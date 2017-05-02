@@ -1,0 +1,164 @@
+#include "FileDialog.h"
+#include <QFileDialog>
+#include <QImageReader>
+
+namespace {
+    const auto UntitledTag = QStringLiteral("/UT/");
+    const auto SessionFileExtension = QStringLiteral(".gpupad");
+    const auto SourceFileExtensions = { "glsl", "vert", "tesc", "tese", "geom",
+            "frag", "comp", "fs", "gs", "vs" };
+    const auto BinaryFileExtensions = { ".bin", ".raw" };
+
+    auto gNextUntitledFileIndex = 1;
+} // namespace
+
+void FileDialog::resetNextUntitledFileIndex()
+{
+    gNextUntitledFileIndex = 1;
+}
+
+QString FileDialog::generateNextUntitledFileName()
+{
+    return UntitledTag + QString::number(gNextUntitledFileIndex++);
+}
+
+QString FileDialog::getUntitledSessionFileName()
+{
+    return UntitledTag + QString("Session");
+}
+
+bool FileDialog::isUntitled(const QString &fileName)
+{
+    return fileName.startsWith(UntitledTag);
+}
+
+QString FileDialog::getFileTitle(const QString &fileName)
+{
+    if (!fileName.startsWith(UntitledTag))
+        return QFileInfo(fileName).fileName();;
+
+    return tr("Untitled") + " " +
+        QString(fileName).remove(0, UntitledTag.size());
+}
+
+QString FileDialog::getWindowTitle(const QString &fileName)
+{
+    return "[*]" + getFileTitle(fileName);
+}
+
+bool FileDialog::isSessionFileName(const QString& fileName)
+{
+    return fileName.endsWith(SessionFileExtension);
+}
+
+bool FileDialog::isBinaryFileName(const QString& fileName)
+{
+    for (const auto &ext : BinaryFileExtensions)
+        if (fileName.endsWith(ext))
+            return true;
+    return false;
+}
+
+FileDialog::FileDialog(QWidget *parent)
+    : QObject(parent)
+{
+}
+
+FileDialog::~FileDialog() = default;
+
+QDir FileDialog::directory() const
+{
+    return mDirectory;
+}
+
+void FileDialog::setDirectory(QDir directory)
+{
+    mDirectory = directory;
+}
+
+QString FileDialog::fileName() const
+{
+    if (mFileNames.isEmpty())
+        return { };
+    return mFileNames.first();
+}
+
+QStringList FileDialog::fileNames() const
+{
+    return mFileNames;
+}
+
+bool FileDialog::exec(Options options, QString currentFileName)
+{
+    QFileDialog dialog(static_cast<QWidget*>(parent()));
+
+    if (options & Saving) {
+        dialog.setWindowTitle(tr("Save '%1' As")
+            .arg(getFileTitle(currentFileName)));
+        dialog.setAcceptMode(QFileDialog::AcceptSave);
+        dialog.setFileMode(QFileDialog::AnyFile);
+    }
+    else {
+        dialog.setWindowTitle(tr("Open File"));
+        dialog.setAcceptMode(QFileDialog::AcceptOpen);
+        dialog.setFileMode(QFileDialog::ExistingFiles);
+    }
+
+    auto sourceFileFilter = QString();
+    for (const auto &ext : SourceFileExtensions)
+        sourceFileFilter = sourceFileFilter + " *." + ext;
+
+    auto imageFileFilter = QString();
+    foreach (const QByteArray &format, QImageReader::supportedImageFormats())
+        imageFileFilter += " *." + QString(format) + " ";
+
+    auto binaryFileFilter = QString();
+    for (const auto &ext : BinaryFileExtensions)
+        binaryFileFilter = binaryFileFilter + " *" + ext;
+
+    auto supportedFileFilter = "*" + SessionFileExtension +
+        sourceFileFilter + imageFileFilter + binaryFileFilter;
+
+    auto filters = QStringList();
+    if (options & SupportedExtensions)
+        filters.append(tr("Supported files") + " (" + supportedFileFilter + ")");
+    if (options & SessionExtensions) {
+        filters.append(qApp->applicationName() + tr(" session") +
+            " (*" + SessionFileExtension + ")");
+        dialog.setDefaultSuffix(SessionFileExtension);
+    }
+    if (options & ShaderExtensions) {
+        filters.append(tr("GLSL shader files") + " (" + sourceFileFilter + ")");
+        dialog.setDefaultSuffix(*begin(SourceFileExtensions));
+    }
+    if (options & ImageExtensions) {
+        filters.append(tr("Image files") + " (" + imageFileFilter + ")");
+        dialog.setDefaultSuffix("pnd");
+    }
+    if (options & BinaryExtensions) {
+        filters.append(tr("Binary files") + " (" + binaryFileFilter + ")");
+        dialog.setDefaultSuffix(*begin(BinaryFileExtensions));
+    }
+    if (options & SupportedExtensions)
+        dialog.setDefaultSuffix("");
+
+    filters.append(tr("All Files (*)"));
+
+    dialog.setNameFilters(filters);
+
+    if (isUntitled(currentFileName))
+        currentFileName = "";
+
+    dialog.selectFile(currentFileName);
+    if (currentFileName.isEmpty())
+        dialog.setDirectory(mDirectory.exists() ?
+            mDirectory : QDir::current());
+
+    auto result = (dialog.exec() == QDialog::Accepted);
+
+    if (result) {
+        mFileNames = dialog.selectedFiles();
+        mDirectory = dialog.directory();
+    }
+    return result;
+}

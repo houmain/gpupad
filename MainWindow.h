@@ -1,0 +1,67 @@
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
+
+#include "EditActions.h"
+#include <QMainWindow>
+#include <QSettings>
+
+namespace Ui {
+class MainWindow;
+}
+
+class Singletons;
+class FileManager;
+class SessionEditor;
+class SessionProperties;
+
+class MainWindow : public QMainWindow
+{
+    Q_OBJECT
+public:
+    explicit MainWindow(QWidget *parent = 0);
+    ~MainWindow();
+
+public slots:
+    void newFile();
+    void openFile();
+    void openFile(const QString &fileName);
+    bool saveFile();
+    bool saveFileAs();
+    bool saveAllFiles();
+    bool reloadFile();
+    bool closeFile();
+    bool closeAllFiles();
+    void openSessionDock();
+    void openMessageDock();
+    void openPreferences();
+    void selectFont();
+    void setTabSize(int tabSize);
+    void openDocumentation();
+    void openAbout();
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
+private:
+    void writeSettings();
+    void readSettings();
+    void updateCurrentEditor();
+    void disconnectEditActions();
+    void connectEditActions();
+    void updateFileActions();
+    bool openSession(const QString &fileName);
+    bool saveSession();
+    bool saveSessionAs();
+    bool closeSession();
+
+    Ui::MainWindow *mUi{ };
+    QSettings mSettings;
+    EditActions mEditActions;
+    QScopedPointer<Singletons> mSingletons;
+    QScopedPointer<SessionEditor> mSessionEditor;
+    QScopedPointer<SessionProperties> mSessionProperties;
+    FileManager &mFileManager;
+    QList<QMetaObject::Connection> mConnectedEditActions;
+};
+
+#endif // MAINWINDOW_H

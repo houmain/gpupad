@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SamplerProperties</class>
+ <widget class="QWidget" name="SamplerProperties">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>268</width>
+    <height>168</height>
+   </rect>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <property name="labelAlignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <property name="horizontalSpacing">
+      <number>8</number>
+     </property>
+     <property name="verticalSpacing">
+      <number>2</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelFile">
+       <property name="text">
+        <string>Texture</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="ReferenceComboBox" name="texture"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelMinFilter">
+       <property name="text">
+        <string>Min. Filter</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="DataComboBox" name="minFilter"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelMagFilter">
+       <property name="text">
+        <string>Mag. Filter</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="DataComboBox" name="magFilter"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelWarpModeX">
+       <property name="text">
+        <string>Wrapmode X</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="DataComboBox" name="wrapModeX"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelWarpModeY">
+       <property name="text">
+        <string>Y</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="DataComboBox" name="wrapModeY"/>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="labelWarpModeZ">
+       <property name="text">
+        <string>Z</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="DataComboBox" name="wrapModeZ"/>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ReferenceComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/ReferenceComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>DataComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/DataComboBox.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

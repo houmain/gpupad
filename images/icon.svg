@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="100mm"
+   height="100mm"
+   viewBox="0 0 100 100"
+   version="1.1"
+   id="svg8"
+   sodipodi:docname="icon.svg"
+   inkscape:export-filename="/mnt/LocalStorage/Home/houdini/icon.png"
+   inkscape:export-xdpi="4.0640001"
+   inkscape:export-ydpi="4.0640001"
+   inkscape:version="0.92.1 r">
+  <defs
+     id="defs2">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient6207-6">
+      <stop
+         style="stop-color:#30ff00;stop-opacity:1;"
+         offset="0"
+         id="stop6203" />
+      <stop
+         style="stop-color:#30ff00;stop-opacity:0;"
+         offset="1"
+         id="stop6205" />
+    </linearGradient>
+    <filter
+       inkscape:label="Neon"
+       inkscape:menu="Bevels"
+       inkscape:menu-tooltip="Neon light effect"
+       x="-0.25"
+       y="-0.25"
+       width="1.5"
+       height="1.5"
+       style="color-interpolation-filters:sRGB;"
+       id="filter387">
+      <feGaussianBlur
+         stdDeviation="1"
+         result="result1"
+         id="feGaussianBlur365" />
+      <feComposite
+         in="result1"
+         in2="result1"
+         result="result4"
+         operator="in"
+         id="feComposite367" />
+      <feGaussianBlur
+         stdDeviation="7"
+         result="result6"
+         in="result4"
+         id="feGaussianBlur369" />
+      <feComposite
+         operator="over"
+         in="result6"
+         in2="result4"
+         result="result8"
+         id="feComposite371" />
+      <feComposite
+         operator="in"
+         result="fbSourceGraphic"
+         in="result6"
+         in2="result8"
+         id="feComposite373" />
+      <feSpecularLighting
+         specularExponent="45"
+         specularConstant="2"
+         surfaceScale="2.5"
+         lighting-color="rgb(255,255,255)"
+         result="result1"
+         in="fbSourceGraphic"
+         id="feSpecularLighting377">
+        <fePointLight
+           z="20000"
+           y="-10000"
+           x="-5000"
+           id="fePointLight375" />
+      </feSpecularLighting>
+      <feComposite
+         operator="in"
+         result="result2"
+         in="result1"
+         in2="fbSourceGraphic"
+         id="feComposite379" />
+      <feComposite
+         k3="1.5"
+         k2="1.2"
+         operator="arithmetic"
+         result="result4"
+         in="fbSourceGraphic"
+         in2="result2"
+         id="feComposite381" />
+      <feComposite
+         operator="over"
+         in="result9"
+         in2="result4"
+         result="result9"
+         id="feComposite383" />
+      <feBlend
+         mode="screen"
+         in2="result9"
+         id="feBlend385" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter5533"
+       x="-0.023272897"
+       width="1.0465458"
+       y="-0.020151476"
+       height="1.040303">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.80452239"
+         id="feGaussianBlur5535" />
+    </filter>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient6207-6"
+       id="radialGradient6209"
+       cx="33.277779"
+       cy="277.59424"
+       fx="33.277779"
+       fy="277.59424"
+       r="27.677598"
+       gradientTransform="matrix(1,0,0,0.94911923,0,13.407815)"
+       gradientUnits="userSpaceOnUse" />
+    <meshgradient
+       inkscape:collect="always"
+       id="meshgradient6945"
+       gradientUnits="userSpaceOnUse"
+       x="30.017891"
+       y="235.64143">
+      <meshrow
+         id="meshrow13321">
+        <meshpatch
+           id="meshpatch13323">
+          <stop
+             path="c 31.0134,2.13821  43.0854,20.5925  48.1737,31.0161"
+             style="stop-color:#ef1100;stop-opacity:1"
+             id="stop13325" />
+          <stop
+             path="c 7.61364e-05,8.03089  -8.52378,10.8397  -8.52377,10.8395"
+             style="stop-color:#0000ff;stop-opacity:1"
+             id="stop13327" />
+          <stop
+             path="c -11.7706,3.74103  -38.5371,11.4839  -46.832,10.682"
+             style="stop-color:#232d87;stop-opacity:1"
+             id="stop13329" />
+          <stop
+             path="c -4.81216,-17.513  -1.90705,-38.233  7.18207,-52.5376"
+             style="stop-color:#00ff44;stop-opacity:1"
+             id="stop13331" />
+        </meshpatch>
+      </meshrow>
+    </meshgradient>
+    <filter
+       y="-0.25"
+       height="1.5"
+       inkscape:menu-tooltip="Darkens the edge with an inner blur and adds a flexible glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:label="Dark And Glow"
+       style="color-interpolation-filters:sRGB;"
+       id="filter13606">
+      <feGaussianBlur
+         stdDeviation="5"
+         result="result6"
+         id="feGaussianBlur13596" />
+      <feComposite
+         result="result8"
+         in="SourceGraphic"
+         operator="atop"
+         in2="result6"
+         id="feComposite13598" />
+      <feComposite
+         result="result9"
+         operator="over"
+         in2="SourceAlpha"
+         in="result8"
+         id="feComposite13600" />
+      <feColorMatrix
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0 "
+         result="result10"
+         id="feColorMatrix13602" />
+      <feBlend
+         in="result10"
+         mode="normal"
+         in2="result6"
+         id="feBlend13604" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter4926"
+       x="-0.061893223"
+       width="1.1237864"
+       y="-0.02538155"
+       height="1.0507631">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.92009056"
+         id="feGaussianBlur4928" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="279.24688"
+     inkscape:cy="298.71152"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1280"
+     inkscape:window-height="998"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:snap-page="true" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-197)">
+    <rect
+       style="opacity:0.95;fill:#0b0b0b;fill-opacity:1;stroke-width:0.27465743;filter:url(#filter5533)"
+       id="rect4169"
+       width="82.965767"
+       height="95.816986"
+       x="10.583333"
+       y="199.86011"
+       transform="matrix(1.012164,0,0,0.9626107,-0.09879331,6.9720375)" />
+    <rect
+       style="opacity:0.95;fill:#eeeeee;fill-opacity:1;stroke-width:0.26612818"
+       id="rect4169-5"
+       width="82.965767"
+       height="89.958359"
+       x="10.583333"
+       y="199.86011" />
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot6019"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:0.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#0000ff;fill-opacity:1;stroke:none"
+       transform="matrix(0.45402342,0,0,0.44133072,-14.078561,182.61916)"><flowRegion
+         id="flowRegion6021"
+         style="line-height:0.25;fill:#0000ff"><rect
+           id="rect6023"
+           width="232.33508"
+           height="308.09653"
+           x="61.619305"
+           y="37.531349"
+           style="line-height:0.25;fill:#0000ff" /></flowRegion><flowPara
+         id="flowPara6025"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff">arst arstarsta arster</flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6027">art arst ars tarst ast </flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6048">   arst</flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6050">   rst arstarstarst </flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6029">ar arst arst arst</flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6031">st arst rast arst</flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6033">ars arst arst   arst</flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6035">t ars ar    arst arst</flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6041">aarst arst arst</flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6052" /><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6054">arsta starstarst</flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6056"> arstarst ars ast arst</flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6058" /><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6060"> arst arstarst ar</flowPara><flowPara
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333397px;line-height:0.25;font-family:'DejaVu Sans Mono';-inkscape-font-specification:'DejaVu Sans Mono Bold';fill:#0000ff"
+         id="flowPara6070">a rstarst arst</flowPara></flowRoot>    <path
+       style="opacity:0.95;fill:url(#meshgradient6945);fill-opacity:1;stroke-width:0.26458332;filter:url(#filter13606)"
+       d="m 30.017891,235.64143 48.17365,31.01615 -55.355198,21.52253 z"
+       id="rect5091-0"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc" />
+    <g
+       id="g4578-3"
+       transform="rotate(-22.543359,80.992759,261.98778)"
+       style="fill:#000000;filter:url(#filter4926)">
+      <rect
+         transform="matrix(0.99999962,-8.6641643e-4,0.00304658,0.99999536,0,0)"
+         y="223.88654"
+         x="69.306824"
+         height="58.608582"
+         width="15.617529"
+         id="rect4171-67"
+         style="fill:#000000;fill-opacity:1;stroke-width:0.29568282" />
+      <rect
+         transform="matrix(0.99999962,-8.6641643e-4,0.00304658,0.99999536,0,0)"
+         ry="2.6990793"
+         y="287.78687"
+         x="69.290726"
+         height="8.9455156"
+         width="15.617534"
+         id="rect4175-5"
+         style="fill:#000000;stroke-width:0.29568282" />
+      <rect
+         transform="matrix(0.99999849,-0.00174011,0.00151692,0.99999885,0,0)"
+         y="282.56909"
+         x="69.738914"
+         height="7.1244693"
+         width="15.617551"
+         id="rect4173-3"
+         style="fill:#000000;stroke-width:0.41903535" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         inkscape:connector-curvature="0"
+         id="rect4177-3-5"
+         d="m 78.059886,207.57975 0.345121,0.0118 2.413698,5.42675 -5.567474,-0.0661 z"
+         style="fill:#000000;fill-opacity:1;stroke-width:0.05514952" />
+      <rect
+         transform="matrix(0.99999962,-8.6641643e-4,0.00304658,0.99999536,0,0)"
+         ry="9.2779788e-14"
+         y="223.88654"
+         x="69.306824"
+         height="58.608582"
+         width="3.9141428"
+         id="rect4171-6-6"
+         style="fill:#000000;fill-opacity:0.06344413;stroke-width:0.14802609" />
+      <rect
+         transform="matrix(0.99999962,-8.6641643e-4,0.00304658,0.99999536,0,0)"
+         y="223.71632"
+         x="79.848221"
+         height="58.778786"
+         width="5.0761356"
+         id="rect4171-6-7-2"
+         style="fill:#000000;fill-opacity:0.55287009;stroke-width:0.16881701" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         inkscape:connector-curvature="0"
+         id="rect4177-9"
+         d="m 75.251231,212.95318 5.567475,0.0661 4.7877,10.09599 c -4.892513,1.69005 -10.196474,2.07725 -15.617515,0.0265 z"
+         style="fill:#000000;fill-opacity:1;stroke-width:0.41420829" />
+    </g>
+    <rect
+       style="fill:#00ff00;fill-opacity:1;stroke-width:0.29568282"
+       id="rect4171"
+       width="15.617529"
+       height="58.608582"
+       x="-35.67881"
+       y="233.32176"
+       transform="matrix(0.92325715,-0.38418255,0.3861945,0.92241737,0,0)" />
+    <rect
+       style="fill:#800000;stroke-width:0.29568282"
+       id="rect4175"
+       width="15.617534"
+       height="8.9455156"
+       x="-35.694908"
+       y="297.22211"
+       ry="2.6990793"
+       transform="matrix(0.92325715,-0.38418255,0.3861945,0.92241737,0,0)" />
+    <rect
+       style="fill:#cccccc;stroke-width:0.41903535"
+       id="rect4173"
+       width="15.617551"
+       height="7.1244693"
+       x="-35.232265"
+       y="291.9126"
+       transform="matrix(0.92292114,-0.38498905,0.38478306,0.92300704,0,0)" />
+    <path
+       style="fill:#1d1600;fill-opacity:1;stroke-width:0.05514952"
+       d="m 58.39284,210.82858 0.323353,-0.12121 4.309788,4.08672 -5.167253,2.07379 z"
+       id="rect4177-3"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc" />
+    <rect
+       style="fill:#000000;fill-opacity:0.66517861;stroke-width:0.14802609"
+       id="rect4171-6"
+       width="3.9141428"
+       height="58.608582"
+       x="-35.67881"
+       y="233.32176"
+       ry="9.2779788e-14"
+       transform="matrix(0.92325715,-0.38418255,0.3861945,0.92241737,0,0)" />
+    <rect
+       style="fill:#ffffff;fill-opacity:0.3169643;stroke-width:0.16881701"
+       id="rect4171-6-7"
+       width="5.0761356"
+       height="58.778786"
+       x="-25.137411"
+       y="233.15155"
+       transform="matrix(0.92325715,-0.38418255,0.3861945,0.92241737,0,0)" />
+    <path
+       style="fill:#ffdd75;fill-opacity:1;stroke-width:0.43081075"
+       d="m 57.858876,216.86822 5.16724,-2.07383 8.598399,8.25085 c -3.817511,3.56918 -8.554072,5.9943 -14.407673,6.02775 z"
+       id="rect4177"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc" />
+  </g>
+</svg>
