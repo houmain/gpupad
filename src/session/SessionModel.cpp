@@ -1,5 +1,5 @@
 #include "SessionModel.h"
-#include "files/FileDialog.h"
+#include "FileDialog.h"
 #include <QIcon>
 #include <QMimeData>
 #include <QXmlStreamWriter>
@@ -13,6 +13,7 @@ namespace {
     const auto BufferTag = QStringLiteral("buffer");
     const auto ColumnTag = QStringLiteral("column");
     const auto TextureTag = QStringLiteral("texture");
+    const auto ImageTag = QStringLiteral("image");
     const auto SamplerTag = QStringLiteral("sampler");
     const auto ProgramTag = QStringLiteral("program");
     const auto ShaderTag = QStringLiteral("shader");
@@ -31,6 +32,7 @@ namespace {
             case ItemType::Buffer: return BufferTag;
             case ItemType::Column: return ColumnTag;
             case ItemType::Texture: return TextureTag;
+            case ItemType::Image: return ImageTag;
             case ItemType::Sampler: return SamplerTag;
             case ItemType::Program: return ProgramTag;
             case ItemType::Shader: return ShaderTag;
@@ -52,6 +54,7 @@ namespace {
         if (tag == BufferTag) return ItemType::Buffer;
         if (tag == ColumnTag) return ItemType::Column;
         if (tag == TextureTag) return ItemType::Texture;
+        if (tag == ImageTag) return ItemType::Image;
         if (tag == SamplerTag) return ItemType::Sampler;
         if (tag == ProgramTag) return ItemType::Program;
         if (tag == ShaderTag) return ItemType::Shader;
@@ -134,15 +137,16 @@ SessionModel::SessionModel(QObject *parent)
 {
     mTypeIcons[ItemType::Group].addFile(QStringLiteral(":/images/16x16/folder.png"));
     mTypeIcons[ItemType::Buffer].addFile(QStringLiteral(":/images/16x16/x-office-spreadsheet.png"));
-    mTypeIcons[ItemType::Column].addFile(QStringLiteral(":/images/16x16/application-x-addon.png"));
-    mTypeIcons[ItemType::Texture].addFile(QStringLiteral(":/images/16x16/image-x-generic.png"));
-    mTypeIcons[ItemType::Sampler].addFile(QStringLiteral(":/images/16x16/image-missing.png"));
+    mTypeIcons[ItemType::Column].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
+    mTypeIcons[ItemType::Texture].addFile(QStringLiteral(":/images/16x16/emblem-photos.png"));
+    mTypeIcons[ItemType::Image].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
+    mTypeIcons[ItemType::Sampler].addFile(QStringLiteral(":/images/16x16/image-x-generic.png"));
     mTypeIcons[ItemType::Program].addFile(QStringLiteral(":/images/16x16/folder-documents.png"));
     mTypeIcons[ItemType::Shader].addFile(QStringLiteral(":/images/16x16/font.png"));
     mTypeIcons[ItemType::Binding].addFile(QStringLiteral(":/images/16x16/insert-text.png"));
     mTypeIcons[ItemType::Primitives].addFile(QStringLiteral(":/images/16x16/media-playback-start-rtl.png"));
-    mTypeIcons[ItemType::Attribute].addFile(QStringLiteral(":/images/16x16/format-text-italic.png"));
-    mTypeIcons[ItemType::Framebuffer].addFile(QStringLiteral(":/images/16x16/emblem-photos.png"));
+    mTypeIcons[ItemType::Attribute].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
+    mTypeIcons[ItemType::Framebuffer].addFile(QStringLiteral(":/images/16x16/image-missing.png"));
     mTypeIcons[ItemType::Attachment].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[ItemType::Call].addFile(QStringLiteral(":/images/16x16/dialog-information.png"));
     mTypeIcons[ItemType::State].addFile(QStringLiteral(":/images/16x16/application-x-addon.png"));
@@ -170,6 +174,7 @@ QString SessionModel::getTypeName(ItemType type) const
         case ItemType::Buffer: return tr("Buffer");
         case ItemType::Column: return tr("Column");
         case ItemType::Texture: return tr("Texture");
+        case ItemType::Image: return tr("Image");
         case ItemType::Sampler: return tr("Sampler");
         case ItemType::Program: return tr("Program");
         case ItemType::Shader: return tr("Shader");
@@ -207,6 +212,9 @@ bool SessionModel::canContainType(const QModelIndex &index, ItemType type) const
 
         case ItemType::Buffer:
             return inList(type, { ItemType::Column });
+
+        case ItemType::Texture:
+            return inList(type, { ItemType::Image });
 
         case ItemType::Program:
             return inList(type, { ItemType::Shader });
@@ -281,6 +289,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         case ColumnType::FileName:
             if (item.itemType == ItemType::Buffer ||
                 item.itemType == ItemType::Texture ||
+                item.itemType == ItemType::Image ||
                 item.itemType == ItemType::Shader)
                 return static_cast<const FileItem&>(item).fileName;
             break;
@@ -300,6 +309,9 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(TextureWidth, Texture, width)
         ADD(TextureHeight, Texture, height)
         ADD(TextureDepth, Texture, depth)
+        ADD(ImageLevel, Image, level)
+        ADD(ImageLayer, Image, layer)
+        ADD(ImageFace, Image, face)
         ADD(SamplerTextureId, Sampler, textureId)
         ADD(SamplerMinFilter, Sampler, minFilter)
         ADD(SamplerMagFilter, Sampler, magFilter)
@@ -351,6 +363,7 @@ bool SessionModel::setData(const QModelIndex &index,
         case ColumnType::FileName:
             if (item.itemType == ItemType::Buffer ||
                 item.itemType == ItemType::Texture ||
+                item.itemType == ItemType::Image ||
                 item.itemType == ItemType::Shader) {
                 undoableFileNameAssignment(index,
                     static_cast<FileItem&>(item), value.toString());
@@ -377,6 +390,9 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(TextureWidth, Texture, width, toInt)
         ADD(TextureHeight, Texture, height, toInt)
         ADD(TextureDepth, Texture, depth, toInt)
+        ADD(ImageLevel, Image, level, toInt)
+        ADD(ImageLayer, Image, layer, toInt)
+        ADD(ImageFace, Image, face, toInt)
         ADD(SamplerTextureId, Sampler, textureId, toInt)
         ADD(SamplerMinFilter, Sampler, minFilter, toInt)
         ADD(SamplerMagFilter, Sampler, magFilter, toInt)
@@ -422,6 +438,7 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     switch (type) {
         case ItemType::Group:
         case ItemType::Buffer:
+        case ItemType::Texture:
         case ItemType::Program:
         case ItemType::Primitives:
         case ItemType::Framebuffer:
@@ -476,6 +493,7 @@ QModelIndex SessionModel::insertItem(ItemType type, const QModelIndex &parent,
         case ItemType::Buffer: return insert(new Buffer());
         case ItemType::Column: return insert(new Column());
         case ItemType::Texture: return insert(new Texture());
+        case ItemType::Image: return insert(new Image());
         case ItemType::Sampler: return insert(new Sampler());
         case ItemType::Program: return insert(new Program());
         case ItemType::Shader: return insert(new Shader());
@@ -879,6 +897,15 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
             break;
         }
 
+        case ItemType::Image: {
+            const auto &image = static_cast<const Image&>(item);
+            writeFileName("fileName", image.fileName);
+            write("level", image.level);
+            write("layer", image.layer);
+            write("face", image.face);
+            break;
+        }
+
         case ItemType::Program: {
             break;
         }
@@ -1064,6 +1091,15 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             read("width", texture.width);
             read("height", texture.height);
             read("depth", texture.depth);
+            break;
+        }
+
+        case ItemType::Image: {
+            auto &image = static_cast<Image&>(item);
+            readFileName("fileName", image.fileName);
+            read("level", image.level);
+            read("layer", image.layer);
+            read("face", image.face);
             break;
         }
 

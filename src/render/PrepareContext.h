@@ -3,26 +3,20 @@
 
 #include "MessageList.h"
 #include "Singletons.h"
+#include "FileCache.h"
 #include "session/SessionModel.h"
-#include "files/FileManager.h"
-#include "files/SourceFile.h"
-#include "files/BinaryFile.h"
-#include "files/ImageFile.h"
 #include <QSet>
 
-class FileManager;
+class EditorManager;
 
-class PrepareContext
+struct PrepareContext
 {
-public:
     SessionModel &session;
-    FileManager &fileManager;
     QSet<ItemId> &usedItems;
     MessageList &messages;
 
     PrepareContext(QSet<ItemId> *usedItems, MessageList *messages)
         : session(Singletons::sessionModel())
-        , fileManager(Singletons::fileManager())
         , usedItems(*usedItems)
         , messages(*messages) { }
 };

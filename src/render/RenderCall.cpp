@@ -4,6 +4,9 @@
 #include "GLProgram.h"
 #include "GLPrimitives.h"
 #include "GLFramebuffer.h"
+#include "editors/EditorManager.h"
+#include "editors/ImageEditor.h"
+#include "editors/BinaryEditor.h"
 
 struct GLCall
 {
@@ -129,16 +132,14 @@ static void applyOutput(RenderCall::Output &output)
 {
     for (const auto& image : output.images) {
         const auto& fileName = image.first;
-        Singletons::fileManager().openImageEditor(fileName, false);
-        if (auto file = Singletons::fileManager().findImageFile(fileName))
-            file->replace(image.second);
+        if (auto editor = Singletons::editorManager().openImageEditor(fileName, false))
+            editor->replace(image.second);
     }
 
     for (const auto& buffer : output.buffers) {
         const auto& fileName = buffer.first;
-        Singletons::fileManager().openBinaryEditor(fileName, false);
-        if (auto file = Singletons::fileManager().findBinaryFile(fileName))
-            file->replace(buffer.second);
+        if (auto editor = Singletons::editorManager().openBinaryEditor(fileName, false))
+            editor->replace(buffer.second);
     }
 }
 

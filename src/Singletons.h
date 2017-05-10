@@ -5,8 +5,9 @@
 
 class MessageWindow;
 class SourceEditorSettings;
+class FileCache;
 class FileDialog;
-class FileManager;
+class EditorManager;
 class SynchronizeLogic;
 class SessionModel;
 class Renderer;
@@ -18,8 +19,9 @@ public:
     static Renderer &renderer();
     static MessageWindow &messageWindow();
     static SourceEditorSettings &sourceEditorSettings();
+    static FileCache& fileCache();
     static FileDialog &fileDialog();
-    static FileManager &fileManager();
+    static EditorManager &editorManager();
     static SessionModel &sessionModel();
     static SynchronizeLogic &synchronizeLogic();
     static FindReplaceBar &findReplaceBar();
@@ -33,8 +35,9 @@ private:
     QScopedPointer<Renderer> mRenderer;
     QScopedPointer<MessageWindow> mMessageWindow;
     QScopedPointer<SourceEditorSettings> mSourceEditorSettings;
+    QScopedPointer<FileCache> mFileCache;
     QScopedPointer<FileDialog> mFileDialog;
-    QScopedPointer<FileManager> mFileManager;
+    QScopedPointer<EditorManager> mEditorManager;
     QScopedPointer<SessionModel> mSessionModel;
     QScopedPointer<SynchronizeLogic> mSynchronizeLogic;
     QScopedPointer<FindReplaceBar> mFindReplaceBar;

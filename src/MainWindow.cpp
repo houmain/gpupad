@@ -5,9 +5,9 @@
 #include "Singletons.h"
 #include "MessageWindow.h"
 #include "SynchronizeLogic.h"
-#include "files/FileManager.h"
-#include "files/FindReplaceBar.h"
-#include "files/SourceEditorSettings.h"
+#include "editors/EditorManager.h"
+#include "editors/FindReplaceBar.h"
+#include "editors/SourceEditorSettings.h"
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QDockWidget>
@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
     , mSingletons(new Singletons())
     , mSessionEditor(new SessionEditor())
     , mSessionProperties(new SessionProperties())
-    , mFileManager(Singletons::fileManager())
+    , mEditorManager(Singletons::editorManager())
 {
     mUi->setupUi(this);
 
@@ -61,12 +61,12 @@ MainWindow::MainWindow(QWidget *parent)
     takeCentralWidget();
 
     auto content = new QWidget(this);
-    mFileManager.setParent(content);
+    mEditorManager.setParent(content);
     Singletons::findReplaceBar().setParent(content);
     auto layout = new QVBoxLayout(content);
     layout->setMargin(0);
     layout->setSpacing(0);
-    layout->addWidget(&mFileManager);
+    layout->addWidget(&mEditorManager);
     layout->addWidget(&Singletons::findReplaceBar());
 
     auto dock = new QDockWidget(this);
@@ -164,13 +164,13 @@ MainWindow::MainWindow(QWidget *parent)
     auto& synchronizeLogic = Singletons::synchronizeLogic();
     connect(mSessionEditor.data(), &SessionEditor::itemActivated,
         &synchronizeLogic, &SynchronizeLogic::handleItemActivated);
-    connect(&mFileManager, &FileManager::editorRenamed,
+    connect(&mEditorManager, &EditorManager::editorRenamed,
         &synchronizeLogic, &SynchronizeLogic::handleFileRenamed);
-    connect(&mFileManager, &FileManager::sourceEditorChanged,
+    connect(&mEditorManager, &EditorManager::sourceEditorChanged,
         &synchronizeLogic, &SynchronizeLogic::handleSourceEditorChanged);
-    connect(&mFileManager, &FileManager::binaryEditorChanged,
+    connect(&mEditorManager, &EditorManager::binaryEditorChanged,
         &synchronizeLogic, &SynchronizeLogic::handleBinaryEditorChanged);
-    connect(&mFileManager, &FileManager::imageEditorChanged,
+    connect(&mEditorManager, &EditorManager::imageEditorChanged,
         &synchronizeLogic, &SynchronizeLogic::handleImageEditorChanged);
     connect(&messageWindow, &MessageWindow::messageActivated,
         &synchronizeLogic, &SynchronizeLogic::handleMessageActivated);
@@ -277,7 +277,7 @@ void MainWindow::updateCurrentEditor()
     if (!qApp->focusWidget())
         return;
 
-    if (!mFileManager.updateCurrentEditor())
+    if (!mEditorManager.updateCurrentEditor())
         return;
 
     disconnectEditActions();
@@ -301,8 +301,8 @@ void MainWindow::disconnectEditActions()
 
 void MainWindow::connectEditActions()
 {
-    if (mFileManager.hasCurrentEditor()) {
-        mConnectedEditActions = mFileManager.connectEditActions(mEditActions);
+    if (mEditorManager.hasCurrentEditor()) {
+        mConnectedEditActions = mEditorManager.connectEditActions(mEditActions);
     }
     else {
         auto focused = (qApp->focusWidget() == mSessionEditor.data());
@@ -325,14 +325,14 @@ void MainWindow::updateFileActions()
     mUi->actionSaveAs->setText(tr("Save%1 &As...").arg(desc));
     mUi->actionClose->setText(tr("&Close%1").arg(desc));
 
-    const auto canReload = (mFileManager.hasCurrentEditor());
+    const auto canReload = (mEditorManager.hasCurrentEditor());
     mUi->actionReload->setEnabled(canReload);
     mUi->actionReload->setText(tr("&Reload%1").arg(canReload ? desc : ""));
 }
 
 void MainWindow::newFile()
 {
-    mFileManager.openNewSourceEditor();
+    mEditorManager.openNewSourceEditor();
 }
 
 void MainWindow::openFile()
@@ -351,28 +351,28 @@ void MainWindow::openFile(const QString &fileName)
     if (FileDialog::isSessionFileName(fileName))
         openSession(fileName);
     else
-        mFileManager.openEditor(fileName);
+        mEditorManager.openEditor(fileName);
 }
 
 bool MainWindow::saveFile()
 {
-    if (mFileManager.hasCurrentEditor())
-        return mFileManager.saveEditor();
+    if (mEditorManager.hasCurrentEditor())
+        return mEditorManager.saveEditor();
 
     return saveSession();
 }
 
 bool MainWindow::saveFileAs()
 {
-    if (mFileManager.hasCurrentEditor())
-        return mFileManager.saveEditorAs();
+    if (mEditorManager.hasCurrentEditor())
+        return mEditorManager.saveEditorAs();
 
     return saveSessionAs();
 }
 
 bool MainWindow::saveAllFiles()
 {
-    if (!mFileManager.saveAllEditors())
+    if (!mEditorManager.saveAllEditors())
         return false;
 
     if (!mSessionEditor->isModified())
@@ -382,13 +382,13 @@ bool MainWindow::saveAllFiles()
 
 bool MainWindow::reloadFile()
 {
-    return mFileManager.reloadEditor();
+    return mEditorManager.reloadEditor();
 }
 
 bool MainWindow::closeFile()
 {
-    if (mFileManager.hasCurrentEditor())
-        return mFileManager.closeEditor();
+    if (mEditorManager.hasCurrentEditor())
+        return mEditorManager.closeEditor();
 
     return closeSession();
 }
@@ -397,7 +397,7 @@ bool MainWindow::closeAllFiles()
 {
     Singletons::synchronizeLogic().deactivateCalls();
 
-    if (!mFileManager.closeAllEditors())
+    if (!mEditorManager.closeAllEditors())
         return false;
 
     return closeSession();
@@ -437,7 +437,7 @@ bool MainWindow::saveSessionAs()
 bool MainWindow::closeSession()
 {
     if (mSessionEditor->isModified()) {
-        auto ret = Singletons::fileManager().openNotSavedDialog(
+        auto ret = Singletons::editorManager().openNotSavedDialog(
             mSessionEditor->fileName());
         if (ret == QMessageBox::Cancel)
             return false;

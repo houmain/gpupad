@@ -1,10 +1,11 @@
 #include "Singletons.h"
 #include "MessageWindow.h"
-#include "files/SourceEditorSettings.h"
-#include "files/FileDialog.h"
-#include "files/FileManager.h"
-#include "files/FindReplaceBar.h"
+#include "FileCache.h"
+#include "FileDialog.h"
 #include "SynchronizeLogic.h"
+#include "editors/SourceEditorSettings.h"
+#include "editors/EditorManager.h"
+#include "editors/FindReplaceBar.h"
 #include "session/SessionModel.h"
 #include "render/Renderer.h"
 
@@ -25,14 +26,19 @@ SourceEditorSettings &Singletons::sourceEditorSettings()
     return *sInstance->mSourceEditorSettings;
 }
 
+FileCache &Singletons::fileCache()
+{
+    return *sInstance->mFileCache;
+}
+
 FileDialog &Singletons::fileDialog()
 {
     return *sInstance->mFileDialog;
 }
 
-FileManager &Singletons::fileManager()
+EditorManager &Singletons::editorManager()
 {
-    return *sInstance->mFileManager;
+    return *sInstance->mEditorManager;
 }
 
 SessionModel &Singletons::sessionModel()
@@ -56,8 +62,9 @@ Singletons::Singletons()
     mRenderer.reset(new Renderer());
     mMessageWindow.reset(new MessageWindow());
     mSourceEditorSettings.reset(new SourceEditorSettings());
+    mFileCache.reset(new FileCache());
     mFileDialog.reset(new FileDialog());
-    mFileManager.reset(new FileManager());
+    mEditorManager.reset(new EditorManager());
     mSessionModel.reset(new SessionModel());
     mSynchronizeLogic.reset(new SynchronizeLogic());
     mFindReplaceBar.reset(new FindReplaceBar());

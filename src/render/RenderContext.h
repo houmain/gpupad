@@ -12,14 +12,13 @@
 #include <QOpenGLFunctions_4_2_Core>
 #include <QOpenGLFunctions_4_3_Core>
 
-class RenderContext : public QOpenGLFunctions_3_3_Core
+struct RenderContext : public QOpenGLFunctions_3_3_Core
 {
-public:
     QSet<ItemId> &usedItems;
     MessageList &messages;
-    QOpenGLFunctions_4_0_Core* gl40{ };
-    QOpenGLFunctions_4_2_Core* gl42{ };
-    QOpenGLFunctions_4_3_Core* gl43{ };
+    QOpenGLFunctions_4_0_Core *gl40{ };
+    QOpenGLFunctions_4_2_Core *gl42{ };
+    QOpenGLFunctions_4_3_Core *gl43{ };
 
     RenderContext(QOpenGLContext& glContext, QSet<ItemId> *usedItems,
                   MessageList *messages)

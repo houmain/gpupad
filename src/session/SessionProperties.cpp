@@ -4,6 +4,7 @@
 #include "ui_GroupProperties.h"
 #include "ui_BufferProperties.h"
 #include "ui_ColumnProperties.h"
+#include "ui_ImageProperties.h"
 #include "ui_SamplerProperties.h"
 #include "ui_ProgramProperties.h"
 #include "ui_ShaderProperties.h"
@@ -13,7 +14,7 @@
 #include "ui_AttachmentProperties.h"
 #include "ui_CallProperties.h"
 #include "ui_StateProperties.h"
-#include "files/FileManager.h"
+#include "editors/EditorManager.h"
 #include "Singletons.h"
 #include "SessionModel.h"
 #include <QStackedWidget>
@@ -60,6 +61,7 @@ SessionProperties::SessionProperties(QWidget *parent)
     add(mColumnProperties);
     mTextureProperties = new TextureProperties(this);
     mStack->addWidget(mTextureProperties);
+    add(mImageProperties);
     add(mSamplerProperties);
     add(mProgramProperties);
     add(mShaderProperties);
@@ -77,23 +79,31 @@ SessionProperties::SessionProperties(QWidget *parent)
     setWidget(mStack);
 
     connect(mShaderProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::fileManager().openNewSourceEditor()); });
+        setCurrentItemFile(Singletons::editorManager().openNewSourceEditor()); });
     connect(mShaderProperties->fileBrowse, &QToolButton::clicked,
-        [this]() { selectCurrentItemFile(FileDialog::ShaderExtensions); });
-    connect(mBufferProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::fileManager().openNewBinaryEditor()); });
-    connect(mBufferProperties->fileBrowse, &QToolButton::clicked,
-        [this]() { selectCurrentItemFile(FileDialog::BinaryExtensions); });
-
+        [this]() { selectCurrentItemFile(FileDialog::ShaderExtensions); });        
     connect(mShaderProperties->file, &ReferenceComboBox::textRequired,
         [](auto data) { return FileDialog::getFileTitle(data.toString()); });
     connect(mShaderProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Shader); });
 
+    connect(mBufferProperties->fileNew, &QToolButton::clicked, [this]() {
+        setCurrentItemFile(Singletons::editorManager().openNewBinaryEditor()); });
+    connect(mBufferProperties->fileBrowse, &QToolButton::clicked,
+        [this]() { selectCurrentItemFile(FileDialog::BinaryExtensions); });
     connect(mBufferProperties->file, &ReferenceComboBox::textRequired,
         [](auto data) { return FileDialog::getFileTitle(data.toString()); });
     connect(mBufferProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Buffer); });
+
+    connect(mImageProperties->fileNew, &QToolButton::clicked, [this]() {
+        setCurrentItemFile(Singletons::editorManager().openNewImageEditor()); });
+    connect(mImageProperties->fileBrowse, &QToolButton::clicked,
+        [this]() { selectCurrentItemFile(FileDialog::ImageExtensions); });
+    connect(mImageProperties->file, &ReferenceComboBox::textRequired,
+        [](auto data) { return FileDialog::getFileTitle(data.toString()); });
+    connect(mImageProperties->file, &ReferenceComboBox::listRequired,
+        [this]() { return getFileNames(ItemType::Image, true); });
 
     connect(mSamplerProperties->texture, &ReferenceComboBox::textRequired,
         [this](QVariant data) { return mModel.findItemName(data.toInt()); });
@@ -187,6 +197,15 @@ void SessionProperties::fillComboBoxes()
     mSamplerProperties->wrapModeZ->setModel(
         mSamplerProperties->wrapModeX->model());
 
+    fill<QOpenGLTexture::CubeMapFace>(mImageProperties->face, {
+        { "Positive X", QOpenGLTexture::CubeMapPositiveX },
+        { "Negative X", QOpenGLTexture::CubeMapNegativeX },
+        { "Positive Y", QOpenGLTexture::CubeMapPositiveY },
+        { "Negative Y", QOpenGLTexture::CubeMapNegativeY },
+        { "Positive Z", QOpenGLTexture::CubeMapPositiveZ },
+        { "Negative Z", QOpenGLTexture::CubeMapNegativeZ },
+    });
+
     fill<Shader::Type>(mShaderProperties->type, {
         { "Vertex", Shader::Vertex },
         { "Fragment", Shader::Fragment },
@@ -226,19 +245,20 @@ QVariantList SessionProperties::getFileNames(ItemType type, bool addNull) const
 
     switch (type) {
         case ItemType::Shader:
-            foreach (QString f, Singletons::fileManager().getSourceFileNames())
+            foreach (QString f, Singletons::editorManager().getSourceFileNames())
                 if (!result.contains(f))
                     result.append(f);
             break;
 
         case ItemType::Buffer:
-            foreach (QString f, Singletons::fileManager().getBinaryFileNames())
+            foreach (QString f, Singletons::editorManager().getBinaryFileNames())
                 if (!result.contains(f))
                     result.append(f);
             break;
 
         case ItemType::Texture:
-            foreach (QString f, Singletons::fileManager().getImageFileNames())
+        case ItemType::Image:
+            foreach (QString f, Singletons::editorManager().getImageFileNames())
                 if (!result.contains(f))
                     result.append(f);
             break;
@@ -328,6 +348,13 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             map(mTextureProperties->widthWidget(), SessionModel::TextureWidth);
             map(mTextureProperties->heightWidget(), SessionModel::TextureHeight);
             map(mTextureProperties->depthWidget(), SessionModel::TextureDepth);
+            break;
+
+        case ItemType::Image:
+            map(mImageProperties->file, SessionModel::FileName);
+            map(mImageProperties->level, SessionModel::ImageLevel);
+            map(mImageProperties->layer, SessionModel::ImageLayer);
+            map(mImageProperties->face, SessionModel::ImageFace);
             break;
 
         case ItemType::Sampler:

@@ -14,6 +14,7 @@ enum class ItemType
     Buffer,
     Column,
     Texture,
+    Image,
     Sampler,
     Program,
     Shader,
@@ -116,11 +117,16 @@ struct Texture : FileItem
     Format format{ QOpenGLTexture::RGBA8_UNorm };
     int width{ 256 };
     int height{ 256 };
-
-    // layers of cube- and 3D-textures need to be consecutively numbered
-    // before the extension e.g. skybox0.png or video0001.png.
-    // the depth is the image count
     int depth{ 1 };
+};
+
+struct Image : FileItem
+{
+    using Face = QOpenGLTexture::CubeMapFace;
+
+    int level{ };
+    int layer{ };
+    Face face{ };
 };
 
 struct Sampler : Item
@@ -262,6 +268,7 @@ template<> inline ItemType getItemType<Group>() { return ItemType::Group; }
 template<> inline ItemType getItemType<Buffer>() { return ItemType::Buffer; }
 template<> inline ItemType getItemType<Column>() { return ItemType::Column; }
 template<> inline ItemType getItemType<Texture>() { return ItemType::Texture; }
+template<> inline ItemType getItemType<Image>() { return ItemType::Image; }
 template<> inline ItemType getItemType<Sampler>() { return ItemType::Sampler; }
 template<> inline ItemType getItemType<Program>() { return ItemType::Program; }
 template<> inline ItemType getItemType<Shader>() { return ItemType::Shader; }

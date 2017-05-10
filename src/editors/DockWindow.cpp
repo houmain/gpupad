@@ -3,10 +3,6 @@
 #include <QApplication>
 #include <QTimer>
 #include <QDockWidget>
-#include <QHBoxLayout>
-
-#include <QLabel>
-#include <QSpinBox>
 
 namespace {
     QDockWidget *getTabBarDock(QTabBar *tabBar, int index)
@@ -15,7 +11,7 @@ namespace {
         return reinterpret_cast<QDockWidget*>(
             tabBar->tabData(index).toULongLong());
     }
-}
+} // namespace
 
 DockWindow::DockWindow(QWidget *parent) : QMainWindow(parent)
 {

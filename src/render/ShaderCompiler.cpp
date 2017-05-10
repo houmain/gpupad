@@ -1,7 +1,6 @@
 #include "ShaderCompiler.h"
 #include "Singletons.h"
-#include "files/FileManager.h"
-#include "files/SourceFile.h"
+#include "FileCache.h"
 #include "GLShader.h"
 
 ShaderCompiler::ShaderCompiler(QString fileName, QObject* parent)
@@ -27,9 +26,7 @@ void ShaderCompiler::prepare()
     if (mFileName.endsWith(".comp"))
         mShaderType = Shader::Type::Compute;
 
-    auto file = Singletons::fileManager().findSourceFile(mFileName);
-    if (file)
-        mSource = file->toPlainText();
+    Singletons::fileCache().getSource(mFileName, &mSource);
 }
 
 void ShaderCompiler::render(QOpenGLContext &glContext)

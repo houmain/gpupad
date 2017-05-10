@@ -1,5 +1,5 @@
 #include "MessageWindow.h"
-#include "files/FileDialog.h"
+#include "FileDialog.h"
 #include <QTimer>
 #include <QHeaderView>
 

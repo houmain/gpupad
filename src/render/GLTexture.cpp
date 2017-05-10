@@ -4,25 +4,30 @@
 GLTexture::GLTexture(const Texture &texture, PrepareContext &context)
 {
     mItemId = texture.id;
-    mFileName = texture.fileName;
     mTarget = texture.target;
     mFormat = texture.format;
     mWidth = texture.width;
     mHeight = texture.height;
     mDepth = texture.depth;
 
-    if (auto file = context.fileManager.findImageFile(mFileName)) {
-        mImages.append(file->image());
-        mSystemCopyModified = true;
-    }
+    context.usedItems += texture.id;
+    mImages.push_back({ 0, 0, QOpenGLTexture::CubeMapPositiveX,
+        texture.fileName, QImage() });
+
+    for (const auto &item : texture.items)
+        if (auto image = castItem<::Image>(item)) {
+            context.usedItems += image->id;
+            mImages.push_back({ image->level, image->layer, image->face,
+                image->fileName, QImage() });
+        }
 }
 
 bool GLTexture::operator==(const GLTexture &rhs) const
 {
-    return std::tie(mFileName, mTarget, mFormat,
-                    mWidth, mHeight, mDepth, mImages) ==
-           std::tie(rhs.mFileName, rhs.mTarget, rhs.mFormat,
-                    rhs.mWidth, rhs.mHeight, rhs.mDepth, rhs.mImages);
+    return std::tie(mTarget, mFormat, mWidth,
+                    mHeight, mDepth, mImages) ==
+           std::tie(rhs.mTarget, rhs.mFormat,rhs.mWidth,
+                    rhs.mHeight, rhs.mDepth, rhs.mImages);
 }
 
 bool GLTexture::isDepthTexture() const
@@ -55,7 +60,7 @@ GLuint GLTexture::getReadWriteTextureId(RenderContext &context)
 {
     load(context.messages);
     upload(context);
-    mDeviceCopyModified = true;
+    mDeviceCopiesModified = true;
     return (mTexture ? mTexture->textureId() : GL_NONE);
 }
 
@@ -65,25 +70,28 @@ QList<std::pair<QString, QImage>> GLTexture::getModifiedImages(
     if (!download(context))
         return { };
 
-    return { std::make_pair(mFileName, mImages[0]) };
+    auto result = QList<std::pair<QString, QImage>>();
+    for (const auto& image : mImages)
+        result.push_back(std::make_pair(image.fileName, image.image));
+
+    return result;
 }
 
 void GLTexture::load(MessageList &messages) {
-    if (!mImages.isEmpty())
-        return;
-
-    auto file = FileManager::openImageFile(mFileName, 0);
-    if (!file)
-        return messages.insert(MessageType::LoadingFileFailed, mFileName);
-
-    mImages.append(file->image());
-    mSystemCopyModified = true;
+    messages.setContext(mItemId);
+    for (Image& image : mImages)
+        if (image.image.isNull()) {
+            if (!Singletons::fileCache().getImage(image.fileName, &image.image))
+                messages.insert(MessageType::LoadingFileFailed, image.fileName);
+            else
+                mSystemCopiesModified = true;
+        }
 }
 
 void GLTexture::upload(RenderContext &context)
 {
     Q_UNUSED(context);
-    if (!mSystemCopyModified)
+    if (!mSystemCopiesModified)
         return;
 
     mTexture = std::make_unique<QOpenGLTexture>(mTarget);
@@ -93,7 +101,8 @@ void GLTexture::upload(RenderContext &context)
     mTexture->setMipLevels(mTexture->maximumMipLevels());
     mTexture->allocateStorage();
 
-    auto image = mImages.first();
+    // TODO:
+    auto image = mImages.front().image;
     if (!image.isNull()) {
         auto sourceFormat = QOpenGLTexture::RGBA;
         auto sourceType = QOpenGLTexture::UInt8;
@@ -158,13 +167,13 @@ void GLTexture::upload(RenderContext &context)
         if (generateMipMaps)
             mTexture->generateMipMaps();
     }
-    mSystemCopyModified = mDeviceCopyModified = false;
+    mSystemCopiesModified = mDeviceCopiesModified = false;
 }
 
 bool GLTexture::download(RenderContext &context)
 {
     Q_UNUSED(context);
-    if (!mDeviceCopyModified)
+    if (!mDeviceCopiesModified)
         return false;
 
     if (!mTexture)
@@ -183,10 +192,12 @@ bool GLTexture::download(RenderContext &context)
     mTexture->bind();
     context.glGetTexImage(mTarget, 0, format, dataType, image.bits());
     mTexture->release();
-    if (mImages[0] == image)
-        return false;
 
-    mImages[0] = image;
-    mSystemCopyModified = mDeviceCopyModified = false;
+    // TODO:
+    if (mImages.front().image == image)
+        return false;
+    mImages.front().image = image;
+
+    mSystemCopiesModified = mDeviceCopiesModified = false;
     return true;
 }

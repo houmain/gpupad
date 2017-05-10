@@ -1,9 +1,7 @@
 #include "SourceEditor.h"
-#include "SourceFile.h"
 #include "Singletons.h"
 #include "SourceEditorSettings.h"
 #include "FindReplaceBar.h"
-#include "render/ShaderCompiler.h"
 #include <QSyntaxHighlighter>
 #include <QCompleter>
 #include <QTextCharFormat>
@@ -14,13 +12,13 @@
 #include <QRegularExpression>
 #include <QAbstractItemView>
 #include <QScrollBar>
+#include <QTextCodec>
 
 class SourceEditor::LineNumberArea : public QWidget
 {
 public:
-    LineNumberArea(SourceEditor *editor) : QWidget(editor), mEditor(editor)
-    {
-    }
+    LineNumberArea(SourceEditor *editor)
+        : QWidget(editor), mEditor(editor) { }
 
     QSize sizeHint() const override
     {
@@ -37,24 +35,13 @@ private:
     SourceEditor *mEditor;
 };
 
-SourceEditor::SourceEditor(SourceFilePtr file,
-    QSyntaxHighlighter *highlighter, QCompleter *completer, QWidget *parent)
+SourceEditor::SourceEditor(QString fileName, QWidget *parent)
     : QPlainTextEdit(parent)
-    , mFile(std::move(file))
-    , mHighlighter(highlighter)
-    , mCompleter(completer)
+    , mFileName(fileName)
+    , mDocument(new QTextDocument())
     , mLineNumberArea(new LineNumberArea(this))
 {
-    setDocument(&mFile->document());
-
-    if (mCompleter) {
-        mCompleter->setWidget(this);
-        mCompleter->setCompletionMode(QCompleter::PopupCompletion);
-        mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
-        using Overload = void(QCompleter::*)(const QString &);
-        connect(mCompleter, static_cast<Overload>(&QCompleter::activated),
-            this, &SourceEditor::insertCompletion);
-    }
+    setDocument(mDocument.data());
 
     connect(this, &SourceEditor::blockCountChanged,
         this, &SourceEditor::updateViewportMargins);
@@ -91,14 +78,12 @@ SourceEditor::SourceEditor(SourceFilePtr file,
 
     updateViewportMargins();
     updateExtraSelections();
-    setPlainText(mFile->toPlainText());
-    refreshShaderCompiler();
+    setPlainText(document()->toPlainText());
 }
 
 SourceEditor::~SourceEditor()
 {
     setDocument(nullptr);
-    mFile.reset();
 
     if (Singletons::findReplaceBar().target() == this)
         Singletons::findReplaceBar().resetTarget();
@@ -134,14 +119,78 @@ QList<QMetaObject::Connection> SourceEditor::connectEditActions(
     c += connect(QApplication::clipboard(), &QClipboard::changed,
         [this, actions]() { actions.paste->setEnabled(canPaste()); });
 
-    actions.windowFileName->setText(mFile->fileName());
-    actions.windowFileName->setEnabled(mFile->document().isModified());
-    c += connect(mFile.data(), &SourceFile::fileNameChanged,
+    actions.windowFileName->setText(fileName());
+    actions.windowFileName->setEnabled(document()->isModified());
+    c += connect(this, &SourceEditor::fileNameChanged,
         actions.windowFileName, &QAction::setText);
-    c += connect(&mFile->document(), &QTextDocument::modificationChanged,
+    c += connect(document(), &QTextDocument::modificationChanged,
         actions.windowFileName, &QAction::setEnabled);
 
     return c;
+}
+
+void SourceEditor::setFileName(QString fileName)
+{
+    mFileName = fileName;
+    emit fileNameChanged(mFileName);
+}
+
+bool SourceEditor::load(const QString &fileName, QString *source)
+{
+    QFile file(fileName);
+    if (!file.open(QFile::ReadOnly | QFile::Text))
+        return false;
+
+    auto bytes = file.readAll();
+    QTextCodec::ConverterState state;
+    auto codec = QTextCodec::codecForUtfText(bytes,
+        QTextCodec::codecForName("UTF-8"));
+    auto text = codec->toUnicode(bytes.constData(), bytes.size(), &state);
+    if (state.invalidChars != 0)
+        return  false;
+
+    *source = text;
+    return true;
+}
+
+bool SourceEditor::load()
+{
+    auto source = QString();
+    if (!load(mFileName, &source))
+        return false;
+
+    setPlainText(source);
+    return true;
+}
+
+bool SourceEditor::save()
+{
+    QFile file(fileName());
+    if (file.open(QFile::WriteOnly | QFile::Text)) {
+        file.write(document()->toPlainText().toUtf8());
+        document()->setModified(false);
+        return true;
+    }
+    return false;
+}
+
+void SourceEditor::setHighlighter(QSyntaxHighlighter *highlighter)
+{
+    highlighter->setDocument(document());
+}
+
+void SourceEditor::setCompleter(QCompleter *completer)
+{
+    mCompleter = completer;
+
+    if (mCompleter) {
+        mCompleter->setWidget(this);
+        mCompleter->setCompletionMode(QCompleter::PopupCompletion);
+        mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+        using Overload = void(QCompleter::*)(const QString &);
+        connect(mCompleter, static_cast<Overload>(&QCompleter::activated),
+            this, &SourceEditor::insertCompletion);
+    }
 }
 
 void SourceEditor::findReplace()
@@ -186,16 +235,6 @@ bool SourceEditor::setCursorPosition(int line, int column)
     ensureCursorVisible();
     setFocus();
     return true;
-}
-
-void SourceEditor::refreshShaderCompiler()
-{
-    // TODO: automatic shader compiling disabled
-#if 0
-    if (!mShaderCompiler || mShaderCompiler->fileName() != mFile->fileName())
-        mShaderCompiler.reset(new ShaderCompiler(mFile->fileName()));
-    mShaderCompiler->update();
-#endif
 }
 
 int SourceEditor::lineNumberAreaWidth()

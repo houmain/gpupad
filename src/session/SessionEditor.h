@@ -59,6 +59,7 @@ private:
     QAction *mAddBufferAction{ };
     QAction *mAddColumnAction{ };
     QAction *mAddTextureAction{ };
+    QAction *mAddImageAction{ };
     QAction *mAddSamplerAction{ };
     QAction *mAddProgramAction{ };
     QAction *mAddShaderAction{ };

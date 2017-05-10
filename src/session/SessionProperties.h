@@ -2,7 +2,7 @@
 #define SESSIONPROPERTIES_H
 
 #include "Item.h"
-#include "files/FileDialog.h"
+#include "FileDialog.h"
 #include <QScrollArea>
 #include <QComboBox>
 #include <QFormLayout>
@@ -12,6 +12,7 @@ namespace Ui {
 class GroupProperties;
 class BufferProperties;
 class ColumnProperties;
+class ImageProperties;
 class SamplerProperties;
 class ProgramProperties;
 class ShaderProperties;
@@ -79,6 +80,7 @@ private:
     QScopedPointer<Ui::BufferProperties> mBufferProperties;
     QScopedPointer<Ui::ColumnProperties> mColumnProperties;
     TextureProperties *mTextureProperties{ };
+    QScopedPointer<Ui::ImageProperties> mImageProperties;
     QScopedPointer<Ui::SamplerProperties> mSamplerProperties;
     QScopedPointer<Ui::ProgramProperties> mProgramProperties;
     QScopedPointer<Ui::ShaderProperties> mShaderProperties;

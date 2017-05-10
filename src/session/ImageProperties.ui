@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>TextureProperties</class>
- <widget class="QWidget" name="TextureProperties">
+ <class>ImageProperties</class>
+ <widget class="QWidget" name="ImageProperties">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>253</width>
-    <height>196</height>
+    <width>209</width>
+    <height>120</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -21,6 +21,18 @@
      </property>
      <property name="verticalSpacing">
       <number>2</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
      </property>
      <item row="0" column="0">
       <widget class="QLabel" name="labelFile">
@@ -82,84 +94,51 @@
       </widget>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="labelTarget">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
+      <widget class="QLabel" name="labelLevel">
        <property name="text">
-        <string>Type</string>
+        <string>Level</string>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="DataComboBox" name="target"/>
+      <widget class="QSpinBox" name="level">
+       <property name="minimumSize">
+        <size>
+         <width>1</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="accelerated">
+        <bool>true</bool>
+       </property>
+      </widget>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="labelFormat">
+      <widget class="QLabel" name="labelLayer">
        <property name="text">
-        <string>Format</string>
+        <string>Layer</string>
        </property>
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="DataComboBox" name="formatType"/>
+      <widget class="QSpinBox" name="layer">
+       <property name="minimumSize">
+        <size>
+         <width>1</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelFace">
+       <property name="text">
+        <string>Face</string>
+       </property>
+      </widget>
      </item>
      <item row="3" column="1">
-      <widget class="DataComboBox" name="formatData"/>
-     </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="labelWidth">
-       <property name="text">
-        <string>Width</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="QSpinBox" name="width">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>65536</number>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="labelHeight">
-       <property name="text">
-        <string>Height</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QSpinBox" name="height">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>65536</number>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
-      <widget class="QLabel" name="labelDepth">
-       <property name="text">
-        <string>Depth</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
-      <widget class="QSpinBox" name="depth">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>65536</number>
-       </property>
-      </widget>
+      <widget class="DataComboBox" name="face"/>
      </item>
     </layout>
    </item>

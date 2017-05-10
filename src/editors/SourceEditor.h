@@ -1,7 +1,7 @@
 #ifndef SOURCEEDITOR_H
 #define SOURCEEDITOR_H
 
-#include "FileTypes.h"
+#include "IEditor.h"
 #include "FindReplaceBar.h"
 #include <QPlainTextEdit>
 
@@ -9,20 +9,27 @@ class QPaintEvent;
 class QResizeEvent;
 class QSyntaxHighlighter;
 class QCompleter;
-class ShaderCompiler;
 
-class SourceEditor : public QPlainTextEdit
+class SourceEditor : public QPlainTextEdit, public IEditor
 {
     Q_OBJECT
 public:
-    SourceEditor(SourceFilePtr file,
-        QSyntaxHighlighter *highlighter, QCompleter *completer,
-        QWidget *parent = 0);
+    static bool load(const QString &fileName, QString *source);
+
+    explicit SourceEditor(QString fileName, QWidget *parent = 0);
     ~SourceEditor();
 
-    QList<QMetaObject::Connection> connectEditActions(const EditActions &actions);
-    const SourceFilePtr &file() const { return mFile; }
+    QList<QMetaObject::Connection> connectEditActions(
+        const EditActions &actions) override;
+    QString fileName() const override { return mFileName; }
+    void setFileName(QString fileName) override;
+    bool load() override;
+    bool save() override;
+    QString source() const { return toPlainText(); }
 
+    void setHighlighter(QSyntaxHighlighter *highlighter);
+    void setCompleter(QCompleter *completer);
+    QCompleter *completer() const { return mCompleter; }
     void findReplace();
     void setLineWrap(bool wrap) { setLineWrapMode(wrap ? WidgetWidth : NoWrap); }
     void setFont(const QFont &);
@@ -30,7 +37,9 @@ public:
     void setIndentWithSpaces(bool enabled);
     void setAutoIndentation(bool enabled);
     bool setCursorPosition(int line, int column);
-    void refreshShaderCompiler();
+
+signals:
+    void fileNameChanged(const QString &fileName);
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -62,7 +71,8 @@ private:
     void markOccurrences(QString text, QTextDocument::FindFlags =
         QTextDocument::FindCaseSensitively | QTextDocument::FindWholeWords);
 
-    SourceFilePtr mFile;
+    QString mFileName;
+    QScopedPointer<QTextDocument> mDocument;
     QSyntaxHighlighter *mHighlighter{ };
     QCompleter *mCompleter{ };
     LineNumberArea *mLineNumberArea{ };
@@ -73,8 +83,6 @@ private:
     int mTabSize{ };
     bool mIndentWithSpaces{ };
     bool mAutoIndentation{ };
-
-    QScopedPointer<ShaderCompiler> mShaderCompiler;
 };
 
 #endif // SOURCEEDITOR_H

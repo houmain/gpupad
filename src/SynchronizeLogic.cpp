@@ -1,9 +1,10 @@
 #include "SynchronizeLogic.h"
 #include "Singletons.h"
+#include "FileCache.h"
 #include "session/SessionModel.h"
-#include "files/FileManager.h"
-#include "files/SourceEditor.h"
-#include "files/BinaryEditor.h"
+#include "editors/EditorManager.h"
+#include "editors/SourceEditor.h"
+#include "editors/BinaryEditor.h"
 #include "render/RenderCall.h"
 #include <QTimer>
 
@@ -30,13 +31,13 @@ SynchronizeLogic::SynchronizeLogic(
 
     using Overload = void(SynchronizeLogic::*)(const QModelIndex&);
     connect(&mModel, &SessionModel::dataChanged,
-        this, (Overload)&SynchronizeLogic::handleSessionChanged);
+        this, static_cast<Overload>(&SynchronizeLogic::handleSessionChanged));
 
     using Overload2 = void(SynchronizeLogic::*)(const QModelIndex&, int);
     connect(&mModel, &SessionModel::rowsInserted,
-        this, (Overload2)&SynchronizeLogic::handleSessionChanged);
+        this, static_cast<Overload2>(&SynchronizeLogic::handleSessionChanged));
     connect(&mModel, &SessionModel::rowsAboutToBeRemoved,
-        this, (Overload2)&SynchronizeLogic::handleSessionChanged);
+        this, static_cast<Overload2>(&SynchronizeLogic::handleSessionChanged));
 }
 
 SynchronizeLogic::~SynchronizeLogic() = default;
@@ -45,7 +46,7 @@ void SynchronizeLogic::handleMessageActivated(ItemId item, QString fileName,
         int line, int column)
 {
     Q_UNUSED(item);
-    Singletons::fileManager().openSourceEditor(fileName, true, line, column);
+    Singletons::editorManager().openSourceEditor(fileName, true, line, column);
 }
 
 void SynchronizeLogic::handleSessionChanged(const QModelIndex &parent, int first)
@@ -69,7 +70,6 @@ void SynchronizeLogic::handleSessionChanged(const QModelIndex &index)
 
 void SynchronizeLogic::handleSourceEditorChanged(const QString &fileName)
 {
-    mSourceEditorsModified.insert(fileName);
     mEditorsModified.insert(fileName);
     mUpdateTimer->start();
 }
@@ -106,20 +106,15 @@ void SynchronizeLogic::update()
             updateBinaryEditor(*buffer);
     mBuffersModified.clear();
 
-    if (mActiveRenderTask)
+    if (mActiveRenderTask) {
         foreach (ItemId itemId, mItemsModified)
             if (mActiveRenderTask->usedItems().contains(itemId)) {
+                Singletons::fileCache().update(Singletons::editorManager());
                 mActiveRenderTask->update();
                 break;
             }
-    mItemsModified.clear();
-
-    foreach (QString fileName, mSourceEditorsModified) {
-        if (auto editor = Singletons::fileManager().findSourceEditor(fileName))
-            editor->refreshShaderCompiler();
-        handleFileItemsChanged(fileName);
     }
-    mSourceEditorsModified.clear();
+    mItemsModified.clear();
 
     foreach (QString fileName, mEditorsModified) {
         handleFileItemsChanged(fileName);
@@ -136,16 +131,20 @@ void SynchronizeLogic::deactivateCalls()
 void SynchronizeLogic::handleItemActivated(const QModelIndex &index)
 {
     if (auto buffer = mModel.item<Buffer>(index)) {
-        Singletons::fileManager().openBinaryEditor(buffer->fileName);
+        Singletons::editorManager().openBinaryEditor(buffer->fileName);
         updateBinaryEditor(*buffer);
     }
     else if (auto texture = mModel.item<Texture>(index)) {
-        Singletons::fileManager().openImageEditor(texture->fileName);
+        Singletons::editorManager().openImageEditor(texture->fileName);
+    }
+    else if (auto image = mModel.item<Image>(index)) {
+        Singletons::editorManager().openImageEditor(image->fileName);
     }
     else if (auto shader = mModel.item<Shader>(index)) {
-        Singletons::fileManager().openSourceEditor(shader->fileName);
+        Singletons::editorManager().openSourceEditor(shader->fileName);
     }
     else if (auto call = mModel.item<Call>(index)) {
+        Singletons::fileCache().update(Singletons::editorManager());
         mActiveRenderTask.reset(new RenderCall(call->id));
         connect(mActiveRenderTask.data(), &RenderTask::updated,
             this, &SynchronizeLogic::handleTaskRendered);
@@ -171,7 +170,7 @@ void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
 
 void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer)
 {
-    auto editor = Singletons::fileManager().findBinaryEditor(buffer.fileName);
+    auto editor = Singletons::editorManager().getBinaryEditor(buffer.fileName);
     if (!editor)
         return;
 
@@ -202,5 +201,5 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer)
         i++;
     }
     editor->setStride();
-    editor->refresh();
+    editor->updateColumns();
 }

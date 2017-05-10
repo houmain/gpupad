@@ -10,7 +10,7 @@ class MainWindow;
 }
 
 class Singletons;
-class FileManager;
+class EditorManager;
 class SessionEditor;
 class SessionProperties;
 
@@ -60,7 +60,7 @@ private:
     QScopedPointer<Singletons> mSingletons;
     QScopedPointer<SessionEditor> mSessionEditor;
     QScopedPointer<SessionProperties> mSessionProperties;
-    FileManager &mFileManager;
+    EditorManager &mEditorManager;
     QList<QMetaObject::Connection> mConnectedEditActions;
 };
 

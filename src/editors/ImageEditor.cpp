@@ -1,26 +1,22 @@
 #include "ImageEditor.h"
-#include "ImageFile.h"
 #include <cmath>
 #include <QAction>
 #include <QScrollBar>
 #include <QWheelEvent>
 #include <QGraphicsPixmapItem>
 
-ImageEditor::ImageEditor(ImageFilePtr file, QWidget *parent)
+ImageEditor::ImageEditor(QString fileName, QWidget *parent)
     : QGraphicsView(parent)
-    , mFile(file)
+    , mFileName(fileName)
 {
     setTransformationAnchor(AnchorUnderMouse);
-
-    connect(file.data(), &ImageFile::dataChanged, this, &ImageEditor::refresh);
-
     refresh();
 }
 
 void ImageEditor::refresh()
 {
     setScene(new QGraphicsScene());
-    auto pixmap = QPixmap::fromImage(mFile->image());
+    auto pixmap = QPixmap::fromImage(mImage);
     auto item = new QGraphicsPixmapItem(pixmap);
     scene()->addItem(item);
 
@@ -56,14 +52,67 @@ QList<QMetaObject::Connection> ImageEditor::connectEditActions(
 {
     auto c = QList<QMetaObject::Connection>();
 
-    actions.windowFileName->setText(mFile->fileName());
-    actions.windowFileName->setEnabled(mFile->isModified());
-    c += connect(mFile.data(), &ImageFile::fileNameChanged,
+    actions.windowFileName->setText(fileName());
+    actions.windowFileName->setEnabled(isModified());
+    c += connect(this, &ImageEditor::fileNameChanged,
         actions.windowFileName, &QAction::setText);
-    c += connect(mFile.data(), &ImageFile::modificationChanged,
+    c += connect(this, &ImageEditor::modificationChanged,
         actions.windowFileName, &QAction::setEnabled);
 
     return c;
+}
+
+void ImageEditor::setFileName(QString fileName)
+{
+    mFileName = fileName;
+    emit fileNameChanged(mFileName);
+}
+
+bool ImageEditor::load(const QString &fileName, QImage *image)
+{
+    auto file = QImage();
+    if (!file.load(fileName))
+        return false;
+
+    *image = file;
+    return true;
+}
+
+bool ImageEditor::load()
+{
+    if (!load(mFileName, &mImage))
+        return false;
+
+    refresh();
+    setModified(false);
+    return true;
+}
+
+bool ImageEditor::save()
+{
+    if (!mImage.save(fileName()))
+        return false;
+
+    setModified(false);
+    return true;
+}
+
+void ImageEditor::replace(QImage image)
+{
+    if (image != mImage) {
+        mImage = image;
+        refresh();
+        setModified(true);
+        emit dataChanged();
+    }
+}
+
+void ImageEditor::setModified(bool modified)
+{
+    if (mModified != modified) {
+        mModified = modified;
+        emit modificationChanged(modified);
+    }
 }
 
 void ImageEditor::wheelEvent(QWheelEvent *event)

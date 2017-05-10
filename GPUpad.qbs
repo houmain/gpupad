@@ -7,8 +7,30 @@ Project {
   CppApplication {
     consoleApplication: false
     targetName: "gpupad"
+
+    cpp.includePaths: [ "src", "libs" ]
+    cpp.cxxLanguageVersion: "c++14"
+    cpp.enableRtti: false
+    cpp.defines: [ "QAPPLICATION_CLASS=QApplication" ]
+    cpp.dynamicLibraries: {
+        var dynamicLibraries = base;
+        if (qbs.targetOS.contains("windows"))
+          dynamicLibraries.push("advapi32");
+        return dynamicLibraries;
+    }
+
+    Depends {
+      name: "Qt";
+      submodules: ["core", "widgets", "opengl", "qml"]
+    }
+
     files: [
+          "libs/SingleApplication/singleapplication.cpp",
+          "libs/SingleApplication/singleapplication.h",
+          "libs/SingleApplication/singleapplication_p.h",
           "src/EditActions.h",
+          "src/FileDialog.cpp",
+          "src/FileDialog.h",
           "src/MainWindow.cpp",
           "src/MainWindow.h",
           "src/MainWindow.ui",
@@ -16,39 +38,34 @@ Project {
           "src/MessageList.h",
           "src/MessageWindow.cpp",
           "src/MessageWindow.h",
-          "libs/SingleApplication/singleapplication.cpp",
-          "libs/SingleApplication/singleapplication.h",
-          "libs/SingleApplication/singleapplication_p.h",
+          "src/FileCache.cpp",
+          "src/FileCache.h",
           "src/Singletons.cpp",
           "src/Singletons.h",
           "src/SynchronizeLogic.cpp",
           "src/SynchronizeLogic.h",
-          "src/files/BinaryEditor.cpp",
-          "src/files/BinaryEditor.h",
-          "src/files/DockWindow.cpp",
-          "src/files/DockWindow.h",
-          "src/files/FileDialog.cpp",
-          "src/files/FileDialog.h",
-          "src/files/FileManager.cpp",
-          "src/files/FileManager.h",
-          "src/files/BinaryFile.cpp",
-          "src/files/BinaryFile.h",
-          "src/files/FileTypes.h",
-          "src/files/FindReplaceBar.cpp",
-          "src/files/FindReplaceBar.h",
-          "src/files/FindReplaceBar.ui",
-          "src/files/GlslHighlighter.cpp",
-          "src/files/GlslHighlighter.h",
-          "src/files/ImageEditor.cpp",
-          "src/files/ImageEditor.h",
-          "src/files/ImageFile.cpp",
-          "src/files/ImageFile.h",
-          "src/files/SourceEditor.cpp",
-          "src/files/SourceEditor.h",
-          "src/files/SourceEditorSettings.cpp",
-          "src/files/SourceEditorSettings.h",
-          "src/files/SourceFile.cpp",
-          "src/files/SourceFile.h",
+          "src/editors/BinaryEditor.cpp",
+          "src/editors/BinaryEditor.h",
+          "src/editors/BinaryEditor_DataModel.h",
+          "src/editors/BinaryEditor_EditableRegion.h",
+          "src/editors/BinaryEditor_HexModel.h",
+          "src/editors/BinaryEditor_SpinBoxDelegate.h",
+          "src/editors/DockWindow.cpp",
+          "src/editors/DockWindow.h",
+          "src/editors/EditorManager.cpp",
+          "src/editors/EditorManager.h",
+          "src/editors/FindReplaceBar.cpp",
+          "src/editors/FindReplaceBar.h",
+          "src/editors/FindReplaceBar.ui",
+          "src/editors/GlslHighlighter.cpp",
+          "src/editors/GlslHighlighter.h",
+          "src/editors/IEditor.h",
+          "src/editors/ImageEditor.cpp",
+          "src/editors/ImageEditor.h",
+          "src/editors/SourceEditor.cpp",
+          "src/editors/SourceEditor.h",
+          "src/editors/SourceEditorSettings.cpp",
+          "src/editors/SourceEditorSettings.h",
           "src/main.cpp",
           "src/render/GLBuffer.cpp",
           "src/render/GLBuffer.h",
@@ -87,6 +104,7 @@ Project {
           "src/session/ExpressionEditor.h",
           "src/session/FramebufferProperties.ui",
           "src/session/GroupProperties.ui",
+          "src/session/ImageProperties.ui",
           "src/session/Item.h",
           "src/session/PrimitivesProperties.ui",
           "src/session/ProgramProperties.ui",
@@ -107,21 +125,6 @@ Project {
           "src/session/TextureProperties.ui",
           "src/_version.h",
       ]
-    cpp.includePaths: [ "src", "libs" ]
-    cpp.cxxLanguageVersion: "c++14"
-    cpp.enableRtti: false
-    cpp.defines: [ "QAPPLICATION_CLASS=QApplication" ]
-    cpp.dynamicLibraries: {
-        var dynamicLibraries = base;
-        if (qbs.targetOS.contains("windows"))
-          dynamicLibraries.push("advapi32");
-        return dynamicLibraries;
-    }
-
-    Depends {
-      name: "Qt";
-      submodules: ["core", "widgets", "opengl", "qml"]
-    }
 
     Group {
       fileTagsFilter: product.type
@@ -131,10 +134,13 @@ Project {
 
     Group {
       name: "Share"
-      files: "share/**"
+      files: [
+            "share/**",
+        ]
       qbs.installSourceBase: "share"
       qbs.install: true
       qbs.installDir: "share"
     }
+
   }
 }

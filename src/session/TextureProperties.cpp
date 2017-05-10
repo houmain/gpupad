@@ -2,7 +2,7 @@
 #include "SessionProperties.h"
 #include "ui_TextureProperties.h"
 #include "Singletons.h"
-#include "files/FileManager.h"
+#include "editors/EditorManager.h"
 
 namespace {
     enum FormatType
@@ -149,7 +149,7 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
 
     connect(mUi->fileNew, &QToolButton::clicked,
         [this]() { mSessionProperties.setCurrentItemFile(
-            Singletons::fileManager().openNewImageEditor()); });
+            Singletons::editorManager().openNewImageEditor()); });
     connect(mUi->fileBrowse, &QToolButton::clicked,
         [this]() { mSessionProperties.selectCurrentItemFile(
             FileDialog::ImageExtensions); });
@@ -169,14 +169,14 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
 
     fill<QOpenGLTexture::Target>(mUi->target, {
         { "1D Texture", QOpenGLTexture::Target1D },
-        //{ "1D Texture Array", QOpenGLTexture::Target1DArray },
+        { "1D Texture Array", QOpenGLTexture::Target1DArray },
         { "2D Texture", QOpenGLTexture::Target2D },
-        //{ "2D Texture Multisample", QOpenGLTexture::Target2DMultisample },
-        //{ "2D Texture Array", QOpenGLTexture::Target2DArray },
-        //{ "2D Texture Multisample Array", QOpenGLTexture::Target2DMultisampleArray },
-        //{ "3D Texture", QOpenGLTexture::Target3D },
-        //{ "CubeMap Texture", QOpenGLTexture::TargetCubeMap },
-        //{ "CubeMap Texture Array", QOpenGLTexture::TargetCubeMapArray },
+        { "2D Texture Multisample", QOpenGLTexture::Target2DMultisample },
+        { "2D Texture Array", QOpenGLTexture::Target2DArray },
+        { "2D Texture Multisample Array", QOpenGLTexture::Target2DMultisampleArray },
+        { "3D Texture", QOpenGLTexture::Target3D },
+        { "CubeMap Texture", QOpenGLTexture::TargetCubeMap },
+        { "CubeMap Texture Array", QOpenGLTexture::TargetCubeMapArray },
         { "Rectangle Texture", QOpenGLTexture::TargetRectangle },
         //{ "Buffer Texture", QOpenGLTexture::TargetBuffer },
     });
@@ -228,16 +228,21 @@ void TextureProperties::updateWidgets()
             dimensions = 1;
             break;
 
+        case QOpenGLTexture::Target1DArray:
+        case QOpenGLTexture::Target2D:
+        case QOpenGLTexture::TargetCubeMap:
+        case QOpenGLTexture::Target2DMultisample:
+        case QOpenGLTexture::TargetRectangle:
+            dimensions = 2;
+            break;
+
+        case QOpenGLTexture::Target2DArray:
+        case QOpenGLTexture::Target2DMultisampleArray:
         case QOpenGLTexture::Target3D:
         case QOpenGLTexture::TargetCubeMapArray:
             dimensions = 3;
             break;
-
-        default:
-            dimensions = 2;
-            break;
     }
-
     setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, dimensions > 1);
     setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth, dimensions > 2);
 }

@@ -39,7 +39,6 @@ private:
 
     SessionModel& mModel;
     QTimer *mUpdateTimer;
-    QSet<QString> mSourceEditorsModified;
     QSet<QString> mEditorsModified;
     QSet<ItemId> mBuffersModified;
     QSet<ItemId> mItemsModified;

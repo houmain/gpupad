@@ -133,7 +133,7 @@ const auto layoutQualifiers = {
     "rg32ui", "rg16ui", "rg8ui", "r32ui", "r16ui", "r8ui" };
 } // namespace
 
-GlslHighlighter::GlslHighlighter(QTextDocument *parent)
+GlslHighlighter::GlslHighlighter(QObject *parent)
     : QSyntaxHighlighter(parent)
 {
     QTextCharFormat keywordFormat;

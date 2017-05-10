@@ -11,7 +11,6 @@ class FindReplaceBar;
 class FindReplaceBar : public QWidget
 {
     Q_OBJECT
-
 public:
     enum Action {
         FindTextChanged, Find, Replace, ReplaceAll

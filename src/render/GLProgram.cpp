@@ -4,11 +4,9 @@
 void GLProgram::initialize(PrepareContext &context, const Program &program)
 {
     mItemId = program.id;
-
     context.usedItems += mItemId;
 
     auto header = QString();
-
     for (const auto& item : program.items)
         if (auto shader = castItem<Shader>(item)) {
             context.usedItems += item->id;

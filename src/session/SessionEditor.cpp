@@ -2,7 +2,7 @@
 #include "Singletons.h"
 #include "SessionModel.h"
 #include "EditActions.h"
-#include "files/FileDialog.h"
+#include "FileDialog.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QMenu>
@@ -54,6 +54,7 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddBufferAction, ItemType::Buffer);
     addAction(mAddColumnAction, ItemType::Column);
     addAction(mAddTextureAction, ItemType::Texture);
+    addAction(mAddImageAction, ItemType::Image);
     addAction(mAddSamplerAction, ItemType::Sampler);
     addAction(mAddProgramAction, ItemType::Program);
     addAction(mAddShaderAction, ItemType::Shader);
@@ -177,6 +178,7 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
     mContextMenu->addAction(mAddPrimitivesAction);
     mContextMenu->addAction(mAddAttributeAction);
     mContextMenu->addAction(mAddTextureAction);
+    mContextMenu->addAction(mAddImageAction);
     mContextMenu->addAction(mAddSamplerAction);
     mContextMenu->addAction(mAddFramebufferAction);
     mContextMenu->addAction(mAddAttachmentAction);
@@ -268,6 +270,7 @@ void SessionEditor::openContextMenu(const QPoint &pos)
         std::make_pair(ItemType::Buffer, mAddBufferAction),
         std::make_pair(ItemType::Column, mAddColumnAction),
         std::make_pair(ItemType::Texture, mAddTextureAction),
+        std::make_pair(ItemType::Image, mAddImageAction),
         std::make_pair(ItemType::Sampler, mAddSamplerAction),
         std::make_pair(ItemType::Program, mAddProgramAction),
         std::make_pair(ItemType::Shader, mAddShaderAction),

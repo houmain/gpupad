@@ -1,4 +1,5 @@
 #include "GLShader.h"
+#include "editors/SourceEditor.h"
 
 void GLShader::parseLog(const QString &log, MessageList &messages)
 {
@@ -46,13 +47,12 @@ GLShader::GLShader(PrepareContext &context, QString header, const Shader &shader
     if (!header.isEmpty())
         mSource = header + "\n#line 1\n";
 
-    context.messages.setContext(mItemId);
-    if (auto file = context.fileManager.findSourceFile(mFileName))
-        mSource += file->toPlainText();
-    else if (auto file = FileManager::openSourceFile(mFileName))
-        mSource += file->toPlainText();
-    else
+    auto source = QString();
+    if (!Singletons::fileCache().getSource(mFileName, &source)) {
+        context.messages.setContext(mItemId);
         context.messages.insert(MessageType::LoadingFileFailed, mFileName);
+    }
+    mSource += source;
 }
 
 bool GLShader::operator==(const GLShader &rhs) const
@@ -91,7 +91,7 @@ bool GLShader::compile(RenderContext &context)
     if (status != GL_TRUE) {
         auto length = GLint{ };
         context.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-        auto log = std::vector<char>(length);
+        auto log = std::vector<char>(static_cast<size_t>(length));
         context.glGetShaderInfoLog(shader, length, NULL, log.data());
         context.messages.setContext(mFileName);
         GLShader::parseLog(log.data(), context.messages);

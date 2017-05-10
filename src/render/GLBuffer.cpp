@@ -4,10 +4,6 @@ GLBuffer::GLBuffer(const Buffer &buffer, PrepareContext &context)
     : mItemId(buffer.id)
     , mFileName(buffer.fileName)
 {
-    if (auto file = context.fileManager.findBinaryFile(mFileName)) {
-        mData = file->data();
-        mSystemCopyModified = true;
-    }
 }
 
 bool GLBuffer::operator==(const GLBuffer &rhs) const
@@ -56,11 +52,10 @@ void GLBuffer::load(MessageList &messages) {
     if (!mData.isNull())
         return;
 
-    auto file = FileManager::openBinaryFile(mFileName);
-    if (!file)
+    if (!Singletons::fileCache().getBinary(mFileName, &mData)) {
+        messages.setContext(mItemId);
         return messages.insert(MessageType::LoadingFileFailed, mFileName);
-    mData = file->data();
-
+    }
     mSystemCopyModified = true;
 }
 

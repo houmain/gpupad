@@ -25,7 +25,7 @@ private:
     ItemId mItemId{ };
     QString mFileName;
     QByteArray mData;
-    bool mSystemCopyModified{ };
+    bool mSystemCopyModified{ true };
     bool mDeviceCopyModified{ };
     GLObject mBufferObject;
 };
