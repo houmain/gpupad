@@ -11,6 +11,7 @@
 #include <QOpenGLFunctions_4_0_Core>
 #include <QOpenGLFunctions_4_2_Core>
 #include <QOpenGLFunctions_4_3_Core>
+#include <QOpenGLFunctions_4_5_Core>
 
 struct RenderContext : public QOpenGLFunctions_3_3_Core
 {
@@ -19,6 +20,7 @@ struct RenderContext : public QOpenGLFunctions_3_3_Core
     QOpenGLFunctions_4_0_Core *gl40{ };
     QOpenGLFunctions_4_2_Core *gl42{ };
     QOpenGLFunctions_4_3_Core *gl43{ };
+    QOpenGLFunctions_4_5_Core *gl45{ };
 
     RenderContext(QOpenGLContext& glContext, QSet<ItemId> *usedItems,
                   MessageList *messages)
@@ -31,6 +33,7 @@ struct RenderContext : public QOpenGLFunctions_3_3_Core
         gl40 = glContext.versionFunctions<QOpenGLFunctions_4_0_Core>();
         gl42 = glContext.versionFunctions<QOpenGLFunctions_4_2_Core>();
         gl43 = glContext.versionFunctions<QOpenGLFunctions_4_3_Core>();
+        gl45 = glContext.versionFunctions<QOpenGLFunctions_4_5_Core>();
     }
 
     explicit operator bool() const { return isInitialized(); }

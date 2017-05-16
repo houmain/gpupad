@@ -32,14 +32,16 @@ private:
         QImage image;
 
         friend bool operator==(const Image &a, const Image &b) {
-            return (std::tie(a.level, a.layer, a.face, a.fileName, a.image) ==
-                    std::tie(b.level, b.layer, b.face, b.fileName, b.image));
+            return (std::tie(a.level, a.layer, a.face, a.fileName) ==
+                    std::tie(b.level, b.layer, b.face, b.fileName));
         }
     };
 
     void load(MessageList &messages);
     void upload(RenderContext &context);
+    void uploadImage(const Image &image);
     bool download(RenderContext &context);
+    bool downloadImage(RenderContext &context, Image& image);
 
     ItemId mItemId{ };
     Texture::Target mTarget{ };
@@ -48,7 +50,7 @@ private:
     int mHeight{ };
     int mDepth{ };
     std::vector<Image> mImages;
-    bool mSystemCopiesModified{ true };
+    bool mSystemCopiesModified{ };
     bool mDeviceCopiesModified{ };
     std::unique_ptr<QOpenGLTexture> mTexture;
 };

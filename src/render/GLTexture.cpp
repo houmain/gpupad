@@ -11,14 +11,16 @@ GLTexture::GLTexture(const Texture &texture, PrepareContext &context)
     mDepth = texture.depth;
 
     context.usedItems += texture.id;
-    mImages.push_back({ 0, 0, QOpenGLTexture::CubeMapPositiveX,
-        texture.fileName, QImage() });
+    if (!texture.fileName.isEmpty())
+        mImages.push_back({ 0, 0, QOpenGLTexture::CubeMapPositiveX,
+            texture.fileName, QImage() });
 
     for (const auto &item : texture.items)
         if (auto image = castItem<::Image>(item)) {
             context.usedItems += image->id;
-            mImages.push_back({ image->level, image->layer, image->face,
-                image->fileName, QImage() });
+            if (!image->fileName.isEmpty())
+                mImages.push_back({ image->level, image->layer, image->face,
+                    image->fileName, QImage() });
         }
 }
 
@@ -91,83 +93,88 @@ void GLTexture::load(MessageList &messages) {
 void GLTexture::upload(RenderContext &context)
 {
     Q_UNUSED(context);
-    if (!mSystemCopiesModified)
+    if (!mSystemCopiesModified || mImages.empty())
         return;
 
     mTexture = std::make_unique<QOpenGLTexture>(mTarget);
-    mTexture->setSize(mWidth, mHeight);
+    mTexture->setSize(mWidth, mHeight, mDepth);
     mTexture->setFormat(mFormat);
     mTexture->setAutoMipMapGenerationEnabled(false);
     mTexture->setMipLevels(mTexture->maximumMipLevels());
     mTexture->allocateStorage();
 
-    // TODO:
-    auto image = mImages.front().image;
-    if (!image.isNull()) {
-        auto sourceFormat = QOpenGLTexture::RGBA;
-        auto sourceType = QOpenGLTexture::UInt8;
-        auto generateMipMaps = true;
-        switch (mFormat) {
-            case QOpenGLTexture::R8U:
-            case QOpenGLTexture::RG8U:
-            case QOpenGLTexture::RGB8U:
-            case QOpenGLTexture::RGBA8U:
-            case QOpenGLTexture::R16U:
-            case QOpenGLTexture::RG16U:
-            case QOpenGLTexture::RGB16U:
-            case QOpenGLTexture::RGBA16U:
-            case QOpenGLTexture::R32U:
-            case QOpenGLTexture::RG32U:
-            case QOpenGLTexture::RGB32U:
-            case QOpenGLTexture::RGBA32U:
-            case QOpenGLTexture::RGB10A2:
-                sourceFormat = QOpenGLTexture::RGBA_Integer;
-                generateMipMaps = false;
-                break;
+    for (const auto &image : mImages)
+        if (!image.image.isNull() && image.level == 0)
+            uploadImage(image);
 
-            case QOpenGLTexture::R8I:
-            case QOpenGLTexture::RG8I:
-            case QOpenGLTexture::RGB8I:
-            case QOpenGLTexture::RGBA8I:
-            case QOpenGLTexture::R16I:
-            case QOpenGLTexture::RG16I:
-            case QOpenGLTexture::RGB16I:
-            case QOpenGLTexture::RGBA16I:
-            case QOpenGLTexture::R32I:
-            case QOpenGLTexture::RG32I:
-            case QOpenGLTexture::RGB32I:
-            case QOpenGLTexture::RGBA32I:
-                sourceFormat = QOpenGLTexture::RGBA_Integer;
-                sourceType = QOpenGLTexture::Int8;
-                generateMipMaps = false;
-                break;
+    mTexture->generateMipMaps();
 
-            default:
-                break;
-        }
+    for (const auto &image : mImages)
+        if (!image.image.isNull() && image.level != 0)
+            uploadImage(image);
 
-        image = image.convertToFormat(QImage::Format_RGBA8888);
-        image = image.scaled(mWidth, mHeight);
-        auto uploadOptions = QOpenGLPixelTransferOptions();
-        uploadOptions.setAlignment(1);
-
-        if (mTarget == QOpenGLTexture::TargetCubeMap) {
-            // TODO: implement cube textures
-            for (auto i = 0; i < 6; i++)
-                mTexture->setData(0, 0,
-                    static_cast<QOpenGLTexture::CubeMapFace>(
-                        QOpenGLTexture::CubeMapPositiveX + i),
-                    sourceFormat, sourceType, image.constBits(),
-                    &uploadOptions);
-        }
-        else {
-            mTexture->setData(0, sourceFormat, sourceType,
-                image.constBits(), &uploadOptions);
-        }
-        if (generateMipMaps)
-            mTexture->generateMipMaps();
-    }
     mSystemCopiesModified = mDeviceCopiesModified = false;
+}
+
+void GLTexture::uploadImage(const Image &image)
+{
+    auto sourceFormat = QOpenGLTexture::RGBA;
+    auto sourceType = QOpenGLTexture::UInt8;
+    switch (mFormat) {
+        case QOpenGLTexture::R8U:
+        case QOpenGLTexture::RG8U:
+        case QOpenGLTexture::RGB8U:
+        case QOpenGLTexture::RGBA8U:
+        case QOpenGLTexture::R16U:
+        case QOpenGLTexture::RG16U:
+        case QOpenGLTexture::RGB16U:
+        case QOpenGLTexture::RGBA16U:
+        case QOpenGLTexture::R32U:
+        case QOpenGLTexture::RG32U:
+        case QOpenGLTexture::RGB32U:
+        case QOpenGLTexture::RGBA32U:
+        case QOpenGLTexture::RGB10A2:
+            sourceFormat = QOpenGLTexture::RGBA_Integer;
+            break;
+
+        case QOpenGLTexture::R8I:
+        case QOpenGLTexture::RG8I:
+        case QOpenGLTexture::RGB8I:
+        case QOpenGLTexture::RGBA8I:
+        case QOpenGLTexture::R16I:
+        case QOpenGLTexture::RG16I:
+        case QOpenGLTexture::RGB16I:
+        case QOpenGLTexture::RGBA16I:
+        case QOpenGLTexture::R32I:
+        case QOpenGLTexture::RG32I:
+        case QOpenGLTexture::RGB32I:
+        case QOpenGLTexture::RGBA32I:
+            sourceFormat = QOpenGLTexture::RGBA_Integer;
+            sourceType = QOpenGLTexture::Int8;
+            break;
+
+        default:
+            break;
+    }
+
+    auto source = image.image.convertToFormat(QImage::Format_RGBA8888);
+    source = source.scaled(
+        std::max(mWidth >> image.level, 1),
+        std::max(mHeight >> image.level, 1));
+
+    auto uploadOptions = QOpenGLPixelTransferOptions();
+    uploadOptions.setAlignment(1);
+
+    if (mTarget == QOpenGLTexture::TargetCubeMap) {
+        mTexture->setData(image.level, image.layer, image.face,
+            sourceFormat, sourceType, source.constBits(),
+            &uploadOptions);
+    }
+    else {
+        mTexture->setData(image.level, image.layer,
+            sourceFormat, sourceType, source.constBits(),
+            &uploadOptions);
+    }
 }
 
 bool GLTexture::download(RenderContext &context)
@@ -176,28 +183,59 @@ bool GLTexture::download(RenderContext &context)
     if (!mDeviceCopiesModified)
         return false;
 
-    if (!mTexture)
-        return false;
+    auto imageUpdated = false;
+    for (auto &image : mImages)
+        imageUpdated |= downloadImage(context, image);
 
+    mSystemCopiesModified = mDeviceCopiesModified = false;
+    return imageUpdated;
+}
+
+bool GLTexture::downloadImage(RenderContext &context, Image& image)
+{
+    auto width = std::max(mWidth >> image.level, 1);
+    auto height = std::max(mHeight >> image.level, 1);
     auto format = QOpenGLTexture::RGBA;
     auto dataType = QOpenGLTexture::UInt8;
-    auto image = QImage(mWidth, mHeight, QImage::Format_RGBA8888);
+    auto dest = QImage();
 
     if (isDepthTexture()) {
         format = QOpenGLTexture::Depth;
         dataType = QOpenGLTexture::UInt8;
-        image = QImage(mWidth, mHeight, QImage::Format_Grayscale8);
+        dest = QImage(width, height, QImage::Format_Grayscale8);
+    }
+    else {
+        dest = QImage(width, height, QImage::Format_RGBA8888);
     }
 
-    mTexture->bind();
-    context.glGetTexImage(mTarget, 0, format, dataType, image.bits());
-    mTexture->release();
+    if (context.gl45) {
+        auto layer = image.layer;
+        if (mTarget == Texture::Target::TargetCubeMapArray)
+            layer *= 6;
+        if (mTarget == Texture::Target::TargetCubeMap)
+            layer += (image.face - QOpenGLTexture::CubeMapPositiveX);
 
-    // TODO:
-    if (mImages.front().image == image)
+        context.gl45->glGetTextureSubImage(mTexture->textureId(),
+            image.level, 0, 0, layer, width, height, 1,
+            format, dataType, dest.byteCount(), dest.bits());
+    }
+    else if (mTarget == QOpenGLTexture::Target1D ||
+             mTarget == QOpenGLTexture::Target2D ||
+             mTarget == QOpenGLTexture::TargetRectangle) {
+        mTexture->bind();
+        context.glGetTexImage(mTarget, image.level,
+            format, dataType, dest.bits());
+        mTexture->release();
+    }
+    else {
+        context.messages.insert(MessageType::Error,
+            "downloading image failed");
         return false;
-    mImages.front().image = image;
+    }
 
-    mSystemCopiesModified = mDeviceCopiesModified = false;
+    if (image.image == dest)
+        return false;
+    image.image = dest;
     return true;
 }
+
