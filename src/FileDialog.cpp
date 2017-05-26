@@ -5,9 +5,10 @@
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
     const auto SessionFileExtension = QStringLiteral(".gpupad");
-    const auto SourceFileExtensions = { "glsl", "vert", "tesc", "tese", "geom",
+    const auto ShaderFileExtensions = { "glsl", "vert", "tesc", "tese", "geom",
             "frag", "comp", "fs", "gs", "vs" };
     const auto BinaryFileExtensions = { ".bin", ".raw" };
+    const auto ScriptFileExtensions = { ".js" };
 
     auto gNextUntitledFileIndex = 1;
 } // namespace
@@ -104,9 +105,9 @@ bool FileDialog::exec(Options options, QString currentFileName)
         dialog.setFileMode(QFileDialog::ExistingFiles);
     }
 
-    auto sourceFileFilter = QString();
-    for (const auto &ext : SourceFileExtensions)
-        sourceFileFilter = sourceFileFilter + " *." + ext;
+    auto shaderFileFilter = QString();
+    for (const auto &ext : ShaderFileExtensions)
+        shaderFileFilter = shaderFileFilter + " *." + ext;
 
     auto imageFileFilter = QString();
     foreach (const QByteArray &format, QImageReader::supportedImageFormats())
@@ -117,7 +118,7 @@ bool FileDialog::exec(Options options, QString currentFileName)
         binaryFileFilter = binaryFileFilter + " *" + ext;
 
     auto supportedFileFilter = "*" + SessionFileExtension +
-        sourceFileFilter + imageFileFilter + binaryFileFilter;
+        shaderFileFilter + imageFileFilter + binaryFileFilter;
 
     auto filters = QStringList();
     if (options & SupportedExtensions)
@@ -128,16 +129,20 @@ bool FileDialog::exec(Options options, QString currentFileName)
         dialog.setDefaultSuffix(SessionFileExtension);
     }
     if (options & ShaderExtensions) {
-        filters.append(tr("GLSL shader files") + " (" + sourceFileFilter + ")");
-        dialog.setDefaultSuffix(*begin(SourceFileExtensions));
+        filters.append(tr("GLSL shader files") + " (" + shaderFileFilter + ")");
+        dialog.setDefaultSuffix(*begin(ShaderFileExtensions));
     }
     if (options & ImageExtensions) {
         filters.append(tr("Image files") + " (" + imageFileFilter + ")");
-        dialog.setDefaultSuffix("pnd");
+        dialog.setDefaultSuffix("png");
     }
     if (options & BinaryExtensions) {
         filters.append(tr("Binary files") + " (" + binaryFileFilter + ")");
         dialog.setDefaultSuffix(*begin(BinaryFileExtensions));
+    }
+    if (options & ImageExtensions) {
+        filters.append(tr("JavaScript files") + " (" + imageFileFilter + ")");
+        dialog.setDefaultSuffix(*begin(ScriptFileExtensions));
     }
     if (options & SupportedExtensions)
         dialog.setDefaultSuffix("");

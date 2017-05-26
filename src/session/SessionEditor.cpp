@@ -30,6 +30,8 @@ SessionEditor::SessionEditor(QWidget *parent)
     setFileName({ });
 
     mRenameAction = new QAction(tr("&Rename"), this);
+    mRenameAction->setShortcut(QKeySequence("F2"));
+
     mActivateAction = new QAction(QIcon(":/images/16x16/system-run.png"),
         tr("&Activate"), this);
 
@@ -65,6 +67,7 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddAttachmentAction, ItemType::Attachment);
     addAction(mAddCallAction, ItemType::Call);
     addAction(mAddStateAction, ItemType::State);
+    addAction(mAddScriptAction, ItemType::Script);
 }
 
 void SessionEditor::mouseReleaseEvent(QMouseEvent *event)
@@ -170,9 +173,6 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
     mContextMenu->addAction(mActivateAction);
     mContextMenu->addSeparator();
     mContextMenu->addAction(mAddGroupAction);
-    mContextMenu->addAction(mAddProgramAction);
-    mContextMenu->addAction(mAddBindingAction);
-    mContextMenu->addAction(mAddShaderAction);
     mContextMenu->addAction(mAddBufferAction);
     mContextMenu->addAction(mAddColumnAction);
     mContextMenu->addAction(mAddPrimitivesAction);
@@ -182,8 +182,12 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
     mContextMenu->addAction(mAddSamplerAction);
     mContextMenu->addAction(mAddFramebufferAction);
     mContextMenu->addAction(mAddAttachmentAction);
-    mContextMenu->addAction(mAddCallAction);
+    mContextMenu->addAction(mAddScriptAction);
+    mContextMenu->addAction(mAddBindingAction);
+    mContextMenu->addAction(mAddProgramAction);
+    mContextMenu->addAction(mAddShaderAction);
     mContextMenu->addAction(mAddStateAction);
+    mContextMenu->addAction(mAddCallAction);
     return c;
 }
 
@@ -280,10 +284,12 @@ void SessionEditor::openContextMenu(const QPoint &pos)
         std::make_pair(ItemType::Framebuffer, mAddFramebufferAction),
         std::make_pair(ItemType::Attachment, mAddAttachmentAction),
         std::make_pair(ItemType::Call, mAddCallAction),
-        std::make_pair(ItemType::State, mAddStateAction)
+        std::make_pair(ItemType::State, mAddStateAction),
+        std::make_pair(ItemType::Script, mAddScriptAction),
     })
     pair.second->setVisible(mModel.canContainType(index, pair.first));
 
+    mRenameAction->setEnabled(index.isValid());
     mActivateAction->setVisible(mModel.getItemType(index) == ItemType::Call);
 
     mContextMenu->popup(mapToGlobal(pos));

@@ -22,6 +22,7 @@ class FramebufferProperties;
 class AttachmentProperties;
 class CallProperties;
 class StateProperties;
+class ScriptProperties;
 }
 
 class QStackedWidget;
@@ -91,6 +92,7 @@ private:
     QScopedPointer<Ui::AttachmentProperties> mAttachmentProperties;
     QScopedPointer<Ui::CallProperties> mCallProperties;
     QScopedPointer<Ui::StateProperties> mStateProperties;
+    QScopedPointer<Ui::ScriptProperties> mScriptProperties;
 };
 
 #endif // SESSIONPROPERTIES_H

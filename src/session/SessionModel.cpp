@@ -24,6 +24,7 @@ namespace {
     const auto AttachmentTag = QStringLiteral("attachment");
     const auto CallTag = QStringLiteral("call");
     const auto StateTag = QStringLiteral("state");
+    const auto ScriptTag = QStringLiteral("script");
 
     const QString &tagNameByType(ItemType type)
     {
@@ -43,6 +44,7 @@ namespace {
             case ItemType::Attachment: return AttachmentTag;
             case ItemType::Call: return CallTag;
             case ItemType::State: return StateTag;
+            case ItemType::Script: return ScriptTag;
         }
         static const QString sEmpty;
         return sEmpty;
@@ -65,6 +67,7 @@ namespace {
         if (tag == AttachmentTag) return ItemType::Attachment;
         if (tag == CallTag) return ItemType::Call;
         if (tag == StateTag) return ItemType::State;
+        if (tag == ScriptTag) return ItemType::Script;
         return { };
     }
 
@@ -150,6 +153,7 @@ SessionModel::SessionModel(QObject *parent)
     mTypeIcons[ItemType::Attachment].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[ItemType::Call].addFile(QStringLiteral(":/images/16x16/dialog-information.png"));
     mTypeIcons[ItemType::State].addFile(QStringLiteral(":/images/16x16/application-x-addon.png"));
+    mTypeIcons[ItemType::Script].addFile(QStringLiteral(":/images/16x16/font.png"));
 
     mActiveColor = QColor::fromRgb(0, 32, 255);
     mActiveCallFont = QFont();
@@ -185,6 +189,7 @@ QString SessionModel::getTypeName(ItemType type) const
         case ItemType::Attachment: return tr("Attachment");
         case ItemType::Call: return tr("Call");
         case ItemType::State: return tr("State");
+        case ItemType::Script: return tr("Script");
     }
     return "";
 }
@@ -206,8 +211,9 @@ bool SessionModel::canContainType(const QModelIndex &index, ItemType type) const
                 ItemType::Binding,
                 ItemType::Primitives,
                 ItemType::Framebuffer,
-                //ItemType::State,
                 ItemType::Call,
+                //ItemType::State,
+                ItemType::Script,
             });
 
         case ItemType::Buffer:
@@ -290,7 +296,8 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
             if (item.itemType == ItemType::Buffer ||
                 item.itemType == ItemType::Texture ||
                 item.itemType == ItemType::Image ||
-                item.itemType == ItemType::Shader)
+                item.itemType == ItemType::Shader ||
+                item.itemType == ItemType::Script)
                 return static_cast<const FileItem&>(item).fileName;
             break;
 
@@ -364,7 +371,8 @@ bool SessionModel::setData(const QModelIndex &index,
             if (item.itemType == ItemType::Buffer ||
                 item.itemType == ItemType::Texture ||
                 item.itemType == ItemType::Image ||
-                item.itemType == ItemType::Shader) {
+                item.itemType == ItemType::Shader ||
+                item.itemType == ItemType::Script) {
                 undoableFileNameAssignment(index,
                     static_cast<FileItem&>(item), value.toString());
                 return true;
@@ -504,6 +512,7 @@ QModelIndex SessionModel::insertItem(ItemType type, const QModelIndex &parent,
         case ItemType::Attachment: return insert(new Attachment());
         case ItemType::Call: return insert(new Call());
         case ItemType::State: return insert(new State());
+        case ItemType::Script: return insert(new Script());
     }
     return { };
 }
@@ -1000,6 +1009,12 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
             write("type", state.type);
             break;
         }
+
+        case ItemType::Script: {
+            const auto &script = static_cast<const Script&>(item);
+            writeFileName("fileName", script.fileName);
+            break;
+        }
     }
 
     foreach (const Item* item, item.items)
@@ -1186,6 +1201,12 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
         case ItemType::State: {
             auto &state = static_cast<State&>(item);
             readEnum("type", state.type);
+            break;
+        }
+
+        case ItemType::Script: {
+            auto &texture = static_cast<Texture&>(item);
+            readFileName("fileName", texture.fileName);
             break;
         }
     }

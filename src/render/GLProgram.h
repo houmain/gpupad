@@ -17,6 +17,7 @@ public:
     void addBufferBinding(PrepareContext &context, const Buffer &buffer,
         QString name = "", int arrayIndex = 0);
     void addBinding(PrepareContext &context, const Binding &uniform);
+    void addScript(PrepareContext &context, const Script &script);
 
     void cache(RenderContext &context, GLProgram &&update);
     bool bind(RenderContext &context);
@@ -61,6 +62,7 @@ private:
         int bufferIndex;
     };
 
+    QJSEngine& scriptEngine();
     QVariantList evalBinding(PrepareContext &context, const Binding &binding);
     bool link(RenderContext &context);
     void applySamplerBinding(RenderContext &context,
@@ -74,7 +76,7 @@ private:
     GLenum getUniformDataType(const QString &name) const;
 
     ItemId mItemId{ };
-    QScopedPointer<QJSEngine> mExpressionEngine;
+    QScopedPointer<QJSEngine> mScriptEngine;
     std::vector<GLShader> mShaders;
     std::vector<GLTexture> mTextures;
     std::vector<GLBuffer> mBuffers;

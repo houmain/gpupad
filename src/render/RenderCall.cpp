@@ -87,6 +87,11 @@ static void createInput(PrepareContext &context, ItemId callId,
                         *castItem<Binding>(&item));
                     break;
 
+                case ItemType::Script:
+                    input.program.addScript(context,
+                        *castItem<Script>(&item));
+                    break;
+
                 default:
                     break;
             }

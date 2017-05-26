@@ -101,6 +101,11 @@ void GLTexture::upload(RenderContext &context)
     mTexture->setFormat(mFormat);
     mTexture->setAutoMipMapGenerationEnabled(false);
     mTexture->setMipLevels(mTexture->maximumMipLevels());
+
+    // TODO:
+    if (mTarget == QOpenGLTexture::Target2DMultisample)
+        mTexture->setSamples(4);
+
     mTexture->allocateStorage();
 
     for (const auto &image : mImages)
@@ -212,7 +217,8 @@ bool GLTexture::downloadImage(RenderContext &context, Image& image)
         auto layer = image.layer;
         if (mTarget == Texture::Target::TargetCubeMapArray)
             layer *= 6;
-        if (mTarget == Texture::Target::TargetCubeMap)
+        if (mTarget == Texture::Target::TargetCubeMap ||
+            mTarget == Texture::Target::TargetCubeMapArray)
             layer += (image.face - QOpenGLTexture::CubeMapPositiveX);
 
         context.gl45->glGetTextureSubImage(mTexture->textureId(),

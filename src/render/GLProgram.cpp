@@ -61,6 +61,15 @@ void GLProgram::addBufferBinding(PrepareContext &context,
         addOnce(mBuffers, buffer, context) });
 }
 
+QJSEngine& GLProgram::scriptEngine()
+{
+    if (!mScriptEngine) {
+        mScriptEngine.reset(new QJSEngine());
+        mScriptEngine->installExtensions(QJSEngine::ConsoleExtension);
+    }
+    return *mScriptEngine;
+}
+
 void GLProgram::addBinding(PrepareContext &context, const Binding &binding)
 {
     // TODO: collect a list of dependencies, add to usedItems when applied
@@ -110,18 +119,13 @@ void GLProgram::addBinding(PrepareContext &context, const Binding &binding)
 QVariantList GLProgram::evalBinding(PrepareContext &context,
     const Binding &binding)
 {
-    if (!mExpressionEngine) {
-        mExpressionEngine.reset(new QJSEngine());
-        mExpressionEngine->installExtensions(QJSEngine::ConsoleExtension);
-    }
-
     auto eval = [&](const QString& expression) {
-        auto result = mExpressionEngine->evaluate(expression);
+        auto result = scriptEngine().evaluate(expression);
         if (result.isError()) {
             context.messages.insert(MessageType::Warning, result.toString());
             return QVariant();
         }
-        mExpressionEngine->globalObject().setProperty(binding.name, result);
+        scriptEngine().globalObject().setProperty(binding.name, result);
         return result.toVariant();
     };
 
@@ -151,6 +155,23 @@ QVariantList GLProgram::evalBinding(PrepareContext &context,
         for (auto i = 0; i < binding.valueCount(); ++i)
             valueExpressions.append("[" + binding.getValue(i).join(',') + "]");
         return eval("[" + valueExpressions.join(',') + "]").toList();
+    }
+}
+
+void GLProgram::addScript(PrepareContext &context, const Script &script)
+{
+    context.usedItems += script.id;
+    context.messages.setContext(script.fileName);
+
+    auto source = QString();
+    if (!Singletons::fileCache().getSource(script.fileName, &source)) {
+        context.messages.insert(MessageType::LoadingFileFailed, script.fileName);
+    }
+    else {
+        auto result = scriptEngine().evaluate(source);
+        if (result.isError())
+            context.messages.insert(MessageType::Error, result.toString(),
+                result.property("lineNumber").toInt());
     }
 }
 

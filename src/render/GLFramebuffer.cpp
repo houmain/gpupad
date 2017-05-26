@@ -101,6 +101,12 @@ bool GLFramebuffer::bind(RenderContext &context)
 void GLFramebuffer::unbind(RenderContext &context)
 {
     context.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
+
+    // resolve multisample textures
+    for (auto& texture : mTextures)
+        if (texture.target() == QOpenGLTexture::Target2DMultisample) {
+            // TODO:
+        }
 }
 
 QList<std::pair<QString, QImage>> GLFramebuffer::getModifiedImages(

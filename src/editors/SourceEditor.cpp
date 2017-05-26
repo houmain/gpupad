@@ -38,11 +38,8 @@ private:
 SourceEditor::SourceEditor(QString fileName, QWidget *parent)
     : QPlainTextEdit(parent)
     , mFileName(fileName)
-    , mDocument(new QTextDocument())
     , mLineNumberArea(new LineNumberArea(this))
 {
-    setDocument(mDocument.data());
-
     connect(this, &SourceEditor::blockCountChanged,
         this, &SourceEditor::updateViewportMargins);
     connect(this, &SourceEditor::updateRequest,

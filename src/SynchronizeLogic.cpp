@@ -13,7 +13,9 @@ void forEachFileItem(SessionModel& model, const F &function) {
     model.forEachItem([&](const Item& item) {
         if (item.itemType == ItemType::Buffer ||
             item.itemType == ItemType::Shader ||
-            item.itemType == ItemType::Texture)
+            item.itemType == ItemType::Texture ||
+            item.itemType == ItemType::Image ||
+            item.itemType == ItemType::Script)
             function(static_cast<const FileItem&>(item));
     });
 }
@@ -142,6 +144,9 @@ void SynchronizeLogic::handleItemActivated(const QModelIndex &index)
     }
     else if (auto shader = mModel.item<Shader>(index)) {
         Singletons::editorManager().openSourceEditor(shader->fileName);
+    }
+    else if (auto script = mModel.item<Script>(index)) {
+        Singletons::editorManager().openSourceEditor(script->fileName);
     }
     else if (auto call = mModel.item<Call>(index)) {
         Singletons::fileCache().update(Singletons::editorManager());

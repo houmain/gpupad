@@ -25,9 +25,10 @@ public:
         ImageExtensions     = 1 << 3,
         BinaryExtensions    = 1 << 4,
         SessionExtensions   = 1 << 5,
-        SupportedExtensions = 1 << 6,
+        ScriptExtensions    = 1 << 6,
+        SupportedExtensions = 1 << 7,
         AllExtensionFilters = ShaderExtensions | ImageExtensions |
-            BinaryExtensions | SessionExtensions | SupportedExtensions
+            BinaryExtensions | ScriptExtensions | SessionExtensions | SupportedExtensions
     };
     Q_DECLARE_FLAGS(Options, OptionBit)
 

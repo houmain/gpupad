@@ -14,6 +14,7 @@
 #include "ui_AttachmentProperties.h"
 #include "ui_CallProperties.h"
 #include "ui_StateProperties.h"
+#include "ui_ScriptProperties.h"
 #include "editors/EditorManager.h"
 #include "Singletons.h"
 #include "SessionModel.h"
@@ -73,6 +74,7 @@ SessionProperties::SessionProperties(QWidget *parent)
     add(mAttachmentProperties);
     add(mCallProperties);
     add(mStateProperties);
+    add(mScriptProperties);
     mStack->addWidget(new QWidget(this));
 
     setWidgetResizable(true);
@@ -104,6 +106,15 @@ SessionProperties::SessionProperties(QWidget *parent)
         [](auto data) { return FileDialog::getFileTitle(data.toString()); });
     connect(mImageProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Image, true); });
+
+    connect(mScriptProperties->fileNew, &QToolButton::clicked, [this]() {
+        setCurrentItemFile(Singletons::editorManager().openNewSourceEditor()); });
+    connect(mScriptProperties->fileBrowse, &QToolButton::clicked,
+        [this]() { selectCurrentItemFile(FileDialog::ScriptExtensions); });
+    connect(mScriptProperties->file, &ReferenceComboBox::textRequired,
+        [](auto data) { return FileDialog::getFileTitle(data.toString()); });
+    connect(mScriptProperties->file, &ReferenceComboBox::listRequired,
+        [this]() { return getFileNames(ItemType::Script); });
 
     connect(mSamplerProperties->texture, &ReferenceComboBox::textRequired,
         [this](QVariant data) { return mModel.findItemName(data.toInt()); });
@@ -245,6 +256,7 @@ QVariantList SessionProperties::getFileNames(ItemType type, bool addNull) const
 
     switch (type) {
         case ItemType::Shader:
+        case ItemType::Script:
             foreach (QString f, Singletons::editorManager().getSourceFileNames())
                 if (!result.contains(f))
                     result.append(f);
@@ -414,6 +426,10 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             break;
 
         case ItemType::State:
+            break;
+
+        case ItemType::Script:
+            map(mScriptProperties->file, SessionModel::FileName);
             break;
     }
 

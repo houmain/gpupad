@@ -24,7 +24,8 @@ enum class ItemType
     Framebuffer,
     Attachment,
     Call,
-    State
+    State,
+    Script,
 };
 
 struct Item
@@ -263,6 +264,10 @@ struct State : Item
     Type type{ };
 };
 
+struct Script : FileItem
+{
+};
+
 template<typename T> ItemType getItemType();
 template<> inline ItemType getItemType<Group>() { return ItemType::Group; }
 template<> inline ItemType getItemType<Buffer>() { return ItemType::Buffer; }
@@ -279,6 +284,7 @@ template<> inline ItemType getItemType<Framebuffer>() { return ItemType::Framebu
 template<> inline ItemType getItemType<Attachment>() { return ItemType::Attachment; }
 template<> inline ItemType getItemType<Call>() { return ItemType::Call; }
 template<> inline ItemType getItemType<State>() { return ItemType::State; }
+template<> inline ItemType getItemType<Script>() { return ItemType::Script; }
 
 template <typename T>
 const T* castItem(const Item* item)

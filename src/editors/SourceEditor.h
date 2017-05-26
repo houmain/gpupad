@@ -72,7 +72,6 @@ private:
         QTextDocument::FindCaseSensitively | QTextDocument::FindWholeWords);
 
     QString mFileName;
-    QScopedPointer<QTextDocument> mDocument;
     QSyntaxHighlighter *mHighlighter{ };
     QCompleter *mCompleter{ };
     LineNumberArea *mLineNumberArea{ };

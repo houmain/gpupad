@@ -15,6 +15,7 @@ ImageEditor::ImageEditor(QString fileName, QWidget *parent)
 
 void ImageEditor::refresh()
 {
+    delete scene();
     setScene(new QGraphicsScene());
     auto pixmap = QPixmap::fromImage(mImage);
     auto item = new QGraphicsPixmapItem(pixmap);

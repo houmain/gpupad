@@ -191,6 +191,10 @@ GlslHighlighter::GlslHighlighter(QObject *parent)
     rule.format = numberFormat;
     mHighlightingRules.append(rule);
 
+    rule.pattern = QRegExp("\\b0x[0-9,A-F,a-f]+\\b");
+    rule.format = numberFormat;
+    mHighlightingRules.append(rule);
+
     rule.pattern = QRegExp("\".*\"");
     rule.format = quotationFormat;
     mHighlightingRules.append(rule);
@@ -207,7 +211,7 @@ GlslHighlighter::GlslHighlighter(QObject *parent)
     mCommentEndExpression = QRegExp("\\*/");
 
     mCompleter = new QCompleter(this);
-    qSort(completerStrings);
+    completerStrings.sort(Qt::CaseInsensitive);
     auto completerModel = new QStringListModel(completerStrings, mCompleter);
     mCompleter->setModel(completerModel);
     mCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
