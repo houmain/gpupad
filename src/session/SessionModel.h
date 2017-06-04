@@ -40,6 +40,7 @@ public:
         SamplerWarpModeZ,
         ShaderType,
         BindingType,
+        BindingEditor,
         BindingValues,
         PrimitivesType,
         PrimitivesIndexBufferId,

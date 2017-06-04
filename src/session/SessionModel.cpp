@@ -327,6 +327,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(SamplerWarpModeZ, Sampler, wrapModeZ)
         ADD(ShaderType, Shader, type)
         ADD(BindingType, Binding, type)
+        ADD(BindingEditor, Binding, editor)
         ADD(BindingValues, Binding, values)
         ADD(PrimitivesType, Primitives, type)
         ADD(PrimitivesIndexBufferId, Primitives, indexBufferId)
@@ -409,6 +410,7 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(SamplerWarpModeZ, Sampler, wrapModeZ, toInt)
         ADD(ShaderType, Shader, type, toInt)
         ADD(BindingType, Binding, type, toInt)
+        ADD(BindingEditor, Binding, editor, toInt)
         ADD(BindingValues, Binding, values, toList)
         ADD(PrimitivesType, Primitives, type, toInt)
         ADD(PrimitivesIndexBufferId, Primitives, indexBufferId, toInt)
@@ -940,6 +942,8 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
         case ItemType::Binding: {
             const auto &binding = static_cast<const Binding&>(item);
             write("type", binding.type);
+            if (binding.type == Binding::Uniform)
+                write("editor", binding.editor);
 
             foreach (QVariant value, binding.values) {
                 xml.writeStartElement("value");
@@ -1143,6 +1147,7 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
         case ItemType::Binding: {
             auto &binding = static_cast<Binding&>(item);
             readEnum("type", binding.type);
+            readEnum("editor", binding.editor);
 
             binding.values = QVariantList();
             while (xml.readNextStartElement()) {

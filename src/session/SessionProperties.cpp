@@ -388,6 +388,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
 
         case ItemType::Binding:
             map(mBindingProperties->typeWidget(), SessionModel::BindingType);
+            map(mBindingProperties->editorWidget(), SessionModel::BindingEditor);
             map(mBindingProperties, SessionModel::BindingValues);
             break;
 

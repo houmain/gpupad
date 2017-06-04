@@ -12,7 +12,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QFormLayout" name="uniformForm">
+    <layout class="QFormLayout" name="formLayout">
      <property name="labelAlignment">
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
@@ -143,14 +143,24 @@
       </widget>
      </item>
      <item row="2" column="0">
+      <widget class="QLabel" name="labelEditor">
+       <property name="text">
+        <string>Editor</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="DataComboBox" name="editor"/>
+     </item>
+     <item row="3" column="0">
       <widget class="QLabel" name="labelValue">
        <property name="text">
         <string>Value</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QWidget" name="widget" native="true">
+     <item row="3" column="1">
+      <widget class="QWidget" name="value" native="true">
        <layout class="QVBoxLayout" name="_3">
         <property name="spacing">
          <number>0</number>
@@ -168,7 +178,7 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="MatrixWidget" name="value">
+         <widget class="ExpressionMatrix" name="expressions">
           <property name="verticalScrollBarPolicy">
            <enum>Qt::ScrollBarAlwaysOff</enum>
           </property>
@@ -205,6 +215,9 @@
          </widget>
         </item>
         <item>
+         <widget class="ColorPicker" name="color"/>
+        </item>
+        <item>
          <widget class="ReferenceComboBox" name="reference"/>
         </item>
         <item>
@@ -223,15 +236,15 @@
        </layout>
       </widget>
      </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="labelLevel">
        <property name="text">
         <string>Level</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="QSpinBox" name="textureLevel">
+     <item row="4" column="1">
+      <widget class="QSpinBox" name="level">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -253,9 +266,14 @@
    <header>session/ReferenceComboBox.h</header>
   </customwidget>
   <customwidget>
-   <class>MatrixWidget</class>
+   <class>ExpressionMatrix</class>
    <extends>QTableWidget</extends>
-   <header location="global">QTableWidget</header>
+   <header>session/ExpressionMatrix.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ColorPicker</class>
+   <extends>QCheckBox</extends>
+   <header>session/ColorPicker.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

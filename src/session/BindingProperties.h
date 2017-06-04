@@ -21,8 +21,9 @@ public:
     ~BindingProperties();
 
     QWidget *typeWidget() const;
-    QWidget *dataTypeWidget() const;
+    QWidget *editorWidget() const;
     Binding::Type currentType() const;
+    Binding::Editor currentEditor() const;
     void setValues(const QVariantList &values);
     const QVariantList &values() const { return mValues; }
 
