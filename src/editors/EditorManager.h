@@ -6,8 +6,8 @@
 #include <QList>
 #include <QMap>
 
+struct EditActions;
 class IEditor;
-class EditActions;
 class SourceEditor;
 class ImageEditor;
 class BinaryEditor;

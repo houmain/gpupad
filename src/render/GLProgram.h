@@ -4,7 +4,7 @@
 #include "GLShader.h"
 #include "GLTexture.h"
 #include "GLBuffer.h"
-#include <QJSEngine>
+#include "ScriptEngine.h"
 
 class GLProgram
 {
@@ -29,6 +29,7 @@ public:
 
 private:
     struct GLUniform {
+        ItemId itemId;
         QString name;
         Binding::Type type;
         QVariantList values;
@@ -62,8 +63,6 @@ private:
         int bufferIndex;
     };
 
-    QJSEngine& scriptEngine();
-    QVariantList evalBinding(PrepareContext &context, const Binding &binding);
     bool link(RenderContext &context);
     void applySamplerBinding(RenderContext &context,
         const GLSamplerBinding &binding, int unit);
@@ -76,7 +75,7 @@ private:
     GLenum getUniformDataType(const QString &name) const;
 
     ItemId mItemId{ };
-    QScopedPointer<QJSEngine> mScriptEngine;
+    ScriptEngine mScriptEngine;
     std::vector<GLShader> mShaders;
     std::vector<GLTexture> mTextures;
     std::vector<GLBuffer> mBuffers;

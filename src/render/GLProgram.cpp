@@ -61,21 +61,10 @@ void GLProgram::addBufferBinding(PrepareContext &context,
         addOnce(mBuffers, buffer, context) });
 }
 
-QJSEngine& GLProgram::scriptEngine()
-{
-    if (!mScriptEngine) {
-        mScriptEngine.reset(new QJSEngine());
-        mScriptEngine->installExtensions(QJSEngine::ConsoleExtension);
-    }
-    return *mScriptEngine;
-}
-
 void GLProgram::addBinding(PrepareContext &context, const Binding &binding)
 {
-    // TODO: collect a list of dependencies, add to usedItems when applied
-    context.usedItems += binding.id;
-
     if (binding.type == Binding::Sampler) {
+        context.usedItems += binding.id;
         for (auto i = 0; i < binding.valueCount(); ++i) {
             auto samplerId = binding.getField(i, 0).toInt();
             if (auto sampler = context.session.findItem<Sampler>(samplerId))
@@ -83,6 +72,7 @@ void GLProgram::addBinding(PrepareContext &context, const Binding &binding)
         }
     }
     else if (binding.type == Binding::Texture) {
+        context.usedItems += binding.id;
         for (auto i = 0; i < binding.valueCount(); ++i) {
             auto textureId = binding.getField(i, 0).toInt();
             if (auto texture = context.session.findItem<Texture>(textureId))
@@ -90,6 +80,7 @@ void GLProgram::addBinding(PrepareContext &context, const Binding &binding)
         }
     }
     else if (binding.type == Binding::Image) {
+        context.usedItems += binding.id;
         for (auto i = 0; i < binding.valueCount(); ++i) {
             auto textureId = binding.getField(i, 0).toInt();
             if (auto texture = context.session.findItem<Texture>(textureId)) {
@@ -104,6 +95,7 @@ void GLProgram::addBinding(PrepareContext &context, const Binding &binding)
         }
     }
     else if (binding.type == Binding::Buffer) {
+        context.usedItems += binding.id;
         for (auto i = 0; i < binding.valueCount(); ++i) {
             auto bufferId = binding.getField(i, 0).toInt();
             if (auto buffer = context.session.findItem<Buffer>(bufferId))
@@ -111,50 +103,7 @@ void GLProgram::addBinding(PrepareContext &context, const Binding &binding)
         }
     }
     else {
-        mUniforms.push_back({ binding.name, binding.type,
-            evalBinding(context, binding) });
-    }
-}
-
-QVariantList GLProgram::evalBinding(PrepareContext &context,
-    const Binding &binding)
-{
-    auto eval = [&](const QString& expression) {
-        auto result = scriptEngine().evaluate(expression);
-        if (result.isError()) {
-            context.messages.insert(MessageType::Warning, result.toString());
-            return QVariant();
-        }
-        scriptEngine().globalObject().setProperty(binding.name, result);
-        return result.toVariant();
-    };
-
-    if (binding.valueCount() == 1) {
-        auto value = binding.getValue(0);
-        // scalar
-        if (value.size() == 1)
-            return { QStringList{ eval(value[0]).toString() } };
-        // array
-        return { eval("[" + value.join(',') + "]").toStringList() };
-    }
-    else if (binding.getValue(0).size() == 1) {
-        // array of scalars
-        auto fields = QStringList();
-        for (auto i = 0; i < binding.valueCount(); ++i)
-            fields.append(binding.getField(i, 0));
-        fields = eval("[" + fields.join(',') + "]").toStringList();
-
-        auto values = QVariantList();
-        foreach (QString field, fields)
-            values.append(QStringList{ field });
-        return values;
-    }
-    else {
-        // array of arrays
-        auto valueExpressions = QList<QString>();
-        for (auto i = 0; i < binding.valueCount(); ++i)
-            valueExpressions.append("[" + binding.getValue(i).join(',') + "]");
-        return eval("[" + valueExpressions.join(',') + "]").toList();
+        mUniforms.push_back({ binding.id, binding.name, binding.type, binding.values });
     }
 }
 
@@ -168,10 +117,7 @@ void GLProgram::addScript(PrepareContext &context, const Script &script)
         context.messages.insert(MessageType::LoadingFileFailed, script.fileName);
     }
     else {
-        auto result = scriptEngine().evaluate(source);
-        if (result.isError())
-            context.messages.insert(MessageType::Error, result.toString(),
-                result.property("lineNumber").toInt());
+        mScriptEngine.evalScript(script.fileName, source);
     }
 }
 
@@ -183,6 +129,9 @@ void GLProgram::cache(RenderContext &context, GLProgram &&update)
     mSamplerBindings = std::move(update.mSamplerBindings);
     mImageBindings = std::move(update.mImageBindings);
     mBufferBindings = std::move(update.mBufferBindings);
+
+    if (mScriptEngine != update.mScriptEngine)
+        mScriptEngine = std::move(update.mScriptEngine);
 
     if (updateList(mShaders, std::move(update.mShaders)))
         mProgramObject.reset();
@@ -390,12 +339,15 @@ void GLProgram::applyUniform(RenderContext &context, const GLUniform &uniform)
         if (location < 0)
             return;
 
+        context.usedItems += uniform.itemId;
+
         auto floats = std::array<GLfloat, 16>();
         auto ints = std::array<GLint, 16>();
         auto uints = std::array<GLuint, 16>();
         auto doubles = std::array<GLdouble, 16>();
         auto j = 0u;
-        foreach (QVariant field, uniform.values[i].toList()) {
+        foreach (QString field, mScriptEngine.evalValue(
+                uniform.values[i].toStringList(), context.messages)) {
             floats.at(j) = field.toFloat();
             ints.at(j) = field.toInt();
             uints.at(j) = field.toUInt();
@@ -457,4 +409,3 @@ void GLProgram::applyUniform(RenderContext &context, const GLUniform &uniform)
 #undef ADD
 #undef ADD_MATRIX
 }
-

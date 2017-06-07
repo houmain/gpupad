@@ -24,6 +24,22 @@ Project {
       submodules: ["core", "widgets", "opengl", "qml"]
     }
 
+    Group {
+      fileTagsFilter: product.type
+      qbs.install: true
+      qbs.installDir: "bin"
+    }
+
+    Group {
+      name: "Share"
+      files: [
+            "share/**",
+        ]
+      qbs.installSourceBase: "share"
+      qbs.install: true
+      qbs.installDir: "share"
+    }
+
     files: [
           "libs/SingleApplication/singleapplication.cpp",
           "libs/SingleApplication/singleapplication.h",
@@ -90,6 +106,8 @@ Project {
           "src/render/RenderTask.h",
           "src/render/Renderer.cpp",
           "src/render/Renderer.h",
+          "src/render/ScriptEngine.cpp",
+          "src/render/ScriptEngine.h",
           "src/render/ShaderCompiler.cpp",
           "src/render/ShaderCompiler.h",
           "src/session/AttachmentProperties.ui",
@@ -132,22 +150,5 @@ Project {
           "src/session/TextureProperties.ui",
           "src/_version.h",
       ]
-
-    Group {
-      fileTagsFilter: product.type
-      qbs.install: true
-      qbs.installDir: "bin"
-    }
-
-    Group {
-      name: "Share"
-      files: [
-            "share/**",
-        ]
-      qbs.installSourceBase: "share"
-      qbs.install: true
-      qbs.installDir: "share"
-    }
-
   }
 }

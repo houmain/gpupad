@@ -266,7 +266,7 @@ void MainWindow::readSettings()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (closeAllFiles())
+    if (closeAllFiles() && closeSession())
         event->accept();
     else
         event->ignore();
@@ -395,12 +395,10 @@ bool MainWindow::closeFile()
 
 bool MainWindow::closeAllFiles()
 {
-    Singletons::synchronizeLogic().deactivateCalls();
-
     if (!mEditorManager.closeAllEditors())
         return false;
 
-    return closeSession();
+    return true;
 }
 
 bool MainWindow::openSession(const QString &fileName)
@@ -436,6 +434,8 @@ bool MainWindow::saveSessionAs()
 
 bool MainWindow::closeSession()
 {
+    Singletons::synchronizeLogic().deactivateCalls();
+
     if (mSessionEditor->isModified()) {
         auto ret = Singletons::editorManager().openNotSavedDialog(
             mSessionEditor->fileName());
