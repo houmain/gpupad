@@ -26,6 +26,7 @@ public:
     void setFileName(QString fileName) override;
     bool load() override;
     bool save() override;
+    int tabifyGroup() override { return 0; }
     bool isModified() const { return mModified; }
     void replace(QByteArray data);    
     const QByteArray &data() const { return mData; }

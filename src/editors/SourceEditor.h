@@ -25,6 +25,7 @@ public:
     void setFileName(QString fileName) override;
     bool load() override;
     bool save() override;
+    int tabifyGroup() override { return 0; }
     QString source() const { return toPlainText(); }
 
     void setHighlighter(QSyntaxHighlighter *highlighter);

@@ -378,10 +378,16 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     dock->toggleViewAction()->setVisible(false);
     dock->installEventFilter(this);
 
-    if (!mDocks.isEmpty())
-        tabifyDockWidget(mDocks.firstKey(), dock);
-    else
-        addDockWidget(Qt::LeftDockWidgetArea, dock);
+    auto tabified = false;
+    foreach (QDockWidget* d, mDocks.keys()) {
+        if (mDocks[d]->tabifyGroup() == editor->tabifyGroup()) {
+            tabifyDockWidget(d, dock);
+            tabified = true;
+            break;
+        }
+    }
+    if (!tabified)
+        addDockWidget(Qt::TopDockWidgetArea, dock);
 
     mDocks.insert(dock, editor);
     return dock;

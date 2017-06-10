@@ -18,6 +18,7 @@ public:
     void setFileName(QString fileName) override;
     bool load() override;
     bool save() override;
+    int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }
     void replace(QImage image);
     const QImage &image() const { return mImage; }
