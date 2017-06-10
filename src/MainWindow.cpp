@@ -48,9 +48,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     mUi->setupUi(this);
 
-    // TODO: why do have spinboxes an extra margin on my machine? broken theme?
-    setStyleSheet("QSpinBox { margin-bottom:-1px; }");
-
     auto icon = QIcon(":images/16x16/icon.png");
     icon.addFile(":images/32x32/icon.png");
     setWindowIcon(icon);
@@ -199,7 +196,8 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->actionAutoIndentation->setChecked(sourceEditorSettings.autoIndentation());
     mUi->actionLineWrapping->setChecked(sourceEditorSettings.lineWrap());
 
-    newFile();
+    if (!mEditorManager.hasCurrentEditor())
+        newFile();
 }
 
 MainWindow::~MainWindow()
@@ -274,9 +272,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::updateCurrentEditor()
 {
-    if (!qApp->focusWidget())
-        return;
-
     if (!mEditorManager.updateCurrentEditor())
         return;
 

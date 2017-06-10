@@ -20,8 +20,7 @@ void forEachFileItem(SessionModel& model, const F &function) {
     });
 }
 
-SynchronizeLogic::SynchronizeLogic(
-    QObject *parent)
+SynchronizeLogic::SynchronizeLogic(QObject *parent)
   : QObject(parent)
   , mModel(Singletons::sessionModel())
   , mUpdateTimer(new QTimer(this))
@@ -31,15 +30,12 @@ SynchronizeLogic::SynchronizeLogic(
     connect(mUpdateTimer, &QTimer::timeout,
         this, &SynchronizeLogic::update);
 
-    using Overload = void(SynchronizeLogic::*)(const QModelIndex&);
     connect(&mModel, &SessionModel::dataChanged,
-        this, static_cast<Overload>(&SynchronizeLogic::handleSessionChanged));
-
-    using Overload2 = void(SynchronizeLogic::*)(const QModelIndex&, int);
+        this, &SynchronizeLogic::handleItemModified);
     connect(&mModel, &SessionModel::rowsInserted,
-        this, static_cast<Overload2>(&SynchronizeLogic::handleSessionChanged));
+        this, &SynchronizeLogic::handleItemReordered);
     connect(&mModel, &SessionModel::rowsAboutToBeRemoved,
-        this, static_cast<Overload2>(&SynchronizeLogic::handleSessionChanged));
+        this, &SynchronizeLogic::handleItemReordered);
 }
 
 SynchronizeLogic::~SynchronizeLogic() = default;
@@ -51,23 +47,30 @@ void SynchronizeLogic::handleMessageActivated(ItemId item, QString fileName,
     Singletons::editorManager().openSourceEditor(fileName, true, line, column);
 }
 
-void SynchronizeLogic::handleSessionChanged(const QModelIndex &parent, int first)
-{
-    handleSessionChanged(mModel.index(first, 0, parent));
-}
-
-void SynchronizeLogic::handleSessionChanged(const QModelIndex &index)
+void SynchronizeLogic::handleItemModified(const QModelIndex &index)
 {
     if (auto buffer = mModel.item<Buffer>(index)) {
         mBuffersModified.insert(buffer->id);
-        mItemsModified.insert(buffer->id);
     }
     else if (auto column = mModel.item<Column>(index)) {
         mBuffersModified.insert(column->parent->id);
-        mItemsModified.insert(column->parent->id);
     }
-    mItemsModified.insert(mModel.getItemId(index));
+    else if (mModel.item<Group>(index)) {
+        // TODO: remove - mark groups containing used items as used
+        mRenderTaskInvalidated = true;
+    }
+
+    if (mActiveRenderTask &&
+        mActiveRenderTask->usedItems().contains(mModel.getItemId(index))) {
+        mRenderTaskInvalidated = true;
+    }
     mUpdateTimer->start();
+}
+
+void SynchronizeLogic::handleItemReordered(const QModelIndex &parent, int first)
+{
+    mRenderTaskInvalidated = true;
+    handleItemModified(mModel.index(first, 0, parent));
 }
 
 void SynchronizeLogic::handleSourceEditorChanged(const QString &fileName)
@@ -108,15 +111,11 @@ void SynchronizeLogic::update()
             updateBinaryEditor(*buffer);
     mBuffersModified.clear();
 
-    if (mActiveRenderTask) {
-        foreach (ItemId itemId, mItemsModified)
-            if (mActiveRenderTask->usedItems().contains(itemId)) {
-                Singletons::fileCache().update(Singletons::editorManager());
-                mActiveRenderTask->update();
-                break;
-            }
+    if (mActiveRenderTask && mRenderTaskInvalidated) {
+        Singletons::fileCache().update(Singletons::editorManager());
+        mActiveRenderTask->update();
     }
-    mItemsModified.clear();
+    mRenderTaskInvalidated = false;
 
     foreach (QString fileName, mEditorsModified) {
         handleFileItemsChanged(fileName);

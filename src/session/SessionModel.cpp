@@ -1118,7 +1118,7 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             readFileName("fileName", image.fileName);
             read("level", image.level);
             read("layer", image.layer);
-            read("face", image.face);
+            readEnum("face", image.face);
             break;
         }
 

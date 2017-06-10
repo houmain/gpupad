@@ -29,8 +29,8 @@ public slots:
     void deactivateCalls();
 
 private slots:
-    void handleSessionChanged(const QModelIndex &parent, int first);
-    void handleSessionChanged(const QModelIndex &index);
+    void handleItemModified(const QModelIndex &index);
+    void handleItemReordered(const QModelIndex &parent, int first);
     void handleFileItemsChanged(const QString &fileName);
     void handleTaskRendered();
 
@@ -41,8 +41,8 @@ private:
     QTimer *mUpdateTimer;
     QSet<QString> mEditorsModified;
     QSet<ItemId> mBuffersModified;
-    QSet<ItemId> mItemsModified;
     QScopedPointer<RenderTask> mActiveRenderTask;
+    bool mRenderTaskInvalidated{ };
 };
 
 #endif // SYNCHRONIZELOGIC_H

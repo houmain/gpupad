@@ -426,9 +426,8 @@ bool EditorManager::closeDock(QDockWidget *dock)
 
     DockWindow::closeDock(dock);
 
-    if (mDocks.isEmpty()) {
+    if (mDocks.isEmpty())
         Singletons::fileDialog().resetNextUntitledFileIndex();
-        openNewSourceEditor();
-    }
+
     return true;
 }

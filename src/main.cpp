@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "SingleApplication/singleapplication.h"
 #include <QApplication>
+#include <QStyleFactory>
 
 int main(int argc, char *argv[])
 {
@@ -19,6 +20,8 @@ int main(int argc, char *argv[])
     );
     app.setOrganizationName("GPUpad");
     app.setApplicationName("GPUpad");
+
+    app.setStyle(QStyleFactory::create("Fusion"));
 
     MainWindow window;
     window.show();
