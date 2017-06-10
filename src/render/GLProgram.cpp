@@ -32,7 +32,7 @@ void GLProgram::addTextureBinding(PrepareContext &context,
         (name.isEmpty() ? texture.name : name),
         arrayIndex,
         addOnce(mTextures, texture, context),
-        QOpenGLTexture::Linear, QOpenGLTexture::Linear,
+        QOpenGLTexture::Nearest, QOpenGLTexture::Nearest,
         QOpenGLTexture::Repeat, QOpenGLTexture::Repeat,
         QOpenGLTexture::Repeat });
 }

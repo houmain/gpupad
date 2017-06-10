@@ -121,10 +121,11 @@ void GLTexture::upload(RenderContext &context)
     mSystemCopiesModified = mDeviceCopiesModified = false;
 }
 
-void GLTexture::uploadImage(const Image &image)
+void GLTexture::getImageDataFormat(QOpenGLTexture::PixelFormat *format,
+                               QOpenGLTexture::PixelType *dataType) const
 {
-    auto sourceFormat = QOpenGLTexture::RGBA;
-    auto sourceType = QOpenGLTexture::UInt8;
+    *format = QOpenGLTexture::RGBA;
+    *dataType = QOpenGLTexture::UInt8;
     switch (mFormat) {
         case QOpenGLTexture::R8U:
         case QOpenGLTexture::RG8U:
@@ -139,7 +140,7 @@ void GLTexture::uploadImage(const Image &image)
         case QOpenGLTexture::RGB32U:
         case QOpenGLTexture::RGBA32U:
         case QOpenGLTexture::RGB10A2:
-            sourceFormat = QOpenGLTexture::RGBA_Integer;
+            *format = QOpenGLTexture::RGBA_Integer;
             break;
 
         case QOpenGLTexture::R8I:
@@ -154,14 +155,20 @@ void GLTexture::uploadImage(const Image &image)
         case QOpenGLTexture::RG32I:
         case QOpenGLTexture::RGB32I:
         case QOpenGLTexture::RGBA32I:
-            sourceFormat = QOpenGLTexture::RGBA_Integer;
-            sourceType = QOpenGLTexture::Int8;
+            *format = QOpenGLTexture::RGBA_Integer;
+            *dataType = QOpenGLTexture::Int8;
             break;
 
         default:
             break;
     }
+}
 
+void GLTexture::uploadImage(const Image &image)
+{
+    auto sourceFormat = QOpenGLTexture::RGBA;
+    auto sourceType = QOpenGLTexture::UInt8;
+    getImageDataFormat(&sourceFormat, &sourceType);
     auto source = image.image.convertToFormat(QImage::Format_RGBA8888);
     source = source.scaled(
         std::max(mWidth >> image.level, 1),
@@ -198,11 +205,12 @@ bool GLTexture::download(RenderContext &context)
 
 bool GLTexture::downloadImage(RenderContext &context, Image& image)
 {
+    auto dest = QImage();
     auto width = std::max(mWidth >> image.level, 1);
     auto height = std::max(mHeight >> image.level, 1);
     auto format = QOpenGLTexture::RGBA;
     auto dataType = QOpenGLTexture::UInt8;
-    auto dest = QImage();
+    getImageDataFormat(&format, &dataType);
 
     if (isDepthTexture()) {
         format = QOpenGLTexture::Depth;

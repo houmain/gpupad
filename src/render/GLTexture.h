@@ -38,6 +38,8 @@ private:
     };
 
     void load(MessageList &messages);
+    void getImageDataFormat(QOpenGLTexture::PixelFormat *format,
+        QOpenGLTexture::PixelType *dataType) const;
     void upload(RenderContext &context);
     void uploadImage(const Image &image);
     bool download(RenderContext &context);
