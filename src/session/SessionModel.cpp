@@ -841,6 +841,15 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
         else
             xml.skipCurrentElement();
     }
+
+    // fixup item references
+    foreach (ItemId prevId, mDroppedIdsReplaced.keys())
+        foreach (ItemId* reference, mDroppedReferences)
+            if (*reference == prevId)
+                *reference = mDroppedIdsReplaced[prevId];
+    mDroppedIdsReplaced.clear();
+    mDroppedReferences.clear();
+
     mUndoStack.endMacro();
     return true;
 }
@@ -1056,7 +1065,14 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
         auto value = xml.attributes().value(name);
         if (!value.isNull())
             property = static_cast<Type>(value.toDouble());
-    };   
+    };
+    const auto readRef = [&](const char* name, ItemId &id) {
+        auto value = xml.attributes().value(name);
+        if (!value.isNull()) {
+            id = static_cast<ItemId>(value.toInt());
+            mDroppedReferences.append(&id);
+        }
+    };
     const auto readEnum = [&](const char* name, auto &property) {
         using Type = std::decay_t<decltype(property)>;
         auto value = xml.attributes().value(name);
@@ -1070,10 +1086,11 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
     };
 
     auto id = xml.attributes().value("id").toInt();
-
-    // TODO: properly fixup references
-    if (findItem(id))
-        id = mNextItemId++;
+    if (findItem(id)) {
+        // generate new id when it collides with an existing item
+        auto prevId = std::exchange(id, mNextItemId++);
+        mDroppedIdsReplaced.insert(prevId, id);
+    }
 
     const auto index = insertItem(type, parent, row, id);
     auto &item = getItem(index);
@@ -1124,7 +1141,7 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
 
         case ItemType::Sampler: {
             auto &sampler = static_cast<Sampler&>(item);
-            read("textureId", sampler.textureId);
+            readRef("textureId", sampler.textureId);
             readEnum("minFilter", sampler.minFilter);
             readEnum("magFilter", sampler.magFilter);
             readEnum("wrapModeX", sampler.wrapModeX);
@@ -1162,7 +1179,7 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
         case ItemType::Primitives: {
             auto &primitives = static_cast<Primitives&>(item);
             readEnum("type", primitives.type);
-            read("indexBufferId", primitives.indexBufferId);
+            readRef("indexBufferId", primitives.indexBufferId);
             read("firstVertex", primitives.firstVertex);
             read("vertexCount", primitives.vertexCount);
             read("instanceCount", primitives.instanceCount);
@@ -1172,8 +1189,8 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
 
         case ItemType::Attribute: {
             auto &attribute = static_cast<Attribute&>(item);
-            read("bufferId", attribute.bufferId);
-            read("columnId", attribute.columnId);
+            readRef("bufferId", attribute.bufferId);
+            readRef("columnId", attribute.columnId);
             readBool("normalize", attribute.normalize);
             read("divisor", attribute.divisor);
             break;
@@ -1187,16 +1204,16 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
 
         case ItemType::Attachment: {
             auto &attachment = static_cast<Attachment&>(item);
-            read("textureId", attachment.textureId);
+            readRef("textureId", attachment.textureId);
             break;
         }
 
         case ItemType::Call: {
             auto &call = static_cast<Call&>(item);
             readEnum("type", call.type);
-            read("programId", call.programId);
-            read("primitivesId", call.primitivesId);
-            read("framebufferId", call.framebufferId);
+            readRef("programId", call.programId);
+            readRef("primitivesId", call.primitivesId);
+            readRef("framebufferId", call.framebufferId);
             read("numGroupsX", call.numGroupsX);
             read("numGroupsY", call.numGroupsY);
             read("numGroupsZ", call.numGroupsZ);

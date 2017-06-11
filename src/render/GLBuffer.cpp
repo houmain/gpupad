@@ -4,6 +4,7 @@ GLBuffer::GLBuffer(const Buffer &buffer, PrepareContext &context)
     : mItemId(buffer.id)
     , mFileName(buffer.fileName)
 {
+    Q_UNUSED(context);
 }
 
 bool GLBuffer::operator==(const GLBuffer &rhs) const

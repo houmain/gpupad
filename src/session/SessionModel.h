@@ -189,6 +189,8 @@ private:
     QSet<ItemId> mActiveItemIds;
     QColor mActiveColor;
     QFont mActiveCallFont;
+    QMap<ItemId, ItemId> mDroppedIdsReplaced;
+    QList<ItemId*> mDroppedReferences;
 };
 
 #endif // SESSIONMODEL_H
