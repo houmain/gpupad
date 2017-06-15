@@ -21,7 +21,7 @@ void ColorPicker::setColor(QColor color)
 void ColorPicker::openColorDialog()
 {
     auto prevColor = mColor;
-    QColorDialog dialog{ mColor };
+    QColorDialog dialog(mColor, this);
     connect(&dialog, &QColorDialog::currentColorChanged,
         this, &ColorPicker::setColor);
     dialog.setOption(QColorDialog::ShowAlphaChannel);

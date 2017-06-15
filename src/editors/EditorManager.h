@@ -61,6 +61,7 @@ private:
     QDockWidget *createDock(QWidget *widget, IEditor *editor);
     bool saveDock(QDockWidget *dock);
     bool closeDock(QDockWidget *dock) override;
+    void raiseEditor(QWidget *editor);
 
     QList<SourceEditor*> mSourceEditors;
     QList<BinaryEditor*> mBinaryEditors;

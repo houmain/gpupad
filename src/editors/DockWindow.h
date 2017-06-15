@@ -8,6 +8,7 @@ class DockWindow : public QMainWindow
     Q_OBJECT
 public:
     explicit DockWindow(QWidget *parent = 0);
+    ~DockWindow();
 
 protected:
     virtual bool closeDock(QDockWidget *dock);

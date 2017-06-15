@@ -43,7 +43,6 @@ SessionEditor::SessionEditor(QWidget *parent)
         this, &SessionEditor::openContextMenu);
     connect(mActivateAction, &QAction::triggered,
         this, &SessionEditor::activateCurrentItem);
-
     connect(mRenameAction, &QAction::triggered,
         this, &SessionEditor::renameCurrentItem);
 
@@ -297,8 +296,7 @@ void SessionEditor::openContextMenu(const QPoint &pos)
 
 void SessionEditor::addItem(ItemType type)
 {
-    auto row = (currentIndex().isValid() ? 0 : -1);
-    auto index = mModel.insertItem(type, currentIndex(), row);
+    auto index = mModel.insertItem(type, currentIndex());
     setCurrentIndex(index);
     edit(index);
 }

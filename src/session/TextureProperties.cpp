@@ -3,6 +3,7 @@
 #include "ui_TextureProperties.h"
 #include "Singletons.h"
 #include "editors/EditorManager.h"
+#include "FileCache.h"
 
 namespace {
     enum FormatType
@@ -151,8 +152,11 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
         [this]() { mSessionProperties.setCurrentItemFile(
             Singletons::editorManager().openNewImageEditor()); });
     connect(mUi->fileBrowse, &QToolButton::clicked,
-        [this]() { mSessionProperties.selectCurrentItemFile(
-            FileDialog::ImageExtensions); });
+        [this]() {
+            mSessionProperties.selectCurrentItemFile(
+                FileDialog::ImageExtensions);
+            updateSize();
+        });
 
     connect(mUi->file, &ReferenceComboBox::textRequired,
         [](auto data) { return FileDialog::getFileTitle(data.toString()); });
@@ -303,8 +307,19 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
 void TextureProperties::updateFormat(QVariant formatData)
 {
     if (!mSuspendUpdateFormat) {
-        auto type = static_cast<FormatType>(mUi->formatType->currentData().toInt());
+        auto type = static_cast<FormatType>(
+            mUi->formatType->currentData().toInt());
         auto data = static_cast<FormatData>(formatData.toInt());
         setFormat(gFormatByTypeData[std::make_pair(type, data)]);
+    }
+}
+
+void TextureProperties::updateSize()
+{
+    auto fileName = mUi->file->currentData().toString();
+    auto image = QImage();
+    if (Singletons::fileCache().getImage(fileName, &image)) {
+        mUi->width->setValue(image.width());
+        mUi->height->setValue(image.height());
     }
 }

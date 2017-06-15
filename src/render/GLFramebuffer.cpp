@@ -94,6 +94,8 @@ bool GLFramebuffer::bind(RenderContext &context)
     context.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     context.glDisable(GL_BLEND);
     context.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    context.glDisable(GL_CULL_FACE);
+    context.glDepthFunc(GL_LEQUAL);
 
     return true;
 }

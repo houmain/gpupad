@@ -35,6 +35,7 @@ private:
     void updateWidgets();
     void updateFormatDataWidget(QVariant formatType);
     void updateFormat(QVariant formatData);
+    void updateSize();
 
     SessionProperties &mSessionProperties;
     Ui::TextureProperties *mUi;

@@ -41,7 +41,7 @@ public:
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , mUi(new Ui::MainWindow)
-    , mSingletons(new Singletons())
+    , mSingletons(new Singletons(this))
     , mSessionEditor(new SessionEditor())
     , mSessionProperties(new SessionProperties())
     , mEditorManager(Singletons::editorManager())

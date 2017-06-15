@@ -56,14 +56,14 @@ FindReplaceBar &Singletons::findReplaceBar()
     return *sInstance->mFindReplaceBar;
 }
 
-Singletons::Singletons()
+Singletons::Singletons(QMainWindow *window)
 {
     sInstance = this;
     mRenderer.reset(new Renderer());
     mMessageWindow.reset(new MessageWindow());
     mSourceEditorSettings.reset(new SourceEditorSettings());
     mFileCache.reset(new FileCache());
-    mFileDialog.reset(new FileDialog());
+    mFileDialog.reset(new FileDialog(window));
     mEditorManager.reset(new EditorManager());
     mSessionModel.reset(new SessionModel());
     mSynchronizeLogic.reset(new SynchronizeLogic());

@@ -8,25 +8,9 @@
 #include "FileDialog.h"
 #include <functional>
 #include <QDockWidget>
-#include <QTimer>
 #include <QMessageBox>
 #include <QAction>
 #include <QApplication>
-
-namespace {
-    void raiseEditor(QWidget *editor)
-    {
-        if (!editor)
-            return;
-        QTimer::singleShot(0,
-            [editor]() {
-                auto dock = qobject_cast<QDockWidget*>(editor->parentWidget());
-                if (dock)
-                    dock->raise();
-                editor->setFocus();
-            });
-    }
-} // namespace
 
 EditorManager::EditorManager(QWidget *parent)
     : DockWindow(parent)
@@ -436,4 +420,16 @@ bool EditorManager::closeDock(QDockWidget *dock)
         Singletons::fileDialog().resetNextUntitledFileIndex();
 
     return true;
+}
+
+void EditorManager::raiseEditor(QWidget *editor)
+{
+    if (!editor)
+        return;
+
+    qApp->processEvents();
+
+    if (auto dock = qobject_cast<QDockWidget*>(editor->parentWidget()))
+        dock->raise();
+    editor->setFocus();
 }

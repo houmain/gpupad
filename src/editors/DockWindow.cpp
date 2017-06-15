@@ -17,6 +17,11 @@ DockWindow::DockWindow(QWidget *parent) : QMainWindow(parent)
 {
 }
 
+DockWindow::~DockWindow()
+{
+    Q_ASSERT(mDocksInvalidated == false);
+}
+
 bool DockWindow::closeDock(QDockWidget *dock)
 {
     delete dock;
@@ -30,8 +35,8 @@ bool DockWindow::event(QEvent *event)
             event->type() == QEvent::ChildRemoved) {
             mDocksInvalidated = true;
             QTimer::singleShot(0, [this]() {
-                mDocksInvalidated = false;
                 updateDocks();
+                mDocksInvalidated = false;
             });
         }
     }

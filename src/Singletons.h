@@ -3,6 +3,7 @@
 
 #include <QScopedPointer>
 
+class QMainWindow;
 class MessageWindow;
 class SourceEditorSettings;
 class FileCache;
@@ -26,7 +27,7 @@ public:
     static SynchronizeLogic &synchronizeLogic();
     static FindReplaceBar &findReplaceBar();
 
-    explicit Singletons();
+    explicit Singletons(QMainWindow *window);
     ~Singletons();
 
 private:

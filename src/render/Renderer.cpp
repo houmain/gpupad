@@ -17,6 +17,10 @@ public:
 public slots:
     void stop() 
     {
+        context.makeCurrent(&surface);
+        mDebugLogger.reset();
+        context.doneCurrent();
+
         auto guiThread = QApplication::instance()->thread();
         context.moveToThread(guiThread);
         surface.moveToThread(guiThread);

@@ -112,19 +112,26 @@ public:
         auto r = begin.row();
         auto c = begin.column();
         foreach (QString row, text.split('\n')) {
+            if (row.trimmed().isEmpty())
+                continue;
             c = begin.column();
             foreach (QString value, row.split(separator)) {
                 const auto index = model()->index(r, c);
-                if (index.flags() & Qt::ItemIsEditable) {
-                    if (value.endsWith('f'))
-                        value.remove('f');
-                    model()->setData(index, value);
-                }
+                if (index.flags() & Qt::ItemIsEditable)
+                    model()->setData(index, toNumber(value));
                 ++c;
             }
             ++r;
         }
         model()->dataChanged(begin, model()->index(r, c));
+    }
+
+    double toNumber(QString value)
+    {
+        value = value.trimmed();
+        if (value.endsWith('f') || value.endsWith('F'))
+            value.resize(value.size() - 1);
+        return value.toDouble();
     }
 
     void cut()

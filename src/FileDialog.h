@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QDir>
 
+class QMainWindow;
+
 class FileDialog : public QObject
 {
     Q_OBJECT
@@ -32,7 +34,7 @@ public:
     };
     Q_DECLARE_FLAGS(Options, OptionBit)
 
-    explicit FileDialog(QWidget *parent = nullptr);
+    explicit FileDialog(QMainWindow *window);
     ~FileDialog();
 
     QDir directory() const;
@@ -42,6 +44,7 @@ public:
     bool exec(Options options, QString fileName = "");
 
 private:
+    QMainWindow *mWindow;
     QStringList mFileNames;
     QDir mDirectory;
 };

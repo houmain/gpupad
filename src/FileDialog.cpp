@@ -1,6 +1,7 @@
 #include "FileDialog.h"
 #include <QFileDialog>
 #include <QImageReader>
+#include <QMainWindow>
 
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
@@ -60,8 +61,8 @@ bool FileDialog::isBinaryFileName(const QString& fileName)
     return false;
 }
 
-FileDialog::FileDialog(QWidget *parent)
-    : QObject(parent)
+FileDialog::FileDialog(QMainWindow *window)
+    : mWindow(window)
 {
 }
 
@@ -91,7 +92,7 @@ QStringList FileDialog::fileNames() const
 
 bool FileDialog::exec(Options options, QString currentFileName)
 {
-    QFileDialog dialog(static_cast<QWidget*>(parent()));
+    QFileDialog dialog(mWindow);
 
     if (options & Saving) {
         dialog.setWindowTitle(tr("Save '%1' As")
