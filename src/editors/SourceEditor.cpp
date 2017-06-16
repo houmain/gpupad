@@ -430,11 +430,10 @@ void SourceEditor::updateExtraSelections()
         auto cursor = textCursor();
         cursor.clearSelection();
         selections.append({  cursor, mCurrentLineFormat });
+
+        for (auto& occurrence : mMarkedOccurrences)
+            selections.append({ occurrence, mOccurrencesFormat });
     }
-
-    for (auto& occurrence : mMarkedOccurrences)
-        selections.append({ occurrence, mOccurrencesFormat });
-
     setExtraSelections(selections);
 }
 

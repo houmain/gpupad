@@ -118,6 +118,9 @@ bool FileDialog::exec(Options options, QString currentFileName)
     for (const auto &ext : BinaryFileExtensions)
         binaryFileFilter = binaryFileFilter + " *" + ext;
 
+    auto scriptFileFilter = QString();
+    for (const auto &ext : ScriptFileExtensions)
+        scriptFileFilter = scriptFileFilter + " *." + ext;
     auto supportedFileFilter = "*" + SessionFileExtension +
         shaderFileFilter + imageFileFilter + binaryFileFilter;
 
@@ -142,7 +145,7 @@ bool FileDialog::exec(Options options, QString currentFileName)
         dialog.setDefaultSuffix(*begin(BinaryFileExtensions));
     }
     if (options & ImageExtensions) {
-        filters.append(tr("JavaScript files") + " (" + imageFileFilter + ")");
+        filters.append(tr("JavaScript files") + " (" + scriptFileFilter + ")");
         dialog.setDefaultSuffix(*begin(ScriptFileExtensions));
     }
     if (options & SupportedExtensions)

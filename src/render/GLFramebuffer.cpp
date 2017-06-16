@@ -31,13 +31,19 @@ void GLFramebuffer::cache(RenderContext &context, GLFramebuffer &&update)
     if (updateList(mTextures, std::move(update.mTextures)))
         mFramebufferObject.reset();
 
-    if (!mFramebufferObject)
-        create(context);
+    // reset when an attached texture was recreated
+    auto attachedTextureIds = QList<GLuint>();
+    for (auto& texture : mTextures)
+        attachedTextureIds += texture.getReadOnlyTextureId(context);
+    if (attachedTextureIds != mAttachedTextureIds)
+        mFramebufferObject.reset();
+
+    create(context);
 }
 
 void GLFramebuffer::create(RenderContext &context)
 {
-    if (mTextures.empty())
+    if (mFramebufferObject)
         return;
 
     auto createFBO = [&]() {
@@ -50,10 +56,11 @@ void GLFramebuffer::create(RenderContext &context)
         gl.glDeleteFramebuffers(1, &fbo);
     };
 
-    auto fbo = GLObject(createFBO(), freeFBO);
-    context.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
     mNumColorAttachments = 0;
+    mAttachedTextureIds.clear();
+    mFramebufferObject = GLObject(createFBO(), freeFBO);
+    context.glBindFramebuffer(GL_FRAMEBUFFER, mFramebufferObject);
+
     for (auto& texture : mTextures) {
         auto attachment = GLenum(
             texture.isDepthTexture() ? GL_DEPTH_ATTACHMENT :
@@ -61,13 +68,16 @@ void GLFramebuffer::create(RenderContext &context)
             texture.isDepthSencilTexture() ? GL_DEPTH_STENCIL_ATTACHMENT :
             GL_COLOR_ATTACHMENT0 + mNumColorAttachments++);
 
-        const auto level = 0;
-        context.glFramebufferTexture(GL_FRAMEBUFFER, attachment,
-            texture.getReadOnlyTextureId(context), level);
+        auto level = 0;
+        auto textureId = texture.getReadOnlyTextureId(context);
+        context.glFramebufferTexture(GL_FRAMEBUFFER, attachment, textureId, level);
+        mAttachedTextureIds += textureId;
     }
-    if (context.glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
-        mFramebufferObject = std::move(fbo);
 
+    if (context.glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        context.messages.insert(MessageType::Error, "creating framebuffer failed");
+        mFramebufferObject.reset();
+    }
     context.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
 }
 
@@ -85,6 +95,7 @@ bool GLFramebuffer::bind(RenderContext &context)
     context.glDrawBuffers(static_cast<GLsizei>(colorAttachments.size()),
       colorAttachments.data());
 
+    // mark texture device copies as modified
     for (auto& texture : mTextures)
         texture.getReadWriteTextureId(context);
 
@@ -96,7 +107,6 @@ bool GLFramebuffer::bind(RenderContext &context)
     context.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     context.glDisable(GL_CULL_FACE);
     context.glDepthFunc(GL_LEQUAL);
-
     return true;
 }
 

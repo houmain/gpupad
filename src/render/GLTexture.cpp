@@ -81,13 +81,14 @@ QList<std::pair<QString, QImage>> GLTexture::getModifiedImages(
 
 void GLTexture::load(MessageList &messages) {
     messages.setContext(mItemId);
-    for (Image& image : mImages)
-        if (image.image.isNull()) {
-            if (!Singletons::fileCache().getImage(image.fileName, &image.image))
-                messages.insert(MessageType::LoadingFileFailed, image.fileName);
-            else
-                mSystemCopiesModified = true;
+    for (Image& image : mImages) {
+        auto prevImage = image.image;
+        if (!Singletons::fileCache().getImage(image.fileName, &image.image)) {
+            messages.insert(MessageType::LoadingFileFailed, image.fileName);
+            continue;
         }
+        mSystemCopiesModified = (image.image != prevImage);
+    }
 }
 
 void GLTexture::upload(RenderContext &context)

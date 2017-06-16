@@ -22,6 +22,7 @@ private:
     std::vector<GLTexture> mTextures;
     int mNumColorAttachments{ };
     GLObject mFramebufferObject;
+    QList<GLuint> mAttachedTextureIds;
 };
 
 #endif // GLFRAMEBUFFER_H

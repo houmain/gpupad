@@ -50,14 +50,13 @@ QList<std::pair<QString, QByteArray>> GLBuffer::getModifiedData(
 }
 
 void GLBuffer::load(MessageList &messages) {
-    if (!mData.isNull())
-        return;
-
+    auto prevData = mData;
     if (!Singletons::fileCache().getBinary(mFileName, &mData)) {
         messages.setContext(mItemId);
-        return messages.insert(MessageType::LoadingFileFailed, mFileName);
+        messages.insert(MessageType::LoadingFileFailed, mFileName);
+        return;
     }
-    mSystemCopyModified = true;
+    mSystemCopyModified = (mData != prevData);
 }
 
 void GLBuffer::upload(RenderContext &context)

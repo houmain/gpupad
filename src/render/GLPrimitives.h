@@ -36,7 +36,7 @@ private:
     int mPrimitiveRestartIndex{ };
     int mIndexBufferIndex{ -1 };
     GLenum mIndexType{ };
-    int mIndexSize{ };
+    int mIndicesOffset{ };
 };
 
 #endif // GLPRIMITIVES_H

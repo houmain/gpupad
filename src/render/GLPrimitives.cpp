@@ -45,7 +45,8 @@ void GLPrimitives::initialize(PrepareContext &context,
                 if (auto column = castItem<Column>(buffer->items.first())) {
                     context.usedItems.insert(column->id);
                     mIndexType = column->dataType;
-                    mIndexSize = column->size();
+                    mIndicesOffset = buffer->columnOffset(column) +
+                        mFirstVertex * column->size();
                 }
         }
 }
@@ -63,7 +64,7 @@ void GLPrimitives::cache(RenderContext &context, GLPrimitives &&update)
     mPrimitiveRestartIndex = update.mPrimitiveRestartIndex;
     mIndexBufferIndex = update.mIndexBufferIndex;
     mIndexType = update.mIndexType;
-    mIndexSize = update.mIndexSize;
+    mIndicesOffset = update.mIndicesOffset;
 
     updateList(mBuffers, std::move(update.mBuffers));
 
@@ -107,10 +108,8 @@ void GLPrimitives::draw(RenderContext &context, const GLProgram &program)
     if (mIndexBufferIndex >= 0) {
         auto &ib = mBuffers.at(mIndexBufferIndex);
         ib.bindReadOnly(context, GL_ELEMENT_ARRAY_BUFFER);
-
-        const auto offset = mIndexSize * mFirstVertex;
         context.glDrawElementsInstanced(mType, mVertexCount, mIndexType,
-            reinterpret_cast<void*>(static_cast<intptr_t>(offset)), mInstanceCount);
+            reinterpret_cast<void*>(static_cast<intptr_t>(mIndicesOffset)), mInstanceCount);
 
         ib.unbind(context, GL_ELEMENT_ARRAY_BUFFER);
     }
