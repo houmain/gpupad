@@ -104,7 +104,8 @@ void GLTexture::upload(RenderContext &context)
     mTexture->setMipLevels(mTexture->maximumMipLevels());
 
     // TODO:
-    if (mTarget == QOpenGLTexture::Target2DMultisample)
+    if (mTarget == QOpenGLTexture::Target2DMultisample ||
+        mTarget == QOpenGLTexture::Target2DMultisampleArray)
         mTexture->setSamples(4);
 
     mTexture->allocateStorage();
@@ -113,7 +114,8 @@ void GLTexture::upload(RenderContext &context)
         if (!image.image.isNull() && image.level == 0)
             uploadImage(image);
 
-    mTexture->generateMipMaps();
+    if (mTexture->mipLevels() > 1)
+        mTexture->generateMipMaps();
 
     for (const auto &image : mImages)
         if (!image.image.isNull() && image.level != 0)
@@ -204,6 +206,60 @@ bool GLTexture::download(RenderContext &context)
     return imageUpdated;
 }
 
+std::unique_ptr<QOpenGLTexture> resolveMultisampleTexture(
+    RenderContext &context, GLTexture &source)
+{
+    auto createFBO = [&]() {
+        auto fbo = GLuint{ };
+        context.glGenFramebuffers(1, &fbo);
+        return fbo;
+    };
+    auto freeFBO = [](GLuint fbo) {
+        auto& gl = *QOpenGLContext::currentContext()->functions();
+        gl.glDeleteFramebuffers(1, &fbo);
+    };
+
+    auto level = 0;
+    auto width = source.width();
+    auto height = source.height();
+    auto format = source.format();
+
+    auto attachment = GL_COLOR_ATTACHMENT0;
+    auto blitMask = GL_COLOR_BUFFER_BIT;
+    if (source.isDepthTexture()) {
+        attachment = GL_DEPTH_ATTACHMENT;
+        blitMask = GL_DEPTH_BUFFER_BIT;
+    }
+    else if (source.isSencilTexture()) {
+        attachment = GL_STENCIL_ATTACHMENT;
+        blitMask = GL_STENCIL_BUFFER_BIT;
+    }
+    else if (source.isDepthSencilTexture()) {
+        attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+        blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
+    }
+
+    auto sourceFbo = GLObject(createFBO(), freeFBO);
+    context.glBindFramebuffer(GL_FRAMEBUFFER, sourceFbo);
+    context.glFramebufferTexture(GL_FRAMEBUFFER, attachment,
+        source.getReadOnlyTextureId(context), level);
+
+    auto destFbo = GLObject(createFBO(), freeFBO);
+    context.glBindFramebuffer(GL_FRAMEBUFFER, destFbo);
+    auto dest = std::make_unique<QOpenGLTexture>(QOpenGLTexture::Target2D);
+    dest->setFormat(format);
+    dest->setSize(width, height);
+    dest->allocateStorage();
+    context.glFramebufferTexture(GL_FRAMEBUFFER, attachment,
+        dest->textureId(), level);
+
+    context.glBindFramebuffer(GL_READ_FRAMEBUFFER, sourceFbo);
+    context.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destFbo);
+    context.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, blitMask, GL_NEAREST);
+    context.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
+    return dest;
+}
+
 bool GLTexture::downloadImage(RenderContext &context, Image& image)
 {
     auto dest = QImage();
@@ -220,6 +276,17 @@ bool GLTexture::downloadImage(RenderContext &context, Image& image)
     }
     else {
         dest = QImage(width, height, QImage::Format_RGBA8888);
+    }
+
+    // TODO: optimize
+    if (mTarget == QOpenGLTexture::Target2DMultisample) {
+        auto resolved = resolveMultisampleTexture(context, *this);
+        resolved->bind();
+        context.glGetTexImage(resolved->target(), image.level,
+            format, dataType, dest.bits());
+        resolved->release();
+        image.image = dest.mirrored();
+        return true;
     }
 
     if (context.gl45) {
@@ -248,6 +315,7 @@ bool GLTexture::downloadImage(RenderContext &context, Image& image)
         return false;
     }
 
+    dest = dest.mirrored();
     if (image.image == dest)
         return false;
     image.image = dest;

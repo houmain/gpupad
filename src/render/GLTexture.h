@@ -16,6 +16,8 @@ public:
     bool isDepthTexture() const;
     bool isSencilTexture() const;
     bool isDepthSencilTexture() const;
+    int width() const { return mWidth; }
+    int height() const { return mHeight; }
     Texture::Target target() const { return mTarget; }
     Texture::Format format() const { return mFormat; }
 

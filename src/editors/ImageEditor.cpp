@@ -120,7 +120,7 @@ void ImageEditor::wheelEvent(QWheelEvent *event)
 {
     if (!event->modifiers()) {
         const auto min = 0;
-        const auto max = 3;
+        const auto max = 5;
         auto delta = (event->delta() > 0 ? 1 : -1);
         setZoom(std::max(min, std::min(mZoom + delta, max)));
         return;
@@ -174,8 +174,7 @@ void ImageEditor::setZoom(int zoom) {
 
 void ImageEditor::updateTransform(double scale)
 {
-    // flip upside down
-    auto transform = QTransform().scale(scale, -scale);
+    auto transform = QTransform().scale(scale, scale);
     setTransform(transform);
 
     // update background checkers pattern
