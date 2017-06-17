@@ -48,6 +48,7 @@ public:
     void setColumnPadding(int index, int padding);
     int columnPadding(int index) const { return getColumn(index).padding; }
     void updateColumns();
+    void scrollToOffset();
 
 signals:
     void dataChanged();

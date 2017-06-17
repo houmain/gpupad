@@ -174,6 +174,12 @@ void BinaryEditor::refresh()
     }
 }
 
+void BinaryEditor::scrollToOffset()
+{
+    const auto row = (mOffset + mStride - 1) / mStride;
+    scrollTo(model()->index(row, 0));
+}
+
 void BinaryEditor::setOffset(int offset)
 {
     mColumnsInvalidated |= set(mOffset, offset);

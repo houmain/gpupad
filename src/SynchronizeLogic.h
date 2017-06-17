@@ -7,6 +7,7 @@
 
 class QTimer;
 class SessionModel;
+class BinaryEditor;
 class RenderTask;
 
 class SynchronizeLogic : public QObject
@@ -35,7 +36,7 @@ private slots:
     void handleTaskRendered();
 
 private:
-    void updateBinaryEditor(const Buffer &buffer);
+    void updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor);
 
     SessionModel& mModel;
     QTimer *mUpdateTimer;

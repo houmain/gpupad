@@ -427,7 +427,9 @@ void EditorManager::raiseEditor(QWidget *editor)
     if (!editor)
         return;
 
-    qApp->processEvents();
+    // it seems like raising only works when the dock was layouted
+    for (auto i = 0; i < 3; i++)
+        qApp->processEvents();
 
     if (auto dock = qobject_cast<QDockWidget*>(editor->parentWidget()))
         dock->raise();

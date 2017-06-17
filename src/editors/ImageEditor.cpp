@@ -174,7 +174,8 @@ void ImageEditor::setZoom(int zoom) {
 
 void ImageEditor::updateTransform(double scale)
 {
-    auto transform = QTransform().scale(scale, scale);
+    // flip upside down
+    auto transform = QTransform().scale(scale, -scale);
     setTransform(transform);
 
     // update background checkers pattern

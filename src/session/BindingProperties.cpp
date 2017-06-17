@@ -41,11 +41,15 @@ namespace {
 
     QColor valueToColor(const QStringList &values)
     {
+        auto clamp = [](const auto &value) {
+            return std::min(std::max(0.0, value.toDouble()), 1.0);
+        };
+
         auto rgba = QColor::fromRgbF(0, 0, 0, 1);
-        if (values.size() > 0) rgba.setRedF(values[0].toFloat());
-        if (values.size() > 1) rgba.setGreenF(values[1].toFloat());
-        if (values.size() > 2) rgba.setBlueF(values[2].toFloat());
-        if (values.size() > 3) rgba.setAlphaF(values[3].toFloat());
+        if (values.size() > 0) rgba.setRedF(clamp(values[0]));
+        if (values.size() > 1) rgba.setGreenF(clamp(values[1]));
+        if (values.size() > 2) rgba.setBlueF(clamp(values[2]));
+        if (values.size() > 3) rgba.setAlphaF(clamp(values[3]));
         return rgba;
     }
 

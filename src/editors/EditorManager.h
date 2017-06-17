@@ -23,7 +23,7 @@ public:
     QString openNewSourceEditor();
     QString openNewBinaryEditor();
     QString openNewImageEditor();
-    bool openEditor(const QString &fileName, bool focus = true);
+    bool openEditor(const QString &fileName, bool raise = true);
     SourceEditor *openSourceEditor(const QString &fileName,
         bool raise = true, int line = -1, int column = -1);
     BinaryEditor *openBinaryEditor(const QString &fileName, bool raise = true);

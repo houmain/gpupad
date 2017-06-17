@@ -108,7 +108,8 @@ void SynchronizeLogic::update()
 
     foreach (ItemId bufferId, mBuffersModified)
         if (auto buffer = mModel.findItem<Buffer>(bufferId))
-            updateBinaryEditor(*buffer);
+            if (auto editor = Singletons::editorManager().getBinaryEditor(buffer->fileName))
+                updateBinaryEditor(*buffer, *editor);
     mBuffersModified.clear();
 
     if (mActiveRenderTask && mRenderTaskInvalidated) {
@@ -132,8 +133,10 @@ void SynchronizeLogic::deactivateCalls()
 void SynchronizeLogic::handleItemActivated(const QModelIndex &index)
 {
     if (auto buffer = mModel.item<Buffer>(index)) {
-        Singletons::editorManager().openBinaryEditor(buffer->fileName);
-        updateBinaryEditor(*buffer);
+        if (auto editor = Singletons::editorManager().openBinaryEditor(buffer->fileName)) {
+            updateBinaryEditor(*buffer, *editor);
+            editor->scrollToOffset();
+        }
     }
     else if (auto texture = mModel.item<Texture>(index)) {
         Singletons::editorManager().openImageEditor(texture->fileName);
@@ -172,12 +175,8 @@ void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
     });
 }
 
-void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer)
+void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor)
 {
-    auto editor = Singletons::editorManager().getBinaryEditor(buffer.fileName);
-    if (!editor)
-        return;
-
     auto mapDataType = [](Column::DataType type) {
         switch (type) {
             case Column::Int8: return BinaryEditor::DataType::Int8;
@@ -192,18 +191,18 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer)
         return BinaryEditor::DataType::Int8;
     };
 
-    editor->setColumnCount(buffer.items.size());
-    editor->setOffset(buffer.offset);
-    editor->setRowCount(buffer.rowCount);
+    editor.setColumnCount(buffer.items.size());
+    editor.setOffset(buffer.offset);
+    editor.setRowCount(buffer.rowCount);
     auto i = 0;
     foreach (Item *item, buffer.items) {
         const auto &column = static_cast<Column&>(*item);
-        editor->setColumnName(i, column.name);
-        editor->setColumnType(i, mapDataType(column.dataType));
-        editor->setColumnArity(i, column.count);
-        editor->setColumnPadding(i, column.padding);
+        editor.setColumnName(i, column.name);
+        editor.setColumnType(i, mapDataType(column.dataType));
+        editor.setColumnArity(i, column.count);
+        editor.setColumnPadding(i, column.padding);
         i++;
     }
-    editor->setStride();
-    editor->updateColumns();
+    editor.setStride();
+    editor.updateColumns();
 }

@@ -144,7 +144,7 @@ SessionModel::SessionModel(QObject *parent)
     mTypeIcons[ItemType::Texture].addFile(QStringLiteral(":/images/16x16/emblem-photos.png"));
     mTypeIcons[ItemType::Image].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[ItemType::Sampler].addFile(QStringLiteral(":/images/16x16/image-x-generic.png"));
-    mTypeIcons[ItemType::Program].addFile(QStringLiteral(":/images/16x16/folder-documents.png"));
+    mTypeIcons[ItemType::Program].addFile(QStringLiteral(":/images/16x16/applications-system.png"));
     mTypeIcons[ItemType::Shader].addFile(QStringLiteral(":/images/16x16/font.png"));
     mTypeIcons[ItemType::Binding].addFile(QStringLiteral(":/images/16x16/insert-text.png"));
     mTypeIcons[ItemType::Primitives].addFile(QStringLiteral(":/images/16x16/media-playback-start-rtl.png"));

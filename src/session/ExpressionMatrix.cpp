@@ -87,7 +87,7 @@ void ExpressionMatrix::setRowCount(int rows)
 
 void ExpressionMatrix::setColumnCount(int columns)
 {
-    if (columns != colorCount()) {
+    if (columns != columnCount()) {
         QTableWidget::setColumnCount(columns);
         updateCells();
     }
