@@ -9,6 +9,7 @@ GLTexture::GLTexture(const Texture &texture, PrepareContext &context)
     mWidth = texture.width;
     mHeight = texture.height;
     mDepth = texture.depth;
+    mFlipY = texture.flipY;
 
     context.usedItems += texture.id;
     if (!texture.fileName.isEmpty())
@@ -27,9 +28,9 @@ GLTexture::GLTexture(const Texture &texture, PrepareContext &context)
 bool GLTexture::operator==(const GLTexture &rhs) const
 {
     return std::tie(mTarget, mFormat, mWidth,
-                    mHeight, mDepth, mImages) ==
+                    mHeight, mDepth, mFlipY, mImages) ==
            std::tie(rhs.mTarget, rhs.mFormat,rhs.mWidth,
-                    rhs.mHeight, rhs.mDepth, rhs.mImages);
+                    rhs.mHeight, rhs.mDepth, rhs.mFlipY, rhs.mImages);
 }
 
 bool GLTexture::isDepthTexture() const
@@ -94,7 +95,7 @@ void GLTexture::load(MessageList &messages) {
 void GLTexture::upload(RenderContext &context)
 {
     Q_UNUSED(context);
-    if (!mSystemCopiesModified || mImages.empty())
+    if (mTexture && !mSystemCopiesModified)
         return;
 
     mTexture = std::make_unique<QOpenGLTexture>(mTarget);
@@ -176,6 +177,8 @@ void GLTexture::uploadImage(const Image &image)
     source = source.scaled(
         std::max(mWidth >> image.level, 1),
         std::max(mHeight >> image.level, 1));
+    if (mFlipY)
+        source = source.mirrored();
 
     auto uploadOptions = QOpenGLPixelTransferOptions();
     uploadOptions.setAlignment(1);
@@ -285,11 +288,8 @@ bool GLTexture::downloadImage(RenderContext &context, Image& image)
         context.glGetTexImage(resolved->target(), image.level,
             format, dataType, dest.bits());
         resolved->release();
-        image.image = dest.mirrored();
-        return true;
     }
-
-    if (context.gl45) {
+    else if (context.gl45) {
         auto layer = image.layer;
         if (mTarget == Texture::Target::TargetCubeMapArray)
             layer *= 6;
@@ -315,7 +315,9 @@ bool GLTexture::downloadImage(RenderContext &context, Image& image)
         return false;
     }
 
-    dest = dest.mirrored();
+    if (mFlipY)
+        dest = dest.mirrored();
+
     if (image.image == dest)
         return false;
     image.image = dest;

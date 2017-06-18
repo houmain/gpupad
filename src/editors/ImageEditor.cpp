@@ -8,7 +8,9 @@
 ImageEditor::ImageEditor(QString fileName, QWidget *parent)
     : QGraphicsView(parent)
     , mFileName(fileName)
+    , mImage(QSize(1, 1), QImage::Format_RGB888)
 {
+    mImage.fill(Qt::black);
     setTransformationAnchor(AnchorUnderMouse);
     refresh();
 }

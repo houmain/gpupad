@@ -208,6 +208,7 @@ QWidget *TextureProperties::targetWidget() const { return mUi->target; }
 QWidget *TextureProperties::widthWidget() const { return mUi->width; }
 QWidget *TextureProperties::heightWidget() const { return mUi->height; }
 QWidget *TextureProperties::depthWidget() const { return mUi->depth; }
+QWidget *TextureProperties::flipYWidget() const { return mUi->flipY; }
 
 void TextureProperties::setFormat(QVariant value) {
     auto format = static_cast<Texture::Format>(value.toInt());
@@ -249,6 +250,7 @@ void TextureProperties::updateWidgets()
     }
     setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, dimensions > 1);
     setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth, dimensions > 2);
+    setFormVisibility(mUi->formLayout, mUi->labelFlipY, mUi->flipY, true);
 }
 
 void TextureProperties::updateFormatDataWidget(QVariant formatType)

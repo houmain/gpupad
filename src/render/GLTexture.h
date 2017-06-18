@@ -53,6 +53,7 @@ private:
     int mWidth{ };
     int mHeight{ };
     int mDepth{ };
+    bool mFlipY{ };
     std::vector<Image> mImages;
     bool mSystemCopiesModified{ };
     bool mDeviceCopiesModified{ };

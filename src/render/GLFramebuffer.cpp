@@ -25,12 +25,16 @@ void GLFramebuffer::initialize(PrepareContext &context,
 
 void GLFramebuffer::cache(RenderContext &context, GLFramebuffer &&update)
 {
+    Q_UNUSED(context);
     mWidth = update.mWidth;
     mHeight = update.mHeight;
 
     if (updateList(mTextures, std::move(update.mTextures)))
         mFramebufferObject.reset();
+}
 
+void GLFramebuffer::create(RenderContext &context)
+{
     // reset when an attached texture was recreated
     auto attachedTextureIds = QList<GLuint>();
     for (auto& texture : mTextures)
@@ -38,11 +42,6 @@ void GLFramebuffer::cache(RenderContext &context, GLFramebuffer &&update)
     if (attachedTextureIds != mAttachedTextureIds)
         mFramebufferObject.reset();
 
-    create(context);
-}
-
-void GLFramebuffer::create(RenderContext &context)
-{
     if (mFramebufferObject)
         return;
 
@@ -83,6 +82,8 @@ void GLFramebuffer::create(RenderContext &context)
 
 bool GLFramebuffer::bind(RenderContext &context)
 {
+    create(context);
+
     if (!mFramebufferObject)
         return false;
 

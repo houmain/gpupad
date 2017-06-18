@@ -252,7 +252,7 @@ bool EditorManager::saveEditorAs()
             auto prevFileName = editor->fileName();
             editor->setFileName(Singletons::fileDialog().fileName());
             emit editorRenamed(prevFileName, editor->fileName());
-            return saveEditor();
+            return editor->save();
         }
     }
     return false;

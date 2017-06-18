@@ -29,6 +29,7 @@ public:
         TextureWidth,
         TextureHeight,
         TextureDepth,
+        TextureFlipY,
         ImageLevel,
         ImageLayer,
         ImageFace,

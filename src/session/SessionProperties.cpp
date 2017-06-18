@@ -360,6 +360,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             map(mTextureProperties->widthWidget(), SessionModel::TextureWidth);
             map(mTextureProperties->heightWidget(), SessionModel::TextureHeight);
             map(mTextureProperties->depthWidget(), SessionModel::TextureDepth);
+            map(mTextureProperties->flipYWidget(), SessionModel::TextureFlipY);
             break;
 
         case ItemType::Image:
