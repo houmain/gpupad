@@ -368,6 +368,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             map(mImageProperties->level, SessionModel::ImageLevel);
             map(mImageProperties->layer, SessionModel::ImageLayer);
             map(mImageProperties->face, SessionModel::ImageFace);
+            updateImageWidgets(index);
             break;
 
         case ItemType::Sampler:
@@ -473,6 +474,30 @@ void SessionProperties::updatePrimitivesWidgets()
     setFormVisibility(mPrimitivesProperties->formLayout,
         mPrimitivesProperties->labelPatchVertices,
         mPrimitivesProperties->patchVertices, (type == Primitives::Patches));
+}
+
+void SessionProperties::updateImageWidgets(const QModelIndex &index)
+{
+    if (auto image = model().item<Image>(index))
+        if (auto texture = castItem<Texture>(image->parent)) {
+            const auto isArray =
+                (texture->target == Texture::Target::Target1DArray ||
+                 texture->target == Texture::Target::Target2DArray ||
+                 texture->target == Texture::Target::Target2DMultisampleArray ||
+                 texture->target == Texture::Target::TargetCubeMapArray);
+
+            const auto isCubeMap =
+                (texture->target == Texture::Target::TargetCubeMap ||
+                 texture->target == Texture::Target::TargetCubeMapArray);
+
+            setFormVisibility(mImageProperties->formLayout,
+                mImageProperties->labelLayer,
+                mImageProperties->layer, isArray);
+
+            setFormVisibility(mImageProperties->formLayout,
+                mImageProperties->labelFace,
+                mImageProperties->face, isCubeMap);
+        }
 }
 
 void SessionProperties::selectCurrentItemFile(FileDialog::Options options)
