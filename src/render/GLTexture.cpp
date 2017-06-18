@@ -201,6 +201,13 @@ bool GLTexture::download(RenderContext &context)
     if (!mDeviceCopiesModified)
         return false;
 
+    // generate mip maps when a sublevel image is attached
+    auto sublevel = false;
+    for (auto &image : mImages)
+        sublevel |= (image.level != 0);
+    if (sublevel && mTexture->mipLevels() > 1)
+        mTexture->generateMipMaps();
+
     auto imageUpdated = false;
     for (auto &image : mImages)
         imageUpdated |= downloadImage(context, image);
@@ -281,7 +288,7 @@ bool GLTexture::downloadImage(RenderContext &context, Image& image)
         dest = QImage(width, height, QImage::Format_RGBA8888);
     }
 
-    // TODO: optimize
+    // TODO: move. resolve level 0 first, then generate mip maps...
     if (mTarget == QOpenGLTexture::Target2DMultisample) {
         auto resolved = resolveMultisampleTexture(context, *this);
         resolved->bind();
