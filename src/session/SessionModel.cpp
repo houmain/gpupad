@@ -459,6 +459,11 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
         default:
             break;
     }
+    // workaround to optimize D&D (do not snap to not droppable targets)
+    if (!mDraggedIndices.empty() && (flags & Qt::ItemIsDropEnabled))
+        if (!canContainType(index, getItemType(mDraggedIndices.first())))
+            flags &= ~Qt::ItemIsDropEnabled;
+
     return flags;
 }
 
@@ -667,7 +672,7 @@ void SessionModel::undoableAssignment(const QModelIndex &index, T *to,
     if (*to != value) {
         if (mergeId < 0)
             mergeId = -index.column();
-        mergeId += index.row() * 65536;
+        mergeId += reinterpret_cast<uintptr_t>(index.internalPointer());
 
         mUndoStack.push(new MergingUndoCommand(mergeId,
             makeUndoCommand("Edit ",
@@ -851,6 +856,7 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
                 *reference = mDroppedIdsReplaced[prevId];
     mDroppedIdsReplaced.clear();
     mDroppedReferences.clear();
+    mDraggedIndices.clear();
 
     mUndoStack.endMacro();
     return true;

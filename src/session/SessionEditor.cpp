@@ -16,7 +16,6 @@ SessionEditor::SessionEditor(QWidget *parent)
     setFrameShape(QFrame::NoFrame);
     setHeaderHidden(true);
     setUniformRowHeights(true);
-    setStyleSheet("QTreeView::item { padding: 1px; }");
     setAnimated(true);
     setVerticalScrollMode(QTreeView::ScrollPerPixel);
     setDragEnabled(true);
@@ -240,14 +239,29 @@ void SessionEditor::copy()
 bool SessionEditor::canPaste() const
 {
     auto data = QApplication::clipboard()->mimeData();
-    return mModel.canDropMimeData(data, Qt::CopyAction, -1, 0, currentIndex());
+    // check if data can be dropped as sibling or child
+    if (mModel.canDropMimeData(data, Qt::CopyAction,
+            currentIndex().row() + 1, 0, currentIndex().parent()))
+        return true;
+    if (mModel.canDropMimeData(data, Qt::CopyAction, -1, 0, currentIndex()))
+        return true;
+
+    return false;
 }
 
 void SessionEditor::paste()
 {
     mModel.undoStack().beginMacro("Paste");
     auto data = QApplication::clipboard()->mimeData();
-    mModel.dropMimeData(data, Qt::CopyAction, -1, 0, currentIndex());
+    // try to drop as sibling first
+    if (mModel.canDropMimeData(data, Qt::CopyAction,
+            currentIndex().row() + 1, 0, currentIndex().parent())) {
+        mModel.dropMimeData(data, Qt::CopyAction,
+            currentIndex().row() + 1, 0, currentIndex().parent());
+    }
+    else {
+        mModel.dropMimeData(data, Qt::CopyAction, -1, 0, currentIndex());
+    }
     mModel.undoStack().endMacro();
 }
 

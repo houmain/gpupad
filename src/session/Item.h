@@ -225,7 +225,7 @@ struct Primitives : Item
     int firstVertex{ 0 };
     int vertexCount{ 3 };
     int instanceCount{ 1 };
-    int patchVertices{ };
+    int patchVertices{ 1 };
     int primitiveRestartIndex{ 0 };
 };
 
