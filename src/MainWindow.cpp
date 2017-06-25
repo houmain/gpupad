@@ -182,8 +182,16 @@ MainWindow::MainWindow(QWidget *parent)
         &settings, &Settings::setIndentWithSpaces);
 
     auto evalModeActionGroup = new QActionGroup(this);
-    mUi->actionAutoEval->setActionGroup(evalModeActionGroup);
-    mUi->actionSteadyEval->setActionGroup(evalModeActionGroup);
+    mUi->actionEvalManual->setActionGroup(evalModeActionGroup);
+    mUi->actionEvalAuto->setActionGroup(evalModeActionGroup);
+    mUi->actionEvalSteady->setActionGroup(evalModeActionGroup);
+    connect(evalModeActionGroup, &QActionGroup::triggered,
+        this, &MainWindow::updateEvaluationMode);
+
+    auto evalRateActionGroup = new QActionGroup(this);
+    mUi->actionEvalRateSlow->setActionGroup(evalRateActionGroup);
+    mUi->actionEvalRateMedium->setActionGroup(evalRateActionGroup);
+    mUi->actionEvalRateFast->setActionGroup(evalRateActionGroup);
 
     auto indentActionGroup = new QActionGroup(this);
     connect(indentActionGroup, &QActionGroup::triggered,
@@ -305,6 +313,11 @@ void MainWindow::updateFileActions()
     const auto canReload = (mEditorManager.hasCurrentEditor());
     mUi->actionReload->setEnabled(canReload);
     mUi->actionReload->setText(tr("&Reload%1").arg(canReload ? desc : ""));
+}
+
+void MainWindow::updateEvaluationMode()
+{
+    mUi->actionEvalManual->setChecked(false);
 }
 
 void MainWindow::newFile()

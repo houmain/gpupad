@@ -125,10 +125,13 @@
       <iconset resource="resources.qrc">
        <normaloff>:/images/16x16/view-refresh.png</normaloff>:/images/16x16/view-refresh.png</iconset>
      </property>
-     <addaction name="actionManualEval"/>
-     <addaction name="actionAutoEval"/>
-     <addaction name="actionSteadyEval"/>
+     <addaction name="actionEvalManual"/>
+     <addaction name="actionEvalAuto"/>
+     <addaction name="actionEvalSteady"/>
      <addaction name="separator"/>
+     <addaction name="actionEvalRateSlow"/>
+     <addaction name="actionEvalRateMedium"/>
+     <addaction name="actionEvalRateFast"/>
     </widget>
     <addaction name="menuEvaluation"/>
     <addaction name="separator"/>
@@ -168,9 +171,9 @@
    <addaction name="actionPaste"/>
    <addaction name="actionDelete"/>
    <addaction name="separator"/>
-   <addaction name="actionManualEval"/>
-   <addaction name="actionAutoEval"/>
-   <addaction name="actionSteadyEval"/>
+   <addaction name="actionEvalManual"/>
+   <addaction name="actionEvalAuto"/>
+   <addaction name="actionEvalSteady"/>
   </widget>
   <action name="actionOpen">
    <property name="icon">
@@ -431,7 +434,10 @@
     <string>&amp;Find/Replace</string>
    </property>
   </action>
-  <action name="actionManualEval">
+  <action name="actionEvalManual">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="resources.qrc">
      <normaloff>:/images/16x16/media-playback-pause.png</normaloff>:/images/16x16/media-playback-pause.png</iconset>
@@ -446,7 +452,7 @@
     <string>F5</string>
    </property>
   </action>
-  <action name="actionAutoEval">
+  <action name="actionEvalAuto">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -464,7 +470,7 @@
     <string>F6</string>
    </property>
   </action>
-  <action name="actionSteadyEval">
+  <action name="actionEvalSteady">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -482,7 +488,7 @@
     <string>F7</string>
    </property>
   </action>
-  <action name="actionSlowRefresh">
+  <action name="actionEvalRateSlow">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -490,15 +496,18 @@
     <string>&amp;Slow</string>
    </property>
   </action>
-  <action name="actionMediumRefresh">
+  <action name="actionEvalRateMedium">
    <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
     <bool>true</bool>
    </property>
    <property name="text">
     <string>&amp;Medium</string>
    </property>
   </action>
-  <action name="actionFastRefresh">
+  <action name="actionEvalRateFast">
    <property name="checkable">
     <bool>true</bool>
    </property>

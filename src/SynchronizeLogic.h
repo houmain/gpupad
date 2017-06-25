@@ -20,7 +20,7 @@ public:
 public slots:
     void handleMessageActivated(ItemId item, QString fileName,
         int line, int colunn);
-    void handleItemActivated(const QModelIndex &index);
+    void handleItemActivated(const QModelIndex &index, bool *handled);
     void handleSourceEditorChanged(const QString &fileName);
     void handleBinaryEditorChanged(const QString &fileName);
     void handleImageEditorChanged(const QString &fileName);
@@ -39,7 +39,7 @@ private:
     void updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor);
 
     SessionModel& mModel;
-    QTimer *mUpdateTimer;
+    QTimer *mUpdateTimer{ };
     QSet<QString> mEditorsModified;
     QSet<ItemId> mBuffersModified;
     QScopedPointer<RenderTask> mActiveRenderTask;

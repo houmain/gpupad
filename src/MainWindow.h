@@ -46,6 +46,7 @@ private:
     void disconnectEditActions();
     void connectEditActions();
     void updateFileActions();
+    void updateEvaluationMode();
     bool openSession(const QString &fileName);
     bool saveSession();
     bool saveSessionAs();

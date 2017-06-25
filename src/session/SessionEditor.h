@@ -26,7 +26,7 @@ public:
     bool save();
 
 signals:
-    void itemActivated(const QModelIndex &index);
+    void itemActivated(const QModelIndex &index, bool *handled);
     void fileNameChanged(const QString &fileName);
     void modificationChanged(bool modified);
     void focusChanged(bool focused);

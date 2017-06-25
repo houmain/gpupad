@@ -91,7 +91,9 @@ void SessionEditor::updateItemActions()
             std::make_pair(ItemType::Attribute, mAddAttributeAction),
             std::make_pair(ItemType::Attachment, mAddAttachmentAction),
         })
-        pair.second->setVisible(mModel.canContainType(index, pair.first));
+        pair.second->setVisible(
+            mModel.canContainType(index, pair.first) ||
+            mModel.canContainType(index.parent(), pair.first));
 
     // TODO: remove
     mAddStateAction->setVisible(false);
@@ -308,18 +310,10 @@ void SessionEditor::addItem(ItemType type)
 
 void SessionEditor::treeItemActivated(const QModelIndex &index)
 {
-    switch (mModel.getItemType(index)) {
-        case ItemType::Group:
-        case ItemType::Program:
-        case ItemType::Primitives:
-        case ItemType::Framebuffer:
-            setExpanded(index, !isExpanded(index));
-            break;
-
-        default:
-            emit itemActivated(index);
-            break;
-    }
+    auto handled = false;
+    emit itemActivated(index, &handled);
+    if (!handled)
+        setExpanded(index, !isExpanded(index));
 }
 
 void SessionEditor::renameCurrentItem()

@@ -130,32 +130,30 @@ void SynchronizeLogic::deactivateCalls()
     Singletons::sessionModel().setActiveItems({ });
 }
 
-void SynchronizeLogic::handleItemActivated(const QModelIndex &index)
+void SynchronizeLogic::handleItemActivated(const QModelIndex &index, bool *handled)
 {
     if (auto buffer = mModel.item<Buffer>(index)) {
         if (auto editor = Singletons::editorManager().openBinaryEditor(buffer->fileName)) {
             updateBinaryEditor(*buffer, *editor);
             editor->scrollToOffset();
+            *handled = true;
         }
     }
     else if (auto texture = mModel.item<Texture>(index)) {
-        Singletons::editorManager().openImageEditor(texture->fileName);
+        if (Singletons::editorManager().openImageEditor(texture->fileName))
+            *handled = true;
     }
     else if (auto image = mModel.item<Image>(index)) {
-        Singletons::editorManager().openImageEditor(image->fileName);
+        if (Singletons::editorManager().openImageEditor(image->fileName))
+            *handled = true;
     }
     else if (auto shader = mModel.item<Shader>(index)) {
-        Singletons::editorManager().openSourceEditor(shader->fileName);
+        if (Singletons::editorManager().openSourceEditor(shader->fileName))
+            *handled = true;
     }
     else if (auto script = mModel.item<Script>(index)) {
-        Singletons::editorManager().openSourceEditor(script->fileName);
-    }
-    else if (auto call = mModel.item<Call>(index)) {
-        Singletons::fileCache().update(Singletons::editorManager());
-        mActiveRenderTask.reset(new RenderCall(call->id));
-        connect(mActiveRenderTask.data(), &RenderTask::updated,
-            this, &SynchronizeLogic::handleTaskRendered);
-        mActiveRenderTask->update();
+        if (Singletons::editorManager().openSourceEditor(script->fileName))
+            *handled = true;
     }
 }
 
@@ -167,12 +165,13 @@ void SynchronizeLogic::handleTaskRendered()
 
 void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
 {
-    forEachFileItem(mModel, [&](const FileItem &item) {
-        if (item.fileName == fileName) {
-            auto index = mModel.index(&item);
-            emit mModel.dataChanged(index, index);
-        }
-    });
+    forEachFileItem(mModel,
+        [&](const FileItem &item) {
+            if (item.fileName == fileName) {
+                auto index = mModel.index(&item);
+                emit mModel.dataChanged(index, index);
+            }
+        });
 }
 
 void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor)
