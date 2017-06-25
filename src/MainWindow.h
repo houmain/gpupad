@@ -3,7 +3,6 @@
 
 #include "EditActions.h"
 #include <QMainWindow>
-#include <QSettings>
 
 namespace Ui {
 class MainWindow;
@@ -33,9 +32,6 @@ public slots:
     bool closeAllFiles();
     void openSessionDock();
     void openMessageDock();
-    void openPreferences();
-    void selectFont();
-    void setTabSize(int tabSize);
     void openDocumentation();
     void openAbout();
 
@@ -55,7 +51,6 @@ private:
     bool closeSession();
 
     Ui::MainWindow *mUi{ };
-    QSettings mSettings;
     EditActions mEditActions;
     QScopedPointer<Singletons> mSingletons;
     QScopedPointer<SessionEditor> mSessionEditor;

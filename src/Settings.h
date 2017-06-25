@@ -1,17 +1,19 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#include <QObject>
+#include <QSettings>
 #include <QFont>
 
-class Settings : public QObject
+class Settings : public QSettings
 {
     Q_OBJECT
 public:
     explicit Settings(QObject *parent = 0);
+    ~Settings();
 
     void setTabSize(int tabSize);
     int tabSize() const { return mTabSize; }
+    void selectFont();
     void setFont(const QFont &font);
     const QFont &font() const { return mFont; }
     void setLineWrap(bool enabled);

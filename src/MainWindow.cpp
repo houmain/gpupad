@@ -14,7 +14,6 @@
 #include <QDesktopServices>
 #include <QSplitter>
 #include <QActionGroup>
-#include <QFontDialog>
 
 class AutoOrientationSplitter : public QSplitter
 {
@@ -126,8 +125,6 @@ MainWindow::MainWindow(QWidget *parent)
         mUi->actionFindReplace
     };
 
-    readSettings();
-
     connect(mUi->actionNew, &QAction::triggered,
         this, &MainWindow::newFile);
     connect(mUi->actionOpen, &QAction::triggered,
@@ -146,8 +143,6 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::closeAllFiles);
     connect(mUi->actionQuit, &QAction::triggered,
         this, &MainWindow::close);
-    connect(mUi->actionPreferences, &QAction::triggered,
-        this, &MainWindow::openPreferences);
     connect(mUi->actionDocumentation, &QAction::triggered,
         this, &MainWindow::openDocumentation);
     connect(mUi->actionAbout, &QAction::triggered,
@@ -178,7 +173,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto& settings = Singletons::settings();
     connect(mUi->actionSelectFont, &QAction::triggered,
-        this, &MainWindow::selectFont);
+        &settings, &Settings::selectFont);
     connect(mUi->actionAutoIndentation, &QAction::triggered,
         &settings, &Settings::setAutoIndentation);
     connect(mUi->actionLineWrapping, &QAction::triggered,
@@ -192,7 +187,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto indentActionGroup = new QActionGroup(this);
     connect(indentActionGroup, &QActionGroup::triggered,
-        [this](QAction* action) { setTabSize(action->text().toInt()); });
+        [](QAction* a) { Singletons::settings().setTabSize(a->text().toInt()); });
     for (auto i = 1; i <= 8; i++) {
         auto action = new QAction(QString::number(i));
         mUi->menuTabSize->addAction(action);
@@ -201,9 +196,7 @@ MainWindow::MainWindow(QWidget *parent)
         action->setActionGroup(indentActionGroup);
     }
 
-    mUi->actionIndentWithSpaces->setChecked(settings.indentWithSpaces());
-    mUi->actionAutoIndentation->setChecked(settings.autoIndentation());
-    mUi->actionLineWrapping->setChecked(settings.lineWrap());
+    readSettings();
 
     if (!mEditorManager.hasCurrentEditor())
         newFile();
@@ -222,53 +215,31 @@ MainWindow::~MainWindow()
 
 void MainWindow::writeSettings()
 {
-    mSettings.beginGroup("General");
+    auto& settings = Singletons::settings();
     if (!isMaximized())
-        mSettings.setValue("geometry", saveGeometry());
-    mSettings.setValue("maximized", isMaximized());
-    mSettings.setValue("state", saveState());
-
-    auto& editorSettings = Singletons::settings();
-    mSettings.setValue("tabSize", editorSettings.tabSize());
-    mSettings.setValue("lineWrap", editorSettings.lineWrap());
-    mSettings.setValue("indentWithSpaces", editorSettings.indentWithSpaces());
-    mSettings.setValue("autoIndentation", editorSettings.autoIndentation());
-    mSettings.setValue("font", editorSettings.font().toString());
+        settings.setValue("geometry", saveGeometry());
+    settings.setValue("maximized", isMaximized());
+    settings.setValue("state", saveState());
 
     auto& fileDialog = Singletons::fileDialog();
-    mSettings.setValue("lastDirectory", fileDialog.directory().absolutePath());
-
-    mSettings.endGroup();
+    settings.setValue("lastDirectory", fileDialog.directory().absolutePath());
 }
 
 void MainWindow::readSettings()
 {
-    mSettings.beginGroup("General");
+    auto& settings = Singletons::settings();
     resize(800, 600);
-    restoreGeometry(mSettings.value("geometry").toByteArray());
-    if (mSettings.value("maximized").toBool())
+    restoreGeometry(settings.value("geometry").toByteArray());
+    if (settings.value("maximized").toBool())
         setWindowState(Qt::WindowMaximized);
-    restoreState(mSettings.value("state").toByteArray());
-
-    auto& editorSettings = Singletons::settings();
-    editorSettings.setTabSize(mSettings.value("tabSize", "4").toInt());
-    editorSettings.setLineWrap(mSettings.value("lineWrap", "false").toBool());
-    editorSettings.setIndentWithSpaces(
-        mSettings.value("indentWithSpaces", "false").toBool());
-    editorSettings.setAutoIndentation(
-        mSettings.value("autoIndentation", "true").toBool());
-
-    auto fontSettings = mSettings.value("font").toString();
-    if (!fontSettings.isEmpty()) {
-        auto font = QFont();
-        if (font.fromString(fontSettings))
-            editorSettings.setFont(font);
-    }
+    restoreState(settings.value("state").toByteArray());
 
     auto& fileDialog = Singletons::fileDialog();
-    fileDialog.setDirectory(mSettings.value("lastDirectory").toString());
+    fileDialog.setDirectory(settings.value("lastDirectory").toString());
 
-    mSettings.endGroup();
+    mUi->actionIndentWithSpaces->setChecked(settings.indentWithSpaces());
+    mUi->actionAutoIndentation->setChecked(settings.autoIndentation());
+    mUi->actionLineWrapping->setChecked(settings.lineWrap());
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -464,27 +435,6 @@ void MainWindow::openMessageDock()
     auto& messageWindow = Singletons::messageWindow();
     for (auto p = messageWindow.parentWidget(); p; p = p->parentWidget())
         p->setVisible(true);
-}
-
-void MainWindow::openPreferences()
-{
-}
-
-void MainWindow::selectFont()
-{
-    auto font = Singletons::settings().font();
-    QFontDialog dialog{ font };
-    connect(&dialog, &QFontDialog::currentFontChanged,
-        &Singletons::settings(),
-        &Settings::setFont);
-    if (dialog.exec() == QDialog::Accepted)
-        font = dialog.selectedFont();
-    Singletons::settings().setFont(font);
-}
-
-void MainWindow::setTabSize(int tabSize)
-{
-    Singletons::settings().setTabSize(tabSize);
 }
 
 void MainWindow::openDocumentation()
