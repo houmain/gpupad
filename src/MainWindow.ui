@@ -10,9 +10,6 @@
     <height>371</height>
    </rect>
   </property>
-  <property name="contextMenuPolicy">
-   <enum>Qt::NoContextMenu</enum>
-  </property>
   <property name="iconSize">
    <size>
     <width>16</width>
@@ -35,7 +32,7 @@
      <x>0</x>
      <y>0</y>
      <width>494</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -83,6 +80,7 @@
     <addaction name="actionSelectAll"/>
     <addaction name="separator"/>
     <addaction name="actionPreferences"/>
+    <addaction name="actionRename"/>
     <addaction name="actionFindReplace"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -109,15 +107,35 @@
      </property>
     </widget>
     <addaction name="actionSelectFont"/>
-    <addaction name="separator"/>
     <addaction name="actionLineWrapping"/>
     <addaction name="actionAutoIndentation"/>
     <addaction name="actionIndentWithSpaces"/>
     <addaction name="menuTabSize"/>
     <addaction name="separator"/>
    </widget>
+   <widget class="QMenu" name="menuSession">
+    <property name="title">
+     <string>&amp;Session</string>
+    </property>
+    <widget class="QMenu" name="menuEvaluation">
+     <property name="title">
+      <string>&amp;Evaluation</string>
+     </property>
+     <property name="icon">
+      <iconset resource="resources.qrc">
+       <normaloff>:/images/16x16/view-refresh.png</normaloff>:/images/16x16/view-refresh.png</iconset>
+     </property>
+     <addaction name="actionManualEval"/>
+     <addaction name="actionAutoEval"/>
+     <addaction name="actionSteadyEval"/>
+     <addaction name="separator"/>
+    </widget>
+    <addaction name="menuEvaluation"/>
+    <addaction name="separator"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuSession"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -149,6 +167,10 @@
    <addaction name="actionCopy"/>
    <addaction name="actionPaste"/>
    <addaction name="actionDelete"/>
+   <addaction name="separator"/>
+   <addaction name="actionManualEval"/>
+   <addaction name="actionAutoEval"/>
+   <addaction name="actionSteadyEval"/>
   </widget>
   <action name="actionOpen">
    <property name="icon">
@@ -407,6 +429,86 @@
    </property>
    <property name="text">
     <string>&amp;Find/Replace</string>
+   </property>
+  </action>
+  <action name="actionManualEval">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/16x16/media-playback-pause.png</normaloff>:/images/16x16/media-playback-pause.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Manual</string>
+   </property>
+   <property name="toolTip">
+    <string>Manual Evaluation</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
+  <action name="actionAutoEval">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/16x16/media-playback-start.png</normaloff>:/images/16x16/media-playback-start.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Automatic</string>
+   </property>
+   <property name="toolTip">
+    <string>Automatic Evaluation</string>
+   </property>
+   <property name="shortcut">
+    <string>F6</string>
+   </property>
+  </action>
+  <action name="actionSteadyEval">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/16x16/media-seek-forward.png</normaloff>:/images/16x16/media-seek-forward.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Steady</string>
+   </property>
+   <property name="toolTip">
+    <string>Steady Evaluation</string>
+   </property>
+   <property name="shortcut">
+    <string>F7</string>
+   </property>
+  </action>
+  <action name="actionSlowRefresh">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Slow</string>
+   </property>
+  </action>
+  <action name="actionMediumRefresh">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Medium</string>
+   </property>
+  </action>
+  <action name="actionFastRefresh">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Fast</string>
+   </property>
+  </action>
+  <action name="actionRename">
+   <property name="text">
+    <string>Rename...</string>
    </property>
   </action>
  </widget>

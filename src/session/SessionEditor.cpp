@@ -28,22 +28,12 @@ SessionEditor::SessionEditor(QWidget *parent)
     setAutoExpandDelay(750);
     setFileName({ });
 
-    mRenameAction = new QAction(tr("&Rename"), this);
-    mRenameAction->setShortcut(QKeySequence("F2"));
-
-    mActivateAction = new QAction(QIcon(":/images/16x16/system-run.png"),
-        tr("&Activate"), this);
-
     connect(&mModel.undoStack(), &QUndoStack::cleanChanged,
         [this](bool clean) { emit modificationChanged(!clean); });
     connect(this, &QTreeView::activated,
         this, &SessionEditor::treeItemActivated);
     connect(this, &QTreeView::customContextMenuRequested,
         this, &SessionEditor::openContextMenu);
-    connect(mActivateAction, &QAction::triggered,
-        this, &SessionEditor::activateCurrentItem);
-    connect(mRenameAction, &QAction::triggered,
-        this, &SessionEditor::renameCurrentItem);
 
     auto addAction = [&](auto &action, auto type) {
         action = new QAction(mModel.getTypeIcon(type),
@@ -66,46 +56,45 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddCallAction, ItemType::Call);
     addAction(mAddStateAction, ItemType::State);
     addAction(mAddScriptAction, ItemType::Script);
+
+    addItemActions(mContextMenu);
 }
 
-void SessionEditor::mouseReleaseEvent(QMouseEvent *event)
+void SessionEditor::addItemActions(QMenu* menu)
 {
-    QTreeView::mouseReleaseEvent(event);
-
-    // keep current selected
-    if (selectionModel()->selection().isEmpty() &&
-        currentIndex().isValid())
-        selectionModel()->select(
-            currentIndex(), QItemSelectionModel::Select);
+    menu->addAction(mAddColumnAction);
+    menu->addAction(mAddAttributeAction);
+    menu->addAction(mAddImageAction);
+    menu->addAction(mAddAttachmentAction);
+    menu->addAction(mAddShaderAction);
+    menu->addSeparator();
+    menu->addAction(mAddGroupAction);
+    menu->addAction(mAddBufferAction);
+    menu->addAction(mAddPrimitivesAction);
+    menu->addAction(mAddTextureAction);
+    menu->addAction(mAddSamplerAction);
+    menu->addAction(mAddFramebufferAction);
+    menu->addAction(mAddScriptAction);
+    menu->addAction(mAddBindingAction);
+    menu->addAction(mAddProgramAction);
+    menu->addAction(mAddStateAction);
+    menu->addAction(mAddCallAction);
 }
 
-void SessionEditor::selectionChanged(const QItemSelection &selected,
-                                     const QItemSelection &deselected)
+void SessionEditor::updateItemActions()
 {
-    // do not allow to select item with different parents
-    const auto parent = currentIndex().parent();
-    const auto selection = selectionModel()->selection();
-    auto invalid = QItemSelection();
-    foreach (QModelIndex index, selection.indexes())
-        if (index.parent() != parent)
-            invalid.select(index, index);
+    auto index = selectionModel()->currentIndex();
+    for (const auto &pair : {
+            std::make_pair(ItemType::Column, mAddColumnAction),
+            std::make_pair(ItemType::Image, mAddImageAction),
+            std::make_pair(ItemType::Shader, mAddShaderAction),
+            std::make_pair(ItemType::Attribute, mAddAttributeAction),
+            std::make_pair(ItemType::Attachment, mAddAttachmentAction),
+        })
+        pair.second->setVisible(mModel.canContainType(index, pair.first));
 
-    if (!invalid.empty())
-        selectionModel()->select(invalid, QItemSelectionModel::Deselect);
-    else
-        QTreeView::selectionChanged(selected, deselected);
-}
-
-void SessionEditor::focusInEvent(QFocusEvent *event)
-{
-    QTreeView::focusInEvent(event);
-    emit focusChanged(true);
-}
-
-void SessionEditor::focusOutEvent(QFocusEvent *event)
-{
-    QTreeView::focusOutEvent(event);
-    emit focusChanged(false);
+    // TODO: remove
+    mAddStateAction->setVisible(false);
 }
 
 QList<QMetaObject::Connection> SessionEditor::connectEditActions(
@@ -147,46 +136,70 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
         this, &SessionEditor::paste);
     c += connect(actions.delete_, &QAction::triggered,
         this, &SessionEditor::delete_);
+    c += connect(actions.rename, &QAction::triggered,
+        this, &SessionEditor::renameCurrentItem);
 
     auto updateEditActions = [this, actions]() {
         actions.cut->setEnabled(hasFocus() && currentIndex().isValid());
         actions.copy->setEnabled(hasFocus() && currentIndex().isValid());
         actions.delete_->setEnabled(hasFocus() && currentIndex().isValid());
         actions.paste->setEnabled(hasFocus() && canPaste());
+        actions.rename->setEnabled(hasFocus() && currentIndex().isValid());
     };
     c += connect(selectionModel(), &QItemSelectionModel::currentChanged,
         updateEditActions);
     c += connect(this, &SessionEditor::focusChanged, updateEditActions);
 
-    mContextMenu->clear();
-    mContextMenu->addAction(actions.undo);
-    mContextMenu->addAction(actions.redo);
-    mContextMenu->addSeparator();
-    mContextMenu->addAction(actions.cut);
-    mContextMenu->addAction(actions.copy);
-    mContextMenu->addAction(actions.paste);
-    mContextMenu->addAction(actions.delete_);
-    mContextMenu->addSeparator();
-    mContextMenu->addAction(mRenameAction);
-    mContextMenu->addAction(mActivateAction);
-    mContextMenu->addSeparator();
-    mContextMenu->addAction(mAddGroupAction);
-    mContextMenu->addAction(mAddBufferAction);
-    mContextMenu->addAction(mAddColumnAction);
-    mContextMenu->addAction(mAddPrimitivesAction);
-    mContextMenu->addAction(mAddAttributeAction);
-    mContextMenu->addAction(mAddTextureAction);
-    mContextMenu->addAction(mAddImageAction);
-    mContextMenu->addAction(mAddSamplerAction);
-    mContextMenu->addAction(mAddFramebufferAction);
-    mContextMenu->addAction(mAddAttachmentAction);
-    mContextMenu->addAction(mAddScriptAction);
-    mContextMenu->addAction(mAddBindingAction);
-    mContextMenu->addAction(mAddProgramAction);
-    mContextMenu->addAction(mAddShaderAction);
-    mContextMenu->addAction(mAddStateAction);
-    mContextMenu->addAction(mAddCallAction);
+    auto pos = mContextMenu->actions().first();
+    if (pos != actions.undo) {
+        mContextMenu->insertAction(pos, actions.undo);
+        mContextMenu->insertAction(pos, actions.redo);
+        mContextMenu->insertSeparator(pos);
+        mContextMenu->insertActions(pos, {
+            actions.cut, actions.copy, actions.paste, actions.delete_ });
+        mContextMenu->insertSeparator(pos);
+    }
     return c;
+}
+
+void SessionEditor::mouseReleaseEvent(QMouseEvent *event)
+{
+    QTreeView::mouseReleaseEvent(event);
+
+    // keep current selected
+    if (selectionModel()->selection().isEmpty() &&
+        currentIndex().isValid())
+        selectionModel()->select(
+            currentIndex(), QItemSelectionModel::Select);
+}
+
+void SessionEditor::selectionChanged(const QItemSelection &selected,
+                                     const QItemSelection &deselected)
+{
+    // do not allow to select item with different parents
+    const auto parent = currentIndex().parent();
+    const auto selection = selectionModel()->selection();
+    auto invalid = QItemSelection();
+    foreach (QModelIndex index, selection.indexes())
+        if (index.parent() != parent)
+            invalid.select(index, index);
+
+    if (!invalid.empty())
+        selectionModel()->select(invalid, QItemSelectionModel::Deselect);
+    else
+        QTreeView::selectionChanged(selected, deselected);
+}
+
+void SessionEditor::focusInEvent(QFocusEvent *event)
+{
+    QTreeView::focusInEvent(event);
+    emit focusChanged(true);
+}
+
+void SessionEditor::focusOutEvent(QFocusEvent *event)
+{
+    QTreeView::focusOutEvent(event);
+    emit focusChanged(false);
 }
 
 bool SessionEditor::isModified() const
@@ -281,29 +294,7 @@ void SessionEditor::openContextMenu(const QPoint &pos)
     if (!indexAt(pos).isValid())
         setCurrentIndex({ });
 
-    auto index = selectionModel()->currentIndex();
-    for (const auto &pair : {
-        std::make_pair(ItemType::Group, mAddGroupAction),
-        std::make_pair(ItemType::Buffer, mAddBufferAction),
-        std::make_pair(ItemType::Column, mAddColumnAction),
-        std::make_pair(ItemType::Texture, mAddTextureAction),
-        std::make_pair(ItemType::Image, mAddImageAction),
-        std::make_pair(ItemType::Sampler, mAddSamplerAction),
-        std::make_pair(ItemType::Program, mAddProgramAction),
-        std::make_pair(ItemType::Shader, mAddShaderAction),
-        std::make_pair(ItemType::Binding, mAddBindingAction),
-        std::make_pair(ItemType::Primitives, mAddPrimitivesAction),
-        std::make_pair(ItemType::Attribute, mAddAttributeAction),
-        std::make_pair(ItemType::Framebuffer, mAddFramebufferAction),
-        std::make_pair(ItemType::Attachment, mAddAttachmentAction),
-        std::make_pair(ItemType::Call, mAddCallAction),
-        std::make_pair(ItemType::State, mAddStateAction),
-        std::make_pair(ItemType::Script, mAddScriptAction),
-    })
-    pair.second->setVisible(mModel.canContainType(index, pair.first));
-
-    mRenameAction->setEnabled(index.isValid());
-    mActivateAction->setVisible(mModel.getItemType(index) == ItemType::Call);
+    updateItemActions();
 
     mContextMenu->popup(mapToGlobal(pos));
 }
@@ -334,9 +325,4 @@ void SessionEditor::treeItemActivated(const QModelIndex &index)
 void SessionEditor::renameCurrentItem()
 {
     edit(currentIndex());
-}
-
-void SessionEditor::activateCurrentItem()
-{
-    emit itemActivated(currentIndex());
 }

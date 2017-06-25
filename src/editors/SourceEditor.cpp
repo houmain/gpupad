@@ -1,6 +1,6 @@
 #include "SourceEditor.h"
 #include "Singletons.h"
-#include "SourceEditorSettings.h"
+#include "Settings.h"
 #include "FindReplaceBar.h"
 #include <QSyntaxHighlighter>
 #include <QCompleter>
@@ -55,22 +55,22 @@ SourceEditor::SourceEditor(QString fileName, QWidget *parent)
 
     mLineNumberColor = palette().window().color().darker(150);
 
-    auto& settings = Singletons::sourceEditorSettings();
+    auto& settings = Singletons::settings();
     setFont(settings.font());
     setTabSize(settings.tabSize());
     setLineWrap(settings.lineWrap());
     setAutoIndentation(settings.autoIndentation());
     setIndentWithSpaces(settings.indentWithSpaces());
 
-    connect(&settings, &SourceEditorSettings::tabSizeChanged,
+    connect(&settings, &Settings::tabSizeChanged,
         this, &SourceEditor::setTabSize);
-    connect(&settings, &SourceEditorSettings::fontChanged,
+    connect(&settings, &Settings::fontChanged,
         this, &SourceEditor::setFont);
-    connect(&settings, &SourceEditorSettings::lineWrapChanged,
+    connect(&settings, &Settings::lineWrapChanged,
         this, &SourceEditor::setLineWrap);
-    connect(&settings, &SourceEditorSettings::autoIndentationChanged,
+    connect(&settings, &Settings::autoIndentationChanged,
         this, &SourceEditor::setAutoIndentation);
-    connect(&settings, &SourceEditorSettings::indentWithSpacesChanged,
+    connect(&settings, &Settings::indentWithSpacesChanged,
         this, &SourceEditor::setIndentWithSpaces);
 
     updateViewportMargins();
@@ -417,7 +417,7 @@ void SourceEditor::wheelEvent(QWheelEvent *event)
     if (event->modifiers() == Qt::ControlModifier) {
         auto font = this->font();
         font.setPointSize(font.pointSize() + (event->delta() > 0 ? 1 : -1));
-        Singletons::sourceEditorSettings().setFont(font);
+        Singletons::settings().setFont(font);
         return;
     }
     QPlainTextEdit::wheelEvent(event);

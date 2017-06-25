@@ -36,6 +36,7 @@ struct Item
     QList<Item*> items;
     QString name{ };
     bool inlineScope{ };
+    bool checked{ true };
 };
 
 struct FileItem : Item

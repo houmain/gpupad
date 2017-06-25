@@ -94,8 +94,8 @@ public:
     QString getTypeName(ItemType type) const;
     bool canContainType(const QModelIndex &index, ItemType type) const;
 
-    QModelIndex insertItem(ItemType type,
-        const QModelIndex &parent, int row = -1, ItemId id = 0);
+    QModelIndex insertItem(ItemType type, QModelIndex parent,
+        int row = -1, ItemId id = 0);
     void deleteItem(const QModelIndex &index);
     QModelIndex index(const Item *item, int column = 0) const;
     ItemId getItemId(const QModelIndex &index) const;

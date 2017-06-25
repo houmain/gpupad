@@ -5,7 +5,7 @@
 
 class QMainWindow;
 class MessageWindow;
-class SourceEditorSettings;
+class Settings;
 class FileCache;
 class FileDialog;
 class EditorManager;
@@ -19,7 +19,7 @@ class Singletons
 public:
     static Renderer &renderer();
     static MessageWindow &messageWindow();
-    static SourceEditorSettings &sourceEditorSettings();
+    static Settings &settings();
     static FileCache& fileCache();
     static FileDialog &fileDialog();
     static EditorManager &editorManager();
@@ -35,7 +35,7 @@ private:
 
     QScopedPointer<Renderer> mRenderer;
     QScopedPointer<MessageWindow> mMessageWindow;
-    QScopedPointer<SourceEditorSettings> mSourceEditorSettings;
+    QScopedPointer<Settings> mSettings;
     QScopedPointer<FileCache> mFileCache;
     QScopedPointer<FileDialog> mFileDialog;
     QScopedPointer<EditorManager> mEditorManager;

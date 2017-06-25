@@ -13,6 +13,7 @@ struct EditActions
     QAction *paste;
     QAction *delete_;
     QAction *selectAll;
+    QAction *rename;
     QAction *findReplace;
 };
 

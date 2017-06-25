@@ -1,14 +1,14 @@
-#ifndef SOURCEEDITORSETTINGS_H
-#define SOURCEEDITORSETTINGS_H
+#ifndef SETTINGS_H
+#define SETTINGS_H
 
 #include <QObject>
 #include <QFont>
 
-class SourceEditorSettings : public QObject
+class Settings : public QObject
 {
     Q_OBJECT
 public:
-    explicit SourceEditorSettings(QObject *parent = 0);
+    explicit Settings(QObject *parent = 0);
 
     void setTabSize(int tabSize);
     int tabSize() const { return mTabSize; }
@@ -36,4 +36,4 @@ private:
     bool mAutoIndentation{ true };
 };
 
-#endif // SOURCEEDITORSETTINGS_H
+#endif // SETTINGS_H

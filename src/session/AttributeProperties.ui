@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>220</width>
-    <height>116</height>
+    <height>125</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -93,6 +93,12 @@
    <header>session/ReferenceComboBox.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>buffer</tabstop>
+  <tabstop>column</tabstop>
+  <tabstop>divisor</tabstop>
+  <tabstop>normalize</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -274,7 +274,8 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
     if (role != Qt::DisplayRole &&
         role != Qt::EditRole &&
         role != Qt::FontRole &&
-        role != Qt::ForegroundRole)
+        role != Qt::ForegroundRole &&
+        role != Qt::CheckStateRole)
         return { };
 
     const auto &item = getItem(index);
@@ -287,6 +288,21 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
     if (role == Qt::ForegroundRole)
         return (mActiveItemIds.contains(item.id) ?
             mActiveColor : QVariant());
+
+    if (role == Qt::CheckStateRole) {
+        auto checked = false;
+        switch (item.itemType) {
+            case ItemType::Group:
+                checked = static_cast<const Group&>(item).checked;
+                break;
+            case ItemType::Call:
+                checked = static_cast<const Call&>(item).checked;
+                break;
+            default:
+                return { };
+        }
+        return (checked ? Qt::Checked : Qt::Unchecked);
+    }
 
     switch (static_cast<ColumnType>(index.column())) {
         case ColumnType::Name: return item.name;
@@ -357,10 +373,28 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
 bool SessionModel::setData(const QModelIndex &index,
     const QVariant &value, int role)
 {
-    if (role != Qt::EditRole)
+    if (role != Qt::EditRole &&
+        role != Qt::CheckStateRole)
         return false;
 
     auto &item = getItem(index);
+
+    if (role == Qt::CheckStateRole) {
+        auto checked = (value == Qt::Checked);
+        switch (item.itemType) {
+            case ItemType::Group:
+                undoableAssignment(index,
+                    &static_cast<Group&>(item).checked, checked);
+                return true;
+            case ItemType::Call:
+                undoableAssignment(index,
+                    &static_cast<Call&>(item).checked, checked);
+                return true;
+            default:
+                return false;
+        }
+    }
+
     switch (static_cast<ColumnType>(index.column())) {
         case ColumnType::Name:
             undoableAssignment(index, &item.name, value.toString());
@@ -447,6 +481,7 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     flags |= Qt::ItemIsEnabled;
     flags |= Qt::ItemIsEditable;
     flags |= Qt::ItemIsDragEnabled;
+    flags |= Qt::ItemIsUserCheckable;
     switch (type) {
         case ItemType::Group:
         case ItemType::Buffer:
@@ -493,10 +528,17 @@ void SessionModel::insertItem(Item *item, const QModelIndex &parent, int row)
         undoableInsertItem(&parentItem.items, item, parent, row);
 }
 
-QModelIndex SessionModel::insertItem(ItemType type, const QModelIndex &parent,
+QModelIndex SessionModel::insertItem(ItemType type, QModelIndex parent,
     int row, ItemId id)
 {
-    Q_ASSERT(canContainType(parent, type));
+    // insert as sibling, when parent cannot contain an item of type
+    while (!canContainType(parent, type)) {
+        if (!parent.isValid())
+            return { };
+        row = parent.row() + 1;
+        parent = parent.parent();
+    }
+
     auto insert = [&](auto item) {
         item->itemType = type;
         item->name = getTypeName(type);
@@ -892,6 +934,7 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
     switch (item.itemType) {
         case ItemType::Group: {
             const auto &group = static_cast<const Group&>(item);
+            writeBool("checked", group.checked);
             writeBool("inlineScope", group.inlineScope);
             break;
         }
@@ -1010,6 +1053,7 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
 
         case ItemType::Call: {
             const auto &call = static_cast<const Call&>(item);
+            writeBool("checked", call.checked);
             write("type", call.type);
             writeRef("programId", call.programId);
             if (call.type == Call::Draw) {
@@ -1109,6 +1153,7 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
     switch (item.itemType) {
         case ItemType::Group: {
             auto &group = static_cast<Group&>(item);
+            readBool("checked", group.checked);
             readBool("inlineScope", group.inlineScope);
             break;
         }
@@ -1221,6 +1266,7 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
 
         case ItemType::Call: {
             auto &call = static_cast<Call&>(item);
+            readBool("checked", call.checked);
             readEnum("type", call.type);
             readRef("programId", call.programId);
             readRef("primitivesId", call.primitivesId);

@@ -4,10 +4,10 @@
 #include "session/SessionProperties.h"
 #include "Singletons.h"
 #include "MessageWindow.h"
+#include "Settings.h"
 #include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
 #include "editors/FindReplaceBar.h"
-#include "editors/SourceEditorSettings.h"
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QDockWidget>
@@ -53,8 +53,6 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowIcon(icon);
     setContentsMargins(2, 0, 2, 0);
 
-    mUi->menuView->addAction(mUi->mainToolBar->toggleViewAction());
-
     takeCentralWidget();
 
     auto content = new QWidget(this);
@@ -85,6 +83,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setWidget(splitter);
     mUi->menuView->addAction(dock->toggleViewAction());
     addDockWidget(Qt::LeftDockWidgetArea, dock);
+    mSessionEditor->addItemActions(mUi->menuSession);
 
     dock = new QDockWidget(tr("Messages"), this);
     dock->setObjectName("Messages");
@@ -93,6 +92,8 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setWidget(&Singletons::messageWindow());
     mUi->menuView->addAction(dock->toggleViewAction());
     addDockWidget(Qt::RightDockWidgetArea, dock);
+
+    mUi->menuView->addAction(mUi->mainToolBar->toggleViewAction());
 
     mUi->actionQuit->setShortcuts(QKeySequence::Quit);
     mUi->actionNew->setShortcuts(QKeySequence::New);
@@ -108,7 +109,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->actionDelete->setShortcuts(QKeySequence::Delete);
     mUi->actionSelectAll->setShortcuts(QKeySequence::SelectAll);
     mUi->actionDocumentation->setShortcuts(QKeySequence::HelpContents);
-    mUi->actionReload->setShortcuts(QKeySequence::Refresh);
+    mUi->actionRename->setShortcut(QKeySequence("F2"));
     mUi->actionFindReplace->setShortcuts(QKeySequence::Find);
 
     auto windowFileName = new QAction(this);
@@ -121,6 +122,7 @@ MainWindow::MainWindow(QWidget *parent)
         mUi->actionPaste,
         mUi->actionDelete,
         mUi->actionSelectAll,
+        mUi->actionRename,
         mUi->actionFindReplace
     };
 
@@ -156,6 +158,8 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::updateCurrentEditor);
     connect(mSessionEditor->selectionModel(), &QItemSelectionModel::currentChanged,
         mSessionProperties.data(), &SessionProperties::setCurrentModelIndex);
+    connect(mUi->menuSession, &QMenu::aboutToShow,
+        mSessionEditor.data(), &SessionEditor::updateItemActions);
 
     auto& messageWindow = Singletons::messageWindow();
     auto& synchronizeLogic = Singletons::synchronizeLogic();
@@ -172,15 +176,20 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&messageWindow, &MessageWindow::messageActivated,
         &synchronizeLogic, &SynchronizeLogic::handleMessageActivated);
 
-    auto& sourceEditorSettings = Singletons::sourceEditorSettings();
+    auto& settings = Singletons::settings();
     connect(mUi->actionSelectFont, &QAction::triggered,
         this, &MainWindow::selectFont);
     connect(mUi->actionAutoIndentation, &QAction::triggered,
-        &sourceEditorSettings, &SourceEditorSettings::setAutoIndentation);
+        &settings, &Settings::setAutoIndentation);
     connect(mUi->actionLineWrapping, &QAction::triggered,
-        &sourceEditorSettings, &SourceEditorSettings::setLineWrap);
+        &settings, &Settings::setLineWrap);
     connect(mUi->actionIndentWithSpaces, &QAction::triggered,
-        &sourceEditorSettings, &SourceEditorSettings::setIndentWithSpaces);
+        &settings, &Settings::setIndentWithSpaces);
+
+    auto evalModeActionGroup = new QActionGroup(this);
+    mUi->actionAutoEval->setActionGroup(evalModeActionGroup);
+    mUi->actionSteadyEval->setActionGroup(evalModeActionGroup);
+
     auto indentActionGroup = new QActionGroup(this);
     connect(indentActionGroup, &QActionGroup::triggered,
         [this](QAction* action) { setTabSize(action->text().toInt()); });
@@ -188,13 +197,13 @@ MainWindow::MainWindow(QWidget *parent)
         auto action = new QAction(QString::number(i));
         mUi->menuTabSize->addAction(action);
         action->setCheckable(true);
-        action->setChecked(i == sourceEditorSettings.tabSize());
+        action->setChecked(i == settings.tabSize());
         action->setActionGroup(indentActionGroup);
     }
 
-    mUi->actionIndentWithSpaces->setChecked(sourceEditorSettings.indentWithSpaces());
-    mUi->actionAutoIndentation->setChecked(sourceEditorSettings.autoIndentation());
-    mUi->actionLineWrapping->setChecked(sourceEditorSettings.lineWrap());
+    mUi->actionIndentWithSpaces->setChecked(settings.indentWithSpaces());
+    mUi->actionAutoIndentation->setChecked(settings.autoIndentation());
+    mUi->actionLineWrapping->setChecked(settings.lineWrap());
 
     if (!mEditorManager.hasCurrentEditor())
         newFile();
@@ -219,7 +228,7 @@ void MainWindow::writeSettings()
     mSettings.setValue("maximized", isMaximized());
     mSettings.setValue("state", saveState());
 
-    auto& editorSettings = Singletons::sourceEditorSettings();
+    auto& editorSettings = Singletons::settings();
     mSettings.setValue("tabSize", editorSettings.tabSize());
     mSettings.setValue("lineWrap", editorSettings.lineWrap());
     mSettings.setValue("indentWithSpaces", editorSettings.indentWithSpaces());
@@ -241,7 +250,7 @@ void MainWindow::readSettings()
         setWindowState(Qt::WindowMaximized);
     restoreState(mSettings.value("state").toByteArray());
 
-    auto& editorSettings = Singletons::sourceEditorSettings();
+    auto& editorSettings = Singletons::settings();
     editorSettings.setTabSize(mSettings.value("tabSize", "4").toInt());
     editorSettings.setLineWrap(mSettings.value("lineWrap", "false").toBool());
     editorSettings.setIndentWithSpaces(
@@ -288,7 +297,7 @@ void MainWindow::disconnectEditActions()
     auto actions = {
         mEditActions.undo, mEditActions.redo, mEditActions.cut,
         mEditActions.copy, mEditActions.paste, mEditActions.delete_,
-        mEditActions.selectAll, mEditActions.findReplace
+        mEditActions.selectAll, mEditActions.rename, mEditActions.findReplace
     };
     for (auto action : actions)
         action->setEnabled(false);
@@ -463,19 +472,19 @@ void MainWindow::openPreferences()
 
 void MainWindow::selectFont()
 {
-    auto font = Singletons::sourceEditorSettings().font();
+    auto font = Singletons::settings().font();
     QFontDialog dialog{ font };
     connect(&dialog, &QFontDialog::currentFontChanged,
-        &Singletons::sourceEditorSettings(),
-        &SourceEditorSettings::setFont);
+        &Singletons::settings(),
+        &Settings::setFont);
     if (dialog.exec() == QDialog::Accepted)
         font = dialog.selectedFont();
-    Singletons::sourceEditorSettings().setFont(font);
+    Singletons::settings().setFont(font);
 }
 
 void MainWindow::setTabSize(int tabSize)
 {
-    Singletons::sourceEditorSettings().setTabSize(tabSize);
+    Singletons::settings().setTabSize(tabSize);
 }
 
 void MainWindow::openDocumentation()

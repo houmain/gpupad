@@ -14,6 +14,8 @@ class SessionEditor : public QTreeView
 public:
     explicit SessionEditor(QWidget *parent = 0);
 
+    void addItemActions(QMenu* menu);
+    void updateItemActions();
     QList<QMetaObject::Connection> connectEditActions(
         const EditActions &actions, bool focused);
     QString fileName() const { return mFileName; }
@@ -45,7 +47,6 @@ private slots:
     void addItem(ItemType type);
     void treeItemActivated(const QModelIndex &index);
     void renameCurrentItem();
-    void activateCurrentItem();
 
 private:
     bool canPaste() const;
@@ -54,7 +55,6 @@ private:
     QMenu *mContextMenu{ };
     QString mFileName;
     QAction *mRenameAction{ };
-    QAction *mActivateAction{ };
     QAction *mAddGroupAction{ };
     QAction *mAddBufferAction{ };
     QAction *mAddColumnAction{ };

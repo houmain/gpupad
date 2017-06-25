@@ -3,7 +3,7 @@
 #include "FileCache.h"
 #include "FileDialog.h"
 #include "SynchronizeLogic.h"
-#include "editors/SourceEditorSettings.h"
+#include "Settings.h"
 #include "editors/EditorManager.h"
 #include "editors/FindReplaceBar.h"
 #include "session/SessionModel.h"
@@ -21,9 +21,9 @@ MessageWindow &Singletons::messageWindow()
     return *sInstance->mMessageWindow;
 }
 
-SourceEditorSettings &Singletons::sourceEditorSettings()
+Settings &Singletons::settings()
 {
-    return *sInstance->mSourceEditorSettings;
+    return *sInstance->mSettings;
 }
 
 FileCache &Singletons::fileCache()
@@ -61,7 +61,7 @@ Singletons::Singletons(QMainWindow *window)
     sInstance = this;
     mRenderer.reset(new Renderer());
     mMessageWindow.reset(new MessageWindow());
-    mSourceEditorSettings.reset(new SourceEditorSettings());
+    mSettings.reset(new Settings());
     mFileCache.reset(new FileCache());
     mFileDialog.reset(new FileDialog(window));
     mEditorManager.reset(new EditorManager());

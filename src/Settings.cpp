@@ -1,36 +1,36 @@
-#include "SourceEditorSettings.h"
+#include "Settings.h"
 #include <QFontDatabase>
 
-SourceEditorSettings::SourceEditorSettings(QObject *parent) : QObject(parent)
+Settings::Settings(QObject *parent) : QObject(parent)
 {
     mFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
 }
 
-void SourceEditorSettings::setTabSize(int tabSize)
+void Settings::setTabSize(int tabSize)
 {
     mTabSize = tabSize;
     emit tabSizeChanged(tabSize);
 }
 
-void SourceEditorSettings::setFont(const QFont &font)
+void Settings::setFont(const QFont &font)
 {
     mFont = font;
     emit fontChanged(font);
 }
 
-void SourceEditorSettings::setLineWrap(bool enabled)
+void Settings::setLineWrap(bool enabled)
 {
     mLineWrap = enabled;
     emit lineWrapChanged(enabled);
 }
 
-void SourceEditorSettings::setIndentWithSpaces(bool enabled)
+void Settings::setIndentWithSpaces(bool enabled)
 {
     mIndentWithSpaces = enabled;
     emit indentWithSpacesChanged(enabled);
 }
 
-void SourceEditorSettings::setAutoIndentation(bool enabled)
+void Settings::setAutoIndentation(bool enabled)
 {
     mAutoIndentation = enabled;
     emit autoIndentationChanged(enabled);
