@@ -71,15 +71,15 @@ MainWindow::MainWindow(QWidget *parent)
     dock->toggleViewAction()->setVisible(false);
     addDockWidget(Qt::RightDockWidgetArea, dock);
 
-    auto splitter = new AutoOrientationSplitter(this);
-    splitter->addWidget(mSessionEditor.data());
-    splitter->addWidget(mSessionProperties.data());
+    mSessionSplitter = new AutoOrientationSplitter(this);
+    mSessionSplitter->addWidget(mSessionEditor.data());
+    mSessionSplitter->addWidget(mSessionProperties.data());
 
     dock = new QDockWidget(tr("Session"), this);
     dock->setObjectName("Session");
     dock->setFeatures(QDockWidget::DockWidgetClosable |
                       QDockWidget::DockWidgetMovable);
-    dock->setWidget(splitter);
+    dock->setWidget(mSessionSplitter);
     mUi->menuView->addAction(dock->toggleViewAction());
     addDockWidget(Qt::LeftDockWidgetArea, dock);
     mSessionEditor->addItemActions(mUi->menuSession);
@@ -220,6 +220,7 @@ void MainWindow::writeSettings()
         settings.setValue("geometry", saveGeometry());
     settings.setValue("maximized", isMaximized());
     settings.setValue("state", saveState());
+    settings.setValue("sessionSplitter", mSessionSplitter->saveState());
 
     auto& fileDialog = Singletons::fileDialog();
     settings.setValue("lastDirectory", fileDialog.directory().absolutePath());
@@ -233,6 +234,7 @@ void MainWindow::readSettings()
     if (settings.value("maximized").toBool())
         setWindowState(Qt::WindowMaximized);
     restoreState(settings.value("state").toByteArray());
+    mSessionSplitter->restoreState(settings.value("sessionSplitter").toByteArray());
 
     auto& fileDialog = Singletons::fileDialog();
     fileDialog.setDirectory(settings.value("lastDirectory").toString());

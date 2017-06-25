@@ -8,6 +8,7 @@ namespace Ui {
 class MainWindow;
 }
 
+class QSplitter;
 class Singletons;
 class EditorManager;
 class SessionEditor;
@@ -51,6 +52,7 @@ private:
     bool closeSession();
 
     Ui::MainWindow *mUi{ };
+    QSplitter *mSessionSplitter{ };
     EditActions mEditActions;
     QScopedPointer<Singletons> mSingletons;
     QScopedPointer<SessionEditor> mSessionEditor;

@@ -108,8 +108,6 @@ Project {
           "src/render/Renderer.h",
           "src/render/ScriptEngine.cpp",
           "src/render/ScriptEngine.h",
-          "src/render/ShaderCompiler.cpp",
-          "src/render/ShaderCompiler.h",
           "src/session/AttachmentProperties.ui",
           "src/session/AttributeProperties.ui",
           "src/session/BindingProperties.cpp",
