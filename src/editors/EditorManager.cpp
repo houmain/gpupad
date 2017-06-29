@@ -40,23 +40,16 @@ int EditorManager::openNotSavedDialog(const QString& fileName)
     return dialog.exec();
 }
 
-bool EditorManager::updateCurrentEditor()
+void EditorManager::updateCurrentEditor()
 {
     mCurrentDock = nullptr;
-
     auto focus = qApp->focusWidget();
     foreach (QDockWidget* dock, mDocks.keys()) {
         if (dock->isAncestorOf(focus)) {
             mCurrentDock = dock;
-            break;
+            return;
         }
     }
-
-    if (mCurrentDock != mPrevCurrentDock) {
-        mPrevCurrentDock = mCurrentDock;
-        return true;
-    }
-    return false;
 }
 
 QString EditorManager::currentEditorFileName()

@@ -262,9 +262,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::updateCurrentEditor()
 {
-    if (!mEditorManager.updateCurrentEditor())
-        return;
-
+    mEditorManager.updateCurrentEditor();
     disconnectEditActions();
     connectEditActions();
 }

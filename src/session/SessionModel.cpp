@@ -23,7 +23,6 @@ namespace {
     const auto FramebufferTag = QStringLiteral("framebuffer");
     const auto AttachmentTag = QStringLiteral("attachment");
     const auto CallTag = QStringLiteral("call");
-    const auto StateTag = QStringLiteral("state");
     const auto ScriptTag = QStringLiteral("script");
 
     const QString &tagNameByType(ItemType type)
@@ -43,7 +42,6 @@ namespace {
             case ItemType::Framebuffer: return FramebufferTag;
             case ItemType::Attachment: return AttachmentTag;
             case ItemType::Call: return CallTag;
-            case ItemType::State: return StateTag;
             case ItemType::Script: return ScriptTag;
         }
         static const QString sEmpty;
@@ -66,7 +64,6 @@ namespace {
         if (tag == FramebufferTag) return ItemType::Framebuffer;
         if (tag == AttachmentTag) return ItemType::Attachment;
         if (tag == CallTag) return ItemType::Call;
-        if (tag == StateTag) return ItemType::State;
         if (tag == ScriptTag) return ItemType::Script;
         return { };
     }
@@ -152,7 +149,6 @@ SessionModel::SessionModel(QObject *parent)
     mTypeIcons[ItemType::Framebuffer].addFile(QStringLiteral(":/images/16x16/image-missing.png"));
     mTypeIcons[ItemType::Attachment].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[ItemType::Call].addFile(QStringLiteral(":/images/16x16/dialog-information.png"));
-    mTypeIcons[ItemType::State].addFile(QStringLiteral(":/images/16x16/application-x-addon.png"));
     mTypeIcons[ItemType::Script].addFile(QStringLiteral(":/images/16x16/font.png"));
 
     mActiveColor = QColor::fromRgb(0, 32, 255);
@@ -188,7 +184,6 @@ QString SessionModel::getTypeName(ItemType type) const
         case ItemType::Framebuffer: return tr("Framebuffer");
         case ItemType::Attachment: return tr("Attachment");
         case ItemType::Call: return tr("Call");
-        case ItemType::State: return tr("State");
         case ItemType::Script: return tr("Script");
     }
     return "";
@@ -212,7 +207,6 @@ bool SessionModel::canContainType(const QModelIndex &index, ItemType type) const
                 ItemType::Primitives,
                 ItemType::Framebuffer,
                 ItemType::Call,
-                //ItemType::State,
                 ItemType::Script,
             });
 
@@ -268,8 +262,10 @@ int SessionModel::columnCount(const QModelIndex &parent) const
 
 QVariant SessionModel::data(const QModelIndex &index, int role) const
 {
-    if (role == Qt::DecorationRole)
-        return getTypeIcon(getItemType(index));
+    if (role == Qt::DecorationRole) {
+        auto type = getItemType(index);
+        return (type != ItemType::Call ? getTypeIcon(type) : QVariant());
+    }
 
     if (role != Qt::DisplayRole &&
         role != Qt::EditRole &&
@@ -292,9 +288,6 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
     if (role == Qt::CheckStateRole) {
         auto checked = false;
         switch (item.itemType) {
-            case ItemType::Group:
-                checked = static_cast<const Group&>(item).checked;
-                break;
             case ItemType::Call:
                 checked = static_cast<const Call&>(item).checked;
                 break;
@@ -364,7 +357,6 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(CallNumGroupsX, Call, numGroupsX)
         ADD(CallNumGroupsY, Call, numGroupsY)
         ADD(CallNumGroupsZ, Call, numGroupsZ)
-        ADD(StateType, State, type)
 #undef ADD
     }
     return { };
@@ -382,10 +374,6 @@ bool SessionModel::setData(const QModelIndex &index,
     if (role == Qt::CheckStateRole) {
         auto checked = (value == Qt::Checked);
         switch (item.itemType) {
-            case ItemType::Group:
-                undoableAssignment(index,
-                    &static_cast<Group&>(item).checked, checked);
-                return true;
             case ItemType::Call:
                 undoableAssignment(index,
                     &static_cast<Call&>(item).checked, checked);
@@ -466,7 +454,6 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(CallNumGroupsX, Call, numGroupsX, toInt)
         ADD(CallNumGroupsY, Call, numGroupsY, toInt)
         ADD(CallNumGroupsZ, Call, numGroupsZ, toInt)
-        ADD(StateType, State, type, toInt)
 #undef ADD
     }
     return false;
@@ -562,7 +549,6 @@ QModelIndex SessionModel::insertItem(ItemType type, QModelIndex parent,
         case ItemType::Framebuffer: return insert(new Framebuffer());
         case ItemType::Attachment: return insert(new Attachment());
         case ItemType::Call: return insert(new Call());
-        case ItemType::State: return insert(new State());
         case ItemType::Script: return insert(new Script());
     }
     return { };
@@ -934,7 +920,6 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
     switch (item.itemType) {
         case ItemType::Group: {
             const auto &group = static_cast<const Group&>(item);
-            writeBool("checked", group.checked);
             writeBool("inlineScope", group.inlineScope);
             break;
         }
@@ -1071,12 +1056,6 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
             break;
         }
 
-        case ItemType::State: {
-            const auto &state = static_cast<const State&>(item);
-            write("type", state.type);
-            break;
-        }
-
         case ItemType::Script: {
             const auto &script = static_cast<const Script&>(item);
             writeFileName("fileName", script.fileName);
@@ -1153,7 +1132,6 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
     switch (item.itemType) {
         case ItemType::Group: {
             auto &group = static_cast<Group&>(item);
-            readBool("checked", group.checked);
             readBool("inlineScope", group.inlineScope);
             break;
         }
@@ -1274,12 +1252,6 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             read("numGroupsX", call.numGroupsX);
             read("numGroupsY", call.numGroupsY);
             read("numGroupsZ", call.numGroupsZ);
-            break;
-        }
-
-        case ItemType::State: {
-            auto &state = static_cast<State&>(item);
-            readEnum("type", state.type);
             break;
         }
 

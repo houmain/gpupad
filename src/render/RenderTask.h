@@ -14,7 +14,7 @@ public:
     explicit RenderTask(QObject *parent = nullptr);
     virtual ~RenderTask();
 
-    virtual QSet<ItemId> usedItems() const { return {}; }
+    virtual QSet<ItemId> usedItems() const = 0;
 
     void update();
 

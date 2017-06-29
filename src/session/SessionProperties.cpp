@@ -13,7 +13,6 @@
 #include "ui_FramebufferProperties.h"
 #include "ui_AttachmentProperties.h"
 #include "ui_CallProperties.h"
-#include "ui_StateProperties.h"
 #include "ui_ScriptProperties.h"
 #include "editors/EditorManager.h"
 #include "Singletons.h"
@@ -73,7 +72,6 @@ SessionProperties::SessionProperties(QWidget *parent)
     add(mFramebufferProperties);
     add(mAttachmentProperties);
     add(mCallProperties);
-    add(mStateProperties);
     add(mScriptProperties);
     mStack->addWidget(new QWidget(this));
 
@@ -426,9 +424,6 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             map(mCallProperties->numGroupsY, SessionModel::CallNumGroupsY);
             map(mCallProperties->numGroupsZ, SessionModel::CallNumGroupsZ);
             updateCallWidgets();
-            break;
-
-        case ItemType::State:
             break;
 
         case ItemType::Script:

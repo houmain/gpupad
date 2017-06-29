@@ -69,7 +69,6 @@ private:
     QAction *mAddFramebufferAction{ };
     QAction *mAddAttachmentAction{ };
     QAction *mAddCallAction{ };
-    QAction *mAddStateAction{ };
     QAction *mAddScriptAction{ };
 };
 

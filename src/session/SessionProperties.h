@@ -21,7 +21,6 @@ class AttributeProperties;
 class FramebufferProperties;
 class AttachmentProperties;
 class CallProperties;
-class StateProperties;
 class ScriptProperties;
 }
 
@@ -92,7 +91,6 @@ private:
     QScopedPointer<Ui::PrimitivesProperties> mPrimitivesProperties;
     QScopedPointer<Ui::AttachmentProperties> mAttachmentProperties;
     QScopedPointer<Ui::CallProperties> mCallProperties;
-    QScopedPointer<Ui::StateProperties> mStateProperties;
     QScopedPointer<Ui::ScriptProperties> mScriptProperties;
 };
 

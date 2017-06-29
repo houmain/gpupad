@@ -36,7 +36,7 @@ public:
     QStringList getBinaryFileNames() const;
     QStringList getImageFileNames() const;
 
-    bool updateCurrentEditor();
+    void updateCurrentEditor();
     bool hasCurrentEditor() const { return (mCurrentDock != nullptr); }
     QString currentEditorFileName();
     QList<QMetaObject::Connection> connectEditActions(const EditActions &actions);
@@ -68,7 +68,6 @@ private:
     QList<ImageEditor*> mImageEditors;
     QMap<QDockWidget*, IEditor*> mDocks;
     QDockWidget *mCurrentDock{ };
-    const void *mPrevCurrentDock{ };
 };
 
 #endif // EDITORMANAGER_H

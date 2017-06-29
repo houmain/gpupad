@@ -14,6 +14,8 @@ class SessionModel;
 class Renderer;
 class FindReplaceBar;
 
+bool onMainThread();
+
 class Singletons
 {
 public:

@@ -61,7 +61,6 @@ public:
         CallNumGroupsX,
         CallNumGroupsY,
         CallNumGroupsZ,
-        StateType,
     };
 
     explicit SessionModel(QObject *parent = 0);

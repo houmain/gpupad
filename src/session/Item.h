@@ -24,7 +24,6 @@ enum class ItemType
     Framebuffer,
     Attachment,
     Call,
-    State,
     Script,
 };
 
@@ -36,7 +35,6 @@ struct Item
     QList<Item*> items;
     QString name{ };
     bool inlineScope{ };
-    bool checked{ true };
 };
 
 struct FileItem : Item
@@ -261,14 +259,7 @@ struct Call : Item
     int numGroupsX{ 1 };
     int numGroupsY{ 1 };
     int numGroupsZ{ 1 };
-};
-
-struct State : Item
-{
-    enum Type {
-    };
-
-    Type type{ };
+    bool checked{ true };
 };
 
 struct Script : FileItem
@@ -290,7 +281,6 @@ template<> inline ItemType getItemType<Attribute>() { return ItemType::Attribute
 template<> inline ItemType getItemType<Framebuffer>() { return ItemType::Framebuffer; }
 template<> inline ItemType getItemType<Attachment>() { return ItemType::Attachment; }
 template<> inline ItemType getItemType<Call>() { return ItemType::Call; }
-template<> inline ItemType getItemType<State>() { return ItemType::State; }
 template<> inline ItemType getItemType<Script>() { return ItemType::Script; }
 
 template <typename T>

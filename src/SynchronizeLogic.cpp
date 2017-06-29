@@ -5,7 +5,7 @@
 #include "editors/EditorManager.h"
 #include "editors/SourceEditor.h"
 #include "editors/BinaryEditor.h"
-#include "render/RenderCall.h"
+#include "render/RenderSession.h"
 #include <QTimer>
 
 template<typename F> // F(const FileItem&)
@@ -111,6 +111,15 @@ void SynchronizeLogic::update()
             if (auto editor = Singletons::editorManager().getBinaryEditor(buffer->fileName))
                 updateBinaryEditor(*buffer, *editor);
     mBuffersModified.clear();
+
+    // TODO: move
+    if (!mActiveRenderTask) {
+        Singletons::fileCache().update(Singletons::editorManager());
+        mActiveRenderTask.reset(new RenderSession());
+        connect(mActiveRenderTask.data(), &RenderTask::updated,
+            this, &SynchronizeLogic::handleTaskRendered);
+        mActiveRenderTask->update();
+    }
 
     if (mActiveRenderTask && mRenderTaskInvalidated) {
         Singletons::fileCache().update(Singletons::editorManager());

@@ -54,7 +54,6 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddFramebufferAction, ItemType::Framebuffer);
     addAction(mAddAttachmentAction, ItemType::Attachment);
     addAction(mAddCallAction, ItemType::Call);
-    addAction(mAddStateAction, ItemType::State);
     addAction(mAddScriptAction, ItemType::Script);
 
     addItemActions(mContextMenu);
@@ -77,7 +76,6 @@ void SessionEditor::addItemActions(QMenu* menu)
     menu->addAction(mAddScriptAction);
     menu->addAction(mAddBindingAction);
     menu->addAction(mAddProgramAction);
-    menu->addAction(mAddStateAction);
     menu->addAction(mAddCallAction);
 }
 
@@ -94,9 +92,6 @@ void SessionEditor::updateItemActions()
         pair.second->setVisible(
             mModel.canContainType(index, pair.first) ||
             mModel.canContainType(index.parent(), pair.first));
-
-    // TODO: remove
-    mAddStateAction->setVisible(false);
 }
 
 QList<QMetaObject::Connection> SessionEditor::connectEditActions(
