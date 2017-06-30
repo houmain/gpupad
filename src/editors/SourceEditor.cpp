@@ -46,12 +46,16 @@ SourceEditor::SourceEditor(QString fileName, QWidget *parent)
         this, &SourceEditor::updateLineNumberArea);
     connect(this, &SourceEditor::cursorPositionChanged,
         this, &SourceEditor::updateExtraSelections);
+    connect(this, &SourceEditor::textChanged,
+        this, &SourceEditor::handleTextChanged);
     connect(&Singletons::findReplaceBar(), &FindReplaceBar::action,
         this, &SourceEditor::findReplaceAction);
 
     mCurrentLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
     mCurrentLineFormat.setBackground(palette().base().color().darker(105));
-    mOccurrencesFormat.setBackground(palette().highlight().color().lighter(200));
+    mOccurrencesFormat.setBackground(palette().base().color().darker(110));
+    mOccurrencesFormat.setProperty(QTextFormat::OutlinePen,
+        QPen(palette().base().color().darker(130)));
 
     mLineNumberColor = palette().window().color().darker(150);
 
@@ -356,10 +360,30 @@ void SourceEditor::autoDeindentBrace()
     ensureCursorVisible();
 }
 
+void SourceEditor::toggleHomePosition(bool shiftHold)
+{
+    auto cursor = textCursor();
+    auto initial = cursor.columnNumber();
+    auto moveMode = (shiftHold ?
+        QTextCursor::KeepAnchor : QTextCursor::MoveAnchor);
+    cursor.movePosition(QTextCursor::StartOfLine, moveMode);
+    if (cursor.movePosition(QTextCursor::EndOfWord, moveMode)) {
+        // line starts with a word, always move to line start
+        cursor.movePosition(QTextCursor::StartOfLine, moveMode);
+    }
+    else {
+        // line starts with whitespace
+        // toggle between line start and end of whitespace
+        cursor.movePosition(QTextCursor::NextWord, moveMode);
+        if (0 < initial && initial <= cursor.columnNumber())
+            cursor.movePosition(QTextCursor::StartOfLine, moveMode);
+    }
+    setTextCursor(cursor);
+}
+
 void SourceEditor::keyPressEvent(QKeyEvent *event)
 {
     if (mCompleter && mCompleter->popup()->isVisible()) {
-       // The following keys are forwarded by the completer to the widget
        switch (event->key()) {
            case Qt::Key_Enter:
            case Qt::Key_Return:
@@ -385,6 +409,9 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
     }
     else if (mAutoIndentation && event->key() == Qt::Key_BraceRight) {
         autoDeindentBrace();
+    }
+    else if (mAutoIndentation && event->key() == Qt::Key_Home) {
+        toggleHomePosition(event->modifiers() & Qt::ShiftModifier);
     }
     else if (event->key() == Qt::Key_Tab) {
         indentSelection();
@@ -423,17 +450,42 @@ void SourceEditor::wheelEvent(QWheelEvent *event)
     QPlainTextEdit::wheelEvent(event);
 }
 
+void SourceEditor::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    QPlainTextEdit::mouseDoubleClickEvent(event);
+    markOccurrences(textUnderCursor(true));
+}
+
+void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
+{
+    mMarkedOccurrences.clear();
+    if (!text.isEmpty()) {
+        auto cursor = textCursor();
+        cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
+        for (auto it = document()->find(text, cursor, flags);
+                !it.isNull(); it = document()->find(text, it, flags))
+            mMarkedOccurrences.append(it);
+    }
+    updateExtraSelections();
+}
+
+void SourceEditor::handleTextChanged()
+{
+    if (!mMarkedOccurrences.empty()) {
+        mMarkedOccurrences.clear();
+        updateExtraSelections();
+    }
+}
+
 void SourceEditor::updateExtraSelections()
 {
     auto selections = QList<QTextEdit::ExtraSelection>();
-    if (hasFocus()) {
-        auto cursor = textCursor();
-        cursor.clearSelection();
-        selections.append({  cursor, mCurrentLineFormat });
+    auto cursor = textCursor();
+    cursor.clearSelection();
+    selections.append({  cursor, mCurrentLineFormat });
 
-        for (auto& occurrence : mMarkedOccurrences)
-            selections.append({ occurrence, mOccurrencesFormat });
-    }
+    for (auto& occurrence : mMarkedOccurrences)
+        selections.append({ occurrence, mOccurrencesFormat });
     setExtraSelections(selections);
 }
 
@@ -460,14 +512,17 @@ void SourceEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
     }
 }
 
-QString SourceEditor::textUnderCursor() const
+QString SourceEditor::textUnderCursor(bool identifierOnly) const
 {
     auto cursor = textCursor();
     if (cursor.selectedText().isEmpty()) {
         cursor.movePosition(QTextCursor::Left);
         cursor.select(QTextCursor::WordUnderCursor);
     }
-    return cursor.selectedText();
+    auto text = cursor.selectedText();
+    if (identifierOnly)
+        text = text.replace(QRegularExpression("[^a-z,A-Z,0-9,_]"), "");
+    return text;
 }
 
 void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
@@ -503,25 +558,6 @@ void SourceEditor::insertCompletion(const QString &completion)
     setTextCursor(cursor);
 }
 
-void SourceEditor::mouseDoubleClickEvent(QMouseEvent *event)
-{
-    markOccurrences(textUnderCursor());
-    QPlainTextEdit::mouseDoubleClickEvent(event);
-}
-
-void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
-{
-    mMarkedOccurrences.clear();
-    if (!text.isEmpty()) {
-        auto cursor = textCursor();
-        cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
-        for (auto it = document()->find(text, cursor, flags);
-                !it.isNull(); it = document()->find(text, it, flags))
-            mMarkedOccurrences.append(it);
-    }
-    updateExtraSelections();
-}
-
 void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
     QString find, QString replace, QTextDocument::FindFlags flags)
 {
@@ -533,23 +569,19 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
     if (action == FindReplaceBar::ReplaceAll) {
         auto cursor = textCursor();
         cursor.beginEditBlock();
-
         for (const auto& occurrence : mMarkedOccurrences) {
             cursor.setPosition(occurrence.anchor());
             cursor.setPosition(occurrence.position(), QTextCursor::KeepAnchor);
             cursor.insertText(replace);
         }
-        setTextCursor(cursor);
         cursor.endEditBlock();
         return;
     }
 
     if (action == FindReplaceBar::Replace) {
         auto cursor = textCursor();
-        if (!cursor.selectedText().compare(find, Qt::CaseInsensitive)) {
+        if (!cursor.selectedText().compare(find, Qt::CaseInsensitive))
             cursor.insertText(replace);
-            setTextCursor(cursor);
-        }
     }
 
     auto cursor = textCursor();

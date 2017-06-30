@@ -47,10 +47,7 @@ void FindReplaceBar::setTarget(QWidget *target, QString text)
     emit action(Action::FindTextChanged, "", "", findFlags());
 
     mTarget = target;
-
-    if (text.split(QRegularExpression("\\s"),
-            QString::SkipEmptyParts).size() == 1)
-        ui->findText->setText(text);
+    ui->findText->setText(text);
 
     show();
     ui->findText->selectAll();

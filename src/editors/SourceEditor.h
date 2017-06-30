@@ -68,9 +68,11 @@ private:
     void indentSelection(bool reverse = false);
     void autoIndentNewLine();
     void autoDeindentBrace();
-    QString textUnderCursor() const;
+    void toggleHomePosition(bool shiftHold);
+    QString textUnderCursor(bool identifierOnly = false) const;
     void markOccurrences(QString text, QTextDocument::FindFlags =
         QTextDocument::FindCaseSensitively | QTextDocument::FindWholeWords);
+    void handleTextChanged();
 
     QString mFileName;
     QSyntaxHighlighter *mHighlighter{ };
