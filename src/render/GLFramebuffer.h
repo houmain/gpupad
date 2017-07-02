@@ -6,23 +6,24 @@
 class GLFramebuffer
 {
 public:
-    void initialize(PrepareContext &context, const Framebuffer &framebuffer);
+    explicit GLFramebuffer(const Framebuffer &framebuffer);
+    void setAttachment(int index, GLTexture *texture);
 
-    void cache(RenderContext &context, GLFramebuffer &&update);
-    bool bind(RenderContext &context);
-    void unbind(RenderContext &context);
-    QList<std::pair<QString, QImage>> getModifiedImages(RenderContext &context);
+    bool bind();
+    void unbind();
+    const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
-    void create(RenderContext &context);
-    void reset();
+    bool create();
 
+    ItemId mItemId{ };
+    MessagePtr mMessage;
+    QSet<ItemId> mUsedItems;
+    std::vector<GLTexture*> mTextures;
     int mWidth{ };
     int mHeight{ };
-    std::vector<GLTexture> mTextures;
     int mNumColorAttachments{ };
     GLObject mFramebufferObject;
-    QList<GLuint> mAttachedTextureIds;
 };
 
 #endif // GLFRAMEBUFFER_H

@@ -24,22 +24,6 @@ Project {
       submodules: ["core", "widgets", "opengl", "qml"]
     }
 
-    Group {
-      fileTagsFilter: product.type
-      qbs.install: true
-      qbs.installDir: "bin"
-    }
-
-    Group {
-      name: "Share"
-      files: [
-            "share/**",
-        ]
-      qbs.installSourceBase: "share"
-      qbs.install: true
-      qbs.installDir: "share"
-    }
-
     files: [
           "libs/SingleApplication/singleapplication.cpp",
           "libs/SingleApplication/singleapplication.h",
@@ -85,8 +69,21 @@ Project {
           "src/editors/SourceEditor.cpp",
           "src/editors/SourceEditor.h",
           "src/main.cpp",
+          "src/render/GLBuffer.cpp",
+          "src/render/GLBuffer.h",
           "src/render/GLContext.h",
+          "src/render/GLFramebuffer.cpp",
+          "src/render/GLFramebuffer.h",
+          "src/render/GLItem.h",
           "src/render/GLObject.h",
+          "src/render/GLPrimitives.cpp",
+          "src/render/GLPrimitives.h",
+          "src/render/GLProgram.cpp",
+          "src/render/GLProgram.h",
+          "src/render/GLShader.cpp",
+          "src/render/GLShader.h",
+          "src/render/GLTexture.cpp",
+          "src/render/GLTexture.h",
           "src/render/RenderSession.cpp",
           "src/render/RenderSession.h",
           "src/render/RenderTask.cpp",
@@ -134,5 +131,21 @@ Project {
           "src/session/TextureProperties.ui",
           "src/_version.h",
       ]
+
+    Group {
+      fileTagsFilter: product.type
+      qbs.install: true
+      qbs.installDir: "bin"
+    }
+
+    Group {
+      name: "Share"
+      files: [
+            "share/**",
+        ]
+      qbs.installSourceBase: "share"
+      qbs.install: true
+      qbs.installDir: "share"
+    }
   }
 }

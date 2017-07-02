@@ -212,8 +212,7 @@ QVariantList BindingProperties::getItemIds() const
 {
     const auto bindingType = currentType();
     const auto referenceType =
-        (bindingType == Binding::Texture ? ItemType::Texture :
-         bindingType == Binding::Sampler ? ItemType::Sampler :
+        (bindingType == Binding::Sampler ? ItemType::Sampler :
          bindingType == Binding::Image ? ItemType::Texture :
          ItemType::Buffer);
 

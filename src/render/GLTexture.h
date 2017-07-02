@@ -1,18 +1,25 @@
 #ifndef GLTEXTURE_H
 #define GLTEXTURE_H
 
-#include "PrepareContext.h"
-#include "RenderContext.h"
-#include <memory>
+#include "GLItem.h"
 #include <QOpenGLTexture>
 
 class GLTexture
 {
 public:
-    GLTexture(const Texture &texture, PrepareContext &context);
+    struct Image
+    {
+        ItemId itemId;
+        int level;
+        int layer;
+        QOpenGLTexture::CubeMapFace face;
+        QString fileName;
+        QImage image;
+    };
+
+    explicit GLTexture(const Texture &texture);
     bool operator==(const GLTexture &rhs) const;
 
-    ItemId itemId() const { return mItemId; }
     bool isDepthTexture() const;
     bool isSencilTexture() const;
     bool isDepthSencilTexture() const;
@@ -21,43 +28,32 @@ public:
     Texture::Target target() const { return mTarget; }
     Texture::Format format() const { return mFormat; }
 
-    GLuint getReadOnlyTextureId(RenderContext &context);
-    GLuint getReadWriteTextureId(RenderContext &context);
-    QList<std::pair<QString, QImage>> getModifiedImages(RenderContext &context);
+    GLuint getReadOnlyTextureId();
+    GLuint getReadWriteTextureId();
+    const QSet<ItemId> &usedItems() const { return mUsedItems; }
+    QList<std::pair<QString, QImage>> getModifiedImages();
 
 private:
-    struct Image {
-        int level;
-        int layer;
-        QOpenGLTexture::CubeMapFace face;
-        QString fileName;
-        QImage image;
-
-        friend bool operator==(const Image &a, const Image &b) {
-            return (std::tie(a.level, a.layer, a.face, a.fileName) ==
-                    std::tie(b.level, b.layer, b.face, b.fileName));
-        }
-    };
-
-    void load(MessageList &messages);
     void getImageDataFormat(QOpenGLTexture::PixelFormat *format,
         QOpenGLTexture::PixelType *dataType) const;
-    void upload(RenderContext &context);
+    void load();
+    void upload();
     void uploadImage(const Image &image);
-    bool download(RenderContext &context);
-    bool downloadImage(RenderContext &context, Image& image);
+    bool download();
+    bool downloadImage(Image& image);
 
-    ItemId mItemId{ };
+    QSet<ItemId> mUsedItems;
+    QList<MessagePtr> mMessages;
     Texture::Target mTarget{ };
     Texture::Format mFormat{ };
     int mWidth{ };
     int mHeight{ };
     int mDepth{ };
     bool mFlipY{ };
-    std::vector<Image> mImages;
+    QList<Image> mImages;
+    std::unique_ptr<QOpenGLTexture> mTexture;
     bool mSystemCopiesModified{ };
     bool mDeviceCopiesModified{ };
-    std::unique_ptr<QOpenGLTexture> mTexture;
 };
 
 #endif // GLTEXTURE_H

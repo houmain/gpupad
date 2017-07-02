@@ -4,7 +4,7 @@
 #include <QScopedPointer>
 
 class QMainWindow;
-class MessageWindow;
+class MessageList;
 class Settings;
 class FileCache;
 class FileDialog;
@@ -20,7 +20,7 @@ class Singletons
 {
 public:
     static Renderer &renderer();
-    static MessageWindow &messageWindow();
+    static MessageList &messageList();
     static Settings &settings();
     static FileCache& fileCache();
     static FileDialog &fileDialog();
@@ -36,7 +36,7 @@ private:
     static Singletons *sInstance;
 
     QScopedPointer<Renderer> mRenderer;
-    QScopedPointer<MessageWindow> mMessageWindow;
+    QScopedPointer<MessageList> mMessageList;
     QScopedPointer<Settings> mSettings;
     QScopedPointer<FileCache> mFileCache;
     QScopedPointer<FileDialog> mFileDialog;

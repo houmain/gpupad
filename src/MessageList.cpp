@@ -1,64 +1,50 @@
 #include "MessageList.h"
-#include "Singletons.h"
-#include "MessageWindow.h"
 
-MessageList::MessageList(MessageList &&rhs)
-    : mMessages(std::move(rhs.mMessages))
-    , mItemId(rhs.mItemId)
-    , mFileName(rhs.mFileName)
+MessagePtr MessageList::insert(QString fileName, int line, MessageType type, QString text)
 {
-}
-
-MessageList &MessageList::operator=(MessageList &&rhs)
-{
-    auto tmp = std::move(rhs);
-    std::swap(mMessages, tmp.mMessages);
-    std::swap(mItemId, tmp.mItemId);
-    std::swap(mFileName, tmp.mFileName);
-    return *this;
-}
-
-MessageList::~MessageList()
-{
-    clear();
-}
-
-void MessageList::clear()
-{
-    foreach (Message *message, mMessages) {
-        Singletons::messageWindow().removeMessage(message);
-        delete message;
-    }
-    mMessages.clear();
-}
-
-void MessageList::setContext(ItemId itemId)
-{
-    mItemId = itemId;
-    mFileName = "";
-}
-
-void MessageList::setContext(QString fileName)
-{
-    mFileName = fileName;
-    mItemId = 0;
-}
-
-void MessageList::insert(MessageType type, QString text, int line, int column)
-{
-    // merge lines with identical location
-    if (!mMessages.empty()) {
-        auto& prev = *mMessages.back();
-        if (prev.type == type &&
-            prev.fileName == mFileName &&
-            prev.itemId == mItemId &&
-            prev.line == line) {
-            prev.text += "\n" + text;
-            return;
-        }
-    }
-
-    auto message = new Message{ type, text, mItemId, mFileName, line, column };
+    QMutexLocker lock(&mMessagesMutex);
+    foreach (const QWeakPointer<const Message> &ptr, mMessages)
+        if (MessagePtr message = ptr.lock())
+            if (message->fileName == fileName &&
+                message->line == line &&
+                message->type == type &&
+                message->text == text)
+                return message;
+    MessagePtr message(new Message{ type, text, 0, fileName, line });
     mMessages.append(message);
-    Singletons::messageWindow().insertMessage(message);
+
+    emit messagesChanged(QPrivateSignal());
+
+    return message;
+}
+
+MessagePtr MessageList::insert(ItemId itemId, MessageType type, QString text)
+{
+    QMutexLocker lock(&mMessagesMutex);
+    foreach (const QWeakPointer<const Message> &ptr, mMessages)
+        if (MessagePtr message = ptr.lock())
+            if (message->itemId == itemId &&
+                message->type == type &&
+                message->text == text)
+                return message;
+    MessagePtr message(new Message{ type, text, itemId, QString(), 0 });
+    mMessages.append(message);
+
+    emit messagesChanged(QPrivateSignal());
+
+    return message;
+}
+
+MessagePtrList MessageList::messages() const
+{
+    QMutexLocker lock(&mMessagesMutex);
+    MessagePtrList result;
+    QMutableListIterator<QWeakPointer<const Message>> it(mMessages);
+    while (it.hasNext()) {
+        if (MessagePtr message = it.next().lock())
+            result += message;
+        else
+            it.remove();
+    }
+    return result;
 }

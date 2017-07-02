@@ -17,19 +17,17 @@ void RenderTask::releaseResources()
         Singletons::renderer().release(this);
 }
 
-void RenderTask::update()
+void RenderTask::update(bool rebuild)
 {
-    ++mInvalidationCount;
-    if (mInvalidationCount == 1)
+    if (!std::exchange(mUpdating, true)) {
+        prepare(rebuild);
         Singletons::renderer().render(this);
+    }
 }
 
-void RenderTask::validate()
+void RenderTask::handleRendered()
 {
-    if (std::exchange(mInvalidationCount, 0) > 1) {
-        update();
-    }
-    else {
-        emit updated();
-    }
+    finish();
+    mUpdating = false;
+    emit updated();
 }

@@ -1,10 +1,10 @@
 #include "GLBuffer.h"
 
-GLBuffer::GLBuffer(const Buffer &buffer, PrepareContext &context)
+GLBuffer::GLBuffer(const Buffer &buffer)
     : mItemId(buffer.id)
     , mFileName(buffer.fileName)
 {
-    Q_UNUSED(context);
+    mUsedItems += buffer.id;
 }
 
 bool GLBuffer::operator==(const GLBuffer &rhs) const
@@ -13,85 +13,91 @@ bool GLBuffer::operator==(const GLBuffer &rhs) const
            std::tie(rhs.mFileName, rhs.mData);
 }
 
-GLuint GLBuffer::getReadOnlyBufferId(RenderContext &context)
+GLuint GLBuffer::getReadOnlyBufferId()
 {
-    load(context.messages);
-    upload(context);
+    load();
+    upload();
     return mBufferObject;
 }
 
-GLuint GLBuffer::getReadWriteBufferId(RenderContext &context)
+GLuint GLBuffer::getReadWriteBufferId()
 {
-    load(context.messages);
-    upload(context);
+    load();
+    upload();
     mDeviceCopyModified = true;
     return mBufferObject;
 }
 
-void GLBuffer::bindReadOnly(RenderContext &context, GLenum target)
+void GLBuffer::bindReadOnly(GLenum target)
 {
-    load(context.messages);
-    upload(context);
-    context.glBindBuffer(target, mBufferObject);
+    load();
+    upload();
+
+    auto& gl = GLContext::currentContext();
+    gl.glBindBuffer(target, mBufferObject);
 }
 
-void GLBuffer::unbind(RenderContext &context, GLenum target)
+void GLBuffer::unbind(GLenum target)
 {
-    context.glBindBuffer(target, GL_NONE);
+    auto& gl = GLContext::currentContext();
+    gl.glBindBuffer(target, GL_NONE);
 }
 
-QList<std::pair<QString, QByteArray>> GLBuffer::getModifiedData(
-    RenderContext &context)
+QList<std::pair<QString, QByteArray>> GLBuffer::getModifiedData()
 {
-    if (!download(context))
+    if (!download())
         return { };
 
     return { std::make_pair(mFileName, mData) };
 }
 
-void GLBuffer::load(MessageList &messages) {
+void GLBuffer::load()
+{
     auto prevData = mData;
     if (!Singletons::fileCache().getBinary(mFileName, &mData)) {
-        messages.setContext(mItemId);
-        messages.insert(MessageType::LoadingFileFailed, mFileName);
+        mMessage = Singletons::messageList().insert(
+            mItemId, MessageType::LoadingFileFailed, mFileName);
         return;
     }
+    mMessage.reset();
     mSystemCopyModified = (mData != prevData);
 }
 
-void GLBuffer::upload(RenderContext &context)
+void GLBuffer::upload()
 {
     if (!mSystemCopyModified)
         return;
 
+    auto& gl = GLContext::currentContext();
     auto createBuffer = [&]() {
         auto buffer = GLuint{ };
-        context.glGenBuffers(1, &buffer);
+        gl.glGenBuffers(1, &buffer);
         return buffer;
     };
     auto freeBuffer = [](GLuint buffer) {
-        auto& gl = *QOpenGLContext::currentContext()->functions();
+        auto& gl = GLContext::currentContext();
         gl.glDeleteBuffers(1, &buffer);
     };
 
     mBufferObject = GLObject(createBuffer(), freeBuffer);
-    context.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
-    context.glBufferData(GL_ARRAY_BUFFER,
+    gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
+    gl.glBufferData(GL_ARRAY_BUFFER,
         mData.size(), mData.data(), GL_DYNAMIC_DRAW);
-    context.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
+    gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
-bool GLBuffer::download(RenderContext &context)
+bool GLBuffer::download()
 {
     if (!mDeviceCopyModified)
         return false;
 
     auto data = QByteArray(mData.size(), Qt::Uninitialized);
-    context.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
-    context.glGetBufferSubData(GL_ARRAY_BUFFER, 0, data.size(), data.data());
-    context.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
+    auto& gl = GLContext::currentContext();
+    gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
+    gl.glGetBufferSubData(GL_ARRAY_BUFFER, 0, data.size(), data.data());
+    gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
     mData = data;
 
     mSystemCopyModified = mDeviceCopyModified = false;

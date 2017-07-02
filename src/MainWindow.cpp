@@ -4,6 +4,7 @@
 #include "session/SessionProperties.h"
 #include "Singletons.h"
 #include "MessageWindow.h"
+#include "MessageList.h"
 #include "Settings.h"
 #include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
@@ -40,10 +41,11 @@ public:
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , mUi(new Ui::MainWindow)
+    , mMessageWindow(new MessageWindow())
     , mSingletons(new Singletons(this))
+    , mEditorManager(Singletons::editorManager())
     , mSessionEditor(new SessionEditor())
     , mSessionProperties(new SessionProperties())
-    , mEditorManager(Singletons::editorManager())
 {
     mUi->setupUi(this);
 
@@ -88,7 +90,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setObjectName("Messages");
     dock->setFeatures(QDockWidget::DockWidgetClosable |
                       QDockWidget::DockWidgetMovable);
-    dock->setWidget(&Singletons::messageWindow());
+    dock->setWidget(mMessageWindow.data());
     mUi->menuView->addAction(dock->toggleViewAction());
     addDockWidget(Qt::RightDockWidgetArea, dock);
 
@@ -156,7 +158,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->menuSession, &QMenu::aboutToShow,
         mSessionEditor.data(), &SessionEditor::updateItemActions);
 
-    auto& messageWindow = Singletons::messageWindow();
     auto& synchronizeLogic = Singletons::synchronizeLogic();
     connect(mSessionEditor.data(), &SessionEditor::itemActivated,
         &synchronizeLogic, &SynchronizeLogic::handleItemActivated);
@@ -168,7 +169,9 @@ MainWindow::MainWindow(QWidget *parent)
         &synchronizeLogic, &SynchronizeLogic::handleBinaryEditorChanged);
     connect(&mEditorManager, &EditorManager::imageEditorChanged,
         &synchronizeLogic, &SynchronizeLogic::handleImageEditorChanged);
-    connect(&messageWindow, &MessageWindow::messageActivated,
+    connect(&Singletons::messageList(), &MessageList::messagesChanged,
+        mMessageWindow.data(), &MessageWindow::handleMessageChanged);
+    connect(mMessageWindow.data(), &MessageWindow::messageActivated,
         &synchronizeLogic, &SynchronizeLogic::handleMessageActivated);
 
     auto& settings = Singletons::settings();
@@ -184,7 +187,6 @@ MainWindow::MainWindow(QWidget *parent)
     auto evalModeActionGroup = new QActionGroup(this);
     mUi->actionEvalManual->setActionGroup(evalModeActionGroup);
     mUi->actionEvalAuto->setActionGroup(evalModeActionGroup);
-    mUi->actionEvalSteady->setActionGroup(evalModeActionGroup);
     connect(evalModeActionGroup, &QActionGroup::triggered,
         this, &MainWindow::updateEvaluationMode);
 
@@ -315,6 +317,10 @@ void MainWindow::updateFileActions()
 
 void MainWindow::updateEvaluationMode()
 {
+    auto pausable = mUi->actionEvalAuto->isChecked();
+    mUi->actionEvalManual->setIcon(pausable ?
+        QIcon(QStringLiteral(":/images/16x16/media-playback-pause.png")) :
+        QIcon(QStringLiteral(":/images/16x16/view-refresh.png")));
     mUi->actionEvalManual->setChecked(false);
 }
 
@@ -445,8 +451,7 @@ void MainWindow::openSessionDock()
 
 void MainWindow::openMessageDock()
 {
-    auto& messageWindow = Singletons::messageWindow();
-    for (auto p = messageWindow.parentWidget(); p; p = p->parentWidget())
+    for (auto p = mMessageWindow->parentWidget(); p; p = p->parentWidget())
         p->setVisible(true);
 }
 

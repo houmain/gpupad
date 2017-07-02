@@ -1,14 +1,16 @@
 #include "GLShader.h"
 #include "editors/SourceEditor.h"
 
-void GLShader::parseLog(const QString &log, MessageList &messages)
+void GLShader::parseLog(const QString &log,
+        MessagePtrList &messages, ItemId itemId,
+        QList<QString> fileNames)
 {
     // Mesa:    0:13(2): error: `gl_Positin' undeclared
     // NVidia:  0(13) : error C1008: undefined variable "gl_Positin"
 
     static const auto split = QRegExp(
         "("
-            "(\\d+)"              // 2. file
+            "(\\d+)"              // 1. source index
             "(:(\\d+))?"          // 4. [line]
             "\\((\\d+)\\)"        // 5. line or column
             "\\s*:\\s*[^:]+:\\s*" // severity/code
@@ -17,87 +19,81 @@ void GLShader::parseLog(const QString &log, MessageList &messages)
 
     auto pos = 0;
     while ((pos = split.indexIn(log, pos)) != -1) {
-        const auto file = split.cap(2).toInt();
+        const auto sourceIndex = split.cap(1).toInt();
         const auto line = (!split.cap(4).isNull() ?
           split.cap(4).toInt() : split.cap(5).toInt());
-        const auto column = 0;
         const auto text = split.cap(6);
 
-        // TODO: jump to header
-        Q_UNUSED(file);
-
-        messages.insert(MessageType::Error, text, line, column);
+        if (sourceIndex < fileNames.size())
+            messages += Singletons::messageList().insert(
+                fileNames[sourceIndex], line,
+                MessageType::Error, text);
+        else
+            messages += Singletons::messageList().insert(itemId,
+                MessageType::Error, text);
 
         pos += split.matchedLength();
     }
 }
 
-GLShader::GLShader(QString fileName, Shader::Type type, QString source)
-    : mFileName(fileName)
-    , mType(type)
-    , mSource(source)
+GLShader::GLShader(const QList<const Shader*> &shaders)
 {
-}
+    foreach (const Shader* shader, shaders) {
+        auto source = QString();
+        if (!Singletons::fileCache().getSource(shader->fileName, &source))
+            mMessages += Singletons::messageList().insert(shader->id,
+                MessageType::LoadingFileFailed, shader->fileName);
 
-GLShader::GLShader(PrepareContext &context, QString header, const Shader &shader)
-    : mItemId(shader.id)
-    , mFileName(shader.fileName)
-    , mType(shader.type)
-{
-    if (!header.isEmpty())
-        mSource = header + "\n#line 1\n";
-
-    auto source = QString();
-    if (!Singletons::fileCache().getSource(mFileName, &source)) {
-        context.messages.setContext(mItemId);
-        context.messages.insert(MessageType::LoadingFileFailed, mFileName);
+        mSources += source;
+        mFileNames += shader->fileName;
+        mItemId = shader->id;
+        mType = shader->type;
     }
-    mSource += source;
 }
 
 bool GLShader::operator==(const GLShader &rhs) const
 {
-    return std::tie(mType, mSource) ==
-           std::tie(rhs.mType, rhs.mSource);
+    return (mSources == rhs.mSources);
 }
 
-bool GLShader::compile(RenderContext &context)
+bool GLShader::compile()
 {
     if (mShaderObject)
         return true;
 
-    if (mSource.trimmed().isEmpty())
-        return false;
-
     auto freeShader = [](GLuint shaderObject) {
-        auto& gl = *QOpenGLContext::currentContext()->functions();
+        auto& gl = GLContext::currentContext();
         gl.glDeleteShader(shaderObject);
     };
 
-    auto shader = GLObject(context.glCreateShader(mType), freeShader);
+    auto& gl = GLContext::currentContext();
+    auto shader = GLObject(gl.glCreateShader(mType), freeShader);
     if (!shader) {
-        context.messages.setContext(mItemId);
-        context.messages.insert(MessageType::UnsupportedShaderType);
+        mMessages += Singletons::messageList().insert(mItemId,
+            MessageType::UnsupportedShaderType);
         return false;
     }
 
-    auto utf8 = mSource.toUtf8();
-    auto cstr = utf8.constData();
-    context.glShaderSource(shader, 1, &cstr, 0);
-    context.glCompileShader(shader);
+    auto sources = std::vector<std::string>();
+    foreach (const QString &source, mSources)
+        sources.push_back(source.toUtf8().data());
+    auto pointers = std::vector<const char*>();
+    for (const auto& source : sources)
+        pointers.push_back(source.data());
+    gl.glShaderSource(shader, pointers.size(), pointers.data(), 0);
+    gl.glCompileShader(shader);
 
     auto status = GLint{ };
-    context.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+    gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (status != GL_TRUE) {
         auto length = GLint{ };
-        context.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
+        gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
         auto log = std::vector<char>(static_cast<size_t>(length));
-        context.glGetShaderInfoLog(shader, length, NULL, log.data());
-        context.messages.setContext(mFileName);
-        GLShader::parseLog(log.data(), context.messages);
+        gl.glGetShaderInfoLog(shader, length, NULL, log.data());
+
+        GLShader::parseLog(log.data(), mMessages, mItemId, mFileNames);
         return false;
     }
-
     mShaderObject = std::move(shader);
     return true;
 }

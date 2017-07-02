@@ -1,29 +1,27 @@
 #ifndef GLSHADER_H
 #define GLSHADER_H
 
-#include "PrepareContext.h"
-#include "RenderContext.h"
+#include "GLItem.h"
 
 class GLShader
 {
 public:
-    static void parseLog(const QString &log, MessageList &messages);
+    static void parseLog(const QString &log,
+        MessagePtrList &messages, ItemId itemId,
+        QList<QString> fileNames);
 
-    ItemId itemId() const { return mItemId; }
-    GLShader(QString fileName, Shader::Type type, QString source);
-    GLShader(PrepareContext &context, QString header, const Shader &shader);
+    explicit GLShader(const QList<const Shader*> &shaders);
     bool operator==(const GLShader &rhs) const;
 
-    QString source() const { return mSource; }
-
-    bool compile(RenderContext &context);
+    bool compile();
     GLuint shaderObject() const { return mShaderObject; }
 
 private:
-    ItemId mItemId;
-    QString mFileName;
+    ItemId mItemId{ };
+    MessagePtrList mMessages;
+    QList<QString> mFileNames;
+    QList<QString> mSources;
     Shader::Type mType;
-    QString mSource;
     GLObject mShaderObject;
 };
 

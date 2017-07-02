@@ -1,11 +1,10 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "RenderTask.h"
 #include <QObject>
 #include <QThread>
 
-class BackgroundRenderer;
+class RenderTask;
 
 class Renderer : public QObject
 {
@@ -25,10 +24,12 @@ private slots:
     void handleTaskRendered();
 
 private:
+    class Worker;
+
     void renderNextTask();
 
     QThread mThread;
-    QScopedPointer<BackgroundRenderer> mBackgroundRenderer;
+    QScopedPointer<Worker> mWorker;
     QList<RenderTask*> mPendingTasks;
     RenderTask* mCurrentTask{ };
 };

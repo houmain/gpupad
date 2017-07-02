@@ -1,7 +1,11 @@
 #ifndef MESSAGELIST_H
 #define MESSAGELIST_H
 
+#include <QSharedPointer>
+#include <QString>
 #include <QList>
+#include <QMutex>
+#include <QObject>
 
 using ItemId = int;
 
@@ -13,37 +17,38 @@ enum MessageType
     OpenGL33NotSupported,
     LoadingFileFailed,
     UnsupportedShaderType,
+    CreatingFramebufferFailed
 };
 
 struct Message
 {
     MessageType type;
     QString text;
-
     ItemId itemId;
     QString fileName;
     int line;
-    int column;
 };
 
-class MessageList
-{
-public:
-    MessageList() = default;
-    MessageList(MessageList &&rhs);
-    MessageList &operator=(MessageList &&rhs);
-    ~MessageList();
+using MessagePtr = QSharedPointer<const Message>;
+using MessagePtrList = QList<MessagePtr>;
 
-    bool empty() const { return mMessages.empty(); }
-    void clear();
-    void setContext(ItemId itemId);
-    void setContext(QString fileName);
-    void insert(MessageType type, QString text = "", int line = -1, int column = -1);
+class MessageList : public QObject
+{
+    Q_OBJECT
+public:
+    MessagePtr insert(QString fileName, int line,
+        MessageType type, QString text = "");
+    MessagePtr insert(ItemId itemId,
+        MessageType type, QString text = "");
+
+    MessagePtrList messages() const;
+
+signals:
+    void messagesChanged(QPrivateSignal);
 
 private:
-    QList<Message*> mMessages;
-    ItemId mItemId{ };
-    QString mFileName{ };
+    mutable QMutex mMessagesMutex;
+    mutable QList<QWeakPointer<const Message>> mMessages;
 };
 
 #endif // MESSAGELIST_H

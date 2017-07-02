@@ -1,22 +1,42 @@
 #include "ScriptEngine.h"
+#include "Singletons.h"
+#include "FileCache.h"
+#include <QJSEngine>
 
-void ScriptEngine::evalScript(const QString &fileName,
-    const QString &source)
+ScriptEngine::ScriptEngine()
+    : mJsEngine(new QJSEngine())
 {
-    mScripts.push_back({ fileName, source });
-    mJsEngine.reset();
+    mJsEngine->installExtensions(QJSEngine::ConsoleExtension);
 }
 
-QStringList ScriptEngine::evalValue(const QStringList &fieldExpressions,
-    MessageList &messages)
-{
-    evalScripts(messages);
+ScriptEngine::~ScriptEngine() = default;
 
+void ScriptEngine::evalScript(
+    const QString &fileName, ItemId itemId)
+{
+    auto source = QString();
+    if (!Singletons::fileCache().getSource(fileName, &source)) {
+        mMessages += Singletons::messageList().insert(
+            itemId, MessageType::LoadingFileFailed, fileName);
+        return;
+    }
+
+    auto result = mJsEngine->evaluate(source, fileName);
+    if (result.isError())
+        mMessages += Singletons::messageList().insert(
+            fileName, result.property("lineNumber").toInt(),
+            MessageType::Error, result.toString());
+}
+
+QStringList ScriptEngine::evalValue(
+    const QStringList &fieldExpressions, ItemId itemId)
+{
     auto fields = QStringList();
     foreach (QString fieldExpression, fieldExpressions) {
         auto result = mJsEngine->evaluate(fieldExpression);
         if (result.isError())
-            messages.insert(MessageType::Error, result.toString());
+            mMessages += Singletons::messageList().insert(
+                itemId, MessageType::Error, result.toString());
 
         if (result.isObject()) {
             for (auto i = 0; ; ++i) {
@@ -31,20 +51,4 @@ QStringList ScriptEngine::evalValue(const QStringList &fieldExpressions,
         }
     }
     return fields;
-}
-
-void ScriptEngine::evalScripts(MessageList &messages)
-{
-    if (!mJsEngine) {
-        mJsEngine = std::make_unique<QJSEngine>();
-        mJsEngine->installExtensions(QJSEngine::ConsoleExtension);
-        for (Script &script : mScripts) {
-            auto result = mJsEngine->evaluate(script.source, script.fileName);
-            if (result.isError()) {
-                messages.setContext(script.fileName);
-                messages.insert(MessageType::Error, result.toString(),
-                    result.property("lineNumber").toInt());
-            }
-        }
-    }
 }

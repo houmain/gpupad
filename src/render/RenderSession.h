@@ -2,9 +2,8 @@
 #define RENDERSESSION_H
 
 #include "RenderTask.h"
-#include "GLContext.h"
-#include <QScopedPointer>
-#include <QSet>
+
+class ScriptEngine;
 
 class RenderSession : public RenderTask
 {
@@ -15,13 +14,19 @@ public:
     QSet<ItemId> usedItems() const override { return mUsedItems; }
 
 private:
-    void prepare() override;
-    void render(QOpenGLContext &glContext) override;
-    void finish() override;
-    void release(QOpenGLContext &glContext) override;
+    struct CommandQueue;
 
-    QScopedPointer<GLContext> mContext;
+    void prepare(bool rebuild) override;
+    void render() override;
+    void finish() override;
+    void release() override;
+
+    QScopedPointer<ScriptEngine> mScriptEngine;
+    QScopedPointer<CommandQueue> mCommandQueue;
+    QScopedPointer<CommandQueue> mPrevCommandQueue;
     QSet<ItemId> mUsedItems;
+    QList<std::pair<QString, QImage>> mModifiedImages;
+    QList<std::pair<QString, QByteArray>> mModifiedBuffers;
 };
 
 #endif // RENDERSESSION_H

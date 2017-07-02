@@ -10,6 +10,7 @@ class MainWindow;
 
 class QSplitter;
 class Singletons;
+class MessageWindow;
 class EditorManager;
 class SessionEditor;
 class SessionProperties;
@@ -55,10 +56,11 @@ private:
     Ui::MainWindow *mUi{ };
     QSplitter *mSessionSplitter{ };
     EditActions mEditActions;
+    QScopedPointer<MessageWindow> mMessageWindow;
     QScopedPointer<Singletons> mSingletons;
+    EditorManager &mEditorManager;
     QScopedPointer<SessionEditor> mSessionEditor;
     QScopedPointer<SessionProperties> mSessionProperties;
-    EditorManager &mEditorManager;
     QList<QMetaObject::Connection> mConnectedEditActions;
 };
 

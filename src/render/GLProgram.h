@@ -2,87 +2,77 @@
 #define GLPROGRAM_H
 
 #include "GLShader.h"
-#include "GLTexture.h"
-#include "GLBuffer.h"
-#include "ScriptEngine.h"
+
+class GLTexture;
+class GLBuffer;
+class ScriptEngine;
+
+struct GLUniformBinding
+{
+    ItemId bindingItemId;
+    QString name;
+    Binding::Type type;
+    QVariantList values;
+};
+
+struct GLSamplerBinding
+{
+    ItemId bindingItemId;
+    ItemId samplerItemId;
+    QString name;
+    int arrayIndex;
+    GLTexture *texture;
+    Sampler::Filter minFilter;
+    Sampler::Filter magFilter;
+    Sampler::WrapMode wrapModeX;
+    Sampler::WrapMode wrapModeY;
+    Sampler::WrapMode wrapModeZ;
+};
+
+struct GLImageBinding
+{
+    ItemId bindingItemId;
+    QString name;
+    int arrayIndex;
+    GLTexture *texture;
+    int level;
+    bool layered;
+    int layer;
+    GLenum access;
+};
+
+struct GLBufferBinding
+{
+    ItemId bindingItemId;
+    QString name;
+    int arrayIndex;
+    GLBuffer *buffer;
+};
 
 class GLProgram
 {
 public:
-    void initialize(PrepareContext &context, const Program &program);
-    void addTextureBinding(PrepareContext &context, const Texture &texture,
-        QString name = "", int arrayIndex = 0);
-    void addSamplerBinding(PrepareContext &context, const Sampler &sampler,
-        QString name = "", int arrayIndex = 0);
-    void addBufferBinding(PrepareContext &context, const Buffer &buffer,
-        QString name = "", int arrayIndex = 0);
-    void addBinding(PrepareContext &context, const Binding &uniform);
-    void addScript(PrepareContext &context, const Script &script);
+    explicit GLProgram(const Program &program);
+    bool operator==(const GLProgram &rhs) const;
 
-    void cache(RenderContext &context, GLProgram &&update);
-    bool bind(RenderContext &context);
-    void unbind(RenderContext &context);
-    int getAttributeLocation(RenderContext &context, const QString &name) const;
-    QList<std::pair<QString, QImage>> getModifiedImages(RenderContext &context);
-    QList<std::pair<QString, QByteArray>> getModifiedBuffers(
-        RenderContext &context);
+    bool bind();
+    void unbind();
+    int getAttributeLocation(const QString &name) const;
+    bool apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine);
+    bool apply(const GLSamplerBinding &binding, int unit);
+    bool apply(const GLImageBinding &binding, int unit);
+    bool apply(const GLBufferBinding &binding, int unit);
+    const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
-    struct GLUniform {
-        ItemId itemId;
-        QString name;
-        Binding::Type type;
-        QVariantList values;
-    };
-
-    struct GLSamplerBinding {
-        ItemId itemId;
-        QString name;
-        int arrayIndex;
-        int textureIndex;
-        Sampler::Filter minFilter;
-        Sampler::Filter magFilter;
-        Sampler::WrapMode wrapModeX;
-        Sampler::WrapMode wrapModeY;
-        Sampler::WrapMode wrapModeZ;
-    };
-
-    struct GLImageBinding {
-        QString name;
-        int arrayIndex;
-        int textureIndex;
-        int level;
-        bool layered;
-        int layer;
-        GLenum access;
-    };
-
-    struct GLBufferBinding {
-        QString name;
-        int arrayIndex;
-        int bufferIndex;
-    };
-
-    bool link(RenderContext &context);
-    void applySamplerBinding(RenderContext &context,
-        const GLSamplerBinding &binding, int unit);
-    void applyImageBinding(RenderContext &context,
-        const GLImageBinding &binding, int unit);
-    void applyBufferBinding(RenderContext &context,
-        const GLBufferBinding &binding, int unit);
-    void applyUniform(RenderContext &context, const GLUniform &uniform);
-    int getUniformLocation(RenderContext &context, const QString &name) const;
+    bool link();
+    int getUniformLocation(const QString &name) const;
     GLenum getUniformDataType(const QString &name) const;
 
     ItemId mItemId{ };
-    ScriptEngine mScriptEngine;
+    QSet<ItemId> mUsedItems;
+    MessagePtrList mMessages;
     std::vector<GLShader> mShaders;
-    std::vector<GLTexture> mTextures;
-    std::vector<GLBuffer> mBuffers;
-    std::vector<GLUniform> mUniforms;
-    std::vector<GLSamplerBinding> mSamplerBindings;
-    std::vector<GLImageBinding> mImageBindings;
-    std::vector<GLBufferBinding> mBufferBindings;
     QMap<QString, GLenum> mUniformDataTypes;
     GLObject mProgramObject;
 };

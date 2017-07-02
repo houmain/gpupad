@@ -5,7 +5,7 @@
 #include <QSet>
 
 using ItemId = int;
-class QOpenGLContext;
+class GLContext;
 
 class RenderTask : public QObject
 {
@@ -16,7 +16,7 @@ public:
 
     virtual QSet<ItemId> usedItems() const = 0;
 
-    void update();
+    void update(bool rebuild);
 
 signals:
     void updated();
@@ -26,23 +26,22 @@ protected:
 
 private:
     friend class Renderer;
-    friend class BackgroundRenderer;
 
     // 1. called in main thread
-    virtual void prepare() = 0;
+    virtual void prepare(bool rebuild) = 0;
 
     // 2. called in render thread
-    virtual void render(QOpenGLContext &glContext) = 0;
+    virtual void render() = 0;
 
     // 3. called in main thread
+    void handleRendered();
     virtual void finish() = 0;
-    void validate();
 
     // 4. called in render thread
-    virtual void release(QOpenGLContext &glContext) = 0;
+    virtual void release() = 0;
 
     bool mReleased{ };
-    int mInvalidationCount{ };
+    bool mUpdating{ };
 };
 
 #endif // RENDERTASK_H

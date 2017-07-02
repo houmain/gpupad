@@ -1,12 +1,14 @@
 #include "MessageWindow.h"
+#include "Singletons.h"
+#include "MessageList.h"
 #include "FileDialog.h"
 #include <QTimer>
 #include <QHeaderView>
 
 MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
 {
-    connect(this, &MessageWindow::messagesChanged,
-        this, &MessageWindow::handleMessagesChanged);
+    mWarningIcon.addFile(QStringLiteral(":/images/16x16/dialog-warning.png"));
+
     connect(this, &MessageWindow::itemActivated,
         this, &MessageWindow::handleItemActivated);
 
@@ -38,38 +40,20 @@ QStyleOptionViewItem MessageWindow::viewOptions() const
     return option;
 }
 
-void MessageWindow::insertMessage(Message *message)
-{
-    QMutexLocker lock(&mMutex);
-    mMessages.append(message);
-    emit messagesChanged();
-}
-
-void MessageWindow::removeMessage(Message *message)
-{
-    QMutexLocker lock(&mMutex);
-    Q_ASSERT(mMessages.contains(message));
-    mMessages.removeAll(message);
-    emit messagesChanged();
-}
-
-void MessageWindow::handleMessagesChanged()
+void MessageWindow::handleMessageChanged()
 {
     mUpdateItemsTimer->start();
 }
 
 void MessageWindow::updateItems()
 {
-    auto icon = QIcon();
-    icon.addFile(QStringLiteral(":/images/16x16/dialog-warning.png"));
+    auto messages = Singletons::messageList().messages();
 
-    clear();
+    setRowCount(messages.size());
 
-    QMutexLocker lock(&mMutex);
-    setRowCount(mMessages.size());
     auto alreadyAdded = QSet<QString>();
     auto row = 0;
-    foreach (const Message* message, mMessages) {
+    foreach (const MessagePtr& message, messages) {
         auto locationText = QString();
         if (!message->fileName.isEmpty())
             locationText = FileDialog::getFileTitle(message->fileName);
@@ -97,13 +81,15 @@ void MessageWindow::updateItems()
             case UnsupportedShaderType:
                 messageText = tr("unsupported shader type");
                 break;
+            case CreatingFramebufferFailed:
+                messageText = tr("creating framebuffer failed");
+                break;
         }
 
-        auto messageItem = new QTableWidgetItem(icon, messageText);
+        auto messageItem = new QTableWidgetItem(mWarningIcon, messageText);
         messageItem->setData(Qt::UserRole + 0, message->itemId);
         messageItem->setData(Qt::UserRole + 1, message->fileName);
         messageItem->setData(Qt::UserRole + 2, message->line);
-        messageItem->setData(Qt::UserRole + 3, message->column);
 
         auto locationItem = new QTableWidgetItem(locationText);
         locationItem->setTextAlignment(Qt::AlignLeft | Qt::AlignTop);
@@ -120,6 +106,5 @@ void MessageWindow::handleItemActivated(QTableWidgetItem *listItem)
     auto itemId = listItem->data(Qt::UserRole + 0).toInt();
     auto fileName = listItem->data(Qt::UserRole + 1).toString();
     auto line = listItem->data(Qt::UserRole + 2).toInt();
-    auto column = listItem->data(Qt::UserRole + 3).toInt();
-    emit messageActivated(itemId, fileName, line, column);
+    emit messageActivated(itemId, fileName, line, -1);
 }

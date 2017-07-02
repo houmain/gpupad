@@ -127,7 +127,6 @@
      </property>
      <addaction name="actionEvalManual"/>
      <addaction name="actionEvalAuto"/>
-     <addaction name="actionEvalSteady"/>
      <addaction name="separator"/>
      <addaction name="actionEvalRateSlow"/>
      <addaction name="actionEvalRateMedium"/>
@@ -173,7 +172,6 @@
    <addaction name="separator"/>
    <addaction name="actionEvalManual"/>
    <addaction name="actionEvalAuto"/>
-   <addaction name="actionEvalSteady"/>
   </widget>
   <action name="actionOpen">
    <property name="icon">
@@ -440,7 +438,7 @@
    </property>
    <property name="icon">
     <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/media-playback-pause.png</normaloff>:/images/16x16/media-playback-pause.png</iconset>
+     <normaloff>:/images/16x16/view-refresh.png</normaloff>:/images/16x16/view-refresh.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Manual</string>
@@ -468,24 +466,6 @@
    </property>
    <property name="shortcut">
     <string>F6</string>
-   </property>
-  </action>
-  <action name="actionEvalSteady">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/media-seek-forward.png</normaloff>:/images/16x16/media-seek-forward.png</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Steady</string>
-   </property>
-   <property name="toolTip">
-    <string>Steady Evaluation</string>
-   </property>
-   <property name="shortcut">
-    <string>F7</string>
    </property>
   </action>
   <action name="actionEvalRateSlow">

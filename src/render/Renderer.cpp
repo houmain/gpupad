@@ -1,17 +1,18 @@
 #include "Renderer.h"
-#include <atomic>
+#include "RenderTask.h"
+#include "GLContext.h"
 #include <QApplication>
-#include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QOffscreenSurface>
 #include <QOpenGLDebugLogger>
+#include <QSemaphore>
 
-class BackgroundRenderer : public QObject
+class Renderer::Worker : public QObject
 {
     Q_OBJECT
 
 public:
-      QOpenGLContext context;
+      GLContext context;
       QOffscreenSurface surface;
 
 public slots:
@@ -30,8 +31,11 @@ public slots:
     void handleRenderTask(RenderTask* renderTask)
     {
         context.makeCurrent(&surface);
-        initializeLogger();
-        renderTask->render(context);
+
+        if (!std::exchange(mInitialized, true))
+            initialize();
+
+        renderTask->render();
         context.doneCurrent();
         emit taskRendered();
     }
@@ -39,18 +43,19 @@ public slots:
     void handleReleaseTask(RenderTask* renderTask, void* userData)
     {
         context.makeCurrent(&surface);
-        renderTask->release(context);
+        renderTask->release();
         context.doneCurrent();
-        static_cast<std::atomic<bool>*>(userData)->store(true);
+        static_cast<QSemaphore*>(userData)->release(1);
     }
 
 signals:
     void taskRendered();
 
 private:
-    void initializeLogger()
-    {        
-#if !defined(NDEBUG)
+    void initialize()
+    {
+        context.initializeOpenGLFunctions();
+
         mDebugLogger.reset(new QOpenGLDebugLogger());
         if (mDebugLogger->initialize()) {
             connect(mDebugLogger.data(), &QOpenGLDebugLogger::messageLogged,
@@ -59,15 +64,15 @@ private:
             });
             mDebugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
         }
-#endif
     }
 
+    bool mInitialized{ };
     QScopedPointer<QOpenGLDebugLogger> mDebugLogger;
 };
 
 Renderer::Renderer(QObject *parent)
     : QObject(parent)
-    , mBackgroundRenderer(new BackgroundRenderer())
+    , mWorker(new Worker())
 {
     auto format = QSurfaceFormat();
     format.setRenderableType(QSurfaceFormat::OpenGL);
@@ -76,22 +81,22 @@ Renderer::Renderer(QObject *parent)
     format.setProfile(QSurfaceFormat::CoreProfile);
     format.setOption(QSurfaceFormat::DebugContext);
 
-    mBackgroundRenderer->context.setFormat(format);
-    mBackgroundRenderer->context.create();
+    mWorker->context.setFormat(format);
+    mWorker->context.create();
 
-    mBackgroundRenderer->surface.setFormat(mBackgroundRenderer->context.format());
-    mBackgroundRenderer->surface.create();
+    mWorker->surface.setFormat(mWorker->context.format());
+    mWorker->surface.create();
     
-    mBackgroundRenderer->context.moveToThread(&mThread);
-    mBackgroundRenderer->surface.moveToThread(&mThread);
-    mBackgroundRenderer->moveToThread(&mThread);
+    mWorker->context.moveToThread(&mThread);
+    mWorker->surface.moveToThread(&mThread);
+    mWorker->moveToThread(&mThread);
 
     connect(this, &Renderer::renderTask,
-        mBackgroundRenderer.data(), &BackgroundRenderer::handleRenderTask);
-    connect(mBackgroundRenderer.data(), &BackgroundRenderer::taskRendered,
+        mWorker.data(), &Worker::handleRenderTask);
+    connect(mWorker.data(), &Worker::taskRendered,
         this, &Renderer::handleTaskRendered);
     connect(this, &Renderer::releaseTask,
-        mBackgroundRenderer.data(), &BackgroundRenderer::handleReleaseTask);
+        mWorker.data(), &Worker::handleReleaseTask);
 
     mThread.start();
 }
@@ -100,10 +105,10 @@ Renderer::~Renderer()
 {
     mPendingTasks.clear();
     
-    QMetaObject::invokeMethod(mBackgroundRenderer.data(), "stop", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(mWorker.data(), "stop", Qt::QueuedConnection);
     mThread.wait();
 
-    mBackgroundRenderer.reset();
+    mWorker.reset();
 }
 
 void Renderer::render(RenderTask *task)
@@ -120,12 +125,13 @@ void Renderer::release(RenderTask *task)
     while (mCurrentTask == task)
         qApp->processEvents(QEventLoop::WaitForMoreEvents);
 
-    std::atomic<bool> released{ false };
-    emit releaseTask(task, &released, QPrivateSignal());
+    QSemaphore done(1);
+    done.acquire(1);
+    emit releaseTask(task, &done, QPrivateSignal());
 
     // block until the render thread finished releasing the task
-    while (!released)
-        QThread::msleep(1);
+    done.acquire(1);
+    done.release(1);
 }
 
 void Renderer::renderNextTask()
@@ -134,15 +140,12 @@ void Renderer::renderNextTask()
         return;
 
     mCurrentTask = mPendingTasks.takeFirst();
-    mCurrentTask->prepare();
-
     emit renderTask(mCurrentTask, QPrivateSignal());
 }
 
 void Renderer::handleTaskRendered()
 {
-    mCurrentTask->finish();
-    mCurrentTask->validate();
+    mCurrentTask->handleRendered();
     mCurrentTask = nullptr;
 
     renderNextTask();

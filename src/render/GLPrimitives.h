@@ -8,25 +8,29 @@
 class GLPrimitives
 {
 public:
-    void initialize(PrepareContext &context, const Primitives &primitives);
+    explicit GLPrimitives(const Primitives &primitives);
+    void setAttribute(int attributeIndex,
+        const Column &column, GLBuffer *buffer);
+    void setIndices(const Column &column, GLBuffer *indices);
 
-    void cache(RenderContext &context, GLPrimitives &&update);
-    void draw(RenderContext &context, const GLProgram &program);
+    void draw(const GLProgram &program);
+    const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
-    struct GLAttribute {
-        int bufferIndex;
+    struct GLAttribute
+    {
+        ItemId id;
         QString name;
-        int count;
-        Column::DataType type;
         bool normalize;
+        int divisor;
+        GLBuffer *buffer;
+        Column::DataType type;
+        int count;
         int stride;
         int offset;
-        int divisor;
     };
 
-    QOpenGLVertexArrayObject mVertexArrayObject;
-    std::vector<GLBuffer> mBuffers;
+    QSet<ItemId> mUsedItems;
     std::vector<GLAttribute> mAttributes;
     Primitives::Type mType{ };
     int mFirstVertex{ };
@@ -34,9 +38,10 @@ private:
     int mPatchVertices{ };
     int mInstanceCount{ };
     int mPrimitiveRestartIndex{ };
-    int mIndexBufferIndex{ -1 };
+    GLBuffer *mIndexBuffer{ };
     GLenum mIndexType{ };
     int mIndicesOffset{ };
+    QOpenGLVertexArrayObject mVertexArrayObject;
 };
 
 #endif // GLPRIMITIVES_H

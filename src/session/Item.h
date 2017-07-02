@@ -166,7 +166,6 @@ struct Binding : Item
 {
     enum Type {
         Uniform,
-        Texture,
         Sampler,
         Image,
         Buffer,
@@ -284,11 +283,17 @@ template<> inline ItemType getItemType<Call>() { return ItemType::Call; }
 template<> inline ItemType getItemType<Script>() { return ItemType::Script; }
 
 template <typename T>
-const T* castItem(const Item* item)
+const T* castItem(const Item &item)
 {
-    if (item && item->itemType == getItemType<T>())
-        return static_cast<const T*>(item);
+    if (item.itemType == getItemType<T>())
+        return static_cast<const T*>(&item);
     return nullptr;
+}
+
+template <typename T>
+const T* castItem(const Item *item)
+{
+    return (item ? castItem<T>(*item) : nullptr);
 }
 
 #endif // ITEM_H

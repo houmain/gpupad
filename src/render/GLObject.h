@@ -1,11 +1,12 @@
 #ifndef GLOBJECT_H
 #define GLOBJECT_H
 
-#include <QOpenGLContext>
+#include <utility>
 
 class GLObject
 {
 public:
+    using GLuint = unsigned int;
     using Free = void(*)(GLuint object);
 
     GLObject() = default;
@@ -32,7 +33,7 @@ public:
         reset();
     }
 
-    explicit operator bool() const { return (mObject != GL_NONE); }
+    explicit operator bool() const { return (mObject != 0); }
     operator GLuint() const { return mObject; }
 
     void reset()

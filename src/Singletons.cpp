@@ -1,5 +1,5 @@
 #include "Singletons.h"
-#include "MessageWindow.h"
+#include "MessageList.h"
 #include "FileCache.h"
 #include "FileDialog.h"
 #include "SynchronizeLogic.h"
@@ -25,10 +25,9 @@ Renderer &Singletons::renderer()
     return *sInstance->mRenderer;
 }
 
-MessageWindow &Singletons::messageWindow()
+MessageList &Singletons::messageList()
 {
-    Q_ASSERT(onMainThread());
-    return *sInstance->mMessageWindow;
+    return *sInstance->mMessageList;
 }
 
 Settings &Singletons::settings()
@@ -77,7 +76,7 @@ Singletons::Singletons(QMainWindow *window)
     Q_ASSERT(onMainThread());
     sInstance = this;
     mRenderer.reset(new Renderer());
-    mMessageWindow.reset(new MessageWindow());
+    mMessageList.reset(new MessageList());
     mSettings.reset(new Settings());
     mFileCache.reset(new FileCache());
     mFileDialog.reset(new FileDialog(window));
