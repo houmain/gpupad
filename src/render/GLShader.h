@@ -7,7 +7,7 @@ class GLShader
 {
 public:
     static void parseLog(const QString &log,
-        MessagePtrList &messages, ItemId itemId,
+        MessagePtrSet &messages, ItemId itemId,
         QList<QString> fileNames);
 
     explicit GLShader(const QList<const Shader*> &shaders);
@@ -18,7 +18,7 @@ public:
 
 private:
     ItemId mItemId{ };
-    MessagePtrList mMessages;
+    MessagePtrSet mMessages;
     QList<QString> mFileNames;
     QList<QString> mSources;
     Shader::Type mType;

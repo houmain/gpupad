@@ -8,15 +8,24 @@ class QJSEngine;
 class ScriptEngine
 {
 public:
+    struct Script
+    {
+        QString fileName;
+        QString source;
+    };
+
     ScriptEngine();
     ~ScriptEngine();
 
-    void evalScript(const QString &fileName, ItemId itemId);
+    void evalScripts(QList<Script> scripts, bool forceReset);
     QStringList evalValue(const QStringList &fieldExpressions, ItemId itemId);
 
 private:
+    void reset();
+
     QScopedPointer<QJSEngine> mJsEngine;
-    MessagePtrList mMessages;
+    QList<Script> mScripts;
+    MessagePtrSet mMessages;
 };
 
 #endif // SCRIPTENGINE_H

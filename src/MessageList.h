@@ -3,9 +3,8 @@
 
 #include <QSharedPointer>
 #include <QString>
-#include <QList>
+#include <QSet>
 #include <QMutex>
-#include <QObject>
 
 using ItemId = int;
 
@@ -30,21 +29,17 @@ struct Message
 };
 
 using MessagePtr = QSharedPointer<const Message>;
-using MessagePtrList = QList<MessagePtr>;
+using MessagePtrSet = QSet<MessagePtr>;
 
-class MessageList : public QObject
+class MessageList
 {
-    Q_OBJECT
 public:
     MessagePtr insert(QString fileName, int line,
         MessageType type, QString text = "");
     MessagePtr insert(ItemId itemId,
         MessageType type, QString text = "");
 
-    MessagePtrList messages() const;
-
-signals:
-    void messagesChanged(QPrivateSignal);
+    MessagePtrSet messages() const;
 
 private:
     mutable QMutex mMessagesMutex;

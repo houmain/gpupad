@@ -1,36 +1,48 @@
 #include "ScriptEngine.h"
 #include "Singletons.h"
-#include "FileCache.h"
 #include <QJSEngine>
 
-ScriptEngine::ScriptEngine()
-    : mJsEngine(new QJSEngine())
+bool operator==(const ScriptEngine::Script &a,
+                const ScriptEngine::Script &b)
 {
-    mJsEngine->installExtensions(QJSEngine::ConsoleExtension);
+    return (a.fileName == b.fileName &&
+            a.source == b.source);
 }
+
+ScriptEngine::ScriptEngine() = default;
 
 ScriptEngine::~ScriptEngine() = default;
 
-void ScriptEngine::evalScript(
-    const QString &fileName, ItemId itemId)
+void ScriptEngine::reset()
 {
-    auto source = QString();
-    if (!Singletons::fileCache().getSource(fileName, &source)) {
-        mMessages += Singletons::messageList().insert(
-            itemId, MessageType::LoadingFileFailed, fileName);
-        return;
-    }
+    mJsEngine.reset(new QJSEngine());
+    mJsEngine->installExtensions(QJSEngine::ConsoleExtension);
+    mMessages.clear();
+}
 
-    auto result = mJsEngine->evaluate(source, fileName);
-    if (result.isError())
-        mMessages += Singletons::messageList().insert(
-            fileName, result.property("lineNumber").toInt(),
-            MessageType::Error, result.toString());
+void ScriptEngine::evalScripts(QList<Script> scripts, bool forceReset)
+{
+    if (!forceReset && scripts == mScripts)
+        return;
+
+    reset();
+
+    foreach (const Script &script, scripts) {
+        auto result = mJsEngine->evaluate(script.source, script.fileName);
+        if (result.isError())
+            mMessages += Singletons::messageList().insert(
+                script.fileName, result.property("lineNumber").toInt(),
+                MessageType::Error, result.toString());
+    }
+    mScripts = scripts;
 }
 
 QStringList ScriptEngine::evalValue(
     const QStringList &fieldExpressions, ItemId itemId)
 {
+    if (!mJsEngine)
+        reset();
+
     auto fields = QStringList();
     foreach (QString fieldExpression, fieldExpressions) {
         auto result = mJsEngine->evaluate(fieldExpression);

@@ -24,11 +24,15 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
   : QObject(parent)
   , mModel(Singletons::sessionModel())
   , mUpdateTimer(new QTimer(this))
+  , mRenderSession(new RenderSession())
 {
+    connect(mRenderSession.data(), &RenderTask::updated,
+        this, &SynchronizeLogic::handleSessionRendered);
+
     mUpdateTimer->setSingleShot(true);
-    mUpdateTimer->setInterval(50);
+    mUpdateTimer->setInterval(10);
     connect(mUpdateTimer, &QTimer::timeout,
-        this, &SynchronizeLogic::update);
+        this, &SynchronizeLogic::handleRefresh);
 
     connect(&mModel, &SessionModel::dataChanged,
         this, &SynchronizeLogic::handleItemModified);
@@ -40,11 +44,10 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
 
 SynchronizeLogic::~SynchronizeLogic() = default;
 
-void SynchronizeLogic::handleMessageActivated(ItemId item, QString fileName,
-        int line, int column)
+void SynchronizeLogic::manualUpdate()
 {
-    Q_UNUSED(item);
-    Singletons::editorManager().openSourceEditor(fileName, true, line, column);
+    mRenderTaskInvalidated = true;
+    handleRefresh();
 }
 
 void SynchronizeLogic::handleItemModified(const QModelIndex &index)
@@ -60,10 +63,9 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
         mRenderTaskInvalidated = true;
     }
 
-    if (mActiveRenderTask &&
-        mActiveRenderTask->usedItems().contains(mModel.getItemId(index))) {
+    if (mRenderSession->usedItems().contains(mModel.getItemId(index)))
         mRenderTaskInvalidated = true;
-    }
+
     mUpdateTimer->start();
 }
 
@@ -102,7 +104,7 @@ void SynchronizeLogic::handleFileRenamed(const QString &prevFileName,
         });
 }
 
-void SynchronizeLogic::update()
+void SynchronizeLogic::handleRefresh()
 {
     mUpdateTimer->stop();
 
@@ -112,31 +114,14 @@ void SynchronizeLogic::update()
                 updateBinaryEditor(*buffer, *editor);
     mBuffersModified.clear();
 
-    // TODO: move
-    if (!mActiveRenderTask) {
-        Singletons::fileCache().update(Singletons::editorManager());
-        mActiveRenderTask.reset(new RenderSession());
-        connect(mActiveRenderTask.data(), &RenderTask::updated,
-            this, &SynchronizeLogic::handleTaskRendered);
-        mActiveRenderTask->update();
-    }
-
-    if (mActiveRenderTask && mRenderTaskInvalidated) {
-        Singletons::fileCache().update(Singletons::editorManager());
-        mActiveRenderTask->update();
-    }
-    mRenderTaskInvalidated = false;
-
     foreach (QString fileName, mEditorsModified) {
         handleFileItemsChanged(fileName);
     }
     mEditorsModified.clear();
-}
 
-void SynchronizeLogic::deactivateCalls()
-{
-    mActiveRenderTask.reset();
-    Singletons::sessionModel().setActiveItems({ });
+    Singletons::fileCache().update(Singletons::editorManager());
+    mRenderSession->update(mRenderTaskInvalidated);
+    mRenderTaskInvalidated = false;
 }
 
 void SynchronizeLogic::handleItemActivated(const QModelIndex &index, bool *handled)
@@ -166,10 +151,11 @@ void SynchronizeLogic::handleItemActivated(const QModelIndex &index, bool *handl
     }
 }
 
-void SynchronizeLogic::handleTaskRendered()
+void SynchronizeLogic::handleSessionRendered()
 {
-    if (mActiveRenderTask)
-        Singletons::sessionModel().setActiveItems(mActiveRenderTask->usedItems());
+    Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
+    // TODO: add evaluation mode "steady"
+    //mUpdateTimer->start();
 }
 
 void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)

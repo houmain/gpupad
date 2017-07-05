@@ -12,9 +12,6 @@ MessagePtr MessageList::insert(QString fileName, int line, MessageType type, QSt
                 return message;
     MessagePtr message(new Message{ type, text, 0, fileName, line });
     mMessages.append(message);
-
-    emit messagesChanged(QPrivateSignal());
-
     return message;
 }
 
@@ -29,16 +26,13 @@ MessagePtr MessageList::insert(ItemId itemId, MessageType type, QString text)
                 return message;
     MessagePtr message(new Message{ type, text, itemId, QString(), 0 });
     mMessages.append(message);
-
-    emit messagesChanged(QPrivateSignal());
-
     return message;
 }
 
-MessagePtrList MessageList::messages() const
+MessagePtrSet MessageList::messages() const
 {
     QMutexLocker lock(&mMessagesMutex);
-    MessagePtrList result;
+    MessagePtrSet result;
     QMutableListIterator<QWeakPointer<const Message>> it(mMessages);
     while (it.hasNext()) {
         if (MessagePtr message = it.next().lock())

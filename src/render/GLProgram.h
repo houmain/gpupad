@@ -71,7 +71,7 @@ private:
 
     ItemId mItemId{ };
     QSet<ItemId> mUsedItems;
-    MessagePtrList mMessages;
+    MessagePtrSet mMessages;
     std::vector<GLShader> mShaders;
     QMap<QString, GLenum> mUniformDataTypes;
     GLObject mProgramObject;

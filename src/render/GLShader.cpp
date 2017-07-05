@@ -2,7 +2,7 @@
 #include "editors/SourceEditor.h"
 
 void GLShader::parseLog(const QString &log,
-        MessagePtrList &messages, ItemId itemId,
+        MessagePtrSet &messages, ItemId itemId,
         QList<QString> fileNames)
 {
     // Mesa:    0:13(2): error: `gl_Positin' undeclared
@@ -10,7 +10,7 @@ void GLShader::parseLog(const QString &log,
 
     static const auto split = QRegExp(
         "("
-            "(\\d+)"              // 1. source index
+            "(\\d+)"              // 2. source index
             "(:(\\d+))?"          // 4. [line]
             "\\((\\d+)\\)"        // 5. line or column
             "\\s*:\\s*[^:]+:\\s*" // severity/code
@@ -19,7 +19,7 @@ void GLShader::parseLog(const QString &log,
 
     auto pos = 0;
     while ((pos = split.indexIn(log, pos)) != -1) {
-        const auto sourceIndex = split.cap(1).toInt();
+        const auto sourceIndex = split.cap(2).toInt();
         const auto line = (!split.cap(4).isNull() ?
           split.cap(4).toInt() : split.cap(5).toInt());
         const auto text = split.cap(6);
@@ -38,11 +38,16 @@ void GLShader::parseLog(const QString &log,
 
 GLShader::GLShader(const QList<const Shader*> &shaders)
 {
+    auto sourceIndex = 0;
     foreach (const Shader* shader, shaders) {
         auto source = QString();
         if (!Singletons::fileCache().getSource(shader->fileName, &source))
             mMessages += Singletons::messageList().insert(shader->id,
                 MessageType::LoadingFileFailed, shader->fileName);
+
+        if (sourceIndex)
+            source = QString("#line 0 %1\n").arg(sourceIndex) + source;
+        sourceIndex++;
 
         mSources += source;
         mFileNames += shader->fileName;

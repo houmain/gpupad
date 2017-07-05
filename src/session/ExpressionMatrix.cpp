@@ -1,7 +1,5 @@
 #include "ExpressionMatrix.h"
 #include "ExpressionEditor.h"
-#include "Singletons.h"
-#include "SynchronizeLogic.h"
 #include <QStyledItemDelegate>
 #include <QHeaderView>
 #include <QToolTip>
@@ -24,14 +22,13 @@ namespace {
             editor->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
             editor->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-            connect(editor,
-                (&ExpressionEditor::textChanged),
+            connect(editor, &ExpressionEditor::textChanged,
                 this, &ExpressionItemDelegate::valueChanged);
 
             return editor;
         }
 
-        void setEditorData(QWidget *editor, const QModelIndex & index) const override
+        void setEditorData(QWidget *editor, const QModelIndex &index) const override
         {
             if (!mEditing)
                 static_cast<ExpressionEditor*>(editor)->setText(
@@ -64,8 +61,6 @@ namespace {
             mEditing = true;
             emit commitData(static_cast<ExpressionEditor*>(QObject::sender()));
             mEditing = false;
-
-            Singletons::synchronizeLogic().update();
         }
 
         bool mEditing{ };

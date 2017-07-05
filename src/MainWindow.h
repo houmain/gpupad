@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "EditActions.h"
+#include "session/Item.h"
 #include <QMainWindow>
 
 namespace Ui {
@@ -36,6 +37,8 @@ public slots:
     void openMessageDock();
     void openDocumentation();
     void openAbout();
+    void handleMessageActivated(ItemId itemId,
+        QString fileName, int line, int column);
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -47,6 +50,7 @@ private:
     void disconnectEditActions();
     void connectEditActions();
     void updateFileActions();
+    void stopEvaluation();
     void updateEvaluationMode();
     bool openSession(const QString &fileName);
     bool saveSession();

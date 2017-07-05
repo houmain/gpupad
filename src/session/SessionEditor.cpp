@@ -286,6 +286,15 @@ void SessionEditor::delete_()
     mModel.undoStack().endMacro();
 }
 
+void SessionEditor::setCurrentItem(ItemId itemId)
+{
+    if (auto item = mModel.findItem(itemId)) {
+        auto index = mModel.index(item);
+        setCurrentIndex(index);
+        scrollTo(index);
+    }
+}
+
 void SessionEditor::openContextMenu(const QPoint &pos)
 {
     if (!indexAt(pos).isValid())

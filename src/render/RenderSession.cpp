@@ -4,6 +4,7 @@
 #include "editors/EditorManager.h"
 #include "editors/ImageEditor.h"
 #include "editors/BinaryEditor.h"
+#include "FileCache.h"
 #include "ScriptEngine.h"
 #include "GLTexture.h"
 #include "GLBuffer.h"
@@ -122,6 +123,7 @@ void RenderSession::prepare(bool rebuild)
     mPrevCommandQueue.swap(mCommandQueue);
     mCommandQueue.reset(new CommandQueue());
 
+    auto scripts = QList<ScriptEngine::Script>();
     auto& session = Singletons::sessionModel();
 
     auto addCommand = [&](auto&& command) {
@@ -184,9 +186,11 @@ void RenderSession::prepare(bool rebuild)
                     addCommand([](BindingState& state) { state.push({ }); });
 
         if (auto script = castItem<Script>(item)) {
-            // all scripts are unconditionally evaluated
+            // for now all scripts are unconditionally evaluated
             mUsedItems += script->id;
-            mScriptEngine->evalScript(script->fileName, script->id);
+            auto source = QString();
+            Singletons::fileCache().getSource(script->fileName, &source);
+            scripts += ScriptEngine::Script{ script->fileName, source };
         }
         else if (auto binding = castItem<Binding>(item)) {
             switch (binding->type) {
@@ -323,6 +327,10 @@ void RenderSession::prepare(bool rebuild)
                 if (!group->inlineScope)
                     addCommand([](BindingState& state) { state.pop(); });
     });
+
+    // TODO: force reset on manual refresh
+    auto forceReset = false;
+    mScriptEngine->evalScripts(scripts, forceReset);
 }
 
 void RenderSession::render()

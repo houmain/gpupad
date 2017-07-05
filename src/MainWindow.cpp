@@ -169,10 +169,8 @@ MainWindow::MainWindow(QWidget *parent)
         &synchronizeLogic, &SynchronizeLogic::handleBinaryEditorChanged);
     connect(&mEditorManager, &EditorManager::imageEditorChanged,
         &synchronizeLogic, &SynchronizeLogic::handleImageEditorChanged);
-    connect(&Singletons::messageList(), &MessageList::messagesChanged,
-        mMessageWindow.data(), &MessageWindow::handleMessageChanged);
     connect(mMessageWindow.data(), &MessageWindow::messageActivated,
-        &synchronizeLogic, &SynchronizeLogic::handleMessageActivated);
+        this, &MainWindow::handleMessageActivated);
 
     auto& settings = Singletons::settings();
     connect(mUi->actionSelectFont, &QAction::triggered,
@@ -315,13 +313,22 @@ void MainWindow::updateFileActions()
     mUi->actionReload->setText(tr("&Reload%1").arg(canReload ? desc : ""));
 }
 
+void MainWindow::stopEvaluation()
+{
+    mUi->actionEvalAuto->setChecked(false);
+}
+
 void MainWindow::updateEvaluationMode()
 {
     auto pausable = mUi->actionEvalAuto->isChecked();
     mUi->actionEvalManual->setIcon(pausable ?
         QIcon(QStringLiteral(":/images/16x16/media-playback-pause.png")) :
         QIcon(QStringLiteral(":/images/16x16/view-refresh.png")));
-    mUi->actionEvalManual->setChecked(false);
+
+    if (mUi->actionEvalManual->isChecked()) {
+        Singletons::synchronizeLogic().manualUpdate();
+        mUi->actionEvalManual->setChecked(false);
+    }
 }
 
 void MainWindow::newFile()
@@ -428,7 +435,7 @@ bool MainWindow::saveSessionAs()
 
 bool MainWindow::closeSession()
 {
-    Singletons::synchronizeLogic().deactivateCalls();
+    stopEvaluation();
 
     if (mSessionEditor->isModified()) {
         auto ret = Singletons::editorManager().openNotSavedDialog(
@@ -441,6 +448,15 @@ bool MainWindow::closeSession()
             return false;
     }
     return mSessionEditor->clear();
+}
+
+void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
+        int line, int column)
+{
+    if (itemId)
+        mSessionEditor->setCurrentItem(itemId);
+    else
+        Singletons::editorManager().openSourceEditor(fileName, true, line, column);
 }
 
 void MainWindow::openSessionDock()
