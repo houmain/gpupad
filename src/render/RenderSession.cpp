@@ -114,14 +114,15 @@ RenderSession::~RenderSession()
     releaseResources();
 }
 
-void RenderSession::prepare(bool rebuild)
+void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 {
-    if (mCommandQueue && !rebuild)
+    if (mCommandQueue && !(itemsChanged || manualEvaluation))
         return;
 
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
     mCommandQueue.reset(new CommandQueue());
+    mUsedItems.clear();
 
     auto scripts = QList<ScriptEngine::Script>();
     auto& session = Singletons::sessionModel();
@@ -179,13 +180,13 @@ void RenderSession::prepare(bool rebuild)
     };
 
     session.forEachItem([&](const Item& item) {
-        // push binding scope
-        if (item.parent && item.parent->items.front() == &item)
-            if (auto group = castItem<Group>(item.parent))
-                if (!group->inlineScope)
-                    addCommand([](BindingState& state) { state.push({ }); });
 
-        if (auto script = castItem<Script>(item)) {
+        if (auto group = castItem<Group>(item)) {
+            // push binding scope
+            if (!group->inlineScope)
+                addCommand([](BindingState& state) { state.push({ }); });
+        }
+        else if (auto script = castItem<Script>(item)) {
             // for now all scripts are unconditionally evaluated
             mUsedItems += script->id;
             auto source = QString();
@@ -280,18 +281,21 @@ void RenderSession::prepare(bool rebuild)
                               program = addProgramOnce(call->programId)
                             ](BindingState& state) {
                                 if (program && program->bind()) {
-                                    mUsedItems += program->usedItems();
                                     mUsedItems += applyBindings(state,
                                         *program, *mScriptEngine);
 
                                     if (framebuffer && framebuffer->bind()) {
-                                        mUsedItems += framebuffer->usedItems();
-                                        mUsedItems += primitives->usedItems();
                                         primitives->draw(*program);
                                         framebuffer->unbind();
                                     }
                                     program->unbind();
                                 }
+                                if (program)
+                                    mUsedItems += program->usedItems();
+                                if (framebuffer)
+                                    mUsedItems += framebuffer->usedItems();
+                                if (primitives)
+                                    mUsedItems += primitives->usedItems();
                             });
                         break;
 
@@ -304,7 +308,6 @@ void RenderSession::prepare(bool rebuild)
                               numGroupsZ = call->numGroupsZ
                             ](BindingState& state) {
                                 if (program && program->bind()) {
-                                    mUsedItems += program->usedItems();
                                     mUsedItems += applyBindings(state,
                                         *program, *mScriptEngine);
 
@@ -315,21 +318,32 @@ void RenderSession::prepare(bool rebuild)
 
                                     program->unbind();
                                 }
+                                if (program)
+                                    mUsedItems += program->usedItems();
                             });
                         break;
                 }
             }
         }
 
-        // pop binding scope
-        if (item.parent && item.parent->items.back() == &item)
-            if (auto group = castItem<Group>(item.parent))
+        // pop binding scope(s) after last group item
+        if (!castItem<Group>(&item)) {
+            auto it = &item;
+            while (it && it->parent && it->parent->items.back() == it) {
+                auto group = castItem<Group>(it->parent);
+                if (!group)
+                    break;
                 if (!group->inlineScope)
-                    addCommand([](BindingState& state) { state.pop(); });
+                    addCommand([](BindingState& state) {
+                        state.pop();
+                    });
+                it = it->parent;
+            }
+        }
     });
 
-    // TODO: force reset on manual refresh
-    auto forceReset = false;
+    // re-evaluate scripts on manual evaluation
+    auto forceReset = manualEvaluation;
     mScriptEngine->evalScripts(scripts, forceReset);
 }
 
@@ -345,7 +359,6 @@ void RenderSession::render()
 
     // execute command queue
     BindingState state;
-    state.push({ });
     for (auto& command : mCommandQueue->commands)
         command(state);
 
@@ -364,14 +377,14 @@ void RenderSession::finish()
     for (auto& image : mModifiedImages) {
         const auto& fileName = image.first;
         if (auto editor = manager.openImageEditor(fileName, false))
-            editor->replace(image.second);
+            editor->replace(image.second, false);
     }
     mModifiedImages.clear();
 
     for (auto& binary : mModifiedBuffers) {
         const auto& fileName = binary.first;
         if (auto editor = manager.openBinaryEditor(fileName, false))
-            editor->replace(binary.second);
+            editor->replace(binary.second, false);
     }
     mModifiedBuffers.clear();
 }

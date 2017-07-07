@@ -100,13 +100,15 @@ bool ImageEditor::save()
     return true;
 }
 
-void ImageEditor::replace(QImage image)
+void ImageEditor::replace(QImage image, bool emitDataChanged)
 {
     if (image != mImage) {
         mImage = image;
         refresh();
         setModified(true);
-        emit dataChanged();
+
+        if (emitDataChanged)
+            emit dataChanged();
     }
 }
 

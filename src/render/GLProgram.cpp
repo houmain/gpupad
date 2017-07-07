@@ -12,7 +12,7 @@ GLProgram::GLProgram(const Program &program)
     auto shaders = QList<const Shader*>();
     for (const auto& item : program.items)
         if (auto shader = castItem<Shader>(item)) {
-            mUsedItems += item->id;
+            mUsedItems += shader->id;
 
             shaders.append(shader);
 

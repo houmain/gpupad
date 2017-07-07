@@ -164,11 +164,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&mEditorManager, &EditorManager::editorRenamed,
         &synchronizeLogic, &SynchronizeLogic::handleFileRenamed);
     connect(&mEditorManager, &EditorManager::sourceEditorChanged,
-        &synchronizeLogic, &SynchronizeLogic::handleSourceEditorChanged);
+        &synchronizeLogic, &SynchronizeLogic::handleFileItemsChanged);
     connect(&mEditorManager, &EditorManager::binaryEditorChanged,
-        &synchronizeLogic, &SynchronizeLogic::handleBinaryEditorChanged);
+        &synchronizeLogic, &SynchronizeLogic::handleFileItemsChanged);
     connect(&mEditorManager, &EditorManager::imageEditorChanged,
-        &synchronizeLogic, &SynchronizeLogic::handleImageEditorChanged);
+        &synchronizeLogic, &SynchronizeLogic::handleFileItemsChanged);
     connect(mMessageWindow.data(), &MessageWindow::messageActivated,
         this, &MainWindow::handleMessageActivated);
 
@@ -182,16 +182,20 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->actionIndentWithSpaces, &QAction::triggered,
         &settings, &Settings::setIndentWithSpaces);
 
-    auto evalModeActionGroup = new QActionGroup(this);
-    mUi->actionEvalManual->setActionGroup(evalModeActionGroup);
-    mUi->actionEvalAuto->setActionGroup(evalModeActionGroup);
-    connect(evalModeActionGroup, &QActionGroup::triggered,
+    connect(mUi->actionEvalManual, &QAction::triggered,
+        this, &MainWindow::updateEvaluationMode);
+    connect(mUi->actionEvalAuto, &QAction::toggled,
+        this, &MainWindow::updateEvaluationMode);
+    connect(mUi->actionEvalSteady, &QAction::toggled,
         this, &MainWindow::updateEvaluationMode);
 
-    auto evalRateActionGroup = new QActionGroup(this);
-    mUi->actionEvalRateSlow->setActionGroup(evalRateActionGroup);
-    mUi->actionEvalRateMedium->setActionGroup(evalRateActionGroup);
-    mUi->actionEvalRateFast->setActionGroup(evalRateActionGroup);
+    auto evalIntervalActionGroup = new QActionGroup(this);
+    mUi->actionEvalIntervalSlow->setActionGroup(evalIntervalActionGroup);
+    mUi->actionEvalIntervalMedium->setActionGroup(evalIntervalActionGroup);
+    mUi->actionEvalIntervalFast->setActionGroup(evalIntervalActionGroup);
+    mUi->actionEvalIntervalUnbounded->setActionGroup(evalIntervalActionGroup);
+    connect(evalIntervalActionGroup, &QActionGroup::triggered,
+        this, &MainWindow::updateEvaluationInterval);
 
     auto indentActionGroup = new QActionGroup(this);
     connect(indentActionGroup, &QActionGroup::triggered,
@@ -205,6 +209,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     readSettings();
+    updateEvaluationInterval();
 
     if (!mEditorManager.hasCurrentEditor())
         newFile();
@@ -254,6 +259,8 @@ void MainWindow::readSettings()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    stopEvaluation();
+
     if (closeAllFiles() && closeSession())
         event->accept();
     else
@@ -316,19 +323,35 @@ void MainWindow::updateFileActions()
 void MainWindow::stopEvaluation()
 {
     mUi->actionEvalAuto->setChecked(false);
+    mUi->actionEvalSteady->setChecked(false);
 }
 
 void MainWindow::updateEvaluationMode()
 {
-    auto pausable = mUi->actionEvalAuto->isChecked();
-    mUi->actionEvalManual->setIcon(pausable ?
-        QIcon(QStringLiteral(":/images/16x16/media-playback-pause.png")) :
-        QIcon(QStringLiteral(":/images/16x16/view-refresh.png")));
-
-    if (mUi->actionEvalManual->isChecked()) {
-        Singletons::synchronizeLogic().manualUpdate();
-        mUi->actionEvalManual->setChecked(false);
+    if (QObject::sender() == mUi->actionEvalManual) {
+        Singletons::synchronizeLogic().manualEvaluation();
     }
+    else {
+        if (QObject::sender() == mUi->actionEvalAuto) {
+            if (mUi->actionEvalAuto->isChecked())
+                mUi->actionEvalSteady->setChecked(false);
+        }
+        else if (mUi->actionEvalSteady->isChecked())
+                mUi->actionEvalAuto->setChecked(false);
+    }
+
+    Singletons::synchronizeLogic().setEvaluationMode(
+        mUi->actionEvalAuto->isChecked(),
+        mUi->actionEvalSteady->isChecked());
+}
+
+void MainWindow::updateEvaluationInterval()
+{
+    Singletons::synchronizeLogic().setEvaluationInterval(
+        mUi->actionEvalIntervalUnbounded->isChecked() ? 0 :
+        mUi->actionEvalIntervalFast->isChecked() ? 15 :
+        mUi->actionEvalIntervalMedium->isChecked() ? 100 :
+        500);
 }
 
 void MainWindow::newFile()

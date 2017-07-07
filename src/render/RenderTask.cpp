@@ -17,10 +17,10 @@ void RenderTask::releaseResources()
         Singletons::renderer().release(this);
 }
 
-void RenderTask::update(bool rebuild)
+void RenderTask::update(bool itemsChanged, bool manualEvaluation)
 {
     if (!std::exchange(mUpdating, true)) {
-        prepare(rebuild);
+        prepare(itemsChanged, manualEvaluation);
         Singletons::renderer().render(this);
     }
 }

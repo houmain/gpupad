@@ -16,7 +16,7 @@ public:
 private:
     struct CommandQueue;
 
-    void prepare(bool rebuild) override;
+    void prepare(bool itemsChanged, bool manualEvaluation) override;
     void render() override;
     void finish() override;
     void release() override;

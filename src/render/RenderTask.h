@@ -16,7 +16,7 @@ public:
 
     virtual QSet<ItemId> usedItems() const = 0;
 
-    void update(bool rebuild);
+    void update(bool itemChanged, bool manualEvaluation);
 
 signals:
     void updated();
@@ -28,7 +28,7 @@ private:
     friend class Renderer;
 
     // 1. called in main thread
-    virtual void prepare(bool rebuild) = 0;
+    virtual void prepare(bool itemsChanged, bool manualEvaluation) = 0;
 
     // 2. called in render thread
     virtual void render() = 0;

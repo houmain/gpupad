@@ -52,6 +52,7 @@ private:
     void updateFileActions();
     void stopEvaluation();
     void updateEvaluationMode();
+    void updateEvaluationInterval();
     bool openSession(const QString &fileName);
     bool saveSession();
     bool saveSessionAs();

@@ -58,7 +58,8 @@ GLShader::GLShader(const QList<const Shader*> &shaders)
 
 bool GLShader::operator==(const GLShader &rhs) const
 {
-    return (mSources == rhs.mSources);
+    return std::tie(mSources, mType) ==
+           std::tie(rhs.mSources, rhs.mType);
 }
 
 bool GLShader::compile()

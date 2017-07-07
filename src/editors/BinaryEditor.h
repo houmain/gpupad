@@ -28,7 +28,7 @@ public:
     bool save() override;
     int tabifyGroup() override { return 0; }
     bool isModified() const { return mModified; }
-    void replace(QByteArray data);    
+    void replace(QByteArray data, bool emitDataChanged = true);
     const QByteArray &data() const { return mData; }
 
     void setOffset(int offset);

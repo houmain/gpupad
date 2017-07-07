@@ -17,31 +17,32 @@ public:
     explicit SynchronizeLogic(QObject *parent = 0);
     ~SynchronizeLogic();
 
+    void setEvaluationMode(bool automatic, bool steady);
+    void setEvaluationInterval(int interval);
+
 public slots:
-    void manualUpdate();
+    void manualEvaluation();
     void handleItemModified(const QModelIndex &index);
+    void handleFileItemsChanged(const QString &fileName);
     void handleItemActivated(const QModelIndex &index, bool *handled);
-    void handleSourceEditorChanged(const QString &fileName);
-    void handleBinaryEditorChanged(const QString &fileName);
-    void handleImageEditorChanged(const QString &fileName);
     void handleFileRenamed(const QString &prevFileName,
         const QString &fileName);
 
 private slots:
     void handleItemReordered(const QModelIndex &parent, int first);
-    void handleFileItemsChanged(const QString &fileName);
     void handleSessionRendered();
-    void handleRefresh();
+    void update(bool manualEvaluation = false);
 
 private:
     void updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor);
 
     SessionModel& mModel;
     QTimer *mUpdateTimer{ };
-    QSet<QString> mEditorsModified;
     QSet<ItemId> mBuffersModified;
     QScopedPointer<RenderTask> mRenderSession;
-    bool mRenderTaskInvalidated{ };
+    bool mRenderSessionInvalidated{ };
+    bool mAutomaticEvaluation{ };
+    bool mSteadyEvaluation{ };
 };
 
 #endif // SYNCHRONIZELOGIC_H
