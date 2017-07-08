@@ -11,27 +11,25 @@ GLPrimitives::GLPrimitives(const Primitives &primitives)
     mPrimitiveRestartIndex = primitives.primitiveRestartIndex;
 
     for (const auto& item : primitives.items)
-        if (auto attribute = castItem<Attribute>(item)) {
-            mUsedItems += attribute->id;
-            mAttributes.push_back(GLAttribute{
-                attribute->id,
+        if (auto attribute = castItem<Attribute>(item))
+            mAttributes.push_back({
+                { item->id },
                 attribute->name,
                 attribute->normalize,
                 attribute->divisor,
-                nullptr, Column::DataType(), 0, 0, 0 });
-        }
+                nullptr, { }, 0, 0, 0 });
 }
 
 void GLPrimitives::setAttribute(int attributeIndex,
     const Column &column, GLBuffer *buffer)
 {
     auto& attribute = mAttributes.at(attributeIndex);
-    mUsedItems += column.id;
+    attribute.usedItems += column.id;
     attribute.buffer = buffer;
     attribute.type = column.dataType;
     attribute.count = column.count;
     if (auto b = castItem<Buffer>(column.parent)) {
-        mUsedItems += b->id;
+        attribute.usedItems += b->id;
         attribute.stride = b->stride();
         attribute.offset = b->columnOffset(&column);
     }
@@ -60,7 +58,7 @@ void GLPrimitives::draw(const GLProgram &program)
         if (location < 0)
             continue;
 
-        mUsedItems += attribute.id;
+        mUsedItems += attribute.usedItems;
 
         attribute.buffer->bindReadOnly(GL_ARRAY_BUFFER);
 

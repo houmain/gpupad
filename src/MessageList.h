@@ -16,7 +16,8 @@ enum MessageType
     OpenGL33NotSupported,
     LoadingFileFailed,
     UnsupportedShaderType,
-    CreatingFramebufferFailed
+    CreatingFramebufferFailed,
+    UnformNotSet,
 };
 
 struct Message

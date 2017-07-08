@@ -13,16 +13,16 @@ void GLShader::parseLog(const QString &log,
             "(\\d+)"              // 2. source index
             "(:(\\d+))?"          // 4. [line]
             "\\((\\d+)\\)"        // 5. line or column
-            "\\s*:\\s*[^:]+:\\s*" // severity/code
+            "\\s*:(\\s*[^:]+):\\s*" // 6. severity/code
         ")?"
-        "([^\\n]+)");  // 6. text
+        "([^\\n]+)");  // 7. text
 
     auto pos = 0;
     while ((pos = split.indexIn(log, pos)) != -1) {
         const auto sourceIndex = split.cap(2).toInt();
         const auto line = (!split.cap(4).isNull() ?
           split.cap(4).toInt() : split.cap(5).toInt());
-        const auto text = split.cap(6);
+        const auto text = split.cap(7);
 
         if (sourceIndex < fileNames.size())
             messages += Singletons::messageList().insert(
@@ -49,7 +49,7 @@ GLShader::GLShader(const QList<const Shader*> &shaders)
             source = QString("#line 0 %1\n").arg(sourceIndex) + source;
         sourceIndex++;
 
-        mSources += source;
+        mSources += source + "\n";
         mFileNames += shader->fileName;
         mItemId = shader->id;
         mType = shader->type;
@@ -87,19 +87,20 @@ bool GLShader::compile()
     for (const auto& source : sources)
         pointers.push_back(source.data());
     gl.glShaderSource(shader, pointers.size(), pointers.data(), 0);
-    gl.glCompileShader(shader);
 
     auto status = GLint{ };
+    gl.glCompileShader(shader);
     gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-    if (status != GL_TRUE) {
-        auto length = GLint{ };
-        gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-        auto log = std::vector<char>(static_cast<size_t>(length));
-        gl.glGetShaderInfoLog(shader, length, NULL, log.data());
 
-        GLShader::parseLog(log.data(), mMessages, mItemId, mFileNames);
+    auto length = GLint{ };
+    gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
+    auto log = std::vector<char>(static_cast<size_t>(length));
+    gl.glGetShaderInfoLog(shader, length, NULL, log.data());
+    GLShader::parseLog(log.data(), mMessages, mItemId, mFileNames);
+
+    if (status != GL_TRUE)
         return false;
-    }
+
     mShaderObject = std::move(shader);
     return true;
 }

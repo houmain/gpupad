@@ -41,37 +41,61 @@ bool GLProgram::link()
 
     auto& gl = GLContext::currentContext();
     auto program = GLObject(gl.glCreateProgram(), freeProgram);
-    for (auto& shader : mShaders) {
-        if (!shader.compile())
-            return false;
-        gl.glAttachShader(program, shader.shaderObject());
-    }
 
-    gl.glLinkProgram(program);
+    auto compilingShadersFailed = false;
+    for (auto& shader : mShaders) {
+        if (shader.compile())
+            gl.glAttachShader(program, shader.shaderObject());
+        else
+            compilingShadersFailed = true;
+    }
+    if (compilingShadersFailed)
+        return false;
 
     auto status = GLint{ };
+    gl.glLinkProgram(program);
     gl.glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if (status != GL_TRUE) {
-        auto length = GLint{ };
-        gl.glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-        auto log = std::vector<char>(static_cast<size_t>(length));
-        gl.glGetProgramInfoLog(program, length, NULL, log.data());
 
-        GLShader::parseLog(log.data(), mMessages, mItemId, { });
+    auto length = GLint{ };
+    gl.glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+    auto log = std::vector<char>(static_cast<size_t>(length));
+    gl.glGetProgramInfoLog(program, length, NULL, log.data());
+    GLShader::parseLog(log.data(), mLinkMessages, mItemId, { });
+
+    if (status != GL_TRUE)
         return false;
-    }
+
+    auto buffer = std::array<char, 256>();
+    auto size = GLint{ };
+    auto type = GLenum{ };
+    auto nameLength = GLint{ };
 
     auto uniforms = GLint{ };
     gl.glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniforms);
     for (auto i = 0; i < uniforms; ++i) {
-        auto name = std::array<char, 256>();
-        auto size = GLint{ };
-        auto type = GLenum{ };
-        auto nameLength = GLint{ };
-        gl.glGetActiveUniform(program, static_cast<GLuint>(i), name.size(),
-            &nameLength, &size, &type, name.data());
-        mUniformDataTypes[QString(name.data())
-            .remove(QRegExp("\\[0\\]"))] = type;
+        gl.glGetActiveUniform(program, static_cast<GLuint>(i), buffer.size(),
+            &nameLength, &size, &type, buffer.data());
+        auto name = QString(buffer.data()).remove(QRegExp("\\[0\\]"));
+        mUniformDataTypes[name] = type;
+        mUniformsSet[name] = false;
+    }
+
+    auto uniformBlocks = GLint{ };
+    gl.glGetProgramiv(program, GL_ACTIVE_UNIFORM_BLOCKS, &uniformBlocks);
+    for (auto i = 0; i < uniformBlocks; ++i) {
+        gl.glGetActiveUniformBlockName(program, static_cast<GLuint>(i),
+            buffer.size(), &nameLength, buffer.data());
+        auto name = QString(buffer.data());
+        mUniformBlocksSet[name] = false;
+    }
+
+    auto attributes = GLint{ };
+    gl.glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributes);
+    for (auto i = 0; i < attributes; ++i) {
+        gl.glGetActiveAttrib(program, static_cast<GLuint>(i), buffer.size(),
+            &nameLength, &size, &type, buffer.data());
+        auto name = QString(buffer.data());
+        mAttributes.append(name);
     }
 
     mProgramObject = std::move(program);
@@ -92,6 +116,22 @@ void GLProgram::unbind()
 {
     auto& gl = GLContext::currentContext();
     gl.glUseProgram(GL_NONE);
+
+    // inform about not set uniforms
+    auto messages = MessagePtrSet();
+    for (auto& kv : mUniformsSet) {
+        if (!kv.second)
+            messages += Singletons::messageList().insert(
+                mItemId, MessageType::UnformNotSet, kv.first);
+        kv.second = false;
+    }
+    for (auto& kv : mUniformBlocksSet) {
+        if (!kv.second)
+            messages += Singletons::messageList().insert(
+                mItemId, MessageType::UnformNotSet, kv.first);
+        kv.second = false;
+    }
+    mNotSetUniformsMessages = messages;
 }
 
 int GLProgram::getUniformLocation(const QString &name) const
@@ -124,6 +164,7 @@ bool GLProgram::apply(const GLUniformBinding &uniform, ScriptEngine &scriptEngin
         const auto location = getUniformLocation(name);
         if (location < 0)
             return false;
+        mUniformsSet[uniform.name] = true;
 
         auto floats = std::array<GLfloat, 16>();
         auto ints = std::array<GLint, 16>();
@@ -200,6 +241,7 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
     auto location = getUniformLocation(binding.name);
     if (location < 0)
         return false;
+    mUniformsSet[binding.name] = true;
 
     auto& gl = GLContext::currentContext();
     auto& texture = *binding.texture;
@@ -220,6 +262,7 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
     auto location = getUniformLocation(binding.name);
     if (location < 0)
         return false;
+    mUniformsSet[binding.name] = true;
 
     auto& gl = GLContext::currentContext();
     if (!gl.v4_2)
@@ -243,6 +286,7 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
         mProgramObject, qPrintable(binding.name));
 
     if (index != GL_INVALID_INDEX) {
+        mUniformBlocksSet[binding.name] = true;
         auto &buffer = *binding.buffer;
         gl.glUniformBlockBinding(mProgramObject, index, unit);
         gl.glBindBufferBase(GL_UNIFORM_BUFFER, unit,
@@ -254,6 +298,7 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
         index = gl.v4_3->glGetProgramResourceIndex(mProgramObject,
             GL_SHADER_STORAGE_BLOCK, qPrintable(binding.name));
         if (index != GL_INVALID_INDEX) {
+            mUniformBlocksSet[binding.name] = true;
             auto &buffer = *binding.buffer;
             gl.v4_3->glShaderStorageBlockBinding(mProgramObject, index, unit);
             gl.v4_3->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit,

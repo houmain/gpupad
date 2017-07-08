@@ -19,7 +19,7 @@ public:
 private:
     struct GLAttribute
     {
-        ItemId id;
+        QSet<ItemId> usedItems;
         QString name;
         bool normalize;
         int divisor;

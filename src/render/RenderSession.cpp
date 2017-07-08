@@ -260,6 +260,18 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     break;
                 }
         }
+        else if (auto texture = castItem<Texture>(item)) {
+            addCommand(
+                [binding = GLSamplerBinding{
+                    0, texture->id, texture->name, 0,
+                    addTextureOnce(texture->id),
+                    Sampler::Filter::Linear, Sampler::Filter::Linear,
+                    Sampler::WrapMode::Repeat, Sampler::WrapMode::Repeat,
+                    Sampler::WrapMode::Repeat
+                }](BindingState& state) {
+                    state.top().samplers[binding.name] = binding;
+                });
+        }
         else if (auto sampler = castItem<Sampler>(item)) {
             addCommand(
                 [binding = GLSamplerBinding{

@@ -2,6 +2,7 @@
 #define GLPROGRAM_H
 
 #include "GLShader.h"
+#include <map>
 
 class GLTexture;
 class GLBuffer;
@@ -57,6 +58,7 @@ public:
 
     bool bind();
     void unbind();
+    const QList<QString> &attributes() const { return mAttributes; }
     int getAttributeLocation(const QString &name) const;
     bool apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine);
     bool apply(const GLSamplerBinding &binding, int unit);
@@ -71,10 +73,15 @@ private:
 
     ItemId mItemId{ };
     QSet<ItemId> mUsedItems;
-    MessagePtrSet mMessages;
+    MessagePtrSet mLinkMessages;
     std::vector<GLShader> mShaders;
+    QList<QString> mAttributes;
     QMap<QString, GLenum> mUniformDataTypes;
     GLObject mProgramObject;
+
+    MessagePtrSet mNotSetUniformsMessages;
+    std::map<QString, bool> mUniformsSet;
+    std::map<QString, bool> mUniformBlocksSet;
 };
 
 #endif // GLPROGRAM_H

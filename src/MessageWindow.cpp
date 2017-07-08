@@ -76,6 +76,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("unsupported shader type");
         case CreatingFramebufferFailed:
             return tr("creating framebuffer failed");
+        case UnformNotSet:
+            return tr("uniform '%1' not set").arg(messageText);
     }
     return messageText;
 }
