@@ -42,6 +42,8 @@ private:
 
     bool mReleased{ };
     bool mUpdating{ };
+    bool mItemsChanged{ };
+    bool mManualEvaluation{ };
 };
 
 #endif // RENDERTASK_H

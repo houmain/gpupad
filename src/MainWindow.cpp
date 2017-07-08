@@ -324,6 +324,7 @@ void MainWindow::stopEvaluation()
 {
     mUi->actionEvalAuto->setChecked(false);
     mUi->actionEvalSteady->setChecked(false);
+    Singletons::synchronizeLogic().resetRenderSession();
 }
 
 void MainWindow::updateEvaluationMode()

@@ -23,11 +23,21 @@ void RenderTask::update(bool itemsChanged, bool manualEvaluation)
         prepare(itemsChanged, manualEvaluation);
         Singletons::renderer().render(this);
     }
+    else {
+        mItemsChanged |= itemsChanged;
+        mManualEvaluation |= manualEvaluation;
+    }
 }
 
 void RenderTask::handleRendered()
 {
     finish();
     mUpdating = false;
+
+    // restart when items were changed in the meantime
+    if (mItemsChanged || mManualEvaluation)
+        return update(std::exchange(mItemsChanged, false),
+                      std::exchange(mManualEvaluation, false));
+
     emit updated();
 }

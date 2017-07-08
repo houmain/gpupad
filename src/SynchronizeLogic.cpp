@@ -24,11 +24,7 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
   : QObject(parent)
   , mModel(Singletons::sessionModel())
   , mUpdateTimer(new QTimer(this))
-  , mRenderSession(new RenderSession())
 {
-    connect(mRenderSession.data(), &RenderTask::updated,
-        this, &SynchronizeLogic::handleSessionRendered);
-
     connect(mUpdateTimer, &QTimer::timeout,
         [this]() { update(); });
     connect(&mModel, &SessionModel::dataChanged,
@@ -38,10 +34,18 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     connect(&mModel, &SessionModel::rowsAboutToBeRemoved,
         this, &SynchronizeLogic::handleItemReordered);
 
+    resetRenderSession();
     setEvaluationMode(false, false);
 }
 
 SynchronizeLogic::~SynchronizeLogic() = default;
+
+void SynchronizeLogic::resetRenderSession()
+{
+    mRenderSession.reset(new RenderSession());
+    connect(mRenderSession.data(), &RenderTask::updated,
+        this, &SynchronizeLogic::handleSessionRendered);
+}
 
 void SynchronizeLogic::manualEvaluation()
 {
@@ -112,7 +116,6 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
             mRenderSessionInvalidated = true;
     }
     else if (mModel.item<Group>(index)) {
-        // TODO: remove - mark groups containing used items as used
         mRenderSessionInvalidated = true;
     }
 

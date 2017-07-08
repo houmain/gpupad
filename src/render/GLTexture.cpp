@@ -24,10 +24,18 @@ GLTexture::GLTexture(const Texture &texture)
         }
 }
 
+bool operator==(const GLTexture::Image &a, const GLTexture::Image &b)
+{
+    return std::tie(a.level, a.layer, a.face) ==
+           std::tie(b.level, b.layer, b.face);
+}
+
 bool GLTexture::operator==(const GLTexture &rhs) const
 {
-    return std::tie(mTarget, mFormat, mWidth, mHeight, mDepth) ==
-           std::tie(rhs.mTarget, rhs.mFormat,rhs.mWidth, rhs.mHeight, rhs.mDepth);
+    return std::tie(mTarget, mFormat, mWidth, mHeight,
+                    mDepth, mFlipY, mImages) ==
+           std::tie(rhs.mTarget, rhs.mFormat,rhs.mWidth, rhs.mHeight,
+                    rhs.mDepth, rhs.mFlipY, rhs.mImages);
 }
 
 bool GLTexture::isDepthTexture() const

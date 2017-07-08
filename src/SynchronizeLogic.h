@@ -17,6 +17,7 @@ public:
     explicit SynchronizeLogic(QObject *parent = 0);
     ~SynchronizeLogic();
 
+    void resetRenderSession();
     void setEvaluationMode(bool automatic, bool steady);
     void setEvaluationInterval(int interval);
 
