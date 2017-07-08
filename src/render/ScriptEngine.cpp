@@ -20,9 +20,9 @@ void ScriptEngine::reset()
     mMessages.clear();
 }
 
-void ScriptEngine::evalScripts(QList<Script> scripts, bool forceReset)
+void ScriptEngine::evalScripts(QList<Script> scripts)
 {
-    if (!forceReset && scripts == mScripts)
+    if (scripts == mScripts)
         return;
 
     reset();

@@ -101,11 +101,11 @@ struct RenderSession::CommandQueue
     std::map<ItemId, GLFramebuffer> framebuffers;
     std::map<ItemId, GLPrimitives> primitives;
     std::vector<Command> commands;
+    QList<ScriptEngine::Script> scripts;
 };
 
 RenderSession::RenderSession(QObject *parent)
     : RenderTask(parent)
-    , mScriptEngine(new ScriptEngine())
 {
 }
 
@@ -124,7 +124,10 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
     mCommandQueue.reset(new CommandQueue());
     mUsedItems.clear();
 
-    auto scripts = QList<ScriptEngine::Script>();
+    // always re-evaluate scripts on manual evaluation
+    if (!mScriptEngine || manualEvaluation)
+        mScriptEngine.reset(new ScriptEngine());
+
     auto& session = Singletons::sessionModel();
 
     auto addCommand = [&](auto&& command) {
@@ -191,7 +194,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
             mUsedItems += script->id;
             auto source = QString();
             Singletons::fileCache().getSource(script->fileName, &source);
-            scripts += ScriptEngine::Script{ script->fileName, source };
+            mCommandQueue->scripts += ScriptEngine::Script{ script->fileName, source };
         }
         else if (auto binding = castItem<Binding>(item)) {
             switch (binding->type) {
@@ -341,10 +344,6 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
             }
         }
     });
-
-    // re-evaluate scripts on manual evaluation
-    auto forceReset = manualEvaluation;
-    mScriptEngine->evalScripts(scripts, forceReset);
 }
 
 void RenderSession::render()
@@ -356,6 +355,9 @@ void RenderSession::render()
         replaceEqual(mCommandQueue->programs, mPrevCommandQueue->programs);
         mPrevCommandQueue.reset();
     }
+
+    // evaluate scripts
+    mScriptEngine->evalScripts(mCommandQueue->scripts);
 
     // execute command queue
     BindingState state;

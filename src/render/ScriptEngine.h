@@ -17,7 +17,7 @@ public:
     ScriptEngine();
     ~ScriptEngine();
 
-    void evalScripts(QList<Script> scripts, bool forceReset);
+    void evalScripts(QList<Script> scripts);
     QStringList evalValue(const QStringList &fieldExpressions, ItemId itemId);
 
 private:
