@@ -15,6 +15,7 @@ public:
 
 private:
     struct CommandQueue;
+    struct TimerQueries;
 
     void prepare(bool itemsChanged, bool manualEvaluation) override;
     void render() override;
@@ -24,6 +25,7 @@ private:
     QScopedPointer<ScriptEngine> mScriptEngine;
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;
+    QScopedPointer<TimerQueries> mTimerQueries;
     QSet<ItemId> mUsedItems;
     QList<std::pair<QString, QImage>> mModifiedImages;
     QList<std::pair<QString, QByteArray>> mModifiedBuffers;

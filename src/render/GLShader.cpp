@@ -13,7 +13,7 @@ void GLShader::parseLog(const QString &log,
             "(\\d+)"              // 2. source index
             "(:(\\d+))?"          // 4. [line]
             "\\((\\d+)\\)"        // 5. line or column
-            "\\s*:(\\s*[^:]+):\\s*" // 6. severity/code
+            "\\s*:(\\s*[^:]+):\\s?" // 6. severity/code
         ")?"
         "([^\\n]+)");  // 7. text
 
@@ -22,15 +22,21 @@ void GLShader::parseLog(const QString &log,
         const auto sourceIndex = split.cap(2).toInt();
         const auto line = (!split.cap(4).isNull() ?
           split.cap(4).toInt() : split.cap(5).toInt());
+        const auto severity = split.cap(6);
         const auto text = split.cap(7);
+
+        auto messageType = MessageType::ShaderWarning;
+        if (severity.contains("Info", Qt::CaseInsensitive))
+            messageType = MessageType::ShaderInfo;
+        if (severity.contains("Error", Qt::CaseInsensitive))
+            messageType = MessageType::ShaderError;
 
         if (sourceIndex < fileNames.size())
             messages += Singletons::messageList().insert(
-                fileNames[sourceIndex], line,
-                MessageType::Error, text);
+                fileNames[sourceIndex], line, messageType, text);
         else
-            messages += Singletons::messageList().insert(itemId,
-                MessageType::Error, text);
+            messages += Singletons::messageList().insert(
+                itemId, messageType, text);
 
         pos += split.matchedLength();
     }

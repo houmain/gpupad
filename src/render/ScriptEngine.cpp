@@ -32,7 +32,7 @@ void ScriptEngine::evalScripts(QList<Script> scripts)
         if (result.isError())
             mMessages += Singletons::messageList().insert(
                 script.fileName, result.property("lineNumber").toInt(),
-                MessageType::Error, result.toString());
+                MessageType::ScriptError, result.toString());
     }
     mScripts = scripts;
 }
@@ -48,7 +48,7 @@ QStringList ScriptEngine::evalValue(
         auto result = mJsEngine->evaluate(fieldExpression);
         if (result.isError())
             mMessages += Singletons::messageList().insert(
-                itemId, MessageType::Error, result.toString());
+                itemId, MessageType::ScriptError, result.toString());
 
         if (result.isObject()) {
             for (auto i = 0; ; ++i) {

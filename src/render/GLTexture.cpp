@@ -316,8 +316,8 @@ bool GLTexture::downloadImage(Image& image)
         mTexture->release();
     }
     else {
-        mMessages += Singletons::messageList().insert(image.itemId,
-            MessageType::Error, "downloading image failed");
+        mMessages += Singletons::messageList().insert(
+            image.itemId, MessageType::DownloadingImageFailed);
         return false;
     }
 

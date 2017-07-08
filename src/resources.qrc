@@ -49,5 +49,6 @@
         <file>images/16x16/insert-text.png</file>
         <file>images/16x16/media-playback-pause.png</file>
         <file>images/16x16/media-playback-start.png</file>
+        <file>images/16x16/dialog-error.png</file>
     </qresource>
 </RCC>

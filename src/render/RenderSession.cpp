@@ -11,7 +11,10 @@
 #include "GLProgram.h"
 #include "GLFramebuffer.h"
 #include "GLPrimitives.h"
+#include <deque>
+#include <chrono>
 #include <QStack>
+#include <QOpenGLTimerQuery>
 
 namespace {
     struct BindingScope
@@ -91,6 +94,37 @@ namespace {
                 kv.second = std::move(it->second);
         }
     }
+
+    QString formatQueryDuration(std::chrono::duration<double> duration)
+    {
+        auto toString = [](double v) { return QString::number(v, 'f', 2); };
+
+        auto seconds = duration.count();
+        if (duration > std::chrono::seconds(1))
+            return toString(seconds) + "s";
+
+        if (duration > std::chrono::milliseconds(1))
+            return toString(seconds * 1000) + "ms";
+
+        if (duration > std::chrono::microseconds(1))
+            return toString(seconds * 1000000ull) + QChar(181) + "s";
+
+        return toString(seconds * 1000000000ull) + "ns";
+    }
+
+    struct TimerQuery : QOpenGLTimerQuery
+    {
+        const ItemId itemId;
+
+        template<typename F>
+        TimerQuery(ItemId itemId, const F& function) : itemId(itemId)
+        {
+            create();
+            begin();
+            function();
+            end();
+        }
+    };
 } // namespace
 
 struct RenderSession::CommandQueue
@@ -104,8 +138,15 @@ struct RenderSession::CommandQueue
     QList<ScriptEngine::Script> scripts;
 };
 
+struct RenderSession::TimerQueries
+{
+    std::deque<TimerQuery> calls;
+    MessagePtrSet messages;
+};
+
 RenderSession::RenderSession(QObject *parent)
     : RenderTask(parent)
+    , mTimerQueries(new TimerQueries())
 {
 }
 
@@ -291,6 +332,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     case Call::Type::Draw:
                         addCommand(
                             [ this,
+                              callId = call->id,
                               framebuffer = addFramebufferOnce(call->framebufferId),
                               primitives = addPrimitivesOnce(call->primitivesId),
                               program = addProgramOnce(call->programId)
@@ -300,7 +342,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                                         *program, *mScriptEngine);
 
                                     if (framebuffer && framebuffer->bind()) {
-                                        primitives->draw(*program);
+                                        mTimerQueries->calls.emplace_back(callId,
+                                            [&]() { primitives->draw(*program); });
                                         framebuffer->unbind();
                                     }
                                     program->unbind();
@@ -317,6 +360,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     case Call::Type::Compute:
                         addCommand(
                             [ this,
+                              callId = call->id,
                               program = addProgramOnce(call->programId),
                               numGroupsX = call->numGroupsX,
                               numGroupsY = call->numGroupsY,
@@ -327,10 +371,12 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                                         *program, *mScriptEngine);
 
                                     auto& gl = GLContext::currentContext();
-                                    if (gl.v4_3)
-                                        gl.v4_3->glDispatchCompute(
-                                            numGroupsX, numGroupsY, numGroupsZ);
-
+                                    mTimerQueries->calls.emplace_back(callId,
+                                        [&]() {
+                                            if (gl.v4_3)
+                                                gl.v4_3->glDispatchCompute(
+                                                    numGroupsX, numGroupsY, numGroupsZ);
+                                        });
                                     program->unbind();
                                 }
                                 if (program)
@@ -382,6 +428,16 @@ void RenderSession::render()
 
     for (auto& buffer : mCommandQueue->buffers)
         mModifiedBuffers += buffer.second.getModifiedData();
+
+    // output timer queries
+    auto messages = MessagePtrSet();
+    for (auto& query : mTimerQueries->calls)
+        messages += Singletons::messageList().insert(query.itemId,
+            MessageType::CallDuration, formatQueryDuration(
+                std::chrono::nanoseconds(query.waitForResult())),
+                false);
+    mTimerQueries->messages = messages;
+    mTimerQueries->calls.clear();
 }
 
 void RenderSession::finish()

@@ -10,14 +10,17 @@ using ItemId = int;
 
 enum MessageType
 {
-    Error,
-    Warning,
-    Info,
     OpenGL33NotSupported,
     LoadingFileFailed,
     UnsupportedShaderType,
     CreatingFramebufferFailed,
+    DownloadingImageFailed,
     UnformNotSet,
+    ShaderInfo,
+    ShaderWarning,
+    ShaderError,
+    CallDuration,
+    ScriptError,
 };
 
 struct Message
@@ -35,12 +38,12 @@ using MessagePtrSet = QSet<MessagePtr>;
 class MessageList
 {
 public:
-    MessagePtr insert(QString fileName, int line,
-        MessageType type, QString text = "");
-    MessagePtr insert(ItemId itemId,
-        MessageType type, QString text = "");
+    MessagePtr insert(QString fileName, int line, MessageType type,
+        QString text = "", bool deduplicate = true);
+    MessagePtr insert(ItemId itemId, MessageType type,
+        QString text = "", bool deduplicate = true);
 
-    MessagePtrSet messages() const;
+    QList<MessagePtr> messages() const;
 
 private:
     mutable QMutex mMessagesMutex;

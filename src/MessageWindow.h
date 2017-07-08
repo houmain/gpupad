@@ -22,18 +22,18 @@ private slots:
     void updateMessages();
     void handleItemActivated(QTableWidgetItem *item);
 
-protected:
-    QStyleOptionViewItem viewOptions() const override;
-
 private:
     static MessageId getMessageId(const Message &message);
+    QIcon getMessageIcon(const Message &message) const;
     QString getMessageText(const Message &message) const;
     void removeMessagesExcept(const QSet<MessageId> &messageIds);
-    void addMessage(const Message &message);
+    void tryReplaceMessage(const Message &message);
+    void addMessageOnce(const Message &message);
 
     QTimer *mUpdateItemsTimer;
+    QIcon mInfoIcon;
     QIcon mWarningIcon;
-    QSet<MessageId> mMessageIds;
+    QIcon mErrorIcon;
 };
 
 #endif // MESSAGEWINDOW_H
