@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>226</width>
-    <height>197</height>
+    <width>212</width>
+    <height>562</height>
    </rect>
   </property>
   <layout class="QVBoxLayout">
@@ -55,65 +55,44 @@
       <widget class="ReferenceComboBox" name="program"/>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="labelPrimitives">
-       <property name="text">
-        <string>Primitives</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="ReferenceComboBox" name="primitives">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
       <widget class="QLabel" name="labelFramebuffer">
        <property name="text">
         <string>Framebuffer</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="ReferenceComboBox" name="framebuffer">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
+     <item row="2" column="1">
+      <widget class="ReferenceComboBox" name="framebuffer"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelVertexStream">
+       <property name="text">
+        <string>Vertex Stream</string>
        </property>
       </widget>
      </item>
+     <item row="3" column="1">
+      <widget class="ReferenceComboBox" name="vertexStream"/>
+     </item>
      <item row="4" column="0">
-      <widget class="QLabel" name="labelGroupsX">
+      <widget class="QLabel" name="labelPrimitiveType">
        <property name="text">
-        <string>Groups X</string>
+        <string>Primitive</string>
        </property>
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QSpinBox" name="numGroupsX">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>65536</number>
-       </property>
-      </widget>
+      <widget class="DataComboBox" name="primitiveType"/>
      </item>
      <item row="5" column="0">
-      <widget class="QLabel" name="labelGroupsY">
+      <widget class="QLabel" name="labelVertexCount">
        <property name="text">
-        <string>Y</string>
+        <string>Vertex Count</string>
        </property>
       </widget>
      </item>
      <item row="5" column="1">
-      <widget class="QSpinBox" name="numGroupsY">
+      <widget class="QSpinBox" name="vertexCount">
        <property name="minimum">
         <number>1</number>
        </property>
@@ -123,14 +102,194 @@
       </widget>
      </item>
      <item row="6" column="0">
-      <widget class="QLabel" name="labelGroupsZ">
+      <widget class="QLabel" name="labelFirstVertex">
+       <property name="text">
+        <string>First Vertex</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QSpinBox" name="firstVertex">
+       <property name="minimum">
+        <number>0</number>
+       </property>
+       <property name="maximum">
+        <number>65536</number>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="labelIndexBuffer">
+       <property name="text">
+        <string>Indices</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="ReferenceComboBox" name="indexBuffer"/>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="labelBaseVertex">
+       <property name="text">
+        <string>Base Vertex</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QSpinBox" name="baseVertex">
+       <property name="maximum">
+        <number>65536</number>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
+      <widget class="QLabel" name="labelInstanceCount">
+       <property name="text">
+        <string>Instances</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="QSpinBox" name="instanceCount">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>65536</number>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="0">
+      <widget class="QLabel" name="labelBaseInstance">
+       <property name="text">
+        <string>Base Instance</string>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="1">
+      <widget class="QSpinBox" name="baseInstance">
+       <property name="maximum">
+        <number>65536</number>
+       </property>
+      </widget>
+     </item>
+     <item row="14" column="0">
+      <widget class="QLabel" name="labelWorkGroupsX">
+       <property name="text">
+        <string>Work Groups X</string>
+       </property>
+      </widget>
+     </item>
+     <item row="14" column="1">
+      <widget class="QSpinBox" name="workGroupsX">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>65536</number>
+       </property>
+      </widget>
+     </item>
+     <item row="15" column="0">
+      <widget class="QLabel" name="labelWorkGroupsY">
+       <property name="text">
+        <string>Y</string>
+       </property>
+      </widget>
+     </item>
+     <item row="15" column="1">
+      <widget class="QSpinBox" name="workGroupsY">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>65536</number>
+       </property>
+      </widget>
+     </item>
+     <item row="16" column="0">
+      <widget class="QLabel" name="labelWorkGroupsZ">
        <property name="text">
         <string>Z</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
-      <widget class="QSpinBox" name="numGroupsZ">
+     <item row="16" column="1">
+      <widget class="QSpinBox" name="workGroupsZ">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>65536</number>
+       </property>
+      </widget>
+     </item>
+     <item row="17" column="0">
+      <widget class="QLabel" name="labelBuffer">
+       <property name="text">
+        <string>Buffer</string>
+       </property>
+      </widget>
+     </item>
+     <item row="17" column="1">
+      <widget class="ReferenceComboBox" name="buffer"/>
+     </item>
+     <item row="18" column="0">
+      <widget class="QLabel" name="labelTexture">
+       <property name="text">
+        <string>Texture</string>
+       </property>
+      </widget>
+     </item>
+     <item row="18" column="1">
+      <widget class="ReferenceComboBox" name="texture"/>
+     </item>
+     <item row="19" column="0">
+      <widget class="QLabel" name="labelClearColor">
+       <property name="text">
+        <string>Color</string>
+       </property>
+      </widget>
+     </item>
+     <item row="19" column="1">
+      <widget class="ColorPicker" name="clearColor"/>
+     </item>
+     <item row="20" column="0">
+      <widget class="QLabel" name="labelClearValue">
+       <property name="text">
+        <string>Value</string>
+       </property>
+      </widget>
+     </item>
+     <item row="20" column="1">
+      <widget class="QSpinBox" name="clearValue">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>65536</number>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="0">
+      <widget class="QLabel" name="labelIndirectBuffer">
+       <property name="text">
+        <string>Indirect Buffer</string>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="1">
+      <widget class="ReferenceComboBox" name="indirectBuffer"/>
+     </item>
+     <item row="13" column="0">
+      <widget class="QLabel" name="labelDrawCount">
+       <property name="text">
+        <string>Draw Count</string>
+       </property>
+      </widget>
+     </item>
+     <item row="13" column="1">
+      <widget class="QSpinBox" name="drawCount">
        <property name="minimum">
         <number>1</number>
        </property>
@@ -145,14 +304,19 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>DataComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/DataComboBox.h</header>
+  </customwidget>
+  <customwidget>
    <class>ReferenceComboBox</class>
    <extends>QComboBox</extends>
    <header>session/ReferenceComboBox.h</header>
   </customwidget>
   <customwidget>
-   <class>DataComboBox</class>
-   <extends>QComboBox</extends>
-   <header>session/DataComboBox.h</header>
+   <class>ColorPicker</class>
+   <extends>QCheckBox</extends>
+   <header>session/ColorPicker.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

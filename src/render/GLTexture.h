@@ -28,10 +28,12 @@ public:
     Texture::Target target() const { return mTarget; }
     Texture::Format format() const { return mFormat; }
 
+    void clear(QVariantList value);
+    void generateMipmaps();
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();
-    const QSet<ItemId> &usedItems() const { return mUsedItems; }
     QList<std::pair<QString, QImage>> getModifiedImages();
+    const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
     void getImageDataFormat(QOpenGLTexture::PixelFormat *format,

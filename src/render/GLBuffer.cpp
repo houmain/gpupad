@@ -3,14 +3,21 @@
 GLBuffer::GLBuffer(const Buffer &buffer)
     : mItemId(buffer.id)
     , mFileName(buffer.fileName)
+    , mOffset(buffer.offset)
+    , mSize(buffer.rowCount * buffer.stride())
 {
     mUsedItems += buffer.id;
 }
 
 bool GLBuffer::operator==(const GLBuffer &rhs) const
 {
-    return std::tie(mFileName, mData) ==
-           std::tie(rhs.mFileName, rhs.mData);
+    return std::tie(mFileName, mOffset, mSize) ==
+           std::tie(rhs.mFileName, rhs.mOffset, rhs.mSize);
+}
+
+void GLBuffer::clear(QVariantList value)
+{
+    // TODO:
 }
 
 GLuint GLBuffer::getReadOnlyBufferId()
@@ -67,6 +74,8 @@ void GLBuffer::upload()
 {
     if (!mSystemCopyModified)
         return;
+    if (mOffset >= mData.size())
+        return;
 
     auto& gl = GLContext::currentContext();
     auto createBuffer = [&]() {
@@ -79,10 +88,11 @@ void GLBuffer::upload()
         gl.glDeleteBuffers(1, &buffer);
     };
 
+    auto size = std::min(mSize, mData.size() - mOffset);
     mBufferObject = GLObject(createBuffer(), freeBuffer);
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
     gl.glBufferData(GL_ARRAY_BUFFER,
-        mData.size(), mData.data(), GL_DYNAMIC_DRAW);
+        size, mData.data() + mOffset, GL_DYNAMIC_DRAW);
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 
     mSystemCopyModified = mDeviceCopyModified = false;
@@ -92,13 +102,15 @@ bool GLBuffer::download()
 {
     if (!mDeviceCopyModified)
         return false;
+    if (mOffset >= mData.size())
+        return false;
+    auto size = std::min(mSize, mData.size() - mOffset);
 
-    auto data = QByteArray(mData.size(), Qt::Uninitialized);
     auto& gl = GLContext::currentContext();
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
-    gl.glGetBufferSubData(GL_ARRAY_BUFFER, 0, data.size(), data.data());
+    gl.glGetBufferSubData(GL_ARRAY_BUFFER,
+        0, size, mData.data() + mOffset);
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
-    mData = data;
 
     mSystemCopyModified = mDeviceCopyModified = false;
     return true;

@@ -9,12 +9,13 @@ public:
     explicit GLBuffer(const Buffer &buffer);
     bool operator==(const GLBuffer &rhs) const;
 
+    void clear(QVariantList value);
     GLuint getReadOnlyBufferId();
     GLuint getReadWriteBufferId();
     void bindReadOnly(GLenum target);
     void unbind(GLenum target);
-    const QSet<ItemId> &usedItems() const { return mUsedItems; }
     QList<std::pair<QString, QByteArray>> getModifiedData();
+    const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
     void load();
@@ -23,8 +24,9 @@ private:
 
     ItemId mItemId{ };
     QString mFileName;
+    int mOffset{ };
+    int mSize{ };
     QByteArray mData;
-
     QSet<ItemId> mUsedItems;
     MessagePtr mMessage;
     GLObject mBufferObject;

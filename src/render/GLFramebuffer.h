@@ -19,7 +19,7 @@ private:
     ItemId mItemId{ };
     MessagePtr mMessage;
     QSet<ItemId> mUsedItems;
-    std::vector<GLTexture*> mTextures;
+    QList<GLTexture*> mTextures;
     int mWidth{ };
     int mHeight{ };
     int mNumColorAttachments{ };

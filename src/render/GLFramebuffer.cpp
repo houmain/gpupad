@@ -17,7 +17,7 @@ void GLFramebuffer::setAttachment(int index, GLTexture *texture)
     if (!texture)
         return;
 
-    mTextures.at(index) = texture;
+    mTextures[index] = texture;
     mWidth = (!mWidth ? texture->width() : qMin(mWidth, texture->width()));
     mHeight = (!mHeight ? texture->height() : qMin(mHeight, texture->height()));
 }

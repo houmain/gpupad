@@ -92,7 +92,8 @@ bool GLShader::compile()
     auto pointers = std::vector<const char*>();
     for (const auto& source : sources)
         pointers.push_back(source.data());
-    gl.glShaderSource(shader, pointers.size(), pointers.data(), 0);
+    gl.glShaderSource(shader, static_cast<GLsizei>(pointers.size()),
+        pointers.data(), 0);
 
     auto status = GLint{ };
     gl.glCompileShader(shader);

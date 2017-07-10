@@ -2,14 +2,13 @@
 #include <QOpenGLPixelTransferOptions>
 
 GLTexture::GLTexture(const Texture &texture)
+    : mTarget(texture.target)
+    , mFormat(texture.format)
+    , mWidth(texture.width)
+    , mHeight(texture.height)
+    , mDepth(texture.depth)
+    , mFlipY(texture.flipY)
 {
-    mTarget = texture.target;
-    mFormat = texture.format;
-    mWidth = texture.width;
-    mHeight = texture.height;
-    mDepth = texture.depth;
-    mFlipY = texture.flipY;
-
     mUsedItems += texture.id;
     if (!texture.fileName.isEmpty())
         mImages.push_back({ texture.id, 0, 0, QOpenGLTexture::CubeMapPositiveX,
@@ -55,6 +54,16 @@ bool GLTexture::isDepthSencilTexture() const
 {
     return (mFormat == QOpenGLTexture::D24S8
          || mFormat == QOpenGLTexture::D32FS8X24);
+}
+
+void GLTexture::clear(QVariantList value)
+{
+    // TODO:
+}
+
+void GLTexture::generateMipmaps()
+{
+    // TODO:
 }
 
 GLuint GLTexture::getReadOnlyTextureId()
@@ -239,8 +248,8 @@ std::unique_ptr<QOpenGLTexture> resolveMultisampleTexture(GLTexture &source)
     auto height = source.height();
     auto format = source.format();
 
-    auto attachment = GL_COLOR_ATTACHMENT0;
-    auto blitMask = GL_COLOR_BUFFER_BIT;
+    auto attachment = GLenum{ GL_COLOR_ATTACHMENT0 };
+    auto blitMask = GLbitfield{ GL_COLOR_BUFFER_BIT };
     if (source.isDepthTexture()) {
         attachment = GL_DEPTH_ATTACHMENT;
         blitMask = GL_DEPTH_BUFFER_BIT;

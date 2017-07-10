@@ -49,7 +49,7 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddProgramAction, ItemType::Program);
     addAction(mAddShaderAction, ItemType::Shader);
     addAction(mAddBindingAction, ItemType::Binding);
-    addAction(mAddPrimitivesAction, ItemType::Primitives);
+    addAction(mAddVertexStreamAction, ItemType::VertexStream);
     addAction(mAddAttributeAction, ItemType::Attribute);
     addAction(mAddFramebufferAction, ItemType::Framebuffer);
     addAction(mAddAttachmentAction, ItemType::Attachment);
@@ -69,7 +69,7 @@ void SessionEditor::addItemActions(QMenu* menu)
     menu->addSeparator();
     menu->addAction(mAddGroupAction);
     menu->addAction(mAddBufferAction);
-    menu->addAction(mAddPrimitivesAction);
+    menu->addAction(mAddVertexStreamAction);
     menu->addAction(mAddTextureAction);
     menu->addAction(mAddSamplerAction);
     menu->addAction(mAddFramebufferAction);

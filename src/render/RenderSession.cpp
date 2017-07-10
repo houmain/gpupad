@@ -10,11 +10,11 @@
 #include "GLBuffer.h"
 #include "GLProgram.h"
 #include "GLFramebuffer.h"
-#include "GLPrimitives.h"
+#include "GLVertexStream.h"
+#include "GLCall.h"
+#include <functional>
 #include <deque>
-#include <chrono>
 #include <QStack>
-#include <QOpenGLTimerQuery>
 
 namespace {
     struct BindingScope
@@ -111,20 +111,6 @@ namespace {
 
         return toString(seconds * 1000000000ull) + "ns";
     }
-
-    struct TimerQuery : QOpenGLTimerQuery
-    {
-        const ItemId itemId;
-
-        template<typename F>
-        TimerQuery(ItemId itemId, const F& function) : itemId(itemId)
-        {
-            create();
-            begin();
-            function();
-            end();
-        }
-    };
 } // namespace
 
 struct RenderSession::CommandQueue
@@ -133,14 +119,14 @@ struct RenderSession::CommandQueue
     std::map<ItemId, GLBuffer> buffers;
     std::map<ItemId, GLProgram> programs;
     std::map<ItemId, GLFramebuffer> framebuffers;
-    std::map<ItemId, GLPrimitives> primitives;
-    std::vector<Command> commands;
+    std::map<ItemId, GLVertexStream> vertexStream;
+    std::deque<Command> commands;
     QList<ScriptEngine::Script> scripts;
 };
 
 struct RenderSession::TimerQueries
 {
-    std::deque<TimerQuery> calls;
+    QList<GLCall*> calls;
     MessagePtrSet messages;
 };
 
@@ -202,25 +188,19 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
         return fb;
     };
 
-    auto addPrimitivesOnce = [&](ItemId primitivesId) {
-        auto primitives = session.findItem<Primitives>(primitivesId);
-        auto p = addOnce(mCommandQueue->primitives, primitives);
-        if (p) {
-            if (primitives->indexBufferId)
-                if (auto buffer = session.findItem<Buffer>(primitives->indexBufferId))
-                    if (!buffer->items.empty())
-                        if (auto column = session.findItem<Column>(buffer->items.first()->id))
-                            p->setIndices(*column, addBufferOnce(buffer->id));
-
-            const auto& items = primitives->items;
+    auto addVertexStreamOnce = [&](ItemId vertexStreamId) {
+        auto vertexStream = session.findItem<VertexStream>(vertexStreamId);
+        auto vs = addOnce(mCommandQueue->vertexStream, vertexStream);
+        if (vs) {
+            const auto& items = vertexStream->items;
             for (auto i = 0; i < items.size(); ++i)
                 if (auto attribute = castItem<Attribute>(items[i]))
                     if (auto column = session.findItem<Column>(attribute->columnId))
                         if (column->parent)
-                            p->setAttribute(i, *column,
+                            vs->setAttribute(i, *column,
                                 addBufferOnce(column->parent->id));
         }
-        return p;
+        return vs;
     };
 
     session.forEachItem([&](const Item& item) {
@@ -243,8 +223,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     addCommand(
                         [binding = GLUniformBinding{
                             binding->id, binding->name,
-                            binding->type, binding->values
-                        }](BindingState& state) {
+                            binding->type, binding->values }
+                        ](BindingState& state) {
                             state.top().uniforms[binding.name] = binding;
                         });
                     break;
@@ -259,8 +239,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                                     addTextureOnce(sampler->textureId),
                                     sampler->minFilter, sampler->magFilter,
                                     sampler->wrapModeX, sampler->wrapModeY,
-                                    sampler->wrapModeZ
-                                }](BindingState& state) {
+                                    sampler->wrapModeZ }
+                                ](BindingState& state) {
                                     state.top().samplers[binding.name] = binding;
                                 });
                         }
@@ -278,8 +258,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                             [binding = GLImageBinding{
                                 binding->id, binding->name, index,
                                 addTextureOnce(textureId),
-                                level, layered, layer, access
-                            }](BindingState& state) {
+                                level, layered, layer, access }
+                            ](BindingState& state) {
                                 state.top().images[binding.name] = binding;
                             });
                     }
@@ -293,8 +273,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                                 binding->id,
                                 binding->name,
                                 index,
-                                addBufferOnce(bufferId)
-                            }](BindingState& state) {
+                                addBufferOnce(bufferId) }
+                            ](BindingState& state) {
                                 state.top().buffers[binding.name] = binding;
                             });
                     }
@@ -308,8 +288,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     addTextureOnce(texture->id),
                     Sampler::Filter::Linear, Sampler::Filter::Linear,
                     Sampler::WrapMode::Repeat, Sampler::WrapMode::Repeat,
-                    Sampler::WrapMode::Repeat
-                }](BindingState& state) {
+                    Sampler::WrapMode::Repeat }
+                ](BindingState& state) {
                     state.top().samplers[binding.name] = binding;
                 });
         }
@@ -319,8 +299,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     0, sampler->id, sampler->name, 0,
                     addTextureOnce(sampler->textureId),
                     sampler->minFilter, sampler->magFilter,
-                    sampler->wrapModeX, sampler->wrapModeY, sampler->wrapModeZ
-                }](BindingState& state) {
+                    sampler->wrapModeX, sampler->wrapModeY, sampler->wrapModeZ }
+                ](BindingState& state) {
                     state.top().samplers[binding.name] = binding;
                 });
         }
@@ -328,62 +308,40 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
             if (call->checked) {
                 mUsedItems += call->id;
 
-                switch (call->type) {
-                    case Call::Type::Draw:
-                        addCommand(
-                            [ this,
-                              callId = call->id,
-                              framebuffer = addFramebufferOnce(call->framebufferId),
-                              primitives = addPrimitivesOnce(call->primitivesId),
-                              program = addProgramOnce(call->programId)
-                            ](BindingState& state) {
-                                if (program && program->bind()) {
-                                    mUsedItems += applyBindings(state,
-                                        *program, *mScriptEngine);
+                auto glcall = GLCall(*call);
+                glcall.setProgram(addProgramOnce(call->programId));
+                glcall.setFramebuffer(addFramebufferOnce(call->framebufferId));
+                glcall.setVextexStream(addVertexStreamOnce(call->vertexStreamId));
 
-                                    if (framebuffer && framebuffer->bind()) {
-                                        mTimerQueries->calls.emplace_back(callId,
-                                            [&]() { primitives->draw(*program); });
-                                        framebuffer->unbind();
-                                    }
-                                    program->unbind();
-                                }
-                                if (program)
-                                    mUsedItems += program->usedItems();
-                                if (framebuffer)
-                                    mUsedItems += framebuffer->usedItems();
-                                if (primitives)
-                                    mUsedItems += primitives->usedItems();
-                            });
-                        break;
+                if (auto buffer = session.findItem<Buffer>(call->indexBufferId))
+                    glcall.setIndexBuffer(addBufferOnce(buffer->id), *buffer);
 
-                    case Call::Type::Compute:
-                        addCommand(
-                            [ this,
-                              callId = call->id,
-                              program = addProgramOnce(call->programId),
-                              numGroupsX = call->numGroupsX,
-                              numGroupsY = call->numGroupsY,
-                              numGroupsZ = call->numGroupsZ
-                            ](BindingState& state) {
-                                if (program && program->bind()) {
-                                    mUsedItems += applyBindings(state,
-                                        *program, *mScriptEngine);
+                if (auto buffer = session.findItem<Buffer>(call->indirectBufferId))
+                    glcall.setIndirectBuffer(addBufferOnce(buffer->id), *buffer);
 
-                                    auto& gl = GLContext::currentContext();
-                                    mTimerQueries->calls.emplace_back(callId,
-                                        [&]() {
-                                            if (gl.v4_3)
-                                                gl.v4_3->glDispatchCompute(
-                                                    numGroupsX, numGroupsY, numGroupsZ);
-                                        });
-                                    program->unbind();
-                                }
-                                if (program)
-                                    mUsedItems += program->usedItems();
-                            });
-                        break;
-                }
+                glcall.setBuffer(addBufferOnce(call->bufferId));
+                glcall.setTexture(addTextureOnce(call->textureId));
+
+                addCommand(
+                    [this,
+                     call = std::move(glcall)
+                    ](BindingState& state) mutable {
+                        auto program = call.program();
+                        if (program) {
+                            program->bind();
+                            mUsedItems += applyBindings(state,
+                                *program, *mScriptEngine);
+                        }
+
+                        call.execute();
+                        mTimerQueries->calls += &call;
+                        mUsedItems += call.usedItems();
+
+                        if (program) {
+                            program->unbind();
+                            mUsedItems += program->usedItems();
+                        }
+                    });
             }
         }
 
@@ -431,11 +389,11 @@ void RenderSession::render()
 
     // output timer queries
     auto messages = MessagePtrSet();
-    for (auto& query : mTimerQueries->calls)
-        messages += Singletons::messageList().insert(query.itemId,
-            MessageType::CallDuration, formatQueryDuration(
-                std::chrono::nanoseconds(query.waitForResult())),
-                false);
+    foreach (const GLCall *call, mTimerQueries->calls)
+        if (call->duration().count() > 0)
+            messages += Singletons::messageList().insert(
+                call->itemId(), MessageType::CallDuration,
+                formatQueryDuration(call->duration()), false);
     mTimerQueries->messages = messages;
     mTimerQueries->calls.clear();
 }

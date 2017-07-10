@@ -241,12 +241,16 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
     auto location = getUniformLocation(binding.name);
     if (location < 0)
         return false;
+
     mUniformsSet[binding.name] = true;
+
+    if (!binding.texture)
+        return false;
 
     auto& gl = GLContext::currentContext();
     auto& texture = *binding.texture;
     const auto target = texture.target();
-    gl.glActiveTexture(GL_TEXTURE0 + unit);
+    gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
     gl.glBindTexture(target, texture.getReadOnlyTextureId());
     gl.glUniform1i(location + binding.arrayIndex, unit);
     gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, binding.minFilter);
@@ -262,10 +266,13 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
     auto location = getUniformLocation(binding.name);
     if (location < 0)
         return false;
+
     mUniformsSet[binding.name] = true;
 
     auto& gl = GLContext::currentContext();
     if (!gl.v4_2)
+        return false;
+    if (!binding.texture)
         return false;
 
     auto &texture = *binding.texture;

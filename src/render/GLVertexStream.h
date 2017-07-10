@@ -1,19 +1,19 @@
-#ifndef GLPRIMITIVES_H
-#define GLPRIMITIVES_H
+#ifndef GLVERTEX_STREAM_H
+#define GLVERTEX_STREAM_H
 
 #include "GLProgram.h"
 #include "GLBuffer.h"
 #include <QOpenGLVertexArrayObject>
 
-class GLPrimitives
+class GLVertexStream
 {
 public:
-    explicit GLPrimitives(const Primitives &primitives);
+    explicit GLVertexStream(const VertexStream &vertexStream);
     void setAttribute(int attributeIndex,
         const Column &column, GLBuffer *buffer);
-    void setIndices(const Column &column, GLBuffer *indices);
 
-    void draw(const GLProgram &program);
+    void bind(const GLProgram &program);
+    void unbind();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
@@ -31,17 +31,9 @@ private:
     };
 
     QSet<ItemId> mUsedItems;
-    std::vector<GLAttribute> mAttributes;
-    Primitives::Type mType{ };
-    int mFirstVertex{ };
-    int mVertexCount{ };
-    int mPatchVertices{ };
-    int mInstanceCount{ };
-    int mPrimitiveRestartIndex{ };
-    GLBuffer *mIndexBuffer{ };
-    GLenum mIndexType{ };
-    int mIndicesOffset{ };
+    QList<GLAttribute> mAttributes;
     QOpenGLVertexArrayObject mVertexArrayObject;
+    QList<GLuint> mEnabledVertexAttributes;
 };
 
-#endif // GLPRIMITIVES_H
+#endif // GLVERTEX_STREAM_H

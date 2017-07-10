@@ -298,6 +298,9 @@ void SingleApplicationPrivate::slotConnectionEstablished()
                 tmp = nextConnSocket->read( checksum.length() );
                 if( checksum == tmp )
                     break; // Otherwise set to invalid connection (next line)
+
+                connectionType = InvalidConnection;
+                break;
             }
             default:
                 connectionType = InvalidConnection;

@@ -114,7 +114,7 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
         [this](QVariant id) { updateValue({ id.toString() }); });
     connect(mUi->reference, &ReferenceComboBox::textRequired,
         [this](QVariant id) {
-            return mSessionProperties.model().findItemName(id.toInt());
+            return mSessionProperties.findItemName(id.toInt());
         });
     connect(mUi->reference, &ReferenceComboBox::listRequired,
         this, &BindingProperties::getItemIds);
@@ -195,7 +195,6 @@ void BindingProperties::updateWidgets()
         mUi->expressions->setRowCount(expressionRows(editor));
         mUi->expressions->setFields(value);
     }
-
 
     mUi->expressions->setVisible(!isReference && !isColor);
     mUi->color->setVisible(isColor);

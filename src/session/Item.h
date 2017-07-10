@@ -19,7 +19,7 @@ enum class ItemType
     Program,
     Shader,
     Binding,
-    Primitives,
+    VertexStream,
     Attribute,
     Framebuffer,
     Attachment,
@@ -97,9 +97,9 @@ struct Buffer : FileItem
     }
 
     int columnOffset(const Column* col) const {
-        auto offset = this->offset;
+        auto offset = 0;
         foreach (const Item* item, items) {
-            auto& column = *static_cast<const Column*>(item);
+            const auto& column = *static_cast<const Column*>(item);
             if (&column == col)
                 return offset;
             offset += column.count * column.size() + column.padding;
@@ -201,30 +201,8 @@ struct Binding : Item
     }
 };
 
-struct Primitives : Item
+struct VertexStream : Item
 {
-    enum Type {
-        Points = GL_POINTS,
-        LineStrip = GL_LINE_STRIP,
-        LineLoop = GL_LINE_LOOP,
-        Lines = GL_LINES,
-        LineStripAdjacency = GL_LINE_STRIP_ADJACENCY,
-        LinesAdjacency = GL_LINES_ADJACENCY,
-        TriangleStrip = GL_TRIANGLE_STRIP,
-        TriangleFan = GL_TRIANGLE_FAN,
-        Triangles = GL_TRIANGLES,
-        TriangleStripAdjacency = GL_TRIANGLE_STRIP_ADJACENCY,
-        TrianglesAdjacency = GL_TRIANGLES_ADJACENCY,
-        Patches = GL_PATCHES
-    };
-
-    ItemId indexBufferId{ };
-    Type type{ Triangles };
-    int firstVertex{ 0 };
-    int vertexCount{ 3 };
-    int instanceCount{ 1 };
-    int patchVertices{ 1 };
-    int primitiveRestartIndex{ 0 };
 };
 
 struct Attribute : Item
@@ -247,18 +225,55 @@ struct Attachment : Item
 struct Call : Item
 {
     enum Type {
-        Draw,
+        Draw, // glDrawArrays(InstancedBaseInstance) / glDrawElements(InstancedBaseVertexBaseInstance)
+        DrawIndirect, // gl(Multi)DrawArraysIndirect) / gl(Multi)DrawElementsIndirect
         Compute,
+        ClearTexture,
+        ClearBuffer,
+        GenerateMipmaps,
     };
 
+    enum PrimitiveType {
+        Points = GL_POINTS,
+        LineStrip = GL_LINE_STRIP,
+        LineLoop = GL_LINE_LOOP,
+        Lines = GL_LINES,
+        LineStripAdjacency = GL_LINE_STRIP_ADJACENCY,
+        LinesAdjacency = GL_LINES_ADJACENCY,
+        TriangleStrip = GL_TRIANGLE_STRIP,
+        TriangleFan = GL_TRIANGLE_FAN,
+        Triangles = GL_TRIANGLES,
+        TriangleStripAdjacency = GL_TRIANGLE_STRIP_ADJACENCY,
+        TrianglesAdjacency = GL_TRIANGLES_ADJACENCY,
+        Patches = GL_PATCHES
+    };
+
+    bool checked{ true };
     Type type{ };
     ItemId programId{ };
-    ItemId primitivesId{ };
     ItemId framebufferId{ };
-    int numGroupsX{ 1 };
-    int numGroupsY{ 1 };
-    int numGroupsZ{ 1 };
-    bool checked{ true };
+    ItemId vertexStreamId{ };
+
+    PrimitiveType primitiveType{ Triangles };
+    int count{ 3 };
+    int first{ 0 };
+
+    ItemId indexBufferId{ };
+    int baseVertex{ };
+
+    int instanceCount{ 1 };
+    int baseInstance{ 0 };
+
+    ItemId indirectBufferId{ };
+    int drawCount{ 1 };
+
+    int workGroupsX{ 1 };
+    int workGroupsY{ 1 };
+    int workGroupsZ{ 1 };
+
+    ItemId textureId{ };
+    ItemId bufferId{ };
+    QVariantList values;
 };
 
 struct Script : FileItem
@@ -275,7 +290,7 @@ template<> inline ItemType getItemType<Sampler>() { return ItemType::Sampler; }
 template<> inline ItemType getItemType<Program>() { return ItemType::Program; }
 template<> inline ItemType getItemType<Shader>() { return ItemType::Shader; }
 template<> inline ItemType getItemType<Binding>() { return ItemType::Binding; }
-template<> inline ItemType getItemType<Primitives>() { return ItemType::Primitives; }
+template<> inline ItemType getItemType<VertexStream>() { return ItemType::VertexStream; }
 template<> inline ItemType getItemType<Attribute>() { return ItemType::Attribute; }
 template<> inline ItemType getItemType<Framebuffer>() { return ItemType::Framebuffer; }
 template<> inline ItemType getItemType<Attachment>() { return ItemType::Attachment; }

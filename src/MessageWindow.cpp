@@ -62,7 +62,7 @@ qulonglong MessageWindow::getMessageId(const Message &message)
 QIcon MessageWindow::getMessageIcon(const Message &message) const
 {
     switch (message.type) {
-        case OpenGL33NotSupported:
+        case OpenGLVersionNotAvailable:
         case LoadingFileFailed:
         case UnsupportedShaderType:
         case CreatingFramebufferFailed:
@@ -91,8 +91,8 @@ QString MessageWindow::getMessageText(const Message &message) const
         case ScriptError:
             return message.text;
 
-        case OpenGL33NotSupported:
-            return tr("the minimum required OpenGL version 3.3 is not supported");
+        case OpenGLVersionNotAvailable:
+            return tr("the required OpenGL version %1 is not available").arg(message.text);
         case LoadingFileFailed:
             return tr("loading file '%1' failed").arg(message.text);
         case UnsupportedShaderType:

@@ -457,7 +457,7 @@
    </property>
    <property name="icon">
     <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/dialog-information.png</normaloff>:/images/16x16/dialog-information.png</iconset>
+     <normaloff>:/images/16x16/media-playback-pause.png</normaloff>:/images/16x16/media-playback-pause.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Automatic</string>

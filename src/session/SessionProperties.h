@@ -16,11 +16,10 @@ class ImageProperties;
 class SamplerProperties;
 class ProgramProperties;
 class ShaderProperties;
-class PrimitivesProperties;
+class VertexStreamProperties;
 class AttributeProperties;
 class FramebufferProperties;
 class AttachmentProperties;
-class CallProperties;
 class ScriptProperties;
 }
 
@@ -30,6 +29,7 @@ class QTimer;
 class SessionModel;
 class TextureProperties;
 class BindingProperties;
+class CallProperties;
 
 template <typename T>
 void fill(QComboBox *c, std::initializer_list<std::pair<const char*, T>> items)
@@ -63,10 +63,9 @@ public:
     void selectCurrentItemFile(FileDialog::Options options);
     QVariantList getFileNames(ItemType type, bool addNull = false) const;
     QVariantList getItemIds(ItemType type, bool addNull = false) const;
+    QString findItemName(ItemId itemId) const;
 
 private slots:
-    void updateCallWidgets();
-    void updatePrimitivesWidgets();
     void updateImageWidgets(const QModelIndex &index);
 
 private:
@@ -88,9 +87,9 @@ private:
     BindingProperties *mBindingProperties{ };
     QScopedPointer<Ui::AttributeProperties> mAttributeProperties;
     QScopedPointer<Ui::FramebufferProperties> mFramebufferProperties;
-    QScopedPointer<Ui::PrimitivesProperties> mPrimitivesProperties;
+    QScopedPointer<Ui::VertexStreamProperties> mVertexStreamProperties;
     QScopedPointer<Ui::AttachmentProperties> mAttachmentProperties;
-    QScopedPointer<Ui::CallProperties> mCallProperties;
+    CallProperties *mCallProperties{ };
     QScopedPointer<Ui::ScriptProperties> mScriptProperties;
 };
 

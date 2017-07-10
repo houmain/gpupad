@@ -18,7 +18,7 @@ namespace {
     const auto ProgramTag = QStringLiteral("program");
     const auto ShaderTag = QStringLiteral("shader");
     const auto BindingTag = QStringLiteral("binding");
-    const auto PrimitivesTag = QStringLiteral("primitives");
+    const auto VertexStreamTag = QStringLiteral("primitives"); // TODO: vertexstream
     const auto AttributeTag = QStringLiteral("attribute");
     const auto FramebufferTag = QStringLiteral("framebuffer");
     const auto AttachmentTag = QStringLiteral("attachment");
@@ -37,7 +37,7 @@ namespace {
             case ItemType::Program: return ProgramTag;
             case ItemType::Shader: return ShaderTag;
             case ItemType::Binding: return BindingTag;
-            case ItemType::Primitives: return PrimitivesTag;
+            case ItemType::VertexStream: return VertexStreamTag;
             case ItemType::Attribute: return AttributeTag;
             case ItemType::Framebuffer: return FramebufferTag;
             case ItemType::Attachment: return AttachmentTag;
@@ -59,7 +59,7 @@ namespace {
         if (tag == ProgramTag) return ItemType::Program;
         if (tag == ShaderTag) return ItemType::Shader;
         if (tag == BindingTag) return ItemType::Binding;
-        if (tag == PrimitivesTag) return ItemType::Primitives;
+        if (tag == VertexStreamTag) return ItemType::VertexStream;
         if (tag == AttributeTag) return ItemType::Attribute;
         if (tag == FramebufferTag) return ItemType::Framebuffer;
         if (tag == AttachmentTag) return ItemType::Attachment;
@@ -144,7 +144,7 @@ SessionModel::SessionModel(QObject *parent)
     mTypeIcons[ItemType::Program].addFile(QStringLiteral(":/images/16x16/applications-system.png"));
     mTypeIcons[ItemType::Shader].addFile(QStringLiteral(":/images/16x16/font.png"));
     mTypeIcons[ItemType::Binding].addFile(QStringLiteral(":/images/16x16/insert-text.png"));
-    mTypeIcons[ItemType::Primitives].addFile(QStringLiteral(":/images/16x16/media-playback-start-rtl.png"));
+    mTypeIcons[ItemType::VertexStream].addFile(QStringLiteral(":/images/16x16/media-playback-start-rtl.png"));
     mTypeIcons[ItemType::Attribute].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[ItemType::Framebuffer].addFile(QStringLiteral(":/images/16x16/image-missing.png"));
     mTypeIcons[ItemType::Attachment].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
@@ -179,7 +179,7 @@ QString SessionModel::getTypeName(ItemType type) const
         case ItemType::Program: return tr("Program");
         case ItemType::Shader: return tr("Shader");
         case ItemType::Binding: return tr("Binding");
-        case ItemType::Primitives: return tr("Primitives");
+        case ItemType::VertexStream: return tr("Vertex Stream");
         case ItemType::Attribute: return tr("Attribute");
         case ItemType::Framebuffer: return tr("Framebuffer");
         case ItemType::Attachment: return tr("Attachment");
@@ -204,7 +204,7 @@ bool SessionModel::canContainType(const QModelIndex &index, ItemType type) const
                 ItemType::Sampler,
                 ItemType::Program,
                 ItemType::Binding,
-                ItemType::Primitives,
+                ItemType::VertexStream,
                 ItemType::Framebuffer,
                 ItemType::Call,
                 ItemType::Script,
@@ -219,7 +219,7 @@ bool SessionModel::canContainType(const QModelIndex &index, ItemType type) const
         case ItemType::Program:
             return inList(type, { ItemType::Shader });
 
-        case ItemType::Primitives:
+        case ItemType::VertexStream:
             return inList(type, { ItemType::Attribute });
 
         case ItemType::Framebuffer:
@@ -339,12 +339,6 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(BindingType, Binding, type)
         ADD(BindingEditor, Binding, editor)
         ADD(BindingValues, Binding, values)
-        ADD(PrimitivesType, Primitives, type)
-        ADD(PrimitivesIndexBufferId, Primitives, indexBufferId)
-        ADD(PrimitivesFirstVertex, Primitives, firstVertex)
-        ADD(PrimitivesVertexCount, Primitives, vertexCount)
-        ADD(PrimitivesInstanceCount, Primitives, instanceCount)
-        ADD(PrimitivesPatchVertices, Primitives, patchVertices)
         ADD(AttributeBufferId, Attribute, bufferId)
         ADD(AttributeColumnId, Attribute, columnId)
         ADD(AttributeNormalize, Attribute, normalize)
@@ -352,11 +346,23 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(AttachmentTextureId, Attachment, textureId)
         ADD(CallType, Call, type)
         ADD(CallProgramId, Call, programId)
-        ADD(CallPrimitivesId, Call, primitivesId)
         ADD(CallFramebufferId, Call, framebufferId)
-        ADD(CallNumGroupsX, Call, numGroupsX)
-        ADD(CallNumGroupsY, Call, numGroupsY)
-        ADD(CallNumGroupsZ, Call, numGroupsZ)
+        ADD(CallVertexStreamId, Call, vertexStreamId)
+        ADD(CallPrimitiveType, Call, primitiveType)
+        ADD(CallCount, Call, count)
+        ADD(CallFirst, Call, first)
+        ADD(CallIndexBufferId, Call, indexBufferId)
+        ADD(CallBaseVertex, Call, baseVertex)
+        ADD(CallInstanceCount, Call, instanceCount)
+        ADD(CallBaseInstance, Call, baseInstance)
+        ADD(CallIndirectBufferId, Call, indirectBufferId)
+        ADD(CallDrawCount, Call, drawCount)
+        ADD(CallWorkGroupsX, Call, workGroupsX)
+        ADD(CallWorkGroupsY, Call, workGroupsY)
+        ADD(CallWorkGroupsZ, Call, workGroupsZ)
+        ADD(CallBufferId, Call, bufferId)
+        ADD(CallTextureId, Call, textureId)
+        ADD(CallValues, Call, values)
 #undef ADD
     }
     return { };
@@ -422,7 +428,7 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(TextureWidth, Texture, width, toInt)
         ADD(TextureHeight, Texture, height, toInt)
         ADD(TextureDepth, Texture, depth, toInt)
-        ADD(TextureFlipY, Texture, flipY, toInt)
+        ADD(TextureFlipY, Texture, flipY, toBool)
         ADD(ImageLevel, Image, level, toInt)
         ADD(ImageLayer, Image, layer, toInt)
         ADD(ImageFace, Image, face, toInt)
@@ -436,12 +442,6 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(BindingType, Binding, type, toInt)
         ADD(BindingEditor, Binding, editor, toInt)
         ADD(BindingValues, Binding, values, toList)
-        ADD(PrimitivesType, Primitives, type, toInt)
-        ADD(PrimitivesIndexBufferId, Primitives, indexBufferId, toInt)
-        ADD(PrimitivesFirstVertex, Primitives, firstVertex, toInt)
-        ADD(PrimitivesVertexCount, Primitives, vertexCount, toInt)
-        ADD(PrimitivesInstanceCount, Primitives, instanceCount, toInt)
-        ADD(PrimitivesPatchVertices, Primitives, patchVertices, toInt)
         ADD(AttributeBufferId, Attribute, bufferId, toInt)
         ADD(AttributeColumnId, Attribute, columnId, toInt)
         ADD(AttributeNormalize, Attribute, normalize, toBool)
@@ -449,11 +449,23 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(AttachmentTextureId, Attachment, textureId, toInt)
         ADD(CallType, Call, type, toInt)
         ADD(CallProgramId, Call, programId, toInt)
-        ADD(CallPrimitivesId, Call, primitivesId, toInt)
         ADD(CallFramebufferId, Call, framebufferId, toInt)
-        ADD(CallNumGroupsX, Call, numGroupsX, toInt)
-        ADD(CallNumGroupsY, Call, numGroupsY, toInt)
-        ADD(CallNumGroupsZ, Call, numGroupsZ, toInt)
+        ADD(CallVertexStreamId, Call, vertexStreamId, toInt)
+        ADD(CallPrimitiveType, Call, primitiveType, toInt)
+        ADD(CallCount, Call, count, toInt)
+        ADD(CallFirst, Call, first, toInt)
+        ADD(CallIndexBufferId, Call, indexBufferId, toInt)
+        ADD(CallBaseVertex, Call, baseVertex, toInt)
+        ADD(CallInstanceCount, Call, instanceCount, toInt)
+        ADD(CallBaseInstance, Call, baseInstance, toInt)
+        ADD(CallIndirectBufferId, Call, indirectBufferId, toInt)
+        ADD(CallDrawCount, Call, drawCount, toInt)
+        ADD(CallWorkGroupsX, Call, workGroupsX, toInt)
+        ADD(CallWorkGroupsY, Call, workGroupsY, toInt)
+        ADD(CallWorkGroupsZ, Call, workGroupsZ, toInt)
+        ADD(CallBufferId, Call, bufferId, toInt)
+        ADD(CallTextureId, Call, textureId, toInt)
+        ADD(CallValues, Call, values, toList)
 #undef ADD
     }
     return false;
@@ -474,7 +486,7 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
         case ItemType::Buffer:
         case ItemType::Texture:
         case ItemType::Program:
-        case ItemType::Primitives:
+        case ItemType::VertexStream:
         case ItemType::Framebuffer:
             flags |= Qt::ItemIsDropEnabled;
             break;
@@ -544,7 +556,7 @@ QModelIndex SessionModel::insertItem(ItemType type, QModelIndex parent,
         case ItemType::Program: return insert(new Program());
         case ItemType::Shader: return insert(new Shader());
         case ItemType::Binding: return insert(new Binding());
-        case ItemType::Primitives: return insert(new Primitives());
+        case ItemType::VertexStream: return insert(new VertexStream());
         case ItemType::Attribute: return insert(new Attribute());
         case ItemType::Framebuffer: return insert(new Framebuffer());
         case ItemType::Attachment: return insert(new Attachment());
@@ -911,6 +923,14 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
     const auto writeBool = [&](const char *name, const auto &property) {
         xml.writeAttribute(name, (property ? "true" : "false"));
     };
+    const auto writeValues = [&](const auto &property) {
+        foreach (QVariant value, property) {
+            xml.writeStartElement("value");
+            foreach (QString field, value.toStringList())
+                xml.writeTextElement("field", field);
+            xml.writeEndElement();
+        }
+    };
 
     if (item.id)
         write("id", item.id);
@@ -991,26 +1011,11 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
             write("type", binding.type);
             if (binding.type == Binding::Uniform)
                 write("editor", binding.editor);
-
-            foreach (QVariant value, binding.values) {
-                xml.writeStartElement("value");
-                foreach (QString field, value.toStringList())
-                    xml.writeTextElement("field", field);
-                xml.writeEndElement();
-            }
+            writeValues(binding.values);
             break;
         }
 
-        case ItemType::Primitives: {
-            const auto &primitives = static_cast<const Primitives&>(item);
-            write("type", primitives.type);
-            writeRef("indexBufferId", primitives.indexBufferId);
-            write("firstVertex", primitives.firstVertex);
-            write("vertexCount", primitives.vertexCount);
-            if (primitives.instanceCount > 1)
-                write("instanceCount", primitives.instanceCount);
-            if (primitives.type == Primitives::Patches)
-                write("patchVertices", primitives.patchVertices);
+        case ItemType::VertexStream: {
             break;
         }
 
@@ -1038,21 +1043,47 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
 
         case ItemType::Call: {
             const auto &call = static_cast<const Call&>(item);
+
+            const auto type = call.type;
+            const auto draw = (type == Call::Draw);
+            const auto drawIndirect = (type == Call::DrawIndirect);
+            const auto compute = (type == Call::Compute);
+            const auto clearTexture = (type == Call::ClearTexture);
+            const auto clearBuffer = (type == Call::ClearBuffer);
+            const auto genMipmaps = (type == Call::GenerateMipmaps);
+
             writeBool("checked", call.checked);
             write("type", call.type);
-            writeRef("programId", call.programId);
-            if (call.type == Call::Draw) {
-                writeRef("primitivesId", call.primitivesId);
+            if (draw || drawIndirect || compute)
+                writeRef("programId", call.programId);
+            if (draw || drawIndirect) {
                 writeRef("framebufferId", call.framebufferId);
+                writeRef("indexBufferId", call.indexBufferId);
             }
-            else if (call.type == Call::Compute) {
-                if (call.numGroupsX > 1)
-                    write("numGroupsX", call.numGroupsX);
-                if (call.numGroupsY > 1)
-                    write("numGroupsY", call.numGroupsY);
-                if (call.numGroupsZ > 1)
-                    write("numGroupsZ", call.numGroupsZ);
+            if (draw) {
+                writeRef("vertexStreamId", call.vertexStreamId);
+                write("primitiveType", call.primitiveType);
+                write("count", call.count);
+                write("first", call.first);
+                write("baseVertex", call.baseVertex);
+                write("instanceCount", call.instanceCount);
+                write("baseInstance", call.baseInstance);
             }
+            if (drawIndirect) {
+                writeRef("indirectBufferId", call.indirectBufferId);
+                write("drawCount", call.drawCount);
+            }
+            if (compute) {
+                write("workGroupsX", call.workGroupsX);
+                write("workGroupsY", call.workGroupsY);
+                write("workGroupsZ", call.workGroupsZ);
+            }
+            if (clearTexture || genMipmaps)
+                writeRef("textureId", call.textureId);
+            if (clearBuffer)
+                writeRef("bufferId", call.bufferId);
+            if (clearTexture || clearBuffer)
+                writeValues(call.values);
             break;
         }
 
@@ -1116,6 +1147,16 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
         auto value = xml.attributes().value(name);
         if (!value.isNull())
             property = (value.toString() == "true");
+    };
+    const auto readValues = [&]() {
+        auto values = QVariantList();
+        while (xml.readNextStartElement()) {
+            auto value = QStringList();
+            while (xml.readNextStartElement())
+                value.append(xml.readElementText());
+            values.append(value);
+        }
+        return values;
     };
 
     auto id = xml.attributes().value("id").toInt();
@@ -1199,25 +1240,11 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             auto &binding = static_cast<Binding&>(item);
             readEnum("type", binding.type);
             readEnum("editor", binding.editor);
-
-            binding.values = QVariantList();
-            while (xml.readNextStartElement()) {
-                auto value = QStringList();
-                while (xml.readNextStartElement())
-                    value.append(xml.readElementText());
-                binding.values.append(value);
-            }
+            binding.values = readValues();
             return;
         }
 
-        case ItemType::Primitives: {
-            auto &primitives = static_cast<Primitives&>(item);
-            readEnum("type", primitives.type);
-            readRef("indexBufferId", primitives.indexBufferId);
-            read("firstVertex", primitives.firstVertex);
-            read("vertexCount", primitives.vertexCount);
-            read("instanceCount", primitives.instanceCount);
-            read("patchVertices", primitives.patchVertices);
+        case ItemType::VertexStream: {
             break;
         }
 
@@ -1247,12 +1274,25 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             readBool("checked", call.checked);
             readEnum("type", call.type);
             readRef("programId", call.programId);
-            readRef("primitivesId", call.primitivesId);
+            readRef("primitivesId", call.vertexStreamId); // TODO: deprecated - remove
+            readRef("vertexStreamId", call.vertexStreamId);
             readRef("framebufferId", call.framebufferId);
-            read("numGroupsX", call.numGroupsX);
-            read("numGroupsY", call.numGroupsY);
-            read("numGroupsZ", call.numGroupsZ);
-            break;
+            readRef("indexBufferId", call.indexBufferId);
+            read("primitiveType", call.primitiveType);
+            read("count", call.count);
+            read("first", call.first);
+            read("baseVertex", call.baseVertex);
+            read("instanceCount", call.instanceCount);
+            read("baseInstance", call.baseInstance);
+            readRef("indirectBufferId", call.indirectBufferId);
+            read("drawCount", call.drawCount);
+            read("workGroupsX", call.workGroupsX);
+            read("workGroupsY", call.workGroupsY);
+            read("workGroupsZ", call.workGroupsZ);
+            readRef("textureId", call.textureId);
+            readRef("bufferId", call.bufferId);
+            call.values = readValues();
+            return;
         }
 
         case ItemType::Script: {

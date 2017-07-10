@@ -10,7 +10,7 @@ using ItemId = int;
 
 enum MessageType
 {
-    OpenGL33NotSupported,
+    OpenGLVersionNotAvailable,
     LoadingFileFailed,
     UnsupportedShaderType,
     CreatingFramebufferFailed,

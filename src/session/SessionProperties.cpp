@@ -1,6 +1,7 @@
 #include "SessionProperties.h"
 #include "TextureProperties.h"
 #include "BindingProperties.h"
+#include "CallProperties.h"
 #include "ui_GroupProperties.h"
 #include "ui_BufferProperties.h"
 #include "ui_ColumnProperties.h"
@@ -8,11 +9,10 @@
 #include "ui_SamplerProperties.h"
 #include "ui_ProgramProperties.h"
 #include "ui_ShaderProperties.h"
-#include "ui_PrimitivesProperties.h"
+#include "ui_VertexStreamProperties.h"
 #include "ui_AttributeProperties.h"
 #include "ui_FramebufferProperties.h"
 #include "ui_AttachmentProperties.h"
-#include "ui_CallProperties.h"
 #include "ui_ScriptProperties.h"
 #include "editors/EditorManager.h"
 #include "Singletons.h"
@@ -67,11 +67,12 @@ SessionProperties::SessionProperties(QWidget *parent)
     add(mShaderProperties);
     mBindingProperties = new BindingProperties(this);
     mStack->addWidget(mBindingProperties);
-    add(mPrimitivesProperties);
+    add(mVertexStreamProperties);
     add(mAttributeProperties);
     add(mFramebufferProperties);
     add(mAttachmentProperties);
-    add(mCallProperties);
+    mCallProperties = new CallProperties(this);
+    mStack->addWidget(mCallProperties);
     add(mScriptProperties);
     mStack->addWidget(new QWidget(this));
 
@@ -81,9 +82,7 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mShaderProperties->fileNew, &QToolButton::clicked, [this]() {
         setCurrentItemFile(Singletons::editorManager().openNewSourceEditor()); });
     connect(mShaderProperties->fileBrowse, &QToolButton::clicked,
-        [this]() { selectCurrentItemFile(FileDialog::ShaderExtensions); });        
-    connect(mShaderProperties->file, &ReferenceComboBox::textRequired,
-        [](auto data) { return FileDialog::getFileTitle(data.toString()); });
+        [this]() { selectCurrentItemFile(FileDialog::ShaderExtensions); });
     connect(mShaderProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Shader); });
 
@@ -91,8 +90,6 @@ SessionProperties::SessionProperties(QWidget *parent)
         setCurrentItemFile(Singletons::editorManager().openNewBinaryEditor()); });
     connect(mBufferProperties->fileBrowse, &QToolButton::clicked,
         [this]() { selectCurrentItemFile(FileDialog::BinaryExtensions); });
-    connect(mBufferProperties->file, &ReferenceComboBox::textRequired,
-        [](auto data) { return FileDialog::getFileTitle(data.toString()); });
     connect(mBufferProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Buffer); });
 
@@ -100,8 +97,6 @@ SessionProperties::SessionProperties(QWidget *parent)
         setCurrentItemFile(Singletons::editorManager().openNewImageEditor()); });
     connect(mImageProperties->fileBrowse, &QToolButton::clicked,
         [this]() { selectCurrentItemFile(FileDialog::ImageExtensions); });
-    connect(mImageProperties->file, &ReferenceComboBox::textRequired,
-        [](auto data) { return FileDialog::getFileTitle(data.toString()); });
     connect(mImageProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Image, true); });
 
@@ -109,58 +104,30 @@ SessionProperties::SessionProperties(QWidget *parent)
         setCurrentItemFile(Singletons::editorManager().openNewSourceEditor()); });
     connect(mScriptProperties->fileBrowse, &QToolButton::clicked,
         [this]() { selectCurrentItemFile(FileDialog::ScriptExtensions); });
-    connect(mScriptProperties->file, &ReferenceComboBox::textRequired,
-        [](auto data) { return FileDialog::getFileTitle(data.toString()); });
     connect(mScriptProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Script); });
 
-    connect(mSamplerProperties->texture, &ReferenceComboBox::textRequired,
-        [this](QVariant data) { return mModel.findItemName(data.toInt()); });
     connect(mSamplerProperties->texture, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(ItemType::Texture); });
-
-    connect(mCallProperties->program, &ReferenceComboBox::textRequired,
-        [this](QVariant data) { return mModel.findItemName(data.toInt()); });
-    connect(mCallProperties->program, &ReferenceComboBox::listRequired,
-        [this]() { return getItemIds(ItemType::Program); });
-
-    connect(mCallProperties->primitives, &ReferenceComboBox::textRequired,
-        [this](QVariant data) { return mModel.findItemName(data.toInt()); });
-    connect(mCallProperties->primitives, &ReferenceComboBox::listRequired,
-        [this]() { return getItemIds(ItemType::Primitives); });
-
-    connect(mCallProperties->framebuffer, &ReferenceComboBox::textRequired,
-        [this](QVariant data) { return mModel.findItemName(data.toInt()); });
-    connect(mCallProperties->framebuffer, &ReferenceComboBox::listRequired,
-        [this]() { return getItemIds(ItemType::Framebuffer, true); });
-
-    connect(mCallProperties->type, &DataComboBox::currentDataChanged,
-        this, &SessionProperties::updateCallWidgets);
-    connect(mPrimitivesProperties->type, &DataComboBox::currentDataChanged,
-        this, &SessionProperties::updatePrimitivesWidgets);
-
-    connect(mPrimitivesProperties->indexBuffer, &ReferenceComboBox::textRequired,
-        [this](QVariant data) { return mModel.findItemName(data.toInt()); });
-    connect(mPrimitivesProperties->indexBuffer, &ReferenceComboBox::listRequired,
-        [this]() { return getItemIds(ItemType::Buffer, true); });
-
-    connect(mAttributeProperties->buffer, &ReferenceComboBox::textRequired,
-        [this](QVariant data) { return mModel.findItemName(data.toInt()); });
     connect(mAttributeProperties->buffer, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(ItemType::Buffer); });
     connect(mAttributeProperties->buffer, &ReferenceComboBox::currentDataChanged,
         mAttributeProperties->column, &ReferenceComboBox::validate);
-
-    connect(mAttributeProperties->column, &ReferenceComboBox::textRequired,
-        [this](QVariant data) { return mModel.findItemName(data.toInt()); });
     connect(mAttributeProperties->column, &ReferenceComboBox::listRequired,
         [this]() { return getColumnIds(
             mAttributeProperties->buffer->currentData().toInt()); });
-
-    connect(mAttachmentProperties->texture, &ReferenceComboBox::textRequired,
-        [this](QVariant data) { return mModel.findItemName(data.toInt()); });
     connect(mAttachmentProperties->texture, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(ItemType::Texture); });
+
+    for (auto comboBox : { mShaderProperties->file, mBufferProperties->file,
+            mImageProperties->file, mScriptProperties->file })
+        connect(comboBox, &ReferenceComboBox::textRequired,
+            [](auto data) { return FileDialog::getFileTitle(data.toString()); });
+
+    for (auto comboBox : { mSamplerProperties->texture, mAttributeProperties->buffer,
+            mAttributeProperties->column, mAttachmentProperties->texture })
+        connect(comboBox, &ReferenceComboBox::textRequired,
+            [this](QVariant data) { return findItemName(data.toInt()); });
 
     setCurrentModelIndex({ });
     fillComboBoxes();
@@ -224,26 +191,6 @@ void SessionProperties::fillComboBoxes()
         { "Compute", Shader::Compute },
         { "Header", Shader::Header },
     });
-
-    fill<Call::Type>(mCallProperties->type, {
-        { "Draw", Call::Draw},
-        { "Compute", Call::Compute },
-    });
-
-    fill<Primitives::Type>(mPrimitivesProperties->type, {
-        { "Points", Primitives::Points },
-        { "Lines", Primitives::Lines },
-        { "Line Strip", Primitives::LineStrip },
-        { "Line Loop", Primitives::LineLoop },
-        { "Triangles", Primitives::Triangles },
-        { "Triangle Strip", Primitives::TriangleStrip },
-        { "Triangle Fan", Primitives::TriangleFan },
-        { "Lines Adjacency", Primitives::LinesAdjacency },
-        { "Line Strip Adjacency", Primitives::LineStripAdjacency },
-        { "Triangle Strip Addjacency", Primitives::TriangleStripAdjacency },
-        { "Triangles Adjacency", Primitives::TrianglesAdjacency },
-        { "Patches", Primitives::Patches },
-    });
 }
 
 QVariantList SessionProperties::getFileNames(ItemType type, bool addNull) const
@@ -287,6 +234,11 @@ QVariantList SessionProperties::getFileNames(ItemType type, bool addNull) const
     qSort(result);
 
     return result;
+}
+
+QString SessionProperties::findItemName(ItemId itemId) const
+{
+    return mModel.findItemName(itemId);
 }
 
 QVariantList SessionProperties::getItemIds(ItemType type, bool addNull) const
@@ -352,6 +304,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             break;
 
         case ItemType::Texture:
+            // TODO: move to TextureProperties class, remove widget getters
             map(mTextureProperties->fileWidget(), SessionModel::FileName);
             map(mTextureProperties->targetWidget(), SessionModel::TextureTarget);
             map(mTextureProperties, SessionModel::TextureFormat);
@@ -387,18 +340,13 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             break;
 
         case ItemType::Binding:
+            // TODO: move to BindingProperties class, remove widget getters
             map(mBindingProperties->typeWidget(), SessionModel::BindingType);
             map(mBindingProperties->editorWidget(), SessionModel::BindingEditor);
             map(mBindingProperties, SessionModel::BindingValues);
             break;
 
-        case ItemType::Primitives:
-            map(mPrimitivesProperties->type, SessionModel::PrimitivesType);
-            map(mPrimitivesProperties->indexBuffer, SessionModel::PrimitivesIndexBufferId);
-            map(mPrimitivesProperties->firstVertex, SessionModel::PrimitivesFirstVertex);
-            map(mPrimitivesProperties->vertexCount, SessionModel::PrimitivesVertexCount);
-            map(mPrimitivesProperties->instanceCount, SessionModel::PrimitivesInstanceCount);
-            map(mPrimitivesProperties->patchVertices, SessionModel::PrimitivesPatchVertices);
+        case ItemType::VertexStream:
             break;
 
         case ItemType::Attribute:
@@ -416,14 +364,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             break;
 
         case ItemType::Call:
-            map(mCallProperties->type, SessionModel::CallType);
-            map(mCallProperties->program, SessionModel::CallProgramId);
-            map(mCallProperties->primitives, SessionModel::CallPrimitivesId);
-            map(mCallProperties->framebuffer, SessionModel::CallFramebufferId);
-            map(mCallProperties->numGroupsX, SessionModel::CallNumGroupsX);
-            map(mCallProperties->numGroupsY, SessionModel::CallNumGroupsY);
-            map(mCallProperties->numGroupsZ, SessionModel::CallNumGroupsZ);
-            updateCallWidgets();
+            mCallProperties->addMappings(*mMapper);
             break;
 
         case ItemType::Script:
@@ -437,43 +378,9 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
     mStack->setCurrentIndex(static_cast<int>(mModel.getItemType(index)));
 }
 
-void SessionProperties::updateCallWidgets()
-{
-    const auto type = static_cast<Call::Type>(
-        mCallProperties->type->currentData().toInt());
-    const auto compute = (type == Call::Compute);
-
-    setFormVisibility(mCallProperties->formLayout,
-        mCallProperties->labelPrimitives,
-        mCallProperties->primitives, !compute);
-    setFormVisibility(mCallProperties->formLayout,
-        mCallProperties->labelFramebuffer,
-        mCallProperties->framebuffer, !compute);
-
-    setFormVisibility(mCallProperties->formLayout,
-        mCallProperties->labelGroupsX,
-        mCallProperties->numGroupsX, compute);
-    setFormVisibility(mCallProperties->formLayout,
-        mCallProperties->labelGroupsY,
-        mCallProperties->numGroupsY, compute);
-    setFormVisibility(mCallProperties->formLayout,
-        mCallProperties->labelGroupsZ,
-        mCallProperties->numGroupsZ, compute);
-}
-
-void SessionProperties::updatePrimitivesWidgets()
-{
-    const auto type = static_cast<Primitives::Type>(
-        mPrimitivesProperties->type->currentData().toInt());
-
-    setFormVisibility(mPrimitivesProperties->formLayout,
-        mPrimitivesProperties->labelPatchVertices,
-        mPrimitivesProperties->patchVertices, (type == Primitives::Patches));
-}
-
 void SessionProperties::updateImageWidgets(const QModelIndex &index)
 {
-    if (auto image = model().item<Image>(index))
+    if (auto image = mModel.item<Image>(index))
         if (auto texture = castItem<Texture>(image->parent)) {
             const auto isArray =
                 (texture->target == Texture::Target::Target1DArray ||
