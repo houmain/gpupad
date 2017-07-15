@@ -39,19 +39,20 @@ MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
 void MessageWindow::updateMessages()
 {
     auto messages = Singletons::messageList().messages();
-
     auto messageIds = QSet<MessageId>();
     foreach (const MessagePtr &message, messages) {
-
         if (message->type == MessageType::CallDuration)
             tryReplaceMessage(*message);
-
         messageIds += getMessageId(*message);
     }
     removeMessagesExcept(messageIds);
 
+    auto added = false;
     foreach (const MessagePtr& message, messages)
-        addMessageOnce(*message);
+        added |= addMessageOnce(*message);
+
+    if (added)
+        emit messagesAdded();
 }
 
 qulonglong MessageWindow::getMessageId(const Message &message)
@@ -69,6 +70,9 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case DownloadingImageFailed:
         case ShaderError:
         case ScriptError:
+        case ProgramNotAssigned:
+        case TextureNotAssigned:
+        case BufferNotAssigned:
             return mErrorIcon;
 
         case ShaderWarning:
@@ -77,6 +81,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
 
         case ShaderInfo:
         case CallDuration:
+        case NoActiveCalls:
             return mInfoIcon;
     }
     return mWarningIcon;
@@ -93,8 +98,12 @@ QString MessageWindow::getMessageText(const Message &message) const
 
         case OpenGLVersionNotAvailable:
             return tr("the required OpenGL version %1 is not available").arg(message.text);
-        case LoadingFileFailed:
-            return tr("loading file '%1' failed").arg(message.text);
+        case LoadingFileFailed: {
+            if (message.text.isEmpty())
+                return tr("no file set").arg(message.text);
+            else
+                return tr("loading file '%1' failed").arg(message.text);
+        }
         case UnsupportedShaderType:
             return tr("unsupported shader type");
         case CreatingFramebufferFailed:
@@ -105,6 +114,14 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("uniform '%1' not set").arg(message.text);
         case CallDuration:
             return tr("call took %1").arg(message.text);
+        case NoActiveCalls:
+            return tr("session has no active calls");
+        case ProgramNotAssigned:
+            return tr("no program set");
+        case TextureNotAssigned:
+            return tr("no texture set");
+        case BufferNotAssigned:
+            return tr("no buffer set");
     }
     return message.text;
 }
@@ -134,12 +151,12 @@ void MessageWindow::tryReplaceMessage(const Message &message)
     }
 }
 
-void MessageWindow::addMessageOnce(const Message &message)
+bool MessageWindow::addMessageOnce(const Message &message)
 {
     auto messageId = getMessageId(message);
     for (auto i = 0; i < rowCount(); i++)
         if (item(i, 0)->data(Qt::UserRole).toULongLong() == messageId)
-            return;
+            return false;
 
     auto locationText = QString();
     if (message.itemId) {
@@ -170,6 +187,7 @@ void MessageWindow::addMessageOnce(const Message &message)
     insertRow(row);
     setItem(row, 0, messageItem);
     setItem(row, 1, locationItem);
+    return true;
 }
 
 void MessageWindow::handleItemActivated(QTableWidgetItem *messageItem)

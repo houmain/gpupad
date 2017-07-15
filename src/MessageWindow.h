@@ -17,6 +17,7 @@ public:
 
 signals:
     void messageActivated(int itemId, QString fileName, int line, int column);
+    void messagesAdded();
 
 private slots:
     void updateMessages();
@@ -28,7 +29,7 @@ private:
     QString getMessageText(const Message &message) const;
     void removeMessagesExcept(const QSet<MessageId> &messageIds);
     void tryReplaceMessage(const Message &message);
-    void addMessageOnce(const Message &message);
+    bool addMessageOnce(const Message &message);
 
     QTimer *mUpdateItemsTimer;
     QIcon mInfoIcon;

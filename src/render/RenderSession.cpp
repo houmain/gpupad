@@ -328,11 +328,9 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                      call = std::move(glcall)
                     ](BindingState& state) mutable {
                         auto program = call.program();
-                        if (program) {
-                            program->bind();
+                        if (program && program->bind())
                             mUsedItems += applyBindings(state,
                                 *program, *mScriptEngine);
-                        }
 
                         call.execute();
                         mTimerQueries->calls += &call;
@@ -367,36 +365,57 @@ void RenderSession::render()
 {
     QOpenGLVertexArrayObject::Binder vaoBinder(&mCommandQueue->vao);
 
-    // reuse unmodified items
+    reuseUnmodifiedItems();
+    evaluateScripts();
+    executeCommandQueue();
+    downloadModifiedResources();
+    outputTimerQueries();
+}
+
+void RenderSession::reuseUnmodifiedItems()
+{
     if (mPrevCommandQueue) {
         replaceEqual(mCommandQueue->textures, mPrevCommandQueue->textures);
         replaceEqual(mCommandQueue->buffers, mPrevCommandQueue->buffers);
         replaceEqual(mCommandQueue->programs, mPrevCommandQueue->programs);
         mPrevCommandQueue.reset();
     }
+}
 
-    // evaluate scripts
+void RenderSession::evaluateScripts()
+{
     mScriptEngine->evalScripts(mCommandQueue->scripts);
+}
 
-    // execute command queue
+void RenderSession::executeCommandQueue()
+{
     BindingState state;
     for (auto& command : mCommandQueue->commands)
         command(state);
+}
 
-    // download modified resources
+void RenderSession::downloadModifiedResources()
+{
     for (auto& texture : mCommandQueue->textures)
         mModifiedImages += texture.second.getModifiedImages();
 
     for (auto& buffer : mCommandQueue->buffers)
         mModifiedBuffers += buffer.second.getModifiedData();
+}
 
-    // output timer queries
+void RenderSession::outputTimerQueries()
+{
     auto messages = MessagePtrSet();
     foreach (const GLCall *call, mTimerQueries->calls)
         if (call->duration().count() >= 0)
             messages += Singletons::messageList().insert(
                 call->itemId(), MessageType::CallDuration,
                 formatQueryDuration(call->duration()), false);
+
+    if (mTimerQueries->calls.empty())
+        messages += Singletons::messageList().insert(
+            0, MessageType::NoActiveCalls);
+
     mTimerQueries->messages = messages;
     mTimerQueries->calls.clear();
 }

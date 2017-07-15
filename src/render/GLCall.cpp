@@ -73,6 +73,8 @@ QOpenGLTimerQuery &GLCall::timerQuery()
 
 void GLCall::execute()
 {
+    mMessages.clear();
+
     switch (mCall.type) {
         case Call::Draw:
         case Call::DrawIndirect: return executeDraw();
@@ -88,7 +90,7 @@ void GLCall::executeDraw()
     if (mFramebuffer)
         mFramebuffer->bind();
 
-    if (mVertexStream)
+    if (mVertexStream && mProgram)
         mVertexStream->bind(*mProgram);
 
     if (mIndexBuffer)
@@ -163,6 +165,10 @@ void GLCall::executeDraw()
         }
         timerQuery().end();
     }
+    else {
+        mMessages += Singletons::messageList().insert(
+            mCall.id,  MessageType::ProgramNotAssigned);
+    }
 
     if (mIndexBuffer)
         mIndexBuffer->unbind(GL_ELEMENT_ARRAY_BUFFER);
@@ -180,7 +186,7 @@ void GLCall::executeDraw()
 
 void GLCall::executeCompute()
 {
-    if (mProgram && mProgram->bind()) {
+    if (mProgram) {
         auto& gl = GLContext::currentContext();
         timerQuery().begin();
         if (auto gl43 = check(gl.v4_3, mCall.id))
@@ -189,10 +195,11 @@ void GLCall::executeCompute()
                 static_cast<GLuint>(mCall.workGroupsY),
                 static_cast<GLuint>(mCall.workGroupsZ));
         timerQuery().end();
-        mProgram->unbind();
     }
-    if (mProgram)
-        mUsedItems += mProgram->usedItems();
+    else {
+        mMessages += Singletons::messageList().insert(
+            mCall.id, MessageType::ProgramNotAssigned);
+    }
 }
 
 void GLCall::executeClearTexture()
@@ -200,6 +207,10 @@ void GLCall::executeClearTexture()
     if (mTexture) {
         mTexture->clear(mCall.values);
         mUsedItems += mTexture->usedItems();
+    }
+    else {
+        mMessages += Singletons::messageList().insert(
+            mCall.id,  MessageType::TextureNotAssigned);
     }
 }
 
@@ -209,6 +220,10 @@ void GLCall::executeClearBuffer()
         mBuffer->clear(mCall.values);
         mUsedItems += mBuffer->usedItems();
     }
+    else {
+        mMessages += Singletons::messageList().insert(
+            mCall.id, MessageType::BufferNotAssigned);
+    }
 }
 
 void GLCall::executeGenerateMipmaps()
@@ -216,5 +231,9 @@ void GLCall::executeGenerateMipmaps()
     if (mTexture) {
         mTexture->generateMipmaps();
         mUsedItems += mTexture->usedItems();
+    }
+    else {
+        mMessages += Singletons::messageList().insert(
+            mCall.id,  MessageType::TextureNotAssigned);
     }
 }

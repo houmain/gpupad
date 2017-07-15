@@ -160,7 +160,7 @@ struct Shader : FileItem
         Compute = GL_COMPUTE_SHADER,
     };
 
-    Type type{ Fragment };
+    Type type{ Vertex };
 };
 
 struct Binding : Item

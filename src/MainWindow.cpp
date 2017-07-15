@@ -171,6 +171,8 @@ MainWindow::MainWindow(QWidget *parent)
         &synchronizeLogic, &SynchronizeLogic::handleFileItemsChanged);
     connect(mMessageWindow.data(), &MessageWindow::messageActivated,
         this, &MainWindow::handleMessageActivated);
+    connect(mMessageWindow.data(), &MessageWindow::messagesAdded,
+        this, &MainWindow::openMessageDock);
 
     auto& settings = Singletons::settings();
     connect(mUi->actionSelectFont, &QAction::triggered,
@@ -479,8 +481,10 @@ void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
 {
     if (itemId)
         mSessionEditor->setCurrentItem(itemId);
-    else
+    else if (!fileName.isEmpty())
         Singletons::editorManager().openSourceEditor(fileName, true, line, column);
+    else
+        openSessionDock();
 }
 
 void MainWindow::openSessionDock()

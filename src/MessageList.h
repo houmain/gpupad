@@ -21,6 +21,10 @@ enum MessageType
     ShaderError,
     CallDuration,
     ScriptError,
+    NoActiveCalls,
+    ProgramNotAssigned,
+    TextureNotAssigned,
+    BufferNotAssigned
 };
 
 struct Message

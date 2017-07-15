@@ -52,7 +52,7 @@ GLShader::GLShader(const QList<const Shader*> &shaders)
                 MessageType::LoadingFileFailed, shader->fileName);
 
         if (sourceIndex)
-            source = QString("#line 0 %1\n").arg(sourceIndex) + source;
+            source = QString("#line 1 %1\n").arg(sourceIndex) + source;
         sourceIndex++;
 
         mSources += source + "\n";

@@ -22,6 +22,12 @@ private:
     void finish() override;
     void release() override;
 
+    void reuseUnmodifiedItems();
+    void evaluateScripts();
+    void executeCommandQueue();
+    void downloadModifiedResources();
+    void outputTimerQueries();
+
     QScopedPointer<ScriptEngine> mScriptEngine;
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;

@@ -53,6 +53,7 @@ private:
     GLuint mIndirectOffset{ };
     GLint mIndirectStride{ };
 
+    MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
     std::shared_ptr<QOpenGLTimerQuery> mTimerQuery;
 };

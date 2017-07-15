@@ -37,6 +37,8 @@ public slots:
     void openMessageDock();
     void openDocumentation();
     void openAbout();
+
+private slots:
     void handleMessageActivated(ItemId itemId,
         QString fileName, int line, int column);
 

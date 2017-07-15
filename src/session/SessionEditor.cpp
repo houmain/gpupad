@@ -308,8 +308,18 @@ void SessionEditor::openContextMenu(const QPoint &pos)
 void SessionEditor::addItem(ItemType type)
 {
     auto index = mModel.insertItem(type, currentIndex());
+
+    if (type == ItemType::Buffer)
+        mModel.insertItem(ItemType::Column, index);
+    else if (type == ItemType::Framebuffer)
+        mModel.insertItem(ItemType::Attachment, index);
+    else if (type == ItemType::VertexStream)
+        mModel.insertItem(ItemType::Attribute, index);
+    else if (type == ItemType::Program)
+        mModel.insertItem(ItemType::Shader, index);
+
     setCurrentIndex(index);
-    edit(index);
+    setExpanded(index, true);
 }
 
 void SessionEditor::treeItemActivated(const QModelIndex &index)
