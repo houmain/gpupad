@@ -393,7 +393,7 @@ void RenderSession::render()
     // output timer queries
     auto messages = MessagePtrSet();
     foreach (const GLCall *call, mTimerQueries->calls)
-        if (call->duration().count() > 0)
+        if (call->duration().count() >= 0)
             messages += Singletons::messageList().insert(
                 call->itemId(), MessageType::CallDuration,
                 formatQueryDuration(call->duration()), false);

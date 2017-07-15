@@ -109,6 +109,8 @@ bool GLProgram::bind()
 
     auto& gl = GLContext::currentContext();
     gl.glUseProgram(mProgramObject);
+
+    mPrevUniformsMessages.swap(mUniformsMessages);
     return true;
 }
 
@@ -118,20 +120,19 @@ void GLProgram::unbind()
     gl.glUseProgram(GL_NONE);
 
     // inform about not set uniforms
-    auto messages = MessagePtrSet();
     for (auto& kv : mUniformsSet) {
         if (!kv.second)
-            messages += Singletons::messageList().insert(
+            mUniformsMessages += Singletons::messageList().insert(
                 mItemId, MessageType::UnformNotSet, kv.first);
         kv.second = false;
     }
     for (auto& kv : mUniformBlocksSet) {
         if (!kv.second)
-            messages += Singletons::messageList().insert(
+            mUniformsMessages += Singletons::messageList().insert(
                 mItemId, MessageType::UnformNotSet, kv.first);
         kv.second = false;
     }
-    mNotSetUniformsMessages = messages;
+    mPrevUniformsMessages.clear();
 }
 
 int GLProgram::getUniformLocation(const QString &name) const
@@ -172,7 +173,9 @@ bool GLProgram::apply(const GLUniformBinding &uniform, ScriptEngine &scriptEngin
         auto doubles = std::array<GLdouble, 16>();
         auto j = 0u;
         foreach (QString field, scriptEngine.evalValue(
-                uniform.values[i].toStringList(), uniform.bindingItemId)) {
+                uniform.values[i].toStringList(),
+                uniform.bindingItemId,
+                mUniformsMessages)) {
             floats.at(j) = field.toFloat();
             ints.at(j) = field.toInt();
             uints.at(j) = field.toUInt();

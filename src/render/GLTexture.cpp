@@ -347,10 +347,12 @@ GLObject GLTexture::createFramebuffer(GLuint textureId, int level) const
     else if (isSencilTexture())
         attachment = GL_STENCIL_ATTACHMENT;
 
+    auto prevFramebufferId = GLint();
+    gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFramebufferId);
     auto fbo = GLObject(createFBO(), freeFBO);
     gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment, textureId, level);
-    gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
+    gl.glBindFramebuffer(GL_FRAMEBUFFER, prevFramebufferId);
     return fbo;
 }
 
@@ -369,8 +371,10 @@ void GLTexture::resolveMultisampleTexture(QOpenGLTexture &source,
     else if (isSencilTexture())
         blitMask = GL_STENCIL_BUFFER_BIT;
 
+    auto prevFramebufferId = GLint();
+    gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFramebufferId);
     gl.glBindFramebuffer(GL_READ_FRAMEBUFFER, sourceFbo);
     gl.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destFbo);
     gl.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, blitMask, GL_NEAREST);
-    gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
+    gl.glBindFramebuffer(GL_FRAMEBUFFER, prevFramebufferId);
 }

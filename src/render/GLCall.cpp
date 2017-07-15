@@ -58,7 +58,7 @@ void GLCall::setTexture(GLTexture *texture)
 std::chrono::nanoseconds GLCall::duration() const
 {
     if (!mTimerQuery)
-        return { };
+        return std::chrono::nanoseconds(-1);
     return std::chrono::nanoseconds(mTimerQuery->waitForResult());
 }
 

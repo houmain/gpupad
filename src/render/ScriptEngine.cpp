@@ -37,8 +37,8 @@ void ScriptEngine::evalScripts(QList<Script> scripts)
     mScripts = scripts;
 }
 
-QStringList ScriptEngine::evalValue(
-    const QStringList &fieldExpressions, ItemId itemId)
+QStringList ScriptEngine::evalValue(const QStringList &fieldExpressions,
+    ItemId itemId, MessagePtrSet &messages)
 {
     if (!mJsEngine)
         reset();
@@ -47,7 +47,7 @@ QStringList ScriptEngine::evalValue(
     foreach (QString fieldExpression, fieldExpressions) {
         auto result = mJsEngine->evaluate(fieldExpression);
         if (result.isError())
-            mMessages += Singletons::messageList().insert(
+            messages += Singletons::messageList().insert(
                 itemId, MessageType::ScriptError, result.toString());
 
         if (result.isObject()) {

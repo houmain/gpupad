@@ -79,7 +79,8 @@ private:
     QMap<QString, GLenum> mUniformDataTypes;
     GLObject mProgramObject;
 
-    MessagePtrSet mNotSetUniformsMessages;
+    MessagePtrSet mUniformsMessages;
+    MessagePtrSet mPrevUniformsMessages;
     std::map<QString, bool> mUniformsSet;
     std::map<QString, bool> mUniformBlocksSet;
 };
