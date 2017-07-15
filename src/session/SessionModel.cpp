@@ -18,7 +18,7 @@ namespace {
     const auto ProgramTag = QStringLiteral("program");
     const auto ShaderTag = QStringLiteral("shader");
     const auto BindingTag = QStringLiteral("binding");
-    const auto VertexStreamTag = QStringLiteral("primitives"); // TODO: vertexstream
+    const auto VertexStreamTag = QStringLiteral("vertexstream");
     const auto AttributeTag = QStringLiteral("attribute");
     const auto FramebufferTag = QStringLiteral("framebuffer");
     const auto AttachmentTag = QStringLiteral("attachment");
@@ -325,6 +325,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(TextureWidth, Texture, width)
         ADD(TextureHeight, Texture, height)
         ADD(TextureDepth, Texture, depth)
+        ADD(TextureSamples, Texture, samples)
         ADD(TextureFlipY, Texture, flipY)
         ADD(ImageLevel, Image, level)
         ADD(ImageLayer, Image, layer)
@@ -344,6 +345,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(AttributeNormalize, Attribute, normalize)
         ADD(AttributeDivisor, Attribute, divisor)
         ADD(AttachmentTextureId, Attachment, textureId)
+        ADD(AttachmentLevel, Attachment, level)
         ADD(CallType, Call, type)
         ADD(CallProgramId, Call, programId)
         ADD(CallFramebufferId, Call, framebufferId)
@@ -428,6 +430,7 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(TextureWidth, Texture, width, toInt)
         ADD(TextureHeight, Texture, height, toInt)
         ADD(TextureDepth, Texture, depth, toInt)
+        ADD(TextureSamples, Texture, samples, toInt)
         ADD(TextureFlipY, Texture, flipY, toBool)
         ADD(ImageLevel, Image, level, toInt)
         ADD(ImageLayer, Image, layer, toInt)
@@ -447,6 +450,7 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(AttributeNormalize, Attribute, normalize, toBool)
         ADD(AttributeDivisor, Attribute, divisor, toInt)
         ADD(AttachmentTextureId, Attachment, textureId, toInt)
+        ADD(AttachmentLevel, Attachment, level, toInt)
         ADD(CallType, Call, type, toInt)
         ADD(CallProgramId, Call, programId, toInt)
         ADD(CallFramebufferId, Call, framebufferId, toInt)
@@ -970,8 +974,10 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
                 write("height",  texture.height);
             if (texture.depth > 1)
                 write("depth",  texture.depth);
+            if (texture.samples > 1)
+                write("samples",  texture.samples);
             if (texture.flipY)
-                write("flipY",  texture.flipY);
+                writeBool("flipY",  texture.flipY);
             break;
         }
 
@@ -1038,6 +1044,7 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
         case ItemType::Attachment: {
             const auto &attachment = static_cast<const Attachment&>(item);
             writeRef("textureId", attachment.textureId);
+            write("level", attachment.level);
             break;
         }
 
@@ -1201,6 +1208,7 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             read("width", texture.width);
             read("height", texture.height);
             read("depth", texture.depth);
+            read("samples", texture.samples);
             readBool("flipY", texture.flipY);
             break;
         }
@@ -1266,6 +1274,7 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
         case ItemType::Attachment: {
             auto &attachment = static_cast<Attachment&>(item);
             readRef("textureId", attachment.textureId);
+            read("level", attachment.level);
             break;
         }
 
@@ -1274,7 +1283,6 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             readBool("checked", call.checked);
             readEnum("type", call.type);
             readRef("programId", call.programId);
-            readRef("primitivesId", call.vertexStreamId); // TODO: deprecated - remove
             readRef("vertexStreamId", call.vertexStreamId);
             readRef("framebufferId", call.framebufferId);
             readRef("indexBufferId", call.indexBufferId);

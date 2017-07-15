@@ -15,9 +15,9 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
         { "Draw", Call::Draw },
         { "Draw Indirect", Call::DrawIndirect },
         { "Compute", Call::Compute },
-        //{ "Clear Texture", Call::ClearTexture },
+        { "Clear Texture", Call::ClearTexture },
         //{ "Clear Buffer", Call::ClearBuffer },
-        //{ "Generate Mipmaps", Call::GenerateMipmaps },
+        { "Generate Mipmaps", Call::GenerateMipmaps },
     });
 
     fill<Call::PrimitiveType>(mUi->primitiveType, {
@@ -46,7 +46,7 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
     connect(mUi->program, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(ItemType::Program); });
     connect(mUi->vertexStream, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(ItemType::VertexStream); });
+        [this]() { return mSessionProperties.getItemIds(ItemType::VertexStream, true); });
     connect(mUi->framebuffer, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(ItemType::Framebuffer, true); });
     connect(mUi->indexBuffer, &ReferenceComboBox::listRequired,
@@ -116,6 +116,7 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelFramebuffer, mUi->framebuffer, anyDraw);
     setFormVisibility(mUi->formLayout, mUi->labelVertexStream, mUi->vertexStream, anyDraw);
     setFormVisibility(mUi->formLayout, mUi->labelIndexBuffer, mUi->indexBuffer, anyDraw);
+    setFormVisibility(mUi->formLayout, mUi->labelIndirectBuffer, mUi->indirectBuffer, drawIndirect);
 
     setFormVisibility(mUi->formLayout, mUi->labelPrimitiveType, mUi->primitiveType, anyDraw);
     setFormVisibility(mUi->formLayout, mUi->labelVertexCount, mUi->vertexCount, draw);
@@ -123,8 +124,6 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelFirstVertex, mUi->firstVertex, draw);
     setFormVisibility(mUi->formLayout, mUi->labelBaseVertex, mUi->baseVertex, draw);
     setFormVisibility(mUi->formLayout, mUi->labelBaseInstance, mUi->baseInstance, draw);
-
-    setFormVisibility(mUi->formLayout, mUi->labelIndirectBuffer, mUi->indirectBuffer, drawIndirect);
     setFormVisibility(mUi->formLayout, mUi->labelDrawCount, mUi->drawCount, drawIndirect);
 
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsX, mUi->workGroupsX, compute);
@@ -133,6 +132,8 @@ void CallProperties::updateWidgets()
 
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture, clearTexture || genMipmaps);
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer, clearBuffer);
-    setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor, clearTexture);
-    setFormVisibility(mUi->formLayout, mUi->labelClearValue, mUi->clearValue, clearBuffer);
+
+    // TODO:
+    setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor, false && clearTexture);
+    setFormVisibility(mUi->formLayout, mUi->labelClearValue, mUi->clearValue, false && clearBuffer);
 }

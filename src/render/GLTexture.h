@@ -22,7 +22,6 @@ public:
 
     bool isDepthTexture() const;
     bool isSencilTexture() const;
-    bool isDepthSencilTexture() const;
     int width() const { return mWidth; }
     int height() const { return mHeight; }
     Texture::Target target() const { return mTarget; }
@@ -38,11 +37,16 @@ public:
 private:
     void getImageDataFormat(QOpenGLTexture::PixelFormat *format,
         QOpenGLTexture::PixelType *dataType) const;
+    int getImageWidth(int level) const;
+    int getImageHeight(int level) const;
+    GLObject createFramebuffer(GLuint textureId, int level) const;
     void load();
     void upload();
     void uploadImage(const Image &image);
     bool download();
     bool downloadImage(Image& image);
+    void resolveMultisampleTexture(QOpenGLTexture &source,
+        QOpenGLTexture &dest, int level);
 
     QSet<ItemId> mUsedItems;
     QList<MessagePtr> mMessages;
@@ -51,9 +55,11 @@ private:
     int mWidth{ };
     int mHeight{ };
     int mDepth{ };
+    int mSamples{ };
     bool mFlipY{ };
     QList<Image> mImages;
     std::unique_ptr<QOpenGLTexture> mTexture;
+    std::unique_ptr<QOpenGLTexture> mResolveTexture;
     bool mSystemCopiesModified{ };
     bool mDeviceCopiesModified{ };
 };

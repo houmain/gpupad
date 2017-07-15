@@ -253,11 +253,24 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
     gl.glBindTexture(target, texture.getReadOnlyTextureId());
     gl.glUniform1i(location + binding.arrayIndex, unit);
-    gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, binding.minFilter);
-    gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, binding.magFilter);
-    gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, binding.wrapModeX);
-    gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, binding.wrapModeY);
-    gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, binding.wrapModeZ);
+    switch (target) {
+        case QOpenGLTexture::Target1D:
+        case QOpenGLTexture::Target1DArray:
+        case QOpenGLTexture::Target2D:
+        case QOpenGLTexture::Target2DArray:
+        case QOpenGLTexture::Target3D:
+        case QOpenGLTexture::TargetCubeMap:
+        case QOpenGLTexture::TargetCubeMapArray:
+            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, binding.minFilter);
+            gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, binding.magFilter);
+            gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, binding.wrapModeX);
+            gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, binding.wrapModeY);
+            gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, binding.wrapModeZ);
+            break;
+
+        default:
+            break;
+    }
     return true;
 }
 

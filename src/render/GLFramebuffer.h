@@ -14,14 +14,17 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
+    struct GLAttachment {
+        int level;
+        GLTexture* texture;
+    };
+
     bool create();
 
     ItemId mItemId{ };
     MessagePtr mMessage;
     QSet<ItemId> mUsedItems;
-    QList<GLTexture*> mTextures;
-    int mWidth{ };
-    int mHeight{ };
+    QMap<int, GLAttachment> mAttachments;
     int mNumColorAttachments{ };
     GLObject mFramebufferObject;
 };

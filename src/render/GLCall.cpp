@@ -87,89 +87,94 @@ void GLCall::executeDraw()
 {
     if (mFramebuffer)
         mFramebuffer->bind();
-    if (mProgram && mVertexStream)
+
+    if (mVertexStream)
         mVertexStream->bind(*mProgram);
+
     if (mIndexBuffer)
         mIndexBuffer->bindReadOnly(GL_ELEMENT_ARRAY_BUFFER);
 
-    timerQuery().begin();
-    auto& gl = GLContext::currentContext();
+    if (mProgram) {
+        timerQuery().begin();
+        auto& gl = GLContext::currentContext();
 
-    if (mCall.type == Call::Draw && !mIndexBuffer) {
-        // DrawArrays(InstancedBaseInstance)
-        if (!mCall.baseInstance) {
-            gl.glDrawArraysInstanced(
-                mCall.primitiveType,
-                mCall.first,
-                mCall.count,
-                mCall.instanceCount);
-        }
-        else if (auto gl42 = check(gl.v4_2, mCall.id)) {
-            gl42->glDrawArraysInstancedBaseInstance(
-                mCall.primitiveType,
-                mCall.first,
-                mCall.count,
-                mCall.instanceCount,
-                mCall.baseInstance);
-        }
-    }
-    else if (mCall.type == Call::Draw) {
-        // DrawElements(InstancedBaseVertexBaseInstance)
-        if (!mCall.baseInstance && !mCall.baseVertex) {
-            gl.glDrawElementsInstanced(
+        if (mCall.type == Call::Draw && !mIndexBuffer) {
+            // DrawArrays(InstancedBaseInstance)
+            if (!mCall.baseInstance) {
+                gl.glDrawArraysInstanced(
                     mCall.primitiveType,
+                    mCall.first,
                     mCall.count,
-                    mIndexType,
-                    reinterpret_cast<void*>(mIndicesOffset),
                     mCall.instanceCount);
-        }
-        else if (auto gl42 = check(gl.v4_2, mCall.id)) {
-            gl42->glDrawElementsInstancedBaseVertexBaseInstance(
+            }
+            else if (auto gl42 = check(gl.v4_2, mCall.id)) {
+                gl42->glDrawArraysInstancedBaseInstance(
                     mCall.primitiveType,
+                    mCall.first,
                     mCall.count,
-                    mIndexType,
-                    reinterpret_cast<void*>(mIndicesOffset),
                     mCall.instanceCount,
-                    mCall.baseVertex,
                     mCall.baseInstance);
+            }
         }
+        else if (mCall.type == Call::Draw) {
+            // DrawElements(InstancedBaseVertexBaseInstance)
+            if (!mCall.baseInstance && !mCall.baseVertex) {
+                gl.glDrawElementsInstanced(
+                        mCall.primitiveType,
+                        mCall.count,
+                        mIndexType,
+                        reinterpret_cast<void*>(mIndicesOffset),
+                        mCall.instanceCount);
+            }
+            else if (auto gl42 = check(gl.v4_2, mCall.id)) {
+                gl42->glDrawElementsInstancedBaseVertexBaseInstance(
+                        mCall.primitiveType,
+                        mCall.count,
+                        mIndexType,
+                        reinterpret_cast<void*>(mIndicesOffset),
+                        mCall.instanceCount,
+                        mCall.baseVertex,
+                        mCall.baseInstance);
+            }
+        }
+        else if (mCall.type == Call::DrawIndirect && !mIndexBuffer) {
+            // (Multi)DrawArraysIndirect
+            if (mCall.drawCount == 1) {
+                if (auto gl40 = check(gl.v4_0, mCall.id))
+                    gl40->glDrawArraysIndirect(mCall.primitiveType,
+                        reinterpret_cast<void*>(mIndirectOffset));
+            }
+            else if (auto gl43 = check(gl.v4_3, mCall.id)) {
+                gl43->glMultiDrawArraysIndirect(mCall.primitiveType,
+                    reinterpret_cast<void*>(mIndirectOffset), mCall.drawCount, mIndirectStride);
+            }
+        }
+        else if (mCall.type == Call::DrawIndirect) {
+            // (Multi)DrawElementsIndirect
+            if (mCall.drawCount == 1) {
+                if (auto gl40 = check(gl.v4_0, mCall.id))
+                    gl40->glDrawElementsIndirect(mCall.primitiveType, mIndexType,
+                        reinterpret_cast<void*>(mIndirectOffset));
+            }
+            else if (auto gl43 = check(gl.v4_3, mCall.id)) {
+                gl43->glMultiDrawElementsIndirect(mCall.primitiveType, mIndexType,
+                    reinterpret_cast<void*>(mIndirectOffset), mCall.drawCount, mIndirectStride);
+            }
+        }
+        timerQuery().end();
     }
-    else if (mCall.type == Call::DrawIndirect && !mIndexBuffer) {
-        // (Multi)DrawArraysIndirect
-        if (mCall.drawCount == 1) {
-            if (auto gl40 = check(gl.v4_0, mCall.id))
-                gl40->glDrawArraysIndirect(mCall.primitiveType,
-                    reinterpret_cast<void*>(mIndirectOffset));
-        }
-        else if (auto gl43 = check(gl.v4_3, mCall.id)) {
-            gl43->glMultiDrawArraysIndirect(mCall.primitiveType,
-                reinterpret_cast<void*>(mIndirectOffset), mCall.drawCount, mIndirectStride);
-        }
-    }
-    else if (mCall.type == Call::DrawIndirect) {
-        // (Multi)DrawElementsIndirect
-        if (mCall.drawCount == 1) {
-            if (auto gl40 = check(gl.v4_0, mCall.id))
-                gl40->glDrawElementsIndirect(mCall.primitiveType, mIndexType,
-                    reinterpret_cast<void*>(mIndirectOffset));
-        }
-        else if (auto gl43 = check(gl.v4_3, mCall.id)) {
-            gl43->glMultiDrawElementsIndirect(mCall.primitiveType, mIndexType,
-                reinterpret_cast<void*>(mIndirectOffset), mCall.drawCount, mIndirectStride);
-        }
-    }
-    timerQuery().end();
 
     if (mIndexBuffer)
         mIndexBuffer->unbind(GL_ELEMENT_ARRAY_BUFFER);
 
-    if (mFramebuffer) {
-        mFramebuffer->unbind();
-        mUsedItems += mFramebuffer->usedItems();
-    }
     if (mVertexStream) {
         mVertexStream->unbind();
         mUsedItems += mVertexStream->usedItems();
+    }
+
+    if (mFramebuffer) {
+        mFramebuffer->unbind();
+        mUsedItems += mFramebuffer->usedItems();
     }
 }
 

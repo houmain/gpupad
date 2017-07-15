@@ -311,6 +311,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             map(mTextureProperties->widthWidget(), SessionModel::TextureWidth);
             map(mTextureProperties->heightWidget(), SessionModel::TextureHeight);
             map(mTextureProperties->depthWidget(), SessionModel::TextureDepth);
+            map(mTextureProperties->samplesWidget(), SessionModel::TextureSamples);
             map(mTextureProperties->flipYWidget(), SessionModel::TextureFlipY);
             break;
 
@@ -361,6 +362,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
 
         case ItemType::Attachment:
             map(mAttachmentProperties->texture, SessionModel::AttachmentTextureId);
+            map(mAttachmentProperties->level, SessionModel::AttachmentLevel);
             break;
 
         case ItemType::Call:

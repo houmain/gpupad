@@ -12,9 +12,9 @@ namespace {
         RG,
         RGB,
         RGBA,
-        sRGB,
         Packed,
-        DepthStencil,
+        Depth,
+        Stencil,
     };
 
     enum FormatData
@@ -33,26 +33,24 @@ namespace {
         Float32,
 
         // Packed formats
-        RGB9E5,
-        RG11B10F,
         RG3B2,
-        R5G6B5,
-        RGB5A1,
         RGBA4,
+        RGB5A1,
+        R5G6B5,
+        RGB9E5,
         RGB10A2,
+        RG11B10F,
+        SRGB8,
+        SRGB8_Alpha8,
 
         // Depth formats
         D16,
         D24,
-        D24S8,
         D32,
         D32F,
-        D32FS8X24,
-        S8,
 
-        // sRGB formats
-        SRGB8,
-        SRGB8_Alpha8,
+        // Stencil formats
+        S8,
     };
 
     std::map<QOpenGLTexture::TextureFormat,
@@ -117,24 +115,22 @@ namespace {
         ADD(QOpenGLTexture::RGB32F, FormatType::RGB, FormatData::Float32)
         ADD(QOpenGLTexture::RGBA32F, FormatType::RGBA, FormatData::Float32)
 
-        ADD(QOpenGLTexture::RGB9E5, FormatType::Packed, FormatData::RGB9E5)
-        ADD(QOpenGLTexture::RG11B10F, FormatType::Packed, FormatData::RG11B10F)
         ADD(QOpenGLTexture::RG3B2, FormatType::Packed, FormatData::RG3B2)
-        ADD(QOpenGLTexture::R5G6B5, FormatType::Packed, FormatData::R5G6B5)
-        ADD(QOpenGLTexture::RGB5A1, FormatType::Packed, FormatData::RGB5A1)
         ADD(QOpenGLTexture::RGBA4, FormatType::Packed, FormatData::RGBA4)
+        ADD(QOpenGLTexture::RGB5A1, FormatType::Packed, FormatData::RGB5A1)
+        ADD(QOpenGLTexture::R5G6B5, FormatType::Packed, FormatData::R5G6B5)
+        ADD(QOpenGLTexture::RGB9E5, FormatType::Packed, FormatData::RGB9E5)
         ADD(QOpenGLTexture::RGB10A2, FormatType::Packed, FormatData::RGB10A2)
+        ADD(QOpenGLTexture::RG11B10F, FormatType::Packed, FormatData::RG11B10F)
+        ADD(QOpenGLTexture::SRGB8, FormatType::Packed, FormatData::SRGB8)
+        ADD(QOpenGLTexture::SRGB8_Alpha8, FormatType::Packed, FormatData::SRGB8_Alpha8)
 
-        ADD(QOpenGLTexture::D16, FormatType::DepthStencil, FormatData::D16)
-        ADD(QOpenGLTexture::D24, FormatType::DepthStencil, FormatData::D24)
-        ADD(QOpenGLTexture::D24S8, FormatType::DepthStencil, FormatData::D24S8)
-        ADD(QOpenGLTexture::D32, FormatType::DepthStencil, FormatData::D32)
-        ADD(QOpenGLTexture::D32F, FormatType::DepthStencil, FormatData::D32F)
-        ADD(QOpenGLTexture::D32FS8X24, FormatType::DepthStencil, FormatData::D32FS8X24)
-        ADD(QOpenGLTexture::S8, FormatType::DepthStencil, FormatData::S8)
+        ADD(QOpenGLTexture::D16, FormatType::Depth, FormatData::D16)
+        ADD(QOpenGLTexture::D24, FormatType::Depth, FormatData::D24)
+        ADD(QOpenGLTexture::D32, FormatType::Depth, FormatData::D32)
+        ADD(QOpenGLTexture::D32F, FormatType::Depth, FormatData::D32F)
 
-        ADD(QOpenGLTexture::SRGB8, FormatType::sRGB, FormatData::SRGB8)
-        ADD(QOpenGLTexture::SRGB8_Alpha8, FormatType::sRGB, FormatData::SRGB8_Alpha8)
+        ADD(QOpenGLTexture::S8, FormatType::Stencil, FormatData::S8)
     #undef ADD
     }
 } // namespace
@@ -190,9 +186,9 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
         { "RG", FormatType::RG },
         { "RGB", FormatType::RGB },
         { "RGBA", FormatType::RGBA },
-        { "sRGB", FormatType::sRGB },
         { "Packed", FormatType::Packed },
-        { "Depth/Stencil", FormatType::DepthStencil },
+        { "Depth", FormatType::Depth},
+        { "Stencil", FormatType::Stencil },
     });
 
     updateWidgets();
@@ -208,6 +204,7 @@ QWidget *TextureProperties::targetWidget() const { return mUi->target; }
 QWidget *TextureProperties::widthWidget() const { return mUi->width; }
 QWidget *TextureProperties::heightWidget() const { return mUi->height; }
 QWidget *TextureProperties::depthWidget() const { return mUi->depth; }
+QWidget *TextureProperties::samplesWidget() const { return mUi->samples; }
 QWidget *TextureProperties::flipYWidget() const { return mUi->flipY; }
 
 void TextureProperties::setFormat(QVariant value) {
@@ -224,9 +221,9 @@ void TextureProperties::setFormat(QVariant value) {
 void TextureProperties::updateWidgets()
 {
     auto dimensions = 0;
+    auto multisampling = false;
     auto target = static_cast<QOpenGLTexture::Target>(
         mUi->target->currentData().toInt());
-
     switch (target) {
         case QOpenGLTexture::Target1D:
         case QOpenGLTexture::TargetBuffer:
@@ -236,21 +233,30 @@ void TextureProperties::updateWidgets()
         case QOpenGLTexture::Target1DArray:
         case QOpenGLTexture::Target2D:
         case QOpenGLTexture::TargetCubeMap:
-        case QOpenGLTexture::Target2DMultisample:
         case QOpenGLTexture::TargetRectangle:
             dimensions = 2;
             break;
 
+        case QOpenGLTexture::Target2DMultisample:
+            dimensions = 2;
+            multisampling = true;
+            break;
+
         case QOpenGLTexture::Target2DArray:
-        case QOpenGLTexture::Target2DMultisampleArray:
         case QOpenGLTexture::Target3D:
         case QOpenGLTexture::TargetCubeMapArray:
             dimensions = 3;
             break;
+
+        case QOpenGLTexture::Target2DMultisampleArray:
+            dimensions = 3;
+            multisampling = true;
+            break;
     }
     setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, dimensions > 1);
     setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth, dimensions > 2);
-    setFormVisibility(mUi->formLayout, mUi->labelFlipY, mUi->flipY, true);
+    setFormVisibility(mUi->formLayout, mUi->labelSamples, mUi->samples, multisampling);
+    setFormVisibility(mUi->formLayout, mUi->labelFlipY, mUi->flipY, dimensions > 1);
 }
 
 void TextureProperties::updateFormatDataWidget(QVariant formatType)
@@ -275,24 +281,22 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
         { "16 Bit Float", FormatData::Float16 },
         { "32 Bit Float", FormatData::Float32 },
 
-        {"RGB9E5", FormatData::RGB9E5 },
-        {"RG11B10F", FormatData::RG11B10F },
-        {"RG3B2", FormatData::RG3B2 },
-        {"R5G6B5", FormatData::R5G6B5 },
-        {"RGB5A1", FormatData::RGB5A1 },
+        {"RG3 B2", FormatData::RG3B2 },
         {"RGBA4", FormatData::RGBA4 },
-        {"RGB10A2", FormatData::RGB10A2 },
-
-        {"D16", FormatData::D16 },
-        {"D24", FormatData::D24 },
-        {"D24S8", FormatData::D24S8 },
-        {"D32", FormatData::D32 },
-        {"D32F", FormatData::D32F },
-        {"D32FS8X24", FormatData::D32FS8X24 },
-        {"S8", FormatData::S8 },
-
+        {"RGB5 A1", FormatData::RGB5A1 },
+        {"R5 G6 B5", FormatData::R5G6B5 },
+        {"RGB9 E5 Float", FormatData::RGB9E5 },
+        {"RGB10 A2", FormatData::RGB10A2 },
+        {"RG11 B10 Float", FormatData::RG11B10F },
         {"SRGB8",FormatData::SRGB8 },
-        {"SRGB8_Alpha8",FormatData::SRGB8_Alpha8 },
+        {"SRGB8 A8",FormatData::SRGB8_Alpha8 },
+
+        {"16 Bit", FormatData::D16 },
+        {"24 Bit", FormatData::D24 },
+        {"32 Bit", FormatData::D32 },
+        {"32 Bit Float", FormatData::D32F },
+
+        {"8 Bit", FormatData::S8 },
     }) {
         if (std::find(data.cbegin(), data.cend(), kv.second) != data.cend())
             mUi->formatData->addItem(kv.first, kv.second);

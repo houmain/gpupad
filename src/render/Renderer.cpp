@@ -58,12 +58,18 @@ private:
 
         mDebugLogger.reset(new QOpenGLDebugLogger());
         if (mDebugLogger->initialize()) {
+            mDebugLogger->disableMessages(QOpenGLDebugMessage::AnySource,
+                QOpenGLDebugMessage::AnyType, QOpenGLDebugMessage::NotificationSeverity);
             connect(mDebugLogger.data(), &QOpenGLDebugLogger::messageLogged,
-            [this](const QOpenGLDebugMessage& message) {
-                qDebug() << message.message();
-            });
+                this, &Worker::handleDebugMessage);
             mDebugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
         }
+    }
+
+    void handleDebugMessage(const QOpenGLDebugMessage &message)
+    {
+        auto text = message.message();
+        qDebug() << text;
     }
 
     bool mInitialized{ };

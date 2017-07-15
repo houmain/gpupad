@@ -3,7 +3,6 @@
 
 #include "GLProgram.h"
 #include "GLBuffer.h"
-#include <QOpenGLVertexArrayObject>
 
 class GLVertexStream
 {
@@ -31,8 +30,7 @@ private:
     };
 
     QSet<ItemId> mUsedItems;
-    QList<GLAttribute> mAttributes;
-    QOpenGLVertexArrayObject mVertexArrayObject;
+    QMap<int, GLAttribute> mAttributes;
     QList<GLuint> mEnabledVertexAttributes;
 };
 

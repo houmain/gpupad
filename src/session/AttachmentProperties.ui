@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>221</width>
-    <height>43</height>
+    <height>45</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -35,7 +35,7 @@
       <number>0</number>
      </property>
      <item row="0" column="0">
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="labelTexture">
        <property name="text">
         <string>Texture</string>
        </property>
@@ -43,6 +43,16 @@
      </item>
      <item row="0" column="1">
       <widget class="ReferenceComboBox" name="texture"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelLevel">
+       <property name="text">
+        <string>Level</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QSpinBox" name="level"/>
      </item>
     </layout>
    </item>

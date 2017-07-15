@@ -118,6 +118,7 @@ struct Texture : FileItem
     int width{ 256 };
     int height{ 256 };
     int depth{ 1 };
+    int samples{ 1 };
     bool flipY{ };
 };
 
@@ -220,6 +221,7 @@ struct Framebuffer : Item
 struct Attachment : Item
 {
     ItemId textureId{ };
+    int level{ };
 };
 
 struct Call : Item

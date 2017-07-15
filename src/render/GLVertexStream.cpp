@@ -4,14 +4,17 @@ GLVertexStream::GLVertexStream(const VertexStream &vertexStream)
 {
     mUsedItems += vertexStream.id;
 
-    for (const auto& item : vertexStream.items)
+    auto attributeIndex = 0;
+    for (const auto& item : vertexStream.items) {
         if (auto attribute = castItem<Attribute>(item))
-            mAttributes.push_back({
+            mAttributes[attributeIndex] = GLAttribute{
                 { item->id },
                 attribute->name,
                 attribute->normalize,
                 attribute->divisor,
-                nullptr, { }, 0, 0, 0 });
+                nullptr, { }, 0, 0, 0 };
+        ++attributeIndex;
+    }
 }
 
 void GLVertexStream::setAttribute(int attributeIndex,
@@ -33,11 +36,7 @@ void GLVertexStream::bind(const GLProgram &program)
 {
     auto &gl = GLContext::currentContext();
 
-    if (!mVertexArrayObject.isCreated())
-        mVertexArrayObject.create();
-    mVertexArrayObject.bind();
     mEnabledVertexAttributes.clear();
-
     for (const auto& attribute : mAttributes) {
         auto attribLocation = program.getAttributeLocation(attribute.name);
         if (attribLocation < 0)
@@ -46,23 +45,25 @@ void GLVertexStream::bind(const GLProgram &program)
 
         mUsedItems += attribute.usedItems;
 
-        attribute.buffer->bindReadOnly(GL_ARRAY_BUFFER);
+        if (attribute.buffer) {
+            attribute.buffer->bindReadOnly(GL_ARRAY_BUFFER);
 
-        gl.glVertexAttribPointer(
-            location,
-            attribute.count,
-            attribute.type,
-            attribute.normalize,
-            attribute.stride,
-            reinterpret_cast<void*>(static_cast<intptr_t>(attribute.offset)));
+            gl.glVertexAttribPointer(
+                location,
+                attribute.count,
+                attribute.type,
+                attribute.normalize,
+                attribute.stride,
+                reinterpret_cast<void*>(static_cast<intptr_t>(attribute.offset)));
 
-        gl.glVertexAttribDivisor(location,
-            static_cast<GLuint>(attribute.divisor));
+            gl.glVertexAttribDivisor(location,
+                static_cast<GLuint>(attribute.divisor));
 
-        gl.glEnableVertexAttribArray(location);
-        mEnabledVertexAttributes.append(location);
+            gl.glEnableVertexAttribArray(location);
+            mEnabledVertexAttributes.append(location);
 
-        attribute.buffer->unbind(GL_ARRAY_BUFFER);
+            attribute.buffer->unbind(GL_ARRAY_BUFFER);
+        }
     }
 }
 
@@ -71,7 +72,5 @@ void GLVertexStream::unbind()
     auto &gl = GLContext::currentContext();
     foreach (GLuint location, mEnabledVertexAttributes)
         gl.glDisableVertexAttribArray(location);
-
-    mVertexArrayObject.release();
 }
 

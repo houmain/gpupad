@@ -5,21 +5,22 @@ GLFramebuffer::GLFramebuffer(const Framebuffer &framebuffer)
 {
     mUsedItems += framebuffer.id;
 
-    for (const auto &item : framebuffer.items)
+    auto attachmentIndex = 0;
+    for (const auto &item : framebuffer.items) {
         if (auto attachment = castItem<Attachment>(item)) {
+            mAttachments[attachmentIndex] = GLAttachment{
+                attachment->level,
+                nullptr
+            };
             mUsedItems += attachment->id;
-            mTextures.push_back(nullptr);
         }
+        attachmentIndex++;
+    }
 }
 
 void GLFramebuffer::setAttachment(int index, GLTexture *texture)
 {
-    if (!texture)
-        return;
-
-    mTextures[index] = texture;
-    mWidth = (!mWidth ? texture->width() : qMin(mWidth, texture->width()));
-    mHeight = (!mHeight ? texture->height() : qMin(mHeight, texture->height()));
+    mAttachments[index].texture = texture;
 }
 
 bool GLFramebuffer::bind()
@@ -29,25 +30,30 @@ bool GLFramebuffer::bind()
 
     auto &gl = GLContext::currentContext();
     gl.glBindFramebuffer(GL_FRAMEBUFFER, mFramebufferObject);
-    gl.glViewport(0, 0, mWidth, mHeight);
 
     auto colorAttachments = std::vector<GLenum>();
     for (auto i = 0; i < mNumColorAttachments; ++i)
         colorAttachments.push_back(static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i));
     gl.glDrawBuffers(static_cast<GLsizei>(colorAttachments.size()),
-      colorAttachments.data());
+        colorAttachments.data());
 
-    // mark texture device copies as modified
-    for (auto& texture : mTextures) {
-        texture->getReadWriteTextureId();
-        mUsedItems += texture->usedItems();
-    }
+    auto minWidth = 0;
+    auto minHeight = 0;
+    for (const auto& attachment : mAttachments)
+        if (auto texture = attachment.texture) {
+            auto width = std::max(texture->width() >> attachment.level, 1);
+            auto height = std::max(texture->height() >> attachment.level, 1);
+            minWidth = (!minWidth ? width : std::min(minWidth, width));
+            minHeight = (!minHeight ? height : std::min(minHeight, height));
 
-    // TODO: move to clear... calls
-    gl.glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+            // mark texture device copies as modified
+            texture->getReadWriteTextureId();
+        }
+    gl.glViewport(0, 0, minWidth, minHeight);
+
+    // TODO: move to states
     gl.glEnable(GL_DEPTH_TEST);
-    gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    gl.glDisable(GL_BLEND);
+    gl.glEnable(GL_BLEND);
     gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     gl.glDisable(GL_CULL_FACE);
     gl.glDepthFunc(GL_LEQUAL);
@@ -76,21 +82,21 @@ bool GLFramebuffer::create()
         gl.glDeleteFramebuffers(1, &fbo);
     };
 
-    mNumColorAttachments = 0;
     mFramebufferObject = GLObject(createFBO(), freeFBO);
     gl.glBindFramebuffer(GL_FRAMEBUFFER, mFramebufferObject);
 
-    for (auto& texture : mTextures) {
-        auto attachment = GLenum(
-            texture->isDepthTexture() ? GL_DEPTH_ATTACHMENT :
-            texture->isSencilTexture() ? GL_STENCIL_ATTACHMENT :
-            texture->isDepthSencilTexture() ? GL_DEPTH_STENCIL_ATTACHMENT :
-            GL_COLOR_ATTACHMENT0 + mNumColorAttachments++);
+    mNumColorAttachments = 0;
+    for (const auto& attachment : mAttachments)
+        if (auto texture = attachment.texture) {
+            auto type = GLenum(
+                texture->isDepthTexture() ? GL_DEPTH_ATTACHMENT :
+                texture->isSencilTexture() ? GL_STENCIL_ATTACHMENT :
+                GL_COLOR_ATTACHMENT0 + mNumColorAttachments++);
 
-        auto level = 0;
-        auto textureId = texture->getReadOnlyTextureId();
-        gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment, textureId, level);
-    }
+            auto textureId = texture->getReadOnlyTextureId();
+            gl.glFramebufferTexture(GL_FRAMEBUFFER, type, textureId, attachment.level);
+            mUsedItems += texture->usedItems();
+        }
 
     if (gl.glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         mMessage = Singletons::messageList().insert(mItemId,

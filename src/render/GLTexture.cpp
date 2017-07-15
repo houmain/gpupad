@@ -7,6 +7,7 @@ GLTexture::GLTexture(const Texture &texture)
     , mWidth(texture.width)
     , mHeight(texture.height)
     , mDepth(texture.depth)
+    , mSamples(texture.samples)
     , mFlipY(texture.flipY)
 {
     mUsedItems += texture.id;
@@ -32,9 +33,9 @@ bool operator==(const GLTexture::Image &a, const GLTexture::Image &b)
 bool GLTexture::operator==(const GLTexture &rhs) const
 {
     return std::tie(mTarget, mFormat, mWidth, mHeight,
-                    mDepth, mFlipY, mImages) ==
+                    mDepth, mSamples, mFlipY, mImages) ==
            std::tie(rhs.mTarget, rhs.mFormat,rhs.mWidth, rhs.mHeight,
-                    rhs.mDepth, rhs.mFlipY, rhs.mImages);
+                    rhs.mDepth, rhs.mSamples, rhs.mFlipY, rhs.mImages);
 }
 
 bool GLTexture::isDepthTexture() const
@@ -48,22 +49,6 @@ bool GLTexture::isDepthTexture() const
 bool GLTexture::isSencilTexture() const
 {
     return (mFormat == QOpenGLTexture::S8);
-}
-
-bool GLTexture::isDepthSencilTexture() const
-{
-    return (mFormat == QOpenGLTexture::D24S8
-         || mFormat == QOpenGLTexture::D32FS8X24);
-}
-
-void GLTexture::clear(QVariantList value)
-{
-    // TODO:
-}
-
-void GLTexture::generateMipmaps()
-{
-    // TODO:
 }
 
 GLuint GLTexture::getReadOnlyTextureId()
@@ -93,6 +78,42 @@ QList<std::pair<QString, QImage>> GLTexture::getModifiedImages()
     return result;
 }
 
+void GLTexture::clear(QVariantList value)
+{
+    auto getField = [&](auto i) {
+        return (i >= value.size() ? QVariant() : value[i]);
+    };
+
+    auto& gl = GLContext::currentContext();
+    auto fbo = createFramebuffer(getReadWriteTextureId(), 0);
+    gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    if (isDepthTexture()) {
+        // TODO:
+        //gl.glClearDepth(getField(0).toDouble());
+        gl.glClear(GL_DEPTH_BUFFER_BIT);
+    }
+    else if (isSencilTexture()) {
+        gl.glClearStencil(getField(0).toInt());
+        gl.glClear(GL_STENCIL_BUFFER_BIT);
+    }
+    else {
+        gl.glClearColor(
+            getField(0).toDouble(),
+            getField(1).toDouble(),
+            getField(2).toDouble(),
+            getField(3).toDouble());
+        gl.glClear(GL_COLOR_BUFFER_BIT);
+    }
+    gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
+}
+
+void GLTexture::generateMipmaps()
+{
+    getReadWriteTextureId();
+    mTexture->generateMipMaps();
+}
+
 void GLTexture::load()
 {
     mMessages.clear();
@@ -113,14 +134,25 @@ void GLTexture::upload()
         mTexture.reset(new QOpenGLTexture(mTarget));
         mTexture->setSize(mWidth, mHeight, mDepth);
         mTexture->setFormat(mFormat);
-        mTexture->setAutoMipMapGenerationEnabled(false);
-        mTexture->setMipLevels(mTexture->maximumMipLevels());
 
-        // TODO:
         if (mTarget == QOpenGLTexture::Target2DMultisample ||
-            mTarget == QOpenGLTexture::Target2DMultisampleArray)
-            mTexture->setSamples(4);
+            mTarget == QOpenGLTexture::Target2DMultisampleArray) {
 
+            mTexture->setSamples(mSamples);
+
+            auto resolveTarget = (mTarget == QOpenGLTexture::Target2DMultisample ?
+                QOpenGLTexture::Target2D : QOpenGLTexture::Target2DArray);
+            mResolveTexture.reset(new QOpenGLTexture(resolveTarget));
+            mResolveTexture->setSize(mWidth, mHeight, mDepth);
+            mResolveTexture->setFormat(mFormat);
+            mResolveTexture->setAutoMipMapGenerationEnabled(false);
+            mResolveTexture->setMipLevels(mResolveTexture->maximumMipLevels());
+            mResolveTexture->allocateStorage();
+        }
+        else {
+            mTexture->setAutoMipMapGenerationEnabled(false);
+            mTexture->setMipLevels(mTexture->maximumMipLevels());
+        }
         mTexture->allocateStorage();
     }
 
@@ -183,44 +215,53 @@ void GLTexture::getImageDataFormat(QOpenGLTexture::PixelFormat *format,
     }
 }
 
+int GLTexture::getImageWidth(int level) const
+{
+    return std::max(mWidth >> level, 1);
+}
+
+int GLTexture::getImageHeight(int level) const
+{
+    return std::max(mHeight >> level, 1);
+}
+
 void GLTexture::uploadImage(const Image &image)
 {
     auto sourceFormat = QOpenGLTexture::RGBA;
     auto sourceType = QOpenGLTexture::UInt8;
     getImageDataFormat(&sourceFormat, &sourceType);
     auto source = image.image.convertToFormat(QImage::Format_RGBA8888);
+
     source = source.scaled(
-        std::max(mWidth >> image.level, 1),
-        std::max(mHeight >> image.level, 1));
+        getImageWidth(image.level),
+        getImageHeight(image.level));
+
     if (mFlipY)
         source = source.mirrored();
 
     auto uploadOptions = QOpenGLPixelTransferOptions();
     uploadOptions.setAlignment(1);
 
+    auto& texture = (mResolveTexture ? *mResolveTexture : *mTexture);
     if (mTarget == QOpenGLTexture::TargetCubeMap) {
-        mTexture->setData(image.level, image.layer, image.face,
+        texture.setData(image.level, image.layer, image.face,
             sourceFormat, sourceType, source.constBits(),
             &uploadOptions);
     }
     else {
-        mTexture->setData(image.level, image.layer,
+        texture.setData(image.level, image.layer,
             sourceFormat, sourceType, source.constBits(),
             &uploadOptions);
     }
+
+    if (mResolveTexture)
+        resolveMultisampleTexture(*mResolveTexture, *mTexture, image.level);
 }
 
 bool GLTexture::download()
 {
     if (!mDeviceCopiesModified)
         return false;
-
-    // generate mip maps when a sublevel image is attached
-    auto sublevel = false;
-    for (auto &image : mImages)
-        sublevel |= (image.level != 0);
-    if (sublevel && mTexture->mipLevels() > 1)
-        mTexture->generateMipMaps();
 
     auto imageUpdated = false;
     for (auto &image : mImages)
@@ -230,71 +271,15 @@ bool GLTexture::download()
     return imageUpdated;
 }
 
-std::unique_ptr<QOpenGLTexture> resolveMultisampleTexture(GLTexture &source)
-{
-    auto& gl = GLContext::currentContext();
-    auto createFBO = [&]() {
-        auto fbo = GLuint{ };
-        gl.glGenFramebuffers(1, &fbo);
-        return fbo;
-    };
-    auto freeFBO = [](GLuint fbo) {
-        auto& gl = GLContext::currentContext();
-        gl.glDeleteFramebuffers(1, &fbo);
-    };
-
-    auto level = 0;
-    auto width = source.width();
-    auto height = source.height();
-    auto format = source.format();
-
-    auto attachment = GLenum{ GL_COLOR_ATTACHMENT0 };
-    auto blitMask = GLbitfield{ GL_COLOR_BUFFER_BIT };
-    if (source.isDepthTexture()) {
-        attachment = GL_DEPTH_ATTACHMENT;
-        blitMask = GL_DEPTH_BUFFER_BIT;
-    }
-    else if (source.isSencilTexture()) {
-        attachment = GL_STENCIL_ATTACHMENT;
-        blitMask = GL_STENCIL_BUFFER_BIT;
-    }
-    else if (source.isDepthSencilTexture()) {
-        attachment = GL_DEPTH_STENCIL_ATTACHMENT;
-        blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
-    }
-
-    auto sourceFbo = GLObject(createFBO(), freeFBO);
-    gl.glBindFramebuffer(GL_FRAMEBUFFER, sourceFbo);
-    gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment,
-        source.getReadOnlyTextureId(), level);
-
-    auto destFbo = GLObject(createFBO(), freeFBO);
-    gl.glBindFramebuffer(GL_FRAMEBUFFER, destFbo);
-    auto dest = std::make_unique<QOpenGLTexture>(QOpenGLTexture::Target2D);
-    dest->setFormat(format);
-    dest->setSize(width, height);
-    dest->allocateStorage();
-    gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment,
-        dest->textureId(), level);
-
-    gl.glBindFramebuffer(GL_READ_FRAMEBUFFER, sourceFbo);
-    gl.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destFbo);
-    gl.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, blitMask, GL_NEAREST);
-    gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
-    return dest;
-}
-
 bool GLTexture::downloadImage(Image& image)
 {
     auto& gl = GLContext::currentContext();
-
     auto dest = QImage();
-    auto width = std::max(mWidth >> image.level, 1);
-    auto height = std::max(mHeight >> image.level, 1);
+    auto width = getImageWidth(image.level);
+    auto height = getImageHeight(image.level);
     auto format = QOpenGLTexture::RGBA;
     auto dataType = QOpenGLTexture::UInt8;
     getImageDataFormat(&format, &dataType);
-
     if (isDepthTexture()) {
         format = QOpenGLTexture::Depth;
         dataType = QOpenGLTexture::UInt8;
@@ -304,14 +289,18 @@ bool GLTexture::downloadImage(Image& image)
         dest = QImage(width, height, QImage::Format_RGBA8888);
     }
 
-    // TODO: move. resolve level 0 first, then generate mip maps...
-    if (mTarget == QOpenGLTexture::Target2DMultisample) {
-        auto resolved = resolveMultisampleTexture(*this);
-        resolved->bind();
-        gl.glGetTexImage(resolved->target(), image.level,
-            format, dataType, dest.bits());
-        resolved->release();
-    }
+    if (mResolveTexture)
+        resolveMultisampleTexture(*mTexture, *mResolveTexture, image.level);
+
+    auto& texture = (mResolveTexture ? *mResolveTexture : *mTexture);
+    if (mTarget == QOpenGLTexture::Target1D ||
+        mTarget == QOpenGLTexture::Target2D ||
+        mTarget == QOpenGLTexture::TargetRectangle) {
+
+        texture.bind();
+        gl.glGetTexImage(mTarget, image.level, format, dataType, dest.bits());
+        texture.release();
+    }    
     else if (gl.v4_5) {
         auto layer = image.layer;
         if (mTarget == Texture::Target::TargetCubeMapArray)
@@ -320,17 +309,9 @@ bool GLTexture::downloadImage(Image& image)
             mTarget == Texture::Target::TargetCubeMapArray)
             layer += (image.face - QOpenGLTexture::CubeMapPositiveX);
 
-        gl.v4_5->glGetTextureSubImage(mTexture->textureId(),
+        gl.v4_5->glGetTextureSubImage(texture.textureId(),
             image.level, 0, 0, layer, width, height, 1,
             format, dataType, dest.byteCount(), dest.bits());
-    }
-    else if (mTarget == QOpenGLTexture::Target1D ||
-             mTarget == QOpenGLTexture::Target2D ||
-             mTarget == QOpenGLTexture::TargetRectangle) {
-        mTexture->bind();
-        gl.glGetTexImage(mTarget, image.level,
-            format, dataType, dest.bits());
-        mTexture->release();
     }
     else {
         mMessages += Singletons::messageList().insert(
@@ -347,3 +328,49 @@ bool GLTexture::downloadImage(Image& image)
     return true;
 }
 
+GLObject GLTexture::createFramebuffer(GLuint textureId, int level) const
+{
+    auto& gl = GLContext::currentContext();
+    auto createFBO = [&]() {
+        auto fbo = GLuint{ };
+        gl.glGenFramebuffers(1, &fbo);
+        return fbo;
+    };
+    auto freeFBO = [](GLuint fbo) {
+        auto& gl = GLContext::currentContext();
+        gl.glDeleteFramebuffers(1, &fbo);
+    };
+
+    auto attachment = GL_COLOR_ATTACHMENT0;
+    if (isDepthTexture())
+        attachment = GL_DEPTH_ATTACHMENT;
+    else if (isSencilTexture())
+        attachment = GL_STENCIL_ATTACHMENT;
+
+    auto fbo = GLObject(createFBO(), freeFBO);
+    gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment, textureId, level);
+    gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
+    return fbo;
+}
+
+void GLTexture::resolveMultisampleTexture(QOpenGLTexture &source,
+        QOpenGLTexture &dest, int level)
+{
+    auto& gl = GLContext::currentContext();
+    auto sourceFbo = createFramebuffer(source.textureId(), level);
+    auto destFbo = createFramebuffer(dest.textureId(), level);
+
+    auto width = getImageWidth(level);
+    auto height = getImageHeight(level);
+    auto blitMask = GLbitfield{ GL_COLOR_BUFFER_BIT };
+    if (isDepthTexture())
+        blitMask = GL_DEPTH_BUFFER_BIT;
+    else if (isSencilTexture())
+        blitMask = GL_STENCIL_BUFFER_BIT;
+
+    gl.glBindFramebuffer(GL_READ_FRAMEBUFFER, sourceFbo);
+    gl.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destFbo);
+    gl.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, blitMask, GL_NEAREST);
+    gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
+}

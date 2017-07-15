@@ -24,6 +24,7 @@ public:
     QWidget *widthWidget() const;
     QWidget *heightWidget() const;
     QWidget *depthWidget() const;
+    QWidget *samplesWidget() const;
     QWidget *flipYWidget() const;
 
     QVariant format() const { return static_cast<int>(mFormat); }

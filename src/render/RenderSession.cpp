@@ -15,6 +15,7 @@
 #include <functional>
 #include <deque>
 #include <QStack>
+#include <QOpenGLVertexArrayObject>
 
 namespace {
     struct BindingScope
@@ -115,6 +116,7 @@ namespace {
 
 struct RenderSession::CommandQueue
 {
+    QOpenGLVertexArrayObject vao;
     std::map<ItemId, GLTexture> textures;
     std::map<ItemId, GLBuffer> buffers;
     std::map<ItemId, GLProgram> programs;
@@ -232,10 +234,10 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                 case Binding::Type::Sampler:
                     for (auto index = 0; index < binding->valueCount(); ++index) {
                         auto samplerId = binding->getField(index, 0).toInt();
-                        if (auto sampler = session.findItem<Sampler>(samplerId)) {
+                        if (auto sampler = session.findItem<Sampler>(samplerId))
                             addCommand(
                                 [binding = GLSamplerBinding{
-                                    binding->id, sampler->id, sampler->name, index,
+                                    binding->id, sampler->id, binding->name, index,
                                     addTextureOnce(sampler->textureId),
                                     sampler->minFilter, sampler->magFilter,
                                     sampler->wrapModeX, sampler->wrapModeY,
@@ -243,7 +245,6 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                                 ](BindingState& state) {
                                     state.top().samplers[binding.name] = binding;
                                 });
-                        }
                     }
                     break;
 
@@ -364,6 +365,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 
 void RenderSession::render()
 {
+    QOpenGLVertexArrayObject::Binder vaoBinder(&mCommandQueue->vao);
+
     // reuse unmodified items
     if (mPrevCommandQueue) {
         replaceEqual(mCommandQueue->textures, mPrevCommandQueue->textures);
