@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>209</width>
-    <height>70</height>
+    <height>128</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -34,10 +34,62 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelFrontFace">
+       <property name="text">
+        <string>Front Face</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="DataComboBox" name="frontFace"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelCullMode">
+       <property name="text">
+        <string>Cull Mode</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="DataComboBox" name="cullMode"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelLogicOperation">
+       <property name="text">
+        <string>Logic Operation</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="DataComboBox" name="logicOperation"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelBlendConstant">
+       <property name="text">
+        <string>Blent Constant</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="ColorPicker" name="blendConstant"/>
+     </item>
     </layout>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>DataComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/DataComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ColorPicker</class>
+   <extends>QCheckBox</extends>
+   <header>session/ColorPicker.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

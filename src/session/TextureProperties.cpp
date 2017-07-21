@@ -288,8 +288,8 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
         {"RGB9 E5 Float", FormatData::RGB9E5 },
         {"RGB10 A2", FormatData::RGB10A2 },
         {"RG11 B10 Float", FormatData::RG11B10F },
-        {"SRGB8",FormatData::SRGB8 },
-        {"SRGB8 A8",FormatData::SRGB8_Alpha8 },
+        {"sRGB8",FormatData::SRGB8 },
+        {"sRGBA8",FormatData::SRGB8_Alpha8 },
 
         {"16 Bit", FormatData::D16 },
         {"24 Bit", FormatData::D24 },
