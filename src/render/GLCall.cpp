@@ -83,6 +83,10 @@ void GLCall::execute()
         case Call::ClearBuffer: return executeClearBuffer();
         case Call::GenerateMipmaps: return executeGenerateMipmaps();
     }
+
+    auto& gl = GLContext::currentContext();
+    if (gl.v4_2)
+      gl.v4_2->glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 
 void GLCall::executeDraw()
