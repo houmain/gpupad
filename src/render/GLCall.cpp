@@ -2,7 +2,7 @@
 #include "GLTexture.h"
 #include "GLBuffer.h"
 #include "GLProgram.h"
-#include "GLFramebuffer.h"
+#include "GLTarget.h"
 #include "GLVertexStream.h"
 #include <QOpenGLTimerQuery>
 
@@ -13,9 +13,9 @@ void GLCall::setProgram(GLProgram *program)
     mProgram = program;
 }
 
-void GLCall::setFramebuffer(GLFramebuffer *framebuffer)
+void GLCall::setTarget(GLTarget *target)
 {
-    mFramebuffer = framebuffer;
+    mTarget = target;
 }
 
 void GLCall::setVextexStream(GLVertexStream *vertexStream)
@@ -91,8 +91,8 @@ void GLCall::execute()
 
 void GLCall::executeDraw()
 {
-    if (mFramebuffer)
-        mFramebuffer->bind();
+    if (mTarget)
+        mTarget->bind();
 
     if (mVertexStream && mProgram)
         mVertexStream->bind(*mProgram);
@@ -103,6 +103,8 @@ void GLCall::executeDraw()
     if (mProgram) {
         timerQuery().begin();
         auto& gl = GLContext::currentContext();
+
+        gl.glEnable(GL_PROGRAM_POINT_SIZE);
 
         if (mCall.type == Call::Draw && !mIndexBuffer) {
             // DrawArrays(InstancedBaseInstance)
@@ -182,9 +184,9 @@ void GLCall::executeDraw()
         mUsedItems += mVertexStream->usedItems();
     }
 
-    if (mFramebuffer) {
-        mFramebuffer->unbind();
-        mUsedItems += mFramebuffer->usedItems();
+    if (mTarget) {
+        mTarget->unbind();
+        mUsedItems += mTarget->usedItems();
     }
 }
 

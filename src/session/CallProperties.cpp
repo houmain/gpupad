@@ -38,7 +38,7 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
     connect(mUi->type, &DataComboBox::currentDataChanged,
         this, &CallProperties::updateWidgets);
 
-    for (auto combobox : { mUi->program, mUi->vertexStream, mUi->framebuffer,
+    for (auto combobox : { mUi->program, mUi->vertexStream, mUi->target,
             mUi->indexBuffer, mUi->indirectBuffer, mUi->texture, mUi->buffer })
         connect(combobox, &ReferenceComboBox::textRequired,
             [this](QVariant data) { return mSessionProperties.findItemName(data.toInt()); });
@@ -47,8 +47,8 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
         [this]() { return mSessionProperties.getItemIds(ItemType::Program); });
     connect(mUi->vertexStream, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(ItemType::VertexStream, true); });
-    connect(mUi->framebuffer, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(ItemType::Framebuffer, true); });
+    connect(mUi->target, &ReferenceComboBox::listRequired,
+        [this]() { return mSessionProperties.getItemIds(ItemType::Target, true); });
     connect(mUi->indexBuffer, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(ItemType::Buffer, true); });
     connect(mUi->indirectBuffer, &ReferenceComboBox::listRequired,
@@ -76,7 +76,7 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->type, SessionModel::CallType);
 
     mapper.addMapping(mUi->program, SessionModel::CallProgramId);
-    mapper.addMapping(mUi->framebuffer, SessionModel::CallFramebufferId);
+    mapper.addMapping(mUi->target, SessionModel::CallTargetId);
     mapper.addMapping(mUi->vertexStream, SessionModel::CallVertexStreamId);
 
     mapper.addMapping(mUi->primitiveType, SessionModel::CallPrimitiveType);
@@ -98,6 +98,8 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
 
     mapper.addMapping(mUi->texture, SessionModel::CallTextureId);
     mapper.addMapping(mUi->buffer, SessionModel::CallBufferId);
+
+    // TODO:
     mapper.addMapping(mUi->clearColor, SessionModel::CallValues);
 }
 
@@ -113,7 +115,7 @@ void CallProperties::updateWidgets()
     const auto genMipmaps = (type == Call::GenerateMipmaps);
 
     setFormVisibility(mUi->formLayout, mUi->labelProgram, mUi->program, anyDraw || compute);
-    setFormVisibility(mUi->formLayout, mUi->labelFramebuffer, mUi->framebuffer, anyDraw);
+    setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target, anyDraw);
     setFormVisibility(mUi->formLayout, mUi->labelVertexStream, mUi->vertexStream, anyDraw);
     setFormVisibility(mUi->formLayout, mUi->labelIndexBuffer, mUi->indexBuffer, anyDraw);
     setFormVisibility(mUi->formLayout, mUi->labelIndirectBuffer, mUi->indirectBuffer, drawIndirect);
@@ -134,6 +136,7 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer, clearBuffer);
 
     // TODO:
-    setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor, false && clearTexture);
-    setFormVisibility(mUi->formLayout, mUi->labelClearValue, mUi->clearValue, false && clearBuffer);
+    setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor, false);
+    setFormVisibility(mUi->formLayout, mUi->labelClearDepth, mUi->clearDepth, false);
+    setFormVisibility(mUi->formLayout, mUi->labelClearStencil, mUi->clearStencil, false);
 }

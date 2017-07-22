@@ -1,6 +1,7 @@
 #include "SessionProperties.h"
 #include "TextureProperties.h"
 #include "BindingProperties.h"
+#include "AttachmentProperties.h"
 #include "CallProperties.h"
 #include "ui_GroupProperties.h"
 #include "ui_BufferProperties.h"
@@ -11,8 +12,7 @@
 #include "ui_ShaderProperties.h"
 #include "ui_VertexStreamProperties.h"
 #include "ui_AttributeProperties.h"
-#include "ui_FramebufferProperties.h"
-#include "ui_AttachmentProperties.h"
+#include "ui_TargetProperties.h"
 #include "ui_ScriptProperties.h"
 #include "editors/EditorManager.h"
 #include "Singletons.h"
@@ -69,8 +69,9 @@ SessionProperties::SessionProperties(QWidget *parent)
     mStack->addWidget(mBindingProperties);
     add(mVertexStreamProperties);
     add(mAttributeProperties);
-    add(mFramebufferProperties);
-    add(mAttachmentProperties);
+    add(mTargetProperties);
+    mAttachmentProperties = new AttachmentProperties(this);
+    mStack->addWidget(mAttachmentProperties);
     mCallProperties = new CallProperties(this);
     mStack->addWidget(mCallProperties);
     add(mScriptProperties);
@@ -116,8 +117,6 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mAttributeProperties->column, &ReferenceComboBox::listRequired,
         [this]() { return getColumnIds(
             mAttributeProperties->buffer->currentData().toInt()); });
-    connect(mAttachmentProperties->texture, &ReferenceComboBox::listRequired,
-        [this]() { return getItemIds(ItemType::Texture); });
 
     for (auto comboBox : { mShaderProperties->file, mBufferProperties->file,
             mImageProperties->file, mScriptProperties->file })
@@ -125,7 +124,7 @@ SessionProperties::SessionProperties(QWidget *parent)
             [](auto data) { return FileDialog::getFileTitle(data.toString()); });
 
     for (auto comboBox : { mSamplerProperties->texture, mAttributeProperties->buffer,
-            mAttributeProperties->column, mAttachmentProperties->texture })
+            mAttributeProperties->column })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant data) { return findItemName(data.toInt()); });
 
@@ -146,6 +145,37 @@ void SessionProperties::fillComboBoxes()
         { "Uint32", Column::Uint32 },
         { "Float", Column::Float },
         { "Double", Column::Double },
+    });
+
+    fill<Target::FrontFace>(mTargetProperties->frontFace, {
+        { "Counter Clockwise", Target::CCW },
+        { "Clockwise", Target::CW },
+    });
+
+    fill<Target::CullMode>(mTargetProperties->cullMode, {
+        { "None", Target::None },
+        { "Back", Target::Back },
+        { "Front", Target::Back },
+        { "Front And Back", Target::FrontAndBack },
+    });
+
+    fill<Target::LogicOperation>(mTargetProperties->logicOperation, {
+        { "Copy", Target::Copy },
+        { "Clear", Target::Clear },
+        { "Set", Target::Set },
+        { "Copy Inverted", Target::CopyInverted },
+        { "No Operation", Target::NoOp },
+        { "Invert", Target::Invert },
+        { "AND", Target::And },
+        { "NAND", Target::Nand },
+        { "OR", Target::Or },
+        { "NOR", Target::Nor },
+        { "XOR", Target::Xor },
+        { "EQUIV", Target::Equiv },
+        { "AND Reverse", Target::AndReverse },
+        { "AND Inverte", Target::AndInverted },
+        { "OR Reverse", Target::OrReverse },
+        { "OR Inverted", Target::OrInverted },
     });
 
     fill<QOpenGLTexture::Filter>(mSamplerProperties->minFilter, {
@@ -357,12 +387,15 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             map(mAttributeProperties->divisor, SessionModel::AttributeDivisor);
             break;
 
-        case ItemType::Framebuffer:
+        case ItemType::Target:
+            map(mTargetProperties->frontFace, SessionModel::TargetFrontFace);
+            map(mTargetProperties->cullMode, SessionModel::TargetCullMode);
+            map(mTargetProperties->logicOperation, SessionModel::TargetLogicOperation);
+            map(mTargetProperties->blendConstant, SessionModel::TargetBlendConstant);
             break;
 
         case ItemType::Attachment:
-            map(mAttachmentProperties->texture, SessionModel::AttachmentTextureId);
-            map(mAttachmentProperties->level, SessionModel::AttachmentLevel);
+            mAttachmentProperties->addMappings(*mMapper);
             break;
 
         case ItemType::Call:

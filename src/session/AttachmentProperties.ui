@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>AttachmentProperties</class>
  <widget class="QWidget" name="AttachmentProperties">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>279</width>
+    <height>558</height>
+   </rect>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QFormLayout" name="formLayout">
@@ -26,167 +34,207 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
-     <item row="1" column="0">
+     <item row="0" column="0">
       <widget class="QLabel" name="labelTexture">
        <property name="text">
         <string>Texture</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="0" column="1">
       <widget class="ReferenceComboBox" name="texture"/>
      </item>
-     <item row="2" column="0">
+     <item row="1" column="0">
       <widget class="QLabel" name="labelLevel">
        <property name="text">
         <string>Level</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="1" column="1">
       <widget class="QSpinBox" name="level"/>
      </item>
-     <item row="3" column="0">
+     <item row="2" column="0">
       <widget class="QLabel" name="labelBlendColorEq">
        <property name="text">
         <string>Blend Color Eq.</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="2" column="1">
       <widget class="DataComboBox" name="blendColorEq"/>
      </item>
-     <item row="4" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="labelBlendColorSource">
        <property name="text">
         <string>Blend Color S.</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="3" column="1">
       <widget class="DataComboBox" name="blendColorSource"/>
      </item>
-     <item row="5" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="labelBlendColorDest">
        <property name="text">
         <string>Blend Color D.</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="4" column="1">
       <widget class="DataComboBox" name="blendColorDest"/>
      </item>
-     <item row="6" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="labelBlendAlphaEq">
        <property name="text">
         <string>Blend Alpha Eq.</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
-      <widget class="DataComboBox" name="alphaBlendEq"/>
+     <item row="5" column="1">
+      <widget class="DataComboBox" name="blendAlphaEq"/>
      </item>
-     <item row="7" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="labelBlendAlphaSource">
        <property name="text">
         <string>Blend Alpha S.</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="6" column="1">
       <widget class="DataComboBox" name="blendAlphaSource"/>
      </item>
-     <item row="8" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="labelBlendAlphaDest">
        <property name="text">
         <string>Blend Alpha D.</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
+     <item row="7" column="1">
       <widget class="DataComboBox" name="blendAlphaDest"/>
      </item>
-     <item row="9" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="labelColorWriteMask">
        <property name="text">
         <string>Write RGBA</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <property name="spacing">
-        <number>12</number>
+     <item row="8" column="1">
+      <widget class="QWidget" name="colorWriteMask" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
        </property>
-       <item>
-        <widget class="QCheckBox" name="writeMaskR">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="writeMaskG">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="writeMaskB">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="writeMaskA">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
+       <layout class="QHBoxLayout">
+        <property name="spacing">
+         <number>12</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QCheckBox" name="writeMaskR">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="writeMaskG">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="writeMaskB">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="writeMaskA">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="labelDepthCompareFunc">
+       <property name="text">
+        <string>Depth Pass</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="1">
+      <widget class="DataComboBox" name="depthCompareFunc"/>
      </item>
      <item row="10" column="0">
-      <widget class="QLabel" name="labelDepthClamp">
-       <property name="text">
-        <string>Depth Clamp</string>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="1">
-      <widget class="QCheckBox" name="depthClamp">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="11" column="0">
       <widget class="QLabel" name="labelDepthBias">
        <property name="text">
         <string>Depth Bias</string>
        </property>
       </widget>
      </item>
+     <item row="10" column="1">
+      <widget class="QDoubleSpinBox" name="depthBias">
+       <property name="minimum">
+        <double>-99.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="0">
+      <widget class="QLabel" name="labelDepthClamp">
+       <property name="text">
+        <string>Depth Clamp</string>
+       </property>
+      </widget>
+     </item>
      <item row="11" column="1">
-      <widget class="QDoubleSpinBox" name="depthBias"/>
+      <widget class="QCheckBox" name="depthClamp">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
      </item>
      <item row="12" column="0">
-      <widget class="QLabel" name="labelDepthWriteMask">
+      <widget class="QLabel" name="labelDepthWrite">
        <property name="text">
         <string>Write Depth</string>
        </property>
@@ -194,23 +242,26 @@
      </item>
      <item row="12" column="1">
       <widget class="QCheckBox" name="depthWrite">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
+       </property>
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
      <item row="13" column="0">
-      <widget class="QLabel" name="labelDepthCompareOp">
+      <widget class="QLabel" name="labelStencilSide">
        <property name="text">
-        <string>Compare Op.</string>
+        <string>Stencilling:</string>
        </property>
       </widget>
      </item>
      <item row="13" column="1">
-      <widget class="DataComboBox" name="depthCompareOp"/>
-     </item>
-     <item row="14" column="1">
-      <widget class="QTabWidget" name="tabStencil">
+      <widget class="QTabWidget" name="tabStencilSide">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
          <horstretch>1</horstretch>
@@ -226,9 +277,6 @@
        <property name="styleSheet">
         <string notr="true">QTabWidget::pane { border: none; }</string>
        </property>
-       <property name="currentIndex">
-        <number>1</number>
-       </property>
        <widget class="QWidget" name="tabStencilFront">
         <attribute name="title">
          <string>Front</string>
@@ -241,10 +289,27 @@
        </widget>
       </widget>
      </item>
-     <item row="15" column="1">
-      <widget class="DataComboBox" name="stencilFailOp"/>
+     <item row="14" column="0">
+      <widget class="QLabel" name="labelStencilCompareFunc">
+       <property name="text">
+        <string>Stencil Pass</string>
+       </property>
+      </widget>
+     </item>
+     <item row="14" column="1">
+      <widget class="DataComboBox" name="stencilCompareFunc"/>
      </item>
      <item row="15" column="0">
+      <widget class="QLabel" name="labelStencilReference">
+       <property name="text">
+        <string>Reference</string>
+       </property>
+      </widget>
+     </item>
+     <item row="15" column="1">
+      <widget class="QSpinBox" name="stencilReference"/>
+     </item>
+     <item row="16" column="0">
       <widget class="QLabel" name="labelStencilFailOp">
        <property name="text">
         <string>Stencil Fail Op.</string>
@@ -252,19 +317,19 @@
       </widget>
      </item>
      <item row="16" column="1">
-      <widget class="DataComboBox" name="stencilPassOp"/>
+      <widget class="DataComboBox" name="stencilFailOp"/>
      </item>
-     <item row="17" column="1">
-      <widget class="DataComboBox" name="stencilDepthFailOp"/>
-     </item>
-     <item row="16" column="0">
-      <widget class="QLabel" name="labelStencilPassOp">
+     <item row="17" column="0">
+      <widget class="QLabel" name="labelStencilDepthPassOp">
        <property name="text">
-        <string>Stencil Pass Op.</string>
+        <string>Depth Pass Op.</string>
        </property>
       </widget>
      </item>
-     <item row="17" column="0">
+     <item row="17" column="1">
+      <widget class="DataComboBox" name="stencilDepthPassOp"/>
+     </item>
+     <item row="18" column="0">
       <widget class="QLabel" name="labelStencilDepthFailOp">
        <property name="text">
         <string>Depth Fail Op.</string>
@@ -272,20 +337,7 @@
       </widget>
      </item>
      <item row="18" column="1">
-      <widget class="DataComboBox" name="stencilCompareOp"/>
-     </item>
-     <item row="18" column="0">
-      <widget class="QLabel" name="labelStencilCompareOp">
-       <property name="text">
-        <string>Compare Op.</string>
-       </property>
-      </widget>
-     </item>
-     <item row="19" column="1">
-      <widget class="QSpinBox" name="stencilWriteMask"/>
-     </item>
-     <item row="20" column="1">
-      <widget class="QSpinBox" name="stencilReference"/>
+      <widget class="DataComboBox" name="stencilDepthFailOp"/>
      </item>
      <item row="19" column="0">
       <widget class="QLabel" name="labelStencilWriteMask">
@@ -294,12 +346,8 @@
        </property>
       </widget>
      </item>
-     <item row="20" column="0">
-      <widget class="QLabel" name="labelStencilReference">
-       <property name="text">
-        <string>Compare Op.</string>
-       </property>
-      </widget>
+     <item row="19" column="1">
+      <widget class="QSpinBox" name="stencilWriteMask"/>
      </item>
     </layout>
    </item>
@@ -307,14 +355,14 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ReferenceComboBox</class>
-   <extends>QComboBox</extends>
-   <header>session/ReferenceComboBox.h</header>
-  </customwidget>
-  <customwidget>
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
    <header>session/DataComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ReferenceComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/ReferenceComboBox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

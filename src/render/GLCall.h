@@ -6,7 +6,7 @@
 
 class QOpenGLTimerQuery;
 class GLProgram;
-class GLFramebuffer;
+class GLTarget;
 class GLVertexStream;
 class GLBuffer;
 class GLTexture;
@@ -19,7 +19,7 @@ public:
     ItemId itemId() const { return mCall.id; }
     GLProgram *program() { return mProgram; }
     void setProgram(GLProgram *program);
-    void setFramebuffer(GLFramebuffer *framebuffer);
+    void setTarget(GLTarget *target);
     void setVextexStream(GLVertexStream *vertexStream);
     void setIndexBuffer(GLBuffer *indices, const Buffer &buffer);
     void setIndirectBuffer(GLBuffer *commands, const Buffer &buffer);
@@ -40,7 +40,7 @@ private:
 
     Call mCall{ };
     GLProgram *mProgram{ };
-    GLFramebuffer *mFramebuffer{ };
+    GLTarget *mTarget{ };
     GLVertexStream *mVertexStream{ };
     GLBuffer *mBuffer{ };
     GLTexture *mTexture{ };

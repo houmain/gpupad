@@ -18,8 +18,7 @@ class ProgramProperties;
 class ShaderProperties;
 class VertexStreamProperties;
 class AttributeProperties;
-class FramebufferProperties;
-class AttachmentProperties;
+class TargetProperties;
 class ScriptProperties;
 }
 
@@ -30,6 +29,7 @@ class SessionModel;
 class TextureProperties;
 class BindingProperties;
 class CallProperties;
+class AttachmentProperties;
 
 template <typename T>
 void fill(QComboBox *c, std::initializer_list<std::pair<const char*, T>> items)
@@ -86,9 +86,9 @@ private:
     QScopedPointer<Ui::ShaderProperties> mShaderProperties;
     BindingProperties *mBindingProperties{ };
     QScopedPointer<Ui::AttributeProperties> mAttributeProperties;
-    QScopedPointer<Ui::FramebufferProperties> mFramebufferProperties;
+    QScopedPointer<Ui::TargetProperties> mTargetProperties;
     QScopedPointer<Ui::VertexStreamProperties> mVertexStreamProperties;
-    QScopedPointer<Ui::AttachmentProperties> mAttachmentProperties;
+    AttachmentProperties *mAttachmentProperties{ };
     CallProperties *mCallProperties{ };
     QScopedPointer<Ui::ScriptProperties> mScriptProperties;
 };

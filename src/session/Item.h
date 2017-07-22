@@ -21,7 +21,7 @@ enum class ItemType
     Binding,
     VertexStream,
     Attribute,
-    Framebuffer,
+    Target,
     Attachment,
     Call,
     Script,
@@ -65,18 +65,19 @@ struct Column : Item
     int count{ 1 };
     int padding{ 0 };
 
-    int size() const {
+    int size() const
+    {
         switch (dataType) {
-            case Column::Int8: return 1;
-            case Column::Int16: return 2;
-            case Column::Int32: return 4;
-            //case Column::Int64: return 8;
-            case Column::Uint8: return 1;
-            case Column::Uint16: return 2;
-            case Column::Uint32: return 4;
-            //case Column::Uint64: return 8;
-            case Column::Float: return 4;
-            case Column::Double: return 8;
+            case Int8: return 1;
+            case Int16: return 2;
+            case Int32: return 4;
+            //case Int64: return 8;
+            case Uint8: return 1;
+            case Uint16: return 2;
+            case Uint32: return 4;
+            //case Uint64: return 8;
+            case Float: return 4;
+            case Double: return 8;
         }
         return 0;
     }
@@ -87,7 +88,8 @@ struct Buffer : FileItem
     int offset{ 0 };
     int rowCount{ 1 };
 
-    int stride() const {
+    int stride() const
+    {
         auto stride = 0;
         foreach (const Item* item, items) {
             auto& column = *static_cast<const Column*>(item);
@@ -96,7 +98,8 @@ struct Buffer : FileItem
         return stride;
     }
 
-    int columnOffset(const Column* col) const {
+    int columnOffset(const Column* col) const
+    {
         auto offset = 0;
         foreach (const Item* item, items) {
             const auto& column = *static_cast<const Column*>(item);
@@ -110,6 +113,13 @@ struct Buffer : FileItem
 
 struct Texture : FileItem
 {
+    enum class Type {
+        None,
+        Color,
+        Depth,
+        DepthStencil,
+        Stencil,
+    };
     using Target = QOpenGLTexture::Target;
     using Format = QOpenGLTexture::TextureFormat;
 
@@ -120,6 +130,20 @@ struct Texture : FileItem
     int depth{ 1 };
     int samples{ 1 };
     bool flipY{ };
+
+    Type type() const
+    {
+        switch (format) {
+            case QOpenGLTexture::D16: return Type::Depth;
+            case QOpenGLTexture::D24: return Type::Depth;
+            case QOpenGLTexture::D32: return Type::Depth;
+            case QOpenGLTexture::D32F: return Type::Depth;
+            case QOpenGLTexture::D24S8: return Type::DepthStencil;
+            case QOpenGLTexture::D32FS8X24: return Type::DepthStencil;
+            case QOpenGLTexture::S8: return Type::Stencil;
+            default: return Type::Color;
+        }
+    }
 };
 
 struct Image : FileItem
@@ -190,12 +214,14 @@ struct Binding : Item
 
     int valueCount() const { return values.size(); }
 
-    QStringList getValue(int index) const {
+    QStringList getValue(int index) const
+    {
         return (index < 0 || index >= values.size() ?
                 QStringList() : values[index].toStringList());
     }
 
-    QString getField(int valueIndex, int fieldIndex) const {
+    QString getField(int valueIndex, int fieldIndex) const
+    {
         auto value = getValue(valueIndex);
         return (fieldIndex < 0 || fieldIndex >= value.size() ?
                 QString() : value[fieldIndex]);
@@ -214,14 +240,124 @@ struct Attribute : Item
     int divisor{ };
 };
 
-struct Framebuffer : Item
+struct Target : Item
 {
+    enum FrontFace {
+        CCW = GL_CCW,
+        CW = GL_CW,
+    };
+
+    enum CullMode {
+        None = GL_NONE,
+        Back = GL_BACK,
+        Front = GL_FRONT,
+        FrontAndBack = GL_FRONT_AND_BACK
+    };
+
+    enum LogicOperation {
+        Copy = GL_COPY,
+        Clear = GL_CLEAR,
+        Set = GL_SET,
+        CopyInverted = GL_COPY_INVERTED,
+        NoOp = GL_NOOP,
+        Invert = GL_INVERT,
+        And = GL_AND,
+        Nand= GL_NAND,
+        Or = GL_OR,
+        Nor = GL_NOR,
+        Xor = GL_XOR,
+        Equiv = GL_EQUIV,
+        AndReverse = GL_AND_REVERSE,
+        AndInverted = GL_AND_INVERTED,
+        OrReverse = GL_OR_REVERSE,
+        OrInverted = GL_OR_INVERTED,
+    };
+
+    FrontFace frontFace{ FrontFace::CCW };
+    CullMode cullMode{ CullMode::None };
+    LogicOperation logicOperation{ LogicOperation::Copy };
+    QColor blendConstant{ Qt::white };
 };
 
 struct Attachment : Item
 {
+    enum BlendEquation {
+        Add = GL_FUNC_ADD,
+        Min = GL_MIN,
+        Max = GL_MAX,
+        Subtract = GL_FUNC_SUBTRACT,
+        ReverseSubtract = GL_FUNC_REVERSE_SUBTRACT,
+    };
+
+    enum BlendFactor {
+        Zero = GL_ZERO,
+        One = GL_ONE,
+        SrcColor = GL_SRC_COLOR,
+        OneMinusSrcColor = GL_ONE_MINUS_SRC_COLOR,
+        SrcAlpha = GL_SRC_ALPHA,
+        OneMinusSrcAlpha = GL_ONE_MINUS_SRC_ALPHA,
+        DstAlpha = GL_DST_ALPHA,
+        OneMinusDstAlpha = GL_ONE_MINUS_DST_ALPHA,
+        DstColor = GL_DST_COLOR,
+        OneMinusDstColor = GL_ONE_MINUS_DST_COLOR,
+        SrcAlphaSaturate = GL_SRC_ALPHA_SATURATE,
+        ConstantColor = GL_CONSTANT_COLOR,
+        OneMinusConstantColor = GL_ONE_MINUS_CONSTANT_COLOR,
+        ConstantAlpha = GL_CONSTANT_ALPHA,
+        OneMinusConstantAlpha = GL_ONE_MINUS_CONSTANT_ALPHA,
+    };
+
+    enum ComparisonFunction {
+        Always = GL_ALWAYS,
+        Never = GL_NEVER,
+        Less = GL_LESS,
+        Equal = GL_EQUAL,
+        LessEqual = GL_LEQUAL,
+        Greater = GL_GREATER,
+        NotEqual = GL_NOTEQUAL,
+        GreaterEqual = GL_GEQUAL,
+    };
+
+    enum StencilOperation {
+        Keep = GL_KEEP,
+        Reset = GL_ZERO,
+        Replace = GL_REPLACE,
+        Increment = GL_INCR,
+        IncrementWrap = GL_INCR_WRAP,
+        Decrement = GL_DECR,
+        DecrementWrap = GL_DECR_WRAP,
+        Invert = GL_INVERT,
+    };
+
     ItemId textureId{ };
     int level{ };
+
+    BlendEquation blendColorEq{ BlendEquation::Add };
+    BlendFactor blendColorSource{ BlendFactor::One };
+    BlendFactor blendColorDest{ BlendFactor::Zero };
+    BlendEquation blendAlphaEq{ BlendEquation::Add };
+    BlendFactor blendAlphaSource{ BlendFactor::One };
+    BlendFactor blendAlphaDest{ BlendFactor::Zero };
+    int colorWriteMask{ 0x15 };
+
+    bool depthClamp{ };
+    float depthBias{ };
+    bool depthWrite{ true };
+    ComparisonFunction depthCompareFunc{ ComparisonFunction::LessEqual };
+
+    ComparisonFunction stencilFrontCompareFunc{ ComparisonFunction::Always };
+    StencilOperation stencilFrontFailOp{ StencilOperation::Keep };
+    StencilOperation stencilFrontDepthFailOp{ StencilOperation::Keep };
+    StencilOperation stencilFrontDepthPassOp{ StencilOperation::Keep };
+    int stencilFrontWriteMask{ };
+    int stencilFrontReference{ };
+
+    ComparisonFunction stencilBackCompareFunc{ ComparisonFunction::Always };
+    StencilOperation stencilBackFailOp{ StencilOperation::Keep };
+    StencilOperation stencilBackDepthFailOp{ StencilOperation::Keep };
+    StencilOperation stencilBackDepthPassOp{ StencilOperation::Keep };
+    int stencilBackWriteMask{ };
+    int stencilBackReference{ };
 };
 
 struct Call : Item
@@ -253,7 +389,7 @@ struct Call : Item
     bool checked{ true };
     Type type{ };
     ItemId programId{ };
-    ItemId framebufferId{ };
+    ItemId targetId{ };
     ItemId vertexStreamId{ };
 
     PrimitiveType primitiveType{ Triangles };
@@ -294,7 +430,7 @@ template<> inline ItemType getItemType<Shader>() { return ItemType::Shader; }
 template<> inline ItemType getItemType<Binding>() { return ItemType::Binding; }
 template<> inline ItemType getItemType<VertexStream>() { return ItemType::VertexStream; }
 template<> inline ItemType getItemType<Attribute>() { return ItemType::Attribute; }
-template<> inline ItemType getItemType<Framebuffer>() { return ItemType::Framebuffer; }
+template<> inline ItemType getItemType<Target>() { return ItemType::Target; }
 template<> inline ItemType getItemType<Attachment>() { return ItemType::Attachment; }
 template<> inline ItemType getItemType<Call>() { return ItemType::Call; }
 template<> inline ItemType getItemType<Script>() { return ItemType::Script; }

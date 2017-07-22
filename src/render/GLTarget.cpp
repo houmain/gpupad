@@ -1,12 +1,12 @@
-#include "GLFramebuffer.h"
+#include "GLTarget.h"
 
-GLFramebuffer::GLFramebuffer(const Framebuffer &framebuffer)
-    : mItemId(framebuffer.id)
+GLTarget::GLTarget(const Target &target)
+    : mItemId(target.id)
 {
-    mUsedItems += framebuffer.id;
+    mUsedItems += target.id;
 
     auto attachmentIndex = 0;
-    for (const auto &item : framebuffer.items) {
+    for (const auto &item : target.items) {
         if (auto attachment = castItem<Attachment>(item)) {
             mAttachments[attachmentIndex] = GLAttachment{
                 attachment->level,
@@ -18,12 +18,12 @@ GLFramebuffer::GLFramebuffer(const Framebuffer &framebuffer)
     }
 }
 
-void GLFramebuffer::setAttachment(int index, GLTexture *texture)
+void GLTarget::setAttachment(int index, GLTexture *texture)
 {
     mAttachments[index].texture = texture;
 }
 
-bool GLFramebuffer::bind()
+bool GLTarget::bind()
 {
     if (!create())
         return false;
@@ -60,13 +60,13 @@ bool GLFramebuffer::bind()
     return true;
 }
 
-void GLFramebuffer::unbind()
+void GLTarget::unbind()
 {
     auto &gl = GLContext::currentContext();
     gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
 }
 
-bool GLFramebuffer::create()
+bool GLTarget::create()
 {
     if (mFramebufferObject)
         return true;
@@ -89,8 +89,9 @@ bool GLFramebuffer::create()
     for (const auto& attachment : mAttachments)
         if (auto texture = attachment.texture) {
             auto type = GLenum(
-                texture->isDepthTexture() ? GL_DEPTH_ATTACHMENT :
-                texture->isSencilTexture() ? GL_STENCIL_ATTACHMENT :
+                texture->type() == Texture::Type::Depth ? GL_DEPTH_ATTACHMENT :
+                texture->type() == Texture::Type::Stencil ? GL_STENCIL_ATTACHMENT :
+                texture->type() == Texture::Type::DepthStencil ? GL_DEPTH_STENCIL_ATTACHMENT :
                 GL_COLOR_ATTACHMENT0 + mNumColorAttachments++);
 
             auto textureId = texture->getReadOnlyTextureId();
@@ -98,9 +99,15 @@ bool GLFramebuffer::create()
             mUsedItems += texture->usedItems();
         }
 
-    if (gl.glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
         mMessage = Singletons::messageList().insert(mItemId,
-            MessageType::CreatingFramebufferFailed);
+            MessageType::CreatingFramebufferFailed,
+            (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT ? "(incomplete attachment)" :
+             status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT ? "(missing attachment)" :
+             status == GL_FRAMEBUFFER_UNSUPPORTED ? "(unsupported)" :
+             status == GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE ? "(sample mismatch)" : ""));
         mFramebufferObject.reset();
     }
     gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);

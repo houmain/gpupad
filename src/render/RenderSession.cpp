@@ -9,7 +9,7 @@
 #include "GLTexture.h"
 #include "GLBuffer.h"
 #include "GLProgram.h"
-#include "GLFramebuffer.h"
+#include "GLTarget.h"
 #include "GLVertexStream.h"
 #include "GLCall.h"
 #include <functional>
@@ -120,7 +120,7 @@ struct RenderSession::CommandQueue
     std::map<ItemId, GLTexture> textures;
     std::map<ItemId, GLBuffer> buffers;
     std::map<ItemId, GLProgram> programs;
-    std::map<ItemId, GLFramebuffer> framebuffers;
+    std::map<ItemId, GLTarget> targets;
     std::map<ItemId, GLVertexStream> vertexStream;
     std::deque<Command> commands;
     QList<ScriptEngine::Script> scripts;
@@ -178,11 +178,11 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
             session.findItem<Texture>(textureId));
     };
 
-    auto addFramebufferOnce = [&](ItemId framebufferId) {
-        auto framebuffer = session.findItem<Framebuffer>(framebufferId);
-        auto fb = addOnce(mCommandQueue->framebuffers, framebuffer);
+    auto addTargetOnce = [&](ItemId targetId) {
+        auto target = session.findItem<Target>(targetId);
+        auto fb = addOnce(mCommandQueue->targets, target);
         if (fb) {
-            const auto& items = framebuffer->items;
+            const auto& items = target->items;
             for (auto i = 0; i < items.size(); ++i)
                 if (auto attachment = castItem<Attachment>(items[i]))
                     fb->setAttachment(i, addTextureOnce(attachment->textureId));
@@ -311,7 +311,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 
                 auto glcall = GLCall(*call);
                 glcall.setProgram(addProgramOnce(call->programId));
-                glcall.setFramebuffer(addFramebufferOnce(call->framebufferId));
+                glcall.setTarget(addTargetOnce(call->targetId));
                 glcall.setVextexStream(addVertexStreamOnce(call->vertexStreamId));
 
                 if (auto buffer = session.findItem<Buffer>(call->indexBufferId))

@@ -1,12 +1,12 @@
-#ifndef GLFRAMEBUFFER_H
-#define GLFRAMEBUFFER_H
+#ifndef GLTARGET_H
+#define GLTARGET_H
 
 #include "GLTexture.h"
 
-class GLFramebuffer
+class GLTarget
 {
 public:
-    explicit GLFramebuffer(const Framebuffer &framebuffer);
+    explicit GLTarget(const Target &target);
     void setAttachment(int index, GLTexture *texture);
 
     bool bind();
@@ -29,4 +29,4 @@ private:
     GLObject mFramebufferObject;
 };
 
-#endif // GLFRAMEBUFFER_H
+#endif // GLTARGET_H

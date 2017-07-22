@@ -2,7 +2,8 @@
 #include <QOpenGLPixelTransferOptions>
 
 GLTexture::GLTexture(const Texture &texture)
-    : mTarget(texture.target)
+    : mType(texture.type())
+    , mTarget(texture.target)
     , mFormat(texture.format)
     , mWidth(texture.width)
     , mHeight(texture.height)
@@ -36,19 +37,6 @@ bool GLTexture::operator==(const GLTexture &rhs) const
                     mDepth, mSamples, mFlipY, mImages) ==
            std::tie(rhs.mTarget, rhs.mFormat,rhs.mWidth, rhs.mHeight,
                     rhs.mDepth, rhs.mSamples, rhs.mFlipY, rhs.mImages);
-}
-
-bool GLTexture::isDepthTexture() const
-{
-    return (mFormat == QOpenGLTexture::D16
-         || mFormat == QOpenGLTexture::D24
-         || mFormat == QOpenGLTexture::D32
-         || mFormat == QOpenGLTexture::D32F);
-}
-
-bool GLTexture::isSencilTexture() const
-{
-    return (mFormat == QOpenGLTexture::S8);
 }
 
 GLuint GLTexture::getReadOnlyTextureId()
@@ -88,14 +76,20 @@ void GLTexture::clear(QVariantList value)
     auto fbo = createFramebuffer(getReadWriteTextureId(), 0);
     gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    if (isDepthTexture()) {
+    if (mType == Texture::Type::Depth) {
         // TODO:
         //gl.glClearDepth(getField(0).toDouble());
         gl.glClear(GL_DEPTH_BUFFER_BIT);
     }
-    else if (isSencilTexture()) {
+    else if (mType == Texture::Type::Stencil) {
         gl.glClearStencil(getField(0).toInt());
         gl.glClear(GL_STENCIL_BUFFER_BIT);
+    }
+    else if (mType == Texture::Type::DepthStencil) {
+        // TODO:
+        //gl.glClearDepth(getField(0).toDouble());
+        gl.glClearStencil(getField(0).toInt());
+        gl.glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
     else {
         gl.glClearColor(
@@ -280,10 +274,20 @@ bool GLTexture::downloadImage(Image& image)
     auto format = QOpenGLTexture::RGBA;
     auto dataType = QOpenGLTexture::UInt8;
     getImageDataFormat(&format, &dataType);
-    if (isDepthTexture()) {
+    if (mType == Texture::Type::Depth) {
         format = QOpenGLTexture::Depth;
         dataType = QOpenGLTexture::UInt8;
         dest = QImage(width, height, QImage::Format_Grayscale8);
+    }
+    else if (mType == Texture::Type::Stencil) {
+        format = QOpenGLTexture::Stencil;
+        dataType = QOpenGLTexture::UInt8;
+        dest = QImage(width, height, QImage::Format_Grayscale8);
+    }
+    else if (mType == Texture::Type::DepthStencil) {
+        format = QOpenGLTexture::DepthStencil;
+        dataType = QOpenGLTexture::UInt32_D24S8;
+        dest = QImage(width, height, QImage::Format_RGBA8888);
     }
     else {
         dest = QImage(width, height, QImage::Format_RGBA8888);
@@ -342,10 +346,12 @@ GLObject GLTexture::createFramebuffer(GLuint textureId, int level) const
     };
 
     auto attachment = GL_COLOR_ATTACHMENT0;
-    if (isDepthTexture())
+    if (mType == Texture::Type::Depth)
         attachment = GL_DEPTH_ATTACHMENT;
-    else if (isSencilTexture())
+    else if (mType == Texture::Type::Stencil)
         attachment = GL_STENCIL_ATTACHMENT;
+    else if (mType == Texture::Type::DepthStencil)
+        attachment = GL_DEPTH_STENCIL_ATTACHMENT;
 
     auto prevFramebufferId = GLint();
     gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFramebufferId);
@@ -366,10 +372,12 @@ void GLTexture::resolveMultisampleTexture(QOpenGLTexture &source,
     auto width = getImageWidth(level);
     auto height = getImageHeight(level);
     auto blitMask = GLbitfield{ GL_COLOR_BUFFER_BIT };
-    if (isDepthTexture())
+    if (mType == Texture::Type::Depth)
         blitMask = GL_DEPTH_BUFFER_BIT;
-    else if (isSencilTexture())
+    else if (mType == Texture::Type::Stencil)
         blitMask = GL_STENCIL_BUFFER_BIT;
+    else if (mType == Texture::Type::DepthStencil)
+        blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
 
     auto prevFramebufferId = GLint();
     gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFramebufferId);

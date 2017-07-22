@@ -107,7 +107,7 @@ QString MessageWindow::getMessageText(const Message &message) const
         case UnsupportedShaderType:
             return tr("unsupported shader type");
         case CreatingFramebufferFailed:
-            return tr("creating framebuffer failed");
+            return tr("creating framebuffer failed %1").arg(message.text);
         case DownloadingImageFailed:
             return tr("downloading image failed");
         case UnformNotSet:

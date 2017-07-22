@@ -67,7 +67,7 @@ private:
     QAction *mAddBindingAction{ };
     QAction *mAddVertexStreamAction{ };
     QAction *mAddAttributeAction{ };
-    QAction *mAddFramebufferAction{ };
+    QAction *mAddTargetAction{ };
     QAction *mAddAttachmentAction{ };
     QAction *mAddCallAction{ };
     QAction *mAddScriptAction{ };

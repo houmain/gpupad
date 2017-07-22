@@ -20,7 +20,7 @@ namespace {
     const auto BindingTag = QStringLiteral("binding");
     const auto VertexStreamTag = QStringLiteral("vertexstream");
     const auto AttributeTag = QStringLiteral("attribute");
-    const auto FramebufferTag = QStringLiteral("framebuffer");
+    const auto TargetTag = QStringLiteral("target");
     const auto AttachmentTag = QStringLiteral("attachment");
     const auto CallTag = QStringLiteral("call");
     const auto ScriptTag = QStringLiteral("script");
@@ -39,7 +39,7 @@ namespace {
             case ItemType::Binding: return BindingTag;
             case ItemType::VertexStream: return VertexStreamTag;
             case ItemType::Attribute: return AttributeTag;
-            case ItemType::Framebuffer: return FramebufferTag;
+            case ItemType::Target: return TargetTag;
             case ItemType::Attachment: return AttachmentTag;
             case ItemType::Call: return CallTag;
             case ItemType::Script: return ScriptTag;
@@ -61,7 +61,8 @@ namespace {
         if (tag == BindingTag) return ItemType::Binding;
         if (tag == VertexStreamTag) return ItemType::VertexStream;
         if (tag == AttributeTag) return ItemType::Attribute;
-        if (tag == FramebufferTag) return ItemType::Framebuffer;
+        if (tag == "framebuffer") return ItemType::Target; // TODO: remove
+        if (tag == TargetTag) return ItemType::Target;
         if (tag == AttachmentTag) return ItemType::Attachment;
         if (tag == CallTag) return ItemType::Call;
         if (tag == ScriptTag) return ItemType::Script;
@@ -138,15 +139,15 @@ SessionModel::SessionModel(QObject *parent)
     mTypeIcons[ItemType::Group].addFile(QStringLiteral(":/images/16x16/folder.png"));
     mTypeIcons[ItemType::Buffer].addFile(QStringLiteral(":/images/16x16/x-office-spreadsheet.png"));
     mTypeIcons[ItemType::Column].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
-    mTypeIcons[ItemType::Texture].addFile(QStringLiteral(":/images/16x16/emblem-photos.png"));
+    mTypeIcons[ItemType::Texture].addFile(QStringLiteral(":/images/16x16/image-x-generic.png"));
     mTypeIcons[ItemType::Image].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
-    mTypeIcons[ItemType::Sampler].addFile(QStringLiteral(":/images/16x16/image-x-generic.png"));
+    mTypeIcons[ItemType::Sampler].addFile(QStringLiteral(":/images/16x16/mail-send.png"));
     mTypeIcons[ItemType::Program].addFile(QStringLiteral(":/images/16x16/applications-system.png"));
     mTypeIcons[ItemType::Shader].addFile(QStringLiteral(":/images/16x16/font.png"));
     mTypeIcons[ItemType::Binding].addFile(QStringLiteral(":/images/16x16/insert-text.png"));
     mTypeIcons[ItemType::VertexStream].addFile(QStringLiteral(":/images/16x16/media-playback-start-rtl.png"));
     mTypeIcons[ItemType::Attribute].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
-    mTypeIcons[ItemType::Framebuffer].addFile(QStringLiteral(":/images/16x16/image-missing.png"));
+    mTypeIcons[ItemType::Target].addFile(QStringLiteral(":/images/16x16/emblem-photos.png"));
     mTypeIcons[ItemType::Attachment].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[ItemType::Call].addFile(QStringLiteral(":/images/16x16/dialog-information.png"));
     mTypeIcons[ItemType::Script].addFile(QStringLiteral(":/images/16x16/font.png"));
@@ -181,7 +182,7 @@ QString SessionModel::getTypeName(ItemType type) const
         case ItemType::Binding: return tr("Binding");
         case ItemType::VertexStream: return tr("Vertex Stream");
         case ItemType::Attribute: return tr("Attribute");
-        case ItemType::Framebuffer: return tr("Framebuffer");
+        case ItemType::Target: return tr("Target");
         case ItemType::Attachment: return tr("Attachment");
         case ItemType::Call: return tr("Call");
         case ItemType::Script: return tr("Script");
@@ -205,7 +206,7 @@ bool SessionModel::canContainType(const QModelIndex &index, ItemType type) const
                 ItemType::Program,
                 ItemType::Binding,
                 ItemType::VertexStream,
-                ItemType::Framebuffer,
+                ItemType::Target,
                 ItemType::Call,
                 ItemType::Script,
             });
@@ -222,7 +223,7 @@ bool SessionModel::canContainType(const QModelIndex &index, ItemType type) const
         case ItemType::VertexStream:
             return inList(type, { ItemType::Attribute });
 
-        case ItemType::Framebuffer:
+        case ItemType::Target:
             return inList(type, { ItemType::Attachment });
 
         default:
@@ -346,9 +347,36 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(AttributeDivisor, Attribute, divisor)
         ADD(AttachmentTextureId, Attachment, textureId)
         ADD(AttachmentLevel, Attachment, level)
+        ADD(AttachmentBlendColorEq, Attachment, blendColorEq)
+        ADD(AttachmentBlendColorSource, Attachment, blendColorSource)
+        ADD(AttachmentBlendColorDest, Attachment, blendColorDest)
+        ADD(AttachmentBlendAlphaEq, Attachment, blendAlphaEq)
+        ADD(AttachmentBlendAlphaSource, Attachment, blendAlphaSource)
+        ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest)
+        ADD(AttachmentColorWriteMask, Attachment, colorWriteMask)
+        ADD(AttachmentDepthCompareFunc, Attachment, depthCompareFunc)
+        ADD(AttachmentDepthBias, Attachment, depthBias)
+        ADD(AttachmentDepthClamp, Attachment, depthClamp)
+        ADD(AttachmentDepthWrite, Attachment, depthWrite)
+        ADD(AttachmentStencilFrontCompareFunc, Attachment, stencilFrontCompareFunc)
+        ADD(AttachmentStencilFrontReference, Attachment, stencilFrontReference)
+        ADD(AttachmentStencilFrontFailOp, Attachment, stencilFrontFailOp)
+        ADD(AttachmentStencilFrontDepthFailOp, Attachment, stencilFrontDepthFailOp)
+        ADD(AttachmentStencilFrontDepthPassOp, Attachment, stencilFrontDepthPassOp)
+        ADD(AttachmentStencilFrontWriteMask, Attachment, stencilFrontWriteMask)
+        ADD(AttachmentStencilBackCompareFunc, Attachment, stencilBackCompareFunc)
+        ADD(AttachmentStencilBackReference, Attachment, stencilBackReference)
+        ADD(AttachmentStencilBackFailOp, Attachment, stencilBackFailOp)
+        ADD(AttachmentStencilBackDepthFailOp, Attachment, stencilBackDepthFailOp)
+        ADD(AttachmentStencilBackDepthPassOp, Attachment, stencilBackDepthPassOp)
+        ADD(AttachmentStencilBackWriteMask, Attachment, stencilBackWriteMask)
+        ADD(TargetFrontFace, Target, frontFace)
+        ADD(TargetCullMode, Target, cullMode)
+        ADD(TargetLogicOperation, Target, logicOperation)
+        ADD(TargetBlendConstant, Target, blendConstant)
         ADD(CallType, Call, type)
         ADD(CallProgramId, Call, programId)
-        ADD(CallFramebufferId, Call, framebufferId)
+        ADD(CallTargetId, Call, targetId)
         ADD(CallVertexStreamId, Call, vertexStreamId)
         ADD(CallPrimitiveType, Call, primitiveType)
         ADD(CallCount, Call, count)
@@ -451,9 +479,36 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(AttributeDivisor, Attribute, divisor, toInt)
         ADD(AttachmentTextureId, Attachment, textureId, toInt)
         ADD(AttachmentLevel, Attachment, level, toInt)
+        ADD(AttachmentBlendColorEq, Attachment, blendColorEq, toInt)
+        ADD(AttachmentBlendColorSource, Attachment, blendColorSource, toInt)
+        ADD(AttachmentBlendColorDest, Attachment, blendColorDest, toInt)
+        ADD(AttachmentBlendAlphaEq, Attachment, blendAlphaEq, toInt)
+        ADD(AttachmentBlendAlphaSource, Attachment, blendAlphaSource, toInt)
+        ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest, toInt)
+        ADD(AttachmentColorWriteMask, Attachment, colorWriteMask, toInt)
+        ADD(AttachmentDepthCompareFunc, Attachment, depthCompareFunc, toInt)
+        ADD(AttachmentDepthBias, Attachment, depthBias, toFloat)
+        ADD(AttachmentDepthClamp, Attachment, depthClamp, toBool)
+        ADD(AttachmentDepthWrite, Attachment, depthWrite, toBool)
+        ADD(AttachmentStencilFrontCompareFunc, Attachment, stencilFrontCompareFunc, toInt)
+        ADD(AttachmentStencilFrontReference, Attachment, stencilFrontReference, toInt)
+        ADD(AttachmentStencilFrontFailOp, Attachment, stencilFrontFailOp, toInt)
+        ADD(AttachmentStencilFrontDepthFailOp, Attachment, stencilFrontDepthFailOp, toInt)
+        ADD(AttachmentStencilFrontDepthPassOp, Attachment, stencilFrontDepthPassOp, toInt)
+        ADD(AttachmentStencilFrontWriteMask, Attachment, stencilFrontWriteMask, toInt)
+        ADD(AttachmentStencilBackCompareFunc, Attachment, stencilBackCompareFunc, toInt)
+        ADD(AttachmentStencilBackReference, Attachment, stencilBackReference, toInt)
+        ADD(AttachmentStencilBackFailOp, Attachment, stencilBackFailOp, toInt)
+        ADD(AttachmentStencilBackDepthFailOp, Attachment, stencilBackDepthFailOp, toInt)
+        ADD(AttachmentStencilBackDepthPassOp, Attachment, stencilBackDepthPassOp, toInt)
+        ADD(AttachmentStencilBackWriteMask, Attachment, stencilBackWriteMask, toInt)
+        ADD(TargetFrontFace, Target, frontFace, toInt)
+        ADD(TargetCullMode, Target, cullMode, toInt)
+        ADD(TargetLogicOperation, Target, logicOperation, toInt)
+        //ADD(TargetBlendConstant, Target, blendConstant, toColor)
         ADD(CallType, Call, type, toInt)
         ADD(CallProgramId, Call, programId, toInt)
-        ADD(CallFramebufferId, Call, framebufferId, toInt)
+        ADD(CallTargetId, Call, targetId, toInt)
         ADD(CallVertexStreamId, Call, vertexStreamId, toInt)
         ADD(CallPrimitiveType, Call, primitiveType, toInt)
         ADD(CallCount, Call, count, toInt)
@@ -491,7 +546,7 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
         case ItemType::Texture:
         case ItemType::Program:
         case ItemType::VertexStream:
-        case ItemType::Framebuffer:
+        case ItemType::Target:
             flags |= Qt::ItemIsDropEnabled;
             break;
         default:
@@ -562,7 +617,7 @@ QModelIndex SessionModel::insertItem(ItemType type, QModelIndex parent,
         case ItemType::Binding: return insert(new Binding());
         case ItemType::VertexStream: return insert(new VertexStream());
         case ItemType::Attribute: return insert(new Attribute());
-        case ItemType::Framebuffer: return insert(new Framebuffer());
+        case ItemType::Target: return insert(new Target());
         case ItemType::Attachment: return insert(new Attachment());
         case ItemType::Call: return insert(new Call());
         case ItemType::Script: return insert(new Script());
@@ -1035,9 +1090,9 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
         }
 
 
-        case ItemType::Framebuffer: {
-            const auto &framebuffer = static_cast<const Framebuffer&>(item);
-            Q_UNUSED(framebuffer);
+        case ItemType::Target: {
+            const auto &target = static_cast<const Target&>(item);
+            Q_UNUSED(target);
             break;
         }
 
@@ -1064,7 +1119,7 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
             if (draw || drawIndirect || compute)
                 writeRef("programId", call.programId);
             if (draw || drawIndirect) {
-                writeRef("framebufferId", call.framebufferId);
+                writeRef("targetId", call.targetId);
                 writeRef("indexBufferId", call.indexBufferId);
             }
             if (draw) {
@@ -1265,9 +1320,9 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             break;
         }
 
-        case ItemType::Framebuffer: {
-            auto &framebuffer = static_cast<Framebuffer&>(item);
-            Q_UNUSED(framebuffer);
+        case ItemType::Target: {
+            auto &target = static_cast<Target&>(item);
+            Q_UNUSED(target);
             break;
         }
 
@@ -1284,7 +1339,8 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             readEnum("type", call.type);
             readRef("programId", call.programId);
             readRef("vertexStreamId", call.vertexStreamId);
-            readRef("framebufferId", call.framebufferId);
+            readRef("framebufferId", call.targetId); // TODO: remove
+            readRef("targetId", call.targetId);
             readRef("indexBufferId", call.indexBufferId);
             read("primitiveType", call.primitiveType);
             read("count", call.count);

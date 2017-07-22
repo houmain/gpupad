@@ -20,8 +20,7 @@ public:
     explicit GLTexture(const Texture &texture);
     bool operator==(const GLTexture &rhs) const;
 
-    bool isDepthTexture() const;
-    bool isSencilTexture() const;
+    Texture::Type type() const { return mType; }
     int width() const { return mWidth; }
     int height() const { return mHeight; }
     Texture::Target target() const { return mTarget; }
@@ -50,6 +49,7 @@ private:
 
     QSet<ItemId> mUsedItems;
     QList<MessagePtr> mMessages;
+    Texture::Type mType{ };
     Texture::Target mTarget{ };
     Texture::Format mFormat{ };
     int mWidth{ };

@@ -13,8 +13,7 @@ namespace {
         RGB,
         RGBA,
         Packed,
-        Depth,
-        Stencil,
+        DepthStencil,
     };
 
     enum FormatData
@@ -38,18 +37,18 @@ namespace {
         RGB5A1,
         R5G6B5,
         RGB9E5,
-        RGB10A2,
+        RGB10A2_UI,
         RG11B10F,
         SRGB8,
         SRGB8_Alpha8,
 
-        // Depth formats
+        // Depth/Stencil formats
         D16,
         D24,
         D32,
         D32F,
-
-        // Stencil formats
+        D24_S8,
+        D32F_S8,
         S8,
     };
 
@@ -120,17 +119,18 @@ namespace {
         ADD(QOpenGLTexture::RGB5A1, FormatType::Packed, FormatData::RGB5A1)
         ADD(QOpenGLTexture::R5G6B5, FormatType::Packed, FormatData::R5G6B5)
         ADD(QOpenGLTexture::RGB9E5, FormatType::Packed, FormatData::RGB9E5)
-        ADD(QOpenGLTexture::RGB10A2, FormatType::Packed, FormatData::RGB10A2)
+        ADD(QOpenGLTexture::RGB10A2, FormatType::Packed, FormatData::RGB10A2_UI)
         ADD(QOpenGLTexture::RG11B10F, FormatType::Packed, FormatData::RG11B10F)
         ADD(QOpenGLTexture::SRGB8, FormatType::Packed, FormatData::SRGB8)
         ADD(QOpenGLTexture::SRGB8_Alpha8, FormatType::Packed, FormatData::SRGB8_Alpha8)
 
-        ADD(QOpenGLTexture::D16, FormatType::Depth, FormatData::D16)
-        ADD(QOpenGLTexture::D24, FormatType::Depth, FormatData::D24)
-        ADD(QOpenGLTexture::D32, FormatType::Depth, FormatData::D32)
-        ADD(QOpenGLTexture::D32F, FormatType::Depth, FormatData::D32F)
-
-        ADD(QOpenGLTexture::S8, FormatType::Stencil, FormatData::S8)
+        ADD(QOpenGLTexture::D16, FormatType::DepthStencil, FormatData::D16)
+        ADD(QOpenGLTexture::D24, FormatType::DepthStencil, FormatData::D24)
+        ADD(QOpenGLTexture::D32, FormatType::DepthStencil, FormatData::D32)
+        ADD(QOpenGLTexture::D32F, FormatType::DepthStencil, FormatData::D32F)
+        ADD(QOpenGLTexture::D24S8, FormatType::DepthStencil, FormatData::D24_S8)
+        ADD(QOpenGLTexture::D32FS8X24, FormatType::DepthStencil, FormatData::D32F_S8)
+        ADD(QOpenGLTexture::S8, FormatType::DepthStencil, FormatData::S8)
     #undef ADD
     }
 } // namespace
@@ -187,8 +187,7 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
         { "RGB", FormatType::RGB },
         { "RGBA", FormatType::RGBA },
         { "Packed", FormatType::Packed },
-        { "Depth", FormatType::Depth},
-        { "Stencil", FormatType::Stencil },
+        { "Depth / Stencil", FormatType::DepthStencil },
     });
 
     updateWidgets();
@@ -267,7 +266,8 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
     mSuspendUpdateFormat = true;
 
     mUi->formatData->clear();
-    for (auto kv : std::initializer_list<std::pair<const char*, FormatData>> {
+
+    auto formats = std::initializer_list<std::pair<const char*, FormatData>> {
         { "8 Bit Normalized", FormatData::Normalized8 },
         { "16 Bit Normalized", FormatData::Normalized16 },
         { "8 Bit Signed Normalized", FormatData::SignedNormalized8 },
@@ -286,21 +286,22 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
         {"RGB5 A1", FormatData::RGB5A1 },
         {"R5 G6 B5", FormatData::R5G6B5 },
         {"RGB9 E5 Float", FormatData::RGB9E5 },
-        {"RGB10 A2", FormatData::RGB10A2 },
+        {"RGB10 A2 Unsigned Int", FormatData::RGB10A2_UI },
         {"RG11 B10 Float", FormatData::RG11B10F },
         {"sRGB8",FormatData::SRGB8 },
         {"sRGBA8",FormatData::SRGB8_Alpha8 },
 
-        {"16 Bit", FormatData::D16 },
-        {"24 Bit", FormatData::D24 },
-        {"32 Bit", FormatData::D32 },
-        {"32 Bit Float", FormatData::D32F },
-
-        {"8 Bit", FormatData::S8 },
-    }) {
+        {"16 Bit Depth", FormatData::D16 },
+        {"24 Bit Depth", FormatData::D24 },
+        {"32 Bit Depth", FormatData::D32 },
+        {"32 Bit Float Depth", FormatData::D32F },
+        {"24 Bit Depth / 8 Bit Stencil", FormatData::D24_S8 },
+        {"32 Bit Float Depth / 8 Bit Stencil", FormatData::D32F_S8 },
+        {"8 Bit Stencil", FormatData::S8 },
+    };
+    for (auto kv : formats)
         if (std::find(data.cbegin(), data.cend(), kv.second) != data.cend())
             mUi->formatData->addItem(kv.first, kv.second);
-    }
 
     mUi->formatData->setCurrentIndex(-1);
 
