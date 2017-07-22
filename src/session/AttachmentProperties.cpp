@@ -20,8 +20,8 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
 
     fill<Attachment::BlendEquation>(mUi->blendColorEq, {
         { "Add", Attachment::Add },
-        { "Min", Attachment::Min },
-        { "Max", Attachment::Max },
+        { "Minimum", Attachment::Min },
+        { "Maximum", Attachment::Max },
         { "Subtract", Attachment::Subtract },
         { "Reverse Subtract", Attachment::ReverseSubtract },
     });
@@ -30,33 +30,43 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
     fill<Attachment::BlendFactor>(mUi->blendColorSource, {
         { "Zero", Attachment::Zero },
         { "One", Attachment::One },
-        { "Source Color", Attachment::SrcColor },
-        { "1 - Source Color", Attachment::OneMinusSrcColor },
+        { "Source", Attachment::SrcColor },
+        { "One Minus Source", Attachment::OneMinusSrcColor },
         { "Source Alpha", Attachment::SrcAlpha },
-        { "1 - Source Alpha", Attachment::OneMinusSrcAlpha },
-        {  "Destination Alpha", Attachment::DstAlpha },
-        { "1 - Destination Alpha", Attachment::OneMinusDstAlpha },
-        { "Destination Color", Attachment::DstColor },
-        { "1 - Destination Color", Attachment::OneMinusDstColor },
+        { "One Minus Source Alpha", Attachment::OneMinusSrcAlpha },
         { "Source Alpha Saturate", Attachment::SrcAlphaSaturate },
-        { "Constant Color", Attachment::ConstantColor },
-        { "1 - Constant Color", Attachment::OneMinusConstantColor },
+        { "Destination", Attachment::DstColor },
+        { "One Minus Destination", Attachment::OneMinusDstColor },
+        { "Destination Alpha", Attachment::DstAlpha },
+        { "One Minus Destination Alpha", Attachment::OneMinusDstAlpha },
+        { "Constant", Attachment::ConstantColor },
+        { "One Minus Constant", Attachment::OneMinusConstantColor },
         { "Constant Alpha", Attachment::ConstantAlpha },
-        { "1 - Constant Alpha", Attachment::OneMinusConstantAlpha },
+        { "One Minus Constant Alpha", Attachment::OneMinusConstantAlpha },
     });
     mUi->blendColorDest->setModel(mUi->blendColorSource->model());
-    mUi->blendAlphaSource->setModel(mUi->blendColorSource->model());
-    mUi->blendAlphaDest->setModel(mUi->blendColorSource->model());
+
+    fill<Attachment::BlendFactor>(mUi->blendAlphaSource, {
+        { "Zero", Attachment::Zero },
+        { "One", Attachment::One },
+        { "Source", Attachment::SrcColor },
+        { "One Minus Source", Attachment::OneMinusSrcColor },
+        { "Destination", Attachment::DstColor },
+        { "One Minus Destination", Attachment::OneMinusDstColor },
+        { "Constant", Attachment::ConstantColor },
+        { "One Minus Constant", Attachment::OneMinusConstantColor },
+    });
+    mUi->blendAlphaDest->setModel(mUi->blendAlphaSource->model());
 
     fill<Attachment::ComparisonFunction>(mUi->depthCompareFunc, {
         { "Always", Attachment::Always },
-        { "Never", Attachment::Never },
         { "Less", Attachment::Less },
-        { "Equal", Attachment::Equal },
         { "Less Equal", Attachment::LessEqual },
+        { "Equal", Attachment::Equal },
+        { "Greater Equal", Attachment::GreaterEqual },
         { "Greater", Attachment::Greater },
         { "Not Equal", Attachment::NotEqual },
-        { "Greater Equal", Attachment::GreaterEqual },
+        { "Never", Attachment::Never },
     });
     mUi->stencilCompareFunc->setModel(mUi->depthCompareFunc->model());
 
@@ -81,7 +91,7 @@ AttachmentProperties::~AttachmentProperties()
     delete mUi;
 }
 
-Texture::Type AttachmentProperties::currentType() const
+Texture::Type AttachmentProperties::currentTextureType() const
 {
     if (!mUi->texture->currentData().isNull())
         if (auto texture = castItem<Texture>(mSessionProperties.model().findItem(
@@ -108,16 +118,22 @@ void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->blendAlphaEq, SessionModel::AttachmentBlendAlphaEq);
     mapper.addMapping(mUi->blendAlphaSource, SessionModel::AttachmentBlendAlphaSource);
     mapper.addMapping(mUi->blendAlphaDest, SessionModel::AttachmentBlendAlphaDest);
-    mapper.addMapping(mUi->colorWriteMask, SessionModel::AttachmentColorWriteMask);
+
+    // TODO: generate mask from checkboxes
+    //mapper.addMapping(mUi->colorWriteMask, SessionModel::AttachmentColorWriteMask);
 
     mapper.addMapping(mUi->depthCompareFunc, SessionModel::AttachmentDepthCompareFunc);
-    mapper.addMapping(mUi->depthBias, SessionModel::AttachmentDepthBias);
+    mapper.addMapping(mUi->depthNear, SessionModel::AttachmentDepthNear);
+    mapper.addMapping(mUi->depthFar, SessionModel::AttachmentDepthFar);
+    mapper.addMapping(mUi->depthBiasSlope, SessionModel::AttachmentDepthBiasSlope);
+    mapper.addMapping(mUi->depthBiasConst, SessionModel::AttachmentDepthBiasConst);
     mapper.addMapping(mUi->depthClamp, SessionModel::AttachmentDepthClamp);
     mapper.addMapping(mUi->depthWrite, SessionModel::AttachmentDepthWrite);
 
     // TODO: switch bindings between front and back
     mapper.addMapping(mUi->stencilCompareFunc, SessionModel::AttachmentStencilFrontCompareFunc);
     mapper.addMapping(mUi->stencilReference, SessionModel::AttachmentStencilFrontReference);
+    mapper.addMapping(mUi->stencilReadMask, SessionModel::AttachmentStencilFrontReadMask);
     mapper.addMapping(mUi->stencilFailOp, SessionModel::AttachmentStencilFrontFailOp);
     mapper.addMapping(mUi->stencilDepthFailOp, SessionModel::AttachmentStencilFrontDepthFailOp);
     mapper.addMapping(mUi->stencilDepthPassOp, SessionModel::AttachmentStencilFrontDepthPassOp);
@@ -126,7 +142,7 @@ void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
 
 void AttachmentProperties::updateWidgets()
 {
-    const auto type = currentType();
+    const auto type = currentTextureType();
     const auto color = (type == Texture::Type::Color);
     const auto depth = (type == Texture::Type::Depth || type == Texture::Type::DepthStencil);
     const auto stencil = (type == Texture::Type::Stencil || type == Texture::Type::DepthStencil);
@@ -140,15 +156,19 @@ void AttachmentProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelColorWriteMask, mUi->colorWriteMask, color);
 
     setFormVisibility(mUi->formLayout, mUi->labelDepthCompareFunc, mUi->depthCompareFunc, depth);
-    setFormVisibility(mUi->formLayout, mUi->labelDepthBias, mUi->depthBias, depth);
+    setFormVisibility(mUi->formLayout, mUi->labelDepthNear, mUi->depthNear, depth);
+    setFormVisibility(mUi->formLayout, mUi->labelDepthFar, mUi->depthFar, depth);
+    setFormVisibility(mUi->formLayout, mUi->labelDepthBiasSlope, mUi->depthBiasSlope, depth);
+    setFormVisibility(mUi->formLayout, mUi->labelDepthBiasConst, mUi->depthBiasConst, depth);
     setFormVisibility(mUi->formLayout, mUi->labelDepthClamp, mUi->depthClamp, depth);
     setFormVisibility(mUi->formLayout, mUi->labelDepthWrite, mUi->depthWrite, depth);
 
     setFormVisibility(mUi->formLayout, mUi->labelStencilSide, mUi->tabStencilSide, stencil);
-    setFormVisibility(mUi->formLayout, mUi->labelStencilCompareFunc, mUi->stencilCompareFunc, stencil);
     setFormVisibility(mUi->formLayout, mUi->labelStencilReference, mUi->stencilReference, stencil);
+    setFormVisibility(mUi->formLayout, mUi->labelStencilReadMask, mUi->stencilReadMask, stencil);
+    setFormVisibility(mUi->formLayout, mUi->labelStencilCompareFunc, mUi->stencilCompareFunc, stencil);
     setFormVisibility(mUi->formLayout, mUi->labelStencilFailOp, mUi->stencilFailOp, stencil);
-    setFormVisibility(mUi->formLayout, mUi->labelStencilDepthPassOp, mUi->stencilDepthPassOp, stencil);
     setFormVisibility(mUi->formLayout, mUi->labelStencilDepthFailOp, mUi->stencilDepthFailOp, stencil);
+    setFormVisibility(mUi->formLayout, mUi->labelStencilDepthPassOp, mUi->stencilDepthPassOp, stencil);
     setFormVisibility(mUi->formLayout, mUi->labelStencilWriteMask, mUi->stencilWriteMask, stencil);
 }

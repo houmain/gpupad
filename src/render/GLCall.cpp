@@ -104,8 +104,6 @@ void GLCall::executeDraw()
         timerQuery().begin();
         auto& gl = GLContext::currentContext();
 
-        gl.glEnable(GL_PROGRAM_POINT_SIZE);
-
         if (mCall.type == Call::Draw && !mIndexBuffer) {
             // DrawArrays(InstancedBaseInstance)
             if (!mCall.baseInstance) {
@@ -115,7 +113,7 @@ void GLCall::executeDraw()
                     mCall.count,
                     mCall.instanceCount);
             }
-            else if (auto gl42 = check(gl.v4_2, mCall.id)) {
+            else if (auto gl42 = check(gl.v4_2, mCall.id, mMessages)) {
                 gl42->glDrawArraysInstancedBaseInstance(
                     mCall.primitiveType,
                     mCall.first,
@@ -134,7 +132,7 @@ void GLCall::executeDraw()
                         reinterpret_cast<void*>(mIndicesOffset),
                         mCall.instanceCount);
             }
-            else if (auto gl42 = check(gl.v4_2, mCall.id)) {
+            else if (auto gl42 = check(gl.v4_2, mCall.id, mMessages)) {
                 gl42->glDrawElementsInstancedBaseVertexBaseInstance(
                         mCall.primitiveType,
                         mCall.count,
@@ -148,11 +146,11 @@ void GLCall::executeDraw()
         else if (mCall.type == Call::DrawIndirect && !mIndexBuffer) {
             // (Multi)DrawArraysIndirect
             if (mCall.drawCount == 1) {
-                if (auto gl40 = check(gl.v4_0, mCall.id))
+                if (auto gl40 = check(gl.v4_0, mCall.id, mMessages))
                     gl40->glDrawArraysIndirect(mCall.primitiveType,
                         reinterpret_cast<void*>(mIndirectOffset));
             }
-            else if (auto gl43 = check(gl.v4_3, mCall.id)) {
+            else if (auto gl43 = check(gl.v4_3, mCall.id, mMessages)) {
                 gl43->glMultiDrawArraysIndirect(mCall.primitiveType,
                     reinterpret_cast<void*>(mIndirectOffset), mCall.drawCount, mIndirectStride);
             }
@@ -160,11 +158,11 @@ void GLCall::executeDraw()
         else if (mCall.type == Call::DrawIndirect) {
             // (Multi)DrawElementsIndirect
             if (mCall.drawCount == 1) {
-                if (auto gl40 = check(gl.v4_0, mCall.id))
+                if (auto gl40 = check(gl.v4_0, mCall.id, mMessages))
                     gl40->glDrawElementsIndirect(mCall.primitiveType, mIndexType,
                         reinterpret_cast<void*>(mIndirectOffset));
             }
-            else if (auto gl43 = check(gl.v4_3, mCall.id)) {
+            else if (auto gl43 = check(gl.v4_3, mCall.id, mMessages)) {
                 gl43->glMultiDrawElementsIndirect(mCall.primitiveType, mIndexType,
                     reinterpret_cast<void*>(mIndirectOffset), mCall.drawCount, mIndirectStride);
             }
@@ -195,7 +193,7 @@ void GLCall::executeCompute()
     if (mProgram) {
         auto& gl = GLContext::currentContext();
         timerQuery().begin();
-        if (auto gl43 = check(gl.v4_3, mCall.id))
+        if (auto gl43 = check(gl.v4_3, mCall.id, mMessages))
             gl43->glDispatchCompute(
                 static_cast<GLuint>(mCall.workGroupsX),
                 static_cast<GLuint>(mCall.workGroupsY),
@@ -211,7 +209,7 @@ void GLCall::executeCompute()
 void GLCall::executeClearTexture()
 {
     if (mTexture) {
-        mTexture->clear(mCall.values);
+        mTexture->clear(mCall.clearColor, mCall.clearDepth, mCall.clearStencil);
         mUsedItems += mTexture->usedItems();
     }
     else {
@@ -223,7 +221,7 @@ void GLCall::executeClearTexture()
 void GLCall::executeClearBuffer()
 {
     if (mBuffer) {
-        mBuffer->clear(mCall.values);
+        mBuffer->clear();
         mUsedItems += mBuffer->usedItems();
     }
     else {

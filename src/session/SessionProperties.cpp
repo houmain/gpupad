@@ -153,13 +153,14 @@ void SessionProperties::fillComboBoxes()
     });
 
     fill<Target::CullMode>(mTargetProperties->cullMode, {
-        { "None", Target::None },
+        { "Disabled", Target::CullDisabled },
         { "Back", Target::Back },
-        { "Front", Target::Back },
+        { "Front", Target::Front },
         { "Front And Back", Target::FrontAndBack },
     });
 
     fill<Target::LogicOperation>(mTargetProperties->logicOperation, {
+        { "Disabled", Target::LogicOperationDisabled },
         { "Copy", Target::Copy },
         { "Clear", Target::Clear },
         { "Set", Target::Set },
@@ -173,7 +174,7 @@ void SessionProperties::fillComboBoxes()
         { "XOR", Target::Xor },
         { "EQUIV", Target::Equiv },
         { "AND Reverse", Target::AndReverse },
-        { "AND Inverte", Target::AndInverted },
+        { "AND Inverted", Target::AndInverted },
         { "OR Reverse", Target::OrReverse },
         { "OR Inverted", Target::OrInverted },
     });

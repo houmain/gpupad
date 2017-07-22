@@ -20,6 +20,7 @@ public:
     ~CallProperties();
 
     Call::Type currentType() const;
+    Texture::Type currentTextureType() const;
     void addMappings(QDataWidgetMapper &mapper);
 
 private:

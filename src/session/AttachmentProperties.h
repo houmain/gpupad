@@ -19,7 +19,7 @@ public:
     explicit AttachmentProperties(SessionProperties *sessionProperties);
     ~AttachmentProperties();
 
-    Texture::Type currentType() const;
+    Texture::Type currentTextureType() const;
     void addMappings(QDataWidgetMapper &mapper);
 
 protected:

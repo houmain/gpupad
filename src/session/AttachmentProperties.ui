@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>279</width>
-    <height>558</height>
+    <height>586</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -67,7 +67,7 @@
      <item row="3" column="0">
       <widget class="QLabel" name="labelBlendColorSource">
        <property name="text">
-        <string>Blend Color S.</string>
+        <string>&lt;html&gt;Source Color &amp;#215;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
@@ -77,7 +77,7 @@
      <item row="4" column="0">
       <widget class="QLabel" name="labelBlendColorDest">
        <property name="text">
-        <string>Blend Color D.</string>
+        <string>&lt;html&gt;Dest. Color &amp;#215;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
@@ -97,7 +97,7 @@
      <item row="6" column="0">
       <widget class="QLabel" name="labelBlendAlphaSource">
        <property name="text">
-        <string>Blend Alpha S.</string>
+        <string>&lt;html&gt;Source Alpha &amp;#215;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
@@ -107,7 +107,7 @@
      <item row="7" column="0">
       <widget class="QLabel" name="labelBlendAlphaDest">
        <property name="text">
-        <string>Blend Alpha D.</string>
+        <string>&lt;html&gt;Dest. Alpha &amp;#215;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
@@ -123,6 +123,9 @@
      </item>
      <item row="8" column="1">
       <widget class="QWidget" name="colorWriteMask" native="true">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -150,12 +153,18 @@
           <property name="text">
            <string/>
           </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
         <item>
          <widget class="QCheckBox" name="writeMaskG">
           <property name="text">
            <string/>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -164,12 +173,18 @@
           <property name="text">
            <string/>
           </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
         <item>
          <widget class="QCheckBox" name="writeMaskA">
           <property name="text">
            <string/>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -192,35 +207,44 @@
      <item row="9" column="0">
       <widget class="QLabel" name="labelDepthCompareFunc">
        <property name="text">
-        <string>Depth Pass</string>
+        <string>Depth Function</string>
        </property>
       </widget>
      </item>
      <item row="9" column="1">
       <widget class="DataComboBox" name="depthCompareFunc"/>
      </item>
-     <item row="10" column="0">
-      <widget class="QLabel" name="labelDepthBias">
+     <item row="13" column="0">
+      <widget class="QLabel" name="labelDepthBiasConst">
        <property name="text">
-        <string>Depth Bias</string>
+        <string>Depth Bias Const.</string>
        </property>
       </widget>
      </item>
-     <item row="10" column="1">
-      <widget class="QDoubleSpinBox" name="depthBias">
+     <item row="13" column="1">
+      <widget class="QDoubleSpinBox" name="depthBiasConst">
+       <property name="decimals">
+        <number>3</number>
+       </property>
        <property name="minimum">
-        <double>-99.000000000000000</double>
+        <double>-1000.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.001000000000000</double>
        </property>
       </widget>
      </item>
-     <item row="11" column="0">
+     <item row="14" column="0">
       <widget class="QLabel" name="labelDepthClamp">
        <property name="text">
         <string>Depth Clamp</string>
        </property>
       </widget>
      </item>
-     <item row="11" column="1">
+     <item row="14" column="1">
       <widget class="QCheckBox" name="depthClamp">
        <property name="minimumSize">
         <size>
@@ -233,14 +257,14 @@
        </property>
       </widget>
      </item>
-     <item row="12" column="0">
+     <item row="15" column="0">
       <widget class="QLabel" name="labelDepthWrite">
        <property name="text">
         <string>Write Depth</string>
        </property>
       </widget>
      </item>
-     <item row="12" column="1">
+     <item row="15" column="1">
       <widget class="QCheckBox" name="depthWrite">
        <property name="minimumSize">
         <size>
@@ -253,15 +277,18 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="0">
+     <item row="16" column="0">
       <widget class="QLabel" name="labelStencilSide">
        <property name="text">
         <string>Stencilling:</string>
        </property>
       </widget>
      </item>
-     <item row="13" column="1">
+     <item row="16" column="1">
       <widget class="QTabWidget" name="tabStencilSide">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
          <horstretch>1</horstretch>
@@ -277,6 +304,9 @@
        <property name="styleSheet">
         <string notr="true">QTabWidget::pane { border: none; }</string>
        </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
        <widget class="QWidget" name="tabStencilFront">
         <attribute name="title">
          <string>Front</string>
@@ -289,65 +319,168 @@
        </widget>
       </widget>
      </item>
-     <item row="14" column="0">
-      <widget class="QLabel" name="labelStencilCompareFunc">
-       <property name="text">
-        <string>Stencil Pass</string>
-       </property>
-      </widget>
-     </item>
-     <item row="14" column="1">
-      <widget class="DataComboBox" name="stencilCompareFunc"/>
-     </item>
-     <item row="15" column="0">
+     <item row="17" column="0">
       <widget class="QLabel" name="labelStencilReference">
        <property name="text">
         <string>Reference</string>
        </property>
       </widget>
      </item>
-     <item row="15" column="1">
-      <widget class="QSpinBox" name="stencilReference"/>
+     <item row="17" column="1">
+      <widget class="QSpinBox" name="stencilReference">
+       <property name="maximum">
+        <number>255</number>
+       </property>
+      </widget>
      </item>
-     <item row="16" column="0">
+     <item row="18" column="0">
+      <widget class="QLabel" name="labelStencilReadMask">
+       <property name="text">
+        <string>Read Mask</string>
+       </property>
+      </widget>
+     </item>
+     <item row="18" column="1">
+      <widget class="QSpinBox" name="stencilReadMask">
+       <property name="prefix">
+        <string>0x</string>
+       </property>
+       <property name="maximum">
+        <number>2147483647</number>
+       </property>
+       <property name="displayIntegerBase">
+        <number>16</number>
+       </property>
+      </widget>
+     </item>
+     <item row="19" column="0">
+      <widget class="QLabel" name="labelStencilCompareFunc">
+       <property name="text">
+        <string>Stencil Function</string>
+       </property>
+      </widget>
+     </item>
+     <item row="19" column="1">
+      <widget class="DataComboBox" name="stencilCompareFunc"/>
+     </item>
+     <item row="20" column="0">
       <widget class="QLabel" name="labelStencilFailOp">
        <property name="text">
         <string>Stencil Fail Op.</string>
        </property>
       </widget>
      </item>
-     <item row="16" column="1">
+     <item row="20" column="1">
       <widget class="DataComboBox" name="stencilFailOp"/>
      </item>
-     <item row="17" column="0">
-      <widget class="QLabel" name="labelStencilDepthPassOp">
-       <property name="text">
-        <string>Depth Pass Op.</string>
-       </property>
-      </widget>
-     </item>
-     <item row="17" column="1">
-      <widget class="DataComboBox" name="stencilDepthPassOp"/>
-     </item>
-     <item row="18" column="0">
+     <item row="21" column="0">
       <widget class="QLabel" name="labelStencilDepthFailOp">
        <property name="text">
         <string>Depth Fail Op.</string>
        </property>
       </widget>
      </item>
-     <item row="18" column="1">
+     <item row="21" column="1">
       <widget class="DataComboBox" name="stencilDepthFailOp"/>
      </item>
-     <item row="19" column="0">
+     <item row="22" column="0">
+      <widget class="QLabel" name="labelStencilDepthPassOp">
+       <property name="text">
+        <string>Depth Pass Op.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="22" column="1">
+      <widget class="DataComboBox" name="stencilDepthPassOp"/>
+     </item>
+     <item row="23" column="0">
       <widget class="QLabel" name="labelStencilWriteMask">
        <property name="text">
         <string>Write Mask</string>
        </property>
       </widget>
      </item>
-     <item row="19" column="1">
-      <widget class="QSpinBox" name="stencilWriteMask"/>
+     <item row="23" column="1">
+      <widget class="QSpinBox" name="stencilWriteMask">
+       <property name="prefix">
+        <string>0x</string>
+       </property>
+       <property name="maximum">
+        <number>2147483647</number>
+       </property>
+       <property name="displayIntegerBase">
+        <number>16</number>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="1">
+      <widget class="QDoubleSpinBox" name="depthBiasSlope">
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>-1000.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.001000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="QDoubleSpinBox" name="depthNear">
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>-1000.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.001000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="1">
+      <widget class="QDoubleSpinBox" name="depthFar">
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>-1000.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.001000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
+      <widget class="QLabel" name="labelDepthNear">
+       <property name="text">
+        <string>Depth Near</string>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="0">
+      <widget class="QLabel" name="labelDepthFar">
+       <property name="text">
+        <string>Depth Far</string>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="0">
+      <widget class="QLabel" name="labelDepthBiasSlope">
+       <property name="text">
+        <string>Depth Bias Slope</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

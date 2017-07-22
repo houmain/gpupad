@@ -66,37 +66,32 @@ QList<std::pair<QString, QImage>> GLTexture::getModifiedImages()
     return result;
 }
 
-void GLTexture::clear(QVariantList value)
+void GLTexture::clear(QColor color, float depth, int stencil)
 {
-    auto getField = [&](auto i) {
-        return (i >= value.size() ? QVariant() : value[i]);
-    };
-
     auto& gl = GLContext::currentContext();
     auto fbo = createFramebuffer(getReadWriteTextureId(), 0);
     gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
+    gl.glColorMask(true, true, true, true);
+    gl.glDepthMask(true);
+    gl.glStencilMask(0xFFFFFFFF);
+
     if (mType == Texture::Type::Depth) {
-        // TODO:
-        //gl.glClearDepth(getField(0).toDouble());
+        gl.glClearDepth(depth);
         gl.glClear(GL_DEPTH_BUFFER_BIT);
     }
     else if (mType == Texture::Type::Stencil) {
-        gl.glClearStencil(getField(0).toInt());
+        gl.glClearStencil(stencil);
         gl.glClear(GL_STENCIL_BUFFER_BIT);
     }
     else if (mType == Texture::Type::DepthStencil) {
-        // TODO:
-        //gl.glClearDepth(getField(0).toDouble());
-        gl.glClearStencil(getField(0).toInt());
+        gl.glClearDepth(depth);
+        gl.glClearStencil(stencil);
         gl.glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
     else {
-        gl.glClearColor(
-            getField(0).toDouble(),
-            getField(1).toDouble(),
-            getField(2).toDouble(),
-            getField(3).toDouble());
+        gl.glClearColor(color.redF(), color.greenF(),
+            color.blueF(), color.alphaF());
         gl.glClear(GL_COLOR_BUFFER_BIT);
     }
     gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);

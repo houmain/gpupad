@@ -9,7 +9,7 @@ public:
     explicit GLBuffer(const Buffer &buffer);
     bool operator==(const GLBuffer &rhs) const;
 
-    void clear(QVariantList value);
+    void clear();
     GLuint getReadOnlyBufferId();
     GLuint getReadWriteBufferId();
     void bindReadOnly(GLenum target);
@@ -28,7 +28,7 @@ private:
     int mSize{ };
     QByteArray mData;
     QSet<ItemId> mUsedItems;
-    MessagePtr mMessage;
+    MessagePtrSet mMessages;
     GLObject mBufferObject;
     bool mSystemCopyModified{ };
     bool mDeviceCopyModified{ };

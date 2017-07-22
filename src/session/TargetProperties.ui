@@ -47,7 +47,7 @@
      <item row="1" column="0">
       <widget class="QLabel" name="labelCullMode">
        <property name="text">
-        <string>Cull Mode</string>
+        <string>Cull Face</string>
        </property>
       </widget>
      </item>

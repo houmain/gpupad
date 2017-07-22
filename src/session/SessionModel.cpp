@@ -355,17 +355,22 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest)
         ADD(AttachmentColorWriteMask, Attachment, colorWriteMask)
         ADD(AttachmentDepthCompareFunc, Attachment, depthCompareFunc)
-        ADD(AttachmentDepthBias, Attachment, depthBias)
+        ADD(AttachmentDepthNear, Attachment, depthNear)
+        ADD(AttachmentDepthFar, Attachment, depthFar)
+        ADD(AttachmentDepthBiasSlope, Attachment, depthBiasSlope)
+        ADD(AttachmentDepthBiasConst, Attachment, depthBiasConst)
         ADD(AttachmentDepthClamp, Attachment, depthClamp)
         ADD(AttachmentDepthWrite, Attachment, depthWrite)
         ADD(AttachmentStencilFrontCompareFunc, Attachment, stencilFrontCompareFunc)
         ADD(AttachmentStencilFrontReference, Attachment, stencilFrontReference)
+        ADD(AttachmentStencilFrontReadMask, Attachment, stencilFrontReadMask)
         ADD(AttachmentStencilFrontFailOp, Attachment, stencilFrontFailOp)
         ADD(AttachmentStencilFrontDepthFailOp, Attachment, stencilFrontDepthFailOp)
         ADD(AttachmentStencilFrontDepthPassOp, Attachment, stencilFrontDepthPassOp)
         ADD(AttachmentStencilFrontWriteMask, Attachment, stencilFrontWriteMask)
         ADD(AttachmentStencilBackCompareFunc, Attachment, stencilBackCompareFunc)
         ADD(AttachmentStencilBackReference, Attachment, stencilBackReference)
+        ADD(AttachmentStencilBackReadMask, Attachment, stencilBackReadMask)
         ADD(AttachmentStencilBackFailOp, Attachment, stencilBackFailOp)
         ADD(AttachmentStencilBackDepthFailOp, Attachment, stencilBackDepthFailOp)
         ADD(AttachmentStencilBackDepthPassOp, Attachment, stencilBackDepthPassOp)
@@ -392,7 +397,9 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(CallWorkGroupsZ, Call, workGroupsZ)
         ADD(CallBufferId, Call, bufferId)
         ADD(CallTextureId, Call, textureId)
-        ADD(CallValues, Call, values)
+        ADD(CallClearColor, Call, clearColor)
+        ADD(CallClearDepth, Call, clearDepth)
+        ADD(CallClearStencil, Call, clearStencil)
 #undef ADD
     }
     return { };
@@ -485,27 +492,32 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(AttachmentBlendAlphaEq, Attachment, blendAlphaEq, toInt)
         ADD(AttachmentBlendAlphaSource, Attachment, blendAlphaSource, toInt)
         ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest, toInt)
-        ADD(AttachmentColorWriteMask, Attachment, colorWriteMask, toInt)
+        ADD(AttachmentColorWriteMask, Attachment, colorWriteMask, toUInt)
         ADD(AttachmentDepthCompareFunc, Attachment, depthCompareFunc, toInt)
-        ADD(AttachmentDepthBias, Attachment, depthBias, toFloat)
+        ADD(AttachmentDepthNear, Attachment, depthNear, toFloat)
+        ADD(AttachmentDepthFar, Attachment, depthFar, toFloat)
+        ADD(AttachmentDepthBiasSlope, Attachment, depthBiasSlope, toFloat)
+        ADD(AttachmentDepthBiasConst, Attachment, depthBiasConst, toFloat)
         ADD(AttachmentDepthClamp, Attachment, depthClamp, toBool)
         ADD(AttachmentDepthWrite, Attachment, depthWrite, toBool)
         ADD(AttachmentStencilFrontCompareFunc, Attachment, stencilFrontCompareFunc, toInt)
-        ADD(AttachmentStencilFrontReference, Attachment, stencilFrontReference, toInt)
+        ADD(AttachmentStencilFrontReference, Attachment, stencilFrontReference, toUInt)
+        ADD(AttachmentStencilFrontReadMask, Attachment, stencilFrontReadMask, toUInt)
         ADD(AttachmentStencilFrontFailOp, Attachment, stencilFrontFailOp, toInt)
         ADD(AttachmentStencilFrontDepthFailOp, Attachment, stencilFrontDepthFailOp, toInt)
         ADD(AttachmentStencilFrontDepthPassOp, Attachment, stencilFrontDepthPassOp, toInt)
-        ADD(AttachmentStencilFrontWriteMask, Attachment, stencilFrontWriteMask, toInt)
+        ADD(AttachmentStencilFrontWriteMask, Attachment, stencilFrontWriteMask, toUInt)
         ADD(AttachmentStencilBackCompareFunc, Attachment, stencilBackCompareFunc, toInt)
-        ADD(AttachmentStencilBackReference, Attachment, stencilBackReference, toInt)
+        ADD(AttachmentStencilBackReference, Attachment, stencilBackReference, toUInt)
+        ADD(AttachmentStencilBackReadMask, Attachment, stencilBackWriteMask, toUInt)
         ADD(AttachmentStencilBackFailOp, Attachment, stencilBackFailOp, toInt)
         ADD(AttachmentStencilBackDepthFailOp, Attachment, stencilBackDepthFailOp, toInt)
         ADD(AttachmentStencilBackDepthPassOp, Attachment, stencilBackDepthPassOp, toInt)
-        ADD(AttachmentStencilBackWriteMask, Attachment, stencilBackWriteMask, toInt)
+        ADD(AttachmentStencilBackWriteMask, Attachment, stencilBackWriteMask, toUInt)
         ADD(TargetFrontFace, Target, frontFace, toInt)
         ADD(TargetCullMode, Target, cullMode, toInt)
         ADD(TargetLogicOperation, Target, logicOperation, toInt)
-        //ADD(TargetBlendConstant, Target, blendConstant, toColor)
+        ADD(TargetBlendConstant, Target, blendConstant, value<QColor>)
         ADD(CallType, Call, type, toInt)
         ADD(CallProgramId, Call, programId, toInt)
         ADD(CallTargetId, Call, targetId, toInt)
@@ -524,7 +536,9 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(CallWorkGroupsZ, Call, workGroupsZ, toInt)
         ADD(CallBufferId, Call, bufferId, toInt)
         ADD(CallTextureId, Call, textureId, toInt)
-        ADD(CallValues, Call, values, toList)
+        ADD(CallClearColor, Call, clearColor, value<QColor>)
+        ADD(CallClearDepth, Call, clearDepth, toFloat)
+        ADD(CallClearStencil, Call, clearStencil, toInt)
 #undef ADD
     }
     return false;
@@ -1092,7 +1106,10 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
 
         case ItemType::Target: {
             const auto &target = static_cast<const Target&>(item);
-            Q_UNUSED(target);
+            write("frontFace", target.frontFace);
+            write("cullMode", target.cullMode);
+            write("logicOperation", target.logicOperation);
+            writeString("blendConstant", target.blendConstant.name());
             break;
         }
 
@@ -1100,6 +1117,34 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
             const auto &attachment = static_cast<const Attachment&>(item);
             writeRef("textureId", attachment.textureId);
             write("level", attachment.level);
+            write("blendColorEq", attachment.blendColorEq);
+            write("blendColorSource", attachment.blendColorSource);
+            write("blendColorDest", attachment.blendColorDest);
+            write("blendAlphaEq", attachment.blendAlphaEq);
+            write("blendAlphaSource", attachment.blendAlphaSource);
+            write("blendAlphaDest", attachment.blendAlphaDest);
+            write("colorWriteMask", attachment.colorWriteMask);
+            write("depthCompareFunc", attachment.depthCompareFunc);
+            write("depthNear", attachment.depthNear);
+            write("depthFar", attachment.depthFar);
+            write("depthBiasSlope", attachment.depthBiasSlope);
+            write("depthBiasConst", attachment.depthBiasConst);
+            write("depthClamp", attachment.depthClamp);
+            writeBool("depthWrite", attachment.depthWrite);
+            write("stencilFrontCompareFunc", attachment.stencilFrontCompareFunc);
+            write("stencilFrontReference", attachment.stencilFrontReference);
+            write("stencilFrontReadMask", attachment.stencilFrontReadMask);
+            write("stencilFrontFailOp", attachment.stencilFrontFailOp);
+            write("stencilFrontDepthFailOp", attachment.stencilFrontDepthFailOp);
+            write("stencilFrontDepthPassOp", attachment.stencilFrontDepthPassOp);
+            write("stencilFrontWriteMask", attachment.stencilFrontWriteMask);
+            write("stencilBackCompareFunc", attachment.stencilBackCompareFunc);
+            write("stencilBackReference", attachment.stencilBackReference);
+            write("stencilBackReadMask", attachment.stencilBackReadMask);
+            write("stencilBackFailOp", attachment.stencilBackFailOp);
+            write("stencilBackDepthFailOp", attachment.stencilBackDepthFailOp);
+            write("stencilBackDepthPassOp", attachment.stencilBackDepthPassOp);
+            write("stencilBackWriteMask", attachment.stencilBackWriteMask);
             break;
         }
 
@@ -1140,12 +1185,14 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
                 write("workGroupsY", call.workGroupsY);
                 write("workGroupsZ", call.workGroupsZ);
             }
-            if (clearTexture || genMipmaps)
+            if (clearTexture || genMipmaps) {
                 writeRef("textureId", call.textureId);
+                writeString("clearColor", call.clearColor.name());
+                write("clearDepth", call.clearDepth);
+                write("clearStencil", call.clearStencil);
+            }
             if (clearBuffer)
                 writeRef("bufferId", call.bufferId);
-            if (clearTexture || clearBuffer)
-                writeValues(call.values);
             break;
         }
 
@@ -1322,7 +1369,10 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
 
         case ItemType::Target: {
             auto &target = static_cast<Target&>(item);
-            Q_UNUSED(target);
+            readEnum("frontFace", target.frontFace);
+            readEnum("cullMode", target.cullMode);
+            readEnum("logicOperation", target.logicOperation);
+            readString("blendConstant", target.blendConstant);
             break;
         }
 
@@ -1330,6 +1380,34 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             auto &attachment = static_cast<Attachment&>(item);
             readRef("textureId", attachment.textureId);
             read("level", attachment.level);
+            readEnum("blendColorEq", attachment.blendColorEq);
+            readEnum("blendColorSource", attachment.blendColorSource);
+            readEnum("blendColorDest", attachment.blendColorDest);
+            readEnum("blendAlphaEq", attachment.blendAlphaEq);
+            readEnum("blendAlphaSource", attachment.blendAlphaSource);
+            readEnum("blendAlphaDest", attachment.blendAlphaDest);
+            read("colorWriteMask", attachment.colorWriteMask);
+            readEnum("depthCompareFunc", attachment.depthCompareFunc);
+            read("depthNear", attachment.depthNear);
+            read("depthFar", attachment.depthFar);
+            read("depthBiasSlope", attachment.depthBiasSlope);
+            read("depthBiasConst", attachment.depthBiasConst);
+            read("depthClamp", attachment.depthClamp);
+            readBool("depthWrite", attachment.depthWrite);
+            readEnum("stencilFrontCompareFunc", attachment.stencilFrontCompareFunc);
+            read("stencilFrontReference", attachment.stencilFrontReference);
+            read("stencilFrontReadMask", attachment.stencilFrontReadMask);
+            readEnum("stencilFrontFailOp", attachment.stencilFrontFailOp);
+            readEnum("stencilFrontDepthFailOp", attachment.stencilFrontDepthFailOp);
+            readEnum("stencilFrontDepthPassOp", attachment.stencilFrontDepthPassOp);
+            read("stencilFrontWriteMask", attachment.stencilFrontWriteMask);
+            readEnum("stencilBackCompareFunc", attachment.stencilBackCompareFunc);
+            read("stencilBackReference", attachment.stencilBackReference);
+            read("stencilBackReadMask", attachment.stencilBackReadMask);
+            readEnum("stencilBackFailOp", attachment.stencilBackFailOp);
+            readEnum("stencilBackDepthFailOp", attachment.stencilBackDepthFailOp);
+            readEnum("stencilBackDepthPassOp", attachment.stencilBackDepthPassOp);
+            read("stencilBackWriteMask", attachment.stencilBackWriteMask);
             break;
         }
 
@@ -1354,9 +1432,11 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             read("workGroupsY", call.workGroupsY);
             read("workGroupsZ", call.workGroupsZ);
             readRef("textureId", call.textureId);
+            readString("clearColor", call.clearColor);
+            read("clearDepth", call.clearDepth);
+            read("clearStencil", call.clearStencil);
             readRef("bufferId", call.bufferId);
-            call.values = readValues();
-            return;
+            break;
         }
 
         case ItemType::Script: {

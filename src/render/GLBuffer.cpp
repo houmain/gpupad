@@ -15,9 +15,16 @@ bool GLBuffer::operator==(const GLBuffer &rhs) const
            std::tie(rhs.mFileName, rhs.mOffset, rhs.mSize);
 }
 
-void GLBuffer::clear(QVariantList value)
+void GLBuffer::clear()
 {
-    // TODO:
+    auto& gl = GLContext::currentContext();
+    if (auto gl43 = check(gl.v4_3, mItemId, mMessages)) {
+        auto data = uint8_t();
+        gl.glBindBuffer(GL_ARRAY_BUFFER, getReadWriteBufferId());
+        gl43->glClearBufferData(GL_ARRAY_BUFFER, GL_R8,
+            GL_RED, GL_UNSIGNED_BYTE, &data);
+        gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
+    }
 }
 
 GLuint GLBuffer::getReadOnlyBufferId()
@@ -62,11 +69,11 @@ void GLBuffer::load()
 {
     auto prevData = mData;
     if (!Singletons::fileCache().getBinary(mFileName, &mData)) {
-        mMessage = Singletons::messageList().insert(
+        mMessages += Singletons::messageList().insert(
             mItemId, MessageType::LoadingFileFailed, mFileName);
         return;
     }
-    mMessage.reset();
+    mMessages.clear();
     mSystemCopyModified = (mData != prevData);
 }
 

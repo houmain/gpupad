@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>253</width>
-    <height>237</height>
+    <height>257</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -170,6 +170,12 @@
      </item>
      <item row="8" column="1">
       <widget class="QCheckBox" name="flipY">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -198,14 +204,14 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ReferenceComboBox</class>
-   <extends>QComboBox</extends>
-   <header>session/ReferenceComboBox.h</header>
-  </customwidget>
-  <customwidget>
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
    <header>session/DataComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ReferenceComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/ReferenceComboBox.h</header>
   </customwidget>
  </customwidgets>
  <resources>

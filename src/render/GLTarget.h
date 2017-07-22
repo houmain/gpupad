@@ -14,18 +14,24 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
-    struct GLAttachment {
-        int level;
-        GLTexture* texture;
+    struct GLAttachment : Attachment {
+        Texture::Type type{ };
+        GLTexture* texture{ };
+        GLenum attachmentPoint{ };
     };
 
     bool create();
+    void applyStates();
+    void applyAttachmentStates(const GLAttachment &attachment);
 
     ItemId mItemId{ };
-    MessagePtr mMessage;
+    MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
+    Target::FrontFace mFrontFace{ };
+    Target::CullMode mCullMode{ };
+    Target::LogicOperation mLogicOperation{ };
+    QColor mBlendConstant{ };
     QMap<int, GLAttachment> mAttachments;
-    int mNumColorAttachments{ };
     GLObject mFramebufferObject;
 };
 

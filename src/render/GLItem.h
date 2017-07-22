@@ -12,33 +12,38 @@
 #include <QSet>
 
 template<typename T>
-inline T *checkVersion(T *gl, const char* name, ItemId itemId)
+inline T *checkVersion(T *gl, const char* name,
+    ItemId itemId, MessagePtrSet &messages)
 {
     if (gl)
         return gl;
-    Singletons::messageList().insert(itemId,
+    messages += Singletons::messageList().insert(itemId,
         MessageType::OpenGLVersionNotAvailable, name);
     return nullptr;
 }
 
-inline auto check(QOpenGLFunctions_4_0_Core *gl, ItemId itemId)
+inline auto check(QOpenGLFunctions_4_0_Core *gl,
+    ItemId itemId, MessagePtrSet &messages)
 {
-    return checkVersion(gl, "4.0", itemId);
+    return checkVersion(gl, "4.0", itemId, messages);
 }
 
-inline auto check(QOpenGLFunctions_4_2_Core *gl, ItemId itemId)
+inline auto check(QOpenGLFunctions_4_2_Core *gl,
+    ItemId itemId, MessagePtrSet &messages)
 {
-    return checkVersion(gl, "4.2", itemId);
+    return checkVersion(gl, "4.2", itemId, messages);
 }
 
-inline auto check(QOpenGLFunctions_4_3_Core *gl, ItemId itemId)
+inline auto check(QOpenGLFunctions_4_3_Core *gl,
+    ItemId itemId, MessagePtrSet &messages)
 {
-    return checkVersion(gl, "4.3", itemId);
+    return checkVersion(gl, "4.3", itemId, messages);
 }
 
-inline auto check(QOpenGLFunctions_4_5_Core *gl, ItemId itemId)
+inline auto check(QOpenGLFunctions_4_5_Core *gl,
+    ItemId itemId, MessagePtrSet &messages)
 {
-    return checkVersion(gl, "4.5", itemId);
+    return checkVersion(gl, "4.5", itemId, messages);
 }
 
 #endif // GLITEM_H

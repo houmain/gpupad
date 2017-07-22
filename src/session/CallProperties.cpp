@@ -16,7 +16,7 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
         { "Draw Indirect", Call::DrawIndirect },
         { "Compute", Call::Compute },
         { "Clear Texture", Call::ClearTexture },
-        //{ "Clear Buffer", Call::ClearBuffer },
+        { "Clear Buffer", Call::ClearBuffer },
         { "Generate Mipmaps", Call::GenerateMipmaps },
     });
 
@@ -36,6 +36,8 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
     });
 
     connect(mUi->type, &DataComboBox::currentDataChanged,
+        this, &CallProperties::updateWidgets);
+    connect(mUi->texture, &ReferenceComboBox::currentDataChanged,
         this, &CallProperties::updateWidgets);
 
     for (auto combobox : { mUi->program, mUi->vertexStream, mUi->target,
@@ -71,6 +73,16 @@ Call::Type CallProperties::currentType() const
     return static_cast<Call::Type>(mUi->type->currentData().toInt());
 }
 
+Texture::Type CallProperties::currentTextureType() const
+{
+    if (!mUi->texture->currentData().isNull())
+        if (auto texture = castItem<Texture>(mSessionProperties.model().findItem(
+                mUi->texture->currentData().toInt())))
+            return texture->type();
+
+    return Texture::Type::None;
+}
+
 void CallProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->type, SessionModel::CallType);
@@ -97,10 +109,11 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->workGroupsZ, SessionModel::CallWorkGroupsZ);
 
     mapper.addMapping(mUi->texture, SessionModel::CallTextureId);
-    mapper.addMapping(mUi->buffer, SessionModel::CallBufferId);
+    mapper.addMapping(mUi->clearColor, SessionModel::CallClearColor);
+    mapper.addMapping(mUi->clearDepth, SessionModel::CallClearDepth);
+    mapper.addMapping(mUi->clearStencil, SessionModel::CallClearStencil);
 
-    // TODO:
-    mapper.addMapping(mUi->clearColor, SessionModel::CallValues);
+    mapper.addMapping(mUi->buffer, SessionModel::CallBufferId);
 }
 
 void CallProperties::updateWidgets()
@@ -133,10 +146,15 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsZ, mUi->workGroupsZ, compute);
 
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture, clearTexture || genMipmaps);
-    setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer, clearBuffer);
+    const auto textureType = currentTextureType();
+    const auto color = (textureType == Texture::Type::Color);
+    const auto depth = (textureType == Texture::Type::Depth ||
+                        textureType == Texture::Type::DepthStencil);
+    const auto stencil = (textureType == Texture::Type::Stencil ||
+                          textureType == Texture::Type::DepthStencil);
+    setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor, clearTexture && color);
+    setFormVisibility(mUi->formLayout, mUi->labelClearDepth, mUi->clearDepth, clearTexture && depth);
+    setFormVisibility(mUi->formLayout, mUi->labelClearStencil, mUi->clearStencil, clearTexture && stencil);
 
-    // TODO:
-    setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor, false);
-    setFormVisibility(mUi->formLayout, mUi->labelClearDepth, mUi->clearDepth, false);
-    setFormVisibility(mUi->formLayout, mUi->labelClearStencil, mUi->clearStencil, false);
+    setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer, clearBuffer);
 }

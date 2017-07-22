@@ -248,13 +248,14 @@ struct Target : Item
     };
 
     enum CullMode {
-        None = GL_NONE,
+        CullDisabled = GL_NONE,
         Back = GL_BACK,
         Front = GL_FRONT,
         FrontAndBack = GL_FRONT_AND_BACK
     };
 
     enum LogicOperation {
+        LogicOperationDisabled = GL_NONE,
         Copy = GL_COPY,
         Clear = GL_CLEAR,
         Set = GL_SET,
@@ -262,7 +263,7 @@ struct Target : Item
         NoOp = GL_NOOP,
         Invert = GL_INVERT,
         And = GL_AND,
-        Nand= GL_NAND,
+        Nand = GL_NAND,
         Or = GL_OR,
         Nor = GL_NOR,
         Xor = GL_XOR,
@@ -274,8 +275,8 @@ struct Target : Item
     };
 
     FrontFace frontFace{ FrontFace::CCW };
-    CullMode cullMode{ CullMode::None };
-    LogicOperation logicOperation{ LogicOperation::Copy };
+    CullMode cullMode{ CullMode::CullDisabled };
+    LogicOperation logicOperation{ LogicOperation::LogicOperationDisabled };
     QColor blendConstant{ Qt::white };
 };
 
@@ -338,26 +339,31 @@ struct Attachment : Item
     BlendEquation blendAlphaEq{ BlendEquation::Add };
     BlendFactor blendAlphaSource{ BlendFactor::One };
     BlendFactor blendAlphaDest{ BlendFactor::Zero };
-    int colorWriteMask{ 0x15 };
+    unsigned int colorWriteMask{ 0xF };
 
+    ComparisonFunction depthCompareFunc{ ComparisonFunction::Less };
+    float depthNear{ };
+    float depthFar{ 1.0f };
+    float depthBiasSlope{ };
+    float depthBiasConst{ };
     bool depthClamp{ };
-    float depthBias{ };
     bool depthWrite{ true };
-    ComparisonFunction depthCompareFunc{ ComparisonFunction::LessEqual };
 
     ComparisonFunction stencilFrontCompareFunc{ ComparisonFunction::Always };
+    unsigned int stencilFrontReference{ };
+    unsigned int stencilFrontReadMask{ 0xFF };
     StencilOperation stencilFrontFailOp{ StencilOperation::Keep };
     StencilOperation stencilFrontDepthFailOp{ StencilOperation::Keep };
     StencilOperation stencilFrontDepthPassOp{ StencilOperation::Keep };
-    int stencilFrontWriteMask{ };
-    int stencilFrontReference{ };
+    unsigned int stencilFrontWriteMask{ 0xFF };
 
     ComparisonFunction stencilBackCompareFunc{ ComparisonFunction::Always };
+    unsigned int stencilBackReference{ };
+    unsigned int stencilBackReadMask{ 0xFF };
     StencilOperation stencilBackFailOp{ StencilOperation::Keep };
     StencilOperation stencilBackDepthFailOp{ StencilOperation::Keep };
     StencilOperation stencilBackDepthPassOp{ StencilOperation::Keep };
-    int stencilBackWriteMask{ };
-    int stencilBackReference{ };
+    unsigned int stencilBackWriteMask{ 0xFF };
 };
 
 struct Call : Item
@@ -410,8 +416,11 @@ struct Call : Item
     int workGroupsZ{ 1 };
 
     ItemId textureId{ };
+    QColor clearColor{ Qt::black };
+    float clearDepth{ 1.0 };
+    int clearStencil{ };
+
     ItemId bufferId{ };
-    QVariantList values;
 };
 
 struct Script : FileItem
