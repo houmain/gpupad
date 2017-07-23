@@ -143,6 +143,12 @@ RenderSession::~RenderSession()
     releaseResources();
 }
 
+QSet<ItemId> RenderSession::usedItems() const
+{
+    QMutexLocker lock{ &mUsedItemsCopyMutex };
+    return mUsedItemsCopy;
+}
+
 void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 {
     if (mCommandQueue && !(itemsChanged || manualEvaluation))
@@ -437,6 +443,9 @@ void RenderSession::finish()
             editor->replace(binary.second, false);
     }
     mModifiedBuffers.clear();
+
+    QMutexLocker lock{ &mUsedItemsCopyMutex };
+    mUsedItemsCopy = mUsedItems;
 }
 
 void RenderSession::release()

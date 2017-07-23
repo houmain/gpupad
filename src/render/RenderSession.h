@@ -2,6 +2,7 @@
 #define RENDERSESSION_H
 
 #include "RenderTask.h"
+#include <QMutex>
 
 class ScriptEngine;
 
@@ -11,7 +12,7 @@ public:
     explicit RenderSession(QObject *parent = nullptr);
     ~RenderSession();
 
-    QSet<ItemId> usedItems() const override { return mUsedItems; }
+    QSet<ItemId> usedItems() const override;
 
 private:
     struct CommandQueue;
@@ -35,6 +36,9 @@ private:
     QSet<ItemId> mUsedItems;
     QList<std::pair<QString, QImage>> mModifiedImages;
     QList<std::pair<QString, QByteArray>> mModifiedBuffers;
+
+    mutable QMutex mUsedItemsCopyMutex;
+    QSet<ItemId> mUsedItemsCopy;
 };
 
 #endif // RENDERSESSION_H
