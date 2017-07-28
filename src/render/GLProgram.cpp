@@ -274,6 +274,7 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
         default:
             break;
     }
+    gl.glActiveTexture(GL_TEXTURE0);
     return true;
 }
 
@@ -299,6 +300,7 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
     gl.v4_2->glUniform1i(location + binding.arrayIndex, unit);
     gl.v4_2->glBindImageTexture(unit, textureId, binding.level,
         binding.layered, binding.layer, binding.access, texture.format());
+    gl.glActiveTexture(GL_TEXTURE0);
     return true;
 }
 

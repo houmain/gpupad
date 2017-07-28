@@ -12,7 +12,10 @@ namespace {
         RG,
         RGB,
         RGBA,
-        Packed,
+        R_Integer,
+        RG_Integer,
+        RGB_Integer,
+        RGBA_Integer,
         DepthStencil,
     };
 
@@ -30,19 +33,14 @@ namespace {
         SignedInt32,
         Float16,
         Float32,
-
-        // Packed formats
-        RG3B2,
-        RGBA4,
-        RGB5A1,
-        R5G6B5,
-        RGB9E5,
-        RGB10A2_UI,
-        RG11B10F,
-        SRGB8,
-        SRGB8_Alpha8,
-
-        // Depth/Stencil formats
+        Normalized332,
+        Normalized4,
+        Normalized555_1,
+        Normalized565,
+        Normalized9_E5,
+        sRGB8,
+        Float11_11_10,
+        UnsignedInt10_10_10_2,
         D16,
         D24,
         D32,
@@ -52,10 +50,8 @@ namespace {
         S8,
     };
 
-    std::map<QOpenGLTexture::TextureFormat,
-        std::pair<FormatType, FormatData>> gTypeDataByFormat;
-    std::map<std::pair<FormatType, FormatData>,
-        QOpenGLTexture::TextureFormat> gFormatByTypeData;
+    std::map<Texture::Format, std::pair<FormatType, FormatData>> gTypeDataByFormat;
+    std::map<std::pair<FormatType, FormatData>, Texture::Format> gFormatByTypeData;
     std::map<FormatType, std::vector<FormatData>> gDataByType;
 
     void buildFormatMappings()
@@ -65,73 +61,86 @@ namespace {
             gFormatByTypeData[std::make_pair(TYPE, DATA)] = FORMAT; \
             gDataByType[TYPE].push_back(DATA);
 
-        ADD(QOpenGLTexture::R8_UNorm, FormatType::R, FormatData::Normalized8)
-        ADD(QOpenGLTexture::RG8_UNorm, FormatType::RG, FormatData::Normalized8)
-        ADD(QOpenGLTexture::RGB8_UNorm, FormatType::RGB, FormatData::Normalized8)
-        ADD(QOpenGLTexture::RGBA8_UNorm, FormatType::RGBA, FormatData::Normalized8)
-        ADD(QOpenGLTexture::R16_UNorm, FormatType::R, FormatData::Normalized16)
-        ADD(QOpenGLTexture::RG16_UNorm, FormatType::RG, FormatData::Normalized16)
-        ADD(QOpenGLTexture::RGB16_UNorm, FormatType::RGB, FormatData::Normalized16)
-        ADD(QOpenGLTexture::RGBA16_UNorm, FormatType::RGBA, FormatData::Normalized16)
-        ADD(QOpenGLTexture::R8_SNorm, FormatType::R, FormatData::SignedNormalized8)
-        ADD(QOpenGLTexture::RG8_SNorm, FormatType::RG, FormatData::SignedNormalized8)
-        ADD(QOpenGLTexture::RGB8_SNorm, FormatType::RGB, FormatData::SignedNormalized8)
-        ADD(QOpenGLTexture::RGBA8_SNorm, FormatType::RGBA, FormatData::SignedNormalized8)
-        ADD(QOpenGLTexture::R16_SNorm, FormatType::R, FormatData::SignedNormalized16)
-        ADD(QOpenGLTexture::RG16_SNorm, FormatType::RG, FormatData::SignedNormalized16)
-        ADD(QOpenGLTexture::RGB16_SNorm, FormatType::RGB, FormatData::SignedNormalized16)
-        ADD(QOpenGLTexture::RGBA16_SNorm, FormatType::RGBA, FormatData::SignedNormalized16)
-        ADD(QOpenGLTexture::R8U, FormatType::R, FormatData::UnsignedInt8)
-        ADD(QOpenGLTexture::RG8U, FormatType::RG, FormatData::UnsignedInt8)
-        ADD(QOpenGLTexture::RGB8U, FormatType::RGB, FormatData::UnsignedInt8)
-        ADD(QOpenGLTexture::RGBA8U, FormatType::RGBA, FormatData::UnsignedInt8)
-        ADD(QOpenGLTexture::R16U, FormatType::R, FormatData::UnsignedInt16)
-        ADD(QOpenGLTexture::RG16U, FormatType::RG, FormatData::UnsignedInt16)
-        ADD(QOpenGLTexture::RGB16U, FormatType::RGB, FormatData::UnsignedInt16)
-        ADD(QOpenGLTexture::RGBA16U, FormatType::RGBA, FormatData::UnsignedInt16)
-        ADD(QOpenGLTexture::R32U, FormatType::R, FormatData::UnsignedInt32)
-        ADD(QOpenGLTexture::RG32U, FormatType::RG, FormatData::UnsignedInt32)
-        ADD(QOpenGLTexture::RGB32U, FormatType::RGB, FormatData::UnsignedInt32)
-        ADD(QOpenGLTexture::RGBA32U, FormatType::RGBA, FormatData::UnsignedInt32)
-        ADD(QOpenGLTexture::R8I, FormatType::R, FormatData::SignedInt8)
-        ADD(QOpenGLTexture::RG8I, FormatType::RG, FormatData::SignedInt8)
-        ADD(QOpenGLTexture::RGB8I, FormatType::RGB, FormatData::SignedInt8)
-        ADD(QOpenGLTexture::RGBA8I, FormatType::RGBA, FormatData::SignedInt8)
-        ADD(QOpenGLTexture::R16I, FormatType::R, FormatData::SignedInt16)
-        ADD(QOpenGLTexture::RG16I, FormatType::RG, FormatData::SignedInt16)
-        ADD(QOpenGLTexture::RGB16I, FormatType::RGB, FormatData::SignedInt16)
-        ADD(QOpenGLTexture::RGBA16I, FormatType::RGBA, FormatData::SignedInt16)
-        ADD(QOpenGLTexture::R32I, FormatType::R, FormatData::SignedInt32)
-        ADD(QOpenGLTexture::RG32I, FormatType::RG, FormatData::SignedInt32)
-        ADD(QOpenGLTexture::RGB32I, FormatType::RGB, FormatData::SignedInt32)
-        ADD(QOpenGLTexture::RGBA32I, FormatType::RGBA, FormatData::SignedInt32)
-        ADD(QOpenGLTexture::R16F, FormatType::R, FormatData::Float16)
-        ADD(QOpenGLTexture::RG16F, FormatType::RG, FormatData::Float16)
-        ADD(QOpenGLTexture::RGB16F, FormatType::RGB, FormatData::Float16)
-        ADD(QOpenGLTexture::RGBA16F, FormatType::RGBA, FormatData::Float16)
-        ADD(QOpenGLTexture::R32F, FormatType::R, FormatData::Float32)
-        ADD(QOpenGLTexture::RG32F, FormatType::RG, FormatData::Float32)
-        ADD(QOpenGLTexture::RGB32F, FormatType::RGB, FormatData::Float32)
-        ADD(QOpenGLTexture::RGBA32F, FormatType::RGBA, FormatData::Float32)
+        ADD(Texture::Format::R8_UNorm, FormatType::R, FormatData::Normalized8)
+        ADD(Texture::Format::R8_SNorm, FormatType::R, FormatData::SignedNormalized8)
+        ADD(Texture::Format::R16_UNorm, FormatType::R, FormatData::Normalized16)
+        ADD(Texture::Format::R16_SNorm, FormatType::R, FormatData::SignedNormalized16)
+        ADD(Texture::Format::R16F, FormatType::R, FormatData::Float16)
+        ADD(Texture::Format::R32F, FormatType::R, FormatData::Float32)
 
-        ADD(QOpenGLTexture::RG3B2, FormatType::Packed, FormatData::RG3B2)
-        ADD(QOpenGLTexture::RGBA4, FormatType::Packed, FormatData::RGBA4)
-        ADD(QOpenGLTexture::RGB5A1, FormatType::Packed, FormatData::RGB5A1)
-        ADD(QOpenGLTexture::R5G6B5, FormatType::Packed, FormatData::R5G6B5)
-        ADD(QOpenGLTexture::RGB9E5, FormatType::Packed, FormatData::RGB9E5)
-        ADD(QOpenGLTexture::RGB10A2, FormatType::Packed, FormatData::RGB10A2_UI)
-        ADD(QOpenGLTexture::RG11B10F, FormatType::Packed, FormatData::RG11B10F)
-        ADD(QOpenGLTexture::SRGB8, FormatType::Packed, FormatData::SRGB8)
-        ADD(QOpenGLTexture::SRGB8_Alpha8, FormatType::Packed, FormatData::SRGB8_Alpha8)
+        ADD(Texture::Format::R8I, FormatType::R_Integer, FormatData::SignedInt8)
+        ADD(Texture::Format::R8U, FormatType::R_Integer, FormatData::UnsignedInt8)
+        ADD(Texture::Format::R16I, FormatType::R_Integer, FormatData::SignedInt16)
+        ADD(Texture::Format::R16U, FormatType::R_Integer, FormatData::UnsignedInt16)
+        ADD(Texture::Format::R32I, FormatType::R_Integer, FormatData::SignedInt32)
+        ADD(Texture::Format::R32U, FormatType::R_Integer, FormatData::UnsignedInt32)
 
-        ADD(QOpenGLTexture::D16, FormatType::DepthStencil, FormatData::D16)
-        ADD(QOpenGLTexture::D24, FormatType::DepthStencil, FormatData::D24)
-        ADD(QOpenGLTexture::D32, FormatType::DepthStencil, FormatData::D32)
-        ADD(QOpenGLTexture::D32F, FormatType::DepthStencil, FormatData::D32F)
-        ADD(QOpenGLTexture::D24S8, FormatType::DepthStencil, FormatData::D24_S8)
-        ADD(QOpenGLTexture::D32FS8X24, FormatType::DepthStencil, FormatData::D32F_S8)
-        ADD(QOpenGLTexture::S8, FormatType::DepthStencil, FormatData::S8)
-    #undef ADD
+        ADD(Texture::Format::RG8_UNorm, FormatType::RG, FormatData::Normalized8)
+        ADD(Texture::Format::RG8_SNorm, FormatType::RG, FormatData::SignedNormalized8)
+        ADD(Texture::Format::RG16_UNorm, FormatType::RG, FormatData::Normalized16)
+        ADD(Texture::Format::RG16_SNorm, FormatType::RG, FormatData::SignedNormalized16)
+        ADD(Texture::Format::RG16F, FormatType::RG, FormatData::Float16)
+        ADD(Texture::Format::RG32F, FormatType::RG, FormatData::Float32)
+
+        ADD(Texture::Format::RG8I, FormatType::RG_Integer, FormatData::SignedInt8)
+        ADD(Texture::Format::RG8U, FormatType::RG_Integer, FormatData::UnsignedInt8)
+        ADD(Texture::Format::RG16I, FormatType::RG_Integer, FormatData::SignedInt16)
+        ADD(Texture::Format::RG16U, FormatType::RG_Integer, FormatData::UnsignedInt16)
+        ADD(Texture::Format::RG32I, FormatType::RG_Integer, FormatData::SignedInt32)
+        ADD(Texture::Format::RG32U, FormatType::RG_Integer, FormatData::UnsignedInt32)
+
+        ADD(Texture::Format::RG3B2, FormatType::RGB, FormatData::Normalized332)
+//        ADD(GL_RGB4, FormatType::RGB, FormatData::Normalized4)
+//        ADD(GL_RGB5, FormatType::RGB, FormatData::Normalized5)
+        ADD(Texture::Format::R5G6B5, FormatType::RGB, FormatData::Normalized565)
+        ADD(Texture::Format::RGB8_UNorm, FormatType::RGB, FormatData::Normalized8)
+        ADD(Texture::Format::RGB8_SNorm, FormatType::RGB, FormatData::SignedNormalized8)
+//        ADD(GL_RGB10, FormatType::RGB, FormatData::Normalized10)
+//        ADD(GL_RGB12, FormatType::RGB, FormatData::Normalized12)
+        ADD(Texture::Format::SRGB8, FormatType::RGB, FormatData::sRGB8)
+        ADD(Texture::Format::RGB9E5, FormatType::RGB, FormatData::Normalized9_E5);
+        ADD(Texture::Format::RG11B10F, FormatType::RGB, FormatData::Float11_11_10)
+        ADD(Texture::Format::RGB16_UNorm, FormatType::RGB, FormatData::Normalized16)
+        ADD(Texture::Format::RGB16_SNorm, FormatType::RGB, FormatData::SignedNormalized16)
+        ADD(Texture::Format::RGB16F, FormatType::RGB, FormatData::Float16)
+        ADD(Texture::Format::RGB32F, FormatType::RGB, FormatData::Float32)
+
+        ADD(Texture::Format::RGB8I, FormatType::RGB_Integer, FormatData::SignedInt8)
+        ADD(Texture::Format::RGB8U, FormatType::RGB_Integer, FormatData::UnsignedInt8)
+        ADD(Texture::Format::RGB16I, FormatType::RGB_Integer, FormatData::SignedInt16)
+        ADD(Texture::Format::RGB16U, FormatType::RGB_Integer, FormatData::UnsignedInt16)
+        ADD(Texture::Format::RGB32I, FormatType::RGB_Integer, FormatData::SignedInt32)
+        ADD(Texture::Format::RGB32U, FormatType::RGB_Integer, FormatData::UnsignedInt32)
+
+//        ADD(GL_RGBA2, FormatType::RGBA, FormatData::Normalized2)
+        ADD(Texture::Format::RGBA4, FormatType::RGBA, FormatData::Normalized4)
+        ADD(Texture::Format::RGB5A1, FormatType::RGBA, FormatData::Normalized555_1)
+        ADD(Texture::Format::RGBA8_UNorm, FormatType::RGBA, FormatData::Normalized8)
+        ADD(Texture::Format::RGBA8_SNorm, FormatType::RGBA, FormatData::SignedNormalized8)
+//        ADD(GL_RGB10_A2, FormatType::RGBA, FormatData::Normalized10_10_10_2)
+//        ADD(GL_RGBA12, FormatType::RGBA, FormatData::Normalized12)
+        ADD(Texture::Format::RGBA16_UNorm, FormatType::RGBA, FormatData::Normalized16)
+        ADD(Texture::Format::RGBA16_SNorm, FormatType::RGBA, FormatData::SignedNormalized16)
+        ADD(Texture::Format::SRGB8_Alpha8, FormatType::RGBA, FormatData::sRGB8)
+        ADD(Texture::Format::RGBA16F, FormatType::RGBA, FormatData::Float16)
+        ADD(Texture::Format::RGBA32F, FormatType::RGBA, FormatData::Float32)
+
+        ADD(Texture::Format::RGBA8I, FormatType::RGBA_Integer, FormatData::SignedInt8)
+        ADD(Texture::Format::RGBA8U, FormatType::RGBA_Integer, FormatData::UnsignedInt8)
+        ADD(Texture::Format::RGB10A2, FormatType::RGBA_Integer, FormatData::UnsignedInt10_10_10_2)
+        ADD(Texture::Format::RGBA16I, FormatType::RGBA_Integer, FormatData::SignedInt16)
+        ADD(Texture::Format::RGBA16U, FormatType::RGBA_Integer, FormatData::UnsignedInt16)
+        ADD(Texture::Format::RGBA32I, FormatType::RGBA_Integer, FormatData::SignedInt32)
+        ADD(Texture::Format::RGBA32U, FormatType::RGBA_Integer, FormatData::UnsignedInt32)
+
+        ADD(Texture::Format::D16, FormatType::DepthStencil, FormatData::D16)
+        ADD(Texture::Format::D24, FormatType::DepthStencil, FormatData::D24)
+        ADD(Texture::Format::D32, FormatType::DepthStencil, FormatData::D32)
+        ADD(Texture::Format::D32F, FormatType::DepthStencil, FormatData::D32F)
+        ADD(Texture::Format::D24S8, FormatType::DepthStencil, FormatData::D24_S8)
+        ADD(Texture::Format::D32FS8X24, FormatType::DepthStencil, FormatData::D32F_S8)
+        ADD(Texture::Format::S8, FormatType::DepthStencil, FormatData::S8)
+#undef ADD
     }
 } // namespace
 
@@ -186,8 +195,11 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
         { "RG", FormatType::RG },
         { "RGB", FormatType::RGB },
         { "RGBA", FormatType::RGBA },
-        { "Packed", FormatType::Packed },
-        { "Depth / Stencil", FormatType::DepthStencil },
+        { "R Integer", FormatType::R_Integer },
+        { "RG Integer", FormatType::RG_Integer },
+        { "RGB Integer", FormatType::RGB_Integer },
+        { "RGBA Integer", FormatType::RGBA_Integer },
+        { "Depth/Stencil", FormatType::DepthStencil },
     });
 
     updateWidgets();
@@ -261,43 +273,41 @@ void TextureProperties::updateWidgets()
 void TextureProperties::updateFormatDataWidget(QVariant formatType)
 {
     auto data = gDataByType[static_cast<FormatType>(formatType.toInt())];
-    auto index = mUi->formatData->currentIndex();
+    auto current = mUi->formatData->currentData();
 
     mSuspendUpdateFormat = true;
 
     mUi->formatData->clear();
 
     auto formats = std::initializer_list<std::pair<const char*, FormatData>> {
-        { "8 Bit Normalized", FormatData::Normalized8 },
-        { "16 Bit Normalized", FormatData::Normalized16 },
-        { "8 Bit Signed Normalized", FormatData::SignedNormalized8 },
-        { "16 Bit Signed Normalized", FormatData::SignedNormalized16 },
+        { "3/3/2 Bit", FormatData::Normalized332 },
+        { "4 Bit", FormatData::Normalized4 },
+        { "5/6/5 Bit", FormatData::Normalized565 },
+        { "5/5/5/1 Bit", FormatData::Normalized555_1 },
+        { "8 Bit", FormatData::Normalized8 },
+        { "8 Bit sRGB", FormatData::sRGB8 },
+        { "8 Bit Signed", FormatData::SignedNormalized8 },
         { "8 Bit Unsigned Int", FormatData::UnsignedInt8 },
         { "8 Bit Signed Int", FormatData::SignedInt8 },
+        { "9 Bit, 5 Bit Exponent", FormatData::Normalized9_E5 },
+        { "10/10/10/2 Bit Unsigned Int", FormatData::UnsignedInt10_10_10_2 },
+        { "11/11/10 Bit Float", FormatData::Float11_11_10 },
+        { "16 Bit", FormatData::Normalized16 },
+        { "16 Bit Signed", FormatData::SignedNormalized16 },
+        { "16 Bit Float", FormatData::Float16 },
         { "16 Bit Unsigned Int", FormatData::UnsignedInt16 },
         { "16 Bit Signed Int", FormatData::SignedInt16 },
+        { "32 Bit Float", FormatData::Float32 },
         { "32 Bit Unsigned Int", FormatData::UnsignedInt32 },
         { "32 Bit Signed Int", FormatData::SignedInt32 },
-        { "16 Bit Float", FormatData::Float16 },
-        { "32 Bit Float", FormatData::Float32 },
 
-        {"RG3 B2", FormatData::RG3B2 },
-        {"RGBA4", FormatData::RGBA4 },
-        {"RGB5 A1", FormatData::RGB5A1 },
-        {"R5 G6 B5", FormatData::R5G6B5 },
-        {"RGB9 E5 Float", FormatData::RGB9E5 },
-        {"RGB10 A2 Unsigned Int", FormatData::RGB10A2_UI },
-        {"RG11 B10 Float", FormatData::RG11B10F },
-        {"sRGB8",FormatData::SRGB8 },
-        {"sRGBA8",FormatData::SRGB8_Alpha8 },
-
-        {"16 Bit Depth", FormatData::D16 },
-        {"24 Bit Depth", FormatData::D24 },
-        {"32 Bit Depth", FormatData::D32 },
-        {"32 Bit Float Depth", FormatData::D32F },
-        {"24 Bit Depth / 8 Bit Stencil", FormatData::D24_S8 },
-        {"32 Bit Float Depth / 8 Bit Stencil", FormatData::D32F_S8 },
-        {"8 Bit Stencil", FormatData::S8 },
+        { "16 Bit Depth", FormatData::D16 },
+        { "24 Bit Depth", FormatData::D24 },
+        { "32 Bit Depth", FormatData::D32 },
+        { "32 Bit Float Depth", FormatData::D32F },
+        { "24 Bit Depth / 8 Bit Stencil", FormatData::D24_S8 },
+        { "32 Bit Float Depth / 8 Bit Stencil", FormatData::D32F_S8 },
+        { "8 Bit Stencil", FormatData::S8 },
     };
     for (auto kv : formats)
         if (std::find(data.cbegin(), data.cend(), kv.second) != data.cend())
@@ -307,8 +317,8 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
 
     mSuspendUpdateFormat = false;
 
-    if (index < mUi->formatData->count())
-        mUi->formatData->setCurrentIndex(index);
+    auto index = mUi->formatData->findData(current);
+    mUi->formatData->setCurrentIndex(index == -1 ? 0 : index);
 }
 
 void TextureProperties::updateFormat(QVariant formatData)

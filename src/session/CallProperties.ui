@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>212</width>
+    <width>225</width>
     <height>597</height>
    </rect>
   </property>
@@ -298,10 +298,7 @@
      <item row="21" column="1">
       <widget class="QSpinBox" name="clearStencil">
        <property name="maximum">
-        <number>65535</number>
-       </property>
-       <property name="value">
-        <number>0</number>
+        <number>255</number>
        </property>
       </widget>
      </item>

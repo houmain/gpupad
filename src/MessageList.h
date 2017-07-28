@@ -14,6 +14,7 @@ enum MessageType
     LoadingFileFailed,
     UnsupportedShaderType,
     CreatingFramebufferFailed,
+    UploadingImageFailed,
     DownloadingImageFailed,
     UnformNotSet,
     ShaderInfo,

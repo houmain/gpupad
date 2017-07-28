@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>279</width>
-    <height>586</height>
+    <height>670</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -346,7 +346,7 @@
         <string>0x</string>
        </property>
        <property name="maximum">
-        <number>2147483647</number>
+        <number>255</number>
        </property>
        <property name="displayIntegerBase">
         <number>16</number>
@@ -406,7 +406,7 @@
         <string>0x</string>
        </property>
        <property name="maximum">
-        <number>2147483647</number>
+        <number>255</number>
        </property>
        <property name="displayIntegerBase">
         <number>16</number>

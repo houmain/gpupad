@@ -34,12 +34,15 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
-    void getImageDataFormat(QOpenGLTexture::PixelFormat *format,
-        QOpenGLTexture::PixelType *dataType) const;
+    void getDataFormat(QOpenGLTexture::PixelFormat *format,
+        QOpenGLTexture::PixelType *type) const;
     int getImageWidth(int level) const;
     int getImageHeight(int level) const;
+    QImage::Format getImageFormat(QOpenGLTexture::PixelFormat format,
+        QOpenGLTexture::PixelType type) const;
     GLObject createFramebuffer(GLuint textureId, int level) const;
     void load();
+    void createTexture();
     void upload();
     void uploadImage(const Image &image);
     bool download();
@@ -59,7 +62,8 @@ private:
     bool mFlipY{ };
     QList<Image> mImages;
     std::unique_ptr<QOpenGLTexture> mTexture;
-    std::unique_ptr<QOpenGLTexture> mResolveTexture;
+    Texture::Target mMultisampleTarget{ };
+    std::unique_ptr<QOpenGLTexture> mMultisampleTexture;
     bool mSystemCopiesModified{ };
     bool mDeviceCopiesModified{ };
 };

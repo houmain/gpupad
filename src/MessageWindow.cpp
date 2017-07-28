@@ -67,6 +67,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case LoadingFileFailed:
         case UnsupportedShaderType:
         case CreatingFramebufferFailed:
+        case UploadingImageFailed:
         case DownloadingImageFailed:
         case ShaderError:
         case ScriptError:
@@ -108,6 +109,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("unsupported shader type");
         case CreatingFramebufferFailed:
             return tr("creating framebuffer failed %1").arg(message.text);
+        case UploadingImageFailed:
+            return tr("uploading image failed");
         case DownloadingImageFailed:
             return tr("downloading image failed");
         case UnformNotSet:
