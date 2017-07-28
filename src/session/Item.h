@@ -369,8 +369,10 @@ struct Attachment : Item
 struct Call : Item
 {
     enum Type {
-        Draw, // glDrawArrays(InstancedBaseInstance) / glDrawElements(InstancedBaseVertexBaseInstance)
-        DrawIndirect, // gl(Multi)DrawArraysIndirect) / gl(Multi)DrawElementsIndirect
+        Draw, // glDrawArrays(InstancedBaseInstance)
+        DrawIndexed, // glDrawElements(InstancedBaseVertexBaseInstance)
+        DrawIndirect, // gl(Multi)DrawArraysIndirect)
+        DrawIndexedIndirect, // gl(Multi)DrawElementsIndirect
         Compute,
         ClearTexture,
         ClearBuffer,

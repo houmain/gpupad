@@ -77,7 +77,10 @@ void GLCall::execute()
 
     switch (mCall.type) {
         case Call::Draw:
-        case Call::DrawIndirect: return executeDraw();
+        case Call::DrawIndexed:
+        case Call::DrawIndirect:
+        case Call::DrawIndexedIndirect:
+            return executeDraw();
         case Call::Compute: return executeCompute();
         case Call::ClearTexture: return executeClearTexture();
         case Call::ClearBuffer: return executeClearBuffer();
@@ -104,7 +107,7 @@ void GLCall::executeDraw()
         timerQuery().begin();
         auto& gl = GLContext::currentContext();
 
-        if (mCall.type == Call::Draw && !mIndexBuffer) {
+        if (mCall.type == Call::Draw) {
             // DrawArrays(InstancedBaseInstance)
             if (!mCall.baseInstance) {
                 gl.glDrawArraysInstanced(
@@ -122,7 +125,7 @@ void GLCall::executeDraw()
                     mCall.baseInstance);
             }
         }
-        else if (mCall.type == Call::Draw) {
+        else if (mCall.type == Call::DrawIndexed) {
             // DrawElements(InstancedBaseVertexBaseInstance)
             if (!mCall.baseInstance && !mCall.baseVertex) {
                 gl.glDrawElementsInstanced(
@@ -143,7 +146,7 @@ void GLCall::executeDraw()
                         mCall.baseInstance);
             }
         }
-        else if (mCall.type == Call::DrawIndirect && !mIndexBuffer) {
+        else if (mCall.type == Call::DrawIndirect) {
             // (Multi)DrawArraysIndirect
             if (mCall.drawCount == 1) {
                 if (auto gl40 = check(gl.v4_0, mCall.id, mMessages))
@@ -155,7 +158,7 @@ void GLCall::executeDraw()
                     reinterpret_cast<void*>(mIndirectOffset), mCall.drawCount, mIndirectStride);
             }
         }
-        else if (mCall.type == Call::DrawIndirect) {
+        else if (mCall.type == Call::DrawIndexedIndirect) {
             // (Multi)DrawElementsIndirect
             if (mCall.drawCount == 1) {
                 if (auto gl40 = check(gl.v4_0, mCall.id, mMessages))

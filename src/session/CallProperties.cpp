@@ -13,7 +13,9 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
 
     fill<Call::Type>(mUi->type, {
         { "Draw", Call::Draw },
+        { "Draw Indexed", Call::DrawIndexed },
         { "Draw Indirect", Call::DrawIndirect },
+        { "Draw Indexed Indirect", Call::DrawIndexedIndirect },
         { "Compute", Call::Compute },
         { "Clear Texture", Call::ClearTexture },
         { "Clear Buffer", Call::ClearBuffer },
@@ -119,26 +121,27 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
 void CallProperties::updateWidgets()
 {
     const auto type = currentType();
-    const auto draw = (type == Call::Draw);
-    const auto drawIndirect = (type == Call::DrawIndirect);
-    const auto anyDraw = (draw || drawIndirect);
+    const auto drawIndexed = (type == Call::DrawIndexed || type == Call::DrawIndexedIndirect);
+    const auto drawIndirect = (type == Call::DrawIndirect || type == Call::DrawIndexedIndirect);
+    const auto draw = (type == Call::Draw || drawIndexed || drawIndirect);
+    const auto drawDirect = (draw && !drawIndirect);
     const auto compute = (type == Call::Compute);
     const auto clearTexture = (type == Call::ClearTexture);
     const auto clearBuffer = (type == Call::ClearBuffer);
     const auto genMipmaps = (type == Call::GenerateMipmaps);
 
-    setFormVisibility(mUi->formLayout, mUi->labelProgram, mUi->program, anyDraw || compute);
-    setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target, anyDraw);
-    setFormVisibility(mUi->formLayout, mUi->labelVertexStream, mUi->vertexStream, anyDraw);
-    setFormVisibility(mUi->formLayout, mUi->labelIndexBuffer, mUi->indexBuffer, anyDraw);
+    setFormVisibility(mUi->formLayout, mUi->labelProgram, mUi->program, draw || compute);
+    setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target, draw);
+    setFormVisibility(mUi->formLayout, mUi->labelVertexStream, mUi->vertexStream, draw);
+    setFormVisibility(mUi->formLayout, mUi->labelIndexBuffer, mUi->indexBuffer, drawIndexed);
     setFormVisibility(mUi->formLayout, mUi->labelIndirectBuffer, mUi->indirectBuffer, drawIndirect);
 
-    setFormVisibility(mUi->formLayout, mUi->labelPrimitiveType, mUi->primitiveType, anyDraw);
-    setFormVisibility(mUi->formLayout, mUi->labelVertexCount, mUi->vertexCount, draw);
-    setFormVisibility(mUi->formLayout, mUi->labelInstanceCount, mUi->instanceCount, draw);
-    setFormVisibility(mUi->formLayout, mUi->labelFirstVertex, mUi->firstVertex, draw);
-    setFormVisibility(mUi->formLayout, mUi->labelBaseVertex, mUi->baseVertex, draw);
-    setFormVisibility(mUi->formLayout, mUi->labelBaseInstance, mUi->baseInstance, draw);
+    setFormVisibility(mUi->formLayout, mUi->labelPrimitiveType, mUi->primitiveType, draw);
+    setFormVisibility(mUi->formLayout, mUi->labelVertexCount, mUi->vertexCount, drawDirect);
+    setFormVisibility(mUi->formLayout, mUi->labelInstanceCount, mUi->instanceCount, drawDirect);
+    setFormVisibility(mUi->formLayout, mUi->labelFirstVertex, mUi->firstVertex, drawDirect);
+    setFormVisibility(mUi->formLayout, mUi->labelBaseVertex, mUi->baseVertex, drawIndexed && drawDirect);
+    setFormVisibility(mUi->formLayout, mUi->labelBaseInstance, mUi->baseInstance, drawDirect);
     setFormVisibility(mUi->formLayout, mUi->labelDrawCount, mUi->drawCount, drawIndirect);
 
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsX, mUi->workGroupsX, compute);
