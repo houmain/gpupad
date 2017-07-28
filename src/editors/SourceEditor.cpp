@@ -321,10 +321,16 @@ void SourceEditor::indentSelection(bool reverse)
         }
         else {
             text.replace(QChar(QChar::ParagraphSeparator), "\n" + tab());
+
+            // no lines were indented, replace selection with tab
+            if (cursor.selectedText() == text) {
+                cursor.insertText(tab());
+                cursor.endEditBlock();
+                return;
+            }
             text.prepend(tab());
         }
         cursor.insertText(text);
-
         cursor.setPosition(cursor.position() - text.size(), QTextCursor::KeepAnchor);
         setTextCursor(cursor);
     }
