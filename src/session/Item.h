@@ -342,8 +342,6 @@ struct Attachment : Item
     unsigned int colorWriteMask{ 0xF };
 
     ComparisonFunction depthCompareFunc{ ComparisonFunction::Less };
-    float depthNear{ };
-    float depthFar{ 1.0f };
     float depthBiasSlope{ };
     float depthBiasConst{ };
     bool depthClamp{ };

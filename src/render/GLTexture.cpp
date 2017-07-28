@@ -113,10 +113,9 @@ void GLTexture::clear(QColor color, float depth, int stencil)
 
 void GLTexture::generateMipmaps()
 {
-    if (mTexture->mipLevels() > 1) {
-        getReadWriteTextureId();
+    getReadWriteTextureId();
+    if (mTexture->mipLevels() > 1)
         mTexture->generateMipMaps();
-    }
 }
 
 void GLTexture::load()
@@ -263,7 +262,7 @@ void GLTexture::createTexture()
     mTexture->setFormat(mFormat);
     mTexture->setAutoMipMapGenerationEnabled(false);
     mTexture->setMipLevels(mType == Texture::Type::Color ?
-        mTexture->maximumMipLevels() : 0);
+        mTexture->maximumMipLevels() : 1);
     mTexture->allocateStorage();
 
     if (mMultisampleTarget != mTarget) {

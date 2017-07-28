@@ -58,8 +58,6 @@ public:
         AttachmentBlendAlphaDest,
         AttachmentColorWriteMask,
         AttachmentDepthCompareFunc,
-        AttachmentDepthNear,
-        AttachmentDepthFar,
         AttachmentDepthBiasSlope,
         AttachmentDepthBiasConst,
         AttachmentDepthClamp,

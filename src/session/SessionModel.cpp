@@ -355,8 +355,6 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest)
         ADD(AttachmentColorWriteMask, Attachment, colorWriteMask)
         ADD(AttachmentDepthCompareFunc, Attachment, depthCompareFunc)
-        ADD(AttachmentDepthNear, Attachment, depthNear)
-        ADD(AttachmentDepthFar, Attachment, depthFar)
         ADD(AttachmentDepthBiasSlope, Attachment, depthBiasSlope)
         ADD(AttachmentDepthBiasConst, Attachment, depthBiasConst)
         ADD(AttachmentDepthClamp, Attachment, depthClamp)
@@ -494,8 +492,6 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest, toInt)
         ADD(AttachmentColorWriteMask, Attachment, colorWriteMask, toUInt)
         ADD(AttachmentDepthCompareFunc, Attachment, depthCompareFunc, toInt)
-        ADD(AttachmentDepthNear, Attachment, depthNear, toFloat)
-        ADD(AttachmentDepthFar, Attachment, depthFar, toFloat)
         ADD(AttachmentDepthBiasSlope, Attachment, depthBiasSlope, toFloat)
         ADD(AttachmentDepthBiasConst, Attachment, depthBiasConst, toFloat)
         ADD(AttachmentDepthClamp, Attachment, depthClamp, toBool)
@@ -509,7 +505,7 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(AttachmentStencilFrontWriteMask, Attachment, stencilFrontWriteMask, toUInt)
         ADD(AttachmentStencilBackCompareFunc, Attachment, stencilBackCompareFunc, toInt)
         ADD(AttachmentStencilBackReference, Attachment, stencilBackReference, toUInt)
-        ADD(AttachmentStencilBackReadMask, Attachment, stencilBackWriteMask, toUInt)
+        ADD(AttachmentStencilBackReadMask, Attachment, stencilBackReadMask, toUInt)
         ADD(AttachmentStencilBackFailOp, Attachment, stencilBackFailOp, toInt)
         ADD(AttachmentStencilBackDepthFailOp, Attachment, stencilBackDepthFailOp, toInt)
         ADD(AttachmentStencilBackDepthPassOp, Attachment, stencilBackDepthPassOp, toInt)
@@ -1125,8 +1121,6 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
             write("blendAlphaDest", attachment.blendAlphaDest);
             write("colorWriteMask", attachment.colorWriteMask);
             write("depthCompareFunc", attachment.depthCompareFunc);
-            write("depthNear", attachment.depthNear);
-            write("depthFar", attachment.depthFar);
             write("depthBiasSlope", attachment.depthBiasSlope);
             write("depthBiasConst", attachment.depthBiasConst);
             write("depthClamp", attachment.depthClamp);
@@ -1388,8 +1382,6 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             readEnum("blendAlphaDest", attachment.blendAlphaDest);
             read("colorWriteMask", attachment.colorWriteMask);
             readEnum("depthCompareFunc", attachment.depthCompareFunc);
-            read("depthNear", attachment.depthNear);
-            read("depthFar", attachment.depthFar);
             read("depthBiasSlope", attachment.depthBiasSlope);
             read("depthBiasConst", attachment.depthBiasConst);
             read("depthClamp", attachment.depthClamp);

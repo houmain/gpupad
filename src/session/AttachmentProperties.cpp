@@ -69,6 +69,7 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
         { "Never", Attachment::Never },
     });
     mUi->stencilCompareFunc->setModel(mUi->depthCompareFunc->model());
+    mUi->stencilBackCompareFunc->setModel(mUi->depthCompareFunc->model());
 
     fill<Attachment::StencilOperation>(mUi->stencilFailOp, {
         { "Keep", Attachment::Keep },
@@ -82,6 +83,9 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
     });
     mUi->stencilDepthFailOp->setModel(mUi->stencilFailOp->model());
     mUi->stencilDepthPassOp->setModel(mUi->stencilFailOp->model());
+    mUi->stencilBackFailOp->setModel(mUi->stencilFailOp->model());
+    mUi->stencilBackDepthFailOp->setModel(mUi->stencilFailOp->model());
+    mUi->stencilBackDepthPassOp->setModel(mUi->stencilFailOp->model());
 
     updateWidgets();
 }
@@ -123,14 +127,11 @@ void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
     //mapper.addMapping(mUi->colorWriteMask, SessionModel::AttachmentColorWriteMask);
 
     mapper.addMapping(mUi->depthCompareFunc, SessionModel::AttachmentDepthCompareFunc);
-    mapper.addMapping(mUi->depthNear, SessionModel::AttachmentDepthNear);
-    mapper.addMapping(mUi->depthFar, SessionModel::AttachmentDepthFar);
     mapper.addMapping(mUi->depthBiasSlope, SessionModel::AttachmentDepthBiasSlope);
     mapper.addMapping(mUi->depthBiasConst, SessionModel::AttachmentDepthBiasConst);
     mapper.addMapping(mUi->depthClamp, SessionModel::AttachmentDepthClamp);
     mapper.addMapping(mUi->depthWrite, SessionModel::AttachmentDepthWrite);
 
-    // TODO: switch bindings between front and back
     mapper.addMapping(mUi->stencilCompareFunc, SessionModel::AttachmentStencilFrontCompareFunc);
     mapper.addMapping(mUi->stencilReference, SessionModel::AttachmentStencilFrontReference);
     mapper.addMapping(mUi->stencilReadMask, SessionModel::AttachmentStencilFrontReadMask);
@@ -138,6 +139,14 @@ void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->stencilDepthFailOp, SessionModel::AttachmentStencilFrontDepthFailOp);
     mapper.addMapping(mUi->stencilDepthPassOp, SessionModel::AttachmentStencilFrontDepthPassOp);
     mapper.addMapping(mUi->stencilWriteMask, SessionModel::AttachmentStencilFrontWriteMask);
+
+    mapper.addMapping(mUi->stencilBackCompareFunc, SessionModel::AttachmentStencilBackCompareFunc);
+    mapper.addMapping(mUi->stencilBackReference, SessionModel::AttachmentStencilBackReference);
+    mapper.addMapping(mUi->stencilBackReadMask, SessionModel::AttachmentStencilBackReadMask);
+    mapper.addMapping(mUi->stencilBackFailOp, SessionModel::AttachmentStencilBackFailOp);
+    mapper.addMapping(mUi->stencilBackDepthFailOp, SessionModel::AttachmentStencilBackDepthFailOp);
+    mapper.addMapping(mUi->stencilBackDepthPassOp, SessionModel::AttachmentStencilBackDepthPassOp);
+    mapper.addMapping(mUi->stencilBackWriteMask, SessionModel::AttachmentStencilBackWriteMask);
 }
 
 void AttachmentProperties::updateWidgets()
@@ -147,6 +156,8 @@ void AttachmentProperties::updateWidgets()
     const auto depth = (type == Texture::Type::Depth || type == Texture::Type::DepthStencil);
     const auto stencil = (type == Texture::Type::Stencil || type == Texture::Type::DepthStencil);
 
+    setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, color);
+
     setFormVisibility(mUi->formLayout, mUi->labelBlendColorEq, mUi->blendColorEq, color);
     setFormVisibility(mUi->formLayout, mUi->labelBlendColorSource, mUi->blendColorSource, color);
     setFormVisibility(mUi->formLayout, mUi->labelBlendColorDest, mUi->blendColorDest, color);
@@ -155,20 +166,17 @@ void AttachmentProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaDest, mUi->blendAlphaDest, color);
     setFormVisibility(mUi->formLayout, mUi->labelColorWriteMask, mUi->colorWriteMask, color);
 
-    setFormVisibility(mUi->formLayout, mUi->labelDepthCompareFunc, mUi->depthCompareFunc, depth);
-    setFormVisibility(mUi->formLayout, mUi->labelDepthNear, mUi->depthNear, depth);
-    setFormVisibility(mUi->formLayout, mUi->labelDepthFar, mUi->depthFar, depth);
-    setFormVisibility(mUi->formLayout, mUi->labelDepthBiasSlope, mUi->depthBiasSlope, depth);
-    setFormVisibility(mUi->formLayout, mUi->labelDepthBiasConst, mUi->depthBiasConst, depth);
-    setFormVisibility(mUi->formLayout, mUi->labelDepthClamp, mUi->depthClamp, depth);
-    setFormVisibility(mUi->formLayout, mUi->labelDepthWrite, mUi->depthWrite, depth);
-
-    setFormVisibility(mUi->formLayout, mUi->labelStencilSide, mUi->tabStencilSide, stencil);
-    setFormVisibility(mUi->formLayout, mUi->labelStencilReference, mUi->stencilReference, stencil);
-    setFormVisibility(mUi->formLayout, mUi->labelStencilReadMask, mUi->stencilReadMask, stencil);
-    setFormVisibility(mUi->formLayout, mUi->labelStencilCompareFunc, mUi->stencilCompareFunc, stencil);
-    setFormVisibility(mUi->formLayout, mUi->labelStencilFailOp, mUi->stencilFailOp, stencil);
-    setFormVisibility(mUi->formLayout, mUi->labelStencilDepthFailOp, mUi->stencilDepthFailOp, stencil);
-    setFormVisibility(mUi->formLayout, mUi->labelStencilDepthPassOp, mUi->stencilDepthPassOp, stencil);
-    setFormVisibility(mUi->formLayout, mUi->labelStencilWriteMask, mUi->stencilWriteMask, stencil);
+    static const QList<QString> tabTitles = {
+        mUi->tabDepthStencil->tabText(0),
+        mUi->tabDepthStencil->tabText(1),
+        mUi->tabDepthStencil->tabText(2)
+    };
+    mUi->tabDepthStencil->setVisible(depth || stencil);
+    mUi->tabDepthStencil->clear();
+    if (depth)
+        mUi->tabDepthStencil->addTab(mUi->tabDepth, tabTitles[0]);
+    if (stencil) {
+        mUi->tabDepthStencil->addTab(mUi->tabStencilFront, tabTitles[1]);
+        mUi->tabDepthStencil->addTab(mUi->tabStencilBack, tabTitles[2]);
+    }
 }

@@ -81,10 +81,14 @@ void GLCall::execute()
         case Call::DrawIndirect:
         case Call::DrawIndexedIndirect:
             return executeDraw();
-        case Call::Compute: return executeCompute();
-        case Call::ClearTexture: return executeClearTexture();
-        case Call::ClearBuffer: return executeClearBuffer();
-        case Call::GenerateMipmaps: return executeGenerateMipmaps();
+        case Call::Compute:
+            return executeCompute();
+        case Call::ClearTexture:
+            return executeClearTexture();
+        case Call::ClearBuffer:
+            return executeClearBuffer();
+        case Call::GenerateMipmaps:
+            return executeGenerateMipmaps();
     }
 
     auto& gl = GLContext::currentContext();

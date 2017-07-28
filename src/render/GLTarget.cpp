@@ -21,7 +21,10 @@ GLTarget::GLTarget(const Target &target)
 
 void GLTarget::setAttachment(int index, GLTexture *texture)
 {
-    mAttachments[index].texture = texture;
+    auto& attachment = mAttachments[index];
+    attachment.texture = texture;
+    if (texture && texture->type() != Texture::Type::Color)
+        attachment.level = 0;
 }
 
 bool GLTarget::bind()
@@ -168,7 +171,7 @@ void GLTarget::applyAttachmentStates(const GLAttachment &a)
                 a.blendAlphaSource, a.blendAlphaDest);
         }
         else if (auto gl40 = check(gl.v4_0, mItemId, mMessages)) {
-            gl40->glEnablei(index, GL_BLEND);
+            gl40->glEnablei(GL_BLEND, index);
             gl40->glBlendEquationSeparatei(index, a.blendColorEq, a.blendAlphaEq);
             gl40->glBlendFuncSeparatei(index, a.blendColorSource, a.blendColorDest,
                 a.blendAlphaSource, a.blendAlphaDest);
@@ -189,7 +192,6 @@ void GLTarget::applyAttachmentStates(const GLAttachment &a)
         gl.glEnable(GL_POLYGON_OFFSET_LINE);
         gl.glEnable(GL_POLYGON_OFFSET_FILL);
         gl.glPolygonOffset(a.depthBiasSlope, a.depthBiasConst);
-        gl.glDepthRange(a.depthNear, a.depthFar);
         if (a.depthClamp)
             gl.glEnable(GL_DEPTH_CLAMP);
         else
