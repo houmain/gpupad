@@ -57,9 +57,10 @@ public:
     ~SessionProperties();
 
     SessionModel &model() { return mModel; }
+    QString currentItemName() const;
     QModelIndex currentModelIndex(int column = 0) const;
     void setCurrentModelIndex(const QModelIndex &index);
-    void setCurrentItemFile(QString fileName);
+    void setCurrentItemFile(const QString &fileName);
     void selectCurrentItemFile(FileDialog::Options options);
     QVariantList getFileNames(ItemType type, bool addNull = false) const;
     QVariantList getItemIds(ItemType type, bool addNull = false) const;

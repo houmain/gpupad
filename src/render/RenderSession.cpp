@@ -429,18 +429,29 @@ void RenderSession::outputTimerQueries()
 void RenderSession::finish()
 {
     auto& manager = Singletons::editorManager();
+    auto& session = Singletons::sessionModel();
 
     for (auto& image : mModifiedImages) {
-        const auto& fileName = image.first;
-        if (auto editor = manager.openImageEditor(fileName, false))
-            editor->replace(image.second, false);
+        if (auto fileItem = castFileItem(session.findItem(image.first))) {
+            if (fileItem->fileName.isEmpty()) {
+                auto index = session.index(fileItem, SessionModel::FileName);
+                session.setData(index, manager.openNewImageEditor(fileItem->name));
+            }
+            if (auto editor = manager.openImageEditor(fileItem->fileName, false))
+                editor->replace(image.second, false);
+        }
     }
     mModifiedImages.clear();
 
-    for (auto& binary : mModifiedBuffers) {
-        const auto& fileName = binary.first;
-        if (auto editor = manager.openBinaryEditor(fileName, false))
-            editor->replace(binary.second, false);
+    for (auto& image : mModifiedBuffers) {
+        if (auto fileItem = castFileItem(session.findItem(image.first))) {
+            if (fileItem->fileName.isEmpty()) {
+                auto index = session.index(fileItem, SessionModel::FileName);
+                session.setData(index, manager.openNewBinaryEditor(fileItem->name));
+            }
+            if (auto editor = manager.openBinaryEditor(fileItem->fileName, false))
+                editor->replace(image.second, false);
+        }
     }
     mModifiedBuffers.clear();
 

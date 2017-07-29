@@ -11,7 +11,7 @@ class FileDialog : public QObject
     Q_OBJECT
 public:
     static void resetNextUntitledFileIndex();
-    static QString generateNextUntitledFileName();
+    static QString generateNextUntitledFileName(const QString &base);
     static QString getUntitledSessionFileName();
     static bool isUntitled(const QString &fileName);
     static QString getFileTitle(const QString &fileName);

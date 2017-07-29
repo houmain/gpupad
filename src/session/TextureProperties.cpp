@@ -155,7 +155,8 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
 
     connect(mUi->fileNew, &QToolButton::clicked,
         [this]() { mSessionProperties.setCurrentItemFile(
-            Singletons::editorManager().openNewImageEditor()); });
+            Singletons::editorManager().openNewImageEditor(
+                mSessionProperties.currentItemName())); });
     connect(mUi->fileBrowse, &QToolButton::clicked,
         [this]() {
             mSessionProperties.selectCurrentItemFile(

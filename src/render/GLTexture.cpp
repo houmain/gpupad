@@ -22,9 +22,6 @@ GLTexture::GLTexture(const Texture &texture)
     }
 
     mUsedItems += texture.id;
-    if (!texture.fileName.isEmpty())
-        mImages.push_back({ texture.id, 0, 0, QOpenGLTexture::CubeMapPositiveX,
-            texture.fileName, QImage() });
 
     for (const auto &item : texture.items)
         if (auto image = castItem<::Image>(item)) {
@@ -33,12 +30,16 @@ GLTexture::GLTexture(const Texture &texture)
                 mImages.push_back({ image->id, image->level, image->layer,
                     image->face, image->fileName, QImage() });
         }
+
+    if (!texture.fileName.isEmpty() || mImages.empty())
+        mImages.push_front({ texture.id, 0, 0, QOpenGLTexture::CubeMapPositiveX,
+            texture.fileName, QImage() });
 }
 
 bool operator==(const GLTexture::Image &a, const GLTexture::Image &b)
 {
-    return std::tie(a.level, a.layer, a.face) ==
-           std::tie(b.level, b.layer, b.face);
+    return std::tie(a.level, a.layer, a.face, a.fileName) ==
+           std::tie(b.level, b.layer, b.face, b.fileName);
 }
 
 bool GLTexture::operator==(const GLTexture &rhs) const
@@ -68,14 +69,14 @@ GLuint GLTexture::getReadWriteTextureId()
     return (mMultisampleTexture ? mMultisampleTexture : mTexture)->textureId();
 }
 
-QList<std::pair<QString, QImage>> GLTexture::getModifiedImages()
+QList<std::pair<ItemId, QImage>> GLTexture::getModifiedImages()
 {
     if (!download())
         return { };
 
-    auto result = QList<std::pair<QString, QImage>>();
+    auto result = QList<std::pair<ItemId, QImage>>();
     for (const auto& image : mImages)
-        result.push_back(std::make_pair(image.fileName, image.image));
+        result.push_back(std::make_pair(image.itemId, image.image));
 
     return result;
 }
@@ -366,7 +367,6 @@ bool GLTexture::downloadImage(Image& image)
             image.itemId, MessageType::DownloadingImageFailed);
         return false;
     }
-
     auto dest = QImage(width, height, imageFormat);
 
     if (mMultisampleTexture)
@@ -404,6 +404,8 @@ bool GLTexture::downloadImage(Image& image)
 
     if (image.image == dest)
         return false;
+
+    mMessages.clear();
     image.image = dest;
     return true;
 }

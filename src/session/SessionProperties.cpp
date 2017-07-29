@@ -81,28 +81,32 @@ SessionProperties::SessionProperties(QWidget *parent)
     setWidget(mStack);
 
     connect(mShaderProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::editorManager().openNewSourceEditor()); });
+        setCurrentItemFile(Singletons::editorManager().openNewSourceEditor(
+            currentItemName())); });
     connect(mShaderProperties->fileBrowse, &QToolButton::clicked,
         [this]() { selectCurrentItemFile(FileDialog::ShaderExtensions); });
     connect(mShaderProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Shader); });
 
     connect(mBufferProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::editorManager().openNewBinaryEditor()); });
+        setCurrentItemFile(Singletons::editorManager().openNewBinaryEditor(
+            currentItemName())); });
     connect(mBufferProperties->fileBrowse, &QToolButton::clicked,
         [this]() { selectCurrentItemFile(FileDialog::BinaryExtensions); });
     connect(mBufferProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Buffer); });
 
     connect(mImageProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::editorManager().openNewImageEditor()); });
+        setCurrentItemFile(Singletons::editorManager().openNewImageEditor(
+            currentItemName())); });
     connect(mImageProperties->fileBrowse, &QToolButton::clicked,
         [this]() { selectCurrentItemFile(FileDialog::ImageExtensions); });
     connect(mImageProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Image, true); });
 
     connect(mScriptProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::editorManager().openNewSourceEditor()); });
+        setCurrentItemFile(Singletons::editorManager().openNewSourceEditor(
+            currentItemName())); });
     connect(mScriptProperties->fileBrowse, &QToolButton::clicked,
         [this]() { selectCurrentItemFile(FileDialog::ScriptExtensions); });
     connect(mScriptProperties->file, &ReferenceComboBox::listRequired,
@@ -414,6 +418,23 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
     mStack->setCurrentIndex(static_cast<int>(mModel.getItemType(index)));
 }
 
+QString SessionProperties::currentItemName() const
+{
+    return mModel.data(currentModelIndex(SessionModel::Name)).toString();
+}
+
+void SessionProperties::selectCurrentItemFile(FileDialog::Options options)
+{
+    options |= FileDialog::Loading;
+    if (Singletons::fileDialog().exec(options))
+        setCurrentItemFile(Singletons::fileDialog().fileName());
+}
+
+void SessionProperties::setCurrentItemFile(const QString &fileName)
+{
+    mModel.setData(currentModelIndex(SessionModel::FileName), fileName);
+}
+
 void SessionProperties::updateImageWidgets(const QModelIndex &index)
 {
     if (auto image = mModel.item<Image>(index))
@@ -436,16 +457,4 @@ void SessionProperties::updateImageWidgets(const QModelIndex &index)
                 mImageProperties->labelFace,
                 mImageProperties->face, isCubeMap);
         }
-}
-
-void SessionProperties::selectCurrentItemFile(FileDialog::Options options)
-{
-    options |= FileDialog::Loading;
-    if (Singletons::fileDialog().exec(options))
-        setCurrentItemFile(Singletons::fileDialog().fileName());
-}
-
-void SessionProperties::setCurrentItemFile(QString fileName)
-{
-    mModel.setData(currentModelIndex(SessionModel::FileName), fileName);
 }

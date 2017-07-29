@@ -57,12 +57,12 @@ void GLBuffer::unbind(GLenum target)
     gl.glBindBuffer(target, GL_NONE);
 }
 
-QList<std::pair<QString, QByteArray>> GLBuffer::getModifiedData()
+QList<std::pair<ItemId, QByteArray>> GLBuffer::getModifiedData()
 {
     if (!download())
         return { };
 
-    return { std::make_pair(mFileName, mData) };
+    return { std::make_pair(mItemId, mData) };
 }
 
 void GLBuffer::load()

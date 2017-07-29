@@ -101,7 +101,7 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("the required OpenGL version %1 is not available").arg(message.text);
         case LoadingFileFailed: {
             if (message.text.isEmpty())
-                return tr("no file set").arg(message.text);
+                return tr("no file set");
             else
                 return tr("loading file '%1' failed").arg(message.text);
         }

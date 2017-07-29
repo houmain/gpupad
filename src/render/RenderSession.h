@@ -34,8 +34,8 @@ private:
     QScopedPointer<CommandQueue> mPrevCommandQueue;
     QScopedPointer<TimerQueries> mTimerQueries;
     QSet<ItemId> mUsedItems;
-    QList<std::pair<QString, QImage>> mModifiedImages;
-    QList<std::pair<QString, QByteArray>> mModifiedBuffers;
+    QList<std::pair<ItemId, QImage>> mModifiedImages;
+    QList<std::pair<ItemId, QByteArray>> mModifiedBuffers;
 
     mutable QMutex mUsedItemsCopyMutex;
     QSet<ItemId> mUsedItemsCopy;

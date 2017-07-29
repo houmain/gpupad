@@ -303,12 +303,8 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         case ColumnType::InlineScope: return item.inlineScope;
 
         case ColumnType::FileName:
-            if (item.itemType == ItemType::Buffer ||
-                item.itemType == ItemType::Texture ||
-                item.itemType == ItemType::Image ||
-                item.itemType == ItemType::Shader ||
-                item.itemType == ItemType::Script)
-                return static_cast<const FileItem&>(item).fileName;
+            if (auto fileItem = castFileItem(item))
+                return fileItem->fileName;
             break;
 
 #define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
@@ -433,11 +429,7 @@ bool SessionModel::setData(const QModelIndex &index,
             return true;
 
         case ColumnType::FileName:
-            if (item.itemType == ItemType::Buffer ||
-                item.itemType == ItemType::Texture ||
-                item.itemType == ItemType::Image ||
-                item.itemType == ItemType::Shader ||
-                item.itemType == ItemType::Script) {
+            if (castFileItem(item)) {
                 undoableFileNameAssignment(index,
                     static_cast<FileItem&>(item), value.toString());
                 return true;
@@ -801,10 +793,13 @@ void SessionModel::undoableFileNameAssignment(const QModelIndex &index,
 
         if (item.name == getTypeName(item.itemType) ||
             item.name == FileDialog::getFileTitle(item.fileName)) {
-            auto newName = FileDialog::getFileTitle(fileName);
-            if (newName.isEmpty())
-                newName = getTypeName(item.itemType);
-            setData(this->index(&item, Name), newName);
+
+            auto newFileName =
+                (fileName.isEmpty() || FileDialog::isUntitled(fileName) ?
+                    getTypeName(item.itemType) : fileName);
+
+            setData(this->index(&item, Name),
+                FileDialog::getFileTitle(newFileName));
         }
         undoableAssignment(index, &item.fileName, fileName);
         mUndoStack.endMacro();
@@ -1146,8 +1141,10 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
             const auto &call = static_cast<const Call&>(item);
 
             const auto type = call.type;
-            const auto draw = (type == Call::Draw);
-            const auto drawIndirect = (type == Call::DrawIndirect);
+            const auto drawIndexed = (type == Call::DrawIndexed || type == Call::DrawIndexedIndirect);
+            const auto drawIndirect = (type == Call::DrawIndirect || type == Call::DrawIndexedIndirect);
+            const auto draw = (type == Call::Draw || drawIndexed || drawIndirect);
+            const auto drawDirect = (draw && !drawIndirect);
             const auto compute = (type == Call::Compute);
             const auto clearTexture = (type == Call::ClearTexture);
             const auto clearBuffer = (type == Call::ClearBuffer);
@@ -1155,20 +1152,23 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
 
             writeBool("checked", call.checked);
             write("type", call.type);
-            if (draw || drawIndirect || compute)
+            if (draw || compute)
                 writeRef("programId", call.programId);
-            if (draw || drawIndirect) {
-                writeRef("targetId", call.targetId);
-                writeRef("indexBufferId", call.indexBufferId);
-            }
             if (draw) {
+                writeRef("targetId", call.targetId);
                 writeRef("vertexStreamId", call.vertexStreamId);
                 write("primitiveType", call.primitiveType);
+            }
+            if (drawIndexed) {
+                writeRef("indexBufferId", call.indexBufferId);
+            }
+            if (drawDirect) {
                 write("count", call.count);
                 write("first", call.first);
-                write("baseVertex", call.baseVertex);
                 write("instanceCount", call.instanceCount);
                 write("baseInstance", call.baseInstance);
+                if (drawIndexed)
+                    write("baseVertex", call.baseVertex);
             }
             if (drawIndirect) {
                 writeRef("indirectBufferId", call.indirectBufferId);
@@ -1179,8 +1179,9 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
                 write("workGroupsY", call.workGroupsY);
                 write("workGroupsZ", call.workGroupsZ);
             }
-            if (clearTexture || genMipmaps) {
+            if (clearTexture || genMipmaps)
                 writeRef("textureId", call.textureId);
+            if (clearTexture) {
                 writeString("clearColor", call.clearColor.name());
                 write("clearDepth", call.clearDepth);
                 write("clearStencil", call.clearStencil);

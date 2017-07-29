@@ -74,27 +74,27 @@ QList<QMetaObject::Connection> EditorManager::connectEditActions(
     return { };
 }
 
-QString EditorManager::openNewSourceEditor()
+QString EditorManager::openNewSourceEditor(const QString &untitledBase)
 {
-    auto fileName = FileDialog::generateNextUntitledFileName();
+    auto fileName = FileDialog::generateNextUntitledFileName(untitledBase);
     auto editor = new SourceEditor(fileName);
     addSourceEditor(editor);
     raiseEditor(editor);
     return fileName;
 }
 
-QString EditorManager::openNewBinaryEditor()
+QString EditorManager::openNewBinaryEditor(const QString &untitledBase)
 {
-    auto fileName = FileDialog::generateNextUntitledFileName();
+    auto fileName = FileDialog::generateNextUntitledFileName(untitledBase);
     auto editor = new BinaryEditor(fileName);
     addBinaryEditor(editor);
     raiseEditor(editor);
     return fileName;
 }
 
-QString EditorManager::openNewImageEditor()
+QString EditorManager::openNewImageEditor(const QString &untitledBase)
 {
-    auto fileName = FileDialog::generateNextUntitledFileName();
+    auto fileName = FileDialog::generateNextUntitledFileName(untitledBase);
     auto editor = new ImageEditor(fileName);
     addImageEditor(editor);
     raiseEditor(editor);
@@ -363,8 +363,10 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
             break;
         }
     }
-    if (!tabified)
+    if (!tabified) {
         addDockWidget(Qt::TopDockWidgetArea, dock);
+        resizeDocks({ dock }, { width() / 2 }, Qt::Horizontal);
+    }
 
     mDocks.insert(dock, editor);
     return dock;

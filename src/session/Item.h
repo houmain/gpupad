@@ -458,4 +458,20 @@ const T* castItem(const Item *item)
     return (item ? castItem<T>(*item) : nullptr);
 }
 
+inline const FileItem* castFileItem(const Item &item)
+{
+    if (item.itemType == ItemType::Buffer ||
+        item.itemType == ItemType::Texture ||
+        item.itemType == ItemType::Image ||
+        item.itemType == ItemType::Shader ||
+        item.itemType == ItemType::Script)
+        return static_cast<const FileItem*>(&item);
+    return nullptr;
+}
+
+inline const FileItem* castFileItem(const Item *item)
+{
+    return (item ? castFileItem(*item) : nullptr);
+}
+
 #endif // ITEM_H

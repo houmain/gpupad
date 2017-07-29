@@ -11,12 +11,8 @@
 template<typename F> // F(const FileItem&)
 void forEachFileItem(SessionModel& model, const F &function) {
     model.forEachItem([&](const Item& item) {
-        if (item.itemType == ItemType::Buffer ||
-            item.itemType == ItemType::Shader ||
-            item.itemType == ItemType::Texture ||
-            item.itemType == ItemType::Image ||
-            item.itemType == ItemType::Script)
-            function(static_cast<const FileItem&>(item));
+        if (auto fileItem = castFileItem(item))
+            function(*fileItem);
     });
 }
 
