@@ -2,8 +2,10 @@
 #include "SessionProperties.h"
 #include "ui_TextureProperties.h"
 #include "Singletons.h"
+#include "session/SessionModel.h"
 #include "editors/EditorManager.h"
 #include "FileCache.h"
+#include <QDataWidgetMapper>
 
 namespace {
     enum FormatType
@@ -211,13 +213,18 @@ TextureProperties::~TextureProperties()
     delete mUi;
 }
 
-QWidget *TextureProperties::fileWidget() const { return mUi->file; }
-QWidget *TextureProperties::targetWidget() const { return mUi->target; }
-QWidget *TextureProperties::widthWidget() const { return mUi->width; }
-QWidget *TextureProperties::heightWidget() const { return mUi->height; }
-QWidget *TextureProperties::depthWidget() const { return mUi->depth; }
-QWidget *TextureProperties::samplesWidget() const { return mUi->samples; }
-QWidget *TextureProperties::flipYWidget() const { return mUi->flipY; }
+void TextureProperties::addMappings(QDataWidgetMapper &mapper)
+{
+    mapper.addMapping(mUi->file, SessionModel::FileName);
+    mapper.addMapping(mUi->target, SessionModel::TextureTarget);
+    mapper.addMapping(this, SessionModel::TextureFormat);
+    mapper.addMapping(mUi->width, SessionModel::TextureWidth);
+    mapper.addMapping(mUi->height, SessionModel::TextureHeight);
+    mapper.addMapping(mUi->depth, SessionModel::TextureDepth);
+    mapper.addMapping(mUi->layers, SessionModel::TextureLayers);
+    mapper.addMapping(mUi->samples, SessionModel::TextureSamples);
+    mapper.addMapping(mUi->flipY, SessionModel::TextureFlipY);
+}
 
 void TextureProperties::setFormat(QVariant value) {
     auto format = static_cast<Texture::Format>(value.toInt());
@@ -233,6 +240,7 @@ void TextureProperties::setFormat(QVariant value) {
 void TextureProperties::updateWidgets()
 {
     auto dimensions = 0;
+    auto layered = false;
     auto multisampling = false;
     auto target = static_cast<QOpenGLTexture::Target>(
         mUi->target->currentData().toInt());
@@ -243,6 +251,10 @@ void TextureProperties::updateWidgets()
             break;
 
         case QOpenGLTexture::Target1DArray:
+            dimensions = 1;
+            layered = true;
+            break;
+
         case QOpenGLTexture::Target2D:
         case QOpenGLTexture::TargetCubeMap:
         case QOpenGLTexture::TargetRectangle:
@@ -255,18 +267,24 @@ void TextureProperties::updateWidgets()
             break;
 
         case QOpenGLTexture::Target2DArray:
-        case QOpenGLTexture::Target3D:
         case QOpenGLTexture::TargetCubeMapArray:
-            dimensions = 3;
+            dimensions = 2;
+            layered = true;
             break;
 
         case QOpenGLTexture::Target2DMultisampleArray:
-            dimensions = 3;
+            dimensions = 2;
+            layered = true;
             multisampling = true;
+            break;
+
+        case QOpenGLTexture::Target3D:
+            dimensions = 3;
             break;
     }
     setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, dimensions > 1);
     setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth, dimensions > 2);
+    setFormVisibility(mUi->formLayout, mUi->labelLayers, mUi->layers, layered);
     setFormVisibility(mUi->formLayout, mUi->labelSamples, mUi->samples, multisampling);
     setFormVisibility(mUi->formLayout, mUi->labelFlipY, mUi->flipY, dimensions > 1);
 }

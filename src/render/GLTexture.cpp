@@ -8,6 +8,7 @@ GLTexture::GLTexture(const Texture &texture)
     , mWidth(texture.width)
     , mHeight(texture.height)
     , mDepth(texture.depth)
+    , mLayers(texture.layers)
     , mSamples(texture.samples)
     , mFlipY(texture.flipY)
     , mMultisampleTarget(texture.target)
@@ -259,8 +260,10 @@ void GLTexture::createTexture()
     getDataFormat(&format, &type);
 
     mTexture.reset(new QOpenGLTexture(mTarget));
-    mTexture->setSize(mWidth, mHeight, mDepth);
     mTexture->setFormat(mFormat);
+    mTexture->setSize(mWidth, mHeight, mDepth);
+    if (mLayers > 1)
+        mTexture->setLayers(mLayers);
     mTexture->setAutoMipMapGenerationEnabled(false);
     mTexture->setMipLevels(mType == Texture::Type::Color ?
         mTexture->maximumMipLevels() : 1);
@@ -268,8 +271,10 @@ void GLTexture::createTexture()
 
     if (mMultisampleTarget != mTarget) {
         mMultisampleTexture.reset(new QOpenGLTexture(mMultisampleTarget));
-        mMultisampleTexture->setSize(mWidth, mHeight, mDepth);
         mMultisampleTexture->setFormat(mFormat);
+        mMultisampleTexture->setSize(mWidth, mHeight, mDepth);
+        if (mLayers > 1)
+            mMultisampleTexture->setLayers(mLayers);
         mMultisampleTexture->setSamples(mSamples);
         mMultisampleTexture->allocateStorage();
     }
@@ -296,12 +301,12 @@ void GLTexture::upload()
 
 int GLTexture::getImageWidth(int level) const
 {
-    return std::max(mWidth >> level, 1);
+    return std::max(mTexture->width() >> level, 1);
 }
 
 int GLTexture::getImageHeight(int level) const
 {
-    return std::max(mHeight >> level, 1);
+    return std::max(mTexture->height() >> level, 1);
 }
 
 void GLTexture::uploadImage(const Image &image)
@@ -323,16 +328,22 @@ void GLTexture::uploadImage(const Image &image)
     if (mFlipY)
         source = source.mirrored();
 
-    auto uploadOptions = QOpenGLPixelTransferOptions();
-    uploadOptions.setAlignment(1);
-
-    if (mTarget == QOpenGLTexture::TargetCubeMap) {
-        mTexture->setData(image.level, image.layer, image.face,
-            format, type, source.constBits(), &uploadOptions);
+    if (mTarget == QOpenGLTexture::Target3D) {
+        auto& gl = GLContext::currentContext();
+        gl.glBindTexture(mTarget, mTexture->textureId());
+        gl.glTexSubImage3D(mTarget, image.level,
+            0, 0, image.layer,
+            getImageWidth(image.level), getImageHeight(image.level), 1,
+            format, type, source.constBits());
+    }
+    else if (mTarget == QOpenGLTexture::TargetCubeMap ||
+             mTarget == QOpenGLTexture::TargetCubeMapArray) {
+        mTexture->setData(image.level, image.layer, 1,
+            image.face, format, type, source.constBits());
     }
     else {
         mTexture->setData(image.level, image.layer,
-            format, type, source.constBits(), &uploadOptions);
+            format, type, source.constBits());
     }
 
     if (mMultisampleTexture)
@@ -374,30 +385,51 @@ bool GLTexture::downloadImage(Image& image)
             *mTexture, image.level);
 
     auto& gl = GLContext::currentContext();
-    if (mTarget == QOpenGLTexture::Target1D ||
-        mTarget == QOpenGLTexture::Target2D ||
-        mTarget == QOpenGLTexture::TargetRectangle) {
+    gl.glBindTexture(mTarget, mTexture->textureId());
+    switch (mTarget) {
+        case QOpenGLTexture::Target1D:
+        case QOpenGLTexture::Target2D:
+        case QOpenGLTexture::TargetRectangle:
+            gl.glGetTexImage(mTarget, image.level, format, type, dest.bits());
+            break;
 
-        gl.glBindTexture(mTarget, mTexture->textureId());
-        gl.glGetTexImage(mTarget, image.level, format, type, dest.bits());
+        case QOpenGLTexture::Target1DArray:
+            gl.glTexSubImage2D(mTarget, image.level,
+                0, image.layer,
+                getImageWidth(image.level), 1,
+                format, type, dest.bits());
+            break;
+
+        case QOpenGLTexture::Target2DArray:
+        case QOpenGLTexture::Target3D:
+            gl.glTexSubImage3D(mTarget, image.level,
+                0, 0, image.layer,
+                getImageWidth(image.level), getImageHeight(image.level), 1,
+                format, type, dest.bits());
+            break;
+
+        case QOpenGLTexture::TargetCubeMap:
+            gl.glTexSubImage2D(image.face, image.level,
+                0, 0,
+                getImageWidth(image.level), getImageHeight(image.level),
+                format, type, dest.bits());
+            break;
+
+        case QOpenGLTexture::TargetCubeMapArray: {
+            auto layer = 6 * image.layer +
+                (image.face - QOpenGLTexture::CubeMapPositiveX);
+            gl.glTexSubImage3D(mTarget, image.level,
+                0, 0, layer,
+                getImageWidth(image.level), getImageHeight(image.level), 1,
+                format, type, dest.bits());
+            break;
+        }
+
+        default:
+            mMessages += Singletons::messageList().insert(
+                image.itemId, MessageType::DownloadingImageFailed);
+            return false;
     }    
-    else if (gl.v4_5) {
-        auto layer = image.layer;
-        if (mTarget == Texture::Target::TargetCubeMapArray)
-            layer *= 6;
-        if (mTarget == Texture::Target::TargetCubeMap ||
-            mTarget == Texture::Target::TargetCubeMapArray)
-            layer += (image.face - QOpenGLTexture::CubeMapPositiveX);
-
-        gl.v4_5->glGetTextureSubImage(mTexture->textureId(),
-            image.level, 0, 0, layer, width, height, 1,
-            format, type, dest.byteCount(), dest.bits());
-    }
-    else {
-        mMessages += Singletons::messageList().insert(
-            image.itemId, MessageType::DownloadingImageFailed);
-        return false;
-    }
 
     if (mFlipY)
         dest = dest.mirrored();

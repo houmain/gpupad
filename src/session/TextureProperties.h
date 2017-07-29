@@ -9,6 +9,7 @@ class TextureProperties;
 }
 
 class SessionProperties;
+class QDataWidgetMapper;
 
 class TextureProperties : public QWidget
 {
@@ -19,16 +20,9 @@ public:
     explicit TextureProperties(SessionProperties *sessionProperties);
     ~TextureProperties();
 
-    QWidget *fileWidget() const;
-    QWidget *targetWidget() const;
-    QWidget *widthWidget() const;
-    QWidget *heightWidget() const;
-    QWidget *depthWidget() const;
-    QWidget *samplesWidget() const;
-    QWidget *flipYWidget() const;
-
     QVariant format() const { return static_cast<int>(mFormat); }
     void setFormat(QVariant format);
+    void addMappings(QDataWidgetMapper &mapper);
 
 signals:
     void formatChanged();

@@ -322,6 +322,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(TextureWidth, Texture, width)
         ADD(TextureHeight, Texture, height)
         ADD(TextureDepth, Texture, depth)
+        ADD(TextureLayers, Texture, layers)
         ADD(TextureSamples, Texture, samples)
         ADD(TextureFlipY, Texture, flipY)
         ADD(ImageLevel, Image, level)
@@ -455,6 +456,7 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(TextureWidth, Texture, width, toInt)
         ADD(TextureHeight, Texture, height, toInt)
         ADD(TextureDepth, Texture, depth, toInt)
+        ADD(TextureLayers, Texture, layers, toInt)
         ADD(TextureSamples, Texture, samples, toInt)
         ADD(TextureFlipY, Texture, flipY, toBool)
         ADD(ImageLevel, Image, level, toInt)
@@ -1034,6 +1036,8 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
                 write("height",  texture.height);
             if (texture.depth > 1)
                 write("depth",  texture.depth);
+            if (texture.layers > 1)
+                write("layers",  texture.layers);
             if (texture.samples > 1)
                 write("samples",  texture.samples);
             if (texture.flipY)
@@ -1305,6 +1309,7 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             read("width", texture.width);
             read("height", texture.height);
             read("depth", texture.depth);
+            read("layers", texture.layers);
             read("samples", texture.samples);
             readBool("flipY", texture.flipY);
             break;

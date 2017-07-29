@@ -23,7 +23,7 @@ public:
     Texture::Type type() const { return mType; }
     int width() const { return mWidth; }
     int height() const { return mHeight; }
-    Texture::Target target() const { return mTarget; }
+    Texture::Target target() const { return mMultisampleTarget; }
     Texture::Format format() const { return mFormat; }
 
     void clear(QColor color, float depth, int stencil);
@@ -58,6 +58,7 @@ private:
     int mWidth{ };
     int mHeight{ };
     int mDepth{ };
+    int mLayers{ };
     int mSamples{ };
     bool mFlipY{ };
     QList<Image> mImages;

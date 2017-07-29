@@ -339,15 +339,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             break;
 
         case ItemType::Texture:
-            // TODO: move to TextureProperties class, remove widget getters
-            map(mTextureProperties->fileWidget(), SessionModel::FileName);
-            map(mTextureProperties->targetWidget(), SessionModel::TextureTarget);
-            map(mTextureProperties, SessionModel::TextureFormat);
-            map(mTextureProperties->widthWidget(), SessionModel::TextureWidth);
-            map(mTextureProperties->heightWidget(), SessionModel::TextureHeight);
-            map(mTextureProperties->depthWidget(), SessionModel::TextureDepth);
-            map(mTextureProperties->samplesWidget(), SessionModel::TextureSamples);
-            map(mTextureProperties->flipYWidget(), SessionModel::TextureFlipY);
+            mTextureProperties->addMappings(*mMapper);
             break;
 
         case ItemType::Image:

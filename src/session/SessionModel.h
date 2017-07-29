@@ -29,6 +29,7 @@ public:
         TextureWidth,
         TextureHeight,
         TextureDepth,
+        TextureLayers,
         TextureSamples,
         TextureFlipY,
         ImageLevel,
