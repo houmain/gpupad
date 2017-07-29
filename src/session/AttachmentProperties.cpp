@@ -99,12 +99,11 @@ AttachmentProperties::~AttachmentProperties()
     delete mUi;
 }
 
-Texture::Kind AttachmentProperties::currentTextureKind() const
+TextureKind AttachmentProperties::currentTextureKind() const
 {
-    if (!mUi->texture->currentData().isNull())
-        if (auto texture = castItem<Texture>(mSessionProperties.model().findItem(
-                mUi->texture->currentData().toInt())))
-            return texture->getKind();
+    if (auto texture = castItem<Texture>(mSessionProperties.model().findItem(
+            mUi->texture->currentData().toInt())))
+        return getKind(*texture);
     return { };
 }
 
@@ -132,8 +131,8 @@ void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
     //mapper.addMapping(mUi->colorWriteMask, SessionModel::AttachmentColorWriteMask);
 
     mapper.addMapping(mUi->depthCompareFunc, SessionModel::AttachmentDepthCompareFunc);
-    mapper.addMapping(mUi->depthBiasSlope, SessionModel::AttachmentDepthBiasSlope);
-    mapper.addMapping(mUi->depthBiasConst, SessionModel::AttachmentDepthBiasConst);
+    mapper.addMapping(mUi->depthOffsetFactor, SessionModel::AttachmentDepthOffsetFactor);
+    mapper.addMapping(mUi->depthOffsetUnits, SessionModel::AttachmentDepthOffsetUnits);
     mapper.addMapping(mUi->depthClamp, SessionModel::AttachmentDepthClamp);
     mapper.addMapping(mUi->depthWrite, SessionModel::AttachmentDepthWrite);
 

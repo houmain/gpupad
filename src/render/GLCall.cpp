@@ -31,7 +31,7 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Buffer &buffer)
             mUsedItems += column->id;
             mIndexBuffer = indices;
             mIndexType = column->dataType;
-            mIndicesOffset = mCall.first * buffer.stride();
+            mIndicesOffset = mCall.first * getStride(buffer);
         }
 }
 
@@ -41,7 +41,7 @@ void GLCall::setIndirectBuffer(GLBuffer *commands, const Buffer &buffer)
     foreach (const Item *item, buffer.items)
         mUsedItems += item->id;
     mIndirectBuffer = commands;
-    mIndirectStride = buffer.stride();
+    mIndirectStride = getStride(buffer);
     mIndirectOffset = 0;
 }
 
@@ -110,6 +110,9 @@ void GLCall::executeDraw()
     if (mProgram) {
         timerQuery().begin();
         auto& gl = GLContext::currentContext();
+
+        if (mCall.primitiveType == Call::Patches && gl.v4_0)
+            gl.v4_0->glPatchParameteri(GL_PATCH_VERTICES, mCall.patchVertices);
 
         if (mCall.type == Call::Draw) {
             // DrawArrays(InstancedBaseInstance)

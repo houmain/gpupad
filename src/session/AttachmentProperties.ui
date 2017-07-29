@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>297</width>
-    <height>496</height>
+    <height>510</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -310,14 +310,14 @@
           <widget class="DataComboBox" name="depthCompareFunc"/>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="labelDepthBiasSlope">
+          <widget class="QLabel" name="labelOffsetFactor">
            <property name="text">
-            <string>Depth Bias Slope</string>
+            <string>Offset Factor</string>
            </property>
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="depthBiasSlope">
+          <widget class="QDoubleSpinBox" name="depthOffsetFactor">
            <property name="decimals">
             <number>3</number>
            </property>
@@ -333,25 +333,9 @@
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="labelDepthBiasConst">
+          <widget class="QLabel" name="labelOffsetUnits">
            <property name="text">
-            <string>Depth Bias Const.</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QDoubleSpinBox" name="depthBiasConst">
-           <property name="decimals">
-            <number>3</number>
-           </property>
-           <property name="minimum">
-            <double>-1000.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>1000.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.001000000000000</double>
+            <string>Offset Units</string>
            </property>
           </widget>
          </item>
@@ -392,6 +376,13 @@
            </property>
            <property name="text">
             <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSpinBox" name="depthOffsetUnits">
+           <property name="minimum">
+            <number>-99</number>
            </property>
           </widget>
          </item>
@@ -639,14 +630,14 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>DataComboBox</class>
-   <extends>QComboBox</extends>
-   <header>session/DataComboBox.h</header>
-  </customwidget>
-  <customwidget>
    <class>ReferenceComboBox</class>
    <extends>QComboBox</extends>
    <header>session/ReferenceComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>DataComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/DataComboBox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

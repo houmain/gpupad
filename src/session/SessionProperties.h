@@ -68,6 +68,7 @@ public:
 
 private slots:
     void updateImageWidgets(const QModelIndex &index);
+    void updateSamplerWidgets(const QModelIndex &index);
 
 private:
     void fillComboBoxes();

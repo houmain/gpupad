@@ -64,51 +64,12 @@ struct Column : Item
     DataType dataType{ DataType::Float };
     int count{ 1 };
     int padding{ 0 };
-
-    int size() const
-    {
-        switch (dataType) {
-            case Int8: return 1;
-            case Int16: return 2;
-            case Int32: return 4;
-            //case Int64: return 8;
-            case Uint8: return 1;
-            case Uint16: return 2;
-            case Uint32: return 4;
-            //case Uint64: return 8;
-            case Float: return 4;
-            case Double: return 8;
-        }
-        return 0;
-    }
 };
 
 struct Buffer : FileItem
 {
     int offset{ 0 };
     int rowCount{ 1 };
-
-    int stride() const
-    {
-        auto stride = 0;
-        foreach (const Item* item, items) {
-            auto& column = *static_cast<const Column*>(item);
-            stride += column.count * column.size() + column.padding;
-        }
-        return stride;
-    }
-
-    int columnOffset(const Column* col) const
-    {
-        auto offset = 0;
-        foreach (const Item* item, items) {
-            const auto& column = *static_cast<const Column*>(item);
-            if (&column == col)
-                return offset;
-            offset += column.count * column.size() + column.padding;
-        }
-        return offset;
-    }
 };
 
 struct Texture : FileItem
@@ -124,71 +85,6 @@ struct Texture : FileItem
     int layers{ 1 };
     int samples{ 1 };
     bool flipY{ };
-
-    struct Kind {
-        int dimensions;
-        bool color;
-        bool depth;
-        bool stencil;
-        bool array;
-        bool multisample;
-    };
-
-    Kind getKind() const
-    {
-        auto kind = Kind{ };
-
-        switch (target) {
-            case QOpenGLTexture::Target1D:
-            case QOpenGLTexture::Target1DArray:
-                kind.dimensions = 1;
-                break;
-            case QOpenGLTexture::Target3D:
-                kind.dimensions = 3;
-                break;
-            default:
-                kind.dimensions = 2;
-        }
-
-        switch (target) {
-            case QOpenGLTexture::Target1DArray:
-            case QOpenGLTexture::Target2DArray:
-            case QOpenGLTexture::TargetCubeMapArray:
-            case QOpenGLTexture::Target2DMultisampleArray:
-                kind.array = true;
-                break;
-            default:
-                break;
-        }
-
-        switch (target) {
-            case QOpenGLTexture::Target2DMultisample:
-            case QOpenGLTexture::Target2DMultisampleArray:
-                kind.multisample = true;
-                break;
-            default:
-                break;
-        }
-
-        switch (format) {
-            case QOpenGLTexture::D16:
-            case QOpenGLTexture::D24:
-            case QOpenGLTexture::D32:
-            case QOpenGLTexture::D32F:
-                kind.depth = true;
-                break;
-            case QOpenGLTexture::D24S8:
-            case QOpenGLTexture::D32FS8X24:
-                kind.depth = kind.stencil = true;
-                break;
-            case QOpenGLTexture::S8:
-                kind.stencil = true;
-                break;
-            default:
-                kind.color = true;
-        }
-        return kind;
-    }
 };
 
 struct Image : FileItem
@@ -256,21 +152,6 @@ struct Binding : Item
 
     // each value is a QStringList (with up to 16 fields)
     QVariantList values;
-
-    int valueCount() const { return values.size(); }
-
-    QStringList getValue(int index) const
-    {
-        return (index < 0 || index >= values.size() ?
-                QStringList() : values[index].toStringList());
-    }
-
-    QString getField(int valueIndex, int fieldIndex) const
-    {
-        auto value = getValue(valueIndex);
-        return (fieldIndex < 0 || fieldIndex >= value.size() ?
-                QString() : value[fieldIndex]);
-    }
 };
 
 struct VertexStream : Item
@@ -389,8 +270,8 @@ struct Attachment : Item
     unsigned int colorWriteMask{ 0xF };
 
     ComparisonFunction depthCompareFunc{ ComparisonFunction::Less };
-    float depthBiasSlope{ };
-    float depthBiasConst{ };
+    float depthOffsetFactor{ };
+    float depthOffsetUnits{ };
     bool depthClamp{ };
     bool depthWrite{ true };
 
@@ -458,6 +339,8 @@ struct Call : Item
     ItemId indirectBufferId{ };
     int drawCount{ 1 };
 
+    int patchVertices{ 3 };
+
     int workGroupsX{ 1 };
     int workGroupsY{ 1 };
     int workGroupsZ{ 1 };
@@ -473,52 +356,5 @@ struct Call : Item
 struct Script : FileItem
 {
 };
-
-template<typename T> ItemType getItemType();
-template<> inline ItemType getItemType<Group>() { return ItemType::Group; }
-template<> inline ItemType getItemType<Buffer>() { return ItemType::Buffer; }
-template<> inline ItemType getItemType<Column>() { return ItemType::Column; }
-template<> inline ItemType getItemType<Texture>() { return ItemType::Texture; }
-template<> inline ItemType getItemType<Image>() { return ItemType::Image; }
-template<> inline ItemType getItemType<Sampler>() { return ItemType::Sampler; }
-template<> inline ItemType getItemType<Program>() { return ItemType::Program; }
-template<> inline ItemType getItemType<Shader>() { return ItemType::Shader; }
-template<> inline ItemType getItemType<Binding>() { return ItemType::Binding; }
-template<> inline ItemType getItemType<VertexStream>() { return ItemType::VertexStream; }
-template<> inline ItemType getItemType<Attribute>() { return ItemType::Attribute; }
-template<> inline ItemType getItemType<Target>() { return ItemType::Target; }
-template<> inline ItemType getItemType<Attachment>() { return ItemType::Attachment; }
-template<> inline ItemType getItemType<Call>() { return ItemType::Call; }
-template<> inline ItemType getItemType<Script>() { return ItemType::Script; }
-
-template <typename T>
-const T* castItem(const Item &item)
-{
-    if (item.itemType == getItemType<T>())
-        return static_cast<const T*>(&item);
-    return nullptr;
-}
-
-template <typename T>
-const T* castItem(const Item *item)
-{
-    return (item ? castItem<T>(*item) : nullptr);
-}
-
-inline const FileItem* castFileItem(const Item &item)
-{
-    if (item.itemType == ItemType::Buffer ||
-        item.itemType == ItemType::Texture ||
-        item.itemType == ItemType::Image ||
-        item.itemType == ItemType::Shader ||
-        item.itemType == ItemType::Script)
-        return static_cast<const FileItem*>(&item);
-    return nullptr;
-}
-
-inline const FileItem* castFileItem(const Item *item)
-{
-    return (item ? castFileItem(*item) : nullptr);
-}
 
 #endif // ITEM_H

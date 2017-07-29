@@ -1,7 +1,7 @@
 #ifndef SESSIONMODEL_H
 #define SESSIONMODEL_H
 
-#include "Item.h"
+#include "ItemFunctions.h"
 #include <QAbstractItemModel>
 #include <QUndoStack>
 #include <QSet>
@@ -61,8 +61,8 @@ public:
         AttachmentBlendAlphaDest,
         AttachmentColorWriteMask,
         AttachmentDepthCompareFunc,
-        AttachmentDepthBiasSlope,
-        AttachmentDepthBiasConst,
+        AttachmentDepthOffsetFactor,
+        AttachmentDepthOffsetUnits,
         AttachmentDepthClamp,
         AttachmentDepthWrite,
         AttachmentStencilFrontCompareFunc,
@@ -88,6 +88,7 @@ public:
         CallTargetId,
         CallVertexStreamId,
         CallPrimitiveType,
+        CallPatchVertices,
         CallCount,
         CallFirst,
         CallIndexBufferId,

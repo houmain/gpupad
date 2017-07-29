@@ -2,7 +2,7 @@
 #include <QOpenGLPixelTransferOptions>
 
 GLTexture::GLTexture(const Texture &texture)
-    : mKind(texture.getKind())
+    : mKind(getKind(texture))
     , mTarget(texture.target)
     , mFormat(texture.format)
     , mWidth(texture.width)

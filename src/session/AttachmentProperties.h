@@ -1,7 +1,7 @@
 #ifndef ATTACHMENTPROPERTIES_H
 #define ATTACHMENTPROPERTIES_H
 
-#include "Item.h"
+#include "ItemFunctions.h"
 #include <QWidget>
 #include <QVariant>
 
@@ -19,7 +19,7 @@ public:
     explicit AttachmentProperties(SessionProperties *sessionProperties);
     ~AttachmentProperties();
 
-    Texture::Kind currentTextureKind() const;
+    TextureKind currentTextureKind() const;
     void addMappings(QDataWidgetMapper &mapper);
 
 protected:

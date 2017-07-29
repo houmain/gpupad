@@ -213,6 +213,15 @@ TextureProperties::~TextureProperties()
     delete mUi;
 }
 
+TextureKind TextureProperties::currentTextureKind() const
+{
+    if (auto texture = mSessionProperties.model().item<Texture>(
+            mSessionProperties.currentModelIndex()))
+        return getKind(*texture);
+    return { };
+}
+
+
 void TextureProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->file, SessionModel::FileName);
@@ -239,54 +248,12 @@ void TextureProperties::setFormat(QVariant value) {
 
 void TextureProperties::updateWidgets()
 {
-    auto dimensions = 0;
-    auto layered = false;
-    auto multisampling = false;
-    auto target = static_cast<QOpenGLTexture::Target>(
-        mUi->target->currentData().toInt());
-    switch (target) {
-        case QOpenGLTexture::Target1D:
-        case QOpenGLTexture::TargetBuffer:
-            dimensions = 1;
-            break;
-
-        case QOpenGLTexture::Target1DArray:
-            dimensions = 1;
-            layered = true;
-            break;
-
-        case QOpenGLTexture::Target2D:
-        case QOpenGLTexture::TargetCubeMap:
-        case QOpenGLTexture::TargetRectangle:
-            dimensions = 2;
-            break;
-
-        case QOpenGLTexture::Target2DMultisample:
-            dimensions = 2;
-            multisampling = true;
-            break;
-
-        case QOpenGLTexture::Target2DArray:
-        case QOpenGLTexture::TargetCubeMapArray:
-            dimensions = 2;
-            layered = true;
-            break;
-
-        case QOpenGLTexture::Target2DMultisampleArray:
-            dimensions = 2;
-            layered = true;
-            multisampling = true;
-            break;
-
-        case QOpenGLTexture::Target3D:
-            dimensions = 3;
-            break;
-    }
-    setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, dimensions > 1);
-    setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth, dimensions > 2);
-    setFormVisibility(mUi->formLayout, mUi->labelLayers, mUi->layers, layered);
-    setFormVisibility(mUi->formLayout, mUi->labelSamples, mUi->samples, multisampling);
-    setFormVisibility(mUi->formLayout, mUi->labelFlipY, mUi->flipY, dimensions > 1);
+    auto kind = currentTextureKind();
+    setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, kind.dimensions > 1);
+    setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth, kind.dimensions > 2);
+    setFormVisibility(mUi->formLayout, mUi->labelLayers, mUi->layers, kind.array);
+    setFormVisibility(mUi->formLayout, mUi->labelSamples, mUi->samples, kind.multisample);
+    setFormVisibility(mUi->formLayout, mUi->labelFlipY, mUi->flipY, kind.dimensions > 1);
 }
 
 void TextureProperties::updateFormatDataWidget(QVariant formatType)

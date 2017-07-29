@@ -117,6 +117,7 @@ Project {
           "src/session/GroupProperties.ui",
           "src/session/ImageProperties.ui",
           "src/session/Item.h",
+          "src/session/ItemFunctions.h",
           "src/session/ProgramProperties.ui",
           "src/session/ReferenceComboBox.cpp",
           "src/session/ReferenceComboBox.h",

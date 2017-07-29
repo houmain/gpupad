@@ -20,7 +20,7 @@ public:
     explicit GLTexture(const Texture &texture);
     bool operator==(const GLTexture &rhs) const;
 
-    Texture::Kind kind() const { return mKind; }
+    TextureKind kind() const { return mKind; }
     int width() const { return mWidth; }
     int height() const { return mHeight; }
     Texture::Target target() const { return mMultisampleTarget; }
@@ -52,7 +52,7 @@ private:
 
     QSet<ItemId> mUsedItems;
     QList<MessagePtr> mMessages;
-    Texture::Kind mKind{ };
+    TextureKind mKind{ };
     Texture::Target mTarget{ };
     Texture::Format mFormat{ };
     int mWidth{ };

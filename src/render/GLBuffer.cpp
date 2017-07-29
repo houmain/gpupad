@@ -4,7 +4,7 @@ GLBuffer::GLBuffer(const Buffer &buffer)
     : mItemId(buffer.id)
     , mFileName(buffer.fileName)
     , mOffset(buffer.offset)
-    , mSize(buffer.rowCount * buffer.stride())
+    , mSize(buffer.rowCount * getStride(buffer))
 {
     mUsedItems += buffer.id;
 }

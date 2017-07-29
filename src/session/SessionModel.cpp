@@ -354,8 +354,8 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest)
         ADD(AttachmentColorWriteMask, Attachment, colorWriteMask)
         ADD(AttachmentDepthCompareFunc, Attachment, depthCompareFunc)
-        ADD(AttachmentDepthBiasSlope, Attachment, depthBiasSlope)
-        ADD(AttachmentDepthBiasConst, Attachment, depthBiasConst)
+        ADD(AttachmentDepthOffsetFactor, Attachment, depthOffsetFactor)
+        ADD(AttachmentDepthOffsetUnits, Attachment, depthOffsetUnits)
         ADD(AttachmentDepthClamp, Attachment, depthClamp)
         ADD(AttachmentDepthWrite, Attachment, depthWrite)
         ADD(AttachmentStencilFrontCompareFunc, Attachment, stencilFrontCompareFunc)
@@ -381,6 +381,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(CallTargetId, Call, targetId)
         ADD(CallVertexStreamId, Call, vertexStreamId)
         ADD(CallPrimitiveType, Call, primitiveType)
+        ADD(CallPatchVertices, Call, patchVertices)
         ADD(CallCount, Call, count)
         ADD(CallFirst, Call, first)
         ADD(CallIndexBufferId, Call, indexBufferId)
@@ -490,8 +491,8 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest, toInt)
         ADD(AttachmentColorWriteMask, Attachment, colorWriteMask, toUInt)
         ADD(AttachmentDepthCompareFunc, Attachment, depthCompareFunc, toInt)
-        ADD(AttachmentDepthBiasSlope, Attachment, depthBiasSlope, toFloat)
-        ADD(AttachmentDepthBiasConst, Attachment, depthBiasConst, toFloat)
+        ADD(AttachmentDepthOffsetFactor, Attachment, depthOffsetFactor, toFloat)
+        ADD(AttachmentDepthOffsetUnits, Attachment, depthOffsetUnits, toFloat)
         ADD(AttachmentDepthClamp, Attachment, depthClamp, toBool)
         ADD(AttachmentDepthWrite, Attachment, depthWrite, toBool)
         ADD(AttachmentStencilFrontCompareFunc, Attachment, stencilFrontCompareFunc, toInt)
@@ -517,6 +518,7 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(CallTargetId, Call, targetId, toInt)
         ADD(CallVertexStreamId, Call, vertexStreamId, toInt)
         ADD(CallPrimitiveType, Call, primitiveType, toInt)
+        ADD(CallPatchVertices, Call, patchVertices, toInt)
         ADD(CallCount, Call, count, toInt)
         ADD(CallFirst, Call, first, toInt)
         ADD(CallIndexBufferId, Call, indexBufferId, toInt)
@@ -1032,20 +1034,21 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
 
         case ItemType::Texture: {
             const auto &texture = static_cast<const Texture&>(item);
+            auto kind = getKind(texture);
             writeFileName("fileName", texture.fileName);
             write("target", texture.target);
             write("format",  texture.format);
             write("width",  texture.width);
-            if (texture.height > 1)
+            if (kind.dimensions > 1)
                 write("height",  texture.height);
-            if (texture.depth > 1)
-                write("depth",  texture.depth);
-            if (texture.layers > 1)
-                write("layers",  texture.layers);
-            if (texture.samples > 1)
-                write("samples",  texture.samples);
-            if (texture.flipY)
-                writeBool("flipY",  texture.flipY);
+            if (kind.dimensions > 2)
+                write("depth", texture.depth);
+            if (kind.array)
+                write("layers", texture.layers);
+            if (kind.multisample)
+                write("samples", texture.samples);
+            if (kind.dimensions > 1 && texture.flipY)
+                writeBool("flipY", texture.flipY);
             break;
         }
 
@@ -1102,7 +1105,6 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
             break;
         }
 
-
         case ItemType::Target: {
             const auto &target = static_cast<const Target&>(item);
             write("frontFace", target.frontFace);
@@ -1114,89 +1116,94 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
 
         case ItemType::Attachment: {
             const auto &attachment = static_cast<const Attachment&>(item);
+            auto kind = TextureKind();
+            if (auto texture = findItem<Texture>(attachment.textureId))
+                kind = getKind(*texture);
+
             writeRef("textureId", attachment.textureId);
             write("level", attachment.level);
-            writeBool("layered", attachment.layered);
-            write("layer", attachment.layer);
-            write("blendColorEq", attachment.blendColorEq);
-            write("blendColorSource", attachment.blendColorSource);
-            write("blendColorDest", attachment.blendColorDest);
-            write("blendAlphaEq", attachment.blendAlphaEq);
-            write("blendAlphaSource", attachment.blendAlphaSource);
-            write("blendAlphaDest", attachment.blendAlphaDest);
-            write("colorWriteMask", attachment.colorWriteMask);
-            write("depthCompareFunc", attachment.depthCompareFunc);
-            write("depthBiasSlope", attachment.depthBiasSlope);
-            write("depthBiasConst", attachment.depthBiasConst);
-            write("depthClamp", attachment.depthClamp);
-            writeBool("depthWrite", attachment.depthWrite);
-            write("stencilFrontCompareFunc", attachment.stencilFrontCompareFunc);
-            write("stencilFrontReference", attachment.stencilFrontReference);
-            write("stencilFrontReadMask", attachment.stencilFrontReadMask);
-            write("stencilFrontFailOp", attachment.stencilFrontFailOp);
-            write("stencilFrontDepthFailOp", attachment.stencilFrontDepthFailOp);
-            write("stencilFrontDepthPassOp", attachment.stencilFrontDepthPassOp);
-            write("stencilFrontWriteMask", attachment.stencilFrontWriteMask);
-            write("stencilBackCompareFunc", attachment.stencilBackCompareFunc);
-            write("stencilBackReference", attachment.stencilBackReference);
-            write("stencilBackReadMask", attachment.stencilBackReadMask);
-            write("stencilBackFailOp", attachment.stencilBackFailOp);
-            write("stencilBackDepthFailOp", attachment.stencilBackDepthFailOp);
-            write("stencilBackDepthPassOp", attachment.stencilBackDepthPassOp);
-            write("stencilBackWriteMask", attachment.stencilBackWriteMask);
+            if (kind.array) {
+              writeBool("layered", attachment.layered);
+              write("layer", attachment.layer);
+            }
+            if (kind.color) {
+                write("blendColorEq", attachment.blendColorEq);
+                write("blendColorSource", attachment.blendColorSource);
+                write("blendColorDest", attachment.blendColorDest);
+                write("blendAlphaEq", attachment.blendAlphaEq);
+                write("blendAlphaSource", attachment.blendAlphaSource);
+                write("blendAlphaDest", attachment.blendAlphaDest);
+                write("colorWriteMask", attachment.colorWriteMask);
+            }
+            if (kind.depth) {
+                write("depthCompareFunc", attachment.depthCompareFunc);
+                write("depthOffsetFactor", attachment.depthOffsetFactor);
+                write("depthOffsetUnits", attachment.depthOffsetUnits);
+                write("depthClamp", attachment.depthClamp);
+                writeBool("depthWrite", attachment.depthWrite);
+            }
+            if (kind.stencil) {
+                write("stencilFrontCompareFunc", attachment.stencilFrontCompareFunc);
+                write("stencilFrontReference", attachment.stencilFrontReference);
+                write("stencilFrontReadMask", attachment.stencilFrontReadMask);
+                write("stencilFrontFailOp", attachment.stencilFrontFailOp);
+                write("stencilFrontDepthFailOp", attachment.stencilFrontDepthFailOp);
+                write("stencilFrontDepthPassOp", attachment.stencilFrontDepthPassOp);
+                write("stencilFrontWriteMask", attachment.stencilFrontWriteMask);
+                write("stencilBackCompareFunc", attachment.stencilBackCompareFunc);
+                write("stencilBackReference", attachment.stencilBackReference);
+                write("stencilBackReadMask", attachment.stencilBackReadMask);
+                write("stencilBackFailOp", attachment.stencilBackFailOp);
+                write("stencilBackDepthFailOp", attachment.stencilBackDepthFailOp);
+                write("stencilBackDepthPassOp", attachment.stencilBackDepthPassOp);
+                write("stencilBackWriteMask", attachment.stencilBackWriteMask);
+            }
             break;
         }
 
         case ItemType::Call: {
             const auto &call = static_cast<const Call&>(item);
-
+            const auto kind = getKind(call);
             const auto type = call.type;
-            const auto drawIndexed = (type == Call::DrawIndexed || type == Call::DrawIndexedIndirect);
-            const auto drawIndirect = (type == Call::DrawIndirect || type == Call::DrawIndexedIndirect);
-            const auto draw = (type == Call::Draw || drawIndexed || drawIndirect);
-            const auto drawDirect = (draw && !drawIndirect);
-            const auto compute = (type == Call::Compute);
-            const auto clearTexture = (type == Call::ClearTexture);
-            const auto clearBuffer = (type == Call::ClearBuffer);
-            const auto genMipmaps = (type == Call::GenerateMipmaps);
 
             writeBool("checked", call.checked);
             write("type", call.type);
-            if (draw || compute)
+            if (kind.draw || kind.compute)
                 writeRef("programId", call.programId);
-            if (draw) {
+            if (kind.draw) {
                 writeRef("targetId", call.targetId);
                 writeRef("vertexStreamId", call.vertexStreamId);
                 write("primitiveType", call.primitiveType);
             }
-            if (drawIndexed) {
+            if (kind.drawPatches)
+                writeRef("patchVertices", call.patchVertices);
+            if (kind.drawIndexed)
                 writeRef("indexBufferId", call.indexBufferId);
-            }
-            if (drawDirect) {
+            if (kind.drawDirect) {
                 write("count", call.count);
                 write("first", call.first);
                 write("instanceCount", call.instanceCount);
                 write("baseInstance", call.baseInstance);
-                if (drawIndexed)
+                if (kind.drawIndexed)
                     write("baseVertex", call.baseVertex);
             }
-            if (drawIndirect) {
+            if (kind.drawIndirect) {
                 writeRef("indirectBufferId", call.indirectBufferId);
                 write("drawCount", call.drawCount);
             }
-            if (compute) {
+            if (kind.compute) {
                 write("workGroupsX", call.workGroupsX);
                 write("workGroupsY", call.workGroupsY);
                 write("workGroupsZ", call.workGroupsZ);
             }
-            if (clearTexture || genMipmaps)
+            if (type == Call::ClearTexture || type == Call::GenerateMipmaps)
                 writeRef("textureId", call.textureId);
-            if (clearTexture) {
+            if (type == Call::ClearTexture) {
                 writeString("clearColor", call.clearColor.name());
                 write("clearDepth", call.clearDepth);
                 write("clearStencil", call.clearStencil);
             }
-            if (clearBuffer)
+            if (type == Call::ClearBuffer)
                 writeRef("bufferId", call.bufferId);
             break;
         }
@@ -1396,8 +1403,8 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             readEnum("blendAlphaDest", attachment.blendAlphaDest);
             read("colorWriteMask", attachment.colorWriteMask);
             readEnum("depthCompareFunc", attachment.depthCompareFunc);
-            read("depthBiasSlope", attachment.depthBiasSlope);
-            read("depthBiasConst", attachment.depthBiasConst);
+            read("depthOffsetFactor", attachment.depthOffsetFactor);
+            read("depthOffsetUnits", attachment.depthOffsetUnits);
             read("depthClamp", attachment.depthClamp);
             readBool("depthWrite", attachment.depthWrite);
             readEnum("stencilFrontCompareFunc", attachment.stencilFrontCompareFunc);
@@ -1427,6 +1434,7 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             readRef("targetId", call.targetId);
             readRef("indexBufferId", call.indexBufferId);
             read("primitiveType", call.primitiveType);
+            read("patchVertices", call.patchVertices);
             read("count", call.count);
             read("first", call.first);
             read("baseVertex", call.baseVertex);

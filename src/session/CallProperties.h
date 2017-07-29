@@ -1,7 +1,7 @@
 #ifndef CALLPROPERTIES_H
 #define CALLPROPERTIES_H
 
-#include "Item.h"
+#include "ItemFunctions.h"
 #include <QWidget>
 #include <QVariant>
 
@@ -20,7 +20,9 @@ public:
     ~CallProperties();
 
     Call::Type currentType() const;
-    Texture::Kind currentTextureKind() const;
+    Call::PrimitiveType currentPrimitiveType() const;
+    CallKind currentCallKind() const;
+    TextureKind currentTextureKind() const;
     void addMappings(QDataWidgetMapper &mapper);
 
 private:

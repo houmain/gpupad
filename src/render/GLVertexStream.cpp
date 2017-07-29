@@ -25,10 +25,10 @@ void GLVertexStream::setAttribute(int attributeIndex,
     attribute.buffer = buffer;
     attribute.type = column.dataType;
     attribute.count = column.count;
-    if (auto b = castItem<Buffer>(column.parent)) {
-        attribute.usedItems += b->id;
-        attribute.stride = b->stride();
-        attribute.offset = b->columnOffset(&column);
+    if (auto buf = castItem<Buffer>(column.parent)) {
+        attribute.usedItems += buf->id;
+        attribute.stride = getStride(*buf);
+        attribute.offset = getColumnOffset(column);
     }
 }
 

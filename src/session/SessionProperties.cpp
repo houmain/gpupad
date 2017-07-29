@@ -114,6 +114,8 @@ SessionProperties::SessionProperties(QWidget *parent)
 
     connect(mSamplerProperties->texture, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(ItemType::Texture); });
+    connect(mSamplerProperties->texture, &ReferenceComboBox::currentDataChanged,
+        [this]() { updateSamplerWidgets(currentModelIndex()); });
     connect(mAttributeProperties->buffer, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(ItemType::Buffer); });
     connect(mAttributeProperties->buffer, &ReferenceComboBox::currentDataChanged,
@@ -357,6 +359,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             map(mSamplerProperties->wrapModeX, SessionModel::SamplerWarpModeX);
             map(mSamplerProperties->wrapModeY, SessionModel::SamplerWarpModeY);
             map(mSamplerProperties->wrapModeZ, SessionModel::SamplerWarpModeZ);
+            updateSamplerWidgets(index);
             break;
 
         case ItemType::Program:
@@ -429,24 +432,28 @@ void SessionProperties::setCurrentItemFile(const QString &fileName)
 
 void SessionProperties::updateImageWidgets(const QModelIndex &index)
 {
+    auto kind = TextureKind();
     if (auto image = mModel.item<Image>(index))
-        if (auto texture = castItem<Texture>(image->parent)) {
-            const auto isArray =
-                (texture->target == Texture::Target::Target1DArray ||
-                 texture->target == Texture::Target::Target2DArray ||
-                 texture->target == Texture::Target::Target2DMultisampleArray ||
-                 texture->target == Texture::Target::TargetCubeMapArray);
+        if (auto texture = castItem<Texture>(image->parent))
+            kind = getKind(*texture);
 
-            const auto isCubeMap =
-                (texture->target == Texture::Target::TargetCubeMap ||
-                 texture->target == Texture::Target::TargetCubeMapArray);
+    auto& ui = *mImageProperties;
+    setFormVisibility(ui.formLayout, ui.labelLayer, ui.layer, kind.array);
+    setFormVisibility(ui.formLayout, ui.labelFace, ui.face, kind.cubeMap);
+}
 
-            setFormVisibility(mImageProperties->formLayout,
-                mImageProperties->labelLayer,
-                mImageProperties->layer, isArray);
+void SessionProperties::updateSamplerWidgets(const QModelIndex &index)
+{
+    auto kind = TextureKind();
+    if (auto sampler = mModel.item<Sampler>(index))
+        if (auto texture = mModel.findItem<Texture>(sampler->textureId))
+            kind = getKind(*texture);
 
-            setFormVisibility(mImageProperties->formLayout,
-                mImageProperties->labelFace,
-                mImageProperties->face, isCubeMap);
-        }
+    auto& ui = *mSamplerProperties;
+    setFormVisibility(ui.formLayout, ui.labelWarpModeX, ui.wrapModeX,
+        kind.dimensions > 0);
+    setFormVisibility(ui.formLayout, ui.labelWarpModeY, ui.wrapModeY,
+        kind.dimensions > 1);
+    setFormVisibility(ui.formLayout, ui.labelWarpModeZ, ui.wrapModeZ,
+        kind.dimensions > 2);
 }

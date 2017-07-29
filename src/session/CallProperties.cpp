@@ -41,6 +41,8 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
         this, &CallProperties::updateWidgets);
     connect(mUi->texture, &ReferenceComboBox::currentDataChanged,
         this, &CallProperties::updateWidgets);
+    connect(mUi->primitiveType, &DataComboBox::currentDataChanged,
+        this, &CallProperties::updateWidgets);
 
     for (auto combobox : { mUi->program, mUi->vertexStream, mUi->target,
             mUi->indexBuffer, mUi->indirectBuffer, mUi->texture, mUi->buffer })
@@ -75,12 +77,25 @@ Call::Type CallProperties::currentType() const
     return static_cast<Call::Type>(mUi->type->currentData().toInt());
 }
 
-Texture::Kind CallProperties::currentTextureKind() const
+Call::PrimitiveType CallProperties::currentPrimitiveType() const
 {
-    if (!mUi->texture->currentData().isNull())
-        if (auto texture = castItem<Texture>(mSessionProperties.model().findItem(
-                mUi->texture->currentData().toInt())))
-            return texture->getKind();
+    return static_cast<Call::PrimitiveType>(
+        mUi->primitiveType->currentData().toInt());
+}
+
+CallKind CallProperties::currentCallKind() const
+{
+    if (auto texture = mSessionProperties.model().item<Call>(
+            mSessionProperties.currentModelIndex()))
+        return getKind(*texture);
+    return { };
+}
+
+TextureKind CallProperties::currentTextureKind() const
+{
+    if (auto texture = castItem<Texture>(mSessionProperties.model().findItem(
+            mUi->texture->currentData().toInt())))
+        return getKind(*texture);
     return { };
 }
 
@@ -93,6 +108,7 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->vertexStream, SessionModel::CallVertexStreamId);
 
     mapper.addMapping(mUi->primitiveType, SessionModel::CallPrimitiveType);
+    mapper.addMapping(mUi->patchVertices, SessionModel::CallPatchVertices);
     mapper.addMapping(mUi->vertexCount, SessionModel::CallCount);
     mapper.addMapping(mUi->firstVertex, SessionModel::CallFirst);
 
@@ -120,46 +136,53 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
 void CallProperties::updateWidgets()
 {
     const auto type = currentType();
-    const auto drawIndexed = (type == Call::DrawIndexed || type == Call::DrawIndexedIndirect);
-    const auto drawIndirect = (type == Call::DrawIndirect || type == Call::DrawIndexedIndirect);
-    const auto draw = (type == Call::Draw || drawIndexed || drawIndirect);
-    const auto drawDirect = (draw && !drawIndirect);
-    const auto compute = (type == Call::Compute);
-    const auto clearTexture = (type == Call::ClearTexture);
-    const auto clearBuffer = (type == Call::ClearBuffer);
-    const auto genMipmaps = (type == Call::GenerateMipmaps);
+    const auto kind = currentCallKind();
+    setFormVisibility(mUi->formLayout, mUi->labelProgram, mUi->program,
+        kind.draw || kind.compute);
+    setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target,
+        kind.draw);
+    setFormVisibility(mUi->formLayout, mUi->labelVertexStream, mUi->vertexStream,
+        kind.draw);
+    setFormVisibility(mUi->formLayout, mUi->labelIndexBuffer, mUi->indexBuffer,
+        kind.drawIndexed);
+    setFormVisibility(mUi->formLayout, mUi->labelIndirectBuffer, mUi->indirectBuffer,
+        kind.drawIndirect);
 
-    setFormVisibility(mUi->formLayout, mUi->labelProgram, mUi->program, draw || compute);
-    setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target, draw);
-    setFormVisibility(mUi->formLayout, mUi->labelVertexStream, mUi->vertexStream, draw);
-    setFormVisibility(mUi->formLayout, mUi->labelIndexBuffer, mUi->indexBuffer, drawIndexed);
-    setFormVisibility(mUi->formLayout, mUi->labelIndirectBuffer, mUi->indirectBuffer, drawIndirect);
-
-    setFormVisibility(mUi->formLayout, mUi->labelPrimitiveType, mUi->primitiveType, draw);
-    setFormVisibility(mUi->formLayout, mUi->labelVertexCount, mUi->vertexCount, drawDirect);
-    setFormVisibility(mUi->formLayout, mUi->labelInstanceCount, mUi->instanceCount, drawDirect);
-    setFormVisibility(mUi->formLayout, mUi->labelFirstVertex, mUi->firstVertex, drawDirect);
-    setFormVisibility(mUi->formLayout, mUi->labelBaseVertex, mUi->baseVertex, drawIndexed && drawDirect);
-    setFormVisibility(mUi->formLayout, mUi->labelBaseInstance, mUi->baseInstance, drawDirect);
-    setFormVisibility(mUi->formLayout, mUi->labelDrawCount, mUi->drawCount, drawIndirect);
+    setFormVisibility(mUi->formLayout, mUi->labelPrimitiveType, mUi->primitiveType,
+        kind.draw);
+    setFormVisibility(mUi->formLayout, mUi->labelPatchVertices, mUi->patchVertices,
+        currentPrimitiveType() == Call::Patches);
+    setFormVisibility(mUi->formLayout, mUi->labelVertexCount, mUi->vertexCount,
+        kind.drawDirect);
+    setFormVisibility(mUi->formLayout, mUi->labelInstanceCount, mUi->instanceCount,
+        kind.drawDirect);
+    setFormVisibility(mUi->formLayout, mUi->labelFirstVertex, mUi->firstVertex,
+        kind.drawDirect);
+    setFormVisibility(mUi->formLayout, mUi->labelBaseVertex, mUi->baseVertex,
+        kind.drawIndexed && kind.drawDirect);
+    setFormVisibility(mUi->formLayout, mUi->labelBaseInstance, mUi->baseInstance,
+        kind.drawDirect);
+    setFormVisibility(mUi->formLayout, mUi->labelDrawCount, mUi->drawCount,
+        kind.drawIndirect);
 
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsX, mUi->workGroupsX,
-        compute);
+        kind.compute);
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsY, mUi->workGroupsY,
-        compute);
+        kind.compute);
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsZ, mUi->workGroupsZ,
-        compute);
+        kind.compute);
 
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
-        clearTexture || genMipmaps);
+        type == Call::ClearTexture || type == Call::GenerateMipmaps);
 
     auto texKind = currentTextureKind();
     setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor,
-        clearTexture && texKind.color);
+        type == Call::ClearTexture && texKind.color);
     setFormVisibility(mUi->formLayout, mUi->labelClearDepth, mUi->clearDepth,
-        clearTexture && texKind.depth);
+        type == Call::ClearTexture && texKind.depth);
     setFormVisibility(mUi->formLayout, mUi->labelClearStencil, mUi->clearStencil,
-        clearTexture && texKind.stencil);
+        type == Call::ClearTexture && texKind.stencil);
 
-    setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer, clearBuffer);
+    setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
+        type == Call::ClearBuffer);
 }

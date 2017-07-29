@@ -238,8 +238,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     break;
 
                 case Binding::Type::Sampler:
-                    for (auto index = 0; index < binding->valueCount(); ++index) {
-                        auto samplerId = binding->getField(index, 0).toInt();
+                    for (auto index = 0; index < getValueCount(*binding); ++index) {
+                        auto samplerId = getField(*binding, index, 0).toInt();
                         if (auto sampler = session.findItem<Sampler>(samplerId))
                             addCommand(
                                 [binding = GLSamplerBinding{
@@ -255,9 +255,9 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     break;
 
                 case Binding::Type::Image:
-                    for (auto index = 0; index < binding->valueCount(); ++index) {
-                        auto textureId = binding->getField(index, 0).toInt();
-                        auto layer = binding->getField(index, 1).toInt();
+                    for (auto index = 0; index < getValueCount(*binding); ++index) {
+                        auto textureId = getField(*binding, index, 0).toInt();
+                        auto layer = getField(*binding, index, 1).toInt();
                         auto level = 0;
                         auto layered = false;
                         auto access = GLenum{ GL_READ_WRITE };
@@ -273,8 +273,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     break;
 
                 case Binding::Type::Buffer:
-                    for (auto index = 0; index < binding->valueCount(); ++index) {
-                        auto bufferId = binding->getField(index, 0).toInt();
+                    for (auto index = 0; index < getValueCount(*binding); ++index) {
+                        auto bufferId = getField(*binding, index, 0).toInt();
                         addCommand(
                             [binding = GLBufferBinding{
                                 binding->id,

@@ -1,7 +1,7 @@
 #ifndef TEXTUREPROPERTIES_H
 #define TEXTUREPROPERTIES_H
 
-#include "Item.h"
+#include "ItemFunctions.h"
 #include <QWidget>
 
 namespace Ui {
@@ -23,6 +23,7 @@ public:
     QVariant format() const { return static_cast<int>(mFormat); }
     void setFormat(QVariant format);
     void addMappings(QDataWidgetMapper &mapper);
+    TextureKind currentTextureKind() const;
 
 signals:
     void formatChanged();
