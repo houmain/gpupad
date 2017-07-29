@@ -3,6 +3,7 @@
 #include "SessionProperties.h"
 #include "ui_AttachmentProperties.h"
 #include <QDataWidgetMapper>
+#include <QCheckBox>
 
 AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
     : QWidget(sessionProperties)
@@ -17,6 +18,9 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
         [this](QVariant data) { return mSessionProperties.findItemName(data.toInt()); });
     connect(mUi->texture, &ReferenceComboBox::currentDataChanged,
         this, &AttachmentProperties::updateWidgets);
+    connect(mUi->layered, &QCheckBox::toggled,
+        mUi->layer, &QWidget::setEnabled);
+    mUi->layer->setEnabled(false);
 
     fill<Attachment::BlendEquation>(mUi->blendColorEq, {
         { "Add", Attachment::Add },
@@ -95,14 +99,13 @@ AttachmentProperties::~AttachmentProperties()
     delete mUi;
 }
 
-Texture::Type AttachmentProperties::currentTextureType() const
+Texture::Kind AttachmentProperties::currentTextureKind() const
 {
     if (!mUi->texture->currentData().isNull())
         if (auto texture = castItem<Texture>(mSessionProperties.model().findItem(
                 mUi->texture->currentData().toInt())))
-            return texture->type();
-
-    return Texture::Type::None;
+            return texture->getKind();
+    return { };
 }
 
 void AttachmentProperties::showEvent(QShowEvent *event)
@@ -115,6 +118,8 @@ void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->texture, SessionModel::AttachmentTextureId);
     mapper.addMapping(mUi->level, SessionModel::AttachmentLevel);
+    mapper.addMapping(mUi->layered, SessionModel::AttachmentLayered);
+    mapper.addMapping(mUi->layer, SessionModel::AttachmentLayer);
 
     mapper.addMapping(mUi->blendColorEq, SessionModel::AttachmentBlendColorEq);
     mapper.addMapping(mUi->blendColorSource, SessionModel::AttachmentBlendColorSource);
@@ -151,31 +156,28 @@ void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
 
 void AttachmentProperties::updateWidgets()
 {
-    const auto type = currentTextureType();
-    const auto color = (type == Texture::Type::Color);
-    const auto depth = (type == Texture::Type::Depth || type == Texture::Type::DepthStencil);
-    const auto stencil = (type == Texture::Type::Stencil || type == Texture::Type::DepthStencil);
+    auto kind = currentTextureKind();
+    setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, kind.color);
+    setFormVisibility(mUi->formLayout, mUi->labelLayer, mUi->layerWidget, kind.array);
 
-    setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, color);
-
-    setFormVisibility(mUi->formLayout, mUi->labelBlendColorEq, mUi->blendColorEq, color);
-    setFormVisibility(mUi->formLayout, mUi->labelBlendColorSource, mUi->blendColorSource, color);
-    setFormVisibility(mUi->formLayout, mUi->labelBlendColorDest, mUi->blendColorDest, color);
-    setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaEq, mUi->blendAlphaEq, color);
-    setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaSource, mUi->blendAlphaSource, color);
-    setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaDest, mUi->blendAlphaDest, color);
-    setFormVisibility(mUi->formLayout, mUi->labelColorWriteMask, mUi->colorWriteMask, color);
+    setFormVisibility(mUi->formLayout, mUi->labelBlendColorEq, mUi->blendColorEq, kind.color);
+    setFormVisibility(mUi->formLayout, mUi->labelBlendColorSource, mUi->blendColorSource, kind.color);
+    setFormVisibility(mUi->formLayout, mUi->labelBlendColorDest, mUi->blendColorDest, kind.color);
+    setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaEq, mUi->blendAlphaEq, kind.color);
+    setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaSource, mUi->blendAlphaSource, kind.color);
+    setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaDest, mUi->blendAlphaDest, kind.color);
+    setFormVisibility(mUi->formLayout, mUi->labelColorWriteMask, mUi->colorWriteMask, kind.color);
 
     static const QList<QString> tabTitles = {
         mUi->tabDepthStencil->tabText(0),
         mUi->tabDepthStencil->tabText(1),
         mUi->tabDepthStencil->tabText(2)
     };
-    mUi->tabDepthStencil->setVisible(depth || stencil);
+    mUi->tabDepthStencil->setVisible(kind.depth || kind.stencil);
     mUi->tabDepthStencil->clear();
-    if (depth)
+    if (kind.depth)
         mUi->tabDepthStencil->addTab(mUi->tabDepth, tabTitles[0]);
-    if (stencil) {
+    if (kind.stencil) {
         mUi->tabDepthStencil->addTab(mUi->tabStencilFront, tabTitles[1]);
         mUi->tabDepthStencil->addTab(mUi->tabStencilBack, tabTitles[2]);
     }

@@ -58,73 +58,80 @@
       <widget class="QSpinBox" name="level"/>
      </item>
      <item row="2" column="0">
+      <widget class="QLabel" name="labelLayer">
+       <property name="text">
+        <string>Layer</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
       <widget class="QLabel" name="labelBlendColorEq">
        <property name="text">
         <string>Blend Color Eq.</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="3" column="1">
       <widget class="DataComboBox" name="blendColorEq"/>
      </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="labelBlendColorSource">
        <property name="text">
         <string>&lt;html&gt;Source Color &amp;#215;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="4" column="1">
       <widget class="DataComboBox" name="blendColorSource"/>
      </item>
-     <item row="4" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="labelBlendColorDest">
        <property name="text">
         <string>&lt;html&gt;Dest. Color &amp;#215;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="5" column="1">
       <widget class="DataComboBox" name="blendColorDest"/>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="labelBlendAlphaEq">
        <property name="text">
         <string>Blend Alpha Eq.</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <widget class="DataComboBox" name="blendAlphaEq"/>
      </item>
-     <item row="6" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="labelBlendAlphaSource">
        <property name="text">
         <string>&lt;html&gt;Source Alpha &amp;#215;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <widget class="DataComboBox" name="blendAlphaSource"/>
      </item>
-     <item row="7" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="labelBlendAlphaDest">
        <property name="text">
         <string>&lt;html&gt;Dest. Alpha &amp;#215;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="8" column="1">
       <widget class="DataComboBox" name="blendAlphaDest"/>
      </item>
-     <item row="8" column="0">
+     <item row="9" column="0">
       <widget class="QLabel" name="labelColorWriteMask">
        <property name="text">
         <string>Write RGBA</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
+     <item row="9" column="1">
       <widget class="QWidget" name="colorWriteMask" native="true">
        <property name="enabled">
         <bool>false</bool>
@@ -203,6 +210,47 @@
            </size>
           </property>
          </spacer>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QWidget" name="layerWidget" native="true">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QCheckBox" name="layered">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="layer">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>

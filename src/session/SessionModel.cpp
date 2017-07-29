@@ -344,6 +344,8 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(AttributeDivisor, Attribute, divisor)
         ADD(AttachmentTextureId, Attachment, textureId)
         ADD(AttachmentLevel, Attachment, level)
+        ADD(AttachmentLayered, Attachment, layered)
+        ADD(AttachmentLayer, Attachment, layer)
         ADD(AttachmentBlendColorEq, Attachment, blendColorEq)
         ADD(AttachmentBlendColorSource, Attachment, blendColorSource)
         ADD(AttachmentBlendColorDest, Attachment, blendColorDest)
@@ -478,6 +480,8 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(AttributeDivisor, Attribute, divisor, toInt)
         ADD(AttachmentTextureId, Attachment, textureId, toInt)
         ADD(AttachmentLevel, Attachment, level, toInt)
+        ADD(AttachmentLayered, Attachment, layered, toBool)
+        ADD(AttachmentLayer, Attachment, layer, toInt)
         ADD(AttachmentBlendColorEq, Attachment, blendColorEq, toInt)
         ADD(AttachmentBlendColorSource, Attachment, blendColorSource, toInt)
         ADD(AttachmentBlendColorDest, Attachment, blendColorDest, toInt)
@@ -1112,6 +1116,8 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
             const auto &attachment = static_cast<const Attachment&>(item);
             writeRef("textureId", attachment.textureId);
             write("level", attachment.level);
+            writeBool("layered", attachment.layered);
+            write("layer", attachment.layer);
             write("blendColorEq", attachment.blendColorEq);
             write("blendColorSource", attachment.blendColorSource);
             write("blendColorDest", attachment.blendColorDest);
@@ -1380,6 +1386,8 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             auto &attachment = static_cast<Attachment&>(item);
             readRef("textureId", attachment.textureId);
             read("level", attachment.level);
+            readBool("layered", attachment.layered);
+            read("layer", attachment.layer);
             readEnum("blendColorEq", attachment.blendColorEq);
             readEnum("blendColorSource", attachment.blendColorSource);
             readEnum("blendColorDest", attachment.blendColorDest);

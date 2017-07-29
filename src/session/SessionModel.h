@@ -51,6 +51,8 @@ public:
         AttributeDivisor,
         AttachmentTextureId,
         AttachmentLevel,
+        AttachmentLayered,
+        AttachmentLayer,
         AttachmentBlendColorEq,
         AttachmentBlendColorSource,
         AttachmentBlendColorDest,

@@ -113,13 +113,6 @@ struct Buffer : FileItem
 
 struct Texture : FileItem
 {
-    enum class Type {
-        None,
-        Color,
-        Depth,
-        DepthStencil,
-        Stencil,
-    };
     using Target = QOpenGLTexture::Target;
     using Format = QOpenGLTexture::TextureFormat;
 
@@ -132,18 +125,69 @@ struct Texture : FileItem
     int samples{ 1 };
     bool flipY{ };
 
-    Type type() const
+    struct Kind {
+        int dimensions;
+        bool color;
+        bool depth;
+        bool stencil;
+        bool array;
+        bool multisample;
+    };
+
+    Kind getKind() const
     {
-        switch (format) {
-            case QOpenGLTexture::D16: return Type::Depth;
-            case QOpenGLTexture::D24: return Type::Depth;
-            case QOpenGLTexture::D32: return Type::Depth;
-            case QOpenGLTexture::D32F: return Type::Depth;
-            case QOpenGLTexture::D24S8: return Type::DepthStencil;
-            case QOpenGLTexture::D32FS8X24: return Type::DepthStencil;
-            case QOpenGLTexture::S8: return Type::Stencil;
-            default: return Type::Color;
+        auto kind = Kind{ };
+
+        switch (target) {
+            case QOpenGLTexture::Target1D:
+            case QOpenGLTexture::Target1DArray:
+                kind.dimensions = 1;
+                break;
+            case QOpenGLTexture::Target3D:
+                kind.dimensions = 3;
+                break;
+            default:
+                kind.dimensions = 2;
         }
+
+        switch (target) {
+            case QOpenGLTexture::Target1DArray:
+            case QOpenGLTexture::Target2DArray:
+            case QOpenGLTexture::TargetCubeMapArray:
+            case QOpenGLTexture::Target2DMultisampleArray:
+                kind.array = true;
+                break;
+            default:
+                break;
+        }
+
+        switch (target) {
+            case QOpenGLTexture::Target2DMultisample:
+            case QOpenGLTexture::Target2DMultisampleArray:
+                kind.multisample = true;
+                break;
+            default:
+                break;
+        }
+
+        switch (format) {
+            case QOpenGLTexture::D16:
+            case QOpenGLTexture::D24:
+            case QOpenGLTexture::D32:
+            case QOpenGLTexture::D32F:
+                kind.depth = true;
+                break;
+            case QOpenGLTexture::D24S8:
+            case QOpenGLTexture::D32FS8X24:
+                kind.depth = kind.stencil = true;
+                break;
+            case QOpenGLTexture::S8:
+                kind.stencil = true;
+                break;
+            default:
+                kind.color = true;
+        }
+        return kind;
     }
 };
 
@@ -333,6 +377,8 @@ struct Attachment : Item
 
     ItemId textureId{ };
     int level{ };
+    bool layered{ };
+    int layer{ };
 
     BlendEquation blendColorEq{ BlendEquation::Add };
     BlendFactor blendColorSource{ BlendFactor::One };

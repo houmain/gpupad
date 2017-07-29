@@ -75,14 +75,13 @@ Call::Type CallProperties::currentType() const
     return static_cast<Call::Type>(mUi->type->currentData().toInt());
 }
 
-Texture::Type CallProperties::currentTextureType() const
+Texture::Kind CallProperties::currentTextureKind() const
 {
     if (!mUi->texture->currentData().isNull())
         if (auto texture = castItem<Texture>(mSessionProperties.model().findItem(
                 mUi->texture->currentData().toInt())))
-            return texture->type();
-
-    return Texture::Type::None;
+            return texture->getKind();
+    return { };
 }
 
 void CallProperties::addMappings(QDataWidgetMapper &mapper)
@@ -144,20 +143,23 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelBaseInstance, mUi->baseInstance, drawDirect);
     setFormVisibility(mUi->formLayout, mUi->labelDrawCount, mUi->drawCount, drawIndirect);
 
-    setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsX, mUi->workGroupsX, compute);
-    setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsY, mUi->workGroupsY, compute);
-    setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsZ, mUi->workGroupsZ, compute);
+    setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsX, mUi->workGroupsX,
+        compute);
+    setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsY, mUi->workGroupsY,
+        compute);
+    setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsZ, mUi->workGroupsZ,
+        compute);
 
-    setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture, clearTexture || genMipmaps);
-    const auto textureType = currentTextureType();
-    const auto color = (textureType == Texture::Type::Color);
-    const auto depth = (textureType == Texture::Type::Depth ||
-                        textureType == Texture::Type::DepthStencil);
-    const auto stencil = (textureType == Texture::Type::Stencil ||
-                          textureType == Texture::Type::DepthStencil);
-    setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor, clearTexture && color);
-    setFormVisibility(mUi->formLayout, mUi->labelClearDepth, mUi->clearDepth, clearTexture && depth);
-    setFormVisibility(mUi->formLayout, mUi->labelClearStencil, mUi->clearStencil, clearTexture && stencil);
+    setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
+        clearTexture || genMipmaps);
+
+    auto texKind = currentTextureKind();
+    setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor,
+        clearTexture && texKind.color);
+    setFormVisibility(mUi->formLayout, mUi->labelClearDepth, mUi->clearDepth,
+        clearTexture && texKind.depth);
+    setFormVisibility(mUi->formLayout, mUi->labelClearStencil, mUi->clearStencil,
+        clearTexture && texKind.stencil);
 
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer, clearBuffer);
 }

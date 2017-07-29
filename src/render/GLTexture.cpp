@@ -2,7 +2,7 @@
 #include <QOpenGLPixelTransferOptions>
 
 GLTexture::GLTexture(const Texture &texture)
-    : mType(texture.type())
+    : mKind(texture.getKind())
     , mTarget(texture.target)
     , mFormat(texture.format)
     , mWidth(texture.width)
@@ -92,18 +92,18 @@ void GLTexture::clear(QColor color, float depth, int stencil)
     gl.glDepthMask(true);
     gl.glStencilMask(0xFF);
 
-    if (mType == Texture::Type::Depth) {
-        gl.glClearDepth(depth);
-        gl.glClear(GL_DEPTH_BUFFER_BIT);
-    }
-    else if (mType == Texture::Type::Stencil) {
-        gl.glClearStencil(stencil);
-        gl.glClear(GL_STENCIL_BUFFER_BIT);
-    }
-    else if (mType == Texture::Type::DepthStencil) {
+    if (mKind.depth && mKind.stencil) {
         gl.glClearDepth(depth);
         gl.glClearStencil(stencil);
         gl.glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    }
+    else if (mKind.depth) {
+        gl.glClearDepth(depth);
+        gl.glClear(GL_DEPTH_BUFFER_BIT);
+    }
+    else if (mKind.stencil) {
+        gl.glClearStencil(stencil);
+        gl.glClear(GL_STENCIL_BUFFER_BIT);
     }
     else {
         gl.glClearColor(color.redF(), color.greenF(),
@@ -262,18 +262,17 @@ void GLTexture::createTexture()
     mTexture.reset(new QOpenGLTexture(mTarget));
     mTexture->setFormat(mFormat);
     mTexture->setSize(mWidth, mHeight, mDepth);
-    if (mLayers > 1)
+    if (mKind.array && mLayers > 1)
         mTexture->setLayers(mLayers);
     mTexture->setAutoMipMapGenerationEnabled(false);
-    mTexture->setMipLevels(mType == Texture::Type::Color ?
-        mTexture->maximumMipLevels() : 1);
+    mTexture->setMipLevels(mKind.color ? mTexture->maximumMipLevels() : 1);
     mTexture->allocateStorage();
 
     if (mMultisampleTarget != mTarget) {
         mMultisampleTexture.reset(new QOpenGLTexture(mMultisampleTarget));
         mMultisampleTexture->setFormat(mFormat);
         mMultisampleTexture->setSize(mWidth, mHeight, mDepth);
-        if (mLayers > 1)
+        if (mKind.array && mLayers > 1)
             mMultisampleTexture->setLayers(mLayers);
         mMultisampleTexture->setSamples(mSamples);
         mMultisampleTexture->allocateStorage();
@@ -456,12 +455,12 @@ GLObject GLTexture::createFramebuffer(GLuint textureId, int level) const
     };
 
     auto attachment = GL_COLOR_ATTACHMENT0;
-    if (mType == Texture::Type::Depth)
-        attachment = GL_DEPTH_ATTACHMENT;
-    else if (mType == Texture::Type::Stencil)
-        attachment = GL_STENCIL_ATTACHMENT;
-    else if (mType == Texture::Type::DepthStencil)
+    if (mKind.depth && mKind.stencil)
         attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+    else if (mKind.depth)
+        attachment = GL_DEPTH_ATTACHMENT;
+    else if (mKind.stencil)
+        attachment = GL_STENCIL_ATTACHMENT;
 
     auto prevFramebufferId = GLint();
     gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFramebufferId);
@@ -482,12 +481,12 @@ void GLTexture::resolveMultisampleTexture(QOpenGLTexture &source,
     auto width = getImageWidth(level);
     auto height = getImageHeight(level);
     auto blitMask = GLbitfield{ GL_COLOR_BUFFER_BIT };
-    if (mType == Texture::Type::Depth)
-        blitMask = GL_DEPTH_BUFFER_BIT;
-    else if (mType == Texture::Type::Stencil)
-        blitMask = GL_STENCIL_BUFFER_BIT;
-    else if (mType == Texture::Type::DepthStencil)
+    if (mKind.depth && mKind.stencil)
         blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
+    else if (mKind.depth)
+        blitMask = GL_DEPTH_BUFFER_BIT;
+    else if (mKind.stencil)
+        blitMask = GL_STENCIL_BUFFER_BIT;
 
     auto prevFramebufferId = GLint();
     gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFramebufferId);

@@ -15,7 +15,6 @@ public:
 
 private:
     struct GLAttachment : Attachment {
-        Texture::Type type{ };
         GLTexture* texture{ };
         GLenum attachmentPoint{ };
     };

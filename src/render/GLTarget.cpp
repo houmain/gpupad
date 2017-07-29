@@ -21,10 +21,7 @@ GLTarget::GLTarget(const Target &target)
 
 void GLTarget::setAttachment(int index, GLTexture *texture)
 {
-    auto& attachment = mAttachments[index];
-    attachment.texture = texture;
-    if (texture && texture->type() != Texture::Type::Color)
-        attachment.level = 0;
+    mAttachments[index].texture = texture;
 }
 
 bool GLTarget::bind()
@@ -37,7 +34,7 @@ bool GLTarget::bind()
 
     auto colorAttachments = std::vector<GLenum>();
     for (const auto& attachment : mAttachments)
-        if (attachment.type == Texture::Type::Color)
+        if (attachment.texture && attachment.texture->kind().color)
             colorAttachments.push_back(attachment.attachmentPoint);
     gl.glDrawBuffers(static_cast<GLsizei>(colorAttachments.size()),
         colorAttachments.data());
@@ -79,25 +76,33 @@ bool GLTarget::create()
     auto nextColorAttachment = GLenum(GL_COLOR_ATTACHMENT0);
     for (auto& attachment : mAttachments)
         if (auto texture = attachment.texture) {
-            attachment.type = texture->type();
-            switch (attachment.type) {
-                case Texture::Type::Color:
-                    attachment.attachmentPoint = nextColorAttachment++;
-                    break;
-                case Texture::Type::Depth:
-                    attachment.attachmentPoint = GL_DEPTH_ATTACHMENT;
-                    break;
-                case Texture::Type::Stencil:
-                    attachment.attachmentPoint = GL_STENCIL_ATTACHMENT;
-                    break;
-                case Texture::Type::DepthStencil:
-                    attachment.attachmentPoint = GL_DEPTH_STENCIL_ATTACHMENT;
-                    break;
-                default:
-                    continue;
+            auto kind = texture->kind();
+            auto level = attachment.level;
+
+            if (kind.depth && kind.stencil) {
+                attachment.attachmentPoint = GL_DEPTH_STENCIL_ATTACHMENT;
+                level = 0;
             }
-            gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment.attachmentPoint,
-                texture->getReadOnlyTextureId(), attachment.level);
+            else if (kind.depth) {
+                attachment.attachmentPoint = GL_DEPTH_ATTACHMENT;
+                level = 0;
+            }
+            else if (kind.stencil) {
+                attachment.attachmentPoint = GL_STENCIL_ATTACHMENT;
+                level = 0;
+            }
+            else {
+                attachment.attachmentPoint = nextColorAttachment++;
+            }
+
+            if (kind.array && attachment.layered) {
+                gl.glFramebufferTextureLayer(GL_FRAMEBUFFER, attachment.attachmentPoint,
+                    texture->getReadOnlyTextureId(), level, attachment.layer);
+            }
+            else {
+                gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment.attachmentPoint,
+                    texture->getReadOnlyTextureId(), level);
+            }
             mUsedItems += texture->usedItems();
         }
 
@@ -157,12 +162,9 @@ void GLTarget::applyStates()
 void GLTarget::applyAttachmentStates(const GLAttachment &a)
 {
     auto &gl = GLContext::currentContext();
-    const auto type = a.texture->type();
-    const auto color = (type == Texture::Type::Color);
-    const auto depth = (type == Texture::Type::Depth || type == Texture::Type::DepthStencil);
-    const auto stencil = (type == Texture::Type::Stencil || type == Texture::Type::DepthStencil);
+    auto kind = a.texture->kind();
 
-    if (color) {
+    if (kind.color) {
         auto index = a.attachmentPoint - GL_COLOR_ATTACHMENT0;
         if (index == 0) {
             gl.glEnable(GL_BLEND);
@@ -185,7 +187,7 @@ void GLTarget::applyAttachmentStates(const GLAttachment &a)
             isSet(a.colorWriteMask, 3));
     }
 
-    if (depth) {
+    if (kind.depth) {
         gl.glEnable(GL_DEPTH_TEST);
         gl.glDepthFunc(a.depthCompareFunc);
         gl.glEnable(GL_POLYGON_OFFSET_POINT);
@@ -199,7 +201,7 @@ void GLTarget::applyAttachmentStates(const GLAttachment &a)
         gl.glDepthMask(a.depthWrite);
     }
 
-    if (stencil) {
+    if (kind.stencil) {
         gl.glEnable(GL_STENCIL_TEST);
         if (auto gl40 = gl.v4_0) {
             gl40->glStencilFuncSeparate(GL_FRONT, a.stencilFrontCompareFunc,
