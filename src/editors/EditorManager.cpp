@@ -365,7 +365,7 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     }
     if (!tabified) {
         addDockWidget(Qt::TopDockWidgetArea, dock);
-        resizeDocks({ dock }, { width() / 2 }, Qt::Horizontal);
+        resizeDocks({ dock }, { width() }, Qt::Horizontal);
     }
 
     mDocks.insert(dock, editor);

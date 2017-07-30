@@ -286,7 +286,6 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
         { "32 Bit Float", FormatData::Float32 },
         { "32 Bit Unsigned Int", FormatData::UnsignedInt32 },
         { "32 Bit Signed Int", FormatData::SignedInt32 },
-
         { "16 Bit Depth", FormatData::D16 },
         { "24 Bit Depth", FormatData::D24 },
         { "32 Bit Depth", FormatData::D32 },

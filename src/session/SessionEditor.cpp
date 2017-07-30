@@ -307,6 +307,7 @@ void SessionEditor::openContextMenu(const QPoint &pos)
 
 void SessionEditor::addItem(ItemType type)
 {
+    mModel.undoStack().beginMacro("Add");
     auto index = mModel.insertItem(type, currentIndex());
 
     if (type == ItemType::Buffer)
@@ -317,6 +318,8 @@ void SessionEditor::addItem(ItemType type)
         mModel.insertItem(ItemType::Attribute, index);
     else if (type == ItemType::Program)
         mModel.insertItem(ItemType::Shader, index);
+
+    mModel.undoStack().endMacro();
 
     setCurrentIndex(index);
     setExpanded(index, true);
