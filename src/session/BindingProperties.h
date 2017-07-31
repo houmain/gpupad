@@ -10,35 +10,34 @@ class BindingProperties;
 }
 
 class SessionProperties;
+class QDataWidgetMapper;
 
 class BindingProperties : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(QVariantList values READ values WRITE setValues
-        NOTIFY valuesChanged USER true)
+    Q_PROPERTY(QStringList fields READ fields WRITE setFields
+        NOTIFY fieldsChanged USER true)
 public:
     explicit BindingProperties(SessionProperties *sessionProperties);
     ~BindingProperties();
 
-    QWidget *typeWidget() const;
-    QWidget *editorWidget() const;
+    void addMappings(QDataWidgetMapper &mapper);
     Binding::Type currentType() const;
     Binding::Editor currentEditor() const;
-    void setValues(const QVariantList &values);
-    const QVariantList &values() const { return mValues; }
+    void setFields(const QStringList &fields);
+    const QStringList &fields() const { return mFields; }
 
 signals:
-    void valuesChanged(const QVariantList &values);
+    void fieldsChanged();
 
 private:
-    void updateValue(QStringList fields);
     void updateWidgets();
     QVariantList getItemIds() const;
 
     SessionProperties &mSessionProperties;
     Ui::BindingProperties *mUi;
-    QVariantList mValues;
-    bool mSuspendUpdateValue{ };
+    QStringList mFields;
+    bool mSuspendSetFields{ };
 };
 
 #endif // BINDINGPROPERTIES_H

@@ -43,25 +43,6 @@ inline int getStride(const Buffer &buffer)
     return stride;
 }
 
-inline int getValueCount(const Binding &binding)
-{
-    return binding.values.size();
-}
-
-inline  QStringList getValue(const Binding &binding, int index)
-{
-    return (index < 0 || index >= binding.values.size() ?
-        QStringList() : binding.values[index].toStringList());
-}
-
-inline QString getField(const Binding &binding,
-    int valueIndex, int fieldIndex)
-{
-    auto value = getValue(binding, valueIndex);
-    return (fieldIndex < 0 || fieldIndex >= value.size() ?
-            QString() : value[fieldIndex]);
-}
-
 struct TextureKind
 {
     int dimensions;

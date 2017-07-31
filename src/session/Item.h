@@ -147,11 +147,19 @@ struct Binding : Item
         Color
     };
 
+    struct Value {
+        QStringList fields;
+        ItemId itemId;
+        int level;
+        bool layered;
+        int layer;
+    };
+
     Type type{ };
     Editor editor{ };
-
-    // each value is a QStringList (with up to 16 fields)
-    QVariantList values;
+    int currentValue{ };
+    int valueCount{ 1 };
+    std::array<Value, 8> values{ };
 };
 
 struct VertexStream : Item

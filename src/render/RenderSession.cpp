@@ -228,18 +228,19 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
         else if (auto binding = castItem<Binding>(item)) {
             switch (binding->type) {
                 case Binding::Type::Uniform:
-                    addCommand(
-                        [binding = GLUniformBinding{
-                            binding->id, binding->name,
-                            binding->type, binding->values }
-                        ](BindingState& state) {
-                            state.top().uniforms[binding.name] = binding;
-                        });
+                    for (auto index = 0; index < binding->valueCount; ++index)
+                        addCommand(
+                            [binding = GLUniformBinding{
+                                binding->id, binding->name, index,
+                                binding->type, binding->values[index].fields }
+                            ](BindingState& state) {
+                                state.top().uniforms[binding.name] = binding;
+                            });
                     break;
 
                 case Binding::Type::Sampler:
-                    for (auto index = 0; index < getValueCount(*binding); ++index) {
-                        auto samplerId = getField(*binding, index, 0).toInt();
+                    for (auto index = 0; index < binding->valueCount; ++index) {
+                        auto samplerId = binding->values[index].itemId;
                         if (auto sampler = session.findItem<Sampler>(samplerId))
                             addCommand(
                                 [binding = GLSamplerBinding{
@@ -255,11 +256,12 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     break;
 
                 case Binding::Type::Image:
-                    for (auto index = 0; index < getValueCount(*binding); ++index) {
-                        auto textureId = getField(*binding, index, 0).toInt();
-                        auto layer = getField(*binding, index, 1).toInt();
-                        auto level = 0;
-                        auto layered = false;
+                    for (auto index = 0; index < binding->valueCount; ++index) {
+                        const auto &value = binding->values[index];
+                        auto textureId = value.itemId;
+                        auto level = value.level;
+                        auto layer = value.layer;
+                        auto layered = value.layered;
                         auto access = GLenum{ GL_READ_WRITE };
                         addCommand(
                             [binding = GLImageBinding{
@@ -273,8 +275,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     break;
 
                 case Binding::Type::Buffer:
-                    for (auto index = 0; index < getValueCount(*binding); ++index) {
-                        auto bufferId = getField(*binding, index, 0).toInt();
+                    for (auto index = 0; index < binding->valueCount; ++index) {
+                        auto bufferId = binding->values[index].itemId;
                         addCommand(
                             [binding = GLBufferBinding{
                                 binding->id,

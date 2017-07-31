@@ -12,8 +12,9 @@ struct GLUniformBinding
 {
     ItemId bindingItemId;
     QString name;
+    int arrayIndex;
     Binding::Type type;
-    QVariantList values;
+    QStringList fields;
 };
 
 struct GLSamplerBinding

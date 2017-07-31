@@ -221,7 +221,6 @@ TextureKind TextureProperties::currentTextureKind() const
     return { };
 }
 
-
 void TextureProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->file, SessionModel::FileName);

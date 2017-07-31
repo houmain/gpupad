@@ -18,6 +18,8 @@ namespace {
     const auto ProgramTag = QStringLiteral("program");
     const auto ShaderTag = QStringLiteral("shader");
     const auto BindingTag = QStringLiteral("binding");
+    const auto ValueTag = QStringLiteral("value");
+    const auto FieldTag = QStringLiteral("field");
     const auto VertexStreamTag = QStringLiteral("vertexstream");
     const auto AttributeTag = QStringLiteral("attribute");
     const auto TargetTag = QStringLiteral("target");
@@ -337,7 +339,8 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(ShaderType, Shader, type)
         ADD(BindingType, Binding, type)
         ADD(BindingEditor, Binding, editor)
-        ADD(BindingValues, Binding, values)
+        ADD(BindingValueCount, Binding, valueCount)
+        ADD(BindingCurrentValue, Binding, currentValue)
         ADD(AttributeBufferId, Attribute, bufferId)
         ADD(AttributeColumnId, Attribute, columnId)
         ADD(AttributeNormalize, Attribute, normalize)
@@ -398,6 +401,20 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(CallClearColor, Call, clearColor)
         ADD(CallClearDepth, Call, clearDepth)
         ADD(CallClearStencil, Call, clearStencil)
+#undef ADD
+
+#define ADD(COLUMN_TYPE, PROPERTY) \
+        case ColumnType::COLUMN_TYPE: \
+            if (item.itemType == ItemType::Binding) { \
+                const auto &binding = static_cast<const Binding&>(item); \
+                return binding.values[binding.currentValue].PROPERTY; \
+            } \
+            break;
+        ADD(BindingValueFields, fields)
+        ADD(BindingValueItemId, itemId)
+        ADD(BindingValueLevel, level)
+        ADD(BindingValueLayered, layered)
+        ADD(BindingValueLayer, layer)
 #undef ADD
     }
     return { };
@@ -474,7 +491,7 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(ShaderType, Shader, type, toInt)
         ADD(BindingType, Binding, type, toInt)
         ADD(BindingEditor, Binding, editor, toInt)
-        ADD(BindingValues, Binding, values, toList)
+        ADD(BindingValueCount, Binding, valueCount, toInt)
         ADD(AttributeBufferId, Attribute, bufferId, toInt)
         ADD(AttributeColumnId, Attribute, columnId, toInt)
         ADD(AttributeNormalize, Attribute, normalize, toBool)
@@ -535,6 +552,38 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(CallClearColor, Call, clearColor, value<QColor>)
         ADD(CallClearDepth, Call, clearDepth, toFloat)
         ADD(CallClearStencil, Call, clearStencil, toInt)
+#undef ADD
+
+        case ColumnType::BindingCurrentValue:
+            if (item.itemType == ItemType::Binding) {
+                auto &binding = static_cast<Binding&>(item);
+                auto newValue = qBound(0, value.toInt(),
+                    static_cast<int>(binding.values.size() - 1));
+                if (binding.currentValue != newValue) {
+                    binding.currentValue = newValue;
+                    emit dataChanged(
+                        this->index(&item, ColumnType::BindingValueFields),
+                        this->index(&item, ColumnType::BindingValueLayer));
+                }
+                return true;
+            }
+            break;
+
+#define ADD(COLUMN_TYPE, PROPERTY, TO_TYPE) \
+        case ColumnType::COLUMN_TYPE: \
+            if (item.itemType == ItemType::Binding) { \
+                auto &binding = static_cast<Binding&>(item); \
+                undoableAssignment(index, \
+                    &binding.values[binding.currentValue].PROPERTY, \
+                    value.TO_TYPE()); \
+                return true; \
+            } \
+            break;
+        ADD(BindingValueFields, fields, toStringList)
+        ADD(BindingValueItemId, itemId, toInt)
+        ADD(BindingValueLevel, level, toInt)
+        ADD(BindingValueLayered, layered, toBool)
+        ADD(BindingValueLayer, layer, toInt)
 #undef ADD
     }
     return false;
@@ -995,14 +1044,6 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
     const auto writeBool = [&](const char *name, const auto &property) {
         xml.writeAttribute(name, (property ? "true" : "false"));
     };
-    const auto writeValues = [&](const auto &property) {
-        foreach (QVariant value, property) {
-            xml.writeStartElement("value");
-            foreach (QString field, value.toStringList())
-                xml.writeTextElement("field", field);
-            xml.writeEndElement();
-        }
-    };
 
     if (item.id)
         write("id", item.id);
@@ -1088,7 +1129,26 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
             write("type", binding.type);
             if (binding.type == Binding::Uniform)
                 write("editor", binding.editor);
-            writeValues(binding.values);
+            for (auto i = 0; i < binding.valueCount; ++i) {
+                const auto &value = binding.values[i];
+                xml.writeStartElement(ValueTag);
+                switch (binding.type) {
+                    case Binding::Uniform:
+                        foreach (const QString &field, value.fields)
+                            xml.writeTextElement(FieldTag, field);
+                        break;
+                    case Binding::Image:
+                        write("level", value.level);
+                        writeBool("layered", value.layered);
+                        write("layer", value.layer);
+                        // fallthrough
+                    case Binding::Sampler:
+                    case Binding::Buffer:
+                        writeRef("itemId", value.itemId);
+                        break;
+                }
+                xml.writeEndElement();
+            }
             break;
         }
 
@@ -1269,16 +1329,6 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
         if (!value.isNull())
             property = (value.toString() == "true");
     };
-    const auto readValues = [&]() {
-        auto values = QVariantList();
-        while (xml.readNextStartElement()) {
-            auto value = QStringList();
-            while (xml.readNextStartElement())
-                value.append(xml.readElementText());
-            values.append(value);
-        }
-        return values;
-    };
 
     auto id = xml.attributes().value("id").toInt();
     if (findItem(id)) {
@@ -1363,7 +1413,18 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             auto &binding = static_cast<Binding&>(item);
             readEnum("type", binding.type);
             readEnum("editor", binding.editor);
-            binding.values = readValues();
+            binding.valueCount = 0;
+            while (xml.readNextStartElement()) {
+                binding.valueCount = qMin(binding.valueCount + 1,
+                    static_cast<int>(binding.values.size()));
+                auto &value = binding.values[binding.valueCount - 1];
+                readRef("itemId", value.itemId);
+                read("level", value.level);
+                readBool("layered", value.layered);
+                read("layer", value.layer);
+                while (xml.readNextStartElement())
+                    value.fields.append(xml.readElementText());
+            }
             return;
         }
 

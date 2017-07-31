@@ -2,6 +2,7 @@
 #include "SessionModel.h"
 #include "SessionProperties.h"
 #include "ui_BindingProperties.h"
+#include <QDataWidgetMapper>
 
 namespace {
     int expressionColumns(Binding::Editor editor)
@@ -39,21 +40,21 @@ namespace {
         }
     }
 
-    QColor valueToColor(const QStringList &values)
+    QColor fieldsToColor(const QStringList &fields)
     {
         auto clamp = [](const auto &value) {
             return std::min(std::max(0.0, value.toDouble()), 1.0);
         };
 
         auto rgba = QColor::fromRgbF(0, 0, 0, 1);
-        if (values.size() > 0) rgba.setRedF(clamp(values[0]));
-        if (values.size() > 1) rgba.setGreenF(clamp(values[1]));
-        if (values.size() > 2) rgba.setBlueF(clamp(values[2]));
-        if (values.size() > 3) rgba.setAlphaF(clamp(values[3]));
+        if (fields.size() > 0) rgba.setRedF(clamp(fields[0]));
+        if (fields.size() > 1) rgba.setGreenF(clamp(fields[1]));
+        if (fields.size() > 2) rgba.setBlueF(clamp(fields[2]));
+        if (fields.size() > 3) rgba.setAlphaF(clamp(fields[3]));
         return rgba;
     }
 
-    QStringList colorToValue(QColor color)
+    QStringList colorToFields(QColor color)
     {
         return {
             QString::number(color.redF()),
@@ -106,18 +107,20 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
     connect(mUi->index, &QTabWidget::currentChanged,
         this, &BindingProperties::updateWidgets);
     connect(mUi->expressions, &ExpressionMatrix::itemChanged,
-        [this]() { updateValue(mUi->expressions->fields()); });
-
+        [this]() { setFields(mUi->expressions->fields()); });
     connect(mUi->color, &ColorPicker::colorChanged,
-        [this](QColor color) { updateValue(colorToValue(color)); });
-    connect(mUi->reference, &ReferenceComboBox::currentDataChanged,
-        [this](QVariant id) { updateValue({ id.toString() }); });
-    connect(mUi->reference, &ReferenceComboBox::textRequired,
+        [this](QColor color) { setFields(colorToFields(color)); });
+
+    connect(mUi->item, &ReferenceComboBox::listRequired,
+        this, &BindingProperties::getItemIds);
+    connect(mUi->item, &ReferenceComboBox::textRequired,
         [this](QVariant id) {
             return mSessionProperties.findItemName(id.toInt());
         });
-    connect(mUi->reference, &ReferenceComboBox::listRequired,
-        this, &BindingProperties::getItemIds);
+
+    connect(mUi->layered, &QCheckBox::toggled,
+        mUi->layer, &QWidget::setEnabled);
+    mUi->layer->setEnabled(false);
 
     updateWidgets();
 }
@@ -127,8 +130,18 @@ BindingProperties::~BindingProperties()
     delete mUi;
 }
 
-QWidget *BindingProperties::typeWidget() const { return mUi->type; }
-QWidget *BindingProperties::editorWidget() const { return mUi->editor; }
+void BindingProperties::addMappings(QDataWidgetMapper &mapper)
+{
+    mapper.addMapping(mUi->type, SessionModel::BindingType);
+    mapper.addMapping(mUi->editor, SessionModel::BindingEditor);
+    mapper.addMapping(mUi->count, SessionModel::BindingValueCount);
+    mapper.addMapping(mUi->index, SessionModel::BindingCurrentValue, "currentIndex");
+    mapper.addMapping(mUi->item, SessionModel::BindingValueItemId);
+    mapper.addMapping(mUi->level, SessionModel::BindingValueLevel);
+    mapper.addMapping(mUi->layered, SessionModel::BindingValueLayered);
+    mapper.addMapping(mUi->layer, SessionModel::BindingValueLayer);
+    mapper.addMapping(this, SessionModel::BindingValueFields);
+}
 
 Binding::Type BindingProperties::currentType() const
 {
@@ -140,28 +153,27 @@ Binding::Editor BindingProperties::currentEditor() const
     return static_cast<Binding::Editor>(mUi->editor->currentData().toInt());
 }
 
-void BindingProperties::setValues(const QVariantList &values)
+void BindingProperties::setFields(const QStringList &fields)
 {
-    if (mValues != values) {
-        mValues = values;
-        mUi->count->setValue(mValues.size());
-        updateWidgets();
-    }
-}
-
-void BindingProperties::updateValue(QStringList fields)
-{
-    if (mSuspendUpdateValue)
+    if (mSuspendSetFields ||
+        mFields == fields)
         return;
 
-    const auto index = mUi->index->currentIndex();
-    mValues[index] = fields;
-    emit valuesChanged(mValues);
+    mFields = fields;
+    emit fieldsChanged();
+
+    updateWidgets();
 }
 
 void BindingProperties::updateWidgets()
 {
-    mSuspendUpdateValue = true;
+    const auto type = currentType();
+    const auto editor = currentEditor();
+    const auto isImage = (type == Binding::Image);
+    const auto isReference = (type != Binding::Uniform);
+    const auto isColor = (type == Binding::Uniform && editor == Binding::Color);
+
+    mSuspendSetFields = true;
 
     const auto count = mUi->count->value();
     while (mUi->index->count() > count)
@@ -170,41 +182,35 @@ void BindingProperties::updateWidgets()
         mUi->index->addTab(new QWidget(), QString::number(i));
     mUi->index->setVisible(count > 1);
 
-    while (mValues.size() < count)
-        mValues.push_back(QVariantList());
-    while (mValues.size() > count)
-        mValues.removeLast();
-    auto value = mValues[mUi->index->currentIndex()].toStringList();
-
-    const auto type = currentType();
-    const auto editor = currentEditor();
-    const auto isImage = (type == Binding::Image);
-    const auto isReference = (type != Binding::Uniform);
-    const auto isColor = (type == Binding::Uniform && editor == Binding::Color);
-
-    if (isReference) {
-        const auto id = (!value.isEmpty() ? value.first().toInt() : 0);
-        mUi->reference->setCurrentData(id);
-        mUi->reference->validate();
-    }
-    else if (isColor) {
-        mUi->color->setColor(valueToColor(value));
-    }
-    else {
-        mUi->expressions->setColumnCount(expressionColumns(editor));
-        mUi->expressions->setRowCount(expressionRows(editor));
-        mUi->expressions->setFields(value);
-    }
-
-    mUi->expressions->setVisible(!isReference && !isColor);
-    mUi->color->setVisible(isColor);
-    mUi->reference->setVisible(isReference);
-
     setFormVisibility(mUi->formLayout, mUi->labelEditor, mUi->editor, !isReference);
-    setFormVisibility(mUi->formLayout, mUi->labelValue, mUi->value, true);
-    setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, isImage);
+    setFormVisibility(mUi->formLayout, mUi->labelCount, mUi->widgetCount, true);
+    setFormVisibility(mUi->formLayout, mUi->labelExpressions, mUi->expressions,
+        !isReference && !isColor);
 
-    mSuspendUpdateValue = false;
+    setFormVisibility(mUi->formLayout, mUi->labelColor, mUi->color, isColor);
+    mUi->expressions->setColumnCount(expressionColumns(editor));
+    mUi->expressions->setRowCount(expressionRows(editor));
+    mUi->color->setColor(fieldsToColor(fields()));
+    mUi->expressions->setFields(fields());
+
+    if (type != Binding::Image)
+        mUi->labelTexture->setVisible(false);
+    if (type != Binding::Sampler)
+        mUi->labelSampler->setVisible(false);
+    if (type != Binding::Buffer)
+        mUi->labelBuffer->setVisible(false);
+
+    setFormVisibility(mUi->formLayout,
+        type == Binding::Image ? mUi->labelTexture :
+        type == Binding::Sampler ? mUi->labelSampler : mUi->labelBuffer,
+        mUi->item, isReference);
+    if (isReference)
+        mUi->item->validate();
+
+    setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, isImage);
+    setFormVisibility(mUi->formLayout, mUi->labelLayer, mUi->layerWidget, isImage);
+
+    mSuspendSetFields = false;
 }
 
 QVariantList BindingProperties::getItemIds() const

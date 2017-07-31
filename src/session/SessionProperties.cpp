@@ -372,10 +372,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             break;
 
         case ItemType::Binding:
-            // TODO: move to BindingProperties class, remove widget getters
-            map(mBindingProperties->typeWidget(), SessionModel::BindingType);
-            map(mBindingProperties->editorWidget(), SessionModel::BindingEditor);
-            map(mBindingProperties, SessionModel::BindingValues);
+            mBindingProperties->addMappings(*mMapper);
             break;
 
         case ItemType::VertexStream:
