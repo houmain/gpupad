@@ -428,15 +428,14 @@ bool GLTexture::downloadImage(Image& image)
             mMessages += Singletons::messageList().insert(
                 image.itemId, MessageType::DownloadingImageFailed);
             return false;
-    }    
+    }
 
     if (mFlipY)
         dest = dest.mirrored();
 
+    mMessages.clear();
     if (image.image == dest)
         return false;
-
-    mMessages.clear();
     image.image = dest;
     return true;
 }

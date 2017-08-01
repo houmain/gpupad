@@ -19,7 +19,8 @@ public:
     bool getBinary(const QString &fileName, QByteArray *binary) const;
 
     // only call from main thread
-    void update(EditorManager &editorManager);
+    void update(EditorManager &editorManager,
+                const QSet<QString> &filesModified);
 
 private:
     mutable QMutex mMutex;

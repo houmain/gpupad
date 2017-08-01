@@ -35,11 +35,13 @@ private slots:
     void update(bool manualEvaluation = false);
 
 private:
+    void updateFileCache();
     void updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor);
 
     SessionModel& mModel;
     QTimer *mUpdateTimer{ };
     QSet<ItemId> mBuffersModified;
+    QSet<QString> mFilesModified;
     QScopedPointer<RenderTask> mRenderSession;
     bool mRenderSessionInvalidated{ };
     bool mAutomaticEvaluation{ };

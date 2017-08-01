@@ -8,21 +8,27 @@ FileCache::FileCache(QObject *parent) : QObject(parent)
 {
 }
 
-void FileCache::update(EditorManager &editorManager)
+void FileCache::update(EditorManager &editorManager,
+                       const QSet<QString> &filesModified)
 {
     QMutexLocker lock(&mMutex);
 
-    foreach (QString fileName, editorManager.getSourceFileNames())
+    foreach (QString fileName, filesModified) {
         if (auto editor = editorManager.getSourceEditor(fileName))
             mSources[editor->fileName()] = editor->source();
+        else
+            mSources.remove(fileName);
 
-    foreach (QString fileName, editorManager.getBinaryFileNames())
         if (auto editor = editorManager.getBinaryEditor(fileName))
             mBinaries[editor->fileName()] = editor->data();
+        else
+            mBinaries.remove(fileName);
 
-    foreach (QString fileName, editorManager.getImageFileNames())
         if (auto editor = editorManager.getImageEditor(fileName))
             mImages[editor->fileName()] = editor->image();
+        else
+            mImages.remove(fileName);
+    }
 }
 
 bool FileCache::getSource(const QString &fileName, QString *source) const

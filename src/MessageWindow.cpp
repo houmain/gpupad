@@ -98,13 +98,13 @@ QString MessageWindow::getMessageText(const Message &message) const
             return message.text;
 
         case OpenGLVersionNotAvailable:
-            return tr("the required OpenGL version %1 is not available").arg(message.text);
-        case LoadingFileFailed: {
+            return tr("the required OpenGL version %1 is not available").arg(
+                message.text);
+        case LoadingFileFailed:
             if (message.text.isEmpty())
                 return tr("no file set");
-            else
-                return tr("loading file '%1' failed").arg(message.text);
-        }
+            return tr("loading file '%1' failed").arg(
+                FileDialog::getFileTitle(message.text));
         case UnsupportedShaderType:
             return tr("unsupported shader type");
         case CreatingFramebufferFailed:

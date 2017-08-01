@@ -83,6 +83,8 @@ void SynchronizeLogic::handleSessionRendered()
 
 void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
 {
+    mFilesModified += fileName;
+
     forEachFileItem(mModel,
         [&](const FileItem &item) {
             if (item.fileName == fileName) {
@@ -137,47 +139,58 @@ void SynchronizeLogic::handleFileRenamed(const QString &prevFileName,
 
 void SynchronizeLogic::update(bool manualEvaluation)
 {
+    auto &editors = Singletons::editorManager();
     foreach (ItemId bufferId, mBuffersModified)
         if (auto buffer = mModel.findItem<Buffer>(bufferId))
-            if (auto editor = Singletons::editorManager().getBinaryEditor(buffer->fileName))
+            if (auto editor = editors.getBinaryEditor(buffer->fileName))
                 updateBinaryEditor(*buffer, *editor);
     mBuffersModified.clear();
 
     if (manualEvaluation || mAutomaticEvaluation || mSteadyEvaluation) {
-        Singletons::fileCache().update(Singletons::editorManager());
+        updateFileCache();
         mRenderSession->update(mRenderSessionInvalidated, manualEvaluation);
     }
     mRenderSessionInvalidated = false;
 }
 
-void SynchronizeLogic::handleItemActivated(const QModelIndex &index, bool *handled)
+void SynchronizeLogic::updateFileCache()
 {
+    auto &editors = Singletons::editorManager();
+    Singletons::fileCache().update(editors, mFilesModified);
+    mFilesModified.clear();
+}
+
+void SynchronizeLogic::handleItemActivated(const QModelIndex &index,
+    bool *handled)
+{
+    auto &editors = Singletons::editorManager();
     if (auto buffer = mModel.item<Buffer>(index)) {
-        if (auto editor = Singletons::editorManager().openBinaryEditor(buffer->fileName)) {
+        if (auto editor = editors.openBinaryEditor(buffer->fileName)) {
             updateBinaryEditor(*buffer, *editor);
             editor->scrollToOffset();
             *handled = true;
         }
     }
     else if (auto texture = mModel.item<Texture>(index)) {
-        if (Singletons::editorManager().openImageEditor(texture->fileName))
+        if (editors.openImageEditor(texture->fileName))
             *handled = true;
     }
     else if (auto image = mModel.item<Image>(index)) {
-        if (Singletons::editorManager().openImageEditor(image->fileName))
+        if (editors.openImageEditor(image->fileName))
             *handled = true;
     }
     else if (auto shader = mModel.item<Shader>(index)) {
-        if (Singletons::editorManager().openSourceEditor(shader->fileName))
+        if (editors.openSourceEditor(shader->fileName))
             *handled = true;
     }
     else if (auto script = mModel.item<Script>(index)) {
-        if (Singletons::editorManager().openSourceEditor(script->fileName))
+        if (editors.openSourceEditor(script->fileName))
             *handled = true;
     }
 }
 
-void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor)
+void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
+    BinaryEditor &editor)
 {
     auto mapDataType = [](Column::DataType type) {
         switch (type) {

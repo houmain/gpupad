@@ -48,9 +48,7 @@ public:
     bool closeAllEditors();
 
 signals:
-    void sourceEditorChanged(const QString &fileName);
-    void binaryEditorChanged(const QString &fileName);
-    void imageEditorChanged(const QString &fileName);
+    void editorChanged(const QString &fileName);
     void editorRenamed(const QString &prevFileName, const QString &fileName);
 
 private:

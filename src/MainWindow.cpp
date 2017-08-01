@@ -163,11 +163,7 @@ MainWindow::MainWindow(QWidget *parent)
         &synchronizeLogic, &SynchronizeLogic::handleItemActivated);
     connect(&mEditorManager, &EditorManager::editorRenamed,
         &synchronizeLogic, &SynchronizeLogic::handleFileRenamed);
-    connect(&mEditorManager, &EditorManager::sourceEditorChanged,
-        &synchronizeLogic, &SynchronizeLogic::handleFileItemsChanged);
-    connect(&mEditorManager, &EditorManager::binaryEditorChanged,
-        &synchronizeLogic, &SynchronizeLogic::handleFileItemsChanged);
-    connect(&mEditorManager, &EditorManager::imageEditorChanged,
+    connect(&mEditorManager, &EditorManager::editorChanged,
         &synchronizeLogic, &SynchronizeLogic::handleFileItemsChanged);
     connect(mMessageWindow.data(), &MessageWindow::messageActivated,
         this, &MainWindow::handleMessageActivated);

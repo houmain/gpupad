@@ -17,8 +17,7 @@ EditorManager::EditorManager(QWidget *parent)
 {
     setWindowFlags(Qt::Widget);
     setTabPosition(Qt::AllDockWidgetAreas, QTabWidget::North);
-    setDockOptions(AnimatedDocks | AllowNestedDocks |
-        AllowTabbedDocks | GroupedDragging);
+    setDockOptions(AnimatedDocks | AllowNestedDocks | AllowTabbedDocks);
     setDocumentMode(true);
     setContentsMargins(0, 1, 0, 0);
 }
@@ -304,7 +303,7 @@ void EditorManager::addSourceEditor(SourceEditor *editor)
         });
     connect(editor, &SourceEditor::textChanged,
         [this, editor]() {
-            emit sourceEditorChanged(editor->fileName());
+            emit editorChanged(editor->fileName());
         });
 }
 
@@ -321,7 +320,7 @@ void EditorManager::addImageEditor(ImageEditor *editor)
         });
     connect(editor, &ImageEditor::dataChanged,
         [this, editor]() {
-            emit imageEditorChanged(editor->fileName());
+            emit editorChanged(editor->fileName());
         });
 }
 
@@ -338,7 +337,7 @@ void EditorManager::addBinaryEditor(BinaryEditor *editor)
         });
     connect(editor, &BinaryEditor::dataChanged,
         [this, editor]() {
-            emit binaryEditorChanged(editor->fileName());
+            emit editorChanged(editor->fileName());
         });
 }
 
@@ -351,13 +350,13 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     dock->setFeatures(QDockWidget::DockWidgetMovable |
         QDockWidget::DockWidgetClosable | 
         QDockWidget::DockWidgetFloatable);
-
     dock->toggleViewAction()->setVisible(false);
     dock->installEventFilter(this);
 
     auto tabified = false;
     foreach (QDockWidget* d, mDocks.keys()) {
-        if (mDocks[d]->tabifyGroup() == editor->tabifyGroup()) {
+        if (!d->isFloating() &&
+              mDocks[d]->tabifyGroup() == editor->tabifyGroup()) {
             tabifyDockWidget(d, dock);
             tabified = true;
             break;
@@ -365,7 +364,7 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     }
     if (!tabified) {
         addDockWidget(Qt::TopDockWidgetArea, dock);
-        resizeDocks({ dock }, { width() }, Qt::Horizontal);
+        resizeDocks({ dock }, { width() / 2 }, Qt::Horizontal);
     }
 
     mDocks.insert(dock, editor);
