@@ -121,7 +121,7 @@ const auto builtinConstants = {
 
 const auto layoutQualifiers = {
     "row_major", "column_major", "location", "component", "binding", "offset",
-    "index", "shared​", "packed​", "std140​", "std430​", "origin_upper_left",
+    "index", "shared", "packed", "std140", "std430", "origin_upper_left",
     "pixel_center_integer", "early_fragment_tests", "xfb_buffer", "xfb_offset",
     "xfb_stride", "vertices", "max_vertices", "points", "lines",
     "lines_adjacency", "triangles", "triangles_adjacency", "line_strip",

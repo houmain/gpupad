@@ -11,7 +11,7 @@
 template<typename F> // F(const FileItem&)
 void forEachFileItem(SessionModel& model, const F &function) {
     model.forEachItem([&](const Item& item) {
-        if (auto fileItem = castFileItem(item))
+        if (auto fileItem = castItem<FileItem>(item))
             function(*fileItem);
     });
 }
@@ -164,28 +164,39 @@ void SynchronizeLogic::handleItemActivated(const QModelIndex &index,
     bool *handled)
 {
     auto &editors = Singletons::editorManager();
-    if (auto buffer = mModel.item<Buffer>(index)) {
-        if (auto editor = editors.openBinaryEditor(buffer->fileName)) {
-            updateBinaryEditor(*buffer, *editor);
-            editor->scrollToOffset();
-            *handled = true;
+    if (auto fileItem = mModel.item<FileItem>(index)) {
+        switch (fileItem->itemType) {
+            case ItemType::Texture:
+            case ItemType::Image:
+                if (fileItem->fileName.isEmpty())
+                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
+                        editors.openNewImageEditor(fileItem->name));
+                editors.openImageEditor(fileItem->fileName);
+                break;
+
+            case ItemType::Shader:
+            case ItemType::Script:
+                if (fileItem->fileName.isEmpty())
+                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
+                        editors.openNewSourceEditor(fileItem->name));
+                editors.openSourceEditor(fileItem->fileName);
+                break;
+
+            case ItemType::Buffer:
+                if (fileItem->fileName.isEmpty())
+                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
+                        editors.openNewBinaryEditor(fileItem->name));
+
+                if (auto editor = editors.openBinaryEditor(fileItem->fileName)) {
+                    updateBinaryEditor(static_cast<const Buffer&>(*fileItem), *editor);
+                    editor->scrollToOffset();
+                }
+                break;
+
+            default:
+                break;
         }
-    }
-    else if (auto texture = mModel.item<Texture>(index)) {
-        if (editors.openImageEditor(texture->fileName))
-            *handled = true;
-    }
-    else if (auto image = mModel.item<Image>(index)) {
-        if (editors.openImageEditor(image->fileName))
-            *handled = true;
-    }
-    else if (auto shader = mModel.item<Shader>(index)) {
-        if (editors.openSourceEditor(shader->fileName))
-            *handled = true;
-    }
-    else if (auto script = mModel.item<Script>(index)) {
-        if (editors.openSourceEditor(script->fileName))
-            *handled = true;
+        *handled = true;
     }
 }
 

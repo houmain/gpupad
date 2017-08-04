@@ -186,14 +186,8 @@ const T* castItem(const Item &item)
     return nullptr;
 }
 
-template <typename T>
-const T* castItem(const Item *item)
-{
-    return (item ? castItem<T>(*item) : nullptr);
-}
-
-inline const FileItem* castFileItem(const Item &item)
-{
+template <>
+inline const FileItem* castItem<FileItem>(const Item &item) {
     if (item.itemType == ItemType::Buffer ||
         item.itemType == ItemType::Texture ||
         item.itemType == ItemType::Image ||
@@ -203,9 +197,10 @@ inline const FileItem* castFileItem(const Item &item)
     return nullptr;
 }
 
-inline const FileItem* castFileItem(const Item *item)
+template <typename T>
+const T* castItem(const Item *item)
 {
-    return (item ? castFileItem(*item) : nullptr);
+    return (item ? castItem<T>(*item) : nullptr);
 }
 
 #endif // ITEMFUNCTIONS_H

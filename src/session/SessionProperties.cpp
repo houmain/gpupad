@@ -94,7 +94,7 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mBufferProperties->fileBrowse, &QToolButton::clicked,
         [this]() { selectCurrentItemFile(FileDialog::BinaryExtensions); });
     connect(mBufferProperties->file, &ReferenceComboBox::listRequired,
-        [this]() { return getFileNames(ItemType::Buffer); });
+        [this]() { return getFileNames(ItemType::Buffer, true); });
 
     connect(mImageProperties->fileNew, &QToolButton::clicked, [this]() {
         setCurrentItemFile(Singletons::editorManager().openNewImageEditor(

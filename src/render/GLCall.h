@@ -47,10 +47,10 @@ private:
 
     GLBuffer *mIndexBuffer{ };
     GLenum mIndexType{ };
-    GLuint mIndicesOffset{ };
+    uintptr_t mIndicesOffset{ };
 
     GLBuffer *mIndirectBuffer{ };
-    GLuint mIndirectOffset{ };
+    uintptr_t mIndirectOffset{ };
     GLint mIndirectStride{ };
 
     MessagePtrSet mMessages;

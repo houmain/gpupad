@@ -2,6 +2,7 @@
 #include "BinaryEditor_EditableRegion.h"
 #include "BinaryEditor_HexModel.h"
 #include "BinaryEditor_DataModel.h"
+#include "FileDialog.h"
 #include <QHeaderView>
 #include <QFile>
 
@@ -80,6 +81,9 @@ void BinaryEditor::setFileName(QString fileName)
 
 bool BinaryEditor::load(const QString &fileName, QByteArray *data)
 {
+    if (FileDialog::isEmptyOrUntitled(fileName))
+        return false;
+
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly))
         return false;
@@ -104,6 +108,7 @@ bool BinaryEditor::save()
         return false;
     file.write(mData);
     setModified(false);
+    emit dataChanged();
     return true;
 }
 

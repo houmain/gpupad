@@ -305,7 +305,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         case ColumnType::InlineScope: return item.inlineScope;
 
         case ColumnType::FileName:
-            if (auto fileItem = castFileItem(item))
+            if (auto fileItem = castItem<FileItem>(item))
                 return fileItem->fileName;
             break;
 
@@ -450,7 +450,7 @@ bool SessionModel::setData(const QModelIndex &index,
             return true;
 
         case ColumnType::FileName:
-            if (castFileItem(item)) {
+            if (castItem<FileItem>(item)) {
                 undoableFileNameAssignment(index,
                     static_cast<FileItem&>(item), value.toString());
                 return true;
@@ -852,7 +852,7 @@ void SessionModel::undoableFileNameAssignment(const QModelIndex &index,
             item.name == FileDialog::getFileTitle(item.fileName)) {
 
             auto newFileName =
-                (fileName.isEmpty() || FileDialog::isUntitled(fileName) ?
+                (FileDialog::isEmptyOrUntitled(fileName) ?
                     getTypeName(item.itemType) : fileName);
 
             setData(this->index(&item, Name),
@@ -1494,7 +1494,7 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             readRef("framebufferId", call.targetId); // TODO: remove
             readRef("targetId", call.targetId);
             readRef("indexBufferId", call.indexBufferId);
-            read("primitiveType", call.primitiveType);
+            readEnum("primitiveType", call.primitiveType);
             read("patchVertices", call.patchVertices);
             read("count", call.count);
             read("first", call.first);

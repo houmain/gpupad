@@ -7,6 +7,7 @@
 #include "session/SessionModel.h"
 #include "session/ItemFunctions.h"
 #include "MessageList.h"
+#include "FileDialog.h"
 #include "FileCache.h"
 #include <memory>
 #include <QSet>

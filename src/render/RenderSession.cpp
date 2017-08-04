@@ -433,28 +433,16 @@ void RenderSession::finish()
     auto& manager = Singletons::editorManager();
     auto& session = Singletons::sessionModel();
 
-    for (auto& image : mModifiedImages) {
-        if (auto fileItem = castFileItem(session.findItem(image.first))) {
-            if (fileItem->fileName.isEmpty()) {
-                auto index = session.index(fileItem, SessionModel::FileName);
-                session.setData(index, manager.openNewImageEditor(fileItem->name));
-            }
+    for (auto& image : mModifiedImages)
+        if (auto fileItem = castItem<FileItem>(session.findItem(image.first)))
             if (auto editor = manager.openImageEditor(fileItem->fileName, false))
                 editor->replace(image.second, false);
-        }
-    }
     mModifiedImages.clear();
 
-    for (auto& image : mModifiedBuffers) {
-        if (auto fileItem = castFileItem(session.findItem(image.first))) {
-            if (fileItem->fileName.isEmpty()) {
-                auto index = session.index(fileItem, SessionModel::FileName);
-                session.setData(index, manager.openNewBinaryEditor(fileItem->name));
-            }
+    for (auto& buffer : mModifiedBuffers)
+        if (auto fileItem = castItem<FileItem>(session.findItem(buffer.first)))
             if (auto editor = manager.openBinaryEditor(fileItem->fileName, false))
-                editor->replace(image.second, false);
-        }
-    }
+                editor->replace(buffer.second, false);
     mModifiedBuffers.clear();
 
     QMutexLocker lock{ &mUsedItemsCopyMutex };

@@ -1,6 +1,7 @@
 #ifndef ITEM_H
 #define ITEM_H
 
+#include <array>
 #include <QList>
 #include <QVariant>
 #include <QOpenGLTexture>

@@ -122,15 +122,16 @@ void GLTexture::generateMipmaps()
 
 void GLTexture::load()
 {
-    for (Image& image : mImages) {
-        auto prevImage = image.image;
-        if (!Singletons::fileCache().getImage(image.fileName, &image.image)) {
-            mMessages += Singletons::messageList().insert(image.itemId,
-                MessageType::LoadingFileFailed, image.fileName);
-            continue;
+    for (Image& image : mImages)
+        if (!FileDialog::isEmptyOrUntitled(image.fileName)) {
+            auto prevImage = image.image;
+            if (!Singletons::fileCache().getImage(image.fileName, &image.image)) {
+                mMessages += Singletons::messageList().insert(image.itemId,
+                    MessageType::LoadingFileFailed, image.fileName);
+                continue;
+            }
+            mSystemCopiesModified |= (image.image != prevImage);
         }
-        mSystemCopiesModified |= (image.image != prevImage);
-    }
 }
 
 void GLTexture::getDataFormat(
@@ -337,7 +338,7 @@ void GLTexture::uploadImage(const Image &image)
     }
     else if (mTarget == QOpenGLTexture::TargetCubeMap ||
              mTarget == QOpenGLTexture::TargetCubeMapArray) {
-        mTexture->setData(image.level, image.layer, 1,
+        mTexture->setData(image.level, image.layer,
             image.face, format, type, source.constBits());
     }
     else {
@@ -433,7 +434,6 @@ bool GLTexture::downloadImage(Image& image)
     if (mFlipY)
         dest = dest.mirrored();
 
-    mMessages.clear();
     if (image.image == dest)
         return false;
     image.image = dest;

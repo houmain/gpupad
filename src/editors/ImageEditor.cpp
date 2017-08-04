@@ -1,4 +1,5 @@
 #include "ImageEditor.h"
+#include "FileDialog.h"
 #include <cmath>
 #include <QAction>
 #include <QScrollBar>
@@ -73,6 +74,9 @@ void ImageEditor::setFileName(QString fileName)
 
 bool ImageEditor::load(const QString &fileName, QImage *image)
 {
+    if (FileDialog::isEmptyOrUntitled(fileName))
+        return false;
+
     auto file = QImage();
     if (!file.load(fileName))
         return false;
@@ -97,6 +101,7 @@ bool ImageEditor::save()
         return false;
 
     setModified(false);
+    emit dataChanged();
     return true;
 }
 

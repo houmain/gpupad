@@ -2,6 +2,7 @@
 #include "Singletons.h"
 #include "Settings.h"
 #include "FindReplaceBar.h"
+#include "FileDialog.h"
 #include <QSyntaxHighlighter>
 #include <QCompleter>
 #include <QTextCharFormat>
@@ -138,6 +139,9 @@ void SourceEditor::setFileName(QString fileName)
 
 bool SourceEditor::load(const QString &fileName, QString *source)
 {
+    if (FileDialog::isEmptyOrUntitled(fileName))
+        return false;
+
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly | QFile::Text))
         return false;

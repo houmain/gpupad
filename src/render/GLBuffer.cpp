@@ -68,20 +68,21 @@ QList<std::pair<ItemId, QByteArray>> GLBuffer::getModifiedData()
 void GLBuffer::load()
 {
     auto prevData = mData;
-    if (!Singletons::fileCache().getBinary(mFileName, &mData)) {
-        mMessages += Singletons::messageList().insert(
-            mItemId, MessageType::LoadingFileFailed, mFileName);
-        return;
-    }
-    mMessages.clear();
+    if (!FileDialog::isEmptyOrUntitled(mFileName))
+        if (!Singletons::fileCache().getBinary(mFileName, &mData))
+            mMessages += Singletons::messageList().insert(
+                mItemId, MessageType::LoadingFileFailed, mFileName);
+
+    auto requiredSize = mOffset + mSize;
+    if (requiredSize > mData.size())
+        mData.append(QByteArray(requiredSize - mData.size(), 0));
+
     mSystemCopyModified = (mData != prevData);
 }
 
 void GLBuffer::upload()
 {
     if (!mSystemCopyModified)
-        return;
-    if (mOffset >= mData.size())
         return;
 
     auto& gl = GLContext::currentContext();
@@ -95,11 +96,11 @@ void GLBuffer::upload()
         gl.glDeleteBuffers(1, &buffer);
     };
 
-    auto size = std::min(mSize, mData.size() - mOffset);
+    Q_ASSERT(mOffset + mSize <= mData.size());
     mBufferObject = GLObject(createBuffer(), freeBuffer);
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
     gl.glBufferData(GL_ARRAY_BUFFER,
-        size, mData.data() + mOffset, GL_DYNAMIC_DRAW);
+        mSize, mData.data() + mOffset, GL_DYNAMIC_DRAW);
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 
     mSystemCopyModified = mDeviceCopyModified = false;
@@ -109,14 +110,12 @@ bool GLBuffer::download()
 {
     if (!mDeviceCopyModified)
         return false;
-    if (mOffset >= mData.size())
-        return false;
-    auto size = std::min(mSize, mData.size() - mOffset);
 
+    Q_ASSERT(mOffset + mSize <= mData.size());
     auto& gl = GLContext::currentContext();
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
     gl.glGetBufferSubData(GL_ARRAY_BUFFER,
-        0, size, mData.data() + mOffset);
+        0, mSize, mData.data() + mOffset);
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 
     mSystemCopyModified = mDeviceCopyModified = false;

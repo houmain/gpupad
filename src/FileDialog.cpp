@@ -34,6 +34,11 @@ bool FileDialog::isUntitled(const QString &fileName)
     return fileName.startsWith(UntitledTag);
 }
 
+bool FileDialog::isEmptyOrUntitled(const QString &fileName)
+{
+    return fileName.isEmpty() || isUntitled(fileName);
+}
+
 QString FileDialog::getFileTitle(const QString &fileName)
 {
     if (!fileName.startsWith(UntitledTag))
