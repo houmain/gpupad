@@ -121,7 +121,6 @@ Project {
           "src/session/ProgramProperties.ui",
           "src/session/ReferenceComboBox.cpp",
           "src/session/ReferenceComboBox.h",
-          "src/session/SamplerProperties.ui",
           "src/session/ScriptProperties.ui",
           "src/session/SessionEditor.cpp",
           "src/session/SessionEditor.h",

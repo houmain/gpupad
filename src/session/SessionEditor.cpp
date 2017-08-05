@@ -45,7 +45,6 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddColumnAction, ItemType::Column);
     addAction(mAddTextureAction, ItemType::Texture);
     addAction(mAddImageAction, ItemType::Image);
-    addAction(mAddSamplerAction, ItemType::Sampler);
     addAction(mAddProgramAction, ItemType::Program);
     addAction(mAddShaderAction, ItemType::Shader);
     addAction(mAddBindingAction, ItemType::Binding);
@@ -73,7 +72,6 @@ void SessionEditor::addItemActions(QMenu* menu)
     menu->addAction(mAddTextureAction);
     menu->addAction(mAddTargetAction);
     menu->addAction(mAddScriptAction);
-    menu->addAction(mAddSamplerAction);
     menu->addAction(mAddBindingAction);
     menu->addAction(mAddProgramAction);
     menu->addAction(mAddCallAction);

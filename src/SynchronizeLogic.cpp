@@ -116,6 +116,9 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
     else if (mModel.item<Group>(index)) {
         mRenderSessionInvalidated = true;
     }
+    else if (mModel.item<Binding>(index)) {
+        mRenderSessionInvalidated = true;
+    }
 
     mUpdateTimer->start();
 }

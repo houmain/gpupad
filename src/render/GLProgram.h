@@ -20,15 +20,16 @@ struct GLUniformBinding
 struct GLSamplerBinding
 {
     ItemId bindingItemId;
-    ItemId samplerItemId;
     QString name;
     int arrayIndex;
     GLTexture *texture;
-    Sampler::Filter minFilter;
-    Sampler::Filter magFilter;
-    Sampler::WrapMode wrapModeX;
-    Sampler::WrapMode wrapModeY;
-    Sampler::WrapMode wrapModeZ;
+    Binding::Filter minFilter;
+    Binding::Filter magFilter;
+    Binding::WrapMode wrapModeX;
+    Binding::WrapMode wrapModeY;
+    Binding::WrapMode wrapModeZ;
+    QColor borderColor;
+    Binding::ComparisonFunc comparisonFunc;
 };
 
 struct GLImageBinding

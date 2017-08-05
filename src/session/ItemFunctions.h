@@ -167,7 +167,6 @@ template<> inline ItemType getItemType<Buffer>() { return ItemType::Buffer; }
 template<> inline ItemType getItemType<Column>() { return ItemType::Column; }
 template<> inline ItemType getItemType<Texture>() { return ItemType::Texture; }
 template<> inline ItemType getItemType<Image>() { return ItemType::Image; }
-template<> inline ItemType getItemType<Sampler>() { return ItemType::Sampler; }
 template<> inline ItemType getItemType<Program>() { return ItemType::Program; }
 template<> inline ItemType getItemType<Shader>() { return ItemType::Shader; }
 template<> inline ItemType getItemType<Binding>() { return ItemType::Binding; }

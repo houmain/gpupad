@@ -14,7 +14,6 @@ namespace {
     const auto ColumnTag = QStringLiteral("column");
     const auto TextureTag = QStringLiteral("texture");
     const auto ImageTag = QStringLiteral("image");
-    const auto SamplerTag = QStringLiteral("sampler");
     const auto ProgramTag = QStringLiteral("program");
     const auto ShaderTag = QStringLiteral("shader");
     const auto BindingTag = QStringLiteral("binding");
@@ -35,7 +34,6 @@ namespace {
             case ItemType::Column: return ColumnTag;
             case ItemType::Texture: return TextureTag;
             case ItemType::Image: return ImageTag;
-            case ItemType::Sampler: return SamplerTag;
             case ItemType::Program: return ProgramTag;
             case ItemType::Shader: return ShaderTag;
             case ItemType::Binding: return BindingTag;
@@ -57,7 +55,7 @@ namespace {
         if (tag == ColumnTag) return ItemType::Column;
         if (tag == TextureTag) return ItemType::Texture;
         if (tag == ImageTag) return ItemType::Image;
-        if (tag == SamplerTag) return ItemType::Sampler;
+        if (tag == "sampler") return ItemType::Binding; // TODO: remove
         if (tag == ProgramTag) return ItemType::Program;
         if (tag == ShaderTag) return ItemType::Shader;
         if (tag == BindingTag) return ItemType::Binding;
@@ -143,7 +141,6 @@ SessionModel::SessionModel(QObject *parent)
     mTypeIcons[ItemType::Column].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[ItemType::Texture].addFile(QStringLiteral(":/images/16x16/image-x-generic.png"));
     mTypeIcons[ItemType::Image].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
-    mTypeIcons[ItemType::Sampler].addFile(QStringLiteral(":/images/16x16/mail-send.png"));
     mTypeIcons[ItemType::Program].addFile(QStringLiteral(":/images/16x16/applications-system.png"));
     mTypeIcons[ItemType::Shader].addFile(QStringLiteral(":/images/16x16/font.png"));
     mTypeIcons[ItemType::Binding].addFile(QStringLiteral(":/images/16x16/insert-text.png"));
@@ -178,7 +175,6 @@ QString SessionModel::getTypeName(ItemType type) const
         case ItemType::Column: return tr("Column");
         case ItemType::Texture: return tr("Texture");
         case ItemType::Image: return tr("Image");
-        case ItemType::Sampler: return tr("Sampler");
         case ItemType::Program: return tr("Program");
         case ItemType::Shader: return tr("Shader");
         case ItemType::Binding: return tr("Binding");
@@ -204,7 +200,6 @@ bool SessionModel::canContainType(const QModelIndex &index, ItemType type) const
                 ItemType::Group,
                 ItemType::Buffer,
                 ItemType::Texture,
-                ItemType::Sampler,
                 ItemType::Program,
                 ItemType::Binding,
                 ItemType::VertexStream,
@@ -330,12 +325,6 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(ImageLevel, Image, level)
         ADD(ImageLayer, Image, layer)
         ADD(ImageFace, Image, face)
-        ADD(SamplerTextureId, Sampler, textureId)
-        ADD(SamplerMinFilter, Sampler, minFilter)
-        ADD(SamplerMagFilter, Sampler, magFilter)
-        ADD(SamplerWarpModeX, Sampler, wrapModeX)
-        ADD(SamplerWarpModeY, Sampler, wrapModeY)
-        ADD(SamplerWarpModeZ, Sampler, wrapModeZ)
         ADD(ShaderType, Shader, type)
         ADD(BindingType, Binding, type)
         ADD(BindingEditor, Binding, editor)
@@ -356,19 +345,19 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(AttachmentBlendAlphaSource, Attachment, blendAlphaSource)
         ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest)
         ADD(AttachmentColorWriteMask, Attachment, colorWriteMask)
-        ADD(AttachmentDepthCompareFunc, Attachment, depthCompareFunc)
+        ADD(AttachmentDepthComparisonFunc, Attachment, depthComparisonFunc)
         ADD(AttachmentDepthOffsetFactor, Attachment, depthOffsetFactor)
         ADD(AttachmentDepthOffsetUnits, Attachment, depthOffsetUnits)
         ADD(AttachmentDepthClamp, Attachment, depthClamp)
         ADD(AttachmentDepthWrite, Attachment, depthWrite)
-        ADD(AttachmentStencilFrontCompareFunc, Attachment, stencilFrontCompareFunc)
+        ADD(AttachmentStencilFrontComparisonFunc, Attachment, stencilFrontComparisonFunc)
         ADD(AttachmentStencilFrontReference, Attachment, stencilFrontReference)
         ADD(AttachmentStencilFrontReadMask, Attachment, stencilFrontReadMask)
         ADD(AttachmentStencilFrontFailOp, Attachment, stencilFrontFailOp)
         ADD(AttachmentStencilFrontDepthFailOp, Attachment, stencilFrontDepthFailOp)
         ADD(AttachmentStencilFrontDepthPassOp, Attachment, stencilFrontDepthPassOp)
         ADD(AttachmentStencilFrontWriteMask, Attachment, stencilFrontWriteMask)
-        ADD(AttachmentStencilBackCompareFunc, Attachment, stencilBackCompareFunc)
+        ADD(AttachmentStencilBackComparisonFunc, Attachment, stencilBackComparisonFunc)
         ADD(AttachmentStencilBackReference, Attachment, stencilBackReference)
         ADD(AttachmentStencilBackReadMask, Attachment, stencilBackReadMask)
         ADD(AttachmentStencilBackFailOp, Attachment, stencilBackFailOp)
@@ -411,11 +400,23 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
             } \
             break;
         ADD(BindingValueFields, fields)
-        ADD(BindingValueItemId, itemId)
+        ADD(BindingValueTextureId, textureId)
+        ADD(BindingValueBufferId, bufferId)
         ADD(BindingValueLevel, level)
         ADD(BindingValueLayered, layered)
         ADD(BindingValueLayer, layer)
+        ADD(BindingValueMinFilter, minFilter)
+        ADD(BindingValueMagFilter, magFilter)
+        ADD(BindingValueWrapModeX, wrapModeX)
+        ADD(BindingValueWrapModeY, wrapModeY)
+        ADD(BindingValueWrapModeZ, wrapModeZ)
+        ADD(BindingValueBorderColor, borderColor)
+        ADD(BindingValueComparisonFunc, comparisonFunc)
 #undef ADD
+
+        case FirstBindingValue:
+        case LastBindingValue:
+            break;
     }
     return { };
 }
@@ -482,12 +483,6 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(ImageLevel, Image, level, toInt)
         ADD(ImageLayer, Image, layer, toInt)
         ADD(ImageFace, Image, face, toInt)
-        ADD(SamplerTextureId, Sampler, textureId, toInt)
-        ADD(SamplerMinFilter, Sampler, minFilter, toInt)
-        ADD(SamplerMagFilter, Sampler, magFilter, toInt)
-        ADD(SamplerWarpModeX, Sampler, wrapModeX, toInt)
-        ADD(SamplerWarpModeY, Sampler, wrapModeY, toInt)
-        ADD(SamplerWarpModeZ, Sampler, wrapModeZ, toInt)
         ADD(ShaderType, Shader, type, toInt)
         ADD(BindingType, Binding, type, toInt)
         ADD(BindingEditor, Binding, editor, toInt)
@@ -507,19 +502,19 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(AttachmentBlendAlphaSource, Attachment, blendAlphaSource, toInt)
         ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest, toInt)
         ADD(AttachmentColorWriteMask, Attachment, colorWriteMask, toUInt)
-        ADD(AttachmentDepthCompareFunc, Attachment, depthCompareFunc, toInt)
+        ADD(AttachmentDepthComparisonFunc, Attachment, depthComparisonFunc, toInt)
         ADD(AttachmentDepthOffsetFactor, Attachment, depthOffsetFactor, toFloat)
         ADD(AttachmentDepthOffsetUnits, Attachment, depthOffsetUnits, toFloat)
         ADD(AttachmentDepthClamp, Attachment, depthClamp, toBool)
         ADD(AttachmentDepthWrite, Attachment, depthWrite, toBool)
-        ADD(AttachmentStencilFrontCompareFunc, Attachment, stencilFrontCompareFunc, toInt)
+        ADD(AttachmentStencilFrontComparisonFunc, Attachment, stencilFrontComparisonFunc, toInt)
         ADD(AttachmentStencilFrontReference, Attachment, stencilFrontReference, toUInt)
         ADD(AttachmentStencilFrontReadMask, Attachment, stencilFrontReadMask, toUInt)
         ADD(AttachmentStencilFrontFailOp, Attachment, stencilFrontFailOp, toInt)
         ADD(AttachmentStencilFrontDepthFailOp, Attachment, stencilFrontDepthFailOp, toInt)
         ADD(AttachmentStencilFrontDepthPassOp, Attachment, stencilFrontDepthPassOp, toInt)
         ADD(AttachmentStencilFrontWriteMask, Attachment, stencilFrontWriteMask, toUInt)
-        ADD(AttachmentStencilBackCompareFunc, Attachment, stencilBackCompareFunc, toInt)
+        ADD(AttachmentStencilBackComparisonFunc, Attachment, stencilBackComparisonFunc, toInt)
         ADD(AttachmentStencilBackReference, Attachment, stencilBackReference, toUInt)
         ADD(AttachmentStencilBackReadMask, Attachment, stencilBackReadMask, toUInt)
         ADD(AttachmentStencilBackFailOp, Attachment, stencilBackFailOp, toInt)
@@ -562,8 +557,8 @@ bool SessionModel::setData(const QModelIndex &index,
                 if (binding.currentValue != newValue) {
                     binding.currentValue = newValue;
                     emit dataChanged(
-                        this->index(&item, ColumnType::BindingValueFields),
-                        this->index(&item, ColumnType::BindingValueLayer));
+                        this->index(&item, ColumnType::FirstBindingValue),
+                        this->index(&item, ColumnType::LastBindingValue));
                 }
                 return true;
             }
@@ -580,11 +575,23 @@ bool SessionModel::setData(const QModelIndex &index,
             } \
             break;
         ADD(BindingValueFields, fields, toStringList)
-        ADD(BindingValueItemId, itemId, toInt)
+        ADD(BindingValueTextureId, textureId, toInt)
+        ADD(BindingValueBufferId, bufferId, toInt)
         ADD(BindingValueLevel, level, toInt)
         ADD(BindingValueLayered, layered, toBool)
         ADD(BindingValueLayer, layer, toInt)
+        ADD(BindingValueMinFilter, minFilter, toInt)
+        ADD(BindingValueMagFilter, magFilter, toInt)
+        ADD(BindingValueWrapModeX, wrapModeX, toInt)
+        ADD(BindingValueWrapModeY, wrapModeY, toInt)
+        ADD(BindingValueWrapModeZ, wrapModeZ, toInt)
+        ADD(BindingValueBorderColor, borderColor, value<QColor>)
+        ADD(BindingValueComparisonFunc, comparisonFunc, toInt)
 #undef ADD
+
+        case FirstBindingValue:
+        case LastBindingValue:
+            break;
     }
     return false;
 }
@@ -670,7 +677,6 @@ QModelIndex SessionModel::insertItem(ItemType type, QModelIndex parent,
         case ItemType::Column: return insert(new Column());
         case ItemType::Texture: return insert(new Texture());
         case ItemType::Image: return insert(new Image());
-        case ItemType::Sampler: return insert(new Sampler());
         case ItemType::Program: return insert(new Program());
         case ItemType::Shader: return insert(new Shader());
         case ItemType::Binding: return insert(new Binding());
@@ -1106,17 +1112,6 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
             break;
         }
 
-        case ItemType::Sampler: {
-            const auto &sampler = static_cast<const Sampler&>(item);
-            writeRef("textureId", sampler.textureId);
-            write("minFilter", sampler.minFilter);
-            write("magFilter", sampler.magFilter);
-            write("wrapModeX", sampler.wrapModeX);
-            write("wrapModeY", sampler.wrapModeY);
-            write("wrapModeZ", sampler.wrapModeZ);
-            break;
-        }
-
         case ItemType::Shader: {
             const auto &shader = static_cast<const Shader&>(item);
             write("type", shader.type);
@@ -1138,13 +1133,23 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
                             xml.writeTextElement(FieldTag, field);
                         break;
                     case Binding::Image:
+                        writeRef("textureId", value.textureId);
                         write("level", value.level);
                         writeBool("layered", value.layered);
                         write("layer", value.layer);
-                        // fallthrough
+                        break;
+
                     case Binding::Sampler:
+                        writeRef("textureId", value.textureId);
+                        write("minFilter", value.minFilter);
+                        write("magFilter", value.magFilter);
+                        write("wrapModeX", value.wrapModeX);
+                        write("wrapModeY", value.wrapModeY);
+                        write("wrapModeZ", value.wrapModeZ);
+                        break;
+
                     case Binding::Buffer:
-                        writeRef("itemId", value.itemId);
+                        writeRef("bufferId", value.bufferId);
                         break;
                 }
                 xml.writeEndElement();
@@ -1196,21 +1201,21 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
                 write("colorWriteMask", attachment.colorWriteMask);
             }
             if (kind.depth) {
-                write("depthCompareFunc", attachment.depthCompareFunc);
+                write("depthComparisonFunc", attachment.depthComparisonFunc);
                 write("depthOffsetFactor", attachment.depthOffsetFactor);
                 write("depthOffsetUnits", attachment.depthOffsetUnits);
                 write("depthClamp", attachment.depthClamp);
                 writeBool("depthWrite", attachment.depthWrite);
             }
             if (kind.stencil) {
-                write("stencilFrontCompareFunc", attachment.stencilFrontCompareFunc);
+                write("stencilFrontComparisonFunc", attachment.stencilFrontComparisonFunc);
                 write("stencilFrontReference", attachment.stencilFrontReference);
                 write("stencilFrontReadMask", attachment.stencilFrontReadMask);
                 write("stencilFrontFailOp", attachment.stencilFrontFailOp);
                 write("stencilFrontDepthFailOp", attachment.stencilFrontDepthFailOp);
                 write("stencilFrontDepthPassOp", attachment.stencilFrontDepthPassOp);
                 write("stencilFrontWriteMask", attachment.stencilFrontWriteMask);
-                write("stencilBackCompareFunc", attachment.stencilBackCompareFunc);
+                write("stencilBackComparisonFunc", attachment.stencilBackComparisonFunc);
                 write("stencilBackReference", attachment.stencilBackReference);
                 write("stencilBackReadMask", attachment.stencilBackReadMask);
                 write("stencilBackFailOp", attachment.stencilBackFailOp);
@@ -1387,17 +1392,6 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             break;
         }
 
-        case ItemType::Sampler: {
-            auto &sampler = static_cast<Sampler&>(item);
-            readRef("textureId", sampler.textureId);
-            readEnum("minFilter", sampler.minFilter);
-            readEnum("magFilter", sampler.magFilter);
-            readEnum("wrapModeX", sampler.wrapModeX);
-            readEnum("wrapModeY", sampler.wrapModeY);
-            readEnum("wrapModeZ", sampler.wrapModeZ);
-            break;
-        }
-
         case ItemType::Program: {
             break;
         }
@@ -1418,10 +1412,16 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
                 binding.valueCount = qMin(binding.valueCount + 1,
                     static_cast<int>(binding.values.size()));
                 auto &value = binding.values[binding.valueCount - 1];
-                readRef("itemId", value.itemId);
+                readRef("textureId", value.textureId);
+                readRef("bufferId", value.bufferId);
                 read("level", value.level);
                 readBool("layered", value.layered);
                 read("layer", value.layer);
+                readEnum("minFilter", value.minFilter);
+                readEnum("magFilter", value.magFilter);
+                readEnum("wrapModeX", value.wrapModeX);
+                readEnum("wrapModeY", value.wrapModeY);
+                readEnum("wrapModeZ", value.wrapModeZ);
                 while (xml.readNextStartElement())
                     value.fields.append(xml.readElementText());
             }
@@ -1463,19 +1463,19 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
             readEnum("blendAlphaSource", attachment.blendAlphaSource);
             readEnum("blendAlphaDest", attachment.blendAlphaDest);
             read("colorWriteMask", attachment.colorWriteMask);
-            readEnum("depthCompareFunc", attachment.depthCompareFunc);
+            readEnum("depthComparisonFunc", attachment.depthComparisonFunc);
             read("depthOffsetFactor", attachment.depthOffsetFactor);
             read("depthOffsetUnits", attachment.depthOffsetUnits);
             read("depthClamp", attachment.depthClamp);
             readBool("depthWrite", attachment.depthWrite);
-            readEnum("stencilFrontCompareFunc", attachment.stencilFrontCompareFunc);
+            readEnum("stencilFrontComparisonFunc", attachment.stencilFrontComparisonFunc);
             read("stencilFrontReference", attachment.stencilFrontReference);
             read("stencilFrontReadMask", attachment.stencilFrontReadMask);
             readEnum("stencilFrontFailOp", attachment.stencilFrontFailOp);
             readEnum("stencilFrontDepthFailOp", attachment.stencilFrontDepthFailOp);
             readEnum("stencilFrontDepthPassOp", attachment.stencilFrontDepthPassOp);
             read("stencilFrontWriteMask", attachment.stencilFrontWriteMask);
-            readEnum("stencilBackCompareFunc", attachment.stencilBackCompareFunc);
+            readEnum("stencilBackComparisonFunc", attachment.stencilBackComparisonFunc);
             read("stencilBackReference", attachment.stencilBackReference);
             read("stencilBackReadMask", attachment.stencilBackReadMask);
             readEnum("stencilBackFailOp", attachment.stencilBackFailOp);

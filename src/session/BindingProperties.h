@@ -1,7 +1,7 @@
 #ifndef BINDINGPROPERTIES_H
 #define BINDINGPROPERTIES_H
 
-#include "Item.h"
+#include "ItemFunctions.h"
 #include <QWidget>
 #include <QVariant>
 
@@ -24,6 +24,7 @@ public:
     void addMappings(QDataWidgetMapper &mapper);
     Binding::Type currentType() const;
     Binding::Editor currentEditor() const;
+    TextureKind currentTextureKind() const;
     void setFields(const QStringList &fields);
     const QStringList &fields() const { return mFields; }
 
@@ -32,7 +33,6 @@ signals:
 
 private:
     void updateWidgets();
-    QVariantList getItemIds() const;
 
     SessionProperties &mSessionProperties;
     Ui::BindingProperties *mUi;

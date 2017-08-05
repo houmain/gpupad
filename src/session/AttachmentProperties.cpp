@@ -62,7 +62,7 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
     });
     mUi->blendAlphaDest->setModel(mUi->blendAlphaSource->model());
 
-    fill<Attachment::ComparisonFunction>(mUi->depthCompareFunc, {
+    fill<Attachment::ComparisonFunction>(mUi->depthComparisonFunc, {
         { "Always", Attachment::Always },
         { "Less", Attachment::Less },
         { "Less Equal", Attachment::LessEqual },
@@ -72,8 +72,8 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
         { "Not Equal", Attachment::NotEqual },
         { "Never", Attachment::Never },
     });
-    mUi->stencilCompareFunc->setModel(mUi->depthCompareFunc->model());
-    mUi->stencilBackCompareFunc->setModel(mUi->depthCompareFunc->model());
+    mUi->stencilComparisonFunc->setModel(mUi->depthComparisonFunc->model());
+    mUi->stencilBackComparisonFunc->setModel(mUi->depthComparisonFunc->model());
 
     fill<Attachment::StencilOperation>(mUi->stencilFailOp, {
         { "Keep", Attachment::Keep },
@@ -130,13 +130,13 @@ void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
     // TODO: generate mask from checkboxes
     //mapper.addMapping(mUi->colorWriteMask, SessionModel::AttachmentColorWriteMask);
 
-    mapper.addMapping(mUi->depthCompareFunc, SessionModel::AttachmentDepthCompareFunc);
+    mapper.addMapping(mUi->depthComparisonFunc, SessionModel::AttachmentDepthComparisonFunc);
     mapper.addMapping(mUi->depthOffsetFactor, SessionModel::AttachmentDepthOffsetFactor);
     mapper.addMapping(mUi->depthOffsetUnits, SessionModel::AttachmentDepthOffsetUnits);
     mapper.addMapping(mUi->depthClamp, SessionModel::AttachmentDepthClamp);
     mapper.addMapping(mUi->depthWrite, SessionModel::AttachmentDepthWrite);
 
-    mapper.addMapping(mUi->stencilCompareFunc, SessionModel::AttachmentStencilFrontCompareFunc);
+    mapper.addMapping(mUi->stencilComparisonFunc, SessionModel::AttachmentStencilFrontComparisonFunc);
     mapper.addMapping(mUi->stencilReference, SessionModel::AttachmentStencilFrontReference);
     mapper.addMapping(mUi->stencilReadMask, SessionModel::AttachmentStencilFrontReadMask);
     mapper.addMapping(mUi->stencilFailOp, SessionModel::AttachmentStencilFrontFailOp);
@@ -144,7 +144,7 @@ void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->stencilDepthPassOp, SessionModel::AttachmentStencilFrontDepthPassOp);
     mapper.addMapping(mUi->stencilWriteMask, SessionModel::AttachmentStencilFrontWriteMask);
 
-    mapper.addMapping(mUi->stencilBackCompareFunc, SessionModel::AttachmentStencilBackCompareFunc);
+    mapper.addMapping(mUi->stencilBackComparisonFunc, SessionModel::AttachmentStencilBackComparisonFunc);
     mapper.addMapping(mUi->stencilBackReference, SessionModel::AttachmentStencilBackReference);
     mapper.addMapping(mUi->stencilBackReadMask, SessionModel::AttachmentStencilBackReadMask);
     mapper.addMapping(mUi->stencilBackFailOp, SessionModel::AttachmentStencilBackFailOp);

@@ -97,6 +97,41 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
         { "Color", Binding::Color },
     });
 
+    fill<QOpenGLTexture::Filter>(mUi->minFilter, {
+        { "Nearest", QOpenGLTexture::Nearest },
+        { "Linear", QOpenGLTexture::Linear },
+        { "Nearest MipMap-Nearest", QOpenGLTexture::NearestMipMapNearest },
+        { "Nearest MipMap-Linear", QOpenGLTexture::NearestMipMapLinear },
+        { "Linear MipMap-Nearest", QOpenGLTexture::LinearMipMapNearest },
+        { "Linear MipMap-Linear", QOpenGLTexture::LinearMipMapLinear },
+    });
+
+    fill<QOpenGLTexture::Filter>(mUi->magFilter, {
+        { "Nearest", QOpenGLTexture::Nearest },
+        { "Linear", QOpenGLTexture::Linear },
+    });
+
+    fill<QOpenGLTexture::WrapMode>(mUi->wrapModeX, {
+        { "Repeat", QOpenGLTexture::Repeat },
+        { "Mirrored Repeat", QOpenGLTexture::MirroredRepeat },
+        { "Clamp to Edge", QOpenGLTexture::ClampToEdge },
+        { "Clamp to Border", QOpenGLTexture::ClampToBorder },
+    });
+    mUi->wrapModeY->setModel(mUi->wrapModeX->model());
+    mUi->wrapModeZ->setModel(mUi->wrapModeX->model());
+
+    fill<Binding::ComparisonFunc>(mUi->comparisonFunc, {
+        { "Disabled", Binding::ComparisonDisabled },
+        { "Always", Binding::Always },
+        { "Less", Binding::Less },
+        { "Less Equal", Binding::LessEqual },
+        { "Equal", Binding::Equal },
+        { "Greater Equal", Binding::GreaterEqual },
+        { "Greater", Binding::Greater },
+        { "Not Equal", Binding::NotEqual },
+        { "Never", Binding::Never },
+    });
+
     connect(mUi->type, &DataComboBox::currentDataChanged,
         this, &BindingProperties::updateWidgets);
     connect(mUi->editor, &DataComboBox::currentDataChanged,
@@ -111,12 +146,17 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
     connect(mUi->color, &ColorPicker::colorChanged,
         [this](QColor color) { setFields(colorToFields(color)); });
 
-    connect(mUi->item, &ReferenceComboBox::listRequired,
-        this, &BindingProperties::getItemIds);
-    connect(mUi->item, &ReferenceComboBox::textRequired,
-        [this](QVariant id) {
-            return mSessionProperties.findItemName(id.toInt());
-        });
+    connect(mUi->texture, &ReferenceComboBox::currentDataChanged,
+        this, &BindingProperties::updateWidgets);
+    connect(mUi->texture, &ReferenceComboBox::listRequired,
+        [this]() { return mSessionProperties.getItemIds(ItemType::Texture); });
+    connect(mUi->buffer, &ReferenceComboBox::listRequired,
+        [this]() { return mSessionProperties.getItemIds(ItemType::Buffer); });
+    for (auto comboBox : { mUi->texture, mUi->buffer })
+        connect(comboBox, &ReferenceComboBox::textRequired,
+            [this](QVariant id) {
+                return mSessionProperties.findItemName(id.toInt());
+            });
 
     connect(mUi->layered, &QCheckBox::toggled,
         mUi->layer, &QWidget::setEnabled);
@@ -136,10 +176,18 @@ void BindingProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->editor, SessionModel::BindingEditor);
     mapper.addMapping(mUi->count, SessionModel::BindingValueCount);
     mapper.addMapping(mUi->index, SessionModel::BindingCurrentValue, "currentIndex");
-    mapper.addMapping(mUi->item, SessionModel::BindingValueItemId);
+    mapper.addMapping(mUi->texture, SessionModel::BindingValueTextureId);
+    mapper.addMapping(mUi->buffer, SessionModel::BindingValueBufferId);
     mapper.addMapping(mUi->level, SessionModel::BindingValueLevel);
     mapper.addMapping(mUi->layered, SessionModel::BindingValueLayered);
-    mapper.addMapping(mUi->layer, SessionModel::BindingValueLayer);
+    mapper.addMapping(mUi->layer, SessionModel::BindingValueLayer);    
+    mapper.addMapping(mUi->minFilter, SessionModel::BindingValueMinFilter);
+    mapper.addMapping(mUi->magFilter, SessionModel::BindingValueMagFilter);
+    mapper.addMapping(mUi->wrapModeX, SessionModel::BindingValueWrapModeX);
+    mapper.addMapping(mUi->wrapModeY, SessionModel::BindingValueWrapModeY);
+    mapper.addMapping(mUi->wrapModeZ, SessionModel::BindingValueWrapModeZ);
+    mapper.addMapping(mUi->borderColor, SessionModel::BindingValueBorderColor);
+    mapper.addMapping(mUi->comparisonFunc, SessionModel::BindingValueComparisonFunc);
     mapper.addMapping(this, SessionModel::BindingValueFields);
 }
 
@@ -151,6 +199,14 @@ Binding::Type BindingProperties::currentType() const
 Binding::Editor BindingProperties::currentEditor() const
 {
     return static_cast<Binding::Editor>(mUi->editor->currentData().toInt());
+}
+
+TextureKind BindingProperties::currentTextureKind() const
+{
+    auto itemId = mUi->texture->currentData().toInt();
+    if (auto texture = mSessionProperties.model().findItem<Texture>(itemId))
+        return getKind(*texture);
+    return { };
 }
 
 void BindingProperties::setFields(const QStringList &fields)
@@ -169,9 +225,10 @@ void BindingProperties::updateWidgets()
 {
     const auto type = currentType();
     const auto editor = currentEditor();
-    const auto isImage = (type == Binding::Image);
-    const auto isReference = (type != Binding::Uniform);
-    const auto isColor = (type == Binding::Uniform && editor == Binding::Color);
+    const auto uniform = (type == Binding::Uniform);
+    const auto sampler = (type == Binding::Sampler);
+    const auto image = (type == Binding::Image);
+    const auto color = (type == Binding::Uniform && editor == Binding::Color);
 
     mSuspendSetFields = true;
 
@@ -182,44 +239,39 @@ void BindingProperties::updateWidgets()
         mUi->index->addTab(new QWidget(), QString::number(i));
     mUi->index->setVisible(count > 1);
 
-    setFormVisibility(mUi->formLayout, mUi->labelEditor, mUi->editor, !isReference);
+    setFormVisibility(mUi->formLayout, mUi->labelEditor, mUi->editor, uniform);
     setFormVisibility(mUi->formLayout, mUi->labelCount, mUi->widgetCount, true);
     setFormVisibility(mUi->formLayout, mUi->labelExpressions, mUi->expressions,
-        !isReference && !isColor);
-
-    setFormVisibility(mUi->formLayout, mUi->labelColor, mUi->color, isColor);
+        uniform && !color);
+    setFormVisibility(mUi->formLayout, mUi->labelColor, mUi->color, color);
     mUi->expressions->setColumnCount(expressionColumns(editor));
     mUi->expressions->setRowCount(expressionRows(editor));
     mUi->color->setColor(fieldsToColor(fields()));
     mUi->expressions->setFields(fields());
 
-    if (type != Binding::Image)
-        mUi->labelTexture->setVisible(false);
-    if (type != Binding::Sampler)
-        mUi->labelSampler->setVisible(false);
-    if (type != Binding::Buffer)
-        mUi->labelBuffer->setVisible(false);
+    setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
+        image || sampler);
+    setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
+        (type == Binding::Buffer));
 
-    setFormVisibility(mUi->formLayout,
-        type == Binding::Image ? mUi->labelTexture :
-        type == Binding::Sampler ? mUi->labelSampler : mUi->labelBuffer,
-        mUi->item, isReference);
-    if (isReference)
-        mUi->item->validate();
+    setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, image);
+    setFormVisibility(mUi->formLayout, mUi->labelLayer, mUi->layerWidget, image);
 
-    setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, isImage);
-    setFormVisibility(mUi->formLayout, mUi->labelLayer, mUi->layerWidget, isImage);
+    auto textureKind = currentTextureKind();
+    setFormVisibility(mUi->formLayout, mUi->labelComparisonFunc, mUi->comparisonFunc,
+        sampler && textureKind.depth);
+    setFormVisibility(mUi->formLayout, mUi->labelMinFilter, mUi->minFilter,
+        sampler);
+    setFormVisibility(mUi->formLayout, mUi->labelMagFilter, mUi->magFilter,
+        sampler);
+    setFormVisibility(mUi->formLayout, mUi->labelWrapModeX, mUi->wrapModeX,
+        sampler && textureKind.dimensions > 0);
+    setFormVisibility(mUi->formLayout, mUi->labelWrapModeY, mUi->wrapModeY,
+        sampler && textureKind.dimensions > 1);
+    setFormVisibility(mUi->formLayout, mUi->labelWrapModeZ, mUi->wrapModeZ,
+        sampler && textureKind.dimensions > 2);
+    setFormVisibility(mUi->formLayout, mUi->labelBorderColor, mUi->borderColor,
+        sampler);
 
     mSuspendSetFields = false;
-}
-
-QVariantList BindingProperties::getItemIds() const
-{
-    const auto bindingType = currentType();
-    const auto referenceType =
-        (bindingType == Binding::Sampler ? ItemType::Sampler :
-         bindingType == Binding::Image ? ItemType::Texture :
-         ItemType::Buffer);
-
-    return mSessionProperties.getItemIds(referenceType);
 }

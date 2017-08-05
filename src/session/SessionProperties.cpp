@@ -7,7 +7,6 @@
 #include "ui_BufferProperties.h"
 #include "ui_ColumnProperties.h"
 #include "ui_ImageProperties.h"
-#include "ui_SamplerProperties.h"
 #include "ui_ProgramProperties.h"
 #include "ui_ShaderProperties.h"
 #include "ui_VertexStreamProperties.h"
@@ -62,7 +61,6 @@ SessionProperties::SessionProperties(QWidget *parent)
     mTextureProperties = new TextureProperties(this);
     mStack->addWidget(mTextureProperties);
     add(mImageProperties);
-    add(mSamplerProperties);
     add(mProgramProperties);
     add(mShaderProperties);
     mBindingProperties = new BindingProperties(this);
@@ -112,25 +110,20 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mScriptProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Script); });
 
-    connect(mSamplerProperties->texture, &ReferenceComboBox::listRequired,
-        [this]() { return getItemIds(ItemType::Texture); });
-    connect(mSamplerProperties->texture, &ReferenceComboBox::currentDataChanged,
-        [this]() { updateSamplerWidgets(currentModelIndex()); });
-    connect(mAttributeProperties->buffer, &ReferenceComboBox::listRequired,
-        [this]() { return getItemIds(ItemType::Buffer); });
     connect(mAttributeProperties->buffer, &ReferenceComboBox::currentDataChanged,
         mAttributeProperties->column, &ReferenceComboBox::validate);
     connect(mAttributeProperties->column, &ReferenceComboBox::listRequired,
         [this]() { return getColumnIds(
             mAttributeProperties->buffer->currentData().toInt()); });
+    connect(mAttributeProperties->buffer, &ReferenceComboBox::listRequired,
+        [this]() { return getItemIds(ItemType::Buffer); });
 
     for (auto comboBox : { mShaderProperties->file, mBufferProperties->file,
             mImageProperties->file, mScriptProperties->file })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [](auto data) { return FileDialog::getFileTitle(data.toString()); });
 
-    for (auto comboBox : { mSamplerProperties->texture, mAttributeProperties->buffer,
-            mAttributeProperties->column })
+    for (auto comboBox : { mAttributeProperties->buffer, mAttributeProperties->column })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant data) { return findItemName(data.toInt()); });
 
@@ -184,31 +177,6 @@ void SessionProperties::fillComboBoxes()
         { "OR Reverse", Target::OrReverse },
         { "OR Inverted", Target::OrInverted },
     });
-
-    fill<QOpenGLTexture::Filter>(mSamplerProperties->minFilter, {
-        { "Nearest", QOpenGLTexture::Nearest },
-        { "Linear", QOpenGLTexture::Linear },
-        { "Nearest MipMap-Nearest", QOpenGLTexture::NearestMipMapNearest },
-        { "Nearest MipMap-Linear", QOpenGLTexture::NearestMipMapLinear },
-        { "Linear MipMap-Nearest", QOpenGLTexture::LinearMipMapNearest },
-        { "Linear MipMap-Linear", QOpenGLTexture::LinearMipMapLinear },
-    });
-
-    fill<QOpenGLTexture::Filter>(mSamplerProperties->magFilter, {
-        { "Nearest", QOpenGLTexture::Nearest },
-        { "Linear", QOpenGLTexture::Linear },
-    });
-
-    fill<QOpenGLTexture::WrapMode>(mSamplerProperties->wrapModeX, {
-        { "Repeat", QOpenGLTexture::Repeat },
-        { "Mirrored Repeat", QOpenGLTexture::MirroredRepeat },
-        { "Clamp to Edge", QOpenGLTexture::ClampToEdge },
-        { "Clamp to Border", QOpenGLTexture::ClampToBorder },
-    });
-    mSamplerProperties->wrapModeY->setModel(
-        mSamplerProperties->wrapModeX->model());
-    mSamplerProperties->wrapModeZ->setModel(
-        mSamplerProperties->wrapModeX->model());
 
     fill<QOpenGLTexture::CubeMapFace>(mImageProperties->face, {
         { "Positive X", QOpenGLTexture::CubeMapPositiveX },
@@ -353,16 +321,6 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             updateImageWidgets(index);
             break;
 
-        case ItemType::Sampler:
-            map(mSamplerProperties->texture, SessionModel::SamplerTextureId);
-            map(mSamplerProperties->minFilter, SessionModel::SamplerMinFilter);
-            map(mSamplerProperties->magFilter, SessionModel::SamplerMagFilter);
-            map(mSamplerProperties->wrapModeX, SessionModel::SamplerWarpModeX);
-            map(mSamplerProperties->wrapModeY, SessionModel::SamplerWarpModeY);
-            map(mSamplerProperties->wrapModeZ, SessionModel::SamplerWarpModeZ);
-            updateSamplerWidgets(index);
-            break;
-
         case ItemType::Program:
             break;
 
@@ -438,20 +396,4 @@ void SessionProperties::updateImageWidgets(const QModelIndex &index)
     auto& ui = *mImageProperties;
     setFormVisibility(ui.formLayout, ui.labelLayer, ui.layer, kind.array);
     setFormVisibility(ui.formLayout, ui.labelFace, ui.face, kind.cubeMap);
-}
-
-void SessionProperties::updateSamplerWidgets(const QModelIndex &index)
-{
-    auto kind = TextureKind();
-    if (auto sampler = mModel.item<Sampler>(index))
-        if (auto texture = mModel.findItem<Texture>(sampler->textureId))
-            kind = getKind(*texture);
-
-    auto& ui = *mSamplerProperties;
-    setFormVisibility(ui.formLayout, ui.labelWarpModeX, ui.wrapModeX,
-        kind.dimensions > 0);
-    setFormVisibility(ui.formLayout, ui.labelWarpModeY, ui.wrapModeY,
-        kind.dimensions > 1);
-    setFormVisibility(ui.formLayout, ui.labelWarpModeZ, ui.wrapModeZ,
-        kind.dimensions > 2);
 }

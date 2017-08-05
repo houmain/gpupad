@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>324</width>
-    <height>388</height>
+    <width>362</width>
+    <height>602</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -153,47 +153,103 @@
       </widget>
      </item>
      <item row="3" column="0">
-      <widget class="QLabel" name="labelSampler">
-       <property name="text">
-        <string>Sampler</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="ReferenceComboBox" name="item"/>
-     </item>
-     <item row="4" column="0">
       <widget class="QLabel" name="labelTexture">
        <property name="text">
         <string>Texture</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="labelBuffer">
+     <item row="3" column="1">
+      <widget class="ReferenceComboBox" name="texture"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelMinFilter">
        <property name="text">
-        <string>Buffer</string>
+        <string>Min. Filter</string>
        </property>
       </widget>
      </item>
+     <item row="4" column="1">
+      <widget class="DataComboBox" name="minFilter"/>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="labelMagFilter">
+       <property name="text">
+        <string>Mag. Filter</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="DataComboBox" name="magFilter"/>
+     </item>
      <item row="6" column="0">
+      <widget class="QLabel" name="labelWrapModeX">
+       <property name="text">
+        <string>Wrap X</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="DataComboBox" name="wrapModeX"/>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="labelWrapModeY">
+       <property name="text">
+        <string>Y</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="DataComboBox" name="wrapModeY"/>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="labelWrapModeZ">
+       <property name="text">
+        <string>Z</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="DataComboBox" name="wrapModeZ"/>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="labelBorderColor">
+       <property name="text">
+        <string>Border</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="1">
+      <widget class="ColorPicker" name="borderColor"/>
+     </item>
+     <item row="10" column="0">
+      <widget class="QLabel" name="labelComparisonFunc">
+       <property name="text">
+        <string>Comparison</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="DataComboBox" name="comparisonFunc"/>
+     </item>
+     <item row="11" column="0">
       <widget class="QLabel" name="labelLevel">
        <property name="text">
         <string>Level</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="11" column="1">
       <widget class="QSpinBox" name="level"/>
      </item>
-     <item row="7" column="0">
+     <item row="12" column="0">
       <widget class="QLabel" name="labelLayer">
        <property name="text">
         <string>Layer</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="12" column="1">
       <widget class="QWidget" name="layerWidget" native="true">
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <property name="leftMargin">
@@ -234,24 +290,34 @@
        </layout>
       </widget>
      </item>
-     <item row="8" column="0">
+     <item row="13" column="0">
+      <widget class="QLabel" name="labelBuffer">
+       <property name="text">
+        <string>Buffer</string>
+       </property>
+      </widget>
+     </item>
+     <item row="13" column="1">
+      <widget class="ReferenceComboBox" name="buffer"/>
+     </item>
+     <item row="14" column="0">
       <widget class="QLabel" name="labelColor">
        <property name="text">
         <string>Color</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
+     <item row="14" column="1">
       <widget class="ColorPicker" name="color"/>
      </item>
-     <item row="9" column="0">
+     <item row="15" column="0">
       <widget class="QLabel" name="labelExpressions">
        <property name="text">
         <string>Value</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
+     <item row="15" column="1">
       <widget class="ExpressionMatrix" name="expressions">
        <property name="verticalScrollBarPolicy">
         <enum>Qt::ScrollBarAlwaysOff</enum>

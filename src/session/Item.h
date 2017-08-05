@@ -16,7 +16,6 @@ enum class ItemType
     Column,
     Texture,
     Image,
-    Sampler,
     Program,
     Shader,
     Binding,
@@ -97,19 +96,6 @@ struct Image : FileItem
     Face face{ };
 };
 
-struct Sampler : Item
-{
-    using Filter = QOpenGLTexture::Filter;
-    using WrapMode = QOpenGLTexture::WrapMode;
-
-    ItemId textureId{ };
-    Filter minFilter{ QOpenGLTexture::Nearest };
-    Filter magFilter{ QOpenGLTexture::Nearest };
-    WrapMode wrapModeX{ QOpenGLTexture::Repeat };
-    WrapMode wrapModeY{ QOpenGLTexture::Repeat };
-    WrapMode wrapModeZ{ QOpenGLTexture::Repeat };
-};
-
 struct Program : Item
 {
 };
@@ -140,6 +126,21 @@ struct Binding : Item
         //Subroutine,
     };
 
+    using Filter = QOpenGLTexture::Filter;
+    using WrapMode = QOpenGLTexture::WrapMode;
+
+    enum ComparisonFunc {
+        ComparisonDisabled  = GL_NONE,
+        LessEqual = GL_LEQUAL,
+        GreaterEqual = GL_GEQUAL,
+        Less = GL_LESS,
+        Greater = GL_GREATER,
+        Equal = GL_EQUAL,
+        NotEqual = GL_NOTEQUAL,
+        Always = GL_ALWAYS,
+        Never = GL_NEVER,
+    };
+
     enum Editor {
         Expression, Expression2, Expression3, Expression4,
         Expression2x2, Expression2x3, Expression2x4,
@@ -150,10 +151,18 @@ struct Binding : Item
 
     struct Value {
         QStringList fields;
-        ItemId itemId;
-        int level;
-        bool layered;
-        int layer;
+        ItemId textureId{ };
+        ItemId bufferId{ };
+        int level{ };
+        bool layered{ };
+        int layer{ };
+        Filter minFilter{ QOpenGLTexture::Nearest };
+        Filter magFilter{ QOpenGLTexture::Nearest };
+        WrapMode wrapModeX{ QOpenGLTexture::Repeat };
+        WrapMode wrapModeY{ QOpenGLTexture::Repeat };
+        WrapMode wrapModeZ{ QOpenGLTexture::Repeat };
+        QColor borderColor{ Qt::black };
+        ComparisonFunc comparisonFunc{ ComparisonDisabled };
     };
 
     Type type{ };
@@ -278,13 +287,13 @@ struct Attachment : Item
     BlendFactor blendAlphaDest{ BlendFactor::Zero };
     unsigned int colorWriteMask{ 0xF };
 
-    ComparisonFunction depthCompareFunc{ ComparisonFunction::Less };
+    ComparisonFunction depthComparisonFunc{ ComparisonFunction::Less };
     float depthOffsetFactor{ };
     float depthOffsetUnits{ };
     bool depthClamp{ };
     bool depthWrite{ true };
 
-    ComparisonFunction stencilFrontCompareFunc{ ComparisonFunction::Always };
+    ComparisonFunction stencilFrontComparisonFunc{ ComparisonFunction::Always };
     unsigned int stencilFrontReference{ };
     unsigned int stencilFrontReadMask{ 0xFF };
     StencilOperation stencilFrontFailOp{ StencilOperation::Keep };
@@ -292,7 +301,7 @@ struct Attachment : Item
     StencilOperation stencilFrontDepthPassOp{ StencilOperation::Keep };
     unsigned int stencilFrontWriteMask{ 0xFF };
 
-    ComparisonFunction stencilBackCompareFunc{ ComparisonFunction::Always };
+    ComparisonFunction stencilBackComparisonFunc{ ComparisonFunction::Always };
     unsigned int stencilBackReference{ };
     unsigned int stencilBackReadMask{ 0xFF };
     StencilOperation stencilBackFailOp{ StencilOperation::Keep };

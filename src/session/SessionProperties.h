@@ -13,7 +13,6 @@ class GroupProperties;
 class BufferProperties;
 class ColumnProperties;
 class ImageProperties;
-class SamplerProperties;
 class ProgramProperties;
 class ShaderProperties;
 class VertexStreamProperties;
@@ -68,7 +67,6 @@ public:
 
 private slots:
     void updateImageWidgets(const QModelIndex &index);
-    void updateSamplerWidgets(const QModelIndex &index);
 
 private:
     void fillComboBoxes();
@@ -83,7 +81,6 @@ private:
     QScopedPointer<Ui::ColumnProperties> mColumnProperties;
     TextureProperties *mTextureProperties{ };
     QScopedPointer<Ui::ImageProperties> mImageProperties;
-    QScopedPointer<Ui::SamplerProperties> mSamplerProperties;
     QScopedPointer<Ui::ProgramProperties> mProgramProperties;
     QScopedPointer<Ui::ShaderProperties> mShaderProperties;
     BindingProperties *mBindingProperties{ };

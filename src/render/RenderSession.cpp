@@ -52,7 +52,6 @@ namespace {
         for (const auto& kv : bindings.samplers)
             if (program.apply(kv.second, unit++)) {
                 usedItems += kv.second.bindingItemId;
-                usedItems += kv.second.samplerItemId;
                 usedItems += kv.second.texture->usedItems();
             }
 
@@ -240,34 +239,30 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 
                 case Binding::Type::Sampler:
                     for (auto index = 0; index < binding->valueCount; ++index) {
-                        auto samplerId = binding->values[index].itemId;
-                        if (auto sampler = session.findItem<Sampler>(samplerId))
-                            addCommand(
-                                [binding = GLSamplerBinding{
-                                    binding->id, sampler->id, binding->name, index,
-                                    addTextureOnce(sampler->textureId),
-                                    sampler->minFilter, sampler->magFilter,
-                                    sampler->wrapModeX, sampler->wrapModeY,
-                                    sampler->wrapModeZ }
-                                ](BindingState& state) {
-                                    state.top().samplers[binding.name] = binding;
-                                });
+                        const auto &value = binding->values[index];
+                        addCommand(
+                            [binding = GLSamplerBinding{
+                                binding->id, binding->name, index,
+                                addTextureOnce(value.textureId),
+                                value.minFilter, value.magFilter,
+                                value.wrapModeX, value.wrapModeY, value.wrapModeZ,
+                                value.borderColor,
+                                value.comparisonFunc }
+                            ](BindingState& state) {
+                                state.top().samplers[binding.name] = binding;
+                            });
                     }
                     break;
 
                 case Binding::Type::Image:
                     for (auto index = 0; index < binding->valueCount; ++index) {
                         const auto &value = binding->values[index];
-                        auto textureId = value.itemId;
-                        auto level = value.level;
-                        auto layer = value.layer;
-                        auto layered = value.layered;
                         auto access = GLenum{ GL_READ_WRITE };
                         addCommand(
                             [binding = GLImageBinding{
                                 binding->id, binding->name, index,
-                                addTextureOnce(textureId),
-                                level, layered, layer, access }
+                                addTextureOnce(value.textureId),
+                                value.level, value.layered, value.layer, access }
                             ](BindingState& state) {
                                 state.top().images[binding.name] = binding;
                             });
@@ -276,42 +271,19 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 
                 case Binding::Type::Buffer:
                     for (auto index = 0; index < binding->valueCount; ++index) {
-                        auto bufferId = binding->values[index].itemId;
+                        const auto &value = binding->values[index];
                         addCommand(
                             [binding = GLBufferBinding{
                                 binding->id,
                                 binding->name,
                                 index,
-                                addBufferOnce(bufferId) }
+                                addBufferOnce(value.bufferId) }
                             ](BindingState& state) {
                                 state.top().buffers[binding.name] = binding;
                             });
                     }
                     break;
                 }
-        }
-        else if (auto texture = castItem<Texture>(item)) {
-            addCommand(
-                [binding = GLSamplerBinding{
-                    0, texture->id, texture->name, 0,
-                    addTextureOnce(texture->id),
-                    Sampler::Filter::Linear, Sampler::Filter::Linear,
-                    Sampler::WrapMode::Repeat, Sampler::WrapMode::Repeat,
-                    Sampler::WrapMode::Repeat }
-                ](BindingState& state) {
-                    state.top().samplers[binding.name] = binding;
-                });
-        }
-        else if (auto sampler = castItem<Sampler>(item)) {
-            addCommand(
-                [binding = GLSamplerBinding{
-                    0, sampler->id, sampler->name, 0,
-                    addTextureOnce(sampler->textureId),
-                    sampler->minFilter, sampler->magFilter,
-                    sampler->wrapModeX, sampler->wrapModeY, sampler->wrapModeZ }
-                ](BindingState& state) {
-                    state.top().samplers[binding.name] = binding;
-                });
         }
         else if (auto call = castItem<Call>(item)) {
             if (call->checked) {

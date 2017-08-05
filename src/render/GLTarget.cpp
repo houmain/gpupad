@@ -189,7 +189,7 @@ void GLTarget::applyAttachmentStates(const GLAttachment &a)
 
     if (kind.depth) {
         gl.glEnable(GL_DEPTH_TEST);
-        gl.glDepthFunc(a.depthCompareFunc);
+        gl.glDepthFunc(a.depthComparisonFunc);
         gl.glEnable(GL_POLYGON_OFFSET_POINT);
         gl.glEnable(GL_POLYGON_OFFSET_LINE);
         gl.glEnable(GL_POLYGON_OFFSET_FILL);
@@ -204,20 +204,20 @@ void GLTarget::applyAttachmentStates(const GLAttachment &a)
     if (kind.stencil) {
         gl.glEnable(GL_STENCIL_TEST);
         if (auto gl40 = gl.v4_0) {
-            gl40->glStencilFuncSeparate(GL_FRONT, a.stencilFrontCompareFunc,
+            gl40->glStencilFuncSeparate(GL_FRONT, a.stencilFrontComparisonFunc,
                 a.stencilFrontReference, a.stencilFrontReadMask);
             gl40->glStencilOpSeparate(GL_FRONT, a.stencilFrontFailOp,
                 a.stencilFrontDepthFailOp, a.stencilFrontDepthPassOp);
             gl40->glStencilMaskSeparate(GL_FRONT, a.stencilFrontWriteMask);
 
-            gl40->glStencilFuncSeparate(GL_BACK, a.stencilBackCompareFunc,
+            gl40->glStencilFuncSeparate(GL_BACK, a.stencilBackComparisonFunc,
                 a.stencilBackReference, a.stencilFrontReadMask);
             gl40->glStencilOpSeparate(GL_BACK, a.stencilBackFailOp,
                 a.stencilBackDepthFailOp, a.stencilBackDepthPassOp);
             gl40->glStencilMaskSeparate(GL_BACK, a.stencilBackWriteMask);
         }
         else {
-            gl40->glStencilFunc(a.stencilFrontCompareFunc,
+            gl40->glStencilFunc(a.stencilFrontComparisonFunc,
                 a.stencilFrontReference, a.stencilFrontReadMask);
             gl40->glStencilOp(a.stencilFrontFailOp,
                 a.stencilFrontDepthFailOp, a.stencilFrontDepthPassOp);

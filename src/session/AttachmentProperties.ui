@@ -300,14 +300,14 @@
           <number>2</number>
          </property>
          <item row="0" column="0">
-          <widget class="QLabel" name="labelDepthCompareFunc">
+          <widget class="QLabel" name="labelDepthComparisonFunc">
            <property name="text">
             <string>Depth Function</string>
            </property>
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="DataComboBox" name="depthCompareFunc"/>
+          <widget class="DataComboBox" name="depthComparisonFunc"/>
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="labelOffsetFactor">
@@ -443,7 +443,7 @@
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="labelStencilCompareFunc">
+          <widget class="QLabel" name="labelStencilComparisonFunc">
            <property name="text">
             <string>Stencil Function</string>
            </property>
@@ -457,7 +457,7 @@
           </widget>
          </item>
          <item row="2" column="1">
-          <widget class="DataComboBox" name="stencilCompareFunc"/>
+          <widget class="DataComboBox" name="stencilComparisonFunc"/>
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="labelStencilFailOp">
@@ -560,7 +560,7 @@
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="labelStencilBackCompareFunc">
+          <widget class="QLabel" name="labelStencilBackComparisonFunc">
            <property name="text">
             <string>Stencil Function</string>
            </property>
@@ -574,7 +574,7 @@
           </widget>
          </item>
          <item row="2" column="1">
-          <widget class="DataComboBox" name="stencilBackCompareFunc"/>
+          <widget class="DataComboBox" name="stencilBackComparisonFunc"/>
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="labelStencilBackFailOp">

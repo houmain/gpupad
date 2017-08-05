@@ -254,6 +254,14 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
     gl.glBindTexture(target, texture.getReadOnlyTextureId());
     gl.glUniform1i(location + binding.arrayIndex, unit);
+
+    auto borderColor = std::array<float, 4>{
+        static_cast<float>(binding.borderColor.redF()),
+        static_cast<float>(binding.borderColor.greenF()),
+        static_cast<float>(binding.borderColor.blueF()),
+        static_cast<float>(binding.borderColor.alphaF())
+    };
+
     switch (target) {
         case QOpenGLTexture::Target1D:
         case QOpenGLTexture::Target1DArray:
@@ -262,11 +270,20 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
         case QOpenGLTexture::Target3D:
         case QOpenGLTexture::TargetCubeMap:
         case QOpenGLTexture::TargetCubeMapArray:
+        case QOpenGLTexture::TargetRectangle:
             gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, binding.minFilter);
             gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, binding.magFilter);
             gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, binding.wrapModeX);
             gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, binding.wrapModeY);
             gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, binding.wrapModeZ);
+            gl.glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, borderColor.data());
+            if (binding.comparisonFunc) {
+                gl.glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+                gl.glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, binding.comparisonFunc);
+            }
+            else {
+                gl.glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+            }
             break;
 
         default:
