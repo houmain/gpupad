@@ -20,9 +20,9 @@ public:
     ~EditorManager();
 
     int openNotSavedDialog(const QString& fileName);
-    QString openNewSourceEditor(const QString &untitledBase);
-    QString openNewBinaryEditor(const QString &untitledBase);
-    QString openNewImageEditor(const QString &untitledBase);
+    QString openNewSourceEditor();
+    QString openNewBinaryEditor();
+    QString openNewImageEditor();
     bool openEditor(const QString &fileName, bool raise = true);
     SourceEditor *openSourceEditor(const QString &fileName,
         bool raise = true, int line = -1, int column = -1);

@@ -19,9 +19,9 @@ void FileDialog::resetNextUntitledFileIndex()
     gNextUntitledFileIndex = 1;
 }
 
-QString FileDialog::generateNextUntitledFileName(const QString &untitledBase)
+QString FileDialog::generateNextUntitledFileName()
 {
-    return UntitledTag + untitledBase + QString::number(gNextUntitledFileIndex++);
+    return UntitledTag + QString::number(gNextUntitledFileIndex++);
 }
 
 QString FileDialog::getUntitledSessionFileName()

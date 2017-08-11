@@ -355,7 +355,7 @@ void MainWindow::updateEvaluationInterval()
 
 void MainWindow::newFile()
 {
-    mEditorManager.openNewSourceEditor("");
+    mEditorManager.openNewSourceEditor();
 }
 
 void MainWindow::openFile()

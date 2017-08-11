@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<group inlineScope="false">
+    <group id="360" name="Target" inlineScope="true">
+        <texture id="343" name="target.png" fileName="target.png" target="3553" format="32856" width="512" height="512"/>
+        <target id="341" name="Target" frontFace="2305" cullMode="0" logicOperation="0" blendConstant="#ffffff">
+            <attachment id="342" name="Color" textureId="343" level="0" blendColorEq="32774" blendColorSource="1" blendColorDest="0" blendAlphaEq="32774" blendAlphaSource="1" blendAlphaDest="0" colorWriteMask="15"/>
+        </target>
+        <call id="357" name="Clear Target" checked="true" type="5" textureId="343" clearColor="#000000" clearDepth="1" clearStencil="0"/>
+    </group>
+    <group id="1" name="Shadertoy" inlineScope="false">
+        <binding id="345" name="iGlobalTime" type="0" editor="0">
+            <value>
+                <field>Date.now() % 10000 / 1000.0</field>
+            </value>
+        </binding>
+        <binding id="344" name="target" type="1">
+            <value textureId="343" minFilter="9728" magFilter="9728" wrapModeX="10497" wrapModeY="10497" wrapModeZ="10497"/>
+        </binding>
+        <program id="336" name="Program">
+            <shader id="337" name="attributeless.vs" type="35633" fileName="Shadertoy/attributeless.vs"/>
+            <shader id="338" name="shadertoy.fs" type="0" fileName="Shadertoy/shadertoy.fs"/>
+            <shader id="339" name="ldscDM.glsl" type="35632" fileName="Shadertoy/ldscDM.glsl"/>
+        </program>
+        <call id="340" name="Call" checked="true" type="0" programId="336" targetId="341" primitiveType="5" count="4" first="0" instanceCount="1" baseInstance="0"/>
+    </group>
+    <group id="366" name="cube" inlineScope="false">
+        <texture id="388" name="depth" fileName="" target="3553" format="33189" width="512" height="512"/>
+        <target id="385" name="Target" frontFace="2305" cullMode="0" logicOperation="0" blendConstant="#ffffff">
+            <attachment id="386" name="Color" textureId="343" level="0" blendColorEq="32774" blendColorSource="1" blendColorDest="0" blendAlphaEq="32774" blendAlphaSource="1" blendAlphaDest="0" colorWriteMask="15"/>
+            <attachment id="387" name="Depth" textureId="388" level="0" depthComparisonFunc="513" depthOffsetFactor="0" depthOffsetUnits="0" depthClamp="0" depthWrite="true"/>
+        </target>
+        <script id="384" name="math.js" fileName="cube/math.js"/>
+        <texture id="380" name="marble.png" fileName="cube/marble.png" target="3553" format="32856" width="512" height="512"/>
+        <buffer id="367" name="cube_position_normal_texcoords.bin" fileName="cube/cube_position_normal_texcoords.bin" offset="0" rowCount="36">
+            <column id="368" name="position" dataType="5126" count="3" padding="0"/>
+            <column id="369" name="normal" dataType="5126" count="3" padding="0"/>
+            <column id="370" name="texcoords" dataType="5126" count="2" padding="0"/>
+        </buffer>
+        <vertexstream id="371" name="Vertex Stream">
+            <attribute id="372" name="aPosition" bufferId="367" columnId="368" normalize="false" divisor="0"/>
+            <attribute id="373" name="aNormal" bufferId="367" columnId="369" normalize="false" divisor="0"/>
+            <attribute id="374" name="aTexCoords" bufferId="367" columnId="370" normalize="false" divisor="0"/>
+        </vertexstream>
+        <binding id="375" name="uModel" type="0" editor="0">
+            <value>
+                <field>rotateY(Date.now() / 1000.0)</field>
+            </value>
+        </binding>
+        <binding id="382" name="uView" type="0" editor="12">
+            <value>
+                <field>1</field>
+                <field>0</field>
+                <field>0</field>
+                <field>0</field>
+                <field>0</field>
+                <field>1</field>
+                <field>0</field>
+                <field>0</field>
+                <field>0</field>
+                <field>0</field>
+                <field>1</field>
+                <field>0</field>
+                <field>0.5</field>
+                <field>0.75</field>
+                <field>-3</field>
+                <field>1</field>
+            </value>
+        </binding>
+        <binding id="383" name="uProjection" type="0" editor="0">
+            <value>
+                <field>perspective(45, 1.0, 1, 100)</field>
+            </value>
+        </binding>
+        <binding id="381" name="uTexture" type="1">
+            <value textureId="380" minFilter="9987" magFilter="9729" wrapModeX="10497" wrapModeY="10497" wrapModeZ="10497"/>
+        </binding>
+        <program id="376" name="Program">
+            <shader id="377" name="cube.vs" type="35633" fileName="cube/cube.vs"/>
+            <shader id="378" name="cube.fs" type="35632" fileName="cube/cube.fs"/>
+        </program>
+        <call id="389" name="Clear Depth" checked="true" type="5" textureId="388" clearColor="#000000" clearDepth="1" clearStencil="0"/>
+        <call id="379" name="Draw Cube" checked="true" type="0" programId="376" targetId="385" vertexStreamId="371" primitiveType="4" count="36" first="0" instanceCount="1" baseInstance="0"/>
+    </group>
+    <group id="346" name="gltf2" inlineScope="false">
+        <buffer id="347" name="simpleTriangle.bin-indices" fileName="gltf2/simpleTriangle.bin" offset="0" rowCount="3">
+            <column id="348" name="index" dataType="5123" count="1" padding="0"/>
+        </buffer>
+        <buffer id="349" name="simpleTriangle.bin-position" fileName="gltf2/simpleTriangle.bin" offset="8" rowCount="3">
+            <column id="350" name="position" dataType="5126" count="3" padding="0"/>
+        </buffer>
+        <vertexstream id="352" name="Vertex Stream">
+            <attribute id="353" name="position" bufferId="349" columnId="350" normalize="false" divisor="0"/>
+        </vertexstream>
+        <binding id="359" name="modelViewProjection" type="0" editor="12">
+            <value>
+                <field>1.5</field>
+                <field>0</field>
+                <field>0</field>
+                <field>0</field>
+                <field>0</field>
+                <field>-1.5</field>
+                <field>0</field>
+                <field>0</field>
+                <field>0</field>
+                <field>0</field>
+                <field>1</field>
+                <field>0</field>
+                <field>-0.75</field>
+                <field>0.75</field>
+                <field>0</field>
+                <field>1</field>
+            </value>
+        </binding>
+        <program id="354" name="Program">
+            <shader id="355" name="simple.vs" type="35633" fileName="gltf2/simple.vs"/>
+            <shader id="356" name="simple.fs" type="35632" fileName="gltf2/simple.fs"/>
+        </program>
+        <call id="351" name="Call" checked="false" type="1" programId="354" targetId="341" vertexStreamId="352" primitiveType="4" indexBufferId="347" count="3" first="0" instanceCount="1" baseInstance="0" baseVertex="0"/>
+    </group>
+    <group id="361" name="compute" inlineScope="false">
+        <binding id="364" name="image" type="2">
+            <value textureId="343" level="0" layered="false" layer="0"/>
+        </binding>
+        <program id="362" name="Program">
+            <shader id="363" name="grid.glsl" type="37305" fileName="compute/grid.glsl"/>
+        </program>
+        <call id="365" name="Call" checked="true" type="4" programId="362" workGroupsX="32" workGroupsY="32" workGroupsZ="1"/>
+    </group>
+</group>

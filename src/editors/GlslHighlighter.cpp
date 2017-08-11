@@ -45,7 +45,7 @@ const auto builtinFunctions = {
     "floatBitsToUint", "floor", "fma", "fract", "frexp", "ftransform", "fwidth",
     "greaterThan", "greaterThanEqual", "imageAtomicAdd", "imageAtomicAnd",
     "imageAtomicCompSwap", "imageAtomicExchange", "imageAtomicMax",
-    "imageAtomicMin", "imageAtomicOr", "imageAtomicXor", "imageLoad",
+    "imageAtomicMin", "imageAtomicOr", "imageAtomicXor", "imageSize", "imageLoad",
     "imageStore", "imulExtended", "intBitsToFloat", "interpolateAtCentroid",
     "interpolateAtOffset", "interpolateAtSample", "inverse", "inversesqrt",
     "isinf", "isnan", "ldexp", "length", "lessThan", "lessThanEqual", "log",

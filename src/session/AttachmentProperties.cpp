@@ -165,7 +165,9 @@ void AttachmentProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaEq, mUi->blendAlphaEq, kind.color);
     setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaSource, mUi->blendAlphaSource, kind.color);
     setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaDest, mUi->blendAlphaDest, kind.color);
-    setFormVisibility(mUi->formLayout, mUi->labelColorWriteMask, mUi->colorWriteMask, kind.color);
+
+    // TODO: implement
+    setFormVisibility(mUi->formLayout, mUi->labelColorWriteMask, mUi->colorWriteMask, false && kind.color);
 
     static const QList<QString> tabTitles = {
         mUi->tabDepthStencil->tabText(0),

@@ -146,10 +146,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="rowCountAuto">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
+         <widget class="QToolButton" name="deduceRowCount">
           <property name="toolTip">
            <string>Deduce row count from file size and stride</string>
           </property>

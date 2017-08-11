@@ -321,6 +321,9 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
 
 bool GLProgram::apply(const GLBufferBinding &binding, int unit)
 {
+    if (!binding.buffer)
+        return false;
+
     auto& gl = GLContext::currentContext();
     auto index = gl.glGetUniformBlockIndex(
         mProgramObject, qPrintable(binding.name));

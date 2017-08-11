@@ -79,32 +79,28 @@ SessionProperties::SessionProperties(QWidget *parent)
     setWidget(mStack);
 
     connect(mShaderProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::editorManager().openNewSourceEditor(
-            currentItemName())); });
+        setCurrentItemFile(Singletons::editorManager().openNewSourceEditor()); });
     connect(mShaderProperties->fileBrowse, &QToolButton::clicked,
         [this]() { selectCurrentItemFile(FileDialog::ShaderExtensions); });
     connect(mShaderProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Shader); });
 
     connect(mBufferProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::editorManager().openNewBinaryEditor(
-            currentItemName())); });
+        setCurrentItemFile(Singletons::editorManager().openNewBinaryEditor()); });
     connect(mBufferProperties->fileBrowse, &QToolButton::clicked,
         [this]() { selectCurrentItemFile(FileDialog::BinaryExtensions); });
     connect(mBufferProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Buffer, true); });
 
     connect(mImageProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::editorManager().openNewImageEditor(
-            currentItemName())); });
+        setCurrentItemFile(Singletons::editorManager().openNewImageEditor()); });
     connect(mImageProperties->fileBrowse, &QToolButton::clicked,
         [this]() { selectCurrentItemFile(FileDialog::ImageExtensions); });
     connect(mImageProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Image, true); });
 
     connect(mScriptProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::editorManager().openNewSourceEditor(
-            currentItemName())); });
+        setCurrentItemFile(Singletons::editorManager().openNewSourceEditor()); });
     connect(mScriptProperties->fileBrowse, &QToolButton::clicked,
         [this]() { selectCurrentItemFile(FileDialog::ScriptExtensions); });
     connect(mScriptProperties->file, &ReferenceComboBox::listRequired,
@@ -129,6 +125,9 @@ SessionProperties::SessionProperties(QWidget *parent)
 
     setCurrentModelIndex({ });
     fillComboBoxes();
+
+    // TODO: implement
+    mBufferProperties->deduceRowCount->setVisible(false);
 }
 
 SessionProperties::~SessionProperties() = default;

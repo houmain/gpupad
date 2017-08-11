@@ -173,7 +173,7 @@ void SynchronizeLogic::handleItemActivated(const QModelIndex &index,
             case ItemType::Image:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.index(fileItem, SessionModel::FileName),
-                        editors.openNewImageEditor(fileItem->name));
+                        editors.openNewImageEditor());
                 editors.openImageEditor(fileItem->fileName);
                 break;
 
@@ -181,14 +181,14 @@ void SynchronizeLogic::handleItemActivated(const QModelIndex &index,
             case ItemType::Script:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.index(fileItem, SessionModel::FileName),
-                        editors.openNewSourceEditor(fileItem->name));
+                        editors.openNewSourceEditor());
                 editors.openSourceEditor(fileItem->fileName);
                 break;
 
             case ItemType::Buffer:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.index(fileItem, SessionModel::FileName),
-                        editors.openNewBinaryEditor(fileItem->name));
+                        editors.openNewBinaryEditor());
 
                 if (auto editor = editors.openBinaryEditor(fileItem->fileName)) {
                     updateBinaryEditor(static_cast<const Buffer&>(*fileItem), *editor);
