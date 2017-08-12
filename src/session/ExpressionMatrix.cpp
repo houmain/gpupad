@@ -43,7 +43,7 @@ namespace {
         }
 
         bool helpEvent(QHelpEvent *event, QAbstractItemView *view,
-            const QStyleOptionViewItem& option, const QModelIndex& index)
+            const QStyleOptionViewItem& option, const QModelIndex& index) override
         {
             if (event->type() == QEvent::ToolTip) {
                 auto value = index.data(Qt::DisplayRole).toString();

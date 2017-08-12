@@ -29,6 +29,8 @@ enum class ItemType
 
 struct Item
 {
+    virtual ~Item() = default;
+
     ItemId id{ };
     ItemType itemType{ };
     Item *parent{ };

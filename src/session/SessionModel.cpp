@@ -159,7 +159,6 @@ SessionModel::SessionModel(QObject *parent)
 SessionModel::~SessionModel()
 {
     clear();
-    delete mRoot;
 }
 
 QIcon SessionModel::getTypeIcon(ItemType type) const
@@ -646,10 +645,7 @@ void SessionModel::insertItem(Item *item, const QModelIndex &parent, int row)
         item->id = mNextItemId;
     mNextItemId = std::max(mNextItemId, item->id + 1);
 
-    if (mUndoStack.undoLimit() == 1)
-        insertItem(&parentItem.items, item, parent, row);
-    else
-        undoableInsertItem(&parentItem.items, item, parent, row);
+    undoableInsertItem(&parentItem.items, item, parent, row);
 }
 
 QModelIndex SessionModel::insertItem(ItemType type, QModelIndex parent,
@@ -697,11 +693,7 @@ void SessionModel::deleteItem(const QModelIndex &index)
 
     if (index.isValid()) {
         auto &item = getItem(index);
-
-        if (mUndoStack.undoLimit() == 1)
-            removeItem(&item.parent->items, index.parent(), index.row());
-        else
-            undoableRemoveItem(&item.parent->items, &item, index);
+        undoableRemoveItem(&item.parent->items, &item, index);
     }
 }
 
@@ -751,7 +743,7 @@ void SessionModel::setItemActive(ItemId id, bool active)
 QModelIndex SessionModel::index(const Item *item, int column) const
 {
     Q_ASSERT(item);
-    if (item == mRoot)
+    if (item == mRoot.data())
         return { };
 
     auto itemPtr = const_cast<Item*>(item);
@@ -921,19 +913,16 @@ void SessionModel::clear()
 bool SessionModel::save(const QString &fileName)
 {
     QDir::setCurrent(QFileInfo(fileName).path());
-    auto mime = mimeData({ QModelIndex() });
+    QScopedPointer<QMimeData> mime(mimeData({ QModelIndex() }));
     if (!mime)
         return false;
 
     QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly)) {
-        delete mime;
+    if (!file.open(QIODevice::WriteOnly))
         return false;
-    }
 
     file.write(mime->data(MimeType));
     file.close();
-    delete mime;
 
     mUndoStack.setClean();
     return true;
@@ -946,17 +935,15 @@ bool SessionModel::load(const QString &fileName)
         return false;
 
     QDir::setCurrent(QFileInfo(fileName).path());
-    auto data = new QMimeData();
-    data->setData(MimeType, file.readAll());
-    if (!canDropMimeData(data, Qt::CopyAction, rowCount(), 0, {})) {
-        delete data;
+    QMimeData data;
+    data.setData(MimeType, file.readAll());
+    if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, {}))
         return false;
-    }
 
     mUndoStack.clear();
     mUndoStack.setUndoLimit(1);
 
-    dropMimeData(data, Qt::CopyAction, 0, 0, {});
+    dropMimeData(&data, Qt::CopyAction, 0, 0, {});
 
     mUndoStack.clear();
     mUndoStack.setUndoLimit(0);

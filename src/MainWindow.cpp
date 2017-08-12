@@ -199,7 +199,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(indentActionGroup, &QActionGroup::triggered,
         [](QAction* a) { Singletons::settings().setTabSize(a->text().toInt()); });
     for (auto i = 1; i <= 8; i++) {
-        auto action = new QAction(QString::number(i));
+        auto action = new QAction(QString::number(i), this);
         mUi->menuTabSize->addAction(action);
         action->setCheckable(true);
         action->setChecked(i == settings.tabSize());

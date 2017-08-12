@@ -335,10 +335,9 @@ void EditorManager::addBinaryEditor(BinaryEditor *editor)
         [dock](const QString &fileName) {
             dock->setWindowTitle(FileDialog::getWindowTitle(fileName));
         });
-    connect(editor, &BinaryEditor::dataChanged,
-        [this, editor]() {
-            emit editorChanged(editor->fileName());
-        });
+    using Overload = void(BinaryEditor::*)();
+    connect(editor, static_cast<Overload>(&BinaryEditor::dataChanged),
+        [this, editor]() { emit editorChanged(editor->fileName()); });
 }
 
 QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)

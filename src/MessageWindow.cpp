@@ -163,10 +163,11 @@ bool MessageWindow::addMessageOnce(const Message &message)
 
     auto locationText = QString();
     if (message.itemId) {
-        auto item = Singletons::sessionModel().findItem(message.itemId);
-        if (item->parent && !item->parent->name.isEmpty())
-            locationText += item->parent->name + " ";
-        locationText += item->name;
+        if (auto item = Singletons::sessionModel().findItem(message.itemId)) {
+            if (item->parent && !item->parent->name.isEmpty())
+                locationText += item->parent->name + " ";
+            locationText += item->name;
+        }
     }
     else if (!message.fileName.isEmpty()) {
         locationText = FileDialog::getFileTitle(message.fileName);

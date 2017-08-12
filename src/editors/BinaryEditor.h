@@ -55,6 +55,12 @@ signals:
     void modificationChanged(bool modified);
     void fileNameChanged(const QString &fileName);
 
+protected:
+    void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight,
+            const QVector<int> &roles = QVector<int>()) override {
+        QAbstractItemView::dataChanged(topLeft, bottomRight, roles);
+    }
+
 private:
     class SpinBoxDelegate;
     class EditableRegion;

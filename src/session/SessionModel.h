@@ -239,7 +239,7 @@ private:
     void deserialize(QXmlStreamReader &xml, const QModelIndex &parent, int row);
 
     ItemId mNextItemId{ 1 };
-    Group *mRoot;
+    QScopedPointer<Group> mRoot;
     QUndoStack mUndoStack;
     QMap<ItemType, QIcon> mTypeIcons;
     mutable QList<QModelIndex> mDraggedIndices;

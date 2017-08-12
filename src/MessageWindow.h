@@ -4,7 +4,7 @@
 #include <QTableWidget>
 #include <QMutex>
 
-class Message;
+struct Message;
 class QTimer;
 
 class MessageWindow : public QTableWidget
