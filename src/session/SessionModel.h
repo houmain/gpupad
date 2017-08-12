@@ -235,7 +235,8 @@ private:
         int mergeId = -1);
     void undoableFileNameAssignment(const QModelIndex &index, FileItem &item,
         QString fileName);
-    void serialize(QXmlStreamWriter &xml, const Item &item) const;
+    void serialize(QXmlStreamWriter &xml, const Item &item,
+        bool relativeFilePaths) const;
     void deserialize(QXmlStreamReader &xml, const QModelIndex &parent, int row);
 
     ItemId mNextItemId{ 1 };

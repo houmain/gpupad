@@ -959,8 +959,12 @@ QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
     if (indexes.size() > 1)
         xml.writeStartElement(MultipleTag);
 
+    const auto serializingWholeSession =
+        (indexes.size() == 1 && !indexes.first().isValid());
+    const auto relativeFilePaths = serializingWholeSession;
+
     foreach (QModelIndex index, indexes)
-        serialize(xml, getItem(index));
+        serialize(xml, getItem(index), relativeFilePaths);
 
     if (indexes.size() > 1)
         xml.writeEndElement();
@@ -1016,7 +1020,8 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     return true;
 }
 
-void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
+void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item,
+    bool relativeFilePaths) const
 {
     xml.writeStartElement(tagNameByType(item.itemType));
 
@@ -1025,7 +1030,8 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
     };
     const auto writeFileName = [&](const char *name, const auto &property) {
         if (!FileDialog::isUntitled(property))
-            writeString(name, QDir::current().relativeFilePath(property));
+            writeString(name, relativeFilePaths ?
+                QDir::current().relativeFilePath(property) : property);
     };
     const auto write = [&](const char *name, const auto &property) {
         xml.writeAttribute(name, QString::number(property));
@@ -1268,7 +1274,7 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item) const
     }
 
     foreach (const Item* item, item.items)
-        serialize(xml, *item);
+        serialize(xml, *item, relativeFilePaths);
 
     xml.writeEndElement();
 }
