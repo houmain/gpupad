@@ -214,6 +214,8 @@ TextureProperties::~TextureProperties()
 
 TextureKind TextureProperties::currentTextureKind() const
 {
+    mSessionProperties.updateModel();
+
     if (auto texture = mSessionProperties.model().item<Texture>(
             mSessionProperties.currentModelIndex()))
         return getKind(*texture);

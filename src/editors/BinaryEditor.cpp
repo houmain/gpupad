@@ -98,6 +98,7 @@ bool BinaryEditor::load()
 
     setModified(false);
     refresh();
+    emit dataChanged();
     return true;
 }
 

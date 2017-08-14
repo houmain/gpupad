@@ -269,9 +269,13 @@ QVariantList SessionProperties::getColumnIds(ItemId bufferId) const
     return result;
 }
 
-QModelIndex SessionProperties::currentModelIndex(int column) const
+void SessionProperties::updateModel()
 {
     mMapper->submit();
+}
+
+QModelIndex SessionProperties::currentModelIndex(int column) const
+{
     return mModel.index(mMapper->currentIndex(), column, mMapper->rootIndex());
 }
 

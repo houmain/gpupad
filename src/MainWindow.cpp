@@ -142,7 +142,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->actionClose, &QAction::triggered,
         this, &MainWindow::closeFile);
     connect(mUi->actionCloseAll, &QAction::triggered,
-        this, &MainWindow::closeAllFiles);
+        this, &MainWindow::closeSession);
     connect(mUi->actionQuit, &QAction::triggered,
         this, &MainWindow::close);
     connect(mUi->actionDocumentation, &QAction::triggered,
@@ -199,11 +199,17 @@ MainWindow::MainWindow(QWidget *parent)
     connect(indentActionGroup, &QActionGroup::triggered,
         [](QAction* a) { Singletons::settings().setTabSize(a->text().toInt()); });
     for (auto i = 1; i <= 8; i++) {
-        auto action = new QAction(QString::number(i), this);
-        mUi->menuTabSize->addAction(action);
+        auto action = mUi->menuTabSize->addAction(QString::number(i));
         action->setCheckable(true);
         action->setChecked(i == settings.tabSize());
         action->setActionGroup(indentActionGroup);
+    }
+
+    for (auto i = 0; i < 10; ++i) {
+        auto action = mUi->menuRecentFiles->addAction("");
+        connect(action, &QAction::triggered,
+            this, &MainWindow::openRecentFile);
+        mRecentFileActions += action;
     }
 
     readSettings();
@@ -232,6 +238,8 @@ void MainWindow::writeSettings()
 
     auto& fileDialog = Singletons::fileDialog();
     settings.setValue("lastDirectory", fileDialog.directory().absolutePath());
+
+    settings.setValue("recentFiles", mRecentFiles);
 }
 
 void MainWindow::readSettings()
@@ -247,6 +255,9 @@ void MainWindow::readSettings()
     auto& fileDialog = Singletons::fileDialog();
     fileDialog.setDirectory(settings.value("lastDirectory").toString());
 
+    mRecentFiles = settings.value("recentFiles").toStringList();
+    updateRecentFileActions();
+
     mUi->actionIndentWithSpaces->setChecked(settings.indentWithSpaces());
     mUi->actionAutoIndentation->setChecked(settings.autoIndentation());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
@@ -254,9 +265,7 @@ void MainWindow::readSettings()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    stopEvaluation();
-
-    if (closeAllFiles() && closeSession())
+    if (closeSession())
         event->accept();
     else
         event->ignore();
@@ -373,10 +382,14 @@ void MainWindow::openFile()
 
 void MainWindow::openFile(const QString &fileName)
 {
-    if (FileDialog::isSessionFileName(fileName))
-        openSession(fileName);
-    else
-        mEditorManager.openEditor(fileName);
+    if (FileDialog::isSessionFileName(fileName)) {
+        if (openSession(fileName))
+            addToRecentFileList(fileName);
+    }
+    else {
+        if (mEditorManager.openEditor(fileName))
+            addToRecentFileList(fileName);
+    }
 }
 
 bool MainWindow::saveFile()
@@ -418,14 +431,6 @@ bool MainWindow::closeFile()
     return closeSession();
 }
 
-bool MainWindow::closeAllFiles()
-{
-    if (!mEditorManager.closeAllEditors())
-        return false;
-
-    return true;
-}
-
 bool MainWindow::openSession(const QString &fileName)
 {
     if (!closeSession())
@@ -461,6 +466,9 @@ bool MainWindow::closeSession()
 {
     stopEvaluation();
 
+    if (!mEditorManager.closeAllEditors())
+        return false;
+
     if (mSessionEditor->isModified()) {
         auto ret = Singletons::editorManager().openNotSavedDialog(
             mSessionEditor->fileName());
@@ -472,6 +480,43 @@ bool MainWindow::closeSession()
             return false;
     }
     return mSessionEditor->clear();
+}
+
+void MainWindow::addToRecentFileList(const QString &fileName)
+{
+    mRecentFiles.removeAll(fileName);
+    mRecentFiles.prepend(fileName);
+    updateRecentFileActions();
+}
+
+void MainWindow::updateRecentFileActions()
+{
+    QMutableStringListIterator i(mRecentFiles);
+    while (i.hasNext())
+        if (!QFile::exists(i.next()))
+            i.remove();
+
+    while (mRecentFiles.size() > mRecentFileActions.size())
+        mRecentFiles.pop_back();
+
+    for (auto j = 0; j < mRecentFileActions.size(); ++j) {
+        if (j < mRecentFiles.count()) {
+            QString text = tr("&%1 %2").arg(j + 1).arg(mRecentFiles[j]);
+            mRecentFileActions[j]->setText(text);
+            mRecentFileActions[j]->setData(mRecentFiles[j]);
+            mRecentFileActions[j]->setVisible(true);
+        }
+        else {
+            mRecentFileActions[j]->setVisible(false);
+        }
+    }
+    mUi->menuRecentFiles->setEnabled(!mRecentFiles.empty());
+}
+
+void MainWindow::openRecentFile()
+{
+    if (auto action = qobject_cast<QAction *>(sender()))
+        openFile(action->data().toString());
 }
 
 void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,

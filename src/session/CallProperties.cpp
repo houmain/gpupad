@@ -85,9 +85,11 @@ Call::PrimitiveType CallProperties::currentPrimitiveType() const
 
 CallKind CallProperties::currentCallKind() const
 {
-    if (auto texture = mSessionProperties.model().item<Call>(
+    mSessionProperties.updateModel();
+
+    if (auto call = mSessionProperties.model().item<Call>(
             mSessionProperties.currentModelIndex()))
-        return getKind(*texture);
+        return getKind(*call);
     return { };
 }
 

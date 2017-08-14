@@ -56,6 +56,7 @@ public:
     ~SessionProperties();
 
     SessionModel &model() { return mModel; }
+    void updateModel();
     QString currentItemName() const;
     QModelIndex currentModelIndex(int column = 0) const;
     void setCurrentModelIndex(const QModelIndex &index);

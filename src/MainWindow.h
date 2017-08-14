@@ -33,7 +33,6 @@ public slots:
     bool saveAllFiles();
     bool reloadFile();
     bool closeFile();
-    bool closeAllFiles();
     void openSessionDock();
     void openMessageDock();
     void openDocumentation();
@@ -60,6 +59,9 @@ private:
     bool saveSession();
     bool saveSessionAs();
     bool closeSession();
+    void addToRecentFileList(const QString &fileName);
+    void updateRecentFileActions();
+    void openRecentFile();
 
     Ui::MainWindow *mUi{ };
     QSplitter *mSessionSplitter{ };
@@ -70,6 +72,8 @@ private:
     QScopedPointer<SessionEditor> mSessionEditor;
     QScopedPointer<SessionProperties> mSessionProperties;
     QList<QMetaObject::Connection> mConnectedEditActions;
+    QStringList mRecentFiles;
+    QList<QAction*> mRecentFileActions;
 };
 
 #endif // MAINWINDOW_H

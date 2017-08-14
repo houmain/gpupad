@@ -92,6 +92,7 @@ bool ImageEditor::load()
 
     refresh();
     setModified(false);
+    emit dataChanged();
     return true;
 }
 

@@ -50,7 +50,6 @@
       <iconset resource="resources.qrc">
        <normaloff>:/images/16x16/document-open-recent.png</normaloff>:/images/16x16/document-open-recent.png</iconset>
      </property>
-     <addaction name="actionClearRecentFiles"/>
     </widget>
     <addaction name="actionNew"/>
     <addaction name="actionOpen"/>
@@ -295,15 +294,6 @@
    </property>
    <property name="menuRole">
     <enum>QAction::PreferencesRole</enum>
-   </property>
-  </action>
-  <action name="actionClearRecentFiles">
-   <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/edit-clear.png</normaloff>:/images/16x16/edit-clear.png</iconset>
-   </property>
-   <property name="text">
-    <string>Clear Recent Files</string>
    </property>
   </action>
   <action name="actionCloseAll">
