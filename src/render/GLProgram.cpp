@@ -4,6 +4,13 @@
 #include "GLBuffer.h"
 #include "ScriptEngine.h"
 
+QString getUniformName(QString base, int arrayIndex)
+{
+    if (arrayIndex > 0)
+        return QStringLiteral("%1[%2]").arg(base).arg(arrayIndex);
+    return base;
+}
+
 GLProgram::GLProgram(const Program &program)
     : mItemId(program.id)
 {
@@ -75,9 +82,12 @@ bool GLProgram::link()
     for (auto i = 0; i < uniforms; ++i) {
         gl.glGetActiveUniform(program, static_cast<GLuint>(i), buffer.size(),
             &nameLength, &size, &type, buffer.data());
-        auto name = QString(buffer.data()).remove(QRegExp("\\[0\\]"));
-        mUniformDataTypes[name] = type;
-        mUniformsSet[name] = false;
+        auto base = QString(buffer.data()).remove(QRegExp("\\[0\\]"));
+        for (auto i = 0; i < size; i++) {
+            auto name = getUniformName(base, i);
+            mUniformDataTypes[name] = type;
+            mUniformsSet[name] = false;
+        }
     }
 
     auto uniformBlocks = GLint{ };
@@ -157,11 +167,7 @@ bool GLProgram::apply(const GLUniformBinding &uniform, ScriptEngine &scriptEngin
     auto& gl = GLContext::currentContext();
     const auto transpose = false;
     const auto dataType = getUniformDataType(uniform.name);
-
-    auto name = uniform.name;
-    if (uniform.arrayIndex > 0)
-        name += QStringLiteral("[%1]").arg(uniform.arrayIndex);
-    const auto location = getUniformLocation(name);
+    const auto location = getUniformLocation(uniform.name);
     if (location < 0)
         return false;
     mUniformsSet[uniform.name] = true;
@@ -260,7 +266,7 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
     const auto target = texture.target();
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
     gl.glBindTexture(target, texture.getReadOnlyTextureId());
-    gl.glUniform1i(location + binding.arrayIndex, unit);
+    gl.glUniform1i(location, unit);
 
     switch (target) {
         case QOpenGLTexture::Target1D:
@@ -312,7 +318,7 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
     const auto textureId = texture.getReadWriteTextureId();
     gl.v4_2->glActiveTexture(GL_TEXTURE0 + unit);
     gl.v4_2->glBindTexture(target, textureId);
-    gl.v4_2->glUniform1i(location + binding.arrayIndex, unit);
+    gl.v4_2->glUniform1i(location, unit);
     gl.v4_2->glBindImageTexture(unit, textureId, binding.level,
         binding.layered, binding.layer, binding.access, texture.format());
     gl.glActiveTexture(GL_TEXTURE0);

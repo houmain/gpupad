@@ -12,7 +12,6 @@ struct GLUniformBinding
 {
     ItemId bindingItemId;
     QString name;
-    int arrayIndex;
     Binding::Type type;
     QStringList fields;
 };
@@ -21,7 +20,6 @@ struct GLSamplerBinding
 {
     ItemId bindingItemId;
     QString name;
-    int arrayIndex;
     GLTexture *texture;
     Binding::Filter minFilter;
     Binding::Filter magFilter;
@@ -36,7 +34,6 @@ struct GLImageBinding
 {
     ItemId bindingItemId;
     QString name;
-    int arrayIndex;
     GLTexture *texture;
     int level;
     bool layered;
@@ -48,7 +45,6 @@ struct GLBufferBinding
 {
     ItemId bindingItemId;
     QString name;
-    int arrayIndex;
     GLBuffer *buffer;
 };
 
@@ -86,5 +82,8 @@ private:
     std::map<QString, bool> mUniformsSet;
     std::map<QString, bool> mUniformBlocksSet;
 };
+
+QString getUniformName(QString base, int arrayIndex);
+
 
 #endif // GLPROGRAM_H

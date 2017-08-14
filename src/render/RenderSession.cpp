@@ -230,7 +230,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     for (auto index = 0; index < binding->valueCount; ++index)
                         addCommand(
                             [binding = GLUniformBinding{
-                                binding->id, binding->name, index,
+                                binding->id, getUniformName(binding->name, index),
                                 binding->type, binding->values[index].fields }
                             ](BindingState& state) {
                                 state.top().uniforms[binding.name] = binding;
@@ -242,7 +242,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                         const auto &value = binding->values[index];
                         addCommand(
                             [binding = GLSamplerBinding{
-                                binding->id, binding->name, index,
+                                binding->id, getUniformName(binding->name, index),
                                 addTextureOnce(value.textureId),
                                 value.minFilter, value.magFilter,
                                 value.wrapModeX, value.wrapModeY, value.wrapModeZ,
@@ -260,7 +260,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                         auto access = GLenum{ GL_READ_WRITE };
                         addCommand(
                             [binding = GLImageBinding{
-                                binding->id, binding->name, index,
+                                binding->id, getUniformName(binding->name, index),
                                 addTextureOnce(value.textureId),
                                 value.level, value.layered, value.layer, access }
                             ](BindingState& state) {
@@ -274,9 +274,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                         const auto &value = binding->values[index];
                         addCommand(
                             [binding = GLBufferBinding{
-                                binding->id,
-                                binding->name,
-                                index,
+                                binding->id, getUniformName(binding->name, index),
                                 addBufferOnce(value.bufferId) }
                             ](BindingState& state) {
                                 state.top().buffers[binding.name] = binding;

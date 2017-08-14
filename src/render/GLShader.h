@@ -12,6 +12,7 @@ public:
 
     explicit GLShader(const QList<const Shader*> &shaders);
     bool operator==(const GLShader &rhs) const;
+    Shader::Type type() const { return mType; }
 
     bool compile();
     GLuint shaderObject() const { return mShaderObject; }
