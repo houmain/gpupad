@@ -11,6 +11,7 @@
 #include <QMessageBox>
 #include <QAction>
 #include <QApplication>
+#include <QMimeData>
 
 EditorManager::EditorManager(QWidget *parent)
     : DockWindow(parent)
@@ -20,6 +21,7 @@ EditorManager::EditorManager(QWidget *parent)
     setDockOptions(AnimatedDocks | AllowNestedDocks | AllowTabbedDocks);
     setDocumentMode(true);
     setContentsMargins(0, 1, 0, 0);
+    setAcceptDrops(true);
 }
 
 EditorManager::~EditorManager() = default;
@@ -37,6 +39,20 @@ int EditorManager::openNotSavedDialog(const QString& fileName)
     dialog.addButton(QMessageBox::Cancel);
     dialog.setDefaultButton(QMessageBox::Save);
     return dialog.exec();
+}
+
+void EditorManager::dragEnterEvent(QDragEnterEvent *e)
+{
+    const auto urls = e->mimeData()->urls();
+    if (!urls.isEmpty() && !urls.front().toLocalFile().isEmpty())
+        e->accept();
+}
+
+void EditorManager::dropEvent(QDropEvent *e)
+{
+    const auto urls = e->mimeData()->urls();
+    for (const QUrl &url : urls)
+        openEditor(url.toLocalFile());
 }
 
 void EditorManager::updateCurrentEditor()

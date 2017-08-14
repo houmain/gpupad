@@ -208,9 +208,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     readSettings();
     updateEvaluationInterval();
-
-    if (!mEditorManager.hasCurrentEditor())
-        newFile();
 }
 
 MainWindow::~MainWindow()
@@ -351,6 +348,11 @@ void MainWindow::updateEvaluationInterval()
         mUi->actionEvalIntervalFast->isChecked() ? 15 :
         mUi->actionEvalIntervalMedium->isChecked() ? 100 :
         500);
+}
+
+bool MainWindow::hasEditor() const
+{
+    return mEditorManager.hasCurrentEditor();
 }
 
 void MainWindow::newFile()

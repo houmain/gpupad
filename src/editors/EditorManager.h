@@ -51,6 +51,10 @@ signals:
     void editorChanged(const QString &fileName);
     void editorRenamed(const QString &prevFileName, const QString &fileName);
 
+protected:
+    void dragEnterEvent(QDragEnterEvent *e) override;
+    void dropEvent(QDropEvent *e) override;
+
 private:
     IEditor *currentEditor();
     void addSourceEditor(SourceEditor *editor);

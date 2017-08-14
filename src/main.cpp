@@ -34,7 +34,10 @@ int main(int argc, char *argv[])
         });
 
     foreach (QString argument, arguments)
-      window.openFile(argument);
+        window.openFile(argument);
+
+    if (!window.hasEditor())
+        window.newFile();
 
     return app.exec();
 }
