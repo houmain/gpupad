@@ -262,7 +262,8 @@ void SessionEditor::paste()
     mModel.undoStack().beginMacro("Paste");
     auto data = QApplication::clipboard()->mimeData();
     // try to drop as sibling first
-    if (mModel.canDropMimeData(data, Qt::CopyAction,
+    if (currentIndex().isValid() &&
+        mModel.canDropMimeData(data, Qt::CopyAction,
             currentIndex().row() + 1, 0, currentIndex().parent())) {
         mModel.dropMimeData(data, Qt::CopyAction,
             currentIndex().row() + 1, 0, currentIndex().parent());

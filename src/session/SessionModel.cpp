@@ -983,6 +983,9 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     if (action == Qt::IgnoreAction)
         return true;
 
+    if (row < 0)
+        row = rowCount(parent);
+
     mUndoStack.beginMacro("Move");
 
     if (action == Qt::MoveAction && !mDraggedIndices.empty()) {
