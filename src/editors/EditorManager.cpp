@@ -1,7 +1,5 @@
 #include "EditorManager.h"
 #include "SourceEditor.h"
-#include "GlslHighlighter.h"
-#include "JsHighlighter.h"
 #include "BinaryEditor.h"
 #include "ImageEditor.h"
 #include "Singletons.h"
@@ -303,11 +301,6 @@ bool EditorManager::closeAllEditors()
 
 void EditorManager::addSourceEditor(SourceEditor *editor)
 {
-    // TODO
-    //auto highlighter = new JsHighlighter(editor);
-    auto highlighter = new GlslHighlighter(editor);
-    editor->setHighlighter(highlighter);
-    editor->setCompleter(highlighter->completer());
     mSourceEditors.append(editor);
 
     auto dock = createDock(editor, editor);

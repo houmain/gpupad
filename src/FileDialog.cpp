@@ -8,8 +8,8 @@ namespace {
     const auto SessionFileExtension = QStringLiteral(".gpupad");
     const auto ShaderFileExtensions = { "glsl", "vert", "tesc", "tese", "geom",
             "frag", "comp", "fs", "gs", "vs" };
-    const auto BinaryFileExtensions = { ".bin", ".raw" };
-    const auto ScriptFileExtensions = { ".js" };
+    const auto BinaryFileExtensions = { "bin", "raw" };
+    const auto ScriptFileExtensions = { "js" };
 
     auto gNextUntitledFileIndex = 1;
 } // namespace
@@ -126,8 +126,9 @@ bool FileDialog::exec(Options options, QString currentFileName)
     auto scriptFileFilter = QString();
     for (const auto &ext : ScriptFileExtensions)
         scriptFileFilter = scriptFileFilter + " *." + ext;
+
     auto supportedFileFilter = "*" + SessionFileExtension +
-        shaderFileFilter + imageFileFilter + binaryFileFilter;
+        shaderFileFilter + scriptFileFilter + imageFileFilter + binaryFileFilter;
 
     auto filters = QStringList();
     if (options & SupportedExtensions)

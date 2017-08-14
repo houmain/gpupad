@@ -28,9 +28,6 @@ public:
     int tabifyGroup() override { return 0; }
     QString source() const { return toPlainText(); }
 
-    void setHighlighter(QSyntaxHighlighter *highlighter);
-    void setCompleter(QCompleter *completer);
-    QCompleter *completer() const { return mCompleter; }
     void findReplace();
     void setLineWrap(bool wrap) { setLineWrapMode(wrap ? WidgetWidth : NoWrap); }
     void setFont(const QFont &);
@@ -73,6 +70,7 @@ private:
     void markOccurrences(QString text, QTextDocument::FindFlags =
         QTextDocument::FindCaseSensitively | QTextDocument::FindWholeWords);
     void handleTextChanged();
+    void updateHighlighting();
 
     QString mFileName;
     QSyntaxHighlighter *mHighlighter{ };

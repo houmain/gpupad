@@ -2,7 +2,8 @@
 #include <QCompleter>
 #include <QStringListModel>
 
-namespace { const auto keywords = { "abstract", "arguments", "await",
+namespace {
+const auto keywords = { "abstract", "arguments", "await",
     "boolean", "break", "byte", "case", "catch", "char", "class", "const",
     "continue", "debugger", "default", "delete", "do", "double", "else", "enum",
     "eval", "export", "extends", "false", "final", "finally", "float", "for",
@@ -10,8 +11,7 @@ namespace { const auto keywords = { "abstract", "arguments", "await",
     "interface", "let", "long", "native", "new", "null", "package", "private",
     "protected", "public", "return", "short", "static", "super", "switch",
     "synchronized", "this", "throw", "throws", "transient", "true", "try",
-    "typeof", "var", "void", "volatile", "while", "with", "yield",
-    "function", "undefined", };
+    "typeof", "var", "void", "volatile", "while", "with", "yield", "undefined", };
 
 const auto builtinFunctions = { "Array", "Date", "eval", "hasOwnProperty",
     "Infinity", "isFinite", "isNaN", "isPrototypeOf", "length", "Math", "NaN",
@@ -21,14 +21,11 @@ const auto builtinFunctions = { "Array", "Date", "eval", "hasOwnProperty",
     "Math.cosh", "Math.exp", "Math.expm1", "Math.floor", "Math.fround", "Math.hypot",
     "Math.imul", "Math.log", "Math.log10", "Math.log1p", "Math.log2", "Math.max",
     "Math.min", "Math.pow", "Math.random", "Math.round", "Math.sign", "Math.sin",
-    "Math.sinh", "Math.sqrt", "Math.tan", "Math.tanh", "Math.trunc"
-};
+    "Math.sinh", "Math.sqrt", "Math.tan", "Math.tanh", "Math.trunc" };
 
 const auto builtinConstants = {
     "Math.E", "Math.LN10", "Math.LN2", "Math.LOG10E", "Math.LOG2E",
-    "Math.PI", "Math.SQRT1_2", "Math.SQRT2"
-};
-
+    "Math.PI", "Math.SQRT1_2", "Math.SQRT2" };
 } // namespace
 
 JsHighlighter::JsHighlighter(QObject *parent)

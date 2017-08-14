@@ -3,7 +3,8 @@
 #include "Settings.h"
 #include "FindReplaceBar.h"
 #include "FileDialog.h"
-#include <QSyntaxHighlighter>
+#include "GlslHighlighter.h"
+#include "JsHighlighter.h"
 #include <QCompleter>
 #include <QTextCharFormat>
 #include <QPainter>
@@ -80,6 +81,7 @@ SourceEditor::SourceEditor(QString fileName, QWidget *parent)
 
     updateViewportMargins();
     updateExtraSelections();
+    updateHighlighting();
     setPlainText(document()->toPlainText());
 }
 
@@ -134,6 +136,7 @@ QList<QMetaObject::Connection> SourceEditor::connectEditActions(
 void SourceEditor::setFileName(QString fileName)
 {
     mFileName = fileName;
+    updateHighlighting();
     emit fileNameChanged(mFileName);
 }
 
@@ -179,23 +182,34 @@ bool SourceEditor::save()
     return false;
 }
 
-void SourceEditor::setHighlighter(QSyntaxHighlighter *highlighter)
+void SourceEditor::updateHighlighting()
 {
-    highlighter->setDocument(document());
-}
+    if (mFileName.endsWith(".js")) {
+        if (qobject_cast<JsHighlighter *>(mHighlighter))
+            return;
 
-void SourceEditor::setCompleter(QCompleter *completer)
-{
-    mCompleter = completer;
-
-    if (mCompleter) {
-        mCompleter->setWidget(this);
-        mCompleter->setCompletionMode(QCompleter::PopupCompletion);
-        mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
-        using Overload = void(QCompleter::*)(const QString &);
-        connect(mCompleter, static_cast<Overload>(&QCompleter::activated),
-            this, &SourceEditor::insertCompletion);
+        auto highlighter = new JsHighlighter(this);
+        delete mHighlighter;
+        mHighlighter = highlighter;
+        mCompleter = highlighter->completer();
     }
+    else {
+        if (qobject_cast<GlslHighlighter *>(mHighlighter))
+            return;
+
+        auto highlighter = new GlslHighlighter(this);
+        delete mHighlighter;
+        mHighlighter = highlighter;
+        mCompleter = highlighter->completer();
+    }
+
+    mHighlighter->setDocument(document());
+    mCompleter->setWidget(this);
+    mCompleter->setCompletionMode(QCompleter::PopupCompletion);
+    mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+    using Overload = void(QCompleter::*)(const QString &);
+    connect(mCompleter, static_cast<Overload>(&QCompleter::activated),
+        this, &SourceEditor::insertCompletion);
 }
 
 void SourceEditor::findReplace()

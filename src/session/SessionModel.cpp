@@ -443,8 +443,11 @@ bool SessionModel::setData(const QModelIndex &index,
 
     switch (static_cast<ColumnType>(index.column())) {
         case ColumnType::Name:
+            if (value.toString().isEmpty())
+                return false;
             undoableAssignment(index, &item.name, value.toString());
             return true;
+
         case ColumnType::InlineScope:
             undoableAssignment(index, &item.inlineScope, value.toBool());
             return true;

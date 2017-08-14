@@ -6,6 +6,7 @@
 class QCompleter;
 
 class JsHighlighter : public QSyntaxHighlighter {
+    Q_OBJECT
 public:
     explicit JsHighlighter(QObject *parent = 0);
     void highlightBlock(const QString &text) override;
