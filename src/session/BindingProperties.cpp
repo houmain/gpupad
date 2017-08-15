@@ -77,7 +77,7 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
         { "Sampler", Binding::Sampler },
         { "Image", Binding::Image },
         { "Buffer", Binding::Buffer },
-        //{ "Subroutine", Binding::Subroutine },
+        { "Subroutine", Binding::Subroutine },
     });
 
     fill<Binding::Editor>(mUi->editor, {
@@ -188,6 +188,7 @@ void BindingProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->wrapModeZ, SessionModel::BindingValueWrapModeZ);
     mapper.addMapping(mUi->borderColor, SessionModel::BindingValueBorderColor);
     mapper.addMapping(mUi->comparisonFunc, SessionModel::BindingValueComparisonFunc);
+    mapper.addMapping(mUi->subroutine, SessionModel::BindingValueSubroutine);
     mapper.addMapping(this, SessionModel::BindingValueFields);
 }
 
@@ -229,6 +230,7 @@ void BindingProperties::updateWidgets()
     const auto sampler = (type == Binding::Sampler);
     const auto image = (type == Binding::Image);
     const auto color = (type == Binding::Uniform && editor == Binding::Color);
+    const auto subroutine = (type == Binding::Subroutine);
 
     mSuspendSetFields = true;
 
@@ -272,6 +274,9 @@ void BindingProperties::updateWidgets()
         sampler && textureKind.dimensions > 2);
     setFormVisibility(mUi->formLayout, mUi->labelBorderColor, mUi->borderColor,
         sampler);
+
+    setFormVisibility(mUi->formLayout, mUi->labelSubroutine, mUi->subroutine,
+        subroutine);
 
     mSuspendSetFields = false;
 }

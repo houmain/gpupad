@@ -74,6 +74,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case ProgramNotAssigned:
         case TextureNotAssigned:
         case BufferNotAssigned:
+        case InvalidSubroutine:
             return mErrorIcon;
 
         case ShaderWarning:
@@ -125,6 +126,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("no texture set");
         case BufferNotAssigned:
             return tr("no buffer set");
+        case InvalidSubroutine:
+            return tr("invalid subroutine '%1'").arg(message.text);
     }
     return message.text;
 }

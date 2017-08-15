@@ -382,14 +382,10 @@ void MainWindow::openFile()
 
 void MainWindow::openFile(const QString &fileName)
 {
-    if (FileDialog::isSessionFileName(fileName)) {
-        if (openSession(fileName))
-            addToRecentFileList(fileName);
-    }
-    else {
-        if (mEditorManager.openEditor(fileName))
-            addToRecentFileList(fileName);
-    }
+    if (FileDialog::isSessionFileName(fileName) ?
+            openSession(fileName) :
+            mEditorManager.openEditor(fileName))
+        addToRecentFileList(fileName);
 }
 
 bool MainWindow::saveFile()
@@ -487,6 +483,9 @@ void MainWindow::addToRecentFileList(const QString &fileName)
     mRecentFiles.removeAll(fileName);
     mRecentFiles.prepend(fileName);
     updateRecentFileActions();
+
+    auto& fileDialog = Singletons::fileDialog();
+    fileDialog.setDirectory(QFileInfo(fileName).dir());
 }
 
 void MainWindow::updateRecentFileActions()

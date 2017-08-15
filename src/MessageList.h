@@ -25,7 +25,8 @@ enum MessageType
     NoActiveCalls,
     ProgramNotAssigned,
     TextureNotAssigned,
-    BufferNotAssigned
+    BufferNotAssigned,
+    InvalidSubroutine
 };
 
 struct Message

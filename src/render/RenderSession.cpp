@@ -24,6 +24,7 @@ namespace {
         std::map<QString, GLSamplerBinding> samplers;
         std::map<QString, GLImageBinding> images;
         std::map<QString, GLBufferBinding> buffers;
+        std::map<QString, GLSubroutineBinding> subroutines;
     };
     using BindingState = QStack<BindingScope>;
     using Command = std::function<void(BindingState&)>;
@@ -42,6 +43,8 @@ namespace {
                 bindings.images[kv.first] = kv.second;
             for (const auto& kv : scope.buffers)
                 bindings.buffers[kv.first] = kv.second;
+            for (const auto& kv : scope.subroutines)
+                bindings.subroutines[kv.first] = kv.second;
         }
 
         for (const auto& kv : bindings.uniforms)
@@ -68,6 +71,12 @@ namespace {
                 usedItems += kv.second.bindingItemId;
                 usedItems += kv.second.buffer->usedItems();
             }
+
+        for (const auto& kv : bindings.subroutines)
+            if (program.apply(kv.second))
+                usedItems += kv.second.bindingItemId;
+        program.reapplySubroutines();
+
         return usedItems;
     }
 
@@ -278,6 +287,19 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                                 addBufferOnce(value.bufferId) }
                             ](BindingState& state) {
                                 state.top().buffers[binding.name] = binding;
+                            });
+                    }
+                    break;
+
+                case Binding::Type::Subroutine:
+                    for (auto index = 0; index < binding->valueCount; ++index) {
+                        const auto &value = binding->values[index];
+                        addCommand(
+                            [binding = GLSubroutineBinding{
+                                binding->id, getUniformName(binding->name, index),
+                                value.subroutine }
+                            ](BindingState& state) {
+                                state.top().subroutines[binding.name] = binding;
                             });
                     }
                     break;

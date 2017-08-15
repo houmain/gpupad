@@ -48,6 +48,14 @@ struct GLBufferBinding
     GLBuffer *buffer;
 };
 
+struct GLSubroutineBinding
+{
+    ItemId bindingItemId;
+    QString name;
+    QString subroutine;
+    Shader::Type type;
+};
+
 class GLProgram
 {
 public:
@@ -62,9 +70,19 @@ public:
     bool apply(const GLSamplerBinding &binding, int unit);
     bool apply(const GLImageBinding &binding, int unit);
     bool apply(const GLBufferBinding &binding, int unit);
+    bool apply(const GLSubroutineBinding &subroutine);
+    void reapplySubroutines();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
+    struct SubroutineUniform
+    {
+        QString name;
+        QList<QString> subroutines;
+        ItemId bindingItemId;
+        QString boundSubroutine;
+    };
+
     bool link();
     int getUniformLocation(const QString &name) const;
     GLenum getUniformDataType(const QString &name) const;
@@ -74,6 +92,7 @@ private:
     MessagePtrSet mLinkMessages;
     std::vector<GLShader> mShaders;
     QList<QString> mAttributes;
+    QMap<Shader::Type, QList<SubroutineUniform>> mSubroutineUniforms;
     QMap<QString, GLenum> mUniformDataTypes;
     GLObject mProgramObject;
 

@@ -54,6 +54,7 @@ public:
         BindingValueWrapModeZ,
         BindingValueBorderColor,
         BindingValueComparisonFunc,
+        BindingValueSubroutine,
         LastBindingValue,
         AttributeBufferId,
         AttributeColumnId,

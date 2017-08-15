@@ -124,8 +124,7 @@ struct Binding : Item
         Sampler,
         Image,
         Buffer,
-        //AtomicCounterBuffer,
-        //Subroutine,
+        Subroutine,
     };
 
     using Filter = QOpenGLTexture::Filter;
@@ -165,6 +164,7 @@ struct Binding : Item
         WrapMode wrapModeZ{ QOpenGLTexture::Repeat };
         QColor borderColor{ Qt::black };
         ComparisonFunc comparisonFunc{ ComparisonDisabled };
+        QString subroutine;
     };
 
     Type type{ };

@@ -108,6 +108,41 @@ bool GLProgram::link()
         mAttributes.append(name);
     }
 
+    if (auto gl40 = gl.v4_0) {
+        auto stages = QSet<Shader::Type>();
+        for (const auto& shader : mShaders)
+            if (shader.type())
+                stages += shader.type();
+
+        auto subroutineIndices = std::vector<GLint>();
+        for (const auto& stage : stages) {
+            gl40->glGetProgramStageiv(program, stage,
+                GL_ACTIVE_SUBROUTINE_UNIFORMS, &uniforms);
+            for (auto i = 0; i < uniforms; ++i) {
+                gl40->glGetActiveSubroutineUniformName(program, stage, i,
+                    buffer.size(), &nameLength, buffer.data());
+                auto name = QString(buffer.data());
+
+                auto compatible = GLint{ };
+                gl40->glGetActiveSubroutineUniformiv(program, stage, i,
+                    GL_NUM_COMPATIBLE_SUBROUTINES, &compatible);
+
+                subroutineIndices.resize(compatible);
+                gl40->glGetActiveSubroutineUniformiv(program, stage, i,
+                    GL_COMPATIBLE_SUBROUTINES, subroutineIndices.data());
+
+                auto subroutines = QList<QString>();
+                for (auto index : subroutineIndices) {
+                    gl40->glGetActiveSubroutineName(program, stage, index,
+                        buffer.size(), &nameLength, buffer.data());
+                    subroutines += QString(buffer.data());
+                }
+                mSubroutineUniforms[stage] +=
+                    SubroutineUniform{ name, subroutines, 0, "" };
+                mUniformsSet[name] = false;
+            }
+        }
+    }
     mProgramObject = std::move(program);
     return true;
 }
@@ -356,4 +391,43 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
         }
     }
     return false;
+}
+
+bool GLProgram::apply(const GLSubroutineBinding &binding)
+{
+    auto bound = false;
+    foreach (Shader::Type stage, mSubroutineUniforms.keys())
+        if (!binding.type || binding.type == stage)
+            for (auto &uniform : mSubroutineUniforms[stage])
+                if (uniform.name == binding.name) {
+                    uniform.bindingItemId = binding.bindingItemId;
+                    uniform.boundSubroutine = binding.subroutine;
+
+                    mUniformsSet[binding.name] = true;
+                    bound = true;
+                }
+    return bound;
+}
+
+void GLProgram::reapplySubroutines()
+{
+    auto& gl = GLContext::currentContext();
+    if (!gl.v4_0)
+        return;
+
+    auto subroutineIndices = std::vector<GLuint>();
+    foreach (Shader::Type stage, mSubroutineUniforms.keys()) {
+        foreach (const SubroutineUniform &uniform, mSubroutineUniforms[stage]) {
+            auto index = gl.v4_0->glGetSubroutineIndex(mProgramObject,
+                stage, qPrintable(uniform.boundSubroutine));
+            subroutineIndices.push_back(index);
+            if (index == GL_INVALID_INDEX && !uniform.boundSubroutine.isEmpty())
+                mUniformsMessages +=
+                    Singletons::messageList().insert(uniform.bindingItemId,
+                    MessageType::InvalidSubroutine, uniform.boundSubroutine);
+        }
+        gl.v4_0->glUniformSubroutinesuiv(stage,
+            subroutineIndices.size(), subroutineIndices.data());
+        subroutineIndices.clear();
+    }
 }

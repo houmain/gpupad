@@ -411,6 +411,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(BindingValueWrapModeZ, wrapModeZ)
         ADD(BindingValueBorderColor, borderColor)
         ADD(BindingValueComparisonFunc, comparisonFunc)
+        ADD(BindingValueSubroutine, subroutine)
 #undef ADD
 
         case FirstBindingValue:
@@ -589,6 +590,7 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(BindingValueWrapModeZ, wrapModeZ, toInt)
         ADD(BindingValueBorderColor, borderColor, value<QColor>)
         ADD(BindingValueComparisonFunc, comparisonFunc, toInt)
+        ADD(BindingValueSubroutine, subroutine, toString)
 #undef ADD
 
         case FirstBindingValue:
@@ -1150,6 +1152,10 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item,
                     case Binding::Buffer:
                         writeRef("bufferId", value.bufferId);
                         break;
+
+                    case Binding::Subroutine:
+                        writeString("subroutine", value.subroutine);
+                        break;
                 }
                 xml.writeEndElement();
             }
@@ -1421,6 +1427,7 @@ void SessionModel::deserialize(QXmlStreamReader &xml,
                 readEnum("wrapModeX", value.wrapModeX);
                 readEnum("wrapModeY", value.wrapModeY);
                 readEnum("wrapModeZ", value.wrapModeZ);
+                readString("subroutine", value.subroutine);
                 while (xml.readNextStartElement())
                     value.fields.append(xml.readElementText());
             }
