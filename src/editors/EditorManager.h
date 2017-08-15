@@ -3,14 +3,11 @@
 
 #include "FileDialog.h"
 #include "DockWindow.h"
+#include "SourceEditor.h"
+#include "BinaryEditor.h"
+#include "ImageEditor.h"
 #include <QList>
 #include <QMap>
-
-struct EditActions;
-class IEditor;
-class SourceEditor;
-class ImageEditor;
-class BinaryEditor;
 
 class EditorManager : public DockWindow
 {
@@ -19,8 +16,8 @@ public:
     explicit EditorManager(QWidget *parent = 0);
     ~EditorManager();
 
-    int openNotSavedDialog(const QString& fileName);
-    QString openNewSourceEditor();
+    int openNotSavedDialog(const QString &fileName);
+    QString openNewSourceEditor(const QString &extension = "");
     QString openNewBinaryEditor();
     QString openNewImageEditor();
     bool openEditor(const QString &fileName, bool raise = true);

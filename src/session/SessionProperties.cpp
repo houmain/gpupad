@@ -16,6 +16,7 @@
 #include "editors/EditorManager.h"
 #include "Singletons.h"
 #include "SessionModel.h"
+#include "SynchronizeLogic.h"
 #include <QStackedWidget>
 #include <QDataWidgetMapper>
 #include <QTimer>
@@ -78,31 +79,31 @@ SessionProperties::SessionProperties(QWidget *parent)
     setWidgetResizable(true);
     setWidget(mStack);
 
-    connect(mShaderProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::editorManager().openNewSourceEditor()); });
+    connect(mShaderProperties->fileNew, &QToolButton::clicked,
+        [this]() { saveCurrentItemFileAs(FileDialog::ShaderExtensions); });
     connect(mShaderProperties->fileBrowse, &QToolButton::clicked,
-        [this]() { selectCurrentItemFile(FileDialog::ShaderExtensions); });
+        [this]() { openCurrentItemFile(FileDialog::ShaderExtensions); });
     connect(mShaderProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Shader); });
 
-    connect(mBufferProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::editorManager().openNewBinaryEditor()); });
+    connect(mBufferProperties->fileNew, &QToolButton::clicked,
+        [this]() { saveCurrentItemFileAs(FileDialog::BinaryExtensions); });
     connect(mBufferProperties->fileBrowse, &QToolButton::clicked,
-        [this]() { selectCurrentItemFile(FileDialog::BinaryExtensions); });
+        [this]() { openCurrentItemFile(FileDialog::BinaryExtensions); });
     connect(mBufferProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Buffer, true); });
 
-    connect(mImageProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::editorManager().openNewImageEditor()); });
+    connect(mImageProperties->fileNew, &QToolButton::clicked,
+        [this]() { saveCurrentItemFileAs(FileDialog::ImageExtensions); });
     connect(mImageProperties->fileBrowse, &QToolButton::clicked,
-        [this]() { selectCurrentItemFile(FileDialog::ImageExtensions); });
+        [this]() { openCurrentItemFile(FileDialog::ImageExtensions); });
     connect(mImageProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Image, true); });
 
-    connect(mScriptProperties->fileNew, &QToolButton::clicked, [this]() {
-        setCurrentItemFile(Singletons::editorManager().openNewSourceEditor()); });
+    connect(mScriptProperties->fileNew, &QToolButton::clicked,
+        [this]() { saveCurrentItemFileAs(FileDialog::ScriptExtensions); });
     connect(mScriptProperties->fileBrowse, &QToolButton::clicked,
-        [this]() { selectCurrentItemFile(FileDialog::ScriptExtensions); });
+        [this]() { openCurrentItemFile(FileDialog::ScriptExtensions); });
     connect(mScriptProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(ItemType::Script); });
 
@@ -372,21 +373,85 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
     mStack->setCurrentIndex(static_cast<int>(mModel.getItemType(index)));
 }
 
+IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
+{
+    auto &editors = Singletons::editorManager();
+    if (auto fileItem = mModel.item<FileItem>(index)) {
+        switch (fileItem->itemType) {
+            case ItemType::Texture:
+                if (!fileItem->items.isEmpty())
+                    return nullptr;
+                // fallthrough
+            case ItemType::Image:
+                if (fileItem->fileName.isEmpty())
+                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
+                        editors.openNewImageEditor());
+                return editors.openImageEditor(fileItem->fileName);
+
+            case ItemType::Shader:
+                if (fileItem->fileName.isEmpty())
+                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
+                        editors.openNewSourceEditor());
+                return editors.openSourceEditor(fileItem->fileName);
+
+            case ItemType::Script:
+                if (fileItem->fileName.isEmpty())
+                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
+                        editors.openNewSourceEditor(".js"));
+                return editors.openSourceEditor(fileItem->fileName);
+
+            case ItemType::Buffer:
+                if (fileItem->fileName.isEmpty())
+                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
+                        editors.openNewBinaryEditor());
+
+                if (auto editor = editors.openBinaryEditor(fileItem->fileName)) {
+                    Singletons::synchronizeLogic().updateBinaryEditor(
+                        static_cast<const Buffer&>(*fileItem), *editor, true);
+                    return editor;
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+    return nullptr;
+}
+
 QString SessionProperties::currentItemName() const
 {
     return mModel.data(currentModelIndex(SessionModel::Name)).toString();
 }
 
-void SessionProperties::selectCurrentItemFile(FileDialog::Options options)
+QString SessionProperties::currentItemFileName() const
 {
-    options |= FileDialog::Loading;
-    if (Singletons::fileDialog().exec(options))
-        setCurrentItemFile(Singletons::fileDialog().fileName());
+    return mModel.data(currentModelIndex(SessionModel::FileName)).toString();
 }
 
 void SessionProperties::setCurrentItemFile(const QString &fileName)
 {
     mModel.setData(currentModelIndex(SessionModel::FileName), fileName);
+}
+
+void SessionProperties::saveCurrentItemFileAs(FileDialog::Options options)
+{
+    options |= FileDialog::Saving;
+    if (Singletons::fileDialog().exec(options, currentItemFileName())) {
+        auto fileName = Singletons::fileDialog().fileName();
+        if (auto editor = openItemEditor(currentModelIndex())) {
+            editor->setFileName(fileName);
+            setCurrentItemFile(fileName);
+            editor->save();
+        }
+    }
+}
+
+void SessionProperties::openCurrentItemFile(FileDialog::Options options)
+{
+    options |= FileDialog::Loading;
+    if (Singletons::fileDialog().exec(options))
+        setCurrentItemFile(Singletons::fileDialog().fileName());
 }
 
 void SessionProperties::updateImageWidgets(const QModelIndex &index)

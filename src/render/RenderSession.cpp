@@ -297,7 +297,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                         addCommand(
                             [binding = GLSubroutineBinding{
                                 binding->id, getUniformName(binding->name, index),
-                                value.subroutine }
+                                value.subroutine, {} }
                             ](BindingState& state) {
                                 state.top().subroutines[binding.name] = binding;
                             });

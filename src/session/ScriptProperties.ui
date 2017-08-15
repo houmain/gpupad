@@ -64,9 +64,12 @@
         </item>
         <item>
          <widget class="QToolButton" name="fileNew">
+          <property name="toolTip">
+           <string>Save As</string>
+          </property>
           <property name="icon">
            <iconset resource="../resources.qrc">
-            <normaloff>:/images/16x16/document-new.png</normaloff>:/images/16x16/document-new.png</iconset>
+            <normaloff>:/images/16x16/document-save-as.png</normaloff>:/images/16x16/document-save-as.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -78,6 +81,9 @@
         </item>
         <item>
          <widget class="QToolButton" name="fileBrowse">
+          <property name="toolTip">
+           <string>Open</string>
+          </property>
           <property name="icon">
            <iconset resource="../resources.qrc">
             <normaloff>:/images/16x16/document-open.png</normaloff>:/images/16x16/document-open.png</iconset>

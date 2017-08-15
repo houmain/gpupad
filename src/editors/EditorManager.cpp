@@ -1,7 +1,4 @@
 #include "EditorManager.h"
-#include "SourceEditor.h"
-#include "BinaryEditor.h"
-#include "ImageEditor.h"
 #include "Singletons.h"
 #include "FileDialog.h"
 #include <functional>
@@ -87,9 +84,9 @@ QList<QMetaObject::Connection> EditorManager::connectEditActions(
     return { };
 }
 
-QString EditorManager::openNewSourceEditor()
+QString EditorManager::openNewSourceEditor(const QString &extension)
 {
-    auto fileName = FileDialog::generateNextUntitledFileName();
+    auto fileName = FileDialog::generateNextUntitledFileName() + extension;
     auto editor = new SourceEditor(fileName);
     addSourceEditor(editor);
     raiseEditor(editor);
@@ -247,8 +244,10 @@ bool EditorManager::saveEditorAs()
 
     if (auto editor = currentEditor()) {
         auto options = FileDialog::Options{ FileDialog::Saving };
-        if (qobject_cast<SourceEditor*>(mCurrentDock->widget()))
+        if (qobject_cast<SourceEditor*>(mCurrentDock->widget())) {
             options |= FileDialog::ShaderExtensions;
+            options |= FileDialog::ScriptExtensions;
+        }
         else if (qobject_cast<BinaryEditor*>(mCurrentDock->widget()))
             options |= FileDialog::BinaryExtensions;
         else if (qobject_cast<ImageEditor*>(mCurrentDock->widget()))

@@ -155,12 +155,14 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::updateCurrentEditor);
     connect(mSessionEditor->selectionModel(), &QItemSelectionModel::currentChanged,
         mSessionProperties.data(), &SessionProperties::setCurrentModelIndex);
+    connect(mSessionEditor.data(), &SessionEditor::itemActivated,
+        [this](const QModelIndex &index, bool* handled) {
+            *handled = (mSessionProperties->openItemEditor(index) != nullptr);
+        });
     connect(mUi->menuSession, &QMenu::aboutToShow,
         mSessionEditor.data(), &SessionEditor::updateItemActions);
 
     auto& synchronizeLogic = Singletons::synchronizeLogic();
-    connect(mSessionEditor.data(), &SessionEditor::itemActivated,
-        &synchronizeLogic, &SynchronizeLogic::handleItemActivated);
     connect(&mEditorManager, &EditorManager::editorRenamed,
         &synchronizeLogic, &SynchronizeLogic::handleFileRenamed);
     connect(&mEditorManager, &EditorManager::editorChanged,
@@ -281,7 +283,7 @@ void MainWindow::updateCurrentEditor()
 void MainWindow::disconnectEditActions()
 {
     foreach (QMetaObject::Connection connection, mConnectedEditActions)
-       disconnect(connection);
+        disconnect(connection);
     mConnectedEditActions.clear();
 
     auto actions = {

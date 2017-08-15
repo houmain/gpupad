@@ -163,48 +163,8 @@ void SynchronizeLogic::updateFileCache()
     mFilesModified.clear();
 }
 
-void SynchronizeLogic::handleItemActivated(const QModelIndex &index,
-    bool *handled)
-{
-    auto &editors = Singletons::editorManager();
-    if (auto fileItem = mModel.item<FileItem>(index)) {
-        switch (fileItem->itemType) {
-            case ItemType::Texture:
-            case ItemType::Image:
-                if (fileItem->fileName.isEmpty())
-                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
-                        editors.openNewImageEditor());
-                editors.openImageEditor(fileItem->fileName);
-                break;
-
-            case ItemType::Shader:
-            case ItemType::Script:
-                if (fileItem->fileName.isEmpty())
-                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
-                        editors.openNewSourceEditor());
-                editors.openSourceEditor(fileItem->fileName);
-                break;
-
-            case ItemType::Buffer:
-                if (fileItem->fileName.isEmpty())
-                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
-                        editors.openNewBinaryEditor());
-
-                if (auto editor = editors.openBinaryEditor(fileItem->fileName)) {
-                    updateBinaryEditor(static_cast<const Buffer&>(*fileItem), *editor);
-                    editor->scrollToOffset();
-                }
-                break;
-
-            default:
-                break;
-        }
-        *handled = true;
-    }
-}
-
 void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
-    BinaryEditor &editor)
+    BinaryEditor &editor, bool scrollToOffset)
 {
     auto mapDataType = [](Column::DataType type) {
         switch (type) {
@@ -234,4 +194,7 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
     }
     editor.setStride();
     editor.updateColumns();
+
+    if (scrollToOffset)
+        editor.scrollToOffset();
 }

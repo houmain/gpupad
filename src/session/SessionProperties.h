@@ -24,6 +24,7 @@ class ScriptProperties;
 class QStackedWidget;
 class QDataWidgetMapper;
 class QTimer;
+class IEditor;
 class SessionModel;
 class TextureProperties;
 class BindingProperties;
@@ -57,11 +58,14 @@ public:
 
     SessionModel &model() { return mModel; }
     void updateModel();
-    QString currentItemName() const;
     QModelIndex currentModelIndex(int column = 0) const;
+    QString currentItemName() const;
+    QString currentItemFileName() const;
+    IEditor* openItemEditor(const QModelIndex &index);
     void setCurrentModelIndex(const QModelIndex &index);
     void setCurrentItemFile(const QString &fileName);
-    void selectCurrentItemFile(FileDialog::Options options);
+    void saveCurrentItemFileAs(FileDialog::Options options);
+    void openCurrentItemFile(FileDialog::Options options);
     QVariantList getFileNames(ItemType type, bool addNull = false) const;
     QVariantList getItemIds(ItemType type, bool addNull = false) const;
     QString findItemName(ItemId itemId) const;

@@ -20,12 +20,13 @@ public:
     void resetRenderSession();
     void setEvaluationMode(bool automatic, bool steady);
     void setEvaluationInterval(int interval);
+    void updateBinaryEditor(const Buffer &buffer,
+        BinaryEditor &editor, bool scrollToOffset = false);
 
 public slots:
     void manualEvaluation();
     void handleItemModified(const QModelIndex &index);
     void handleFileItemsChanged(const QString &fileName);
-    void handleItemActivated(const QModelIndex &index, bool *handled);
     void handleFileRenamed(const QString &prevFileName,
         const QString &fileName);
 
@@ -36,7 +37,6 @@ private slots:
 
 private:
     void updateFileCache();
-    void updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor);
 
     SessionModel& mModel;
     QTimer *mUpdateTimer{ };

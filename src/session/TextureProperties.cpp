@@ -156,11 +156,13 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
     buildFormatMappings();
 
     connect(mUi->fileNew, &QToolButton::clicked,
-        [this]() { mSessionProperties.setCurrentItemFile(
-            Singletons::editorManager().openNewImageEditor()); });
+        [this]() {
+            mSessionProperties.saveCurrentItemFileAs(
+                FileDialog::ImageExtensions);
+        });
     connect(mUi->fileBrowse, &QToolButton::clicked,
         [this]() {
-            mSessionProperties.selectCurrentItemFile(
+            mSessionProperties.openCurrentItemFile(
                 FileDialog::ImageExtensions);
             updateSize();
         });
@@ -201,7 +203,7 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
         { "RG Integer", FormatType::RG_Integer },
         { "RGB Integer", FormatType::RGB_Integer },
         { "RGBA Integer", FormatType::RGBA_Integer },
-        { "Depth/Stencil", FormatType::DepthStencil },
+        { "Depth / Stencil", FormatType::DepthStencil },
     });
 
     updateWidgets();

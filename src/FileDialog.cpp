@@ -100,8 +100,12 @@ bool FileDialog::exec(Options options, QString currentFileName)
     QFileDialog dialog(mWindow);
 
     if (options & Saving) {
-        dialog.setWindowTitle(tr("Save '%1' As")
-            .arg(getFileTitle(currentFileName)));
+        if (currentFileName.isEmpty())
+            dialog.setWindowTitle(tr("New File"));
+        else
+            dialog.setWindowTitle(tr("Save '%1' As")
+                .arg(getFileTitle(currentFileName)));
+
         dialog.setAcceptMode(QFileDialog::AcceptSave);
         dialog.setFileMode(QFileDialog::AnyFile);
     }
@@ -150,7 +154,7 @@ bool FileDialog::exec(Options options, QString currentFileName)
         filters.append(tr("Binary files") + " (" + binaryFileFilter + ")");
         dialog.setDefaultSuffix(*begin(BinaryFileExtensions));
     }
-    if (options & ImageExtensions) {
+    if (options & ScriptExtensions) {
         filters.append(tr("JavaScript files") + " (" + scriptFileFilter + ")");
         dialog.setDefaultSuffix(*begin(ScriptFileExtensions));
     }
