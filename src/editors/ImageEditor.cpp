@@ -20,7 +20,8 @@ void ImageEditor::refresh()
 {
     delete scene();
     setScene(new QGraphicsScene(this));
-    auto pixmap = QPixmap::fromImage(mImage);
+    auto pixmap = QPixmap::fromImage(mImage,
+        Qt::NoOpaqueDetection | Qt::NoFormatConversion);
     auto item = new QGraphicsPixmapItem(pixmap);
     scene()->addItem(item);
 
@@ -108,14 +109,15 @@ bool ImageEditor::save()
 
 void ImageEditor::replace(QImage image, bool emitDataChanged)
 {
-    if (image != mImage) {
-        mImage = image;
-        refresh();
-        setModified(true);
+    if (image.bits() == mImage.bits())
+        return;
 
-        if (emitDataChanged)
-            emit dataChanged();
-    }
+    mImage = image;
+    refresh();
+    setModified(true);
+
+    if (emitDataChanged)
+        emit dataChanged();
 }
 
 void ImageEditor::setModified(bool modified)

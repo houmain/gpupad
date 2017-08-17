@@ -434,8 +434,6 @@ bool GLTexture::downloadImage(Image& image)
     if (mFlipY)
         dest = dest.mirrored();
 
-    if (image.image == dest)
-        return false;
     image.image = dest;
     return true;
 }

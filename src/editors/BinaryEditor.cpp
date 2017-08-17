@@ -115,14 +115,15 @@ bool BinaryEditor::save()
 
 void BinaryEditor::replace(QByteArray data, bool emitDataChanged)
 {
-    if (data != mData) {
-        mData = data;
-        setModified(true);
-        refresh();
+    if (data.data() == mData.data())
+        return;
 
-        if (emitDataChanged)
-            emit dataChanged();
-    }
+    mData = data;
+    setModified(true);
+    refresh();
+
+    if (emitDataChanged)
+        emit dataChanged();
 }
 
 void BinaryEditor::setModified(bool modified)
