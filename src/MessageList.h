@@ -22,6 +22,7 @@ enum MessageType
     ShaderError,
     CallDuration,
     ScriptError,
+    ScriptMessage,
     NoActiveCalls,
     ProgramNotAssigned,
     TextureNotAssigned,
@@ -31,6 +32,7 @@ enum MessageType
 
 struct Message
 {
+    qulonglong id;
     MessageType type;
     QString text;
     ItemId itemId;

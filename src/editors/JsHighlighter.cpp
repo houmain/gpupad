@@ -3,37 +3,35 @@
 #include <QStringListModel>
 
 namespace {
-const auto keywords = { "abstract", "arguments", "await",
-    "boolean", "break", "byte", "case", "catch", "char", "class", "const",
-    "continue", "debugger", "default", "delete", "do", "double", "else", "enum",
-    "eval", "export", "extends", "false", "final", "finally", "float", "for",
-    "function", "goto", "if", "implements", "import", "in", "instanceof", "int",
-    "interface", "let", "long", "native", "new", "null", "package", "private",
-    "protected", "public", "return", "short", "static", "super", "switch",
-    "synchronized", "this", "throw", "throws", "transient", "true", "try",
-    "typeof", "var", "void", "volatile", "while", "with", "yield", "undefined", };
 
-const auto builtinFunctions = { "Array", "Date", "eval", "hasOwnProperty",
-    "Infinity", "isFinite", "isNaN", "isPrototypeOf", "length", "Math", "NaN",
-    "name", "Number", "Object", "prototype", "String", "toString", "valueOf",
-    "Math.abs", "Math.acos", "Math.acosh", "Math.asin", "Math.asinh", "Math.atan",
-    "Math.atan2", "Math.atanh", "Math.cbrt", "Math.ceil", "Math.clz32", "Math.cos",
-    "Math.cosh", "Math.exp", "Math.expm1", "Math.floor", "Math.fround", "Math.hypot",
-    "Math.imul", "Math.log", "Math.log10", "Math.log1p", "Math.log2", "Math.max",
-    "Math.min", "Math.pow", "Math.random", "Math.round", "Math.sign", "Math.sin",
-    "Math.sinh", "Math.sqrt", "Math.tan", "Math.tanh", "Math.trunc" };
+// https://developer.mozilla.org/de/docs/Web/JavaScript/Reference/Lexical_grammar
+const auto keywords = {
+    "break", "case", "catch", "class", "const", "continue", "debugger", "default",
+    "delete", "do", "else", "export", "extends", "finally", "for", "function",
+    "if", "import", "in", "instanceof", "new", "return", "super", "switch", "this",
+    "throw", "try", "typeof", "var", "void", "while", "with", "yield", "enum",
+    "implements", "interface", "let", "package", "private", "protected", "public",
+    "static", "await" };
 
-const auto builtinConstants = {
-    "Math.E", "Math.LN10", "Math.LN2", "Math.LOG10E", "Math.LOG2E",
-    "Math.PI", "Math.SQRT1_2", "Math.SQRT2" };
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
+const auto globalObjects = {
+    "Infinity", "NaN", "undefined", "null", "eval", "isFinite", "isNaN",
+    "parseFloat", "parseInt", "decodeURI", "decodeURIComponent", "encodeURI",
+    "encodeURIComponent", "Object", "Function", "Boolean", "Error", "EvalError",
+    "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError",
+    "Number", "Math", "Date", "String", "RegExp", "Array", "Int8Array",
+    "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array",
+    "Uint32Array", "Float32Array", "Float64Array", "Map", "Set", "WeakMap",
+    "WeakSet", "ArrayBuffer", "SharedArrayBuffer", "Atomics", "DataView", "JSON",
+
+    "true", "false", "console", "print" };
 } // namespace
 
 JsHighlighter::JsHighlighter(QObject *parent)
     : QSyntaxHighlighter(parent)
 {
     QTextCharFormat keywordFormat;
-    QTextCharFormat builtinFunctionFormat;
-    QTextCharFormat builtinConstantsFormat;
+    QTextCharFormat globalObjectFormat;
     QTextCharFormat preprocessorFormat;
     QTextCharFormat singleLineCommentFormat;
     QTextCharFormat quotationFormat;
@@ -41,10 +39,8 @@ JsHighlighter::JsHighlighter(QObject *parent)
     QTextCharFormat functionFormat;
 
     functionFormat.setForeground(QColor("#000066"));
-    //functionFormat.setFontWeight(QFont::Bold);
     keywordFormat.setForeground(QColor("#003C98"));
-    builtinFunctionFormat.setForeground(QColor("#000066"));
-    builtinConstantsFormat.setForeground(QColor("#981111"));
+    globalObjectFormat.setForeground(QColor("#003C98"));
     numberFormat.setForeground(QColor("#981111"));
     quotationFormat.setForeground(QColor("#981111"));
     preprocessorFormat.setForeground(QColor("#800080"));
@@ -65,18 +61,11 @@ JsHighlighter::JsHighlighter(QObject *parent)
         completerStrings.append(keyword);
     }
 
-    for (const auto& builtinFunction : builtinFunctions) {
-        rule.pattern = QRegExp(QStringLiteral("\\b%1\\b").arg(builtinFunction));
-        rule.format = builtinFunctionFormat;
+    for (const auto& global : globalObjects) {
+        rule.pattern = QRegExp(QStringLiteral("\\b%1\\b").arg(global));
+        rule.format = globalObjectFormat;
         mHighlightingRules.append(rule);
-        completerStrings.append(builtinFunction);
-    }
-
-    for (const auto& builtinConstant : builtinConstants) {
-        rule.pattern = QRegExp(QStringLiteral("\\b%1\\b").arg(builtinConstant));
-        rule.format = builtinConstantsFormat;
-        mHighlightingRules.append(rule);
-        completerStrings.append(builtinConstant);
+        completerStrings.append(global);
     }
 
     rule.pattern = QRegExp("\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?[uUlLfF]{,2}\\b");
@@ -88,6 +77,10 @@ JsHighlighter::JsHighlighter(QObject *parent)
     mHighlightingRules.append(rule);
 
     rule.pattern = QRegExp("\".*\"");
+    rule.format = quotationFormat;
+    mHighlightingRules.append(rule);
+
+    rule.pattern = QRegExp("\'.*\'");
     rule.format = quotationFormat;
     mHighlightingRules.append(rule);
 

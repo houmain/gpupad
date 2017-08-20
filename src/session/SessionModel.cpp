@@ -1180,7 +1180,7 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item,
             write("frontFace", target.frontFace);
             write("cullMode", target.cullMode);
             write("logicOperation", target.logicOperation);
-            writeString("blendConstant", target.blendConstant.name());
+            writeString("blendConstant", target.blendConstant.name(QColor::HexArgb));
             break;
         }
 
@@ -1269,7 +1269,7 @@ void SessionModel::serialize(QXmlStreamWriter &xml, const Item &item,
             if (type == Call::ClearTexture || type == Call::GenerateMipmaps)
                 writeRef("textureId", call.textureId);
             if (type == Call::ClearTexture) {
-                writeString("clearColor", call.clearColor.name());
+                writeString("clearColor", call.clearColor.name(QColor::HexArgb));
                 write("clearDepth", call.clearDepth);
                 write("clearStencil", call.clearStencil);
             }

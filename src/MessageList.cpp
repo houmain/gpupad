@@ -1,5 +1,9 @@
 #include "MessageList.h"
 
+namespace {
+    qulonglong gNextMessageId;
+}
+
 MessagePtr MessageList::insert(QString fileName, int line,
     MessageType type, QString text, bool deduplicate)
 {
@@ -13,7 +17,8 @@ MessagePtr MessageList::insert(QString fileName, int line,
                     message->text == text)
                     return message;
     }
-    auto message = MessagePtr(new Message{ type, text, 0, fileName, line });
+    auto message = MessagePtr(new Message{
+        gNextMessageId++, type, text, 0, fileName, line });
     mMessages.append(message);
     return message;
 }
@@ -30,7 +35,8 @@ MessagePtr MessageList::insert(ItemId itemId,
                     message->text == text)
                     return message;
     }
-    auto message = MessagePtr(new Message{ type, text, itemId, QString(), 0 });
+    auto message = MessagePtr(new Message{
+        gNextMessageId++, type, text, itemId, QString(), 0 });
     mMessages.append(message);
     return message;
 }

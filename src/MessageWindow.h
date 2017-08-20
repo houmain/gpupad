@@ -24,7 +24,6 @@ private slots:
     void handleItemActivated(QTableWidgetItem *item);
 
 private:
-    static MessageId getMessageId(const Message &message);
     QIcon getMessageIcon(const Message &message) const;
     QString getMessageText(const Message &message) const;
     void removeMessagesExcept(const QSet<MessageId> &messageIds);

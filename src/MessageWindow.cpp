@@ -43,7 +43,7 @@ void MessageWindow::updateMessages()
     foreach (const MessagePtr &message, messages) {
         if (message->type == MessageType::CallDuration)
             tryReplaceMessage(*message);
-        messageIds += getMessageId(*message);
+        messageIds += message->id;
     }
     removeMessagesExcept(messageIds);
 
@@ -53,11 +53,6 @@ void MessageWindow::updateMessages()
 
     if (added)
         emit messagesAdded();
-}
-
-qulonglong MessageWindow::getMessageId(const Message &message)
-{
-    return static_cast<qulonglong>(reinterpret_cast<uintptr_t>(&message));
 }
 
 QIcon MessageWindow::getMessageIcon(const Message &message) const
@@ -82,6 +77,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
             return mWarningIcon;
 
         case ShaderInfo:
+        case ScriptMessage:
         case CallDuration:
         case NoActiveCalls:
             return mInfoIcon;
@@ -96,6 +92,7 @@ QString MessageWindow::getMessageText(const Message &message) const
         case ShaderWarning:
         case ShaderError:
         case ScriptError:
+        case ScriptMessage:
             return message.text;
 
         case OpenGLVersionNotAvailable:
@@ -150,7 +147,7 @@ void MessageWindow::tryReplaceMessage(const Message &message)
         if (item.data(Qt::UserRole + 1) == message.itemId &&
             item.data(Qt::UserRole + 4) == message.type) {
 
-            item.setData(Qt::UserRole, getMessageId(message));
+            item.setData(Qt::UserRole, message.id);
             item.setText(getMessageText(message));
             return;
         }
@@ -159,9 +156,8 @@ void MessageWindow::tryReplaceMessage(const Message &message)
 
 bool MessageWindow::addMessageOnce(const Message &message)
 {
-    auto messageId = getMessageId(message);
     for (auto i = 0; i < rowCount(); i++)
-        if (item(i, 0)->data(Qt::UserRole).toULongLong() == messageId)
+        if (item(i, 0)->data(Qt::UserRole).toULongLong() == message.id)
             return false;
 
     auto locationText = QString();
@@ -181,7 +177,7 @@ bool MessageWindow::addMessageOnce(const Message &message)
     auto messageIcon = getMessageIcon(message);
     auto messageText = getMessageText(message);
     auto messageItem = new QTableWidgetItem(messageIcon, messageText);
-    messageItem->setData(Qt::UserRole, messageId);
+    messageItem->setData(Qt::UserRole, message.id);
     messageItem->setData(Qt::UserRole + 1, message.itemId);
     messageItem->setData(Qt::UserRole + 2, message.fileName);
     messageItem->setData(Qt::UserRole + 3, message.line);

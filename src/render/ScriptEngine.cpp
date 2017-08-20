@@ -1,6 +1,22 @@
 #include "ScriptEngine.h"
 #include "Singletons.h"
+#include "FileDialog.h"
 #include <QJSEngine>
+
+namespace {
+    MessagePtrSet* gCurrentMessageList;
+
+    void consoleMessageHandler(QtMsgType type,
+        const QMessageLogContext &context, const QString &msg)
+    {
+        auto fileName = FileDialog::getFileTitle(context.file);
+        auto message = QString(msg).replace(context.file, fileName);
+        auto messageType = (type == QtDebugMsg || type == QtInfoMsg ?
+            MessageType::ScriptMessage : MessageType::ScriptError);
+        (*gCurrentMessageList) += Singletons::messageList().insert(
+            context.file, context.line, messageType, message, false);
+    }
+} // namespace
 
 bool operator==(const ScriptEngine::Script &a,
                 const ScriptEngine::Script &b)
@@ -27,6 +43,9 @@ void ScriptEngine::evalScripts(QList<Script> scripts)
 
     reset();
 
+    gCurrentMessageList = &mMessages;
+    auto prevMessageHandler = qInstallMessageHandler(consoleMessageHandler);
+
     foreach (const Script &script, scripts) {
         auto result = mJsEngine->evaluate(script.source, script.fileName);
         if (result.isError())
@@ -35,6 +54,8 @@ void ScriptEngine::evalScripts(QList<Script> scripts)
                 MessageType::ScriptError, result.toString());
     }
     mScripts = scripts;
+
+    qInstallMessageHandler(prevMessageHandler);
 }
 
 QStringList ScriptEngine::evalValue(const QStringList &fieldExpressions,
