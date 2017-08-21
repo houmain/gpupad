@@ -13,17 +13,8 @@ ImageEditor::ImageEditor(QString fileName, QWidget *parent)
 {
     mImage.fill(Qt::black);
     setTransformationAnchor(AnchorUnderMouse);
-    refresh();
-}
 
-void ImageEditor::refresh()
-{
-    delete scene();
     setScene(new QGraphicsScene(this));
-    auto pixmap = QPixmap::fromImage(mImage,
-        Qt::NoOpaqueDetection | Qt::NoFormatConversion);
-    auto item = new QGraphicsPixmapItem(pixmap);
-    scene()->addItem(item);
 
     auto pen = QPen();
     pen.setWidth(1);
@@ -35,34 +26,32 @@ void ImageEditor::refresh()
     mOutside->setBrush(QBrush(QColor::fromRgbF(0.6, 0.6, 0.6, 0.7)));
     scene()->addItem(mOutside);
 
-    auto bounds = pixmap.rect();
+    refresh();
+}
 
-    const auto max = 65536;
-    auto outside = QPainterPath();
-    outside.addRect(-max, -max, 2 * max, 2 * max);
-    auto inside = QPainterPath();
-    inside.addRect(bounds);
-    outside = outside.subtracted(inside);
-    mOutside->setPath(outside);
+void ImageEditor::refresh()
+{
+    delete mPixmapItem;
+    auto pixmap = QPixmap::fromImage(mImage,
+        Qt::NoOpaqueDetection | Qt::NoFormatConversion);
+    mPixmapItem = new QGraphicsPixmapItem(pixmap);
+    scene()->addItem(mPixmapItem);
 
-    const auto margin = 5;
-    bounds.adjust(-margin, -margin, margin, margin);
-    setSceneRect(bounds);
-
+    setBounds(pixmap.rect());
     setZoom(mZoom);
 }
 
 QList<QMetaObject::Connection> ImageEditor::connectEditActions(
-    const EditActions &actions)
+        const EditActions &actions)
 {
     auto c = QList<QMetaObject::Connection>();
 
     actions.windowFileName->setText(fileName());
     actions.windowFileName->setEnabled(isModified());
     c += connect(this, &ImageEditor::fileNameChanged,
-        actions.windowFileName, &QAction::setText);
+                 actions.windowFileName, &QAction::setText);
     c += connect(this, &ImageEditor::modificationChanged,
-        actions.windowFileName, &QAction::setEnabled);
+                 actions.windowFileName, &QAction::setEnabled);
 
     return c;
 }
@@ -109,7 +98,7 @@ bool ImageEditor::save()
 
 void ImageEditor::replace(QImage image, bool emitDataChanged)
 {
-    if (image.bits() == mImage.bits())
+    if (image.constBits() == mImage.constBits())
         return;
 
     mImage = image;
@@ -182,7 +171,28 @@ void ImageEditor::mouseReleaseEvent(QMouseEvent *event)
     QGraphicsView::mouseReleaseEvent(event);
 }
 
-void ImageEditor::setZoom(int zoom) {
+void ImageEditor::setBounds(QRect bounds)
+{
+    if (bounds == mBounds)
+        return;
+    mBounds = bounds;
+    const auto max = 65536;
+    auto outside = QPainterPath();
+    outside.addRect(-max, -max, 2 * max, 2 * max);
+    auto inside = QPainterPath();
+    inside.addRect(bounds);
+    outside = outside.subtracted(inside);
+    mOutside->setPath(outside);
+
+    const auto margin = 5;
+    bounds.adjust(-margin, -margin, margin, margin);
+    setSceneRect(bounds);
+}
+
+void ImageEditor::setZoom(int zoom) 
+{
+    if (mZoom == zoom)
+        return;
     mZoom = zoom;
     auto scale = (mZoom < 0 ?
         1.0 / (1 << (-mZoom)) :

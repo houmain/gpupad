@@ -41,7 +41,7 @@ private:
     QImage::Format getImageFormat(QOpenGLTexture::PixelFormat format,
         QOpenGLTexture::PixelType type) const;
     GLObject createFramebuffer(GLuint textureId, int level) const;
-    void load();
+    void reload();
     void createTexture();
     void upload();
     void uploadImage(const Image &image);

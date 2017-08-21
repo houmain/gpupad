@@ -420,21 +420,24 @@ void RenderSession::outputTimerQueries()
     mTimerQueries->calls.clear();
 }
 
-void RenderSession::finish()
+void RenderSession::finish(bool steadyEvaluation)
 {
+    // do not emit data changed in automatic refresh mode,
+    // since it would keep triggering updates
+    auto emitDataChanged = steadyEvaluation;
+
     auto& manager = Singletons::editorManager();
     auto& session = Singletons::sessionModel();
-
     for (auto& image : mModifiedImages)
         if (auto fileItem = castItem<FileItem>(session.findItem(image.first)))
             if (auto editor = manager.openImageEditor(fileItem->fileName, false))
-                editor->replace(image.second, false);
+                editor->replace(image.second, emitDataChanged);
     mModifiedImages.clear();
 
     for (auto& buffer : mModifiedBuffers)
         if (auto fileItem = castItem<FileItem>(session.findItem(buffer.first)))
             if (auto editor = manager.openBinaryEditor(fileItem->fileName, false))
-                editor->replace(buffer.second, false);
+                editor->replace(buffer.second, emitDataChanged);
     mModifiedBuffers.clear();
 
     QMutexLocker lock{ &mUsedItemsCopyMutex };

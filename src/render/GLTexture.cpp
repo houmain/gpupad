@@ -55,7 +55,7 @@ bool GLTexture::operator==(const GLTexture &rhs) const
 
 GLuint GLTexture::getReadOnlyTextureId()
 {
-    load();
+    reload();
     createTexture();
     upload();
     return (mMultisampleTexture ? mMultisampleTexture : mTexture)->textureId();
@@ -63,7 +63,7 @@ GLuint GLTexture::getReadOnlyTextureId()
 
 GLuint GLTexture::getReadWriteTextureId()
 {
-    load();
+    reload();
     createTexture();
     upload();
     mDeviceCopiesModified = true;
@@ -120,7 +120,7 @@ void GLTexture::generateMipmaps()
         mTexture->generateMipMaps();
 }
 
-void GLTexture::load()
+void GLTexture::reload()
 {
     for (Image& image : mImages)
         if (!FileDialog::isEmptyOrUntitled(image.fileName)) {
@@ -130,7 +130,7 @@ void GLTexture::load()
                     MessageType::LoadingFileFailed, image.fileName);
                 continue;
             }
-            mSystemCopiesModified |= (image.image != prevImage);
+            mSystemCopiesModified |= (image.image.constBits() != prevImage.constBits());
         }
 }
 

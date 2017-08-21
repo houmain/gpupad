@@ -29,14 +29,16 @@ void GLBuffer::clear()
 
 GLuint GLBuffer::getReadOnlyBufferId()
 {
-    load();
+    reload();
+    createBuffer();
     upload();
     return mBufferObject;
 }
 
 GLuint GLBuffer::getReadWriteBufferId()
 {
-    load();
+    reload();
+    createBuffer();
     upload();
     mDeviceCopyModified = true;
     return mBufferObject;
@@ -44,9 +46,9 @@ GLuint GLBuffer::getReadWriteBufferId()
 
 void GLBuffer::bindReadOnly(GLenum target)
 {
-    load();
+    reload();
+    createBuffer();
     upload();
-
     auto& gl = GLContext::currentContext();
     gl.glBindBuffer(target, mBufferObject);
 }
@@ -65,7 +67,7 @@ QList<std::pair<ItemId, QByteArray>> GLBuffer::getModifiedData()
     return { std::make_pair(mItemId, mData) };
 }
 
-void GLBuffer::load()
+void GLBuffer::reload()
 {
     auto prevData = mData;
     if (!FileDialog::isEmptyOrUntitled(mFileName))
@@ -77,7 +79,29 @@ void GLBuffer::load()
     if (requiredSize > mData.size())
         mData.append(QByteArray(requiredSize - mData.size(), 0));
 
-    mSystemCopyModified = (mData != prevData);
+    mSystemCopyModified |= !mData.isSharedWith(prevData);
+}
+
+void GLBuffer::createBuffer()
+{
+    if (mBufferObject)
+        return;
+
+    auto& gl = GLContext::currentContext();
+    auto createBuffer = [&]() {
+      auto buffer = GLuint{};
+      gl.glGenBuffers(1, &buffer);
+      return buffer;
+    };
+    auto freeBuffer = [](GLuint buffer) {
+      auto& gl = GLContext::currentContext();
+      gl.glDeleteBuffers(1, &buffer);
+    };
+
+    mBufferObject = GLObject(createBuffer(), freeBuffer);
+    gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
+    gl.glBufferData(GL_ARRAY_BUFFER, mSize, nullptr, GL_DYNAMIC_DRAW);
+    gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 }
 
 void GLBuffer::upload()
@@ -86,21 +110,10 @@ void GLBuffer::upload()
         return;
 
     auto& gl = GLContext::currentContext();
-    auto createBuffer = [&]() {
-        auto buffer = GLuint{ };
-        gl.glGenBuffers(1, &buffer);
-        return buffer;
-    };
-    auto freeBuffer = [](GLuint buffer) {
-        auto& gl = GLContext::currentContext();
-        gl.glDeleteBuffers(1, &buffer);
-    };
-
     Q_ASSERT(mOffset + mSize <= mData.size());
-    mBufferObject = GLObject(createBuffer(), freeBuffer);
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
-    gl.glBufferData(GL_ARRAY_BUFFER,
-        mSize, mData.data() + mOffset, GL_DYNAMIC_DRAW);
+    gl.glBufferSubData(GL_ARRAY_BUFFER, 0, mSize, 
+        mData.constData() + mOffset);
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 
     mSystemCopyModified = mDeviceCopyModified = false;

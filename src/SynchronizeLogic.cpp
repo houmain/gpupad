@@ -151,7 +151,8 @@ void SynchronizeLogic::update(bool manualEvaluation)
 
     if (manualEvaluation || mAutomaticEvaluation || mSteadyEvaluation) {
         updateFileCache();
-        mRenderSession->update(mRenderSessionInvalidated, manualEvaluation);
+        mRenderSession->update(mRenderSessionInvalidated,
+            manualEvaluation, mSteadyEvaluation);
     }
     mRenderSessionInvalidated = false;
 }

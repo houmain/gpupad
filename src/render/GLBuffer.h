@@ -18,7 +18,8 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
-    void load();
+    void reload();
+    void createBuffer();
     void upload();
     bool download();
 

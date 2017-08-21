@@ -37,6 +37,7 @@ protected:
 
 private:
     void refresh();
+    void setBounds(QRect bounds);
     void setZoom(int zoom);
     void updateTransform(double scale);
     void setModified(bool modified);
@@ -44,8 +45,10 @@ private:
     QString mFileName;
     bool mModified{ };
     QImage mImage;
+    QGraphicsPixmapItem *mPixmapItem{ };
     QGraphicsPathItem *mOutside{ };
     bool mPan{ };
+    QRect mBounds{ };
     int mZoom{ };
     int mPanStartX{ };
     int mPanStartY{ };
