@@ -14,7 +14,7 @@
 #include <QRegularExpression>
 #include <QAbstractItemView>
 #include <QScrollBar>
-#include <QTextCodec>
+#include <QTextStream>
 
 class SourceEditor::LineNumberArea : public QWidget
 {
@@ -148,16 +148,7 @@ bool SourceEditor::load(const QString &fileName, QString *source)
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly | QFile::Text))
         return false;
-
-    auto bytes = file.readAll();
-    QTextCodec::ConverterState state;
-    auto codec = QTextCodec::codecForUtfText(bytes,
-        QTextCodec::codecForName("UTF-8"));
-    auto text = codec->toUnicode(bytes.constData(), bytes.size(), &state);
-    if (state.invalidChars != 0)
-        return  false;
-
-    *source = text;
+    *source = QTextStream(&file).readAll();
     return true;
 }
 

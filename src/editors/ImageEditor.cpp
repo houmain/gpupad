@@ -26,6 +26,7 @@ ImageEditor::ImageEditor(QString fileName, QWidget *parent)
     mOutside->setBrush(QBrush(QColor::fromRgbF(0.6, 0.6, 0.6, 0.7)));
     scene()->addItem(mOutside);
 
+    setZoom(mZoom);
     refresh();
 }
 
@@ -38,7 +39,6 @@ void ImageEditor::refresh()
     scene()->addItem(mPixmapItem);
 
     setBounds(pixmap.rect());
-    setZoom(mZoom);
 }
 
 QList<QMetaObject::Connection> ImageEditor::connectEditActions(
@@ -184,15 +184,13 @@ void ImageEditor::setBounds(QRect bounds)
     outside = outside.subtracted(inside);
     mOutside->setPath(outside);
 
-    const auto margin = 5;
+    const auto margin = 15;
     bounds.adjust(-margin, -margin, margin, margin);
     setSceneRect(bounds);
 }
 
-void ImageEditor::setZoom(int zoom) 
+void ImageEditor::setZoom(int zoom)
 {
-    if (mZoom == zoom)
-        return;
     mZoom = zoom;
     auto scale = (mZoom < 0 ?
         1.0 / (1 << (-mZoom)) :
