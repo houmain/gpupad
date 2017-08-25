@@ -13,10 +13,10 @@ Project {
     cpp.enableRtti: false
     cpp.defines: [ "QAPPLICATION_CLASS=QApplication" ]
     cpp.dynamicLibraries: {
-        var dynamicLibraries = base;
-        if (qbs.targetOS.contains("windows"))
-          dynamicLibraries.push("advapi32");
-        return dynamicLibraries;
+      var dynamicLibraries = base;
+      if (qbs.targetOS.contains("windows"))
+        dynamicLibraries.push("advapi32");
+      return dynamicLibraries;
     }
 
     Depends {
@@ -129,6 +129,7 @@ Project {
           "src/session/SessionProperties.cpp",
           "src/session/SessionProperties.h",
           "src/resources.qrc",
+          "src/resources.rc",
           "src/session/ShaderProperties.ui",
           "src/session/TargetProperties.ui",
           "src/session/TextureProperties.cpp",
