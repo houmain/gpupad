@@ -22,69 +22,20 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
         mUi->layer, &QWidget::setEnabled);
     mUi->layer->setEnabled(false);
 
-    fill<Attachment::BlendEquation>(mUi->blendColorEq, {
-        { "Add", Attachment::Add },
-        { "Minimum", Attachment::Min },
-        { "Maximum", Attachment::Max },
-        { "Subtract", Attachment::Subtract },
-        { "Reverse Subtract", Attachment::ReverseSubtract },
-    });
+    fillComboBox<Attachment::BlendEquation>(mUi->blendColorEq);
     mUi->blendAlphaEq->setModel(mUi->blendColorEq->model());
 
-    fill<Attachment::BlendFactor>(mUi->blendColorSource, {
-        { "Zero", Attachment::Zero },
-        { "One", Attachment::One },
-        { "Source", Attachment::SrcColor },
-        { "One Minus Source", Attachment::OneMinusSrcColor },
-        { "Source Alpha", Attachment::SrcAlpha },
-        { "One Minus Source Alpha", Attachment::OneMinusSrcAlpha },
-        { "Source Alpha Saturate", Attachment::SrcAlphaSaturate },
-        { "Destination", Attachment::DstColor },
-        { "One Minus Destination", Attachment::OneMinusDstColor },
-        { "Destination Alpha", Attachment::DstAlpha },
-        { "One Minus Destination Alpha", Attachment::OneMinusDstAlpha },
-        { "Constant", Attachment::ConstantColor },
-        { "One Minus Constant", Attachment::OneMinusConstantColor },
-        { "Constant Alpha", Attachment::ConstantAlpha },
-        { "One Minus Constant Alpha", Attachment::OneMinusConstantAlpha },
-    });
+    fillComboBox<Attachment::BlendFactor>(mUi->blendColorSource);
     mUi->blendColorDest->setModel(mUi->blendColorSource->model());
 
-    fill<Attachment::BlendFactor>(mUi->blendAlphaSource, {
-        { "Zero", Attachment::Zero },
-        { "One", Attachment::One },
-        { "Source", Attachment::SrcColor },
-        { "One Minus Source", Attachment::OneMinusSrcColor },
-        { "Destination", Attachment::DstColor },
-        { "One Minus Destination", Attachment::OneMinusDstColor },
-        { "Constant", Attachment::ConstantColor },
-        { "One Minus Constant", Attachment::OneMinusConstantColor },
-    });
+    fillComboBox<Attachment::BlendFactor>(mUi->blendAlphaSource);
     mUi->blendAlphaDest->setModel(mUi->blendAlphaSource->model());
 
-    fill<Attachment::ComparisonFunction>(mUi->depthComparisonFunc, {
-        { "Always", Attachment::Always },
-        { "Less", Attachment::Less },
-        { "Less Equal", Attachment::LessEqual },
-        { "Equal", Attachment::Equal },
-        { "Greater Equal", Attachment::GreaterEqual },
-        { "Greater", Attachment::Greater },
-        { "Not Equal", Attachment::NotEqual },
-        { "Never", Attachment::Never },
-    });
+    fillComboBox<Attachment::ComparisonFunc>(mUi->depthComparisonFunc);
     mUi->stencilComparisonFunc->setModel(mUi->depthComparisonFunc->model());
     mUi->stencilBackComparisonFunc->setModel(mUi->depthComparisonFunc->model());
 
-    fill<Attachment::StencilOperation>(mUi->stencilFailOp, {
-        { "Keep", Attachment::Keep },
-        { "Reset", Attachment::Reset },
-        { "Replace", Attachment::Replace },
-        { "Increment", Attachment::Increment },
-        { "Increment Wrap", Attachment::IncrementWrap },
-        { "Decrement", Attachment::Decrement },
-        { "Decrement Wrap", Attachment::DecrementWrap },
-        { "Invert", Attachment::Invert },
-    });
+    fillComboBox<Attachment::StencilOperation>(mUi->stencilFailOp);
     mUi->stencilDepthFailOp->setModel(mUi->stencilFailOp->model());
     mUi->stencilDepthPassOp->setModel(mUi->stencilFailOp->model());
     mUi->stencilBackFailOp->setModel(mUi->stencilFailOp->model());

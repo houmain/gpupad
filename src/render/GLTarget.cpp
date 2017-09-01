@@ -125,7 +125,7 @@ void GLTarget::applyStates()
     auto &gl = GLContext::currentContext();
 
     gl.glFrontFace(mFrontFace);
-    if (mCullMode != Target::CullDisabled) {
+    if (mCullMode != Target::CullMode::NoCullMode) {
         gl.glEnable(GL_CULL_FACE);
         gl.glCullFace(mCullMode);
     }
@@ -133,7 +133,7 @@ void GLTarget::applyStates()
         gl.glDisable(GL_CULL_FACE);
     }
 
-    if (mLogicOperation != Target::LogicOperationDisabled) {
+    if (mLogicOperation != Target::LogicOperation::NoLogicOperation) {
       gl.glEnable(GL_COLOR_LOGIC_OP);
       gl.glLogicOp(mLogicOperation);
     }

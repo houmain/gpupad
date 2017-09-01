@@ -7,8 +7,7 @@
 #include <QSet>
 #include <QFont>
 
-class QXmlStreamWriter;
-class QXmlStreamReader;
+class QJsonObject;
 
 class SessionModel : public QAbstractItemModel
 {
@@ -145,6 +144,7 @@ public:
         const QModelIndex &parent = QModelIndex()) override;
 
     QIcon getTypeIcon(ItemType type) const;
+    ItemType getTypeByName(const QString &name) const;
     QString getTypeName(ItemType type) const;
     bool canContainType(const QModelIndex &index, ItemType type) const;
 
@@ -236,20 +236,22 @@ private:
         int mergeId = -1);
     void undoableFileNameAssignment(const QModelIndex &index, FileItem &item,
         QString fileName);
-    void serialize(QXmlStreamWriter &xml, const Item &item,
-        bool relativeFilePaths) const;
-    void deserialize(QXmlStreamReader &xml, const QModelIndex &parent, int row);
+    const QJsonDocument *parseClipboard(const QMimeData *data) const;
+    void serialize(QJsonObject &object, const Item &item, bool relativeFilePaths) const;
+    void deserialize(const QJsonObject &object, const QModelIndex &parent, int row);
 
     ItemId mNextItemId{ 1 };
     QScopedPointer<Group> mRoot;
     QUndoStack mUndoStack;
     QMap<ItemType, QIcon> mTypeIcons;
-    mutable QList<QModelIndex> mDraggedIndices;
     QSet<ItemId> mActiveItemIds;
     QColor mActiveColor;
     QFont mActiveCallFont;
     QMap<ItemId, ItemId> mDroppedIdsReplaced;
     QList<ItemId*> mDroppedReferences;
+    mutable QList<QModelIndex> mDraggedIndices;
+    mutable const QMimeData *mClipboardData{ };
+    mutable QScopedPointer<QJsonDocument> mClipboardJsonDocument;
 };
 
 #endif // SESSIONMODEL_H

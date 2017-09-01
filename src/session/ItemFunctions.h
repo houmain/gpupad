@@ -6,16 +6,16 @@
 inline int getSize(const Column &column)
 {
     switch (column.dataType) {
-        case Column::Int8: return 1;
-        case Column::Int16: return 2;
-        case Column::Int32: return 4;
-        //case Column::Int64: return 8;
-        case Column::Uint8: return 1;
-        case Column::Uint16: return 2;
-        case Column::Uint32: return 4;
-        //case Column::Uint64: return 8;
-        case Column::Float: return 4;
-        case Column::Double: return 8;
+        case Column::DataType::Int8: return 1;
+        case Column::DataType::Int16: return 2;
+        case Column::DataType::Int32: return 4;
+        //case Column::DataType::Int64: return 8;
+        case Column::DataType::Uint8: return 1;
+        case Column::DataType::Uint16: return 2;
+        case Column::DataType::Uint32: return 4;
+        //case Column::DataType::Uint64: return 8;
+        case Column::DataType::Float: return 4;
+        case Column::DataType::Double: return 8;
     }
     return 0;
 }
@@ -134,19 +134,19 @@ inline CallKind getKind(const Call &call)
     auto kind = CallKind{ };
 
     switch (call.type) {
-        case Call::Draw:
+        case Call::Type::Draw:
             kind.drawDirect = true;
             break;
-        case Call::DrawIndexed:
+        case Call::Type::DrawIndexed:
             kind.drawDirect = kind.drawIndexed = true;
             break;
-        case Call::DrawIndirect:
+        case Call::Type::DrawIndirect:
             kind.drawIndirect = true;
             break;
-        case Call::DrawIndexedIndirect:
+        case Call::Type::DrawIndexedIndirect:
             kind.drawIndirect = kind.drawIndexed = true;
             break;
-        case Call::Compute:
+        case Call::Type::Compute:
             kind.compute = true;
             break;
         default:
@@ -155,7 +155,7 @@ inline CallKind getKind(const Call &call)
 
     kind.draw = (kind.drawDirect || kind.drawIndirect);
 
-    if (call.primitiveType == Call::Patches)
+    if (call.primitiveType == Call::PrimitiveType::Patches)
         kind.drawPatches = true;
 
     return kind;

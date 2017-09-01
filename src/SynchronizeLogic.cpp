@@ -169,14 +169,14 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
 {
     auto mapDataType = [](Column::DataType type) {
         switch (type) {
-            case Column::Int8: return BinaryEditor::DataType::Int8;
-            case Column::Int16: return BinaryEditor::DataType::Int16;
-            case Column::Int32: return BinaryEditor::DataType::Int32;
-            case Column::Uint8: return BinaryEditor::DataType::Uint8;
-            case Column::Uint16: return BinaryEditor::DataType::Uint16;
-            case Column::Uint32: return BinaryEditor::DataType::Uint32;
-            case Column::Float: return BinaryEditor::DataType::Float;
-            case Column::Double: return BinaryEditor::DataType::Double;
+            case Column::DataType::Int8: return BinaryEditor::DataType::Int8;
+            case Column::DataType::Int16: return BinaryEditor::DataType::Int16;
+            case Column::DataType::Int32: return BinaryEditor::DataType::Int32;
+            case Column::DataType::Uint8: return BinaryEditor::DataType::Uint8;
+            case Column::DataType::Uint16: return BinaryEditor::DataType::Uint16;
+            case Column::DataType::Uint32: return BinaryEditor::DataType::Uint32;
+            case Column::DataType::Float: return BinaryEditor::DataType::Float;
+            case Column::DataType::Double: return BinaryEditor::DataType::Double;
         }
         return BinaryEditor::DataType::Int8;
     };

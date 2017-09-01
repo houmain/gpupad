@@ -7,6 +7,7 @@
 #include <QComboBox>
 #include <QFormLayout>
 #include <QLabel>
+#include <QMetaEnum>
 
 namespace Ui {
 class GroupProperties;
@@ -30,24 +31,6 @@ class TextureProperties;
 class BindingProperties;
 class CallProperties;
 class AttachmentProperties;
-
-template <typename T>
-void fill(QComboBox *c, std::initializer_list<std::pair<const char*, T>> items)
-{
-    for (const auto &kv : items)
-        c->addItem(kv.first, kv.second);
-}
-
-inline void setFormVisibility(QFormLayout* layout, QLabel* label,
-    QWidget* widget, bool visible)
-{
-    layout->removeWidget(label);
-    layout->removeWidget(widget);
-    if (visible)
-        layout->addRow(label, widget);
-    label->setVisible(visible);
-    widget->setVisible(visible);
-}
 
 class SessionProperties : public QScrollArea
 {
@@ -96,5 +79,34 @@ private:
     CallProperties *mCallProperties{ };
     QScopedPointer<Ui::ScriptProperties> mScriptProperties;
 };
+
+QString splitPascalCase(QString str);
+
+template <typename T>
+void fillComboBox(QComboBox *c)
+{
+    auto metaType = QMetaEnum::fromType<T>();
+    for (auto i = 0; i < metaType.keyCount(); ++i)
+        c->addItem(splitPascalCase(metaType.key(i)),
+            metaType.value(i));
+}
+
+template <typename T>
+void fillComboBox(QComboBox *c, std::initializer_list<std::pair<const char*, T>> items)
+{
+    for (const auto &kv : items)
+        c->addItem(kv.first, kv.second);
+}
+
+inline void setFormVisibility(QFormLayout* layout, QLabel* label,
+    QWidget* widget, bool visible)
+{
+    layout->removeWidget(label);
+    layout->removeWidget(widget);
+    if (visible)
+        layout->addRow(label, widget);
+    label->setVisible(visible);
+    widget->setVisible(visible);
+}
 
 #endif // SESSIONPROPERTIES_H

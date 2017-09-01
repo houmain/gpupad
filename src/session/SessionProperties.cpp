@@ -31,6 +31,11 @@ public:
     }
 };
 
+QString splitPascalCase(QString str)
+{
+    return str.replace(QRegularExpression("([a-z])([A-Z])"), "\\1 \\2");
+}
+
 template <typename T>
 void instantiate(QScopedPointer<T> &ptr) { ptr.reset(new T()); }
 
@@ -135,67 +140,12 @@ SessionProperties::~SessionProperties() = default;
 
 void SessionProperties::fillComboBoxes()
 {
-    fill<Column::DataType>(mColumnProperties->type, {
-        { "Int8", Column::Int8 },
-        { "Int16", Column::Int16 },
-        { "Int32", Column::Int32 },
-        { "Uint8", Column::Uint8 },
-        { "Uint16", Column::Uint16 },
-        { "Uint32", Column::Uint32 },
-        { "Float", Column::Float },
-        { "Double", Column::Double },
-    });
-
-    fill<Target::FrontFace>(mTargetProperties->frontFace, {
-        { "Counter Clockwise", Target::CCW },
-        { "Clockwise", Target::CW },
-    });
-
-    fill<Target::CullMode>(mTargetProperties->cullMode, {
-        { "Disabled", Target::CullDisabled },
-        { "Back", Target::Back },
-        { "Front", Target::Front },
-        { "Front And Back", Target::FrontAndBack },
-    });
-
-    fill<Target::LogicOperation>(mTargetProperties->logicOperation, {
-        { "Disabled", Target::LogicOperationDisabled },
-        { "Copy", Target::Copy },
-        { "Clear", Target::Clear },
-        { "Set", Target::Set },
-        { "Copy Inverted", Target::CopyInverted },
-        { "No Operation", Target::NoOp },
-        { "Invert", Target::Invert },
-        { "AND", Target::And },
-        { "NAND", Target::Nand },
-        { "OR", Target::Or },
-        { "NOR", Target::Nor },
-        { "XOR", Target::Xor },
-        { "EQUIV", Target::Equiv },
-        { "AND Reverse", Target::AndReverse },
-        { "AND Inverted", Target::AndInverted },
-        { "OR Reverse", Target::OrReverse },
-        { "OR Inverted", Target::OrInverted },
-    });
-
-    fill<QOpenGLTexture::CubeMapFace>(mImageProperties->face, {
-        { "Positive X", QOpenGLTexture::CubeMapPositiveX },
-        { "Negative X", QOpenGLTexture::CubeMapNegativeX },
-        { "Positive Y", QOpenGLTexture::CubeMapPositiveY },
-        { "Negative Y", QOpenGLTexture::CubeMapNegativeY },
-        { "Positive Z", QOpenGLTexture::CubeMapPositiveZ },
-        { "Negative Z", QOpenGLTexture::CubeMapNegativeZ },
-    });
-
-    fill<Shader::Type>(mShaderProperties->type, {
-        { "Vertex", Shader::Vertex },
-        { "Fragment", Shader::Fragment },
-        { "Geometry", Shader::Geometry },
-        { "Tessellation Control", Shader::TessellationControl },
-        { "Tessellation Evaluation", Shader::TessellationEvaluation },
-        { "Compute", Shader::Compute },
-        { "Header", Shader::Header },
-    });
+    fillComboBox<Column::DataType>(mColumnProperties->type);
+    fillComboBox<Target::FrontFace>(mTargetProperties->frontFace);
+    fillComboBox<Target::CullMode>(mTargetProperties->cullMode);
+    fillComboBox<Target::LogicOperation>(mTargetProperties->logicOperation);
+    fillComboBox<Image::CubeMapFace>(mImageProperties->face);
+    fillComboBox<Shader::Type>(mShaderProperties->type);
 }
 
 QVariantList SessionProperties::getFileNames(ItemType type, bool addNull) const

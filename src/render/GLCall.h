@@ -46,7 +46,7 @@ private:
     GLTexture *mTexture{ };
 
     GLBuffer *mIndexBuffer{ };
-    GLenum mIndexType{ };
+    GLuint mIndexType{ };
     uintptr_t mIndicesOffset{ };
 
     GLBuffer *mIndirectBuffer{ };

@@ -24,7 +24,7 @@ GLProgram::GLProgram(const Program &program)
             shaders.append(shader);
 
             // headers are prepended to the next shader
-            if (shader->type != Shader::Header) {
+            if (shader->type != Shader::Type::Header) {
                 mShaders.emplace_back(shaders);
                 shaders.clear();
             }

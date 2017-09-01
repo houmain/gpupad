@@ -8,15 +8,15 @@ namespace {
     int expressionColumns(Binding::Editor editor)
     {
         switch (editor) {
-            case Binding::Expression2x2:
-            case Binding::Expression3x2:
-            case Binding::Expression4x2: return 2;
-            case Binding::Expression2x3:
-            case Binding::Expression3x3:
-            case Binding::Expression4x3: return 3;
-            case Binding::Expression2x4:
-            case Binding::Expression3x4:
-            case Binding::Expression4x4: return 4;
+            case Binding::Editor::Expression2x2:
+            case Binding::Editor::Expression3x2:
+            case Binding::Editor::Expression4x2: return 2;
+            case Binding::Editor::Expression2x3:
+            case Binding::Editor::Expression3x3:
+            case Binding::Editor::Expression4x3: return 3;
+            case Binding::Editor::Expression2x4:
+            case Binding::Editor::Expression3x4:
+            case Binding::Editor::Expression4x4: return 4;
             default: return 1;
         }
     }
@@ -24,18 +24,18 @@ namespace {
     int expressionRows(Binding::Editor editor)
     {
         switch (editor) {
-            case Binding::Expression2x2:
-            case Binding::Expression2x3:
-            case Binding::Expression2x4:
-            case Binding::Expression2: return 2;
-            case Binding::Expression3x2:
-            case Binding::Expression3x3:
-            case Binding::Expression3x4:
-            case Binding::Expression3: return 3;
-            case Binding::Expression4x2:
-            case Binding::Expression4x3:
-            case Binding::Expression4x4:
-            case Binding::Expression4: return 4;
+            case Binding::Editor::Expression2x2:
+            case Binding::Editor::Expression2x3:
+            case Binding::Editor::Expression2x4:
+            case Binding::Editor::Expression2: return 2;
+            case Binding::Editor::Expression3x2:
+            case Binding::Editor::Expression3x3:
+            case Binding::Editor::Expression3x4:
+            case Binding::Editor::Expression3: return 3;
+            case Binding::Editor::Expression4x2:
+            case Binding::Editor::Expression4x3:
+            case Binding::Editor::Expression4x4:
+            case Binding::Editor::Expression4: return 4;
             default: return 1;
         }
     }
@@ -72,32 +72,26 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
 {
     mUi->setupUi(this);
 
-    fill<Binding::Type>(mUi->type, {
-        { "Uniform", Binding::Uniform },
-        { "Sampler", Binding::Sampler },
-        { "Image", Binding::Image },
-        { "Buffer", Binding::Buffer },
-        { "Subroutine", Binding::Subroutine },
+    fillComboBox<Binding::Type>(mUi->type);
+
+    fillComboBox<Binding::Editor>(mUi->editor, {
+        { "Expression", Binding::Editor::Expression },
+        { "2 Expressions", Binding::Editor::Expression2 },
+        { "3 Expressions", Binding::Editor::Expression3 },
+        { "4 Expressions", Binding::Editor::Expression4 },
+        { "2x2 Expressions", Binding::Editor::Expression2x2 },
+        { "2x3 Expressions", Binding::Editor::Expression2x3 },
+        { "2x4 Expressions", Binding::Editor::Expression2x4 },
+        { "3x2 Expressions", Binding::Editor::Expression3x2 },
+        { "3x3 Expressions", Binding::Editor::Expression3x3 },
+        { "3x4 Expressions", Binding::Editor::Expression3x4 },
+        { "4x2 Expressions", Binding::Editor::Expression4x2 },
+        { "4x3 Expressions", Binding::Editor::Expression4x3 },
+        { "4x4 Expressions", Binding::Editor::Expression4x4 },
+        { "Color", Binding::Editor::Color },
     });
 
-    fill<Binding::Editor>(mUi->editor, {
-        { "Expression", Binding::Expression },
-        { "2 Expressions", Binding::Expression2 },
-        { "3 Expressions", Binding::Expression3 },
-        { "4 Expressions", Binding::Expression4 },
-        { "2x2 Expressions", Binding::Expression2x2 },
-        { "2x3 Expressions", Binding::Expression2x3 },
-        { "2x4 Expressions", Binding::Expression2x4 },
-        { "3x2 Expressions", Binding::Expression3x2 },
-        { "3x3 Expressions", Binding::Expression3x3 },
-        { "3x4 Expressions", Binding::Expression3x4 },
-        { "4x2 Expressions", Binding::Expression4x2 },
-        { "4x3 Expressions", Binding::Expression4x3 },
-        { "4x4 Expressions", Binding::Expression4x4 },
-        { "Color", Binding::Color },
-    });
-
-    fill<QOpenGLTexture::Filter>(mUi->minFilter, {
+    fillComboBox<QOpenGLTexture::Filter>(mUi->minFilter, {
         { "Nearest", QOpenGLTexture::Nearest },
         { "Linear", QOpenGLTexture::Linear },
         { "Nearest MipMap-Nearest", QOpenGLTexture::NearestMipMapNearest },
@@ -106,31 +100,16 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
         { "Linear MipMap-Linear", QOpenGLTexture::LinearMipMapLinear },
     });
 
-    fill<QOpenGLTexture::Filter>(mUi->magFilter, {
+    fillComboBox<QOpenGLTexture::Filter>(mUi->magFilter, {
         { "Nearest", QOpenGLTexture::Nearest },
         { "Linear", QOpenGLTexture::Linear },
     });
 
-    fill<QOpenGLTexture::WrapMode>(mUi->wrapModeX, {
-        { "Repeat", QOpenGLTexture::Repeat },
-        { "Mirrored Repeat", QOpenGLTexture::MirroredRepeat },
-        { "Clamp to Edge", QOpenGLTexture::ClampToEdge },
-        { "Clamp to Border", QOpenGLTexture::ClampToBorder },
-    });
+    fillComboBox<QOpenGLTexture::WrapMode>(mUi->wrapModeX);
     mUi->wrapModeY->setModel(mUi->wrapModeX->model());
     mUi->wrapModeZ->setModel(mUi->wrapModeX->model());
 
-    fill<Binding::ComparisonFunc>(mUi->comparisonFunc, {
-        { "Disabled", Binding::ComparisonDisabled },
-        { "Always", Binding::Always },
-        { "Less", Binding::Less },
-        { "Less Equal", Binding::LessEqual },
-        { "Equal", Binding::Equal },
-        { "Greater Equal", Binding::GreaterEqual },
-        { "Greater", Binding::Greater },
-        { "Not Equal", Binding::NotEqual },
-        { "Never", Binding::Never },
-    });
+    fillComboBox<Binding::ComparisonFunc>(mUi->comparisonFunc);
 
     connect(mUi->type, &DataComboBox::currentDataChanged,
         this, &BindingProperties::updateWidgets);
@@ -226,11 +205,12 @@ void BindingProperties::updateWidgets()
 {
     const auto type = currentType();
     const auto editor = currentEditor();
-    const auto uniform = (type == Binding::Uniform);
-    const auto sampler = (type == Binding::Sampler);
-    const auto image = (type == Binding::Image);
-    const auto color = (type == Binding::Uniform && editor == Binding::Color);
-    const auto subroutine = (type == Binding::Subroutine);
+    const auto uniform = (type == Binding::Type::Uniform);
+    const auto sampler = (type == Binding::Type::Sampler);
+    const auto image = (type == Binding::Type::Image);
+    const auto color = (type == Binding::Type::Uniform &&
+                        editor == Binding::Editor::Color);
+    const auto subroutine = (type == Binding::Type::Subroutine);
 
     mSuspendSetFields = true;
 
@@ -254,7 +234,7 @@ void BindingProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
         image || sampler);
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
-        (type == Binding::Buffer));
+        (type == Binding::Type::Buffer));
 
     setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, image);
     setFormVisibility(mUi->formLayout, mUi->labelLayer, mUi->layerWidget, image);

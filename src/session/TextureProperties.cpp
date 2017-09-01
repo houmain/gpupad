@@ -180,7 +180,7 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
     connect(mUi->formatData, &DataComboBox::currentDataChanged,
         this, &TextureProperties::updateFormat);
 
-    fill<QOpenGLTexture::Target>(mUi->target, {
+    fillComboBox<QOpenGLTexture::Target>(mUi->target, {
         { "1D Texture", QOpenGLTexture::Target1D },
         { "1D Texture Array", QOpenGLTexture::Target1DArray },
         { "2D Texture", QOpenGLTexture::Target2D },
@@ -194,7 +194,7 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
         //{ "Buffer Texture", QOpenGLTexture::TargetBuffer },
     });
 
-    fill<FormatType>(mUi->formatType, {
+    fillComboBox<FormatType>(mUi->formatType, {
         { "R", FormatType::R },
         { "RG", FormatType::RG },
         { "RGB", FormatType::RGB },

@@ -144,6 +144,8 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
     c += connect(selectionModel(), &QItemSelectionModel::currentChanged,
         updateEditActions);
     c += connect(this, &SessionEditor::focusChanged, updateEditActions);
+    c += connect(QApplication::clipboard(), &QClipboard::changed,
+        updateEditActions);
 
     auto pos = mContextMenu->actions().first();
     if (pos != actions.undo) {
@@ -307,7 +309,9 @@ void SessionEditor::openContextMenu(const QPoint &pos)
 void SessionEditor::addItem(ItemType type)
 {
     mModel.undoStack().beginMacro("Add");
-    auto index = mModel.insertItem(type, currentIndex());
+
+    auto addingToGroup = (mModel.getItemType(currentIndex()) == ItemType::Group);
+    auto index = mModel.insertItem(type, currentIndex(), addingToGroup ? 0 : -1);
 
     if (type == ItemType::Buffer)
         mModel.insertItem(ItemType::Column, index);
