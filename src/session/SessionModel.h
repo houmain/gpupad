@@ -6,8 +6,8 @@
 #include <QUndoStack>
 #include <QSet>
 #include <QFont>
-
-class QJsonObject;
+#include <QJsonObject>
+#include <QJsonArray>
 
 class SessionModel : public QAbstractItemModel
 {
@@ -143,23 +143,24 @@ public:
     bool removeRows(int row, int count,
         const QModelIndex &parent = QModelIndex()) override;
 
-    QIcon getTypeIcon(ItemType type) const;
-    ItemType getTypeByName(const QString &name) const;
-    QString getTypeName(ItemType type) const;
-    bool canContainType(const QModelIndex &index, ItemType type) const;
+    QIcon getTypeIcon(Item::Type type) const;
+    Item::Type getTypeByName(const QString &name) const;
+    QString getTypeName(Item::Type type) const;
+    bool canContainType(const QModelIndex &index, Item::Type type) const;
 
-    QModelIndex insertItem(ItemType type, QModelIndex parent,
+    QModelIndex insertItem(Item::Type type, QModelIndex parent,
         int row = -1, ItemId id = 0);
     void deleteItem(const QModelIndex &index);
     QModelIndex index(const Item *item, int column = 0) const;
     ItemId getItemId(const QModelIndex &index) const;
-    ItemType getItemType(const QModelIndex &index) const;
+    Item::Type getItemType(const QModelIndex &index) const;
     const Item* findItem(ItemId id) const;
     QString findItemName(ItemId id) const;
 
     void setActiveItems(QSet<ItemId> itemIds);
     void setItemActive(ItemId id, bool active);
 
+    QJsonArray getJson(const QModelIndexList &indexes) const;
     QUndoStack &undoStack() { return mUndoStack; }
     void clear();
     bool save(const QString &fileName);
@@ -243,7 +244,7 @@ private:
     ItemId mNextItemId{ 1 };
     QScopedPointer<Group> mRoot;
     QUndoStack mUndoStack;
-    QMap<ItemType, QIcon> mTypeIcons;
+    QMap<Item::Type, QIcon> mTypeIcons;
     QSet<ItemId> mActiveItemIds;
     QColor mActiveColor;
     QFont mActiveCallFont;

@@ -136,26 +136,37 @@ namespace {
         }
         return false;
     }
+
+
+    template<>
+    bool fromJsonValue(const QJsonValue &value, QColor &v)
+    {
+        if (!value.isUndefined()) {
+            v = QColor(value.toString());
+            return true;
+        }
+        return false;
+    }
 } // namespace
 
 SessionModel::SessionModel(QObject *parent)
     : QAbstractItemModel(parent)
     , mRoot(new Group())
 {
-    mTypeIcons[ItemType::Group].addFile(QStringLiteral(":/images/16x16/folder.png"));
-    mTypeIcons[ItemType::Buffer].addFile(QStringLiteral(":/images/16x16/x-office-spreadsheet.png"));
-    mTypeIcons[ItemType::Column].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
-    mTypeIcons[ItemType::Texture].addFile(QStringLiteral(":/images/16x16/image-x-generic.png"));
-    mTypeIcons[ItemType::Image].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
-    mTypeIcons[ItemType::Program].addFile(QStringLiteral(":/images/16x16/applications-system.png"));
-    mTypeIcons[ItemType::Shader].addFile(QStringLiteral(":/images/16x16/font.png"));
-    mTypeIcons[ItemType::Binding].addFile(QStringLiteral(":/images/16x16/insert-text.png"));
-    mTypeIcons[ItemType::VertexStream].addFile(QStringLiteral(":/images/16x16/media-playback-start-rtl.png"));
-    mTypeIcons[ItemType::Attribute].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
-    mTypeIcons[ItemType::Target].addFile(QStringLiteral(":/images/16x16/emblem-photos.png"));
-    mTypeIcons[ItemType::Attachment].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
-    mTypeIcons[ItemType::Call].addFile(QStringLiteral(":/images/16x16/dialog-information.png"));
-    mTypeIcons[ItemType::Script].addFile(QStringLiteral(":/images/16x16/font.png"));
+    mTypeIcons[Item::Type::Group].addFile(QStringLiteral(":/images/16x16/folder.png"));
+    mTypeIcons[Item::Type::Buffer].addFile(QStringLiteral(":/images/16x16/x-office-spreadsheet.png"));
+    mTypeIcons[Item::Type::Column].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
+    mTypeIcons[Item::Type::Texture].addFile(QStringLiteral(":/images/16x16/image-x-generic.png"));
+    mTypeIcons[Item::Type::Image].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
+    mTypeIcons[Item::Type::Program].addFile(QStringLiteral(":/images/16x16/applications-system.png"));
+    mTypeIcons[Item::Type::Shader].addFile(QStringLiteral(":/images/16x16/font.png"));
+    mTypeIcons[Item::Type::Binding].addFile(QStringLiteral(":/images/16x16/insert-text.png"));
+    mTypeIcons[Item::Type::VertexStream].addFile(QStringLiteral(":/images/16x16/media-playback-start-rtl.png"));
+    mTypeIcons[Item::Type::Attribute].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
+    mTypeIcons[Item::Type::Target].addFile(QStringLiteral(":/images/16x16/emblem-photos.png"));
+    mTypeIcons[Item::Type::Attachment].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
+    mTypeIcons[Item::Type::Call].addFile(QStringLiteral(":/images/16x16/dialog-information.png"));
+    mTypeIcons[Item::Type::Script].addFile(QStringLiteral(":/images/16x16/font.png"));
 
     mActiveColor = QColor::fromRgb(0, 32, 255);
     mActiveCallFont = QFont();
@@ -167,46 +178,46 @@ SessionModel::~SessionModel()
     clear();
 }
 
-QIcon SessionModel::getTypeIcon(ItemType type) const
+QIcon SessionModel::getTypeIcon(Item::Type type) const
 {
     return mTypeIcons[type];
 }
 
-QString SessionModel::getTypeName(ItemType type) const
+QString SessionModel::getTypeName(Item::Type type) const
 {
-    return QMetaEnum::fromType<ItemType>().valueToKey(static_cast<int>(type));
+    return QMetaEnum::fromType<Item::Type>().valueToKey(static_cast<int>(type));
 }
 
-ItemType SessionModel::getTypeByName(const QString &name) const
+Item::Type SessionModel::getTypeByName(const QString &name) const
 {
     auto ok = false;
-    auto type = QMetaEnum::fromType<ItemType>().keyToValue(qPrintable(name), &ok);
-    return (ok ? static_cast<ItemType>(type) : ItemType::Group);
+    auto type = QMetaEnum::fromType<Item::Type>().keyToValue(qPrintable(name), &ok);
+    return (ok ? static_cast<Item::Type>(type) : Item::Type::Group);
 }
 
-bool SessionModel::canContainType(const QModelIndex &index, ItemType type) const
+bool SessionModel::canContainType(const QModelIndex &index, Item::Type type) const
 {
     switch (getItemType(index)) {
-        case ItemType::Group:
+        case Item::Type::Group:
             switch (type) {
-                case ItemType::Group:
-                case ItemType::Buffer:
-                case ItemType::Texture:
-                case ItemType::Program:
-                case ItemType::Binding:
-                case ItemType::VertexStream:
-                case ItemType::Target:
-                case ItemType::Call:
-                case ItemType::Script:
+                case Item::Type::Group:
+                case Item::Type::Buffer:
+                case Item::Type::Texture:
+                case Item::Type::Program:
+                case Item::Type::Binding:
+                case Item::Type::VertexStream:
+                case Item::Type::Target:
+                case Item::Type::Call:
+                case Item::Type::Script:
                     return true;
                 default:
                     return false;
             }
-        case ItemType::Buffer: return (type == ItemType::Column);
-        case ItemType::Texture: return (type == ItemType::Image);
-        case ItemType::Program: return (type == ItemType::Shader);
-        case ItemType::VertexStream: return (type == ItemType::Attribute);
-        case ItemType::Target: return (type == ItemType::Attachment);
+        case Item::Type::Buffer: return (type == Item::Type::Column);
+        case Item::Type::Texture: return (type == Item::Type::Image);
+        case Item::Type::Program: return (type == Item::Type::Shader);
+        case Item::Type::VertexStream: return (type == Item::Type::Attribute);
+        case Item::Type::Target: return (type == Item::Type::Attachment);
         default:
             return false;
     }
@@ -246,7 +257,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
 {
     if (role == Qt::DecorationRole) {
         auto type = getItemType(index);
-        return (type != ItemType::Call ? getTypeIcon(type) : QVariant());
+        return (type != Item::Type::Call ? getTypeIcon(type) : QVariant());
     }
 
     if (role != Qt::DisplayRole &&
@@ -259,7 +270,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
     const auto &item = getItem(index);
 
     if (role == Qt::FontRole)
-        return (item.itemType == ItemType::Call &&
+        return (item.type == Item::Type::Call &&
                 mActiveItemIds.contains(item.id) ?
              mActiveCallFont : QVariant());
 
@@ -269,8 +280,8 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
 
     if (role == Qt::CheckStateRole) {
         auto checked = false;
-        switch (item.itemType) {
-            case ItemType::Call:
+        switch (item.type) {
+            case Item::Type::Call:
                 checked = static_cast<const Call&>(item).checked;
                 break;
             default:
@@ -290,7 +301,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
 
 #define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
         case ColumnType::COLUMN_TYPE: \
-            if (item.itemType == ItemType::ITEM_TYPE) \
+            if (item.type == Item::Type::ITEM_TYPE) \
                 return static_cast<const ITEM_TYPE&>(item).PROPERTY; \
             break;
         ADD(BufferOffset, Buffer, offset)
@@ -309,8 +320,8 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(ImageLevel, Image, level)
         ADD(ImageLayer, Image, layer)
         ADD(ImageFace, Image, face)
-        ADD(ShaderType, Shader, type)
-        ADD(BindingType, Binding, type)
+        ADD(ShaderType, Shader, shaderType)
+        ADD(BindingType, Binding, bindingType)
         ADD(BindingEditor, Binding, editor)
         ADD(BindingValueCount, Binding, valueCount)
         ADD(BindingCurrentValue, Binding, currentValue)
@@ -352,7 +363,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         ADD(TargetCullMode, Target, cullMode)
         ADD(TargetLogicOperation, Target, logicOperation)
         ADD(TargetBlendConstant, Target, blendConstant)
-        ADD(CallType, Call, type)
+        ADD(CallType, Call, callType)
         ADD(CallProgramId, Call, programId)
         ADD(CallTargetId, Call, targetId)
         ADD(CallVertexStreamId, Call, vertexStreamId)
@@ -378,7 +389,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
 
 #define ADD(COLUMN_TYPE, PROPERTY) \
         case ColumnType::COLUMN_TYPE: \
-            if (item.itemType == ItemType::Binding) { \
+            if (item.type == Item::Type::Binding) { \
                 const auto &binding = static_cast<const Binding&>(item); \
                 return binding.values[binding.currentValue].PROPERTY; \
             } \
@@ -417,8 +428,8 @@ bool SessionModel::setData(const QModelIndex &index,
 
     if (role == Qt::CheckStateRole) {
         auto checked = (value == Qt::Checked);
-        switch (item.itemType) {
-            case ItemType::Call:
+        switch (item.type) {
+            case Item::Type::Call:
                 undoableAssignment(index,
                     &static_cast<Call&>(item).checked, checked);
                 return true;
@@ -448,7 +459,7 @@ bool SessionModel::setData(const QModelIndex &index,
 
 #define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY, TO_TYPE) \
         case ColumnType::COLUMN_TYPE: \
-            if (item.itemType == ItemType::ITEM_TYPE) { \
+            if (item.type == Item::Type::ITEM_TYPE) { \
                 undoableAssignment(index, \
                     &static_cast<ITEM_TYPE&>(item).PROPERTY, value.TO_TYPE()); \
                 return true; \
@@ -471,8 +482,8 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(ImageLevel, Image, level, toInt)
         ADD(ImageLayer, Image, layer, toInt)
         ADD(ImageFace, Image, face, toInt)
-        ADD(ShaderType, Shader, type, toInt)
-        ADD(BindingType, Binding, type, toInt)
+        ADD(ShaderType, Shader, shaderType, toInt)
+        ADD(BindingType, Binding, bindingType, toInt)
         ADD(BindingEditor, Binding, editor, toInt)
         ADD(BindingValueCount, Binding, valueCount, toInt)
         ADD(AttributeBufferId, Attribute, bufferId, toInt)
@@ -513,7 +524,7 @@ bool SessionModel::setData(const QModelIndex &index,
         ADD(TargetCullMode, Target, cullMode, toInt)
         ADD(TargetLogicOperation, Target, logicOperation, toInt)
         ADD(TargetBlendConstant, Target, blendConstant, value<QColor>)
-        ADD(CallType, Call, type, toInt)
+        ADD(CallType, Call, callType, toInt)
         ADD(CallProgramId, Call, programId, toInt)
         ADD(CallTargetId, Call, targetId, toInt)
         ADD(CallVertexStreamId, Call, vertexStreamId, toInt)
@@ -538,7 +549,7 @@ bool SessionModel::setData(const QModelIndex &index,
 #undef ADD
 
         case ColumnType::BindingCurrentValue:
-            if (item.itemType == ItemType::Binding) {
+            if (item.type == Item::Type::Binding) {
                 auto &binding = static_cast<Binding&>(item);
                 auto newValue = qBound(0, value.toInt(),
                     static_cast<int>(binding.values.size() - 1));
@@ -554,7 +565,7 @@ bool SessionModel::setData(const QModelIndex &index,
 
 #define ADD(COLUMN_TYPE, PROPERTY, TO_TYPE) \
         case ColumnType::COLUMN_TYPE: \
-            if (item.itemType == ItemType::Binding) { \
+            if (item.type == Item::Type::Binding) { \
                 auto &binding = static_cast<Binding&>(item); \
                 undoableAssignment(index, \
                     &binding.values[binding.currentValue].PROPERTY, \
@@ -596,12 +607,12 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     flags |= Qt::ItemIsDragEnabled;
     flags |= Qt::ItemIsUserCheckable;
     switch (type) {
-        case ItemType::Group:
-        case ItemType::Buffer:
-        case ItemType::Texture:
-        case ItemType::Program:
-        case ItemType::VertexStream:
-        case ItemType::Target:
+        case Item::Type::Group:
+        case Item::Type::Buffer:
+        case Item::Type::Texture:
+        case Item::Type::Program:
+        case Item::Type::VertexStream:
+        case Item::Type::Target:
             flags |= Qt::ItemIsDropEnabled;
             break;
         default:
@@ -644,7 +655,7 @@ void SessionModel::insertItem(Item *item, const QModelIndex &parent, int row)
     undoableInsertItem(&parentItem.items, item, parent, row);
 }
 
-QModelIndex SessionModel::insertItem(ItemType type, QModelIndex parent,
+QModelIndex SessionModel::insertItem(Item::Type type, QModelIndex parent,
     int row, ItemId id)
 {
     // insert as sibling, when parent cannot contain an item of type
@@ -656,7 +667,7 @@ QModelIndex SessionModel::insertItem(ItemType type, QModelIndex parent,
     }
 
     auto insert = [&](auto item) {
-        item->itemType = type;
+        item->type = type;
         item->name = getTypeName(type);
         item->id = id;
         insertItem(item, parent, row);
@@ -664,20 +675,20 @@ QModelIndex SessionModel::insertItem(ItemType type, QModelIndex parent,
     };
 
     switch (type) {
-        case ItemType::Group: return insert(new Group());
-        case ItemType::Buffer: return insert(new Buffer());
-        case ItemType::Column: return insert(new Column());
-        case ItemType::Texture: return insert(new Texture());
-        case ItemType::Image: return insert(new Image());
-        case ItemType::Program: return insert(new Program());
-        case ItemType::Shader: return insert(new Shader());
-        case ItemType::Binding: return insert(new Binding());
-        case ItemType::VertexStream: return insert(new VertexStream());
-        case ItemType::Attribute: return insert(new Attribute());
-        case ItemType::Target: return insert(new Target());
-        case ItemType::Attachment: return insert(new Attachment());
-        case ItemType::Call: return insert(new Call());
-        case ItemType::Script: return insert(new Script());
+        case Item::Type::Group: return insert(new Group());
+        case Item::Type::Buffer: return insert(new Buffer());
+        case Item::Type::Column: return insert(new Column());
+        case Item::Type::Texture: return insert(new Texture());
+        case Item::Type::Image: return insert(new Image());
+        case Item::Type::Program: return insert(new Program());
+        case Item::Type::Shader: return insert(new Shader());
+        case Item::Type::Binding: return insert(new Binding());
+        case Item::Type::VertexStream: return insert(new VertexStream());
+        case Item::Type::Attribute: return insert(new Attribute());
+        case Item::Type::Target: return insert(new Target());
+        case Item::Type::Attachment: return insert(new Attachment());
+        case Item::Type::Call: return insert(new Call());
+        case Item::Type::Script: return insert(new Script());
     }
     return { };
 }
@@ -765,9 +776,9 @@ ItemId SessionModel::getItemId(const QModelIndex &index) const
     return getItem(index).id;
 }
 
-ItemType SessionModel::getItemType(const QModelIndex &index) const
+Item::Type SessionModel::getItemType(const QModelIndex &index) const
 {
-    return getItem(index).itemType;
+    return getItem(index).type;
 }
 
 void SessionModel::insertItem(QList<Item*> *list, Item *item,
@@ -842,12 +853,12 @@ void SessionModel::undoableFileNameAssignment(const QModelIndex &index,
     if (item.fileName != fileName) {
         mUndoStack.beginMacro("Edit");
 
-        if (item.name == getTypeName(item.itemType) ||
+        if (item.name == getTypeName(item.type) ||
             item.name == FileDialog::getFileTitle(item.fileName)) {
 
             auto newFileName =
                 (FileDialog::isEmptyOrUntitled(fileName) ?
-                    getTypeName(item.itemType) : fileName);
+                    getTypeName(item.type) : fileName);
 
             setData(this->index(&item, Name),
                 FileDialog::getFileTitle(newFileName));
@@ -961,7 +972,7 @@ bool SessionModel::load(const QString &fileName)
     return true;
 }
 
-QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
+QJsonArray SessionModel::getJson(const QModelIndexList &indexes) const
 {
     auto itemArray = QJsonArray();
     if (indexes.size() == 1 && !indexes.first().isValid()) {
@@ -978,14 +989,18 @@ QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
             itemArray.append(object);
         }
     }
+    return itemArray;
+}
 
-    auto document = (itemArray.size() != 1 ?
-        QJsonDocument(itemArray) :
-        QJsonDocument(itemArray.first().toObject()));
-    auto json = document.toJson();
+QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
+{
     auto data = new QMimeData();
-    data->setData(MimeType, json);
-
+    auto itemArray = getJson(indexes);
+    auto document =
+        (itemArray.size() != 1 ?
+         QJsonDocument(itemArray) :
+         QJsonDocument(itemArray.first().toObject()));
+    data->setData(MimeType, document.toJson());
     mDraggedIndices = indexes;
     return data;
 }
@@ -1049,20 +1064,20 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
                 QDir::current().relativeFilePath(property) : property);
     };
 
-    write("item", getTypeName(item.itemType));
+    write("type", getTypeName(item.type));
     if (item.id)
         write("id", item.id);
     if (!item.name.isEmpty())
         write("name", item.name);
 
-    switch (item.itemType) {
-        case ItemType::Group: {
+    switch (item.type) {
+        case Item::Type::Group: {
             const auto &group = static_cast<const Group&>(item);
-            write("inlineScope", group.inlineScope);
+            write("inline", group.inlineScope);
             break;
         }
 
-        case ItemType::Buffer: {
+        case Item::Type::Buffer: {
             const auto &buffer = static_cast<const Buffer&>(item);
             writeFileName("fileName", buffer.fileName);
             write("offset", buffer.offset);
@@ -1070,7 +1085,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
             break;
         }
 
-        case ItemType::Column: {
+        case Item::Type::Column: {
             const auto &column = static_cast<const Column&>(item);
             write("dataType", column.dataType);
             write("count", column.count);
@@ -1078,7 +1093,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
             break;
         }
 
-        case ItemType::Texture: {
+        case Item::Type::Texture: {
             const auto &texture = static_cast<const Texture&>(item);
             auto kind = getKind(texture);
             writeFileName("fileName", texture.fileName);
@@ -1098,7 +1113,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
             break;
         }
 
-        case ItemType::Image: {
+        case Item::Type::Image: {
             const auto &image = static_cast<const Image&>(item);
             writeFileName("fileName", image.fileName);
             write("level", image.level);
@@ -1107,42 +1122,42 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
             break;
         }
 
-        case ItemType::Program: {
+        case Item::Type::Program: {
             break;
         }
 
-        case ItemType::Shader: {
+        case Item::Type::Shader: {
             const auto &shader = static_cast<const Shader&>(item);
-            write("type", shader.type);
+            write("shaderType", shader.shaderType);
             writeFileName("fileName", shader.fileName);
             break;
         }
 
-        case ItemType::Binding: {
+        case Item::Type::Binding: {
             const auto &binding = static_cast<const Binding&>(item);
-            write("type", binding.type);
-            if (binding.type == Binding::Type::Uniform)
+            write("bindingType", binding.bindingType);
+            if (binding.bindingType == Binding::BindingType::Uniform)
                 write("editor", binding.editor);
             auto values = QJsonArray();
             for (auto i = 0; i < binding.valueCount; ++i) {
                 const auto &value = binding.values[i];
                 auto v = QJsonObject();
-                switch (binding.type) {
-                    case Binding::Type::Uniform: {
+                switch (binding.bindingType) {
+                    case Binding::BindingType::Uniform: {
                         auto fields = QJsonArray();
                         foreach (const QString &field, value.fields)
                             fields.append(field);
                         v.insert("fields", fields);
                         break;
                     }
-                    case Binding::Type::Image:
+                    case Binding::BindingType::Image:
                         v.insert("textureId", value.textureId);
                         v.insert("level", value.level);
                         v.insert("layered", value.layered);
                         v.insert("layer", value.layer);
                         break;
 
-                    case Binding::Type::Sampler:
+                    case Binding::BindingType::Sampler:
                         v.insert("textureId", value.textureId);
                         v.insert("minFilter", toJsonValue(value.minFilter));
                         v.insert("magFilter", toJsonValue(value.magFilter));
@@ -1154,11 +1169,11 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
                             value.borderColor.name(QColor::HexArgb)));
                         break;
 
-                    case Binding::Type::Buffer:
+                    case Binding::BindingType::Buffer:
                         v.insert("bufferId", value.bufferId);
                         break;
 
-                    case Binding::Type::Subroutine:
+                    case Binding::BindingType::Subroutine:
                         v.insert("subroutine", value.subroutine);
                         break;
                 }
@@ -1168,11 +1183,11 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
             break;
         }
 
-        case ItemType::VertexStream: {
+        case Item::Type::VertexStream: {
             break;
         }
 
-        case ItemType::Attribute: {
+        case Item::Type::Attribute: {
             const auto &attribute = static_cast<const Attribute&>(item);
             write("bufferId", attribute.bufferId);
             write("columnId", attribute.columnId);
@@ -1181,7 +1196,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
             break;
         }
 
-        case ItemType::Target: {
+        case Item::Type::Target: {
             const auto &target = static_cast<const Target&>(item);
             write("frontFace", target.frontFace);
             write("cullMode", target.cullMode);
@@ -1190,7 +1205,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
             break;
         }
 
-        case ItemType::Attachment: {
+        case Item::Type::Attachment: {
             const auto &attachment = static_cast<const Attachment&>(item);
             auto kind = TextureKind();
             if (auto texture = findItem<Texture>(attachment.textureId))
@@ -1237,13 +1252,13 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
             break;
         }
 
-        case ItemType::Call: {
+        case Item::Type::Call: {
             const auto &call = static_cast<const Call&>(item);
             const auto kind = getKind(call);
-            const auto type = call.type;
+            const auto type = call.callType;
 
             write("checked", call.checked);
-            write("type", call.type);
+            write("callType", call.callType);
             if (kind.draw || kind.compute)
                 write("programId", call.programId);
             if (kind.draw) {
@@ -1272,19 +1287,20 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
                 write("workGroupsY", call.workGroupsY);
                 write("workGroupsZ", call.workGroupsZ);
             }
-            if (type == Call::Type::ClearTexture || type == Call::Type::GenerateMipmaps)
+            if (type == Call::CallType::ClearTexture ||
+                type == Call::CallType::GenerateMipmaps)
                 write("textureId", call.textureId);
-            if (type == Call::Type::ClearTexture) {
+            if (type == Call::CallType::ClearTexture) {
                 write("clearColor", call.clearColor.name(QColor::HexArgb));
                 write("clearDepth", call.clearDepth);
                 write("clearStencil", call.clearStencil);
             }
-            if (type == Call::Type::ClearBuffer)
+            if (type == Call::CallType::ClearBuffer)
                 write("bufferId", call.bufferId);
             break;
         }
 
-        case ItemType::Script: {
+        case Item::Type::Script: {
             const auto &script = static_cast<const Script&>(item);
             writeFileName("fileName", script.fileName);
             break;
@@ -1323,8 +1339,8 @@ void SessionModel::deserialize(const QJsonObject &object,
         readRefValue(object[name], id);
     };
 
-    auto itemType = getTypeByName(object["item"].toString());
-    if (!canContainType(parent, itemType))
+    auto type = getTypeByName(object["type"].toString());
+    if (!canContainType(parent, type))
         return;
 
     auto id = object["id"].toInt();
@@ -1334,18 +1350,18 @@ void SessionModel::deserialize(const QJsonObject &object,
         mDroppedIdsReplaced.insert(prevId, id);
     }
 
-    const auto index = insertItem(itemType, parent, row, id);
+    const auto index = insertItem(type, parent, row, id);
     auto &item = getItem(index);
     read("name", item.name);
 
-    switch (item.itemType) {
-        case ItemType::Group: {
+    switch (item.type) {
+        case Item::Type::Group: {
             auto &group = static_cast<Group&>(item);
-            read("inlineScope", group.inlineScope);
+            read("inline", group.inlineScope);
             break;
         }
 
-        case ItemType::Buffer: {
+        case Item::Type::Buffer: {
             auto &buffer = static_cast<Buffer&>(item);
             readFileName("fileName", buffer.fileName);
             read("offset", buffer.offset);
@@ -1353,7 +1369,7 @@ void SessionModel::deserialize(const QJsonObject &object,
             break;
         }
 
-        case ItemType::Column: {
+        case Item::Type::Column: {
             auto &column = static_cast<Column&>(item);
             read("dataType", column.dataType);
             read("count", column.count);
@@ -1361,7 +1377,7 @@ void SessionModel::deserialize(const QJsonObject &object,
             break;
         }
 
-        case ItemType::Texture: {
+        case Item::Type::Texture: {
             auto &texture = static_cast<Texture&>(item);
             readFileName("fileName", texture.fileName);
             read("target", texture.target);
@@ -1375,7 +1391,7 @@ void SessionModel::deserialize(const QJsonObject &object,
             break;
         }
 
-        case ItemType::Image: {
+        case Item::Type::Image: {
             auto &image = static_cast<Image&>(item);
             readFileName("fileName", image.fileName);
             read("level", image.level);
@@ -1384,20 +1400,20 @@ void SessionModel::deserialize(const QJsonObject &object,
             break;
         }
 
-        case ItemType::Program: {
+        case Item::Type::Program: {
             break;
         }
 
-        case ItemType::Shader: {
+        case Item::Type::Shader: {
             auto &shader = static_cast<Shader&>(item);
-            read("type", shader.type);
+            read("shaderType", shader.shaderType);
             readFileName("fileName", shader.fileName);
             break;
         }
 
-        case ItemType::Binding: {
+        case Item::Type::Binding: {
             auto &binding = static_cast<Binding&>(item);
-            read("type", binding.type);
+            read("bindingType", binding.bindingType);
             read("editor", binding.editor);
             auto values = object["values"].toArray();
             binding.valueCount =
@@ -1423,11 +1439,11 @@ void SessionModel::deserialize(const QJsonObject &object,
             break;
         }
 
-        case ItemType::VertexStream: {
+        case Item::Type::VertexStream: {
             break;
         }
 
-        case ItemType::Attribute: {
+        case Item::Type::Attribute: {
             auto &attribute = static_cast<Attribute&>(item);
             readRef("bufferId", attribute.bufferId);
             readRef("columnId", attribute.columnId);
@@ -1436,7 +1452,7 @@ void SessionModel::deserialize(const QJsonObject &object,
             break;
         }
 
-        case ItemType::Target: {
+        case Item::Type::Target: {
             auto &target = static_cast<Target&>(item);
             read("frontFace", target.frontFace);
             read("cullMode", target.cullMode);
@@ -1445,7 +1461,7 @@ void SessionModel::deserialize(const QJsonObject &object,
             break;
         }
 
-        case ItemType::Attachment: {
+        case Item::Type::Attachment: {
             auto &attachment = static_cast<Attachment&>(item);
             readRef("textureId", attachment.textureId);
             read("level", attachment.level);
@@ -1480,10 +1496,10 @@ void SessionModel::deserialize(const QJsonObject &object,
             break;
         }
 
-        case ItemType::Call: {
+        case Item::Type::Call: {
             auto &call = static_cast<Call&>(item);
             read("checked", call.checked);
-            read("type", call.type);
+            read("callType", call.callType);
             readRef("programId", call.programId);
             readRef("vertexStreamId", call.vertexStreamId);
             readRef("targetId", call.targetId);
@@ -1508,7 +1524,7 @@ void SessionModel::deserialize(const QJsonObject &object,
             break;
         }
 
-        case ItemType::Script: {
+        case Item::Type::Script: {
             auto &texture = static_cast<Texture&>(item);
             readFileName("fileName", texture.fileName);
             break;

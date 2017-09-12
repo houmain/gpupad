@@ -5,7 +5,7 @@
 
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
-    const auto SessionFileExtension = QStringLiteral(".gpupad");
+    const auto SessionFileExtension = QStringLiteral("gpjs");
     const auto ShaderFileExtensions = { "glsl", "vert", "tesc", "tese", "geom",
             "frag", "comp", "fs", "gs", "vs" };
     const auto BinaryFileExtensions = { "bin", "raw" };
@@ -53,12 +53,12 @@ QString FileDialog::getWindowTitle(const QString &fileName)
     return "[*]" + getFileTitle(fileName);
 }
 
-bool FileDialog::isSessionFileName(const QString& fileName)
+bool FileDialog::isSessionFileName(const QString &fileName)
 {
     return fileName.endsWith(SessionFileExtension);
 }
 
-bool FileDialog::isBinaryFileName(const QString& fileName)
+bool FileDialog::isBinaryFileName(const QString &fileName)
 {
     for (const auto &ext : BinaryFileExtensions)
         if (fileName.endsWith(ext))
@@ -131,7 +131,7 @@ bool FileDialog::exec(Options options, QString currentFileName)
     for (const auto &ext : ScriptFileExtensions)
         scriptFileFilter = scriptFileFilter + " *." + ext;
 
-    auto supportedFileFilter = "*" + SessionFileExtension +
+    auto supportedFileFilter = "*." + SessionFileExtension +
         shaderFileFilter + scriptFileFilter + imageFileFilter + binaryFileFilter;
 
     auto filters = QStringList();
@@ -139,7 +139,7 @@ bool FileDialog::exec(Options options, QString currentFileName)
         filters.append(tr("Supported files") + " (" + supportedFileFilter + ")");
     if (options & SessionExtensions) {
         filters.append(qApp->applicationName() + tr(" session") +
-            " (*" + SessionFileExtension + ")");
+            " (*." + SessionFileExtension + ")");
         dialog.setDefaultSuffix(SessionFileExtension);
     }
     if (options & ShaderExtensions) {

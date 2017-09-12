@@ -13,7 +13,7 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
     mUi->setupUi(this);
 
     connect(mUi->texture, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(ItemType::Texture); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Texture); });
     connect(mUi->texture, &ReferenceComboBox::textRequired,
         [this](QVariant data) { return mSessionProperties.findItemName(data.toInt()); });
     connect(mUi->texture, &ReferenceComboBox::currentDataChanged,

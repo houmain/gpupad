@@ -33,6 +33,16 @@ void ScriptEngine::reset()
 {
     mJsEngine.reset(new QJSEngine());
     mJsEngine->installExtensions(QJSEngine::ConsoleExtension);
+    mJsEngine->evaluate(
+        "(function() {"
+          "var log = console.log;"
+          "console.log = function() {"
+            "var text = '';"
+            "for (var i = 0, n = arguments.length; i < n; i++)"
+              "text += JSON.stringify(arguments[i], null, 2);"
+            "log(text);"
+           "};"
+        "})();");
     mMessages.clear();
 }
 

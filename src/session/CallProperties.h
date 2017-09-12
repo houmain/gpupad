@@ -19,7 +19,7 @@ public:
     explicit CallProperties(SessionProperties *sessionProperties);
     ~CallProperties();
 
-    Call::Type currentType() const;
+    Call::CallType currentType() const;
     Call::PrimitiveType currentPrimitiveType() const;
     CallKind currentCallKind() const;
     TextureKind currentTextureKind() const;

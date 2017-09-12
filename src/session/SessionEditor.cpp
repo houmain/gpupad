@@ -40,20 +40,20 @@ SessionEditor::SessionEditor(QWidget *parent)
             tr("Add &") + mModel.getTypeName(type), this);
         connect(action, &QAction::triggered, [this, type]() { addItem(type); });
     };
-    addAction(mAddGroupAction, ItemType::Group);
-    addAction(mAddBufferAction, ItemType::Buffer);
-    addAction(mAddColumnAction, ItemType::Column);
-    addAction(mAddTextureAction, ItemType::Texture);
-    addAction(mAddImageAction, ItemType::Image);
-    addAction(mAddProgramAction, ItemType::Program);
-    addAction(mAddShaderAction, ItemType::Shader);
-    addAction(mAddBindingAction, ItemType::Binding);
-    addAction(mAddVertexStreamAction, ItemType::VertexStream);
-    addAction(mAddAttributeAction, ItemType::Attribute);
-    addAction(mAddTargetAction, ItemType::Target);
-    addAction(mAddAttachmentAction, ItemType::Attachment);
-    addAction(mAddCallAction, ItemType::Call);
-    addAction(mAddScriptAction, ItemType::Script);
+    addAction(mAddGroupAction, Item::Type::Group);
+    addAction(mAddBufferAction, Item::Type::Buffer);
+    addAction(mAddColumnAction, Item::Type::Column);
+    addAction(mAddTextureAction, Item::Type::Texture);
+    addAction(mAddImageAction, Item::Type::Image);
+    addAction(mAddProgramAction, Item::Type::Program);
+    addAction(mAddShaderAction, Item::Type::Shader);
+    addAction(mAddBindingAction, Item::Type::Binding);
+    addAction(mAddVertexStreamAction, Item::Type::VertexStream);
+    addAction(mAddAttributeAction, Item::Type::Attribute);
+    addAction(mAddTargetAction, Item::Type::Target);
+    addAction(mAddAttachmentAction, Item::Type::Attachment);
+    addAction(mAddCallAction, Item::Type::Call);
+    addAction(mAddScriptAction, Item::Type::Script);
 
     addItemActions(mContextMenu);
 }
@@ -81,11 +81,11 @@ void SessionEditor::updateItemActions()
 {
     auto index = selectionModel()->currentIndex();
     for (const auto &pair : {
-            std::make_pair(ItemType::Column, mAddColumnAction),
-            std::make_pair(ItemType::Image, mAddImageAction),
-            std::make_pair(ItemType::Shader, mAddShaderAction),
-            std::make_pair(ItemType::Attribute, mAddAttributeAction),
-            std::make_pair(ItemType::Attachment, mAddAttachmentAction),
+            std::make_pair(Item::Type::Column, mAddColumnAction),
+            std::make_pair(Item::Type::Image, mAddImageAction),
+            std::make_pair(Item::Type::Shader, mAddShaderAction),
+            std::make_pair(Item::Type::Attribute, mAddAttributeAction),
+            std::make_pair(Item::Type::Attachment, mAddAttachmentAction),
         })
         pair.second->setVisible(
             mModel.canContainType(index, pair.first) ||
@@ -306,21 +306,22 @@ void SessionEditor::openContextMenu(const QPoint &pos)
     mContextMenu->popup(mapToGlobal(pos));
 }
 
-void SessionEditor::addItem(ItemType type)
+void SessionEditor::addItem(Item::Type type)
 {
     mModel.undoStack().beginMacro("Add");
 
-    auto addingToGroup = (mModel.getItemType(currentIndex()) == ItemType::Group);
+    auto addingToGroup = (currentIndex().isValid() &&
+        mModel.getItemType(currentIndex()) == Item::Type::Group);
     auto index = mModel.insertItem(type, currentIndex(), addingToGroup ? 0 : -1);
 
-    if (type == ItemType::Buffer)
-        mModel.insertItem(ItemType::Column, index);
-    else if (type == ItemType::Target)
-        mModel.insertItem(ItemType::Attachment, index);
-    else if (type == ItemType::VertexStream)
-        mModel.insertItem(ItemType::Attribute, index);
-    else if (type == ItemType::Program)
-        mModel.insertItem(ItemType::Shader, index);
+    if (type == Item::Type::Buffer)
+        mModel.insertItem(Item::Type::Column, index);
+    else if (type == Item::Type::Target)
+        mModel.insertItem(Item::Type::Attachment, index);
+    else if (type == Item::Type::VertexStream)
+        mModel.insertItem(Item::Type::Attribute, index);
+    else if (type == Item::Type::Program)
+        mModel.insertItem(Item::Type::Shader, index);
 
     mModel.undoStack().endMacro();
 

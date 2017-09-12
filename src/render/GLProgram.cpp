@@ -24,7 +24,7 @@ GLProgram::GLProgram(const Program &program)
             shaders.append(shader);
 
             // headers are prepended to the next shader
-            if (shader->type != Shader::Type::Header) {
+            if (shader->shaderType != Shader::ShaderType::Header) {
                 mShaders.emplace_back(shaders);
                 shaders.clear();
             }
@@ -109,7 +109,7 @@ bool GLProgram::link()
     }
 
     if (auto gl40 = gl.v4_0) {
-        auto stages = QSet<Shader::Type>();
+        auto stages = QSet<Shader::ShaderType>();
         for (const auto& shader : mShaders)
             if (shader.type())
                 stages += shader.type();
@@ -396,7 +396,7 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
 bool GLProgram::apply(const GLSubroutineBinding &binding)
 {
     auto bound = false;
-    foreach (Shader::Type stage, mSubroutineUniforms.keys())
+    foreach (Shader::ShaderType stage, mSubroutineUniforms.keys())
         if (!binding.type || binding.type == stage)
             for (auto &uniform : mSubroutineUniforms[stage])
                 if (uniform.name == binding.name) {
@@ -416,7 +416,7 @@ void GLProgram::reapplySubroutines()
         return;
 
     auto subroutineIndices = std::vector<GLuint>();
-    foreach (Shader::Type stage, mSubroutineUniforms.keys()) {
+    foreach (Shader::ShaderType stage, mSubroutineUniforms.keys()) {
         foreach (const SubroutineUniform &uniform, mSubroutineUniforms[stage]) {
             auto index = gl.v4_0->glGetSubroutineIndex(mProgramObject,
                 stage, qPrintable(uniform.boundSubroutine));

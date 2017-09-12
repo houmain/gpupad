@@ -11,7 +11,7 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
 {
     mUi->setupUi(this);
 
-    fillComboBox<Call::Type>(mUi->type);
+    fillComboBox<Call::CallType>(mUi->type);
     fillComboBox<Call::PrimitiveType>(mUi->primitiveType);
 
     connect(mUi->type, &DataComboBox::currentDataChanged,
@@ -27,19 +27,19 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
             [this](QVariant data) { return mSessionProperties.findItemName(data.toInt()); });
 
     connect(mUi->program, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(ItemType::Program); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Program); });
     connect(mUi->vertexStream, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(ItemType::VertexStream, true); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::VertexStream, true); });
     connect(mUi->target, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(ItemType::Target, true); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Target, true); });
     connect(mUi->indexBuffer, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(ItemType::Buffer, true); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer, true); });
     connect(mUi->indirectBuffer, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(ItemType::Buffer); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
     connect(mUi->buffer, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(ItemType::Buffer); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
     connect(mUi->texture, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(ItemType::Texture); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Texture); });
 
     updateWidgets();
 }
@@ -49,9 +49,9 @@ CallProperties::~CallProperties()
     delete mUi;
 }
 
-Call::Type CallProperties::currentType() const
+Call::CallType CallProperties::currentType() const
 {
-    return static_cast<Call::Type>(mUi->type->currentData().toInt());
+    return static_cast<Call::CallType>(mUi->type->currentData().toInt());
 }
 
 Call::PrimitiveType CallProperties::currentPrimitiveType() const
@@ -152,16 +152,17 @@ void CallProperties::updateWidgets()
         kind.compute);
 
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
-        type == Call::Type::ClearTexture || type == Call::Type::GenerateMipmaps);
+        type == Call::CallType::ClearTexture ||
+        type == Call::CallType::GenerateMipmaps);
 
     auto texKind = currentTextureKind();
     setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor,
-        type == Call::Type::ClearTexture && texKind.color);
+        type == Call::CallType::ClearTexture && texKind.color);
     setFormVisibility(mUi->formLayout, mUi->labelClearDepth, mUi->clearDepth,
-        type == Call::Type::ClearTexture && texKind.depth);
+        type == Call::CallType::ClearTexture && texKind.depth);
     setFormVisibility(mUi->formLayout, mUi->labelClearStencil, mUi->clearStencil,
-        type == Call::Type::ClearTexture && texKind.stencil);
+        type == Call::CallType::ClearTexture && texKind.stencil);
 
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
-        type == Call::Type::ClearBuffer);
+        type == Call::CallType::ClearBuffer);
 }

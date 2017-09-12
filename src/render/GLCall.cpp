@@ -75,19 +75,19 @@ void GLCall::execute()
 {
     mMessages.clear();
 
-    switch (mCall.type) {
-        case Call::Type::Draw:
-        case Call::Type::DrawIndexed:
-        case Call::Type::DrawIndirect:
-        case Call::Type::DrawIndexedIndirect:
+    switch (mCall.callType) {
+        case Call::CallType::Draw:
+        case Call::CallType::DrawIndexed:
+        case Call::CallType::DrawIndirect:
+        case Call::CallType::DrawIndexedIndirect:
             return executeDraw();
-        case Call::Type::Compute:
+        case Call::CallType::Compute:
             return executeCompute();
-        case Call::Type::ClearTexture:
+        case Call::CallType::ClearTexture:
             return executeClearTexture();
-        case Call::Type::ClearBuffer:
+        case Call::CallType::ClearBuffer:
             return executeClearBuffer();
-        case Call::Type::GenerateMipmaps:
+        case Call::CallType::GenerateMipmaps:
             return executeGenerateMipmaps();
     }
 
@@ -114,7 +114,7 @@ void GLCall::executeDraw()
         if (mCall.primitiveType == Call::PrimitiveType::Patches && gl.v4_0)
             gl.v4_0->glPatchParameteri(GL_PATCH_VERTICES, mCall.patchVertices);
 
-        if (mCall.type == Call::Type::Draw) {
+        if (mCall.callType == Call::CallType::Draw) {
             // DrawArrays(InstancedBaseInstance)
             if (!mCall.baseInstance) {
                 gl.glDrawArraysInstanced(
@@ -132,7 +132,7 @@ void GLCall::executeDraw()
                     mCall.baseInstance);
             }
         }
-        else if (mCall.type == Call::Type::DrawIndexed) {
+        else if (mCall.callType == Call::CallType::DrawIndexed) {
             // DrawElements(InstancedBaseVertexBaseInstance)
             if (!mCall.baseInstance && !mCall.baseVertex) {
                 gl.glDrawElementsInstanced(
@@ -153,7 +153,7 @@ void GLCall::executeDraw()
                         mCall.baseInstance);
             }
         }
-        else if (mCall.type == Call::Type::DrawIndirect) {
+        else if (mCall.callType == Call::CallType::DrawIndirect) {
             // (Multi)DrawArraysIndirect
             if (mCall.drawCount == 1) {
                 if (auto gl40 = check(gl.v4_0, mCall.id, mMessages))
@@ -165,7 +165,7 @@ void GLCall::executeDraw()
                     reinterpret_cast<void*>(mIndirectOffset), mCall.drawCount, mIndirectStride);
             }
         }
-        else if (mCall.type == Call::Type::DrawIndexedIndirect) {
+        else if (mCall.callType == Call::CallType::DrawIndexedIndirect) {
             // (Multi)DrawElementsIndirect
             if (mCall.drawCount == 1) {
                 if (auto gl40 = check(gl.v4_0, mCall.id, mMessages))

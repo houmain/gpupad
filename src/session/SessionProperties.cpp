@@ -89,28 +89,28 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mShaderProperties->fileBrowse, &QToolButton::clicked,
         [this]() { openCurrentItemFile(FileDialog::ShaderExtensions); });
     connect(mShaderProperties->file, &ReferenceComboBox::listRequired,
-        [this]() { return getFileNames(ItemType::Shader); });
+        [this]() { return getFileNames(Item::Type::Shader); });
 
     connect(mBufferProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::BinaryExtensions); });
     connect(mBufferProperties->fileBrowse, &QToolButton::clicked,
         [this]() { openCurrentItemFile(FileDialog::BinaryExtensions); });
     connect(mBufferProperties->file, &ReferenceComboBox::listRequired,
-        [this]() { return getFileNames(ItemType::Buffer, true); });
+        [this]() { return getFileNames(Item::Type::Buffer, true); });
 
     connect(mImageProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::ImageExtensions); });
     connect(mImageProperties->fileBrowse, &QToolButton::clicked,
         [this]() { openCurrentItemFile(FileDialog::ImageExtensions); });
     connect(mImageProperties->file, &ReferenceComboBox::listRequired,
-        [this]() { return getFileNames(ItemType::Image, true); });
+        [this]() { return getFileNames(Item::Type::Image, true); });
 
     connect(mScriptProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::ScriptExtensions); });
     connect(mScriptProperties->fileBrowse, &QToolButton::clicked,
         [this]() { openCurrentItemFile(FileDialog::ScriptExtensions); });
     connect(mScriptProperties->file, &ReferenceComboBox::listRequired,
-        [this]() { return getFileNames(ItemType::Script); });
+        [this]() { return getFileNames(Item::Type::Script); });
 
     connect(mAttributeProperties->buffer, &ReferenceComboBox::currentDataChanged,
         mAttributeProperties->column, &ReferenceComboBox::validate);
@@ -118,7 +118,7 @@ SessionProperties::SessionProperties(QWidget *parent)
         [this]() { return getColumnIds(
             mAttributeProperties->buffer->currentData().toInt()); });
     connect(mAttributeProperties->buffer, &ReferenceComboBox::listRequired,
-        [this]() { return getItemIds(ItemType::Buffer); });
+        [this]() { return getItemIds(Item::Type::Buffer); });
 
     for (auto comboBox : { mShaderProperties->file, mBufferProperties->file,
             mImageProperties->file, mScriptProperties->file })
@@ -145,31 +145,31 @@ void SessionProperties::fillComboBoxes()
     fillComboBox<Target::CullMode>(mTargetProperties->cullMode);
     fillComboBox<Target::LogicOperation>(mTargetProperties->logicOperation);
     fillComboBox<Image::CubeMapFace>(mImageProperties->face);
-    fillComboBox<Shader::Type>(mShaderProperties->type);
+    fillComboBox<Shader::ShaderType>(mShaderProperties->type);
 }
 
-QVariantList SessionProperties::getFileNames(ItemType type, bool addNull) const
+QVariantList SessionProperties::getFileNames(Item::Type type, bool addNull) const
 {
     auto result = QVariantList();
     if (addNull)
         result += "";
 
     switch (type) {
-        case ItemType::Shader:
-        case ItemType::Script:
+        case Item::Type::Shader:
+        case Item::Type::Script:
             foreach (QString f, Singletons::editorManager().getSourceFileNames())
                 if (!result.contains(f))
                     result.append(f);
             break;
 
-        case ItemType::Buffer:
+        case Item::Type::Buffer:
             foreach (QString f, Singletons::editorManager().getBinaryFileNames())
                 if (!result.contains(f))
                     result.append(f);
             break;
 
-        case ItemType::Texture:
-        case ItemType::Image:
+        case Item::Type::Texture:
+        case Item::Type::Image:
             foreach (QString f, Singletons::editorManager().getImageFileNames())
                 if (!result.contains(f))
                     result.append(f);
@@ -180,7 +180,7 @@ QVariantList SessionProperties::getFileNames(ItemType type, bool addNull) const
     }
 
     mModel.forEachItem([&](const Item &item) {
-        if (item.itemType == type) {
+        if (item.type == type) {
             const auto &fileName = static_cast<const FileItem&>(item).fileName;
             if (!result.contains(fileName))
                 result.append(fileName);
@@ -196,14 +196,14 @@ QString SessionProperties::findItemName(ItemId itemId) const
     return mModel.findItemName(itemId);
 }
 
-QVariantList SessionProperties::getItemIds(ItemType type, bool addNull) const
+QVariantList SessionProperties::getItemIds(Item::Type type, bool addNull) const
 {
     auto result = QVariantList();
     if (addNull)
         result += 0;
 
     mModel.forEachItemScoped(currentModelIndex(), [&](const Item &item) {
-        if (item.itemType == type)
+        if (item.type == type)
             result.append(item.id);
     });
     return result;
@@ -213,7 +213,7 @@ QVariantList SessionProperties::getColumnIds(ItemId bufferId) const
 {
     auto result = QVariantList();
     mModel.forEachItem([&](const Item &item) {
-        if (item.itemType == ItemType::Column)
+        if (item.type == Item::Type::Column)
             if (static_cast<const Buffer*>(item.parent)->id == bufferId)
                 result.append(item.id);
     });
@@ -247,27 +247,27 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
     };
 
     switch (mModel.getItemType(index)) {
-        case ItemType::Group:
+        case Item::Type::Group:
             map(mGroupProperties->inlineScope, SessionModel::InlineScope);
             break;
 
-        case ItemType::Buffer:
+        case Item::Type::Buffer:
             map(mBufferProperties->file, SessionModel::FileName);
             map(mBufferProperties->offset, SessionModel::BufferOffset);
             map(mBufferProperties->rowCount, SessionModel::BufferRowCount);
             break;
 
-        case ItemType::Column:
+        case Item::Type::Column:
             map(mColumnProperties->type, SessionModel::ColumnDataType);
             map(mColumnProperties->count, SessionModel::ColumnCount);
             map(mColumnProperties->padding, SessionModel::ColumnPadding);
             break;
 
-        case ItemType::Texture:
+        case Item::Type::Texture:
             mTextureProperties->addMappings(*mMapper);
             break;
 
-        case ItemType::Image:
+        case Item::Type::Image:
             map(mImageProperties->file, SessionModel::FileName);
             map(mImageProperties->level, SessionModel::ImageLevel);
             map(mImageProperties->layer, SessionModel::ImageLayer);
@@ -275,44 +275,44 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             updateImageWidgets(index);
             break;
 
-        case ItemType::Program:
+        case Item::Type::Program:
             break;
 
-        case ItemType::Shader:
+        case Item::Type::Shader:
             map(mShaderProperties->type, SessionModel::ShaderType);
             map(mShaderProperties->file, SessionModel::FileName);
             break;
 
-        case ItemType::Binding:
+        case Item::Type::Binding:
             mBindingProperties->addMappings(*mMapper);
             break;
 
-        case ItemType::VertexStream:
+        case Item::Type::VertexStream:
             break;
 
-        case ItemType::Attribute:
+        case Item::Type::Attribute:
             map(mAttributeProperties->buffer, SessionModel::AttributeBufferId);
             map(mAttributeProperties->column, SessionModel::AttributeColumnId);
             map(mAttributeProperties->normalize, SessionModel::AttributeNormalize);
             map(mAttributeProperties->divisor, SessionModel::AttributeDivisor);
             break;
 
-        case ItemType::Target:
+        case Item::Type::Target:
             map(mTargetProperties->frontFace, SessionModel::TargetFrontFace);
             map(mTargetProperties->cullMode, SessionModel::TargetCullMode);
             map(mTargetProperties->logicOperation, SessionModel::TargetLogicOperation);
             map(mTargetProperties->blendConstant, SessionModel::TargetBlendConstant);
             break;
 
-        case ItemType::Attachment:
+        case Item::Type::Attachment:
             mAttachmentProperties->addMappings(*mMapper);
             break;
 
-        case ItemType::Call:
+        case Item::Type::Call:
             mCallProperties->addMappings(*mMapper);
             break;
 
-        case ItemType::Script:
+        case Item::Type::Script:
             map(mScriptProperties->file, SessionModel::FileName);
             break;
     }
@@ -327,30 +327,30 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
 {
     auto &editors = Singletons::editorManager();
     if (auto fileItem = mModel.item<FileItem>(index)) {
-        switch (fileItem->itemType) {
-            case ItemType::Texture:
+        switch (fileItem->type) {
+            case Item::Type::Texture:
                 if (!fileItem->items.isEmpty())
                     return nullptr;
                 // fallthrough
-            case ItemType::Image:
+            case Item::Type::Image:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.index(fileItem, SessionModel::FileName),
                         editors.openNewImageEditor());
                 return editors.openImageEditor(fileItem->fileName);
 
-            case ItemType::Shader:
+            case Item::Type::Shader:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.index(fileItem, SessionModel::FileName),
                         editors.openNewSourceEditor());
                 return editors.openSourceEditor(fileItem->fileName);
 
-            case ItemType::Script:
+            case Item::Type::Script:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.index(fileItem, SessionModel::FileName),
                         editors.openNewSourceEditor(".js"));
                 return editors.openSourceEditor(fileItem->fileName);
 
-            case ItemType::Buffer:
+            case Item::Type::Buffer:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.index(fileItem, SessionModel::FileName),
                         editors.openNewBinaryEditor());

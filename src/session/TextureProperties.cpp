@@ -171,7 +171,7 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
         [](auto data) { return FileDialog::getFileTitle(data.toString()); });
     connect(mUi->file, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getFileNames(
-            ItemType::Texture, true); });
+            Item::Type::Texture, true); });
 
     connect(mUi->target, &DataComboBox::currentDataChanged,
         this, &TextureProperties::updateWidgets);

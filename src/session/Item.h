@@ -10,14 +10,14 @@
 using ItemId = int;
 struct Item;
 
-using ItemType = ItemEnums::ItemType;
-
 struct Item
 {
+    using Type = ItemEnums::ItemType;
+
     virtual ~Item() = default;
 
     ItemId id{ };
-    ItemType itemType{ };
+    Type type{ };
     Item *parent{ };
     QList<Item*> items;
     QString name{ };
@@ -78,14 +78,14 @@ struct Program : Item
 
 struct Shader : FileItem
 {
-    using Type = ItemEnums::ShaderType;
+    using ShaderType = ItemEnums::ShaderType;
 
-    Type type{ Type::Vertex };
+    ShaderType shaderType{ ShaderType::Vertex };
 };
 
 struct Binding : Item
 {
-    using Type = ItemEnums::BindingType;
+    using BindingType = ItemEnums::BindingType;
     using Filter = QOpenGLTexture::Filter;
     using WrapMode = QOpenGLTexture::WrapMode;
     using ComparisonFunc = ItemEnums::ComparisonFunc;
@@ -108,7 +108,7 @@ struct Binding : Item
         QString subroutine;
     };
 
-    Type type{ };
+    BindingType bindingType{ };
     Editor editor{ };
     int currentValue{ };
     int valueCount{ 1 };
@@ -184,11 +184,11 @@ struct Attachment : Item
 
 struct Call : Item
 {
-    using Type = ItemEnums2::CallType;
+    using CallType = ItemEnums2::CallType;
     using PrimitiveType = ItemEnums::PrimitiveType;
 
     bool checked{ true };
-    Type type{ };
+    CallType callType{ };
     ItemId programId{ };
     ItemId targetId{ };
     ItemId vertexStreamId{ };

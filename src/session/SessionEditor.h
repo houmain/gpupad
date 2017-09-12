@@ -45,7 +45,7 @@ private slots:
     void paste();
     void delete_();
     void openContextMenu(const QPoint &pos);
-    void addItem(ItemType type);
+    void addItem(Item::Type type);
     void treeItemActivated(const QModelIndex &index);
     void renameCurrentItem();
 

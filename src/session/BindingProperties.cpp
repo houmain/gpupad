@@ -72,7 +72,7 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
 {
     mUi->setupUi(this);
 
-    fillComboBox<Binding::Type>(mUi->type);
+    fillComboBox<Binding::BindingType>(mUi->type);
 
     fillComboBox<Binding::Editor>(mUi->editor, {
         { "Expression", Binding::Editor::Expression },
@@ -128,9 +128,9 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
     connect(mUi->texture, &ReferenceComboBox::currentDataChanged,
         this, &BindingProperties::updateWidgets);
     connect(mUi->texture, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(ItemType::Texture); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Texture); });
     connect(mUi->buffer, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(ItemType::Buffer); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
     for (auto comboBox : { mUi->texture, mUi->buffer })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant id) {
@@ -171,9 +171,9 @@ void BindingProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(this, SessionModel::BindingValueFields);
 }
 
-Binding::Type BindingProperties::currentType() const
+Binding::BindingType BindingProperties::currentType() const
 {
-    return static_cast<Binding::Type>(mUi->type->currentData().toInt());
+    return static_cast<Binding::BindingType>(mUi->type->currentData().toInt());
 }
 
 Binding::Editor BindingProperties::currentEditor() const
@@ -205,12 +205,12 @@ void BindingProperties::updateWidgets()
 {
     const auto type = currentType();
     const auto editor = currentEditor();
-    const auto uniform = (type == Binding::Type::Uniform);
-    const auto sampler = (type == Binding::Type::Sampler);
-    const auto image = (type == Binding::Type::Image);
-    const auto color = (type == Binding::Type::Uniform &&
+    const auto uniform = (type == Binding::BindingType::Uniform);
+    const auto sampler = (type == Binding::BindingType::Sampler);
+    const auto image = (type == Binding::BindingType::Image);
+    const auto color = (type == Binding::BindingType::Uniform &&
                         editor == Binding::Editor::Color);
-    const auto subroutine = (type == Binding::Type::Subroutine);
+    const auto subroutine = (type == Binding::BindingType::Subroutine);
 
     mSuspendSetFields = true;
 
@@ -234,7 +234,7 @@ void BindingProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
         image || sampler);
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
-        (type == Binding::Type::Buffer));
+        (type == Binding::BindingType::Buffer));
 
     setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, image);
     setFormVisibility(mUi->formLayout, mUi->labelLayer, mUi->layerWidget, image);

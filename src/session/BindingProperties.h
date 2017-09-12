@@ -22,7 +22,7 @@ public:
     ~BindingProperties();
 
     void addMappings(QDataWidgetMapper &mapper);
-    Binding::Type currentType() const;
+    Binding::BindingType currentType() const;
     Binding::Editor currentEditor() const;
     TextureKind currentTextureKind() const;
     void setFields(const QStringList &fields);

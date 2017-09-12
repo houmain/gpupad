@@ -58,7 +58,7 @@ GLShader::GLShader(const QList<const Shader*> &shaders)
         mSources += source + "\n";
         mFileNames += shader->fileName;
         mItemId = shader->id;
-        mType = shader->type;
+        mType = shader->shaderType;
     }
 }
 

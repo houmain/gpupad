@@ -133,20 +133,20 @@ inline CallKind getKind(const Call &call)
 {
     auto kind = CallKind{ };
 
-    switch (call.type) {
-        case Call::Type::Draw:
+    switch (call.callType) {
+        case Call::CallType::Draw:
             kind.drawDirect = true;
             break;
-        case Call::Type::DrawIndexed:
+        case Call::CallType::DrawIndexed:
             kind.drawDirect = kind.drawIndexed = true;
             break;
-        case Call::Type::DrawIndirect:
+        case Call::CallType::DrawIndirect:
             kind.drawIndirect = true;
             break;
-        case Call::Type::DrawIndexedIndirect:
+        case Call::CallType::DrawIndexedIndirect:
             kind.drawIndirect = kind.drawIndexed = true;
             break;
-        case Call::Type::Compute:
+        case Call::CallType::Compute:
             kind.compute = true;
             break;
         default:
@@ -161,37 +161,37 @@ inline CallKind getKind(const Call &call)
     return kind;
 }
 
-template<typename T> ItemType getItemType();
-template<> inline ItemType getItemType<Group>() { return ItemType::Group; }
-template<> inline ItemType getItemType<Buffer>() { return ItemType::Buffer; }
-template<> inline ItemType getItemType<Column>() { return ItemType::Column; }
-template<> inline ItemType getItemType<Texture>() { return ItemType::Texture; }
-template<> inline ItemType getItemType<Image>() { return ItemType::Image; }
-template<> inline ItemType getItemType<Program>() { return ItemType::Program; }
-template<> inline ItemType getItemType<Shader>() { return ItemType::Shader; }
-template<> inline ItemType getItemType<Binding>() { return ItemType::Binding; }
-template<> inline ItemType getItemType<VertexStream>() { return ItemType::VertexStream; }
-template<> inline ItemType getItemType<Attribute>() { return ItemType::Attribute; }
-template<> inline ItemType getItemType<Target>() { return ItemType::Target; }
-template<> inline ItemType getItemType<Attachment>() { return ItemType::Attachment; }
-template<> inline ItemType getItemType<Call>() { return ItemType::Call; }
-template<> inline ItemType getItemType<Script>() { return ItemType::Script; }
+template<typename T> Item::Type getItemType();
+template<> inline Item::Type getItemType<Group>() { return Item::Type::Group; }
+template<> inline Item::Type getItemType<Buffer>() { return Item::Type::Buffer; }
+template<> inline Item::Type getItemType<Column>() { return Item::Type::Column; }
+template<> inline Item::Type getItemType<Texture>() { return Item::Type::Texture; }
+template<> inline Item::Type getItemType<Image>() { return Item::Type::Image; }
+template<> inline Item::Type getItemType<Program>() { return Item::Type::Program; }
+template<> inline Item::Type getItemType<Shader>() { return Item::Type::Shader; }
+template<> inline Item::Type getItemType<Binding>() { return Item::Type::Binding; }
+template<> inline Item::Type getItemType<VertexStream>() { return Item::Type::VertexStream; }
+template<> inline Item::Type getItemType<Attribute>() { return Item::Type::Attribute; }
+template<> inline Item::Type getItemType<Target>() { return Item::Type::Target; }
+template<> inline Item::Type getItemType<Attachment>() { return Item::Type::Attachment; }
+template<> inline Item::Type getItemType<Call>() { return Item::Type::Call; }
+template<> inline Item::Type getItemType<Script>() { return Item::Type::Script; }
 
 template <typename T>
 const T* castItem(const Item &item)
 {
-    if (item.itemType == getItemType<T>())
+    if (item.type == getItemType<T>())
         return static_cast<const T*>(&item);
     return nullptr;
 }
 
 template <>
 inline const FileItem* castItem<FileItem>(const Item &item) {
-    if (item.itemType == ItemType::Buffer ||
-        item.itemType == ItemType::Texture ||
-        item.itemType == ItemType::Image ||
-        item.itemType == ItemType::Shader ||
-        item.itemType == ItemType::Script)
+    if (item.type == Item::Type::Buffer ||
+        item.type == Item::Type::Texture ||
+        item.type == Item::Type::Image ||
+        item.type == Item::Type::Shader ||
+        item.type == Item::Type::Script)
         return static_cast<const FileItem*>(&item);
     return nullptr;
 }

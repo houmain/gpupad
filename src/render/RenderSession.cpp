@@ -234,19 +234,19 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
             mCommandQueue->scripts += ScriptEngine::Script{ script->fileName, source };
         }
         else if (auto binding = castItem<Binding>(item)) {
-            switch (binding->type) {
-                case Binding::Type::Uniform:
+            switch (binding->bindingType) {
+                case Binding::BindingType::Uniform:
                     for (auto index = 0; index < binding->valueCount; ++index)
                         addCommand(
                             [binding = GLUniformBinding{
                                 binding->id, getUniformName(binding->name, index),
-                                binding->type, binding->values[index].fields }
+                                binding->bindingType, binding->values[index].fields }
                             ](BindingState& state) {
                                 state.top().uniforms[binding.name] = binding;
                             });
                     break;
 
-                case Binding::Type::Sampler:
+                case Binding::BindingType::Sampler:
                     for (auto index = 0; index < binding->valueCount; ++index) {
                         const auto &value = binding->values[index];
                         addCommand(
@@ -263,7 +263,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     }
                     break;
 
-                case Binding::Type::Image:
+                case Binding::BindingType::Image:
                     for (auto index = 0; index < binding->valueCount; ++index) {
                         const auto &value = binding->values[index];
                         auto access = GLenum{ GL_READ_WRITE };
@@ -278,7 +278,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     }
                     break;
 
-                case Binding::Type::Buffer:
+                case Binding::BindingType::Buffer:
                     for (auto index = 0; index < binding->valueCount; ++index) {
                         const auto &value = binding->values[index];
                         addCommand(
@@ -291,7 +291,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     }
                     break;
 
-                case Binding::Type::Subroutine:
+                case Binding::BindingType::Subroutine:
                     for (auto index = 0; index < binding->valueCount; ++index) {
                         const auto &value = binding->values[index];
                         addCommand(

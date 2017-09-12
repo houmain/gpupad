@@ -12,7 +12,7 @@ struct GLUniformBinding
 {
     ItemId bindingItemId;
     QString name;
-    Binding::Type type;
+    Binding::BindingType type;
     QStringList fields;
 };
 
@@ -53,7 +53,7 @@ struct GLSubroutineBinding
     ItemId bindingItemId;
     QString name;
     QString subroutine;
-    Shader::Type type;
+    Shader::ShaderType type;
 };
 
 class GLProgram
@@ -92,7 +92,7 @@ private:
     MessagePtrSet mLinkMessages;
     std::vector<GLShader> mShaders;
     QList<QString> mAttributes;
-    QMap<Shader::Type, QList<SubroutineUniform>> mSubroutineUniforms;
+    QMap<Shader::ShaderType, QList<SubroutineUniform>> mSubroutineUniforms;
     QMap<QString, GLenum> mUniformDataTypes;
     GLObject mProgramObject;
 

@@ -49,8 +49,8 @@ public:
     void setCurrentItemFile(const QString &fileName);
     void saveCurrentItemFileAs(FileDialog::Options options);
     void openCurrentItemFile(FileDialog::Options options);
-    QVariantList getFileNames(ItemType type, bool addNull = false) const;
-    QVariantList getItemIds(ItemType type, bool addNull = false) const;
+    QVariantList getFileNames(Item::Type type, bool addNull = false) const;
+    QVariantList getItemIds(Item::Type type, bool addNull = false) const;
     QString findItemName(ItemId itemId) const;
 
 private slots:

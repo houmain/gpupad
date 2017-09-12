@@ -117,9 +117,9 @@ bool EditorManager::openEditor(const QString &fileName, bool raise)
         if (openBinaryEditor(fileName, raise))
             return true;
 
-    if (openSourceEditor(fileName, raise))
-        return true;
     if (openImageEditor(fileName, raise))
+        return true;
+    if (openSourceEditor(fileName, raise))
         return true;
     if (openBinaryEditor(fileName, raise))
         return true;
