@@ -24,12 +24,13 @@ public:
     {
         Loading             = 1 << 0,
         Saving              = 1 << 1,
-        ShaderExtensions    = 1 << 2,
-        ImageExtensions     = 1 << 3,
-        BinaryExtensions    = 1 << 4,
-        SessionExtensions   = 1 << 5,
-        ScriptExtensions    = 1 << 6,
-        SupportedExtensions = 1 << 7,
+        Importing           = 1 << 2,
+        ShaderExtensions    = 1 << 3,
+        ImageExtensions     = 1 << 4,
+        BinaryExtensions    = 1 << 5,
+        SessionExtensions   = 1 << 6,
+        ScriptExtensions    = 1 << 7,
+        SupportedExtensions = 1 << 8,
         AllExtensionFilters = ShaderExtensions | ImageExtensions |
             BinaryExtensions | ScriptExtensions | SessionExtensions | SupportedExtensions
     };

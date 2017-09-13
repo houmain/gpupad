@@ -8,6 +8,7 @@
 #include "editors/FindReplaceBar.h"
 #include "session/SessionModel.h"
 #include "render/Renderer.h"
+#include "scripting/CustomActions.h"
 #include <QApplication>
 
 Singletons *Singletons::sInstance;
@@ -71,6 +72,12 @@ FindReplaceBar &Singletons::findReplaceBar()
     return *sInstance->mFindReplaceBar;
 }
 
+CustomActions &Singletons::customActions()
+{
+    Q_ASSERT(onMainThread());
+    return *sInstance->mCustomActions;
+}
+
 Singletons::Singletons(QMainWindow *window)
 {
     Q_ASSERT(onMainThread());
@@ -84,6 +91,7 @@ Singletons::Singletons(QMainWindow *window)
     mSessionModel.reset(new SessionModel());
     mSynchronizeLogic.reset(new SynchronizeLogic());
     mFindReplaceBar.reset(new FindReplaceBar());
+    mCustomActions.reset(new CustomActions(window));
 }
 
 Singletons::~Singletons() = default;

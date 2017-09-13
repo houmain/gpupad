@@ -536,7 +536,7 @@ QString SourceEditor::textUnderCursor(bool identifierOnly) const
     }
     auto text = cursor.selectedText();
     if (identifierOnly)
-        text = text.replace(QRegularExpression("[^a-z,A-Z,0-9,_]"), "");
+        text = text.replace(QRegularExpression("[^a-zA-Z0-9_]"), "");
     return text;
 }
 

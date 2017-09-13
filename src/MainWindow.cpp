@@ -9,6 +9,7 @@
 #include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
 #include "editors/FindReplaceBar.h"
+#include "scripting/CustomActions.h"
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QDockWidget>
@@ -188,6 +189,10 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::updateEvaluationMode);
     connect(mUi->actionEvalSteady, &QAction::toggled,
         this, &MainWindow::updateEvaluationMode);
+
+    auto& customActions = Singletons::customActions();
+    connect(mUi->actionManageCustomActions, &QAction::triggered,
+        &customActions, &QDialog::show);
 
     auto evalIntervalActionGroup = new QActionGroup(this);
     mUi->actionEvalIntervalSlow->setActionGroup(evalIntervalActionGroup);

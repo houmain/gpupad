@@ -13,6 +13,7 @@ class SynchronizeLogic;
 class SessionModel;
 class Renderer;
 class FindReplaceBar;
+class CustomActions;
 
 bool onMainThread();
 
@@ -28,6 +29,7 @@ public:
     static SessionModel &sessionModel();
     static SynchronizeLogic &synchronizeLogic();
     static FindReplaceBar &findReplaceBar();
+    static CustomActions &customActions();
 
     explicit Singletons(QMainWindow *window);
     ~Singletons();
@@ -44,6 +46,7 @@ private:
     QScopedPointer<SessionModel> mSessionModel;
     QScopedPointer<SynchronizeLogic> mSynchronizeLogic;
     QScopedPointer<FindReplaceBar> mFindReplaceBar;
+    QScopedPointer<CustomActions> mCustomActions;
 };
 
 #endif // SINGLETONS_H

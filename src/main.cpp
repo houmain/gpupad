@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     app.setApplicationVersion(
 #include "_version.h"
     );
-    app.setOrganizationName("GPUpad");
+    app.setOrganizationName("gpupad");
     app.setApplicationName("GPUpad");
 
     app.setStyle(QStyleFactory::create("Fusion"));

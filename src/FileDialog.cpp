@@ -110,7 +110,8 @@ bool FileDialog::exec(Options options, QString currentFileName)
         dialog.setFileMode(QFileDialog::AnyFile);
     }
     else {
-        dialog.setWindowTitle(tr("Open File"));
+        auto importing = ((options & Importing) != 0);
+        dialog.setWindowTitle(importing ? tr("Import File") : tr("Open File"));
         dialog.setAcceptMode(QFileDialog::AcceptOpen);
         dialog.setFileMode(QFileDialog::ExistingFiles);
     }

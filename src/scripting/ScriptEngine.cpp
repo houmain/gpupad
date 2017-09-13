@@ -1,5 +1,6 @@
 #include "ScriptEngine.h"
 #include "Singletons.h"
+#include "session/SessionModel.h"
 #include "FileDialog.h"
 #include <QJSEngine>
 

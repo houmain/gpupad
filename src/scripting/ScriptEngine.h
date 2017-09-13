@@ -2,6 +2,7 @@
 #define SCRIPTENGINE_H
 
 #include "MessageList.h"
+#include <QJsonArray>
 
 class QJSEngine;
 

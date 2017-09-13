@@ -2,7 +2,7 @@
 #include "GLProgram.h"
 #include "GLTexture.h"
 #include "GLBuffer.h"
-#include "ScriptEngine.h"
+#include "scripting/ScriptEngine.h"
 
 QString getUniformName(QString base, int arrayIndex)
 {
