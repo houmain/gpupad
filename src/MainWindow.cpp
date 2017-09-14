@@ -558,12 +558,17 @@ void MainWindow::openAbout()
     QMessageBox::about(this,
         tr("About %1").arg(QApplication::applicationName()),
         tr("<h3>%1 %2</h3>"
-           "A text editor for efficiently editing GLSL shaders of all kinds.<br><br>"
+           "%3<br>"
+           "<a href='%4'>%4</a><br><br>"
            "Copyright &copy; 2016-2017<br>"
            "Albert Kalchmair<br>"
-           "All Rights Reserved.<br><br>"
-           "<a href='%3'>%3</a><br>")
+           "%5<br><br>"
+           "%6")
            .arg(QApplication::applicationName())
            .arg(QApplication::applicationVersion())
-           .arg("https://github.com/houmaster/gpupad"));
+           .arg(tr("A text editor for efficiently editing GLSL shaders of all kinds."))
+           .arg("https://github.com/houmaster/gpupad")
+           .arg(tr("All Rights Reserved."))
+           .arg(tr("The program is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.")));
+
 }
