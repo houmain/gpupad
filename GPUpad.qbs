@@ -132,6 +132,8 @@ Project {
           "src/session/SessionEditor.h",
           "src/session/SessionModel.cpp",
           "src/session/SessionModel.h",
+          "src/session/SessionModelCore.cpp",
+          "src/session/SessionModelCore.h",
           "src/session/SessionProperties.cpp",
           "src/session/SessionProperties.h",
           "src/resources.qrc",

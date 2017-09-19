@@ -33,7 +33,7 @@ QJsonValue GpupadScriptObject::readTextFile(const QString &fileName)
 void GpupadScriptObject::insertSessionItem(QJsonValue parent, int row, QJsonValue item)
 {
     auto &model = Singletons::sessionModel();
-    auto index = model.index(model.findItem(parent.toInt()));
+    auto index = model.getIndex(model.findItem(parent.toInt()));
     if (item.isArray())
         model.dropJson(QJsonDocument(item.toArray()), row, index, false);
     else if (item.isObject())

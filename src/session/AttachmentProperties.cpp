@@ -52,8 +52,8 @@ AttachmentProperties::~AttachmentProperties()
 
 TextureKind AttachmentProperties::currentTextureKind() const
 {
-    if (auto texture = castItem<Texture>(mSessionProperties.model().findItem(
-            mUi->texture->currentData().toInt())))
+    if (auto texture = mSessionProperties.model().findItem<Texture>(
+            mUi->texture->currentData().toInt()))
         return getKind(*texture);
     return { };
 }

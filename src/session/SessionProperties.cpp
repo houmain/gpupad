@@ -334,25 +334,25 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
                 // fallthrough
             case Item::Type::Image:
                 if (fileItem->fileName.isEmpty())
-                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
+                    mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
                         editors.openNewImageEditor());
                 return editors.openImageEditor(fileItem->fileName);
 
             case Item::Type::Shader:
                 if (fileItem->fileName.isEmpty())
-                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
+                    mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
                         editors.openNewSourceEditor());
                 return editors.openSourceEditor(fileItem->fileName);
 
             case Item::Type::Script:
                 if (fileItem->fileName.isEmpty())
-                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
+                    mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
                         editors.openNewSourceEditor(".js"));
                 return editors.openSourceEditor(fileItem->fileName);
 
             case Item::Type::Buffer:
                 if (fileItem->fileName.isEmpty())
-                    mModel.setData(mModel.index(fileItem, SessionModel::FileName),
+                    mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
                         editors.openNewBinaryEditor());
 
                 if (auto editor = editors.openBinaryEditor(fileItem->fileName)) {

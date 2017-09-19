@@ -88,7 +88,7 @@ void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
     forEachFileItem(mModel,
         [&](const FileItem &item) {
             if (item.fileName == fileName) {
-                auto index = mModel.index(&item);
+                auto index = mModel.getIndex(&item);
                 emit mModel.dataChanged(index, index);
             }
         });
@@ -135,7 +135,7 @@ void SynchronizeLogic::handleFileRenamed(const QString &prevFileName,
     if (FileDialog::isUntitled(prevFileName))
         forEachFileItem(mModel, [&](const FileItem &item) {
             if (item.fileName == prevFileName)
-                mModel.setData(mModel.index(&item, SessionModel::FileName),
+                mModel.setData(mModel.getIndex(&item, SessionModel::FileName),
                     fileName);
         });
 }

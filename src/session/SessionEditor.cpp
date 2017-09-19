@@ -290,7 +290,7 @@ void SessionEditor::delete_()
 void SessionEditor::setCurrentItem(ItemId itemId)
 {
     if (auto item = mModel.findItem(itemId)) {
-        auto index = mModel.index(item);
+        auto index = mModel.getIndex(item);
         setCurrentIndex(index);
         scrollTo(index);
     }
