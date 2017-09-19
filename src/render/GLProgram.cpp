@@ -212,7 +212,7 @@ bool GLProgram::apply(const GLUniformBinding &uniform, ScriptEngine &scriptEngin
     auto uints = std::array<GLuint, 16>();
     auto doubles = std::array<GLdouble, 16>();
     auto j = 0u;
-    foreach (QString field, scriptEngine.evalValue(
+    foreach (QString field, scriptEngine.evaluateValue(
             uniform.fields,
             uniform.bindingItemId,
             mUniformsMessages)) {

@@ -992,6 +992,26 @@ QJsonArray SessionModel::getJson(const QModelIndexList &indexes) const
     return itemArray;
 }
 
+void SessionModel::dropJson(const QJsonDocument &document,
+    int row, const QModelIndex &parent, bool updateExisting)
+{
+    if (document.isArray()) {
+        foreach (const QJsonValue &value, document.array())
+            deserialize(value.toObject(), parent, row++, updateExisting);
+    }
+    else if (document.isObject()) {
+        deserialize(document.object(), parent, row, updateExisting);
+    }
+
+    // fixup item references
+    foreach (ItemId prevId, mDroppedIdsReplaced.keys())
+        foreach (ItemId* reference, mDroppedReferences)
+            if (*reference == prevId)
+                *reference = mDroppedIdsReplaced[prevId];
+    mDroppedIdsReplaced.clear();
+    mDroppedReferences.clear();
+}
+
 QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
 {
     auto data = new QMimeData();
@@ -1031,21 +1051,8 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     auto document = parseClipboard(data);
     if (!document)
         return false;
-    if (document->isArray()) {
-        foreach (const QJsonValue &value, document->array())
-            deserialize(value.toObject(), parent, row++);
-    }
-    else if (document->isObject()) {
-        deserialize(document->object(), parent, row);
-    }
 
-    // fixup item references
-    foreach (ItemId prevId, mDroppedIdsReplaced.keys())
-        foreach (ItemId* reference, mDroppedReferences)
-            if (*reference == prevId)
-                *reference = mDroppedIdsReplaced[prevId];
-    mDroppedIdsReplaced.clear();
-    mDroppedReferences.clear();
+    dropJson(*document, row, parent, false);
     mDraggedIndices.clear();
 
     mUndoStack.endMacro();
@@ -1319,7 +1326,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
 }
 
 void SessionModel::deserialize(const QJsonObject &object,
-    const QModelIndex &parent, int row)
+    const QModelIndex &parent, int row, bool updateExisting)
 {
     const auto readValue = [&](const QJsonValue& value, auto &property) {
         return fromJsonValue(value, property);
@@ -1344,13 +1351,19 @@ void SessionModel::deserialize(const QJsonObject &object,
         return;
 
     auto id = object["id"].toInt();
-    if (findItem(id)) {
+    if (!id)
+        id = mNextItemId++;
+
+    auto existingItem = findItem(id);
+    if (existingItem && !updateExisting) {
         // generate new id when it collides with an existing item
         auto prevId = std::exchange(id, mNextItemId++);
         mDroppedIdsReplaced.insert(prevId, id);
+        existingItem = nullptr;
     }
+    const auto index = (existingItem ?
+        this->index(existingItem) : insertItem(type, parent, row, id));
 
-    const auto index = insertItem(type, parent, row, id);
     auto &item = getItem(index);
     read("name", item.name);
 
@@ -1534,5 +1547,5 @@ void SessionModel::deserialize(const QJsonObject &object,
     auto items = object["items"].toArray();
     if (!items.isEmpty())
         foreach (const QJsonValue &value, items)
-            deserialize(value.toObject(), index, -1);
+            deserialize(value.toObject(), index, -1, updateExisting);
 }

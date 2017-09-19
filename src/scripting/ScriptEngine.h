@@ -18,8 +18,11 @@ public:
     ScriptEngine();
     ~ScriptEngine();
 
-    void evalScripts(QList<Script> scripts);
-    QStringList evalValue(const QStringList &fieldExpressions,
+    void reset(QList<Script> scripts);
+    void setGlobal(const QString &name, QObject *object);
+    QVariant evaluate(const QString &expression,
+        ItemId itemId, MessagePtrSet &messages);
+    QStringList evaluateValue(const QStringList &fieldExpressions,
         ItemId itemId, MessagePtrSet &messages);
 
 private:

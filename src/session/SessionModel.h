@@ -161,6 +161,8 @@ public:
     void setItemActive(ItemId id, bool active);
 
     QJsonArray getJson(const QModelIndexList &indexes) const;
+    void dropJson(const QJsonDocument &document,
+        int row, const QModelIndex &parent, bool updateExisting);
     QUndoStack &undoStack() { return mUndoStack; }
     void clear();
     bool save(const QString &fileName);
@@ -239,7 +241,8 @@ private:
         QString fileName);
     const QJsonDocument *parseClipboard(const QMimeData *data) const;
     void serialize(QJsonObject &object, const Item &item, bool relativeFilePaths) const;
-    void deserialize(const QJsonObject &object, const QModelIndex &parent, int row);
+    void deserialize(const QJsonObject &object, const QModelIndex &parent, int row,
+        bool updateExisting);
 
     ItemId mNextItemId{ 1 };
     QScopedPointer<Group> mRoot;

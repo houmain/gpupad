@@ -1,12 +1,48 @@
 #include "CustomActions.h"
 #include "ui_CustomActions.h"
 #include "Singletons.h"
+#include "ScriptEngine.h"
+#include "FileCache.h"
+#include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
+#include "GpupadScriptObject.h"
 #include <QListView>
 #include <QFileSystemModel>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QStandardPaths>
+#include <QAction>
+
+class CustomAction : public QAction
+{
+public:
+    CustomAction(const QString &filePath)
+        : mFilePath(filePath)
+    {
+        auto source = QString();
+        if (Singletons::fileCache().getSource(mFilePath, &source)) {
+            mScriptEngine.reset({ ScriptEngine::Script{ mFilePath, source } });
+            mScriptEngine.setGlobal("gpupad", new GpupadScriptObject());
+        }
+        auto messages = MessagePtrSet();
+        auto name = mScriptEngine.evaluate("name", 0, messages).toString();
+        setText(name);
+    }
+
+    bool applicable()
+    {
+        return true;
+    }
+
+    void execute(MessagePtrSet &messages)
+    {
+        mScriptEngine.evaluate("execute()", 0, messages);
+    }
+
+private:
+    const QString mFilePath;
+    ScriptEngine mScriptEngine;
+};
 
 CustomActions::CustomActions(QWidget *parent)
     : QDialog(parent, Qt::Tool)
@@ -99,4 +135,39 @@ void CustomActions::deleteAction()
         return;
 
     QFile::remove(filePath);
+}
+
+void CustomActions::actionTriggered()
+{
+    auto &action = static_cast<CustomAction&>(
+        *qobject_cast<QAction*>(QObject::sender()));
+
+    mMessages.clear();
+    action.execute(mMessages);
+}
+
+void CustomActions::updateActions()
+{
+    Singletons::synchronizeLogic().updateFileCache();
+
+    mActions.clear();
+    auto root = mModel->index(mModel->rootPath());
+    for (auto i = 0; i < mModel->rowCount(root); i++) {
+        mActions.emplace_back(new CustomAction(
+            mModel->filePath(mModel->index(i, 0, root))));
+        connect(mActions.back().get(), &QAction::triggered,
+            this, &CustomActions::actionTriggered);
+    }
+}
+
+QList<QAction*> CustomActions::getApplicableActions()
+{
+    // TODO: move
+    updateActions();
+
+    auto actions = QList<QAction*>();
+    for (const auto &action : mActions)
+        if (action->applicable())
+            actions += action.get();
+    return actions;
 }

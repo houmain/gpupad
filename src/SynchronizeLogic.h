@@ -22,6 +22,7 @@ public:
     void setEvaluationInterval(int interval);
     void updateBinaryEditor(const Buffer &buffer,
         BinaryEditor &editor, bool scrollToOffset = false);
+    void updateFileCache();
 
 public slots:
     void manualEvaluation();
@@ -36,8 +37,6 @@ private slots:
     void update(bool manualEvaluation = false);
 
 private:
-    void updateFileCache();
-
     SessionModel& mModel;
     QTimer *mUpdateTimer{ };
     QSet<ItemId> mBuffersModified;

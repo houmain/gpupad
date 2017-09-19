@@ -92,6 +92,8 @@ Project {
           "src/render/RenderTask.h",
           "src/render/Renderer.cpp",
           "src/render/Renderer.h",
+          "src/scripting/GpupadScriptObject.cpp",
+          "src/scripting/GpupadScriptObject.h",
           "src/scripting/ScriptEngine.cpp",
           "src/scripting/ScriptEngine.h",
           "src/scripting/CustomActions.cpp",

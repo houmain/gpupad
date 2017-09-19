@@ -62,6 +62,7 @@ private:
     void addToRecentFileList(const QString &fileName);
     void updateRecentFileActions();
     void openRecentFile();
+    void updateCustomActionsMenu();
 
     Ui::MainWindow *mUi{ };
     QSplitter *mSessionSplitter{ };

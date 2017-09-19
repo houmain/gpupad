@@ -16,6 +16,7 @@
 #include <QDesktopServices>
 #include <QSplitter>
 #include <QActionGroup>
+#include <QMenu>
 
 class AutoOrientationSplitter : public QSplitter
 {
@@ -193,6 +194,8 @@ MainWindow::MainWindow(QWidget *parent)
     auto& customActions = Singletons::customActions();
     connect(mUi->actionManageCustomActions, &QAction::triggered,
         &customActions, &QDialog::show);
+    connect(mUi->menuCustomActions, &QMenu::aboutToShow,
+        this, &MainWindow::updateCustomActionsMenu);
 
     auto evalIntervalActionGroup = new QActionGroup(this);
     mUi->actionEvalIntervalSlow->setActionGroup(evalIntervalActionGroup);
@@ -523,6 +526,16 @@ void MainWindow::openRecentFile()
 {
     if (auto action = qobject_cast<QAction *>(sender()))
         openFile(action->data().toString());
+}
+
+void MainWindow::updateCustomActionsMenu()
+{
+    auto actions = Singletons::customActions().getApplicableActions();
+    auto manage = mUi->menuCustomActions->actions().last();
+    mUi->menuCustomActions->clear();
+    mUi->menuCustomActions->addActions(actions);
+    mUi->menuCustomActions->addSeparator();
+    mUi->menuCustomActions->addAction(manage);
 }
 
 void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,

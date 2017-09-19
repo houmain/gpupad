@@ -384,7 +384,7 @@ void RenderSession::reuseUnmodifiedItems()
 
 void RenderSession::evaluateScripts()
 {
-    mScriptEngine->evalScripts(mCommandQueue->scripts);
+    mScriptEngine->reset(mCommandQueue->scripts);
 }
 
 void RenderSession::executeCommandQueue()
