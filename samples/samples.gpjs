@@ -1,10 +1,11 @@
 [
     {
         "id": 3,
-        "inline": true,
+        "inlineScope": true,
         "items": [
             {
                 "fileName": "target.png",
+                "flipY": false,
                 "format": "RGBA8_UNorm",
                 "height": 512,
                 "id": 4,
@@ -55,7 +56,7 @@
     },
     {
         "id": 8,
-        "inline": false,
+        "inlineScope": false,
         "items": [
             {
                 "bindingType": "Uniform",
@@ -79,6 +80,7 @@
                 "values": [
                     {
                         "borderColor": "#ff000000",
+                        "comparisonFunc": "NoComparisonFunc",
                         "magFilter": "Nearest",
                         "minFilter": "Nearest",
                         "textureId": 4,
@@ -137,7 +139,7 @@
     },
     {
         "id": 23,
-        "inline": false,
+        "inlineScope": false,
         "items": [
             {
                 "bindingType": "Uniform",
@@ -264,7 +266,7 @@
     },
     {
         "id": 44,
-        "inline": false,
+        "inlineScope": false,
         "items": [
             {
                 "fileName": "cube/math.js",
@@ -273,6 +275,7 @@
                 "type": "Script"
             },
             {
+                "flipY": false,
                 "format": "D16",
                 "height": 512,
                 "id": 67,
@@ -320,6 +323,7 @@
             },
             {
                 "fileName": "cube/marble.png",
+                "flipY": false,
                 "format": "RGBA8_UNorm",
                 "height": 512,
                 "id": 56,
@@ -336,6 +340,7 @@
                 "values": [
                     {
                         "borderColor": "#ff000000",
+                        "comparisonFunc": "NoComparisonFunc",
                         "magFilter": "Nearest",
                         "minFilter": "LinearMipMapLinear",
                         "textureId": 56,
@@ -523,7 +528,7 @@
     },
     {
         "id": 16,
-        "inline": false,
+        "inlineScope": false,
         "items": [
             {
                 "bindingType": "Image",

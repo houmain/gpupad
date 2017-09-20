@@ -248,7 +248,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
 
     switch (mModel.getItemType(index)) {
         case Item::Type::Group:
-            map(mGroupProperties->inlineScope, SessionModel::InlineScope);
+            map(mGroupProperties->inlineScope, SessionModel::GroupInlineScope);
             break;
 
         case Item::Type::Buffer:

@@ -1,93 +1,10 @@
 #include "SessionModel.h"
+#include "SessionModelPriv.h"
 #include "FileDialog.h"
 #include <QIcon>
 #include <QMimeData>
 #include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QXmlStreamReader>
 #include <QDir>
-#include <QMetaEnum>
-
-namespace {
-    template<typename T>
-    auto toJsonValue(const T &v)
-         -> std::enable_if_t<!std::is_enum<T>::value, QJsonValue>
-    {
-        return v;
-    }
-
-    template<typename T>
-    auto toJsonValue(const T &v)
-         -> std::enable_if_t<std::is_enum<T>::value, QJsonValue>
-    {
-        return QMetaEnum::fromType<T>().valueToKey(v);
-    }
-
-    template<>
-    QJsonValue toJsonValue(const unsigned int &v)
-    {
-        return static_cast<double>(v);
-    }
-
-    template<typename T>
-    auto fromJsonValue(const QJsonValue &value, T &v)
-         -> std::enable_if_t<!std::is_enum<T>::value, bool>
-    {
-        if (!value.isUndefined()) {
-            v = static_cast<T>(value.toDouble());
-            return true;
-        }
-        return false;
-    }
-
-    template<typename T>
-    auto fromJsonValue(const QJsonValue &key, T &v)
-         -> std::enable_if_t<std::is_enum<T>::value, bool>
-    {
-        if (!key.isUndefined()) {
-            auto ok = false;
-            auto value = QMetaEnum::fromType<T>().keyToValue(
-                qPrintable(key.toString()), &ok);
-            if (ok) {
-                v = static_cast<T>(value);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    template<>
-    bool fromJsonValue(const QJsonValue &value, QString &v)
-    {
-        if (!value.isUndefined()) {
-            v = value.toString();
-            return true;
-        }
-        return false;
-    }
-
-    template<>
-    bool fromJsonValue(const QJsonValue &value, bool &v)
-    {
-        if (!value.isUndefined()) {
-            v = value.toBool();
-            return true;
-        }
-        return false;
-    }
-
-
-    template<>
-    bool fromJsonValue(const QJsonValue &value, QColor &v)
-    {
-        if (!value.isUndefined()) {
-            v = QColor(value.toString());
-            return true;
-        }
-        return false;
-    }
-} // namespace
 
 SessionModel::SessionModel(QObject *parent)
     : SessionModelCore(parent)
@@ -128,13 +45,6 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         auto type = getItemType(index);
         return (type != Item::Type::Call ? getTypeIcon(type) : QVariant());
     }
-
-    if (role != Qt::DisplayRole &&
-        role != Qt::EditRole &&
-        role != Qt::FontRole &&
-        role != Qt::ForegroundRole &&
-        role != Qt::CheckStateRole)
-        return { };
 
     const auto &item = getItem(index);
 
@@ -283,24 +193,6 @@ void SessionModel::clear()
     undoStack().setUndoLimit(0);
 }
 
-bool SessionModel::save(const QString &fileName)
-{
-    QDir::setCurrent(QFileInfo(fileName).path());
-    QScopedPointer<QMimeData> mime(mimeData({ QModelIndex() }));
-    if (!mime)
-        return false;
-
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly))
-        return false;
-
-    file.write(mime->text().toUtf8());
-    file.close();
-
-    undoStack().setClean();
-    return true;
-}
-
 bool SessionModel::load(const QString &fileName)
 {
     QFile file(fileName);
@@ -320,6 +212,71 @@ bool SessionModel::load(const QString &fileName)
 
     undoStack().clear();
     undoStack().setUndoLimit(0);
+    return true;
+}
+
+bool SessionModel::save(const QString &fileName)
+{
+    QDir::setCurrent(QFileInfo(fileName).path());
+    QScopedPointer<QMimeData> mime(mimeData({ QModelIndex() }));
+    if (!mime)
+        return false;
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly))
+        return false;
+
+    file.write(mime->text().toUtf8());
+    file.close();
+
+    undoStack().setClean();
+    return true;
+}
+
+QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
+{
+    auto data = new QMimeData();
+    auto itemArray = getJson(indexes);
+    auto document =
+        (itemArray.size() != 1 ?
+         QJsonDocument(itemArray) :
+         QJsonDocument(itemArray.first().toObject()));
+    data->setText(document.toJson());
+    mDraggedIndices = indexes;
+    return data;
+}
+
+bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
+        int row, int column, const QModelIndex &parent)
+{
+    Q_UNUSED(column);
+    if (action == Qt::IgnoreAction)
+        return true;
+
+    auto document = parseClipboard(data);
+    if (!document)
+        return false;
+
+    if (row < 0)
+        row = rowCount(parent);
+
+    undoStack().beginMacro("Move");    
+
+    if (action == Qt::MoveAction && !mDraggedIndices.empty()) {
+        std::stable_sort(mDraggedIndices.begin(), mDraggedIndices.end(),
+            [](const auto &a, const auto &b) { return a.row() > b.row(); });
+        for (auto index : mDraggedIndices) {
+            if (index.parent() == parent &&
+                index.row() < row)
+                --row;
+            deleteItem(index);
+        }
+    }
+
+    dropJson(*document, row, parent, false);
+    mDraggedIndices.clear();
+
+    undoStack().endMacro();
     return true;
 }
 
@@ -356,347 +313,16 @@ void SessionModel::dropJson(const QJsonDocument &document,
 
     // fixup item references
     foreach (ItemId prevId, mDroppedIdsReplaced.keys())
-        foreach (ItemId* reference, mDroppedReferences)
-            if (*reference == prevId)
-                *reference = mDroppedIdsReplaced[prevId];
+        foreach (QModelIndex reference, mDroppedReferences)
+            if (data(reference).toInt() == prevId)
+                setData(reference, mDroppedIdsReplaced[prevId]);
     mDroppedIdsReplaced.clear();
     mDroppedReferences.clear();
-}
-
-QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
-{
-    auto data = new QMimeData();
-    auto itemArray = getJson(indexes);
-    auto document =
-        (itemArray.size() != 1 ?
-         QJsonDocument(itemArray) :
-         QJsonDocument(itemArray.first().toObject()));
-    data->setText(document.toJson());
-    mDraggedIndices = indexes;
-    return data;
-}
-
-bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
-        int row, int column, const QModelIndex &parent)
-{
-    Q_UNUSED(column);
-    if (action == Qt::IgnoreAction)
-        return true;
-
-    if (row < 0)
-        row = rowCount(parent);
-
-    undoStack().beginMacro("Move");
-
-    if (action == Qt::MoveAction && !mDraggedIndices.empty()) {
-        std::stable_sort(mDraggedIndices.begin(), mDraggedIndices.end(),
-            [](const auto &a, const auto &b) { return a.row() > b.row(); });
-        for (auto index : mDraggedIndices) {
-            if (index.parent() == parent &&
-                index.row() < row)
-                --row;
-            deleteItem(index);
-        }
-    }
-
-    auto document = parseClipboard(data);
-    if (!document)
-        return false;
-
-    dropJson(*document, row, parent, false);
-    mDraggedIndices.clear();
-
-    undoStack().endMacro();
-    return true;
-}
-
-void SessionModel::serialize(QJsonObject &object, const Item &item,
-    bool relativeFilePaths) const
-{
-    const auto write = [&](const char *name, const auto &property) {
-        object.insert(name, toJsonValue(property));
-    };
-    const auto writeFileName = [&](const char *name, const auto &property) {
-        if (!FileDialog::isEmptyOrUntitled(property))
-            write(name, relativeFilePaths ?
-                QDir::current().relativeFilePath(property) : property);
-    };
-
-    write("type", getTypeName(item.type));
-    if (item.id)
-        write("id", item.id);
-    if (!item.name.isEmpty())
-        write("name", item.name);
-
-    switch (item.type) {
-        case Item::Type::Group: {
-            const auto &group = static_cast<const Group&>(item);
-            write("inline", group.inlineScope);
-            break;
-        }
-
-        case Item::Type::Buffer: {
-            const auto &buffer = static_cast<const Buffer&>(item);
-            writeFileName("fileName", buffer.fileName);
-            write("offset", buffer.offset);
-            write("rowCount", buffer.rowCount);
-            break;
-        }
-
-        case Item::Type::Column: {
-            const auto &column = static_cast<const Column&>(item);
-            write("dataType", column.dataType);
-            write("count", column.count);
-            write("padding", column.padding);
-            break;
-        }
-
-        case Item::Type::Texture: {
-            const auto &texture = static_cast<const Texture&>(item);
-            auto kind = getKind(texture);
-            writeFileName("fileName", texture.fileName);
-            write("target", texture.target);
-            write("format",  texture.format);
-            write("width",  texture.width);
-            if (kind.dimensions > 1)
-                write("height",  texture.height);
-            if (kind.dimensions > 2)
-                write("depth", texture.depth);
-            if (kind.array)
-                write("layers", texture.layers);
-            if (kind.multisample)
-                write("samples", texture.samples);
-            if (kind.dimensions > 1 && texture.flipY)
-                write("flipY", texture.flipY);
-            break;
-        }
-
-        case Item::Type::Image: {
-            const auto &image = static_cast<const Image&>(item);
-            writeFileName("fileName", image.fileName);
-            write("level", image.level);
-            write("layer", image.layer);
-            write("face", image.face);
-            break;
-        }
-
-        case Item::Type::Program: {
-            break;
-        }
-
-        case Item::Type::Shader: {
-            const auto &shader = static_cast<const Shader&>(item);
-            write("shaderType", shader.shaderType);
-            writeFileName("fileName", shader.fileName);
-            break;
-        }
-
-        case Item::Type::Binding: {
-            const auto &binding = static_cast<const Binding&>(item);
-            write("bindingType", binding.bindingType);
-            if (binding.bindingType == Binding::BindingType::Uniform)
-                write("editor", binding.editor);
-            auto values = QJsonArray();
-            for (auto i = 0; i < binding.valueCount; ++i) {
-                const auto &value = binding.values[i];
-                auto v = QJsonObject();
-                switch (binding.bindingType) {
-                    case Binding::BindingType::Uniform: {
-                        auto fields = QJsonArray();
-                        foreach (const QString &field, value.fields)
-                            fields.append(field);
-                        v.insert("fields", fields);
-                        break;
-                    }
-                    case Binding::BindingType::Image:
-                        v.insert("textureId", value.textureId);
-                        v.insert("level", value.level);
-                        v.insert("layered", value.layered);
-                        v.insert("layer", value.layer);
-                        break;
-
-                    case Binding::BindingType::Sampler:
-                        v.insert("textureId", value.textureId);
-                        v.insert("minFilter", toJsonValue(value.minFilter));
-                        v.insert("magFilter", toJsonValue(value.magFilter));
-                        v.insert("wrapModeX", toJsonValue(value.wrapModeX));
-                        v.insert("wrapModeY", toJsonValue(value.wrapModeY));
-                        v.insert("wrapModeZ", toJsonValue(value.wrapModeZ));
-                        v.insert("wrapModeZ", toJsonValue(value.wrapModeZ));
-                        v.insert("borderColor", toJsonValue(
-                            value.borderColor.name(QColor::HexArgb)));
-                        break;
-
-                    case Binding::BindingType::Buffer:
-                        v.insert("bufferId", value.bufferId);
-                        break;
-
-                    case Binding::BindingType::Subroutine:
-                        v.insert("subroutine", value.subroutine);
-                        break;
-                }
-                values.append(v);
-            }
-            object.insert("values", values);
-            break;
-        }
-
-        case Item::Type::VertexStream: {
-            break;
-        }
-
-        case Item::Type::Attribute: {
-            const auto &attribute = static_cast<const Attribute&>(item);
-            write("bufferId", attribute.bufferId);
-            write("columnId", attribute.columnId);
-            write("normalize", attribute.normalize);
-            write("divisor", attribute.divisor);
-            break;
-        }
-
-        case Item::Type::Target: {
-            const auto &target = static_cast<const Target&>(item);
-            write("frontFace", target.frontFace);
-            write("cullMode", target.cullMode);
-            write("logicOperation", target.logicOperation);
-            write("blendConstant", target.blendConstant.name(QColor::HexArgb));
-            break;
-        }
-
-        case Item::Type::Attachment: {
-            const auto &attachment = static_cast<const Attachment&>(item);
-            auto kind = TextureKind();
-            if (auto texture = findItem<Texture>(attachment.textureId))
-                kind = getKind(*texture);
-
-            write("textureId", attachment.textureId);
-            write("level", attachment.level);
-            if (kind.array) {
-              write("layered", attachment.layered);
-              write("layer", attachment.layer);
-            }
-            if (kind.color) {
-                write("blendColorEq", attachment.blendColorEq);
-                write("blendColorSource", attachment.blendColorSource);
-                write("blendColorDest", attachment.blendColorDest);
-                write("blendAlphaEq", attachment.blendAlphaEq);
-                write("blendAlphaSource", attachment.blendAlphaSource);
-                write("blendAlphaDest", attachment.blendAlphaDest);
-                write("colorWriteMask", attachment.colorWriteMask);
-            }
-            if (kind.depth) {
-                write("depthComparisonFunc", attachment.depthComparisonFunc);
-                write("depthOffsetFactor", attachment.depthOffsetFactor);
-                write("depthOffsetUnits", attachment.depthOffsetUnits);
-                write("depthClamp", attachment.depthClamp);
-                write("depthWrite", attachment.depthWrite);
-            }
-            if (kind.stencil) {
-                write("stencilFrontComparisonFunc", attachment.stencilFrontComparisonFunc);
-                write("stencilFrontReference", attachment.stencilFrontReference);
-                write("stencilFrontReadMask", attachment.stencilFrontReadMask);
-                write("stencilFrontFailOp", attachment.stencilFrontFailOp);
-                write("stencilFrontDepthFailOp", attachment.stencilFrontDepthFailOp);
-                write("stencilFrontDepthPassOp", attachment.stencilFrontDepthPassOp);
-                write("stencilFrontWriteMask", attachment.stencilFrontWriteMask);
-                write("stencilBackComparisonFunc", attachment.stencilBackComparisonFunc);
-                write("stencilBackReference", attachment.stencilBackReference);
-                write("stencilBackReadMask", attachment.stencilBackReadMask);
-                write("stencilBackFailOp", attachment.stencilBackFailOp);
-                write("stencilBackDepthFailOp", attachment.stencilBackDepthFailOp);
-                write("stencilBackDepthPassOp", attachment.stencilBackDepthPassOp);
-                write("stencilBackWriteMask", attachment.stencilBackWriteMask);
-            }
-            break;
-        }
-
-        case Item::Type::Call: {
-            const auto &call = static_cast<const Call&>(item);
-            const auto kind = getKind(call);
-            const auto type = call.callType;
-
-            write("checked", call.checked);
-            write("callType", call.callType);
-            if (kind.draw || kind.compute)
-                write("programId", call.programId);
-            if (kind.draw) {
-                write("targetId", call.targetId);
-                write("vertexStreamId", call.vertexStreamId);
-                write("primitiveType", call.primitiveType);
-            }
-            if (kind.drawPatches)
-                write("patchVertices", call.patchVertices);
-            if (kind.drawIndexed)
-                write("indexBufferId", call.indexBufferId);
-            if (kind.drawDirect) {
-                write("count", call.count);
-                write("first", call.first);
-                write("instanceCount", call.instanceCount);
-                write("baseInstance", call.baseInstance);
-                if (kind.drawIndexed)
-                    write("baseVertex", call.baseVertex);
-            }
-            if (kind.drawIndirect) {
-                write("indirectBufferId", call.indirectBufferId);
-                write("drawCount", call.drawCount);
-            }
-            if (kind.compute) {
-                write("workGroupsX", call.workGroupsX);
-                write("workGroupsY", call.workGroupsY);
-                write("workGroupsZ", call.workGroupsZ);
-            }
-            if (type == Call::CallType::ClearTexture ||
-                type == Call::CallType::GenerateMipmaps)
-                write("textureId", call.textureId);
-            if (type == Call::CallType::ClearTexture) {
-                write("clearColor", call.clearColor.name(QColor::HexArgb));
-                write("clearDepth", call.clearDepth);
-                write("clearStencil", call.clearStencil);
-            }
-            if (type == Call::CallType::ClearBuffer)
-                write("bufferId", call.bufferId);
-            break;
-        }
-
-        case Item::Type::Script: {
-            const auto &script = static_cast<const Script&>(item);
-            writeFileName("fileName", script.fileName);
-            break;
-        }
-    }
-
-    if (!item.items.empty()) {
-        auto items = QJsonArray();
-        foreach (const Item *item, item.items) {
-            auto sub = QJsonObject();
-            serialize(sub, *item, relativeFilePaths);
-            items.append(sub);
-        }
-        object["items"] = items;
-    }
 }
 
 void SessionModel::deserialize(const QJsonObject &object,
     const QModelIndex &parent, int row, bool updateExisting)
 {
-    const auto readValue = [&](const QJsonValue& value, auto &property) {
-        return fromJsonValue(value, property);
-    };
-    const auto readRefValue = [&](const QJsonValue& value, ItemId &id) {
-        if (fromJsonValue(value, id))
-            mDroppedReferences.append(&id);
-    };
-    const auto read = [&](auto name, auto &property) {
-        readValue(object[name], property);
-    };
-    const auto readFileName = [&](auto name, auto &property) {
-        if (readValue(object[name], property))
-            property = QDir::current().absoluteFilePath(property);
-    };
-    const auto readRef = [&](auto name, ItemId &id) {
-        readRefValue(object[name], id);
-    };
-
     auto type = getTypeByName(object["type"].toString());
     if (!canContainType(parent, type))
         return;
@@ -715,183 +341,38 @@ void SessionModel::deserialize(const QJsonObject &object,
     const auto index = (existingItem ?
         getIndex(existingItem) : insertItem(type, parent, row, id));
 
-    auto &item = getItem(index);
-    read("name", item.name);
+    foreach (const QString &property, object.keys()) {
+        auto value = object[property].toVariant();
 
-    switch (item.type) {
-        case Item::Type::Group: {
-            auto &group = static_cast<Group&>(item);
-            read("inline", group.inlineScope);
-            break;
+        if (property == "name") {
+            setData(getIndex(index, Name), value);
         }
-
-        case Item::Type::Buffer: {
-            auto &buffer = static_cast<Buffer&>(item);
-            readFileName("fileName", buffer.fileName);
-            read("offset", buffer.offset);
-            read("rowCount", buffer.rowCount);
-            break;
+        else if (property == "fileName") {
+            setData(getIndex(index, FileName),
+                QDir::current().absoluteFilePath(value.toString()));
         }
+#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
+        else if (Item::Type::ITEM_TYPE == type && #PROPERTY == property) \
+            setData(getIndex(index, COLUMN_TYPE), value);
 
-        case Item::Type::Column: {
-            auto &column = static_cast<Column&>(item);
-            read("dataType", column.dataType);
-            read("count", column.count);
-            read("padding", column.padding);
-            break;
-        }
+        ADD_EACH_COLUMN_TYPE()
+#undef ADD
+        else if (property == "values") {
+            auto values = object[property].toArray();
+            for (auto i = 0; i < values.size(); i++) {
+                auto value = values[i].toObject();
+                setData(getIndex(index, BindingCurrentValue), i);
+                foreach (const QString &valueProperty, value.keys()) {
+#define ADD(COLUMN_TYPE, PROPERTY) \
+                    if (#PROPERTY == valueProperty) \
+                        setData(getIndex(index, COLUMN_TYPE), \
+                            value[valueProperty].toVariant());
 
-        case Item::Type::Texture: {
-            auto &texture = static_cast<Texture&>(item);
-            readFileName("fileName", texture.fileName);
-            read("target", texture.target);
-            read("format", texture.format);
-            read("width", texture.width);
-            read("height", texture.height);
-            read("depth", texture.depth);
-            read("layers", texture.layers);
-            read("samples", texture.samples);
-            read("flipY", texture.flipY);
-            break;
-        }
-
-        case Item::Type::Image: {
-            auto &image = static_cast<Image&>(item);
-            readFileName("fileName", image.fileName);
-            read("level", image.level);
-            read("layer", image.layer);
-            read("face", image.face);
-            break;
-        }
-
-        case Item::Type::Program: {
-            break;
-        }
-
-        case Item::Type::Shader: {
-            auto &shader = static_cast<Shader&>(item);
-            read("shaderType", shader.shaderType);
-            readFileName("fileName", shader.fileName);
-            break;
-        }
-
-        case Item::Type::Binding: {
-            auto &binding = static_cast<Binding&>(item);
-            read("bindingType", binding.bindingType);
-            read("editor", binding.editor);
-            auto values = object["values"].toArray();
-            binding.valueCount =
-                qMin(values.size(), static_cast<int>(binding.values.size()));
-            for (auto i = 0; i < binding.valueCount; ++i) {
-                const auto v = values[i].toObject();
-                auto &value = binding.values[i];
-                foreach (const QJsonValue &field, v["fields"].toArray())
-                    value.fields.append(field.toString());
-                readRefValue(v["textureId"], value.textureId);
-                readRefValue(v["bufferId"], value.bufferId);
-                readValue(v["level"], value.level);
-                readValue(v["layered"], value.layered);
-                readValue(v["layer"], value.layer);
-                readValue(v["minFilter"], value.minFilter);
-                readValue(v["magFilter"], value.magFilter);
-                readValue(v["wrapModeX"], value.wrapModeX);
-                readValue(v["wrapModeY"], value.wrapModeY);
-                readValue(v["wrapModeZ"], value.wrapModeZ);
-                readValue(v["borderColor"], value.borderColor);
-                readValue(v["subroutine"], value.subroutine);
+                    ADD_EACH_BINDING_VALUE_COLUMN_TYPE()
+#undef ADD
+                }
             }
-            break;
-        }
-
-        case Item::Type::VertexStream: {
-            break;
-        }
-
-        case Item::Type::Attribute: {
-            auto &attribute = static_cast<Attribute&>(item);
-            readRef("bufferId", attribute.bufferId);
-            readRef("columnId", attribute.columnId);
-            read("normalize", attribute.normalize);
-            read("divisor", attribute.divisor);
-            break;
-        }
-
-        case Item::Type::Target: {
-            auto &target = static_cast<Target&>(item);
-            read("frontFace", target.frontFace);
-            read("cullMode", target.cullMode);
-            read("logicOperation", target.logicOperation);
-            read("blendConstant", target.blendConstant);
-            break;
-        }
-
-        case Item::Type::Attachment: {
-            auto &attachment = static_cast<Attachment&>(item);
-            readRef("textureId", attachment.textureId);
-            read("level", attachment.level);
-            read("layered", attachment.layered);
-            read("layer", attachment.layer);
-            read("blendColorEq", attachment.blendColorEq);
-            read("blendColorSource", attachment.blendColorSource);
-            read("blendColorDest", attachment.blendColorDest);
-            read("blendAlphaEq", attachment.blendAlphaEq);
-            read("blendAlphaSource", attachment.blendAlphaSource);
-            read("blendAlphaDest", attachment.blendAlphaDest);
-            read("colorWriteMask", attachment.colorWriteMask);
-            read("depthComparisonFunc", attachment.depthComparisonFunc);
-            read("depthOffsetFactor", attachment.depthOffsetFactor);
-            read("depthOffsetUnits", attachment.depthOffsetUnits);
-            read("depthClamp", attachment.depthClamp);
-            read("depthWrite", attachment.depthWrite);
-            read("stencilFrontComparisonFunc", attachment.stencilFrontComparisonFunc);
-            read("stencilFrontReference", attachment.stencilFrontReference);
-            read("stencilFrontReadMask", attachment.stencilFrontReadMask);
-            read("stencilFrontFailOp", attachment.stencilFrontFailOp);
-            read("stencilFrontDepthFailOp", attachment.stencilFrontDepthFailOp);
-            read("stencilFrontDepthPassOp", attachment.stencilFrontDepthPassOp);
-            read("stencilFrontWriteMask", attachment.stencilFrontWriteMask);
-            read("stencilBackComparisonFunc", attachment.stencilBackComparisonFunc);
-            read("stencilBackReference", attachment.stencilBackReference);
-            read("stencilBackReadMask", attachment.stencilBackReadMask);
-            read("stencilBackFailOp", attachment.stencilBackFailOp);
-            read("stencilBackDepthFailOp", attachment.stencilBackDepthFailOp);
-            read("stencilBackDepthPassOp", attachment.stencilBackDepthPassOp);
-            read("stencilBackWriteMask", attachment.stencilBackWriteMask);
-            break;
-        }
-
-        case Item::Type::Call: {
-            auto &call = static_cast<Call&>(item);
-            read("checked", call.checked);
-            read("callType", call.callType);
-            readRef("programId", call.programId);
-            readRef("vertexStreamId", call.vertexStreamId);
-            readRef("targetId", call.targetId);
-            readRef("indexBufferId", call.indexBufferId);
-            read("primitiveType", call.primitiveType);
-            read("patchVertices", call.patchVertices);
-            read("count", call.count);
-            read("first", call.first);
-            read("baseVertex", call.baseVertex);
-            read("instanceCount", call.instanceCount);
-            read("baseInstance", call.baseInstance);
-            readRef("indirectBufferId", call.indirectBufferId);
-            read("drawCount", call.drawCount);
-            read("workGroupsX", call.workGroupsX);
-            read("workGroupsY", call.workGroupsY);
-            read("workGroupsZ", call.workGroupsZ);
-            readRef("textureId", call.textureId);
-            read("clearColor", call.clearColor);
-            read("clearDepth", call.clearDepth);
-            read("clearStencil", call.clearStencil);
-            readRef("bufferId", call.bufferId);
-            break;
-        }
-
-        case Item::Type::Script: {
-            auto &texture = static_cast<Texture&>(item);
-            readFileName("fileName", texture.fileName);
-            break;
+            setData(getIndex(index, BindingCurrentValue), 0);
         }
     }
 
@@ -899,4 +380,166 @@ void SessionModel::deserialize(const QJsonObject &object,
     if (!items.isEmpty())
         foreach (const QJsonValue &value, items)
             deserialize(value.toObject(), index, -1, updateExisting);
+}
+
+void SessionModel::serialize(QJsonObject &object, const Item &item,
+    bool relativeFilePaths) const
+{
+    object["type"] = getTypeName(item.type);
+    object["id"] = item.id;
+    object["name"] = item.name;
+    if (auto fileItem = castItem<FileItem>(item)) {
+        const auto &fileName = fileItem->fileName;
+        if (!FileDialog::isEmptyOrUntitled(fileName))
+            object["fileName"] = (relativeFilePaths ?
+                QDir::current().relativeFilePath(fileName) : fileName);
+    }
+
+#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
+    if (item.type == Item::Type::ITEM_TYPE && \
+            shouldSerializeColumn(item, COLUMN_TYPE)) \
+        object[#PROPERTY] = toJsonValue(\
+            static_cast<const ITEM_TYPE&>(item).PROPERTY);
+
+    ADD_EACH_COLUMN_TYPE()
+#undef ADD
+
+    if (auto binding = castItem<Binding>(item)) {
+        auto values = QJsonArray();
+        for (auto i = 0; i < binding->valueCount; ++i) {
+            auto value = QJsonObject();
+#define ADD(COLUMN_TYPE, PROPERTY) \
+            if (shouldSerializeColumn(item, COLUMN_TYPE)) \
+                value[#PROPERTY] = toJsonValue( \
+                    binding->values[static_cast<size_t>(i)].PROPERTY);
+
+            ADD_EACH_BINDING_VALUE_COLUMN_TYPE()
+#undef ADD
+            values.append(value);
+        }
+        object["values"] = values;
+    }
+
+    if (!item.items.empty()) {
+        auto items = QJsonArray();
+        foreach (const Item *item, item.items) {
+            auto sub = QJsonObject();
+            serialize(sub, *item, relativeFilePaths);
+            items.append(sub);
+        }
+        object["items"] = items;
+    }
+}
+
+bool SessionModel::shouldSerializeColumn(const Item &item,
+    ColumnType column) const
+{
+    auto result = true;
+    switch (item.type) {
+        case Item::Type::Texture: {
+            const auto &texture = static_cast<const Texture&>(item);
+            auto kind = getKind(texture);
+            result &= (column != TextureHeight || kind.dimensions > 1);
+            result &= (column != TextureDepth || kind.dimensions > 2);
+            result &= (column != TextureLayers || kind.array);
+            result &= (column != TextureSamples || kind.multisample);
+            result &= (column != TextureFlipY || kind.dimensions > 1);
+            break;
+        }
+
+        case Item::Type::Binding: {
+            const auto &binding = static_cast<const Binding&>(item);
+            const auto uniform = (binding.bindingType == Binding::BindingType::Uniform);
+            const auto image = (binding.bindingType == Binding::BindingType::Image);
+            const auto sampler = (binding.bindingType == Binding::BindingType::Sampler);
+            result &= (column != BindingEditor || uniform);
+            result &= (column != BindingValueFields || uniform);
+            result &= (column != BindingValueTextureId || image || sampler);
+            result &= (column != BindingValueLevel || image);
+            result &= (column != BindingValueLayered || image);
+            result &= (column != BindingValueLayer || image);
+            result &= (column != BindingValueMinFilter || sampler);
+            result &= (column != BindingValueMagFilter || sampler);
+            result &= (column != BindingValueWrapModeX || sampler);
+            result &= (column != BindingValueWrapModeY || sampler);
+            result &= (column != BindingValueWrapModeZ || sampler);
+            result &= (column != BindingValueBorderColor || sampler);
+            result &= (column != BindingValueComparisonFunc || sampler);
+            result &= (column != BindingValueBufferId ||
+                (binding.bindingType == Binding::BindingType::Buffer));
+            result &= (column != BindingValueSubroutine ||
+                (binding.bindingType == Binding::BindingType::Subroutine));
+            break;
+        }
+
+        case Item::Type::Attachment: {
+            const auto &attachment = static_cast<const Attachment&>(item);
+            auto kind = TextureKind();
+            if (auto texture = findItem<Texture>(attachment.textureId))
+                kind = getKind(*texture);
+            result &= (column != AttachmentLayered || kind.array);
+            result &= (column != AttachmentLayer || kind.array);
+            result &= (column != AttachmentBlendColorEq || kind.color);
+            result &= (column != AttachmentBlendColorSource || kind.color);
+            result &= (column != AttachmentBlendColorDest || kind.color);
+            result &= (column != AttachmentBlendAlphaEq || kind.color);
+            result &= (column != AttachmentBlendAlphaSource || kind.color);
+            result &= (column != AttachmentBlendAlphaDest || kind.color);
+            result &= (column != AttachmentColorWriteMask || kind.color);
+            result &= (column != AttachmentDepthComparisonFunc || kind.depth);
+            result &= (column != AttachmentDepthOffsetFactor || kind.depth);
+            result &= (column != AttachmentDepthOffsetUnits || kind.depth);
+            result &= (column != AttachmentDepthClamp || kind.depth);
+            result &= (column != AttachmentDepthWrite || kind.depth);
+            result &= (column != AttachmentStencilFrontComparisonFunc || kind.stencil);
+            result &= (column != AttachmentStencilFrontReference || kind.stencil);
+            result &= (column != AttachmentStencilFrontReadMask || kind.stencil);
+            result &= (column != AttachmentStencilFrontFailOp || kind.stencil);
+            result &= (column != AttachmentStencilFrontDepthFailOp || kind.stencil);
+            result &= (column != AttachmentStencilFrontDepthPassOp || kind.stencil);
+            result &= (column != AttachmentStencilFrontWriteMask || kind.stencil);
+            result &= (column != AttachmentStencilBackComparisonFunc || kind.stencil);
+            result &= (column != AttachmentStencilBackReference || kind.stencil);
+            result &= (column != AttachmentStencilBackReadMask || kind.stencil);
+            result &= (column != AttachmentStencilBackFailOp || kind.stencil);
+            result &= (column != AttachmentStencilBackDepthFailOp || kind.stencil);
+            result &= (column != AttachmentStencilBackDepthPassOp || kind.stencil);
+            result &= (column != AttachmentStencilBackWriteMask || kind.stencil);
+            break;
+        }
+
+        case Item::Type::Call: {
+            const auto &call = static_cast<const Call&>(item);
+            const auto kind = getKind(call);
+            const auto callType = call.callType;
+            result &= (column != CallProgramId || kind.draw || kind.compute);
+            result &= (column != CallTargetId || kind.draw);
+            result &= (column != CallVertexStreamId || kind.draw);
+            result &= (column != CallPrimitiveType || kind.draw);
+            result &= (column != CallPatchVertices || kind.drawPatches);
+            result &= (column != CallIndexBufferId || kind.drawIndexed);
+            result &= (column != CallCount || kind.drawDirect);
+            result &= (column != CallFirst || kind.drawDirect);
+            result &= (column != CallInstanceCount || kind.drawDirect);
+            result &= (column != CallBaseInstance || kind.drawDirect);
+            result &= (column != CallBaseVertex || (kind.drawDirect && kind.drawIndexed));
+            result &= (column != CallIndirectBufferId || kind.drawIndirect);
+            result &= (column != CallDrawCount || kind.drawIndirect);
+            result &= (column != CallWorkGroupsX || kind.compute);
+            result &= (column != CallWorkGroupsY || kind.compute);
+            result &= (column != CallWorkGroupsZ || kind.compute);
+            result &= (column != CallTextureId ||
+                callType == Call::CallType::ClearTexture ||
+                callType == Call::CallType::GenerateMipmaps);
+            result &= (column != CallClearColor || callType == Call::CallType::ClearTexture);
+            result &= (column != CallClearDepth || callType == Call::CallType::ClearTexture);
+            result &= (column != CallClearStencil || callType == Call::CallType::ClearTexture);
+            result &= (column != CallBufferId || callType == Call::CallType::ClearBuffer);
+            break;
+        }
+
+        default:
+            break;
+    }
+    return result;
 }

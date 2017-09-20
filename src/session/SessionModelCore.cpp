@@ -1,6 +1,6 @@
 #include "SessionModelCore.h"
+#include "SessionModelPriv.h"
 #include "FileDialog.h"
-#include <QMetaEnum>
 
 namespace {
     template<typename Redo, typename Undo, typename Free>
@@ -64,14 +64,6 @@ namespace {
         const int mId;
         mutable QList<QUndoCommand*> mCommands;
     };
-
-    template<typename F>
-    void forEachItem(const Item &item, const F &function)
-    {
-        function(item);
-        foreach (const Item *child, item.items)
-            forEachItem(*child, function);
-    }
 } // namespace
 
 SessionModelCore::SessionModelCore(QObject *parent)
@@ -162,20 +154,16 @@ QVariant SessionModelCore::data(const QModelIndex &index, int role) const
     const auto &item = getItem(index);
 
     if (role == Qt::CheckStateRole) {
-        auto checked = false;
-        switch (item.type) {
-            case Item::Type::Call:
-                checked = static_cast<const Call&>(item).checked;
-                break;
-            default:
-                return { };
-        }
-        return (checked ? Qt::Checked : Qt::Unchecked);
+        if (auto call = castItem<Call>(item))
+            return (call->checked ? Qt::Checked : Qt::Unchecked);
+        return { };
     }
 
-    switch (static_cast<ColumnType>(index.column())) {
-        case ColumnType::Name: return item.name;
-        case ColumnType::InlineScope: return item.inlineScope;
+    const auto column = static_cast<ColumnType>(index.column());
+
+    switch (column) {
+        case ColumnType::Name:
+            return item.name;
 
         case ColumnType::FileName:
             if (auto fileItem = castItem<FileItem>(item))
@@ -187,87 +175,10 @@ QVariant SessionModelCore::data(const QModelIndex &index, int role) const
             if (item.type == Item::Type::ITEM_TYPE) \
                 return static_cast<const ITEM_TYPE&>(item).PROPERTY; \
             break;
-        ADD(BufferOffset, Buffer, offset)
-        ADD(BufferRowCount, Buffer, rowCount)
-        ADD(ColumnDataType, Column, dataType)
-        ADD(ColumnCount, Column, count)
-        ADD(ColumnPadding, Column, padding)
-        ADD(TextureTarget, Texture, target)
-        ADD(TextureFormat, Texture, format)
-        ADD(TextureWidth, Texture, width)
-        ADD(TextureHeight, Texture, height)
-        ADD(TextureDepth, Texture, depth)
-        ADD(TextureLayers, Texture, layers)
-        ADD(TextureSamples, Texture, samples)
-        ADD(TextureFlipY, Texture, flipY)
-        ADD(ImageLevel, Image, level)
-        ADD(ImageLayer, Image, layer)
-        ADD(ImageFace, Image, face)
-        ADD(ShaderType, Shader, shaderType)
-        ADD(BindingType, Binding, bindingType)
-        ADD(BindingEditor, Binding, editor)
+
+        ADD_EACH_COLUMN_TYPE()
         ADD(BindingValueCount, Binding, valueCount)
         ADD(BindingCurrentValue, Binding, currentValue)
-        ADD(AttributeBufferId, Attribute, bufferId)
-        ADD(AttributeColumnId, Attribute, columnId)
-        ADD(AttributeNormalize, Attribute, normalize)
-        ADD(AttributeDivisor, Attribute, divisor)
-        ADD(AttachmentTextureId, Attachment, textureId)
-        ADD(AttachmentLevel, Attachment, level)
-        ADD(AttachmentLayered, Attachment, layered)
-        ADD(AttachmentLayer, Attachment, layer)
-        ADD(AttachmentBlendColorEq, Attachment, blendColorEq)
-        ADD(AttachmentBlendColorSource, Attachment, blendColorSource)
-        ADD(AttachmentBlendColorDest, Attachment, blendColorDest)
-        ADD(AttachmentBlendAlphaEq, Attachment, blendAlphaEq)
-        ADD(AttachmentBlendAlphaSource, Attachment, blendAlphaSource)
-        ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest)
-        ADD(AttachmentColorWriteMask, Attachment, colorWriteMask)
-        ADD(AttachmentDepthComparisonFunc, Attachment, depthComparisonFunc)
-        ADD(AttachmentDepthOffsetFactor, Attachment, depthOffsetFactor)
-        ADD(AttachmentDepthOffsetUnits, Attachment, depthOffsetUnits)
-        ADD(AttachmentDepthClamp, Attachment, depthClamp)
-        ADD(AttachmentDepthWrite, Attachment, depthWrite)
-        ADD(AttachmentStencilFrontComparisonFunc, Attachment, stencilFrontComparisonFunc)
-        ADD(AttachmentStencilFrontReference, Attachment, stencilFrontReference)
-        ADD(AttachmentStencilFrontReadMask, Attachment, stencilFrontReadMask)
-        ADD(AttachmentStencilFrontFailOp, Attachment, stencilFrontFailOp)
-        ADD(AttachmentStencilFrontDepthFailOp, Attachment, stencilFrontDepthFailOp)
-        ADD(AttachmentStencilFrontDepthPassOp, Attachment, stencilFrontDepthPassOp)
-        ADD(AttachmentStencilFrontWriteMask, Attachment, stencilFrontWriteMask)
-        ADD(AttachmentStencilBackComparisonFunc, Attachment, stencilBackComparisonFunc)
-        ADD(AttachmentStencilBackReference, Attachment, stencilBackReference)
-        ADD(AttachmentStencilBackReadMask, Attachment, stencilBackReadMask)
-        ADD(AttachmentStencilBackFailOp, Attachment, stencilBackFailOp)
-        ADD(AttachmentStencilBackDepthFailOp, Attachment, stencilBackDepthFailOp)
-        ADD(AttachmentStencilBackDepthPassOp, Attachment, stencilBackDepthPassOp)
-        ADD(AttachmentStencilBackWriteMask, Attachment, stencilBackWriteMask)
-        ADD(TargetFrontFace, Target, frontFace)
-        ADD(TargetCullMode, Target, cullMode)
-        ADD(TargetLogicOperation, Target, logicOperation)
-        ADD(TargetBlendConstant, Target, blendConstant)
-        ADD(CallType, Call, callType)
-        ADD(CallProgramId, Call, programId)
-        ADD(CallTargetId, Call, targetId)
-        ADD(CallVertexStreamId, Call, vertexStreamId)
-        ADD(CallPrimitiveType, Call, primitiveType)
-        ADD(CallPatchVertices, Call, patchVertices)
-        ADD(CallCount, Call, count)
-        ADD(CallFirst, Call, first)
-        ADD(CallIndexBufferId, Call, indexBufferId)
-        ADD(CallBaseVertex, Call, baseVertex)
-        ADD(CallInstanceCount, Call, instanceCount)
-        ADD(CallBaseInstance, Call, baseInstance)
-        ADD(CallIndirectBufferId, Call, indirectBufferId)
-        ADD(CallDrawCount, Call, drawCount)
-        ADD(CallWorkGroupsX, Call, workGroupsX)
-        ADD(CallWorkGroupsY, Call, workGroupsY)
-        ADD(CallWorkGroupsZ, Call, workGroupsZ)
-        ADD(CallBufferId, Call, bufferId)
-        ADD(CallTextureId, Call, textureId)
-        ADD(CallClearColor, Call, clearColor)
-        ADD(CallClearDepth, Call, clearDepth)
-        ADD(CallClearStencil, Call, clearStencil)
 #undef ADD
 
 #define ADD(COLUMN_TYPE, PROPERTY) \
@@ -278,20 +189,8 @@ QVariant SessionModelCore::data(const QModelIndex &index, int role) const
                 return binding.values[current].PROPERTY; \
             } \
             break;
-        ADD(BindingValueFields, fields)
-        ADD(BindingValueTextureId, textureId)
-        ADD(BindingValueBufferId, bufferId)
-        ADD(BindingValueLevel, level)
-        ADD(BindingValueLayered, layered)
-        ADD(BindingValueLayer, layer)
-        ADD(BindingValueMinFilter, minFilter)
-        ADD(BindingValueMagFilter, magFilter)
-        ADD(BindingValueWrapModeX, wrapModeX)
-        ADD(BindingValueWrapModeY, wrapModeY)
-        ADD(BindingValueWrapModeZ, wrapModeZ)
-        ADD(BindingValueBorderColor, borderColor)
-        ADD(BindingValueComparisonFunc, comparisonFunc)
-        ADD(BindingValueSubroutine, subroutine)
+
+        ADD_EACH_BINDING_VALUE_COLUMN_TYPE()
 #undef ADD
 
         case FirstBindingValue:
@@ -308,7 +207,7 @@ bool SessionModelCore::setData(const QModelIndex &index,
         role != Qt::CheckStateRole)
         return false;
 
-    auto &item = getItem(index);
+    auto &item = getItemRef(index);
 
     if (role == Qt::CheckStateRole) {
         auto checked = (value == Qt::Checked);
@@ -329,10 +228,6 @@ bool SessionModelCore::setData(const QModelIndex &index,
             undoableAssignment(index, &item.name, value.toString());
             return true;
 
-        case ColumnType::InlineScope:
-            undoableAssignment(index, &item.inlineScope, value.toBool());
-            return true;
-
         case ColumnType::FileName:
             if (castItem<FileItem>(item)) {
                 undoableFileNameAssignment(index,
@@ -340,97 +235,6 @@ bool SessionModelCore::setData(const QModelIndex &index,
                 return true;
             }
             break;
-
-#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY, TO_TYPE) \
-        case ColumnType::COLUMN_TYPE: \
-            if (item.type == Item::Type::ITEM_TYPE) { \
-                undoableAssignment(index, \
-                    &static_cast<ITEM_TYPE&>(item).PROPERTY, value.TO_TYPE()); \
-                return true; \
-            } \
-            break;
-
-        ADD(BufferOffset, Buffer, offset, toInt)
-        ADD(BufferRowCount, Buffer, rowCount, toInt)
-        ADD(ColumnDataType, Column, dataType, toInt)
-        ADD(ColumnCount, Column, count, toInt)
-        ADD(ColumnPadding, Column, padding, toInt)
-        ADD(TextureTarget, Texture, target, toInt)
-        ADD(TextureFormat, Texture, format, toInt)
-        ADD(TextureWidth, Texture, width, toInt)
-        ADD(TextureHeight, Texture, height, toInt)
-        ADD(TextureDepth, Texture, depth, toInt)
-        ADD(TextureLayers, Texture, layers, toInt)
-        ADD(TextureSamples, Texture, samples, toInt)
-        ADD(TextureFlipY, Texture, flipY, toBool)
-        ADD(ImageLevel, Image, level, toInt)
-        ADD(ImageLayer, Image, layer, toInt)
-        ADD(ImageFace, Image, face, toInt)
-        ADD(ShaderType, Shader, shaderType, toInt)
-        ADD(BindingType, Binding, bindingType, toInt)
-        ADD(BindingEditor, Binding, editor, toInt)
-        ADD(BindingValueCount, Binding, valueCount, toInt)
-        ADD(AttributeBufferId, Attribute, bufferId, toInt)
-        ADD(AttributeColumnId, Attribute, columnId, toInt)
-        ADD(AttributeNormalize, Attribute, normalize, toBool)
-        ADD(AttributeDivisor, Attribute, divisor, toInt)
-        ADD(AttachmentTextureId, Attachment, textureId, toInt)
-        ADD(AttachmentLevel, Attachment, level, toInt)
-        ADD(AttachmentLayered, Attachment, layered, toBool)
-        ADD(AttachmentLayer, Attachment, layer, toInt)
-        ADD(AttachmentBlendColorEq, Attachment, blendColorEq, toInt)
-        ADD(AttachmentBlendColorSource, Attachment, blendColorSource, toInt)
-        ADD(AttachmentBlendColorDest, Attachment, blendColorDest, toInt)
-        ADD(AttachmentBlendAlphaEq, Attachment, blendAlphaEq, toInt)
-        ADD(AttachmentBlendAlphaSource, Attachment, blendAlphaSource, toInt)
-        ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest, toInt)
-        ADD(AttachmentColorWriteMask, Attachment, colorWriteMask, toUInt)
-        ADD(AttachmentDepthComparisonFunc, Attachment, depthComparisonFunc, toInt)
-        ADD(AttachmentDepthOffsetFactor, Attachment, depthOffsetFactor, toFloat)
-        ADD(AttachmentDepthOffsetUnits, Attachment, depthOffsetUnits, toFloat)
-        ADD(AttachmentDepthClamp, Attachment, depthClamp, toBool)
-        ADD(AttachmentDepthWrite, Attachment, depthWrite, toBool)
-        ADD(AttachmentStencilFrontComparisonFunc, Attachment, stencilFrontComparisonFunc, toInt)
-        ADD(AttachmentStencilFrontReference, Attachment, stencilFrontReference, toUInt)
-        ADD(AttachmentStencilFrontReadMask, Attachment, stencilFrontReadMask, toUInt)
-        ADD(AttachmentStencilFrontFailOp, Attachment, stencilFrontFailOp, toInt)
-        ADD(AttachmentStencilFrontDepthFailOp, Attachment, stencilFrontDepthFailOp, toInt)
-        ADD(AttachmentStencilFrontDepthPassOp, Attachment, stencilFrontDepthPassOp, toInt)
-        ADD(AttachmentStencilFrontWriteMask, Attachment, stencilFrontWriteMask, toUInt)
-        ADD(AttachmentStencilBackComparisonFunc, Attachment, stencilBackComparisonFunc, toInt)
-        ADD(AttachmentStencilBackReference, Attachment, stencilBackReference, toUInt)
-        ADD(AttachmentStencilBackReadMask, Attachment, stencilBackReadMask, toUInt)
-        ADD(AttachmentStencilBackFailOp, Attachment, stencilBackFailOp, toInt)
-        ADD(AttachmentStencilBackDepthFailOp, Attachment, stencilBackDepthFailOp, toInt)
-        ADD(AttachmentStencilBackDepthPassOp, Attachment, stencilBackDepthPassOp, toInt)
-        ADD(AttachmentStencilBackWriteMask, Attachment, stencilBackWriteMask, toUInt)
-        ADD(TargetFrontFace, Target, frontFace, toInt)
-        ADD(TargetCullMode, Target, cullMode, toInt)
-        ADD(TargetLogicOperation, Target, logicOperation, toInt)
-        ADD(TargetBlendConstant, Target, blendConstant, value<QColor>)
-        ADD(CallType, Call, callType, toInt)
-        ADD(CallProgramId, Call, programId, toInt)
-        ADD(CallTargetId, Call, targetId, toInt)
-        ADD(CallVertexStreamId, Call, vertexStreamId, toInt)
-        ADD(CallPrimitiveType, Call, primitiveType, toInt)
-        ADD(CallPatchVertices, Call, patchVertices, toInt)
-        ADD(CallCount, Call, count, toInt)
-        ADD(CallFirst, Call, first, toInt)
-        ADD(CallIndexBufferId, Call, indexBufferId, toInt)
-        ADD(CallBaseVertex, Call, baseVertex, toInt)
-        ADD(CallInstanceCount, Call, instanceCount, toInt)
-        ADD(CallBaseInstance, Call, baseInstance, toInt)
-        ADD(CallIndirectBufferId, Call, indirectBufferId, toInt)
-        ADD(CallDrawCount, Call, drawCount, toInt)
-        ADD(CallWorkGroupsX, Call, workGroupsX, toInt)
-        ADD(CallWorkGroupsY, Call, workGroupsY, toInt)
-        ADD(CallWorkGroupsZ, Call, workGroupsZ, toInt)
-        ADD(CallBufferId, Call, bufferId, toInt)
-        ADD(CallTextureId, Call, textureId, toInt)
-        ADD(CallClearColor, Call, clearColor, value<QColor>)
-        ADD(CallClearDepth, Call, clearDepth, toFloat)
-        ADD(CallClearStencil, Call, clearStencil, toInt)
-#undef ADD
 
         case ColumnType::BindingCurrentValue:
             if (item.type == Item::Type::Binding) {
@@ -447,30 +251,33 @@ bool SessionModelCore::setData(const QModelIndex &index,
             }
             break;
 
-#define ADD(COLUMN_TYPE, PROPERTY, TO_TYPE) \
+#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
+        case ColumnType::COLUMN_TYPE: \
+            if (item.type == Item::Type::ITEM_TYPE) { \
+                auto &property = static_cast<ITEM_TYPE&>(item).PROPERTY; \
+                undoableAssignment(index, &property, \
+                    fromVariant<std::decay_t<decltype(property)>>(value)); \
+                return true; \
+            } \
+            break;
+
+        ADD_EACH_COLUMN_TYPE()
+        ADD(BindingValueCount, Binding, valueCount)
+#undef ADD
+
+#define ADD(COLUMN_TYPE, PROPERTY) \
         case ColumnType::COLUMN_TYPE: \
             if (item.type == Item::Type::Binding) { \
                 auto &binding = static_cast<Binding&>(item); \
                 const auto current = static_cast<size_t>(binding.currentValue); \
-                undoableAssignment(index, &binding.values[current].PROPERTY, \
-                    value.TO_TYPE()); \
+                auto &property = binding.values[current].PROPERTY; \
+                undoableAssignment(index, &property, \
+                    fromVariant<std::decay_t<decltype(property)>>(value)); \
                 return true; \
             } \
             break;
-        ADD(BindingValueFields, fields, toStringList)
-        ADD(BindingValueTextureId, textureId, toInt)
-        ADD(BindingValueBufferId, bufferId, toInt)
-        ADD(BindingValueLevel, level, toInt)
-        ADD(BindingValueLayered, layered, toBool)
-        ADD(BindingValueLayer, layer, toInt)
-        ADD(BindingValueMinFilter, minFilter, toInt)
-        ADD(BindingValueMagFilter, magFilter, toInt)
-        ADD(BindingValueWrapModeX, wrapModeX, toInt)
-        ADD(BindingValueWrapModeY, wrapModeY, toInt)
-        ADD(BindingValueWrapModeZ, wrapModeZ, toInt)
-        ADD(BindingValueBorderColor, borderColor, value<QColor>)
-        ADD(BindingValueComparisonFunc, comparisonFunc, toInt)
-        ADD(BindingValueSubroutine, subroutine, toString)
+
+        ADD_EACH_BINDING_VALUE_COLUMN_TYPE()
 #undef ADD
 
         case FirstBindingValue:
@@ -483,7 +290,7 @@ bool SessionModelCore::setData(const QModelIndex &index,
 void SessionModelCore::insertItem(Item *item, const QModelIndex &parent, int row)
 {
     Q_ASSERT(item && !item->parent);
-    auto &parentItem = getItem(parent);
+    auto &parentItem = getItemRef(parent);
     if (row < 0 || row > parentItem.items.size())
         row = parentItem.items.size();
 
@@ -545,7 +352,7 @@ void SessionModelCore::deleteItem(const QModelIndex &index)
         deleteItem(this->index(i, 0, index));
 
     if (index.isValid()) {
-        auto &item = getItem(index);
+        auto &item = getItemRef(index);
         undoableRemoveItem(&item.parent->items, &item, index);
     }
 }
@@ -571,6 +378,12 @@ QModelIndex SessionModelCore::getIndex(const Item *item, int column) const
     return createIndex(item->parent->items.indexOf(itemPtr), column, itemPtr);
 }
 
+QModelIndex SessionModelCore::getIndex(const QModelIndex &rowIndex,
+    ColumnType column) const
+{
+    return index(rowIndex.row(), column, rowIndex.parent());
+}
+
 const Item &SessionModelCore::getItem(const QModelIndex &index) const
 {
     if (index.isValid())
@@ -578,7 +391,7 @@ const Item &SessionModelCore::getItem(const QModelIndex &index) const
     return *mRoot;
 }
 
-Item &SessionModelCore::getItem(const QModelIndex &index)
+Item &SessionModelCore::getItemRef(const QModelIndex &index)
 {
     if (index.isValid())
         return *static_cast<Item*>(index.internalPointer());

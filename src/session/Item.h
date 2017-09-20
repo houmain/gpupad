@@ -21,7 +21,6 @@ struct Item
     Item *parent{ };
     QList<Item*> items;
     QString name{ };
-    bool inlineScope{ };
 };
 
 struct FileItem : Item
@@ -31,6 +30,7 @@ struct FileItem : Item
 
 struct Group : Item
 {
+    bool inlineScope{ };
 };
 
 struct Column : Item

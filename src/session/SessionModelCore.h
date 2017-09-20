@@ -1,5 +1,5 @@
-#ifndef SessionModelCore_H
-#define SessionModelCore_H
+#ifndef SESSIONMODELCORE_H
+#define SESSIONMODELCORE_H
 
 #include "ItemFunctions.h"
 #include <QAbstractItemModel>
@@ -12,8 +12,9 @@ public:
     enum ColumnType
     {
         Name = 0,
-        InlineScope,
         FileName,
+
+        GroupInlineScope,
         BufferOffset,
         BufferRowCount,
         ColumnDataType,
@@ -33,24 +34,6 @@ public:
         ShaderType,
         BindingType,
         BindingEditor,
-        BindingValueCount,
-        BindingCurrentValue,
-        FirstBindingValue,
-        BindingValueFields,
-        BindingValueTextureId,
-        BindingValueBufferId,
-        BindingValueLevel,
-        BindingValueLayered,
-        BindingValueLayer,
-        BindingValueMinFilter,
-        BindingValueMagFilter,
-        BindingValueWrapModeX,
-        BindingValueWrapModeY,
-        BindingValueWrapModeZ,
-        BindingValueBorderColor,
-        BindingValueComparisonFunc,
-        BindingValueSubroutine,
-        LastBindingValue,
         AttributeBufferId,
         AttributeColumnId,
         AttributeNormalize,
@@ -89,6 +72,7 @@ public:
         TargetCullMode,
         TargetLogicOperation,
         TargetBlendConstant,
+        CallChecked,
         CallType,
         CallProgramId,
         CallTargetId,
@@ -111,6 +95,25 @@ public:
         CallClearColor,
         CallClearDepth,
         CallClearStencil,
+
+        BindingValueCount,
+        BindingCurrentValue,
+        FirstBindingValue,
+        BindingValueFields,
+        BindingValueTextureId,
+        BindingValueBufferId,
+        BindingValueLevel,
+        BindingValueLayered,
+        BindingValueLayer,
+        BindingValueMinFilter,
+        BindingValueMagFilter,
+        BindingValueWrapModeX,
+        BindingValueWrapModeY,
+        BindingValueWrapModeZ,
+        BindingValueBorderColor,
+        BindingValueComparisonFunc,
+        BindingValueSubroutine,
+        LastBindingValue,
     };
 
     explicit SessionModelCore(QObject *parent = 0);
@@ -136,18 +139,29 @@ public:
         int row = -1, ItemId id = 0);
     void deleteItem(const QModelIndex &index);
     QModelIndex getIndex(const Item *item, int column = 0) const;
+    QModelIndex getIndex(const QModelIndex &index, ColumnType column) const;
     const Item* findItem(ItemId id) const;
     const Item &getItem(const QModelIndex &index) const;
     ItemId getItemId(const QModelIndex &index) const;
     Item::Type getItemType(const QModelIndex &index) const;
 
+    template<typename T>
+    const T *item(const QModelIndex &index) const
+    {
+        return castItem<T>(&getItem(index));
+    }
+
+    template<typename T>
+    const T *findItem(ItemId id) const
+    {
+        return castItem<T>(SessionModelCore::findItem(id));
+    }
+
 protected:
     ItemId getNextItemId();
 
-    // TODO: make private
-    Item &getItem(const QModelIndex &index);
-
 private:
+    Item &getItemRef(const QModelIndex &index);
     void insertItem(Item *item, const QModelIndex &parent, int row = -1);
     void insertItem(QList<Item*> *list, Item *item,
         const QModelIndex &parent, int row);
@@ -170,4 +184,4 @@ private:
     QUndoStack mUndoStack;
 };
 
-#endif // SessionModelCore_H
+#endif // SESSIONMODELCORE_H

@@ -40,20 +40,6 @@ public:
     bool save(const QString &fileName);
     bool load(const QString &fileName);
 
-    template<typename T>
-    const T *item(const QModelIndex &index) const
-    {
-        return castItem<T>(&getItem(index));
-    }
-
-    using SessionModelCore::findItem;
-
-    template<typename T>
-    const T *findItem(ItemId id) const
-    {
-        return castItem<T>(SessionModelCore::findItem(id));
-    }
-
     template<typename F> // F(const Item&)
     void forEachItem(const F &function) const
     {
@@ -69,6 +55,7 @@ public:
     }
 
 private:
+    bool shouldSerializeColumn(const Item &item, ColumnType column) const;
     const QJsonDocument *parseClipboard(const QMimeData *data) const;
     void serialize(QJsonObject &object, const Item &item, bool relativeFilePaths) const;
     void deserialize(const QJsonObject &object, const QModelIndex &parent, int row,
@@ -79,9 +66,13 @@ private:
     {
         function(item);
 
-        foreach (const Item *child, item.items)
-            if (!scoped || item.inlineScope)
+        foreach (const Item *child, item.items) {
+            auto visible = true;
+            if (scoped && item.type == Item::Type::Group)
+                visible = castItem<Group>(item)->inlineScope;
+            if (visible)
                 forEachItemRec(*child, scoped, function);
+        }
     }
 
     template<typename F> // F(const Item&)
@@ -105,7 +96,7 @@ private:
     QColor mActiveColor;
     QFont mActiveCallFont;
     QMap<ItemId, ItemId> mDroppedIdsReplaced;
-    QList<ItemId*> mDroppedReferences;
+    QList<QModelIndex> mDroppedReferences;
     mutable QList<QModelIndex> mDraggedIndices;
     mutable const QMimeData *mClipboardData{ };
     mutable QScopedPointer<QJsonDocument> mClipboardJsonDocument;
