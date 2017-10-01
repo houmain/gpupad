@@ -76,15 +76,16 @@ JsHighlighter::JsHighlighter(QObject *parent)
     rule.format = numberFormat;
     mHighlightingRules.append(rule);
 
-    rule.pattern = QRegExp("\".*\"");
+    auto quotation = QString("%1([^%1]*(\\\\%1[^%1]*)*)(%1|$)");
+    rule.pattern = QRegExp(quotation.arg('"'));
     rule.format = quotationFormat;
     mHighlightingRules.append(rule);
 
-    rule.pattern = QRegExp("\'.*\'");
+    rule.pattern = QRegExp(quotation.arg('\''));
     rule.format = quotationFormat;
     mHighlightingRules.append(rule);
 
-    rule.pattern = QRegExp("//[^\n]*");
+    rule.pattern = QRegExp("//.*");
     rule.format = singleLineCommentFormat;
     mHighlightingRules.append(rule);
 

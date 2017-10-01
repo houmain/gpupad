@@ -20,13 +20,13 @@ protected:
 private slots:
     void tabbedDockChanged(int index);
     void tabbedDockClicked(int index);
+    void updateDocks();
 
 private:
-    void updateDocks();
     void updateTabBar(QTabBar *tabBar);
 
+    QTimer *mUpdateDocksTimer{ };
     QList<QMetaObject::Connection> mDockConnections;
-    bool mDocksInvalidated{ };
 };
 
 #endif // DOCKWINDOW_H

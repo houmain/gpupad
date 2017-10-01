@@ -91,7 +91,7 @@ private:
     bool mColumnsInvalidated{ true };
     QList<Column> mColumns;
     int mOffset{ };
-    int mStride{ 16 };
+    int mStride{ };
     int mRowCount{ };
     int mPrevFirstRow{ };
 };

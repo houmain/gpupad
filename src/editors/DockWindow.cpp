@@ -13,13 +13,14 @@ namespace {
     }
 } // namespace
 
-DockWindow::DockWindow(QWidget *parent) : QMainWindow(parent)
+DockWindow::DockWindow(QWidget *parent)
+    : QMainWindow(parent)
 {
+    mUpdateDocksTimer = new QTimer(this);
 }
 
 DockWindow::~DockWindow()
 {
-    Q_ASSERT(mDocksInvalidated == false);
 }
 
 bool DockWindow::closeDock(QDockWidget *dock)
@@ -30,14 +31,11 @@ bool DockWindow::closeDock(QDockWidget *dock)
 
 bool DockWindow::event(QEvent *event)
 {
-    if (!mDocksInvalidated) {
+    if (mUpdateDocksTimer && !mUpdateDocksTimer->isActive()) {
         if (event->type() == QEvent::ChildAdded ||
             event->type() == QEvent::ChildRemoved) {
-            mDocksInvalidated = true;
-            QTimer::singleShot(0, [this]() {
-                updateDocks();
-                mDocksInvalidated = false;
-            });
+            mUpdateDocksTimer->singleShot(0,
+                this, &DockWindow::updateDocks);
         }
     }
     return QMainWindow::event(event);

@@ -55,6 +55,7 @@ BinaryEditor::BinaryEditor(QString fileName, QWidget *parent)
     mEditableRegion->setStyleSheet(
         "QTableView { margin-bottom: -1px; margin-right: -1px; }");
 
+    setStride();
     refresh();
 }
 
@@ -146,19 +147,21 @@ auto BinaryEditor::getColumn(int index) const -> Column
 
 void BinaryEditor::refresh()
 {
+    const auto row = (mOffset + mStride - 1) / mStride;
+    auto rowLength = 0;
+    for (const auto &column : mColumns)
+        rowLength += column.arity * getTypeSize(column.type) + column.padding;
+    const auto rowCount = (rowLength ? mRowCount : 0);
+    const auto offset = (rowLength ? mOffset : 0);
+
     auto prevModel = model();
-    setModel(new HexModel(&mData, mOffset, mStride, mRowCount, this));
+    setModel(new HexModel(&mData, offset, mStride, rowCount, this));
     delete prevModel;
 
     clearSpans();
     setRowHeight(mPrevFirstRow, mRowHeight);
 
-    const auto row = (mOffset + mStride - 1) / mStride;
-    auto rowLength = 0;
-    for (const auto &column : mColumns)
-        rowLength += column.arity * getTypeSize(column.type) + column.padding;
-
-    const auto empty = (!rowLength || !mRowCount);
+    const auto empty = (!rowCount);
     mEditableRegion->setVisible(!empty);
     if (!empty) {
         setSpan(row, 0, mRowCount, rowLength);

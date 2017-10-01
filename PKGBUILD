@@ -27,7 +27,7 @@ build() {
   qbs setup-qt /usr/bin/qmake ${pkgname}
   qbs config defaultProfile ${pkgname}
   qbs config profiles.${pkgname}.baseProfile gcc
-  qbs build -d "../${pkgname}-build" cpp.optimization:small release
+  qbs build -d "../${pkgname}-build" release
 }
 
 package() {

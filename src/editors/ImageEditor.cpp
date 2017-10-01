@@ -176,6 +176,7 @@ void ImageEditor::setBounds(QRect bounds)
     if (bounds == mBounds)
         return;
     mBounds = bounds;
+    bounds.adjust(-1, -1, 0, 0);
     const auto max = 65536;
     auto outside = QPainterPath();
     outside.addRect(-max, -max, 2 * max, 2 * max);

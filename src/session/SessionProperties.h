@@ -44,7 +44,7 @@ public:
     QModelIndex currentModelIndex(int column = 0) const;
     QString currentItemName() const;
     QString currentItemFileName() const;
-    IEditor* openItemEditor(const QModelIndex &index);
+    IEditor *openItemEditor(const QModelIndex &index);
     void setCurrentModelIndex(const QModelIndex &index);
     void setCurrentItemFile(const QString &fileName);
     void saveCurrentItemFileAs(FileDialog::Options options);
