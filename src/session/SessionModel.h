@@ -34,7 +34,7 @@ public:
     void setItemActive(ItemId id, bool active);
 
     QJsonArray getJson(const QModelIndexList &indexes) const;
-    void dropJson(const QJsonDocument &document,
+    void dropJson(const QJsonArray &json,
         int row, const QModelIndex &parent, bool updateExisting);
     void clear();
     bool save(const QString &fileName);
@@ -56,7 +56,7 @@ public:
 
 private:
     bool shouldSerializeColumn(const Item &item, ColumnType column) const;
-    const QJsonDocument *parseClipboard(const QMimeData *data) const;
+    const QJsonArray *parseClipboard(const QMimeData *data) const;
     void serialize(QJsonObject &object, const Item &item, bool relativeFilePaths) const;
     void deserialize(const QJsonObject &object, const QModelIndex &parent, int row,
         bool updateExisting);
@@ -98,8 +98,8 @@ private:
     QMap<ItemId, ItemId> mDroppedIdsReplaced;
     QList<QModelIndex> mDroppedReferences;
     mutable QList<QModelIndex> mDraggedIndices;
-    mutable const QMimeData *mClipboardData{ };
-    mutable QScopedPointer<QJsonDocument> mClipboardJsonDocument;
+    mutable const void *mClipboardData{ };
+    mutable QJsonArray mClipboardJson;
 };
 
 #endif // SESSIONMODEL_H

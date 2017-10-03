@@ -144,16 +144,17 @@ Qt::DropActions SessionModel::supportedDropActions() const
     return Qt::CopyAction | Qt::MoveAction;
 }
 
-const QJsonDocument *SessionModel::parseClipboard(const QMimeData *data) const
+const QJsonArray *SessionModel::parseClipboard(const QMimeData *data) const
 {
     if (data != mClipboardData) {
         mClipboardData = data;
-        mClipboardJsonDocument.reset();
         auto document = QJsonDocument::fromJson(data->text().toUtf8());
-        if (!document.isNull())
-            mClipboardJsonDocument.reset(new QJsonDocument(std::move(document)));
+        mClipboardJson =
+            document.isNull() ? QJsonArray() :
+            document.isArray() ? document.array() :
+            QJsonArray({ document.object() });
     }
-    return mClipboardJsonDocument.data();
+    return (mClipboardJson.empty() ? nullptr : &mClipboardJson);
 }
 
 bool SessionModel::canDropMimeData(const QMimeData *data,
@@ -168,16 +169,11 @@ bool SessionModel::canDropMimeData(const QMimeData *data,
         return getTypeByName(object["item"].toString());
     };
 
-    if (auto document = parseClipboard(data)) {
-        if (document->isArray()) {
-            foreach (const QJsonValue &value, document->array())
-                if (!canContainType(parent, getType(value.toObject())))
-                    return false;
-            return true;
-        }
-        else if (document->isObject()) {
-            return canContainType(parent, getType(document->object()));
-        }
+    if (auto json = parseClipboard(data)) {
+        foreach (const QJsonValue &value, *json)
+            if (!canContainType(parent, getType(value.toObject())))
+                return false;
+        return true;
     }
     return false;
 }
@@ -300,16 +296,11 @@ QJsonArray SessionModel::getJson(const QModelIndexList &indexes) const
     return itemArray;
 }
 
-void SessionModel::dropJson(const QJsonDocument &document,
+void SessionModel::dropJson(const QJsonArray &json,
     int row, const QModelIndex &parent, bool updateExisting)
 {
-    if (document.isArray()) {
-        foreach (const QJsonValue &value, document.array())
-            deserialize(value.toObject(), parent, row++, updateExisting);
-    }
-    else if (document.isObject()) {
-        deserialize(document.object(), parent, row, updateExisting);
-    }
+    foreach (const QJsonValue &value, json)
+        deserialize(value.toObject(), parent, row++, updateExisting);
 
     // fixup item references
     foreach (ItemId prevId, mDroppedIdsReplaced.keys())
