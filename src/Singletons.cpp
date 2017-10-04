@@ -23,6 +23,8 @@ bool onMainThread()
 Renderer &Singletons::renderer()
 {
     Q_ASSERT(onMainThread());
+    if (!sInstance->mRenderer)
+        sInstance->mRenderer.reset(new Renderer());
     return *sInstance->mRenderer;
 }
 
@@ -75,23 +77,25 @@ FindReplaceBar &Singletons::findReplaceBar()
 CustomActions &Singletons::customActions()
 {
     Q_ASSERT(onMainThread());
+    if (!sInstance->mCustomActions)
+        sInstance->mCustomActions.reset(
+            new CustomActions(sInstance->mMainWindow));
     return *sInstance->mCustomActions;
 }
 
 Singletons::Singletons(QMainWindow *window)
+    : mMainWindow(window)
+    , mMessageList(new MessageList())
+    , mSettings(new Settings())
+    , mFileCache(new FileCache())
+    , mFileDialog(new FileDialog(window))
+    , mEditorManager(new EditorManager())
+    , mSessionModel(new SessionModel())
+    , mFindReplaceBar(new FindReplaceBar())
 {
     Q_ASSERT(onMainThread());
     sInstance = this;
-    mRenderer.reset(new Renderer());
-    mMessageList.reset(new MessageList());
-    mSettings.reset(new Settings());
-    mFileCache.reset(new FileCache());
-    mFileDialog.reset(new FileDialog(window));
-    mEditorManager.reset(new EditorManager());
-    mSessionModel.reset(new SessionModel());
     mSynchronizeLogic.reset(new SynchronizeLogic());
-    mFindReplaceBar.reset(new FindReplaceBar());
-    mCustomActions.reset(new CustomActions(window));
 }
 
 Singletons::~Singletons() = default;

@@ -37,6 +37,7 @@ public:
 private:
     static Singletons *sInstance;
 
+    QMainWindow *mMainWindow;
     QScopedPointer<Renderer> mRenderer;
     QScopedPointer<MessageList> mMessageList;
     QScopedPointer<Settings> mSettings;
