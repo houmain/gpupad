@@ -2,6 +2,7 @@
 #include "ui_MainWindow.h"
 #include "session/SessionEditor.h"
 #include "session/SessionProperties.h"
+#include "session/SessionModel.h"
 #include "Singletons.h"
 #include "MessageWindow.h"
 #include "MessageList.h"
@@ -191,11 +192,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->actionEvalSteady, &QAction::toggled,
         this, &MainWindow::updateEvaluationMode);
 
-    auto& customActions = Singletons::customActions();
-    connect(mUi->actionManageCustomActions, &QAction::triggered,
-        &customActions, &QDialog::show);
     connect(mUi->menuCustomActions, &QMenu::aboutToShow,
         this, &MainWindow::updateCustomActionsMenu);
+    connect(mUi->actionManageCustomActions, &QAction::triggered,
+        &Singletons::customActions(), &QDialog::show, Qt::UniqueConnection);
 
     auto evalIntervalActionGroup = new QActionGroup(this);
     mUi->actionEvalIntervalSlow->setActionGroup(evalIntervalActionGroup);
@@ -529,13 +529,16 @@ void MainWindow::openRecentFile()
 }
 
 void MainWindow::updateCustomActionsMenu()
-{
-    auto actions = Singletons::customActions().getApplicableActions();
-    auto manage = mUi->menuCustomActions->actions().last();
+{    
+    auto& customActions = Singletons::customActions();
+    auto& model = Singletons::sessionModel();
+    auto selection = mSessionEditor->selectionModel()->selectedIndexes();
+    customActions.setSelection(model.getJson(selection));
+
     mUi->menuCustomActions->clear();
-    mUi->menuCustomActions->addActions(actions);
+    mUi->menuCustomActions->addActions(customActions.getApplicableActions());
     mUi->menuCustomActions->addSeparator();
-    mUi->menuCustomActions->addAction(manage);
+    mUi->menuCustomActions->addAction(mUi->actionManageCustomActions);
 }
 
 void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,

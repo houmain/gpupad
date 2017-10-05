@@ -2,7 +2,6 @@
 #include "Singletons.h"
 #include "session/SessionModel.h"
 #include "FileDialog.h"
-#include <QJSEngine>
 
 namespace {
     QMutex gMutex;
@@ -38,7 +37,10 @@ bool operator==(const ScriptEngine::Script &a,
             a.source == b.source);
 }
 
-ScriptEngine::ScriptEngine() = default;
+ScriptEngine::ScriptEngine()
+{
+    reset();
+}
 
 ScriptEngine::~ScriptEngine() = default;
 
@@ -71,7 +73,7 @@ void ScriptEngine::reset(QList<Script> scripts)
 
     redirectConsoleMessages(mMessages, [&]() {
         foreach (const Script &script, scripts) {
-            auto result = mJsEngine->evaluate(script.source, script.fileName);
+            auto result = evaluate(script.source, script.fileName);
             if (result.isError())
                 mMessages += Singletons::messageList().insert(
                     script.fileName, result.property("lineNumber").toInt(),
@@ -81,40 +83,41 @@ void ScriptEngine::reset(QList<Script> scripts)
     mScripts = scripts;
 }
 
+QJSValue ScriptEngine::evaluate(const QString &program, const QString &fileName)
+{
+    return mJsEngine->evaluate(program, fileName);
+}
+
 void ScriptEngine::setGlobal(const QString &name, QObject *object)
 {
-    if (!mJsEngine)
-        reset();
-
     mJsEngine->globalObject().setProperty(name, mJsEngine->newQObject(object));
 }
 
-QVariant ScriptEngine::evaluate(const QString &expression,
+QJSValue ScriptEngine::getGlobal(const QString &name)
+{
+    return mJsEngine->globalObject().property(name);
+}
+
+QJSValue ScriptEngine::call(QJSValue& callable, const QJSValueList &args,
     ItemId itemId, MessagePtrSet &messages)
 {
-    if (!mJsEngine)
-        reset();
-
     auto result = QJSValue();
     redirectConsoleMessages(messages, [&]() {
-        result = mJsEngine->evaluate(expression);
+        result = callable.call(args);
         if (result.isError())
             messages += Singletons::messageList().insert(
                 itemId, MessageType::ScriptError, result.toString());
     });
-    return result.toVariant();
+    return result;
 }
 
 QStringList ScriptEngine::evaluateValue(const QStringList &fieldExpressions,
     ItemId itemId, MessagePtrSet &messages)
 {
-    if (!mJsEngine)
-        reset();
-
     auto fields = QStringList();
     redirectConsoleMessages(messages, [&]() {
         foreach (QString fieldExpression, fieldExpressions) {
-            auto result = mJsEngine->evaluate(fieldExpression);
+            auto result = evaluate(fieldExpression);
             if (result.isError())
                 messages += Singletons::messageList().insert(
                     itemId, MessageType::ScriptError, result.toString());

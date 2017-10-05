@@ -2,9 +2,8 @@
 #define SCRIPTENGINE_H
 
 #include "MessageList.h"
-#include <QJsonArray>
-
-class QJSEngine;
+#include <QJSEngine>
+#include <QJSValue>
 
 class ScriptEngine
 {
@@ -20,12 +19,17 @@ public:
 
     void reset(QList<Script> scripts);
     void setGlobal(const QString &name, QObject *object);
-    QVariant evaluate(const QString &expression,
+    QJSValue getGlobal(const QString &name);
+    QJSValue call(QJSValue& callable, const QJSValueList &args,
         ItemId itemId, MessagePtrSet &messages);
     QStringList evaluateValue(const QStringList &fieldExpressions,
         ItemId itemId, MessagePtrSet &messages);
 
+    template<typename T>
+    QJSValue toJsValue(const T &value) { return mJsEngine->toScriptValue(value); }
+
 private:
+    QJSValue evaluate(const QString &program, const QString &fileName = QString());
     void reset();
 
     QScopedPointer<QJSEngine> mJsEngine;

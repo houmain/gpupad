@@ -18,30 +18,49 @@ class CustomAction : public QAction
 public:
     CustomAction(const QString &filePath)
         : mFilePath(filePath)
+        , mGpupadScriptObject(new GpupadScriptObject(this))
     {
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
             mScriptEngine.reset({ ScriptEngine::Script{ mFilePath, source } });
-            mScriptEngine.setGlobal("gpupad", new GpupadScriptObject());
+            mScriptEngine.setGlobal("gpupad", mGpupadScriptObject);
         }
-        auto messages = MessagePtrSet();
-        auto name = mScriptEngine.evaluate("name", 0, messages).toString();
-        setText(name);
+
+        auto name = mScriptEngine.getGlobal("name");
+        setText(name.isUndefined() ?
+            QFileInfo(mFilePath).baseName() :
+            name.toString());
     }
 
-    bool applicable()
+    bool context(const QJsonValue &selection, MessagePtrSet &messages)
     {
+        auto context = mScriptEngine.getGlobal("context");
+        if (context.isCallable()) {
+            auto result = mScriptEngine.call(context,
+                { mScriptEngine.toJsValue(selection) },
+                0, messages);
+            if (result.isBool())
+                return result.toBool();
+            return false;
+        }
         return true;
     }
 
-    void execute(MessagePtrSet &messages)
+    void execute(const QJsonValue &selection, MessagePtrSet &messages)
     {
-        mScriptEngine.evaluate("execute()", 0, messages);
+        auto execute = mScriptEngine.getGlobal("execute");
+        if (execute.isCallable())
+            mScriptEngine.call(execute,
+                { mScriptEngine.toJsValue(selection) },
+                0, messages);
+
+        mGpupadScriptObject->finishSessionUpdate();
     }
 
 private:
     const QString mFilePath;
     ScriptEngine mScriptEngine;
+    GpupadScriptObject *mGpupadScriptObject;
 };
 
 CustomActions::CustomActions(QWidget *parent)
@@ -62,9 +81,7 @@ CustomActions::CustomActions(QWidget *parent)
     auto config = QStandardPaths::writableLocation(
         QStandardPaths::AppConfigLocation);
     auto actions = QDir::cleanPath(config + "/../actions");
-    if (!QDir().mkpath(actions))
-        return;
-
+    QDir().mkpath(actions);
     mModel->setRootPath(actions);
     ui->actions->setRootIndex(mModel->index(mModel->rootPath()));
 
@@ -143,7 +160,7 @@ void CustomActions::actionTriggered()
         *qobject_cast<QAction*>(QObject::sender()));
 
     mMessages.clear();
-    action.execute(mMessages);
+    action.execute(mSelection, mMessages);
 }
 
 void CustomActions::updateActions()
@@ -160,6 +177,11 @@ void CustomActions::updateActions()
     }
 }
 
+void CustomActions::setSelection(QJsonValue selection)
+{
+    mSelection = selection;
+}
+
 QList<QAction*> CustomActions::getApplicableActions()
 {
     // TODO: move
@@ -167,7 +189,7 @@ QList<QAction*> CustomActions::getApplicableActions()
 
     auto actions = QList<QAction*>();
     for (const auto &action : mActions)
-        if (action->applicable())
+        if (action->context(mSelection, mMessages))
             actions += action.get();
     return actions;
 }

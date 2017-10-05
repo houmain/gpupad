@@ -11,7 +11,7 @@ GpupadScriptObject::GpupadScriptObject(QObject *parent) : QObject(parent)
 
 QJsonArray GpupadScriptObject::session()
 {
-    return Singletons::sessionModel().getJson({ QModelIndex() });
+    return sessionModel().getJson({ QModelIndex() });
 }
 
 QJsonValue GpupadScriptObject::openFileDialog()
@@ -30,21 +30,37 @@ QJsonValue GpupadScriptObject::readTextFile(const QString &fileName)
     return { };
 }
 
-void GpupadScriptObject::insertSessionItem(QJsonValue parent, int row, QJsonValue item)
+void GpupadScriptObject::updateSession(QJsonValue update, QJsonValue parent, int row)
 {
-    auto &model = Singletons::sessionModel();
-    auto index = model.getIndex(model.findItem(parent.toInt()));
-    if (item.isArray())
-        model.dropJson(QJsonDocument(item.toArray()), row, index, false);
-    else if (item.isObject())
-        model.dropJson(QJsonDocument(item.toObject()), row, index, false);
+    auto index = findItem(parent);
+    if (!update.isArray())
+        update = QJsonArray({ update });
+    sessionModel().dropJson(update.toArray(), row, index, true);
 }
 
-void GpupadScriptObject::updateSession(QJsonValue update)
+void GpupadScriptObject::deleteItem(QJsonValue item)
 {
-    auto &model = Singletons::sessionModel();
-    if (update.isArray())
-        model.dropJson(QJsonDocument(update.toArray()), 0, { }, true);
-    else if (update.isObject())
-        model.dropJson(QJsonDocument(update.toObject()), 0, { }, true);
+    sessionModel().deleteItem(findItem(item));
+}
+
+QModelIndex GpupadScriptObject::findItem(QJsonValue value)
+{
+    return sessionModel().getIndex(
+        sessionModel().findItem(value.isObject() ?
+            value.toObject()["id"].toInt() :
+            value.toInt()));
+}
+
+SessionModel& GpupadScriptObject::sessionModel()
+{
+    if (!std::exchange(mUpdatingSession, true))
+        Singletons::sessionModel().undoStack().beginMacro("script");
+
+    return Singletons::sessionModel();
+}
+
+void GpupadScriptObject::finishSessionUpdate()
+{
+    if (std::exchange(mUpdatingSession, false))
+        Singletons::sessionModel().undoStack().endMacro();
 }

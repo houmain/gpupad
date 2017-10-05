@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <QDialog>
+#include <QJsonValue>
 
 namespace Ui {
 class CustomActions;
@@ -21,6 +22,7 @@ public:
     explicit CustomActions(QWidget *parent = 0);
     ~CustomActions();
 
+    void setSelection(QJsonValue selection);
     QList<QAction*> getApplicableActions();
 
 private slots:
@@ -37,6 +39,7 @@ private:
     QFileSystemModel *mModel;
     std::vector<std::unique_ptr<CustomAction>> mActions;
     MessagePtrSet mMessages;
+    QJsonValue mSelection;
 };
 
 #endif // CustomACTIONS_H

@@ -5,6 +5,9 @@
 #include <QJsonValue>
 #include <QJsonArray>
 
+class Item;
+class SessionModel;
+
 class GpupadScriptObject : public QObject
 {
     Q_OBJECT
@@ -15,8 +18,17 @@ public:
     QJsonArray session();
     Q_INVOKABLE QJsonValue openFileDialog();
     Q_INVOKABLE QJsonValue readTextFile(const QString &fileName);
-    Q_INVOKABLE void insertSessionItem(QJsonValue parent, int row, QJsonValue item);
-    Q_INVOKABLE void updateSession(QJsonValue update);
+    Q_INVOKABLE void updateSession(QJsonValue update,
+        QJsonValue parent = { }, int row = -1);
+    Q_INVOKABLE void deleteItem(QJsonValue item);
+
+    void finishSessionUpdate();
+
+private:
+    QModelIndex findItem(QJsonValue value);
+    SessionModel &sessionModel();
+
+    bool mUpdatingSession{ };
 };
 
 #endif // GPUPADSCRIPTOBJECT_H
