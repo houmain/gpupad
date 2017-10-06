@@ -41,7 +41,7 @@ private:
     // 4. called in render thread
     virtual void release() = 0;
 
-    bool mReleased{ };
+    bool mReleased{ true };
     bool mUpdating{ };
     bool mItemsChanged{ };
     bool mManualEvaluation{ };

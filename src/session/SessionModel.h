@@ -56,7 +56,7 @@ public:
 
 private:
     bool shouldSerializeColumn(const Item &item, ColumnType column) const;
-    const QJsonArray *parseClipboard(const QMimeData *data) const;
+    QJsonArray parseClipboard(const QMimeData *data) const;
     void serialize(QJsonObject &object, const Item &item, bool relativeFilePaths) const;
     void deserialize(const QJsonObject &object, const QModelIndex &parent, int row,
         bool updateExisting);
@@ -98,7 +98,9 @@ private:
     QMap<ItemId, ItemId> mDroppedIdsReplaced;
     QList<QModelIndex> mDroppedReferences;
     mutable QList<QModelIndex> mDraggedIndices;
+    mutable QByteArray mDraggedJson;
     mutable const void *mClipboardData{ };
+    mutable QString mClipboardText;
     mutable QJsonArray mClipboardJson;
 };
 

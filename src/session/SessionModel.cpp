@@ -144,17 +144,21 @@ Qt::DropActions SessionModel::supportedDropActions() const
     return Qt::CopyAction | Qt::MoveAction;
 }
 
-const QJsonArray *SessionModel::parseClipboard(const QMimeData *data) const
+QJsonArray SessionModel::parseClipboard(const QMimeData *data) const
 {
-    if (data != mClipboardData) {
+    if (mClipboardData != data) {
         mClipboardData = data;
-        auto document = QJsonDocument::fromJson(data->text().toUtf8());
-        mClipboardJson =
-            document.isNull() ? QJsonArray() :
-            document.isArray() ? document.array() :
-            QJsonArray({ document.object() });
+        auto text = data->text().toUtf8();
+        if (text != mClipboardText) {
+            mClipboardText = text;
+            auto document = QJsonDocument::fromJson(text);
+            mClipboardJson =
+                document.isNull() ? QJsonArray() :
+                document.isArray() ? document.array() :
+                QJsonArray({ document.object() });
+        }
     }
-    return (mClipboardJson.empty() ? nullptr : &mClipboardJson);
+    return mClipboardJson;
 }
 
 bool SessionModel::canDropMimeData(const QMimeData *data,
@@ -165,17 +169,16 @@ bool SessionModel::canDropMimeData(const QMimeData *data,
             data, action, row, column, parent))
         return false;
 
-    const auto getType = [&](const auto& object) {
-        return getTypeByName(object["item"].toString());
-    };
+    auto jsonArray = parseClipboard(data);
+    if (jsonArray.empty())
+        return false;
 
-    if (auto json = parseClipboard(data)) {
-        foreach (const QJsonValue &value, *json)
-            if (!canContainType(parent, getType(value.toObject())))
-                return false;
-        return true;
+    foreach (const QJsonValue &value, jsonArray) {
+        auto type = getTypeByName(value.toObject()["type"].toString());
+        if (!canContainType(parent, type))
+            return false;
     }
-    return false;
+    return true;
 }
 
 void SessionModel::clear()
@@ -231,14 +234,17 @@ bool SessionModel::save(const QString &fileName)
 
 QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
 {
+    if (mDraggedIndices != indexes) {
+      auto jsonArray = getJson(indexes);
+      auto document =
+          (jsonArray.size() != 1 ?
+           QJsonDocument(jsonArray) :
+           QJsonDocument(jsonArray.first().toObject()));
+      mDraggedJson = document.toJson();
+      mDraggedIndices = indexes;
+    }
     auto data = new QMimeData();
-    auto itemArray = getJson(indexes);
-    auto document =
-        (itemArray.size() != 1 ?
-         QJsonDocument(itemArray) :
-         QJsonDocument(itemArray.first().toObject()));
-    data->setText(document.toJson());
-    mDraggedIndices = indexes;
+    data->setText(mDraggedJson);
     return data;
 }
 
@@ -249,8 +255,8 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     if (action == Qt::IgnoreAction)
         return true;
 
-    auto document = parseClipboard(data);
-    if (!document)
+    auto jsonArray = parseClipboard(data);
+    if (jsonArray.empty())
         return false;
 
     if (row < 0)
@@ -269,7 +275,7 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
         }
     }
 
-    dropJson(*document, row, parent, false);
+    dropJson(jsonArray, row, parent, false);
     mDraggedIndices.clear();
 
     undoStack().endMacro();
@@ -296,10 +302,10 @@ QJsonArray SessionModel::getJson(const QModelIndexList &indexes) const
     return itemArray;
 }
 
-void SessionModel::dropJson(const QJsonArray &json,
+void SessionModel::dropJson(const QJsonArray &jsonArray,
     int row, const QModelIndex &parent, bool updateExisting)
 {
-    foreach (const QJsonValue &value, json)
+    foreach (const QJsonValue &value, jsonArray)
         deserialize(value.toObject(), parent, row++, updateExisting);
 
     // fixup item references

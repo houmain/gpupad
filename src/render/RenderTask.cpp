@@ -21,6 +21,7 @@ void RenderTask::update(bool itemsChanged, bool manualEvaluation,
     bool steadyEvaluation)
 {
     if (!std::exchange(mUpdating, true)) {
+        mReleased = false;
         prepare(itemsChanged, manualEvaluation);
         Singletons::renderer().render(this);
     }
