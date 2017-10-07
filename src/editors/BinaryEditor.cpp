@@ -120,8 +120,10 @@ void BinaryEditor::replace(QByteArray data, bool emitDataChanged)
         return;
 
     mData = data;
-    setModified(true);
     refresh();
+
+    if (!FileDialog::isEmptyOrUntitled(mFileName))
+        setModified(true);
 
     if (emitDataChanged)
         emit dataChanged();

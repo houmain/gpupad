@@ -55,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent)
     auto icon = QIcon(":images/16x16/icon.png");
     icon.addFile(":images/32x32/icon.png");
     setWindowIcon(icon);
-    setContentsMargins(2, 0, 2, 0);
+    setContentsMargins(2, 0, 2, 2);
 
     takeCentralWidget();
 
@@ -97,7 +97,9 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->menuView->addAction(dock->toggleViewAction());
     addDockWidget(Qt::RightDockWidgetArea, dock);
 
-    mUi->menuView->addAction(mUi->mainToolBar->toggleViewAction());
+    mUi->menuView->addSeparator();
+    mUi->menuView->addAction(mUi->toolBarMain->toggleViewAction());
+    mUi->menuView->addAction(mUi->toolBarSession->toggleViewAction());
 
     mUi->actionQuit->setShortcuts(QKeySequence::Quit);
     mUi->actionNew->setShortcuts(QKeySequence::New);
@@ -158,6 +160,8 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::updateCurrentEditor);
     connect(mSessionEditor->selectionModel(), &QItemSelectionModel::currentChanged,
         mSessionProperties.data(), &SessionProperties::setCurrentModelIndex);
+    connect(mSessionEditor.data(), &SessionEditor::itemAdded,
+        this, &MainWindow::openSessionDock);
     connect(mSessionEditor.data(), &SessionEditor::itemActivated,
         [this](const QModelIndex &index, bool* handled) {
             *handled = (mSessionProperties->openItemEditor(index) != nullptr);
@@ -195,7 +199,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->menuCustomActions, &QMenu::aboutToShow,
         this, &MainWindow::updateCustomActionsMenu);
     connect(mUi->actionManageCustomActions, &QAction::triggered,
-        &Singletons::customActions(), &QDialog::show, Qt::UniqueConnection);
+        &Singletons::customActions(), &QDialog::show);
 
     auto evalIntervalActionGroup = new QActionGroup(this);
     mUi->actionEvalIntervalSlow->setActionGroup(evalIntervalActionGroup);
@@ -256,7 +260,13 @@ void MainWindow::readSettings()
 {
     auto& settings = Singletons::settings();
     resize(800, 600);
-    restoreGeometry(settings.value("geometry").toByteArray());
+
+    auto geometry = settings.value("geometry").toByteArray();
+    if (!geometry.isEmpty())
+        restoreGeometry(geometry);
+    else
+        move(100, 100);
+
     if (settings.value("maximized").toBool())
         setWindowState(Qt::WindowMaximized);
     restoreState(settings.value("state").toByteArray());
@@ -317,9 +327,11 @@ void MainWindow::connectEditActions()
 
 void MainWindow::updateFileActions()
 {
+    if (!qApp->focusWidget())
+        return;
+
     auto fileName = mEditActions.windowFileName->text();
     auto modified = mEditActions.windowFileName->isEnabled();
-
     setWindowTitle((modified ? "*" : "") +
         FileDialog::getWindowTitle(fileName) +
         " - " + qApp->applicationName());

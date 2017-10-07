@@ -103,7 +103,9 @@ void ImageEditor::replace(QImage image, bool emitDataChanged)
 
     mImage = image;
     refresh();
-    setModified(true);
+
+    if (!FileDialog::isEmptyOrUntitled(mFileName))
+        setModified(true);
 
     if (emitDataChanged)
         emit dataChanged();
@@ -176,7 +178,6 @@ void ImageEditor::setBounds(QRect bounds)
     if (bounds == mBounds)
         return;
     mBounds = bounds;
-    bounds.adjust(-1, -1, 0, 0);
     const auto max = 65536;
     auto outside = QPainterPath();
     outside.addRect(-max, -max, 2 * max, 2 * max);

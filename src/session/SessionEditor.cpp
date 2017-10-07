@@ -327,6 +327,7 @@ void SessionEditor::addItem(Item::Type type)
 
     setCurrentIndex(index);
     setExpanded(index, true);
+    emit itemAdded(index);
 }
 
 void SessionEditor::treeItemActivated(const QModelIndex &index)
