@@ -30,7 +30,9 @@ int main(int argc, char *argv[])
         [&](quint32 instanceId, QByteArray argument) {
             Q_UNUSED(instanceId);
             window.openFile(QString::fromUtf8(argument));
+            window.setWindowState((window.windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
             window.raise();
+            window.activateWindow();
         });
 
     foreach (QString argument, arguments)
