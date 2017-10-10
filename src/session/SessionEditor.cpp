@@ -48,7 +48,7 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddProgramAction, Item::Type::Program);
     addAction(mAddShaderAction, Item::Type::Shader);
     addAction(mAddBindingAction, Item::Type::Binding);
-    addAction(mAddVertexStreamAction, Item::Type::VertexStream);
+    addAction(mAddStreamAction, Item::Type::Stream);
     addAction(mAddAttributeAction, Item::Type::Attribute);
     addAction(mAddTargetAction, Item::Type::Target);
     addAction(mAddAttachmentAction, Item::Type::Attachment);
@@ -68,7 +68,7 @@ void SessionEditor::addItemActions(QMenu* menu)
     menu->addSeparator();
     menu->addAction(mAddGroupAction);
     menu->addAction(mAddBufferAction);
-    menu->addAction(mAddVertexStreamAction);
+    menu->addAction(mAddStreamAction);
     menu->addAction(mAddTextureAction);
     menu->addAction(mAddTargetAction);
     menu->addAction(mAddScriptAction);
@@ -318,7 +318,7 @@ void SessionEditor::addItem(Item::Type type)
         mModel.insertItem(Item::Type::Column, index);
     else if (type == Item::Type::Target)
         mModel.insertItem(Item::Type::Attachment, index);
-    else if (type == Item::Type::VertexStream)
+    else if (type == Item::Type::Stream)
         mModel.insertItem(Item::Type::Attribute, index);
     else if (type == Item::Type::Program)
         mModel.insertItem(Item::Type::Shader, index);

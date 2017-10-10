@@ -9,7 +9,7 @@
 #include "ui_ImageProperties.h"
 #include "ui_ProgramProperties.h"
 #include "ui_ShaderProperties.h"
-#include "ui_VertexStreamProperties.h"
+#include "ui_StreamProperties.h"
 #include "ui_AttributeProperties.h"
 #include "ui_TargetProperties.h"
 #include "ui_ScriptProperties.h"
@@ -71,7 +71,7 @@ SessionProperties::SessionProperties(QWidget *parent)
     add(mShaderProperties);
     mBindingProperties = new BindingProperties(this);
     mStack->addWidget(mBindingProperties);
-    add(mVertexStreamProperties);
+    add(mStreamProperties);
     add(mAttributeProperties);
     add(mTargetProperties);
     mAttachmentProperties = new AttachmentProperties(this);
@@ -287,7 +287,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             mBindingProperties->addMappings(*mMapper);
             break;
 
-        case Item::Type::VertexStream:
+        case Item::Type::Stream:
             break;
 
         case Item::Type::Attribute:

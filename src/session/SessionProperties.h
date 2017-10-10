@@ -16,7 +16,7 @@ class ColumnProperties;
 class ImageProperties;
 class ProgramProperties;
 class ShaderProperties;
-class VertexStreamProperties;
+class StreamProperties;
 class AttributeProperties;
 class TargetProperties;
 class ScriptProperties;
@@ -74,7 +74,7 @@ private:
     BindingProperties *mBindingProperties{ };
     QScopedPointer<Ui::AttributeProperties> mAttributeProperties;
     QScopedPointer<Ui::TargetProperties> mTargetProperties;
-    QScopedPointer<Ui::VertexStreamProperties> mVertexStreamProperties;
+    QScopedPointer<Ui::StreamProperties> mStreamProperties;
     AttachmentProperties *mAttachmentProperties{ };
     CallProperties *mCallProperties{ };
     QScopedPointer<Ui::ScriptProperties> mScriptProperties;

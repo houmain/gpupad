@@ -115,7 +115,7 @@ struct Binding : Item
     std::array<Value, 8> values{ };
 };
 
-struct VertexStream : Item
+struct Stream : Item
 {
 };
 

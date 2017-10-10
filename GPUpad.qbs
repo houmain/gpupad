@@ -80,12 +80,12 @@ Project {
           "src/render/GLProgram.h",
           "src/render/GLShader.cpp",
           "src/render/GLShader.h",
+          "src/render/GLStream.cpp",
+          "src/render/GLStream.h",
           "src/render/GLTarget.cpp",
           "src/render/GLTarget.h",
           "src/render/GLTexture.cpp",
           "src/render/GLTexture.h",
-          "src/render/GLVertexStream.cpp",
-          "src/render/GLVertexStream.h",
           "src/render/RenderSession.cpp",
           "src/render/RenderSession.h",
           "src/render/RenderTask.cpp",
@@ -140,12 +140,12 @@ Project {
           "src/resources.qrc",
           "src/resources.rc",
           "src/session/ShaderProperties.ui",
+          "src/session/StreamProperties.ui",
           "src/session/TargetProperties.ui",
           "src/session/TextureProperties.cpp",
           "src/session/TextureProperties.h",
           "src/session/TextureProperties.ui",
           "src/_version.h",
-          "src/session/VertexStreamProperties.ui",
       ]
 
     Group {

@@ -1,13 +1,13 @@
-#ifndef GLVERTEX_STREAM_H
-#define GLVERTEX_STREAM_H
+#ifndef GL_STREAM_H
+#define GL_STREAM_H
 
 #include "GLProgram.h"
 #include "GLBuffer.h"
 
-class GLVertexStream
+class GLStream
 {
 public:
-    explicit GLVertexStream(const VertexStream &vertexStream);
+    explicit GLStream(const Stream &stream);
     void setAttribute(int attributeIndex,
         const Column &column, GLBuffer *buffer);
 
@@ -34,4 +34,4 @@ private:
     QList<GLuint> mEnabledVertexAttributes;
 };
 
-#endif // GLVERTEX_STREAM_H
+#endif // GL_STREAM_H

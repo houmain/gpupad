@@ -3,7 +3,7 @@
 #include "GLBuffer.h"
 #include "GLProgram.h"
 #include "GLTarget.h"
-#include "GLVertexStream.h"
+#include "GLStream.h"
 #include <QOpenGLTimerQuery>
 
 GLCall::GLCall(const Call &call) : mCall(call) { }
@@ -18,9 +18,9 @@ void GLCall::setTarget(GLTarget *target)
     mTarget = target;
 }
 
-void GLCall::setVextexStream(GLVertexStream *vertexStream)
+void GLCall::setVextexStream(GLStream *stream)
 {
-    mVertexStream = vertexStream;
+    mVertexStream = stream;
 }
 
 void GLCall::setIndexBuffer(GLBuffer *indices, const Buffer &buffer)

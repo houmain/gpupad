@@ -1,11 +1,11 @@
-#include "GLVertexStream.h"
+#include "GLStream.h"
 
-GLVertexStream::GLVertexStream(const VertexStream &vertexStream)
+GLStream::GLStream(const Stream &stream)
 {
-    mUsedItems += vertexStream.id;
+    mUsedItems += stream.id;
 
     auto attributeIndex = 0;
-    for (const auto& item : vertexStream.items) {
+    for (const auto& item : stream.items) {
         if (auto attribute = castItem<Attribute>(item))
             mAttributes[attributeIndex] = GLAttribute{
                 { item->id },
@@ -17,7 +17,7 @@ GLVertexStream::GLVertexStream(const VertexStream &vertexStream)
     }
 }
 
-void GLVertexStream::setAttribute(int attributeIndex,
+void GLStream::setAttribute(int attributeIndex,
     const Column &column, GLBuffer *buffer)
 {
     auto& attribute = mAttributes[attributeIndex];
@@ -32,7 +32,7 @@ void GLVertexStream::setAttribute(int attributeIndex,
     }
 }
 
-void GLVertexStream::bind(const GLProgram &program)
+void GLStream::bind(const GLProgram &program)
 {
     auto &gl = GLContext::currentContext();
 
@@ -67,7 +67,7 @@ void GLVertexStream::bind(const GLProgram &program)
     }
 }
 
-void GLVertexStream::unbind()
+void GLStream::unbind()
 {
     auto &gl = GLContext::currentContext();
     foreach (GLuint location, mEnabledVertexAttributes)

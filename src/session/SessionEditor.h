@@ -66,7 +66,7 @@ private:
     QAction *mAddProgramAction{ };
     QAction *mAddShaderAction{ };
     QAction *mAddBindingAction{ };
-    QAction *mAddVertexStreamAction{ };
+    QAction *mAddStreamAction{ };
     QAction *mAddAttributeAction{ };
     QAction *mAddTargetAction{ };
     QAction *mAddAttachmentAction{ };

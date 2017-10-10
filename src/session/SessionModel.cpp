@@ -17,7 +17,7 @@ SessionModel::SessionModel(QObject *parent)
     mTypeIcons[Item::Type::Program].addFile(QStringLiteral(":/images/16x16/applications-system.png"));
     mTypeIcons[Item::Type::Shader].addFile(QStringLiteral(":/images/16x16/font.png"));
     mTypeIcons[Item::Type::Binding].addFile(QStringLiteral(":/images/16x16/insert-text.png"));
-    mTypeIcons[Item::Type::VertexStream].addFile(QStringLiteral(":/images/16x16/media-playback-start-rtl.png"));
+    mTypeIcons[Item::Type::Stream].addFile(QStringLiteral(":/images/16x16/media-playback-start-rtl.png"));
     mTypeIcons[Item::Type::Attribute].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[Item::Type::Target].addFile(QStringLiteral(":/images/16x16/emblem-photos.png"));
     mTypeIcons[Item::Type::Attachment].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
@@ -75,7 +75,7 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
         case Item::Type::Buffer:
         case Item::Type::Texture:
         case Item::Type::Program:
-        case Item::Type::VertexStream:
+        case Item::Type::Stream:
         case Item::Type::Target:
             flags |= Qt::ItemIsDropEnabled;
             break;

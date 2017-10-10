@@ -10,7 +10,7 @@
 #include "GLBuffer.h"
 #include "GLProgram.h"
 #include "GLTarget.h"
-#include "GLVertexStream.h"
+#include "GLStream.h"
 #include "GLCall.h"
 #include <functional>
 #include <deque>
@@ -129,7 +129,7 @@ struct RenderSession::CommandQueue
     std::map<ItemId, GLBuffer> buffers;
     std::map<ItemId, GLProgram> programs;
     std::map<ItemId, GLTarget> targets;
-    std::map<ItemId, GLVertexStream> vertexStream;
+    std::map<ItemId, GLStream> vertexStream;
     std::deque<Command> commands;
     QList<ScriptEngine::Script> scripts;
 };
@@ -205,7 +205,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
     };
 
     auto addVertexStreamOnce = [&](ItemId vertexStreamId) {
-        auto vertexStream = session.findItem<VertexStream>(vertexStreamId);
+        auto vertexStream = session.findItem<Stream>(vertexStreamId);
         auto vs = addOnce(mCommandQueue->vertexStream, vertexStream);
         if (vs) {
             const auto& items = vertexStream->items;

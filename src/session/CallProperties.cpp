@@ -29,7 +29,7 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
     connect(mUi->program, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Program); });
     connect(mUi->vertexStream, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(Item::Type::VertexStream, true); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Stream, true); });
     connect(mUi->target, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Target, true); });
     connect(mUi->indexBuffer, &ReferenceComboBox::listRequired,

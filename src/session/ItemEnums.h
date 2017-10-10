@@ -17,7 +17,7 @@ namespace ItemEnums {
         Program,
         Shader,
         Binding,
-        VertexStream,
+        Stream,
         Attribute,
         Target,
         Attachment,

@@ -170,7 +170,7 @@ template<> inline Item::Type getItemType<Image>() { return Item::Type::Image; }
 template<> inline Item::Type getItemType<Program>() { return Item::Type::Program; }
 template<> inline Item::Type getItemType<Shader>() { return Item::Type::Shader; }
 template<> inline Item::Type getItemType<Binding>() { return Item::Type::Binding; }
-template<> inline Item::Type getItemType<VertexStream>() { return Item::Type::VertexStream; }
+template<> inline Item::Type getItemType<Stream>() { return Item::Type::Stream; }
 template<> inline Item::Type getItemType<Attribute>() { return Item::Type::Attribute; }
 template<> inline Item::Type getItemType<Target>() { return Item::Type::Target; }
 template<> inline Item::Type getItemType<Attachment>() { return Item::Type::Attachment; }

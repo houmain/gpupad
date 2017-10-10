@@ -96,7 +96,7 @@ bool SessionModelCore::canContainType(const QModelIndex &index, Item::Type type)
                 case Item::Type::Texture:
                 case Item::Type::Program:
                 case Item::Type::Binding:
-                case Item::Type::VertexStream:
+                case Item::Type::Stream:
                 case Item::Type::Target:
                 case Item::Type::Call:
                 case Item::Type::Script:
@@ -107,7 +107,7 @@ bool SessionModelCore::canContainType(const QModelIndex &index, Item::Type type)
         case Item::Type::Buffer: return (type == Item::Type::Column);
         case Item::Type::Texture: return (type == Item::Type::Image);
         case Item::Type::Program: return (type == Item::Type::Shader);
-        case Item::Type::VertexStream: return (type == Item::Type::Attribute);
+        case Item::Type::Stream: return (type == Item::Type::Attribute);
         case Item::Type::Target: return (type == Item::Type::Attachment);
         default:
             return false;
@@ -336,7 +336,7 @@ QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
         case Item::Type::Program: return insert(new Program());
         case Item::Type::Shader: return insert(new Shader());
         case Item::Type::Binding: return insert(new Binding());
-        case Item::Type::VertexStream: return insert(new VertexStream());
+        case Item::Type::Stream: return insert(new Stream());
         case Item::Type::Attribute: return insert(new Attribute());
         case Item::Type::Target: return insert(new Target());
         case Item::Type::Attachment: return insert(new Attachment());

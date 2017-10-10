@@ -219,8 +219,8 @@
                         "type": "Attribute"
                     }
                 ],
-                "name": "VertexStream",
-                "type": "VertexStream"
+                "name": "Stream",
+                "type": "Stream"
             },
             {
                 "id": 21,
@@ -472,8 +472,8 @@
                         "type": "Attribute"
                     }
                 ],
-                "name": "VertexStream",
-                "type": "VertexStream"
+                "name": "Stream",
+                "type": "Stream"
             },
             {
                 "id": 41,
