@@ -19,7 +19,7 @@ public:
     QList<QMetaObject::Connection> connectEditActions(
         const EditActions &actions, bool focused);
     QString fileName() const { return mFileName; }
-    void setFileName(const QString &fileName);
+    void setFileName(QString fileName);
     void setCurrentItem(ItemId itemId);
     bool isModified() const;
     bool clear();

@@ -335,25 +335,25 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
             case Item::Type::Image:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
-                        editors.openNewImageEditor());
+                        editors.openNewImageEditor(fileItem->name));
                 return editors.openImageEditor(fileItem->fileName);
 
             case Item::Type::Shader:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
-                        editors.openNewSourceEditor());
+                        editors.openNewSourceEditor(fileItem->name));
                 return editors.openSourceEditor(fileItem->fileName);
 
             case Item::Type::Script:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
-                        editors.openNewSourceEditor(".js"));
+                        editors.openNewSourceEditor(fileItem->name));
                 return editors.openSourceEditor(fileItem->fileName);
 
             case Item::Type::Buffer:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
-                        editors.openNewBinaryEditor());
+                        editors.openNewBinaryEditor(fileItem->name));
 
                 if (auto editor = editors.openBinaryEditor(fileItem->fileName)) {
                     Singletons::synchronizeLogic().updateBinaryEditor(

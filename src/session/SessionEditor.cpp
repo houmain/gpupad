@@ -71,10 +71,10 @@ void SessionEditor::addItemActions(QMenu* menu)
     menu->addAction(mAddStreamAction);
     menu->addAction(mAddTextureAction);
     menu->addAction(mAddTargetAction);
-    menu->addAction(mAddScriptAction);
     menu->addAction(mAddBindingAction);
     menu->addAction(mAddProgramAction);
     menu->addAction(mAddCallAction);
+    menu->addAction(mAddScriptAction);
 }
 
 void SessionEditor::updateItemActions()
@@ -211,12 +211,16 @@ bool SessionEditor::clear()
     return true;
 }
 
-void SessionEditor::setFileName(const QString &fileName)
+void SessionEditor::setFileName(QString fileName)
 {
-    mFileName = fileName;
-    if (mFileName.isEmpty())
-        mFileName = FileDialog::getUntitledSessionFileName();
-    emit fileNameChanged(mFileName);
+    if (fileName.isEmpty())
+        fileName = FileDialog::generateNextUntitledFileName(
+            tr("Untitled Session"), true);
+
+    if (mFileName != fileName) {
+        mFileName = fileName;
+        emit fileNameChanged(mFileName);
+    }
 }
 
 bool SessionEditor::load()

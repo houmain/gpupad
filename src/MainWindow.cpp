@@ -388,7 +388,7 @@ bool MainWindow::hasEditor() const
 
 void MainWindow::newFile()
 {
-    mEditorManager.openNewSourceEditor();
+    mEditorManager.openNewSourceEditor(tr("Untitled"));
 }
 
 void MainWindow::openFile()

@@ -84,27 +84,27 @@ QList<QMetaObject::Connection> EditorManager::connectEditActions(
     return { };
 }
 
-QString EditorManager::openNewSourceEditor(const QString &extension)
+QString EditorManager::openNewSourceEditor(const QString &baseName)
 {
-    auto fileName = FileDialog::generateNextUntitledFileName() + extension;
+    auto fileName = FileDialog::generateNextUntitledFileName(baseName);
     auto editor = new SourceEditor(fileName);
     addSourceEditor(editor);
     raiseEditor(editor);
     return fileName;
 }
 
-QString EditorManager::openNewBinaryEditor()
+QString EditorManager::openNewBinaryEditor(const QString &baseName)
 {
-    auto fileName = FileDialog::generateNextUntitledFileName();
+    auto fileName = FileDialog::generateNextUntitledFileName(baseName);
     auto editor = new BinaryEditor(fileName);
     addBinaryEditor(editor);
     raiseEditor(editor);
     return fileName;
 }
 
-QString EditorManager::openNewImageEditor()
+QString EditorManager::openNewImageEditor(const QString &baseName)
 {
-    auto fileName = FileDialog::generateNextUntitledFileName();
+    auto fileName = FileDialog::generateNextUntitledFileName(baseName);
     auto editor = new ImageEditor(fileName);
     addImageEditor(editor);
     raiseEditor(editor);

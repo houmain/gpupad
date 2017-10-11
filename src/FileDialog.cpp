@@ -2,6 +2,7 @@
 #include <QFileDialog>
 #include <QImageReader>
 #include <QMainWindow>
+#include <QMap>
 
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
@@ -11,22 +12,23 @@ namespace {
     const auto BinaryFileExtensions = { "bin", "raw" };
     const auto ScriptFileExtensions = { "js" };
 
-    auto gNextUntitledFileIndex = 1;
+    static QMap<QString, int> gNextUntitledFileIndex;
 } // namespace
 
 void FileDialog::resetNextUntitledFileIndex()
 {
-    gNextUntitledFileIndex = 1;
+    gNextUntitledFileIndex.clear();
 }
 
-QString FileDialog::generateNextUntitledFileName()
+QString FileDialog::generateNextUntitledFileName(QString base, bool startWithZero)
 {
-    return UntitledTag + QString::number(gNextUntitledFileIndex++);
-}
-
-QString FileDialog::getUntitledSessionFileName()
-{
-    return UntitledTag + QString("Session");
+    auto fileName = UntitledTag + base;
+    auto index = gNextUntitledFileIndex[base]++;
+    if (!startWithZero)
+        index++;
+    if (index)
+        fileName += " " + QString::number(index);
+    return fileName;
 }
 
 bool FileDialog::isUntitled(const QString &fileName)
@@ -44,8 +46,7 @@ QString FileDialog::getFileTitle(const QString &fileName)
     if (!fileName.startsWith(UntitledTag))
         return QFileInfo(fileName).fileName();
 
-    return tr("Untitled") + " " +
-        QString(fileName).remove(0, UntitledTag.size());
+    return QString(fileName).remove(0, UntitledTag.size());
 }
 
 QString FileDialog::getWindowTitle(const QString &fileName)
