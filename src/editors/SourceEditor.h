@@ -14,6 +14,19 @@ class SourceEditor : public QPlainTextEdit, public IEditor
 {
     Q_OBJECT
 public:
+    enum SourceType
+    {
+        None,
+        VertexShader,
+        FragmentShader,
+        GeometryShader,
+        TesselationControl,
+        TesselationEvaluation,
+        ComputeShader,
+        JavaScript,
+    };
+    Q_ENUM(SourceType)
+
     static bool load(const QString &fileName, QString *source);
 
     explicit SourceEditor(QString fileName, QWidget *parent = 0);
@@ -27,6 +40,8 @@ public:
     bool save() override;
     int tabifyGroup() override { return 0; }
     QString source() const { return toPlainText(); }
+    SourceType sourceType() const { return mSourceType; }
+    void setSourceType(SourceType sourceType) { mSourceType = sourceType; }
 
     void findReplace();
     void setLineWrap(bool wrap) { setLineWrapMode(wrap ? WidgetWidth : NoWrap); }
@@ -83,6 +98,7 @@ private:
     int mTabSize{ };
     bool mIndentWithSpaces{ };
     bool mAutoIndentation{ };
+    SourceType mSourceType{ };
 };
 
 #endif // SOURCEEDITOR_H

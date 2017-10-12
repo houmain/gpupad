@@ -18,6 +18,7 @@
 #include <QSplitter>
 #include <QActionGroup>
 #include <QMenu>
+#include <QToolButton>
 
 class AutoOrientationSplitter : public QSplitter
 {
@@ -97,9 +98,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->menuView->addAction(dock->toggleViewAction());
     addDockWidget(Qt::RightDockWidgetArea, dock);
 
-    mUi->menuView->addSeparator();
     mUi->menuView->addAction(mUi->toolBarMain->toggleViewAction());
-    mUi->menuView->addAction(mUi->toolBarSession->toggleViewAction());
 
     mUi->actionQuit->setShortcuts(QKeySequence::Quit);
     mUi->actionNew->setShortcuts(QKeySequence::New);
@@ -200,6 +199,37 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::updateCustomActionsMenu);
     connect(mUi->actionManageCustomActions, &QAction::triggered,
         &Singletons::customActions(), &QDialog::show);
+
+    auto sourceTypeActionGroup = new QActionGroup(this);
+    auto sourceTypeMenu = new QMenu(this);
+    auto sourceTypeButton = qobject_cast<QToolButton*>(
+        mUi->toolBarMain->widgetForAction(mUi->actionValidateSyntax));
+    sourceTypeButton->setMenu(sourceTypeMenu);
+    sourceTypeButton->setPopupMode(QToolButton::MenuButtonPopup);
+
+    auto metaType = QMetaEnum::fromType<SourceEditor::SourceType>();
+    for (auto i = 0; i < metaType.keyCount(); ++i)
+        if (auto sourceType = metaType.value(i)) {
+            auto text = QString(metaType.key(i));
+            if (sourceType != SourceEditor::JavaScript)
+                text = splitPascalCase(text);
+            auto action = sourceTypeMenu->addAction(text);
+            action->setData(sourceType);
+            action->setCheckable(true);
+            action->setActionGroup(sourceTypeActionGroup);
+        }
+    connect(sourceTypeMenu, &QMenu::aboutToShow,
+        [this, sourceTypeActionGroup]() {
+            auto sourceType = mEditorManager.currentSourceType();
+            foreach (QAction *action, sourceTypeActionGroup->actions())
+                action->setChecked(action->data().toInt() == sourceType);
+        });
+    connect(sourceTypeMenu, &QMenu::triggered,
+        [this](QAction *action) {
+            mUi->actionValidateSyntax->setChecked(true);
+            mEditorManager.setCurrentSourceType(
+                static_cast<SourceEditor::SourceType>(action->data().toInt()));
+        });
 
     auto evalIntervalActionGroup = new QActionGroup(this);
     mUi->actionEvalIntervalSlow->setActionGroup(evalIntervalActionGroup);

@@ -151,7 +151,7 @@
   </widget>
   <widget class="QToolBar" name="toolBarMain">
    <property name="windowTitle">
-    <string>Main Toolbar</string>
+    <string>Toolbar</string>
    </property>
    <property name="movable">
     <bool>false</bool>
@@ -177,23 +177,8 @@
    <addaction name="actionPaste"/>
    <addaction name="actionDelete"/>
    <addaction name="separator"/>
-  </widget>
-  <widget class="QToolBar" name="toolBarSession">
-   <property name="windowTitle">
-    <string>Session Toolbar</string>
-   </property>
-   <property name="movable">
-    <bool>false</bool>
-   </property>
-   <property name="floatable">
-    <bool>false</bool>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
+   <addaction name="actionValidateSyntax"/>
+   <addaction name="separator"/>
    <addaction name="actionEvalManual"/>
    <addaction name="actionEvalAuto"/>
    <addaction name="actionEvalSteady"/>

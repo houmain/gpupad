@@ -36,6 +36,8 @@ public:
     void updateCurrentEditor();
     bool hasCurrentEditor() const { return (mCurrentDock != nullptr); }
     QString currentEditorFileName();
+    SourceEditor::SourceType currentSourceType();
+    void setCurrentSourceType(SourceEditor::SourceType sourceType);
     QList<QMetaObject::Connection> connectEditActions(const EditActions &actions);
     bool saveEditor();
     bool saveEditorAs();

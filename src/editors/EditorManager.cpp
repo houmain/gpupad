@@ -76,6 +76,21 @@ IEditor *EditorManager::currentEditor()
     return nullptr;
 }
 
+SourceEditor::SourceType EditorManager::currentSourceType()
+{
+    if (auto editor = static_cast<SourceEditor*>(currentEditor()))
+        if (mSourceEditors.contains(editor))
+            return editor->sourceType();
+    return SourceEditor::SourceType::None;
+}
+
+void EditorManager::setCurrentSourceType(SourceEditor::SourceType sourceType)
+{
+    if (auto editor = static_cast<SourceEditor*>(currentEditor()))
+        if (mSourceEditors.contains(editor))
+            editor->setSourceType(sourceType);
+}
+
 QList<QMetaObject::Connection> EditorManager::connectEditActions(
     const EditActions &actions)
 {
