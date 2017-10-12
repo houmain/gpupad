@@ -69,6 +69,8 @@ Project {
           "src/editors/SourceEditor.cpp",
           "src/editors/SourceEditor.h",
           "src/main.cpp",
+          "src/render/CompileShader.cpp",
+          "src/render/CompileShader.h",
           "src/render/GLBuffer.cpp",
           "src/render/GLBuffer.h",
           "src/render/GLCall.cpp",
