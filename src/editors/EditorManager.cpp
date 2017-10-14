@@ -99,10 +99,12 @@ QList<QMetaObject::Connection> EditorManager::connectEditActions(
     return { };
 }
 
-QString EditorManager::openNewSourceEditor(const QString &baseName)
+QString EditorManager::openNewSourceEditor(const QString &baseName,
+    SourceEditor::SourceType sourceType)
 {
     auto fileName = FileDialog::generateNextUntitledFileName(baseName);
     auto editor = new SourceEditor(fileName);
+    editor->setSourceType(sourceType);
     addSourceEditor(editor);
     raiseEditor(editor);
     return fileName;

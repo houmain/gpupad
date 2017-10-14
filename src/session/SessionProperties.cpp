@@ -338,17 +338,34 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
                         editors.openNewImageEditor(fileItem->name));
                 return editors.openImageEditor(fileItem->fileName);
 
-            case Item::Type::Shader:
+            case Item::Type::Shader: {
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
                         editors.openNewSourceEditor(fileItem->name));
-                return editors.openSourceEditor(fileItem->fileName);
+                auto editor = editors.openSourceEditor(fileItem->fileName);
+                if (auto shader = mModel.item<Shader>(index)) {
+                    static const auto sMapping = QMap<Shader::ShaderType, SourceEditor::SourceType>{
+                        { Shader::ShaderType::Vertex, SourceEditor::VertexShader },
+                        { Shader::ShaderType::Fragment, SourceEditor::FragmentShader },
+                        { Shader::ShaderType::Geometry, SourceEditor::GeometryShader },
+                        { Shader::ShaderType::TessellationControl, SourceEditor::TesselationControl },
+                        { Shader::ShaderType::TessellationEvaluation, SourceEditor::TesselationEvaluation },
+                        { Shader::ShaderType::Compute, SourceEditor::ComputeShader },
+                    };
+                    if (auto sourceType = sMapping[shader->shaderType])
+                        editor->setSourceType(sourceType);
+                }
+                return editor;
+            }
 
-            case Item::Type::Script:
+            case Item::Type::Script: {
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
                         editors.openNewSourceEditor(fileItem->name));
-                return editors.openSourceEditor(fileItem->fileName);
+                auto editor = editors.openSourceEditor(fileItem->fileName);
+                editor->setSourceType(SourceEditor::JavaScript);
+                return editor;
+            }
 
             case Item::Type::Buffer:
                 if (fileItem->fileName.isEmpty())

@@ -17,6 +17,7 @@ public:
     enum SourceType
     {
         None,
+        PlainText,
         VertexShader,
         FragmentShader,
         GeometryShader,
@@ -41,7 +42,8 @@ public:
     int tabifyGroup() override { return 0; }
     QString source() const { return toPlainText(); }
     SourceType sourceType() const { return mSourceType; }
-    void setSourceType(SourceType sourceType) { mSourceType = sourceType; }
+    void setSourceTypeFromExtension();
+    void setSourceType(SourceType sourceType);
 
     void findReplace();
     void setLineWrap(bool wrap) { setLineWrapMode(wrap ? WidgetWidth : NoWrap); }
@@ -85,9 +87,10 @@ private:
     void markOccurrences(QString text, QTextDocument::FindFlags =
         QTextDocument::FindCaseSensitively | QTextDocument::FindWholeWords);
     void handleTextChanged();
-    void updateHighlighting();
+    void updateSyntaxHighlighting();
 
     QString mFileName;
+    SourceType mSourceType{ PlainText };
     QSyntaxHighlighter *mHighlighter{ };
     QCompleter *mCompleter{ };
     LineNumberArea *mLineNumberArea{ };
@@ -98,7 +101,6 @@ private:
     int mTabSize{ };
     bool mIndentWithSpaces{ };
     bool mAutoIndentation{ };
-    SourceType mSourceType{ };
 };
 
 #endif // SOURCEEDITOR_H

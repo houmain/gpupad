@@ -17,7 +17,8 @@ public:
     ~EditorManager();
 
     int openNotSavedDialog(const QString &fileName);
-    QString openNewSourceEditor(const QString &baseName);
+    QString openNewSourceEditor(const QString &baseName,
+        SourceEditor::SourceType sourceType = SourceEditor::PlainText);
     QString openNewBinaryEditor(const QString &baseName);
     QString openNewImageEditor(const QString &baseName);
     bool openEditor(const QString &fileName, bool raise = true);

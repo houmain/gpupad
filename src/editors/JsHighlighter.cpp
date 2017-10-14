@@ -17,7 +17,7 @@ const auto keywords = {
 const auto globalObjects = {
     "Infinity", "NaN", "undefined", "null", "eval", "isFinite", "isNaN",
     "parseFloat", "parseInt", "decodeURI", "decodeURIComponent", "encodeURI",
-    "encodeURIComponent", "Object", "Function", "Boolean", "Error", "EvalError",
+    "encodeURIComponent", "Object", "Boolean", "Error", "EvalError", // "Function",
     "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError",
     "Number", "Math", "Date", "String", "RegExp", "Array", "Int8Array",
     "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array",

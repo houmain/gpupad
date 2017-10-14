@@ -97,28 +97,6 @@
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
    </widget>
-   <widget class="QMenu" name="menuView">
-    <property name="title">
-     <string>&amp;View</string>
-    </property>
-    <widget class="QMenu" name="menuTabSize">
-     <property name="maximumSize">
-      <size>
-       <width>50</width>
-       <height>16777215</height>
-      </size>
-     </property>
-     <property name="title">
-      <string>&amp;Tab Size</string>
-     </property>
-    </widget>
-    <addaction name="actionSelectFont"/>
-    <addaction name="actionLineWrapping"/>
-    <addaction name="actionAutoIndentation"/>
-    <addaction name="actionIndentWithSpaces"/>
-    <addaction name="menuTabSize"/>
-    <addaction name="separator"/>
-   </widget>
    <widget class="QMenu" name="menuSession">
     <property name="title">
      <string>&amp;Session</string>
@@ -143,10 +121,35 @@
     <addaction name="menuEvaluation"/>
     <addaction name="separator"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <widget class="QMenu" name="menuTabSize">
+     <property name="title">
+      <string>Tab Size</string>
+     </property>
+    </widget>
+    <widget class="QMenu" name="menuSourceType">
+     <property name="title">
+      <string>Source &amp;Type</string>
+     </property>
+    </widget>
+    <addaction name="menuSourceType"/>
+    <addaction name="separator"/>
+    <addaction name="actionSelectFont"/>
+    <addaction name="actionSyntaxHighlighting"/>
+    <addaction name="actionSourceValidation"/>
+    <addaction name="actionLineWrapping"/>
+    <addaction name="actionIndentWithSpaces"/>
+    <addaction name="actionAutoIndentation"/>
+    <addaction name="menuTabSize"/>
+    <addaction name="separator"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
-   <addaction name="menuSession"/>
    <addaction name="menuView"/>
+   <addaction name="menuSession"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="toolBarMain">
@@ -177,7 +180,7 @@
    <addaction name="actionPaste"/>
    <addaction name="actionDelete"/>
    <addaction name="separator"/>
-   <addaction name="actionValidateSyntax"/>
+   <addaction name="actionSourceValidation"/>
    <addaction name="separator"/>
    <addaction name="actionEvalManual"/>
    <addaction name="actionEvalAuto"/>
@@ -405,7 +408,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Auto &amp;Indentation</string>
+    <string>&amp;Auto Indentation</string>
    </property>
   </action>
   <action name="actionIndentWithSpaces">
@@ -533,10 +536,10 @@
     <string>&amp;Manage...</string>
    </property>
    <property name="shortcut">
-    <string>F4</string>
+    <string>F9</string>
    </property>
   </action>
-  <action name="actionValidateSyntax">
+  <action name="actionSourceValidation">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -545,7 +548,21 @@
      <normaloff>:/images/16x16/help-faq.png</normaloff>:/images/16x16/help-faq.png</iconset>
    </property>
    <property name="text">
-    <string>Validate Syntax</string>
+    <string>Source &amp;Validation</string>
+   </property>
+   <property name="shortcut">
+    <string>F4</string>
+   </property>
+   <property name="iconVisibleInMenu">
+    <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionSyntaxHighlighting">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Syntax &amp;Highlighting</string>
    </property>
   </action>
  </widget>

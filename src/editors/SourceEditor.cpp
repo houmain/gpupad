@@ -61,7 +61,7 @@ SourceEditor::SourceEditor(QString fileName, QWidget *parent)
 
     mLineNumberColor = palette().window().color().darker(150);
 
-    auto& settings = Singletons::settings();
+    const auto& settings = Singletons::settings();
     setFont(settings.font());
     setTabSize(settings.tabSize());
     setLineWrap(settings.lineWrap());
@@ -78,10 +78,12 @@ SourceEditor::SourceEditor(QString fileName, QWidget *parent)
         this, &SourceEditor::setAutoIndentation);
     connect(&settings, &Settings::indentWithSpacesChanged,
         this, &SourceEditor::setIndentWithSpaces);
+    connect(&settings, &Settings::syntaxHighlightingChanged,
+        this, &SourceEditor::updateSyntaxHighlighting);
 
     updateViewportMargins();
     updateExtraSelections();
-    updateHighlighting();
+    setSourceTypeFromExtension();
     setPlainText(document()->toPlainText());
 }
 
@@ -136,7 +138,6 @@ QList<QMetaObject::Connection> SourceEditor::connectEditActions(
 void SourceEditor::setFileName(QString fileName)
 {
     mFileName = fileName;
-    updateHighlighting();
     emit fileNameChanged(mFileName);
 }
 
@@ -168,14 +169,55 @@ bool SourceEditor::save()
     if (file.open(QFile::WriteOnly | QFile::Text)) {
         file.write(document()->toPlainText().toUtf8());
         document()->setModified(false);
+        setSourceTypeFromExtension();
         return true;
     }
     return false;
 }
 
-void SourceEditor::updateHighlighting()
+void SourceEditor::setSourceTypeFromExtension()
 {
-    if (mFileName.endsWith(".js")) {
+    const auto extension = QFileInfo(mFileName).suffix();
+
+    if (extension == "glsl" && mSourceType == PlainText)
+        setSourceType(FragmentShader);
+    else if (extension == "vs" || extension == "vert")
+        setSourceType(VertexShader);
+    else if (extension == "fs" || extension == "frag")
+        setSourceType(FragmentShader);
+    else if (extension == "gs" || extension == "geom")
+        setSourceType(GeometryShader);
+    else if (extension == "tesc")
+        setSourceType(TesselationControl);
+    else if (extension == "tese")
+        setSourceType(TesselationEvaluation);
+    else if (extension == "comp")
+        setSourceType(ComputeShader);
+    else if (extension == "js")
+        setSourceType(JavaScript);
+}
+
+void SourceEditor::setSourceType(SourceType sourceType)
+{
+    mSourceType = sourceType;
+    updateSyntaxHighlighting();
+}
+
+void SourceEditor::updateSyntaxHighlighting()
+{
+    const auto disabled =
+        (document()->characterCount() > (1 << 20) ||
+         !Singletons::settings().syntaxHighlighting() ||
+         mSourceType == PlainText);
+
+    if (disabled) {
+        delete mHighlighter;
+        mHighlighter = nullptr;
+        mCompleter = nullptr;
+        return;
+    }
+
+    if (mSourceType == JavaScript) {
         if (qobject_cast<JsHighlighter *>(mHighlighter))
             return;
 

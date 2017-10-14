@@ -183,6 +183,10 @@ MainWindow::MainWindow(QWidget *parent)
         &settings, &Settings::selectFont);
     connect(mUi->actionAutoIndentation, &QAction::triggered,
         &settings, &Settings::setAutoIndentation);
+    connect(mUi->actionSyntaxHighlighting, &QAction::triggered,
+        &settings, &Settings::setSyntaxHighlighting);
+    connect(mUi->actionSourceValidation, &QAction::triggered,
+        &settings, &Settings::setSourceValidation);
     connect(mUi->actionLineWrapping, &QAction::triggered,
         &settings, &Settings::setLineWrap);
     connect(mUi->actionIndentWithSpaces, &QAction::triggered,
@@ -201,10 +205,9 @@ MainWindow::MainWindow(QWidget *parent)
         &Singletons::customActions(), &QDialog::show);
 
     auto sourceTypeActionGroup = new QActionGroup(this);
-    auto sourceTypeMenu = new QMenu(this);
     auto sourceTypeButton = qobject_cast<QToolButton*>(
-        mUi->toolBarMain->widgetForAction(mUi->actionValidateSyntax));
-    sourceTypeButton->setMenu(sourceTypeMenu);
+        mUi->toolBarMain->widgetForAction(mUi->actionSourceValidation));
+    sourceTypeButton->setMenu(mUi->menuSourceType);
     sourceTypeButton->setPopupMode(QToolButton::MenuButtonPopup);
 
     auto metaType = QMetaEnum::fromType<SourceEditor::SourceType>();
@@ -213,20 +216,19 @@ MainWindow::MainWindow(QWidget *parent)
             auto text = QString(metaType.key(i));
             if (sourceType != SourceEditor::JavaScript)
                 text = splitPascalCase(text);
-            auto action = sourceTypeMenu->addAction(text);
+            auto action = mUi->menuSourceType->addAction(text);
             action->setData(sourceType);
             action->setCheckable(true);
             action->setActionGroup(sourceTypeActionGroup);
         }
-    connect(sourceTypeMenu, &QMenu::aboutToShow,
+    connect(mUi->menuSourceType, &QMenu::aboutToShow,
         [this, sourceTypeActionGroup]() {
             auto sourceType = mEditorManager.currentSourceType();
             foreach (QAction *action, sourceTypeActionGroup->actions())
                 action->setChecked(action->data().toInt() == sourceType);
         });
-    connect(sourceTypeMenu, &QMenu::triggered,
+    connect(mUi->menuSourceType, &QMenu::triggered,
         [this](QAction *action) {
-            mUi->actionValidateSyntax->setChecked(true);
             mEditorManager.setCurrentSourceType(
                 static_cast<SourceEditor::SourceType>(action->data().toInt()));
         });
@@ -310,6 +312,8 @@ void MainWindow::readSettings()
 
     mUi->actionIndentWithSpaces->setChecked(settings.indentWithSpaces());
     mUi->actionAutoIndentation->setChecked(settings.autoIndentation());
+    mUi->actionSyntaxHighlighting->setChecked(settings.syntaxHighlighting());
+    mUi->actionSourceValidation->setChecked(settings.sourceValidation());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
 }
 
@@ -357,7 +361,7 @@ void MainWindow::connectEditActions()
 
 void MainWindow::updateFileActions()
 {
-    if (!qApp->focusWidget())
+    if (!isActiveWindow())
         return;
 
     auto fileName = mEditActions.windowFileName->text();
@@ -374,6 +378,9 @@ void MainWindow::updateFileActions()
     const auto canReload = (mEditorManager.hasCurrentEditor());
     mUi->actionReload->setEnabled(canReload);
     mUi->actionReload->setText(tr("&Reload%1").arg(canReload ? desc : ""));
+
+    auto sourceType = mEditorManager.currentSourceType();
+    mUi->menuSourceType->setEnabled(sourceType != SourceEditor::None);
 }
 
 void MainWindow::stopEvaluation()
@@ -418,7 +425,8 @@ bool MainWindow::hasEditor() const
 
 void MainWindow::newFile()
 {
-    mEditorManager.openNewSourceEditor(tr("Untitled"));
+    mEditorManager.openNewSourceEditor(tr("Untitled"),
+        SourceEditor::FragmentShader);
 }
 
 void MainWindow::openFile()

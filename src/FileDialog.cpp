@@ -7,8 +7,8 @@
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
     const auto SessionFileExtension = QStringLiteral("gpjs");
-    const auto ShaderFileExtensions = { "glsl", "vert", "tesc", "tese", "geom",
-            "frag", "comp", "fs", "gs", "vs" };
+    const auto ShaderFileExtensions = { "glsl", "vs", "fs", "gs",
+        "vert", "tesc", "tese", "geom", "frag", "comp" };
     const auto BinaryFileExtensions = { "bin", "raw" };
     const auto ScriptFileExtensions = { "js" };
 

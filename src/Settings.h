@@ -22,6 +22,10 @@ public:
     bool indentWithSpaces() const { return mIndentWithSpaces; }
     void setAutoIndentation(bool enabled);
     bool autoIndentation() const { return mAutoIndentation; }
+    void setSyntaxHighlighting(bool enabled);
+    bool syntaxHighlighting() const { return mSyntaxHighlighting; }
+    void setSourceValidation(bool enabled);
+    bool sourceValidation() const { return mSourceValidation; }
 
 signals:
     void tabSizeChanged(int tabSize);
@@ -29,6 +33,8 @@ signals:
     void lineWrapChanged(bool wrap);
     void indentWithSpacesChanged(bool enabled);
     void autoIndentationChanged(bool enabled);
+    void syntaxHighlightingChanged(bool enabled);
+    void sourceValidationChanged(bool enabled);
 
 private:
     int mTabSize{ 4 };
@@ -36,6 +42,8 @@ private:
     bool mLineWrap{ };
     bool mIndentWithSpaces{ };
     bool mAutoIndentation{ true };
+    bool mSyntaxHighlighting{ true };
+    bool mSourceValidation{ };
 };
 
 #endif // SETTINGS_H

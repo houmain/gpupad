@@ -27,6 +27,7 @@ SessionEditor::SessionEditor(QWidget *parent)
     setContextMenuPolicy(Qt::CustomContextMenu);
     setAutoExpandDelay(750);
     setFileName({ });
+    setMinimumWidth(200);
 
     connect(&mModel.undoStack(), &QUndoStack::cleanChanged,
         [this](bool clean) { emit modificationChanged(!clean); });
