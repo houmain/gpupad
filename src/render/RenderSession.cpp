@@ -169,7 +169,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 
     // always re-evaluate scripts on manual evaluation
     if (!mScriptEngine || manualEvaluation)
-        mScriptEngine.reset(new ScriptEngine());
+        mScriptEngine.reset();
 
     auto& session = Singletons::sessionModel();
 
@@ -384,7 +384,10 @@ void RenderSession::reuseUnmodifiedItems()
 
 void RenderSession::evaluateScripts()
 {
-    mScriptEngine->reset(mCommandQueue->scripts);
+    if (mScriptEngine &&
+        mCommandQueue->scripts == mScriptEngine->scripts())
+        return;
+    mScriptEngine.reset(new ScriptEngine(mCommandQueue->scripts));
 }
 
 void RenderSession::executeCommandQueue()

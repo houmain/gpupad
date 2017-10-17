@@ -6,6 +6,7 @@
 #include "editors/SourceEditor.h"
 #include "editors/BinaryEditor.h"
 #include "render/RenderSession.h"
+#include "render/ValidateSource.h"
 #include <QTimer>
 
 template<typename F> // F(const FileItem&)
@@ -17,12 +18,16 @@ void forEachFileItem(SessionModel& model, const F &function) {
 }
 
 SynchronizeLogic::SynchronizeLogic(QObject *parent)
-  : QObject(parent)
-  , mModel(Singletons::sessionModel())
-  , mUpdateTimer(new QTimer(this))
+    : QObject(parent)
+    , mModel(Singletons::sessionModel())
+    , mEvaluationTimer(new QTimer(this))
+    , mValidateSourceTimer(new QTimer(this))
+    , mValidateSource(new ValidateSource())
 {
-    connect(mUpdateTimer, &QTimer::timeout,
-        [this]() { update(); });
+    connect(mEvaluationTimer, &QTimer::timeout,
+        [this]() { evaluate(); });
+    connect(mValidateSourceTimer, &QTimer::timeout,
+        this, &SynchronizeLogic::validateSource);
     connect(&mModel, &SessionModel::dataChanged,
         this, &SynchronizeLogic::handleItemModified);
     connect(&mModel, &SessionModel::rowsInserted,
@@ -32,6 +37,9 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
 
     resetRenderSession();
     setEvaluationMode(false, false);
+
+    mValidateSourceTimer->setInterval(500);
+    mValidateSourceTimer->setSingleShot(true);
 }
 
 SynchronizeLogic::~SynchronizeLogic() = default;
@@ -46,7 +54,7 @@ void SynchronizeLogic::resetRenderSession()
 void SynchronizeLogic::manualEvaluation()
 {
     mRenderSessionInvalidated = true;
-    update(true);
+    evaluate(true);
 }
 
 void SynchronizeLogic::setEvaluationMode(bool automatic, bool steady)
@@ -56,23 +64,23 @@ void SynchronizeLogic::setEvaluationMode(bool automatic, bool steady)
     mRenderSessionInvalidated = true;
 
     if (mSteadyEvaluation) {
-        mUpdateTimer->setSingleShot(false);
-        mUpdateTimer->start();
+        mEvaluationTimer->setSingleShot(false);
+        mEvaluationTimer->start();
     }
     else if (mAutomaticEvaluation) {
-        mUpdateTimer->setSingleShot(true);
-        mUpdateTimer->stop();
-        update();
+        mEvaluationTimer->setSingleShot(true);
+        mEvaluationTimer->stop();
+        evaluate();
     }
     else {
-        mUpdateTimer->stop();
+        mEvaluationTimer->stop();
         Singletons::sessionModel().setActiveItems({ });
     }
 }
 
 void SynchronizeLogic::setEvaluationInterval(int interval)
 {
-    mUpdateTimer->setInterval(interval);
+    mEvaluationTimer->setInterval(interval);
 }
 
 void SynchronizeLogic::handleSessionRendered()
@@ -92,6 +100,10 @@ void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
                 emit mModel.dataChanged(index, index);
             }
         });
+
+    auto &editorManager = Singletons::editorManager();
+    if (editorManager.currentEditorFileName() == fileName)
+        mValidateSourceTimer->start();
 }
 
 void SynchronizeLogic::handleItemModified(const QModelIndex &index)
@@ -120,7 +132,7 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
         mRenderSessionInvalidated = true;
     }
 
-    mUpdateTimer->start();
+    mEvaluationTimer->start();
 }
 
 void SynchronizeLogic::handleItemReordered(const QModelIndex &parent, int first)
@@ -140,7 +152,7 @@ void SynchronizeLogic::handleFileRenamed(const QString &prevFileName,
         });
 }
 
-void SynchronizeLogic::update(bool manualEvaluation)
+void SynchronizeLogic::evaluate(bool manualEvaluation)
 {
     auto &editors = Singletons::editorManager();
     foreach (ItemId bufferId, mBuffersModified)
@@ -198,4 +210,14 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
 
     if (scrollToOffset)
         editor.scrollToOffset();
+}
+
+void SynchronizeLogic::validateSource()
+{
+    auto &editorManager = Singletons::editorManager();
+    mValidateSource->setSource(
+        editorManager.currentEditorFileName(),
+        editorManager.currentSourceType());
+    updateFileCache();
+    mValidateSource->update(false, false, false);
 }

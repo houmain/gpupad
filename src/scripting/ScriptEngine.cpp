@@ -30,23 +30,10 @@ namespace {
     }
 } // namespace
 
-bool operator==(const ScriptEngine::Script &a,
-                const ScriptEngine::Script &b)
+ScriptEngine::ScriptEngine(QList<Script> scripts)
+    : mScripts(scripts)
+    , mJsEngine(new QJSEngine())
 {
-    return (a.fileName == b.fileName &&
-            a.source == b.source);
-}
-
-ScriptEngine::ScriptEngine()
-{
-    reset();
-}
-
-ScriptEngine::~ScriptEngine() = default;
-
-void ScriptEngine::reset()
-{
-    mJsEngine.reset(new QJSEngine());
     mJsEngine->installExtensions(QJSEngine::ConsoleExtension);
     mJsEngine->evaluate(
         "(function() {"
@@ -61,15 +48,6 @@ void ScriptEngine::reset()
             "log(text);"
            "};"
         "})();");
-    mMessages.clear();
-}
-
-void ScriptEngine::reset(QList<Script> scripts)
-{
-    if (scripts == mScripts)
-        return;
-
-    reset();
 
     redirectConsoleMessages(mMessages, [&]() {
         foreach (const Script &script, scripts) {
@@ -80,8 +58,9 @@ void ScriptEngine::reset(QList<Script> scripts)
                     MessageType::ScriptError, result.toString());
         }
     });
-    mScripts = scripts;
 }
+
+ScriptEngine::~ScriptEngine() = default;
 
 QJSValue ScriptEngine::evaluate(const QString &program, const QString &fileName)
 {

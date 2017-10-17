@@ -8,7 +8,8 @@
 class QTimer;
 class SessionModel;
 class BinaryEditor;
-class RenderTask;
+class RenderSession;
+class ValidateSource;
 
 class SynchronizeLogic : public QObject
 {
@@ -34,17 +35,22 @@ public slots:
 private slots:
     void handleItemReordered(const QModelIndex &parent, int first);
     void handleSessionRendered();
-    void update(bool manualEvaluation = false);
+    void evaluate(bool manualEvaluation = false);
+    void validateSource();
 
 private:
     SessionModel& mModel;
-    QTimer *mUpdateTimer{ };
     QSet<ItemId> mBuffersModified;
     QSet<QString> mFilesModified;
-    QScopedPointer<RenderTask> mRenderSession;
+
+    QTimer *mEvaluationTimer{ };
+    QScopedPointer<RenderSession> mRenderSession;
     bool mRenderSessionInvalidated{ };
     bool mAutomaticEvaluation{ };
     bool mSteadyEvaluation{ };
+
+    QTimer *mValidateSourceTimer{ };
+    ValidateSource *mValidateSource{ };
 };
 
 #endif // SYNCHRONIZELOGIC_H

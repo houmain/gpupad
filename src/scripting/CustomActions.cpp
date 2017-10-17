@@ -22,11 +22,13 @@ public:
     {
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
-            mScriptEngine.reset({ ScriptEngine::Script{ mFilePath, source } });
-            mScriptEngine.setGlobal("gpupad", mGpupadScriptObject);
+            mScriptEngine.reset(new ScriptEngine({
+                ScriptEngine::Script{ mFilePath, source }
+            }));
+            mScriptEngine->setGlobal("gpupad", mGpupadScriptObject);
         }
 
-        auto name = mScriptEngine.getGlobal("name");
+        auto name = mScriptEngine->getGlobal("name");
         setText(name.isUndefined() ?
             QFileInfo(mFilePath).baseName() :
             name.toString());
@@ -34,10 +36,10 @@ public:
 
     bool context(const QJsonValue &selection, MessagePtrSet &messages)
     {
-        auto context = mScriptEngine.getGlobal("context");
+        auto context = mScriptEngine->getGlobal("context");
         if (context.isCallable()) {
-            auto result = mScriptEngine.call(context,
-                { mScriptEngine.toJsValue(selection) },
+            auto result = mScriptEngine->call(context,
+                { mScriptEngine->toJsValue(selection) },
                 0, messages);
             if (result.isBool())
                 return result.toBool();
@@ -48,10 +50,10 @@ public:
 
     void execute(const QJsonValue &selection, MessagePtrSet &messages)
     {
-        auto execute = mScriptEngine.getGlobal("execute");
+        auto execute = mScriptEngine->getGlobal("execute");
         if (execute.isCallable())
-            mScriptEngine.call(execute,
-                { mScriptEngine.toJsValue(selection) },
+            mScriptEngine->call(execute,
+                { mScriptEngine->toJsValue(selection) },
                 0, messages);
 
         mGpupadScriptObject->finishSessionUpdate();
@@ -59,7 +61,7 @@ public:
 
 private:
     const QString mFilePath;
-    ScriptEngine mScriptEngine;
+    QScopedPointer<ScriptEngine> mScriptEngine;
     GpupadScriptObject *mGpupadScriptObject;
 };
 

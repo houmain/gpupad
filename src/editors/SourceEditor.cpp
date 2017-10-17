@@ -149,7 +149,14 @@ bool SourceEditor::load(const QString &fileName, QString *source)
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly | QFile::Text))
         return false;
-    *source = QTextStream(&file).readAll();
+
+    QTextStream stream(&file);
+    auto sample = stream.read(1024);
+    if (!sample.isSimpleText())
+        return false;
+
+    stream.seek(0);
+    *source = stream.readAll();
     return true;
 }
 

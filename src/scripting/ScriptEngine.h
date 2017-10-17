@@ -12,12 +12,18 @@ public:
     {
         QString fileName;
         QString source;
+
+        friend bool operator==(const Script &a, const Script &b)
+        {
+            return (a.fileName == b.fileName &&
+                    a.source == b.source);
+        }
     };
 
-    ScriptEngine();
+    explicit ScriptEngine(QList<Script> scripts);
     ~ScriptEngine();
 
-    void reset(QList<Script> scripts);
+    const QList<Script> &scripts() const { return mScripts; }
     void setGlobal(const QString &name, QObject *object);
     QJSValue getGlobal(const QString &name);
     QJSValue call(QJSValue& callable, const QJSValueList &args,
@@ -30,10 +36,9 @@ public:
 
 private:
     QJSValue evaluate(const QString &program, const QString &fileName = QString());
-    void reset();
 
+    const QList<Script> mScripts;
     QScopedPointer<QJSEngine> mJsEngine;
-    QList<Script> mScripts;
     MessagePtrSet mMessages;
 };
 
