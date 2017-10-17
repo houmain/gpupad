@@ -138,9 +138,9 @@ inline unsigned int fromVariant<unsigned int>(const QVariant &v)
 }
 
 template<>
-inline float fromVariant<float>(const QVariant &v)
+inline double fromVariant<double>(const QVariant &v)
 {
-    return v.toFloat();
+    return v.toDouble();
 }
 
 template<>
@@ -202,12 +202,6 @@ template<>
 inline QJsonValue toJsonValue(const unsigned int &v)
 {
     return static_cast<int>(v);
-}
-
-template<>
-inline QJsonValue toJsonValue(const float &v)
-{
-    return static_cast<double>(v);
 }
 
 template<>

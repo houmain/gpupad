@@ -6,7 +6,7 @@
 class ExpressionMatrix : public QTableWidget
 {
 public:
-    explicit ExpressionMatrix(QWidget *parent = 0);
+    explicit ExpressionMatrix(QWidget *parent = nullptr);
 
     void setRowCount(int rows);
     void setColumnCount(int columns);

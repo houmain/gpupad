@@ -263,7 +263,7 @@
       <string notr="true">QTabWidget::pane { border: none; }</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <property name="tabBarAutoHide">
       <bool>true</bool>
@@ -430,6 +430,9 @@
          </item>
          <item row="0" column="1">
           <widget class="QSpinBox" name="stencilReference">
+           <property name="minimum">
+            <number>-128</number>
+           </property>
            <property name="maximum">
             <number>255</number>
            </property>
@@ -547,6 +550,9 @@
          </item>
          <item row="0" column="1">
           <widget class="QSpinBox" name="stencilBackReference">
+           <property name="minimum">
+            <number>-128</number>
+           </property>
            <property name="maximum">
             <number>255</number>
            </property>

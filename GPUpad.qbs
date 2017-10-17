@@ -28,6 +28,7 @@ Project {
           "libs/SingleApplication/singleapplication.cpp",
           "libs/SingleApplication/singleapplication.h",
           "libs/SingleApplication/singleapplication_p.h",
+          "src/AutoOrientationSplitter.h",
           "src/EditActions.h",
           "src/FileDialog.cpp",
           "src/FileDialog.h",

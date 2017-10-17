@@ -116,7 +116,7 @@ public:
         LastBindingValue,
     };
 
-    explicit SessionModelCore(QObject *parent = 0);
+    explicit SessionModelCore(QObject *parent = nullptr);
     ~SessionModelCore();
 
     QModelIndex index(int row, int column,

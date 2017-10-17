@@ -12,7 +12,7 @@ class SessionEditor : public QTreeView
 {
     Q_OBJECT
 public:
-    explicit SessionEditor(QWidget *parent = 0);
+    explicit SessionEditor(QWidget *parent = nullptr);
 
     void addItemActions(QMenu* menu);
     void updateItemActions();

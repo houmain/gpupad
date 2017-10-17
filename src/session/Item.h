@@ -160,13 +160,13 @@ struct Attachment : Item
     unsigned int colorWriteMask{ 0xF };
 
     ComparisonFunc depthComparisonFunc{ ComparisonFunc::Less };
-    float depthOffsetFactor{ };
-    float depthOffsetUnits{ };
+    double depthOffsetFactor{ };
+    double depthOffsetUnits{ };
     bool depthClamp{ };
     bool depthWrite{ true };
 
     ComparisonFunc stencilFrontComparisonFunc{ ComparisonFunc::Always };
-    unsigned int stencilFrontReference{ };
+    int stencilFrontReference{ };
     unsigned int stencilFrontReadMask{ 0xFF };
     StencilOperation stencilFrontFailOp{ StencilOperation::Keep };
     StencilOperation stencilFrontDepthFailOp{ StencilOperation::Keep };
@@ -174,7 +174,7 @@ struct Attachment : Item
     unsigned int stencilFrontWriteMask{ 0xFF };
 
     ComparisonFunc stencilBackComparisonFunc{ ComparisonFunc::Always };
-    unsigned int stencilBackReference{ };
+    int stencilBackReference{ };
     unsigned int stencilBackReadMask{ 0xFF };
     StencilOperation stencilBackFailOp{ StencilOperation::Keep };
     StencilOperation stencilBackDepthFailOp{ StencilOperation::Keep };
@@ -214,7 +214,7 @@ struct Call : Item
 
     ItemId textureId{ };
     QColor clearColor{ Qt::black };
-    float clearDepth{ 1.0 };
+    double clearDepth{ 1.0 };
     int clearStencil{ };
 
     ItemId bufferId{ };

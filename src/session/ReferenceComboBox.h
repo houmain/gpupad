@@ -9,7 +9,7 @@ class ReferenceComboBox : public QComboBox
     Q_PROPERTY(QVariant currentData READ currentData WRITE
         setCurrentData NOTIFY currentDataChanged USER true)
 public:
-    explicit ReferenceComboBox(QWidget *parent = 0);
+    explicit ReferenceComboBox(QWidget *parent = nullptr);
     void setCurrentData(QVariant data);
     void validate();
 

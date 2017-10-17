@@ -15,7 +15,7 @@ class SynchronizeLogic : public QObject
 {
     Q_OBJECT
 public:
-    explicit SynchronizeLogic(QObject *parent = 0);
+    explicit SynchronizeLogic(QObject *parent = nullptr);
     ~SynchronizeLogic();
 
     void resetRenderSession();

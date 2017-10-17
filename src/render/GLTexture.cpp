@@ -82,7 +82,7 @@ QList<std::pair<ItemId, QImage>> GLTexture::getModifiedImages()
     return result;
 }
 
-void GLTexture::clear(QColor color, float depth, int stencil)
+void GLTexture::clear(QColor color, double depth, int stencil)
 {
     auto& gl = GLContext::currentContext();
     auto fbo = createFramebuffer(getReadWriteTextureId(), 0);
@@ -106,8 +106,11 @@ void GLTexture::clear(QColor color, float depth, int stencil)
         gl.glClear(GL_STENCIL_BUFFER_BIT);
     }
     else {
-        gl.glClearColor(color.redF(), color.greenF(),
-            color.blueF(), color.alphaF());
+        gl.glClearColor(
+            static_cast<float>(color.redF()),
+            static_cast<float>(color.greenF()),
+            static_cast<float>(color.blueF()),
+            static_cast<float>(color.alphaF()));
         gl.glClear(GL_COLOR_BUFFER_BIT);
     }
     gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
@@ -451,7 +454,7 @@ GLObject GLTexture::createFramebuffer(GLuint textureId, int level) const
         gl.glDeleteFramebuffers(1, &fbo);
     };
 
-    auto attachment = GL_COLOR_ATTACHMENT0;
+    auto attachment = GLenum{ GL_COLOR_ATTACHMENT0 };
     if (mKind.depth && mKind.stencil)
         attachment = GL_DEPTH_STENCIL_ATTACHMENT;
     else if (mKind.depth)
@@ -464,7 +467,8 @@ GLObject GLTexture::createFramebuffer(GLuint textureId, int level) const
     auto fbo = GLObject(createFBO(), freeFBO);
     gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment, textureId, level);
-    gl.glBindFramebuffer(GL_FRAMEBUFFER, prevFramebufferId);
+    gl.glBindFramebuffer(GL_FRAMEBUFFER,
+        static_cast<GLuint>(prevFramebufferId));
     return fbo;
 }
 
@@ -491,5 +495,6 @@ void GLTexture::resolveMultisampleTexture(QOpenGLTexture &source,
     gl.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destFbo);
     gl.glBlitFramebuffer(0, 0, width, height, 0, 0,
         width, height, blitMask, GL_NEAREST);
-    gl.glBindFramebuffer(GL_FRAMEBUFFER, prevFramebufferId);
+    gl.glBindFramebuffer(GL_FRAMEBUFFER,
+        static_cast<GLuint>(prevFramebufferId));
 }

@@ -36,7 +36,7 @@ class SessionProperties : public QScrollArea
 {
     Q_OBJECT
 public:
-    explicit SessionProperties(QWidget *parent = 0);
+    explicit SessionProperties(QWidget *parent = nullptr);
     ~SessionProperties();
 
     SessionModel &model() { return mModel; }

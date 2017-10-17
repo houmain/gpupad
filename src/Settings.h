@@ -8,7 +8,7 @@ class Settings : public QSettings
 {
     Q_OBJECT
 public:
-    explicit Settings(QObject *parent = 0);
+    explicit Settings(QObject *parent = nullptr);
     ~Settings();
 
     void setTabSize(int tabSize);

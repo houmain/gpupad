@@ -16,7 +16,7 @@ public:
         FindTextChanged, Find, Replace, ReplaceAll
     };
 
-    explicit FindReplaceBar(QWidget *parent = 0);
+    explicit FindReplaceBar(QWidget *parent = nullptr);
     ~FindReplaceBar();
 
     QWidget *target() const { return mTarget; }

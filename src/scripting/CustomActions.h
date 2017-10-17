@@ -19,7 +19,7 @@ class CustomActions : public QDialog
     Q_OBJECT
 
 public:
-    explicit CustomActions(QWidget *parent = 0);
+    explicit CustomActions(QWidget *parent = nullptr);
     ~CustomActions();
 
     void setSelection(QJsonValue selection);

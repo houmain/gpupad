@@ -7,7 +7,7 @@ class DockWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit DockWindow(QWidget *parent = 0);
+    explicit DockWindow(QWidget *parent = nullptr);
     ~DockWindow();
 
 protected:

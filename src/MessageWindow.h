@@ -13,7 +13,7 @@ class MessageWindow : public QTableWidget
     using MessageId = qulonglong;
 
 public:
-    explicit MessageWindow(QWidget *parent = 0);
+    explicit MessageWindow(QWidget *parent = nullptr);
 
 signals:
     void messageActivated(int itemId, QString fileName, int line, int column);

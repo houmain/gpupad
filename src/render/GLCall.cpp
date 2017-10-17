@@ -31,7 +31,8 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Buffer &buffer)
             mUsedItems += column->id;
             mIndexBuffer = indices;
             mIndexType = column->dataType;
-            mIndicesOffset = mCall.first * getStride(buffer);
+            mIndicesOffset =
+                static_cast<uintptr_t>(mCall.first * getStride(buffer));
         }
 }
 
@@ -129,28 +130,28 @@ void GLCall::executeDraw()
                     mCall.first,
                     mCall.count,
                     mCall.instanceCount,
-                    mCall.baseInstance);
+                    static_cast<GLuint>(mCall.baseInstance));
             }
         }
         else if (mCall.callType == Call::CallType::DrawIndexed) {
             // DrawElements(InstancedBaseVertexBaseInstance)
             if (!mCall.baseInstance && !mCall.baseVertex) {
                 gl.glDrawElementsInstanced(
-                        mCall.primitiveType,
-                        mCall.count,
-                        mIndexType,
-                        reinterpret_cast<void*>(mIndicesOffset),
-                        mCall.instanceCount);
+                    mCall.primitiveType,
+                    mCall.count,
+                    mIndexType,
+                    reinterpret_cast<void*>(mIndicesOffset),
+                    mCall.instanceCount);
             }
             else if (auto gl42 = check(gl.v4_2, mCall.id, mMessages)) {
                 gl42->glDrawElementsInstancedBaseVertexBaseInstance(
-                        mCall.primitiveType,
-                        mCall.count,
-                        mIndexType,
-                        reinterpret_cast<void*>(mIndicesOffset),
-                        mCall.instanceCount,
-                        mCall.baseVertex,
-                        mCall.baseInstance);
+                    mCall.primitiveType,
+                    mCall.count,
+                    mIndexType,
+                    reinterpret_cast<void*>(mIndicesOffset),
+                    mCall.instanceCount,
+                    mCall.baseVertex,
+                    static_cast<GLuint>(mCall.baseInstance));
             }
         }
         else if (mCall.callType == Call::CallType::DrawIndirect) {
@@ -219,7 +220,8 @@ void GLCall::executeCompute()
 void GLCall::executeClearTexture()
 {
     if (mTexture) {
-        mTexture->clear(mCall.clearColor, mCall.clearDepth, mCall.clearStencil);
+        mTexture->clear(mCall.clearColor,
+            mCall.clearDepth, mCall.clearStencil);
         mUsedItems += mTexture->usedItems();
     }
     else {

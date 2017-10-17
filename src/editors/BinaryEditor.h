@@ -18,7 +18,7 @@ public:
     static bool load(const QString &fileName, QByteArray *data);
     static int getTypeSize(DataType type);
 
-    explicit BinaryEditor(QString fileName, QWidget *parent = 0);
+    explicit BinaryEditor(QString fileName, QWidget *parent = nullptr);
 
     QList<QMetaObject::Connection> connectEditActions(
         const EditActions &actions) override;

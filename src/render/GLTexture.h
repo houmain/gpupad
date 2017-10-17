@@ -26,7 +26,7 @@ public:
     Texture::Target target() const { return mMultisampleTarget; }
     Texture::Format format() const { return mFormat; }
 
-    void clear(QColor color, float depth, int stencil);
+    void clear(QColor color, double depth, int stencil);
     void generateMipmaps();
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();

@@ -13,7 +13,8 @@ void ColorPicker::setColor(QColor color)
 {
     if (color != mColor) {
         mColor = color;
-        setStyleSheet("QToolButton { background: " + color.name(QColor::HexRgb) + "}");
+        setStyleSheet("QToolButton { background: " +
+            color.name(QColor::HexRgb) + "}");
         emit colorChanged(color);
     }
 }

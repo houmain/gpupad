@@ -10,7 +10,7 @@ class Renderer : public QObject
 {
     Q_OBJECT
 public:
-    explicit Renderer(QObject *parent = 0);
+    explicit Renderer(QObject *parent = nullptr);
     ~Renderer();
 
     void render(RenderTask *task);

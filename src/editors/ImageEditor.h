@@ -10,7 +10,7 @@ class ImageEditor : public QGraphicsView, public IEditor
 public:
     static bool load(const QString &fileName, QImage *image);
 
-    explicit ImageEditor(QString fileName, QWidget *parent = 0);
+    explicit ImageEditor(QString fileName, QWidget *parent = nullptr);
 
     QList<QMetaObject::Connection>
         connectEditActions(const EditActions &actions) override;

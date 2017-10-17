@@ -11,7 +11,7 @@ class SessionModel : public SessionModelCore
 {
     Q_OBJECT
 public:
-    explicit SessionModel(QObject *parent = 0);
+    explicit SessionModel(QObject *parent = nullptr);
     ~SessionModel();
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;

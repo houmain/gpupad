@@ -21,7 +21,7 @@ void GLShader::parseLog(const QString &log,
     while ((pos = split.indexIn(log, pos)) != -1) {
         const auto sourceIndex = split.cap(2).toInt();
         const auto line = (!split.cap(4).isNull() ?
-          split.cap(4).toInt() : split.cap(5).toInt());
+            split.cap(4).toInt() : split.cap(5).toInt());
         const auto severity = split.cap(6);
         const auto text = split.cap(7);
 
@@ -93,7 +93,7 @@ bool GLShader::compile()
     for (const auto& source : sources)
         pointers.push_back(source.data());
     gl.glShaderSource(shader, static_cast<GLsizei>(pointers.size()),
-        pointers.data(), 0);
+        pointers.data(), nullptr);
 
     auto status = GLint{ };
     gl.glCompileShader(shader);
@@ -102,7 +102,7 @@ bool GLShader::compile()
     auto length = GLint{ };
     gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
     auto log = std::vector<char>(static_cast<size_t>(length));
-    gl.glGetShaderInfoLog(shader, length, NULL, log.data());
+    gl.glGetShaderInfoLog(shader, length, nullptr, log.data());
     GLShader::parseLog(log.data(), mMessages, mItemId, mFileNames);
 
     if (status != GL_TRUE)

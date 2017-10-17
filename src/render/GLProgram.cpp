@@ -66,7 +66,7 @@ bool GLProgram::link()
     auto length = GLint{ };
     gl.glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
     auto log = std::vector<char>(static_cast<size_t>(length));
-    gl.glGetProgramInfoLog(program, length, NULL, log.data());
+    gl.glGetProgramInfoLog(program, length, nullptr, log.data());
     GLShader::parseLog(log.data(), mLinkMessages, mItemId, { });
 
     if (status != GL_TRUE)
@@ -118,7 +118,7 @@ bool GLProgram::link()
         for (const auto& stage : stages) {
             gl40->glGetProgramStageiv(program, stage,
                 GL_ACTIVE_SUBROUTINE_UNIFORMS, &uniforms);
-            for (auto i = 0; i < uniforms; ++i) {
+            for (auto i = 0u; i < static_cast<GLuint>(uniforms); ++i) {
                 gl40->glGetActiveSubroutineUniformName(program, stage, i,
                     buffer.size(), &nameLength, buffer.data());
                 auto name = QString(buffer.data());
@@ -127,13 +127,14 @@ bool GLProgram::link()
                 gl40->glGetActiveSubroutineUniformiv(program, stage, i,
                     GL_NUM_COMPATIBLE_SUBROUTINES, &compatible);
 
-                subroutineIndices.resize(compatible);
+                subroutineIndices.resize(static_cast<size_t>(compatible));
                 gl40->glGetActiveSubroutineUniformiv(program, stage, i,
                     GL_COMPATIBLE_SUBROUTINES, subroutineIndices.data());
 
                 auto subroutines = QList<QString>();
                 for (auto index : subroutineIndices) {
-                    gl40->glGetActiveSubroutineName(program, stage, index,
+                    gl40->glGetActiveSubroutineName(program, stage,
+                        static_cast<GLuint>(index),
                         buffer.size(), &nameLength, buffer.data());
                     subroutines += QString(buffer.data());
                 }
@@ -351,11 +352,12 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
     auto &texture = *binding.texture;
     const auto target = texture.target();
     const auto textureId = texture.getReadWriteTextureId();
-    gl.v4_2->glActiveTexture(GL_TEXTURE0 + unit);
+    gl.v4_2->glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
     gl.v4_2->glBindTexture(target, textureId);
     gl.v4_2->glUniform1i(location, unit);
-    gl.v4_2->glBindImageTexture(unit, textureId, binding.level,
-        binding.layered, binding.layer, binding.access, texture.format());
+    gl.v4_2->glBindImageTexture(static_cast<GLuint>(unit),
+        textureId, binding.level, binding.layered,
+        binding.layer, binding.access, texture.format());
     gl.glActiveTexture(GL_TEXTURE0);
     return true;
 }
@@ -372,9 +374,10 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
     if (index != GL_INVALID_INDEX) {
         mUniformBlocksSet[binding.name] = true;
         auto &buffer = *binding.buffer;
-        gl.glUniformBlockBinding(mProgramObject, index, unit);
-        gl.glBindBufferBase(GL_UNIFORM_BUFFER, unit,
-            buffer.getReadOnlyBufferId());
+        gl.glUniformBlockBinding(mProgramObject, index,
+            static_cast<GLuint>(unit));
+        gl.glBindBufferBase(GL_UNIFORM_BUFFER,
+            static_cast<GLuint>(unit), buffer.getReadOnlyBufferId());
         return true;
     }
 
@@ -384,9 +387,10 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
         if (index != GL_INVALID_INDEX) {
             mUniformBlocksSet[binding.name] = true;
             auto &buffer = *binding.buffer;
-            gl.v4_3->glShaderStorageBlockBinding(mProgramObject, index, unit);
-            gl.v4_3->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, unit,
-                buffer.getReadWriteBufferId());
+            gl.v4_3->glShaderStorageBlockBinding(mProgramObject,
+                index, static_cast<GLuint>(unit));
+            gl.v4_3->glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
+                static_cast<GLuint>(unit), buffer.getReadWriteBufferId());
             return true;
         }
     }
@@ -427,7 +431,8 @@ void GLProgram::reapplySubroutines()
                     MessageType::InvalidSubroutine, uniform.boundSubroutine);
         }
         gl.v4_0->glUniformSubroutinesuiv(stage,
-            subroutineIndices.size(), subroutineIndices.data());
+            static_cast<GLsizei>(subroutineIndices.size()),
+            subroutineIndices.data());
         subroutineIndices.clear();
     }
 }

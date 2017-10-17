@@ -30,7 +30,7 @@ public:
 
     static bool load(const QString &fileName, QString *source);
 
-    explicit SourceEditor(QString fileName, QWidget *parent = 0);
+    explicit SourceEditor(QString fileName, QWidget *parent = nullptr);
     ~SourceEditor();
 
     QList<QMetaObject::Connection> connectEditActions(

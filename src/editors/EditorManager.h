@@ -13,7 +13,7 @@ class EditorManager : public DockWindow
 {
     Q_OBJECT
 public:
-    explicit EditorManager(QWidget *parent = 0);
+    explicit EditorManager(QWidget *parent = nullptr);
     ~EditorManager();
 
     int openNotSavedDialog(const QString &fileName);

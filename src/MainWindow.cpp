@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include "AutoOrientationSplitter.h"
 #include "session/SessionEditor.h"
 #include "session/SessionProperties.h"
 #include "session/SessionModel.h"
@@ -15,32 +16,9 @@
 #include <QMessageBox>
 #include <QDockWidget>
 #include <QDesktopServices>
-#include <QSplitter>
 #include <QActionGroup>
 #include <QMenu>
 #include <QToolButton>
-
-class AutoOrientationSplitter : public QSplitter
-{
-public:
-    AutoOrientationSplitter(QWidget *parent) : QSplitter(parent)
-    {
-        setFrameShape(QFrame::StyledPanel);
-        setChildrenCollapsible(false);
-    }
-
-    void resizeEvent(QResizeEvent *event) override
-    {
-        setOrientation(2 * width() > 3 * height() ?
-            Qt::Horizontal : Qt::Vertical);
-
-        const auto vertical = (orientation() == Qt::Vertical);
-        setStretchFactor(vertical ? 1 : 0, 0);
-        setStretchFactor(vertical ? 0 : 1, 100);
-
-        QSplitter::resizeEvent(event);
-    }
-};
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)

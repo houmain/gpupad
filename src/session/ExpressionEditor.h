@@ -7,7 +7,7 @@ class ExpressionEditor : public QPlainTextEdit
 {
     Q_OBJECT
 public:
-    explicit ExpressionEditor(QWidget *parent = 0);
+    explicit ExpressionEditor(QWidget *parent = nullptr);
 
     void setText(const QString &text) { setPlainText(text); }
     QString text() const { return toPlainText(); }

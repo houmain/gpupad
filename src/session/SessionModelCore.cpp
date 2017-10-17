@@ -14,7 +14,7 @@ namespace {
             , mUndo(std::forward<Undo>(undo))
             , mFree(std::forward<Free>(free))
             , mOwns(owns) { }
-        ~UndoCommand() { if (mOwns) mFree(); }
+        ~UndoCommand() override { if (mOwns) mFree(); }
         void redo() override { mRedo(); mOwns = !mOwns; }
         void undo() override { mUndo(); mOwns = !mOwns; }
 
@@ -43,7 +43,7 @@ namespace {
             : QUndoCommand(firstCommand->text())
             , mId(id)
             , mCommands{ firstCommand } { }
-        ~MergingUndoCommand() {
+        ~MergingUndoCommand() override {
             qDeleteAll(mCommands);
         }
         void redo() override { foreach (QUndoCommand *c, mCommands) c->redo(); }

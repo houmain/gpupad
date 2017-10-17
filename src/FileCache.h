@@ -12,7 +12,7 @@ class FileCache : public QObject
 {
     Q_OBJECT
 public:
-    explicit FileCache(QObject *parent = 0);
+    explicit FileCache(QObject *parent = nullptr);
 
     bool getSource(const QString &fileName, QString *source) const;
     bool getImage(const QString &fileName, QImage *image) const;

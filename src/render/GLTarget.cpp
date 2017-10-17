@@ -140,8 +140,11 @@ void GLTarget::applyStates()
     else {
         gl.glDisable(GL_COLOR_LOGIC_OP);
     }
-    gl.glBlendColor(mBlendConstant.redF(), mBlendConstant.blueF(),
-                    mBlendConstant.greenF(), mBlendConstant.alphaF());
+    gl.glBlendColor(
+        static_cast<float>(mBlendConstant.redF()),
+        static_cast<float>(mBlendConstant.greenF()),
+        static_cast<float>(mBlendConstant.blueF()),
+        static_cast<float>(mBlendConstant.alphaF()));
 
     gl.glEnable(GL_PROGRAM_POINT_SIZE);
     gl.glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
@@ -193,7 +196,9 @@ void GLTarget::applyAttachmentStates(const GLAttachment &a)
         gl.glEnable(GL_POLYGON_OFFSET_POINT);
         gl.glEnable(GL_POLYGON_OFFSET_LINE);
         gl.glEnable(GL_POLYGON_OFFSET_FILL);
-        gl.glPolygonOffset(a.depthOffsetFactor, a.depthOffsetUnits);
+        gl.glPolygonOffset(
+            static_cast<float>(a.depthOffsetFactor),
+            static_cast<float>(a.depthOffsetUnits));
         if (a.depthClamp)
             gl.glEnable(GL_DEPTH_CLAMP);
         else

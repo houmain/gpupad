@@ -9,7 +9,7 @@ class DataComboBox : public QComboBox
     Q_PROPERTY(QVariant currentData READ currentData WRITE
         setCurrentData NOTIFY currentDataChanged USER true)
 public:
-    explicit DataComboBox(QWidget *parent = 0);
+    explicit DataComboBox(QWidget *parent = nullptr);
     void setCurrentData(QVariant data);
 
     QSize minimumSizeHint() const override;
