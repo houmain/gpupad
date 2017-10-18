@@ -3,7 +3,6 @@
 #include "FileCache.h"
 #include "session/SessionModel.h"
 #include "editors/EditorManager.h"
-#include "editors/SourceEditor.h"
 #include "editors/BinaryEditor.h"
 #include "render/RenderSession.h"
 #include "render/ValidateSource.h"
@@ -22,7 +21,6 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     , mModel(Singletons::sessionModel())
     , mEvaluationTimer(new QTimer(this))
     , mValidateSourceTimer(new QTimer(this))
-    , mValidateSource(new ValidateSource())
 {
     connect(mEvaluationTimer, &QTimer::timeout,
         [this]() { evaluate(); });
@@ -43,6 +41,19 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
 }
 
 SynchronizeLogic::~SynchronizeLogic() = default;
+
+void SynchronizeLogic::setSourceValidationActive(bool active)
+{
+    if (active) {
+        if (!mValidateSource) {
+            mValidateSource.reset(new ValidateSource());
+            validateSource();
+        }
+    }
+    else {
+        mValidateSource.reset();
+    }
+}
 
 void SynchronizeLogic::resetRenderSession()
 {
@@ -152,6 +163,12 @@ void SynchronizeLogic::handleFileRenamed(const QString &prevFileName,
         });
 }
 
+void SynchronizeLogic::handleSourceTypeChanged(SourceEditor::SourceType sourceType)
+{
+    Q_UNUSED(sourceType);
+    validateSource();
+}
+
 void SynchronizeLogic::evaluate(bool manualEvaluation)
 {
     auto &editors = Singletons::editorManager();
@@ -214,10 +231,12 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
 
 void SynchronizeLogic::validateSource()
 {
-    auto &editorManager = Singletons::editorManager();
-    mValidateSource->setSource(
-        editorManager.currentEditorFileName(),
-        editorManager.currentSourceType());
-    updateFileCache();
-    mValidateSource->update(false, false, false);
+    if (mValidateSource) {
+        auto &editorManager = Singletons::editorManager();
+        mValidateSource->setSource(
+            editorManager.currentEditorFileName(),
+            editorManager.currentSourceType());
+        updateFileCache();
+        mValidateSource->update(false, false, false);
+    }
 }

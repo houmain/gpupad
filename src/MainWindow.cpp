@@ -151,6 +151,10 @@ MainWindow::MainWindow(QWidget *parent)
         &synchronizeLogic, &SynchronizeLogic::handleFileRenamed);
     connect(&mEditorManager, &EditorManager::editorChanged,
         &synchronizeLogic, &SynchronizeLogic::handleFileItemsChanged);
+    connect(&mEditorManager, &EditorManager::sourceTypeChanged,
+        &synchronizeLogic, &SynchronizeLogic::handleSourceTypeChanged);
+    connect(mUi->actionSourceValidation, &QAction::toggled,
+        &synchronizeLogic, &SynchronizeLogic::setSourceValidationActive);
     connect(mMessageWindow.data(), &MessageWindow::messageActivated,
         this, &MainWindow::handleMessageActivated);
     connect(mMessageWindow.data(), &MessageWindow::messagesAdded,
@@ -572,12 +576,14 @@ void MainWindow::updateCustomActionsMenu()
 void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
         int line, int column)
 {
-    if (itemId)
+    if (itemId) {
         mSessionEditor->setCurrentItem(itemId);
-    else if (!fileName.isEmpty())
-        Singletons::editorManager().openSourceEditor(fileName, true, line, column);
-    else
         openSessionDock();
+    }
+    else if (!fileName.isEmpty()) {
+        Singletons::editorManager().openSourceEditor(
+            fileName, true, line, column);
+    }
 }
 
 void MainWindow::openSessionDock()

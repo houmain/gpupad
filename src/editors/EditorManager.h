@@ -50,6 +50,7 @@ public:
 signals:
     void editorChanged(const QString &fileName);
     void editorRenamed(const QString &prevFileName, const QString &fileName);
+    void sourceTypeChanged(SourceEditor::SourceType sourceType);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *e) override;

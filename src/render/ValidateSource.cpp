@@ -67,15 +67,17 @@ void ValidateSource::prepare(bool itemsChanged, bool manualEvaluation)
 
 void ValidateSource::render()
 {
-    mShader.reset(mNewShader.take());
-    if (mShader) {
+    if (mNewShader) {
         mScriptEngine.reset();
+        mShader.reset(mNewShader.take());
         mShader->compile();
     }
     else {
         mShader.reset();
         mScriptEngine.reset(new ScriptEngine({
-            ScriptEngine::Script{ mFileName, mScriptSource }
+            ScriptEngine::Script{
+                mFileName, std::exchange(mScriptSource, "")
+            }
         }));
     }
 }

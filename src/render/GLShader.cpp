@@ -60,6 +60,12 @@ GLShader::GLShader(const QList<const Shader*> &shaders)
         mItemId = shader->id;
         mType = shader->shaderType;
     }
+
+    // workaround: to prevent unesthetic "unexpected end" error,
+    // ensure shader is not empty
+    if (mSources.empty())
+        mSources += "";
+    mSources.back() += "\n struct XXX_gpupad { float a; };\n";
 }
 
 bool GLShader::operator==(const GLShader &rhs) const

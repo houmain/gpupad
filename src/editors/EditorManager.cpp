@@ -57,6 +57,8 @@ void EditorManager::updateCurrentEditor()
     foreach (QDockWidget* dock, mDocks.keys()) {
         if (dock->isAncestorOf(focus)) {
             mCurrentDock = dock;
+
+            emit sourceTypeChanged(currentSourceType());
             return;
         }
     }
@@ -87,8 +89,10 @@ SourceEditor::SourceType EditorManager::currentSourceType()
 void EditorManager::setCurrentSourceType(SourceEditor::SourceType sourceType)
 {
     if (auto editor = static_cast<SourceEditor*>(currentEditor()))
-        if (mSourceEditors.contains(editor))
+        if (mSourceEditors.contains(editor)) {
             editor->setSourceType(sourceType);
+            emit sourceTypeChanged(sourceType);
+        }
 }
 
 QList<QMetaObject::Connection> EditorManager::connectEditActions(

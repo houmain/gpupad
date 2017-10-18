@@ -2,6 +2,7 @@
 #define SYNCHRONIZELOGIC_H
 
 #include "session/Item.h"
+#include "editors/SourceEditor.h"
 #include <QObject>
 #include <QSet>
 
@@ -19,6 +20,7 @@ public:
     ~SynchronizeLogic();
 
     void resetRenderSession();
+    void setSourceValidationActive(bool active);
     void setEvaluationMode(bool automatic, bool steady);
     void setEvaluationInterval(int interval);
     void updateBinaryEditor(const Buffer &buffer,
@@ -31,6 +33,7 @@ public slots:
     void handleFileItemsChanged(const QString &fileName);
     void handleFileRenamed(const QString &prevFileName,
         const QString &fileName);
+    void handleSourceTypeChanged(SourceEditor::SourceType sourceType);
 
 private slots:
     void handleItemReordered(const QModelIndex &parent, int first);
@@ -50,7 +53,7 @@ private:
     bool mSteadyEvaluation{ };
 
     QTimer *mValidateSourceTimer{ };
-    ValidateSource *mValidateSource{ };
+    QScopedPointer<ValidateSource> mValidateSource;
 };
 
 #endif // SYNCHRONIZELOGIC_H
