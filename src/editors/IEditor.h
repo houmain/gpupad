@@ -2,6 +2,7 @@
 #define IEDITOR_H
 
 #include "EditActions.h"
+#include "SourceType.h"
 #include <QList>
 #include <QMetaObject>
 
@@ -16,6 +17,8 @@ public:
     virtual bool load() = 0;
     virtual bool save() = 0;
     virtual int tabifyGroup() = 0;
+    virtual SourceType sourceType() const { return SourceType::None; }
+    virtual void setSourceType(SourceType) { }
 };
 
 #endif // IEDITOR_H

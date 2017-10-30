@@ -2,8 +2,8 @@
 #define VALIDATESOURCE_H
 
 #include "RenderTask.h"
+#include "SourceType.h"
 #include "session/Item.h"
-#include "editors/SourceEditor.h"
 
 class GLShader;
 class ScriptEngine;

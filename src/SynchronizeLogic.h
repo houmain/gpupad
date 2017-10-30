@@ -2,7 +2,7 @@
 #define SYNCHRONIZELOGIC_H
 
 #include "session/Item.h"
-#include "editors/SourceEditor.h"
+#include "SourceType.h"
 #include <QObject>
 #include <QSet>
 

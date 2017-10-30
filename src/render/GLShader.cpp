@@ -1,5 +1,4 @@
 #include "GLShader.h"
-#include "editors/SourceEditor.h"
 
 void GLShader::parseLog(const QString &log,
         MessagePtrSet &messages, ItemId itemId,

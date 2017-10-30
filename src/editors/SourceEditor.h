@@ -3,7 +3,6 @@
 
 #include "IEditor.h"
 #include "FindReplaceBar.h"
-#include "SourceType.h"
 #include <QPlainTextEdit>
 
 class QPaintEvent;
@@ -29,9 +28,9 @@ public:
     bool save() override;
     int tabifyGroup() override { return 0; }
     QString source() const { return toPlainText(); }
-    SourceType sourceType() const { return mSourceType; }
+    SourceType sourceType() const override { return mSourceType; }
+    void setSourceType(SourceType sourceType) override;
     void setSourceTypeFromExtension();
-    void setSourceType(SourceType sourceType);
 
     void findReplace();
     void setLineWrap(bool wrap) { setLineWrapMode(wrap ? WidgetWidth : NoWrap); }

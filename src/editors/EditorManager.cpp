@@ -81,19 +81,17 @@ IEditor *EditorManager::currentEditor()
 
 SourceType EditorManager::currentSourceType()
 {
-    if (auto editor = static_cast<SourceEditor*>(currentEditor()))
-        if (mSourceEditors.contains(editor))
-            return editor->sourceType();
+    if (auto editor = currentEditor())
+        return editor->sourceType();
     return SourceType::None;
 }
 
 void EditorManager::setCurrentSourceType(SourceType sourceType)
 {
-    if (auto editor = static_cast<SourceEditor*>(currentEditor()))
-        if (mSourceEditors.contains(editor)) {
-            editor->setSourceType(sourceType);
-            emit sourceTypeChanged(sourceType);
-        }
+    if (auto editor = currentEditor()) {
+        editor->setSourceType(sourceType);
+        emit sourceTypeChanged(sourceType);
+    }
 }
 
 QList<QMetaObject::Connection> EditorManager::connectEditActions(
