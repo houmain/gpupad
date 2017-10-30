@@ -344,15 +344,16 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
                         editors.openNewSourceEditor(fileItem->name));
                 auto editor = editors.openSourceEditor(fileItem->fileName);
                 if (auto shader = mModel.item<Shader>(index)) {
-                    static const auto sMapping = QMap<Shader::ShaderType, SourceEditor::SourceType>{
-                        { Shader::ShaderType::Vertex, SourceEditor::VertexShader },
-                        { Shader::ShaderType::Fragment, SourceEditor::FragmentShader },
-                        { Shader::ShaderType::Geometry, SourceEditor::GeometryShader },
-                        { Shader::ShaderType::TessellationControl, SourceEditor::TesselationControl },
-                        { Shader::ShaderType::TessellationEvaluation, SourceEditor::TesselationEvaluation },
-                        { Shader::ShaderType::Compute, SourceEditor::ComputeShader },
+                    static const auto sMapping = QMap<Shader::ShaderType, SourceType>{
+                        { Shader::ShaderType::Vertex, SourceType::VertexShader },
+                        { Shader::ShaderType::Fragment, SourceType::FragmentShader },
+                        { Shader::ShaderType::Geometry, SourceType::GeometryShader },
+                        { Shader::ShaderType::TessellationControl, SourceType::TesselationControl },
+                        { Shader::ShaderType::TessellationEvaluation, SourceType::TesselationEvaluation },
+                        { Shader::ShaderType::Compute, SourceType::ComputeShader },
                     };
-                    if (auto sourceType = sMapping[shader->shaderType])
+                    auto sourceType = sMapping[shader->shaderType];
+                    if (sourceType != SourceType::None)
                         editor->setSourceType(sourceType);
                 }
                 return editor;
@@ -363,7 +364,7 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
                     mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
                         editors.openNewSourceEditor(fileItem->name));
                 auto editor = editors.openSourceEditor(fileItem->fileName);
-                editor->setSourceType(SourceEditor::JavaScript);
+                editor->setSourceType(SourceType::JavaScript);
                 return editor;
             }
 

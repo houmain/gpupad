@@ -18,7 +18,7 @@ public:
 
     int openNotSavedDialog(const QString &fileName);
     QString openNewSourceEditor(const QString &baseName,
-        SourceEditor::SourceType sourceType = SourceEditor::PlainText);
+        SourceType sourceType = SourceType::PlainText);
     QString openNewBinaryEditor(const QString &baseName);
     QString openNewImageEditor(const QString &baseName);
     bool openEditor(const QString &fileName, bool raise = true);
@@ -37,8 +37,8 @@ public:
     void updateCurrentEditor();
     bool hasCurrentEditor() const { return (mCurrentDock != nullptr); }
     QString currentEditorFileName();
-    SourceEditor::SourceType currentSourceType();
-    void setCurrentSourceType(SourceEditor::SourceType sourceType);
+    SourceType currentSourceType();
+    void setCurrentSourceType(SourceType sourceType);
     QList<QMetaObject::Connection> connectEditActions(const EditActions &actions);
     bool saveEditor();
     bool saveEditorAs();
@@ -50,7 +50,7 @@ public:
 signals:
     void editorChanged(const QString &fileName);
     void editorRenamed(const QString &prevFileName, const QString &fileName);
-    void sourceTypeChanged(SourceEditor::SourceType sourceType);
+    void sourceTypeChanged(SourceType sourceType);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *e) override;

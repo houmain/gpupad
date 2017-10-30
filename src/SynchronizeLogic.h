@@ -33,7 +33,7 @@ public slots:
     void handleFileItemsChanged(const QString &fileName);
     void handleFileRenamed(const QString &prevFileName,
         const QString &fileName);
-    void handleSourceTypeChanged(SourceEditor::SourceType sourceType);
+    void handleSourceTypeChanged(SourceType sourceType);
 
 private slots:
     void handleItemReordered(const QModelIndex &parent, int first);

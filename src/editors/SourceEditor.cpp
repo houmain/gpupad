@@ -186,22 +186,22 @@ void SourceEditor::setSourceTypeFromExtension()
 {
     const auto extension = QFileInfo(mFileName).suffix();
 
-    if (extension == "glsl" && mSourceType == PlainText)
-        setSourceType(FragmentShader);
+    if (extension == "glsl" && mSourceType == SourceType::PlainText)
+        setSourceType(SourceType::FragmentShader);
     else if (extension == "vs" || extension == "vert")
-        setSourceType(VertexShader);
+        setSourceType(SourceType::VertexShader);
     else if (extension == "fs" || extension == "frag")
-        setSourceType(FragmentShader);
+        setSourceType(SourceType::FragmentShader);
     else if (extension == "gs" || extension == "geom")
-        setSourceType(GeometryShader);
+        setSourceType(SourceType::GeometryShader);
     else if (extension == "tesc")
-        setSourceType(TesselationControl);
+        setSourceType(SourceType::TesselationControl);
     else if (extension == "tese")
-        setSourceType(TesselationEvaluation);
+        setSourceType(SourceType::TesselationEvaluation);
     else if (extension == "comp")
-        setSourceType(ComputeShader);
+        setSourceType(SourceType::ComputeShader);
     else if (extension == "js")
-        setSourceType(JavaScript);
+        setSourceType(SourceType::JavaScript);
 }
 
 void SourceEditor::setSourceType(SourceType sourceType)
@@ -215,7 +215,7 @@ void SourceEditor::updateSyntaxHighlighting()
     const auto disabled =
         (document()->characterCount() > (1 << 20) ||
          !Singletons::settings().syntaxHighlighting() ||
-         mSourceType == PlainText);
+         mSourceType == SourceType::PlainText);
 
     if (disabled) {
         delete mHighlighter;
@@ -224,7 +224,7 @@ void SourceEditor::updateSyntaxHighlighting()
         return;
     }
 
-    if (mSourceType == JavaScript) {
+    if (mSourceType == SourceType::JavaScript) {
         if (qobject_cast<JsHighlighter *>(mHighlighter))
             return;
 

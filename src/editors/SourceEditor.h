@@ -3,6 +3,7 @@
 
 #include "IEditor.h"
 #include "FindReplaceBar.h"
+#include "SourceType.h"
 #include <QPlainTextEdit>
 
 class QPaintEvent;
@@ -14,20 +15,6 @@ class SourceEditor : public QPlainTextEdit, public IEditor
 {
     Q_OBJECT
 public:
-    enum SourceType
-    {
-        None,
-        PlainText,
-        VertexShader,
-        FragmentShader,
-        GeometryShader,
-        TesselationControl,
-        TesselationEvaluation,
-        ComputeShader,
-        JavaScript,
-    };
-    Q_ENUM(SourceType)
-
     static bool load(const QString &fileName, QString *source);
 
     explicit SourceEditor(QString fileName, QWidget *parent = nullptr);
@@ -90,7 +77,7 @@ private:
     void updateSyntaxHighlighting();
 
     QString mFileName;
-    SourceType mSourceType{ PlainText };
+    SourceType mSourceType{ SourceType::PlainText };
     QSyntaxHighlighter *mHighlighter{ };
     QCompleter *mCompleter{ };
     LineNumberArea *mLineNumberArea{ };

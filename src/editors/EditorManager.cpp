@@ -78,15 +78,15 @@ IEditor *EditorManager::currentEditor()
     return nullptr;
 }
 
-SourceEditor::SourceType EditorManager::currentSourceType()
+SourceType EditorManager::currentSourceType()
 {
     if (auto editor = static_cast<SourceEditor*>(currentEditor()))
         if (mSourceEditors.contains(editor))
             return editor->sourceType();
-    return SourceEditor::SourceType::None;
+    return SourceType::None;
 }
 
-void EditorManager::setCurrentSourceType(SourceEditor::SourceType sourceType)
+void EditorManager::setCurrentSourceType(SourceType sourceType)
 {
     if (auto editor = static_cast<SourceEditor*>(currentEditor()))
         if (mSourceEditors.contains(editor)) {
@@ -104,7 +104,7 @@ QList<QMetaObject::Connection> EditorManager::connectEditActions(
 }
 
 QString EditorManager::openNewSourceEditor(const QString &baseName,
-    SourceEditor::SourceType sourceType)
+    SourceType sourceType)
 {
     auto fileName = FileDialog::generateNextUntitledFileName(baseName);
     auto editor = new SourceEditor(fileName);

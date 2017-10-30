@@ -17,7 +17,7 @@ QSet<ItemId> ValidateSource::usedItems() const
 }
 
 void ValidateSource::setSource(QString fileName,
-        SourceEditor::SourceType sourceType)
+        SourceType sourceType)
 {
     mFileName = fileName;
     mSourceType = sourceType;
@@ -30,31 +30,31 @@ void ValidateSource::prepare(bool itemsChanged, bool manualEvaluation)
 
     auto shaderType = Shader::ShaderType{ };
     switch (mSourceType) {
-        case SourceEditor::None:
-        case SourceEditor::PlainText:
+        case SourceType::None:
+        case SourceType::PlainText:
             return;
 
-        case SourceEditor::JavaScript:
+        case SourceType::JavaScript:
             Singletons::fileCache().getSource(mFileName, &mScriptSource);
             mScriptSource = "if (false) {" + mScriptSource + "}";
             return;
 
-        case SourceEditor::VertexShader:
+        case SourceType::VertexShader:
             shaderType = Shader::ShaderType::Vertex;
             break;
-        case SourceEditor::FragmentShader:
+        case SourceType::FragmentShader:
             shaderType = Shader::ShaderType::Fragment;
             break;
-        case SourceEditor::GeometryShader:
+        case SourceType::GeometryShader:
             shaderType = Shader::ShaderType::Geometry;
             break;
-        case SourceEditor::TesselationControl:
+        case SourceType::TesselationControl:
             shaderType = Shader::ShaderType::TessellationControl;
             break;
-        case SourceEditor::TesselationEvaluation:
+        case SourceType::TesselationEvaluation:
             shaderType = Shader::ShaderType::TessellationEvaluation;
             break;
-        case SourceEditor::ComputeShader:
+        case SourceType::ComputeShader:
             shaderType = Shader::ShaderType::Compute;
             break;
     }

@@ -163,7 +163,7 @@ void SynchronizeLogic::handleFileRenamed(const QString &prevFileName,
         });
 }
 
-void SynchronizeLogic::handleSourceTypeChanged(SourceEditor::SourceType sourceType)
+void SynchronizeLogic::handleSourceTypeChanged(SourceType sourceType)
 {
     Q_UNUSED(sourceType);
     validateSource();

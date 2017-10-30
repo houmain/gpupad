@@ -15,7 +15,7 @@ public:
     explicit ValidateSource(QObject *parent = nullptr);
     ~ValidateSource();
 
-    void setSource(QString fileName, SourceEditor::SourceType sourceType);
+    void setSource(QString fileName, SourceType sourceType);
     QSet<ItemId> usedItems() const override;
 
 private:
@@ -27,7 +27,7 @@ private:
     QScopedPointer<GLShader> mNewShader;
     QScopedPointer<GLShader> mShader;
     QString mFileName;
-    SourceEditor::SourceType mSourceType{ };
+    SourceType mSourceType{ };
 
     QString mScriptSource;
     QScopedPointer<ScriptEngine> mScriptEngine;

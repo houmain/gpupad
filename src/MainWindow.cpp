@@ -192,27 +192,32 @@ MainWindow::MainWindow(QWidget *parent)
     sourceTypeButton->setMenu(mUi->menuSourceType);
     sourceTypeButton->setPopupMode(QToolButton::MenuButtonPopup);
 
-    auto metaType = QMetaEnum::fromType<SourceEditor::SourceType>();
-    for (auto i = 0; i < metaType.keyCount(); ++i)
-        if (auto sourceType = metaType.value(i)) {
-            auto text = QString(metaType.key(i));
-            if (sourceType != SourceEditor::JavaScript)
-                text = splitPascalCase(text);
-            auto action = mUi->menuSourceType->addAction(text);
-            action->setData(sourceType);
-            action->setCheckable(true);
-            action->setActionGroup(sourceTypeActionGroup);
-        }
+    auto addSourceType = [&](const QString &text, SourceType sourceType) {
+        auto action = mUi->menuSourceType->addAction(text);
+        action->setData(static_cast<int>(sourceType));
+        action->setCheckable(true);
+        action->setActionGroup(sourceTypeActionGroup);
+    };
+    addSourceType(tr("Plaintext"), SourceType::PlainText);
+    addSourceType(tr("Vertex Shader"), SourceType::VertexShader);
+    addSourceType(tr("Fragment Shader"), SourceType::FragmentShader);
+    addSourceType(tr("Geometry Shader"), SourceType::GeometryShader);
+    addSourceType(tr("Tesselation Control"), SourceType::TesselationControl);
+    addSourceType(tr("Tesselation Evaluation"), SourceType::TesselationEvaluation);
+    addSourceType(tr("Compute Shader"), SourceType::ComputeShader);
+    addSourceType(tr("JavaScript"), SourceType::JavaScript);
+
     connect(mUi->menuSourceType, &QMenu::aboutToShow,
         [this, sourceTypeActionGroup]() {
             auto sourceType = mEditorManager.currentSourceType();
             foreach (QAction *action, sourceTypeActionGroup->actions())
-                action->setChecked(action->data().toInt() == sourceType);
+                action->setChecked(static_cast<SourceType>(
+                    action->data().toInt()) == sourceType);
         });
     connect(mUi->menuSourceType, &QMenu::triggered,
         [this](QAction *action) {
             mEditorManager.setCurrentSourceType(
-                static_cast<SourceEditor::SourceType>(action->data().toInt()));
+                static_cast<SourceType>(action->data().toInt()));
         });
 
     auto evalIntervalActionGroup = new QActionGroup(this);
@@ -362,7 +367,7 @@ void MainWindow::updateFileActions()
     mUi->actionReload->setText(tr("&Reload%1").arg(canReload ? desc : ""));
 
     auto sourceType = mEditorManager.currentSourceType();
-    mUi->menuSourceType->setEnabled(sourceType != SourceEditor::None);
+    mUi->menuSourceType->setEnabled(sourceType != SourceType::None);
 }
 
 void MainWindow::stopEvaluation()
@@ -408,7 +413,7 @@ bool MainWindow::hasEditor() const
 void MainWindow::newFile()
 {
     mEditorManager.openNewSourceEditor(tr("Untitled"),
-        SourceEditor::FragmentShader);
+        SourceType::FragmentShader);
 }
 
 void MainWindow::openFile()

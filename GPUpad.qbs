@@ -45,6 +45,7 @@ Project {
           "src/Settings.h",
           "src/Singletons.cpp",
           "src/Singletons.h",
+          "src/SourceType.h",
           "src/SynchronizeLogic.cpp",
           "src/SynchronizeLogic.h",
           "src/editors/BinaryEditor.cpp",
