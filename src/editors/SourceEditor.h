@@ -17,7 +17,8 @@ class SourceEditor : public QPlainTextEdit, public IEditor
 public:
     static bool load(const QString &fileName, QString *source);
 
-    explicit SourceEditor(QString fileName, QWidget *parent = nullptr);
+    explicit SourceEditor(QString fileName,
+        FindReplaceBar *findReplaceBar, QWidget *parent = nullptr);
     ~SourceEditor();
 
     QList<QMetaObject::Connection> connectEditActions(
@@ -77,6 +78,7 @@ private:
     void updateSyntaxHighlighting();
 
     QString mFileName;
+    FindReplaceBar &mFindReplaceBar;
     SourceType mSourceType{ SourceType::PlainText };
     QSyntaxHighlighter *mHighlighter{ };
     QCompleter *mCompleter{ };

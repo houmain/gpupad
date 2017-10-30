@@ -12,7 +12,6 @@ class EditorManager;
 class SynchronizeLogic;
 class SessionModel;
 class Renderer;
-class FindReplaceBar;
 class CustomActions;
 
 bool onMainThread();
@@ -28,7 +27,6 @@ public:
     static EditorManager &editorManager();
     static SessionModel &sessionModel();
     static SynchronizeLogic &synchronizeLogic();
-    static FindReplaceBar &findReplaceBar();
     static CustomActions &customActions();
 
     explicit Singletons(QMainWindow *window);
@@ -46,7 +44,6 @@ private:
     QScopedPointer<EditorManager> mEditorManager;
     QScopedPointer<SessionModel> mSessionModel;
     QScopedPointer<SynchronizeLogic> mSynchronizeLogic;
-    QScopedPointer<FindReplaceBar> mFindReplaceBar;
     QScopedPointer<CustomActions> mCustomActions;
 };
 

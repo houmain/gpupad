@@ -40,12 +40,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto content = new QWidget(this);
     mEditorManager.setParent(content);
-    Singletons::findReplaceBar().setParent(content);
     auto layout = new QVBoxLayout(content);
     layout->setMargin(0);
     layout->setSpacing(0);
     layout->addWidget(&mEditorManager);
-    layout->addWidget(&Singletons::findReplaceBar());
+    layout->addWidget(&mEditorManager.findReplaceBar());
 
     auto dock = new QDockWidget(this);
     dock->setWidget(content);

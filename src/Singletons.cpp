@@ -5,7 +5,6 @@
 #include "SynchronizeLogic.h"
 #include "Settings.h"
 #include "editors/EditorManager.h"
-#include "editors/FindReplaceBar.h"
 #include "session/SessionModel.h"
 #include "render/Renderer.h"
 #include "scripting/CustomActions.h"
@@ -68,12 +67,6 @@ SynchronizeLogic &Singletons::synchronizeLogic()
     return *sInstance->mSynchronizeLogic;
 }
 
-FindReplaceBar &Singletons::findReplaceBar()
-{
-    Q_ASSERT(onMainThread());
-    return *sInstance->mFindReplaceBar;
-}
-
 CustomActions &Singletons::customActions()
 {
     Q_ASSERT(onMainThread());
@@ -91,7 +84,6 @@ Singletons::Singletons(QMainWindow *window)
     , mFileDialog(new FileDialog(window))
     , mEditorManager(new EditorManager())
     , mSessionModel(new SessionModel())
-    , mFindReplaceBar(new FindReplaceBar())
 {
     Q_ASSERT(onMainThread());
     sInstance = this;

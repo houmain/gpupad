@@ -10,6 +10,7 @@
 
 EditorManager::EditorManager(QWidget *parent)
     : DockWindow(parent)
+    , mFindReplaceBar(new FindReplaceBar(this))
 {
     setWindowFlags(Qt::Widget);
     setTabPosition(Qt::AllDockWidgetAreas, QTabWidget::North);
@@ -107,7 +108,7 @@ QString EditorManager::openNewSourceEditor(const QString &baseName,
     SourceType sourceType)
 {
     auto fileName = FileDialog::generateNextUntitledFileName(baseName);
-    auto editor = new SourceEditor(fileName);
+    auto editor = new SourceEditor(fileName, mFindReplaceBar);
     editor->setSourceType(sourceType);
     addSourceEditor(editor);
     raiseEditor(editor);
@@ -153,7 +154,7 @@ SourceEditor *EditorManager::openSourceEditor(const QString &fileName, bool rais
 {
     auto editor = getSourceEditor(fileName);
     if (!editor) {
-        editor = new SourceEditor(fileName);
+        editor = new SourceEditor(fileName, mFindReplaceBar);
         if (!editor->load()) {
             delete editor;
             return nullptr;

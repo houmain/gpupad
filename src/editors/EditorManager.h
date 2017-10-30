@@ -16,6 +16,7 @@ public:
     explicit EditorManager(QWidget *parent = nullptr);
     ~EditorManager();
 
+    FindReplaceBar &findReplaceBar() { return *mFindReplaceBar; }
     int openNotSavedDialog(const QString &fileName);
     QString openNewSourceEditor(const QString &baseName,
         SourceType sourceType = SourceType::PlainText);
@@ -71,6 +72,7 @@ private:
     QList<ImageEditor*> mImageEditors;
     QMap<QDockWidget*, IEditor*> mDocks;
     QDockWidget *mCurrentDock{ };
+    FindReplaceBar *mFindReplaceBar{ };
 };
 
 #endif // EDITORMANAGER_H

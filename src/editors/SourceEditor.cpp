@@ -37,9 +37,10 @@ private:
     SourceEditor *mEditor;
 };
 
-SourceEditor::SourceEditor(QString fileName, QWidget *parent)
+SourceEditor::SourceEditor(QString fileName, FindReplaceBar *findReplaceBar, QWidget *parent)
     : QPlainTextEdit(parent)
     , mFileName(fileName)
+    , mFindReplaceBar(*findReplaceBar)
     , mLineNumberArea(new LineNumberArea(this))
 {
     connect(this, &SourceEditor::blockCountChanged,
@@ -50,7 +51,7 @@ SourceEditor::SourceEditor(QString fileName, QWidget *parent)
         this, &SourceEditor::updateExtraSelections);
     connect(this, &SourceEditor::textChanged,
         this, &SourceEditor::handleTextChanged);
-    connect(&Singletons::findReplaceBar(), &FindReplaceBar::action,
+    connect(&mFindReplaceBar, &FindReplaceBar::action,
         this, &SourceEditor::findReplaceAction);
 
     mCurrentLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
@@ -91,8 +92,8 @@ SourceEditor::~SourceEditor()
 {
     setDocument(nullptr);
 
-    if (Singletons::findReplaceBar().target() == this)
-        Singletons::findReplaceBar().resetTarget();
+    if (mFindReplaceBar.target() == this)
+        mFindReplaceBar.resetTarget();
 }
 
 QList<QMetaObject::Connection> SourceEditor::connectEditActions(
@@ -254,7 +255,7 @@ void SourceEditor::updateSyntaxHighlighting()
 
 void SourceEditor::findReplace()
 {
-    Singletons::findReplaceBar().setTarget(this, textUnderCursor());
+    mFindReplaceBar.setTarget(this, textUnderCursor());
 }
 
 void SourceEditor::setFont(const QFont &font)
@@ -466,7 +467,7 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
         findReplace();
     }
     else if (mAutoIndentation && event->key() == Qt::Key_Escape) {
-        Singletons::findReplaceBar().cancel();
+        mFindReplaceBar.cancel();
     }
     else if (mAutoIndentation && event->key() == Qt::Key_Return) {
         autoIndentNewLine();
@@ -625,7 +626,7 @@ void SourceEditor::insertCompletion(const QString &completion)
 void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
     QString find, QString replace, QTextDocument::FindFlags flags)
 {
-    if (Singletons::findReplaceBar().target() != this)
+    if (mFindReplaceBar.target() != this)
         return;
 
     markOccurrences(find, flags & (~QTextDocument::FindBackward));
