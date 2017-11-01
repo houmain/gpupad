@@ -108,7 +108,7 @@ bool GLTarget::create()
 
     auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
-        mMessages += Singletons::messageList().insert(mItemId,
+        mMessages += MessageList::insert(mItemId,
             MessageType::CreatingFramebufferFailed,
             (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT ? "(incomplete attachment)" :
              status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT ? "(missing attachment)" :

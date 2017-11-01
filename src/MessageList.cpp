@@ -1,15 +1,20 @@
 #include "MessageList.h"
+#include <QMutex>
 
 namespace {
+    QMutex gMessagesMutex;
+    QList<QWeakPointer<const Message>> gMessages;
     qulonglong gNextMessageId;
-}
+} // namespace
 
-MessagePtr MessageList::insert(QString fileName, int line,
+namespace MessageList {
+
+MessagePtr insert(QString fileName, int line,
     MessageType type, QString text, bool deduplicate)
 {
-    QMutexLocker lock(&mMessagesMutex);
+    QMutexLocker lock(&gMessagesMutex);
     if (deduplicate) {
-        foreach (const QWeakPointer<const Message> &ptr, mMessages)
+        foreach (const QWeakPointer<const Message> &ptr, gMessages)
             if (MessagePtr message = ptr.lock())
                 if (message->fileName == fileName &&
                     message->line == line &&
@@ -19,16 +24,16 @@ MessagePtr MessageList::insert(QString fileName, int line,
     }
     auto message = MessagePtr(new Message{
         gNextMessageId++, type, text, 0, fileName, line });
-    mMessages.append(message);
+    gMessages.append(message);
     return message;
 }
 
-MessagePtr MessageList::insert(ItemId itemId,
+MessagePtr insert(ItemId itemId,
     MessageType type, QString text, bool deduplicate)
 {
-    QMutexLocker lock(&mMessagesMutex);
+    QMutexLocker lock(&gMessagesMutex);
     if (deduplicate) {
-        foreach (const QWeakPointer<const Message> &ptr, mMessages)
+        foreach (const QWeakPointer<const Message> &ptr, gMessages)
             if (MessagePtr message = ptr.lock())
                 if (message->itemId == itemId &&
                     message->type == type &&
@@ -37,15 +42,15 @@ MessagePtr MessageList::insert(ItemId itemId,
     }
     auto message = MessagePtr(new Message{
         gNextMessageId++, type, text, itemId, QString(), 0 });
-    mMessages.append(message);
+    gMessages.append(message);
     return message;
 }
 
-QList<MessagePtr> MessageList::messages() const
+QList<MessagePtr> messages()
 {
-    QMutexLocker lock(&mMessagesMutex);
+    QMutexLocker lock(&gMessagesMutex);
     auto result = QList<MessagePtr>();
-    QMutableListIterator<QWeakPointer<const Message>> it(mMessages);
+    QMutableListIterator<QWeakPointer<const Message>> it(gMessages);
     while (it.hasNext()) {
         if (MessagePtr message = it.next().lock())
             result += message;
@@ -54,3 +59,5 @@ QList<MessagePtr> MessageList::messages() const
     }
     return result;
 }
+
+} // namespace

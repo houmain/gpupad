@@ -411,12 +411,12 @@ void RenderSession::outputTimerQueries()
     auto messages = MessagePtrSet();
     foreach (const GLCall *call, mTimerQueries->calls)
         if (call->duration().count() >= 0)
-            messages += Singletons::messageList().insert(
+            messages += MessageList::insert(
                 call->itemId(), MessageType::CallDuration,
                 formatQueryDuration(call->duration()), false);
 
     if (mTimerQueries->calls.empty())
-        messages += Singletons::messageList().insert(
+        messages += MessageList::insert(
             0, MessageType::NoActiveCalls);
 
     mTimerQueries->messages = messages;

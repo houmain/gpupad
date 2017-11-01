@@ -129,7 +129,7 @@ void GLTexture::reload()
         if (!FileDialog::isEmptyOrUntitled(image.fileName)) {
             auto prevImage = image.image;
             if (!Singletons::fileCache().getImage(image.fileName, &image.image)) {
-                mMessages += Singletons::messageList().insert(image.itemId,
+                mMessages += MessageList::insert(image.itemId,
                     MessageType::LoadingFileFailed, image.fileName);
                 continue;
             }
@@ -320,7 +320,7 @@ void GLTexture::uploadImage(const Image &image)
 
     auto imageFormat = getImageFormat(format, type);
     if (imageFormat == QImage::Format_Invalid) {
-        mMessages += Singletons::messageList().insert(
+        mMessages += MessageList::insert(
             image.itemId, MessageType::UploadingImageFailed);
         return;
     }
@@ -377,7 +377,7 @@ bool GLTexture::downloadImage(Image& image)
 
     auto imageFormat = getImageFormat(format, type);
     if (imageFormat == QImage::Format_Invalid) {
-        mMessages += Singletons::messageList().insert(
+        mMessages += MessageList::insert(
             image.itemId, MessageType::DownloadingImageFailed);
         return false;
     }
@@ -429,7 +429,7 @@ bool GLTexture::downloadImage(Image& image)
         }
 
         default:
-            mMessages += Singletons::messageList().insert(
+            mMessages += MessageList::insert(
                 image.itemId, MessageType::DownloadingImageFailed);
             return false;
     }

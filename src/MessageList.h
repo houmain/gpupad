@@ -4,7 +4,6 @@
 #include <QSharedPointer>
 #include <QString>
 #include <QSet>
-#include <QMutex>
 
 using ItemId = int;
 
@@ -43,19 +42,13 @@ struct Message
 using MessagePtr = QSharedPointer<const Message>;
 using MessagePtrSet = QSet<MessagePtr>;
 
-class MessageList
+namespace MessageList
 {
-public:
     MessagePtr insert(QString fileName, int line, MessageType type,
         QString text = "", bool deduplicate = true);
     MessagePtr insert(ItemId itemId, MessageType type,
         QString text = "", bool deduplicate = true);
-
-    QList<MessagePtr> messages() const;
-
-private:
-    mutable QMutex mMessagesMutex;
-    mutable QList<QWeakPointer<const Message>> mMessages;
+    QList<MessagePtr> messages();
 };
 
 #endif // MESSAGELIST_H

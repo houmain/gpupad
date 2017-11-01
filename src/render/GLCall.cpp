@@ -181,7 +181,7 @@ void GLCall::executeDraw()
         timerQuery().end();
     }
     else {
-        mMessages += Singletons::messageList().insert(
+        mMessages += MessageList::insert(
             mCall.id,  MessageType::ProgramNotAssigned);
     }
 
@@ -212,7 +212,7 @@ void GLCall::executeCompute()
         timerQuery().end();
     }
     else {
-        mMessages += Singletons::messageList().insert(
+        mMessages += MessageList::insert(
             mCall.id, MessageType::ProgramNotAssigned);
     }
 }
@@ -225,7 +225,7 @@ void GLCall::executeClearTexture()
         mUsedItems += mTexture->usedItems();
     }
     else {
-        mMessages += Singletons::messageList().insert(
+        mMessages += MessageList::insert(
             mCall.id,  MessageType::TextureNotAssigned);
     }
 }
@@ -237,7 +237,7 @@ void GLCall::executeClearBuffer()
         mUsedItems += mBuffer->usedItems();
     }
     else {
-        mMessages += Singletons::messageList().insert(
+        mMessages += MessageList::insert(
             mCall.id, MessageType::BufferNotAssigned);
     }
 }
@@ -249,7 +249,7 @@ void GLCall::executeGenerateMipmaps()
         mUsedItems += mTexture->usedItems();
     }
     else {
-        mMessages += Singletons::messageList().insert(
+        mMessages += MessageList::insert(
             mCall.id,  MessageType::TextureNotAssigned);
     }
 }

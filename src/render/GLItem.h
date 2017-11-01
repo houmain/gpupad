@@ -18,7 +18,7 @@ inline T *checkVersion(T *gl, const char* name,
 {
     if (gl)
         return gl;
-    messages += Singletons::messageList().insert(itemId,
+    messages += MessageList::insert(itemId,
         MessageType::OpenGLVersionNotAvailable, name);
     return nullptr;
 }

@@ -2,6 +2,7 @@
 #include "Singletons.h"
 #include "session/SessionModel.h"
 #include "FileDialog.h"
+#include <QMutex>
 
 namespace {
     QMutex gMutex;
@@ -14,7 +15,7 @@ namespace {
         auto message = QString(msg).replace(context.file, fileName);
         auto messageType = (type == QtDebugMsg || type == QtInfoMsg ?
             MessageType::ScriptMessage : MessageType::ScriptError);
-        (*gCurrentMessageList) += Singletons::messageList().insert(
+        (*gCurrentMessageList) += MessageList::insert(
             context.file, context.line, messageType, message, false);
     }
 
@@ -53,7 +54,7 @@ ScriptEngine::ScriptEngine(QList<Script> scripts)
         foreach (const Script &script, scripts) {
             auto result = evaluate(script.source, script.fileName);
             if (result.isError())
-                mMessages += Singletons::messageList().insert(
+                mMessages += MessageList::insert(
                     script.fileName, result.property("lineNumber").toInt(),
                     MessageType::ScriptError, result.toString());
         }
@@ -84,7 +85,7 @@ QJSValue ScriptEngine::call(QJSValue& callable, const QJSValueList &args,
     redirectConsoleMessages(messages, [&]() {
         result = callable.call(args);
         if (result.isError())
-            messages += Singletons::messageList().insert(
+            messages += MessageList::insert(
                 itemId, MessageType::ScriptError, result.toString());
     });
     return result;
@@ -98,7 +99,7 @@ QStringList ScriptEngine::evaluateValue(const QStringList &fieldExpressions,
         foreach (QString fieldExpression, fieldExpressions) {
             auto result = evaluate(fieldExpression);
             if (result.isError())
-                messages += Singletons::messageList().insert(
+                messages += MessageList::insert(
                     itemId, MessageType::ScriptError, result.toString());
 
             if (result.isObject()) {

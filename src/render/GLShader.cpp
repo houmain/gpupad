@@ -31,10 +31,10 @@ void GLShader::parseLog(const QString &log,
             messageType = MessageType::ShaderError;
 
         if (sourceIndex < fileNames.size())
-            messages += Singletons::messageList().insert(
+            messages += MessageList::insert(
                 fileNames[sourceIndex], line, messageType, text);
         else
-            messages += Singletons::messageList().insert(
+            messages += MessageList::insert(
                 itemId, messageType, text);
 
         pos += split.matchedLength();
@@ -47,7 +47,7 @@ GLShader::GLShader(const QList<const Shader*> &shaders)
     foreach (const Shader* shader, shaders) {
         auto source = QString();
         if (!Singletons::fileCache().getSource(shader->fileName, &source))
-            mMessages += Singletons::messageList().insert(shader->id,
+            mMessages += MessageList::insert(shader->id,
                 MessageType::LoadingFileFailed, shader->fileName);
 
         if (sourceIndex)
@@ -86,7 +86,7 @@ bool GLShader::compile()
     auto& gl = GLContext::currentContext();
     auto shader = GLObject(gl.glCreateShader(mType), freeShader);
     if (!shader) {
-        mMessages += Singletons::messageList().insert(mItemId,
+        mMessages += MessageList::insert(mItemId,
             MessageType::UnsupportedShaderType);
         return false;
     }

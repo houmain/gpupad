@@ -38,7 +38,7 @@ MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
 
 void MessageWindow::updateMessages()
 {
-    auto messages = Singletons::messageList().messages();
+    auto messages = MessageList::messages();
     auto messageIds = QSet<MessageId>();
     foreach (const MessagePtr &message, messages) {
         if (message->type == MessageType::CallDuration)

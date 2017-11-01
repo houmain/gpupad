@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , mUi(new Ui::MainWindow)
     , mMessageWindow(new MessageWindow())
+    , mCustomActions(new CustomActions())
     , mSingletons(new Singletons(this))
     , mEditorManager(Singletons::editorManager())
     , mSessionEditor(new SessionEditor())
@@ -183,7 +184,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->menuCustomActions, &QMenu::aboutToShow,
         this, &MainWindow::updateCustomActionsMenu);
     connect(mUi->actionManageCustomActions, &QAction::triggered,
-        &Singletons::customActions(), &QDialog::show);
+        mCustomActions.data(), &QDialog::show);
 
     auto sourceTypeActionGroup = new QActionGroup(this);
     auto sourceTypeButton = qobject_cast<QToolButton*>(
@@ -366,6 +367,7 @@ void MainWindow::updateFileActions()
     mUi->actionReload->setText(tr("&Reload%1").arg(canReload ? desc : ""));
 
     auto sourceType = mEditorManager.currentSourceType();
+    mUi->actionSourceValidation->setEnabled(sourceType != SourceType::None);
     mUi->menuSourceType->setEnabled(sourceType != SourceType::None);
 }
 
@@ -566,13 +568,12 @@ void MainWindow::openRecentFile()
 
 void MainWindow::updateCustomActionsMenu()
 {    
-    auto& customActions = Singletons::customActions();
     auto& model = Singletons::sessionModel();
     auto selection = mSessionEditor->selectionModel()->selectedIndexes();
-    customActions.setSelection(model.getJson(selection));
+    mCustomActions->setSelection(model.getJson(selection));
 
     mUi->menuCustomActions->clear();
-    mUi->menuCustomActions->addActions(customActions.getApplicableActions());
+    mUi->menuCustomActions->addActions(mCustomActions->getApplicableActions());
     mUi->menuCustomActions->addSeparator();
     mUi->menuCustomActions->addAction(mUi->actionManageCustomActions);
 }

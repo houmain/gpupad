@@ -72,7 +72,7 @@ void GLBuffer::reload()
     auto prevData = mData;
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         if (!Singletons::fileCache().getBinary(mFileName, &mData))
-            mMessages += Singletons::messageList().insert(
+            mMessages += MessageList::insert(
                 mItemId, MessageType::LoadingFileFailed, mFileName);
 
     auto requiredSize = mOffset + mSize;

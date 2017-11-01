@@ -168,13 +168,13 @@ void GLProgram::unbind()
     // inform about not set uniforms
     for (auto& kv : mUniformsSet) {
         if (!kv.second)
-            mUniformsMessages += Singletons::messageList().insert(
+            mUniformsMessages += MessageList::insert(
                 mItemId, MessageType::UnformNotSet, kv.first);
         kv.second = false;
     }
     for (auto& kv : mUniformBlocksSet) {
         if (!kv.second)
-            mUniformsMessages += Singletons::messageList().insert(
+            mUniformsMessages += MessageList::insert(
                 mItemId, MessageType::UnformNotSet, kv.first);
         kv.second = false;
     }
@@ -427,7 +427,7 @@ void GLProgram::reapplySubroutines()
             subroutineIndices.push_back(index);
             if (index == GL_INVALID_INDEX && !uniform.boundSubroutine.isEmpty())
                 mUniformsMessages +=
-                    Singletons::messageList().insert(uniform.bindingItemId,
+                    MessageList::insert(uniform.bindingItemId,
                     MessageType::InvalidSubroutine, uniform.boundSubroutine);
         }
         gl.v4_0->glUniformSubroutinesuiv(stage,

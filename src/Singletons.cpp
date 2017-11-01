@@ -1,5 +1,4 @@
 #include "Singletons.h"
-#include "MessageList.h"
 #include "FileCache.h"
 #include "FileDialog.h"
 #include "SynchronizeLogic.h"
@@ -7,7 +6,6 @@
 #include "editors/EditorManager.h"
 #include "session/SessionModel.h"
 #include "render/Renderer.h"
-#include "scripting/CustomActions.h"
 #include <QApplication>
 
 Singletons *Singletons::sInstance;
@@ -25,11 +23,6 @@ Renderer &Singletons::renderer()
     if (!sInstance->mRenderer)
         sInstance->mRenderer.reset(new Renderer());
     return *sInstance->mRenderer;
-}
-
-MessageList &Singletons::messageList()
-{
-    return *sInstance->mMessageList;
 }
 
 Settings &Singletons::settings()
@@ -67,18 +60,8 @@ SynchronizeLogic &Singletons::synchronizeLogic()
     return *sInstance->mSynchronizeLogic;
 }
 
-CustomActions &Singletons::customActions()
-{
-    Q_ASSERT(onMainThread());
-    if (!sInstance->mCustomActions)
-        sInstance->mCustomActions.reset(
-            new CustomActions(sInstance->mMainWindow));
-    return *sInstance->mCustomActions;
-}
-
 Singletons::Singletons(QMainWindow *window)
     : mMainWindow(window)
-    , mMessageList(new MessageList())
     , mSettings(new Settings())
     , mFileCache(new FileCache())
     , mFileDialog(new FileDialog(window))

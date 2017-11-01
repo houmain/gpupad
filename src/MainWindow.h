@@ -15,6 +15,7 @@ class MessageWindow;
 class EditorManager;
 class SessionEditor;
 class SessionProperties;
+class CustomActions;
 
 class MainWindow : public QMainWindow
 {
@@ -68,6 +69,7 @@ private:
     QSplitter *mSessionSplitter{ };
     EditActions mEditActions;
     QScopedPointer<MessageWindow> mMessageWindow;
+    QScopedPointer<CustomActions> mCustomActions;
     QScopedPointer<Singletons> mSingletons;
     EditorManager &mEditorManager;
     QScopedPointer<SessionEditor> mSessionEditor;
