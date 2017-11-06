@@ -167,8 +167,6 @@ MainWindow::MainWindow(QWidget *parent)
         &settings, &Settings::setAutoIndentation);
     connect(mUi->actionSyntaxHighlighting, &QAction::triggered,
         &settings, &Settings::setSyntaxHighlighting);
-    connect(mUi->actionSourceValidation, &QAction::triggered,
-        &settings, &Settings::setSourceValidation);
     connect(mUi->actionLineWrapping, &QAction::triggered,
         &settings, &Settings::setLineWrap);
     connect(mUi->actionIndentWithSpaces, &QAction::triggered,
@@ -300,7 +298,6 @@ void MainWindow::readSettings()
     mUi->actionIndentWithSpaces->setChecked(settings.indentWithSpaces());
     mUi->actionAutoIndentation->setChecked(settings.autoIndentation());
     mUi->actionSyntaxHighlighting->setChecked(settings.syntaxHighlighting());
-    mUi->actionSourceValidation->setChecked(settings.sourceValidation());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
 }
 
