@@ -37,11 +37,11 @@ void RenderTask::handleRendered()
     finish(mSteadyEvaluation);
     mUpdating = false;
 
+    emit updated();
+
     // restart when items were changed in the meantime
     if (mItemsChanged || mManualEvaluation)
-        return update(std::exchange(mItemsChanged, false),
-                      std::exchange(mManualEvaluation, false),
-                      mSteadyEvaluation);
-
-    emit updated();
+        update(std::exchange(mItemsChanged, false),
+               std::exchange(mManualEvaluation, false),
+               mSteadyEvaluation);
 }
