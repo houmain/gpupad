@@ -338,6 +338,13 @@ void SessionModel::deserialize(const QJsonObject &object,
     const auto index = (existingItem ?
         getIndex(existingItem) : insertItem(type, parent, row, id));
 
+    const auto dropColumn = [&](const QString &property,
+            const QModelIndex &index, const QVariant &value) {
+        if (property.endsWith("Id"))
+            mDroppedReferences.append(index);
+        setData(index, value);
+    };
+
     foreach (const QString &property, object.keys()) {
         auto value = object[property].toVariant();
 
@@ -350,7 +357,7 @@ void SessionModel::deserialize(const QJsonObject &object,
         }
 #define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
         else if (Item::Type::ITEM_TYPE == type && #PROPERTY == property) \
-            setData(getIndex(index, COLUMN_TYPE), value);
+            dropColumn(property, getIndex(index, COLUMN_TYPE), value);
 
         ADD_EACH_COLUMN_TYPE()
 #undef ADD
@@ -362,7 +369,7 @@ void SessionModel::deserialize(const QJsonObject &object,
                 foreach (const QString &valueProperty, value.keys()) {
 #define ADD(COLUMN_TYPE, PROPERTY) \
                     if (#PROPERTY == valueProperty) \
-                        setData(getIndex(index, COLUMN_TYPE), \
+                        dropColumn(valueProperty, getIndex(index, COLUMN_TYPE), \
                             value[valueProperty].toVariant());
 
                     ADD_EACH_BINDING_VALUE_COLUMN_TYPE()
