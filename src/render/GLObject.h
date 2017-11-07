@@ -20,7 +20,7 @@ public:
         std::swap(mFree, rhs.mFree);
     }
 
-    GLObject& operator=(GLObject &&rhs) noexcept
+    GLObject &operator=(GLObject &&rhs) noexcept
     {
         auto tmp = std::move(rhs);
         std::swap(mObject, tmp.mObject);

@@ -70,7 +70,7 @@ void DockWindow::tabbedDockClicked(int index)
 
 void DockWindow::updateDocks()
 {
-    foreach (QMetaObject::Connection connection, mDockConnections)
+    for (const auto &connection : qAsConst(mDockConnections))
        disconnect(connection);
     mDockConnections.clear();
 

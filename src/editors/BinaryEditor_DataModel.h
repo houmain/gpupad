@@ -13,7 +13,7 @@ namespace
     }
 
     template <typename T, typename S>
-    void set(void* ptr, const S& value)
+    void set(void *ptr, const S &value)
     {
         *static_cast<T*>(ptr) = static_cast<T>(value);
     }

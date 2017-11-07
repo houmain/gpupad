@@ -27,7 +27,7 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Buffer &buffer)
 {
     mUsedItems += buffer.id;
     if (!buffer.items.empty())
-        if (const auto* column = castItem<Column>(buffer.items.first())) {
+        if (const auto *column = castItem<Column>(buffer.items.first())) {
             mUsedItems += column->id;
             mIndexBuffer = indices;
             mIndexType = column->dataType;
@@ -39,7 +39,7 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Buffer &buffer)
 void GLCall::setIndirectBuffer(GLBuffer *commands, const Buffer &buffer)
 {
     mUsedItems += buffer.id;
-    foreach (const Item *item, buffer.items)
+    for (const auto *item : buffer.items)
         mUsedItems += item->id;
     mIndirectBuffer = commands;
     mIndirectStride = getStride(buffer);
@@ -92,7 +92,7 @@ void GLCall::execute()
             return executeGenerateMipmaps();
     }
 
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     if (gl.v4_2)
       gl.v4_2->glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
@@ -110,7 +110,7 @@ void GLCall::executeDraw()
 
     if (mProgram) {
         timerQuery().begin();
-        auto& gl = GLContext::currentContext();
+        auto &gl = GLContext::currentContext();
 
         if (mCall.primitiveType == Call::PrimitiveType::Patches && gl.v4_0)
             gl.v4_0->glPatchParameteri(GL_PATCH_VERTICES, mCall.patchVertices);
@@ -202,7 +202,7 @@ void GLCall::executeDraw()
 void GLCall::executeCompute()
 {
     if (mProgram) {
-        auto& gl = GLContext::currentContext();
+        auto &gl = GLContext::currentContext();
         timerQuery().begin();
         if (auto gl43 = check(gl.v4_3, mCall.id, mMessages))
             gl43->glDispatchCompute(

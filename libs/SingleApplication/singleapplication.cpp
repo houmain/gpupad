@@ -114,7 +114,7 @@ void SingleApplicationPrivate::genBlockServerName( int timeout )
         } else {
             appData.addData(
                 QDir(
-                    QStandardPaths::standardLocations( QStandardPaths::HomeLocation ).first()
+                    QStandardPaths::standardLocations( QStandardPaths::HomeLocation ).constFirst()
                 ).absolutePath().toUtf8()
             );
         }
@@ -278,7 +278,7 @@ void SingleApplicationPrivate::slotConnectionEstablished()
         // Verify that the socket data start with blockServerName
         if( tmp == blockServerName.toLatin1() ) {
             initMsg = tmp;
-            connectionType = nextConnSocket->read( 1 )[0];
+            connectionType = nextConnSocket->read( 1 ).at(0);
 
             switch( connectionType ) {
             case NewInstance:
@@ -319,7 +319,7 @@ void SingleApplicationPrivate::slotConnectionEstablished()
         &QLocalSocket::aboutToClose,
         this,
         [nextConnSocket, instanceId, this]() {
-            Q_EMIT this->slotClientConnectionClosed( nextConnSocket, instanceId );
+            this->slotClientConnectionClosed( nextConnSocket, instanceId );
         }
     );
 
@@ -328,7 +328,7 @@ void SingleApplicationPrivate::slotConnectionEstablished()
         &QLocalSocket::readyRead,
         this,
         [nextConnSocket, instanceId, this]() {
-            Q_EMIT this->slotDataAvailable( nextConnSocket, instanceId );
+            this->slotDataAvailable( nextConnSocket, instanceId );
         }
     );
 
@@ -341,7 +341,7 @@ void SingleApplicationPrivate::slotConnectionEstablished()
     }
 
     if( nextConnSocket->bytesAvailable() > 0 ) {
-        Q_EMIT this->slotDataAvailable( nextConnSocket, instanceId );
+        this->slotDataAvailable( nextConnSocket, instanceId );
     }
 }
 
@@ -354,7 +354,7 @@ void SingleApplicationPrivate::slotDataAvailable( QLocalSocket *dataSocket, quin
 void SingleApplicationPrivate::slotClientConnectionClosed( QLocalSocket *closedSocket, quint32 instanceId )
 {
     if( closedSocket->bytesAvailable() > 0 )
-        Q_EMIT slotDataAvailable( closedSocket, instanceId  );
+        slotDataAvailable( closedSocket, instanceId  );
     closedSocket->deleteLater();
 }
 

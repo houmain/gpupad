@@ -19,7 +19,7 @@ class Singletons
 public:
     static Renderer &renderer();
     static Settings &settings();
-    static FileCache& fileCache();
+    static FileCache &fileCache();
     static FileDialog &fileDialog();
     static EditorManager &editorManager();
     static SessionModel &sessionModel();
@@ -31,7 +31,6 @@ public:
 private:
     static Singletons *sInstance;
 
-    QMainWindow *mMainWindow;
     QScopedPointer<Renderer> mRenderer;
     QScopedPointer<Settings> mSettings;
     QScopedPointer<FileCache> mFileCache;

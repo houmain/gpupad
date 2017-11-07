@@ -8,6 +8,7 @@ class ScriptEngine;
 
 class RenderSession : public RenderTask
 {
+    Q_OBJECT
 public:
     explicit RenderSession(QObject *parent = nullptr);
     ~RenderSession();

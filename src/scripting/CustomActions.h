@@ -17,7 +17,6 @@ class CustomAction;
 class CustomActions : public QDialog
 {
     Q_OBJECT
-
 public:
     explicit CustomActions(QWidget *parent = nullptr);
     ~CustomActions();

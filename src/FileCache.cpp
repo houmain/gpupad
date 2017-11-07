@@ -13,7 +13,7 @@ void FileCache::update(EditorManager &editorManager,
 {
     QMutexLocker lock(&mMutex);
 
-    foreach (QString fileName, filesModified) {
+    for (const auto &fileName : filesModified) {
         if (auto editor = editorManager.getSourceEditor(fileName))
             mSources[editor->fileName()] = editor->source();
         else

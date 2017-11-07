@@ -20,7 +20,7 @@ namespace {
     }
 
     template<typename F>
-    void redirectConsoleMessages(MessagePtrSet &messages, F&& function)
+    void redirectConsoleMessages(MessagePtrSet &messages, F &&function)
     {
         QMutexLocker locker(&gMutex);
         gCurrentMessageList = &messages;
@@ -78,7 +78,7 @@ QJSValue ScriptEngine::getGlobal(const QString &name)
     return mJsEngine->globalObject().property(name);
 }
 
-QJSValue ScriptEngine::call(QJSValue& callable, const QJSValueList &args,
+QJSValue ScriptEngine::call(QJSValue &callable, const QJSValueList &args,
     ItemId itemId, MessagePtrSet &messages)
 {
     auto result = QJSValue();

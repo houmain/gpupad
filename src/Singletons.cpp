@@ -61,8 +61,7 @@ SynchronizeLogic &Singletons::synchronizeLogic()
 }
 
 Singletons::Singletons(QMainWindow *window)
-    : mMainWindow(window)
-    , mSettings(new Settings())
+    : mSettings(new Settings())
     , mFileCache(new FileCache())
     , mFileDialog(new FileDialog(window))
     , mEditorManager(new EditorManager())

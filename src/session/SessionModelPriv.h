@@ -171,7 +171,7 @@ template<typename F>
 void forEachItem(const Item &item, const F &function)
 {
     function(item);
-    foreach (const Item *child, item.items)
+    for (const auto *child : qAsConst(item.items))
         forEachItem(*child, function);
 }
 
@@ -193,7 +193,7 @@ template<>
 inline QJsonValue toJsonValue(const QStringList &v)
 {
     auto array = QJsonArray();
-    foreach (const QString &field, v)
+    for (const auto &field : v)
         array.append(field);
     return array;
 }

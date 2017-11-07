@@ -10,6 +10,7 @@
 
 class BinaryEditor::EditableRegion : public QTableView
 {
+    Q_OBJECT
 public:
     EditableRegion(int columnWidth, int rowHeight, QWidget *parent)
         : QTableView(parent)
@@ -80,7 +81,7 @@ public:
         auto str = QString();
         auto prevRow = -1;
         auto newLine = true;
-        for (const auto &index : selectedIndexes()) {
+        foreach (QModelIndex index, selectedIndexes()) {
             auto row = index.row();
             if (prevRow != -1 && row != prevRow) {
                 str += "\n";
@@ -108,7 +109,7 @@ public:
 
         const auto text = QApplication::clipboard()->text();
         const auto separator = guessSeparator(text);
-        const auto begin = selectedIndexes().first();
+        const auto begin = selectedIndexes().constFirst();
         auto r = begin.row();
         auto c = begin.column();
         foreach (QString row, text.split('\n')) {
@@ -123,7 +124,7 @@ public:
             }
             ++r;
         }
-        model()->dataChanged(begin, model()->index(r, c));
+        emit model()->dataChanged(begin, model()->index(r, c));
     }
 
     double toNumber(QString value)
@@ -142,8 +143,8 @@ public:
 
     void delete_()
     {
-        auto minIndex = selectedIndexes().first();
-        auto maxIndex = selectedIndexes().first();
+        auto minIndex = selectedIndexes().constFirst();
+        auto maxIndex = selectedIndexes().constFirst();
         foreach (QModelIndex index, selectedIndexes())
             if (index.flags() & Qt::ItemIsEditable) {
                 model()->setData(index, 0.0);
@@ -154,7 +155,7 @@ public:
                     std::max(index.row(), maxIndex.row()),
                     std::max(index.column(), maxIndex.column()));
             }
-        model()->dataChanged(minIndex, maxIndex);
+        emit model()->dataChanged(minIndex, maxIndex);
     }
 
 private:
@@ -176,6 +177,7 @@ private:
 
 class BinaryEditor::EditableRegionDelegate : public QItemDelegate
 {
+    Q_OBJECT
 public:
     EditableRegionDelegate(QWidget *editor, QWidget *parent)
         : QItemDelegate(parent)

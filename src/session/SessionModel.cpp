@@ -263,7 +263,7 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     if (action == Qt::MoveAction && !mDraggedIndices.empty()) {
         std::stable_sort(mDraggedIndices.begin(), mDraggedIndices.end(),
             [](const auto &a, const auto &b) { return a.row() > b.row(); });
-        for (auto index : mDraggedIndices) {
+        for (const auto &index : qAsConst(mDraggedIndices)) {
             if (index.parent() == parent &&
                 index.row() < row)
                 --row;

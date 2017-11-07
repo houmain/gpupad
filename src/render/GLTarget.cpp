@@ -33,14 +33,14 @@ bool GLTarget::bind()
     gl.glBindFramebuffer(GL_FRAMEBUFFER, mFramebufferObject);
 
     auto colorAttachments = std::vector<GLenum>();
-    for (const auto& attachment : mAttachments)
+    foreach (const GLAttachment &attachment, mAttachments)
         if (attachment.texture && attachment.texture->kind().color)
             colorAttachments.push_back(attachment.attachmentPoint);
     gl.glDrawBuffers(static_cast<GLsizei>(colorAttachments.size()),
         colorAttachments.data());
 
     // mark texture device copies as modified
-    for (const auto& attachment : mAttachments)
+    foreach (const GLAttachment &attachment, mAttachments)
         if (auto texture = attachment.texture)
             texture->getReadWriteTextureId();
 
@@ -74,7 +74,7 @@ bool GLTarget::create()
     gl.glBindFramebuffer(GL_FRAMEBUFFER, mFramebufferObject);
 
     auto nextColorAttachment = GLenum(GL_COLOR_ATTACHMENT0);
-    for (auto& attachment : mAttachments)
+    for (auto &attachment : mAttachments)
         if (auto texture = attachment.texture) {
             auto kind = texture->kind();
             auto level = attachment.level;
@@ -151,7 +151,7 @@ void GLTarget::applyStates()
 
     auto minWidth = 0;
     auto minHeight = 0;
-    for (const auto& attachment : mAttachments)
+    foreach (const GLAttachment &attachment, mAttachments)
         if (auto texture = attachment.texture) {
             auto width = std::max(texture->width() >> attachment.level, 1);
             auto height = std::max(texture->height() >> attachment.level, 1);

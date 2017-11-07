@@ -146,7 +146,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->menuSession, &QMenu::aboutToShow,
         mSessionEditor.data(), &SessionEditor::updateItemActions);
 
-    auto& synchronizeLogic = Singletons::synchronizeLogic();
+    auto &synchronizeLogic = Singletons::synchronizeLogic();
     connect(&mEditorManager, &EditorManager::editorRenamed,
         &synchronizeLogic, &SynchronizeLogic::handleFileRenamed);
     connect(&mEditorManager, &EditorManager::editorChanged,
@@ -160,7 +160,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mMessageWindow.data(), &MessageWindow::messagesAdded,
         this, &MainWindow::openMessageDock);
 
-    auto& settings = Singletons::settings();
+    auto &settings = Singletons::settings();
     connect(mUi->actionSelectFont, &QAction::triggered,
         &settings, &Settings::selectFont);
     connect(mUi->actionAutoIndentation, &QAction::triggered,
@@ -260,14 +260,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::writeSettings()
 {
-    auto& settings = Singletons::settings();
+    auto &settings = Singletons::settings();
     if (!isMaximized())
         settings.setValue("geometry", saveGeometry());
     settings.setValue("maximized", isMaximized());
     settings.setValue("state", saveState());
     settings.setValue("sessionSplitter", mSessionSplitter->saveState());
 
-    auto& fileDialog = Singletons::fileDialog();
+    auto &fileDialog = Singletons::fileDialog();
     settings.setValue("lastDirectory", fileDialog.directory().absolutePath());
 
     settings.setValue("recentFiles", mRecentFiles);
@@ -275,7 +275,7 @@ void MainWindow::writeSettings()
 
 void MainWindow::readSettings()
 {
-    auto& settings = Singletons::settings();
+    auto &settings = Singletons::settings();
     resize(800, 600);
 
     auto geometry = settings.value("geometry").toByteArray();
@@ -289,7 +289,7 @@ void MainWindow::readSettings()
     restoreState(settings.value("state").toByteArray());
     mSessionSplitter->restoreState(settings.value("sessionSplitter").toByteArray());
 
-    auto& fileDialog = Singletons::fileDialog();
+    auto &fileDialog = Singletons::fileDialog();
     fileDialog.setDirectory(settings.value("lastDirectory").toString());
 
     mRecentFiles = settings.value("recentFiles").toStringList();
@@ -318,7 +318,7 @@ void MainWindow::updateCurrentEditor()
 
 void MainWindow::disconnectEditActions()
 {
-    foreach (QMetaObject::Connection connection, mConnectedEditActions)
+    for (const auto &connection : qAsConst(mConnectedEditActions))
         disconnect(connection);
     mConnectedEditActions.clear();
 
@@ -529,7 +529,7 @@ void MainWindow::addToRecentFileList(const QString &fileName)
     mRecentFiles.prepend(fileName);
     updateRecentFileActions();
 
-    auto& fileDialog = Singletons::fileDialog();
+    auto &fileDialog = Singletons::fileDialog();
     fileDialog.setDirectory(QFileInfo(fileName).dir());
 }
 
@@ -545,7 +545,7 @@ void MainWindow::updateRecentFileActions()
 
     for (auto j = 0; j < mRecentFileActions.size(); ++j) {
         if (j < mRecentFiles.count()) {
-            QString text = tr("&%1 %2").arg(j + 1).arg(mRecentFiles[j]);
+            auto text = tr("&%1 %2").arg(j + 1).arg(mRecentFiles[j]);
             mRecentFileActions[j]->setText(text);
             mRecentFileActions[j]->setData(mRecentFiles[j]);
             mRecentFileActions[j]->setVisible(true);
@@ -565,7 +565,7 @@ void MainWindow::openRecentFile()
 
 void MainWindow::updateCustomActionsMenu()
 {    
-    auto& model = Singletons::sessionModel();
+    auto &model = Singletons::sessionModel();
     auto selection = mSessionEditor->selectionModel()->selectedIndexes();
     mCustomActions->setSelection(model.getJson(selection));
 

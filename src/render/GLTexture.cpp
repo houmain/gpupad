@@ -76,7 +76,7 @@ QList<std::pair<ItemId, QImage>> GLTexture::getModifiedImages()
         return { };
 
     auto result = QList<std::pair<ItemId, QImage>>();
-    for (const auto& image : mImages)
+    foreach (const Image &image, mImages)
         result.push_back(std::make_pair(image.itemId, image.image));
 
     return result;
@@ -84,7 +84,7 @@ QList<std::pair<ItemId, QImage>> GLTexture::getModifiedImages()
 
 void GLTexture::clear(QColor color, double depth, int stencil)
 {
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     auto fbo = createFramebuffer(getReadWriteTextureId(), 0);
     gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
@@ -288,14 +288,14 @@ void GLTexture::upload()
     if (!mSystemCopiesModified)
         return;
 
-    for (const auto &image : mImages)
+    foreach (const Image &image, mImages)
         if (!image.image.isNull() && image.level == 0)
             uploadImage(image);
 
     if (mTexture->mipLevels() > 1)
         mTexture->generateMipMaps();
 
-    for (const auto &image : mImages)
+    foreach (const Image &image, mImages)
         if (!image.image.isNull() && image.level != 0)
             uploadImage(image);
 
@@ -332,7 +332,7 @@ void GLTexture::uploadImage(const Image &image)
         source = source.mirrored();
 
     if (mTarget == QOpenGLTexture::Target3D) {
-        auto& gl = GLContext::currentContext();
+        auto &gl = GLContext::currentContext();
         gl.glBindTexture(mTarget, mTexture->textureId());
         gl.glTexSubImage3D(mTarget, image.level,
             0, 0, image.layer,
@@ -387,7 +387,7 @@ bool GLTexture::downloadImage(Image& image)
         resolveMultisampleTexture(*mMultisampleTexture,
             *mTexture, image.level);
 
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     gl.glBindTexture(mTarget, mTexture->textureId());
     switch (mTarget) {
         case QOpenGLTexture::Target1D:
@@ -443,14 +443,14 @@ bool GLTexture::downloadImage(Image& image)
 
 GLObject GLTexture::createFramebuffer(GLuint textureId, int level) const
 {
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     auto createFBO = [&]() {
         auto fbo = GLuint{ };
         gl.glGenFramebuffers(1, &fbo);
         return fbo;
     };
     auto freeFBO = [](GLuint fbo) {
-        auto& gl = GLContext::currentContext();
+        auto &gl = GLContext::currentContext();
         gl.glDeleteFramebuffers(1, &fbo);
     };
 
@@ -475,7 +475,7 @@ GLObject GLTexture::createFramebuffer(GLuint textureId, int level) const
 void GLTexture::resolveMultisampleTexture(QOpenGLTexture &source,
         QOpenGLTexture &dest, int level)
 {
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     auto sourceFbo = createFramebuffer(source.textureId(), level);
     auto destFbo = createFramebuffer(dest.textureId(), level);
 

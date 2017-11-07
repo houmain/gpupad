@@ -42,7 +42,7 @@ private slots:
     void validateSource();
 
 private:
-    SessionModel& mModel;
+    SessionModel &mModel;
     QSet<ItemId> mBuffersModified;
     QSet<QString> mFilesModified;
 

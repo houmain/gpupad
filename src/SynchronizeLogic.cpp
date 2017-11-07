@@ -9,8 +9,8 @@
 #include <QTimer>
 
 template<typename F> // F(const FileItem&)
-void forEachFileItem(SessionModel& model, const F &function) {
-    model.forEachItem([&](const Item& item) {
+void forEachFileItem(SessionModel &model, const F &function) {
+    model.forEachItem([&](const Item &item) {
         if (auto fileItem = castItem<FileItem>(item))
             function(*fileItem);
     });
@@ -172,7 +172,7 @@ void SynchronizeLogic::handleSourceTypeChanged(SourceType sourceType)
 void SynchronizeLogic::evaluate(bool manualEvaluation)
 {
     auto &editors = Singletons::editorManager();
-    foreach (ItemId bufferId, mBuffersModified)
+    for (auto bufferId : qAsConst(mBuffersModified))
         if (auto buffer = mModel.findItem<Buffer>(bufferId))
             if (auto editor = editors.getBinaryEditor(buffer->fileName))
                 updateBinaryEditor(*buffer, *editor);
@@ -214,7 +214,7 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
     editor.setOffset(buffer.offset);
     editor.setRowCount(buffer.rowCount);
     auto i = 0;
-    foreach (Item *item, buffer.items) {
+    for (Item *item : qAsConst(buffer.items)) {
         const auto &column = static_cast<Column&>(*item);
         editor.setColumnName(i, column.name);
         editor.setColumnType(i, mapDataType(column.dataType));

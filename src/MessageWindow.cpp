@@ -38,9 +38,9 @@ MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
 
 void MessageWindow::updateMessages()
 {
-    auto messages = MessageList::messages();
+    const auto messages = MessageList::messages();
     auto messageIds = QSet<MessageId>();
-    foreach (const MessagePtr &message, messages) {
+    for (const auto &message : messages) {
         if (message->type == MessageType::CallDuration)
             tryReplaceMessage(*message);
         messageIds += message->id;
@@ -48,7 +48,7 @@ void MessageWindow::updateMessages()
     removeMessagesExcept(messageIds);
 
     auto added = false;
-    foreach (const MessagePtr& message, messages)
+    for (const auto &message : messages)
         added |= addMessageOnce(*message);
 
     if (added)
@@ -143,7 +143,7 @@ void MessageWindow::removeMessagesExcept(const QSet<MessageId> &messageIds)
 void MessageWindow::tryReplaceMessage(const Message &message)
 {
     for (auto i = 0; i < rowCount(); i++) {
-        auto& item = *this->item(i, 0);
+        auto &item = *this->item(i, 0);
         if (item.data(Qt::UserRole + 1) == message.itemId &&
             item.data(Qt::UserRole + 4) == message.type) {
 

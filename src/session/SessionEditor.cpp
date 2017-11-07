@@ -148,7 +148,7 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
     c += connect(QApplication::clipboard(), &QClipboard::changed,
         updateEditActions);
 
-    auto pos = mContextMenu->actions().first();
+    auto pos = mContextMenu->actions().constFirst();
     if (pos != actions.undo) {
         mContextMenu->insertAction(pos, actions.undo);
         mContextMenu->insertAction(pos, actions.redo);

@@ -62,7 +62,7 @@ SourceEditor::SourceEditor(QString fileName, FindReplaceBar *findReplaceBar, QWi
 
     mLineNumberColor = palette().window().color().darker(150);
 
-    const auto& settings = Singletons::settings();
+    const auto &settings = Singletons::settings();
     setFont(settings.font());
     setTabSize(settings.tabSize());
     setLineWrap(settings.lineWrap());
@@ -549,7 +549,7 @@ void SourceEditor::updateExtraSelections()
     cursor.clearSelection();
     selections.append({  cursor, mCurrentLineFormat });
 
-    for (auto& occurrence : mMarkedOccurrences)
+    for (auto &occurrence : mMarkedOccurrences)
         selections.append({ occurrence, mOccurrencesFormat });
     setExtraSelections(selections);
 }
@@ -634,7 +634,7 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
     if (action == FindReplaceBar::ReplaceAll) {
         auto cursor = textCursor();
         cursor.beginEditBlock();
-        for (const auto& occurrence : mMarkedOccurrences) {
+        for (const auto &occurrence : qAsConst(mMarkedOccurrences)) {
             cursor.setPosition(occurrence.anchor());
             cursor.setPosition(occurrence.position(), QTextCursor::KeepAnchor);
             cursor.insertText(replace);

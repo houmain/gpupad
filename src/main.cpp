@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     arguments.removeFirst();
 
     if(app.isSecondary() && !arguments.empty()) {
-        foreach (QString argument, arguments)
+        for (const auto &argument : qAsConst(arguments))
             app.sendMessage(argument.toUtf8());
         return 0;
     }

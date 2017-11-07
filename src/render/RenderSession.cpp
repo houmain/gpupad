@@ -29,50 +29,50 @@ namespace {
     using BindingState = QStack<BindingScope>;
     using Command = std::function<void(BindingState&)>;
 
-    QSet<ItemId> applyBindings(BindingState& state,
-            GLProgram& program, ScriptEngine &scriptEngine)
+    QSet<ItemId> applyBindings(BindingState &state,
+            GLProgram &program, ScriptEngine &scriptEngine)
     {
         QSet<ItemId> usedItems;
         BindingScope bindings;
         foreach (const BindingScope &scope, state) {
-            for (const auto& kv : scope.uniforms)
+            for (const auto &kv : scope.uniforms)
                 bindings.uniforms[kv.first] = kv.second;
-            for (const auto& kv : scope.samplers)
+            for (const auto &kv : scope.samplers)
                 bindings.samplers[kv.first] = kv.second;
-            for (const auto& kv : scope.images)
+            for (const auto &kv : scope.images)
                 bindings.images[kv.first] = kv.second;
-            for (const auto& kv : scope.buffers)
+            for (const auto &kv : scope.buffers)
                 bindings.buffers[kv.first] = kv.second;
-            for (const auto& kv : scope.subroutines)
+            for (const auto &kv : scope.subroutines)
                 bindings.subroutines[kv.first] = kv.second;
         }
 
-        for (const auto& kv : bindings.uniforms)
+        for (const auto &kv : bindings.uniforms)
             if (program.apply(kv.second, scriptEngine))
                 usedItems += kv.second.bindingItemId;
 
         auto unit = 0;
-        for (const auto& kv : bindings.samplers)
+        for (const auto &kv : bindings.samplers)
             if (program.apply(kv.second, unit++)) {
                 usedItems += kv.second.bindingItemId;
                 usedItems += kv.second.texture->usedItems();
             }
 
         unit = 0;
-        for (const auto& kv : bindings.images)
+        for (const auto &kv : bindings.images)
             if (program.apply(kv.second, unit++)) {
                 usedItems += kv.second.bindingItemId;
                 usedItems += kv.second.texture->usedItems();
             }
 
         unit = 0;
-        for (const auto& kv : bindings.buffers)
+        for (const auto &kv : bindings.buffers)
             if (program.apply(kv.second, unit++)) {
                 usedItems += kv.second.bindingItemId;
                 usedItems += kv.second.buffer->usedItems();
             }
 
-        for (const auto& kv : bindings.subroutines)
+        for (const auto &kv : bindings.subroutines)
             if (program.apply(kv.second))
                 usedItems += kv.second.bindingItemId;
         program.reapplySubroutines();
@@ -81,7 +81,7 @@ namespace {
     }
 
     template<typename T, typename Item, typename... Args>
-    T* addOnce(std::map<ItemId, T>& list, const Item* item, Args&&... args)
+    T* addOnce(std::map<ItemId, T> &list, const Item *item, Args &&...args)
     {
         if (!item)
             return nullptr;
@@ -95,9 +95,9 @@ namespace {
     }
 
     template<typename T>
-    void replaceEqual(std::map<ItemId, T>& to, std::map<ItemId, T>& from)
+    void replaceEqual(std::map<ItemId, T> &to, std::map<ItemId, T> &from)
     {
-        for (auto& kv : to) {
+        for (auto &kv : to) {
             auto it = from.find(kv.first);
             if (it != from.end() && kv.second == it->second)
                 kv.second = std::move(it->second);
@@ -171,7 +171,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
     if (!mScriptEngine || manualEvaluation)
         mScriptEngine.reset();
 
-    auto& session = Singletons::sessionModel();
+    auto &session = Singletons::sessionModel();
 
     auto addCommand = [&](auto&& command) {
         mCommandQueue->commands.emplace_back(std::move(command));
@@ -196,7 +196,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
         auto target = session.findItem<Target>(targetId);
         auto fb = addOnce(mCommandQueue->targets, target);
         if (fb) {
-            const auto& items = target->items;
+            const auto &items = target->items;
             for (auto i = 0; i < items.size(); ++i)
                 if (auto attachment = castItem<Attachment>(items[i]))
                     fb->setAttachment(i, addTextureOnce(attachment->textureId));
@@ -208,7 +208,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
         auto vertexStream = session.findItem<Stream>(vertexStreamId);
         auto vs = addOnce(mCommandQueue->vertexStream, vertexStream);
         if (vs) {
-            const auto& items = vertexStream->items;
+            const auto &items = vertexStream->items;
             for (auto i = 0; i < items.size(); ++i)
                 if (auto attribute = castItem<Attribute>(items[i]))
                     if (auto column = session.findItem<Column>(attribute->columnId))
@@ -219,12 +219,12 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
         return vs;
     };
 
-    session.forEachItem([&](const Item& item) {
+    session.forEachItem([&](const Item &item) {
 
         if (auto group = castItem<Group>(item)) {
             // push binding scope
             if (!group->inlineScope)
-                addCommand([](BindingState& state) { state.push({ }); });
+                addCommand([](BindingState &state) { state.push({ }); });
         }
         else if (auto script = castItem<Script>(item)) {
             // for now all scripts are unconditionally evaluated
@@ -241,7 +241,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                             [binding = GLUniformBinding{
                                 binding->id, getUniformName(binding->name, index),
                                 binding->bindingType, binding->values[index].fields }
-                            ](BindingState& state) {
+                            ](BindingState &state) {
                                 state.top().uniforms[binding.name] = binding;
                             });
                     break;
@@ -257,7 +257,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                                 value.wrapModeX, value.wrapModeY, value.wrapModeZ,
                                 value.borderColor,
                                 value.comparisonFunc }
-                            ](BindingState& state) {
+                            ](BindingState &state) {
                                 state.top().samplers[binding.name] = binding;
                             });
                     }
@@ -272,7 +272,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                                 binding->id, getUniformName(binding->name, index),
                                 addTextureOnce(value.textureId),
                                 value.level, value.layered, value.layer, access }
-                            ](BindingState& state) {
+                            ](BindingState &state) {
                                 state.top().images[binding.name] = binding;
                             });
                     }
@@ -285,7 +285,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                             [binding = GLBufferBinding{
                                 binding->id, getUniformName(binding->name, index),
                                 addBufferOnce(value.bufferId) }
-                            ](BindingState& state) {
+                            ](BindingState &state) {
                                 state.top().buffers[binding.name] = binding;
                             });
                     }
@@ -298,7 +298,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                             [binding = GLSubroutineBinding{
                                 binding->id, getUniformName(binding->name, index),
                                 value.subroutine, {} }
-                            ](BindingState& state) {
+                            ](BindingState &state) {
                                 state.top().subroutines[binding.name] = binding;
                             });
                     }
@@ -326,7 +326,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                 addCommand(
                     [this,
                      call = std::move(glcall)
-                    ](BindingState& state) mutable {
+                    ](BindingState &state) mutable {
                         auto program = call.program();
                         if (program && program->bind())
                             mUsedItems += applyBindings(state,
@@ -352,7 +352,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                 if (!group)
                     break;
                 if (!group->inlineScope)
-                    addCommand([](BindingState& state) {
+                    addCommand([](BindingState &state) {
                         state.pop();
                     });
                 it = it->parent;
@@ -393,16 +393,16 @@ void RenderSession::evaluateScripts()
 void RenderSession::executeCommandQueue()
 {
     BindingState state;
-    for (auto& command : mCommandQueue->commands)
+    for (auto &command : mCommandQueue->commands)
         command(state);
 }
 
 void RenderSession::downloadModifiedResources()
 {
-    for (auto& texture : mCommandQueue->textures)
+    for (auto &texture : mCommandQueue->textures)
         mModifiedImages += texture.second.getModifiedImages();
 
-    for (auto& buffer : mCommandQueue->buffers)
+    for (auto &buffer : mCommandQueue->buffers)
         mModifiedBuffers += buffer.second.getModifiedData();
 }
 
@@ -429,15 +429,15 @@ void RenderSession::finish(bool steadyEvaluation)
     // since it would keep triggering updates
     auto emitDataChanged = steadyEvaluation;
 
-    auto& manager = Singletons::editorManager();
-    auto& session = Singletons::sessionModel();
-    for (auto& image : mModifiedImages)
+    auto &manager = Singletons::editorManager();
+    auto &session = Singletons::sessionModel();
+    for (auto &image : mModifiedImages)
         if (auto fileItem = castItem<FileItem>(session.findItem(image.first)))
             if (auto editor = manager.openImageEditor(fileItem->fileName, false))
                 editor->replace(image.second, emitDataChanged);
     mModifiedImages.clear();
 
-    for (auto& buffer : mModifiedBuffers)
+    for (auto &buffer : mModifiedBuffers)
         if (auto fileItem = castItem<FileItem>(session.findItem(buffer.first)))
             if (auto editor = manager.openBinaryEditor(fileItem->fileName, false))
                 editor->replace(buffer.second, emitDataChanged);

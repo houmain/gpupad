@@ -5,7 +5,7 @@
 #include <QJsonValue>
 #include <QJsonArray>
 
-class Item;
+struct Item;
 class SessionModel;
 
 class GpupadScriptObject : public QObject

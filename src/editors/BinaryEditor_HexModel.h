@@ -15,6 +15,7 @@ namespace
 
 class BinaryEditor::HexModel : public QAbstractTableModel
 {
+    Q_OBJECT
 public:
     HexModel(const QByteArray *data,
              int offset, int stride, int rowCount,

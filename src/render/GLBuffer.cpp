@@ -17,7 +17,7 @@ bool GLBuffer::operator==(const GLBuffer &rhs) const
 
 void GLBuffer::clear()
 {
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     if (auto gl43 = check(gl.v4_3, mItemId, mMessages)) {
         auto data = uint8_t();
         gl.glBindBuffer(GL_ARRAY_BUFFER, getReadWriteBufferId());
@@ -49,13 +49,13 @@ void GLBuffer::bindReadOnly(GLenum target)
     reload();
     createBuffer();
     upload();
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     gl.glBindBuffer(target, mBufferObject);
 }
 
 void GLBuffer::unbind(GLenum target)
 {
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     gl.glBindBuffer(target, GL_NONE);
 }
 
@@ -87,14 +87,14 @@ void GLBuffer::createBuffer()
     if (mBufferObject)
         return;
 
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     auto createBuffer = [&]() {
       auto buffer = GLuint{};
       gl.glGenBuffers(1, &buffer);
       return buffer;
     };
     auto freeBuffer = [](GLuint buffer) {
-      auto& gl = GLContext::currentContext();
+      auto &gl = GLContext::currentContext();
       gl.glDeleteBuffers(1, &buffer);
     };
 
@@ -109,7 +109,7 @@ void GLBuffer::upload()
     if (!mSystemCopyModified)
         return;
 
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     Q_ASSERT(mOffset + mSize <= mData.size());
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
     gl.glBufferSubData(GL_ARRAY_BUFFER, 0, mSize, 
@@ -125,7 +125,7 @@ bool GLBuffer::download()
         return false;
 
     Q_ASSERT(mOffset + mSize <= mData.size());
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
     gl.glGetBufferSubData(GL_ARRAY_BUFFER,
         0, mSize, mData.data() + mOffset);

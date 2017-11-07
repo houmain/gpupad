@@ -25,7 +25,7 @@ inline int getColumnOffset(const Column &column)
     auto offset = 0;
     const auto &buffer = *static_cast<const Buffer*>(column.parent);
     foreach (const Item* item, buffer.items) {
-        const auto& col = *static_cast<const Column*>(item);
+        const auto &col = *static_cast<const Column*>(item);
         if (&column == &col)
             return offset;
         offset += col.count * getSize(col) + col.padding;
@@ -37,7 +37,7 @@ inline int getStride(const Buffer &buffer)
 {
     auto stride = 0;
     foreach (const Item* item, buffer.items) {
-        auto& column = *static_cast<const Column*>(item);
+        auto &column = *static_cast<const Column*>(item);
         stride += column.count * getSize(column) + column.padding;
     }
     return stride;

@@ -46,7 +46,7 @@ private:
     void upload();
     void uploadImage(const Image &image);
     bool download();
-    bool downloadImage(Image& image);
+    bool downloadImage(Image &image);
     void resolveMultisampleTexture(QOpenGLTexture &source,
         QOpenGLTexture &dest, int level);
 

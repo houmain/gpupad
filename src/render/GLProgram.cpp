@@ -17,7 +17,7 @@ GLProgram::GLProgram(const Program &program)
     mUsedItems += program.id;
 
     auto shaders = QList<const Shader*>();
-    for (const auto& item : program.items)
+    for (const auto &item : program.items)
         if (auto shader = castItem<Shader>(item)) {
             mUsedItems += shader->id;
 
@@ -42,15 +42,15 @@ bool GLProgram::link()
         return true;
 
     auto freeProgram = [](GLuint program) {
-        auto& gl = GLContext::currentContext();
+        auto &gl = GLContext::currentContext();
         gl.glDeleteProgram(program);
     };
 
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     auto program = GLObject(gl.glCreateProgram(), freeProgram);
 
     auto compilingShadersFailed = false;
-    for (auto& shader : mShaders) {
+    for (auto &shader : mShaders) {
         if (shader.compile())
             gl.glAttachShader(program, shader.shaderObject());
         else
@@ -110,12 +110,12 @@ bool GLProgram::link()
 
     if (auto gl40 = gl.v4_0) {
         auto stages = QSet<Shader::ShaderType>();
-        for (const auto& shader : mShaders)
+        for (const auto &shader : mShaders)
             if (shader.type())
                 stages += shader.type();
 
         auto subroutineIndices = std::vector<GLint>();
-        for (const auto& stage : stages) {
+        for (const auto &stage : qAsConst(stages)) {
             gl40->glGetProgramStageiv(program, stage,
                 GL_ACTIVE_SUBROUTINE_UNIFORMS, &uniforms);
             for (auto i = 0u; i < static_cast<GLuint>(uniforms); ++i) {
@@ -153,7 +153,7 @@ bool GLProgram::bind()
     if (!link())
         return false;
 
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     gl.glUseProgram(mProgramObject);
 
     mPrevUniformsMessages.swap(mUniformsMessages);
@@ -162,17 +162,17 @@ bool GLProgram::bind()
 
 void GLProgram::unbind()
 {
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     gl.glUseProgram(GL_NONE);
 
     // inform about not set uniforms
-    for (auto& kv : mUniformsSet) {
+    for (auto &kv : mUniformsSet) {
         if (!kv.second)
             mUniformsMessages += MessageList::insert(
                 mItemId, MessageType::UnformNotSet, kv.first);
         kv.second = false;
     }
-    for (auto& kv : mUniformBlocksSet) {
+    for (auto &kv : mUniformBlocksSet) {
         if (!kv.second)
             mUniformsMessages += MessageList::insert(
                 mItemId, MessageType::UnformNotSet, kv.first);
@@ -183,7 +183,7 @@ void GLProgram::unbind()
 
 int GLProgram::getUniformLocation(const QString &name) const
 {
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     return gl.glGetUniformLocation(mProgramObject, qPrintable(name));
 }
 
@@ -194,13 +194,13 @@ GLenum GLProgram::getUniformDataType(const QString &name) const
 
 int GLProgram::getAttributeLocation(const QString &name) const
 {
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     return gl.glGetAttribLocation(mProgramObject, qPrintable(name));
 }
 
 bool GLProgram::apply(const GLUniformBinding &uniform, ScriptEngine &scriptEngine)
 {
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     const auto transpose = false;
     const auto dataType = getUniformDataType(uniform.name);
     const auto location = getUniformLocation(uniform.name);
@@ -297,8 +297,8 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
         static_cast<float>(binding.borderColor.alphaF())
     };
 
-    auto& gl = GLContext::currentContext();
-    auto& texture = *binding.texture;
+    auto &gl = GLContext::currentContext();
+    auto &texture = *binding.texture;
     const auto target = texture.target();
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
     gl.glBindTexture(target, texture.getReadOnlyTextureId());
@@ -343,7 +343,7 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
 
     mUniformsSet[binding.name] = true;
 
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     if (!gl.v4_2)
         return false;
     if (!binding.texture)
@@ -367,7 +367,7 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
     if (!binding.buffer)
         return false;
 
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     auto index = gl.glGetUniformBlockIndex(
         mProgramObject, qPrintable(binding.name));
 
@@ -415,13 +415,13 @@ bool GLProgram::apply(const GLSubroutineBinding &binding)
 
 void GLProgram::reapplySubroutines()
 {
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     if (!gl.v4_0)
         return;
 
     auto subroutineIndices = std::vector<GLuint>();
     foreach (Shader::ShaderType stage, mSubroutineUniforms.keys()) {
-        foreach (const SubroutineUniform &uniform, mSubroutineUniforms[stage]) {
+        for (const auto &uniform : qAsConst(mSubroutineUniforms[stage])) {
             auto index = gl.v4_0->glGetSubroutineIndex(mProgramObject,
                 stage, qPrintable(uniform.boundSubroutine));
             subroutineIndices.push_back(index);

@@ -9,7 +9,7 @@
 namespace
 {
     template <typename T>
-    bool set(T& property, const T& value)
+    bool set(T &property, const T &value)
     {
         if (property == value)
             return false;
@@ -151,7 +151,7 @@ void BinaryEditor::refresh()
 {
     const auto row = (mOffset + mStride - 1) / mStride;
     auto rowLength = 0;
-    for (const auto &column : mColumns)
+    for (const auto &column : qAsConst(mColumns))
         rowLength += column.arity * getTypeSize(column.type) + column.padding;
     const auto rowCount = (rowLength ? mRowCount : 0);
     const auto offset = (rowLength ? mOffset : 0);
@@ -203,7 +203,7 @@ void BinaryEditor::setStride(int stride)
 {
     if (stride <= 0) {
         stride = 0;
-        for (const auto &column : mColumns)
+        for (const auto &column : qAsConst(mColumns))
             stride += column.arity * getTypeSize(column.type) + column.padding;
     }
     mColumnsInvalidated |= set(mStride, (stride ? stride : 16));

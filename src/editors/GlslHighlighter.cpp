@@ -145,16 +145,16 @@ GlslHighlighter::GlslHighlighter(QObject *parent)
     QTextCharFormat numberFormat;
     QTextCharFormat functionFormat;
 
-    functionFormat.setForeground(QColor("#000066"));
+    functionFormat.setForeground(QColor(0x000066));
     functionFormat.setFontWeight(QFont::Bold);
-    keywordFormat.setForeground(QColor("#003C98"));
-    builtinFunctionFormat.setForeground(QColor("#000066"));
-    builtinConstantsFormat.setForeground(QColor("#981111"));
-    numberFormat.setForeground(QColor("#981111"));
-    quotationFormat.setForeground(QColor("#981111"));
-    preprocessorFormat.setForeground(QColor("#800080"));
-    singleLineCommentFormat.setForeground(QColor("#008700"));
-    mMultiLineCommentFormat.setForeground(QColor("#008700"));
+    keywordFormat.setForeground(QColor(0x003C98));
+    builtinFunctionFormat.setForeground(QColor(0x000066));
+    builtinConstantsFormat.setForeground(QColor(0x981111));
+    numberFormat.setForeground(QColor(0x981111));
+    quotationFormat.setForeground(QColor(0x981111));
+    preprocessorFormat.setForeground(QColor(0x800080));
+    singleLineCommentFormat.setForeground(QColor(0x008700));
+    mMultiLineCommentFormat.setForeground(QColor(0x008700));
 
     auto rule = HighlightingRule();
     rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
@@ -163,28 +163,28 @@ GlslHighlighter::GlslHighlighter(QObject *parent)
 
     auto completerStrings = QStringList();
 
-    for (const auto& keyword : keywords) {
+    for (const auto &keyword : keywords) {
         rule.pattern = QRegExp(QStringLiteral("\\b%1\\b").arg(keyword));
         rule.format = keywordFormat;
         mHighlightingRules.append(rule);
         completerStrings.append(keyword);
     }
 
-    for (const auto& builtinFunction : builtinFunctions) {
+    for (const auto &builtinFunction : builtinFunctions) {
         rule.pattern = QRegExp(QStringLiteral("\\b%1\\b").arg(builtinFunction));
         rule.format = builtinFunctionFormat;
         mHighlightingRules.append(rule);
         completerStrings.append(builtinFunction);
     }
 
-    for (const auto& builtinConstant : builtinConstants) {
+    for (const auto &builtinConstant : builtinConstants) {
         rule.pattern = QRegExp(QStringLiteral("\\b%1\\b").arg(builtinConstant));
         rule.format = builtinConstantsFormat;
         mHighlightingRules.append(rule);
         completerStrings.append(builtinConstant);
     }
 
-    for (const auto& qaulifier : layoutQualifiers)
+    for (const auto &qaulifier : layoutQualifiers)
         completerStrings.append(qaulifier);
 
     rule.pattern = QRegExp("\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?[uUlLfF]{,2}\\b");

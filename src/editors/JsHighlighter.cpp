@@ -38,14 +38,14 @@ JsHighlighter::JsHighlighter(QObject *parent)
     QTextCharFormat numberFormat;
     QTextCharFormat functionFormat;
 
-    functionFormat.setForeground(QColor("#000066"));
-    keywordFormat.setForeground(QColor("#003C98"));
-    globalObjectFormat.setForeground(QColor("#003C98"));
-    numberFormat.setForeground(QColor("#981111"));
-    quotationFormat.setForeground(QColor("#981111"));
-    preprocessorFormat.setForeground(QColor("#800080"));
-    singleLineCommentFormat.setForeground(QColor("#008700"));
-    mMultiLineCommentFormat.setForeground(QColor("#008700"));
+    functionFormat.setForeground(QColor(0x000066));
+    keywordFormat.setForeground(QColor(0x003C98));
+    globalObjectFormat.setForeground(QColor(0x003C98));
+    numberFormat.setForeground(QColor(0x981111));
+    quotationFormat.setForeground(QColor(0x981111));
+    preprocessorFormat.setForeground(QColor(0x800080));
+    singleLineCommentFormat.setForeground(QColor(0x008700));
+    mMultiLineCommentFormat.setForeground(QColor(0x008700));
 
     auto rule = HighlightingRule();
     rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
@@ -54,14 +54,14 @@ JsHighlighter::JsHighlighter(QObject *parent)
 
     auto completerStrings = QStringList();
 
-    for (const auto& keyword : keywords) {
+    for (const auto &keyword : keywords) {
         rule.pattern = QRegExp(QStringLiteral("\\b%1\\b").arg(keyword));
         rule.format = keywordFormat;
         mHighlightingRules.append(rule);
         completerStrings.append(keyword);
     }
 
-    for (const auto& global : globalObjects) {
+    for (const auto &global : globalObjects) {
         rule.pattern = QRegExp(QStringLiteral("\\b%1\\b").arg(global));
         rule.format = globalObjectFormat;
         mHighlightingRules.append(rule);

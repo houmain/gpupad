@@ -14,7 +14,7 @@ class GLTexture;
 class GLCall
 {
 public:
-    explicit GLCall(const Call& call);
+    explicit GLCall(const Call &call);
 
     ItemId itemId() const { return mCall.id; }
     GLProgram *program() { return mProgram; }

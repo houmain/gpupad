@@ -5,6 +5,7 @@
 
 class ExpressionMatrix : public QTableWidget
 {
+    Q_OBJECT
 public:
     explicit ExpressionMatrix(QWidget *parent = nullptr);
 

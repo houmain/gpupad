@@ -26,7 +26,7 @@ public:
     const QList<Script> &scripts() const { return mScripts; }
     void setGlobal(const QString &name, QObject *object);
     QJSValue getGlobal(const QString &name);
-    QJSValue call(QJSValue& callable, const QJSValueList &args,
+    QJSValue call(QJSValue &callable, const QJSValueList &args,
         ItemId itemId, MessagePtrSet &messages);
     QStringList evaluateValue(const QStringList &fieldExpressions,
         ItemId itemId, MessagePtrSet &messages);

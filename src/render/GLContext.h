@@ -11,6 +11,7 @@
 
 class GLContext : public QOpenGLContext, public QOpenGLFunctions_3_3_Core
 {
+    Q_OBJECT
 public:
     static GLContext &currentContext()
     {

@@ -46,7 +46,10 @@ namespace {
         ~MergingUndoCommand() override {
             qDeleteAll(mCommands);
         }
-        void redo() override { foreach (QUndoCommand *c, mCommands) c->redo(); }
+        void redo() override {
+            std::for_each(mCommands.begin(), mCommands.end(),
+                [](auto c) { c->redo(); });
+        }
         void undo() override {
             std::for_each(mCommands.rbegin(), mCommands.rend(),
                 [](auto c) { c->undo(); });

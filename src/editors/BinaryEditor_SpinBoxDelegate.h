@@ -18,6 +18,7 @@ namespace
 
 class BinaryEditor::SpinBoxDelegate : public QItemDelegate
 {
+    Q_OBJECT
 public:
     using QItemDelegate::QItemDelegate;
 

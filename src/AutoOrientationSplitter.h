@@ -5,6 +5,7 @@
 
 class AutoOrientationSplitter : public QSplitter
 {
+    Q_OBJECT
 public:
     AutoOrientationSplitter(QWidget *parent) : QSplitter(parent)
     {

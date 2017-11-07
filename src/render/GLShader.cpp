@@ -79,11 +79,11 @@ bool GLShader::compile()
         return true;
 
     auto freeShader = [](GLuint shaderObject) {
-        auto& gl = GLContext::currentContext();
+        auto &gl = GLContext::currentContext();
         gl.glDeleteShader(shaderObject);
     };
 
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     auto shader = GLObject(gl.glCreateShader(mType), freeShader);
     if (!shader) {
         mMessages += MessageList::insert(mItemId,
@@ -95,7 +95,7 @@ bool GLShader::compile()
     foreach (const QString &source, mSources)
         sources.push_back(source.toUtf8().data());
     auto pointers = std::vector<const char*>();
-    for (const auto& source : sources)
+    for (const auto &source : sources)
         pointers.push_back(source.data());
     gl.glShaderSource(shader, static_cast<GLsizei>(pointers.size()),
         pointers.data(), nullptr);

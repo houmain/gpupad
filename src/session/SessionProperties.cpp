@@ -21,7 +21,8 @@
 #include <QDataWidgetMapper>
 #include <QTimer>
 
-class StackedWidget : public QStackedWidget {
+class StackedWidget : public QStackedWidget
+{
 public:
     using QStackedWidget::QStackedWidget;
 
@@ -429,7 +430,7 @@ void SessionProperties::updateImageWidgets(const QModelIndex &index)
         if (auto texture = castItem<Texture>(image->parent))
             kind = getKind(*texture);
 
-    auto& ui = *mImageProperties;
+    auto &ui = *mImageProperties;
     setFormVisibility(ui.formLayout, ui.labelLayer, ui.layer, kind.array);
     setFormVisibility(ui.formLayout, ui.labelFace, ui.face, kind.cubeMap);
 }

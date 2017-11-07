@@ -14,7 +14,7 @@ MessagePtr insert(QString fileName, int line,
 {
     QMutexLocker lock(&gMessagesMutex);
     if (deduplicate) {
-        foreach (const QWeakPointer<const Message> &ptr, gMessages)
+        for (const auto &ptr : qAsConst(gMessages))
             if (MessagePtr message = ptr.lock())
                 if (message->fileName == fileName &&
                     message->line == line &&

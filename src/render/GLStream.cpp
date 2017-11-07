@@ -5,7 +5,7 @@ GLStream::GLStream(const Stream &stream)
     mUsedItems += stream.id;
 
     auto attributeIndex = 0;
-    for (const auto& item : stream.items) {
+    for (const auto &item : stream.items) {
         if (auto attribute = castItem<Attribute>(item))
             mAttributes[attributeIndex] = GLAttribute{
                 { item->id },
@@ -20,7 +20,7 @@ GLStream::GLStream(const Stream &stream)
 void GLStream::setAttribute(int attributeIndex,
     const Column &column, GLBuffer *buffer)
 {
-    auto& attribute = mAttributes[attributeIndex];
+    auto &attribute = mAttributes[attributeIndex];
     attribute.usedItems += column.id;
     attribute.buffer = buffer;
     attribute.type = column.dataType;
@@ -37,7 +37,7 @@ void GLStream::bind(const GLProgram &program)
     auto &gl = GLContext::currentContext();
 
     mEnabledVertexAttributes.clear();
-    for (const auto& attribute : mAttributes) {
+    foreach (const GLAttribute &attribute, mAttributes) {
         auto attribLocation = program.getAttributeLocation(attribute.name);
         if (attribLocation < 0)
             continue;

@@ -49,7 +49,7 @@ public:
     template<typename F> // F(const Item&)
     void forEachItemScoped(const QModelIndex &index, const F &function) const
     {
-        const auto& pos = getItem(index);
+        const auto &pos = getItem(index);
         if (pos.parent)
             forEachItemRecUp(*pos.parent, pos, function);
     }
@@ -66,7 +66,7 @@ private:
     {
         function(item);
 
-        foreach (const Item *child, item.items) {
+        for (const auto *child : item.items) {
             auto visible = true;
             if (scoped && item.type == Item::Type::Group)
                 visible = castItem<Group>(item)->inlineScope;
@@ -84,7 +84,7 @@ private:
             forEachItemRecUp(*parent.parent, parent, function);
 
         // then recursively traverse siblings until pos is found
-        foreach (const Item *child, parent.items) {
+        for (const auto *child : parent.items) {
             if (child->id == pos.id)
                 break;
             forEachItemRec(*child, true, function);
