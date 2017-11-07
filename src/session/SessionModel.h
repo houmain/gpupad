@@ -97,8 +97,7 @@ private:
     QFont mActiveCallFont;
     QMap<ItemId, ItemId> mDroppedIdsReplaced;
     QList<QModelIndex> mDroppedReferences;
-    mutable QList<QModelIndex> mDraggedIndices;
-    mutable QByteArray mDraggedJson;
+    QList<QModelIndex> mDraggedIndices;
     mutable const void *mClipboardData{ };
     mutable QString mClipboardText;
     mutable QJsonArray mClipboardJson;

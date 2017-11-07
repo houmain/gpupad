@@ -234,17 +234,13 @@ bool SessionModel::save(const QString &fileName)
 
 QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
 {
-    if (mDraggedIndices != indexes) {
-      auto jsonArray = getJson(indexes);
-      auto document =
-          (jsonArray.size() != 1 ?
-           QJsonDocument(jsonArray) :
-           QJsonDocument(jsonArray.first().toObject()));
-      mDraggedJson = document.toJson();
-      mDraggedIndices = indexes;
-    }
+    auto jsonArray = getJson(indexes);
+    auto document =
+        (jsonArray.size() != 1 ?
+          QJsonDocument(jsonArray) :
+          QJsonDocument(jsonArray.first().toObject()));
     auto data = new QMimeData();
-    data->setText(mDraggedJson);
+    data->setText(document.toJson());
     return data;
 }
 
