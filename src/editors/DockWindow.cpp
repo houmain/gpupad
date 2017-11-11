@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QTimer>
 #include <QDockWidget>
+#include <QPointer>
 
 namespace {
     QDockWidget *getTabBarDock(QTabBar *tabBar, int index)
@@ -21,6 +22,18 @@ DockWindow::DockWindow(QWidget *parent)
 
 DockWindow::~DockWindow()
 {
+}
+
+void DockWindow::raiseDock(QDockWidget *dock)
+{
+    // it seems like raising only works when the dock was layouted
+    mUpdateDocksTimer->singleShot(0,
+        [dock = QPointer<QDockWidget>(dock)]() {
+            if (dock) {
+                dock->raise();
+                dock->widget()->setFocus();
+            }
+        });
 }
 
 bool DockWindow::closeDock(QDockWidget *dock)

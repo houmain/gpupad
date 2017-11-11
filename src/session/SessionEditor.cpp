@@ -208,7 +208,8 @@ bool SessionEditor::isModified() const
 bool SessionEditor::clear()
 {
     mModel.clear();
-    setFileName({ });
+    if (!FileDialog::isUntitled(mFileName))
+        setFileName({ });
     return true;
 }
 

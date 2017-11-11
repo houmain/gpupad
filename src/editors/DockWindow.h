@@ -11,6 +11,7 @@ public:
     ~DockWindow();
 
 protected:
+    void raiseDock(QDockWidget *dock);
     virtual bool closeDock(QDockWidget *dock);
 
     QSize sizeHint() const override { return QSize(700, 800); }
