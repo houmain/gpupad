@@ -36,7 +36,8 @@ public slots:
     bool closeFile();
     void openSessionDock();
     void openMessageDock();
-    void openDocumentation();
+    void openOnlineHelp();
+    void openSampleSession();
     void openAbout();
 
 private slots:

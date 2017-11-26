@@ -19,6 +19,7 @@
 #include <QActionGroup>
 #include <QMenu>
 #include <QToolButton>
+#include <QCoreApplication>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -64,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setFeatures(QDockWidget::DockWidgetClosable |
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mSessionSplitter);
+    dock->setVisible(false);
     mUi->menuView->addAction(dock->toggleViewAction());
     addDockWidget(Qt::LeftDockWidgetArea, dock);
     mSessionEditor->addItemActions(mUi->menuSession);
@@ -73,6 +75,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setFeatures(QDockWidget::DockWidgetClosable |
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mMessageWindow.data());
+    dock->setVisible(false);
     mUi->menuView->addAction(dock->toggleViewAction());
     addDockWidget(Qt::RightDockWidgetArea, dock);
 
@@ -91,7 +94,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->actionPaste->setShortcuts(QKeySequence::Paste);
     mUi->actionDelete->setShortcuts(QKeySequence::Delete);
     mUi->actionSelectAll->setShortcuts(QKeySequence::SelectAll);
-    mUi->actionDocumentation->setShortcuts(QKeySequence::HelpContents);
+    mUi->actionOnlineHelp->setShortcuts(QKeySequence::HelpContents);
     mUi->actionRename->setShortcut(QKeySequence("F2"));
     mUi->actionFindReplace->setShortcuts(QKeySequence::Find);
 
@@ -127,8 +130,10 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::closeSession);
     connect(mUi->actionQuit, &QAction::triggered,
         this, &MainWindow::close);
-    connect(mUi->actionDocumentation, &QAction::triggered,
-        this, &MainWindow::openDocumentation);
+    connect(mUi->actionOnlineHelp, &QAction::triggered,
+        this, &MainWindow::openOnlineHelp);
+    connect(mUi->actionSampleSession, &QAction::triggered,
+        this, &MainWindow::openSampleSession);
     connect(mUi->actionAbout, &QAction::triggered,
         this, &MainWindow::openAbout);
     connect(windowFileName, &QAction::changed,
@@ -364,7 +369,6 @@ void MainWindow::updateFileActions()
     mUi->actionReload->setText(tr("&Reload%1").arg(canReload ? desc : ""));
 
     auto sourceType = mEditorManager.currentSourceType();
-    mUi->actionSourceValidation->setEnabled(sourceType != SourceType::None);
     mUi->menuSourceType->setEnabled(sourceType != SourceType::None);
 }
 
@@ -600,27 +604,43 @@ void MainWindow::openMessageDock()
         p->setVisible(true);
 }
 
-void MainWindow::openDocumentation()
+void MainWindow::openSampleSession()
 {
-    QDesktopServices::openUrl(QUrl("http://qt.io/"));
+    const auto paths = {
+        QString("/usr/share/gpupad/samples/samples.gpjs"),
+        QCoreApplication::applicationDirPath() + "/../share/gpupad/samples/samples.gpjs",
+        QCoreApplication::applicationDirPath() + "/samples/samples.gpjs",
+    };
+    for (const auto &path : paths)
+        if (QFileInfo(path).exists()) {
+            openFile(path);
+            mUi->actionEvalSteady->setChecked(true);
+            break;
+        }
+}
+
+void MainWindow::openOnlineHelp()
+{
+    QDesktopServices::openUrl(QUrl("https://github.com/houmaster/gpupad"));
 }
 
 void MainWindow::openAbout()
 {
-    QMessageBox::about(this,
-        tr("About %1").arg(QApplication::applicationName()),
-        tr("<h3>%1 %2</h3>"
-           "%3<br>"
-           "<a href='%4'>%4</a><br><br>"
-           "Copyright &copy; 2016-2017<br>"
-           "Albert Kalchmair<br>"
-           "%5<br><br>"
-           "%6")
-           .arg(QApplication::applicationName())
-           .arg(QApplication::applicationVersion())
-           .arg(tr("A text editor for efficiently editing GLSL shaders of all kinds."))
-           .arg("https://github.com/houmaster/gpupad")
-           .arg(tr("All Rights Reserved."))
-           .arg(tr("The program is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.")));
-
+    const auto title = tr("About %1").arg(QApplication::applicationName());
+    const auto text = tr("<h3>%1 %2</h3>"
+       "%3<br>"
+       "<a href='%4'>%4</a><br><br>"
+       "Copyright &copy; 2016-2017<br>"
+       "Albert Kalchmair<br>"
+       "%5<br><br>"
+       "%6")
+       .arg(QApplication::applicationName())
+       .arg(QApplication::applicationVersion())
+       .arg(tr("A text editor for efficiently editing GLSL shaders of all kinds."))
+       .arg("https://github.com/houmaster/gpupad")
+       .arg(tr("All Rights Reserved."))
+       .arg(tr("The program is provided AS IS with NO WARRANTY OF ANY KIND, "
+               "INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY AND "
+               "FITNESS FOR A PARTICULAR PURPOSE."));
+    QMessageBox::about(this, title, text);
 }

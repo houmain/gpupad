@@ -167,5 +167,15 @@ Project {
       qbs.install: true
       qbs.installDir: "share"
     }
+
+    Group {
+      name: "ShareGpupad"
+      files: [
+            "samples/**",
+        ]
+      qbs.installSourceBase: "samples"
+      qbs.install: true
+      qbs.installDir: "share/gpupad/samples"
+    }
   }
 }

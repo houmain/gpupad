@@ -36,9 +36,9 @@ public:
 
     bool context(const QJsonValue &selection, MessagePtrSet &messages)
     {
-        auto context = mScriptEngine->getGlobal("context");
-        if (context.isCallable()) {
-            auto result = mScriptEngine->call(context,
+        auto applicable = mScriptEngine->getGlobal("applicable");
+        if (applicable.isCallable()) {
+            auto result = mScriptEngine->call(applicable,
                 { mScriptEngine->toJsValue(selection) },
                 0, messages);
             if (result.isBool())

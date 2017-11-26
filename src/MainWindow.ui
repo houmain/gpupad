@@ -93,7 +93,9 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
-    <addaction name="actionDocumentation"/>
+    <addaction name="separator"/>
+    <addaction name="actionOnlineHelp"/>
+    <addaction name="actionSampleSession"/>
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
    </widget>
@@ -332,18 +334,6 @@
     <string>Sa&amp;ve All</string>
    </property>
   </action>
-  <action name="actionDocumentation">
-   <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/help-faq.png</normaloff>:/images/16x16/help-faq.png</iconset>
-   </property>
-   <property name="text">
-    <string>Documentation</string>
-   </property>
-   <property name="visible">
-    <bool>false</bool>
-   </property>
-  </action>
   <action name="actionReload">
    <property name="enabled">
     <bool>false</bool>
@@ -563,6 +553,24 @@
    </property>
    <property name="text">
     <string>Syntax &amp;Highlighting</string>
+   </property>
+  </action>
+  <action name="actionSampleSession">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/16x16/document-open.png</normaloff>:/images/16x16/document-open.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Sample Session</string>
+   </property>
+  </action>
+  <action name="actionOnlineHelp">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/16x16/help-faq.png</normaloff>:/images/16x16/help-faq.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Online Help</string>
    </property>
   </action>
  </widget>
