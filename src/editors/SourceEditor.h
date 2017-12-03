@@ -50,15 +50,6 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
 
-private slots:
-    void updateViewportMargins();
-    void updateExtraSelections();
-    void updateLineNumberArea(const QRect&, int);
-    void updateCompleterPopup(const QString &prefix, bool show);
-    void insertCompletion(const QString &completion);
-    void findReplaceAction(FindReplaceBar::Action action, QString find,
-        QString replace, QTextDocument::FindFlags flags);
-
 private:
     class LineNumberArea;
 
@@ -73,6 +64,14 @@ private:
     void markOccurrences(QString text, QTextDocument::FindFlags =
         QTextDocument::FindCaseSensitively | QTextDocument::FindWholeWords);
     void handleTextChanged();
+    void updateViewportMargins();
+    void updateExtraSelections();
+    void updateLineNumberArea(const QRect&, int);
+    void updateCompleterPopup(const QString &prefix, bool show);
+    void insertCompletion(const QString &completion);
+    void findReplaceAction(FindReplaceBar::Action action, QString find,
+        QString replace, QTextDocument::FindFlags flags);
+    void updateColors();
     void updateSyntaxHighlighting();
 
     QString mFileName;

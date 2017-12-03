@@ -95,6 +95,8 @@ void DockWindow::updateTabBar(QTabBar *tabBar)
 {
     tabBar->setUsesScrollButtons(true);
     tabBar->setElideMode(Qt::ElideLeft);
+
+    QCoreApplication::setAttribute(Qt::AA_UseStyleSheetPropagationInWidgetStyles, true);
     tabBar->setStyleSheet(
         "QTabBar::tab { min-width:100px; max-width: 200px; }");
 

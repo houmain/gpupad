@@ -12,6 +12,9 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
 {
     mUi->setupUi(this);
 
+    QCoreApplication::setAttribute(Qt::AA_UseStyleSheetPropagationInWidgetStyles, true);
+    mUi->tabDepthStencil->setStyleSheet("QTabWidget::pane { border: none; }");
+
     connect(mUi->texture, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Texture); });
     connect(mUi->texture, &ReferenceComboBox::textRequired,

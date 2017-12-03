@@ -36,25 +36,38 @@ SessionEditor::SessionEditor(QWidget *parent)
     connect(this, &QTreeView::customContextMenuRequested,
         this, &SessionEditor::openContextMenu);
 
+    auto usedLetters = QSet<QChar>();
     auto addAction = [&](auto &action, auto type) {
+        auto typeName = mModel.getTypeName(type);
+
+        // automatically insert & before first unused letter
+        for (auto i = 0; i < typeName.size(); i++) {
+            const auto c = typeName[i].toLower();
+            if (!usedLetters.contains(c)) {
+                usedLetters.insert(c);
+                typeName = typeName.insert(i, '&');
+                break;
+            }
+        }
         action = new QAction(mModel.getTypeIcon(type),
-            tr("Add &") + mModel.getTypeName(type), this);
-        connect(action, &QAction::triggered, [this, type]() { addItem(type); });
+            tr("Add ") + typeName, this);
+        connect(action, &QAction::triggered,
+            [this, type]() { addItem(type); });
     };
     addAction(mAddGroupAction, Item::Type::Group);
-    addAction(mAddBufferAction, Item::Type::Buffer);
-    addAction(mAddColumnAction, Item::Type::Column);
-    addAction(mAddTextureAction, Item::Type::Texture);
-    addAction(mAddImageAction, Item::Type::Image);
+    addAction(mAddScriptAction, Item::Type::Script);
     addAction(mAddProgramAction, Item::Type::Program);
+    addAction(mAddBufferAction, Item::Type::Buffer);
+    addAction(mAddTextureAction, Item::Type::Texture);
+    addAction(mAddCallAction, Item::Type::Call);
+    addAction(mAddAttachmentAction, Item::Type::Attachment);
     addAction(mAddShaderAction, Item::Type::Shader);
     addAction(mAddBindingAction, Item::Type::Binding);
-    addAction(mAddStreamAction, Item::Type::Stream);
-    addAction(mAddAttributeAction, Item::Type::Attribute);
+    addAction(mAddImageAction, Item::Type::Image);
+    addAction(mAddColumnAction, Item::Type::Column);
     addAction(mAddTargetAction, Item::Type::Target);
-    addAction(mAddAttachmentAction, Item::Type::Attachment);
-    addAction(mAddCallAction, Item::Type::Call);
-    addAction(mAddScriptAction, Item::Type::Script);
+    addAction(mAddAttributeAction, Item::Type::Attribute);
+    addAction(mAddStreamAction, Item::Type::Stream);
 
     addItemActions(mContextMenu);
 }

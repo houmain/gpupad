@@ -19,11 +19,13 @@ ImageEditor::ImageEditor(QString fileName, QWidget *parent)
     auto pen = QPen();
     pen.setWidth(1);
     pen.setCosmetic(true);
-    pen.setColor(QColor::fromRgbF(0.5, 0.5, 0.5));
+    pen.setColor(Qt::darkGray);
     mOutside = new QGraphicsPathItem();
     mOutside->setPen(pen);
     mOutside->setZValue(1);
-    mOutside->setBrush(QBrush(QColor::fromRgbF(0.6, 0.6, 0.6, 0.7)));
+    auto color = QColor(Qt::darkGray);
+    color.setAlphaF(0.6);
+    mOutside->setBrush(QBrush(color));
     scene()->addItem(mOutside);
 
     setZoom(mZoom);

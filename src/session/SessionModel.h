@@ -93,7 +93,6 @@ private:
 
     QMap<Item::Type, QIcon> mTypeIcons;
     QSet<ItemId> mActiveItemIds;
-    QColor mActiveColor;
     QFont mActiveCallFont;
     QMap<ItemId, ItemId> mDroppedIdsReplaced;
     QList<QModelIndex> mDroppedReferences;

@@ -5,6 +5,8 @@
 #include <QMimeData>
 #include <QJsonDocument>
 #include <QDir>
+#include <QApplication>
+#include <QPalette>
 
 SessionModel::SessionModel(QObject *parent)
     : SessionModelCore(parent)
@@ -24,7 +26,6 @@ SessionModel::SessionModel(QObject *parent)
     mTypeIcons[Item::Type::Call].addFile(QStringLiteral(":/images/16x16/dialog-information.png"));
     mTypeIcons[Item::Type::Script].addFile(QStringLiteral(":/images/16x16/font.png"));
 
-    mActiveColor = QColor::fromRgb(0, 32, 255);
     mActiveCallFont = QFont();
     mActiveCallFont.setBold(true);
 }
@@ -53,9 +54,11 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
                 mActiveItemIds.contains(item.id) ?
              mActiveCallFont : QVariant());
 
-    if (role == Qt::ForegroundRole)
-        return (mActiveItemIds.contains(item.id) ?
-            mActiveColor : QVariant());
+    if (role == Qt::ForegroundRole) {
+        if (mActiveItemIds.contains(item.id))
+            return qApp->palette().color(QPalette::Active, QPalette::Link);
+        return QVariant();
+    }
 
     return SessionModelCore::data(index, role);
 }

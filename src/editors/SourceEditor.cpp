@@ -54,14 +54,6 @@ SourceEditor::SourceEditor(QString fileName, FindReplaceBar *findReplaceBar, QWi
     connect(&mFindReplaceBar, &FindReplaceBar::action,
         this, &SourceEditor::findReplaceAction);
 
-    mCurrentLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
-    mCurrentLineFormat.setBackground(palette().base().color().darker(105));
-    mOccurrencesFormat.setBackground(palette().base().color().darker(110));
-    mOccurrencesFormat.setProperty(QTextFormat::OutlinePen,
-        QPen(palette().base().color().darker(130)));
-
-    mLineNumberColor = palette().window().color().darker(150);
-
     const auto &settings = Singletons::settings();
     setFont(settings.font());
     setTabSize(settings.tabSize());
@@ -81,15 +73,23 @@ SourceEditor::SourceEditor(QString fileName, FindReplaceBar *findReplaceBar, QWi
         this, &SourceEditor::setIndentWithSpaces);
     connect(&settings, &Settings::syntaxHighlightingChanged,
         this, &SourceEditor::updateSyntaxHighlighting);
+    connect(&settings, &Settings::darkThemeChanged,
+        this, &SourceEditor::updateColors);
+    connect(&settings, &Settings::darkThemeChanged,
+        this, &SourceEditor::updateSyntaxHighlighting);
 
     updateViewportMargins();
     updateExtraSelections();
+    updateColors();
     setSourceTypeFromExtension();
     setPlainText(document()->toPlainText());
 }
 
 SourceEditor::~SourceEditor()
 {
+    disconnect(this, &SourceEditor::textChanged,
+        this, &SourceEditor::handleTextChanged);
+
     setDocument(nullptr);
 
     if (mFindReplaceBar.target() == this)
@@ -213,6 +213,22 @@ void SourceEditor::setSourceType(SourceType sourceType)
     }
 }
 
+void SourceEditor::updateColors()
+{
+    mCurrentLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
+    mCurrentLineFormat.setBackground(palette().base().color().darker(105));
+
+    mOccurrencesFormat.setProperty(QTextFormat::OutlinePen,
+        QPen(palette().highlight().color()));
+    mOccurrencesFormat.setBackground(palette().base().color().darker(110));
+
+    auto window = palette().window().color();
+    mLineNumberColor = (window.value() < 128 ?
+        window.lighter(150) : window.darker(150));
+
+    updateExtraSelections();
+}
+
 void SourceEditor::updateSyntaxHighlighting()
 {
     const auto disabled =
@@ -227,20 +243,16 @@ void SourceEditor::updateSyntaxHighlighting()
         return;
     }
 
-    if (mSourceType == SourceType::JavaScript) {
-        if (qobject_cast<JsHighlighter *>(mHighlighter))
-            return;
+    const auto &settings = Singletons::settings();
 
-        auto highlighter = new JsHighlighter(this);
+    if (mSourceType == SourceType::JavaScript) {
+        auto highlighter = new JsHighlighter(settings.darkTheme(), this);
         delete mHighlighter;
         mHighlighter = highlighter;
         mCompleter = highlighter->completer();
     }
     else {
-        if (qobject_cast<GlslHighlighter *>(mHighlighter))
-            return;
-
-        auto highlighter = new GlslHighlighter(this);
+        auto highlighter = new GlslHighlighter(settings.darkTheme(), this);
         delete mHighlighter;
         mHighlighter = highlighter;
         mCompleter = highlighter->completer();

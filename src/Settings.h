@@ -24,6 +24,8 @@ public:
     bool autoIndentation() const { return mAutoIndentation; }
     void setSyntaxHighlighting(bool enabled);
     bool syntaxHighlighting() const { return mSyntaxHighlighting; }
+    void setDarkTheme(bool enabled);
+    bool darkTheme() const { return mDarkTheme; }
 
 signals:
     void tabSizeChanged(int tabSize);
@@ -32,6 +34,7 @@ signals:
     void indentWithSpacesChanged(bool enabled);
     void autoIndentationChanged(bool enabled);
     void syntaxHighlightingChanged(bool enabled);
+    void darkThemeChanged(bool enabled);
 
 private:
     int mTabSize{ 4 };
@@ -40,6 +43,7 @@ private:
     bool mIndentWithSpaces{ };
     bool mAutoIndentation{ true };
     bool mSyntaxHighlighting{ true };
+    bool mDarkTheme{ };
 };
 
 #endif // SETTINGS_H

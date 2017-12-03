@@ -8,7 +8,7 @@ class QCompleter;
 class JsHighlighter : public QSyntaxHighlighter {
     Q_OBJECT
 public:
-    explicit JsHighlighter(QObject *parent = nullptr);
+    explicit JsHighlighter(bool darkTheme, QObject *parent = nullptr);
     void highlightBlock(const QString &text) override;
     QCompleter *completer() const { return mCompleter; }
 

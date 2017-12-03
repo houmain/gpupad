@@ -12,6 +12,7 @@ Settings::Settings(QObject *parent) : QSettings(parent)
     setIndentWithSpaces(value("indentWithSpaces", "false").toBool());
     setAutoIndentation(value("autoIndentation", "true").toBool());
     setSyntaxHighlighting(value("syntaxHighlighting", "true").toBool());
+    setDarkTheme(value("darkTheme", "false").toBool());
 
     auto fontSettings = value("font").toString();
     if (!fontSettings.isEmpty()) {
@@ -28,6 +29,7 @@ Settings::~Settings()
     setValue("indentWithSpaces", indentWithSpaces());
     setValue("autoIndentation", autoIndentation());
     setValue("syntaxHighlighting", syntaxHighlighting());
+    setValue("darkTheme", darkTheme());
     setValue("font", font().toString());
     endGroup();
 }
@@ -79,4 +81,10 @@ void Settings::setSyntaxHighlighting(bool enabled)
 {
     mSyntaxHighlighting = enabled;
     emit syntaxHighlightingChanged(enabled);
+}
+
+void Settings::setDarkTheme(bool enabled)
+{
+    mDarkTheme = enabled;
+    emit darkThemeChanged(enabled);
 }

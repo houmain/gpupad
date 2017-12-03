@@ -40,10 +40,6 @@ public slots:
     void openSampleSession();
     void openAbout();
 
-private slots:
-    void handleMessageActivated(ItemId itemId,
-        QString fileName, int line, int column);
-
 protected:
     void closeEvent(QCloseEvent *event) override;
 
@@ -65,6 +61,9 @@ private:
     void updateRecentFileActions();
     void openRecentFile();
     void updateCustomActionsMenu();
+    void handleMessageActivated(ItemId itemId,
+        QString fileName, int line, int column);
+    void handleDarkThemeChanged(bool enabled);
 
     Ui::MainWindow *mUi{ };
     QSplitter *mSessionSplitter{ };

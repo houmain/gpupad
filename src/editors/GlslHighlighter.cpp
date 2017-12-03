@@ -133,7 +133,7 @@ const auto layoutQualifiers = {
     "rg32ui", "rg16ui", "rg8ui", "r32ui", "r16ui", "r8ui" };
 } // namespace
 
-GlslHighlighter::GlslHighlighter(QObject *parent)
+GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
     : QSyntaxHighlighter(parent)
 {
     QTextCharFormat keywordFormat;
@@ -145,16 +145,30 @@ GlslHighlighter::GlslHighlighter(QObject *parent)
     QTextCharFormat numberFormat;
     QTextCharFormat functionFormat;
 
-    functionFormat.setForeground(QColor(0x000066));
-    functionFormat.setFontWeight(QFont::Bold);
-    keywordFormat.setForeground(QColor(0x003C98));
-    builtinFunctionFormat.setForeground(QColor(0x000066));
-    builtinConstantsFormat.setForeground(QColor(0x981111));
-    numberFormat.setForeground(QColor(0x981111));
-    quotationFormat.setForeground(QColor(0x981111));
-    preprocessorFormat.setForeground(QColor(0x800080));
-    singleLineCommentFormat.setForeground(QColor(0x008700));
-    mMultiLineCommentFormat.setForeground(QColor(0x008700));
+    if (darkTheme) {
+        functionFormat.setForeground(QColor(0x7AAFFF));
+        functionFormat.setFontWeight(QFont::Bold);
+        keywordFormat.setForeground(QColor(0x3384FF));
+        builtinFunctionFormat.setForeground(QColor(0x7AAFFF));
+        builtinConstantsFormat.setForeground(QColor(0xCC4444));
+        numberFormat.setForeground(QColor(0xB09D30));
+        quotationFormat.setForeground(QColor(0xB09D30));
+        preprocessorFormat.setForeground(QColor(0xC010C0));
+        singleLineCommentFormat.setForeground(QColor(0x009E00));
+        mMultiLineCommentFormat.setForeground(QColor(0x009E00));
+    }
+    else {
+        functionFormat.setForeground(QColor(0x000066));
+        functionFormat.setFontWeight(QFont::Bold);
+        keywordFormat.setForeground(QColor(0x003C98));
+        builtinFunctionFormat.setForeground(QColor(0x000066));
+        builtinConstantsFormat.setForeground(QColor(0x981111));
+        numberFormat.setForeground(QColor(0x981111));
+        quotationFormat.setForeground(QColor(0x981111));
+        preprocessorFormat.setForeground(QColor(0x800080));
+        singleLineCommentFormat.setForeground(QColor(0x008700));
+        mMultiLineCommentFormat.setForeground(QColor(0x008700));
+    }
 
     auto rule = HighlightingRule();
     rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");

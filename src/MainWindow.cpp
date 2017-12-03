@@ -167,16 +167,20 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::openMessageDock);
 
     auto &settings = Singletons::settings();
-    connect(mUi->actionSelectFont, &QAction::triggered,
+    connect(mUi->actionSelectFont, &QAction::toggled,
         &settings, &Settings::selectFont);
-    connect(mUi->actionAutoIndentation, &QAction::triggered,
+    connect(mUi->actionAutoIndentation, &QAction::toggled,
         &settings, &Settings::setAutoIndentation);
-    connect(mUi->actionSyntaxHighlighting, &QAction::triggered,
+    connect(mUi->actionSyntaxHighlighting, &QAction::toggled,
         &settings, &Settings::setSyntaxHighlighting);
-    connect(mUi->actionLineWrapping, &QAction::triggered,
+    connect(mUi->actionDarkTheme, &QAction::toggled,
+        &settings, &Settings::setDarkTheme);
+    connect(mUi->actionLineWrapping, &QAction::toggled,
         &settings, &Settings::setLineWrap);
-    connect(mUi->actionIndentWithSpaces, &QAction::triggered,
+    connect(mUi->actionIndentWithSpaces, &QAction::toggled,
         &settings, &Settings::setIndentWithSpaces);
+    connect(&settings, &Settings::darkThemeChanged,
+        this, &MainWindow::handleDarkThemeChanged);
 
     connect(mUi->actionEvalManual, &QAction::triggered,
         this, &MainWindow::updateEvaluationMode);
@@ -187,7 +191,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(mUi->menuCustomActions, &QMenu::aboutToShow,
         this, &MainWindow::updateCustomActionsMenu);
-    connect(mUi->actionManageCustomActions, &QAction::triggered,
+    connect(mUi->actionManageCustomActions, &QAction::toggled,
         mCustomActions.data(), &QDialog::show);
 
     auto sourceTypeActionGroup = new QActionGroup(this);
@@ -304,6 +308,7 @@ void MainWindow::readSettings()
     mUi->actionIndentWithSpaces->setChecked(settings.indentWithSpaces());
     mUi->actionAutoIndentation->setChecked(settings.autoIndentation());
     mUi->actionSyntaxHighlighting->setChecked(settings.syntaxHighlighting());
+    mUi->actionDarkTheme->setChecked(settings.darkTheme());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
 }
 
@@ -591,6 +596,34 @@ void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
         Singletons::editorManager().openSourceEditor(
             fileName, true, line, column);
     }
+}
+
+void MainWindow::handleDarkThemeChanged(bool enabled)
+{
+    auto palette = qApp->style()->standardPalette();
+    if (enabled) {
+        struct S { QPalette::ColorRole role; QColor a; QColor i; QColor d; };
+        for (auto s : std::initializer_list<S>{
+                { QPalette::WindowText, 0x9F9F9F, 0x9F9F9F, 0x818181 },
+                { QPalette::Button, 0x3B3B41, 0x3B3B41, 0x3B3B41 },
+                { QPalette::Light, 0x6F6F6F, 0x6F6F6F, 0x4D4D53 },
+                { QPalette::Text, 0xCFCFCF, 0xCFCFCF, 0x707070 },
+                { QPalette::ButtonText, 0xCFCFCF, 0xCFCFCF, 0xCFCFCF },
+                { QPalette::Base, 0x4B4B51, 0x4B4B51, 0x4B4B51 },
+                { QPalette::Window, 0x4D4D53, 0x4D4D53, 0x4D4D53 },
+                { QPalette::Shadow, 0x767472, 0x767472, 0x767472 },
+                { QPalette::Highlight, 0x59595E, 0x59595E, 0x59595E },
+                { QPalette::Link, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF },
+                { QPalette::AlternateBase, 0x505056, 0x505056, 0x505056 },
+                { QPalette::ToolTipBase, 0x45454B, 0x45454B, 0x45454B },
+                { QPalette::ToolTipText, 0x999999, 0x999999, 0x999999 },
+            }) {
+                palette.setColor(QPalette::Active, s.role, s.a);
+                palette.setColor(QPalette::Inactive, s.role, s.i);
+                palette.setColor(QPalette::Disabled, s.role, s.d);
+            }
+    }
+    qApp->setPalette(palette);
 }
 
 void MainWindow::openSessionDock()

@@ -27,7 +27,7 @@ const auto globalObjects = {
     "true", "false", "console", "print" };
 } // namespace
 
-JsHighlighter::JsHighlighter(QObject *parent)
+JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
     : QSyntaxHighlighter(parent)
 {
     QTextCharFormat keywordFormat;
@@ -38,14 +38,26 @@ JsHighlighter::JsHighlighter(QObject *parent)
     QTextCharFormat numberFormat;
     QTextCharFormat functionFormat;
 
-    functionFormat.setForeground(QColor(0x000066));
-    keywordFormat.setForeground(QColor(0x003C98));
-    globalObjectFormat.setForeground(QColor(0x003C98));
-    numberFormat.setForeground(QColor(0x981111));
-    quotationFormat.setForeground(QColor(0x981111));
-    preprocessorFormat.setForeground(QColor(0x800080));
-    singleLineCommentFormat.setForeground(QColor(0x008700));
-    mMultiLineCommentFormat.setForeground(QColor(0x008700));
+    if (darkTheme) {
+        functionFormat.setForeground(QColor(0x7AAFFF));
+        keywordFormat.setForeground(QColor(0x3384FF));
+        globalObjectFormat.setForeground(QColor(0x3384FF));
+        numberFormat.setForeground(QColor(0xB09D30));
+        quotationFormat.setForeground(QColor(0xB09D30));
+        preprocessorFormat.setForeground(QColor(0xC010C0));
+        singleLineCommentFormat.setForeground(QColor(0x009E00));
+        mMultiLineCommentFormat.setForeground(QColor(0x009E00));
+    }
+    else {
+        functionFormat.setForeground(QColor(0x000066));
+        keywordFormat.setForeground(QColor(0x003C98));
+        globalObjectFormat.setForeground(QColor(0x003C98));
+        numberFormat.setForeground(QColor(0x981111));
+        quotationFormat.setForeground(QColor(0x981111));
+        preprocessorFormat.setForeground(QColor(0x800080));
+        singleLineCommentFormat.setForeground(QColor(0x008700));
+        mMultiLineCommentFormat.setForeground(QColor(0x008700));
+    }
 
     auto rule = HighlightingRule();
     rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
