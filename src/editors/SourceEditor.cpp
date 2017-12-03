@@ -255,7 +255,7 @@ void SourceEditor::updateSyntaxHighlighting()
 
 void SourceEditor::findReplace()
 {
-    mFindReplaceBar.setTarget(this, textUnderCursor());
+    mFindReplaceBar.focus(this, textUnderCursor());
 }
 
 void SourceEditor::setFont(const QFont &font)
@@ -336,16 +336,10 @@ void SourceEditor::resizeEvent(QResizeEvent *e)
 
 void SourceEditor::focusInEvent(QFocusEvent *event)
 {
-    updateExtraSelections();
+    if (mFindReplaceBar.isVisible())
+        mFindReplaceBar.setTarget(this);
 
     QPlainTextEdit::focusInEvent(event);
-}
-
-void SourceEditor::focusOutEvent(QFocusEvent *event)
-{
-    setExtraSelections({ });
-
-    QPlainTextEdit::focusOutEvent(event);
 }
 
 QString SourceEditor::tab() const

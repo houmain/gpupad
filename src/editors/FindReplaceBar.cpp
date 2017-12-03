@@ -42,22 +42,27 @@ FindReplaceBar::~FindReplaceBar()
     delete ui;
 }
 
-void FindReplaceBar::setTarget(QWidget *target, QString text)
+void FindReplaceBar::setTarget(QWidget *target)
 {
     emit action(Action::FindTextChanged, "", "", findFlags());
 
     mTarget = target;
+}
+
+void FindReplaceBar::resetTarget()
+{
+    mTarget = nullptr;
+}
+
+void FindReplaceBar::focus(QWidget *target, QString text)
+{
+    setTarget(target);
     ui->findText->setText(text);
 
     show();
     ui->findText->selectAll();
     ui->findText->setFocus();
     findTextChanged();
-}
-
-void FindReplaceBar::resetTarget()
-{
-    mTarget = nullptr;
 }
 
 void FindReplaceBar::cancel()
