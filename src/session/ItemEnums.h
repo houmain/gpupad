@@ -89,7 +89,7 @@ namespace ItemEnums {
     Q_ENUM_NS(FrontFace)
 
     enum CullMode {
-        NoCullMode = GL_NONE,
+        NoCulling = GL_NONE,
         Back = GL_BACK,
         Front = GL_FRONT,
         FrontAndBack = GL_FRONT_AND_BACK

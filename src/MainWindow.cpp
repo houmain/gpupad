@@ -35,6 +35,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto icon = QIcon(":images/16x16/icon.png");
     icon.addFile(":images/32x32/icon.png");
+    icon.addFile(":images/64x64/icon.png");
     setWindowIcon(icon);
     setContentsMargins(2, 0, 2, 2);
 
@@ -627,20 +628,21 @@ void MainWindow::openOnlineHelp()
 void MainWindow::openAbout()
 {
     const auto title = tr("About %1").arg(QApplication::applicationName());
-    const auto text = tr("<h3>%1 %2</h3>"
+    const auto text = QStringLiteral(
+       "<h3>%1 %2</h3>"
        "%3<br>"
        "<a href='%4'>%4</a><br><br>"
        "Copyright &copy; 2016-2017<br>"
        "Albert Kalchmair<br>"
        "%5<br><br>"
-       "%6")
+       "%6<br>"
+       "%7<br>")
        .arg(QApplication::applicationName())
        .arg(QApplication::applicationVersion())
        .arg(tr("A text editor for efficiently editing GLSL shaders of all kinds."))
        .arg("https://github.com/houmaster/gpupad")
        .arg(tr("All Rights Reserved."))
-       .arg(tr("The program is provided AS IS with NO WARRANTY OF ANY KIND, "
-               "INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY AND "
-               "FITNESS FOR A PARTICULAR PURPOSE."));
+       .arg(tr("This program comes with absolutely no warranty."))
+       .arg(tr("See the GNU General Public License, version 3 for details."));
     QMessageBox::about(this, title, text);
 }

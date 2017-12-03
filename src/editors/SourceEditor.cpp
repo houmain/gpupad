@@ -207,8 +207,10 @@ void SourceEditor::setSourceTypeFromExtension()
 
 void SourceEditor::setSourceType(SourceType sourceType)
 {
-    mSourceType = sourceType;
-    updateSyntaxHighlighting();
+    if (mSourceType != sourceType) {
+        mSourceType = sourceType;
+        updateSyntaxHighlighting();
+    }
 }
 
 void SourceEditor::updateSyntaxHighlighting()

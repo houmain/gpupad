@@ -236,10 +236,11 @@ void BindingProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
         (type == Binding::BindingType::Buffer));
 
-    setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, image);
-    setFormVisibility(mUi->formLayout, mUi->labelLayer, mUi->layerWidget, image);
-
     auto textureKind = currentTextureKind();
+    setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, image);
+    setFormVisibility(mUi->formLayout, mUi->labelLayer, mUi->layerWidget,
+        textureKind.array);
+
     setFormVisibility(mUi->formLayout, mUi->labelComparisonFunc, mUi->comparisonFunc,
         sampler && textureKind.depth);
     setFormVisibility(mUi->formLayout, mUi->labelMinFilter, mUi->minFilter,

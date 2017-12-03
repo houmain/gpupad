@@ -125,7 +125,7 @@ void GLTarget::applyStates()
     auto &gl = GLContext::currentContext();
 
     gl.glFrontFace(mFrontFace);
-    if (mCullMode != Target::CullMode::NoCullMode) {
+    if (mCullMode != Target::CullMode::NoCulling) {
         gl.glEnable(GL_CULL_FACE);
         gl.glCullFace(mCullMode);
     }
