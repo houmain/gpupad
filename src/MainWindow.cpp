@@ -409,7 +409,7 @@ void MainWindow::updateEvaluationInterval()
 
 bool MainWindow::hasEditor() const
 {
-    return mEditorManager.hasCurrentEditor();
+    return mEditorManager.hasEditor();
 }
 
 void MainWindow::newFile()

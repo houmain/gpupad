@@ -35,6 +35,7 @@ public:
     QStringList getBinaryFileNames() const;
     QStringList getImageFileNames() const;
 
+    bool hasEditor() const { return !mDocks.isEmpty(); }
     void updateCurrentEditor();
     bool hasCurrentEditor() const { return (mCurrentDock != nullptr); }
     QString currentEditorFileName();
