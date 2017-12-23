@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , mUi(new Ui::MainWindow)
     , mMessageWindow(new MessageWindow())
-    , mCustomActions(new CustomActions())
+    , mCustomActions(new CustomActions(this))
     , mSingletons(new Singletons(this))
     , mEditorManager(Singletons::editorManager())
     , mSessionEditor(new SessionEditor())
@@ -167,7 +167,7 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::openMessageDock);
 
     auto &settings = Singletons::settings();
-    connect(mUi->actionSelectFont, &QAction::toggled,
+    connect(mUi->actionSelectFont, &QAction::triggered,
         &settings, &Settings::selectFont);
     connect(mUi->actionAutoIndentation, &QAction::toggled,
         &settings, &Settings::setAutoIndentation);
@@ -182,7 +182,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&settings, &Settings::darkThemeChanged,
         this, &MainWindow::handleDarkThemeChanged);
 
-    connect(mUi->actionEvalManual, &QAction::triggered,
+    connect(mUi->actionEvalManual, &QAction::toggled,
         this, &MainWindow::updateEvaluationMode);
     connect(mUi->actionEvalAuto, &QAction::toggled,
         this, &MainWindow::updateEvaluationMode);
@@ -191,7 +191,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(mUi->menuCustomActions, &QMenu::aboutToShow,
         this, &MainWindow::updateCustomActionsMenu);
-    connect(mUi->actionManageCustomActions, &QAction::toggled,
+    connect(mUi->actionManageCustomActions, &QAction::triggered,
         mCustomActions.data(), &QDialog::show);
 
     auto sourceTypeActionGroup = new QActionGroup(this);

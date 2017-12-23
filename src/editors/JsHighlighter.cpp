@@ -32,7 +32,6 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
 {
     QTextCharFormat keywordFormat;
     QTextCharFormat globalObjectFormat;
-    QTextCharFormat preprocessorFormat;
     QTextCharFormat singleLineCommentFormat;
     QTextCharFormat quotationFormat;
     QTextCharFormat numberFormat;
@@ -44,7 +43,6 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
         globalObjectFormat.setForeground(QColor(0x3384FF));
         numberFormat.setForeground(QColor(0xB09D30));
         quotationFormat.setForeground(QColor(0xB09D30));
-        preprocessorFormat.setForeground(QColor(0xC010C0));
         singleLineCommentFormat.setForeground(QColor(0x009E00));
         mMultiLineCommentFormat.setForeground(QColor(0x009E00));
     }
@@ -54,7 +52,6 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
         globalObjectFormat.setForeground(QColor(0x003C98));
         numberFormat.setForeground(QColor(0x981111));
         quotationFormat.setForeground(QColor(0x981111));
-        preprocessorFormat.setForeground(QColor(0x800080));
         singleLineCommentFormat.setForeground(QColor(0x008700));
         mMultiLineCommentFormat.setForeground(QColor(0x008700));
     }

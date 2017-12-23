@@ -148,14 +148,14 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
     if (darkTheme) {
         functionFormat.setForeground(QColor(0x7AAFFF));
         functionFormat.setFontWeight(QFont::Bold);
-        keywordFormat.setForeground(QColor(0x3384FF));
+        keywordFormat.setForeground(QColor(0x7AAFFF));
         builtinFunctionFormat.setForeground(QColor(0x7AAFFF));
-        builtinConstantsFormat.setForeground(QColor(0xCC4444));
+        builtinConstantsFormat.setForeground(QColor(0xDD8D8D));
         numberFormat.setForeground(QColor(0xB09D30));
         quotationFormat.setForeground(QColor(0xB09D30));
-        preprocessorFormat.setForeground(QColor(0xC010C0));
-        singleLineCommentFormat.setForeground(QColor(0x009E00));
-        mMultiLineCommentFormat.setForeground(QColor(0x009E00));
+        preprocessorFormat.setForeground(QColor(0xA87FFF));
+        singleLineCommentFormat.setForeground(QColor(0x56A056));
+        mMultiLineCommentFormat.setForeground(QColor(0x56A056));
     }
     else {
         functionFormat.setForeground(QColor(0x000066));
