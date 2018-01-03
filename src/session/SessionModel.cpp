@@ -149,17 +149,14 @@ Qt::DropActions SessionModel::supportedDropActions() const
 
 QJsonArray SessionModel::parseClipboard(const QMimeData *data) const
 {
-    if (mClipboardData != data) {
-        mClipboardData = data;
-        auto text = data->text().toUtf8();
-        if (text != mClipboardText) {
-            mClipboardText = text;
-            auto document = QJsonDocument::fromJson(text);
-            mClipboardJson =
-                document.isNull() ? QJsonArray() :
-                document.isArray() ? document.array() :
-                QJsonArray({ document.object() });
-        }
+    auto text = data->text().toUtf8();
+    if (text != mClipboardText) {
+        mClipboardText = text;
+        auto document = QJsonDocument::fromJson(text);
+        mClipboardJson =
+            document.isNull() ? QJsonArray() :
+            document.isArray() ? document.array() :
+            QJsonArray({ document.object() });
     }
     return mClipboardJson;
 }

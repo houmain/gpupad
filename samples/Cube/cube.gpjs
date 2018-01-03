@@ -1,0 +1,277 @@
+[
+    {
+        "flipY": false,
+        "format": "RGBA8_UNorm",
+        "height": 512,
+        "id": 93,
+        "name": "Color",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 512
+    },
+    {
+        "flipY": false,
+        "format": "D16",
+        "height": 512,
+        "id": 98,
+        "name": "Depth",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 512
+    },
+    {
+        "blendConstant": "#ff000000",
+        "cullMode": "NoCulling",
+        "frontFace": "CCW",
+        "id": 100,
+        "items": [
+            {
+                "blendAlphaDest": "Zero",
+                "blendAlphaEq": "Add",
+                "blendAlphaSource": "One",
+                "blendColorDest": "Zero",
+                "blendColorEq": "Add",
+                "blendColorSource": "One",
+                "colorWriteMask": 15,
+                "id": 101,
+                "level": 0,
+                "name": "Color",
+                "textureId": 93,
+                "type": "Attachment"
+            },
+            {
+                "depthClamp": false,
+                "depthComparisonFunc": "Less",
+                "depthOffsetFactor": 0,
+                "depthOffsetUnits": 0,
+                "depthWrite": true,
+                "id": 102,
+                "level": 0,
+                "name": "Depth",
+                "textureId": 98,
+                "type": "Attachment"
+            }
+        ],
+        "logicOperation": "NoLogicOperation",
+        "name": "Target",
+        "type": "Target"
+    },
+    {
+        "fileName": "math.js",
+        "id": 103,
+        "name": "math.js",
+        "type": "Script"
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 77,
+        "name": "uModel",
+        "type": "Binding",
+        "values": [
+            {
+                "fields": [
+                    "rotateY(Date.now() / 1000.0)"
+                ]
+            }
+        ]
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression4x4",
+        "id": 78,
+        "name": "uView",
+        "type": "Binding",
+        "values": [
+            {
+                "fields": [
+                    "1",
+                    "0",
+                    "0",
+                    "0",
+                    "0",
+                    "1",
+                    "0",
+                    "0",
+                    "0",
+                    "0",
+                    "1",
+                    "0",
+                    "0.40",
+                    "0.75",
+                    "-3",
+                    "1"
+                ]
+            }
+        ]
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 79,
+        "name": "uProjection",
+        "type": "Binding",
+        "values": [
+            {
+                "fields": [
+                    "perspective(45, 1.0, 1, 100)"
+                ]
+            }
+        ]
+    },
+    {
+        "fileName": "marble.png",
+        "flipY": false,
+        "format": "RGBA8_UNorm",
+        "height": 512,
+        "id": 104,
+        "name": "marble.png",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 512
+    },
+    {
+        "bindingType": "Sampler",
+        "id": 99,
+        "name": "uTexture",
+        "type": "Binding",
+        "values": [
+            {
+                "borderColor": "#ff000000",
+                "comparisonFunc": "NoComparisonFunc",
+                "magFilter": "Nearest",
+                "minFilter": "LinearMipMapLinear",
+                "textureId": 104,
+                "wrapModeX": "Repeat",
+                "wrapModeY": "Repeat",
+                "wrapModeZ": "Repeat"
+            }
+        ]
+    },
+    {
+        "fileName": "cube_position_normal_texcoords.bin",
+        "id": 80,
+        "items": [
+            {
+                "count": 3,
+                "dataType": "Float",
+                "id": 81,
+                "name": "position",
+                "padding": 0,
+                "type": "Column"
+            },
+            {
+                "count": 3,
+                "dataType": "Float",
+                "id": 82,
+                "name": "normal",
+                "padding": 0,
+                "type": "Column"
+            },
+            {
+                "count": 2,
+                "dataType": "Float",
+                "id": 83,
+                "name": "texcoords",
+                "padding": 0,
+                "type": "Column"
+            }
+        ],
+        "name": "cube_position_normal_texcoords.bin",
+        "offset": 0,
+        "rowCount": 36,
+        "type": "Buffer"
+    },
+    {
+        "id": 84,
+        "items": [
+            {
+                "bufferId": 80,
+                "columnId": 81,
+                "divisor": 0,
+                "id": 85,
+                "name": "aPosition",
+                "normalize": false,
+                "type": "Attribute"
+            },
+            {
+                "bufferId": 80,
+                "columnId": 82,
+                "divisor": 0,
+                "id": 86,
+                "name": "aNormal",
+                "normalize": false,
+                "type": "Attribute"
+            },
+            {
+                "bufferId": 80,
+                "columnId": 83,
+                "divisor": 0,
+                "id": 87,
+                "name": "aTexCoords",
+                "normalize": false,
+                "type": "Attribute"
+            }
+        ],
+        "name": "Stream",
+        "type": "Stream"
+    },
+    {
+        "id": 88,
+        "items": [
+            {
+                "fileName": "cube.vs",
+                "id": 89,
+                "name": "cube.vs",
+                "shaderType": "Vertex",
+                "type": "Shader"
+            },
+            {
+                "fileName": "cube.fs",
+                "id": 90,
+                "name": "cube.fs",
+                "shaderType": "Fragment",
+                "type": "Shader"
+            }
+        ],
+        "name": "Program",
+        "type": "Program"
+    },
+    {
+        "callType": "ClearTexture",
+        "checked": true,
+        "clearColor": "#ff464757",
+        "clearDepth": 1,
+        "clearStencil": 0,
+        "id": 97,
+        "name": "Clear Color",
+        "textureId": 93,
+        "type": "Call"
+    },
+    {
+        "callType": "ClearTexture",
+        "checked": true,
+        "clearColor": "#ff000000",
+        "clearDepth": 1,
+        "clearStencil": 0,
+        "id": 91,
+        "name": "Clear Depth",
+        "textureId": 98,
+        "type": "Call"
+    },
+    {
+        "baseInstance": 0,
+        "callType": "Draw",
+        "checked": true,
+        "count": 36,
+        "first": 0,
+        "id": 92,
+        "instanceCount": 1,
+        "name": "Draw",
+        "primitiveType": "Triangles",
+        "programId": 88,
+        "targetId": 100,
+        "type": "Call",
+        "vertexStreamId": 84
+    }
+]

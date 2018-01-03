@@ -39,8 +39,8 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
 
     if (darkTheme) {
         functionFormat.setForeground(QColor(0x7AAFFF));
-        keywordFormat.setForeground(QColor(0x3384FF));
-        globalObjectFormat.setForeground(QColor(0x3384FF));
+        keywordFormat.setForeground(QColor(0x7AAFFF));
+        globalObjectFormat.setForeground(QColor(0x7AAFFF));
         numberFormat.setForeground(QColor(0xB09D30));
         quotationFormat.setForeground(QColor(0xB09D30));
         singleLineCommentFormat.setForeground(QColor(0x009E00));

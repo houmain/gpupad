@@ -491,9 +491,21 @@ void SessionModelCore::undoableAssignment(const QModelIndex &index, T *to,
 void SessionModelCore::undoableFileNameAssignment(const QModelIndex &index,
     FileItem &item, QString fileName)
 {
+    // do not add undo command, when untitled replaces empty
+    if (FileDialog::isEmptyOrUntitled(item.fileName) &&
+        FileDialog::isEmptyOrUntitled(fileName)) {
+
+        if (item.fileName != fileName) {
+            item.fileName = fileName;
+            emit dataChanged(index, index);
+        }
+        return;
+    }
+
     if (item.fileName != fileName) {
         mUndoStack.beginMacro("Edit");
 
+        // update name when it is still the default
         if (item.name == getTypeName(item.type) ||
             item.name == FileDialog::getFileTitle(item.fileName)) {
 

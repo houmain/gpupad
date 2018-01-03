@@ -1,0 +1,34 @@
+#version 430
+
+layout (rgba8) uniform image2D uImageR;
+layout (rgba8) uniform image2D uImageW;
+layout (local_size_x = 16, local_size_y = 16) in;
+
+void main() {
+  ivec2 size = imageSize(uImageR);
+  ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+
+  bool alive = false;  
+  int neighbors = 0;
+  for (int y = -1; y <= 1; y++)
+    for (int x = -1; x <= 1; x++) {
+      ivec2 wrapped = (pos + ivec2(x, y) + size) % size;
+      if (imageLoad(uImageR, wrapped).r == 0) {
+        if (x == 0 && y == 0)
+          alive = true;
+        else
+          neighbors++;
+      }
+    }
+  
+  if (alive) {
+    if (neighbors < 2 || neighbors > 3)
+      alive = false;
+  }
+  else {
+    if (neighbors == 3)
+      alive = true;
+  }  
+  
+  imageStore(uImageW, pos, vec4(vec3(alive ? 0 : 1), 1));
+}

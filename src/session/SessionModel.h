@@ -97,7 +97,6 @@ private:
     QMap<ItemId, ItemId> mDroppedIdsReplaced;
     QList<QModelIndex> mDroppedReferences;
     QList<QModelIndex> mDraggedIndices;
-    mutable const void *mClipboardData{ };
     mutable QString mClipboardText;
     mutable QJsonArray mClipboardJson;
 };

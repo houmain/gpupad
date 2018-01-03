@@ -249,7 +249,8 @@ QStringList EditorManager::getImageFileNames() const
 bool EditorManager::saveEditor()
 {
     if (auto editor = currentEditor()) {
-        if (FileDialog::isUntitled(editor->fileName()))
+        if (FileDialog::isUntitled(editor->fileName()) ||
+            !QFileInfo(editor->fileName()).isWritable())
             return saveEditorAs();
 
         return editor->save();

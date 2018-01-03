@@ -37,6 +37,7 @@ public slots:
     void openSessionDock();
     void openMessageDock();
     void openOnlineHelp();
+    void populateSampleSessions();
     void openSampleSession();
     void openAbout();
 

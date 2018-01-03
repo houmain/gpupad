@@ -133,8 +133,8 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::close);
     connect(mUi->actionOnlineHelp, &QAction::triggered,
         this, &MainWindow::openOnlineHelp);
-    connect(mUi->actionSampleSession, &QAction::triggered,
-        this, &MainWindow::openSampleSession);
+    connect(mUi->menuHelp, &QMenu::aboutToShow,
+        this, &MainWindow::populateSampleSessions);
     connect(mUi->actionAbout, &QAction::triggered,
         this, &MainWindow::openAbout);
     connect(windowFileName, &QAction::changed,
@@ -182,7 +182,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&settings, &Settings::darkThemeChanged,
         this, &MainWindow::handleDarkThemeChanged);
 
-    connect(mUi->actionEvalManual, &QAction::toggled,
+    connect(mUi->actionEvalManual, &QAction::triggered,
         this, &MainWindow::updateEvaluationMode);
     connect(mUi->actionEvalAuto, &QAction::toggled,
         this, &MainWindow::updateEvaluationMode);
@@ -246,7 +246,7 @@ MainWindow::MainWindow(QWidget *parent)
         action->setActionGroup(indentActionGroup);
     }
 
-    for (auto i = 0; i < 10; ++i) {
+    for (auto i = 0; i < 9; ++i) {
         auto action = mUi->menuRecentFiles->addAction("");
         connect(action, &QAction::triggered,
             this, &MainWindow::openRecentFile);
@@ -494,7 +494,8 @@ bool MainWindow::openSession(const QString &fileName)
 
 bool MainWindow::saveSession()
 {
-    if (FileDialog::isUntitled(mSessionEditor->fileName()))
+    if (FileDialog::isUntitled(mSessionEditor->fileName()) ||
+        !QFileInfo(mSessionEditor->fileName()).isWritable())
         return saveSessionAs();
 
     return mSessionEditor->save();
@@ -638,18 +639,41 @@ void MainWindow::openMessageDock()
         p->setVisible(true);
 }
 
-void MainWindow::openSampleSession()
+void MainWindow::populateSampleSessions()
 {
     const auto paths = {
-        QString("/usr/share/gpupad/samples/samples.gpjs"),
-        QCoreApplication::applicationDirPath() + "/../share/gpupad/samples/samples.gpjs",
-        QCoreApplication::applicationDirPath() + "/samples/samples.gpjs",
+        QCoreApplication::applicationDirPath() + "/../share/gpupad/samples",
+        QCoreApplication::applicationDirPath() + "/samples",
+        QString("/usr/share/gpupad/samples"),
     };
-    for (const auto &path : paths)
-        if (QFileInfo(path).exists()) {
-            openFile(path);
+    for (const auto &path : paths) {
+        if (!mUi->menuSampleSessions->actions().empty())
+            return;
+
+        auto samples = QDir(path);
+        if (samples.exists()) {
+            samples.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
+            auto entries = samples.entryInfoList();
+            for (auto entry = entries.cbegin(); entry != entries.cend(); ++entry) {
+                auto sample = QDir(entry->absoluteFilePath());
+                sample.setNameFilters({ "*.gpjs" });
+                auto sessions = sample.entryInfoList();
+                if (!sessions.empty()) {
+                    auto action = mUi->menuSampleSessions->addAction(
+                        entry->fileName(), this, SLOT(openSampleSession()));
+                    action->setData(sessions.first().absoluteFilePath());
+                }
+            }
+        }
+    }
+}
+
+void MainWindow::openSampleSession()
+{
+    if (auto action = qobject_cast<QAction*>(QObject::sender()))
+        if (openSession(action->data().toString())) {
             mUi->actionEvalSteady->setChecked(true);
-            break;
+            mSessionEditor->activateFirstItem();
         }
 }
 
@@ -665,7 +689,7 @@ void MainWindow::openAbout()
        "<h3>%1 %2</h3>"
        "%3<br>"
        "<a href='%4'>%4</a><br><br>"
-       "Copyright &copy; 2016-2017<br>"
+       "Copyright &copy; 2016-2018<br>"
        "Albert Kalchmair<br>"
        "%5<br><br>"
        "%6<br>"

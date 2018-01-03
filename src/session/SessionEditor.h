@@ -25,6 +25,7 @@ public:
     bool clear();
     bool load();
     bool save();
+    void activateFirstItem();
 
 signals:
     void itemAdded(const QModelIndex &index);

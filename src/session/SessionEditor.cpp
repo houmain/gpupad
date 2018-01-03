@@ -349,6 +349,11 @@ void SessionEditor::addItem(Item::Type type)
     emit itemAdded(index);
 }
 
+void SessionEditor::activateFirstItem()
+{
+    treeItemActivated(model()->index(0, 0));
+}
+
 void SessionEditor::treeItemActivated(const QModelIndex &index)
 {
     auto handled = false;

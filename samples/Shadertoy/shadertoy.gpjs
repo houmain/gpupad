@@ -1,0 +1,112 @@
+[
+    {
+        "flipY": false,
+        "format": "RGBA8_UNorm",
+        "height": 512,
+        "id": 70,
+        "name": "Texture",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 512
+    },
+    {
+        "blendConstant": "#ff000000",
+        "cullMode": "NoCulling",
+        "frontFace": "CCW",
+        "id": 71,
+        "items": [
+            {
+                "blendAlphaDest": "Zero",
+                "blendAlphaEq": "Add",
+                "blendAlphaSource": "One",
+                "blendColorDest": "Zero",
+                "blendColorEq": "Add",
+                "blendColorSource": "One",
+                "colorWriteMask": 15,
+                "id": 72,
+                "level": 0,
+                "name": "Color",
+                "textureId": 70,
+                "type": "Attachment"
+            }
+        ],
+        "logicOperation": "NoLogicOperation",
+        "name": "Target",
+        "type": "Target"
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 74,
+        "name": "iGlobalTime",
+        "type": "Binding",
+        "values": [
+            {
+                "fields": [
+                    "Date.now()%10000/1000.0"
+                ]
+            }
+        ]
+    },
+    {
+        "bindingType": "Sampler",
+        "id": 75,
+        "name": "target",
+        "type": "Binding",
+        "values": [
+            {
+                "borderColor": "#ff000000",
+                "comparisonFunc": "NoComparisonFunc",
+                "magFilter": "Nearest",
+                "minFilter": "Nearest",
+                "textureId": 70,
+                "wrapModeX": "Repeat",
+                "wrapModeY": "Repeat",
+                "wrapModeZ": "Repeat"
+            }
+        ]
+    },
+    {
+        "id": 76,
+        "items": [
+            {
+                "fileName": "attributeless.vs",
+                "id": 77,
+                "name": "attributeless.vs",
+                "shaderType": "Vertex",
+                "type": "Shader"
+            },
+            {
+                "fileName": "shadertoy.fs",
+                "id": 78,
+                "name": "shadertoy.fs",
+                "shaderType": "Header",
+                "type": "Shader"
+            },
+            {
+                "fileName": "ldscDM.glsl",
+                "id": 79,
+                "name": "ldscDM.glsl",
+                "shaderType": "Fragment",
+                "type": "Shader"
+            }
+        ],
+        "name": "Program",
+        "type": "Program"
+    },
+    {
+        "baseInstance": 0,
+        "callType": "Draw",
+        "checked": true,
+        "count": 4,
+        "first": 0,
+        "id": 80,
+        "instanceCount": 1,
+        "name": "Call",
+        "primitiveType": "TriangleStrip",
+        "programId": 76,
+        "targetId": 71,
+        "type": "Call",
+        "vertexStreamId": 0
+    }
+]

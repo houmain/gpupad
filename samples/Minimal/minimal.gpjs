@@ -1,0 +1,124 @@
+[
+    {
+        "flipY": false,
+        "format": "RGBA8_UNorm",
+        "height": 256,
+        "id": 10,
+        "name": "Texture",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 256
+    },
+    {
+        "blendConstant": "#ffffffff",
+        "cullMode": "NoCulling",
+        "frontFace": "CCW",
+        "id": 7,
+        "items": [
+            {
+                "blendAlphaDest": "Zero",
+                "blendAlphaEq": "Add",
+                "blendAlphaSource": "One",
+                "blendColorDest": "Zero",
+                "blendColorEq": "Add",
+                "blendColorSource": "One",
+                "colorWriteMask": 15,
+                "id": 8,
+                "level": 0,
+                "name": "Color",
+                "textureId": 10,
+                "type": "Attachment"
+            }
+        ],
+        "logicOperation": "NoLogicOperation",
+        "name": "Target",
+        "type": "Target"
+    },
+    {
+        "fileName": "vertices.bin",
+        "id": 22,
+        "items": [
+            {
+                "count": 2,
+                "dataType": "Float",
+                "id": 23,
+                "name": "Position",
+                "padding": 0,
+                "type": "Column"
+            }
+        ],
+        "name": "Vertices",
+        "offset": 0,
+        "rowCount": 4,
+        "type": "Buffer"
+    },
+    {
+        "id": 17,
+        "items": [
+            {
+                "bufferId": 22,
+                "columnId": 23,
+                "divisor": 0,
+                "id": 18,
+                "name": "aPosition",
+                "normalize": false,
+                "type": "Attribute"
+            }
+        ],
+        "name": "Stream",
+        "type": "Stream"
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression4",
+        "id": 24,
+        "name": "uColor",
+        "type": "Binding",
+        "values": [
+            {
+                "fields": [
+                    "1",
+                    "0.50",
+                    "0",
+                    "1"
+                ]
+            }
+        ]
+    },
+    {
+        "id": 1,
+        "items": [
+            {
+                "fileName": "minimal.vs",
+                "id": 2,
+                "name": "Vertex",
+                "shaderType": "Vertex",
+                "type": "Shader"
+            },
+            {
+                "fileName": "minimal.fs",
+                "id": 3,
+                "name": "Fragment",
+                "shaderType": "Fragment",
+                "type": "Shader"
+            }
+        ],
+        "name": "Program",
+        "type": "Program"
+    },
+    {
+        "baseInstance": 0,
+        "callType": "Draw",
+        "checked": true,
+        "count": 4,
+        "first": 0,
+        "id": 4,
+        "instanceCount": 1,
+        "name": "Call",
+        "primitiveType": "TriangleStrip",
+        "programId": 1,
+        "targetId": 7,
+        "type": "Call",
+        "vertexStreamId": 17
+    }
+]
