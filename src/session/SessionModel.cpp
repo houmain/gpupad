@@ -241,6 +241,8 @@ QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
           QJsonDocument(jsonArray.first().toObject()));
     auto data = new QMimeData();
     data->setText(document.toJson());
+
+    mDraggedIndices = indexes;
     return data;
 }
 

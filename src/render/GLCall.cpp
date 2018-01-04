@@ -63,13 +63,18 @@ std::chrono::nanoseconds GLCall::duration() const
     return std::chrono::nanoseconds(mTimerQuery->waitForResult());
 }
 
-QOpenGLTimerQuery &GLCall::timerQuery()
+std::shared_ptr<void> GLCall::beginTimerQuery()
 {
-    if (!mTimerQuery) {
-        mTimerQuery = std::make_shared<QOpenGLTimerQuery>();
-        mTimerQuery->create();
-    }
-    return *mTimerQuery;
+    mTimerQuery = std::make_shared<QOpenGLTimerQuery>();
+    mTimerQuery->create();
+
+    // glFinish to improve accuracy of timing
+    auto &gl = GLContext::currentContext();
+    gl.glFinish();
+
+    mTimerQuery->begin();
+    return std::shared_ptr<void>(nullptr,
+        [this](void*) { mTimerQuery->end(); });
 }
 
 void GLCall::execute()
@@ -81,15 +86,20 @@ void GLCall::execute()
         case Call::CallType::DrawIndexed:
         case Call::CallType::DrawIndirect:
         case Call::CallType::DrawIndexedIndirect:
-            return executeDraw();
+            executeDraw();
+            break;
         case Call::CallType::Compute:
-            return executeCompute();
+            executeCompute();
+            break;
         case Call::CallType::ClearTexture:
-            return executeClearTexture();
+            executeClearTexture();
+            break;
         case Call::CallType::ClearBuffer:
-            return executeClearBuffer();
+            executeClearBuffer();
+            break;
         case Call::CallType::GenerateMipmaps:
-            return executeGenerateMipmaps();
+            executeGenerateMipmaps();
+            break;
     }
 
     auto &gl = GLContext::currentContext();
@@ -109,11 +119,12 @@ void GLCall::executeDraw()
         mIndexBuffer->bindReadOnly(GL_ELEMENT_ARRAY_BUFFER);
 
     if (mProgram) {
-        timerQuery().begin();
         auto &gl = GLContext::currentContext();
 
         if (mCall.primitiveType == Call::PrimitiveType::Patches && gl.v4_0)
             gl.v4_0->glPatchParameteri(GL_PATCH_VERTICES, mCall.patchVertices);
+
+        auto guard = beginTimerQuery();
 
         if (mCall.callType == Call::CallType::Draw) {
             // DrawArrays(InstancedBaseInstance)
@@ -178,7 +189,6 @@ void GLCall::executeDraw()
                     reinterpret_cast<void*>(mIndirectOffset), mCall.drawCount, mIndirectStride);
             }
         }
-        timerQuery().end();
     }
     else {
         mMessages += MessageList::insert(
@@ -203,13 +213,12 @@ void GLCall::executeCompute()
 {
     if (mProgram) {
         auto &gl = GLContext::currentContext();
-        timerQuery().begin();
+        auto guard = beginTimerQuery();
         if (auto gl43 = check(gl.v4_3, mCall.id, mMessages))
             gl43->glDispatchCompute(
                 static_cast<GLuint>(mCall.workGroupsX),
                 static_cast<GLuint>(mCall.workGroupsY),
                 static_cast<GLuint>(mCall.workGroupsZ));
-        timerQuery().end();
     }
     else {
         mMessages += MessageList::insert(
@@ -220,6 +229,7 @@ void GLCall::executeCompute()
 void GLCall::executeClearTexture()
 {
     if (mTexture) {
+        auto guard = beginTimerQuery();
         mTexture->clear(mCall.clearColor,
             mCall.clearDepth, mCall.clearStencil);
         mUsedItems += mTexture->usedItems();
@@ -233,6 +243,7 @@ void GLCall::executeClearTexture()
 void GLCall::executeClearBuffer()
 {
     if (mBuffer) {
+        auto guard = beginTimerQuery();
         mBuffer->clear();
         mUsedItems += mBuffer->usedItems();
     }
@@ -245,6 +256,7 @@ void GLCall::executeClearBuffer()
 void GLCall::executeGenerateMipmaps()
 {
     if (mTexture) {
+        auto guard = beginTimerQuery();
         mTexture->generateMipmaps();
         mUsedItems += mTexture->usedItems();
     }

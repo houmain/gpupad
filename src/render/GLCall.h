@@ -31,7 +31,7 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
-    QOpenGLTimerQuery &timerQuery();
+    std::shared_ptr<void> beginTimerQuery();
     void executeDraw();
     void executeCompute();
     void executeClearTexture();

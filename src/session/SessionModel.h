@@ -95,8 +95,8 @@ private:
     QSet<ItemId> mActiveItemIds;
     QFont mActiveCallFont;
     QMap<ItemId, ItemId> mDroppedIdsReplaced;
-    QList<QModelIndex> mDroppedReferences;
-    QList<QModelIndex> mDraggedIndices;
+    QModelIndexList mDroppedReferences;
+    mutable QModelIndexList mDraggedIndices;
     mutable QString mClipboardText;
     mutable QJsonArray mClipboardJson;
 };

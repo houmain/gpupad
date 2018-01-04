@@ -30,5 +30,9 @@ void main() {
       alive = true;
   }  
   
+  // create life
+  if (floor(length(pos - size/2)) == 100)
+    alive = true;
+  
   imageStore(uImageW, pos, vec4(vec3(alive ? 0 : 1), 1));
 }
