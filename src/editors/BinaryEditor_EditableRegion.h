@@ -7,6 +7,7 @@
 #include <QMenu>
 #include <QApplication>
 #include <QClipboard>
+#include <QMimeData>
 
 class BinaryEditor::EditableRegion : public QTableView
 {
@@ -98,8 +99,9 @@ public:
 
     bool canPaste() const
     {
-        const auto text = QApplication::clipboard()->text();
-        return !text.isEmpty();
+        if (auto mimeData = QApplication::clipboard()->mimeData())
+            return mimeData->hasText();
+        return false;
     }
 
     void paste()

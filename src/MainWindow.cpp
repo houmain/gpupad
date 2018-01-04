@@ -322,6 +322,14 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::updateCurrentEditor()
 {
+    // do not switch, when there are both
+    // session and editors, but none is focused
+    auto focusWidget = qApp->focusWidget();
+    if (mEditorManager.hasEditor() &&
+        !mEditorManager.isAncestorOf(focusWidget) &&
+        !mSessionSplitter->isAncestorOf(focusWidget))
+        return;
+
     mEditorManager.updateCurrentEditor();
     disconnectEditActions();
     connectEditActions();
@@ -344,21 +352,13 @@ void MainWindow::disconnectEditActions()
 
 void MainWindow::connectEditActions()
 {
-    if (mEditorManager.hasCurrentEditor()) {
-        mConnectedEditActions = mEditorManager.connectEditActions(mEditActions);
-    }
-    else {
-        auto focused = (qApp->focusWidget() == mSessionEditor.data());
-        mConnectedEditActions = mSessionEditor->connectEditActions(
-            mEditActions, focused);
-    }
+    mConnectedEditActions = mEditorManager.hasCurrentEditor() ?
+        mEditorManager.connectEditActions(mEditActions) :
+        mSessionEditor->connectEditActions(mEditActions);
 }
 
 void MainWindow::updateFileActions()
 {
-    if (!isActiveWindow())
-        return;
-
     auto fileName = mEditActions.windowFileName->text();
     auto modified = mEditActions.windowFileName->isEnabled();
     setWindowTitle((modified ? "*" : "") +

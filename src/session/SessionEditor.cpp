@@ -5,6 +5,7 @@
 #include "FileDialog.h"
 #include <QApplication>
 #include <QClipboard>
+#include <QMimeData>
 #include <QMenu>
 
 SessionEditor::SessionEditor(QWidget *parent)
@@ -107,7 +108,7 @@ void SessionEditor::updateItemActions()
 }
 
 QList<QMetaObject::Connection> SessionEditor::connectEditActions(
-    const EditActions &actions, bool focused)
+    const EditActions &actions)
 {
     auto c = QList<QMetaObject::Connection>();
     actions.windowFileName->setText(fileName());
@@ -129,7 +130,7 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
         actions.redo, &QAction::setEnabled);
 
     // do not enable copy/paste... actions when a property editor is focused
-    if (!focused)
+    if (qApp->focusWidget() != this)
         return c;
 
     const auto hasSelection = currentIndex().isValid();
@@ -267,32 +268,29 @@ void SessionEditor::copy()
 
 bool SessionEditor::canPaste() const
 {
-    auto data = QApplication::clipboard()->mimeData();
-    // check if data can be dropped as sibling or child
-    if (mModel.canDropMimeData(data, Qt::CopyAction,
-            currentIndex().row() + 1, 0, currentIndex().parent()))
-        return true;
-    if (mModel.canDropMimeData(data, Qt::CopyAction, -1, 0, currentIndex()))
-        return true;
-
+    if (auto mimeData = QApplication::clipboard()->mimeData())
+        return mimeData->hasText();
     return false;
 }
 
 void SessionEditor::paste()
 {
-    mModel.undoStack().beginMacro("Paste");
-    auto data = QApplication::clipboard()->mimeData();
+    auto drop = [&](auto row, auto column, auto parent) {
+        auto mimeData = QApplication::clipboard()->mimeData();
+        if (!mModel.canDropMimeData(mimeData, Qt::CopyAction, row, column, parent))
+            return false;
+        mModel.undoStack().beginMacro("Paste");
+        mModel.dropMimeData(mimeData, Qt::CopyAction, row, column, parent);
+        mModel.undoStack().endMacro();
+        return true;
+    };
+
     // try to drop as sibling first
     if (currentIndex().isValid() &&
-        mModel.canDropMimeData(data, Qt::CopyAction,
-            currentIndex().row() + 1, 0, currentIndex().parent())) {
-        mModel.dropMimeData(data, Qt::CopyAction,
-            currentIndex().row() + 1, 0, currentIndex().parent());
-    }
-    else {
-        mModel.dropMimeData(data, Qt::CopyAction, -1, 0, currentIndex());
-    }
-    mModel.undoStack().endMacro();
+        drop(currentIndex().row() + 1, 0, currentIndex().parent()))
+        return;
+
+    drop(-1, 0, currentIndex());
 }
 
 void SessionEditor::delete_()

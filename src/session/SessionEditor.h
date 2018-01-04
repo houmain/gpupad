@@ -17,7 +17,7 @@ public:
     void addItemActions(QMenu* menu);
     void updateItemActions();
     QList<QMetaObject::Connection> connectEditActions(
-        const EditActions &actions, bool focused);
+        const EditActions &actions);
     QString fileName() const { return mFileName; }
     void setFileName(QString fileName);
     void setCurrentItem(ItemId itemId);

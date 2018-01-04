@@ -62,7 +62,8 @@ Call::PrimitiveType CallProperties::currentPrimitiveType() const
 
 CallKind CallProperties::currentCallKind() const
 {
-    mSessionProperties.updateModel();
+    if (QObject::sender() == mUi->type)
+        mSessionProperties.updateModel();
 
     if (auto call = mSessionProperties.model().item<Call>(
             mSessionProperties.currentModelIndex()))

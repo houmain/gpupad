@@ -54,13 +54,12 @@ void EditorManager::dropEvent(QDropEvent *e)
 void EditorManager::updateCurrentEditor()
 {
     mCurrentDock = nullptr;
-    auto focus = qApp->focusWidget();
+    auto focusWidget = qApp->focusWidget();
     foreach (QDockWidget* dock, mDocks.keys()) {
-        if (dock->isAncestorOf(focus)) {
+        if (dock->isAncestorOf(focusWidget)) {
             mCurrentDock = dock;
-
             emit sourceTypeChanged(currentSourceType());
-            return;
+            break;
         }
     }
 }
