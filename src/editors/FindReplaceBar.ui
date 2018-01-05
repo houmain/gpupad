@@ -38,13 +38,30 @@
       <number>3</number>
      </property>
      <item row="1" column="3">
-      <widget class="QPushButton" name="replace">
+      <widget class="QPushButton" name="replaceAll">
        <property name="text">
-        <string>Replace</string>
+        <string>Replace &amp;all</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="7">
+     <item row="0" column="2">
+      <widget class="QPushButton" name="findPrevious">
+       <property name="text">
+        <string>Previous</string>
+       </property>
+       <property name="shortcut">
+        <string>Shift+F3</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QPushButton" name="replace">
+       <property name="text">
+        <string>&amp;Replace</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="5">
       <widget class="QCheckBox" name="caseSensitive">
        <property name="minimumSize">
         <size>
@@ -53,11 +70,11 @@
         </size>
        </property>
        <property name="text">
-        <string>Case Sensitive</string>
+        <string>&amp;Case sensitive</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="1" column="0">
       <widget class="QLabel" name="labelReplace">
        <property name="minimumSize">
         <size>
@@ -70,7 +87,17 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="0" column="3">
+      <widget class="QPushButton" name="findNext">
+       <property name="text">
+        <string>Next</string>
+       </property>
+       <property name="shortcut">
+        <string>F3</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
       <widget class="QLabel" name="labelFind">
        <property name="minimumSize">
         <size>
@@ -84,13 +111,6 @@
       </widget>
      </item>
      <item row="1" column="5">
-      <widget class="QPushButton" name="replaceAll">
-       <property name="text">
-        <string>Replace All</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="7">
       <widget class="QCheckBox" name="wholeWordsOnly">
        <property name="minimumSize">
         <size>
@@ -99,11 +119,11 @@
         </size>
        </property>
        <property name="text">
-        <string>Whole Word Only</string>
+        <string>&amp;Whole words only</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="2">
+     <item row="1" column="1">
       <widget class="QLineEdit" name="replaceText">
        <property name="minimumSize">
         <size>
@@ -119,7 +139,7 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="2">
+     <item row="0" column="1">
       <widget class="QLineEdit" name="findText">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -141,14 +161,7 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="3">
-      <widget class="QPushButton" name="findNext">
-       <property name="text">
-        <string>Next</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="9">
+     <item row="0" column="7">
       <widget class="QPushButton" name="closeButton">
        <property name="maximumSize">
         <size>
@@ -165,7 +178,7 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="6">
+     <item row="0" column="4">
       <widget class="QWidget" name="widget" native="true">
        <property name="minimumSize">
         <size>
@@ -175,14 +188,7 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="5">
-      <widget class="QPushButton" name="findPrevious">
-       <property name="text">
-        <string>Previous</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="8">
+     <item row="0" column="6">
       <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -202,9 +208,9 @@
  <tabstops>
   <tabstop>findText</tabstop>
   <tabstop>replaceText</tabstop>
-  <tabstop>findNext</tabstop>
-  <tabstop>replace</tabstop>
   <tabstop>findPrevious</tabstop>
+  <tabstop>replace</tabstop>
+  <tabstop>findNext</tabstop>
   <tabstop>replaceAll</tabstop>
   <tabstop>caseSensitive</tabstop>
   <tabstop>wholeWordsOnly</tabstop>
