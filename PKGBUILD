@@ -1,7 +1,7 @@
 
 pkgname=gpupad-git
 _pkgname=gpupad
-pkgver=r2.230232e
+pkgver=r0.0
 pkgrel=1
 pkgdesc='A text editor for efficiently editing GLSL shaders of all kinds.'
 arch=('i686' 'x86_64' 'armv6h' 'armv7h')
@@ -22,15 +22,11 @@ pkgver() {
 build() {
   cd "${srcdir}/${_pkgname}"
   echo "\"${pkgver}\"" > "src/_version.h"
-  qbs setup-toolchains --detect
-  qbs setup-qt --detect
-  qbs setup-qt /usr/bin/qmake ${pkgname}
-  qbs config defaultProfile ${pkgname}
-  qbs config profiles.${pkgname}.baseProfile gcc
-  qbs build -d "../${pkgname}-build" release
+  qbs setup-qt /usr/bin/qmake qt5
+  qbs build -d "../${pkgname}-build" profile:qt5 release
 }
 
 package() {
   cd "${srcdir}/${_pkgname}"
-  qbs install -d "../${pkgname}-build" --no-build --install-root "${pkgdir}/usr" profile:${pkgname} release
+  qbs install -d "../${pkgname}-build" --no-build --install-root "${pkgdir}/usr" profile:qt5 release
 }
