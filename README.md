@@ -73,10 +73,10 @@ A C++14 conforming compiler and [Qt5](https://www.qt.io/) is required. A build s
     qbs build profile:qt5 release
 
 * **Arch Linux** -
-You can install it from the [AUR](https://aur.archlinux.org/packages/gpupad).
+You can install it from the [AUR](https://aur.archlinux.org/packages/gpupad-git).
 
 * **Windows** -
-The provided `mscv2015.bat` can be used to generate a VisualStudio solution in the `_build` directory. The environment variable `%QTDIR%` needs to point to the Qt5 installation path.
+The provided `msvc2015.bat` can be used to generate a Visual Studio solution in the `_build` directory. The environment variable `%QTDIR%` needs to point to the Qt5 installation path.
 
 License
 -------

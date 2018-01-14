@@ -1,12 +1,12 @@
 
 pkgname=gpupad-git
 _pkgname=gpupad
-pkgver=r0.0
+pkgver=latest
 pkgrel=1
 pkgdesc='A text editor for efficiently editing GLSL shaders of all kinds.'
-arch=('i686' 'x86_64' 'armv6h' 'armv7h')
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
 url="https://github.com/houmaster/gpupad"
-license=('GPL')
+license=('GPL3')
 depends=('qt5-declarative')
 makedepends=('qbs' 'git')
 conflicts=(${_pkgname})
