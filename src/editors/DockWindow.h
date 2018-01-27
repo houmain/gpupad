@@ -8,7 +8,7 @@ class DockWindow : public QMainWindow
     Q_OBJECT
 public:
     explicit DockWindow(QWidget *parent = nullptr);
-    ~DockWindow();
+    ~DockWindow() override;
 
 protected:
     void raiseDock(QDockWidget *dock);

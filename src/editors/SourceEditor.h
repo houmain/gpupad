@@ -18,7 +18,7 @@ public:
 
     explicit SourceEditor(QString fileName,
         FindReplaceBar *findReplaceBar, QWidget *parent = nullptr);
-    ~SourceEditor();
+    ~SourceEditor() override;
 
     QList<QMetaObject::Connection> connectEditActions(
         const EditActions &actions) override;

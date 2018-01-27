@@ -17,7 +17,7 @@ public:
     };
 
     explicit FindReplaceBar(QWidget *parent = nullptr);
-    ~FindReplaceBar();
+    ~FindReplaceBar() override;
 
     void focus(QWidget* target, QString text);
     void cancel();

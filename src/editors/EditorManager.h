@@ -14,7 +14,7 @@ class EditorManager : public DockWindow
     Q_OBJECT
 public:
     explicit EditorManager(QWidget *parent = nullptr);
-    ~EditorManager();
+    ~EditorManager() override;
 
     FindReplaceBar &findReplaceBar() { return *mFindReplaceBar; }
     int openNotSavedDialog(const QString &fileName);

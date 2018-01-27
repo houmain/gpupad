@@ -17,7 +17,7 @@ class SynchronizeLogic : public QObject
     Q_OBJECT
 public:
     explicit SynchronizeLogic(QObject *parent = nullptr);
-    ~SynchronizeLogic();
+    ~SynchronizeLogic() override;
 
     void resetRenderSession();
     void setSourceValidationActive(bool active);
