@@ -30,7 +30,15 @@ QJsonValue GpupadScriptObject::readTextFile(const QString &fileName)
     return { };
 }
 
-void GpupadScriptObject::updateSession(QJsonValue update, QJsonValue parent, int row)
+void GpupadScriptObject::insertItems(QJsonValue update, QJsonValue parent, int row)
+{
+    auto index = findItem(parent);
+    if (!update.isArray())
+        update = QJsonArray({ update });
+    sessionModel().dropJson(update.toArray(), row, index, false);
+}
+
+void GpupadScriptObject::updateItems(QJsonValue update, QJsonValue parent, int row)
 {
     auto index = findItem(parent);
     if (!update.isArray())

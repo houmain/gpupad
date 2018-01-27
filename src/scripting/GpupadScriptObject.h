@@ -18,7 +18,9 @@ public:
     QJsonArray session();
     Q_INVOKABLE QJsonValue openFileDialog();
     Q_INVOKABLE QJsonValue readTextFile(const QString &fileName);
-    Q_INVOKABLE void updateSession(QJsonValue update,
+    Q_INVOKABLE void insertItems(QJsonValue update,
+        QJsonValue parent = { }, int row = -1);
+    Q_INVOKABLE void updateItems(QJsonValue update,
         QJsonValue parent = { }, int row = -1);
     Q_INVOKABLE void deleteItem(QJsonValue item);
 
