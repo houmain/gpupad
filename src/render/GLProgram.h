@@ -62,7 +62,7 @@ public:
     explicit GLProgram(const Program &program);
     bool operator==(const GLProgram &rhs) const;
 
-    bool bind();
+    bool bind(MessagePtrSet *callMessages);
     void unbind();
     const QList<QString> &attributes() const { return mAttributes; }
     int getAttributeLocation(const QString &name) const;
@@ -72,6 +72,7 @@ public:
     bool apply(const GLBufferBinding &binding, int unit);
     bool apply(const GLSubroutineBinding &subroutine);
     void reapplySubroutines();
+    void checkUniforms();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
@@ -95,9 +96,7 @@ private:
     QMap<Shader::ShaderType, QList<SubroutineUniform>> mSubroutineUniforms;
     QMap<QString, GLenum> mUniformDataTypes;
     GLObject mProgramObject;
-
-    MessagePtrSet mUniformsMessages;
-    MessagePtrSet mPrevUniformsMessages;
+    MessagePtrSet *mCallMessages{ };
     std::map<QString, bool> mUniformsSet;
     std::map<QString, bool> mUniformBlocksSet;
 };

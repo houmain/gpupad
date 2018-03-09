@@ -13,7 +13,7 @@ class ValidateSource : public RenderTask
     Q_OBJECT
 public:
     explicit ValidateSource(QObject *parent = nullptr);
-    ~ValidateSource();
+    ~ValidateSource() override;
 
     void setSource(QString fileName, SourceType sourceType);
     QSet<ItemId> usedItems() const override;

@@ -77,28 +77,26 @@ std::shared_ptr<void> GLCall::beginTimerQuery()
         [this](void*) { mTimerQuery->end(); });
 }
 
-void GLCall::execute()
+void GLCall::execute(MessagePtrSet &messages)
 {
-    mMessages.clear();
-
     switch (mCall.callType) {
         case Call::CallType::Draw:
         case Call::CallType::DrawIndexed:
         case Call::CallType::DrawIndirect:
         case Call::CallType::DrawIndexedIndirect:
-            executeDraw();
+            executeDraw(messages);
             break;
         case Call::CallType::Compute:
-            executeCompute();
+            executeCompute(messages);
             break;
         case Call::CallType::ClearTexture:
-            executeClearTexture();
+            executeClearTexture(messages);
             break;
         case Call::CallType::ClearBuffer:
-            executeClearBuffer();
+            executeClearBuffer(messages);
             break;
         case Call::CallType::GenerateMipmaps:
-            executeGenerateMipmaps();
+            executeGenerateMipmaps(messages);
             break;
     }
 
@@ -107,7 +105,7 @@ void GLCall::execute()
       gl.v4_2->glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 
-void GLCall::executeDraw()
+void GLCall::executeDraw(MessagePtrSet &messages)
 {
     if (mTarget)
         mTarget->bind();
@@ -135,7 +133,7 @@ void GLCall::executeDraw()
                     mCall.count,
                     mCall.instanceCount);
             }
-            else if (auto gl42 = check(gl.v4_2, mCall.id, mMessages)) {
+            else if (auto gl42 = check(gl.v4_2, mCall.id, messages)) {
                 gl42->glDrawArraysInstancedBaseInstance(
                     mCall.primitiveType,
                     mCall.first,
@@ -154,7 +152,7 @@ void GLCall::executeDraw()
                     reinterpret_cast<void*>(mIndicesOffset),
                     mCall.instanceCount);
             }
-            else if (auto gl42 = check(gl.v4_2, mCall.id, mMessages)) {
+            else if (auto gl42 = check(gl.v4_2, mCall.id, messages)) {
                 gl42->glDrawElementsInstancedBaseVertexBaseInstance(
                     mCall.primitiveType,
                     mCall.count,
@@ -168,11 +166,11 @@ void GLCall::executeDraw()
         else if (mCall.callType == Call::CallType::DrawIndirect) {
             // (Multi)DrawArraysIndirect
             if (mCall.drawCount == 1) {
-                if (auto gl40 = check(gl.v4_0, mCall.id, mMessages))
+                if (auto gl40 = check(gl.v4_0, mCall.id, messages))
                     gl40->glDrawArraysIndirect(mCall.primitiveType,
                         reinterpret_cast<void*>(mIndirectOffset));
             }
-            else if (auto gl43 = check(gl.v4_3, mCall.id, mMessages)) {
+            else if (auto gl43 = check(gl.v4_3, mCall.id, messages)) {
                 gl43->glMultiDrawArraysIndirect(mCall.primitiveType,
                     reinterpret_cast<void*>(mIndirectOffset), mCall.drawCount, mIndirectStride);
             }
@@ -180,18 +178,18 @@ void GLCall::executeDraw()
         else if (mCall.callType == Call::CallType::DrawIndexedIndirect) {
             // (Multi)DrawElementsIndirect
             if (mCall.drawCount == 1) {
-                if (auto gl40 = check(gl.v4_0, mCall.id, mMessages))
+                if (auto gl40 = check(gl.v4_0, mCall.id, messages))
                     gl40->glDrawElementsIndirect(mCall.primitiveType, mIndexType,
                         reinterpret_cast<void*>(mIndirectOffset));
             }
-            else if (auto gl43 = check(gl.v4_3, mCall.id, mMessages)) {
+            else if (auto gl43 = check(gl.v4_3, mCall.id, messages)) {
                 gl43->glMultiDrawElementsIndirect(mCall.primitiveType, mIndexType,
                     reinterpret_cast<void*>(mIndirectOffset), mCall.drawCount, mIndirectStride);
             }
         }
     }
     else {
-        mMessages += MessageList::insert(
+        messages += MessageList::insert(
             mCall.id,  MessageType::ProgramNotAssigned);
     }
 
@@ -209,24 +207,24 @@ void GLCall::executeDraw()
     }
 }
 
-void GLCall::executeCompute()
+void GLCall::executeCompute(MessagePtrSet &messages)
 {
     if (mProgram) {
         auto &gl = GLContext::currentContext();
         auto guard = beginTimerQuery();
-        if (auto gl43 = check(gl.v4_3, mCall.id, mMessages))
+        if (auto gl43 = check(gl.v4_3, mCall.id, messages))
             gl43->glDispatchCompute(
                 static_cast<GLuint>(mCall.workGroupsX),
                 static_cast<GLuint>(mCall.workGroupsY),
                 static_cast<GLuint>(mCall.workGroupsZ));
     }
     else {
-        mMessages += MessageList::insert(
+        messages += MessageList::insert(
             mCall.id, MessageType::ProgramNotAssigned);
     }
 }
 
-void GLCall::executeClearTexture()
+void GLCall::executeClearTexture(MessagePtrSet &messages)
 {
     if (mTexture) {
         auto guard = beginTimerQuery();
@@ -235,12 +233,12 @@ void GLCall::executeClearTexture()
         mUsedItems += mTexture->usedItems();
     }
     else {
-        mMessages += MessageList::insert(
+        messages += MessageList::insert(
             mCall.id,  MessageType::TextureNotAssigned);
     }
 }
 
-void GLCall::executeClearBuffer()
+void GLCall::executeClearBuffer(MessagePtrSet &messages)
 {
     if (mBuffer) {
         auto guard = beginTimerQuery();
@@ -248,12 +246,12 @@ void GLCall::executeClearBuffer()
         mUsedItems += mBuffer->usedItems();
     }
     else {
-        mMessages += MessageList::insert(
+        messages += MessageList::insert(
             mCall.id, MessageType::BufferNotAssigned);
     }
 }
 
-void GLCall::executeGenerateMipmaps()
+void GLCall::executeGenerateMipmaps(MessagePtrSet &messages)
 {
     if (mTexture) {
         auto guard = beginTimerQuery();
@@ -261,7 +259,7 @@ void GLCall::executeGenerateMipmaps()
         mUsedItems += mTexture->usedItems();
     }
     else {
-        mMessages += MessageList::insert(
+        messages += MessageList::insert(
             mCall.id,  MessageType::TextureNotAssigned);
     }
 }

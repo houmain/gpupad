@@ -26,17 +26,17 @@ public:
     void setBuffer(GLBuffer *buffer);
     void setTexture(GLTexture *texture);
 
-    void execute();
+    void execute(MessagePtrSet &messages);
     std::chrono::nanoseconds duration() const;
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
     std::shared_ptr<void> beginTimerQuery();
-    void executeDraw();
-    void executeCompute();
-    void executeClearTexture();
-    void executeClearBuffer();
-    void executeGenerateMipmaps();
+    void executeDraw(MessagePtrSet &messages);
+    void executeCompute(MessagePtrSet &messages);
+    void executeClearTexture(MessagePtrSet &messages);
+    void executeClearBuffer(MessagePtrSet &messages);
+    void executeGenerateMipmaps(MessagePtrSet &messages);
 
     Call mCall{ };
     GLProgram *mProgram{ };
@@ -53,7 +53,6 @@ private:
     uintptr_t mIndirectOffset{ };
     GLint mIndirectStride{ };
 
-    MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
     std::shared_ptr<QOpenGLTimerQuery> mTimerQuery;
 };

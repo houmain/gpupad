@@ -40,16 +40,19 @@ void MessageWindow::updateMessages()
 {
     const auto messages = MessageList::messages();
     auto messageIds = QSet<MessageId>();
+    auto replacedMessageIds = QSet<MessageId>();
     for (const auto &message : messages) {
         if (message->type == MessageType::CallDuration)
-            tryReplaceMessage(*message);
+            if (auto replaced = tryReplaceMessage(*message))
+                replacedMessageIds += replaced;
         messageIds += message->id;
     }
     removeMessagesExcept(messageIds);
 
     auto added = false;
     for (const auto &message : messages)
-        added |= addMessageOnce(*message);
+        if (!replacedMessageIds.contains(message->id))
+            added |= addMessageOnce(*message);
 
     if (added)
         emit messagesAdded();
@@ -140,18 +143,20 @@ void MessageWindow::removeMessagesExcept(const QSet<MessageId> &messageIds)
     }
 }
 
-void MessageWindow::tryReplaceMessage(const Message &message)
+auto MessageWindow::tryReplaceMessage(const Message &message) -> MessageId
 {
     for (auto i = 0; i < rowCount(); i++) {
         auto &item = *this->item(i, 0);
         if (item.data(Qt::UserRole + 1) == message.itemId &&
             item.data(Qt::UserRole + 4) == message.type) {
 
+            auto replacedId = item.data(Qt::UserRole).toULongLong();
             item.setData(Qt::UserRole, message.id);
             item.setText(getMessageText(message));
-            return;
+            return replacedId;
         }
     }
+    return 0;
 }
 
 bool MessageWindow::addMessageOnce(const Message &message)

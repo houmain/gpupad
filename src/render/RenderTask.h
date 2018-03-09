@@ -5,14 +5,13 @@
 #include <QSet>
 
 using ItemId = int;
-class GLContext;
 
 class RenderTask : public QObject
 {
     Q_OBJECT
 public:
     explicit RenderTask(QObject *parent = nullptr);
-    virtual ~RenderTask();
+    ~RenderTask() override;
 
     virtual QSet<ItemId> usedItems() const = 0;
 

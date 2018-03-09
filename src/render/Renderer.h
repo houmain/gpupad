@@ -11,7 +11,7 @@ class Renderer : public QObject
     Q_OBJECT
 public:
     explicit Renderer(QObject *parent = nullptr);
-    ~Renderer();
+    ~Renderer() override;
 
     void render(RenderTask *task);
     void release(RenderTask *task);

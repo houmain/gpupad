@@ -30,7 +30,7 @@ namespace {
     using Command = std::function<void(BindingState&)>;
 
     QSet<ItemId> applyBindings(BindingState &state,
-            GLProgram &program, ScriptEngine &scriptEngine)
+        GLProgram &program, ScriptEngine &scriptEngine)
     {
         QSet<ItemId> usedItems;
         BindingScope bindings;
@@ -132,17 +132,11 @@ struct RenderSession::CommandQueue
     std::map<ItemId, GLStream> vertexStream;
     std::deque<Command> commands;
     QList<ScriptEngine::Script> scripts;
-};
-
-struct RenderSession::TimerQueries
-{
-    QList<GLCall*> calls;
-    MessagePtrSet messages;
+    QList<GLCall*> timerQueryCalls;
 };
 
 RenderSession::RenderSession(QObject *parent)
     : RenderTask(parent)
-    , mTimerQueries(new TimerQueries())
 {
 }
 
@@ -159,6 +153,9 @@ QSet<ItemId> RenderSession::usedItems() const
 
 void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 {
+    mPrevMessages.swap(mMessages);
+    mMessages.clear();
+
     if (mCommandQueue && !(itemsChanged || manualEvaluation))
         return;
 
@@ -328,12 +325,12 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                      call = std::move(glcall)
                     ](BindingState &state) mutable {
                         auto program = call.program();
-                        if (program && program->bind())
-                            mUsedItems += applyBindings(state,
-                                *program, *mScriptEngine);
+                        if (program && program->bind(&mMessages))
+                            mUsedItems += applyBindings(
+                                state, *program, *mScriptEngine);
 
-                        call.execute();
-                        mTimerQueries->calls += &call;
+                        call.execute(mMessages);
+                        mCommandQueue->timerQueryCalls += &call;
                         mUsedItems += call.usedItems();
 
                         if (program) {
@@ -364,7 +361,6 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 void RenderSession::render()
 {
     QOpenGLVertexArrayObject::Binder vaoBinder(&mCommandQueue->vao);
-
     reuseUnmodifiedItems();
     evaluateScripts();
     executeCommandQueue();
@@ -408,19 +404,15 @@ void RenderSession::downloadModifiedResources()
 
 void RenderSession::outputTimerQueries()
 {
-    auto messages = MessagePtrSet();
-    foreach (const GLCall *call, mTimerQueries->calls)
+    foreach (const GLCall *call, mCommandQueue->timerQueryCalls)
         if (call->duration().count() >= 0)
-            messages += MessageList::insert(
+            mMessages += MessageList::insert(
                 call->itemId(), MessageType::CallDuration,
                 formatQueryDuration(call->duration()), false);
 
-    if (mTimerQueries->calls.empty())
-        messages += MessageList::insert(
+    if (mCommandQueue->timerQueryCalls.empty())
+        mMessages += MessageList::insert(
             0, MessageType::NoActiveCalls);
-
-    mTimerQueries->messages = messages;
-    mTimerQueries->calls.clear();
 }
 
 void RenderSession::finish(bool steadyEvaluation)
@@ -442,6 +434,8 @@ void RenderSession::finish(bool steadyEvaluation)
             if (auto editor = manager.openBinaryEditor(fileItem->fileName, false))
                 editor->replace(buffer.second, emitDataChanged);
     mModifiedBuffers.clear();
+
+    mPrevMessages.clear();
 
     QMutexLocker lock{ &mUsedItemsCopyMutex };
     mUsedItemsCopy = mUsedItems;

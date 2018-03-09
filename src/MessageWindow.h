@@ -27,7 +27,7 @@ private:
     QIcon getMessageIcon(const Message &message) const;
     QString getMessageText(const Message &message) const;
     void removeMessagesExcept(const QSet<MessageId> &messageIds);
-    void tryReplaceMessage(const Message &message);
+    MessageId tryReplaceMessage(const Message &message);
     bool addMessageOnce(const Message &message);
 
     QTimer *mUpdateItemsTimer;

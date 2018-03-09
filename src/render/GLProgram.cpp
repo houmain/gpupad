@@ -148,15 +148,14 @@ bool GLProgram::link()
     return true;
 }
 
-bool GLProgram::bind()
+bool GLProgram::bind(MessagePtrSet *callMessages)
 {
     if (!link())
         return false;
 
     auto &gl = GLContext::currentContext();
     gl.glUseProgram(mProgramObject);
-
-    mPrevUniformsMessages.swap(mUniformsMessages);
+    mCallMessages = callMessages;
     return true;
 }
 
@@ -168,17 +167,17 @@ void GLProgram::unbind()
     // inform about not set uniforms
     for (auto &kv : mUniformsSet) {
         if (!kv.second)
-            mUniformsMessages += MessageList::insert(
+            *mCallMessages += MessageList::insert(
                 mItemId, MessageType::UnformNotSet, kv.first);
         kv.second = false;
     }
     for (auto &kv : mUniformBlocksSet) {
         if (!kv.second)
-            mUniformsMessages += MessageList::insert(
+            *mCallMessages += MessageList::insert(
                 mItemId, MessageType::UnformNotSet, kv.first);
         kv.second = false;
     }
-    mPrevUniformsMessages.clear();
+    mCallMessages = nullptr;
 }
 
 int GLProgram::getUniformLocation(const QString &name) const
@@ -214,9 +213,7 @@ bool GLProgram::apply(const GLUniformBinding &uniform, ScriptEngine &scriptEngin
     auto doubles = std::array<GLdouble, 16>();
     auto j = 0u;
     foreach (QString field, scriptEngine.evaluateValue(
-            uniform.fields,
-            uniform.bindingItemId,
-            mUniformsMessages)) {
+                uniform.fields, uniform.bindingItemId, *mCallMessages)) {
         floats.at(j) = field.toFloat();
         ints.at(j) = field.toInt();
         uints.at(j) = field.toUInt();
@@ -426,7 +423,7 @@ void GLProgram::reapplySubroutines()
                 stage, qPrintable(uniform.boundSubroutine));
             subroutineIndices.push_back(index);
             if (index == GL_INVALID_INDEX && !uniform.boundSubroutine.isEmpty())
-                mUniformsMessages +=
+                *mCallMessages +=
                     MessageList::insert(uniform.bindingItemId,
                     MessageType::InvalidSubroutine, uniform.boundSubroutine);
         }
