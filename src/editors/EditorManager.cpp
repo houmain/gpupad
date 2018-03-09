@@ -249,10 +249,9 @@ bool EditorManager::saveEditor()
 {
     if (auto editor = currentEditor()) {
         if (FileDialog::isUntitled(editor->fileName()) ||
-            !QFileInfo(editor->fileName()).isWritable())
+            !editor->save())
             return saveEditorAs();
-
-        return editor->save();
+        return true;
     }
     return false;
 }

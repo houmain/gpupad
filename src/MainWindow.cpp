@@ -495,10 +495,10 @@ bool MainWindow::openSession(const QString &fileName)
 bool MainWindow::saveSession()
 {
     if (FileDialog::isUntitled(mSessionEditor->fileName()) ||
-        !QFileInfo(mSessionEditor->fileName()).isWritable())
+        !mSessionEditor->save())
         return saveSessionAs();
 
-    return mSessionEditor->save();
+    return true;
 }
 
 bool MainWindow::saveSessionAs()
