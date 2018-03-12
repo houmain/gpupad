@@ -16,6 +16,8 @@ enum MessageType
     UploadingImageFailed,
     DownloadingImageFailed,
     UnformNotSet,
+    BlockNotSet,
+    AttributeNotSet,
     ShaderInfo,
     ShaderWarning,
     ShaderError,

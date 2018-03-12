@@ -64,7 +64,6 @@ public:
 
     bool bind(MessagePtrSet *callMessages);
     void unbind();
-    const QList<QString> &attributes() const { return mAttributes; }
     int getAttributeLocation(const QString &name) const;
     bool apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine);
     bool apply(const GLSamplerBinding &binding, int unit);
@@ -92,13 +91,13 @@ private:
     QSet<ItemId> mUsedItems;
     MessagePtrSet mLinkMessages;
     std::vector<GLShader> mShaders;
-    QList<QString> mAttributes;
     QMap<Shader::ShaderType, QList<SubroutineUniform>> mSubroutineUniforms;
     QMap<QString, GLenum> mUniformDataTypes;
     GLObject mProgramObject;
     MessagePtrSet *mCallMessages{ };
     std::map<QString, bool> mUniformsSet;
     std::map<QString, bool> mUniformBlocksSet;
+    mutable std::map<QString, bool> mAttributesSet;
 };
 
 QString getUniformName(QString base, int arrayIndex);

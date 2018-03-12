@@ -105,7 +105,7 @@ bool GLProgram::link()
         gl.glGetActiveAttrib(program, static_cast<GLuint>(i), buffer.size(),
             &nameLength, &size, &type, buffer.data());
         auto name = QString(buffer.data());
-        mAttributes.append(name);
+        mAttributesSet[name] = false;
     }
 
     if (auto gl40 = gl.v4_0) {
@@ -174,7 +174,13 @@ void GLProgram::unbind()
     for (auto &kv : mUniformBlocksSet) {
         if (!kv.second)
             *mCallMessages += MessageList::insert(
-                mItemId, MessageType::UnformNotSet, kv.first);
+                mItemId, MessageType::BlockNotSet, kv.first);
+        kv.second = false;
+    }
+    for (auto &kv : mAttributesSet) {
+        if (!kv.second)
+            *mCallMessages += MessageList::insert(
+                mItemId, MessageType::AttributeNotSet, kv.first);
         kv.second = false;
     }
     mCallMessages = nullptr;
@@ -193,6 +199,8 @@ GLenum GLProgram::getUniformDataType(const QString &name) const
 
 int GLProgram::getAttributeLocation(const QString &name) const
 {
+    if (mAttributesSet.count(name))
+        mAttributesSet[name] = true;
     auto &gl = GLContext::currentContext();
     return gl.glGetAttribLocation(mProgramObject, qPrintable(name));
 }

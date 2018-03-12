@@ -77,6 +77,8 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
 
         case ShaderWarning:
         case UnformNotSet:
+        case BlockNotSet:
+        case AttributeNotSet:
             return mWarningIcon;
 
         case ShaderInfo:
@@ -116,6 +118,10 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("downloading image failed");
         case UnformNotSet:
             return tr("uniform '%1' not set").arg(message.text);
+        case BlockNotSet:
+            return tr("block '%1' not set").arg(message.text);
+        case AttributeNotSet:
+            return tr("attribute '%1' not set").arg(message.text);
         case CallDuration:
             return tr("call took %1").arg(message.text);
         case NoActiveCalls:
