@@ -28,7 +28,8 @@ enum MessageType
     ProgramNotAssigned,
     TextureNotAssigned,
     BufferNotAssigned,
-    InvalidSubroutine
+    InvalidSubroutine,
+    FormatNotSupported,
 };
 
 struct Message

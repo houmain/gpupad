@@ -73,6 +73,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case TextureNotAssigned:
         case BufferNotAssigned:
         case InvalidSubroutine:
+        case FormatNotSupported:
             return mErrorIcon;
 
         case ShaderWarning:
@@ -134,6 +135,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("no buffer set");
         case InvalidSubroutine:
             return tr("invalid subroutine '%1'").arg(message.text);
+        case FormatNotSupported:
+            return tr("format not supported");
     }
     return message.text;
 }

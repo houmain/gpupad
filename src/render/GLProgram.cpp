@@ -105,7 +105,8 @@ bool GLProgram::link()
         gl.glGetActiveAttrib(program, static_cast<GLuint>(i), buffer.size(),
             &nameLength, &size, &type, buffer.data());
         auto name = QString(buffer.data());
-        mAttributesSet[name] = false;
+        if (!name.startsWith("gl_"))
+            mAttributesSet[name] = false;
     }
 
     if (auto gl40 = gl.v4_0) {
@@ -357,13 +358,23 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
     auto &texture = *binding.texture;
     const auto target = texture.target();
     const auto textureId = texture.getReadWriteTextureId();
-    gl.v4_2->glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
-    gl.v4_2->glBindTexture(target, textureId);
-    gl.v4_2->glUniform1i(location, unit);
-    gl.v4_2->glBindImageTexture(static_cast<GLuint>(unit),
-        textureId, binding.level, binding.layered,
-        binding.layer, binding.access, texture.format());
-    gl.glActiveTexture(GL_TEXTURE0);
+
+    auto formatSupported = GLint();
+    gl.v4_2->glGetInternalformativ(target, texture.format(),
+        GL_SHADER_IMAGE_LOAD, 1, &formatSupported);
+    if (formatSupported == GL_NONE) {
+        *mCallMessages += MessageList::insert(
+            binding.bindingItemId, MessageType::FormatNotSupported);
+    }
+    else {
+        gl.v4_2->glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
+        gl.v4_2->glBindTexture(target, textureId);
+        gl.v4_2->glUniform1i(location, unit);
+        gl.v4_2->glBindImageTexture(static_cast<GLuint>(unit),
+            textureId, binding.level, binding.layered,
+            binding.layer, binding.access, texture.format());
+        gl.glActiveTexture(GL_TEXTURE0);
+    }
     return true;
 }
 
