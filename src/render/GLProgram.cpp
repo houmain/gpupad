@@ -40,6 +40,8 @@ bool GLProgram::link()
 {
     if (mProgramObject)
         return true;
+    if (mFailed)
+        return false;
 
     auto freeProgram = [](GLuint program) {
         auto &gl = GLContext::currentContext();
@@ -49,14 +51,13 @@ bool GLProgram::link()
     auto &gl = GLContext::currentContext();
     auto program = GLObject(gl.glCreateProgram(), freeProgram);
 
-    auto compilingShadersFailed = false;
     for (auto &shader : mShaders) {
         if (shader.compile())
             gl.glAttachShader(program, shader.shaderObject());
         else
-            compilingShadersFailed = true;
+            mFailed = true;
     }
-    if (compilingShadersFailed)
+    if (mFailed)
         return false;
 
     auto status = GLint{ };
@@ -69,14 +70,15 @@ bool GLProgram::link()
     gl.glGetProgramInfoLog(program, length, nullptr, log.data());
     GLShader::parseLog(log.data(), mLinkMessages, mItemId, { });
 
-    if (status != GL_TRUE)
+    if (status != GL_TRUE) {
+        mFailed = true;
         return false;
+    }
 
     auto buffer = std::array<char, 256>();
     auto size = GLint{ };
     auto type = GLenum{ };
     auto nameLength = GLint{ };
-
     auto uniforms = GLint{ };
     gl.glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniforms);
     for (auto i = 0; i < uniforms; ++i) {

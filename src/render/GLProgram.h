@@ -94,6 +94,7 @@ private:
     QMap<Shader::ShaderType, QList<SubroutineUniform>> mSubroutineUniforms;
     QMap<QString, GLenum> mUniformDataTypes;
     GLObject mProgramObject;
+    bool mFailed{ };
     MessagePtrSet *mCallMessages{ };
     std::map<QString, bool> mUniformsSet;
     std::map<QString, bool> mUniformBlocksSet;
