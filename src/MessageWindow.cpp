@@ -67,19 +67,20 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case CreatingFramebufferFailed:
         case UploadingImageFailed:
         case DownloadingImageFailed:
+        case UnformNotSet:
+        case BlockNotSet:
+        case AttributeNotSet:
         case ShaderError:
         case ScriptError:
         case ProgramNotAssigned:
         case TextureNotAssigned:
         case BufferNotAssigned:
         case InvalidSubroutine:
-        case FormatNotSupported:
+        case ImageFormatNotBindable:
+        case InvalidUniformValueCount:
             return mErrorIcon;
 
         case ShaderWarning:
-        case UnformNotSet:
-        case BlockNotSet:
-        case AttributeNotSet:
             return mWarningIcon;
 
         case ShaderInfo:
@@ -135,8 +136,10 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("no buffer set");
         case InvalidSubroutine:
             return tr("invalid subroutine '%1'").arg(message.text);
-        case FormatNotSupported:
-            return tr("format not supported");
+        case ImageFormatNotBindable:
+            return tr("image format not bindable");
+        case InvalidUniformValueCount:
+            return tr("invalid uniform value count %1").arg(message.text);
     }
     return message.text;
 }

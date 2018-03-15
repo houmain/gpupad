@@ -208,79 +208,89 @@ int GLProgram::getAttributeLocation(const QString &name) const
     return gl.glGetAttribLocation(mProgramObject, qPrintable(name));
 }
 
+template<typename T> T toField(const QString &);
+template<> GLfloat toField(const QString &string) { return string.toFloat(); }
+template<> GLdouble toField(const QString &string) { return string.toDouble(); }
+template<> GLint toField(const QString &string) { return string.toInt(); }
+template<> GLuint toField(const QString &string) { return string.toUInt(); }
+
 bool GLProgram::apply(const GLUniformBinding &uniform, ScriptEngine &scriptEngine)
 {
     auto &gl = GLContext::currentContext();
     const auto transpose = false;
     const auto dataType = getUniformDataType(uniform.name);
     const auto location = getUniformLocation(uniform.name);
-    if (location < 0)
+    const auto fields = scriptEngine.evaluateValue(
+        uniform.fields, uniform.bindingItemId, *mCallMessages);
+    if (location < 0 || fields.empty())
         return false;
     mUniformsSet[uniform.name] = true;
 
-    auto floats = std::array<GLfloat, 16>();
-    auto ints = std::array<GLint, 16>();
-    auto uints = std::array<GLuint, 16>();
-    auto doubles = std::array<GLdouble, 16>();
-    auto j = 0u;
-    foreach (QString field, scriptEngine.evaluateValue(
-                uniform.fields, uniform.bindingItemId, *mCallMessages)) {
-        floats.at(j) = field.toFloat();
-        ints.at(j) = field.toInt();
-        uints.at(j) = field.toUInt();
-        doubles.at(j) = field.toDouble();
-        ++j;
-    }
+    auto getValue = [&](auto t, auto count) {
+        using T = decltype(t);
+        auto array = std::array<T, 16>{ };
+        if (fields.count() == count) {
+            auto i = 0u;
+            foreach (const QString &field, fields)
+                 array[i++] = toField<T>(field);
+        }
+        else {
+            *mCallMessages += MessageList::insert(uniform.bindingItemId,
+                MessageType::InvalidUniformValueCount,
+                QString("(%1/%2)").arg(fields.count()).arg(count));
+        }
+        return array;
+    };
 
-#define ADD(TYPE, VALUES, FUNCTION) \
+#define ADD(TYPE, DATATYPE, COUNT, FUNCTION) \
         case TYPE: \
-            FUNCTION(location, 1, VALUES.data()); \
+            FUNCTION(location, 1, getValue(DATATYPE(), COUNT).data()); \
             break;
 
-#define ADD_MATRIX(TYPE, VALUES, FUNCTION) \
+#define ADD_MATRIX(TYPE, DATATYPE, COUNT, FUNCTION) \
         case TYPE: \
-            FUNCTION(location, 1, transpose, VALUES.data()); \
+            FUNCTION(location, 1, transpose, getValue(DATATYPE(), COUNT).data()); \
             break;
 
     switch (dataType) {
-        ADD(GL_FLOAT, floats, gl.glUniform1fv);
-        ADD(GL_FLOAT_VEC2, floats, gl.glUniform2fv);
-        ADD(GL_FLOAT_VEC3, floats, gl.glUniform3fv);
-        ADD(GL_FLOAT_VEC4, floats, gl.glUniform4fv);
-        ADD(GL_DOUBLE, doubles, gl.v4_0->glUniform1dv);
-        ADD(GL_DOUBLE_VEC2, doubles, gl.v4_0->glUniform2dv);
-        ADD(GL_DOUBLE_VEC3, doubles, gl.v4_0->glUniform3dv);
-        ADD(GL_DOUBLE_VEC4, doubles, gl.v4_0->glUniform4dv);
-        ADD(GL_INT, ints, gl.glUniform1iv);
-        ADD(GL_INT_VEC2, ints, gl.glUniform2iv);
-        ADD(GL_INT_VEC3, ints, gl.glUniform3iv);
-        ADD(GL_INT_VEC4, ints, gl.glUniform4iv);
-        ADD(GL_UNSIGNED_INT, uints, gl.glUniform1uiv);
-        ADD(GL_UNSIGNED_INT_VEC2, uints, gl.glUniform2uiv);
-        ADD(GL_UNSIGNED_INT_VEC3, uints, gl.glUniform3uiv);
-        ADD(GL_UNSIGNED_INT_VEC4, uints, gl.glUniform4uiv);
-        ADD(GL_BOOL, ints, gl.glUniform1iv);
-        ADD(GL_BOOL_VEC2, ints, gl.glUniform2iv);
-        ADD(GL_BOOL_VEC3, ints, gl.glUniform3iv);
-        ADD(GL_BOOL_VEC4, ints, gl.glUniform4iv);
-        ADD_MATRIX(GL_FLOAT_MAT2, floats, gl.glUniformMatrix2fv);
-        ADD_MATRIX(GL_FLOAT_MAT3, floats, gl.glUniformMatrix3fv);
-        ADD_MATRIX(GL_FLOAT_MAT4, floats, gl.glUniformMatrix4fv);
-        ADD_MATRIX(GL_FLOAT_MAT2x3, floats, gl.glUniformMatrix2x3fv);
-        ADD_MATRIX(GL_FLOAT_MAT2x4, floats, gl.glUniformMatrix2x4fv);
-        ADD_MATRIX(GL_FLOAT_MAT3x2, floats, gl.glUniformMatrix3x2fv);
-        ADD_MATRIX(GL_FLOAT_MAT3x4, floats, gl.glUniformMatrix3x4fv);
-        ADD_MATRIX(GL_FLOAT_MAT4x2, floats, gl.glUniformMatrix4x2fv);
-        ADD_MATRIX(GL_FLOAT_MAT4x3, floats, gl.glUniformMatrix4x3fv);
-        ADD_MATRIX(GL_DOUBLE_MAT2, doubles, gl.v4_0->glUniformMatrix2dv);
-        ADD_MATRIX(GL_DOUBLE_MAT3, doubles, gl.v4_0->glUniformMatrix3dv);
-        ADD_MATRIX(GL_DOUBLE_MAT4, doubles, gl.v4_0->glUniformMatrix4dv);
-        ADD_MATRIX(GL_DOUBLE_MAT2x3, doubles, gl.v4_0->glUniformMatrix2x3dv);
-        ADD_MATRIX(GL_DOUBLE_MAT2x4, doubles, gl.v4_0->glUniformMatrix2x4dv);
-        ADD_MATRIX(GL_DOUBLE_MAT3x2, doubles, gl.v4_0->glUniformMatrix3x2dv);
-        ADD_MATRIX(GL_DOUBLE_MAT3x4, doubles, gl.v4_0->glUniformMatrix3x4dv);
-        ADD_MATRIX(GL_DOUBLE_MAT4x2, doubles, gl.v4_0->glUniformMatrix4x2dv);
-        ADD_MATRIX(GL_DOUBLE_MAT4x3, doubles, gl.v4_0->glUniformMatrix4x3dv);
+        ADD(GL_FLOAT, GLfloat, 1, gl.glUniform1fv);
+        ADD(GL_FLOAT_VEC2, GLfloat, 2, gl.glUniform2fv);
+        ADD(GL_FLOAT_VEC3, GLfloat, 3, gl.glUniform3fv);
+        ADD(GL_FLOAT_VEC4, GLfloat, 4, gl.glUniform4fv);
+        ADD(GL_DOUBLE, GLdouble, 1, gl.v4_0->glUniform1dv);
+        ADD(GL_DOUBLE_VEC2, GLdouble, 2, gl.v4_0->glUniform2dv);
+        ADD(GL_DOUBLE_VEC3, GLdouble, 3, gl.v4_0->glUniform3dv);
+        ADD(GL_DOUBLE_VEC4, GLdouble, 4, gl.v4_0->glUniform4dv);
+        ADD(GL_INT, GLint, 1, gl.glUniform1iv);
+        ADD(GL_INT_VEC2, GLint, 2, gl.glUniform2iv);
+        ADD(GL_INT_VEC3, GLint, 3, gl.glUniform3iv);
+        ADD(GL_INT_VEC4, GLint, 4, gl.glUniform4iv);
+        ADD(GL_UNSIGNED_INT, GLuint, 1, gl.glUniform1uiv);
+        ADD(GL_UNSIGNED_INT_VEC2, GLuint, 2, gl.glUniform2uiv);
+        ADD(GL_UNSIGNED_INT_VEC3, GLuint, 3, gl.glUniform3uiv);
+        ADD(GL_UNSIGNED_INT_VEC4, GLuint, 4, gl.glUniform4uiv);
+        ADD(GL_BOOL, GLint, 1, gl.glUniform1iv);
+        ADD(GL_BOOL_VEC2, GLint, 2, gl.glUniform2iv);
+        ADD(GL_BOOL_VEC3, GLint, 3, gl.glUniform3iv);
+        ADD(GL_BOOL_VEC4, GLint, 4, gl.glUniform4iv);
+        ADD_MATRIX(GL_FLOAT_MAT2, GLfloat, 4, gl.glUniformMatrix2fv);
+        ADD_MATRIX(GL_FLOAT_MAT3, GLfloat, 9, gl.glUniformMatrix3fv);
+        ADD_MATRIX(GL_FLOAT_MAT4, GLfloat, 16, gl.glUniformMatrix4fv);
+        ADD_MATRIX(GL_FLOAT_MAT2x3, GLfloat, 6, gl.glUniformMatrix2x3fv);
+        ADD_MATRIX(GL_FLOAT_MAT3x2, GLfloat, 6, gl.glUniformMatrix3x2fv);
+        ADD_MATRIX(GL_FLOAT_MAT2x4, GLfloat, 8, gl.glUniformMatrix2x4fv);
+        ADD_MATRIX(GL_FLOAT_MAT4x2, GLfloat, 8, gl.glUniformMatrix4x2fv);
+        ADD_MATRIX(GL_FLOAT_MAT3x4, GLfloat, 12, gl.glUniformMatrix3x4fv);
+        ADD_MATRIX(GL_FLOAT_MAT4x3, GLfloat, 12, gl.glUniformMatrix4x3fv);
+        ADD_MATRIX(GL_DOUBLE_MAT2, GLdouble, 4, gl.v4_0->glUniformMatrix2dv);
+        ADD_MATRIX(GL_DOUBLE_MAT3, GLdouble, 9, gl.v4_0->glUniformMatrix3dv);
+        ADD_MATRIX(GL_DOUBLE_MAT4, GLdouble, 16, gl.v4_0->glUniformMatrix4dv);
+        ADD_MATRIX(GL_DOUBLE_MAT2x3, GLdouble, 6, gl.v4_0->glUniformMatrix2x3dv);
+        ADD_MATRIX(GL_DOUBLE_MAT3x2, GLdouble, 6, gl.v4_0->glUniformMatrix3x2dv);
+        ADD_MATRIX(GL_DOUBLE_MAT2x4, GLdouble, 8, gl.v4_0->glUniformMatrix2x4dv);
+        ADD_MATRIX(GL_DOUBLE_MAT4x2, GLdouble, 8, gl.v4_0->glUniformMatrix4x2dv);
+        ADD_MATRIX(GL_DOUBLE_MAT3x4, GLdouble, 12, gl.v4_0->glUniformMatrix3x4dv);
+        ADD_MATRIX(GL_DOUBLE_MAT4x3, GLdouble, 12, gl.v4_0->glUniformMatrix4x3dv);
     }
 #undef ADD
 #undef ADD_MATRIX
@@ -366,7 +376,7 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
         GL_SHADER_IMAGE_LOAD, 1, &formatSupported);
     if (formatSupported == GL_NONE) {
         *mCallMessages += MessageList::insert(
-            binding.bindingItemId, MessageType::FormatNotSupported);
+            binding.bindingItemId, MessageType::ImageFormatNotBindable);
     }
     else {
         gl.v4_2->glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
