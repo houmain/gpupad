@@ -146,6 +146,7 @@ void GLTarget::applyStates()
         static_cast<float>(mBlendConstant.blueF()),
         static_cast<float>(mBlendConstant.alphaF()));
 
+    gl.glEnable(GL_FRAMEBUFFER_SRGB);
     gl.glEnable(GL_PROGRAM_POINT_SIZE);
     gl.glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
 
