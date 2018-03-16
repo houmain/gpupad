@@ -11,8 +11,8 @@ public:
 
     void setRowCount(int rows);
     void setColumnCount(int columns);
-    void setFields(QStringList fields);
-    QStringList fields() const;
+    void setValues(QStringList values);
+    QStringList values() const;
 
 protected:
     void resizeEvent(QResizeEvent *event) override;

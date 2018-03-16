@@ -27,6 +27,20 @@
     ADD(ShaderType, Shader, shaderType) \
     ADD(BindingType, Binding, bindingType) \
     ADD(BindingEditor, Binding, editor) \
+    ADD(BindingValues, Binding, values) \
+    ADD(BindingTextureId, Binding, textureId) \
+    ADD(BindingBufferId, Binding, bufferId) \
+    ADD(BindingLevel, Binding, level) \
+    ADD(BindingLayered, Binding, layered) \
+    ADD(BindingLayer, Binding, layer) \
+    ADD(BindingMinFilter, Binding, minFilter) \
+    ADD(BindingMagFilter, Binding, magFilter) \
+    ADD(BindingWrapModeX, Binding, wrapModeX) \
+    ADD(BindingWrapModeY, Binding, wrapModeY) \
+    ADD(BindingWrapModeZ, Binding, wrapModeZ) \
+    ADD(BindingBorderColor, Binding, borderColor) \
+    ADD(BindingComparisonFunc, Binding, comparisonFunc) \
+    ADD(BindingSubroutine, Binding, subroutine) \
     ADD(AttributeBufferId, Attribute, bufferId) \
     ADD(AttributeColumnId, Attribute, columnId) \
     ADD(AttributeNormalize, Attribute, normalize) \
@@ -88,22 +102,6 @@
     ADD(CallClearColor, Call, clearColor) \
     ADD(CallClearDepth, Call, clearDepth) \
     ADD(CallClearStencil, Call, clearStencil) \
-
-#define ADD_EACH_BINDING_VALUE_COLUMN_TYPE() \
-    ADD(BindingValueFields, fields) \
-    ADD(BindingValueTextureId, textureId) \
-    ADD(BindingValueBufferId, bufferId) \
-    ADD(BindingValueLevel, level) \
-    ADD(BindingValueLayered, layered) \
-    ADD(BindingValueLayer, layer) \
-    ADD(BindingValueMinFilter, minFilter) \
-    ADD(BindingValueMagFilter, magFilter) \
-    ADD(BindingValueWrapModeX, wrapModeX) \
-    ADD(BindingValueWrapModeY, wrapModeY) \
-    ADD(BindingValueWrapModeZ, wrapModeZ) \
-    ADD(BindingValueBorderColor, borderColor) \
-    ADD(BindingValueComparisonFunc, comparisonFunc) \
-    ADD(BindingValueSubroutine, subroutine) \
 
 template<typename T>
 auto fromVariant(const QVariant &v)
@@ -193,8 +191,8 @@ template<>
 inline QJsonValue toJsonValue(const QStringList &v)
 {
     auto array = QJsonArray();
-    for (const auto &field : v)
-        array.append(field);
+    for (const auto &value : v)
+        array.append(value);
     return array;
 }
 

@@ -91,28 +91,22 @@ struct Binding : Item
     using ComparisonFunc = ItemEnums::ComparisonFunc;
     using Editor = ItemEnums::BindingEditor;
 
-    struct Value {
-        QStringList fields;
-        ItemId textureId{ };
-        ItemId bufferId{ };
-        int level{ };
-        bool layered{ };
-        int layer{ };
-        Filter minFilter{ QOpenGLTexture::Nearest };
-        Filter magFilter{ QOpenGLTexture::Nearest };
-        WrapMode wrapModeX{ QOpenGLTexture::Repeat };
-        WrapMode wrapModeY{ QOpenGLTexture::Repeat };
-        WrapMode wrapModeZ{ QOpenGLTexture::Repeat };
-        QColor borderColor{ Qt::black };
-        ComparisonFunc comparisonFunc{ };
-        QString subroutine;
-    };
-
     BindingType bindingType{ };
     Editor editor{ };
-    int currentValue{ };
-    int valueCount{ 1 };
-    std::array<Value, 8> values{ };
+    QStringList values;
+    ItemId textureId{ };
+    ItemId bufferId{ };
+    int level{ };
+    bool layered{ };
+    int layer{ };
+    Filter minFilter{ QOpenGLTexture::Nearest };
+    Filter magFilter{ QOpenGLTexture::Nearest };
+    WrapMode wrapModeX{ QOpenGLTexture::Repeat };
+    WrapMode wrapModeY{ QOpenGLTexture::Repeat };
+    WrapMode wrapModeZ{ QOpenGLTexture::Repeat };
+    QColor borderColor{ Qt::black };
+    ComparisonFunc comparisonFunc{ };
+    QString subroutine;
 };
 
 struct Stream : Item

@@ -15,8 +15,8 @@ class QDataWidgetMapper;
 class BindingProperties : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(QStringList fields READ fields WRITE setFields
-        NOTIFY fieldsChanged USER true)
+    Q_PROPERTY(QStringList values READ values WRITE setValues
+        NOTIFY valuesChanged USER true)
 public:
     explicit BindingProperties(SessionProperties *sessionProperties);
     ~BindingProperties();
@@ -25,19 +25,19 @@ public:
     Binding::BindingType currentType() const;
     Binding::Editor currentEditor() const;
     TextureKind currentTextureKind() const;
-    void setFields(const QStringList &fields);
-    const QStringList &fields() const { return mFields; }
+    void setValues(const QStringList &values);
+    const QStringList &values() const { return mValues; }
 
 signals:
-    void fieldsChanged();
+    void valuesChanged();
 
 private:
     void updateWidgets();
 
     SessionProperties &mSessionProperties;
     Ui::BindingProperties *mUi;
-    QStringList mFields;
-    bool mSuspendSetFields{ };
+    QStringList mValues;
+    bool mSuspendSetValues{ };
 };
 
 #endif // BINDINGPROPERTIES_H

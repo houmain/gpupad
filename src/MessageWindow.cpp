@@ -77,7 +77,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case BufferNotAssigned:
         case InvalidSubroutine:
         case ImageFormatNotBindable:
-        case InvalidUniformValueCount:
+        case UniformComponentMismatch:
             return mErrorIcon;
 
         case ShaderWarning:
@@ -138,8 +138,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("invalid subroutine '%1'").arg(message.text);
         case ImageFormatNotBindable:
             return tr("image format not bindable");
-        case InvalidUniformValueCount:
-            return tr("invalid uniform value count %1").arg(message.text);
+        case UniformComponentMismatch:
+            return tr("uniform component mismatch %1").arg(message.text);
     }
     return message.text;
 }

@@ -40,21 +40,21 @@ namespace {
         }
     }
 
-    QColor fieldsToColor(const QStringList &fields)
+    QColor valuesToColor(const QStringList &values)
     {
         auto clamp = [](const auto &value) {
             return std::min(std::max(0.0, value.toDouble()), 1.0);
         };
 
         auto rgba = QColor::fromRgbF(0, 0, 0, 1);
-        if (fields.size() > 0) rgba.setRedF(clamp(fields[0]));
-        if (fields.size() > 1) rgba.setGreenF(clamp(fields[1]));
-        if (fields.size() > 2) rgba.setBlueF(clamp(fields[2]));
-        if (fields.size() > 3) rgba.setAlphaF(clamp(fields[3]));
+        if (values.size() > 0) rgba.setRedF(clamp(values[0]));
+        if (values.size() > 1) rgba.setGreenF(clamp(values[1]));
+        if (values.size() > 2) rgba.setBlueF(clamp(values[2]));
+        if (values.size() > 3) rgba.setAlphaF(clamp(values[3]));
         return rgba;
     }
 
-    QStringList colorToFields(QColor color)
+    QStringList colorToValues(QColor color)
     {
         return {
             QString::number(color.redF()),
@@ -115,15 +115,10 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
         this, &BindingProperties::updateWidgets);
     connect(mUi->editor, &DataComboBox::currentDataChanged,
         this, &BindingProperties::updateWidgets);
-    using Overload = void(QSpinBox::*)(int);
-    connect(mUi->count, static_cast<Overload>(&QSpinBox::valueChanged),
-        this, &BindingProperties::updateWidgets);
-    connect(mUi->index, &QTabWidget::currentChanged,
-        this, &BindingProperties::updateWidgets);
     connect(mUi->expressions, &ExpressionMatrix::itemChanged,
-        [this]() { setFields(mUi->expressions->fields()); });
+        [this]() { setValues(mUi->expressions->values()); });
     connect(mUi->color, &ColorPicker::colorChanged,
-        [this](QColor color) { setFields(colorToFields(color)); });
+        [this](QColor color) { setValues(colorToValues(color)); });
 
     connect(mUi->texture, &ReferenceComboBox::currentDataChanged,
         this, &BindingProperties::updateWidgets);
@@ -153,22 +148,20 @@ void BindingProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->type, SessionModel::BindingType);
     mapper.addMapping(mUi->editor, SessionModel::BindingEditor);
-    mapper.addMapping(mUi->count, SessionModel::BindingValueCount);
-    mapper.addMapping(mUi->index, SessionModel::BindingCurrentValue, "currentIndex");
-    mapper.addMapping(mUi->texture, SessionModel::BindingValueTextureId);
-    mapper.addMapping(mUi->buffer, SessionModel::BindingValueBufferId);
-    mapper.addMapping(mUi->level, SessionModel::BindingValueLevel);
-    mapper.addMapping(mUi->layered, SessionModel::BindingValueLayered);
-    mapper.addMapping(mUi->layer, SessionModel::BindingValueLayer);    
-    mapper.addMapping(mUi->minFilter, SessionModel::BindingValueMinFilter);
-    mapper.addMapping(mUi->magFilter, SessionModel::BindingValueMagFilter);
-    mapper.addMapping(mUi->wrapModeX, SessionModel::BindingValueWrapModeX);
-    mapper.addMapping(mUi->wrapModeY, SessionModel::BindingValueWrapModeY);
-    mapper.addMapping(mUi->wrapModeZ, SessionModel::BindingValueWrapModeZ);
-    mapper.addMapping(mUi->borderColor, SessionModel::BindingValueBorderColor);
-    mapper.addMapping(mUi->comparisonFunc, SessionModel::BindingValueComparisonFunc);
-    mapper.addMapping(mUi->subroutine, SessionModel::BindingValueSubroutine);
-    mapper.addMapping(this, SessionModel::BindingValueFields);
+    mapper.addMapping(mUi->texture, SessionModel::BindingTextureId);
+    mapper.addMapping(mUi->buffer, SessionModel::BindingBufferId);
+    mapper.addMapping(mUi->level, SessionModel::BindingLevel);
+    mapper.addMapping(mUi->layered, SessionModel::BindingLayered);
+    mapper.addMapping(mUi->layer, SessionModel::BindingLayer);
+    mapper.addMapping(mUi->minFilter, SessionModel::BindingMinFilter);
+    mapper.addMapping(mUi->magFilter, SessionModel::BindingMagFilter);
+    mapper.addMapping(mUi->wrapModeX, SessionModel::BindingWrapModeX);
+    mapper.addMapping(mUi->wrapModeY, SessionModel::BindingWrapModeY);
+    mapper.addMapping(mUi->wrapModeZ, SessionModel::BindingWrapModeZ);
+    mapper.addMapping(mUi->borderColor, SessionModel::BindingBorderColor);
+    mapper.addMapping(mUi->comparisonFunc, SessionModel::BindingComparisonFunc);
+    mapper.addMapping(mUi->subroutine, SessionModel::BindingSubroutine);
+    mapper.addMapping(this, SessionModel::BindingValues);
 }
 
 Binding::BindingType BindingProperties::currentType() const
@@ -189,14 +182,14 @@ TextureKind BindingProperties::currentTextureKind() const
     return { };
 }
 
-void BindingProperties::setFields(const QStringList &fields)
+void BindingProperties::setValues(const QStringList &values)
 {
-    if (mSuspendSetFields ||
-        mFields == fields)
+    if (mSuspendSetValues ||
+        mValues == values)
         return;
 
-    mFields = fields;
-    emit fieldsChanged();
+    mValues = values;
+    emit valuesChanged();
 
     updateWidgets();
 }
@@ -212,24 +205,16 @@ void BindingProperties::updateWidgets()
                         editor == Binding::Editor::Color);
     const auto subroutine = (type == Binding::BindingType::Subroutine);
 
-    mSuspendSetFields = true;
-
-    const auto count = mUi->count->value();
-    while (mUi->index->count() > count)
-        mUi->index->removeTab(mUi->index->count() - 1);
-    for (auto i = mUi->index->count(); i < mUi->count->value(); ++i)
-        mUi->index->addTab(new QWidget(), QString::number(i));
-    mUi->index->setVisible(count > 1);
+    mSuspendSetValues = true;
 
     setFormVisibility(mUi->formLayout, mUi->labelEditor, mUi->editor, uniform);
-    setFormVisibility(mUi->formLayout, mUi->labelCount, mUi->widgetCount, true);
     setFormVisibility(mUi->formLayout, mUi->labelExpressions, mUi->expressions,
         uniform && !color);
     setFormVisibility(mUi->formLayout, mUi->labelColor, mUi->color, color);
     mUi->expressions->setColumnCount(expressionColumns(editor));
     mUi->expressions->setRowCount(expressionRows(editor));
-    mUi->color->setColor(fieldsToColor(fields()));
-    mUi->expressions->setFields(fields());
+    mUi->color->setColor(valuesToColor(values()));
+    mUi->expressions->setValues(values());
 
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
         image || sampler);
@@ -259,5 +244,5 @@ void BindingProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelSubroutine, mUi->subroutine,
         subroutine);
 
-    mSuspendSetFields = false;
+    mSuspendSetValues = false;
 }

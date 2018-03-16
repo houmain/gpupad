@@ -28,7 +28,7 @@ public:
     QJSValue getGlobal(const QString &name);
     QJSValue call(QJSValue &callable, const QJSValueList &args,
         ItemId itemId, MessagePtrSet &messages);
-    QStringList evaluateValue(const QStringList &fieldExpressions,
+    QStringList evaluateValues(const QStringList &valueExpressions,
         ItemId itemId, MessagePtrSet &messages);
 
     template<typename T>

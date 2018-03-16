@@ -359,23 +359,6 @@ void SessionModel::deserialize(const QJsonObject &object,
 
         ADD_EACH_COLUMN_TYPE()
 #undef ADD
-        else if (property == "values") {
-            auto values = object[property].toArray();
-            for (auto i = 0; i < values.size(); i++) {
-                auto value = values[i].toObject();
-                setData(getIndex(index, BindingCurrentValue), i);
-                foreach (const QString &valueProperty, value.keys()) {
-#define ADD(COLUMN_TYPE, PROPERTY) \
-                    if (#PROPERTY == valueProperty) \
-                        dropColumn(valueProperty, getIndex(index, COLUMN_TYPE), \
-                            value[valueProperty].toVariant());
-
-                    ADD_EACH_BINDING_VALUE_COLUMN_TYPE()
-#undef ADD
-                }
-            }
-            setData(getIndex(index, BindingCurrentValue), 0);
-        }
     }
 
     auto items = object["items"].toArray();
@@ -405,22 +388,6 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
 
     ADD_EACH_COLUMN_TYPE()
 #undef ADD
-
-    if (auto binding = castItem<Binding>(item)) {
-        auto values = QJsonArray();
-        for (auto i = 0; i < binding->valueCount; ++i) {
-            auto value = QJsonObject();
-#define ADD(COLUMN_TYPE, PROPERTY) \
-            if (shouldSerializeColumn(item, COLUMN_TYPE)) \
-                value[#PROPERTY] = toJsonValue( \
-                    binding->values[static_cast<size_t>(i)].PROPERTY);
-
-            ADD_EACH_BINDING_VALUE_COLUMN_TYPE()
-#undef ADD
-            values.append(value);
-        }
-        object["values"] = values;
-    }
 
     if (!item.items.empty()) {
         auto items = QJsonArray();
@@ -455,21 +422,21 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             const auto image = (binding.bindingType == Binding::BindingType::Image);
             const auto sampler = (binding.bindingType == Binding::BindingType::Sampler);
             result &= (column != BindingEditor || uniform);
-            result &= (column != BindingValueFields || uniform);
-            result &= (column != BindingValueTextureId || image || sampler);
-            result &= (column != BindingValueLevel || image);
-            result &= (column != BindingValueLayered || image);
-            result &= (column != BindingValueLayer || image);
-            result &= (column != BindingValueMinFilter || sampler);
-            result &= (column != BindingValueMagFilter || sampler);
-            result &= (column != BindingValueWrapModeX || sampler);
-            result &= (column != BindingValueWrapModeY || sampler);
-            result &= (column != BindingValueWrapModeZ || sampler);
-            result &= (column != BindingValueBorderColor || sampler);
-            result &= (column != BindingValueComparisonFunc || sampler);
-            result &= (column != BindingValueBufferId ||
+            result &= (column != BindingValues || uniform);
+            result &= (column != BindingTextureId || image || sampler);
+            result &= (column != BindingLevel || image);
+            result &= (column != BindingLayered || image);
+            result &= (column != BindingLayer || image);
+            result &= (column != BindingMinFilter || sampler);
+            result &= (column != BindingMagFilter || sampler);
+            result &= (column != BindingWrapModeX || sampler);
+            result &= (column != BindingWrapModeY || sampler);
+            result &= (column != BindingWrapModeZ || sampler);
+            result &= (column != BindingBorderColor || sampler);
+            result &= (column != BindingComparisonFunc || sampler);
+            result &= (column != BindingBufferId ||
                 (binding.bindingType == Binding::BindingType::Buffer));
-            result &= (column != BindingValueSubroutine ||
+            result &= (column != BindingSubroutine ||
                 (binding.bindingType == Binding::BindingType::Subroutine));
             break;
         }

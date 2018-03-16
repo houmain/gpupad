@@ -134,8 +134,8 @@ void GLTarget::applyStates()
     }
 
     if (mLogicOperation != Target::LogicOperation::NoLogicOperation) {
-      gl.glEnable(GL_COLOR_LOGIC_OP);
-      gl.glLogicOp(mLogicOperation);
+        gl.glEnable(GL_COLOR_LOGIC_OP);
+        gl.glLogicOp(mLogicOperation);
     }
     else {
         gl.glDisable(GL_COLOR_LOGIC_OP);

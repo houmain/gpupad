@@ -38,28 +38,20 @@
         "id": 70,
         "name": "uImageR",
         "type": "Binding",
-        "values": [
-            {
-                "layer": 0,
-                "layered": false,
-                "level": 0,
-                "textureId": 79
-            }
-        ]
+        "layer": 0,
+        "layered": false,
+        "level": 0,
+        "textureId": 79
     },
     {
         "bindingType": "Image",
         "id": 86,
         "name": "uImageW",
         "type": "Binding",
-        "values": [
-            {
-                "layer": 0,
-                "layered": false,
-                "level": 0,
-                "textureId": 92
-            }
-        ]
+        "layer": 0,
+        "layered": false,
+        "level": 0,
+        "textureId": 92
     },
     {
         "callType": "Compute",
@@ -77,28 +69,20 @@
         "id": 88,
         "name": "uImageR",
         "type": "Binding",
-        "values": [
-            {
-                "layer": 0,
-                "layered": false,
-                "level": 0,
-                "textureId": 92
-            }
-        ]
+        "layer": 0,
+        "layered": false,
+        "level": 0,
+        "textureId": 92
     },
     {
         "bindingType": "Image",
         "id": 89,
         "name": "uImageW",
         "type": "Binding",
-        "values": [
-            {
-                "layer": 0,
-                "layered": false,
-                "level": 0,
-                "textureId": 79
-            }
-        ]
+        "layer": 0,
+        "layered": false,
+        "level": 0,
+        "textureId": 79
     },
     {
         "callType": "Compute",

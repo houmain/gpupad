@@ -41,11 +41,7 @@
         "name": "iGlobalTime",
         "type": "Binding",
         "values": [
-            {
-                "fields": [
-                    "Date.now()%10000/1000.0"
-                ]
-            }
+            "Date.now()%10000/1000.0"
         ]
     },
     {
@@ -53,18 +49,14 @@
         "id": 75,
         "name": "target",
         "type": "Binding",
-        "values": [
-            {
-                "borderColor": "#ff000000",
-                "comparisonFunc": "NoComparisonFunc",
-                "magFilter": "Nearest",
-                "minFilter": "Nearest",
-                "textureId": 70,
-                "wrapModeX": "Repeat",
-                "wrapModeY": "Repeat",
-                "wrapModeZ": "Repeat"
-            }
-        ]
+        "borderColor": "#ff000000",
+        "comparisonFunc": "NoComparisonFunc",
+        "magFilter": "Nearest",
+        "minFilter": "Nearest",
+        "textureId": 70,
+        "wrapModeX": "Repeat",
+        "wrapModeY": "Repeat",
+        "wrapModeZ": "Repeat"
     },
     {
         "id": 76,

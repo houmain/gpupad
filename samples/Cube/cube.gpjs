@@ -69,11 +69,7 @@
         "name": "uModel",
         "type": "Binding",
         "values": [
-            {
-                "fields": [
-                    "rotateY(Date.now() / 1000.0)"
-                ]
-            }
+            "rotateY(Date.now() / 1000.0)"
         ]
     },
     {
@@ -83,26 +79,22 @@
         "name": "uView",
         "type": "Binding",
         "values": [
-            {
-                "fields": [
-                    "1",
-                    "0",
-                    "0",
-                    "0",
-                    "0",
-                    "1",
-                    "0",
-                    "0",
-                    "0",
-                    "0",
-                    "1",
-                    "0",
-                    "0.40",
-                    "0.75",
-                    "-3",
-                    "1"
-                ]
-            }
+            "1",
+            "0",
+            "0",
+            "0",
+            "0",
+            "1",
+            "0",
+            "0",
+            "0",
+            "0",
+            "1",
+            "0",
+            "0.40",
+            "0.75",
+            "-3",
+            "1"
         ]
     },
     {
@@ -112,11 +104,7 @@
         "name": "uProjection",
         "type": "Binding",
         "values": [
-            {
-                "fields": [
-                    "perspective(45, 1.0, 1, 100)"
-                ]
-            }
+            "perspective(45, 1.0, 1, 100)"
         ]
     },
     {
@@ -135,18 +123,14 @@
         "id": 99,
         "name": "uTexture",
         "type": "Binding",
-        "values": [
-            {
-                "borderColor": "#ff000000",
-                "comparisonFunc": "NoComparisonFunc",
-                "magFilter": "Nearest",
-                "minFilter": "LinearMipMapLinear",
-                "textureId": 104,
-                "wrapModeX": "Repeat",
-                "wrapModeY": "Repeat",
-                "wrapModeZ": "Repeat"
-            }
-        ]
+        "borderColor": "#ff000000",
+        "comparisonFunc": "NoComparisonFunc",
+        "magFilter": "Nearest",
+        "minFilter": "LinearMipMapLinear",
+        "textureId": 104,
+        "wrapModeX": "Repeat",
+        "wrapModeY": "Repeat",
+        "wrapModeZ": "Repeat"
     },
     {
         "fileName": "cube_position_normal_texcoords.bin",

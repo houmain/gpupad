@@ -180,25 +180,7 @@ QVariant SessionModelCore::data(const QModelIndex &index, int role) const
             break;
 
         ADD_EACH_COLUMN_TYPE()
-        ADD(BindingValueCount, Binding, valueCount)
-        ADD(BindingCurrentValue, Binding, currentValue)
 #undef ADD
-
-#define ADD(COLUMN_TYPE, PROPERTY) \
-        case ColumnType::COLUMN_TYPE: \
-            if (item.type == Item::Type::Binding) { \
-                const auto &binding = static_cast<const Binding&>(item); \
-                const auto current = static_cast<size_t>(binding.currentValue); \
-                return binding.values[current].PROPERTY; \
-            } \
-            break;
-
-        ADD_EACH_BINDING_VALUE_COLUMN_TYPE()
-#undef ADD
-
-        case FirstBindingValue:
-        case LastBindingValue:
-            break;
     }
     return { };
 }
@@ -239,21 +221,6 @@ bool SessionModelCore::setData(const QModelIndex &index,
             }
             break;
 
-        case ColumnType::BindingCurrentValue:
-            if (item.type == Item::Type::Binding) {
-                auto &binding = static_cast<Binding&>(item);
-                auto newValue = qBound(0, value.toInt(),
-                    static_cast<int>(binding.values.size() - 1));
-                if (binding.currentValue != newValue) {
-                    binding.currentValue = newValue;
-                    emit dataChanged(
-                        getIndex(&item, ColumnType::FirstBindingValue),
-                        getIndex(&item, ColumnType::LastBindingValue));
-                }
-                return true;
-            }
-            break;
-
 #define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
         case ColumnType::COLUMN_TYPE: \
             if (item.type == Item::Type::ITEM_TYPE) { \
@@ -265,27 +232,7 @@ bool SessionModelCore::setData(const QModelIndex &index,
             break;
 
         ADD_EACH_COLUMN_TYPE()
-        ADD(BindingValueCount, Binding, valueCount)
 #undef ADD
-
-#define ADD(COLUMN_TYPE, PROPERTY) \
-        case ColumnType::COLUMN_TYPE: \
-            if (item.type == Item::Type::Binding) { \
-                auto &binding = static_cast<Binding&>(item); \
-                const auto current = static_cast<size_t>(binding.currentValue); \
-                auto &property = binding.values[current].PROPERTY; \
-                undoableAssignment(index, &property, \
-                    fromVariant<std::decay_t<decltype(property)>>(value)); \
-                return true; \
-            } \
-            break;
-
-        ADD_EACH_BINDING_VALUE_COLUMN_TYPE()
-#undef ADD
-
-        case FirstBindingValue:
-        case LastBindingValue:
-            break;
     }
     return false;
 }

@@ -48,7 +48,7 @@ All kind of color, depth or stencil textures can be created. They serve as sampl
 Specifies where draws calls should render to (it corresponds to an OpenGL *FBO*). Multiple images can be attached. Depending on the attached image's type, different OpenGL states can be configured.
 
 - **Binding** -
-Allows to bind data to a program's uniforms, samplers, images, buffers and to select shader subroutines. A binding affects all subsequent calls, until it is replaced by a binding with the same name, or the scope ends (see *Groups*). The name of a binding needs to match the name of a program's binding points. The *count* is used for binding multiple values to arrays.
+Allows to bind data to a program's uniforms, samplers, images, buffers and to select shader subroutines. A binding affects all subsequent calls, until it is replaced by a binding with the same name, or the scope ends (see *Groups*). The name of a binding needs to match the name of a program's binding points. 
 
 - **Buffer** -
 Defines the structure of a region within a binary. It consists of rows with multiple columns of some data type. It can be backed by a binary file.

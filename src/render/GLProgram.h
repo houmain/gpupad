@@ -13,7 +13,8 @@ struct GLUniformBinding
     ItemId bindingItemId;
     QString name;
     Binding::BindingType type;
-    QStringList fields;
+    QStringList values;
+    bool transpose;
 };
 
 struct GLSamplerBinding
@@ -63,7 +64,7 @@ public:
     bool operator==(const GLProgram &rhs) const;
 
     bool bind(MessagePtrSet *callMessages);
-    void unbind();
+    void unbind(ItemId callItemId);
     int getAttributeLocation(const QString &name) const;
     bool apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine);
     bool apply(const GLSamplerBinding &binding, int unit);
@@ -84,8 +85,9 @@ private:
     };
 
     bool link();
-    int getUniformLocation(const QString &name) const;
-    GLenum getUniformDataType(const QString &name) const;
+    QString getUniformBaseName(const QString &name) const;
+    void uniformSet(const QString &name);
+    void uniformBlockSet(const QString &name);
 
     ItemId mItemId{ };
     QSet<ItemId> mUsedItems;
@@ -100,8 +102,5 @@ private:
     std::map<QString, bool> mUniformBlocksSet;
     mutable std::map<QString, bool> mAttributesSet;
 };
-
-QString getUniformName(QString base, int arrayIndex);
-
 
 #endif // GLPROGRAM_H

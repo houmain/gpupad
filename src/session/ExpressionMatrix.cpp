@@ -88,29 +88,29 @@ void ExpressionMatrix::setColumnCount(int columns)
     }
 }
 
-void ExpressionMatrix::setFields(QStringList fields)
+void ExpressionMatrix::setValues(QStringList values)
 {
     for (auto r = 0; r < rowCount(); ++r)
         for (auto c = 0; c < columnCount(); ++c) {
             const auto index = r * columnCount() + c;
-            const auto text = (index < fields.size() ?
-                fields.at(index) : "0");
+            const auto text = (index < values.size() ?
+                values.at(index) : "0");
             auto item = new QTableWidgetItem(text);
             item->setTextAlignment(Qt::AlignLeft | Qt::AlignTop);
             setItem(r, c, item);
         }
 }
 
-QStringList ExpressionMatrix::fields() const
+QStringList ExpressionMatrix::values() const
 {
-    auto fields = QStringList();
+    auto values = QStringList();
     for (auto r = 0; r < rowCount(); ++r)
         for (auto c = 0; c < columnCount(); ++c) {
             auto value = (item(r, c) ?
                 item(r, c)->text().trimmed() : "");
-            fields.append(!value.isEmpty() ? value : "0");
+            values.append(!value.isEmpty() ? value : "0");
         }
-    return fields;
+    return values;
 }
 
 void ExpressionMatrix::resizeEvent(QResizeEvent *event)

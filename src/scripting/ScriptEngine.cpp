@@ -91,29 +91,29 @@ QJSValue ScriptEngine::call(QJSValue &callable, const QJSValueList &args,
     return result;
 }
 
-QStringList ScriptEngine::evaluateValue(const QStringList &fieldExpressions,
+QStringList ScriptEngine::evaluateValues(const QStringList &valueExpressions,
     ItemId itemId, MessagePtrSet &messages)
 {
-    auto fields = QStringList();
+    auto values = QStringList();
     redirectConsoleMessages(messages, [&]() {
-        foreach (QString fieldExpression, fieldExpressions) {
-            auto result = evaluate(fieldExpression);
+        foreach (QString valueExpression, valueExpressions) {
+            auto result = evaluate(valueExpression);
             if (result.isError())
                 messages += MessageList::insert(
                     itemId, MessageType::ScriptError, result.toString());
 
             if (result.isObject()) {
                 for (auto i = 0u; ; ++i) {
-                    auto field = result.property(i);
-                    if (field.isUndefined())
+                    auto value = result.property(i);
+                    if (value.isUndefined())
                         break;
-                    fields.append(field.toString());
+                    values.append(value.toString());
                 }
             }
             else {
-                fields.append(result.toString());
+                values.append(result.toString());
             }
         }
     });
-    return fields;
+    return values;
 }

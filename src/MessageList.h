@@ -30,7 +30,7 @@ enum MessageType
     BufferNotAssigned,
     InvalidSubroutine,
     ImageFormatNotBindable,
-    InvalidUniformValueCount,
+    UniformComponentMismatch,
 };
 
 struct Message

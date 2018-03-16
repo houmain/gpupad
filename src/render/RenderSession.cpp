@@ -231,74 +231,57 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
             mCommandQueue->scripts += ScriptEngine::Script{ script->fileName, source };
         }
         else if (auto binding = castItem<Binding>(item)) {
-            switch (binding->bindingType) {
+            const auto &b = *binding;
+            switch (b.bindingType) {
                 case Binding::BindingType::Uniform:
-                    for (auto index = 0; index < binding->valueCount; ++index)
-                        addCommand(
-                            [binding = GLUniformBinding{
-                                binding->id, getUniformName(binding->name, index),
-                                binding->bindingType, binding->values[index].fields }
-                            ](BindingState &state) {
-                                state.top().uniforms[binding.name] = binding;
-                            });
+                    addCommand(
+                        [binding = GLUniformBinding{
+                            b.id, b.name, b.bindingType, b.values, false }
+                        ](BindingState &state) {
+                            state.top().uniforms[binding.name] = binding;
+                        });
                     break;
 
                 case Binding::BindingType::Sampler:
-                    for (auto index = 0; index < binding->valueCount; ++index) {
-                        const auto &value = binding->values[index];
-                        addCommand(
-                            [binding = GLSamplerBinding{
-                                binding->id, getUniformName(binding->name, index),
-                                addTextureOnce(value.textureId),
-                                value.minFilter, value.magFilter,
-                                value.wrapModeX, value.wrapModeY, value.wrapModeZ,
-                                value.borderColor,
-                                value.comparisonFunc }
-                            ](BindingState &state) {
-                                state.top().samplers[binding.name] = binding;
-                            });
-                    }
+                    addCommand(
+                        [binding = GLSamplerBinding{
+                            b.id, b.name, addTextureOnce(b.textureId),
+                            b.minFilter, b.magFilter,
+                            b.wrapModeX, b.wrapModeY, b.wrapModeZ,
+                            b.borderColor,
+                            b.comparisonFunc }
+                        ](BindingState &state) {
+                            state.top().samplers[binding.name] = binding;
+                        });
                     break;
 
                 case Binding::BindingType::Image:
-                    for (auto index = 0; index < binding->valueCount; ++index) {
-                        const auto &value = binding->values[index];
-                        auto access = GLenum{ GL_READ_WRITE };
-                        addCommand(
-                            [binding = GLImageBinding{
-                                binding->id, getUniformName(binding->name, index),
-                                addTextureOnce(value.textureId),
-                                value.level, value.layered, value.layer, access }
-                            ](BindingState &state) {
-                                state.top().images[binding.name] = binding;
-                            });
-                    }
+                    addCommand(
+                        [binding = GLImageBinding{
+                            b.id, b.name, addTextureOnce(b.textureId),
+                            b.level, b.layered, b.layer,
+                            GLenum{ GL_READ_WRITE } }
+                        ](BindingState &state) {
+                            state.top().images[binding.name] = binding;
+                        });
                     break;
 
                 case Binding::BindingType::Buffer:
-                    for (auto index = 0; index < binding->valueCount; ++index) {
-                        const auto &value = binding->values[index];
-                        addCommand(
-                            [binding = GLBufferBinding{
-                                binding->id, getUniformName(binding->name, index),
-                                addBufferOnce(value.bufferId) }
-                            ](BindingState &state) {
-                                state.top().buffers[binding.name] = binding;
-                            });
-                    }
+                    addCommand(
+                        [binding = GLBufferBinding{
+                            b.id, b.name, addBufferOnce(b.bufferId) }
+                        ](BindingState &state) {
+                            state.top().buffers[binding.name] = binding;
+                        });
                     break;
 
                 case Binding::BindingType::Subroutine:
-                    for (auto index = 0; index < binding->valueCount; ++index) {
-                        const auto &value = binding->values[index];
-                        addCommand(
-                            [binding = GLSubroutineBinding{
-                                binding->id, getUniformName(binding->name, index),
-                                value.subroutine, {} }
-                            ](BindingState &state) {
-                                state.top().subroutines[binding.name] = binding;
-                            });
-                    }
+                    addCommand(
+                        [binding = GLSubroutineBinding{
+                            b.id, b.name, b.subroutine, {} }
+                        ](BindingState &state) {
+                            state.top().subroutines[binding.name] = binding;
+                        });
                     break;
                 }
         }
@@ -324,22 +307,20 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                     [this,
                      call = std::move(glcall)
                     ](BindingState &state) mutable {
-                        auto program = call.program();
-                        if (program && !program->bind(&mMessages))
-                            return;
-
-                        if (program)
+                        if (auto program = call.program()) {
+                            if (!program->bind(&mMessages))
+                                return;
                             mUsedItems += applyBindings(
                                 state, *program, *mScriptEngine);
-
-                        call.execute(mMessages);
-                        mCommandQueue->timerQueryCalls += &call;
-                        mUsedItems += call.usedItems();
-
-                        if (program) {
-                            program->unbind();
+                            call.execute(mMessages);
+                            program->unbind(call.itemId());
                             mUsedItems += program->usedItems();
                         }
+                        else {
+                            call.execute(mMessages);
+                        }
+                        mCommandQueue->timerQueryCalls += &call;
+                        mUsedItems += call.usedItems();
                     });
             }
         }

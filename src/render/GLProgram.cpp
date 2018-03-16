@@ -4,13 +4,6 @@
 #include "GLBuffer.h"
 #include "scripting/ScriptEngine.h"
 
-QString getUniformName(QString base, int arrayIndex)
-{
-    if (arrayIndex > 0)
-        return QStringLiteral("%1[%2]").arg(base).arg(arrayIndex);
-    return base;
-}
-
 GLProgram::GLProgram(const Program &program)
     : mItemId(program.id)
 {
@@ -84,12 +77,10 @@ bool GLProgram::link()
     for (auto i = 0; i < uniforms; ++i) {
         gl.glGetActiveUniform(program, static_cast<GLuint>(i), buffer.size(),
             &nameLength, &size, &type, buffer.data());
-        auto base = QString(buffer.data()).remove(QRegExp("\\[0\\]"));
-        for (auto i = 0; i < size; i++) {
-            auto name = getUniformName(base, i);
-            mUniformDataTypes[name] = type;
-            mUniformsSet[name] = false;
-        }
+        const auto base = getUniformBaseName(buffer.data());
+        mUniformDataTypes[base] = type;
+        for (auto i = 0; i < size; i++)
+            mUniformsSet[QStringLiteral("%1[%2]").arg(base).arg(i)] = false;
     }
 
     auto uniformBlocks = GLint{ };
@@ -153,7 +144,7 @@ bool GLProgram::link()
 
 bool GLProgram::bind(MessagePtrSet *callMessages)
 {
-    if (!link())
+    if (!link() || !callMessages)
         return false;
 
     auto &gl = GLContext::currentContext();
@@ -162,7 +153,7 @@ bool GLProgram::bind(MessagePtrSet *callMessages)
     return true;
 }
 
-void GLProgram::unbind()
+void GLProgram::unbind(ItemId callItemId)
 {
     auto &gl = GLContext::currentContext();
     gl.glUseProgram(GL_NONE);
@@ -171,33 +162,44 @@ void GLProgram::unbind()
     for (auto &kv : mUniformsSet) {
         if (!kv.second)
             *mCallMessages += MessageList::insert(
-                mItemId, MessageType::UnformNotSet, kv.first);
+                callItemId, MessageType::UnformNotSet, kv.first);
         kv.second = false;
     }
     for (auto &kv : mUniformBlocksSet) {
         if (!kv.second)
             *mCallMessages += MessageList::insert(
-                mItemId, MessageType::BlockNotSet, kv.first);
+                callItemId, MessageType::BlockNotSet, kv.first);
         kv.second = false;
     }
     for (auto &kv : mAttributesSet) {
         if (!kv.second)
             *mCallMessages += MessageList::insert(
-                mItemId, MessageType::AttributeNotSet, kv.first);
+                callItemId, MessageType::AttributeNotSet, kv.first);
         kv.second = false;
     }
     mCallMessages = nullptr;
 }
 
-int GLProgram::getUniformLocation(const QString &name) const
+QString GLProgram::getUniformBaseName(const QString &name) const
 {
-    auto &gl = GLContext::currentContext();
-    return gl.glGetUniformLocation(mProgramObject, qPrintable(name));
+    const auto base = QString(name).remove(QRegExp("\\[.*\\]"));
+    return base;
 }
 
-GLenum GLProgram::getUniformDataType(const QString &name) const
+void GLProgram::uniformSet(const QString &name)
 {
-    return mUniformDataTypes[name];
+    auto it = mUniformsSet.find(name);
+    if (it == mUniformsSet.end())
+        it = mUniformsSet.find(name + "[0]");
+    if (it != mUniformsSet.end())
+        it->second = true;
+}
+
+void GLProgram::uniformBlockSet(const QString &name)
+{
+    auto it = mUniformBlocksSet.find(name);
+    if (it != mUniformBlocksSet.end())
+        it->second = true;
 }
 
 int GLProgram::getAttributeLocation(const QString &name) const
@@ -208,48 +210,49 @@ int GLProgram::getAttributeLocation(const QString &name) const
     return gl.glGetAttribLocation(mProgramObject, qPrintable(name));
 }
 
-template<typename T> T toField(const QString &);
-template<> GLfloat toField(const QString &string) { return string.toFloat(); }
-template<> GLdouble toField(const QString &string) { return string.toDouble(); }
-template<> GLint toField(const QString &string) { return string.toInt(); }
-template<> GLuint toField(const QString &string) { return string.toUInt(); }
+template<typename T> T toValue(const QString &);
+template<> GLfloat toValue(const QString &string) { return string.toFloat(); }
+template<> GLdouble toValue(const QString &string) { return string.toDouble(); }
+template<> GLint toValue(const QString &string) { return string.toInt(); }
+template<> GLuint toValue(const QString &string) { return string.toUInt(); }
 
-bool GLProgram::apply(const GLUniformBinding &uniform, ScriptEngine &scriptEngine)
+bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine)
 {
     auto &gl = GLContext::currentContext();
-    const auto transpose = false;
-    const auto dataType = getUniformDataType(uniform.name);
-    const auto location = getUniformLocation(uniform.name);
-    const auto fields = scriptEngine.evaluateValue(
-        uniform.fields, uniform.bindingItemId, *mCallMessages);
-    if (location < 0 || fields.empty())
+    const auto location = gl.glGetUniformLocation(
+        mProgramObject, qPrintable(binding.name));
+    const auto values = scriptEngine.evaluateValues(
+        binding.values, binding.bindingItemId, *mCallMessages);
+    if (location < 0 || values.empty())
         return false;
-    mUniformsSet[uniform.name] = true;
+    uniformSet(binding.name);
 
-    auto getValue = [&](auto t, auto count) {
+    const auto dataType = mUniformDataTypes[getUniformBaseName(binding.name)];
+
+    auto getValues = [&](auto t, auto count) {
         using T = decltype(t);
         auto array = std::array<T, 16>{ };
-        if (fields.count() == count) {
+        if (values.count() == count) {
             auto i = 0u;
-            foreach (const QString &field, fields)
-                 array[i++] = toField<T>(field);
+            foreach (const QString &value, values)
+                 array[i++] = toValue<T>(value);
         }
         else {
-            *mCallMessages += MessageList::insert(uniform.bindingItemId,
-                MessageType::InvalidUniformValueCount,
-                QString("(%1/%2)").arg(fields.count()).arg(count));
+            *mCallMessages += MessageList::insert(binding.bindingItemId,
+                MessageType::UniformComponentMismatch,
+                QString("(%1/%2)").arg(values.count()).arg(count));
         }
         return array;
     };
 
 #define ADD(TYPE, DATATYPE, COUNT, FUNCTION) \
         case TYPE: \
-            FUNCTION(location, 1, getValue(DATATYPE(), COUNT).data()); \
+            FUNCTION(location, 1, getValues(DATATYPE(), COUNT).data()); \
             break;
 
 #define ADD_MATRIX(TYPE, DATATYPE, COUNT, FUNCTION) \
         case TYPE: \
-            FUNCTION(location, 1, transpose, getValue(DATATYPE(), COUNT).data()); \
+            FUNCTION(location, 1, binding.transpose, getValues(DATATYPE(), COUNT).data()); \
             break;
 
     switch (dataType) {
@@ -299,14 +302,14 @@ bool GLProgram::apply(const GLUniformBinding &uniform, ScriptEngine &scriptEngin
 
 bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
 {
-    auto location = getUniformLocation(binding.name);
+    auto &gl = GLContext::currentContext();
+    const auto location = gl.glGetUniformLocation(
+        mProgramObject, qPrintable(binding.name));
     if (location < 0)
         return false;
-
-    mUniformsSet[binding.name] = true;
-
     if (!binding.texture)
         return false;
+    uniformSet(binding.name);
 
     float borderColor[] = {
         static_cast<float>(binding.borderColor.redF()),
@@ -315,7 +318,6 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
         static_cast<float>(binding.borderColor.alphaF())
     };
 
-    auto &gl = GLContext::currentContext();
     auto &texture = *binding.texture;
     const auto target = texture.target();
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
@@ -355,13 +357,13 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
 
 bool GLProgram::apply(const GLImageBinding &binding, int unit)
 {
-    auto location = getUniformLocation(binding.name);
+    auto &gl = GLContext::currentContext();
+    const auto location = gl.glGetUniformLocation(
+        mProgramObject, qPrintable(binding.name));
     if (location < 0)
         return false;
+    uniformSet(binding.name);
 
-    mUniformsSet[binding.name] = true;
-
-    auto &gl = GLContext::currentContext();
     if (!gl.v4_2)
         return false;
     if (!binding.texture)
@@ -400,7 +402,7 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
         mProgramObject, qPrintable(binding.name));
 
     if (index != GL_INVALID_INDEX) {
-        mUniformBlocksSet[binding.name] = true;
+        uniformBlockSet(binding.name);
         auto &buffer = *binding.buffer;
         gl.glUniformBlockBinding(mProgramObject, index,
             static_cast<GLuint>(unit));
@@ -413,7 +415,7 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
         index = gl.v4_3->glGetProgramResourceIndex(mProgramObject,
             GL_SHADER_STORAGE_BLOCK, qPrintable(binding.name));
         if (index != GL_INVALID_INDEX) {
-            mUniformBlocksSet[binding.name] = true;
+            uniformBlockSet(binding.name);
             auto &buffer = *binding.buffer;
             gl.v4_3->glShaderStorageBlockBinding(mProgramObject,
                 index, static_cast<GLuint>(unit));
@@ -434,8 +436,7 @@ bool GLProgram::apply(const GLSubroutineBinding &binding)
                 if (uniform.name == binding.name) {
                     uniform.bindingItemId = binding.bindingItemId;
                     uniform.boundSubroutine = binding.subroutine;
-
-                    mUniformsSet[binding.name] = true;
+                    uniformSet(binding.name);
                     bound = true;
                 }
     return bound;
