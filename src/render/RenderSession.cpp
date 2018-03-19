@@ -308,13 +308,13 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                      call = std::move(glcall)
                     ](BindingState &state) mutable {
                         if (auto program = call.program()) {
+                            mUsedItems += program->usedItems();
                             if (!program->bind(&mMessages))
                                 return;
                             mUsedItems += applyBindings(
                                 state, *program, *mScriptEngine);
                             call.execute(mMessages);
                             program->unbind(call.itemId());
-                            mUsedItems += program->usedItems();
                         }
                         else {
                             call.execute(mMessages);
