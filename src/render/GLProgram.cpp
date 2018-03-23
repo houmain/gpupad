@@ -158,25 +158,28 @@ void GLProgram::unbind(ItemId callItemId)
     auto &gl = GLContext::currentContext();
     gl.glUseProgram(GL_NONE);
 
-    // inform about not set uniforms
-    for (auto &kv : mUniformsSet) {
-        if (!kv.second)
-            *mCallMessages += MessageList::insert(
-                callItemId, MessageType::UnformNotSet, kv.first);
-        kv.second = false;
-    }
-    for (auto &kv : mUniformBlocksSet) {
-        if (!kv.second)
+    // warn about not set uniforms
+    for (auto &kv : mUniformsSet)
+        if (!std::exchange(kv.second, false)) {
+            // remove [0] from warning, when there is no uniform [1]
+            auto uniformName = kv.first;
+            if (uniformName.endsWith("[0]") &&
+                !mUniformsSet.count(QString(kv.first).replace("[0]", "[1]")))
+                uniformName.chop(3);
+            *mCallMessages += MessageList::insert(callItemId,
+                MessageType::UnformNotSet, uniformName);
+        }
+
+    for (auto &kv : mUniformBlocksSet)
+        if (!std::exchange(kv.second, false))
             *mCallMessages += MessageList::insert(
                 callItemId, MessageType::BlockNotSet, kv.first);
-        kv.second = false;
-    }
-    for (auto &kv : mAttributesSet) {
-        if (!kv.second)
+
+    for (auto &kv : mAttributesSet)
+        if (!std::exchange(kv.second, false))
             *mCallMessages += MessageList::insert(
                 callItemId, MessageType::AttributeNotSet, kv.first);
-        kv.second = false;
-    }
+
     mCallMessages = nullptr;
 }
 
