@@ -111,13 +111,27 @@
       </widget>
      </item>
      <item row="2" column="0">
+      <widget class="QLabel" name="labelStride">
+       <property name="text">
+        <string>Stride</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="stride">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
       <widget class="QLabel" name="labelRows">
        <property name="text">
         <string>Rows</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="3" column="1">
       <widget class="QWidget" name="widgetRows" native="true">
        <layout class="QHBoxLayout" name="horizontalLayout">
         <property name="spacing">
@@ -166,6 +180,32 @@
          </widget>
         </item>
        </layout>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelSize">
+       <property name="text">
+        <string>Size</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QSpinBox" name="size">
+       <property name="minimumSize">
+        <size>
+         <width>1</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="accelerated">
+        <bool>true</bool>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>1073741824</number>
+       </property>
       </widget>
      </item>
     </layout>

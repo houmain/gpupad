@@ -17,6 +17,7 @@
 #include "Singletons.h"
 #include "SessionModel.h"
 #include "SynchronizeLogic.h"
+#include "FileCache.h"
 #include <QStackedWidget>
 #include <QDataWidgetMapper>
 #include <QTimer>
@@ -51,7 +52,6 @@ SessionProperties::SessionProperties(QWidget *parent)
     setBackgroundRole(QPalette::ToolTipBase);
 
     mMapper->setModel(&mModel);
-
     connect(mSubmitTimer, &QTimer::timeout,
         mMapper, &QDataWidgetMapper::submit);
     mSubmitTimer->start(100);
@@ -98,6 +98,13 @@ SessionProperties::SessionProperties(QWidget *parent)
         [this]() { openCurrentItemFile(FileDialog::BinaryExtensions); });
     connect(mBufferProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(Item::Type::Buffer, true); });
+    using Overload = void(QSpinBox::*)(int);
+    connect(mBufferProperties->rowCount, static_cast<Overload>(&QSpinBox::valueChanged),
+        [this]() { updateBufferWidgets(currentModelIndex()); });
+    connect(mBufferProperties->size, &QSpinBox::editingFinished,
+        this, &SessionProperties::deduceBufferRowCount);
+    connect(mBufferProperties->deduceRowCount, &QToolButton::clicked,
+        this, &SessionProperties::deduceBufferRowCount);
 
     connect(mImageProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::ImageExtensions); });
@@ -132,9 +139,6 @@ SessionProperties::SessionProperties(QWidget *parent)
 
     setCurrentModelIndex({ });
     fillComboBoxes();
-
-    // TODO: implement
-    mBufferProperties->deduceRowCount->setVisible(false);
 }
 
 SessionProperties::~SessionProperties() = default;
@@ -256,6 +260,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             map(mBufferProperties->file, SessionModel::FileName);
             map(mBufferProperties->offset, SessionModel::BufferOffset);
             map(mBufferProperties->rowCount, SessionModel::BufferRowCount);
+            updateBufferWidgets(index);
             break;
 
         case Item::Type::Column:
@@ -434,3 +439,36 @@ void SessionProperties::updateImageWidgets(const QModelIndex &index)
     setFormVisibility(ui.formLayout, ui.labelLayer, ui.layer, kind.array);
     setFormVisibility(ui.formLayout, ui.labelFace, ui.face, kind.cubeMap);
 }
+
+void SessionProperties::updateBufferWidgets(const QModelIndex &index)
+{
+    auto stride = 0;
+    if (auto buffer = mModel.item<Buffer>(index))
+        stride = getStride(*buffer);
+
+    auto &ui = *mBufferProperties;
+    ui.stride->setText(QString::number(stride));
+    ui.size->setValue(stride * ui.rowCount->value());
+    setFormVisibility(ui.formLayout, ui.labelRows, ui.widgetRows, stride > 0);
+    setFormVisibility(ui.formLayout, ui.labelSize, ui.size, stride > 0);
+}
+
+void SessionProperties::deduceBufferRowCount()
+{
+    if (auto buffer = mModel.item<Buffer>(currentModelIndex())) {
+        auto size = mBufferProperties->size->value();
+        if (QObject::sender() == mBufferProperties->deduceRowCount) {
+            auto binary = QByteArray();
+            if (!Singletons::fileCache().getBinary(buffer->fileName, &binary))
+                return;
+            size = binary.size() - buffer->offset;
+        }
+
+        if (auto stride = getStride(*buffer)) {
+            mModel.setData(mModel.getIndex(currentModelIndex(),
+                    SessionModel::BufferRowCount), size / stride);
+            updateBufferWidgets(currentModelIndex());
+        }
+    }
+}
+

@@ -55,6 +55,8 @@ public:
 
 private slots:
     void updateImageWidgets(const QModelIndex &index);
+    void updateBufferWidgets(const QModelIndex &index);
+    void deduceBufferRowCount();
 
 private:
     void fillComboBoxes();
