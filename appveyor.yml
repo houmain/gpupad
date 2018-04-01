@@ -1,4 +1,4 @@
-version: 1.0.{build}
+version: v1.0.{build}
 branches:
   only:
   - master
@@ -17,6 +17,8 @@ build_script:
     qbs-setup-qt %QTDIR%\bin\qmake.exe qt5
 
     qbs-config profiles.qt5.baseProfile MSVC2015-amd64
+
+    echo "{version}" > "src\_version.h"
 
     qbs install profile:qt5 release
 
