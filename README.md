@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/d1frxd63iohaqcto/branch/master?svg=true)](https://ci.appveyor.com/project/houmaster/gpupad/branch/master)
+
 GPUpad
 ======
 Aims to be a simple to use GLSL source code editor, which allows to immediately try out the shaders.

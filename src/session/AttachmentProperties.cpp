@@ -35,6 +35,7 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
     mUi->blendAlphaDest->setModel(mUi->blendAlphaSource->model());
 
     fillComboBox<Attachment::ComparisonFunc>(mUi->depthComparisonFunc);
+    mUi->depthComparisonFunc->removeItem(0);
     mUi->stencilComparisonFunc->setModel(mUi->depthComparisonFunc->model());
     mUi->stencilBackComparisonFunc->setModel(mUi->depthComparisonFunc->model());
 

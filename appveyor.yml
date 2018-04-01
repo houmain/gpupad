@@ -1,0 +1,30 @@
+version: 1.0.{build}
+
+branches:
+  only:
+  - master
+skip_non_tags: true
+
+build_script:
+- cmd: >-
+    SET QTDIR="C:\Qt\5.10.1\msvc2015_64"
+    SET PATH=%PATH%;%QTDIR%\bin
+    SET PATH=%PATH%;%QTDIR%\..\..\Tools\QtCreator\bin
+
+    qbs-setup-toolchains --detect
+    qbs-setup-qt %QTDIR%\bin\qmake.exe qt5
+    qbs-config profiles.qt5.baseProfile MSVC2015-amd64
+    qbs install profile:qt5 release
+
+    windeployqt --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations release\install-root\bin\gpupad.exe
+    
+artifacts:
+- path: release\install-root
+  name: gpupad-win64
+  
+deploy:
+- provider: GitHub
+  auth_token:
+    secure: Ma46R5Ug+VxFkYqj3XDNyyhtjK6jpIavKIZZ5dta2M68LqEYLvQR5kOy7SpoUmZZ
+  artifact: gpupad-win64
+  

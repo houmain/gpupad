@@ -653,14 +653,13 @@ void MainWindow::populateSampleSessions()
         auto samples = QDir(path);
         if (samples.exists()) {
             samples.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
-            auto entries = samples.entryInfoList();
-            for (auto entry = entries.cbegin(); entry != entries.cend(); ++entry) {
-                auto sample = QDir(entry->absoluteFilePath());
+            for (const auto &entry : samples.entryInfoList()) {
+                auto sample = QDir(entry.absoluteFilePath());
                 sample.setNameFilters({ "*.gpjs" });
                 auto sessions = sample.entryInfoList();
                 if (!sessions.empty()) {
                     auto action = mUi->menuSampleSessions->addAction(
-                        entry->fileName(), this, SLOT(openSampleSession()));
+                        entry.fileName(), this, SLOT(openSampleSession()));
                     action->setData(sessions.first().absoluteFilePath());
                 }
             }
