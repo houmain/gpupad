@@ -18,7 +18,7 @@ build_script:
 
     qbs-config profiles.qt5.baseProfile MSVC2015-amd64
 
-    echo "{version}" > "src\_version.h"
+    echo "$(appveyor_build_version)" > "src\_version.h"
 
     qbs install profile:qt5 release
 

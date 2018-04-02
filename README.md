@@ -50,7 +50,7 @@ All kind of color, depth or stencil textures can be created. They serve as sampl
 Specifies where draws calls should render to (it corresponds to an OpenGL *FBO*). Multiple images can be attached. Depending on the attached image's type, different OpenGL states can be configured.
 
 - **Binding** -
-Allows to bind data to a program's uniforms, samplers, images, buffers and to select shader subroutines. A binding affects all subsequent calls, until it is replaced by a binding with the same name, or the scope ends (see *Groups*). The name of a binding needs to match the name of a program's binding points. 
+Allows to bind data to a program's uniforms, samplers, images, buffers and to select shader subroutines. A binding affects all subsequent calls, until it is replaced by a binding with the same name, or the scope ends (see *Groups*). The name of a binding needs to match the name of a program's binding points.
 
 - **Buffer** -
 Defines the structure of a region within a binary. It consists of rows with multiple columns of some data type. It can be backed by a binary file.
@@ -72,13 +72,18 @@ A C++14 conforming compiler and [Qt5](https://www.qt.io/) is required. A build s
     git clone https://github.com/houmaster/gpupad
     cd gpupad
     qbs setup-qt /usr/bin/qmake qt5
-    qbs build profile:qt5 release
+    qbs build profile:qt5
 
-* **Arch Linux** -
-You can install it from the [AUR](https://aur.archlinux.org/packages/gpupad-git).
+**Arch Linux** users can install it from the [AUR](https://aur.archlinux.org/packages/gpupad-git).
 
-* **Windows** -
-The provided `msvc2015.bat` can be used to generate a Visual Studio solution in the `_build` directory. The environment variable `%QTDIR%` needs to point to the Qt5 installation path.
+Qbs can also generate a **Visual Studio** solution, like:
+
+    SET QTDIR="C:\Qt\5.10.1\msvc2015_64"
+    SET PATH=%PATH%;%QTDIR%\bin;%QTDIR%\..\..\Tools\QtCreator\bin
+    qbs-setup-toolchains --detect
+    qbs-setup-qt %QTDIR%\bin\qmake.exe qt5
+    qbs-config profiles.qt5.baseProfile MSVC2015-amd64
+    qbs generate --generator visualstudio2015 -d _build profile:qt5
 
 License
 -------
