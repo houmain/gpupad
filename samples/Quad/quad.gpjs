@@ -2,12 +2,23 @@
     {
         "flipY": false,
         "format": "RGBA8_UNorm",
-        "height": 256,
+        "height": 512,
         "id": 10,
+        "name": "Color",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 512
+    },
+    {
+        "fileName": "marble.png",
+        "flipY": false,
+        "format": "RGBA8_UNorm",
+        "height": 512,
+        "id": 105,
         "name": "Texture",
         "target": "Target2D",
         "type": "Texture",
-        "width": 256
+        "width": 512
     },
     {
         "blendConstant": "#ffffffff",
@@ -45,6 +56,14 @@
                 "name": "Position",
                 "padding": 0,
                 "type": "Column"
+            },
+            {
+                "count": 2,
+                "dataType": "Float",
+                "id": 106,
+                "name": "TexCoords",
+                "padding": 0,
+                "type": "Column"
             }
         ],
         "name": "Vertices",
@@ -63,36 +82,46 @@
                 "name": "aPosition",
                 "normalize": false,
                 "type": "Attribute"
+            },
+            {
+                "bufferId": 22,
+                "columnId": 106,
+                "divisor": 0,
+                "id": 107,
+                "name": "aTexCoords",
+                "normalize": false,
+                "type": "Attribute"
             }
         ],
         "name": "Stream",
         "type": "Stream"
     },
     {
-        "bindingType": "Uniform",
-        "editor": "Color",
-        "id": 24,
-        "name": "uColor",
+        "bindingType": "Sampler",
+        "borderColor": "#ff000000",
+        "comparisonFunc": "NoComparisonFunc",
+        "id": 109,
+        "magFilter": "Nearest",
+        "minFilter": "Nearest",
+        "name": "uTexture",
+        "textureId": 105,
         "type": "Binding",
-        "values": [
-            "1",
-            "0.50",
-            "0",
-            "1"
-        ]
+        "wrapModeX": "Repeat",
+        "wrapModeY": "Repeat",
+        "wrapModeZ": "Repeat"
     },
     {
         "id": 1,
         "items": [
             {
-                "fileName": "minimal.vs",
+                "fileName": "quad.vs",
                 "id": 2,
                 "name": "Vertex",
                 "shaderType": "Vertex",
                 "type": "Shader"
             },
             {
-                "fileName": "minimal.fs",
+                "fileName": "textured.fs",
                 "id": 3,
                 "name": "Fragment",
                 "shaderType": "Fragment",
@@ -103,6 +132,17 @@
         "type": "Program"
     },
     {
+        "callType": "ClearTexture",
+        "checked": true,
+        "clearColor": "#00bf4040",
+        "clearDepth": 1,
+        "clearStencil": 0,
+        "id": 110,
+        "name": "Clear",
+        "textureId": 10,
+        "type": "Call"
+    },
+    {
         "baseInstance": 0,
         "callType": "Draw",
         "checked": true,
@@ -110,7 +150,7 @@
         "first": 0,
         "id": 4,
         "instanceCount": 1,
-        "name": "Call",
+        "name": "Draw",
         "primitiveType": "TriangleStrip",
         "programId": 1,
         "targetId": 7,
