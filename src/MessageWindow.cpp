@@ -67,7 +67,6 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case CreatingFramebufferFailed:
         case UploadingImageFailed:
         case DownloadingImageFailed:
-        case UnformNotSet:
         case BlockNotSet:
         case AttributeNotSet:
         case ShaderError:
@@ -80,6 +79,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case UniformComponentMismatch:
             return mErrorIcon;
 
+        case UnformNotSet:
         case ShaderWarning:
             return mWarningIcon;
 

@@ -20,6 +20,7 @@
 #include <QMenu>
 #include <QToolButton>
 #include <QCoreApplication>
+#include <QDesktopWidget>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -285,17 +286,17 @@ void MainWindow::writeSettings()
 
 void MainWindow::readSettings()
 {
-    auto &settings = Singletons::settings();
-    resize(800, 600);
+    const auto &settings = Singletons::settings();
+    if (!restoreGeometry(settings.value("geometry").toByteArray()))
+        setGeometry(100, 100, 800, 600);
 
-    auto geometry = settings.value("geometry").toByteArray();
-    if (!geometry.isEmpty())
-        restoreGeometry(geometry);
-    else
-        move(100, 100);
-
-    if (settings.value("maximized").toBool())
+    if (settings.value("maximized").toBool()) {
+        // maximize before restoring state so layout is not jumbled
+        // unfortunately this overwrites the unmaximized geometry
+        setGeometry(QApplication::desktop()->availableGeometry(this));
         setWindowState(Qt::WindowMaximized);
+    }
+
     restoreState(settings.value("state").toByteArray());
     mSessionSplitter->restoreState(settings.value("sessionSplitter").toByteArray());
 
@@ -575,7 +576,7 @@ void MainWindow::openRecentFile()
 }
 
 void MainWindow::updateCustomActionsMenu()
-{    
+{
     auto &model = Singletons::sessionModel();
     auto selection = mSessionEditor->selectionModel()->selectedIndexes();
     mCustomActions->setSelection(model.getJson(selection));
@@ -688,7 +689,7 @@ void MainWindow::openAbout()
        "<h3>%1 %2</h3>"
        "%3<br>"
        "<a href='%4'>%4</a><br><br>"
-       "Copyright &copy; 2016-2018<br>"
+       "Copyright &copy; 2016-2019<br>"
        "Albert Kalchmair<br>"
        "%5<br><br>"
        "%6<br>"
