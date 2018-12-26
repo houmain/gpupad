@@ -67,23 +67,11 @@ There is currently only one JavaScript state for the whole session and the scrip
 
 Building
 --------
-A C++14 conforming compiler and [Qt5](https://www.qt.io/) is required. A build script for the [Qbs](https://doc.qt.io/qbs/) build system is provided.
+A C++14 conforming compiler and [Qt5](https://www.qt.io/) is required. A script for the
+[CMake](https://cmake.org) build system is provided.
 
-    git clone https://github.com/houmaster/gpupad
-    cd gpupad
-    qbs setup-qt /usr/bin/qmake qt5
-    qbs build profile:qt5
 
 **Arch Linux** users can install it from the [AUR](https://aur.archlinux.org/packages/gpupad-git).
-
-Qbs can also generate a **Visual Studio** solution, like:
-
-    SET QTDIR="C:\Qt\5.10.1\msvc2015_64"
-    SET PATH=%PATH%;%QTDIR%\bin;%QTDIR%\..\..\Tools\QtCreator\bin
-    qbs-setup-toolchains --detect
-    qbs-setup-qt %QTDIR%\bin\qmake.exe qt5
-    qbs-config profiles.qt5.baseProfile MSVC2015-amd64
-    qbs generate --generator visualstudio2015 -d _build profile:qt5
 
 License
 -------

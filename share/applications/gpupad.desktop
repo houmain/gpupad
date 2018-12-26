@@ -2,6 +2,7 @@
 Type=Application
 Version=1.0
 Name=GPUpad
+Comment=GLSL Shader Editor
 Exec=gpupad %F
 Icon=gpupad
 Terminal=false
