@@ -75,6 +75,12 @@ bool GLShader::operator==(const GLShader &rhs) const
 
 bool GLShader::compile()
 {
+    if (!GLContext::currentContext()) {
+        mMessages += MessageList::insert(
+            0, MessageType::OpenGLVersionNotAvailable, "3.3");
+        return false;
+    }
+
     if (mShaderObject)
         return true;
 

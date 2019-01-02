@@ -372,6 +372,12 @@ void RenderSession::evaluateScripts()
 
 void RenderSession::executeCommandQueue()
 {
+    if (!GLContext::currentContext()) {
+        mMessages += MessageList::insert(
+            0, MessageType::OpenGLVersionNotAvailable, "3.3");
+        return;
+    }
+
     BindingState state;
     for (auto &command : mCommandQueue->commands)
         command(state);
