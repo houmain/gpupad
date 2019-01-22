@@ -5,6 +5,13 @@
 
 int main(int argc, char *argv[])
 {
+#if defined(__linux)
+    // try to increase device/driver support
+    // does not seem to cause any problems
+    setenv("MESA_GL_VERSION_OVERRIDE", "4.5", 0);
+    setenv("MESA_GLSL_VERSION_OVERRIDE", "450", 0);
+#endif
+
     SingleApplication app(argc, argv, true);
     auto arguments = app.arguments();
     arguments.removeFirst();

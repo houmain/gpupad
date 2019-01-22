@@ -16,8 +16,8 @@ Features
 
 Screenshots
 -----------
-<a href="screenshot1.png"><img src="screenshot1.png" height="180"></a>
-<a href="screenshot2.png"><img src="screenshot2.png" height="180"></a>
+<a href="screenshot1.png"><img src="screenshot1.png" height="300"></a> &nbsp; &nbsp;
+<a href="screenshot2.png"><img src="screenshot2.png" height="300"></a>
 
 Session
 -------
