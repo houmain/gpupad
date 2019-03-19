@@ -160,11 +160,15 @@ void GLTexture::getDataFormat(
             break;
 
         case QOpenGLTexture::RGBA8U:
+            *format = QOpenGLTexture::RGBA_Integer;
+            *type = QOpenGLTexture::UInt8;
+            break;
+
         case QOpenGLTexture::RGB10A2:
         case QOpenGLTexture::RGBA16U:
         case QOpenGLTexture::RGBA32U:
             *format = QOpenGLTexture::RGBA_Integer;
-            *type = QOpenGLTexture::UInt8;
+            *type = QOpenGLTexture::UInt16;
             break;
 
         case QOpenGLTexture::R8I:
@@ -185,10 +189,14 @@ void GLTexture::getDataFormat(
             break;
 
         case QOpenGLTexture::RGBA8I:
+            *format = QOpenGLTexture::RGBA_Integer;
+            *type = QOpenGLTexture::Int8;
+            break;
+
         case QOpenGLTexture::RGBA16I:
         case QOpenGLTexture::RGBA32I:
             *format = QOpenGLTexture::RGBA_Integer;
-            *type = QOpenGLTexture::Int8;
+            *type = QOpenGLTexture::Int16;
             break;
 
         case QOpenGLTexture::D16:
@@ -212,6 +220,14 @@ void GLTexture::getDataFormat(
         case QOpenGLTexture::S8:
             *format = QOpenGLTexture::Stencil;
             *type = QOpenGLTexture::UInt8;
+            break;
+
+        case QOpenGLTexture::RGBA16_SNorm:
+        case QOpenGLTexture::RGBA16_UNorm:
+        case QOpenGLTexture::RGBA16F:
+        case QOpenGLTexture::RGBA32F:
+            *format = QOpenGLTexture::RGBA;
+            *type = QOpenGLTexture::UInt16;
             break;
 
         default:
@@ -241,6 +257,17 @@ QImage::Format GLTexture::getImageFormat(
                 case QOpenGLTexture::RGBA:
                 case QOpenGLTexture::RGBA_Integer:
                     return QImage::Format_RGBA8888;
+
+                default:
+                    return QImage::Format_Invalid;
+            }
+
+        case QOpenGLTexture::Int16:
+        case QOpenGLTexture::UInt16:
+            switch (format) {
+                case QOpenGLTexture::RGBA:
+                case QOpenGLTexture::RGBA_Integer:
+                    return QImage::Format_RGBA64;
 
                 default:
                     return QImage::Format_Invalid;
