@@ -76,7 +76,7 @@ set(SOURCES
 
 FILE(GLOB_RECURSE HEADERS include *.h *.rc)
 
-add_executable(gpupad ${SOURCES} ${HEADERS})
+add_executable(gpupad WIN32 ${SOURCES} ${HEADERS})
 
 find_package(Qt5Widgets CONFIG REQUIRED)
 find_package(Qt5OpenGL CONFIG REQUIRED)
