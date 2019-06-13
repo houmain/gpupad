@@ -21,11 +21,15 @@ public:
 
     void resetRenderSession();
     void setSourceValidationActive(bool active);
+    void setSourceAssemblyActive(bool active);
     void setEvaluationMode(bool automatic, bool steady);
     void setEvaluationInterval(int interval);
     void updateBinaryEditor(const Buffer &buffer,
         BinaryEditor &editor, bool scrollToOffset = false);
     void updateFileCache();
+
+signals:
+    void assemblyChanged(QString assembly);
 
 public slots:
     void manualEvaluation();
@@ -52,6 +56,7 @@ private:
     bool mAutomaticEvaluation{ };
     bool mSteadyEvaluation{ };
 
+    bool mAssembleSource{ };
     QTimer *mValidateSourceTimer{ };
     QScopedPointer<ValidateSource> mValidateSource;
 };

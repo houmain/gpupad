@@ -16,7 +16,11 @@ public:
     ~ValidateSource() override;
 
     void setSource(QString fileName, SourceType sourceType);
+    void setAssembleSource(bool active);
     QSet<ItemId> usedItems() const override;
+
+signals:
+    void assemblyChanged(QString assembly);
 
 private:
     void prepare(bool itemsChanged, bool manualEvaluation) override;
@@ -31,6 +35,9 @@ private:
 
     QString mScriptSource;
     QScopedPointer<ScriptEngine> mScriptEngine;
+
+    bool mAssembleSource{ };
+    QString mAssembly;
 };
 
 #endif // VALIDATESOURCE_H

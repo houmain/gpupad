@@ -16,6 +16,7 @@ set(SOURCES
   src/MainWindow.ui
   src/MessageList.cpp
   src/MessageWindow.cpp
+  src/AssemblyWindow.cpp
   src/FileCache.cpp
   src/Settings.cpp
   src/Singletons.cpp
@@ -74,7 +75,7 @@ set(SOURCES
   src/session/TextureProperties.cpp
   src/session/TextureProperties.ui)
 
-FILE(GLOB_RECURSE HEADERS include *.h *.rc)
+file(GLOB_RECURSE HEADERS include *.h *.rc)
 
 add_executable(gpupad WIN32 ${SOURCES} ${HEADERS})
 

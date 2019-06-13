@@ -34,6 +34,7 @@ signals:
     void indentWithSpacesChanged(bool enabled);
     void autoIndentationChanged(bool enabled);
     void syntaxHighlightingChanged(bool enabled);
+    void darkThemeChanging(bool enabled);
     void darkThemeChanged(bool enabled);
 
 private:

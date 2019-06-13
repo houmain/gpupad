@@ -1,6 +1,46 @@
 #include "ValidateSource.h"
 #include "GLShader.h"
 #include "scripting/ScriptEngine.h"
+#include <QProcess>
+
+namespace {
+    QString generateSpirv(QString source, SourceType sourceType)
+    {
+        const auto type = [&]() -> const char* {
+            switch (sourceType) {
+                case SourceType::VertexShader: return "vert";
+                case SourceType::FragmentShader: return "frag";
+                case SourceType::TesselationControl: return "tesc";
+                case SourceType::TesselationEvaluation: return "tese";
+                case SourceType::GeometryShader: return "geom";
+                case SourceType::ComputeShader: return "comp";
+                default: return nullptr;
+            }
+        }();
+        if (!type)
+            return "";
+
+        const auto args = QStringList{
+          "-H", "--aml", "--amb",
+          "--client", "opengl100",
+          "--stdin", "-S", type
+        };
+
+        QProcess process;
+        process.setProcessChannelMode(QProcess::MergedChannels);
+        process.start("glslangValidator", args);
+        if (!process.waitForStarted())
+            return "";
+        process.write(source.toUtf8());
+        process.closeWriteChannel();
+
+        auto data = QByteArray();
+        while (process.waitForReadyRead())
+            data.append(process.readAll());
+
+        return QString::fromUtf8(data);
+    }
+} // namespace
 
 ValidateSource::ValidateSource(QObject *parent) : RenderTask(parent)
 {
@@ -21,6 +61,11 @@ void ValidateSource::setSource(QString fileName,
 {
     mFileName = fileName;
     mSourceType = sourceType;
+}
+
+void ValidateSource::setAssembleSource(bool active)
+{
+    mAssembleSource = active;
 }
 
 void ValidateSource::prepare(bool itemsChanged, bool manualEvaluation)
@@ -63,6 +108,7 @@ void ValidateSource::prepare(bool itemsChanged, bool manualEvaluation)
     shader.fileName = mFileName;
     shader.shaderType = shaderType;
     mNewShader.reset(new GLShader({ &shader }));
+    mAssembly.clear();
 }
 
 void ValidateSource::render()
@@ -71,6 +117,15 @@ void ValidateSource::render()
         mScriptEngine.reset();
         mShader.reset(mNewShader.take());
         mShader->compile();
+
+        if (mAssembleSource) {
+            auto source = QString();
+            Singletons::fileCache().getSource(mFileName, &source);
+            mAssembly = generateSpirv(source, mSourceType);
+
+            if (mAssembly.isEmpty())
+                mAssembly = mShader->getAssembly();
+        }
     }
     else {
         mShader.reset();
@@ -85,6 +140,7 @@ void ValidateSource::render()
 void ValidateSource::finish(bool steadyEvaluation)
 {
     Q_UNUSED(steadyEvaluation);
+    emit assemblyChanged(mAssembly);
 }
 
 void ValidateSource::release()

@@ -47,12 +47,20 @@ void SynchronizeLogic::setSourceValidationActive(bool active)
     if (active) {
         if (!mValidateSource) {
             mValidateSource.reset(new ValidateSource());
+            connect(mValidateSource.data(), &ValidateSource::assemblyChanged,
+                this, &SynchronizeLogic::assemblyChanged);
             validateSource();
         }
     }
     else {
         mValidateSource.reset();
     }
+}
+
+void SynchronizeLogic::setSourceAssemblyActive(bool active)
+{
+    mAssembleSource = active;
+    validateSource();
 }
 
 void SynchronizeLogic::resetRenderSession()
@@ -232,11 +240,12 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
 void SynchronizeLogic::validateSource()
 {
     if (mValidateSource) {
-        auto &editorManager = Singletons::editorManager();
-        mValidateSource->setSource(
-            editorManager.currentEditorFileName(),
-            editorManager.currentSourceType());
         updateFileCache();
+        mValidateSource->setSource(
+            Singletons::editorManager().currentEditorFileName(),
+            Singletons::editorManager().currentSourceType());
+        mValidateSource->setAssembleSource(mAssembleSource);
         mValidateSource->update(false, false, false);
     }
 }
+

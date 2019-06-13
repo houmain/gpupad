@@ -12,6 +12,7 @@ class MainWindow;
 class QSplitter;
 class Singletons;
 class MessageWindow;
+class AssemblyWindow;
 class EditorManager;
 class SessionEditor;
 class SessionProperties;
@@ -64,7 +65,7 @@ private:
     void updateCustomActionsMenu();
     void handleMessageActivated(ItemId itemId,
         QString fileName, int line, int column);
-    void handleDarkThemeChanged(bool enabled);
+    void handleDarkThemeChanging(bool enabled);
 
     Ui::MainWindow *mUi{ };
     QSplitter *mSessionSplitter{ };
@@ -72,6 +73,7 @@ private:
     QScopedPointer<MessageWindow> mMessageWindow;
     QScopedPointer<CustomActions> mCustomActions;
     QScopedPointer<Singletons> mSingletons;
+    QScopedPointer<AssemblyWindow> mAssemblyWindow;
     EditorManager &mEditorManager;
     QScopedPointer<SessionEditor> mSessionEditor;
     QScopedPointer<SessionProperties> mSessionProperties;

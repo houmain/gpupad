@@ -6,6 +6,7 @@
 #include "session/SessionModel.h"
 #include "Singletons.h"
 #include "MessageWindow.h"
+#include "AssemblyWindow.h"
 #include "MessageList.h"
 #include "Settings.h"
 #include "SynchronizeLogic.h"
@@ -28,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     , mMessageWindow(new MessageWindow())
     , mCustomActions(new CustomActions(this))
     , mSingletons(new Singletons(this))
+    , mAssemblyWindow(new AssemblyWindow())
     , mEditorManager(Singletons::editorManager())
     , mSessionEditor(new SessionEditor())
     , mSessionProperties(new SessionProperties())
@@ -39,6 +41,8 @@ MainWindow::MainWindow(QWidget *parent)
     icon.addFile(":images/64x64/icon.png");
     setWindowIcon(icon);
     setContentsMargins(2, 0, 2, 2);
+
+    mUi->menuView->addAction(mUi->toolBarMain->toggleViewAction());
 
     takeCentralWidget();
 
@@ -81,7 +85,16 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->menuView->addAction(dock->toggleViewAction());
     addDockWidget(Qt::RightDockWidgetArea, dock);
 
-    mUi->menuView->addAction(mUi->toolBarMain->toggleViewAction());
+    dock = new QDockWidget(tr("Assembly"), this);
+    dock->setObjectName("Assembly");
+    dock->setFeatures(QDockWidget::DockWidgetClosable |
+                      QDockWidget::DockWidgetMovable |
+                      QDockWidget::DockWidgetFloatable);
+    dock->setWidget(mAssemblyWindow.data());
+    dock->setVisible(false);
+    mUi->menuView->addAction(dock->toggleViewAction());
+    addDockWidget(Qt::RightDockWidgetArea, dock);
+    auto assemblyDock = dock;
 
     mUi->actionQuit->setShortcuts(QKeySequence::Quit);
     mUi->actionNew->setShortcuts(QKeySequence::New);
@@ -162,10 +175,14 @@ MainWindow::MainWindow(QWidget *parent)
         &synchronizeLogic, &SynchronizeLogic::handleSourceTypeChanged);
     connect(mUi->actionSourceValidation, &QAction::toggled,
         &synchronizeLogic, &SynchronizeLogic::setSourceValidationActive);
+    connect(assemblyDock, &QDockWidget::visibilityChanged,
+        &synchronizeLogic, &SynchronizeLogic::setSourceAssemblyActive);
     connect(mMessageWindow.data(), &MessageWindow::messageActivated,
         this, &MainWindow::handleMessageActivated);
     connect(mMessageWindow.data(), &MessageWindow::messagesAdded,
         this, &MainWindow::openMessageDock);
+    connect(&synchronizeLogic, &SynchronizeLogic::assemblyChanged,
+        mAssemblyWindow.data(), &AssemblyWindow::setText);
 
     auto &settings = Singletons::settings();
     connect(mUi->actionSelectFont, &QAction::triggered,
@@ -180,8 +197,8 @@ MainWindow::MainWindow(QWidget *parent)
         &settings, &Settings::setLineWrap);
     connect(mUi->actionIndentWithSpaces, &QAction::toggled,
         &settings, &Settings::setIndentWithSpaces);
-    connect(&settings, &Settings::darkThemeChanged,
-        this, &MainWindow::handleDarkThemeChanged);
+    connect(&settings, &Settings::darkThemeChanging,
+        this, &MainWindow::handleDarkThemeChanging);
 
     connect(mUi->actionEvalManual, &QAction::triggered,
         this, &MainWindow::updateEvaluationMode);
@@ -600,7 +617,7 @@ void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
     }
 }
 
-void MainWindow::handleDarkThemeChanged(bool enabled)
+void MainWindow::handleDarkThemeChanging(bool enabled)
 {
     auto palette = qApp->style()->standardPalette();
     if (enabled) {

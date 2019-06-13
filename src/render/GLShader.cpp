@@ -122,3 +122,31 @@ bool GLShader::compile()
     mShaderObject = std::move(shader);
     return true;
 }
+
+QString GLShader::getAssembly() {
+    auto assembly = QString();
+
+    auto &gl = GLContext::currentContext();
+    auto& shader = mShaderObject;
+    if (gl.v4_2 && shader) {
+        auto program = gl.glCreateProgram();
+        gl.glAttachShader(program, shader);
+        gl.glLinkProgram(program);
+
+        auto length = GLint{ };
+        gl.glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, &length);
+        if (length > 0) {
+            auto format = GLuint{ };
+            auto binary = std::string(static_cast<size_t>(length + 1), ' ');
+            gl.v4_2->glGetProgramBinary(program, length, nullptr, &format, &binary[0]);
+
+            // only supported on nvidia so far
+            const auto begin = binary.find("!!NV",0);
+            const auto end = binary.rfind("END");
+            if (begin != std::string::npos && end != std::string::npos)
+                assembly = QString::fromUtf8(&binary[begin], static_cast<int>(end - begin));
+        }
+        gl.glDeleteProgram(program);
+    }
+    return assembly;
+}

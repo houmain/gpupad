@@ -86,5 +86,6 @@ void Settings::setSyntaxHighlighting(bool enabled)
 void Settings::setDarkTheme(bool enabled)
 {
     mDarkTheme = enabled;
+    emit darkThemeChanging(enabled);
     emit darkThemeChanged(enabled);
 }

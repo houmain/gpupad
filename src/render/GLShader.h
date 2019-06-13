@@ -16,6 +16,7 @@ public:
 
     bool compile();
     GLuint shaderObject() const { return mShaderObject; }
+    QString getAssembly();
 
 private:
     ItemId mItemId{ };
