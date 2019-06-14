@@ -75,27 +75,41 @@ bool GLProgram::link()
     auto uniforms = GLint{ };
     gl.glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniforms);
     for (auto i = 0; i < uniforms; ++i) {
-        gl.glGetActiveUniform(program, static_cast<GLuint>(i), buffer.size(),
+        gl.glGetActiveUniform(program, static_cast<GLuint>(i), static_cast<GLsizei>(buffer.size()),
             &nameLength, &size, &type, buffer.data());
-        const auto base = getUniformBaseName(buffer.data());
-        mUniformDataTypes[base] = type;
+        auto name = QString(buffer.data());
+        mUniformDataTypes[getUniformBaseName(name)] = type;
         for (auto i = 0; i < size; i++)
-            mUniformsSet[QStringLiteral("%1[%2]").arg(base).arg(i)] = false;
+            mUniformsSet[name.replace("[0]", QStringLiteral("[%1]").arg(i))] = false;
     }
 
     auto uniformBlocks = GLint{ };
     gl.glGetProgramiv(program, GL_ACTIVE_UNIFORM_BLOCKS, &uniformBlocks);
     for (auto i = 0; i < uniformBlocks; ++i) {
         gl.glGetActiveUniformBlockName(program, static_cast<GLuint>(i),
-            buffer.size(), &nameLength, buffer.data());
+            static_cast<GLsizei>(buffer.size()), &nameLength, buffer.data());
         auto name = QString(buffer.data());
         mUniformBlocksSet[name] = false;
+
+        // remove block's uniforms from list of uniforms to set
+        gl.glGetActiveUniformBlockiv(program, static_cast<GLuint>(i),
+            GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniforms);
+        auto uniformIndices = std::vector<GLint>(uniforms);
+        gl.glGetActiveUniformBlockiv(program, static_cast<GLuint>(i),
+            GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, uniformIndices.data());
+        for (auto index : uniformIndices) {
+            gl.glGetActiveUniform(program, index, static_cast<GLsizei>(buffer.size()),
+                &nameLength, &size, &type, buffer.data());
+            auto name = QString(buffer.data());
+            for (auto i = 0; i < size; i++)
+                mUniformsSet.erase(name.replace("[0]", QStringLiteral("[%1]").arg(i)));
+        }
     }
 
     auto attributes = GLint{ };
     gl.glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributes);
     for (auto i = 0; i < attributes; ++i) {
-        gl.glGetActiveAttrib(program, static_cast<GLuint>(i), buffer.size(),
+        gl.glGetActiveAttrib(program, static_cast<GLuint>(i), static_cast<GLsizei>(buffer.size()),
             &nameLength, &size, &type, buffer.data());
         auto name = QString(buffer.data());
         if (!name.startsWith("gl_"))
@@ -114,7 +128,7 @@ bool GLProgram::link()
                 GL_ACTIVE_SUBROUTINE_UNIFORMS, &uniforms);
             for (auto i = 0u; i < static_cast<GLuint>(uniforms); ++i) {
                 gl40->glGetActiveSubroutineUniformName(program, stage, i,
-                    buffer.size(), &nameLength, buffer.data());
+                    static_cast<GLsizei>(buffer.size()), &nameLength, buffer.data());
                 auto name = QString(buffer.data());
 
                 auto compatible = GLint{ };
@@ -129,7 +143,7 @@ bool GLProgram::link()
                 for (auto index : subroutineIndices) {
                     gl40->glGetActiveSubroutineName(program, stage,
                         static_cast<GLuint>(index),
-                        buffer.size(), &nameLength, buffer.data());
+                        static_cast<GLsizei>(buffer.size()), &nameLength, buffer.data());
                     subroutines += QString(buffer.data());
                 }
                 mSubroutineUniforms[stage] +=
@@ -160,15 +174,9 @@ void GLProgram::unbind(ItemId callItemId)
 
     // warn about not set uniforms
     for (auto &kv : mUniformsSet)
-        if (!std::exchange(kv.second, false)) {
-            // remove [0] from warning, when there is no uniform [1]
-            auto uniformName = kv.first;
-            if (uniformName.endsWith("[0]") &&
-                !mUniformsSet.count(QString(kv.first).replace("[0]", "[1]")))
-                uniformName.chop(3);
+        if (!std::exchange(kv.second, false))
             *mCallMessages += MessageList::insert(callItemId,
-                MessageType::UnformNotSet, uniformName);
-        }
+                MessageType::UnformNotSet, kv.first);
 
     for (auto &kv : mUniformBlocksSet)
         if (!std::exchange(kv.second, false))
