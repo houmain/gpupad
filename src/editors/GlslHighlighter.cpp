@@ -153,9 +153,9 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
         builtinConstantsFormat.setForeground(QColor(0xDD8D8D));
         numberFormat.setForeground(QColor(0xB09D30));
         quotationFormat.setForeground(QColor(0xB09D30));
-        preprocessorFormat.setForeground(QColor(0xA87FFF));
-        singleLineCommentFormat.setForeground(QColor(0x56A056));
-        mMultiLineCommentFormat.setForeground(QColor(0x56A056));
+        preprocessorFormat.setForeground(QColor(0xC87FFF));
+        singleLineCommentFormat.setForeground(QColor(0x56C056));
+        mMultiLineCommentFormat.setForeground(QColor(0x56C056));
     }
     else {
         functionFormat.setForeground(QColor(0x000066));
