@@ -14,6 +14,7 @@ void ExpressionEditor::wheelEvent(QWheelEvent *event)
     mWheelDeltaRemainder -= steps * 120;
     stepBy(event->modifiers() & Qt::ShiftModifier ? steps / 10.0 :
            event->modifiers() & Qt::ControlModifier ? steps * 10.0 : steps);
+    selectAll();
     event->accept();
 }
 

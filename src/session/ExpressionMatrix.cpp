@@ -18,6 +18,7 @@ namespace {
                               const QModelIndex&) const override
         {
             auto editor = new ExpressionEditor(parent);
+            editor->setFont(parent->font());
             editor->setFrameShape(QFrame::NoFrame);
             editor->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
             editor->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -28,11 +29,14 @@ namespace {
             return editor;
         }
 
-        void setEditorData(QWidget *editor, const QModelIndex &index) const override
+        void setEditorData(QWidget *editor_, const QModelIndex &index) const override
         {
-            if (!mEditing)
-                static_cast<ExpressionEditor*>(editor)->setText(
-                    index.model()->data(index, Qt::EditRole).toString());
+            if (!mEditing) {
+                auto editor = static_cast<ExpressionEditor*>(editor_);
+                auto text = index.model()->data(index, Qt::EditRole).toString();
+                editor->setText(text);
+                editor->selectAll();
+            }
         }
 
         void setModelData(QWidget *editor, QAbstractItemModel *model,
