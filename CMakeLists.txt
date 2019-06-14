@@ -75,9 +75,12 @@ set(SOURCES
   src/session/TextureProperties.cpp
   src/session/TextureProperties.ui)
 
-file(GLOB_RECURSE HEADERS include *.h *.rc)
+if(MSVC)
+  file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h" "src/*.qrc" "libs/*.cpp" "libs/*.h" "*.natvis")
+  source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
+endif()
 
-add_executable(gpupad WIN32 ${SOURCES} ${HEADERS})
+add_executable(gpupad WIN32 ${SOURCES})
 
 find_package(Qt5Widgets CONFIG REQUIRED)
 find_package(Qt5OpenGL CONFIG REQUIRED)
