@@ -15,6 +15,9 @@ public slots:
 
 private slots:
     void updatePalette();
+
+private:
+    int mLastScrollPosVertical{ };
 };
 
 #endif // ASSEMBLYWINDOW_H

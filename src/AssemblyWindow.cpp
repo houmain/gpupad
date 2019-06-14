@@ -29,7 +29,13 @@ void AssemblyWindow::setText(QString text)
 {
     auto h = horizontalScrollBar()->value();
     auto v = verticalScrollBar()->value();
+    if (v)
+      mLastScrollPosVertical = v;
+    else
+      v = mLastScrollPosVertical;
+
     setPlainText(text);
+
     verticalScrollBar()->setValue(v);
     horizontalScrollBar()->setValue(h);
 }
