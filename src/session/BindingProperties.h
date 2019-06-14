@@ -26,7 +26,7 @@ public:
     Binding::Editor currentEditor() const;
     TextureKind currentTextureKind() const;
     void setValues(const QStringList &values);
-    const QStringList &values() const { return mValues; }
+    QStringList values() const;
 
 signals:
     void valuesChanged();

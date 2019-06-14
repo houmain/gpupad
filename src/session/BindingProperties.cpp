@@ -63,6 +63,16 @@ namespace {
             QString::number(color.alphaF())
         };
     }
+
+    bool startsWith(const QStringList &a, const QStringList &b)
+    {
+        if (b.size() > a.size())
+            return false;
+        for (auto i = 0; i < b.size(); ++i)
+            if (a[i] != b[i])
+                return false;
+        return true;
+    }
 } // namespace
 
 BindingProperties::BindingProperties(SessionProperties *sessionProperties)
@@ -188,10 +198,18 @@ void BindingProperties::setValues(const QStringList &values)
         mValues == values)
         return;
 
-    mValues = values;
+    // remember more values, to allow scrolling through dimensions without losing entries
+    if (!startsWith(mValues, values))
+        mValues = values;
+
     emit valuesChanged();
 
     updateWidgets();
+}
+
+QStringList BindingProperties::values() const
+{
+    return mUi->expressions->values();
 }
 
 void BindingProperties::updateWidgets()
@@ -213,8 +231,8 @@ void BindingProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelColor, mUi->color, color);
     mUi->expressions->setColumnCount(expressionColumns(editor));
     mUi->expressions->setRowCount(expressionRows(editor));
-    mUi->color->setColor(valuesToColor(values()));
-    mUi->expressions->setValues(values());
+    mUi->color->setColor(valuesToColor(mValues));
+    mUi->expressions->setValues(mValues);
 
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
         image || sampler);
