@@ -16,7 +16,7 @@ set(SOURCES
   src/MainWindow.ui
   src/MessageList.cpp
   src/MessageWindow.cpp
-  src/AssemblyWindow.cpp
+  src/OutputWindow.cpp
   src/FileCache.cpp
   src/Settings.cpp
   src/Singletons.cpp
@@ -41,7 +41,7 @@ set(SOURCES
   src/render/RenderSession.cpp
   src/render/RenderTask.cpp
   src/render/Renderer.cpp
-  src/render/ValidateSource.cpp
+  src/render/ProcessSource.cpp
   src/scripting/GpupadScriptObject.cpp
   src/scripting/ScriptEngine.cpp
   src/scripting/CustomActions.cpp
@@ -75,12 +75,13 @@ set(SOURCES
   src/session/TextureProperties.cpp
   src/session/TextureProperties.ui)
 
-if(MSVC)
-  file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h" "src/*.qrc" "libs/*.cpp" "libs/*.h" "*.natvis")
-  source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
+file(GLOB_RECURSE HEADERS include *.h)
+if(WIN32)
+  set(HEADERS ${HEADERS} src/resources.rc qt5.natvis)
 endif()
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
-add_executable(gpupad WIN32 ${SOURCES})
+add_executable(gpupad WIN32 ${SOURCES} ${HEADERS})
 
 find_package(Qt5Widgets CONFIG REQUIRED)
 find_package(Qt5OpenGL CONFIG REQUIRED)
@@ -91,7 +92,7 @@ if(NOT WIN32)
   install(TARGETS gpupad DESTINATION "bin")
   install(DIRECTORY share DESTINATION .)
   install(DIRECTORY samples DESTINATION "share/gpupad")
-else(NOT WIN32)
+else()
   install(TARGETS gpupad DESTINATION .)
   install(DIRECTORY samples DESTINATION .)
-endif(NOT WIN32)
+endif()

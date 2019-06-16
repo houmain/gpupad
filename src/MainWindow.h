@@ -12,7 +12,7 @@ class MainWindow;
 class QSplitter;
 class Singletons;
 class MessageWindow;
-class AssemblyWindow;
+class OutputWindow;
 class EditorManager;
 class SessionEditor;
 class SessionProperties;
@@ -73,7 +73,7 @@ private:
     QScopedPointer<MessageWindow> mMessageWindow;
     QScopedPointer<CustomActions> mCustomActions;
     QScopedPointer<Singletons> mSingletons;
-    QScopedPointer<AssemblyWindow> mAssemblyWindow;
+    QScopedPointer<OutputWindow> mOutputWindow;
     EditorManager &mEditorManager;
     QScopedPointer<SessionEditor> mSessionEditor;
     QScopedPointer<SessionProperties> mSessionProperties;

@@ -1,5 +1,5 @@
-#ifndef VALIDATESOURCE_H
-#define VALIDATESOURCE_H
+#ifndef PROCESSSOURCE_H
+#define PROCESSSOURCE_H
 
 #include "RenderTask.h"
 #include "SourceType.h"
@@ -8,19 +8,20 @@
 class GLShader;
 class ScriptEngine;
 
-class ValidateSource : public RenderTask
+class ProcessSource : public RenderTask
 {
     Q_OBJECT
 public:
-    explicit ValidateSource(QObject *parent = nullptr);
-    ~ValidateSource() override;
+    explicit ProcessSource(QObject *parent = nullptr);
+    ~ProcessSource() override;
 
     void setSource(QString fileName, SourceType sourceType);
-    void setAssembleSource(bool active);
+    void setValidateSource(bool validate);
+    void setProcessType(QString processType);
     QSet<ItemId> usedItems() const override;
 
 signals:
-    void assemblyChanged(QString assembly);
+    void outputChanged(QString output);
 
 private:
     void prepare(bool itemsChanged, bool manualEvaluation) override;
@@ -36,8 +37,9 @@ private:
     QString mScriptSource;
     QScopedPointer<ScriptEngine> mScriptEngine;
 
-    bool mAssembleSource{ };
-    QString mAssembly;
+    bool mValidateSource{ };
+    QString mProcessType{ };
+    QString mOutput;
 };
 
-#endif // VALIDATESOURCE_H
+#endif // PROCESSSOURCE_H

@@ -10,7 +10,7 @@ class QTimer;
 class SessionModel;
 class BinaryEditor;
 class RenderSession;
-class ValidateSource;
+class ProcessSource;
 
 class SynchronizeLogic : public QObject
 {
@@ -20,8 +20,8 @@ public:
     ~SynchronizeLogic() override;
 
     void resetRenderSession();
-    void setSourceValidationActive(bool active);
-    void setSourceAssemblyActive(bool active);
+    void setValidateSource(bool validate);
+    void setProcessSourceType(QString type);
     void setEvaluationMode(bool automatic, bool steady);
     void setEvaluationInterval(int interval);
     void updateBinaryEditor(const Buffer &buffer,
@@ -29,7 +29,7 @@ public:
     void updateFileCache();
 
 signals:
-    void assemblyChanged(QString assembly);
+    void outputChanged(QString assembly);
 
 public slots:
     void manualEvaluation();
@@ -43,7 +43,7 @@ private slots:
     void handleItemReordered(const QModelIndex &parent, int first);
     void handleSessionRendered();
     void evaluate(bool manualEvaluation = false);
-    void validateSource();
+    void processSource();
 
 private:
     SessionModel &mModel;
@@ -56,9 +56,10 @@ private:
     bool mAutomaticEvaluation{ };
     bool mSteadyEvaluation{ };
 
-    bool mAssembleSource{ };
-    QTimer *mValidateSourceTimer{ };
-    QScopedPointer<ValidateSource> mValidateSource;
+    bool mValidateSource{ };
+    QString mProcessSourceType{ };
+    QTimer *mProcessSourceTimer{ };
+    ProcessSource* mProcessSource{ };
 };
 
 #endif // SYNCHRONIZELOGIC_H

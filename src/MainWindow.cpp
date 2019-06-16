@@ -6,7 +6,7 @@
 #include "session/SessionModel.h"
 #include "Singletons.h"
 #include "MessageWindow.h"
-#include "AssemblyWindow.h"
+#include "OutputWindow.h"
 #include "MessageList.h"
 #include "Settings.h"
 #include "SynchronizeLogic.h"
@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     , mMessageWindow(new MessageWindow())
     , mCustomActions(new CustomActions(this))
     , mSingletons(new Singletons(this))
-    , mAssemblyWindow(new AssemblyWindow())
+    , mOutputWindow(new OutputWindow())
     , mEditorManager(Singletons::editorManager())
     , mSessionEditor(new SessionEditor())
     , mSessionProperties(new SessionProperties())
@@ -85,16 +85,16 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->menuView->addAction(dock->toggleViewAction());
     addDockWidget(Qt::RightDockWidgetArea, dock);
 
-    dock = new QDockWidget(tr("Assembly"), this);
-    dock->setObjectName("Assembly");
+    dock = new QDockWidget(tr("Output"), this);
+    dock->setObjectName("Output");
     dock->setFeatures(QDockWidget::DockWidgetClosable |
                       QDockWidget::DockWidgetMovable |
                       QDockWidget::DockWidgetFloatable);
-    dock->setWidget(mAssemblyWindow.data());
+    dock->setWidget(mOutputWindow.data());
     dock->setVisible(false);
     mUi->menuView->addAction(dock->toggleViewAction());
     addDockWidget(Qt::RightDockWidgetArea, dock);
-    auto assemblyDock = dock;
+    auto outputDock = dock;
 
     mUi->actionQuit->setShortcuts(QKeySequence::Quit);
     mUi->actionNew->setShortcuts(QKeySequence::New);
@@ -174,15 +174,20 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&mEditorManager, &EditorManager::sourceTypeChanged,
         &synchronizeLogic, &SynchronizeLogic::handleSourceTypeChanged);
     connect(mUi->actionSourceValidation, &QAction::toggled,
-        &synchronizeLogic, &SynchronizeLogic::setSourceValidationActive);
-    connect(assemblyDock, &QDockWidget::visibilityChanged,
-        &synchronizeLogic, &SynchronizeLogic::setSourceAssemblyActive);
+        &synchronizeLogic, &SynchronizeLogic::setValidateSource);
+    connect(mOutputWindow.data(), &OutputWindow::typeSelectionChanged,
+        &synchronizeLogic, &SynchronizeLogic::setProcessSourceType);
+    connect(outputDock, &QDockWidget::visibilityChanged,
+        [this](bool visible) {
+            Singletons::synchronizeLogic().setProcessSourceType(
+                visible ? mOutputWindow->selectedType() : "");
+        });
     connect(mMessageWindow.data(), &MessageWindow::messageActivated,
         this, &MainWindow::handleMessageActivated);
     connect(mMessageWindow.data(), &MessageWindow::messagesAdded,
         this, &MainWindow::openMessageDock);
-    connect(&synchronizeLogic, &SynchronizeLogic::assemblyChanged,
-        mAssemblyWindow.data(), &AssemblyWindow::setText);
+    connect(&synchronizeLogic, &SynchronizeLogic::outputChanged,
+        mOutputWindow.data(), &OutputWindow::setText);
 
     auto &settings = Singletons::settings();
     connect(mUi->actionSelectFont, &QAction::triggered,
@@ -289,8 +294,7 @@ MainWindow::~MainWindow()
 void MainWindow::writeSettings()
 {
     auto &settings = Singletons::settings();
-    if (!isMaximized())
-        settings.setValue("geometry", saveGeometry());
+    settings.setValue("geometry", saveGeometry());
     settings.setValue("maximized", isMaximized());
     settings.setValue("state", saveState());
     settings.setValue("sessionSplitter", mSessionSplitter->saveState());

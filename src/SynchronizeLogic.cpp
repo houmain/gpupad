@@ -5,7 +5,7 @@
 #include "editors/EditorManager.h"
 #include "editors/BinaryEditor.h"
 #include "render/RenderSession.h"
-#include "render/ValidateSource.h"
+#include "render/ProcessSource.h"
 #include <QTimer>
 
 template<typename F> // F(const FileItem&)
@@ -20,47 +20,45 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     : QObject(parent)
     , mModel(Singletons::sessionModel())
     , mEvaluationTimer(new QTimer(this))
-    , mValidateSourceTimer(new QTimer(this))
+    , mProcessSourceTimer(new QTimer(this))
+    , mProcessSource(new ProcessSource(this))
 {
     connect(mEvaluationTimer, &QTimer::timeout,
         [this]() { evaluate(); });
-    connect(mValidateSourceTimer, &QTimer::timeout,
-        this, &SynchronizeLogic::validateSource);
+    connect(mProcessSourceTimer, &QTimer::timeout,
+        this, &SynchronizeLogic::processSource);
     connect(&mModel, &SessionModel::dataChanged,
         this, &SynchronizeLogic::handleItemModified);
     connect(&mModel, &SessionModel::rowsInserted,
         this, &SynchronizeLogic::handleItemReordered);
     connect(&mModel, &SessionModel::rowsAboutToBeRemoved,
         this, &SynchronizeLogic::handleItemReordered);
+    connect(mProcessSource, &ProcessSource::outputChanged,
+        this, &SynchronizeLogic::outputChanged);
 
     resetRenderSession();
     setEvaluationMode(false, false);
 
-    mValidateSourceTimer->setInterval(500);
-    mValidateSourceTimer->setSingleShot(true);
+    mProcessSourceTimer->setInterval(500);
+    mProcessSourceTimer->setSingleShot(true);
 }
 
 SynchronizeLogic::~SynchronizeLogic() = default;
 
-void SynchronizeLogic::setSourceValidationActive(bool active)
+void SynchronizeLogic::setValidateSource(bool validate)
 {
-    if (active) {
-        if (!mValidateSource) {
-            mValidateSource.reset(new ValidateSource());
-            connect(mValidateSource.data(), &ValidateSource::assemblyChanged,
-                this, &SynchronizeLogic::assemblyChanged);
-            validateSource();
-        }
-    }
-    else {
-        mValidateSource.reset();
+    if (mValidateSource != validate) {
+        mValidateSource = validate;
+        processSource();
     }
 }
 
-void SynchronizeLogic::setSourceAssemblyActive(bool active)
+void SynchronizeLogic::setProcessSourceType(QString type)
 {
-    mAssembleSource = active;
-    validateSource();
+    if (mProcessSourceType != type) {
+        mProcessSourceType = type;
+        processSource();
+    }
 }
 
 void SynchronizeLogic::resetRenderSession()
@@ -122,7 +120,7 @@ void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
 
     auto &editorManager = Singletons::editorManager();
     if (editorManager.currentEditorFileName() == fileName)
-        mValidateSourceTimer->start();
+        mProcessSourceTimer->start();
 }
 
 void SynchronizeLogic::handleItemModified(const QModelIndex &index)
@@ -174,7 +172,7 @@ void SynchronizeLogic::handleFileRenamed(const QString &prevFileName,
 void SynchronizeLogic::handleSourceTypeChanged(SourceType sourceType)
 {
     Q_UNUSED(sourceType);
-    validateSource();
+    processSource();
 }
 
 void SynchronizeLogic::evaluate(bool manualEvaluation)
@@ -237,15 +235,17 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
         editor.scrollToOffset();
 }
 
-void SynchronizeLogic::validateSource()
+void SynchronizeLogic::processSource()
 {
-    if (mValidateSource) {
-        updateFileCache();
-        mValidateSource->setSource(
-            Singletons::editorManager().currentEditorFileName(),
-            Singletons::editorManager().currentSourceType());
-        mValidateSource->setAssembleSource(mAssembleSource);
-        mValidateSource->update(false, false, false);
-    }
-}
+    if (!mValidateSource && mProcessSourceType.isEmpty())
+        return;
 
+    updateFileCache();
+
+    mProcessSource->setSource(
+        Singletons::editorManager().currentEditorFileName(),
+        Singletons::editorManager().currentSourceType());
+    mProcessSource->setValidateSource(mValidateSource);
+    mProcessSource->setProcessType(mProcessSourceType);
+    mProcessSource->update(false, false, false);
+}

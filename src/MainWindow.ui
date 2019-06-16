@@ -147,11 +147,11 @@
      </property>
     </widget>
     <addaction name="menuSourceType"/>
+    <addaction name="actionSourceValidation"/>
     <addaction name="separator"/>
     <addaction name="actionSelectFont"/>
     <addaction name="actionDarkTheme"/>
     <addaction name="actionSyntaxHighlighting"/>
-    <addaction name="actionSourceValidation"/>
     <addaction name="actionLineWrapping"/>
     <addaction name="actionIndentWithSpaces"/>
     <addaction name="actionAutoIndentation"/>

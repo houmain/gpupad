@@ -144,9 +144,10 @@ void SourceEditor::setFileName(QString fileName)
 
 bool SourceEditor::load(const QString &fileName, QString *source)
 {
-    if (FileDialog::isEmptyOrUntitled(fileName))
-        return false;
-
+    if (FileDialog::isEmptyOrUntitled(fileName)) {
+        *source = "";
+        return true;
+    }
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly | QFile::Text))
         return false;

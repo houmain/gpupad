@@ -1,10 +1,33 @@
-#include "ValidateSource.h"
+#include "ProcessSource.h"
 #include "GLShader.h"
 #include "scripting/ScriptEngine.h"
 #include <QProcess>
 
 namespace {
-    QString generateSpirv(QString source, SourceType sourceType)
+    QString glslangValidator(QString source, QStringList args)
+    {
+        QProcess process;
+        process.setProcessChannelMode(QProcess::MergedChannels);
+        process.start("glslangValidator", args);
+        if (!process.waitForStarted())
+            return "";
+        process.write(source.toUtf8());
+        process.closeWriteChannel();
+
+        auto data = QByteArray();
+        while (process.waitForReadyRead())
+            data.append(process.readAll());
+
+        return QString::fromUtf8(data);
+    }
+
+    QString preprocess(QString source)
+    {
+        const auto args = QStringList{ "-E", "--stdin", "-S", "vert" };
+        return glslangValidator(source, args);
+    }
+
+    QString generateSpirV(QString source, SourceType sourceType)
     {
         const auto type = [&]() -> const char* {
             switch (sourceType) {
@@ -25,50 +48,42 @@ namespace {
           "--client", "opengl100",
           "--stdin", "-S", type
         };
-
-        QProcess process;
-        process.setProcessChannelMode(QProcess::MergedChannels);
-        process.start("glslangValidator", args);
-        if (!process.waitForStarted())
-            return "";
-        process.write(source.toUtf8());
-        process.closeWriteChannel();
-
-        auto data = QByteArray();
-        while (process.waitForReadyRead())
-            data.append(process.readAll());
-
-        return QString::fromUtf8(data);
+        return glslangValidator(source, args).replace("stdin", "");
     }
 } // namespace
 
-ValidateSource::ValidateSource(QObject *parent) : RenderTask(parent)
+ProcessSource::ProcessSource(QObject *parent) : RenderTask(parent)
 {
 }
 
-ValidateSource::~ValidateSource()
+ProcessSource::~ProcessSource()
 {
     releaseResources();
 }
 
-QSet<ItemId> ValidateSource::usedItems() const
+QSet<ItemId> ProcessSource::usedItems() const
 {
     return { };
 }
 
-void ValidateSource::setSource(QString fileName,
+void ProcessSource::setSource(QString fileName,
         SourceType sourceType)
 {
     mFileName = fileName;
     mSourceType = sourceType;
 }
 
-void ValidateSource::setAssembleSource(bool active)
+void ProcessSource::setValidateSource(bool validate)
 {
-    mAssembleSource = active;
+    mValidateSource = validate;
 }
 
-void ValidateSource::prepare(bool itemsChanged, bool manualEvaluation)
+void ProcessSource::setProcessType(QString processType)
+{
+    mProcessType = processType;
+}
+
+void ProcessSource::prepare(bool itemsChanged, bool manualEvaluation)
 {
     Q_UNUSED(itemsChanged);
     Q_UNUSED(manualEvaluation);
@@ -108,24 +123,26 @@ void ValidateSource::prepare(bool itemsChanged, bool manualEvaluation)
     shader.fileName = mFileName;
     shader.shaderType = shaderType;
     mNewShader.reset(new GLShader({ &shader }));
-    mAssembly.clear();
+    mOutput.clear();
 }
 
-void ValidateSource::render()
+void ProcessSource::render()
 {
     if (mNewShader) {
         mScriptEngine.reset();
         mShader.reset(mNewShader.take());
-        mShader->compile();
 
-        if (mAssembleSource) {
-            auto source = QString();
-            Singletons::fileCache().getSource(mFileName, &source);
-            mAssembly = generateSpirv(source, mSourceType);
+        if (mValidateSource)
+            mShader->compile();
 
-            if (mAssembly.isEmpty())
-                mAssembly = mShader->getAssembly();
-        }
+        auto source = QString();
+        Singletons::fileCache().getSource(mFileName, &source);
+        if (mProcessType == "preprocess")
+            mOutput = preprocess(source);
+        else if (mProcessType == "spirv")
+            mOutput = generateSpirV(source, mSourceType);
+        else if (mProcessType == "assembly")
+            mOutput = mShader->getAssembly();
     }
     else {
         mShader.reset();
@@ -137,13 +154,13 @@ void ValidateSource::render()
     }
 }
 
-void ValidateSource::finish(bool steadyEvaluation)
+void ProcessSource::finish(bool steadyEvaluation)
 {
     Q_UNUSED(steadyEvaluation);
-    emit assemblyChanged(mAssembly);
+    emit outputChanged(mOutput);
 }
 
-void ValidateSource::release()
+void ProcessSource::release()
 {
     mShader.reset();
 }

@@ -73,7 +73,7 @@ bool GLShader::operator==(const GLShader &rhs) const
            std::tie(rhs.mSources, rhs.mType);
 }
 
-bool GLShader::compile()
+bool GLShader::compile(bool silent)
 {
     if (!GLContext::currentContext()) {
         mMessages += MessageList::insert(
@@ -110,12 +110,13 @@ bool GLShader::compile()
     gl.glCompileShader(shader);
     gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
-    auto length = GLint{ };
-    gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-    auto log = std::vector<char>(static_cast<size_t>(length));
-    gl.glGetShaderInfoLog(shader, length, nullptr, log.data());
-    GLShader::parseLog(log.data(), mMessages, mItemId, mFileNames);
-
+    if (!silent) {
+        auto length = GLint{ };
+        gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
+        auto log = std::vector<char>(static_cast<size_t>(length));
+        gl.glGetShaderInfoLog(shader, length, nullptr, log.data());
+        GLShader::parseLog(log.data(), mMessages, mItemId, mFileNames);
+    }
     if (status != GL_TRUE)
         return false;
 
@@ -124,13 +125,13 @@ bool GLShader::compile()
 }
 
 QString GLShader::getAssembly() {
-    auto assembly = QString();
+    compile(true);
 
+    auto assembly = QString();
     auto &gl = GLContext::currentContext();
-    auto& shader = mShaderObject;
-    if (gl.v4_2 && shader) {
+    if (gl.v4_2 && mShaderObject) {
         auto program = gl.glCreateProgram();
-        gl.glAttachShader(program, shader);
+        gl.glAttachShader(program, mShaderObject);
         gl.glLinkProgram(program);
 
         auto length = GLint{ };
@@ -141,7 +142,7 @@ QString GLShader::getAssembly() {
             gl.v4_2->glGetProgramBinary(program, length, nullptr, &format, &binary[0]);
 
             // only supported on nvidia so far
-            const auto begin = binary.find("!!NV",0);
+            const auto begin = binary.find("!!NV");
             const auto end = binary.rfind("END");
             if (begin != std::string::npos && end != std::string::npos)
                 assembly = QString::fromUtf8(&binary[begin], static_cast<int>(end - begin));
