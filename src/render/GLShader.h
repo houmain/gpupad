@@ -14,6 +14,7 @@ public:
     bool operator==(const GLShader &rhs) const;
     Shader::ShaderType type() const { return mType; }
 
+    QString getSource() const;
     bool compile(bool silent = false);
     GLuint shaderObject() const { return mShaderObject; }
     QString getAssembly();

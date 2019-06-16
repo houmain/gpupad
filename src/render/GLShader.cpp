@@ -59,18 +59,20 @@ GLShader::GLShader(const QList<const Shader*> &shaders)
         mItemId = shader->id;
         mType = shader->shaderType;
     }
-
-    // workaround: to prevent unesthetic "unexpected end" error,
-    // ensure shader is not empty
-    if (mSources.empty())
-        mSources += "";
-    mSources.back() += "\n struct XXX_gpupad { float a; };\n";
 }
 
 bool GLShader::operator==(const GLShader &rhs) const
 {
     return std::tie(mSources, mType) ==
            std::tie(rhs.mSources, rhs.mType);
+}
+
+QString GLShader::getSource() const
+{
+    auto result = QString();
+    for (const auto &source : mSources)
+        result += source + "\n";
+    return result;
 }
 
 bool GLShader::compile(bool silent)
@@ -100,6 +102,13 @@ bool GLShader::compile(bool silent)
     auto sources = std::vector<std::string>();
     foreach (const QString &source, mSources)
         sources.push_back(source.toUtf8().data());
+
+    // workaround: to prevent unesthetic "unexpected end" error,
+    // ensure shader is not empty
+    if (sources.empty())
+        sources.emplace_back();
+    sources.back() += "\n struct XXX_gpupad { float a; };\n";
+
     auto pointers = std::vector<const char*>();
     for (const auto &source : sources)
         pointers.push_back(source.data());

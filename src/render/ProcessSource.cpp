@@ -2,15 +2,17 @@
 #include "GLShader.h"
 #include "scripting/ScriptEngine.h"
 #include <QProcess>
+#include <QDir>
 
 namespace {
     QString glslangValidator(QString source, QStringList args)
     {
         QProcess process;
         process.setProcessChannelMode(QProcess::MergedChannels);
+        process.setWorkingDirectory(QDir::temp().path());
         process.start("glslangValidator", args);
         if (!process.waitForStarted())
-            return "";
+            return "glslangValidator not found";
         process.write(source.toUtf8());
         process.closeWriteChannel();
 
@@ -50,6 +52,57 @@ namespace {
         };
         return glslangValidator(source, args).replace("stdin", "");
     }
+
+    Shader::ShaderType getShaderType(SourceType sourceType)
+    {
+        switch (sourceType) {
+            case SourceType::None:
+            case SourceType::PlainText:
+            case SourceType::JavaScript:
+                break;
+
+            case SourceType::VertexShader:
+                return Shader::ShaderType::Vertex;
+            case SourceType::FragmentShader:
+                return Shader::ShaderType::Fragment;
+            case SourceType::GeometryShader:
+                return Shader::ShaderType::Geometry;
+            case SourceType::TesselationControl:
+                return Shader::ShaderType::TessellationControl;
+            case SourceType::TesselationEvaluation:
+                return Shader::ShaderType::TessellationEvaluation;
+            case SourceType::ComputeShader:
+                return Shader::ShaderType::Compute;
+        }
+        return { };
+    }
+
+    const Item *findShaderInSession(const QString &fileName)
+    {
+        auto shader = std::add_pointer_t<const Shader>();
+        Singletons::sessionModel().forEachItem([&](const Item &item) {
+            if (auto s = castItem<Shader>(item))
+                if (s->fileName == fileName)
+                    shader = s;
+        });
+        return shader;
+    }
+
+    QList<const Shader*> getHeadersInSession(const QString &fileName)
+    {
+        auto shaders = QList<const Shader*>();
+        if (auto shader = findShaderInSession(fileName))
+            if (auto program = castItem<Program>(shader->parent)) {
+                auto index = program->items.indexOf(const_cast<Item*>(shader));
+                for (auto i = index - 1; i >= 0; --i)
+                    if (auto header = castItem<Shader>(program->items[i])) {
+                        if (header->shaderType != Shader::ShaderType::Header)
+                            break;
+                        shaders.prepend(header);
+                    }
+            }
+        return shaders;
+    }
 } // namespace
 
 ProcessSource::ProcessSource(QObject *parent) : RenderTask(parent)
@@ -88,69 +141,42 @@ void ProcessSource::prepare(bool itemsChanged, bool manualEvaluation)
     Q_UNUSED(itemsChanged);
     Q_UNUSED(manualEvaluation);
 
-    auto shaderType = Shader::ShaderType{ };
-    switch (mSourceType) {
-        case SourceType::None:
-        case SourceType::PlainText:
-            return;
-
-        case SourceType::JavaScript:
-            Singletons::fileCache().getSource(mFileName, &mScriptSource);
-            mScriptSource = "if (false) {" + mScriptSource + "}";
-            return;
-
-        case SourceType::VertexShader:
-            shaderType = Shader::ShaderType::Vertex;
-            break;
-        case SourceType::FragmentShader:
-            shaderType = Shader::ShaderType::Fragment;
-            break;
-        case SourceType::GeometryShader:
-            shaderType = Shader::ShaderType::Geometry;
-            break;
-        case SourceType::TesselationControl:
-            shaderType = Shader::ShaderType::TessellationControl;
-            break;
-        case SourceType::TesselationEvaluation:
-            shaderType = Shader::ShaderType::TessellationEvaluation;
-            break;
-        case SourceType::ComputeShader:
-            shaderType = Shader::ShaderType::Compute;
-            break;
+    if (auto shaderType = getShaderType(mSourceType)) {
+        auto shaders = getHeadersInSession(mFileName);
+        auto shader = Shader();
+        shader.fileName = mFileName;
+        shader.shaderType = shaderType;
+        shaders.append(&shader);
+        mNewShader.reset(new GLShader(shaders));
     }
-
-    Shader shader;
-    shader.fileName = mFileName;
-    shader.shaderType = shaderType;
-    mNewShader.reset(new GLShader({ &shader }));
-    mOutput.clear();
 }
 
 void ProcessSource::render()
 {
-    if (mNewShader) {
-        mScriptEngine.reset();
-        mShader.reset(mNewShader.take());
+    mShader.reset(mNewShader.take());
+    mScriptEngine.reset();
+    mOutput.clear();
 
-        if (mValidateSource)
+    if (mValidateSource) {
+        if (mShader) {
             mShader->compile();
+        }
+        else if (mSourceType == SourceType::JavaScript) {
+            auto scriptSource = QString();
+            Singletons::fileCache().getSource(mFileName, &scriptSource);
+            scriptSource = "if (false) {" + scriptSource + "}";
+            mScriptEngine.reset(new ScriptEngine({
+                ScriptEngine::Script{ mFileName, scriptSource } }));
+        }
+    }
 
-        auto source = QString();
-        Singletons::fileCache().getSource(mFileName, &source);
+    if (mShader) {
         if (mProcessType == "preprocess")
-            mOutput = preprocess(source);
+            mOutput = preprocess(mShader->getSource());
         else if (mProcessType == "spirv")
-            mOutput = generateSpirV(source, mSourceType);
+            mOutput = generateSpirV(mShader->getSource(), mSourceType);
         else if (mProcessType == "assembly")
             mOutput = mShader->getAssembly();
-    }
-    else {
-        mShader.reset();
-        mScriptEngine.reset(new ScriptEngine({
-            ScriptEngine::Script{
-                mFileName, std::exchange(mScriptSource, "")
-            }
-        }));
     }
 }
 

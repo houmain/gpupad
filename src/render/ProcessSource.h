@@ -34,7 +34,6 @@ private:
     QString mFileName;
     SourceType mSourceType{ };
 
-    QString mScriptSource;
     QScopedPointer<ScriptEngine> mScriptEngine;
 
     bool mValidateSource{ };
