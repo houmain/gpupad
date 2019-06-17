@@ -3,6 +3,7 @@
 #include <QImageReader>
 #include <QMainWindow>
 #include <QMap>
+#include <QMessageBox>
 
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
@@ -175,11 +176,22 @@ bool FileDialog::exec(Options options, QString currentFileName)
         dialog.setDirectory(mDirectory.exists() ?
             mDirectory : QDir::current());
 
-    auto result = (dialog.exec() == QDialog::Accepted);
+    if (dialog.exec() != QDialog::Accepted)
+        return false;
 
-    if (result) {
-        mFileNames = dialog.selectedFiles();
-        mDirectory = dialog.directory();
-    }
-    return result;
+    if (options & Saving)
+        for (const auto &fileName : dialog.selectedFiles())
+            if (!QFileInfo(fileName).isWritable()) {
+                QMessageBox dialog(mWindow);
+                dialog.setIcon(QMessageBox::Warning);
+                dialog.setWindowTitle(tr("File Error"));
+                dialog.setText(tr("Error while saving file '%1'.").arg(fileName));
+                dialog.addButton(QMessageBox::Ok);
+                dialog.exec();
+                return false;
+            }
+
+    mFileNames = dialog.selectedFiles();
+    mDirectory = dialog.directory();
+    return true;
 }
