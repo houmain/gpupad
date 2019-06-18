@@ -15,7 +15,7 @@ OutputWindow::OutputWindow(QWidget *parent) : QWidget(parent)
     layout->addWidget(mTypeSelector);
     layout->addWidget(mTextEdit);
 
-    mTypeSelector->addItem(tr("Perprocess"), "preprocess");
+    mTypeSelector->addItem(tr("Preprocess"), "preprocess");
     mTypeSelector->addItem(tr("Dump SPIR-V"), "spirv");
     mTypeSelector->addItem(tr("Dump assembly (NV_gpu_program)"), "assembly");
     connect(mTypeSelector, &DataComboBox::currentDataChanged,
@@ -49,7 +49,7 @@ void OutputWindow::setText(QString text)
 {
     auto h = mTextEdit->horizontalScrollBar()->value();
     auto v = mTextEdit->verticalScrollBar()->value();
-    if (v)
+    if (v > 0 || mTextEdit->verticalScrollBar()->maximum() > 0)
       mLastScrollPosVertical = v;
     else
       v = mLastScrollPosVertical;

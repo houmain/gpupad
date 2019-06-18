@@ -133,6 +133,29 @@ bool GLShader::compile(bool silent)
     return true;
 }
 
+QString formatNvGpuProgram(QString assembly)
+{
+    // indent conditional jumps
+    auto indent = 0;
+    auto lines = assembly.split('\n');
+    for (auto& line : lines) {
+        if (line.startsWith("ENDIF") ||
+                line.startsWith("ENDREP") ||
+                line.startsWith("ELSE"))
+            indent -= 2;
+
+        const auto lineIndent = indent;
+
+        if (line.startsWith("IF") ||
+                line.startsWith("REP") ||
+                line.startsWith("ELSE"))
+            indent += 2;
+
+        line.prepend(QString(lineIndent, ' '));
+    }
+    return lines.join('\n');
+}
+
 QString GLShader::getAssembly() {
     compile(true);
 
@@ -148,13 +171,15 @@ QString GLShader::getAssembly() {
         if (length > 0) {
             auto format = GLuint{ };
             auto binary = std::string(static_cast<size_t>(length + 1), ' ');
-            gl.v4_2->glGetProgramBinary(program, length, nullptr, &format, &binary[0]);
+            gl.v4_2->glGetProgramBinary(program, length,
+                nullptr, &format, &binary[0]);
 
-            // only supported on nvidia so far
+            // only supported on Nvidia so far
             const auto begin = binary.find("!!NV");
             const auto end = binary.rfind("END");
             if (begin != std::string::npos && end != std::string::npos)
-                assembly = QString::fromUtf8(&binary[begin], static_cast<int>(end - begin));
+                assembly = formatNvGpuProgram(QString::fromUtf8(
+                    &binary[begin], static_cast<int>(end - begin)));
         }
         gl.glDeleteProgram(program);
     }
