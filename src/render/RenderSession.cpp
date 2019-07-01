@@ -53,21 +53,22 @@ namespace {
 
         auto unit = 0;
         for (const auto &kv : bindings.samplers)
-            if (program.apply(kv.second, unit++)) {
+            if (program.apply(kv.second, unit)) {
+                ++unit;
                 usedItems += kv.second.bindingItemId;
                 usedItems += kv.second.texture->usedItems();
             }
 
-        unit = 0;
         for (const auto &kv : bindings.images)
-            if (program.apply(kv.second, unit++)) {
+            if (program.apply(kv.second, unit)) {
+                ++unit;
                 usedItems += kv.second.bindingItemId;
                 usedItems += kv.second.texture->usedItems();
             }
 
-        unit = 0;
         for (const auto &kv : bindings.buffers)
-            if (program.apply(kv.second, unit++)) {
+            if (program.apply(kv.second, unit)) {
+                ++unit;
                 usedItems += kv.second.bindingItemId;
                 usedItems += kv.second.buffer->usedItems();
             }

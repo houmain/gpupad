@@ -85,20 +85,20 @@ bool GLProgram::link()
 
     auto uniformBlocks = GLint{ };
     gl.glGetProgramiv(program, GL_ACTIVE_UNIFORM_BLOCKS, &uniformBlocks);
-    for (auto i = 0; i < uniformBlocks; ++i) {
-        gl.glGetActiveUniformBlockName(program, static_cast<GLuint>(i),
+    for (auto i = 0u; i < static_cast<GLuint>(uniformBlocks); ++i) {
+        gl.glGetActiveUniformBlockName(program, i,
             static_cast<GLsizei>(buffer.size()), &nameLength, buffer.data());
         auto name = QString(buffer.data());
         mUniformBlocksSet[name] = false;
 
         // remove block's uniforms from list of uniforms to set
-        gl.glGetActiveUniformBlockiv(program, static_cast<GLuint>(i),
+        gl.glGetActiveUniformBlockiv(program, i,
             GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniforms);
-        auto uniformIndices = std::vector<GLint>(uniforms);
-        gl.glGetActiveUniformBlockiv(program, static_cast<GLuint>(i),
+        auto uniformIndices = std::vector<GLint>(static_cast<size_t>(uniforms));
+        gl.glGetActiveUniformBlockiv(program, i,
             GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, uniformIndices.data());
         for (auto index : uniformIndices) {
-            gl.glGetActiveUniform(program, index, static_cast<GLsizei>(buffer.size()),
+            gl.glGetActiveUniform(program, static_cast<GLuint>(index), static_cast<GLsizei>(buffer.size()),
                 &nameLength, &size, &type, buffer.data());
             auto name = QString(buffer.data());
             for (auto i = 0; i < size; i++)
@@ -236,7 +236,6 @@ bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngin
         binding.values, binding.bindingItemId, *mCallMessages);
     if (location < 0 || values.empty())
         return false;
-    uniformSet(binding.name);
 
     const auto dataType = mUniformDataTypes[getUniformBaseName(binding.name)];
 
@@ -259,14 +258,10 @@ bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngin
     };
 
 #define ADD(TYPE, DATATYPE, COUNT, FUNCTION) \
-        case TYPE: \
-            FUNCTION(location, 1, getValues(DATATYPE(), COUNT).data()); \
-            break;
+        case TYPE: FUNCTION(location, 1, getValues(DATATYPE(), COUNT).data()); break
 
 #define ADD_MATRIX(TYPE, DATATYPE, COUNT, FUNCTION) \
-        case TYPE: \
-            FUNCTION(location, 1, binding.transpose, getValues(DATATYPE(), COUNT).data()); \
-            break;
+        case TYPE: FUNCTION(location, 1, binding.transpose, getValues(DATATYPE(), COUNT).data()); break
 
     switch (dataType) {
         ADD(GL_FLOAT, GLfloat, 1, gl.glUniform1fv);
@@ -310,6 +305,8 @@ bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngin
     }
 #undef ADD
 #undef ADD_MATRIX
+
+    uniformSet(binding.name);
     return true;
 }
 
@@ -322,7 +319,6 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
         return false;
     if (!binding.texture)
         return false;
-    uniformSet(binding.name);
 
     float borderColor[] = {
         static_cast<float>(binding.borderColor.redF()),
@@ -364,7 +360,7 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
         default:
             break;
     }
-    gl.glActiveTexture(GL_TEXTURE0);
+    uniformSet(binding.name);
     return true;
 }
 
@@ -375,7 +371,6 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
         mProgramObject, qPrintable(binding.name));
     if (location < 0)
         return false;
-    uniformSet(binding.name);
 
     if (!gl.v4_2)
         return false;
@@ -400,8 +395,8 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
         gl.v4_2->glBindImageTexture(static_cast<GLuint>(unit),
             textureId, binding.level, binding.layered,
             binding.layer, binding.access, texture.format());
-        gl.glActiveTexture(GL_TEXTURE0);
     }
+    uniformSet(binding.name);
     return true;
 }
 
@@ -409,18 +404,19 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
 {
     if (!binding.buffer)
         return false;
+    auto& buffer = *binding.buffer;
 
     auto &gl = GLContext::currentContext();
     auto index = gl.glGetUniformBlockIndex(
         mProgramObject, qPrintable(binding.name));
 
     if (index != GL_INVALID_INDEX) {
-        uniformBlockSet(binding.name);
-        auto &buffer = *binding.buffer;
         gl.glUniformBlockBinding(mProgramObject, index,
             static_cast<GLuint>(unit));
         gl.glBindBufferBase(GL_UNIFORM_BUFFER,
             static_cast<GLuint>(unit), buffer.getReadOnlyBufferId());
+
+        uniformBlockSet(binding.name);
         return true;
     }
 
@@ -428,12 +424,12 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
         index = gl.v4_3->glGetProgramResourceIndex(mProgramObject,
             GL_SHADER_STORAGE_BLOCK, qPrintable(binding.name));
         if (index != GL_INVALID_INDEX) {
-            uniformBlockSet(binding.name);
-            auto &buffer = *binding.buffer;
             gl.v4_3->glShaderStorageBlockBinding(mProgramObject,
                 index, static_cast<GLuint>(unit));
             gl.v4_3->glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
                 static_cast<GLuint>(unit), buffer.getReadWriteBufferId());
+
+            uniformBlockSet(binding.name);
             return true;
         }
     }
