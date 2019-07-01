@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QMap>
 #include <QMessageBox>
+#include <QTemporaryFile>
 
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
@@ -140,33 +141,32 @@ bool FileDialog::exec(Options options, QString currentFileName)
     auto filters = QStringList();
     if (options & SupportedExtensions)
         filters.append(tr("Supported files") + " (" + supportedFileFilter + ")");
-    if (options & SessionExtensions) {
+    if (options & SessionExtensions)
         filters.append(qApp->applicationName() + tr(" session") +
             " (*." + SessionFileExtension + ")");
-        dialog.setDefaultSuffix(SessionFileExtension);
-    }
-    if (options & ShaderExtensions) {
+    if (options & ShaderExtensions)
         filters.append(tr("GLSL shader files") + " (" + shaderFileFilter + ")");
-        dialog.setDefaultSuffix(*begin(ShaderFileExtensions));
-    }
-    if (options & ImageExtensions) {
+    if (options & ImageExtensions)
         filters.append(tr("Image files") + " (" + imageFileFilter + ")");
-        dialog.setDefaultSuffix("png");
-    }
-    if (options & BinaryExtensions) {
+    if (options & BinaryExtensions)
         filters.append(tr("Binary files") + " (" + binaryFileFilter + ")");
-        dialog.setDefaultSuffix(*begin(BinaryFileExtensions));
-    }
-    if (options & ScriptExtensions) {
+    if (options & ScriptExtensions)
         filters.append(tr("JavaScript files") + " (" + scriptFileFilter + ")");
-        dialog.setDefaultSuffix(*begin(ScriptFileExtensions));
-    }
-    if (options & SupportedExtensions)
-        dialog.setDefaultSuffix("");
 
     filters.append(tr("All Files (*)"));
-
     dialog.setNameFilters(filters);
+
+    dialog.setDefaultSuffix("");
+    if (options & ShaderExtensions)
+        dialog.setDefaultSuffix(*begin(ShaderFileExtensions));
+    else if (options & SessionExtensions)
+        dialog.setDefaultSuffix(SessionFileExtension);
+    else if (options & ScriptExtensions)
+        dialog.setDefaultSuffix(*begin(ScriptFileExtensions));
+    else if (options & ImageExtensions)
+        dialog.setDefaultSuffix("png");
+    else if (options & BinaryExtensions)
+        dialog.setDefaultSuffix(*begin(BinaryFileExtensions));
 
     if (isUntitled(currentFileName))
         currentFileName = "";
@@ -181,7 +181,7 @@ bool FileDialog::exec(Options options, QString currentFileName)
 
     if (options & Saving)
         for (const auto &fileName : dialog.selectedFiles())
-            if (!QFileInfo(fileName).isWritable()) {
+            if (!QFileInfo(fileName).isWritable() && !QTemporaryFile(fileName).open()) {
                 QMessageBox dialog(mWindow);
                 dialog.setIcon(QMessageBox::Warning);
                 dialog.setWindowTitle(tr("File Error"));
