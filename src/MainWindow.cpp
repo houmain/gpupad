@@ -160,9 +160,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mSessionEditor.data(), &SessionEditor::itemAdded,
         this, &MainWindow::openSessionDock);
     connect(mSessionEditor.data(), &SessionEditor::itemActivated,
-        [this](const QModelIndex &index, bool* handled) {
-            *handled = (mSessionProperties->openItemEditor(index) != nullptr);
-        });
+        mSessionProperties.data(), &SessionProperties::openItemEditor);
     connect(mUi->menuSession, &QMenu::aboutToShow,
         mSessionEditor.data(), &SessionEditor::updateItemActions);
 

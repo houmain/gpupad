@@ -29,7 +29,7 @@ public:
 
 signals:
     void itemAdded(const QModelIndex &index);
-    void itemActivated(const QModelIndex &index, bool *handled);
+    void itemActivated(const QModelIndex &index);
     void fileNameChanged(const QString &fileName);
     void modificationChanged(bool modified);
     void focusChanged(bool focused);
@@ -48,7 +48,6 @@ private slots:
     void delete_();
     void openContextMenu(const QPoint &pos);
     void addItem(Item::Type type);
-    void treeItemActivated(const QModelIndex &index);
     void renameCurrentItem();
 
 private:
