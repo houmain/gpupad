@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>225</width>
-    <height>597</height>
+    <height>625</height>
    </rect>
   </property>
   <layout class="QVBoxLayout">
@@ -97,7 +97,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>65536</number>
+        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -114,7 +114,7 @@
         <number>0</number>
        </property>
        <property name="maximum">
-        <number>65536</number>
+        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -138,7 +138,7 @@
      <item row="9" column="1">
       <widget class="QSpinBox" name="baseVertex">
        <property name="maximum">
-        <number>65536</number>
+        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -155,7 +155,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>65536</number>
+        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -169,7 +169,7 @@
      <item row="12" column="1">
       <widget class="QSpinBox" name="baseInstance">
        <property name="maximum">
-        <number>65536</number>
+        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -186,7 +186,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>65536</number>
+        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -203,7 +203,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>65536</number>
+        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -220,7 +220,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>65536</number>
+        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -291,7 +291,7 @@
         <number>1</number>
        </property>
        <property name="maximum">
-        <number>65536</number>
+        <number>100000000</number>
        </property>
       </widget>
      </item>
