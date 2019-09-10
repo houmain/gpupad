@@ -455,35 +455,44 @@ void MainWindow::openFile()
             openFile(fileName);
 }
 
-void MainWindow::openFile(const QString &fileName)
+bool MainWindow::openFile(const QString &fileName)
 {
-    if (FileDialog::isSessionFileName(fileName) ?
-            openSession(fileName) :
-            mEditorManager.openEditor(fileName))
-        addToRecentFileList(fileName);
+    if (FileDialog::isSessionFileName(fileName)) {
+        if (!openSession(fileName))
+            return false;
+    }
+    else {
+        if (!mEditorManager.openEditor(fileName))
+            return false;
+    }
+    addToRecentFileList(fileName);
+    return true;
 }
 
 bool MainWindow::saveFile()
 {
-    if (mEditorManager.hasCurrentEditor())
-        return mEditorManager.saveEditor();
-
-    return saveSession();
+    if (!mEditorManager.hasCurrentEditor())
+        return saveSession();
+    if (!mEditorManager.saveEditor())
+        return false;
+    addToRecentFileList(mEditorManager.currentEditorFileName());
+    return true;
 }
 
 bool MainWindow::saveFileAs()
 {
-    if (mEditorManager.hasCurrentEditor())
-        return mEditorManager.saveEditorAs();
-
-    return saveSessionAs();
+    if (!mEditorManager.hasCurrentEditor())
+        return saveSessionAs();
+    if (!mEditorManager.saveEditorAs())
+        return false;
+    addToRecentFileList(mEditorManager.currentEditorFileName());
+    return true;
 }
 
 bool MainWindow::saveAllFiles()
 {
     if (!mEditorManager.saveAllEditors())
         return false;
-
     if (!mSessionEditor->isModified())
         return true;
     return saveSession();
@@ -518,6 +527,7 @@ bool MainWindow::saveSession()
         !mSessionEditor->save())
         return saveSessionAs();
 
+    addToRecentFileList(mSessionEditor->fileName());
     return true;
 }
 
@@ -527,11 +537,10 @@ bool MainWindow::saveSessionAs()
         FileDialog::Saving |
         FileDialog::SessionExtensions
     };
-    if (Singletons::fileDialog().exec(options, mSessionEditor->fileName())) {
-        mSessionEditor->setFileName(Singletons::fileDialog().fileName());
-        return saveSession();
-    }
-    return false;
+    if (!Singletons::fileDialog().exec(options, mSessionEditor->fileName()))
+        return false;
+    mSessionEditor->setFileName(Singletons::fileDialog().fileName());
+    return saveSession();
 }
 
 bool MainWindow::closeSession()
