@@ -11,7 +11,7 @@ const auto keywords = {
     "if", "import", "in", "instanceof", "new", "return", "super", "switch", "this",
     "throw", "try", "typeof", "var", "void", "while", "with", "yield", "enum",
     "implements", "interface", "let", "package", "private", "protected", "public",
-    "static", "await" };
+    "static", "await", "of" };
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
 const auto globalObjects = {
