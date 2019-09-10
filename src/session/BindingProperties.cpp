@@ -35,7 +35,8 @@ namespace {
             case Binding::Editor::Expression4x2:
             case Binding::Editor::Expression4x3:
             case Binding::Editor::Expression4x4:
-            case Binding::Editor::Expression4: return 4;
+            case Binding::Editor::Expression4:
+            case Binding::Editor::Color: return 4;
             default: return 1;
         }
     }
