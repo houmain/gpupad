@@ -1,0 +1,97 @@
+[
+    {
+        "flipY": false,
+        "format": "RGBA8_UNorm",
+        "height": 1080,
+        "id": 70,
+        "name": "Texture",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 1920
+    },
+    {
+        "blendConstant": "#ff000000",
+        "cullMode": "NoCulling",
+        "frontFace": "CCW",
+        "id": 71,
+        "items": [
+            {
+                "blendAlphaDest": "Zero",
+                "blendAlphaEq": "Add",
+                "blendAlphaSource": "One",
+                "blendColorDest": "Zero",
+                "blendColorEq": "Add",
+                "blendColorSource": "One",
+                "colorWriteMask": 15,
+                "id": 72,
+                "level": 0,
+                "name": "Color",
+                "textureId": 70,
+                "type": "Attachment"
+            }
+        ],
+        "logicOperation": "NoLogicOperation",
+        "name": "Target",
+        "type": "Target"
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 74,
+        "name": "frame",
+        "type": "Binding",
+        "values": [
+            "frame = (typeof(frame) == \"undefined\" ? 0 : frame + 1)"
+        ]
+    },
+    {
+        "bindingType": "Sampler",
+        "borderColor": "#ff000000",
+        "comparisonFunc": "NoComparisonFunc",
+        "id": 81,
+        "magFilter": "Nearest",
+        "minFilter": "Nearest",
+        "name": "target",
+        "textureId": 70,
+        "type": "Binding",
+        "wrapModeX": "Repeat",
+        "wrapModeY": "Repeat",
+        "wrapModeZ": "Repeat"
+    },
+    {
+        "id": 76,
+        "items": [
+            {
+                "fileName": "attributeless.vs",
+                "id": 77,
+                "name": "attributeless.vs",
+                "shaderType": "Vertex",
+                "type": "Shader"
+            },
+            {
+                "fileName": "sync.frag",
+                "id": 79,
+                "name": "sync.frag",
+                "shaderType": "Fragment",
+                "type": "Shader"
+            }
+        ],
+        "name": "Program",
+        "type": "Program"
+    },
+    {
+        "baseInstance": 0,
+        "callType": "Draw",
+        "checked": true,
+        "count": 4,
+        "first": 0,
+        "id": 80,
+        "instanceCount": 1,
+        "name": "Call",
+        "primitiveType": "TriangleStrip",
+        "programId": 76,
+        "targetId": 71,
+        "type": "Call",
+        "vertexStreamId": 0
+    }
+]
