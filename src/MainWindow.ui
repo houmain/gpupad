@@ -123,11 +123,6 @@
      <addaction name="actionEvalManual"/>
      <addaction name="actionEvalAuto"/>
      <addaction name="actionEvalSteady"/>
-     <addaction name="separator"/>
-     <addaction name="actionEvalIntervalSlow"/>
-     <addaction name="actionEvalIntervalMedium"/>
-     <addaction name="actionEvalIntervalFast"/>
-     <addaction name="actionEvalIntervalUnbounded"/>
     </widget>
     <addaction name="menuEvaluation"/>
     <addaction name="separator"/>
@@ -470,33 +465,6 @@
     <string>F6</string>
    </property>
   </action>
-  <action name="actionEvalIntervalSlow">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Slow</string>
-   </property>
-  </action>
-  <action name="actionEvalIntervalMedium">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Medium</string>
-   </property>
-  </action>
-  <action name="actionEvalIntervalFast">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Fast</string>
-   </property>
-  </action>
   <action name="actionRename">
    <property name="text">
     <string>Rename</string>
@@ -518,17 +486,6 @@
    </property>
    <property name="shortcut">
     <string>F7</string>
-   </property>
-  </action>
-  <action name="actionEvalIntervalUnbounded">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Unbounded</string>
-   </property>
-   <property name="toolTip">
-    <string>Unbounded</string>
    </property>
   </action>
   <action name="actionManageCustomActions">

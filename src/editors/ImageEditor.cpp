@@ -1,46 +1,174 @@
 #include "ImageEditor.h"
 #include "FileDialog.h"
-#include <cmath>
+#include <QGraphicsItem>
 #include <QAction>
 #include <QScrollBar>
 #include <QWheelEvent>
-#include <QGraphicsPixmapItem>
+#include <QOpenGLWidget>
+#include <QOpenGLTexture>
+#include <QOpenGLShader>
+#include <QOpenGLFunctions_3_3_Core>
+
+namespace {
+
+    class ImageItem : public QGraphicsItem
+    {
+    static constexpr auto vertexShader = R"(
+    #version 330
+
+    uniform mat4 uTransform;
+    uniform vec2 uSize;
+    out vec2 vTexCoord;
+
+    const vec2 data[4]= vec2[] (
+    vec2(-0.5,  0.5),
+    vec2(-0.5, -0.5),
+    vec2( 0.5,  0.5),
+    vec2( 0.5, -0.5)
+    );
+
+    void main() {
+    vec2 pos = data[gl_VertexID];
+    vTexCoord = pos + 0.5;
+    gl_Position = uTransform * vec4(pos * uSize, 0.0, 1.0);
+    }
+    )";
+    static constexpr auto fragmentShader = R"(
+    #version 330
+
+    uniform sampler2D uTexture;
+    in vec2 vTexCoord;
+    out vec4 oColor;
+
+    void main() {
+    oColor = texture(uTexture, vTexCoord);
+    }
+    )";
+
+    private:
+        QOpenGLFunctions_3_3_Core mGL;
+        QScopedPointer<QOpenGLShaderProgram> mProgram;
+        QOpenGLTexture *mTexture{ };
+        QMetaObject::Connection mTextureContextConnection;
+        QImage mUploadImage;
+        QRect mBoundingRect;
+        bool mMagnifyLinear{ };
+
+    public:
+        void setImage(QImage image)
+        {
+            prepareGeometryChange();
+            mUploadImage = image;
+            const auto w = image.width();
+            const auto h = image.height();
+            mBoundingRect = { -w / 2, -h / 2, w, h };
+            update();
+        }
+
+        void setMagnifyLinear(bool magnifyLinear)
+        {
+            mMagnifyLinear = magnifyLinear;
+        }
+
+        QRectF boundingRect() const override
+        {
+            return mBoundingRect;
+        }
+
+        void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override
+        {
+            if (!mProgram)
+                initialize();
+
+            if (!mUploadImage.isNull()) {
+                // delete previous version in current thread
+                if (mTexture) {
+                    QObject::disconnect(mTextureContextConnection);
+                    delete mTexture;
+                }
+
+                mTexture = new QOpenGLTexture(mUploadImage);
+                mUploadImage = { };
+
+                // delete last version together with context
+                auto context = QOpenGLContext::currentContext();
+                auto surface = context->surface();
+                mTextureContextConnection = QObject::connect(
+                    context, &QOpenGLContext::aboutToBeDestroyed,
+                    [context, surface, texture = mTexture]() mutable {
+                        context->makeCurrent(surface);
+                        delete texture;
+                        context->doneCurrent();
+                    });
+            }
+
+            if (mTexture) {
+                painter->beginNativePainting();
+
+                auto proj = QMatrix4x4{ };
+                mGL.glGetFloatv(GL_PROJECTION_MATRIX, proj.data());
+
+                auto model = QMatrix4x4{ };
+                mGL.glGetFloatv(GL_MODELVIEW_MATRIX, model.data());
+
+                mProgram->bind();
+                mProgram->setUniformValue("uTexture", 0);
+                mProgram->setUniformValue("uTransform", proj * model);
+                mProgram->setUniformValue("uSize", mBoundingRect.size());
+
+                mGL.glEnable(GL_TEXTURE_2D);
+                mTexture->bind();
+
+                mTexture->setWrapMode(QOpenGLTexture::ClampToEdge);
+                mTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+                mTexture->setMagnificationFilter(mMagnifyLinear ?
+                    QOpenGLTexture::Linear : QOpenGLTexture::Nearest);
+
+                mGL.glEnable(GL_BLEND);
+                mGL.glBlendEquation(GL_ADD);
+                mGL.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+                mGL.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+                painter->endNativePainting();
+            }
+        }
+
+    private:
+        void initialize()
+        {
+            mGL.initializeOpenGLFunctions();
+
+            auto vs = new QOpenGLShader(QOpenGLShader::Vertex);
+            vs->compileSourceCode(vertexShader);
+
+            auto fs = new QOpenGLShader(QOpenGLShader::Fragment);
+            fs->compileSourceCode(fragmentShader);
+
+            mProgram.reset(new QOpenGLShaderProgram());
+            mProgram->addShader(vs);
+            mProgram->addShader(fs);
+            mProgram->link();
+        }
+    };
+} // namespace
 
 ImageEditor::ImageEditor(QString fileName, QWidget *parent)
     : QGraphicsView(parent)
     , mFileName(fileName)
-    , mImage(QSize(1, 1), QImage::Format_RGB888)
 {
     mImage.fill(Qt::black);
     setTransformationAnchor(AnchorUnderMouse);
 
+    setViewport(new QOpenGLWidget(this));
+    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+
     setScene(new QGraphicsScene(this));
+    scene()->addItem(new ImageItem());
 
-    auto pen = QPen();
-    pen.setWidth(1);
-    pen.setCosmetic(true);
-    pen.setColor(Qt::darkGray);
-    mOutside = new QGraphicsPathItem();
-    mOutside->setPen(pen);
-    mOutside->setZValue(1);
-    auto color = QColor(Qt::darkGray);
-    color.setAlphaF(0.6);
-    mOutside->setBrush(QBrush(color));
-    scene()->addItem(mOutside);
-
+    replace(QImage(QSize(1, 1), QImage::Format_RGB888), false);
     setZoom(mZoom);
-    refresh();
-}
-
-void ImageEditor::refresh()
-{
-    delete mPixmapItem;
-    auto pixmap = QPixmap::fromImage(mImage,
-        Qt::NoOpaqueDetection | Qt::NoFormatConversion);
-    mPixmapItem = new QGraphicsPixmapItem(pixmap);
-    scene()->addItem(mPixmapItem);
-
-    setBounds(pixmap.rect());
+    updateTransform(1.0);
 }
 
 QList<QMetaObject::Connection> ImageEditor::connectEditActions(
@@ -79,10 +207,12 @@ bool ImageEditor::load(const QString &fileName, QImage *image)
 
 bool ImageEditor::load()
 {
-    if (!load(mFileName, &mImage))
+    auto image = QImage();
+    if (!load(mFileName, &image))
         return false;
 
-    refresh();
+    replace(image, false);
+
     setModified(false);
     emit dataChanged();
     return true;
@@ -104,7 +234,9 @@ void ImageEditor::replace(QImage image, bool emitDataChanged)
         return;
 
     mImage = image;
-    refresh();
+    auto& item = static_cast<ImageItem&>(*items().first());
+    item.setImage(mImage);
+    setBounds(item.boundingRect().toRect());
 
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
@@ -180,13 +312,6 @@ void ImageEditor::setBounds(QRect bounds)
     if (bounds == mBounds)
         return;
     mBounds = bounds;
-    const auto max = 65536;
-    auto outside = QPainterPath();
-    outside.addRect(-max, -max, 2 * max, 2 * max);
-    auto inside = QPainterPath();
-    inside.addRect(bounds);
-    outside = outside.subtracted(inside);
-    mOutside->setPath(outside);
 
     const auto margin = 15;
     bounds.adjust(-margin, -margin, margin, margin);
@@ -195,11 +320,17 @@ void ImageEditor::setBounds(QRect bounds)
 
 void ImageEditor::setZoom(int zoom)
 {
+    if (mZoom == zoom)
+        return;
+
     mZoom = zoom;
     auto scale = (mZoom < 0 ?
         1.0 / (1 << (-mZoom)) :
         1 << (mZoom));
     updateTransform(scale);
+
+    auto& item = static_cast<ImageItem&>(*items().first());
+    item.setMagnifyLinear(scale <= 4);
 }
 
 void ImageEditor::updateTransform(double scale)

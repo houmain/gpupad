@@ -23,7 +23,6 @@ public:
     void setValidateSource(bool validate);
     void setProcessSourceType(QString type);
     void setEvaluationMode(bool automatic, bool steady);
-    void setEvaluationInterval(int interval);
     void updateBinaryEditor(const Buffer &buffer,
         BinaryEditor &editor, bool scrollToOffset = false);
     void updateFileCache();

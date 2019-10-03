@@ -39,6 +39,7 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     resetRenderSession();
     setEvaluationMode(false, false);
 
+    mEvaluationTimer->setInterval(10);
     mProcessSourceTimer->setInterval(500);
     mProcessSourceTimer->setSingleShot(true);
 }
@@ -93,11 +94,6 @@ void SynchronizeLogic::setEvaluationMode(bool automatic, bool steady)
         mEvaluationTimer->stop();
         Singletons::sessionModel().setActiveItems({ });
     }
-}
-
-void SynchronizeLogic::setEvaluationInterval(int interval)
-{
-    mEvaluationTimer->setInterval(interval);
 }
 
 void SynchronizeLogic::handleSessionRendered()

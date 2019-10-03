@@ -249,14 +249,6 @@ MainWindow::MainWindow(QWidget *parent)
                 static_cast<SourceType>(action->data().toInt()));
         });
 
-    auto evalIntervalActionGroup = new QActionGroup(this);
-    mUi->actionEvalIntervalSlow->setActionGroup(evalIntervalActionGroup);
-    mUi->actionEvalIntervalMedium->setActionGroup(evalIntervalActionGroup);
-    mUi->actionEvalIntervalFast->setActionGroup(evalIntervalActionGroup);
-    mUi->actionEvalIntervalUnbounded->setActionGroup(evalIntervalActionGroup);
-    connect(evalIntervalActionGroup, &QActionGroup::triggered,
-        this, &MainWindow::updateEvaluationInterval);
-
     auto indentActionGroup = new QActionGroup(this);
     connect(indentActionGroup, &QActionGroup::triggered,
         [](QAction* a) { Singletons::settings().setTabSize(a->text().toInt()); });
@@ -275,7 +267,6 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     readSettings();
-    updateEvaluationInterval();
 }
 
 MainWindow::~MainWindow()
@@ -422,15 +413,6 @@ void MainWindow::updateEvaluationMode()
     Singletons::synchronizeLogic().setEvaluationMode(
         mUi->actionEvalAuto->isChecked(),
         mUi->actionEvalSteady->isChecked());
-}
-
-void MainWindow::updateEvaluationInterval()
-{
-    Singletons::synchronizeLogic().setEvaluationInterval(
-        mUi->actionEvalIntervalUnbounded->isChecked() ? 0 :
-        mUi->actionEvalIntervalFast->isChecked() ? 15 :
-        mUi->actionEvalIntervalMedium->isChecked() ? 100 :
-        500);
 }
 
 bool MainWindow::hasEditor() const

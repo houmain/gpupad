@@ -36,7 +36,6 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
 
 private:
-    void refresh();
     void setBounds(QRect bounds);
     void setZoom(int zoom);
     void updateTransform(double scale);
