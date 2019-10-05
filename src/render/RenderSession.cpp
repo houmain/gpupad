@@ -387,10 +387,12 @@ void RenderSession::executeCommandQueue()
 void RenderSession::downloadModifiedResources()
 {
     for (auto &texture : mCommandQueue->textures)
-        mModifiedImages += texture.second.getModifiedImages();
+        mModifiedImages = mModifiedImages.unite(
+            texture.second.getModifiedImages());
 
     for (auto &buffer : mCommandQueue->buffers)
-        mModifiedBuffers += buffer.second.getModifiedData();
+        mModifiedBuffers = mModifiedBuffers.unite(
+            buffer.second.getModifiedData());
 }
 
 void RenderSession::outputTimerQueries()
@@ -414,16 +416,16 @@ void RenderSession::finish(bool steadyEvaluation)
 
     auto &manager = Singletons::editorManager();
     auto &session = Singletons::sessionModel();
-    for (auto &image : mModifiedImages)
-        if (auto fileItem = castItem<FileItem>(session.findItem(image.first)))
+    for (auto itemId : mModifiedImages.keys())
+        if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
             if (auto editor = manager.openImageEditor(fileItem->fileName, false))
-                editor->replace(image.second, emitDataChanged);
+                editor->replace(mModifiedImages[itemId], emitDataChanged);
     mModifiedImages.clear();
 
-    for (auto &buffer : mModifiedBuffers)
-        if (auto fileItem = castItem<FileItem>(session.findItem(buffer.first)))
+    for (auto itemId : mModifiedBuffers.keys())
+        if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
             if (auto editor = manager.openBinaryEditor(fileItem->fileName, false))
-                editor->replace(buffer.second, emitDataChanged);
+                editor->replace(mModifiedBuffers[itemId], emitDataChanged);
     mModifiedBuffers.clear();
 
     mPrevMessages.clear();

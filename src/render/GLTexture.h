@@ -30,7 +30,7 @@ public:
     void generateMipmaps();
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();
-    QList<std::pair<ItemId, QImage>> getModifiedImages();
+    QMap<ItemId, QImage> getModifiedImages();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:

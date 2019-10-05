@@ -70,14 +70,14 @@ GLuint GLTexture::getReadWriteTextureId()
     return (mMultisampleTexture ? mMultisampleTexture : mTexture)->textureId();
 }
 
-QList<std::pair<ItemId, QImage>> GLTexture::getModifiedImages()
+QMap<ItemId, QImage> GLTexture::getModifiedImages()
 {
     if (!download())
         return { };
 
-    auto result = QList<std::pair<ItemId, QImage>>();
+    auto result = QMap<ItemId, QImage>();
     foreach (const Image &image, mImages)
-        result.push_back(std::make_pair(image.itemId, image.image));
+        result[image.itemId] = image.image;
 
     return result;
 }

@@ -4,6 +4,7 @@
 #include "RenderTask.h"
 #include "MessageList.h"
 #include <QMutex>
+#include <QMap>
 
 class ScriptEngine;
 
@@ -35,8 +36,8 @@ private:
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;
     QSet<ItemId> mUsedItems;
-    QList<std::pair<ItemId, QImage>> mModifiedImages;
-    QList<std::pair<ItemId, QByteArray>> mModifiedBuffers;
+    QMap<ItemId, QImage> mModifiedImages;
+    QMap<ItemId, QByteArray> mModifiedBuffers;
     MessagePtrSet mMessages;
     MessagePtrSet mPrevMessages;
 

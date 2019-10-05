@@ -14,7 +14,7 @@ public:
     GLuint getReadWriteBufferId();
     void bindReadOnly(GLenum target);
     void unbind(GLenum target);
-    QList<std::pair<ItemId, QByteArray>> getModifiedData();
+    QMap<ItemId, QByteArray> getModifiedData();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
