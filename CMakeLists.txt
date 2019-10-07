@@ -6,9 +6,6 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-include_directories(src libs)
-add_compile_definitions(QAPPLICATION_CLASS=QApplication)
-
 set(SOURCES
   libs/SingleApplication/singleapplication.cpp
   src/FileDialog.cpp
@@ -42,6 +39,7 @@ set(SOURCES
   src/render/RenderTask.cpp
   src/render/Renderer.cpp
   src/render/ProcessSource.cpp
+  src/render/CompositorSync.cpp
   src/scripting/GpupadScriptObject.cpp
   src/scripting/ScriptEngine.cpp
   src/scripting/CustomActions.cpp
@@ -81,7 +79,17 @@ if(WIN32)
 endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
+add_compile_definitions(QAPPLICATION_CLASS=QApplication)
 add_executable(gpupad WIN32 ${SOURCES} ${HEADERS})
+
+target_include_directories(gpupad PRIVATE src libs)
+
+if(NOT WIN32)
+  target_include_directories(gpupad PRIVATE /usr/include/libdrm)
+  target_link_libraries(gpupad drm)
+else ()
+  target_link_libraries(gpupad dwmapi)
+endif()
 
 find_package(Qt5Widgets CONFIG REQUIRED)
 find_package(Qt5OpenGL CONFIG REQUIRED)

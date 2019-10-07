@@ -6,6 +6,7 @@
 #include "editors/BinaryEditor.h"
 #include "render/RenderSession.h"
 #include "render/ProcessSource.h"
+#include "render/CompositorSync.h"
 #include <QTimer>
 
 template<typename F> // F(const FileItem&)
@@ -100,6 +101,8 @@ void SynchronizeLogic::handleSessionRendered()
 {
     if (mAutomaticEvaluation || mSteadyEvaluation)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
+
+    synchronizeToCompositor();
 }
 
 void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
@@ -182,6 +185,7 @@ void SynchronizeLogic::evaluate(bool manualEvaluation)
 
     if (manualEvaluation || mAutomaticEvaluation || mSteadyEvaluation) {
         updateFileCache();
+
         mRenderSession->update(mRenderSessionInvalidated,
             manualEvaluation, mSteadyEvaluation);
     }

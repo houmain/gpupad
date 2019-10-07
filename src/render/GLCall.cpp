@@ -68,10 +68,6 @@ std::shared_ptr<void> GLCall::beginTimerQuery()
     mTimerQuery = std::make_shared<QOpenGLTimerQuery>();
     mTimerQuery->create();
 
-    // glFinish to improve accuracy of timing
-    auto &gl = GLContext::currentContext();
-    gl.glFinish();
-
     mTimerQuery->begin();
     return std::shared_ptr<void>(nullptr,
         [this](void*) { mTimerQuery->end(); });

@@ -11,6 +11,7 @@ public:
     static bool load(const QString &fileName, QImage *image);
 
     explicit ImageEditor(QString fileName, QWidget *parent = nullptr);
+    ~ImageEditor() override;
 
     QList<QMetaObject::Connection>
         connectEditActions(const EditActions &actions) override;
@@ -45,8 +46,6 @@ private:
     QString mFileName;
     bool mModified{ };
     QImage mImage;
-    QGraphicsPixmapItem *mPixmapItem{ };
-    QGraphicsPathItem *mOutside{ };
     bool mPan{ };
     QRect mBounds{ };
     int mZoom{ };

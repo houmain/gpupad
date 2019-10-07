@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "SingleApplication/singleapplication.h"
+#include "render/CompositorSync.h"
 #include <QApplication>
 #include <QStyleFactory>
 
@@ -20,6 +21,8 @@ int main(int argc, char *argv[])
 #endif
 
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+
+    initializeCompositorSync();
 
     SingleApplication app(argc, argv, true);
     auto arguments = app.arguments();

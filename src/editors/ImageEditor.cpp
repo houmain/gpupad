@@ -19,20 +19,19 @@ namespace {
     #version 330
 
     uniform mat4 uTransform;
-    uniform vec2 uSize;
     out vec2 vTexCoord;
 
     const vec2 data[4]= vec2[] (
-    vec2(-0.5,  0.5),
-    vec2(-0.5, -0.5),
-    vec2( 0.5,  0.5),
-    vec2( 0.5, -0.5)
+    vec2(-1.0,  1.0),
+    vec2(-1.0, -1.0),
+    vec2( 1.0,  1.0),
+    vec2( 1.0, -1.0)
     );
 
     void main() {
     vec2 pos = data[gl_VertexID];
-    vTexCoord = pos + 0.5;
-    gl_Position = uTransform * vec4(pos * uSize, 0.0, 1.0);
+    vTexCoord = (pos + 1.0) / 2.0;
+    gl_Position = uTransform * vec4(pos, 0.0, 1.0);
     }
     )";
     static constexpr auto fragmentShader = R"(
@@ -114,16 +113,21 @@ namespace {
 
             painter->beginNativePainting();
 
-            auto proj = QMatrix4x4{ };
-            mGL.glGetFloatv(GL_PROJECTION_MATRIX, proj.data());
-
-            auto model = QMatrix4x4{ };
-            mGL.glGetFloatv(GL_MODELVIEW_MATRIX, model.data());
-
             mProgram->bind();
             mProgram->setUniformValue("uTexture", 0);
-            mProgram->setUniformValue("uTransform", proj * model);
-            mProgram->setUniformValue("uSize", mBoundingRect.size());
+
+            auto scale = painter->combinedTransform().m11();
+            auto s = mBoundingRect.size();
+            auto cr = painter->clipBoundingRect();
+            auto w = painter->window();
+
+            auto transform = QMatrix(
+              s.width() / static_cast<qreal>(w.width()) * scale, 0,
+              0, -s.height() / static_cast<qreal>(w.height()) * scale,
+              2 * -(cr.left() * scale + w.width() / 2) / static_cast<qreal>(w.width()),
+              2 * (cr.top() * scale + w.height() / 2) / static_cast<qreal>(w.height()));
+
+            mProgram->setUniformValue("uTransform", transform);
 
             mGL.glEnable(GL_BLEND);
             mGL.glBlendEquation(GL_ADD);
@@ -133,6 +137,10 @@ namespace {
                 Singletons::glShareSynchronizer().beginUsage(mGL);
                 mGL.glEnable(GL_TEXTURE_2D);
                 mGL.glBindTexture(GL_TEXTURE_2D, mPreviewTextureId);
+                mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                    GL_CLAMP_TO_EDGE);
+                mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                    GL_CLAMP_TO_EDGE);
                 mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                     GL_LINEAR_MIPMAP_LINEAR);
                 mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
@@ -190,6 +198,11 @@ ImageEditor::ImageEditor(QString fileName, QWidget *parent)
     replace(QImage(QSize(1, 1), QImage::Format_RGB888), false);
     setZoom(mZoom);
     updateTransform(1.0);
+}
+
+ImageEditor::~ImageEditor() 
+{
+    delete scene();
 }
 
 QList<QMetaObject::Connection> ImageEditor::connectEditActions(
