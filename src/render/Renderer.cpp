@@ -88,6 +88,7 @@ Renderer::Renderer(QObject *parent)
     format.setOption(QSurfaceFormat::DebugContext);
 
     mWorker->context.setFormat(format);
+    mWorker->context.setShareContext(QOpenGLContext::globalShareContext());
     mWorker->context.create();
 
     mWorker->surface.setFormat(mWorker->context.format());

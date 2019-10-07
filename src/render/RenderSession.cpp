@@ -12,6 +12,7 @@
 #include "GLTarget.h"
 #include "GLStream.h"
 #include "GLCall.h"
+#include "GLShareSynchronizer.h"
 #include <functional>
 #include <deque>
 #include <QStack>
@@ -164,6 +165,9 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
     mPrevCommandQueue.swap(mCommandQueue);
     mCommandQueue.reset(new CommandQueue());
     mUsedItems.clear();
+
+    if (manualEvaluation)
+        mUpdatingPreviewTexture.clear();
 
     // always re-evaluate scripts on manual evaluation
     if (!mScriptEngine || manualEvaluation)
@@ -373,22 +377,28 @@ void RenderSession::evaluateScripts()
 
 void RenderSession::executeCommandQueue()
 {
-    if (!GLContext::currentContext()) {
+    auto& context = GLContext::currentContext();
+    if (!context) {
         mMessages += MessageList::insert(
             0, MessageType::OpenGLVersionNotAvailable, "3.3");
         return;
     }
 
+    Singletons::glShareSynchronizer().beginUpdate(context);
+
     BindingState state;
     for (auto &command : mCommandQueue->commands)
         command(state);
+
+    Singletons::glShareSynchronizer().endUpdate(context);
 }
 
 void RenderSession::downloadModifiedResources()
 {
     for (auto &texture : mCommandQueue->textures)
-        mModifiedImages = mModifiedImages.unite(
-            texture.second.getModifiedImages());
+        if (!mUpdatingPreviewTexture.contains(texture.first))
+            mModifiedImages = mModifiedImages.unite(
+                texture.second.getModifiedImages());
 
     for (auto &buffer : mCommandQueue->buffers)
         mModifiedBuffers = mModifiedBuffers.unite(
@@ -416,11 +426,23 @@ void RenderSession::finish(bool steadyEvaluation)
 
     auto &manager = Singletons::editorManager();
     auto &session = Singletons::sessionModel();
+
     for (auto itemId : mModifiedImages.keys())
         if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
-            if (auto editor = manager.openImageEditor(fileItem->fileName, false))
+            if (auto editor = manager.openImageEditor(fileItem->fileName, false)) {
                 editor->replace(mModifiedImages[itemId], emitDataChanged);
+                mUpdatingPreviewTexture.insert(itemId);
+            }
     mModifiedImages.clear();
+
+    // keep updating preview texture
+    for (auto itemId : mUpdatingPreviewTexture) {
+        const auto it = mCommandQueue->textures.find(itemId);
+        if (it != mCommandQueue->textures.end())
+            if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
+                if (auto editor = manager.getImageEditor(fileItem->fileName))
+                    editor->updatePreviewTexture(it->second.getReadOnlyTextureId());
+    }
 
     for (auto itemId : mModifiedBuffers.keys())
         if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))

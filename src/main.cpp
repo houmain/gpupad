@@ -19,6 +19,8 @@ int main(int argc, char *argv[])
     setenv("MESA_GLSL_VERSION_OVERRIDE", "450", 0);
 #endif
 
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+
     SingleApplication app(argc, argv, true);
     auto arguments = app.arguments();
     arguments.removeFirst();

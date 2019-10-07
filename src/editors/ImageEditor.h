@@ -21,6 +21,7 @@ public:
     int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }
     void replace(QImage image, bool emitDataChanged = true);
+    void updatePreviewTexture(unsigned int textureId);
     const QImage &image() const { return mImage; }
 
 signals:

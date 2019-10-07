@@ -11,6 +11,7 @@ class EditorManager;
 class SynchronizeLogic;
 class SessionModel;
 class Renderer;
+class GLShareSynchronizer;
 
 bool onMainThread();
 
@@ -24,6 +25,7 @@ public:
     static EditorManager &editorManager();
     static SessionModel &sessionModel();
     static SynchronizeLogic &synchronizeLogic();
+    static GLShareSynchronizer &glShareSynchronizer();
 
     explicit Singletons(QMainWindow *window);
     ~Singletons();
@@ -38,6 +40,7 @@ private:
     QScopedPointer<EditorManager> mEditorManager;
     QScopedPointer<SessionModel> mSessionModel;
     QScopedPointer<SynchronizeLogic> mSynchronizeLogic;
+    QScopedPointer<GLShareSynchronizer> mGLShareSynchronizer;
 };
 
 #endif // SINGLETONS_H

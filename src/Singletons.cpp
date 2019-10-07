@@ -6,6 +6,7 @@
 #include "editors/EditorManager.h"
 #include "session/SessionModel.h"
 #include "render/Renderer.h"
+#include "render/GLShareSynchronizer.h"
 #include <QApplication>
 
 Singletons *Singletons::sInstance;
@@ -60,12 +61,18 @@ SynchronizeLogic &Singletons::synchronizeLogic()
     return *sInstance->mSynchronizeLogic;
 }
 
+GLShareSynchronizer &Singletons::glShareSynchronizer()
+{
+    return *sInstance->mGLShareSynchronizer;
+}
+
 Singletons::Singletons(QMainWindow *window)
     : mSettings(new Settings())
     , mFileCache(new FileCache())
     , mFileDialog(new FileDialog(window))
     , mEditorManager(new EditorManager())
     , mSessionModel(new SessionModel())
+    , mGLShareSynchronizer(new GLShareSynchronizer())
 {
     Q_ASSERT(onMainThread());
     sInstance = this;

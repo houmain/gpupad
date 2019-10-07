@@ -43,6 +43,7 @@ private:
 
     mutable QMutex mUsedItemsCopyMutex;
     QSet<ItemId> mUsedItemsCopy;
+    QSet<ItemId> mUpdatingPreviewTexture;
 };
 
 #endif // RENDERSESSION_H

@@ -1,5 +1,7 @@
 #include "ImageEditor.h"
 #include "FileDialog.h"
+#include "Singletons.h"
+#include "render/GLShareSynchronizer.h"
 #include <QGraphicsItem>
 #include <QAction>
 #include <QScrollBar>
@@ -51,6 +53,7 @@ namespace {
         QOpenGLTexture *mTexture{ };
         QMetaObject::Connection mTextureContextConnection;
         QImage mUploadImage;
+        GLuint mPreviewTextureId{ };
         QRect mBoundingRect;
         bool mMagnifyLinear{ };
 
@@ -62,6 +65,12 @@ namespace {
             const auto w = image.width();
             const auto h = image.height();
             mBoundingRect = { -w / 2, -h / 2, w, h };
+            update();
+        }
+
+        void setPreviewTexture(GLuint textureId)
+        {
+            mPreviewTextureId = textureId;
             update();
         }
 
@@ -80,13 +89,14 @@ namespace {
             if (!mProgram)
                 initialize();
 
-            if (!mUploadImage.isNull()) {
+            if (!mPreviewTextureId && !mUploadImage.isNull()) {
                 // delete previous version in current thread
                 if (mTexture) {
                     QObject::disconnect(mTextureContextConnection);
                     delete mTexture;
                 }
 
+                // upload texture
                 mTexture = new QOpenGLTexture(mUploadImage);
                 mUploadImage = { };
 
@@ -102,36 +112,47 @@ namespace {
                     });
             }
 
-            if (mTexture) {
-                painter->beginNativePainting();
+            painter->beginNativePainting();
 
-                auto proj = QMatrix4x4{ };
-                mGL.glGetFloatv(GL_PROJECTION_MATRIX, proj.data());
+            auto proj = QMatrix4x4{ };
+            mGL.glGetFloatv(GL_PROJECTION_MATRIX, proj.data());
 
-                auto model = QMatrix4x4{ };
-                mGL.glGetFloatv(GL_MODELVIEW_MATRIX, model.data());
+            auto model = QMatrix4x4{ };
+            mGL.glGetFloatv(GL_MODELVIEW_MATRIX, model.data());
 
-                mProgram->bind();
-                mProgram->setUniformValue("uTexture", 0);
-                mProgram->setUniformValue("uTransform", proj * model);
-                mProgram->setUniformValue("uSize", mBoundingRect.size());
+            mProgram->bind();
+            mProgram->setUniformValue("uTexture", 0);
+            mProgram->setUniformValue("uTransform", proj * model);
+            mProgram->setUniformValue("uSize", mBoundingRect.size());
 
+            mGL.glEnable(GL_BLEND);
+            mGL.glBlendEquation(GL_ADD);
+            mGL.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            if (mPreviewTextureId) {
+                Singletons::glShareSynchronizer().beginUsage(mGL);
                 mGL.glEnable(GL_TEXTURE_2D);
+                mGL.glBindTexture(GL_TEXTURE_2D, mPreviewTextureId);
+                mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                    GL_LINEAR_MIPMAP_LINEAR);
+                mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                   mMagnifyLinear ? GL_LINEAR : GL_NEAREST);
+                mGL.glGenerateMipmap(GL_TEXTURE_2D);
+            }
+            else if (mTexture) {
                 mTexture->bind();
-
                 mTexture->setWrapMode(QOpenGLTexture::ClampToEdge);
                 mTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
                 mTexture->setMagnificationFilter(mMagnifyLinear ?
                     QOpenGLTexture::Linear : QOpenGLTexture::Nearest);
-
-                mGL.glEnable(GL_BLEND);
-                mGL.glBlendEquation(GL_ADD);
-                mGL.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-                mGL.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-                painter->endNativePainting();
             }
+
+            mGL.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+            if (mPreviewTextureId)
+                Singletons::glShareSynchronizer().endUsage(mGL);
+
+            painter->endNativePainting();
         }
 
     private:
@@ -243,6 +264,12 @@ void ImageEditor::replace(QImage image, bool emitDataChanged)
 
     if (emitDataChanged)
         emit dataChanged();
+}
+
+void ImageEditor::updatePreviewTexture(unsigned int textureId)
+{
+    auto& item = static_cast<ImageItem&>(*items().first());
+    item.setPreviewTexture(textureId);
 }
 
 void ImageEditor::setModified(bool modified)
