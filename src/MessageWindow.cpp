@@ -38,21 +38,22 @@ MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
 
 void MessageWindow::updateMessages()
 {
-    const auto messages = MessageList::messages();
+    auto added = false;
+    auto messages = MessageList::messages();
     auto messageIds = QSet<MessageId>();
-    auto replacedMessageIds = QSet<MessageId>();
-    for (const auto &message : messages) {
-        if (message->type == MessageType::CallDuration)
-            if (auto replaced = tryReplaceMessage(*message))
-                replacedMessageIds += replaced;
-        messageIds += message->id;
+    for (auto it = messages.begin(); it != messages.end(); ) {
+        const auto& message = **it;
+        if (message.type == MessageType::CallDuration)
+            if (auto messageId = tryReplaceMessage(message)) {
+                messageIds += messageId;
+                it = messages.erase(it);
+                continue;
+            }
+        added |= addMessageOnce(message);
+        messageIds += message.id;
+        ++it;
     }
     removeMessagesExcept(messageIds);
-
-    auto added = false;
-    for (const auto &message : messages)
-        if (!replacedMessageIds.contains(message->id))
-            added |= addMessageOnce(*message);
 
     if (added)
         emit messagesAdded();
@@ -162,10 +163,8 @@ auto MessageWindow::tryReplaceMessage(const Message &message) -> MessageId
         if (item.data(Qt::UserRole + 1) == message.itemId &&
             item.data(Qt::UserRole + 4) == message.type) {
 
-            auto replacedId = item.data(Qt::UserRole).toULongLong();
-            item.setData(Qt::UserRole, message.id);
             item.setText(getMessageText(message));
-            return replacedId;
+            return item.data(Qt::UserRole).toULongLong();
         }
     }
     return 0;
