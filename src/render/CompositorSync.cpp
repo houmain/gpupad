@@ -19,23 +19,29 @@ namespace {
     int gFd;
 } // namespace
 
-void initializeCompositorSync() {
+bool initializeCompositorSync() {
     if (!drmAvailable())
-        return;
+        return false;
 
     gFd = open("/dev/dri/card0", O_RDWR);
-    if (gFd)
-        disableVSync();
+    if (!gFd)
+        return false;
+
+    disableVSync();
+    return true;
 }
 
-void synchronizeToCompositor() {
+bool synchronizeToCompositor() {
     if (!gFd)
-        return;
+        return false;
 
     auto vbl = drmVBlank{ };
     vbl.request.type = DRM_VBLANK_RELATIVE;
     vbl.request.sequence = 1;
-    drmWaitVBlank(gFd, &vbl);
+    if (drmWaitVBlank(gFd, &vbl) < 0)
+        return false;
+
+    return true;
 }
 
 #elif defined(_WIN32)
@@ -46,15 +52,16 @@ namespace {
     BOOL gDwmEnabled;
 } // namespace
 
-void initializeCompositorSync() {
-    DwmIsCompositionEnabled(&gDwmEnabled);
-    if (gDwmEnabled)
-        disableVSync();
+bool initializeCompositorSync() {
+    if (!DwmIsCompositionEnabled(&gDwmEnabled) || !gDwmEnabled)
+        return false;
+
+    disableVSync();
+    return true;
 }
 
-void synchronizeToCompositor() {
-    if (gDwmEnabled)
-        DwmFlush();
+bool synchronizeToCompositor() {
+    return (gDwmEnabled && DwmFlush());
 }
 
 #endif

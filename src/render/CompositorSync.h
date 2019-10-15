@@ -1,7 +1,7 @@
 #ifndef COMPOSITORSYNC_H
 #define COMPOSITORSYNC_H
 
-void initializeCompositorSync();
-void synchronizeToCompositor();
+bool initializeCompositorSync();
+bool synchronizeToCompositor();
 
 #endif

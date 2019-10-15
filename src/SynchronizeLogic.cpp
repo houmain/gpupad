@@ -40,7 +40,7 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     resetRenderSession();
     setEvaluationMode(false, false);
 
-    mEvaluationTimer->setInterval(10);
+    mEvaluationTimer->setInterval(5);
     mProcessSourceTimer->setInterval(500);
     mProcessSourceTimer->setSingleShot(true);
 }
@@ -102,7 +102,8 @@ void SynchronizeLogic::handleSessionRendered()
     if (mAutomaticEvaluation || mSteadyEvaluation)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
 
-    synchronizeToCompositor();
+    if (synchronizeToCompositor())
+        mEvaluationTimer->start(0);
 }
 
 void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
