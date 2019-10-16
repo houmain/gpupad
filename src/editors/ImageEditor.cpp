@@ -73,6 +73,11 @@ namespace {
             update();
         }
 
+        QOpenGLTexture* resetTexture()
+        {
+            return std::exchange(mTexture, nullptr);
+        }
+
         void setMagnifyLinear(bool magnifyLinear)
         {
             mMagnifyLinear = magnifyLinear;
@@ -90,25 +95,14 @@ namespace {
 
             if (!mPreviewTextureId && !mUploadImage.isNull()) {
                 // delete previous version in current thread
-                if (mTexture) {
-                    QObject::disconnect(mTextureContextConnection);
+                if (mTexture)
                     delete mTexture;
-                }
 
                 // upload texture
                 mTexture = new QOpenGLTexture(mUploadImage);
                 mUploadImage = { };
 
-                // delete last version together with context
-                auto context = QOpenGLContext::currentContext();
-                auto surface = context->surface();
-                mTextureContextConnection = QObject::connect(
-                    context, &QOpenGLContext::aboutToBeDestroyed,
-                    [context, surface, texture = mTexture]() mutable {
-                        context->makeCurrent(surface);
-                        delete texture;
-                        context->doneCurrent();
-                    });
+                // last version is deleted in QGraphicsView destructor
             }
 
             painter->beginNativePainting();
@@ -202,6 +196,15 @@ ImageEditor::ImageEditor(QString fileName, QWidget *parent)
 
 ImageEditor::~ImageEditor() 
 {
+    auto& item = static_cast<ImageItem&>(*items().first());
+    if (auto texture = item.resetTexture()) {
+        auto glWidget = qobject_cast<QOpenGLWidget*>(viewport());
+        auto context = glWidget->context();
+        auto surface = context->surface();
+        context->makeCurrent(surface);
+        delete texture;
+        context->doneCurrent();
+    }
     delete scene();
 }
 
