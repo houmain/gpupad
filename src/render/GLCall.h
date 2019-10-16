@@ -27,8 +27,8 @@ public:
     void setBuffer(GLBuffer *buffer);
     void setTexture(GLTexture *texture);
 
-    std::chrono::nanoseconds duration() const;
     void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
+    std::shared_ptr<const QOpenGLTimerQuery> timerQuery() const { return mTimerQuery; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:

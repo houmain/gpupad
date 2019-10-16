@@ -87,7 +87,6 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case ShaderInfo:
         case ScriptMessage:
         case CallDuration:
-        case NoActiveCalls:
             return mInfoIcon;
     }
     return mWarningIcon;
@@ -127,8 +126,6 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("attribute '%1' not set").arg(message.text);
         case CallDuration:
             return tr("call took %1").arg(message.text);
-        case NoActiveCalls:
-            return tr("session has no active calls");
         case ProgramNotAssigned:
             return tr("no program set");
         case TextureNotAssigned:

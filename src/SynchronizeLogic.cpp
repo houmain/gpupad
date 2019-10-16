@@ -89,7 +89,6 @@ void SynchronizeLogic::setEvaluationMode(bool automatic, bool steady)
     else if (mAutomaticEvaluation) {
         mEvaluationTimer->setSingleShot(true);
         mEvaluationTimer->stop();
-        evaluate();
     }
     else {
         mEvaluationTimer->stop();
@@ -103,7 +102,8 @@ void SynchronizeLogic::handleSessionRendered()
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
 
     if (synchronizeToCompositor())
-        mEvaluationTimer->start(0);
+        if (mSteadyEvaluation)
+            mEvaluationTimer->start(0);
 }
 
 void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)

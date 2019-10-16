@@ -24,7 +24,6 @@ enum MessageType
     CallDuration,
     ScriptError,
     ScriptMessage,
-    NoActiveCalls,
     ProgramNotAssigned,
     TextureNotAssigned,
     BufferNotAssigned,

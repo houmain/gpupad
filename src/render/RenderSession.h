@@ -5,8 +5,10 @@
 #include "MessageList.h"
 #include <QMutex>
 #include <QMap>
+#include <memory>
 
 class ScriptEngine;
+class QOpenGLTimerQuery;
 
 class RenderSession : public RenderTask
 {
@@ -38,6 +40,7 @@ private:
     QSet<ItemId> mUsedItems;
     QMap<ItemId, QImage> mModifiedImages;
     QMap<ItemId, QByteArray> mModifiedBuffers;
+    QMap<ItemId, std::shared_ptr<const QOpenGLTimerQuery>> mTimerQueries;
     MessagePtrSet mMessages;
     MessagePtrSet mPrevMessages;
 

@@ -17,6 +17,7 @@
 #include <deque>
 #include <QStack>
 #include <QOpenGLVertexArrayObject>
+#include <QOpenGLTimerQuery>
 
 namespace {
     struct BindingScope
@@ -134,7 +135,6 @@ struct RenderSession::CommandQueue
     std::map<ItemId, GLStream> vertexStream;
     std::deque<Command> commands;
     QList<ScriptEngine::Script> scripts;
-    QList<GLCall*> timerQueryCalls;
 };
 
 RenderSession::RenderSession(QObject *parent)
@@ -324,7 +324,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                         else {
                             call.execute(mMessages, *mScriptEngine);
                         }
-                        mCommandQueue->timerQueryCalls += &call;
+                        if (auto timerQuery = call.timerQuery())
+                            mTimerQueries[call.itemId()] = std::move(timerQuery);
                         mUsedItems += call.usedItems();
                     });
             }
@@ -407,15 +408,14 @@ void RenderSession::downloadModifiedResources()
 
 void RenderSession::outputTimerQueries()
 {
-    foreach (const GLCall *call, mCommandQueue->timerQueryCalls)
-        if (call->duration().count() >= 0)
-            mMessages += MessageList::insert(
-                call->itemId(), MessageType::CallDuration,
-                formatQueryDuration(call->duration()), false);
-
-    if (mCommandQueue->timerQueryCalls.empty())
+    for (auto itemId : mTimerQueries.keys()) {
+        const auto duration = std::chrono::nanoseconds(
+            mTimerQueries[itemId]->waitForResult());
         mMessages += MessageList::insert(
-            0, MessageType::NoActiveCalls);
+            itemId, MessageType::CallDuration,
+            formatQueryDuration(duration), false);
+    }
+    mTimerQueries.clear();
 }
 
 void RenderSession::finish(bool steadyEvaluation)
@@ -460,4 +460,5 @@ void RenderSession::release()
 {
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
+    mTimerQueries.clear();
 }

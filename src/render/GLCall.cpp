@@ -57,13 +57,6 @@ void GLCall::setTexture(GLTexture *texture)
     mTexture = texture;
 }
 
-std::chrono::nanoseconds GLCall::duration() const
-{
-    if (!mTimerQuery)
-        return std::chrono::nanoseconds(-1);
-    return std::chrono::nanoseconds(mTimerQuery->waitForResult());
-}
-
 std::shared_ptr<void> GLCall::beginTimerQuery()
 {
     mTimerQuery = std::make_shared<QOpenGLTimerQuery>();
