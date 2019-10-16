@@ -188,7 +188,7 @@ struct Call : Item
     ItemId vertexStreamId{ };
 
     PrimitiveType primitiveType{ PrimitiveType::Triangles };
-    int count{ 3 };
+    QString count{ "3" };
     int first{ 0 };
 
     ItemId indexBufferId{ };

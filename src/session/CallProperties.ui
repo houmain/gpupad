@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>225</width>
-    <height>625</height>
+    <width>227</width>
+    <height>669</height>
    </rect>
   </property>
   <layout class="QVBoxLayout">
@@ -84,20 +84,24 @@
      <item row="4" column="1">
       <widget class="DataComboBox" name="primitiveType"/>
      </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="labelPatchVertices">
+       <property name="text">
+        <string>Patch Vertices</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QSpinBox" name="patchVertices">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+      </widget>
+     </item>
      <item row="6" column="0">
       <widget class="QLabel" name="labelVertexCount">
        <property name="text">
         <string>Vertex Count</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
-      <widget class="QSpinBox" name="vertexCount">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -168,6 +172,33 @@
      </item>
      <item row="12" column="1">
       <widget class="QSpinBox" name="baseInstance">
+       <property name="maximum">
+        <number>100000000</number>
+       </property>
+      </widget>
+     </item>
+     <item row="13" column="0">
+      <widget class="QLabel" name="labelIndirectBuffer">
+       <property name="text">
+        <string>Indirect Buffer</string>
+       </property>
+      </widget>
+     </item>
+     <item row="13" column="1">
+      <widget class="ReferenceComboBox" name="indirectBuffer"/>
+     </item>
+     <item row="14" column="0">
+      <widget class="QLabel" name="labelDrawCount">
+       <property name="text">
+        <string>Draw Count</string>
+       </property>
+      </widget>
+     </item>
+     <item row="14" column="1">
+      <widget class="QSpinBox" name="drawCount">
+       <property name="minimum">
+        <number>1</number>
+       </property>
        <property name="maximum">
         <number>100000000</number>
        </property>
@@ -268,47 +299,6 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="0">
-      <widget class="QLabel" name="labelIndirectBuffer">
-       <property name="text">
-        <string>Indirect Buffer</string>
-       </property>
-      </widget>
-     </item>
-     <item row="13" column="1">
-      <widget class="ReferenceComboBox" name="indirectBuffer"/>
-     </item>
-     <item row="14" column="0">
-      <widget class="QLabel" name="labelDrawCount">
-       <property name="text">
-        <string>Draw Count</string>
-       </property>
-      </widget>
-     </item>
-     <item row="14" column="1">
-      <widget class="QSpinBox" name="drawCount">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>100000000</number>
-       </property>
-      </widget>
-     </item>
-     <item row="22" column="1">
-      <widget class="QSpinBox" name="clearStencil">
-       <property name="maximum">
-        <number>255</number>
-       </property>
-      </widget>
-     </item>
-     <item row="22" column="0">
-      <widget class="QLabel" name="labelClearStencil">
-       <property name="text">
-        <string>Clear Stencil</string>
-       </property>
-      </widget>
-     </item>
      <item row="21" column="1">
       <widget class="QDoubleSpinBox" name="clearDepth">
        <property name="decimals">
@@ -325,19 +315,22 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="labelPatchVertices">
+     <item row="22" column="0">
+      <widget class="QLabel" name="labelClearStencil">
        <property name="text">
-        <string>Patch Vertices</string>
+        <string>Clear Stencil</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
-      <widget class="QSpinBox" name="patchVertices">
-       <property name="minimum">
-        <number>1</number>
+     <item row="22" column="1">
+      <widget class="QSpinBox" name="clearStencil">
+       <property name="maximum">
+        <number>255</number>
        </property>
       </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="ExpressionLineEdit" name="vertexCount"/>
      </item>
     </layout>
    </item>
@@ -358,6 +351,11 @@
    <class>ColorPicker</class>
    <extends>QCheckBox</extends>
    <header>session/ColorPicker.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ExpressionLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>session/ExpressionLineEdit.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

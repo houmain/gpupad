@@ -4,6 +4,7 @@
 #include "GLProgram.h"
 #include "GLTarget.h"
 #include "GLStream.h"
+#include "../scripting/ScriptEngine.h"
 #include <QOpenGLTimerQuery>
 
 GLCall::GLCall(const Call &call) : mCall(call) { }
@@ -73,14 +74,14 @@ std::shared_ptr<void> GLCall::beginTimerQuery()
         [this](void*) { mTimerQuery->end(); });
 }
 
-void GLCall::execute(MessagePtrSet &messages)
+void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
     switch (mCall.callType) {
         case Call::CallType::Draw:
         case Call::CallType::DrawIndexed:
         case Call::CallType::DrawIndirect:
         case Call::CallType::DrawIndexedIndirect:
-            executeDraw(messages);
+            executeDraw(messages, scriptEngine);
             break;
         case Call::CallType::Compute:
             executeCompute(messages);
@@ -101,7 +102,7 @@ void GLCall::execute(MessagePtrSet &messages)
       gl.v4_2->glMemoryBarrier(GL_ALL_BARRIER_BITS);
 }
 
-void GLCall::executeDraw(MessagePtrSet &messages)
+void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
     if (mTarget)
         mTarget->bind();
@@ -120,20 +121,23 @@ void GLCall::executeDraw(MessagePtrSet &messages)
 
         auto guard = beginTimerQuery();
 
+        const auto count = static_cast<int>(scriptEngine.evaluateValue(
+            mCall.count, mCall.id, messages).toDouble());
+
         if (mCall.callType == Call::CallType::Draw) {
             // DrawArrays(InstancedBaseInstance)
             if (!mCall.baseInstance) {
                 gl.glDrawArraysInstanced(
                     mCall.primitiveType,
                     mCall.first,
-                    mCall.count,
+                    count,
                     mCall.instanceCount);
             }
             else if (auto gl42 = check(gl.v4_2, mCall.id, messages)) {
                 gl42->glDrawArraysInstancedBaseInstance(
                     mCall.primitiveType,
                     mCall.first,
-                    mCall.count,
+                    count,
                     mCall.instanceCount,
                     static_cast<GLuint>(mCall.baseInstance));
             }
@@ -143,7 +147,7 @@ void GLCall::executeDraw(MessagePtrSet &messages)
             if (!mCall.baseInstance && !mCall.baseVertex) {
                 gl.glDrawElementsInstanced(
                     mCall.primitiveType,
-                    mCall.count,
+                    count,
                     mIndexType,
                     reinterpret_cast<void*>(mIndicesOffset),
                     mCall.instanceCount);
@@ -151,7 +155,7 @@ void GLCall::executeDraw(MessagePtrSet &messages)
             else if (auto gl42 = check(gl.v4_2, mCall.id, messages)) {
                 gl42->glDrawElementsInstancedBaseVertexBaseInstance(
                     mCall.primitiveType,
-                    mCall.count,
+                    count,
                     mIndexType,
                     reinterpret_cast<void*>(mIndicesOffset),
                     mCall.instanceCount,

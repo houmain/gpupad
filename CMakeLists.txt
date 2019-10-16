@@ -57,6 +57,7 @@ set(SOURCES
   src/session/DataComboBox.cpp
   src/session/ExpressionEditor.cpp
   src/session/ExpressionMatrix.cpp
+  src/session/ExpressionLineEdit.cpp
   src/session/GroupProperties.ui
   src/session/ImageProperties.ui
   src/session/ProgramProperties.ui

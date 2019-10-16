@@ -30,6 +30,8 @@ public:
         ItemId itemId, MessagePtrSet &messages);
     QStringList evaluateValues(const QStringList &valueExpressions,
         ItemId itemId, MessagePtrSet &messages);
+    QString evaluateValue(const QString &valueExpression,
+      ItemId itemId, MessagePtrSet &messages);
 
     template<typename T>
     QJSValue toJsValue(const T &value) { return mJsEngine->toScriptValue(value); }

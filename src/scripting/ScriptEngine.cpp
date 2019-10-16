@@ -117,3 +117,12 @@ QStringList ScriptEngine::evaluateValues(const QStringList &valueExpressions,
     });
     return values;
 }
+
+QString ScriptEngine::evaluateValue(const QString &valueExpression,
+    ItemId itemId, MessagePtrSet &messages) 
+{
+    const auto values = evaluateValues({ valueExpression },
+        itemId, messages);
+    return (values.isEmpty() ? 0 : values.first());
+}
+

@@ -10,6 +10,7 @@ class GLTarget;
 class GLStream;
 class GLBuffer;
 class GLTexture;
+class ScriptEngine;
 
 class GLCall
 {
@@ -26,13 +27,13 @@ public:
     void setBuffer(GLBuffer *buffer);
     void setTexture(GLTexture *texture);
 
-    void execute(MessagePtrSet &messages);
     std::chrono::nanoseconds duration() const;
+    void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
     std::shared_ptr<void> beginTimerQuery();
-    void executeDraw(MessagePtrSet &messages);
+    void executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine);
     void executeCompute(MessagePtrSet &messages);
     void executeClearTexture(MessagePtrSet &messages);
     void executeClearBuffer(MessagePtrSet &messages);

@@ -22,6 +22,8 @@ namespace {
             editor->setFrameShape(QFrame::NoFrame);
             editor->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
             editor->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+            editor->document()->setDocumentMargin(0);
+            editor->setViewportMargins(3, 0, 0, 0);
 
             connect(editor, &ExpressionEditor::textChanged,
                 this, &ExpressionItemDelegate::valueChanged);

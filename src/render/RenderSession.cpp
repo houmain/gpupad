@@ -318,11 +318,11 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                                 return;
                             mUsedItems += applyBindings(
                                 state, *program, *mScriptEngine);
-                            call.execute(mMessages);
+                            call.execute(mMessages, *mScriptEngine);
                             program->unbind(call.itemId());
                         }
                         else {
-                            call.execute(mMessages);
+                            call.execute(mMessages, *mScriptEngine);
                         }
                         mCommandQueue->timerQueryCalls += &call;
                         mUsedItems += call.usedItems();

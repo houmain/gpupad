@@ -3,8 +3,6 @@
 
 ExpressionEditor::ExpressionEditor(QWidget *parent) : QPlainTextEdit(parent)
 {
-    document()->setDocumentMargin(0);
-    setViewportMargins(3, 0, 0, 0);
 }
 
 void ExpressionEditor::wheelEvent(QWheelEvent *event)
@@ -25,7 +23,7 @@ void ExpressionEditor::stepBy(double steps)
     auto value = toPlainText().toDouble(&ok);
     if (ok) {
         value += steps * singleStep;
-        setPlainText(QString::number(value, 'f',
+        setText(QString::number(value, 'f',
             value == qRound(value) ? 0 : 2));
     }
 }
