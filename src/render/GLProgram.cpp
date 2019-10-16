@@ -221,12 +221,6 @@ int GLProgram::getAttributeLocation(const QString &name) const
     return gl.glGetAttribLocation(mProgramObject, qPrintable(name));
 }
 
-template<typename T> T toValue(const QString &);
-template<> GLfloat toValue(const QString &string) { return string.toFloat(); }
-template<> GLdouble toValue(const QString &string) { return string.toDouble(); }
-template<> GLint toValue(const QString &string) { return string.toInt(); }
-template<> GLuint toValue(const QString &string) { return string.toUInt(); }
-
 bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine)
 {
     auto &gl = GLContext::currentContext();
@@ -247,7 +241,7 @@ bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngin
             (values.count() == 3 && count == 4)) {
             auto i = 0u;
             foreach (const QString &value, values)
-                 array[i++] = toValue<T>(value);
+                 array[i++] = static_cast<T>(value.toDouble());
         }
         else {
             *mCallMessages += MessageList::insert(binding.bindingItemId,
