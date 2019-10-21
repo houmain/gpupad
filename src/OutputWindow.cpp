@@ -23,7 +23,8 @@ OutputWindow::OutputWindow(QWidget *parent) : QWidget(parent)
 
     mTextEdit->setReadOnly(true);
     mTextEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
-    mTextEdit->setTabStopWidth(2);
+    mTextEdit->setTabStopDistance(
+        fontMetrics().horizontalAdvance(QString(2, QChar::Space)));
 
     setFont(Singletons::settings().font());
     updatePalette();

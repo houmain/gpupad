@@ -282,8 +282,8 @@ void SourceEditor::setFont(const QFont &font)
 void SourceEditor::setTabSize(int tabSize)
 {
     mTabSize = tabSize;
-    auto width = QFontMetrics(font()).width(QString(tabSize, QChar::Space));
-    setTabStopWidth(width);
+    setTabStopDistance(fontMetrics().horizontalAdvance(
+        QString(tabSize, QChar::Space)));
 }
 
 void SourceEditor::setIndentWithSpaces(bool enabled)
@@ -320,7 +320,7 @@ int SourceEditor::lineNumberAreaWidth()
         max /= 10;
         ++digits;
     }
-    return fontMetrics().width(QLatin1Char('9')) * digits;
+    return fontMetrics().horizontalAdvance(QString(digits, '9'));
 }
 
 void SourceEditor::updateViewportMargins()

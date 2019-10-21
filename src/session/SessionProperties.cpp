@@ -22,24 +22,29 @@
 #include <QDataWidgetMapper>
 #include <QTimer>
 
-class StackedWidget : public QStackedWidget
-{
-public:
-    using QStackedWidget::QStackedWidget;
+namespace {
+  class StackedWidget : public QStackedWidget
+  {
+  public:
+      using QStackedWidget::QStackedWidget;
 
-    QSize minimumSizeHint() const
-    {
-        return currentWidget()->minimumSizeHint();
-    }
-};
+      QSize minimumSizeHint() const override
+      {
+          return currentWidget()->minimumSizeHint();
+      }
+  };
+
+  template <typename T>
+  void instantiate(QScopedPointer<T> &ptr)
+  {
+      ptr.reset(new T());
+  }
+} // namespace
 
 QString splitPascalCase(QString str)
 {
     return str.replace(QRegularExpression("([a-z])([A-Z])"), "\\1 \\2");
 }
-
-template <typename T>
-void instantiate(QScopedPointer<T> &ptr) { ptr.reset(new T()); }
 
 SessionProperties::SessionProperties(QWidget *parent)
     : QScrollArea(parent)
@@ -191,7 +196,7 @@ QVariantList SessionProperties::getFileNames(Item::Type type, bool addNull) cons
                 result.append(fileName);
         }
     });
-    qSort(result);
+    std::sort(result.begin(), result.end());
 
     return result;
 }
@@ -337,7 +342,7 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
             case Item::Type::Texture:
                 if (!fileItem->items.isEmpty())
                     return nullptr;
-                // fallthrough
+                [[fallthrough]];
             case Item::Type::Image:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),

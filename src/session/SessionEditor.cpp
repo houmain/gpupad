@@ -297,7 +297,7 @@ void SessionEditor::delete_()
 {
     mModel.undoStack().beginMacro("Delete");
     auto indices = selectionModel()->selectedIndexes();
-    qSort(indices.begin(), indices.end(),
+    std::sort(indices.begin(), indices.end(),
         [](const auto &a, const auto &b) { return a.row() > b.row(); });
     foreach (QModelIndex index, indices)
         mModel.deleteItem(index);
