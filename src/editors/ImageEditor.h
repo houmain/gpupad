@@ -4,6 +4,8 @@
 #include "IEditor.h"
 #include <QGraphicsView>
 
+class ImageItem;
+
 class ImageEditor : public QGraphicsView, public IEditor
 {
     Q_OBJECT
@@ -51,6 +53,9 @@ private:
     int mZoom{ };
     int mPanStartX{ };
     int mPanStartY{ };
+    QGraphicsPathItem *mInside{ };
+    QGraphicsPathItem *mBorder{ };
+    ImageItem *mImageItem{ };
 };
 
 #endif // IMAGEEDITOR_H

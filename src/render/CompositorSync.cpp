@@ -53,7 +53,7 @@ namespace {
 } // namespace
 
 bool initializeCompositorSync() {
-    if (!DwmIsCompositionEnabled(&gDwmEnabled) || !gDwmEnabled)
+    if (!SUCCEEDED(DwmIsCompositionEnabled(&gDwmEnabled)) || !gDwmEnabled)
         return false;
 
     disableVSync();
@@ -61,7 +61,7 @@ bool initializeCompositorSync() {
 }
 
 bool synchronizeToCompositor() {
-    return (gDwmEnabled && DwmFlush());
+    return (gDwmEnabled && SUCCEEDED(DwmFlush()));
 }
 
 #endif

@@ -200,7 +200,7 @@ void BindingProperties::setValues(const QStringList &values)
         return;
 
     // remember more values, to allow scrolling through dimensions without losing entries
-    if (!startsWith(mValues, values))
+    if (values.empty() || !startsWith(mValues, values))
         mValues = values;
 
     emit valuesChanged();
