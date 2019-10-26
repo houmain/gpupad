@@ -646,6 +646,10 @@ void MainWindow::openSessionDock()
 
 void MainWindow::openMessageDock()
 {
+    // only open once automatically
+    disconnect(mMessageWindow.data(), &MessageWindow::messagesAdded,
+        this, &MainWindow::openMessageDock);
+
     for (auto p = mMessageWindow->parentWidget(); p; p = p->parentWidget())
         p->setVisible(true);
 }

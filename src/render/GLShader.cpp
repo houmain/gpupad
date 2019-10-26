@@ -159,7 +159,7 @@ QString formatNvGpuProgram(QString assembly)
 QString GLShader::getAssembly() {
     compile(true);
 
-    auto assembly = QString();
+    auto assembly = QString("not supported");
     auto &gl = GLContext::currentContext();
     if (gl.v4_2 && mShaderObject) {
         auto program = gl.glCreateProgram();
