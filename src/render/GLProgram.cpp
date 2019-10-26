@@ -240,8 +240,8 @@ bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngin
             (values.count() == 4 && count == 3) ||
             (values.count() == 3 && count == 4)) {
             auto i = 0u;
-            foreach (const QString &value, values)
-                 array[i++] = static_cast<T>(value.toDouble());
+            foreach (const double value, values)
+                 array[i++] = static_cast<T>(value);
         }
         else {
             *mCallMessages += MessageList::insert(binding.bindingItemId,

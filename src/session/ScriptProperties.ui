@@ -100,9 +100,9 @@
       </widget>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="labelExecute">
+      <widget class="QLabel" name="labelExecuteOn">
        <property name="text">
-        <string>Execute</string>
+        <string>Execute on</string>
        </property>
       </widget>
      </item>

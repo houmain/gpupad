@@ -86,18 +86,18 @@ void ScriptEngine::evaluateScript(const QString &script, const QString &fileName
     });
 }
 
-QStringList ScriptEngine::evaluateValues(const QStringList &valueExpressions,
+QList<double> ScriptEngine::evaluateValues(const QStringList &valueExpressions,
     ItemId itemId, MessagePtrSet &messages)
 {
-    auto values = QStringList();
+    auto values = QList<double>();
     redirectConsoleMessages(messages, [&]() {
         foreach (QString valueExpression, valueExpressions) {
 
-            // fast path, when script is empty or a number
+            // fast path, when script is a number
             auto ok = false;
             auto value = valueExpression.toDouble(&ok);
             if (ok) {
-                values.append(QString::number(value));
+                values.append(value);
                 continue;
             }
 
@@ -111,22 +111,22 @@ QStringList ScriptEngine::evaluateValues(const QStringList &valueExpressions,
                     auto value = result.property(i);
                     if (value.isUndefined())
                         break;
-                    values.append(value.toString());
+                    values.append(value.toNumber());
                 }
             }
             else {
-                values.append(result.toString());
+                values.append(result.toNumber());
             }
         }
     });
     return values;
 }
 
-QString ScriptEngine::evaluateValue(const QString &valueExpression,
+double ScriptEngine::evaluateValue(const QString &valueExpression,
     ItemId itemId, MessagePtrSet &messages) 
 {
     const auto values = evaluateValues({ valueExpression },
         itemId, messages);
-    return (values.isEmpty() ? 0 : values.first());
+    return (values.isEmpty() ? 0.0 : values.first());
 }
 

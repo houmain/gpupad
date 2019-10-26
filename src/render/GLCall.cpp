@@ -115,7 +115,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         auto guard = beginTimerQuery();
 
         const auto count = static_cast<int>(scriptEngine.evaluateValue(
-            mCall.count, mCall.id, messages).toDouble());
+            mCall.count, mCall.id, messages));
 
         if (mCall.callType == Call::CallType::Draw) {
             // DrawArrays(InstancedBaseInstance)
