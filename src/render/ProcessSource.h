@@ -26,7 +26,7 @@ signals:
 private:
     void prepare(bool itemsChanged, bool manualEvaluation) override;
     void render() override;
-    void finish(bool steadyEvaluation) override;
+    void finish() override;
     void release() override;
 
     QScopedPointer<GLShader> mNewShader;

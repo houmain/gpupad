@@ -15,8 +15,7 @@ public:
 
     virtual QSet<ItemId> usedItems() const = 0;
 
-    void update(bool itemChanged, bool manualEvaluation,
-        bool steadyEvaluation);
+    void update(bool itemChanged, bool manualEvaluation);
 
 signals:
     void updated();
@@ -35,7 +34,7 @@ private:
 
     // 3. called in main thread
     void handleRendered();
-    virtual void finish(bool steadyEvaluation) = 0;
+    virtual void finish() = 0;
 
     // 4. called in render thread
     virtual void release() = 0;
@@ -44,7 +43,6 @@ private:
     bool mUpdating{ };
     bool mItemsChanged{ };
     bool mManualEvaluation{ };
-    bool mSteadyEvaluation{ };
 };
 
 #endif // RENDERTASK_H

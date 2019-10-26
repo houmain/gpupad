@@ -31,6 +31,7 @@ public:
         ImageLevel,
         ImageLayer,
         ImageFace,
+        ScriptExecuteOn,
         ShaderType,
         BindingType,
         BindingEditor,

@@ -216,6 +216,9 @@ struct Call : Item
 
 struct Script : FileItem
 {
+    using ExecuteOn = ItemEnums::ExecuteOn;
+
+    ExecuteOn executeOn{ ExecuteOn::ManualEvaluation };
 };
 
 #endif // ITEM_H

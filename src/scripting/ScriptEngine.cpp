@@ -31,9 +31,8 @@ namespace {
     }
 } // namespace
 
-ScriptEngine::ScriptEngine(QList<Script> scripts)
-    : mScripts(scripts)
-    , mJsEngine(new QJSEngine())
+ScriptEngine::ScriptEngine()
+    : mJsEngine(new QJSEngine())
 {
     mJsEngine->installExtensions(QJSEngine::ConsoleExtension);
     mJsEngine->evaluate(
@@ -49,24 +48,9 @@ ScriptEngine::ScriptEngine(QList<Script> scripts)
             "log(text);"
            "};"
         "})();");
-
-    redirectConsoleMessages(mMessages, [&]() {
-        foreach (const Script &script, scripts) {
-            auto result = evaluate(script.source, script.fileName);
-            if (result.isError())
-                mMessages += MessageList::insert(
-                    script.fileName, result.property("lineNumber").toInt(),
-                    MessageType::ScriptError, result.toString());
-        }
-    });
 }
 
 ScriptEngine::~ScriptEngine() = default;
-
-QJSValue ScriptEngine::evaluate(const QString &program, const QString &fileName)
-{
-    return mJsEngine->evaluate(program, fileName);
-}
 
 void ScriptEngine::setGlobal(const QString &name, QObject *object)
 {
@@ -91,13 +75,33 @@ QJSValue ScriptEngine::call(QJSValue &callable, const QJSValueList &args,
     return result;
 }
 
+void ScriptEngine::evaluateScript(const QString &script, const QString &fileName) 
+{
+    redirectConsoleMessages(mMessages, [&]() {
+        auto result = mJsEngine->evaluate(script, fileName);
+        if (result.isError())
+            mMessages += MessageList::insert(
+                fileName, result.property("lineNumber").toInt(),
+                MessageType::ScriptError, result.toString());
+    });
+}
+
 QStringList ScriptEngine::evaluateValues(const QStringList &valueExpressions,
     ItemId itemId, MessagePtrSet &messages)
 {
     auto values = QStringList();
     redirectConsoleMessages(messages, [&]() {
         foreach (QString valueExpression, valueExpressions) {
-            auto result = evaluate(valueExpression);
+
+            // fast path, when script is empty or a number
+            auto ok = false;
+            auto value = valueExpression.toDouble(&ok);
+            if (ok) {
+                values.append(QString::number(value));
+                continue;
+            }
+
+            auto result = mJsEngine->evaluate(valueExpression);
             if (result.isError())
                 messages += MessageList::insert(
                     itemId, MessageType::ScriptError, result.toString());

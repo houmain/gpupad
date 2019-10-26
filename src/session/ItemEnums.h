@@ -160,6 +160,12 @@ namespace ItemEnums {
         Patches = GL_PATCHES
     };
     Q_ENUM_NS(PrimitiveType)
+
+    enum ExecuteOn {
+        ManualEvaluation,
+        EveryEvaluation,
+    };
+    Q_ENUM_NS(ExecuteOn)
 }
 
 // enums moved to another namespace because of name clashes

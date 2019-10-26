@@ -22,9 +22,8 @@ public:
     {
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
-            mScriptEngine.reset(new ScriptEngine({
-                ScriptEngine::Script{ mFilePath, source }
-            }));
+            mScriptEngine.reset(new ScriptEngine());
+            mScriptEngine->evaluateScript(source, mFilePath);
             mScriptEngine->setGlobal("gpupad", mGpupadScriptObject);
         }
 

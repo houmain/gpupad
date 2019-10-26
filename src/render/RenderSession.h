@@ -25,24 +25,24 @@ private:
 
     void prepare(bool itemsChanged, bool manualEvaluation) override;
     void render() override;
-    void finish(bool steadyEvaluation) override;
+    void finish() override;
     void release() override;
 
     void reuseUnmodifiedItems();
-    void evaluateScripts();
     void executeCommandQueue();
     void downloadModifiedResources();
     void outputTimerQueries();
 
-    QScopedPointer<ScriptEngine> mScriptEngine;
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;
+    QScopedPointer<ScriptEngine> mScriptEngine;
     QSet<ItemId> mUsedItems;
     QMap<ItemId, QImage> mModifiedImages;
     QMap<ItemId, QByteArray> mModifiedBuffers;
     QMap<ItemId, std::shared_ptr<const QOpenGLTimerQuery>> mTimerQueries;
     MessagePtrSet mMessages;
     MessagePtrSet mPrevMessages;
+    bool mManualEvaluation{ };
 
     mutable QMutex mUsedItemsCopyMutex;
     QSet<ItemId> mUsedItemsCopy;

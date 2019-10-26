@@ -41,7 +41,7 @@ public slots:
 private slots:
     void handleItemReordered(const QModelIndex &parent, int first);
     void handleSessionRendered();
-    void evaluate(bool manualEvaluation = false);
+    void evaluate(bool manualEvaluation);
     void processSource();
 
 private:

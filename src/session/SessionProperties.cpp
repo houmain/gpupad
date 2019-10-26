@@ -156,6 +156,7 @@ void SessionProperties::fillComboBoxes()
     fillComboBox<Target::LogicOperation>(mTargetProperties->logicOperation);
     fillComboBox<Image::CubeMapFace>(mImageProperties->face);
     fillComboBox<Shader::ShaderType>(mShaderProperties->type);
+    fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
 }
 
 QVariantList SessionProperties::getFileNames(Item::Type type, bool addNull) const
@@ -325,6 +326,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
 
         case Item::Type::Script:
             map(mScriptProperties->file, SessionModel::FileName);
+            map(mScriptProperties->executeOn, SessionModel::ScriptExecuteOn);
             break;
     }
 

@@ -25,7 +25,7 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     , mProcessSource(new ProcessSource(this))
 {
     connect(mEvaluationTimer, &QTimer::timeout,
-        [this]() { evaluate(); });
+        [this]() { evaluate(false); });
     connect(mProcessSourceTimer, &QTimer::timeout,
         this, &SynchronizeLogic::processSource);
     connect(&mModel, &SessionModel::dataChanged,
@@ -40,7 +40,6 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     resetRenderSession();
     setEvaluationMode(false, false);
 
-    mEvaluationTimer->setInterval(5);
     mProcessSourceTimer->setInterval(500);
     mProcessSourceTimer->setSingleShot(true);
 }
@@ -80,11 +79,11 @@ void SynchronizeLogic::setEvaluationMode(bool automatic, bool steady)
 {
     mAutomaticEvaluation = automatic;
     mSteadyEvaluation = steady;
-    mRenderSessionInvalidated = true;
 
     if (mSteadyEvaluation) {
+        evaluate(true);
         mEvaluationTimer->setSingleShot(false);
-        mEvaluationTimer->start();
+        mEvaluationTimer->start(10);
     }
     else if (mAutomaticEvaluation) {
         mEvaluationTimer->setSingleShot(true);
@@ -148,7 +147,8 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
         mRenderSessionInvalidated = true;
     }
 
-    mEvaluationTimer->start();
+    if (mAutomaticEvaluation)
+        mEvaluationTimer->start(100);
 }
 
 void SynchronizeLogic::handleItemReordered(const QModelIndex &parent, int first)
@@ -185,9 +185,7 @@ void SynchronizeLogic::evaluate(bool manualEvaluation)
 
     if (manualEvaluation || mAutomaticEvaluation || mSteadyEvaluation) {
         updateFileCache();
-
-        mRenderSession->update(mRenderSessionInvalidated,
-            manualEvaluation, mSteadyEvaluation);
+        mRenderSession->update(mRenderSessionInvalidated, manualEvaluation);
     }
     mRenderSessionInvalidated = false;
 }
@@ -247,5 +245,5 @@ void SynchronizeLogic::processSource()
         Singletons::editorManager().currentSourceType());
     mProcessSource->setValidateSource(mValidateSource);
     mProcessSource->setProcessType(mProcessSourceType);
-    mProcessSource->update(false, false, false);
+    mProcessSource->update(false, false);
 }

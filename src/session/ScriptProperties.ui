@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>198</width>
-    <height>72</height>
+    <width>219</width>
+    <height>166</height>
    </rect>
   </property>
   <layout class="QVBoxLayout">
@@ -99,6 +99,16 @@
        </layout>
       </widget>
      </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelExecute">
+       <property name="text">
+        <string>Execute</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="DataComboBox" name="executeOn"/>
+     </item>
     </layout>
    </item>
   </layout>
@@ -108,6 +118,11 @@
    <class>ReferenceComboBox</class>
    <extends>QComboBox</extends>
    <header>session/ReferenceComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>DataComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/DataComboBox.h</header>
   </customwidget>
  </customwidgets>
  <resources>

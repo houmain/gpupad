@@ -24,6 +24,7 @@
     ADD(ImageLevel, Image, level) \
     ADD(ImageLayer, Image, layer) \
     ADD(ImageFace, Image, face) \
+    ADD(ScriptExecuteOn, Script, executeOn) \
     ADD(ShaderType, Shader, shaderType) \
     ADD(BindingType, Binding, bindingType) \
     ADD(BindingEditor, Binding, editor) \

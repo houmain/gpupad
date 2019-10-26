@@ -17,8 +17,7 @@ void RenderTask::releaseResources()
         Singletons::renderer().release(this);
 }
 
-void RenderTask::update(bool itemsChanged, bool manualEvaluation,
-    bool steadyEvaluation)
+void RenderTask::update(bool itemsChanged, bool manualEvaluation)
 {
     if (!std::exchange(mUpdating, true)) {
         mReleased = false;
@@ -29,12 +28,11 @@ void RenderTask::update(bool itemsChanged, bool manualEvaluation,
         mItemsChanged |= itemsChanged;
         mManualEvaluation |= manualEvaluation;
     }
-    mSteadyEvaluation = steadyEvaluation;
 }
 
 void RenderTask::handleRendered()
 {
-    finish(mSteadyEvaluation);
+    finish();
     mUpdating = false;
 
     emit updated();
@@ -42,6 +40,5 @@ void RenderTask::handleRendered()
     // restart when items were changed in the meantime
     if (mItemsChanged || mManualEvaluation)
         update(std::exchange(mItemsChanged, false),
-               std::exchange(mManualEvaluation, false),
-               mSteadyEvaluation);
+               std::exchange(mManualEvaluation, false));
 }

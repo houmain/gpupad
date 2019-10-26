@@ -134,7 +134,6 @@ struct RenderSession::CommandQueue
     std::map<ItemId, GLTarget> targets;
     std::map<ItemId, GLStream> vertexStream;
     std::deque<Command> commands;
-    QList<ScriptEngine::Script> scripts;
 };
 
 RenderSession::RenderSession(QObject *parent)
@@ -155,6 +154,7 @@ QSet<ItemId> RenderSession::usedItems() const
 
 void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 {
+    mManualEvaluation = manualEvaluation;
     mPrevMessages.swap(mMessages);
     mMessages.clear();
 
@@ -168,10 +168,6 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 
     if (manualEvaluation)
         mUpdatingPreviewTexture.clear();
-
-    // always re-evaluate scripts on manual evaluation
-    if (!mScriptEngine || manualEvaluation)
-        mScriptEngine.reset();
 
     auto &session = Singletons::sessionModel();
 
@@ -229,11 +225,19 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                 addCommand([](BindingState &state) { state.push({ }); });
         }
         else if (auto script = castItem<Script>(item)) {
-            // for now all scripts are unconditionally evaluated
             mUsedItems += script->id;
             auto source = QString();
             Singletons::fileCache().getSource(script->fileName, &source);
-            mCommandQueue->scripts += ScriptEngine::Script{ script->fileName, source };
+            addCommand(
+                [this,
+                 source,
+                 fileName = script->fileName,
+                 executeOn = script->executeOn
+                ](BindingState &) {
+                    if (mManualEvaluation ||
+                        executeOn == Script::ExecuteOn::EveryEvaluation)
+                        mScriptEngine->evaluateScript(source, fileName);
+                });
         }
         else if (auto binding = castItem<Binding>(item)) {
             const auto &b = *binding;
@@ -352,7 +356,6 @@ void RenderSession::render()
 {
     QOpenGLVertexArrayObject::Binder vaoBinder(&mCommandQueue->vao);
     reuseUnmodifiedItems();
-    evaluateScripts();
     executeCommandQueue();
     downloadModifiedResources();
     outputTimerQueries();
@@ -368,14 +371,6 @@ void RenderSession::reuseUnmodifiedItems()
     }
 }
 
-void RenderSession::evaluateScripts()
-{
-    if (mScriptEngine &&
-        mCommandQueue->scripts == mScriptEngine->scripts())
-        return;
-    mScriptEngine.reset(new ScriptEngine(mCommandQueue->scripts));
-}
-
 void RenderSession::executeCommandQueue()
 {
     auto& context = GLContext::currentContext();
@@ -384,6 +379,10 @@ void RenderSession::executeCommandQueue()
             0, MessageType::OpenGLVersionNotAvailable, "3.3");
         return;
     }
+
+    // always re-evaluate scripts on manual evaluation
+    if (!mScriptEngine || mManualEvaluation)
+        mScriptEngine.reset(new ScriptEngine());
 
     Singletons::glShareSynchronizer().beginUpdate(context);
 
@@ -418,11 +417,11 @@ void RenderSession::outputTimerQueries()
     mTimerQueries.clear();
 }
 
-void RenderSession::finish(bool steadyEvaluation)
+void RenderSession::finish()
 {
-    // do not emit data changed in automatic refresh mode,
+    // do not emit data changed in automatic evaluation mode,
     // since it would keep triggering updates
-    auto emitDataChanged = steadyEvaluation;
+    const auto emitDataChanged = mManualEvaluation;
 
     auto &manager = Singletons::editorManager();
     auto &session = Singletons::sessionModel();
