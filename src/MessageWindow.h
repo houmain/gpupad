@@ -1,16 +1,15 @@
 #ifndef MESSAGEWINDOW_H
 #define MESSAGEWINDOW_H
 
+#include "MessageList.h"
 #include <QTableWidget>
 #include <QMutex>
 
-struct Message;
 class QTimer;
 
 class MessageWindow : public QTableWidget
 {
     Q_OBJECT
-    using MessageId = qulonglong;
 
 public:
     explicit MessageWindow(QWidget *parent = nullptr);
@@ -26,6 +25,7 @@ private slots:
 private:
     QIcon getMessageIcon(const Message &message) const;
     QString getMessageText(const Message &message) const;
+    QString getLocationText(const Message &message) const;
     void removeMessagesExcept(const QSet<MessageId> &messageIds);
     MessageId tryReplaceMessage(const Message &message);
     bool addMessageOnce(const Message &message);
@@ -34,6 +34,7 @@ private:
     QIcon mInfoIcon;
     QIcon mWarningIcon;
     QIcon mErrorIcon;
+    QSet<MessageId> mMessageIds;
 };
 
 #endif // MESSAGEWINDOW_H

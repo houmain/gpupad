@@ -4,7 +4,7 @@
 namespace {
     QMutex gMessagesMutex;
     QList<QWeakPointer<const Message>> gMessages;
-    qulonglong gNextMessageId;
+    qulonglong gNextMessageId = 1;
 } // namespace
 
 namespace MessageList {

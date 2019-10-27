@@ -6,6 +6,9 @@
 #include <QSet>
 
 using ItemId = int;
+using MessageId = qulonglong;
+using MessagePtr = QSharedPointer<const struct Message>;
+using MessagePtrSet = QSet<MessagePtr>;
 
 enum MessageType
 {
@@ -34,16 +37,13 @@ enum MessageType
 
 struct Message
 {
-    qulonglong id;
+    MessageId id;
     MessageType type;
     QString text;
     ItemId itemId;
     QString fileName;
     int line;
 };
-
-using MessagePtr = QSharedPointer<const Message>;
-using MessagePtrSet = QSet<MessagePtr>;
 
 namespace MessageList
 {

@@ -20,9 +20,10 @@ MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
     setColumnCount(2);
     verticalHeader()->setVisible(false);
     horizontalHeader()->setVisible(false);
-    verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    verticalHeader()->setDefaultSectionSize(24);
     horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    horizontalHeader()->setSectionResizeMode(1, QHeaderView::Fixed);
     setEditTriggers(NoEditTriggers);
     setSelectionMode(SingleSelection);
     setSelectionBehavior(SelectRows);
@@ -142,37 +143,8 @@ QString MessageWindow::getMessageText(const Message &message) const
     return message.text;
 }
 
-void MessageWindow::removeMessagesExcept(const QSet<MessageId> &messageIds)
+QString MessageWindow::getLocationText(const Message &message) const
 {
-    for (auto i = 0; i < rowCount(); ) {
-        auto it = item(i, 0);
-        if (!messageIds.contains(it->data(Qt::UserRole).toULongLong()))
-            removeRow(i);
-        else
-            ++i;
-    }
-}
-
-auto MessageWindow::tryReplaceMessage(const Message &message) -> MessageId
-{
-    for (auto i = 0; i < rowCount(); i++) {
-        auto &item = *this->item(i, 0);
-        if (item.data(Qt::UserRole + 1) == message.itemId &&
-            item.data(Qt::UserRole + 4) == message.type) {
-
-            item.setText(getMessageText(message));
-            return item.data(Qt::UserRole).toULongLong();
-        }
-    }
-    return 0;
-}
-
-bool MessageWindow::addMessageOnce(const Message &message)
-{
-    for (auto i = 0; i < rowCount(); i++)
-        if (item(i, 0)->data(Qt::UserRole).toULongLong() == message.id)
-            return false;
-
     auto locationText = QString();
     if (message.itemId) {
         if (auto item = Singletons::sessionModel().findItem(message.itemId)) {
@@ -186,16 +158,59 @@ bool MessageWindow::addMessageOnce(const Message &message)
         if (message.line > 0)
             locationText += ":" + QString::number(message.line);
     }
+    return locationText;
+}
+
+void MessageWindow::removeMessagesExcept(const QSet<MessageId> &messageIds)
+{
+    auto removeIds = mMessageIds;
+    removeIds.subtract(messageIds);
+    if (removeIds.empty())
+        return;
+
+    for (auto i = 0; i < rowCount(); ) {
+        const auto messageId = item(i, 0)->data(Qt::UserRole + 5).toULongLong();
+        if (removeIds.contains(messageId)) {
+            removeRow(i);
+            mMessageIds.remove(messageId);
+        }
+        else {
+            ++i;
+        }
+    }
+}
+
+auto MessageWindow::tryReplaceMessage(const Message &message) -> MessageId
+{
+    for (auto i = 0; i < rowCount(); i++) {
+        auto &item = *this->item(i, 0);
+        if (item.data(Qt::UserRole + 1) == message.itemId &&
+            item.data(Qt::UserRole + 4) == message.type) {
+
+            const auto messageId = item.data(Qt::UserRole + 5).toULongLong();
+            item.setText(getMessageText(message));
+            return messageId;
+        }
+    }
+    return 0;
+}
+
+bool MessageWindow::addMessageOnce(const Message &message)
+{
+    if (mMessageIds.contains(message.id))
+        return false;
+    mMessageIds.insert(message.id);
 
     auto messageIcon = getMessageIcon(message);
     auto messageText = getMessageText(message);
     auto messageItem = new QTableWidgetItem(messageIcon, messageText);
-    messageItem->setData(Qt::UserRole, message.id);
     messageItem->setData(Qt::UserRole + 1, message.itemId);
     messageItem->setData(Qt::UserRole + 2, message.fileName);
     messageItem->setData(Qt::UserRole + 3, message.line);
     messageItem->setData(Qt::UserRole + 4, message.type);
+    messageItem->setData(Qt::UserRole + 5, message.id);
 
+    auto locationText = getLocationText(message);
     auto locationItem = new QTableWidgetItem(locationText);
     locationItem->setTextAlignment(Qt::AlignLeft | Qt::AlignTop);
 
