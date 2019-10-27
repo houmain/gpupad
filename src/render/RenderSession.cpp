@@ -217,17 +217,6 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
         return vs;
     };
 
-    const auto shouldExecute = [&](Call::ExecuteOn executeOn) {
-        if (executeOn == Call::ExecuteOn::EveryEvaluation)
-            return true;
-
-        if (executeOn == Call::ExecuteOn::ManualEvaluation &&
-            mManualEvaluation)
-            return true;
-
-        return false;
-    };
-
     session.forEachItem([&](const Item &item) {
 
         if (auto group = castItem<Group>(item)) {
@@ -236,16 +225,19 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                 addCommand([](BindingState &state) { state.push({ }); });
         }
         else if (auto script = castItem<Script>(item)) {
-            if (shouldExecute(script->executeOn)) {
-                mUsedItems += script->id;
-                auto source = QString();
-                Singletons::fileCache().getSource(script->fileName, &source);
-                addCommand(
-                    [this, source, fileName = script->fileName
-                    ](BindingState &) {
-                        mScriptEngine->evaluateScript(source, fileName);
-                    });
-            }
+            mUsedItems += script->id;
+            auto source = QString();
+            Singletons::fileCache().getSource(script->fileName, &source);
+            addCommand(
+                [this, source, fileName = script->fileName,
+                  executeOn = script->executeOn
+                ](BindingState &) {
+                      if (executeOn == Call::ExecuteOn::ManualEvaluation &&
+                          !mManualEvaluation)
+                          return;
+
+                      mScriptEngine->evaluateScript(source, fileName);
+                });
         }
         else if (auto binding = castItem<Binding>(item)) {
             const auto &b = *binding;
@@ -303,9 +295,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                 }
         }
         else if (auto call = castItem<Call>(item)) {
-            if (call->checked && shouldExecute(call->executeOn)) {
+            if (call->checked) {
                 mUsedItems += call->id;
-
                 auto glcall = GLCall(*call);
                 glcall.setProgram(addProgramOnce(call->programId));
                 glcall.setTarget(addTargetOnce(call->targetId));
@@ -322,8 +313,13 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 
                 addCommand(
                     [this,
+                     executeOn = call->executeOn,
                      call = std::move(glcall)
                     ](BindingState &state) mutable {
+                        if (executeOn == Call::ExecuteOn::ManualEvaluation &&
+                            !mManualEvaluation)
+                            return;
+
                         if (auto program = call.program()) {
                             mUsedItems += program->usedItems();
                             if (!program->bind(&mMessages))

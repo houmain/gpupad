@@ -29,7 +29,7 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     connect(mProcessSourceTimer, &QTimer::timeout,
         this, &SynchronizeLogic::processSource);
     connect(&mModel, &SessionModel::dataChanged,
-        this, &SynchronizeLogic::handleItemModified);
+        this, &SynchronizeLogic::handleItemsModified);
     connect(&mModel, &SessionModel::rowsInserted,
         this, &SynchronizeLogic::handleItemReordered);
     connect(&mModel, &SessionModel::rowsAboutToBeRemoved,
@@ -71,12 +71,15 @@ void SynchronizeLogic::resetRenderSession()
 
 void SynchronizeLogic::manualEvaluation()
 {
-    mRenderSessionInvalidated = true;
     evaluate(true);
 }
 
 void SynchronizeLogic::setEvaluationMode(bool automatic, bool steady)
 {
+    if (mAutomaticEvaluation == automatic &&
+        mSteadyEvaluation == steady)
+        return;
+
     mAutomaticEvaluation = automatic;
     mSteadyEvaluation = steady;
 
@@ -121,6 +124,15 @@ void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
     auto &editorManager = Singletons::editorManager();
     if (editorManager.currentEditorFileName() == fileName)
         mProcessSourceTimer->start();
+}
+
+void SynchronizeLogic::handleItemsModified(const QModelIndex &topLeft,
+    const QModelIndex &bottomRight, const QVector<int> &roles)
+{
+    Q_UNUSED(bottomRight)
+    // ignore FontRole...
+    if (roles.empty())
+        handleItemModified(topLeft);
 }
 
 void SynchronizeLogic::handleItemModified(const QModelIndex &index)
@@ -172,7 +184,7 @@ void SynchronizeLogic::handleFileRenamed(const QString &prevFileName,
 
 void SynchronizeLogic::handleSourceTypeChanged(SourceType sourceType)
 {
-    Q_UNUSED(sourceType);
+    Q_UNUSED(sourceType)
     processSource();
 }
 

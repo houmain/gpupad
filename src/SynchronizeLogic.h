@@ -32,6 +32,8 @@ signals:
 
 public slots:
     void manualEvaluation();
+    void handleItemsModified(const QModelIndex &topLeft,
+        const QModelIndex &bottomRight, const QVector<int> &roles);
     void handleItemModified(const QModelIndex &index);
     void handleFileItemsChanged(const QString &fileName);
     void handleFileRenamed(const QString &prevFileName,
