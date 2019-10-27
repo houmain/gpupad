@@ -110,6 +110,7 @@ public:
         CallClearColor,
         CallClearDepth,
         CallClearStencil,
+        CallExecuteOn,
     };
 
     explicit SessionModelCore(QObject *parent = nullptr);

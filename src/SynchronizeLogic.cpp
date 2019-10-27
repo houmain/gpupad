@@ -86,8 +86,10 @@ void SynchronizeLogic::setEvaluationMode(bool automatic, bool steady)
         mEvaluationTimer->start(10);
     }
     else if (mAutomaticEvaluation) {
-        mEvaluationTimer->setSingleShot(true);
         mEvaluationTimer->stop();
+        mEvaluationTimer->setSingleShot(true);
+        if (mRenderSessionInvalidated)
+            mEvaluationTimer->start(0);
     }
     else {
         mEvaluationTimer->stop();

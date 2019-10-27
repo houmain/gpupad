@@ -169,28 +169,28 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
     if (manualEvaluation)
         mUpdatingPreviewTexture.clear();
 
-    auto &session = Singletons::sessionModel();
+    const auto &session = Singletons::sessionModel();
 
-    auto addCommand = [&](auto&& command) {
+    const auto addCommand = [&](auto&& command) {
         mCommandQueue->commands.emplace_back(std::move(command));
     };
 
-    auto addProgramOnce = [&](ItemId programId) {
+    const auto addProgramOnce = [&](ItemId programId) {
         return addOnce(mCommandQueue->programs,
             session.findItem<Program>(programId));
     };
 
-    auto addBufferOnce = [&](ItemId bufferId) {
+    const auto addBufferOnce = [&](ItemId bufferId) {
         return addOnce(mCommandQueue->buffers,
             session.findItem<Buffer>(bufferId));
     };
 
-    auto addTextureOnce = [&](ItemId textureId) {
+    const auto addTextureOnce = [&](ItemId textureId) {
         return addOnce(mCommandQueue->textures,
             session.findItem<Texture>(textureId));
     };
 
-    auto addTargetOnce = [&](ItemId targetId) {
+    const auto addTargetOnce = [&](ItemId targetId) {
         auto target = session.findItem<Target>(targetId);
         auto fb = addOnce(mCommandQueue->targets, target);
         if (fb) {
@@ -202,7 +202,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
         return fb;
     };
 
-    auto addVertexStreamOnce = [&](ItemId vertexStreamId) {
+    const auto addVertexStreamOnce = [&](ItemId vertexStreamId) {
         auto vertexStream = session.findItem<Stream>(vertexStreamId);
         auto vs = addOnce(mCommandQueue->vertexStream, vertexStream);
         if (vs) {
@@ -217,6 +217,17 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
         return vs;
     };
 
+    const auto shouldExecute = [&](Call::ExecuteOn executeOn) {
+        if (executeOn == Call::ExecuteOn::EveryEvaluation)
+            return true;
+
+        if (executeOn == Call::ExecuteOn::ManualEvaluation &&
+            mManualEvaluation)
+            return true;
+
+        return false;
+    };
+
     session.forEachItem([&](const Item &item) {
 
         if (auto group = castItem<Group>(item)) {
@@ -225,19 +236,16 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                 addCommand([](BindingState &state) { state.push({ }); });
         }
         else if (auto script = castItem<Script>(item)) {
-            mUsedItems += script->id;
-            auto source = QString();
-            Singletons::fileCache().getSource(script->fileName, &source);
-            addCommand(
-                [this,
-                 source,
-                 fileName = script->fileName,
-                 executeOn = script->executeOn
-                ](BindingState &) {
-                    if (mManualEvaluation ||
-                        executeOn == Script::ExecuteOn::EveryEvaluation)
+            if (shouldExecute(script->executeOn)) {
+                mUsedItems += script->id;
+                auto source = QString();
+                Singletons::fileCache().getSource(script->fileName, &source);
+                addCommand(
+                    [this, source, fileName = script->fileName
+                    ](BindingState &) {
                         mScriptEngine->evaluateScript(source, fileName);
-                });
+                    });
+            }
         }
         else if (auto binding = castItem<Binding>(item)) {
             const auto &b = *binding;
@@ -295,7 +303,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                 }
         }
         else if (auto call = castItem<Call>(item)) {
-            if (call->checked) {
+            if (call->checked && shouldExecute(call->executeOn)) {
                 mUsedItems += call->id;
 
                 auto glcall = GLCall(*call);

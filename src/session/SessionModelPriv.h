@@ -103,6 +103,7 @@
     ADD(CallClearColor, Call, clearColor) \
     ADD(CallClearDepth, Call, clearDepth) \
     ADD(CallClearStencil, Call, clearStencil) \
+    ADD(CallExecuteOn, Call, executeOn) \
 
 template<typename T>
 auto fromVariant(const QVariant &v)

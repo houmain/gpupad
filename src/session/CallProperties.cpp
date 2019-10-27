@@ -13,6 +13,7 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
 
     fillComboBox<Call::CallType>(mUi->type);
     fillComboBox<Call::PrimitiveType>(mUi->primitiveType);
+    fillComboBox<Script::ExecuteOn>(mUi->executeOn);
 
     connect(mUi->type, &DataComboBox::currentDataChanged,
         this, &CallProperties::updateWidgets);
@@ -82,6 +83,7 @@ TextureKind CallProperties::currentTextureKind() const
 void CallProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->type, SessionModel::CallType);
+    mapper.addMapping(mUi->executeOn, SessionModel::CallExecuteOn);
 
     mapper.addMapping(mUi->program, SessionModel::CallProgramId);
     mapper.addMapping(mUi->target, SessionModel::CallTargetId);
@@ -156,7 +158,7 @@ void CallProperties::updateWidgets()
         type == Call::CallType::ClearTexture ||
         type == Call::CallType::GenerateMipmaps);
 
-    auto texKind = currentTextureKind();
+    const auto texKind = currentTextureKind();
     setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor,
         type == Call::CallType::ClearTexture && texKind.color);
     setFormVisibility(mUi->formLayout, mUi->labelClearDepth, mUi->clearDepth,

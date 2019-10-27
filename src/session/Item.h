@@ -180,7 +180,9 @@ struct Call : Item
 {
     using CallType = ItemEnums2::CallType;
     using PrimitiveType = ItemEnums::PrimitiveType;
+    using ExecuteOn = ItemEnums::ExecuteOn;
 
+    ExecuteOn executeOn{ ExecuteOn::EveryEvaluation };
     bool checked{ true };
     CallType callType{ };
     ItemId programId{ };
