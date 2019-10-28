@@ -70,6 +70,39 @@ GLuint GLTexture::getReadWriteTextureId()
     return (mMultisampleTexture ? mMultisampleTexture : mTexture)->textureId();
 }
 
+bool GLTexture::canUpdatePreview() const
+{
+    switch (mFormat) {
+        case Texture::Format::R8_UNorm:
+        case Texture::Format::RG8_UNorm:
+        case Texture::Format::RGB8_UNorm:
+        case Texture::Format::RGBA8_UNorm:
+        case Texture::Format::R16_UNorm:
+        case Texture::Format::RG16_UNorm:
+        case Texture::Format::RGB16_UNorm:
+        case Texture::Format::RGBA16_UNorm:
+        case Texture::Format::R8_SNorm:
+        case Texture::Format::RG8_SNorm:
+        case Texture::Format::RGB8_SNorm:
+        case Texture::Format::RGBA8_SNorm:
+        case Texture::Format::R16_SNorm:
+        case Texture::Format::RG16_SNorm:
+        case Texture::Format::RGB16_SNorm:
+        case Texture::Format::RGBA16_SNorm:
+        case Texture::Format::R16F:
+        case Texture::Format::RG16F:
+        case Texture::Format::RGB16F:
+        case Texture::Format::RGBA16F:
+        case Texture::Format::R32F:
+        case Texture::Format::RG32F:
+        case Texture::Format::RGB32F:
+        case Texture::Format::RGBA32F:
+            return true;
+        default:
+            return false;
+    }
+}
+
 QMap<ItemId, QImage> GLTexture::getModifiedImages()
 {
     if (!download())

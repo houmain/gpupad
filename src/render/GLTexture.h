@@ -23,6 +23,7 @@ public:
     TextureKind kind() const { return mKind; }
     int width() const { return mWidth; }
     int height() const { return mHeight; }
+    bool flipY() const { return mFlipY; }
     Texture::Target target() const { return mMultisampleTarget; }
     Texture::Format format() const { return mFormat; }
 
@@ -30,6 +31,7 @@ public:
     void generateMipmaps();
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();
+    bool canUpdatePreview() const;
     QMap<ItemId, QImage> getModifiedImages();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 

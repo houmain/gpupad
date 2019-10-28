@@ -154,6 +154,7 @@ QSet<ItemId> RenderSession::usedItems() const
 
 void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 {
+    mItemsChanged = itemsChanged;
     mManualEvaluation = manualEvaluation;
     mPrevMessages.swap(mMessages);
     mMessages.clear();
@@ -165,9 +166,6 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
     mPrevCommandQueue.swap(mCommandQueue);
     mCommandQueue.reset(new CommandQueue());
     mUsedItems.clear();
-
-    if (manualEvaluation)
-        mUpdatingPreviewTexture.clear();
 
     const auto &session = Singletons::sessionModel();
 
@@ -399,14 +397,14 @@ void RenderSession::executeCommandQueue()
 
 void RenderSession::downloadModifiedResources()
 {
-    for (auto &texture : mCommandQueue->textures)
-        if (!mUpdatingPreviewTexture.contains(texture.first))
+    for (auto &[itemId, texture] : mCommandQueue->textures)
+        if (mItemsChanged || !texture.canUpdatePreview())
             mModifiedImages = mModifiedImages.unite(
-                texture.second.getModifiedImages());
+                texture.getModifiedImages());
 
-    for (auto &buffer : mCommandQueue->buffers)
+    for (auto &[itemId, buffer] : mCommandQueue->buffers)
         mModifiedBuffers = mModifiedBuffers.unite(
-            buffer.second.getModifiedData());
+            buffer.getModifiedData());
 }
 
 void RenderSession::outputTimerQueries()
@@ -423,35 +421,28 @@ void RenderSession::outputTimerQueries()
 
 void RenderSession::finish()
 {
-    // do not emit data changed in automatic evaluation mode,
-    // since it would keep triggering updates
-    const auto emitDataChanged = mManualEvaluation;
-
     auto &manager = Singletons::editorManager();
     auto &session = Singletons::sessionModel();
 
     for (auto itemId : mModifiedImages.keys())
         if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
-            if (auto editor = manager.openImageEditor(fileItem->fileName, false)) {
-                editor->replace(mModifiedImages[itemId], emitDataChanged);
-                mUpdatingPreviewTexture.insert(itemId);
-            }
+            if (auto editor = manager.openImageEditor(fileItem->fileName, false))
+                editor->replace(mModifiedImages[itemId], false);
     mModifiedImages.clear();
-
-    // keep updating preview texture
-    for (auto itemId : mUpdatingPreviewTexture) {
-        const auto it = mCommandQueue->textures.find(itemId);
-        if (it != mCommandQueue->textures.end())
-            if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
-                if (auto editor = manager.getImageEditor(fileItem->fileName))
-                    editor->updatePreviewTexture(it->second.getReadOnlyTextureId());
-    }
 
     for (auto itemId : mModifiedBuffers.keys())
         if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
             if (auto editor = manager.openBinaryEditor(fileItem->fileName, false))
-                editor->replace(mModifiedBuffers[itemId], emitDataChanged);
+                editor->replace(mModifiedBuffers[itemId], false);
     mModifiedBuffers.clear();
+
+    // keep updating preview texture
+    for (auto& [itemId, texture] : mCommandQueue->textures)
+        if (!mItemsChanged && texture.canUpdatePreview())
+            if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
+                if (auto editor = manager.getImageEditor(fileItem->fileName))
+                    editor->updatePreviewTexture(texture.getReadOnlyTextureId(),
+                        texture.flipY());
 
     mPrevMessages.clear();
 

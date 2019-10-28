@@ -42,11 +42,11 @@ private:
     QMap<ItemId, std::shared_ptr<const QOpenGLTimerQuery>> mTimerQueries;
     MessagePtrSet mMessages;
     MessagePtrSet mPrevMessages;
+    bool mItemsChanged{ };
     bool mManualEvaluation{ };
 
     mutable QMutex mUsedItemsCopyMutex;
     QSet<ItemId> mUsedItemsCopy;
-    QSet<ItemId> mUpdatingPreviewTexture;
 };
 
 #endif // RENDERSESSION_H

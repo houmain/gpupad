@@ -35,84 +35,97 @@
       <number>0</number>
      </property>
      <item row="0" column="0">
+      <widget class="QLabel" name="labelExecuteOn">
+       <property name="text">
+        <string>Execute On</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="DataComboBox" name="executeOn"/>
+     </item>
+     <item row="1" column="0">
       <widget class="QLabel" name="labelType">
        <property name="text">
         <string>Type</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="1" column="1">
       <widget class="DataComboBox" name="type"/>
      </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <widget class="QLabel" name="labelProgram">
        <property name="text">
         <string>Program</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="2" column="1">
       <widget class="ReferenceComboBox" name="program"/>
      </item>
-     <item row="2" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="labelTarget">
        <property name="text">
         <string>Target</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="3" column="1">
       <widget class="ReferenceComboBox" name="target"/>
      </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="labelVertexStream">
        <property name="text">
         <string>Vertex Stream</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="4" column="1">
       <widget class="ReferenceComboBox" name="vertexStream"/>
      </item>
-     <item row="4" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="labelPrimitiveType">
        <property name="text">
         <string>Primitive Type</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="5" column="1">
       <widget class="DataComboBox" name="primitiveType"/>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="labelPatchVertices">
        <property name="text">
         <string>Patch Vertices</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <widget class="QSpinBox" name="patchVertices">
        <property name="minimum">
         <number>1</number>
        </property>
       </widget>
      </item>
-     <item row="6" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="labelVertexCount">
        <property name="text">
         <string>Vertex Count</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="0">
+     <item row="7" column="1">
+      <widget class="ExpressionLineEdit" name="vertexCount"/>
+     </item>
+     <item row="8" column="0">
       <widget class="QLabel" name="labelFirstVertex">
        <property name="text">
         <string>First Vertex</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="8" column="1">
       <widget class="QSpinBox" name="firstVertex">
        <property name="minimum">
         <number>0</number>
@@ -122,24 +135,24 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="0">
+     <item row="9" column="0">
       <widget class="QLabel" name="labelIndexBuffer">
        <property name="text">
         <string>Index Buffer</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
+     <item row="9" column="1">
       <widget class="ReferenceComboBox" name="indexBuffer"/>
      </item>
-     <item row="9" column="0">
+     <item row="10" column="0">
       <widget class="QLabel" name="labelBaseVertex">
        <property name="text">
         <string>Base Vertex</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
+     <item row="10" column="1">
       <widget class="QSpinBox" name="baseVertex">
        <property name="maximum">
         <number>100000000</number>
@@ -326,19 +339,6 @@
       <widget class="QSpinBox" name="clearStencil">
        <property name="maximum">
         <number>255</number>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
-      <widget class="ExpressionLineEdit" name="vertexCount"/>
-     </item>
-     <item row="23" column="1">
-      <widget class="DataComboBox" name="executeOn"/>
-     </item>
-     <item row="23" column="0">
-      <widget class="QLabel" name="labelExecuteOn">
-       <property name="text">
-        <string>Execute On</string>
        </property>
       </widget>
      </item>

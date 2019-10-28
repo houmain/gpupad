@@ -17,6 +17,7 @@ static constexpr auto vertexShader = R"(
 #version 330
 
 uniform mat4 uTransform;
+uniform bool uFlipY;
 out vec2 vTexCoord;
 
 const vec2 data[4]= vec2[] (
@@ -29,6 +30,8 @@ const vec2 data[4]= vec2[] (
 void main() {
   vec2 pos = data[gl_VertexID];
   vTexCoord = (pos + 1.0) / 2.0;
+  if (uFlipY)
+    vTexCoord.y = 1.0 - vTexCoord.y;
   gl_Position = uTransform * vec4(pos, 0.0, 1.0);
 }
 )";
@@ -51,6 +54,7 @@ private:
     QMetaObject::Connection mTextureContextConnection;
     QImage mUploadImage;
     GLuint mPreviewTextureId{ };
+    bool mPreviewFlipY{ };
     QRect mBoundingRect;
     bool mMagnifyLinear{ };
 
@@ -62,12 +66,14 @@ public:
         const auto w = image.width();
         const auto h = image.height();
         mBoundingRect = { -w / 2, -h / 2, w, h };
+        mPreviewTextureId = GL_NONE;
         update();
     }
 
-    void setPreviewTexture(GLuint textureId)
+    void setPreviewTexture(GLuint textureId, bool flipY)
     {
         mPreviewTextureId = textureId;
+        mPreviewFlipY = flipY;
         update();
     }
 
@@ -105,26 +111,11 @@ public:
 
         painter->beginNativePainting();
 
-        mProgram->bind();
-        mProgram->setUniformValue("uTexture", 0);
-
-        auto scale = painter->combinedTransform().m11();
-        auto s = mBoundingRect.size();
-        auto cr = painter->clipBoundingRect();
-        auto w = painter->window();
-
-        auto transform = QMatrix(
-          s.width() / static_cast<qreal>(w.width()) * scale, 0,
-          0, -s.height() / static_cast<qreal>(w.height()) * scale,
-          2 * -(cr.left() * scale + w.width() / 2) / static_cast<qreal>(w.width()),
-          2 * (cr.top() * scale + w.height() / 2) / static_cast<qreal>(w.height()));
-
-        mProgram->setUniformValue("uTransform", transform);
-
         mGL.glEnable(GL_BLEND);
         mGL.glBlendEquation(GL_ADD);
         mGL.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+        auto flipY = false;
         if (mPreviewTextureId) {
             Singletons::glShareSynchronizer().beginUsage(mGL);
             mGL.glEnable(GL_TEXTURE_2D);
@@ -138,6 +129,7 @@ public:
             mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
                mMagnifyLinear ? GL_LINEAR : GL_NEAREST);
             mGL.glGenerateMipmap(GL_TEXTURE_2D);
+            flipY = mPreviewFlipY;
         }
         else if (mTexture) {
             mTexture->bind();
@@ -146,6 +138,21 @@ public:
             mTexture->setMagnificationFilter(mMagnifyLinear ?
                 QOpenGLTexture::Linear : QOpenGLTexture::Nearest);
         }
+
+        const auto scale = painter->combinedTransform().m11();
+        const auto s = mBoundingRect.size();
+        const auto cr = painter->clipBoundingRect();
+        const auto w = painter->window();
+        const auto transform = QMatrix(
+            s.width() / static_cast<qreal>(w.width()) * scale, 0,
+            0, -s.height() / static_cast<qreal>(w.height()) * scale,
+            2 * -(cr.left() * scale + w.width() / 2) / static_cast<qreal>(w.width()),
+            2 * (cr.top() * scale + w.height() / 2) / static_cast<qreal>(w.height()));
+
+        mProgram->bind();
+        mProgram->setUniformValue("uTexture", 0);
+        mProgram->setUniformValue("uTransform", transform);
+        mProgram->setUniformValue("uFlipY", flipY);
 
         mGL.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
@@ -302,9 +309,9 @@ void ImageEditor::replace(QImage image, bool emitDataChanged)
         emit dataChanged();
 }
 
-void ImageEditor::updatePreviewTexture(unsigned int textureId)
+void ImageEditor::updatePreviewTexture(unsigned int textureId, bool flipY)
 {
-    mImageItem->setPreviewTexture(textureId);
+    mImageItem->setPreviewTexture(textureId, flipY);
 }
 
 void ImageEditor::setModified(bool modified)
