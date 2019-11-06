@@ -22,6 +22,7 @@
 #include <QToolButton>
 #include <QCoreApplication>
 #include <QDesktopWidget>
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -373,7 +374,7 @@ void MainWindow::updateFileActions()
     auto fileName = mEditActions.windowFileName->text();
     auto modified = mEditActions.windowFileName->isEnabled();
     setWindowTitle((modified ? "*" : "") +
-        FileDialog::getWindowTitle(fileName) +
+        FileDialog::getFullWindowTitle(fileName) +
         " - " + qApp->applicationName());
 
     const auto desc = QString(" \"%1\"").arg(FileDialog::getFileTitle(fileName));
@@ -521,8 +522,33 @@ bool MainWindow::saveSessionAs()
     };
     if (!Singletons::fileDialog().exec(options, mSessionEditor->fileName()))
         return false;
+
+    const auto prevFileName = mSessionEditor->fileName();
     mSessionEditor->setFileName(Singletons::fileDialog().fileName());
-    return saveSession();
+    if (!saveSession()) {
+        mSessionEditor->setFileName(prevFileName);
+        return false;
+    }
+
+    copySessionFiles(QFileInfo(prevFileName).path(), 
+        QFileInfo(mSessionEditor->fileName()).path());
+
+    mSessionEditor->save();
+    mSessionEditor->clearUndo();
+    return true;
+}
+
+void MainWindow::copySessionFiles(const QString &fromPath, const QString &toPath) 
+{
+    auto &model = Singletons::sessionModel();
+    model.forEachFileItem([&](const FileItem &fileItem) {
+        if (fileItem.fileName.startsWith(fromPath)) {
+            const auto index = model.getIndex(&fileItem, SessionModel::FileName);
+            const auto newFileName = toPath + fileItem.fileName.mid(fromPath.length());
+            QFile(fileItem.fileName).copy(newFileName);
+            model.setData(index, newFileName);
+        }
+    });
 }
 
 bool MainWindow::closeSession()
@@ -545,8 +571,9 @@ bool MainWindow::closeSession()
     return mSessionEditor->clear();
 }
 
-void MainWindow::addToRecentFileList(const QString &fileName)
+void MainWindow::addToRecentFileList(QString fileName)
 {
+    fileName = QDir::toNativeSeparators(fileName);
     mRecentFiles.removeAll(fileName);
     mRecentFiles.prepend(fileName);
     updateRecentFileActions();
@@ -606,7 +633,7 @@ void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
     }
     else if (!fileName.isEmpty()) {
         Singletons::editorManager().openSourceEditor(
-            fileName, true, line, column);
+            fileName, line, column);
     }
 }
 
@@ -684,10 +711,13 @@ void MainWindow::populateSampleSessions()
 
 void MainWindow::openSampleSession()
 {
+    auto &editors = Singletons::editorManager();
     if (auto action = qobject_cast<QAction*>(QObject::sender()))
         if (openSession(action->data().toString())) {
             mUi->actionEvalSteady->setChecked(true);
+            editors.setAutoRaise(false);
             mSessionEditor->activateFirstItem();
+            editors.setAutoRaise(true);
         }
 }
 

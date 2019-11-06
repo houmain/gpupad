@@ -219,6 +219,11 @@ bool SessionEditor::isModified() const
     return !mModel.undoStack().isClean();
 }
 
+void SessionEditor::clearUndo()
+{
+    mModel.undoStack().clear();
+}
+
 bool SessionEditor::clear()
 {
     mModel.clear();

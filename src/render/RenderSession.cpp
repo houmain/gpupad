@@ -425,26 +425,30 @@ void RenderSession::outputTimerQueries()
 
 void RenderSession::finish()
 {
-    auto &manager = Singletons::editorManager();
+    auto &editors = Singletons::editorManager();
     auto &session = Singletons::sessionModel();
+
+    editors.setAutoRaise(false);
 
     for (auto itemId : mModifiedImages.keys())
         if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
-            if (auto editor = manager.openImageEditor(fileItem->fileName, false))
+            if (auto editor = editors.openImageEditor(fileItem->fileName))
                 editor->replace(mModifiedImages[itemId], false);
     mModifiedImages.clear();
 
     for (auto itemId : mModifiedBuffers.keys())
         if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
-            if (auto editor = manager.openBinaryEditor(fileItem->fileName, false))
+            if (auto editor = editors.openBinaryEditor(fileItem->fileName))
                 editor->replace(mModifiedBuffers[itemId], false);
     mModifiedBuffers.clear();
+
+    editors.setAutoRaise(true);
 
     // keep updating preview texture
     for (auto& [itemId, texture] : mCommandQueue->textures)
         if (!mItemsChanged && texture.canUpdatePreview())
             if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
-                if (auto editor = manager.getImageEditor(fileItem->fileName))
+                if (auto editor = editors.getImageEditor(fileItem->fileName))
                     editor->updatePreviewTexture(texture.getReadOnlyTextureId(),
                         texture.flipY());
 

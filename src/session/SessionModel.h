@@ -54,6 +54,14 @@ public:
             forEachItemRecUp(*pos.parent, pos, function);
     }
 
+    template<typename F> // F(const FileItem&)
+    void forEachFileItem(const F &function)
+    {
+        forEachItem([&](const Item &item) {
+            if (auto fileItem = castItem<FileItem>(item))
+                function(*fileItem);
+        });
+    }
 private:
     bool shouldSerializeColumn(const Item &item, ColumnType column) const;
     QJsonArray parseClipboard(const QMimeData *data) const;

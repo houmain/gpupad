@@ -9,14 +9,6 @@
 #include "render/CompositorSync.h"
 #include <QTimer>
 
-template<typename F> // F(const FileItem&)
-void forEachFileItem(SessionModel &model, const F &function) {
-    model.forEachItem([&](const Item &item) {
-        if (auto fileItem = castItem<FileItem>(item))
-            function(*fileItem);
-    });
-}
-
 SynchronizeLogic::SynchronizeLogic(QObject *parent)
     : QObject(parent)
     , mModel(Singletons::sessionModel())
@@ -105,15 +97,15 @@ void SynchronizeLogic::handleSessionRendered()
     if (mAutomaticEvaluation || mSteadyEvaluation)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
 
-    if (mSteadyEvaluation && synchronizeToCompositor())
-        mEvaluationTimer->start(1);
+    if (synchronizeToCompositor())
+      mEvaluationTimer->setInterval(1);
 }
 
 void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
 {
     mFilesModified += fileName;
 
-    forEachFileItem(mModel,
+    mModel.forEachFileItem(
         [&](const FileItem &item) {
             if (item.fileName == fileName) {
                 auto index = mModel.getIndex(&item);
@@ -175,7 +167,7 @@ void SynchronizeLogic::handleFileRenamed(const QString &prevFileName,
     const QString &fileName)
 {
     if (FileDialog::isUntitled(prevFileName))
-        forEachFileItem(mModel, [&](const FileItem &item) {
+        mModel.forEachFileItem([&](const FileItem &item) {
             if (item.fileName == prevFileName)
                 mModel.setData(mModel.getIndex(&item, SessionModel::FileName),
                     fileName);
@@ -206,8 +198,7 @@ void SynchronizeLogic::evaluate(bool manualEvaluation)
 
 void SynchronizeLogic::updateFileCache()
 {
-    auto &editors = Singletons::editorManager();
-    Singletons::fileCache().update(editors, mFilesModified);
+    Singletons::fileCache().update(Singletons::editorManager(), mFilesModified);
     mFilesModified.clear();
 }
 

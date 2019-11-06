@@ -108,7 +108,7 @@ QString EditorManager::openNewSourceEditor(const QString &baseName,
     auto editor = new SourceEditor(fileName, mFindReplaceBar);
     editor->setSourceType(sourceType);
     addSourceEditor(editor);
-    raiseEditor(editor);
+    autoRaise(editor);
     return fileName;
 }
 
@@ -117,7 +117,7 @@ QString EditorManager::openNewBinaryEditor(const QString &baseName)
     auto fileName = FileDialog::generateNextUntitledFileName(baseName);
     auto editor = new BinaryEditor(fileName);
     addBinaryEditor(editor);
-    raiseEditor(editor);
+    autoRaise(editor);
     return fileName;
 }
 
@@ -126,27 +126,27 @@ QString EditorManager::openNewImageEditor(const QString &baseName)
     auto fileName = FileDialog::generateNextUntitledFileName(baseName);
     auto editor = new ImageEditor(fileName);
     addImageEditor(editor);
-    raiseEditor(editor);
+    autoRaise(editor);
     return fileName;
 }
 
-bool EditorManager::openEditor(const QString &fileName, bool raise)
+bool EditorManager::openEditor(const QString &fileName)
 {
     if (FileDialog::isBinaryFileName(fileName))
-        if (openBinaryEditor(fileName, raise))
+        if (openBinaryEditor(fileName))
             return true;
 
-    if (openImageEditor(fileName, raise))
+    if (openImageEditor(fileName))
         return true;
-    if (openSourceEditor(fileName, raise))
+    if (openSourceEditor(fileName))
         return true;
-    if (openBinaryEditor(fileName, raise))
+    if (openBinaryEditor(fileName))
         return true;
 
     return false;
 }
 
-SourceEditor *EditorManager::openSourceEditor(const QString &fileName, bool raise,
+SourceEditor *EditorManager::openSourceEditor(const QString &fileName, 
     int line, int column)
 {
     auto editor = getSourceEditor(fileName);
@@ -158,14 +158,13 @@ SourceEditor *EditorManager::openSourceEditor(const QString &fileName, bool rais
         }
         addSourceEditor(editor);
     }
-    if (raise)
-        raiseEditor(editor);
+    autoRaise(editor);
     if (editor)
         editor->setCursorPosition(line, column);
     return editor;
 }
 
-BinaryEditor *EditorManager::openBinaryEditor(const QString &fileName, bool raise)
+BinaryEditor *EditorManager::openBinaryEditor(const QString &fileName)
 {
     auto editor = getBinaryEditor(fileName);
     if (!editor) {
@@ -176,12 +175,11 @@ BinaryEditor *EditorManager::openBinaryEditor(const QString &fileName, bool rais
         }
         addBinaryEditor(editor);
     }
-    if (raise)
-        raiseEditor(editor);
+    autoRaise(editor);
     return editor;
 }
 
-ImageEditor *EditorManager::openImageEditor(const QString &fileName, bool raise)
+ImageEditor *EditorManager::openImageEditor(const QString &fileName)
 {
     auto editor = getImageEditor(fileName);
     if (!editor) {
@@ -192,8 +190,7 @@ ImageEditor *EditorManager::openImageEditor(const QString &fileName, bool raise)
         }
         addImageEditor(editor);
     }
-    if (raise)
-        raiseEditor(editor);
+    autoRaise(editor);
     return editor;
 }
 
@@ -431,7 +428,7 @@ bool EditorManager::closeDock(QDockWidget *dock)
     if (mCurrentDock == dock) {
         mCurrentDock = nullptr;
         if (!mDocks.isEmpty())
-            raiseEditor(mDocks.lastKey()->widget());
+            autoRaise(mDocks.lastKey()->widget());
     }
 
     DockWindow::closeDock(dock);
@@ -442,8 +439,8 @@ bool EditorManager::closeDock(QDockWidget *dock)
     return true;
 }
 
-void EditorManager::raiseEditor(QWidget *editor)
+void EditorManager::autoRaise(QWidget *editor)
 {
-    if (editor)
+    if (mAutoRaise && editor)
         raiseDock(qobject_cast<QDockWidget*>(editor->parentWidget()));
 }

@@ -22,11 +22,12 @@ public:
         SourceType sourceType = SourceType::PlainText);
     QString openNewBinaryEditor(const QString &baseName);
     QString openNewImageEditor(const QString &baseName);
-    bool openEditor(const QString &fileName, bool raise = true);
+    bool openEditor(const QString &fileName);
     SourceEditor *openSourceEditor(const QString &fileName,
-        bool raise = true, int line = -1, int column = -1);
-    BinaryEditor *openBinaryEditor(const QString &fileName, bool raise = true);
-    ImageEditor *openImageEditor(const QString &fileName, bool raise = true);
+        int line = -1, int column = -1);
+    BinaryEditor *openBinaryEditor(const QString &fileName);
+    ImageEditor *openImageEditor(const QString &fileName);
+    void setAutoRaise(bool raise) { mAutoRaise = raise; }
 
     SourceEditor *getSourceEditor(const QString &fileName);
     BinaryEditor *getBinaryEditor(const QString &fileName);
@@ -66,7 +67,7 @@ private:
     QDockWidget *createDock(QWidget *widget, IEditor *editor);
     bool saveDock(QDockWidget *dock);
     bool closeDock(QDockWidget *dock) override;
-    void raiseEditor(QWidget *editor);
+    void autoRaise(QWidget *editor);
 
     QList<SourceEditor*> mSourceEditors;
     QList<BinaryEditor*> mBinaryEditors;
@@ -74,6 +75,7 @@ private:
     QMap<QDockWidget*, IEditor*> mDocks;
     QDockWidget *mCurrentDock{ };
     FindReplaceBar *mFindReplaceBar{ };
+    bool mAutoRaise{ true };
 };
 
 #endif // EDITORMANAGER_H

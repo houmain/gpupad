@@ -51,6 +51,14 @@ QString FileDialog::getFileTitle(const QString &fileName)
     return QString(fileName).remove(0, UntitledTag.size());
 }
 
+QString FileDialog::getFullWindowTitle(const QString &fileName)
+{
+    if (!fileName.startsWith(UntitledTag))
+        return "[*]" + QFileInfo(fileName).fileName() + " - " + QFileInfo(fileName).path();
+
+    return "[*]" + QString(fileName).remove(0, UntitledTag.size());
+}
+
 QString FileDialog::getWindowTitle(const QString &fileName)
 {
     return "[*]" + getFileTitle(fileName);

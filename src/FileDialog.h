@@ -17,6 +17,7 @@ public:
     static bool isUntitled(const QString &fileName);
     static QString getFileTitle(const QString &fileName);
     static QString getWindowTitle(const QString &fileName);
+    static QString getFullWindowTitle(const QString &fileName);
     static bool isSessionFileName(const QString &fileName);
     static bool isBinaryFileName(const QString &fileName);
 

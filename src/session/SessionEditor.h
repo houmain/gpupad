@@ -22,6 +22,7 @@ public:
     void setFileName(QString fileName);
     void setCurrentItem(ItemId itemId);
     bool isModified() const;
+    void clearUndo();
     bool clear();
     bool load();
     bool save();
