@@ -96,6 +96,8 @@ CustomActions::CustomActions(QWidget *parent)
         this, &CustomActions::editAction);
     connect(ui->deleteAction, &QPushButton::clicked,
         this, &CustomActions::deleteAction);
+    connect(ui->actions->selectionModel(), &QItemSelectionModel::currentChanged,
+        this, &CustomActions::updateWidgets);
 }
 
 CustomActions::~CustomActions()
@@ -162,6 +164,13 @@ void CustomActions::actionTriggered()
 
     mMessages.clear();
     action.execute(mSelection, mMessages);
+}
+
+void CustomActions::updateWidgets()
+{
+    const auto hasSelection = ui->actions->currentIndex().isValid();
+    ui->editAction->setEnabled(hasSelection);
+    ui->deleteAction->setEnabled(hasSelection);
 }
 
 void CustomActions::updateActions()

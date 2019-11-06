@@ -78,6 +78,9 @@
        </item>
        <item>
         <widget class="QPushButton" name="editAction">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="minimumSize">
           <size>
            <width>28</width>
@@ -95,6 +98,9 @@
        </item>
        <item>
         <widget class="QPushButton" name="deleteAction">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="minimumSize">
           <size>
            <width>28</width>

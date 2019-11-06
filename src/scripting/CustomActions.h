@@ -30,6 +30,7 @@ private slots:
     void editAction();
     void deleteAction();
     void actionTriggered();
+    void updateWidgets();
 
 private:
     void updateActions();
