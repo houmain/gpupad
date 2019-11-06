@@ -356,11 +356,20 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 
 void RenderSession::render()
 {
+    auto& context = GLContext::currentContext();
+    if (!context) {
+        mMessages += MessageList::insert(
+            0, MessageType::OpenGLVersionNotAvailable, "3.3");
+        return;
+    }
+
     QOpenGLVertexArrayObject::Binder vaoBinder(&mCommandQueue->vao);
     reuseUnmodifiedItems();
     executeCommandQueue();
     downloadModifiedResources();
     outputTimerQueries();
+
+    context.glFlush();
 }
 
 void RenderSession::reuseUnmodifiedItems()
@@ -376,11 +385,6 @@ void RenderSession::reuseUnmodifiedItems()
 void RenderSession::executeCommandQueue()
 {
     auto& context = GLContext::currentContext();
-    if (!context) {
-        mMessages += MessageList::insert(
-            0, MessageType::OpenGLVersionNotAvailable, "3.3");
-        return;
-    }
 
     // always re-evaluate scripts on manual evaluation
     if (!mScriptEngine || mManualEvaluation)

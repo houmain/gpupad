@@ -72,6 +72,12 @@ GLuint GLTexture::getReadWriteTextureId()
 
 bool GLTexture::canUpdatePreview() const
 {
+    if (mMultisampleTarget != Texture::Target::Target2D)
+        return false;
+
+    if (mImages.size() != 1 || mImages[0].level != 0)
+        return false;
+
     switch (mFormat) {
         case Texture::Format::R8_UNorm:
         case Texture::Format::RG8_UNorm:

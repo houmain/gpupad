@@ -105,8 +105,8 @@ void SynchronizeLogic::handleSessionRendered()
     if (mAutomaticEvaluation || mSteadyEvaluation)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
 
-    if (synchronizeToCompositor())
-      mEvaluationTimer->setInterval(1);
+    if (mSteadyEvaluation && synchronizeToCompositor())
+        mEvaluationTimer->start(1);
 }
 
 void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
