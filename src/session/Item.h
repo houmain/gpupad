@@ -191,22 +191,22 @@ struct Call : Item
 
     PrimitiveType primitiveType{ PrimitiveType::Triangles };
     QString count{ "3" };
-    int first{ 0 };
+    QString first{ "0" };
 
     ItemId indexBufferId{ };
-    int baseVertex{ };
+    QString baseVertex{ "0" };
 
-    int instanceCount{ 1 };
-    int baseInstance{ 0 };
+    QString instanceCount{ "1" };
+    QString baseInstance{ "0" };
 
     ItemId indirectBufferId{ };
-    int drawCount{ 1 };
+    QString drawCount{ "1" };
 
-    int patchVertices{ 3 };
+    QString patchVertices{ "3" };
 
-    int workGroupsX{ 1 };
-    int workGroupsY{ 1 };
-    int workGroupsZ{ 1 };
+    QString workGroupsX{ "1" };
+    QString workGroupsY{ "1" };
+    QString workGroupsZ{ "1" };
 
     ItemId textureId{ };
     QColor clearColor{ Qt::black };

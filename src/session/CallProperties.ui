@@ -101,13 +101,6 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
-      <widget class="QSpinBox" name="patchVertices">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-      </widget>
-     </item>
      <item row="7" column="0">
       <widget class="QLabel" name="labelVertexCount">
        <property name="text">
@@ -115,23 +108,10 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
-      <widget class="ExpressionLineEdit" name="vertexCount"/>
-     </item>
      <item row="8" column="0">
       <widget class="QLabel" name="labelFirstVertex">
        <property name="text">
         <string>First Vertex</string>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="1">
-      <widget class="QSpinBox" name="firstVertex">
-       <property name="minimum">
-        <number>0</number>
-       </property>
-       <property name="maximum">
-        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -152,13 +132,6 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="1">
-      <widget class="QSpinBox" name="baseVertex">
-       <property name="maximum">
-        <number>100000000</number>
-       </property>
-      </widget>
-     </item>
      <item row="11" column="0">
       <widget class="QLabel" name="labelInstanceCount">
        <property name="text">
@@ -166,27 +139,10 @@
        </property>
       </widget>
      </item>
-     <item row="11" column="1">
-      <widget class="QSpinBox" name="instanceCount">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>100000000</number>
-       </property>
-      </widget>
-     </item>
      <item row="12" column="0">
       <widget class="QLabel" name="labelBaseInstance">
        <property name="text">
         <string>Base Instance</string>
-       </property>
-      </widget>
-     </item>
-     <item row="12" column="1">
-      <widget class="QSpinBox" name="baseInstance">
-       <property name="maximum">
-        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -207,30 +163,10 @@
        </property>
       </widget>
      </item>
-     <item row="14" column="1">
-      <widget class="QSpinBox" name="drawCount">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>100000000</number>
-       </property>
-      </widget>
-     </item>
      <item row="15" column="0">
       <widget class="QLabel" name="labelWorkGroupsX">
        <property name="text">
         <string>Work Groups X</string>
-       </property>
-      </widget>
-     </item>
-     <item row="15" column="1">
-      <widget class="QSpinBox" name="workGroupsX">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -241,30 +177,10 @@
        </property>
       </widget>
      </item>
-     <item row="16" column="1">
-      <widget class="QSpinBox" name="workGroupsY">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>100000000</number>
-       </property>
-      </widget>
-     </item>
      <item row="17" column="0">
       <widget class="QLabel" name="labelWorkGroupsZ">
        <property name="text">
         <string>Z</string>
-       </property>
-      </widget>
-     </item>
-     <item row="17" column="1">
-      <widget class="QSpinBox" name="workGroupsZ">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>100000000</number>
        </property>
       </widget>
      </item>
@@ -341,6 +257,36 @@
         <number>255</number>
        </property>
       </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="ExpressionLineEdit" name="vertexCount"/>
+     </item>
+     <item row="6" column="1">
+      <widget class="ExpressionLineEdit" name="patchVertices"/>
+     </item>
+     <item row="8" column="1">
+      <widget class="ExpressionLineEdit" name="firstVertex"/>
+     </item>
+     <item row="10" column="1">
+      <widget class="ExpressionLineEdit" name="baseVertex"/>
+     </item>
+     <item row="11" column="1">
+      <widget class="ExpressionLineEdit" name="instanceCount"/>
+     </item>
+     <item row="12" column="1">
+      <widget class="ExpressionLineEdit" name="baseInstance"/>
+     </item>
+     <item row="14" column="1">
+      <widget class="ExpressionLineEdit" name="drawCount"/>
+     </item>
+     <item row="15" column="1">
+      <widget class="ExpressionLineEdit" name="workGroupsX"/>
+     </item>
+     <item row="16" column="1">
+      <widget class="ExpressionLineEdit" name="workGroupsY"/>
+     </item>
+     <item row="17" column="1">
+      <widget class="ExpressionLineEdit" name="workGroupsZ"/>
      </item>
     </layout>
    </item>

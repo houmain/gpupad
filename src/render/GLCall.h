@@ -34,7 +34,7 @@ public:
 private:
     std::shared_ptr<void> beginTimerQuery();
     void executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine);
-    void executeCompute(MessagePtrSet &messages);
+    void executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
     void executeClearTexture(MessagePtrSet &messages);
     void executeClearBuffer(MessagePtrSet &messages);
     void executeGenerateMipmaps(MessagePtrSet &messages);
@@ -48,7 +48,7 @@ private:
 
     GLBuffer *mIndexBuffer{ };
     GLuint mIndexType{ };
-    uintptr_t mIndicesOffset{ };
+    GLuint mIndexSize{ };
 
     GLBuffer *mIndirectBuffer{ };
     uintptr_t mIndirectOffset{ };
