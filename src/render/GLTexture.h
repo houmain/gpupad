@@ -28,6 +28,7 @@ public:
     Texture::Format format() const { return mFormat; }
 
     void clear(QColor color, double depth, int stencil);
+    void copy(GLTexture &source);
     void generateMipmaps();
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();

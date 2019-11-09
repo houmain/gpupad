@@ -499,7 +499,10 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             result &= (column != CallWorkGroupsZ || kind.compute);
             result &= (column != CallTextureId ||
                 callType == Call::CallType::ClearTexture ||
+                callType == Call::CallType::CopyTexture ||
                 callType == Call::CallType::GenerateMipmaps);
+            result &= (column != CallFromTextureId ||
+                callType == Call::CallType::CopyTexture);
             result &= (column != CallClearColor || callType == Call::CallType::ClearTexture);
             result &= (column != CallClearDepth || callType == Call::CallType::ClearTexture);
             result &= (column != CallClearStencil || callType == Call::CallType::ClearTexture);

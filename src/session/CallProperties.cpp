@@ -19,11 +19,13 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
         this, &CallProperties::updateWidgets);
     connect(mUi->texture, &ReferenceComboBox::currentDataChanged,
         this, &CallProperties::updateWidgets);
+    connect(mUi->fromTexture, &ReferenceComboBox::currentDataChanged,
+        this, &CallProperties::updateWidgets);
     connect(mUi->primitiveType, &DataComboBox::currentDataChanged,
         this, &CallProperties::updateWidgets);
 
     for (auto combobox : { mUi->program, mUi->vertexStream, mUi->target,
-            mUi->indexBuffer, mUi->indirectBuffer, mUi->texture, mUi->buffer })
+            mUi->indexBuffer, mUi->indirectBuffer, mUi->texture, mUi->fromTexture, mUi->buffer })
         connect(combobox, &ReferenceComboBox::textRequired,
             [this](QVariant data) { return mSessionProperties.findItemName(data.toInt()); });
 
@@ -40,6 +42,8 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
     connect(mUi->buffer, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
     connect(mUi->texture, &ReferenceComboBox::listRequired,
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Texture); });
+    connect(mUi->fromTexture, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Texture); });
 
     updateWidgets();
@@ -108,6 +112,7 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->workGroupsZ, SessionModel::CallWorkGroupsZ);
 
     mapper.addMapping(mUi->texture, SessionModel::CallTextureId);
+    mapper.addMapping(mUi->fromTexture, SessionModel::CallFromTextureId);
     mapper.addMapping(mUi->clearColor, SessionModel::CallClearColor);
     mapper.addMapping(mUi->clearDepth, SessionModel::CallClearDepth);
     mapper.addMapping(mUi->clearStencil, SessionModel::CallClearStencil);
@@ -154,8 +159,12 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsZ, mUi->workGroupsZ,
         kind.compute);
 
+    setFormVisibility(mUi->formLayout, mUi->labelFromTexture, mUi->fromTexture,
+        type == Call::CallType::CopyTexture);
+
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
         type == Call::CallType::ClearTexture ||
+        type == Call::CallType::CopyTexture ||
         type == Call::CallType::GenerateMipmaps);
 
     const auto texKind = currentTextureKind();

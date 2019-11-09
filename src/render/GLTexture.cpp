@@ -155,6 +155,13 @@ void GLTexture::clear(QColor color, double depth, int stencil)
     gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
 }
 
+void GLTexture::copy(GLTexture &source)
+{
+    source.getReadOnlyTextureId();
+    getReadWriteTextureId();
+    resolveMultisampleTexture(*source.mTexture, *mTexture, 0);
+}
+
 void GLTexture::generateMipmaps()
 {
     getReadWriteTextureId();

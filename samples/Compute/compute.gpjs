@@ -34,65 +34,57 @@
         "type": "Program"
     },
     {
+        "callType": "ClearTexture",
+        "checked": true,
+        "clearColor": "#ff000000",
+        "clearDepth": 1,
+        "clearStencil": 0,
+        "executeOn": "ManualEvaluation",
+        "id": 73,
+        "name": "Clear",
+        "textureId": 79,
+        "type": "Call"
+    },
+    {
         "bindingType": "Image",
         "id": 70,
-        "name": "uImageR",
-        "type": "Binding",
         "layer": 0,
         "layered": false,
         "level": 0,
-        "textureId": 79
+        "name": "uImageR",
+        "textureId": 79,
+        "type": "Binding"
     },
     {
         "bindingType": "Image",
         "id": 86,
-        "name": "uImageW",
-        "type": "Binding",
         "layer": 0,
         "layered": false,
         "level": 0,
-        "textureId": 92
+        "name": "uImageW",
+        "textureId": 92,
+        "type": "Binding"
     },
     {
         "callType": "Compute",
         "checked": true,
-        "id": 73,
+        "executeOn": "EveryEvaluation",
+        "id": 93,
         "name": "Compute",
         "programId": 90,
         "type": "Call",
-        "workGroupsX": 16,
-        "workGroupsY": 16,
-        "workGroupsZ": 1
+        "workGroupsX": "16",
+        "workGroupsY": "16",
+        "workGroupsZ": "1"
     },
     {
-        "bindingType": "Image",
-        "id": 88,
-        "name": "uImageR",
-        "type": "Binding",
-        "layer": 0,
-        "layered": false,
-        "level": 0,
-        "textureId": 92
-    },
-    {
-        "bindingType": "Image",
-        "id": 89,
-        "name": "uImageW",
-        "type": "Binding",
-        "layer": 0,
-        "layered": false,
-        "level": 0,
-        "textureId": 79
-    },
-    {
-        "callType": "Compute",
+        "callType": "CopyTexture",
         "checked": true,
+        "executeOn": "EveryEvaluation",
+        "fromTextureId": 92,
         "id": 87,
-        "name": "Compute",
-        "programId": 90,
-        "type": "Call",
-        "workGroupsX": 16,
-        "workGroupsY": 16,
-        "workGroupsZ": 1
+        "name": "Copy",
+        "textureId": 79,
+        "type": "Call"
     }
 ]

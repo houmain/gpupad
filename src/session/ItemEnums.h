@@ -179,6 +179,7 @@ namespace ItemEnums2 {
         DrawIndexedIndirect, // gl(Multi)DrawElementsIndirect
         Compute,
         ClearTexture,
+        CopyTexture,
         ClearBuffer,
         GenerateMipmaps,
     };

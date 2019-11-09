@@ -51,9 +51,10 @@ void GLCall::setBuffer(GLBuffer *buffer)
     mBuffer = buffer;
 }
 
-void GLCall::setTexture(GLTexture *texture)
+void GLCall::setTextures(GLTexture *texture, GLTexture *fromTexture)
 {
     mTexture = texture;
+    mFromTexture = fromTexture;
 }
 
 std::shared_ptr<void> GLCall::beginTimerQuery()
@@ -80,6 +81,9 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             break;
         case Call::CallType::ClearTexture:
             executeClearTexture(messages);
+            break;
+        case Call::CallType::CopyTexture:
+            executeCopyTexture(messages);
             break;
         case Call::CallType::ClearBuffer:
             executeClearBuffer(messages);
@@ -140,7 +144,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
                     first,
                     count,
                     instanceCount,
-                    baseInstance);
+                    static_cast<GLuint>(baseInstance));
             }
         }
         else if (mCall.callType == Call::CallType::DrawIndexed) {
@@ -162,7 +166,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
                     reinterpret_cast<void*>(offset),
                     instanceCount,
                     baseVertex,
-                    baseInstance);
+                    static_cast<GLuint>(baseInstance));
             }
         }
         else if (mCall.callType == Call::CallType::DrawIndirect) {
@@ -214,7 +218,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 void GLCall::executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
     const auto evaluate = [&](const auto &expression) {
-        return static_cast<int>(scriptEngine.evaluateValue(
+        return static_cast<GLuint>(scriptEngine.evaluateValue(
             expression, mCall.id, messages));
     };
     if (mProgram) {
@@ -239,6 +243,20 @@ void GLCall::executeClearTexture(MessagePtrSet &messages)
         mTexture->clear(mCall.clearColor,
             mCall.clearDepth, mCall.clearStencil);
         mUsedItems += mTexture->usedItems();
+    }
+    else {
+        messages += MessageList::insert(
+            mCall.id,  MessageType::TextureNotAssigned);
+    }
+}
+
+void GLCall::executeCopyTexture(MessagePtrSet &messages)
+{
+    if (mTexture && mFromTexture) {
+        auto guard = beginTimerQuery();
+        mTexture->copy(*mFromTexture);
+        mUsedItems += mTexture->usedItems();
+        mUsedItems += mFromTexture->usedItems();
     }
     else {
         messages += MessageList::insert(

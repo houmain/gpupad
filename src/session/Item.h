@@ -209,6 +209,7 @@ struct Call : Item
     QString workGroupsZ{ "1" };
 
     ItemId textureId{ };
+    ItemId fromTextureId{ };
     QColor clearColor{ Qt::black };
     double clearDepth{ 1.0 };
     int clearStencil{ };
