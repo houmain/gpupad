@@ -263,8 +263,7 @@ void SourceEditor::updateSyntaxHighlighting()
     mCompleter->setWidget(this);
     mCompleter->setCompletionMode(QCompleter::PopupCompletion);
     mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
-    using Overload = void(QCompleter::*)(const QString &);
-    connect(mCompleter, static_cast<Overload>(&QCompleter::activated),
+    connect(mCompleter, qOverload<const QString &>(&QCompleter::activated),
         this, &SourceEditor::insertCompletion);
 }
 

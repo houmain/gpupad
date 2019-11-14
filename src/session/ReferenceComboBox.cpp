@@ -3,8 +3,7 @@
 
 ReferenceComboBox::ReferenceComboBox(QWidget *parent) : QComboBox(parent)
 {
-    using Overload = void(QComboBox::*)(int);
-    connect(this, (Overload)&QComboBox::currentIndexChanged,
+    connect(this, qOverload<int>(&QComboBox::currentIndexChanged),
         [this]() {
             if (!mSuspendDataChangedSignal)
                 emit currentDataChanged(currentData());

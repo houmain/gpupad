@@ -103,8 +103,7 @@ SessionProperties::SessionProperties(QWidget *parent)
         [this]() { openCurrentItemFile(FileDialog::BinaryExtensions); });
     connect(mBufferProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(Item::Type::Buffer, true); });
-    using Overload = void(QSpinBox::*)(int);
-    connect(mBufferProperties->rowCount, static_cast<Overload>(&QSpinBox::valueChanged),
+    connect(mBufferProperties->rowCount, qOverload<int>(&QSpinBox::valueChanged),
         [this]() { updateBufferWidgets(currentModelIndex()); });
     connect(mBufferProperties->size, &QSpinBox::editingFinished,
         this, &SessionProperties::deduceBufferRowCount);

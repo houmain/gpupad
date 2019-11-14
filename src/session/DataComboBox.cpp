@@ -2,8 +2,7 @@
 
 DataComboBox::DataComboBox(QWidget *parent) : QComboBox(parent)
 {
-    using Overload = void(QComboBox::*)(int);
-    connect(this, static_cast<Overload>(&QComboBox::currentIndexChanged),
+    connect(this, qOverload<int>(&QComboBox::currentIndexChanged),
         [this]() { emit currentDataChanged(currentData()); });
 }
 
