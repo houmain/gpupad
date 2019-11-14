@@ -20,6 +20,26 @@
         "width": 256
     },
     {
+        "bindingType": "Image",
+        "id": 70,
+        "layer": 0,
+        "layered": false,
+        "level": 0,
+        "name": "uImageR",
+        "textureId": 79,
+        "type": "Binding"
+    },
+    {
+        "bindingType": "Image",
+        "id": 86,
+        "layer": 0,
+        "layered": false,
+        "level": 0,
+        "name": "uImageW",
+        "textureId": 92,
+        "type": "Binding"
+    },
+    {
         "id": 90,
         "items": [
             {
@@ -44,26 +64,6 @@
         "name": "Clear",
         "textureId": 79,
         "type": "Call"
-    },
-    {
-        "bindingType": "Image",
-        "id": 70,
-        "layer": 0,
-        "layered": false,
-        "level": 0,
-        "name": "uImageR",
-        "textureId": 79,
-        "type": "Binding"
-    },
-    {
-        "bindingType": "Image",
-        "id": 86,
-        "layer": 0,
-        "layered": false,
-        "level": 0,
-        "name": "uImageW",
-        "textureId": 92,
-        "type": "Binding"
     },
     {
         "callType": "Compute",

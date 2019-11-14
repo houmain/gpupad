@@ -1,0 +1,18 @@
+
+layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+vec3 hash(uvec3 x) {
+  const uint k = 1103515245U;
+  x = ((x >> 8U) ^ x.yzx) * k;
+  x = ((x >> 8U) ^ x.yzx) * k;
+  x = ((x >> 8U) ^ x.yzx) * k;
+  return vec3(x) * (1.0 / float(0xffffffffU));
+}
+
+void main() {
+  uint gid = gl_GlobalInvocationID.x;
+  if(gid < particleCount) {
+    vec4 position = vec4(hash(uvec3(gid, 0, 1)) - vec3(0.5), 1);
+    particle[gid] = Particle(position, vec4(0));
+  }
+}

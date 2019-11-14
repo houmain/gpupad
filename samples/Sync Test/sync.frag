@@ -4,8 +4,7 @@ uniform int frame;
 uniform sampler2D target;
 out vec4 color;
 
-void main()
-{
+void main() {
   float frameRate = 60;
   int barWidth = 8;
   int width = textureSize(target, 0).x - barWidth;

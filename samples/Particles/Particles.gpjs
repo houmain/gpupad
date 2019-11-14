@@ -1,0 +1,229 @@
+[
+    {
+        "flipY": false,
+        "format": "RGB8_UNorm",
+        "height": 512,
+        "id": 77,
+        "name": "Texture",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 512
+    },
+    {
+        "executeOn": "ManualEvaluation",
+        "expression": "particleCount = 100000\n",
+        "id": 61,
+        "name": "Script",
+        "type": "Script"
+    },
+    {
+        "id": 66,
+        "items": [
+            {
+                "count": 4,
+                "dataType": "Float",
+                "id": 67,
+                "name": "position",
+                "padding": 0,
+                "type": "Column"
+            },
+            {
+                "count": 4,
+                "dataType": "Float",
+                "id": 68,
+                "name": "velocity",
+                "padding": 0,
+                "type": "Column"
+            }
+        ],
+        "name": "Buffer",
+        "offset": 0,
+        "rowCount": 100000,
+        "type": "Buffer"
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 65,
+        "name": "particleCount",
+        "type": "Binding",
+        "values": [
+            "particleCount"
+        ]
+    },
+    {
+        "bindingType": "Buffer",
+        "bufferId": 66,
+        "id": 69,
+        "name": "particles",
+        "type": "Binding"
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression3",
+        "id": 87,
+        "name": "attractor",
+        "type": "Binding",
+        "values": [
+            "Math.sin(Date.now() / 20)",
+            "Math.cos(Date.now() / 30)",
+            "0"
+        ]
+    },
+    {
+        "blendConstant": "#ffffffff",
+        "cullMode": "NoCulling",
+        "frontFace": "CCW",
+        "id": 78,
+        "items": [
+            {
+                "blendAlphaDest": "One",
+                "blendAlphaEq": "Add",
+                "blendAlphaSource": "One",
+                "blendColorDest": "One",
+                "blendColorEq": "Add",
+                "blendColorSource": "SrcAlpha",
+                "colorWriteMask": 15,
+                "id": 79,
+                "level": 0,
+                "name": "Attachment",
+                "textureId": 77,
+                "type": "Attachment"
+            }
+        ],
+        "logicOperation": "NoLogicOperation",
+        "name": "Target",
+        "type": "Target"
+    },
+    {
+        "id": 83,
+        "items": [
+            {
+                "bufferId": 66,
+                "columnId": 67,
+                "divisor": 0,
+                "id": 84,
+                "name": "aPosition",
+                "normalize": false,
+                "type": "Attribute"
+            }
+        ],
+        "name": "Stream",
+        "type": "Stream"
+    },
+    {
+        "id": 62,
+        "items": [
+            {
+                "fileName": "particle.glsl",
+                "id": 76,
+                "name": "particle.glsl",
+                "shaderType": "Header",
+                "type": "Shader"
+            },
+            {
+                "fileName": "reset.glsl",
+                "id": 63,
+                "name": "reset.glsl",
+                "shaderType": "Compute",
+                "type": "Shader"
+            }
+        ],
+        "name": "Reset Program",
+        "type": "Program"
+    },
+    {
+        "id": 72,
+        "items": [
+            {
+                "fileName": "particle.glsl",
+                "id": 75,
+                "name": "particle.glsl",
+                "shaderType": "Header",
+                "type": "Shader"
+            },
+            {
+                "fileName": "update.glsl",
+                "id": 73,
+                "name": "update.glsl",
+                "shaderType": "Compute",
+                "type": "Shader"
+            }
+        ],
+        "name": "Update Program",
+        "type": "Program"
+    },
+    {
+        "id": 80,
+        "items": [
+            {
+                "fileName": "particle.vs",
+                "id": 81,
+                "name": "particle.vs",
+                "shaderType": "Vertex",
+                "type": "Shader"
+            },
+            {
+                "fileName": "particle.fs",
+                "id": 85,
+                "name": "particle.fs",
+                "shaderType": "Fragment",
+                "type": "Shader"
+            }
+        ],
+        "name": "Render Program",
+        "type": "Program"
+    },
+    {
+        "callType": "Compute",
+        "checked": true,
+        "executeOn": "ManualEvaluation",
+        "id": 64,
+        "name": "Reset Call",
+        "programId": 62,
+        "type": "Call",
+        "workGroupsX": "Math.ceil(particleCount / 256)",
+        "workGroupsY": "1",
+        "workGroupsZ": "1"
+    },
+    {
+        "callType": "Compute",
+        "checked": true,
+        "executeOn": "EveryEvaluation",
+        "id": 74,
+        "name": "Update Call",
+        "programId": 72,
+        "type": "Call",
+        "workGroupsX": "Math.ceil(particleCount / 256)",
+        "workGroupsY": "1",
+        "workGroupsZ": "1"
+    },
+    {
+        "callType": "ClearTexture",
+        "checked": true,
+        "clearColor": "#ff000000",
+        "clearDepth": 1,
+        "clearStencil": 0,
+        "executeOn": "EveryEvaluation",
+        "id": 86,
+        "name": "Clear",
+        "textureId": 77,
+        "type": "Call"
+    },
+    {
+        "baseInstance": "0",
+        "callType": "Draw",
+        "checked": true,
+        "count": "particleCount",
+        "executeOn": "EveryEvaluation",
+        "first": "0",
+        "id": 82,
+        "instanceCount": "1",
+        "name": "Draw Call",
+        "primitiveType": "Points",
+        "programId": 80,
+        "targetId": 78,
+        "type": "Call",
+        "vertexStreamId": 83
+    }
+]

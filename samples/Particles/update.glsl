@@ -1,0 +1,16 @@
+
+uniform vec3 attractor;
+
+layout (local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+void main() {
+  uint gid = gl_GlobalInvocationID.x;
+  if(gid < particleCount) {
+    Particle p = particle[gid];
+    vec3 acceleration = normalize(attractor - p.position.xyz) / 100;
+    p.velocity += vec4(acceleration, 0);
+    p.position += p.velocity;
+    p.position = clamp(p.position, -1.1, 1.1);
+    particle[gid] = p;
+  }
+}
