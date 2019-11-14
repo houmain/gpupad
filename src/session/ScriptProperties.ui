@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>219</width>
+    <width>239</width>
     <height>166</height>
    </rect>
   </property>
@@ -34,14 +34,14 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
-     <item row="0" column="0">
+     <item row="1" column="0">
       <widget class="QLabel" name="labelFile">
        <property name="text">
         <string>File</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="1" column="1">
       <widget class="QWidget" name="widgetFile" native="true">
        <layout class="QHBoxLayout" name="horizontalLayout_6">
         <property name="spacing">
@@ -99,15 +99,25 @@
        </layout>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="0" column="0">
       <widget class="QLabel" name="labelExecuteOn">
        <property name="text">
         <string>Execute on</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="0" column="1">
       <widget class="DataComboBox" name="executeOn"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelExpression">
+       <property name="text">
+        <string>Expression</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="ExpressionEditor" name="expression"/>
      </item>
     </layout>
    </item>
@@ -123,6 +133,11 @@
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
    <header>session/DataComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ExpressionEditor</class>
+   <extends>QPlainTextEdit</extends>
+   <header>session/ExpressionEditor.h</header>
   </customwidget>
  </customwidgets>
  <resources>

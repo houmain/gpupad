@@ -56,6 +56,8 @@ public:
 private slots:
     void updateImageWidgets(const QModelIndex &index);
     void updateBufferWidgets(const QModelIndex &index);
+    void updateScriptWidgets(const QModelIndex &index);
+    void updateScriptWidgets(bool hasFile);
     void deduceBufferRowCount();
 
 private:

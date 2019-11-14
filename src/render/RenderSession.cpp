@@ -225,7 +225,12 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
         else if (auto script = castItem<Script>(item)) {
             mUsedItems += script->id;
             auto source = QString();
-            Singletons::fileCache().getSource(script->fileName, &source);
+            if (script->fileName.isEmpty()) {
+                source = script->expression;
+            }
+            else {
+                Singletons::fileCache().getSource(script->fileName, &source);
+            }
             addCommand(
                 [this, source, fileName = script->fileName,
                   executeOn = script->executeOn

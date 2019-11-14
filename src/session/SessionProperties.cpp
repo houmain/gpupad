@@ -123,7 +123,9 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mScriptProperties->fileBrowse, &QToolButton::clicked,
         [this]() { openCurrentItemFile(FileDialog::ScriptExtensions); });
     connect(mScriptProperties->file, &ReferenceComboBox::listRequired,
-        [this]() { return getFileNames(Item::Type::Script); });
+        [this]() { return getFileNames(Item::Type::Script, true); });
+    connect(mScriptProperties->file, &ReferenceComboBox::currentDataChanged,
+        [this](QVariant data) { updateScriptWidgets(!data.toString().isEmpty()); });
 
     connect(mAttributeProperties->buffer, &ReferenceComboBox::currentDataChanged,
         mAttributeProperties->column, &ReferenceComboBox::validate);
@@ -327,6 +329,8 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
         case Item::Type::Script:
             map(mScriptProperties->file, SessionModel::FileName);
             map(mScriptProperties->executeOn, SessionModel::ScriptExecuteOn);
+            map(mScriptProperties->expression, SessionModel::ScriptExpression);
+            updateScriptWidgets(index);
             break;
     }
 
@@ -458,6 +462,20 @@ void SessionProperties::updateBufferWidgets(const QModelIndex &index)
     ui.size->setValue(stride * ui.rowCount->value());
     setFormVisibility(ui.formLayout, ui.labelRows, ui.widgetRows, stride > 0);
     setFormVisibility(ui.formLayout, ui.labelSize, ui.size, stride > 0);
+}
+
+void SessionProperties::updateScriptWidgets(const QModelIndex &index)
+{
+    auto hasFile = false;
+    if (auto script = mModel.item<Script>(index))
+        hasFile = !script->fileName.isEmpty();
+    updateScriptWidgets(hasFile);
+}
+
+void SessionProperties::updateScriptWidgets(bool hasFile)
+{
+    auto &ui = *mScriptProperties;
+    setFormVisibility(ui.formLayout, ui.labelExpression, ui.expression, !hasFile);
 }
 
 void SessionProperties::deduceBufferRowCount()

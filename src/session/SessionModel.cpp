@@ -510,6 +510,13 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             break;
         }
 
+        case Item::Type::Script: {
+            const auto &script = static_cast<const Script&>(item);
+            result &= (column != FileName || !script.fileName.isEmpty());
+            result &= (column != ScriptExpression || script.fileName.isEmpty());
+            break;
+        }
+
         default:
             break;
     }
