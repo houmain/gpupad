@@ -67,7 +67,7 @@ There is currently only one JavaScript state for the whole session and the scrip
 
 Building
 --------
-A C++14 conforming compiler and [Qt5](https://www.qt.io/) is required. A script for the
+A C++17 conforming compiler and [Qt5](https://www.qt.io/) is required. A script for the
 [CMake](https://cmake.org) build system is provided.
 
 

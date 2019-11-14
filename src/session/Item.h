@@ -93,7 +93,7 @@ struct Binding : Item
 
     BindingType bindingType{ };
     Editor editor{ };
-    QStringList values;
+    QStringList values{ "0" };
     ItemId textureId{ };
     ItemId bufferId{ };
     int level{ };

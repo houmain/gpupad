@@ -114,6 +114,6 @@ else()
 
 	install(CODE "set(deployqt \"${deployqt}\")" COMPONENT Runtime)
 	install(CODE [===[
-	execute_process(COMMAND "${deployqt}" "${CMAKE_INSTALL_PREFIX}")
+	execute_process(COMMAND "${deployqt}" --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations "${CMAKE_INSTALL_PREFIX}")
 	]===] COMPONENT Runtime)
 endif()
