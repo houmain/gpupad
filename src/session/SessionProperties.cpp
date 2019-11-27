@@ -354,35 +354,41 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
                         editors.openNewImageEditor(fileItem->name));
                 return editors.openImageEditor(fileItem->fileName);
 
-            case Item::Type::Shader: {
+            case Item::Type::Shader:
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
                         editors.openNewSourceEditor(fileItem->name));
-                auto editor = editors.openSourceEditor(fileItem->fileName);
-                if (auto shader = mModel.item<Shader>(index)) {
-                    static const auto sMapping = QMap<Shader::ShaderType, SourceType>{
-                        { Shader::ShaderType::Vertex, SourceType::VertexShader },
-                        { Shader::ShaderType::Fragment, SourceType::FragmentShader },
-                        { Shader::ShaderType::Geometry, SourceType::GeometryShader },
-                        { Shader::ShaderType::TessellationControl, SourceType::TesselationControl },
-                        { Shader::ShaderType::TessellationEvaluation, SourceType::TesselationEvaluation },
-                        { Shader::ShaderType::Compute, SourceType::ComputeShader },
-                    };
-                    auto sourceType = sMapping[shader->shaderType];
-                    if (sourceType != SourceType::None)
-                        editor->setSourceType(sourceType);
+                if (auto editor = editors.openSourceEditor(fileItem->fileName)) {
+                    if (auto shader = mModel.item<Shader>(index)) {
+                        static const auto sMapping = QMap<Shader::ShaderType, SourceType>{
+                            { Shader::ShaderType::Vertex, SourceType::VertexShader },
+                            { Shader::ShaderType::Fragment, SourceType::FragmentShader },
+                            { Shader::ShaderType::Geometry, SourceType::GeometryShader },
+                            { Shader::ShaderType::TessellationControl, SourceType::TesselationControl },
+                            { Shader::ShaderType::TessellationEvaluation, SourceType::TesselationEvaluation },
+                            { Shader::ShaderType::Compute, SourceType::ComputeShader },
+                        };
+                        auto sourceType = sMapping[shader->shaderType];
+                        if (sourceType != SourceType::None)
+                            editor->setSourceType(sourceType);
+                    }
+                    return editor;
                 }
-                return editor;
-            }
+                break;
 
-            case Item::Type::Script: {
+            case Item::Type::Script:
+                if (auto script = mModel.item<Script>(index))
+                    if (!script->expression.isEmpty())
+                        return nullptr;
+
                 if (fileItem->fileName.isEmpty())
                     mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
                         editors.openNewSourceEditor(fileItem->name));
-                auto editor = editors.openSourceEditor(fileItem->fileName);
-                editor->setSourceType(SourceType::JavaScript);
-                return editor;
-            }
+                if (auto editor = editors.openSourceEditor(fileItem->fileName)) {
+                    editor->setSourceType(SourceType::JavaScript);
+                    return editor;
+                }
+                break;
 
             case Item::Type::Buffer:
                 if (fileItem->fileName.isEmpty())
