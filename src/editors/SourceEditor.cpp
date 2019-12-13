@@ -369,7 +369,7 @@ void SourceEditor::indentSelection(bool reverse)
     const auto tabSelector = QString("(\\t| {1,%1})").arg(mTabSize);
     auto cursor = textCursor();
     cursor.beginEditBlock();
-    if (!cursor.hasSelection()) {
+    if (!cursor.hasSelection() || cursor.selectedText().indexOf(newParagraph) < 0) {
         if (reverse) {
             cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
             auto text = cursor.selectedText();
@@ -381,24 +381,24 @@ void SourceEditor::indentSelection(bool reverse)
         }
     }
     else {
+        auto begin = std::min(cursor.selectionStart(), cursor.selectionEnd());
+        auto end = std::max(cursor.selectionStart(), cursor.selectionEnd());
+        cursor.setPosition(begin);
+        cursor.movePosition(QTextCursor::StartOfBlock);
+        cursor.setPosition(end, QTextCursor::KeepAnchor);
         auto text = cursor.selectedText();
         if (reverse) {
             text.remove(QRegularExpression("^" + tabSelector));
-            text.replace(QRegularExpression(newParagraph + tabSelector), "\n");
+            text.replace(QRegularExpression(newParagraph + tabSelector), newParagraph);
         }
         else {
-            text.replace(QChar(QChar::ParagraphSeparator), "\n" + tab());
-
-            // no lines were indented, replace selection with tab
-            if (cursor.selectedText() == text) {
-                cursor.insertText(tab());
-                cursor.endEditBlock();
-                return;
-            }
+            text.replace(newParagraph, newParagraph + tab());
             text.prepend(tab());
         }
         cursor.insertText(text);
-        cursor.setPosition(cursor.position() - text.size(), QTextCursor::KeepAnchor);
+        end = cursor.position();
+        cursor.setPosition(end - text.length());
+        cursor.setPosition(end, QTextCursor::KeepAnchor);
         setTextCursor(cursor);
     }
     cursor.endEditBlock();
@@ -407,6 +407,7 @@ void SourceEditor::indentSelection(bool reverse)
 
 void SourceEditor::autoIndentNewLine()
 {
+    const auto newParagraph = QString(QChar(QChar::ParagraphSeparator));
     auto cursor = textCursor();
     cursor.beginEditBlock();
     if (cursor.hasSelection())
@@ -414,11 +415,15 @@ void SourceEditor::autoIndentNewLine()
 
     cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
     auto line = cursor.selectedText();
+    while (!line.isEmpty() && (line.back() == ' ' || line.back() == '\t'))
+        line.chop(1);
+    if (line.isEmpty())
+      line = cursor.selectedText();
     auto spaces = QString(line).replace(QRegularExpression("^(\\s*).*"), "\\1");
-    if (line.trimmed().endsWith('{'))
+    if (line.endsWith('{'))
         spaces += tab();
 
-    cursor.insertText(line + "\n" + spaces);
+    cursor.insertText(line + newParagraph + spaces);
     cursor.endEditBlock();
     ensureCursorVisible();
 }
@@ -433,11 +438,23 @@ void SourceEditor::autoDeindentBrace()
     ensureCursorVisible();
 }
 
+void SourceEditor::removeTrailingSpace()
+{
+    auto cursor = textCursor();
+    if (!cursor.selectedText().isEmpty())
+        return;
+    cursor.joinPreviousEditBlock();
+    cursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+    if (cursor.selectedText().trimmed().isEmpty())
+        cursor.removeSelectedText();
+    cursor.endEditBlock();
+}
+
 void SourceEditor::toggleHomePosition(bool shiftHold)
 {
     auto cursor = textCursor();
-    auto initial = cursor.columnNumber();
-    auto moveMode = (shiftHold ?
+    const auto initial = cursor.columnNumber();
+    const auto moveMode = (shiftHold ?
         QTextCursor::KeepAnchor : QTextCursor::MoveAnchor);
     cursor.movePosition(QTextCursor::StartOfLine, moveMode);
     if (cursor.movePosition(QTextCursor::EndOfWord, moveMode)) {
@@ -470,15 +487,17 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
        }
     }
 
-    auto ctrlHold = (event->modifiers() & Qt::ControlModifier);
+    const auto ctrlHold = (event->modifiers() & Qt::ControlModifier);
     if (ctrlHold && event->key() == Qt::Key_F) {
         findReplace();
     }
     else if (mAutoIndentation && event->key() == Qt::Key_Escape) {
         mFindReplaceBar.cancel();
     }
-    else if (mAutoIndentation && event->key() == Qt::Key_Return) {
+    else if (mAutoIndentation && (event->key() == Qt::Key_Return ||
+                                  event->key() == Qt::Key_Enter)) {
         autoIndentNewLine();
+        removeTrailingSpace();
     }
     else if (mAutoIndentation && event->key() == Qt::Key_BraceRight) {
         autoDeindentBrace();

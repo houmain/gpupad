@@ -59,6 +59,7 @@ private:
     void indentSelection(bool reverse = false);
     void autoIndentNewLine();
     void autoDeindentBrace();
+    void removeTrailingSpace();
     void toggleHomePosition(bool shiftHold);
     QString textUnderCursor(bool identifierOnly = false) const;
     void markOccurrences(QString text, QTextDocument::FindFlags =
