@@ -658,6 +658,9 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
 
     markOccurrences(find, flags & (~QTextDocument::FindBackward));
 
+    if (find.isEmpty())
+        return;
+
     if (action == FindReplaceBar::ReplaceAll) {
         auto cursor = textCursor();
         cursor.beginEditBlock();
