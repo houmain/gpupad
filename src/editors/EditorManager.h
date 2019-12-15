@@ -49,6 +49,7 @@ public:
     bool reloadEditor();
     bool closeEditor();
     bool closeAllEditors();
+    bool closeAllImageEditors();
 
 signals:
     void editorChanged(const QString &fileName);

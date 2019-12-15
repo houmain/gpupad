@@ -11,7 +11,9 @@
 #include <QOpenGLShader>
 #include <QOpenGLFunctions_3_3_Core>
 
-class ImageItem : public QGraphicsItem
+extern bool gZeroCopyPreview;
+
+class ZeroCopyItem : public QGraphicsItem
 {
 static constexpr auto vertexShader = R"(
 #version 330
@@ -53,9 +55,9 @@ private:
     QOpenGLTexture *mTexture{ };
     QMetaObject::Connection mTextureContextConnection;
     QImage mUploadImage;
+    QRect mBoundingRect;
     GLuint mPreviewTextureId{ };
     bool mPreviewFlipY{ };
-    QRect mBoundingRect;
     bool mMagnifyLinear{ };
 
 public:
@@ -192,13 +194,17 @@ ImageEditor::ImageEditor(QString fileName, QWidget *parent)
     mImage.fill(Qt::black);
     setTransformationAnchor(AnchorUnderMouse);
 
-    setViewport(new QOpenGLWidget(this));
-    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    if (gZeroCopyPreview) {
+        setViewport(new QOpenGLWidget(this));
+        setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    }
 
     setScene(new QGraphicsScene(this));
 
-    mImageItem = new ImageItem();
-    scene()->addItem(mImageItem);
+    if (gZeroCopyPreview) {
+        mZeroCopyItem = new ZeroCopyItem();
+        scene()->addItem(mZeroCopyItem);
+    }
 
     auto color = QColor(Qt::black);
     color.setAlphaF(0.2);
@@ -225,13 +231,15 @@ ImageEditor::ImageEditor(QString fileName, QWidget *parent)
 
 ImageEditor::~ImageEditor() 
 {
-    if (auto texture = mImageItem->resetTexture()) {
-        auto glWidget = qobject_cast<QOpenGLWidget*>(viewport());
-        auto context = glWidget->context();
-        auto surface = context->surface();
-        if (context->makeCurrent(surface)) {
-            delete texture;
-            context->doneCurrent();
+    if (mZeroCopyItem) {
+        if (auto texture = mZeroCopyItem->resetTexture()) {
+            auto glWidget = qobject_cast<QOpenGLWidget*>(viewport());
+            auto context = glWidget->context();
+            auto surface = context->surface();
+            if (context->makeCurrent(surface)) {
+                delete texture;
+                context->doneCurrent();
+            }
         }
     }
     delete scene();
@@ -299,8 +307,18 @@ void ImageEditor::replace(QImage image, bool emitDataChanged)
         return;
 
     mImage = image;
-    mImageItem->setImage(mImage);
-    setBounds(mImageItem->boundingRect().toRect());
+    if (mZeroCopyItem) {
+        mZeroCopyItem->setImage(mImage);
+        setBounds(mZeroCopyItem->boundingRect().toRect());
+    }
+    else {
+        delete mPixmapItem;
+        auto pixmap = QPixmap::fromImage(mImage,
+            Qt::NoOpaqueDetection | Qt::NoFormatConversion);
+        mPixmapItem = new QGraphicsPixmapItem(pixmap);
+        scene()->addItem(mPixmapItem);
+        setBounds(pixmap.rect());
+    }
 
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
@@ -311,7 +329,8 @@ void ImageEditor::replace(QImage image, bool emitDataChanged)
 
 void ImageEditor::updatePreviewTexture(unsigned int textureId, bool flipY)
 {
-    mImageItem->setPreviewTexture(textureId, flipY);
+    if (mZeroCopyItem)
+        mZeroCopyItem->setPreviewTexture(textureId, flipY);
 }
 
 void ImageEditor::setModified(bool modified)
@@ -403,7 +422,8 @@ void ImageEditor::setZoom(int zoom)
         1 << (mZoom));
     updateTransform(scale);
 
-    mImageItem->setMagnifyLinear(scale <= 4);
+    if (mZeroCopyItem)
+        mZeroCopyItem->setMagnifyLinear(scale <= 4);
 }
 
 void ImageEditor::updateTransform(double scale)

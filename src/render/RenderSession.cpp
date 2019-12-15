@@ -19,6 +19,8 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLTimerQuery>
 
+extern bool gZeroCopyPreview;
+
 namespace {
     struct BindingScope
     {
@@ -409,7 +411,7 @@ void RenderSession::executeCommandQueue()
 void RenderSession::downloadModifiedResources()
 {
     for (auto &[itemId, texture] : mCommandQueue->textures)
-        if (mItemsChanged || !texture.canUpdatePreview())
+        if (!gZeroCopyPreview || mItemsChanged || !texture.canUpdatePreview())
             mModifiedImages = mModifiedImages.unite(
                 texture.getModifiedImages());
 
@@ -453,7 +455,7 @@ void RenderSession::finish()
 
     // keep updating preview texture
     for (auto& [itemId, texture] : mCommandQueue->textures)
-        if (!mItemsChanged && texture.canUpdatePreview())
+        if (gZeroCopyPreview && !mItemsChanged && texture.canUpdatePreview())
             if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
                 if (auto editor = editors.getImageEditor(fileItem->fileName))
                     editor->updatePreviewTexture(texture.getReadOnlyTextureId(),

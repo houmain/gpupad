@@ -2,6 +2,8 @@
 #include <QFontDialog>
 #include <QFontDatabase>
 
+bool gZeroCopyPreview = true;
+
 Settings::Settings(QObject *parent) : QSettings(parent)
 {
     mFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
@@ -13,6 +15,7 @@ Settings::Settings(QObject *parent) : QSettings(parent)
     setAutoIndentation(value("autoIndentation", "true").toBool());
     setSyntaxHighlighting(value("syntaxHighlighting", "true").toBool());
     setDarkTheme(value("darkTheme", "false").toBool());
+    setZeroCopyPreview(value("zeroCopyPreview", "false").toBool());
 
     auto fontSettings = value("font").toString();
     if (!fontSettings.isEmpty()) {
@@ -31,6 +34,7 @@ Settings::~Settings()
     setValue("syntaxHighlighting", syntaxHighlighting());
     setValue("darkTheme", darkTheme());
     setValue("font", font().toString());
+    setValue("zeroCopyPreview", zeroCopyPreview());
     endGroup();
 }
 
@@ -88,4 +92,16 @@ void Settings::setDarkTheme(bool enabled)
     mDarkTheme = enabled;
     emit darkThemeChanging(enabled);
     emit darkThemeChanged(enabled);
+}
+
+void Settings::setZeroCopyPreview(bool enabled)
+{
+    gZeroCopyPreview = enabled;
+    gZeroCopyPreview = enabled;
+    emit zeroCopyPreviewChanged(enabled);
+}
+
+bool Settings::zeroCopyPreview() const
+{
+    return gZeroCopyPreview;
 }

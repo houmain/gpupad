@@ -123,6 +123,8 @@
      <addaction name="actionEvalManual"/>
      <addaction name="actionEvalAuto"/>
      <addaction name="actionEvalSteady"/>
+     <addaction name="separator"/>
+     <addaction name="actionZeroCopyPreview"/>
     </widget>
     <addaction name="menuEvaluation"/>
     <addaction name="separator"/>
@@ -537,6 +539,17 @@
    </property>
    <property name="text">
     <string>&amp;Dark Theme</string>
+   </property>
+  </action>
+  <action name="actionZeroCopyPreview">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Zero Copy Preview (experimental)</string>
+   </property>
+   <property name="toolTip">
+    <string>Zero Copy Preview</string>
    </property>
   </action>
  </widget>

@@ -314,6 +314,15 @@ bool EditorManager::closeAllEditors()
     return true;
 }
 
+bool EditorManager::closeAllImageEditors()
+{
+    foreach (QDockWidget* dock, mDocks.keys())
+        if (qobject_cast<ImageEditor*>(dock->widget()))
+            if (!closeDock(dock))
+                return false;
+    return true;
+}
+
 void EditorManager::addSourceEditor(SourceEditor *editor)
 {
     mSourceEditors.append(editor);

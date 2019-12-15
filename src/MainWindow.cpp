@@ -203,6 +203,11 @@ MainWindow::MainWindow(QWidget *parent)
         &settings, &Settings::setIndentWithSpaces);
     connect(&settings, &Settings::darkThemeChanging,
         this, &MainWindow::handleDarkThemeChanging);
+    connect(mUi->actionZeroCopyPreview, &QAction::toggled,
+        [&](bool enabled) {
+            if (mEditorManager.closeAllImageEditors())
+                settings.setZeroCopyPreview(enabled);
+        });
 
     connect(mUi->actionEvalManual, &QAction::triggered,
         this, &MainWindow::updateEvaluationMode);
@@ -322,6 +327,7 @@ void MainWindow::readSettings()
     mUi->actionSyntaxHighlighting->setChecked(settings.syntaxHighlighting());
     mUi->actionDarkTheme->setChecked(settings.darkTheme());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
+    mUi->actionZeroCopyPreview->setChecked(settings.zeroCopyPreview());
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
