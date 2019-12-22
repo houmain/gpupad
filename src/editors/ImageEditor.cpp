@@ -1,6 +1,7 @@
 #include "ImageEditor.h"
 #include "FileDialog.h"
 #include "Singletons.h"
+#include "SynchronizeLogic.h"
 #include "render/GLShareSynchronizer.h"
 #include <QGraphicsItem>
 #include <QAction>
@@ -368,6 +369,9 @@ void ImageEditor::mousePressEvent(QMouseEvent *event)
         setCursor(Qt::ClosedHandCursor);
         return;
     }
+
+    updateMousePosition(event);
+
     QGraphicsView::mousePressEvent(event);
 }
 
@@ -382,7 +386,19 @@ void ImageEditor::mouseMoveEvent(QMouseEvent *event)
         mPanStartY = event->y();
         return;
     }
+
+    updateMousePosition(event);
+
     QGraphicsView::mouseMoveEvent(event);
+}
+
+void ImageEditor::updateMousePosition(QMouseEvent *event)
+{
+    if (event->buttons() & Qt::LeftButton)
+        Singletons::synchronizeLogic().setMousePosition({ 
+            event->x() / static_cast<qreal>(width()),
+            event->y() / static_cast<qreal>(height()),
+        });
 }
 
 void ImageEditor::mouseReleaseEvent(QMouseEvent *event)

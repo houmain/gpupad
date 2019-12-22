@@ -1,10 +1,12 @@
 #include "RenderSession.h"
 #include "Singletons.h"
+#include "SynchronizeLogic.h"
 #include "session/SessionModel.h"
 #include "editors/EditorManager.h"
 #include "editors/ImageEditor.h"
 #include "editors/BinaryEditor.h"
 #include "scripting/ScriptEngine.h"
+#include "scripting/InputScriptObject.h"
 #include "FileCache.h"
 #include "GLTexture.h"
 #include "GLBuffer.h"
@@ -139,7 +141,8 @@ struct RenderSession::CommandQueue
 };
 
 RenderSession::RenderSession(QObject *parent)
-    : RenderTask(parent)
+    : mInputScriptObject(new InputScriptObject(this)),
+      RenderTask(parent)
 {
 }
 
@@ -160,6 +163,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
     mManualEvaluation = manualEvaluation;
     mPrevMessages.swap(mMessages);
     mMessages.clear();
+    mInputScriptObject->setMousePosition(Singletons::synchronizeLogic().mousePosition());
 
     if (mCommandQueue && !(itemsChanged || manualEvaluation))
         return;
@@ -398,6 +402,8 @@ void RenderSession::executeCommandQueue()
     // always re-evaluate scripts on manual evaluation
     if (!mScriptEngine || mManualEvaluation)
         mScriptEngine.reset(new ScriptEngine());
+
+    mScriptEngine->setGlobal("input", mInputScriptObject);
 
     Singletons::glShareSynchronizer().beginUpdate(context);
 

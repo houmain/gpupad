@@ -51,6 +51,7 @@ set(SOURCES
   src/render/ProcessSource.cpp
   src/render/CompositorSync.cpp
   src/scripting/GpupadScriptObject.cpp
+  src/scripting/InputScriptObject.cpp
   src/scripting/ScriptEngine.cpp
   src/scripting/CustomActions.cpp
   src/scripting/CustomActions.ui

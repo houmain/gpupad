@@ -26,6 +26,8 @@ public:
     void updateBinaryEditor(const Buffer &buffer,
         BinaryEditor &editor, bool scrollToOffset = false);
     void updateFileCache();
+    void setMousePosition(QPointF pos) { mMousePosition = pos; }
+    const QPointF &mousePosition() const { return mMousePosition; }
 
 signals:
     void outputChanged(QString assembly);
@@ -61,6 +63,8 @@ private:
     QString mProcessSourceType{ };
     QTimer *mProcessSourceTimer{ };
     ProcessSource* mProcessSource{ };
+
+    QPointF mMousePosition{ };
 };
 
 #endif // SYNCHRONIZELOGIC_H

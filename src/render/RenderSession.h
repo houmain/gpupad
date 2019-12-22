@@ -8,6 +8,7 @@
 #include <memory>
 
 class ScriptEngine;
+class InputScriptObject;
 class QOpenGLTimerQuery;
 
 class RenderSession : public RenderTask
@@ -33,6 +34,7 @@ private:
     void downloadModifiedResources();
     void outputTimerQueries();
 
+    InputScriptObject *mInputScriptObject{ };
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;
     QScopedPointer<ScriptEngine> mScriptEngine;
