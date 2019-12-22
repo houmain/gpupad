@@ -22,14 +22,12 @@ void FileDialog::resetNextUntitledFileIndex()
     gNextUntitledFileIndex.clear();
 }
 
-QString FileDialog::generateNextUntitledFileName(QString base, bool startWithZero)
+QString FileDialog::generateNextUntitledFileName(QString base)
 {
     auto fileName = UntitledTag + base;
     auto index = gNextUntitledFileIndex[base]++;
-    if (!startWithZero)
-        index++;
     if (index)
-        fileName += " " + QString::number(index);
+        fileName += QStringLiteral(" [%1]").arg(index + 1);
     return fileName;
 }
 

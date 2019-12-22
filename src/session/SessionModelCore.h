@@ -177,6 +177,7 @@ private:
         int mergeId = -1);
     void undoableFileNameAssignment(const QModelIndex &index, FileItem &item,
         QString fileName);
+    bool hasChildWithName(const QModelIndex &parent, const QString &name);
 
     ItemId mNextItemId{ 1 };
     QScopedPointer<Group> mRoot;

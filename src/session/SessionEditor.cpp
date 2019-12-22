@@ -236,7 +236,7 @@ void SessionEditor::setFileName(QString fileName)
 {
     if (fileName.isEmpty())
         fileName = FileDialog::generateNextUntitledFileName(
-            tr("Untitled Session"), true);
+            tr("Untitled Session"));
 
     if (mFileName != fileName) {
         mFileName = fileName;

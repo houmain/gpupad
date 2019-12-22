@@ -258,6 +258,15 @@ ItemId SessionModelCore::getNextItemId()
     return mNextItemId++;
 }
 
+bool SessionModelCore::hasChildWithName(const QModelIndex &parent, 
+    const QString &name) 
+{
+    for (auto i = 0; i < rowCount(parent); ++i)
+        if (getItem(index(i, 0, parent)).name == name)
+            return true;
+    return false;
+}
+
 QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
     int row, ItemId id)
 {
@@ -269,9 +278,14 @@ QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
         parent = parent.parent();
     }
 
+    const auto typeName = getTypeName(type);
+    auto name = typeName;
+    for (auto i = 2; hasChildWithName(parent, name); ++i)
+        name = typeName + QStringLiteral(" %1").arg(i);
+    
     auto insert = [&](auto item) {
         item->type = type;
-        item->name = getTypeName(type);
+        item->name = name;
         item->id = id;
         insertItem(item, parent, row);
         return getIndex(item);
