@@ -454,8 +454,11 @@ void GLProgram::reapplySubroutines()
     auto subroutineIndices = std::vector<GLuint>();
     foreach (Shader::ShaderType stage, mSubroutineUniforms.keys()) {
         for (const auto &uniform : qAsConst(mSubroutineUniforms[stage])) {
-            auto index = gl.v4_0->glGetSubroutineIndex(mProgramObject,
-                stage, qPrintable(uniform.boundSubroutine));
+            auto isIndex = false;
+            auto index = uniform.boundSubroutine.toInt(&isIndex);
+            if (!isIndex)
+                index = gl.v4_0->glGetSubroutineIndex(mProgramObject,
+                    stage, qPrintable(uniform.boundSubroutine));
             subroutineIndices.push_back(index);
             if (index == GL_INVALID_INDEX && !uniform.boundSubroutine.isEmpty())
                 *mCallMessages +=
