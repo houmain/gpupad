@@ -274,7 +274,22 @@ QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
     while (!canContainType(parent, type)) {
         if (!parent.isValid())
             return { };
-        row = parent.row() + 1;
+
+        // insert new item before sinks and after sources
+        const auto insertBefore = [&]() {
+            const auto parentType = getItemType(parent);
+            if (parentType != type)
+                switch (parentType) {
+                    case Item::Type::Buffer:
+                    case Item::Type::Texture:
+                    case Item::Type::Script:
+                        return true;
+                    default:
+                        break;
+                }
+            return false;
+        };
+        row = parent.row() + (insertBefore() ? 0 : 1);
         parent = parent.parent();
     }
 
