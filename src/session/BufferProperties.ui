@@ -132,54 +132,22 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QWidget" name="widgetRows" native="true">
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <property name="spacing">
-         <number>2</number>
-        </property>
-        <property name="leftMargin">
-         <number>0</number>
-        </property>
-        <property name="topMargin">
-         <number>0</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
-        <item>
-         <widget class="QSpinBox" name="rowCount">
-          <property name="minimumSize">
-           <size>
-            <width>1</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="accelerated">
-           <bool>true</bool>
-          </property>
-          <property name="minimum">
-           <number>1</number>
-          </property>
-          <property name="maximum">
-           <number>1073741824</number>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="deduceRowCount">
-          <property name="toolTip">
-           <string>Deduce row count from file size and stride</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../resources.qrc">
-            <normaloff>:/images/16x16/view-refresh.png</normaloff>:/images/16x16/view-refresh.png</iconset>
-          </property>
-         </widget>
-        </item>
-       </layout>
+      <widget class="QSpinBox" name="rowCount">
+       <property name="minimumSize">
+        <size>
+         <width>1</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="accelerated">
+        <bool>true</bool>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>1073741824</number>
+       </property>
       </widget>
      </item>
      <item row="4" column="0">
