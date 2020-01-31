@@ -27,6 +27,17 @@ void GLBuffer::clear()
     }
 }
 
+void GLBuffer::copy(GLBuffer &source)
+{
+    auto &gl = GLContext::currentContext();
+    gl.glBindBuffer(GL_COPY_READ_BUFFER, source.getReadOnlyBufferId());
+    gl.glBindBuffer(GL_COPY_WRITE_BUFFER, getReadWriteBufferId());
+    gl.glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER,
+        0, 0, std::min(source.mSize, mSize));
+    gl.glBindBuffer(GL_COPY_READ_BUFFER, GL_NONE);
+    gl.glBindBuffer(GL_COPY_WRITE_BUFFER, GL_NONE);
+}
+
 GLuint GLBuffer::getReadOnlyBufferId()
 {
     reload();

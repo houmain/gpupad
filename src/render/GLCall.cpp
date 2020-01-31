@@ -46,9 +46,10 @@ void GLCall::setIndirectBuffer(GLBuffer *commands, const Buffer &buffer)
     mIndirectOffset = 0;
 }
 
-void GLCall::setBuffer(GLBuffer *buffer)
+void GLCall::setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer)
 {
     mBuffer = buffer;
+    mFromBuffer = fromBuffer;
 }
 
 void GLCall::setTextures(GLTexture *texture, GLTexture *fromTexture)
@@ -87,6 +88,9 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             break;
         case Call::CallType::ClearBuffer:
             executeClearBuffer(messages);
+            break;
+        case Call::CallType::CopyBuffer:
+            executeCopyBuffer(messages);
             break;
         case Call::CallType::GenerateMipmaps:
             executeGenerateMipmaps(messages);
@@ -277,6 +281,19 @@ void GLCall::executeClearBuffer(MessagePtrSet &messages)
     }
 }
 
+void GLCall::executeCopyBuffer(MessagePtrSet &messages)
+{
+    if (mBuffer && mFromBuffer) {
+        auto guard = beginTimerQuery();
+        mBuffer->copy(*mFromBuffer);
+        mUsedItems += mBuffer->usedItems();
+        mUsedItems += mFromBuffer->usedItems();
+    }
+    else {
+        messages += MessageList::insert(
+            mCall.id,  MessageType::BufferNotAssigned);
+    }
+}
 void GLCall::executeGenerateMipmaps(MessagePtrSet &messages)
 {
     if (mTexture) {

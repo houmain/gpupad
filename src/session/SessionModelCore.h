@@ -107,6 +107,7 @@ public:
         CallWorkGroupsY,
         CallWorkGroupsZ,
         CallBufferId,
+        CallFromBufferId,
         CallTextureId,
         CallFromTextureId,
         CallClearColor,

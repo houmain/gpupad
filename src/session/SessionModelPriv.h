@@ -100,6 +100,7 @@
     ADD(CallWorkGroupsY, Call, workGroupsY) \
     ADD(CallWorkGroupsZ, Call, workGroupsZ) \
     ADD(CallBufferId, Call, bufferId) \
+    ADD(CallFromBufferId, Call, fromBufferId) \
     ADD(CallTextureId, Call, textureId) \
     ADD(CallFromTextureId, Call, fromTextureId) \
     ADD(CallClearColor, Call, clearColor) \

@@ -317,7 +317,9 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                 if (auto buffer = session.findItem<Buffer>(call->indirectBufferId))
                     glcall.setIndirectBuffer(addBufferOnce(buffer->id), *buffer);
 
-                glcall.setBuffer(addBufferOnce(call->bufferId));
+                glcall.setBuffers(
+                    addBufferOnce(call->bufferId),
+                    addBufferOnce(call->fromBufferId));
                 glcall.setTextures(
                     addTextureOnce(call->textureId),
                     addTextureOnce(call->fromTextureId));

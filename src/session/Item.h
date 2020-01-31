@@ -215,6 +215,7 @@ struct Call : Item
     int clearStencil{ };
 
     ItemId bufferId{ };
+    ItemId fromBufferId{ };
 };
 
 struct Script : FileItem

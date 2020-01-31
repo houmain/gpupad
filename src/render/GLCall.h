@@ -24,7 +24,7 @@ public:
     void setVextexStream(GLStream *vertexStream);
     void setIndexBuffer(GLBuffer *indices, const Buffer &buffer);
     void setIndirectBuffer(GLBuffer *commands, const Buffer &buffer);
-    void setBuffer(GLBuffer *buffer);
+    void setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer);
     void setTextures(GLTexture *texture, GLTexture *fromTexture);
 
     void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
@@ -38,6 +38,7 @@ private:
     void executeClearTexture(MessagePtrSet &messages);
     void executeCopyTexture(MessagePtrSet &messages);
     void executeClearBuffer(MessagePtrSet &messages);
+    void executeCopyBuffer(MessagePtrSet &messages);
     void executeGenerateMipmaps(MessagePtrSet &messages);
 
     Call mCall{ };
@@ -45,6 +46,7 @@ private:
     GLTarget *mTarget{ };
     GLStream *mVertexStream{ };
     GLBuffer *mBuffer{ };
+    GLBuffer *mFromBuffer{ };
     GLTexture *mTexture{ };
     GLTexture *mFromTexture{ };
 

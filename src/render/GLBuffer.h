@@ -10,6 +10,7 @@ public:
     bool operator==(const GLBuffer &rhs) const;
 
     void clear();
+    void copy(GLBuffer &source);
     GLuint getReadOnlyBufferId();
     GLuint getReadWriteBufferId();
     void bindReadOnly(GLenum target);

@@ -181,6 +181,7 @@ namespace ItemEnums2 {
         ClearTexture,
         CopyTexture,
         ClearBuffer,
+        CopyBuffer,
         GenerateMipmaps,
     };
     Q_ENUM_NS(CallType)

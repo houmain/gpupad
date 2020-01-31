@@ -506,7 +506,11 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             result &= (column != CallClearColor || callType == Call::CallType::ClearTexture);
             result &= (column != CallClearDepth || callType == Call::CallType::ClearTexture);
             result &= (column != CallClearStencil || callType == Call::CallType::ClearTexture);
-            result &= (column != CallBufferId || callType == Call::CallType::ClearBuffer);
+            result &= (column != CallBufferId || 
+                callType == Call::CallType::ClearBuffer ||
+                callType == Call::CallType::CopyBuffer);
+            result &= (column != CallFromBufferId ||
+                callType == Call::CallType::CopyBuffer);
             break;
         }
 
