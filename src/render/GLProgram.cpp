@@ -89,7 +89,7 @@ bool GLProgram::link()
         gl.glGetActiveUniformBlockName(program, i,
             static_cast<GLsizei>(buffer.size()), &nameLength, buffer.data());
         auto name = QString(buffer.data());
-        mUniformBlocksSet[name] = false;
+        mBuffersSet[name] = false;
 
         // remove block's uniforms from list of uniforms to set
         gl.glGetActiveUniformBlockiv(program, i,
@@ -152,6 +152,22 @@ bool GLProgram::link()
             }
         }
     }
+
+    if (auto gl43 = gl.v4_3) {
+        auto maxNameLength = GLint{ };
+        gl43->glGetProgramInterfaceiv(program, 
+            GL_SHADER_STORAGE_BLOCK, GL_MAX_NAME_LENGTH, &maxNameLength);
+        auto buffer = std::vector<char>(maxNameLength);
+
+        auto shaderStorageBlocks = GLint{ };
+        gl43->glGetProgramInterfaceiv(program, 
+            GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &shaderStorageBlocks);
+        for (auto i = 0u; i < static_cast<GLuint>(shaderStorageBlocks); ++i) {
+            gl43->glGetProgramResourceName(program, GL_SHADER_STORAGE_BLOCK, i, 
+                static_cast<GLsizei>(buffer.size()), nullptr, buffer.data());
+            mBuffersSet[buffer.data()] = false;
+        }
+    }
     mProgramObject = std::move(program);
     return true;
 }
@@ -178,10 +194,10 @@ void GLProgram::unbind(ItemId callItemId)
             *mCallMessages += MessageList::insert(callItemId,
                 MessageType::UnformNotSet, kv.first);
 
-    for (auto &kv : mUniformBlocksSet)
+    for (auto &kv : mBuffersSet)
         if (!std::exchange(kv.second, false))
             *mCallMessages += MessageList::insert(
-                callItemId, MessageType::BlockNotSet, kv.first);
+                callItemId, MessageType::BufferNotSet, kv.first);
 
     for (auto &kv : mAttributesSet)
         if (!std::exchange(kv.second, false))
@@ -206,10 +222,10 @@ void GLProgram::uniformSet(const QString &name)
         it->second = true;
 }
 
-void GLProgram::uniformBlockSet(const QString &name)
+void GLProgram::bufferSet(const QString &name)
 {
-    auto it = mUniformBlocksSet.find(name);
-    if (it != mUniformBlocksSet.end())
+    auto it = mBuffersSet.find(name);
+    if (it != mBuffersSet.end())
         it->second = true;
 }
 
@@ -410,7 +426,7 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
         gl.glBindBufferBase(GL_UNIFORM_BUFFER,
             static_cast<GLuint>(unit), buffer.getReadOnlyBufferId());
 
-        uniformBlockSet(binding.name);
+        bufferSet(binding.name);
         return true;
     }
 
@@ -423,7 +439,7 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
             gl.v4_3->glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
                 static_cast<GLuint>(unit), buffer.getReadWriteBufferId());
 
-            uniformBlockSet(binding.name);
+            bufferSet(binding.name);
             return true;
         }
     }

@@ -69,7 +69,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case CreatingFramebufferFailed:
         case UploadingImageFailed:
         case DownloadingImageFailed:
-        case BlockNotSet:
+        case BufferNotSet:
         case AttributeNotSet:
         case ShaderError:
         case ScriptError:
@@ -121,8 +121,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("downloading image failed");
         case UnformNotSet:
             return tr("uniform '%1' not set").arg(message.text);
-        case BlockNotSet:
-            return tr("block '%1' not set").arg(message.text);
+        case BufferNotSet:
+            return tr("buffer '%1' not set").arg(message.text);
         case AttributeNotSet:
             return tr("attribute '%1' not set").arg(message.text);
         case CallDuration:

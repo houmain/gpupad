@@ -87,7 +87,7 @@ private:
     bool link();
     QString getUniformBaseName(const QString &name) const;
     void uniformSet(const QString &name);
-    void uniformBlockSet(const QString &name);
+    void bufferSet(const QString &name);
 
     ItemId mItemId{ };
     QSet<ItemId> mUsedItems;
@@ -99,7 +99,7 @@ private:
     bool mFailed{ };
     MessagePtrSet *mCallMessages{ };
     std::map<QString, bool> mUniformsSet;
-    std::map<QString, bool> mUniformBlocksSet;
+    std::map<QString, bool> mBuffersSet;
     mutable std::map<QString, bool> mAttributesSet;
 };
 
