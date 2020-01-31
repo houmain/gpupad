@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.0)
-project(gpupad LANGUAGES CXX)
+project(gpupad LANGUAGES CXX C)
 
 set(GIT_COMMIT_LAST_TAG "unknown")
 find_package(Git)
@@ -18,6 +18,16 @@ set(CMAKE_AUTORCC ON)
 
 set(SOURCES
   libs/SingleApplication/singleapplication.cpp
+  libs/KTX/lib/checkheader.c
+  libs/KTX/lib/errstr.c
+  libs/KTX/lib/filestream.c
+  libs/KTX/lib/hashlist.c
+  libs/KTX/lib/hashtable.c
+  libs/KTX/lib/memstream.c
+  libs/KTX/lib/swap.c
+  libs/KTX/lib/texture.c
+  libs/KTX/lib/writer.c
+  libs/KTX/lib/writer_v1.c
   src/FileDialog.cpp
   src/MainWindow.cpp
   src/MainWindow.ui
@@ -94,7 +104,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 add_compile_definitions(QAPPLICATION_CLASS=QApplication)
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
 
-target_include_directories(${PROJECT_NAME} PRIVATE src libs)
+target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include)
 
 if(NOT WIN32)
 	target_include_directories(${PROJECT_NAME} PRIVATE /usr/include/libdrm)
