@@ -2,6 +2,7 @@
 #define IMAGEEDITOR_H
 
 #include "IEditor.h"
+#include "ImageData.h"
 #include <QGraphicsView>
 
 class ZeroCopyItem;
@@ -10,7 +11,7 @@ class ImageEditor : public QGraphicsView, public IEditor
 {
     Q_OBJECT
 public:
-    static bool load(const QString &fileName, QImage *image);
+    static bool load(const QString &fileName, ImageData *image);
 
     explicit ImageEditor(QString fileName, QWidget *parent = nullptr);
     ~ImageEditor() override;
@@ -23,9 +24,9 @@ public:
     bool save() override;
     int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }
-    void replace(QImage image, bool emitDataChanged = true);
+    void replace(ImageData image, bool emitDataChanged = true);
     void updatePreviewTexture(unsigned int textureId, bool flipY);
-    const QImage &image() const { return mImage; }
+    const ImageData &image() const { return mImage; }
 
 signals:
     void dataChanged();
@@ -48,7 +49,7 @@ private:
 
     QString mFileName;
     bool mModified{ };
-    QImage mImage;
+    ImageData mImage;
     bool mPan{ };
     QRect mBounds{ };
     int mZoom{ };

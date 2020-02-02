@@ -55,14 +55,14 @@ private:
     QScopedPointer<QOpenGLShaderProgram> mProgram;
     QOpenGLTexture *mTexture{ };
     QMetaObject::Connection mTextureContextConnection;
-    QImage mUploadImage;
+    ImageData mUploadImage;
     QRect mBoundingRect;
     GLuint mPreviewTextureId{ };
     bool mPreviewFlipY{ };
     bool mMagnifyLinear{ };
 
 public:
-    void setImage(QImage image)
+    void setImage(ImageData image)
     {
         prepareGeometryChange();
         mUploadImage = image;
@@ -106,7 +106,8 @@ public:
                 delete mTexture;
 
             // upload texture
-            mTexture = new QOpenGLTexture(mUploadImage);
+            mTexture = new QOpenGLTexture(mUploadImage.image(),
+                QOpenGLTexture::MipMapGeneration::DontGenerateMipMaps);
             mUploadImage = { };
 
             // last version is deleted in QGraphicsView destructor
@@ -192,7 +193,6 @@ ImageEditor::ImageEditor(QString fileName, QWidget *parent)
     : QGraphicsView(parent)
     , mFileName(fileName)
 {
-    mImage.fill(Qt::black);
     setTransformationAnchor(AnchorUnderMouse);
 
     if (gZeroCopyPreview) {
@@ -225,7 +225,9 @@ ImageEditor::ImageEditor(QString fileName, QWidget *parent)
     mBorder->setZValue(1);
     scene()->addItem(mBorder);
 
-    replace(QImage(QSize(1, 1), QImage::Format_RGB888), false);
+    auto image = ImageData{ };
+    image.create(1, 1, QOpenGLTexture::TextureFormat::RGBA8_UNorm);
+    replace(std::move(image), false);
     setZoom(mZoom);
     updateTransform(1.0);
 }
@@ -266,12 +268,12 @@ void ImageEditor::setFileName(QString fileName)
     emit fileNameChanged(mFileName);
 }
 
-bool ImageEditor::load(const QString &fileName, QImage *image)
+bool ImageEditor::load(const QString &fileName, ImageData *image)
 {
     if (FileDialog::isEmptyOrUntitled(fileName))
         return false;
 
-    auto file = QImage();
+    auto file = ImageData();
     if (!file.load(fileName))
         return false;
 
@@ -281,7 +283,7 @@ bool ImageEditor::load(const QString &fileName, QImage *image)
 
 bool ImageEditor::load()
 {
-    auto image = QImage();
+    auto image = ImageData();
     if (!load(mFileName, &image))
         return false;
 
@@ -302,7 +304,7 @@ bool ImageEditor::save()
     return true;
 }
 
-void ImageEditor::replace(QImage image, bool emitDataChanged)
+void ImageEditor::replace(ImageData image, bool emitDataChanged)
 {
     if (image.constBits() == mImage.constBits())
         return;
@@ -314,7 +316,7 @@ void ImageEditor::replace(QImage image, bool emitDataChanged)
     }
     else {
         delete mPixmapItem;
-        auto pixmap = QPixmap::fromImage(mImage,
+        auto pixmap = QPixmap::fromImage(mImage.image(),
             Qt::NoOpaqueDetection | Qt::NoFormatConversion);
         mPixmapItem = new QGraphicsPixmapItem(pixmap);
         scene()->addItem(mPixmapItem);

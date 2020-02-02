@@ -4,7 +4,7 @@
 #include "GLProgram.h"
 #include "GLTarget.h"
 #include "GLStream.h"
-#include "../scripting/ScriptEngine.h"
+#include "scripting/ScriptEngine.h"
 #include <QOpenGLTimerQuery>
 
 GLCall::GLCall(const Call &call) : mCall(call) { }

@@ -38,6 +38,7 @@ set(SOURCES
   src/Settings.cpp
   src/Singletons.cpp
   src/SynchronizeLogic.cpp
+  src/ImageData.cpp
   src/editors/BinaryEditor.cpp
   src/editors/DockWindow.cpp
   src/editors/EditorManager.cpp

@@ -3,6 +3,7 @@
 
 #include "RenderTask.h"
 #include "MessageList.h"
+#include "ImageData.h"
 #include <QMutex>
 #include <QMap>
 #include <memory>
@@ -39,7 +40,7 @@ private:
     QScopedPointer<CommandQueue> mPrevCommandQueue;
     QScopedPointer<ScriptEngine> mScriptEngine;
     QSet<ItemId> mUsedItems;
-    QMap<ItemId, QImage> mModifiedImages;
+    QMap<ItemId, ImageData> mModifiedImages;
     QMap<ItemId, QByteArray> mModifiedBuffers;
     QMap<ItemId, std::shared_ptr<const QOpenGLTimerQuery>> mTimerQueries;
     MessagePtrSet mMessages;

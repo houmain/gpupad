@@ -130,12 +130,13 @@ bool FileDialog::exec(Options options, QString currentFileName)
         shaderFileFilter = shaderFileFilter + " *." + ext;
 
     auto imageFileFilter = QString();
+    imageFileFilter += " *.ktx";
     foreach (const QByteArray &format, QImageReader::supportedImageFormats())
-        imageFileFilter += " *." + QString(format) + " ";
+        imageFileFilter = imageFileFilter + " *." + QString(format);
 
     auto binaryFileFilter = QString();
     for (const auto &ext : BinaryFileExtensions)
-        binaryFileFilter = binaryFileFilter + " *" + ext;
+        binaryFileFilter = binaryFileFilter + " *." + ext;
 
     auto scriptFileFilter = QString();
     for (const auto &ext : ScriptFileExtensions)

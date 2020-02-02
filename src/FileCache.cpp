@@ -46,7 +46,7 @@ bool FileCache::getSource(const QString &fileName, QString *source) const
     return true;
 }
 
-bool FileCache::getImage(const QString &fileName, QImage *image) const
+bool FileCache::getImage(const QString &fileName, ImageData *image) const
 {
     Q_ASSERT(image);
     QMutexLocker lock(&mMutex);

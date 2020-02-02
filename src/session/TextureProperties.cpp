@@ -321,7 +321,7 @@ void TextureProperties::updateFormat(QVariant formatData)
 void TextureProperties::updateSize()
 {
     auto fileName = mUi->file->currentData().toString();
-    auto image = QImage();
+    auto image = ImageData();
     if (Singletons::fileCache().getImage(fileName, &image)) {
         mUi->width->setValue(image.width());
         mUi->height->setValue(image.height());

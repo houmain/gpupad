@@ -14,7 +14,7 @@ public:
         int layer;
         QOpenGLTexture::CubeMapFace face;
         QString fileName;
-        QImage image;
+        ImageData image;
     };
 
     explicit GLTexture(const Texture &texture);
@@ -33,16 +33,12 @@ public:
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();
     bool canUpdatePreview() const;
-    QMap<ItemId, QImage> getModifiedImages();
+    QMap<ItemId, ImageData> getModifiedImages();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
-    void getDataFormat(QOpenGLTexture::PixelFormat *format,
-        QOpenGLTexture::PixelType *type) const;
     int getImageWidth(int level) const;
     int getImageHeight(int level) const;
-    QImage::Format getImageFormat(QOpenGLTexture::PixelFormat format,
-        QOpenGLTexture::PixelType type) const;
     GLObject createFramebuffer(GLuint textureId, int level) const;
     void reload();
     void createTexture();
