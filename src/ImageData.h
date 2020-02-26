@@ -1,8 +1,8 @@
 #pragma once
 
 #include <QImage>
-#include <memory>
 #include <QOpenGLTexture>
+#include <memory>
 #include "ktx.h"
 
 class ImageData
@@ -10,29 +10,35 @@ class ImageData
 public:
     bool create(int width, int height,
         QOpenGLTexture::TextureFormat format);
-    ImageData convert(int width, int height,
-        QOpenGLTexture::TextureFormat format,
-        bool flipY) const;
-
-    bool isNull() const;
     bool load(const QString &fileName);
     bool save(const QString &fileName) const;
+    bool isNull() const;
+    QImage toImage() const;
 
-    const QImage &image() const;
-    int width() const;
-    int height() const;
+    bool isArray() const;
+    bool isCubemap() const;
+    bool isCompressed() const;
+    int dimensions() const;
+    QOpenGLTexture::TextureFormat format() const;
+    QOpenGLTexture::PixelFormat pixelFormat() const;
+    QOpenGLTexture::PixelType pixelType() const;
+    int width() const { return getLevelWidth(0); }
+    int height() const { return getLevelHeight(0); }
+    int depth() const { return getLevelDepth(0); }
+    int getLevelWidth(int level) const;
+    int getLevelHeight(int level) const;
+    int getLevelDepth(int level) const;
+    int levels() const;
+    int layers() const;
+    int faces() const;
+    uchar *getWriteonlyData(int level, int layer, int face);
+    const uchar *getData(int level, int layer, int face) const;
+    size_t getLevelSize(int level) const;
 
-    QOpenGLTexture::TextureFormat format() const { return mFormat; }
-    QOpenGLTexture::PixelFormat pixelFormat() const { return mPixelFormat; }
-    QOpenGLTexture::PixelType pixelType() const { return mPixelType; }
-    uchar *bits();
-    const uchar *constBits() const;
+    friend bool operator==(const ImageData &a, const ImageData &b);
+    friend bool operator!=(const ImageData &a, const ImageData &b);
 
 private:
-    QOpenGLTexture::TextureFormat mFormat{ };
-    QOpenGLTexture::PixelFormat mPixelFormat{ };
-    QOpenGLTexture::PixelType mPixelType{ };
-    QImage mQImage;
-    std::shared_ptr<const ktxTexture> mKtxTexture;
+    std::shared_ptr<ktxTexture> mKtxTexture;
 };
 

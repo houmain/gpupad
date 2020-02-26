@@ -20,7 +20,6 @@
     ADD(TextureDepth, Texture, depth) \
     ADD(TextureLayers, Texture, layers) \
     ADD(TextureSamples, Texture, samples) \
-    ADD(TextureFlipY, Texture, flipY) \
     ADD(ImageLevel, Image, level) \
     ADD(ImageLayer, Image, layer) \
     ADD(ImageFace, Image, face) \

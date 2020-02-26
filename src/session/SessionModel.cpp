@@ -412,7 +412,6 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             result &= (column != TextureDepth || kind.dimensions > 2);
             result &= (column != TextureLayers || kind.array);
             result &= (column != TextureSamples || kind.multisample);
-            result &= (column != TextureFlipY || kind.dimensions > 1);
             break;
         }
 

@@ -60,7 +60,6 @@ struct Texture : FileItem
     int depth{ 1 };
     int layers{ 1 };
     int samples{ 1 };
-    bool flipY{ };
 };
 
 struct Image : FileItem

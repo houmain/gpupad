@@ -234,7 +234,6 @@ void TextureProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->depth, SessionModel::TextureDepth);
     mapper.addMapping(mUi->layers, SessionModel::TextureLayers);
     mapper.addMapping(mUi->samples, SessionModel::TextureSamples);
-    mapper.addMapping(mUi->flipY, SessionModel::TextureFlipY);
 }
 
 void TextureProperties::setFormat(QVariant value) {
@@ -255,7 +254,6 @@ void TextureProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth, kind.dimensions > 2);
     setFormVisibility(mUi->formLayout, mUi->labelLayers, mUi->layers, kind.array);
     setFormVisibility(mUi->formLayout, mUi->labelSamples, mUi->samples, kind.multisample);
-    setFormVisibility(mUi->formLayout, mUi->labelFlipY, mUi->flipY, kind.dimensions > 1);
 }
 
 void TextureProperties::updateFormatDataWidget(QVariant formatType)

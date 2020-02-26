@@ -73,10 +73,9 @@ public:
         update();
     }
 
-    void setPreviewTexture(GLuint textureId, bool flipY)
+    void setPreviewTexture(GLuint textureId)
     {
         mPreviewTextureId = textureId;
-        mPreviewFlipY = flipY;
         update();
     }
 
@@ -106,7 +105,7 @@ public:
                 delete mTexture;
 
             // upload texture
-            mTexture = new QOpenGLTexture(mUploadImage.image(),
+            mTexture = new QOpenGLTexture(mUploadImage.toImage(),
                 QOpenGLTexture::MipMapGeneration::DontGenerateMipMaps);
             mUploadImage = { };
 
@@ -306,7 +305,7 @@ bool ImageEditor::save()
 
 void ImageEditor::replace(ImageData image, bool emitDataChanged)
 {
-    if (image.constBits() == mImage.constBits())
+    if (image == mImage)
         return;
 
     mImage = image;
@@ -316,7 +315,7 @@ void ImageEditor::replace(ImageData image, bool emitDataChanged)
     }
     else {
         delete mPixmapItem;
-        auto pixmap = QPixmap::fromImage(mImage.image(),
+        auto pixmap = QPixmap::fromImage(mImage.toImage(),
             Qt::NoOpaqueDetection | Qt::NoFormatConversion);
         mPixmapItem = new QGraphicsPixmapItem(pixmap);
         scene()->addItem(mPixmapItem);
@@ -330,10 +329,10 @@ void ImageEditor::replace(ImageData image, bool emitDataChanged)
         emit dataChanged();
 }
 
-void ImageEditor::updatePreviewTexture(unsigned int textureId, bool flipY)
+void ImageEditor::updatePreviewTexture(unsigned int textureId)
 {
     if (mZeroCopyItem)
-        mZeroCopyItem->setPreviewTexture(textureId, flipY);
+        mZeroCopyItem->setPreviewTexture(textureId);
 }
 
 void ImageEditor::setModified(bool modified)
@@ -435,7 +434,7 @@ void ImageEditor::setZoom(int zoom)
         return;
 
     mZoom = zoom;
-    auto scale = (mZoom < 0 ?
+    const auto scale = (mZoom < 0 ?
         1.0 / (1 << (-mZoom)) :
         1 << (mZoom));
     updateTransform(scale);
@@ -446,10 +445,13 @@ void ImageEditor::setZoom(int zoom)
 
 void ImageEditor::updateTransform(double scale)
 {
-    auto transform = QTransform().scale(scale, scale);
+    const auto transform = QTransform().scale(scale, scale);
     setTransform(transform);
+    updateBackground(transform);
+}
 
-    // update background checkers pattern
+void ImageEditor::updateBackground(const QTransform& transform) 
+{
     QPixmap pm(2, 2);
     QPainter pmp(&pm);
     pmp.fillRect(0, 0, 1, 1, 0x999999);

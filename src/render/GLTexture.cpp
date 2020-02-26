@@ -10,7 +10,6 @@ GLTexture::GLTexture(const Texture &texture)
     , mDepth(texture.depth)
     , mLayers(texture.layers)
     , mSamples(texture.samples)
-    , mFlipY(texture.flipY)
     , mMultisampleTarget(texture.target)
 {
     if (mTarget == QOpenGLTexture::Target2DMultisample) {
@@ -46,10 +45,10 @@ bool operator==(const GLTexture::Image &a, const GLTexture::Image &b)
 bool GLTexture::operator==(const GLTexture &rhs) const
 {
     return std::tie(mTarget, mFormat, mWidth, mHeight,
-                    mDepth, mSamples, mFlipY, mImages,
+                    mDepth, mSamples, mImages,
                     mMultisampleTarget) ==
-           std::tie(rhs.mTarget, rhs.mFormat,rhs.mWidth, rhs.mHeight,
-                    rhs.mDepth, rhs.mSamples, rhs.mFlipY, rhs.mImages,
+           std::tie(rhs.mTarget, rhs.mFormat, rhs.mWidth, rhs.mHeight,
+                    rhs.mDepth, rhs.mSamples, rhs.mImages,
                     rhs.mMultisampleTarget);
 }
 
@@ -179,7 +178,7 @@ void GLTexture::reload()
                     MessageType::LoadingFileFailed, image.fileName);
                 continue;
             }
-            mSystemCopiesModified |= (image.image.constBits() != prevImage.constBits());
+            mSystemCopiesModified |= (image.image != prevImage);
         }
 }
 
@@ -239,18 +238,14 @@ int GLTexture::getImageHeight(int level) const
 
 void GLTexture::uploadImage(const Image &image)
 {
-    auto source = image.image.convert(
-        getImageWidth(image.level),
-        getImageHeight(image.level),
-        mFormat, mFlipY);
-    if (source.isNull()) {
+    if (image.image.isNull()) {
         mMessages += MessageList::insert(
             image.itemId, MessageType::UploadingImageFailed);
         return;
     }
-    const auto format = source.pixelFormat();
-    const auto type = source.pixelType();
-    const auto data = source.constBits();
+    const auto format = image.image.pixelFormat();
+    const auto type = image.image.pixelType();
+    const auto data = image.image.getData(0, 0, 0);
 
     if (mTarget == QOpenGLTexture::Target3D) {
         auto &gl = GLContext::currentContext();
@@ -289,15 +284,17 @@ bool GLTexture::download()
 
 bool GLTexture::downloadImage(Image& image)
 {
-    if (!image.image.create(getImageWidth(image.level),
-        getImageHeight(image.level), mFormat)) {
+    if (!image.image.create(
+            getImageWidth(image.level),
+            getImageHeight(image.level), 
+            mFormat)) {
         mMessages += MessageList::insert(
             image.itemId, MessageType::DownloadingImageFailed);
         return false;
     }
     const auto format = image.image.pixelFormat();
     const auto type = image.image.pixelType();
-    const auto data = image.image.bits();
+    const auto data = image.image.getWriteonlyData(0, 0, 0);
 
     if (mMultisampleTexture)
         resolveMultisampleTexture(*mMultisampleTexture,
@@ -345,12 +342,6 @@ bool GLTexture::downloadImage(Image& image)
                 image.itemId, MessageType::DownloadingImageFailed);
             return false;
     }
-
-    if (mFlipY)
-        image.image = image.image.convert(
-            image.image.width(), image.image.height(),
-            image.image.format(), true);
-
     return true;
 }
 
@@ -389,11 +380,11 @@ void GLTexture::resolveMultisampleTexture(QOpenGLTexture &source,
         QOpenGLTexture &dest, int level)
 {
     auto &gl = GLContext::currentContext();
-    auto sourceFbo = createFramebuffer(source.textureId(), level);
-    auto destFbo = createFramebuffer(dest.textureId(), level);
+    const auto sourceFbo = createFramebuffer(source.textureId(), level);
+    const auto destFbo = createFramebuffer(dest.textureId(), level);
 
-    auto width = getImageWidth(level);
-    auto height = getImageHeight(level);
+    const auto width = getImageWidth(level);
+    const auto height = getImageHeight(level);
     auto blitMask = GLbitfield{ GL_COLOR_BUFFER_BIT };
     if (mKind.depth && mKind.stencil)
         blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;

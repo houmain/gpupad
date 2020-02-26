@@ -25,7 +25,7 @@ public:
     int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }
     void replace(ImageData image, bool emitDataChanged = true);
-    void updatePreviewTexture(unsigned int textureId, bool flipY);
+    void updatePreviewTexture(unsigned int textureId);
     const ImageData &image() const { return mImage; }
 
 signals:
@@ -45,6 +45,7 @@ private:
     void setBounds(QRect bounds);
     void setZoom(int zoom);
     void updateTransform(double scale);
+    void updateBackground(const QTransform& transform);
     void setModified(bool modified);
 
     QString mFileName;

@@ -27,7 +27,6 @@ public:
         TextureDepth,
         TextureLayers,
         TextureSamples,
-        TextureFlipY,
         ImageLevel,
         ImageLayer,
         ImageFace,

@@ -23,7 +23,6 @@ public:
     TextureKind kind() const { return mKind; }
     int width() const { return mWidth; }
     int height() const { return mHeight; }
-    bool flipY() const { return mFlipY; }
     Texture::Target target() const { return mMultisampleTarget; }
     Texture::Format format() const { return mFormat; }
 
@@ -59,7 +58,6 @@ private:
     int mDepth{ };
     int mLayers{ };
     int mSamples{ };
-    bool mFlipY{ };
     QList<Image> mImages;
     std::unique_ptr<QOpenGLTexture> mTexture;
     Texture::Target mMultisampleTarget{ };
