@@ -281,9 +281,9 @@ const uchar *ImageData::getData(int level, int layer, int face) const
     return nullptr;
 }
 
-size_t ImageData::getLevelSize(int level) const
+int ImageData::getLevelSize(int level) const
 {
-    return (isNull() ? 0u : 
-      ktxTexture_GetImageSize(mKtxTexture.get(),
-      static_cast<ktx_uint32_t>(level)));
+    return (isNull() ? 0 :
+      static_cast<int>(ktxTexture_GetImageSize(mKtxTexture.get(),
+          static_cast<ktx_uint32_t>(level))));
 }

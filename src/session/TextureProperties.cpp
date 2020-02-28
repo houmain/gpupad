@@ -179,6 +179,8 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
         this, &TextureProperties::updateFormatDataWidget);
     connect(mUi->formatData, &DataComboBox::currentDataChanged,
         this, &TextureProperties::updateFormat);
+    connect(mUi->readonly, &QCheckBox::stateChanged,
+        this, &TextureProperties::updateWidgets);
 
     fillComboBox<QOpenGLTexture::Target>(mUi->target, {
         { "1D Texture", QOpenGLTexture::Target1D },
@@ -228,6 +230,7 @@ void TextureProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->file, SessionModel::FileName);
     mapper.addMapping(mUi->target, SessionModel::TextureTarget);
+    mapper.addMapping(mUi->readonly, SessionModel::TextureReadonly);
     mapper.addMapping(this, SessionModel::TextureFormat);
     mapper.addMapping(mUi->width, SessionModel::TextureWidth);
     mapper.addMapping(mUi->height, SessionModel::TextureHeight);
@@ -237,10 +240,10 @@ void TextureProperties::addMappings(QDataWidgetMapper &mapper)
 }
 
 void TextureProperties::setFormat(QVariant value) {
-    auto format = static_cast<Texture::Format>(value.toInt());
+    const auto format = static_cast<Texture::Format>(value.toInt());
     if (mFormat != format) {
         mFormat = format;
-        auto typeData = gTypeDataByFormat[format];
+        const auto typeData = gTypeDataByFormat[format];
         mUi->formatType->setCurrentData(typeData.first);
         mUi->formatData->setCurrentData(typeData.second);
         emit formatChanged();
@@ -249,7 +252,20 @@ void TextureProperties::setFormat(QVariant value) {
 
 void TextureProperties::updateWidgets()
 {
-    auto kind = currentTextureKind();
+    const auto hasFile = !mUi->file->currentData().isNull();
+    mUi->readonly->setEnabled(hasFile);
+
+    const auto readonly = mUi->readonly->isChecked();
+    setFormEnabled(mUi->labelTarget, mUi->target, !readonly);
+    setFormEnabled(mUi->labelFormat, mUi->formatType, !readonly);
+    setFormEnabled(mUi->labelFormat, mUi->formatData, !readonly);
+    setFormEnabled(mUi->labelWidth, mUi->width, !readonly);
+    setFormEnabled(mUi->labelHeight, mUi->height, !readonly);
+    setFormEnabled(mUi->labelDepth, mUi->depth, !readonly);
+    setFormEnabled(mUi->labelLayers, mUi->layers, !readonly);
+    setFormEnabled(mUi->labelSamples, mUi->samples, !readonly);
+
+    const auto kind = currentTextureKind();
     setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, kind.dimensions > 1);
     setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth, kind.dimensions > 2);
     setFormVisibility(mUi->formLayout, mUi->labelLayers, mUi->layers, kind.array);
@@ -321,6 +337,8 @@ void TextureProperties::updateSize()
     auto fileName = mUi->file->currentData().toString();
     auto image = ImageData();
     if (Singletons::fileCache().getImage(fileName, &image)) {
+        mUi->readonly->setCheckState(Qt::Checked);
+        setFormat(image.format());
         mUi->width->setValue(image.width());
         mUi->height->setValue(image.height());
     }

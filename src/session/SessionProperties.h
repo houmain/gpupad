@@ -113,4 +113,11 @@ inline void setFormVisibility(QFormLayout* layout, QLabel* label,
     widget->setVisible(visible);
 }
 
+inline void setFormEnabled(QLabel* label,
+    QWidget* widget, bool enabled)
+{
+    label->setEnabled(enabled);
+    widget->setEnabled(enabled);
+}
+
 #endif // SESSIONPROPERTIES_H

@@ -1,22 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Palette>
-    <Color role="WindowText" group="Active" value="#9f9f9f"/>
-    <Color role="WindowText" group="Disabled" value="#818181"/>
-    <Color role="WindowText" group="Inactive" value="#9f9f9f"/>
+    <Color role="WindowText" group="Active" value="#cfcfcf"/>
+    <Color role="WindowText" group="Disabled" value="#6a6a6a"/>
+    <Color role="WindowText" group="Inactive" value="#cfcfcf"/>
     <Color role="Button" group="Active" value="#3b3b41"/>
     <Color role="Button" group="Disabled" value="#3b3b41"/>
     <Color role="Button" group="Inactive" value="#3b3b41"/>
     <Color role="Light" group="Active" value="#6f6f6f"/>
-    <Color role="Light" group="Disabled" value="#4d4d53"/>
+    <Color role="Light" group="Disabled" value="#6f6f6f"/>
     <Color role="Light" group="Inactive" value="#6f6f6f"/>
+    <Color role="Midlight" group="Active" value="#cbcbcb"/>
+    <Color role="Midlight" group="Disabled" value="#cbcbcb"/>
+    <Color role="Midlight" group="Inactive" value="#cbcbcb"/>
+    <Color role="Dark" group="Active" value="#9f9f9f"/>
+    <Color role="Dark" group="Disabled" value="#bebebe"/>
+    <Color role="Dark" group="Inactive" value="#9f9f9f"/>
+    <Color role="Mid" group="Active" value="#b8b8b8"/>
+    <Color role="Mid" group="Disabled" value="#b8b8b8"/>
+    <Color role="Mid" group="Inactive" value="#b8b8b8"/>
     <Color role="Text" group="Active" value="#cfcfcf"/>
-    <Color role="Text" group="Disabled" value="#707070"/>
+    <Color role="Text" group="Disabled" value="#8f8f8f"/>
     <Color role="Text" group="Inactive" value="#cfcfcf"/>
     <Color role="BrightText" group="Active" value="#ffffff"/>
     <Color role="BrightText" group="Disabled" value="#ffffff"/>
     <Color role="BrightText" group="Inactive" value="#ffffff"/>
     <Color role="ButtonText" group="Active" value="#cfcfcf"/>
-    <Color role="ButtonText" group="Disabled" value="#cfcfcf"/>
+    <Color role="ButtonText" group="Disabled" value="#8b8b8b"/>
     <Color role="ButtonText" group="Inactive" value="#cfcfcf"/>
     <Color role="Base" group="Active" value="#4b4b51"/>
     <Color role="Base" group="Disabled" value="#4b4b51"/>
@@ -36,6 +45,9 @@
     <Color role="Link" group="Active" value="#ffffff"/>
     <Color role="Link" group="Disabled" value="#ffffff"/>
     <Color role="Link" group="Inactive" value="#ffffff"/>
+    <Color role="LinkVisited" group="Active" value="#ff00ff"/>
+    <Color role="LinkVisited" group="Disabled" value="#ff00ff"/>
+    <Color role="LinkVisited" group="Inactive" value="#ff00ff"/>
     <Color role="AlternateBase" group="Active" value="#505056"/>
     <Color role="AlternateBase" group="Disabled" value="#505056"/>
     <Color role="AlternateBase" group="Inactive" value="#505056"/>
@@ -45,4 +57,7 @@
     <Color role="ToolTipText" group="Active" value="#999999"/>
     <Color role="ToolTipText" group="Disabled" value="#999999"/>
     <Color role="ToolTipText" group="Inactive" value="#999999"/>
+    <Color role="PlaceholderText" group="Active" value="#cfcfcf"/>
+    <Color role="PlaceholderText" group="Disabled" value="#cfcfcf"/>
+    <Color role="PlaceholderText" group="Inactive" value="#cfcfcf"/>
 </Palette>

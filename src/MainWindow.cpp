@@ -646,14 +646,15 @@ void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
 void MainWindow::handleDarkThemeChanging(bool enabled)
 {
     auto palette = qApp->style()->standardPalette();
+    auto styleSheet = QString();
     if (enabled) {
         struct S { QPalette::ColorRole role; QColor a; QColor i; QColor d; };
         for (auto s : std::initializer_list<S>{
-                { QPalette::WindowText, 0x9F9F9F, 0x9F9F9F, 0x818181 },
+                { QPalette::WindowText, 0xCFCFCF, 0xCFCFCF, 0x6A6A6A },
                 { QPalette::Button, 0x3B3B41, 0x3B3B41, 0x3B3B41 },
-                { QPalette::Light, 0x6F6F6F, 0x6F6F6F, 0x4D4D53 },
-                { QPalette::Text, 0xCFCFCF, 0xCFCFCF, 0x707070 },
-                { QPalette::ButtonText, 0xCFCFCF, 0xCFCFCF, 0xCFCFCF },
+                { QPalette::Light, 0x6F6F6F, 0x6F6F6F, 0x6F6F6F },
+                { QPalette::Text, 0xCFCFCF, 0xCFCFCF, 0x8F8F8F },
+                { QPalette::ButtonText, 0xCFCFCF, 0xCFCFCF, 0x8B8B8B },
                 { QPalette::Base, 0x4B4B51, 0x4B4B51, 0x4B4B51 },
                 { QPalette::Window, 0x4D4D53, 0x4D4D53, 0x4D4D53 },
                 { QPalette::Shadow, 0x767472, 0x767472, 0x767472 },
@@ -662,13 +663,16 @@ void MainWindow::handleDarkThemeChanging(bool enabled)
                 { QPalette::AlternateBase, 0x505056, 0x505056, 0x505056 },
                 { QPalette::ToolTipBase, 0x45454B, 0x45454B, 0x45454B },
                 { QPalette::ToolTipText, 0x999999, 0x999999, 0x999999 },
+                { QPalette::PlaceholderText, 0xCFCFCF, 0xCFCFCF, 0xCFCFCF },
             }) {
                 palette.setColor(QPalette::Active, s.role, s.a);
                 palette.setColor(QPalette::Inactive, s.role, s.i);
                 palette.setColor(QPalette::Disabled, s.role, s.d);
             }
+        styleSheet = "QLabel:disabled { color: #6A6A6A; }";
     }
     qApp->setPalette(palette);
+    setStyleSheet(styleSheet);
 }
 
 void MainWindow::openSessionDock()

@@ -13,6 +13,7 @@
     ADD(ColumnDataType, Column, dataType) \
     ADD(ColumnCount, Column, count) \
     ADD(ColumnPadding, Column, padding) \
+    ADD(TextureReadonly, Texture, readonly) \
     ADD(TextureTarget, Texture, target) \
     ADD(TextureFormat, Texture, format) \
     ADD(TextureWidth, Texture, width) \

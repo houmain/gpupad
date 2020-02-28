@@ -246,22 +246,40 @@ void GLTexture::uploadImage(const Image &image)
     const auto format = image.image.pixelFormat();
     const auto type = image.image.pixelType();
     const auto data = image.image.getData(0, 0, 0);
+    const auto isCompressed = image.image.isCompressed();
+    const auto dataSize = image.image.getLevelSize(0);
 
     if (mTarget == QOpenGLTexture::Target3D) {
         auto &gl = GLContext::currentContext();
         gl.glBindTexture(mTarget, mTexture->textureId());
-        gl.glTexSubImage3D(mTarget, image.level, 0, 0, image.layer,
-            getImageWidth(image.level), getImageHeight(image.level), 1,
-            format, type, data);
+        if (isCompressed) {
+            gl.glCompressedTexSubImage3D(mTarget, image.level, 0, 0, image.layer,
+                getImageWidth(image.level), getImageHeight(image.level), 1,
+                format, dataSize, data);
+        } else {
+            gl.glTexSubImage3D(mTarget, image.level, 0, 0, image.layer,
+                getImageWidth(image.level), getImageHeight(image.level), 1,
+                format, type, data);
+        }
     }
     else if (mTarget == QOpenGLTexture::TargetCubeMap ||
              mTarget == QOpenGLTexture::TargetCubeMapArray) {
-        mTexture->setData(image.level, image.layer,
-            image.face, format, type, data);
+        if (isCompressed) {
+            mTexture->setCompressedData(image.level, image.layer,
+                image.face, dataSize, data);
+        } else {
+            mTexture->setData(image.level, image.layer,
+                image.face, format, type, data);
+        }
     }
     else {
-        mTexture->setData(image.level, image.layer,
-            format, type, data);
+        if (isCompressed) {
+            mTexture->setCompressedData(image.level, image.layer,
+                dataSize, data);
+        } else {
+            mTexture->setData(image.level, image.layer,
+                format, type, data);
+        }
     }
 
     if (mMultisampleTexture)

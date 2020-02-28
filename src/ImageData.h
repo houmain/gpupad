@@ -33,7 +33,7 @@ public:
     int faces() const;
     uchar *getWriteonlyData(int level, int layer, int face);
     const uchar *getData(int level, int layer, int face) const;
-    size_t getLevelSize(int level) const;
+    int getLevelSize(int level) const;
 
     friend bool operator==(const ImageData &a, const ImageData &b);
     friend bool operator!=(const ImageData &a, const ImageData &b);
