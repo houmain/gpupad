@@ -1,20 +1,20 @@
-#ifndef IMAGEEDITOR_H
-#define IMAGEEDITOR_H
+#ifndef TEXTUREEDITOR_H
+#define TEXTUREEDITOR_H
 
 #include "IEditor.h"
-#include "ImageData.h"
+#include "TextureData.h"
 #include <QGraphicsView>
 
 class ZeroCopyItem;
 
-class ImageEditor : public QGraphicsView, public IEditor
+class TextureEditor : public QGraphicsView, public IEditor
 {
     Q_OBJECT
 public:
-    static bool load(const QString &fileName, ImageData *image);
+    static bool load(const QString &fileName, TextureData *texture);
 
-    explicit ImageEditor(QString fileName, QWidget *parent = nullptr);
-    ~ImageEditor() override;
+    explicit TextureEditor(QString fileName, QWidget *parent = nullptr);
+    ~TextureEditor() override;
 
     QList<QMetaObject::Connection>
         connectEditActions(const EditActions &actions) override;
@@ -24,9 +24,9 @@ public:
     bool save() override;
     int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }
-    void replace(ImageData image, bool emitDataChanged = true);
+    void replace(TextureData texture, bool emitDataChanged = true);
     void updatePreviewTexture(unsigned int textureId);
-    const ImageData &image() const { return mImage; }
+    const TextureData &texture() const { return mTexture; }
 
 signals:
     void dataChanged();
@@ -50,7 +50,7 @@ private:
 
     QString mFileName;
     bool mModified{ };
-    ImageData mImage;
+    TextureData mTexture;
     bool mPan{ };
     QRect mBounds{ };
     int mZoom{ };
@@ -62,4 +62,4 @@ private:
     QGraphicsPixmapItem *mPixmapItem{ };
 };
 
-#endif // IMAGEEDITOR_H
+#endif // TEXTUREEDITOR_H

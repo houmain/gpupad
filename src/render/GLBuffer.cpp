@@ -70,14 +70,6 @@ void GLBuffer::unbind(GLenum target)
     gl.glBindBuffer(target, GL_NONE);
 }
 
-QMap<ItemId, QByteArray> GLBuffer::getModifiedData()
-{
-    if (!download())
-        return { };
-
-    return { std::make_pair(mItemId, mData) };
-}
-
 void GLBuffer::reload()
 {
     auto prevData = mData;

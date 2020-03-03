@@ -7,50 +7,37 @@
 class GLTexture
 {
 public:
-    struct Image
-    {
-        ItemId itemId;
-        int level;
-        int layer;
-        QOpenGLTexture::CubeMapFace face;
-        QString fileName;
-        ImageData image;
-    };
-
     explicit GLTexture(const Texture &texture);
     bool operator==(const GLTexture &rhs) const;
 
+    ItemId itemId() const { return mItemId; }
     TextureKind kind() const { return mKind; }
+    Texture::Target target() const { return mMultisampleTarget; }
     int width() const { return mWidth; }
     int height() const { return mHeight; }
-    Texture::Target target() const { return mMultisampleTarget; }
+    int depth() const { return mDepth; }
+    int layers() const { return mLayers; }
     Texture::Format format() const { return mFormat; }
-
+    TextureData data() const { return mData; }
     void clear(QColor color, double depth, int stencil);
     void copy(GLTexture &source);
     void generateMipmaps();
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();
-    bool canUpdatePreview() const;
-    QMap<ItemId, ImageData> getModifiedImages();
+    bool download();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
-    int getImageWidth(int level) const;
-    int getImageHeight(int level) const;
     GLObject createFramebuffer(GLuint textureId, int level) const;
     void reload();
     void createTexture();
     void upload();
-    void uploadImage(const Image &image);
-    bool download();
-    bool downloadImage(Image &image);
-    void resolveMultisampleTexture(QOpenGLTexture &source,
-        QOpenGLTexture &dest, int level);
+    void copyTexture(GLuint sourceTextureId,
+        GLuint destTextureId, int level);
 
-    QSet<ItemId> mUsedItems;
-    QList<MessagePtr> mMessages;
-    TextureKind mKind{ };
+    ItemId mItemId{ };
+    QString mFileName;
+    bool mReadonly{ };
     Texture::Target mTarget{ };
     Texture::Format mFormat{ };
     int mWidth{ };
@@ -58,12 +45,15 @@ private:
     int mDepth{ };
     int mLayers{ };
     int mSamples{ };
-    QList<Image> mImages;
-    std::unique_ptr<QOpenGLTexture> mTexture;
+    TextureData mData;
+    QSet<ItemId> mUsedItems;
+    QList<MessagePtr> mMessages;
+    TextureKind mKind{ };
+    GLObject mTextureObject;
     Texture::Target mMultisampleTarget{ };
-    std::unique_ptr<QOpenGLTexture> mMultisampleTexture;
-    bool mSystemCopiesModified{ };
-    bool mDeviceCopiesModified{ };
+    GLObject mMultisampleTexture;
+    bool mSystemCopyModified{ };
+    bool mDeviceCopyModified{ };
 };
 
 #endif // GLTEXTURE_H

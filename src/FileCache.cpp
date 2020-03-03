@@ -1,7 +1,7 @@
 #include "FileCache.h"
 #include "editors/EditorManager.h"
 #include "editors/SourceEditor.h"
-#include "editors/ImageEditor.h"
+#include "editors/TextureEditor.h"
 #include "editors/BinaryEditor.h"
 
 FileCache::FileCache(QObject *parent) : QObject(parent)
@@ -24,10 +24,10 @@ void FileCache::update(EditorManager &editorManager,
         else
             mBinaries.remove(fileName);
 
-        if (auto editor = editorManager.getImageEditor(fileName))
-            mImages[editor->fileName()] = editor->image();
+        if (auto editor = editorManager.getTextureEditor(fileName))
+            mTextures[editor->fileName()] = editor->texture();
         else
-            mImages.remove(fileName);
+            mTextures.remove(fileName);
     }
 }
 
@@ -46,18 +46,18 @@ bool FileCache::getSource(const QString &fileName, QString *source) const
     return true;
 }
 
-bool FileCache::getImage(const QString &fileName, ImageData *image) const
+bool FileCache::getTexture(const QString &fileName, TextureData *texture) const
 {
-    Q_ASSERT(image);
+    Q_ASSERT(texture);
     QMutexLocker lock(&mMutex);
-    if (mImages.contains(fileName)) {
-        *image = mImages[fileName];
+    if (mTextures.contains(fileName)) {
+        *texture = mTextures[fileName];
         return true;
     }
 
-    if (!ImageEditor::load(fileName, image))
+    if (!TextureEditor::load(fileName, texture))
         return false;
-    mImages[fileName] = *image;
+    mTextures[fileName] = *texture;
     return true;
 }
 

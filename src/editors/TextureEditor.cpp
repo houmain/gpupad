@@ -1,4 +1,4 @@
-#include "ImageEditor.h"
+#include "TextureEditor.h"
 #include "FileDialog.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
@@ -53,16 +53,16 @@ void main() {
 private:
     QOpenGLFunctions_3_3_Core mGL;
     QScopedPointer<QOpenGLShaderProgram> mProgram;
-    QOpenGLTexture *mTexture{ };
+    GLuint mTexture{ };
     QMetaObject::Connection mTextureContextConnection;
-    ImageData mUploadImage;
+    TextureData mUploadImage;
     QRect mBoundingRect;
     GLuint mPreviewTextureId{ };
     bool mPreviewFlipY{ };
     bool mMagnifyLinear{ };
 
 public:
-    void setImage(ImageData image)
+    void setImage(TextureData image)
     {
         prepareGeometryChange();
         mUploadImage = image;
@@ -79,9 +79,9 @@ public:
         update();
     }
 
-    QOpenGLTexture* resetTexture()
+    GLuint resetTexture()
     {
-        return std::exchange(mTexture, nullptr);
+        return std::exchange(mTexture, GL_NONE);
     }
 
     void setMagnifyLinear(bool magnifyLinear)
@@ -100,13 +100,9 @@ public:
             initialize();
 
         if (!mPreviewTextureId && !mUploadImage.isNull()) {
-            // delete previous version in current thread
-            if (mTexture)
-                delete mTexture;
+            // upload/replace texture
+            mUploadImage.upload(&mTexture);
 
-            // upload texture
-            mTexture = new QOpenGLTexture(mUploadImage.toImage(),
-                QOpenGLTexture::MipMapGeneration::DontGenerateMipMaps);
             mUploadImage = { };
 
             // last version is deleted in QGraphicsView destructor
@@ -117,30 +113,23 @@ public:
         mGL.glEnable(GL_BLEND);
         mGL.glBlendEquation(GL_ADD);
         mGL.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        mGL.glEnable(GL_TEXTURE_2D);
 
         auto flipY = false;
         if (mPreviewTextureId) {
-            Singletons::glShareSynchronizer().beginUsage(mGL);
-            mGL.glEnable(GL_TEXTURE_2D);
+            Singletons::glShareSynchronizer().beginUsage(mGL);    
             mGL.glBindTexture(GL_TEXTURE_2D, mPreviewTextureId);
-            mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                GL_CLAMP_TO_EDGE);
-            mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-                GL_CLAMP_TO_EDGE);
-            mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                GL_LINEAR_MIPMAP_LINEAR);
-            mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-               mMagnifyLinear ? GL_LINEAR : GL_NEAREST);
-            mGL.glGenerateMipmap(GL_TEXTURE_2D);
-            flipY = mPreviewFlipY;
         }
         else if (mTexture) {
-            mTexture->bind();
-            mTexture->setWrapMode(QOpenGLTexture::ClampToEdge);
-            mTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-            mTexture->setMagnificationFilter(mMagnifyLinear ?
-                QOpenGLTexture::Linear : QOpenGLTexture::Nearest);
+            mGL.glBindTexture(GL_TEXTURE_2D, mTexture);
         }
+
+        mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+            mMagnifyLinear ? GL_LINEAR : GL_NEAREST);
+        mGL.glGenerateMipmap(GL_TEXTURE_2D);
 
         const auto scale = painter->combinedTransform().m11();
         const auto s = mBoundingRect.size();
@@ -188,7 +177,7 @@ private:
 
 //-------------------------------------------------------------------------
 
-ImageEditor::ImageEditor(QString fileName, QWidget *parent)
+TextureEditor::TextureEditor(QString fileName, QWidget *parent)
     : QGraphicsView(parent)
     , mFileName(fileName)
 {
@@ -224,14 +213,15 @@ ImageEditor::ImageEditor(QString fileName, QWidget *parent)
     mBorder->setZValue(1);
     scene()->addItem(mBorder);
 
-    auto image = ImageData{ };
-    image.create(1, 1, QOpenGLTexture::TextureFormat::RGBA8_UNorm);
+    auto image = TextureData{ };
+    image.create(QOpenGLTexture::Target2D,
+        QOpenGLTexture::TextureFormat::RGBA8_UNorm, 1, 1, 1, 1);
     replace(std::move(image), false);
     setZoom(mZoom);
     updateTransform(1.0);
 }
 
-ImageEditor::~ImageEditor() 
+TextureEditor::~TextureEditor() 
 {
     if (mZeroCopyItem) {
         if (auto texture = mZeroCopyItem->resetTexture()) {
@@ -239,7 +229,8 @@ ImageEditor::~ImageEditor()
             auto context = glWidget->context();
             auto surface = context->surface();
             if (context->makeCurrent(surface)) {
-                delete texture;
+                auto& gl = *context->functions();
+                gl.glDeleteTextures(1, &texture);
                 context->doneCurrent();
             }
         }
@@ -247,42 +238,42 @@ ImageEditor::~ImageEditor()
     delete scene();
 }
 
-QList<QMetaObject::Connection> ImageEditor::connectEditActions(
+QList<QMetaObject::Connection> TextureEditor::connectEditActions(
         const EditActions &actions)
 {
     auto c = QList<QMetaObject::Connection>();
 
     actions.windowFileName->setText(fileName());
     actions.windowFileName->setEnabled(isModified());
-    c += connect(this, &ImageEditor::fileNameChanged,
+    c += connect(this, &TextureEditor::fileNameChanged,
                  actions.windowFileName, &QAction::setText);
-    c += connect(this, &ImageEditor::modificationChanged,
+    c += connect(this, &TextureEditor::modificationChanged,
                  actions.windowFileName, &QAction::setEnabled);
     return c;
 }
 
-void ImageEditor::setFileName(QString fileName)
+void TextureEditor::setFileName(QString fileName)
 {
     mFileName = fileName;
     emit fileNameChanged(mFileName);
 }
 
-bool ImageEditor::load(const QString &fileName, ImageData *image)
+bool TextureEditor::load(const QString &fileName, TextureData *texture)
 {
     if (FileDialog::isEmptyOrUntitled(fileName))
         return false;
 
-    auto file = ImageData();
+    auto file = TextureData();
     if (!file.load(fileName))
         return false;
 
-    *image = file;
+    *texture = file;
     return true;
 }
 
-bool ImageEditor::load()
+bool TextureEditor::load()
 {
-    auto image = ImageData();
+    auto image = TextureData();
     if (!load(mFileName, &image))
         return false;
 
@@ -293,9 +284,9 @@ bool ImageEditor::load()
     return true;
 }
 
-bool ImageEditor::save()
+bool TextureEditor::save()
 {
-    if (!mImage.save(fileName()))
+    if (!mTexture.save(fileName()))
         return false;
 
     setModified(false);
@@ -303,19 +294,19 @@ bool ImageEditor::save()
     return true;
 }
 
-void ImageEditor::replace(ImageData image, bool emitDataChanged)
+void TextureEditor::replace(TextureData texture, bool emitDataChanged)
 {
-    if (image == mImage)
+    if (texture == mTexture)
         return;
 
-    mImage = image;
+    mTexture = texture;
     if (mZeroCopyItem) {
-        mZeroCopyItem->setImage(mImage);
+        mZeroCopyItem->setImage(mTexture);
         setBounds(mZeroCopyItem->boundingRect().toRect());
     }
     else {
         delete mPixmapItem;
-        auto pixmap = QPixmap::fromImage(mImage.toImage(),
+        auto pixmap = QPixmap::fromImage(mTexture.toImage(),
             Qt::NoOpaqueDetection | Qt::NoFormatConversion);
         mPixmapItem = new QGraphicsPixmapItem(pixmap);
         scene()->addItem(mPixmapItem);
@@ -329,13 +320,13 @@ void ImageEditor::replace(ImageData image, bool emitDataChanged)
         emit dataChanged();
 }
 
-void ImageEditor::updatePreviewTexture(unsigned int textureId)
+void TextureEditor::updatePreviewTexture(unsigned int textureId)
 {
     if (mZeroCopyItem)
         mZeroCopyItem->setPreviewTexture(textureId);
 }
 
-void ImageEditor::setModified(bool modified)
+void TextureEditor::setModified(bool modified)
 {
     if (mModified != modified) {
         mModified = modified;
@@ -343,7 +334,7 @@ void ImageEditor::setModified(bool modified)
     }
 }
 
-void ImageEditor::wheelEvent(QWheelEvent *event)
+void TextureEditor::wheelEvent(QWheelEvent *event)
 {
     if (!event->modifiers()) {
         const auto min = -3;
@@ -355,13 +346,13 @@ void ImageEditor::wheelEvent(QWheelEvent *event)
     QGraphicsView::wheelEvent(event);
 }
 
-void ImageEditor::mouseDoubleClickEvent(QMouseEvent *event)
+void TextureEditor::mouseDoubleClickEvent(QMouseEvent *event)
 {
     setZoom(0);
     QGraphicsView::mouseDoubleClickEvent(event);
 }
 
-void ImageEditor::mousePressEvent(QMouseEvent *event)
+void TextureEditor::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::MidButton) {
         mPan = true;
@@ -376,7 +367,7 @@ void ImageEditor::mousePressEvent(QMouseEvent *event)
     QGraphicsView::mousePressEvent(event);
 }
 
-void ImageEditor::mouseMoveEvent(QMouseEvent *event)
+void TextureEditor::mouseMoveEvent(QMouseEvent *event)
 {
     if (mPan) {
         horizontalScrollBar()->setValue(
@@ -393,7 +384,7 @@ void ImageEditor::mouseMoveEvent(QMouseEvent *event)
     QGraphicsView::mouseMoveEvent(event);
 }
 
-void ImageEditor::updateMousePosition(QMouseEvent *event)
+void TextureEditor::updateMousePosition(QMouseEvent *event)
 {
     if (event->buttons() & Qt::LeftButton)
         Singletons::synchronizeLogic().setMousePosition({ 
@@ -402,7 +393,7 @@ void ImageEditor::updateMousePosition(QMouseEvent *event)
         });
 }
 
-void ImageEditor::mouseReleaseEvent(QMouseEvent *event)
+void TextureEditor::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::MidButton) {
         mPan = false;
@@ -412,7 +403,7 @@ void ImageEditor::mouseReleaseEvent(QMouseEvent *event)
     QGraphicsView::mouseReleaseEvent(event);
 }
 
-void ImageEditor::setBounds(QRect bounds)
+void TextureEditor::setBounds(QRect bounds)
 {
     if (bounds == mBounds)
         return;
@@ -428,7 +419,7 @@ void ImageEditor::setBounds(QRect bounds)
     setSceneRect(bounds);
 }
 
-void ImageEditor::setZoom(int zoom)
+void TextureEditor::setZoom(int zoom)
 {
     if (mZoom == zoom)
         return;
@@ -443,14 +434,14 @@ void ImageEditor::setZoom(int zoom)
         mZeroCopyItem->setMagnifyLinear(scale <= 4);
 }
 
-void ImageEditor::updateTransform(double scale)
+void TextureEditor::updateTransform(double scale)
 {
     const auto transform = QTransform().scale(scale, scale);
     setTransform(transform);
     updateBackground(transform);
 }
 
-void ImageEditor::updateBackground(const QTransform& transform) 
+void TextureEditor::updateBackground(const QTransform& transform) 
 {
     QPixmap pm(2, 2);
     QPainter pmp(&pm);

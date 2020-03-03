@@ -5,20 +5,23 @@
 #include <memory>
 #include "ktx.h"
 
-class ImageData
+class TextureData
 {
 public:
-    bool create(int width, int height,
-        QOpenGLTexture::TextureFormat format);
+    bool create(QOpenGLTexture::Target target,
+        QOpenGLTexture::TextureFormat format,
+        int width, int height, int depth, int layers);
     bool load(const QString &fileName);
     bool save(const QString &fileName) const;
     bool isNull() const;
+    void clear();
     QImage toImage() const;
 
     bool isArray() const;
     bool isCubemap() const;
     bool isCompressed() const;
     int dimensions() const;
+    QOpenGLTexture::Target target() const { return mTarget; }
     QOpenGLTexture::TextureFormat format() const;
     QOpenGLTexture::PixelFormat pixelFormat() const;
     QOpenGLTexture::PixelType pixelType() const;
@@ -34,11 +37,15 @@ public:
     uchar *getWriteonlyData(int level, int layer, int face);
     const uchar *getData(int level, int layer, int face) const;
     int getLevelSize(int level) const;
+    bool upload(GLuint textureId);
+    bool upload(GLuint *textureId);
+    bool download(GLuint textureId);
 
-    friend bool operator==(const ImageData &a, const ImageData &b);
-    friend bool operator!=(const ImageData &a, const ImageData &b);
+    friend bool operator==(const TextureData &a, const TextureData &b);
+    friend bool operator!=(const TextureData &a, const TextureData &b);
 
 private:
+    QOpenGLTexture::Target mTarget{ };
     std::shared_ptr<ktxTexture> mKtxTexture;
 };
 

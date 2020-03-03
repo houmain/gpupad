@@ -157,14 +157,13 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
 
     connect(mUi->fileNew, &QToolButton::clicked,
         [this]() {
-            mSessionProperties.saveCurrentItemFileAs(
-                FileDialog::ImageExtensions);
+            mSessionProperties.saveCurrentItemFileAs(FileDialog::TextureExtensions);
         });
     connect(mUi->fileBrowse, &QToolButton::clicked,
         [this]() {
-            mSessionProperties.openCurrentItemFile(
-                FileDialog::ImageExtensions);
-            updateSize();
+            mSessionProperties.openCurrentItemFile(FileDialog::TextureExtensions);
+            updateWidgets();
+            applyFileFormat();
         });
 
     connect(mUi->file, &ReferenceComboBox::textRequired,
@@ -172,6 +171,8 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
     connect(mUi->file, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getFileNames(
             Item::Type::Texture, true); });
+    connect(mUi->file, &ReferenceComboBox::currentDataChanged,
+        this, &TextureProperties::updateWidgets);
 
     connect(mUi->target, &DataComboBox::currentDataChanged,
         this, &TextureProperties::updateWidgets);
@@ -226,6 +227,16 @@ TextureKind TextureProperties::currentTextureKind() const
     return { };
 }
 
+bool TextureProperties::hasFile() const
+{
+    mSessionProperties.updateModel();
+
+    if (auto texture = mSessionProperties.model().item<Texture>(
+            mSessionProperties.currentModelIndex()))
+        return !texture->fileName.isEmpty();
+    return false;
+}
+
 void TextureProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->file, SessionModel::FileName);
@@ -239,7 +250,8 @@ void TextureProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->samples, SessionModel::TextureSamples);
 }
 
-void TextureProperties::setFormat(QVariant value) {
+void TextureProperties::setFormat(QVariant value) 
+{
     const auto format = static_cast<Texture::Format>(value.toInt());
     if (mFormat != format) {
         mFormat = format;
@@ -252,18 +264,17 @@ void TextureProperties::setFormat(QVariant value) {
 
 void TextureProperties::updateWidgets()
 {
-    const auto hasFile = !mUi->file->currentData().isNull();
-    mUi->readonly->setEnabled(hasFile);
+    setFormEnabled(mUi->labelReadonly, mUi->readonly, hasFile());
+    if (!mUi->readonly->isEnabled())
+      mUi->readonly->setChecked(false);
 
     const auto readonly = mUi->readonly->isChecked();
-    setFormEnabled(mUi->labelTarget, mUi->target, !readonly);
     setFormEnabled(mUi->labelFormat, mUi->formatType, !readonly);
     setFormEnabled(mUi->labelFormat, mUi->formatData, !readonly);
     setFormEnabled(mUi->labelWidth, mUi->width, !readonly);
     setFormEnabled(mUi->labelHeight, mUi->height, !readonly);
     setFormEnabled(mUi->labelDepth, mUi->depth, !readonly);
     setFormEnabled(mUi->labelLayers, mUi->layers, !readonly);
-    setFormEnabled(mUi->labelSamples, mUi->samples, !readonly);
 
     const auto kind = currentTextureKind();
     setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, kind.dimensions > 1);
@@ -332,14 +343,15 @@ void TextureProperties::updateFormat(QVariant formatData)
     }
 }
 
-void TextureProperties::updateSize()
+void TextureProperties::applyFileFormat()
 {
     auto fileName = mUi->file->currentData().toString();
-    auto image = ImageData();
-    if (Singletons::fileCache().getImage(fileName, &image)) {
-        mUi->readonly->setCheckState(Qt::Checked);
-        setFormat(image.format());
-        mUi->width->setValue(image.width());
-        mUi->height->setValue(image.height());
+    auto texture = TextureData();
+    if (Singletons::fileCache().getTexture(fileName, &texture)) {
+        mUi->readonly->setChecked(true);
+        setFormat(texture.format());
+        mUi->width->setValue(texture.width());
+        mUi->height->setValue(texture.height());
+        mUi->depth->setValue(texture.depth());
     }
 }

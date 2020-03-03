@@ -24,6 +24,7 @@ public:
     void setFormat(QVariant format);
     void addMappings(QDataWidgetMapper &mapper);
     TextureKind currentTextureKind() const;
+    bool hasFile() const;
 
 signals:
     void formatChanged();
@@ -32,7 +33,7 @@ private:
     void updateWidgets();
     void updateFormatDataWidget(QVariant formatType);
     void updateFormat(QVariant formatData);
-    void updateSize();
+    void applyFileFormat();
 
     SessionProperties &mSessionProperties;
     Ui::TextureProperties *mUi;

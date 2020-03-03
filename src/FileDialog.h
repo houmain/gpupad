@@ -26,12 +26,12 @@ public:
         Saving              = 1 << 1,
         Importing           = 1 << 2,
         ShaderExtensions    = 1 << 3,
-        ImageExtensions     = 1 << 4,
+        TextureExtensions   = 1 << 4,
         BinaryExtensions    = 1 << 5,
         SessionExtensions   = 1 << 6,
         ScriptExtensions    = 1 << 7,
         SupportedExtensions = 1 << 8,
-        AllExtensionFilters = ShaderExtensions | ImageExtensions |
+        AllExtensionFilters = ShaderExtensions | TextureExtensions |
             BinaryExtensions | ScriptExtensions | SessionExtensions | SupportedExtensions
     };
     Q_DECLARE_FLAGS(Options, OptionBit)

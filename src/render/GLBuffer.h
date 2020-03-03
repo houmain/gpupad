@@ -9,20 +9,21 @@ public:
     explicit GLBuffer(const Buffer &buffer);
     bool operator==(const GLBuffer &rhs) const;
 
+    ItemId itemId() const { return mItemId; }
+    QByteArray data() const { return mData; }
     void clear();
     void copy(GLBuffer &source);
     GLuint getReadOnlyBufferId();
     GLuint getReadWriteBufferId();
     void bindReadOnly(GLenum target);
     void unbind(GLenum target);
-    QMap<ItemId, QByteArray> getModifiedData();
+    bool download();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
     void reload();
     void createBuffer();
     void upload();
-    bool download();
 
     ItemId mItemId{ };
     QString mFileName;

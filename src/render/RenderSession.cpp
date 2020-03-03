@@ -3,7 +3,7 @@
 #include "SynchronizeLogic.h"
 #include "session/SessionModel.h"
 #include "editors/EditorManager.h"
-#include "editors/ImageEditor.h"
+#include "editors/TextureEditor.h"
 #include "editors/BinaryEditor.h"
 #include "scripting/ScriptEngine.h"
 #include "scripting/InputScriptObject.h"
@@ -419,13 +419,13 @@ void RenderSession::executeCommandQueue()
 void RenderSession::downloadModifiedResources()
 {
     for (auto &[itemId, texture] : mCommandQueue->textures)
-        if (!gZeroCopyPreview || mItemsChanged || !texture.canUpdatePreview())
-            mModifiedImages = mModifiedImages.unite(
-                texture.getModifiedImages());
+        if (!gZeroCopyPreview || mItemsChanged)
+            if (texture.download())
+                mModifiedTextures[texture.itemId()] = texture.data();
 
     for (auto &[itemId, buffer] : mCommandQueue->buffers)
-        mModifiedBuffers = mModifiedBuffers.unite(
-            buffer.getModifiedData());
+        if (buffer.download())
+            mModifiedBuffers[buffer.itemId()] = buffer.data();
 }
 
 void RenderSession::outputTimerQueries()
@@ -447,11 +447,11 @@ void RenderSession::finish()
 
     editors.setAutoRaise(false);
 
-    for (auto itemId : mModifiedImages.keys())
+    for (auto itemId : mModifiedTextures.keys())
         if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
-            if (auto editor = editors.openImageEditor(fileItem->fileName))
-                editor->replace(mModifiedImages[itemId], false);
-    mModifiedImages.clear();
+            if (auto editor = editors.openTextureEditor(fileItem->fileName))
+                editor->replace(mModifiedTextures[itemId], false);
+    mModifiedTextures.clear();
 
     for (auto itemId : mModifiedBuffers.keys())
         if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
@@ -463,9 +463,9 @@ void RenderSession::finish()
 
     // keep updating preview texture
     for (auto& [itemId, texture] : mCommandQueue->textures)
-        if (gZeroCopyPreview && !mItemsChanged && texture.canUpdatePreview())
+        if (gZeroCopyPreview && !mItemsChanged)
             if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
-                if (auto editor = editors.getImageEditor(fileItem->fileName))
+                if (auto editor = editors.getTextureEditor(fileItem->fileName))
                     editor->updatePreviewTexture(texture.getReadOnlyTextureId());
 
     mPrevMessages.clear();

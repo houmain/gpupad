@@ -28,6 +28,7 @@ set(SOURCES
   libs/KTX/lib/texture.c
   libs/KTX/lib/writer.c
   libs/KTX/lib/writer_v1.c
+  libs/KTX/lib/glloader.c
   src/FileDialog.cpp
   src/MainWindow.cpp
   src/MainWindow.ui
@@ -38,14 +39,14 @@ set(SOURCES
   src/Settings.cpp
   src/Singletons.cpp
   src/SynchronizeLogic.cpp
-  src/ImageData.cpp
+  src/TextureData.cpp
   src/editors/BinaryEditor.cpp
   src/editors/DockWindow.cpp
   src/editors/EditorManager.cpp
   src/editors/FindReplaceBar.cpp
   src/editors/FindReplaceBar.ui
   src/editors/GlslHighlighter.cpp
-  src/editors/ImageEditor.cpp
+  src/editors/TextureEditor.cpp
   src/editors/JsHighlighter.cpp
   src/editors/SourceEditor.cpp
   src/main.cpp
@@ -102,16 +103,16 @@ if(WIN32)
 endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
-add_compile_definitions(QAPPLICATION_CLASS=QApplication)
+add_compile_definitions(QAPPLICATION_CLASS=QApplication KTX_OPENGL)
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
 
 target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include)
 
 if(NOT WIN32)
-	target_include_directories(${PROJECT_NAME} PRIVATE /usr/include/libdrm)
-	target_link_libraries(${PROJECT_NAME} drm)
+    target_include_directories(${PROJECT_NAME} PRIVATE /usr/include/libdrm)
+    target_link_libraries(${PROJECT_NAME} drm GL)
 else ()
-	target_link_libraries(${PROJECT_NAME} dwmapi)
+    target_link_libraries(${PROJECT_NAME} dwmapi opengl32)
 endif()
 
 find_package(Qt5Widgets CONFIG REQUIRED)
@@ -120,22 +121,22 @@ find_package(Qt5Qml CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::OpenGL Qt5::Qml)
 
 if(NOT WIN32)
-	install(TARGETS ${PROJECT_NAME} DESTINATION "bin")
-	install(DIRECTORY share DESTINATION .)
-	install(DIRECTORY samples DESTINATION "share/gpupad")
+    install(TARGETS ${PROJECT_NAME} DESTINATION "bin")
+    install(DIRECTORY share DESTINATION .)
+    install(DIRECTORY samples DESTINATION "share/gpupad")
 else()
-	install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Runtime)
-	install(DIRECTORY samples DESTINATION .)
+    install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Runtime)
+    install(DIRECTORY samples DESTINATION .)
 
-	get_target_property(uic_location Qt5::uic IMPORTED_LOCATION)
-	get_filename_component(_dir ${uic_location} DIRECTORY)
-	set(deployqt "${_dir}/windeployqt.exe")
-	if(NOT EXISTS ${deployqt})
-		message(FATAL_ERROR "Failed to locate deployqt executable: [${deployqt}]")
-	endif()
+    get_target_property(uic_location Qt5::uic IMPORTED_LOCATION)
+    get_filename_component(_dir ${uic_location} DIRECTORY)
+    set(deployqt "${_dir}/windeployqt.exe")
+    if(NOT EXISTS ${deployqt})
+        message(FATAL_ERROR "Failed to locate deployqt executable: [${deployqt}]")
+    endif()
 
-	install(CODE "set(deployqt \"${deployqt}\")" COMPONENT Runtime)
-	install(CODE [===[
-	execute_process(COMMAND "${deployqt}" --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations "${CMAKE_INSTALL_PREFIX}")
-	]===] COMPONENT Runtime)
+    install(CODE "set(deployqt \"${deployqt}\")" COMPONENT Runtime)
+    install(CODE [===[
+    execute_process(COMMAND "${deployqt}" --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations "${CMAKE_INSTALL_PREFIX}")
+    ]===] COMPONENT Runtime)
 endif()

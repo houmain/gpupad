@@ -205,7 +205,7 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::handleDarkThemeChanging);
     connect(mUi->actionZeroCopyPreview, &QAction::toggled,
         [&](bool enabled) {
-            if (mEditorManager.closeAllImageEditors())
+            if (mEditorManager.closeAllTextureEditors())
                 settings.setZeroCopyPreview(enabled);
         });
 

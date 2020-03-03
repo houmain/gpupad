@@ -32,7 +32,7 @@
   /* Include for all GL versions because have seen OpenGL ES 3
    * implementaions that do not support ETC1 (ARM Mali emulator v1.0)!
    */
-  #define SUPPORT_SOFTWARE_ETC_UNPACK 1
+  #define SUPPORT_SOFTWARE_ETC_UNPACK 0
 #endif
 
 #ifndef MAX

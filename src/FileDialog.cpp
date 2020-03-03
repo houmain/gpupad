@@ -129,10 +129,10 @@ bool FileDialog::exec(Options options, QString currentFileName)
     for (const auto &ext : ShaderFileExtensions)
         shaderFileFilter = shaderFileFilter + " *." + ext;
 
-    auto imageFileFilter = QString();
-    imageFileFilter += " *.ktx";
+    auto textureFileFilter = QString();
+    textureFileFilter += " *.ktx";
     foreach (const QByteArray &format, QImageReader::supportedImageFormats())
-        imageFileFilter = imageFileFilter + " *." + QString(format);
+        textureFileFilter = textureFileFilter + " *." + QString(format);
 
     auto binaryFileFilter = QString();
     for (const auto &ext : BinaryFileExtensions)
@@ -143,7 +143,7 @@ bool FileDialog::exec(Options options, QString currentFileName)
         scriptFileFilter = scriptFileFilter + " *." + ext;
 
     auto supportedFileFilter = "*." + SessionFileExtension +
-        shaderFileFilter + scriptFileFilter + imageFileFilter + binaryFileFilter;
+        shaderFileFilter + scriptFileFilter + textureFileFilter + binaryFileFilter;
 
     auto filters = QStringList();
     if (options & SupportedExtensions)
@@ -153,8 +153,8 @@ bool FileDialog::exec(Options options, QString currentFileName)
             " (*." + SessionFileExtension + ")");
     if (options & ShaderExtensions)
         filters.append(tr("GLSL shader files") + " (" + shaderFileFilter + ")");
-    if (options & ImageExtensions)
-        filters.append(tr("Image files") + " (" + imageFileFilter + ")");
+    if (options & TextureExtensions)
+        filters.append(tr("Texture files") + " (" + textureFileFilter + ")");
     if (options & BinaryExtensions)
         filters.append(tr("Binary files") + " (" + binaryFileFilter + ")");
     if (options & ScriptExtensions)
@@ -170,7 +170,7 @@ bool FileDialog::exec(Options options, QString currentFileName)
         dialog.setDefaultSuffix(SessionFileExtension);
     else if (options & ScriptExtensions)
         dialog.setDefaultSuffix(*begin(ScriptFileExtensions));
-    else if (options & ImageExtensions)
+    else if (options & TextureExtensions)
         dialog.setDefaultSuffix("png");
     else if (options & BinaryExtensions)
         dialog.setDefaultSuffix(*begin(BinaryFileExtensions));

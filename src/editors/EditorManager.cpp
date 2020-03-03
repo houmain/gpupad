@@ -121,11 +121,11 @@ QString EditorManager::openNewBinaryEditor(const QString &baseName)
     return fileName;
 }
 
-QString EditorManager::openNewImageEditor(const QString &baseName)
+QString EditorManager::openNewTextureEditor(const QString &baseName)
 {
     auto fileName = FileDialog::generateNextUntitledFileName(baseName);
-    auto editor = new ImageEditor(fileName);
-    addImageEditor(editor);
+    auto editor = new TextureEditor(fileName);
+    addTextureEditor(editor);
     autoRaise(editor);
     return fileName;
 }
@@ -136,7 +136,7 @@ bool EditorManager::openEditor(const QString &fileName)
         if (openBinaryEditor(fileName))
             return true;
 
-    if (openImageEditor(fileName))
+    if (openTextureEditor(fileName))
         return true;
     if (openSourceEditor(fileName))
         return true;
@@ -179,16 +179,16 @@ BinaryEditor *EditorManager::openBinaryEditor(const QString &fileName)
     return editor;
 }
 
-ImageEditor *EditorManager::openImageEditor(const QString &fileName)
+TextureEditor *EditorManager::openTextureEditor(const QString &fileName)
 {
-    auto editor = getImageEditor(fileName);
+    auto editor = getTextureEditor(fileName);
     if (!editor) {
-        editor = new ImageEditor(fileName);
+        editor = new TextureEditor(fileName);
         if (!editor->load()) {
             delete editor;
             return nullptr;
         }
-        addImageEditor(editor);
+        addTextureEditor(editor);
     }
     autoRaise(editor);
     return editor;
@@ -210,9 +210,9 @@ BinaryEditor* EditorManager::getBinaryEditor(const QString &fileName)
     return nullptr;
 }
 
-ImageEditor* EditorManager::getImageEditor(const QString &fileName)
+TextureEditor* EditorManager::getTextureEditor(const QString &fileName)
 {
-    foreach (ImageEditor *editor, mImageEditors)
+    foreach (TextureEditor *editor, mTextureEditors)
         if (editor->fileName() == fileName)
             return editor;
     return nullptr;
@@ -237,7 +237,7 @@ QStringList EditorManager::getBinaryFileNames() const
 QStringList EditorManager::getImageFileNames() const
 {
     auto result = QStringList();
-    foreach (ImageEditor *editor, mImageEditors)
+    foreach (TextureEditor *editor, mTextureEditors)
         result.append(editor->fileName());
     return result;
 }
@@ -266,8 +266,8 @@ bool EditorManager::saveEditorAs()
         }
         else if (qobject_cast<BinaryEditor*>(mCurrentDock->widget()))
             options |= FileDialog::BinaryExtensions;
-        else if (qobject_cast<ImageEditor*>(mCurrentDock->widget()))
-            options |= FileDialog::ImageExtensions;
+        else if (qobject_cast<TextureEditor*>(mCurrentDock->widget()))
+            options |= FileDialog::TextureExtensions;
 
         if (Singletons::fileDialog().exec(options, editor->fileName())) {
             auto prevFileName = editor->fileName();
@@ -314,10 +314,10 @@ bool EditorManager::closeAllEditors()
     return true;
 }
 
-bool EditorManager::closeAllImageEditors()
+bool EditorManager::closeAllTextureEditors()
 {
     foreach (QDockWidget* dock, mDocks.keys())
-        if (qobject_cast<ImageEditor*>(dock->widget()))
+        if (qobject_cast<TextureEditor*>(dock->widget()))
             if (!closeDock(dock))
                 return false;
     return true;
@@ -340,18 +340,18 @@ void EditorManager::addSourceEditor(SourceEditor *editor)
         });
 }
 
-void EditorManager::addImageEditor(ImageEditor *editor)
+void EditorManager::addTextureEditor(TextureEditor *editor)
 {
-    mImageEditors.append(editor);
+    mTextureEditors.append(editor);
 
     auto dock = createDock(editor, editor);
-    connect(editor, &ImageEditor::modificationChanged,
+    connect(editor, &TextureEditor::modificationChanged,
         dock, &QDockWidget::setWindowModified);
-    connect(editor, &ImageEditor::fileNameChanged,
+    connect(editor, &TextureEditor::fileNameChanged,
         [dock](const QString &fileName) {
             dock->setWindowTitle(FileDialog::getWindowTitle(fileName));
         });
-    connect(editor, &ImageEditor::dataChanged,
+    connect(editor, &TextureEditor::dataChanged,
         [this, editor]() {
             emit editorChanged(editor->fileName());
         });
@@ -429,7 +429,7 @@ bool EditorManager::closeDock(QDockWidget *dock)
 
     mSourceEditors.removeAll(static_cast<SourceEditor*>(editor));
     mBinaryEditors.removeAll(static_cast<BinaryEditor*>(editor));
-    mImageEditors.removeAll(static_cast<ImageEditor*>(editor));
+    mTextureEditors.removeAll(static_cast<TextureEditor*>(editor));
 
     mDocks.remove(dock);
 

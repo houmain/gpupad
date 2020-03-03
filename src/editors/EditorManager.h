@@ -5,7 +5,7 @@
 #include "DockWindow.h"
 #include "SourceEditor.h"
 #include "BinaryEditor.h"
-#include "ImageEditor.h"
+#include "TextureEditor.h"
 #include <QList>
 #include <QMap>
 
@@ -21,17 +21,17 @@ public:
     QString openNewSourceEditor(const QString &baseName,
         SourceType sourceType = SourceType::PlainText);
     QString openNewBinaryEditor(const QString &baseName);
-    QString openNewImageEditor(const QString &baseName);
+    QString openNewTextureEditor(const QString &baseName);
     bool openEditor(const QString &fileName);
     SourceEditor *openSourceEditor(const QString &fileName,
         int line = -1, int column = -1);
     BinaryEditor *openBinaryEditor(const QString &fileName);
-    ImageEditor *openImageEditor(const QString &fileName);
+    TextureEditor *openTextureEditor(const QString &fileName);
     void setAutoRaise(bool raise) { mAutoRaise = raise; }
 
     SourceEditor *getSourceEditor(const QString &fileName);
     BinaryEditor *getBinaryEditor(const QString &fileName);
-    ImageEditor *getImageEditor(const QString &fileName);
+    TextureEditor *getTextureEditor(const QString &fileName);
     QStringList getSourceFileNames() const;
     QStringList getBinaryFileNames() const;
     QStringList getImageFileNames() const;
@@ -49,7 +49,7 @@ public:
     bool reloadEditor();
     bool closeEditor();
     bool closeAllEditors();
-    bool closeAllImageEditors();
+    bool closeAllTextureEditors();
 
 signals:
     void editorChanged(const QString &fileName);
@@ -64,7 +64,7 @@ private:
     IEditor *currentEditor();
     void addSourceEditor(SourceEditor *editor);
     void addBinaryEditor(BinaryEditor *editor);
-    void addImageEditor(ImageEditor *editor);
+    void addTextureEditor(TextureEditor *editor);
     QDockWidget *createDock(QWidget *widget, IEditor *editor);
     bool saveDock(QDockWidget *dock);
     bool closeDock(QDockWidget *dock) override;
@@ -72,7 +72,7 @@ private:
 
     QList<SourceEditor*> mSourceEditors;
     QList<BinaryEditor*> mBinaryEditors;
-    QList<ImageEditor*> mImageEditors;
+    QList<TextureEditor*> mTextureEditors;
     QMap<QDockWidget*, IEditor*> mDocks;
     QDockWidget *mCurrentDock{ };
     FindReplaceBar *mFindReplaceBar{ };
