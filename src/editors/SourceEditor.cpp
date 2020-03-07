@@ -632,6 +632,7 @@ void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
             mCompleter->popup()->setCurrentIndex(
                 mCompleter->completionModel()->index(0, 0));
             auto rect = cursorRect();
+            rect.moveTop(6);
             rect.setWidth(mCompleter->popup()->sizeHintForColumn(0)
                 + mCompleter->popup()->verticalScrollBar()->sizeHint().width());
             mCompleter->complete(rect);

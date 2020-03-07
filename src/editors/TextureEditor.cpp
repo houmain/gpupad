@@ -190,28 +190,21 @@ TextureEditor::TextureEditor(QString fileName, QWidget *parent)
 
     setScene(new QGraphicsScene(this));
 
-    if (gZeroCopyPreview) {
-        mZeroCopyItem = new ZeroCopyItem();
-        scene()->addItem(mZeroCopyItem);
-    }
-
-    auto color = QColor(Qt::black);
-    color.setAlphaF(0.2);
-    mInside = new QGraphicsPathItem();
-    mInside->setPen(Qt::NoPen);
-    mInside->setBrush(QBrush(color));
-    mInside->setZValue(-1);
-    scene()->addItem(mInside);
-
     auto pen = QPen();
-    pen.setWidth(2);
+    auto color = QColor(Qt::gray);
+    pen.setWidth(1);
     pen.setCosmetic(true);
-    pen.setColor(Qt::gray);
+    pen.setColor(color);
     mBorder = new QGraphicsPathItem();
     mBorder->setPen(pen);
     mBorder->setBrush(Qt::NoBrush);
     mBorder->setZValue(1);
     scene()->addItem(mBorder);
+
+    if (gZeroCopyPreview) {
+        mZeroCopyItem = new ZeroCopyItem();
+        scene()->addItem(mZeroCopyItem);
+    }
 
     auto image = TextureData{ };
     image.create(QOpenGLTexture::Target2D,
@@ -411,7 +404,6 @@ void TextureEditor::setBounds(QRect bounds)
 
     auto inside = QPainterPath();
     inside.addRect(bounds);
-    mInside->setPath(inside);
     mBorder->setPath(inside);
 
     const auto margin = 15;
@@ -445,13 +437,13 @@ void TextureEditor::updateBackground(const QTransform& transform)
 {
     QPixmap pm(2, 2);
     QPainter pmp(&pm);
-    pmp.fillRect(0, 0, 1, 1, 0x999999);
-    pmp.fillRect(1, 1, 1, 1, 0x999999);
+    pmp.fillRect(0, 0, 1, 1, 0x959595);
+    pmp.fillRect(1, 1, 1, 1, 0x959595);
     pmp.fillRect(0, 1, 1, 1, 0x888888);
     pmp.fillRect(1, 0, 1, 1, 0x888888);
     pmp.end();
 
     auto brush = QBrush(pm);
-    brush.setTransform(transform.inverted().scale(8, 8));
+    brush.setTransform(transform.inverted().translate(0, 1).scale(16, 16));
     setBackgroundBrush(brush);
 }

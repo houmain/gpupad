@@ -56,7 +56,6 @@ private:
     int mZoom{ };
     int mPanStartX{ };
     int mPanStartY{ };
-    QGraphicsPathItem *mInside{ };
     QGraphicsPathItem *mBorder{ };
     ZeroCopyItem *mZeroCopyItem{ };
     QGraphicsPixmapItem *mPixmapItem{ };
