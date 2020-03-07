@@ -41,7 +41,6 @@ MainWindow::MainWindow(QWidget *parent)
     icon.addFile(":images/32x32/icon.png");
     icon.addFile(":images/64x64/icon.png");
     setWindowIcon(icon);
-    setContentsMargins(2, 0, 2, 2);
 
     mUi->menuView->addAction(mUi->toolBarMain->toggleViewAction());
 
@@ -76,6 +75,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->menuView->addAction(dock->toggleViewAction());
     addDockWidget(Qt::LeftDockWidgetArea, dock);
     mSessionEditor->addItemActions(mUi->menuSession);
+    mSessionDock = dock;
 
     dock = new QDockWidget(tr("Messages"), this);
     dock->setObjectName("Messages");
@@ -328,6 +328,7 @@ void MainWindow::readSettings()
     mUi->actionDarkTheme->setChecked(settings.darkTheme());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
     mUi->actionZeroCopyPreview->setChecked(settings.zeroCopyPreview());
+    handleDarkThemeChanging(settings.darkTheme());
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -351,6 +352,7 @@ void MainWindow::updateCurrentEditor()
     mEditorManager.updateCurrentEditor();
     disconnectEditActions();
     connectEditActions();
+    updateDockCurrentProperty(mSessionDock, !mEditorManager.hasCurrentEditor());
 }
 
 void MainWindow::disconnectEditActions()
@@ -645,40 +647,57 @@ void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
 
 void MainWindow::handleDarkThemeChanging(bool enabled)
 {
+    auto frameDarker = 110;
+    auto currentFrameDarker = 150;
     auto palette = qApp->style()->standardPalette();
-    auto styleSheet = QString();
     if (enabled) {
         struct S { QPalette::ColorRole role; QColor a; QColor i; QColor d; };
-        for (auto s : std::initializer_list<S>{
-                { QPalette::WindowText, 0xCFCFCF, 0xCFCFCF, 0x6A6A6A },
-                { QPalette::Button, 0x3B3B41, 0x3B3B41, 0x3B3B41 },
-                { QPalette::Light, 0x6F6F6F, 0x6F6F6F, 0x6F6F6F },
-                { QPalette::Text, 0xCFCFCF, 0xCFCFCF, 0x8F8F8F },
-                { QPalette::ButtonText, 0xCFCFCF, 0xCFCFCF, 0x8B8B8B },
-                { QPalette::Base, 0x4B4B51, 0x4B4B51, 0x4B4B51 },
-                { QPalette::Window, 0x4D4D53, 0x4D4D53, 0x4D4D53 },
-                { QPalette::Shadow, 0x767472, 0x767472, 0x767472 },
-                { QPalette::Highlight, 0x59595E, 0x59595E, 0x59595E },
-                { QPalette::Link, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF },
-                { QPalette::AlternateBase, 0x505056, 0x505056, 0x505056 },
-                { QPalette::ToolTipBase, 0x45454B, 0x45454B, 0x45454B },
-                { QPalette::ToolTipText, 0x999999, 0x999999, 0x999999 },
-                { QPalette::PlaceholderText, 0xCFCFCF, 0xCFCFCF, 0xCFCFCF },
-            }) {
-                palette.setColor(QPalette::Active, s.role, s.a);
-                palette.setColor(QPalette::Inactive, s.role, s.i);
-                palette.setColor(QPalette::Disabled, s.role, s.d);
-            }
-        styleSheet = "QLabel:disabled { color: #6A6A6A; }";
+        const auto colors = std::initializer_list<S>{
+            { QPalette::WindowText, 0xCFCFCF, 0xCFCFCF, 0x6A6A6A },
+            { QPalette::Button, 0x3B3B41, 0x3B3B41, 0x3B3B41 },
+            { QPalette::Light, 0x4B4B51, 0x4B4B51, 0x4B4B51 },
+            { QPalette::Midlight, 0xCBCBCB, 0xCBCBCB, 0xCBCBCB },
+            { QPalette::Dark, 0x9F9F9F, 0x9F9F9F, 0xBEBEBE },
+            { QPalette::Mid, 0xB8B8B8, 0xB8B8B8, 0xB8B8B8 },
+            { QPalette::Text, 0xCFCFCF, 0xCFCFCF, 0x8F8F8F },
+            { QPalette::ButtonText, 0xCFCFCF, 0xCFCFCF, 0x8B8B8B },
+            { QPalette::Base, 0x4B4B51, 0x4B4B51, 0x4B4B51 },
+            { QPalette::Window, 0x4D4D53, 0x4D4D53, 0x4D4D53 },
+            { QPalette::Shadow, 0x767472, 0x767472, 0x767472 },
+            { QPalette::Highlight, 0x59595E, 0x59595E, 0x59595E },
+            { QPalette::Link, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF },
+            { QPalette::AlternateBase, 0x505056, 0x505056, 0x505056 },
+            { QPalette::ToolTipBase, 0x45454B, 0x45454B, 0x45454B },
+            { QPalette::ToolTipText, 0x999999, 0x999999, 0x999999 },
+            { QPalette::PlaceholderText, 0xCFCFCF, 0xCFCFCF, 0xCFCFCF },
+        };
+        for (auto s : colors) {
+            palette.setColor(QPalette::Active, s.role, s.a);
+            palette.setColor(QPalette::Inactive, s.role, s.i);
+            palette.setColor(QPalette::Disabled, s.role, s.d);
+        }
+        frameDarker = 90;
+        currentFrameDarker = 70;
     }
+
     qApp->setPalette(palette);
-    setStyleSheet(styleSheet);
+
+    const auto color = [&](QPalette::ColorRole role,
+          QPalette::ColorGroup group, int darker = 100) {
+        return palette.brush(group, role).color().darker(darker).name(QColor::HexRgb);
+    };
+    setStyleSheet(QString(
+      "QLabel:disabled { color: %1 }\n"
+      "QDockWidget > QFrame { border:1px solid %2 }\n"
+      "QDockWidget[current=true] > QFrame { border:1px solid %3}\n")
+      .arg(color(QPalette::WindowText, QPalette::Disabled))
+      .arg(color(QPalette::Window, QPalette::Active, frameDarker))
+      .arg(color(QPalette::Window, QPalette::Active, currentFrameDarker)));
 }
 
 void MainWindow::openSessionDock()
 {
-    for (auto p = mSessionEditor->parentWidget(); p; p = p->parentWidget())
-        p->setVisible(true);
+    mSessionDock->setVisible(true);
 }
 
 void MainWindow::openMessageDock()
@@ -743,7 +762,7 @@ void MainWindow::openAbout()
        "<h3>%1 %2</h3>"
        "%3<br>"
        "<a href='%4'>%4</a><br><br>"
-       "Copyright &copy; 2016-2019<br>"
+       "Copyright &copy; 2016-2020<br>"
        "Albert Kalchmair<br>"
        "%5<br><br>"
        "%6<br>"

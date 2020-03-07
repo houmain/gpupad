@@ -79,4 +79,6 @@ private:
     bool mAutoRaise{ true };
 };
 
+void updateDockCurrentProperty(QDockWidget *dock, bool current);
+
 #endif // EDITORMANAGER_H

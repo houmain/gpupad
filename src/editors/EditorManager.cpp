@@ -53,15 +53,19 @@ void EditorManager::dropEvent(QDropEvent *e)
 
 void EditorManager::updateCurrentEditor()
 {
+    auto previous = mCurrentDock;
     mCurrentDock = nullptr;
     auto focusWidget = qApp->focusWidget();
     foreach (QDockWidget* dock, mDocks.keys()) {
         if (dock->isAncestorOf(focusWidget)) {
             mCurrentDock = dock;
+            updateDockCurrentProperty(dock, true);
             emit sourceTypeChanged(currentSourceType());
             break;
         }
     }
+    if (previous != mCurrentDock)
+        updateDockCurrentProperty(previous, false);
 }
 
 QString EditorManager::currentEditorFileName()
@@ -434,6 +438,7 @@ bool EditorManager::closeDock(QDockWidget *dock)
     mDocks.remove(dock);
 
     if (mCurrentDock == dock) {
+        updateDockCurrentProperty(dock, false);
         mCurrentDock = nullptr;
         if (!mDocks.isEmpty())
             autoRaise(mDocks.lastKey()->widget());
@@ -451,4 +456,16 @@ void EditorManager::autoRaise(QWidget *editor)
 {
     if (mAutoRaise && editor)
         raiseDock(qobject_cast<QDockWidget*>(editor->parentWidget()));
+}
+
+void updateDockCurrentProperty(QDockWidget *dock, bool current)
+{
+    if (dock && dock->property("current") != current) {
+        dock->setProperty("current", current);
+        if (auto frame = qobject_cast<QFrame*>(dock->widget())) {
+            frame->style()->unpolish(frame);
+            frame->style()->polish(frame);
+            frame->update();
+        }
+    }
 }

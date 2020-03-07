@@ -76,6 +76,7 @@ private:
     QScopedPointer<OutputWindow> mOutputWindow;
     EditorManager &mEditorManager;
     QScopedPointer<SessionEditor> mSessionEditor;
+    QDockWidget *mSessionDock{ };
     QScopedPointer<SessionProperties> mSessionProperties;
     QList<QMetaObject::Connection> mConnectedEditActions;
     QStringList mRecentFiles;

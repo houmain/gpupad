@@ -6,9 +6,9 @@
     <Color role="Button" group="Active" value="#3b3b41"/>
     <Color role="Button" group="Disabled" value="#3b3b41"/>
     <Color role="Button" group="Inactive" value="#3b3b41"/>
-    <Color role="Light" group="Active" value="#6f6f6f"/>
-    <Color role="Light" group="Disabled" value="#6f6f6f"/>
-    <Color role="Light" group="Inactive" value="#6f6f6f"/>
+    <Color role="Light" group="Active" value="#4b4b51"/>
+    <Color role="Light" group="Disabled" value="#4b4b51"/>
+    <Color role="Light" group="Inactive" value="#4b4b51"/>
     <Color role="Midlight" group="Active" value="#cbcbcb"/>
     <Color role="Midlight" group="Disabled" value="#cbcbcb"/>
     <Color role="Midlight" group="Inactive" value="#cbcbcb"/>
