@@ -11,7 +11,6 @@ namespace {
     const auto SessionFileExtension = QStringLiteral("gpjs");
     const auto ShaderFileExtensions = { "glsl", "vs", "fs", "gs",
         "vert", "tesc", "tese", "geom", "frag", "comp" };
-    const auto BinaryFileExtensions = { "bin", "raw" };
     const auto ScriptFileExtensions = { "js" };
 
     static QMap<QString, int> gNextUntitledFileIndex;
@@ -67,25 +66,12 @@ bool FileDialog::isSessionFileName(const QString &fileName)
     return fileName.endsWith(SessionFileExtension);
 }
 
-bool FileDialog::isBinaryFileName(const QString &fileName)
-{
-    for (const auto &ext : BinaryFileExtensions)
-        if (fileName.endsWith(ext))
-            return true;
-    return false;
-}
-
 FileDialog::FileDialog(QMainWindow *window)
     : mWindow(window)
 {
 }
 
 FileDialog::~FileDialog() = default;
-
-QDir FileDialog::directory() const
-{
-    return mDirectory;
-}
 
 void FileDialog::setDirectory(QDir directory)
 {
@@ -97,11 +83,6 @@ QString FileDialog::fileName() const
     if (mFileNames.isEmpty())
         return { };
     return mFileNames.first();
-}
-
-QStringList FileDialog::fileNames() const
-{
-    return mFileNames;
 }
 
 bool FileDialog::exec(Options options, QString currentFileName)
@@ -119,10 +100,12 @@ bool FileDialog::exec(Options options, QString currentFileName)
         dialog.setFileMode(QFileDialog::AnyFile);
     }
     else {
-        auto importing = ((options & Importing) != 0);
+        const auto importing = ((options & Importing) != 0);
+        const auto multiselect = ((options & Multiselect) != 0);
         dialog.setWindowTitle(importing ? tr("Import File") : tr("Open File"));
         dialog.setAcceptMode(QFileDialog::AcceptOpen);
-        dialog.setFileMode(QFileDialog::ExistingFiles);
+        dialog.setFileMode(multiselect ?
+            QFileDialog::ExistingFiles : QFileDialog::ExistingFile);
     }
 
     auto shaderFileFilter = QString();
@@ -134,18 +117,15 @@ bool FileDialog::exec(Options options, QString currentFileName)
     foreach (const QByteArray &format, QImageReader::supportedImageFormats())
         textureFileFilter = textureFileFilter + " *." + QString(format);
 
-    auto binaryFileFilter = QString();
-    for (const auto &ext : BinaryFileExtensions)
-        binaryFileFilter = binaryFileFilter + " *." + ext;
-
     auto scriptFileFilter = QString();
     for (const auto &ext : ScriptFileExtensions)
         scriptFileFilter = scriptFileFilter + " *." + ext;
 
     auto supportedFileFilter = "*." + SessionFileExtension +
-        shaderFileFilter + scriptFileFilter + textureFileFilter + binaryFileFilter;
+        shaderFileFilter + scriptFileFilter + textureFileFilter;
 
     auto filters = QStringList();
+    const auto binaryFileFilter = tr("Binary files") + " (*)";
     if (options & SupportedExtensions)
         filters.append(tr("Supported files") + " (" + supportedFileFilter + ")");
     if (options & SessionExtensions)
@@ -156,7 +136,7 @@ bool FileDialog::exec(Options options, QString currentFileName)
     if (options & TextureExtensions)
         filters.append(tr("Texture files") + " (" + textureFileFilter + ")");
     if (options & BinaryExtensions)
-        filters.append(tr("Binary files") + " (" + binaryFileFilter + ")");
+        filters.append(binaryFileFilter);
     if (options & ScriptExtensions)
         filters.append(tr("JavaScript files") + " (" + scriptFileFilter + ")");
 
@@ -172,8 +152,6 @@ bool FileDialog::exec(Options options, QString currentFileName)
         dialog.setDefaultSuffix(*begin(ScriptFileExtensions));
     else if (options & TextureExtensions)
         dialog.setDefaultSuffix("png");
-    else if (options & BinaryExtensions)
-        dialog.setDefaultSuffix(*begin(BinaryFileExtensions));
 
     if (isUntitled(currentFileName))
         currentFileName = "";
@@ -200,5 +178,6 @@ bool FileDialog::exec(Options options, QString currentFileName)
 
     mFileNames = dialog.selectedFiles();
     mDirectory = dialog.directory();
+    mAsBinaryFile = (dialog.selectedNameFilter() == binaryFileFilter);
     return true;
 }

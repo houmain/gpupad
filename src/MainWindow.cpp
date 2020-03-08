@@ -438,22 +438,24 @@ void MainWindow::newFile()
 void MainWindow::openFile()
 {
     auto options = FileDialog::Options{
-        FileDialog::Loading |
+        FileDialog::Multiselect |
         FileDialog::AllExtensionFilters
     };
-    if (Singletons::fileDialog().exec(options))
-        foreach (QString fileName, Singletons::fileDialog().fileNames())
-            openFile(fileName);
+    auto& dialog = Singletons::fileDialog();
+    if (dialog.exec(options))
+        foreach (QString fileName, dialog.fileNames())
+            openFile(fileName, dialog.asBinaryFile());
 }
 
-bool MainWindow::openFile(const QString &fileName)
+bool MainWindow::openFile(const QString &fileName,
+    bool asBinaryFile)
 {
     if (FileDialog::isSessionFileName(fileName)) {
         if (!openSession(fileName))
             return false;
     }
     else {
-        if (!mEditorManager.openEditor(fileName))
+        if (!mEditorManager.openEditor(fileName, asBinaryFile))
             return false;
     }
     addToRecentFileList(fileName);

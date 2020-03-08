@@ -134,15 +134,12 @@ QString EditorManager::openNewTextureEditor(const QString &baseName)
     return fileName;
 }
 
-bool EditorManager::openEditor(const QString &fileName)
+bool EditorManager::openEditor(const QString &fileName,
+    bool asBinaryFile)
 {
-    if (FileDialog::isBinaryFileName(fileName))
-        if (openBinaryEditor(fileName))
-            return true;
-
-    if (openTextureEditor(fileName))
+    if (!asBinaryFile && openTextureEditor(fileName))
         return true;
-    if (openSourceEditor(fileName))
+    if (!asBinaryFile && openSourceEditor(fileName))
         return true;
     if (openBinaryEditor(fileName))
         return true;

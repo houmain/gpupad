@@ -29,7 +29,8 @@ public:
 public slots:
     void newFile();
     void openFile();
-    bool openFile(const QString &fileName);
+    bool openFile(const QString &fileName,
+        bool asBinaryFile = false);
     bool saveFile();
     bool saveFileAs();
     bool saveAllFiles();

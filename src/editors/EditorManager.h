@@ -22,7 +22,8 @@ public:
         SourceType sourceType = SourceType::PlainText);
     QString openNewBinaryEditor(const QString &baseName);
     QString openNewTextureEditor(const QString &baseName);
-    bool openEditor(const QString &fileName);
+    bool openEditor(const QString &fileName,
+        bool asBinaryFile = false);
     SourceEditor *openSourceEditor(const QString &fileName,
         int line = -1, int column = -1);
     BinaryEditor *openBinaryEditor(const QString &fileName);

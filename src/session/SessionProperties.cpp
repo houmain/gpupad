@@ -433,7 +433,6 @@ void SessionProperties::saveCurrentItemFileAs(FileDialog::Options options)
 
 void SessionProperties::openCurrentItemFile(FileDialog::Options options)
 {
-    options |= FileDialog::Loading;
     if (Singletons::fileDialog().exec(options))
         setCurrentItemFile(Singletons::fileDialog().fileName());
 }

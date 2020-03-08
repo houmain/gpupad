@@ -18,13 +18,12 @@ public:
     static QString getWindowTitle(const QString &fileName);
     static QString getFullWindowTitle(const QString &fileName);
     static bool isSessionFileName(const QString &fileName);
-    static bool isBinaryFileName(const QString &fileName);
 
     enum OptionBit
     {
-        Loading             = 1 << 0,
-        Saving              = 1 << 1,
-        Importing           = 1 << 2,
+        Saving              = 1 << 0,
+        Importing           = 1 << 1,
+        Multiselect         = 1 << 2,
         ShaderExtensions    = 1 << 3,
         TextureExtensions   = 1 << 4,
         BinaryExtensions    = 1 << 5,
@@ -39,16 +38,18 @@ public:
     explicit FileDialog(QMainWindow *window);
     ~FileDialog();
 
-    QDir directory() const;
+    QDir directory() const { return mDirectory; }
     void setDirectory(QDir directory);
     QString fileName() const;
-    QStringList fileNames() const;
+    QStringList fileNames() const { return mFileNames; }
+    bool asBinaryFile() const { return mAsBinaryFile; }
     bool exec(Options options, QString fileName = "");
 
 private:
     QMainWindow *mWindow;
     QStringList mFileNames;
     QDir mDirectory;
+    bool mAsBinaryFile{ };
 };
 
 #endif // FILEDIALOG_H
