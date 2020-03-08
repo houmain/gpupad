@@ -21,7 +21,6 @@ public:
         ColumnDataType,
         ColumnCount,
         ColumnPadding,
-        TextureReadonly,
         TextureTarget,
         TextureFormat,
         TextureWidth,

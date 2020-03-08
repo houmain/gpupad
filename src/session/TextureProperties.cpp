@@ -180,8 +180,6 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
         this, &TextureProperties::updateFormatDataWidget);
     connect(mUi->formatData, &DataComboBox::currentDataChanged,
         this, &TextureProperties::updateFormat);
-    connect(mUi->readonly, &QCheckBox::stateChanged,
-        this, &TextureProperties::updateWidgets);
 
     fillComboBox<QOpenGLTexture::Target>(mUi->target, {
         { "1D Texture", QOpenGLTexture::Target1D },
@@ -241,7 +239,6 @@ void TextureProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->file, SessionModel::FileName);
     mapper.addMapping(mUi->target, SessionModel::TextureTarget);
-    mapper.addMapping(mUi->readonly, SessionModel::TextureReadonly);
     mapper.addMapping(this, SessionModel::TextureFormat);
     mapper.addMapping(mUi->width, SessionModel::TextureWidth);
     mapper.addMapping(mUi->height, SessionModel::TextureHeight);
@@ -264,18 +261,6 @@ void TextureProperties::setFormat(QVariant value)
 
 void TextureProperties::updateWidgets()
 {
-    setFormEnabled(mUi->labelReadonly, mUi->readonly, hasFile());
-    if (!mUi->readonly->isEnabled())
-      mUi->readonly->setChecked(false);
-
-    const auto readonly = mUi->readonly->isChecked();
-    setFormEnabled(mUi->labelFormat, mUi->formatType, !readonly);
-    setFormEnabled(mUi->labelFormat, mUi->formatData, !readonly);
-    setFormEnabled(mUi->labelWidth, mUi->width, !readonly);
-    setFormEnabled(mUi->labelHeight, mUi->height, !readonly);
-    setFormEnabled(mUi->labelDepth, mUi->depth, !readonly);
-    setFormEnabled(mUi->labelLayers, mUi->layers, !readonly);
-
     const auto kind = currentTextureKind();
     setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, kind.dimensions > 1);
     setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth, kind.dimensions > 2);
@@ -348,7 +333,6 @@ void TextureProperties::applyFileFormat()
     auto fileName = mUi->file->currentData().toString();
     auto texture = TextureData();
     if (Singletons::fileCache().getTexture(fileName, &texture)) {
-        mUi->readonly->setChecked(true);
         setFormat(texture.format());
         mUi->width->setValue(texture.width());
         mUi->height->setValue(texture.height());

@@ -53,7 +53,6 @@ struct Texture : FileItem
     using Target = QOpenGLTexture::Target;
     using Format = QOpenGLTexture::TextureFormat;
 
-    bool readonly{ };
     Target target{ QOpenGLTexture::Target2D };
     Format format{ QOpenGLTexture::RGBA8_UNorm };
     int width{ 256 };

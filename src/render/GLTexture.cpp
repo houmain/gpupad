@@ -4,7 +4,6 @@
 GLTexture::GLTexture(const Texture &texture)
     : mItemId(texture.id)
     , mFileName(texture.fileName)
-    , mReadonly(texture.readonly)
     , mTarget(texture.target)
     , mFormat(texture.format)
     , mWidth(texture.width)
@@ -28,10 +27,6 @@ GLTexture::GLTexture(const Texture &texture)
 
 bool GLTexture::operator==(const GLTexture &rhs) const
 {
-    if (mReadonly && rhs.mReadonly)
-        return std::tie(mFileName, mTarget, mSamples) ==
-               std::tie(rhs.mFileName, rhs.mTarget, rhs.mSamples);
-
     return std::tie(mFileName, mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples) ==
            std::tie(rhs.mFileName, rhs.mTarget, rhs.mFormat, rhs.mWidth, rhs.mHeight, rhs.mDepth, rhs.mLayers, rhs.mSamples);
 }
@@ -107,24 +102,16 @@ void GLTexture::reload()
             mMessages += MessageList::insert(mItemId,
                 MessageType::LoadingFileFailed, mFileName);
 
-    if (mData.isNull() || !mReadonly) {
-        const auto recreate = (
-            mFormat != mData.format() ||
-            mWidth != mData.width() ||
-            mHeight != mData.height() ||
-            mDepth != mData.depth() ||
-            mLayers != mData.layers());
-        if (recreate)
-            mData.create(mTarget, mFormat,
-                mWidth, mHeight, mDepth, mLayers);
-    }
-    else {
-        mFormat = mData.format();
-        mWidth = mData.width();
-        mHeight = mData.height();
-        mDepth = mData.depth();
-        mLayers = mData.layers();
-    }
+    const auto recreate = (
+        mData.isNull() ||
+        mFormat != mData.format() ||
+        mWidth != mData.width() ||
+        mHeight != mData.height() ||
+        mDepth != mData.depth() ||
+        mLayers != mData.layers());
+    if (recreate)
+        mData.create(mTarget, mFormat,
+            mWidth, mHeight, mDepth, mLayers);
     mSystemCopyModified |= (mData != prevData);
 }
 
@@ -169,9 +156,6 @@ void GLTexture::upload()
 bool GLTexture::download()
 {
     if (!mDeviceCopyModified)
-        return false;
-
-    if (mReadonly)
         return false;
 
     if (mMultisampleTexture)

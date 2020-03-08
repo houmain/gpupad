@@ -37,7 +37,6 @@ private:
 
     ItemId mItemId{ };
     QString mFileName;
-    bool mReadonly{ };
     Texture::Target mTarget{ };
     Texture::Format mFormat{ };
     int mWidth{ };
