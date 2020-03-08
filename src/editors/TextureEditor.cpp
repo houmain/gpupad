@@ -11,6 +11,7 @@
 #include <QOpenGLTexture>
 #include <QOpenGLShader>
 #include <QOpenGLFunctions_3_3_Core>
+#include <cmath>
 
 extern bool gZeroCopyPreview;
 
@@ -20,7 +21,6 @@ static constexpr auto vertexShader = R"(
 #version 330
 
 uniform mat4 uTransform;
-uniform bool uFlipY;
 out vec2 vTexCoord;
 
 const vec2 data[4]= vec2[] (
@@ -33,8 +33,6 @@ const vec2 data[4]= vec2[] (
 void main() {
   vec2 pos = data[gl_VertexID];
   vTexCoord = (pos + 1.0) / 2.0;
-  if (uFlipY)
-    vTexCoord.y = 1.0 - vTexCoord.y;
   gl_Position = uTransform * vec4(pos, 0.0, 1.0);
 }
 )";
@@ -54,11 +52,9 @@ private:
     QOpenGLFunctions_3_3_Core mGL;
     QScopedPointer<QOpenGLShaderProgram> mProgram;
     GLuint mTexture{ };
-    QMetaObject::Connection mTextureContextConnection;
     TextureData mUploadImage;
     QRect mBoundingRect;
     GLuint mPreviewTextureId{ };
-    bool mPreviewFlipY{ };
     bool mMagnifyLinear{ };
 
 public:
@@ -115,7 +111,6 @@ public:
         mGL.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         mGL.glEnable(GL_TEXTURE_2D);
 
-        auto flipY = false;
         if (mPreviewTextureId) {
             Singletons::glShareSynchronizer().beginUsage(mGL);    
             mGL.glBindTexture(GL_TEXTURE_2D, mPreviewTextureId);
@@ -131,20 +126,21 @@ public:
             mMagnifyLinear ? GL_LINEAR : GL_NEAREST);
         mGL.glGenerateMipmap(GL_TEXTURE_2D);
 
-        const auto scale = painter->combinedTransform().m11();
         const auto s = mBoundingRect.size();
-        const auto cr = painter->clipBoundingRect();
-        const auto w = painter->window();
+        const auto x = painter->clipBoundingRect().left() - (s.width() % 2 ? 0.5 : 0.0);
+        const auto y = painter->clipBoundingRect().top() - (s.height() % 2 ? 0.5 : 0.0);
+        const auto scale = painter->combinedTransform().m11();
+        const auto width = static_cast<qreal>(painter->window().width());
+        const auto height = static_cast<qreal>(painter->window().height());
         const auto transform = QMatrix(
-            s.width() / static_cast<qreal>(w.width()) * scale, 0,
-            0, -s.height() / static_cast<qreal>(w.height()) * scale,
-            2 * -(cr.left() * scale + w.width() / 2) / static_cast<qreal>(w.width()),
-            2 * (cr.top() * scale + w.height() / 2) / static_cast<qreal>(w.height()));
+            s.width() / width * scale, 0,
+            0, -s.height() / height * scale,
+            2 * -(x * scale + width / 2) / width,
+            2 * (y * scale + height / 2) / height);
 
         mProgram->bind();
         mProgram->setUniformValue("uTexture", 0);
         mProgram->setUniformValue("uTransform", transform);
-        mProgram->setUniformValue("uFlipY", flipY);
 
         mGL.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
