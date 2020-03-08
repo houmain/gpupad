@@ -43,6 +43,7 @@ namespace {
         sRGB8,
         Float11_11_10,
         UnsignedInt10_10_10_2,
+        Normalized10_10_10_2,
         D16,
         D24,
         D32,
@@ -50,6 +51,27 @@ namespace {
         D24_S8,
         D32F_S8,
         S8,
+        DXT1,
+        DXT3,
+        DXT5,
+        DXT1_sRGB,
+        DXT3_sRGB,
+        DXT5_sRGB,
+        RGTC_Normalized,
+        RGTC_SignedNormalized,
+        EAC_Normalized,
+        EAC_SignedNormalized,
+        ETC1,
+        ETC2,
+        ETC2_sRGB,
+        ETC2_Alpha,
+        ETC2_Alpha_sRGB,
+        ETC2_Alpha1,
+        ETC2_Alpha1_sRGB,
+        BPTC_Float,
+        BPTC_UnsignedFloat,
+        BPTC_Normalized,
+        BPTC_Normalized_sRGB,
     };
 
     std::map<Texture::Format, std::pair<FormatType, FormatData>> gTypeDataByFormat;
@@ -69,6 +91,10 @@ namespace {
         ADD(Texture::Format::R16_SNorm, FormatType::R, FormatData::SignedNormalized16)
         ADD(Texture::Format::R16F, FormatType::R, FormatData::Float16)
         ADD(Texture::Format::R32F, FormatType::R, FormatData::Float32)
+        ADD(Texture::Format::R_ATI1N_UNorm, FormatType::R, FormatData::RGTC_Normalized)
+        ADD(Texture::Format::R_ATI1N_SNorm, FormatType::R, FormatData::RGTC_SignedNormalized)
+        ADD(Texture::Format::R11_EAC_UNorm, FormatType::R, FormatData::EAC_Normalized)
+        ADD(Texture::Format::R11_EAC_SNorm, FormatType::R, FormatData::EAC_SignedNormalized)
 
         ADD(Texture::Format::R8I, FormatType::R_Integer, FormatData::SignedInt8)
         ADD(Texture::Format::R8U, FormatType::R_Integer, FormatData::UnsignedInt8)
@@ -83,6 +109,10 @@ namespace {
         ADD(Texture::Format::RG16_SNorm, FormatType::RG, FormatData::SignedNormalized16)
         ADD(Texture::Format::RG16F, FormatType::RG, FormatData::Float16)
         ADD(Texture::Format::RG32F, FormatType::RG, FormatData::Float32)
+        ADD(Texture::Format::RG_ATI2N_UNorm, FormatType::RG, FormatData::RGTC_Normalized)
+        ADD(Texture::Format::RG_ATI2N_SNorm, FormatType::RG, FormatData::RGTC_SignedNormalized)
+        ADD(Texture::Format::RG11_EAC_UNorm, FormatType::RG, FormatData::EAC_Normalized)
+        ADD(Texture::Format::RG11_EAC_SNorm, FormatType::RG, FormatData::EAC_SignedNormalized)
 
         ADD(Texture::Format::RG8I, FormatType::RG_Integer, FormatData::SignedInt8)
         ADD(Texture::Format::RG8U, FormatType::RG_Integer, FormatData::UnsignedInt8)
@@ -100,12 +130,19 @@ namespace {
 //        ADD(GL_RGB10, FormatType::RGB, FormatData::Normalized10)
 //        ADD(GL_RGB12, FormatType::RGB, FormatData::Normalized12)
         ADD(Texture::Format::SRGB8, FormatType::RGB, FormatData::sRGB8)
-        ADD(Texture::Format::RGB9E5, FormatType::RGB, FormatData::Normalized9_E5);
+        ADD(Texture::Format::RGB9E5, FormatType::RGB, FormatData::Normalized9_E5)
         ADD(Texture::Format::RG11B10F, FormatType::RGB, FormatData::Float11_11_10)
         ADD(Texture::Format::RGB16_UNorm, FormatType::RGB, FormatData::Normalized16)
         ADD(Texture::Format::RGB16_SNorm, FormatType::RGB, FormatData::SignedNormalized16)
         ADD(Texture::Format::RGB16F, FormatType::RGB, FormatData::Float16)
         ADD(Texture::Format::RGB32F, FormatType::RGB, FormatData::Float32)
+        ADD(Texture::Format::RGB_DXT1, FormatType::RGB, FormatData::DXT1)
+        ADD(Texture::Format::SRGB_DXT1, FormatType::RGB, FormatData::DXT1_sRGB)
+        ADD(Texture::Format::RGB8_ETC1, FormatType::RGB, FormatData::ETC1)
+        ADD(Texture::Format::RGB8_ETC2, FormatType::RGB, FormatData::ETC2)
+        ADD(Texture::Format::SRGB8_ETC2, FormatType::RGB, FormatData::ETC2_sRGB)
+        ADD(Texture::Format::RGB_BP_SIGNED_FLOAT, FormatType::RGB, FormatData::BPTC_Float)
+        ADD(Texture::Format::RGB_BP_UNSIGNED_FLOAT, FormatType::RGB, FormatData::BPTC_UnsignedFloat)
 
         ADD(Texture::Format::RGB8I, FormatType::RGB_Integer, FormatData::SignedInt8)
         ADD(Texture::Format::RGB8U, FormatType::RGB_Integer, FormatData::UnsignedInt8)
@@ -119,13 +156,25 @@ namespace {
         ADD(Texture::Format::RGB5A1, FormatType::RGBA, FormatData::Normalized555_1)
         ADD(Texture::Format::RGBA8_UNorm, FormatType::RGBA, FormatData::Normalized8)
         ADD(Texture::Format::RGBA8_SNorm, FormatType::RGBA, FormatData::SignedNormalized8)
-//        ADD(GL_RGB10_A2, FormatType::RGBA, FormatData::Normalized10_10_10_2)
+        ADD(Texture::Format::RGB10A2, FormatType::RGBA, FormatData::Normalized10_10_10_2)
 //        ADD(GL_RGBA12, FormatType::RGBA, FormatData::Normalized12)
         ADD(Texture::Format::RGBA16_UNorm, FormatType::RGBA, FormatData::Normalized16)
         ADD(Texture::Format::RGBA16_SNorm, FormatType::RGBA, FormatData::SignedNormalized16)
         ADD(Texture::Format::SRGB8_Alpha8, FormatType::RGBA, FormatData::sRGB8)
         ADD(Texture::Format::RGBA16F, FormatType::RGBA, FormatData::Float16)
         ADD(Texture::Format::RGBA32F, FormatType::RGBA, FormatData::Float32)
+        ADD(Texture::Format::RGBA_DXT1, FormatType::RGBA, FormatData::DXT1)
+        ADD(Texture::Format::SRGB_Alpha_DXT1, FormatType::RGBA, FormatData::DXT1_sRGB)
+        ADD(Texture::Format::RGBA_DXT3, FormatType::RGBA, FormatData::DXT3)
+        ADD(Texture::Format::SRGB_Alpha_DXT3, FormatType::RGBA, FormatData::DXT3_sRGB)
+        ADD(Texture::Format::RGBA_DXT5, FormatType::RGBA, FormatData::DXT5)
+        ADD(Texture::Format::SRGB_Alpha_DXT5, FormatType::RGBA, FormatData::DXT5_sRGB)
+        ADD(Texture::Format::RGBA8_ETC2_EAC, FormatType::RGBA, FormatData::ETC2_Alpha)
+        ADD(Texture::Format::SRGB8_Alpha8_ETC2_EAC, FormatType::RGBA, FormatData::ETC2_Alpha_sRGB)
+        ADD(Texture::Format::RGB8_PunchThrough_Alpha1_ETC2, FormatType::RGBA, FormatData::ETC2_Alpha1)
+        ADD(Texture::Format::SRGB8_PunchThrough_Alpha1_ETC2, FormatType::RGBA, FormatData::ETC2_Alpha1_sRGB)
+        ADD(Texture::Format::RGB_BP_UNorm, FormatType::RGBA, FormatData::BPTC_Normalized)
+        ADD(Texture::Format::SRGB_BP_UNorm, FormatType::RGBA, FormatData::BPTC_Normalized_sRGB)
 
         ADD(Texture::Format::RGBA8I, FormatType::RGBA_Integer, FormatData::SignedInt8)
         ADD(Texture::Format::RGBA8U, FormatType::RGBA_Integer, FormatData::UnsignedInt8)
@@ -251,11 +300,13 @@ void TextureProperties::setFormat(QVariant value)
 {
     const auto format = static_cast<Texture::Format>(value.toInt());
     if (mFormat != format) {
-        mFormat = format;
-        const auto typeData = gTypeDataByFormat[format];
-        mUi->formatType->setCurrentData(typeData.first);
-        mUi->formatData->setCurrentData(typeData.second);
-        emit formatChanged();
+        const auto it = gTypeDataByFormat.find(format);
+        if (it != gTypeDataByFormat.end()) {
+            mFormat = format;
+            mUi->formatType->setCurrentData(it->second.first);
+            mUi->formatData->setCurrentData(it->second.second);
+            emit formatChanged();
+        }
     }
 }
 
@@ -277,7 +328,7 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
 
     mUi->formatData->clear();
 
-    auto formats = std::initializer_list<std::pair<const char*, FormatData>> {
+    const auto formats = std::initializer_list<std::pair<const char*, FormatData>> {
         { "3/3/2 Bit", FormatData::Normalized332 },
         { "4 Bit", FormatData::Normalized4 },
         { "5/6/5 Bit", FormatData::Normalized565 },
@@ -288,6 +339,7 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
         { "8 Bit Unsigned Int", FormatData::UnsignedInt8 },
         { "8 Bit Signed Int", FormatData::SignedInt8 },
         { "9 Bit, 5 Bit Exponent", FormatData::Normalized9_E5 },
+        { "10/10/10/2 Bit", FormatData::Normalized10_10_10_2 },
         { "10/10/10/2 Bit Unsigned Int", FormatData::UnsignedInt10_10_10_2 },
         { "11/11/10 Bit Float", FormatData::Float11_11_10 },
         { "16 Bit", FormatData::Normalized16 },
@@ -305,6 +357,27 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
         { "24 Bit Depth / 8 Bit Stencil", FormatData::D24_S8 },
         { "32 Bit Float Depth / 8 Bit Stencil", FormatData::D32F_S8 },
         { "8 Bit Stencil", FormatData::S8 },
+        { "DXT1", FormatData::DXT1 },
+        { "DXT1 sRGB", FormatData::DXT1_sRGB },
+        { "DXT3", FormatData::DXT3 },
+        { "DXT3 sRGB", FormatData::DXT3_sRGB },
+        { "DXT5", FormatData::DXT5 },
+        { "DXT5 sRGB", FormatData::DXT5_sRGB },
+        { "RGTC", FormatData::RGTC_Normalized },
+        { "RGTC Signed", FormatData::RGTC_SignedNormalized },
+        { "EAC", FormatData::EAC_Normalized },
+        { "EAC Signed", FormatData::EAC_SignedNormalized },
+        { "ETC1", FormatData::ETC1 },
+        { "ETC2", FormatData::ETC2 },
+        { "ETC2 sRGB", FormatData::ETC2_sRGB },
+        { "ETC2 Alpha", FormatData::ETC2_Alpha },
+        { "ETC2 Alpha sRGB", FormatData::ETC2_Alpha_sRGB },
+        { "ETC2 Alpha1", FormatData::ETC2_Alpha1 },
+        { "ETC2 Alpha1 sRGB", FormatData::ETC2_Alpha1_sRGB },
+        { "BPTC Float", FormatData::BPTC_Float },
+        { "BPTC Unsigned Float", FormatData::BPTC_UnsignedFloat },
+        { "BPTC Normalized", FormatData::BPTC_Normalized },
+        { "BPTC Normalized sRGB", FormatData::BPTC_Normalized_sRGB },
     };
     for (auto kv : formats)
         if (std::find(data.cbegin(), data.cend(), kv.second) != data.cend())
