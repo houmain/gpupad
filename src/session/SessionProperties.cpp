@@ -107,6 +107,8 @@ SessionProperties::SessionProperties(QWidget *parent)
         [this]() { updateBufferWidgets(currentModelIndex()); });
     connect(mBufferProperties->size, &QSpinBox::editingFinished,
         this, &SessionProperties::deduceBufferRowCount);
+    connect(mBufferProperties->deduceRowCount, &QToolButton::clicked,
+        this, &SessionProperties::deduceBufferRowCount);
 
     connect(mImageProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::TextureExtensions); });
@@ -461,7 +463,7 @@ void SessionProperties::updateBufferWidgets(const QModelIndex &index)
     auto &ui = *mBufferProperties;
     ui.stride->setText(QString::number(stride));
     ui.size->setValue(stride * ui.rowCount->value());
-    setFormVisibility(ui.formLayout, ui.labelRows, ui.rowCount, stride > 0);
+    setFormVisibility(ui.formLayout, ui.labelRows, ui.widgetRows, stride > 0);
     setFormVisibility(ui.formLayout, ui.labelSize, ui.size, stride > 0);
 }
 
@@ -481,12 +483,20 @@ void SessionProperties::updateScriptWidgets(bool hasFile)
 
 void SessionProperties::deduceBufferRowCount()
 {
-    if (auto buffer = mModel.item<Buffer>(currentModelIndex()))
-        if (const auto stride = getStride(*buffer)) {
-            const auto size = mBufferProperties->size->value();
+    if (auto buffer = mModel.item<Buffer>(currentModelIndex())) {
+        auto size = mBufferProperties->size->value();
+        if (QObject::sender() == mBufferProperties->deduceRowCount) {
+            auto binary = QByteArray();
+            if (!Singletons::fileCache().getBinary(buffer->fileName, &binary))
+                return;
+            size = binary.size() - buffer->offset;
+        }
+
+        if (auto stride = getStride(*buffer)) {
             mModel.setData(mModel.getIndex(currentModelIndex(),
                     SessionModel::BufferRowCount), size / stride);
             updateBufferWidgets(currentModelIndex());
         }
+    }
 }
 
