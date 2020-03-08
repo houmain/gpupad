@@ -339,72 +339,68 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
     mStack->setCurrentIndex(static_cast<int>(mModel.getItemType(index)));
 }
 
+IEditor* SessionProperties::openEditor(const FileItem &fileItem)
+{
+    auto &editors = Singletons::editorManager();
+    switch (fileItem.type) {
+        case Item::Type::Texture:
+            if (fileItem.fileName.isEmpty())
+                mModel.setData(mModel.getIndex(&fileItem, SessionModel::FileName),
+                    editors.openNewTextureEditor(fileItem.name));
+            return editors.openTextureEditor(fileItem.fileName);
+
+        case Item::Type::Shader:
+        case Item::Type::Script:
+            if (fileItem.fileName.isEmpty())
+                mModel.setData(mModel.getIndex(&fileItem, SessionModel::FileName),
+                    editors.openNewSourceEditor(fileItem.name));
+            return editors.openSourceEditor(fileItem.fileName);
+
+        case Item::Type::Buffer:
+            if (fileItem.fileName.isEmpty())
+                mModel.setData(mModel.getIndex(&fileItem, SessionModel::FileName),
+                    editors.openNewBinaryEditor(fileItem.name));
+            return editors.openBinaryEditor(fileItem.fileName);
+
+        default:
+            return nullptr;
+    }
+}
+
 IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
 {
-    auto fileItem = mModel.item<FileItem>(index);
+    const auto fileItem = mModel.item<FileItem>(index);
     if (!fileItem)
         return nullptr;
 
-    auto &editors = Singletons::editorManager();
-    switch (fileItem->type) {
-        case Item::Type::Texture:
-            if (fileItem->fileName.isEmpty())
-                mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
-                    editors.openNewTextureEditor(fileItem->name));
-            return editors.openTextureEditor(fileItem->fileName);
+    if (auto script = castItem<Script>(fileItem))
+        if (!script->expression.isEmpty())
+            return nullptr;
 
-        case Item::Type::Shader:
-            if (fileItem->fileName.isEmpty())
-                mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
-                    editors.openNewSourceEditor(fileItem->name));
-            if (auto editor = editors.openSourceEditor(fileItem->fileName)) {
-                if (auto shader = mModel.item<Shader>(index)) {
-                    static const auto sMapping = QMap<Shader::ShaderType, SourceType>{
-                        { Shader::ShaderType::Vertex, SourceType::VertexShader },
-                        { Shader::ShaderType::Fragment, SourceType::FragmentShader },
-                        { Shader::ShaderType::Geometry, SourceType::GeometryShader },
-                        { Shader::ShaderType::TessellationControl, SourceType::TesselationControl },
-                        { Shader::ShaderType::TessellationEvaluation, SourceType::TesselationEvaluation },
-                        { Shader::ShaderType::Compute, SourceType::ComputeShader },
-                    };
-                    auto sourceType = sMapping[shader->shaderType];
-                    if (sourceType != SourceType::None)
-                        editor->setSourceType(sourceType);
-                }
-                return editor;
-            }
-            break;
+    const auto editor = openEditor(*fileItem);
+    if (!editor)
+        return nullptr;
 
-        case Item::Type::Script:
-            if (auto script = mModel.item<Script>(index))
-                if (!script->expression.isEmpty())
-                    return nullptr;
-
-            if (fileItem->fileName.isEmpty())
-                mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
-                    editors.openNewSourceEditor(fileItem->name));
-            if (auto editor = editors.openSourceEditor(fileItem->fileName)) {
-                editor->setSourceType(SourceType::JavaScript);
-                return editor;
-            }
-            break;
-
-        case Item::Type::Buffer:
-            if (fileItem->fileName.isEmpty())
-                mModel.setData(mModel.getIndex(fileItem, SessionModel::FileName),
-                    editors.openNewBinaryEditor(fileItem->name));
-
-            if (auto editor = editors.openBinaryEditor(fileItem->fileName)) {
-                Singletons::synchronizeLogic().updateBinaryEditor(
-                    static_cast<const Buffer&>(*fileItem), *editor, true);
-                return editor;
-            }
-            break;
-
-        default:
-            break;
+    if (auto script = castItem<Shader>(fileItem)) {
+        editor->setSourceType(SourceType::JavaScript);
     }
-    return nullptr;
+    else if (auto shader = castItem<Shader>(fileItem)) {
+        static const auto sMapping = QMap<Shader::ShaderType, SourceType>{
+            { Shader::ShaderType::Vertex, SourceType::VertexShader },
+            { Shader::ShaderType::Fragment, SourceType::FragmentShader },
+            { Shader::ShaderType::Geometry, SourceType::GeometryShader },
+            { Shader::ShaderType::TessellationControl, SourceType::TesselationControl },
+            { Shader::ShaderType::TessellationEvaluation, SourceType::TesselationEvaluation },
+            { Shader::ShaderType::Compute, SourceType::ComputeShader },
+        };
+        auto sourceType = sMapping[shader->shaderType];
+        if (sourceType != SourceType::None)
+            editor->setSourceType(sourceType);
+    }
+    else {
+        Singletons::synchronizeLogic().updateEditor(fileItem->id, true);
+    }
+    return editor;
 }
 
 QString SessionProperties::currentItemName() const

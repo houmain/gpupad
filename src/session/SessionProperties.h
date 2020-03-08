@@ -61,6 +61,7 @@ private slots:
     void deduceBufferRowCount();
 
 private:
+    IEditor* openEditor(const FileItem &fileItem);
     void fillComboBoxes();
     QVariantList getColumnIds(ItemId bufferId) const;
 

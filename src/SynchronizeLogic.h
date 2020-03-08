@@ -8,6 +8,7 @@
 
 class QTimer;
 class SessionModel;
+class TextureEditor;
 class BinaryEditor;
 class RenderSession;
 class ProcessSource;
@@ -23,9 +24,8 @@ public:
     void setValidateSource(bool validate);
     void setProcessSourceType(QString type);
     void setEvaluationMode(bool automatic, bool steady);
-    void updateBinaryEditor(const Buffer &buffer,
-        BinaryEditor &editor, bool scrollToOffset = false);
     void updateFileCache();
+    void updateEditor(ItemId itemId, bool activated);
     void setMousePosition(QPointF pos) { mMousePosition = pos; }
     const QPointF &mousePosition() const { return mMousePosition; }
 
@@ -45,15 +45,22 @@ public slots:
 private slots:
     void handleItemReordered(const QModelIndex &parent, int first);
     void handleSessionRendered();
+    void updateEditors();
+    void updateTextureEditor(const Texture &texture,
+        TextureEditor &editor);
+    void updateBinaryEditor(const Buffer &buffer,
+        BinaryEditor &editor);
     void evaluate(bool manualEvaluation);
     void processSource();
 
 private:
     SessionModel &mModel;
-    QSet<ItemId> mBuffersModified;
-    QSet<QString> mFilesModified;
+
+    QTimer *mUpdateEditorsTimer{ };
+    QSet<ItemId> mEditorItemsModified;
 
     QTimer *mEvaluationTimer{ };
+    QSet<QString> mFilesModified;
     QScopedPointer<RenderSession> mRenderSession;
     bool mRenderSessionInvalidated{ };
     bool mAutomaticEvaluation{ };

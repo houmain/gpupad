@@ -122,7 +122,8 @@ QModelIndex SessionModelCore::index(int row, int column,
 {
     const auto &parentItem = getItem(parent);
     if (row >= 0 && row < parentItem.items.size())
-        return getIndex(parentItem.items.at(row), column);
+        return getIndex(parentItem.items.at(row),
+            static_cast<ColumnType>(column));
 
     return { };
 }
@@ -130,7 +131,7 @@ QModelIndex SessionModelCore::index(int row, int column,
 QModelIndex SessionModelCore::parent(const QModelIndex &child) const
 {
     if (child.isValid())
-        return getIndex(getItem(child).parent, 0);
+        return getIndex(getItem(child).parent, ColumnType::None);
     return { };
 }
 
@@ -167,6 +168,9 @@ QVariant SessionModelCore::data(const QModelIndex &index, int role) const
     switch (column) {
         case ColumnType::Name:
             return item.name;
+
+        case ColumnType::None:
+            return { };
 
         case ColumnType::FileName:
             if (auto fileItem = castItem<FileItem>(item))
@@ -211,6 +215,9 @@ bool SessionModelCore::setData(const QModelIndex &index,
             if (value.toString().isEmpty())
                 return false;
             undoableAssignment(index, &item.name, value.toString());
+            return true;
+
+        case ColumnType::None:
             return true;
 
         case ColumnType::FileName:
@@ -347,7 +354,7 @@ const Item* SessionModelCore::findItem(ItemId id) const
     return result;
 }
 
-QModelIndex SessionModelCore::getIndex(const Item *item, int column) const
+QModelIndex SessionModelCore::getIndex(const Item *item, ColumnType column) const
 {
     Q_ASSERT(item);
     if (item == mRoot.data())

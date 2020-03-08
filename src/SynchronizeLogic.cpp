@@ -12,10 +12,13 @@
 SynchronizeLogic::SynchronizeLogic(QObject *parent)
     : QObject(parent)
     , mModel(Singletons::sessionModel())
+    , mUpdateEditorsTimer(new QTimer(this))
     , mEvaluationTimer(new QTimer(this))
     , mProcessSourceTimer(new QTimer(this))
     , mProcessSource(new ProcessSource(this))
 {
+    connect(mUpdateEditorsTimer, &QTimer::timeout,
+        this, &SynchronizeLogic::updateEditors);
     connect(mEvaluationTimer, &QTimer::timeout,
         [this]() { evaluate(false); });
     connect(mProcessSourceTimer, &QTimer::timeout,
@@ -31,6 +34,8 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
 
     resetRenderSession();
     setEvaluationMode(false, false);
+
+    mUpdateEditorsTimer->start(100);
 
     mProcessSourceTimer->setInterval(500);
     mProcessSourceTimer->setSingleShot(true);
@@ -98,7 +103,7 @@ void SynchronizeLogic::handleSessionRendered()
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
 
     if (synchronizeToCompositor())
-      mEvaluationTimer->setInterval(1);
+        mEvaluationTimer->setInterval(1);
 }
 
 void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
@@ -129,11 +134,16 @@ void SynchronizeLogic::handleItemsModified(const QModelIndex &topLeft,
 
 void SynchronizeLogic::handleItemModified(const QModelIndex &index)
 {
-    if (auto buffer = mModel.item<Buffer>(index)) {
-        mBuffersModified.insert(buffer->id);
-    }
-    else if (auto column = mModel.item<Column>(index)) {
-        mBuffersModified.insert(column->parent->id);
+    if (index.column() != SessionModel::None) {
+        if (auto buffer = mModel.item<Buffer>(index)) {
+            mEditorItemsModified.insert(buffer->id);
+        }
+        else if (auto column = mModel.item<Column>(index)) {
+            mEditorItemsModified.insert(column->parent->id);
+        }
+        else if (auto texture = mModel.item<Texture>(index)) {
+            mEditorItemsModified.insert(texture->id);
+        }
     }
 
     if (mRenderSession->usedItems().contains(mModel.getItemId(index))) {
@@ -182,13 +192,6 @@ void SynchronizeLogic::handleSourceTypeChanged(SourceType sourceType)
 
 void SynchronizeLogic::evaluate(bool manualEvaluation)
 {
-    auto &editors = Singletons::editorManager();
-    for (auto bufferId : qAsConst(mBuffersModified))
-        if (auto buffer = mModel.findItem<Buffer>(bufferId))
-            if (auto editor = editors.getBinaryEditor(buffer->fileName))
-                updateBinaryEditor(*buffer, *editor);
-    mBuffersModified.clear();
-
     if (manualEvaluation || mAutomaticEvaluation || mSteadyEvaluation) {
         updateFileCache();
         mRenderSession->update(mRenderSessionInvalidated, manualEvaluation);
@@ -202,10 +205,38 @@ void SynchronizeLogic::updateFileCache()
     mFilesModified.clear();
 }
 
-void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
-    BinaryEditor &editor, bool scrollToOffset)
+void SynchronizeLogic::updateEditors()
 {
-    auto mapDataType = [](Column::DataType type) {
+    for (auto itemId : qAsConst(mEditorItemsModified))
+        updateEditor(itemId, false);
+    mEditorItemsModified.clear();
+}
+
+void SynchronizeLogic::updateEditor(ItemId itemId, bool activated)
+{
+    auto &editors = Singletons::editorManager();
+    if (auto texture = mModel.findItem<Texture>(itemId)) {
+        if (auto editor = editors.getTextureEditor(texture->fileName))
+            updateTextureEditor(*texture, *editor);
+    }
+    else if (auto buffer = mModel.findItem<Buffer>(itemId)) {
+        if (auto editor = editors.getBinaryEditor(buffer->fileName)) {
+            updateBinaryEditor(*buffer, *editor);
+            if (activated)
+                editor->scrollToOffset();
+        }
+    }
+}
+
+void SynchronizeLogic::updateTextureEditor(const Texture &texture,
+    TextureEditor &editor)
+{
+}
+
+void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
+    BinaryEditor &editor)
+{
+    const auto mapDataType = [](Column::DataType type) {
         switch (type) {
             case Column::DataType::Int8: return BinaryEditor::DataType::Int8;
             case Column::DataType::Int16: return BinaryEditor::DataType::Int16;
@@ -233,9 +264,6 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
     }
     editor.setStride();
     editor.updateColumns();
-
-    if (scrollToOffset)
-        editor.scrollToOffset();
 }
 
 void SynchronizeLogic::processSource()

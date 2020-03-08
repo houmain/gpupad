@@ -12,6 +12,7 @@ public:
     enum ColumnType
     {
         Name = 0,
+        None,
         FileName,
 
         GroupInlineScope,
@@ -117,7 +118,7 @@ public:
     };
 
     explicit SessionModelCore(QObject *parent = nullptr);
-    ~SessionModelCore();
+    ~SessionModelCore() override;
 
     QModelIndex index(int row, int column,
           const QModelIndex &parent = QModelIndex()) const override;
@@ -138,7 +139,7 @@ public:
     QModelIndex insertItem(Item::Type type, QModelIndex parent,
         int row = -1, ItemId id = 0);
     void deleteItem(const QModelIndex &index);
-    QModelIndex getIndex(const Item *item, int column = 0) const;
+    QModelIndex getIndex(const Item *item, ColumnType column = ColumnType::None) const;
     QModelIndex getIndex(const QModelIndex &index, ColumnType column) const;
     const Item* findItem(ItemId id) const;
     const Item &getItem(const QModelIndex &index) const;
