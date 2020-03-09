@@ -381,7 +381,7 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
     if (!editor)
         return nullptr;
 
-    if (auto script = castItem<Shader>(fileItem)) {
+    if (auto script = castItem<Script>(fileItem)) {
         editor->setSourceType(SourceType::JavaScript);
     }
     else if (auto shader = castItem<Shader>(fileItem)) {

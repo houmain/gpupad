@@ -43,8 +43,8 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
         globalObjectFormat.setForeground(QColor(0x7AAFFF));
         numberFormat.setForeground(QColor(0xB09D30));
         quotationFormat.setForeground(QColor(0xB09D30));
-        singleLineCommentFormat.setForeground(QColor(0x009E00));
-        mMultiLineCommentFormat.setForeground(QColor(0x009E00));
+        singleLineCommentFormat.setForeground(QColor(0x56C056));
+        mMultiLineCommentFormat.setForeground(QColor(0x56C056));
     }
     else {
         functionFormat.setForeground(QColor(0x000066));

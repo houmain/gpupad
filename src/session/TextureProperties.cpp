@@ -156,7 +156,7 @@ namespace {
         ADD(Texture::Format::RGB5A1, FormatType::RGBA, FormatData::Normalized555_1)
         ADD(Texture::Format::RGBA8_UNorm, FormatType::RGBA, FormatData::Normalized8)
         ADD(Texture::Format::RGBA8_SNorm, FormatType::RGBA, FormatData::SignedNormalized8)
-        ADD(Texture::Format::RGB10A2, FormatType::RGBA, FormatData::Normalized10_10_10_2)
+        ADD(Texture::Format(GL_RGB10_A2), FormatType::RGBA, FormatData::Normalized10_10_10_2)
 //        ADD(GL_RGBA12, FormatType::RGBA, FormatData::Normalized12)
         ADD(Texture::Format::RGBA16_UNorm, FormatType::RGBA, FormatData::Normalized16)
         ADD(Texture::Format::RGBA16_SNorm, FormatType::RGBA, FormatData::SignedNormalized16)

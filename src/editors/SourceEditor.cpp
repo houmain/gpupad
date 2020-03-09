@@ -512,8 +512,6 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
         indentSelection(true);
     }
     else {
-        auto prevCharCount = document()->characterCount();
-
         QPlainTextEdit::keyPressEvent(event);
 
         const auto hitCtrlOrShift = event->modifiers() &
@@ -521,12 +519,12 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
         if (hitCtrlOrShift && event->text().isEmpty())
             return;
 
-        auto prefix = textUnderCursor();
-        auto textEntered = (prevCharCount < document()->characterCount());
-        auto hitCtrlSpace = ((event->modifiers() & Qt::ControlModifier) &&
+        const auto prefix = textUnderCursor();
+        const auto textEntered = !event->text().trimmed().isEmpty();
+        const auto hitCtrlSpace = ((event->modifiers() & Qt::ControlModifier) &&
             event->key() == Qt::Key_Space);
 
-        auto show = ((textEntered && prefix.size() >= 3) || hitCtrlSpace);
+        const auto show = ((textEntered && prefix.size() >= 3) || hitCtrlSpace);
         updateCompleterPopup(prefix, show);
     }
 }
@@ -624,7 +622,7 @@ void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
 
     if (show) {
         mCompleter->setCompletionPrefix(prefix);
-        auto alreadyComplete =
+        const auto alreadyComplete =
           (mCompleter->currentCompletion() == prefix &&
            mCompleter->completionCount() == 1);
 
@@ -632,7 +630,7 @@ void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
             mCompleter->popup()->setCurrentIndex(
                 mCompleter->completionModel()->index(0, 0));
             auto rect = cursorRect();
-            rect.moveTop(6);
+            rect.adjust(0, 1, 0, 1);
             rect.setWidth(mCompleter->popup()->sizeHintForColumn(0)
                 + mCompleter->popup()->verticalScrollBar()->sizeHint().width());
             mCompleter->complete(rect);
