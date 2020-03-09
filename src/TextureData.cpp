@@ -104,6 +104,20 @@ namespace {
                 return QImage::Format_Invalid;
         }
     }
+
+    bool canGenerateMipmaps(QOpenGLTexture::PixelFormat format)
+    {
+        switch (format) {
+            case QOpenGLTexture::Red:
+            case QOpenGLTexture::RG:
+            case QOpenGLTexture::RGB:
+            case QOpenGLTexture::BGR:
+            case QOpenGLTexture::RGBA:
+            case QOpenGLTexture::BGRA:
+                return true;
+        }
+        return false;
+    }
 } // namespace
 
 bool operator==(const TextureData &a, const TextureData &b) 
@@ -149,7 +163,6 @@ bool TextureData::create(
     createInfo.numFaces = 1;
     createInfo.numLevels = 1;
     createInfo.isArray = KTX_FALSE;
-    createInfo.generateMipmaps = KTX_TRUE;
 
     switch (target) {
       case QOpenGLTexture::Target1DArray:
@@ -374,6 +387,11 @@ bool TextureData::upload(GLuint *textureId)
 #if defined(_WIN32)
     initializeKtxOpenGLFunctions();
 #endif
+
+    const auto format =
+        static_cast<QOpenGLTexture::PixelFormat>(mKtxTexture->glFormat);
+    mKtxTexture->generateMipmaps =
+        (canGenerateMipmaps(format) ? KTX_TRUE : KTX_FALSE);
 
     auto target = static_cast<GLenum>(mTarget);
     auto error = GLenum{ };
