@@ -1095,15 +1095,15 @@ static inline GLenum glGetFormatFromInternalFormat( const GLenum internalFormat 
 		case GL_RGB8_SNORM:										return GL_RGB;		// 3-component, 8-bit signed normalized
 		case GL_RGBA8_SNORM:									return GL_RGBA;		// 4-component, 8-bit signed normalized
 
-		case GL_R8UI:											return GL_RED;		// 1-component, 8-bit unsigned integer
-		case GL_RG8UI:											return GL_RG;		// 2-component, 8-bit unsigned integer
-		case GL_RGB8UI:											return GL_RGB;		// 3-component, 8-bit unsigned integer
-		case GL_RGBA8UI:										return GL_RGBA;		// 4-component, 8-bit unsigned integer
+		case GL_R8UI:											return GL_RED_INTEGER;		// 1-component, 8-bit unsigned integer
+		case GL_RG8UI:											return GL_RG_INTEGER;		// 2-component, 8-bit unsigned integer
+		case GL_RGB8UI:											return GL_RGB_INTEGER;		// 3-component, 8-bit unsigned integer
+		case GL_RGBA8UI:										return GL_RGBA_INTEGER;		// 4-component, 8-bit unsigned integer
 
-		case GL_R8I:											return GL_RED;		// 1-component, 8-bit signed integer
-		case GL_RG8I:											return GL_RG;		// 2-component, 8-bit signed integer
-		case GL_RGB8I:											return GL_RGB;		// 3-component, 8-bit signed integer
-		case GL_RGBA8I:											return GL_RGBA;		// 4-component, 8-bit signed integer
+		case GL_R8I:											return GL_RED_INTEGER;		// 1-component, 8-bit signed integer
+		case GL_RG8I:											return GL_RG_INTEGER;		// 2-component, 8-bit signed integer
+		case GL_RGB8I:											return GL_RGB_INTEGER;		// 3-component, 8-bit signed integer
+		case GL_RGBA8I:											return GL_RGBA_INTEGER;		// 4-component, 8-bit signed integer
 
 		case GL_SR8:											return GL_RED;		// 1-component, 8-bit sRGB
 		case GL_SRG8:											return GL_RG;		// 2-component, 8-bit sRGB
@@ -1123,15 +1123,15 @@ static inline GLenum glGetFormatFromInternalFormat( const GLenum internalFormat 
 		case GL_RGB16_SNORM:									return GL_RGB;		// 3-component, 16-bit signed normalized
 		case GL_RGBA16_SNORM:									return GL_RGBA;		// 4-component, 16-bit signed normalized
 
-		case GL_R16UI:											return GL_RED;		// 1-component, 16-bit unsigned integer
-		case GL_RG16UI:											return GL_RG;		// 2-component, 16-bit unsigned integer
-		case GL_RGB16UI:										return GL_RGB;		// 3-component, 16-bit unsigned integer
-		case GL_RGBA16UI:										return GL_RGBA;		// 4-component, 16-bit unsigned integer
+		case GL_R16UI:											return GL_RED_INTEGER;		// 1-component, 16-bit unsigned integer
+		case GL_RG16UI:											return GL_RG_INTEGER;		// 2-component, 16-bit unsigned integer
+		case GL_RGB16UI:										return GL_RGB_INTEGER;		// 3-component, 16-bit unsigned integer
+		case GL_RGBA16UI:										return GL_RGBA_INTEGER;		// 4-component, 16-bit unsigned integer
 
-		case GL_R16I:											return GL_RED;		// 1-component, 16-bit signed integer
-		case GL_RG16I:											return GL_RG;		// 2-component, 16-bit signed integer
-		case GL_RGB16I:											return GL_RGB;		// 3-component, 16-bit signed integer
-		case GL_RGBA16I:										return GL_RGBA;		// 4-component, 16-bit signed integer
+		case GL_R16I:											return GL_RED_INTEGER;		// 1-component, 16-bit signed integer
+		case GL_RG16I:											return GL_RG_INTEGER;		// 2-component, 16-bit signed integer
+		case GL_RGB16I:											return GL_RGB_INTEGER;		// 3-component, 16-bit signed integer
+		case GL_RGBA16I:										return GL_RGBA_INTEGER;		// 4-component, 16-bit signed integer
 
 		case GL_R16F:											return GL_RED;		// 1-component, 16-bit floating-point
 		case GL_RG16F:											return GL_RG;		// 2-component, 16-bit floating-point
@@ -1141,15 +1141,15 @@ static inline GLenum glGetFormatFromInternalFormat( const GLenum internalFormat 
 		//
 		// 32 bits per component
 		//
-		case GL_R32UI:											return GL_RED;		// 1-component, 32-bit unsigned integer
-		case GL_RG32UI:											return GL_RG;		// 2-component, 32-bit unsigned integer
-		case GL_RGB32UI:										return GL_RGB;		// 3-component, 32-bit unsigned integer
-		case GL_RGBA32UI:										return GL_RGBA;		// 4-component, 32-bit unsigned integer
+		case GL_R32UI:											return GL_RED_INTEGER;		// 1-component, 32-bit unsigned integer
+		case GL_RG32UI:											return GL_RG_INTEGER;		// 2-component, 32-bit unsigned integer
+		case GL_RGB32UI:										return GL_RGB_INTEGER;		// 3-component, 32-bit unsigned integer
+		case GL_RGBA32UI:										return GL_RGBA_INTEGER;		// 4-component, 32-bit unsigned integer
 
-		case GL_R32I:											return GL_RED;		// 1-component, 32-bit signed integer
-		case GL_RG32I:											return GL_RG;		// 2-component, 32-bit signed integer
-		case GL_RGB32I:											return GL_RGB;		// 3-component, 32-bit signed integer
-		case GL_RGBA32I:										return GL_RGBA;		// 4-component, 32-bit signed integer
+		case GL_R32I:											return GL_RED_INTEGER;		// 1-component, 32-bit signed integer
+		case GL_RG32I:											return GL_RG_INTEGER;		// 2-component, 32-bit signed integer
+		case GL_RGB32I:											return GL_RGB_INTEGER;		// 3-component, 32-bit signed integer
+		case GL_RGBA32I:										return GL_RGBA_INTEGER;		// 4-component, 32-bit signed integer
 
 		case GL_R32F:											return GL_RED;		// 1-component, 32-bit floating-point
 		case GL_RG32F:											return GL_RG;		// 2-component, 32-bit floating-point
@@ -1170,7 +1170,7 @@ static inline GLenum glGetFormatFromInternalFormat( const GLenum internalFormat 
 		case GL_RGBA12:											return GL_RGBA;		// 4-component 12:12:12:12, unsigned normalized
 		case GL_RGB5_A1:										return GL_RGBA;		// 4-component 5:5:5:1,     unsigned normalized
 		case GL_RGB10_A2:										return GL_RGBA;		// 4-component 10:10:10:2,  unsigned normalized
-		case GL_RGB10_A2UI:										return GL_RGBA;		// 4-component 10:10:10:2,  unsigned integer
+		case GL_RGB10_A2UI:										return GL_RGBA_INTEGER;		// 4-component 10:10:10:2,  unsigned integer
 		case GL_R11F_G11F_B10F:									return GL_RGB;		// 3-component 11:11:10,    floating-point
 		case GL_RGB9_E5:										return GL_RGB;		// 3-component/exp 9:9:9/5, floating-point
 
