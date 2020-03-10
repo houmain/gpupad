@@ -25,6 +25,7 @@ enum MessageType
     ShaderWarning,
     ShaderError,
     CallDuration,
+    CallFailed,
     ScriptError,
     ScriptMessage,
     ProgramNotAssigned,

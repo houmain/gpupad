@@ -79,6 +79,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case InvalidSubroutine:
         case ImageFormatNotBindable:
         case UniformComponentMismatch:
+        case CallFailed:
             return mErrorIcon;
 
         case UnformNotSet:
@@ -104,41 +105,43 @@ QString MessageWindow::getMessageText(const Message &message) const
             return message.text;
 
         case OpenGLVersionNotAvailable:
-            return tr("the required OpenGL version %1 is not available").arg(
+            return tr("The required OpenGL version %1 is not available").arg(
                 message.text);
         case LoadingFileFailed:
             if (message.text.isEmpty())
-                return tr("no file set");
-            return tr("loading file '%1' failed").arg(
+                return tr("No file set");
+            return tr("Loading file '%1' failed").arg(
                 FileDialog::getFileTitle(message.text));
         case UnsupportedShaderType:
-            return tr("unsupported shader type");
+            return tr("Unsupported shader type");
         case CreatingFramebufferFailed:
-            return tr("creating framebuffer failed %1").arg(message.text);
+            return tr("Creating framebuffer failed %1").arg(message.text);
         case UploadingImageFailed:
-            return tr("uploading image failed");
+            return tr("Uploading image failed");
         case DownloadingImageFailed:
-            return tr("downloading image failed");
+            return tr("Downloading image failed");
         case UnformNotSet:
-            return tr("uniform '%1' not set").arg(message.text);
+            return tr("Uniform '%1' not set").arg(message.text);
         case BufferNotSet:
-            return tr("buffer '%1' not set").arg(message.text);
+            return tr("Buffer '%1' not set").arg(message.text);
         case AttributeNotSet:
-            return tr("attribute '%1' not set").arg(message.text);
+            return tr("Attribute '%1' not set").arg(message.text);
         case CallDuration:
-            return tr("call took %1").arg(message.text);
+            return tr("Call took %1").arg(message.text);
+        case CallFailed:
+            return tr("Call failed: %1").arg(message.text);
         case ProgramNotAssigned:
-            return tr("no program set");
+            return tr("No program set");
         case TextureNotAssigned:
-            return tr("no texture set");
+            return tr("No texture set");
         case BufferNotAssigned:
-            return tr("no buffer set");
+            return tr("No buffer set");
         case InvalidSubroutine:
-            return tr("invalid subroutine '%1'").arg(message.text);
+            return tr("Invalid subroutine '%1'").arg(message.text);
         case ImageFormatNotBindable:
-            return tr("image format not bindable");
+            return tr("Image format not bindable");
         case UniformComponentMismatch:
-            return tr("uniform component mismatch %1").arg(message.text);
+            return tr("Uniform component mismatch %1").arg(message.text);
     }
     return message.text;
 }

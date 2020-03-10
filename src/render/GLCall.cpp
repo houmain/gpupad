@@ -4,10 +4,14 @@
 #include "GLProgram.h"
 #include "GLTarget.h"
 #include "GLStream.h"
+#include "Renderer.h"
 #include "scripting/ScriptEngine.h"
 #include <QOpenGLTimerQuery>
 
-GLCall::GLCall(const Call &call) : mCall(call) { }
+GLCall::GLCall(const Call &call)
+    : mCall(call)
+{
+}
 
 void GLCall::setProgram(GLProgram *program)
 {
@@ -100,6 +104,11 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     auto &gl = GLContext::currentContext();
     if (gl.v4_2)
       gl.v4_2->glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+    const auto error = glGetError();
+    if (error != GL_NO_ERROR)
+        messages += MessageList::insert(
+            mCall.id, MessageType::CallFailed, getFirstGLError());
 }
 
 void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
@@ -250,7 +259,7 @@ void GLCall::executeClearTexture(MessagePtrSet &messages)
     }
     else {
         messages += MessageList::insert(
-            mCall.id,  MessageType::TextureNotAssigned);
+            mCall.id, MessageType::TextureNotAssigned);
     }
 }
 
@@ -264,7 +273,7 @@ void GLCall::executeCopyTexture(MessagePtrSet &messages)
     }
     else {
         messages += MessageList::insert(
-            mCall.id,  MessageType::TextureNotAssigned);
+            mCall.id, MessageType::TextureNotAssigned);
     }
 }
 
@@ -291,7 +300,7 @@ void GLCall::executeCopyBuffer(MessagePtrSet &messages)
     }
     else {
         messages += MessageList::insert(
-            mCall.id,  MessageType::BufferNotAssigned);
+            mCall.id, MessageType::BufferNotAssigned);
     }
 }
 void GLCall::executeGenerateMipmaps(MessagePtrSet &messages)
@@ -303,6 +312,6 @@ void GLCall::executeGenerateMipmaps(MessagePtrSet &messages)
     }
     else {
         messages += MessageList::insert(
-            mCall.id,  MessageType::TextureNotAssigned);
+            mCall.id, MessageType::TextureNotAssigned);
     }
 }

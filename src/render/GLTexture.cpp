@@ -104,6 +104,7 @@ void GLTexture::reload()
 
     const auto recreate = (
         mData.isNull() ||
+        mTarget != mData.target() ||
         mFormat != mData.format() ||
         mWidth != mData.width() ||
         mHeight != mData.height() ||

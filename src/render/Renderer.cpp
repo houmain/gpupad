@@ -6,6 +6,18 @@
 #include <QOffscreenSurface>
 #include <QOpenGLDebugLogger>
 #include <QSemaphore>
+#include <QMutex>
+
+namespace {
+    QMutex gFirstGLErrorMutex;
+    QString gFirstGLError;
+}
+
+QString getFirstGLError()
+{
+    auto lock = QMutexLocker(&gFirstGLErrorMutex);
+    return std::exchange(gFirstGLError, "");
+}
 
 class Renderer::Worker : public QObject
 {
@@ -68,8 +80,14 @@ private:
 
     void handleDebugMessage(const QOpenGLDebugMessage &message)
     {
-        auto text = message.message();
-        qDebug() << text;
+        auto lock = QMutexLocker(&gFirstGLErrorMutex);
+        if (message.severity() == QOpenGLDebugMessage::HighSeverity) {
+            if (gFirstGLError.isEmpty())
+                gFirstGLError = message.message();
+        }
+        else {
+            qDebug() << message.message();
+        }
     }
 
     bool mInitialized{ };

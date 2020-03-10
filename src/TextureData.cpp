@@ -115,8 +115,10 @@ namespace {
             case QOpenGLTexture::RGBA:
             case QOpenGLTexture::BGRA:
                 return true;
+
+            default:
+                return false;
         }
-        return false;
     }
 } // namespace
 
@@ -393,6 +395,7 @@ bool TextureData::upload(GLuint *textureId)
     mKtxTexture->generateMipmaps =
         (canGenerateMipmaps(format) ? KTX_TRUE : KTX_FALSE);
 
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
     auto target = static_cast<GLenum>(mTarget);
     auto error = GLenum{ };
     return (ktxTexture_GLUpload(
@@ -404,6 +407,7 @@ bool TextureData::download(GLuint textureId)
     if (isNull() || !textureId)
         return false;
 
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
     QOpenGLFunctions_3_3_Core gl;
     gl.initializeOpenGLFunctions();
     gl.glBindTexture(mTarget, textureId);
@@ -420,11 +424,13 @@ bool TextureData::download(GLuint textureId)
                             pixelFormat(), pixelType(), data);
                         break;
 
+                    // TODO:
                     default:
                         return false;
                 }
             }
-    return true;
+
+    return (glGetError() == GL_NO_ERROR);
 }
 
 void TextureData::clear()
@@ -436,5 +442,5 @@ void TextureData::clear()
         for (auto layer = 0; layer < layers(); ++layer)
             for (auto face = 0; face < faces(); ++face)
                 std::memset(getWriteonlyData(level, layer, face), 
-                    0xFF, static_cast<size_t>(getLevelSize(level)));
+                    0x00, static_cast<size_t>(getLevelSize(level)));
 }

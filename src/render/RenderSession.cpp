@@ -371,6 +371,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
 
 void RenderSession::render()
 {
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
+
     auto& context = GLContext::currentContext();
     if (!context) {
         mMessages += MessageList::insert(
@@ -385,6 +387,7 @@ void RenderSession::render()
     outputTimerQueries();
 
     context.glFlush();
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
 }
 
 void RenderSession::reuseUnmodifiedItems()

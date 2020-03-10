@@ -92,6 +92,9 @@ public:
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) override
     {
+        Q_ASSERT(glGetError() == GL_NO_ERROR);
+        painter->beginNativePainting();
+
         if (!mProgram)
             initialize();
 
@@ -104,16 +107,18 @@ public:
             // last version is deleted in QGraphicsView destructor
         }
 
-        painter->beginNativePainting();
-
         mGL.glEnable(GL_BLEND);
-        mGL.glBlendEquation(GL_ADD);
+        mGL.glBlendEquation(GL_FUNC_ADD);
         mGL.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         mGL.glEnable(GL_TEXTURE_2D);
 
         if (mPreviewTextureId) {
             Singletons::glShareSynchronizer().beginUsage(mGL);    
             mGL.glBindTexture(GL_TEXTURE_2D, mPreviewTextureId);
+
+            // try to generate mipmaps
+            mGL.glGenerateMipmap(GL_TEXTURE_2D);
+            glGetError();
         }
         else if (mTexture) {
             mGL.glBindTexture(GL_TEXTURE_2D, mTexture);
@@ -124,7 +129,6 @@ public:
         mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         mGL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
             mMagnifyLinear ? GL_LINEAR : GL_NEAREST);
-        mGL.glGenerateMipmap(GL_TEXTURE_2D);
 
         const auto s = mBoundingRect.size();
         const auto x = painter->clipBoundingRect().left() - (s.width() % 2 ? 0.5 : 0.0);
@@ -150,6 +154,7 @@ public:
             Singletons::glShareSynchronizer().endUsage(mGL);
         }
 
+        Q_ASSERT(glGetError() == GL_NO_ERROR);
         painter->endNativePainting();
     }
 

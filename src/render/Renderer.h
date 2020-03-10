@@ -34,4 +34,6 @@ private:
     RenderTask* mCurrentTask{ };
 };
 
+QString getFirstGLError();
+
 #endif // RENDERER_H
