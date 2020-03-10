@@ -33,7 +33,7 @@ bool GLTexture::operator==(const GLTexture &rhs) const
 
 GLuint GLTexture::getReadOnlyTextureId()
 {
-    reload();
+    reload(false);
     createTexture();
     upload();
     return (mMultisampleTexture ? mMultisampleTexture : mTextureObject);
@@ -41,7 +41,7 @@ GLuint GLTexture::getReadOnlyTextureId()
 
 GLuint GLTexture::getReadWriteTextureId()
 {
-    reload();
+    reload(true);
     createTexture();
     upload();
     mDeviceCopyModified = true;
@@ -94,7 +94,7 @@ void GLTexture::generateMipmaps()
     gl.glGenerateMipmap(target());
 }
 
-void GLTexture::reload()
+void GLTexture::reload(bool writeable)
 {
     const auto prevData = mData;
     if (!FileDialog::isEmptyOrUntitled(mFileName))
@@ -102,17 +102,17 @@ void GLTexture::reload()
             mMessages += MessageList::insert(mItemId,
                 MessageType::LoadingFileFailed, mFileName);
 
-    const auto recreate = (
-        mData.isNull() ||
-        mTarget != mData.target() ||
-        mFormat != mData.format() ||
-        mWidth != mData.width() ||
-        mHeight != mData.height() ||
-        mDepth != mData.depth() ||
-        mLayers != mData.layers());
-    if (recreate)
-        mData.create(mTarget, mFormat,
-            mWidth, mHeight, mDepth, mLayers);
+    // when writeable apply requested dimensions, otherwise keep file's
+    const auto sameDimensions = [&]() {
+        return (mFormat == mData.format() &&
+                mWidth == mData.width() &&
+                mHeight == mData.height() &&
+                mDepth == mData.depth() &&
+                mLayers == mData.layers());
+    };
+    if (mData.isNull() || (writeable && !sameDimensions()))
+        mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers);
+
     mSystemCopyModified |= (mData != prevData);
 }
 
@@ -122,14 +122,14 @@ void GLTexture::createTexture()
         return;
 
     auto &gl = GLContext::currentContext();
-    auto createTexture = [&]() {
-      auto texture = GLuint{};
-      gl.glGenTextures(1, &texture);
-      return texture;
+    const auto createTexture = [&]() {
+        auto texture = GLuint{};
+        gl.glGenTextures(1, &texture);
+        return texture;
     };
-    auto freeTexture = [](GLuint texture) {
-      auto &gl = GLContext::currentContext();
-      gl.glDeleteTextures(1, &texture);
+    const auto freeTexture = [](GLuint texture) {
+        auto &gl = GLContext::currentContext();
+        gl.glDeleteTextures(1, &texture);
     };
 
     mTextureObject = GLObject(createTexture(), freeTexture);

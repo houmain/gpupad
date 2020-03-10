@@ -45,7 +45,6 @@ namespace {
         UnsignedInt10_10_10_2,
         Normalized10_10_10_2,
         D16,
-        D24,
         D32,
         D32F,
         D24_S8,
@@ -185,7 +184,7 @@ namespace {
         ADD(Texture::Format::RGBA32U, FormatType::RGBA_Integer, FormatData::UnsignedInt32)
 
         ADD(Texture::Format::D16, FormatType::DepthStencil, FormatData::D16)
-        ADD(Texture::Format::D24, FormatType::DepthStencil, FormatData::D24)
+//        ADD(Texture::Format::D24, FormatType::DepthStencil, FormatData::D24)
         ADD(Texture::Format::D32, FormatType::DepthStencil, FormatData::D32)
         ADD(Texture::Format::D32F, FormatType::DepthStencil, FormatData::D32F)
         ADD(Texture::Format::D24S8, FormatType::DepthStencil, FormatData::D24_S8)
@@ -351,7 +350,6 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
         { "32 Bit Unsigned Int", FormatData::UnsignedInt32 },
         { "32 Bit Signed Int", FormatData::SignedInt32 },
         { "16 Bit Depth", FormatData::D16 },
-        { "24 Bit Depth", FormatData::D24 },
         { "32 Bit Depth", FormatData::D32 },
         { "32 Bit Float Depth", FormatData::D32F },
         { "24 Bit Depth / 8 Bit Stencil", FormatData::D24_S8 },

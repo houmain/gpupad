@@ -56,7 +56,7 @@ namespace {
             case QImage::Format_Grayscale16:
                 return QOpenGLTexture::R16_UNorm;
             default:
-                return getTextureFormat(getNextNativeImageFormat(format));
+                return QOpenGLTexture::NoFormat;
         }
     }
 
@@ -221,15 +221,12 @@ bool TextureData::load(const QString &fileName)
     auto image = QImage();
     if (!image.load(fileName))
         return false;
+    image.convertTo(getNextNativeImageFormat(image.format()));
     if (!create(QOpenGLTexture::Target2D, getTextureFormat(image.format()),
           image.width(), image.height(), 1, 1))
         return false;
     if (static_cast<int>(image.sizeInBytes()) != getLevelSize(0))
         return false;
-
-    if (format() == QOpenGLTexture::RGB8_UNorm ||
-        format() == QOpenGLTexture::RGBA8_UNorm)
-        image = std::move(image).rgbSwapped();
 
     std::memcpy(getWriteonlyData(0, 0, 0), image.constBits(),
         static_cast<size_t>(getLevelSize(0)));
@@ -244,9 +241,8 @@ bool TextureData::save(const QString &fileName) const
       return true;
 
     auto image = toImage();
-    if (format() == QOpenGLTexture::RGB8_UNorm ||
-        format() == QOpenGLTexture::RGBA8_UNorm)
-        image = std::move(image).rgbSwapped();
+    if (!image.isNull())
+      return false;
 
     return image.save(fileName);
 }
@@ -442,5 +438,5 @@ void TextureData::clear()
         for (auto layer = 0; layer < layers(); ++layer)
             for (auto face = 0; face < faces(); ++face)
                 std::memset(getWriteonlyData(level, layer, face), 
-                    0x00, static_cast<size_t>(getLevelSize(level)));
+                    0xFF, static_cast<size_t>(getLevelSize(level)));
 }
