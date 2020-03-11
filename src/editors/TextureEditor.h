@@ -4,6 +4,7 @@
 #include "IEditor.h"
 #include "TextureData.h"
 #include <QGraphicsView>
+#include <QOpenGLTexture>
 
 class ZeroCopyItem;
 
@@ -25,7 +26,8 @@ public:
     int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }
     void replace(TextureData texture, bool emitDataChanged = true);
-    void updatePreviewTexture(unsigned int textureId);
+    void updatePreviewTexture(QOpenGLTexture::Target target,
+        QOpenGLTexture::TextureFormat format, GLuint textureId);
     const TextureData &texture() const { return mTexture; }
 
 signals:

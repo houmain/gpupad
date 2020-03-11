@@ -120,6 +120,21 @@ namespace {
                 return false;
         }
     }
+
+    QOpenGLTexture::Target getTarget(const ktxTexture &texture)
+    {
+        if (texture.isCubemap)
+            return (texture.isArray ?
+                QOpenGLTexture::TargetCubeMapArray : QOpenGLTexture::TargetCubeMap);
+        switch (texture.numDimensions) {
+            case 1: return (texture.isArray ?
+                QOpenGLTexture::Target1DArray : QOpenGLTexture::Target1D);
+            case 2: return (texture.isArray ?
+                QOpenGLTexture::Target2DArray : QOpenGLTexture::Target2D);
+            case 3: return QOpenGLTexture::Target3D;
+        }
+        return { };
+    }
 } // namespace
 
 bool operator==(const TextureData &a, const TextureData &b) 
@@ -214,6 +229,7 @@ bool TextureData::load(const QString &fileName)
     auto texture = std::add_pointer_t<ktxTexture>{ };
     if (ktxTexture_CreateFromNamedFile(fileName.toUtf8().constData(),
             KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture) == KTX_SUCCESS) {
+        mTarget = getTarget(*texture);
         mKtxTexture.reset(texture, &ktxTexture_Destroy);
         return true;
     }

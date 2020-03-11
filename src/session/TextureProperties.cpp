@@ -405,8 +405,10 @@ void TextureProperties::applyFileFormat()
     auto texture = TextureData();
     if (Singletons::fileCache().getTexture(fileName, &texture)) {
         setFormat(texture.format());
+        mUi->target->setCurrentData(texture.target());
         mUi->width->setValue(texture.width());
         mUi->height->setValue(texture.height());
         mUi->depth->setValue(texture.depth());
+        mUi->layers->setValue(texture.layers());
     }
 }

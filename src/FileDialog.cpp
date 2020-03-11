@@ -88,6 +88,7 @@ QString FileDialog::fileName() const
 bool FileDialog::exec(Options options, QString currentFileName)
 {
     QFileDialog dialog(mWindow);
+    dialog.setOption(QFileDialog::HideNameFilterDetails);
 
     if (options & Saving) {
         if (currentFileName.isEmpty())

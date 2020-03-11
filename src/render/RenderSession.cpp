@@ -141,8 +141,8 @@ struct RenderSession::CommandQueue
 };
 
 RenderSession::RenderSession(QObject *parent)
-    : mInputScriptObject(new InputScriptObject(this)),
-      RenderTask(parent)
+    : RenderTask(parent)
+    , mInputScriptObject(new InputScriptObject(this))
 {
 }
 
@@ -469,7 +469,8 @@ void RenderSession::finish()
         if (gZeroCopyPreview && !mItemsChanged)
             if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
                 if (auto editor = editors.getTextureEditor(fileItem->fileName))
-                    editor->updatePreviewTexture(texture.getReadOnlyTextureId());
+                    editor->updatePreviewTexture(texture.target(), texture.format(),
+                        texture.getReadOnlyTextureId());
 
     mPrevMessages.clear();
 

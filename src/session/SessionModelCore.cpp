@@ -131,7 +131,7 @@ QModelIndex SessionModelCore::index(int row, int column,
 QModelIndex SessionModelCore::parent(const QModelIndex &child) const
 {
     if (child.isValid())
-        return getIndex(getItem(child).parent, ColumnType::None);
+        return getIndex(getItem(child).parent, ColumnType::Name);
     return { };
 }
 
