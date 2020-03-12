@@ -119,6 +119,31 @@ inline TextureKind getKind(const Texture &texture)
     return kind;
 }
 
+enum class TextureFormatType
+{
+    Float, UInt, Int
+};
+
+inline TextureFormatType getFormatType(QOpenGLTexture::TextureFormat format)
+{
+    using TF = QOpenGLTexture::TextureFormat;
+    switch (format) {
+        case TF::R8U: case TF::RG8U: case TF::RGB8U: case TF::RGBA8U:
+        case TF::R16U: case TF::RG16U: case TF::RGB16U: case TF::RGBA16U:
+        case TF::R32U: case TF::RG32U: case TF::RGB32U: case TF::RGBA32U:
+        case TF::S8:
+            return TextureFormatType::UInt;
+
+        case TF::R8I: case TF::RG8I: case TF::RGB8I: case TF::RGBA8I:
+        case TF::R16I: case TF::RG16I: case TF::RGB16I: case TF::RGBA16I:
+        case TF::R32I: case TF::RG32I: case TF::RGB32I: case TF::RGBA32I:
+            return TextureFormatType::Int;
+
+        default:
+            return TextureFormatType::Float;
+    }
+}
+
 struct CallKind
 {
     bool draw;

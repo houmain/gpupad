@@ -48,7 +48,7 @@ GLuint GLTexture::getReadWriteTextureId()
     return (mMultisampleTexture ? mMultisampleTexture : mTextureObject);
 }
 
-void GLTexture::clear(QColor color, double depth, int stencil)
+void GLTexture::clear(std::array<double, 4> color, double depth, int stencil)
 {
     auto &gl = GLContext::currentContext();
     auto fbo = createFramebuffer(getReadWriteTextureId(), 0);
@@ -59,25 +59,50 @@ void GLTexture::clear(QColor color, double depth, int stencil)
     gl.glStencilMask(0xFF);
 
     if (mKind.depth && mKind.stencil) {
-        gl.glClearDepth(depth);
-        gl.glClearStencil(stencil);
-        gl.glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        gl.glClearBufferfi(GL_DEPTH_STENCIL, 0, depth, stencil);
     }
     else if (mKind.depth) {
-        gl.glClearDepth(depth);
-        gl.glClear(GL_DEPTH_BUFFER_BIT);
+        const auto d = static_cast<float>(depth);
+        gl.glClearBufferfv(GL_DEPTH, 0, &d);
     }
     else if (mKind.stencil) {
-        gl.glClearStencil(stencil);
-        gl.glClear(GL_STENCIL_BUFFER_BIT);
+        gl.glClearBufferiv(GL_STENCIL, 0, &stencil);
     }
     else {
-        gl.glClearColor(
-            static_cast<float>(color.redF()),
-            static_cast<float>(color.greenF()),
-            static_cast<float>(color.blueF()),
-            static_cast<float>(color.alphaF()));
-        gl.glClear(GL_COLOR_BUFFER_BIT);
+        switch (getFormatType(mFormat)) {
+            case TextureFormatType::Float: {
+                const auto values = std::array<float, 4>{
+                    static_cast<float>(color[0]),
+                    static_cast<float>(color[1]),
+                    static_cast<float>(color[2]),
+                    static_cast<float>(color[3])
+                };
+                gl.glClearBufferfv(GL_COLOR, 0, values.data());
+                break;
+            }
+
+            case TextureFormatType::UInt: {
+                const auto values = std::array<GLuint, 4>{
+                    static_cast<GLuint>(color[0] * 255),
+                    static_cast<GLuint>(color[1] * 255),
+                    static_cast<GLuint>(color[2] * 255),
+                    static_cast<GLuint>(color[3] * 255)
+                };
+                gl.glClearBufferuiv(GL_COLOR, 0, values.data());
+                break;
+            }
+
+            case TextureFormatType::Int: {
+                const auto values = std::array<GLint, 4>{
+                    static_cast<GLint>(color[0] * 255),
+                    static_cast<GLint>(color[1] * 255),
+                    static_cast<GLint>(color[2] * 255),
+                    static_cast<GLint>(color[3] * 255)
+                };
+                gl.glClearBufferiv(GL_COLOR, 0, values.data());
+                break;
+            }
+        }
     }
     gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
 }

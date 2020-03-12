@@ -3,6 +3,7 @@
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
 #include "render/GLShareSynchronizer.h"
+#include "session/ItemFunctions.h"
 #include <QGraphicsItem>
 #include <QAction>
 #include <QScrollBar>
@@ -80,29 +81,7 @@ void main() {
         return (mPreviewTextureId || mTextureId);
     }
 
-    enum class FormatType {
-        Float, UInt, Int
-    };
-
-    FormatType getFormatType(QOpenGLTexture::TextureFormat format)
-    {
-        using TF = QOpenGLTexture::TextureFormat;
-        switch (format) {
-            case TF::R8U: case TF::RG8U: case TF::RGB8U: case TF::RGBA8U:
-            case TF::R16U: case TF::RG16U: case TF::RGB16U: case TF::RGBA16U:
-            case TF::R32U: case TF::RG32U: case TF::RGB32U: case TF::RGBA32U:
-            case TF::S8:
-                return FormatType::UInt;
-            case TF::R8I: case TF::RG8I: case TF::RGB8I: case TF::RGBA8I:
-            case TF::R16I: case TF::RG16I: case TF::RGB16I: case TF::RGBA16I:
-            case TF::R32I: case TF::RG32I: case TF::RGB32I: case TF::RGBA32I:
-                return FormatType::Int;
-            default:
-                return FormatType::Float;
-        }
-    }
-
-    QString buildFragmentShader(QOpenGLTexture::Target target, FormatType formatType)
+    QString buildFragmentShader(QOpenGLTexture::Target target, TextureFormatType formatType)
     {
         struct TargetVersion {
             QString sampler;
@@ -122,10 +101,10 @@ void main() {
             { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "vTexCoord.xy" } },
             { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "vTexCoord.xy, uLayer" } },
         };
-        static auto sFormatTypeVersions = std::map<FormatType, FormatTypeVersion>{
-            { FormatType::Float, { "" } },
-            { FormatType::UInt, { "u" } },
-            { FormatType::Int, { "i" } },
+        static auto sFormatTypeVersions = std::map<TextureFormatType, FormatTypeVersion>{
+            { TextureFormatType::Float, { "" } },
+            { TextureFormatType::UInt, { "u" } },
+            { TextureFormatType::Int, { "i" } },
         };
         const auto targetVersion = sTargetVersions[target];
         const auto formatTypeVersion = sFormatTypeVersions[formatType];

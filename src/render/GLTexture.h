@@ -19,7 +19,7 @@ public:
     int layers() const { return mLayers; }
     Texture::Format format() const { return mFormat; }
     TextureData data() const { return mData; }
-    void clear(QColor color, double depth, int stencil);
+    void clear(std::array<double, 4> color, double depth, int stencil);
     void copy(GLTexture &source);
     void generateMipmaps();
     GLuint getReadOnlyTextureId();

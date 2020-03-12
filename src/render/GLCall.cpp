@@ -253,7 +253,12 @@ void GLCall::executeClearTexture(MessagePtrSet &messages)
 {
     if (mTexture) {
         auto guard = beginTimerQuery();
-        mTexture->clear(mCall.clearColor,
+        mTexture->clear({
+                mCall.clearColor.redF(),
+                mCall.clearColor.greenF(),
+                mCall.clearColor.blueF(),
+                mCall.clearColor.alphaF()
+            },
             mCall.clearDepth, mCall.clearStencil);
         mUsedItems += mTexture->usedItems();
     }

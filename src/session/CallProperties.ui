@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>227</width>
-    <height>669</height>
+    <height>694</height>
    </rect>
   </property>
   <layout class="QVBoxLayout">
@@ -35,24 +35,24 @@
       <number>0</number>
      </property>
      <item row="0" column="0">
-      <widget class="QLabel" name="labelExecuteOn">
-       <property name="text">
-        <string>Execute On</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="DataComboBox" name="executeOn"/>
-     </item>
-     <item row="1" column="0">
       <widget class="QLabel" name="labelType">
        <property name="text">
         <string>Type</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="0" column="1">
       <widget class="DataComboBox" name="type"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelExecuteOn">
+       <property name="text">
+        <string>Execute On</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="DataComboBox" name="executeOn"/>
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="labelProgram">
@@ -101,6 +101,9 @@
        </property>
       </widget>
      </item>
+     <item row="6" column="1">
+      <widget class="ExpressionLineEdit" name="patchVertices"/>
+     </item>
      <item row="7" column="0">
       <widget class="QLabel" name="labelVertexCount">
        <property name="text">
@@ -108,12 +111,18 @@
        </property>
       </widget>
      </item>
+     <item row="7" column="1">
+      <widget class="ExpressionLineEdit" name="vertexCount"/>
+     </item>
      <item row="8" column="0">
       <widget class="QLabel" name="labelFirstVertex">
        <property name="text">
         <string>First Vertex</string>
        </property>
       </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="ExpressionLineEdit" name="firstVertex"/>
      </item>
      <item row="9" column="0">
       <widget class="QLabel" name="labelIndexBuffer">
@@ -132,6 +141,9 @@
        </property>
       </widget>
      </item>
+     <item row="10" column="1">
+      <widget class="ExpressionLineEdit" name="baseVertex"/>
+     </item>
      <item row="11" column="0">
       <widget class="QLabel" name="labelInstanceCount">
        <property name="text">
@@ -139,12 +151,18 @@
        </property>
       </widget>
      </item>
+     <item row="11" column="1">
+      <widget class="ExpressionLineEdit" name="instanceCount"/>
+     </item>
      <item row="12" column="0">
       <widget class="QLabel" name="labelBaseInstance">
        <property name="text">
         <string>Base Instance</string>
        </property>
       </widget>
+     </item>
+     <item row="12" column="1">
+      <widget class="ExpressionLineEdit" name="baseInstance"/>
      </item>
      <item row="13" column="0">
       <widget class="QLabel" name="labelIndirectBuffer">
@@ -163,12 +181,18 @@
        </property>
       </widget>
      </item>
+     <item row="14" column="1">
+      <widget class="ExpressionLineEdit" name="drawCount"/>
+     </item>
      <item row="15" column="0">
       <widget class="QLabel" name="labelWorkGroupsX">
        <property name="text">
         <string>Work Groups X</string>
        </property>
       </widget>
+     </item>
+     <item row="15" column="1">
+      <widget class="ExpressionLineEdit" name="workGroupsX"/>
      </item>
      <item row="16" column="0">
       <widget class="QLabel" name="labelWorkGroupsY">
@@ -177,12 +201,18 @@
        </property>
       </widget>
      </item>
+     <item row="16" column="1">
+      <widget class="ExpressionLineEdit" name="workGroupsY"/>
+     </item>
      <item row="17" column="0">
       <widget class="QLabel" name="labelWorkGroupsZ">
        <property name="text">
         <string>Z</string>
        </property>
       </widget>
+     </item>
+     <item row="17" column="1">
+      <widget class="ExpressionLineEdit" name="workGroupsZ"/>
      </item>
      <item row="18" column="0">
       <widget class="QLabel" name="labelBuffer">
@@ -194,6 +224,16 @@
      <item row="18" column="1">
       <widget class="ReferenceComboBox" name="buffer"/>
      </item>
+     <item row="19" column="0">
+      <widget class="QLabel" name="labelFromBuffer">
+       <property name="text">
+        <string>From Buffer</string>
+       </property>
+      </widget>
+     </item>
+     <item row="19" column="1">
+      <widget class="ReferenceComboBox" name="fromBuffer"/>
+     </item>
      <item row="20" column="0">
       <widget class="QLabel" name="labelTexture">
        <property name="text">
@@ -203,6 +243,16 @@
      </item>
      <item row="20" column="1">
       <widget class="ReferenceComboBox" name="texture"/>
+     </item>
+     <item row="21" column="0">
+      <widget class="QLabel" name="labelFromTexture">
+       <property name="text">
+        <string>From Texture</string>
+       </property>
+      </widget>
+     </item>
+     <item row="21" column="1">
+      <widget class="ReferenceComboBox" name="fromTexture"/>
      </item>
      <item row="22" column="0">
       <widget class="QLabel" name="labelClearColor">
@@ -255,56 +305,6 @@
       <widget class="QSpinBox" name="clearStencil">
        <property name="maximum">
         <number>255</number>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="1">
-      <widget class="ExpressionLineEdit" name="vertexCount"/>
-     </item>
-     <item row="6" column="1">
-      <widget class="ExpressionLineEdit" name="patchVertices"/>
-     </item>
-     <item row="8" column="1">
-      <widget class="ExpressionLineEdit" name="firstVertex"/>
-     </item>
-     <item row="10" column="1">
-      <widget class="ExpressionLineEdit" name="baseVertex"/>
-     </item>
-     <item row="11" column="1">
-      <widget class="ExpressionLineEdit" name="instanceCount"/>
-     </item>
-     <item row="12" column="1">
-      <widget class="ExpressionLineEdit" name="baseInstance"/>
-     </item>
-     <item row="14" column="1">
-      <widget class="ExpressionLineEdit" name="drawCount"/>
-     </item>
-     <item row="15" column="1">
-      <widget class="ExpressionLineEdit" name="workGroupsX"/>
-     </item>
-     <item row="16" column="1">
-      <widget class="ExpressionLineEdit" name="workGroupsY"/>
-     </item>
-     <item row="17" column="1">
-      <widget class="ExpressionLineEdit" name="workGroupsZ"/>
-     </item>
-     <item row="21" column="1">
-      <widget class="ReferenceComboBox" name="fromTexture"/>
-     </item>
-     <item row="21" column="0">
-      <widget class="QLabel" name="labelFromTexture">
-       <property name="text">
-        <string>From Texture</string>
-       </property>
-      </widget>
-     </item>
-     <item row="19" column="1">
-      <widget class="ReferenceComboBox" name="fromBuffer"/>
-     </item>
-     <item row="19" column="0">
-      <widget class="QLabel" name="labelFromBuffer">
-       <property name="text">
-        <string>From Buffer</string>
        </property>
       </widget>
      </item>
