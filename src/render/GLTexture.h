@@ -19,9 +19,9 @@ public:
     int layers() const { return mLayers; }
     Texture::Format format() const { return mFormat; }
     TextureData data() const { return mData; }
-    void clear(std::array<double, 4> color, double depth, int stencil);
-    void copy(GLTexture &source);
-    void generateMipmaps();
+    bool clear(std::array<double, 4> color, double depth, int stencil);
+    bool copy(GLTexture &source);
+    bool updateMipmaps();
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();
     bool download();
@@ -32,7 +32,7 @@ private:
     void reload(bool writeable);
     void createTexture();
     void upload();
-    void copyTexture(GLuint sourceTextureId,
+    bool copyTexture(GLuint sourceTextureId,
         GLuint destTextureId, int level);
 
     ItemId mItemId{ };
@@ -53,6 +53,7 @@ private:
     GLObject mMultisampleTexture;
     bool mSystemCopyModified{ };
     bool mDeviceCopyModified{ };
+    bool mMipmapsInvalidated{ };
 };
 
 #endif // GLTEXTURE_H

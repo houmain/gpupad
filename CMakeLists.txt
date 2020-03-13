@@ -78,6 +78,7 @@ set(SOURCES
   src/session/ColorPicker.cpp
   src/session/ColumnProperties.ui
   src/session/DataComboBox.cpp
+  src/session/Item.cpp
   src/session/ExpressionEditor.cpp
   src/session/ExpressionMatrix.cpp
   src/session/ExpressionLineEdit.cpp

@@ -6,6 +6,7 @@
 #include <QGraphicsView>
 #include <QOpenGLTexture>
 
+class ZeroCopyContext;
 class ZeroCopyItem;
 
 class TextureEditor : public QGraphicsView, public IEditor
@@ -26,8 +27,7 @@ public:
     int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }
     void replace(TextureData texture, bool emitDataChanged = true);
-    void updatePreviewTexture(QOpenGLTexture::Target target,
-        QOpenGLTexture::TextureFormat format, GLuint textureId);
+    void updatePreviewTexture(GLuint textureId);
     const TextureData &texture() const { return mTexture; }
 
 signals:
@@ -59,6 +59,7 @@ private:
     int mPanStartX{ };
     int mPanStartY{ };
     QGraphicsPathItem *mBorder{ };
+    ZeroCopyContext *mZeroCopyContext{ };
     ZeroCopyItem *mZeroCopyItem{ };
     QGraphicsPixmapItem *mPixmapItem{ };
 };

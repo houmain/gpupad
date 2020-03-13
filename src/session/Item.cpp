@@ -1,9 +1,6 @@
-#ifndef ITEMFUNCTIONS_H
-#define ITEMFUNCTIONS_H
-
 #include "Item.h"
 
-inline int getSize(const Column &column)
+int getColumnSize(const Column &column)
 {
     switch (column.dataType) {
         case Column::DataType::Int8: return 1;
@@ -20,7 +17,7 @@ inline int getSize(const Column &column)
     return 0;
 }
 
-inline int getColumnOffset(const Column &column)
+int getColumnOffset(const Column &column)
 {
     auto offset = 0;
     const auto &buffer = *static_cast<const Buffer*>(column.parent);
@@ -28,33 +25,22 @@ inline int getColumnOffset(const Column &column)
         const auto &col = *static_cast<const Column*>(item);
         if (&column == &col)
             return offset;
-        offset += col.count * getSize(col) + col.padding;
+        offset += col.count * getColumnSize(col) + col.padding;
     }
     return offset;
 }
 
-inline int getStride(const Buffer &buffer)
+int getStride(const Buffer &buffer)
 {
     auto stride = 0;
     foreach (const Item* item, buffer.items) {
         auto &column = *static_cast<const Column*>(item);
-        stride += column.count * getSize(column) + column.padding;
+        stride += column.count * getColumnSize(column) + column.padding;
     }
     return stride;
 }
 
-struct TextureKind
-{
-    int dimensions;
-    bool color;
-    bool depth;
-    bool stencil;
-    bool array;
-    bool multisample;
-    bool cubeMap;
-};
-
-inline TextureKind getKind(const Texture &texture)
+TextureKind getKind(const Texture &texture)
 {
     auto kind = TextureKind{ };
 
@@ -119,42 +105,7 @@ inline TextureKind getKind(const Texture &texture)
     return kind;
 }
 
-enum class TextureFormatType
-{
-    Float, UInt, Int
-};
-
-inline TextureFormatType getFormatType(QOpenGLTexture::TextureFormat format)
-{
-    using TF = QOpenGLTexture::TextureFormat;
-    switch (format) {
-        case TF::R8U: case TF::RG8U: case TF::RGB8U: case TF::RGBA8U:
-        case TF::R16U: case TF::RG16U: case TF::RGB16U: case TF::RGBA16U:
-        case TF::R32U: case TF::RG32U: case TF::RGB32U: case TF::RGBA32U:
-        case TF::S8:
-            return TextureFormatType::UInt;
-
-        case TF::R8I: case TF::RG8I: case TF::RGB8I: case TF::RGBA8I:
-        case TF::R16I: case TF::RG16I: case TF::RGB16I: case TF::RGBA16I:
-        case TF::R32I: case TF::RG32I: case TF::RGB32I: case TF::RGBA32I:
-            return TextureFormatType::Int;
-
-        default:
-            return TextureFormatType::Float;
-    }
-}
-
-struct CallKind
-{
-    bool draw;
-    bool drawIndexed;
-    bool drawIndirect;
-    bool drawDirect;
-    bool drawPatches;
-    bool compute;
-};
-
-inline CallKind getKind(const Call &call)
+CallKind getKind(const Call &call)
 {
     auto kind = CallKind{ };
 
@@ -185,46 +136,3 @@ inline CallKind getKind(const Call &call)
 
     return kind;
 }
-
-template<typename T> Item::Type getItemType();
-template<> inline Item::Type getItemType<Group>() { return Item::Type::Group; }
-template<> inline Item::Type getItemType<Buffer>() { return Item::Type::Buffer; }
-template<> inline Item::Type getItemType<Column>() { return Item::Type::Column; }
-template<> inline Item::Type getItemType<Texture>() { return Item::Type::Texture; }
-template<> inline Item::Type getItemType<Image>() { return Item::Type::Image; }
-template<> inline Item::Type getItemType<Program>() { return Item::Type::Program; }
-template<> inline Item::Type getItemType<Shader>() { return Item::Type::Shader; }
-template<> inline Item::Type getItemType<Binding>() { return Item::Type::Binding; }
-template<> inline Item::Type getItemType<Stream>() { return Item::Type::Stream; }
-template<> inline Item::Type getItemType<Attribute>() { return Item::Type::Attribute; }
-template<> inline Item::Type getItemType<Target>() { return Item::Type::Target; }
-template<> inline Item::Type getItemType<Attachment>() { return Item::Type::Attachment; }
-template<> inline Item::Type getItemType<Call>() { return Item::Type::Call; }
-template<> inline Item::Type getItemType<Script>() { return Item::Type::Script; }
-
-template <typename T>
-const T* castItem(const Item &item)
-{
-    if (item.type == getItemType<T>())
-        return static_cast<const T*>(&item);
-    return nullptr;
-}
-
-template <>
-inline const FileItem* castItem<FileItem>(const Item &item) {
-    if (item.type == Item::Type::Buffer ||
-        item.type == Item::Type::Texture ||
-        item.type == Item::Type::Image ||
-        item.type == Item::Type::Shader ||
-        item.type == Item::Type::Script)
-        return static_cast<const FileItem*>(&item);
-    return nullptr;
-}
-
-template <typename T>
-const T* castItem(const Item *item)
-{
-    return (item ? castItem<T>(*item) : nullptr);
-}
-
-#endif // ITEMFUNCTIONS_H

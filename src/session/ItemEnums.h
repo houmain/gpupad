@@ -26,7 +26,7 @@ namespace ItemEnums {
     };
     Q_ENUM_NS(ItemType)
 
-    enum ColumnDataType {
+    enum DataType {
         Int8 = GL_BYTE,
         Int16 = GL_SHORT,
         Int32 = GL_INT,
@@ -38,7 +38,7 @@ namespace ItemEnums {
         Float = GL_FLOAT,
         Double = GL_DOUBLE,
     };
-    Q_ENUM_NS(ColumnDataType)
+    Q_ENUM_NS(DataType)
 
     enum ShaderType {
         Header = 0,
@@ -182,7 +182,6 @@ namespace ItemEnums2 {
         CopyTexture,
         ClearBuffer,
         CopyBuffer,
-        GenerateMipmaps,
     };
     Q_ENUM_NS(CallType)
 

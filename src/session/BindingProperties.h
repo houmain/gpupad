@@ -1,7 +1,7 @@
 #ifndef BINDINGPROPERTIES_H
 #define BINDINGPROPERTIES_H
 
-#include "ItemFunctions.h"
+#include "Item.h"
 #include <QWidget>
 #include <QVariant>
 

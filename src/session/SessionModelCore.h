@@ -1,7 +1,7 @@
 #ifndef SESSIONMODELCORE_H
 #define SESSIONMODELCORE_H
 
-#include "ItemFunctions.h"
+#include "Item.h"
 #include <QAbstractItemModel>
 #include <QUndoStack>
 

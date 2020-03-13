@@ -340,6 +340,7 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
     auto &texture = *binding.texture;
     const auto target = texture.target();
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
+    texture.updateMipmaps();
     gl.glBindTexture(target, texture.getReadOnlyTextureId());
     gl.glUniform1i(location, unit);
 

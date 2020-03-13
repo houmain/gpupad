@@ -7,7 +7,7 @@
 #include <QVariant>
 #include <QOpenGLTexture>
 
-using ItemId = int;
+using ItemId = int; 
 struct Item;
 
 struct Item
@@ -35,7 +35,7 @@ struct Group : Item
 
 struct Column : Item
 {
-    using DataType = ItemEnums::ColumnDataType;
+    using DataType = ItemEnums::DataType;
 
     DataType dataType{ DataType::Float };
     int count{ 1 };
@@ -224,5 +224,73 @@ struct Script : FileItem
     ExecuteOn executeOn{ ExecuteOn::ManualEvaluation };
     QString expression;
 };
+
+struct TextureKind
+{
+    int dimensions;
+    bool color;
+    bool depth;
+    bool stencil;
+    bool array;
+    bool multisample;
+    bool cubeMap;
+};
+
+struct CallKind
+{
+    bool draw;
+    bool drawIndexed;
+    bool drawIndirect;
+    bool drawDirect;
+    bool drawPatches;
+    bool compute;
+};
+
+int getColumSize(const Column &column);
+int getColumnOffset(const Column &column);
+int getStride(const Buffer &buffer);
+TextureKind getKind(const Texture &texture);
+CallKind getKind(const Call &call);
+
+template<typename T> Item::Type getItemType();
+template<> inline Item::Type getItemType<Group>() { return Item::Type::Group; }
+template<> inline Item::Type getItemType<Buffer>() { return Item::Type::Buffer; }
+template<> inline Item::Type getItemType<Column>() { return Item::Type::Column; }
+template<> inline Item::Type getItemType<Texture>() { return Item::Type::Texture; }
+template<> inline Item::Type getItemType<Image>() { return Item::Type::Image; }
+template<> inline Item::Type getItemType<Program>() { return Item::Type::Program; }
+template<> inline Item::Type getItemType<Shader>() { return Item::Type::Shader; }
+template<> inline Item::Type getItemType<Binding>() { return Item::Type::Binding; }
+template<> inline Item::Type getItemType<Stream>() { return Item::Type::Stream; }
+template<> inline Item::Type getItemType<Attribute>() { return Item::Type::Attribute; }
+template<> inline Item::Type getItemType<Target>() { return Item::Type::Target; }
+template<> inline Item::Type getItemType<Attachment>() { return Item::Type::Attachment; }
+template<> inline Item::Type getItemType<Call>() { return Item::Type::Call; }
+template<> inline Item::Type getItemType<Script>() { return Item::Type::Script; }
+
+template <typename T>
+const T* castItem(const Item &item)
+{
+    if (item.type == getItemType<T>())
+        return static_cast<const T*>(&item);
+    return nullptr;
+}
+
+template <>
+inline const FileItem* castItem<FileItem>(const Item &item) {
+    if (item.type == Item::Type::Buffer ||
+        item.type == Item::Type::Texture ||
+        item.type == Item::Type::Image ||
+        item.type == Item::Type::Shader ||
+        item.type == Item::Type::Script)
+        return static_cast<const FileItem*>(&item);
+    return nullptr;
+}
+
+template <typename T>
+const T* castItem(const Item *item)
+{
+    return (item ? castItem<T>(*item) : nullptr);
+}
 
 #endif // ITEM_H

@@ -3,7 +3,7 @@
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
 #include "render/GLShareSynchronizer.h"
-#include "session/ItemFunctions.h"
+#include "session/Item.h"
 #include <QGraphicsItem>
 #include <QAction>
 #include <QScrollBar>
@@ -12,14 +12,14 @@
 #include <QOpenGLTexture>
 #include <QOpenGLShader>
 #include <QOpenGLFunctions_3_3_Core>
+#include <QOpenGLDebugLogger>
 #include <map>
 #include <cmath>
 
 extern bool gZeroCopyPreview;
 
-class ZeroCopyItem : public QGraphicsItem
-{
-static constexpr auto vertexShader = R"(
+namespace {
+  static constexpr auto vertexShaderSource = R"(
 #version 330
 
 uniform mat4 uTransform;
@@ -39,7 +39,7 @@ void main() {
 }
 )";
 
-static constexpr auto fragmentShader = R"(
+static constexpr auto fragmentShaderSource = R"(
 
 uniform SAMPLER uTexture;
 uniform float uLayer;
@@ -48,47 +48,37 @@ uniform int uLevel;
 in vec2 vTexCoord;
 out vec4 oColor;
 
+float linearToSrgb(float value) {
+  if (value > 0.0031308)
+    return 1.055 * pow(value, 1.0 / 2.4) - 0.055;
+  return 12.92 * value;
+}
+vec3 linearToSrgb(vec3 value) {
+  return vec3(
+    linearToSrgb(value.r),
+    linearToSrgb(value.g),
+    linearToSrgb(value.b)
+  );
+}
+
 void main() {
-  oColor = vec4(texture(uTexture, SAMPLECOORDS));
+  vec4 color = vec4(texture(uTexture, SAMPLECOORDS));
+  color = MAPPING;
+  color = SWIZZLE;
+  oColor = color;
 }
 )";
 
-    QOpenGLFunctions_3_3_Core mGL;
-    QScopedPointer<QOpenGLShader> mVertexShader;
-    std::map<QOpenGLTexture::Target, QOpenGLShaderProgram> mPrograms;
-    GLuint mTextureId{ };
-    TextureData mUploadImage;
-    QRect mBoundingRect;
-    QOpenGLTexture::Target mTarget{ };
-    QOpenGLTexture::TextureFormat mFormat{ };
-    GLuint mPreviewTextureId{ };
-    bool mMagnifyLinear{ };
-
-    bool updateTexture()
-    {
-        if (!mPreviewTextureId && !mUploadImage.isNull()) {
-            // upload/replace texture
-            if (!mUploadImage.upload(&mTextureId)) {
-                mGL.glDeleteTextures(1, &mTextureId);
-                mTextureId = GL_NONE;
-            }
-            mTarget = mUploadImage.target();
-            mFormat = mUploadImage.format();
-            mUploadImage = { };
-
-            // last version is deleted in QGraphicsView destructor
-        }
-        return (mPreviewTextureId || mTextureId);
-    }
-
-    QString buildFragmentShader(QOpenGLTexture::Target target, TextureFormatType formatType)
+    QString buildFragmentShader(QOpenGLTexture::Target target,
+        QOpenGLTexture::TextureFormat format)
     {
         struct TargetVersion {
             QString sampler;
             QString samplecoords;
         };
-        struct FormatTypeVersion {
+        struct DataTypeVersion {
             QString prefix;
+            QString mapping;
         };
         static auto sTargetVersions = std::map<QOpenGLTexture::Target, TargetVersion>{
             { QOpenGLTexture::Target1D, { "sampler1D", "vTexCoord.x" } },
@@ -101,100 +91,209 @@ void main() {
             { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "vTexCoord.xy" } },
             { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "vTexCoord.xy, uLayer" } },
         };
-        static auto sFormatTypeVersions = std::map<TextureFormatType, FormatTypeVersion>{
-            { TextureFormatType::Float, { "" } },
-            { TextureFormatType::UInt, { "u" } },
-            { TextureFormatType::Int, { "i" } },
+        static auto sDataTypeVersions = std::map<TextureDataType, DataTypeVersion>{
+            { TextureDataType::Normalized, { "", "color" } },
+            { TextureDataType::Normalized_sRGB, { "", "vec4(linearToSrgb(color.rgb), color.a)" } },
+            { TextureDataType::Float, { "", "vec4(linearToSrgb(color.rgb), color.a)" } },
+            { TextureDataType::Uint8, { "u", "color / 255.0" } },
+            { TextureDataType::Uint16, { "u", "color / 65535.0" } },
+            { TextureDataType::Uint32, { "u", "color / 4294967295.0" } },
+            { TextureDataType::Uint_10_10_10_2, { "u", "color / vec4(vec3(1023.0), 3.0)" } },
+            { TextureDataType::Int8, { "i", "color / 127.0" } },
+            { TextureDataType::Int16, { "i", "color / 32767.0" } },
+            { TextureDataType::Int32, { "i", "color / 2147483647.0" } },
+            { TextureDataType::Compressed, { "", "color" } },
         };
+        static auto sComponetSwizzle = std::map<int, QString>{
+            { 1, "vec4(vec3(color.r), 1)" },
+            { 2, "vec4(vec3(color.rg, 0), 1)" },
+            { 3, "vec4(color.rgb, 1)" },
+            { 4, "color" },
+        };
+        const auto dataType = getTextureDataType(format);
         const auto targetVersion = sTargetVersions[target];
-        const auto formatTypeVersion = sFormatTypeVersions[formatType];
+        const auto dataTypeVersion = sDataTypeVersions[dataType];
+        const auto swizzle = sComponetSwizzle[getTextureComponentCount(format)];
         return "#version 330\n"
-               "#define SAMPLER " + formatTypeVersion.prefix + targetVersion.sampler + "\n"
+               "#define SAMPLER " + dataTypeVersion.prefix + targetVersion.sampler + "\n"
                "#define SAMPLECOORDS " + targetVersion.samplecoords + "\n" +
-               fragmentShader;
+               "#define MAPPING " + dataTypeVersion.mapping + "\n" +
+               "#define SWIZZLE " + swizzle + "\n" +
+               fragmentShaderSource;
     }
 
-    QOpenGLShaderProgram &getProgram(QOpenGLTexture::Target target,
-        QOpenGLTexture::TextureFormat format)
+    void buildProgram(QOpenGLShaderProgram &program,
+        QOpenGLTexture::Target target, QOpenGLTexture::TextureFormat format)
     {
-        auto& program = mPrograms[target];
-        if (!program.isLinked()) {
-            const auto shader = buildFragmentShader(target, getFormatType(format));
-            auto fragmentShader = new QOpenGLShader(QOpenGLShader::Fragment, &program);
-            fragmentShader->compileSourceCode(shader);
-            program.create();
-            program.addShader(mVertexShader.get());
-            program.addShader(fragmentShader);
-            program.link();
+        program.create();
+
+        auto vertexShader = new QOpenGLShader(QOpenGLShader::Vertex, &program);
+        vertexShader->compileSourceCode(vertexShaderSource);
+        program.addShader(vertexShader);
+
+        auto fragmentShader = new QOpenGLShader(QOpenGLShader::Fragment, &program);
+        fragmentShader->compileSourceCode(
+            buildFragmentShader(target, format));
+        program.addShader(fragmentShader);
+
+        program.link();
+    }
+} // namespace
+
+class ZeroCopyContext : public QObject
+{
+private:
+    using ProgramKey = std::tuple<QOpenGLTexture::Target, QOpenGLTexture::TextureFormat>;
+
+    QOpenGLFunctions_3_3_Core mGL;
+    QOpenGLDebugLogger mDebugLogger;
+    std::map<ProgramKey, QOpenGLShaderProgram> mPrograms;
+    bool mInitialized{ };
+
+    void initialize()
+    {
+        if (std::exchange(mInitialized, true))
+            return;
+
+        mGL.initializeOpenGLFunctions();
+
+        if (mDebugLogger.initialize()) {
+            mDebugLogger.disableMessages(QOpenGLDebugMessage::AnySource,
+                QOpenGLDebugMessage::AnyType, QOpenGLDebugMessage::NotificationSeverity);
+            QObject::connect(&mDebugLogger, &QOpenGLDebugLogger::messageLogged,
+                this, &ZeroCopyContext::handleDebugMessage);
+            mDebugLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
         }
+    }
+
+    void handleDebugMessage(const QOpenGLDebugMessage &message)
+    {
+        const auto text = message.message();
+        qDebug() << text;
+    }
+
+public:
+    explicit ZeroCopyContext(QObject *parent)
+        : QObject(parent)
+    {
+    }
+
+    QOpenGLFunctions_3_3_Core &gl()
+    {
+        initialize();
+        return mGL;
+    }
+
+    QOpenGLShaderProgram &getProgram(
+        QOpenGLTexture::Target target, QOpenGLTexture::TextureFormat format)
+    {
+        auto &program = mPrograms[std::make_tuple(target, format)];
+        if (!program.isLinked())
+            buildProgram(program, target, format);
         return program;
     }
+};
 
-    void renderTexture(const QMatrix &transform)
+class ZeroCopyItem : public QGraphicsItem
+{
+    ZeroCopyContext &mContext;
+    QRect mBoundingRect;
+    TextureData mImage;
+    GLuint mImageTextureId{ };
+    GLuint mPreviewTextureId{ };
+    bool mMagnifyLinear{ };
+    bool mUpload{ };
+
+    bool updateTexture()
     {
-        mGL.glEnable(mTarget);
+        if (!mPreviewTextureId && std::exchange(mUpload, false)) {
+            // upload/replace texture
+            if (!mImage.upload(&mImageTextureId)) {
+                mContext.gl().glDeleteTextures(1, &mImageTextureId);
+                mImageTextureId = GL_NONE;
+            }
+            // last version is deleted in QGraphicsView destructor
+        }
+        return (mPreviewTextureId || mImageTextureId);
+    }
+
+    bool renderTexture(const QMatrix &transform)
+    {
+        Q_ASSERT(glGetError() == GL_NO_ERROR);
+        auto &gl = mContext.gl();
+
+        const auto target = mImage.target();
+        gl.glEnable(target);
 
         if (mPreviewTextureId) {
-            Singletons::glShareSynchronizer().beginUsage(mGL);
-            mGL.glBindTexture(mTarget, mPreviewTextureId);
-
-            // try to generate mipmaps
-            mGL.glGenerateMipmap(mTarget);
-            glGetError();
+            Singletons::glShareSynchronizer().beginUsage(gl);
+            gl.glBindTexture(target, mPreviewTextureId);
         }
         else {
-            mGL.glBindTexture(mTarget, mTextureId);
+            gl.glBindTexture(target, mImageTextureId);
         }
 
-        mGL.glEnable(GL_BLEND);
-        mGL.glBlendEquation(GL_FUNC_ADD);
-        mGL.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        mGL.glTexParameteri(mTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        mGL.glTexParameteri(mTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        mGL.glTexParameteri(mTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        mGL.glTexParameteri(mTarget, GL_TEXTURE_MAG_FILTER,
-            mMagnifyLinear ? GL_LINEAR : GL_NEAREST);
+        gl.glEnable(GL_BLEND);
+        gl.glBlendEquation(GL_FUNC_ADD);
+        gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        if (mImage.levels() > 1) {
+            gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        }
+        else {
+            gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        }
 
-        auto& program = getProgram(mTarget, mFormat);
+        auto &program = mContext.getProgram(target, mImage.format());
         program.bind();
         program.setUniformValue("uTexture", 0);
         program.setUniformValue("uTransform", transform);
         program.setUniformValue("uLevel", 0);
         program.setUniformValue("uLayer", 0);
 
-        mGL.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         if (mPreviewTextureId) {
-            mGL.glBindTexture(mTarget, 0);
-            Singletons::glShareSynchronizer().endUsage(mGL);
+            gl.glBindTexture(target, 0);
+            Singletons::glShareSynchronizer().endUsage(gl);
         }
-        mGL.glDisable(mTarget);
+        gl.glDisable(target);
+        return (glGetError() == GL_NO_ERROR);
     }
 
 public:
+    ZeroCopyItem(ZeroCopyContext *context)
+        : mContext(*context)
+    {
+    }
+
     void setImage(TextureData image)
     {
         prepareGeometryChange();
         const auto w = image.width();
         const auto h = image.height();
         mBoundingRect = { -w / 2, -h / 2, w, h };
-        mUploadImage = std::move(image);
+        mImage = std::move(image);
+        mUpload = true;
         mPreviewTextureId = GL_NONE;
         update();
     }
 
-    void setPreviewTexture(QOpenGLTexture::Target target,
-        QOpenGLTexture::TextureFormat format, GLuint textureId)
+    void setPreviewTexture(GLuint textureId)
     {
-        mTarget = target;
-        mFormat = format;
-        mPreviewTextureId = textureId;
-        update();
+        if (!mImage.isNull()) {
+            mPreviewTextureId = textureId;
+            update();
+        }
     }
 
     GLuint resetTexture()
     {
-        return std::exchange(mTextureId, GL_NONE);
+        return std::exchange(mImageTextureId, GL_NONE);
     }
 
     void setMagnifyLinear(bool magnifyLinear)
@@ -207,17 +306,10 @@ public:
         return mBoundingRect;
     }
 
-
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) override
     {
         Q_ASSERT(glGetError() == GL_NO_ERROR);
         painter->beginNativePainting();
-
-        if (mPrograms.empty()) {
-            mGL.initializeOpenGLFunctions();
-            mVertexShader.reset(new QOpenGLShader(QOpenGLShader::Vertex));
-            mVertexShader->compileSourceCode(vertexShader);
-        }
 
         const auto s = mBoundingRect.size();
         const auto x = painter->clipBoundingRect().left() - (s.width() % 2 ? 0.5 : 0.0);
@@ -266,14 +358,11 @@ TextureEditor::TextureEditor(QString fileName, QWidget *parent)
     scene()->addItem(mBorder);
 
     if (gZeroCopyPreview) {
-        mZeroCopyItem = new ZeroCopyItem();
+        mZeroCopyContext = new ZeroCopyContext(this);
+        mZeroCopyItem = new ZeroCopyItem(mZeroCopyContext);
         scene()->addItem(mZeroCopyItem);
     }
 
-    auto image = TextureData{ };
-    image.create(QOpenGLTexture::Target2D,
-        QOpenGLTexture::TextureFormat::RGBA8_UNorm, 1, 1, 1, 1);
-    replace(std::move(image), false);
     setZoom(mZoom);
     updateTransform(1.0);
 }
@@ -377,11 +466,10 @@ void TextureEditor::replace(TextureData texture, bool emitDataChanged)
         emit dataChanged();
 }
 
-void TextureEditor::updatePreviewTexture(QOpenGLTexture::Target target,
-    QOpenGLTexture::TextureFormat format, GLuint textureId)
+void TextureEditor::updatePreviewTexture(GLuint textureId)
 {
     if (mZeroCopyItem)
-        mZeroCopyItem->setPreviewTexture(target, format, textureId);
+        mZeroCopyItem->setPreviewTexture(textureId);
 }
 
 void TextureEditor::setModified(bool modified)

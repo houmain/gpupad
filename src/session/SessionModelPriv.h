@@ -1,7 +1,7 @@
 #ifndef SESSIONMODELPRIV_H
 #define SESSIONMODELPRIV_H
 
-#include "ItemFunctions.h"
+#include "Item.h"
 #include <QMetaEnum>
 #include <QJsonObject>
 #include <QJsonArray>

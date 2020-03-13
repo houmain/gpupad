@@ -67,6 +67,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case LoadingFileFailed:
         case UnsupportedShaderType:
         case CreatingFramebufferFailed:
+        case CreatingTextureFailed:
         case UploadingImageFailed:
         case DownloadingImageFailed:
         case BufferNotSet:
@@ -80,6 +81,8 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case ImageFormatNotBindable:
         case UniformComponentMismatch:
         case CallFailed:
+        case ClearingTextureFailed:
+        case CopyingTextureFailed:
             return mErrorIcon;
 
         case UnformNotSet:
@@ -116,6 +119,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Unsupported shader type");
         case CreatingFramebufferFailed:
             return tr("Creating framebuffer failed %1").arg(message.text);
+        case CreatingTextureFailed:
+           return tr("Creating texture failed");
         case UploadingImageFailed:
             return tr("Uploading image failed");
         case DownloadingImageFailed:
@@ -130,6 +135,10 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Call took %1").arg(message.text);
         case CallFailed:
             return tr("Call failed: %1").arg(message.text);
+        case ClearingTextureFailed:
+            return tr("Clearing texture failed");
+        case CopyingTextureFailed:
+            return tr("Copying texture failed");
         case ProgramNotAssigned:
             return tr("No program set");
         case TextureNotAssigned:

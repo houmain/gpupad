@@ -162,8 +162,7 @@ void CallProperties::updateWidgets()
 
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
         type == Call::CallType::ClearTexture ||
-        type == Call::CallType::CopyTexture ||
-        type == Call::CallType::GenerateMipmaps);
+        type == Call::CallType::CopyTexture);
 
     const auto texKind = currentTextureKind();
     setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor,

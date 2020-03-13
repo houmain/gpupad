@@ -1,7 +1,7 @@
 #ifndef TEXTUREPROPERTIES_H
 #define TEXTUREPROPERTIES_H
 
-#include "ItemFunctions.h"
+#include "Item.h"
 #include <QWidget>
 
 namespace Ui {

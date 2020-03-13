@@ -39,7 +39,6 @@ private:
     void executeCopyTexture(MessagePtrSet &messages);
     void executeClearBuffer(MessagePtrSet &messages);
     void executeCopyBuffer(MessagePtrSet &messages);
-    void executeGenerateMipmaps(MessagePtrSet &messages);
 
     Call mCall{ };
     GLProgram *mProgram{ };

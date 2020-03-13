@@ -1,4 +1,5 @@
 #include "TextureData.h"
+#include "session/Item.h"
 #include <cstring>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions_3_3_Core>
@@ -105,22 +106,6 @@ namespace {
         }
     }
 
-    bool canGenerateMipmaps(QOpenGLTexture::PixelFormat format)
-    {
-        switch (format) {
-            case QOpenGLTexture::Red:
-            case QOpenGLTexture::RG:
-            case QOpenGLTexture::RGB:
-            case QOpenGLTexture::BGR:
-            case QOpenGLTexture::RGBA:
-            case QOpenGLTexture::BGRA:
-                return true;
-
-            default:
-                return false;
-        }
-    }
-
     QOpenGLTexture::Target getTarget(const ktxTexture &texture)
     {
         if (texture.isCubemap)
@@ -135,17 +120,204 @@ namespace {
         }
         return { };
     }
+
+    ktx_uint32_t getLevelCount(const ktxTextureCreateInfo &info)
+    {
+        auto dimension = std::max(std::max(
+            info.baseWidth, info.baseHeight),
+            info.baseDepth);
+        auto levels = ktx_uint32_t{ };
+        for (; dimension; dimension >>= 1)
+            ++levels;
+        return levels;
+    }
+
+    bool canGenerateMipmaps(const QOpenGLTexture::TextureFormat &format)
+    {
+        const auto dataType = getTextureDataType(format);
+        return (dataType == TextureDataType::Normalized ||
+                dataType == TextureDataType::Float);
+    }
 } // namespace
+
+TextureDataType getTextureDataType(
+    const QOpenGLTexture::TextureFormat &format)
+{
+    switch (format) {
+        case QOpenGLTexture::R8_UNorm:
+        case QOpenGLTexture::RG8_UNorm:
+        case QOpenGLTexture::RGB8_UNorm:
+        case QOpenGLTexture::RGBA8_UNorm:
+        case QOpenGLTexture::R16_UNorm:
+        case QOpenGLTexture::RG16_UNorm:
+        case QOpenGLTexture::RGB16_UNorm:
+        case QOpenGLTexture::RGBA16_UNorm:
+        case QOpenGLTexture::R8_SNorm:
+        case QOpenGLTexture::RG8_SNorm:
+        case QOpenGLTexture::RGB8_SNorm:
+        case QOpenGLTexture::RGBA8_SNorm:
+        case QOpenGLTexture::R16_SNorm:
+        case QOpenGLTexture::RG16_SNorm:
+        case QOpenGLTexture::RGB16_SNorm:
+        case QOpenGLTexture::RGBA16_SNorm:
+        case QOpenGLTexture::RG3B2:
+        case QOpenGLTexture::R5G6B5:
+        case QOpenGLTexture::RGB5A1:
+        case QOpenGLTexture::RGBA4:
+            return TextureDataType::Normalized;
+
+        case QOpenGLTexture::SRGB8:
+        case QOpenGLTexture::SRGB8_Alpha8:
+            return TextureDataType::Normalized_sRGB;
+
+        case QOpenGLTexture::R16F:
+        case QOpenGLTexture::RG16F:
+        case QOpenGLTexture::RGB16F:
+        case QOpenGLTexture::RGBA16F:
+        case QOpenGLTexture::R32F:
+        case QOpenGLTexture::RG32F:
+        case QOpenGLTexture::RGB32F:
+        case QOpenGLTexture::RGBA32F:
+        case QOpenGLTexture::RGB9E5:
+        case QOpenGLTexture::RG11B10F:
+            return TextureDataType::Float;
+
+        case QOpenGLTexture::R8U:
+        case QOpenGLTexture::RG8U:
+        case QOpenGLTexture::RGB8U:
+        case QOpenGLTexture::RGBA8U:
+        case QOpenGLTexture::S8:
+            return TextureDataType::Uint8;
+
+        case QOpenGLTexture::R16U:
+        case QOpenGLTexture::RG16U:
+        case QOpenGLTexture::RGB16U:
+        case QOpenGLTexture::RGBA16U:
+            return TextureDataType::Uint16;
+
+        case QOpenGLTexture::R32U:
+        case QOpenGLTexture::RG32U:
+        case QOpenGLTexture::RGB32U:
+        case QOpenGLTexture::RGBA32U:
+            return TextureDataType::Uint32;
+
+        case QOpenGLTexture::R8I:
+        case QOpenGLTexture::RG8I:
+        case QOpenGLTexture::RGB8I:
+        case QOpenGLTexture::RGBA8I:
+            return TextureDataType::Int8;
+
+        case QOpenGLTexture::R16I:
+        case QOpenGLTexture::RG16I:
+        case QOpenGLTexture::RGB16I:
+        case QOpenGLTexture::RGBA16I:
+            return TextureDataType::Int16;
+
+        case QOpenGLTexture::R32I:
+        case QOpenGLTexture::RG32I:
+        case QOpenGLTexture::RGB32I:
+        case QOpenGLTexture::RGBA32I:
+            return TextureDataType::Int32;
+
+        case QOpenGLTexture::RGB10A2:
+            return TextureDataType::Uint_10_10_10_2;
+
+        default:
+            return TextureDataType::Compressed;
+    }
+}
+
+int getTextureComponentCount(QOpenGLTexture::TextureFormat format)
+{
+    switch (format) {
+        case QOpenGLTexture::R8_UNorm:
+        case QOpenGLTexture::R8_SNorm:
+        case QOpenGLTexture::R16_UNorm:
+        case QOpenGLTexture::R16_SNorm:
+        case QOpenGLTexture::R8U:
+        case QOpenGLTexture::R8I:
+        case QOpenGLTexture::R16U:
+        case QOpenGLTexture::R16I:
+        case QOpenGLTexture::R32U:
+        case QOpenGLTexture::R32I:
+        case QOpenGLTexture::R16F:
+        case QOpenGLTexture::R32F:
+        case QOpenGLTexture::D16:
+        case QOpenGLTexture::D24:
+        case QOpenGLTexture::D32:
+        case QOpenGLTexture::D32F:
+        case QOpenGLTexture::D24S8:
+        case QOpenGLTexture::D32FS8X24:
+        case QOpenGLTexture::S8:
+        case QOpenGLTexture::R_ATI1N_UNorm:
+        case QOpenGLTexture::R_ATI1N_SNorm:
+        case QOpenGLTexture::R11_EAC_UNorm:
+        case QOpenGLTexture::R11_EAC_SNorm:
+            return 1;
+
+        case QOpenGLTexture::RG8_UNorm:
+        case QOpenGLTexture::RG8_SNorm:
+        case QOpenGLTexture::RG16_UNorm:
+        case QOpenGLTexture::RG16_SNorm:
+        case QOpenGLTexture::RG8U:
+        case QOpenGLTexture::RG8I:
+        case QOpenGLTexture::RG16U:
+        case QOpenGLTexture::RG16I:
+        case QOpenGLTexture::RG32U:
+        case QOpenGLTexture::RG32I:
+        case QOpenGLTexture::RG16F:
+        case QOpenGLTexture::RG32F:
+        case QOpenGLTexture::RG_ATI2N_UNorm:
+        case QOpenGLTexture::RG_ATI2N_SNorm:
+        case QOpenGLTexture::RGB_BP_UNSIGNED_FLOAT:
+        case QOpenGLTexture::RGB_BP_SIGNED_FLOAT:
+        case QOpenGLTexture::RG11_EAC_UNorm:
+        case QOpenGLTexture::RG11_EAC_SNorm:
+            return 2;
+
+        case QOpenGLTexture::RGB8_UNorm:
+        case QOpenGLTexture::RGB8_SNorm:
+        case QOpenGLTexture::RGB16_UNorm:
+        case QOpenGLTexture::RGB16_SNorm:
+        case QOpenGLTexture::RGB8U:
+        case QOpenGLTexture::RGB8I:
+        case QOpenGLTexture::RGB16U:
+        case QOpenGLTexture::RGB16I:
+        case QOpenGLTexture::RGB32U:
+        case QOpenGLTexture::RGB32I:
+        case QOpenGLTexture::RGB16F:
+        case QOpenGLTexture::RGB32F:
+        case QOpenGLTexture::SRGB8:
+        case QOpenGLTexture::SRGB_DXT1:
+        case QOpenGLTexture::RGB9E5:
+        case QOpenGLTexture::RG11B10F:
+        case QOpenGLTexture::RG3B2:
+        case QOpenGLTexture::R5G6B5:
+        case QOpenGLTexture::RGB_DXT1:
+        case QOpenGLTexture::RGB8_ETC2:
+        case QOpenGLTexture::SRGB8_ETC2:
+            return 3;
+
+        default:
+            return 4;
+    }
+}
 
 bool operator==(const TextureData &a, const TextureData &b) 
 {
-    if (a.width() != b.width() ||
+    if (a.isSharedWith(b))
+        return true;
+
+    if (a.target() != b.target() ||
+        a.format() != b.format() ||
+        a.width() != b.width() ||
         a.height() != b.height() ||
         a.depth() != b.depth() ||
         a.levels() != b.levels() ||
         a.layers() != b.layers() ||
         a.faces() != b.faces())
         return false;
+
     for (auto level = 0; level < a.levels(); ++level)
         for (auto layer = 0; layer < a.layers(); ++layer)
             for (auto face = 0; face < a.faces(); ++face) {
@@ -155,10 +327,17 @@ bool operator==(const TextureData &a, const TextureData &b)
                     continue;
                 const auto sa = a.getLevelSize(level);
                 const auto sb = b.getLevelSize(level);
-                if (sa != sb || std::memcmp(da, db, sa))
+                if (sa != sb ||
+                    std::memcmp(da, db, static_cast<size_t>(sa)) != 0)
                     return false;
             }
     return true;
+}
+
+bool TextureData::isSharedWith(const TextureData &other) const
+{
+    return (mKtxTexture == other.mKtxTexture &&
+            mTarget == other.mTarget);
 }
 
 bool operator!=(const TextureData &a, const TextureData &b)
@@ -174,52 +353,61 @@ bool TextureData::create(
     auto createInfo = ktxTextureCreateInfo{ };
     createInfo.glInternalformat = format;
     createInfo.baseWidth = static_cast<ktx_uint32_t>(width);
-    createInfo.baseHeight = static_cast<ktx_uint32_t>(height);
-    createInfo.baseDepth = static_cast<ktx_uint32_t>(depth);
-    createInfo.numLayers = static_cast<ktx_uint32_t>(layers);
+    createInfo.baseHeight = 1;
+    createInfo.baseDepth = 1;
+    createInfo.numLayers = 1;
     createInfo.numFaces = 1;
-    createInfo.numLevels = 1;
     createInfo.isArray = KTX_FALSE;
 
     switch (target) {
-      case QOpenGLTexture::Target1DArray:
-        createInfo.isArray = KTX_TRUE;
-        [[fallthrough]];
-      case QOpenGLTexture::Target1D:
-        createInfo.numDimensions = 1;
-        break;
+        case QOpenGLTexture::Target1DArray:
+            createInfo.isArray = KTX_TRUE;
+            createInfo.numLayers = static_cast<ktx_uint32_t>(layers);
+            [[fallthrough]];
+        case QOpenGLTexture::Target1D:
+            createInfo.numDimensions = 1;
+            break;
 
-      case QOpenGLTexture::Target2DArray:
-        createInfo.isArray = KTX_TRUE;
-        [[fallthrough]];
-      case QOpenGLTexture::Target2D:
-      case QOpenGLTexture::TargetRectangle:
-        createInfo.numDimensions = 2;
-        break;
+        case QOpenGLTexture::Target2DArray:
+            createInfo.isArray = KTX_TRUE;
+            createInfo.numLayers = static_cast<ktx_uint32_t>(layers);
+            [[fallthrough]];
+        case QOpenGLTexture::Target2D:
+        case QOpenGLTexture::TargetRectangle:
+            createInfo.numDimensions = 2;
+            createInfo.baseHeight = static_cast<ktx_uint32_t>(height);
+            break;
 
-      case QOpenGLTexture::Target3D:
-        createInfo.numDimensions = 3;
-        break;
+        case QOpenGLTexture::Target3D:
+            createInfo.numDimensions = 3;
+            createInfo.baseHeight = static_cast<ktx_uint32_t>(height);
+            createInfo.baseDepth = static_cast<ktx_uint32_t>(depth);
+            break;
 
-      case QOpenGLTexture::TargetCubeMapArray:
-        createInfo.isArray = KTX_TRUE;
-        [[fallthrough]];
-      case QOpenGLTexture::TargetCubeMap:
-        createInfo.numDimensions = 3;
-        createInfo.numFaces = 6;
-        break;
+        case QOpenGLTexture::TargetCubeMapArray:
+            createInfo.isArray = KTX_TRUE;
+            createInfo.numLayers = static_cast<ktx_uint32_t>(layers);
+            [[fallthrough]];
+        case QOpenGLTexture::TargetCubeMap:
+            createInfo.baseHeight = static_cast<ktx_uint32_t>(height);
+            createInfo.numDimensions = 3;
+            createInfo.numFaces = 6;
+            break;
 
-      default:
-        return false;
+        default:
+            return false;
     }
+
+    createInfo.numLevels = (!canGenerateMipmaps(format) ? 1 :
+        getLevelCount(createInfo));
 
     auto texture = std::add_pointer_t<ktxTexture>{ };
     if (ktxTexture_Create(&createInfo, KTX_TEXTURE_CREATE_ALLOC_STORAGE,
-        &texture) == KTX_SUCCESS) {
-      mTarget = target;
-      mKtxTexture.reset(texture, &ktxTexture_Destroy);
-      clear();
-      return true;
+            &texture) == KTX_SUCCESS) {
+        mTarget = target;
+        mKtxTexture.reset(texture, &ktxTexture_Destroy);
+        clear();
+        return true;
     }
     return false;
 }
@@ -253,12 +441,12 @@ bool TextureData::save(const QString &fileName) const
 {
     if (fileName.toLower().endsWith(".ktx") &&
         ktxTexture_WriteToNamedFile(mKtxTexture.get(), 
-        fileName.toUtf8().constData()))
-      return true;
+            fileName.toUtf8().constData()))
+        return true;
 
     auto image = toImage();
-    if (!image.isNull())
-      return false;
+    if (image.isNull())
+        return false;
 
     return image.save(fileName);
 }
@@ -362,6 +550,10 @@ uchar *TextureData::getWriteonlyData(int level, int layer, int face)
     if (mKtxTexture.use_count() > 1)
         create(target(), format(), width(), height(), depth(), layers());
 
+    // generate mipmaps on next upload when level 0 is written
+    mKtxTexture->generateMipmaps =
+        (level == 0 && canGenerateMipmaps(format()) ? KTX_TRUE : KTX_FALSE);
+
     return const_cast<uchar*>(
         static_cast<const TextureData*>(this)->getData(level, layer, face));
 }
@@ -388,12 +580,14 @@ int TextureData::getLevelSize(int level) const
           static_cast<ktx_uint32_t>(level))));
 }
 
-bool TextureData::upload(GLuint textureId)
+bool TextureData::upload(GLuint textureId,
+    QOpenGLTexture::TextureFormat format)
 {
-    return upload(&textureId);
+    return upload(&textureId, format);
 }
 
-bool TextureData::upload(GLuint *textureId)
+bool TextureData::upload(GLuint *textureId,
+    QOpenGLTexture::TextureFormat format)
 {
     if (isNull() || !textureId)
         return false;
@@ -402,16 +596,20 @@ bool TextureData::upload(GLuint *textureId)
     initializeKtxOpenGLFunctions();
 #endif
 
-    const auto format =
-        static_cast<QOpenGLTexture::PixelFormat>(mKtxTexture->glFormat);
-    mKtxTexture->generateMipmaps =
-        (canGenerateMipmaps(format) ? KTX_TRUE : KTX_FALSE);
-
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     auto target = static_cast<GLenum>(mTarget);
     auto error = GLenum{ };
-    return (ktxTexture_GLUpload(
+
+    const auto originalFormat = mKtxTexture->glInternalformat;
+    if (format)
+        mKtxTexture->glInternalformat = static_cast<ktx_uint32_t>(format);
+
+    const auto result = (ktxTexture_GLUpload(
         mKtxTexture.get(), textureId, &target, &error) == KTX_SUCCESS);
+
+    mKtxTexture->glInternalformat = originalFormat;
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
+    return result;
 }
 
 bool TextureData::download(GLuint textureId)
@@ -428,17 +626,17 @@ bool TextureData::download(GLuint textureId)
         for (auto layer = 0; layer < layers(); ++layer)
             for (auto face = 0; face < faces(); ++face) {
                 auto data = getWriteonlyData(level, layer, face);
-                switch (mTarget) {
-                    case QOpenGLTexture::Target1D:
-                    case QOpenGLTexture::Target2D:
-                    case QOpenGLTexture::TargetRectangle:
-                        gl.glGetTexImage(mTarget, level,
-                            pixelFormat(), pixelType(), data);
-                        break;
-
-                    // TODO:
-                    default:
+                if (mKtxTexture->isCompressed) {
+                    auto size = GLint{ };
+                    gl.glGetTexLevelParameteriv(mTarget, level,
+                        GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size);
+                    if (size > getLevelSize(level))
                         return false;
+                    gl.glGetCompressedTexImage(mTarget, level, data);
+                }
+                else {
+                    gl.glGetTexImage(mTarget, level,
+                        pixelFormat(), pixelType(), data);
                 }
             }
 
@@ -450,9 +648,9 @@ void TextureData::clear()
     if (isNull())
         return;
 
-    for (auto level = 0; level < levels(); ++level)
-        for (auto layer = 0; layer < layers(); ++layer)
-            for (auto face = 0; face < faces(); ++face)
-                std::memset(getWriteonlyData(level, layer, face), 
-                    0xFF, static_cast<size_t>(getLevelSize(level)));
+    const auto level = 0;
+    for (auto layer = 0; layer < layers(); ++layer)
+        for (auto face = 0; face < faces(); ++face)
+            std::memset(getWriteonlyData(level, layer, face),
+                0xFF, static_cast<size_t>(getLevelSize(level)));
 }

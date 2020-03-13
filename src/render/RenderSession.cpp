@@ -373,12 +373,16 @@ void RenderSession::render()
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 
-    auto& context = GLContext::currentContext();
-    if (!context) {
+    auto& gl = GLContext::currentContext();
+    if (!gl) {
         mMessages += MessageList::insert(
             0, MessageType::OpenGLVersionNotAvailable, "3.3");
         return;
     }
+
+    gl.glEnable(GL_FRAMEBUFFER_SRGB);
+    gl.glEnable(GL_PROGRAM_POINT_SIZE);
+    gl.glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
 
     QOpenGLVertexArrayObject::Binder vaoBinder(&mCommandQueue->vao);
     reuseUnmodifiedItems();
@@ -386,7 +390,7 @@ void RenderSession::render()
     downloadModifiedResources();
     outputTimerQueries();
 
-    context.glFlush();
+    gl.glFlush();
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 }
 
@@ -421,10 +425,12 @@ void RenderSession::executeCommandQueue()
 
 void RenderSession::downloadModifiedResources()
 {
-    for (auto &[itemId, texture] : mCommandQueue->textures)
+    for (auto &[itemId, texture] : mCommandQueue->textures) {
+        texture.updateMipmaps();
         if (!gZeroCopyPreview || mItemsChanged)
             if (texture.download())
                 mModifiedTextures[texture.itemId()] = texture.data();
+    }
 
     for (auto &[itemId, buffer] : mCommandQueue->buffers)
         if (buffer.download())
@@ -469,8 +475,7 @@ void RenderSession::finish()
         if (gZeroCopyPreview && !mItemsChanged)
             if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
                 if (auto editor = editors.getTextureEditor(fileItem->fileName))
-                    editor->updatePreviewTexture(texture.target(), texture.format(),
-                        texture.getReadOnlyTextureId());
+                    editor->updatePreviewTexture(texture.getReadOnlyTextureId());
 
     mPrevMessages.clear();
 

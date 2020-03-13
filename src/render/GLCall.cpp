@@ -96,14 +96,11 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         case Call::CallType::CopyBuffer:
             executeCopyBuffer(messages);
             break;
-        case Call::CallType::GenerateMipmaps:
-            executeGenerateMipmaps(messages);
-            break;
     }
 
     auto &gl = GLContext::currentContext();
     if (gl.v4_2)
-      gl.v4_2->glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        gl.v4_2->glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     const auto error = glGetError();
     if (error != GL_NO_ERROR)
@@ -230,93 +227,84 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 
 void GLCall::executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
+    if (!mProgram) {
+        messages += MessageList::insert(
+            mCall.id, MessageType::ProgramNotAssigned);
+        return;
+    }
+
     const auto evaluate = [&](const auto &expression) {
         return static_cast<GLuint>(scriptEngine.evaluateValue(
             expression, mCall.id, messages));
     };
-    if (mProgram) {
-        auto &gl = GLContext::currentContext();
-        auto guard = beginTimerQuery();
-        if (auto gl43 = check(gl.v4_3, mCall.id, messages))
-            gl43->glDispatchCompute(
-                evaluate(mCall.workGroupsX),
-                evaluate(mCall.workGroupsY),
-                evaluate(mCall.workGroupsZ));
-    }
-    else {
-        messages += MessageList::insert(
-            mCall.id, MessageType::ProgramNotAssigned);
-    }
+    auto &gl = GLContext::currentContext();
+    auto guard = beginTimerQuery();
+    if (auto gl43 = check(gl.v4_3, mCall.id, messages))
+        gl43->glDispatchCompute(
+            evaluate(mCall.workGroupsX),
+            evaluate(mCall.workGroupsY),
+            evaluate(mCall.workGroupsZ));
 }
 
 void GLCall::executeClearTexture(MessagePtrSet &messages)
 {
-    if (mTexture) {
-        auto guard = beginTimerQuery();
-        mTexture->clear({
-                mCall.clearColor.redF(),
-                mCall.clearColor.greenF(),
-                mCall.clearColor.blueF(),
-                mCall.clearColor.alphaF()
-            },
-            mCall.clearDepth, mCall.clearStencil);
-        mUsedItems += mTexture->usedItems();
-    }
-    else {
+    if (!mTexture) {
         messages += MessageList::insert(
             mCall.id, MessageType::TextureNotAssigned);
+        return;
     }
+
+    auto guard = beginTimerQuery();
+    const auto color = std::array<double, 4>{
+        mCall.clearColor.redF(),
+        mCall.clearColor.greenF(),
+        mCall.clearColor.blueF(),
+        mCall.clearColor.alphaF()
+    };
+    if (!mTexture->clear(color, mCall.clearDepth, mCall.clearStencil))
+        messages += MessageList::insert(
+            mCall.id, MessageType::ClearingTextureFailed);
+
+    mUsedItems += mTexture->usedItems();
 }
 
 void GLCall::executeCopyTexture(MessagePtrSet &messages)
 {
-    if (mTexture && mFromTexture) {
-        auto guard = beginTimerQuery();
-        mTexture->copy(*mFromTexture);
-        mUsedItems += mTexture->usedItems();
-        mUsedItems += mFromTexture->usedItems();
-    }
-    else {
+    if (!mTexture || !mFromTexture) {
         messages += MessageList::insert(
             mCall.id, MessageType::TextureNotAssigned);
+        return;
     }
+    auto guard = beginTimerQuery();
+    if (!mTexture->copy(*mFromTexture))
+        messages += MessageList::insert(
+            mCall.id, MessageType::CopyingTextureFailed);
+
+    mUsedItems += mTexture->usedItems();
+    mUsedItems += mFromTexture->usedItems();
 }
 
 void GLCall::executeClearBuffer(MessagePtrSet &messages)
 {
-    if (mBuffer) {
-        auto guard = beginTimerQuery();
-        mBuffer->clear();
-        mUsedItems += mBuffer->usedItems();
-    }
-    else {
+    if (!mBuffer) {
         messages += MessageList::insert(
             mCall.id, MessageType::BufferNotAssigned);
+        return;
     }
+    auto guard = beginTimerQuery();
+    mBuffer->clear();
+    mUsedItems += mBuffer->usedItems();
 }
 
 void GLCall::executeCopyBuffer(MessagePtrSet &messages)
 {
-    if (mBuffer && mFromBuffer) {
-        auto guard = beginTimerQuery();
-        mBuffer->copy(*mFromBuffer);
-        mUsedItems += mBuffer->usedItems();
-        mUsedItems += mFromBuffer->usedItems();
-    }
-    else {
+    if (!mBuffer || !mFromBuffer) {
         messages += MessageList::insert(
             mCall.id, MessageType::BufferNotAssigned);
+        return;
     }
-}
-void GLCall::executeGenerateMipmaps(MessagePtrSet &messages)
-{
-    if (mTexture) {
-        auto guard = beginTimerQuery();
-        mTexture->generateMipmaps();
-        mUsedItems += mTexture->usedItems();
-    }
-    else {
-        messages += MessageList::insert(
-            mCall.id, MessageType::TextureNotAssigned);
-    }
+    auto guard = beginTimerQuery();
+    mBuffer->copy(*mFromBuffer);
+    mUsedItems += mBuffer->usedItems();
+    mUsedItems += mFromBuffer->usedItems();
 }

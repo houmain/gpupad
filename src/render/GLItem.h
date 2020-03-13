@@ -5,7 +5,7 @@
 #include "GLObject.h"
 #include "Singletons.h"
 #include "session/SessionModel.h"
-#include "session/ItemFunctions.h"
+#include "session/Item.h"
 #include "MessageList.h"
 #include "FileDialog.h"
 #include "FileCache.h"

@@ -171,7 +171,7 @@ bool FileDialog::exec(Options options, QString currentFileName)
                 QMessageBox dialog(mWindow);
                 dialog.setIcon(QMessageBox::Warning);
                 dialog.setWindowTitle(tr("File Error"));
-                dialog.setText(tr("Error while saving file '%1'.").arg(fileName));
+                dialog.setText(tr("Saving failed. The path is not writeable."));
                 dialog.addButton(QMessageBox::Ok);
                 dialog.exec();
                 return false;

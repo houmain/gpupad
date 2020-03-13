@@ -6,6 +6,7 @@
 #include "editors/EditorManager.h"
 #include "FileCache.h"
 #include <QDataWidgetMapper>
+#include <QDebug>
 
 namespace {
     enum FormatType
@@ -40,6 +41,7 @@ namespace {
         Normalized555_1,
         Normalized565,
         Normalized9_E5,
+        Normalized10,
         sRGB8,
         Float11_11_10,
         UnsignedInt10_10_10_2,
@@ -155,7 +157,7 @@ namespace {
         ADD(Texture::Format::RGB5A1, FormatType::RGBA, FormatData::Normalized555_1)
         ADD(Texture::Format::RGBA8_UNorm, FormatType::RGBA, FormatData::Normalized8)
         ADD(Texture::Format::RGBA8_SNorm, FormatType::RGBA, FormatData::SignedNormalized8)
-        ADD(Texture::Format(GL_RGB10_A2), FormatType::RGBA, FormatData::Normalized10_10_10_2)
+//        ADD(GL_RGB10_A2, FormatType::RGBA, FormatData::Normalized10_10_10_2)
 //        ADD(GL_RGBA12, FormatType::RGBA, FormatData::Normalized12)
         ADD(Texture::Format::RGBA16_UNorm, FormatType::RGBA, FormatData::Normalized16)
         ADD(Texture::Format::RGBA16_SNorm, FormatType::RGBA, FormatData::SignedNormalized16)
@@ -306,6 +308,9 @@ void TextureProperties::setFormat(QVariant value)
             mUi->formatData->setCurrentData(it->second.second);
             emit formatChanged();
         }
+        else {
+            qDebug() << "unknown format " << value.toInt();
+        }
     }
 }
 
@@ -338,6 +343,7 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
         { "8 Bit Unsigned Int", FormatData::UnsignedInt8 },
         { "8 Bit Signed Int", FormatData::SignedInt8 },
         { "9 Bit, 5 Bit Exponent", FormatData::Normalized9_E5 },
+        { "10 Bit", FormatData::Normalized10 },
         { "10/10/10/2 Bit", FormatData::Normalized10_10_10_2 },
         { "10/10/10/2 Bit Unsigned Int", FormatData::UnsignedInt10_10_10_2 },
         { "11/11/10 Bit Float", FormatData::Float11_11_10 },

@@ -1,7 +1,7 @@
 #ifndef ATTACHMENTPROPERTIES_H
 #define ATTACHMENTPROPERTIES_H
 
-#include "ItemFunctions.h"
+#include "Item.h"
 #include <QWidget>
 #include <QVariant>
 

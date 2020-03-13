@@ -8,6 +8,7 @@
 class TextureData
 {
 public:
+    bool isSharedWith(const TextureData &other) const;
     bool create(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format,
         int width, int height, int depth, int layers);
@@ -37,8 +38,10 @@ public:
     uchar *getWriteonlyData(int level, int layer, int face);
     const uchar *getData(int level, int layer, int face) const;
     int getLevelSize(int level) const;
-    bool upload(GLuint textureId);
-    bool upload(GLuint *textureId);
+    bool upload(GLuint textureId, QOpenGLTexture::TextureFormat format =
+        QOpenGLTexture::TextureFormat::NoFormat);
+    bool upload(GLuint *textureId, QOpenGLTexture::TextureFormat format =
+        QOpenGLTexture::TextureFormat::NoFormat);
     bool download(GLuint textureId);
 
     friend bool operator==(const TextureData &a, const TextureData &b);
@@ -49,3 +52,22 @@ private:
     std::shared_ptr<ktxTexture> mKtxTexture;
 };
 
+enum class TextureDataType
+{
+    Normalized,
+    Normalized_sRGB,
+    Float,
+    Int8,
+    Int16,
+    Int32,
+    Uint8,
+    Uint16,
+    Uint32,
+    Uint_10_10_10_2,
+    Compressed,
+};
+
+TextureDataType getTextureDataType(
+    const QOpenGLTexture::TextureFormat &format);
+int getTextureComponentCount(
+    QOpenGLTexture::TextureFormat format);
