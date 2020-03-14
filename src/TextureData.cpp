@@ -132,8 +132,21 @@ namespace {
         return levels;
     }
 
-    bool canGenerateMipmaps(const QOpenGLTexture::TextureFormat &format)
+    bool canGenerateMipmaps(const QOpenGLTexture::Target target,
+        const QOpenGLTexture::TextureFormat format)
     {
+        switch (target) {
+            case QOpenGLTexture::Target1D:
+            case QOpenGLTexture::Target1DArray:
+            case QOpenGLTexture::Target2D:
+            case QOpenGLTexture::Target2DArray:
+            case QOpenGLTexture::Target3D:
+            case QOpenGLTexture::TargetCubeMap:
+            case QOpenGLTexture::TargetCubeMapArray:
+                break;
+            default:
+                return false;
+        }
         const auto dataType = getTextureDataType(format);
         return (dataType == TextureDataType::Normalized ||
                 dataType == TextureDataType::Float);
@@ -398,7 +411,7 @@ bool TextureData::create(
             return false;
     }
 
-    createInfo.numLevels = (!canGenerateMipmaps(format) ? 1 :
+    createInfo.numLevels = (!canGenerateMipmaps(target, format) ? 1 :
         getLevelCount(createInfo));
 
     auto texture = std::add_pointer_t<ktxTexture>{ };
@@ -551,8 +564,8 @@ uchar *TextureData::getWriteonlyData(int level, int layer, int face)
         create(target(), format(), width(), height(), depth(), layers());
 
     // generate mipmaps on next upload when level 0 is written
-    mKtxTexture->generateMipmaps =
-        (level == 0 && canGenerateMipmaps(format()) ? KTX_TRUE : KTX_FALSE);
+    mKtxTexture->generateMipmaps = (level == 0 &&
+        canGenerateMipmaps(target(), format()) ? KTX_TRUE : KTX_FALSE);
 
     return const_cast<uchar*>(
         static_cast<const TextureData*>(this)->getData(level, layer, face));
@@ -622,24 +635,21 @@ bool TextureData::download(GLuint textureId)
     gl.initializeOpenGLFunctions();
     gl.glBindTexture(mTarget, textureId);
 
-    for (auto level = 0; level < levels(); ++level)
-        for (auto layer = 0; layer < layers(); ++layer)
-            for (auto face = 0; face < faces(); ++face) {
-                auto data = getWriteonlyData(level, layer, face);
-                if (mKtxTexture->isCompressed) {
-                    auto size = GLint{ };
-                    gl.glGetTexLevelParameteriv(mTarget, level,
-                        GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size);
-                    if (size > getLevelSize(level))
-                        return false;
-                    gl.glGetCompressedTexImage(mTarget, level, data);
-                }
-                else {
-                    gl.glGetTexImage(mTarget, level,
-                        pixelFormat(), pixelType(), data);
-                }
-            }
-
+    for (auto level = 0; level < levels(); ++level) {
+        auto data = getWriteonlyData(level, 0, 0);
+        if (mKtxTexture->isCompressed) {
+            auto size = GLint{ };
+            gl.glGetTexLevelParameteriv(mTarget, level,
+                GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size);
+            if (size > getLevelSize(level))
+                return false;
+            gl.glGetCompressedTexImage(mTarget, level, data);
+        }
+        else {
+            gl.glGetTexImage(mTarget, level,
+                pixelFormat(), pixelType(), data);
+        }
+    }
     return (glGetError() == GL_NO_ERROR);
 }
 

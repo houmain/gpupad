@@ -241,7 +241,7 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
         { "3D Texture", QOpenGLTexture::Target3D },
         { "CubeMap Texture", QOpenGLTexture::TargetCubeMap },
         { "CubeMap Texture Array", QOpenGLTexture::TargetCubeMapArray },
-        { "Rectangle Texture", QOpenGLTexture::TargetRectangle },
+        //{ "Rectangle Texture", QOpenGLTexture::TargetRectangle },
         //{ "Buffer Texture", QOpenGLTexture::TargetBuffer },
     });
 

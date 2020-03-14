@@ -29,7 +29,7 @@ public:
 
 private:
     GLObject createFramebuffer(GLuint textureId, int level) const;
-    void reload(bool writeable);
+    void reload();
     void createTexture();
     void upload();
     bool copyTexture(GLuint sourceTextureId,

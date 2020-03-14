@@ -42,8 +42,11 @@ void main() {
 static constexpr auto fragmentShaderSource = R"(
 
 uniform SAMPLER uTexture;
+uniform vec2 uSize;
+uniform float uLevel;
 uniform float uLayer;
-uniform int uLevel;
+uniform float uFace;
+uniform int uSample;
 
 in vec2 vTexCoord;
 out vec4 oColor;
@@ -62,7 +65,7 @@ vec3 linearToSrgb(vec3 value) {
 }
 
 void main() {
-  vec4 color = vec4(texture(uTexture, SAMPLECOORDS));
+  vec4 color = vec4(SAMPLE);
   color = MAPPING;
   color = SWIZZLE;
   oColor = color;
@@ -74,22 +77,22 @@ void main() {
     {
         struct TargetVersion {
             QString sampler;
-            QString samplecoords;
+            QString sample;
         };
         struct DataTypeVersion {
             QString prefix;
             QString mapping;
         };
         static auto sTargetVersions = std::map<QOpenGLTexture::Target, TargetVersion>{
-            { QOpenGLTexture::Target1D, { "sampler1D", "vTexCoord.x" } },
-            { QOpenGLTexture::Target1DArray, { "sampler1DArray", "vTexCoord.x, uLayer" } },
-            { QOpenGLTexture::Target2D, { "sampler2D", "vTexCoord.xy" } },
-            { QOpenGLTexture::Target2DArray, { "sampler2DArray", "vTexCoord.xy, uLayer" } },
-            { QOpenGLTexture::Target3D, { "sampler2DArray", "vTexCoord.xy" } },
-            { QOpenGLTexture::TargetCubeMap, { "samplerCube", "vec3(vTexCoord.xy, 0)" } },
-            { QOpenGLTexture::TargetCubeMapArray,  { "samplerCubeArray", "vec3(vTexCoord.xy, 0), uLayer" } },
-            { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "vTexCoord.xy" } },
-            { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "vTexCoord.xy, uLayer" } },
+            { QOpenGLTexture::Target1D, { "sampler1D", "textureLod(S, TC.x, uLevel)" } },
+            { QOpenGLTexture::Target1DArray, { "sampler1DArray", "textureLod(S, vec2(TC.x, uLayer), uLevel)" } },
+            { QOpenGLTexture::Target2D, { "sampler2D", "textureLod(S, TC, uLevel)" } },
+            { QOpenGLTexture::Target2DArray, { "sampler2DArray", "textureLod(S, vec3(TC, uLayer), uLevel)" } },
+            { QOpenGLTexture::Target3D, { "sampler3D", "textureLod(S, vec3(TC, uLayer), uLevel)" } },
+            { QOpenGLTexture::TargetCubeMap, { "samplerCube", "textureLod(S, vec3(TC, uFace), uLevel)" } },
+            { QOpenGLTexture::TargetCubeMapArray,  { "samplerCubeArray", "textureLod(S, vec4(TC, uFace, uLayer), uLevel)" } },
+            { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "texelFetch(S, ivec2(TC * uSize), uSample)" } },
+            { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "texelFetch(S, ivec3(TC * uSize, uLayer), uSample)" } },
         };
         static auto sDataTypeVersions = std::map<TextureDataType, DataTypeVersion>{
             { TextureDataType::Normalized, { "", "color" } },
@@ -115,28 +118,28 @@ void main() {
         const auto dataTypeVersion = sDataTypeVersions[dataType];
         const auto swizzle = sComponetSwizzle[getTextureComponentCount(format)];
         return "#version 330\n"
+               "#define S uTexture\n"
+               "#define TC vTexCoord\n"
                "#define SAMPLER " + dataTypeVersion.prefix + targetVersion.sampler + "\n"
-               "#define SAMPLECOORDS " + targetVersion.samplecoords + "\n" +
+               "#define SAMPLE " + targetVersion.sample + "\n" +
                "#define MAPPING " + dataTypeVersion.mapping + "\n" +
                "#define SWIZZLE " + swizzle + "\n" +
                fragmentShaderSource;
     }
 
-    void buildProgram(QOpenGLShaderProgram &program,
+    bool buildProgram(QOpenGLShaderProgram &program,
         QOpenGLTexture::Target target, QOpenGLTexture::TextureFormat format)
     {
         program.create();
-
         auto vertexShader = new QOpenGLShader(QOpenGLShader::Vertex, &program);
-        vertexShader->compileSourceCode(vertexShaderSource);
-        program.addShader(vertexShader);
-
         auto fragmentShader = new QOpenGLShader(QOpenGLShader::Fragment, &program);
-        fragmentShader->compileSourceCode(
-            buildFragmentShader(target, format));
+        if (!vertexShader->compileSourceCode(vertexShaderSource))
+            return false;
+        if (!fragmentShader->compileSourceCode(buildFragmentShader(target, format)))
+            return false;
+        program.addShader(vertexShader);
         program.addShader(fragmentShader);
-
-        program.link();
+        return program.link();
     }
 } // namespace
 
@@ -184,13 +187,17 @@ public:
         return mGL;
     }
 
-    QOpenGLShaderProgram &getProgram(
-        QOpenGLTexture::Target target, QOpenGLTexture::TextureFormat format)
+    QOpenGLShaderProgram *getProgram(QOpenGLTexture::Target target,
+        QOpenGLTexture::TextureFormat format)
     {
-        auto &program = mPrograms[std::make_tuple(target, format)];
+        const auto key = std::make_tuple(target, format);
+        auto &program = mPrograms[key];
         if (!program.isLinked())
-            buildProgram(program, target, format);
-        return program;
+            if (!buildProgram(program, target, format)) {
+                mPrograms.erase(key);
+                return nullptr;
+            }
+        return &program;
     }
 };
 
@@ -200,6 +207,7 @@ class ZeroCopyItem : public QGraphicsItem
     QRect mBoundingRect;
     TextureData mImage;
     GLuint mImageTextureId{ };
+    QOpenGLTexture::Target mPreviewTarget{ };
     GLuint mPreviewTextureId{ };
     bool mMagnifyLinear{ };
     bool mUpload{ };
@@ -222,11 +230,10 @@ class ZeroCopyItem : public QGraphicsItem
         Q_ASSERT(glGetError() == GL_NO_ERROR);
         auto &gl = mContext.gl();
 
-        const auto target = mImage.target();
-        gl.glEnable(target);
-
+        auto target = mImage.target();
         if (mPreviewTextureId) {
             Singletons::glShareSynchronizer().beginUsage(gl);
+            target = mPreviewTarget;
             gl.glBindTexture(target, mPreviewTextureId);
         }
         else {
@@ -236,32 +243,40 @@ class ZeroCopyItem : public QGraphicsItem
         gl.glEnable(GL_BLEND);
         gl.glBlendEquation(GL_FUNC_ADD);
         gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        if (mImage.levels() > 1) {
-            gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        }
-        else {
-            gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        if (target != QOpenGLTexture::Target2DMultisample &&
+            target != QOpenGLTexture::Target2DMultisampleArray) {
+
+            gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            if (mImage.levels() > 1) {
+                gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            }
+            else {
+                gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            }
         }
 
-        auto &program = mContext.getProgram(target, mImage.format());
-        program.bind();
-        program.setUniformValue("uTexture", 0);
-        program.setUniformValue("uTransform", transform);
-        program.setUniformValue("uLevel", 0);
-        program.setUniformValue("uLayer", 0);
-
-        gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        if (auto *program = mContext.getProgram(target, mImage.format())) {
+            program->bind();
+            program->setUniformValue("uTexture", 0);
+            program->setUniformValue("uTransform", transform);
+            program->setUniformValue("uSize",
+                QPointF(mBoundingRect.width(), mBoundingRect.height()));
+            program->setUniformValue("uLevel", 0.0f);
+            program->setUniformValue("uFace", 0.0f);
+            program->setUniformValue("uLayer", 0.0f);
+            program->setUniformValue("uSample", 0);
+            gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        }
 
         if (mPreviewTextureId) {
             gl.glBindTexture(target, 0);
             Singletons::glShareSynchronizer().endUsage(gl);
         }
-        gl.glDisable(target);
         return (glGetError() == GL_NO_ERROR);
     }
 
@@ -283,9 +298,10 @@ public:
         update();
     }
 
-    void setPreviewTexture(GLuint textureId)
+    void setPreviewTexture(QOpenGLTexture::Target target, GLuint textureId)
     {
         if (!mImage.isNull()) {
+            mPreviewTarget = target;
             mPreviewTextureId = textureId;
             update();
         }
@@ -466,10 +482,11 @@ void TextureEditor::replace(TextureData texture, bool emitDataChanged)
         emit dataChanged();
 }
 
-void TextureEditor::updatePreviewTexture(GLuint textureId)
+void TextureEditor::updatePreviewTexture(
+    QOpenGLTexture::Target target, GLuint textureId)
 {
     if (mZeroCopyItem)
-        mZeroCopyItem->setPreviewTexture(textureId);
+        mZeroCopyItem->setPreviewTexture(target, textureId);
 }
 
 void TextureEditor::setModified(bool modified)

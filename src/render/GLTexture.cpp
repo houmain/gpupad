@@ -15,6 +15,13 @@ GLTexture::GLTexture(const Texture &texture)
     , mKind(getKind(texture))
     , mMultisampleTarget(texture.target)
 {
+    if (mKind.dimensions < 2)
+        mHeight = 1;
+    if (mKind.dimensions < 3)
+        mDepth = 1;
+    if (!mKind.array)
+        mLayers = 1;
+
     if (mTarget == QOpenGLTexture::Target2DMultisample) {
         mMultisampleTarget = mTarget;
         mTarget = QOpenGLTexture::Target2D;
@@ -34,7 +41,7 @@ bool GLTexture::operator==(const GLTexture &rhs) const
 
 GLuint GLTexture::getReadOnlyTextureId()
 {
-    reload(false);
+    reload();
     createTexture();
     upload();
     return (mMultisampleTexture ? mMultisampleTexture : mTextureObject);
@@ -42,7 +49,7 @@ GLuint GLTexture::getReadOnlyTextureId()
 
 GLuint GLTexture::getReadWriteTextureId()
 {
-    reload(true);
+    reload();
     createTexture();
     upload();
     mDeviceCopyModified = true;
@@ -174,7 +181,7 @@ bool GLTexture::updateMipmaps()
     return (glGetError() == GL_NO_ERROR);
 }
 
-void GLTexture::reload(bool writeable)
+void GLTexture::reload()
 {
     auto fileData = TextureData{ };
     if (!FileDialog::isEmptyOrUntitled(mFileName))
@@ -182,7 +189,7 @@ void GLTexture::reload(bool writeable)
             mMessages += MessageList::insert(mItemId,
                 MessageType::LoadingFileFailed, mFileName);
 
-    // when writeable apply requested dimensions, otherwise keep file's
+    // reload file as long as dimensions match (format is ignored)
     const auto sameDimensions = [&](const TextureData &data) {
         return (mTarget == data.target() &&
                 mWidth == data.width() &&
@@ -194,7 +201,7 @@ void GLTexture::reload(bool writeable)
         mSystemCopyModified |= !mData.isSharedWith(fileData);
         mData = fileData;
     }
-    else if (mData.isNull() || (writeable && !sameDimensions(mData))) {
+    else if (mData.isNull()) {
         if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers)) {
             mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1);
             mMessages += MessageList::insert(mItemId,
@@ -221,8 +228,19 @@ void GLTexture::createTexture()
     };
 
     mTextureObject = GLObject(createTexture(), freeTexture);
-    if (mMultisampleTarget != mTarget)
+    if (mMultisampleTarget != mTarget) {
         mMultisampleTexture = GLObject(createTexture(), freeTexture);
+        gl.glBindTexture(mMultisampleTarget, mMultisampleTexture);
+        // TODO: check sample limits
+        if (mMultisampleTarget == QOpenGLTexture::Target2DMultisample) {
+            gl.glTexImage2DMultisample(mMultisampleTarget, mSamples,
+                mFormat, mWidth, mHeight, GL_FALSE);
+        }
+        else {
+            gl.glTexImage3DMultisample(mMultisampleTarget, mSamples,
+                mFormat, mWidth, mHeight, mLayers, GL_FALSE);
+        }
+    }
 }
 
 void GLTexture::upload()
@@ -281,19 +299,12 @@ GLObject GLTexture::createFramebuffer(GLuint textureId, int level) const
     else if (mKind.stencil)
         attachment = GL_STENCIL_ATTACHMENT;
 
-    auto prevFramebufferId = GLint();
-    gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFramebufferId);
-
     auto fbo = GLObject(createFBO(), freeFBO);
     gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment, textureId, level);
     auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE)
         fbo.reset();
-
-    gl.glBindFramebuffer(GL_FRAMEBUFFER,
-        static_cast<GLuint>(prevFramebufferId));
-
     return fbo;
 }
 
@@ -316,13 +327,9 @@ bool GLTexture::copyTexture(GLuint sourceTextureId,
     else if (mKind.stencil)
         blitMask = GL_STENCIL_BUFFER_BIT;
 
-    auto prevFramebufferId = GLint();
-    gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFramebufferId);
     gl.glBindFramebuffer(GL_READ_FRAMEBUFFER, sourceFbo);
     gl.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destFbo);
     gl.glBlitFramebuffer(0, 0, width, height, 0, 0,
         width, height, blitMask, GL_NEAREST);
-    gl.glBindFramebuffer(GL_FRAMEBUFFER,
-        static_cast<GLuint>(prevFramebufferId));
     return true;
 }

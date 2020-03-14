@@ -475,7 +475,8 @@ void RenderSession::finish()
         if (gZeroCopyPreview && !mItemsChanged)
             if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
                 if (auto editor = editors.getTextureEditor(fileItem->fileName))
-                    editor->updatePreviewTexture(texture.getReadOnlyTextureId());
+                    editor->updatePreviewTexture(texture.target(),
+                        texture.getReadOnlyTextureId());
 
     mPrevMessages.clear();
 

@@ -27,7 +27,7 @@ public:
     int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }
     void replace(TextureData texture, bool emitDataChanged = true);
-    void updatePreviewTexture(GLuint textureId);
+    void updatePreviewTexture(QOpenGLTexture::Target target, GLuint textureId);
     const TextureData &texture() const { return mTexture; }
 
 signals:
