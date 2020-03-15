@@ -11,7 +11,7 @@ public:
     bool isSharedWith(const TextureData &other) const;
     bool create(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format,
-        int width, int height, int depth, int layers);
+        int width, int height, int depth, int layers, int samples);
     bool load(const QString &fileName);
     bool save(const QString &fileName) const;
     bool isNull() const;
@@ -35,6 +35,7 @@ public:
     int levels() const;
     int layers() const;
     int faces() const;
+    int samples() const { return mSamples; }
     uchar *getWriteonlyData(int level, int layer, int face);
     const uchar *getData(int level, int layer, int face) const;
     int getLevelSize(int level) const;
@@ -48,7 +49,12 @@ public:
     friend bool operator!=(const TextureData &a, const TextureData &b);
 
 private:
+    bool uploadMultisample(GLuint *textureId,
+        QOpenGLTexture::TextureFormat format);
+    bool downloadMultisample(GLuint textureId);
+
     QOpenGLTexture::Target mTarget{ };
+    int mSamples{ };
     std::shared_ptr<ktxTexture> mKtxTexture;
 };
 

@@ -13,7 +13,6 @@ GLTexture::GLTexture(const Texture &texture)
     , mLayers(texture.layers)
     , mSamples(texture.samples)
     , mKind(getKind(texture))
-    , mMultisampleTarget(texture.target)
 {
     if (mKind.dimensions < 2)
         mHeight = 1;
@@ -22,14 +21,6 @@ GLTexture::GLTexture(const Texture &texture)
     if (!mKind.array)
         mLayers = 1;
 
-    if (mTarget == QOpenGLTexture::Target2DMultisample) {
-        mMultisampleTarget = mTarget;
-        mTarget = QOpenGLTexture::Target2D;
-    }
-    else if (mTarget == QOpenGLTexture::Target2DMultisampleArray) {
-        mMultisampleTarget = mTarget;
-        mTarget = QOpenGLTexture::Target2DArray;
-    }
     mUsedItems += texture.id;
 }
 
@@ -44,7 +35,7 @@ GLuint GLTexture::getReadOnlyTextureId()
     reload();
     createTexture();
     upload();
-    return (mMultisampleTexture ? mMultisampleTexture : mTextureObject);
+    return mTextureObject;
 }
 
 GLuint GLTexture::getReadWriteTextureId()
@@ -54,7 +45,7 @@ GLuint GLTexture::getReadWriteTextureId()
     upload();
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
-    return (mMultisampleTexture ? mMultisampleTexture : mTextureObject);
+    return mTextureObject;
 }
 
 bool GLTexture::clear(std::array<double, 4> color, double depth, int stencil)
@@ -202,8 +193,8 @@ void GLTexture::reload()
         mData = fileData;
     }
     else if (mData.isNull()) {
-        if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers)) {
-            mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1);
+        if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples)) {
+            mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1, 1);
             mMessages += MessageList::insert(mItemId,
                 MessageType::CreatingTextureFailed);
         }
@@ -228,19 +219,6 @@ void GLTexture::createTexture()
     };
 
     mTextureObject = GLObject(createTexture(), freeTexture);
-    if (mMultisampleTarget != mTarget) {
-        mMultisampleTexture = GLObject(createTexture(), freeTexture);
-        gl.glBindTexture(mMultisampleTarget, mMultisampleTexture);
-        // TODO: check sample limits
-        if (mMultisampleTarget == QOpenGLTexture::Target2DMultisample) {
-            gl.glTexImage2DMultisample(mMultisampleTarget, mSamples,
-                mFormat, mWidth, mHeight, GL_FALSE);
-        }
-        else {
-            gl.glTexImage3DMultisample(mMultisampleTarget, mSamples,
-                mFormat, mWidth, mHeight, mLayers, GL_FALSE);
-        }
-    }
 }
 
 void GLTexture::upload()
@@ -253,10 +231,6 @@ void GLTexture::upload()
             mItemId, MessageType::UploadingImageFailed);
         return;
     }
-
-    if (mMultisampleTexture)
-        copyTexture(mTextureObject, mMultisampleTexture, 0);
-
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
@@ -265,15 +239,11 @@ bool GLTexture::download()
     if (!mDeviceCopyModified)
         return false;
 
-    if (mMultisampleTexture)
-        copyTexture(mMultisampleTexture, mTextureObject, 0);
-
     if (!mData.download(mTextureObject)) {
         mMessages += MessageList::insert(
             mItemId, MessageType::DownloadingImageFailed);
         return false;
     }
-
     mSystemCopyModified = mDeviceCopyModified = false;
     return true;
 }

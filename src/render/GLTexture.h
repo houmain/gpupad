@@ -12,7 +12,7 @@ public:
 
     ItemId itemId() const { return mItemId; }
     TextureKind kind() const { return mKind; }
-    Texture::Target target() const { return mMultisampleTarget; }
+    Texture::Target target() const { return mTarget; }
     int width() const { return mWidth; }
     int height() const { return mHeight; }
     int depth() const { return mDepth; }
@@ -49,8 +49,6 @@ private:
     QList<MessagePtr> mMessages;
     TextureKind mKind{ };
     GLObject mTextureObject;
-    Texture::Target mMultisampleTarget{ };
-    GLObject mMultisampleTexture;
     bool mSystemCopyModified{ };
     bool mDeviceCopyModified{ };
     bool mMipmapsInvalidated{ };
