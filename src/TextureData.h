@@ -5,6 +5,8 @@
 #include <memory>
 #include "ktx.h"
 
+class QOpenGLFunctions_3_3_Core;
+
 class TextureData
 {
 public:
@@ -49,9 +51,13 @@ public:
     friend bool operator!=(const TextureData &a, const TextureData &b);
 
 private:
-    bool uploadMultisample(GLuint *textureId,
+    using GL = QOpenGLFunctions_3_3_Core;
+
+    bool uploadMultisample(GL& gl,
         QOpenGLTexture::TextureFormat format);
-    bool downloadMultisample(GLuint textureId);
+    bool download(GL& gl);
+    bool downloadCubemap(GL& gl);
+    bool downloadMultisample(GL& gl);
 
     QOpenGLTexture::Target mTarget{ };
     int mSamples{ };

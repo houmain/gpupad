@@ -127,6 +127,12 @@ namespace {
                 target == QOpenGLTexture::Target2DMultisampleArray);
     }
 
+    bool isCubemapTarget(QOpenGLTexture::Target target)
+    {
+        return (target == QOpenGLTexture::TargetCubeMap ||
+                target == QOpenGLTexture::TargetCubeMapArray);
+    }
+
     ktx_uint32_t getLevelCount(const ktxTextureCreateInfo &info)
     {
         auto dimension = std::max(std::max(
@@ -410,10 +416,11 @@ bool TextureData::create(
         case QOpenGLTexture::TargetCubeMapArray:
             createInfo.isArray = KTX_TRUE;
             createInfo.numLayers = static_cast<ktx_uint32_t>(layers);
+            createInfo.numLayers *= 6;
             [[fallthrough]];
         case QOpenGLTexture::TargetCubeMap:
-            createInfo.baseHeight = static_cast<ktx_uint32_t>(height);
-            createInfo.numDimensions = 3;
+            createInfo.baseHeight = createInfo.baseWidth;
+            createInfo.numDimensions = 2;
             createInfo.numFaces = 6;
             break;
 
@@ -605,6 +612,18 @@ int TextureData::getLevelSize(int level) const
           static_cast<ktx_uint32_t>(level))));
 }
 
+void TextureData::clear()
+{
+    if (isNull())
+        return;
+
+    const auto level = 0;
+    for (auto layer = 0; layer < layers(); ++layer)
+        for (auto face = 0; face < faces(); ++face)
+            std::memset(getWriteonlyData(level, layer, face),
+                0xFF, static_cast<size_t>(getLevelSize(level)));
+}
+
 bool TextureData::upload(GLuint textureId,
     QOpenGLTexture::TextureFormat format)
 {
@@ -617,18 +636,23 @@ bool TextureData::upload(GLuint *textureId,
     if (isNull() || !textureId)
         return false;
 
-    if (isMultisampleTarget(mTarget))
-        return uploadMultisample(textureId, format);
-
-#if defined(_WIN32)
-    initializeKtxOpenGLFunctions();
-#endif
+    if (isMultisampleTarget(mTarget)) {
+        QOpenGLFunctions_3_3_Core gl;
+        gl.initializeOpenGLFunctions();
+        if (!*textureId)
+            glGenTextures(1, textureId);
+        gl.glBindTexture(mTarget, *textureId);
+        return uploadMultisample(gl, format);
+    }
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     const auto originalFormat = mKtxTexture->glInternalformat;
     if (format)
         mKtxTexture->glInternalformat = static_cast<ktx_uint32_t>(format);
 
+#if defined(_WIN32)
+    initializeKtxOpenGLFunctions();
+#endif
     auto target = static_cast<GLenum>(mTarget);
     auto error = GLenum{ };
     const auto result = (ktxTexture_GLUpload(
@@ -644,55 +668,23 @@ bool TextureData::download(GLuint textureId)
     if (isNull() || !textureId)
         return false;
 
-    if (isMultisampleTarget(mTarget))
-        return downloadMultisample(textureId);
-
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     QOpenGLFunctions_3_3_Core gl;
     gl.initializeOpenGLFunctions();
     gl.glBindTexture(mTarget, textureId);
 
-    for (auto level = 0; level < levels(); ++level) {
-        auto data = getWriteonlyData(level, 0, 0);
-        if (mKtxTexture->isCompressed) {
-            auto size = GLint{ };
-            gl.glGetTexLevelParameteriv(mTarget, level,
-                GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size);
-            if (size > getLevelSize(level))
-                return false;
-            gl.glGetCompressedTexImage(mTarget, level, data);
-        }
-        else {
-            gl.glGetTexImage(mTarget, level,
-                pixelFormat(), pixelType(), data);
-        }
-    }
-    return (glGetError() == GL_NO_ERROR);
+    if (isMultisampleTarget(mTarget))
+        return downloadMultisample(gl);
+
+    if (isCubemapTarget(mTarget))
+        return downloadCubemap(gl);
+
+    return download(gl);
 }
 
-void TextureData::clear()
-{
-    if (isNull())
-        return;
-
-    const auto level = 0;
-    for (auto layer = 0; layer < layers(); ++layer)
-        for (auto face = 0; face < faces(); ++face)
-            std::memset(getWriteonlyData(level, layer, face),
-                0xFF, static_cast<size_t>(getLevelSize(level)));
-}
-
-bool TextureData::uploadMultisample(GLuint *textureId,
+bool TextureData::uploadMultisample(GL& gl,
     QOpenGLTexture::TextureFormat format)
 {
-    Q_ASSERT(glGetError() == GL_NO_ERROR);
-
-    QOpenGLFunctions_3_3_Core gl;
-    gl.initializeOpenGLFunctions();
-    if (!*textureId)
-        glGenTextures(1, textureId);
-    gl.glBindTexture(mTarget, *textureId);
-
     if(mTarget == QOpenGLTexture::Target2DMultisampleArray) {
         gl.glTexImage3DMultisample(mTarget, samples(),
             format, width(), height(), layers(), GL_FALSE);
@@ -705,8 +697,36 @@ bool TextureData::uploadMultisample(GLuint *textureId,
     return (glGetError() == GL_NO_ERROR);
 }
 
-bool TextureData::downloadMultisample(GLuint textureId)
+bool TextureData::download(GL& gl)
+{
+    for (auto level = 0; level < levels(); ++level) {
+        auto data = getWriteonlyData(level, 0, 0);
+        if (mKtxTexture->isCompressed) {
+            auto size = GLint{ };
+            gl.glGetTexLevelParameteriv(mTarget, level,
+                GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size);
+            if (glGetError() != GL_NO_ERROR || size > getLevelSize(level))
+                return false;
+            gl.glGetCompressedTexImage(mTarget, level, data);
+        }
+        else {
+            gl.glGetTexImage(mTarget, level,
+                pixelFormat(), pixelType(), data);
+        }
+    }
+    return (glGetError() == GL_NO_ERROR);
+}
+
+bool TextureData::downloadCubemap(GL& gl)
+{
+    // TODO: download
+    return true;
+}
+
+bool TextureData::downloadMultisample(GL& gl)
 {
     // TODO: resolve and download
     return true;
 }
+
+

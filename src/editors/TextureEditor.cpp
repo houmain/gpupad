@@ -41,11 +41,15 @@ void main() {
 
 static constexpr auto fragmentShaderSource = R"(
 
+#ifdef GL_ARB_texture_cube_map_array
+#extension GL_ARB_texture_cube_map_array: enable
+#endif
+
 uniform SAMPLER uTexture;
 uniform vec2 uSize;
 uniform float uLevel;
 uniform float uLayer;
-uniform float uFace;
+uniform int uFace;
 uniform int uSample;
 
 in vec2 vTexCoord;
@@ -62,6 +66,9 @@ vec3 linearToSrgb(vec3 value) {
     linearToSrgb(value.g),
     linearToSrgb(value.b)
   );
+}
+vec3 getCubeTexCoord(vec2 texCoord, int face) {
+  return vec3(0, texCoord);
 }
 
 void main() {
@@ -89,8 +96,8 @@ void main() {
             { QOpenGLTexture::Target2D, { "sampler2D", "textureLod(S, TC, uLevel)" } },
             { QOpenGLTexture::Target2DArray, { "sampler2DArray", "textureLod(S, vec3(TC, uLayer), uLevel)" } },
             { QOpenGLTexture::Target3D, { "sampler3D", "textureLod(S, vec3(TC, uLayer), uLevel)" } },
-            { QOpenGLTexture::TargetCubeMap, { "samplerCube", "textureLod(S, vec3(TC, uFace), uLevel)" } },
-            { QOpenGLTexture::TargetCubeMapArray,  { "samplerCubeArray", "textureLod(S, vec4(TC, uFace, uLayer), uLevel)" } },
+            { QOpenGLTexture::TargetCubeMap, { "samplerCube", "textureLod(S, getCubeTexCoord(TC, uFace), uLevel)" } },
+            { QOpenGLTexture::TargetCubeMapArray,  { "samplerCubeArray", "textureLod(S, vec4(getCubeTexCoord(TC, uFace), uLayer), uLevel)" } },
             { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "texelFetch(S, ivec2(TC * uSize), uSample)" } },
             { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "texelFetch(S, ivec3(TC * uSize, uLayer), uSample)" } },
         };
@@ -267,7 +274,7 @@ class ZeroCopyItem : public QGraphicsItem
             program->setUniformValue("uSize",
                 QPointF(mBoundingRect.width(), mBoundingRect.height()));
             program->setUniformValue("uLevel", 0.0f);
-            program->setUniformValue("uFace", 0.0f);
+            program->setUniformValue("uFace", 0);
             program->setUniformValue("uLayer", 0.0f);
             program->setUniformValue("uSample", 0);
             gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

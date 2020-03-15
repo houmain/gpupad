@@ -317,7 +317,7 @@ void TextureProperties::setFormat(QVariant value)
 void TextureProperties::updateWidgets()
 {
     const auto kind = currentTextureKind();
-    setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, kind.dimensions > 1);
+    setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, (kind.dimensions > 1 && !kind.cubeMap));
     setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth, kind.dimensions > 2);
     setFormVisibility(mUi->formLayout, mUi->labelLayers, mUi->layers, kind.array);
     setFormVisibility(mUi->formLayout, mUi->labelSamples, mUi->samples, kind.multisample);

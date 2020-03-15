@@ -408,7 +408,7 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         case Item::Type::Texture: {
             const auto &texture = static_cast<const Texture&>(item);
             auto kind = getKind(texture);
-            result &= (column != TextureHeight || kind.dimensions > 1);
+            result &= (column != TextureHeight || (kind.dimensions > 1 && !kind.cubeMap));
             result &= (column != TextureDepth || kind.dimensions > 2);
             result &= (column != TextureLayers || kind.array);
             result &= (column != TextureSamples || kind.multisample);
