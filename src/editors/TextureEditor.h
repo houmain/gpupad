@@ -6,8 +6,7 @@
 #include <QGraphicsView>
 #include <QOpenGLTexture>
 
-class ZeroCopyContext;
-class ZeroCopyItem;
+class TextureItem;
 
 class TextureEditor : public QGraphicsView, public IEditor
 {
@@ -59,8 +58,7 @@ private:
     int mPanStartX{ };
     int mPanStartY{ };
     QGraphicsPathItem *mBorder{ };
-    ZeroCopyContext *mZeroCopyContext{ };
-    ZeroCopyItem *mZeroCopyItem{ };
+    TextureItem *mTextureItem{ };
     QGraphicsPixmapItem *mPixmapItem{ };
 };
 
