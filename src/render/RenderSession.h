@@ -25,7 +25,8 @@ private:
     struct CommandQueue;
     struct TimerQueries;
 
-    void prepare(bool itemsChanged, bool manualEvaluation) override;
+    void prepare(bool itemsChanged,
+        EvaluationType evaluationType) override;
     void render() override;
     void finish() override;
     void release() override;
@@ -46,7 +47,7 @@ private:
     MessagePtrSet mMessages;
     MessagePtrSet mPrevMessages;
     bool mItemsChanged{ };
-    bool mManualEvaluation{ };
+    EvaluationType mEvaluationType{ };
 
     mutable QMutex mUsedItemsCopyMutex;
     QSet<ItemId> mUsedItemsCopy;

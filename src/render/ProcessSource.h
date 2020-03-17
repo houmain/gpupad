@@ -24,7 +24,7 @@ signals:
     void outputChanged(QString output);
 
 private:
-    void prepare(bool itemsChanged, bool manualEvaluation) override;
+    void prepare(bool itemsChanged, EvaluationType) override;
     void render() override;
     void finish() override;
     void release() override;

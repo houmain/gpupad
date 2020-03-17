@@ -136,11 +136,8 @@ void ProcessSource::setProcessType(QString processType)
     mProcessType = processType;
 }
 
-void ProcessSource::prepare(bool itemsChanged, bool manualEvaluation)
+void ProcessSource::prepare(bool, EvaluationType)
 {
-    Q_UNUSED(itemsChanged);
-    Q_UNUSED(manualEvaluation);
-
     if (auto shaderType = getShaderType(mSourceType)) {
         auto shaders = getHeadersInSession(mFileName);
         auto shader = Shader();

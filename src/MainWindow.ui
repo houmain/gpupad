@@ -120,6 +120,7 @@
       <iconset resource="resources.qrc">
        <normaloff>:/images/16x16/view-refresh.png</normaloff>:/images/16x16/view-refresh.png</iconset>
      </property>
+     <addaction name="actionEvalReset"/>
      <addaction name="actionEvalManual"/>
      <addaction name="actionEvalAuto"/>
      <addaction name="actionEvalSteady"/>
@@ -191,6 +192,7 @@
    <addaction name="separator"/>
    <addaction name="actionSourceValidation"/>
    <addaction name="separator"/>
+   <addaction name="actionEvalReset"/>
    <addaction name="actionEvalManual"/>
    <addaction name="actionEvalAuto"/>
    <addaction name="actionEvalSteady"/>
@@ -437,7 +439,7 @@
   <action name="actionEvalManual">
    <property name="icon">
     <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/view-refresh.png</normaloff>:/images/16x16/view-refresh.png</iconset>
+     <normaloff>:/images/16x16/media-playback-start.png</normaloff>:/images/16x16/media-playback-start.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Manual</string>
@@ -446,7 +448,7 @@
     <string>Manual Evaluation</string>
    </property>
    <property name="shortcut">
-    <string>F5</string>
+    <string>F6</string>
    </property>
   </action>
   <action name="actionEvalAuto">
@@ -455,7 +457,7 @@
    </property>
    <property name="icon">
     <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/media-playback-pause.png</normaloff>:/images/16x16/media-playback-pause.png</iconset>
+     <normaloff>:/images/16x16/media-skip-forward.png</normaloff>:/images/16x16/media-skip-forward.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Automatic</string>
@@ -464,7 +466,7 @@
     <string>Automatic Evaluation</string>
    </property>
    <property name="shortcut">
-    <string>F6</string>
+    <string>F7</string>
    </property>
   </action>
   <action name="actionRename">
@@ -478,7 +480,7 @@
    </property>
    <property name="icon">
     <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/media-playback-start.png</normaloff>:/images/16x16/media-playback-start.png</iconset>
+     <normaloff>:/images/16x16/media-seek-forward.png</normaloff>:/images/16x16/media-seek-forward.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Steady</string>
@@ -487,7 +489,7 @@
     <string>Steady Evaluation</string>
    </property>
    <property name="shortcut">
-    <string>F7</string>
+    <string>F8</string>
    </property>
   </action>
   <action name="actionManageCustomActions">
@@ -550,6 +552,21 @@
    </property>
    <property name="toolTip">
     <string>Zero Copy Preview</string>
+   </property>
+  </action>
+  <action name="actionEvalReset">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/16x16/view-refresh.png</normaloff>:/images/16x16/view-refresh.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Reset</string>
+   </property>
+   <property name="toolTip">
+    <string>Reset Evaluation</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
    </property>
   </action>
  </widget>

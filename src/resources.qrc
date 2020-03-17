@@ -52,5 +52,7 @@
         <file>images/16x16/dialog-error.png</file>
         <file>images/16x16/mail-send.png</file>
         <file>images/64x64/icon.png</file>
+        <file>images/16x16/media-seek-forward.png</file>
+        <file>images/16x16/media-skip-forward.png</file>
     </qresource>
 </RCC>

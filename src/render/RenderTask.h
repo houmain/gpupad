@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QSet>
+#include "Evaluation.h"
 
 using ItemId = int;
 
@@ -15,7 +16,8 @@ public:
 
     virtual QSet<ItemId> usedItems() const = 0;
 
-    void update(bool itemChanged, bool manualEvaluation);
+    void update(bool itemChanged = false,
+        EvaluationType evaluationType = EvaluationType::Reset);
 
 signals:
     void updated();
@@ -27,7 +29,8 @@ private:
     friend class Renderer;
 
     // 1. called in main thread
-    virtual void prepare(bool itemsChanged, bool manualEvaluation) = 0;
+    virtual void prepare(bool itemsChanged,
+        EvaluationType evaluationType) = 0;
 
     // 2. called in render thread
     virtual void render() = 0;
@@ -42,7 +45,7 @@ private:
     bool mReleased{ true };
     bool mUpdating{ };
     bool mItemsChanged{ };
-    bool mManualEvaluation{ };
+    EvaluationType mEvaluationType{ };
 };
 
 #endif // RENDERTASK_H

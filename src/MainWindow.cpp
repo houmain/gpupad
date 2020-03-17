@@ -209,6 +209,8 @@ MainWindow::MainWindow(QWidget *parent)
                 settings.setZeroCopyPreview(enabled);
         });
 
+    connect(mUi->actionEvalReset, &QAction::triggered,
+        this, &MainWindow::updateEvaluationMode);
     connect(mUi->actionEvalManual, &QAction::triggered,
         this, &MainWindow::updateEvaluationMode);
     connect(mUi->actionEvalAuto, &QAction::toggled,
@@ -410,21 +412,25 @@ void MainWindow::stopEvaluation()
 
 void MainWindow::updateEvaluationMode()
 {
-    if (QObject::sender() == mUi->actionEvalManual) {
+    if (QObject::sender() == mUi->actionEvalReset) {
+        Singletons::synchronizeLogic().resetEvaluation();
+    }
+    else if (QObject::sender() == mUi->actionEvalManual) {
         Singletons::synchronizeLogic().manualEvaluation();
     }
+    else if (QObject::sender() == mUi->actionEvalAuto) {
+        if (mUi->actionEvalAuto->isChecked())
+            mUi->actionEvalSteady->setChecked(false);
+    }
     else {
-        if (QObject::sender() == mUi->actionEvalAuto) {
-            if (mUi->actionEvalAuto->isChecked())
-                mUi->actionEvalSteady->setChecked(false);
-        }
-        else if (mUi->actionEvalSteady->isChecked())
-                mUi->actionEvalAuto->setChecked(false);
+        if (mUi->actionEvalSteady->isChecked())
+            mUi->actionEvalAuto->setChecked(false);
     }
 
     Singletons::synchronizeLogic().setEvaluationMode(
-        mUi->actionEvalAuto->isChecked(),
-        mUi->actionEvalSteady->isChecked());
+        mUi->actionEvalAuto->isChecked() ? EvaluationMode::Automatic :
+        mUi->actionEvalSteady->isChecked() ? EvaluationMode::Steady :
+        EvaluationMode::Paused);
 }
 
 bool MainWindow::hasEditor() const
@@ -445,9 +451,10 @@ void MainWindow::openFile()
         FileDialog::AllExtensionFilters
     };
     auto& dialog = Singletons::fileDialog();
-    if (dialog.exec(options))
+    if (dialog.exec(options)) {
         foreach (QString fileName, dialog.fileNames())
             openFile(fileName, dialog.asBinaryFile());
+    }
 }
 
 bool MainWindow::openFile(const QString &fileName,

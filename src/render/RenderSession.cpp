@@ -127,6 +127,22 @@ namespace {
 
         return toString(seconds * 1000000000ull) + "ns";
     }
+
+    bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType)
+    {
+        switch (executeOn) {
+            case Call::ExecuteOn::ResetEvaluation:
+                return (evaluationType == EvaluationType::Reset);
+
+            case Call::ExecuteOn::ManualEvaluation:
+                return (evaluationType == EvaluationType::Reset ||
+                        evaluationType == EvaluationType::Manual);
+
+            case Call::ExecuteOn::EveryEvaluation:
+                break;
+        }
+        return true;
+    }
 } // namespace
 
 struct RenderSession::CommandQueue
@@ -157,15 +173,19 @@ QSet<ItemId> RenderSession::usedItems() const
     return mUsedItemsCopy;
 }
 
-void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
+void RenderSession::prepare(bool itemsChanged,
+        EvaluationType evaluationType)
 {
     mItemsChanged = itemsChanged;
-    mManualEvaluation = manualEvaluation;
+    mEvaluationType = evaluationType;
     mPrevMessages.swap(mMessages);
     mMessages.clear();
     mInputScriptObject->setMousePosition(Singletons::synchronizeLogic().mousePosition());
 
-    if (mCommandQueue && !(itemsChanged || manualEvaluation))
+    if (!mCommandQueue)
+        mEvaluationType = EvaluationType::Reset;
+
+    if (!itemsChanged && mEvaluationType != EvaluationType::Reset)
         return;
 
     Q_ASSERT(!mPrevCommandQueue);
@@ -241,11 +261,8 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                 [this, source, fileName = script->fileName,
                   executeOn = script->executeOn
                 ](BindingState &) {
-                      if (executeOn == Call::ExecuteOn::ManualEvaluation &&
-                          !mManualEvaluation)
-                          return;
-
-                      mScriptEngine->evaluateScript(source, fileName);
+                      if (shouldExecute(executeOn, mEvaluationType))
+                          mScriptEngine->evaluateScript(source, fileName);
                 });
         }
         else if (auto binding = castItem<Binding>(item)) {
@@ -329,8 +346,7 @@ void RenderSession::prepare(bool itemsChanged, bool manualEvaluation)
                      executeOn = call->executeOn,
                      call = std::move(glcall)
                     ](BindingState &state) mutable {
-                        if (executeOn == Call::ExecuteOn::ManualEvaluation &&
-                            !mManualEvaluation)
+                        if (!shouldExecute(executeOn, mEvaluationType))
                             return;
 
                         if (auto program = call.program()) {
@@ -408,8 +424,8 @@ void RenderSession::executeCommandQueue()
 {
     auto& context = GLContext::currentContext();
 
-    // always re-evaluate scripts on manual evaluation
-    if (!mScriptEngine || mManualEvaluation)
+    // always re-evaluate scripts on reset
+    if (!mScriptEngine || mEvaluationType == EvaluationType::Reset)
         mScriptEngine.reset(new ScriptEngine());
 
     mScriptEngine->setGlobal("input", mInputScriptObject);

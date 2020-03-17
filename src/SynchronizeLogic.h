@@ -3,6 +3,7 @@
 
 #include "session/Item.h"
 #include "SourceType.h"
+#include "Evaluation.h"
 #include <QObject>
 #include <QSet>
 
@@ -23,7 +24,7 @@ public:
     void resetRenderSession();
     void setValidateSource(bool validate);
     void setProcessSourceType(QString type);
-    void setEvaluationMode(bool automatic, bool steady);
+    void setEvaluationMode(EvaluationMode mode);
     void updateFileCache();
     void updateEditor(ItemId itemId, bool activated);
     void setMousePosition(QPointF pos) { mMousePosition = pos; }
@@ -33,6 +34,7 @@ signals:
     void outputChanged(QString assembly);
 
 public slots:
+    void resetEvaluation();
     void manualEvaluation();
     void handleItemsModified(const QModelIndex &topLeft,
         const QModelIndex &bottomRight, const QVector<int> &roles);
@@ -50,7 +52,7 @@ private slots:
         TextureEditor &editor);
     void updateBinaryEditor(const Buffer &buffer,
         BinaryEditor &editor);
-    void evaluate(bool manualEvaluation);
+    void evaluate(EvaluationType evaluationType);
     void processSource();
 
 private:
@@ -63,8 +65,7 @@ private:
     QSet<QString> mFilesModified;
     QScopedPointer<RenderSession> mRenderSession;
     bool mRenderSessionInvalidated{ };
-    bool mAutomaticEvaluation{ };
-    bool mSteadyEvaluation{ };
+    EvaluationMode mEvaluationMode{ };
 
     bool mValidateSource{ };
     QString mProcessSourceType{ };

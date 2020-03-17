@@ -20,7 +20,7 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     connect(mUpdateEditorsTimer, &QTimer::timeout,
         this, &SynchronizeLogic::updateEditors);
     connect(mEvaluationTimer, &QTimer::timeout,
-        [this]() { evaluate(false); });
+        [this]() { evaluate(EvaluationType::Automatic); });
     connect(mProcessSourceTimer, &QTimer::timeout,
         this, &SynchronizeLogic::processSource);
     connect(&mModel, &SessionModel::dataChanged,
@@ -33,7 +33,6 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
         this, &SynchronizeLogic::outputChanged);
 
     resetRenderSession();
-    setEvaluationMode(false, false);
 
     mUpdateEditorsTimer->start(100);
 
@@ -66,26 +65,28 @@ void SynchronizeLogic::resetRenderSession()
         this, &SynchronizeLogic::handleSessionRendered);
 }
 
-void SynchronizeLogic::manualEvaluation()
+void SynchronizeLogic::resetEvaluation()
 {
-    evaluate(true);
+    evaluate(EvaluationType::Reset);
 }
 
-void SynchronizeLogic::setEvaluationMode(bool automatic, bool steady)
+void SynchronizeLogic::manualEvaluation()
 {
-    if (mAutomaticEvaluation == automatic &&
-        mSteadyEvaluation == steady)
+    evaluate(EvaluationType::Manual);
+}
+
+void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
+{
+    if (mEvaluationMode == mode)
         return;
 
-    mAutomaticEvaluation = automatic;
-    mSteadyEvaluation = steady;
+    mEvaluationMode = mode;
 
-    if (mSteadyEvaluation) {
-        evaluate(true);
+    if (mEvaluationMode == EvaluationMode::Steady) {
         mEvaluationTimer->setSingleShot(false);
         mEvaluationTimer->start(10);
     }
-    else if (mAutomaticEvaluation) {
+    else if (mEvaluationMode == EvaluationMode::Automatic) {
         mEvaluationTimer->stop();
         mEvaluationTimer->setSingleShot(true);
         if (mRenderSessionInvalidated)
@@ -99,7 +100,7 @@ void SynchronizeLogic::setEvaluationMode(bool automatic, bool steady)
 
 void SynchronizeLogic::handleSessionRendered()
 {
-    if (mAutomaticEvaluation || mSteadyEvaluation)
+    if (mEvaluationMode != EvaluationMode::Paused)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
 
     if (synchronizeToCompositor())
@@ -163,7 +164,7 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
         mRenderSessionInvalidated = true;
     }
 
-    if (mAutomaticEvaluation)
+    if (mEvaluationMode == EvaluationMode::Automatic)
         mEvaluationTimer->start(100);
 }
 
@@ -190,12 +191,10 @@ void SynchronizeLogic::handleSourceTypeChanged(SourceType sourceType)
     processSource();
 }
 
-void SynchronizeLogic::evaluate(bool manualEvaluation)
+void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
-    if (manualEvaluation || mAutomaticEvaluation || mSteadyEvaluation) {
-        updateFileCache();
-        mRenderSession->update(mRenderSessionInvalidated, manualEvaluation);
-    }
+    updateFileCache();
+    mRenderSession->update(mRenderSessionInvalidated, evaluationType);
     mRenderSessionInvalidated = false;
 }
 
@@ -278,5 +277,5 @@ void SynchronizeLogic::processSource()
         Singletons::editorManager().currentSourceType());
     mProcessSource->setValidateSource(mValidateSource);
     mProcessSource->setProcessType(mProcessSourceType);
-    mProcessSource->update(false, false);
+    mProcessSource->update();
 }

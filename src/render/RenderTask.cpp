@@ -17,16 +17,16 @@ void RenderTask::releaseResources()
         Singletons::renderer().release(this);
 }
 
-void RenderTask::update(bool itemsChanged, bool manualEvaluation)
+void RenderTask::update(bool itemsChanged, EvaluationType evaluationType)
 {
     if (!std::exchange(mUpdating, true)) {
         mReleased = false;
-        prepare(itemsChanged, manualEvaluation);
+        prepare(itemsChanged, evaluationType);
         Singletons::renderer().render(this);
     }
     else {
         mItemsChanged |= itemsChanged;
-        mManualEvaluation |= manualEvaluation;
+        mEvaluationType = std::max(mEvaluationType, evaluationType);
     }
 }
 
@@ -38,7 +38,7 @@ void RenderTask::handleRendered()
     emit updated();
 
     // restart when items were changed in the meantime
-    if (mItemsChanged || mManualEvaluation)
+    if (mItemsChanged || mEvaluationType != EvaluationType::Automatic)
         update(std::exchange(mItemsChanged, false),
-               std::exchange(mManualEvaluation, false));
+               std::exchange(mEvaluationType, EvaluationType::Automatic));
 }

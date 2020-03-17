@@ -162,6 +162,7 @@ namespace ItemEnums {
     Q_ENUM_NS(PrimitiveType)
 
     enum ExecuteOn {
+        ResetEvaluation,
         ManualEvaluation,
         EveryEvaluation,
     };
