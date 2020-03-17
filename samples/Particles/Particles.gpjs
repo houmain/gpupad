@@ -1,6 +1,5 @@
 [
     {
-        "flipY": false,
         "format": "RGB8_UNorm",
         "height": 512,
         "id": 77,
@@ -177,7 +176,7 @@
     {
         "callType": "Compute",
         "checked": true,
-        "executeOn": "ManualEvaluation",
+        "executeOn": "ResetEvaluation",
         "id": 64,
         "name": "Reset Call",
         "programId": 62,

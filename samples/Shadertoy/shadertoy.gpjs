@@ -38,7 +38,7 @@
         "bindingType": "Uniform",
         "editor": "Expression",
         "id": 74,
-        "name": "iGlobalTime",
+        "name": "iTime",
         "type": "Binding",
         "values": [
             "Date.now()%10000/1000.0"
@@ -46,14 +46,14 @@
     },
     {
         "bindingType": "Sampler",
-        "id": 75,
-        "name": "target",
-        "type": "Binding",
         "borderColor": "#ff000000",
         "comparisonFunc": "NoComparisonFunc",
+        "id": 75,
         "magFilter": "Nearest",
         "minFilter": "Nearest",
+        "name": "iTarget",
         "textureId": 70,
+        "type": "Binding",
         "wrapModeX": "Repeat",
         "wrapModeY": "Repeat",
         "wrapModeZ": "Repeat"
@@ -76,9 +76,9 @@
                 "type": "Shader"
             },
             {
-                "fileName": "ldscDM.glsl",
+                "fileName": "image.glsl",
                 "id": 79,
-                "name": "ldscDM.glsl",
+                "name": "image.glsl",
                 "shaderType": "Fragment",
                 "type": "Shader"
             }
@@ -87,13 +87,14 @@
         "type": "Program"
     },
     {
-        "baseInstance": 0,
+        "baseInstance": "0",
         "callType": "Draw",
         "checked": true,
-        "count": 4,
-        "first": 0,
+        "count": "4",
+        "executeOn": "EveryEvaluation",
+        "first": "0",
         "id": 80,
-        "instanceCount": 1,
+        "instanceCount": "1",
         "name": "Call",
         "primitiveType": "TriangleStrip",
         "programId": 76,

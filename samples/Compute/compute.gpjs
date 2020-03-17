@@ -1,6 +1,5 @@
 [
     {
-        "flipY": false,
         "format": "RGBA8_UNorm",
         "height": 256,
         "id": 79,
@@ -10,7 +9,6 @@
         "width": 256
     },
     {
-        "flipY": false,
         "format": "RGBA8_UNorm",
         "height": 256,
         "id": 92,
@@ -59,7 +57,7 @@
         "clearColor": "#ff000000",
         "clearDepth": 1,
         "clearStencil": 0,
-        "executeOn": "ManualEvaluation",
+        "executeOn": "ResetEvaluation",
         "id": 73,
         "name": "Clear",
         "textureId": 79,

@@ -1,6 +1,5 @@
 [
     {
-        "flipY": false,
         "format": "RGBA8_UNorm",
         "height": 512,
         "id": 93,
@@ -10,7 +9,6 @@
         "width": 512
     },
     {
-        "flipY": false,
         "format": "D16",
         "height": 512,
         "id": 98,
@@ -57,6 +55,7 @@
         "type": "Target"
     },
     {
+        "executeOn": "ResetEvaluation",
         "fileName": "math.js",
         "id": 103,
         "name": "math.js",
@@ -69,7 +68,7 @@
         "name": "uModel",
         "type": "Binding",
         "values": [
-            "rotateY(Date.now() / 1000.0)"
+            "rotateY(frame++ / 60)"
         ]
     },
     {
@@ -109,7 +108,6 @@
     },
     {
         "fileName": "marble.png",
-        "flipY": false,
         "format": "RGBA8_UNorm",
         "height": 512,
         "id": 104,
@@ -120,14 +118,14 @@
     },
     {
         "bindingType": "Sampler",
-        "id": 99,
-        "name": "uTexture",
-        "type": "Binding",
         "borderColor": "#ff000000",
         "comparisonFunc": "NoComparisonFunc",
+        "id": 99,
         "magFilter": "Nearest",
         "minFilter": "LinearMipMapLinear",
+        "name": "uTexture",
         "textureId": 104,
+        "type": "Binding",
         "wrapModeX": "Repeat",
         "wrapModeY": "Repeat",
         "wrapModeZ": "Repeat"
@@ -227,6 +225,7 @@
         "clearColor": "#ff464757",
         "clearDepth": 1,
         "clearStencil": 0,
+        "executeOn": "EveryEvaluation",
         "id": 97,
         "name": "Clear Color",
         "textureId": 93,
@@ -238,19 +237,21 @@
         "clearColor": "#ff000000",
         "clearDepth": 1,
         "clearStencil": 0,
+        "executeOn": "EveryEvaluation",
         "id": 91,
         "name": "Clear Depth",
         "textureId": 98,
         "type": "Call"
     },
     {
-        "baseInstance": 0,
+        "baseInstance": "0",
         "callType": "Draw",
         "checked": true,
-        "count": 36,
-        "first": 0,
+        "count": "36",
+        "executeOn": "EveryEvaluation",
+        "first": "0",
         "id": 92,
-        "instanceCount": 1,
+        "instanceCount": "1",
         "name": "Draw",
         "primitiveType": "Triangles",
         "programId": 88,
