@@ -289,7 +289,8 @@ MainWindow::~MainWindow()
 void MainWindow::writeSettings()
 {
     auto &settings = Singletons::settings();
-    settings.setValue("geometry", saveGeometry());
+    if (!isMaximized())
+        settings.setValue("geometry", saveGeometry());
     settings.setValue("maximized", isMaximized());
     settings.setValue("state", saveState());
     settings.setValue("sessionSplitter", mSessionSplitter->saveState());
@@ -306,12 +307,9 @@ void MainWindow::readSettings()
     if (!restoreGeometry(settings.value("geometry").toByteArray()))
         setGeometry(100, 100, 800, 600);
 
-    if (settings.value("maximized").toBool()) {
-        // maximize before restoring state so layout is not jumbled
-        // unfortunately this overwrites the unmaximized geometry
+    // maximize before restoring state so layout is not jumbled
+    if (settings.value("maximized").toBool())
         setGeometry(QApplication::desktop()->availableGeometry(this));
-        setWindowState(Qt::WindowMaximized);
-    }
 
     restoreState(settings.value("state").toByteArray());
     mSessionSplitter->restoreState(settings.value("sessionSplitter").toByteArray());
@@ -329,6 +327,11 @@ void MainWindow::readSettings()
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
     mUi->actionZeroCopyPreview->setChecked(settings.zeroCopyPreview());
     handleDarkThemeChanging(settings.darkTheme());
+
+    if (settings.value("maximized").toBool()) {
+        restoreGeometry(settings.value("geometry").toByteArray());
+        setWindowState(Qt::WindowMaximized);
+    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
