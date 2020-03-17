@@ -80,7 +80,7 @@ SourceEditor::SourceEditor(QString fileName, FindReplaceBar *findReplaceBar, QWi
 
     updateViewportMargins();
     updateExtraSelections();
-    updateColors();
+    updateColors(settings.darkTheme());
     setSourceTypeFromExtension();
     setPlainText(document()->toPlainText());
 }
@@ -214,18 +214,16 @@ void SourceEditor::setSourceType(SourceType sourceType)
     }
 }
 
-void SourceEditor::updateColors()
+void SourceEditor::updateColors(bool darkTheme)
 {
     mCurrentLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
-    mCurrentLineFormat.setBackground(palette().base().color().darker(105));
+    mCurrentLineFormat.setBackground(palette().base().color().lighter(darkTheme ? 110 : 95));
 
-    mOccurrencesFormat.setProperty(QTextFormat::OutlinePen,
-        QPen(palette().highlight().color()));
-    mOccurrencesFormat.setBackground(palette().base().color().darker(110));
+    mOccurrencesFormat.setForeground(palette().text().color().lighter(darkTheme ? 120 : 90));
+    mOccurrencesFormat.setBackground(palette().base().color().lighter(darkTheme ? 120 : 90));
 
     auto window = palette().window().color();
-    mLineNumberColor = (window.value() < 128 ?
-        window.lighter(150) : window.darker(150));
+    mLineNumberColor = window.darker(window.value() < 128 ? 50 : 150);
 
     updateExtraSelections();
 }

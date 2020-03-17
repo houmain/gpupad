@@ -29,6 +29,7 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) override;
 
 private:
+    ZeroCopyContext &context();
     bool updateTexture();
     bool renderTexture(const QMatrix &transform);
 

@@ -150,24 +150,29 @@ public:
 
 private:
     using ProgramKey = std::tuple<QOpenGLTexture::Target, QOpenGLTexture::TextureFormat>;
+    void handleDebugMessage(const QOpenGLDebugMessage &message);
 
     QOpenGLFunctions_3_3_Core mGL;
     QOpenGLDebugLogger mDebugLogger;
     std::map<ProgramKey, QOpenGLShaderProgram> mPrograms;
-    bool mInitialized{ };
-
-    void initialize();
-    void handleDebugMessage(const QOpenGLDebugMessage &message);
 };
 
 ZeroCopyContext::ZeroCopyContext(QObject *parent)
     : QObject(parent)
 {
+    mGL.initializeOpenGLFunctions();
+
+    if (mDebugLogger.initialize()) {
+        mDebugLogger.disableMessages(QOpenGLDebugMessage::AnySource,
+            QOpenGLDebugMessage::AnyType, QOpenGLDebugMessage::NotificationSeverity);
+        QObject::connect(&mDebugLogger, &QOpenGLDebugLogger::messageLogged,
+            this, &ZeroCopyContext::handleDebugMessage);
+        mDebugLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
+    }
 }
 
 QOpenGLFunctions_3_3_Core &ZeroCopyContext::gl()
 {
-    initialize();
     return mGL;
 }
 
@@ -182,22 +187,6 @@ QOpenGLShaderProgram *ZeroCopyContext::getProgram(QOpenGLTexture::Target target,
             return nullptr;
         }
     return &program;
-}
-
-void ZeroCopyContext::initialize()
-{
-    if (std::exchange(mInitialized, true))
-        return;
-
-    mGL.initializeOpenGLFunctions();
-
-    if (mDebugLogger.initialize()) {
-        mDebugLogger.disableMessages(QOpenGLDebugMessage::AnySource,
-            QOpenGLDebugMessage::AnyType, QOpenGLDebugMessage::NotificationSeverity);
-        QObject::connect(&mDebugLogger, &QOpenGLDebugLogger::messageLogged,
-            this, &ZeroCopyContext::handleDebugMessage);
-        mDebugLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
-    }
 }
 
 void ZeroCopyContext::handleDebugMessage(const QOpenGLDebugMessage &message)
@@ -269,9 +258,6 @@ void TextureItem::paint(QPainter *painter,
         2 * -(x * scale + width / 2) / width,
         2 * (y * scale + height / 2) / height);
 
-    if (!mContext)
-        mContext.reset(new ZeroCopyContext());
-
     if (updateTexture())
         renderTexture(transform);
 
@@ -279,14 +265,20 @@ void TextureItem::paint(QPainter *painter,
     painter->endNativePainting();
 }
 
+ZeroCopyContext &TextureItem::context()
+{
+    if (!mContext)
+        mContext.reset(new ZeroCopyContext());
+    return *mContext;
+}
+
 bool TextureItem::updateTexture()
 {
     if (!mPreviewTextureId && std::exchange(mUpload, false)) {
         // upload/replace texture
-        if (!mImage.upload(&mImageTextureId)) {
-            mContext->gl().glDeleteTextures(1, &mImageTextureId);
-            mImageTextureId = GL_NONE;
-        }
+        context().gl().glDeleteTextures(1, &mImageTextureId);
+        mImageTextureId = GL_NONE;
+        mImage.upload(&mImageTextureId);
         // last version is deleted in QGraphicsView destructor
     }
     return (mPreviewTextureId || mImageTextureId);
@@ -295,7 +287,7 @@ bool TextureItem::updateTexture()
 bool TextureItem::renderTexture(const QMatrix &transform)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    auto &gl = mContext->gl();
+    auto &gl = context().gl();
 
     auto target = mImage.target();
     if (mPreviewTextureId) {
@@ -317,7 +309,7 @@ bool TextureItem::renderTexture(const QMatrix &transform)
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        if (mImage.levels() > 1) {
+        if (mMagnifyLinear && mImage.levels() > 1) {
             gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         }
@@ -327,7 +319,7 @@ bool TextureItem::renderTexture(const QMatrix &transform)
         }
     }
 
-    if (auto *program = mContext->getProgram(target, mImage.format())) {
+    if (auto *program = context().getProgram(target, mImage.format())) {
         program->bind();
         program->setUniformValue("uTexture", 0);
         program->setUniformValue("uTransform", transform);

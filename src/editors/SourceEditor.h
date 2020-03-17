@@ -72,7 +72,7 @@ private:
     void insertCompletion(const QString &completion);
     void findReplaceAction(FindReplaceBar::Action action, QString find,
         QString replace, QTextDocument::FindFlags flags);
-    void updateColors();
+    void updateColors(bool darkTheme);
     void updateSyntaxHighlighting();
 
     QString mFileName;

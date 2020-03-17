@@ -635,6 +635,8 @@ bool TextureData::upload(GLuint *textureId,
 {
     if (isNull() || !textureId)
         return false;
+    if (!format)
+        format = this->format();
 
     if (isMultisampleTarget(mTarget)) {
         QOpenGLFunctions_3_3_Core gl;
@@ -646,19 +648,18 @@ bool TextureData::upload(GLuint *textureId,
     }
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    const auto originalFormat = mKtxTexture->glInternalformat;
-    if (format)
-        mKtxTexture->glInternalformat = static_cast<ktx_uint32_t>(format);
-
 #if defined(_WIN32)
     initializeKtxOpenGLFunctions();
 #endif
+
+    const auto originalFormat = mKtxTexture->glInternalformat;
+    mKtxTexture->glInternalformat = static_cast<ktx_uint32_t>(format);
     auto target = static_cast<GLenum>(mTarget);
     auto error = GLenum{ };
     const auto result = (ktxTexture_GLUpload(
         mKtxTexture.get(), textureId, &target, &error) == KTX_SUCCESS);
-
     mKtxTexture->glInternalformat = originalFormat;
+
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     return result;
 }
