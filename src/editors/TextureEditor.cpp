@@ -3,6 +3,7 @@
 #include "Singletons.h"
 #include "FileCache.h"
 #include "SynchronizeLogic.h"
+#include "Settings.h"
 #include "render/GLContext.h"
 #include "session/Item.h"
 #include "TextureItem.h"
@@ -42,8 +43,9 @@ TextureEditor::TextureEditor(QString fileName, QWidget *parent)
         scene()->addItem(mTextureItem);
     }
 
-    setZoom(mZoom);
-    updateTransform(1.0);
+    connect(&Singletons::settings(), &Settings::darkThemeChanged,
+        this, &TextureEditor::updateBackground);
+    updateBackground();
 }
 
 TextureEditor::~TextureEditor() 
@@ -262,33 +264,36 @@ void TextureEditor::setZoom(int zoom)
         return;
 
     mZoom = zoom;
+    setTransform(getZoomTransform());
+
+    updateBackground();
+
+    if (mTextureItem)
+        mTextureItem->setMagnifyLinear(mZoom <= 2);
+}
+
+QTransform TextureEditor::getZoomTransform() const
+{
     const auto scale = (mZoom < 0 ?
         1.0 / (1 << (-mZoom)) :
         1 << (mZoom));
-    updateTransform(scale);
-
-    if (mTextureItem)
-        mTextureItem->setMagnifyLinear(scale <= 4);
+    return QTransform().scale(scale, scale);
 }
 
-void TextureEditor::updateTransform(double scale)
+void TextureEditor::updateBackground()
 {
-    const auto transform = QTransform().scale(scale, scale);
-    setTransform(transform);
-    updateBackground(transform);
-}
+    const auto color1 = QPalette().window().color().darker(115);
+    const auto color2 = QPalette().window().color().darker(110);
 
-void TextureEditor::updateBackground(const QTransform& transform) 
-{
     QPixmap pm(2, 2);
     QPainter pmp(&pm);
-    pmp.fillRect(0, 0, 1, 1, 0x959595);
-    pmp.fillRect(1, 1, 1, 1, 0x959595);
-    pmp.fillRect(0, 1, 1, 1, 0x888888);
-    pmp.fillRect(1, 0, 1, 1, 0x888888);
+    pmp.fillRect(0, 0, 1, 1, color1);
+    pmp.fillRect(1, 1, 1, 1, color1);
+    pmp.fillRect(0, 1, 1, 1, color2);
+    pmp.fillRect(1, 0, 1, 1, color2);
     pmp.end();
 
     auto brush = QBrush(pm);
-    brush.setTransform(transform.inverted().translate(0, 1).scale(16, 16));
+    brush.setTransform(getZoomTransform().inverted().translate(0, 1).scale(16, 16));
     setBackgroundBrush(brush);
 }

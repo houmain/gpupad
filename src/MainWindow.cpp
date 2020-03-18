@@ -658,8 +658,8 @@ void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
 
 void MainWindow::handleDarkThemeChanging(bool enabled)
 {
-    auto frameDarker = 110;
-    auto currentFrameDarker = 150;
+    auto frameDarker = 105;
+    auto currentFrameDarker = 120;
     auto palette = qApp->style()->standardPalette();
     if (enabled) {
         struct S { QPalette::ColorRole role; QColor a; QColor i; QColor d; };
@@ -699,8 +699,8 @@ void MainWindow::handleDarkThemeChanging(bool enabled)
     };
     setStyleSheet(QString(
       "QLabel:disabled { color: %1 }\n"
-      "QDockWidget > QFrame { border:1px solid %2 }\n"
-      "QDockWidget[current=true] > QFrame { border:1px solid %3}\n")
+      "QDockWidget > QFrame { border:2px solid %2 }\n"
+      "QDockWidget[current=true] > QFrame { border:2px solid %3 2}\n")
       .arg(color(QPalette::WindowText, QPalette::Disabled))
       .arg(color(QPalette::Window, QPalette::Active, frameDarker))
       .arg(color(QPalette::Window, QPalette::Active, currentFrameDarker)));

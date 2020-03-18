@@ -45,8 +45,8 @@ private:
     void updateMousePosition(QMouseEvent *event);
     void setBounds(QRect bounds);
     void setZoom(int zoom);
-    void updateTransform(double scale);
-    void updateBackground(const QTransform& transform);
+    QTransform getZoomTransform() const;
+    void updateBackground();
     void setModified(bool modified);
 
     QString mFileName;
