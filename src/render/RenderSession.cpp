@@ -443,19 +443,23 @@ bool RenderSession::updatingPreviewTextures() const
 {
     return (gZeroCopyPreview &&
         !mItemsChanged &&
-        mEvaluationType == EvaluationType::Automatic);
+        mEvaluationType == EvaluationType::Steady);
 }
 
 void RenderSession::downloadModifiedResources()
 {
     for (auto &[itemId, texture] : mCommandQueue->textures) {
         texture.updateMipmaps();
-        if (!updatingPreviewTextures() && texture.download())
+        if (!updatingPreviewTextures() &&
+            !texture.fileName().isEmpty() &&
+            texture.download())
             mModifiedTextures[texture.itemId()] = texture.data();
     }
 
     for (auto &[itemId, buffer] : mCommandQueue->buffers)
-        if (buffer.download())
+        if (!buffer.fileName().isEmpty() &&
+            buffer.download() &&
+            mEvaluationType != EvaluationType::Steady)
             mModifiedBuffers[buffer.itemId()] = buffer.data();
 }
 

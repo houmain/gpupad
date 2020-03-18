@@ -11,6 +11,7 @@ public:
 
     ItemId itemId() const { return mItemId; }
     QByteArray data() const { return mData; }
+    const QString &fileName() const { return mFileName; }
     void clear();
     void copy(GLBuffer &source);
     GLuint getReadOnlyBufferId();

@@ -10,6 +10,7 @@ enum class EvaluationMode
 
 enum class EvaluationType
 {
+    Steady,
     Automatic,
     Manual,
     Reset,

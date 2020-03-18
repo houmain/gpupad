@@ -11,6 +11,7 @@ public:
     bool operator==(const GLTexture &rhs) const;
 
     ItemId itemId() const { return mItemId; }
+    const QString &fileName() const { return mFileName; }
     TextureKind kind() const { return mKind; }
     Texture::Target target() const { return mTarget; }
     int width() const { return mWidth; }
