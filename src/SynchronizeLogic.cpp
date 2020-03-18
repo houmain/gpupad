@@ -31,6 +31,8 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
         this, &SynchronizeLogic::handleItemReordered);
     connect(mProcessSource, &ProcessSource::outputChanged,
         this, &SynchronizeLogic::outputChanged);
+    connect(&Singletons::fileCache(), &FileCache::fileChanged,
+        this, &SynchronizeLogic::handleFileChanged);
 
     resetRenderSession();
 
@@ -107,10 +109,8 @@ void SynchronizeLogic::handleSessionRendered()
         mEvaluationTimer->setInterval(1);
 }
 
-void SynchronizeLogic::handleFileItemsChanged(const QString &fileName)
+void SynchronizeLogic::handleFileChanged(const QString &fileName)
 {
-    mFilesModified += fileName;
-
     mModel.forEachFileItem(
         [&](const FileItem &item) {
             if (item.fileName == fileName) {
@@ -193,15 +193,9 @@ void SynchronizeLogic::handleSourceTypeChanged(SourceType sourceType)
 
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
-    updateFileCache();
+    Singletons::fileCache().updateEditorFiles();
     mRenderSession->update(mRenderSessionInvalidated, evaluationType);
     mRenderSessionInvalidated = false;
-}
-
-void SynchronizeLogic::updateFileCache()
-{
-    Singletons::fileCache().update(Singletons::editorManager(), mFilesModified);
-    mFilesModified.clear();
 }
 
 void SynchronizeLogic::updateEditors()
@@ -270,7 +264,7 @@ void SynchronizeLogic::processSource()
     if (!mValidateSource && mProcessSourceType.isEmpty())
         return;
 
-    updateFileCache();
+    Singletons::fileCache().updateEditorFiles();
 
     mProcessSource->setSource(
         Singletons::editorManager().currentEditorFileName(),

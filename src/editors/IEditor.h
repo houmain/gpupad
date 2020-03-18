@@ -15,6 +15,7 @@ public:
     virtual QString fileName() const = 0;
     virtual void setFileName(QString fileName) = 0;
     virtual bool load() = 0;
+    virtual bool reload() = 0;
     virtual bool save() = 0;
     virtual int tabifyGroup() = 0;
     virtual SourceType sourceType() const { return SourceType::None; }

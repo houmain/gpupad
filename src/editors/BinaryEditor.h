@@ -19,16 +19,18 @@ public:
     static int getTypeSize(DataType type);
 
     explicit BinaryEditor(QString fileName, QWidget *parent = nullptr);
+    ~BinaryEditor() override;
 
     QList<QMetaObject::Connection> connectEditActions(
         const EditActions &actions) override;
     QString fileName() const override { return mFileName; }
     void setFileName(QString fileName) override;
     bool load() override;
+    bool reload() override;
     bool save() override;
     int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }
-    void replace(QByteArray data, bool emitDataChanged = true);
+    void replace(QByteArray data, bool invalidateFileCache = true);
     const QByteArray &data() const { return mData; }
 
     void setOffset(int offset);
@@ -51,15 +53,8 @@ public:
     void scrollToOffset();
 
 signals:
-    void dataChanged();
     void modificationChanged(bool modified);
     void fileNameChanged(const QString &fileName);
-
-protected:
-    void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight,
-            const QVector<int> &roles = QVector<int>()) override {
-        QAbstractItemView::dataChanged(topLeft, bottomRight, roles);
-    }
 
 private:
     class SpinBoxDelegate;
@@ -76,6 +71,7 @@ private:
         int padding;
     };
 
+    void handleDataChanged();
     void setModified(bool modified);
     Column *getColumn(int index);
     Column getColumn(int index) const;

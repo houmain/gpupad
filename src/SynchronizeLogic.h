@@ -25,7 +25,6 @@ public:
     void setValidateSource(bool validate);
     void setProcessSourceType(QString type);
     void setEvaluationMode(EvaluationMode mode);
-    void updateFileCache();
     void updateEditor(ItemId itemId, bool activated);
     void setMousePosition(QPointF pos) { mMousePosition = pos; }
     const QPointF &mousePosition() const { return mMousePosition; }
@@ -39,12 +38,12 @@ public slots:
     void handleItemsModified(const QModelIndex &topLeft,
         const QModelIndex &bottomRight, const QVector<int> &roles);
     void handleItemModified(const QModelIndex &index);
-    void handleFileItemsChanged(const QString &fileName);
     void handleFileRenamed(const QString &prevFileName,
         const QString &fileName);
     void handleSourceTypeChanged(SourceType sourceType);
 
 private slots:
+    void handleFileChanged(const QString &fileName);
     void handleItemReordered(const QModelIndex &parent, int first);
     void handleSessionRendered();
     void updateEditors();
@@ -62,7 +61,6 @@ private:
     QSet<ItemId> mEditorItemsModified;
 
     QTimer *mEvaluationTimer{ };
-    QSet<QString> mFilesModified;
     QScopedPointer<RenderSession> mRenderSession;
     bool mRenderSessionInvalidated{ };
     EvaluationMode mEvaluationMode{ };

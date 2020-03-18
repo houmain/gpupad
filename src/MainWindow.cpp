@@ -102,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->actionOpen->setShortcuts(QKeySequence::Open);
     mUi->actionSave->setShortcuts(QKeySequence::Save);
     mUi->actionSaveAs->setShortcuts(QKeySequence::SaveAs);
+    mUi->actionReload->setShortcut(QKeySequence::Refresh);
     mUi->actionClose->setShortcuts(QKeySequence::Close);
     mUi->actionUndo->setShortcuts(QKeySequence::Undo);
     mUi->actionRedo->setShortcuts(QKeySequence::Redo);
@@ -168,8 +169,6 @@ MainWindow::MainWindow(QWidget *parent)
     auto &synchronizeLogic = Singletons::synchronizeLogic();
     connect(&mEditorManager, &EditorManager::editorRenamed,
         &synchronizeLogic, &SynchronizeLogic::handleFileRenamed);
-    connect(&mEditorManager, &EditorManager::editorChanged,
-        &synchronizeLogic, &SynchronizeLogic::handleFileItemsChanged);
     connect(&mEditorManager, &EditorManager::sourceTypeChanged,
         &synchronizeLogic, &SynchronizeLogic::handleSourceTypeChanged);
     connect(mUi->actionSourceValidation, &QAction::toggled,

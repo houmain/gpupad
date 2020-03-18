@@ -439,13 +439,19 @@ void RenderSession::executeCommandQueue()
     Singletons::glShareSynchronizer().endUpdate(context);
 }
 
+bool RenderSession::updatingPreviewTextures() const
+{
+    return (gZeroCopyPreview &&
+        !mItemsChanged &&
+        mEvaluationType == EvaluationType::Automatic);
+}
+
 void RenderSession::downloadModifiedResources()
 {
     for (auto &[itemId, texture] : mCommandQueue->textures) {
         texture.updateMipmaps();
-        if (!gZeroCopyPreview || mItemsChanged)
-            if (texture.download())
-                mModifiedTextures[texture.itemId()] = texture.data();
+        if (!updatingPreviewTextures() && texture.download())
+            mModifiedTextures[texture.itemId()] = texture.data();
     }
 
     for (auto &[itemId, buffer] : mCommandQueue->buffers)
@@ -486,9 +492,8 @@ void RenderSession::finish()
 
     editors.setAutoRaise(true);
 
-    // keep updating preview texture
-    for (auto& [itemId, texture] : mCommandQueue->textures)
-        if (gZeroCopyPreview && !mItemsChanged)
+    if (updatingPreviewTextures())
+        for (auto& [itemId, texture] : mCommandQueue->textures)
             if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
                 if (auto editor = editors.getTextureEditor(fileItem->fileName))
                     editor->updatePreviewTexture(texture.target(),

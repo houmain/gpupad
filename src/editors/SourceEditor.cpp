@@ -1,5 +1,6 @@
-#include "SourceEditor.h"
+﻿#include "SourceEditor.h"
 #include "Singletons.h"
+#include "FileCache.h"
 #include "Settings.h"
 #include "FindReplaceBar.h"
 #include "FileDialog.h"
@@ -43,6 +44,8 @@ SourceEditor::SourceEditor(QString fileName, FindReplaceBar *findReplaceBar, QWi
     , mFindReplaceBar(*findReplaceBar)
     , mLineNumberArea(new LineNumberArea(this))
 {
+    connect(this, &SourceEditor::textChanged,
+        [this]() { Singletons::fileCache().invalidateEditorFile(mFileName); });
     connect(this, &SourceEditor::blockCountChanged,
         this, &SourceEditor::updateViewportMargins);
     connect(this, &SourceEditor::updateRequest,
@@ -165,10 +168,22 @@ bool SourceEditor::load(const QString &fileName, QString *source)
 bool SourceEditor::load()
 {
     auto source = QString();
-    if (!load(mFileName, &source))
+    if (!Singletons::fileCache().getSource(mFileName, &source))
         return false;
 
     setPlainText(source);
+    return true;
+}
+
+bool SourceEditor::reload()
+{
+    auto source = QString();
+    if (!load(mFileName, &source))
+        return false;
+
+    selectAll();
+    insertPlainText(source);
+    document()->setModified(false);
     return true;
 }
 

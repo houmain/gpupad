@@ -53,7 +53,6 @@ public:
     bool closeAllTextureEditors();
 
 signals:
-    void editorChanged(const QString &fileName);
     void editorRenamed(const QString &prevFileName, const QString &fileName);
     void sourceTypeChanged(SourceType sourceType);
 

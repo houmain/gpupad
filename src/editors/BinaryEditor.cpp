@@ -3,6 +3,8 @@
 #include "BinaryEditor_HexModel.h"
 #include "BinaryEditor_DataModel.h"
 #include "FileDialog.h"
+#include "Singletons.h"
+#include "FileCache.h"
 #include <QHeaderView>
 #include <QFile>
 
@@ -59,6 +61,12 @@ BinaryEditor::BinaryEditor(QString fileName, QWidget *parent)
     refresh();
 }
 
+BinaryEditor::~BinaryEditor()
+{
+    if (isModified())
+        Singletons::fileCache().invalidateEditorFile(mFileName);
+}
+
 QList<QMetaObject::Connection> BinaryEditor::connectEditActions(
     const EditActions &actions)
 {
@@ -94,12 +102,23 @@ bool BinaryEditor::load(const QString &fileName, QByteArray *data)
 
 bool BinaryEditor::load()
 {
-    if (!load(mFileName, &mData))
+    auto data = QByteArray();
+    if (!Singletons::fileCache().getBinary(mFileName, &data))
         return false;
 
+    replace(data);
     setModified(false);
-    refresh();
-    emit dataChanged();
+    return true;
+}
+
+bool BinaryEditor::reload()
+{
+    auto data = QByteArray();
+    if (!load(mFileName, &data))
+        return false;
+
+    replace(data);
+    setModified(false);
     return true;
 }
 
@@ -110,11 +129,10 @@ bool BinaryEditor::save()
         return false;
     file.write(mData);
     setModified(false);
-    emit dataChanged();
     return true;
 }
 
-void BinaryEditor::replace(QByteArray data, bool emitDataChanged)
+void BinaryEditor::replace(QByteArray data, bool invalidateFileCache)
 {
     if (data.isSharedWith(mData))
         return;
@@ -125,8 +143,14 @@ void BinaryEditor::replace(QByteArray data, bool emitDataChanged)
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
 
-    if (emitDataChanged)
-        emit dataChanged();
+    if (invalidateFileCache)
+        Singletons::fileCache().invalidateEditorFile(mFileName);
+}
+
+void BinaryEditor::handleDataChanged()
+{
+    setModified(true);
+    Singletons::fileCache().invalidateEditorFile(mFileName);
 }
 
 void BinaryEditor::setModified(bool modified)

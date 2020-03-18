@@ -1,6 +1,7 @@
 #include "TextureEditor.h"
 #include "FileDialog.h"
 #include "Singletons.h"
+#include "FileCache.h"
 #include "SynchronizeLogic.h"
 #include "render/GLContext.h"
 #include "session/Item.h"
@@ -61,6 +62,9 @@ TextureEditor::~TextureEditor()
         }
     }
     delete scene();
+
+    if (isModified())
+        Singletons::fileCache().invalidateEditorFile(mFileName);
 }
 
 QList<QMetaObject::Connection> TextureEditor::connectEditActions(
@@ -99,13 +103,22 @@ bool TextureEditor::load(const QString &fileName, TextureData *texture)
 bool TextureEditor::load()
 {
     auto image = TextureData();
+    if (!Singletons::fileCache().getTexture(mFileName, &image))
+        return false;
+
+    replace(image);
+    setModified(false);
+    return true;
+}
+
+bool TextureEditor::reload()
+{
+    auto image = TextureData();
     if (!load(mFileName, &image))
         return false;
 
-    replace(image, false);
-
+    replace(image);
     setModified(false);
-    emit dataChanged();
     return true;
 }
 
@@ -115,11 +128,10 @@ bool TextureEditor::save()
         return false;
 
     setModified(false);
-    emit dataChanged();
     return true;
 }
 
-void TextureEditor::replace(TextureData texture, bool emitDataChanged)
+void TextureEditor::replace(TextureData texture, bool invalidateFileCache)
 {
     if (texture == mTexture)
         return;
@@ -141,8 +153,8 @@ void TextureEditor::replace(TextureData texture, bool emitDataChanged)
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
 
-    if (emitDataChanged)
-        emit dataChanged();
+    if (invalidateFileCache)
+        Singletons::fileCache().invalidateEditorFile(mFileName);
 }
 
 void TextureEditor::updatePreviewTexture(

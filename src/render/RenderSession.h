@@ -35,6 +35,7 @@ private:
     void executeCommandQueue();
     void downloadModifiedResources();
     void outputTimerQueries();
+    bool updatingPreviewTextures() const;
 
     InputScriptObject *mInputScriptObject{ };
     QScopedPointer<CommandQueue> mCommandQueue;

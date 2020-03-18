@@ -295,7 +295,7 @@ bool EditorManager::reloadEditor()
         if (FileDialog::isUntitled(editor->fileName()))
             return false;
 
-        return editor->load();
+        return editor->reload();
     }
     return false;
 }
@@ -335,10 +335,6 @@ void EditorManager::addSourceEditor(SourceEditor *editor)
         [dock](const QString &fileName) {
             dock->setWindowTitle(FileDialog::getWindowTitle(fileName));
         });
-    connect(editor, &SourceEditor::textChanged,
-        [this, editor]() {
-            emit editorChanged(editor->fileName());
-        });
 }
 
 void EditorManager::addTextureEditor(TextureEditor *editor)
@@ -351,10 +347,6 @@ void EditorManager::addTextureEditor(TextureEditor *editor)
     connect(editor, &TextureEditor::fileNameChanged,
         [dock](const QString &fileName) {
             dock->setWindowTitle(FileDialog::getWindowTitle(fileName));
-        });
-    connect(editor, &TextureEditor::dataChanged,
-        [this, editor]() {
-            emit editorChanged(editor->fileName());
         });
 }
 
@@ -369,8 +361,6 @@ void EditorManager::addBinaryEditor(BinaryEditor *editor)
         [dock](const QString &fileName) {
             dock->setWindowTitle(FileDialog::getWindowTitle(fileName));
         });
-    connect(editor, qOverload<>(&BinaryEditor::dataChanged),
-        [this, editor]() { emit editorChanged(editor->fileName()); });
 }
 
 QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)

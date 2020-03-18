@@ -22,15 +22,15 @@ public:
     QString fileName() const override { return mFileName; }
     void setFileName(QString fileName) override;
     bool load() override;
+    bool reload() override;
     bool save() override;
     int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }
-    void replace(TextureData texture, bool emitDataChanged = true);
+    void replace(TextureData texture, bool invalidateFileCache = true);
     void updatePreviewTexture(QOpenGLTexture::Target target, GLuint textureId);
     const TextureData &texture() const { return mTexture; }
 
 signals:
-    void dataChanged();
     void modificationChanged(bool modified);
     void fileNameChanged(const QString &fileName);
 

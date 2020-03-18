@@ -3,10 +3,10 @@
 
 #include <QObject>
 #include <QMap>
+#include <QSet>
 #include <QMutex>
+#include <QFileSystemWatcher>
 #include "TextureData.h"
-
-class EditorManager;
 
 class FileCache : public QObject
 {
@@ -19,14 +19,24 @@ public:
     bool getBinary(const QString &fileName, QByteArray *binary) const;
 
     // only call from main thread
-    void update(EditorManager &editorManager,
-                const QSet<QString> &filesModified);
+    void invalidateEditorFile(const QString &fileName);
+    void updateEditorFiles();
+
+signals:
+    void fileChanged(const QString &fileName) const;
 
 private:
+    void addFileSystemWatch(const QString &fileName) const;
+    void removeFileSystemWatch(const QString &fileName) const;
+    void handleFileSystemFileChanged(const QString &fileName);
+
+    QSet<QString> mEditorFilesInvalidated;
+
     mutable QMutex mMutex;
     mutable QMap<QString, QString> mSources;
     mutable QMap<QString, TextureData> mTextures;
     mutable QMap<QString, QByteArray> mBinaries;
+    mutable QFileSystemWatcher mFileSystemWatcher;
 };
 
 #endif // FILECACHE_H
