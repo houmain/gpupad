@@ -45,6 +45,7 @@ signals:
     void fileNameChanged(const QString &fileName);
 
 protected:
+    void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
@@ -63,6 +64,8 @@ private:
     void removeTrailingSpace();
     void toggleHomePosition(bool shiftHold);
     QString textUnderCursor(bool identifierOnly = false) const;
+    bool updateMultiSelection(QKeyEvent *event, bool multiSelectionModifierHold);
+    void clearMultiSelection();
     void markOccurrences(QString text, QTextDocument::FindFlags =
         QTextDocument::FindCaseSensitively | QTextDocument::FindWholeWords);
     void handleTextChanged();
@@ -84,7 +87,9 @@ private:
     LineNumberArea *mLineNumberArea{ };
     QTextCharFormat mCurrentLineFormat;
     QTextCharFormat mOccurrencesFormat;
+    QTextCharFormat mMultiSelectionFormat;
     QList<QTextCursor> mMarkedOccurrences;
+    QList<QTextCursor> mMultiSelections;
     QColor mLineNumberColor;
     int mTabSize{ };
     bool mIndentWithSpaces{ };

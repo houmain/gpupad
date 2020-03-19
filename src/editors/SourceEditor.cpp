@@ -6,6 +6,7 @@
 #include "FileDialog.h"
 #include "GlslHighlighter.h"
 #include "JsHighlighter.h"
+#include "RectangularSelection.h"
 #include <QCompleter>
 #include <QTextCharFormat>
 #include <QPainter>
@@ -237,6 +238,9 @@ void SourceEditor::updateColors(bool darkTheme)
     mOccurrencesFormat.setForeground(palette().text().color().lighter(darkTheme ? 120 : 90));
     mOccurrencesFormat.setBackground(palette().base().color().lighter(darkTheme ? 120 : 90));
 
+    mMultiSelectionFormat.setForeground(palette().highlightedText());
+    mMultiSelectionFormat.setBackground(palette().highlight());
+
     auto window = palette().window().color();
     mLineNumberColor = window.darker(window.value() < 128 ? 50 : 150);
 
@@ -350,6 +354,19 @@ void SourceEditor::updateLineNumberArea(const QRect &rect, int dy)
 
     if (rect.contains(viewport()->rect()))
         updateViewportMargins();
+}
+
+void SourceEditor::paintEvent(QPaintEvent *event)
+{
+    QPlainTextEdit::paintEvent(event);
+    QPainter painter(viewport());
+
+    painter.setPen(QPen(QPalette().text().color()));
+    for (const auto &cursor : mMultiSelections)
+        if (cursor.anchor() == cursor.position()) {
+            const auto rect = cursorRect(cursor);
+            painter.drawLine(rect.x(), rect.top(), rect.x(), rect.bottom());
+        }
 }
 
 void SourceEditor::resizeEvent(QResizeEvent *e)
@@ -501,6 +518,13 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
     }
 
     const auto ctrlHold = (event->modifiers() & Qt::ControlModifier);
+    const auto multiSelectionModifierHold = (event->modifiers() & Qt::AltModifier) &&
+                                            (event->modifiers() & Qt::ShiftModifier);
+
+    if (!mMultiSelections.empty() || multiSelectionModifierHold)
+        if (updateMultiSelection(event, multiSelectionModifierHold))
+            return;
+
     if (ctrlHold && event->key() == Qt::Key_F) {
         findReplace();
     }
@@ -540,6 +564,49 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
         const auto show = ((textEntered && prefix.size() >= 3) || hitCtrlSpace);
         updateCompleterPopup(prefix, show);
     }
+}
+
+bool SourceEditor::updateMultiSelection(QKeyEvent *event, bool multiSelectionModifierHold)
+{
+    if (!multiSelectionModifierHold) {
+        if (event->key() == Qt::Key_Shift ||
+            event->key() == Qt::Key_Control)
+            return true;
+
+        clearMultiSelection();
+        return false;
+    }
+
+    switch (event->key()) {
+        case Qt::Key_Shift:
+        case Qt::Key_Control:
+            return true;
+
+        case Qt::Key_Up:
+        case Qt::Key_Down:
+        case Qt::Key_Left:
+        case Qt::Key_Right: {
+            mMultiSelections.append(textCursor());
+            auto selection = RectangularSelection(&mMultiSelections);
+            switch (event->key()) {
+                case Qt::Key_Up: selection.moveUp(); break;
+                case Qt::Key_Down: selection.moveDown(); break;
+                case Qt::Key_Left: selection.moveLeft(); break;
+                case Qt::Key_Right: selection.moveRight(); break;
+            }
+            setTextCursor(mMultiSelections.last());
+            mMultiSelections.removeLast();
+            updateExtraSelections();
+            return true;
+        }
+    }
+    return false;
+}
+
+void SourceEditor::clearMultiSelection()
+{
+    mMultiSelections.clear();
+    updateExtraSelections();
 }
 
 void SourceEditor::wheelEvent(QWheelEvent *event)
@@ -589,6 +656,10 @@ void SourceEditor::updateExtraSelections()
 
     for (auto &occurrence : mMarkedOccurrences)
         selections.append({ occurrence, mOccurrencesFormat });
+
+    for (auto &row : mMultiSelections)
+        selections.append({ row, mMultiSelectionFormat });
+
     setExtraSelections(selections);
 }
 
