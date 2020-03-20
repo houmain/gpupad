@@ -51,6 +51,8 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
 
 private:
     class LineNumberArea;
@@ -64,8 +66,9 @@ private:
     void removeTrailingSpace();
     void toggleHomePosition(bool shiftHold);
     QString textUnderCursor(bool identifierOnly = false) const;
+    void beginMultiSelection();
+    void endMultiSelection();
     bool updateMultiSelection(QKeyEvent *event, bool multiSelectionModifierHold);
-    void clearMultiSelection();
     void markOccurrences(QString text, QTextDocument::FindFlags =
         QTextDocument::FindCaseSensitively | QTextDocument::FindWholeWords);
     void handleTextChanged();
@@ -90,6 +93,7 @@ private:
     QTextCharFormat mMultiSelectionFormat;
     QList<QTextCursor> mMarkedOccurrences;
     QList<QTextCursor> mMultiSelections;
+    QTextCursor mMultiEditCursor;
     QColor mLineNumberColor;
     int mTabSize{ };
     bool mIndentWithSpaces{ };

@@ -93,6 +93,8 @@ SourceEditor::~SourceEditor()
 {
     disconnect(this, &SourceEditor::textChanged,
         this, &SourceEditor::handleTextChanged);
+   disconnect(this, &SourceEditor::cursorPositionChanged,
+        this, &SourceEditor::updateExtraSelections);
 
     setDocument(nullptr);
 
@@ -359,14 +361,16 @@ void SourceEditor::updateLineNumberArea(const QRect &rect, int dy)
 void SourceEditor::paintEvent(QPaintEvent *event)
 {
     QPlainTextEdit::paintEvent(event);
-    QPainter painter(viewport());
 
-    painter.setPen(QPen(QPalette().text().color()));
-    for (const auto &cursor : mMultiSelections)
-        if (cursor.anchor() == cursor.position()) {
-            const auto rect = cursorRect(cursor);
-            painter.drawLine(rect.x(), rect.top(), rect.x(), rect.bottom());
+    if (!mMultiSelections.empty()) {
+        QPainter painter(viewport());
+        for (const auto &selection : mMultiSelections)
+            if (selection.anchor() == selection.position()) {
+            const auto rect = cursorRect(selection);
+            painter.fillRect(rect.x(), rect.y(), 1, rect.height(),
+                QPalette().text());
         }
+    }
 }
 
 void SourceEditor::resizeEvent(QResizeEvent *e)
@@ -521,9 +525,11 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
     const auto multiSelectionModifierHold = (event->modifiers() & Qt::AltModifier) &&
                                             (event->modifiers() & Qt::ShiftModifier);
 
-    if (!mMultiSelections.empty() || multiSelectionModifierHold)
-        if (updateMultiSelection(event, multiSelectionModifierHold))
+    if (!mMultiSelections.empty() || multiSelectionModifierHold) {
+        if (!ctrlHold && updateMultiSelection(event, multiSelectionModifierHold))
             return;
+        endMultiSelection();
+    }
 
     if (ctrlHold && event->key() == Qt::Key_F) {
         findReplace();
@@ -566,47 +572,96 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
     }
 }
 
-bool SourceEditor::updateMultiSelection(QKeyEvent *event, bool multiSelectionModifierHold)
+void SourceEditor::beginMultiSelection()
 {
-    if (!multiSelectionModifierHold) {
-        if (event->key() == Qt::Key_Shift ||
-            event->key() == Qt::Key_Control)
-            return true;
-
-        clearMultiSelection();
-        return false;
-    }
-
-    switch (event->key()) {
-        case Qt::Key_Shift:
-        case Qt::Key_Control:
-            return true;
-
-        case Qt::Key_Up:
-        case Qt::Key_Down:
-        case Qt::Key_Left:
-        case Qt::Key_Right: {
-            mMultiSelections.append(textCursor());
-            auto selection = RectangularSelection(&mMultiSelections);
-            switch (event->key()) {
-                case Qt::Key_Up: selection.moveUp(); break;
-                case Qt::Key_Down: selection.moveDown(); break;
-                case Qt::Key_Left: selection.moveLeft(); break;
-                case Qt::Key_Right: selection.moveRight(); break;
-            }
-            setTextCursor(mMultiSelections.last());
-            mMultiSelections.removeLast();
-            updateExtraSelections();
-            return true;
-        }
-    }
-    return false;
+    mMultiEditCursor = { };
+    setCursorWidth(0);
+    if (mMultiSelections.empty())
+        mMultiSelections.append(textCursor());
 }
 
-void SourceEditor::clearMultiSelection()
+void SourceEditor::endMultiSelection()
 {
-    mMultiSelections.clear();
+    if (!mMultiSelections.isEmpty()) {
+        auto cursor = textCursor();
+        auto position = cursor.position();
+        cursor.setPosition(mMultiSelections.front().anchor());
+        cursor.setPosition(position, QTextCursor::KeepAnchor);
+        setTextCursor(cursor);
+
+        mMultiSelections.clear();
+        updateExtraSelections();
+        setCursorWidth(1);
+    }
+}
+
+bool SourceEditor::updateMultiSelection(QKeyEvent *event, bool multiSelectionModifierHold)
+{
+    const auto withEachSelection = [&](const auto& function) {
+        if (mMultiEditCursor.isNull()) {
+            mMultiEditCursor = textCursor();
+            mMultiEditCursor.beginEditBlock();
+        }
+        else {
+            mMultiEditCursor.joinPreviousEditBlock();
+        }
+        for (auto &selection : mMultiSelections) {
+            mMultiEditCursor.setPosition(selection.anchor());
+            mMultiEditCursor.setPosition(selection.position(), QTextCursor::KeepAnchor);
+            function(mMultiEditCursor);
+            selection = mMultiEditCursor;
+        }
+        mMultiEditCursor.endEditBlock();
+    };
+
+    if (!multiSelectionModifierHold) {
+        switch (event->key()) {
+            case Qt::Key_Escape:
+            case Qt::Key_Up:
+            case Qt::Key_Down:
+            case Qt::Key_Left:
+            case Qt::Key_Right:
+                return false;
+
+            case Qt::Key_Backspace:
+                withEachSelection([&](QTextCursor& selection) {
+                    selection.deletePreviousChar();
+                });
+                return true;
+
+            case Qt::Key_Delete:
+                withEachSelection([&](QTextCursor& selection) {
+                    selection.deleteChar();
+                });
+                return true;
+
+            case Qt::Key_Tab:
+                if (!(event->modifiers() & Qt::ShiftModifier))
+                    withEachSelection([&](QTextCursor& selection) {
+                        selection.insertText(tab());
+                    });
+                return true;
+
+            default:
+                if (!event->text().isEmpty())
+                    withEachSelection([&](QTextCursor& selection) {
+                        selection.insertText(event->text());
+                    });
+                return true;
+        }
+    }
+
+    beginMultiSelection();
+    auto selection = RectangularSelection(&mMultiSelections);
+    switch (event->key()) {
+        case Qt::Key_Up: selection.moveUp(); break;
+        case Qt::Key_Down: selection.moveDown(); break;
+        case Qt::Key_Left: selection.moveLeft(); break;
+        case Qt::Key_Right: selection.moveRight(); break;
+    }
+    setTextCursor(mMultiSelections.last());
     updateExtraSelections();
+    return true;
 }
 
 void SourceEditor::wheelEvent(QWheelEvent *event)
@@ -624,6 +679,28 @@ void SourceEditor::mouseDoubleClickEvent(QMouseEvent *event)
 {
     QPlainTextEdit::mouseDoubleClickEvent(event);
     markOccurrences(textUnderCursor(true));
+}
+
+void SourceEditor::mousePressEvent(QMouseEvent *event)
+{
+    endMultiSelection();
+    QPlainTextEdit::mousePressEvent(event);
+}
+
+void SourceEditor::mouseMoveEvent(QMouseEvent *event)
+{
+    QPlainTextEdit::mouseMoveEvent(event);
+    if (event->modifiers() & Qt::AltModifier) {
+        beginMultiSelection();
+        mMultiSelections.last() = textCursor();
+        RectangularSelection selection(&mMultiSelections);
+        selection.create();
+        setTextCursor(mMultiSelections.last());
+        updateExtraSelections();
+    }
+    else {
+        endMultiSelection();
+    }
 }
 
 void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
@@ -652,13 +729,13 @@ void SourceEditor::updateExtraSelections()
     auto selections = QList<QTextEdit::ExtraSelection>();
     auto cursor = textCursor();
     cursor.clearSelection();
-    selections.append({  cursor, mCurrentLineFormat });
+    selections.append({ cursor, mCurrentLineFormat });
 
-    for (auto &occurrence : mMarkedOccurrences)
+    for (const auto &occurrence : mMarkedOccurrences)
         selections.append({ occurrence, mOccurrencesFormat });
 
-    for (auto &row : mMultiSelections)
-        selections.append({ row, mMultiSelectionFormat });
+    for (const auto &selection : mMultiSelections)
+        selections.append({ selection, mMultiSelectionFormat });
 
     setExtraSelections(selections);
 }

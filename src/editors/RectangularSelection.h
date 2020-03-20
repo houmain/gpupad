@@ -11,7 +11,42 @@ public:
         : cursors(*cursors)
     {
         Q_ASSERT(!cursors->isEmpty());
-        convertToRectangle();
+        if (cursors->size() == 1)
+            create();
+    }
+
+    void create()
+    {
+        auto& cursor = cursors.front();
+        if (cursors.size() > 1) {
+            // reset to sole cursor with anchor of first and position of last
+            cursor.setPosition(cursor.anchor());
+            cursor.setPosition(cursors.last().position(), QTextCursor::KeepAnchor);
+            while (cursors.size() > 1)
+                cursors.removeLast();
+        }
+
+        auto anchor = cursor;
+        anchor.setPosition(cursor.anchor());
+
+        if (anchor.columnNumber() < cursor.columnNumber()) {
+            // create a cursor for each line between position and anchor
+            const auto position = cursor.position();
+            const auto lines = anchor.blockNumber() - cursor.blockNumber();
+            cursor.setPosition(getVerticallyMoved(anchor, cursor.blockNumber()));
+            cursor.setPosition(position, QTextCursor::KeepAnchor);
+            for (auto i = 0; i < std::abs(lines); ++i)
+                addLine(lines > 0 ? QTextCursor::Down : QTextCursor::Up);
+            std::reverse(cursors.begin(), cursors.end());
+        }
+        else {
+            // create a cursor for each line between anchor and position
+            const auto lines = cursor.blockNumber() - anchor.blockNumber();
+            anchor.setPosition(getVerticallyMoved(cursor, anchor.blockNumber()), QTextCursor::KeepAnchor);
+            cursor = anchor;
+            for (auto i = 0; i < std::abs(lines); ++i)
+                addLine(lines > 0 ? QTextCursor::Down : QTextCursor::Up);
+        }
     }
 
     void moveUp()
@@ -63,20 +98,6 @@ public:
 
 private:
     QList<QTextCursor>& cursors;
-
-    void convertToRectangle()
-    {
-        if (cursors.size() == 1) {
-            auto& cursor = cursors.front();
-            auto anchor = cursor;
-            anchor.setPosition(cursor.anchor());
-            const auto lines = cursor.blockNumber() - anchor.blockNumber();
-            anchor.setPosition(getVerticallyMoved(cursor, anchor.blockNumber()), QTextCursor::KeepAnchor);
-            cursor = anchor;
-            for (auto i = 0; i < std::abs(lines); ++i)
-                addLine(lines > 0 ? QTextCursor::Down : QTextCursor::Up);
-        }
-    }
 
     bool isBottomUp() const
     {
