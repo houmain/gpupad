@@ -369,22 +369,29 @@ IEditor* SessionProperties::openEditor(const FileItem &fileItem)
 
 IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
 {
-    const auto fileItem = mModel.item<FileItem>(index);
-    if (!fileItem)
-        return nullptr;
+    const auto& item = mModel.getItem(index);
 
-    if (auto script = castItem<Script>(fileItem))
+    if (auto script = castItem<Script>(item))
         if (!script->expression.isEmpty())
             return nullptr;
 
-    const auto editor = openEditor(*fileItem);
+    auto editor = std::add_pointer_t<IEditor>();
+    if (auto program = castItem<Program>(item)) {
+        for (auto item : program->items)
+            if (auto shader = castItem<Shader>(item))
+                editor = openEditor(*shader);
+        return editor;
+    }
+
+    if (const auto fileItem = castItem<FileItem>(item))
+        editor = openEditor(*fileItem);
     if (!editor)
         return nullptr;
 
-    if (auto script = castItem<Script>(fileItem)) {
+    if (auto script = castItem<Script>(item)) {
         editor->setSourceType(SourceType::JavaScript);
     }
-    else if (auto shader = castItem<Shader>(fileItem)) {
+    else if (auto shader = castItem<Shader>(item)) {
         static const auto sMapping = QMap<Shader::ShaderType, SourceType>{
             { Shader::ShaderType::Vertex, SourceType::VertexShader },
             { Shader::ShaderType::Fragment, SourceType::FragmentShader },
@@ -398,7 +405,7 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
             editor->setSourceType(sourceType);
     }
     else {
-        Singletons::synchronizeLogic().updateEditor(fileItem->id, true);
+        Singletons::synchronizeLogic().updateEditor(item.id, true);
     }
     return editor;
 }
