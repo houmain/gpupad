@@ -497,11 +497,11 @@ void RenderSession::finish()
     editors.setAutoRaise(true);
 
     if (updatingPreviewTextures())
-        for (auto& [itemId, texture] : mCommandQueue->textures)
+        for (const auto& [itemId, texture] : mCommandQueue->textures)
             if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
                 if (auto editor = editors.getTextureEditor(fileItem->fileName))
-                    editor->updatePreviewTexture(texture.target(),
-                        texture.getReadOnlyTextureId());
+                    if (auto textureId = texture.textureId())
+                        editor->updatePreviewTexture(texture.target(), textureId);
 
     mPrevMessages.clear();
 

@@ -12,6 +12,8 @@ public:
     ItemId itemId() const { return mItemId; }
     QByteArray data() const { return mData; }
     const QString &fileName() const { return mFileName; }
+    const QSet<ItemId> &usedItems() const { return mUsedItems; }
+
     void clear();
     void copy(GLBuffer &source);
     GLuint getReadOnlyBufferId();
@@ -19,7 +21,6 @@ public:
     void bindReadOnly(GLenum target);
     void unbind(GLenum target);
     bool download();
-    const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
     void reload();

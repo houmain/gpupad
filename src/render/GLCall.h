@@ -19,6 +19,9 @@ public:
 
     ItemId itemId() const { return mCall.id; }
     GLProgram *program() { return mProgram; }
+    std::shared_ptr<const QOpenGLTimerQuery> timerQuery() const { return mTimerQuery; }
+    const QSet<ItemId> &usedItems() const { return mUsedItems; }
+
     void setProgram(GLProgram *program);
     void setTarget(GLTarget *target);
     void setVextexStream(GLStream *vertexStream);
@@ -26,10 +29,7 @@ public:
     void setIndirectBuffer(GLBuffer *commands, const Buffer &buffer);
     void setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer);
     void setTextures(GLTexture *texture, GLTexture *fromTexture);
-
     void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
-    std::shared_ptr<const QOpenGLTimerQuery> timerQuery() const { return mTimerQuery; }
-    const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
     std::shared_ptr<void> beginTimerQuery();

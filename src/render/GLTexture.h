@@ -20,13 +20,15 @@ public:
     int layers() const { return mLayers; }
     Texture::Format format() const { return mFormat; }
     TextureData data() const { return mData; }
+    GLuint textureId() const { return mTextureObject; }
+    const QSet<ItemId> &usedItems() const { return mUsedItems; }
+
     bool clear(std::array<double, 4> color, double depth, int stencil);
     bool copy(GLTexture &source);
     bool updateMipmaps();
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();
     bool download();
-    const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
     GLObject createFramebuffer(GLuint textureId, int level) const;
