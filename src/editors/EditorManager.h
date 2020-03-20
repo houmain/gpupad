@@ -38,6 +38,8 @@ public:
     QStringList getImageFileNames() const;
 
     bool hasEditor() const { return !mDocks.isEmpty(); }
+    bool focusNextEditor();
+    bool focusPreviousEditor();
     void updateCurrentEditor();
     bool hasCurrentEditor() const { return (mCurrentDock != nullptr); }
     QString currentEditorFileName();
@@ -61,6 +63,8 @@ protected:
     void dropEvent(QDropEvent *e) override;
 
 private:
+    int getFocusedEditorIndex() const;
+    bool focusEditorByIndex(int index);
     IEditor *currentEditor();
     void addSourceEditor(SourceEditor *editor);
     void addBinaryEditor(BinaryEditor *editor);

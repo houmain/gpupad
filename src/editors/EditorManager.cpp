@@ -51,6 +51,34 @@ void EditorManager::dropEvent(QDropEvent *e)
         openEditor(url.toLocalFile());
 }
 
+int EditorManager::getFocusedEditorIndex() const
+{
+    auto index = 0;
+    for (auto it = mDocks.begin(); it != mDocks.end(); ++it, ++index)
+        if (it.key() == mCurrentDock)
+            return index;
+    return -1;
+}
+
+bool EditorManager::focusEditorByIndex(int index)
+{
+    if (index < 0 || index >= mDocks.size())
+        return false;
+    raiseDock(std::next(mDocks.begin(), index).key());
+    return true;
+}
+
+bool EditorManager::focusNextEditor()
+{
+    return focusEditorByIndex(getFocusedEditorIndex() + 1);
+}
+
+bool EditorManager::focusPreviousEditor()
+{
+    const auto current = getFocusedEditorIndex();
+    return focusEditorByIndex((current == -1 ? mDocks.size() : current) - 1);
+}
+
 void EditorManager::updateCurrentEditor()
 {
     auto previous = mCurrentDock;

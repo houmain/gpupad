@@ -569,6 +569,16 @@
     <string>F5</string>
    </property>
   </action>
+  <action name="actionFocusNextEditor">
+   <property name="text">
+    <string>Focus next editor</string>
+   </property>
+  </action>
+  <action name="actionFocusPreviousEditor">
+   <property name="text">
+    <string>Focus previous editor</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="resources.qrc"/>

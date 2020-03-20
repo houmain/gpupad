@@ -114,6 +114,10 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->actionOnlineHelp->setShortcuts(QKeySequence::HelpContents);
     mUi->actionRename->setShortcut(QKeySequence("F2"));
     mUi->actionFindReplace->setShortcuts(QKeySequence::Find);
+    mUi->actionFocusNextEditor->setShortcut(QKeySequence::NextChild);
+    mUi->actionFocusPreviousEditor->setShortcut(QKeySequence("Ctrl+Shift+Tab"));
+    addAction(mUi->actionFocusNextEditor);
+    addAction(mUi->actionFocusPreviousEditor);
 
     auto windowFileName = new QAction(this);
     mEditActions = EditActions{
@@ -155,6 +159,10 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::openAbout);
     connect(windowFileName, &QAction::changed,
         this, &MainWindow::updateFileActions);
+    connect(mUi->actionFocusNextEditor, &QAction::triggered,
+        this, &MainWindow::focusNextEditor);
+    connect(mUi->actionFocusPreviousEditor, &QAction::triggered,
+        this, &MainWindow::focusPreviousEditor);
     connect(qApp, &QApplication::focusChanged,
         this, &MainWindow::updateCurrentEditor);
     connect(mSessionEditor->selectionModel(), &QItemSelectionModel::currentChanged,
@@ -337,6 +345,18 @@ void MainWindow::closeEvent(QCloseEvent *event)
         event->accept();
     else
         event->ignore();
+}
+
+void MainWindow::focusNextEditor()
+{
+    if (!mEditorManager.focusNextEditor())
+        mSessionEditor->setFocus();
+}
+
+void MainWindow::focusPreviousEditor()
+{
+    if (!mEditorManager.focusPreviousEditor())
+        mSessionEditor->setFocus();
 }
 
 void MainWindow::updateCurrentEditor()

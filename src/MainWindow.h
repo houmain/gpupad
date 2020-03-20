@@ -53,6 +53,8 @@ private:
     void disconnectEditActions();
     void connectEditActions();
     void updateFileActions();
+    void focusNextEditor();
+    void focusPreviousEditor();
     void stopEvaluation();
     void updateEvaluationMode();
     bool openSession(const QString &fileName);
