@@ -60,6 +60,11 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
+    if (role == Qt::ToolTipRole)
+        if (auto fileItem = castItem<FileItem>(item))
+            if (!FileDialog::isEmptyOrUntitled(fileItem->fileName))
+                return fileItem->fileName;
+
     return SessionModelCore::data(index, role);
 }
 

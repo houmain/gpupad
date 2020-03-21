@@ -86,6 +86,10 @@ private:
 };
 
 QString splitPascalCase(QString str);
+void setFormVisibility(QFormLayout *layout, QLabel *label,
+    QWidget *widget, bool visible);
+void setFormEnabled(QLabel *label,
+    QWidget *widget, bool enabled);
 
 template <typename T>
 void fillComboBox(QComboBox *c)
@@ -101,24 +105,6 @@ void fillComboBox(QComboBox *c, std::initializer_list<std::pair<const char*, T>>
 {
     for (const auto &kv : items)
         c->addItem(kv.first, kv.second);
-}
-
-inline void setFormVisibility(QFormLayout* layout, QLabel* label,
-    QWidget* widget, bool visible)
-{
-    layout->removeWidget(label);
-    layout->removeWidget(widget);
-    if (visible)
-        layout->addRow(label, widget);
-    label->setVisible(visible);
-    widget->setVisible(visible);
-}
-
-inline void setFormEnabled(QLabel* label,
-    QWidget* widget, bool enabled)
-{
-    label->setEnabled(enabled);
-    widget->setEnabled(enabled);
 }
 
 #endif // SESSIONPROPERTIES_H

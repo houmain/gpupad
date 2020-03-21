@@ -7,7 +7,7 @@ ReferenceComboBox::ReferenceComboBox(QWidget *parent) : QComboBox(parent)
         [this]() {
             if (!mSuspendDataChangedSignal)
                 emit currentDataChanged(currentData());
-            });
+        });
 }
 
 void ReferenceComboBox::setCurrentData(QVariant data)

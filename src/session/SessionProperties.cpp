@@ -46,6 +46,24 @@ QString splitPascalCase(QString str)
     return str.replace(QRegularExpression("([a-z])([A-Z])"), "\\1 \\2");
 }
 
+void setFormVisibility(QFormLayout *layout, QLabel *label,
+    QWidget *widget, bool visible)
+{
+    layout->removeWidget(label);
+    layout->removeWidget(widget);
+    if (visible)
+        layout->addRow(label, widget);
+    label->setVisible(visible);
+    widget->setVisible(visible);
+}
+
+void setFormEnabled(QLabel *label,
+    QWidget* widget, bool enabled)
+{
+    label->setEnabled(enabled);
+    widget->setEnabled(enabled);
+}
+
 SessionProperties::SessionProperties(QWidget *parent)
     : QScrollArea(parent)
     , mModel(Singletons::sessionModel())
