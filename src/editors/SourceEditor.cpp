@@ -17,6 +17,7 @@
 #include <QAbstractItemView>
 #include <QScrollBar>
 #include <QTextStream>
+#include <QSaveFile>
 
 class SourceEditor::LineNumberArea : public QWidget
 {
@@ -192,12 +193,12 @@ bool SourceEditor::reload()
 
 bool SourceEditor::save()
 {
-    QFile file(fileName());
+    QSaveFile file(fileName());
     if (file.open(QFile::WriteOnly | QFile::Text)) {
         file.write(document()->toPlainText().toUtf8());
         document()->setModified(false);
         setSourceTypeFromExtension();
-        return true;
+        return file.commit();
     }
     return false;
 }

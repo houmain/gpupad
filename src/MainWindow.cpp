@@ -43,6 +43,9 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowIcon(icon);
 
     mUi->menuView->addAction(mUi->toolBarMain->toggleViewAction());
+#if defined(_WIN32)
+    mUi->toolBarMain->setContentsMargins(2, 2, 2, 2);
+#endif
 
     takeCentralWidget();
 

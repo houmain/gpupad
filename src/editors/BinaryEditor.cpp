@@ -6,7 +6,7 @@
 #include "Singletons.h"
 #include "FileCache.h"
 #include <QHeaderView>
-#include <QFile>
+#include <QSaveFile>
 
 namespace
 {
@@ -124,12 +124,12 @@ bool BinaryEditor::reload()
 
 bool BinaryEditor::save()
 {
-    QFile file(fileName());
+    QSaveFile file(fileName());
     if (!file.open(QFile::WriteOnly | QFile::Truncate))
         return false;
     file.write(mData);
     setModified(false);
-    return true;
+    return file.commit();
 }
 
 void BinaryEditor::replace(QByteArray data, bool invalidateFileCache)

@@ -21,9 +21,9 @@ MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
     verticalHeader()->setVisible(false);
     horizontalHeader()->setVisible(false);
     verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    verticalHeader()->setDefaultSectionSize(24);
+    verticalHeader()->setDefaultSectionSize(20);
     horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    horizontalHeader()->setSectionResizeMode(1, QHeaderView::Fixed);
+    horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     setEditTriggers(NoEditTriggers);
     setSelectionMode(SingleSelection);
     setSelectionBehavior(SelectRows);

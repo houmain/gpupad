@@ -54,8 +54,18 @@ vec3 linearToSrgb(vec3 value) {
     linearToSrgb(value.b)
   );
 }
-vec3 getCubeTexCoord(vec2 texCoord, int face) {
-  return vec3(0, texCoord);
+vec3 getCubeTexCoord(vec2 tc, int face) {
+  float rx = 0.5 - tc.x;
+  float ry = 0.5 - tc.y;
+  float rz = 0.5;
+  return vec3[](
+    vec3(-rz, -ry, rx),
+    vec3( rz, -ry, rx),
+    vec3( rx,  rz, ry),
+    vec3( rx, -rz, ry),
+    vec3( rx, -ry, rz),
+    vec3(-rx, -ry, rz)
+  )[face];
 }
 
 void main() {

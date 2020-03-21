@@ -399,6 +399,7 @@ void RenderSession::render()
     gl.glEnable(GL_FRAMEBUFFER_SRGB);
     gl.glEnable(GL_PROGRAM_POINT_SIZE);
     gl.glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+    gl.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
     QOpenGLVertexArrayObject::Binder vaoBinder(&mCommandQueue->vao);
     reuseUnmodifiedItems();

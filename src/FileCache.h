@@ -5,6 +5,7 @@
 #include <QMap>
 #include <QSet>
 #include <QMutex>
+#include <QTimer>
 #include <QFileSystemWatcher>
 #include "TextureData.h"
 
@@ -27,16 +28,19 @@ signals:
 
 private:
     void addFileSystemWatch(const QString &fileName) const;
+    void addFileSystemWatches();
     void removeFileSystemWatch(const QString &fileName) const;
     void handleFileSystemFileChanged(const QString &fileName);
 
     QSet<QString> mEditorFilesInvalidated;
+    QTimer mFileSystemWatchUpdateTimer;
 
     mutable QMutex mMutex;
     mutable QMap<QString, QString> mSources;
     mutable QMap<QString, TextureData> mTextures;
     mutable QMap<QString, QByteArray> mBinaries;
     mutable QFileSystemWatcher mFileSystemWatcher;
+    mutable QSet<QString> mFileSystemWatchesToAdd;
 };
 
 #endif // FILECACHE_H

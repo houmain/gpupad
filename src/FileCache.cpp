@@ -9,6 +9,9 @@ FileCache::FileCache(QObject *parent) : QObject(parent)
 {
     connect(&mFileSystemWatcher, &QFileSystemWatcher::fileChanged,
         this, &FileCache::handleFileSystemFileChanged);
+    connect(&mFileSystemWatchUpdateTimer, &QTimer::timeout,
+        this, &FileCache::addFileSystemWatches);
+    mFileSystemWatchUpdateTimer.setInterval(500);
 }
 
 void FileCache::invalidateEditorFile(const QString &fileName)
@@ -49,10 +52,10 @@ bool FileCache::getSource(const QString &fileName, QString *source) const
         return true;
     }
 
+    addFileSystemWatch(fileName);
     if (!SourceEditor::load(fileName, source))
         return false;
     mSources[fileName] = *source;
-    addFileSystemWatch(fileName);
     return true;
 }
 
@@ -65,10 +68,10 @@ bool FileCache::getTexture(const QString &fileName, TextureData *texture) const
         return true;
     }
 
+    addFileSystemWatch(fileName);
     if (!TextureEditor::load(fileName, texture))
         return false;
     mTextures[fileName] = *texture;
-    addFileSystemWatch(fileName);
     return true;
 }
 
@@ -81,10 +84,10 @@ bool FileCache::getBinary(const QString &fileName, QByteArray *binary) const
         return true;
     }
 
+    addFileSystemWatch(fileName);
     if (!BinaryEditor::load(fileName, binary))
         return false;
     mBinaries[fileName] = *binary;
-    addFileSystemWatch(fileName);
     return true;
 }
 
@@ -94,7 +97,15 @@ void FileCache::addFileSystemWatch(const QString &fileName) const
         mFileSystemWatcher.files().contains(fileName))
         return;
 
-    mFileSystemWatcher.addPath(fileName);
+    if (!QFileInfo(fileName).exists() ||
+        !mFileSystemWatcher.addPath(fileName))
+        mFileSystemWatchesToAdd.insert(fileName);
+}
+
+void FileCache::addFileSystemWatches()
+{
+    for (auto fileName : std::exchange(mFileSystemWatchesToAdd, { }))
+        addFileSystemWatch(fileName);
 }
 
 void FileCache::removeFileSystemWatch(const QString &fileName) const
@@ -104,14 +115,18 @@ void FileCache::removeFileSystemWatch(const QString &fileName) const
 
 void FileCache::handleFileSystemFileChanged(const QString &fileName)
 {
-    auto &editorManager = Singletons::editorManager();
-    if (auto editor = editorManager.getSourceEditor(fileName)) {
-        editor->reload();
-    }
-    else if (auto editor = editorManager.getBinaryEditor(fileName)) {
-        editor->reload();
-    }
-    else if (auto editor = editorManager.getTextureEditor(fileName)) {
+    const auto getEditor = [](const auto &fileName) -> IEditor* {
+        auto &editorManager = Singletons::editorManager();
+        if (auto editor = editorManager.getSourceEditor(fileName))
+            return editor;
+        if (auto editor = editorManager.getBinaryEditor(fileName))
+            return editor;
+        else if (auto editor = editorManager.getTextureEditor(fileName))
+            return editor;
+        return nullptr;
+    };
+
+    if (auto editor = getEditor(fileName)) {
         editor->reload();
     }
     else {
@@ -121,8 +136,8 @@ void FileCache::handleFileSystemFileChanged(const QString &fileName)
         mTextures.remove(fileName);
     }
 
+    emit fileChanged(fileName);
+
     removeFileSystemWatch(fileName);
     addFileSystemWatch(fileName);
-
-    emit fileChanged(fileName);
 }

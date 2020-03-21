@@ -72,6 +72,8 @@ void GLBuffer::unbind(GLenum target)
 
 void GLBuffer::reload()
 {
+    mMessages.clear();
+
     auto prevData = mData;
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         if (!Singletons::fileCache().getBinary(mFileName, &mData))

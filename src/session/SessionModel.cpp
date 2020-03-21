@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QApplication>
 #include <QPalette>
+#include <QSaveFile>
 
 SessionModel::SessionModel(QObject *parent)
     : SessionModelCore(parent)
@@ -226,12 +227,13 @@ bool SessionModel::save(const QString &fileName)
     if (!mime)
         return false;
 
-    QFile file(fileName);
+    QSaveFile file(fileName);
     if (!file.open(QIODevice::WriteOnly))
         return false;
 
     file.write(mime->text().toUtf8());
-    file.close();
+    if  (!file.commit())
+        return false;
 
     undoStack().setClean();
     return true;
