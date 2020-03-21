@@ -1,0 +1,776 @@
+[
+    {
+        "format": "RGBA8_UNorm",
+        "height": 1024,
+        "id": 10,
+        "name": "Target",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 1024
+    },
+    {
+        "format": "D16",
+        "height": 1024,
+        "id": 47,
+        "name": "Depth",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 1024
+    },
+    {
+        "blendConstant": "#ffffffff",
+        "cullMode": "NoCulling",
+        "frontFace": "CCW",
+        "id": 8,
+        "items": [
+            {
+                "blendAlphaDest": "Zero",
+                "blendAlphaEq": "Add",
+                "blendAlphaSource": "One",
+                "blendColorDest": "Zero",
+                "blendColorEq": "Add",
+                "blendColorSource": "One",
+                "colorWriteMask": 15,
+                "id": 9,
+                "level": 0,
+                "name": "Color",
+                "textureId": 10,
+                "type": "Attachment"
+            },
+            {
+                "depthClamp": false,
+                "depthComparisonFunc": "Less",
+                "depthOffsetFactor": 0,
+                "depthOffsetUnits": 0,
+                "depthWrite": true,
+                "id": 48,
+                "level": 0,
+                "name": "Depth",
+                "textureId": 47,
+                "type": "Attachment"
+            }
+        ],
+        "logicOperation": "NoLogicOperation",
+        "name": "Target",
+        "type": "Target"
+    },
+    {
+        "executeOn": "ManualEvaluation",
+        "fileName": "math.js",
+        "id": 796,
+        "name": "math.js",
+        "type": "Script"
+    },
+    {
+        "id": 862,
+        "inlineScope": true,
+        "items": [
+            {
+                "fileName": "DamagedHelmet/Default_emissive.jpg",
+                "format": "RGBA8_UNorm",
+                "height": 2048,
+                "id": 1,
+                "name": "Default_emissive.jpg",
+                "target": "Target2D",
+                "type": "Texture",
+                "width": 2048
+            },
+            {
+                "fileName": "DamagedHelmet/Default_normal.jpg",
+                "format": "RGBA8_UNorm",
+                "height": 2048,
+                "id": 2,
+                "name": "Default_normal.jpg",
+                "target": "Target2D",
+                "type": "Texture",
+                "width": 2048
+            },
+            {
+                "fileName": "DamagedHelmet/Default_AO.jpg",
+                "format": "RGBA8_UNorm",
+                "height": 2048,
+                "id": 865,
+                "name": "Default_AO.jpg",
+                "target": "Target2D",
+                "type": "Texture",
+                "width": 2048
+            },
+            {
+                "fileName": "DamagedHelmet/Default_albedo.jpg",
+                "format": "RGBA8_UNorm",
+                "height": 2048,
+                "id": 867,
+                "name": "Default_albedo.jpg",
+                "target": "Target2D",
+                "type": "Texture",
+                "width": 2048
+            },
+            {
+                "fileName": "DamagedHelmet/Default_metalRoughness.jpg",
+                "format": "RGBA8_UNorm",
+                "height": 2048,
+                "id": 869,
+                "name": "Default_metalRoughness.jpg",
+                "target": "Target2D",
+                "type": "Texture",
+                "width": 2048
+            },
+            {
+                "fileName": "DamagedHelmet/DamagedHelmet.bin",
+                "id": 871,
+                "items": [
+                    {
+                        "count": 3,
+                        "dataType": "Float",
+                        "id": 872,
+                        "name": "NORMAL",
+                        "padding": 0,
+                        "type": "Column"
+                    }
+                ],
+                "name": "DamagedHelmet.bin",
+                "offset": 267384,
+                "rowCount": 14556,
+                "type": "Buffer"
+            },
+            {
+                "fileName": "DamagedHelmet/DamagedHelmet.bin",
+                "id": 873,
+                "items": [
+                    {
+                        "count": 3,
+                        "dataType": "Float",
+                        "id": 874,
+                        "name": "POSITION",
+                        "padding": 0,
+                        "type": "Column"
+                    }
+                ],
+                "name": "DamagedHelmet.bin",
+                "offset": 92712,
+                "rowCount": 14556,
+                "type": "Buffer"
+            },
+            {
+                "fileName": "DamagedHelmet/DamagedHelmet.bin",
+                "id": 875,
+                "items": [
+                    {
+                        "count": 2,
+                        "dataType": "Float",
+                        "id": 876,
+                        "name": "TEXCOORD_0",
+                        "padding": 0,
+                        "type": "Column"
+                    }
+                ],
+                "name": "DamagedHelmet.bin",
+                "offset": 442056,
+                "rowCount": 14556,
+                "type": "Buffer"
+            },
+            {
+                "fileName": "DamagedHelmet/DamagedHelmet.bin",
+                "id": 881,
+                "items": [
+                    {
+                        "count": 1,
+                        "dataType": "Uint16",
+                        "id": 882,
+                        "name": "INDEX",
+                        "padding": 0,
+                        "type": "Column"
+                    }
+                ],
+                "name": "DamagedHelmet.bin",
+                "offset": 0,
+                "rowCount": 46356,
+                "type": "Buffer"
+            },
+            {
+                "id": 877,
+                "items": [
+                    {
+                        "bufferId": 871,
+                        "columnId": 872,
+                        "divisor": 0,
+                        "id": 878,
+                        "name": "a_Normal",
+                        "normalize": false,
+                        "type": "Attribute"
+                    },
+                    {
+                        "bufferId": 873,
+                        "columnId": 874,
+                        "divisor": 0,
+                        "id": 879,
+                        "name": "a_Position",
+                        "normalize": false,
+                        "type": "Attribute"
+                    },
+                    {
+                        "bufferId": 875,
+                        "columnId": 876,
+                        "divisor": 0,
+                        "id": 880,
+                        "name": "a_UV1",
+                        "normalize": false,
+                        "type": "Attribute"
+                    }
+                ],
+                "name": "Stream",
+                "type": "Stream"
+            }
+        ],
+        "name": "DamagedHelmet",
+        "type": "Group"
+    },
+    {
+        "id": 74,
+        "inlineScope": false,
+        "items": [
+            {
+                "id": 126,
+                "inlineScope": true,
+                "items": [
+                    {
+                        "fileName": "gltf-viewer/papermill/papermill_irr.ktx",
+                        "format": "RGBA16F",
+                        "id": 667,
+                        "name": "papermill_irr.ktx",
+                        "target": "TargetCubeMap",
+                        "type": "Texture",
+                        "width": 256
+                    },
+                    {
+                        "fileName": "gltf-viewer/papermill/papermill_pmrem.ktx",
+                        "format": "RGBA16F",
+                        "id": 606,
+                        "name": "papermill_pmrem.ktx",
+                        "target": "TargetCubeMap",
+                        "type": "Texture",
+                        "width": 256
+                    },
+                    {
+                        "fileName": "gltf-viewer/brdfLUT.png",
+                        "format": "RGBA8_UNorm",
+                        "height": 512,
+                        "id": 127,
+                        "name": "brdfLUT.png",
+                        "target": "Target2D",
+                        "type": "Texture",
+                        "width": 512
+                    }
+                ],
+                "name": "Environment",
+                "type": "Group"
+            },
+            {
+                "id": 71,
+                "inlineScope": true,
+                "items": [
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 13,
+                        "name": "u_ModelMatrix",
+                        "type": "Binding",
+                        "values": [
+                            "modelMatrix(Date.now())"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 69,
+                        "name": "u_NormalMatrix",
+                        "type": "Binding",
+                        "values": [
+                            "modelMatrix(Date.now())"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 14,
+                        "name": "u_ViewProjectionMatrix",
+                        "type": "Binding",
+                        "values": [
+                            "multiply(\n  translation(0, 0, -3.5),\n  perspective(45, 1.0, 0.1, 1000),\n)"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression3",
+                        "id": 30,
+                        "name": "u_Camera",
+                        "type": "Binding",
+                        "values": [
+                            "0",
+                            "0",
+                            "3.5"
+                        ]
+                    }
+                ],
+                "name": "Matrices",
+                "type": "Group"
+            },
+            {
+                "id": 70,
+                "inlineScope": true,
+                "items": [
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 28,
+                        "name": "u_Exposure",
+                        "type": "Binding",
+                        "values": [
+                            "1"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 31,
+                        "name": "u_Lights[0].type",
+                        "type": "Binding",
+                        "values": [
+                            "0"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression3",
+                        "id": 35,
+                        "name": "u_Lights[0].color",
+                        "type": "Binding",
+                        "values": [
+                            "1",
+                            "1",
+                            "1"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression3",
+                        "id": 32,
+                        "name": "u_Lights[0].direction",
+                        "type": "Binding",
+                        "values": [
+                            "-4.50",
+                            "-4.20",
+                            "-1.40"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression3",
+                        "id": 36,
+                        "name": "u_Lights[0].position",
+                        "type": "Binding",
+                        "values": [
+                            "0",
+                            "0",
+                            "0"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 33,
+                        "name": "u_Lights[0].intensity",
+                        "type": "Binding",
+                        "values": [
+                            "2"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 50,
+                        "name": "u_Lights[0].innerConeCos",
+                        "type": "Binding",
+                        "values": [
+                            "Math.cos(0)"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 51,
+                        "name": "u_Lights[0].outerConeCos",
+                        "type": "Binding",
+                        "values": [
+                            "Math.cos(Math.PI / 4)"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 52,
+                        "name": "u_Lights[0].range",
+                        "type": "Binding",
+                        "values": [
+                            "-1"
+                        ]
+                    },
+                    {
+                        "bindingType": "Sampler",
+                        "borderColor": "#ff000000",
+                        "comparisonFunc": "NoComparisonFunc",
+                        "id": 130,
+                        "magFilter": "Linear",
+                        "minFilter": "LinearMipMapLinear",
+                        "name": "u_DiffuseEnvSampler",
+                        "textureId": 667,
+                        "type": "Binding",
+                        "wrapModeX": "ClampToEdge",
+                        "wrapModeY": "ClampToEdge",
+                        "wrapModeZ": "Repeat"
+                    },
+                    {
+                        "bindingType": "Sampler",
+                        "borderColor": "#ff000000",
+                        "comparisonFunc": "NoComparisonFunc",
+                        "id": 131,
+                        "magFilter": "Linear",
+                        "minFilter": "LinearMipMapLinear",
+                        "name": "u_SpecularEnvSampler",
+                        "textureId": 606,
+                        "type": "Binding",
+                        "wrapModeX": "ClampToEdge",
+                        "wrapModeY": "ClampToEdge",
+                        "wrapModeZ": "Repeat"
+                    },
+                    {
+                        "bindingType": "Sampler",
+                        "borderColor": "#ff000000",
+                        "comparisonFunc": "NoComparisonFunc",
+                        "id": 128,
+                        "magFilter": "Linear",
+                        "minFilter": "LinearMipMapLinear",
+                        "name": "u_brdfLUT",
+                        "textureId": 127,
+                        "type": "Binding",
+                        "wrapModeX": "ClampToEdge",
+                        "wrapModeY": "ClampToEdge",
+                        "wrapModeZ": "Repeat"
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 797,
+                        "name": "u_MipCount",
+                        "type": "Binding",
+                        "values": [
+                            "8"
+                        ]
+                    }
+                ],
+                "name": "Lights",
+                "type": "Group"
+            },
+            {
+                "id": 72,
+                "inlineScope": true,
+                "items": [
+                    {
+                        "bindingType": "Sampler",
+                        "borderColor": "#ff000000",
+                        "comparisonFunc": "NoComparisonFunc",
+                        "id": 54,
+                        "magFilter": "Linear",
+                        "minFilter": "LinearMipMapLinear",
+                        "name": "u_BaseColorSampler",
+                        "textureId": 867,
+                        "type": "Binding",
+                        "wrapModeX": "Repeat",
+                        "wrapModeY": "Repeat",
+                        "wrapModeZ": "Repeat"
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 27,
+                        "name": "u_BaseColorUVSet",
+                        "type": "Binding",
+                        "values": [
+                            "0"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression4",
+                        "id": 42,
+                        "name": "u_BaseColorFactor",
+                        "type": "Binding",
+                        "values": [
+                            "1",
+                            "1",
+                            "1",
+                            "1"
+                        ]
+                    },
+                    {
+                        "bindingType": "Sampler",
+                        "borderColor": "#ff000000",
+                        "comparisonFunc": "NoComparisonFunc",
+                        "id": 23,
+                        "magFilter": "Linear",
+                        "minFilter": "LinearMipMapLinear",
+                        "name": "u_NormalSampler",
+                        "textureId": 2,
+                        "type": "Binding",
+                        "wrapModeX": "Repeat",
+                        "wrapModeY": "Repeat",
+                        "wrapModeZ": "Repeat"
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 55,
+                        "name": "u_NormalUVSet",
+                        "type": "Binding",
+                        "values": [
+                            "0"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 57,
+                        "name": "u_NormalScale",
+                        "type": "Binding",
+                        "values": [
+                            "1"
+                        ]
+                    },
+                    {
+                        "bindingType": "Sampler",
+                        "borderColor": "#ff000000",
+                        "comparisonFunc": "NoComparisonFunc",
+                        "id": 63,
+                        "magFilter": "Linear",
+                        "minFilter": "LinearMipMapLinear",
+                        "name": "u_MetallicRoughnessSampler",
+                        "textureId": 869,
+                        "type": "Binding",
+                        "wrapModeX": "Repeat",
+                        "wrapModeY": "Repeat",
+                        "wrapModeZ": "Repeat"
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 60,
+                        "name": "u_MetallicRoughnessUVSet",
+                        "type": "Binding",
+                        "values": [
+                            "0"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 798,
+                        "name": "u_OcclusionUVSet",
+                        "type": "Binding",
+                        "values": [
+                            "0"
+                        ]
+                    },
+                    {
+                        "bindingType": "Sampler",
+                        "borderColor": "#ff000000",
+                        "comparisonFunc": "NoComparisonFunc",
+                        "id": 799,
+                        "magFilter": "Linear",
+                        "minFilter": "LinearMipMapLinear",
+                        "name": "u_OcclusionSampler",
+                        "textureId": 865,
+                        "type": "Binding",
+                        "wrapModeX": "Repeat",
+                        "wrapModeY": "Repeat",
+                        "wrapModeZ": "Repeat"
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 800,
+                        "name": "u_OcclusionStrength",
+                        "type": "Binding",
+                        "values": [
+                            "1"
+                        ]
+                    },
+                    {
+                        "bindingType": "Sampler",
+                        "borderColor": "#ff000000",
+                        "comparisonFunc": "NoComparisonFunc",
+                        "id": 59,
+                        "magFilter": "Linear",
+                        "minFilter": "LinearMipMapLinear",
+                        "name": "u_EmissiveSampler",
+                        "textureId": 1,
+                        "type": "Binding",
+                        "wrapModeX": "Repeat",
+                        "wrapModeY": "Repeat",
+                        "wrapModeZ": "Repeat"
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 64,
+                        "name": "u_EmissiveUVSet",
+                        "type": "Binding",
+                        "values": [
+                            "0"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 40,
+                        "name": "u_MetallicFactor",
+                        "type": "Binding",
+                        "values": [
+                            "1"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression",
+                        "id": 61,
+                        "name": "u_RoughnessFactor",
+                        "type": "Binding",
+                        "values": [
+                            "1"
+                        ]
+                    },
+                    {
+                        "bindingType": "Uniform",
+                        "editor": "Expression3",
+                        "id": 38,
+                        "name": "u_EmissiveFactor",
+                        "type": "Binding",
+                        "values": [
+                            "1",
+                            "1",
+                            "1"
+                        ]
+                    }
+                ],
+                "name": "Material",
+                "type": "Group"
+            },
+            {
+                "id": 6,
+                "items": [
+                    {
+                        "fileName": "gltf-viewer/header_vert.glsl",
+                        "id": 12,
+                        "name": "header_vert.glsl",
+                        "shaderType": "Header",
+                        "type": "Shader"
+                    },
+                    {
+                        "fileName": "gltf-viewer/animation.glsl",
+                        "id": 11,
+                        "name": "animation.glsl",
+                        "shaderType": "Header",
+                        "type": "Shader"
+                    },
+                    {
+                        "fileName": "gltf-viewer/primitive.vert",
+                        "id": 7,
+                        "name": "primitive.vert",
+                        "shaderType": "Vertex",
+                        "type": "Shader"
+                    },
+                    {
+                        "fileName": "gltf-viewer/header_frag.glsl",
+                        "id": 16,
+                        "name": "header_frag.glsl",
+                        "shaderType": "Header",
+                        "type": "Shader"
+                    },
+                    {
+                        "fileName": "gltf-viewer/tonemapping.glsl",
+                        "id": 17,
+                        "name": "tonemapping.glsl",
+                        "shaderType": "Header",
+                        "type": "Shader"
+                    },
+                    {
+                        "fileName": "gltf-viewer/textures.glsl",
+                        "id": 18,
+                        "name": "textures.glsl",
+                        "shaderType": "Header",
+                        "type": "Shader"
+                    },
+                    {
+                        "fileName": "gltf-viewer/functions.glsl",
+                        "id": 19,
+                        "name": "functions.glsl",
+                        "shaderType": "Header",
+                        "type": "Shader"
+                    },
+                    {
+                        "fileName": "gltf-viewer/metallic-roughness.frag",
+                        "id": 15,
+                        "name": "metallic-roughness.frag",
+                        "shaderType": "Fragment",
+                        "type": "Shader"
+                    }
+                ],
+                "name": "Program",
+                "type": "Program"
+            },
+            {
+                "callType": "ClearTexture",
+                "checked": true,
+                "clearColor": "#ff000000",
+                "clearDepth": 1,
+                "clearStencil": 0,
+                "executeOn": "EveryEvaluation",
+                "id": 49,
+                "name": "Clear Depth",
+                "textureId": 47,
+                "type": "Call"
+            },
+            {
+                "callType": "ClearTexture",
+                "checked": true,
+                "clearColor": "#ff414141",
+                "clearDepth": 1,
+                "clearStencil": 0,
+                "executeOn": "EveryEvaluation",
+                "id": 20,
+                "name": "Clear",
+                "textureId": 10,
+                "type": "Call"
+            },
+            {
+                "baseInstance": "0",
+                "baseVertex": "0",
+                "callType": "DrawIndexed",
+                "checked": true,
+                "count": "46356",
+                "executeOn": "EveryEvaluation",
+                "first": "0",
+                "id": 883,
+                "indexBufferId": 881,
+                "instanceCount": "1",
+                "name": "Draw",
+                "primitiveType": "Triangles",
+                "programId": 6,
+                "targetId": 8,
+                "type": "Call",
+                "vertexStreamId": 877
+            }
+        ],
+        "name": "SampleViewer",
+        "type": "Group"
+    }
+]
