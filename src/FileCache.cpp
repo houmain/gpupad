@@ -94,8 +94,7 @@ void FileCache::addFileSystemWatch(const QString &fileName) const
         mFileSystemWatcher.files().contains(fileName))
         return;
 
-    auto added = mFileSystemWatcher.addPath(fileName);
-    Q_ASSERT(added);
+    mFileSystemWatcher.addPath(fileName);
 }
 
 void FileCache::removeFileSystemWatch(const QString &fileName) const

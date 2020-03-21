@@ -46,6 +46,7 @@ public:
     SourceType currentSourceType();
     void setCurrentSourceType(SourceType sourceType);
     QList<QMetaObject::Connection> connectEditActions(const EditActions &actions);
+    void renameEditors(const QString &prevFileName, const QString &fileName);
     bool saveEditor();
     bool saveEditorAs();
     bool saveAllEditors();

@@ -175,10 +175,6 @@ MainWindow::MainWindow(QWidget *parent)
         mSessionEditor.data(), &SessionEditor::updateItemActions);
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
-    connect(&mEditorManager, &EditorManager::editorRenamed,
-        &synchronizeLogic, &SynchronizeLogic::handleFileRenamed);
-    connect(&mEditorManager, &EditorManager::sourceTypeChanged,
-        &synchronizeLogic, &SynchronizeLogic::handleSourceTypeChanged);
     connect(mUi->actionSourceValidation, &QAction::toggled,
         &synchronizeLogic, &SynchronizeLogic::setValidateSource);
     connect(mOutputWindow.data(), &OutputWindow::typeSelectionChanged,

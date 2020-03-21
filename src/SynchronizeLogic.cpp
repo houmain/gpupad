@@ -35,6 +35,10 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
         this, &SynchronizeLogic::outputChanged);
     connect(&Singletons::fileCache(), &FileCache::fileChanged,
         this, &SynchronizeLogic::handleFileChanged);
+    connect(&Singletons::editorManager(), &EditorManager::editorRenamed,
+        this, &SynchronizeLogic::handleEditorFileRenamed);
+    connect(&Singletons::editorManager(), &EditorManager::sourceTypeChanged,
+        this, &SynchronizeLogic::handleSourceTypeChanged);
 
     resetRenderSession();
 
@@ -137,6 +141,13 @@ void SynchronizeLogic::handleItemsModified(const QModelIndex &topLeft,
 
 void SynchronizeLogic::handleItemModified(const QModelIndex &index)
 {
+    if (auto fileItem = mModel.item<FileItem>(index)) {
+        if (index.column() == SessionModel::Name)
+            handleFileItemRenamed(*fileItem);
+        else if (index.column() == SessionModel::FileName)
+            handleFileItemFileChanged(*fileItem);
+    }
+
     if (index.column() != SessionModel::None) {
         if (auto buffer = mModel.item<Buffer>(index)) {
             mEditorItemsModified.insert(buffer->id);
@@ -176,15 +187,55 @@ void SynchronizeLogic::handleItemReordered(const QModelIndex &parent, int first)
     handleItemModified(mModel.index(first, 0, parent));
 }
 
-void SynchronizeLogic::handleFileRenamed(const QString &prevFileName,
+void SynchronizeLogic::handleEditorFileRenamed(const QString &prevFileName,
     const QString &fileName)
 {
-    if (FileDialog::isUntitled(prevFileName))
-        mModel.forEachFileItem([&](const FileItem &item) {
-            if (item.fileName == prevFileName)
+    // update item filenames
+    mModel.forEachFileItem([&](const FileItem &item) {
+        if (item.fileName == prevFileName)
+            if (!fileName.isEmpty() || FileDialog::isUntitled(item.fileName))
                 mModel.setData(mModel.getIndex(&item, SessionModel::FileName),
                     fileName);
-        });
+    });
+}
+
+void SynchronizeLogic::handleFileItemFileChanged(const FileItem &item)
+{
+    // update item name
+    const auto name = FileDialog::getFileTitle(item.fileName);
+    if (name != item.name)
+        mModel.setData(mModel.getIndex(&item, SessionModel::Name), name);
+}
+
+void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
+{
+    if (item.fileName.isEmpty() ||
+        FileDialog::getFileTitle(item.fileName) == item.name)
+        return;
+
+    const auto prevFileName = item.fileName;
+    if (!FileDialog::isEmptyOrUntitled(item.fileName)) {
+        // try to rename file in filesystem
+        const auto fileName = QFileInfo(item.fileName).dir().filePath(item.name);
+        if (QFile(prevFileName).exists() &&
+            !QFile::rename(prevFileName, fileName)) {
+            // failed rename item back
+            mModel.setData(mModel.getIndex(&item, SessionModel::Name),
+                QFileInfo(item.fileName).fileName());
+            return;
+        }
+
+        // update item filename
+        mModel.setData(mModel.getIndex(&item, SessionModel::FileName), fileName);
+    }
+    else {
+        // update item filename
+        const auto fileName = FileDialog::generateNextUntitledFileName(item.name);
+        mModel.setData(mModel.getIndex(&item, SessionModel::FileName), fileName);
+    }
+
+    // rename editor filenames
+    Singletons::editorManager().renameEditors(prevFileName, item.fileName);
 }
 
 void SynchronizeLogic::handleSourceTypeChanged(SourceType sourceType)

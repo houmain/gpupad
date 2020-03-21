@@ -13,21 +13,13 @@ namespace {
         "vert", "tesc", "tese", "geom", "frag", "comp" };
     const auto ScriptFileExtensions = { "js" };
 
-    static QMap<QString, int> gNextUntitledFileIndex;
+    int gNextUntitledFileIndex;
 } // namespace
-
-void FileDialog::resetNextUntitledFileIndex()
-{
-    gNextUntitledFileIndex.clear();
-}
 
 QString FileDialog::generateNextUntitledFileName(QString base)
 {
-    auto fileName = UntitledTag + base;
-    auto index = gNextUntitledFileIndex[base]++;
-    if (index)
-        fileName += QStringLiteral(" [%1]").arg(index + 1);
-    return fileName;
+    const auto index = gNextUntitledFileIndex++;
+    return UntitledTag + base + QStringLiteral("/%1").arg(index + 1);
 }
 
 bool FileDialog::isUntitled(const QString &fileName)
@@ -45,7 +37,8 @@ QString FileDialog::getFileTitle(const QString &fileName)
     if (!fileName.startsWith(UntitledTag))
         return QFileInfo(fileName).fileName();
 
-    return QString(fileName).remove(0, UntitledTag.size());
+    auto name = QString(fileName).remove(0, UntitledTag.size());
+    return name.left(name.lastIndexOf('/'));
 }
 
 QString FileDialog::getFullWindowTitle(const QString &fileName)
@@ -53,7 +46,7 @@ QString FileDialog::getFullWindowTitle(const QString &fileName)
     if (!fileName.startsWith(UntitledTag))
         return "[*]" + QFileInfo(fileName).fileName() + " - " + QFileInfo(fileName).path();
 
-    return "[*]" + QString(fileName).remove(0, UntitledTag.size());
+    return "[*]" + getFileTitle(fileName);
 }
 
 QString FileDialog::getWindowTitle(const QString &fileName)

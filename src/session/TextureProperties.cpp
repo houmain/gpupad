@@ -267,7 +267,8 @@ TextureProperties::~TextureProperties()
 
 TextureKind TextureProperties::currentTextureKind() const
 {
-    mSessionProperties.updateModel();
+    if (QObject::sender() == mUi->target)
+        mSessionProperties.updateModel();
 
     if (auto texture = mSessionProperties.model().item<Texture>(
             mSessionProperties.currentModelIndex()))
@@ -277,7 +278,8 @@ TextureKind TextureProperties::currentTextureKind() const
 
 bool TextureProperties::hasFile() const
 {
-    mSessionProperties.updateModel();
+    if (QObject::sender() == mUi->file)
+        mSessionProperties.updateModel();
 
     if (auto texture = mSessionProperties.model().item<Texture>(
             mSessionProperties.currentModelIndex()))

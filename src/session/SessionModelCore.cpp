@@ -485,21 +485,6 @@ void SessionModelCore::undoableFileNameAssignment(const QModelIndex &index,
         return;
     }
 
-    if (item.fileName != fileName) {
-        mUndoStack.beginMacro("Edit");
-
-        // update name when it is still the default
-        if (item.name == getTypeName(item.type) ||
-            item.name == FileDialog::getFileTitle(item.fileName)) {
-
-            auto newFileName =
-                (FileDialog::isEmptyOrUntitled(fileName) ?
-                    getTypeName(item.type) : fileName);
-
-            setData(getIndex(&item, Name),
-                FileDialog::getFileTitle(newFileName));
-        }
+    if (item.fileName != fileName)
         undoableAssignment(index, &item.fileName, fileName);
-        mUndoStack.endMacro();
-    }
 }

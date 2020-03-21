@@ -271,6 +271,18 @@ QStringList EditorManager::getImageFileNames() const
     return result;
 }
 
+void EditorManager::renameEditors(const QString &prevFileName, const QString &fileName)
+{
+    if (prevFileName.isEmpty() ||
+        fileName.isEmpty() ||
+        prevFileName == fileName)
+        return;
+
+    for (auto editor : qAsConst(mDocks))
+        if (editor->fileName() == prevFileName)
+            editor->setFileName(fileName);
+}
+
 bool EditorManager::saveEditor()
 {
     if (auto editor = currentEditor()) {
@@ -460,10 +472,6 @@ bool EditorManager::closeDock(QDockWidget *dock)
     }
 
     DockWindow::closeDock(dock);
-
-    if (mDocks.isEmpty())
-        Singletons::fileDialog().resetNextUntitledFileIndex();
-
     return true;
 }
 

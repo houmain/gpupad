@@ -20,7 +20,7 @@ struct Item
     Type type{ };
     Item *parent{ };
     QList<Item*> items;
-    QString name{ };
+    QString name;
 };
 
 struct FileItem : Item
