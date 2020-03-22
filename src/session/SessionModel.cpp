@@ -379,13 +379,14 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
 {
     object["type"] = getTypeName(item.type);
     object["id"] = item.id;
-    object["name"] = item.name;
     if (auto fileItem = castItem<FileItem>(item)) {
         const auto &fileName = fileItem->fileName;
         if (!FileDialog::isEmptyOrUntitled(fileName))
             object["fileName"] = (relativeFilePaths ?
                 QDir::current().relativeFilePath(fileName) : fileName);
     }
+    if (!object.contains("fileName"))
+        object["name"] = item.name;
 
 #define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
     if (item.type == Item::Type::ITEM_TYPE && \
