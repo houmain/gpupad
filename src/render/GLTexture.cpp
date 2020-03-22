@@ -32,7 +32,7 @@ bool GLTexture::operator==(const GLTexture &rhs) const
 
 GLuint GLTexture::getReadOnlyTextureId()
 {
-    reload();
+    reload(false);
     createTexture();
     upload();
     return mTextureObject;
@@ -40,7 +40,7 @@ GLuint GLTexture::getReadOnlyTextureId()
 
 GLuint GLTexture::getReadWriteTextureId()
 {
-    reload();
+    reload(true);
     createTexture();
     upload();
     mDeviceCopyModified = true;
@@ -173,7 +173,7 @@ bool GLTexture::updateMipmaps()
     return (glGetError() == GL_NO_ERROR);
 }
 
-void GLTexture::reload()
+void GLTexture::reload(bool forWriting)
 {
     mMessages.clear();
 
@@ -183,15 +183,20 @@ void GLTexture::reload()
             mMessages += MessageList::insert(mItemId,
                 MessageType::LoadingFileFailed, mFileName);
 
-    // reload file as long as dimensions match (format is ignored)
-    const auto sameDimensions = [&](const TextureData &data) {
-        return (mTarget == data.target() &&
-                mWidth == data.width() &&
-                mHeight == data.height() &&
-                mDepth == data.depth() &&
-                mLayers == data.layers());
+    // reload file as long as targets match
+    // and when when writing to it also dimensions match (format is ignored)
+    const auto useFileData = [&]() {
+        if (fileData.isNull() ||
+            mTarget != fileData.target())
+            return false;
+        if (!forWriting)
+            return true;
+        return (mWidth == fileData.width() &&
+                mHeight == fileData.height() &&
+                mDepth == fileData.depth() &&
+                mLayers == fileData.layers());
     };
-    if (sameDimensions(fileData)) {
+    if (useFileData()) {
         mSystemCopyModified |= !mData.isSharedWith(fileData);
         mData = fileData;
     }
