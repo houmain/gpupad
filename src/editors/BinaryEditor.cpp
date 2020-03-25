@@ -53,9 +53,7 @@ BinaryEditor::BinaryEditor(QString fileName, QWidget *parent)
 
     mEditableRegion = new EditableRegion(mColumnWidth, mRowHeight, this);
     setItemDelegate(new EditableRegionDelegate(mEditableRegion, this));
-
-    mEditableRegion->setStyleSheet(
-        "QTableView { margin-bottom: -1px; margin-right: -1px; }");
+    mEditableRegion->setStyleSheet("QTableView { margin: -2px; }");
 
     setStride();
     refresh();
@@ -205,7 +203,7 @@ void BinaryEditor::refresh()
                 dataModel->getColumnSize(i) * mColumnWidth);
 
         setRowHeight(row,
-            mRowHeight + mEditableRegion->horizontalHeader()->height());
+            mRowHeight + mEditableRegion->horizontalHeader()->height() + 1);
         mPrevFirstRow = row;
 
         openPersistentEditor(model()->index(row, 0));

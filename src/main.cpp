@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
 #endif
 
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
     initializeCompositorSync();
 

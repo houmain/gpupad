@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
     , mSessionProperties(new SessionProperties())
 {
     mUi->setupUi(this);
+    setContentsMargins(1, 0, 1, 1);
 
     auto icon = QIcon(":images/16x16/icon.png");
     icon.addFile(":images/32x32/icon.png");
