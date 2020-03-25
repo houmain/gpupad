@@ -185,8 +185,16 @@ bool SourceEditor::reload()
     if (!load(mFileName, &source))
         return false;
 
-    selectAll();
-    insertPlainText(source);
+    auto cursor = textCursor();
+    auto position = cursor.position();
+    cursor.beginEditBlock();
+    cursor.movePosition(QTextCursor::Start);
+    cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+    cursor.insertText(source);
+    cursor.setPosition(position);
+    cursor.endEditBlock();
+    setTextCursor(cursor);
+
     document()->setModified(false);
     return true;
 }
@@ -194,13 +202,15 @@ bool SourceEditor::reload()
 bool SourceEditor::save()
 {
     QSaveFile file(fileName());
-    if (file.open(QFile::WriteOnly | QFile::Text)) {
-        file.write(document()->toPlainText().toUtf8());
-        document()->setModified(false);
-        setSourceTypeFromExtension();
-        return file.commit();
-    }
-    return false;
+    if (!file.open(QFile::WriteOnly | QFile::Text))
+        return false;
+    file.write(document()->toPlainText().toUtf8());
+    if (!file.commit())
+        return false;
+
+    document()->setModified(false);
+    setSourceTypeFromExtension();
+    return true;
 }
 
 void SourceEditor::setSourceTypeFromExtension()
@@ -622,6 +632,10 @@ bool SourceEditor::updateMultiSelection(QKeyEvent *event, bool multiSelectionMod
             case Qt::Key_Down:
             case Qt::Key_Left:
             case Qt::Key_Right:
+            case Qt::Key_Home:
+            case Qt::Key_End:
+            case Qt::Key_PageUp:
+            case Qt::Key_PageDown:
                 return false;
 
             case Qt::Key_Backspace:

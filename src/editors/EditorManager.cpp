@@ -1,5 +1,6 @@
 #include "EditorManager.h"
 #include "Singletons.h"
+#include "FileCache.h"
 #include "FileDialog.h"
 #include <functional>
 #include <QDockWidget>
@@ -286,8 +287,11 @@ void EditorManager::renameEditors(const QString &prevFileName, const QString &fi
 bool EditorManager::saveEditor()
 {
     if (auto editor = currentEditor()) {
-        if (FileDialog::isUntitled(editor->fileName()) ||
-            !editor->save())
+        if (FileDialog::isUntitled(editor->fileName()))
+            return saveEditorAs();
+
+        Singletons::fileCache().advertiseEditorSave(editor->fileName());
+        if (!editor->save())
             return saveEditorAs();
         return true;
     }

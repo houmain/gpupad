@@ -9,9 +9,15 @@ FileCache::FileCache(QObject *parent) : QObject(parent)
 {
     connect(&mFileSystemWatcher, &QFileSystemWatcher::fileChanged,
         this, &FileCache::handleFileSystemFileChanged);
-    connect(&mFileSystemWatchUpdateTimer, &QTimer::timeout,
-        this, &FileCache::addFileSystemWatches);
-    mFileSystemWatchUpdateTimer.setInterval(500);
+    connect(&mUpdateFileSystemWatchesTimer, &QTimer::timeout,
+        this, &FileCache::updateFileSystemWatches);
+    mUpdateFileSystemWatchesTimer.start(250);
+}
+
+void FileCache::advertiseEditorSave(const QString &fileName)
+{
+    QMutexLocker lock(&mMutex);
+    mEditorSaveAdvertised.insert(fileName);
 }
 
 void FileCache::invalidateEditorFile(const QString &fileName)
@@ -91,30 +97,38 @@ bool FileCache::getBinary(const QString &fileName, QByteArray *binary) const
     return true;
 }
 
-void FileCache::addFileSystemWatch(const QString &fileName) const
+void FileCache::addFileSystemWatch(const QString &fileName, bool changed) const
 {
-    if (FileDialog::isEmptyOrUntitled(fileName) ||
-        mFileSystemWatcher.files().contains(fileName))
-        return;
-
-    if (!QFileInfo(fileName).exists() ||
-        !mFileSystemWatcher.addPath(fileName))
-        mFileSystemWatchesToAdd.insert(fileName);
-}
-
-void FileCache::addFileSystemWatches()
-{
-    for (auto fileName : std::exchange(mFileSystemWatchesToAdd, { }))
-        addFileSystemWatch(fileName);
-}
-
-void FileCache::removeFileSystemWatch(const QString &fileName) const
-{
-    mFileSystemWatcher.removePath(fileName);
+    if (!FileDialog::isEmptyOrUntitled(fileName))
+        mFileSystemWatchesToAdd[fileName] |= changed;
 }
 
 void FileCache::handleFileSystemFileChanged(const QString &fileName)
 {
+    QMutexLocker lock(&mMutex);
+    addFileSystemWatch(fileName, true);
+}
+
+void FileCache::updateFileSystemWatches()
+{
+    QMutexLocker lock(&mMutex);
+    auto filesChanged = QSet<QString>();
+    for (auto it = mFileSystemWatchesToAdd.begin(); it != mFileSystemWatchesToAdd.end(); ) {
+        const auto &fileName = it.key();
+        const auto &changed = it.value();
+        mFileSystemWatcher.removePath(it.key());
+        if (QFileInfo(fileName).exists() &&
+            mFileSystemWatcher.addPath(fileName)) {
+            if (changed)
+                filesChanged.insert(fileName);
+            it = mFileSystemWatchesToAdd.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+    lock.unlock();
+
     const auto getEditor = [](const auto &fileName) -> IEditor* {
         auto &editorManager = Singletons::editorManager();
         if (auto editor = editorManager.getSourceEditor(fileName))
@@ -126,18 +140,17 @@ void FileCache::handleFileSystemFileChanged(const QString &fileName)
         return nullptr;
     };
 
-    if (auto editor = getEditor(fileName)) {
-        editor->reload();
+    for (auto fileName : qAsConst(filesChanged)) {
+        if (auto editor = getEditor(fileName)) {
+            if (!mEditorSaveAdvertised.remove(fileName))
+                editor->reload();
+        }
+        else {
+            QMutexLocker lock(&mMutex);
+            mSources.remove(fileName);
+            mBinaries.remove(fileName);
+            mTextures.remove(fileName);
+        }
+        emit fileChanged(fileName);
     }
-    else {
-        QMutexLocker lock(&mMutex);
-        mSources.remove(fileName);
-        mBinaries.remove(fileName);
-        mTextures.remove(fileName);
-    }
-
-    emit fileChanged(fileName);
-
-    removeFileSystemWatch(fileName);
-    addFileSystemWatch(fileName);
 }

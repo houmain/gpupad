@@ -21,26 +21,27 @@ public:
 
     // only call from main thread
     void invalidateEditorFile(const QString &fileName);
+    void advertiseEditorSave(const QString &fileName);
     void updateEditorFiles();
 
 signals:
     void fileChanged(const QString &fileName) const;
 
 private:
-    void addFileSystemWatch(const QString &fileName) const;
-    void addFileSystemWatches();
-    void removeFileSystemWatch(const QString &fileName) const;
     void handleFileSystemFileChanged(const QString &fileName);
+    void addFileSystemWatch(const QString &fileName, bool changed = false) const;
+    void updateFileSystemWatches();
 
     QSet<QString> mEditorFilesInvalidated;
-    QTimer mFileSystemWatchUpdateTimer;
+    QTimer mUpdateFileSystemWatchesTimer;
+    QSet<QString> mEditorSaveAdvertised;
+    QFileSystemWatcher mFileSystemWatcher;
 
     mutable QMutex mMutex;
     mutable QMap<QString, QString> mSources;
     mutable QMap<QString, TextureData> mTextures;
     mutable QMap<QString, QByteArray> mBinaries;
-    mutable QFileSystemWatcher mFileSystemWatcher;
-    mutable QSet<QString> mFileSystemWatchesToAdd;
+    mutable QMap<QString, bool> mFileSystemWatchesToAdd;
 };
 
 #endif // FILECACHE_H

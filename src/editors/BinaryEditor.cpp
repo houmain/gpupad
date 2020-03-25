@@ -128,8 +128,11 @@ bool BinaryEditor::save()
     if (!file.open(QFile::WriteOnly | QFile::Truncate))
         return false;
     file.write(mData);
+    if (!file.commit())
+        return false;
+
     setModified(false);
-    return file.commit();
+    return true;
 }
 
 void BinaryEditor::replace(QByteArray data, bool invalidateFileCache)
