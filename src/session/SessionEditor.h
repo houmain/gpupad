@@ -42,7 +42,7 @@ protected:
     void focusInEvent(QFocusEvent *event) override;
     void focusOutEvent(QFocusEvent *event) override;
 
-private slots:
+private:
     void cut();
     void copy();
     void paste();
@@ -50,9 +50,8 @@ private slots:
     void openContextMenu(const QPoint &pos);
     void addItem(Item::Type type);
     void renameCurrentItem();
-
-private:
     bool canPaste() const;
+    void handleItemActivated(const QModelIndex &index);
 
     SessionModel &mModel;
     QMenu *mContextMenu{ };

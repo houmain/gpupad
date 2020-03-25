@@ -33,7 +33,7 @@ SessionEditor::SessionEditor(QWidget *parent)
     connect(&mModel.undoStack(), &QUndoStack::cleanChanged,
         [this](bool clean) { emit modificationChanged(!clean); });
     connect(this, &QTreeView::activated,
-        this, &SessionEditor::itemActivated);
+        this, &SessionEditor::handleItemActivated);
     connect(this, &QTreeView::customContextMenuRequested,
         this, &SessionEditor::openContextMenu);
 
@@ -355,6 +355,16 @@ void SessionEditor::addItem(Item::Type type)
 void SessionEditor::activateFirstItem()
 {
     emit itemActivated(model()->index(0, 0));
+}
+
+void SessionEditor::handleItemActivated(const QModelIndex &index)
+{
+    if (mModel.getItemType(index) == Item::Type::Group) {
+        setExpanded(index, !isExpanded(index));
+    }
+    else {
+        emit itemActivated(index);
+   }
 }
 
 void SessionEditor::renameCurrentItem()
