@@ -166,6 +166,7 @@ void BindingProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->layer, SessionModel::BindingLayer);
     mapper.addMapping(mUi->minFilter, SessionModel::BindingMinFilter);
     mapper.addMapping(mUi->magFilter, SessionModel::BindingMagFilter);
+    mapper.addMapping(mUi->anisotropic, SessionModel::BindingAnisotropic);
     mapper.addMapping(mUi->wrapModeX, SessionModel::BindingWrapModeX);
     mapper.addMapping(mUi->wrapModeY, SessionModel::BindingWrapModeY);
     mapper.addMapping(mUi->wrapModeZ, SessionModel::BindingWrapModeZ);
@@ -247,9 +248,11 @@ void BindingProperties::updateWidgets()
 
     setFormVisibility(mUi->formLayout, mUi->labelComparisonFunc, mUi->comparisonFunc,
         sampler && textureKind.depth);
+    setFormVisibility(mUi->formLayout, mUi->labelMagFilter, mUi->magFilter,
+        sampler);
     setFormVisibility(mUi->formLayout, mUi->labelMinFilter, mUi->minFilter,
         sampler);
-    setFormVisibility(mUi->formLayout, mUi->labelMagFilter, mUi->magFilter,
+    setFormVisibility(mUi->formLayout, mUi->labelAnisotropic, mUi->anisotropic,
         sampler);
     setFormVisibility(mUi->formLayout, mUi->labelWrapModeX, mUi->wrapModeX,
         sampler && textureKind.dimensions > 0);

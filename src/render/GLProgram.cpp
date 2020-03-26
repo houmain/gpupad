@@ -355,6 +355,12 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
         case QOpenGLTexture::TargetRectangle:
             gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, binding.minFilter);
             gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, binding.magFilter);
+            if (binding.minFilter != Binding::Filter::Nearest) {
+                auto anisotropy = 1.0f;
+                if (binding.anisotropic)
+                    gl.glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &anisotropy);
+                gl.glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+            }
             gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, binding.wrapModeX);
             gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, binding.wrapModeY);
             gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, binding.wrapModeZ);

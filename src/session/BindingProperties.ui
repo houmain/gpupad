@@ -72,93 +72,103 @@
       <widget class="ReferenceComboBox" name="texture"/>
      </item>
      <item row="3" column="0">
-      <widget class="QLabel" name="labelMinFilter">
-       <property name="text">
-        <string>Min. Filter</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="DataComboBox" name="minFilter"/>
-     </item>
-     <item row="4" column="0">
       <widget class="QLabel" name="labelMagFilter">
        <property name="text">
         <string>Mag. Filter</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="3" column="1">
       <widget class="DataComboBox" name="magFilter"/>
      </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelMinFilter">
+       <property name="text">
+        <string>Min. Filter</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="DataComboBox" name="minFilter"/>
+     </item>
      <item row="5" column="0">
+      <widget class="QLabel" name="labelAnisotropic">
+       <property name="text">
+        <string>Anisotropic</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QCheckBox" name="anisotropic"/>
+     </item>
+     <item row="6" column="0">
       <widget class="QLabel" name="labelWrapModeX">
        <property name="text">
         <string>Wrap X</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <widget class="DataComboBox" name="wrapModeX"/>
      </item>
-     <item row="6" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="labelWrapModeY">
        <property name="text">
         <string>Y</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <widget class="DataComboBox" name="wrapModeY"/>
      </item>
-     <item row="7" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="labelWrapModeZ">
        <property name="text">
         <string>Z</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="8" column="1">
       <widget class="DataComboBox" name="wrapModeZ"/>
      </item>
-     <item row="8" column="0">
+     <item row="9" column="0">
       <widget class="QLabel" name="labelBorderColor">
        <property name="text">
         <string>Border</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
+     <item row="9" column="1">
       <widget class="ColorPicker" name="borderColor"/>
      </item>
-     <item row="9" column="0">
+     <item row="10" column="0">
       <widget class="QLabel" name="labelComparisonFunc">
        <property name="text">
         <string>Comparison</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
+     <item row="10" column="1">
       <widget class="DataComboBox" name="comparisonFunc"/>
      </item>
-     <item row="10" column="0">
+     <item row="11" column="0">
       <widget class="QLabel" name="labelLevel">
        <property name="text">
         <string>Level</string>
        </property>
       </widget>
      </item>
-     <item row="10" column="1">
+     <item row="11" column="1">
       <widget class="QSpinBox" name="level"/>
      </item>
-     <item row="11" column="0">
+     <item row="12" column="0">
       <widget class="QLabel" name="labelLayer">
        <property name="text">
         <string>Layer</string>
        </property>
       </widget>
      </item>
-     <item row="11" column="1">
+     <item row="12" column="1">
       <widget class="QWidget" name="layerWidget" native="true">
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <property name="leftMargin">
@@ -199,34 +209,34 @@
        </layout>
       </widget>
      </item>
-     <item row="12" column="0">
+     <item row="13" column="0">
       <widget class="QLabel" name="labelBuffer">
        <property name="text">
         <string>Buffer</string>
        </property>
       </widget>
      </item>
-     <item row="12" column="1">
+     <item row="13" column="1">
       <widget class="ReferenceComboBox" name="buffer"/>
      </item>
-     <item row="13" column="0">
+     <item row="14" column="0">
       <widget class="QLabel" name="labelColor">
        <property name="text">
         <string>Color</string>
        </property>
       </widget>
      </item>
-     <item row="13" column="1">
+     <item row="14" column="1">
       <widget class="ColorPicker" name="color"/>
      </item>
-     <item row="14" column="0">
+     <item row="15" column="0">
       <widget class="QLabel" name="labelExpressions">
        <property name="text">
         <string>Value</string>
        </property>
       </widget>
      </item>
-     <item row="14" column="1">
+     <item row="15" column="1">
       <widget class="ExpressionMatrix" name="expressions">
        <property name="verticalScrollBarPolicy">
         <enum>Qt::ScrollBarAlwaysOff</enum>
@@ -263,14 +273,14 @@
        </attribute>
       </widget>
      </item>
-     <item row="15" column="0">
+     <item row="16" column="0">
       <widget class="QLabel" name="labelSubroutine">
        <property name="text">
         <string>Value</string>
        </property>
       </widget>
      </item>
-     <item row="15" column="1">
+     <item row="16" column="1">
       <widget class="QComboBox" name="subroutine">
        <property name="editable">
         <bool>true</bool>
@@ -283,14 +293,14 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ReferenceComboBox</class>
-   <extends>QComboBox</extends>
-   <header>session/ReferenceComboBox.h</header>
-  </customwidget>
-  <customwidget>
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
    <header>session/DataComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ReferenceComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/ReferenceComboBox.h</header>
   </customwidget>
   <customwidget>
    <class>ExpressionMatrix</class>

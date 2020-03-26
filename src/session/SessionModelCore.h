@@ -44,6 +44,7 @@ public:
         BindingLayer,
         BindingMinFilter,
         BindingMagFilter,
+        BindingAnisotropic,
         BindingWrapModeX,
         BindingWrapModeY,
         BindingWrapModeZ,

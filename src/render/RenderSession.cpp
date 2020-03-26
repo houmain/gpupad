@@ -281,7 +281,7 @@ void RenderSession::prepare(bool itemsChanged,
                     addCommand(
                         [binding = GLSamplerBinding{
                             b.id, b.name, addTextureOnce(b.textureId),
-                            b.minFilter, b.magFilter,
+                            b.minFilter, b.magFilter, b.anisotropic,
                             b.wrapModeX, b.wrapModeY, b.wrapModeZ,
                             b.borderColor,
                             b.comparisonFunc }

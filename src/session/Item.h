@@ -100,6 +100,7 @@ struct Binding : Item
     int layer{ };
     Filter minFilter{ QOpenGLTexture::Nearest };
     Filter magFilter{ QOpenGLTexture::Nearest };
+    bool anisotropic{ true };
     WrapMode wrapModeX{ QOpenGLTexture::Repeat };
     WrapMode wrapModeY{ QOpenGLTexture::Repeat };
     WrapMode wrapModeZ{ QOpenGLTexture::Repeat };

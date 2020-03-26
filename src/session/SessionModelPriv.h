@@ -36,6 +36,7 @@
     ADD(BindingLayer, Binding, layer) \
     ADD(BindingMinFilter, Binding, minFilter) \
     ADD(BindingMagFilter, Binding, magFilter) \
+    ADD(BindingAnisotropic, Binding, anisotropic) \
     ADD(BindingWrapModeX, Binding, wrapModeX) \
     ADD(BindingWrapModeY, Binding, wrapModeY) \
     ADD(BindingWrapModeZ, Binding, wrapModeZ) \

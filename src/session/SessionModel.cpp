@@ -436,6 +436,7 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             result &= (column != BindingLayer || image);
             result &= (column != BindingMinFilter || sampler);
             result &= (column != BindingMagFilter || sampler);
+            result &= (column != BindingAnisotropic || sampler);
             result &= (column != BindingWrapModeX || sampler);
             result &= (column != BindingWrapModeY || sampler);
             result &= (column != BindingWrapModeZ || sampler);

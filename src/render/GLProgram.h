@@ -24,6 +24,7 @@ struct GLSamplerBinding
     GLTexture *texture;
     Binding::Filter minFilter;
     Binding::Filter magFilter;
+    bool anisotropic;
     Binding::WrapMode wrapModeX;
     Binding::WrapMode wrapModeY;
     Binding::WrapMode wrapModeZ;
