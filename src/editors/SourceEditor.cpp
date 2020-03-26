@@ -151,6 +151,9 @@ void SourceEditor::setFileName(QString fileName)
 
 bool SourceEditor::load(const QString &fileName, QString *source)
 {
+    if (!source)
+        return false;
+
     if (FileDialog::isEmptyOrUntitled(fileName)) {
         *source = "";
         return true;

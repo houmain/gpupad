@@ -1,9 +1,11 @@
 #include "FileCache.h"
 #include "Singletons.h"
+#include "VideoPlayer.h"
 #include "editors/EditorManager.h"
 #include "editors/SourceEditor.h"
 #include "editors/TextureEditor.h"
 #include "editors/BinaryEditor.h"
+#include <QThread>
 
 FileCache::FileCache(QObject *parent) : QObject(parent)
 {
@@ -12,22 +14,29 @@ FileCache::FileCache(QObject *parent) : QObject(parent)
     connect(&mUpdateFileSystemWatchesTimer, &QTimer::timeout,
         this, &FileCache::updateFileSystemWatches);
     mUpdateFileSystemWatchesTimer.start(250);
+    connect(this, &FileCache::videoPlayerRequested,
+        this, &FileCache::handleVideoPlayerRequested, Qt::QueuedConnection);
 }
+
+FileCache::~FileCache() = default;
 
 void FileCache::advertiseEditorSave(const QString &fileName)
 {
+    Q_ASSERT(onMainThread());
     QMutexLocker lock(&mMutex);
     mEditorSaveAdvertised.insert(fileName);
 }
 
 void FileCache::invalidateEditorFile(const QString &fileName)
 {
+    Q_ASSERT(onMainThread());
     mEditorFilesInvalidated.insert(fileName);
     emit fileChanged(fileName);
 }
 
 void FileCache::updateEditorFiles()
 {
+    Q_ASSERT(onMainThread());
     QMutexLocker lock(&mMutex);
     auto &editorManager = Singletons::editorManager();
     for (const auto &fileName : mEditorFilesInvalidated) {
@@ -78,6 +87,15 @@ bool FileCache::getTexture(const QString &fileName, TextureData *texture) const
     if (!TextureEditor::load(fileName, texture))
         return false;
     mTextures[fileName] = *texture;
+    return true;
+}
+
+bool FileCache::updateTexture(const QString &fileName, TextureData texture) const
+{
+    QMutexLocker lock(&mMutex);
+    if (!mTextures.contains(fileName))
+        return false;
+    mTextures[fileName] = std::move(texture);
     return true;
 }
 
@@ -153,4 +171,54 @@ void FileCache::updateFileSystemWatches()
         }
         emit fileChanged(fileName);
     }
+}
+
+void FileCache::asyncOpenVideoPlayer(const QString &fileName)
+{
+    emit videoPlayerRequested(fileName);
+}
+
+void FileCache::handleVideoPlayerRequested(const QString &fileName)
+{
+    Q_ASSERT(onMainThread());
+    auto videoPlayer = new VideoPlayer(fileName);
+    connect(videoPlayer, &VideoPlayer::loadingFinished,
+        this, &FileCache::handleVideoPlayerLoaded);
+}
+
+void FileCache::handleVideoPlayerLoaded()
+{
+    Q_ASSERT(onMainThread());
+    auto videoPlayer = qobject_cast<VideoPlayer*>(QObject::sender());
+    if (videoPlayer->width()) {
+        if (mVideosPlaying)
+            videoPlayer->play();
+        mVideoPlayers[videoPlayer->fileName()].reset(videoPlayer);
+    }
+    else {
+        videoPlayer->deleteLater();
+    }
+}
+
+void FileCache::playVideoFiles()
+{
+    Q_ASSERT(onMainThread());
+    for (const auto &videoPlayer : mVideoPlayers)
+        videoPlayer.second->play();
+    mVideosPlaying = true;
+}
+
+void FileCache::pauseVideoFiles()
+{
+    Q_ASSERT(onMainThread());
+    for (const auto &videoPlayer : mVideoPlayers)
+        videoPlayer.second->pause();
+    mVideosPlaying = false;
+}
+
+void FileCache::rewindVideoFiles()
+{
+  Q_ASSERT(onMainThread());
+    for (const auto &videoPlayer : mVideoPlayers)
+        videoPlayer.second->rewind();
 }

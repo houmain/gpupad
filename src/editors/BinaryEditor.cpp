@@ -88,7 +88,7 @@ void BinaryEditor::setFileName(QString fileName)
 
 bool BinaryEditor::load(const QString &fileName, QByteArray *data)
 {
-    if (FileDialog::isEmptyOrUntitled(fileName))
+    if (!data || FileDialog::isEmptyOrUntitled(fileName))
         return false;
 
     QFile file(fileName);

@@ -40,6 +40,7 @@ set(SOURCES
   src/Singletons.cpp
   src/SynchronizeLogic.cpp
   src/TextureData.cpp
+  src/VideoPlayer.cpp
   src/editors/BinaryEditor.cpp
   src/editors/DockWindow.cpp
   src/editors/EditorManager.cpp
@@ -120,7 +121,8 @@ endif()
 find_package(Qt5Widgets CONFIG REQUIRED)
 find_package(Qt5OpenGL CONFIG REQUIRED)
 find_package(Qt5Qml CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::OpenGL Qt5::Qml)
+find_package(Qt5Multimedia CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::OpenGL Qt5::Qml Qt5::Multimedia)
 
 if(NOT WIN32)
     install(TARGETS ${PROJECT_NAME} DESTINATION "bin")

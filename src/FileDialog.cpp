@@ -12,6 +12,7 @@ namespace {
     const auto ShaderFileExtensions = { "glsl", "vs", "fs", "gs",
         "vert", "tesc", "tese", "geom", "frag", "comp" };
     const auto ScriptFileExtensions = { "js" };
+    const auto VideoFileExtensions = { "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi" };
 
     int gNextUntitledFileIndex;
 } // namespace
@@ -57,6 +58,15 @@ QString FileDialog::getWindowTitle(const QString &fileName)
 bool FileDialog::isSessionFileName(const QString &fileName)
 {
     return fileName.endsWith(SessionFileExtension);
+}
+
+bool FileDialog::isVideoFileName(const QString &fileName)
+{
+    const auto lowerFileName = fileName.toLower();
+    for (auto extension : VideoFileExtensions)
+        if (lowerFileName.endsWith(extension))
+            return true;
+    return false;
 }
 
 FileDialog::FileDialog(QMainWindow *window)
@@ -109,6 +119,8 @@ bool FileDialog::exec(Options options, QString currentFileName)
     auto textureFileFilter = QString();
     textureFileFilter += " *.ktx";
     foreach (const QByteArray &format, QImageReader::supportedImageFormats())
+        textureFileFilter = textureFileFilter + " *." + QString(format);
+    foreach (const QByteArray &format, VideoFileExtensions)
         textureFileFilter = textureFileFilter + " *." + QString(format);
 
     auto scriptFileFilter = QString();

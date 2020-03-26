@@ -1,6 +1,6 @@
 [
     {
-        "format": "RGBA8_UNorm",
+        "format": "SRGB8_Alpha8",
         "height": 512,
         "id": 93,
         "name": "Color",
@@ -90,8 +90,8 @@
             "1",
             "0",
             "0.40",
-            "0.75",
-            "-4.00",
+            "0.85",
+            "-4",
             "1"
         ]
     },
@@ -106,8 +106,8 @@
         ]
     },
     {
-        "fileName": "planks.jpg",
-        "format": "RGBA8_UNorm",
+        "fileName": "robin.mp4",
+        "format": "SRGB8_Alpha8",
         "height": 512,
         "id": 104,
         "target": "Target2D",

@@ -76,6 +76,7 @@ void SynchronizeLogic::resetRenderSession()
 void SynchronizeLogic::resetEvaluation()
 {
     evaluate(EvaluationType::Reset);
+    Singletons::fileCache().rewindVideoFiles();
 }
 
 void SynchronizeLogic::manualEvaluation()
@@ -93,16 +94,19 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
     if (mEvaluationMode == EvaluationMode::Steady) {
         mEvaluationTimer->setSingleShot(false);
         mEvaluationTimer->start(10);
+        Singletons::fileCache().playVideoFiles();
     }
     else if (mEvaluationMode == EvaluationMode::Automatic) {
         mEvaluationTimer->stop();
         mEvaluationTimer->setSingleShot(true);
         if (mRenderSessionInvalidated)
             mEvaluationTimer->start(0);
+        Singletons::fileCache().pauseVideoFiles();
     }
     else {
         mEvaluationTimer->stop();
         Singletons::sessionModel().setActiveItems({ });
+        Singletons::fileCache().pauseVideoFiles();
     }
 }
 

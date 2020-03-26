@@ -1,21 +1,21 @@
 [
     {
         "format": "RGBA8_UNorm",
-        "height": 1024,
+        "height": 512,
         "id": 10,
         "name": "Target",
         "target": "Target2D",
         "type": "Texture",
-        "width": 1024
+        "width": 512
     },
     {
         "format": "D16",
-        "height": 1024,
+        "height": 512,
         "id": 47,
         "name": "Depth",
         "target": "Target2D",
         "type": "Texture",
-        "width": 1024
+        "width": 512
     },
     {
         "blendConstant": "#ffffffff",
@@ -58,7 +58,6 @@
         "executeOn": "ManualEvaluation",
         "fileName": "math.js",
         "id": 796,
-        "name": "math.js",
         "type": "Script"
     },
     {
@@ -70,7 +69,6 @@
                 "format": "RGBA8_UNorm",
                 "height": 2048,
                 "id": 1,
-                "name": "Default_emissive.jpg",
                 "target": "Target2D",
                 "type": "Texture",
                 "width": 2048
@@ -80,7 +78,6 @@
                 "format": "RGBA8_UNorm",
                 "height": 2048,
                 "id": 2,
-                "name": "Default_normal.jpg",
                 "target": "Target2D",
                 "type": "Texture",
                 "width": 2048
@@ -90,7 +87,6 @@
                 "format": "RGBA8_UNorm",
                 "height": 2048,
                 "id": 865,
-                "name": "Default_AO.jpg",
                 "target": "Target2D",
                 "type": "Texture",
                 "width": 2048
@@ -100,7 +96,6 @@
                 "format": "RGBA8_UNorm",
                 "height": 2048,
                 "id": 867,
-                "name": "Default_albedo.jpg",
                 "target": "Target2D",
                 "type": "Texture",
                 "width": 2048
@@ -110,7 +105,6 @@
                 "format": "RGBA8_UNorm",
                 "height": 2048,
                 "id": 869,
-                "name": "Default_metalRoughness.jpg",
                 "target": "Target2D",
                 "type": "Texture",
                 "width": 2048
@@ -128,7 +122,6 @@
                         "type": "Column"
                     }
                 ],
-                "name": "DamagedHelmet.bin",
                 "offset": 267384,
                 "rowCount": 14556,
                 "type": "Buffer"
@@ -146,7 +139,6 @@
                         "type": "Column"
                     }
                 ],
-                "name": "DamagedHelmet.bin",
                 "offset": 92712,
                 "rowCount": 14556,
                 "type": "Buffer"
@@ -164,7 +156,6 @@
                         "type": "Column"
                     }
                 ],
-                "name": "DamagedHelmet.bin",
                 "offset": 442056,
                 "rowCount": 14556,
                 "type": "Buffer"
@@ -182,7 +173,6 @@
                         "type": "Column"
                     }
                 ],
-                "name": "DamagedHelmet.bin",
                 "offset": 0,
                 "rowCount": 46356,
                 "type": "Buffer"
@@ -237,7 +227,6 @@
                         "fileName": "gltf-viewer/papermill/papermill_irr.ktx",
                         "format": "RGBA16F",
                         "id": 667,
-                        "name": "papermill_irr.ktx",
                         "target": "TargetCubeMap",
                         "type": "Texture",
                         "width": 256
@@ -246,7 +235,6 @@
                         "fileName": "gltf-viewer/papermill/papermill_pmrem.ktx",
                         "format": "RGBA16F",
                         "id": 606,
-                        "name": "papermill_pmrem.ktx",
                         "target": "TargetCubeMap",
                         "type": "Texture",
                         "width": 256
@@ -256,7 +244,6 @@
                         "format": "RGBA8_UNorm",
                         "height": 512,
                         "id": 127,
-                        "name": "brdfLUT.png",
                         "target": "Target2D",
                         "type": "Texture",
                         "width": 512
@@ -670,56 +657,48 @@
                     {
                         "fileName": "gltf-viewer/header_vert.glsl",
                         "id": 12,
-                        "name": "header_vert.glsl",
                         "shaderType": "Header",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/animation.glsl",
                         "id": 11,
-                        "name": "animation.glsl",
                         "shaderType": "Header",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/primitive.vert",
                         "id": 7,
-                        "name": "primitive.vert",
                         "shaderType": "Vertex",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/header_frag.glsl",
                         "id": 16,
-                        "name": "header_frag.glsl",
                         "shaderType": "Header",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/tonemapping.glsl",
                         "id": 17,
-                        "name": "tonemapping.glsl",
                         "shaderType": "Header",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/textures.glsl",
                         "id": 18,
-                        "name": "textures.glsl",
                         "shaderType": "Header",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/functions.glsl",
                         "id": 19,
-                        "name": "functions.glsl",
                         "shaderType": "Header",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/metallic-roughness.frag",
                         "id": 15,
-                        "name": "metallic-roughness.frag",
                         "shaderType": "Fragment",
                         "type": "Shader"
                     }

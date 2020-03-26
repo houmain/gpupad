@@ -90,12 +90,19 @@ void TextureEditor::setFileName(QString fileName)
 
 bool TextureEditor::load(const QString &fileName, TextureData *texture)
 {
-    if (FileDialog::isEmptyOrUntitled(fileName))
+    if (!texture || FileDialog::isEmptyOrUntitled(fileName))
         return false;
 
     auto file = TextureData();
-    if (!file.load(fileName))
+    if (!file.load(fileName)) {
+        if (FileDialog::isVideoFileName(fileName)) {
+            texture->create(QOpenGLTexture::Target2D,
+                QOpenGLTexture::RGBA8_UNorm, 256, 256, 1, 1, 1);
+            Singletons::fileCache().asyncOpenVideoPlayer(fileName);
+            return true;
+        }
         return false;
+    }
 
     *texture = file;
     return true;

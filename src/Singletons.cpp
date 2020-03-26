@@ -11,7 +11,6 @@
 
 Singletons *Singletons::sInstance;
 
-
 bool onMainThread()
 {
     return (QThread::currentThread() ==
