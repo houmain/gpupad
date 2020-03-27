@@ -35,8 +35,6 @@ void GLStream::setAttribute(int attributeIndex,
 void GLStream::bind(const GLProgram &program)
 {
     auto &gl = GLContext::currentContext();
-
-    mEnabledVertexAttributes.clear();
     foreach (const GLAttribute &attribute, mAttributes) {
         auto attribLocation = program.getAttributeLocation(attribute.name);
         if (attribLocation < 0)
@@ -60,17 +58,7 @@ void GLStream::bind(const GLProgram &program)
                 static_cast<GLuint>(attribute.divisor));
 
             gl.glEnableVertexAttribArray(location);
-            mEnabledVertexAttributes.append(location);
-
             attribute.buffer->unbind(GL_ARRAY_BUFFER);
         }
     }
 }
-
-void GLStream::unbind()
-{
-    auto &gl = GLContext::currentContext();
-    foreach (GLuint location, mEnabledVertexAttributes)
-        gl.glDisableVertexAttribArray(location);
-}
-

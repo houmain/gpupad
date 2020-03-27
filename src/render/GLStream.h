@@ -12,7 +12,6 @@ public:
         const Column &column, GLBuffer *buffer);
 
     void bind(const GLProgram &program);
-    void unbind();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
@@ -31,7 +30,6 @@ private:
 
     QSet<ItemId> mUsedItems;
     QMap<int, GLAttribute> mAttributes;
-    QList<GLuint> mEnabledVertexAttributes;
 };
 
 #endif // GL_STREAM_H

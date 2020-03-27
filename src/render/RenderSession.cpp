@@ -18,7 +18,6 @@
 #include <functional>
 #include <deque>
 #include <QStack>
-#include <QOpenGLVertexArrayObject>
 #include <QOpenGLTimerQuery>
 
 extern bool gZeroCopyPreview;
@@ -147,12 +146,11 @@ namespace {
 
 struct RenderSession::CommandQueue
 {
-    QOpenGLVertexArrayObject vao;
     std::map<ItemId, GLTexture> textures;
     std::map<ItemId, GLBuffer> buffers;
     std::map<ItemId, GLProgram> programs;
     std::map<ItemId, GLTarget> targets;
-    std::map<ItemId, GLStream> vertexStream;
+    std::map<ItemId, GLStream> vertexStreams;
     std::deque<Command> commands;
 };
 
@@ -228,7 +226,7 @@ void RenderSession::prepare(bool itemsChanged,
 
     const auto addVertexStreamOnce = [&](ItemId vertexStreamId) {
         auto vertexStream = session.findItem<Stream>(vertexStreamId);
-        auto vs = addOnce(mCommandQueue->vertexStream, vertexStream);
+        auto vs = addOnce(mCommandQueue->vertexStreams, vertexStream);
         if (vs) {
             const auto &items = vertexStream->items;
             for (auto i = 0; i < items.size(); ++i)
@@ -401,7 +399,6 @@ void RenderSession::render()
     gl.glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
     gl.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-    QOpenGLVertexArrayObject::Binder vaoBinder(&mCommandQueue->vao);
     reuseUnmodifiedItems();
     executeCommandQueue();
     downloadModifiedResources();
