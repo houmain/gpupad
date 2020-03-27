@@ -25,6 +25,7 @@ public:
         if (mUpdateFenceSync)
             gl.glDeleteSync(mUpdateFenceSync);
         mUpdateFenceSync = gl.glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+        gl.glFlush();
         mMutex.unlock();
     }
 
@@ -41,6 +42,7 @@ public:
         // mark end of usage
         mUsageFenceSyncs.append(
             gl.glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0));
+        gl.glFlush();
         mMutex.unlock();
     }
 
