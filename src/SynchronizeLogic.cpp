@@ -223,9 +223,11 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
         const auto fileName = QFileInfo(item.fileName).dir().filePath(item.name);
         if (QFile(prevFileName).exists() &&
             !QFile::rename(prevFileName, fileName)) {
-            // failed rename item back
-            mModel.setData(mModel.getIndex(&item, SessionModel::Name),
-                QFileInfo(item.fileName).fileName());
+            // failed, rename item back
+            const auto name = QFileInfo(item.fileName).fileName();
+            // WORKAROUND: directly updating item, because redo() of update command segfaults
+            // mModel.setData(mModel.getIndex(&item, SessionModel::Name), name);
+            const_cast<FileItem&>(item).name = name;
             return;
         }
 
