@@ -175,7 +175,7 @@ void FileCache::updateFileSystemWatches()
 
 void FileCache::asyncOpenVideoPlayer(const QString &fileName)
 {
-    emit videoPlayerRequested(fileName);
+    emit videoPlayerRequested(fileName, QPrivateSignal());
 }
 
 void FileCache::handleVideoPlayerRequested(const QString &fileName)
@@ -218,7 +218,7 @@ void FileCache::pauseVideoFiles()
 
 void FileCache::rewindVideoFiles()
 {
-  Q_ASSERT(onMainThread());
+    Q_ASSERT(onMainThread());
     for (const auto &videoPlayer : mVideoPlayers)
         videoPlayer.second->rewind();
 }

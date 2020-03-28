@@ -12,7 +12,11 @@ namespace {
     const auto ShaderFileExtensions = { "glsl", "vs", "fs", "gs",
         "vert", "tesc", "tese", "geom", "frag", "comp" };
     const auto ScriptFileExtensions = { "js" };
-    const auto VideoFileExtensions = { "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi" };
+    const auto VideoFileExtensions = std::initializer_list<const char*>{
+#if defined(Qt5Multimedia_FOUND)
+    "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi"
+#endif
+    };
 
     int gNextUntitledFileIndex;
 } // namespace

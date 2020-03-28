@@ -34,7 +34,7 @@ public:
 
 signals:
     void fileChanged(const QString &fileName) const;
-    void videoPlayerRequested(const QString &fileName);
+    void videoPlayerRequested(const QString &fileName, QPrivateSignal);
 
 private:
     void handleFileSystemFileChanged(const QString &fileName);

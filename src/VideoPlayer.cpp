@@ -1,3 +1,5 @@
+#if defined(Qt5Multimedia_FOUND)
+
 #include "VideoPlayer.h"
 #include "TextureData.h"
 #include "Singletons.h"
@@ -74,3 +76,5 @@ void VideoPlayer::rewind()
     if (mPlayer)
         mPlayer->setPosition(0);
 }
+
+#endif // Qt5Multimedia_FOUND

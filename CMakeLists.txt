@@ -121,8 +121,14 @@ endif()
 find_package(Qt5Widgets CONFIG REQUIRED)
 find_package(Qt5OpenGL CONFIG REQUIRED)
 find_package(Qt5Qml CONFIG REQUIRED)
-find_package(Qt5Multimedia CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::OpenGL Qt5::Qml Qt5::Multimedia)
+target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::OpenGL Qt5::Qml)
+
+find_package(Qt5Multimedia CONFIG)
+if(Qt5Multimedia_FOUND)
+    target_link_libraries(${PROJECT_NAME} Qt5::Multimedia)
+    add_compile_definitions(Qt5Multimedia_FOUND)
+endif()
+
 
 if(NOT WIN32)
     install(TARGETS ${PROJECT_NAME} DESTINATION "bin")
