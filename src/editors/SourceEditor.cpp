@@ -643,13 +643,15 @@ bool SourceEditor::updateMultiSelection(QKeyEvent *event, bool multiSelectionMod
 
             case Qt::Key_Backspace:
                 withEachSelection([&](QTextCursor& selection) {
-                    selection.deletePreviousChar();
+                    if (!selection.atBlockStart())
+                        selection.deletePreviousChar();
                 });
                 return true;
 
             case Qt::Key_Delete:
                 withEachSelection([&](QTextCursor& selection) {
-                    selection.deleteChar();
+                    if (!selection.atBlockEnd())
+                        selection.deleteChar();
                 });
                 return true;
 
