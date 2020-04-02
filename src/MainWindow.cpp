@@ -65,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setTitleBarWidget(new QWidget(this));
     dock->toggleViewAction()->setVisible(false);
     addDockWidget(Qt::RightDockWidgetArea, dock);
+    auto editorsDock = dock;
 
     mSessionSplitter = new AutoOrientationSplitter(this);
     mSessionSplitter->addWidget(mSessionEditor.data());
@@ -282,6 +283,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     readSettings();
+    editorsDock->show();
 }
 
 MainWindow::~MainWindow()
