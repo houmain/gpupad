@@ -170,8 +170,6 @@ void TextureEditor::updatePreviewTexture(
 {
     if (mTextureItem)
         mTextureItem->setPreviewTexture(target, textureId);
-
-    update();
 }
 
 void TextureEditor::setModified(bool modified)
