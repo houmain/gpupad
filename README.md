@@ -6,31 +6,35 @@ Aims to be a simple to use GLSL source code editor, which allows to immediately 
 
 Features
 --------
-* syntax highlighting
-* basic auto completion (of built-in GLSL functions and constants)
-* continuous source validation (by trying to compile it using OpenGL)
-* possibility to evaluate the shaders with custom data and OpenGL state
-* JavaScript expressions for uniforms
-* JavaScript custom actions *(still work in progress)*
-* a cool dark theme
+* Cross platform and efficient.
+* Decent source editor with automatic indentation, rectangular selection&hellip;
+* GLSL and JavaScript syntax highlighting with basic auto completion (of built-in functions and constants).
+* Continuous validation of standalone shader files (by compiling them using OpenGL).
+* Possibility to evaluate shader programs with completely customizeable input and OpenGL state.
+* JavaScript expressions and scripts to define uniform input.
+* Reading and writing of image files ([KTX](https://github.com/KhronosGroup/KTX-Software) for 3D/Array textures, block compressed textures, cube maps&hellip;).
+* Streaming video files to textures.
+* Editor for structured binary files.
+* Sample sessions in the Help menu.
+* JavaScript custom actions *(still work in progress)*.
 
 Screenshots
 -----------
-<a href="screenshot1.png"><img src="screenshot1.png"></a> &nbsp; &nbsp;
-<a href="screenshot2.png"><img src="screenshot2.png"></a>
+<a href="screenshot1.png"><img src="screenshot1.png" height="300"></a> &nbsp;
+<a href="screenshot2.png"><img src="screenshot2.png" height="400"></a>
 
 Session
 -------
-In order to try out the shaders, the session allows to define draw and compute calls, together with the pipeline state and some data the programs should operate on.
+In order to try out the shaders, the session allows to define draw and compute calls, together with the pipeline state and data the programs should operate on.
 
 It can be populated with items from the *Session* menu or the context menu. Undo/redo, copy/paste and drag/drop should work as expected (also between multiple instances).
 It is even possible to drag the items to and from a text editor (they are serialized as JSON).
 
 ### Getting Started
-To get started, you can open and play around with the sample sessions in the *Help* menu.
+To get started, you can open and play around with the sample sessions in the *Help* menu. They can also be used as templates - saving the session As... copies all the dependencies to the new location.
 
 ### Evaluation
-The session can be evaluated manually *[F5]*, automatically whenever something relevant changes *[F6]* or steadily, for animations *[F7]*.
+The session can be evaluated manually *[F6]*, automatically whenever something relevant changes *[F7]* or steadily, for animations *[F8]*.
 All items which contributed to the last evaluation are highlighted.
 
 ### Items
@@ -69,7 +73,6 @@ Building
 --------
 A C++17 conforming compiler and [Qt5](https://www.qt.io/) is required. A script for the
 [CMake](https://cmake.org) build system is provided.
-
 
 **Arch Linux** users can install it from the [AUR](https://aur.archlinux.org/packages/gpupad-git).
 
