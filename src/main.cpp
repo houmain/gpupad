@@ -7,8 +7,8 @@
 #if defined(_WIN32)
 // use dedicated GPUs by default
 // http://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf
-extern "C" { _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001; }
-extern "C" { _declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001; }
+extern "C" { __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001; }
+extern "C" { __declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001; }
 #endif
 
 int main(int argc, char *argv[])

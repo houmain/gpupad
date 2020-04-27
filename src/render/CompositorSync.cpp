@@ -46,7 +46,7 @@ bool synchronizeToCompositor() {
 
 #elif defined(_WIN32)
 
-#include <Dwmapi.h>
+#include <dwmapi.h>
 
 namespace {
     BOOL gDwmEnabled;
