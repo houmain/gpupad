@@ -376,9 +376,7 @@ void EditorManager::addSourceEditor(SourceEditor *editor)
     connect(editor, &SourceEditor::modificationChanged,
         dock, &QDockWidget::setWindowModified);
     connect(editor, &SourceEditor::fileNameChanged,
-        [dock](const QString &fileName) {
-            dock->setWindowTitle(FileDialog::getWindowTitle(fileName));
-        });
+        [this, dock]() { handleEditorFilenameChanged(dock); });
 }
 
 void EditorManager::addTextureEditor(TextureEditor *editor)
@@ -389,9 +387,7 @@ void EditorManager::addTextureEditor(TextureEditor *editor)
     connect(editor, &TextureEditor::modificationChanged,
         dock, &QDockWidget::setWindowModified);
     connect(editor, &TextureEditor::fileNameChanged,
-        [dock](const QString &fileName) {
-            dock->setWindowTitle(FileDialog::getWindowTitle(fileName));
-        });
+        [this, dock]() { handleEditorFilenameChanged(dock); });
 }
 
 void EditorManager::addBinaryEditor(BinaryEditor *editor)
@@ -402,9 +398,7 @@ void EditorManager::addBinaryEditor(BinaryEditor *editor)
     connect(editor, &BinaryEditor::modificationChanged,
         dock, &QDockWidget::setWindowModified);
     connect(editor, &BinaryEditor::fileNameChanged,
-        [dock](const QString &fileName) {
-            dock->setWindowTitle(FileDialog::getWindowTitle(fileName));
-        });
+        [this, dock]() { handleEditorFilenameChanged(dock); });
 }
 
 QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
@@ -435,6 +429,14 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
 
     mDocks.insert(dock, editor);
     return dock;
+}
+
+void EditorManager::handleEditorFilenameChanged(QDockWidget *dock) 
+{
+    if (auto editor = mDocks[dock]) {
+        dock->setWindowTitle(FileDialog::getWindowTitle(editor->fileName()));
+        Singletons::fileCache().invalidateEditorFile(editor->fileName());
+    }
 }
 
 bool EditorManager::saveDock(QDockWidget *dock)

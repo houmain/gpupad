@@ -71,6 +71,7 @@ private:
     void addBinaryEditor(BinaryEditor *editor);
     void addTextureEditor(TextureEditor *editor);
     QDockWidget *createDock(QWidget *widget, IEditor *editor);
+    void handleEditorFilenameChanged(QDockWidget *dock);
     bool saveDock(QDockWidget *dock);
     bool closeDock(QDockWidget *dock) override;
     void autoRaise(QWidget *editor);

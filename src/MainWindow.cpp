@@ -567,25 +567,44 @@ bool MainWindow::saveSessionAs()
         return false;
     }
 
-    copySessionFiles(QFileInfo(prevFileName).path(), 
-        QFileInfo(mSessionEditor->fileName()).path());
+    if (!copySessionFiles(QFileInfo(prevFileName).path(), 
+            QFileInfo(mSessionEditor->fileName()).path())) {
+        QMessageBox dialog(this);
+        dialog.setIcon(QMessageBox::Warning);
+        dialog.setWindowTitle(tr("File Error"));
+        dialog.setText(tr("Copying session files failed."));
+        dialog.addButton(QMessageBox::Ok);
+        dialog.exec();
+    }
 
     mSessionEditor->save();
     mSessionEditor->clearUndo();
     return true;
 }
 
-void MainWindow::copySessionFiles(const QString &fromPath, const QString &toPath) 
+bool MainWindow::copySessionFiles(const QString &fromPath, const QString &toPath) 
 {
+    auto succeeded = true;
     auto &model = Singletons::sessionModel();
     model.forEachFileItem([&](const FileItem &fileItem) {
-        if (fileItem.fileName.startsWith(fromPath)) {
-            const auto index = model.getIndex(&fileItem, SessionModel::FileName);
-            const auto newFileName = toPath + fileItem.fileName.mid(fromPath.length());
-            QFile(fileItem.fileName).copy(newFileName);
-            model.setData(index, newFileName);
+        const auto prevFileName = fileItem.fileName;
+        if (prevFileName.startsWith(fromPath)) {
+            const auto newFileName = toPath + prevFileName.mid(fromPath.length());
+            if (QFileInfo(newFileName).exists())
+                return;
+
+            QDir().mkpath(QFileInfo(newFileName).path());
+            if (!QFile(prevFileName).copy(newFileName)) {
+                succeeded = false;
+                return;
+            }
+            model.setData(model.getIndex(&fileItem, SessionModel::FileName), newFileName);
+
+            // rename editor filenames
+            Singletons::editorManager().renameEditors(prevFileName, newFileName);
         }
     });
+    return succeeded;
 }
 
 bool MainWindow::closeSession()
