@@ -26,9 +26,6 @@ SessionModel::SessionModel(QObject *parent)
     mTypeIcons[Item::Type::Attachment].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[Item::Type::Call].addFile(QStringLiteral(":/images/16x16/dialog-information.png"));
     mTypeIcons[Item::Type::Script].addFile(QStringLiteral(":/images/16x16/font.png"));
-
-    mActiveCallFont = QFont();
-    mActiveCallFont.setBold(true);
 }
 
 SessionModel::~SessionModel()
@@ -49,12 +46,6 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
     }
 
     const auto &item = getItem(index);
-
-    if (role == Qt::FontRole)
-        return (item.type == Item::Type::Call &&
-                mActiveItemIds.contains(item.id) ?
-             mActiveCallFont : QVariant());
-
     if (role == Qt::ForegroundRole) {
         if (mActiveItemIds.contains(item.id))
             return qApp->palette().color(QPalette::Active, QPalette::Link);
@@ -113,7 +104,7 @@ void SessionModel::setActiveItems(QSet<ItemId> itemIds)
 
     mActiveItemIds = std::move(itemIds);
     emit dataChanged(index(0, 0), index(rowCount(), 0),
-        { Qt::FontRole, Qt::ForegroundRole });
+        { Qt::ForegroundRole });
 }
 
 void SessionModel::setItemActive(ItemId id, bool active)
@@ -128,7 +119,7 @@ void SessionModel::setItemActive(ItemId id, bool active)
 
     auto item = findItem(id);
     emit dataChanged(getIndex(item), getIndex(item),
-        { Qt::FontRole, Qt::ForegroundRole });
+        { Qt::ForegroundRole });
 }
 
  QString SessionModel::findItemName(ItemId id) const

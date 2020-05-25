@@ -138,7 +138,7 @@ void SynchronizeLogic::handleItemsModified(const QModelIndex &topLeft,
     const QModelIndex &bottomRight, const QVector<int> &roles)
 {
     Q_UNUSED(bottomRight)
-    // ignore FontRole...
+    // ignore ForegroundRole...
     if (roles.empty())
         handleItemModified(topLeft);
 }

@@ -101,7 +101,6 @@ private:
 
     QMap<Item::Type, QIcon> mTypeIcons;
     QSet<ItemId> mActiveItemIds;
-    QFont mActiveCallFont;
     QMap<ItemId, ItemId> mDroppedIdsReplaced;
     QModelIndexList mDroppedReferences;
     mutable QModelIndexList mDraggedIndices;
