@@ -71,6 +71,11 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddStreamAction, Item::Type::Stream);
 
     addItemActions(mContextMenu);
+
+    // WORKAROUND: checkbox border is too dark in dark theme
+    QPalette p = palette();
+    p.setColor(QPalette::Window, "#CCC");
+    setPalette(p);
 }
 
 void SessionEditor::addItemActions(QMenu* menu)
