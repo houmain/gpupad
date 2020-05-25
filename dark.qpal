@@ -3,9 +3,9 @@
     <Color role="WindowText" group="Active" value="#cfcfcf"/>
     <Color role="WindowText" group="Disabled" value="#6a6a6a"/>
     <Color role="WindowText" group="Inactive" value="#cfcfcf"/>
-    <Color role="Button" group="Active" value="#3b3b41"/>
-    <Color role="Button" group="Disabled" value="#3b3b41"/>
-    <Color role="Button" group="Inactive" value="#3b3b41"/>
+    <Color role="Button" group="Active" value="#252525"/>
+    <Color role="Button" group="Disabled" value="#252525"/>
+    <Color role="Button" group="Inactive" value="#252525"/>
     <Color role="Light" group="Active" value="#4b4b51"/>
     <Color role="Light" group="Disabled" value="#4b4b51"/>
     <Color role="Light" group="Inactive" value="#4b4b51"/>
@@ -27,18 +27,18 @@
     <Color role="ButtonText" group="Active" value="#cfcfcf"/>
     <Color role="ButtonText" group="Disabled" value="#8b8b8b"/>
     <Color role="ButtonText" group="Inactive" value="#cfcfcf"/>
-    <Color role="Base" group="Active" value="#4b4b51"/>
-    <Color role="Base" group="Disabled" value="#4b4b51"/>
-    <Color role="Base" group="Inactive" value="#4b4b51"/>
-    <Color role="Window" group="Active" value="#4d4d53"/>
-    <Color role="Window" group="Disabled" value="#4d4d53"/>
-    <Color role="Window" group="Inactive" value="#4d4d53"/>
+    <Color role="Base" group="Active" value="#232323"/>
+    <Color role="Base" group="Disabled" value="#2a2a2a"/>
+    <Color role="Base" group="Inactive" value="#232323"/>
+    <Color role="Window" group="Active" value="#252525"/>
+    <Color role="Window" group="Disabled" value="#252525"/>
+    <Color role="Window" group="Inactive" value="#252525"/>
     <Color role="Shadow" group="Active" value="#767472"/>
     <Color role="Shadow" group="Disabled" value="#767472"/>
     <Color role="Shadow" group="Inactive" value="#767472"/>
-    <Color role="Highlight" group="Active" value="#59595e"/>
-    <Color role="Highlight" group="Disabled" value="#59595e"/>
-    <Color role="Highlight" group="Inactive" value="#59595e"/>
+    <Color role="Highlight" group="Active" value="#343434"/>
+    <Color role="Highlight" group="Disabled" value="#343434"/>
+    <Color role="Highlight" group="Inactive" value="#343434"/>
     <Color role="HighlightedText" group="Active" value="#ffffff"/>
     <Color role="HighlightedText" group="Disabled" value="#ffffff"/>
     <Color role="HighlightedText" group="Inactive" value="#ffffff"/>
@@ -48,15 +48,15 @@
     <Color role="LinkVisited" group="Active" value="#ff00ff"/>
     <Color role="LinkVisited" group="Disabled" value="#ff00ff"/>
     <Color role="LinkVisited" group="Inactive" value="#ff00ff"/>
-    <Color role="AlternateBase" group="Active" value="#505056"/>
-    <Color role="AlternateBase" group="Disabled" value="#505056"/>
-    <Color role="AlternateBase" group="Inactive" value="#505056"/>
-    <Color role="ToolTipBase" group="Active" value="#45454b"/>
+    <Color role="AlternateBase" group="Active" value="#212121"/>
+    <Color role="AlternateBase" group="Disabled" value="#212121"/>
+    <Color role="AlternateBase" group="Inactive" value="#212121"/>
+    <Color role="ToolTipBase" group="Active" value="#2f2f2f"/>
     <Color role="ToolTipBase" group="Disabled" value="#45454b"/>
-    <Color role="ToolTipBase" group="Inactive" value="#45454b"/>
-    <Color role="ToolTipText" group="Active" value="#999999"/>
-    <Color role="ToolTipText" group="Disabled" value="#999999"/>
-    <Color role="ToolTipText" group="Inactive" value="#999999"/>
+    <Color role="ToolTipBase" group="Inactive" value="#2f2f2f"/>
+    <Color role="ToolTipText" group="Active" value="#cacaca"/>
+    <Color role="ToolTipText" group="Disabled" value="#8a8a8a"/>
+    <Color role="ToolTipText" group="Inactive" value="#cacaca"/>
     <Color role="PlaceholderText" group="Active" value="#cfcfcf"/>
     <Color role="PlaceholderText" group="Disabled" value="#cfcfcf"/>
     <Color role="PlaceholderText" group="Inactive" value="#cfcfcf"/>

@@ -702,21 +702,21 @@ void MainWindow::handleDarkThemeChanging(bool enabled)
         struct S { QPalette::ColorRole role; QColor a; QColor i; QColor d; };
         const auto colors = std::initializer_list<S>{
             { QPalette::WindowText, 0xCFCFCF, 0xCFCFCF, 0x6A6A6A },
-            { QPalette::Button, 0x3B3B41, 0x3B3B41, 0x3B3B41 },
+            { QPalette::Button, 0x252525, 0x252525, 0x252525 },
             { QPalette::Light, 0x4B4B51, 0x4B4B51, 0x4B4B51 },
             { QPalette::Midlight, 0xCBCBCB, 0xCBCBCB, 0xCBCBCB },
             { QPalette::Dark, 0x9F9F9F, 0x9F9F9F, 0xBEBEBE },
             { QPalette::Mid, 0xB8B8B8, 0xB8B8B8, 0xB8B8B8 },
             { QPalette::Text, 0xCFCFCF, 0xCFCFCF, 0x8F8F8F },
             { QPalette::ButtonText, 0xCFCFCF, 0xCFCFCF, 0x8B8B8B },
-            { QPalette::Base, 0x4B4B51, 0x4B4B51, 0x4B4B51 },
-            { QPalette::Window, 0x4D4D53, 0x4D4D53, 0x4D4D53 },
+            { QPalette::Base, 0x232323, 0x232323, 0x2A2A2A },
+            { QPalette::Window, 0x252525, 0x252525, 0x252525 },
             { QPalette::Shadow, 0x767472, 0x767472, 0x767472 },
-            { QPalette::Highlight, 0x59595E, 0x59595E, 0x59595E },
+            { QPalette::Highlight, 0x343434, 0x343434, 0x343434 },
             { QPalette::Link, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF },
-            { QPalette::AlternateBase, 0x505056, 0x505056, 0x505056 },
-            { QPalette::ToolTipBase, 0x45454B, 0x45454B, 0x45454B },
-            { QPalette::ToolTipText, 0x999999, 0x999999, 0x999999 },
+            { QPalette::AlternateBase, 0x212121, 0x212121, 0x212121 },
+            { QPalette::ToolTipBase, 0x2F2F2F, 0x2F2F2F, 0x45454B },
+            { QPalette::ToolTipText, 0xCACACA, 0xCACACA, 0x8A8A8A },
             { QPalette::PlaceholderText, 0xCFCFCF, 0xCFCFCF, 0xCFCFCF },
         };
         for (auto s : colors) {
@@ -736,6 +736,8 @@ void MainWindow::handleDarkThemeChanging(bool enabled)
     };
     setStyleSheet(QString(
       "QLabel:disabled { color: %1 }\n"
+      "QMenuBar { border: none; padding-top:2px; }\n"
+      "QToolBar { border: none; margin-top:4px; }\n"
       "QDockWidget > QFrame { border:2px solid %2 }\n"
       "QDockWidget[current=true] > QFrame { border:2px solid %3 2}\n")
       .arg(color(QPalette::WindowText, QPalette::Disabled))
@@ -800,7 +802,7 @@ void MainWindow::openSampleSession()
 
 void MainWindow::openOnlineHelp()
 {
-    QDesktopServices::openUrl(QUrl("https://github.com/houmaster/gpupad"));
+    QDesktopServices::openUrl(QUrl("https://my-foss.net/gpupad"));
 }
 
 void MainWindow::openAbout()
@@ -818,7 +820,7 @@ void MainWindow::openAbout()
        .arg(QApplication::applicationName())
        .arg(QApplication::applicationVersion())
        .arg(tr("A text editor for efficiently editing GLSL shaders of all kinds."))
-       .arg("https://github.com/houmaster/gpupad")
+       .arg("https://my-foss.net/gpupad")
        .arg(tr("All Rights Reserved."))
        .arg(tr("This program comes with absolutely no warranty."))
        .arg(tr("See the GNU General Public License, version 3 for details."));
