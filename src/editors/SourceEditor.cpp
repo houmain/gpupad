@@ -163,12 +163,18 @@ bool SourceEditor::load(const QString &fileName, QString *source)
         return false;
 
     QTextStream stream(&file);
-    auto sample = stream.read(1024);
-    if (!sample.isSimpleText())
+    auto string = stream.readAll();
+    if (!string.isSimpleText()) {
+      stream.setCodec("Windows-1250");
+      stream.seek(0);
+      string = stream.readAll();
+      const auto unprintable = std::find_if(string.constBegin(), string.constEnd(),
+          [](QChar c) { return (!c.isPrint() && !c.isSpace()); });
+      if (unprintable != string.constEnd())
         return false;
+    }
 
-    stream.seek(0);
-    *source = stream.readAll();
+    *source = string;
     return true;
 }
 
