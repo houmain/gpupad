@@ -42,10 +42,11 @@ private:
     // 4. called in render thread
     virtual void release() = 0;
 
-    bool mReleased{ true };
+    bool mPrepared{ };
+    bool mReleased{ };
     bool mUpdating{ };
     bool mItemsChanged{ };
-    EvaluationType mPendingEvaluation{ };
+    std::optional<EvaluationType> mPendingEvaluation;
 };
 
 #endif // RENDERTASK_H

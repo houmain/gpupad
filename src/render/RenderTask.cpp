@@ -8,25 +8,31 @@ RenderTask::RenderTask(QObject *parent) : QObject(parent)
 
 RenderTask::~RenderTask()
 {
-    Q_ASSERT(mReleased);
+    Q_ASSERT(!mPrepared || mReleased);
 }
 
 void RenderTask::releaseResources()
 {
-    if (!std::exchange(mReleased, true))
-        Singletons::renderer().release(this);
+    Q_ASSERT(!mReleased);
+    mReleased = true;
+    mItemsChanged = false;
+    mPendingEvaluation.reset();
+    Singletons::renderer().release(this);
 }
 
 void RenderTask::update(bool itemsChanged, EvaluationType evaluationType)
 {
+    Q_ASSERT(!mReleased);
     if (!std::exchange(mUpdating, true)) {
-        mReleased = false;
+        mPrepared = true;
         prepare(itemsChanged, evaluationType);
         Singletons::renderer().render(this);
     }
     else {
         mItemsChanged |= itemsChanged;
-        mPendingEvaluation = std::max(mPendingEvaluation, evaluationType);
+        if (evaluationType != EvaluationType::Steady)
+            mPendingEvaluation = std::max(evaluationType,
+                mPendingEvaluation.value_or(EvaluationType::Steady));
     }
 }
 
@@ -38,7 +44,8 @@ void RenderTask::handleRendered()
     emit updated();
 
     // restart when items were changed in the meantime
-    if (mItemsChanged || mPendingEvaluation != EvaluationType::Automatic)
+    if (mItemsChanged || mPendingEvaluation.has_value())
         update(std::exchange(mItemsChanged, false),
-               std::exchange(mPendingEvaluation, EvaluationType::Automatic));
+            std::exchange(mPendingEvaluation, { })
+                .value_or(EvaluationType::Steady));
 }
