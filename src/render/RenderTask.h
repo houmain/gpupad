@@ -45,7 +45,7 @@ private:
     bool mReleased{ true };
     bool mUpdating{ };
     bool mItemsChanged{ };
-    EvaluationType mEvaluationType{ };
+    EvaluationType mPendingEvaluation{ };
 };
 
 #endif // RENDERTASK_H

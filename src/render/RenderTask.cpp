@@ -26,7 +26,7 @@ void RenderTask::update(bool itemsChanged, EvaluationType evaluationType)
     }
     else {
         mItemsChanged |= itemsChanged;
-        mEvaluationType = std::max(mEvaluationType, evaluationType);
+        mPendingEvaluation = std::max(mPendingEvaluation, evaluationType);
     }
 }
 
@@ -38,7 +38,7 @@ void RenderTask::handleRendered()
     emit updated();
 
     // restart when items were changed in the meantime
-    if (mItemsChanged || mEvaluationType != EvaluationType::Automatic)
+    if (mItemsChanged || mPendingEvaluation != EvaluationType::Automatic)
         update(std::exchange(mItemsChanged, false),
-               std::exchange(mEvaluationType, EvaluationType::Automatic));
+               std::exchange(mPendingEvaluation, EvaluationType::Automatic));
 }

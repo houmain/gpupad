@@ -170,8 +170,8 @@ void Renderer::renderNextTask()
 
 void Renderer::handleTaskRendered()
 {
-    mCurrentTask->handleRendered();
-    mCurrentTask = nullptr;
+    auto currentTask = std::exchange(mCurrentTask, nullptr);
+    currentTask->handleRendered();
 
     renderNextTask();
 }

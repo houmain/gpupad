@@ -89,6 +89,11 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
     if (mEvaluationMode == mode)
         return;
 
+    // manual evaluation after steady evaluation
+    if (mEvaluationMode == EvaluationMode::Steady) {
+        manualEvaluation();
+    }
+
     mEvaluationMode = mode;
 
     if (mEvaluationMode == EvaluationMode::Steady) {
@@ -115,7 +120,8 @@ void SynchronizeLogic::handleSessionRendered()
     if (mEvaluationMode != EvaluationMode::Paused)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
 
-    if (synchronizeToCompositor())
+    if (mEvaluationMode == EvaluationMode::Steady &&
+        synchronizeToCompositor())
         mEvaluationTimer->setInterval(1);
 }
 

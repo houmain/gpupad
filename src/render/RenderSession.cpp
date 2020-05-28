@@ -456,8 +456,8 @@ void RenderSession::downloadModifiedResources()
 
     for (auto &[itemId, buffer] : mCommandQueue->buffers)
         if (!buffer.fileName().isEmpty() &&
-            buffer.download() &&
-            mEvaluationType != EvaluationType::Steady)
+            (mItemsChanged || mEvaluationType != EvaluationType::Steady) &&
+            buffer.download())
             mModifiedBuffers[buffer.itemId()] = buffer.data();
 }
 
