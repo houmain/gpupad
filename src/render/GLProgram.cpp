@@ -79,8 +79,26 @@ bool GLProgram::link()
             &nameLength, &size, &type, buffer.data());
         auto name = QString(buffer.data());
         mUniformDataTypes[getUniformBaseName(name)] = type;
-        for (auto i = 0; i < size; i++)
-            mUniformsSet[name.replace("[0]", QStringLiteral("[%1]").arg(i))] = false;
+
+        if (auto gl42 = gl.v4_2) {
+            auto atomicCounterIndex = 0;
+            auto indices = static_cast<GLuint>(i);
+            gl.glGetActiveUniformsiv(program, 1, &indices,
+                GL_UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX, &atomicCounterIndex);
+            if (atomicCounterIndex >= 0) {
+                auto binding = 0;
+                gl42->glGetActiveAtomicCounterBufferiv(program, atomicCounterIndex,
+                    GL_ATOMIC_COUNTER_BUFFER_BINDING, &binding);
+                if (!mAtomicCounterBufferBindings.values().contains(binding)) {
+                    mAtomicCounterBufferBindings[name] = binding;
+                    mBuffersSet[name] = false;
+                }
+                continue;
+            }
+        }
+
+        for (auto j = 0; j < size; ++j)
+            mUniformsSet[name.replace("[0]", QStringLiteral("[%1]").arg(j))] = false;
     }
 
     auto uniformBlocks = GLint{ };
@@ -101,8 +119,8 @@ bool GLProgram::link()
             gl.glGetActiveUniform(program, static_cast<GLuint>(index), static_cast<GLsizei>(buffer.size()),
                 &nameLength, &size, &type, buffer.data());
             auto name = QString(buffer.data());
-            for (auto i = 0; i < size; i++)
-                mUniformsSet.erase(name.replace("[0]", QStringLiteral("[%1]").arg(i)));
+            for (auto j = 0; j < size; ++j)
+                mUniformsSet.erase(name.replace("[0]", QStringLiteral("[%1]").arg(j)));
         }
     }
 
@@ -435,6 +453,16 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
 
         bufferSet(binding.name);
         return true;
+    }
+
+    if (gl.v4_2) {
+        if (mAtomicCounterBufferBindings.contains(binding.name)) {
+            auto unit = mAtomicCounterBufferBindings[binding.name];
+            gl.v4_3->glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER,
+                static_cast<GLuint>(unit), buffer.getReadWriteBufferId());
+            bufferSet(binding.name);
+            return true;
+        }
     }
 
     if (gl.v4_3) {

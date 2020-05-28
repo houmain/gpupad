@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "items": [
+            {
+                "count": 1,
+                "dataType": "Uint32",
+                "id": 2,
+                "name": "Counter0",
+                "padding": 0,
+                "type": "Column"
+            }
+        ],
+        "name": "CounterBuffer",
+        "offset": 0,
+        "rowCount": 1,
+        "type": "Buffer"
+    },
+    {
+        "id": 3,
+        "items": [
+            {
+                "count": 1,
+                "dataType": "Uint32",
+                "id": 4,
+                "name": "Counter1",
+                "padding": 0,
+                "type": "Column"
+            },
+            {
+                "count": 1,
+                "dataType": "Uint32",
+                "id": 11,
+                "name": "Counter2",
+                "padding": 0,
+                "type": "Column"
+            }
+        ],
+        "name": "CountersBuffer",
+        "offset": 0,
+        "rowCount": 1,
+        "type": "Buffer"
+    },
+    {
+        "bindingType": "Buffer",
+        "bufferId": 1,
+        "id": 8,
+        "name": "uCounter0",
+        "type": "Binding"
+    },
+    {
+        "bindingType": "Buffer",
+        "bufferId": 3,
+        "id": 9,
+        "name": "uCounter1",
+        "type": "Binding"
+    },
+    {
+        "id": 5,
+        "items": [
+            {
+                "fileName": "atomics.comp",
+                "id": 6,
+                "shaderType": "Compute",
+                "type": "Shader"
+            }
+        ],
+        "name": "Program",
+        "type": "Program"
+    },
+    {
+        "bufferId": 3,
+        "callType": "ClearBuffer",
+        "checked": false,
+        "executeOn": "EveryEvaluation",
+        "id": 10,
+        "name": "Reset Counters",
+        "type": "Call"
+    },
+    {
+        "callType": "Compute",
+        "checked": true,
+        "executeOn": "EveryEvaluation",
+        "id": 7,
+        "name": "Call",
+        "programId": 5,
+        "type": "Call",
+        "workGroupsX": "1",
+        "workGroupsY": "1",
+        "workGroupsZ": "1"
+    }
+]

@@ -96,6 +96,7 @@ private:
     std::vector<GLShader> mShaders;
     QMap<Shader::ShaderType, QList<SubroutineUniform>> mSubroutineUniforms;
     QMap<QString, GLenum> mUniformDataTypes;
+    QMap<QString, int> mAtomicCounterBufferBindings;
     GLObject mProgramObject;
     bool mFailed{ };
     MessagePtrSet *mCallMessages{ };
