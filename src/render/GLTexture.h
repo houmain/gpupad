@@ -4,10 +4,14 @@
 #include "GLItem.h"
 #include <QOpenGLTexture>
 
+class GLBuffer;
+
 class GLTexture
 {
 public:
     explicit GLTexture(const Texture &texture);
+    GLTexture(const Buffer &buffer,
+        GLBuffer *textureBuffer, Texture::Format format);
     bool operator==(const GLTexture &rhs) const;
 
     ItemId itemId() const { return mItemId; }
@@ -40,6 +44,7 @@ private:
 
     ItemId mItemId{ };
     QString mFileName;
+    GLBuffer *mTextureBuffer{ };
     Texture::Target mTarget{ };
     Texture::Format mFormat{ };
     int mWidth{ };

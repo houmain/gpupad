@@ -34,6 +34,7 @@
     ADD(BindingLevel, Binding, level) \
     ADD(BindingLayered, Binding, layered) \
     ADD(BindingLayer, Binding, layer) \
+    ADD(BindingImageFormat, Binding, imageFormat) \
     ADD(BindingMinFilter, Binding, minFilter) \
     ADD(BindingMagFilter, Binding, magFilter) \
     ADD(BindingAnisotropic, Binding, anisotropic) \

@@ -6,13 +6,22 @@ layout(binding = 0, offset = 0) uniform atomic_uint uCounter0;
 layout(binding = 1, offset = 0) uniform atomic_uint uCounter1;
 layout(binding = 1, offset = 4) uniform atomic_uint uCounter2;
 
+layout(rgba8ui) uniform uimageBuffer uData;
+
 void main() {
-  atomicCounterIncrement(uCounter0);
+  // increment counter0 once
+  uint pos = atomicCounterIncrement(uCounter0);
   
-  atomicCounterIncrement(uCounter1);
+  // increment counter1 twice
+  uint value1 = atomicCounterIncrement(uCounter1);
   atomicCounterIncrement(uCounter1);
   
+  // increment counter2 three times
+  uint value2 = atomicCounterIncrement(uCounter2);
   atomicCounterIncrement(uCounter2);
   atomicCounterIncrement(uCounter2);
-  atomicCounterIncrement(uCounter2);
+  
+  // use atomic values to update a texture buffer
+  uint size = imageSize(uData).x;
+  imageStore(uData, int(pos % size), uvec4(value1 % 255, value2 % 255, size % 255, 0));
 }

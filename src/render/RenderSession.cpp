@@ -212,6 +212,12 @@ void RenderSession::prepare(bool itemsChanged,
             session.findItem<Texture>(textureId));
     };
 
+    const auto addTextureBufferOnce = [&](ItemId bufferId,
+            GLBuffer *buffer, Texture::Format format) {
+        return addOnce(mCommandQueue->textures,
+            session.findItem<Buffer>(bufferId), buffer, format);
+    };
+
     const auto addTargetOnce = [&](ItemId targetId) {
         auto target = session.findItem<Target>(targetId);
         auto fb = addOnce(mCommandQueue->targets, target);
@@ -293,11 +299,27 @@ void RenderSession::prepare(bool itemsChanged,
                         [binding = GLImageBinding{
                             b.id, b.name, addTextureOnce(b.textureId),
                             b.level, b.layered, b.layer,
-                            GLenum{ GL_READ_WRITE } }
+                            GLenum{ GL_READ_WRITE },
+                            b.imageFormat }
                         ](BindingState &state) {
                             state.top().images[binding.name] = binding;
                         });
                     break;
+
+                case Binding::BindingType::TextureBuffer: {
+                    addCommand(
+                        [binding = GLImageBinding{
+                            b.id, b.name,
+                            addTextureBufferOnce(b.bufferId, addBufferOnce(b.bufferId),
+                                static_cast<Texture::Format>(b.imageFormat)),
+                            b.level, b.layered, b.layer,
+                            GLenum{ GL_READ_WRITE },
+                            b.imageFormat }
+                        ](BindingState &state) {
+                            state.top().images[binding.name] = binding;
+                        });
+                    break;
+                }
 
                 case Binding::BindingType::Buffer:
                     addCommand(

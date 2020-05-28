@@ -42,6 +42,7 @@ public:
         BindingLevel,
         BindingLayered,
         BindingLayer,
+        BindingImageFormat,
         BindingMinFilter,
         BindingMagFilter,
         BindingAnisotropic,

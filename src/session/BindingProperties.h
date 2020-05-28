@@ -33,6 +33,9 @@ signals:
 
 private:
     void updateWidgets();
+    int getTextureStride(QVariant textureId) const;
+    int getBufferStride(QVariant bufferId) const;
+    void filterImageFormats(int stride);
 
     SessionProperties &mSessionProperties;
     Ui::BindingProperties *mUi;

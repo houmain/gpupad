@@ -104,7 +104,8 @@ template <typename T>
 void fillComboBox(QComboBox *c, std::initializer_list<std::pair<const char*, T>> items)
 {
     for (const auto &kv : items)
-        c->addItem(kv.first, kv.second);
+        if (kv.first)
+            c->addItem(kv.first, kv.second);
 }
 
 #endif // SESSIONPROPERTIES_H

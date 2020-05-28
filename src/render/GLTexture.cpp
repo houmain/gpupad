@@ -1,4 +1,5 @@
 #include "GLTexture.h"
+#include "GLBuffer.h"
 #include <QOpenGLPixelTransferOptions>
 #include <cmath>
 
@@ -24,10 +25,26 @@ GLTexture::GLTexture(const Texture &texture)
     mUsedItems += texture.id;
 }
 
+GLTexture::GLTexture(const Buffer &buffer,
+        GLBuffer *textureBuffer, Texture::Format format)
+    : mItemId(buffer.id)
+    , mTextureBuffer(textureBuffer)
+    , mTarget(Texture::Target::TargetBuffer)
+    , mFormat(format)
+    , mWidth(buffer.rowCount)
+    , mHeight(1)
+    , mDepth(1)
+    , mLayers(1)
+    , mSamples(1)
+    , mKind()
+{
+    mUsedItems += buffer.id;
+}
+
 bool GLTexture::operator==(const GLTexture &rhs) const
 {
-    return std::tie(mFileName, mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples) ==
-           std::tie(rhs.mFileName, rhs.mTarget, rhs.mFormat, rhs.mWidth, rhs.mHeight, rhs.mDepth, rhs.mLayers, rhs.mSamples);
+    return std::tie(mFileName, mTextureBuffer, mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples) ==
+           std::tie(rhs.mFileName, rhs.mTextureBuffer, rhs.mTarget, rhs.mFormat, rhs.mWidth, rhs.mHeight, rhs.mDepth, rhs.mLayers, rhs.mSamples);
 }
 
 GLuint GLTexture::getReadOnlyTextureId()
@@ -177,6 +194,12 @@ void GLTexture::reload(bool forWriting)
 {
     mMessages.clear();
 
+    if (mTextureBuffer) {
+        if (forWriting)
+            mTextureBuffer->getReadWriteBufferId();
+        return;
+    }
+
     auto fileData = TextureData{ };
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         if (!Singletons::fileCache().getTexture(mFileName, &fileData))
@@ -219,6 +242,13 @@ void GLTexture::createTexture()
     const auto createTexture = [&]() {
         auto texture = GLuint{};
         gl.glGenTextures(1, &texture);
+
+        if (mTextureBuffer) {
+            gl.glBindTexture(mTarget, texture);
+            gl.glTexBuffer(mTarget, mFormat,
+                mTextureBuffer->getReadWriteBufferId());
+            gl.glBindTexture(mTarget, 0);
+        }
         return texture;
     };
     const auto freeTexture = [](GLuint texture) {
@@ -244,6 +274,9 @@ void GLTexture::upload()
 
 bool GLTexture::download()
 {
+    if (mTextureBuffer)
+        return mTextureBuffer->download();
+
     if (!mDeviceCopyModified)
         return false;
 

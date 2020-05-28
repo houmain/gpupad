@@ -11,7 +11,7 @@
                 "type": "Column"
             }
         ],
-        "name": "CounterBuffer",
+        "name": "Counter Buffer",
         "offset": 0,
         "rowCount": 1,
         "type": "Buffer"
@@ -36,7 +36,7 @@
                 "type": "Column"
             }
         ],
-        "name": "CountersBuffer",
+        "name": "Counters Buffer",
         "offset": 0,
         "rowCount": 1,
         "type": "Buffer"
@@ -56,6 +56,31 @@
         "type": "Binding"
     },
     {
+        "id": 96,
+        "items": [
+            {
+                "count": 4,
+                "dataType": "Uint8",
+                "id": 97,
+                "name": "Column",
+                "padding": 0,
+                "type": "Column"
+            }
+        ],
+        "name": "Data",
+        "offset": 0,
+        "rowCount": 32,
+        "type": "Buffer"
+    },
+    {
+        "bindingType": "TextureBuffer",
+        "bufferId": 96,
+        "id": 100,
+        "imageFormat": "rgba8ui",
+        "name": "uData",
+        "type": "Binding"
+    },
+    {
         "id": 5,
         "items": [
             {
@@ -71,8 +96,8 @@
     {
         "bufferId": 3,
         "callType": "ClearBuffer",
-        "checked": false,
-        "executeOn": "EveryEvaluation",
+        "checked": true,
+        "executeOn": "ResetEvaluation",
         "id": 10,
         "name": "Reset Counters",
         "type": "Call"
@@ -82,7 +107,7 @@
         "checked": true,
         "executeOn": "EveryEvaluation",
         "id": 7,
-        "name": "Call",
+        "name": "Compute",
         "programId": 5,
         "type": "Call",
         "workGroupsX": "1",

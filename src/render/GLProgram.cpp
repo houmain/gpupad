@@ -415,9 +415,10 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
     auto &texture = *binding.texture;
     const auto target = texture.target();
     const auto textureId = texture.getReadWriteTextureId();
+    const auto format = (binding.format ? binding.format : texture.format());
 
     auto formatSupported = GLint();
-    gl.v4_2->glGetInternalformativ(target, texture.format(),
+    gl.v4_2->glGetInternalformativ(target, format,
         GL_SHADER_IMAGE_LOAD, 1, &formatSupported);
     if (formatSupported == GL_NONE) {
         *mCallMessages += MessageList::insert(
@@ -429,7 +430,7 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
         gl.v4_2->glUniform1i(location, unit);
         gl.v4_2->glBindImageTexture(static_cast<GLuint>(unit),
             textureId, binding.level, binding.layered,
-            binding.layer, binding.access, texture.format());
+            binding.layer, binding.access, format);
     }
     uniformSet(binding.name);
     return true;

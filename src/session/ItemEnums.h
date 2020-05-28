@@ -54,8 +54,9 @@ namespace ItemEnums {
     enum BindingType {
         Uniform,
         Sampler,
-        Image,
         Buffer,
+        Image,
+        TextureBuffer,
         Subroutine,
     };
     Q_ENUM_NS(BindingType)
@@ -81,6 +82,64 @@ namespace ItemEnums {
         Color
     };
     Q_ENUM_NS(BindingEditor)
+
+    enum ImageBindingFormat {
+        Internal       = GL_NONE,
+
+        // 8 bit
+        r8             = GL_R8,
+        r8ui           = GL_R8UI,
+        r8i            = GL_R8I,
+
+        // 16 bit
+        r16            = GL_R16,
+        r16_snorm      = GL_R16_SNORM, // not supported by glTexBuffer
+        r16f           = GL_R16F,
+        r16ui          = GL_R16UI,
+        r16i           = GL_R16I,
+        rg8            = GL_RG8,
+        rg8_snorm      = GL_RG8_SNORM, // not supported by glTexBuffer
+        rg8ui          = GL_RG8UI,
+        rg8i           = GL_RG8I,
+
+        // 24 bit - not supported by glBindImageTexture
+        rgb32f         = GL_RGB32F,
+        rgb32i         = GL_RGB32I,
+        rgb32ui        = GL_RGB32UI,
+
+        // 32 bit
+        r32f           = GL_R32F,
+        r32ui          = GL_R32UI,
+        r32i           = GL_R32I,
+        rg16           = GL_RG16,
+        rg16_snorm     = GL_RG16_SNORM, // not supported by glTexBuffer
+        rg16ui         = GL_RG16UI,
+        rg16i          = GL_RG16I,
+        rg16f          = GL_RG16F,
+        rgba8          = GL_RGBA8,
+        rgba8_snorm    = GL_RGBA8_SNORM, // not supported by glTexBuffer
+        rgba8ui        = GL_RGBA8UI,
+        rgba8i         = GL_RGBA8I,
+        rgb10_a2       = GL_RGB10_A2, // not supported by glTexBuffer
+        rgb10_a2ui     = GL_RGB10_A2UI, // not supported by glTexBuffer
+        r11f_g11f_b10f = GL_R11F_G11F_B10F, // not supported by glTexBuffer
+
+        // 64 bit
+        rg32f          = GL_RG32F,
+        rg32ui         = GL_RG32UI,
+        rg32i          = GL_RG32I,
+        rgba16         = GL_RGBA16,
+        rgba16_snorm   = GL_RGBA16_SNORM, // not supported by glTexBuffer
+        rgba16f        = GL_RGBA16F,
+        rgba16ui       = GL_RGBA16UI,
+        rgba16i        = GL_RGBA16I,
+
+        // 128 bit
+        rgba32f        = GL_RGBA32F,
+        rgba32i        = GL_RGBA32I,
+        rgba32ui       = GL_RGBA32UI,
+    };
+    Q_ENUM_NS(ImageBindingFormat)
 
     enum FrontFace {
         CCW = GL_CCW,

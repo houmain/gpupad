@@ -81,5 +81,6 @@ enum class TextureDataType
 
 TextureDataType getTextureDataType(
     const QOpenGLTexture::TextureFormat &format);
+int getTextureDataSize(TextureDataType dataType);
 int getTextureComponentCount(
     QOpenGLTexture::TextureFormat format);

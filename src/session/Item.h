@@ -89,6 +89,7 @@ struct Binding : Item
     using WrapMode = QOpenGLTexture::WrapMode;
     using ComparisonFunc = ItemEnums::ComparisonFunc;
     using Editor = ItemEnums::BindingEditor;
+    using ImageFormat = ItemEnums::ImageBindingFormat;
 
     BindingType bindingType{ };
     Editor editor{ };
@@ -107,6 +108,7 @@ struct Binding : Item
     QColor borderColor{ Qt::black };
     ComparisonFunc comparisonFunc{ };
     QString subroutine;
+    ImageFormat imageFormat{ ImageFormat::Internal };
 };
 
 struct Stream : Item

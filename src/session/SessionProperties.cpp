@@ -49,11 +49,13 @@ QString splitPascalCase(QString str)
 void setFormVisibility(QFormLayout *layout, QLabel *label,
     QWidget *widget, bool visible)
 {
-    layout->removeWidget(label);
+    if (label)
+        layout->removeWidget(label);
     layout->removeWidget(widget);
     if (visible)
         layout->addRow(label, widget);
-    label->setVisible(visible);
+    if (label)
+        label->setVisible(visible);
     widget->setVisible(visible);
 }
 

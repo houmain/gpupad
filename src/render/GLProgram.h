@@ -41,6 +41,7 @@ struct GLImageBinding
     bool layered;
     int layer;
     GLenum access;
+    Binding::ImageFormat format;
 };
 
 struct GLBufferBinding
@@ -97,6 +98,7 @@ private:
     QMap<Shader::ShaderType, QList<SubroutineUniform>> mSubroutineUniforms;
     QMap<QString, GLenum> mUniformDataTypes;
     QMap<QString, int> mAtomicCounterBufferBindings;
+    QMap<QString, GLObject> mTextureBufferObjects;
     GLObject mProgramObject;
     bool mFailed{ };
     MessagePtrSet *mCallMessages{ };

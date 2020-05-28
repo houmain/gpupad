@@ -417,14 +417,18 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         case Item::Type::Binding: {
             const auto &binding = static_cast<const Binding&>(item);
             const auto uniform = (binding.bindingType == Binding::BindingType::Uniform);
-            const auto image = (binding.bindingType == Binding::BindingType::Image);
             const auto sampler = (binding.bindingType == Binding::BindingType::Sampler);
+            const auto image = (binding.bindingType == Binding::BindingType::Image);
+            const auto textureBuffer = (binding.bindingType == Binding::BindingType::TextureBuffer);
+            const auto buffer = (binding.bindingType == Binding::BindingType::Buffer);
+            const auto subroutine = (binding.bindingType == Binding::BindingType::Subroutine);
             result &= (column != BindingEditor || uniform);
             result &= (column != BindingValues || uniform);
             result &= (column != BindingTextureId || image || sampler);
             result &= (column != BindingLevel || image);
             result &= (column != BindingLayered || image);
             result &= (column != BindingLayer || image);
+            result &= (column != BindingImageFormat || image || textureBuffer);
             result &= (column != BindingMinFilter || sampler);
             result &= (column != BindingMagFilter || sampler);
             result &= (column != BindingAnisotropic || sampler);
@@ -433,10 +437,8 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             result &= (column != BindingWrapModeZ || sampler);
             result &= (column != BindingBorderColor || sampler);
             result &= (column != BindingComparisonFunc || sampler);
-            result &= (column != BindingBufferId ||
-                (binding.bindingType == Binding::BindingType::Buffer));
-            result &= (column != BindingSubroutine ||
-                (binding.bindingType == Binding::BindingType::Subroutine));
+            result &= (column != BindingBufferId || buffer || textureBuffer);
+            result &= (column != BindingSubroutine || subroutine);
             break;
         }
 

@@ -252,6 +252,31 @@ TextureDataType getTextureDataType(
     }
 }
 
+int getTextureDataSize(TextureDataType dataType)
+{
+    switch (dataType) {
+        case TextureDataType::Normalized:
+        case TextureDataType::Normalized_sRGB:
+        case TextureDataType::Uint8:
+        case TextureDataType::Int8:
+            return 1;
+
+        case TextureDataType::Uint16:
+        case TextureDataType::Int16:
+            return 2;
+
+        case TextureDataType::Uint32:
+        case TextureDataType::Int32:
+        case TextureDataType::Float:
+        case TextureDataType::Uint_10_10_10_2:
+            return 4;
+
+        case TextureDataType::Compressed:
+            break;
+    }
+    return 0;
+}
+
 int getTextureComponentCount(QOpenGLTexture::TextureFormat format)
 {
     switch (format) {
