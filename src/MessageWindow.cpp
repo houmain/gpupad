@@ -75,6 +75,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case ShaderError:
         case ScriptError:
         case ProgramNotAssigned:
+        case TargetNotAssigned:
         case TextureNotAssigned:
         case BufferNotAssigned:
         case InvalidSubroutine:
@@ -141,6 +142,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Copying texture failed");
         case ProgramNotAssigned:
             return tr("No program set");
+        case TargetNotAssigned:
+            return tr("No target set");
         case TextureNotAssigned:
             return tr("No texture set");
         case BufferNotAssigned:

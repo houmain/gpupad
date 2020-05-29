@@ -132,6 +132,10 @@ struct Target : Item
     CullMode cullMode{ };
     LogicOperation logicOperation{ };
     QColor blendConstant{ Qt::white };
+    int defaultWidth{ 1 };
+    int defaultHeight{ 1 };
+    int defaultLayers{ 0 };
+    int defaultSamples{ 0 };
 };
 
 struct Attachment : Item

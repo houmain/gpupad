@@ -519,6 +519,16 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             break;
         }
 
+        case Item::Type::Target: {
+            const auto &target = static_cast<const Target&>(item);
+            const auto hasAttachments = !target.items.empty();
+            result &= (column != TargetDefaultWidth || !hasAttachments);
+            result &= (column != TargetDefaultHeight || !hasAttachments);
+            result &= (column != TargetDefaultLayers || !hasAttachments);
+            result &= (column != TargetDefaultSamples || !hasAttachments);
+            break;
+        }
+
         default:
             break;
     }

@@ -6,6 +6,10 @@ GLTarget::GLTarget(const Target &target)
     , mCullMode(target.cullMode)
     , mLogicOperation(target.logicOperation)
     , mBlendConstant(target.blendConstant)
+    , mDefaultWidth(target.defaultWidth)
+    , mDefaultHeight(target.defaultHeight)
+    , mDefaultLayers(target.defaultLayers)
+    , mDefaultSamples(target.defaultSamples)
 {
     mUsedItems += target.id;
 
@@ -106,7 +110,15 @@ bool GLTarget::create()
             mUsedItems += texture->usedItems();
         }
 
-    auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    auto gl43 = gl.v4_3;
+    if (gl43 && mAttachments.empty()) {
+        gl43->glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_WIDTH, mDefaultWidth);
+        gl43->glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_HEIGHT, mDefaultHeight);
+        gl43->glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_LAYERS, mDefaultLayers);
+        gl43->glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_SAMPLES, mDefaultSamples);
+    }
+
+    const auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         mMessages += MessageList::insert(mItemId,
             MessageType::CreatingFramebufferFailed,
@@ -146,17 +158,22 @@ void GLTarget::applyStates()
         static_cast<float>(mBlendConstant.blueF()),
         static_cast<float>(mBlendConstant.alphaF()));
 
-    auto minWidth = 0;
-    auto minHeight = 0;
-    foreach (const GLAttachment &attachment, mAttachments)
-        if (auto texture = attachment.texture) {
-            auto width = std::max(texture->width() >> attachment.level, 1);
-            auto height = std::max(texture->height() >> attachment.level, 1);
-            minWidth = (!minWidth ? width : std::min(minWidth, width));
-            minHeight = (!minHeight ? height : std::min(minHeight, height));
-            applyAttachmentStates(attachment);
-        }
-    gl.glViewport(0, 0, minWidth, minHeight);
+    if (!mAttachments.empty()) {
+        auto minWidth = 0;
+        auto minHeight = 0;
+        foreach (const GLAttachment &attachment, mAttachments)
+            if (auto texture = attachment.texture) {
+                const auto width = std::max(texture->width() >> attachment.level, 1);
+                const auto height = std::max(texture->height() >> attachment.level, 1);
+                minWidth = (!minWidth ? width : std::min(minWidth, width));
+                minHeight = (!minHeight ? height : std::min(minHeight, height));
+                applyAttachmentStates(attachment);
+            }
+        gl.glViewport(0, 0, minWidth, minHeight);
+    }
+    else {
+        gl.glViewport(0, 0, mDefaultWidth, mDefaultHeight);
+    }
 }
 
 void GLTarget::applyAttachmentStates(const GLAttachment &a)

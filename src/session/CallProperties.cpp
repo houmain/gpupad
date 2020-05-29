@@ -33,9 +33,9 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
     connect(mUi->vertexStream, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Stream, true); });
     connect(mUi->target, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(Item::Type::Target, true); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Target); });
     connect(mUi->indexBuffer, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer, true); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
     for (auto buffer : { mUi->indirectBuffer, mUi->buffer, mUi->fromBuffer })
         connect(buffer, &ReferenceComboBox::listRequired,
             [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });

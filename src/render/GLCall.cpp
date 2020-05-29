@@ -119,8 +119,13 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     QOpenGLVertexArrayObject vao;
     QOpenGLVertexArrayObject::Binder vaoBinder(&vao);
 
-    if (mTarget)
+    if (mTarget) {
         mTarget->bind();
+    }
+    else {
+        messages += MessageList::insert(
+            mCall.id, MessageType::TargetNotAssigned);
+    }
 
     if (mVertexStream && mProgram)
         mVertexStream->bind(*mProgram);
@@ -212,7 +217,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     }
     else {
         messages += MessageList::insert(
-            mCall.id,  MessageType::ProgramNotAssigned);
+            mCall.id, MessageType::ProgramNotAssigned);
     }
 
     if (mIndexBuffer)

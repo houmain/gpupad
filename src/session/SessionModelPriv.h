@@ -80,6 +80,10 @@
     ADD(TargetCullMode, Target, cullMode) \
     ADD(TargetLogicOperation, Target, logicOperation) \
     ADD(TargetBlendConstant, Target, blendConstant) \
+    ADD(TargetDefaultWidth, Target, defaultWidth) \
+    ADD(TargetDefaultHeight, Target, defaultHeight) \
+    ADD(TargetDefaultLayers, Target, defaultLayers) \
+    ADD(TargetDefaultSamples, Target, defaultSamples) \
     ADD(CallChecked, Call, checked) \
     ADD(CallType, Call, callType) \
     ADD(CallProgramId, Call, programId) \

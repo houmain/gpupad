@@ -181,12 +181,14 @@ bool GLTexture::copy(GLTexture &source)
 bool GLTexture::updateMipmaps()
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    if (std::exchange(mMipmapsInvalidated, false))
+    if (mMipmapsInvalidated) {
         if (mData.levels() > 1) {
             auto &gl = GLContext::currentContext();
             gl.glBindTexture(target(), getReadWriteTextureId());
             gl.glGenerateMipmap(target());
         }
+        mMipmapsInvalidated = false;
+    }
     return (glGetError() == GL_NO_ERROR);
 }
 

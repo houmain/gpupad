@@ -32,6 +32,7 @@ enum MessageType
     ScriptError,
     ScriptMessage,
     ProgramNotAssigned,
+    TargetNotAssigned,
     TextureNotAssigned,
     BufferNotAssigned,
     InvalidSubroutine,

@@ -31,6 +31,10 @@ private:
     Target::LogicOperation mLogicOperation{ };
     QColor mBlendConstant{ };
     QMap<int, GLAttachment> mAttachments;
+    int mDefaultWidth{ };
+    int mDefaultHeight{ };
+    int mDefaultLayers{ };
+    int mDefaultSamples{ };
     GLObject mFramebufferObject;
 };
 

@@ -331,10 +331,15 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             break;
 
         case Item::Type::Target:
+            map(mTargetProperties->width, SessionModel::TargetDefaultWidth);
+            map(mTargetProperties->height, SessionModel::TargetDefaultHeight);
+            map(mTargetProperties->layers, SessionModel::TargetDefaultLayers);
+            map(mTargetProperties->samples, SessionModel::TargetDefaultSamples);
             map(mTargetProperties->frontFace, SessionModel::TargetFrontFace);
             map(mTargetProperties->cullMode, SessionModel::TargetCullMode);
             map(mTargetProperties->logicOperation, SessionModel::TargetLogicOperation);
             map(mTargetProperties->blendConstant, SessionModel::TargetBlendConstant);
+            updateTargetWidgets(index);
             break;
 
         case Item::Type::Attachment:
@@ -487,6 +492,22 @@ void SessionProperties::updateBufferWidgets(const QModelIndex &index)
     ui.size->setValue(stride * ui.rowCount->value());
     setFormVisibility(ui.formLayout, ui.labelRows, ui.widgetRows, stride > 0);
     setFormVisibility(ui.formLayout, ui.labelSize, ui.size, stride > 0);
+}
+
+void SessionProperties::updateTargetWidgets(const QModelIndex &index)
+{
+    const auto target = mModel.item<Target>(index);
+    const auto hasAttachments = !target->items.empty();
+
+    auto &ui = *mTargetProperties;
+    setFormVisibility(ui.formLayout, ui.labelWidth, ui.width, !hasAttachments);
+    setFormVisibility(ui.formLayout, ui.labelHeight, ui.height, !hasAttachments);
+    setFormVisibility(ui.formLayout, ui.labelLayers, ui.layers, !hasAttachments);
+    setFormVisibility(ui.formLayout, ui.labelSamples, ui.samples, !hasAttachments);
+    setFormVisibility(ui.formLayout, ui.labelFrontFace, ui.frontFace, true);
+    setFormVisibility(ui.formLayout, ui.labelCullMode, ui.cullMode, true);
+    setFormVisibility(ui.formLayout, ui.labelLogicOperation, ui.logicOperation, hasAttachments);
+    setFormVisibility(ui.formLayout, ui.labelBlendConstant, ui.blendConstant, hasAttachments);
 }
 
 void SessionProperties::updateScriptWidgets(const QModelIndex &index)
