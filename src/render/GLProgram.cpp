@@ -429,8 +429,8 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
         gl.v4_2->glBindTexture(target, textureId);
         gl.v4_2->glUniform1i(location, unit);
         gl.v4_2->glBindImageTexture(static_cast<GLuint>(unit),
-            textureId, binding.level, binding.layered,
-            binding.layer, binding.access, format);
+            textureId, binding.level, (binding.layer < 0),
+            std::max(binding.layer, 0), binding.access, format);
     }
     uniformSet(binding.name);
     return true;

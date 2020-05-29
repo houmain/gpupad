@@ -237,9 +237,6 @@
             <height>24</height>
            </size>
           </property>
-          <property name="text">
-           <string/>
-          </property>
          </widget>
         </item>
         <item>
@@ -249,6 +246,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="minimum">
+           <number>-1</number>
           </property>
          </widget>
         </item>
@@ -633,14 +633,14 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ReferenceComboBox</class>
-   <extends>QComboBox</extends>
-   <header>session/ReferenceComboBox.h</header>
-  </customwidget>
-  <customwidget>
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
    <header>session/DataComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ReferenceComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/ReferenceComboBox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

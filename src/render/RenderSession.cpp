@@ -298,8 +298,7 @@ void RenderSession::prepare(bool itemsChanged,
                     addCommand(
                         [binding = GLImageBinding{
                             b.id, b.name, addTextureOnce(b.textureId),
-                            b.level, b.layered, b.layer,
-                            GLenum{ GL_READ_WRITE },
+                            b.level, b.layer, GLenum{ GL_READ_WRITE },
                             b.imageFormat }
                         ](BindingState &state) {
                             state.top().images[binding.name] = binding;
@@ -312,8 +311,7 @@ void RenderSession::prepare(bool itemsChanged,
                             b.id, b.name,
                             addTextureBufferOnce(b.bufferId, addBufferOnce(b.bufferId),
                                 static_cast<Texture::Format>(b.imageFormat)),
-                            b.level, b.layered, b.layer,
-                            GLenum{ GL_READ_WRITE },
+                            b.level, b.layer, GLenum{ GL_READ_WRITE },
                             b.imageFormat }
                         ](BindingState &state) {
                             state.top().images[binding.name] = binding;

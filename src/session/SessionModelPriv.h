@@ -32,7 +32,6 @@
     ADD(BindingTextureId, Binding, textureId) \
     ADD(BindingBufferId, Binding, bufferId) \
     ADD(BindingLevel, Binding, level) \
-    ADD(BindingLayered, Binding, layered) \
     ADD(BindingLayer, Binding, layer) \
     ADD(BindingImageFormat, Binding, imageFormat) \
     ADD(BindingMinFilter, Binding, minFilter) \
@@ -50,7 +49,6 @@
     ADD(AttributeDivisor, Attribute, divisor) \
     ADD(AttachmentTextureId, Attachment, textureId) \
     ADD(AttachmentLevel, Attachment, level) \
-    ADD(AttachmentLayered, Attachment, layered) \
     ADD(AttachmentLayer, Attachment, layer) \
     ADD(AttachmentBlendColorEq, Attachment, blendColorEq) \
     ADD(AttachmentBlendColorSource, Attachment, blendColorSource) \

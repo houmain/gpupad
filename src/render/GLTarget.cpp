@@ -95,7 +95,7 @@ bool GLTarget::create()
                 attachment.attachmentPoint = nextColorAttachment++;
             }
 
-            if (kind.array && attachment.layered) {
+            if (kind.array && attachment.layer >= 0) {
                 gl.glFramebufferTextureLayer(GL_FRAMEBUFFER, attachment.attachmentPoint,
                     texture->getReadOnlyTextureId(), level, attachment.layer);
             }

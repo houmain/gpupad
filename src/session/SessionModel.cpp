@@ -426,7 +426,6 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             result &= (column != BindingValues || uniform);
             result &= (column != BindingTextureId || image || sampler);
             result &= (column != BindingLevel || image);
-            result &= (column != BindingLayered || image);
             result &= (column != BindingLayer || image);
             result &= (column != BindingImageFormat || image || textureBuffer);
             result &= (column != BindingMinFilter || sampler);
@@ -447,7 +446,6 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             auto kind = TextureKind();
             if (auto texture = findItem<Texture>(attachment.textureId))
                 kind = getKind(*texture);
-            result &= (column != AttachmentLayered || kind.array);
             result &= (column != AttachmentLayer || kind.array);
             result &= (column != AttachmentBlendColorEq || kind.color);
             result &= (column != AttachmentBlendColorSource || kind.color);

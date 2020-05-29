@@ -140,16 +140,14 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
         [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
     connect(mUi->buffer, &ReferenceComboBox::currentDataChanged,
         this, &BindingProperties::updateWidgets);
-
     for (auto comboBox : { mUi->texture, mUi->buffer })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant id) {
                 return mSessionProperties.findItemName(id.toInt());
             });
 
-    connect(mUi->layered, &QCheckBox::toggled,
-        mUi->layer, &QWidget::setEnabled);
-    mUi->layer->setEnabled(false);
+    // TODO: set layer to -1 when disabled...
+    mUi->layered->setVisible(false);
 
     updateWidgets();
 }
@@ -166,7 +164,6 @@ void BindingProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->texture, SessionModel::BindingTextureId);
     mapper.addMapping(mUi->buffer, SessionModel::BindingBufferId);
     mapper.addMapping(mUi->level, SessionModel::BindingLevel);
-    mapper.addMapping(mUi->layered, SessionModel::BindingLayered);
     mapper.addMapping(mUi->layer, SessionModel::BindingLayer);
     mapper.addMapping(mUi->minFilter, SessionModel::BindingMinFilter);
     mapper.addMapping(mUi->magFilter, SessionModel::BindingMagFilter);
@@ -272,7 +269,7 @@ void BindingProperties::updateWidgets()
     const auto textureKind = currentTextureKind();
     setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, image);
     setFormVisibility(mUi->formLayout, mUi->labelLayer, mUi->layerWidget,
-        textureKind.array);
+        textureKind.array || textureKind.dimensions == 3 || textureKind.cubeMap);
 
     auto stride = 0;
     if (image)

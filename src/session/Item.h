@@ -97,8 +97,7 @@ struct Binding : Item
     ItemId textureId{ };
     ItemId bufferId{ };
     int level{ };
-    bool layered{ };
-    int layer{ };
+    int layer{ -1 };
     Filter minFilter{ QOpenGLTexture::Nearest };
     Filter magFilter{ QOpenGLTexture::Nearest };
     bool anisotropic{ true };
@@ -144,8 +143,7 @@ struct Attachment : Item
 
     ItemId textureId{ };
     int level{ };
-    bool layered{ };
-    int layer{ };
+    int layer{ -1 };
 
     BlendEquation blendColorEq{ BlendEquation::Add };
     BlendFactor blendColorSource{ BlendFactor::One };

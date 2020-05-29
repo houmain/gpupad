@@ -21,9 +21,6 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
         [this](QVariant data) { return mSessionProperties.findItemName(data.toInt()); });
     connect(mUi->texture, &ReferenceComboBox::currentDataChanged,
         this, &AttachmentProperties::updateWidgets);
-    connect(mUi->layered, &QCheckBox::toggled,
-        mUi->layer, &QWidget::setEnabled);
-    mUi->layer->setEnabled(false);
 
     fillComboBox<Attachment::BlendEquation>(mUi->blendColorEq);
     mUi->blendAlphaEq->setModel(mUi->blendColorEq->model());
@@ -45,6 +42,9 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
     mUi->stencilBackFailOp->setModel(mUi->stencilFailOp->model());
     mUi->stencilBackDepthFailOp->setModel(mUi->stencilFailOp->model());
     mUi->stencilBackDepthPassOp->setModel(mUi->stencilFailOp->model());
+
+    // TODO: set layer to -1 when disabled...
+    mUi->layered->setVisible(false);
 
     updateWidgets();
 }
@@ -72,7 +72,6 @@ void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->texture, SessionModel::AttachmentTextureId);
     mapper.addMapping(mUi->level, SessionModel::AttachmentLevel);
-    mapper.addMapping(mUi->layered, SessionModel::AttachmentLayered);
     mapper.addMapping(mUi->layer, SessionModel::AttachmentLayer);
 
     mapper.addMapping(mUi->blendColorEq, SessionModel::AttachmentBlendColorEq);

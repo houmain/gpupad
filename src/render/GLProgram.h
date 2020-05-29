@@ -38,7 +38,6 @@ struct GLImageBinding
     QString name;
     GLTexture *texture;
     int level;
-    bool layered;
     int layer;
     GLenum access;
     Binding::ImageFormat format;
