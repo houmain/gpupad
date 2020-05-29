@@ -310,7 +310,7 @@ QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
         item->name = name;
         item->id = id;
         insertItem(item, parent, row);
-        return getIndex(item);
+        return getIndex(item, ColumnType::Name);
     };
 
     switch (type) {
