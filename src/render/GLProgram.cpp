@@ -81,7 +81,7 @@ bool GLProgram::link()
         mActiveUniforms[name] = { type, size };
         mUniformsSet[getUniformBaseName(name)] = false;
         for (auto j = 0; j < size; ++j) 
-          mActiveUniforms[QStringLiteral("%1[%2]").arg(name).arg(j)] = { type, 1 };
+            mActiveUniforms[QStringLiteral("%1[%2]").arg(name).arg(j)] = { type, 1 };
 
         if (auto gl42 = gl.v4_2) {
             auto atomicCounterIndex = 0;

@@ -198,6 +198,7 @@ void BinaryEditor::refresh()
         mEditableRegion->setModel(dataModel);
         delete prevModel;
 
+        mEditableRegion->horizontalHeader()->setMinimumSectionSize(1);
         for (auto i = 0; i < dataModel->columnCount({ }); ++i)
             mEditableRegion->horizontalHeader()->resizeSection(i,
                 dataModel->getColumnSize(i) * mColumnWidth);
