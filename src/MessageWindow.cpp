@@ -20,7 +20,7 @@ MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
     setColumnCount(2);
     verticalHeader()->setVisible(false);
     horizontalHeader()->setVisible(false);
-    verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     verticalHeader()->setDefaultSectionSize(20);
     horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);

@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QSet>
+#include <optional>
 #include "Evaluation.h"
 
 using ItemId = int;
