@@ -95,7 +95,7 @@ private:
     MessagePtrSet mLinkMessages;
     std::vector<GLShader> mShaders;
     QMap<Shader::ShaderType, QList<SubroutineUniform>> mSubroutineUniforms;
-    QMap<QString, GLenum> mUniformDataTypes;
+    QMap<QString, std::pair<GLenum, GLint>> mActiveUniforms;
     QMap<QString, int> mAtomicCounterBufferBindings;
     QMap<QString, GLObject> mTextureBufferObjects;
     GLObject mProgramObject;

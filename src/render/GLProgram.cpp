@@ -77,8 +77,11 @@ bool GLProgram::link()
     for (auto i = 0; i < uniforms; ++i) {
         gl.glGetActiveUniform(program, static_cast<GLuint>(i), static_cast<GLsizei>(buffer.size()),
             &nameLength, &size, &type, buffer.data());
-        auto name = QString(buffer.data());
-        mUniformDataTypes[getUniformBaseName(name)] = type;
+        const auto name = getUniformBaseName(buffer.data());
+        mActiveUniforms[name] = { type, size };
+        mUniformsSet[getUniformBaseName(name)] = false;
+        for (auto j = 0; j < size; ++j) 
+          mActiveUniforms[QStringLiteral("%1[%2]").arg(name).arg(j)] = { type, 1 };
 
         if (auto gl42 = gl.v4_2) {
             auto atomicCounterIndex = 0;
@@ -93,12 +96,9 @@ bool GLProgram::link()
                     mAtomicCounterBufferBindings[name] = binding;
                     mBuffersSet[name] = false;
                 }
-                continue;
+                mUniformsSet.erase(name);
             }
         }
-
-        for (auto j = 0; j < size; ++j)
-            mUniformsSet[name.replace("[0]", QStringLiteral("[%1]").arg(j))] = false;
     }
 
     auto uniformBlocks = GLint{ };
@@ -106,7 +106,7 @@ bool GLProgram::link()
     for (auto i = 0u; i < static_cast<GLuint>(uniformBlocks); ++i) {
         gl.glGetActiveUniformBlockName(program, i,
             static_cast<GLsizei>(buffer.size()), &nameLength, buffer.data());
-        auto name = QString(buffer.data());
+        const auto name = QString(buffer.data());
         mBuffersSet[name] = false;
 
         // remove block's uniforms from list of uniforms to set
@@ -118,9 +118,8 @@ bool GLProgram::link()
         for (auto index : uniformIndices) {
             gl.glGetActiveUniform(program, static_cast<GLuint>(index), static_cast<GLsizei>(buffer.size()),
                 &nameLength, &size, &type, buffer.data());
-            auto name = QString(buffer.data());
-            for (auto j = 0; j < size; ++j)
-                mUniformsSet.erase(name.replace("[0]", QStringLiteral("[%1]").arg(j)));
+            const auto name = QString(buffer.data());
+            mUniformsSet.erase(getUniformBaseName(name));
         }
     }
 
@@ -260,38 +259,44 @@ bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngin
     auto &gl = GLContext::currentContext();
     const auto location = gl.glGetUniformLocation(
         mProgramObject, qPrintable(binding.name));
-    const auto values = scriptEngine.evaluateValues(
+    auto values = scriptEngine.evaluateValues(
         binding.values, binding.bindingItemId, *mCallMessages);
     if (location < 0 || values.empty())
         return false;
 
-    const auto dataType = mUniformDataTypes[getUniformBaseName(binding.name)];
+    const auto [dataType, size] = mActiveUniforms[binding.name];
+    Q_ASSERT(size > 0);
 
-    auto getValues = [&](auto t, auto count) {
+    const auto getValues = [&](auto t, auto count) {
         using T = decltype(t);
-        auto array = std::array<T, 16>{ };
-        if (values.count() == count ||
-            (values.count() == 4 && count == 3) ||
-            (values.count() == 3 && count == 4)) {
-            auto i = 0u;
-            foreach (const double value, values)
-                 array[i++] = static_cast<T>(value);
-        }
-        else {
+        static auto sResult = std::vector<T>{ };
+        count *= size;
+
+        if (count == 4 && values.count() == 3)
+            values.push_back(1);
+        if (count == 3 && values.count() == 4)
+            values.removeLast();
+
+        sResult.clear();
+        sResult.resize(count);
+        for (auto i = 0; i < std::min(count, values.count()); ++i)
+            sResult[i] = values[i];
+
+        if (count != values.count())
             *mCallMessages += MessageList::insert(binding.bindingItemId,
                 MessageType::UniformComponentMismatch,
                 QString("(%1/%2)").arg(values.count()).arg(count));
-        }
-        return array;
+
+        return &sResult;
     };
 
+    switch (dataType) {
 #define ADD(TYPE, DATATYPE, COUNT, FUNCTION) \
-        case TYPE: FUNCTION(location, 1, getValues(DATATYPE(), COUNT).data()); break
+        case TYPE: FUNCTION(location, size, getValues(DATATYPE(), COUNT)->data()); break
 
 #define ADD_MATRIX(TYPE, DATATYPE, COUNT, FUNCTION) \
-        case TYPE: FUNCTION(location, 1, binding.transpose, getValues(DATATYPE(), COUNT).data()); break
+        case TYPE: FUNCTION(location, size, binding.transpose, getValues(DATATYPE(), COUNT)->data()); break
 
-    switch (dataType) {
         ADD(GL_FLOAT, GLfloat, 1, gl.glUniform1fv);
         ADD(GL_FLOAT_VEC2, GLfloat, 2, gl.glUniform2fv);
         ADD(GL_FLOAT_VEC3, GLfloat, 3, gl.glUniform3fv);
@@ -330,11 +335,11 @@ bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngin
         ADD_MATRIX(GL_DOUBLE_MAT4x2, GLdouble, 8, gl.v4_0->glUniformMatrix4x2dv);
         ADD_MATRIX(GL_DOUBLE_MAT3x4, GLdouble, 12, gl.v4_0->glUniformMatrix3x4dv);
         ADD_MATRIX(GL_DOUBLE_MAT4x3, GLdouble, 12, gl.v4_0->glUniformMatrix4x3dv);
-    }
 #undef ADD
 #undef ADD_MATRIX
+    }
 
-    uniformSet(binding.name);
+    uniformSet(getUniformBaseName(binding.name));
     return true;
 }
 
