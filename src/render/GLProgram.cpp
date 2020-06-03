@@ -254,48 +254,50 @@ int GLProgram::getAttributeLocation(const QString &name) const
     return gl.glGetAttribLocation(mProgramObject, qPrintable(name));
 }
 
+template <typename T>
+std::vector<T> getValues(ScriptEngine &scriptEngine,
+    const QStringList &valueExpressions, ItemId itemId, int count, MessagePtrSet &messages)
+{
+    Q_ASSERT(count > 0);
+    auto values = scriptEngine.evaluateValues(
+        valueExpressions, itemId, messages);
+
+    if (count == 4 && values.count() == 3)
+        values.push_back(1);
+    if (count == 3 && values.count() == 4)
+        values.removeLast();
+
+    if (count != values.count())
+        messages += MessageList::insert(itemId,
+            MessageType::UniformComponentMismatch,
+            QString("(%1/%2)").arg(values.count()).arg(count));
+
+    auto result = std::vector<T>{ };
+    result.resize(count);
+    for (auto i = 0; i < std::min(count, values.count()); ++i)
+        result[i] = values[i];
+    return result;
+}
+
 bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine)
 {
     auto &gl = GLContext::currentContext();
     const auto location = gl.glGetUniformLocation(
         mProgramObject, qPrintable(binding.name));
-    auto values = scriptEngine.evaluateValues(
-        binding.values, binding.bindingItemId, *mCallMessages);
-    if (location < 0 || values.empty())
+    if (location < 0)
         return false;
 
     const auto [dataType, size] = mActiveUniforms[binding.name];
-    Q_ASSERT(size > 0);
-
-    const auto getValues = [&](auto t, auto count) {
-        using T = decltype(t);
-        static auto sResult = std::vector<T>{ };
-        count *= size;
-
-        if (count == 4 && values.count() == 3)
-            values.push_back(1);
-        if (count == 3 && values.count() == 4)
-            values.removeLast();
-
-        sResult.clear();
-        sResult.resize(count);
-        for (auto i = 0; i < std::min(count, values.count()); ++i)
-            sResult[i] = values[i];
-
-        if (count != values.count())
-            *mCallMessages += MessageList::insert(binding.bindingItemId,
-                MessageType::UniformComponentMismatch,
-                QString("(%1/%2)").arg(values.count()).arg(count));
-
-        return &sResult;
-    };
-
     switch (dataType) {
 #define ADD(TYPE, DATATYPE, COUNT, FUNCTION) \
-        case TYPE: FUNCTION(location, size, getValues(DATATYPE(), COUNT)->data()); break
+        case TYPE: FUNCTION(location, size, \
+                getValues<DATATYPE>(scriptEngine, binding.values, binding.bindingItemId, \
+                    COUNT * size, *mCallMessages).data()); break
 
 #define ADD_MATRIX(TYPE, DATATYPE, COUNT, FUNCTION) \
-        case TYPE: FUNCTION(location, size, binding.transpose, getValues(DATATYPE(), COUNT)->data()); break
+        case TYPE: FUNCTION(location, size, binding.transpose, \
+                getValues<DATATYPE>(scriptEngine, binding.values, binding.bindingItemId, \
+                    COUNT * size, *mCallMessages).data()); break
 
         ADD(GL_FLOAT, GLfloat, 1, gl.glUniform1fv);
         ADD(GL_FLOAT_VEC2, GLfloat, 2, gl.glUniform2fv);
@@ -420,7 +422,9 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
     auto &texture = *binding.texture;
     const auto target = texture.target();
     const auto textureId = texture.getReadWriteTextureId();
-    const auto format = (binding.format ? binding.format : texture.format());
+    const auto format = (binding.format ?
+        static_cast<GLenum>(binding.format) :
+        static_cast<GLenum>(texture.format()));
 
     auto formatSupported = GLint();
     gl.v4_2->glGetInternalformativ(target, format,
@@ -512,7 +516,7 @@ void GLProgram::reapplySubroutines()
     foreach (Shader::ShaderType stage, mSubroutineUniforms.keys()) {
         for (const auto &uniform : qAsConst(mSubroutineUniforms[stage])) {
             auto isIndex = false;
-            auto index = uniform.boundSubroutine.toInt(&isIndex);
+            auto index = uniform.boundSubroutine.toUInt(&isIndex);
             if (!isIndex)
                 index = gl.v4_0->glGetSubroutineIndex(mProgramObject,
                     stage, qPrintable(uniform.boundSubroutine));
