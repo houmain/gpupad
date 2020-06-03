@@ -107,7 +107,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->actionOpen->setShortcuts(QKeySequence::Open);
     mUi->actionSave->setShortcuts(QKeySequence::Save);
     mUi->actionSaveAs->setShortcuts(QKeySequence::SaveAs);
-    mUi->actionReload->setShortcut(QKeySequence::Refresh);
+    mUi->actionReload->setShortcut(QKeySequence("Ctrl+R"));
     mUi->actionClose->setShortcuts(QKeySequence::Close);
     mUi->actionUndo->setShortcuts(QKeySequence::Undo);
     mUi->actionRedo->setShortcuts(QKeySequence::Redo);
@@ -577,7 +577,9 @@ bool MainWindow::saveSessionAs()
         dialog.exec();
     }
 
-    mSessionEditor->save();
+    if (!mSessionEditor->save())
+      return false;
+
     mSessionEditor->clearUndo();
     return true;
 }
