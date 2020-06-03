@@ -732,6 +732,7 @@ ktxTexture_CreateFromNamedFile(const char* const filename,
     if (result == KTX_SUCCESS)
         *newTex = (ktxTexture*)tex;
     else {
+        ktxTextureInt_destruct(tex);
         free(tex);
         *newTex = NULL;
     }
