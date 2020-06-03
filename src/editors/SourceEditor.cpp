@@ -162,15 +162,18 @@ bool SourceEditor::load(const QString &fileName, QString *source)
     if (!file.open(QFile::ReadOnly | QFile::Text))
         return false;
 
+    const auto unprintable = [](const auto &string) {
+      return (std::find_if(string.constBegin(), string.constEnd(),
+          [](QChar c) { return (!c.isPrint() && !c.isSpace()); }) != string.constEnd());
+    };
+
     QTextStream stream(&file);
     auto string = stream.readAll();
-    if (!string.isSimpleText()) {
+    if (!string.isSimpleText() || unprintable(string)) {
       stream.setCodec("Windows-1250");
       stream.seek(0);
       string = stream.readAll();
-      const auto unprintable = std::find_if(string.constBegin(), string.constEnd(),
-          [](QChar c) { return (!c.isPrint() && !c.isSpace()); });
-      if (unprintable != string.constEnd())
+      if (unprintable(string))
         return false;
     }
 
