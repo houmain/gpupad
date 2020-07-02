@@ -258,7 +258,6 @@ template <typename T>
 std::vector<T> getValues(ScriptEngine &scriptEngine,
     const QStringList &valueExpressions, ItemId itemId, int count, MessagePtrSet &messages)
 {
-    Q_ASSERT(count > 0);
     auto values = scriptEngine.evaluateValues(
         valueExpressions, itemId, messages);
 
@@ -287,7 +286,11 @@ bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngin
     if (location < 0)
         return false;
 
-    const auto [dataType, size] = mActiveUniforms[binding.name];
+    const auto [dataType, size] = 
+        mActiveUniforms[(mActiveUniforms.contains(binding.name) ? 
+           binding.name : getUniformBaseName(binding.name))];
+    Q_ASSERT(dataType);
+
     switch (dataType) {
 #define ADD(TYPE, DATATYPE, COUNT, FUNCTION) \
         case TYPE: FUNCTION(location, size, \

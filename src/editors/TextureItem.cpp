@@ -245,11 +245,6 @@ GLuint TextureItem::resetTexture()
     return std::exchange(mImageTextureId, GL_NONE);
 }
 
-void TextureItem::setMagnifyLinear(bool magnifyLinear)
-{
-    mMagnifyLinear = magnifyLinear;
-}
-
 void TextureItem::paint(QPainter *painter,
     const QStyleOptionGraphicsItem *, QWidget *)
 {
@@ -319,13 +314,14 @@ bool TextureItem::renderTexture(const QMatrix &transform)
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        if (mMagnifyLinear && mImage.levels() > 1) {
+
+        if (mMagnifyLinear) {
             gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         }
         else {
             gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
         }
     }
 
@@ -333,12 +329,11 @@ bool TextureItem::renderTexture(const QMatrix &transform)
         program->bind();
         program->setUniformValue("uTexture", 0);
         program->setUniformValue("uTransform", transform);
-        program->setUniformValue("uSize",
-            QPointF(mBoundingRect.width(), mBoundingRect.height()));
-        program->setUniformValue("uLevel", 0.0f);
-        program->setUniformValue("uFace", 0);
-        program->setUniformValue("uLayer", 0.0f);
-        program->setUniformValue("uSample", 0);
+        program->setUniformValue("uSize", QSizeF(mBoundingRect.size()));
+        program->setUniformValue("uLevel", mLevel);
+        program->setUniformValue("uFace", mFace);
+        program->setUniformValue("uLayer", mLayer);
+        program->setUniformValue("uSample", mSample);
         gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 

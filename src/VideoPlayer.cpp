@@ -21,8 +21,6 @@ VideoPlayer::VideoPlayer(QString fileName, QObject *parent)
     playlist->setPlaybackMode(QMediaPlaylist::PlaybackMode::Loop);
     playlist->addMedia(QUrl::fromLocalFile(fileName));
     mPlayer->setPlaylist(playlist);
-
-    mPlayer->pause();
 }
 
 QList<QVideoFrame::PixelFormat> VideoPlayer::supportedPixelFormats(
@@ -35,8 +33,10 @@ void VideoPlayer::handleStatusChanged(QMediaPlayer::MediaStatus status)
 {
     if (status == QMediaPlayer::InvalidMedia) {
         mPlayer->deleteLater();
-        mPlayer = nullptr;
         emit loadingFinished();
+    }
+    else if (status == QMediaPlayer::LoadedMedia) {
+        mPlayer->pause();
     }
 }
 

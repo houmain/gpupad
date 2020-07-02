@@ -765,9 +765,13 @@ void MainWindow::openMessageDock()
 void MainWindow::populateSampleSessions()
 {
     const auto paths = {
-        QCoreApplication::applicationDirPath() + "/../share/gpupad/samples",
         QCoreApplication::applicationDirPath() + "/samples",
         QString("/usr/share/gpupad/samples"),
+#if !defined(NDEBUG)
+        QCoreApplication::applicationDirPath() + "/../share/gpupad/samples",
+        QCoreApplication::applicationDirPath() + "/../samples",
+        QCoreApplication::applicationDirPath() + "/../../samples",
+#endif
     };
     for (const auto &path : paths) {
         if (!mUi->menuSampleSessions->actions().empty())
