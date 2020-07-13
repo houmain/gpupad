@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TextureEditorToolBar</class>
+ <widget class="QWidget" name="TextureEditorToolBar">
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="spacing">
+    <number>4</number>
+   </property>
+   <property name="leftMargin">
+    <number>4</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QLabel" name="labelLevel">
+     <property name="text">
+      <string>Level</string>
+     </property>
+     <property name="buddy">
+      <cstring>level</cstring>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDoubleSpinBox" name="level"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelLayer">
+     <property name="text">
+      <string>Layer</string>
+     </property>
+     <property name="buddy">
+      <cstring>layer</cstring>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDoubleSpinBox" name="layer"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelSample">
+     <property name="text">
+      <string>Sample</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QSpinBox" name="sample"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelFace">
+     <property name="text">
+      <string>Face</string>
+     </property>
+     <property name="buddy">
+      <cstring>face</cstring>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="face">
+     <item>
+      <property name="text">
+       <string>Positive X</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Negative X</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Positive Y</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Negative Y</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Positive Z</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Negative Z</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item>
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>4</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="filter">
+     <property name="text">
+      <string>Filter</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

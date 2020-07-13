@@ -541,6 +541,11 @@ bool TextureData::isCompressed() const
     return (!isNull() && mKtxTexture->isCompressed);
 }
 
+bool TextureData::isMultisample() const
+{
+    return isMultisampleTarget(mTarget);
+}
+
 int TextureData::dimensions() const
 {
     return (isNull() ? 0 :

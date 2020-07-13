@@ -52,7 +52,8 @@ private:
     float mLevel{ };
     int mFace{ };
     float mLayer{ };
-    int mSample{ };
+    int mSample{ -1 };
+    int mSamples{ };
     bool mUpload{ };
 };
 

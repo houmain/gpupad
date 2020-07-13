@@ -3,6 +3,7 @@
 
 #include "IEditor.h"
 #include "TextureData.h"
+#include "ui_TextureEditorToolBar.h"
 #include <QGraphicsView>
 #include <QOpenGLTexture>
 
@@ -13,8 +14,11 @@ class TextureEditor : public QGraphicsView, public IEditor
     Q_OBJECT
 public:
     static bool load(const QString &fileName, TextureData *texture);
+    static Ui::TextureEditorToolBar *createEditorToolBar(QWidget *container);
 
-    explicit TextureEditor(QString fileName, QWidget *parent = nullptr);
+    TextureEditor(QString fileName, 
+        const Ui::TextureEditorToolBar* editorToolbar, 
+        QWidget *parent = nullptr);
     ~TextureEditor() override;
 
     QList<QMetaObject::Connection>
@@ -48,7 +52,9 @@ private:
     QTransform getZoomTransform() const;
     void updateBackground();
     void setModified(bool modified);
+    void updateEditorToolBar();
 
+    const Ui::TextureEditorToolBar &mEditorToolBar;
     QString mFileName;
     bool mModified{ };
     TextureData mTexture;

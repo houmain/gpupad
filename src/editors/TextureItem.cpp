@@ -38,6 +38,7 @@ uniform float uLevel;
 uniform float uLayer;
 uniform int uFace;
 uniform int uSample;
+uniform int uSamples;
 
 in vec2 vTexCoord;
 out vec4 oColor;
@@ -69,7 +70,10 @@ vec3 getCubeTexCoord(vec2 tc, int face) {
 }
 
 void main() {
-  vec4 color = vec4(SAMPLE);
+  vec4 color = vec4(0);
+  for (int sample = uSample; sample < uSample + uSamples; ++sample)
+    color += vec4(SAMPLE);
+  color /= float(uSamples);
   color = MAPPING;
   color = SWIZZLE;
   oColor = color;
@@ -95,8 +99,8 @@ void main() {
             { QOpenGLTexture::Target3D, { "sampler3D", "textureLod(S, vec3(TC, uLayer), uLevel)" } },
             { QOpenGLTexture::TargetCubeMap, { "samplerCube", "textureLod(S, getCubeTexCoord(TC, uFace), uLevel)" } },
             { QOpenGLTexture::TargetCubeMapArray,  { "samplerCubeArray", "textureLod(S, vec4(getCubeTexCoord(TC, uFace), uLayer), uLevel)" } },
-            { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "texelFetch(S, ivec2(TC * uSize), uSample)" } },
-            { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "texelFetch(S, ivec3(TC * uSize, uLayer), uSample)" } },
+            { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "texelFetch(S, ivec2(TC * uSize), sample)" } },
+            { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "texelFetch(S, ivec3(TC * uSize, uLayer), sample)" } },
         };
         static auto sDataTypeVersions = std::map<TextureDataType, DataTypeVersion>{
             { TextureDataType::Normalized, { "", "color" } },
@@ -333,7 +337,9 @@ bool TextureItem::renderTexture(const QMatrix &transform)
         program->setUniformValue("uLevel", mLevel);
         program->setUniformValue("uFace", mFace);
         program->setUniformValue("uLayer", mLayer);
-        program->setUniformValue("uSample", mSample);
+        const auto resolve = (mSample < 0);
+        program->setUniformValue("uSample", std::max(0, (resolve ? 0 : mSample)));
+        program->setUniformValue("uSamples", std::max(1, (resolve ? mImage.samples() : 1)));
         gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 

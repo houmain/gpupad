@@ -23,6 +23,7 @@ public:
     bool isArray() const;
     bool isCubemap() const;
     bool isCompressed() const;
+    bool isMultisample() const;
     int dimensions() const;
     QOpenGLTexture::Target target() const { return mTarget; }
     QOpenGLTexture::TextureFormat format() const;

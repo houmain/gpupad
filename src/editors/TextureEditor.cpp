@@ -14,8 +14,18 @@
 
 extern bool gZeroCopyPreview;
 
-TextureEditor::TextureEditor(QString fileName, QWidget *parent)
+Ui::TextureEditorToolBar* TextureEditor::createEditorToolBar(QWidget *container)
+{
+    auto toolBarWidgets = new Ui::TextureEditorToolBar();
+    toolBarWidgets->setupUi(container);
+    return toolBarWidgets;
+}
+
+TextureEditor::TextureEditor(QString fileName, 
+      const Ui::TextureEditorToolBar *editorToolBar, 
+      QWidget *parent)
     : QGraphicsView(parent)
+    , mEditorToolBar(*editorToolBar)
     , mFileName(fileName)
 {
     setTransformationAnchor(AnchorUnderMouse);
@@ -79,7 +89,56 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
                  actions.windowFileName, &QAction::setText);
     c += connect(this, &TextureEditor::modificationChanged,
                  actions.windowFileName, &QAction::setEnabled);
+
+    updateEditorToolBar();
+
+    c += connect(mEditorToolBar.level, 
+        qOverload<double>(&QDoubleSpinBox::valueChanged),
+        [&](double value) { mTextureItem->setLevel(value); });
+    c += connect(mEditorToolBar.layer, 
+        qOverload<double>(&QDoubleSpinBox::valueChanged),
+        [&](double value) { mTextureItem->setLayer(value); });
+    c += connect(mEditorToolBar.sample, 
+        qOverload<int>(&QSpinBox::valueChanged),
+        [&](int value) { mTextureItem->setSample(value); });
+    c += connect(mEditorToolBar.face, 
+        qOverload<int>(&QComboBox::currentIndexChanged),
+        [&](int index) { mTextureItem->setFace(index); });
+    c += connect(mEditorToolBar.filter, 
+        &QCheckBox::stateChanged,
+        [&](int state) { mTextureItem->setMagnifyLinear(state != 0); });
+
     return c;
+}
+
+void TextureEditor::updateEditorToolBar() 
+{
+    const auto maxLevel = std::max(mTexture.levels() - 1, 0);
+    mEditorToolBar.level->setMaximum(maxLevel);
+    mEditorToolBar.labelLevel->setVisible(maxLevel);
+    mEditorToolBar.level->setVisible(maxLevel);
+    mEditorToolBar.level->setValue(mTextureItem->level());
+
+    const auto maxLayer = std::max(mTexture.layers() - 1, 0);
+    mEditorToolBar.layer->setMaximum(maxLayer);
+    mEditorToolBar.labelLayer->setVisible(maxLayer);
+    mEditorToolBar.layer->setVisible(maxLayer);
+    mEditorToolBar.layer->setValue(mTextureItem->layer());
+
+    const auto maxSample = std::max(mTexture.samples() - 1, 0);
+    mEditorToolBar.sample->setMinimum(-1);
+    mEditorToolBar.sample->setMaximum(maxSample);
+    mEditorToolBar.labelSample->setVisible(maxSample);
+    mEditorToolBar.sample->setVisible(maxSample);
+    mEditorToolBar.sample->setValue(mTextureItem->sample());
+
+    const auto maxFace = std::max(mTexture.faces() - 1, 0);
+    mEditorToolBar.labelFace->setVisible(maxFace);
+    mEditorToolBar.face->setVisible(maxFace);
+    mEditorToolBar.face->setCurrentIndex(mTextureItem->face());
+
+    mEditorToolBar.filter->setVisible(!mTexture.isMultisample());
+    mEditorToolBar.filter->setChecked(mTextureItem->magnifyLinear());
 }
 
 void TextureEditor::setFileName(QString fileName)
@@ -163,6 +222,9 @@ void TextureEditor::replace(TextureData texture, bool invalidateFileCache)
 
     if (invalidateFileCache)
         Singletons::fileCache().invalidateEditorFile(mFileName);
+
+    if (focusWidget() == this)
+      updateEditorToolBar();
 }
 
 void TextureEditor::updatePreviewTexture(
@@ -273,9 +335,6 @@ void TextureEditor::setZoom(int zoom)
     setTransform(getZoomTransform());
 
     updateBackground();
-
-    if (mTextureItem)
-        mTextureItem->setMagnifyLinear(mZoom <= 2);
 }
 
 QTransform TextureEditor::getZoomTransform() const

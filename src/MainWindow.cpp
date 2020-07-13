@@ -44,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowIcon(icon);
 
     mUi->menuView->addAction(mUi->toolBarMain->toggleViewAction());
+    mUi->toolBarMain->setMinimumHeight(40);
 #if defined(_WIN32)
     mUi->toolBarMain->setContentsMargins(2, 2, 2, 2);
 #endif
@@ -57,6 +58,8 @@ MainWindow::MainWindow(QWidget *parent)
     layout->setSpacing(0);
     layout->addWidget(&mEditorManager);
     layout->addWidget(&mEditorManager.findReplaceBar());
+
+    mEditorManager.createEditorToolBars(mUi->toolBarMain);
 
     auto dock = new QDockWidget(this);
     dock->setWidget(content);
@@ -615,6 +618,8 @@ bool MainWindow::closeSession()
 
     if (!mEditorManager.closeAllEditors())
         return false;
+
+    updateCurrentEditor();
 
     if (mSessionEditor->isModified()) {
         auto ret = Singletons::editorManager().openNotSavedDialog(

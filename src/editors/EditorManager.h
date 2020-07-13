@@ -15,6 +15,7 @@ class EditorManager : public DockWindow
 public:
     explicit EditorManager(QWidget *parent = nullptr);
     ~EditorManager() override;
+    void createEditorToolBars(QToolBar *mainToolBar);
 
     FindReplaceBar &findReplaceBar() { return *mFindReplaceBar; }
     int openNotSavedDialog(const QString &fileName);
@@ -82,6 +83,8 @@ private:
     QMap<QDockWidget*, IEditor*> mDocks;
     QDockWidget *mCurrentDock{ };
     FindReplaceBar *mFindReplaceBar{ };
+    Ui::TextureEditorToolBar *mTextureEditorToolBar{ };
+    QWidget *mTextureEditorToolBarContainer{ };
     bool mAutoRaise{ true };
 };
 

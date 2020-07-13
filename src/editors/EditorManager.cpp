@@ -8,6 +8,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QMimeData>
+#include <QToolBar>
 
 EditorManager::EditorManager(QWidget *parent)
     : DockWindow(parent)
@@ -22,6 +23,16 @@ EditorManager::EditorManager(QWidget *parent)
 }
 
 EditorManager::~EditorManager() = default;
+
+void EditorManager::createEditorToolBars(QToolBar *mainToolBar) 
+{
+    // setting maximumWidth since simply setting visibility did not work
+    mTextureEditorToolBarContainer = new QWidget(this);
+    mTextureEditorToolBar = TextureEditor::createEditorToolBar(
+        mTextureEditorToolBarContainer);
+
+    mainToolBar->addWidget(mTextureEditorToolBarContainer);
+}
 
 int EditorManager::openNotSavedDialog(const QString& fileName)
 {
@@ -157,7 +168,7 @@ QString EditorManager::openNewBinaryEditor(const QString &baseName)
 QString EditorManager::openNewTextureEditor(const QString &baseName)
 {
     auto fileName = FileDialog::generateNextUntitledFileName(baseName);
-    auto editor = new TextureEditor(fileName);
+    auto editor = new TextureEditor(fileName, mTextureEditorToolBar);
     addTextureEditor(editor);
     autoRaise(editor);
     return fileName;
@@ -213,7 +224,7 @@ TextureEditor *EditorManager::openTextureEditor(const QString &fileName)
 {
     auto editor = getTextureEditor(fileName);
     if (!editor) {
-        editor = new TextureEditor(fileName);
+        editor = new TextureEditor(fileName, mTextureEditorToolBar);
         if (!editor->load()) {
             delete editor;
             return nullptr;
