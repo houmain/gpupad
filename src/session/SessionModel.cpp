@@ -16,7 +16,6 @@ SessionModel::SessionModel(QObject *parent)
     mTypeIcons[Item::Type::Buffer].addFile(QStringLiteral(":/images/16x16/x-office-spreadsheet.png"));
     mTypeIcons[Item::Type::Column].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[Item::Type::Texture].addFile(QStringLiteral(":/images/16x16/image-x-generic.png"));
-    mTypeIcons[Item::Type::Image].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[Item::Type::Program].addFile(QStringLiteral(":/images/16x16/applications-system.png"));
     mTypeIcons[Item::Type::Shader].addFile(QStringLiteral(":/images/16x16/font.png"));
     mTypeIcons[Item::Type::Binding].addFile(QStringLiteral(":/images/16x16/insert-text.png"));

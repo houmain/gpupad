@@ -108,7 +108,6 @@ bool SessionModelCore::canContainType(const QModelIndex &index, Item::Type type)
                     return false;
             }
         case Item::Type::Buffer: return (type == Item::Type::Column);
-        case Item::Type::Texture: return (type == Item::Type::Image);
         case Item::Type::Program: return (type == Item::Type::Shader);
         case Item::Type::Stream: return (type == Item::Type::Attribute);
         case Item::Type::Target: return (type == Item::Type::Attachment);
@@ -318,7 +317,6 @@ QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
         case Item::Type::Buffer: return insert(new Buffer());
         case Item::Type::Column: return insert(new Column());
         case Item::Type::Texture: return insert(new Texture());
-        case Item::Type::Image: return insert(new Image());
         case Item::Type::Program: return insert(new Program());
         case Item::Type::Shader: return insert(new Shader());
         case Item::Type::Binding: return insert(new Binding());

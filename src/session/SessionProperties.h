@@ -13,7 +13,6 @@ namespace Ui {
 class GroupProperties;
 class BufferProperties;
 class ColumnProperties;
-class ImageProperties;
 class ProgramProperties;
 class ShaderProperties;
 class StreamProperties;
@@ -54,7 +53,6 @@ public:
     QString findItemName(ItemId itemId) const;
 
 private slots:
-    void updateImageWidgets(const QModelIndex &index);
     void updateBufferWidgets(const QModelIndex &index);
     void updateTargetWidgets(const QModelIndex &index);
     void updateScriptWidgets(const QModelIndex &index);
@@ -74,7 +72,6 @@ private:
     QScopedPointer<Ui::BufferProperties> mBufferProperties;
     QScopedPointer<Ui::ColumnProperties> mColumnProperties;
     TextureProperties *mTextureProperties{ };
-    QScopedPointer<Ui::ImageProperties> mImageProperties;
     QScopedPointer<Ui::ProgramProperties> mProgramProperties;
     QScopedPointer<Ui::ShaderProperties> mShaderProperties;
     BindingProperties *mBindingProperties{ };

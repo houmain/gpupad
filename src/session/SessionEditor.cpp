@@ -64,7 +64,6 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddAttachmentAction, Item::Type::Attachment);
     addAction(mAddShaderAction, Item::Type::Shader);
     addAction(mAddBindingAction, Item::Type::Binding);
-    addAction(mAddImageAction, Item::Type::Image);
     addAction(mAddColumnAction, Item::Type::Column);
     addAction(mAddTargetAction, Item::Type::Target);
     addAction(mAddAttributeAction, Item::Type::Attribute);
@@ -82,7 +81,6 @@ void SessionEditor::addItemActions(QMenu* menu)
 {
     menu->addAction(mAddColumnAction);
     menu->addAction(mAddAttributeAction);
-    menu->addAction(mAddImageAction);
     menu->addAction(mAddAttachmentAction);
     menu->addAction(mAddShaderAction);
     menu->addSeparator();
@@ -102,7 +100,6 @@ void SessionEditor::updateItemActions()
     auto index = selectionModel()->currentIndex();
     for (const auto &pair : {
             std::make_pair(Item::Type::Column, mAddColumnAction),
-            std::make_pair(Item::Type::Image, mAddImageAction),
             std::make_pair(Item::Type::Shader, mAddShaderAction),
             std::make_pair(Item::Type::Attribute, mAddAttributeAction),
             std::make_pair(Item::Type::Attachment, mAddAttachmentAction),

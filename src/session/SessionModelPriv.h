@@ -20,9 +20,6 @@
     ADD(TextureDepth, Texture, depth) \
     ADD(TextureLayers, Texture, layers) \
     ADD(TextureSamples, Texture, samples) \
-    ADD(ImageLevel, Image, level) \
-    ADD(ImageLayer, Image, layer) \
-    ADD(ImageFace, Image, face) \
     ADD(ScriptExecuteOn, Script, executeOn) \
     ADD(ScriptExpression, Script, expression) \
     ADD(ShaderType, Shader, shaderType) \

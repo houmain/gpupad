@@ -62,15 +62,6 @@ struct Texture : FileItem
     int samples{ 1 };
 };
 
-struct Image : FileItem
-{
-    using CubeMapFace = QOpenGLTexture::CubeMapFace;
-
-    int level{ };
-    int layer{ };
-    CubeMapFace face{ };
-};
-
 struct Program : Item
 {
 };
@@ -262,7 +253,6 @@ template<> inline Item::Type getItemType<Group>() { return Item::Type::Group; }
 template<> inline Item::Type getItemType<Buffer>() { return Item::Type::Buffer; }
 template<> inline Item::Type getItemType<Column>() { return Item::Type::Column; }
 template<> inline Item::Type getItemType<Texture>() { return Item::Type::Texture; }
-template<> inline Item::Type getItemType<Image>() { return Item::Type::Image; }
 template<> inline Item::Type getItemType<Program>() { return Item::Type::Program; }
 template<> inline Item::Type getItemType<Shader>() { return Item::Type::Shader; }
 template<> inline Item::Type getItemType<Binding>() { return Item::Type::Binding; }
@@ -285,7 +275,6 @@ template <>
 inline const FileItem* castItem<FileItem>(const Item &item) {
     if (item.type == Item::Type::Buffer ||
         item.type == Item::Type::Texture ||
-        item.type == Item::Type::Image ||
         item.type == Item::Type::Shader ||
         item.type == Item::Type::Script)
         return static_cast<const FileItem*>(&item);

@@ -13,7 +13,6 @@ namespace ItemEnums {
         Buffer,
         Column,
         Texture,
-        Image,
         Program,
         Shader,
         Binding,

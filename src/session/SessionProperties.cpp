@@ -6,7 +6,6 @@
 #include "ui_GroupProperties.h"
 #include "ui_BufferProperties.h"
 #include "ui_ColumnProperties.h"
-#include "ui_ImageProperties.h"
 #include "ui_ProgramProperties.h"
 #include "ui_ShaderProperties.h"
 #include "ui_StreamProperties.h"
@@ -92,7 +91,6 @@ SessionProperties::SessionProperties(QWidget *parent)
     add(mColumnProperties);
     mTextureProperties = new TextureProperties(this);
     mStack->addWidget(mTextureProperties);
-    add(mImageProperties);
     add(mProgramProperties);
     add(mShaderProperties);
     mBindingProperties = new BindingProperties(this);
@@ -130,13 +128,6 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mBufferProperties->deduceRowCount, &QToolButton::clicked,
         this, &SessionProperties::deduceBufferRowCount);
 
-    connect(mImageProperties->fileNew, &QToolButton::clicked,
-        [this]() { saveCurrentItemFileAs(FileDialog::TextureExtensions); });
-    connect(mImageProperties->fileBrowse, &QToolButton::clicked,
-        [this]() { openCurrentItemFile(FileDialog::TextureExtensions); });
-    connect(mImageProperties->file, &ReferenceComboBox::listRequired,
-        [this]() { return getFileNames(Item::Type::Image, true); });
-
     connect(mScriptProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::ScriptExtensions); });
     connect(mScriptProperties->fileBrowse, &QToolButton::clicked,
@@ -154,8 +145,7 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mAttributeProperties->buffer, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(Item::Type::Buffer); });
 
-    for (auto comboBox : { mShaderProperties->file, mBufferProperties->file,
-            mImageProperties->file, mScriptProperties->file })
+    for (auto comboBox : { mShaderProperties->file, mBufferProperties->file, mScriptProperties->file })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [](auto data) { return FileDialog::getFileTitle(data.toString()); });
 
@@ -175,7 +165,6 @@ void SessionProperties::fillComboBoxes()
     fillComboBox<Target::FrontFace>(mTargetProperties->frontFace);
     fillComboBox<Target::CullMode>(mTargetProperties->cullMode);
     fillComboBox<Target::LogicOperation>(mTargetProperties->logicOperation);
-    fillComboBox<Image::CubeMapFace>(mImageProperties->face);
     fillComboBox<Shader::ShaderType>(mShaderProperties->type);
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
 }
@@ -201,7 +190,6 @@ QVariantList SessionProperties::getFileNames(Item::Type type, bool addNull) cons
             break;
 
         case Item::Type::Texture:
-        case Item::Type::Image:
             foreach (QString f, Singletons::editorManager().getImageFileNames())
                 if (!result.contains(f))
                     result.append(f);
@@ -298,14 +286,6 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
 
         case Item::Type::Texture:
             mTextureProperties->addMappings(*mMapper);
-            break;
-
-        case Item::Type::Image:
-            map(mImageProperties->file, SessionModel::FileName);
-            map(mImageProperties->level, SessionModel::ImageLevel);
-            map(mImageProperties->layer, SessionModel::ImageLayer);
-            map(mImageProperties->face, SessionModel::ImageFace);
-            updateImageWidgets(index);
             break;
 
         case Item::Type::Program:
@@ -467,18 +447,6 @@ void SessionProperties::openCurrentItemFile(FileDialog::Options options)
 {
     if (Singletons::fileDialog().exec(options))
         setCurrentItemFile(Singletons::fileDialog().fileName());
-}
-
-void SessionProperties::updateImageWidgets(const QModelIndex &index)
-{
-    auto kind = TextureKind();
-    if (auto image = mModel.item<Image>(index))
-        if (auto texture = castItem<Texture>(image->parent))
-            kind = getKind(*texture);
-
-    auto &ui = *mImageProperties;
-    setFormVisibility(ui.formLayout, ui.labelLayer, ui.layer, kind.array);
-    setFormVisibility(ui.formLayout, ui.labelFace, ui.face, kind.cubeMap);
 }
 
 void SessionProperties::updateBufferWidgets(const QModelIndex &index)
