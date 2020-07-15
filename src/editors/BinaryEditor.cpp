@@ -278,3 +278,9 @@ void BinaryEditor::updateColumns()
     if (std::exchange(mColumnsInvalidated, false))
         refresh();
 }
+
+void BinaryEditor::wheelEvent(QWheelEvent *event)
+{
+    setFocus();
+    QTableView::wheelEvent(event);
+}

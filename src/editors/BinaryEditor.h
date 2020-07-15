@@ -56,6 +56,9 @@ signals:
     void modificationChanged(bool modified);
     void fileNameChanged(const QString &fileName);
 
+protected:
+    void wheelEvent(QWheelEvent *event) override;
+
 private:
     class SpinBoxDelegate;
     class EditableRegion;

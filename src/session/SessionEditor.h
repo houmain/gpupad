@@ -37,6 +37,7 @@ signals:
 
 protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
     void selectionChanged(const QItemSelection &selected,
                           const QItemSelection &deselected) override;
     void focusInEvent(QFocusEvent *event) override;

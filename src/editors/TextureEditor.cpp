@@ -238,6 +238,8 @@ void TextureEditor::setModified(bool modified)
 
 void TextureEditor::wheelEvent(QWheelEvent *event)
 {
+    setFocus();
+
     if (!event->modifiers()) {
         const auto min = -3;
         const auto max = 4;
@@ -245,6 +247,8 @@ void TextureEditor::wheelEvent(QWheelEvent *event)
         setZoom(std::max(min, std::min(mZoom + delta, max)));
         return;
     }
+
+    event->setModifiers(event->modifiers() & ~(Qt::ShiftModifier | Qt::ControlModifier));
     QGraphicsView::wheelEvent(event);
 }
 

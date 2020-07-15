@@ -695,6 +695,8 @@ bool SourceEditor::updateMultiSelection(QKeyEvent *event, bool multiSelectionMod
 
 void SourceEditor::wheelEvent(QWheelEvent *event)
 {
+    setFocus();
+
     if (event->modifiers() == Qt::ControlModifier) {
         auto font = this->font();
         font.setPointSize(font.pointSize() + (event->delta() > 0 ? 1 : -1));

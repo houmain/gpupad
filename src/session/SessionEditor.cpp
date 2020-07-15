@@ -190,6 +190,12 @@ void SessionEditor::mouseReleaseEvent(QMouseEvent *event)
             currentIndex(), QItemSelectionModel::Select);
 }
 
+void SessionEditor::wheelEvent(QWheelEvent *event)
+{
+    setFocus();
+    QTreeView::wheelEvent(event);
+}
+
 void SessionEditor::selectionChanged(const QItemSelection &selected,
                                      const QItemSelection &deselected)
 {
