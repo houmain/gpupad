@@ -252,19 +252,22 @@ void RenderSession::prepare(bool itemsChanged,
         }
         else if (auto script = castItem<Script>(item)) {
             mUsedItems += script->id;
-            auto source = QString();
-            if (script->fileName.isEmpty()) {
-                source = script->expression;
-            }
-            else {
+            auto source = script->expression;
+            if (!script->fileName.isEmpty())
                 Singletons::fileCache().getSource(script->fileName, &source);
-            }
+
             addCommand(
-                [this, source, fileName = script->fileName,
-                  executeOn = script->executeOn
+                [this, itemId = script->id, name = script->name, source, 
+                  fileName = script->fileName, executeOn = script->executeOn
                 ](BindingState &) {
-                      if (shouldExecute(executeOn, mEvaluationType))
-                          mScriptEngine->evaluateScript(source, fileName);
+                      if (shouldExecute(executeOn, mEvaluationType)) {
+                          if (fileName.isEmpty()) {
+                              mScriptEngine->evaluateExpression(source, name, itemId, mMessages);
+                          }
+                          else {
+                              mScriptEngine->evaluateScript(source, fileName);
+                          }
+                      }
                 });
         }
         else if (auto binding = castItem<Binding>(item)) {

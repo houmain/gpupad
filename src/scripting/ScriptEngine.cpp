@@ -52,6 +52,11 @@ ScriptEngine::ScriptEngine()
 
 ScriptEngine::~ScriptEngine() = default;
 
+void ScriptEngine::setGlobal(const QString &name, QJSValue value)
+{
+    mJsEngine->globalObject().setProperty(name, value);
+}
+
 void ScriptEngine::setGlobal(const QString &name, QObject *object)
 {
     mJsEngine->globalObject().setProperty(name, mJsEngine->newQObject(object));
@@ -83,6 +88,21 @@ void ScriptEngine::evaluateScript(const QString &script, const QString &fileName
             mMessages += MessageList::insert(
                 fileName, result.property("lineNumber").toInt(),
                 MessageType::ScriptError, result.toString());
+    });
+}
+
+void ScriptEngine::evaluateExpression(const QString &script, const QString &resultName,
+    ItemId itemId, MessagePtrSet &messages) 
+{
+    redirectConsoleMessages(mMessages, [&]() {
+        auto result = mJsEngine->evaluate(script);
+        if (result.isError()) {
+            messages += MessageList::insert(
+                itemId, MessageType::ScriptError, result.toString());
+        }
+        else {
+            setGlobal(resultName, result);
+        }
     });
 }
 
