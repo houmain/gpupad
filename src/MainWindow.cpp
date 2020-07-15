@@ -798,13 +798,18 @@ void MainWindow::populateSampleSessions()
 
 void MainWindow::openSampleSession()
 {
+    const auto evalSteady = mUi->actionEvalSteady->isChecked();
+
     auto &editors = Singletons::editorManager();
     if (auto action = qobject_cast<QAction*>(QObject::sender()))
         if (openSession(action->data().toString())) {
-            mUi->actionEvalSteady->setChecked(true);
             editors.setAutoRaise(false);
             mSessionEditor->activateFirstItem();
             editors.setAutoRaise(true);
+
+            mUi->actionEvalSteady->setChecked(evalSteady);
+            if (!evalSteady)
+              mUi->actionEvalReset->trigger();
         }
 }
 
