@@ -1,8 +1,8 @@
 #version 330
 
 /*uniform*/ vec3  iResolution;           // viewport resolution (in pixels)
-uniform float     iTime;                 // shader playback time (in seconds)
-uniform float     iTimeDelta;            // render time (in seconds)
+/*uniform*/ float iTime;                 // shader playback time (in seconds)
+/*uniform*/ float iTimeDelta;            // render time (in seconds)
 uniform int       iFrame;                // shader playback frame
 /*uniform*/ float iChannelTime[4];       // channel playback time (in seconds)
 /*uniform*/ vec3  iChannelResolution[4]; // channel resolution (in pixels)
@@ -20,6 +20,8 @@ out vec4 oColor;
 void mainImage(out vec4 fragColor, in vec2 fragCoord);
 
 void main() {
+  iTime = iFrame / 60.0;
+  iTimeDelta = 1 / 60.0;
   iResolution = vec3(textureSize(iTarget, 0), 1);
   iChannelResolution[0] = vec3(textureSize(iChannel0, 0), 1);
   iChannelResolution[1] = vec3(textureSize(iChannel1, 0), 1);

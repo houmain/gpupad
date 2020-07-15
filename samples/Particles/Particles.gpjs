@@ -9,10 +9,10 @@
         "width": 512
     },
     {
-        "executeOn": "ManualEvaluation",
-        "expression": "particleCount = 100000\n",
-        "id": 61,
-        "name": "Script",
+        "executeOn": "EveryEvaluation",
+        "expression": "100000",
+        "id": 88,
+        "name": "particleCount",
         "type": "Script"
     },
     {
@@ -39,16 +39,6 @@
         "offset": 0,
         "rowCount": 100000,
         "type": "Buffer"
-    },
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression",
-        "id": 65,
-        "name": "particleCount",
-        "type": "Binding",
-        "values": [
-            "particleCount"
-        ]
     },
     {
         "bindingType": "Buffer",
@@ -111,19 +101,27 @@
         "type": "Stream"
     },
     {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 65,
+        "name": "particleCount",
+        "type": "Binding",
+        "values": [
+            "particleCount"
+        ]
+    },
+    {
         "id": 62,
         "items": [
             {
                 "fileName": "particle.glsl",
                 "id": 76,
-                "name": "particle.glsl",
                 "shaderType": "Header",
                 "type": "Shader"
             },
             {
                 "fileName": "reset.glsl",
                 "id": 63,
-                "name": "reset.glsl",
                 "shaderType": "Compute",
                 "type": "Shader"
             }
@@ -137,14 +135,12 @@
             {
                 "fileName": "particle.glsl",
                 "id": 75,
-                "name": "particle.glsl",
                 "shaderType": "Header",
                 "type": "Shader"
             },
             {
                 "fileName": "update.glsl",
                 "id": 73,
-                "name": "update.glsl",
                 "shaderType": "Compute",
                 "type": "Shader"
             }
@@ -158,14 +154,12 @@
             {
                 "fileName": "particle.vs",
                 "id": 81,
-                "name": "particle.vs",
                 "shaderType": "Vertex",
                 "type": "Shader"
             },
             {
                 "fileName": "particle.fs",
                 "id": 85,
-                "name": "particle.fs",
                 "shaderType": "Fragment",
                 "type": "Shader"
             }

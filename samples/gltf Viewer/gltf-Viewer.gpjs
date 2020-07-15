@@ -4,7 +4,8 @@
         "height": 512,
         "id": 10,
         "name": "Target",
-        "target": "Target2D",
+        "samples": 4,
+        "target": "Target2DMultisample",
         "type": "Texture",
         "width": 512
     },
@@ -13,7 +14,8 @@
         "height": 512,
         "id": 47,
         "name": "Depth",
-        "target": "Target2D",
+        "samples": 4,
+        "target": "Target2DMultisample",
         "type": "Texture",
         "width": 512
     },
@@ -58,6 +60,13 @@
         "executeOn": "ManualEvaluation",
         "fileName": "math.js",
         "id": 796,
+        "type": "Script"
+    },
+    {
+        "executeOn": "EveryEvaluation",
+        "expression": "(this.frame || 0) + 1",
+        "id": 884,
+        "name": "frame",
         "type": "Script"
     },
     {
@@ -263,7 +272,7 @@
                         "name": "u_ModelMatrix",
                         "type": "Binding",
                         "values": [
-                            "modelMatrix(Date.now())"
+                            "modelMatrix(frame / 60)"
                         ]
                     },
                     {
@@ -273,7 +282,7 @@
                         "name": "u_NormalMatrix",
                         "type": "Binding",
                         "values": [
-                            "modelMatrix(Date.now())"
+                            "normalMatrix(frame / 60)"
                         ]
                     },
                     {
@@ -403,6 +412,7 @@
                         ]
                     },
                     {
+                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -417,6 +427,7 @@
                         "wrapModeZ": "Repeat"
                     },
                     {
+                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -431,6 +442,7 @@
                         "wrapModeZ": "Repeat"
                     },
                     {
+                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -463,6 +475,7 @@
                 "inlineScope": true,
                 "items": [
                     {
+                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -500,6 +513,7 @@
                         ]
                     },
                     {
+                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -534,6 +548,7 @@
                         ]
                     },
                     {
+                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -568,6 +583,7 @@
                         ]
                     },
                     {
+                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -592,6 +608,7 @@
                         ]
                     },
                     {
+                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",

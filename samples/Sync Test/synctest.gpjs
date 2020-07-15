@@ -1,6 +1,5 @@
 [
     {
-        "flipY": false,
         "format": "RGBA8_UNorm",
         "height": 1080,
         "id": 70,
@@ -41,10 +40,11 @@
         "name": "frame",
         "type": "Binding",
         "values": [
-            "frame = (typeof(frame) == \"undefined\" ? 0 : frame + 1)"
+            "frame = (this.frame || 0) + 1"
         ]
     },
     {
+        "anisotropic": true,
         "bindingType": "Sampler",
         "borderColor": "#ff000000",
         "comparisonFunc": "NoComparisonFunc",
@@ -64,14 +64,12 @@
             {
                 "fileName": "attributeless.vs",
                 "id": 77,
-                "name": "attributeless.vs",
                 "shaderType": "Vertex",
                 "type": "Shader"
             },
             {
                 "fileName": "sync.frag",
                 "id": 79,
-                "name": "sync.frag",
                 "shaderType": "Fragment",
                 "type": "Shader"
             }
@@ -80,13 +78,14 @@
         "type": "Program"
     },
     {
-        "baseInstance": 0,
+        "baseInstance": "0",
         "callType": "Draw",
         "checked": true,
-        "count": 4,
-        "first": 0,
+        "count": "4",
+        "executeOn": "EveryEvaluation",
+        "first": "0",
         "id": 80,
-        "instanceCount": 1,
+        "instanceCount": "1",
         "name": "Call",
         "primitiveType": "TriangleStrip",
         "programId": 76,

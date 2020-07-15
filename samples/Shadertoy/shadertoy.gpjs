@@ -1,6 +1,5 @@
 [
     {
-        "flipY": false,
         "format": "RGBA8_UNorm",
         "height": 512,
         "id": 70,
@@ -35,16 +34,24 @@
         "type": "Target"
     },
     {
+        "executeOn": "EveryEvaluation",
+        "expression": "(this.frame || 0) + 1",
+        "id": 90,
+        "name": "frame",
+        "type": "Script"
+    },
+    {
         "bindingType": "Uniform",
         "editor": "Expression",
         "id": 74,
-        "name": "iTime",
+        "name": "iFrame",
         "type": "Binding",
         "values": [
-            "Date.now()%10000/1000.0"
+            "frame"
         ]
     },
     {
+        "anisotropic": true,
         "bindingType": "Sampler",
         "borderColor": "#ff000000",
         "comparisonFunc": "NoComparisonFunc",
@@ -64,21 +71,18 @@
             {
                 "fileName": "attributeless.vs",
                 "id": 77,
-                "name": "attributeless.vs",
                 "shaderType": "Vertex",
                 "type": "Shader"
             },
             {
                 "fileName": "shadertoy.fs",
                 "id": 78,
-                "name": "shadertoy.fs",
                 "shaderType": "Header",
                 "type": "Shader"
             },
             {
                 "fileName": "image.glsl",
                 "id": 79,
-                "name": "image.glsl",
                 "shaderType": "Fragment",
                 "type": "Shader"
             }

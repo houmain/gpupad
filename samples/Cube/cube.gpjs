@@ -61,13 +61,20 @@
         "type": "Script"
     },
     {
+        "executeOn": "EveryEvaluation",
+        "expression": "(this.frame || 0) +1",
+        "id": 105,
+        "name": "frame",
+        "type": "Script"
+    },
+    {
         "bindingType": "Uniform",
         "editor": "Expression",
         "id": 77,
         "name": "uModel",
         "type": "Binding",
         "values": [
-            "rotateY(frame++ / 60)"
+            "rotateY(frame / 60)"
         ]
     },
     {

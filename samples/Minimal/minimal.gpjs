@@ -1,6 +1,5 @@
 [
     {
-        "flipY": false,
         "format": "RGBA8_UNorm",
         "height": 256,
         "id": 10,
@@ -47,7 +46,6 @@
                 "type": "Column"
             }
         ],
-        "name": "Vertices",
         "offset": 0,
         "rowCount": 4,
         "type": "Buffer"
@@ -87,14 +85,12 @@
             {
                 "fileName": "minimal.vs",
                 "id": 2,
-                "name": "Vertex",
                 "shaderType": "Vertex",
                 "type": "Shader"
             },
             {
                 "fileName": "minimal.fs",
                 "id": 3,
-                "name": "Fragment",
                 "shaderType": "Fragment",
                 "type": "Shader"
             }
@@ -103,13 +99,14 @@
         "type": "Program"
     },
     {
-        "baseInstance": 0,
+        "baseInstance": "0",
         "callType": "Draw",
         "checked": true,
-        "count": 4,
-        "first": 0,
+        "count": "4",
+        "executeOn": "EveryEvaluation",
+        "first": "0",
         "id": 4,
-        "instanceCount": 1,
+        "instanceCount": "1",
         "name": "Call",
         "primitiveType": "TriangleStrip",
         "programId": 1,

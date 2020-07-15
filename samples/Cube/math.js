@@ -1,6 +1,4 @@
 
-var frame = 0
-
 function rotateY(t) {
   var s = Math.sin(t);
   var c = Math.cos(t);
