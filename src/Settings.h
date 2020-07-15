@@ -26,8 +26,6 @@ public:
     bool syntaxHighlighting() const { return mSyntaxHighlighting; }
     void setDarkTheme(bool enabled);
     bool darkTheme() const { return mDarkTheme; }
-    void setZeroCopyPreview(bool enabled);
-    bool zeroCopyPreview() const;
 
 signals:
     void tabSizeChanged(int tabSize);
@@ -38,7 +36,6 @@ signals:
     void syntaxHighlightingChanged(bool enabled);
     void darkThemeChanging(bool enabled);
     void darkThemeChanged(bool enabled);
-    void zeroCopyPreviewChanged(bool enabled);
 
 private:
     int mTabSize{ 4 };

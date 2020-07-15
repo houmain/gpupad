@@ -20,8 +20,6 @@
 #include <QStack>
 #include <QOpenGLTimerQuery>
 
-extern bool gZeroCopyPreview;
-
 namespace {
     struct BindingScope
     {
@@ -459,8 +457,7 @@ void RenderSession::executeCommandQueue()
 
 bool RenderSession::updatingPreviewTextures() const
 {
-    return (gZeroCopyPreview &&
-        !mItemsChanged &&
+    return (!mItemsChanged &&
         mEvaluationType == EvaluationType::Steady);
 }
 

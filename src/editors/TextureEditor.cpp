@@ -12,8 +12,6 @@
 #include <QWheelEvent>
 #include <QScrollBar>
 
-extern bool gZeroCopyPreview;
-
 Ui::TextureEditorToolBar* TextureEditor::createEditorToolBar(QWidget *container)
 {
     auto toolBarWidgets = new Ui::TextureEditorToolBar();
@@ -30,10 +28,8 @@ TextureEditor::TextureEditor(QString fileName,
 {
     setTransformationAnchor(AnchorUnderMouse);
 
-    if (gZeroCopyPreview) {
-        setViewport(new QOpenGLWidget(this));
-        setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
-    }
+    setViewport(new QOpenGLWidget(this));
+    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
 
     setScene(new QGraphicsScene(this));
 
@@ -48,10 +44,8 @@ TextureEditor::TextureEditor(QString fileName,
     mBorder->setZValue(1);
     scene()->addItem(mBorder);
 
-    if (gZeroCopyPreview) {
-        mTextureItem = new TextureItem();
-        scene()->addItem(mTextureItem);
-    }
+    mTextureItem = new TextureItem();
+    scene()->addItem(mTextureItem);
 
     connect(&Singletons::settings(), &Settings::darkThemeChanged,
         this, &TextureEditor::updateBackground);
