@@ -744,6 +744,9 @@ void MainWindow::handleDarkThemeChanging(bool enabled)
       .arg(color(QPalette::WindowText, QPalette::Disabled))
       .arg(color(QPalette::Window, QPalette::Active, frameDarker))
       .arg(color(QPalette::Window, QPalette::Active, currentFrameDarker)));
+
+    style()->unpolish(qApp);
+    style()->polish(qApp);
 }
 
 void MainWindow::openSessionDock()

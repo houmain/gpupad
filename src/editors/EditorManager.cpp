@@ -30,6 +30,11 @@ void EditorManager::createEditorToolBars(QToolBar *mainToolBar)
     mTextureEditorToolBar = TextureEditor::createEditorToolBar(widget);
     mainToolBar->addWidget(widget);
 
+    // WORKAROUND: checkbox border is too dark in dark theme
+    QPalette p = palette();
+    p.setColor(QPalette::Window, "#CCC");
+    widget->setPalette(p);
+
     updateEditorToolBarVisibility();
 }
 

@@ -217,7 +217,7 @@ void TextureEditor::replace(TextureData texture, bool invalidateFileCache)
     if (invalidateFileCache)
         Singletons::fileCache().invalidateEditorFile(mFileName);
 
-    if (focusWidget() == this)
+    if (qApp->focusWidget() == this)
       updateEditorToolBar();
 }
 
