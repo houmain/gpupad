@@ -26,12 +26,21 @@ EditorManager::~EditorManager() = default;
 
 void EditorManager::createEditorToolBars(QToolBar *mainToolBar) 
 {
-    // setting maximumWidth since simply setting visibility did not work
-    mTextureEditorToolBarContainer = new QWidget(this);
-    mTextureEditorToolBar = TextureEditor::createEditorToolBar(
-        mTextureEditorToolBarContainer);
+    const auto widget = new QWidget(this);
+    mTextureEditorToolBar = TextureEditor::createEditorToolBar(widget);
+    mainToolBar->addWidget(widget);
 
-    mainToolBar->addWidget(mTextureEditorToolBarContainer);
+    updateEditorToolBarVisibility();
+}
+
+void EditorManager::updateEditorToolBarVisibility()
+{
+    // setting maximumWidth since simply setting visibility did not work
+    const auto setVisible = [](const QWidget* child, bool visible) {
+      child->parentWidget()->setMaximumWidth(visible ? 65536 : 0);
+    };
+    setVisible(mTextureEditorToolBar->level, 
+        mCurrentDock && qobject_cast<TextureEditor*>(mCurrentDock->widget()));
 }
 
 int EditorManager::openNotSavedDialog(const QString& fileName)
@@ -106,6 +115,8 @@ void EditorManager::updateCurrentEditor()
     }
     if (previous != mCurrentDock)
         updateDockCurrentProperty(previous, false);
+
+    updateEditorToolBarVisibility();
 }
 
 QString EditorManager::currentEditorFileName()

@@ -76,6 +76,7 @@ private:
     bool saveDock(QDockWidget *dock);
     bool closeDock(QDockWidget *dock) override;
     void autoRaise(QWidget *editor);
+    void updateEditorToolBarVisibility();
 
     QList<SourceEditor*> mSourceEditors;
     QList<BinaryEditor*> mBinaryEditors;
@@ -84,7 +85,6 @@ private:
     QDockWidget *mCurrentDock{ };
     FindReplaceBar *mFindReplaceBar{ };
     Ui::TextureEditorToolBar *mTextureEditorToolBar{ };
-    QWidget *mTextureEditorToolBarContainer{ };
     bool mAutoRaise{ true };
 };
 

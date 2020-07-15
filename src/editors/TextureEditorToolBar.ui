@@ -2,9 +2,17 @@
 <ui version="4.0">
  <class>TextureEditorToolBar</class>
  <widget class="QWidget" name="TextureEditorToolBar">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>428</width>
+    <height>20</height>
+   </rect>
+  </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="spacing">
-    <number>4</number>
+    <number>2</number>
    </property>
    <property name="leftMargin">
     <number>4</number>
@@ -21,7 +29,7 @@
    <item>
     <widget class="QLabel" name="labelLevel">
      <property name="text">
-      <string>Level</string>
+      <string>  Level</string>
      </property>
      <property name="buddy">
       <cstring>level</cstring>
@@ -34,7 +42,7 @@
    <item>
     <widget class="QLabel" name="labelLayer">
      <property name="text">
-      <string>Layer</string>
+      <string>  Layer</string>
      </property>
      <property name="buddy">
       <cstring>layer</cstring>
@@ -47,7 +55,7 @@
    <item>
     <widget class="QLabel" name="labelSample">
      <property name="text">
-      <string>Sample</string>
+      <string>  Sample</string>
      </property>
     </widget>
    </item>
@@ -57,7 +65,7 @@
    <item>
     <widget class="QLabel" name="labelFace">
      <property name="text">
-      <string>Face</string>
+      <string>  Face</string>
      </property>
      <property name="buddy">
       <cstring>face</cstring>
@@ -108,7 +116,7 @@
      </property>
      <property name="sizeHint" stdset="0">
       <size>
-       <width>4</width>
+       <width>8</width>
        <height>20</height>
       </size>
      </property>
