@@ -495,10 +495,9 @@ bool TextureData::load(const QString &fileName)
 
 bool TextureData::save(const QString &fileName) const 
 {
-    if (fileName.toLower().endsWith(".ktx") &&
-        ktxTexture_WriteToNamedFile(mKtxTexture.get(), 
-            fileName.toUtf8().constData()))
-        return true;
+    if (fileName.toLower().endsWith(".ktx"))
+        return ktxTexture_WriteToNamedFile(
+            mKtxTexture.get(), fileName.toUtf8().constData());
 
     auto image = toImage();
     if (image.isNull())
