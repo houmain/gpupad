@@ -3,6 +3,7 @@
 #include <cstring>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions_3_3_Core>
+#include <QScopeGuard>
 
 #if defined(_WIN32)
 
@@ -162,6 +163,57 @@ namespace {
         const auto dataType = getTextureDataType(format);
         return (dataType == TextureDataType::Normalized ||
                 dataType == TextureDataType::Float);
+    }
+
+    GLuint createFramebuffer(QOpenGLFunctions_3_3_Core& gl, GLenum target, GLuint textureId, GLenum attachment)
+    {
+        auto fbo = GLuint{ };
+        gl.glGenFramebuffers(1, &fbo);
+        gl.glBindFramebuffer(target, fbo);
+        gl.glFramebufferTexture(target, attachment, textureId, 0);
+        return fbo;
+    }
+
+    bool resolveTexture(QOpenGLFunctions_3_3_Core& gl, GLuint sourceTextureId,
+        GLuint destTextureId, int width, int height, QOpenGLTexture::TextureFormat format)
+    {
+        auto blitMask = GLbitfield{ };
+        auto attachment = GLenum{ };
+        switch (format) {
+            default:
+                blitMask = GL_COLOR_BUFFER_BIT;
+                attachment = GL_COLOR_ATTACHMENT0;
+                break;
+
+            case QOpenGLTexture::D16:
+            case QOpenGLTexture::D24:
+            case QOpenGLTexture::D32:
+            case QOpenGLTexture::D32F:
+                blitMask = GL_DEPTH_BUFFER_BIT;
+                attachment = GL_DEPTH_ATTACHMENT;
+                break;
+
+            case QOpenGLTexture::S8:
+                blitMask = GL_STENCIL_BUFFER_BIT;
+                attachment = GL_STENCIL_ATTACHMENT;
+                break;
+
+            case QOpenGLTexture::D24S8:
+            case QOpenGLTexture::D32FS8X24:
+                blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
+                attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+                break;
+        }
+
+        auto previousTarget = GLint{ };
+        gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousTarget);
+        const auto sourceFbo = createFramebuffer(gl, GL_READ_FRAMEBUFFER, sourceTextureId, attachment);
+        const auto destFbo = createFramebuffer(gl, GL_DRAW_FRAMEBUFFER, destTextureId, attachment);
+        gl.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, blitMask, GL_NEAREST);
+        gl.glDeleteFramebuffers(1, &sourceFbo);
+        gl.glDeleteFramebuffers(1, &destFbo);
+        gl.glBindFramebuffer(GL_FRAMEBUFFER, previousTarget);
+        return (glGetError() == GL_NONE);
     }
 } // namespace
 
@@ -672,8 +724,8 @@ bool TextureData::upload(GLuint *textureId,
         gl.initializeOpenGLFunctions();
         if (!*textureId)
             glGenTextures(1, textureId);
-        gl.glBindTexture(mTarget, *textureId);
-        return uploadMultisample(gl, format);
+
+        return uploadMultisample(gl, *textureId, format);
     }
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
@@ -701,34 +753,46 @@ bool TextureData::download(GLuint textureId)
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     QOpenGLFunctions_3_3_Core gl;
     gl.initializeOpenGLFunctions();
-    gl.glBindTexture(mTarget, textureId);
 
     if (isMultisampleTarget(mTarget))
-        return downloadMultisample(gl);
+        return downloadMultisample(gl, textureId);
 
     if (isCubemapTarget(mTarget))
-        return downloadCubemap(gl);
+        return downloadCubemap(gl, textureId);
 
-    return download(gl);
+    return download(gl, textureId);
 }
 
-bool TextureData::uploadMultisample(GL& gl,
+bool TextureData::uploadMultisample(GL& gl, GLuint textureId,
     QOpenGLTexture::TextureFormat format)
 {
-    if(mTarget == QOpenGLTexture::Target2DMultisampleArray) {
-        gl.glTexImage3DMultisample(mTarget, samples(),
-            format, width(), height(), layers(), GL_FALSE);
-    }
-    else {
+    gl.glBindTexture(mTarget, textureId);
+    if (mTarget == QOpenGLTexture::Target2DMultisample) {
         gl.glTexImage2DMultisample(mTarget, samples(),
             format, width(), height(), GL_FALSE);
+
+        // upload single sample and resolve
+        auto singleSampleTexture = *this;
+        singleSampleTexture.mTarget = QOpenGLTexture::Target2D;
+        singleSampleTexture.mSamples = 1;
+        auto singleSampleTextureId = GLuint{ };
+        const auto cleanup = qScopeGuard([&] { gl.glDeleteTextures(1, &singleSampleTextureId); });
+        return (singleSampleTexture.upload(&singleSampleTextureId, format) &&
+                resolveTexture(gl, singleSampleTextureId, textureId, width(), height(), format));
     }
-    // TODO: resolve and upload
-    return (glGetError() == GL_NO_ERROR);
+    else {
+        Q_ASSERT(mTarget == QOpenGLTexture::Target2DMultisampleArray);
+        gl.glTexImage3DMultisample(mTarget, samples(),
+            format, width(), height(), layers(), GL_FALSE);
+
+        // TODO: upload
+        return false;
+    }
 }
 
-bool TextureData::download(GL& gl)
+bool TextureData::download(GL& gl, GLuint textureId)
 {
+    gl.glBindTexture(mTarget, textureId);
     for (auto level = 0; level < levels(); ++level) {
         auto data = getWriteonlyData(level, 0, 0);
         if (mKtxTexture->isCompressed) {
@@ -747,16 +811,34 @@ bool TextureData::download(GL& gl)
     return (glGetError() == GL_NO_ERROR);
 }
 
-bool TextureData::downloadCubemap(GL& gl)
+bool TextureData::downloadCubemap(GL& gl, GLuint textureId)
 {
     // TODO: download
     return true;
 }
 
-bool TextureData::downloadMultisample(GL& gl)
+bool TextureData::downloadMultisample(GL& gl, GLuint textureId)
 {
-    // TODO: resolve and download
-    return true;
+    if (mTarget == QOpenGLTexture::Target2DMultisample) {
+        // create single sample texture (=upload), resolve, download and copy plane
+        auto singleSampleTexture = *this;
+        singleSampleTexture.mTarget = QOpenGLTexture::Target2D;
+        singleSampleTexture.mSamples = 1;
+        auto singleSampleTextureId = GLuint{ };
+        const auto cleanup = qScopeGuard([&] { gl.glDeleteTextures(1, &singleSampleTextureId); });
+        if (!singleSampleTexture.upload(&singleSampleTextureId) ||
+            !resolveTexture(gl, textureId, singleSampleTextureId, width(), height(), format()) ||
+            !singleSampleTexture.download(singleSampleTextureId))
+            return false;
+
+        std::memcpy(getWriteonlyData(0, 0, 0), singleSampleTexture.getData(0, 0, 0), getLevelSize(0));
+        return true;
+    }
+    else {
+        Q_ASSERT(mTarget == QOpenGLTexture::Target2DMultisampleArray);
+        // TODO: download
+        return false;
+    }
 }
 
 

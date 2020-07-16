@@ -54,11 +54,11 @@ public:
 private:
     using GL = QOpenGLFunctions_3_3_Core;
 
-    bool uploadMultisample(GL& gl,
+    bool uploadMultisample(GL& gl, GLuint textureId,
         QOpenGLTexture::TextureFormat format);
-    bool download(GL& gl);
-    bool downloadCubemap(GL& gl);
-    bool downloadMultisample(GL& gl);
+    bool download(GL& gl, GLuint textureId);
+    bool downloadCubemap(GL& gl, GLuint textureId);
+    bool downloadMultisample(GL& gl, GLuint textureId);
 
     QOpenGLTexture::Target mTarget{ };
     int mSamples{ };
