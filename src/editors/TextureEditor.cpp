@@ -54,18 +54,16 @@ TextureEditor::TextureEditor(QString fileName,
 
 TextureEditor::~TextureEditor() 
 {
-    if (mTextureItem) {
-        auto texture = mTextureItem->resetTexture();
-        auto glWidget = qobject_cast<QOpenGLWidget*>(viewport());
-        if (auto context = glWidget->context())
-            if (auto surface = context->surface())
-                if (context->makeCurrent(surface)) {
-                    auto& gl = *context->functions();
-                    gl.glDeleteTextures(1, &texture);
-                    mTextureItem->releaseGL();
-                    context->doneCurrent();
-                }
-    }
+    auto texture = mTextureItem->resetTexture();
+    auto glWidget = qobject_cast<QOpenGLWidget*>(viewport());
+    if (auto context = glWidget->context())
+        if (auto surface = context->surface())
+            if (context->makeCurrent(surface)) {
+                auto& gl = *context->functions();
+                gl.glDeleteTextures(1, &texture);
+                mTextureItem->releaseGL();
+                context->doneCurrent();
+            }
     delete scene();
 
     if (isModified())
@@ -198,18 +196,8 @@ void TextureEditor::replace(TextureData texture, bool invalidateFileCache)
         return;
 
     mTexture = texture;
-    if (mTextureItem) {
-        mTextureItem->setImage(mTexture);
-        setBounds(mTextureItem->boundingRect().toRect());
-    }
-    else {
-        delete mPixmapItem;
-        auto pixmap = QPixmap::fromImage(mTexture.toImage(),
-            Qt::NoOpaqueDetection | Qt::NoFormatConversion);
-        mPixmapItem = new QGraphicsPixmapItem(pixmap);
-        scene()->addItem(mPixmapItem);
-        setBounds(pixmap.rect());
-    }
+    mTextureItem->setImage(mTexture);
+    setBounds(mTextureItem->boundingRect().toRect());
 
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
@@ -224,8 +212,7 @@ void TextureEditor::replace(TextureData texture, bool invalidateFileCache)
 void TextureEditor::updatePreviewTexture(
     QOpenGLTexture::Target target, GLuint textureId)
 {
-    if (mTextureItem)
-        mTextureItem->setPreviewTexture(target, textureId);
+    mTextureItem->setPreviewTexture(target, textureId);
 }
 
 void TextureEditor::setModified(bool modified)
