@@ -31,7 +31,7 @@ SessionEditor::SessionEditor(QWidget *parent)
     setMinimumWidth(150);
 
     connect(&mModel.undoStack(), &QUndoStack::cleanChanged,
-        [this](bool clean) { emit modificationChanged(!clean); });
+        [this](bool clean) { Q_EMIT modificationChanged(!clean); });
     connect(this, &QTreeView::activated,
         this, &SessionEditor::handleItemActivated);
     connect(this, &QTreeView::customContextMenuRequested,
@@ -200,7 +200,7 @@ void SessionEditor::selectionChanged(const QItemSelection &selected,
     const auto parent = currentIndex().parent();
     const auto selection = selectionModel()->selection();
     auto invalid = QItemSelection();
-    foreach (QModelIndex index, selection.indexes())
+    for (QModelIndex index : selection.indexes())
         if (index.parent() != parent)
             invalid.select(index, index);
 
@@ -213,13 +213,13 @@ void SessionEditor::selectionChanged(const QItemSelection &selected,
 void SessionEditor::focusInEvent(QFocusEvent *event)
 {
     QTreeView::focusInEvent(event);
-    emit focusChanged(true);
+    Q_EMIT focusChanged(true);
 }
 
 void SessionEditor::focusOutEvent(QFocusEvent *event)
 {
     QTreeView::focusOutEvent(event);
-    emit focusChanged(false);
+    Q_EMIT focusChanged(false);
 }
 
 bool SessionEditor::isModified() const
@@ -248,7 +248,7 @@ void SessionEditor::setFileName(QString fileName)
 
     if (mFileName != fileName) {
         mFileName = fileName;
-        emit fileNameChanged(mFileName);
+        Q_EMIT fileNameChanged(mFileName);
     }
 }
 
@@ -312,7 +312,7 @@ void SessionEditor::delete_()
     auto indices = selectionModel()->selectedIndexes();
     std::sort(indices.begin(), indices.end(),
         [](const auto &a, const auto &b) { return a.row() > b.row(); });
-    foreach (QModelIndex index, indices)
+    for (QModelIndex index : indices)
         mModel.deleteItem(index);
     mModel.undoStack().endMacro();
 }
@@ -357,12 +357,12 @@ void SessionEditor::addItem(Item::Type type)
 
     setCurrentIndex(index);
     setExpanded(index, true);
-    emit itemAdded(index);
+    Q_EMIT itemAdded(index);
 }
 
 void SessionEditor::activateFirstItem()
 {
-    emit itemActivated(model()->index(0, 0));
+    Q_EMIT itemActivated(model()->index(0, 0));
 }
 
 void SessionEditor::handleItemActivated(const QModelIndex &index)
@@ -371,7 +371,7 @@ void SessionEditor::handleItemActivated(const QModelIndex &index)
         setExpanded(index, !isExpanded(index));
     }
     else {
-        emit itemActivated(index);
+        Q_EMIT itemActivated(index);
    }
 }
 

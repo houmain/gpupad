@@ -28,7 +28,7 @@ public:
     void setValues(const QStringList &values);
     QStringList values() const;
 
-signals:
+Q_SIGNALS:
     void valuesChanged();
 
 private:

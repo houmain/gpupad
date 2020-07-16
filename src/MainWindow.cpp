@@ -253,7 +253,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->menuSourceType, &QMenu::aboutToShow,
         [this, sourceTypeActionGroup]() {
             auto sourceType = mEditorManager.currentSourceType();
-            foreach (QAction *action, sourceTypeActionGroup->actions())
+            for (QAction *action : sourceTypeActionGroup->actions())
                 action->setChecked(static_cast<SourceType>(
                     action->data().toInt()) == sourceType);
         });
@@ -466,7 +466,7 @@ void MainWindow::openFile()
     };
     auto& dialog = Singletons::fileDialog();
     if (dialog.exec(options)) {
-        foreach (QString fileName, dialog.fileNames())
+        for (QString fileName : dialog.fileNames())
             openFile(fileName, dialog.asBinaryFile());
     }
 }
@@ -588,7 +588,7 @@ bool MainWindow::copySessionFiles(const QString &fromPath, const QString &toPath
     model.forEachFileItem([&](const FileItem &fileItem) {
         const auto prevFileName = fileItem.fileName;
         if (prevFileName.startsWith(fromPath)) {
-            const auto newFileName = toPath + prevFileName.mid(fromPath.length());
+            const auto newFileName = QString(toPath + prevFileName.mid(fromPath.length()));
             if (QFileInfo(newFileName).exists())
                 return;
 

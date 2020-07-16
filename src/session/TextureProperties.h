@@ -26,7 +26,7 @@ public:
     TextureKind currentTextureKind() const;
     bool hasFile() const;
 
-signals:
+Q_SIGNALS:
     void formatChanged();
 
 private:

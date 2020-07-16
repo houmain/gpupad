@@ -131,7 +131,7 @@ void SynchronizeLogic::handleFileChanged(const QString &fileName)
         [&](const FileItem &item) {
             if (item.fileName == fileName) {
                 auto index = mModel.getIndex(&item);
-                emit mModel.dataChanged(index, index);
+                Q_EMIT mModel.dataChanged(index, index);
             }
         });
 

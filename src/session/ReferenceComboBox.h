@@ -17,7 +17,7 @@ public:
     void showPopup() override;
     void showEvent(QShowEvent *event) override;
 
-signals:
+Q_SIGNALS:
     QVariantList listRequired();
     QString textRequired(QVariant data);
     void currentDataChanged(QVariant data);

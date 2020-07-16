@@ -14,17 +14,14 @@ public:
     explicit OutputWindow(QWidget *parent = nullptr);
 
     QString selectedType() const;
-
-signals:
-    void typeSelectionChanged(QString type);
-
-public slots:
     void setText(QString text);
 
-private slots:
-    void updatePalette();
+Q_SIGNALS:
+    void typeSelectionChanged(QString type);
 
 private:
+    void updatePalette();
+
     DataComboBox *mTypeSelector{ };
     QPlainTextEdit *mTextEdit{ };
     int mLastScrollPosVertical{ };

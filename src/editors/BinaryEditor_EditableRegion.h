@@ -82,7 +82,7 @@ public:
         auto str = QString();
         auto prevRow = -1;
         auto newLine = true;
-        foreach (QModelIndex index, selectedIndexes()) {
+        for (QModelIndex index : selectedIndexes()) {
             auto row = index.row();
             if (prevRow != -1 && row != prevRow) {
                 str += "\n";
@@ -114,11 +114,11 @@ public:
         const auto begin = selectedIndexes().constFirst();
         auto r = begin.row();
         auto c = begin.column();
-        foreach (QString row, text.split('\n')) {
+        for (QString row : text.split('\n')) {
             if (row.trimmed().isEmpty())
                 continue;
             c = begin.column();
-            foreach (QString value, row.split(separator)) {
+            for (QString value : row.split(separator)) {
                 const auto index = model()->index(r, c);
                 if (index.flags() & Qt::ItemIsEditable)
                     model()->setData(index, toNumber(value));
@@ -126,7 +126,7 @@ public:
             }
             ++r;
         }
-        emit model()->dataChanged(begin, model()->index(r, c));
+        Q_EMIT model()->dataChanged(begin, model()->index(r, c));
     }
 
     double toNumber(QString value)
@@ -147,7 +147,7 @@ public:
     {
         auto minIndex = selectedIndexes().constFirst();
         auto maxIndex = selectedIndexes().constFirst();
-        foreach (QModelIndex index, selectedIndexes())
+        for (QModelIndex index : selectedIndexes())
             if (index.flags() & Qt::ItemIsEditable) {
                 model()->setData(index, 0.0);
                 minIndex = model()->index(
@@ -157,7 +157,7 @@ public:
                     std::max(index.row(), maxIndex.row()),
                     std::max(index.column(), maxIndex.column()));
             }
-        emit model()->dataChanged(minIndex, maxIndex);
+        Q_EMIT model()->dataChanged(minIndex, maxIndex);
     }
 
 private:

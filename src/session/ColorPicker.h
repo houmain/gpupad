@@ -12,7 +12,7 @@ public:
     QColor color() const { return mColor; }
     void setColor(QColor color);
 
-signals:
+Q_SIGNALS:
     void colorChanged(QColor color);
 
 private:

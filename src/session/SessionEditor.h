@@ -28,7 +28,7 @@ public:
     bool save();
     void activateFirstItem();
 
-signals:
+Q_SIGNALS:
     void itemAdded(const QModelIndex &index);
     void itemActivated(const QModelIndex &index);
     void fileNameChanged(const QString &fileName);

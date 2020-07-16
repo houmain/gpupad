@@ -18,12 +18,10 @@ protected:
     bool event(QEvent *event) override;
     bool eventFilter(QObject *watched, QEvent *event) override;
 
-private slots:
+private:
     void tabbedDockChanged(int index);
     void tabbedDockClicked(int index);
     void updateDocks();
-
-private:
     void updateTabBar(QTabBar *tabBar);
 
     QTimer *mUpdateDocksTimer{ };

@@ -15,7 +15,7 @@ void ColorPicker::setColor(QColor color)
         mColor = color;
         setStyleSheet("QToolButton { background: " +
             color.name(QColor::HexRgb) + "}");
-        emit colorChanged(color);
+        Q_EMIT colorChanged(color);
     }
 }
 

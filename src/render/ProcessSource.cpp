@@ -179,7 +179,7 @@ void ProcessSource::render()
 
 void ProcessSource::finish()
 {
-    emit outputChanged(mOutput);
+    Q_EMIT outputChanged(mOutput);
 }
 
 void ProcessSource::release()

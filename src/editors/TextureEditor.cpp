@@ -136,7 +136,7 @@ void TextureEditor::updateEditorToolBar()
 void TextureEditor::setFileName(QString fileName)
 {
     mFileName = fileName;
-    emit fileNameChanged(mFileName);
+    Q_EMIT fileNameChanged(mFileName);
 }
 
 bool TextureEditor::load(const QString &fileName, TextureData *texture)
@@ -219,7 +219,7 @@ void TextureEditor::setModified(bool modified)
 {
     if (mModified != modified) {
         mModified = modified;
-        emit modificationChanged(modified);
+        Q_EMIT modificationChanged(modified);
     }
 }
 

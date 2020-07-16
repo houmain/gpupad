@@ -14,15 +14,13 @@ class MessageWindow : public QTableWidget
 public:
     explicit MessageWindow(QWidget *parent = nullptr);
 
-signals:
+Q_SIGNALS:
     void messageActivated(int itemId, QString fileName, int line, int column);
     void messagesAdded();
 
-private slots:
+private:
     void updateMessages();
     void handleItemActivated(QTableWidgetItem *item);
-
-private:
     QIcon getMessageIcon(const Message &message) const;
     QString getMessageText(const Message &message) const;
     QString getLocationText(const Message &message) const;

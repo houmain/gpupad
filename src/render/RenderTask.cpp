@@ -41,7 +41,7 @@ void RenderTask::handleRendered()
     finish();
     mUpdating = false;
 
-    emit updated();
+    Q_EMIT updated();
 
     // restart when items were changed in the meantime
     if (mItemsChanged || mPendingEvaluation.has_value())

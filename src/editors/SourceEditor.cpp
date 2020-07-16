@@ -146,7 +146,7 @@ QList<QMetaObject::Connection> SourceEditor::connectEditActions(
 void SourceEditor::setFileName(QString fileName)
 {
     mFileName = fileName;
-    emit fileNameChanged(mFileName);
+    Q_EMIT fileNameChanged(mFileName);
 }
 
 bool SourceEditor::load(const QString &fileName, QString *source)

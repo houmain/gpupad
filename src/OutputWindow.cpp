@@ -19,7 +19,7 @@ OutputWindow::OutputWindow(QWidget *parent) : QWidget(parent)
     mTypeSelector->addItem(tr("Dump SPIR-V"), "spirv");
     mTypeSelector->addItem(tr("Dump assembly (NV_gpu_program)"), "assembly");
     connect(mTypeSelector, &DataComboBox::currentDataChanged,
-        [this](QVariant data) { emit typeSelectionChanged(data.toString()); });
+        [this](QVariant data) { Q_EMIT typeSelectionChanged(data.toString()); });
 
     mTextEdit->setReadOnly(true);
     mTextEdit->setLineWrapMode(QPlainTextEdit::NoWrap);

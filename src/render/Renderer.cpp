@@ -24,10 +24,9 @@ class Renderer::Worker : public QObject
     Q_OBJECT
 
 public:
-      GLContext context;
-      QOffscreenSurface surface;
+    GLContext context;
+    QOffscreenSurface surface;
 
-public slots:
     void stop() 
     {
         context.makeCurrent(&surface);
@@ -49,7 +48,7 @@ public slots:
 
         renderTask->render();
         context.doneCurrent();
-        emit taskRendered();
+        Q_EMIT taskRendered();
     }
 
     void handleReleaseTask(RenderTask* renderTask, void* userData)
@@ -60,7 +59,7 @@ public slots:
         static_cast<QSemaphore*>(userData)->release(1);
     }
 
-signals:
+Q_SIGNALS:
     void taskRendered();
 
 private:
@@ -152,7 +151,7 @@ void Renderer::release(RenderTask *task)
 
     QSemaphore done(1);
     done.acquire(1);
-    emit releaseTask(task, &done, QPrivateSignal());
+    Q_EMIT releaseTask(task, &done, QPrivateSignal());
 
     // block until the render thread finished releasing the task
     done.acquire(1);
@@ -165,7 +164,7 @@ void Renderer::renderNextTask()
         return;
 
     mCurrentTask = mPendingTasks.takeFirst();
-    emit renderTask(mCurrentTask, QPrivateSignal());
+    Q_EMIT renderTask(mCurrentTask, QPrivateSignal());
 }
 
 void Renderer::handleTaskRendered()

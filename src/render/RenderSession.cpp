@@ -37,7 +37,7 @@ namespace {
     {
         QSet<ItemId> usedItems;
         BindingScope bindings;
-        foreach (const BindingScope &scope, state) {
+        for (const BindingScope &scope : state) {
             for (const auto &kv : scope.uniforms)
                 bindings.uniforms[kv.first] = kv.second;
             for (const auto &kv : scope.samplers)

@@ -110,11 +110,11 @@ void EditorManager::updateCurrentEditor()
     auto previous = mCurrentDock;
     mCurrentDock = nullptr;
     auto focusWidget = qApp->focusWidget();
-    foreach (QDockWidget* dock, mDocks.keys()) {
+    for (QDockWidget* dock : mDocks.keys()) {
         if (dock->isAncestorOf(focusWidget)) {
             mCurrentDock = dock;
             updateDockCurrentProperty(dock, true);
-            emit sourceTypeChanged(currentSourceType());
+            Q_EMIT sourceTypeChanged(currentSourceType());
             break;
         }
     }
@@ -149,7 +149,7 @@ void EditorManager::setCurrentSourceType(SourceType sourceType)
 {
     if (auto editor = currentEditor()) {
         editor->setSourceType(sourceType);
-        emit sourceTypeChanged(sourceType);
+        Q_EMIT sourceTypeChanged(sourceType);
     }
 }
 
@@ -253,7 +253,7 @@ TextureEditor *EditorManager::openTextureEditor(const QString &fileName)
 
 SourceEditor* EditorManager::getSourceEditor(const QString &fileName)
 {
-    foreach (SourceEditor *editor, mSourceEditors)
+    for (SourceEditor *editor : mSourceEditors)
         if (editor->fileName() == fileName)
             return editor;
     return nullptr;
@@ -261,7 +261,7 @@ SourceEditor* EditorManager::getSourceEditor(const QString &fileName)
 
 BinaryEditor* EditorManager::getBinaryEditor(const QString &fileName)
 {
-    foreach (BinaryEditor *editor, mBinaryEditors)
+    for (BinaryEditor *editor : mBinaryEditors)
         if (editor->fileName() == fileName)
             return editor;
     return nullptr;
@@ -269,7 +269,7 @@ BinaryEditor* EditorManager::getBinaryEditor(const QString &fileName)
 
 TextureEditor* EditorManager::getTextureEditor(const QString &fileName)
 {
-    foreach (TextureEditor *editor, mTextureEditors)
+    for (TextureEditor *editor : mTextureEditors)
         if (editor->fileName() == fileName)
             return editor;
     return nullptr;
@@ -278,7 +278,7 @@ TextureEditor* EditorManager::getTextureEditor(const QString &fileName)
 QStringList EditorManager::getSourceFileNames() const
 {
     auto result = QStringList();
-    foreach (SourceEditor *editor, mSourceEditors)
+    for (SourceEditor *editor : mSourceEditors)
         result.append(editor->fileName());
     return result;
 }
@@ -286,7 +286,7 @@ QStringList EditorManager::getSourceFileNames() const
 QStringList EditorManager::getBinaryFileNames() const
 {
     auto result = QStringList();
-    foreach (BinaryEditor *editor, mBinaryEditors)
+    for (BinaryEditor *editor : mBinaryEditors)
         result.append(editor->fileName());
     return result;
 }
@@ -294,7 +294,7 @@ QStringList EditorManager::getBinaryFileNames() const
 QStringList EditorManager::getImageFileNames() const
 {
     auto result = QStringList();
-    foreach (TextureEditor *editor, mTextureEditors)
+    for (TextureEditor *editor : mTextureEditors)
         result.append(editor->fileName());
     return result;
 }
@@ -344,7 +344,7 @@ bool EditorManager::saveEditorAs()
         if (Singletons::fileDialog().exec(options, editor->fileName())) {
             auto prevFileName = editor->fileName();
             editor->setFileName(Singletons::fileDialog().fileName());
-            emit editorRenamed(prevFileName, editor->fileName());
+            Q_EMIT editorRenamed(prevFileName, editor->fileName());
             return editor->save();
         }
     }
@@ -353,7 +353,7 @@ bool EditorManager::saveEditorAs()
 
 bool EditorManager::saveAllEditors()
 {
-    foreach (QDockWidget *dock, mDocks.keys())
+    for (QDockWidget *dock : mDocks.keys())
         if (dock->isWindowModified())
             if (!saveDock(dock))
                 return false;
@@ -380,7 +380,7 @@ bool EditorManager::closeEditor()
 
 bool EditorManager::closeAllEditors()
 {
-    foreach (QDockWidget* dock, mDocks.keys())
+    for (QDockWidget* dock : mDocks.keys())
         if (!closeDock(dock))
             return false;
     return true;
@@ -388,7 +388,7 @@ bool EditorManager::closeAllEditors()
 
 bool EditorManager::closeAllTextureEditors()
 {
-    foreach (QDockWidget* dock, mDocks.keys())
+    for (QDockWidget* dock : mDocks.keys())
         if (qobject_cast<TextureEditor*>(dock->widget()))
             if (!closeDock(dock))
                 return false;
@@ -441,7 +441,7 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     dock->installEventFilter(this);
 
     auto tabified = false;
-    foreach (QDockWidget* d, mDocks.keys()) {
+    for (QDockWidget* d : mDocks.keys()) {
         if (!d->isFloating() &&
               mDocks[d]->tabifyGroup() == editor->tabifyGroup()) {
             tabifyDockWidget(d, dock);
@@ -489,7 +489,7 @@ bool EditorManager::closeDock(QDockWidget *dock)
             return false;
     }
 
-    emit editorRenamed(editor->fileName(), "");
+    Q_EMIT editorRenamed(editor->fileName(), "");
 
     mSourceEditors.removeAll(static_cast<SourceEditor*>(editor));
     mBinaryEditors.removeAll(static_cast<BinaryEditor*>(editor));

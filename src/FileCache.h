@@ -32,7 +32,7 @@ public:
     void pauseVideoFiles();
     void rewindVideoFiles();
 
-signals:
+Q_SIGNALS:
     void fileChanged(const QString &fileName) const;
     void videoPlayerRequested(const QString &fileName, QPrivateSignal);
 

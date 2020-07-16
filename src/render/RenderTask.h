@@ -20,7 +20,7 @@ public:
     void update(bool itemChanged = false,
         EvaluationType evaluationType = EvaluationType::Reset);
 
-signals:
+Q_SIGNALS:
     void updated();
 
 protected:

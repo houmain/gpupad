@@ -122,9 +122,9 @@ bool FileDialog::exec(Options options, QString currentFileName)
 
     auto textureFileFilter = QString();
     textureFileFilter += " *.ktx";
-    foreach (const QByteArray &format, QImageReader::supportedImageFormats())
+    for (const QByteArray &format : QImageReader::supportedImageFormats())
         textureFileFilter = textureFileFilter + " *." + QString(format);
-    foreach (const QByteArray &format, VideoFileExtensions)
+    for (const QByteArray &format : VideoFileExtensions)
         textureFileFilter = textureFileFilter + " *." + QString(format);
 
     auto scriptFileFilter = QString();

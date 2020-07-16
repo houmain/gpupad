@@ -27,7 +27,7 @@ public:
     void setDarkTheme(bool enabled);
     bool darkTheme() const { return mDarkTheme; }
 
-signals:
+Q_SIGNALS:
     void tabSizeChanged(int tabSize);
     void fontChanged(const QFont &font);
     void lineWrapChanged(bool wrap);

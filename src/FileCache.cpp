@@ -31,7 +31,7 @@ void FileCache::invalidateEditorFile(const QString &fileName)
 {
     Q_ASSERT(onMainThread());
     mEditorFilesInvalidated.insert(fileName);
-    emit fileChanged(fileName);
+    Q_EMIT fileChanged(fileName);
 }
 
 void FileCache::updateEditorFiles()
@@ -169,13 +169,13 @@ void FileCache::updateFileSystemWatches()
             mBinaries.remove(fileName);
             mTextures.remove(fileName);
         }
-        emit fileChanged(fileName);
+        Q_EMIT fileChanged(fileName);
     }
 }
 
 void FileCache::asyncOpenVideoPlayer(const QString &fileName)
 {
-    emit videoPlayerRequested(fileName, QPrivateSignal());
+    Q_EMIT videoPlayerRequested(fileName, QPrivateSignal());
 }
 
 void FileCache::handleVideoPlayerRequested(const QString &fileName)

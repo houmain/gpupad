@@ -44,7 +44,7 @@ FindReplaceBar::~FindReplaceBar()
 
 void FindReplaceBar::setTarget(QWidget *target)
 {
-    emit action(Action::FindTextChanged, "", "", findFlags());
+    Q_EMIT action(Action::FindTextChanged, "", "", findFlags());
 
     mTarget = target;
 }
@@ -67,7 +67,7 @@ void FindReplaceBar::focus(QWidget *target, QString text)
 
 void FindReplaceBar::cancel()
 {
-    emit action(Action::FindTextChanged, "", "", findFlags());
+    Q_EMIT action(Action::FindTextChanged, "", "", findFlags());
 
     hide();
 
@@ -79,29 +79,29 @@ void FindReplaceBar::cancel()
 
 void FindReplaceBar::findTextChanged()
 {
-    emit action(Action::FindTextChanged, ui->findText->text(), "", findFlags());
+    Q_EMIT action(Action::FindTextChanged, ui->findText->text(), "", findFlags());
 }
 
 void FindReplaceBar::findNext()
 {
-    emit action(Action::Find, ui->findText->text(), "", findFlags());
+    Q_EMIT action(Action::Find, ui->findText->text(), "", findFlags());
 }
 
 void FindReplaceBar::findPrevious()
 {
-    emit action(Action::Find, ui->findText->text(), "",
+    Q_EMIT action(Action::Find, ui->findText->text(), "",
         findFlags() | QTextDocument::FindBackward);
 }
 
 void FindReplaceBar::replace()
 {
-    emit action(Action::Replace, ui->findText->text(),
+    Q_EMIT action(Action::Replace, ui->findText->text(),
         ui->replaceText->text(), findFlags());
 }
 
 void FindReplaceBar::replaceAll()
 {
-    emit action(Action::ReplaceAll, ui->findText->text(),
+    Q_EMIT action(Action::ReplaceAll, ui->findText->text(),
         ui->replaceText->text(), findFlags());
 }
 

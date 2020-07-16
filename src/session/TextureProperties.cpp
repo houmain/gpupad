@@ -308,7 +308,7 @@ void TextureProperties::setFormat(QVariant value)
             mFormat = format;
             mUi->formatType->setCurrentData(it->second.first);
             mUi->formatData->setCurrentData(it->second.second);
-            emit formatChanged();
+            Q_EMIT formatChanged();
         }
         else {
             qDebug() << "unknown format " << value.toInt();

@@ -445,7 +445,7 @@ void SessionModelCore::assignment(const QModelIndex &index, T *to, S &&value)
     Q_ASSERT(index.isValid());
     if (*to != value) {
         *to = value;
-        emit dataChanged(index, index);
+        Q_EMIT dataChanged(index, index);
     }
 }
 
@@ -462,9 +462,9 @@ void SessionModelCore::undoableAssignment(const QModelIndex &index, T *to,
         mUndoStack.push(new MergingUndoCommand(mergeId,
             makeUndoCommand("Edit ",
                 [=, value = std::forward<S>(value)]()
-                { *to = static_cast<T>(value); emit dataChanged(index, index); },
+                { *to = static_cast<T>(value); Q_EMIT dataChanged(index, index); },
                 [=, orig = *to]()
-                { *to = orig; emit dataChanged(index, index); },
+                { *to = orig; Q_EMIT dataChanged(index, index); },
                 [](){})));
     }
 }
@@ -478,7 +478,7 @@ void SessionModelCore::undoableFileNameAssignment(const QModelIndex &index,
 
         if (item.fileName != fileName) {
             item.fileName = fileName;
-            emit dataChanged(index, index);
+            Q_EMIT dataChanged(index, index);
         }
         return;
     }

@@ -24,15 +24,13 @@ public:
     void setSelection(QJsonValue selection);
     QList<QAction*> getApplicableActions();
 
-private slots:
+private:
     void newAction();
     void importAction();
     void editAction();
     void deleteAction();
     void actionTriggered();
     void updateWidgets();
-
-private:
     void updateActions();
 
     Ui::CustomActions *ui;

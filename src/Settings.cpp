@@ -37,13 +37,13 @@ Settings::~Settings()
 void Settings::setTabSize(int tabSize)
 {
     mTabSize = tabSize;
-    emit tabSizeChanged(tabSize);
+    Q_EMIT tabSizeChanged(tabSize);
 }
 
 void Settings::setFont(const QFont &font)
 {
     mFont = font;
-    emit fontChanged(font);
+    Q_EMIT fontChanged(font);
 }
 
 void Settings::selectFont()
@@ -62,30 +62,30 @@ void Settings::selectFont()
 void Settings::setLineWrap(bool enabled)
 {
     mLineWrap = enabled;
-    emit lineWrapChanged(enabled);
+    Q_EMIT lineWrapChanged(enabled);
 }
 
 void Settings::setIndentWithSpaces(bool enabled)
 {
     mIndentWithSpaces = enabled;
-    emit indentWithSpacesChanged(enabled);
+    Q_EMIT indentWithSpacesChanged(enabled);
 }
 
 void Settings::setAutoIndentation(bool enabled)
 {
     mAutoIndentation = enabled;
-    emit autoIndentationChanged(enabled);
+    Q_EMIT autoIndentationChanged(enabled);
 }
 
 void Settings::setSyntaxHighlighting(bool enabled)
 {
     mSyntaxHighlighting = enabled;
-    emit syntaxHighlightingChanged(enabled);
+    Q_EMIT syntaxHighlightingChanged(enabled);
 }
 
 void Settings::setDarkTheme(bool enabled)
 {
     mDarkTheme = enabled;
-    emit darkThemeChanging(enabled);
-    emit darkThemeChanged(enabled);
+    Q_EMIT darkThemeChanging(enabled);
+    Q_EMIT darkThemeChanged(enabled);
 }

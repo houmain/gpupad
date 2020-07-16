@@ -18,7 +18,7 @@ public:
     }
     QString text() const { return QLineEdit::text(); }
 
-signals:
+Q_SIGNALS:
     void textChanged();
 
 protected:

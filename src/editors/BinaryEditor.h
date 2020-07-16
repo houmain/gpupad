@@ -52,7 +52,7 @@ public:
     void updateColumns();
     void scrollToOffset();
 
-signals:
+Q_SIGNALS:
     void modificationChanged(bool modified);
     void fileNameChanged(const QString &fileName);
 

@@ -16,16 +16,13 @@ public:
     void render(RenderTask *task);
     void release(RenderTask *task);
 
-signals:
+Q_SIGNALS:
     void renderTask(RenderTask* renderTask, QPrivateSignal);
     void releaseTask(RenderTask *renderTask, void *userData, QPrivateSignal);
 
-private slots:
-    void handleTaskRendered();
-
 private:
     class Worker;
-
+    void handleTaskRendered();
     void renderNextTask();
 
     QThread mThread;

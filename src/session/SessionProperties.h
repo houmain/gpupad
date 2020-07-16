@@ -52,14 +52,12 @@ public:
     QVariantList getItemIds(Item::Type type, bool addNull = false) const;
     QString findItemName(ItemId itemId) const;
 
-private slots:
+private:
     void updateBufferWidgets(const QModelIndex &index);
     void updateTargetWidgets(const QModelIndex &index);
     void updateScriptWidgets(const QModelIndex &index);
     void updateScriptWidgets(bool hasFile);
     void deduceBufferRowCount();
-
-private:
     IEditor* openEditor(const FileItem &fileItem);
     void fillComboBoxes();
     QVariantList getColumnIds(ItemId bufferId) const;

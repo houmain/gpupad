@@ -227,7 +227,7 @@ void BindingProperties::setValues(const QStringList &values)
     if (values.empty() || !startsWith(mValues, values))
         mValues = values;
 
-    emit valuesChanged();
+    Q_EMIT valuesChanged();
 
     updateWidgets();
 }

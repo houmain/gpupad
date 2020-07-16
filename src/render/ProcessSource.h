@@ -20,7 +20,7 @@ public:
     void setProcessType(QString processType);
     QSet<ItemId> usedItems() const override;
 
-signals:
+Q_SIGNALS:
     void outputChanged(QString output);
 
 private:

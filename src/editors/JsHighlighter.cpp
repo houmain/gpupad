@@ -112,7 +112,7 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
 
 void JsHighlighter::highlightBlock(const QString &text)
 {
-    foreach (const HighlightingRule &rule, mHighlightingRules) {
+    for (const HighlightingRule &rule : mHighlightingRules) {
         auto index = rule.pattern.indexIn(text);
         while (index >= 0) {
             const auto length = rule.pattern.matchedLength();

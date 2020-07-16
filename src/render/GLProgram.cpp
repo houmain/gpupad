@@ -497,7 +497,7 @@ bool GLProgram::apply(const GLBufferBinding &binding, int unit)
 bool GLProgram::apply(const GLSubroutineBinding &binding)
 {
     auto bound = false;
-    foreach (Shader::ShaderType stage, mSubroutineUniforms.keys())
+    for (Shader::ShaderType stage : mSubroutineUniforms.keys())
         if (!binding.type || binding.type == stage)
             for (auto &uniform : mSubroutineUniforms[stage])
                 if (uniform.name == binding.name) {
@@ -516,7 +516,7 @@ void GLProgram::reapplySubroutines()
         return;
 
     auto subroutineIndices = std::vector<GLuint>();
-    foreach (Shader::ShaderType stage, mSubroutineUniforms.keys()) {
+    for (Shader::ShaderType stage : mSubroutineUniforms.keys()) {
         for (const auto &uniform : qAsConst(mSubroutineUniforms[stage])) {
             auto isIndex = false;
             auto index = uniform.boundSubroutine.toUInt(&isIndex);

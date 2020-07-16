@@ -14,7 +14,7 @@ public:
 
     QSize minimumSizeHint() const override;
 
-signals:
+Q_SIGNALS:
     void currentDataChanged(QVariant data);
 };
 

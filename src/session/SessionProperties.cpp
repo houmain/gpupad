@@ -178,19 +178,19 @@ QVariantList SessionProperties::getFileNames(Item::Type type, bool addNull) cons
     switch (type) {
         case Item::Type::Shader:
         case Item::Type::Script:
-            foreach (QString f, Singletons::editorManager().getSourceFileNames())
+            for (QString f : Singletons::editorManager().getSourceFileNames())
                 if (!result.contains(f))
                     result.append(f);
             break;
 
         case Item::Type::Buffer:
-            foreach (QString f, Singletons::editorManager().getBinaryFileNames())
+            for (QString f : Singletons::editorManager().getBinaryFileNames())
                 if (!result.contains(f))
                     result.append(f);
             break;
 
         case Item::Type::Texture:
-            foreach (QString f, Singletons::editorManager().getImageFileNames())
+            for (QString f : Singletons::editorManager().getImageFileNames())
                 if (!result.contains(f))
                     result.append(f);
             break;

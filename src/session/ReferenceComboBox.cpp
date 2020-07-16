@@ -6,7 +6,7 @@ ReferenceComboBox::ReferenceComboBox(QWidget *parent) : QComboBox(parent)
     connect(this, qOverload<int>(&QComboBox::currentIndexChanged),
         [this]() {
             if (!mSuspendDataChangedSignal)
-                emit currentDataChanged(currentData());
+                Q_EMIT currentDataChanged(currentData());
         });
 }
 
@@ -50,7 +50,7 @@ void ReferenceComboBox::refreshList()
     auto current = currentData();
 
     clear();
-    foreach (QVariant data, listRequired())
+    for (QVariant data : listRequired())
         insertItem(model()->rowCount(), data);
 
     setCurrentData(current);

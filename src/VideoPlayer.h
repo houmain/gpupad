@@ -23,7 +23,7 @@ public:
     void pause();
     void rewind();
 
-signals:
+Q_SIGNALS:
     void loadingFinished();
 
 private:
@@ -52,7 +52,7 @@ public:
     void pause() { }
     void rewind() { }
 
-signals:
+Q_SIGNALS:
     void loadingFinished();
 
 private:

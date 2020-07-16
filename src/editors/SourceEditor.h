@@ -41,7 +41,7 @@ public:
     void setAutoIndentation(bool enabled);
     bool setCursorPosition(int line, int column);
 
-signals:
+Q_SIGNALS:
     void fileNameChanged(const QString &fileName);
 
 protected:

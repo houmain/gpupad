@@ -34,7 +34,7 @@ public:
     void updatePreviewTexture(QOpenGLTexture::Target target, GLuint textureId);
     const TextureData &texture() const { return mTexture; }
 
-signals:
+Q_SIGNALS:
     void modificationChanged(bool modified);
     void fileNameChanged(const QString &fileName);
 

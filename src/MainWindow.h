@@ -26,7 +26,7 @@ public:
     ~MainWindow() override;
     bool hasEditor() const;
 
-public slots:
+public Q_SLOTS:
     void newFile();
     void openFile();
     bool openFile(const QString &fileName,

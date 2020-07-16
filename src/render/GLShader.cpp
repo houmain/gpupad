@@ -44,7 +44,7 @@ void GLShader::parseLog(const QString &log,
 GLShader::GLShader(const QList<const Shader*> &shaders)
 {
     auto sourceIndex = 0;
-    foreach (const Shader* shader, shaders) {
+    for (const Shader *shader : shaders) {
         auto source = QString();
         if (!Singletons::fileCache().getSource(shader->fileName, &source))
             mMessages += MessageList::insert(shader->id,
@@ -100,7 +100,7 @@ bool GLShader::compile(bool silent)
     }
 
     auto sources = std::vector<std::string>();
-    foreach (const QString &source, mSources)
+    for (const QString &source : mSources)
         sources.push_back(source.toUtf8().data());
 
     // workaround: to prevent unesthetic "unexpected end" error,

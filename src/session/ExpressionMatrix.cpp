@@ -65,7 +65,7 @@ namespace {
         void valueChanged()
         {
             mEditing = true;
-            emit commitData(static_cast<ExpressionEditor*>(QObject::sender()));
+            Q_EMIT commitData(static_cast<ExpressionEditor*>(QObject::sender()));
             mEditing = false;
         }
 

@@ -31,7 +31,7 @@ public:
     void setMousePosition(QPointF pos) { mMousePosition = pos; }
     const QPointF &mousePosition() const { return mMousePosition; }
 
-signals:
+Q_SIGNALS:
     void outputChanged(QString assembly);
 
 private:

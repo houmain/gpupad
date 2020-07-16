@@ -83,7 +83,7 @@ QList<QMetaObject::Connection> BinaryEditor::connectEditActions(
 void BinaryEditor::setFileName(QString fileName)
 {
     mFileName = fileName;
-    emit fileNameChanged(mFileName);
+    Q_EMIT fileNameChanged(mFileName);
 }
 
 bool BinaryEditor::load(const QString &fileName, QByteArray *data)
@@ -158,7 +158,7 @@ void BinaryEditor::setModified(bool modified)
 {
     if (mModified != modified) {
         mModified = modified;
-        emit modificationChanged(modified);
+        Q_EMIT modificationChanged(modified);
     }
 }
 

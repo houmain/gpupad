@@ -102,7 +102,7 @@ void SessionModel::setActiveItems(QSet<ItemId> itemIds)
         return;
 
     mActiveItemIds = std::move(itemIds);
-    emit dataChanged(index(0, 0), index(rowCount(), 0),
+    Q_EMIT dataChanged(index(0, 0), index(rowCount(), 0),
         { Qt::ForegroundRole });
 }
 
@@ -117,7 +117,7 @@ void SessionModel::setItemActive(ItemId id, bool active)
         mActiveItemIds.remove(id);
 
     auto item = findItem(id);
-    emit dataChanged(getIndex(item), getIndex(item),
+    Q_EMIT dataChanged(getIndex(item), getIndex(item),
         { Qt::ForegroundRole });
 }
 
@@ -169,7 +169,7 @@ bool SessionModel::canDropMimeData(const QMimeData *data,
     if (jsonArray.empty())
         return false;
 
-    foreach (const QJsonValue &value, jsonArray) {
+    for (const QJsonValue &value : jsonArray) {
         auto type = getTypeByName(value.toObject()["type"].toString());
         if (!canContainType(parent, type))
             return false;
@@ -281,14 +281,14 @@ QJsonArray SessionModel::getJson(const QModelIndexList &indexes) const
 {
     auto itemArray = QJsonArray();
     if (indexes.size() == 1 && !indexes.first().isValid()) {
-        foreach (const Item *item, getItem({ }).items) {
+        for (const Item *item : getItem({ }).items) {
             auto object = QJsonObject();
             serialize(object, *item, true);
             itemArray.append(object);
         }
     }
     else {
-        foreach (QModelIndex index, indexes) {
+        for (QModelIndex index : indexes) {
             auto object = QJsonObject();
             serialize(object, getItem(index), false);
             itemArray.append(object);
@@ -300,12 +300,12 @@ QJsonArray SessionModel::getJson(const QModelIndexList &indexes) const
 void SessionModel::dropJson(const QJsonArray &jsonArray,
     int row, const QModelIndex &parent, bool updateExisting)
 {
-    foreach (const QJsonValue &value, jsonArray)
+    for (const QJsonValue &value : jsonArray)
         deserialize(value.toObject(), parent, row++, updateExisting);
 
     // fixup item references
-    foreach (ItemId prevId, mDroppedIdsReplaced.keys())
-        foreach (QModelIndex reference, mDroppedReferences)
+    for (ItemId prevId : mDroppedIdsReplaced.keys())
+        for (QModelIndex reference : mDroppedReferences)
             if (data(reference).toInt() == prevId)
                 setData(reference, mDroppedIdsReplaced[prevId]);
     mDroppedIdsReplaced.clear();
@@ -340,7 +340,7 @@ void SessionModel::deserialize(const QJsonObject &object,
         setData(index, value);
     };
 
-    foreach (const QString &property, object.keys()) {
+    for (const QString &property : object.keys()) {
         auto value = object[property].toVariant();
 
         if (property == "name") {
@@ -360,7 +360,7 @@ void SessionModel::deserialize(const QJsonObject &object,
 
     auto items = object["items"].toArray();
     if (!items.isEmpty())
-        foreach (const QJsonValue &value, items)
+        for (const QJsonValue &value : items)
             deserialize(value.toObject(), index, -1, updateExisting);
 }
 
@@ -389,7 +389,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
 
     if (!item.items.empty()) {
         auto items = QJsonArray();
-        foreach (const Item *item, item.items) {
+        for (const Item *item : item.items) {
             auto sub = QJsonObject();
             serialize(sub, *item, relativeFilePaths);
             items.append(sub);

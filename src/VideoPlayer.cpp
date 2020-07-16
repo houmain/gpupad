@@ -33,7 +33,7 @@ void VideoPlayer::handleStatusChanged(QMediaPlayer::MediaStatus status)
 {
     if (status == QMediaPlayer::InvalidMedia) {
         mPlayer->deleteLater();
-        emit loadingFinished();
+        Q_EMIT loadingFinished();
     }
     else if (status == QMediaPlayer::LoadedMedia) {
         mPlayer->pause();
@@ -45,7 +45,7 @@ bool VideoPlayer::present(const QVideoFrame &frame)
     if (!mWidth) {
         mWidth = frame.width();
         mHeight = frame.height();
-        emit loadingFinished();
+        Q_EMIT loadingFinished();
     }
     auto mappableFrame = frame;
     auto texture = TextureData();

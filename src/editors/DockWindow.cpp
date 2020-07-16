@@ -87,7 +87,7 @@ void DockWindow::updateDocks()
        disconnect(connection);
     mDockConnections.clear();
 
-    foreach (QTabBar* tabBar, findChildren<QTabBar*>())
+    for (QTabBar* tabBar : findChildren<QTabBar*>())
         updateTabBar(tabBar);
 }
 

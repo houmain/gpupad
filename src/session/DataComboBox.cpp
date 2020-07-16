@@ -3,7 +3,7 @@
 DataComboBox::DataComboBox(QWidget *parent) : QComboBox(parent)
 {
     connect(this, qOverload<int>(&QComboBox::currentIndexChanged),
-        [this]() { emit currentDataChanged(currentData()); });
+        [this]() { Q_EMIT currentDataChanged(currentData()); });
 }
 
 void DataComboBox::setCurrentData(QVariant data)

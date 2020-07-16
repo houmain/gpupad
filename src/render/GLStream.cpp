@@ -35,7 +35,7 @@ void GLStream::setAttribute(int attributeIndex,
 void GLStream::bind(const GLProgram &program)
 {
     auto &gl = GLContext::currentContext();
-    foreach (const GLAttribute &attribute, mAttributes) {
+    for (const GLAttribute &attribute : mAttributes) {
         auto attribLocation = program.getAttributeLocation(attribute.name);
         if (attribLocation < 0)
             continue;

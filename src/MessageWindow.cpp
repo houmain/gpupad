@@ -57,7 +57,7 @@ void MessageWindow::updateMessages()
     removeMessagesExcept(messageIds);
 
     if (added)
-        emit messagesAdded();
+        Q_EMIT messagesAdded();
 }
 
 QIcon MessageWindow::getMessageIcon(const Message &message) const
@@ -241,5 +241,5 @@ void MessageWindow::handleItemActivated(QTableWidgetItem *messageItem)
     auto itemId = messageItem->data(Qt::UserRole + 1).toInt();
     auto fileName = messageItem->data(Qt::UserRole + 2).toString();
     auto line = messageItem->data(Qt::UserRole + 3).toInt();
-    emit messageActivated(itemId, fileName, line, -1);
+    Q_EMIT messageActivated(itemId, fileName, line, -1);
 }
