@@ -54,7 +54,6 @@ MainWindow::MainWindow(QWidget *parent)
     auto content = new QWidget(this);
     mEditorManager.setParent(content);
     auto layout = new QVBoxLayout(content);
-    layout->setMargin(0);
     layout->setSpacing(0);
     layout->addWidget(&mEditorManager);
     layout->addWidget(&mEditorManager.findReplaceBar());
@@ -466,7 +465,7 @@ void MainWindow::openFile()
     };
     auto& dialog = Singletons::fileDialog();
     if (dialog.exec(options)) {
-        for (QString fileName : dialog.fileNames())
+        for (const QString &fileName : dialog.fileNames())
             openFile(fileName, dialog.asBinaryFile());
     }
 }
@@ -589,7 +588,7 @@ bool MainWindow::copySessionFiles(const QString &fromPath, const QString &toPath
         const auto prevFileName = fileItem.fileName;
         if (prevFileName.startsWith(fromPath)) {
             const auto newFileName = QString(toPath + prevFileName.mid(fromPath.length()));
-            if (QFileInfo(newFileName).exists())
+            if (QFileInfo::exists(newFileName))
                 return;
 
             QDir().mkpath(QFileInfo(newFileName).path());
@@ -720,7 +719,7 @@ void MainWindow::handleDarkThemeChanging(bool enabled)
             { QPalette::ToolTipText, 0xCACACA, 0xCACACA, 0x8A8A8A },
             { QPalette::PlaceholderText, 0xCFCFCF, 0xCFCFCF, 0xCFCFCF },
         };
-        for (auto s : colors) {
+        for (const auto &s : colors) {
             palette.setColor(QPalette::Active, s.role, s.a);
             palette.setColor(QPalette::Inactive, s.role, s.i);
             palette.setColor(QPalette::Disabled, s.role, s.d);
@@ -741,9 +740,9 @@ void MainWindow::handleDarkThemeChanging(bool enabled)
       "QToolBar { border: none; margin-top:4px; }\n"
       "QDockWidget > QFrame { border:2px solid %2 }\n"
       "QDockWidget[current=true] > QFrame { border:2px solid %3 2}\n")
-      .arg(color(QPalette::WindowText, QPalette::Disabled))
-      .arg(color(QPalette::Window, QPalette::Active, frameDarker))
-      .arg(color(QPalette::Window, QPalette::Active, currentFrameDarker)));
+      .arg(color(QPalette::WindowText, QPalette::Disabled),
+           color(QPalette::Window, QPalette::Active, frameDarker),
+           color(QPalette::Window, QPalette::Active, currentFrameDarker)));
 
     style()->unpolish(qApp);
     style()->polish(qApp);
@@ -766,9 +765,9 @@ void MainWindow::openMessageDock()
 
 void MainWindow::populateSampleSessions()
 {
-    const auto paths = {
+    const auto paths = std::initializer_list<QString>{
         QCoreApplication::applicationDirPath() + "/samples",
-        QString("/usr/share/gpupad/samples"),
+        "/usr/share/gpupad/samples",
 #if !defined(NDEBUG)
         QCoreApplication::applicationDirPath() + "/../share/gpupad/samples",
         QCoreApplication::applicationDirPath() + "/../samples",

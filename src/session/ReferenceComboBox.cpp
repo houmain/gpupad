@@ -50,7 +50,8 @@ void ReferenceComboBox::refreshList()
     auto current = currentData();
 
     clear();
-    for (QVariant data : listRequired())
+    const auto list = Q_EMIT listRequired();
+    for (const QVariant &data : list)
         insertItem(model()->rowCount(), data);
 
     setCurrentData(current);
@@ -60,7 +61,8 @@ void ReferenceComboBox::refreshList()
 void ReferenceComboBox::insertItem(int index, QVariant data)
 {
     if (auto model = qobject_cast<QStandardItemModel*>(this->model())) {
-        auto item = new QStandardItem(textRequired(data));
+        const auto text = Q_EMIT textRequired(data);
+        auto item = new QStandardItem(text);
         item->setData(data, Qt::UserRole);
         model->insertRow(index, item);
     }

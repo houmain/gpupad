@@ -141,10 +141,8 @@ void main() {
         program.create();
         auto vertexShader = new QOpenGLShader(QOpenGLShader::Vertex, &program);
         auto fragmentShader = new QOpenGLShader(QOpenGLShader::Fragment, &program);
-        if (!vertexShader->compileSourceCode(vertexShaderSource))
-            return false;
-        if (!fragmentShader->compileSourceCode(buildFragmentShader(target, format)))
-            return false;
+        vertexShader->compileSourceCode(vertexShaderSource);
+        fragmentShader->compileSourceCode(buildFragmentShader(target, format));
         program.addShader(vertexShader);
         program.addShader(fragmentShader);
         return program.link();
@@ -261,11 +259,11 @@ void TextureItem::paint(QPainter *painter,
     const auto scale = painter->combinedTransform().m11();
     const auto width = static_cast<qreal>(painter->window().width());
     const auto height = static_cast<qreal>(painter->window().height());
-    const auto transform = QMatrix(
-        s.width() / width * scale, 0,
-        0, -s.height() / height * scale,
+    const auto transform = QTransform(
+        s.width() / width * scale, 0, 0,
+        0, -s.height() / height * scale, 0,
         2 * -(x * scale + width / 2) / width,
-        2 * (y * scale + height / 2) / height);
+        2 * (y * scale + height / 2) / height, 1);
 
     if (updateTexture())
         renderTexture(transform);
@@ -293,7 +291,7 @@ bool TextureItem::updateTexture()
     return (mPreviewTextureId || mImageTextureId);
 }
 
-bool TextureItem::renderTexture(const QMatrix &transform)
+bool TextureItem::renderTexture(const QMatrix4x4 &transform)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     auto &gl = context().gl();

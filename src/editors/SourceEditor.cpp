@@ -387,12 +387,12 @@ void SourceEditor::paintEvent(QPaintEvent *event)
 
     if (!mMultiSelections.empty()) {
         QPainter painter(viewport());
-        for (const auto &selection : mMultiSelections)
+        for (const auto &selection : qAsConst(mMultiSelections))
             if (selection.anchor() == selection.position()) {
-            const auto rect = cursorRect(selection);
-            painter.fillRect(rect.x(), rect.y(), 1, rect.height(),
-                QPalette().text());
-        }
+                const auto rect = cursorRect(selection);
+                painter.fillRect(rect.x(), rect.y(), 1, rect.height(),
+                    QPalette().text());
+            }
     }
 }
 
@@ -699,7 +699,7 @@ void SourceEditor::wheelEvent(QWheelEvent *event)
 
     if (event->modifiers() == Qt::ControlModifier) {
         auto font = this->font();
-        font.setPointSize(font.pointSize() + (event->delta() > 0 ? 1 : -1));
+        font.setPointSize(font.pointSize() + (event->angleDelta().y() > 0 ? 1 : -1));
         Singletons::settings().setFont(font);
         return;
     }
@@ -762,10 +762,10 @@ void SourceEditor::updateExtraSelections()
     cursor.clearSelection();
     selections.append({ cursor, mCurrentLineFormat });
 
-    for (const auto &occurrence : mMarkedOccurrences)
+    for (const auto &occurrence : qAsConst(mMarkedOccurrences))
         selections.append({ occurrence, mOccurrencesFormat });
 
-    for (const auto &selection : mMultiSelections)
+    for (const auto &selection : qAsConst(mMultiSelections))
         selections.append({ selection, mMultiSelectionFormat });
 
     setExtraSelections(selections);

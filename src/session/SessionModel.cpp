@@ -305,7 +305,7 @@ void SessionModel::dropJson(const QJsonArray &jsonArray,
 
     // fixup item references
     for (ItemId prevId : mDroppedIdsReplaced.keys())
-        for (QModelIndex reference : mDroppedReferences)
+        for (QModelIndex reference : qAsConst(mDroppedReferences))
             if (data(reference).toInt() == prevId)
                 setData(reference, mDroppedIdsReplaced[prevId]);
     mDroppedIdsReplaced.clear();

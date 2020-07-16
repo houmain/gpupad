@@ -230,7 +230,7 @@ void TextureEditor::wheelEvent(QWheelEvent *event)
     if (!event->modifiers()) {
         const auto min = -3;
         const auto max = 4;
-        auto delta = (event->delta() > 0 ? 1 : -1);
+        auto delta = (event->angleDelta().y() > 0 ? 1 : -1);
         setZoom(std::max(min, std::min(mZoom + delta, max)));
         return;
     }

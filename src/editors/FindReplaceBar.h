@@ -26,7 +26,7 @@ public:
     void resetTarget();
 
 Q_SIGNALS:
-    void action(Action action, QString find, QString replace,
+    void action(FindReplaceBar::Action action, QString find, QString replace,
         QTextDocument::FindFlags flags);
 
 protected:

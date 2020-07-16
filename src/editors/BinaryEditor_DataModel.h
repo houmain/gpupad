@@ -152,8 +152,8 @@ public:
             auto column = getColumn(section);
             if (column && column->editable) {
                 const auto index = section - column->index;
-                return column->name + (column->arity > 1 ?
-                    QString("[%1]").arg(index) : "");
+                return QString(column->name + (column->arity > 1 ?
+                    QString("[%1]").arg(index) : ""));
             }
         }
 

@@ -11,7 +11,6 @@ OutputWindow::OutputWindow(QWidget *parent) : QWidget(parent)
     , mTextEdit(new QPlainTextEdit(this))
 {
     auto layout = new QVBoxLayout(this);
-    layout->setMargin(0);
     layout->addWidget(mTypeSelector);
     layout->addWidget(mTextEdit);
 

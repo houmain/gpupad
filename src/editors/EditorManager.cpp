@@ -32,7 +32,7 @@ void EditorManager::createEditorToolBars(QToolBar *mainToolBar)
 
     // WORKAROUND: checkbox border is too dark in dark theme
     QPalette p = palette();
-    p.setColor(QPalette::Window, "#CCC");
+    p.setColor(QPalette::Window, 0xCCCCCC);
     widget->setPalette(p);
 
     updateEditorToolBarVisibility();
@@ -80,17 +80,19 @@ void EditorManager::dropEvent(QDropEvent *e)
 int EditorManager::getFocusedEditorIndex() const
 {
     auto index = 0;
-    for (auto it = mDocks.begin(); it != mDocks.end(); ++it, ++index)
-        if (it.key() == mCurrentDock)
+    for (auto [dock, editor] : mDocks) {
+        if (dock == mCurrentDock)
             return index;
+        ++index;
+    }
     return -1;
 }
 
 bool EditorManager::focusEditorByIndex(int index)
 {
-    if (index < 0 || index >= mDocks.size())
+    if (index < 0 || index >= static_cast<int>(mDocks.size()))
         return false;
-    raiseDock(std::next(mDocks.begin(), index).key());
+    raiseDock(std::next(mDocks.begin(), index)->first);
     return true;
 }
 
@@ -110,7 +112,7 @@ void EditorManager::updateCurrentEditor()
     auto previous = mCurrentDock;
     mCurrentDock = nullptr;
     auto focusWidget = qApp->focusWidget();
-    for (QDockWidget* dock : mDocks.keys()) {
+    for (const auto [dock, editor] : mDocks) {
         if (dock->isAncestorOf(focusWidget)) {
             mCurrentDock = dock;
             updateDockCurrentProperty(dock, true);
@@ -253,7 +255,7 @@ TextureEditor *EditorManager::openTextureEditor(const QString &fileName)
 
 SourceEditor* EditorManager::getSourceEditor(const QString &fileName)
 {
-    for (SourceEditor *editor : mSourceEditors)
+    for (SourceEditor *editor : qAsConst(mSourceEditors))
         if (editor->fileName() == fileName)
             return editor;
     return nullptr;
@@ -261,7 +263,7 @@ SourceEditor* EditorManager::getSourceEditor(const QString &fileName)
 
 BinaryEditor* EditorManager::getBinaryEditor(const QString &fileName)
 {
-    for (BinaryEditor *editor : mBinaryEditors)
+    for (BinaryEditor *editor : qAsConst(mBinaryEditors))
         if (editor->fileName() == fileName)
             return editor;
     return nullptr;
@@ -269,7 +271,7 @@ BinaryEditor* EditorManager::getBinaryEditor(const QString &fileName)
 
 TextureEditor* EditorManager::getTextureEditor(const QString &fileName)
 {
-    for (TextureEditor *editor : mTextureEditors)
+    for (TextureEditor *editor : qAsConst(mTextureEditors))
         if (editor->fileName() == fileName)
             return editor;
     return nullptr;
@@ -306,7 +308,7 @@ void EditorManager::renameEditors(const QString &prevFileName, const QString &fi
         prevFileName == fileName)
         return;
 
-    for (auto editor : qAsConst(mDocks))
+    for (auto [dock, editor] : mDocks)
         if (editor->fileName() == prevFileName)
             editor->setFileName(fileName);
 }
@@ -353,7 +355,7 @@ bool EditorManager::saveEditorAs()
 
 bool EditorManager::saveAllEditors()
 {
-    for (QDockWidget *dock : mDocks.keys())
+    for (auto [dock, editor] : mDocks)
         if (dock->isWindowModified())
             if (!saveDock(dock))
                 return false;
@@ -380,15 +382,15 @@ bool EditorManager::closeEditor()
 
 bool EditorManager::closeAllEditors()
 {
-    for (QDockWidget* dock : mDocks.keys())
-        if (!closeDock(dock))
+    while (!mDocks.empty())
+        if (!closeDock(mDocks.begin()->first))
             return false;
     return true;
 }
 
 bool EditorManager::closeAllTextureEditors()
 {
-    for (QDockWidget* dock : mDocks.keys())
+    for (auto [dock, editor] : mDocks)
         if (qobject_cast<TextureEditor*>(dock->widget()))
             if (!closeDock(dock))
                 return false;
@@ -441,9 +443,8 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     dock->installEventFilter(this);
 
     auto tabified = false;
-    for (QDockWidget* d : mDocks.keys()) {
-        if (!d->isFloating() &&
-              mDocks[d]->tabifyGroup() == editor->tabifyGroup()) {
+    for (auto [d, e] : mDocks) {
+        if (!d->isFloating() && e->tabifyGroup() == editor->tabifyGroup()) {
             tabifyDockWidget(d, dock);
             tabified = true;
             break;
@@ -454,7 +455,7 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
         resizeDocks({ dock }, { width() }, Qt::Horizontal);
     }
 
-    mDocks.insert(dock, editor);
+    mDocks.emplace(dock, editor);
     return dock;
 }
 
@@ -495,13 +496,13 @@ bool EditorManager::closeDock(QDockWidget *dock)
     mBinaryEditors.removeAll(static_cast<BinaryEditor*>(editor));
     mTextureEditors.removeAll(static_cast<TextureEditor*>(editor));
 
-    mDocks.remove(dock);
+    mDocks.erase(dock);
 
     if (mCurrentDock == dock) {
         updateDockCurrentProperty(dock, false);
         mCurrentDock = nullptr;
-        if (!mDocks.isEmpty())
-            autoRaise(mDocks.lastKey()->widget());
+        if (!mDocks.empty())
+            autoRaise(mDocks.rbegin()->first->widget());
     }
 
     DockWindow::closeDock(dock);

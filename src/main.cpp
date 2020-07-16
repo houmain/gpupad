@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
             window.activateWindow();
         });
 
-    for (QString argument : arguments)
+    for (const QString &argument : qAsConst(arguments))
         window.openFile(argument);
 
     if (!window.hasEditor())

@@ -73,7 +73,7 @@ SessionEditor::SessionEditor(QWidget *parent)
 
     // WORKAROUND: checkbox border is too dark in dark theme
     QPalette p = palette();
-    p.setColor(QPalette::Window, "#CCC");
+    p.setColor(QPalette::Window, 0xCCCCCC);
     setPalette(p);
 }
 

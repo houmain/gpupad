@@ -111,7 +111,7 @@ QList<double> ScriptEngine::evaluateValues(const QStringList &valueExpressions,
 {
     auto values = QList<double>();
     redirectConsoleMessages(messages, [&]() {
-        for (QString valueExpression : valueExpressions) {
+        for (const QString &valueExpression : valueExpressions) {
 
             // fast path, when script is a number
             auto ok = false;

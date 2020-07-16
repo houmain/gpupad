@@ -131,11 +131,11 @@ bool FileDialog::exec(Options options, QString currentFileName)
     for (const auto &ext : ScriptFileExtensions)
         scriptFileFilter = scriptFileFilter + " *." + ext;
 
-    auto supportedFileFilter = "*." + SessionFileExtension +
-        shaderFileFilter + scriptFileFilter + textureFileFilter;
+    auto supportedFileFilter = QString("*." + SessionFileExtension +
+        shaderFileFilter + scriptFileFilter + textureFileFilter);
 
     auto filters = QStringList();
-    const auto binaryFileFilter = tr("Binary files") + " (*)";
+    const auto binaryFileFilter = QString(tr("Binary files") + " (*)");
     if (options & SupportedExtensions)
         filters.append(tr("Supported files") + " (" + supportedFileFilter + ")");
     if (options & SessionExtensions)

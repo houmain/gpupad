@@ -33,7 +33,7 @@ MessagePtr insert(ItemId itemId,
 {
     QMutexLocker lock(&gMessagesMutex);
     if (deduplicate) {
-        for (const QWeakPointer<const Message> &ptr : gMessages)
+        for (const QWeakPointer<const Message> &ptr : qAsConst(gMessages))
             if (MessagePtr message = ptr.lock())
                 if (message->itemId == itemId &&
                     message->type == type &&

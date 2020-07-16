@@ -38,7 +38,7 @@ public:
     QStringList getBinaryFileNames() const;
     QStringList getImageFileNames() const;
 
-    bool hasEditor() const { return !mDocks.isEmpty(); }
+    bool hasEditor() const { return !mDocks.empty(); }
     bool focusNextEditor();
     bool focusPreviousEditor();
     void updateCurrentEditor();
@@ -81,7 +81,7 @@ private:
     QList<SourceEditor*> mSourceEditors;
     QList<BinaryEditor*> mBinaryEditors;
     QList<TextureEditor*> mTextureEditors;
-    QMap<QDockWidget*, IEditor*> mDocks;
+    std::map<QDockWidget*, IEditor*> mDocks;
     QDockWidget *mCurrentDock{ };
     FindReplaceBar *mFindReplaceBar{ };
     Ui::TextureEditorToolBar *mTextureEditorToolBar{ };

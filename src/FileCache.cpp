@@ -39,7 +39,7 @@ void FileCache::updateEditorFiles()
     Q_ASSERT(onMainThread());
     QMutexLocker lock(&mMutex);
     auto &editorManager = Singletons::editorManager();
-    for (const auto &fileName : mEditorFilesInvalidated) {
+    for (const auto &fileName : qAsConst(mEditorFilesInvalidated)) {
         if (auto editor = editorManager.getSourceEditor(fileName)) {
             mSources[fileName] = editor->source();
         }
@@ -158,7 +158,7 @@ void FileCache::updateFileSystemWatches()
         return nullptr;
     };
 
-    for (auto fileName : qAsConst(filesChanged)) {
+    for (const auto &fileName : qAsConst(filesChanged)) {
         if (auto editor = getEditor(fileName)) {
             if (!mEditorSaveAdvertised.remove(fileName))
                 editor->reload();

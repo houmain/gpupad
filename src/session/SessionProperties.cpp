@@ -175,24 +175,23 @@ QVariantList SessionProperties::getFileNames(Item::Type type, bool addNull) cons
     if (addNull)
         result += "";
 
+    const auto append = [&](const QStringList fileNames) {
+        for (const auto &fileName : fileNames)
+            if (!result.contains(fileName))
+                result.append(fileName);
+    };
     switch (type) {
         case Item::Type::Shader:
         case Item::Type::Script:
-            for (QString f : Singletons::editorManager().getSourceFileNames())
-                if (!result.contains(f))
-                    result.append(f);
+            append(Singletons::editorManager().getSourceFileNames());
             break;
 
         case Item::Type::Buffer:
-            for (QString f : Singletons::editorManager().getBinaryFileNames())
-                if (!result.contains(f))
-                    result.append(f);
+            append(Singletons::editorManager().getBinaryFileNames());
             break;
 
         case Item::Type::Texture:
-            for (QString f : Singletons::editorManager().getImageFileNames())
-                if (!result.contains(f))
-                    result.append(f);
+            append(Singletons::editorManager().getImageFileNames());
             break;
 
         default:
@@ -206,8 +205,6 @@ QVariantList SessionProperties::getFileNames(Item::Type type, bool addNull) cons
                 result.append(fileName);
         }
     });
-    std::sort(result.begin(), result.end());
-
     return result;
 }
 

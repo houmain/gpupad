@@ -33,7 +33,7 @@ public:
     void rewindVideoFiles();
 
 Q_SIGNALS:
-    void fileChanged(const QString &fileName) const;
+    void fileChanged(const QString &fileName);
     void videoPlayerRequested(const QString &fileName, QPrivateSignal);
 
 private:

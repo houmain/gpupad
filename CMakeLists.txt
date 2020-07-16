@@ -12,9 +12,22 @@ endif()
 configure_file("src/version.h.in" "${CMAKE_SOURCE_DIR}/src/_version.h")
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
+
+add_definitions(-DQT_NO_CAST_TO_ASCII
+                #-DQT_NO_CAST_FROM_ASCII
+                -DQT_NO_URL_CAST_FROM_STRING
+                -DQT_NO_CAST_FROM_BYTEARRAY
+                -DQT_NO_SIGNALS_SLOTS_KEYWORDS
+                -DQT_USE_QSTRINGBUILDER
+                -DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT
+                #-DQT_STRICT_ITERATORS
+                -DQT_NO_KEYWORDS
+                -DQT_DISABLE_DEPRECATED_BEFORE=0x051200
+                -DQT_NO_FOREACH)
 
 set(SOURCES
   libs/SingleApplication/singleapplication.cpp
@@ -101,12 +114,20 @@ set(SOURCES
 
 file(GLOB_RECURSE HEADERS include *.h)
 if(WIN32)
-  set(HEADERS ${HEADERS} src/resources.rc qt5.natvis)
+    set(HEADERS ${HEADERS} src/resources.rc qt5.natvis)
 endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
 add_compile_definitions(QAPPLICATION_CLASS=QApplication KTX_OPENGL)
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
+
+option(OPTION_DEVELOPER_MODE "Developer Mode" OFF)
+if (OPTION_DEVELOPER_MODE)
+    add_definitions(-DQT_FORCE_ASSERTS)
+    if (NOT MSVC)
+        add_compile_options(-Wall -Wextra -Werror)
+    endif()
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include)
 

@@ -84,7 +84,7 @@ public:
 
     void moveRight()
     {
-        for (auto position : cursors)
+        for (auto position : qAsConst(cursors))
             if (!position.atBlockEnd()) {
                 position.setPosition(position.position());
                 position.movePosition(QTextCursor::Right);

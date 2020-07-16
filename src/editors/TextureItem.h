@@ -40,7 +40,7 @@ public:
 private:
     ZeroCopyContext &context();
     bool updateTexture();
-    bool renderTexture(const QMatrix &transform);
+    bool renderTexture(const QMatrix4x4 &transform);
 
     QScopedPointer<ZeroCopyContext> mContext;
     QRect mBoundingRect;

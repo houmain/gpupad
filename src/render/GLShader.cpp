@@ -100,7 +100,7 @@ bool GLShader::compile(bool silent)
     }
 
     auto sources = std::vector<std::string>();
-    for (const QString &source : mSources)
+    for (const QString &source : qAsConst(mSources))
         sources.push_back(source.toUtf8().data());
 
     // workaround: to prevent unesthetic "unexpected end" error,

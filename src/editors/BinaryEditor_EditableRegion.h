@@ -82,7 +82,8 @@ public:
         auto str = QString();
         auto prevRow = -1;
         auto newLine = true;
-        for (QModelIndex index : selectedIndexes()) {
+        const auto indices = selectedIndexes();
+        for (QModelIndex index : indices) {
             auto row = index.row();
             if (prevRow != -1 && row != prevRow) {
                 str += "\n";
@@ -114,11 +115,13 @@ public:
         const auto begin = selectedIndexes().constFirst();
         auto r = begin.row();
         auto c = begin.column();
-        for (QString row : text.split('\n')) {
+        const auto rows = text.split('\n');
+        for (const auto &row : rows) {
             if (row.trimmed().isEmpty())
                 continue;
             c = begin.column();
-            for (QString value : row.split(separator)) {
+            const auto values = row.split(separator);
+            for (const auto &value : values) {
                 const auto index = model()->index(r, c);
                 if (index.flags() & Qt::ItemIsEditable)
                     model()->setData(index, toNumber(value));
@@ -145,9 +148,10 @@ public:
 
     void delete_()
     {
-        auto minIndex = selectedIndexes().constFirst();
-        auto maxIndex = selectedIndexes().constFirst();
-        for (QModelIndex index : selectedIndexes())
+        const auto indices = selectedIndexes();
+        auto minIndex = indices.first();
+        auto maxIndex = indices.first();
+        for (const QModelIndex &index : indices)
             if (index.flags() & Qt::ItemIsEditable) {
                 model()->setData(index, 0.0);
                 minIndex = model()->index(
