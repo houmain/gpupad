@@ -54,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
     auto content = new QWidget(this);
     mEditorManager.setParent(content);
     auto layout = new QVBoxLayout(content);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     layout->addWidget(&mEditorManager);
     layout->addWidget(&mEditorManager.findReplaceBar());
