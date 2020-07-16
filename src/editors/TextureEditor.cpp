@@ -117,7 +117,8 @@ void TextureEditor::updateEditorToolBar()
     mEditorToolBar.layer->setVisible(maxLayer);
     mEditorToolBar.layer->setValue(mTextureItem->layer());
 
-    const auto maxSample = std::max(mTexture.samples() - 1, 0);
+    // disabled for now, since all samples are identical after download
+    const auto maxSample = 0; //std::max(mTexture.samples() - 1, 0);
     mEditorToolBar.sample->setMinimum(-1);
     mEditorToolBar.sample->setMaximum(maxSample);
     mEditorToolBar.labelSample->setVisible(maxSample);

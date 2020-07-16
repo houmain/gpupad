@@ -27,18 +27,6 @@ public:
     GLContext context;
     QOffscreenSurface surface;
 
-    void stop() 
-    {
-        context.makeCurrent(&surface);
-        mDebugLogger.reset();
-        context.doneCurrent();
-
-        auto guiThread = QApplication::instance()->thread();
-        context.moveToThread(guiThread);
-        surface.moveToThread(guiThread);
-        QThread::currentThread()->exit(0);
-    }
-
     void handleRenderTask(RenderTask* renderTask)
     {
         context.makeCurrent(&surface);
@@ -57,6 +45,19 @@ public:
         renderTask->release();
         context.doneCurrent();
         static_cast<QSemaphore*>(userData)->release(1);
+    }
+
+public Q_SLOTS:
+    void stop()
+    {
+        context.makeCurrent(&surface);
+        mDebugLogger.reset();
+        context.doneCurrent();
+
+        auto guiThread = QApplication::instance()->thread();
+        context.moveToThread(guiThread);
+        surface.moveToThread(guiThread);
+        QThread::currentThread()->exit(0);
     }
 
 Q_SIGNALS:

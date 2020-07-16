@@ -87,7 +87,8 @@ void DockWindow::updateDocks()
        disconnect(connection);
     mDockConnections.clear();
 
-    for (QTabBar* tabBar : findChildren<QTabBar*>())
+    const auto children = findChildren<QTabBar*>();
+    for (QTabBar* tabBar : children)
         updateTabBar(tabBar);
 }
 
