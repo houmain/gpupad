@@ -10,7 +10,7 @@ class QResizeEvent;
 class QSyntaxHighlighter;
 class QCompleter;
 
-class SourceEditor : public QPlainTextEdit, public IEditor
+class SourceEditor final : public QPlainTextEdit, public IEditor
 {
     Q_OBJECT
 public:

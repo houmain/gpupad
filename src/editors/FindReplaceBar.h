@@ -8,7 +8,7 @@ namespace Ui {
 class FindReplaceBar;
 }
 
-class FindReplaceBar : public QWidget
+class FindReplaceBar final : public QWidget
 {
     Q_OBJECT
 public:

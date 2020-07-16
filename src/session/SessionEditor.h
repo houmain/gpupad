@@ -8,7 +8,7 @@ class QMenu;
 struct EditActions;
 class SessionModel;
 
-class SessionEditor : public QTreeView
+class SessionEditor final : public QTreeView
 {
     Q_OBJECT
 public:

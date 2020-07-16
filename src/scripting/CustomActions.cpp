@@ -13,7 +13,7 @@
 #include <QStandardPaths>
 #include <QAction>
 
-class CustomAction : public QAction
+class CustomAction final : public QAction
 {
 public:
     CustomAction(const QString &filePath)

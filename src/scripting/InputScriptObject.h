@@ -5,7 +5,7 @@
 #include <QJsonValue>
 #include <QPointF>
 
-class InputScriptObject : public QObject
+class InputScriptObject final : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QJsonValue mouseX READ mouseX)

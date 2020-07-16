@@ -12,7 +12,7 @@ class AttachmentProperties;
 class QDataWidgetMapper;
 class SessionProperties;
 
-class AttachmentProperties : public QWidget
+class AttachmentProperties final : public QWidget
 {
     Q_OBJECT
 public:

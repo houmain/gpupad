@@ -36,7 +36,7 @@ namespace {
             owns);
     }
 
-    class MergingUndoCommand : public QUndoCommand
+    class MergingUndoCommand final : public QUndoCommand
     {
     public:
         MergingUndoCommand(int id, QUndoCommand *firstCommand)

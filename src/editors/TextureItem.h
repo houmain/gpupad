@@ -12,7 +12,7 @@
 
 class ZeroCopyContext;
 
-class TextureItem : public QGraphicsItem
+class TextureItem final : public QGraphicsItem
 {
 public:
     TextureItem();

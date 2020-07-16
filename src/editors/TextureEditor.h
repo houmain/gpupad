@@ -9,7 +9,7 @@
 
 class TextureItem;
 
-class TextureEditor : public QGraphicsView, public IEditor
+class TextureEditor final : public QGraphicsView, public IEditor
 {
     Q_OBJECT
 public:

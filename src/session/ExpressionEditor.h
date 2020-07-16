@@ -3,7 +3,7 @@
 
 #include <QPlainTextEdit>
 
-class ExpressionEditor : public QPlainTextEdit
+class ExpressionEditor final : public QPlainTextEdit
 {
     Q_OBJECT
     Q_PROPERTY(QString text READ text WRITE

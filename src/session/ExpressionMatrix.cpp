@@ -5,7 +5,7 @@
 #include <QToolTip>
 
 namespace {
-    class ExpressionItemDelegate : public QStyledItemDelegate
+    class ExpressionItemDelegate final : public QStyledItemDelegate
     {
     public:
         ExpressionItemDelegate(QWidget *parent)

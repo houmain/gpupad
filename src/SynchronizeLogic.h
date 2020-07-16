@@ -14,7 +14,7 @@ class BinaryEditor;
 class RenderSession;
 class ProcessSource;
 
-class SynchronizeLogic : public QObject
+class SynchronizeLogic final : public QObject
 {
     Q_OBJECT
 public:

@@ -19,7 +19,7 @@ QString getFirstGLError()
     return std::exchange(gFirstGLError, "");
 }
 
-class Renderer::Worker : public QObject
+class Renderer::Worker final : public QObject
 {
     Q_OBJECT
 

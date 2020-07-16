@@ -9,7 +9,7 @@
 #include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLFunctions_4_5_Core>
 
-class GLContext : public QOpenGLContext, public QOpenGLFunctions_3_3_Core
+class GLContext final : public QOpenGLContext, public QOpenGLFunctions_3_3_Core
 {
     Q_OBJECT
 public:

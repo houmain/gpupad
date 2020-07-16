@@ -13,7 +13,7 @@ namespace
     }
 } // namespace
 
-class BinaryEditor::HexModel : public QAbstractTableModel
+class BinaryEditor::HexModel final : public QAbstractTableModel
 {
     Q_OBJECT
 public:

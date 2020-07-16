@@ -8,7 +8,7 @@
 struct Item;
 class SessionModel;
 
-class GpupadScriptObject : public QObject
+class GpupadScriptObject final : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QJsonArray session READ session)

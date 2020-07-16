@@ -7,7 +7,7 @@
 
 class QTimer;
 
-class MessageWindow : public QTableWidget
+class MessageWindow final : public QTableWidget
 {
     Q_OBJECT
 

@@ -8,7 +8,7 @@
 class GLShader;
 class ScriptEngine;
 
-class ProcessSource : public RenderTask
+class ProcessSource final : public RenderTask
 {
     Q_OBJECT
 public:

@@ -5,7 +5,7 @@
 
 class QCompleter;
 
-class GlslHighlighter : public QSyntaxHighlighter {
+class GlslHighlighter final : public QSyntaxHighlighter {
     Q_OBJECT
 public:
     explicit GlslHighlighter(bool darkTheme, QObject *parent = nullptr);

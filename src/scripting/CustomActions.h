@@ -14,7 +14,7 @@ class CustomActions;
 class QFileSystemModel;
 class CustomAction;
 
-class CustomActions : public QDialog
+class CustomActions final : public QDialog
 {
     Q_OBJECT
 public:

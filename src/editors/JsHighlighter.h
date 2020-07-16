@@ -5,7 +5,7 @@
 
 class QCompleter;
 
-class JsHighlighter : public QSyntaxHighlighter {
+class JsHighlighter final : public QSyntaxHighlighter {
     Q_OBJECT
 public:
     explicit JsHighlighter(bool darkTheme, QObject *parent = nullptr);

@@ -151,7 +151,7 @@ void main() {
 
 //-------------------------------------------------------------------------
 
-class ZeroCopyContext : public QObject
+class ZeroCopyContext final : public QObject
 {
 public:
     explicit ZeroCopyContext(QObject *parent = nullptr);

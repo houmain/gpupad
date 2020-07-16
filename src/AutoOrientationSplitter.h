@@ -3,7 +3,7 @@
 
 #include <QSplitter>
 
-class AutoOrientationSplitter : public QSplitter
+class AutoOrientationSplitter final : public QSplitter
 {
     Q_OBJECT
 public:

@@ -16,7 +16,7 @@ namespace
     }
 } // namespace
 
-class BinaryEditor::SpinBoxDelegate : public QItemDelegate
+class BinaryEditor::SpinBoxDelegate final : public QItemDelegate
 {
     Q_OBJECT
 public:

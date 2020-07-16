@@ -3,7 +3,7 @@
 
 #include <QTableWidget>
 
-class ExpressionMatrix : public QTableWidget
+class ExpressionMatrix final : public QTableWidget
 {
     Q_OBJECT
 public:

@@ -19,7 +19,7 @@
 #include <QTextStream>
 #include <QSaveFile>
 
-class SourceEditor::LineNumberArea : public QWidget
+class SourceEditor::LineNumberArea final : public QWidget
 {
 public:
     LineNumberArea(SourceEditor *editor)

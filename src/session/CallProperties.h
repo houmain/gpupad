@@ -12,7 +12,7 @@ class CallProperties;
 class QDataWidgetMapper;
 class SessionProperties;
 
-class CallProperties : public QWidget
+class CallProperties final : public QWidget
 {
     Q_OBJECT
 public:

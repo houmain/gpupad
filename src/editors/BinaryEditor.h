@@ -4,7 +4,7 @@
 #include "IEditor.h"
 #include <QTableView>
 
-class BinaryEditor : public QTableView, public IEditor
+class BinaryEditor final : public QTableView, public IEditor
 {
     Q_OBJECT
 public:

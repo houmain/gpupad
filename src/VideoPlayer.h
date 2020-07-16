@@ -6,7 +6,7 @@
 #include <QAbstractVideoSurface>
 #include <QMediaPlayer>
 
-class VideoPlayer : public QAbstractVideoSurface
+class VideoPlayer final : public QAbstractVideoSurface
 {
     Q_OBJECT
 public:
@@ -39,7 +39,7 @@ private:
 
 #include <QObject>
 
-class VideoPlayer : public QObject
+class VideoPlayer final : public QObject
 {
     Q_OBJECT
 public:

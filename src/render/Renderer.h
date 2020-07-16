@@ -6,7 +6,7 @@
 
 class RenderTask;
 
-class Renderer : public QObject
+class Renderer final : public QObject
 {
     Q_OBJECT
 public:

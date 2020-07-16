@@ -12,7 +12,7 @@ class BindingProperties;
 class SessionProperties;
 class QDataWidgetMapper;
 
-class BindingProperties : public QWidget
+class BindingProperties final : public QWidget
 {
     Q_OBJECT
     Q_PROPERTY(QStringList values READ values WRITE setValues

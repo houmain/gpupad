@@ -12,7 +12,7 @@ class ScriptEngine;
 class InputScriptObject;
 class QOpenGLTimerQuery;
 
-class RenderSession : public RenderTask
+class RenderSession final : public RenderTask
 {
     Q_OBJECT
 public:

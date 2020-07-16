@@ -3,7 +3,7 @@
 
 #include <QComboBox>
 
-class ReferenceComboBox : public QComboBox
+class ReferenceComboBox final : public QComboBox
 {
     Q_OBJECT
     Q_PROPERTY(QVariant currentData READ currentData WRITE

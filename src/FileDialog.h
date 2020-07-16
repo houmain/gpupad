@@ -6,7 +6,7 @@
 
 class QMainWindow;
 
-class FileDialog : public QObject
+class FileDialog final : public QObject
 {
     Q_OBJECT
 public:

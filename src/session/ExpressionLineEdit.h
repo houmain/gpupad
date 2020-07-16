@@ -3,7 +3,7 @@
 
 #include <QLineEdit>
 
-class ExpressionLineEdit : public QLineEdit
+class ExpressionLineEdit final : public QLineEdit
 {
     Q_OBJECT
     Q_PROPERTY(QString text READ text WRITE

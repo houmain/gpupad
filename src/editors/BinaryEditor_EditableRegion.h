@@ -9,7 +9,7 @@
 #include <QClipboard>
 #include <QMimeData>
 
-class BinaryEditor::EditableRegion : public QTableView
+class BinaryEditor::EditableRegion final : public QTableView
 {
     Q_OBJECT
 public:
@@ -181,7 +181,7 @@ private:
 
 //-------------------------------------------------------------------------
 
-class BinaryEditor::EditableRegionDelegate : public QItemDelegate
+class BinaryEditor::EditableRegionDelegate final : public QItemDelegate
 {
     Q_OBJECT
 public:

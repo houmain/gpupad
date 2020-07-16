@@ -11,7 +11,7 @@
 
 class VideoPlayer;
 
-class FileCache : public QObject
+class FileCache final : public QObject
 {
     Q_OBJECT
 public:

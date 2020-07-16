@@ -22,7 +22,7 @@
 #include <QTimer>
 
 namespace {
-  class StackedWidget : public QStackedWidget
+  class StackedWidget final : public QStackedWidget
   {
   public:
       using QStackedWidget::QStackedWidget;

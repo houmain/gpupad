@@ -11,7 +11,7 @@ class TextureProperties;
 class SessionProperties;
 class QDataWidgetMapper;
 
-class TextureProperties : public QWidget
+class TextureProperties final : public QWidget
 {
     Q_OBJECT
     Q_PROPERTY(QVariant format READ format WRITE setFormat

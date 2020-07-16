@@ -9,7 +9,7 @@
 #include <QList>
 #include <QMap>
 
-class EditorManager : public DockWindow
+class EditorManager final : public DockWindow
 {
     Q_OBJECT
 public:

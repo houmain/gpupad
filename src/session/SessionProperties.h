@@ -31,7 +31,7 @@ class BindingProperties;
 class CallProperties;
 class AttachmentProperties;
 
-class SessionProperties : public QScrollArea
+class SessionProperties final : public QScrollArea
 {
     Q_OBJECT
 public:

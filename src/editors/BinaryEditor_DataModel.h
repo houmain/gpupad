@@ -19,7 +19,7 @@ namespace
     }
 } // namespace
 
-class BinaryEditor::DataModel : public QAbstractTableModel
+class BinaryEditor::DataModel final : public QAbstractTableModel
 {
 public:
     DataModel(BinaryEditor *editor, QByteArray *data)

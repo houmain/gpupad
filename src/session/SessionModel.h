@@ -7,7 +7,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-class SessionModel : public SessionModelCore
+class SessionModel final : public SessionModelCore
 {
     Q_OBJECT
 public:

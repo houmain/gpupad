@@ -6,7 +6,7 @@
 class QPlainTextEdit;
 class DataComboBox;
 
-class OutputWindow : public QWidget
+class OutputWindow final : public QWidget
 {
     Q_OBJECT
 
