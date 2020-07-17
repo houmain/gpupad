@@ -1,4 +1,3 @@
-//#include <animation.glsl>
 
 attribute vec4 a_Position;
 varying vec3 v_Position;

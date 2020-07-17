@@ -150,7 +150,6 @@ if(Qt5Multimedia_FOUND)
     add_compile_definitions(Qt5Multimedia_FOUND)
 endif()
 
-
 if(NOT WIN32)
     install(TARGETS ${PROJECT_NAME} DESTINATION "bin")
     install(DIRECTORY share DESTINATION .)

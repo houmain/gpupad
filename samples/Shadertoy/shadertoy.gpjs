@@ -81,7 +81,7 @@
                 "type": "Shader"
             },
             {
-                "fileName": "image.glsl",
+                "fileName": "image.fs",
                 "id": 79,
                 "shaderType": "Fragment",
                 "type": "Shader"

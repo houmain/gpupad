@@ -9,7 +9,7 @@ void main() {
   int barWidth = 8;
   int width = textureSize(target, 0).x - barWidth;
   float speed = width / frameRate;
-  int pos = abs(int(frame * speed) % (width * 2) - width);
+  float pos = abs(int(frame * speed) % (width * 2) - width);
   float onLine =
     step(pos, gl_FragCoord.x) -
     step(pos + barWidth, gl_FragCoord.x);

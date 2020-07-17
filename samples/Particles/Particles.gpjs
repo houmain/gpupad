@@ -114,13 +114,13 @@
         "id": 62,
         "items": [
             {
-                "fileName": "particle.glsl",
+                "fileName": "particle.comp",
                 "id": 76,
                 "shaderType": "Header",
                 "type": "Shader"
             },
             {
-                "fileName": "reset.glsl",
+                "fileName": "reset.comp",
                 "id": 63,
                 "shaderType": "Compute",
                 "type": "Shader"
@@ -133,13 +133,13 @@
         "id": 72,
         "items": [
             {
-                "fileName": "particle.glsl",
+                "fileName": "particle.comp",
                 "id": 75,
                 "shaderType": "Header",
                 "type": "Shader"
             },
             {
-                "fileName": "update.glsl",
+                "fileName": "update.comp",
                 "id": 73,
                 "shaderType": "Compute",
                 "type": "Shader"

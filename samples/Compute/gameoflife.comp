@@ -8,7 +8,7 @@ void main() {
   ivec2 size = imageSize(uImageR);
   ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
 
-  bool alive = false;  
+  bool alive = false;
   int neighbors = 0;
   for (int y = -1; y <= 1; y++)
     for (int x = -1; x <= 1; x++) {
@@ -20,7 +20,7 @@ void main() {
           neighbors++;
       }
     }
-  
+
   if (alive) {
     if (neighbors < 2 || neighbors > 3)
       alive = false;
@@ -28,11 +28,11 @@ void main() {
   else {
     if (neighbors == 3)
       alive = true;
-  }  
-  
+  }
+
   // create life
-  if (floor(length(pos - size/2)) == 100)
-    alive = true;
-  
+  if (floor(length(pos - size/2)) == 100 || pos == vec2(58, 60))
+    alive = !alive;
+
   imageStore(uImageW, pos, vec4(vec3(alive ? 0 : 1), 1));
 }

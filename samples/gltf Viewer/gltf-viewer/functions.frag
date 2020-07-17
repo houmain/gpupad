@@ -1,4 +1,3 @@
-// textures.glsl needs to be included
 
 const float M_PI = 3.141592653589793;
 const float c_MinReflectance = 0.04;
