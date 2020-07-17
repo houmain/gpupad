@@ -11,11 +11,13 @@ OutputWindow::OutputWindow(QWidget *parent) : QWidget(parent)
     , mTextEdit(new QPlainTextEdit(this))
 {
     auto layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(mTypeSelector);
     layout->addWidget(mTextEdit);
 
     mTypeSelector->addItem(tr("Preprocess"), "preprocess");
     mTypeSelector->addItem(tr("Dump SPIR-V"), "spirv");
+    mTypeSelector->addItem(tr("Dump glslang AST"), "ast");
     mTypeSelector->addItem(tr("Dump assembly (NV_gpu_program)"), "assembly");
     connect(mTypeSelector, &DataComboBox::currentDataChanged,
         [this](QVariant data) { Q_EMIT typeSelectionChanged(data.toString()); });

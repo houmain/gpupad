@@ -5,7 +5,20 @@
 #include <QDir>
 
 namespace {
-    QString glslangValidator(QString source, QStringList args)
+    const char *getGLSLangSourceType(SourceType sourceType)
+    {
+        switch (sourceType) {
+            case SourceType::VertexShader: return "vert";
+            case SourceType::FragmentShader: return "frag";
+            case SourceType::TesselationControl: return "tesc";
+            case SourceType::TesselationEvaluation: return "tese";
+            case SourceType::GeometryShader: return "geom";
+            case SourceType::ComputeShader: return "comp";
+            default: return nullptr;
+        }
+    }
+
+    QString executeGLSLangValidator(QString source, QStringList args)
     {
         QProcess process;
         process.setProcessChannelMode(QProcess::MergedChannels);
@@ -26,22 +39,12 @@ namespace {
     QString preprocess(QString source)
     {
         const auto args = QStringList{ "-E", "--stdin", "-S", "vert" };
-        return glslangValidator(source, args);
+        return executeGLSLangValidator(source, args);
     }
 
     QString generateSpirV(QString source, SourceType sourceType)
     {
-        const auto type = [&]() -> const char* {
-            switch (sourceType) {
-                case SourceType::VertexShader: return "vert";
-                case SourceType::FragmentShader: return "frag";
-                case SourceType::TesselationControl: return "tesc";
-                case SourceType::TesselationEvaluation: return "tese";
-                case SourceType::GeometryShader: return "geom";
-                case SourceType::ComputeShader: return "comp";
-                default: return nullptr;
-            }
-        }();
+        const auto type = getGLSLangSourceType(sourceType);
         if (!type)
             return "";
 
@@ -50,7 +53,21 @@ namespace {
           "--client", "opengl100",
           "--stdin", "-S", type
         };
-        return glslangValidator(source, args).replace("stdin", "");
+        return executeGLSLangValidator(source, args).replace("stdin", "");
+    }
+
+    QString generateAST(QString source, SourceType sourceType)
+    {
+        const auto type = getGLSLangSourceType(sourceType);
+        if (!type)
+            return "";
+
+        const auto args = QStringList{
+          "-i", "--aml", "--amb",
+          "--client", "opengl100",
+          "--stdin", "-S", type
+        };
+        return executeGLSLangValidator(source, args).replace("stdin", "");
     }
 
     Shader::ShaderType getShaderType(SourceType sourceType)
@@ -172,6 +189,8 @@ void ProcessSource::render()
             mOutput = preprocess(mShader->getSource());
         else if (mProcessType == "spirv")
             mOutput = generateSpirV(mShader->getSource(), mSourceType);
+        else if (mProcessType == "ast")
+            mOutput = generateAST(mShader->getSource(), mSourceType);
         else if (mProcessType == "assembly")
             mOutput = mShader->getAssembly();
     }
