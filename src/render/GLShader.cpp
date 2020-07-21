@@ -1,4 +1,17 @@
 #include "GLShader.h"
+namespace {
+    QString removeVersion(QString *source, bool removeNewline) {
+        const auto regex = QRegularExpression(
+            (removeNewline ? "(#version[^\n]*\n?)" : "(#version[^\n]*)"),
+            QRegularExpression::MultilineOption);
+        auto version = QString();
+        if (auto match = regex.match(*source); match.hasMatch()) {
+            version = match.captured();
+            source->remove(match.capturedStart(), match.capturedLength());
+        }
+        return version.trimmed();
+    }
+} // namespace
 
 void GLShader::parseLog(const QString &log,
         MessagePtrSet &messages, ItemId itemId,
@@ -44,20 +57,29 @@ void GLShader::parseLog(const QString &log,
 GLShader::GLShader(const QList<const Shader*> &shaders)
 {
     auto sourceIndex = 0;
+    auto maxVersion = QString();
     for (const Shader *shader : shaders) {
         auto source = QString();
         if (!Singletons::fileCache().getSource(shader->fileName, &source))
             mMessages += MessageList::insert(shader->id,
                 MessageType::LoadingFileFailed, shader->fileName);
 
-        if (sourceIndex)
+        if (sourceIndex > 0)
             source = QString("#line 1 %1\n").arg(sourceIndex) + source;
-        sourceIndex++;
+
+
+        maxVersion = std::max(maxVersion,
+            removeVersion(&source, (sourceIndex > 0)));
 
         mSources += source + "\n";
         mFileNames += shader->fileName;
         mItemId = shader->id;
         mType = shader->shaderType;
+        sourceIndex++;
+    }
+
+    if (!mSources.isEmpty() && !maxVersion.isEmpty()) {
+        mSources.first() = maxVersion + "\n" + mSources.first();
     }
 }
 
