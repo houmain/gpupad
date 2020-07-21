@@ -238,9 +238,9 @@ void SourceEditor::setSourceTypeFromExtension()
     else if (extension == "gs" || extension == "geom")
         setSourceType(SourceType::GeometryShader);
     else if (extension == "tesc")
-        setSourceType(SourceType::TesselationControl);
+        setSourceType(SourceType::TessellationControl);
     else if (extension == "tese")
-        setSourceType(SourceType::TesselationEvaluation);
+        setSourceType(SourceType::TessellationEvaluation);
     else if (extension == "comp")
         setSourceType(SourceType::ComputeShader);
     else if (extension == "js")

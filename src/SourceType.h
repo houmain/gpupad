@@ -8,8 +8,8 @@ enum class SourceType
     VertexShader,
     FragmentShader,
     GeometryShader,
-    TesselationControl,
-    TesselationEvaluation,
+    TessellationControl,
+    TessellationEvaluation,
     ComputeShader,
     JavaScript,
 };

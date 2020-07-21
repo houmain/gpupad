@@ -398,8 +398,8 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
             { Shader::ShaderType::Vertex, SourceType::VertexShader },
             { Shader::ShaderType::Fragment, SourceType::FragmentShader },
             { Shader::ShaderType::Geometry, SourceType::GeometryShader },
-            { Shader::ShaderType::TessellationControl, SourceType::TesselationControl },
-            { Shader::ShaderType::TessellationEvaluation, SourceType::TesselationEvaluation },
+            { Shader::ShaderType::TessellationControl, SourceType::TessellationControl },
+            { Shader::ShaderType::TessellationEvaluation, SourceType::TessellationEvaluation },
             { Shader::ShaderType::Compute, SourceType::ComputeShader },
         };
         auto sourceType = sMapping[shader->shaderType];

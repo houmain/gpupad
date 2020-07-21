@@ -245,8 +245,8 @@ MainWindow::MainWindow(QWidget *parent)
     addSourceType(tr("Vertex Shader"), SourceType::VertexShader);
     addSourceType(tr("Fragment Shader"), SourceType::FragmentShader);
     addSourceType(tr("Geometry Shader"), SourceType::GeometryShader);
-    addSourceType(tr("Tesselation Control"), SourceType::TesselationControl);
-    addSourceType(tr("Tesselation Evaluation"), SourceType::TesselationEvaluation);
+    addSourceType(tr("Tessellation Control"), SourceType::TessellationControl);
+    addSourceType(tr("Tessellation Evaluation"), SourceType::TessellationEvaluation);
     addSourceType(tr("Compute Shader"), SourceType::ComputeShader);
     addSourceType(tr("JavaScript"), SourceType::JavaScript);
 

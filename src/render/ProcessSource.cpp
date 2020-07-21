@@ -5,21 +5,30 @@
 #include <QDir>
 
 namespace {
-    const char *getGLSLangSourceType(SourceType sourceType)
+    const char *getGLSLangSourceType(Shader::ShaderType shaderType)
     {
-        switch (sourceType) {
-            case SourceType::VertexShader: return "vert";
-            case SourceType::FragmentShader: return "frag";
-            case SourceType::TesselationControl: return "tesc";
-            case SourceType::TesselationEvaluation: return "tese";
-            case SourceType::GeometryShader: return "geom";
-            case SourceType::ComputeShader: return "comp";
-            default: return nullptr;
+        switch (shaderType) {
+            case Shader::ShaderType::Vertex: return "vert";
+            case Shader::ShaderType::Fragment: return "frag";
+            case Shader::ShaderType::TessellationControl: return "tesc";
+            case Shader::ShaderType::TessellationEvaluation: return "tese";
+            case Shader::ShaderType::Geometry: return "geom";
+            case Shader::ShaderType::Compute: return "comp";
+                break;
+
+            case Shader::ShaderType::Header:
+                break;
         }
+        return nullptr;
     }
 
-    QString executeGLSLangValidator(QString source, QStringList args)
+    QString executeGLSLangValidator(QString source, QStringList args, Shader::ShaderType shaderType)
     {
+        args += "--stdin";
+        if (auto sourceType = getGLSLangSourceType(shaderType)) {
+            args += "-S";
+            args += sourceType;
+        }
         QProcess process;
         process.setProcessChannelMode(QProcess::MergedChannels);
         process.setWorkingDirectory(QDir::temp().path());
@@ -33,41 +42,34 @@ namespace {
         while (process.waitForReadyRead())
             data.append(process.readAll());
 
-        return QString::fromUtf8(data);
+        auto result = QString::fromUtf8(data);
+        if (result.startsWith("stdin"))
+            return result.mid(5);
+        return result;
     }
 
     QString preprocess(QString source)
     {
-        const auto args = QStringList{ "-E", "--stdin", "-S", "vert" };
-        return executeGLSLangValidator(source, args);
+        const auto args = QStringList{ "-E" };
+        return executeGLSLangValidator(source, args, Shader::ShaderType::Vertex);
     }
 
-    QString generateSpirV(QString source, SourceType sourceType)
+    QString generateSpirV(QString source, Shader::ShaderType shaderType)
     {
-        const auto type = getGLSLangSourceType(sourceType);
-        if (!type)
-            return "";
-
         const auto args = QStringList{
           "-H", "--aml", "--amb",
           "--client", "opengl100",
-          "--stdin", "-S", type
         };
-        return executeGLSLangValidator(source, args).replace("stdin", "");
+        return executeGLSLangValidator(source, args, shaderType);
     }
 
-    QString generateAST(QString source, SourceType sourceType)
+    QString generateAST(QString source, Shader::ShaderType shaderType)
     {
-        const auto type = getGLSLangSourceType(sourceType);
-        if (!type)
-            return "";
-
         const auto args = QStringList{
           "-i", "--aml", "--amb",
           "--client", "opengl100",
-          "--stdin", "-S", type
         };
-        return executeGLSLangValidator(source, args).replace("stdin", "");
+        return executeGLSLangValidator(source, args, shaderType);
     }
 
     Shader::ShaderType getShaderType(SourceType sourceType)
@@ -84,9 +86,9 @@ namespace {
                 return Shader::ShaderType::Fragment;
             case SourceType::GeometryShader:
                 return Shader::ShaderType::Geometry;
-            case SourceType::TesselationControl:
+            case SourceType::TessellationControl:
                 return Shader::ShaderType::TessellationControl;
-            case SourceType::TesselationEvaluation:
+            case SourceType::TessellationEvaluation:
                 return Shader::ShaderType::TessellationEvaluation;
             case SourceType::ComputeShader:
                 return Shader::ShaderType::Compute;
@@ -188,9 +190,9 @@ void ProcessSource::render()
         if (mProcessType == "preprocess")
             mOutput = preprocess(mShader->getSource());
         else if (mProcessType == "spirv")
-            mOutput = generateSpirV(mShader->getSource(), mSourceType);
+            mOutput = generateSpirV(mShader->getSource(), getShaderType(mSourceType));
         else if (mProcessType == "ast")
-            mOutput = generateAST(mShader->getSource(), mSourceType);
+            mOutput = generateAST(mShader->getSource(), getShaderType(mSourceType));
         else if (mProcessType == "assembly")
             mOutput = mShader->getAssembly();
     }
