@@ -69,6 +69,8 @@ namespace {
                 usedItems += kv.second.texture->usedItems();
             }
 
+        program.applyPrintfBindings();
+
         for (const auto &kv : bindings.buffers)
             if (program.apply(kv.second, unit)) {
                 ++unit;

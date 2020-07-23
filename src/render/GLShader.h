@@ -2,6 +2,7 @@
 #define GLSHADER_H
 
 #include "GLItem.h"
+#include "GLPrintf.h"
 
 class GLShader
 {
@@ -15,11 +16,13 @@ public:
     Shader::ShaderType type() const { return mType; }
 
     QString getSource() const;
-    bool compile(bool silent = false);
+    bool compile(GLPrintf *printf = nullptr, bool silent = false);
     GLuint shaderObject() const { return mShaderObject; }
     QString getAssembly();
 
 private:
+    QStringList getPatchedSources(GLPrintf *printf);
+
     ItemId mItemId{ };
     MessagePtrSet mMessages;
     QList<QString> mFileNames;

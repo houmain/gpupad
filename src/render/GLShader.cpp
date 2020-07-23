@@ -1,4 +1,6 @@
 #include "GLShader.h"
+#include <QRegularExpression>
+
 namespace {
     QString removeVersion(QString *source, bool removeNewline) {
         const auto regex = QRegularExpression(
@@ -56,30 +58,17 @@ void GLShader::parseLog(const QString &log,
 
 GLShader::GLShader(const QList<const Shader*> &shaders)
 {
-    auto sourceIndex = 0;
-    auto maxVersion = QString();
+    Q_ASSERT(!shaders.isEmpty());
+
     for (const Shader *shader : shaders) {
         auto source = QString();
         if (!Singletons::fileCache().getSource(shader->fileName, &source))
             mMessages += MessageList::insert(shader->id,
                 MessageType::LoadingFileFailed, shader->fileName);
-
-        if (sourceIndex > 0)
-            source = QString("#line 1 %1\n").arg(sourceIndex) + source;
-
-
-        maxVersion = std::max(maxVersion,
-            removeVersion(&source, (sourceIndex > 0)));
-
         mSources += source + "\n";
         mFileNames += shader->fileName;
         mItemId = shader->id;
         mType = shader->shaderType;
-        sourceIndex++;
-    }
-
-    if (!mSources.isEmpty() && !maxVersion.isEmpty()) {
-        mSources.first() = maxVersion + "\n" + mSources.first();
     }
 }
 
@@ -97,7 +86,7 @@ QString GLShader::getSource() const
     return result;
 }
 
-bool GLShader::compile(bool silent)
+bool GLShader::compile(GLPrintf* printf, bool silent)
 {
     if (!GLContext::currentContext()) {
         mMessages += MessageList::insert(
@@ -122,15 +111,8 @@ bool GLShader::compile(bool silent)
     }
 
     auto sources = std::vector<std::string>();
-    for (const QString &source : qAsConst(mSources))
+    for (const QString &source : getPatchedSources(printf))
         sources.push_back(source.toUtf8().data());
-
-    // workaround: to prevent unesthetic "unexpected end" error,
-    // ensure shader is not empty
-    if (sources.empty())
-        sources.emplace_back();
-    sources.back() += "\n struct XXX_gpupad { float a; };\n";
-
     auto pointers = std::vector<const char*>();
     for (const auto &source : sources)
         pointers.push_back(source.data());
@@ -153,6 +135,37 @@ bool GLShader::compile(bool silent)
 
     mShaderObject = std::move(shader);
     return true;
+}
+
+QStringList GLShader::getPatchedSources(GLPrintf *printf)
+{
+    auto sources = mSources;
+    Q_ASSERT(!sources.isEmpty());
+
+    auto maxVersion = QString();
+    for (auto i = 0; i < sources.size(); ++i) {
+        maxVersion = std::max(maxVersion,
+            removeVersion(&sources[i], (i > 0)));
+        sources[i] = QString("#line 1 %1\n").arg(i) + sources[i];
+    }
+
+    if (printf) {
+        for (auto i = 0; i < sources.size(); ++i)
+            sources[i] = printf->patchSource(mFileNames[i], sources[i]);
+    
+        if (printf->isUsed()) {
+            auto& source = sources.front();
+            source = GLPrintf::preamble() + source;
+            maxVersion = std::max(maxVersion,
+                GLPrintf::requiredVersion());
+        }
+    }
+    sources.first() = maxVersion + "\n" + sources.first();
+
+    // workaround: to prevent unesthetic "unexpected end" error,
+    // ensure shader is not empty
+    sources.back() += "\n struct XXX_gpupad { float a; };\n";
+    return sources;
 }
 
 QString formatNvGpuProgram(QString assembly)
@@ -179,7 +192,7 @@ QString formatNvGpuProgram(QString assembly)
 }
 
 QString GLShader::getAssembly() {
-    compile(true);
+    compile(nullptr, true);
 
     auto assembly = QString("not supported");
     auto &gl = GLContext::currentContext();

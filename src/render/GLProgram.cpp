@@ -45,13 +45,12 @@ bool GLProgram::link()
     auto program = GLObject(gl.glCreateProgram(), freeProgram);
 
     for (auto &shader : mShaders) {
-        if (shader.compile())
-            gl.glAttachShader(program, shader.shaderObject());
-        else
+        if (!shader.compile(&mPrintf)) {
             mFailed = true;
+            return false;
+        }
+        gl.glAttachShader(program, shader.shaderObject());
     }
-    if (mFailed)
-        return false;
 
     auto status = GLint{ };
     gl.glLinkProgram(program);
@@ -221,6 +220,9 @@ void GLProgram::unbind(ItemId callItemId)
             *mCallMessages += MessageList::insert(
                 callItemId, MessageType::AttributeNotSet, kv.first);
 
+    if (mPrintf.isUsed())
+        *mCallMessages += mPrintf.formatMessages(mItemId);
+
     mCallMessages = nullptr;
 }
 
@@ -276,6 +278,16 @@ std::vector<T> getValues(ScriptEngine &scriptEngine,
     for (auto i = 0; i < std::min(count, values.count()); ++i)
         result[i] = values[i];
     return result;
+}
+
+bool GLProgram::applyPrintfBindings()
+{
+    if (mPrintf.isUsed() &&
+        mPrintf.applyBindings(mProgramObject)) {
+        bufferSet(mPrintf.bufferBindingName());
+        return true;
+    }
+    return false;
 }
 
 bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine)

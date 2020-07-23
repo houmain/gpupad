@@ -67,6 +67,7 @@ public:
     bool bind(MessagePtrSet *callMessages);
     void unbind(ItemId callItemId);
     int getAttributeLocation(const QString &name) const;
+    bool applyPrintfBindings();
     bool apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine);
     bool apply(const GLSamplerBinding &binding, int unit);
     bool apply(const GLImageBinding &binding, int unit);
@@ -89,6 +90,7 @@ private:
     QString getUniformBaseName(const QString &name) const;
     void uniformSet(const QString &name);
     void bufferSet(const QString &name);
+    void outputPrintfStrings();
 
     ItemId mItemId{ };
     QSet<ItemId> mUsedItems;
@@ -104,6 +106,7 @@ private:
     std::map<QString, bool> mUniformsSet;
     std::map<QString, bool> mBuffersSet;
     mutable std::map<QString, bool> mAttributesSet;
+    GLPrintf mPrintf;
 };
 
 #endif // GLPROGRAM_H

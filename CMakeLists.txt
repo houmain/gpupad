@@ -73,6 +73,7 @@ set(SOURCES
   src/render/GLStream.cpp
   src/render/GLTarget.cpp
   src/render/GLTexture.cpp
+  src/render/GLPrintf.cpp
   src/render/RenderSession.cpp
   src/render/RenderTask.cpp
   src/render/Renderer.cpp

@@ -36,6 +36,7 @@ const auto keywords = {
     "uimage2DMSArray", "struct" };
 
 const auto builtinFunctions = {
+    "printf",
     "abs", "acos", "acosh", "all", "any", "asin",
     "asinh", "atan", "atanh", "atomicCounter", "atomicCounterDecrement",
     "atomicCounterIncrement", "barrier", "bitCount", "bitfieldExtract",
@@ -70,6 +71,7 @@ const auto builtinFunctions = {
     "unpackUnorm4x8", "usubBorrow" };
 
 const auto builtinConstants = {
+    "printfEnabled", "HAS_PRINTF",
     "gl_ClipDistance", "gl_CullDistance",
     "gl_DepthRange", "gl_DepthRangeParameters", "gl_FragCoord", "gl_FragDepth",
     "gl_FrontFacing", "gl_GlobalInvocationID", "gl_HelperInvocation", "gl_in",
