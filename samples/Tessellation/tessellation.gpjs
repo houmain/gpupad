@@ -1,0 +1,288 @@
+[
+    {
+        "format": "RGBA8_UNorm",
+        "height": 512,
+        "id": 93,
+        "name": "Color",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 512
+    },
+    {
+        "format": "D16",
+        "height": 512,
+        "id": 98,
+        "name": "Depth",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 512
+    },
+    {
+        "blendConstant": "#ff000000",
+        "cullMode": "NoCulling",
+        "frontFace": "CCW",
+        "id": 100,
+        "items": [
+            {
+                "blendAlphaDest": "Zero",
+                "blendAlphaEq": "Add",
+                "blendAlphaSource": "One",
+                "blendColorDest": "Zero",
+                "blendColorEq": "Add",
+                "blendColorSource": "One",
+                "colorWriteMask": 15,
+                "id": 101,
+                "level": 0,
+                "name": "Color",
+                "textureId": 93,
+                "type": "Attachment"
+            },
+            {
+                "depthClamp": false,
+                "depthComparisonFunc": "Less",
+                "depthOffsetFactor": 0,
+                "depthOffsetUnits": 0,
+                "depthWrite": true,
+                "id": 102,
+                "level": 0,
+                "name": "Depth",
+                "textureId": 98,
+                "type": "Attachment"
+            }
+        ],
+        "logicOperation": "NoLogicOperation",
+        "name": "Target",
+        "type": "Target"
+    },
+    {
+        "executeOn": "ResetEvaluation",
+        "fileName": "math.js",
+        "id": 103,
+        "type": "Script"
+    },
+    {
+        "executeOn": "EveryEvaluation",
+        "expression": "(this.frame || 0) +1",
+        "id": 105,
+        "name": "frame",
+        "type": "Script"
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 77,
+        "name": "NormalMatrix",
+        "type": "Binding",
+        "values": [
+            "normalMatrix(frame / 60)"
+        ]
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 78,
+        "name": "Modelview",
+        "type": "Binding",
+        "values": [
+            "multiply(\n  modelMatrix(frame / 60),\n  translation(0, 0, -3.1),\n)"
+        ]
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 79,
+        "name": "Projection",
+        "type": "Binding",
+        "values": [
+            "perspective(45, 1.0, 1, 100)"
+        ]
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression3",
+        "id": 894,
+        "name": "LightPosition",
+        "type": "Binding",
+        "values": [
+            "0.25",
+            "0.25",
+            "1"
+        ]
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 890,
+        "name": "TessLevelInner",
+        "type": "Binding",
+        "values": [
+            "5"
+        ]
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 891,
+        "name": "TessLevelOuter",
+        "type": "Binding",
+        "values": [
+            "4"
+        ]
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Color",
+        "id": 892,
+        "name": "AmbientMaterial",
+        "type": "Binding",
+        "values": [
+            "0.0399939",
+            "0.0399939",
+            "0.0399939",
+            "0"
+        ]
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Color",
+        "id": 893,
+        "name": "DiffuseMaterial",
+        "type": "Binding",
+        "values": [
+            "0",
+            "0.75",
+            "0.75",
+            "0"
+        ]
+    },
+    {
+        "fileName": "geodesic_positions.bin",
+        "id": 80,
+        "items": [
+            {
+                "count": 3,
+                "dataType": "Float",
+                "id": 81,
+                "name": "position",
+                "padding": 0,
+                "type": "Column"
+            }
+        ],
+        "offset": 0,
+        "rowCount": 12,
+        "type": "Buffer"
+    },
+    {
+        "fileName": "geodesic_indices.bin",
+        "id": 885,
+        "items": [
+            {
+                "count": 1,
+                "dataType": "Uint32",
+                "id": 886,
+                "name": "index",
+                "padding": 0,
+                "type": "Column"
+            }
+        ],
+        "offset": 0,
+        "rowCount": 60,
+        "type": "Buffer"
+    },
+    {
+        "id": 84,
+        "items": [
+            {
+                "bufferId": 80,
+                "columnId": 81,
+                "divisor": 0,
+                "id": 85,
+                "name": "Position",
+                "normalize": false,
+                "type": "Attribute"
+            }
+        ],
+        "name": "Stream",
+        "type": "Stream"
+    },
+    {
+        "id": 88,
+        "items": [
+            {
+                "fileName": "geodesic.vert",
+                "id": 89,
+                "shaderType": "Vertex",
+                "type": "Shader"
+            },
+            {
+                "fileName": "geodesic.tesc",
+                "id": 90,
+                "shaderType": "TessellationControl",
+                "type": "Shader"
+            },
+            {
+                "fileName": "geodesic.tese",
+                "id": 887,
+                "shaderType": "TessellationEvaluation",
+                "type": "Shader"
+            },
+            {
+                "fileName": "geodesic.geom",
+                "id": 889,
+                "shaderType": "Geometry",
+                "type": "Shader"
+            },
+            {
+                "fileName": "geodesic.frag",
+                "id": 888,
+                "shaderType": "Fragment",
+                "type": "Shader"
+            }
+        ],
+        "name": "Program",
+        "type": "Program"
+    },
+    {
+        "callType": "ClearTexture",
+        "checked": true,
+        "clearColor": "#ffb2997f",
+        "clearDepth": 1,
+        "clearStencil": 0,
+        "executeOn": "EveryEvaluation",
+        "id": 97,
+        "name": "Clear Color",
+        "textureId": 93,
+        "type": "Call"
+    },
+    {
+        "callType": "ClearTexture",
+        "checked": true,
+        "clearColor": "#ff000000",
+        "clearDepth": 1,
+        "clearStencil": 0,
+        "executeOn": "EveryEvaluation",
+        "id": 91,
+        "name": "Clear Depth",
+        "textureId": 98,
+        "type": "Call"
+    },
+    {
+        "baseInstance": "0",
+        "baseVertex": "0",
+        "callType": "DrawIndexed",
+        "checked": true,
+        "count": "60",
+        "executeOn": "EveryEvaluation",
+        "first": "0",
+        "id": 92,
+        "indexBufferId": 885,
+        "instanceCount": "1",
+        "name": "Draw",
+        "patchVertices": "3",
+        "primitiveType": "Patches",
+        "programId": 88,
+        "targetId": 100,
+        "type": "Call",
+        "vertexStreamId": 84
+    }
+]
