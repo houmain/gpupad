@@ -35,13 +35,12 @@
     },
     {
         "bindingType": "Uniform",
-        "editor": "Expression2",
+        "editor": "Expression",
         "id": 25,
-        "name": "uMousePosition",
+        "name": "uMouseFragCoord",
         "type": "Binding",
         "values": [
-            "input.mouseX * 256",
-            "input.mouseY * 256"
+            "input.mouseFragCoord"
         ]
     },
     {

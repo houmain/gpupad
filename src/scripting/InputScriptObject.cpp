@@ -1,20 +1,19 @@
 #include "InputScriptObject.h"
+#include <QJsonArray>
 
 InputScriptObject::InputScriptObject(QObject *parent) : QObject(parent)
 {
 }
 
-void InputScriptObject::setMousePosition(QPointF pos) 
+void InputScriptObject::setMouseFragCoord(QPointF coord)
 {
-    mMousePosition = pos; 
+    mMouseFragCoord = coord;
 }
 
-QJsonValue InputScriptObject::mouseX() const 
+QJsonValue InputScriptObject::mouseFragCoord() const
 {
-    return mMousePosition.x();
-}
-
-QJsonValue InputScriptObject::mouseY() const 
-{
-    return mMousePosition.y();
+    auto array = QJsonArray();
+    array.append(mMouseFragCoord.x());
+    array.append(mMouseFragCoord.y());
+    return array;
 }

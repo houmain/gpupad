@@ -280,11 +280,11 @@ void TextureEditor::mouseMoveEvent(QMouseEvent *event)
 
 void TextureEditor::updateMousePosition(QMouseEvent *event)
 {
-    if (event->buttons() & Qt::LeftButton)
-        Singletons::synchronizeLogic().setMousePosition({ 
-            event->x() / static_cast<qreal>(width()),
-            event->y() / static_cast<qreal>(height()),
-        });
+    const auto pos = mTextureItem->mapFromScene(
+        mapToScene(event->pos())) - mTextureItem->boundingRect().topLeft();
+    const auto fragmentCoord =
+        QPointF(qRound(pos.x() - 0.5) + 0.5, qRound(pos.y() - 0.5) + 0.5);
+    Singletons::synchronizeLogic().setMousePosition(fragmentCoord);
 }
 
 void TextureEditor::mouseReleaseEvent(QMouseEvent *event)

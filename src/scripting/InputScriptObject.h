@@ -8,17 +8,15 @@
 class InputScriptObject final : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QJsonValue mouseX READ mouseX)
-    Q_PROPERTY(QJsonValue mouseY READ mouseY)
+    Q_PROPERTY(QJsonValue mouseFragCoord READ mouseFragCoord)
 public:
     explicit InputScriptObject(QObject *parent = nullptr);
 
-    void setMousePosition(QPointF pos);
-    QJsonValue mouseX() const;
-    QJsonValue mouseY() const;
+    void setMouseFragCoord(QPointF pos);
+    QJsonValue mouseFragCoord() const;
 
 private:
-    QPointF mMousePosition{ };
+    QPointF mMouseFragCoord{ };
 };
 
 #endif // INPUTSCRIPTOBJECT_H

@@ -178,7 +178,7 @@ void RenderSession::prepare(bool itemsChanged,
     mEvaluationType = evaluationType;
     mPrevMessages.swap(mMessages);
     mMessages.clear();
-    mInputScriptObject->setMousePosition(Singletons::synchronizeLogic().mousePosition());
+    mInputScriptObject->setMouseFragCoord(Singletons::synchronizeLogic().mousePosition());
 
     if (!mCommandQueue)
         mEvaluationType = EvaluationType::Reset;
