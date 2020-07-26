@@ -39,6 +39,8 @@ const auto builtinFunctions = {
     "printf",
     "abs", "acos", "acosh", "all", "any", "asin",
     "asinh", "atan", "atanh", "atomicCounter", "atomicCounterDecrement",
+    "atomicAdd", "atomicAnd", "atomicOr", "atomicXor",
+    "atomicMin", "atomicMax", "atomicExchange", "atomicCompSwap",
     "atomicCounterIncrement", "barrier", "bitCount", "bitfieldExtract",
     "bitfieldInsert", "bitfieldReverse", "ceil", "clamp", "cos", "cosh", "cross",
     "dFdx", "dFdy", "degrees", "determinant", "distance", "dot", "equal", "exp",
@@ -207,7 +209,7 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
     rule.format = numberFormat;
     mHighlightingRules.append(rule);
 
-    rule.pattern = QRegExp("\\b0x[0-9,A-F,a-f]+\\b");
+    rule.pattern = QRegExp("\\b0x[0-9,A-F,a-f]+[uUlL]\\b");
     rule.format = numberFormat;
     mHighlightingRules.append(rule);
 
@@ -242,7 +244,9 @@ void GlslHighlighter::highlightBlock(const QString &text)
         auto index = rule.pattern.indexIn(text);
         while (index >= 0) {
             const auto length = rule.pattern.matchedLength();
-            setFormat(index, length, rule.format);
+            // do not start single line comment in string
+            if (format(index) == QTextCharFormat{ })
+                setFormat(index, length, rule.format);
             index = rule.pattern.indexIn(text, index + length);
         }
     }
@@ -253,6 +257,12 @@ void GlslHighlighter::highlightBlock(const QString &text)
         startIndex = mCommentStartExpression.indexIn(text);
 
     while (startIndex >= 0) {
+        // do not start multiline comment in single line comment or string
+        if (startIndex && format(startIndex) != QTextCharFormat{ }) {
+            setCurrentBlockState(0);
+            break;
+        }
+
         const auto endIndex = mCommentEndExpression.indexIn(text, startIndex);
         auto commentLength = 0;
         if (endIndex == -1) {

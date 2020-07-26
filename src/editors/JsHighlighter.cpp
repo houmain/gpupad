@@ -77,7 +77,7 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
         completerStrings.append(global);
     }
 
-    rule.pattern = QRegExp("\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?[uUlLfF]{,2}\\b");
+    rule.pattern = QRegExp("\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?\\b");
     rule.format = numberFormat;
     mHighlightingRules.append(rule);
 
@@ -116,7 +116,9 @@ void JsHighlighter::highlightBlock(const QString &text)
         auto index = rule.pattern.indexIn(text);
         while (index >= 0) {
             const auto length = rule.pattern.matchedLength();
-            setFormat(index, length, rule.format);
+            // do not start single line comment in string
+            if (format(index) == QTextCharFormat{ })
+                setFormat(index, length, rule.format);
             index = rule.pattern.indexIn(text, index + length);
         }
     }
@@ -127,6 +129,12 @@ void JsHighlighter::highlightBlock(const QString &text)
         startIndex = mCommentStartExpression.indexIn(text);
 
     while (startIndex >= 0) {
+        // do not start multiline comment in single line comment or string
+        if (startIndex && format(startIndex) != QTextCharFormat{ }) {
+            setCurrentBlockState(0);
+            break;
+        }
+
         const auto endIndex = mCommentEndExpression.indexIn(text, startIndex);
         auto commentLength = 0;
         if (endIndex == -1) {
