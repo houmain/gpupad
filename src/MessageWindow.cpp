@@ -5,6 +5,7 @@
 #include "FileDialog.h"
 #include <QTimer>
 #include <QHeaderView>
+#include <QStandardItemModel>
 
 MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
 {
@@ -12,9 +13,9 @@ MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
         this, &MessageWindow::handleItemActivated);
 
     mUpdateItemsTimer = new QTimer(this);
-    mUpdateItemsTimer->setInterval(250);
     connect(mUpdateItemsTimer, &QTimer::timeout,
         this, &MessageWindow::updateMessages);
+    mUpdateItemsTimer->setSingleShot(true);
     mUpdateItemsTimer->start();
 
     setColumnCount(2);
@@ -58,6 +59,8 @@ void MessageWindow::updateMessages()
 
     if (added)
         Q_EMIT messagesAdded();
+
+    mUpdateItemsTimer->start(100);
 }
 
 QIcon MessageWindow::getMessageIcon(const Message &message) const
