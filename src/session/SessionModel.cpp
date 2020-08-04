@@ -143,18 +143,18 @@ Qt::DropActions SessionModel::supportedDropActions() const
     return Qt::CopyAction | Qt::MoveAction;
 }
 
-QJsonArray SessionModel::parseClipboard(const QMimeData *data) const
+QJsonArray SessionModel::parseDraggedJson(const QMimeData *data) const
 {
     auto text = data->text();
-    if (text != mClipboardText) {
-        mClipboardText = text;
+    if (text != mDraggedText) {
+        mDraggedText = text;
         auto document = QJsonDocument::fromJson(text.toUtf8());
-        mClipboardJson =
+        mDraggedJson =
             document.isNull() ? QJsonArray() :
             document.isArray() ? document.array() :
             QJsonArray({ document.object() });
     }
-    return mClipboardJson;
+    return mDraggedJson;
 }
 
 bool SessionModel::canDropMimeData(const QMimeData *data,
@@ -165,7 +165,7 @@ bool SessionModel::canDropMimeData(const QMimeData *data,
             data, action, row, column, parent))
         return false;
 
-    auto jsonArray = parseClipboard(data);
+    auto jsonArray = parseDraggedJson(data);
     if (jsonArray.empty())
         return false;
 
@@ -250,7 +250,7 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     if (action == Qt::IgnoreAction)
         return true;
 
-    auto jsonArray = parseClipboard(data);
+    auto jsonArray = parseDraggedJson(data);
     if (jsonArray.empty())
         return false;
 

@@ -64,7 +64,7 @@ public:
     }
 private:
     bool shouldSerializeColumn(const Item &item, ColumnType column) const;
-    QJsonArray parseClipboard(const QMimeData *data) const;
+    QJsonArray parseDraggedJson(const QMimeData *data) const;
     void serialize(QJsonObject &object, const Item &item, bool relativeFilePaths) const;
     void deserialize(const QJsonObject &object, const QModelIndex &parent, int row,
         bool updateExisting);
@@ -104,8 +104,8 @@ private:
     QMap<ItemId, ItemId> mDroppedIdsReplaced;
     QModelIndexList mDroppedReferences;
     mutable QModelIndexList mDraggedIndices;
-    mutable QString mClipboardText;
-    mutable QJsonArray mClipboardJson;
+    mutable QString mDraggedText;
+    mutable QJsonArray mDraggedJson;
 };
 
 #endif // SESSIONMODEL_H
