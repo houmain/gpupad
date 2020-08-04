@@ -60,10 +60,6 @@ Q_SIGNALS:
     void editorRenamed(const QString &prevFileName, const QString &fileName);
     void sourceTypeChanged(SourceType sourceType);
 
-protected:
-    void dragEnterEvent(QDragEnterEvent *e) override;
-    void dropEvent(QDropEvent *e) override;
-
 private:
     int getFocusedEditorIndex() const;
     bool focusEditorByIndex(int index);

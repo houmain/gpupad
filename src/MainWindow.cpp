@@ -23,6 +23,7 @@
 #include <QCoreApplication>
 #include <QDesktopWidget>
 #include <QTimer>
+#include <QMimeData>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -37,6 +38,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     mUi->setupUi(this);
     setContentsMargins(1, 0, 1, 1);
+
+    setAcceptDrops(true);
 
     auto icon = QIcon(":images/16x16/icon.png");
     icon.addFile(":images/32x32/icon.png");
@@ -336,6 +339,19 @@ void MainWindow::readSettings()
     mUi->actionDarkTheme->setChecked(settings.darkTheme());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
     handleDarkThemeChanging(settings.darkTheme());
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        event->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    for (const QUrl &url : event->mimeData()->urls())
+        openFile(url.toLocalFile());
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
