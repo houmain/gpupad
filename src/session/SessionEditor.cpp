@@ -288,7 +288,7 @@ bool SessionEditor::canPaste() const
 
 void SessionEditor::paste()
 {
-    auto drop = [&](auto row, auto column, auto parent) {
+    const auto drop = [&](auto row, auto column, auto parent) {
         auto mimeData = QApplication::clipboard()->mimeData();
         if (!mModel.canDropMimeData(mimeData, Qt::CopyAction, row, column, parent))
             return false;
@@ -298,12 +298,16 @@ void SessionEditor::paste()
         return true;
     };
 
-    // try to drop as sibling first
+    // try to drop as child first
+    if (drop(-1, 0, currentIndex())) {
+        expand(currentIndex());
+        return;
+    }
+
+    // drop as sibling
     if (currentIndex().isValid() &&
         drop(currentIndex().row() + 1, 0, currentIndex().parent()))
         return;
-
-    drop(-1, 0, currentIndex());
 }
 
 void SessionEditor::delete_()
