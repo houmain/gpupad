@@ -147,33 +147,30 @@ QList<QMetaObject::Connection> EditorManager::connectEditActions(
     return { };
 }
 
-QString EditorManager::openNewSourceEditor(const QString &baseName,
+SourceEditor *EditorManager::openNewSourceEditor(const QString &fileName,
     SourceType sourceType)
 {
-    auto fileName = FileDialog::generateNextUntitledFileName(baseName);
     auto editor = new SourceEditor(fileName, mFindReplaceBar);
     editor->setSourceType(sourceType);
     addSourceEditor(editor);
     autoRaise(editor);
-    return fileName;
+    return editor;
 }
 
-QString EditorManager::openNewBinaryEditor(const QString &baseName)
+BinaryEditor *EditorManager::openNewBinaryEditor(const QString &fileName)
 {
-    auto fileName = FileDialog::generateNextUntitledFileName(baseName);
     auto editor = new BinaryEditor(fileName);
     addBinaryEditor(editor);
     autoRaise(editor);
-    return fileName;
+    return editor;
 }
 
-QString EditorManager::openNewTextureEditor(const QString &baseName)
+TextureEditor *EditorManager::openNewTextureEditor(const QString &fileName)
 {
-    auto fileName = FileDialog::generateNextUntitledFileName(baseName);
     auto editor = new TextureEditor(fileName, mTextureEditorToolBar);
     addTextureEditor(editor);
     autoRaise(editor);
-    return fileName;
+    return editor;
 }
 
 bool EditorManager::openEditor(const QString &fileName,

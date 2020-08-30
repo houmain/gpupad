@@ -344,25 +344,28 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
 IEditor* SessionProperties::openEditor(const FileItem &fileItem)
 {
     auto &editors = Singletons::editorManager();
+
+    if (fileItem.fileName.isEmpty()) {
+        const auto fileName = FileDialog::generateNextUntitledFileName(fileItem.name);
+        mModel.setData(mModel.getIndex(&fileItem, SessionModel::FileName), fileName);
+    }
+
     switch (fileItem.type) {
         case Item::Type::Texture:
-            if (fileItem.fileName.isEmpty())
-                mModel.setData(mModel.getIndex(&fileItem, SessionModel::FileName),
-                    editors.openNewTextureEditor(fileItem.name));
-            return editors.openTextureEditor(fileItem.fileName);
+            if (auto editor = editors.openTextureEditor(fileItem.fileName))
+                return editor;
+            return editors.openNewTextureEditor(fileItem.fileName);
 
         case Item::Type::Shader:
         case Item::Type::Script:
-            if (fileItem.fileName.isEmpty())
-                mModel.setData(mModel.getIndex(&fileItem, SessionModel::FileName),
-                    editors.openNewSourceEditor(fileItem.name));
-            return editors.openSourceEditor(fileItem.fileName);
+            if (auto editor = editors.openSourceEditor(fileItem.fileName))
+                return editor;
+            return editors.openNewSourceEditor(fileItem.fileName);
 
         case Item::Type::Buffer:
-            if (fileItem.fileName.isEmpty())
-                mModel.setData(mModel.getIndex(&fileItem, SessionModel::FileName),
-                    editors.openNewBinaryEditor(fileItem.name));
-            return editors.openBinaryEditor(fileItem.fileName);
+            if (auto editor = editors.openBinaryEditor(fileItem.fileName))
+                return editor;
+            return editors.openNewBinaryEditor(fileItem.fileName);
 
         default:
             return nullptr;

@@ -19,10 +19,10 @@ public:
 
     FindReplaceBar &findReplaceBar() { return *mFindReplaceBar; }
     int openNotSavedDialog(const QString &fileName);
-    QString openNewSourceEditor(const QString &baseName,
+    SourceEditor *openNewSourceEditor(const QString &fileName,
         SourceType sourceType = SourceType::PlainText);
-    QString openNewBinaryEditor(const QString &baseName);
-    QString openNewTextureEditor(const QString &baseName);
+    BinaryEditor *openNewBinaryEditor(const QString &fileName);
+    TextureEditor *openNewTextureEditor(const QString &fileName);
     bool openEditor(const QString &fileName,
         bool asBinaryFile = false);
     SourceEditor *openSourceEditor(const QString &fileName,
