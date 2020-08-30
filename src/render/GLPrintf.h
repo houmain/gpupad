@@ -11,9 +11,10 @@ public:
     static QString preamble();
 
     const char *bufferBindingName() const { return "_printfBuffer"; }
+    const GLObject &bufferObject() const { return mBufferObject; }
     bool isUsed() const { return mIsUsed; }
     QString patchSource(const QString &fileName, const QString &source);
-    bool applyBindings(GLint programObject);
+    void clear();
     MessagePtrSet formatMessages(ItemId callItemId);
 
 private:

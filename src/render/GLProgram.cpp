@@ -88,11 +88,13 @@ bool GLProgram::link()
             gl.glGetActiveUniformsiv(program, 1, &indices,
                 GL_UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX, &atomicCounterIndex);
             if (atomicCounterIndex >= 0) {
-                auto binding = 0;
+                auto bindingPoint = std::pair<GLenum, GLint>{
+                    GL_ATOMIC_COUNTER_BUFFER, 0
+                };
                 gl42->glGetActiveAtomicCounterBufferiv(program, atomicCounterIndex,
-                    GL_ATOMIC_COUNTER_BUFFER_BINDING, &binding);
-                if (!mAtomicCounterBufferBindings.values().contains(binding)) {
-                    mAtomicCounterBufferBindings[name] = binding;
+                    GL_ATOMIC_COUNTER_BUFFER_BINDING, &bindingPoint.second);
+                if (!mBufferBindingPoints.values().contains(bindingPoint)) {
+                    mBufferBindingPoints[name] = bindingPoint;
                     mBuffersSet[name] = false;
                 }
                 mUniformsSet.erase(name);
@@ -106,6 +108,11 @@ bool GLProgram::link()
         gl.glGetActiveUniformBlockName(program, i,
             static_cast<GLsizei>(buffer.size()), &nameLength, buffer.data());
         const auto name = QString(buffer.data());
+        const auto uniformBlockIndex = gl.glGetUniformBlockIndex(
+            program, qPrintable(name));
+        const auto uniformBlockBinding = i;
+        gl.glUniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding);
+        mBufferBindingPoints[name] = { GL_UNIFORM_BUFFER, uniformBlockBinding };
         mBuffersSet[name] = false;
 
         // remove block's uniforms from list of uniforms to set
@@ -127,7 +134,7 @@ bool GLProgram::link()
     for (auto i = 0; i < attributes; ++i) {
         gl.glGetActiveAttrib(program, static_cast<GLuint>(i), static_cast<GLsizei>(buffer.size()),
             &nameLength, &size, &type, buffer.data());
-        auto name = QString(buffer.data());
+        const auto name = QString(buffer.data());
         if (!name.startsWith("gl_"))
             mAttributesSet[name] = false;
     }
@@ -181,7 +188,14 @@ bool GLProgram::link()
         for (auto i = 0u; i < static_cast<GLuint>(shaderStorageBlocks); ++i) {
             gl43->glGetProgramResourceName(program, GL_SHADER_STORAGE_BLOCK, i, 
                 static_cast<GLsizei>(buffer.size()), nullptr, buffer.data());
-            mBuffersSet[buffer.data()] = false;
+            const auto name = QString(buffer.data());
+            const auto storageBlockIndex = gl.v4_3->glGetProgramResourceIndex(
+                program, GL_SHADER_STORAGE_BLOCK, qPrintable(name));
+            const auto storageBlockBinding = i;
+            gl43->glShaderStorageBlockBinding(program,
+                storageBlockIndex, storageBlockBinding);
+            mBufferBindingPoints[name] = { GL_SHADER_STORAGE_BUFFER, storageBlockBinding };
+            mBuffersSet[name] = false;
         }
     }
     mProgramObject = std::move(program);
@@ -278,16 +292,6 @@ std::vector<T> getValues(ScriptEngine &scriptEngine,
     for (auto i = 0; i < std::min(count, values.count()); ++i)
         result[i] = values[i];
     return result;
-}
-
-bool GLProgram::applyPrintfBindings()
-{
-    if (mPrintf.isUsed() &&
-        mPrintf.applyBindings(mProgramObject)) {
-        bufferSet(mPrintf.bufferBindingName());
-        return true;
-    }
-    return false;
 }
 
 bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine)
@@ -460,50 +464,37 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
     return true;
 }
 
-bool GLProgram::apply(const GLBufferBinding &binding, int unit)
+bool GLProgram::apply(const GLBufferBinding &binding)
 {
     if (!binding.buffer)
         return false;
-    auto& buffer = *binding.buffer;
+
+    if (!mBufferBindingPoints.contains(binding.name))
+        return false;
 
     auto &gl = GLContext::currentContext();
-    auto index = gl.glGetUniformBlockIndex(
-        mProgramObject, qPrintable(binding.name));
+    const auto [target, index] = mBufferBindingPoints[binding.name];
+    gl.glBindBufferBase(target, index, binding.buffer->getReadWriteBufferId());
+    bufferSet(binding.name);
+    return true;
+}
 
-    if (index != GL_INVALID_INDEX) {
-        gl.glUniformBlockBinding(mProgramObject, index,
-            static_cast<GLuint>(unit));
-        gl.glBindBufferBase(GL_UNIFORM_BUFFER,
-            static_cast<GLuint>(unit), buffer.getReadOnlyBufferId());
+bool GLProgram::applyPrintfBindings()
+{
+    if (!mPrintf.isUsed())
+        return false;
 
-        bufferSet(binding.name);
-        return true;
-    }
+    mPrintf.clear();
 
-    if (gl.v4_2) {
-        if (mAtomicCounterBufferBindings.contains(binding.name)) {
-            auto unit = mAtomicCounterBufferBindings[binding.name];
-            gl.v4_3->glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER,
-                static_cast<GLuint>(unit), buffer.getReadWriteBufferId());
-            bufferSet(binding.name);
-            return true;
-        }
-    }
+    const auto name = mPrintf.bufferBindingName();
+    if (!mBufferBindingPoints.contains(name))
+        return false;
 
-    if (gl.v4_3) {
-        index = gl.v4_3->glGetProgramResourceIndex(mProgramObject,
-            GL_SHADER_STORAGE_BLOCK, qPrintable(binding.name));
-        if (index != GL_INVALID_INDEX) {
-            gl.v4_3->glShaderStorageBlockBinding(mProgramObject,
-                index, static_cast<GLuint>(unit));
-            gl.v4_3->glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
-                static_cast<GLuint>(unit), buffer.getReadWriteBufferId());
-
-            bufferSet(binding.name);
-            return true;
-        }
-    }
-    return false;
+    auto &gl = GLContext::currentContext();
+    const auto [target, index] = mBufferBindingPoints[name];
+    gl.glBindBufferBase(target, index, mPrintf.bufferObject());
+    bufferSet(name);
+    return true;
 }
 
 bool GLProgram::apply(const GLSubroutineBinding &binding)

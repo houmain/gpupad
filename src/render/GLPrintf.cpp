@@ -500,15 +500,12 @@ QString GLPrintf::formatMessage(const ParsedFormatString &format,
     return string;
 }
 
-bool GLPrintf::applyBindings(GLint programObject)
+void GLPrintf::clear()
 {
-    auto *gl43 = GLContext::currentContext().v4_3;
-    if (!gl43)
-        return false;
-
+    auto& gl = GLContext::currentContext();
     const auto createBuffer = [&]() {
         auto buffer = GLuint{};
-        gl43->glGenBuffers(1, &buffer);
+        gl.glGenBuffers(1, &buffer);
         return buffer;
     };
     const auto freeBuffer = [](GLuint buffer) {
@@ -518,8 +515,8 @@ bool GLPrintf::applyBindings(GLint programObject)
 
     if (!mBufferObject) {
         mBufferObject = GLObject(createBuffer(), freeBuffer);
-        gl43->glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferObject);
-        gl43->glBufferData(GL_SHADER_STORAGE_BUFFER,
+        gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferObject);
+        gl.glBufferData(GL_SHADER_STORAGE_BUFFER,
             maxBufferValues * sizeof(uint32_t) + sizeof(BufferHeader),
             nullptr, GL_STREAM_READ);
     }
@@ -527,18 +524,8 @@ bool GLPrintf::applyBindings(GLint programObject)
     // clear header in buffer, data[0] is already reserved for
     // head of linked list and prevBegin points to it
     auto header = BufferHeader{ 1, 0 };
-    gl43->glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferObject);
-    gl43->glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(header), &header);
-
-    const auto index = gl43->glGetProgramResourceIndex(programObject,
-        GL_SHADER_STORAGE_BLOCK, bufferBindingName());
-    auto property = GLenum{ GL_BUFFER_BINDING };
-    auto binding = GLint{ };
-    gl43->glGetProgramResourceiv(programObject, GL_SHADER_STORAGE_BLOCK,
-        index, 1, &property, sizeof(binding), nullptr, &binding);
-
-    gl43->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, mBufferObject);
-    return true;
+    gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferObject);
+    gl.glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(header), &header);
 }
 
 MessagePtrSet GLPrintf::formatMessages(ItemId callItemId)

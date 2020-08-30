@@ -67,11 +67,11 @@ public:
     bool bind(MessagePtrSet *callMessages);
     void unbind(ItemId callItemId);
     int getAttributeLocation(const QString &name) const;
-    bool applyPrintfBindings();
     bool apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine);
     bool apply(const GLSamplerBinding &binding, int unit);
     bool apply(const GLImageBinding &binding, int unit);
-    bool apply(const GLBufferBinding &binding, int unit);
+    bool apply(const GLBufferBinding &binding);
+    bool applyPrintfBindings();
     bool apply(const GLSubroutineBinding &subroutine);
     void reapplySubroutines();
     void checkUniforms();
@@ -98,7 +98,7 @@ private:
     std::vector<GLShader> mShaders;
     QMap<Shader::ShaderType, QList<SubroutineUniform>> mSubroutineUniforms;
     QMap<QString, std::pair<GLenum, GLint>> mActiveUniforms;
-    QMap<QString, int> mAtomicCounterBufferBindings;
+    QMap<QString, std::pair<GLenum, GLuint>> mBufferBindingPoints;
     QMap<QString, GLObject> mTextureBufferObjects;
     GLObject mProgramObject;
     bool mFailed{ };
