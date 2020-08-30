@@ -1,0 +1,159 @@
+[
+    {
+        "format": "RGBA8_UNorm",
+        "height": 256,
+        "id": 10,
+        "name": "Texture",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 256
+    },
+    {
+        "blendConstant": "#ffffffff",
+        "cullMode": "NoCulling",
+        "frontFace": "CCW",
+        "id": 7,
+        "items": [
+            {
+                "blendAlphaDest": "Zero",
+                "blendAlphaEq": "Add",
+                "blendAlphaSource": "One",
+                "blendColorDest": "Zero",
+                "blendColorEq": "Add",
+                "blendColorSource": "One",
+                "colorWriteMask": 15,
+                "id": 8,
+                "level": 0,
+                "name": "Color",
+                "textureId": 10,
+                "type": "Attachment"
+            }
+        ],
+        "logicOperation": "NoLogicOperation",
+        "name": "Target",
+        "type": "Target"
+    },
+    {
+        "fileName": "vertices.bin",
+        "id": 22,
+        "items": [
+            {
+                "count": 2,
+                "dataType": "Float",
+                "id": 23,
+                "name": "Position",
+                "padding": 0,
+                "type": "Column"
+            }
+        ],
+        "offset": 0,
+        "rowCount": 4,
+        "type": "Buffer"
+    },
+    {
+        "fileName": "instances.bin",
+        "id": 106,
+        "items": [
+            {
+                "count": 2,
+                "dataType": "Float",
+                "id": 107,
+                "name": "position",
+                "padding": 0,
+                "type": "Column"
+            },
+            {
+                "count": 4,
+                "dataType": "Float",
+                "id": 108,
+                "name": "color",
+                "padding": 0,
+                "type": "Column"
+            }
+        ],
+        "offset": 0,
+        "rowCount": 4,
+        "type": "Buffer"
+    },
+    {
+        "id": 109,
+        "items": [
+            {
+                "bufferId": 22,
+                "columnId": 23,
+                "divisor": 0,
+                "id": 18,
+                "name": "aPosition",
+                "normalize": false,
+                "type": "Attribute"
+            },
+            {
+                "bufferId": 106,
+                "columnId": 107,
+                "divisor": 1,
+                "id": 112,
+                "name": "aInstancePosition",
+                "normalize": false,
+                "type": "Attribute"
+            },
+            {
+                "bufferId": 106,
+                "columnId": 108,
+                "divisor": 1,
+                "id": 113,
+                "name": "aInstanceColor",
+                "normalize": false,
+                "type": "Attribute"
+            }
+        ],
+        "name": "Stream",
+        "type": "Stream"
+    },
+    {
+        "id": 1,
+        "items": [
+            {
+                "fileName": "instancing.vs",
+                "id": 2,
+                "shaderType": "Vertex",
+                "type": "Shader"
+            },
+            {
+                "fileName": "instancing.fs",
+                "id": 3,
+                "shaderType": "Fragment",
+                "type": "Shader"
+            }
+        ],
+        "name": "Program",
+        "type": "Program"
+    },
+    {
+        "callType": "ClearTexture",
+        "checked": true,
+        "clearColor": "#ff000000",
+        "clearDepth": 1,
+        "clearStencil": 0,
+        "executeOn": "EveryEvaluation",
+        "id": 115,
+        "name": "Clear",
+        "textureId": 10,
+        "type": "Call"
+    },
+    {
+        "baseInstance": "0",
+        "callType": "Draw",
+        "checked": true,
+        "count": "4",
+        "executeOn": "EveryEvaluation",
+        "first": "0",
+        "id": 114,
+        "instanceCount": "4",
+        "name": "Call",
+        "primitiveType": "TriangleStrip",
+        "programId": 1,
+        "targetId": 7,
+        "type": "Call",
+        "vertexStreamId": 109
+    }
+]
