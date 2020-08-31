@@ -344,22 +344,38 @@ void RenderSession::prepare(bool itemsChanged,
             if (call->checked) {
                 mUsedItems += call->id;
                 auto glcall = GLCall(*call);
-                glcall.setProgram(addProgramOnce(call->programId));
-                glcall.setTarget(addTargetOnce(call->targetId));
-                glcall.setVextexStream(addVertexStreamOnce(call->vertexStreamId));
+                switch (call->callType) {
+                    case Call::CallType::Draw:
+                    case Call::CallType::DrawIndexed:
+                    case Call::CallType::DrawIndirect:
+                    case Call::CallType::DrawIndexedIndirect:
+                        glcall.setProgram(addProgramOnce(call->programId));
+                        glcall.setTarget(addTargetOnce(call->targetId));
+                        glcall.setVextexStream(addVertexStreamOnce(call->vertexStreamId));
+                        if (auto buffer = session.findItem<Buffer>(call->indexBufferId))
+                            glcall.setIndexBuffer(addBufferOnce(buffer->id), *buffer);
+                        if (auto buffer = session.findItem<Buffer>(call->indirectBufferId))
+                            glcall.setIndirectBuffer(addBufferOnce(buffer->id), *buffer);
+                        break;
 
-                if (auto buffer = session.findItem<Buffer>(call->indexBufferId))
-                    glcall.setIndexBuffer(addBufferOnce(buffer->id), *buffer);
+                    case Call::CallType::Compute:
+                        glcall.setProgram(addProgramOnce(call->programId));
+                        break;
 
-                if (auto buffer = session.findItem<Buffer>(call->indirectBufferId))
-                    glcall.setIndirectBuffer(addBufferOnce(buffer->id), *buffer);
+                    case Call::CallType::ClearTexture:
+                    case Call::CallType::CopyTexture:
+                        glcall.setTextures(
+                            addTextureOnce(call->textureId),
+                            addTextureOnce(call->fromTextureId));
+                        break;
 
-                glcall.setBuffers(
-                    addBufferOnce(call->bufferId),
-                    addBufferOnce(call->fromBufferId));
-                glcall.setTextures(
-                    addTextureOnce(call->textureId),
-                    addTextureOnce(call->fromTextureId));
+                    case Call::CallType::ClearBuffer:
+                    case Call::CallType::CopyBuffer:
+                        glcall.setBuffers(
+                            addBufferOnce(call->bufferId),
+                            addBufferOnce(call->fromBufferId));
+                        break;
+                }
 
                 addCommand(
                     [this,
