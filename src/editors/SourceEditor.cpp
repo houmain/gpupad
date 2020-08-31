@@ -549,7 +549,7 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
                                             (event->modifiers() & Qt::ShiftModifier);
 
     if (!mMultiSelections.empty() || multiSelectionModifierHold) {
-        if (!ctrlHold && updateMultiSelection(event, multiSelectionModifierHold))
+        if (updateMultiSelection(event, multiSelectionModifierHold))
             return;
         endMultiSelection();
     }
@@ -636,6 +636,61 @@ bool SourceEditor::updateMultiSelection(QKeyEvent *event, bool multiSelectionMod
         }
         mMultiEditCursor.endEditBlock();
     };
+
+    const auto reverseOnBottomUpSelection = [&](QStringList &lines) {
+        if (mMultiSelections.size() > 1 &&
+            mMultiSelections.front().position() > mMultiSelections.back().position())
+            std::reverse(lines.begin(), lines.end());
+    };
+
+    const auto ctrlHold = (event->modifiers() & Qt::ControlModifier);
+    if (ctrlHold) {
+        switch (event->key()) {
+            case Qt::Key_Control:
+                return true;
+
+            case Qt::Key_X:
+            case Qt::Key_C: {
+                auto lines = QStringList();
+                withEachSelection([&](QTextCursor& selection) {
+                    lines.append(selection.selectedText());
+                });
+                reverseOnBottomUpSelection(lines);
+                QApplication::clipboard()->setText(lines.join("\n"));
+
+                if (event->key() ==  Qt::Key_X)
+                    withEachSelection([&](QTextCursor& selection) {
+                        selection.insertText("");
+                    });
+                return true;
+            }
+
+            case Qt::Key_V: {
+                auto lines = QApplication::clipboard()->text().remove("\r").split("\n");
+                if (lines.size() == 1) {
+                    withEachSelection([&](QTextCursor& selection) {
+                        selection.insertText(lines[0]);
+                    });
+                }
+                else {
+                    if (lines.size() > mMultiSelections.size())
+                        lines = lines.mid(0, mMultiSelections.size());
+                    while (lines.size() < mMultiSelections.size())
+                        lines.append("");
+                    reverseOnBottomUpSelection(lines);
+
+                    auto i = 0;
+                    withEachSelection([&](QTextCursor& selection) {
+                        selection.insertText(lines[i++]);
+                    });
+                }
+                return true;
+            }
+
+            default:
+                return false;
+        }
+    }
 
     if (!multiSelectionModifierHold) {
         switch (event->key()) {
