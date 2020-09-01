@@ -730,7 +730,7 @@ void MainWindow::handleDarkThemeChanging(bool enabled)
             { QPalette::Base, 0x232323, 0x232323, 0x2A2A2A },
             { QPalette::Window, 0x252525, 0x252525, 0x252525 },
             { QPalette::Shadow, 0x767472, 0x767472, 0x767472 },
-            { QPalette::Highlight, 0x343434, 0x343434, 0x343434 },
+            { QPalette::Highlight, 0x405D86, 0x405D86, 0x343434 },
             { QPalette::Link, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF },
             { QPalette::AlternateBase, 0x212121, 0x212121, 0x212121 },
             { QPalette::ToolTipBase, 0x2F2F2F, 0x2F2F2F, 0x45454B },
