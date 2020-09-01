@@ -9,11 +9,10 @@
 namespace
 {
     template <typename T>
-    void setRange(QSpinBox *spinBox)
+    void setRange(QDoubleSpinBox *spinBox)
     {
-        spinBox->setRange(
-            static_cast<int>(std::numeric_limits<T>::lowest()),
-            static_cast<int>(std::numeric_limits<T>::max()));
+        spinBox->setRange(std::numeric_limits<T>::lowest(),
+                          std::numeric_limits<T>::max());
     }
 } // namespace
 
@@ -40,22 +39,23 @@ public:
             return editor;
         }
 
-        auto *editor = new QSpinBox(parent);
+        auto *editor = new QDoubleSpinBox(parent);
         editor->setButtonSymbols(QAbstractSpinBox::NoButtons);
         editor->setFrame(false);
+        editor->setDecimals(0);
         switch (dataType) {
             case DataType::Int8: setRange<int8_t>(editor); break;
             case DataType::Int16: setRange<int16_t>(editor); break;
             case DataType::Int32: setRange<int32_t>(editor); break;
-            case DataType::Int64: setRange<int64_t>(editor); break;
+            //case DataType::Int64: setRange<int64_t>(editor); break;
             case DataType::Uint8: setRange<uint8_t>(editor); break;
             case DataType::Uint16: setRange<uint16_t>(editor); break;
             case DataType::Uint32: setRange<uint32_t>(editor); break;
-            case DataType::Uint64: setRange<uint64_t>(editor); break;
+            //case DataType::UInt64: setRange<uint64_t>(editor); break;
             default: break;
         }
 
-        connect(editor, &QSpinBox::valueChanged,
+        connect(editor, &QDoubleSpinBox::valueChanged,
             [this, editor, index]() {
                 setModelData(editor, const_cast<QAbstractItemModel *>(index.model()), index);
             });
@@ -64,7 +64,7 @@ public:
 
     void setEditorData(QWidget *editor, const QModelIndex &index) const override
     {
-        if (auto *spinBox = qobject_cast<QSpinBox*>(editor)) {
+        if (auto *spinBox = qobject_cast<QDoubleSpinBox*>(editor)) {
             auto value = index.model()->data(index, Qt::EditRole).toInt();
             spinBox->setValue(value);
         }
@@ -77,7 +77,7 @@ public:
     void setModelData(QWidget *editor, QAbstractItemModel *model,
         const QModelIndex &index) const override
     {
-        if (auto *spinBox = qobject_cast<QSpinBox*>(editor)) {
+        if (auto *spinBox = qobject_cast<QDoubleSpinBox*>(editor)) {
             spinBox->interpretText();
             auto value = spinBox->value();
             model->setData(index, value, Qt::EditRole);
