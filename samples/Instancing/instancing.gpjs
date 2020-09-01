@@ -15,12 +15,12 @@
         "id": 7,
         "items": [
             {
-                "blendAlphaDest": "Zero",
+                "blendAlphaDest": "One",
                 "blendAlphaEq": "Add",
                 "blendAlphaSource": "One",
-                "blendColorDest": "Zero",
+                "blendColorDest": "OneMinusSrcAlpha",
                 "blendColorEq": "Add",
-                "blendColorSource": "One",
+                "blendColorSource": "SrcAlpha",
                 "colorWriteMask": 15,
                 "id": 8,
                 "level": 0,
