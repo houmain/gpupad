@@ -2,17 +2,18 @@
 #define BINARYEDITOR_SPINBOXDELEGATE_H
 
 #include "BinaryEditor.h"
+#include "session/ExpressionLineEdit.h"
 #include <QItemDelegate>
-#include <QDoubleSpinBox>
+#include <QSpinBox>
 
 namespace
 {
     template <typename T>
-    void setRange(QDoubleSpinBox *spinBox)
+    void setRange(QSpinBox *spinBox)
     {
         spinBox->setRange(
-            static_cast<double>(std::numeric_limits<T>::lowest()),
-            static_cast<double>(std::numeric_limits<T>::max()));
+            static_cast<int>(std::numeric_limits<T>::lowest()),
+            static_cast<int>(std::numeric_limits<T>::max()));
     }
 } // namespace
 
@@ -25,12 +26,23 @@ public:
     QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &,
         const QModelIndex &index) const override
     {
-        auto *editor = new QDoubleSpinBox(parent);
-        editor->setDecimals(0);
+        const auto dataType = static_cast<DataType>(index.data(Qt::UserRole).toInt());
+
+        if (dataType == DataType::Float || dataType == DataType::Double) {
+            auto *editor = new ExpressionLineEdit(parent);
+            editor->setFrame(false);
+            editor->setDecimal(true);
+
+            connect(editor, &QLineEdit::textChanged,
+                [this, editor, index]() {
+                    setModelData(editor, const_cast<QAbstractItemModel *>(index.model()), index);
+                });
+            return editor;
+        }
+
+        auto *editor = new QSpinBox(parent);
         editor->setButtonSymbols(QAbstractSpinBox::NoButtons);
         editor->setFrame(false);
-
-        auto dataType = static_cast<DataType>(index.data(Qt::UserRole).toInt());
         switch (dataType) {
             case DataType::Int8: setRange<int8_t>(editor); break;
             case DataType::Int16: setRange<int16_t>(editor); break;
@@ -40,34 +52,42 @@ public:
             case DataType::Uint16: setRange<uint16_t>(editor); break;
             case DataType::Uint32: setRange<uint32_t>(editor); break;
             case DataType::Uint64: setRange<uint64_t>(editor); break;
-            case DataType::Float:
-                setRange<float>(editor);
-                editor->setDecimals(3);
-                editor->setSingleStep(0.1);
-                break;
-            case DataType::Double:
-                setRange<double>(editor);
-                editor->setDecimals(3);
-                editor->setSingleStep(0.1);
-                break;
+            default: break;
         }
+
+        connect(editor, &QSpinBox::valueChanged,
+            [this, editor, index]() {
+                setModelData(editor, const_cast<QAbstractItemModel *>(index.model()), index);
+            });
         return editor;
     }
 
     void setEditorData(QWidget *editor, const QModelIndex &index) const override
     {
-        auto value = index.model()->data(index, Qt::EditRole).toDouble();
-        auto *spinBox = static_cast<QDoubleSpinBox*>(editor);
-        spinBox->setValue(value);
+        if (auto *spinBox = qobject_cast<QSpinBox*>(editor)) {
+            auto value = index.model()->data(index, Qt::EditRole).toInt();
+            spinBox->setValue(value);
+        }
+        else if (auto *lineEdit = qobject_cast<QLineEdit*>(editor)) {
+            auto value = index.model()->data(index, Qt::EditRole).toString();
+            lineEdit->setText(value);
+        }
     }
 
     void setModelData(QWidget *editor, QAbstractItemModel *model,
         const QModelIndex &index) const override
     {
-        auto *spinBox = static_cast<QDoubleSpinBox*>(editor);
-        spinBox->interpretText();
-        auto value = spinBox->value();
-        model->setData(index, value, Qt::EditRole);
+        if (auto *spinBox = qobject_cast<QSpinBox*>(editor)) {
+            spinBox->interpretText();
+            auto value = spinBox->value();
+            model->setData(index, value, Qt::EditRole);
+        }
+        else if (auto *lineEdit = qobject_cast<QLineEdit*>(editor)) {
+            auto ok = true;
+            auto value = lineEdit->text().toDouble(&ok);
+            if (ok)
+                model->setData(index, value, Qt::EditRole);
+        }
     }
 
     void updateEditorGeometry(QWidget *editor,

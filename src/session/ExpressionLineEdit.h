@@ -18,6 +18,9 @@ public:
     }
     QString text() const { return QLineEdit::text(); }
 
+    bool decimal() const { return mDecimal; }
+    void setDecimal(bool decimal) { mDecimal = decimal; }
+
 Q_SIGNALS:
     void textChanged();
 
@@ -26,8 +29,10 @@ protected:
 
 private:
     void stepBy(int steps);
+    void stepBy(double steps);
 
     int mWheelDeltaRemainder{ };
+    bool mDecimal{ };
 };
 
 #endif // EXPRESSIONLINEEDIT_H
