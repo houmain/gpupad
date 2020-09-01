@@ -36,9 +36,9 @@
     <Color role="Shadow" group="Active" value="#767472"/>
     <Color role="Shadow" group="Disabled" value="#767472"/>
     <Color role="Shadow" group="Inactive" value="#767472"/>
-    <Color role="Highlight" group="Active" value="#343434"/>
+    <Color role="Highlight" group="Active" value="#405d86"/>
     <Color role="Highlight" group="Disabled" value="#343434"/>
-    <Color role="Highlight" group="Inactive" value="#343434"/>
+    <Color role="Highlight" group="Inactive" value="#405d86"/>
     <Color role="HighlightedText" group="Active" value="#ffffff"/>
     <Color role="HighlightedText" group="Disabled" value="#ffffff"/>
     <Color role="HighlightedText" group="Inactive" value="#ffffff"/>

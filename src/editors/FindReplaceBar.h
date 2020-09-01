@@ -25,6 +25,12 @@ public:
     void setTarget(QWidget* target);
     void resetTarget();
 
+    void findTextChanged();
+    void findNext();
+    void findPrevious();
+    void replace();
+    void replaceAll();
+
 Q_SIGNALS:
     void action(FindReplaceBar::Action action, QString find, QString replace,
         QTextDocument::FindFlags flags);
@@ -33,11 +39,6 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private:
-    void findTextChanged();
-    void findNext();
-    void findPrevious();
-    void replace();
-    void replaceAll();
     QTextDocument::FindFlags findFlags() const;
 
     Ui::FindReplaceBar *ui;

@@ -258,10 +258,10 @@ void SourceEditor::setSourceType(SourceType sourceType)
 void SourceEditor::updateColors(bool darkTheme)
 {
     mCurrentLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
-    mCurrentLineFormat.setBackground(palette().base().color().lighter(darkTheme ? 110 : 95));
+    mCurrentLineFormat.setBackground(palette().base().color().lighter(darkTheme ? 115 : 95));
 
     mOccurrencesFormat.setForeground(palette().text().color().lighter(darkTheme ? 120 : 90));
-    mOccurrencesFormat.setBackground(palette().base().color().lighter(darkTheme ? 120 : 90));
+    mOccurrencesFormat.setBackground(palette().base().color().lighter(darkTheme ? 150 : 90));
 
     mMultiSelectionFormat.setForeground(palette().highlightedText());
     mMultiSelectionFormat.setBackground(palette().highlight());
@@ -554,8 +554,12 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
         endMultiSelection();
     }
 
-    if (ctrlHold && event->key() == Qt::Key_F) {
+    if (ctrlHold && (event->key() == Qt::Key_F || event->key() == Qt::Key_F3)) {
+        endMultiSelection();
         findReplace();
+
+        if (event->key() == Qt::Key_F3)
+            mFindReplaceBar.findNext();
     }
     else if (mAutoIndentation && event->key() == Qt::Key_Escape) {
         mFindReplaceBar.cancel();
@@ -852,7 +856,7 @@ void SourceEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
 QString SourceEditor::textUnderCursor(bool identifierOnly) const
 {
     auto cursor = textCursor();
-    if (cursor.selectedText().isEmpty()) {
+    if (cursor.selectedText().isEmpty() || identifierOnly) {
         cursor.movePosition(QTextCursor::Left);
         cursor.select(QTextCursor::WordUnderCursor);
     }
