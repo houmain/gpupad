@@ -163,8 +163,12 @@ bool FileDialog::exec(Options options, QString currentFileName)
     else if (options & TextureExtensions)
         dialog.setDefaultSuffix("png");
 
-    if (isUntitled(currentFileName))
-        currentFileName = "";
+    if (isUntitled(currentFileName)) {
+        currentFileName = getFileTitle(currentFileName);
+        if (QFileInfo(currentFileName).suffix().isEmpty() &&
+            !dialog.defaultSuffix().isEmpty())
+            currentFileName += "." + dialog.defaultSuffix();
+    }
 
     dialog.selectFile(currentFileName);
     if (currentFileName.isEmpty())

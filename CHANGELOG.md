@@ -6,12 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Added
 - Copy/paste/cut for rectangular selection.
+- Suggest filename when saving untitled.
 - Instancing sample.
+
+### Changed
+- Improved pasting as session item child.
+- Improved binary editor cell editing.
+- Improved syntax highlighting.
+- Improved find/replace (Ctrl-F3).
+- Changed dark theme highlight to blue.
 
 ### Fixed
 - Ignore unused item references of call.
 - Allow opening missing files in new editor.
-- Improved pasting as session item child.
 - Improved buffer binding point assignment.
 
 ## [Version 1.11] - 2020-08-04
