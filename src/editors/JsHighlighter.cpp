@@ -39,6 +39,7 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
 
     if (darkTheme) {
         functionFormat.setForeground(QColor(0x7AAFFF));
+        functionFormat.setFontWeight(QFont::Bold);
         keywordFormat.setForeground(QColor(0x7AAFFF));
         globalObjectFormat.setForeground(QColor(0x7AAFFF));
         numberFormat.setForeground(QColor(0xB09D30));
@@ -48,6 +49,7 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
     }
     else {
         functionFormat.setForeground(QColor(0x000066));
+        functionFormat.setFontWeight(QFont::Bold);
         keywordFormat.setForeground(QColor(0x003C98));
         globalObjectFormat.setForeground(QColor(0x003C98));
         numberFormat.setForeground(QColor(0x981111));
@@ -57,10 +59,6 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
     }
 
     auto rule = HighlightingRule();
-    rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
-    rule.format = functionFormat;
-    mHighlightingRules.append(rule);
-
     auto completerStrings = QStringList();
 
     for (const auto &keyword : keywords) {
@@ -71,11 +69,15 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
     }
 
     for (const auto &global : globalObjects) {
-        rule.pattern = QRegExp(QStringLiteral("\\b%1\\b").arg(global));
+        rule.pattern = QRegExp(QStringLiteral("\\b%1(\\.[A-Za-z0-9]+)*\\b").arg(global));
         rule.format = globalObjectFormat;
         mHighlightingRules.append(rule);
         completerStrings.append(global);
     }
+
+    rule.pattern = QRegExp("[A-Za-z_$][A-Za-z0-9_$]*(?=\\s*\\()");
+    rule.format = functionFormat;
+    mHighlightingRules.append(rule);
 
     rule.pattern = QRegExp("\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?\\b");
     rule.format = numberFormat;

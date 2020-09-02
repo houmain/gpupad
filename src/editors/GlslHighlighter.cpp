@@ -175,10 +175,6 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
     }
 
     auto rule = HighlightingRule();
-    rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
-    rule.format = functionFormat;
-    mHighlightingRules.append(rule);
-
     auto completerStrings = QStringList();
 
     for (const auto &keyword : keywords) {
@@ -204,6 +200,10 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
 
     for (const auto &qaulifier : layoutQualifiers)
         completerStrings.append(qaulifier);
+
+    rule.pattern = QRegExp("\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()");
+    rule.format = functionFormat;
+    mHighlightingRules.append(rule);
 
     rule.pattern = QRegExp("\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?[uUlLfF]{,2}\\b");
     rule.format = numberFormat;
