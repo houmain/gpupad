@@ -1,12 +1,12 @@
 [
     {
         "format": "RGBA8_UNorm",
-        "height": 256,
+        "height": 896,
         "id": 10,
-        "name": "Texture",
+        "name": "TargetColor",
         "target": "Target2D",
         "type": "Texture",
-        "width": 256
+        "width": 512
     },
     {
         "blendConstant": "#ffffffff",
@@ -34,62 +34,50 @@
         "type": "Target"
     },
     {
-        "fileName": "vertices.bin",
-        "id": 22,
-        "items": [
-            {
-                "count": 2,
-                "dataType": "Float",
-                "id": 23,
-                "name": "Position",
-                "padding": 0,
-                "type": "Column"
-            }
-        ],
-        "offset": 0,
-        "rowCount": 4,
-        "type": "Buffer"
+        "fileName": "robin.mp4",
+        "format": "RGBA8_UNorm",
+        "height": 256,
+        "id": 105,
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 256
     },
     {
-        "id": 17,
-        "items": [
-            {
-                "bufferId": 22,
-                "columnId": 23,
-                "divisor": 0,
-                "id": 18,
-                "name": "aPosition",
-                "normalize": false,
-                "type": "Attribute"
-            }
-        ],
-        "name": "Stream",
-        "type": "Stream"
+        "anisotropic": true,
+        "bindingType": "Sampler",
+        "borderColor": "#ff000000",
+        "comparisonFunc": "NoComparisonFunc",
+        "id": 109,
+        "magFilter": "Linear",
+        "minFilter": "LinearMipMapLinear",
+        "name": "uTexture",
+        "textureId": 105,
+        "type": "Binding",
+        "wrapModeX": "MirroredRepeat",
+        "wrapModeY": "MirroredRepeat",
+        "wrapModeZ": "Repeat"
     },
     {
         "bindingType": "Uniform",
-        "editor": "Color",
-        "id": 24,
-        "name": "uColor",
+        "editor": "Expression",
+        "id": 111,
+        "name": "uTime",
         "type": "Binding",
         "values": [
-            "1",
-            "0.50",
-            "0",
-            "1"
+            "(Date.now() % 100000) / 1000"
         ]
     },
     {
         "id": 1,
         "items": [
             {
-                "fileName": "minimal.vs",
+                "fileName": "attributeless.vs",
                 "id": 2,
                 "shaderType": "Vertex",
                 "type": "Shader"
             },
             {
-                "fileName": "minimal.fs",
+                "fileName": "textured.fs",
                 "id": 3,
                 "shaderType": "Fragment",
                 "type": "Shader"
@@ -97,6 +85,18 @@
         ],
         "name": "Program",
         "type": "Program"
+    },
+    {
+        "callType": "ClearTexture",
+        "checked": true,
+        "clearColor": "#00000000",
+        "clearDepth": 1,
+        "clearStencil": 0,
+        "executeOn": "EveryEvaluation",
+        "id": 110,
+        "name": "Clear",
+        "textureId": 10,
+        "type": "Call"
     },
     {
         "baseInstance": "0",
@@ -107,7 +107,7 @@
         "first": "0",
         "id": 4,
         "instanceCount": "1",
-        "name": "Call",
+        "name": "Draw",
         "primitiveType": "TriangleStrip",
         "programId": 1,
         "targetId": 7,

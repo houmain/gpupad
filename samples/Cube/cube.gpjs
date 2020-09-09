@@ -19,7 +19,7 @@
     },
     {
         "blendConstant": "#ff000000",
-        "cullMode": "NoCulling",
+        "cullMode": "Back",
         "frontFace": "CCW",
         "id": 100,
         "items": [

@@ -3,16 +3,7 @@
         "format": "RGBA8_UNorm",
         "height": 512,
         "id": 10,
-        "name": "Color",
-        "target": "Target2D",
-        "type": "Texture",
-        "width": 512
-    },
-    {
-        "fileName": "marble.png",
-        "format": "RGBA8_UNorm",
-        "height": 512,
-        "id": 105,
+        "name": "TargetColor",
         "target": "Target2D",
         "type": "Texture",
         "width": 512
@@ -43,54 +34,13 @@
         "type": "Target"
     },
     {
-        "fileName": "vertices.bin",
-        "id": 22,
-        "items": [
-            {
-                "count": 2,
-                "dataType": "Float",
-                "id": 23,
-                "name": "Position",
-                "padding": 0,
-                "type": "Column"
-            },
-            {
-                "count": 2,
-                "dataType": "Float",
-                "id": 106,
-                "name": "TexCoords",
-                "padding": 0,
-                "type": "Column"
-            }
-        ],
-        "offset": 0,
-        "rowCount": 4,
-        "type": "Buffer"
-    },
-    {
-        "id": 17,
-        "items": [
-            {
-                "bufferId": 22,
-                "columnId": 23,
-                "divisor": 0,
-                "id": 18,
-                "name": "aPosition",
-                "normalize": false,
-                "type": "Attribute"
-            },
-            {
-                "bufferId": 22,
-                "columnId": 106,
-                "divisor": 0,
-                "id": 107,
-                "name": "aTexCoords",
-                "normalize": false,
-                "type": "Attribute"
-            }
-        ],
-        "name": "Stream",
-        "type": "Stream"
+        "fileName": "marble.png",
+        "format": "RGBA8_UNorm",
+        "height": 512,
+        "id": 105,
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 512
     },
     {
         "anisotropic": true,
@@ -108,10 +58,23 @@
         "wrapModeZ": "Repeat"
     },
     {
+        "bindingType": "Uniform",
+        "editor": "Color",
+        "id": 111,
+        "name": "uColor",
+        "type": "Binding",
+        "values": [
+            "0.12549",
+            "0.290196",
+            "0.529412",
+            "1"
+        ]
+    },
+    {
         "id": 1,
         "items": [
             {
-                "fileName": "quad.vs",
+                "fileName": "attributeless.vs",
                 "id": 2,
                 "shaderType": "Vertex",
                 "type": "Shader"
@@ -129,7 +92,7 @@
     {
         "callType": "ClearTexture",
         "checked": true,
-        "clearColor": "#00bf4040",
+        "clearColor": "#00000000",
         "clearDepth": 1,
         "clearStencil": 0,
         "executeOn": "EveryEvaluation",
@@ -152,6 +115,6 @@
         "programId": 1,
         "targetId": 7,
         "type": "Call",
-        "vertexStreamId": 17
+        "vertexStreamId": 0
     }
 ]
