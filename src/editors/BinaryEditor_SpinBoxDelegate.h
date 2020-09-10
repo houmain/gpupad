@@ -55,7 +55,7 @@ public:
             default: break;
         }
 
-        connect(editor, &QDoubleSpinBox::valueChanged,
+        connect(editor, qOverload<double>(&QDoubleSpinBox::valueChanged),
             [this, editor, index]() {
                 setModelData(editor, const_cast<QAbstractItemModel *>(index.model()), index);
             });
