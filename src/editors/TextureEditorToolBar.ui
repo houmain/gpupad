@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>428</width>
-    <height>20</height>
+    <width>555</width>
+    <height>25</height>
    </rect>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
@@ -40,17 +40,34 @@
     <widget class="QDoubleSpinBox" name="level"/>
    </item>
    <item>
+    <widget class="QLabel" name="labelZ">
+     <property name="text">
+      <string>  Z</string>
+     </property>
+     <property name="buddy">
+      <cstring>z</cstring>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDoubleSpinBox" name="z">
+     <property name="maximum">
+      <double>1.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QLabel" name="labelLayer">
      <property name="text">
       <string>  Layer</string>
      </property>
      <property name="buddy">
-      <cstring>layer</cstring>
+      <cstring>z</cstring>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QDoubleSpinBox" name="layer"/>
+    <widget class="QSpinBox" name="layer"/>
    </item>
    <item>
     <widget class="QLabel" name="labelSample">

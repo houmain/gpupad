@@ -87,9 +87,12 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
     c += connect(mEditorToolBar.level, 
         qOverload<double>(&QDoubleSpinBox::valueChanged),
         [&](double value) { mTextureItem->setLevel(value); });
-    c += connect(mEditorToolBar.layer, 
+    c += connect(mEditorToolBar.z,
         qOverload<double>(&QDoubleSpinBox::valueChanged),
         [&](double value) { mTextureItem->setLayer(value); });
+    c += connect(mEditorToolBar.layer, 
+        qOverload<int>(&QSpinBox::valueChanged),
+        [&](int value) { mTextureItem->setLayer(value); });
     c += connect(mEditorToolBar.sample, 
         qOverload<int>(&QSpinBox::valueChanged),
         [&](int value) { mTextureItem->setSample(value); });
@@ -110,6 +113,11 @@ void TextureEditor::updateEditorToolBar()
     mEditorToolBar.labelLevel->setVisible(maxLevel);
     mEditorToolBar.level->setVisible(maxLevel);
     mEditorToolBar.level->setValue(mTextureItem->level());
+
+    const auto hasDepth = (mTexture.depth() > 1);
+    mEditorToolBar.labelZ->setVisible(hasDepth);
+    mEditorToolBar.z->setVisible(hasDepth);
+    mEditorToolBar.z->setSingleStep(hasDepth ? 0.5 / (mTexture.depth() - 1) : 1);
 
     const auto maxLayer = std::max(mTexture.layers() - 1, 0);
     mEditorToolBar.layer->setMaximum(maxLayer);
