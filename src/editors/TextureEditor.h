@@ -13,7 +13,6 @@ class TextureEditor final : public QGraphicsView, public IEditor
 {
     Q_OBJECT
 public:
-    static bool load(const QString &fileName, TextureData *texture);
     static Ui::TextureEditorToolBar *createEditorToolBar(QWidget *container);
 
     TextureEditor(QString fileName, 

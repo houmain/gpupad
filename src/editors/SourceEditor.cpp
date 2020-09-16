@@ -149,38 +149,6 @@ void SourceEditor::setFileName(QString fileName)
     Q_EMIT fileNameChanged(mFileName);
 }
 
-bool SourceEditor::load(const QString &fileName, QString *source)
-{
-    if (!source)
-        return false;
-
-    if (FileDialog::isEmptyOrUntitled(fileName)) {
-        *source = "";
-        return true;
-    }
-    QFile file(fileName);
-    if (!file.open(QFile::ReadOnly | QFile::Text))
-        return false;
-
-    const auto unprintable = [](const auto &string) {
-      return (std::find_if(string.constBegin(), string.constEnd(),
-          [](QChar c) { return (!c.isPrint() && !c.isSpace()); }) != string.constEnd());
-    };
-
-    QTextStream stream(&file);
-    auto string = stream.readAll();
-    if (!string.isSimpleText() || unprintable(string)) {
-      stream.setCodec("Windows-1250");
-      stream.seek(0);
-      string = stream.readAll();
-      if (unprintable(string))
-        return false;
-    }
-
-    *source = string;
-    return true;
-}
-
 bool SourceEditor::load()
 {
     auto source = QString();
@@ -194,7 +162,7 @@ bool SourceEditor::load()
 bool SourceEditor::reload()
 {
     auto source = QString();
-    if (!load(mFileName, &source))
+    if (!Singletons::fileCache().loadSource(mFileName, &source))
         return false;
 
     auto cursor = textCursor();

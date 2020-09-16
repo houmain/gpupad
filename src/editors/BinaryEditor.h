@@ -15,7 +15,6 @@ public:
         Float, Double,
     };
 
-    static bool load(const QString &fileName, QByteArray *data);
     static int getTypeSize(DataType type);
 
     explicit BinaryEditor(QString fileName, QWidget *parent = nullptr);

@@ -18,11 +18,13 @@ public:
     explicit FileCache(QObject *parent = nullptr);
     ~FileCache();
 
+    bool loadSource(const QString &fileName, QString *source) const;
+    bool loadTexture(const QString &fileName, TextureData *texture) const;
+    bool loadBinary(const QString &fileName, QByteArray *binary) const;
     bool getSource(const QString &fileName, QString *source) const;
     bool getTexture(const QString &fileName, TextureData *texture) const;
     bool getBinary(const QString &fileName, QByteArray *binary) const;
     bool updateTexture(const QString &fileName, TextureData texture) const;
-    void asyncOpenVideoPlayer(const QString &fileName);
 
     // only call from main thread
     void invalidateEditorFile(const QString &fileName);
@@ -34,7 +36,7 @@ public:
 
 Q_SIGNALS:
     void fileChanged(const QString &fileName);
-    void videoPlayerRequested(const QString &fileName, QPrivateSignal);
+    void videoPlayerRequested(const QString &fileName, QPrivateSignal) const;
 
 private:
     void handleFileSystemFileChanged(const QString &fileName);
@@ -42,6 +44,7 @@ private:
     void updateFileSystemWatches();
     void handleVideoPlayerRequested(const QString &fileName);
     void handleVideoPlayerLoaded();
+    void asyncOpenVideoPlayer(const QString &fileName) const;
 
     QSet<QString> mEditorFilesInvalidated;
     QTimer mUpdateFileSystemWatchesTimer;

@@ -58,6 +58,70 @@ void FileCache::updateEditorFiles()
     mEditorFilesInvalidated.clear();
 }
 
+bool FileCache::loadSource(const QString &fileName, QString *source) const
+{
+    if (!source)
+        return false;
+
+    if (FileDialog::isEmptyOrUntitled(fileName)) {
+        *source = "";
+        return true;
+    }
+    QFile file(fileName);
+    if (!file.open(QFile::ReadOnly | QFile::Text))
+        return false;
+
+    const auto unprintable = [](const auto &string) {
+      return (std::find_if(string.constBegin(), string.constEnd(),
+          [](QChar c) { return (!c.isPrint() && !c.isSpace()); }) != string.constEnd());
+    };
+
+    QTextStream stream(&file);
+    auto string = stream.readAll();
+    if (!string.isSimpleText() || unprintable(string)) {
+      stream.setCodec("Windows-1250");
+      stream.seek(0);
+      string = stream.readAll();
+      if (unprintable(string))
+        return false;
+    }
+
+    *source = string;
+    return true;
+}
+
+bool FileCache::loadTexture(const QString &fileName, TextureData *texture) const
+{
+    if (!texture || FileDialog::isEmptyOrUntitled(fileName))
+        return false;
+
+    auto file = TextureData();
+    if (!file.load(fileName)) {
+        if (FileDialog::isVideoFileName(fileName)) {
+            texture->create(QOpenGLTexture::Target2D,
+                QOpenGLTexture::RGBA8_UNorm, 1, 1, 1, 1, 1);
+            asyncOpenVideoPlayer(fileName);
+            return true;
+        }
+        return false;
+    }
+
+    *texture = file;
+    return true;
+}
+
+bool FileCache::loadBinary(const QString &fileName, QByteArray *binary) const
+{
+    if (!binary || FileDialog::isEmptyOrUntitled(fileName))
+        return false;
+
+    QFile file(fileName);
+    if (!file.open(QFile::ReadOnly))
+        return false;
+    *binary = file.readAll();
+    return true;
+}
+
 bool FileCache::getSource(const QString &fileName, QString *source) const
 {
     Q_ASSERT(source);
@@ -68,7 +132,7 @@ bool FileCache::getSource(const QString &fileName, QString *source) const
     }
 
     addFileSystemWatch(fileName);
-    if (!SourceEditor::load(fileName, source))
+    if (!loadSource(fileName, source))
         return false;
     mSources[fileName] = *source;
     return true;
@@ -84,7 +148,7 @@ bool FileCache::getTexture(const QString &fileName, TextureData *texture) const
     }
 
     addFileSystemWatch(fileName);
-    if (!TextureEditor::load(fileName, texture))
+    if (!loadTexture(fileName, texture))
         return false;
     mTextures[fileName] = *texture;
     return true;
@@ -109,7 +173,7 @@ bool FileCache::getBinary(const QString &fileName, QByteArray *binary) const
     }
 
     addFileSystemWatch(fileName);
-    if (!BinaryEditor::load(fileName, binary))
+    if (!loadBinary(fileName, binary))
         return false;
     mBinaries[fileName] = *binary;
     return true;
@@ -173,7 +237,7 @@ void FileCache::updateFileSystemWatches()
     }
 }
 
-void FileCache::asyncOpenVideoPlayer(const QString &fileName)
+void FileCache::asyncOpenVideoPlayer(const QString &fileName) const
 {
     Q_EMIT videoPlayerRequested(fileName, QPrivateSignal());
 }

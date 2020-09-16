@@ -242,7 +242,7 @@ struct CallKind
     bool compute;
 };
 
-int getColumSize(const Column &column);
+int getColumnSize(const Column &column);
 int getColumnOffset(const Column &column);
 int getStride(const Buffer &buffer);
 TextureKind getKind(const Texture &texture);

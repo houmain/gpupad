@@ -14,8 +14,6 @@ class SourceEditor final : public QPlainTextEdit, public IEditor
 {
     Q_OBJECT
 public:
-    static bool load(const QString &fileName, QString *source);
-
     explicit SourceEditor(QString fileName,
         FindReplaceBar *findReplaceBar, QWidget *parent = nullptr);
     ~SourceEditor() override;

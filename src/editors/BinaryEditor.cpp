@@ -86,18 +86,6 @@ void BinaryEditor::setFileName(QString fileName)
     Q_EMIT fileNameChanged(mFileName);
 }
 
-bool BinaryEditor::load(const QString &fileName, QByteArray *data)
-{
-    if (!data || FileDialog::isEmptyOrUntitled(fileName))
-        return false;
-
-    QFile file(fileName);
-    if (!file.open(QFile::ReadOnly))
-        return false;
-    *data = file.readAll();
-    return true;
-}
-
 bool BinaryEditor::load()
 {
     auto data = QByteArray();
@@ -112,7 +100,7 @@ bool BinaryEditor::load()
 bool BinaryEditor::reload()
 {
     auto data = QByteArray();
-    if (!load(mFileName, &data))
+    if (!Singletons::fileCache().loadBinary(mFileName, &data))
         return false;
 
     replace(data);

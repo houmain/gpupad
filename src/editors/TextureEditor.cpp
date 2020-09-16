@@ -140,26 +140,6 @@ void TextureEditor::setFileName(QString fileName)
     Q_EMIT fileNameChanged(mFileName);
 }
 
-bool TextureEditor::load(const QString &fileName, TextureData *texture)
-{
-    if (!texture || FileDialog::isEmptyOrUntitled(fileName))
-        return false;
-
-    auto file = TextureData();
-    if (!file.load(fileName)) {
-        if (FileDialog::isVideoFileName(fileName)) {
-            texture->create(QOpenGLTexture::Target2D,
-                QOpenGLTexture::RGBA8_UNorm, 256, 256, 1, 1, 1);
-            Singletons::fileCache().asyncOpenVideoPlayer(fileName);
-            return true;
-        }
-        return false;
-    }
-
-    *texture = file;
-    return true;
-}
-
 bool TextureEditor::load()
 {
     auto image = TextureData();
@@ -174,7 +154,7 @@ bool TextureEditor::load()
 bool TextureEditor::reload()
 {
     auto image = TextureData();
-    if (!load(mFileName, &image))
+    if (!Singletons::fileCache().loadTexture(mFileName, &image))
         return false;
 
     replace(image);
