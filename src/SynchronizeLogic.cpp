@@ -259,8 +259,8 @@ void SynchronizeLogic::handleSourceTypeChanged(SourceType sourceType)
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
     Singletons::fileCache().updateEditorFiles();
-    mRenderSession->update(mRenderSessionInvalidated, evaluationType);
-    mRenderSessionInvalidated = false;
+    mRenderSession->update(
+        std::exchange(mRenderSessionInvalidated, true), evaluationType);
 }
 
 void SynchronizeLogic::updateEditors()

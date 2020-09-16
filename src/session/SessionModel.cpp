@@ -170,8 +170,9 @@ bool SessionModel::canDropMimeData(const QMimeData *data,
         return false;
 
     for (const QJsonValue &value : jsonArray) {
-        auto type = getTypeByName(value.toObject()["type"].toString());
-        if (!canContainType(parent, type))
+        auto ok = false;
+        const auto type = getTypeByName(value.toObject()["type"].toString(), ok);
+        if (!ok || !canContainType(parent, type))
             return false;
     }
     return true;
@@ -315,8 +316,9 @@ void SessionModel::dropJson(const QJsonArray &jsonArray,
 void SessionModel::deserialize(const QJsonObject &object,
     const QModelIndex &parent, int row, bool updateExisting)
 {
-    auto type = getTypeByName(object["type"].toString());
-    if (!canContainType(parent, type))
+    auto ok = false;
+    auto type = getTypeByName(object["type"].toString(), ok);
+    if (!ok || !canContainType(parent, type))
         return;
 
     auto id = object["id"].toInt();

@@ -343,13 +343,12 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
 
 IEditor* SessionProperties::openEditor(const FileItem &fileItem)
 {
-    auto &editors = Singletons::editorManager();
-
     if (fileItem.fileName.isEmpty()) {
         const auto fileName = FileDialog::generateNextUntitledFileName(fileItem.name);
         mModel.setData(mModel.getIndex(&fileItem, SessionModel::FileName), fileName);
     }
 
+    auto &editors = Singletons::editorManager();
     switch (fileItem.type) {
         case Item::Type::Texture:
             if (auto editor = editors.openTextureEditor(fileItem.fileName))

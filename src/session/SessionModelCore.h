@@ -133,7 +133,7 @@ public:
     bool removeRows(int row, int count, const QModelIndex &parent) override;
 
     QUndoStack &undoStack() { return mUndoStack; }
-    Item::Type getTypeByName(const QString &name) const;
+    Item::Type getTypeByName(const QString &name, bool &ok) const;
     QString getTypeName(Item::Type type) const;
     bool canContainType(const QModelIndex &index, Item::Type type) const;
     QModelIndex insertItem(Item::Type type, QModelIndex parent,

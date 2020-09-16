@@ -82,9 +82,8 @@ QString SessionModelCore::getTypeName(Item::Type type) const
     return QMetaEnum::fromType<Item::Type>().valueToKey(static_cast<int>(type));
 }
 
-Item::Type SessionModelCore::getTypeByName(const QString &name) const
+Item::Type SessionModelCore::getTypeByName(const QString &name, bool &ok) const
 {
-    auto ok = false;
     auto type = QMetaEnum::fromType<Item::Type>().keyToValue(qPrintable(name), &ok);
     return (ok ? static_cast<Item::Type>(type) : Item::Type::Group);
 }
