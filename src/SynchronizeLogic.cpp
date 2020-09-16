@@ -289,6 +289,15 @@ void SynchronizeLogic::updateEditor(ItemId itemId, bool activated)
 void SynchronizeLogic::updateTextureEditor(const Texture &texture,
     TextureEditor &editor)
 {
+    editor.setRawFormat({
+        texture.target,
+        texture.format,
+        texture.width,
+        texture.height,
+        texture.depth,
+        texture.layers,
+        texture.samples,
+    });
 }
 
 void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,

@@ -75,7 +75,7 @@ void GLBuffer::reload()
     mMessages.clear();
 
     auto prevData = mData;
-    if (!mFileName.isEmpty())
+    if (!FileDialog::isEmptyOrUntitled(mFileName))
         if (!Singletons::fileCache().getBinary(mFileName, &mData))
             mMessages += MessageList::insert(
                 mItemId, MessageType::LoadingFileFailed, mFileName);

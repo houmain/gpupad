@@ -61,6 +61,7 @@ set(SOURCES
   src/editors/FindReplaceBar.cpp
   src/editors/FindReplaceBar.ui
   src/editors/GlslHighlighter.cpp
+  src/editors/TextureEditorToolBar.ui
   src/editors/TextureEditor.cpp
   src/editors/TextureItem.cpp
   src/editors/JsHighlighter.cpp

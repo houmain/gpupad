@@ -428,8 +428,8 @@ bool operator==(const TextureData &a, const TextureData &b)
                 const auto db = b.getData(level, layer, face);
                 if (da == db)
                     continue;
-                const auto sa = a.getLevelSize(level);
-                const auto sb = b.getLevelSize(level);
+                const auto sa = a.getImageSize(level);
+                const auto sb = b.getImageSize(level);
                 if (sa != sb ||
                     std::memcmp(da, db, static_cast<size_t>(sa)) != 0)
                     return false;
@@ -537,11 +537,11 @@ bool TextureData::load(const QString &fileName)
     if (!create(QOpenGLTexture::Target2D, getTextureFormat(image.format()),
           image.width(), image.height(), 1, 1, 1))
         return false;
-    if (static_cast<int>(image.sizeInBytes()) != getLevelSize(0))
+    if (static_cast<int>(image.sizeInBytes()) != getImageSize(0))
         return false;
 
     std::memcpy(getWriteonlyData(0, 0, 0), image.constBits(),
-        static_cast<size_t>(getLevelSize(0)));
+        static_cast<size_t>(getImageSize(0)));
     return true;
 }
 
@@ -569,10 +569,10 @@ QImage TextureData::toImage() const
     if (imageFormat == QImage::Format_Invalid)
         return { };
     auto image = QImage(width(), height(), imageFormat);
-    if (static_cast<int>(image.sizeInBytes()) != getLevelSize(0))
+    if (static_cast<int>(image.sizeInBytes()) != getImageSize(0))
         return { };
     std::memcpy(image.bits(), getData(0, 0, 0),
-        static_cast<size_t>(getLevelSize(0)));
+        static_cast<size_t>(getImageSize(0)));
 
     return image;
 }
@@ -646,6 +646,9 @@ int TextureData::levels() const
 
 int TextureData::layers() const
 {
+    if (mTarget == QOpenGLTexture::TargetCubeMapArray)
+        return static_cast<int>(mKtxTexture->numLayers / 6);
+
     return (isNull() ? 0 : static_cast<int>(mKtxTexture->numLayers));
 }
 
@@ -686,11 +689,16 @@ const uchar *TextureData::getData(int level, int layer, int face) const
     return nullptr;
 }
 
-int TextureData::getLevelSize(int level) const
+int TextureData::getImageSize(int level) const
 {
     return (isNull() ? 0 :
       static_cast<int>(ktxTexture_GetImageSize(mKtxTexture.get(),
           static_cast<ktx_uint32_t>(level))));
+}
+
+int TextureData::getLevelSize(int level) const
+{
+    return getImageSize(level) * depth() * layers() * faces();
 }
 
 void TextureData::clear()
@@ -702,7 +710,7 @@ void TextureData::clear()
     for (auto layer = 0; layer < layers(); ++layer)
         for (auto face = 0; face < faces(); ++face)
             std::memset(getWriteonlyData(level, layer, face),
-                0xFF, static_cast<size_t>(getLevelSize(level)));
+                0xFF, static_cast<size_t>(getImageSize(level)));
 }
 
 bool TextureData::upload(GLuint textureId,
@@ -799,7 +807,7 @@ bool TextureData::download(GL& gl, GLuint textureId)
             auto size = GLint{ };
             gl.glGetTexLevelParameteriv(mTarget, level,
                 GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size);
-            if (glGetError() != GL_NO_ERROR || size > getLevelSize(level))
+            if (glGetError() != GL_NO_ERROR || size > getImageSize(level))
                 return false;
             gl.glGetCompressedTexImage(mTarget, level, data);
         }
@@ -831,7 +839,7 @@ bool TextureData::downloadMultisample(GL& gl, GLuint textureId)
             !singleSampleTexture.download(singleSampleTextureId))
             return false;
 
-        std::memcpy(getWriteonlyData(0, 0, 0), singleSampleTexture.getData(0, 0, 0), getLevelSize(0));
+        std::memcpy(getWriteonlyData(0, 0, 0), singleSampleTexture.getData(0, 0, 0), getImageSize(0));
         return true;
     }
     else {

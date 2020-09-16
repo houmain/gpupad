@@ -41,6 +41,7 @@ public:
     int samples() const { return mSamples; }
     uchar *getWriteonlyData(int level, int layer, int face);
     const uchar *getData(int level, int layer, int face) const;
+    int getImageSize(int level) const;
     int getLevelSize(int level) const;
     bool upload(GLuint textureId, QOpenGLTexture::TextureFormat format =
         QOpenGLTexture::TextureFormat::NoFormat);

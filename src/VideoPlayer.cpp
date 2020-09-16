@@ -52,7 +52,7 @@ bool VideoPlayer::present(const QVideoFrame &frame)
     if (texture.create(QOpenGLTexture::Target2D,
           QOpenGLTexture::RGBA8_UNorm, frame.width(), frame.height(), 1, 1, 1))
         if (mappableFrame.map(QAbstractVideoBuffer::ReadOnly))
-            if (const auto size = texture.getLevelSize(0); size <= frame.mappedBytes()) {
+            if (const auto size = texture.getImageSize(0); size <= frame.mappedBytes()) {
                 std::memcpy(texture.getWriteonlyData(0, 0, 0), mappableFrame.bits(), size);
                 return Singletons::fileCache().updateTexture(mFileName, std::move(texture));
             }

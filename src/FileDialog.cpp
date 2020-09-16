@@ -121,11 +121,12 @@ bool FileDialog::exec(Options options, QString currentFileName)
         shaderFileFilter = shaderFileFilter + " *." + ext;
 
     auto textureFileFilter = QString();
-    textureFileFilter += " *.ktx";
+    textureFileFilter += " *.ktx *.raw";
     for (const QByteArray &format : QImageReader::supportedImageFormats())
         textureFileFilter = textureFileFilter + " *." + QString(format);
     for (const QByteArray &format : VideoFileExtensions)
         textureFileFilter = textureFileFilter + " *." + QString(format);
+    textureFileFilter += textureFileFilter.toUpper();
 
     auto scriptFileFilter = QString();
     for (const auto &ext : ScriptFileExtensions)

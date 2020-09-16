@@ -11,6 +11,19 @@
 #include <QOpenGLWidget>
 #include <QWheelEvent>
 #include <QScrollBar>
+#include <cstring>
+
+bool createFromRaw(const QByteArray &binary,
+    const TextureEditor::RawFormat &r, TextureData *texture)
+{
+    if (!texture->create(r.target, r.format, r.width, r.height,
+                         r.depth, r.layers, r.samples))
+        return false;
+
+    std::memcpy(texture->getWriteonlyData(0, 0, 0), binary.data(),
+        static_cast<size_t>(std::min(binary.size(), texture->getLevelSize(0))));
+    return true;
+}
 
 Ui::TextureEditorToolBar* TextureEditor::createEditorToolBar(QWidget *container)
 {
@@ -148,24 +161,46 @@ void TextureEditor::setFileName(QString fileName)
     Q_EMIT fileNameChanged(mFileName);
 }
 
+void TextureEditor::setRawFormat(RawFormat rawFormat)
+{
+    if (!std::memcmp(&mRawFormat, &rawFormat, sizeof(RawFormat)))
+        return;
+
+    mRawFormat = rawFormat;
+    if (mTexture.isNull() || mIsRaw)
+        reload();
+}
+
 bool TextureEditor::load()
 {
-    auto image = TextureData();
-    if (!Singletons::fileCache().getTexture(mFileName, &image))
-        return false;
+    auto texture = TextureData();
+    if (!Singletons::fileCache().getTexture(mFileName, &texture)) {
+        auto binary = QByteArray();
+        if (!Singletons::fileCache().getBinary(mFileName, &binary))
+            return false;
+        if (!createFromRaw(binary, mRawFormat, &texture))
+            return false;
+        mIsRaw = true;
+    }
 
-    replace(image);
+    replace(texture);
     setModified(false);
     return true;
 }
 
 bool TextureEditor::reload()
 {
-    auto image = TextureData();
-    if (!Singletons::fileCache().loadTexture(mFileName, &image))
-        return false;
+    auto texture = TextureData();
+    if (!Singletons::fileCache().loadTexture(mFileName, &texture)) {
+        auto binary = QByteArray();
+        if (!Singletons::fileCache().loadBinary(mFileName, &binary))
+            return false;
+        if (!createFromRaw(binary, mRawFormat, &texture))
+            return false;
+        mIsRaw = true;
+    }
 
-    replace(image);
+    replace(texture);
     setModified(false);
     return true;
 }

@@ -13,6 +13,12 @@ class TextureEditor final : public QGraphicsView, public IEditor
 {
     Q_OBJECT
 public:
+    struct RawFormat {
+        QOpenGLTexture::Target target;
+        QOpenGLTexture::TextureFormat format;
+        int width, height, depth, layers, samples;
+    };
+
     static Ui::TextureEditorToolBar *createEditorToolBar(QWidget *container);
 
     TextureEditor(QString fileName, 
@@ -24,6 +30,7 @@ public:
         connectEditActions(const EditActions &actions) override;
     QString fileName() const override { return mFileName; }
     void setFileName(QString fileName) override;
+    void setRawFormat(RawFormat rawFormat);
     bool load() override;
     bool reload() override;
     bool save() override;
@@ -55,6 +62,8 @@ private:
 
     const Ui::TextureEditorToolBar &mEditorToolBar;
     QString mFileName;
+    RawFormat mRawFormat{ };
+    bool mIsRaw{ };
     bool mModified{ };
     TextureData mTexture;
     bool mPan{ };
