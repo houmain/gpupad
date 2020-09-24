@@ -223,17 +223,38 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
         FileDialog::getFileTitle(item.fileName) == item.name)
         return;
 
+    mModel.undoStack().beginMacro("update filename");
+
     const auto prevFileName = item.fileName;
     if (!FileDialog::isEmptyOrUntitled(item.fileName)) {
-        // try to rename file in filesystem
         const auto fileName = QFileInfo(item.fileName).dir().filePath(item.name);
-        if (QFile(prevFileName).exists() &&
-            !QFile::rename(prevFileName, fileName)) {
+        const auto file = QFile(fileName);
+        const auto prevFile = QFile(prevFileName);
+
+        const auto identical = [](const QFileInfo &a, const QFileInfo &b) {
+            if (!a.exists() || !b.exists() || a.size() != b.size())
+                return false;
+            return (QFile(a.fileName()).readAll() == QFile(b.fileName()).readAll());
+        };
+
+        const auto mergeRenameOrCopy = [&]() {
+            if (identical(prevFile, file))
+                return QFile::remove(prevFileName);
+
+            auto fileReferencedByOtherItem = false;
+            mModel.forEachFileItem([&](const FileItem& other) {
+                if (&item != &other && item.fileName == other.fileName)
+                    fileReferencedByOtherItem = true;
+            });
+            if (!fileReferencedByOtherItem)
+                return QFile::rename(prevFileName, fileName);
+
+            return QFile::copy(prevFileName, fileName);
+        };
+        if (prevFile.exists() && !mergeRenameOrCopy()) {
             // failed, rename item back
             const auto name = QFileInfo(item.fileName).fileName();
-            // WORKAROUND: directly updating item, because redo() of update command segfaults
-            // mModel.setData(mModel.getIndex(&item, SessionModel::Name), name);
-            const_cast<FileItem&>(item).name = name;
+            mModel.setData(mModel.getIndex(&item, SessionModel::Name), name);
             return;
         }
 
@@ -245,6 +266,8 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
         const auto fileName = FileDialog::generateNextUntitledFileName(item.name);
         mModel.setData(mModel.getIndex(&item, SessionModel::FileName), fileName);
     }
+
+    mModel.undoStack().endMacro();
 
     // rename editor filenames
     Singletons::editorManager().renameEditors(prevFileName, item.fileName);
