@@ -62,7 +62,7 @@ QModelIndex GpupadScriptObject::findItem(QJsonValue value)
 SessionModel &GpupadScriptObject::sessionModel()
 {
     if (!std::exchange(mUpdatingSession, true))
-        Singletons::sessionModel().undoStack().beginMacro("script");
+        Singletons::sessionModel().beginUndoMacro("Script");
 
     return Singletons::sessionModel();
 }
@@ -70,5 +70,5 @@ SessionModel &GpupadScriptObject::sessionModel()
 void GpupadScriptObject::finishSessionUpdate()
 {
     if (std::exchange(mUpdatingSession, false))
-        Singletons::sessionModel().undoStack().endMacro();
+        Singletons::sessionModel().endUndoMacro();
 }

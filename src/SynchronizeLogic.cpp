@@ -223,7 +223,7 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
         FileDialog::getFileTitle(item.fileName) == item.name)
         return;
 
-    mModel.undoStack().beginMacro("update filename");
+    mModel.beginUndoMacro("Update filename");
 
     const auto prevFileName = item.fileName;
     if (!FileDialog::isEmptyOrUntitled(item.fileName)) {
@@ -267,7 +267,7 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
         mModel.setData(mModel.getIndex(&item, SessionModel::FileName), fileName);
     }
 
-    mModel.undoStack().endMacro();
+    mModel.endUndoMacro();
 
     // rename editor filenames
     Singletons::editorManager().renameEditors(prevFileName, item.fileName);

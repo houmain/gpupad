@@ -132,7 +132,6 @@ public:
         int role = Qt::EditRole) override;
     bool removeRows(int row, int count, const QModelIndex &parent) override;
 
-    QUndoStack &undoStack() { return mUndoStack; }
     Item::Type getTypeByName(const QString &name, bool &ok) const;
     QString getTypeName(Item::Type type) const;
     bool canContainType(const QModelIndex &index, Item::Type type) const;
@@ -160,6 +159,7 @@ public:
 
 protected:
     ItemId getNextItemId();
+    QUndoStack &undoStack() { return mUndoStack; }
 
 private:
     Item &getItemRef(const QModelIndex &index);
@@ -168,6 +168,7 @@ private:
         const QModelIndex &parent, int row);
     void removeItem(QList<Item*> *list,
         const QModelIndex &parent, int row);
+    void pushUndoCommand(QUndoCommand *command);
     void undoableInsertItem(QList<Item*> *list, Item *item,
         const QModelIndex &parent, int row);
     void undoableRemoveItem(QList<Item*> *list, Item *item,

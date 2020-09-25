@@ -8,6 +8,7 @@
 #include <QApplication>
 #include <QPalette>
 #include <QSaveFile>
+#include <QAction>
 
 SessionModel::SessionModel(QObject *parent)
     : SessionModelCore(parent)
@@ -30,6 +31,39 @@ SessionModel::SessionModel(QObject *parent)
 SessionModel::~SessionModel()
 {
     clear();
+}
+
+QList<QMetaObject::Connection> SessionModel::connectUndoActions(
+    QAction *undo, QAction *redo)
+{
+    auto c = QList<QMetaObject::Connection>();
+    undo->setEnabled(undoStack().canUndo());
+    redo->setEnabled(undoStack().canRedo());
+    c += connect(undo, &QAction::triggered, &undoStack(), &QUndoStack::undo);
+    c += connect(redo, &QAction::triggered, &undoStack(), &QUndoStack::redo);
+    c += connect(&undoStack(), &QUndoStack::canUndoChanged, undo, &QAction::setEnabled);
+    c += connect(&undoStack(), &QUndoStack::canRedoChanged, redo, &QAction::setEnabled);
+    return c;
+}
+
+bool SessionModel::isUndoStackClean()
+{
+    return undoStack().isClean();
+}
+
+void SessionModel::clearUndoStack()
+{
+    undoStack().clear();
+}
+
+void SessionModel::beginUndoMacro(const QString &text)
+{
+    undoStack().beginMacro(text);
+}
+
+void SessionModel::endUndoMacro()
+{
+    undoStack().endMacro();
 }
 
 QIcon SessionModel::getTypeIcon(Item::Type type) const
@@ -258,7 +292,7 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     if (row < 0)
         row = rowCount(parent);
 
-    undoStack().beginMacro("Move");    
+    beginUndoMacro("Move");    
 
     if (action == Qt::MoveAction && !mDraggedIndices.empty()) {
         std::stable_sort(mDraggedIndices.begin(), mDraggedIndices.end(),
@@ -274,7 +308,7 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     dropJson(jsonArray, row, parent, false);
     mDraggedIndices.clear();
 
-    undoStack().endMacro();
+    endUndoMacro();
     return true;
 }
 

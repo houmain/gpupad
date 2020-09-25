@@ -28,6 +28,12 @@ public:
     bool removeRows(int row, int count,
         const QModelIndex &parent = QModelIndex()) override;
 
+    QList<QMetaObject::Connection> connectUndoActions(QAction *undo, QAction *redo);
+    bool isUndoStackClean();
+    void clearUndoStack();
+    void beginUndoMacro(const QString &text);
+    void endUndoMacro();
+
     QIcon getTypeIcon(Item::Type type) const;
     QString findItemName(ItemId id) const;
     void setActiveItems(QSet<ItemId> itemIds);

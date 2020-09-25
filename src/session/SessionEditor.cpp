@@ -30,8 +30,6 @@ SessionEditor::SessionEditor(QWidget *parent)
     setFileName({ });
     setMinimumWidth(150);
 
-    connect(&mModel.undoStack(), &QUndoStack::cleanChanged,
-        [this](bool clean) { Q_EMIT modificationChanged(!clean); });
     connect(this, &QTreeView::activated,
         this, &SessionEditor::handleItemActivated);
     connect(this, &QTreeView::customContextMenuRequested,
@@ -120,16 +118,11 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
     c += connect(this, &SessionEditor::modificationChanged,
         actions.windowFileName, &QAction::setEnabled);
 
-    actions.undo->setEnabled(mModel.undoStack().canUndo());
-    actions.redo->setEnabled(mModel.undoStack().canRedo());
-    c += connect(actions.undo, &QAction::triggered,
-        &mModel.undoStack(), &QUndoStack::undo);
-    c += connect(actions.redo, &QAction::triggered,
-        &mModel.undoStack(), &QUndoStack::redo);
-    c += connect(&mModel.undoStack(), &QUndoStack::canUndoChanged,
-        actions.undo, &QAction::setEnabled);
-    c += connect(&mModel.undoStack(), &QUndoStack::canRedoChanged,
-        actions.redo, &QAction::setEnabled);
+    c += mModel.connectUndoActions(actions.undo, actions.redo);
+    const auto updateModifiaction = 
+      [this]() { Q_EMIT modificationChanged(!mModel.isUndoStackClean()); };
+    c += connect(actions.undo, &QAction::changed, updateModifiaction);
+    c += connect(actions.redo, &QAction::changed, updateModifiaction);
 
     // do not enable copy/paste... actions when a property editor is focused
     if (qApp->focusWidget() != this)
@@ -224,12 +217,12 @@ void SessionEditor::focusOutEvent(QFocusEvent *event)
 
 bool SessionEditor::isModified() const
 {
-    return !mModel.undoStack().isClean();
+    return !mModel.isUndoStackClean();
 }
 
 void SessionEditor::clearUndo()
 {
-    mModel.undoStack().clear();
+    mModel.clearUndoStack();
 }
 
 bool SessionEditor::clear()
@@ -267,10 +260,10 @@ bool SessionEditor::save()
 
 void SessionEditor::cut()
 {
-    mModel.undoStack().beginMacro("Cut");
+    mModel.beginUndoMacro("Cut");
     copy();
     delete_();
-    mModel.undoStack().endMacro();
+    mModel.endUndoMacro();
 }
 
 void SessionEditor::copy()
@@ -292,9 +285,9 @@ void SessionEditor::paste()
         auto mimeData = QApplication::clipboard()->mimeData();
         if (!mModel.canDropMimeData(mimeData, Qt::CopyAction, row, column, parent))
             return false;
-        mModel.undoStack().beginMacro("Paste");
+        mModel.beginUndoMacro("Paste");
         mModel.dropMimeData(mimeData, Qt::CopyAction, row, column, parent);
-        mModel.undoStack().endMacro();
+        mModel.endUndoMacro();
         return true;
     };
 
@@ -312,13 +305,13 @@ void SessionEditor::paste()
 
 void SessionEditor::delete_()
 {
-    mModel.undoStack().beginMacro("Delete");
+    mModel.beginUndoMacro("Delete");
     auto indices = selectionModel()->selectedIndexes();
     std::sort(indices.begin(), indices.end(),
         [](const auto &a, const auto &b) { return a.row() > b.row(); });
     for (QModelIndex index : indices)
         mModel.deleteItem(index);
-    mModel.undoStack().endMacro();
+    mModel.endUndoMacro();
 }
 
 void SessionEditor::setCurrentItem(ItemId itemId)
@@ -342,7 +335,7 @@ void SessionEditor::openContextMenu(const QPoint &pos)
 
 void SessionEditor::addItem(Item::Type type)
 {
-    mModel.undoStack().beginMacro("Add");
+    mModel.beginUndoMacro("Add");
 
     auto addingToGroup = (currentIndex().isValid() &&
         mModel.getItemType(currentIndex()) == Item::Type::Group);
@@ -357,7 +350,7 @@ void SessionEditor::addItem(Item::Type type)
     else if (type == Item::Type::Program)
         mModel.insertItem(Item::Type::Shader, index);
 
-    mModel.undoStack().endMacro();
+    mModel.endUndoMacro();
 
     setCurrentIndex(index);
     setExpanded(index, true);
