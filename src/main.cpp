@@ -9,6 +9,22 @@
 // http://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf
 extern "C" { __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001; }
 extern "C" { __declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001; }
+
+// https://www.codeproject.com/Tips/76427/How-to-bring-window-to-top-with-SetForegroundWindo
+void SetForegroundWindowInternal(HWND hWnd) {
+    // Press the "Alt" key
+    auto ip = INPUT{ };
+    ip.type = INPUT_KEYBOARD;
+    ip.ki.wVk = VK_MENU;
+    SendInput(1, &ip, sizeof(INPUT));
+
+    ::Sleep(100);
+    ::SetForegroundWindow(hWnd);
+
+    // Release the "Alt" key
+    ip.ki.dwFlags = KEYEVENTF_KEYUP;
+    SendInput(1, &ip, sizeof(INPUT));
+}
 #endif
 
 int main(int argc, char *argv[])
@@ -51,8 +67,13 @@ int main(int argc, char *argv[])
             Q_UNUSED(instanceId);
             window.openFile(QString::fromUtf8(argument));
             window.setWindowState((window.windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
+
+#if defined(_WIN32)
+            SetForegroundWindowInternal(reinterpret_cast<HWND>(window.winId()));
+#else
             window.raise();
             window.activateWindow();
+#endif
         });
 
     for (const QString &argument : qAsConst(arguments))
