@@ -1,9 +1,8 @@
 #include "MainWindow.h"
-#include "KDSingleApplication/kdsingleapplication.h"
+#include "SingleApplication/singleapplication.h"
 #include "render/CompositorSync.h"
 #include <QApplication>
 #include <QStyleFactory>
-#include <QFileInfo>
 
 #if defined(_WIN32)
 // use dedicated GPUs by default
@@ -26,34 +25,30 @@ int main(int argc, char *argv[])
 
     initializeCompositorSync();
 
-    QApplication app(argc, argv);
+    SingleApplication app(argc, argv, true);
+    auto arguments = app.arguments();
+    arguments.removeFirst();
+
+    if(app.isSecondary() && !arguments.empty()) {
+        for (const auto &argument : qAsConst(arguments))
+            app.sendMessage(argument.toUtf8());
+        return 0;
+    }
+
     app.setApplicationVersion(
 #include "_version.h"
     );
     app.setOrganizationName("gpupad");
     app.setApplicationName("GPUpad");
 
-    auto arguments = app.arguments();
-    arguments.removeFirst();
-
-    KDSingleApplication kdsa;
-
-    if (!kdsa.isPrimaryInstance() && !arguments.empty()) {
-        for (const auto &argument : qAsConst(arguments)) {
-            const auto file = QFileInfo(argument);
-            if (file.exists())
-                kdsa.sendMessage(file.absoluteFilePath().toUtf8());
-        }
-        return 0;
-    }
-
     app.setStyle(QStyleFactory::create("Fusion"));
 
     MainWindow window;
     window.show();
 
-    QObject::connect(&kdsa, &KDSingleApplication::messageReceived,
-        [&](QByteArray argument) {
+    QObject::connect(&app, &SingleApplication::receivedMessage,
+        [&](quint32 instanceId, QByteArray argument) {
+            Q_UNUSED(instanceId);
             window.openFile(QString::fromUtf8(argument));
             window.setWindowState((window.windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
             window.raise();

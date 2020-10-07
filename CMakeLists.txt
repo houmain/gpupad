@@ -30,8 +30,7 @@ add_definitions(-DQT_NO_CAST_TO_ASCII
                 -DQT_NO_FOREACH)
 
 set(SOURCES
-  libs/KDSingleApplication/kdsingleapplication_localsocket.cpp
-  libs/KDSingleApplication/kdsingleapplication.cpp
+  libs/SingleApplication/singleapplication.cpp
   libs/KTX/lib/checkheader.c
   libs/KTX/lib/errstr.c
   libs/KTX/lib/filestream.c
@@ -121,7 +120,7 @@ if(WIN32)
 endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
-add_compile_definitions(KDSINGLEAPPLICATION_STATIC_BUILD KTX_OPENGL)
+add_compile_definitions(QAPPLICATION_CLASS=QApplication KTX_OPENGL)
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
 
 option(OPTION_DEVELOPER_MODE "Developer Mode" OFF)
