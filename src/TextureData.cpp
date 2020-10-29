@@ -1,5 +1,6 @@
 #include "TextureData.h"
 #include "session/Item.h"
+#include "tga/tga.h"
 #include <cstring>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions_3_3_Core>
@@ -520,42 +521,125 @@ bool TextureData::create(
     return false;
 }
 
-bool TextureData::load(const QString &fileName) 
+bool TextureData::loadFromKtx(const QString &fileName)
 {
     auto texture = std::add_pointer_t<ktxTexture>{ };
     if (ktxTexture_CreateFromNamedFile(fileName.toUtf8().constData(),
-            KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture) == KTX_SUCCESS) {
-        mTarget = getTarget(*texture);
-        mKtxTexture.reset(texture, &ktxTexture_Destroy);
-        return true;
-    }
+            KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture) != KTX_SUCCESS)
+        return false;
+    mTarget = getTarget(*texture);
+    mKtxTexture.reset(texture, &ktxTexture_Destroy);
+    return true;
+}
 
+bool TextureData::loadFromQImage(const QString &fileName)
+{
     auto image = QImage();
     if (!image.load(fileName))
         return false;
     image.convertTo(getNextNativeImageFormat(image.format()));
     if (!create(QOpenGLTexture::Target2D, getTextureFormat(image.format()),
-          image.width(), image.height(), 1, 1, 1))
+                image.width(), image.height(), 1, 1, 1))
         return false;
     if (static_cast<int>(image.sizeInBytes()) != getImageSize(0))
         return false;
-
     std::memcpy(getWriteonlyData(0, 0, 0), image.constBits(),
         static_cast<size_t>(getImageSize(0)));
     return true;
 }
 
-bool TextureData::save(const QString &fileName) const 
+bool TextureData::loadFromTga(const QString &fileName)
 {
-    if (fileName.toLower().endsWith(".ktx"))
-        return ktxTexture_WriteToNamedFile(
-            mKtxTexture.get(), fileName.toUtf8().constData());
+    auto f = std::fopen(fileName.toUtf8().constData(), "rb");
+    auto guard = qScopeGuard([&]() { std::fclose(f); });
+    auto file = tga::StdioFileInterface(f);
+    auto decoder = tga::Decoder(&file);
+    auto header = tga::Header();
+    if (!decoder.readHeader(header))
+        return false;
+    const auto format = (header.bytesPerPixel() == 4 ? 
+        QOpenGLTexture::TextureFormat::RGBA8_UNorm : 
+        QOpenGLTexture::TextureFormat::R8_UNorm);
+    if (!create(QOpenGLTexture::Target2D, format, header.width, header.height, 1, 1, 1))
+        return false;
+    auto image = tga::Image();
+    image.bytesPerPixel = header.bytesPerPixel();
+    image.rowstride = header.width * header.bytesPerPixel();
+    image.pixels = getWriteonlyData(0, 0, 0);
+    if (image.rowstride * header.height != getImageSize(0))
+        return false;
+    if (!decoder.readImage(header, image, nullptr))
+        return false;
+    decoder.postProcessImage(header, image);
+    return true;
+}
 
+bool TextureData::load(const QString &fileName) 
+{
+    return loadFromKtx(fileName) ||
+           loadFromQImage(fileName) ||
+           loadFromTga(fileName);
+}
+
+bool TextureData::saveToKtx(const QString &fileName) const 
+{
+    if (!fileName.toLower().endsWith(".ktx"))
+        return false;
+    return ktxTexture_WriteToNamedFile(
+        mKtxTexture.get(), fileName.toUtf8().constData());
+}
+
+bool TextureData::saveToQImage(const QString &fileName) const 
+{
     auto image = toImage();
     if (image.isNull())
         return false;
 
     return image.save(fileName);
+}
+
+bool TextureData::saveToTga(const QString &fileName) const 
+{
+    auto f = std::fopen(fileName.toUtf8().constData(), "wb");
+    auto guard = qScopeGuard([&]() { std::fclose(f); });
+    auto file = tga::StdioFileInterface(f);
+    auto encoder = tga::Encoder(&file);
+    auto header = tga::Header();
+    header.width = width();
+    header.height = height();
+    auto imageData = toImage();
+    if (imageData.isGrayscale()) {
+        imageData = imageData.convertToFormat(QImage::Format_Grayscale8);
+        header.imageType = tga::UncompressedGray;
+        header.bitsPerPixel = 8;
+    }
+    else if (imageData.hasAlphaChannel()){
+        imageData = imageData.convertToFormat(QImage::Format_RGBA8888);
+        header.imageType = tga::UncompressedRgb;
+        header.bitsPerPixel = 32;
+    }
+    else {
+        imageData = imageData.convertToFormat(QImage::Format_RGB888);
+        header.imageType = tga::UncompressedRgb;
+        header.bitsPerPixel = 24;
+    }
+    auto image = tga::Image();
+    image.bytesPerPixel = header.bytesPerPixel();
+    image.rowstride = header.width * header.bytesPerPixel();
+    image.pixels = imageData.bits();
+    if (image.rowstride * header.height != imageData.sizeInBytes())
+        return false;
+    encoder.writeHeader(header);
+    encoder.writeImage(header, image, nullptr);
+    encoder.writeFooter();
+    return true;
+}
+
+bool TextureData::save(const QString &fileName) const 
+{
+    return saveToKtx(fileName) ||
+           saveToQImage(fileName) ||
+           saveToTga(fileName);
 }
 
 bool TextureData::isNull() const 

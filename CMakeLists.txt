@@ -42,6 +42,10 @@ set(SOURCES
   libs/KTX/lib/writer.c
   libs/KTX/lib/writer_v1.c
   libs/KTX/lib/glloader.c
+  libs/tga/encoder.cpp
+  libs/tga/decoder.cpp
+  libs/tga/image_iterator.cpp
+  libs/tga/stdio.cpp
   src/FileDialog.cpp
   src/MainWindow.cpp
   src/MainWindow.ui

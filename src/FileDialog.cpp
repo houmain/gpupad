@@ -121,7 +121,7 @@ bool FileDialog::exec(Options options, QString currentFileName)
         shaderFileFilter = shaderFileFilter + " *." + ext;
 
     auto textureFileFilter = QString();
-    textureFileFilter += " *.ktx *.raw";
+    textureFileFilter += " *.ktx *.raw *.tga";
     for (const QByteArray &format : QImageReader::supportedImageFormats())
         textureFileFilter = textureFileFilter + " *." + QString(format);
     for (const QByteArray &format : VideoFileExtensions)
