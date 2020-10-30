@@ -13,7 +13,8 @@ public:
     bool isSharedWith(const TextureData &other) const;
     bool create(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format,
-        int width, int height, int depth, int layers, int samples);
+        int width, int height, 
+        int depth = 1, int layers = 1, int samples = 1, int levels = 0);
     bool load(const QString &fileName);
     bool save(const QString &fileName) const;
     bool isNull() const;
@@ -56,9 +57,11 @@ private:
     using GL = QOpenGLFunctions_3_3_Core;
 
     bool loadFromKtx(const QString &fileName);
+    bool loadFromDds(const QString &fileName);
     bool loadFromQImage(const QString &fileName);
     bool loadFromTga(const QString &fileName);
     bool saveToKtx(const QString &fileName) const;
+    bool saveToDds(const QString &fileName) const;
     bool saveToQImage(const QString &fileName) const;
     bool saveToTga(const QString &fileName) const;
     bool uploadMultisample(GL& gl, GLuint textureId,
