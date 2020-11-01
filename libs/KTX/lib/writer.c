@@ -282,8 +282,8 @@ ktxTexture_writeToStream(ktxTexture* This, ktxStream* dststr)
     header.glType = This->glType;
     header.glTypeSize = ktxTexture_glTypeSize(This);
     header.pixelWidth = This->baseWidth;
-    header.pixelHeight = This->baseHeight;
-    header.pixelDepth = This->baseDepth;
+    header.pixelHeight = This->numDimensions > 1 ? This->baseHeight : 0;
+    header.pixelDepth = This->numDimensions > 2 ? This->baseDepth : 0;
     header.numberOfArrayElements = This->isArray ? This->numLayers : 0;
     assert (This->isCubemap ? This->numFaces == 6 : This->numFaces == 1);
     header.numberOfFaces = This->numFaces;
