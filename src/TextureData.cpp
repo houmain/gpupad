@@ -715,18 +715,18 @@ bool TextureData::loadFromDds(const QString &fileName)
             QOpenGLTexture::Target::Target1DArray :
             QOpenGLTexture::Target::Target1D;
     }
-    if (TinyDDS_Is2D(context)) {
+    else if (TinyDDS_IsCubemap(context)) {
+        target = TinyDDS_IsArray(context) ? 
+            QOpenGLTexture::Target::TargetCubeMapArray : 
+            QOpenGLTexture::Target::TargetCubeMap;
+    }
+    else if (TinyDDS_Is2D(context)) {
         target = TinyDDS_IsArray(context) ? 
             QOpenGLTexture::Target::Target2DArray : 
             QOpenGLTexture::Target::Target2D;
     }
     else if (TinyDDS_Is3D(context)) {
         target = QOpenGLTexture::Target::Target3D;
-    }
-    else if (TinyDDS_IsCubemap(context)) {
-        target = TinyDDS_IsArray(context) ? 
-            QOpenGLTexture::Target::TargetCubeMapArray : 
-            QOpenGLTexture::Target::TargetCubeMap;
     }
 
     const auto format = getTextureFormat(TinyDDS_GetFormat(context));
@@ -818,21 +818,27 @@ bool TextureData::saveToDds(const QString &fileName) const
     if (!format)
         return false;
 
-    auto levelSizes = std::vector<uint32_t>();
-    auto levelData = std::vector<const void*>();
-    for (auto level = 0; level < levels(); ++level) {
-        levelSizes.push_back(getLevelSize(level));
-        levelData.push_back(getData(level, 0, 0));
-    }
     auto callbacks = TinyDDS_WriteCallbacks{ };
     callbacks.alloc = [](void *user, size_t size) { return std::malloc(size); };
     callbacks.free = [](void *user, void *memory) { std::free(memory); };
     callbacks.write = [](void *user, void const *buffer, size_t byteCount) { 
-      std::fwrite(buffer, 1, byteCount, static_cast<FILE*>(user)); };
+        std::fwrite(buffer, 1, byteCount, static_cast<FILE*>(user)); };
     auto f = std::fopen(fileName.toUtf8().constData(), "wb");
     auto guard = qScopeGuard([&]() { std::fclose(f); });
-    return TinyDDS_WriteImage(&callbacks, f, width(), height(), depth(), layers(), levels(),
-        format, isCubemap(), false, levelSizes.data(), levelData.data());
+
+    // manually writing faces, layers, levels because internal layout differs
+    auto levelSizes = std::array<uint32_t, TINYDDS_MAX_MIPMAPLEVELS>{ };
+    auto levelData = std::array<const void*, TINYDDS_MAX_MIPMAPLEVELS>{ };
+    if (!TinyDDS_WriteImage(&callbacks, f, width(), height(), depth(), layers(), levels(),
+        format, isCubemap(), false, levelSizes.data(), levelData.data()))
+        return false;
+
+    for (auto faceSlice = 0; faceSlice < faces() * depth(); ++faceSlice)
+        for (auto layer = 0; layer < layers(); ++layer)
+            for (auto level = 0; level < levels(); ++level)            
+                std::fwrite(getData(level, layer, faceSlice), 1, getImageSize(level), f);
+
+    return true;
 }
 
 bool TextureData::saveToTga(const QString &fileName) const 
@@ -1007,7 +1013,7 @@ uchar *TextureData::getWriteonlyData(int level, int layer, int face)
         static_cast<const TextureData*>(this)->getData(level, layer, face));
 }
 
-const uchar *TextureData::getData(int level, int layer, int face) const
+const uchar *TextureData::getData(int level, int layer, int faceSlice) const
 {
     if (isNull())
         return nullptr;
@@ -1016,7 +1022,7 @@ const uchar *TextureData::getData(int level, int layer, int face) const
     if (ktxTexture_GetImageOffset(mKtxTexture.get(), 
             static_cast<ktx_uint32_t>(level),
             static_cast<ktx_uint32_t>(layer),
-            static_cast<ktx_uint32_t>(face), &offset) == KTX_SUCCESS)
+            static_cast<ktx_uint32_t>(faceSlice), &offset) == KTX_SUCCESS)
         return ktxTexture_GetData(mKtxTexture.get()) + offset;
 
     return nullptr;
