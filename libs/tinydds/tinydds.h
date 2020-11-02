@@ -1671,7 +1671,8 @@ void const *TinyDDS_ImageRawData(TinyDDS_ContextHandle handle, uint32_t mipmaple
 			ctx->callbacks.seekFn(ctx->user, offset + ctx->firstImagePos);
 			size_t read = ctx->callbacks.readFn(ctx->user, (void *) dstPtr, faceSize);
 			if(read != faceSize) {
-				ctx->callbacks.freeFn(ctx->user, (void*)&ctx->mipmaps[mipmaplevel]);
+				ctx->callbacks.freeFn(ctx->user, (void*)ctx->mipmaps[mipmaplevel]);
+				ctx->mipmaps[mipmaplevel] = NULL;
 				return NULL;
 			}
 			dstPtr += faceSize;
@@ -1695,7 +1696,8 @@ void const *TinyDDS_ImageRawData(TinyDDS_ContextHandle handle, uint32_t mipmaple
 	if (!ctx->mipmaps[mipmaplevel]) return NULL;
 	size_t read = ctx->callbacks.readFn(ctx->user, (void *) ctx->mipmaps[mipmaplevel], size);
 	if(read != size) {
-		ctx->callbacks.freeFn(ctx->user, (void*)&ctx->mipmaps[mipmaplevel]);
+		ctx->callbacks.freeFn(ctx->user, (void*)ctx->mipmaps[mipmaplevel]);
+		ctx->mipmaps[mipmaplevel] = NULL;
 		return NULL;
 	}
 
