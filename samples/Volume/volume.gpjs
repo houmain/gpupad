@@ -1,0 +1,47 @@
+[
+    {
+        "depth": 64,
+        "format": "RGBA8_UNorm",
+        "height": 64,
+        "id": 79,
+        "name": "Buffer",
+        "target": "Target3D",
+        "type": "Texture",
+        "width": 64
+    },
+    {
+        "bindingType": "Image",
+        "id": 86,
+        "imageFormat": "Internal",
+        "layer": 0,
+        "level": 0,
+        "name": "uImage",
+        "textureId": 79,
+        "type": "Binding"
+    },
+    {
+        "id": 90,
+        "items": [
+            {
+                "fileName": "fill.comp",
+                "id": 91,
+                "shaderType": "Compute",
+                "type": "Shader"
+            }
+        ],
+        "name": "Program",
+        "type": "Program"
+    },
+    {
+        "callType": "Compute",
+        "checked": true,
+        "executeOn": "EveryEvaluation",
+        "id": 93,
+        "name": "Fill",
+        "programId": 90,
+        "type": "Call",
+        "workGroupsX": "16",
+        "workGroupsY": "16",
+        "workGroupsZ": "64"
+    }
+]

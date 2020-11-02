@@ -744,9 +744,11 @@ bool TextureData::loadFromDds(const QString &fileName)
     for (auto level = 0; level < levels; ++level) {
         if (TinyDDS_ImageSize(context, level) != getLevelSize(level))
             return false;
-        std::memcpy(getWriteonlyData(level, 0, 0), 
-            TinyDDS_ImageRawData(context, level), 
-            getLevelSize(level));
+        auto dest = getWriteonlyData(level, 0, 0);
+        auto source = TinyDDS_ImageRawData(context, level);
+        if (!source || !dest)
+            return false;
+        std::memcpy(dest, source, getLevelSize(level));
     }
     return true;
 }
@@ -805,8 +807,8 @@ bool TextureData::saveToKtx(const QString &fileName) const
 {
     if (!fileName.toLower().endsWith(".ktx"))
         return false;
-    return ktxTexture_WriteToNamedFile(
-        mKtxTexture.get(), fileName.toUtf8().constData());
+    return (ktxTexture_WriteToNamedFile(
+        mKtxTexture.get(), fileName.toUtf8().constData()) == KTX_SUCCESS);
 }
 
 bool TextureData::saveToDds(const QString &fileName) const 
@@ -833,11 +835,17 @@ bool TextureData::saveToDds(const QString &fileName) const
         format, isCubemap(), false, levelSizes.data(), levelData.data()))
         return false;
 
-    for (auto faceSlice = 0; faceSlice < faces() * depth(); ++faceSlice)
-        for (auto layer = 0; layer < layers(); ++layer)
-            for (auto level = 0; level < levels(); ++level)            
-                std::fwrite(getData(level, layer, faceSlice), 1, getImageSize(level), f);
-
+    if (depth() == 1) {
+        for (auto face = 0; face < faces(); ++face)
+            for (auto layer = 0; layer < layers(); ++layer)
+                for (auto level = 0; level < levels(); ++level)            
+                    std::fwrite(getData(level, layer, face), 1, getImageSize(level), f);
+    }
+    else {
+        for (auto level = 0; level < levels(); ++level)
+            for (auto slice = 0; slice < std::max(depth() >> level, 1); ++slice)
+                std::fwrite(getData(level, 0, slice), 1, getImageSize(level), f);
+    }
     return true;
 }
 
@@ -1037,7 +1045,7 @@ int TextureData::getImageSize(int level) const
 
 int TextureData::getLevelSize(int level) const
 {
-    return getImageSize(level) * depth() * layers() * faces();
+    return getImageSize(level) * std::max(depth() >> level, 1) * layers() * faces();
 }
 
 void TextureData::clear()

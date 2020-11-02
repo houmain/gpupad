@@ -1,0 +1,9 @@
+#version 430
+
+layout (rgba8) uniform image3D uImage;
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+void main() {
+  ivec3 pos = ivec3(gl_GlobalInvocationID.xyz);
+  imageStore(uImage, pos, vec4(pos / 64.0, 1));
+}
