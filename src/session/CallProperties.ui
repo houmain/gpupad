@@ -174,94 +174,94 @@
      <item row="13" column="1">
       <widget class="ReferenceComboBox" name="indirectBuffer"/>
      </item>
-     <item row="14" column="0">
+     <item row="15" column="0">
       <widget class="QLabel" name="labelDrawCount">
        <property name="text">
         <string>Draw Count</string>
        </property>
       </widget>
      </item>
-     <item row="14" column="1">
+     <item row="15" column="1">
       <widget class="ExpressionLineEdit" name="drawCount"/>
      </item>
-     <item row="15" column="0">
+     <item row="16" column="0">
       <widget class="QLabel" name="labelWorkGroupsX">
        <property name="text">
         <string>Work Groups X</string>
        </property>
       </widget>
      </item>
-     <item row="15" column="1">
+     <item row="16" column="1">
       <widget class="ExpressionLineEdit" name="workGroupsX"/>
      </item>
-     <item row="16" column="0">
+     <item row="17" column="0">
       <widget class="QLabel" name="labelWorkGroupsY">
        <property name="text">
         <string>Y</string>
        </property>
       </widget>
      </item>
-     <item row="16" column="1">
+     <item row="17" column="1">
       <widget class="ExpressionLineEdit" name="workGroupsY"/>
      </item>
-     <item row="17" column="0">
+     <item row="18" column="0">
       <widget class="QLabel" name="labelWorkGroupsZ">
        <property name="text">
         <string>Z</string>
        </property>
       </widget>
      </item>
-     <item row="17" column="1">
+     <item row="18" column="1">
       <widget class="ExpressionLineEdit" name="workGroupsZ"/>
      </item>
-     <item row="18" column="0">
+     <item row="19" column="0">
       <widget class="QLabel" name="labelBuffer">
        <property name="text">
         <string>Buffer</string>
        </property>
       </widget>
      </item>
-     <item row="18" column="1">
+     <item row="19" column="1">
       <widget class="ReferenceComboBox" name="buffer"/>
      </item>
-     <item row="19" column="0">
+     <item row="20" column="0">
       <widget class="QLabel" name="labelFromBuffer">
        <property name="text">
         <string>From Buffer</string>
        </property>
       </widget>
      </item>
-     <item row="19" column="1">
+     <item row="20" column="1">
       <widget class="ReferenceComboBox" name="fromBuffer"/>
      </item>
-     <item row="20" column="0">
+     <item row="21" column="0">
       <widget class="QLabel" name="labelTexture">
        <property name="text">
         <string>Texture</string>
        </property>
       </widget>
      </item>
-     <item row="20" column="1">
+     <item row="21" column="1">
       <widget class="ReferenceComboBox" name="texture"/>
      </item>
-     <item row="21" column="0">
+     <item row="22" column="0">
       <widget class="QLabel" name="labelFromTexture">
        <property name="text">
         <string>From Texture</string>
        </property>
       </widget>
      </item>
-     <item row="21" column="1">
+     <item row="22" column="1">
       <widget class="ReferenceComboBox" name="fromTexture"/>
      </item>
-     <item row="22" column="0">
+     <item row="23" column="0">
       <widget class="QLabel" name="labelClearColor">
        <property name="text">
         <string>Clear Color</string>
        </property>
       </widget>
      </item>
-     <item row="22" column="1">
+     <item row="23" column="1">
       <widget class="ColorPicker" name="clearColor">
        <property name="minimumSize">
         <size>
@@ -271,14 +271,14 @@
        </property>
       </widget>
      </item>
-     <item row="23" column="0">
+     <item row="24" column="0">
       <widget class="QLabel" name="labelClearDepth">
        <property name="text">
         <string>Clear Depth</string>
        </property>
       </widget>
      </item>
-     <item row="23" column="1">
+     <item row="24" column="1">
       <widget class="QDoubleSpinBox" name="clearDepth">
        <property name="decimals">
         <number>3</number>
@@ -294,17 +294,27 @@
        </property>
       </widget>
      </item>
-     <item row="24" column="0">
+     <item row="25" column="0">
       <widget class="QLabel" name="labelClearStencil">
        <property name="text">
         <string>Clear Stencil</string>
        </property>
       </widget>
      </item>
-     <item row="24" column="1">
+     <item row="25" column="1">
       <widget class="QSpinBox" name="clearStencil">
        <property name="maximum">
         <number>255</number>
+       </property>
+      </widget>
+     </item>
+     <item row="14" column="1">
+      <widget class="ExpressionLineEdit" name="indirectOffset"/>
+     </item>
+     <item row="14" column="0">
+      <widget class="QLabel" name="labelIndirectOffset">
+       <property name="text">
+        <string>Indirect Offset</string>
        </property>
       </widget>
      </item>

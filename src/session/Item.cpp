@@ -111,28 +111,29 @@ CallKind getKind(const Call &call)
 
     switch (call.callType) {
         case Call::CallType::Draw:
-            kind.drawDirect = true;
+            kind.draw = true;
             break;
         case Call::CallType::DrawIndexed:
-            kind.drawDirect = kind.drawIndexed = true;
+            kind.draw = kind.indexed = true;
             break;
         case Call::CallType::DrawIndirect:
-            kind.drawIndirect = true;
+            kind.draw = kind.indirect = true;
             break;
         case Call::CallType::DrawIndexedIndirect:
-            kind.drawIndirect = kind.drawIndexed = true;
+            kind.draw = kind.indirect = kind.indexed = true;
             break;
         case Call::CallType::Compute:
             kind.compute = true;
+            break;
+        case Call::CallType::ComputeIndirect:
+            kind.compute = kind.indirect = true;
             break;
         default:
             break;
     }
 
-    kind.draw = (kind.drawDirect || kind.drawIndirect);
-
     if (call.primitiveType == Call::PrimitiveType::Patches)
-        kind.drawPatches = true;
+        kind.patches = true;
 
     return kind;
 }

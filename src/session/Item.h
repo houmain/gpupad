@@ -195,6 +195,7 @@ struct Call : Item
     QString baseInstance{ "0" };
 
     ItemId indirectBufferId{ };
+    QString indirectOffset{ "0" };
     QString drawCount{ "1" };
 
     QString patchVertices{ "3" };
@@ -235,10 +236,9 @@ struct TextureKind
 struct CallKind
 {
     bool draw;
-    bool drawIndexed;
-    bool drawIndirect;
-    bool drawDirect;
-    bool drawPatches;
+    bool indexed;
+    bool indirect;
+    bool patches;
     bool compute;
 };
 

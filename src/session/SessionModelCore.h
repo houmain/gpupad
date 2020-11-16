@@ -103,6 +103,7 @@ public:
         CallInstanceCount,
         CallBaseInstance,
         CallIndirectBufferId,
+        CallIndirectOffset,
         CallDrawCount,
         CallWorkGroupsX,
         CallWorkGroupsY,

@@ -237,6 +237,7 @@ namespace ItemEnums2 {
         DrawIndirect, // gl(Multi)DrawArraysIndirect)
         DrawIndexedIndirect, // gl(Multi)DrawElementsIndirect
         Compute,
+        ComputeIndirect,
         ClearTexture,
         CopyTexture,
         ClearBuffer,

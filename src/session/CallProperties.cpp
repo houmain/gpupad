@@ -102,6 +102,7 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->baseInstance, SessionModel::CallBaseInstance);
 
     mapper.addMapping(mUi->indirectBuffer, SessionModel::CallIndirectBufferId);
+    mapper.addMapping(mUi->indirectOffset, SessionModel::CallIndirectOffset);
     mapper.addMapping(mUi->drawCount, SessionModel::CallDrawCount);
 
     mapper.addMapping(mUi->workGroupsX, SessionModel::CallWorkGroupsX);
@@ -129,33 +130,35 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelVertexStream, mUi->vertexStream,
         kind.draw);
     setFormVisibility(mUi->formLayout, mUi->labelIndexBuffer, mUi->indexBuffer,
-        kind.drawIndexed);
-    setFormVisibility(mUi->formLayout, mUi->labelIndirectBuffer, mUi->indirectBuffer,
-        kind.drawIndirect);
-
+        kind.indexed);
     setFormVisibility(mUi->formLayout, mUi->labelPrimitiveType, mUi->primitiveType,
         kind.draw);
+    setFormVisibility(mUi->formLayout, mUi->labelIndirectBuffer, mUi->indirectBuffer,
+        kind.indirect);
+    setFormVisibility(mUi->formLayout, mUi->labelIndirectOffset, mUi->indirectOffset,
+        kind.indirect);
+
     setFormVisibility(mUi->formLayout, mUi->labelPatchVertices, mUi->patchVertices,
         currentPrimitiveType() == Call::PrimitiveType::Patches);
     setFormVisibility(mUi->formLayout, mUi->labelVertexCount, mUi->vertexCount,
-        kind.drawDirect);
+        kind.draw && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelInstanceCount, mUi->instanceCount,
-        kind.drawDirect);
+        kind.draw && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelFirstVertex, mUi->firstVertex,
-        kind.drawDirect);
+        kind.draw && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelBaseVertex, mUi->baseVertex,
-        kind.drawIndexed && kind.drawDirect);
+        kind.draw && kind.indexed && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelBaseInstance, mUi->baseInstance,
-        kind.drawDirect);
+        kind.draw && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelDrawCount, mUi->drawCount,
-        kind.drawIndirect);
+        kind.draw && kind.indirect);
 
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsX, mUi->workGroupsX,
-        kind.compute);
+        kind.compute && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsY, mUi->workGroupsY,
-        kind.compute);
+        kind.compute && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsZ, mUi->workGroupsZ,
-        kind.compute);
+        kind.compute && !kind.indirect);
 
     setFormVisibility(mUi->formLayout, mUi->labelFromTexture, mUi->fromTexture,
         type == Call::CallType::CopyTexture);

@@ -54,7 +54,6 @@ private:
     int mIndexSize{ };
 
     GLBuffer *mIndirectBuffer{ };
-    uintptr_t mIndirectOffset{ };
     GLint mIndirectStride{ };
 
     QSet<ItemId> mUsedItems;

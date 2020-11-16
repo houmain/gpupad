@@ -95,6 +95,7 @@
     ADD(CallInstanceCount, Call, instanceCount) \
     ADD(CallBaseInstance, Call, baseInstance) \
     ADD(CallIndirectBufferId, Call, indirectBufferId) \
+    ADD(CallIndirectOffset, Call, indirectOffset) \
     ADD(CallDrawCount, Call, drawCount) \
     ADD(CallWorkGroupsX, Call, workGroupsX) \
     ADD(CallWorkGroupsY, Call, workGroupsY) \

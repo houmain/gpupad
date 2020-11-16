@@ -519,18 +519,19 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             result &= (column != CallTargetId || kind.draw);
             result &= (column != CallVertexStreamId || kind.draw);
             result &= (column != CallPrimitiveType || kind.draw);
-            result &= (column != CallPatchVertices || kind.drawPatches);
-            result &= (column != CallIndexBufferId || kind.drawIndexed);
-            result &= (column != CallCount || kind.drawDirect);
-            result &= (column != CallFirst || kind.drawDirect);
-            result &= (column != CallInstanceCount || kind.drawDirect);
-            result &= (column != CallBaseInstance || kind.drawDirect);
-            result &= (column != CallBaseVertex || (kind.drawDirect && kind.drawIndexed));
-            result &= (column != CallIndirectBufferId || kind.drawIndirect);
-            result &= (column != CallDrawCount || kind.drawIndirect);
-            result &= (column != CallWorkGroupsX || kind.compute);
-            result &= (column != CallWorkGroupsY || kind.compute);
-            result &= (column != CallWorkGroupsZ || kind.compute);
+            result &= (column != CallPatchVertices || kind.patches);
+            result &= (column != CallIndexBufferId || kind.indexed);
+            result &= (column != CallCount || (kind.draw && !kind.indirect));
+            result &= (column != CallFirst || (kind.draw && !kind.indirect));
+            result &= (column != CallInstanceCount || (kind.draw && !kind.indirect));
+            result &= (column != CallBaseInstance || (kind.draw && !kind.indirect));
+            result &= (column != CallBaseVertex || (kind.draw && kind.indexed && !kind.indirect));
+            result &= (column != CallIndirectBufferId || kind.indirect);
+            result &= (column != CallIndirectOffset || kind.indirect);
+            result &= (column != CallDrawCount || (kind.draw && kind.indirect));
+            result &= (column != CallWorkGroupsX || (kind.compute && !kind.indirect));
+            result &= (column != CallWorkGroupsY || (kind.compute && !kind.indirect));
+            result &= (column != CallWorkGroupsZ || (kind.compute && !kind.indirect));
             result &= (column != CallTextureId ||
                 callType == Call::CallType::ClearTexture ||
                 callType == Call::CallType::CopyTexture);

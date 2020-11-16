@@ -359,7 +359,10 @@ void RenderSession::prepare(bool itemsChanged,
                         break;
 
                     case Call::CallType::Compute:
+                    case Call::CallType::ComputeIndirect:
                         glcall.setProgram(addProgramOnce(call->programId));
+                        if (auto buffer = session.findItem<Buffer>(call->indirectBufferId))
+                            glcall.setIndirectBuffer(addBufferOnce(buffer->id), *buffer);
                         break;
 
                     case Call::CallType::ClearTexture:
