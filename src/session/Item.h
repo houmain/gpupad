@@ -117,10 +117,12 @@ struct Target : Item
 {
     using FrontFace = ItemEnums::FrontFace;
     using CullMode = ItemEnums::CullMode;
+    using PolygonMode = ItemEnums::PolygonMode;
     using LogicOperation = ItemEnums::LogicOperation;
 
     FrontFace frontFace{ };
     CullMode cullMode{ };
+    PolygonMode polygonMode{ PolygonMode::Fill };
     LogicOperation logicOperation{ };
     QColor blendConstant{ Qt::white };
     int defaultWidth{ 1 };

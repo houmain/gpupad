@@ -75,6 +75,7 @@
     ADD(AttachmentStencilBackWriteMask, Attachment, stencilBackWriteMask) \
     ADD(TargetFrontFace, Target, frontFace) \
     ADD(TargetCullMode, Target, cullMode) \
+    ADD(TargetPolygonMode, Target, polygonMode) \
     ADD(TargetLogicOperation, Target, logicOperation) \
     ADD(TargetBlendConstant, Target, blendConstant) \
     ADD(TargetDefaultWidth, Target, defaultWidth) \

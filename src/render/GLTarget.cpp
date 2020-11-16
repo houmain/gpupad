@@ -4,6 +4,7 @@ GLTarget::GLTarget(const Target &target)
     : mItemId(target.id)
     , mFrontFace(target.frontFace)
     , mCullMode(target.cullMode)
+    , mPolygonMode(target.polygonMode)
     , mLogicOperation(target.logicOperation)
     , mBlendConstant(target.blendConstant)
     , mDefaultWidth(target.defaultWidth)
@@ -144,6 +145,8 @@ void GLTarget::applyStates()
     else {
         gl.glDisable(GL_CULL_FACE);
     }
+
+    gl.glPolygonMode(GL_FRONT_AND_BACK, mPolygonMode);
 
     if (mLogicOperation != Target::LogicOperation::NoLogicOperation) {
         gl.glEnable(GL_COLOR_LOGIC_OP);

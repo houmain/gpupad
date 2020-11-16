@@ -28,6 +28,7 @@ private:
     QSet<ItemId> mUsedItems;
     Target::FrontFace mFrontFace{ };
     Target::CullMode mCullMode{ };
+    Target::PolygonMode mPolygonMode{ };
     Target::LogicOperation mLogicOperation{ };
     QColor mBlendConstant{ };
     QMap<int, GLAttachment> mAttachments;

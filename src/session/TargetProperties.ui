@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>TargetProperties</class>
  <widget class="QWidget" name="TargetProperties">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>194</width>
+    <height>209</height>
+   </rect>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QFormLayout" name="formLayout">
@@ -46,24 +54,24 @@
      <item row="5" column="1">
       <widget class="DataComboBox" name="frontFace"/>
      </item>
-     <item row="6" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="labelLogicOperation">
        <property name="text">
         <string>Logic Operation</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <widget class="DataComboBox" name="logicOperation"/>
      </item>
-     <item row="7" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="labelBlendConstant">
        <property name="text">
         <string>Blend Constant</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="8" column="1">
       <widget class="ColorPicker" name="blendConstant"/>
      </item>
      <item row="0" column="0">
@@ -128,6 +136,16 @@
        </property>
       </widget>
      </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="labelPolygonMode">
+       <property name="text">
+        <string>Polygon Mode</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="DataComboBox" name="polygonMode"/>
+     </item>
     </layout>
    </item>
   </layout>
@@ -144,6 +162,17 @@
    <header>session/ColorPicker.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>width</tabstop>
+  <tabstop>height</tabstop>
+  <tabstop>layers</tabstop>
+  <tabstop>samples</tabstop>
+  <tabstop>cullMode</tabstop>
+  <tabstop>frontFace</tabstop>
+  <tabstop>polygonMode</tabstop>
+  <tabstop>logicOperation</tabstop>
+  <tabstop>blendConstant</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

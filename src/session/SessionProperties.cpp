@@ -164,6 +164,7 @@ void SessionProperties::fillComboBoxes()
     fillComboBox<Column::DataType>(mColumnProperties->type);
     fillComboBox<Target::FrontFace>(mTargetProperties->frontFace);
     fillComboBox<Target::CullMode>(mTargetProperties->cullMode);
+    fillComboBox<Target::PolygonMode>(mTargetProperties->polygonMode);
     fillComboBox<Target::LogicOperation>(mTargetProperties->logicOperation);
     fillComboBox<Shader::ShaderType>(mShaderProperties->type);
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
@@ -314,6 +315,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             map(mTargetProperties->samples, SessionModel::TargetDefaultSamples);
             map(mTargetProperties->frontFace, SessionModel::TargetFrontFace);
             map(mTargetProperties->cullMode, SessionModel::TargetCullMode);
+            map(mTargetProperties->polygonMode, SessionModel::TargetPolygonMode);
             map(mTargetProperties->logicOperation, SessionModel::TargetLogicOperation);
             map(mTargetProperties->blendConstant, SessionModel::TargetBlendConstant);
             updateTargetWidgets(index);
@@ -473,6 +475,7 @@ void SessionProperties::updateTargetWidgets(const QModelIndex &index)
     setFormVisibility(ui.formLayout, ui.labelSamples, ui.samples, !hasAttachments);
     setFormVisibility(ui.formLayout, ui.labelFrontFace, ui.frontFace, true);
     setFormVisibility(ui.formLayout, ui.labelCullMode, ui.cullMode, true);
+    setFormVisibility(ui.formLayout, ui.labelPolygonMode, ui.polygonMode, true);
     setFormVisibility(ui.formLayout, ui.labelLogicOperation, ui.logicOperation, hasAttachments);
     setFormVisibility(ui.formLayout, ui.labelBlendConstant, ui.blendConstant, hasAttachments);
 }

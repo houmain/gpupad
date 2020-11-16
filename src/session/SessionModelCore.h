@@ -83,6 +83,7 @@ public:
         AttachmentStencilBackWriteMask,
         TargetFrontFace,
         TargetCullMode,
+        TargetPolygonMode,
         TargetLogicOperation,
         TargetBlendConstant,
         TargetDefaultWidth,

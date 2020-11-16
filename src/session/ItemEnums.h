@@ -154,6 +154,13 @@ namespace ItemEnums {
     };
     Q_ENUM_NS(CullMode)
 
+    enum PolygonMode {
+        Fill = GL_FILL,
+        Line = GL_LINE,
+        Point = GL_POINT,
+    };
+    Q_ENUM_NS(PolygonMode)
+
     enum LogicOperation {
         NoLogicOperation = GL_NONE,
         Copy = GL_COPY,
