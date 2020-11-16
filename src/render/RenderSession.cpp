@@ -443,7 +443,8 @@ void RenderSession::render()
     reuseUnmodifiedItems();
     executeCommandQueue();
     downloadModifiedResources();
-    outputTimerQueries();
+    if (!updatingPreviewTextures())
+      outputTimerQueries();
 
     gl.glFlush();
     Q_ASSERT(glGetError() == GL_NO_ERROR);

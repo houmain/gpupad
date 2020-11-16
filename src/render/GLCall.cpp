@@ -64,9 +64,10 @@ void GLCall::setTextures(GLTexture *texture, GLTexture *fromTexture)
 
 std::shared_ptr<void> GLCall::beginTimerQuery()
 {
-    mTimerQuery = std::make_shared<QOpenGLTimerQuery>();
-    mTimerQuery->create();
-
+    if (!mTimerQuery) {
+        mTimerQuery = std::make_shared<QOpenGLTimerQuery>();
+        mTimerQuery->create();
+    }
     mTimerQuery->begin();
     return std::shared_ptr<void>(nullptr,
         [this](void*) { mTimerQuery->end(); });
