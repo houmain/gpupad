@@ -1,0 +1,224 @@
+[
+    {
+        "format": "RGBA8_UNorm",
+        "height": 512,
+        "id": 6,
+        "name": "Texture",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": 512
+    },
+    {
+        "blendConstant": "#ffffffff",
+        "cullMode": "NoCulling",
+        "frontFace": "CCW",
+        "id": 4,
+        "items": [
+            {
+                "blendAlphaDest": "Zero",
+                "blendAlphaEq": "Add",
+                "blendAlphaSource": "One",
+                "blendColorDest": "Zero",
+                "blendColorEq": "Add",
+                "blendColorSource": "One",
+                "colorWriteMask": 15,
+                "id": 5,
+                "level": 0,
+                "name": "Texture",
+                "textureId": 6,
+                "type": "Attachment"
+            }
+        ],
+        "logicOperation": "NoLogicOperation",
+        "name": "Target",
+        "polygonMode": "Line",
+        "type": "Target"
+    },
+    {
+        "id": 14,
+        "items": [
+            {
+                "fileName": "setup.glsl",
+                "id": 15,
+                "shaderType": "Compute",
+                "type": "Shader"
+            }
+        ],
+        "name": "Setup",
+        "type": "Program"
+    },
+    {
+        "id": 8,
+        "items": [
+            {
+                "fileName": "generate.glsl",
+                "id": 9,
+                "shaderType": "Compute",
+                "type": "Shader"
+            }
+        ],
+        "name": "Generate",
+        "type": "Program"
+    },
+    {
+        "id": 11,
+        "items": [
+            {
+                "fileName": "vertex.glsl",
+                "id": 12,
+                "shaderType": "Vertex",
+                "type": "Shader"
+            },
+            {
+                "fileName": "fragment.glsl",
+                "id": 19,
+                "shaderType": "Fragment",
+                "type": "Shader"
+            }
+        ],
+        "name": "Render",
+        "type": "Program"
+    },
+    {
+        "id": 22,
+        "items": [
+            {
+                "count": 2,
+                "dataType": "Float",
+                "id": 23,
+                "name": "position",
+                "padding": 0,
+                "type": "Column"
+            }
+        ],
+        "name": "VertexBuffer",
+        "offset": 0,
+        "rowCount": 100000,
+        "type": "Buffer"
+    },
+    {
+        "id": 1,
+        "items": [
+            {
+                "count": 3,
+                "dataType": "Uint32",
+                "id": 2,
+                "name": "workGroups",
+                "padding": 0,
+                "type": "Column"
+            },
+            {
+                "count": 4,
+                "dataType": "Uint32",
+                "id": 21,
+                "name": "drawCommand",
+                "padding": 0,
+                "type": "Column"
+            }
+        ],
+        "name": "IndirectBuffer",
+        "offset": 0,
+        "rowCount": 1,
+        "type": "Buffer"
+    },
+    {
+        "id": 17,
+        "items": [
+            {
+                "bufferId": 22,
+                "columnId": 23,
+                "divisor": 0,
+                "id": 18,
+                "name": "aPosition",
+                "normalize": false,
+                "type": "Attribute"
+            }
+        ],
+        "name": "Stream",
+        "type": "Stream"
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 7,
+        "name": "uCountX",
+        "type": "Binding",
+        "values": [
+            "30"
+        ]
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 25,
+        "name": "uCountY",
+        "type": "Binding",
+        "values": [
+            "11"
+        ]
+    },
+    {
+        "bindingType": "Buffer",
+        "bufferId": 1,
+        "id": 16,
+        "name": "uIndirectBuffer",
+        "type": "Binding"
+    },
+    {
+        "bindingType": "Buffer",
+        "bufferId": 22,
+        "id": 26,
+        "name": "uVertexBuffer",
+        "type": "Binding"
+    },
+    {
+        "callType": "Compute",
+        "checked": true,
+        "executeOn": "EveryEvaluation",
+        "id": 3,
+        "name": "Setup",
+        "programId": 14,
+        "type": "Call",
+        "workGroupsX": "1",
+        "workGroupsY": "1",
+        "workGroupsZ": "1"
+    },
+    {
+        "callType": "ComputeIndirect",
+        "checked": true,
+        "executeOn": "EveryEvaluation",
+        "id": 13,
+        "indirectBufferId": 1,
+        "indirectOffset": "0",
+        "name": "Generate",
+        "programId": 8,
+        "type": "Call"
+    },
+    {
+        "callType": "ClearTexture",
+        "checked": true,
+        "clearColor": "#ff00007c",
+        "clearDepth": 1,
+        "clearStencil": 0,
+        "executeOn": "EveryEvaluation",
+        "id": 20,
+        "name": "Clear",
+        "textureId": 6,
+        "type": "Call"
+    },
+    {
+        "callType": "DrawIndirect",
+        "checked": true,
+        "drawCount": "1",
+        "executeOn": "EveryEvaluation",
+        "id": 10,
+        "indirectBufferId": 1,
+        "indirectOffset": "4 * 3",
+        "name": "Render",
+        "primitiveType": "Triangles",
+        "programId": 11,
+        "targetId": 4,
+        "type": "Call",
+        "vertexStreamId": 17
+    }
+]
