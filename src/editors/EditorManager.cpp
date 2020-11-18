@@ -319,10 +319,17 @@ bool EditorManager::saveEditorAs()
             options |= FileDialog::ShaderExtensions;
             options |= FileDialog::ScriptExtensions;
         }
-        else if (qobject_cast<BinaryEditor*>(mCurrentDock->widget()))
+        else if (qobject_cast<BinaryEditor*>(mCurrentDock->widget())) {
             options |= FileDialog::BinaryExtensions;
-        else if (qobject_cast<TextureEditor*>(mCurrentDock->widget()))
+        }
+        else if (auto textureEditor = qobject_cast<TextureEditor*>(mCurrentDock->widget())) {
             options |= FileDialog::TextureExtensions;
+            if (textureEditor->texture().dimensions() != 2 ||
+                textureEditor->texture().isArray() ||
+                textureEditor->texture().isCubemap() ||
+                textureEditor->texture().isCompressed())
+                options |= FileDialog::SavingNon2DTexture;
+        }
 
         if (Singletons::fileDialog().exec(options, editor->fileName())) {
             auto prevFileName = editor->fileName();

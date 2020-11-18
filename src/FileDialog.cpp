@@ -161,8 +161,10 @@ bool FileDialog::exec(Options options, QString currentFileName)
         dialog.setDefaultSuffix(SessionFileExtension);
     else if (options & ScriptExtensions)
         dialog.setDefaultSuffix(*begin(ScriptFileExtensions));
+    else if (options & BinaryExtensions)
+        dialog.setDefaultSuffix("bin");
     else if (options & TextureExtensions)
-        dialog.setDefaultSuffix("png");
+        dialog.setDefaultSuffix(options & SavingNon2DTexture ? "ktx" : "png");
 
     if (isUntitled(currentFileName)) {
         currentFileName = getFileTitle(currentFileName);

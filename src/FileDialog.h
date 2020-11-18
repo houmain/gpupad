@@ -30,6 +30,7 @@ public:
         SessionExtensions   = 1 << 6,
         ScriptExtensions    = 1 << 7,
         SupportedExtensions = 1 << 8,
+        SavingNon2DTexture  = 1 << 9,
         AllExtensionFilters = ShaderExtensions | TextureExtensions |
             BinaryExtensions | ScriptExtensions | SessionExtensions | SupportedExtensions
     };
