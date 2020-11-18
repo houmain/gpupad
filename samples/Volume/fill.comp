@@ -3,7 +3,41 @@
 layout (rgba8) uniform image3D uImage;
 layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-void main() {
-  ivec3 pos = ivec3(gl_GlobalInvocationID.xyz);
-  imageStore(uImage, pos, vec4(pos / 64.0, 1));
+uniform float frame;
+
+// https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
+float sdTorus( vec3 p, vec2 t )
+{
+  vec2 q = vec2(length(p.xz)-t.x,p.y);
+  return length(q)-t.y;
+}
+
+float opSubtraction( float d1, float d2 )
+{
+  return max(-d1,d2);
+}
+
+mat3 rotateX(float t)
+{
+  float s = sin(t);
+  float c = cos(t);
+  return mat3(
+    1, 0, 0,
+    0, c,-s,
+    0, s, c);
+}
+
+void main()
+{
+  ivec3 coord = ivec3(gl_GlobalInvocationID.xyz);
+  vec3 pos = vec3(coord) / 128.0 - vec3(0.5, 0.5, 0);
+
+  // a rotating hollow doughnut
+  pos = rotateX(frame / 60.0) * pos;  
+  float outer = sdTorus(pos, vec2(0.3, 0.2));
+  float inner = sdTorus(pos, vec2(0.3, 0.15));
+  float d = opSubtraction(inner, outer);
+  
+  float aa = 1 / 128.0;
+  imageStore(uImage, coord, vec4(smoothstep(aa, -aa, d)));
 }

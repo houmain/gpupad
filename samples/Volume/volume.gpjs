@@ -1,13 +1,13 @@
 [
     {
         "depth": 64,
-        "format": "RGBA8_UNorm",
-        "height": 64,
+        "format": "R8_UNorm",
+        "height": 128,
         "id": 79,
         "name": "Buffer",
         "target": "Target3D",
         "type": "Texture",
-        "width": 64
+        "width": 128
     },
     {
         "bindingType": "Image",
@@ -18,6 +18,16 @@
         "name": "uImage",
         "textureId": 79,
         "type": "Binding"
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 108,
+        "name": "frame",
+        "type": "Binding",
+        "values": [
+            "frame = (this.frame || 0) +1"
+        ]
     },
     {
         "id": 90,
@@ -40,8 +50,8 @@
         "name": "Fill",
         "programId": 90,
         "type": "Call",
-        "workGroupsX": "16",
-        "workGroupsY": "16",
+        "workGroupsX": "8",
+        "workGroupsY": "8",
         "workGroupsZ": "64"
     }
 ]
