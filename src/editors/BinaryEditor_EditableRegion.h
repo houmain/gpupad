@@ -83,7 +83,7 @@ public:
         auto prevRow = -1;
         auto newLine = true;
         const auto indices = selectedIndexes();
-        for (QModelIndex index : indices) {
+        for (const QModelIndex &index : indices) {
             auto row = index.row();
             if (prevRow != -1 && row != prevRow) {
                 str += "\n";

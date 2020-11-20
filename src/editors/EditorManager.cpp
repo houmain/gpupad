@@ -94,7 +94,8 @@ bool EditorManager::focusNextEditor()
 bool EditorManager::focusPreviousEditor()
 {
     const auto current = getFocusedEditorIndex();
-    return focusEditorByIndex((current == -1 ? mDocks.size() : current) - 1);
+    return focusEditorByIndex((current == -1 ? 
+        static_cast<int>(mDocks.size()) : current) - 1);
 }
 
 void EditorManager::updateCurrentEditor()

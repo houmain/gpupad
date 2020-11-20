@@ -108,7 +108,7 @@ QList<QMetaObject::Connection> BinaryEditor::connectEditActions(
     updateEditorToolBar();
 
     c += connect(mEditorToolBar.block,
-        &QComboBox::currentIndexChanged,
+        qOverload<int>(&QComboBox::currentIndexChanged),
         this, &BinaryEditor::setCurrentBlockIndex);
 
     return c;

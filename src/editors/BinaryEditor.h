@@ -52,6 +52,7 @@ public:
     void replace(QByteArray data, bool invalidateFileCache = true);
     const QByteArray &data() const { return mData; }
     void setBlocks(QList<Block> blocks);
+    void setCurrentBlockIndex(int index);
     void scrollToOffset();
 
 Q_SIGNALS:
@@ -71,7 +72,6 @@ private:
     void handleDataChanged();
     void setModified(bool modified);
     const Block *currentBlock() const;
-    void setCurrentBlockIndex(int indx);
     void refresh();
     void updateEditorToolBar();
 

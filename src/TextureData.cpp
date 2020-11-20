@@ -741,7 +741,7 @@ bool TextureData::loadFromDds(const QString &fileName)
     if (!create(target, format, width, height, depth, layers, samples, levels))
         return false;
 
-    for (auto level = 0; level < levels; ++level) {
+    for (auto level = 0u; level < levels; ++level) {
         if (TinyDDS_ImageSize(context, level) != getLevelSize(level))
             return false;
         auto dest = getWriteonlyData(level, 0, 0);

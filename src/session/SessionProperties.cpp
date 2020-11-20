@@ -375,8 +375,19 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
         return editor;
     }
 
-    if (const auto fileItem = castItem<FileItem>(item))
+    if (auto block = castItem<Block>(item)) {
+        const auto &buffer = *static_cast<Buffer*>(block->parent);
+        editor = openEditor(buffer);
+        if (auto binaryEditor = static_cast<BinaryEditor*>(editor))
+            for (auto i = 0; i < buffer.items.size(); ++i)
+                if (buffer.items[i] == block) {
+                    binaryEditor->setCurrentBlockIndex(i);
+                    break;
+                }
+    }
+    else if (const auto fileItem = castItem<FileItem>(item)) {
         editor = openEditor(*fileItem);
+    }
     if (!editor)
         return nullptr;
 
