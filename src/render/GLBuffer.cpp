@@ -3,16 +3,15 @@
 GLBuffer::GLBuffer(const Buffer &buffer)
     : mItemId(buffer.id)
     , mFileName(buffer.fileName)
-    , mOffset(buffer.offset)
-    , mSize(buffer.rowCount * getStride(buffer))
+    , mSize(getBufferSize(buffer))
 {
     mUsedItems += buffer.id;
 }
 
 bool GLBuffer::operator==(const GLBuffer &rhs) const
 {
-    return std::tie(mFileName, mOffset, mSize) ==
-           std::tie(rhs.mFileName, rhs.mOffset, rhs.mSize);
+    return std::tie(mFileName, mSize) ==
+           std::tie(rhs.mFileName, rhs.mSize);
 }
 
 void GLBuffer::clear()
@@ -80,9 +79,8 @@ void GLBuffer::reload()
             mMessages += MessageList::insert(
                 mItemId, MessageType::LoadingFileFailed, mFileName);
 
-    auto requiredSize = mOffset + mSize;
-    if (requiredSize > mData.size())
-        mData.append(QByteArray(requiredSize - mData.size(), 0));
+    if (mSize > mData.size())
+        mData.append(QByteArray(mSize - mData.size(), 0));
 
     mSystemCopyModified |= !mData.isSharedWith(prevData);
 }
@@ -115,10 +113,8 @@ void GLBuffer::upload()
         return;
 
     auto &gl = GLContext::currentContext();
-    Q_ASSERT(mOffset + mSize <= mData.size());
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
-    gl.glBufferSubData(GL_ARRAY_BUFFER, 0, mSize, 
-        mData.constData() + mOffset);
+    gl.glBufferSubData(GL_ARRAY_BUFFER, 0, mSize, mData.constData());
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 
     mSystemCopyModified = mDeviceCopyModified = false;
@@ -129,11 +125,9 @@ bool GLBuffer::download()
     if (!mDeviceCopyModified)
         return false;
 
-    Q_ASSERT(mOffset + mSize <= mData.size());
     auto &gl = GLContext::currentContext();
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
-    gl.glGetBufferSubData(GL_ARRAY_BUFFER,
-        0, mSize, mData.data() + mOffset);
+    gl.glGetBufferSubData(GL_ARRAY_BUFFER, 0, mSize, mData.data());
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 
     mSystemCopyModified = mDeviceCopyModified = false;

@@ -33,19 +33,23 @@ struct Group : Item
     bool inlineScope{ };
 };
 
-struct Column : Item
+struct Buffer : FileItem
+{
+};
+
+struct Block : Item 
+{
+    int offset{ };
+    int rowCount{ 1 };
+};
+
+struct Field : Item
 {
     using DataType = ItemEnums::DataType;
 
     DataType dataType{ DataType::Float };
     int count{ 1 };
     int padding{ 0 };
-};
-
-struct Buffer : FileItem
-{
-    int offset{ 0 };
-    int rowCount{ 1 };
 };
 
 struct Texture : FileItem
@@ -107,8 +111,7 @@ struct Stream : Item
 
 struct Attribute : Item
 {
-    ItemId bufferId{ };
-    ItemId columnId{ };
+    ItemId fieldId{ };
     bool normalize{ };
     int divisor{ };
 };
@@ -190,14 +193,13 @@ struct Call : Item
     QString count{ "3" };
     QString first{ "0" };
 
-    ItemId indexBufferId{ };
+    ItemId indexBufferBlockId{ };
     QString baseVertex{ "0" };
 
     QString instanceCount{ "1" };
     QString baseInstance{ "0" };
 
-    ItemId indirectBufferId{ };
-    QString indirectOffset{ "0" };
+    ItemId indirectBufferBlockId{ };
     QString drawCount{ "1" };
 
     QString patchVertices{ "3" };
@@ -244,16 +246,18 @@ struct CallKind
     bool compute;
 };
 
-int getColumnSize(const Column &column);
-int getColumnOffset(const Column &column);
-int getStride(const Buffer &buffer);
+int getFieldSize(const Field &field);
+int getFieldOffset(const Field &field);
+int getBlockStride(const Block &block);
+int getBufferSize(const Buffer &buffer);
 TextureKind getKind(const Texture &texture);
 CallKind getKind(const Call &call);
 
 template<typename T> Item::Type getItemType();
 template<> inline Item::Type getItemType<Group>() { return Item::Type::Group; }
 template<> inline Item::Type getItemType<Buffer>() { return Item::Type::Buffer; }
-template<> inline Item::Type getItemType<Column>() { return Item::Type::Column; }
+template<> inline Item::Type getItemType<Block>() { return Item::Type::Block; }
+template<> inline Item::Type getItemType<Field>() { return Item::Type::Field; }
 template<> inline Item::Type getItemType<Texture>() { return Item::Type::Texture; }
 template<> inline Item::Type getItemType<Program>() { return Item::Type::Program; }
 template<> inline Item::Type getItemType<Shader>() { return Item::Type::Shader; }

@@ -8,11 +8,11 @@
 
 #define ADD_EACH_COLUMN_TYPE() \
     ADD(GroupInlineScope, Group, inlineScope) \
-    ADD(BufferOffset, Buffer, offset) \
-    ADD(BufferRowCount, Buffer, rowCount) \
-    ADD(ColumnDataType, Column, dataType) \
-    ADD(ColumnCount, Column, count) \
-    ADD(ColumnPadding, Column, padding) \
+    ADD(BlockOffset, Block, offset) \
+    ADD(BlockRowCount, Block, rowCount) \
+    ADD(FieldDataType, Field, dataType) \
+    ADD(FieldCount, Field, count) \
+    ADD(FieldPadding, Field, padding) \
     ADD(TextureTarget, Texture, target) \
     ADD(TextureFormat, Texture, format) \
     ADD(TextureWidth, Texture, width) \
@@ -40,8 +40,7 @@
     ADD(BindingBorderColor, Binding, borderColor) \
     ADD(BindingComparisonFunc, Binding, comparisonFunc) \
     ADD(BindingSubroutine, Binding, subroutine) \
-    ADD(AttributeBufferId, Attribute, bufferId) \
-    ADD(AttributeColumnId, Attribute, columnId) \
+    ADD(AttributeFieldId, Attribute, fieldId) \
     ADD(AttributeNormalize, Attribute, normalize) \
     ADD(AttributeDivisor, Attribute, divisor) \
     ADD(AttachmentTextureId, Attachment, textureId) \
@@ -91,12 +90,11 @@
     ADD(CallPatchVertices, Call, patchVertices) \
     ADD(CallCount, Call, count) \
     ADD(CallFirst, Call, first) \
-    ADD(CallIndexBufferId, Call, indexBufferId) \
+    ADD(CallIndexBufferBlockId, Call, indexBufferBlockId) \
     ADD(CallBaseVertex, Call, baseVertex) \
     ADD(CallInstanceCount, Call, instanceCount) \
     ADD(CallBaseInstance, Call, baseInstance) \
-    ADD(CallIndirectBufferId, Call, indirectBufferId) \
-    ADD(CallIndirectOffset, Call, indirectOffset) \
+    ADD(CallIndirectBufferBlockId, Call, indirectBufferBlockId) \
     ADD(CallDrawCount, Call, drawCount) \
     ADD(CallWorkGroupsX, Call, workGroupsX) \
     ADD(CallWorkGroupsY, Call, workGroupsY) \

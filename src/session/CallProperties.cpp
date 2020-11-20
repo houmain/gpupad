@@ -23,7 +23,7 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
         this, &CallProperties::updateWidgets);
 
     for (auto combobox : { mUi->program, mUi->vertexStream, mUi->target, 
-            mUi->indexBuffer, mUi->indirectBuffer, mUi->texture, 
+            mUi->indexBufferBlock, mUi->indirectBufferBlock, mUi->texture,
             mUi->fromTexture, mUi->buffer, mUi->fromBuffer })
         connect(combobox, &ReferenceComboBox::textRequired,
             [this](QVariant data) { return mSessionProperties.findItemName(data.toInt()); });
@@ -34,9 +34,10 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
         [this]() { return mSessionProperties.getItemIds(Item::Type::Stream, true); });
     connect(mUi->target, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Target); });
-    connect(mUi->indexBuffer, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
-    for (auto buffer : { mUi->indirectBuffer, mUi->buffer, mUi->fromBuffer })
+    for (auto block : { mUi->indexBufferBlock, mUi->indirectBufferBlock })
+        connect(block, &ReferenceComboBox::listRequired,
+            [this]() { return mSessionProperties.getItemIds(Item::Type::Block); });
+    for (auto buffer : { mUi->buffer, mUi->fromBuffer })
         connect(buffer, &ReferenceComboBox::listRequired,
             [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
     for (auto texture : { mUi->texture, mUi->fromTexture })
@@ -95,14 +96,13 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->vertexCount, SessionModel::CallCount);
     mapper.addMapping(mUi->firstVertex, SessionModel::CallFirst);
 
-    mapper.addMapping(mUi->indexBuffer, SessionModel::CallIndexBufferId);
+    mapper.addMapping(mUi->indexBufferBlock, SessionModel::CallIndexBufferBlockId);
     mapper.addMapping(mUi->baseVertex, SessionModel::CallBaseVertex);
 
     mapper.addMapping(mUi->instanceCount, SessionModel::CallInstanceCount);
     mapper.addMapping(mUi->baseInstance, SessionModel::CallBaseInstance);
 
-    mapper.addMapping(mUi->indirectBuffer, SessionModel::CallIndirectBufferId);
-    mapper.addMapping(mUi->indirectOffset, SessionModel::CallIndirectOffset);
+    mapper.addMapping(mUi->indirectBufferBlock, SessionModel::CallIndirectBufferBlockId);
     mapper.addMapping(mUi->drawCount, SessionModel::CallDrawCount);
 
     mapper.addMapping(mUi->workGroupsX, SessionModel::CallWorkGroupsX);
@@ -129,13 +129,11 @@ void CallProperties::updateWidgets()
         kind.draw);
     setFormVisibility(mUi->formLayout, mUi->labelVertexStream, mUi->vertexStream,
         kind.draw);
-    setFormVisibility(mUi->formLayout, mUi->labelIndexBuffer, mUi->indexBuffer,
+    setFormVisibility(mUi->formLayout, mUi->labelIndexBufferBlock, mUi->indexBufferBlock,
         kind.indexed);
     setFormVisibility(mUi->formLayout, mUi->labelPrimitiveType, mUi->primitiveType,
         kind.draw);
-    setFormVisibility(mUi->formLayout, mUi->labelIndirectBuffer, mUi->indirectBuffer,
-        kind.indirect);
-    setFormVisibility(mUi->formLayout, mUi->labelIndirectOffset, mUi->indirectOffset,
+    setFormVisibility(mUi->formLayout, mUi->labelIndirectBufferBlock, mUi->indirectBufferBlock,
         kind.indirect);
 
     setFormVisibility(mUi->formLayout, mUi->labelPatchVertices, mUi->patchVertices,

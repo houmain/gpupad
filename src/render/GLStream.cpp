@@ -18,17 +18,18 @@ GLStream::GLStream(const Stream &stream)
 }
 
 void GLStream::setAttribute(int attributeIndex,
-    const Column &column, GLBuffer *buffer)
+    const Field &field, GLBuffer *buffer)
 {
     auto &attribute = mAttributes[attributeIndex];
-    attribute.usedItems += column.id;
+    attribute.usedItems += field.id;
     attribute.buffer = buffer;
-    attribute.type = column.dataType;
-    attribute.count = column.count;
-    if (auto buf = castItem<Buffer>(column.parent)) {
-        attribute.usedItems += buf->id;
-        attribute.stride = getStride(*buf);
-        attribute.offset = getColumnOffset(column);
+    attribute.type = field.dataType;
+    attribute.count = field.count;
+    if (auto block = castItem<Block>(field.parent)) {
+        attribute.usedItems += block->id;
+        attribute.usedItems += block->parent->id;
+        attribute.stride = getBlockStride(*block);
+        attribute.offset = getFieldOffset(field);
     }
 }
 

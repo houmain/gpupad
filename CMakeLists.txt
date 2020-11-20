@@ -59,6 +59,7 @@ set(SOURCES
   src/TextureData.cpp
   src/VideoPlayer.cpp
   src/editors/BinaryEditor.cpp
+  src/editors/BinaryEditorToolBar.ui
   src/editors/DockWindow.cpp
   src/editors/EditorManager.cpp
   src/editors/FindReplaceBar.cpp
@@ -94,10 +95,11 @@ set(SOURCES
   src/session/BindingProperties.cpp
   src/session/BindingProperties.ui
   src/session/BufferProperties.ui
+  src/session/BlockProperties.ui
   src/session/CallProperties.cpp
   src/session/CallProperties.ui
   src/session/ColorPicker.cpp
-  src/session/ColumnProperties.ui
+  src/session/FieldProperties.ui
   src/session/DataComboBox.cpp
   src/session/Item.cpp
   src/session/ExpressionEditor.cpp

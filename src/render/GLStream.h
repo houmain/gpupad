@@ -9,7 +9,7 @@ class GLStream
 public:
     explicit GLStream(const Stream &stream);
     void setAttribute(int attributeIndex,
-        const Column &column, GLBuffer *buffer);
+        const Field &column, GLBuffer *buffer);
 
     void bind(const GLProgram &program);
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
@@ -22,7 +22,7 @@ private:
         bool normalize;
         int divisor;
         GLBuffer *buffer;
-        Column::DataType type;
+        Field::DataType type;
         int count;
         int stride;
         int offset;

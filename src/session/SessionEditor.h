@@ -60,7 +60,8 @@ private:
     QAction *mRenameAction{ };
     QAction *mAddGroupAction{ };
     QAction *mAddBufferAction{ };
-    QAction *mAddColumnAction{ };
+    QAction *mAddBlockAction{ };
+    QAction *mAddFieldAction{ };
     QAction *mAddTextureAction{ };
     QAction *mAddImageAction{ };
     QAction *mAddSamplerAction{ };

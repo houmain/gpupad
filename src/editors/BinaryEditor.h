@@ -2,6 +2,7 @@
 #define BINARYEDITOR_H
 
 #include "IEditor.h"
+#include "ui_BinaryEditorToolBar.h"
 #include <QTableView>
 
 class BinaryEditor final : public QTableView, public IEditor
@@ -15,9 +16,28 @@ public:
         Float, Double,
     };
 
-    static int getTypeSize(DataType type);
+    struct Field
+    {
+        QString name;
+        DataType dataType;
+        int count;
+        int padding;
+    };
 
-    explicit BinaryEditor(QString fileName, QWidget *parent = nullptr);
+    struct Block
+    {
+        QString name;
+        int offset;
+        int rowCount;
+        QList<Field> fields;
+    };
+
+    static int getTypeSize(DataType type);
+    static int getStride(const Block &block);
+    static Ui::BinaryEditorToolBar *createEditorToolBar(QWidget *container);
+
+    BinaryEditor(QString fileName,
+        const Ui::BinaryEditorToolBar* editorToolbar, QWidget *parent = nullptr);
     ~BinaryEditor() override;
 
     QList<QMetaObject::Connection> connectEditActions(
@@ -31,24 +51,7 @@ public:
     bool isModified() const { return mModified; }
     void replace(QByteArray data, bool invalidateFileCache = true);
     const QByteArray &data() const { return mData; }
-
-    void setOffset(int offset);
-    int offset() const { return mOffset; }
-    void setStride(int stride = 0);
-    int stride() const { return mStride; }
-    void setRowCount(int rowCount);
-    int rowCount() const { return mRowCount; }
-    void setColumnCount(int count);
-    int columnCount() const { return mColumns.size(); }
-    void setColumnName(int index, QString name);
-    QString columnName(int index) const { return getColumn(index).name; }
-    void setColumnType(int index, DataType type);
-    DataType columnType(int index) const { return getColumn(index).type; }
-    void setColumnArity(int index, int arity);
-    int columnArity(int index) const { return getColumn(index).arity; }
-    void setColumnPadding(int index, int padding);
-    int columnPadding(int index) const { return getColumn(index).padding; }
-    void updateColumns();
+    void setBlocks(QList<Block> blocks);
     void scrollToOffset();
 
 Q_SIGNALS:
@@ -65,32 +68,22 @@ private:
     class DataModel;
     class HexModel;
 
-    struct Column
-    {
-        QString name;
-        DataType type;
-        int arity;
-        int padding;
-    };
-
     void handleDataChanged();
     void setModified(bool modified);
-    Column *getColumn(int index);
-    Column getColumn(int index) const;
+    const Block *currentBlock() const;
+    void setCurrentBlockIndex(int indx);
     void refresh();
+    void updateEditorToolBar();
 
+    const Ui::BinaryEditorToolBar &mEditorToolBar;
     QString mFileName;
     bool mModified{ };
     QByteArray mData;
     EditableRegion *mEditableRegion{ };
     int mRowHeight{ 20 };
     int mColumnWidth{ 32 };
-
-    bool mColumnsInvalidated{ true };
-    QList<Column> mColumns;
-    int mOffset{ };
-    int mStride{ };
-    int mRowCount{ };
+    QList<Block> mBlocks;
+    int mCurrentBlockIndex{ };
     int mPrevFirstRow{ };
 };
 

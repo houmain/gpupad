@@ -22,41 +22,41 @@ namespace
 class BinaryEditor::DataModel final : public QAbstractTableModel
 {
 public:
-    DataModel(BinaryEditor *editor, QByteArray *data)
+    DataModel(BinaryEditor *editor, const BinaryEditor::Block &block, QByteArray *data)
       : QAbstractTableModel(editor)
       , mEditor(*editor)
-      , mOffset(editor->offset())
-      , mStride(editor->stride())
-      , mRowCount(editor->rowCount())
+      , mOffset(block.offset)
+      , mStride(getStride(block))
+      , mRowCount(block.rowCount)
       , mData(*data)
     {
         auto index = 0;
         auto offset = 0;
-        for (auto i = 0; i < editor->columnCount(); ++i) {
-            if (const auto arity = editor->columnArity(i)) {
+        for (const auto &field : block.fields) {
+            if (field.count) {
                 mColumns.append({
                     index,
                     offset,
-                    editor->columnType(i),
-                    arity,
-                    editor->columnName(i),
+                    field.dataType,
+                    field.count,
+                    field.name,
                     true });
 
-                index += arity;
-                offset += getTypeSize(editor->columnType(i)) * arity;
+                index += field.count;
+                offset += getTypeSize(field.dataType) * field.count;
             }
             // fill padding with not editable column sets
-            if (const auto padding = editor->columnPadding(i)) {
+            if (field.padding) {
                 mColumns.append({
                     index,
                     offset,
                     DataType::Uint8,
-                    padding,
+                    field.padding,
                     "",
                     false });
 
-                index += padding;
-                offset += padding;
+                index += field.padding;
+                offset += field.padding;
             }
         }
         mColumnCount = index;
@@ -152,7 +152,7 @@ public:
             auto column = getColumn(section);
             if (column && column->editable) {
                 const auto index = section - column->index;
-                return QString(column->name + (column->arity > 1 ?
+                return QString(column->name + (column->count > 1 ?
                     QString("[%1]").arg(index) : ""));
             }
         }
@@ -176,7 +176,7 @@ private:
         int index;
         int offset;
         DataType type;
-        int arity;
+        int count;
         QString name;
         bool editable;
     };
@@ -184,7 +184,7 @@ private:
     const Column *getColumn(int index) const
     {
         for (const auto &c : mColumns)
-            if (index < c.index + c.arity)
+            if (index < c.index + c.count)
                 return &c;
         return nullptr;
     }

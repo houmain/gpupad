@@ -236,10 +236,9 @@ void RenderSession::prepare(bool itemsChanged,
             const auto &items = vertexStream->items;
             for (auto i = 0; i < items.size(); ++i)
                 if (auto attribute = castItem<Attribute>(items[i]))
-                    if (auto column = session.findItem<Column>(attribute->columnId))
-                        if (column->parent)
-                            vs->setAttribute(i, *column,
-                                addBufferOnce(column->parent->id));
+                    if (auto field = session.findItem<Field>(attribute->fieldId))
+                        vs->setAttribute(i, *field,
+                            addBufferOnce(field->parent->parent->id));
         }
         return vs;
     };
@@ -352,17 +351,17 @@ void RenderSession::prepare(bool itemsChanged,
                         glcall.setProgram(addProgramOnce(call->programId));
                         glcall.setTarget(addTargetOnce(call->targetId));
                         glcall.setVextexStream(addVertexStreamOnce(call->vertexStreamId));
-                        if (auto buffer = session.findItem<Buffer>(call->indexBufferId))
-                            glcall.setIndexBuffer(addBufferOnce(buffer->id), *buffer);
-                        if (auto buffer = session.findItem<Buffer>(call->indirectBufferId))
-                            glcall.setIndirectBuffer(addBufferOnce(buffer->id), *buffer);
+                        if (auto block = session.findItem<Block>(call->indexBufferBlockId))
+                            glcall.setIndexBuffer(addBufferOnce(block->parent->id), *block);
+                        if (auto block = session.findItem<Block>(call->indirectBufferBlockId))
+                            glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block);
                         break;
 
                     case Call::CallType::Compute:
                     case Call::CallType::ComputeIndirect:
                         glcall.setProgram(addProgramOnce(call->programId));
-                        if (auto buffer = session.findItem<Buffer>(call->indirectBufferId))
-                            glcall.setIndirectBuffer(addBufferOnce(buffer->id), *buffer);
+                        if (auto block = session.findItem<Block>(call->indirectBufferBlockId))
+                            glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block);
                         break;
 
                     case Call::CallType::ClearTexture:

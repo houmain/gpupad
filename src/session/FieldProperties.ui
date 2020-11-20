@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ColumnProperties</class>
- <widget class="QWidget" name="ColumnProperties">
+ <class>FieldProperties</class>
+ <widget class="QWidget" name="FieldProperties">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>209</width>
-    <height>122</height>
+    <height>98</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">

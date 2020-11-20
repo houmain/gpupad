@@ -54,5 +54,6 @@
         <file>images/64x64/icon.png</file>
         <file>images/16x16/media-seek-forward.png</file>
         <file>images/16x16/media-skip-forward.png</file>
+        <file>images/16x16/format-justify-left.png</file>
     </qresource>
 </RCC>

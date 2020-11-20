@@ -34,7 +34,7 @@ Q_SIGNALS:
 private:
     void updateWidgets();
     int getTextureStride(QVariant textureId) const;
-    int getBufferStride(QVariant bufferId) const;
+    int getBlockStride(QVariant blockId) const;
     void filterImageFormats(int stride);
 
     SessionProperties &mSessionProperties;

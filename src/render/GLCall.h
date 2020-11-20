@@ -25,8 +25,8 @@ public:
     void setProgram(GLProgram *program);
     void setTarget(GLTarget *target);
     void setVextexStream(GLStream *vertexStream);
-    void setIndexBuffer(GLBuffer *indices, const Buffer &buffer);
-    void setIndirectBuffer(GLBuffer *commands, const Buffer &buffer);
+    void setIndexBuffer(GLBuffer *indices, const Block &block);
+    void setIndirectBuffer(GLBuffer *commands, const Block &block);
     void setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer);
     void setTextures(GLTexture *texture, GLTexture *fromTexture);
     void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
@@ -39,6 +39,7 @@ private:
     void executeCopyTexture(MessagePtrSet &messages);
     void executeClearBuffer(MessagePtrSet &messages);
     void executeCopyBuffer(MessagePtrSet &messages);
+    GLenum getIndexType() const;
 
     Call mCall{ };
     GLProgram *mProgram{ };
@@ -50,7 +51,7 @@ private:
     GLTexture *mFromTexture{ };
 
     GLBuffer *mIndexBuffer{ };
-    GLuint mIndexType{ };
+    GLuint mIndirectOffset{ };
     int mIndexSize{ };
 
     GLBuffer *mIndirectBuffer{ };

@@ -1,43 +1,54 @@
 #include "Item.h"
 
-int getColumnSize(const Column &column)
+int getFieldSize(const Field &field)
 {
-    switch (column.dataType) {
-        case Column::DataType::Int8: return 1;
-        case Column::DataType::Int16: return 2;
-        case Column::DataType::Int32: return 4;
-        //case Column::DataType::Int64: return 8;
-        case Column::DataType::Uint8: return 1;
-        case Column::DataType::Uint16: return 2;
-        case Column::DataType::Uint32: return 4;
-        //case Column::DataType::Uint64: return 8;
-        case Column::DataType::Float: return 4;
-        case Column::DataType::Double: return 8;
+    switch (field.dataType) {
+        case Field::DataType::Int8: return 1;
+        case Field::DataType::Int16: return 2;
+        case Field::DataType::Int32: return 4;
+        //case Field::DataType::Int64: return 8;
+        case Field::DataType::Uint8: return 1;
+        case Field::DataType::Uint16: return 2;
+        case Field::DataType::Uint32: return 4;
+        //case Field::DataType::Uint64: return 8;
+        case Field::DataType::Float: return 4;
+        case Field::DataType::Double: return 8;
     }
     return 0;
 }
 
-int getColumnOffset(const Column &column)
+int getFieldOffset(const Field &field)
 {
     auto offset = 0;
-    const auto &buffer = *static_cast<const Buffer*>(column.parent);
-    for (const Item* item : buffer.items) {
-        const auto &col = *static_cast<const Column*>(item);
-        if (&column == &col)
-            return offset;
-        offset += col.count * getColumnSize(col) + col.padding;
+    const auto &block = *static_cast<const Block*>(field.parent);
+    for (const Item* item : block.items) {
+        if (&field == item)
+            break;
+        const auto &f = *static_cast<const Field*>(item);
+        offset += f.count * getFieldSize(f) + f.padding;
     }
-    return offset;
+    return block.offset + offset;
 }
 
-int getStride(const Buffer &buffer)
+int getBlockStride(const Block &block)
 {
     auto stride = 0;
-    for (const Item* item : buffer.items) {
-        auto &column = *static_cast<const Column*>(item);
-        stride += column.count * getColumnSize(column) + column.padding;
+    for (const Item* item : block.items) {
+        const auto &field = *static_cast<const Field*>(item);
+        stride += field.count * getFieldSize(field) + field.padding;
     }
     return stride;
+}
+
+int getBufferSize(const Buffer &buffer)
+{
+    auto size = 1;
+    for (const Item* item : buffer.items) {
+        const auto &block = *static_cast<const Block*>(item);
+        size = std::max(size,
+            block.offset + block.rowCount * getBlockStride(block));
+    }
+    return size;
 }
 
 TextureKind getKind(const Texture &texture)

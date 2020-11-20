@@ -12,7 +12,8 @@
 namespace Ui {
 class GroupProperties;
 class BufferProperties;
-class ColumnProperties;
+class BlockProperties;
+class FieldProperties;
 class ProgramProperties;
 class ShaderProperties;
 class StreamProperties;
@@ -53,22 +54,23 @@ public:
     QString findItemName(ItemId itemId) const;
 
 private:
-    void updateBufferWidgets(const QModelIndex &index);
+    void updateBlockWidgets(const QModelIndex &index);
     void updateTargetWidgets(const QModelIndex &index);
     void updateScriptWidgets(const QModelIndex &index);
     void updateScriptWidgets(bool hasFile);
-    void deduceBufferRowCount();
+    void deduceBlockOffset();
+    void deduceBlockRowCount();
     IEditor* openEditor(const FileItem &fileItem);
     void fillComboBoxes();
-    QVariantList getColumnIds(ItemId bufferId) const;
 
     SessionModel &mModel;
     QStackedWidget *mStack;
     QDataWidgetMapper *mMapper;
     QTimer *mSubmitTimer;
     QScopedPointer<Ui::GroupProperties> mGroupProperties;
+    QScopedPointer<Ui::BlockProperties> mBlockProperties;
     QScopedPointer<Ui::BufferProperties> mBufferProperties;
-    QScopedPointer<Ui::ColumnProperties> mColumnProperties;
+    QScopedPointer<Ui::FieldProperties> mFieldProperties;
     TextureProperties *mTextureProperties{ };
     QScopedPointer<Ui::ProgramProperties> mProgramProperties;
     QScopedPointer<Ui::ShaderProperties> mShaderProperties;

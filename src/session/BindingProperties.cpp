@@ -138,9 +138,11 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
         [this]() { return mSessionProperties.getItemIds(Item::Type::Texture); });
     connect(mUi->buffer, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
-    connect(mUi->buffer, &ReferenceComboBox::currentDataChanged,
+    connect(mUi->block, &ReferenceComboBox::listRequired,
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Block); });
+    connect(mUi->block, &ReferenceComboBox::currentDataChanged,
         this, &BindingProperties::updateWidgets);
-    for (auto comboBox : { mUi->texture, mUi->buffer })
+    for (auto comboBox : { mUi->texture, mUi->buffer, mUi->block })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant id) {
                 return mSessionProperties.findItemName(id.toInt());
@@ -209,11 +211,11 @@ int BindingProperties::getTextureStride(QVariant textureId) const
     return 0;
 }
 
-int BindingProperties::getBufferStride(QVariant bufferId) const
+int BindingProperties::getBlockStride(QVariant blockId) const
 {
-    const auto itemId = bufferId.toInt();
-    if (auto buffer = mSessionProperties.model().findItem<Buffer>(itemId))
-        return getStride(*buffer);
+    const auto itemId = blockId.toInt();
+    if (auto block = mSessionProperties.model().findItem<Block>(itemId))
+        return ::getBlockStride(*block);
     return 0;
 }
 
@@ -264,7 +266,9 @@ void BindingProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
         image || sampler);
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
-        buffer || textureBuffer);
+        buffer);
+    setFormVisibility(mUi->formLayout, mUi->labelBlock, mUi->block,
+        textureBuffer);
 
     const auto textureKind = currentTextureKind();
     setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, image);
@@ -275,7 +279,7 @@ void BindingProperties::updateWidgets()
     if (image)
         stride = getTextureStride(mUi->texture->currentData());
     else if (textureBuffer)
-        stride = getBufferStride(mUi->buffer->currentData());
+        stride = getBlockStride(mUi->block->currentData());
     filterImageFormats(stride);
     setFormVisibility(mUi->formLayout, mUi->labelImageFormat, mUi->imageFormat,
         stride);

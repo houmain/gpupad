@@ -80,6 +80,7 @@ private:
     QDockWidget *mCurrentDock{ };
     FindReplaceBar *mFindReplaceBar{ };
     Ui::TextureEditorToolBar *mTextureEditorToolBar{ };
+    Ui::BinaryEditorToolBar *mBinaryEditorToolBar{ };
     bool mAutoRaise{ true };
 };
 

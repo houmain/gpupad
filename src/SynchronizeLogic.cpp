@@ -162,8 +162,11 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
         if (auto buffer = mModel.item<Buffer>(index)) {
             mEditorItemsModified.insert(buffer->id);
         }
-        else if (auto column = mModel.item<Column>(index)) {
-            mEditorItemsModified.insert(column->parent->id);
+        else if (auto block = mModel.item<Block>(index)) {
+            mEditorItemsModified.insert(block->parent->id);
+        }
+        else if (auto field = mModel.item<Field>(index)) {
+            mEditorItemsModified.insert(field->parent->parent->id);
         }
         else if (auto texture = mModel.item<Texture>(index)) {
             mEditorItemsModified.insert(texture->id);
@@ -326,34 +329,41 @@ void SynchronizeLogic::updateTextureEditor(const Texture &texture,
 void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
     BinaryEditor &editor)
 {
-    const auto mapDataType = [](Column::DataType type) {
+    const auto getDataType = [](Field::DataType type) {
         switch (type) {
-            case Column::DataType::Int8: return BinaryEditor::DataType::Int8;
-            case Column::DataType::Int16: return BinaryEditor::DataType::Int16;
-            case Column::DataType::Int32: return BinaryEditor::DataType::Int32;
-            case Column::DataType::Uint8: return BinaryEditor::DataType::Uint8;
-            case Column::DataType::Uint16: return BinaryEditor::DataType::Uint16;
-            case Column::DataType::Uint32: return BinaryEditor::DataType::Uint32;
-            case Column::DataType::Float: return BinaryEditor::DataType::Float;
-            case Column::DataType::Double: return BinaryEditor::DataType::Double;
+            case Field::DataType::Int8: return BinaryEditor::DataType::Int8;
+            case Field::DataType::Int16: return BinaryEditor::DataType::Int16;
+            case Field::DataType::Int32: return BinaryEditor::DataType::Int32;
+            case Field::DataType::Uint8: return BinaryEditor::DataType::Uint8;
+            case Field::DataType::Uint16: return BinaryEditor::DataType::Uint16;
+            case Field::DataType::Uint32: return BinaryEditor::DataType::Uint32;
+            case Field::DataType::Float: return BinaryEditor::DataType::Float;
+            case Field::DataType::Double: return BinaryEditor::DataType::Double;
         }
         return BinaryEditor::DataType::Int8;
     };
 
-    editor.setColumnCount(buffer.items.size());
-    editor.setOffset(buffer.offset);
-    editor.setRowCount(buffer.rowCount);
-    auto i = 0;
-    for (Item *item : qAsConst(buffer.items)) {
-        const auto &column = static_cast<Column&>(*item);
-        editor.setColumnName(i, column.name);
-        editor.setColumnType(i, mapDataType(column.dataType));
-        editor.setColumnArity(i, column.count);
-        editor.setColumnPadding(i, column.padding);
-        i++;
+    auto blocks = QList<BinaryEditor::Block>();
+    for (const auto *item : qAsConst(buffer.items)) {
+        const auto &block = static_cast<const Block&>(*item);
+        auto fields = QList<BinaryEditor::Field>();
+        for (const auto *item : qAsConst(block.items)) {
+            const auto &field = static_cast<const Field&>(*item);
+            fields.append({
+                field.name,
+                getDataType(field.dataType),
+                field.count,
+                field.padding
+            });
+        }
+        blocks.append({
+            block.name,
+            block.offset,
+            block.rowCount,
+            fields
+        });
     }
-    editor.setStride();
-    editor.updateColumns();
+    editor.setBlocks(blocks);
 }
 
 void SynchronizeLogic::processSource()

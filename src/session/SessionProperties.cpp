@@ -5,7 +5,8 @@
 #include "CallProperties.h"
 #include "ui_GroupProperties.h"
 #include "ui_BufferProperties.h"
-#include "ui_ColumnProperties.h"
+#include "ui_BlockProperties.h"
+#include "ui_FieldProperties.h"
 #include "ui_ProgramProperties.h"
 #include "ui_ShaderProperties.h"
 #include "ui_StreamProperties.h"
@@ -88,7 +89,8 @@ SessionProperties::SessionProperties(QWidget *parent)
     };
     add(mGroupProperties);
     add(mBufferProperties);
-    add(mColumnProperties);
+    add(mBlockProperties);
+    add(mFieldProperties);
     mTextureProperties = new TextureProperties(this);
     mStack->addWidget(mTextureProperties);
     add(mProgramProperties);
@@ -121,12 +123,10 @@ SessionProperties::SessionProperties(QWidget *parent)
         [this]() { openCurrentItemFile(FileDialog::BinaryExtensions); });
     connect(mBufferProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(Item::Type::Buffer, true); });
-    connect(mBufferProperties->rowCount, qOverload<int>(&QSpinBox::valueChanged),
-        [this]() { updateBufferWidgets(currentModelIndex()); });
-    connect(mBufferProperties->size, &QSpinBox::editingFinished,
-        this, &SessionProperties::deduceBufferRowCount);
-    connect(mBufferProperties->deduceRowCount, &QToolButton::clicked,
-        this, &SessionProperties::deduceBufferRowCount);
+    connect(mBlockProperties->deduceOffset, &QToolButton::clicked,
+        this, &SessionProperties::deduceBlockOffset);
+    connect(mBlockProperties->deduceRowCount, &QToolButton::clicked,
+        this, &SessionProperties::deduceBlockRowCount);
 
     connect(mScriptProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::ScriptExtensions); });
@@ -137,19 +137,14 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mScriptProperties->file, &ReferenceComboBox::currentDataChanged,
         [this](QVariant data) { updateScriptWidgets(!data.toString().isEmpty()); });
 
-    connect(mAttributeProperties->buffer, &ReferenceComboBox::currentDataChanged,
-        mAttributeProperties->column, &ReferenceComboBox::validate);
-    connect(mAttributeProperties->column, &ReferenceComboBox::listRequired,
-        [this]() { return getColumnIds(
-            mAttributeProperties->buffer->currentData().toInt()); });
-    connect(mAttributeProperties->buffer, &ReferenceComboBox::listRequired,
-        [this]() { return getItemIds(Item::Type::Buffer); });
+    connect(mAttributeProperties->field, &ReferenceComboBox::listRequired,
+        [this]() { return getItemIds(Item::Type::Field); });
 
     for (auto comboBox : { mShaderProperties->file, mBufferProperties->file, mScriptProperties->file })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [](auto data) { return FileDialog::getFileTitle(data.toString()); });
 
-    for (auto comboBox : { mAttributeProperties->buffer, mAttributeProperties->column })
+    for (auto comboBox : { mAttributeProperties->field })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant data) { return findItemName(data.toInt()); });
 
@@ -161,7 +156,7 @@ SessionProperties::~SessionProperties() = default;
 
 void SessionProperties::fillComboBoxes()
 {
-    fillComboBox<Column::DataType>(mColumnProperties->type);
+    fillComboBox<Field::DataType>(mFieldProperties->type);
     fillComboBox<Target::FrontFace>(mTargetProperties->frontFace);
     fillComboBox<Target::CullMode>(mTargetProperties->cullMode);
     fillComboBox<Target::PolygonMode>(mTargetProperties->polygonMode);
@@ -227,17 +222,6 @@ QVariantList SessionProperties::getItemIds(Item::Type type, bool addNull) const
     return result;
 }
 
-QVariantList SessionProperties::getColumnIds(ItemId bufferId) const
-{
-    auto result = QVariantList();
-    mModel.forEachItem([&](const Item &item) {
-        if (item.type == Item::Type::Column)
-            if (static_cast<const Buffer*>(item.parent)->id == bufferId)
-                result.append(item.id);
-    });
-    return result;
-}
-
 void SessionProperties::updateModel()
 {
     mMapper->submit();
@@ -271,15 +255,18 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
 
         case Item::Type::Buffer:
             map(mBufferProperties->file, SessionModel::FileName);
-            map(mBufferProperties->offset, SessionModel::BufferOffset);
-            map(mBufferProperties->rowCount, SessionModel::BufferRowCount);
-            updateBufferWidgets(index);
             break;
 
-        case Item::Type::Column:
-            map(mColumnProperties->type, SessionModel::ColumnDataType);
-            map(mColumnProperties->count, SessionModel::ColumnCount);
-            map(mColumnProperties->padding, SessionModel::ColumnPadding);
+        case Item::Type::Block:
+            map(mBlockProperties->offset, SessionModel::BlockOffset);
+            map(mBlockProperties->rowCount, SessionModel::BlockRowCount);
+            updateBlockWidgets(index);
+            break;
+
+        case Item::Type::Field:
+            map(mFieldProperties->type, SessionModel::FieldDataType);
+            map(mFieldProperties->count, SessionModel::FieldCount);
+            map(mFieldProperties->padding, SessionModel::FieldPadding);
             break;
 
         case Item::Type::Texture:
@@ -302,8 +289,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             break;
 
         case Item::Type::Attribute:
-            map(mAttributeProperties->buffer, SessionModel::AttributeBufferId);
-            map(mAttributeProperties->column, SessionModel::AttributeColumnId);
+            map(mAttributeProperties->field, SessionModel::AttributeFieldId);
             map(mAttributeProperties->normalize, SessionModel::AttributeNormalize);
             map(mAttributeProperties->divisor, SessionModel::AttributeDivisor);
             break;
@@ -450,17 +436,25 @@ void SessionProperties::openCurrentItemFile(FileDialog::Options options)
         setCurrentItemFile(Singletons::fileDialog().fileName());
 }
 
-void SessionProperties::updateBufferWidgets(const QModelIndex &index)
+void SessionProperties::updateBlockWidgets(const QModelIndex &index)
 {
     auto stride = 0;
-    if (auto buffer = mModel.item<Buffer>(index))
-        stride = getStride(*buffer);
+    auto isFirstBlock = true;
+    auto isLastBlock = true;
+    auto hasFile = false;
+    if (auto block = mModel.item<Block>(index)) {
+        const auto &buffer = *static_cast<Buffer*>(block->parent);
+        stride = getBlockStride(*block);
+        isFirstBlock = (buffer.items.first() == block);
+        isLastBlock = (buffer.items.last() == block);
+        if (!FileDialog::isEmptyOrUntitled(buffer.fileName))
+            hasFile = true;
+    }
 
-    auto &ui = *mBufferProperties;
+    auto &ui = *mBlockProperties;
     ui.stride->setText(QString::number(stride));
-    ui.size->setValue(stride * ui.rowCount->value());
-    setFormVisibility(ui.formLayout, ui.labelRows, ui.widgetRows, stride > 0);
-    setFormVisibility(ui.formLayout, ui.labelSize, ui.size, stride > 0);
+    ui.deduceOffset->setVisible(!isFirstBlock);
+    ui.deduceRowCount->setVisible(hasFile && isLastBlock);
 }
 
 void SessionProperties::updateTargetWidgets(const QModelIndex &index)
@@ -494,22 +488,29 @@ void SessionProperties::updateScriptWidgets(bool hasFile)
     setFormVisibility(ui.formLayout, ui.labelExpression, ui.expression, !hasFile);
 }
 
-void SessionProperties::deduceBufferRowCount()
+void SessionProperties::deduceBlockOffset()
 {
-    if (auto buffer = mModel.item<Buffer>(currentModelIndex())) {
-        auto size = mBufferProperties->size->value();
-        if (QObject::sender() == mBufferProperties->deduceRowCount) {
-            auto binary = QByteArray();
-            if (!Singletons::fileCache().getBinary(buffer->fileName, &binary))
-                return;
-            size = binary.size() - buffer->offset;
-        }
+    const auto &block = *mModel.item<Block>(currentModelIndex());
+    auto offset = 0;
+    for (auto item : block.parent->items) {
+        if (item == &block)
+            break;
 
-        if (auto stride = getStride(*buffer)) {
-            mModel.setData(mModel.getIndex(currentModelIndex(),
-                    SessionModel::BufferRowCount), size / stride);
-            updateBufferWidgets(currentModelIndex());
-        }
+        const auto &prevBlock = *static_cast<const Block*>(item);
+        offset = std::max(offset,
+            prevBlock.offset + getBlockStride(prevBlock) * prevBlock.rowCount);
     }
+
+    mModel.setData(mModel.getIndex(currentModelIndex(),
+        SessionModel::BlockOffset), offset);
 }
 
+void SessionProperties::deduceBlockRowCount()
+{
+    const auto &block = *mModel.item<Block>(currentModelIndex());
+    const auto &buffer = *static_cast<const Buffer*>(block.parent);
+    auto binary = QByteArray();
+    if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
+        mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::BlockRowCount),
+            (binary.size() - block.offset) / getBlockStride(block));
+}

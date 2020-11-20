@@ -11,7 +11,8 @@ namespace ItemEnums {
     {
         Group,
         Buffer,
-        Column,
+        Block,
+        Field,
         Texture,
         Program,
         Shader,

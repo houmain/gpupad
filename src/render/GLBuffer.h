@@ -29,7 +29,6 @@ private:
 
     ItemId mItemId{ };
     QString mFileName;
-    int mOffset{ };
     int mSize{ };
     QByteArray mData;
     QSet<ItemId> mUsedItems;

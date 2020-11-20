@@ -62,7 +62,8 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddAttachmentAction, Item::Type::Attachment);
     addAction(mAddShaderAction, Item::Type::Shader);
     addAction(mAddBindingAction, Item::Type::Binding);
-    addAction(mAddColumnAction, Item::Type::Column);
+    addAction(mAddBlockAction, Item::Type::Block);
+    addAction(mAddFieldAction, Item::Type::Field);
     addAction(mAddTargetAction, Item::Type::Target);
     addAction(mAddAttributeAction, Item::Type::Attribute);
     addAction(mAddStreamAction, Item::Type::Stream);
@@ -77,7 +78,8 @@ SessionEditor::SessionEditor(QWidget *parent)
 
 void SessionEditor::addItemActions(QMenu* menu)
 {
-    menu->addAction(mAddColumnAction);
+    menu->addAction(mAddBlockAction);
+    menu->addAction(mAddFieldAction);
     menu->addAction(mAddAttributeAction);
     menu->addAction(mAddAttachmentAction);
     menu->addAction(mAddShaderAction);
@@ -97,7 +99,8 @@ void SessionEditor::updateItemActions()
 {
     auto index = selectionModel()->currentIndex();
     for (const auto &pair : {
-            std::make_pair(Item::Type::Column, mAddColumnAction),
+            std::make_pair(Item::Type::Block, mAddBlockAction),
+            std::make_pair(Item::Type::Field, mAddFieldAction),
             std::make_pair(Item::Type::Shader, mAddShaderAction),
             std::make_pair(Item::Type::Attribute, mAddAttributeAction),
             std::make_pair(Item::Type::Attachment, mAddAttachmentAction),
@@ -341,8 +344,11 @@ void SessionEditor::addItem(Item::Type type)
         mModel.getItemType(currentIndex()) == Item::Type::Group);
     auto index = mModel.insertItem(type, currentIndex(), addingToGroup ? 0 : -1);
 
-    if (type == Item::Type::Buffer)
-        mModel.insertItem(Item::Type::Column, index);
+    if (type == Item::Type::Buffer) {
+        const auto block = mModel.insertItem(Item::Type::Block, index);
+        mModel.insertItem(Item::Type::Field, block);
+        setExpanded(block, true);
+    }
     else if (type == Item::Type::Target)
         mModel.insertItem(Item::Type::Attachment, index);
     else if (type == Item::Type::Stream)

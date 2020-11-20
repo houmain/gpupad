@@ -18,6 +18,18 @@ namespace
         property = value;
         return true;
     }
+
+    [[maybe_unused]] bool operator==(const BinaryEditor::Field &a, const BinaryEditor::Field &b)
+    {
+        return std::tie(a.name, a.dataType, a.count, a.padding) ==
+               std::tie(b.name, b.dataType, b.count, b.padding);
+    }
+
+    [[maybe_unused]] bool operator==(const BinaryEditor::Block &a, const BinaryEditor::Block &b)
+    {
+        return std::tie(a.name, a.offset, a.rowCount, a.fields) ==
+               std::tie(b.name, b.offset, b.rowCount, b.fields);
+    }
 } // namespace
 
 int BinaryEditor::getTypeSize(DataType type)
@@ -37,9 +49,27 @@ int BinaryEditor::getTypeSize(DataType type)
     return 0;
 }
 
-BinaryEditor::BinaryEditor(QString fileName, QWidget *parent)
-    : QTableView(parent)
-    , mFileName(fileName)
+int BinaryEditor::getStride(const Block &block)
+{
+    auto stride = 0;
+    for (const auto &field : block.fields)
+        stride += getTypeSize(field.dataType) * field.count + field.padding;
+    return stride;
+}
+
+Ui::BinaryEditorToolBar *BinaryEditor::createEditorToolBar(QWidget *container)
+{
+    auto toolBarWidgets = new Ui::BinaryEditorToolBar();
+    toolBarWidgets->setupUi(container);
+    return toolBarWidgets;
+}
+
+BinaryEditor::BinaryEditor(QString fileName,
+      const Ui::BinaryEditorToolBar* editorToolbar,
+      QWidget *parent)
+    : QTableView(parent),
+      mEditorToolBar(*editorToolbar),
+      mFileName(fileName)
 {
     horizontalHeader()->setVisible(false);
     horizontalHeader()->setDefaultSectionSize(mColumnWidth);
@@ -49,13 +79,11 @@ BinaryEditor::BinaryEditor(QString fileName, QWidget *parent)
     verticalHeader()->setDefaultAlignment(Qt::AlignHCenter | Qt::AlignBottom);
     verticalHeader()->setSectionsClickable(false);
     setGridStyle(Qt::DotLine);
-    setFocusPolicy(Qt::NoFocus);
 
     mEditableRegion = new EditableRegion(mColumnWidth, mRowHeight, this);
     setItemDelegate(new EditableRegionDelegate(mEditableRegion, this));
     mEditableRegion->setStyleSheet("QTableView { margin: -2px; }");
 
-    setStride();
     refresh();
 }
 
@@ -76,6 +104,12 @@ QList<QMetaObject::Connection> BinaryEditor::connectEditActions(
         actions.windowFileName, &QAction::setText);
     c += connect(this, &BinaryEditor::modificationChanged,
         actions.windowFileName, &QAction::setEnabled);
+
+    updateEditorToolBar();
+
+    c += connect(mEditorToolBar.block,
+        &QComboBox::currentIndexChanged,
+        this, &BinaryEditor::setCurrentBlockIndex);
 
     return c;
 }
@@ -150,27 +184,41 @@ void BinaryEditor::setModified(bool modified)
     }
 }
 
-auto BinaryEditor::getColumn(int index) -> Column*
+auto BinaryEditor::currentBlock() const -> const Block *
 {
-    return (index < mColumns.size() ? &mColumns[index] : nullptr);
+    return (mBlocks.empty() ? nullptr :
+        &mBlocks[std::min(mCurrentBlockIndex, mBlocks.size() - 1)]);
 }
 
-auto BinaryEditor::getColumn(int index) const -> Column
+void BinaryEditor::setCurrentBlockIndex(int index)
 {
-    return (index < mColumns.size() ? mColumns[index] : Column{ });
+    if (index != mCurrentBlockIndex) {
+        mCurrentBlockIndex = index;
+        refresh();
+        scrollToOffset();
+    }
 }
 
 void BinaryEditor::refresh()
 {
-    const auto row = (mOffset + mStride - 1) / mStride;
-    auto rowLength = 0;
-    for (const auto &column : qAsConst(mColumns))
-        rowLength += column.arity * getTypeSize(column.type) + column.padding;
-    const auto rowCount = (rowLength ? mRowCount : 0);
-    const auto offset = (rowLength ? mOffset : 0);
+    auto stride = 0;
+    auto rowCount = 0;
+    auto offset = 0;
+
+    const auto *block = currentBlock();
+    if (block)
+        stride = getStride(*block);
+
+    if (stride) {
+        rowCount = block->rowCount;
+        offset = block->offset;
+    }
+    else {
+        stride = 16;
+    }
 
     auto prevModel = model();
-    setModel(new HexModel(&mData, offset, mStride, rowCount, this));
+    setModel(new HexModel(&mData, offset, stride, rowCount, this));
     delete prevModel;
 
     clearSpans();
@@ -179,9 +227,10 @@ void BinaryEditor::refresh()
     const auto empty = (!rowCount);
     mEditableRegion->setVisible(!empty);
     if (!empty) {
-        setSpan(row, 0, mRowCount, rowLength);
+        const auto row = (offset + stride - 1) / stride;
+        setSpan(row, 0, rowCount, stride);
 
-        auto dataModel = new DataModel(this, &mData);
+        auto dataModel = new DataModel(this, *block, &mData);
         prevModel = mEditableRegion->model();
         mEditableRegion->setModel(dataModel);
         delete prevModel;
@@ -202,69 +251,37 @@ void BinaryEditor::refresh()
     }
 }
 
+void BinaryEditor::updateEditorToolBar()
+{
+    if (mBlocks.size() > 1) {
+        mEditorToolBar.block->clear();
+        for (const auto &block : mBlocks)
+            mEditorToolBar.block->addItem(block.name);
+        mEditorToolBar.block->setCurrentIndex(mCurrentBlockIndex);
+        mEditorToolBar.labelBlock->setVisible(true);
+        mEditorToolBar.block->setVisible(true);
+    }
+    else {
+        mEditorToolBar.labelBlock->setVisible(false);
+        mEditorToolBar.block->setVisible(false);
+    }
+}
+
+void BinaryEditor::setBlocks(QList<Block> blocks)
+{
+    if (mBlocks != blocks) {
+        mBlocks = blocks;
+        refresh();
+    }
+}
+
 void BinaryEditor::scrollToOffset()
 {
-    const auto row = (mOffset + mStride - 1) / mStride;
-    scrollTo(model()->index(row, 0));
-}
-
-void BinaryEditor::setOffset(int offset)
-{
-    mColumnsInvalidated |= set(mOffset, offset);
-}
-
-void BinaryEditor::setStride(int stride)
-{
-    if (stride <= 0) {
-        stride = 0;
-        for (const auto &column : qAsConst(mColumns))
-            stride += column.arity * getTypeSize(column.type) + column.padding;
-    }
-    mColumnsInvalidated |= set(mStride, (stride ? stride : 16));
-}
-
-void BinaryEditor::setRowCount(int rowCount)
-{
-    mColumnsInvalidated |= set(mRowCount, rowCount);
-}
-
-void BinaryEditor::setColumnCount(int count)
-{
-    mColumnsInvalidated |= (mColumns.size() != count);
-    while (mColumns.size() > count)
-        mColumns.pop_back();
-    while (mColumns.size() < count)
-        mColumns.push_back({ });
-}
-
-void BinaryEditor::setColumnName(int index, QString name)
-{
-    if (auto column = getColumn(index))
-        mColumnsInvalidated |= set(column->name, name);
-}
-
-void BinaryEditor::setColumnType(int index, DataType type)
-{
-    if (auto column = getColumn(index))
-        mColumnsInvalidated |= set(column->type, type);
-}
-
-void BinaryEditor::setColumnArity(int index, int arity)
-{
-    if (auto column = getColumn(index))
-        mColumnsInvalidated |= set(column->arity, arity);
-}
-
-void BinaryEditor::setColumnPadding(int index, int padding)
-{
-    if (auto column = getColumn(index))
-        mColumnsInvalidated |= set(column->padding, padding);
-}
-
-void BinaryEditor::updateColumns()
-{
-    if (std::exchange(mColumnsInvalidated, false))
-        refresh();
+    if (const auto *block = currentBlock())
+        if (const auto stride = getStride(*block)) {
+            const auto row = (block->offset + stride - 1) / stride;
+            scrollTo(model()->index(row, 0));
+        }
 }
 
 void BinaryEditor::wheelEvent(QWheelEvent *event)

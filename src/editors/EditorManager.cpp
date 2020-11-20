@@ -24,8 +24,12 @@ EditorManager::~EditorManager() = default;
 
 void EditorManager::createEditorToolBars(QToolBar *mainToolBar) 
 {
-    const auto widget = new QWidget(this);
+    auto widget = new QWidget(this);
     mTextureEditorToolBar = TextureEditor::createEditorToolBar(widget);
+    mainToolBar->addWidget(widget);
+
+    widget = new QWidget(this);
+    mBinaryEditorToolBar = BinaryEditor::createEditorToolBar(widget);
     mainToolBar->addWidget(widget);
 
     // WORKAROUND: checkbox border is too dark in dark theme
@@ -40,10 +44,12 @@ void EditorManager::updateEditorToolBarVisibility()
 {
     // setting maximumWidth since simply setting visibility did not work
     const auto setVisible = [](const QWidget* child, bool visible) {
-      child->parentWidget()->setMaximumWidth(visible ? 65536 : 0);
+        child->parentWidget()->setMaximumWidth(visible ? 65536 : 0);
     };
     setVisible(mTextureEditorToolBar->level, 
         mCurrentDock && qobject_cast<TextureEditor*>(mCurrentDock->widget()));
+    setVisible(mBinaryEditorToolBar->block,
+        mCurrentDock && qobject_cast<BinaryEditor*>(mCurrentDock->widget()));
 }
 
 int EditorManager::openNotSavedDialog(const QString& fileName)
@@ -159,7 +165,7 @@ SourceEditor *EditorManager::openNewSourceEditor(const QString &fileName,
 
 BinaryEditor *EditorManager::openNewBinaryEditor(const QString &fileName)
 {
-    auto editor = new BinaryEditor(fileName);
+    auto editor = new BinaryEditor(fileName, mBinaryEditorToolBar);
     addBinaryEditor(editor);
     autoRaise(editor);
     return editor;
@@ -208,7 +214,7 @@ BinaryEditor *EditorManager::openBinaryEditor(const QString &fileName)
 {
     auto editor = getBinaryEditor(fileName);
     if (!editor) {
-        editor = new BinaryEditor(fileName);
+        editor = new BinaryEditor(fileName, mBinaryEditorToolBar);
         if (!editor->load()) {
             delete editor;
             return nullptr;

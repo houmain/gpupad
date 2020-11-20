@@ -31,7 +31,7 @@ GLTexture::GLTexture(const Buffer &buffer,
     , mTextureBuffer(textureBuffer)
     , mTarget(Texture::Target::TargetBuffer)
     , mFormat(format)
-    , mWidth(buffer.rowCount)
+    , mWidth(getBufferSize(buffer))
     , mHeight(1)
     , mDepth(1)
     , mLayers(1)

@@ -15,7 +15,8 @@ SessionModel::SessionModel(QObject *parent)
 {
     mTypeIcons[Item::Type::Group].addFile(QStringLiteral(":/images/16x16/folder.png"));
     mTypeIcons[Item::Type::Buffer].addFile(QStringLiteral(":/images/16x16/x-office-spreadsheet.png"));
-    mTypeIcons[Item::Type::Column].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
+    mTypeIcons[Item::Type::Block].addFile(QStringLiteral(":/images/16x16/format-justify-left.png"));
+    mTypeIcons[Item::Type::Field].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[Item::Type::Texture].addFile(QStringLiteral(":/images/16x16/image-x-generic.png"));
     mTypeIcons[Item::Type::Program].addFile(QStringLiteral(":/images/16x16/applications-system.png"));
     mTypeIcons[Item::Type::Shader].addFile(QStringLiteral(":/images/16x16/font.png"));
@@ -106,6 +107,7 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     switch (type) {
         case Item::Type::Group:
         case Item::Type::Buffer:
+        case Item::Type::Block:
         case Item::Type::Texture:
         case Item::Type::Program:
         case Item::Type::Stream:
@@ -520,14 +522,13 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             result &= (column != CallVertexStreamId || kind.draw);
             result &= (column != CallPrimitiveType || kind.draw);
             result &= (column != CallPatchVertices || kind.patches);
-            result &= (column != CallIndexBufferId || kind.indexed);
+            result &= (column != CallIndexBufferBlockId || kind.indexed);
             result &= (column != CallCount || (kind.draw && !kind.indirect));
             result &= (column != CallFirst || (kind.draw && !kind.indirect));
             result &= (column != CallInstanceCount || (kind.draw && !kind.indirect));
             result &= (column != CallBaseInstance || (kind.draw && !kind.indirect));
             result &= (column != CallBaseVertex || (kind.draw && kind.indexed && !kind.indirect));
-            result &= (column != CallIndirectBufferId || kind.indirect);
-            result &= (column != CallIndirectOffset || kind.indirect);
+            result &= (column != CallIndirectBufferBlockId || kind.indirect);
             result &= (column != CallDrawCount || (kind.draw && kind.indirect));
             result &= (column != CallWorkGroupsX || (kind.compute && !kind.indirect));
             result &= (column != CallWorkGroupsY || (kind.compute && !kind.indirect));
