@@ -23,5 +23,5 @@ void main() {
   
   // use atomic values to update a texture buffer
   uint size = imageSize(uData).x;
-  imageStore(uData, int(pos % size), uvec4(value1 % 255, value2 % 255, size % 255, 0));
+  imageStore(uData, int(pos % size), uvec4(pos % 256, value1 % 256, value2 % 256, 0));
 }

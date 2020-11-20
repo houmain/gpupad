@@ -83,51 +83,97 @@
         "id": 22,
         "items": [
             {
-                "count": 2,
-                "dataType": "Float",
-                "id": 23,
-                "name": "position",
-                "padding": 0,
-                "type": "Column"
+                "id": 894,
+                "items": [
+                    {
+                        "count": 2,
+                        "dataType": "Float",
+                        "id": 895,
+                        "name": "position",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "Vertex",
+                "offset": 0,
+                "rowCount": 10000,
+                "type": "Block"
             }
         ],
         "name": "VertexBuffer",
-        "offset": 0,
-        "rowCount": 100000,
         "type": "Buffer"
     },
     {
         "id": 1,
         "items": [
             {
-                "count": 3,
-                "dataType": "Uint32",
-                "id": 2,
-                "name": "workGroups",
-                "padding": 0,
-                "type": "Column"
+                "id": 896,
+                "items": [
+                    {
+                        "count": 3,
+                        "dataType": "Uint32",
+                        "id": 898,
+                        "name": "workgroups",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "ComputeCommand",
+                "offset": 0,
+                "rowCount": 1,
+                "type": "Block"
             },
             {
-                "count": 4,
-                "dataType": "Uint32",
-                "id": 21,
-                "name": "drawCommand",
-                "padding": 0,
-                "type": "Column"
+                "id": 897,
+                "items": [
+                    {
+                        "count": 1,
+                        "dataType": "Uint32",
+                        "id": 899,
+                        "name": "count",
+                        "padding": 0,
+                        "type": "Field"
+                    },
+                    {
+                        "count": 1,
+                        "dataType": "Uint32",
+                        "id": 900,
+                        "name": "instanceCount",
+                        "padding": 0,
+                        "type": "Field"
+                    },
+                    {
+                        "count": 1,
+                        "dataType": "Uint32",
+                        "id": 902,
+                        "name": "first",
+                        "padding": 0,
+                        "type": "Field"
+                    },
+                    {
+                        "count": 1,
+                        "dataType": "Uint32",
+                        "id": 901,
+                        "name": "baseInstance",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "DrawCommand",
+                "offset": 12,
+                "rowCount": 1,
+                "type": "Block"
             }
         ],
         "name": "IndirectBuffer",
-        "offset": 0,
-        "rowCount": 1,
         "type": "Buffer"
     },
     {
         "id": 17,
         "items": [
             {
-                "bufferId": 22,
-                "columnId": 23,
                 "divisor": 0,
+                "fieldId": 895,
                 "id": 18,
                 "name": "aPosition",
                 "normalize": false,
@@ -188,8 +234,7 @@
         "checked": true,
         "executeOn": "EveryEvaluation",
         "id": 13,
-        "indirectBufferId": 1,
-        "indirectOffset": "0",
+        "indirectBufferBlockId": 896,
         "name": "Generate",
         "programId": 8,
         "type": "Call"
@@ -212,8 +257,7 @@
         "drawCount": "1",
         "executeOn": "EveryEvaluation",
         "id": 10,
-        "indirectBufferId": 1,
-        "indirectOffset": "4 * 3",
+        "indirectBufferBlockId": 897,
         "name": "Render",
         "primitiveType": "Triangles",
         "programId": 11,

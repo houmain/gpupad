@@ -52,6 +52,7 @@
         ],
         "logicOperation": "NoLogicOperation",
         "name": "Target",
+        "polygonMode": "Fill",
         "type": "Target"
     },
     {
@@ -141,59 +142,63 @@
         "id": 80,
         "items": [
             {
-                "count": 3,
-                "dataType": "Float",
-                "id": 81,
-                "name": "position",
-                "padding": 0,
-                "type": "Column"
-            },
-            {
-                "count": 3,
-                "dataType": "Float",
-                "id": 82,
-                "name": "normal",
-                "padding": 0,
-                "type": "Column"
-            },
-            {
-                "count": 2,
-                "dataType": "Float",
-                "id": 83,
-                "name": "texcoords",
-                "padding": 0,
-                "type": "Column"
+                "id": 890,
+                "items": [
+                    {
+                        "count": 3,
+                        "dataType": "Float",
+                        "id": 891,
+                        "name": "position",
+                        "padding": 0,
+                        "type": "Field"
+                    },
+                    {
+                        "count": 3,
+                        "dataType": "Float",
+                        "id": 892,
+                        "name": "normal",
+                        "padding": 0,
+                        "type": "Field"
+                    },
+                    {
+                        "count": 2,
+                        "dataType": "Float",
+                        "id": 893,
+                        "name": "texcoords",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "Vertex",
+                "offset": 0,
+                "rowCount": 36,
+                "type": "Block"
             }
         ],
-        "offset": 0,
-        "rowCount": 36,
         "type": "Buffer"
     },
     {
         "id": 84,
         "items": [
             {
-                "bufferId": 80,
-                "columnId": 81,
                 "divisor": 0,
+                "fieldId": 891,
                 "id": 85,
                 "name": "aPosition",
                 "normalize": false,
                 "type": "Attribute"
             },
             {
-                "bufferId": 80,
-                "columnId": 82,
                 "divisor": 0,
+                "fieldId": 892,
                 "id": 86,
                 "name": "aNormal",
                 "normalize": false,
                 "type": "Attribute"
             },
             {
-                "bufferId": 80,
-                "columnId": 83,
                 "divisor": 0,
+                "fieldId": 893,
                 "id": 87,
                 "name": "aTexCoords",
                 "normalize": false,

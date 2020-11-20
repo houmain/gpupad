@@ -11,8 +11,8 @@ vec3 hash(uvec3 x) {
 
 void main() {
   uint gid = gl_GlobalInvocationID.x;
-  if(gid < particleCount) {
-    vec4 position = vec4(hash(uvec3(gid, 0, 1)) - vec3(0.5), 1);
-    particle[gid] = Particle(position, vec4(0));
+  if (gid < particleCount) {
+    vec2 position = hash(uvec3(gid, 0, 1)).xy - vec2(0.5);
+    particle[gid] = Particle(position, vec2(0));
   }
 }

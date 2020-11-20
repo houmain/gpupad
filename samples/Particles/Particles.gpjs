@@ -19,25 +19,32 @@
         "id": 66,
         "items": [
             {
-                "count": 4,
-                "dataType": "Float",
-                "id": 67,
-                "name": "position",
-                "padding": 0,
-                "type": "Column"
-            },
-            {
-                "count": 4,
-                "dataType": "Float",
-                "id": 68,
-                "name": "velocity",
-                "padding": 0,
-                "type": "Column"
+                "id": 918,
+                "items": [
+                    {
+                        "count": 2,
+                        "dataType": "Float",
+                        "id": 919,
+                        "name": "Position",
+                        "padding": 0,
+                        "type": "Field"
+                    },
+                    {
+                        "count": 2,
+                        "dataType": "Float",
+                        "id": 920,
+                        "name": "Velocity",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "Particle",
+                "offset": 0,
+                "rowCount": 100000,
+                "type": "Block"
             }
         ],
         "name": "Buffer",
-        "offset": 0,
-        "rowCount": 100000,
         "type": "Buffer"
     },
     {
@@ -49,14 +56,13 @@
     },
     {
         "bindingType": "Uniform",
-        "editor": "Expression3",
+        "editor": "Expression2",
         "id": 87,
         "name": "attractor",
         "type": "Binding",
         "values": [
             "Math.sin(Date.now() / 20)",
-            "Math.cos(Date.now() / 30)",
-            "0"
+            "Math.cos(Date.now() / 30)"
         ]
     },
     {
@@ -82,15 +88,15 @@
         ],
         "logicOperation": "NoLogicOperation",
         "name": "Target",
+        "polygonMode": "Fill",
         "type": "Target"
     },
     {
         "id": 83,
         "items": [
             {
-                "bufferId": 66,
-                "columnId": 67,
                 "divisor": 0,
+                "fieldId": 919,
                 "id": 84,
                 "name": "aPosition",
                 "normalize": false,

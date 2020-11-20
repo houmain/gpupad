@@ -13,5 +13,6 @@ void main() {
   vTexCoords = (data[gl_VertexID] + 1) / 2;
   gl_Position = vec4(data[gl_VertexID], 0.0, 1.0);
   
-  printf("Vertex %i is at %.1f", gl_VertexID, gl_Position.xyz);
+  // not supported by all GPUs in VS
+  //printf("Vertex %i is at %.1f", gl_VertexID, gl_Position.xyz);
 }

@@ -54,6 +54,7 @@
         ],
         "logicOperation": "NoLogicOperation",
         "name": "Target",
+        "polygonMode": "Fill",
         "type": "Target"
     },
     {
@@ -123,94 +124,99 @@
                 "id": 871,
                 "items": [
                     {
-                        "count": 3,
-                        "dataType": "Float",
-                        "id": 872,
-                        "name": "NORMAL",
-                        "padding": 0,
-                        "type": "Column"
-                    }
-                ],
-                "offset": 267384,
-                "rowCount": 14556,
-                "type": "Buffer"
-            },
-            {
-                "fileName": "DamagedHelmet/DamagedHelmet.bin",
-                "id": 873,
-                "items": [
+                        "id": 889,
+                        "items": [
+                            {
+                                "count": 1,
+                                "dataType": "Uint16",
+                                "id": 882,
+                                "name": "INDEX",
+                                "padding": 0,
+                                "type": "Field"
+                            }
+                        ],
+                        "name": "Indices",
+                        "offset": 0,
+                        "rowCount": 46356,
+                        "type": "Block"
+                    },
                     {
-                        "count": 3,
-                        "dataType": "Float",
-                        "id": 874,
-                        "name": "POSITION",
-                        "padding": 0,
-                        "type": "Column"
-                    }
-                ],
-                "offset": 92712,
-                "rowCount": 14556,
-                "type": "Buffer"
-            },
-            {
-                "fileName": "DamagedHelmet/DamagedHelmet.bin",
-                "id": 875,
-                "items": [
+                        "id": 887,
+                        "items": [
+                            {
+                                "count": 3,
+                                "dataType": "Float",
+                                "id": 874,
+                                "name": "POSITION",
+                                "padding": 0,
+                                "type": "Field"
+                            }
+                        ],
+                        "name": "Position",
+                        "offset": 92712,
+                        "rowCount": 14556,
+                        "type": "Block"
+                    },
                     {
-                        "count": 2,
-                        "dataType": "Float",
-                        "id": 876,
-                        "name": "TEXCOORD_0",
-                        "padding": 0,
-                        "type": "Column"
-                    }
-                ],
-                "offset": 442056,
-                "rowCount": 14556,
-                "type": "Buffer"
-            },
-            {
-                "fileName": "DamagedHelmet/DamagedHelmet.bin",
-                "id": 881,
-                "items": [
+                        "id": 885,
+                        "items": [
+                            {
+                                "count": 3,
+                                "dataType": "Float",
+                                "id": 872,
+                                "name": "NORMAL",
+                                "padding": 0,
+                                "type": "Field"
+                            }
+                        ],
+                        "name": "Normal",
+                        "offset": 267384,
+                        "rowCount": 14556,
+                        "type": "Block"
+                    },
                     {
-                        "count": 1,
-                        "dataType": "Uint16",
-                        "id": 882,
-                        "name": "INDEX",
-                        "padding": 0,
-                        "type": "Column"
+                        "id": 888,
+                        "items": [
+                            {
+                                "count": 2,
+                                "dataType": "Float",
+                                "id": 876,
+                                "name": "TEXCOORD_0",
+                                "padding": 0,
+                                "type": "Field"
+                            }
+                        ],
+                        "name": "TexCoord",
+                        "offset": 442056,
+                        "rowCount": 14556,
+                        "type": "Block"
                     }
                 ],
-                "offset": 0,
-                "rowCount": 46356,
+                "size": 558504,
                 "type": "Buffer"
             },
             {
                 "id": 877,
                 "items": [
                     {
-                        "bufferId": 871,
-                        "columnId": 872,
                         "divisor": 0,
-                        "id": 878,
-                        "name": "a_Normal",
-                        "normalize": false,
-                        "type": "Attribute"
-                    },
-                    {
-                        "bufferId": 873,
-                        "columnId": 874,
-                        "divisor": 0,
+                        "fieldId": 874,
                         "id": 879,
                         "name": "a_Position",
                         "normalize": false,
                         "type": "Attribute"
                     },
                     {
-                        "bufferId": 875,
-                        "columnId": 876,
                         "divisor": 0,
+                        "fieldId": 872,
+                        "id": 878,
+                        "name": "a_Normal",
+                        "normalize": false,
+                        "type": "Attribute"
+                    },
+                    {
+                        "divisor": 0,
+                        "fieldId": 876,
                         "id": 880,
                         "name": "a_UV1",
                         "normalize": false,
@@ -756,7 +762,7 @@
                 "executeOn": "EveryEvaluation",
                 "first": "0",
                 "id": 883,
-                "indexBufferId": 881,
+                "indexBufferBlockId": 889,
                 "instanceCount": "1",
                 "name": "Draw",
                 "primitiveType": "Triangles",

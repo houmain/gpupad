@@ -52,6 +52,7 @@
         ],
         "logicOperation": "NoLogicOperation",
         "name": "Target",
+        "polygonMode": "Fill",
         "type": "Target"
     },
     {
@@ -160,16 +161,23 @@
         "id": 80,
         "items": [
             {
-                "count": 3,
-                "dataType": "Float",
-                "id": 81,
-                "name": "position",
-                "padding": 0,
-                "type": "Column"
+                "id": 921,
+                "items": [
+                    {
+                        "count": 3,
+                        "dataType": "Float",
+                        "id": 922,
+                        "name": "Position",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "Vertex",
+                "offset": 0,
+                "rowCount": 12,
+                "type": "Block"
             }
         ],
-        "offset": 0,
-        "rowCount": 12,
         "type": "Buffer"
     },
     {
@@ -177,25 +185,31 @@
         "id": 885,
         "items": [
             {
-                "count": 1,
-                "dataType": "Uint32",
-                "id": 886,
-                "name": "index",
-                "padding": 0,
-                "type": "Column"
+                "id": 923,
+                "items": [
+                    {
+                        "count": 1,
+                        "dataType": "Uint32",
+                        "id": 924,
+                        "name": "Index",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "Index",
+                "offset": 0,
+                "rowCount": 60,
+                "type": "Block"
             }
         ],
-        "offset": 0,
-        "rowCount": 60,
         "type": "Buffer"
     },
     {
         "id": 84,
         "items": [
             {
-                "bufferId": 80,
-                "columnId": 81,
                 "divisor": 0,
+                "fieldId": 922,
                 "id": 85,
                 "name": "Position",
                 "normalize": false,
@@ -275,7 +289,7 @@
         "executeOn": "EveryEvaluation",
         "first": "0",
         "id": 92,
-        "indexBufferId": 885,
+        "indexBufferBlockId": 923,
         "instanceCount": "1",
         "name": "Draw",
         "patchVertices": "3",

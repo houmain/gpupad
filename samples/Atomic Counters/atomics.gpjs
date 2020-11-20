@@ -1,44 +1,82 @@
 [
     {
+        "id": 96,
+        "items": [
+            {
+                "id": 908,
+                "items": [
+                    {
+                        "count": 4,
+                        "dataType": "Uint8",
+                        "id": 909,
+                        "name": "Channel",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "RGBA",
+                "offset": 0,
+                "rowCount": 32,
+                "type": "Block"
+            }
+        ],
+        "name": "Data",
+        "type": "Buffer"
+    },
+    {
         "id": 1,
         "items": [
             {
-                "count": 1,
-                "dataType": "Uint32",
-                "id": 2,
-                "name": "Counter0",
-                "padding": 0,
-                "type": "Column"
+                "id": 903,
+                "items": [
+                    {
+                        "count": 1,
+                        "dataType": "Uint32",
+                        "id": 904,
+                        "name": "Counter0",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "Counter",
+                "offset": 0,
+                "rowCount": 1,
+                "type": "Block"
             }
         ],
         "name": "Counter Buffer",
-        "offset": 0,
-        "rowCount": 1,
         "type": "Buffer"
     },
     {
         "id": 3,
         "items": [
             {
-                "count": 1,
-                "dataType": "Uint32",
-                "id": 4,
-                "name": "Counter1",
-                "padding": 0,
-                "type": "Column"
-            },
-            {
-                "count": 1,
-                "dataType": "Uint32",
-                "id": 11,
-                "name": "Counter2",
-                "padding": 0,
-                "type": "Column"
+                "id": 905,
+                "items": [
+                    {
+                        "count": 1,
+                        "dataType": "Uint32",
+                        "id": 906,
+                        "name": "Counter1",
+                        "padding": 0,
+                        "type": "Field"
+                    },
+                    {
+                        "count": 1,
+                        "dataType": "Uint32",
+                        "id": 907,
+                        "name": "Counter2",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "Counters",
+                "offset": 0,
+                "rowCount": 1,
+                "type": "Block"
             }
         ],
         "name": "Counters Buffer",
-        "offset": 0,
-        "rowCount": 1,
         "type": "Buffer"
     },
     {
@@ -54,23 +92,6 @@
         "id": 9,
         "name": "uCounter1",
         "type": "Binding"
-    },
-    {
-        "id": 96,
-        "items": [
-            {
-                "count": 4,
-                "dataType": "Uint8",
-                "id": 97,
-                "name": "Column",
-                "padding": 0,
-                "type": "Column"
-            }
-        ],
-        "name": "Data",
-        "offset": 0,
-        "rowCount": 32,
-        "type": "Buffer"
     },
     {
         "bindingType": "TextureBuffer",
@@ -94,12 +115,21 @@
         "type": "Program"
     },
     {
-        "bufferId": 3,
+        "bufferId": 1,
         "callType": "ClearBuffer",
         "checked": true,
         "executeOn": "ResetEvaluation",
         "id": 10,
-        "name": "Reset Counters",
+        "name": "Reset Counter",
+        "type": "Call"
+    },
+    {
+        "bufferId": 96,
+        "callType": "ClearBuffer",
+        "checked": true,
+        "executeOn": "ResetEvaluation",
+        "id": 911,
+        "name": "Clear Data",
         "type": "Call"
     },
     {
