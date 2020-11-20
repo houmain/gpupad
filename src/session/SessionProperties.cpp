@@ -146,7 +146,7 @@ SessionProperties::SessionProperties(QWidget *parent)
 
     for (auto comboBox : { mAttributeProperties->field })
         connect(comboBox, &ReferenceComboBox::textRequired,
-            [this](QVariant data) { return findItemName(data.toInt()); });
+            [this](QVariant data) { return getItemName(data.toInt()); });
 
     setCurrentModelIndex({ });
     fillComboBoxes();
@@ -204,9 +204,9 @@ QVariantList SessionProperties::getFileNames(Item::Type type, bool addNull) cons
     return result;
 }
 
-QString SessionProperties::findItemName(ItemId itemId) const
+QString SessionProperties::getItemName(ItemId itemId) const
 {
-    return mModel.findItemName(itemId);
+    return mModel.getFullItemName(itemId);
 }
 
 QVariantList SessionProperties::getItemIds(Item::Type type, bool addNull) const

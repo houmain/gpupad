@@ -18,7 +18,7 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
     connect(mUi->texture, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Texture); });
     connect(mUi->texture, &ReferenceComboBox::textRequired,
-        [this](QVariant data) { return mSessionProperties.findItemName(data.toInt()); });
+        [this](QVariant data) { return mSessionProperties.getItemName(data.toInt()); });
     connect(mUi->texture, &ReferenceComboBox::currentDataChanged,
         this, &AttachmentProperties::updateWidgets);
 

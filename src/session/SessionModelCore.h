@@ -158,6 +158,7 @@ public:
     }
 
 protected:
+    const Group &root() const { return *mRoot; }
     ItemId getNextItemId();
     QUndoStack &undoStack() { return mUndoStack; }
 

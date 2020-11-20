@@ -22,6 +22,9 @@ Q_SIGNALS:
     QString textRequired(QVariant data);
     void currentDataChanged(QVariant data);
 
+protected:
+    void paintEvent(QPaintEvent *event) override;
+
 private:
     void refreshList();
     void insertItem(int index, QVariant data);

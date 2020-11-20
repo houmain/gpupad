@@ -165,11 +165,7 @@ QString MessageWindow::getLocationText(const Message &message) const
 {
     auto locationText = QString();
     if (message.itemId) {
-        if (auto item = Singletons::sessionModel().findItem(message.itemId)) {
-            if (item->parent && !item->parent->name.isEmpty())
-                locationText += item->parent->name + " ";
-            locationText += item->name;
-        }
+        locationText += Singletons::sessionModel().getFullItemName(message.itemId);
     }
     else if (!message.fileName.isEmpty()) {
         locationText = FileDialog::getFileTitle(message.fileName);

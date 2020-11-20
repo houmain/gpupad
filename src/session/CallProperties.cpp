@@ -26,7 +26,7 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
             mUi->indexBufferBlock, mUi->indirectBufferBlock, mUi->texture,
             mUi->fromTexture, mUi->buffer, mUi->fromBuffer })
         connect(combobox, &ReferenceComboBox::textRequired,
-            [this](QVariant data) { return mSessionProperties.findItemName(data.toInt()); });
+            [this](QVariant data) { return mSessionProperties.getItemName(data.toInt()); });
 
     connect(mUi->program, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Program); });

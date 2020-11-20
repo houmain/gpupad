@@ -35,7 +35,8 @@ public:
     void endUndoMacro();
 
     QIcon getTypeIcon(Item::Type type) const;
-    QString findItemName(ItemId id) const;
+    QString getItemName(ItemId id) const;
+    QString getFullItemName(ItemId id) const;
     void setActiveItems(QSet<ItemId> itemIds);
     void setItemActive(ItemId id, bool active);
 

@@ -145,7 +145,7 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
     for (auto comboBox : { mUi->texture, mUi->buffer, mUi->block })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant id) {
-                return mSessionProperties.findItemName(id.toInt());
+                return mSessionProperties.getItemName(id.toInt());
             });
 
     // TODO: set layer to -1 when disabled...

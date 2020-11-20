@@ -157,11 +157,25 @@ void SessionModel::setItemActive(ItemId id, bool active)
         { Qt::ForegroundRole });
 }
 
- QString SessionModel::findItemName(ItemId id) const
- {
-     if (auto item = findItem(id))
-         return item->name;
-     return { };
+QString SessionModel::getItemName(ItemId id) const
+{
+    if (auto item = findItem(id))
+        return item->name;
+    return { };
+ }
+
+QString SessionModel::getFullItemName(ItemId id) const
+{
+    if (auto item = findItem(id)) {
+        auto name = item->name;
+        for (item = item->parent; item && item != &root(); item = item->parent)
+            name = item->name + (
+              item->type == Item::Type::Group ? "/" : 
+              item->type == Item::Type::Block ? "." : 
+              " - ") + name;
+        return name;
+    }
+    return { };
  }
 
 QStringList SessionModel::mimeTypes() const

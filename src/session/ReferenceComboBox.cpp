@@ -1,5 +1,6 @@
 #include "ReferenceComboBox.h"
 #include <QStandardItemModel>
+#include <QStylePainter>
 
 ReferenceComboBox::ReferenceComboBox(QWidget *parent) : QComboBox(parent)
 {
@@ -42,6 +43,32 @@ void ReferenceComboBox::showEvent(QShowEvent *event)
     if (currentIndex() != -1)
         setItemText(currentIndex(), textRequired(currentData()));
     QComboBox::showEvent(event);
+}
+
+void ReferenceComboBox::paintEvent(QPaintEvent *event)
+{
+    QStyleOptionComboBox opt;
+    initStyleOption(&opt);
+
+    // partially convert full to plain item name
+    auto text = opt.currentText;
+    if (auto i = text.lastIndexOf(" - "); i >= 0)
+        text = text.mid(i + 3);
+    if (auto i = text.lastIndexOf("/"); i >= 0)
+        text = text.mid(i + 1);
+
+    // still show complete text in tooltip
+    if (opt.currentText != text) {
+        setToolTip(opt.currentText);
+        opt.currentText = text;
+    }
+    else {
+        setToolTip("");
+    }
+
+    QStylePainter p(this);
+    p.drawComplexControl(QStyle::CC_ComboBox, opt);
+    p.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
 
 void ReferenceComboBox::refreshList()

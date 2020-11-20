@@ -51,7 +51,7 @@ public:
     void openCurrentItemFile(FileDialog::Options options);
     QVariantList getFileNames(Item::Type type, bool addNull = false) const;
     QVariantList getItemIds(Item::Type type, bool addNull = false) const;
-    QString findItemName(ItemId itemId) const;
+    QString getItemName(ItemId itemId) const;
 
 private:
     void updateBlockWidgets(const QModelIndex &index);
