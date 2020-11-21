@@ -50,11 +50,10 @@ void ReferenceComboBox::paintEvent(QPaintEvent *event)
     QStyleOptionComboBox opt;
     initStyleOption(&opt);
 
-    // partially convert full to plain item name
+    // convert full to plain item name
     auto text = opt.currentText;
-    if (auto i = text.lastIndexOf(" - "); i >= 0)
-        text = text.mid(i + 3);
-    if (auto i = text.lastIndexOf("/"); i >= 0)
+    const auto fullwidthHyphenMinus = QChar(0xFF0D);
+    if (auto i = text.lastIndexOf(fullwidthHyphenMinus); i >= 0)
         text = text.mid(i + 1);
 
     // still show complete text in tooltip

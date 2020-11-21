@@ -167,12 +167,11 @@ QString SessionModel::getItemName(ItemId id) const
 QString SessionModel::getFullItemName(ItemId id) const
 {
     if (auto item = findItem(id)) {
+        const auto fullwidthHyphenMinus = QChar(0xFF0D);
         auto name = item->name;
         for (item = item->parent; item && item != &root(); item = item->parent)
-            name = item->name + (
-              item->type == Item::Type::Group ? "/" : 
-              item->type == Item::Type::Block ? "." : 
-              " - ") + name;
+            name = item->name + (item->type == Item::Type::Block ?
+                QChar('.') : fullwidthHyphenMinus) + name;
         return name;
     }
     return { };
