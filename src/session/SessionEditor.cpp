@@ -122,10 +122,8 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
         actions.windowFileName, &QAction::setEnabled);
 
     c += mModel.connectUndoActions(actions.undo, actions.redo);
-    const auto updateModifiaction = 
-      [this]() { Q_EMIT modificationChanged(!mModel.isUndoStackClean()); };
-    c += connect(actions.undo, &QAction::changed, updateModifiaction);
-    c += connect(actions.redo, &QAction::changed, updateModifiaction);
+    c += connect(&mModel, &SessionModel::undoStackCleanChanged,
+        [this](bool isClean) { Q_EMIT this->modificationChanged(!isClean); });
 
     // do not enable copy/paste... actions when a property editor is focused
     if (qApp->focusWidget() != this)

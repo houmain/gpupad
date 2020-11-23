@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Version 1.13] - 2020-11-21
 ### Added
 - Added indirect compute call.
-- Added polygone mode to target.
+- Added polygon mode to target.
 - DDS reading/writing.
 - TGA reading/writing.
 - RAW image data can be loaded as texture.

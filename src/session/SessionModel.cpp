@@ -27,6 +27,9 @@ SessionModel::SessionModel(QObject *parent)
     mTypeIcons[Item::Type::Attachment].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
     mTypeIcons[Item::Type::Call].addFile(QStringLiteral(":/images/16x16/dialog-information.png"));
     mTypeIcons[Item::Type::Script].addFile(QStringLiteral(":/images/16x16/font.png"));
+
+    connect(&undoStack(), &QUndoStack::cleanChanged,
+        this, &SessionModel::undoStackCleanChanged);
 }
 
 SessionModel::~SessionModel()

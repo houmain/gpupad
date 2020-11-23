@@ -11,6 +11,7 @@ Features
 * GLSL and JavaScript syntax highlighting with basic auto completion (of built-in functions and constants).
 * Continuous validation of standalone shader files (by compiling them using OpenGL).
 * Possibility to evaluate shader programs with completely customizeable input and OpenGL state.
+* Automatically defined printf function for printf-debugging.
 * JavaScript expressions and scripts to define uniform input.
 * Reading and writing of image files ([KTX](https://github.com/KhronosGroup/KTX-Software) and DDS for 3D/Array textures, block compressed textures, cube maps&hellip;).
 * Streaming video files to textures.

@@ -69,6 +69,10 @@ public:
                 function(*fileItem);
         });
     }
+
+Q_SIGNALS:
+    void undoStackCleanChanged(bool isClean);
+
 private:
     bool shouldSerializeColumn(const Item &item, ColumnType column) const;
     QJsonArray parseDraggedJson(const QMimeData *data) const;
