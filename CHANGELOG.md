@@ -4,15 +4,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
+## [Version 1.13] - 2020-11-21
 ### Added
+- Added indirect compute call.
+- Added polygone mode to target.
+- DDS reading/writing.
+- TGA reading/writing.
 - RAW image data can be loaded as texture.
 - Z-level of 3D-textures can be selected in preview.
+- Added indirect sample.
+
+### Changed
+- Replaced buffer column with block and field.
+- Showing full item name in reference comboboxes.
+- Setting default extension of non-2D textures to .ktx.
+- Updated volume sample.
+
+### Fixed
+- Fixed reading/writing of 3D textures.
+- Improved renaming file items.
+- Improved bringing first instance to front (under Windows).
 
 ## [Version 1.12] - 2020-09-10
 ### Added
 - Copy/paste/cut for rectangular selection.
 - Suggest filename when saving untitled.
-- Instancing sample.
+- Added Instancing sample.
 
 ### Changed
 - Improved pasting as session item child.
@@ -183,7 +201,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.0] - 2019-04-14
 
-[Unreleased]: https://github.com/houmaster/gpupad/compare/1.10...1.11...HEAD
+[Unreleased]: https://github.com/houmaster/gpupad/compare/1.13...HEAD
+[Version 1.13]: https://github.com/houmaster/gpupad/compare/1.12...1.13
 [Version 1.12]: https://github.com/houmaster/gpupad/compare/1.11...1.12
 [Version 1.11]: https://github.com/houmaster/gpupad/compare/1.10...1.11
 [Version 1.10]: https://github.com/houmaster/gpupad/compare/1.9...1.10

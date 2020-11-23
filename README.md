@@ -2,7 +2,7 @@
 
 GPUpad
 ======
-Aims to be a simple to use GLSL source code editor, which allows to immediately try out the shaders.
+Aims to be a lightweight editor for GLSL shaders of all kinds and a fully-featured IDE for developing GPU based algorithms.
 
 Features
 --------
@@ -12,16 +12,15 @@ Features
 * Continuous validation of standalone shader files (by compiling them using OpenGL).
 * Possibility to evaluate shader programs with completely customizeable input and OpenGL state.
 * JavaScript expressions and scripts to define uniform input.
-* Reading and writing of image files ([KTX](https://github.com/KhronosGroup/KTX-Software) for 3D/Array textures, block compressed textures, cube maps&hellip;).
+* Reading and writing of image files ([KTX](https://github.com/KhronosGroup/KTX-Software) and DDS for 3D/Array textures, block compressed textures, cube maps&hellip;).
 * Streaming video files to textures.
 * Editor for structured binary files.
 * Sample sessions in the Help menu.
-* JavaScript custom actions *(still work in progress)*.
 
 Screenshots
 -----------
-<a href="screenshot1.png"><img src="screenshot1.png" height="300"></a> &nbsp;
-<a href="screenshot2.png"><img src="screenshot2.png" height="400"></a>
+<a href="screenshot2.png"><img src="screenshot2.png" height="380"></a> &nbsp;
+<a href="screenshot1.png"><img src="screenshot1.png" height="280"></a>
 
 Session
 -------
@@ -57,17 +56,17 @@ Specifies where draws calls should render to (it corresponds to an OpenGL *FBO*)
 Allows to bind data to a program's uniforms, samplers, images, buffers and to select shader subroutines. A binding affects all subsequent calls, until it is replaced by a binding with the same name, or the scope ends (see *Groups*). The name of a binding needs to match the name of a program's binding points.
 
 - **Buffer** -
-Defines the structure of a region within a binary. It consists of rows with multiple columns of some data type. It can be backed by a binary file.
+Buffer blocks define the structure of a region within a binary. It consists of rows with multiple fields of some data type. Buffers can be backed by a binary file.
 
 - **Stream** -
-Serves as the input for vertex shaders. A stream consists of multiple attributes, which get their data from the referenced buffer column.
+Serves as the input for vertex shaders. A stream consists of multiple attributes, which get their data from the referenced buffer blocks.
 
 - **Group** -
 Allows to structure more complex sessions. They open a new scope unless *inline scope* is checked. Items within a scope are not visible for items outside the scope (they do not appear in the combo boxes).
 
 - **Script** -
 Allows to define JavaScript functions and variables in script files, which can subsequently be used in uniform binding expressions.
-There is currently only one JavaScript state for the whole session and the scripts are evaluated in consecutive order (*Group* scopes do not have an effect).
+There is one JavaScript state for the whole session and the scripts are evaluated in consecutive order (*Group* scopes do not have an effect).
 
 Building
 --------
