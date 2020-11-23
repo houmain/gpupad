@@ -31,8 +31,6 @@ void GLCall::setVextexStream(GLStream *stream)
 
 void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block)
 {
-    mUsedItems += block.id;
-    mUsedItems += block.parent->id;
     if (!block.items.empty()) {
         mIndexBuffer = indices;
         mIndexSize = getBlockStride(block);
@@ -51,8 +49,6 @@ GLenum GLCall::getIndexType() const
 
 void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block)
 {
-    mUsedItems += block.id;
-    mUsedItems += block.parent->id;
     mIndirectBuffer = commands;
     mIndirectStride = getBlockStride(block);
     mIndirectOffset = block.offset;

@@ -6,6 +6,13 @@ GLBuffer::GLBuffer(const Buffer &buffer)
     , mSize(getBufferSize(buffer))
 {
     mUsedItems += buffer.id;
+    for (const auto item : buffer.items)
+        if (auto block = static_cast<const Block*>(item)) {
+            mUsedItems += block->id;
+            for (const auto item : block->items)
+                if (auto field = static_cast<const Block*>(item))
+                    mUsedItems += field->id;
+        }
 }
 
 bool GLBuffer::operator==(const GLBuffer &rhs) const
