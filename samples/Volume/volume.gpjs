@@ -13,7 +13,7 @@
         "bindingType": "Image",
         "id": 86,
         "imageFormat": "Internal",
-        "layer": 0,
+        "layer": -1,
         "level": 0,
         "name": "uImage",
         "textureId": 79,
