@@ -5,11 +5,12 @@
 #include <QOpenGLTexture>
 
 class GLBuffer;
+class ScriptEngine;
 
 class GLTexture
 {
 public:
-    explicit GLTexture(const Texture &texture);
+    GLTexture(const Texture &texture, ScriptEngine &scriptEngine);
     GLTexture(const Buffer &buffer,
         GLBuffer *textureBuffer, Texture::Format format);
     bool operator==(const GLTexture &rhs) const;
@@ -43,6 +44,7 @@ private:
         GLuint destTextureId, int level);
 
     ItemId mItemId{ };
+    MessagePtrSet mMessages;
     QString mFileName;
     GLBuffer *mTextureBuffer{ };
     Texture::Target mTarget{ };
@@ -54,7 +56,6 @@ private:
     int mSamples{ };
     TextureData mData;
     QSet<ItemId> mUsedItems;
-    QList<MessagePtr> mMessages;
     TextureKind mKind{ };
     GLObject mTextureObject;
     bool mSystemCopyModified{ };

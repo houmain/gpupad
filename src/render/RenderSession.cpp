@@ -233,7 +233,7 @@ void RenderSession::prepare(bool itemsChanged,
 
     const auto addTextureOnce = [&](ItemId textureId) {
         return addOnce(mCommandQueue->textures,
-            session.findItem<Texture>(textureId));
+            session.findItem<Texture>(textureId), *mScriptEngine);
     };
 
     const auto addTextureBufferOnce = [&](ItemId bufferId,

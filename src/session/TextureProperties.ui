@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>TextureProperties</class>
  <widget class="QWidget" name="TextureProperties">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>202</width>
+    <height>257</height>
+   </rect>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QFormLayout" name="formLayout">
@@ -116,14 +124,7 @@
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QSpinBox" name="width">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>65536</number>
-       </property>
-      </widget>
+      <widget class="ExpressionLineEdit" name="width"/>
      </item>
      <item row="5" column="0">
       <widget class="QLabel" name="labelHeight">
@@ -133,14 +134,7 @@
       </widget>
      </item>
      <item row="5" column="1">
-      <widget class="QSpinBox" name="height">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>65536</number>
-       </property>
-      </widget>
+      <widget class="ExpressionLineEdit" name="height"/>
      </item>
      <item row="6" column="0">
       <widget class="QLabel" name="labelDepth">
@@ -150,14 +144,7 @@
       </widget>
      </item>
      <item row="6" column="1">
-      <widget class="QSpinBox" name="depth">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>65536</number>
-       </property>
-      </widget>
+      <widget class="ExpressionLineEdit" name="depth"/>
      </item>
      <item row="7" column="0">
       <widget class="QLabel" name="labelLayers">
@@ -167,14 +154,7 @@
       </widget>
      </item>
      <item row="7" column="1">
-      <widget class="QSpinBox" name="layers">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>65536</number>
-       </property>
-      </widget>
+      <widget class="ExpressionLineEdit" name="layers"/>
      </item>
      <item row="8" column="0">
       <widget class="QLabel" name="labelSamples">
@@ -207,6 +187,11 @@
    <class>ReferenceComboBox</class>
    <extends>QComboBox</extends>
    <header>session/ReferenceComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ExpressionLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>session/ExpressionLineEdit.h</header>
   </customwidget>
  </customwidgets>
  <resources>

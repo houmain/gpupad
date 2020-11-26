@@ -1,17 +1,20 @@
 #include "GLTexture.h"
 #include "GLBuffer.h"
+#include "scripting/ScriptEngine.h"
 #include <QOpenGLPixelTransferOptions>
 #include <cmath>
 
-GLTexture::GLTexture(const Texture &texture)
+inline int toInt(double value) { return std::max(static_cast<int>(std::round(value)), 1); }
+
+GLTexture::GLTexture(const Texture &texture, ScriptEngine &scriptEngine)
     : mItemId(texture.id)
     , mFileName(texture.fileName)
     , mTarget(texture.target)
     , mFormat(texture.format)
-    , mWidth(texture.width)
-    , mHeight(texture.height)
-    , mDepth(texture.depth)
-    , mLayers(texture.layers)
+    , mWidth(toInt(scriptEngine.evaluateValue(texture.width, mItemId, mMessages)))
+    , mHeight(toInt(scriptEngine.evaluateValue(texture.height, mItemId, mMessages)))
+    , mDepth(toInt(scriptEngine.evaluateValue(texture.depth, mItemId, mMessages)))
+    , mLayers(toInt(scriptEngine.evaluateValue(texture.layers, mItemId, mMessages)))
     , mSamples(texture.samples)
     , mKind(getKind(texture))
 {
@@ -43,8 +46,8 @@ GLTexture::GLTexture(const Buffer &buffer,
 
 bool GLTexture::operator==(const GLTexture &rhs) const
 {
-    return std::tie(mFileName, mTextureBuffer, mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples) ==
-           std::tie(rhs.mFileName, rhs.mTextureBuffer, rhs.mTarget, rhs.mFormat, rhs.mWidth, rhs.mHeight, rhs.mDepth, rhs.mLayers, rhs.mSamples);
+    return std::tie(mMessages, mFileName, mTextureBuffer, mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples) ==
+           std::tie(rhs.mMessages, rhs.mFileName, rhs.mTextureBuffer, rhs.mTarget, rhs.mFormat, rhs.mWidth, rhs.mHeight, rhs.mDepth, rhs.mLayers, rhs.mSamples);
 }
 
 GLuint GLTexture::getReadOnlyTextureId()
@@ -194,8 +197,6 @@ bool GLTexture::updateMipmaps()
 
 void GLTexture::reload(bool forWriting)
 {
-    mMessages.clear();
-
     if (mTextureBuffer) {
         if (forWriting)
             mTextureBuffer->getReadWriteBufferId();

@@ -59,10 +59,10 @@ struct Texture : FileItem
 
     Target target{ QOpenGLTexture::Target2D };
     Format format{ QOpenGLTexture::RGBA8_UNorm };
-    int width{ 256 };
-    int height{ 256 };
-    int depth{ 1 };
-    int layers{ 1 };
+    QString width{ "256" };
+    QString height{ "256" };
+    QString depth{ "1" };
+    QString layers{ "1" };
     int samples{ 1 };
 };
 

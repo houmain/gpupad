@@ -318,10 +318,10 @@ void SynchronizeLogic::updateTextureEditor(const Texture &texture,
     editor.setRawFormat({
         texture.target,
         texture.format,
-        texture.width,
-        texture.height,
-        texture.depth,
-        texture.layers,
+        texture.width.toInt(),
+        texture.height.toInt(),
+        texture.depth.toInt(),
+        texture.layers.toInt(),
         texture.samples,
     });
 }

@@ -414,9 +414,9 @@ void TextureProperties::applyFileFormat()
     if (Singletons::fileCache().getTexture(fileName, &texture)) {
         setFormat(texture.format());
         mUi->target->setCurrentData(texture.target());
-        mUi->width->setValue(texture.width());
-        mUi->height->setValue(texture.height());
-        mUi->depth->setValue(texture.depth());
-        mUi->layers->setValue(texture.layers());
+        mUi->width->setText(QString::number(texture.width()));
+        mUi->height->setText(QString::number(texture.height()));
+        mUi->depth->setText(QString::number(texture.depth()));
+        mUi->layers->setText(QString::number(texture.layers()));
     }
 }
