@@ -271,30 +271,23 @@ int GLProgram::getAttributeLocation(const QString &name) const
 }
 
 template <typename T>
-std::vector<T> getValues(ScriptEngine &scriptEngine,
-    const QStringList &valueExpressions, ItemId itemId, int count, MessagePtrSet &messages)
+std::vector<T> getValues(const ScriptVariable &variable,
+    ItemId itemId, int count, MessagePtrSet &messages)
 {
-    auto values = scriptEngine.evaluateValues(
-        valueExpressions, itemId, messages);
-
-    if (count == 4 && values.count() == 3)
-        values.push_back(1);
-    if (count == 3 && values.count() == 4)
-        values.removeLast();
-
-    if (count != values.count())
-        messages += MessageList::insert(itemId,
-            MessageType::UniformComponentMismatch,
-            QString("(%1/%2)").arg(values.count()).arg(count));
+    if (count != variable.count())
+        if (count != 3 || variable.count() != 4)
+            messages += MessageList::insert(itemId,
+                MessageType::UniformComponentMismatch,
+                QString("(%1/%2)").arg(variable.count()).arg(count));
 
     auto result = std::vector<T>{ };
     result.resize(count);
-    for (auto i = 0; i < std::min(count, values.count()); ++i)
-        result[i] = values[i];
+    for (auto i = 0; i < std::min(count, variable.count()); ++i)
+        result[i] = variable.get(i);
     return result;
 }
 
-bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine)
+bool GLProgram::apply(const GLUniformBinding &binding)
 {
     auto &gl = GLContext::currentContext();
     const auto location = gl.glGetUniformLocation(
@@ -310,12 +303,12 @@ bool GLProgram::apply(const GLUniformBinding &binding, ScriptEngine &scriptEngin
     switch (dataType) {
 #define ADD(TYPE, DATATYPE, COUNT, FUNCTION) \
         case TYPE: FUNCTION(location, size, \
-                getValues<DATATYPE>(scriptEngine, binding.values, binding.bindingItemId, \
+                getValues<DATATYPE>(binding.values, binding.bindingItemId, \
                     COUNT * size, *mCallMessages).data()); break
 
 #define ADD_MATRIX(TYPE, DATATYPE, COUNT, FUNCTION) \
         case TYPE: FUNCTION(location, size, binding.transpose, \
-                getValues<DATATYPE>(scriptEngine, binding.values, binding.bindingItemId, \
+                getValues<DATATYPE>(binding.values, binding.bindingItemId, \
                     COUNT * size, *mCallMessages).data()); break
 
         ADD(GL_FLOAT, GLfloat, 1, gl.glUniform1fv);

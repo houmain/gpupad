@@ -37,10 +37,10 @@ private:
     void outputTimerQueries();
     bool updatingPreviewTextures() const;
 
+    QScopedPointer<ScriptEngine> mScriptEngine;
     InputScriptObject *mInputScriptObject{ };
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;
-    QScopedPointer<ScriptEngine> mScriptEngine;
     QSet<ItemId> mUsedItems;
     QMap<ItemId, TextureData> mModifiedTextures;
     QMap<ItemId, QByteArray> mModifiedBuffers;

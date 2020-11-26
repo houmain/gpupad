@@ -32,8 +32,7 @@ namespace {
     using BindingState = QStack<BindingScope>;
     using Command = std::function<void(BindingState&)>;
 
-    QSet<ItemId> applyBindings(BindingState &state,
-        GLProgram &program, ScriptEngine &scriptEngine)
+    QSet<ItemId> applyBindings(BindingState &state, GLProgram &program)
     {
         QSet<ItemId> usedItems;
         BindingScope bindings;
@@ -51,7 +50,7 @@ namespace {
         }
 
         for (const auto &kv : bindings.uniforms)
-            if (program.apply(kv.second, scriptEngine))
+            if (program.apply(kv.second))
                 usedItems += kv.second.bindingItemId;
 
         auto unit = 0;
@@ -155,7 +154,6 @@ struct RenderSession::CommandQueue
 
 RenderSession::RenderSession(QObject *parent)
     : RenderTask(parent)
-    , mInputScriptObject(new InputScriptObject(this))
 {
 }
 
@@ -177,20 +175,47 @@ void RenderSession::prepare(bool itemsChanged,
     mEvaluationType = evaluationType;
     mPrevMessages.swap(mMessages);
     mMessages.clear();
-    mInputScriptObject->setMouseFragCoord(Singletons::synchronizeLogic().mousePosition());
 
     if (!mCommandQueue)
         mEvaluationType = EvaluationType::Reset;
 
-    if (!itemsChanged && mEvaluationType != EvaluationType::Reset)
+    if (!mScriptEngine || mEvaluationType == EvaluationType::Reset) {
+        mScriptEngine.reset(new ScriptEngine());
+        mInputScriptObject = new InputScriptObject(this);
+        mScriptEngine->setGlobal("input", mInputScriptObject);
+    }
+
+    mScriptEngine->updateVariables();
+    mInputScriptObject->setMouseFragCoord(Singletons::synchronizeLogic().mousePosition());
+
+    const auto evaluateScript = [&](const Script &script) {
+        if (shouldExecute(script.executeOn, mEvaluationType)) {
+            if (script.fileName.isEmpty()) {
+                mScriptEngine->evaluateExpression(script.expression,
+                    script.name, script.id, mMessages);
+            }
+            else {
+                auto source = QString();
+                Singletons::fileCache().getSource(script.fileName, &source);
+                mScriptEngine->evaluateScript(source, script.fileName);
+            }
+        }
+    };
+
+    const auto &session = Singletons::sessionModel();
+
+    if (!itemsChanged && mEvaluationType != EvaluationType::Reset) {
+        session.forEachItem([&](const Item &item) {
+            if (auto script = castItem<Script>(item))
+                evaluateScript(*script);
+        });
         return;
+    }
 
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
     mCommandQueue.reset(new CommandQueue());
     mUsedItems.clear();
-
-    const auto &session = Singletons::sessionModel();
 
     const auto addCommand = [&](auto&& command) {
         mCommandQueue->commands.emplace_back(std::move(command));
@@ -252,23 +277,7 @@ void RenderSession::prepare(bool itemsChanged,
         }
         else if (auto script = castItem<Script>(item)) {
             mUsedItems += script->id;
-            auto source = script->expression;
-            if (!script->fileName.isEmpty())
-                Singletons::fileCache().getSource(script->fileName, &source);
-
-            addCommand(
-                [this, itemId = script->id, name = script->name, source, 
-                  fileName = script->fileName, executeOn = script->executeOn
-                ](BindingState &) {
-                      if (shouldExecute(executeOn, mEvaluationType)) {
-                          if (fileName.isEmpty()) {
-                              mScriptEngine->evaluateExpression(source, name, itemId, mMessages);
-                          }
-                          else {
-                              mScriptEngine->evaluateScript(source, fileName);
-                          }
-                      }
-                });
+            evaluateScript(*script);
         }
         else if (auto binding = castItem<Binding>(item)) {
             const auto &b = *binding;
@@ -276,7 +285,9 @@ void RenderSession::prepare(bool itemsChanged,
                 case Binding::BindingType::Uniform:
                     addCommand(
                         [binding = GLUniformBinding{
-                            b.id, b.name, b.bindingType, b.values, false }
+                            b.id, b.name, b.bindingType,
+                            mScriptEngine->getVariable(b.values, b.id, mMessages),
+                            false }
                         ](BindingState &state) {
                             state.top().uniforms[binding.name] = binding;
                         });
@@ -342,7 +353,7 @@ void RenderSession::prepare(bool itemsChanged,
         else if (auto call = castItem<Call>(item)) {
             if (call->checked) {
                 mUsedItems += call->id;
-                auto glcall = GLCall(*call);
+                auto glcall = GLCall(*call, *mScriptEngine, mMessages);
                 switch (call->callType) {
                     case Call::CallType::Draw:
                     case Call::CallType::DrawIndexed:
@@ -391,13 +402,12 @@ void RenderSession::prepare(bool itemsChanged,
                             mUsedItems += program->usedItems();
                             if (!program->bind(&mMessages))
                                 return;
-                            mUsedItems += applyBindings(
-                                state, *program, *mScriptEngine);
-                            call.execute(mMessages, *mScriptEngine);
+                            mUsedItems += applyBindings(state, *program);
+                            call.execute(mMessages);
                             program->unbind(call.itemId());
                         }
                         else {
-                            call.execute(mMessages, *mScriptEngine);
+                            call.execute(mMessages);
                         }
                         if (auto timerQuery = call.timerQuery())
                             mTimerQueries[call.itemId()] = std::move(timerQuery);
@@ -462,13 +472,6 @@ void RenderSession::reuseUnmodifiedItems()
 void RenderSession::executeCommandQueue()
 {
     auto& context = GLContext::currentContext();
-
-    // always re-evaluate scripts on reset
-    if (!mScriptEngine || mEvaluationType == EvaluationType::Reset)
-        mScriptEngine.reset(new ScriptEngine());
-
-    mScriptEngine->setGlobal("input", mInputScriptObject);
-
     Singletons::glShareSynchronizer().beginUpdate(context);
 
     BindingState state;

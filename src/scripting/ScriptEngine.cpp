@@ -2,10 +2,8 @@
 #include "Singletons.h"
 #include "session/SessionModel.h"
 #include "FileDialog.h"
-#include <QMutex>
 
 namespace {
-    QMutex gMutex;
     MessagePtrSet* gCurrentMessageList;
 
     void consoleMessageHandler(QtMsgType type,
@@ -22,7 +20,7 @@ namespace {
     template<typename F>
     void redirectConsoleMessages(MessagePtrSet &messages, F &&function)
     {
-        QMutexLocker locker(&gMutex);
+        Q_ASSERT(onMainThread());
         gCurrentMessageList = &messages;
         auto prevMessageHandler = qInstallMessageHandler(consoleMessageHandler);
         function();
@@ -31,9 +29,25 @@ namespace {
     }
 } // namespace
 
+int ScriptVariable::count() const
+{
+    return (mValues ? mValues->size() : 0);
+}
+
+ScriptValue ScriptVariable::get() const
+{
+    return (mValues && !mValues->isEmpty() ? mValues->first() : 0.0);
+}
+
+ScriptValue ScriptVariable::get(int index) const
+{
+    return (mValues && index < mValues->size() ? mValues->at(index) : 0.0);
+}
+
 ScriptEngine::ScriptEngine()
     : mJsEngine(new QJSEngine())
 {
+    Q_ASSERT(onMainThread());
     mJsEngine->installExtensions(QJSEngine::ConsoleExtension);
     mJsEngine->evaluate(
         "(function() {"
@@ -54,16 +68,19 @@ ScriptEngine::~ScriptEngine() = default;
 
 void ScriptEngine::setGlobal(const QString &name, QJSValue value)
 {
+    Q_ASSERT(onMainThread());
     mJsEngine->globalObject().setProperty(name, value);
 }
 
 void ScriptEngine::setGlobal(const QString &name, QObject *object)
 {
+    Q_ASSERT(onMainThread());
     mJsEngine->globalObject().setProperty(name, mJsEngine->newQObject(object));
 }
 
 QJSValue ScriptEngine::getGlobal(const QString &name)
 {
+    Q_ASSERT(onMainThread());
     return mJsEngine->globalObject().property(name);
 }
 
@@ -106,14 +123,18 @@ void ScriptEngine::evaluateExpression(const QString &script, const QString &resu
     });
 }
 
-QList<double> ScriptEngine::evaluateValues(const QStringList &valueExpressions,
+ScriptValueList ScriptEngine::evaluateValues(const QStringList &valueExpressions,
     ItemId itemId, MessagePtrSet &messages)
 {
     auto values = QList<double>();
     redirectConsoleMessages(messages, [&]() {
         for (const QString &valueExpression : valueExpressions) {
 
-            // fast path, when script is a number
+            // fast path, when expression is empty or a number
+            if (valueExpression.isEmpty()) {
+                values.append(0.0);
+                continue;
+            }
             auto ok = false;
             auto value = valueExpression.toDouble(&ok);
             if (ok) {
@@ -142,7 +163,7 @@ QList<double> ScriptEngine::evaluateValues(const QStringList &valueExpressions,
     return values;
 }
 
-double ScriptEngine::evaluateValue(const QString &valueExpression,
+ScriptValue ScriptEngine::evaluateValue(const QString &valueExpression,
     ItemId itemId, MessagePtrSet &messages) 
 {
     const auto values = evaluateValues({ valueExpression },
@@ -150,3 +171,32 @@ double ScriptEngine::evaluateValue(const QString &valueExpression,
     return (values.isEmpty() ? 0.0 : values.first());
 }
 
+
+void ScriptEngine::updateVariables()
+{
+    for (auto it = mVariables.begin(); it != mVariables.end(); )
+        if (auto values = it->second.lock()) {
+            *values = evaluateValues(it->first, 0, mMessages);
+            ++it;
+        }
+        else {
+            it = mVariables.erase(it);
+        }
+}
+
+ScriptVariable ScriptEngine::getVariable(const QStringList &valueExpressions,
+    ItemId itemId, MessagePtrSet &messages)
+{
+    auto values = QSharedPointer<ScriptValueList>(new ScriptValueList());
+    *values = evaluateValues(valueExpressions, itemId, messages);
+    mVariables.append({ valueExpressions, values });
+    auto result = ScriptVariable();
+    result.mValues = std::move(values);
+    return result;
+}
+
+ScriptVariable ScriptEngine::getVariable(const QString &valueExpression,
+    ItemId itemId, MessagePtrSet &messages)
+{
+    return getVariable(QStringList{ valueExpression }, itemId, messages);
+}

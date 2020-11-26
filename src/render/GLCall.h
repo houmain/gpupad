@@ -2,6 +2,7 @@
 #define GLCALL_H
 
 #include "GLItem.h"
+#include "scripting/ScriptEngine.h"
 #include <chrono>
 
 class QOpenGLTimerQuery;
@@ -10,12 +11,11 @@ class GLTarget;
 class GLStream;
 class GLBuffer;
 class GLTexture;
-class ScriptEngine;
 
 class GLCall
 {
 public:
-    explicit GLCall(const Call &call);
+    GLCall(const Call &call, ScriptEngine &scriptEngine, MessagePtrSet &messages);
 
     ItemId itemId() const { return mCall.id; }
     GLProgram *program() { return mProgram; }
@@ -29,12 +29,12 @@ public:
     void setIndirectBuffer(GLBuffer *commands, const Block &block);
     void setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer);
     void setTextures(GLTexture *texture, GLTexture *fromTexture);
-    void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
+    void execute(MessagePtrSet &messages);
 
 private:
     std::shared_ptr<void> beginTimerQuery();
-    void executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine);
-    void executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
+    void executeDraw(MessagePtrSet &messages);
+    void executeCompute(MessagePtrSet &messages);
     void executeClearTexture(MessagePtrSet &messages);
     void executeCopyTexture(MessagePtrSet &messages);
     void executeClearBuffer(MessagePtrSet &messages);
@@ -56,6 +56,17 @@ private:
 
     GLBuffer *mIndirectBuffer{ };
     GLint mIndirectStride{ };
+
+    ScriptVariable mFirst;
+    ScriptVariable mCount;
+    ScriptVariable mInstanceCount;
+    ScriptVariable mBaseVertex;
+    ScriptVariable mBaseInstance;
+    ScriptVariable mDrawCount;
+    ScriptVariable mPatchVertices;
+    ScriptVariable mWorkgroupsX;
+    ScriptVariable mWorkgroupsY;
+    ScriptVariable mWorkgroupsZ;
 
     QSet<ItemId> mUsedItems;
     std::shared_ptr<QOpenGLTimerQuery> mTimerQuery;

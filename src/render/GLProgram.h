@@ -2,18 +2,18 @@
 #define GLPROGRAM_H
 
 #include "GLShader.h"
+#include "scripting/ScriptEngine.h"
 #include <map>
 
 class GLTexture;
 class GLBuffer;
-class ScriptEngine;
 
 struct GLUniformBinding
 {
     ItemId bindingItemId;
     QString name;
     Binding::BindingType type;
-    QStringList values;
+    ScriptVariable values;
     bool transpose;
 };
 
@@ -67,7 +67,7 @@ public:
     bool bind(MessagePtrSet *callMessages);
     void unbind(ItemId callItemId);
     int getAttributeLocation(const QString &name) const;
-    bool apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine);
+    bool apply(const GLUniformBinding &binding);
     bool apply(const GLSamplerBinding &binding, int unit);
     bool apply(const GLImageBinding &binding, int unit);
     bool apply(const GLBufferBinding &binding);

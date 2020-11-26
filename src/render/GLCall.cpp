@@ -5,13 +5,22 @@
 #include "GLTarget.h"
 #include "GLStream.h"
 #include "Renderer.h"
-#include "scripting/ScriptEngine.h"
 #include <QOpenGLTimerQuery>
 #include <QOpenGLVertexArrayObject>
 
-GLCall::GLCall(const Call &call)
+GLCall::GLCall(const Call &call, ScriptEngine &scriptEngine, MessagePtrSet &messages)
     : mCall(call)
 {
+    mFirst = scriptEngine.getVariable(call.first, call.id, messages);
+    mCount = scriptEngine.getVariable(call.count, call.id, messages);
+    mInstanceCount = scriptEngine.getVariable(call.instanceCount, call.id, messages);
+    mBaseVertex = scriptEngine.getVariable(call.baseVertex, call.id, messages);
+    mBaseInstance = scriptEngine.getVariable(call.baseInstance, call.id, messages);
+    mDrawCount = scriptEngine.getVariable(call.drawCount, call.id, messages);
+    mPatchVertices = scriptEngine.getVariable(call.patchVertices, call.id, messages);
+    mWorkgroupsX = scriptEngine.getVariable(call.workGroupsX, call.id, messages);
+    mWorkgroupsY = scriptEngine.getVariable(call.workGroupsY, call.id, messages);
+    mWorkgroupsZ = scriptEngine.getVariable(call.workGroupsZ, call.id, messages);
 }
 
 void GLCall::setProgram(GLProgram *program)
@@ -85,18 +94,18 @@ std::shared_ptr<void> GLCall::beginTimerQuery()
         [this](void*) { mTimerQuery->end(); });
 }
 
-void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
+void GLCall::execute(MessagePtrSet &messages)
 {
     switch (mCall.callType) {
         case Call::CallType::Draw:
         case Call::CallType::DrawIndexed:
         case Call::CallType::DrawIndirect:
         case Call::CallType::DrawIndexedIndirect:
-            executeDraw(messages, scriptEngine);
+            executeDraw(messages);
             break;
         case Call::CallType::Compute:
         case Call::CallType::ComputeIndirect:
-            executeCompute(messages, scriptEngine);
+            executeCompute(messages);
             break;
         case Call::CallType::ClearTexture:
             executeClearTexture(messages);
@@ -122,13 +131,8 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             mCall.id, MessageType::CallFailed, getFirstGLError());
 }
 
-void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
+void GLCall::executeDraw(MessagePtrSet &messages)
 {
-    const auto evaluate = [&](const auto &expression) {
-        return static_cast<int>(scriptEngine.evaluateValue(
-            expression, mCall.id, messages));
-    };
-
     QOpenGLVertexArrayObject vao;
     QOpenGLVertexArrayObject::Binder vaoBinder(&vao);
 
@@ -153,15 +157,14 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         auto &gl = GLContext::currentContext();
 
         if (mCall.primitiveType == Call::PrimitiveType::Patches && gl.v4_0)
-            gl.v4_0->glPatchParameteri(GL_PATCH_VERTICES, 
-              evaluate(mCall.patchVertices));
+            gl.v4_0->glPatchParameteri(GL_PATCH_VERTICES, mPatchVertices.get());
 
-        const auto first = evaluate(mCall.first);
-        const auto count = evaluate(mCall.count);
-        const auto instanceCount = evaluate(mCall.instanceCount);
-        const auto baseVertex = evaluate(mCall.baseVertex);
-        const auto baseInstance = evaluate(mCall.baseInstance);
-        const auto drawCount = evaluate(mCall.drawCount);
+        const auto first = mFirst.get();
+        const auto count = mCount.get();
+        const auto instanceCount = mInstanceCount.get();
+        const auto baseVertex = mBaseVertex.get();
+        const auto baseInstance = mBaseInstance.get();
+        const auto drawCount = mDrawCount.get();
 
         auto guard = beginTimerQuery();
         if (mCall.callType == Call::CallType::Draw) {
@@ -237,13 +240,8 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         mUsedItems += mTarget->usedItems();
 }
 
-void GLCall::executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
+void GLCall::executeCompute(MessagePtrSet &messages)
 {
-    const auto evaluate = [&](const auto &expression) {
-        return static_cast<GLuint>(scriptEngine.evaluateValue(
-            expression, mCall.id, messages));
-    };
-
     if (mIndirectBuffer)
         mIndirectBuffer->bindReadOnly(GL_DISPATCH_INDIRECT_BUFFER);
 
@@ -254,9 +252,9 @@ void GLCall::executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         if (auto gl43 = check(gl.v4_3, mCall.id, messages)) {
             if (mCall.callType == Call::CallType::Compute) {
                 gl43->glDispatchCompute(
-                    evaluate(mCall.workGroupsX),
-                    evaluate(mCall.workGroupsY),
-                    evaluate(mCall.workGroupsZ));
+                    mWorkgroupsX.get(),
+                    mWorkgroupsY.get(),
+                    mWorkgroupsZ.get());
             }
             else if (mCall.callType == Call::CallType::ComputeIndirect) {
                 const auto offset = static_cast<GLintptr>(mIndirectOffset);
