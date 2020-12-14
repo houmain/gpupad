@@ -26,7 +26,7 @@ add_definitions(-DQT_NO_CAST_TO_ASCII
                 -DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT
                 #-DQT_STRICT_ITERATORS
                 -DQT_NO_KEYWORDS
-                -DQT_DISABLE_DEPRECATED_BEFORE=0x051200
+                -DQT_DISABLE_DEPRECATED_BEFORE=0x060000
                 -DQT_NO_FOREACH)
 
 set(SOURCES
@@ -142,19 +142,28 @@ target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include)
 if(NOT WIN32)
     target_include_directories(${PROJECT_NAME} PRIVATE /usr/include/libdrm)
     target_link_libraries(${PROJECT_NAME} drm GL)
-else ()
+else()
     target_link_libraries(${PROJECT_NAME} dwmapi opengl32)
 endif()
 
-find_package(Qt5Widgets CONFIG REQUIRED)
-find_package(Qt5OpenGL CONFIG REQUIRED)
-find_package(Qt5Qml CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::OpenGL Qt5::Qml)
+option(OPTION_USE_QT6 "Use Qt6" OFF)
+if (NOT OPTION_USE_QT6)
+    find_package(Qt5Widgets CONFIG REQUIRED)
+    find_package(Qt5OpenGL CONFIG REQUIRED)
+    find_package(Qt5Qml CONFIG REQUIRED)
+    target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::OpenGL Qt5::Qml)
 
-find_package(Qt5Multimedia CONFIG)
-if(Qt5Multimedia_FOUND)
-    target_link_libraries(${PROJECT_NAME} Qt5::Multimedia)
-    add_compile_definitions(Qt5Multimedia_FOUND)
+    find_package(Qt5Multimedia CONFIG)
+    if(Qt5Multimedia_FOUND)
+        target_link_libraries(${PROJECT_NAME} Qt5::Multimedia)
+        add_compile_definitions(Qt5Multimedia_FOUND)
+    endif()
+else()
+    find_package(Qt6Widgets CONFIG REQUIRED)
+    find_package(Qt6OpenGL CONFIG REQUIRED)
+    find_package(Qt6OpenGLWidgets CONFIG REQUIRED)
+    find_package(Qt6Qml CONFIG REQUIRED)
+    target_link_libraries(${PROJECT_NAME} Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets Qt6::Qml)
 endif()
 
 if(NOT WIN32)
@@ -165,7 +174,12 @@ else()
     install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Runtime)
     install(DIRECTORY samples DESTINATION .)
 
-    get_target_property(uic_location Qt5::uic IMPORTED_LOCATION)
+    if (NOT OPTION_USE_QT6)
+        get_target_property(uic_location Qt5::uic IMPORTED_LOCATION)
+    else()
+        get_target_property(uic_location Qt6::uic IMPORTED_LOCATION)
+    endif()
+
     get_filename_component(_dir ${uic_location} DIRECTORY)
     set(deployqt "${_dir}/windeployqt.exe")
     if(NOT EXISTS ${deployqt})

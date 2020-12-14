@@ -178,21 +178,21 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
     auto completerStrings = QStringList();
 
     for (const auto &keyword : keywords) {
-        rule.pattern = QRegExp(QStringLiteral("\\b%1\\b").arg(keyword));
+        rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(keyword));
         rule.format = keywordFormat;
         mHighlightingRules.append(rule);
         completerStrings.append(keyword);
     }
 
     for (const auto &builtinFunction : builtinFunctions) {
-        rule.pattern = QRegExp(QStringLiteral("\\b%1\\b").arg(builtinFunction));
+        rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(builtinFunction));
         rule.format = builtinFunctionFormat;
         mHighlightingRules.append(rule);
         completerStrings.append(builtinFunction);
     }
 
     for (const auto &builtinConstant : builtinConstants) {
-        rule.pattern = QRegExp(QStringLiteral("\\b%1\\b").arg(builtinConstant));
+        rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(builtinConstant));
         rule.format = builtinConstantsFormat;
         mHighlightingRules.append(rule);
         completerStrings.append(builtinConstant);
@@ -201,33 +201,33 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
     for (const auto &qaulifier : layoutQualifiers)
         completerStrings.append(qaulifier);
 
-    rule.pattern = QRegExp("\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()");
+    rule.pattern = QRegularExpression("\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()");
     rule.format = functionFormat;
     mHighlightingRules.append(rule);
 
-    rule.pattern = QRegExp("\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?[uUlLfF]{,2}\\b");
+    rule.pattern = QRegularExpression("\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?[uUlLfF]{,2}\\b");
     rule.format = numberFormat;
     mHighlightingRules.append(rule);
 
-    rule.pattern = QRegExp("\\b0x[0-9,A-F,a-f]+[uUlL]\\b");
+    rule.pattern = QRegularExpression("\\b0x[0-9,A-F,a-f]+[uUlL]\\b");
     rule.format = numberFormat;
     mHighlightingRules.append(rule);
 
     auto quotation = QString("%1([^%1]*(\\\\%1[^%1]*)*)(%1|$)");
-    rule.pattern = QRegExp(quotation.arg('"'));
+    rule.pattern = QRegularExpression(quotation.arg('"'));
     rule.format = quotationFormat;
     mHighlightingRules.append(rule);
 
-    rule.pattern = QRegExp("^\\s*#.*");
+    rule.pattern = QRegularExpression("^\\s*#.*");
     rule.format = preprocessorFormat;
     mHighlightingRules.append(rule);
 
-    rule.pattern = QRegExp("//.*");
+    rule.pattern = QRegularExpression("//.*");
     rule.format = singleLineCommentFormat;
     mHighlightingRules.append(rule);
 
-    mCommentStartExpression = QRegExp("/\\*");
-    mCommentEndExpression = QRegExp("\\*/");
+    mCommentStartExpression = QRegularExpression("/\\*");
+    mCommentEndExpression = QRegularExpression("\\*/");
 
     mCompleter = new QCompleter(this);
     completerStrings.sort(Qt::CaseInsensitive);
@@ -241,20 +241,21 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
 void GlslHighlighter::highlightBlock(const QString &text)
 {
     for (const HighlightingRule &rule : qAsConst(mHighlightingRules)) {
-        auto index = rule.pattern.indexIn(text);
+        auto index = text.indexOf(rule.pattern);
         while (index >= 0) {
-            const auto length = rule.pattern.matchedLength();
+            const auto match = rule.pattern.match(text, index);
+            const auto length = match.capturedLength();
             // do not start single line comment in string
             if (format(index) == QTextCharFormat{ })
                 setFormat(index, length, rule.format);
-            index = rule.pattern.indexIn(text, index + length);
+            index = text.indexOf(rule.pattern, index + length);
         }
     }
     setCurrentBlockState(0);
 
     auto startIndex = 0;
     if (previousBlockState() != 1)
-        startIndex = mCommentStartExpression.indexIn(text);
+        startIndex = text.indexOf(mCommentStartExpression);
 
     while (startIndex >= 0) {
         // do not start multiline comment in single line comment or string
@@ -263,16 +264,17 @@ void GlslHighlighter::highlightBlock(const QString &text)
             break;
         }
 
-        const auto endIndex = mCommentEndExpression.indexIn(text, startIndex);
+        const auto match = mCommentEndExpression.match(text, startIndex);
+        const auto endIndex = match.capturedStart();
         auto commentLength = 0;
         if (endIndex == -1) {
             setCurrentBlockState(1);
             commentLength = text.length() - startIndex;
         }
         else {
-            commentLength = endIndex - startIndex + mCommentEndExpression.matchedLength();
+            commentLength = endIndex - startIndex + match.capturedLength();
         }
         setFormat(startIndex, commentLength, mMultiLineCommentFormat);
-        startIndex = mCommentStartExpression.indexIn(text, startIndex + commentLength);
+        startIndex = text.indexOf(mCommentStartExpression, startIndex + commentLength);
     }
 }

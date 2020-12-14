@@ -97,8 +97,8 @@ public:
 
         if (role == Qt::TextAlignmentRole) {
             if (column->editable)
-                return Qt::AlignRight + Qt::AlignVCenter;
-            return Qt::AlignHCenter + Qt::AlignVCenter;
+                return static_cast<int>(Qt::AlignRight | Qt::AlignVCenter);
+            return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
         }
 
         if (role == Qt::DisplayRole || role == Qt::EditRole) {
@@ -142,7 +142,7 @@ public:
         Qt::Orientation orientation, int role) const override
     {
         if (role == Qt::TextAlignmentRole)
-            return Qt::AlignLeft + Qt::AlignVCenter;
+            return static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter);
 
         if (role == Qt::DisplayRole && orientation == Qt::Vertical)
             return section;

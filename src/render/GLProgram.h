@@ -98,7 +98,7 @@ private:
     std::vector<GLShader> mShaders;
     QMap<Shader::ShaderType, QList<SubroutineUniform>> mSubroutineUniforms;
     QMap<QString, std::pair<GLenum, GLint>> mActiveUniforms;
-    QMap<QString, std::pair<GLenum, GLuint>> mBufferBindingPoints;
+    QMap<QString, std::pair<GLenum, GLint>> mBufferBindingPoints;
     QMap<QString, GLObject> mTextureBufferObjects;
     GLObject mProgramObject;
     bool mFailed{ };

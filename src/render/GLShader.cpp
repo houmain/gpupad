@@ -22,7 +22,7 @@ void GLShader::parseLog(const QString &log,
     // Mesa:    0:13(2): error: `gl_Positin' undeclared
     // NVidia:  0(13) : error C1008: undefined variable "gl_Positin"
 
-    static const auto split = QRegExp(
+    static const auto split = QRegularExpression(
         "("
             "(\\d+)"              // 2. source index
             "(:(\\d+))?"          // 4. [line]
@@ -31,13 +31,13 @@ void GLShader::parseLog(const QString &log,
         ")?"
         "([^\\n]+)");  // 7. text
 
-    auto pos = 0;
-    while ((pos = split.indexIn(log, pos)) != -1) {
-        const auto sourceIndex = split.cap(2).toInt();
-        const auto line = (!split.cap(4).isNull() ?
-            split.cap(4).toInt() : split.cap(5).toInt());
-        const auto severity = split.cap(6);
-        const auto text = split.cap(7);
+    for (auto matches = split.globalMatch(log); matches.hasNext(); ) {
+        auto match = matches.next();
+        const auto sourceIndex = match.captured(2).toInt();
+        const auto line = (!match.captured().isEmpty() ?
+            match.captured(4).toInt() : match.captured(5).toInt());
+        const auto severity = match.captured(6);
+        const auto text = match.captured(7);
 
         auto messageType = MessageType::ShaderWarning;
         if (severity.contains("Info", Qt::CaseInsensitive))
@@ -51,8 +51,6 @@ void GLShader::parseLog(const QString &log,
         else
             messages += MessageList::insert(
                 itemId, messageType, text);
-
-        pos += split.matchedLength();
     }
 }
 

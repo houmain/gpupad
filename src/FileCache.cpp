@@ -79,11 +79,13 @@ bool FileCache::loadSource(const QString &fileName, QString *source) const
     QTextStream stream(&file);
     auto string = stream.readAll();
     if (!string.isSimpleText() || unprintable(string)) {
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
       stream.setCodec("Windows-1250");
       stream.seek(0);
       string = stream.readAll();
+#endif
       if (unprintable(string))
-        return false;
+          return false;
     }
 
     *source = string;

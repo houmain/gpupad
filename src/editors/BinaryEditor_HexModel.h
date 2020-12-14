@@ -61,10 +61,10 @@ public:
 
         if (role == Qt::TextAlignmentRole) {
             if (index.column() == 0)
-                return Qt::AlignRight + Qt::AlignVCenter;
+                return static_cast<int>(Qt::AlignRight | Qt::AlignVCenter);
             if (index.row() == (mOffset + mStride - 1) / mStride)
-                return Qt::AlignHCenter + Qt::AlignBottom;
-            return Qt::AlignHCenter + Qt::AlignVCenter;
+                return static_cast<int>(Qt::AlignHCenter | Qt::AlignBottom);
+            return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
         }
 
         if (role == Qt::DisplayRole || role == Qt::EditRole) {

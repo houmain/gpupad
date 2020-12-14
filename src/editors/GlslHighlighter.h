@@ -2,6 +2,7 @@
 #define GLSLHIGHLIGHTER_H
 
 #include <QSyntaxHighlighter>
+#include <QRegularExpression>
 
 class QCompleter;
 
@@ -14,13 +15,13 @@ public:
 
 private:
     struct HighlightingRule {
-        QRegExp pattern;
+        QRegularExpression pattern;
         QTextCharFormat format;
     };
     QCompleter *mCompleter{ };
     QVector<HighlightingRule> mHighlightingRules;
-    QRegExp mCommentStartExpression;
-    QRegExp mCommentEndExpression;
+    QRegularExpression mCommentStartExpression;
+    QRegularExpression mCommentEndExpression;
     QTextCharFormat mMultiLineCommentFormat;
 };
 

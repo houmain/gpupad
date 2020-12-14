@@ -21,9 +21,9 @@
 #include <QMenu>
 #include <QToolButton>
 #include <QCoreApplication>
-#include <QDesktopWidget>
 #include <QTimer>
 #include <QMimeData>
+#include <QScreen>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -321,7 +321,8 @@ void MainWindow::readSettings()
     if (settings.value("maximized").toBool()) {
         // maximize before restoring state so layout is not jumbled
         // unfortunately this overwrites the unmaximized geometry
-        setGeometry(QApplication::desktop()->availableGeometry(this));
+        if (auto screen = QGuiApplication::screenAt(pos()))
+            setGeometry(screen->availableGeometry());
         setWindowState(Qt::WindowMaximized);
     }
     restoreState(settings.value("state").toByteArray());

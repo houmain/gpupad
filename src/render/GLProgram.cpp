@@ -242,7 +242,7 @@ void GLProgram::unbind(ItemId callItemId)
 
 QString GLProgram::getUniformBaseName(const QString &name) const
 {
-    const auto base = QString(name).remove(QRegExp("\\[.*\\]"));
+    const auto base = QString(name).remove(QRegularExpression("\\[.*\\]"));
     return base;
 }
 

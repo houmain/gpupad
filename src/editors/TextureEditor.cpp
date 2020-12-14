@@ -21,7 +21,7 @@ bool createFromRaw(const QByteArray &binary,
         return false;
 
     std::memcpy(texture->getWriteonlyData(0, 0, 0), binary.data(),
-        static_cast<size_t>(std::min(binary.size(), texture->getLevelSize(0))));
+        static_cast<size_t>(std::min(static_cast<int>(binary.size()), texture->getLevelSize(0))));
     return true;
 }
 
@@ -271,7 +271,7 @@ void TextureEditor::mouseDoubleClickEvent(QMouseEvent *event)
 
 void TextureEditor::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::MidButton) {
+    if (event->button() == Qt::MiddleButton) {
         mPan = true;
         mPanStartX = event->x();
         mPanStartY = event->y();
@@ -312,7 +312,7 @@ void TextureEditor::updateMousePosition(QMouseEvent *event)
 
 void TextureEditor::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::MidButton) {
+    if (event->button() == Qt::MiddleButton) {
         mPan = false;
         setCursor(Qt::ArrowCursor);
         return;

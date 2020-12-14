@@ -187,7 +187,7 @@ void BinaryEditor::setModified(bool modified)
 auto BinaryEditor::currentBlock() const -> const Block *
 {
     return (mBlocks.empty() ? nullptr :
-        &mBlocks[std::min(mCurrentBlockIndex, mBlocks.size() - 1)]);
+        &mBlocks[std::min(mCurrentBlockIndex, static_cast<int>(mBlocks.size()) - 1)]);
 }
 
 void BinaryEditor::setCurrentBlockIndex(int index)
