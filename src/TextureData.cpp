@@ -805,7 +805,7 @@ bool TextureData::load(const QString &fileName)
 
 bool TextureData::saveToKtx(const QString &fileName) const 
 {
-    if (!fileName.toLower().endsWith(".ktx"))
+    if (!fileName.endsWith(".ktx", Qt::CaseInsensitive))
         return false;
     return (ktxTexture_WriteToNamedFile(
         mKtxTexture.get(), fileName.toUtf8().constData()) == KTX_SUCCESS);
@@ -813,7 +813,7 @@ bool TextureData::saveToKtx(const QString &fileName) const
 
 bool TextureData::saveToDds(const QString &fileName) const 
 {
-    if (!fileName.toLower().endsWith(".dds"))
+    if (!fileName.endsWith(".dds", Qt::CaseInsensitive))
         return false;
 
     auto format = getDdsFormat(this->format());
@@ -851,7 +851,7 @@ bool TextureData::saveToDds(const QString &fileName) const
 
 bool TextureData::saveToTga(const QString &fileName) const 
 {
-    if (!fileName.toLower().endsWith(".tga"))
+    if (!fileName.endsWith(".tga", Qt::CaseInsensitive))
         return false;
     auto f = std::fopen(fileName.toUtf8().constData(), "wb");
     auto guard = qScopeGuard([&]() { std::fclose(f); });

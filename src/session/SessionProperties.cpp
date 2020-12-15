@@ -503,7 +503,7 @@ void SessionProperties::deduceBlockOffset()
 {
     const auto &block = *mModel.item<Block>(currentModelIndex());
     auto offset = 0;
-    for (auto item : block.parent->items) {
+    for (auto item : qAsConst(block.parent->items)) {
         if (item == &block)
             break;
 
