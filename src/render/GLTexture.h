@@ -12,7 +12,8 @@ class GLTexture
 public:
     GLTexture(const Texture &texture, ScriptEngine &scriptEngine);
     GLTexture(const Buffer &buffer,
-        GLBuffer *textureBuffer, Texture::Format format);
+        GLBuffer *textureBuffer, Texture::Format format,
+        ScriptEngine &scriptEngine, MessagePtrSet &messages);
     bool operator==(const GLTexture &rhs) const;
 
     ItemId itemId() const { return mItemId; }

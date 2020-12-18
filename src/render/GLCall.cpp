@@ -59,7 +59,8 @@ GLenum GLCall::getIndexType() const
     }
 }
 
-void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block)
+void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block,
+    ScriptEngine &scriptEngine, MessagePtrSet &messages)
 {
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
@@ -68,7 +69,8 @@ void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block)
 
     mIndirectBuffer = commands;
     mIndirectStride = getBlockStride(block);
-    mIndirectOffset = block.offset;
+    mIndirectOffset = scriptEngine.evaluateValue(
+        block.offset, block.id, messages);
 }
 
 void GLCall::setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer)

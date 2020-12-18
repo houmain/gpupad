@@ -9,7 +9,8 @@ class GLStream
 public:
     explicit GLStream(const Stream &stream);
     void setAttribute(int attributeIndex,
-        const Field &column, GLBuffer *buffer);
+        const Field &column, GLBuffer *buffer,
+        ScriptEngine& scriptEngine, MessagePtrSet& messages);
 
     void bind(const GLProgram &program);
     const QSet<ItemId> &usedItems() const { return mUsedItems; }

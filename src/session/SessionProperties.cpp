@@ -501,6 +501,11 @@ void SessionProperties::updateScriptWidgets(bool hasFile)
 
 void SessionProperties::deduceBlockOffset()
 {
+    auto ok = true;
+    auto toInt = [&](const QString &expression) {
+        return (ok ? expression.toInt(&ok) : 0);
+    };
+
     const auto &block = *mModel.item<Block>(currentModelIndex());
     auto offset = 0;
     for (auto item : qAsConst(block.parent->items)) {
@@ -509,19 +514,24 @@ void SessionProperties::deduceBlockOffset()
 
         const auto &prevBlock = *static_cast<const Block*>(item);
         offset = std::max(offset,
-            prevBlock.offset + getBlockStride(prevBlock) * prevBlock.rowCount);
+            toInt(prevBlock.offset) + getBlockStride(prevBlock) * toInt(prevBlock.rowCount));
     }
 
-    mModel.setData(mModel.getIndex(currentModelIndex(),
-        SessionModel::BlockOffset), offset);
+    if (ok)
+        mModel.setData(mModel.getIndex(currentModelIndex(),
+            SessionModel::BlockOffset), offset);
 }
 
 void SessionProperties::deduceBlockRowCount()
 {
     const auto &block = *mModel.item<Block>(currentModelIndex());
-    const auto &buffer = *static_cast<const Buffer*>(block.parent);
-    auto binary = QByteArray();
-    if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
-        mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::BlockRowCount),
-            (binary.size() - block.offset) / getBlockStride(block));
+    auto ok = true;
+    const auto blockOffset = block.offset.toInt(&ok);
+    if (ok) {
+        const auto &buffer = *static_cast<const Buffer*>(block.parent);
+        auto binary = QByteArray();
+        if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
+            mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::BlockRowCount),
+                (binary.size() - blockOffset) / getBlockStride(block));
+    }
 }

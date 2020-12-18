@@ -358,8 +358,8 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
         }
         blocks.append({
             block.name,
-            block.offset,
-            block.rowCount,
+            block.offset.toInt(),
+            block.rowCount.toInt(),
             fields
         });
     }

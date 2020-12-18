@@ -1,9 +1,24 @@
 #include "GLBuffer.h"
 
-GLBuffer::GLBuffer(const Buffer &buffer)
+int getBufferSize(const Buffer &buffer,
+    ScriptEngine &scriptEngine, MessagePtrSet &messages)
+{
+    auto size = 1;
+    for (const Item* item : buffer.items) {
+        const auto &block = *static_cast<const Block*>(item);
+        const auto blockOffset = scriptEngine.evaluateInt(block.offset, block.id, messages);
+        const auto blockRowCount = scriptEngine.evaluateInt(block.rowCount, block.id, messages);
+        size = std::max(size,
+            blockOffset + blockRowCount * getBlockStride(block));
+    }
+    return size;
+}
+
+GLBuffer::GLBuffer(const Buffer &buffer,
+      ScriptEngine &scriptEngine, MessagePtrSet &messages)
     : mItemId(buffer.id)
     , mFileName(buffer.fileName)
-    , mSize(getBufferSize(buffer))
+    , mSize(getBufferSize(buffer, scriptEngine, messages))
 {
     mUsedItems += buffer.id;
     for (const auto item : buffer.items)

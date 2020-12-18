@@ -17,7 +17,7 @@ int getFieldSize(const Field &field)
     return 0;
 }
 
-int getFieldOffset(const Field &field)
+int getFieldRowOffset(const Field &field)
 {
     auto offset = 0;
     const auto &block = *static_cast<const Block*>(field.parent);
@@ -27,7 +27,7 @@ int getFieldOffset(const Field &field)
         const auto &f = *static_cast<const Field*>(item);
         offset += f.count * getFieldSize(f) + f.padding;
     }
-    return block.offset + offset;
+    return offset;
 }
 
 int getBlockStride(const Block &block)
@@ -38,17 +38,6 @@ int getBlockStride(const Block &block)
         stride += field.count * getFieldSize(field) + field.padding;
     }
     return stride;
-}
-
-int getBufferSize(const Buffer &buffer)
-{
-    auto size = 1;
-    for (const Item* item : buffer.items) {
-        const auto &block = *static_cast<const Block*>(item);
-        size = std::max(size,
-            block.offset + block.rowCount * getBlockStride(block));
-    }
-    return size;
 }
 
 TextureKind getKind(const Texture &texture)

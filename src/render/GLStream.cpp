@@ -18,8 +18,11 @@ GLStream::GLStream(const Stream &stream)
 }
 
 void GLStream::setAttribute(int attributeIndex,
-    const Field &field, GLBuffer *buffer)
+    const Field &field, GLBuffer *buffer,
+    ScriptEngine& scriptEngine, MessagePtrSet& messages)
 {
+    const auto &block = *castItem<Block>(field.parent);
+    const auto blockOffset = scriptEngine.evaluateValue(block.offset, block.id, messages);
     auto &attribute = mAttributes[attributeIndex];
     attribute.usedItems += field.id;
     attribute.buffer = buffer;
@@ -29,7 +32,7 @@ void GLStream::setAttribute(int attributeIndex,
         attribute.usedItems += block->id;
         attribute.usedItems += block->parent->id;
         attribute.stride = getBlockStride(*block);
-        attribute.offset = getFieldOffset(field);
+        attribute.offset = blockOffset + getFieldRowOffset(field);
     }
 }
 

@@ -26,7 +26,8 @@ public:
     void setTarget(GLTarget *target);
     void setVextexStream(GLStream *vertexStream);
     void setIndexBuffer(GLBuffer *indices, const Block &block);
-    void setIndirectBuffer(GLBuffer *commands, const Block &block);
+    void setIndirectBuffer(GLBuffer *commands, const Block &block,
+        ScriptEngine &scriptEngine, MessagePtrSet &messages);
     void setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer);
     void setTextures(GLTexture *texture, GLTexture *fromTexture);
     void execute(MessagePtrSet &messages);

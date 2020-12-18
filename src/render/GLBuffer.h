@@ -2,11 +2,13 @@
 #define GLBUFFER_H
 
 #include "GLItem.h"
+#include "scripting/ScriptEngine.h"
 
 class GLBuffer
 {
 public:
-    explicit GLBuffer(const Buffer &buffer);
+    GLBuffer(const Buffer &buffer,
+        ScriptEngine &scriptEngine, MessagePtrSet &messages);
     bool operator==(const GLBuffer &rhs) const;
 
     ItemId itemId() const { return mItemId; }
@@ -37,5 +39,8 @@ private:
     bool mSystemCopyModified{ };
     bool mDeviceCopyModified{ };
 };
+
+int getBufferSize(const Buffer &buffer,
+    ScriptEngine &scriptEngine, MessagePtrSet &messages);
 
 #endif // GLBUFFER_H

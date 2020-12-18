@@ -171,6 +171,11 @@ ScriptValue ScriptEngine::evaluateValue(const QString &valueExpression,
     return (values.isEmpty() ? 0.0 : values.first());
 }
 
+int ScriptEngine::evaluateInt(const QString &valueExpression,
+      ItemId itemId, MessagePtrSet &messages)
+{
+    return static_cast<int>(evaluateValue(valueExpression, itemId, messages) + 0.5);
+}
 
 void ScriptEngine::updateVariables()
 {

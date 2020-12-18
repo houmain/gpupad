@@ -60,20 +60,7 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="QSpinBox" name="offset">
-          <property name="minimumSize">
-           <size>
-            <width>1</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="accelerated">
-           <bool>true</bool>
-          </property>
-          <property name="maximum">
-           <number>1073741824</number>
-          </property>
-         </widget>
+         <widget class="ExpressionLineEdit" name="offset"/>
         </item>
         <item>
          <widget class="QToolButton" name="deduceOffset">
@@ -115,20 +102,7 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="QSpinBox" name="rowCount">
-          <property name="minimumSize">
-           <size>
-            <width>1</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="accelerated">
-           <bool>true</bool>
-          </property>
-          <property name="maximum">
-           <number>1073741824</number>
-          </property>
-         </widget>
+         <widget class="ExpressionLineEdit" name="rowCount"/>
         </item>
         <item>
          <widget class="QToolButton" name="deduceRowCount">
@@ -162,6 +136,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ExpressionLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>session/ExpressionLineEdit.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../resources.qrc"/>
  </resources>

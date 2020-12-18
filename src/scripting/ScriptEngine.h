@@ -38,6 +38,8 @@ public:
         ItemId itemId, MessagePtrSet &messages);
     ScriptValue evaluateValue(const QString &valueExpression,
       ItemId itemId, MessagePtrSet &messages);
+    int evaluateInt(const QString &valueExpression,
+      ItemId itemId, MessagePtrSet &messages);
 
     void updateVariables();
     ScriptVariable getVariable(const QStringList &valueExpressions,

@@ -39,8 +39,8 @@ struct Buffer : FileItem
 
 struct Block : Item 
 {
-    int offset{ };
-    int rowCount{ 1 };
+    QString offset{ "0" };
+    QString rowCount{ "1" };
 };
 
 struct Field : Item
@@ -247,9 +247,8 @@ struct CallKind
 };
 
 int getFieldSize(const Field &field);
-int getFieldOffset(const Field &field);
+int getFieldRowOffset(const Field &field);
 int getBlockStride(const Block &block);
-int getBufferSize(const Buffer &buffer);
 TextureKind getKind(const Texture &texture);
 CallKind getKind(const Call &call);
 

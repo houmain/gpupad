@@ -228,7 +228,8 @@ void RenderSession::prepare(bool itemsChanged,
 
     const auto addBufferOnce = [&](ItemId bufferId) {
         return addOnce(mCommandQueue->buffers,
-            session.findItem<Buffer>(bufferId));
+            session.findItem<Buffer>(bufferId),
+            *mScriptEngine, mMessages);
     };
 
     const auto addTextureOnce = [&](ItemId textureId) {
@@ -239,7 +240,8 @@ void RenderSession::prepare(bool itemsChanged,
     const auto addTextureBufferOnce = [&](ItemId bufferId,
             GLBuffer *buffer, Texture::Format format) {
         return addOnce(mCommandQueue->textures,
-            session.findItem<Buffer>(bufferId), buffer, format);
+            session.findItem<Buffer>(bufferId), buffer, format,
+            *mScriptEngine, mMessages);
     };
 
     const auto addTargetOnce = [&](ItemId targetId) {
@@ -263,7 +265,8 @@ void RenderSession::prepare(bool itemsChanged,
                 if (auto attribute = castItem<Attribute>(items[i]))
                     if (auto field = session.findItem<Field>(attribute->fieldId))
                         vs->setAttribute(i, *field,
-                            addBufferOnce(field->parent->parent->id));
+                            addBufferOnce(field->parent->parent->id),
+                                *mScriptEngine, mMessages);
         }
         return vs;
     };
@@ -365,14 +368,16 @@ void RenderSession::prepare(bool itemsChanged,
                         if (auto block = session.findItem<Block>(call->indexBufferBlockId))
                             glcall.setIndexBuffer(addBufferOnce(block->parent->id), *block);
                         if (auto block = session.findItem<Block>(call->indirectBufferBlockId))
-                            glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block);
+                            glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block,
+                                *mScriptEngine, mMessages);
                         break;
 
                     case Call::CallType::Compute:
                     case Call::CallType::ComputeIndirect:
                         glcall.setProgram(addProgramOnce(call->programId));
                         if (auto block = session.findItem<Block>(call->indirectBufferBlockId))
-                            glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block);
+                            glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block,
+                                *mScriptEngine, mMessages);
                         break;
 
                     case Call::CallType::ClearTexture:
