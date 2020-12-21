@@ -276,6 +276,15 @@ MainWindow::MainWindow(QWidget *parent)
         action->setActionGroup(indentActionGroup);
     }
 
+    for (auto i = 0; i < 5; ++i) {
+        auto action = mUi->menuRecentFiles->addAction("");
+        connect(action, &QAction::triggered,
+            this, &MainWindow::openRecentFile);
+        mRecentSessionActions += action;
+    }
+
+    mUi->menuRecentFiles->addSeparator();
+
     for (auto i = 0; i < 9; ++i) {
         auto action = mUi->menuRecentFiles->addAction("");
         connect(action, &QAction::triggered,
@@ -328,8 +337,7 @@ void MainWindow::readSettings()
     restoreState(settings.value("state").toByteArray());
     mSessionSplitter->restoreState(settings.value("sessionSplitter").toByteArray());
 
-    auto &fileDialog = Singletons::fileDialog();
-    fileDialog.setDirectory(settings.value("lastDirectory").toString());
+    Singletons::fileDialog().setDirectory(settings.value("lastDirectory").toString());
 
     mRecentFiles = settings.value("recentFiles").toStringList();
     updateRecentFileActions();
@@ -506,21 +514,31 @@ bool MainWindow::openFile(const QString &fileName,
 
 bool MainWindow::saveFile()
 {
-    if (!mEditorManager.hasCurrentEditor())
-        return saveSession();
-    if (!mEditorManager.saveEditor())
-        return false;
-    addToRecentFileList(mEditorManager.currentEditorFileName());
+    if (!mEditorManager.hasCurrentEditor()) {
+        if (!saveSession())
+            return false;
+        addToRecentFileList(mSessionEditor->fileName());
+    }
+    else {
+        if (!mEditorManager.saveEditor())
+            return false;
+        addToRecentFileList(mEditorManager.currentEditorFileName());
+    }
     return true;
 }
 
 bool MainWindow::saveFileAs()
 {
-    if (!mEditorManager.hasCurrentEditor())
-        return saveSessionAs();
-    if (!mEditorManager.saveEditorAs())
-        return false;
-    addToRecentFileList(mEditorManager.currentEditorFileName());
+    if (!mEditorManager.hasCurrentEditor()) {
+        if (!saveSessionAs())
+            return false;
+        addToRecentFileList(mSessionEditor->fileName());
+    }
+    else {
+        if (!mEditorManager.saveEditorAs())
+            return false;
+        addToRecentFileList(mEditorManager.currentEditorFileName());
+    }
     return true;
 }
 
@@ -653,31 +671,42 @@ void MainWindow::addToRecentFileList(QString fileName)
     mRecentFiles.prepend(fileName);
     updateRecentFileActions();
 
-    auto &fileDialog = Singletons::fileDialog();
-    fileDialog.setDirectory(QFileInfo(fileName).dir());
+    Singletons::fileDialog().setDirectory(QFileInfo(fileName).dir());
 }
 
 void MainWindow::updateRecentFileActions()
 {
+    auto index = 0;
+    auto recentFileIndex = 0;
+    auto recentSessionIndex = 0;
     QMutableStringListIterator i(mRecentFiles);
-    while (i.hasNext())
-        if (!QFile::exists(i.next()))
-            i.remove();
-
-    while (mRecentFiles.size() > mRecentFileActions.size())
-        mRecentFiles.pop_back();
-
-    for (auto j = 0; j < mRecentFileActions.size(); ++j) {
-        if (j < mRecentFiles.count()) {
-            auto text = tr("&%1 %2").arg(j + 1).arg(mRecentFiles[j]);
-            mRecentFileActions[j]->setText(text);
-            mRecentFileActions[j]->setData(mRecentFiles[j]);
-            mRecentFileActions[j]->setVisible(true);
+    while (i.hasNext()) {
+        const auto filename = i.next();
+        auto action = std::add_pointer_t<QAction>();
+        if (FileDialog::isSessionFileName(filename)) {
+            if (recentSessionIndex < mRecentSessionActions.size())
+                action = mRecentSessionActions[recentSessionIndex++];
         }
         else {
-            mRecentFileActions[j]->setVisible(false);
+            if (recentFileIndex < mRecentFileActions.size())
+                action = mRecentFileActions[recentFileIndex++];
+        }
+        if (QFile::exists(filename) && action) {
+            ++index;
+            action->setText((index < 10 ? 
+              QStringLiteral("  &%1 %2") : 
+              QStringLiteral("%1 %2")).arg(index).arg(filename));
+            action->setData(filename);
+            action->setVisible(true);
+        }
+        else {
+            i.remove();
         }
     }
+    for (auto i = recentSessionIndex; i < mRecentSessionActions.size(); ++i)
+        mRecentSessionActions[i]->setVisible(false);
+    for (auto i = recentFileIndex; i < mRecentFileActions.size(); ++i)
+        mRecentFileActions[i]->setVisible(false);
     mUi->menuRecentFiles->setEnabled(!mRecentFiles.empty());
 }
 
@@ -820,7 +849,7 @@ void MainWindow::openSampleSession()
 
     auto &editors = Singletons::editorManager();
     if (auto action = qobject_cast<QAction*>(QObject::sender()))
-        if (openSession(action->data().toString())) {
+        if (openFile(action->data().toString())) {
             editors.setAutoRaise(false);
             mSessionEditor->activateFirstItem();
             editors.setAutoRaise(true);

@@ -85,6 +85,7 @@ private:
     QScopedPointer<SessionProperties> mSessionProperties;
     QList<QMetaObject::Connection> mConnectedEditActions;
     QStringList mRecentFiles;
+    QList<QAction*> mRecentSessionActions;
     QList<QAction*> mRecentFileActions;
 };
 
