@@ -676,7 +676,6 @@ void MainWindow::addToRecentFileList(QString fileName)
 
 void MainWindow::updateRecentFileActions()
 {
-    auto index = 0;
     auto recentFileIndex = 0;
     auto recentSessionIndex = 0;
     QMutableStringListIterator i(mRecentFiles);
@@ -691,12 +690,10 @@ void MainWindow::updateRecentFileActions()
             if (recentFileIndex < mRecentFileActions.size())
                 action = mRecentFileActions[recentFileIndex++];
         }
-        if (QFile::exists(filename) && action) {
-            ++index;
-            action->setText((index < 10 ? 
-              QStringLiteral("  &%1 %2") : 
-              QStringLiteral("%1 %2")).arg(index).arg(filename));
+        if (action) {
+            action->setText(filename);
             action->setData(filename);
+            action->setEnabled(QFile::exists(filename));
             action->setVisible(true);
         }
         else {
@@ -707,6 +704,14 @@ void MainWindow::updateRecentFileActions()
         mRecentSessionActions[i]->setVisible(false);
     for (auto i = recentFileIndex; i < mRecentFileActions.size(); ++i)
         mRecentFileActions[i]->setVisible(false);
+
+    auto index = 1;
+    for (const auto &actions : { mRecentSessionActions, mRecentFileActions })
+        for (const auto action : actions)
+            if (action->isVisible())
+                action->setText((index < 10 ? QStringLiteral("  &%1 %2") :
+                    QStringLiteral("%1 %2")).arg(index++).arg(action->text()));
+
     mUi->menuRecentFiles->setEnabled(!mRecentFiles.empty());
 }
 
