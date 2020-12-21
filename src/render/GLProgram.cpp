@@ -1,8 +1,9 @@
-#include <array>
 #include "GLProgram.h"
 #include "GLTexture.h"
 #include "GLBuffer.h"
 #include "scripting/ScriptEngine.h"
+#include <array>
+#include <QRegularExpression>
 
 GLProgram::GLProgram(const Program &program)
     : mItemId(program.id)

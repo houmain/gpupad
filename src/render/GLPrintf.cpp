@@ -407,7 +407,7 @@ QString GLPrintf::patchSource(const QString &fileName, const QString &source)
     auto patchedSource = QString();
     for (const auto &call : calls) {
         const auto offset = std::distance(sourceWithoutComments.begin(), call.statement.begin());
-        patchedSource += QStringView(source.data() + prevOffset, offset - prevOffset);
+        patchedSource += QString(source.data() + prevOffset, offset - prevOffset);
         patchedSource += QStringLiteral("(printfEnabled ? _printfBegin(%1, %2)")
             .arg(mFormatStrings.size()).arg(call.arguments.size());
         for (const auto &argument : call.arguments)
@@ -420,7 +420,7 @@ QString GLPrintf::patchSource(const QString &fileName, const QString &source)
         mFormatStrings.append(formatString);
         prevOffset = offset + call.statement.size();
     }
-    patchedSource += QStringView(source.data() + prevOffset, source.size() - prevOffset);
+    patchedSource += QString(source.data() + prevOffset, source.size() - prevOffset);
     return patchedSource;
 }
 

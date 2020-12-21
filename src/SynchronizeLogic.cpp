@@ -356,10 +356,14 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
                 field.padding
             });
         }
+        const auto offset = (block.evaluatedOffset ? 
+            block.evaluatedOffset : block.offset.toInt());
+        const auto rowCount = (block.evaluatedRowCount ?
+            block.evaluatedRowCount : block.rowCount.toInt());
         blocks.append({
             block.name,
-            block.offset.toInt(),
-            block.rowCount.toInt(),
+            offset,
+            rowCount,
             fields
         });
     }

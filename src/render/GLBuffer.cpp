@@ -10,6 +10,9 @@ int getBufferSize(const Buffer &buffer,
         const auto blockRowCount = scriptEngine.evaluateInt(block.rowCount, block.id, messages);
         size = std::max(size,
             blockOffset + blockRowCount * getBlockStride(block));
+        
+        block.evaluatedOffset = blockOffset;
+        block.evaluatedRowCount = blockRowCount;
     }
     return size;
 }
