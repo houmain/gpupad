@@ -2,6 +2,8 @@
 #include "Singletons.h"
 #include "session/SessionModel.h"
 #include "FileDialog.h"
+#include <QThread>
+#include <QTimer>
 
 namespace {
     MessagePtrSet* gCurrentMessageList;
@@ -44,12 +46,22 @@ ScriptValue ScriptVariable::get(int index) const
     return (mValues && index < mValues->size() ? mValues->at(index) : 0.0);
 }
 
-ScriptEngine::ScriptEngine()
-    : mJsEngine(new QJSEngine())
+ScriptEngine::ScriptEngine(QObject *parent)
+    : QObject(parent)
+    , mJsEngine(new QJSEngine(this))
+    , mInterruptThread(new QThread())
+    , mInterruptTimer(new QTimer())
 {
     Q_ASSERT(onMainThread());
+    mInterruptTimer->setInterval(1000);
+    mInterruptTimer->setSingleShot(true);
+    connect(mInterruptTimer, &QTimer::timeout,
+        [jsEngine = mJsEngine]() { jsEngine->setInterrupted(true); });
+    mInterruptTimer->moveToThread(mInterruptThread);
+    mInterruptThread->start();
+
     mJsEngine->installExtensions(QJSEngine::ConsoleExtension);
-    mJsEngine->evaluate(
+    evaluate(
         "(function() {"
           "var log = console.log;"
           "console.log = function() {"
@@ -64,7 +76,19 @@ ScriptEngine::ScriptEngine()
         "})();");
 }
 
-ScriptEngine::~ScriptEngine() = default;
+ScriptEngine::~ScriptEngine() {
+    QMetaObject::invokeMethod(mInterruptTimer, "stop", Qt::BlockingQueuedConnection);
+    connect(mInterruptThread, &QThread::finished, mInterruptThread, &QObject::deleteLater);
+    mInterruptThread->requestInterruption();
+}
+
+QJSValue ScriptEngine::evaluate(const QString &program, const QString &fileName, int lineNumber)
+{
+    Q_ASSERT(onMainThread());
+    QMetaObject::invokeMethod(mInterruptTimer, "start", Qt::BlockingQueuedConnection);
+    mJsEngine->setInterrupted(false);
+    return mJsEngine->evaluate(program, fileName, lineNumber);
+}
 
 void ScriptEngine::setGlobal(const QString &name, QJSValue value)
 {
@@ -100,7 +124,7 @@ QJSValue ScriptEngine::call(QJSValue &callable, const QJSValueList &args,
 void ScriptEngine::evaluateScript(const QString &script, const QString &fileName) 
 {
     redirectConsoleMessages(mMessages, [&]() {
-        auto result = mJsEngine->evaluate(script, fileName);
+        auto result = evaluate(script, fileName);
         if (result.isError())
             mMessages += MessageList::insert(
                 fileName, result.property("lineNumber").toInt(),
@@ -112,7 +136,7 @@ void ScriptEngine::evaluateExpression(const QString &script, const QString &resu
     ItemId itemId, MessagePtrSet &messages) 
 {
     redirectConsoleMessages(mMessages, [&]() {
-        auto result = mJsEngine->evaluate(script);
+        auto result = evaluate(script);
         if (result.isError()) {
             messages += MessageList::insert(
                 itemId, MessageType::ScriptError, result.toString());
@@ -142,7 +166,7 @@ ScriptValueList ScriptEngine::evaluateValues(const QStringList &valueExpressions
                 continue;
             }
 
-            auto result = mJsEngine->evaluate(valueExpression);
+            auto result = evaluate(valueExpression);
             if (result.isError())
                 messages += MessageList::insert(
                     itemId, MessageType::ScriptError, result.toString());

@@ -7,6 +7,7 @@
 
 using ScriptValue = double;
 using ScriptValueList = QList<ScriptValue>;
+class QTimer;
 
 class ScriptVariable
 {
@@ -20,10 +21,11 @@ private:
     QSharedPointer<ScriptValueList> mValues;
 };
 
-class ScriptEngine
+class ScriptEngine : public QObject
 {
+    Q_OBJECT
 public:
-    ScriptEngine();
+    explicit ScriptEngine(QObject *parent = nullptr);
     ~ScriptEngine();
 
     void setGlobal(const QString &name, QJSValue value);
@@ -51,7 +53,11 @@ public:
     QJSValue toJsValue(const T &value) { return mJsEngine->toScriptValue(value); }
 
 private:
-    QScopedPointer<QJSEngine> mJsEngine;
+    QJSValue evaluate(const QString &program, const QString &fileName = QString(), int lineNumber = 1);
+
+    QJSEngine *mJsEngine{ };
+    QThread *mInterruptThread{ };
+    QTimer *mInterruptTimer{ };
     MessagePtrSet mMessages;
     QList<QPair<QStringList, QWeakPointer<ScriptValueList>>> mVariables;
 };
