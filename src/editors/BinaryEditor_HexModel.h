@@ -73,7 +73,7 @@ public:
                 return QVariant();
 
             return toHexString(
-                static_cast<uint8_t>(mData.data()[offset]), 2);
+                static_cast<uint8_t>(mData.constData()[offset]), 2);
         }
         return QVariant();
     }

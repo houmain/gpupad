@@ -20,7 +20,7 @@ bool createFromRaw(const QByteArray &binary,
                          r.depth, r.layers, r.samples))
         return false;
 
-    std::memcpy(texture->getWriteonlyData(0, 0, 0), binary.data(),
+    std::memcpy(texture->getWriteonlyData(0, 0, 0), binary.constData(),
         static_cast<size_t>(std::min(static_cast<int>(binary.size()), texture->getLevelSize(0))));
     return true;
 }

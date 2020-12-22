@@ -13,7 +13,7 @@ public:
     bool operator==(const GLBuffer &rhs) const;
 
     ItemId itemId() const { return mItemId; }
-    QByteArray data() const { return mData; }
+    const QByteArray &data() const { return mData; }
     const QString &fileName() const { return mFileName; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 

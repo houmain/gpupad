@@ -199,12 +199,12 @@ private:
 
     uint8_t getByte(int offset) const
     {
-        return static_cast<uint8_t>(mData.data()[offset]);
+        return static_cast<uint8_t>(mData.constData()[offset]);
     }
 
     QVariant getData(int offset, DataType type) const
     {
-        auto data = mData.data() + offset;
+        auto data = mData.constData() + offset;
         switch (type) {
             case DataType::Int8: return get<int8_t>(data);
             case DataType::Int16: return get<int16_t>(data);
