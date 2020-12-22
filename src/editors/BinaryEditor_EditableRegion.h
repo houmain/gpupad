@@ -149,6 +149,8 @@ public:
     void delete_()
     {
         const auto indices = selectedIndexes();
+        if (indices.isEmpty())
+            return;
         auto minIndex = indices.first();
         auto maxIndex = indices.first();
         for (const QModelIndex &index : indices)

@@ -36,7 +36,7 @@ public:
     bool save() override;
     int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }
-    void replace(TextureData texture, bool invalidateFileCache = true);
+    void replace(TextureData texture, bool emitFileChanged = true);
     void updatePreviewTexture(QOpenGLTexture::Target target, GLuint textureId);
     const TextureData &texture() const { return mTexture; }
 

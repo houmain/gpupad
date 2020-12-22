@@ -117,6 +117,8 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
 
 void SynchronizeLogic::handleSessionRendered()
 {
+    Singletons::fileCache().updateEditorFiles();
+
     if (mEvaluationMode != EvaluationMode::Paused)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
 

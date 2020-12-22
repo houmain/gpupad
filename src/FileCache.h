@@ -27,7 +27,7 @@ public:
     bool updateTexture(const QString &fileName, TextureData texture) const;
 
     // only call from main thread
-    void invalidateEditorFile(const QString &fileName);
+    void invalidateEditorFile(const QString &fileName, bool emitFileChanged = true);
     void advertiseEditorSave(const QString &fileName);
     void updateEditorFiles();
     void playVideoFiles();

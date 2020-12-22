@@ -107,10 +107,11 @@ void GLBuffer::reload()
     mMessages.clear();
 
     auto prevData = mData;
-    if (!FileDialog::isEmptyOrUntitled(mFileName))
+    if (!mFileName.isEmpty())
         if (!Singletons::fileCache().getBinary(mFileName, &mData))
-            mMessages += MessageList::insert(
-                mItemId, MessageType::LoadingFileFailed, mFileName);
+            if (!FileDialog::isEmptyOrUntitled(mFileName))
+                mMessages += MessageList::insert(
+                    mItemId, MessageType::LoadingFileFailed, mFileName);
 
     if (mSize > mData.size())
         mData.append(QByteArray(mSize - mData.size(), 0));

@@ -214,7 +214,7 @@ bool TextureEditor::save()
     return true;
 }
 
-void TextureEditor::replace(TextureData texture, bool invalidateFileCache)
+void TextureEditor::replace(TextureData texture, bool emitFileChanged)
 {
     if (texture == mTexture)
         return;
@@ -226,8 +226,7 @@ void TextureEditor::replace(TextureData texture, bool invalidateFileCache)
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
 
-    if (invalidateFileCache)
-        Singletons::fileCache().invalidateEditorFile(mFileName);
+    Singletons::fileCache().invalidateEditorFile(mFileName, emitFileChanged);
 
     if (qApp->focusWidget() == this)
       updateEditorToolBar();

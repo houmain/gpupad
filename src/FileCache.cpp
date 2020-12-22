@@ -27,11 +27,13 @@ void FileCache::advertiseEditorSave(const QString &fileName)
     mEditorSaveAdvertised.insert(fileName);
 }
 
-void FileCache::invalidateEditorFile(const QString &fileName)
+void FileCache::invalidateEditorFile(const QString &fileName, bool emitFileChanged)
 {
     Q_ASSERT(onMainThread());
     mEditorFilesInvalidated.insert(fileName);
-    Q_EMIT fileChanged(fileName);
+
+    if (emitFileChanged)
+        Q_EMIT fileChanged(fileName);
 }
 
 void FileCache::updateEditorFiles()

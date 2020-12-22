@@ -235,14 +235,12 @@ private:
             case DataType::Float: set<float>(data, v.toFloat()); break;
             case DataType::Double: set<double>(data, v.toDouble()); break;
         }
-        mEditor.handleDataChanged();
     }
 
     void expand(int requiredSize)
     {
         if (requiredSize > mData.size()) {
             mData.append(QByteArray(requiredSize - mData.size(), 0));
-            mEditor.handleDataChanged();
         }
     }
 

@@ -81,12 +81,15 @@ public:
             spinBox->interpretText();
             auto value = spinBox->value();
             model->setData(index, value, Qt::EditRole);
+            Q_EMIT model->dataChanged(index, index);
         }
         else if (auto *lineEdit = qobject_cast<QLineEdit*>(editor)) {
             auto ok = true;
             auto value = lineEdit->text().toDouble(&ok);
-            if (ok)
+            if (ok) {
                 model->setData(index, value, Qt::EditRole);
+                Q_EMIT model->dataChanged(index, index);
+            }
         }
     }
 

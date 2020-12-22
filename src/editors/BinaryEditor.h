@@ -49,7 +49,7 @@ public:
     bool save() override;
     int tabifyGroup() override { return 0; }
     bool isModified() const { return mModified; }
-    void replace(QByteArray data, bool invalidateFileCache = true);
+    void replace(QByteArray data, bool emitFileChanged = true);
     const QByteArray &data() const { return mData; }
     void setBlocks(QList<Block> blocks);
     void setCurrentBlockIndex(int index);

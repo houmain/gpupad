@@ -155,7 +155,7 @@ bool BinaryEditor::save()
     return true;
 }
 
-void BinaryEditor::replace(QByteArray data, bool invalidateFileCache)
+void BinaryEditor::replace(QByteArray data, bool emitFileChanged)
 {
     if (data.isSharedWith(mData))
         return;
@@ -166,8 +166,7 @@ void BinaryEditor::replace(QByteArray data, bool invalidateFileCache)
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
 
-    if (invalidateFileCache)
-        Singletons::fileCache().invalidateEditorFile(mFileName);
+    Singletons::fileCache().invalidateEditorFile(mFileName, emitFileChanged);
 }
 
 void BinaryEditor::handleDataChanged()
@@ -234,6 +233,9 @@ void BinaryEditor::refresh()
         prevModel = mEditableRegion->model();
         mEditableRegion->setModel(dataModel);
         delete prevModel;
+
+        connect(dataModel, &DataModel::dataChanged,
+            this, &BinaryEditor::handleDataChanged);
 
         mEditableRegion->horizontalHeader()->setMinimumSectionSize(1);
         for (auto i = 0; i < dataModel->columnCount({ }); ++i)
