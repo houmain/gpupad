@@ -33,6 +33,14 @@ GLBuffer::GLBuffer(const Buffer &buffer,
         }
 }
 
+void GLBuffer::updateUntitledFilename(const GLBuffer &rhs)
+{
+    if (mSize == rhs.mSize &&
+        FileDialog::isEmptyOrUntitled(mFileName) &&
+        FileDialog::isEmptyOrUntitled(rhs.mFileName))
+        mFileName = rhs.mFileName;
+}
+
 bool GLBuffer::operator==(const GLBuffer &rhs) const
 {
     return std::tie(mFileName, mSize) ==

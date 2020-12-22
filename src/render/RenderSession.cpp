@@ -19,6 +19,7 @@
 #include <deque>
 #include <QStack>
 #include <QOpenGLTimerQuery>
+#include <type_traits>
 
 namespace {
     struct BindingScope
@@ -103,8 +104,14 @@ namespace {
     {
         for (auto &kv : to) {
             auto it = from.find(kv.first);
-            if (it != from.end() && kv.second == it->second)
-                kv.second = std::move(it->second);
+            if (it != from.end()) {
+                // implicitly update untitled filename of buffer
+                if constexpr (std::is_same_v<T, GLBuffer>)
+                    it->second.updateUntitledFilename(kv.second);
+
+                if (kv.second == it->second)
+                    kv.second = std::move(it->second);
+            }
         }
     }
 

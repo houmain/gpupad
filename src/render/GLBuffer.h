@@ -9,6 +9,7 @@ class GLBuffer
 public:
     GLBuffer(const Buffer &buffer,
         ScriptEngine &scriptEngine, MessagePtrSet &messages);
+    void updateUntitledFilename(const GLBuffer &rhs);
     bool operator==(const GLBuffer &rhs) const;
 
     ItemId itemId() const { return mItemId; }
