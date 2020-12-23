@@ -1,12 +1,12 @@
 [
     {
         "format": "RGB8_UNorm",
-        "height": 512,
+        "height": "512",
         "id": 77,
         "name": "Texture",
         "target": "Target2D",
         "type": "Texture",
-        "width": 512
+        "width": "512"
     },
     {
         "executeOn": "EveryEvaluation",
@@ -39,8 +39,8 @@
                     }
                 ],
                 "name": "Particle",
-                "offset": 0,
-                "rowCount": 100000,
+                "offset": "0",
+                "rowCount": "particleCount",
                 "type": "Block"
             }
         ],

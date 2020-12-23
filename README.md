@@ -71,7 +71,7 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 
 Building
 --------
-A C++17 conforming compiler and [Qt5](https://www.qt.io/) is required. A script for the
+A C++17 conforming compiler and [Qt5 or Qt6](https://www.qt.io/) are required. A script for the
 [CMake](https://cmake.org) build system is provided.
 
 **Arch Linux** users can install it from the [AUR](https://aur.archlinux.org/packages/gpupad-git).
