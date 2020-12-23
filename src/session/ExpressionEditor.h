@@ -11,12 +11,8 @@ class ExpressionEditor final : public QPlainTextEdit
 public:
     explicit ExpressionEditor(QWidget *parent = nullptr);
 
-    void setText(const QString &text)
-    {
-        if (text != toPlainText())
-            setPlainText(text);
-    }
-    QString text() const { return toPlainText(); }
+    void setText(const QString &text);
+    QString text() const;
 
     using QAbstractScrollArea::setViewportMargins;
 

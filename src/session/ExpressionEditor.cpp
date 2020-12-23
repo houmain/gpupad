@@ -1,6 +1,8 @@
 #include "ExpressionEditor.h"
 #include <QWheelEvent>
 
+extern QString simpleDoubleString(double value);
+
 ExpressionEditor::ExpressionEditor(QWidget *parent) : QPlainTextEdit(parent)
 {
 }
@@ -22,8 +24,18 @@ void ExpressionEditor::stepBy(double steps)
     auto value = toPlainText().toDouble(&ok);
     if (ok) {
         value += steps * singleStep;
-        setText(QString::number(value, 'f',
-            value == qRound(value) ? 0 : 2));
+        setText(simpleDoubleString(value));
         selectAll();
     }
+}
+
+void ExpressionEditor::setText(const QString &text)
+{
+    if (text != toPlainText())
+        setPlainText(text);
+}
+
+QString ExpressionEditor::text() const
+{
+    return toPlainText();
 }

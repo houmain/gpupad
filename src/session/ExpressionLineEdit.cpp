@@ -1,5 +1,14 @@
 #include "ExpressionLineEdit.h"
 #include <QWheelEvent>
+#include <QRegularExpression>
+
+QString simpleDoubleString(double value)
+{
+     static QRegularExpression sRegex("\\.?0+$");
+     auto string = QString::number(value, 'f', 6);
+     string.remove(sRegex);
+     return string;
+}
 
 ExpressionLineEdit::ExpressionLineEdit(QWidget *parent) : QLineEdit(parent)
 {
@@ -31,6 +40,28 @@ void ExpressionLineEdit::stepBy(int steps)
     }
 }
 
+void ExpressionLineEdit::setText(const QString &text)
+{
+    auto ok = false;
+    if (auto value = text.toDouble(&ok); ok) {
+        auto simplified = simpleDoubleString(value);
+        if (simplified != this->text())
+            QLineEdit::setText(simplified);
+    }
+    else {
+        if (text != this->text())
+            QLineEdit::setText(text);
+    }
+}
+
+QString ExpressionLineEdit::text() const
+{
+    auto ok = false;
+    if (auto value = QLineEdit::text().toDouble(&ok))
+        return simpleDoubleString(value);
+    return QLineEdit::text();
+}
+
 void ExpressionLineEdit::stepBy(double steps)
 {
     const auto singleStep = 0.1;
@@ -38,8 +69,7 @@ void ExpressionLineEdit::stepBy(double steps)
     auto value = text().toDouble(&ok);
     if (ok) {
         value += steps * singleStep;
-        setText(QString::number(value, 'f',
-            value == qRound(value) ? 0 : 2));
+        setText(QString::number(value));
         selectAll();
     }
 }

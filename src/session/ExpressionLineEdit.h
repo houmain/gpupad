@@ -11,12 +11,8 @@ class ExpressionLineEdit final : public QLineEdit
 public:
     explicit ExpressionLineEdit(QWidget *parent = nullptr);
 
-    void setText(const QString &text)
-    {
-        if (text != QLineEdit::text())
-            QLineEdit::setText(text);
-    }
-    QString text() const { return QLineEdit::text(); }
+    void setText(const QString &text);
+    QString text() const;
 
     bool decimal() const { return mDecimal; }
     void setDecimal(bool decimal) { mDecimal = decimal; }

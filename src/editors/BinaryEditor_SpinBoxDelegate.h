@@ -32,7 +32,7 @@ public:
             editor->setFrame(false);
             editor->setDecimal(true);
 
-            connect(editor, &QLineEdit::textChanged,
+            connect(editor, &ExpressionLineEdit::textChanged,
                 [this, editor, index]() {
                     setModelData(editor, const_cast<QAbstractItemModel *>(index.model()), index);
                 });
@@ -68,7 +68,7 @@ public:
             auto value = index.model()->data(index, Qt::EditRole).toInt();
             spinBox->setValue(value);
         }
-        else if (auto *lineEdit = qobject_cast<QLineEdit*>(editor)) {
+        else if (auto *lineEdit = qobject_cast<ExpressionLineEdit*>(editor)) {
             auto value = index.model()->data(index, Qt::EditRole).toString();
             lineEdit->setText(value);
         }
@@ -83,7 +83,7 @@ public:
             model->setData(index, value, Qt::EditRole);
             Q_EMIT model->dataChanged(index, index);
         }
-        else if (auto *lineEdit = qobject_cast<QLineEdit*>(editor)) {
+        else if (auto *lineEdit = qobject_cast<ExpressionLineEdit*>(editor)) {
             auto ok = true;
             auto value = lineEdit->text().toDouble(&ok);
             if (ok) {
