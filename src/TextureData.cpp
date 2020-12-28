@@ -59,8 +59,10 @@ namespace {
                 return QOpenGLTexture::RGBA16_UNorm;
             case QImage::Format_Grayscale8:
                 return QOpenGLTexture::R8_UNorm;
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 13, 0))
             case QImage::Format_Grayscale16:
                 return QOpenGLTexture::R16_UNorm;
+#endif
             default:
                 return QOpenGLTexture::NoFormat;
         }
@@ -758,7 +760,7 @@ bool TextureData::loadFromQImage(const QString &fileName)
     auto image = QImage();
     if (!image.load(fileName))
         return false;
-    image.convertTo(getNextNativeImageFormat(image.format()));
+    image = std::move(image).convertToFormat(getNextNativeImageFormat(image.format()));
     if (!create(QOpenGLTexture::Target2D, getTextureFormat(image.format()),
                 image.width(), image.height()))
         return false;
@@ -862,17 +864,17 @@ bool TextureData::saveToTga(const QString &fileName) const
     header.height = height();
     auto imageData = toImage();
     if (imageData.isGrayscale()) {
-        imageData = imageData.convertToFormat(QImage::Format_Grayscale8);
+        imageData = std::move(imageData).convertToFormat(QImage::Format_Grayscale8);
         header.imageType = tga::UncompressedGray;
         header.bitsPerPixel = 8;
     }
-    else if (imageData.hasAlphaChannel()){
-        imageData = imageData.convertToFormat(QImage::Format_RGBA8888);
+    else if (imageData.hasAlphaChannel()) {
+        imageData = std::move(imageData).convertToFormat(QImage::Format_RGBA8888);
         header.imageType = tga::UncompressedRgb;
         header.bitsPerPixel = 32;
     }
     else {
-        imageData = imageData.convertToFormat(QImage::Format_RGB888);
+        imageData = std::move(imageData).convertToFormat(QImage::Format_RGB888);
         header.imageType = tga::UncompressedRgb;
         header.bitsPerPixel = 24;
     }

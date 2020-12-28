@@ -10,7 +10,7 @@ namespace {
     }
 } // namespace
 
-#if defined(__linux)
+#if defined(__linux) && __has_include(<xf86drm.h>)
 
 #include <fcntl.h>
 #include <xf86drm.h>
@@ -62,6 +62,16 @@ bool initializeCompositorSync() {
 
 bool synchronizeToCompositor() {
     return (gDwmEnabled && SUCCEEDED(DwmFlush()));
+}
+
+#else
+
+bool initializeCompositorSync() {
+    return false;
+}
+
+bool synchronizeToCompositor() {
+    return false;
 }
 
 #endif

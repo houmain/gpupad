@@ -6,6 +6,7 @@
 #include "editors/TextureEditor.h"
 #include "editors/BinaryEditor.h"
 #include <QThread>
+#include <QTextStream>
 
 FileCache::FileCache(QObject *parent) : QObject(parent)
 {

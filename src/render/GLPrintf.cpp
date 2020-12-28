@@ -1,4 +1,5 @@
 #include "GLPrintf.h"
+#include <QVector>
 #include <array>
 #include <cstring>
 
