@@ -43,7 +43,6 @@
         "width": 256
     },
     {
-        "anisotropic": true,
         "bindingType": "Sampler",
         "borderColor": "#ff000000",
         "comparisonFunc": "NoComparisonFunc",

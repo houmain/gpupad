@@ -418,7 +418,6 @@
                         ]
                     },
                     {
-                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -433,7 +432,6 @@
                         "wrapModeZ": "Repeat"
                     },
                     {
-                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -448,7 +446,6 @@
                         "wrapModeZ": "Repeat"
                     },
                     {
-                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -481,7 +478,6 @@
                 "inlineScope": true,
                 "items": [
                     {
-                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -519,7 +515,6 @@
                         ]
                     },
                     {
-                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -554,7 +549,6 @@
                         ]
                     },
                     {
-                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -589,7 +583,6 @@
                         ]
                     },
                     {
-                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -614,7 +607,6 @@
                         ]
                     },
                     {
-                        "anisotropic": true,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
