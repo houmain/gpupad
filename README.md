@@ -2,13 +2,18 @@
 
 GPUpad
 ======
+
 Aims to be a lightweight editor for GLSL shaders of all kinds and a fully-featured IDE for developing GPU based algorithms.
 
-# Screenshots
+Screenshots
+-----------
+
 <a href="screenshot2.png"><img src="screenshot2.png" height="380"></a> &nbsp;
 <a href="screenshot1.png"><img src="screenshot1.png" height="280"></a>
 
-# Features
+Features
+--------
+
 * Cross platform and efficient.
 * Decent source editor with automatic indentation, rectangular selection&hellip;
 * GLSL and JavaScript syntax highlighting with basic auto completion (of built-in functions and constants).
@@ -21,11 +26,13 @@ Aims to be a lightweight editor for GLSL shaders of all kinds and a fully-featur
 * Editor for structured binary files.
 * Sample sessions in the Help menu.
 
-# Introduction
-## Getting Started
+Introduction
+------------
+
+### Getting Started
 To get started, you can open and play around with the sample sessions in the *Help* menu.
 
-## Session
+### Session
 In order to try out the shaders, the session allows to define draw and compute calls, together with the pipeline state and data the programs should operate on.
 
 It can be populated with items from the *Session* menu or the context menu. Undo/redo, copy/paste and drag/drop should work as expected (also between multiple instances).
@@ -69,19 +76,23 @@ Allows to structure more complex sessions. They open a new scope unless *inline 
 Allows to define JavaScript functions and variables in script files, which can subsequently be used in uniform binding expressions.
 There is one JavaScript state for the whole session and the scripts are evaluated in consecutive order (*Group* scopes do not have an effect).
 
-# Installation
-## Arch Linux and derivatives:
+Installation
+------------
+
+### Arch Linux and derivatives:
 
 An up to date build can be installed from the [AUR](https://aur.archlinux.org/packages/gpupad-git/).
 
-## Other Linux distributions:
+### Other Linux distributions:
 
 No packages are provided yet, please follow the instructions for [building manually](#Building).
 
-## Windows:
+### Windows:
 A portable build can be downloaded from the [latest release](https://github.com/houmaster/gpupad/releases/latest) page.
 
-# Building
+Building
+--------
+
 A C++17 conforming compiler and [Qt5](https://www.qt.io/) (or Qt6) are required. A script for the
 [CMake](https://cmake.org) build system is provided.
 
@@ -109,5 +120,6 @@ cmake --build . --config Release
 ./gpupad
 ```
 
-# License
+License
+-------
 It is released under the GNU GPLv3. Please see `LICENSE` for license details.
