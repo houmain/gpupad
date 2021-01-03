@@ -53,7 +53,7 @@ ScriptEngine::ScriptEngine(QObject *parent)
     Q_ASSERT(onMainThread());
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
-    mInterruptThread = new QThread(this);
+    mInterruptThread = new QThread();
     mInterruptTimer = new QTimer();
     mInterruptTimer->setInterval(1000);
     mInterruptTimer->setSingleShot(true);
