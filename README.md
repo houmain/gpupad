@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/d1frxd63iohaqcto/branch/master?svg=true)](https://ci.appveyor.com/project/houmaster/gpupad/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/d1frxd63iohaqcto/branch/master?svg=true)](https://ci.appveyor.com/project/houmain/gpupad/branch/master)
 
 GPUpad
 ======
@@ -88,7 +88,7 @@ An up to date build can be installed from the [AUR](https://aur.archlinux.org/pa
 No packages are provided yet, please follow the instructions for [building manually](#Building).
 
 ### Windows:
-A portable build can be downloaded from the [latest release](https://github.com/houmaster/gpupad/releases/latest) page.
+A portable build can be downloaded from the [latest release](https://github.com/houmain/gpupad/releases/latest) page.
 
 Building
 --------
@@ -103,7 +103,7 @@ sudo apt install build-essential git cmake qtdeclarative5-dev
 
 ### Checking out the source:
 ```
-git clone --depth 1 https://github.com/houmaster/gpupad
+git clone --depth 1 https://github.com/houmain/gpupad
 cd gpupad
 ```
 

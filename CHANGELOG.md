@@ -215,19 +215,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.0] - 2019-04-14
 
-[Unreleased]: https://github.com/houmaster/gpupad/compare/1.14...HEAD
-[Version 1.14]: https://github.com/houmaster/gpupad/compare/1.13...1.14
-[Version 1.13]: https://github.com/houmaster/gpupad/compare/1.12...1.13
-[Version 1.12]: https://github.com/houmaster/gpupad/compare/1.11...1.12
-[Version 1.11]: https://github.com/houmaster/gpupad/compare/1.10...1.11
-[Version 1.10]: https://github.com/houmaster/gpupad/compare/1.9...1.10
-[Version 1.9]: https://github.com/houmaster/gpupad/compare/1.8...1.9
-[Version 1.8]: https://github.com/houmaster/gpupad/compare/1.7...1.8
-[Version 1.7]: https://github.com/houmaster/gpupad/compare/1.6...1.7
-[Version 1.6]: https://github.com/houmaster/gpupad/compare/1.5...1.6
-[Version 1.5]: https://github.com/houmaster/gpupad/compare/1.4...1.5
-[Version 1.4]: https://github.com/houmaster/gpupad/compare/1.3...1.4
-[Version 1.3]: https://github.com/houmaster/gpupad/compare/1.2...1.3
-[Version 1.2]: https://github.com/houmaster/gpupad/compare/1.1...1.2
-[Version 1.1]: https://github.com/houmaster/gpupad/compare/1.0.0...1.1
-[Version 1.0]: https://github.com/houmaster/gpupad/releases/tag/1.0.0
+[Unreleased]: https://github.com/houmain/gpupad/compare/1.14...HEAD
+[Version 1.14]: https://github.com/houmain/gpupad/compare/1.13...1.14
+[Version 1.13]: https://github.com/houmain/gpupad/compare/1.12...1.13
+[Version 1.12]: https://github.com/houmain/gpupad/compare/1.11...1.12
+[Version 1.11]: https://github.com/houmain/gpupad/compare/1.10...1.11
+[Version 1.10]: https://github.com/houmain/gpupad/compare/1.9...1.10
+[Version 1.9]: https://github.com/houmain/gpupad/compare/1.8...1.9
+[Version 1.8]: https://github.com/houmain/gpupad/compare/1.7...1.8
+[Version 1.7]: https://github.com/houmain/gpupad/compare/1.6...1.7
+[Version 1.6]: https://github.com/houmain/gpupad/compare/1.5...1.6
+[Version 1.5]: https://github.com/houmain/gpupad/compare/1.4...1.5
+[Version 1.4]: https://github.com/houmain/gpupad/compare/1.3...1.4
+[Version 1.3]: https://github.com/houmain/gpupad/compare/1.2...1.3
+[Version 1.2]: https://github.com/houmain/gpupad/compare/1.1...1.2
+[Version 1.1]: https://github.com/houmain/gpupad/compare/1.0.0...1.1
+[Version 1.0]: https://github.com/houmain/gpupad/releases/tag/1.0.0
