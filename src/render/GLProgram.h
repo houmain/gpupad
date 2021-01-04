@@ -74,7 +74,7 @@ public:
     bool applyPrintfBindings();
     bool apply(const GLSubroutineBinding &subroutine);
     void reapplySubroutines();
-    void checkUniforms();
+    bool allBuffersBound() const;
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:

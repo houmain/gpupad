@@ -532,3 +532,11 @@ void GLProgram::reapplySubroutines()
         subroutineIndices.clear();
     }
 }
+
+bool GLProgram::allBuffersBound() const
+{
+    for (const auto &[buffer, set]  : mBuffersSet)
+        if (!set)
+            return false;
+    return true;
+}

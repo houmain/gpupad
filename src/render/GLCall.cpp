@@ -155,7 +155,11 @@ void GLCall::executeDraw(MessagePtrSet &messages)
     if (mIndirectBuffer)
         mIndirectBuffer->bindReadOnly(GL_DRAW_INDIRECT_BUFFER);
 
-    if (mProgram) {
+    if (!mProgram) {
+        messages += MessageList::insert(
+            mCall.id, MessageType::ProgramNotAssigned);
+    }
+    else if (mProgram->allBuffersBound()) {
         auto &gl = GLContext::currentContext();
 
         if (mCall.primitiveType == Call::PrimitiveType::Patches && gl.v4_0)
@@ -224,10 +228,6 @@ void GLCall::executeDraw(MessagePtrSet &messages)
             }
         }
     }
-    else {
-        messages += MessageList::insert(
-            mCall.id, MessageType::ProgramNotAssigned);
-    }
         
     if (mIndirectBuffer)
         mIndirectBuffer->unbind(GL_DRAW_INDIRECT_BUFFER);
@@ -247,7 +247,11 @@ void GLCall::executeCompute(MessagePtrSet &messages)
     if (mIndirectBuffer)
         mIndirectBuffer->bindReadOnly(GL_DISPATCH_INDIRECT_BUFFER);
 
-    if (mProgram) {
+    if (!mProgram) {
+        messages += MessageList::insert(
+            mCall.id, MessageType::ProgramNotAssigned);
+    }
+    else if (mProgram->allBuffersBound()) {
         auto &gl = GLContext::currentContext();
 
         auto guard = beginTimerQuery();
@@ -263,10 +267,6 @@ void GLCall::executeCompute(MessagePtrSet &messages)
                 gl43->glDispatchComputeIndirect(offset);
             }
         }
-    }
-    else {
-        messages += MessageList::insert(
-            mCall.id, MessageType::ProgramNotAssigned);
     }
 
     if (mIndirectBuffer)
