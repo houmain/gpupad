@@ -94,6 +94,7 @@ struct Binding : Item
     QStringList values{ "0" };
     ItemId textureId{ };
     ItemId bufferId{ };
+    ItemId blockId{ };
     int level{ };
     int layer{ -1 };
     Filter minFilter{ QOpenGLTexture::Nearest };

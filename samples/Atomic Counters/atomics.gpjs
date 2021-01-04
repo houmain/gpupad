@@ -15,8 +15,8 @@
                     }
                 ],
                 "name": "RGBA",
-                "offset": 0,
-                "rowCount": 32,
+                "offset": "0",
+                "rowCount": "32",
                 "type": "Block"
             }
         ],
@@ -39,8 +39,8 @@
                     }
                 ],
                 "name": "Counter",
-                "offset": 0,
-                "rowCount": 1,
+                "offset": "0",
+                "rowCount": "1",
                 "type": "Block"
             }
         ],
@@ -71,8 +71,8 @@
                     }
                 ],
                 "name": "Counters",
-                "offset": 0,
-                "rowCount": 1,
+                "offset": "0",
+                "rowCount": "1",
                 "type": "Block"
             }
         ],
@@ -95,7 +95,7 @@
     },
     {
         "bindingType": "TextureBuffer",
-        "bufferId": 96,
+        "blockId": 908,
         "id": 100,
         "imageFormat": "rgba8ui",
         "name": "uData",

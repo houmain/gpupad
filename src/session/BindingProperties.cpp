@@ -165,6 +165,7 @@ void BindingProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->editor, SessionModel::BindingEditor);
     mapper.addMapping(mUi->texture, SessionModel::BindingTextureId);
     mapper.addMapping(mUi->buffer, SessionModel::BindingBufferId);
+    mapper.addMapping(mUi->block, SessionModel::BindingBlockId);
     mapper.addMapping(mUi->level, SessionModel::BindingLevel);
     mapper.addMapping(mUi->layer, SessionModel::BindingLayer);
     mapper.addMapping(mUi->minFilter, SessionModel::BindingMinFilter);

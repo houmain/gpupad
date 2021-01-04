@@ -28,6 +28,7 @@
     ADD(BindingValues, Binding, values) \
     ADD(BindingTextureId, Binding, textureId) \
     ADD(BindingBufferId, Binding, bufferId) \
+    ADD(BindingBlockId, Binding, blockId) \
     ADD(BindingLevel, Binding, level) \
     ADD(BindingLayer, Binding, layer) \
     ADD(BindingImageFormat, Binding, imageFormat) \
