@@ -79,15 +79,16 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 Installation
 ------------
 
-### Arch Linux and derivatives:
+**Arch Linux and derivatives:**
 
 An up to date build can be installed from the [AUR](https://aur.archlinux.org/packages/gpupad-git/).
 
-### Other Linux distributions:
+**Other Linux distributions:**
 
 No packages are provided yet, please follow the instructions for [building manually](#Building).
 
-### Windows:
+**Windows:**
+
 A portable build can be downloaded from the [latest release](https://github.com/houmain/gpupad/releases/latest) page.
 
 Building
@@ -96,18 +97,18 @@ Building
 A C++17 conforming compiler and [Qt5](https://www.qt.io/) (or Qt6) are required. A script for the
 [CMake](https://cmake.org) build system is provided.
 
-### Installing dependencies on Debian Linux and derivatives:
+**Installing dependencies on Debian Linux and derivatives:**
 ```
 sudo apt install build-essential git cmake qtdeclarative5-dev
 ```
 
-### Checking out the source:
+**Checking out the source:**
 ```
 git clone --depth 1 https://github.com/houmain/gpupad
 cd gpupad
 ```
 
-### Building:
+**Building:**
 ```
 mkdir build
 cd build
@@ -115,7 +116,7 @@ cmake ..
 cmake --build . --config Release
 ```
 
-### Running:
+**Running:**
 ```
 ./gpupad
 ```
