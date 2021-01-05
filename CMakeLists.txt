@@ -139,11 +139,14 @@ endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include)
 
-if(NOT WIN32)
-    target_include_directories(${PROJECT_NAME} PRIVATE /usr/include/libdrm)
-    target_link_libraries(${PROJECT_NAME} drm GL)
-else()
+if(WIN32)
     target_link_libraries(${PROJECT_NAME} dwmapi opengl32)
+else()
+    target_link_libraries(${PROJECT_NAME} GL)
+    if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+        target_include_directories(${PROJECT_NAME} PRIVATE /usr/include/libdrm)
+        target_link_libraries(${PROJECT_NAME} drm)
+    endif()
 endif()
 
 option(OPTION_USE_QT6 "Use Qt6" OFF)
