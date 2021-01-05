@@ -708,9 +708,11 @@ void MainWindow::updateRecentFileActions()
     auto index = 1;
     for (const auto &actions : { mRecentSessionActions, mRecentFileActions })
         for (const auto action : actions)
-            if (action->isVisible())
+            if (action->isVisible()) {
                 action->setText((index < 10 ? QStringLiteral("  &%1 %2") :
-                    QStringLiteral("%1 %2")).arg(index++).arg(action->text()));
+                    QStringLiteral("%1 %2")).arg(index).arg(action->text()));
+                ++index;
+            }
 
     mUi->menuRecentFiles->setEnabled(!mRecentFiles.empty());
 }

@@ -503,6 +503,7 @@ QString GLPrintf::formatMessage(const ParsedFormatString &format,
 
 void GLPrintf::clear()
 {
+#if GL_VERSION_4_3
     auto& gl = GLContext::currentContext();
     const auto createBuffer = [&]() {
         auto buffer = GLuint{};
@@ -527,10 +528,14 @@ void GLPrintf::clear()
     auto header = BufferHeader{ 1, 0 };
     gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferObject);
     gl.glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(header), &header);
+#endif // GL_VERSION_4_3
 }
 
 MessagePtrSet GLPrintf::formatMessages(ItemId callItemId)
 {
+    auto messages = MessagePtrSet();
+
+#if GL_VERSION_4_3
     auto &gl = GLContext::currentContext();
     auto header = BufferHeader{ };
     gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferObject);
@@ -553,7 +558,6 @@ MessagePtrSet GLPrintf::formatMessages(ItemId callItemId)
         return { };
     };
 
-    auto messages = MessagePtrSet();
     for (auto offset = data[0];;) {
         const auto lastMessage = (offset == lastBegin);
         const auto nextBegin = read(offset++);
@@ -585,6 +589,7 @@ MessagePtrSet GLPrintf::formatMessages(ItemId callItemId)
     if (readOutside)
         messages += MessageList::insert(callItemId, MessageType::ShaderWarning,
             "Too many printf calls. Please filter threads by setting printfEnabled.");
+#endif // GL_VERSION_4_3
 
     return messages;
 }

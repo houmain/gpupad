@@ -274,7 +274,7 @@ void GLCall::executeCompute(MessagePtrSet &messages)
 
     if (mIndirectBuffer)
         mIndirectBuffer->unbind(GL_DISPATCH_INDIRECT_BUFFER);
-#endif
+#endif // GL_VERSION_4_3
 }
 
 void GLCall::executeClearTexture(MessagePtrSet &messages)
