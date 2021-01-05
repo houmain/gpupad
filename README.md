@@ -82,11 +82,7 @@ Installation
 
 An up to date build can be installed from the [AUR](https://aur.archlinux.org/packages/gpupad-git/).
 
-**Other Linux distributions:**
-
-No packages are provided yet, please follow the instructions for [building manually](#Building).
-
-**Windows:**
+**Other Linux distributions, Windows, macOS:**
 
 A portable build can be downloaded from the [latest release](https://github.com/houmain/gpupad/releases/latest) page.
 
@@ -113,6 +109,12 @@ mkdir build
 cd build
 cmake ..
 cmake --build . --config Release
+```
+
+On Windows and macOS you might have to pass the path to your Qt installation. e.g:
+
+```
+cmake --build . --config Release -DCMAKE_PREFIX_PATH=C:\Qt\5.15\msvc2019_64
 ```
 
 **Running:**
