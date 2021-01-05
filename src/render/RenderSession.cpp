@@ -458,8 +458,12 @@ void RenderSession::render()
 
     gl.glEnable(GL_FRAMEBUFFER_SRGB);
     gl.glEnable(GL_PROGRAM_POINT_SIZE);
-    gl.glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
     gl.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+#if GL_VERSION_4_3
+    if (gl.v4_3)
+        gl.glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+#endif
 
     reuseUnmodifiedItems();
     executeCommandQueue();
