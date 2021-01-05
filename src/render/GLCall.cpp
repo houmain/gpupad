@@ -123,9 +123,11 @@ void GLCall::execute(MessagePtrSet &messages)
             break;
     }
 
+#if GL_VERSION_4_2
     auto &gl = GLContext::currentContext();
     if (gl.v4_2)
         gl.v4_2->glMemoryBarrier(GL_ALL_BARRIER_BITS);
+#endif
 
     const auto error = glGetError();
     if (error != GL_NO_ERROR)
@@ -244,6 +246,7 @@ void GLCall::executeDraw(MessagePtrSet &messages)
 
 void GLCall::executeCompute(MessagePtrSet &messages)
 {
+#if GL_VERSION_4_3
     if (mIndirectBuffer)
         mIndirectBuffer->bindReadOnly(GL_DISPATCH_INDIRECT_BUFFER);
 
@@ -271,6 +274,7 @@ void GLCall::executeCompute(MessagePtrSet &messages)
 
     if (mIndirectBuffer)
         mIndirectBuffer->unbind(GL_DISPATCH_INDIRECT_BUFFER);
+#endif
 }
 
 void GLCall::executeClearTexture(MessagePtrSet &messages)

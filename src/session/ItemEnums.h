@@ -4,6 +4,10 @@
 #include <QObject>
 #include <QOpenGLTexture>
 
+#if !defined(GL_COMPUTE_SHADER)
+# define GL_COMPUTE_SHADER 0x91B9
+#endif
+
 namespace ItemEnums {
     Q_NAMESPACE
 

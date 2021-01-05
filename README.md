@@ -1,4 +1,3 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/d1frxd63iohaqcto/branch/master?svg=true)](https://ci.appveyor.com/project/houmain/gpupad/branch/master)
 
 GPUpad
 ======
@@ -99,7 +98,7 @@ A C++17 conforming compiler and [Qt5](https://www.qt.io/) (or Qt6) are required.
 
 **Installing dependencies on Debian Linux and derivatives:**
 ```
-sudo apt install build-essential git cmake qtdeclarative5-dev
+sudo apt install build-essential git cmake qtdeclarative5-dev libdrm-dev
 ```
 
 **Checking out the source:**

@@ -83,6 +83,7 @@ bool GLProgram::link()
         for (auto j = 0; j < size; ++j) 
             mActiveUniforms[QStringLiteral("%1[%2]").arg(name).arg(j)] = { type, 1 };
 
+#if GL_VERSION_4_2
         if (auto gl42 = gl.v4_2) {
             auto atomicCounterIndex = 0;
             auto indices = static_cast<GLuint>(i);
@@ -101,6 +102,7 @@ bool GLProgram::link()
                 mUniformsSet.erase(name);
             }
         }
+#endif
     }
 
     auto uniformBlocks = GLint{ };
@@ -177,6 +179,7 @@ bool GLProgram::link()
         }
     }
 
+#if GL_VERSION_4_3
     if (auto gl43 = gl.v4_3) {
         auto maxNameLength = GLint{ };
         gl43->glGetProgramInterfaceiv(program, 
@@ -199,6 +202,7 @@ bool GLProgram::link()
             mBuffersSet[name] = false;
         }
     }
+#endif
     mProgramObject = std::move(program);
     return true;
 }
