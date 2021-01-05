@@ -111,6 +111,7 @@ bool GLTarget::create()
             mUsedItems += texture->usedItems();
         }
 
+#if GL_VERSION_4_3
     auto gl43 = gl.v4_3;
     if (gl43 && mAttachments.empty()) {
         gl43->glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_WIDTH, mDefaultWidth);
@@ -118,6 +119,7 @@ bool GLTarget::create()
         gl43->glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_LAYERS, mDefaultLayers);
         gl43->glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_SAMPLES, mDefaultSamples);
     }
+#endif
 
     const auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
