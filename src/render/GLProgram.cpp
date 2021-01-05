@@ -436,6 +436,7 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
     if (!binding.texture)
         return false;
 
+#if GL_VERSION_4_2
     auto &texture = *binding.texture;
     const auto target = texture.target();
     const auto textureId = texture.getReadWriteTextureId();
@@ -459,6 +460,7 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
             std::max(binding.layer, 0), binding.access, format);
     }
     uniformSet(binding.name);
+#endif
     return true;
 }
 
