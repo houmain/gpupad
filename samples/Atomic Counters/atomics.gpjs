@@ -95,7 +95,7 @@
     },
     {
         "bindingType": "TextureBuffer",
-        "blockId": 908,
+        "bufferId": 96,
         "id": 100,
         "imageFormat": "rgba8ui",
         "name": "uData",

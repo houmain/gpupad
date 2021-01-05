@@ -138,11 +138,9 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
         [this]() { return mSessionProperties.getItemIds(Item::Type::Texture); });
     connect(mUi->buffer, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
-    connect(mUi->block, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(Item::Type::Block); });
-    connect(mUi->block, &ReferenceComboBox::currentDataChanged,
+    connect(mUi->buffer, &ReferenceComboBox::currentDataChanged,
         this, &BindingProperties::updateWidgets);
-    for (auto comboBox : { mUi->texture, mUi->buffer, mUi->block })
+    for (auto comboBox : { mUi->texture, mUi->buffer })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant id) {
                 return mSessionProperties.getItemName(id.toInt());
@@ -165,7 +163,6 @@ void BindingProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->editor, SessionModel::BindingEditor);
     mapper.addMapping(mUi->texture, SessionModel::BindingTextureId);
     mapper.addMapping(mUi->buffer, SessionModel::BindingBufferId);
-    mapper.addMapping(mUi->block, SessionModel::BindingBlockId);
     mapper.addMapping(mUi->level, SessionModel::BindingLevel);
     mapper.addMapping(mUi->layer, SessionModel::BindingLayer);
     mapper.addMapping(mUi->minFilter, SessionModel::BindingMinFilter);
@@ -212,11 +209,13 @@ int BindingProperties::getTextureStride(QVariant textureId) const
     return 0;
 }
 
-int BindingProperties::getBlockStride(QVariant blockId) const
+int BindingProperties::getBufferStride(QVariant bufferId) const
 {
-    const auto itemId = blockId.toInt();
-    if (auto block = mSessionProperties.model().findItem<Block>(itemId))
-        return ::getBlockStride(*block);
+    const auto itemId = bufferId.toInt();
+    if (auto buffer = mSessionProperties.model().findItem<Buffer>(itemId))
+        if (!buffer->items.empty())
+            if (auto firstBlock = castItem<Block>(buffer->items.first()))
+                return ::getBlockStride(*firstBlock);
     return 0;
 }
 
@@ -267,9 +266,7 @@ void BindingProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
         image || sampler);
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
-        buffer);
-    setFormVisibility(mUi->formLayout, mUi->labelBlock, mUi->block,
-        textureBuffer);
+        buffer || textureBuffer);
 
     const auto textureKind = (image ? currentTextureKind() : TextureKind{ });
     setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, image);
@@ -280,7 +277,7 @@ void BindingProperties::updateWidgets()
     if (image)
         stride = getTextureStride(mUi->texture->currentData());
     else if (textureBuffer)
-        stride = getBlockStride(mUi->block->currentData());
+        stride = getBufferStride(mUi->buffer->currentData());
     filterImageFormats(stride);
     setFormVisibility(mUi->formLayout, mUi->labelImageFormat, mUi->imageFormat,
         stride);

@@ -489,8 +489,7 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             result &= (column != BindingWrapModeZ || sampler);
             result &= (column != BindingBorderColor || sampler);
             result &= (column != BindingComparisonFunc || sampler);
-            result &= (column != BindingBufferId || buffer);
-            result &= (column != BindingBlockId || textureBuffer);
+            result &= (column != BindingBufferId || buffer || textureBuffer);
             result &= (column != BindingSubroutine || subroutine);
             break;
         }
