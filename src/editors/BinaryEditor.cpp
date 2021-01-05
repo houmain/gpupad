@@ -18,19 +18,19 @@ namespace
         property = value;
         return true;
     }
-
-    [[maybe_unused]] bool operator==(const BinaryEditor::Field &a, const BinaryEditor::Field &b)
-    {
-        return std::tie(a.name, a.dataType, a.count, a.padding) ==
-               std::tie(b.name, b.dataType, b.count, b.padding);
-    }
-
-    [[maybe_unused]] bool operator==(const BinaryEditor::Block &a, const BinaryEditor::Block &b)
-    {
-        return std::tie(a.name, a.offset, a.rowCount, a.fields) ==
-               std::tie(b.name, b.offset, b.rowCount, b.fields);
-    }
 } // namespace
+
+[[maybe_unused]] bool operator==(const BinaryEditor::Field &a, const BinaryEditor::Field &b)
+{
+    return std::tie(a.name, a.dataType, a.count, a.padding) ==
+           std::tie(b.name, b.dataType, b.count, b.padding);
+}
+
+[[maybe_unused]] bool operator==(const BinaryEditor::Block &a, const BinaryEditor::Block &b)
+{
+    return std::tie(a.name, a.offset, a.rowCount, a.fields) ==
+           std::tie(b.name, b.offset, b.rowCount, b.fields);
+}
 
 int BinaryEditor::getTypeSize(DataType type)
 {
