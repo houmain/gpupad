@@ -34,7 +34,7 @@ void GLShader::parseLog(const QString &log,
     for (auto matches = split.globalMatch(log); matches.hasNext(); ) {
         auto match = matches.next();
         const auto sourceIndex = match.captured(2).toInt();
-        const auto line = (!match.captured().isEmpty() ?
+        const auto line = (!match.captured(4).isEmpty() ?
             match.captured(4).toInt() : match.captured(5).toInt());
         const auto severity = match.captured(6);
         const auto text = match.captured(7);
