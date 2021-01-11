@@ -434,7 +434,7 @@ void MainWindow::updateFileActions()
     mUi->actionSaveAs->setText(tr("Save%1 &As...").arg(desc));
     mUi->actionClose->setText(tr("&Close%1").arg(desc));
 
-    const auto canReload = (mEditorManager.hasCurrentEditor());
+    const auto canReload = !FileDialog::isEmptyOrUntitled(fileName);
     mUi->actionReload->setEnabled(canReload);
     mUi->actionReload->setText(tr("&Reload%1").arg(canReload ? desc : ""));
 
@@ -553,7 +553,10 @@ bool MainWindow::saveAllFiles()
 
 bool MainWindow::reloadFile()
 {
-    return mEditorManager.reloadEditor();
+    if (mEditorManager.hasCurrentEditor())
+        return mEditorManager.reloadEditor();
+
+    return reloadSession();
 }
 
 bool MainWindow::closeFile()
@@ -662,6 +665,11 @@ bool MainWindow::closeSession()
             return false;
     }
     return mSessionEditor->clear();
+}
+
+bool MainWindow::reloadSession()
+{
+    return openFile(mSessionEditor->fileName());
 }
 
 void MainWindow::addToRecentFileList(QString fileName)
@@ -879,7 +887,7 @@ void MainWindow::openAbout()
        "<h3>%1 %2</h3>"
        "%3<br>"
        "<a href='%4'>%4</a><br><br>"
-       "Copyright &copy; 2016-2020<br>"
+       "Copyright &copy; 2016-2021<br>"
        "Albert Kalchmair<br>"
        "%5<br><br>"
        "%6<br>"
@@ -887,7 +895,7 @@ void MainWindow::openAbout()
        .arg(QApplication::applicationName())
        .arg(QApplication::applicationVersion())
        .arg(tr("A text editor for efficiently editing GLSL shaders of all kinds."))
-       .arg("https://my-foss.net/gpupad")
+       .arg("https://github.com/houmain/gpupad")
        .arg(tr("All Rights Reserved."))
        .arg(tr("This program comes with absolutely no warranty."))
        .arg(tr("See the GNU General Public License, version 3 for details."));

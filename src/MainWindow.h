@@ -64,6 +64,7 @@ private:
     bool saveSessionAs();
     bool copySessionFiles(const QString &fromPath, const QString &toPath);
     bool closeSession();
+    bool reloadSession();
     void addToRecentFileList(QString fileName);
     void updateRecentFileActions();
     void openRecentFile();
