@@ -363,29 +363,34 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
 {
     const auto& item = mModel.getItem(index);
 
+    // do not open file of script with expression
     if (auto script = castItem<Script>(item))
         if (!script->expression.isEmpty())
             return nullptr;
 
-    auto editor = std::add_pointer_t<IEditor>();
+    // open all shaders of program
     if (auto program = castItem<Program>(item)) {
         for (auto item : program->items)
             if (auto shader = castItem<Shader>(item))
-                editor = openEditor(*shader);
-        return editor;
+                openEditor(*shader);
+        return nullptr;
     }
 
+    // open buffer of block
     if (auto block = castItem<Block>(item)) {
         const auto &buffer = *static_cast<Buffer*>(block->parent);
-        editor = openEditor(buffer);
+        auto editor = openItemEditor(mModel.getIndex(&buffer));
         if (auto binaryEditor = static_cast<BinaryEditor*>(editor))
             for (auto i = 0; i < buffer.items.size(); ++i)
                 if (buffer.items[i] == block) {
                     binaryEditor->setCurrentBlockIndex(i);
                     break;
                 }
+        return editor;
     }
-    else if (const auto fileItem = castItem<FileItem>(item)) {
+
+    auto editor = std::add_pointer_t<IEditor>();
+    if (const auto fileItem = castItem<FileItem>(item)) {
         editor = openEditor(*fileItem);
     }
     if (!editor)
