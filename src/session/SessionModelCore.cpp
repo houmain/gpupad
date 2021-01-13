@@ -261,7 +261,9 @@ void SessionModelCore::insertItem(Item *item, const QModelIndex &parent, int row
 
 ItemId SessionModelCore::getNextItemId()
 {
-    return mNextItemId++;
+    while (findItem(mNextItemId))
+        mNextItemId++;
+    return mNextItemId;
 }
 
 bool SessionModelCore::hasChildWithName(const QModelIndex &parent, 

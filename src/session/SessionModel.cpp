@@ -389,8 +389,16 @@ void SessionModel::deserialize(const QJsonObject &object,
 
     const auto dropColumn = [&](const QString &property,
             const QModelIndex &index, const QVariant &value) {
-        if (property.endsWith("Id"))
+        if (property.endsWith("Id")) {
+            // reference to an already patched id?
+            auto it = mDroppedIdsReplaced.find(value.toInt());
+            if (it != mDroppedIdsReplaced.end()) {
+                setData(index, it.value());
+                return;
+            }
+            // otherwise remember reference for fixup
             mDroppedReferences.append(index);
+        }
         setData(index, value);
     };
 
