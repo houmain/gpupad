@@ -89,8 +89,8 @@ struct Binding : Item
     using Editor = ItemEnums::BindingEditor;
     using ImageFormat = ItemEnums::ImageBindingFormat;
 
-    BindingType bindingType{ };
-    Editor editor{ };
+    BindingType bindingType{ BindingType::Uniform };
+    Editor editor{ Editor::Expression };
     QStringList values{ "0" };
     ItemId textureId{ };
     ItemId bufferId{ };
@@ -104,7 +104,7 @@ struct Binding : Item
     WrapMode wrapModeY{ QOpenGLTexture::Repeat };
     WrapMode wrapModeZ{ QOpenGLTexture::Repeat };
     QColor borderColor{ Qt::black };
-    ComparisonFunc comparisonFunc{ };
+    ComparisonFunc comparisonFunc{ ComparisonFunc::NoComparisonFunc };
     QString subroutine;
     ImageFormat imageFormat{ ImageFormat::Internal };
 };
@@ -127,10 +127,10 @@ struct Target : Item
     using PolygonMode = ItemEnums::PolygonMode;
     using LogicOperation = ItemEnums::LogicOperation;
 
-    FrontFace frontFace{ };
-    CullMode cullMode{ };
+    FrontFace frontFace{ FrontFace::CCW };
+    CullMode cullMode{ CullMode::NoCulling };
     PolygonMode polygonMode{ PolygonMode::Fill };
-    LogicOperation logicOperation{ };
+    LogicOperation logicOperation{ LogicOperation::NoLogicOperation };
     QColor blendConstant{ Qt::white };
     int defaultWidth{ 1 };
     int defaultHeight{ 1 };
