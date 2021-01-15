@@ -48,6 +48,8 @@ struct GLBufferBinding
     ItemId bindingItemId;
     QString name;
     GLBuffer *buffer;
+    int offset;
+    int size;
 };
 
 struct GLSubroutineBinding

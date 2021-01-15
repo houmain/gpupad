@@ -350,10 +350,24 @@ void RenderSession::prepare(bool itemsChanged,
                 case Binding::BindingType::Buffer:
                     addCommand(
                         [binding = GLBufferBinding{
-                            b.id, b.name, addBufferOnce(b.bufferId) }
+                            b.id, b.name, addBufferOnce(b.bufferId), 0, 0 }
                         ](BindingState &state) {
                             state.top().buffers[binding.name] = binding;
                         });
+                    break;
+
+                case Binding::BindingType::BufferBlock:
+                    if (auto block = session.findItem<Block>(b.blockId)) {
+                        const auto offset = mScriptEngine->evaluateInt(block->offset, b.blockId, mMessages);
+                        const auto rowCount = mScriptEngine->evaluateInt(block->rowCount, b.blockId, mMessages);
+                        const auto stride = getBlockStride(*block);
+                        addCommand(
+                            [binding = GLBufferBinding{
+                                b.id, b.name, addBufferOnce(block->parent->id), offset, rowCount * stride }
+                            ](BindingState &state) {
+                                state.top().buffers[binding.name] = binding;
+                            });
+                    }
                     break;
 
                 case Binding::BindingType::Subroutine:

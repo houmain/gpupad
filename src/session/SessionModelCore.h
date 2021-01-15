@@ -36,6 +36,7 @@ public:
         BindingValues,
         BindingTextureId,
         BindingBufferId,
+        BindingBlockId,
         BindingLevel,
         BindingLayer,
         BindingImageFormat,

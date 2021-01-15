@@ -474,7 +474,13 @@ bool GLProgram::apply(const GLBufferBinding &binding)
 
     auto &gl = GLContext::currentContext();
     const auto [target, index] = mBufferBindingPoints[binding.name];
-    gl.glBindBufferBase(target, index, binding.buffer->getReadWriteBufferId());
+    const auto buffer = binding.buffer->getReadWriteBufferId();
+    if (binding.size <= 0) {
+        gl.glBindBufferBase(target, index, buffer);
+    }
+    else {
+        gl.glBindBufferRange(target, index, buffer, binding.offset, binding.size);
+    }
     bufferSet(binding.name);
     return true;
 }

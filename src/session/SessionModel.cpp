@@ -482,6 +482,7 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             const auto image = (binding.bindingType == Binding::BindingType::Image);
             const auto textureBuffer = (binding.bindingType == Binding::BindingType::TextureBuffer);
             const auto buffer = (binding.bindingType == Binding::BindingType::Buffer);
+            const auto block = (binding.bindingType == Binding::BindingType::BufferBlock);
             const auto subroutine = (binding.bindingType == Binding::BindingType::Subroutine);
             result &= (column != BindingEditor || uniform);
             result &= (column != BindingValues || uniform);
@@ -498,6 +499,7 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             result &= (column != BindingBorderColor || sampler);
             result &= (column != BindingComparisonFunc || sampler);
             result &= (column != BindingBufferId || buffer || textureBuffer);
+            result &= (column != BindingBlockId || block);
             result &= (column != BindingSubroutine || subroutine);
             break;
         }

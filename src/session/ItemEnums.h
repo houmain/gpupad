@@ -59,6 +59,7 @@ namespace ItemEnums {
         Uniform,
         Sampler,
         Buffer,
+        BufferBlock,
         Image,
         TextureBuffer,
         Subroutine,

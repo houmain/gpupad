@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Version 1.15] - 2021-01-05
+### Added
+ - Providing builds for Linux and macOS.
+
+### Fixed
+ - Improved Qt and OpenGL version and platform support.
+
 ## [Version 1.14] - 2020-12-23
 ### Added
 - Expressions for texture dimensions.
@@ -215,7 +222,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.0] - 2019-04-14
 
-[Unreleased]: https://github.com/houmain/gpupad/compare/1.14...HEAD
+[Unreleased]: https://github.com/houmain/gpupad/compare/1.15...HEAD
+[Version 1.15]: https://github.com/houmain/gpupad/compare/1.14...1.15
 [Version 1.14]: https://github.com/houmain/gpupad/compare/1.13...1.14
 [Version 1.13]: https://github.com/houmain/gpupad/compare/1.12...1.13
 [Version 1.12]: https://github.com/houmain/gpupad/compare/1.11...1.12
