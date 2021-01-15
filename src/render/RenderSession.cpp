@@ -302,7 +302,7 @@ void RenderSession::prepare(bool itemsChanged,
                     addCommand(
                         [binding = GLUniformBinding{
                             b.id, b.name, b.bindingType,
-                            mScriptEngine->getVariable(b.values, b.id, mMessages),
+                            mScriptEngine->getVariable(b.name, b.values, b.id, mMessages),
                             false }
                         ](BindingState &state) {
                             state.top().uniforms[binding.name] = binding;

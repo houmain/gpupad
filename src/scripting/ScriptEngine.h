@@ -30,12 +30,11 @@ public:
 
     void setGlobal(const QString &name, QJSValue value);
     void setGlobal(const QString &name, QObject *object);
+    void setGlobal(const QString &name, const ScriptValueList &values);
     QJSValue getGlobal(const QString &name);
     QJSValue call(QJSValue &callable, const QJSValueList &args,
         ItemId itemId, MessagePtrSet &messages);
     void evaluateScript(const QString &script, const QString &fileName);
-    void evaluateExpression(const QString &script, const QString &resultName, 
-        ItemId itemId, MessagePtrSet &messages);
     ScriptValueList evaluateValues(const QStringList &valueExpressions,
         ItemId itemId, MessagePtrSet &messages);
     ScriptValue evaluateValue(const QString &valueExpression,
@@ -44,22 +43,31 @@ public:
       ItemId itemId, MessagePtrSet &messages);
 
     void updateVariables();
-    ScriptVariable getVariable(const QStringList &valueExpressions,
+    ScriptVariable getVariable(const QString &variableName,
+        const QStringList &valueExpressions,
         ItemId itemId, MessagePtrSet &messages);
-    ScriptVariable getVariable(const QString &valueExpression,
+    ScriptVariable getVariable(
+        const QString &valueExpression,
         ItemId itemId, MessagePtrSet &messages);
 
     template<typename T>
     QJSValue toJsValue(const T &value) { return mJsEngine->toScriptValue(value); }
 
 private:
+    struct Variable {
+        QString name;
+        QStringList expressions;
+        QWeakPointer<ScriptValueList> values;
+    };
+
     QJSValue evaluate(const QString &program, const QString &fileName = QString(), int lineNumber = 1);
+    bool updateVariable(const Variable &variable, ItemId itemId, MessagePtrSet &messages);
 
     QJSEngine *mJsEngine{ };
     QThread *mInterruptThread{ };
     QTimer *mInterruptTimer{ };
     MessagePtrSet mMessages;
-    QList<QPair<QStringList, QWeakPointer<ScriptValueList>>> mVariables;
+    QList<Variable> mVariables;
 };
 
 #endif // SCRIPTENGINE_H

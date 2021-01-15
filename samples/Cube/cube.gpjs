@@ -1,21 +1,21 @@
 [
     {
         "format": "RGBA8_UNorm",
-        "height": 512,
+        "height": "512",
         "id": 93,
         "name": "Color",
         "target": "Target2D",
         "type": "Texture",
-        "width": 512
+        "width": "512"
     },
     {
         "format": "D16",
-        "height": 512,
+        "height": "512",
         "id": 98,
         "name": "Depth",
         "target": "Target2D",
         "type": "Texture",
-        "width": 512
+        "width": "512"
     },
     {
         "blendConstant": "#ff000000",
@@ -56,16 +56,19 @@
         "type": "Target"
     },
     {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 895,
+        "name": "frame",
+        "type": "Binding",
+        "values": [
+            "(this.frame || 0) + 1"
+        ]
+    },
+    {
         "executeOn": "ResetEvaluation",
         "fileName": "math.js",
         "id": 103,
-        "type": "Script"
-    },
-    {
-        "executeOn": "EveryEvaluation",
-        "expression": "(this.frame || 0) +1",
-        "id": 105,
-        "name": "frame",
         "type": "Script"
     },
     {
@@ -116,13 +119,14 @@
     {
         "fileName": "planks.jpg",
         "format": "RGBA8_UNorm",
-        "height": 512,
+        "height": "512",
         "id": 104,
         "target": "Target2D",
         "type": "Texture",
-        "width": 512
+        "width": "512"
     },
     {
+        "anisotropic": false,
         "bindingType": "Sampler",
         "borderColor": "#ff000000",
         "comparisonFunc": "NoComparisonFunc",
@@ -169,8 +173,8 @@
                     }
                 ],
                 "name": "Vertex",
-                "offset": 0,
-                "rowCount": 36,
+                "offset": "0",
+                "rowCount": "36",
                 "type": "Block"
             }
         ],

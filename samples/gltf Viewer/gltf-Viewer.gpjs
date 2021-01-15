@@ -1,23 +1,23 @@
 [
     {
         "format": "RGBA8_UNorm",
-        "height": 512,
+        "height": "512",
         "id": 10,
         "name": "Target",
         "samples": 4,
         "target": "Target2DMultisample",
         "type": "Texture",
-        "width": 512
+        "width": "512"
     },
     {
         "format": "D16",
-        "height": 512,
+        "height": "512",
         "id": 47,
         "name": "Depth",
         "samples": 4,
         "target": "Target2DMultisample",
         "type": "Texture",
-        "width": 512
+        "width": "512"
     },
     {
         "blendConstant": "#ffffffff",
@@ -58,16 +58,19 @@
         "type": "Target"
     },
     {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 896,
+        "name": "frame",
+        "type": "Binding",
+        "values": [
+            "(this.frame || 0) + 1"
+        ]
+    },
+    {
         "executeOn": "ManualEvaluation",
         "fileName": "math.js",
         "id": 796,
-        "type": "Script"
-    },
-    {
-        "executeOn": "EveryEvaluation",
-        "expression": "(this.frame || 0) + 1",
-        "id": 884,
-        "name": "frame",
         "type": "Script"
     },
     {
@@ -77,47 +80,47 @@
             {
                 "fileName": "DamagedHelmet/Default_emissive.jpg",
                 "format": "RGBA8_UNorm",
-                "height": 2048,
+                "height": "2048",
                 "id": 1,
                 "target": "Target2D",
                 "type": "Texture",
-                "width": 2048
+                "width": "2048"
             },
             {
                 "fileName": "DamagedHelmet/Default_normal.jpg",
                 "format": "RGBA8_UNorm",
-                "height": 2048,
+                "height": "2048",
                 "id": 2,
                 "target": "Target2D",
                 "type": "Texture",
-                "width": 2048
+                "width": "2048"
             },
             {
                 "fileName": "DamagedHelmet/Default_AO.jpg",
                 "format": "RGBA8_UNorm",
-                "height": 2048,
+                "height": "2048",
                 "id": 865,
                 "target": "Target2D",
                 "type": "Texture",
-                "width": 2048
+                "width": "2048"
             },
             {
                 "fileName": "DamagedHelmet/Default_albedo.jpg",
                 "format": "RGBA8_UNorm",
-                "height": 2048,
+                "height": "2048",
                 "id": 867,
                 "target": "Target2D",
                 "type": "Texture",
-                "width": 2048
+                "width": "2048"
             },
             {
                 "fileName": "DamagedHelmet/Default_metalRoughness.jpg",
                 "format": "RGBA8_UNorm",
-                "height": 2048,
+                "height": "2048",
                 "id": 869,
                 "target": "Target2D",
                 "type": "Texture",
-                "width": 2048
+                "width": "2048"
             },
             {
                 "fileName": "DamagedHelmet/DamagedHelmet.bin",
@@ -136,8 +139,8 @@
                             }
                         ],
                         "name": "Indices",
-                        "offset": 0,
-                        "rowCount": 46356,
+                        "offset": "0",
+                        "rowCount": "46356",
                         "type": "Block"
                     },
                     {
@@ -153,8 +156,8 @@
                             }
                         ],
                         "name": "Position",
-                        "offset": 92712,
-                        "rowCount": 14556,
+                        "offset": "92712",
+                        "rowCount": "14556",
                         "type": "Block"
                     },
                     {
@@ -170,8 +173,8 @@
                             }
                         ],
                         "name": "Normal",
-                        "offset": 267384,
-                        "rowCount": 14556,
+                        "offset": "267384",
+                        "rowCount": "14556",
                         "type": "Block"
                     },
                     {
@@ -187,12 +190,11 @@
                             }
                         ],
                         "name": "TexCoord",
-                        "offset": 442056,
-                        "rowCount": 14556,
+                        "offset": "442056",
+                        "rowCount": "14556",
                         "type": "Block"
                     }
                 ],
-                "size": 558504,
                 "type": "Buffer"
             },
             {
@@ -227,6 +229,7 @@
                 "type": "Stream"
             }
         ],
+        "iterations": "1",
         "name": "DamagedHelmet",
         "type": "Group"
     },
@@ -244,7 +247,7 @@
                         "id": 667,
                         "target": "TargetCubeMap",
                         "type": "Texture",
-                        "width": 256
+                        "width": "256"
                     },
                     {
                         "fileName": "gltf-viewer/papermill/papermill_pmrem.ktx",
@@ -252,18 +255,19 @@
                         "id": 606,
                         "target": "TargetCubeMap",
                         "type": "Texture",
-                        "width": 256
+                        "width": "256"
                     },
                     {
                         "fileName": "gltf-viewer/brdfLUT.png",
                         "format": "RGBA8_UNorm",
-                        "height": 512,
+                        "height": "512",
                         "id": 127,
                         "target": "Target2D",
                         "type": "Texture",
-                        "width": 512
+                        "width": "512"
                     }
                 ],
+                "iterations": "1",
                 "name": "Environment",
                 "type": "Group"
             },
@@ -314,6 +318,7 @@
                         ]
                     }
                 ],
+                "iterations": "1",
                 "name": "Matrices",
                 "type": "Group"
             },
@@ -418,6 +423,7 @@
                         ]
                     },
                     {
+                        "anisotropic": false,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -432,6 +438,7 @@
                         "wrapModeZ": "Repeat"
                     },
                     {
+                        "anisotropic": false,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -446,6 +453,7 @@
                         "wrapModeZ": "Repeat"
                     },
                     {
+                        "anisotropic": false,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -470,6 +478,7 @@
                         ]
                     }
                 ],
+                "iterations": "1",
                 "name": "Lights",
                 "type": "Group"
             },
@@ -478,6 +487,7 @@
                 "inlineScope": true,
                 "items": [
                     {
+                        "anisotropic": false,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -515,6 +525,7 @@
                         ]
                     },
                     {
+                        "anisotropic": false,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -549,6 +560,7 @@
                         ]
                     },
                     {
+                        "anisotropic": false,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -583,6 +595,7 @@
                         ]
                     },
                     {
+                        "anisotropic": false,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -607,6 +620,7 @@
                         ]
                     },
                     {
+                        "anisotropic": false,
                         "bindingType": "Sampler",
                         "borderColor": "#ff000000",
                         "comparisonFunc": "NoComparisonFunc",
@@ -663,6 +677,7 @@
                         ]
                     }
                 ],
+                "iterations": "1",
                 "name": "Material",
                 "type": "Group"
             },
@@ -764,6 +779,7 @@
                 "vertexStreamId": 877
             }
         ],
+        "iterations": "1",
         "name": "SampleViewer",
         "type": "Group"
     }

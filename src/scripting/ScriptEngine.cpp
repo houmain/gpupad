@@ -110,6 +110,20 @@ void ScriptEngine::setGlobal(const QString &name, QObject *object)
     mJsEngine->globalObject().setProperty(name, mJsEngine->newQObject(object));
 }
 
+void ScriptEngine::setGlobal(const QString &name, const ScriptValueList &values)
+{
+    if (values.size() == 1) {
+        setGlobal(name, values.at(0));
+    }
+    else {
+        auto i = 0;
+        auto array = QJSValue();
+        for (const auto &value : values)
+            array.setProperty(i++, value);
+        setGlobal(name, array);
+    }
+}
+
 QJSValue ScriptEngine::getGlobal(const QString &name)
 {
     Q_ASSERT(onMainThread());
@@ -137,21 +151,6 @@ void ScriptEngine::evaluateScript(const QString &script, const QString &fileName
             mMessages += MessageList::insert(
                 fileName, result.property("lineNumber").toInt(),
                 MessageType::ScriptError, result.toString());
-    });
-}
-
-void ScriptEngine::evaluateExpression(const QString &script, const QString &resultName,
-    ItemId itemId, MessagePtrSet &messages) 
-{
-    redirectConsoleMessages(mMessages, [&]() {
-        auto result = evaluate(script);
-        if (result.isError()) {
-            messages += MessageList::insert(
-                itemId, MessageType::ScriptError, result.toString());
-        }
-        else {
-            setGlobal(resultName, result);
-        }
     });
 }
 
@@ -212,8 +211,7 @@ int ScriptEngine::evaluateInt(const QString &valueExpression,
 void ScriptEngine::updateVariables()
 {
     for (auto it = mVariables.begin(); it != mVariables.end(); )
-        if (auto values = it->second.lock()) {
-            *values = evaluateValues(it->first, 0, mMessages);
+        if (updateVariable(*it, 0, mMessages)) {
             ++it;
         }
         else {
@@ -221,12 +219,28 @@ void ScriptEngine::updateVariables()
         }
 }
 
-ScriptVariable ScriptEngine::getVariable(const QStringList &valueExpressions,
+bool ScriptEngine::updateVariable(const Variable &variable,
+    ItemId itemId, MessagePtrSet &messages)
+{
+    auto values = variable.values.lock();
+    if (!values)
+        return false;
+    *values = evaluateValues(variable.expressions, itemId, messages);
+
+    // set global in script state, when variable name is known
+    if (!variable.name.isEmpty())
+        setGlobal(variable.name, *values);
+    return true;
+}
+
+ScriptVariable ScriptEngine::getVariable(const QString &variableName,
+    const QStringList &valueExpressions,
     ItemId itemId, MessagePtrSet &messages)
 {
     auto values = QSharedPointer<ScriptValueList>(new ScriptValueList());
-    *values = evaluateValues(valueExpressions, itemId, messages);
-    mVariables.append({ valueExpressions, values });
+    mVariables.append({ variableName, valueExpressions, values });
+    updateVariable(mVariables.back(), itemId, messages);
+
     auto result = ScriptVariable();
     result.mValues = std::move(values);
     return result;
@@ -235,5 +249,5 @@ ScriptVariable ScriptEngine::getVariable(const QStringList &valueExpressions,
 ScriptVariable ScriptEngine::getVariable(const QString &valueExpression,
     ItemId itemId, MessagePtrSet &messages)
 {
-    return getVariable(QStringList{ valueExpression }, itemId, messages);
+    return getVariable("", QStringList{ valueExpression }, itemId, messages);
 }

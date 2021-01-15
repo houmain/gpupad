@@ -9,11 +9,14 @@
         "width": "512"
     },
     {
-        "executeOn": "EveryEvaluation",
-        "expression": "100000",
-        "id": 88,
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 922,
         "name": "particleCount",
-        "type": "Script"
+        "type": "Binding",
+        "values": [
+            "100000"
+        ]
     },
     {
         "id": 66,
