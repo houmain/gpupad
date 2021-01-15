@@ -16,6 +16,7 @@ public:
         FileName,
 
         GroupInlineScope,
+        GroupIterations,
         BlockOffset,
         BlockRowCount,
         FieldDataType,

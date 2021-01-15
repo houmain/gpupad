@@ -8,6 +8,7 @@
 
 #define ADD_EACH_COLUMN_TYPE() \
     ADD(GroupInlineScope, Group, inlineScope) \
+    ADD(GroupIterations, Group, iterations) \
     ADD(BlockOffset, Block, offset) \
     ADD(BlockRowCount, Block, rowCount) \
     ADD(FieldDataType, Field, dataType) \

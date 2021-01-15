@@ -31,6 +31,7 @@ struct FileItem : Item
 struct Group : Item
 {
     bool inlineScope{ };
+    QString iterations{ "1" };
 };
 
 struct Buffer : FileItem

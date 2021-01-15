@@ -281,6 +281,18 @@ void RenderSession::prepare(bool itemsChanged,
     session.forEachItem([&](const Item &item) {
 
         if (auto group = castItem<Group>(item)) {
+            const auto iterations =
+                mScriptEngine->evaluateInt(group->iterations, group->id, mMessages);
+
+            // mark begin of iteration
+            addCommand([this, groupId = group->id](BindingState &) {
+                auto &iterations = mGroupIterations[groupId];
+                iterations.iterationsLeft = iterations.iterations;
+            });
+            const auto commandQueueBeginIndex =
+                static_cast<int>(mCommandQueue->commands.size());
+            mGroupIterations[group->id] = { iterations, commandQueueBeginIndex, 0 };
+
             // push binding scope
             if (!group->inlineScope)
                 addCommand([](BindingState &state) { state.push({ }); });
@@ -435,10 +447,24 @@ void RenderSession::prepare(bool itemsChanged,
                 auto group = castItem<Group>(it->parent);
                 if (!group)
                     break;
+
                 if (!group->inlineScope)
                     addCommand([](BindingState &state) {
                         state.pop();
                     });
+
+                addCommand([this, groupId = group->id](BindingState &) {
+                    // jump to begin of group
+                    auto &iteration = mGroupIterations[groupId];
+                    if (--iteration.iterationsLeft > 0)
+                        setNextCommandQueueIndex(iteration.commandQueueBeginIndex);
+                });
+
+                // undo pushing commands, when there is not a single iteration
+                const auto &iteration = mGroupIterations[group->id];
+                if (!iteration.iterations)
+                    mCommandQueue->commands.resize(iteration.commandQueueBeginIndex);
+
                 it = it->parent;
             }
         }
@@ -485,14 +511,24 @@ void RenderSession::reuseUnmodifiedItems()
     }
 }
 
+void RenderSession::setNextCommandQueueIndex(int index)
+{
+    mNextCommandQueueIndex = index;
+}
+
 void RenderSession::executeCommandQueue()
 {
     auto& context = GLContext::currentContext();
     Singletons::glShareSynchronizer().beginUpdate(context);
 
     BindingState state;
-    for (auto &command : mCommandQueue->commands)
-        command(state);
+
+    mNextCommandQueueIndex = 0;
+    while (mNextCommandQueueIndex < static_cast<int>(mCommandQueue->commands.size())) {
+        const auto index = mNextCommandQueueIndex++;
+        // executing command might call setNextCommandQueueIndex
+        mCommandQueue->commands[index](state);
+    }
 
     Singletons::glShareSynchronizer().endUpdate(context);
 }

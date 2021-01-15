@@ -25,6 +25,12 @@ private:
     struct CommandQueue;
     struct TimerQueries;
 
+    struct GroupIteration {
+        int iterations;
+        int commandQueueBeginIndex;
+        int iterationsLeft;
+    };
+
     void prepare(bool itemsChanged,
         EvaluationType evaluationType) override;
     void render() override;
@@ -33,6 +39,7 @@ private:
 
     void reuseUnmodifiedItems();
     void executeCommandQueue();
+    void setNextCommandQueueIndex(int index);
     void downloadModifiedResources();
     void outputTimerQueries();
     bool updatingPreviewTextures() const;
@@ -41,6 +48,8 @@ private:
     InputScriptObject *mInputScriptObject{ };
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;
+    int mNextCommandQueueIndex{ };
+    QMap<ItemId, GroupIteration> mGroupIterations;
     QSet<ItemId> mUsedItems;
     QMap<ItemId, TextureData> mModifiedTextures;
     QMap<ItemId, QByteArray> mModifiedBuffers;
