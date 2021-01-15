@@ -109,16 +109,6 @@
      <item row="1" column="1">
       <widget class="DataComboBox" name="executeOn"/>
      </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="labelExpression">
-       <property name="text">
-        <string>Expression</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="ExpressionEditor" name="expression"/>
-     </item>
     </layout>
    </item>
   </layout>
@@ -133,11 +123,6 @@
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
    <header>session/DataComboBox.h</header>
-  </customwidget>
-  <customwidget>
-   <class>ExpressionEditor</class>
-   <extends>QPlainTextEdit</extends>
-   <header>session/ExpressionEditor.h</header>
   </customwidget>
  </customwidgets>
  <resources>

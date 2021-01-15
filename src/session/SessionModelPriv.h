@@ -22,7 +22,6 @@
     ADD(TextureLayers, Texture, layers) \
     ADD(TextureSamples, Texture, samples) \
     ADD(ScriptExecuteOn, Script, executeOn) \
-    ADD(ScriptExpression, Script, expression) \
     ADD(ShaderType, Shader, shaderType) \
     ADD(BindingType, Binding, bindingType) \
     ADD(BindingEditor, Binding, editor) \

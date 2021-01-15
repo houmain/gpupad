@@ -30,7 +30,6 @@ public:
         TextureLayers,
         TextureSamples,
         ScriptExecuteOn,
-        ScriptExpression,
         ShaderType,
         BindingType,
         BindingEditor,

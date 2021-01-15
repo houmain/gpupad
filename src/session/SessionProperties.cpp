@@ -134,8 +134,6 @@ SessionProperties::SessionProperties(QWidget *parent)
         [this]() { openCurrentItemFile(FileDialog::ScriptExtensions); });
     connect(mScriptProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(Item::Type::Script, true); });
-    connect(mScriptProperties->file, &ReferenceComboBox::currentDataChanged,
-        [this](QVariant data) { updateScriptWidgets(!data.toString().isEmpty()); });
 
     connect(mAttributeProperties->field, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(Item::Type::Field); });
@@ -319,8 +317,6 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
         case Item::Type::Script:
             map(mScriptProperties->file, SessionModel::FileName);
             map(mScriptProperties->executeOn, SessionModel::ScriptExecuteOn);
-            map(mScriptProperties->expression, SessionModel::ScriptExpression);
-            updateScriptWidgets(index);
             break;
     }
 
@@ -363,11 +359,6 @@ IEditor* SessionProperties::openEditor(const FileItem &fileItem)
 IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
 {
     const auto& item = mModel.getItem(index);
-
-    // do not open file of script with expression
-    if (auto script = castItem<Script>(item))
-        if (!script->expression.isEmpty())
-            return nullptr;
 
     // open all shaders of program
     if (auto program = castItem<Program>(item)) {
@@ -489,20 +480,6 @@ void SessionProperties::updateTargetWidgets(const QModelIndex &index)
     setFormVisibility(ui.formLayout, ui.labelPolygonMode, ui.polygonMode, true);
     setFormVisibility(ui.formLayout, ui.labelLogicOperation, ui.logicOperation, hasAttachments);
     setFormVisibility(ui.formLayout, ui.labelBlendConstant, ui.blendConstant, hasAttachments);
-}
-
-void SessionProperties::updateScriptWidgets(const QModelIndex &index)
-{
-    auto hasFile = false;
-    if (auto script = mModel.item<Script>(index))
-        hasFile = !script->fileName.isEmpty();
-    updateScriptWidgets(hasFile);
-}
-
-void SessionProperties::updateScriptWidgets(bool hasFile)
-{
-    auto &ui = *mScriptProperties;
-    setFormVisibility(ui.formLayout, ui.labelExpression, ui.expression, !hasFile);
 }
 
 void SessionProperties::deduceBlockOffset()

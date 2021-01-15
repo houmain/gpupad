@@ -197,15 +197,9 @@ void RenderSession::prepare(bool itemsChanged,
 
     const auto evaluateScript = [&](const Script &script) {
         if (shouldExecute(script.executeOn, mEvaluationType)) {
-            if (script.fileName.isEmpty()) {
-                mScriptEngine->evaluateExpression(script.expression,
-                    script.name, script.id, mMessages);
-            }
-            else {
-                auto source = QString();
-                Singletons::fileCache().getSource(script.fileName, &source);
+            auto source = QString();
+            if (Singletons::fileCache().getSource(script.fileName, &source))
                 mScriptEngine->evaluateScript(source, script.fileName);
-            }
         }
     };
 

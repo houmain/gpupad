@@ -228,7 +228,6 @@ struct Script : FileItem
     using ExecuteOn = ItemEnums::ExecuteOn;
 
     ExecuteOn executeOn{ ExecuteOn::ManualEvaluation };
-    QString expression;
 };
 
 struct TextureKind

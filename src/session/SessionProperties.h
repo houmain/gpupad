@@ -56,8 +56,6 @@ public:
 private:
     void updateBlockWidgets(const QModelIndex &index);
     void updateTargetWidgets(const QModelIndex &index);
-    void updateScriptWidgets(const QModelIndex &index);
-    void updateScriptWidgets(bool hasFile);
     void deduceBlockOffset();
     void deduceBlockRowCount();
     IEditor* openEditor(const FileItem &fileItem);
