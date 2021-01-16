@@ -51,6 +51,7 @@ private:
         TextureEditor &editor);
     void updateBinaryEditor(const Buffer &buffer,
         BinaryEditor &editor);
+    void handleEvaluateTimout();
     void evaluate(EvaluationType evaluationType);
     void processSource();
 

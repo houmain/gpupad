@@ -6,6 +6,7 @@
 #include "editors/TextureEditor.h"
 #include "editors/BinaryEditor.h"
 #include "scripting/ScriptEngine.h"
+#include "scripting/GpupadScriptObject.h"
 #include "scripting/InputScriptObject.h"
 #include "FileCache.h"
 #include "GLTexture.h"
@@ -188,7 +189,9 @@ void RenderSession::prepare(bool itemsChanged,
 
     if (!mScriptEngine || mEvaluationType == EvaluationType::Reset) {
         mScriptEngine.reset(new ScriptEngine());
+        mGpupadScriptObject = new GpupadScriptObject(this);
         mInputScriptObject = new InputScriptObject(this);
+        mScriptEngine->setGlobal("gpupad", mGpupadScriptObject);
         mScriptEngine->setGlobal("input", mInputScriptObject);
     }
 
@@ -198,8 +201,10 @@ void RenderSession::prepare(bool itemsChanged,
     const auto evaluateScript = [&](const Script &script) {
         if (shouldExecute(script.executeOn, mEvaluationType)) {
             auto source = QString();
-            if (Singletons::fileCache().getSource(script.fileName, &source))
+            if (Singletons::fileCache().getSource(script.fileName, &source)) {
                 mScriptEngine->evaluateScript(source, script.fileName);
+                mGpupadScriptObject->finishSessionUpdate();
+            }
         }
     };
 

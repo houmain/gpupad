@@ -20,9 +20,7 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     connect(mUpdateEditorsTimer, &QTimer::timeout,
         this, &SynchronizeLogic::updateEditors);
     connect(mEvaluationTimer, &QTimer::timeout,
-        [this]() { evaluate(mEvaluationMode == EvaluationMode::Automatic ?
-            EvaluationType::Automatic : EvaluationType::Steady);
-        });
+        this, &SynchronizeLogic::handleEvaluateTimout);
     connect(mProcessSourceTimer, &QTimer::timeout,
         this, &SynchronizeLogic::processSource);
     connect(&mModel, &SessionModel::dataChanged,
@@ -282,6 +280,12 @@ void SynchronizeLogic::handleSourceTypeChanged(SourceType sourceType)
 {
     Q_UNUSED(sourceType)
     processSource();
+}
+
+void SynchronizeLogic::handleEvaluateTimout()
+{
+    evaluate(mEvaluationMode == EvaluationMode::Automatic ?
+        EvaluationType::Automatic : EvaluationType::Steady);
 }
 
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)

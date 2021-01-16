@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QJsonValue>
 #include <QJsonArray>
+#include <QJSValue>
 
 struct Item;
 class SessionModel;
@@ -11,24 +12,27 @@ class SessionModel;
 class GpupadScriptObject final : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QJsonArray session READ session)
 public:
     explicit GpupadScriptObject(QObject *parent = nullptr);
 
-    QJsonArray session();
-    Q_INVOKABLE QJsonValue openFileDialog();
-    Q_INVOKABLE QJsonValue readTextFile(const QString &fileName);
-    Q_INVOKABLE void insertItems(QJsonValue update,
-        QJsonValue parent = { }, int row = -1);
+    Q_INVOKABLE QJsonArray getItems() const;
+    Q_INVOKABLE QJsonArray getItemsByName(const QString &name) const;
+
     Q_INVOKABLE void updateItems(QJsonValue update,
         QJsonValue parent = { }, int row = -1);
     Q_INVOKABLE void deleteItem(QJsonValue item);
 
+    Q_INVOKABLE void setBlockData(QJsonValue item, QJSValue data);
+
+    Q_INVOKABLE QJsonValue openFileDialog();
+    Q_INVOKABLE QJsonValue readTextFile(const QString &fileName);
+
     void finishSessionUpdate();
 
 private:
-    QModelIndex findItem(QJsonValue value);
     SessionModel &sessionModel();
+    const SessionModel &sessionModel() const;
+    const Item *findItem(QJsonValue objectOrId) const;
 
     bool mUpdatingSession{ };
 };

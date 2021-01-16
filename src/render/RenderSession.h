@@ -9,6 +9,7 @@
 #include <memory>
 
 class ScriptEngine;
+class GpupadScriptObject;
 class InputScriptObject;
 class QOpenGLTimerQuery;
 
@@ -45,6 +46,7 @@ private:
     bool updatingPreviewTextures() const;
 
     QScopedPointer<ScriptEngine> mScriptEngine;
+    GpupadScriptObject *mGpupadScriptObject{ };
     InputScriptObject *mInputScriptObject{ };
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;
