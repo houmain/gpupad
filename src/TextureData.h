@@ -44,6 +44,7 @@ public:
     const uchar *getData(int level, int layer, int faceSlice) const;
     int getImageSize(int level) const;
     int getLevelSize(int level) const;
+    void setPixelFormat(QOpenGLTexture::PixelFormat pixelFormat);
     bool upload(GLuint textureId, QOpenGLTexture::TextureFormat format =
         QOpenGLTexture::TextureFormat::NoFormat);
     bool upload(GLuint *textureId, QOpenGLTexture::TextureFormat format =

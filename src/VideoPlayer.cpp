@@ -24,9 +24,15 @@ VideoPlayer::VideoPlayer(QString fileName, QObject *parent)
 }
 
 QList<QVideoFrame::PixelFormat> VideoPlayer::supportedPixelFormats(
-    QAbstractVideoBuffer::HandleType) const
+    QAbstractVideoBuffer::HandleType handleType) const
 {
-    return { QVideoFrame::Format_ABGR32 };
+    if (handleType != QAbstractVideoBuffer::NoHandle)
+        return { };
+
+    return { 
+        QVideoFrame::Format_ARGB32,
+        QVideoFrame::Format_BGRA32,
+    };
 }
 
 void VideoPlayer::handleStatusChanged(QMediaPlayer::MediaStatus status)
@@ -47,15 +53,24 @@ bool VideoPlayer::present(const QVideoFrame &frame)
         mHeight = frame.height();
         Q_EMIT loadingFinished();
     }
-    auto mappableFrame = frame;
     auto texture = TextureData();
     if (texture.create(QOpenGLTexture::Target2D,
-          QOpenGLTexture::RGBA8_UNorm, frame.width(), frame.height(), 1, 1, 1))
-        if (mappableFrame.map(QAbstractVideoBuffer::ReadOnly))
-            if (const auto size = texture.getImageSize(0); size <= frame.mappedBytes()) {
-                std::memcpy(texture.getWriteonlyData(0, 0, 0), mappableFrame.bits(), size);
+            QOpenGLTexture::RGBA8_UNorm, frame.width(), frame.height(), 1, 1, 1, 0)) {
+
+        if (frame.pixelFormat() == QVideoFrame::Format_ARGB32)
+            texture.setPixelFormat(QOpenGLTexture::BGRA);
+    
+        if (auto buffer = frame.buffer()) {
+            auto size = 0;
+            auto stride = 0;
+            if (auto data = buffer->map(QAbstractVideoBuffer::ReadOnly, &size, &stride)) {
+                if (size <= texture.getImageSize(0))
+                    std::memcpy(texture.getWriteonlyData(0, 0, 0), data, size);
+                buffer->unmap();
                 return Singletons::fileCache().updateTexture(mFileName, std::move(texture));
             }
+        }
+    }
     return false;
 }
 

@@ -1062,6 +1062,12 @@ void TextureData::clear()
                 0xFF, static_cast<size_t>(getImageSize(level)));
 }
 
+void TextureData::setPixelFormat(QOpenGLTexture::PixelFormat pixelFormat)
+{
+    if (!isNull())
+        mKtxTexture->glFormat = static_cast<GLenum>(pixelFormat);
+}
+
 bool TextureData::upload(GLuint textureId,
     QOpenGLTexture::TextureFormat format)
 {
