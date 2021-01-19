@@ -256,7 +256,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->menuSourceType, &QMenu::aboutToShow,
         [this, sourceTypeActionGroup]() {
             auto sourceType = mEditorManager.currentSourceType();
-            for (QAction *action : sourceTypeActionGroup->actions())
+            const auto actions = sourceTypeActionGroup->actions();
+            for (QAction *action : actions)
                 action->setChecked(static_cast<SourceType>(
                     action->data().toInt()) == sourceType);
         });
@@ -359,7 +360,8 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 
 void MainWindow::dropEvent(QDropEvent *event)
 {
-    for (const QUrl &url : event->mimeData()->urls())
+    const auto urls = event->mimeData()->urls();
+    for (const QUrl &url : urls)
         openFile(url.toLocalFile());
 }
 
@@ -492,7 +494,8 @@ void MainWindow::openFile()
     };
     auto& dialog = Singletons::fileDialog();
     if (dialog.exec(options)) {
-        for (const QString &fileName : dialog.fileNames())
+        const auto fileNames = dialog.fileNames();
+        for (const QString &fileName : fileNames)
             openFile(fileName, dialog.asBinaryFile());
     }
 }
@@ -844,7 +847,8 @@ void MainWindow::populateSampleSessions()
         auto samples = QDir(path);
         if (samples.exists()) {
             samples.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
-            for (const auto &entry : samples.entryInfoList()) {
+            const auto entries = samples.entryInfoList();
+            for (const auto &entry : entries) {
                 auto sample = QDir(entry.absoluteFilePath());
                 sample.setNameFilters({ "*.gpjs" });
                 auto sessions = sample.entryInfoList();
@@ -892,12 +896,12 @@ void MainWindow::openAbout()
        "%5<br><br>"
        "%6<br>"
        "%7<br>")
-       .arg(QApplication::applicationName())
-       .arg(QApplication::applicationVersion())
-       .arg(tr("A text editor for efficiently editing GLSL shaders of all kinds."))
-       .arg("https://github.com/houmain/gpupad")
-       .arg(tr("All Rights Reserved."))
-       .arg(tr("This program comes with absolutely no warranty."))
-       .arg(tr("See the GNU General Public License, version 3 for details."));
+       .arg(QApplication::applicationName(),
+            QApplication::applicationVersion(),
+            tr("A text editor for efficiently editing GLSL shaders of all kinds."),
+            "https://github.com/houmain/gpupad",
+            tr("All Rights Reserved."),
+            tr("This program comes with absolutely no warranty."),
+            tr("See the GNU General Public License, version 3 for details."));
     QMessageBox::about(this, title, text);
 }
