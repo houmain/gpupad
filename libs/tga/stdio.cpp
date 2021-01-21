@@ -26,7 +26,7 @@ size_t StdioFileInterface::tell()
 
 void StdioFileInterface::seek(size_t absPos)
 {
-  fseek(m_file, absPos, SEEK_SET);
+  fseek(m_file, static_cast<long>(absPos), SEEK_SET);
 }
 
 uint8_t StdioFileInterface::read8()

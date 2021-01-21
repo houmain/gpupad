@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "SingleApplication/singleapplication.h"
 #include "render/CompositorSync.h"
+#include "FileDialog.h"
 #include <QApplication>
 #include <QStyleFactory>
 
@@ -46,9 +47,16 @@ int main(int argc, char *argv[])
     arguments.removeFirst();
 
     if(app.isSecondary() && !arguments.empty()) {
-        for (const auto &argument : qAsConst(arguments))
-            app.sendMessage(argument.toUtf8());
-        return 0;
+        const auto openingSessionFile = (std::count_if(
+            arguments.begin(), arguments.end(), [](const QString &argument) { 
+                    return FileDialog::isSessionFileName(argument); 
+                }) != 0);
+        
+        if (!openingSessionFile) {
+            for (const auto &argument : qAsConst(arguments))
+                app.sendMessage(argument.toUtf8());
+            return 0;
+        }
     }
 
     app.setApplicationVersion(

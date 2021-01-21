@@ -6,6 +6,9 @@ out vec4 oColor;
 uniform float frame;
 
 void main() {
-  vec3 color = mix(vec3(1, 1, 0), vec3(0, 1, 1), vec3(abs(sin(frame / 30.0))));
-  oColor = vec4(color, 1);
+  float time = frame / 60.0;
+  float s = sin(time);
+  float c = cos(time);
+  vec2 pos = abs(vTexCoords.xy * mat2x2(c, s, -s, c) * 2);
+  oColor = vec4(pos, 0.3, 1);
 }
