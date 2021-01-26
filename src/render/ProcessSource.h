@@ -3,6 +3,7 @@
 
 #include "RenderTask.h"
 #include "SourceType.h"
+#include "MessageList.h"
 #include "session/Item.h"
 
 class GLShader;
@@ -35,6 +36,7 @@ private:
     SourceType mSourceType{ };
 
     QScopedPointer<ScriptEngine> mScriptEngine;
+    MessagePtrSet mMessages;
 
     bool mValidateSource{ };
     QString mProcessType{ };

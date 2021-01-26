@@ -182,7 +182,7 @@ void ProcessSource::render()
             Singletons::fileCache().getSource(mFileName, &scriptSource);
             scriptSource = "if (false) {" + scriptSource + "}";
             mScriptEngine.reset(new ScriptEngine());
-            mScriptEngine->evaluateScript(scriptSource, mFileName);
+            mScriptEngine->evaluateScript(scriptSource, mFileName, mMessages);
         }
     }
 

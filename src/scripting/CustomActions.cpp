@@ -23,7 +23,7 @@ public:
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
             mScriptEngine.reset(new ScriptEngine());
-            mScriptEngine->evaluateScript(source, mFilePath);
+            mScriptEngine->evaluateScript(source, mFilePath, mMessages);
             mScriptEngine->setGlobal("gpupad", mGpupadScriptObject);
         }
 
@@ -60,6 +60,7 @@ public:
 
 private:
     const QString mFilePath;
+    MessagePtrSet mMessages;
     QScopedPointer<ScriptEngine> mScriptEngine;
     GpupadScriptObject *mGpupadScriptObject;
 };

@@ -143,12 +143,13 @@ QJSValue ScriptEngine::call(QJSValue &callable, const QJSValueList &args,
     return result;
 }
 
-void ScriptEngine::evaluateScript(const QString &script, const QString &fileName) 
+void ScriptEngine::evaluateScript(const QString &script,
+    const QString &fileName, MessagePtrSet &messages)
 {
-    redirectConsoleMessages(mMessages, [&]() {
+    redirectConsoleMessages(messages, [&]() {
         auto result = evaluate(script, fileName);
         if (result.isError())
-            mMessages += MessageList::insert(
+            messages += MessageList::insert(
                 fileName, result.property("lineNumber").toInt(),
                 MessageType::ScriptError, result.toString());
     });
@@ -208,10 +209,10 @@ int ScriptEngine::evaluateInt(const QString &valueExpression,
     return static_cast<int>(evaluateValue(valueExpression, itemId, messages) + 0.5);
 }
 
-void ScriptEngine::updateVariables()
+void ScriptEngine::updateVariables(MessagePtrSet &messages)
 {
     for (auto it = mVariables.begin(); it != mVariables.end(); )
-        if (updateVariable(*it, 0, mMessages)) {
+        if (updateVariable(*it, 0, messages)) {
             ++it;
         }
         else {

@@ -35,7 +35,7 @@ MessagePtr insert(ItemId itemId,
     if (deduplicate) {
         for (const QWeakPointer<const Message> &ptr : qAsConst(gMessages))
             if (MessagePtr message = ptr.lock())
-                if (message->itemId == itemId &&
+                if ((!itemId || message->itemId == itemId) &&
                     message->type == type &&
                     message->text == text)
                     return message;

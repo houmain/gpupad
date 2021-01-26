@@ -34,7 +34,8 @@ public:
     QJSValue getGlobal(const QString &name);
     QJSValue call(QJSValue &callable, const QJSValueList &args,
         ItemId itemId, MessagePtrSet &messages);
-    void evaluateScript(const QString &script, const QString &fileName);
+    void evaluateScript(const QString &script,
+        const QString &fileName, MessagePtrSet &messages);
     ScriptValueList evaluateValues(const QStringList &valueExpressions,
         ItemId itemId, MessagePtrSet &messages);
     ScriptValue evaluateValue(const QString &valueExpression,
@@ -42,7 +43,7 @@ public:
     int evaluateInt(const QString &valueExpression,
       ItemId itemId, MessagePtrSet &messages);
 
-    void updateVariables();
+    void updateVariables(MessagePtrSet &messages);
     ScriptVariable getVariable(const QString &variableName,
         const QStringList &valueExpressions,
         ItemId itemId, MessagePtrSet &messages);
@@ -66,7 +67,6 @@ private:
     QJSEngine *mJsEngine{ };
     QThread *mInterruptThread{ };
     QTimer *mInterruptTimer{ };
-    MessagePtrSet mMessages;
     QList<Variable> mVariables;
 };
 

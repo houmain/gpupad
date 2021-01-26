@@ -195,14 +195,13 @@ void RenderSession::prepare(bool itemsChanged,
         mScriptEngine->setGlobal("input", mInputScriptObject);
     }
 
-    mScriptEngine->updateVariables();
     mInputScriptObject->setMouseFragCoord(Singletons::synchronizeLogic().mousePosition());
 
     const auto evaluateScript = [&](const Script &script) {
         if (shouldExecute(script.executeOn, mEvaluationType)) {
             auto source = QString();
             if (Singletons::fileCache().getSource(script.fileName, &source)) {
-                mScriptEngine->evaluateScript(source, script.fileName);
+                mScriptEngine->evaluateScript(source, script.fileName, mMessages);
                 mGpupadScriptObject->finishSessionUpdate();
             }
         }
@@ -211,6 +210,8 @@ void RenderSession::prepare(bool itemsChanged,
     const auto &session = Singletons::sessionModel();
 
     if (!itemsChanged && mEvaluationType != EvaluationType::Reset) {
+        mScriptEngine->updateVariables(mMessages);
+
         session.forEachItem([&](const Item &item) {
             if (auto script = castItem<Script>(item))
                 evaluateScript(*script);
