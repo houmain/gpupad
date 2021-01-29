@@ -42,7 +42,7 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
 
     mUpdateEditorsTimer->start(100);
 
-    mProcessSourceTimer->setInterval(500);
+    mProcessSourceTimer->setInterval(50);
     mProcessSourceTimer->setSingleShot(true);
 }
 

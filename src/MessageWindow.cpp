@@ -60,7 +60,7 @@ void MessageWindow::updateMessages()
     if (added)
         Q_EMIT messagesAdded();
 
-    mUpdateItemsTimer->start(100);
+    mUpdateItemsTimer->start(50);
 }
 
 QIcon MessageWindow::getMessageIcon(const Message &message) const
