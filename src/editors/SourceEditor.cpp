@@ -273,6 +273,7 @@ void SourceEditor::updateSyntaxHighlighting()
     mCompleter->setWidget(this);
     mCompleter->setCompletionMode(QCompleter::PopupCompletion);
     mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+    mCompleter->popup()->setFont(font());
     connect(mCompleter, qOverload<const QString &>(&QCompleter::activated),
         this, &SourceEditor::insertCompletion);
 }
@@ -285,6 +286,8 @@ void SourceEditor::findReplace()
 void SourceEditor::setFont(const QFont &font)
 {
     QPlainTextEdit::setFont(font);
+    if (mCompleter)
+        mCompleter->popup()->setFont(font);
     setTabSize(mTabSize);
 }
 
@@ -557,12 +560,14 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
         if (hitCtrlOrShift && event->text().isEmpty())
             return;
 
-        const auto prefix = textUnderCursor();
-        const auto textEntered = !event->text().trimmed().isEmpty();
+        const auto prefix = textUnderCursor().trimmed();
+        const auto text = event->text();
+        const auto textEntered = !text.isEmpty() && 
+            (text.at(0).isLetterOrNumber() || text.at(0) == '_');
         const auto hitCtrlSpace = ((event->modifiers() & Qt::ControlModifier) &&
             event->key() == Qt::Key_Space);
 
-        const auto show = ((textEntered && prefix.size() >= 3) || hitCtrlSpace);
+        const auto show = ((textEntered && prefix.size() >= 1) || hitCtrlSpace);
         updateCompleterPopup(prefix, show);
     }
 }
@@ -848,8 +853,10 @@ void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
         if (!alreadyComplete) {
             mCompleter->popup()->setCurrentIndex(
                 mCompleter->completionModel()->index(0, 0));
-            auto rect = cursorRect();
-            rect.adjust(0, 1, 0, 1);
+            auto cursor = textCursor();
+            cursor.movePosition(QTextCursor::WordLeft);
+            auto rect = cursorRect(cursor);
+            rect.adjust(viewportMargins().left(), 4, 0, 4);
             rect.setWidth(mCompleter->popup()->sizeHintForColumn(0)
                 + mCompleter->popup()->verticalScrollBar()->sizeHint().width());
             mCompleter->complete(rect);
