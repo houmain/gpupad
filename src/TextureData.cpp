@@ -693,6 +693,11 @@ bool TextureData::loadFromKtx(const QString &fileName)
 
 bool TextureData::loadFromDds(const QString &fileName)
 {
+    auto f = std::fopen(fileName.toUtf8().constData(), "rb");
+    if (!f)
+        return false;
+    auto guard = qScopeGuard([&]() { std::fclose(f); });
+
     auto callbacks = TinyDDS_Callbacks{ };
     callbacks.allocFn = [](void *user, size_t size) { return std::malloc(size); };
     callbacks.freeFn = [](void *user, void *memory) { std::free(memory); };
@@ -703,8 +708,6 @@ bool TextureData::loadFromDds(const QString &fileName)
     callbacks.tellFn = [](void *user) { 
       return static_cast<int64_t>(std::ftell(static_cast<FILE*>(user))); };
 
-    auto f = std::fopen(fileName.toUtf8().constData(), "rb");
-    auto guard = qScopeGuard([&]() { std::fclose(f); });
     auto context = TinyDDS_CreateContext(&callbacks, f);
     auto guard2 = qScopeGuard([&]() { TinyDDS_DestroyContext(context); });
 
@@ -774,7 +777,10 @@ bool TextureData::loadFromQImage(const QString &fileName)
 bool TextureData::loadFromTga(const QString &fileName)
 {
     auto f = std::fopen(fileName.toUtf8().constData(), "rb");
+    if (!f)
+        return false;
     auto guard = qScopeGuard([&]() { std::fclose(f); });
+
     auto file = tga::StdioFileInterface(f);
     auto decoder = tga::Decoder(&file);
     auto header = tga::Header();
