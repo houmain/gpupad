@@ -59,9 +59,11 @@ int main(int argc, char *argv[])
         }
     }
 
+#if __has_include("_version.h")
     app.setApplicationVersion(
-#include "_version.h"
+# include "_version.h"
     );
+#endif
     app.setOrganizationName("gpupad");
     app.setApplicationName("GPUpad");
 

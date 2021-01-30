@@ -191,7 +191,7 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
     }
 
     if (mEvaluationMode == EvaluationMode::Automatic)
-        mEvaluationTimer->start(100);
+        mEvaluationTimer->start(50);
 }
 
 void SynchronizeLogic::handleItemReordered(const QModelIndex &parent, int first)
