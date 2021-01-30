@@ -50,6 +50,7 @@ struct GLBufferBinding
     GLBuffer *buffer;
     int offset;
     int size;
+    bool readonly;
 };
 
 struct GLSubroutineBinding
