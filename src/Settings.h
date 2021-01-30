@@ -38,10 +38,10 @@ Q_SIGNALS:
     void darkThemeChanged(bool enabled);
 
 private:
-    int mTabSize{ 4 };
+    int mTabSize{ 2 };
     QFont mFont;
     bool mLineWrap{ };
-    bool mIndentWithSpaces{ };
+    bool mIndentWithSpaces{ true };
     bool mAutoIndentation{ true };
     bool mSyntaxHighlighting{ true };
     bool mDarkTheme{ };
