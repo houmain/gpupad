@@ -66,6 +66,7 @@ public:
     explicit GLProgram(const Program &program);
     bool operator==(const GLProgram &rhs) const;
 
+    bool link();
     bool bind(MessagePtrSet *callMessages);
     void unbind(ItemId callItemId);
     int getAttributeLocation(const QString &name) const;
@@ -88,7 +89,6 @@ private:
         QString boundSubroutine;
     };
 
-    bool link();
     QString getUniformBaseName(const QString &name) const;
     void uniformSet(const QString &name);
     void bufferSet(const QString &name);

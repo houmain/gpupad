@@ -833,12 +833,12 @@ void MainWindow::populateSampleSessions()
 {
     const auto paths = std::initializer_list<QString>{
         QCoreApplication::applicationDirPath() + "/samples",
-        "/usr/share/gpupad/samples",
 #if !defined(NDEBUG)
         QCoreApplication::applicationDirPath() + "/../share/gpupad/samples",
         QCoreApplication::applicationDirPath() + "/../samples",
         QCoreApplication::applicationDirPath() + "/../../samples",
 #endif
+        "/usr/share/gpupad/samples",
     };
     for (const auto &path : paths) {
         if (!mUi->menuSampleSessions->actions().empty())

@@ -158,6 +158,7 @@ struct RenderSession::CommandQueue
     std::map<ItemId, GLTarget> targets;
     std::map<ItemId, GLStream> vertexStreams;
     std::deque<Command> commands;
+    std::vector<GLProgram> failedPrograms;
 };
 
 RenderSession::RenderSession(QObject *parent)
@@ -518,9 +519,24 @@ void RenderSession::render()
 void RenderSession::reuseUnmodifiedItems()
 {
     if (mPrevCommandQueue) {
+
         replaceEqual(mCommandQueue->textures, mPrevCommandQueue->textures);
         replaceEqual(mCommandQueue->buffers, mPrevCommandQueue->buffers);
         replaceEqual(mCommandQueue->programs, mPrevCommandQueue->programs);
+
+        // immediately try to link programs
+        // when failing restore previous version but keep error messages
+        for (auto &[id, program] : mCommandQueue->programs) {
+            auto it = mPrevCommandQueue->programs.find(id);
+            if (it != mPrevCommandQueue->programs.end()) {
+                auto &prev = it->second;
+                if (!program.link() && prev.link()) {
+                    mCommandQueue->failedPrograms.push_back(std::move(program));
+                    program = std::move(prev);
+                }
+            }
+        }
+
         mPrevCommandQueue.reset();
     }
 }

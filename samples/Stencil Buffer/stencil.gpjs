@@ -171,7 +171,7 @@
                 "id": 113,
                 "items": [
                     {
-                        "fileName": "../../../../Program Files (x86)/gpupad/samples/Quad/attributeless.vs",
+                        "fileName": "attributeless.vs",
                         "id": 114,
                         "shaderType": "Vertex",
                         "type": "Shader"
