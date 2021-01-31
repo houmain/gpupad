@@ -191,8 +191,9 @@ void RenderSession::prepare(bool itemsChanged,
     if (!mScriptEngine || mEvaluationType == EvaluationType::Reset) {
         mScriptEngine.reset(new ScriptEngine());
         mGpupadScriptObject = new GpupadScriptObject(this);
+        mGpupadScriptObject->initialize(*mScriptEngine);
+
         mInputScriptObject = new InputScriptObject(this);
-        mScriptEngine->setGlobal("gpupad", mGpupadScriptObject);
         mScriptEngine->setGlobal("input", mInputScriptObject);
     }
 
@@ -201,10 +202,8 @@ void RenderSession::prepare(bool itemsChanged,
     const auto evaluateScript = [&](const Script &script) {
         if (shouldExecute(script.executeOn, mEvaluationType)) {
             auto source = QString();
-            if (Singletons::fileCache().getSource(script.fileName, &source)) {
+            if (Singletons::fileCache().getSource(script.fileName, &source))
                 mScriptEngine->evaluateScript(source, script.fileName, mMessages);
-                mGpupadScriptObject->finishSessionUpdate();
-            }
         }
     };
 
@@ -217,6 +216,7 @@ void RenderSession::prepare(bool itemsChanged,
             if (auto script = castItem<Script>(item))
                 evaluateScript(*script);
         });
+        mGpupadScriptObject->applySessionUpdate(*mScriptEngine);
         return;
     }
 
@@ -484,6 +484,7 @@ void RenderSession::prepare(bool itemsChanged,
             }
         }
     });
+    mGpupadScriptObject->applySessionUpdate(*mScriptEngine);
 }
 
 void RenderSession::render()

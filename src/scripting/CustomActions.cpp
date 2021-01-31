@@ -23,8 +23,8 @@ public:
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
             mScriptEngine.reset(new ScriptEngine());
+            mGpupadScriptObject->initialize(*mScriptEngine);
             mScriptEngine->evaluateScript(source, mFilePath, mMessages);
-            mScriptEngine->setGlobal("gpupad", mGpupadScriptObject);
         }
 
         auto name = mScriptEngine->getGlobal("name");
@@ -50,12 +50,13 @@ public:
     void execute(const QJsonValue &selection, MessagePtrSet &messages)
     {
         auto execute = mScriptEngine->getGlobal("execute");
-        if (execute.isCallable())
+        if (execute.isCallable()) {
             mScriptEngine->call(execute,
                 { mScriptEngine->toJsValue(selection) },
                 0, messages);
 
-        mGpupadScriptObject->finishSessionUpdate();
+            mGpupadScriptObject->applySessionUpdate(*mScriptEngine);
+        }
     }
 
 private:

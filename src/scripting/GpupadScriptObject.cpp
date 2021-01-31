@@ -1,5 +1,6 @@
 #include "GpupadScriptObject.h"
 #include "Singletons.h"
+#include "ScriptEngine.h"
 #include "FileDialog.h"
 #include "FileCache.h"
 #include "session/SessionModel.h"
@@ -7,7 +8,13 @@
 #include "editors/BinaryEditor.h"
 #include <QJsonDocument>
 #include <QVariantMap>
+#include <QDir>
 #include <cstring>
+
+#if defined(Qt5WebEngineWidgets_FOUND)
+#  include <QWebEngineView>
+#  include <QWebChannel>
+#endif
 
 namespace {
     // there does not seems to be a way to access e.g. Float32Array directly...
@@ -52,38 +59,66 @@ namespace {
         }
         return bytes;
     }
+
+    const Item *findItem(QJsonValue objectOrId)
+    {
+        const auto id = (objectOrId.isObject() ?
+            objectOrId.toObject()["id"].toInt() :
+            objectOrId.toInt());
+        return Singletons::sessionModel().findItem(id);
+    }
 } // namespace
 
 GpupadScriptObject::GpupadScriptObject(QObject *parent) : QObject(parent)
 {
 }
 
+void GpupadScriptObject::initialize(ScriptEngine &scriptEngine)
+{
+    auto file = QFile(":/scripting/GpupadScriptObject.js");
+    if (file.open(QFile::ReadOnly | QFile::Text)) {
+        scriptEngine.setGlobal("gpupad", this);
+        scriptEngine.evaluateScript(QTextStream(&file).readAll(), "", mMessages);
+    }
+}
+
+void GpupadScriptObject::applySessionUpdate(ScriptEngine &scriptEngine)
+{
+    scriptEngine.evaluateScript("gpupad.updateItems()", "", mMessages);
+
+    if (mPendingUpdates.empty())
+        return;
+
+    Singletons::sessionModel().beginUndoMacro("Script");
+    for (const auto &update : mPendingUpdates)
+        update();
+    mPendingUpdates.clear();
+    Singletons::sessionModel().endUndoMacro();
+
+    if (std::exchange(mEditorDataUpdated, false))
+        Singletons::fileCache().updateEditorFiles();
+}
+
 QJsonArray GpupadScriptObject::getItems() const
 {
-    return sessionModel().getJson({ QModelIndex() });
+    return Singletons::sessionModel().getJson({ QModelIndex() });
 }
 
-QJsonArray GpupadScriptObject::getItemsByName(const QString &name) const
+void GpupadScriptObject::updateItems(QJsonValue update)
 {
-    auto itemIndices = QList<QModelIndex>();
-    sessionModel().forEachItem([&](const Item &item) {
-        if (item.name == name)
-            itemIndices.append(sessionModel().getIndex(&item));
+    mPendingUpdates.push_back([update = std::move(update)]() {
+        auto array = (update.isArray() ? update.toArray() : QJsonArray({ update }));
+        Singletons::sessionModel().dropJson(array, -1, { }, true);
     });
-    return sessionModel().getJson(itemIndices);
-}
-
-void GpupadScriptObject::updateItems(QJsonValue update, QJsonValue parent, int row)
-{
-    const auto index = sessionModel().getIndex(findItem(parent));
-    if (!update.isArray())
-        update = QJsonArray({ update });
-    sessionModel().dropJson(update.toArray(), row, index, true);
 }
 
 void GpupadScriptObject::deleteItem(QJsonValue item)
 {
-    sessionModel().deleteItem(sessionModel().getIndex(findItem(item)));
+    mPendingUpdates.push_back([item = std::move(item)]() {
+        const auto index = Singletons::sessionModel().getIndex(findItem(item));
+        if (index.isValid())
+            Singletons::sessionModel().deleteItem(index);
+    });
 }
 
 void GpupadScriptObject::setBlockData(QJsonValue item, QJSValue data)
@@ -92,7 +127,7 @@ void GpupadScriptObject::setBlockData(QJsonValue item, QJSValue data)
         auto buffer = castItem<Buffer>(block->parent);
         if (buffer->fileName.isEmpty()) {
             const auto fileName = FileDialog::generateNextUntitledFileName(buffer->name);
-            Singletons::sessionModel().setData(sessionModel().getIndex(
+            Singletons::sessionModel().setData(Singletons::sessionModel().getIndex(
                 buffer, SessionModel::FileName), fileName);
         }
 
@@ -106,11 +141,12 @@ void GpupadScriptObject::setBlockData(QJsonValue item, QJSValue data)
         if (editor) {
             // TODO: take offset into account
             editor->replace(toByteArray(data, *block), false);
+            mEditorDataUpdated = true;
         }
     }
 }
 
-QJsonValue GpupadScriptObject::openFileDialog()
+QString GpupadScriptObject::openFileDialog()
 {
     auto options = FileDialog::Options();
     if (Singletons::fileDialog().exec(options))
@@ -118,7 +154,7 @@ QJsonValue GpupadScriptObject::openFileDialog()
     return { };
 }
 
-QJsonValue GpupadScriptObject::readTextFile(const QString &fileName)
+QString GpupadScriptObject::readTextFile(const QString &fileName)
 {
     auto source = QString();
     if (Singletons::fileCache().getSource(fileName, &source))
@@ -126,33 +162,39 @@ QJsonValue GpupadScriptObject::readTextFile(const QString &fileName)
     return { };
 }
 
-SessionModel &GpupadScriptObject::sessionModel()
+bool GpupadScriptObject::openWebDock()
 {
-    if (!std::exchange(mUpdatingSession, true))
-        Singletons::sessionModel().beginUndoMacro("Script");
+#if defined(Qt5WebEngineWidgets_FOUND)
+    class CustomEditor : public IEditor
+    {
+    public:
+        QList<QMetaObject::Connection> connectEditActions(const EditActions &) override { return { }; }
+        QString fileName() const override { return { }; }
+        void setFileName(QString) override { }
+        bool load() override { return false; }
+        bool reload() override { return false; }
+        bool save() override { return false; }
+        int tabifyGroup() override { return 1; }
+    };
 
-    return Singletons::sessionModel();
-}
+    auto fileName = QDir::current().filePath("index.html");
+    if (!QFileInfo::exists(fileName))
+        return false;
 
-const SessionModel &GpupadScriptObject::sessionModel() const
-{
-    return Singletons::sessionModel();
-}
+    auto editor = new CustomEditor();
+    auto view = new QWebEngineView();
+    Singletons::editorManager().createDock(view, editor);
 
-const Item *GpupadScriptObject::findItem(QJsonValue objectOrId) const
-{
-    const auto id = (objectOrId.isObject() ?
-        objectOrId.toObject()["id"].toInt() :
-        objectOrId.toInt());
-    return sessionModel().findItem(id);
-}
+    view->load(QUrl::fromLocalFile(fileName));
+    connect(view, &QWebEngineView::loadStarted,
+        [this, view]() {
+            auto webChannel = new QWebChannel();
+            webChannel->registerObject("gpupad", this);
+            view->page()->setWebChannel(webChannel);
+        });
 
-void GpupadScriptObject::finishSessionUpdate()
-{
-    if (std::exchange(mUpdatingSession, false)) {
-        Singletons::sessionModel().endUndoMacro();
-
-        // TODO: call when buffers were updated
-        Singletons::fileCache().updateEditorFiles();
-    }
+    return true;
+#else
+    return false;
+#endif
 }

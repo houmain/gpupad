@@ -1,13 +1,13 @@
 #ifndef GPUPADSCRIPTOBJECT_H
 #define GPUPADSCRIPTOBJECT_H
 
-#include <QObject>
+#include "MessageList.h"
 #include <QJsonValue>
 #include <QJsonArray>
+#include <QJsonObject>
 #include <QJSValue>
 
-struct Item;
-class SessionModel;
+class ScriptEngine;
 
 class GpupadScriptObject final : public QObject
 {
@@ -15,26 +15,22 @@ class GpupadScriptObject final : public QObject
 public:
     explicit GpupadScriptObject(QObject *parent = nullptr);
 
-    Q_INVOKABLE QJsonArray getItems() const;
-    Q_INVOKABLE QJsonArray getItemsByName(const QString &name) const;
+    void initialize(ScriptEngine &engine);
+    void applySessionUpdate(ScriptEngine &engine);
 
-    Q_INVOKABLE void updateItems(QJsonValue update,
-        QJsonValue parent = { }, int row = -1);
+    Q_INVOKABLE QJsonArray getItems() const;
+    Q_INVOKABLE void updateItems(QJsonValue update);
     Q_INVOKABLE void deleteItem(QJsonValue item);
 
     Q_INVOKABLE void setBlockData(QJsonValue item, QJSValue data);
-
-    Q_INVOKABLE QJsonValue openFileDialog();
-    Q_INVOKABLE QJsonValue readTextFile(const QString &fileName);
-
-    void finishSessionUpdate();
+    Q_INVOKABLE QString openFileDialog();
+    Q_INVOKABLE QString readTextFile(const QString &fileName);
+    Q_INVOKABLE bool openWebDock();
 
 private:
-    SessionModel &sessionModel();
-    const SessionModel &sessionModel() const;
-    const Item *findItem(QJsonValue objectOrId) const;
-
-    bool mUpdatingSession{ };
+    MessagePtrSet mMessages;
+    std::vector<std::function<void()>> mPendingUpdates;
+    bool mEditorDataUpdated{ };
 };
 
 #endif // GPUPADSCRIPTOBJECT_H

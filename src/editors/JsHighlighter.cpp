@@ -96,6 +96,10 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
     rule.format = quotationFormat;
     mHighlightingRules.append(rule);
 
+    rule.pattern = QRegularExpression(quotation.arg('`'));
+    rule.format = quotationFormat;
+    mHighlightingRules.append(rule);
+
     rule.pattern = QRegularExpression("//.*");
     rule.format = singleLineCommentFormat;
     mHighlightingRules.append(rule);

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.12.0)
 project(gpupad LANGUAGES CXX C)
 
 set(GIT_COMMIT_LAST_TAG "unknown")
@@ -161,6 +161,12 @@ if (NOT OPTION_USE_QT6)
     if(Qt5Multimedia_FOUND)
         target_link_libraries(${PROJECT_NAME} Qt5::Multimedia)
         add_compile_definitions(Qt5Multimedia_FOUND)
+    endif()
+
+    find_package(Qt5WebEngineWidgets CONFIG)
+    if(Qt5WebEngineWidgets_FOUND)
+        target_link_libraries(${PROJECT_NAME} Qt5::WebEngineWidgets)
+        add_compile_definitions(Qt5WebEngineWidgets_FOUND)
     endif()
 else()
     find_package(Qt6Widgets CONFIG REQUIRED)

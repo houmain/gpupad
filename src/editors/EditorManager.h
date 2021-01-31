@@ -28,6 +28,7 @@ public:
         int line = -1, int column = -1);
     BinaryEditor *openBinaryEditor(const QString &fileName);
     TextureEditor *openTextureEditor(const QString &fileName);
+    QDockWidget *createDock(QWidget *widget, IEditor *editor);
     void setAutoRaise(bool raise) { mAutoRaise = raise; }
 
     SourceEditor *getSourceEditor(const QString &fileName);
@@ -66,7 +67,6 @@ private:
     void addSourceEditor(SourceEditor *editor);
     void addBinaryEditor(BinaryEditor *editor);
     void addTextureEditor(TextureEditor *editor);
-    QDockWidget *createDock(QWidget *widget, IEditor *editor);
     void handleEditorFilenameChanged(QDockWidget *dock);
     bool saveDock(QDockWidget *dock);
     bool closeDock(QDockWidget *dock) override;
