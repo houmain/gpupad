@@ -80,13 +80,16 @@ public:
         if (auto *spinBox = qobject_cast<QDoubleSpinBox*>(editor)) {
             spinBox->interpretText();
             auto value = spinBox->value();
-            model->setData(index, value, Qt::EditRole);
-            Q_EMIT model->dataChanged(index, index);
+            if (model->data(index, Qt::EditRole) != value) {
+                model->setData(index, value, Qt::EditRole);
+                Q_EMIT model->dataChanged(index, index);
+            }
         }
         else if (auto *lineEdit = qobject_cast<ExpressionLineEdit*>(editor)) {
             auto ok = true;
-            auto value = lineEdit->text().toDouble(&ok);
-            if (ok) {
+            const auto value = lineEdit->text().toDouble(&ok);
+            const auto current = model->data(index, Qt::EditRole).toDouble();
+            if (ok && !lineEdit->hasValue(current)) {
                 model->setData(index, value, Qt::EditRole);
                 Q_EMIT model->dataChanged(index, index);
             }

@@ -40,28 +40,6 @@ void ExpressionLineEdit::stepBy(int steps)
     }
 }
 
-void ExpressionLineEdit::setText(const QString &text)
-{
-    auto ok = false;
-    if (auto value = text.toDouble(&ok); ok) {
-        auto simplified = simpleDoubleString(value);
-        if (simplified != this->text())
-            QLineEdit::setText(simplified);
-    }
-    else {
-        if (text != this->text())
-            QLineEdit::setText(text);
-    }
-}
-
-QString ExpressionLineEdit::text() const
-{
-    auto ok = false;
-    if (auto value = QLineEdit::text().toDouble(&ok))
-        return simpleDoubleString(value);
-    return QLineEdit::text();
-}
-
 void ExpressionLineEdit::stepBy(double steps)
 {
     const auto singleStep = 0.1;
@@ -72,4 +50,36 @@ void ExpressionLineEdit::stepBy(double steps)
         setText(QString::number(value));
         selectAll();
     }
+}
+
+void ExpressionLineEdit::setText(const QString &string)
+{
+    auto ok = false;
+    if (auto value = string.toDouble(&ok); ok) {
+        auto simplified = simpleDoubleString(value);
+        if (simplified != text()) {
+            QLineEdit::setText(simplified);
+            Q_EMIT textChanged(simplified);
+        }
+    }
+    else {
+        if (string != QLineEdit::text()) {
+            QLineEdit::setText(string);
+            Q_EMIT textChanged(string);
+        }
+    }
+}
+
+QString ExpressionLineEdit::text() const
+{
+    auto ok = false;
+    auto string = QLineEdit::text();
+    if (auto value = string.toDouble(&ok))
+        return simpleDoubleString(value);
+    return string;
+}
+
+bool ExpressionLineEdit::hasValue(double value) const
+{
+    return (text() == simpleDoubleString(value));
 }

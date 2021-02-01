@@ -59,6 +59,9 @@ int main(int argc, char *argv[])
         }
     }
 
+    // format floats independent of local
+    QLocale::setDefault(QLocale::c());
+
 #if __has_include("_version.h")
     app.setApplicationVersion(
 # include "_version.h"

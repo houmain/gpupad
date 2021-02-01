@@ -13,12 +13,13 @@ public:
 
     void setText(const QString &text);
     QString text() const;
+    bool hasValue(double value) const;
 
     bool decimal() const { return mDecimal; }
     void setDecimal(bool decimal) { mDecimal = decimal; }
 
 Q_SIGNALS:
-    void textChanged();
+    void textChanged(const QString &);
 
 protected:
     void wheelEvent(QWheelEvent *event) override;
