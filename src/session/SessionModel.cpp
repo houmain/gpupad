@@ -409,8 +409,8 @@ void SessionModel::deserialize(const QJsonObject &object,
             setData(getIndex(index, Name), value);
         }
         else if (property == "fileName") {
-            setData(getIndex(index, FileName),
-                QDir::current().absoluteFilePath(value.toString()));
+            const auto absolutePath = QFileInfo(QDir::current().absoluteFilePath(value.toString())).canonicalFilePath();
+            setData(getIndex(index, FileName), QDir::toNativeSeparators(absolutePath));
         }
 #define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
         else if (Item::Type::ITEM_TYPE == type && #PROPERTY == property) \
