@@ -159,10 +159,16 @@ bool GLBuffer::download()
     if (!mDeviceCopyModified)
         return false;
 
+    const auto prevData = mData;
     auto &gl = GLContext::currentContext();
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
     gl.glGetBufferSubData(GL_ARRAY_BUFFER, 0, mSize, mData.data());
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
+
+    if (prevData == mData) {
+        mData = prevData;
+        return false;
+    }
 
     mSystemCopyModified = mDeviceCopyModified = false;
     return true;
