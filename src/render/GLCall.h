@@ -25,7 +25,8 @@ public:
     void setProgram(GLProgram *program);
     void setTarget(GLTarget *target);
     void setVextexStream(GLStream *vertexStream);
-    void setIndexBuffer(GLBuffer *indices, const Block &block);
+    void setIndexBuffer(GLBuffer *indices, const Block &block,
+        ScriptEngine &scriptEngine, MessagePtrSet &messages);
     void setIndirectBuffer(GLBuffer *commands, const Block &block,
         ScriptEngine &scriptEngine, MessagePtrSet &messages);
     void setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer);
@@ -54,6 +55,7 @@ private:
     GLBuffer *mIndexBuffer{ };
     GLuint mIndirectOffset{ };
     int mIndexSize{ };
+    GLuint mIndicesOffset{ };
 
     GLBuffer *mIndirectBuffer{ };
     GLint mIndirectStride{ };

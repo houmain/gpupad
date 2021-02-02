@@ -879,7 +879,7 @@ void MainWindow::openSampleSession()
 
 void MainWindow::openOnlineHelp()
 {
-    QDesktopServices::openUrl(QUrl("https://my-foss.net/gpupad"));
+    QDesktopServices::openUrl(QUrl("https://github.com/houmain/gpupad"));
 }
 
 void MainWindow::openAbout()

@@ -357,7 +357,7 @@ void RenderSession::prepare(bool itemsChanged,
                 case Binding::BindingType::Buffer:
                     addCommand(
                         [binding = GLBufferBinding{
-                            b.id, b.name, addBufferOnce(b.bufferId), 0, 0 }
+                            b.id, b.name, addBufferOnce(b.bufferId), 0, 0, false }
                         ](BindingState &state) {
                             state.top().buffers[binding.name] = binding;
                         });
@@ -370,7 +370,7 @@ void RenderSession::prepare(bool itemsChanged,
                         const auto stride = getBlockStride(*block);
                         addCommand(
                             [binding = GLBufferBinding{
-                                b.id, b.name, addBufferOnce(block->parent->id), offset, rowCount * stride }
+                                b.id, b.name, addBufferOnce(block->parent->id), offset, rowCount * stride, false }
                             ](BindingState &state) {
                                 state.top().buffers[binding.name] = binding;
                             });
@@ -400,7 +400,8 @@ void RenderSession::prepare(bool itemsChanged,
                         glcall.setTarget(addTargetOnce(call->targetId));
                         glcall.setVextexStream(addVertexStreamOnce(call->vertexStreamId));
                         if (auto block = session.findItem<Block>(call->indexBufferBlockId))
-                            glcall.setIndexBuffer(addBufferOnce(block->parent->id), *block);
+                            glcall.setIndexBuffer(addBufferOnce(block->parent->id), *block,
+                                *mScriptEngine, mMessages);
                         if (auto block = session.findItem<Block>(call->indirectBufferBlockId))
                             glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block,
                                 *mScriptEngine, mMessages);

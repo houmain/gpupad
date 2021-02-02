@@ -7,6 +7,8 @@
 #include "FileCache.h"
 #include <QHeaderView>
 #include <QSaveFile>
+#include <cstdint>
+#include <cstring>
 
 namespace
 {
@@ -167,6 +169,19 @@ void BinaryEditor::replace(QByteArray data, bool emitFileChanged)
         setModified(true);
 
     Singletons::fileCache().invalidateEditorFile(mFileName, emitFileChanged);
+}
+
+void BinaryEditor::replaceRange(int offset, QByteArray data, bool emitFileChanged)
+{
+    if (offset == 0 && data.size() >= mData.size()) {
+        mData = data;
+    }
+    else {
+        if (offset + data.size() > mData.size())
+            mData.resize(offset + data.size());
+        std::memcpy(mData.data() + offset, data.constData(), data.size());
+    }
+    replace(std::exchange(mData, { }), emitFileChanged);
 }
 
 void BinaryEditor::handleDataChanged()

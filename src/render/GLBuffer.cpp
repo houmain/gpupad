@@ -87,13 +87,23 @@ GLuint GLBuffer::getReadWriteBufferId()
     return mBufferObject;
 }
 
+void GLBuffer::bindIndexedRange(GLenum target, int index, int offset, int size, bool readonly)
+{
+    const auto bufferObject = (readonly ?
+        getReadOnlyBufferId() : getReadWriteBufferId());
+    auto &gl = GLContext::currentContext();
+    if (size <= 0) {
+        gl.glBindBufferBase(target, index, bufferObject);
+    }
+    else {
+        gl.glBindBufferRange(target, index, bufferObject, offset, size);
+    }
+}
+
 void GLBuffer::bindReadOnly(GLenum target)
 {
-    reload();
-    createBuffer();
-    upload();
     auto &gl = GLContext::currentContext();
-    gl.glBindBuffer(target, mBufferObject);
+    gl.glBindBuffer(target, getReadOnlyBufferId());
 }
 
 void GLBuffer::unbind(GLenum target)

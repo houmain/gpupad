@@ -38,7 +38,8 @@ void GLCall::setVextexStream(GLStream *stream)
     mVertexStream = stream;
 }
 
-void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block)
+void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block,
+    ScriptEngine &scriptEngine, MessagePtrSet &messages)
 {
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
@@ -47,6 +48,8 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block)
 
     mIndexBuffer = indices;
     mIndexSize = getBlockStride(block);
+    mIndicesOffset = scriptEngine.evaluateValue(
+        block.offset, block.id, messages);
 }
 
 GLenum GLCall::getIndexType() const
@@ -190,7 +193,7 @@ void GLCall::executeDraw(MessagePtrSet &messages)
         else if (mCall.callType == Call::CallType::DrawIndexed) {
             // DrawElements(InstancedBaseVertexBaseInstance)
             const auto offset =
-                reinterpret_cast<void*>(static_cast<intptr_t>(first * mIndexSize));
+                reinterpret_cast<void*>(static_cast<intptr_t>(mIndicesOffset + first * mIndexSize));
             if (!baseVertex && !baseInstance) {
                 gl.glDrawElementsInstanced(mCall.primitiveType, count, 
                     getIndexType(), offset, instanceCount);

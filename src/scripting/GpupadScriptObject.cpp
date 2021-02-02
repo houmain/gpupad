@@ -9,6 +9,7 @@
 #include <QJsonDocument>
 #include <QVariantMap>
 #include <QDir>
+#include <QTextStream>
 #include <cstring>
 
 #if defined(Qt5WebEngineWidgets_FOUND)
@@ -95,6 +96,8 @@ void GpupadScriptObject::applySessionUpdate(ScriptEngine &scriptEngine)
     mPendingUpdates.clear();
     Singletons::sessionModel().endUndoMacro();
 
+    scriptEngine.updateVariables(mMessages);
+
     if (std::exchange(mEditorDataUpdated, false))
         Singletons::fileCache().updateEditorFiles();
 }
@@ -139,9 +142,13 @@ void GpupadScriptObject::setBlockData(QJsonValue item, QJSValue data)
         editors.setAutoRaise(true);
 
         if (editor) {
-            // TODO: take offset into account
-            editor->replace(toByteArray(data, *block), false);
-            mEditorDataUpdated = true;
+            auto ok = true;
+            const auto offset = (block->evaluatedOffset ?
+                block->evaluatedOffset : block->offset.toInt(&ok));
+            if (ok) {
+                editor->replaceRange(offset, toByteArray(data, *block), false);
+                mEditorDataUpdated = true;
+            }
         }
     }
 }

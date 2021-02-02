@@ -6,6 +6,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJSValue>
+#include <functional>
 
 class ScriptEngine;
 

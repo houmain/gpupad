@@ -22,6 +22,7 @@ public:
     GLuint getReadOnlyBufferId();
     GLuint getReadWriteBufferId();
     void bindReadOnly(GLenum target);
+    void bindIndexedRange(GLenum target, int index, int offset, int size, bool readonly);
     void unbind(GLenum target);
     bool download();
 

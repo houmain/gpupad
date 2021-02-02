@@ -472,17 +472,9 @@ bool GLProgram::apply(const GLBufferBinding &binding)
     if (!mBufferBindingPoints.contains(binding.name))
         return false;
 
-    auto &gl = GLContext::currentContext();
     const auto [target, index] = mBufferBindingPoints[binding.name];
-    const auto buffer = (binding.readonly ?
-        binding.buffer->getReadOnlyBufferId() :
-        binding.buffer->getReadWriteBufferId());
-    if (binding.size <= 0) {
-        gl.glBindBufferBase(target, index, buffer);
-    }
-    else {
-        gl.glBindBufferRange(target, index, buffer, binding.offset, binding.size);
-    }
+    binding.buffer->bindIndexedRange(target, index,
+        binding.offset, binding.size, binding.readonly);
     bufferSet(binding.name);
     return true;
 }
