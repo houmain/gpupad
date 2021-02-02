@@ -71,7 +71,6 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setTitleBarWidget(new QWidget(this));
     dock->toggleViewAction()->setVisible(false);
     addDockWidget(Qt::RightDockWidgetArea, dock);
-    auto editorsDock = dock;
 
     mSessionSplitter = new AutoOrientationSplitter(this);
     mSessionSplitter->addWidget(mSessionEditor.data());
@@ -294,7 +293,6 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     readSettings();
-    editorsDock->show();
 }
 
 MainWindow::~MainWindow()
@@ -328,15 +326,15 @@ void MainWindow::readSettings()
     const auto &settings = Singletons::settings();
     if (!restoreGeometry(settings.value("geometry").toByteArray()))
         setGeometry(100, 100, 800, 600);
-    if (settings.value("maximized").toBool()) {
-        // maximize before restoring state so layout is not jumbled
-        // unfortunately this overwrites the unmaximized geometry
-        if (auto screen = QGuiApplication::screenAt(pos()))
-            setGeometry(screen->availableGeometry());
+    if (settings.value("maximized").toBool())
         setWindowState(Qt::WindowMaximized);
-    }
-    restoreState(settings.value("state").toByteArray());
-    mSessionSplitter->restoreState(settings.value("sessionSplitter").toByteArray());
+
+    // workaround: restore state after geometry is applied, so it is not garbled
+    QTimer::singleShot(0, this, [this]() {
+        const auto &settings = Singletons::settings();
+        restoreState(settings.value("state").toByteArray());
+        mSessionSplitter->restoreState(settings.value("sessionSplitter").toByteArray());
+    });
 
     Singletons::fileDialog().setDirectory(settings.value("lastDirectory").toString());
 
