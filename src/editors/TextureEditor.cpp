@@ -219,9 +219,11 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
     if (texture == mTexture)
         return;
 
-    mTexture = texture;
-    mTextureItem->setImage(mTexture);
+    mTextureItem->setImage(texture);
     setBounds(mTextureItem->boundingRect().toRect());
+    if (mTexture.isNull())
+        centerOn(mTextureItem->boundingRect().topLeft());
+    mTexture = texture;
 
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
