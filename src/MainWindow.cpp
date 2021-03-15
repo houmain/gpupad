@@ -24,6 +24,19 @@
 #include <QTimer>
 #include <QMimeData>
 #include <QScreen>
+#include <QProcess>
+
+void showInFileManager(const QString &path) {
+#if defined(_WIN32)
+    QProcess::startDetached("explorer.exe", { "/select,", QDir::toNativeSeparators(path) });
+#elif defined(__APPLE__)
+    QProcess::execute("/usr/bin/osascript", { "-e", "tell application \"Finder\" to reveal POSIX file \"" + path + "\"" });
+    QProcess::execute("/usr/bin/osascript", { "-e", "tell application \"Finder\" to activate" });
+#else
+    const auto info = QFileInfo(path);
+    QDesktopServices::openUrl(QUrl::fromLocalFile(info.isDir() ? path : info.path()));
+#endif
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -161,6 +174,8 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::closeSession);
     connect(mUi->actionQuit, &QAction::triggered,
         this, &MainWindow::close);
+    connect(mUi->actionOpenContainingFolder, &QAction::triggered,
+        this, &MainWindow::openContainingFolder);
     connect(mUi->actionOnlineHelp, &QAction::triggered,
         this, &MainWindow::openOnlineHelp);
     connect(mUi->menuHelp, &QMenu::aboutToShow,
@@ -276,7 +291,7 @@ MainWindow::MainWindow(QWidget *parent)
         action->setActionGroup(indentActionGroup);
     }
 
-    for (auto i = 0; i < 5; ++i) {
+    for (auto i = 0; i < 9; ++i) {
         auto action = mUi->menuRecentFiles->addAction("");
         connect(action, &QAction::triggered,
             this, &MainWindow::openRecentFile);
@@ -434,9 +449,10 @@ void MainWindow::updateFileActions()
     mUi->actionSaveAs->setText(tr("Save%1 &As...").arg(desc));
     mUi->actionClose->setText(tr("&Close%1").arg(desc));
 
-    const auto canReload = !FileDialog::isEmptyOrUntitled(fileName);
-    mUi->actionReload->setEnabled(canReload);
-    mUi->actionReload->setText(tr("&Reload%1").arg(canReload ? desc : ""));
+    const auto hasFile = !FileDialog::isEmptyOrUntitled(fileName);
+    mUi->actionReload->setEnabled(hasFile);
+    mUi->actionReload->setText(tr("&Reload%1").arg(hasFile ? desc : ""));
+    mUi->actionOpenContainingFolder->setEnabled(hasFile);
 
     auto sourceType = mEditorManager.currentSourceType();
     mUi->menuSourceType->setEnabled(sourceType != SourceType::None);
@@ -724,12 +740,12 @@ void MainWindow::updateRecentFileActions()
     for (auto i = recentFileIndex; i < mRecentFileActions.size(); ++i)
         mRecentFileActions[i]->setVisible(false);
 
-    auto index = 1;
+    auto index = 0;
     for (const auto &actions : { mRecentSessionActions, mRecentFileActions })
         for (const auto action : actions)
             if (action->isVisible()) {
-                action->setText((index < 10 ? QStringLiteral("  &%1 %2") :
-                    QStringLiteral("%1 %2")).arg(index).arg(action->text()));
+                action->setText(QStringLiteral("  &%1 %2").arg(
+                    QChar(index < 9 ? '1' + index : 'A' + (index - 9))).arg(action->text()));
                 ++index;
             }
 
@@ -835,6 +851,14 @@ void MainWindow::openMessageDock()
 
     for (auto p = mMessageWindow->parentWidget(); p; p = p->parentWidget())
         p->setVisible(true);
+}
+
+void MainWindow::openContainingFolder()
+{
+    if (mEditorManager.hasCurrentEditor())
+        return showInFileManager(mEditorManager.currentEditorFileName());
+
+    return showInFileManager(mSessionEditor->fileName());
 }
 
 void MainWindow::populateSampleSessions()

@@ -59,6 +59,7 @@
     <addaction name="actionSaveAs"/>
     <addaction name="actionSaveAll"/>
     <addaction name="actionReload"/>
+    <addaction name="actionOpenContainingFolder"/>
     <addaction name="separator"/>
     <addaction name="actionClose"/>
     <addaction name="actionCloseAll"/>
@@ -564,6 +565,11 @@
   <action name="actionFocusPreviousEditor">
    <property name="text">
     <string>Focus previous editor</string>
+   </property>
+  </action>
+  <action name="actionOpenContainingFolder">
+   <property name="text">
+    <string>Open containing folder</string>
    </property>
   </action>
  </widget>

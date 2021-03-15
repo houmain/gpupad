@@ -36,6 +36,7 @@ public Q_SLOTS:
     bool saveAllFiles();
     bool reloadFile();
     bool closeFile();
+    void openContainingFolder();
     void openSessionDock();
     void openMessageDock();
     void openOnlineHelp();
