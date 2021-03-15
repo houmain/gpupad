@@ -274,7 +274,7 @@ void BindingProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelBlock, mUi->block,
         block);
 
-    const auto textureKind = (image ? currentTextureKind() : TextureKind{ });
+    const auto textureKind = (image || sampler ? currentTextureKind() : TextureKind{ });
     setFormVisibility(mUi->formLayout, mUi->labelLevel, mUi->level, image);
     setFormVisibility(mUi->formLayout, mUi->labelLayer, mUi->layerWidget,
         textureKind.array || textureKind.dimensions == 3 || textureKind.cubeMap);

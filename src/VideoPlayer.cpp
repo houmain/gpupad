@@ -18,7 +18,7 @@ VideoPlayer::VideoPlayer(QString fileName, QObject *parent)
     mPlayer->setMuted(true);
 
     auto playlist = new QMediaPlaylist(this);
-    playlist->setPlaybackMode(QMediaPlaylist::PlaybackMode::Loop);
+    playlist->setPlaybackMode(QMediaPlaylist::PlaybackMode::CurrentItemInLoop);
     playlist->addMedia(QUrl::fromLocalFile(fileName));
     mPlayer->setPlaylist(playlist);
 }

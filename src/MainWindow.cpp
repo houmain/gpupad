@@ -623,11 +623,21 @@ bool MainWindow::saveSessionAs()
 
 bool MainWindow::copySessionFiles(const QString &fromPath, const QString &toPath) 
 {
+    const auto startsWithPath = [](const QString& string, const QString& start) {
+        if (start.length() > string.length())
+            return false;
+        const auto isSlash = [](QChar c) { return (c == '/' || c == '\\'); };
+        for (auto i = 0; i < start.length(); ++i)
+            if (start[i] != string[i] && (!isSlash(string[i]) || !isSlash(start[i])))
+                return false;
+        return true;
+    };
+
     auto succeeded = true;
     auto &model = Singletons::sessionModel();
     model.forEachFileItem([&](const FileItem &fileItem) {
         const auto prevFileName = fileItem.fileName;
-        if (prevFileName.startsWith(fromPath)) {
+        if (startsWithPath(prevFileName, fromPath)) {
             const auto newFileName = QString(toPath + prevFileName.mid(fromPath.length()));
             if (QFileInfo::exists(newFileName))
                 return;
