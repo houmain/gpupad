@@ -14,9 +14,10 @@ FileCache::FileCache(QObject *parent) : QObject(parent)
         this, &FileCache::handleFileSystemFileChanged);
     connect(&mUpdateFileSystemWatchesTimer, &QTimer::timeout,
         this, &FileCache::updateFileSystemWatches);
-    mUpdateFileSystemWatchesTimer.start(250);
     connect(this, &FileCache::videoPlayerRequested,
         this, &FileCache::handleVideoPlayerRequested, Qt::QueuedConnection);
+
+    updateFileSystemWatches();
 }
 
 FileCache::~FileCache() = default;
@@ -240,6 +241,9 @@ void FileCache::updateFileSystemWatches()
         }
         Q_EMIT fileChanged(fileName);
     }
+
+    // enqueue update
+    mUpdateFileSystemWatchesTimer.start(5);
 }
 
 void FileCache::asyncOpenVideoPlayer(const QString &fileName) const
