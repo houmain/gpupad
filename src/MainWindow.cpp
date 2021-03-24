@@ -60,9 +60,8 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowIcon(icon);
 
     mUi->menuView->addAction(mUi->toolBarMain->toggleViewAction());
-    mUi->toolBarMain->setMinimumHeight(40);
 #if defined(_WIN32)
-    mUi->toolBarMain->setContentsMargins(2, 2, 2, 2);
+    mUi->toolBarMain->setContentsMargins(0, 0, 0, 4);
 #endif
 
     takeCentralWidget();
@@ -783,12 +782,12 @@ void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
     }
 }
 
-void MainWindow::handleDarkThemeChanging(bool enabled)
+void MainWindow::handleDarkThemeChanging(bool darkTheme)
 {
     auto frameDarker = 105;
     auto currentFrameDarker = 120;
     auto palette = qApp->style()->standardPalette();
-    if (enabled) {
+    if (darkTheme) {
         struct S { QPalette::ColorRole role; QColor a; QColor i; QColor d; };
         const auto colors = std::initializer_list<S>{
             { QPalette::WindowText, 0xCFCFCF, 0xCFCFCF, 0x6A6A6A },
@@ -824,15 +823,21 @@ void MainWindow::handleDarkThemeChanging(bool enabled)
           QPalette::ColorGroup group, int darker = 100) {
         return palette.brush(group, role).color().darker(darker).name(QColor::HexRgb);
     };
-    setStyleSheet(QString(
+    auto styleSheet = QString(
       "QLabel:disabled { color: %1 }\n"
-      "QMenuBar { border: none; padding-top:2px; }\n"
-      "QToolBar { border: none; margin-top:4px; }\n"
       "QDockWidget > QFrame { border:2px solid %2 }\n"
-      "QDockWidget[current=true] > QFrame { border:2px solid %3 2}\n")
+      "QDockWidget[current=true] > QFrame { border:2px solid %3 }\n"
+      "QMenuBar { background-color: %4; padding-top:2px; }\n"
+      "QToolBar { background-color: %4 }\n")
       .arg(color(QPalette::WindowText, QPalette::Disabled),
            color(QPalette::Window, QPalette::Active, frameDarker),
-           color(QPalette::Window, QPalette::Active, currentFrameDarker)));
+           color(QPalette::Window, QPalette::Active, currentFrameDarker),
+           color(QPalette::Base, QPalette::Active));
+
+    if (darkTheme)
+        styleSheet += "QToolBar { border:none }\n";
+
+    setStyleSheet(styleSheet);
 
     style()->unpolish(qApp);
     style()->polish(qApp);
