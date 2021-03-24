@@ -93,7 +93,6 @@ private:
     QString getUniformBaseName(const QString &name) const;
     void uniformSet(const QString &name);
     void bufferSet(const QString &name);
-    void outputPrintfStrings();
 
     ItemId mItemId{ };
     QSet<ItemId> mUsedItems;

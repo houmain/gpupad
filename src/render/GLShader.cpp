@@ -137,9 +137,8 @@ bool GLShader::compile(GLPrintf* printf, bool silent)
 
 QStringList GLShader::getPatchedSources(GLPrintf *printf)
 {
+    Q_ASSERT(!mSources.isEmpty());
     auto sources = mSources;
-    Q_ASSERT(!sources.isEmpty());
-
     auto maxVersion = QString();
     for (auto i = 0; i < sources.size(); ++i) {
         maxVersion = std::max(maxVersion,
@@ -152,17 +151,17 @@ QStringList GLShader::getPatchedSources(GLPrintf *printf)
             sources[i] = printf->patchSource(mFileNames[i], sources[i]);
     
         if (printf->isUsed()) {
-            auto& source = sources.front();
-            source = GLPrintf::preamble() + source;
-            maxVersion = std::max(maxVersion,
-                GLPrintf::requiredVersion());
+            sources.front().prepend(GLPrintf::preamble());
+            maxVersion = std::max(maxVersion, GLPrintf::requiredVersion());
         }
     }
-    sources.first() = maxVersion + "\n" + sources.first();
+
+    sources.front().prepend("#define GPUPAD 1\n");
+    sources.front().prepend(maxVersion + "\n");
 
     // workaround: to prevent unesthetic "unexpected end" error,
     // ensure shader is not empty
-    sources.back() += "\n struct XXX_gpupad { float a; };\n";
+    sources.back().append("\n struct XXX_gpupad { float a; };\n");
     return sources;
 }
 
