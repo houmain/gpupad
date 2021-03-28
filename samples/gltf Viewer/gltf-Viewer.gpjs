@@ -687,13 +687,13 @@
                     {
                         "fileName": "gltf-viewer/header.vert",
                         "id": 12,
-                        "shaderType": "Header",
+                        "shaderType": "Vertex",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/animation.vert",
                         "id": 11,
-                        "shaderType": "Header",
+                        "shaderType": "Vertex",
                         "type": "Shader"
                     },
                     {
@@ -705,25 +705,25 @@
                     {
                         "fileName": "gltf-viewer/header.frag",
                         "id": 16,
-                        "shaderType": "Header",
+                        "shaderType": "Fragment",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/tonemapping.frag",
                         "id": 17,
-                        "shaderType": "Header",
+                        "shaderType": "Fragment",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/textures.frag",
                         "id": 18,
-                        "shaderType": "Header",
+                        "shaderType": "Fragment",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/functions.frag",
                         "id": 19,
-                        "shaderType": "Header",
+                        "shaderType": "Fragment",
                         "type": "Shader"
                     },
                     {

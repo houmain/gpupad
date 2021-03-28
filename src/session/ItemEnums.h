@@ -45,7 +45,6 @@ namespace ItemEnums {
     Q_ENUM_NS(DataType)
 
     enum ShaderType {
-        Header = 0,
         Vertex = GL_VERTEX_SHADER,
         Fragment = GL_FRAGMENT_SHADER,
         Geometry = GL_GEOMETRY_SHADER,

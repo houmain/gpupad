@@ -71,7 +71,7 @@
             {
                 "fileName": "shadertoy.fs",
                 "id": 78,
-                "shaderType": "Header",
+                "shaderType": "Fragment",
                 "type": "Shader"
             },
             {

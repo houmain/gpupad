@@ -10,19 +10,15 @@ GLProgram::GLProgram(const Program &program)
 {
     mUsedItems += program.id;
 
-    auto shaders = QList<const Shader*>();
+    auto shaders = QMap<Shader::ShaderType, QList<const Shader*>>();
     for (const auto &item : program.items)
         if (auto shader = castItem<Shader>(item)) {
             mUsedItems += shader->id;
-
-            shaders.append(shader);
-
-            // headers are prepended to the next shader
-            if (shader->shaderType != Shader::ShaderType::Header) {
-                mShaders.emplace_back(shaders);
-                shaders.clear();
-            }
+            shaders[shader->shaderType].append(shader);
         }
+
+    for (auto type : shaders.keys())
+        mShaders.emplace_back(type, shaders[type]);
 }
 
 bool GLProgram::operator==(const GLProgram &rhs) const

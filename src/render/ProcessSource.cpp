@@ -15,9 +15,6 @@ namespace {
             case Shader::ShaderType::Geometry: return "geom";
             case Shader::ShaderType::Compute: return "comp";
                 break;
-
-            case Shader::ShaderType::Header:
-                break;
         }
         return nullptr;
     }
@@ -107,19 +104,15 @@ namespace {
         return shader;
     }
 
-    QList<const Shader*> getHeadersInSession(const QString &fileName)
+    QList<const Shader*> getShadersInSession(const QString &fileName)
     {
         auto shaders = QList<const Shader*>();
-        if (auto shader = findShaderInSession(fileName))
-            if (auto program = castItem<Program>(shader->parent)) {
-                auto index = program->items.indexOf(const_cast<Item*>(shader));
-                for (auto i = index - 1; i >= 0; --i)
-                    if (auto header = castItem<Shader>(program->items[i])) {
-                        if (header->shaderType != Shader::ShaderType::Header)
-                            break;
-                        shaders.prepend(header);
-                    }
-            }
+        if (auto currentShader = castItem<Shader>(findShaderInSession(fileName)))
+            if (auto program = castItem<Program>(currentShader->parent))
+                for (auto child : program->items)
+                    if (auto shader = castItem<Shader>(child))
+                        if (shader->shaderType == currentShader->shaderType)
+                            shaders.append(shader);
         return shaders;
     }
 } // namespace
@@ -157,14 +150,8 @@ void ProcessSource::setProcessType(QString processType)
 
 void ProcessSource::prepare(bool, EvaluationType)
 {
-    if (auto shaderType = getShaderType(mSourceType)) {
-        auto shaders = getHeadersInSession(mFileName);
-        auto shader = Shader();
-        shader.fileName = mFileName;
-        shader.shaderType = shaderType;
-        shaders.append(&shader);
-        mNewShader.reset(new GLShader(shaders));
-    }
+    if (auto shaderType = getShaderType(mSourceType))
+        mNewShader.reset(new GLShader(shaderType, getShadersInSession(mFileName)));
 }
 
 void ProcessSource::render()

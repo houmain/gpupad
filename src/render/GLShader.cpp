@@ -54,19 +54,21 @@ void GLShader::parseLog(const QString &log,
     }
 }
 
-GLShader::GLShader(const QList<const Shader*> &shaders)
+GLShader::GLShader(Shader::ShaderType type, 
+    const QList<const Shader*> &shaders)
 {
     Q_ASSERT(!shaders.isEmpty());
-
+    mType = type;
+    
     for (const Shader *shader : shaders) {
         auto source = QString();
         if (!Singletons::fileCache().getSource(shader->fileName, &source))
             mMessages += MessageList::insert(shader->id,
                 MessageType::LoadingFileFailed, shader->fileName);
-        mSources += source + "\n";
-        mFileNames += shader->fileName;
+
         mItemId = shader->id;
-        mType = shader->shaderType;
+        mFileNames += shader->fileName;
+        mSources += source + "\n";
     }
 }
 
@@ -111,14 +113,16 @@ bool GLShader::compile(GLPrintf* printf, bool silent)
     auto sources = std::vector<std::string>();
     for (const QString &source : getPatchedSources(printf))
         sources.push_back(source.toUtf8().data());
-    auto pointers = std::vector<const char*>();
+
+    auto sourcePointers = std::vector<const char*>();
     for (const auto &source : sources)
-        pointers.push_back(source.data());
-    gl.glShaderSource(shader, static_cast<GLsizei>(pointers.size()),
-        pointers.data(), nullptr);
+        sourcePointers.push_back(source.data());
+    gl.glShaderSource(shader, static_cast<GLsizei>(sourcePointers.size()),
+        sourcePointers.data(), nullptr);
+
+    gl.glCompileShader(shader);
 
     auto status = GLint{ };
-    gl.glCompileShader(shader);
     gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
     if (!silent) {
@@ -161,7 +165,7 @@ QStringList GLShader::getPatchedSources(GLPrintf *printf)
 
     // workaround: to prevent unesthetic "unexpected end" error,
     // ensure shader is not empty
-    sources.back().append("\n struct XXX_gpupad { float a; };\n");
+    sources.back().append("\nstruct XXX_gpupad { float a; };\n");
     return sources;
 }
 

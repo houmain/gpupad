@@ -11,7 +11,8 @@ public:
         MessagePtrSet &messages, ItemId itemId,
         QList<QString> fileNames);
 
-    explicit GLShader(const QList<const Shader*> &shaders);
+    GLShader(Shader::ShaderType type,
+        const QList<const Shader*> &shaders);
     bool operator==(const GLShader &rhs) const;
     Shader::ShaderType type() const { return mType; }
 
