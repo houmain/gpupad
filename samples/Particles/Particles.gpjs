@@ -125,7 +125,7 @@
             {
                 "fileName": "particle.comp",
                 "id": 76,
-                "shaderType": "Compute",
+                "shaderType": "Includable",
                 "type": "Shader"
             },
             {
@@ -144,7 +144,7 @@
             {
                 "fileName": "particle.comp",
                 "id": 75,
-                "shaderType": "Compute",
+                "shaderType": "Includable",
                 "type": "Shader"
             },
             {

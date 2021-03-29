@@ -17,8 +17,10 @@ GLProgram::GLProgram(const Program &program)
             shaders[shader->shaderType].append(shader);
         }
 
+    const auto includables = shaders[Shader::ShaderType::Includable];
     for (auto type : shaders.keys())
-        mShaders.emplace_back(type, shaders[type]);
+        if (type != Shader::ShaderType::Includable)
+            mShaders.emplace_back(type, shaders[type], includables);
 }
 
 bool GLProgram::operator==(const GLProgram &rhs) const
@@ -161,7 +163,7 @@ bool GLProgram::link()
                 gl40->glGetActiveSubroutineUniformiv(program, stage, i,
                     GL_COMPATIBLE_SUBROUTINES, subroutineIndices.data());
 
-                auto subroutines = QList<QString>();
+                auto subroutines = QStringList();
                 for (auto index : subroutineIndices) {
                     gl40->glGetActiveSubroutineName(program, stage,
                         static_cast<GLuint>(index),

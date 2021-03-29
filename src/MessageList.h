@@ -38,6 +38,8 @@ enum MessageType
     InvalidSubroutine,
     ImageFormatNotBindable,
     UniformComponentMismatch,
+    InvalidIncludeDirective,
+    IncludableNotFound,
 };
 
 struct Message

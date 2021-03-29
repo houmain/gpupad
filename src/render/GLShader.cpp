@@ -2,22 +2,66 @@
 #include <QRegularExpression>
 
 namespace {
-    QString removeVersion(QString *source, bool removeNewline) {
+    void removeVersion(QString *source, QString *maxVersion, bool removeNewline)
+    {
         const auto regex = QRegularExpression(
             (removeNewline ? "(#version[^\n]*\n?)" : "(#version[^\n]*)"),
             QRegularExpression::MultilineOption);
-        auto version = QString();
-        if (auto match = regex.match(*source); match.hasMatch()) {
-            version = match.captured();
+
+        for (auto match = regex.match(*source); match.hasMatch(); match = regex.match(*source)) {
+            *maxVersion = qMax(*maxVersion, match.captured().trimmed());
             source->remove(match.capturedStart(), match.capturedLength());
         }
-        return version.trimmed();
+    }
+
+    int countLines(const QString &source, int offset) 
+    {
+        auto line = 1;
+        for (auto i = 0; i < qMin(source.size(), offset); ++i)
+            if (source[i] == '\n')
+                ++line;
+        return line;
+    }
+
+    QString substituteIncludes(QString source, int fileNo, int sourceFileCount,
+        const QStringList &includableSources, const QStringList &includableFileNames,
+        ItemId itemId, MessagePtrSet &messages) 
+    {
+        const auto regex = QRegularExpression(R"(#include([^\n]*))");
+        for (auto match = regex.match(source); match.hasMatch(); match = regex.match(source)) {
+            source.remove(match.capturedStart(), match.capturedLength());
+            auto fileName = match.captured(1).trimmed();
+            if ((fileName.startsWith('<') && fileName.endsWith('>')) ||
+                (fileName.startsWith('"') && fileName.endsWith('"'))) {
+                fileName = fileName.mid(1, fileName.size() - 2);
+
+                if (const auto index = includableFileNames.indexOf(fileName); index >= 0) {
+                    const auto lineNo = countLines(source, match.capturedStart());
+
+                    const auto includableSource = substituteIncludes(
+                        includableSources[index], sourceFileCount + index, sourceFileCount, 
+                        includableSources, includableFileNames, itemId, messages);
+
+                    source.insert(match.capturedStart(), 
+                        includableSource + QString("\n#line %1 %2\n").arg(lineNo).arg(fileNo));
+                }
+                else {
+                    messages += MessageList::insert(itemId,
+                        MessageType::IncludableNotFound, fileName);
+                }
+            }
+            else {
+                messages += MessageList::insert(itemId,
+                    MessageType::InvalidIncludeDirective, fileName);
+            }
+        }
+        return QString("#line 1 %1\n").arg(fileNo) + source;
     }
 } // namespace
 
 void GLShader::parseLog(const QString &log,
         MessagePtrSet &messages, ItemId itemId,
-        QList<QString> fileNames)
+        QStringList fileNames)
 {
     // Mesa:    0:13(2): error: `gl_Positin' undeclared
     // NVidia:  0(13) : error C1008: undefined variable "gl_Positin"
@@ -55,27 +99,33 @@ void GLShader::parseLog(const QString &log,
 }
 
 GLShader::GLShader(Shader::ShaderType type, 
-    const QList<const Shader*> &shaders)
+    const QList<const Shader*> &shaders,
+    const QList<const Shader*> &includables)
 {
     Q_ASSERT(!shaders.isEmpty());
     mType = type;
-    
-    for (const Shader *shader : shaders) {
-        auto source = QString();
-        if (!Singletons::fileCache().getSource(shader->fileName, &source))
-            mMessages += MessageList::insert(shader->id,
-                MessageType::LoadingFileFailed, shader->fileName);
+    mItemId = shaders.front()->id;
 
-        mItemId = shader->id;
-        mFileNames += shader->fileName;
-        mSources += source + "\n";
-    }
+    const auto add = [&](const Shader& shader, bool isIncludable) {
+        auto source = QString();
+        if (!Singletons::fileCache().getSource(shader.fileName, &source))
+            mMessages += MessageList::insert(shader.id,
+                MessageType::LoadingFileFailed, shader.fileName);
+
+        mFileNames += shader.fileName;
+        (isIncludable ? mIncludableSources : mSources) += source + "\n";
+    };
+
+    for (const Shader *shader : shaders)
+        add(*shader, false);
+    for (const Shader *shader : includables)
+        add(*shader, true);
 }
 
 bool GLShader::operator==(const GLShader &rhs) const
 {
-    return std::tie(mSources, mType) ==
-           std::tie(rhs.mSources, rhs.mType);
+    return std::tie(mType, mSources, mIncludableSources, mFileNames) ==
+           std::tie(rhs.mType, rhs.mSources, rhs.mIncludableSources, rhs.mFileNames);
 }
 
 QString GLShader::getSource() const
@@ -142,13 +192,19 @@ bool GLShader::compile(GLPrintf* printf, bool silent)
 QStringList GLShader::getPatchedSources(GLPrintf *printf)
 {
     Q_ASSERT(!mSources.isEmpty());
-    auto sources = mSources;
+    
+    auto includableFileNames = QStringList();
+    for (auto i = mSources.size(); i < mFileNames.size(); ++i)
+        includableFileNames += QFileInfo(mFileNames[i]).fileName();
+
+    auto sources = QStringList();
+    for (auto i = 0; i < mSources.size(); ++i)
+        sources += substituteIncludes(mSources[i], i, mSources.size(), 
+            mIncludableSources, includableFileNames, mItemId, mMessages);
+
     auto maxVersion = QString();
-    for (auto i = 0; i < sources.size(); ++i) {
-        maxVersion = std::max(maxVersion,
-            removeVersion(&sources[i], (i > 0)));
-        sources[i] = QString("#line 1 %1\n").arg(i) + sources[i];
-    }
+    for (auto i = 0; i < sources.size(); ++i)
+        removeVersion(&sources[i], &maxVersion, (i > 0));
 
     if (printf) {
         for (auto i = 0; i < sources.size(); ++i)

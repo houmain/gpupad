@@ -123,7 +123,7 @@ void AttachmentProperties::updateWidgets()
     // TODO: implement
     setFormVisibility(mUi->formLayout, mUi->labelColorWriteMask, mUi->colorWriteMask, false && kind.color);
 
-    static const QList<QString> tabTitles = {
+    static const QStringList tabTitles = {
         mUi->tabDepthStencil->tabText(0),
         mUi->tabDepthStencil->tabText(1),
         mUi->tabDepthStencil->tabText(2)

@@ -85,7 +85,7 @@ private:
     struct SubroutineUniform
     {
         QString name;
-        QList<QString> subroutines;
+        QStringList subroutines;
         ItemId bindingItemId;
         QString boundSubroutine;
     };

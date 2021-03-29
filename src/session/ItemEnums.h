@@ -51,6 +51,7 @@ namespace ItemEnums {
         TessellationControl = GL_TESS_CONTROL_SHADER,
         TessellationEvaluation = GL_TESS_EVALUATION_SHADER,
         Compute = GL_COMPUTE_SHADER,
+        Includable = 0,
     };
     Q_ENUM_NS(ShaderType)
 

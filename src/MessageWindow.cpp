@@ -87,6 +87,8 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case CallFailed:
         case ClearingTextureFailed:
         case CopyingTextureFailed:
+        case InvalidIncludeDirective:
+        case IncludableNotFound:
             return mErrorIcon;
 
         case UnformNotSet:
@@ -157,6 +159,10 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Image format not bindable");
         case UniformComponentMismatch:
             return tr("Uniform component mismatch %1").arg(message.text);
+        case InvalidIncludeDirective:
+            return tr("Invalid #include directive");
+        case IncludableNotFound:
+            return tr("Includable shader '%1' not found").arg(message.text);
     }
     return message.text;
 }
