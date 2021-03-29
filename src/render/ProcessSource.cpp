@@ -14,6 +14,8 @@ namespace {
             case Shader::ShaderType::TessellationEvaluation: return "tese";
             case Shader::ShaderType::Geometry: return "geom";
             case Shader::ShaderType::Compute: return "comp";
+
+            case Shader::ShaderType::Includable:
                 break;
         }
         return nullptr;
