@@ -5,6 +5,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Version 1.17] - 2021-03-29
+## Added
+- Added open containing folder menu action.
+- Added support for the #include directive.
+- Added GPUPAD preprocessor definition.
+
+## Changed
+- Simplified working with multi-file shaders.
+- Showing top-left corner of texture on open.
+- Increased update rate of externally modified files.
+- Improved binary editor cell editing.
+- Checking buffer for modifications after download.
+- Improved display of file paths.
+- Changed default indentation.
+- Improved theme.
+
+## Fixed
+- Restoring unmaximized window geometry.
+- Handling different directory separators in Save Session As.
+- Fixed index buffer offset.
+
+## [Version 1.16] - 2021-01-31
+### Added
+- Iteration count for groups.
+- Buffer block bindings.
+- Sessions can be reloaded.
+
+### Changed
+- Binding uniform sets global script variable.
+- Removed Script expression.
+- Keep rendering with previous program version when invalid.
+- Increased shader validation responsiveness.
+- Increased automatic evaluation responsiveness.
+- Keeping instance when opening session file.
+
+### Fixed
+- Improved auto completion popup.
+- Fixed error message line number parsing.
+- Fixed opening of buffer block editor.
+- Fixed crash when opening missing image.
+- Fixed not disappearing messages.
+- Improved video playback on Windows.
+
 ## [Version 1.15] - 2021-01-05
 ### Added
  - Providing builds for Linux and macOS.
@@ -222,7 +265,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.0] - 2019-04-14
 
-[Unreleased]: https://github.com/houmain/gpupad/compare/1.15...HEAD
+[Unreleased]: https://github.com/houmain/gpupad/compare/1.17...HEAD
+[Version 1.17]: https://github.com/houmain/gpupad/compare/1.16...1.17
+[Version 1.16]: https://github.com/houmain/gpupad/compare/1.15...1.16
 [Version 1.15]: https://github.com/houmain/gpupad/compare/1.14...1.15
 [Version 1.14]: https://github.com/houmain/gpupad/compare/1.13...1.14
 [Version 1.13]: https://github.com/houmain/gpupad/compare/1.12...1.13
