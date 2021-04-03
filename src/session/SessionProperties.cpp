@@ -425,6 +425,8 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
                 return openItemEditor(mModel.getIndex(mModel.findItem(binding->bufferId)));
             case Binding::BindingType::BufferBlock:
                 return openItemEditor(mModel.getIndex(mModel.findItem(binding->blockId)));
+            default:
+                break;
         }
     }
 
