@@ -60,6 +60,32 @@ QString FileDialog::getWindowTitle(const QString &fileName)
     return "[*]" + getFileTitle(fileName);
 }
 
+QString FileDialog::advanceSaveAsSuffix(const QString &fileName)
+{
+    if (isEmptyOrUntitled(fileName))
+        return fileName;
+
+    const auto dot = fileName.lastIndexOf('.');
+    if (dot < 0)
+        return fileName;
+
+    const auto base = fileName.mid(0, dot);
+    if (!base.endsWith(')'))
+        return base + " (1)" + fileName.mid(dot);
+
+    const auto suffix = fileName.lastIndexOf('(');
+    if (suffix >= 0) {
+        auto ok = false;
+        const auto number = fileName.mid(suffix + 1, dot - suffix - 2).toInt(&ok);
+        if (ok)
+            return QString("%1(%2)%3")
+                .arg(fileName.mid(0, suffix))
+                .arg(number + 1)
+                .arg(fileName.mid(dot));
+    }
+    return fileName;
+}
+
 bool FileDialog::isSessionFileName(const QString &fileName)
 {
     return fileName.endsWith(SessionFileExtension);
