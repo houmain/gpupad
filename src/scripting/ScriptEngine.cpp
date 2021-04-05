@@ -31,6 +31,35 @@ namespace {
     }
 } // namespace
 
+ScriptValue evaluateValueExpression(const QString &expression, bool *ok)
+{
+    auto tmp = false;
+    if (!ok)
+        ok = &tmp;
+
+    if (expression.isEmpty()) {
+        *ok = true;
+        return 0;
+    }
+        
+    const auto value = expression.toDouble(ok);
+    if (*ok)
+        return value;
+
+    static QJSEngine sJsEngine;
+    const auto result = sJsEngine.evaluate(expression);
+    if (result.isError()) {
+       *ok = false;
+       return 0;
+    }
+    return result.toVariant().toDouble(ok);
+}
+
+int evaluateIntExpression(const QString &expression, bool *ok)
+{
+    return static_cast<int>(evaluateValueExpression(expression, ok) + 0.5);
+}
+
 int ScriptVariable::count() const
 {
     return (mValues ? mValues->size() : 0);

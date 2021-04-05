@@ -14,6 +14,7 @@
 #include "ui_TargetProperties.h"
 #include "ui_ScriptProperties.h"
 #include "editors/EditorManager.h"
+#include "scripting/ScriptEngine.h"
 #include "Singletons.h"
 #include "SessionModel.h"
 #include "SynchronizeLogic.h"
@@ -484,20 +485,17 @@ void SessionProperties::updateTargetWidgets(const QModelIndex &index)
 
 void SessionProperties::deduceBlockOffset()
 {
-    auto ok = true;
-    auto toInt = [&](const QString &expression) {
-        return (ok ? expression.toInt(&ok) : 0);
-    };
-
     const auto &block = *mModel.item<Block>(currentModelIndex());
     auto offset = 0;
+    auto ok = true;
     for (auto item : qAsConst(block.parent->items)) {
         if (item == &block)
             break;
 
         const auto &prevBlock = *static_cast<const Block*>(item);
         offset = std::max(offset,
-            toInt(prevBlock.offset) + getBlockStride(prevBlock) * toInt(prevBlock.rowCount));
+            evaluateIntExpression(prevBlock.offset, &ok) + 
+            getBlockStride(prevBlock) * evaluateIntExpression(prevBlock.rowCount, &ok));
     }
 
     if (ok)
@@ -510,7 +508,7 @@ void SessionProperties::deduceBlockRowCount()
     const auto &block = *mModel.item<Block>(currentModelIndex());
     auto ok = true;
     const auto offset = (block.evaluatedOffset ?
-        block.evaluatedOffset : block.offset.toInt(&ok));
+        block.evaluatedOffset : evaluateIntExpression(block.offset, &ok));
     if (ok) {
         const auto &buffer = *static_cast<const Buffer*>(block.parent);
         auto binary = QByteArray();

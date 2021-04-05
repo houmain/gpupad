@@ -70,4 +70,7 @@ private:
     QList<Variable> mVariables;
 };
 
+ScriptValue evaluateValueExpression(const QString &expression, bool *ok);
+int evaluateIntExpression(const QString &expression, bool *ok);
+
 #endif // SCRIPTENGINE_H

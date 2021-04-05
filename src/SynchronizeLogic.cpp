@@ -2,6 +2,7 @@
 #include "Singletons.h"
 #include "FileCache.h"
 #include "session/SessionModel.h"
+#include "scripting/ScriptEngine.h"
 #include "editors/EditorManager.h"
 #include "editors/BinaryEditor.h"
 #include "render/RenderSession.h"
@@ -321,15 +322,17 @@ void SynchronizeLogic::updateEditor(ItemId itemId, bool activated)
 void SynchronizeLogic::updateTextureEditor(const Texture &texture,
     TextureEditor &editor)
 {
-    editor.setRawFormat({
+    auto ok = true;
+    const auto format = TextureEditor::RawFormat{
         texture.target,
         texture.format,
-        texture.width.toInt(),
-        texture.height.toInt(),
-        texture.depth.toInt(),
-        texture.layers.toInt(),
+        evaluateIntExpression(texture.width, &ok),
+        evaluateIntExpression(texture.height, &ok),
+        evaluateIntExpression(texture.depth, &ok),
+        evaluateIntExpression(texture.layers, &ok),
         texture.samples,
-    });
+    };
+    editor.setRawFormat(format);
 }
 
 void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
@@ -349,6 +352,7 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
         return BinaryEditor::DataType::Int8;
     };
 
+    auto ok = true;
     auto blocks = QList<BinaryEditor::Block>();
     for (const auto *item : qAsConst(buffer.items)) {
         const auto &block = static_cast<const Block&>(*item);
@@ -362,10 +366,10 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
                 field.padding
             });
         }
-        const auto offset = (block.evaluatedOffset ? 
-            block.evaluatedOffset : block.offset.toInt());
-        const auto rowCount = (block.evaluatedRowCount ?
-            block.evaluatedRowCount : block.rowCount.toInt());
+        const auto offset = (block.evaluatedOffset ? block.evaluatedOffset : 
+            evaluateIntExpression(block.offset, &ok));
+        const auto rowCount = (block.evaluatedRowCount ? block.evaluatedRowCount :
+            evaluateIntExpression(block.rowCount, &ok));
         blocks.append({
             block.name,
             offset,
@@ -373,7 +377,8 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
             fields
         });
     }
-    editor.setBlocks(blocks);
+    if (ok)
+        editor.setBlocks(blocks);
 }
 
 void SynchronizeLogic::processSource()

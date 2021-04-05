@@ -144,7 +144,7 @@ void GpupadScriptObject::setBlockData(QJsonValue item, QJSValue data)
         if (editor) {
             auto ok = true;
             const auto offset = (block->evaluatedOffset ?
-                block->evaluatedOffset : block->offset.toInt(&ok));
+                block->evaluatedOffset : evaluateIntExpression(block->offset, &ok));
             if (ok) {
                 editor->replaceRange(offset, toByteArray(data, *block), false);
                 mEditorDataUpdated = true;

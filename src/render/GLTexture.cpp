@@ -4,17 +4,15 @@
 #include <QOpenGLPixelTransferOptions>
 #include <cmath>
 
-inline int toInt(double value) { return std::max(static_cast<int>(std::round(value)), 1); }
-
 GLTexture::GLTexture(const Texture &texture, ScriptEngine &scriptEngine)
     : mItemId(texture.id)
     , mFileName(texture.fileName)
     , mTarget(texture.target)
     , mFormat(texture.format)
-    , mWidth(toInt(scriptEngine.evaluateValue(texture.width, mItemId, mMessages)))
-    , mHeight(toInt(scriptEngine.evaluateValue(texture.height, mItemId, mMessages)))
-    , mDepth(toInt(scriptEngine.evaluateValue(texture.depth, mItemId, mMessages)))
-    , mLayers(toInt(scriptEngine.evaluateValue(texture.layers, mItemId, mMessages)))
+    , mWidth(std::max(scriptEngine.evaluateInt(texture.width, mItemId, mMessages), 1))
+    , mHeight(std::max(scriptEngine.evaluateInt(texture.height, mItemId, mMessages), 1))
+    , mDepth(std::max(scriptEngine.evaluateInt(texture.depth, mItemId, mMessages), 1))
+    , mLayers(std::max(scriptEngine.evaluateInt(texture.layers, mItemId, mMessages), 1))
     , mSamples(texture.samples)
     , mKind(getKind(texture))
 {
