@@ -364,10 +364,38 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
     // open all shaders of program
     if (auto program = castItem<Program>(item)) {
         for (auto item : program->items)
-            if (auto shader = castItem<Shader>(item))
+            if (auto shader = castItem<Shader>(item)) {
                 openEditor(*shader);
+                Singletons::editorManager().setAutoRaise(false);
+            }
+        Singletons::editorManager().setAutoRaise(true);
         return nullptr;
     }
+
+    // open all attachments of target
+    if (auto target = castItem<Target>(item)) {
+        for (auto item : target->items) {
+            if (auto attachment = castItem<Attachment>(item))
+                if (auto texture = castItem<Texture>(mModel.findItem(attachment->textureId))) {
+                    openEditor(*texture);
+                    Singletons::editorManager().setAutoRaise(false);
+                }
+        }
+        Singletons::editorManager().setAutoRaise(true);
+        return nullptr;
+    }
+        
+    // open first attribute of stream
+    if (auto stream = castItem<Stream>(item))
+        for (auto item : stream->items)
+            if (auto attribute = castItem<Attribute>(item))
+                return openItemEditor(mModel.getIndex(attribute));
+
+    // open block of attribute
+    if (auto attribute = castItem<Attribute>(item))
+        if (auto field = castItem<Field>(mModel.findItem(attribute->fieldId)))
+            if (auto block = castItem<Block>(field->parent))
+                return openItemEditor(mModel.getIndex(block));
 
     // open buffer of block
     if (auto block = castItem<Block>(item)) {
@@ -380,6 +408,39 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
                     break;
                 }
         return editor;
+    }
+
+    // open item of binding
+    if (auto binding = castItem<Binding>(item)) {
+        switch (binding->bindingType) {
+            case Binding::BindingType::Sampler:
+            case Binding::BindingType::Image:
+                return openItemEditor(mModel.getIndex(mModel.findItem(binding->textureId)));
+            case Binding::BindingType::Buffer:
+            case Binding::BindingType::TextureBuffer:
+                return openItemEditor(mModel.getIndex(mModel.findItem(binding->bufferId)));
+            case Binding::BindingType::BufferBlock:
+                return openItemEditor(mModel.getIndex(mModel.findItem(binding->blockId)));
+        }
+    }
+
+    // open item of call
+    if (auto call = castItem<Call>(item)) {
+        switch (call->callType) {
+            case Call::CallType::Draw:
+            case Call::CallType::DrawIndexed:
+            case Call::CallType::DrawIndirect:
+            case Call::CallType::DrawIndexedIndirect:
+            case Call::CallType::Compute:
+            case Call::CallType::ComputeIndirect:
+                return openItemEditor(mModel.getIndex(mModel.findItem(call->programId)));
+            case Call::CallType::ClearTexture:
+            case Call::CallType::CopyTexture:
+                return openItemEditor(mModel.getIndex(mModel.findItem(call->textureId)));
+            case Call::CallType::ClearBuffer:
+            case Call::CallType::CopyBuffer:
+                return openItemEditor(mModel.getIndex(mModel.findItem(call->bufferId)));
+        }
     }
 
     auto editor = std::add_pointer_t<IEditor>();
