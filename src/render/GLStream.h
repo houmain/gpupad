@@ -29,6 +29,8 @@ private:
         int offset;
     };
 
+    bool validateAttribute(const GLAttribute &attribute) const;
+
     QSet<ItemId> mUsedItems;
     QMap<int, GLAttribute> mAttributes;
 };

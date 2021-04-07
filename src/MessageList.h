@@ -35,6 +35,7 @@ enum MessageType
     TargetNotAssigned,
     TextureNotAssigned,
     BufferNotAssigned,
+    InvalidAttribute,
     InvalidSubroutine,
     ImageFormatNotBindable,
     UniformComponentMismatch,

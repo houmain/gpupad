@@ -89,6 +89,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case CopyingTextureFailed:
         case InvalidIncludeDirective:
         case IncludableNotFound:
+        case InvalidAttribute:
             return mErrorIcon;
 
         case UnformNotSet:
@@ -163,6 +164,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Invalid #include directive");
         case IncludableNotFound:
             return tr("Includable shader '%1' not found").arg(message.text);
+        case InvalidAttribute:
+            return tr("Invalid stream attribute");
     }
     return message.text;
 }

@@ -34,35 +34,83 @@ void GLStream::setAttribute(int attributeIndex,
         attribute.stride = getBlockStride(*block);
         attribute.offset = blockOffset + getFieldRowOffset(field);
     }
+
+    if (!validateAttribute(attribute)) {
+        attribute.buffer = nullptr;
+        messages += MessageList::insert(field.id,
+            MessageType::InvalidAttribute);
+    }
+}
+
+bool GLStream::validateAttribute(const GLAttribute &attribute) const
+{
+    switch (attribute.count) {
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+            break;
+        default: 
+            return false;
+    }
+    return true;
 }
 
 void GLStream::bind(const GLProgram &program)
 {
     auto &gl = GLContext::currentContext();
     for (const GLAttribute &attribute : qAsConst(mAttributes)) {
-        auto attribLocation = program.getAttributeLocation(attribute.name);
+        const auto attribLocation = program.getAttributeLocation(attribute.name);
         if (attribLocation < 0)
             continue;
-        auto location = static_cast<GLuint>(attribLocation);
-
         mUsedItems += attribute.usedItems;
+        if (!attribute.buffer)
+            continue;
 
-        if (attribute.buffer) {
-            attribute.buffer->bindReadOnly(GL_ARRAY_BUFFER);
+        const auto location = static_cast<GLuint>(attribLocation);
+        attribute.buffer->bindReadOnly(GL_ARRAY_BUFFER);
 
-            gl.glVertexAttribPointer(
-                location,
-                attribute.count,
-                attribute.type,
-                attribute.normalize,
-                attribute.stride,
-                reinterpret_cast<void*>(static_cast<intptr_t>(attribute.offset)));
+        switch(attribute.type) {
+            case GL_BYTE: case GL_UNSIGNED_BYTE: 
+            case GL_SHORT: case GL_UNSIGNED_SHORT: 
+            case GL_INT: case GL_UNSIGNED_INT:
+                // normalized integer types fall through to glVertexAttribPointer
+                if (!attribute.normalize) {
+                    gl.glVertexAttribIPointer(
+                        location,
+                        attribute.count,
+                        attribute.type,
+                        attribute.stride,
+                        reinterpret_cast<void*>(static_cast<intptr_t>(attribute.offset)));
+                    break;
+                }
+                [[fallthrough]];
 
-            gl.glVertexAttribDivisor(location,
-                static_cast<GLuint>(attribute.divisor));
+            default:
+                gl.glVertexAttribPointer(
+                    location,
+                    attribute.count,
+                    attribute.type,
+                    attribute.normalize,
+                    attribute.stride,
+                    reinterpret_cast<void*>(static_cast<intptr_t>(attribute.offset)));
+                break;
 
-            gl.glEnableVertexAttribArray(location);
-            attribute.buffer->unbind(GL_ARRAY_BUFFER);
+            case GL_DOUBLE:
+                if (gl.v4_2)
+                    gl.v4_2->glVertexAttribLPointer(
+                        location,
+                        attribute.count,
+                        attribute.type,
+                        attribute.stride,
+                        reinterpret_cast<void*>(static_cast<intptr_t>(attribute.offset)));
+                break;
         }
+
+        gl.glVertexAttribDivisor(location,
+            static_cast<GLuint>(attribute.divisor));
+
+        gl.glEnableVertexAttribArray(location);
+        attribute.buffer->unbind(GL_ARRAY_BUFFER);
     }
 }
