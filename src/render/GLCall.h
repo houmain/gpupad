@@ -15,7 +15,7 @@ class GLTexture;
 class GLCall
 {
 public:
-    GLCall(const Call &call, ScriptEngine &scriptEngine, MessagePtrSet &messages);
+    GLCall(const Call &call, ScriptEngine &scriptEngine);
 
     ItemId itemId() const { return mCall.id; }
     GLProgram *program() { return mProgram; }
@@ -26,9 +26,9 @@ public:
     void setTarget(GLTarget *target);
     void setVextexStream(GLStream *vertexStream);
     void setIndexBuffer(GLBuffer *indices, const Block &block,
-        ScriptEngine &scriptEngine, MessagePtrSet &messages);
+        ScriptEngine &scriptEngine);
     void setIndirectBuffer(GLBuffer *commands, const Block &block,
-        ScriptEngine &scriptEngine, MessagePtrSet &messages);
+        ScriptEngine &scriptEngine);
     void setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer);
     void setTextures(GLTexture *texture, GLTexture *fromTexture);
     void execute(MessagePtrSet &messages);
@@ -43,6 +43,7 @@ private:
     void executeCopyBuffer(MessagePtrSet &messages);
     GLenum getIndexType() const;
 
+    MessagePtrSet mMessages;
     Call mCall{ };
     GLProgram *mProgram{ };
     GLTarget *mTarget{ };

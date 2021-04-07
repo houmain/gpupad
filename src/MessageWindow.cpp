@@ -45,12 +45,6 @@ void MessageWindow::updateMessages()
     auto messageIds = QSet<MessageId>();
     for (auto it = messages.begin(); it != messages.end(); ) {
         const auto& message = **it;
-        if (message.type == MessageType::CallDuration)
-            if (auto messageId = tryReplaceMessage(message)) {
-                messageIds += messageId;
-                it = messages.erase(it);
-                continue;
-            }
         added |= addMessageOnce(message);
         messageIds += message.id;
         ++it;
@@ -186,43 +180,23 @@ QString MessageWindow::getLocationText(const Message &message) const
 
 void MessageWindow::removeMessagesExcept(const QSet<MessageId> &messageIds)
 {
-    auto removeIds = mMessageIds;
-    removeIds.subtract(messageIds);
-    if (removeIds.empty())
-        return;
-
-    for (auto i = 0; i < rowCount(); ) {
-        const auto messageId = item(i, 0)->data(Qt::UserRole + 5).toULongLong();
-        if (removeIds.contains(messageId)) {
-            removeRow(i);
-            mMessageIds.remove(messageId);
+    for (auto row = 0; row < mMessageIds.size(); )
+        if (!messageIds.contains(mMessageIds[row])) {
+            removeRow(row);
+            mMessageIds.removeAt(row);
         }
         else {
-            ++i;
+            ++row;
         }
-    }
-}
-
-auto MessageWindow::tryReplaceMessage(const Message &message) -> MessageId
-{
-    for (auto i = 0; i < rowCount(); i++) {
-        auto &item = *this->item(i, 0);
-        if (item.data(Qt::UserRole + 1) == message.itemId &&
-            item.data(Qt::UserRole + 4) == message.type) {
-
-            const auto messageId = item.data(Qt::UserRole + 5).toULongLong();
-            item.setText(getMessageText(message));
-            return messageId;
-        }
-    }
-    return 0;
 }
 
 bool MessageWindow::addMessageOnce(const Message &message)
 {
-    if (mMessageIds.contains(message.id))
+    auto it = std::lower_bound(mMessageIds.begin(), mMessageIds.end(), message.id);
+    if (it != mMessageIds.end() && *it == message.id)
         return false;
-    mMessageIds.insert(message.id);
+    const auto row = std::distance(mMessageIds.begin(), it);
+    mMessageIds.insert(it, message.id);
 
     auto messageIcon = getMessageIcon(message);
     auto messageText = getMessageText(message);
@@ -231,13 +205,11 @@ bool MessageWindow::addMessageOnce(const Message &message)
     messageItem->setData(Qt::UserRole + 2, message.fileName);
     messageItem->setData(Qt::UserRole + 3, message.line);
     messageItem->setData(Qt::UserRole + 4, message.type);
-    messageItem->setData(Qt::UserRole + 5, message.id);
 
     auto locationText = getLocationText(message);
     auto locationItem = new QTableWidgetItem(locationText);
     locationItem->setTextAlignment(Qt::AlignLeft | Qt::AlignTop);
 
-    auto row = rowCount();
     insertRow(row);
     setItem(row, 0, messageItem);
     setItem(row, 1, locationItem);

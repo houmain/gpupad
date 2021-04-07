@@ -25,14 +25,13 @@ private:
     QString getMessageText(const Message &message) const;
     QString getLocationText(const Message &message) const;
     void removeMessagesExcept(const QSet<MessageId> &messageIds);
-    MessageId tryReplaceMessage(const Message &message);
     bool addMessageOnce(const Message &message);
 
     QTimer *mUpdateItemsTimer;
     QIcon mInfoIcon;
     QIcon mWarningIcon;
     QIcon mErrorIcon;
-    QSet<MessageId> mMessageIds;
+    QList<MessageId> mMessageIds;
 };
 
 #endif // MESSAGEWINDOW_H

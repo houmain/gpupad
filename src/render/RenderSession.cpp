@@ -182,8 +182,6 @@ void RenderSession::prepare(bool itemsChanged,
 {
     mItemsChanged = itemsChanged;
     mEvaluationType = evaluationType;
-    mPrevMessages.swap(mMessages);
-    mMessages.clear();
 
     if (!mCommandQueue)
         mEvaluationType = EvaluationType::Reset;
@@ -220,6 +218,9 @@ void RenderSession::prepare(bool itemsChanged,
         return;
     }
 
+    mPrevMessages.swap(mMessages);
+    mMessages.clear();
+
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
     mCommandQueue.reset(new CommandQueue());
@@ -236,8 +237,7 @@ void RenderSession::prepare(bool itemsChanged,
 
     const auto addBufferOnce = [&](ItemId bufferId) {
         return addOnce(mCommandQueue->buffers,
-            session.findItem<Buffer>(bufferId),
-            *mScriptEngine, mMessages);
+            session.findItem<Buffer>(bufferId), *mScriptEngine);
     };
 
     const auto addTextureOnce = [&](ItemId textureId) {
@@ -248,8 +248,7 @@ void RenderSession::prepare(bool itemsChanged,
     const auto addTextureBufferOnce = [&](ItemId bufferId,
             GLBuffer *buffer, Texture::Format format) {
         return addOnce(mCommandQueue->textures,
-            session.findItem<Buffer>(bufferId), buffer, format,
-            *mScriptEngine, mMessages);
+            session.findItem<Buffer>(bufferId), buffer, format, *mScriptEngine);
     };
 
     const auto addTargetOnce = [&](ItemId targetId) {
@@ -272,9 +271,8 @@ void RenderSession::prepare(bool itemsChanged,
             for (auto i = 0; i < items.size(); ++i)
                 if (auto attribute = castItem<Attribute>(items[i]))
                     if (auto field = session.findItem<Field>(attribute->fieldId))
-                        vs->setAttribute(i, *field,
-                            addBufferOnce(field->parent->parent->id),
-                                *mScriptEngine, mMessages);
+                        vs->setAttribute(i, *field, 
+                            addBufferOnce(field->parent->parent->id), *mScriptEngine);
         }
         return vs;
     };
@@ -390,7 +388,7 @@ void RenderSession::prepare(bool itemsChanged,
         else if (auto call = castItem<Call>(item)) {
             if (call->checked) {
                 mUsedItems += call->id;
-                auto glcall = GLCall(*call, *mScriptEngine, mMessages);
+                auto glcall = GLCall(*call, *mScriptEngine);
                 switch (call->callType) {
                     case Call::CallType::Draw:
                     case Call::CallType::DrawIndexed:
@@ -401,10 +399,10 @@ void RenderSession::prepare(bool itemsChanged,
                         glcall.setVextexStream(addVertexStreamOnce(call->vertexStreamId));
                         if (auto block = session.findItem<Block>(call->indexBufferBlockId))
                             glcall.setIndexBuffer(addBufferOnce(block->parent->id), *block,
-                                *mScriptEngine, mMessages);
+                                *mScriptEngine);
                         if (auto block = session.findItem<Block>(call->indirectBufferBlockId))
                             glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block,
-                                *mScriptEngine, mMessages);
+                                *mScriptEngine);
                         break;
 
                     case Call::CallType::Compute:
@@ -412,7 +410,7 @@ void RenderSession::prepare(bool itemsChanged,
                         glcall.setProgram(addProgramOnce(call->programId));
                         if (auto block = session.findItem<Block>(call->indirectBufferBlockId))
                             glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block,
-                                *mScriptEngine, mMessages);
+                                *mScriptEngine);
                         break;
 
                     case Call::CallType::ClearTexture:
@@ -449,8 +447,9 @@ void RenderSession::prepare(bool itemsChanged,
                         else {
                             call.execute(mMessages);
                         }
-                        if (auto timerQuery = call.timerQuery())
-                            mTimerQueries[call.itemId()] = std::move(timerQuery);
+
+                        if (!updatingPreviewTextures())
+                            mTimerQueries.append({ call.itemId(), call.timerQuery() });
                         mUsedItems += call.usedItems();
                     });
             }
@@ -512,7 +511,7 @@ void RenderSession::render()
     executeCommandQueue();
     downloadModifiedResources();
     if (!updatingPreviewTextures())
-      outputTimerQueries();
+        outputTimerQueries();
 
     gl.glFlush();
     Q_ASSERT(glGetError() == GL_NO_ERROR);
@@ -590,10 +589,10 @@ void RenderSession::downloadModifiedResources()
 
 void RenderSession::outputTimerQueries()
 {
-    for (auto itemId : mTimerQueries.keys()) {
-        const auto duration = std::chrono::nanoseconds(
-            mTimerQueries[itemId]->waitForResult());
-        mMessages += MessageList::insert(
+    mTimerMessages.clear();
+    for (const auto &[itemId, query] : mTimerQueries) {
+        const auto duration = std::chrono::nanoseconds(query->waitForResult());
+        mTimerMessages += MessageList::insert(
             itemId, MessageType::CallDuration,
             formatQueryDuration(duration), false);
     }

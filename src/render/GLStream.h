@@ -10,7 +10,7 @@ public:
     explicit GLStream(const Stream &stream);
     void setAttribute(int attributeIndex,
         const Field &column, GLBuffer *buffer,
-        ScriptEngine& scriptEngine, MessagePtrSet& messages);
+        ScriptEngine& scriptEngine);
 
     void bind(const GLProgram &program);
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
@@ -31,6 +31,7 @@ private:
 
     bool validateAttribute(const GLAttribute &attribute) const;
 
+    MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
     QMap<int, GLAttribute> mAttributes;
 };

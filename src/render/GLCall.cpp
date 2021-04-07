@@ -8,19 +8,19 @@
 #include <QOpenGLTimerQuery>
 #include <QOpenGLVertexArrayObject>
 
-GLCall::GLCall(const Call &call, ScriptEngine &scriptEngine, MessagePtrSet &messages)
+GLCall::GLCall(const Call &call, ScriptEngine &scriptEngine)
     : mCall(call)
 {
-    mFirst = scriptEngine.getVariable(call.first, call.id, messages);
-    mCount = scriptEngine.getVariable(call.count, call.id, messages);
-    mInstanceCount = scriptEngine.getVariable(call.instanceCount, call.id, messages);
-    mBaseVertex = scriptEngine.getVariable(call.baseVertex, call.id, messages);
-    mBaseInstance = scriptEngine.getVariable(call.baseInstance, call.id, messages);
-    mDrawCount = scriptEngine.getVariable(call.drawCount, call.id, messages);
-    mPatchVertices = scriptEngine.getVariable(call.patchVertices, call.id, messages);
-    mWorkgroupsX = scriptEngine.getVariable(call.workGroupsX, call.id, messages);
-    mWorkgroupsY = scriptEngine.getVariable(call.workGroupsY, call.id, messages);
-    mWorkgroupsZ = scriptEngine.getVariable(call.workGroupsZ, call.id, messages);
+    mFirst = scriptEngine.getVariable(call.first, call.id, mMessages);
+    mCount = scriptEngine.getVariable(call.count, call.id, mMessages);
+    mInstanceCount = scriptEngine.getVariable(call.instanceCount, call.id, mMessages);
+    mBaseVertex = scriptEngine.getVariable(call.baseVertex, call.id, mMessages);
+    mBaseInstance = scriptEngine.getVariable(call.baseInstance, call.id, mMessages);
+    mDrawCount = scriptEngine.getVariable(call.drawCount, call.id, mMessages);
+    mPatchVertices = scriptEngine.getVariable(call.patchVertices, call.id, mMessages);
+    mWorkgroupsX = scriptEngine.getVariable(call.workGroupsX, call.id, mMessages);
+    mWorkgroupsY = scriptEngine.getVariable(call.workGroupsY, call.id, mMessages);
+    mWorkgroupsZ = scriptEngine.getVariable(call.workGroupsZ, call.id, mMessages);
 }
 
 void GLCall::setProgram(GLProgram *program)
@@ -39,7 +39,7 @@ void GLCall::setVextexStream(GLStream *stream)
 }
 
 void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block,
-    ScriptEngine &scriptEngine, MessagePtrSet &messages)
+    ScriptEngine &scriptEngine)
 {
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
@@ -49,7 +49,7 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block,
     mIndexBuffer = indices;
     mIndexSize = getBlockStride(block);
     mIndicesOffset = scriptEngine.evaluateValue(
-        block.offset, block.id, messages);
+        block.offset, block.id, mMessages);
 }
 
 GLenum GLCall::getIndexType() const
@@ -63,7 +63,7 @@ GLenum GLCall::getIndexType() const
 }
 
 void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block,
-    ScriptEngine &scriptEngine, MessagePtrSet &messages)
+    ScriptEngine &scriptEngine)
 {
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
@@ -73,7 +73,7 @@ void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block,
     mIndirectBuffer = commands;
     mIndirectStride = getBlockStride(block);
     mIndirectOffset = scriptEngine.evaluateValue(
-        block.offset, block.id, messages);
+        block.offset, block.id, mMessages);
 }
 
 void GLCall::setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer)

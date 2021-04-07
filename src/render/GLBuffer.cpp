@@ -17,11 +17,10 @@ int getBufferSize(const Buffer &buffer,
     return size;
 }
 
-GLBuffer::GLBuffer(const Buffer &buffer,
-      ScriptEngine &scriptEngine, MessagePtrSet &messages)
+GLBuffer::GLBuffer(const Buffer &buffer, ScriptEngine &scriptEngine)
     : mItemId(buffer.id)
     , mFileName(buffer.fileName)
-    , mSize(getBufferSize(buffer, scriptEngine, messages))
+    , mSize(getBufferSize(buffer, scriptEngine, mMessages))
 {
     mUsedItems += buffer.id;
     for (const auto item : buffer.items)
@@ -43,8 +42,8 @@ void GLBuffer::updateUntitledFilename(const GLBuffer &rhs)
 
 bool GLBuffer::operator==(const GLBuffer &rhs) const
 {
-    return std::tie(mFileName, mSize) ==
-           std::tie(rhs.mFileName, rhs.mSize);
+    return std::tie(mFileName, mSize, mMessages) ==
+           std::tie(rhs.mFileName, rhs.mSize,rhs.mMessages);
 }
 
 void GLBuffer::clear()
@@ -114,8 +113,6 @@ void GLBuffer::unbind(GLenum target)
 
 void GLBuffer::reload()
 {
-    mMessages.clear();
-
     auto prevData = mData;
     if (!mFileName.isEmpty())
         if (!Singletons::fileCache().getBinary(mFileName, &mData))

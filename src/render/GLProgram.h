@@ -109,6 +109,7 @@ private:
     std::map<QString, bool> mBuffersSet;
     mutable std::map<QString, bool> mAttributesSet;
     GLPrintf mPrintf;
+    MessagePtrSet mPrintfMessages;
 };
 
 #endif // GLPROGRAM_H

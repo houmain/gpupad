@@ -55,9 +55,10 @@ private:
     QSet<ItemId> mUsedItems;
     QMap<ItemId, TextureData> mModifiedTextures;
     QMap<ItemId, QByteArray> mModifiedBuffers;
-    QMap<ItemId, std::shared_ptr<const QOpenGLTimerQuery>> mTimerQueries;
+    QList<std::pair<ItemId, std::shared_ptr<const QOpenGLTimerQuery>>> mTimerQueries;
     MessagePtrSet mMessages;
     MessagePtrSet mPrevMessages;
+    MessagePtrSet mTimerMessages;
     bool mItemsChanged{ };
     EvaluationType mEvaluationType{ };
 

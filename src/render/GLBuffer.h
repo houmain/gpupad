@@ -7,8 +7,7 @@
 class GLBuffer
 {
 public:
-    GLBuffer(const Buffer &buffer,
-        ScriptEngine &scriptEngine, MessagePtrSet &messages);
+    GLBuffer(const Buffer &buffer, ScriptEngine &scriptEngine);
     void updateUntitledFilename(const GLBuffer &rhs);
     bool operator==(const GLBuffer &rhs) const;
 
@@ -31,12 +30,12 @@ private:
     void createBuffer();
     void upload();
 
+    MessagePtrSet mMessages;
     ItemId mItemId{ };
     QString mFileName;
     int mSize{ };
     QByteArray mData;
     QSet<ItemId> mUsedItems;
-    MessagePtrSet mMessages;
     GLObject mBufferObject;
     bool mSystemCopyModified{ };
     bool mDeviceCopyModified{ };

@@ -28,12 +28,12 @@ GLTexture::GLTexture(const Texture &texture, ScriptEngine &scriptEngine)
 
 GLTexture::GLTexture(const Buffer &buffer,
         GLBuffer *textureBuffer, Texture::Format format,
-        ScriptEngine &scriptEngine, MessagePtrSet &messages)
+        ScriptEngine &scriptEngine)
     : mItemId(buffer.id)
     , mTextureBuffer(textureBuffer)
     , mTarget(Texture::Target::TargetBuffer)
     , mFormat(format)
-    , mWidth(getBufferSize(buffer, scriptEngine, messages))
+    , mWidth(getBufferSize(buffer, scriptEngine, mMessages))
     , mHeight(1)
     , mDepth(1)
     , mLayers(1)

@@ -238,7 +238,7 @@ void GLProgram::unbind(ItemId callItemId)
                 callItemId, MessageType::AttributeNotSet, kv.first);
 
     if (mPrintf.isUsed())
-        *mCallMessages += mPrintf.formatMessages(mItemId);
+        mPrintfMessages = mPrintf.formatMessages(mItemId);
 
     mCallMessages = nullptr;
 }
