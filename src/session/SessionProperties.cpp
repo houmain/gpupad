@@ -397,6 +397,10 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
             if (auto block = castItem<Block>(field->parent))
                 return openItemEditor(mModel.getIndex(block));
 
+    // open block of field
+    if (auto field = castItem<Field>(item))
+        return openItemEditor(mModel.getIndex(field->parent));
+
     // open buffer of block
     if (auto block = castItem<Block>(item)) {
         const auto &buffer = *static_cast<Buffer*>(block->parent);

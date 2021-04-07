@@ -316,15 +316,8 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
-        if (mMagnifyLinear) {
-            gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        }
-        else {
-            gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-        }
+        gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, (mMagnifyLinear ? GL_LINEAR : GL_NEAREST));
     }
 
     if (auto *program = context().getProgram(target, mImage.format())) {
