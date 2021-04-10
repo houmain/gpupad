@@ -231,6 +231,7 @@ void GLTexture::reload(bool forWriting)
             mMessages += MessageList::insert(mItemId,
                 MessageType::CreatingTextureFailed);
         }
+        mData.clear();
         mSystemCopyModified |= true;
     }
 }

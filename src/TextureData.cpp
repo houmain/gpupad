@@ -956,7 +956,7 @@ void TextureData::clear()
     for (auto layer = 0; layer < layers(); ++layer)
         for (auto face = 0; face < faces(); ++face)
             std::memset(getWriteonlyData(level, layer, face),
-                0xFF, static_cast<size_t>(getImageSize(level)));
+                0x00, static_cast<size_t>(getImageSize(level)));
 }
 
 void TextureData::setPixelFormat(QOpenGLTexture::PixelFormat pixelFormat)
