@@ -557,7 +557,10 @@ bool TextureData::create(
 
 bool TextureData::flipOnLoadSave(const QString &fileName) const
 {
-    if (isCubemap())
+    if (mTarget != QOpenGLTexture::Target2D &&
+        mTarget != QOpenGLTexture::Target2DArray &&
+        mTarget != QOpenGLTexture::TargetCubeMap &&
+        mTarget != QOpenGLTexture::TargetCubeMapArray)
         return false;
 
     return !fileName.endsWith(".ktx", Qt::CaseInsensitive);
