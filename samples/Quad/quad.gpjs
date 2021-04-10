@@ -1,12 +1,12 @@
 [
     {
         "format": "RGBA8_UNorm",
-        "height": 512,
+        "height": "512",
         "id": 10,
         "name": "TargetColor",
         "target": "Target2D",
         "type": "Texture",
-        "width": 512
+        "width": "512"
     },
     {
         "blendConstant": "#ffffffff",
@@ -31,18 +31,20 @@
         ],
         "logicOperation": "NoLogicOperation",
         "name": "Target",
+        "polygonMode": "Fill",
         "type": "Target"
     },
     {
         "fileName": "marble.png",
         "format": "RGBA8_UNorm",
-        "height": 512,
+        "height": "512",
         "id": 105,
         "target": "Target2D",
         "type": "Texture",
-        "width": 512
+        "width": "512"
     },
     {
+        "anisotropic": false,
         "bindingType": "Sampler",
         "borderColor": "#ff000000",
         "comparisonFunc": "NoComparisonFunc",
@@ -63,9 +65,9 @@
         "name": "uColor",
         "type": "Binding",
         "values": [
-            "0.12549",
-            "0.290196",
-            "0.529412",
+            "0.6",
+            "0.756863",
+            "0.945098",
             "1"
         ]
     },

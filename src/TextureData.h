@@ -57,6 +57,7 @@ public:
 private:
     using GL = QOpenGLFunctions_3_3_Core;
 
+    bool flipOnLoadSave(const QString &fileName) const;
     bool loadKtx(const QString &fileName);
     bool loadGli(const QString &fileName);
     bool loadQImage(const QString &fileName);

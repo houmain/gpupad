@@ -220,7 +220,7 @@ namespace {
         return (glGetError() == GL_NONE);
     }
 
-    gli::target get_gli_target(QOpenGLTexture::Target target)
+    gli::target getGliTarget(QOpenGLTexture::Target target)
     {
         switch (target) {
             case QOpenGLTexture::TargetBuffer:
@@ -237,6 +237,18 @@ namespace {
         }
         return { };
     }
+
+    void flipVertically(uchar * data, int pitch, int height)
+    {
+        auto buffer = std::vector<std::byte>(pitch);
+        auto low = data;
+        auto high = &data[(height - 1) * pitch];
+        for (; low < high; low += pitch, high -= pitch) {
+            std::memcpy(buffer.data(), low, pitch);
+            std::memcpy(low, high, pitch);
+            std::memcpy(high, buffer.data(), pitch);
+        }
+      }
 } // namespace
 
 TextureDataType getTextureDataType(
@@ -543,6 +555,14 @@ bool TextureData::create(
     return false;
 }
 
+bool TextureData::flipOnLoadSave(const QString &fileName) const
+{
+    if (isCubemap())
+        return false;
+
+    return !fileName.endsWith(".ktx", Qt::CaseInsensitive);
+}
+
 bool TextureData::loadKtx(const QString &fileName)
 {
     auto texture = std::add_pointer_t<ktxTexture>{ };
@@ -560,6 +580,9 @@ bool TextureData::loadGli(const QString &fileName) try
     auto texture = gli::load(fileName.toUtf8().constData());
     if (texture.empty())
         return false;
+
+    if (flipOnLoadSave(fileName))
+        texture = gli::flip(std::move(texture));
 
     auto gl = gli::gl(gli::gl::PROFILE_GL33);
     const auto format = gl.translate(texture.format(), texture.swizzles());
@@ -597,6 +620,10 @@ bool TextureData::loadQImage(const QString &fileName)
         return false;
 
     image = std::move(image).convertToFormat(getNextNativeImageFormat(image.format()));
+
+    if (flipOnLoadSave(fileName))
+        image = std::move(image).mirrored();
+
     if (!create(QOpenGLTexture::Target2D, getTextureFormat(image.format()),
                 image.width(), image.height()))
         return false;
@@ -638,6 +665,9 @@ bool TextureData::loadTga(const QString &fileName)
     if (!decoder.readImage(header, image, nullptr))
         return false;
 
+    if (flipOnLoadSave(fileName))
+        flipVertically(image.pixels, image.rowstride, header.height);
+
     decoder.postProcessImage(header, image);
     return true;
 }
@@ -674,9 +704,12 @@ bool TextureData::saveGli(const QString &fileName) const try
     if (!gli_format)
         return false;
 
-    auto texture = gli::texture(get_gli_target(target()),
+    auto texture = gli::texture(getGliTarget(target()),
         gli_format, gli::extent3d{ width(), height(), depth() },
         layers(), faces(), levels());
+
+    if (flipOnLoadSave(fileName))
+        texture = gli::flip(std::move(texture));
 
     for (auto layer = 0u; layer < texture.layers(); ++layer)
         for (auto face = 0u; face < texture.faces(); ++face)
@@ -710,7 +743,14 @@ bool TextureData::saveTga(const QString &fileName) const
     auto header = tga::Header();
     header.width = width();
     header.height = height();
+
     auto imageData = toImage();
+    if (imageData.isNull())
+        return false;
+
+    if (flipOnLoadSave(fileName))
+        imageData = std::move(imageData).mirrored();
+
     if (imageData.isGrayscale()) {
         imageData = std::move(imageData).convertToFormat(QImage::Format_Grayscale8);
         header.imageType = tga::UncompressedGray;
@@ -745,6 +785,9 @@ bool TextureData::saveQImage(const QString &fileName) const
     if (image.isNull())
         return false;
 
+    if (flipOnLoadSave(fileName))
+        image = std::move(image).mirrored();
+
     return image.save(fileName);
 }
 
@@ -763,12 +806,17 @@ bool TextureData::isNull() const
 
 QImage TextureData::toImage() const 
 {
+    if (depth() > 1 || layers() > 1 || isCubemap())
+        return { };
+
     const auto imageFormat = getImageFormat(pixelFormat(), pixelType());
     if (imageFormat == QImage::Format_Invalid)
         return { };
+
     auto image = QImage(width(), height(), imageFormat);
     if (static_cast<int>(image.sizeInBytes()) != getImageSize(0))
         return { };
+
     std::memcpy(image.bits(), getData(0, 0, 0),
         static_cast<size_t>(getImageSize(0)));
 
