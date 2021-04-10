@@ -120,7 +120,7 @@ set(SOURCES
   src/session/TextureProperties.cpp
   src/session/TextureProperties.ui)
 
-file(GLOB_RECURSE HEADERS include *.h)
+file(GLOB_RECURSE HEADERS include *.h *.hpp)
 if(WIN32)
     set(HEADERS ${HEADERS} src/resources.rc qt5.natvis)
 endif()
@@ -137,7 +137,7 @@ if (OPTION_DEVELOPER_MODE)
     endif()
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include)
+target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include libs/gli)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_include_directories(${PROJECT_NAME} PRIVATE /usr/include/libdrm)

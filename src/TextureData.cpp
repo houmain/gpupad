@@ -1,13 +1,11 @@
 #include "TextureData.h"
 #include "session/Item.h"
 #include "tga/tga.h"
+#include "gli/gli.hpp"
 #include <cstring>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions_3_3_Core>
 #include <QScopeGuard>
-
-#define TINYDDS_IMPLEMENTATION
-#include "tinydds/tinydds.h"
 
 #if defined(_WIN32)
 
@@ -222,156 +220,22 @@ namespace {
         return (glGetError() == GL_NONE);
     }
 
-    QOpenGLTexture::TextureFormat getTextureFormat(TinyDDS_Format format)
+    gli::target get_gli_target(QOpenGLTexture::Target target)
     {
-        switch (format) {
-	          case TDDS_R8_UNORM: return QOpenGLTexture::R8_UNorm;
-	          case TDDS_R8_SNORM: return QOpenGLTexture::R8_SNorm;
-	          case TDDS_A8_UNORM: return QOpenGLTexture::R8_UNorm;
-
-	          case TDDS_R8_UINT: return QOpenGLTexture::R8U;
-	          case TDDS_R8_SINT: return QOpenGLTexture::R8I;
-	          case TDDS_R8G8_UNORM: return QOpenGLTexture::RG8_UNorm;
-	          case TDDS_R8G8_SNORM: return QOpenGLTexture::RG8_SNorm;
-	          case TDDS_R8G8_UINT: return QOpenGLTexture::RG8U;
-	          case TDDS_R8G8_SINT: return QOpenGLTexture::RG8I;
-	          case TDDS_R8G8B8A8_UNORM: return QOpenGLTexture::RGBA8_UNorm;
-	          case TDDS_R8G8B8A8_SNORM: return QOpenGLTexture::RGBA8_SNorm;
-	          case TDDS_R8G8B8A8_UINT: return QOpenGLTexture::RGBA8U;
-	          case TDDS_R8G8B8A8_SINT: return QOpenGLTexture::RGBA8I;
-	          case TDDS_R8G8B8A8_SRGB: return QOpenGLTexture::SRGB8;
-            
-	          case TDDS_R9G9B9E5_UFLOAT: return QOpenGLTexture::RGB9E5;
-	          case TDDS_R10G10B10A2_UNORM: return QOpenGLTexture::RGB10A2;
-	          case TDDS_R11G11B10_UFLOAT: return QOpenGLTexture::RG11B10F;
-            
-	          case TDDS_R16_UNORM: return QOpenGLTexture::R16_UNorm;
-	          case TDDS_R16_SNORM: return QOpenGLTexture::R16_SNorm;
-	          case TDDS_R16_UINT: return QOpenGLTexture::R16U;
-	          case TDDS_R16_SINT: return QOpenGLTexture::R16I;
-	          case TDDS_R16_SFLOAT: return QOpenGLTexture::R16F;
-            
-	          case TDDS_R16G16_UNORM: return QOpenGLTexture::RG16_UNorm;
-	          case TDDS_R16G16_SNORM: return QOpenGLTexture::RG16_SNorm;
-	          case TDDS_R16G16_UINT: return QOpenGLTexture::RG16U;
-	          case TDDS_R16G16_SINT: return QOpenGLTexture::RG16I;
-	          case TDDS_R16G16_SFLOAT: return QOpenGLTexture::RG16F;
-            
-	          case TDDS_R16G16B16A16_UNORM: return QOpenGLTexture::RGBA16_UNorm;
-	          case TDDS_R16G16B16A16_SNORM: return QOpenGLTexture::RGBA16_SNorm;
-	          case TDDS_R16G16B16A16_UINT: return QOpenGLTexture::RGBA16U;
-	          case TDDS_R16G16B16A16_SINT: return QOpenGLTexture::RGBA16I;
-	          case TDDS_R16G16B16A16_SFLOAT: return QOpenGLTexture::RGBA16F;
-            
-	          case TDDS_R32_UINT: return QOpenGLTexture::R32U;
-	          case TDDS_R32_SINT: return QOpenGLTexture::R32I;
-	          case TDDS_R32_SFLOAT: return QOpenGLTexture::R32F;
-            
-	          case TDDS_R32G32_UINT: return QOpenGLTexture::RG32U;
-	          case TDDS_R32G32_SINT: return QOpenGLTexture::RG32I;
-	          case TDDS_R32G32_SFLOAT: return QOpenGLTexture::RG32F;
-            
-	          case TDDS_R32G32B32_UINT: return QOpenGLTexture::RGB32U;
-	          case TDDS_R32G32B32_SINT: return QOpenGLTexture::RGB32I;
-	          case TDDS_R32G32B32_SFLOAT: return QOpenGLTexture::RGB32F;
-            
-	          case TDDS_R32G32B32A32_UINT: return QOpenGLTexture::RGBA32U;
-	          case TDDS_R32G32B32A32_SINT: return QOpenGLTexture::RGBA32I;
-	          case TDDS_R32G32B32A32_SFLOAT: return QOpenGLTexture::RGBA32F;
-            
-            case TDDS_BC1_RGBA_UNORM_BLOCK: return QOpenGLTexture::RGB_DXT1;
-            case TDDS_BC1_RGBA_SRGB_BLOCK: return QOpenGLTexture::SRGB_Alpha_DXT1;
-	          case TDDS_BC2_UNORM_BLOCK: return QOpenGLTexture::RGBA_DXT3;
-	          case TDDS_BC2_SRGB_BLOCK: return QOpenGLTexture::SRGB_Alpha_DXT3;
-	          case TDDS_BC3_UNORM_BLOCK: return QOpenGLTexture::RGBA_DXT5;
-	          case TDDS_BC3_SRGB_BLOCK: return QOpenGLTexture::SRGB_Alpha_DXT5;
-	          case TDDS_BC4_UNORM_BLOCK: return QOpenGLTexture::R_ATI1N_UNorm;
-	          case TDDS_BC4_SNORM_BLOCK: return QOpenGLTexture::R_ATI1N_SNorm;
-	          case TDDS_BC5_UNORM_BLOCK: return QOpenGLTexture::RG_ATI2N_UNorm;
-	          case TDDS_BC5_SNORM_BLOCK: return QOpenGLTexture::RG_ATI2N_SNorm;
-            
-	          case TDDS_BC6H_UFLOAT_BLOCK: return QOpenGLTexture::RGB_BP_UNSIGNED_FLOAT;
-	          case TDDS_BC6H_SFLOAT_BLOCK: return QOpenGLTexture::RGB_BP_SIGNED_FLOAT;
-	          case TDDS_BC7_UNORM_BLOCK: return QOpenGLTexture::RGB_BP_UNorm;
-	          case TDDS_BC7_SRGB_BLOCK: return QOpenGLTexture::SRGB_BP_UNorm;
-
-            default: return QOpenGLTexture::NoFormat;
+        switch (target) {
+            case QOpenGLTexture::TargetBuffer:
+            case QOpenGLTexture::Target1D: return gli::TARGET_1D;
+            case QOpenGLTexture::Target1DArray: return gli::TARGET_1D_ARRAY;
+            case QOpenGLTexture::Target2DMultisample:
+            case QOpenGLTexture::Target2D: return gli::TARGET_2D;
+            case QOpenGLTexture::Target2DMultisampleArray:
+            case QOpenGLTexture::Target2DArray: return gli::TARGET_2D_ARRAY;
+            case QOpenGLTexture::Target3D: return gli::TARGET_3D;
+            case QOpenGLTexture::TargetCubeMap: return gli::TARGET_CUBE;
+            case QOpenGLTexture::TargetCubeMapArray: return gli::TARGET_CUBE_ARRAY;
+            case QOpenGLTexture::TargetRectangle: return gli::TARGET_RECT;
         }
-    }
-
-    TinyDDS_Format getDdsFormat(QOpenGLTexture::TextureFormat format) {
-        switch (format) {
-            case QOpenGLTexture::R8_UNorm: return TDDS_R8_UNORM;
-	          case QOpenGLTexture::R8_SNorm: return TDDS_R8_SNORM;
-
-	          case QOpenGLTexture::R8U: return TDDS_R8_UINT;
-	          case QOpenGLTexture::R8I: return TDDS_R8_SINT;
-	          case QOpenGLTexture::RG8_UNorm: return TDDS_R8G8_UNORM;
-	          case QOpenGLTexture::RG8_SNorm: return TDDS_R8G8_SNORM;
-	          case QOpenGLTexture::RG8U: return TDDS_R8G8_UINT;
-	          case QOpenGLTexture::RG8I: return TDDS_R8G8_SINT;
-	          case QOpenGLTexture::RGBA8_UNorm: return TDDS_R8G8B8A8_UNORM;
-	          case QOpenGLTexture::RGBA8_SNorm: return TDDS_R8G8B8A8_SNORM;
-	          case QOpenGLTexture::RGBA8U: return TDDS_R8G8B8A8_UINT;
-	          case QOpenGLTexture::RGBA8I: return TDDS_R8G8B8A8_SINT;
-	          case QOpenGLTexture::SRGB8: return TDDS_R8G8B8A8_SRGB;
-            
-	          case QOpenGLTexture::RGB9E5: return TDDS_R9G9B9E5_UFLOAT;
-	          case QOpenGLTexture::RGB10A2: return TDDS_R10G10B10A2_UNORM;
-	          case QOpenGLTexture::RG11B10F: return TDDS_R11G11B10_UFLOAT;
-            
-	          case QOpenGLTexture::R16_UNorm: return TDDS_R16_UNORM;
-	          case QOpenGLTexture::R16_SNorm: return TDDS_R16_SNORM;
-	          case QOpenGLTexture::R16U: return TDDS_R16_UINT;
-	          case QOpenGLTexture::R16I: return TDDS_R16_SINT;
-	          case QOpenGLTexture::R16F: return TDDS_R16_SFLOAT;
-            
-	          case QOpenGLTexture::RG16_UNorm: return TDDS_R16G16_UNORM;
-	          case QOpenGLTexture::RG16_SNorm: return TDDS_R16G16_SNORM;
-	          case QOpenGLTexture::RG16U: return TDDS_R16G16_UINT;
-	          case QOpenGLTexture::RG16I: return TDDS_R16G16_SINT;
-	          case QOpenGLTexture::RG16F: return TDDS_R16G16_SFLOAT;
-            
-	          case QOpenGLTexture::RGBA16_UNorm: return TDDS_R16G16B16A16_UNORM;
-	          case QOpenGLTexture::RGBA16_SNorm: return TDDS_R16G16B16A16_SNORM;
-	          case QOpenGLTexture::RGBA16U: return TDDS_R16G16B16A16_UINT;
-	          case QOpenGLTexture::RGBA16I: return TDDS_R16G16B16A16_SINT;
-	          case QOpenGLTexture::RGBA16F: return TDDS_R16G16B16A16_SFLOAT;
-            
-	          case QOpenGLTexture::R32U: return TDDS_R32_UINT;
-	          case QOpenGLTexture::R32I: return TDDS_R32_SINT;
-	          case QOpenGLTexture::R32F: return TDDS_R32_SFLOAT;
-            
-	          case QOpenGLTexture::RG32U: return TDDS_R32G32_UINT;
-	          case QOpenGLTexture::RG32I: return TDDS_R32G32_SINT;
-	          case QOpenGLTexture::RG32F: return TDDS_R32G32_SFLOAT;
-            
-	          case QOpenGLTexture::RGB32U: return TDDS_R32G32B32_UINT;
-	          case QOpenGLTexture::RGB32I: return TDDS_R32G32B32_SINT;
-	          case QOpenGLTexture::RGB32F: return TDDS_R32G32B32_SFLOAT;
-            
-	          case QOpenGLTexture::RGBA32U: return TDDS_R32G32B32A32_UINT;
-	          case QOpenGLTexture::RGBA32I: return TDDS_R32G32B32A32_SINT;
-	          case QOpenGLTexture::RGBA32F: return TDDS_R32G32B32A32_SFLOAT;
-            
-            case QOpenGLTexture::RGB_DXT1: return TDDS_BC1_RGBA_UNORM_BLOCK;
-            case QOpenGLTexture::SRGB_Alpha_DXT1: return TDDS_BC1_RGBA_SRGB_BLOCK;
-	          case QOpenGLTexture::RGBA_DXT3: return TDDS_BC2_UNORM_BLOCK;
-	          case QOpenGLTexture::SRGB_Alpha_DXT3: return TDDS_BC2_SRGB_BLOCK;
-	          case QOpenGLTexture::RGBA_DXT5: return TDDS_BC3_UNORM_BLOCK;
-	          case QOpenGLTexture::SRGB_Alpha_DXT5: return TDDS_BC3_SRGB_BLOCK;
-	          case QOpenGLTexture::R_ATI1N_UNorm: return TDDS_BC4_UNORM_BLOCK;
-	          case QOpenGLTexture::R_ATI1N_SNorm: return TDDS_BC4_SNORM_BLOCK;
-	          case QOpenGLTexture::RG_ATI2N_UNorm: return TDDS_BC5_UNORM_BLOCK;
-	          case QOpenGLTexture::RG_ATI2N_SNorm: return TDDS_BC5_SNORM_BLOCK;
-            
-	          case QOpenGLTexture::RGB_BP_UNSIGNED_FLOAT: return TDDS_BC6H_UFLOAT_BLOCK;
-	          case QOpenGLTexture::RGB_BP_SIGNED_FLOAT: return TDDS_BC6H_SFLOAT_BLOCK;
-	          case QOpenGLTexture::RGB_BP_UNorm: return TDDS_BC7_UNORM_BLOCK;
-	          case QOpenGLTexture::SRGB_BP_UNorm: return TDDS_BC7_SRGB_BLOCK;
-
-            default: return TDDS_UNDEFINED;
-        }
+        return { };
     }
 } // namespace
 
@@ -674,107 +538,78 @@ bool TextureData::create(
         mKtxTexture.reset(texture, &ktxTexture_Destroy);
         mTarget = target;
         mSamples = (isMultisampleTarget(target) ? samples : 1);
-        clear();
         return true;
     }
     return false;
 }
 
-bool TextureData::loadFromKtx(const QString &fileName)
+bool TextureData::loadKtx(const QString &fileName)
 {
     auto texture = std::add_pointer_t<ktxTexture>{ };
     if (ktxTexture_CreateFromNamedFile(fileName.toUtf8().constData(),
             KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture) != KTX_SUCCESS)
         return false;
+
     mTarget = getTarget(*texture);
     mKtxTexture.reset(texture, &ktxTexture_Destroy);
     return true;
 }
 
-bool TextureData::loadFromDds(const QString &fileName)
+bool TextureData::loadGli(const QString &fileName) try
 {
-    auto f = std::fopen(fileName.toUtf8().constData(), "rb");
-    if (!f)
-        return false;
-    auto guard = qScopeGuard([&]() { std::fclose(f); });
-
-    auto callbacks = TinyDDS_Callbacks{ };
-    callbacks.allocFn = [](void *user, size_t size) { return std::malloc(size); };
-    callbacks.freeFn = [](void *user, void *memory) { std::free(memory); };
-    callbacks.readFn = [](void *user, void *buffer, size_t byteCount) { 
-      return std::fread(buffer, 1, byteCount, static_cast<FILE*>(user)); };
-    callbacks.seekFn = [](void *user, int64_t offset) { 
-      return std::fseek(static_cast<FILE*>(user), offset, SEEK_SET) == 0; };
-    callbacks.tellFn = [](void *user) { 
-      return static_cast<int64_t>(std::ftell(static_cast<FILE*>(user))); };
-
-    auto context = TinyDDS_CreateContext(&callbacks, f);
-    auto guard2 = qScopeGuard([&]() { TinyDDS_DestroyContext(context); });
-
-    if (!TinyDDS_ReadHeader(context))
+    auto texture = gli::load(fileName.toUtf8().constData());
+    if (texture.empty())
         return false;
 
-    auto target = QOpenGLTexture::Target{ };
-    if (TinyDDS_Is1D(context)) {
-        target = TinyDDS_IsArray(context) ? 
-            QOpenGLTexture::Target::Target1DArray :
-            QOpenGLTexture::Target::Target1D;
-    }
-    else if (TinyDDS_IsCubemap(context)) {
-        target = TinyDDS_IsArray(context) ? 
-            QOpenGLTexture::Target::TargetCubeMapArray : 
-            QOpenGLTexture::Target::TargetCubeMap;
-    }
-    else if (TinyDDS_Is2D(context)) {
-        target = TinyDDS_IsArray(context) ? 
-            QOpenGLTexture::Target::Target2DArray : 
-            QOpenGLTexture::Target::Target2D;
-    }
-    else if (TinyDDS_Is3D(context)) {
-        target = QOpenGLTexture::Target::Target3D;
-    }
+    auto gl = gli::gl(gli::gl::PROFILE_GL33);
+    const auto format = gl.translate(texture.format(), texture.swizzles());
+    const auto target = static_cast<QOpenGLTexture::Target>(gl.translate(texture.target()));
+    const auto extent = texture.extent();
+    const auto levels = (texture.levels() > 1 ? texture.levels() : 0);
 
-    const auto format = getTextureFormat(TinyDDS_GetFormat(context));
-    const auto width = TinyDDS_Width(context);
-    const auto height = TinyDDS_Height(context);
-    const auto depth = TinyDDS_Depth(context);
-    const auto layers = TinyDDS_ArraySlices(context);
-    const auto levels = TinyDDS_NumberOfMipmaps(context);
-    const auto samples = 1;
-    // TODO: TinyDDS_NeedsEndianCorrecting(context);
-
-    if (!create(target, format, width, height, depth, layers, samples, levels))
+    if (!create(target, static_cast<QOpenGLTexture::TextureFormat>(format.Internal),
+          extent.x, extent.y, extent.z, texture.layers(), 1, levels))
         return false;
 
-    for (auto level = 0u; level < levels; ++level) {
-        if (TinyDDS_ImageSize(context, level) != getLevelSize(level))
-            return false;
-        auto dest = getWriteonlyData(level, 0, 0);
-        auto source = TinyDDS_ImageRawData(context, level);
-        if (!source || !dest)
-            return false;
-        std::memcpy(dest, source, getLevelSize(level));
-    }
+    for (auto layer = 0u; layer < texture.layers(); ++layer)
+        for (auto face = 0u; face < texture.faces(); ++face)
+            for (auto level = 0u; level < texture.levels(); ++level) {
+                auto dest = getWriteonlyData(level, layer, face);
+                const auto source = texture.data(layer, face, level);
+                const auto sourceSize = static_cast<int>(texture.size(level));
+                const auto destSize = getImageSize(level);
+                if (!source || !dest)
+                    return false;
+
+                std::memcpy(dest, source, std::min(sourceSize, destSize));
+            }
     return true;
 }
+catch (...)
+{
+    return false;
+}
 
-bool TextureData::loadFromQImage(const QString &fileName)
+bool TextureData::loadQImage(const QString &fileName)
 {
     auto image = QImage();
     if (!image.load(fileName))
         return false;
+
     image = std::move(image).convertToFormat(getNextNativeImageFormat(image.format()));
     if (!create(QOpenGLTexture::Target2D, getTextureFormat(image.format()),
                 image.width(), image.height()))
         return false;
+
     if (static_cast<int>(image.sizeInBytes()) != getImageSize(0))
         return false;
+
     std::memcpy(getWriteonlyData(0, 0, 0), image.constBits(),
         static_cast<size_t>(getImageSize(0)));
     return true;
 }
 
-bool TextureData::loadFromTga(const QString &fileName)
+bool TextureData::loadTga(const QString &fileName)
 {
     auto f = std::fopen(fileName.toUtf8().constData(), "rb");
     if (!f)
@@ -786,81 +621,88 @@ bool TextureData::loadFromTga(const QString &fileName)
     auto header = tga::Header();
     if (!decoder.readHeader(header))
         return false;
+
     const auto format = (header.bytesPerPixel() == 4 ? 
         QOpenGLTexture::TextureFormat::RGBA8_UNorm : 
         QOpenGLTexture::TextureFormat::R8_UNorm);
     if (!create(QOpenGLTexture::Target2D, format, header.width, header.height))
         return false;
+
     auto image = tga::Image();
     image.bytesPerPixel = header.bytesPerPixel();
     image.rowstride = header.width * header.bytesPerPixel();
     image.pixels = getWriteonlyData(0, 0, 0);
-    if (image.rowstride * header.height != getImageSize(0))
+    if (static_cast<int>(image.rowstride * header.height) != getImageSize(0))
         return false;
+
     if (!decoder.readImage(header, image, nullptr))
         return false;
+
     decoder.postProcessImage(header, image);
     return true;
 }
 
 bool TextureData::load(const QString &fileName) 
 {
-    return loadFromKtx(fileName) ||
-           loadFromDds(fileName) ||
-           loadFromTga(fileName) ||
-           loadFromQImage(fileName);
+    return loadKtx(fileName) ||
+           loadGli(fileName) ||
+           loadTga(fileName) ||
+           loadQImage(fileName);
 }
 
-bool TextureData::saveToKtx(const QString &fileName) const 
+bool TextureData::saveKtx(const QString &fileName) const
 {
     if (!fileName.endsWith(".ktx", Qt::CaseInsensitive))
         return false;
+
     return (ktxTexture_WriteToNamedFile(
         mKtxTexture.get(), fileName.toUtf8().constData()) == KTX_SUCCESS);
 }
 
-bool TextureData::saveToDds(const QString &fileName) const 
+bool TextureData::saveGli(const QString &fileName) const try
 {
-    if (!fileName.endsWith(".dds", Qt::CaseInsensitive))
+    if (!fileName.endsWith(".ktx", Qt::CaseInsensitive) &&
+        !fileName.endsWith(".dds", Qt::CaseInsensitive) &&
+        !fileName.endsWith(".kmg", Qt::CaseInsensitive))
         return false;
 
-    auto format = getDdsFormat(this->format());
-    if (!format)
+    auto gl = gli::gl(gli::gl::PROFILE_GL33);
+    const auto gli_format = gl.find(
+        static_cast<gli::gl::internal_format>(format()),
+        static_cast<gli::gl::external_format>(pixelFormat()),
+        static_cast<gli::gl::type_format>(pixelType()));
+    if (!gli_format)
         return false;
 
-    auto callbacks = TinyDDS_WriteCallbacks{ };
-    callbacks.alloc = [](void *user, size_t size) { return std::malloc(size); };
-    callbacks.free = [](void *user, void *memory) { std::free(memory); };
-    callbacks.write = [](void *user, void const *buffer, size_t byteCount) { 
-        std::fwrite(buffer, 1, byteCount, static_cast<FILE*>(user)); };
-    auto f = std::fopen(fileName.toUtf8().constData(), "wb");
-    auto guard = qScopeGuard([&]() { std::fclose(f); });
+    auto texture = gli::texture(get_gli_target(target()),
+        gli_format, gli::extent3d{ width(), height(), depth() },
+        layers(), faces(), levels());
 
-    // manually writing faces, layers, levels because internal layout differs
-    auto levelSizes = std::array<uint32_t, TINYDDS_MAX_MIPMAPLEVELS>{ };
-    auto levelData = std::array<const void*, TINYDDS_MAX_MIPMAPLEVELS>{ };
-    if (!TinyDDS_WriteImage(&callbacks, f, width(), height(), depth(), layers(), levels(),
-        format, isCubemap(), false, levelSizes.data(), levelData.data()))
-        return false;
+    for (auto layer = 0u; layer < texture.layers(); ++layer)
+        for (auto face = 0u; face < texture.faces(); ++face)
+            for (auto level = 0u; level < texture.levels(); ++level) {
+                auto dest = texture.data(layer, face, level);
+                const auto source = getData(level, layer, face);
+                const auto sourceSize = static_cast<int>(texture.size(level));
+                const auto destSize = getImageSize(level);
+                if (!source || !dest)
+                    return false;
 
-    if (depth() == 1) {
-        for (auto face = 0; face < faces(); ++face)
-            for (auto layer = 0; layer < layers(); ++layer)
-                for (auto level = 0; level < levels(); ++level)            
-                    std::fwrite(getData(level, layer, face), 1, getImageSize(level), f);
-    }
-    else {
-        for (auto level = 0; level < levels(); ++level)
-            for (auto slice = 0; slice < std::max(depth() >> level, 1); ++slice)
-                std::fwrite(getData(level, 0, slice), 1, getImageSize(level), f);
-    }
-    return true;
+                std::memcpy(dest, source, std::min(sourceSize, destSize));
+            }
+
+    return gli::save(texture, fileName.toUtf8().constData());
+}
+catch (...)
+{
+    return false;
 }
 
-bool TextureData::saveToTga(const QString &fileName) const 
+bool TextureData::saveTga(const QString &fileName) const
 {
     if (!fileName.endsWith(".tga", Qt::CaseInsensitive))
         return false;
+
     auto f = std::fopen(fileName.toUtf8().constData(), "wb");
     auto guard = qScopeGuard([&]() { std::fclose(f); });
     auto file = tga::StdioFileInterface(f);
@@ -890,13 +732,14 @@ bool TextureData::saveToTga(const QString &fileName) const
     image.pixels = imageData.bits();
     if (image.rowstride * header.height != imageData.sizeInBytes())
         return false;
+
     encoder.writeHeader(header);
     encoder.writeImage(header, image, nullptr);
     encoder.writeFooter();
     return true;
 }
 
-bool TextureData::saveToQImage(const QString &fileName) const 
+bool TextureData::saveQImage(const QString &fileName) const
 {
     auto image = toImage();
     if (image.isNull())
@@ -907,10 +750,10 @@ bool TextureData::saveToQImage(const QString &fileName) const
 
 bool TextureData::save(const QString &fileName) const 
 {
-    return saveToKtx(fileName) ||
-           saveToDds(fileName) ||
-           saveToTga(fileName) ||
-           saveToQImage(fileName);
+    return saveKtx(fileName) ||
+           saveGli(fileName) ||
+           saveTga(fileName) ||
+           saveQImage(fileName);
 }
 
 bool TextureData::isNull() const 

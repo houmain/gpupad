@@ -57,14 +57,14 @@ public:
 private:
     using GL = QOpenGLFunctions_3_3_Core;
 
-    bool loadFromKtx(const QString &fileName);
-    bool loadFromDds(const QString &fileName);
-    bool loadFromQImage(const QString &fileName);
-    bool loadFromTga(const QString &fileName);
-    bool saveToKtx(const QString &fileName) const;
-    bool saveToDds(const QString &fileName) const;
-    bool saveToQImage(const QString &fileName) const;
-    bool saveToTga(const QString &fileName) const;
+    bool loadKtx(const QString &fileName);
+    bool loadGli(const QString &fileName);
+    bool loadQImage(const QString &fileName);
+    bool loadTga(const QString &fileName);
+    bool saveGli(const QString &fileName) const;
+    bool saveKtx(const QString &fileName) const;
+    bool saveQImage(const QString &fileName) const;
+    bool saveTga(const QString &fileName) const;
     bool uploadMultisample(GL& gl, GLuint textureId,
         QOpenGLTexture::TextureFormat format);
     bool download(GL& gl, GLuint textureId);
