@@ -163,8 +163,10 @@ void TextureEditor::updateEditorToolBar()
 
 void TextureEditor::setFileName(QString fileName)
 {
-    mFileName = fileName;
-    Q_EMIT fileNameChanged(mFileName);
+    if (mFileName != fileName) {
+        mFileName = fileName;
+        Q_EMIT fileNameChanged(mFileName);
+    }
 }
 
 void TextureEditor::setRawFormat(RawFormat rawFormat)

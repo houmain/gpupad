@@ -736,14 +736,6 @@ bool TextureData::saveTga(const QString &fileName) const
     if (!fileName.endsWith(".tga", Qt::CaseInsensitive))
         return false;
 
-    auto f = std::fopen(fileName.toUtf8().constData(), "wb");
-    auto guard = qScopeGuard([&]() { std::fclose(f); });
-    auto file = tga::StdioFileInterface(f);
-    auto encoder = tga::Encoder(&file);
-    auto header = tga::Header();
-    header.width = width();
-    header.height = height();
-
     auto imageData = toImage();
     if (imageData.isNull())
         return false;
@@ -751,6 +743,9 @@ bool TextureData::saveTga(const QString &fileName) const
     if (flipOnLoadSave(fileName))
         imageData = std::move(imageData).mirrored();
 
+    auto header = tga::Header();
+    header.width = width();
+    header.height = height();
     if (imageData.isGrayscale()) {
         imageData = std::move(imageData).convertToFormat(QImage::Format_Grayscale8);
         header.imageType = tga::UncompressedGray;
@@ -773,6 +768,12 @@ bool TextureData::saveTga(const QString &fileName) const
     if (image.rowstride * header.height != imageData.sizeInBytes())
         return false;
 
+    auto file = std::fopen(fileName.toUtf8().constData(), "wb");
+    if (!file)
+        return false;
+    auto guard = qScopeGuard([&]() { std::fclose(file); });
+    auto fileInterface = tga::StdioFileInterface(file);
+    auto encoder = tga::Encoder(&fileInterface);
     encoder.writeHeader(header);
     encoder.writeImage(header, image, nullptr);
     encoder.writeFooter();

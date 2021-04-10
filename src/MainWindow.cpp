@@ -609,14 +609,15 @@ bool MainWindow::saveSessionAs()
         FileDialog::Saving |
         FileDialog::SessionExtensions
     };
-    if (!Singletons::fileDialog().exec(options, mSessionEditor->fileName()))
-        return false;
-
     const auto prevFileName = mSessionEditor->fileName();
-    mSessionEditor->setFileName(Singletons::fileDialog().fileName());
-    if (!saveSession()) {
-        mSessionEditor->setFileName(prevFileName);
-        return false;
+    for (;;) {
+        if (!Singletons::fileDialog().exec(options, mSessionEditor->fileName())) {
+            mSessionEditor->setFileName(prevFileName);
+            return false;
+        }
+        mSessionEditor->setFileName(Singletons::fileDialog().fileName());
+        if (mSessionEditor->save())
+            break;
     }
 
     if (!copySessionFiles(QFileInfo(prevFileName).path(), 
@@ -629,10 +630,9 @@ bool MainWindow::saveSessionAs()
         dialog.exec();
     }
 
-    if (!mSessionEditor->save())
-      return false;
-
+    mSessionEditor->save();
     mSessionEditor->clearUndo();
+    addToRecentFileList(mSessionEditor->fileName());
     return true;
 }
 

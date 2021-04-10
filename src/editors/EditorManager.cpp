@@ -338,13 +338,17 @@ bool EditorManager::saveEditorAs()
                 options |= FileDialog::SavingNon2DTexture;
         }
 
-        if (Singletons::fileDialog().exec(options, 
-                FileDialog::advanceSaveAsSuffix(editor->fileName()))) {
-            auto prevFileName = editor->fileName();
+        const auto prevFileName = editor->fileName();
+        auto fileName = FileDialog::advanceSaveAsSuffix(editor->fileName());
+        while (Singletons::fileDialog().exec(options, fileName)) {
             editor->setFileName(Singletons::fileDialog().fileName());
-            Q_EMIT editorRenamed(prevFileName, editor->fileName());
-            return editor->save();
+            if (editor->save()) {
+                Q_EMIT editorRenamed(prevFileName, editor->fileName());
+                return true;
+            }
+            fileName = editor->fileName();
         }
+        editor->setFileName(prevFileName);
     }
     return false;
 }

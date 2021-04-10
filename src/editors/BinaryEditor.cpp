@@ -118,8 +118,10 @@ QList<QMetaObject::Connection> BinaryEditor::connectEditActions(
 
 void BinaryEditor::setFileName(QString fileName)
 {
-    mFileName = fileName;
-    Q_EMIT fileNameChanged(mFileName);
+    if (mFileName != fileName) {
+        mFileName = fileName;
+        Q_EMIT fileNameChanged(mFileName);
+    }
 }
 
 bool BinaryEditor::load()
