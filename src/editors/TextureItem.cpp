@@ -22,7 +22,7 @@ const vec2 data[4]= vec2[] (
 void main() {
   vec2 pos = data[gl_VertexID];
   vTexCoord = (pos + 1.0) / 2.0;
-  gl_Position = uTransform * vec4(pos, 0.0, 1.0);
+  gl_Position = uTransform * vec4(vec2(pos.x, -pos.y), 0.0, 1.0);
 }
 )";
 
