@@ -72,9 +72,9 @@ private:
     bool downloadCubemap(GL& gl, GLuint textureId);
     bool downloadMultisample(GL& gl, GLuint textureId);
 
-    QOpenGLTexture::Target mTarget{ };
-    int mSamples{ };
     std::shared_ptr<ktxTexture> mKtxTexture;
+    QOpenGLTexture::Target mTarget{ QOpenGLTexture::Target2D };
+    int mSamples{ };
 };
 
 enum class TextureDataType

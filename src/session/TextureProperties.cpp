@@ -215,7 +215,8 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
             updateWidgets();
             applyFileFormat();
         });
-
+    connect(mUi->file, &ReferenceComboBox::activated,
+        this, &TextureProperties::applyFileFormat);
     connect(mUi->file, &ReferenceComboBox::textRequired,
         [](auto data) { return FileDialog::getFileTitle(data.toString()); });
     connect(mUi->file, &ReferenceComboBox::listRequired,
