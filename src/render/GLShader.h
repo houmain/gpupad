@@ -1,7 +1,6 @@
 #ifndef GLSHADER_H
 #define GLSHADER_H
 
-#include "GLItem.h"
 #include "GLPrintf.h"
 
 class GLShader

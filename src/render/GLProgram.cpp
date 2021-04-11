@@ -10,7 +10,7 @@ GLProgram::GLProgram(const Program &program)
 {
     mUsedItems += program.id;
 
-    auto shaders = QMap<Shader::ShaderType, QList<const Shader*>>();
+    auto shaders = std::map<Shader::ShaderType, QList<const Shader*>>();
     for (const auto &item : program.items)
         if (auto shader = castItem<Shader>(item)) {
             mUsedItems += shader->id;
@@ -18,9 +18,9 @@ GLProgram::GLProgram(const Program &program)
         }
 
     const auto includables = shaders[Shader::ShaderType::Includable];
-    for (auto type : shaders.keys())
+    for (const auto &[type, list] : shaders)
         if (type != Shader::ShaderType::Includable)
-            mShaders.emplace_back(type, shaders[type], includables);
+            mShaders.emplace_back(type, list, includables);
 }
 
 bool GLProgram::operator==(const GLProgram &rhs) const

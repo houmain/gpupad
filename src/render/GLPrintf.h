@@ -1,8 +1,6 @@
 #pragma once
 
-#include "GLObject.h"
-#include "GLContext.h"
-#include "MessageList.h"
+#include "GLItem.h"
 
 class GLPrintf
 {
@@ -12,8 +10,10 @@ public:
 
     const char *bufferBindingName() const { return "_printfBuffer"; }
     const GLObject &bufferObject() const { return mBufferObject; }
-    bool isUsed() const { return mIsUsed; }
-    QString patchSource(const QString &fileName, const QString &source);
+    bool isUsed() const;
+    bool isUsed(Shader::ShaderType stage) const;
+    QString patchSource(Shader::ShaderType stage,
+        const QString &fileName, const QString &source);
     void clear();
     MessagePtrSet formatMessages(ItemId callItemId);
 
@@ -35,7 +35,7 @@ private:
     static QString formatMessage(const ParsedFormatString &format,
         const QList<Argument>& arguments);
 
-    bool mIsUsed{ };
+    QSet<Shader::ShaderType> mUsedInStages;
     QList<ParsedFormatString> mFormatStrings;
     GLObject mBufferObject;
 };

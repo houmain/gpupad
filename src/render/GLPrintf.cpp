@@ -273,8 +273,6 @@ QString GLPrintf::preamble()
 {
     return QStringLiteral(R"(
 
-#define HAS_PRINTF 1
-
 bool printfEnabled = true;
 uint _printfArgumentOffset = 0;
 layout(std430) buffer _printfBuffer {
@@ -392,17 +390,27 @@ void _printf(dmat4x4 m) { _printf(mat4x4(m)); }
 )");
 }
 
-QString GLPrintf::patchSource(const QString &fileName, const QString &source)
+bool GLPrintf::isUsed() const
+{
+    return !mUsedInStages.isEmpty();
+}
+
+bool GLPrintf::isUsed(Shader::ShaderType stage) const
+{
+    return mUsedInStages.contains(stage);
+}
+
+QString GLPrintf::patchSource(Shader::ShaderType stage,
+    const QString &fileName, const QString &source)
 {
     const auto sourceWithoutComments = blankComments(source);
     const auto calls = findPrintfCalls(sourceWithoutComments);
     if (calls.isEmpty()) {
-        if (!mIsUsed)
-            mIsUsed = containsIdentifier(source, "HAS_PRINTF") ||
-                      containsIdentifier(source, "printfEnabled");
+        if (containsIdentifier(source, "printfEnabled"))
+            mUsedInStages.insert(stage);
         return source;
     }
-    mIsUsed = true;
+    mUsedInStages.insert(stage);
 
     auto prevOffset = 0;
     auto patchedSource = QString();

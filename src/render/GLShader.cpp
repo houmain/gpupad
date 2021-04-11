@@ -208,9 +208,9 @@ QStringList GLShader::getPatchedSources(GLPrintf *printf)
 
     if (printf) {
         for (auto i = 0; i < sources.size(); ++i)
-            sources[i] = printf->patchSource(mFileNames[i], sources[i]);
+            sources[i] = printf->patchSource(mType, mFileNames[i], sources[i]);
     
-        if (printf->isUsed()) {
+        if (printf->isUsed(mType)) {
             sources.front().prepend(GLPrintf::preamble());
             maxVersion = std::max(maxVersion, GLPrintf::requiredVersion());
         }

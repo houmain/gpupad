@@ -943,12 +943,12 @@ int TextureData::getImageSize(int level) const
 {
     return (isNull() ? 0 :
       static_cast<int>(ktxTexture_GetImageSize(mKtxTexture.get(),
-          static_cast<ktx_uint32_t>(level))));
+          static_cast<ktx_uint32_t>(level)))) * std::max(depth() >> level, 1);
 }
 
 int TextureData::getLevelSize(int level) const
 {
-    return getImageSize(level) * std::max(depth() >> level, 1) * layers() * faces();
+    return getImageSize(level) * layers() * faces();
 }
 
 void TextureData::clear()

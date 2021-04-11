@@ -137,6 +137,7 @@ void TextureEditor::updateEditorToolBar()
     mEditorToolBar.labelZ->setVisible(hasDepth);
     mEditorToolBar.z->setVisible(hasDepth);
     mEditorToolBar.z->setSingleStep(hasDepth ? 0.5 / (mTexture.depth() - 1) : 1);
+    mEditorToolBar.z->setValue(mTextureItem->layer());
 
     const auto maxLayer = std::max(mTexture.layers() - 1, 0);
     mEditorToolBar.layer->setMaximum(maxLayer);
