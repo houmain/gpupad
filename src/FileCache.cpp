@@ -101,16 +101,16 @@ bool FileCache::loadTexture(const QString &fileName, TextureData *texture) const
     if (!texture || FileDialog::isEmptyOrUntitled(fileName))
         return false;
 
-    auto file = TextureData();
-    if (!file.load(fileName)) {
-        if (FileDialog::isVideoFileName(fileName)) {
-            texture->create(QOpenGLTexture::Target2D,
-                QOpenGLTexture::RGBA8_UNorm, 1, 1, 1, 1, 1);
-            asyncOpenVideoPlayer(fileName);
-            return true;
-        }
-        return false;
+    if (FileDialog::isVideoFileName(fileName)) {
+        texture->create(QOpenGLTexture::Target2D,
+            QOpenGLTexture::RGBA8_UNorm, 1, 1, 1, 1, 1);
+        asyncOpenVideoPlayer(fileName);
+        return true;
     }
+
+    auto file = TextureData();
+    if (!file.load(fileName))
+        return false;
 
     *texture = file;
     return true;
