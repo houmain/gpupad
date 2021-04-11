@@ -56,6 +56,7 @@ bool VideoPlayer::present(const QVideoFrame &frame)
     auto texture = TextureData();
     if (texture.create(QOpenGLTexture::Target2D,
             QOpenGLTexture::RGBA8_UNorm, frame.width(), frame.height(), 1, 1, 1, 0)) {
+        texture.clear();
 
         if (frame.pixelFormat() == QVideoFrame::Format_ARGB32)
             texture.setPixelFormat(QOpenGLTexture::BGRA);

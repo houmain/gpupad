@@ -25,8 +25,7 @@ bool createFromRaw(const QByteArray &binary,
             static_cast<size_t>(std::min(static_cast<int>(binary.size()), texture->getLevelSize(0))));
     }
     else {
-        std::memset(texture->getWriteonlyData(0, 0, 0), 0x00,
-            static_cast<size_t>(texture->getLevelSize(0)));
+        texture->clear();
     }
     return true;
 }

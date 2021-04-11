@@ -103,7 +103,8 @@ bool FileCache::loadTexture(const QString &fileName, TextureData *texture) const
 
     if (FileDialog::isVideoFileName(fileName)) {
         texture->create(QOpenGLTexture::Target2D,
-            QOpenGLTexture::RGBA8_UNorm, 1, 1, 1, 1, 1);
+            QOpenGLTexture::RGB8_UNorm, 1, 1, 1, 1, 1);
+        texture->clear();
         asyncOpenVideoPlayer(fileName);
         return true;
     }
