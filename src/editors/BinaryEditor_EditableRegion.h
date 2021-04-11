@@ -44,13 +44,18 @@ public:
     QList<QMetaObject::Connection> connectEditActions(const EditActions &actions)
     {
         auto c = QList<QMetaObject::Connection>();
-        //c += connect(actions.undo, &QAction::triggered, this, &EditableRegion::undo);
-        //c += connect(actions.redo, &QAction::triggered, this, &EditableRegion::redo);
+        if (!isVisible()) {
+            actions.cut->setEnabled(false);
+            actions.copy->setEnabled(false);
+            actions.paste->setEnabled(false);
+            actions.delete_->setEnabled(false);
+            return c;
+        }
+
         c += connect(actions.cut, &QAction::triggered, this, &EditableRegion::cut);
         c += connect(actions.copy, &QAction::triggered, this, &EditableRegion::copy);
         c += connect(actions.paste, &QAction::triggered, this, &EditableRegion::paste);
         c += connect(actions.delete_, &QAction::triggered, this, &EditableRegion::delete_);
-        //c += connect(actions.selectAll, &QAction::triggered, this, &EditableRegion::selectAll);
 
         actions.cut->setEnabled(true);
         actions.copy->setEnabled(true);
