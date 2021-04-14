@@ -19,12 +19,12 @@ public:
     ~FileCache();
 
     bool loadSource(const QString &fileName, QString *source) const;
-    bool loadTexture(const QString &fileName, TextureData *texture) const;
+    bool loadTexture(const QString &fileName, bool flipVertically, TextureData *texture) const;
     bool loadBinary(const QString &fileName, QByteArray *binary) const;
     bool getSource(const QString &fileName, QString *source) const;
-    bool getTexture(const QString &fileName, TextureData *texture) const;
+    bool getTexture(const QString &fileName, bool flipVertically, TextureData *texture) const;
     bool getBinary(const QString &fileName, QByteArray *binary) const;
-    bool updateTexture(const QString &fileName, TextureData texture) const;
+    bool updateTexture(const QString &fileName, bool flippedVertically, TextureData texture) const;
 
     // only call from main thread
     void invalidateEditorFile(const QString &fileName, bool emitFileChanged = true);
@@ -36,15 +36,17 @@ public:
 
 Q_SIGNALS:
     void fileChanged(const QString &fileName);
-    void videoPlayerRequested(const QString &fileName, QPrivateSignal) const;
+    void videoPlayerRequested(const QString &fileName, bool flipVertically, QPrivateSignal) const;
 
 private:
+    using TextureKey = QPair<QString, bool>;
+
     void handleFileSystemFileChanged(const QString &fileName);
     void addFileSystemWatch(const QString &fileName, bool changed = false) const;
     void updateFileSystemWatches();
-    void handleVideoPlayerRequested(const QString &fileName);
+    void handleVideoPlayerRequested(const QString &fileName, bool flipVertically);
     void handleVideoPlayerLoaded();
-    void asyncOpenVideoPlayer(const QString &fileName) const;
+    void asyncOpenVideoPlayer(const QString &fileName, bool flipVertically) const;
 
     QSet<QString> mEditorFilesInvalidated;
     QTimer mUpdateFileSystemWatchesTimer;
@@ -55,7 +57,7 @@ private:
 
     mutable QMutex mMutex;
     mutable QMap<QString, QString> mSources;
-    mutable QMap<QString, TextureData> mTextures;
+    mutable QMap<TextureKey, TextureData> mTextures;
     mutable QMap<QString, QByteArray> mBinaries;
     mutable QMap<QString, bool> mFileSystemWatchesToAdd;
 };

@@ -298,6 +298,7 @@ void TextureProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->depth, SessionModel::TextureDepth);
     mapper.addMapping(mUi->layers, SessionModel::TextureLayers);
     mapper.addMapping(mUi->samples, SessionModel::TextureSamples);
+    mapper.addMapping(mUi->flipVertically, SessionModel::TextureFlipVertically);
 }
 
 void TextureProperties::setFormat(QVariant value) 
@@ -319,11 +320,14 @@ void TextureProperties::setFormat(QVariant value)
 
 void TextureProperties::updateWidgets()
 {
+    const auto fileName = mUi->file->currentData().toString();
     const auto kind = currentTextureKind();
     setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, (kind.dimensions > 1 && !kind.cubeMap));
     setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth, kind.dimensions > 2);
     setFormVisibility(mUi->formLayout, mUi->labelLayers, mUi->layers, kind.array);
     setFormVisibility(mUi->formLayout, mUi->labelSamples, mUi->samples, kind.multisample);
+    setFormVisibility(mUi->formLayout, mUi->labelFlipVertically, mUi->flipVertically,
+        !FileDialog::isEmptyOrUntitled(fileName) && (kind.dimensions == 2 || kind.cubeMap));
 }
 
 void TextureProperties::updateFormatDataWidget(QVariant formatType)
@@ -410,9 +414,9 @@ void TextureProperties::updateFormat(QVariant formatData)
 
 void TextureProperties::applyFileFormat()
 {
-    auto fileName = mUi->file->currentData().toString();
+    const auto fileName = mUi->file->currentData().toString();
     auto texture = TextureData();
-    if (Singletons::fileCache().getTexture(fileName, &texture)) {
+    if (Singletons::fileCache().getTexture(fileName, false, &texture)) {
         setFormat(texture.format());
         mUi->target->setCurrentData(texture.target());
         mUi->width->setText(QString::number(texture.width()));

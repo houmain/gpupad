@@ -10,6 +10,7 @@ namespace {
 #version 330
 
 uniform mat4 uTransform;
+uniform bool uFlipVertically;
 out vec2 vTexCoord;
 
 const vec2 data[4]= vec2[] (
@@ -22,7 +23,9 @@ const vec2 data[4]= vec2[] (
 void main() {
   vec2 pos = data[gl_VertexID];
   vTexCoord = (pos + 1.0) / 2.0;
-  gl_Position = uTransform * vec4(vec2(pos.x, -pos.y), 0.0, 1.0);
+  if (!uFlipVertically)
+    pos.y *= -1;
+  gl_Position = uTransform * vec4(pos, 0.0, 1.0);
 }
 )";
 
@@ -337,6 +340,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         const auto resolve = (mSample < 0);
         program->setUniformValue("uSample", std::max(0, (resolve ? 0 : mSample)));
         program->setUniformValue("uSamples", std::max(1, (resolve ? mImage.samples() : 1)));
+        program->setUniformValue("uFlipVertically", mFlipVertically);
         gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 

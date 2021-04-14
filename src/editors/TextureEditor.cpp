@@ -120,6 +120,9 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
     c += connect(mEditorToolBar.filter, 
         &QCheckBox::stateChanged,
         [&](int state) { mTextureItem->setMagnifyLinear(state != 0); });
+    c += connect(mEditorToolBar.flipVertically,
+        &QCheckBox::stateChanged,
+        [&](int state) { mTextureItem->setFlipVertically(state != 0); });
 
     return c;
 }
@@ -159,6 +162,9 @@ void TextureEditor::updateEditorToolBar()
 
     mEditorToolBar.filter->setVisible(!mTexture.isMultisample());
     mEditorToolBar.filter->setChecked(mTextureItem->magnifyLinear());
+
+    mEditorToolBar.flipVertically->setVisible(mTexture.dimensions() == 2 || mTexture.isCubemap());
+    mEditorToolBar.flipVertically->setChecked(mTextureItem->flipVertically());
 }
 
 void TextureEditor::setFileName(QString fileName)
@@ -182,7 +188,7 @@ void TextureEditor::setRawFormat(RawFormat rawFormat)
 bool TextureEditor::load()
 {
     auto texture = TextureData();
-    if (!Singletons::fileCache().getTexture(mFileName, &texture)) {
+    if (!Singletons::fileCache().getTexture(mFileName, true, &texture)) {
         auto binary = QByteArray();
         if (!Singletons::fileCache().getBinary(mFileName, &binary))
             return false;
@@ -199,7 +205,7 @@ bool TextureEditor::load()
 bool TextureEditor::reload()
 {
     auto texture = TextureData();
-    if (Singletons::fileCache().loadTexture(mFileName, &texture)) {
+    if (Singletons::fileCache().loadTexture(mFileName, true, &texture)) {
         mIsRaw = false;
     }
     else {
@@ -217,7 +223,7 @@ bool TextureEditor::reload()
 
 bool TextureEditor::save()
 {
-    if (!mTexture.save(fileName()))
+    if (!mTexture.save(fileName(), !mTextureItem->flipVertically()))
         return false;
 
     setModified(false);
@@ -314,8 +320,12 @@ void TextureEditor::mouseMoveEvent(QMouseEvent *event)
 
 void TextureEditor::updateMousePosition(QMouseEvent *event)
 {
-    const auto pos = mTextureItem->mapFromScene(
-        mapToScene(event->pos())) - mTextureItem->boundingRect().topLeft();
+    auto pos = mTextureItem->mapFromScene(
+        mapToScene(event->pos() - QPoint(1, 1))) - mTextureItem->boundingRect().topLeft();
+
+    if (!mTextureItem->flipVertically())
+        pos.setY(mTextureItem->boundingRect().height() - pos.y());
+
     const auto fragmentCoord =
         QPointF(qRound(pos.x() - 0.5) + 0.5, qRound(pos.y() - 0.5) + 0.5);
     Singletons::synchronizeLogic().setMousePosition(fragmentCoord);

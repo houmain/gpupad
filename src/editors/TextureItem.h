@@ -34,6 +34,8 @@ public:
     float layer() const { return mLayer; }
     void setSample(int sample) { mSample = sample; update(); }
     int sample() const { return mSample; }
+    void setFlipVertically(bool flip) { mFlipVertically = flip; update(); }
+    bool flipVertically() const { return mFlipVertically; }
     QRectF boundingRect() const override { return mBoundingRect; }
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) override;
 
@@ -54,6 +56,7 @@ private:
     float mLayer{ };
     int mSample{ -1 };
     int mSamples{ };
+    bool mFlipVertically{ };
     bool mUpload{ };
 };
 

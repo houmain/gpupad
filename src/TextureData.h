@@ -14,9 +14,10 @@ public:
     bool create(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format,
         int width, int height, 
-        int depth = 1, int layers = 1, int samples = 1, int levels = 0);
-    bool load(const QString &fileName);
-    bool save(const QString &fileName) const;
+        int depth = 1, int layers = 1, int samples = 1,
+        int levels = 0);
+    bool load(const QString &fileName, bool flipVertically);
+    bool save(const QString &fileName, bool flipVertically) const;
     bool isNull() const;
     void clear();
     QImage toImage() const;
@@ -40,6 +41,7 @@ public:
     int layers() const;
     int faces() const;
     int samples() const { return mSamples; }
+    bool flippedVertically() const { return mFlippedVertically; }
     uchar *getWriteonlyData(int level, int layer, int faceSlice);
     const uchar *getData(int level, int layer, int faceSlice) const;
     int getImageSize(int level) const;
@@ -57,15 +59,14 @@ public:
 private:
     using GL = QOpenGLFunctions_3_3_Core;
 
-    bool flipOnLoadSave(const QString &fileName) const;
-    bool loadKtx(const QString &fileName);
-    bool loadGli(const QString &fileName);
-    bool loadQImage(const QString &fileName);
-    bool loadTga(const QString &fileName);
-    bool saveGli(const QString &fileName) const;
-    bool saveKtx(const QString &fileName) const;
-    bool saveQImage(const QString &fileName) const;
-    bool saveTga(const QString &fileName) const;
+    bool loadKtx(const QString &fileName, bool flipVertically);
+    bool loadGli(const QString &fileName, bool flipVertically);
+    bool loadQImage(const QString &fileName, bool flipVertically);
+    bool loadTga(const QString &fileName, bool flipVertically);
+    bool saveGli(const QString &fileName, bool flipVertically) const;
+    bool saveKtx(const QString &fileName, bool flipVertically) const;
+    bool saveQImage(const QString &fileName, bool flipVertically) const;
+    bool saveTga(const QString &fileName, bool flipVertically) const;
     bool uploadMultisample(GL& gl, GLuint textureId,
         QOpenGLTexture::TextureFormat format);
     bool download(GL& gl, GLuint textureId);
@@ -75,6 +76,7 @@ private:
     std::shared_ptr<ktxTexture> mKtxTexture;
     QOpenGLTexture::Target mTarget{ QOpenGLTexture::Target2D };
     int mSamples{ };
+    bool mFlippedVertically{ };
 };
 
 enum class TextureDataType

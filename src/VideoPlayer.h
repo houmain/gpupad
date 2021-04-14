@@ -10,7 +10,7 @@ class VideoPlayer final : public QAbstractVideoSurface
 {
     Q_OBJECT
 public:
-    explicit VideoPlayer(QString fileName, QObject *parent = nullptr);
+    VideoPlayer(QString fileName, bool flipVertically, QObject *parent = nullptr);
 
     QList<QVideoFrame::PixelFormat> supportedPixelFormats(
         QAbstractVideoBuffer::HandleType) const override;
@@ -33,6 +33,7 @@ private:
     QString mFileName;
     int mWidth{ };
     int mHeight{ };
+    bool mFlipVertically{ };
 };
 
 #else // !Qt5Multimedia_FOUND

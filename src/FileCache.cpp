@@ -51,12 +51,13 @@ void FileCache::updateEditorFiles()
             mBinaries[fileName] = editor->data();
         }
         else if (auto editor = editorManager.getTextureEditor(fileName)) {
-            mTextures[fileName] = editor->texture();
+            mTextures[TextureKey(fileName, false)] = editor->texture();
         }
         else {
             mSources.remove(fileName);
             mBinaries.remove(fileName);
-            mTextures.remove(fileName);
+            mTextures.remove(TextureKey(fileName, true));
+            mTextures.remove(TextureKey(fileName, false));
         }
     }
     mEditorFilesInvalidated.clear();
@@ -96,7 +97,7 @@ bool FileCache::loadSource(const QString &fileName, QString *source) const
     return true;
 }
 
-bool FileCache::loadTexture(const QString &fileName, TextureData *texture) const
+bool FileCache::loadTexture(const QString &fileName, bool flipVertically, TextureData *texture) const
 {
     if (!texture || FileDialog::isEmptyOrUntitled(fileName))
         return false;
@@ -105,12 +106,12 @@ bool FileCache::loadTexture(const QString &fileName, TextureData *texture) const
         texture->create(QOpenGLTexture::Target2D,
             QOpenGLTexture::RGB8_UNorm, 1, 1, 1, 1, 1);
         texture->clear();
-        asyncOpenVideoPlayer(fileName);
+        asyncOpenVideoPlayer(fileName, flipVertically);
         return true;
     }
 
     auto file = TextureData();
-    if (!file.load(fileName))
+    if (!file.load(fileName, flipVertically))
         return false;
 
     *texture = file;
@@ -145,28 +146,30 @@ bool FileCache::getSource(const QString &fileName, QString *source) const
     return true;
 }
 
-bool FileCache::getTexture(const QString &fileName, TextureData *texture) const
+bool FileCache::getTexture(const QString &fileName, bool flipVertically, TextureData *texture) const
 {
     Q_ASSERT(texture);
     QMutexLocker lock(&mMutex);
-    if (mTextures.contains(fileName)) {
-        *texture = mTextures[fileName];
+    const auto key = TextureKey(fileName, flipVertically);
+    if (mTextures.contains(key)) {
+        *texture = mTextures[key];
         return true;
     }
 
     addFileSystemWatch(fileName);
-    if (!loadTexture(fileName, texture))
+    if (!loadTexture(fileName, flipVertically, texture))
         return false;
-    mTextures[fileName] = *texture;
+    mTextures[key] = *texture;
     return true;
 }
 
-bool FileCache::updateTexture(const QString &fileName, TextureData texture) const
+bool FileCache::updateTexture(const QString &fileName, bool flippedVertically, TextureData texture) const
 {
     QMutexLocker lock(&mMutex);
-    if (!mTextures.contains(fileName))
+    const auto key = TextureKey(fileName, flippedVertically);
+    if (!mTextures.contains(key))
         return false;
-    mTextures[fileName] = std::move(texture);
+    mTextures[key] = std::move(texture);
     return true;
 }
 
@@ -238,7 +241,8 @@ void FileCache::updateFileSystemWatches()
             QMutexLocker lock(&mMutex);
             mSources.remove(fileName);
             mBinaries.remove(fileName);
-            mTextures.remove(fileName);
+            mTextures.remove(TextureKey(fileName, true));
+            mTextures.remove(TextureKey(fileName, false));
         }
         Q_EMIT fileChanged(fileName);
     }
@@ -247,15 +251,15 @@ void FileCache::updateFileSystemWatches()
     mUpdateFileSystemWatchesTimer.start(5);
 }
 
-void FileCache::asyncOpenVideoPlayer(const QString &fileName) const
+void FileCache::asyncOpenVideoPlayer(const QString &fileName, bool flipVertically) const
 {
-    Q_EMIT videoPlayerRequested(fileName, QPrivateSignal());
+    Q_EMIT videoPlayerRequested(fileName, flipVertically, QPrivateSignal());
 }
 
-void FileCache::handleVideoPlayerRequested(const QString &fileName)
+void FileCache::handleVideoPlayerRequested(const QString &fileName, bool flipVertically)
 {
     Q_ASSERT(onMainThread());
-    auto videoPlayer = new VideoPlayer(fileName);
+    auto videoPlayer = new VideoPlayer(fileName, flipVertically);
     connect(videoPlayer, &VideoPlayer::loadingFinished,
         this, &FileCache::handleVideoPlayerLoaded);
 }

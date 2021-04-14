@@ -99,7 +99,14 @@
       </widget>
      </item>
      <item row="5" column="1">
-      <widget class="QCheckBox" name="anisotropic"/>
+      <widget class="QCheckBox" name="anisotropic">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="6" column="0">
       <widget class="QLabel" name="labelWrapModeX">
@@ -139,7 +146,14 @@
       </widget>
      </item>
      <item row="9" column="1">
-      <widget class="ColorPicker" name="borderColor"/>
+      <widget class="ColorPicker" name="borderColor">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="10" column="0">
       <widget class="QLabel" name="labelComparisonFunc">
@@ -240,7 +254,14 @@
       </widget>
      </item>
      <item row="16" column="1">
-      <widget class="ColorPicker" name="color"/>
+      <widget class="ColorPicker" name="color">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="17" column="0">
       <widget class="QLabel" name="labelExpressions">
@@ -316,14 +337,14 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ReferenceComboBox</class>
-   <extends>QComboBox</extends>
-   <header>session/ReferenceComboBox.h</header>
-  </customwidget>
-  <customwidget>
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
    <header>session/DataComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ReferenceComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/ReferenceComboBox.h</header>
   </customwidget>
   <customwidget>
    <class>ExpressionMatrix</class>

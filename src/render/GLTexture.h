@@ -33,6 +33,7 @@ public:
     bool updateMipmaps();
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();
+    bool deviceCopyModified() const { return mDeviceCopyModified; }
     bool download();
 
 private:
@@ -46,6 +47,7 @@ private:
     ItemId mItemId{ };
     MessagePtrSet mMessages;
     QString mFileName;
+    bool mFlipVertically{ };
     GLBuffer *mTextureBuffer{ };
     Texture::Target mTarget{ };
     Texture::Format mFormat{ };

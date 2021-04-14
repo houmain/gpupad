@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>194</width>
-    <height>209</height>
+    <height>248</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -72,7 +72,14 @@
       </widget>
      </item>
      <item row="8" column="1">
-      <widget class="ColorPicker" name="blendConstant"/>
+      <widget class="ColorPicker" name="blendConstant">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="0" column="0">
       <widget class="QLabel" name="labelWidth">

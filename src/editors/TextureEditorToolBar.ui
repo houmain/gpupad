@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>555</width>
+    <width>571</width>
     <height>25</height>
    </rect>
   </property>
@@ -143,6 +143,13 @@
     <widget class="QCheckBox" name="filter">
      <property name="text">
       <string>Filter</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="flipVertically">
+     <property name="text">
+      <string>Flip Vert.</string>
      </property>
     </widget>
    </item>

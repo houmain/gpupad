@@ -7,6 +7,7 @@
 GLTexture::GLTexture(const Texture &texture, ScriptEngine &scriptEngine)
     : mItemId(texture.id)
     , mFileName(texture.fileName)
+    , mFlipVertically(texture.flipVertically)
     , mTarget(texture.target)
     , mFormat(texture.format)
     , mWidth(std::max(scriptEngine.evaluateInt(texture.width, mItemId, mMessages), 1))
@@ -45,8 +46,8 @@ GLTexture::GLTexture(const Buffer &buffer,
 
 bool GLTexture::operator==(const GLTexture &rhs) const
 {
-    return std::tie(mMessages, mFileName, mTextureBuffer, mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples) ==
-           std::tie(rhs.mMessages, rhs.mFileName, rhs.mTextureBuffer, rhs.mTarget, rhs.mFormat, rhs.mWidth, rhs.mHeight, rhs.mDepth, rhs.mLayers, rhs.mSamples);
+    return std::tie(mMessages, mFileName, mFlipVertically, mTextureBuffer, mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples) ==
+           std::tie(rhs.mMessages, rhs.mFileName, rhs.mFlipVertically, rhs.mTextureBuffer, rhs.mTarget, rhs.mFormat, rhs.mWidth, rhs.mHeight, rhs.mDepth, rhs.mLayers, rhs.mSamples);
 }
 
 GLuint GLTexture::getReadOnlyTextureId()
@@ -204,7 +205,7 @@ void GLTexture::reload(bool forWriting)
 
     auto fileData = TextureData{ };
     if (!FileDialog::isEmptyOrUntitled(mFileName))
-        if (!Singletons::fileCache().getTexture(mFileName, &fileData))
+        if (!Singletons::fileCache().getTexture(mFileName, mFlipVertically, &fileData))
             mMessages += MessageList::insert(mItemId,
                 MessageType::LoadingFileFailed, mFileName);
 

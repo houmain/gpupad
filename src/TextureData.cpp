@@ -238,7 +238,7 @@ namespace {
         return { };
     }
 
-    void flipVertically(uchar * data, int pitch, int height)
+    void flipImageVertically(uchar * data, int pitch, int height)
     {
         auto buffer = std::vector<std::byte>(pitch);
         auto low = data;
@@ -441,9 +441,6 @@ int getTextureComponentCount(QOpenGLTexture::TextureFormat format)
 
 bool operator==(const TextureData &a, const TextureData &b) 
 {
-    if (a.isSharedWith(b))
-        return true;
-
     if (a.target() != b.target() ||
         a.format() != b.format() ||
         a.width() != b.width() ||
@@ -454,6 +451,9 @@ bool operator==(const TextureData &a, const TextureData &b)
         a.faces() != b.faces() ||
         a.samples() != b.samples())
         return false;
+
+    if (a.isSharedWith(b))
+        return true;
 
     for (auto level = 0; level < a.levels(); ++level)
         for (auto layer = 0; layer < a.layers(); ++layer)
@@ -473,9 +473,7 @@ bool operator==(const TextureData &a, const TextureData &b)
 
 bool TextureData::isSharedWith(const TextureData &other) const
 {
-    return (mKtxTexture == other.mKtxTexture &&
-            mTarget == other.mTarget &&
-            mSamples == other.mSamples);
+    return (mKtxTexture == other.mKtxTexture);
 }
 
 bool operator!=(const TextureData &a, const TextureData &b)
@@ -555,18 +553,7 @@ bool TextureData::create(
     return false;
 }
 
-bool TextureData::flipOnLoadSave(const QString &fileName) const
-{
-    if (mTarget != QOpenGLTexture::Target2D &&
-        mTarget != QOpenGLTexture::Target2DArray &&
-        mTarget != QOpenGLTexture::TargetCubeMap &&
-        mTarget != QOpenGLTexture::TargetCubeMapArray)
-        return false;
-
-    return !fileName.endsWith(".ktx", Qt::CaseInsensitive);
-}
-
-bool TextureData::loadKtx(const QString &fileName)
+bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
 {
     auto texture = std::add_pointer_t<ktxTexture>{ };
     if (ktxTexture_CreateFromNamedFile(fileName.toUtf8().constData(),
@@ -575,16 +562,17 @@ bool TextureData::loadKtx(const QString &fileName)
 
     mTarget = getTarget(*texture);
     mKtxTexture.reset(texture, &ktxTexture_Destroy);
+    mFlippedVertically = false;
     return true;
 }
 
-bool TextureData::loadGli(const QString &fileName) try
+bool TextureData::loadGli(const QString &fileName, bool flipVertically) try
 {
     auto texture = gli::load(fileName.toUtf8().constData());
     if (texture.empty())
         return false;
 
-    if (flipOnLoadSave(fileName))
+    if (flipVertically)
         texture = gli::flip(std::move(texture));
 
     auto gl = gli::gl(gli::gl::PROFILE_GL33);
@@ -609,6 +597,7 @@ bool TextureData::loadGli(const QString &fileName) try
 
                 std::memcpy(dest, source, std::min(sourceSize, destSize));
             }
+    mFlippedVertically = flipVertically;
     return true;
 }
 catch (...)
@@ -616,7 +605,7 @@ catch (...)
     return false;
 }
 
-bool TextureData::loadQImage(const QString &fileName)
+bool TextureData::loadQImage(const QString &fileName, bool flipVertically)
 {
     auto image = QImage();
     if (!image.load(fileName))
@@ -624,7 +613,7 @@ bool TextureData::loadQImage(const QString &fileName)
 
     image = std::move(image).convertToFormat(getNextNativeImageFormat(image.format()));
 
-    if (flipOnLoadSave(fileName))
+    if (flipVertically)
         image = std::move(image).mirrored();
 
     if (!create(QOpenGLTexture::Target2D, getTextureFormat(image.format()),
@@ -636,10 +625,12 @@ bool TextureData::loadQImage(const QString &fileName)
 
     std::memcpy(getWriteonlyData(0, 0, 0), image.constBits(),
         static_cast<size_t>(getImageSize(0)));
+
+    mFlippedVertically = flipVertically;
     return true;
 }
 
-bool TextureData::loadTga(const QString &fileName)
+bool TextureData::loadTga(const QString &fileName, bool flipVertically)
 {
     auto f = std::fopen(fileName.toUtf8().constData(), "rb");
     if (!f)
@@ -668,22 +659,23 @@ bool TextureData::loadTga(const QString &fileName)
     if (!decoder.readImage(header, image, nullptr))
         return false;
 
-    if (flipOnLoadSave(fileName))
-        flipVertically(image.pixels, image.rowstride, header.height);
+    if (flipVertically)
+        flipImageVertically(image.pixels, image.rowstride, header.height);
 
     decoder.postProcessImage(header, image);
+    mFlippedVertically = flipVertically;
     return true;
 }
 
-bool TextureData::load(const QString &fileName) 
+bool TextureData::load(const QString &fileName, bool flipVertically)
 {
-    return loadKtx(fileName) ||
-           loadGli(fileName) ||
-           loadTga(fileName) ||
-           loadQImage(fileName);
+    return loadKtx(fileName, flipVertically) ||
+           loadGli(fileName, flipVertically) ||
+           loadTga(fileName, flipVertically) ||
+           loadQImage(fileName, flipVertically);
 }
 
-bool TextureData::saveKtx(const QString &fileName) const
+bool TextureData::saveKtx(const QString &fileName, bool flipVertically) const
 {
     if (!fileName.endsWith(".ktx", Qt::CaseInsensitive))
         return false;
@@ -692,7 +684,7 @@ bool TextureData::saveKtx(const QString &fileName) const
         mKtxTexture.get(), fileName.toUtf8().constData()) == KTX_SUCCESS);
 }
 
-bool TextureData::saveGli(const QString &fileName) const try
+bool TextureData::saveGli(const QString &fileName, bool flipVertically) const try
 {
     if (!fileName.endsWith(".ktx", Qt::CaseInsensitive) &&
         !fileName.endsWith(".dds", Qt::CaseInsensitive) &&
@@ -711,7 +703,7 @@ bool TextureData::saveGli(const QString &fileName) const try
         gli_format, gli::extent3d{ width(), height(), depth() },
         layers(), faces(), levels());
 
-    if (flipOnLoadSave(fileName))
+    if (flipVertically)
         texture = gli::flip(std::move(texture));
 
     for (auto layer = 0u; layer < texture.layers(); ++layer)
@@ -734,7 +726,7 @@ catch (...)
     return false;
 }
 
-bool TextureData::saveTga(const QString &fileName) const
+bool TextureData::saveTga(const QString &fileName, bool flipVertically) const
 {
     if (!fileName.endsWith(".tga", Qt::CaseInsensitive))
         return false;
@@ -743,7 +735,7 @@ bool TextureData::saveTga(const QString &fileName) const
     if (imageData.isNull())
         return false;
 
-    if (flipOnLoadSave(fileName))
+    if (flipVertically)
         imageData = std::move(imageData).mirrored();
 
     auto header = tga::Header();
@@ -783,24 +775,24 @@ bool TextureData::saveTga(const QString &fileName) const
     return true;
 }
 
-bool TextureData::saveQImage(const QString &fileName) const
+bool TextureData::saveQImage(const QString &fileName, bool flipVertically) const
 {
     auto image = toImage();
     if (image.isNull())
         return false;
 
-    if (flipOnLoadSave(fileName))
+    if (flipVertically)
         image = std::move(image).mirrored();
 
     return image.save(fileName);
 }
 
-bool TextureData::save(const QString &fileName) const 
+bool TextureData::save(const QString &fileName, bool flipVertically) const
 {
-    return saveKtx(fileName) ||
-           saveGli(fileName) ||
-           saveTga(fileName) ||
-           saveQImage(fileName);
+    return saveKtx(fileName, flipVertically) ||
+           saveGli(fileName, flipVertically) ||
+           saveTga(fileName, flipVertically) ||
+           saveQImage(fileName, flipVertically);
 }
 
 bool TextureData::isNull() const 

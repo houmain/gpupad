@@ -590,7 +590,7 @@ void RenderSession::downloadModifiedResources()
 void RenderSession::outputTimerQueries()
 {
     mTimerMessages.clear();
-    for (const auto &[itemId, query] : mTimerQueries) {
+    for (const auto &[itemId, query] : qAsConst(mTimerQueries)) {
         const auto duration = std::chrono::nanoseconds(query->waitForResult());
         mTimerMessages += MessageList::insert(
             itemId, MessageType::CallDuration,
@@ -622,10 +622,11 @@ void RenderSession::finish()
 
     if (updatingPreviewTextures())
         for (const auto& [itemId, texture] : mCommandQueue->textures)
-            if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
-                if (auto editor = editors.getTextureEditor(fileItem->fileName))
-                    if (auto textureId = texture.textureId())
-                        editor->updatePreviewTexture(texture.target(), textureId);
+            if (texture.deviceCopyModified())
+                if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
+                    if (auto editor = editors.getTextureEditor(fileItem->fileName))
+                        if (auto textureId = texture.textureId())
+                            editor->updatePreviewTexture(texture.target(), textureId);
 
     mPrevMessages.clear();
 

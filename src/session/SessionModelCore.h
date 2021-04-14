@@ -29,6 +29,7 @@ public:
         TextureDepth,
         TextureLayers,
         TextureSamples,
+        TextureFlipVertically,
         ScriptExecuteOn,
         ShaderType,
         BindingType,

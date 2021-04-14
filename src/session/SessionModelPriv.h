@@ -21,6 +21,7 @@
     ADD(TextureDepth, Texture, depth) \
     ADD(TextureLayers, Texture, layers) \
     ADD(TextureSamples, Texture, samples) \
+    ADD(TextureFlipVertically, Texture, flipVertically) \
     ADD(ScriptExecuteOn, Script, executeOn) \
     ADD(ShaderType, Shader, shaderType) \
     ADD(BindingType, Binding, bindingType) \

@@ -7,9 +7,10 @@
 #include <QMediaPlaylist>
 #include <cstring>
 
-VideoPlayer::VideoPlayer(QString fileName, QObject *parent)
+VideoPlayer::VideoPlayer(QString fileName, bool flipVertically, QObject *parent)
     : QAbstractVideoSurface(parent)
     , mFileName(fileName)
+    , mFlipVertically(flipVertically)
 {
     mPlayer = new QMediaPlayer(this);
     connect(mPlayer, &QMediaPlayer::mediaStatusChanged,
@@ -65,10 +66,10 @@ bool VideoPlayer::present(const QVideoFrame &frame)
             auto size = 0;
             auto stride = 0;
             if (auto data = buffer->map(QAbstractVideoBuffer::ReadOnly, &size, &stride)) {
-                if (size <= texture.getImageSize(0))
-                    std::memcpy(texture.getWriteonlyData(0, 0, 0), data, size);
+                std::memcpy(texture.getWriteonlyData(0, 0, 0), data, std::min(size, texture.getImageSize(0)));
                 buffer->unmap();
-                return Singletons::fileCache().updateTexture(mFileName, std::move(texture));
+                return Singletons::fileCache().updateTexture(
+                    mFileName, mFlipVertically, std::move(texture));
             }
         }
     }

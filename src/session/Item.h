@@ -68,6 +68,7 @@ struct Texture : FileItem
     QString depth{ "1" };
     QString layers{ "1" };
     int samples{ 1 };
+    bool flipVertically{ };
 };
 
 struct Program : Item
