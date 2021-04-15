@@ -137,7 +137,7 @@ if (OPTION_DEVELOPER_MODE)
     endif()
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include libs/gli)
+target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include libs/gli libs/glm)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_include_directories(${PROJECT_NAME} PRIVATE /usr/include/libdrm)
