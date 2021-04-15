@@ -81,7 +81,7 @@ function multiply(a, b) {
 function modelMatrix(time) {
   return multiply(      
     rotateX(-3.141516 / 2),
-    rotateY(3.141516 + time));
+    rotateY(time));
 }
 
 function normalMatrix(time) {
