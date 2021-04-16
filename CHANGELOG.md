@@ -5,9 +5,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Version 1.18] - 2021-04-16
+## Added
+- Added manual vertical texture flip control.
+- Added support for integer/double stream attributes.
+- Automatically adding suffix when Saving As.
+
+## Changed
+- Opening more editors on double click.
+- Applying image format on combobox select.
+- Using gli for loading/saving DDS.
+
+## Fixed
+- Better handling of failing save.
+- Evaluating expressions in more contexts.
+- Improved message updates.
+
 ## [Version 1.17] - 2021-03-29
 ## Added
-- Added open containing folder menu action.
+- Added menu action for opening containing folder.
 - Added support for the #include directive.
 - Added GPUPAD preprocessor definition.
 
@@ -265,7 +281,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.0] - 2019-04-14
 
-[Unreleased]: https://github.com/houmain/gpupad/compare/1.17...HEAD
+[Unreleased]: https://github.com/houmain/gpupad/compare/1.18...HEAD
+[Version 1.18]: https://github.com/houmain/gpupad/compare/1.17...1.18
 [Version 1.17]: https://github.com/houmain/gpupad/compare/1.16...1.17
 [Version 1.16]: https://github.com/houmain/gpupad/compare/1.15...1.16
 [Version 1.15]: https://github.com/houmain/gpupad/compare/1.14...1.15
