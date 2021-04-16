@@ -44,7 +44,7 @@ class VideoPlayer final : public QObject
 {
     Q_OBJECT
 public:
-    explicit VideoPlayer(QString fileName, QObject *parent = nullptr)
+    explicit VideoPlayer(QString fileName, bool flipVertically, QObject *parent = nullptr)
         : QObject(parent), mFileName(fileName) { }
     const QString &fileName() const { return mFileName; }
     int width() const { return 0; }
