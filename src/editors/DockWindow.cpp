@@ -65,13 +65,6 @@ bool DockWindow::eventFilter(QObject *watched, QEvent *event)
     return QMainWindow::eventFilter(watched, event);
 }
 
-void DockWindow::tabbedDockChanged(int index)
-{
-    auto tabBar = static_cast<QTabBar*>(QObject::sender());
-    if (auto dock = getTabBarDock(tabBar, index))
-        dock->widget()->setFocus();
-}
-
 void DockWindow::tabbedDockClicked(int index)
 {
     if (QApplication::mouseButtons() & Qt::MiddleButton) {
@@ -104,8 +97,4 @@ void DockWindow::updateTabBar(QTabBar *tabBar)
     mDockConnections +=
         connect(tabBar, &QTabBar::tabBarClicked,
             this, &DockWindow::tabbedDockClicked);
-
-    mDockConnections +=
-        connect(tabBar, &QTabBar::currentChanged,
-            this, &DockWindow::tabbedDockChanged);
 }

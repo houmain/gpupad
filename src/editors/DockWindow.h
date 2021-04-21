@@ -19,7 +19,6 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
-    void tabbedDockChanged(int index);
     void tabbedDockClicked(int index);
     void updateDocks();
     void updateTabBar(QTabBar *tabBar);

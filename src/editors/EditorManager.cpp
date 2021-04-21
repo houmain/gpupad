@@ -131,6 +131,14 @@ IEditor *EditorManager::currentEditor()
     return nullptr;
 }
 
+QDockWidget *EditorManager::findEditorDock(const IEditor *editor) const
+{
+    for (auto [dock, dockEditor] : mDocks)
+          if (editor == dockEditor)
+              return dock;
+    return nullptr;
+}
+
 SourceType EditorManager::currentSourceType()
 {
     if (auto editor = currentEditor())
@@ -180,17 +188,16 @@ TextureEditor *EditorManager::openNewTextureEditor(const QString &fileName)
     return editor;
 }
 
-bool EditorManager::openEditor(const QString &fileName,
+IEditor* EditorManager::openEditor(const QString &fileName,
     bool asBinaryFile)
 {
-    if (!asBinaryFile && openTextureEditor(fileName))
-        return true;
-    if (!asBinaryFile && openSourceEditor(fileName))
-        return true;
-    if (openBinaryEditor(fileName))
-        return true;
-
-    return false;
+    if (!asBinaryFile) {
+        if (auto editor = openTextureEditor(fileName))
+            return editor;
+        if (auto editor = openSourceEditor(fileName))
+            return editor;
+    }
+    return openBinaryEditor(fileName);
 }
 
 SourceEditor *EditorManager::openSourceEditor(const QString &fileName, 
@@ -238,6 +245,16 @@ TextureEditor *EditorManager::openTextureEditor(const QString &fileName)
         addTextureEditor(editor);
     }
     autoRaise(editor);
+    return editor;
+}
+
+IEditor *EditorManager::getEditor(const QString &fileName)
+{
+    auto editor = static_cast<IEditor*>(getSourceEditor(fileName));
+    if (!editor)
+        editor = getBinaryEditor(fileName);
+    if (!editor)
+        editor = getTextureEditor(fileName);
     return editor;
 }
 
@@ -397,6 +414,19 @@ bool EditorManager::closeAllTextureEditors()
     return true;
 }
 
+QString EditorManager::getEditorObjectName(IEditor *editor) const
+{
+    if (auto dock = findEditorDock(editor))
+        return dock->objectName();
+    return "";
+}
+
+void EditorManager::setEditorObjectName(IEditor *editor, const QString &name)
+{
+    if (auto dock = findEditorDock(editor))
+        dock->setObjectName(name);
+}
+
 void EditorManager::addSourceEditor(SourceEditor *editor)
 {
     mSourceEditors.append(editor);
@@ -435,6 +465,7 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     auto fileName = editor->fileName();
     auto dock = new QDockWidget(FileDialog::getWindowTitle(fileName), this);
     dock->setWidget(widget);
+    dock->setObjectName(QString::number(qrand(), 16) + QString::number(qrand(), 16));
 
     dock->setFeatures(QDockWidget::DockWidgetMovable |
         QDockWidget::DockWidgetClosable | 

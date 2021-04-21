@@ -23,7 +23,7 @@ public:
         SourceType sourceType = SourceType::PlainText);
     BinaryEditor *openNewBinaryEditor(const QString &fileName);
     TextureEditor *openNewTextureEditor(const QString &fileName);
-    bool openEditor(const QString &fileName, bool asBinaryFile = false);
+    IEditor *openEditor(const QString &fileName, bool asBinaryFile = false);
     SourceEditor *openSourceEditor(const QString &fileName,
         int line = -1, int column = -1);
     BinaryEditor *openBinaryEditor(const QString &fileName);
@@ -31,6 +31,7 @@ public:
     QDockWidget *createDock(QWidget *widget, IEditor *editor);
     void setAutoRaise(bool raise) { mAutoRaise = raise; }
 
+    IEditor *getEditor(const QString &fileName);
     SourceEditor *getSourceEditor(const QString &fileName);
     BinaryEditor *getBinaryEditor(const QString &fileName);
     TextureEditor *getTextureEditor(const QString &fileName);
@@ -55,6 +56,8 @@ public:
     bool closeEditor();
     bool closeAllEditors();
     bool closeAllTextureEditors();
+    QString getEditorObjectName(IEditor *editor) const;
+    void setEditorObjectName(IEditor *editor, const QString &name);
 
 Q_SIGNALS:
     void editorRenamed(const QString &prevFileName, const QString &fileName);
@@ -64,6 +67,7 @@ private:
     int getFocusedEditorIndex() const;
     bool focusEditorByIndex(int index);
     IEditor *currentEditor();
+    QDockWidget *findEditorDock(const IEditor *editor) const;
     void addSourceEditor(SourceEditor *editor);
     void addBinaryEditor(BinaryEditor *editor);
     void addTextureEditor(TextureEditor *editor);

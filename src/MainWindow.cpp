@@ -609,8 +609,11 @@ bool MainWindow::openSession(const QString &fileName)
         return false;
 
     mSessionEditor->setFileName(fileName);
-    openSessionDock();
-    return mSessionEditor->load();
+    if (!mSessionEditor->load())
+        return false;
+
+    restoreSessionState(fileName);
+    return true;
 }
 
 bool MainWindow::saveSession()
@@ -619,6 +622,7 @@ bool MainWindow::saveSession()
         !mSessionEditor->save())
         return saveSessionAs();
 
+    saveSessionState(mSessionEditor->fileName());
     addToRecentFileList(mSessionEditor->fileName());
     return true;
 }
@@ -652,6 +656,7 @@ bool MainWindow::saveSessionAs()
 
     mSessionEditor->save();
     mSessionEditor->clearUndo();
+    saveSessionState(mSessionEditor->fileName());
     addToRecentFileList(mSessionEditor->fileName());
     return true;
 }
@@ -689,6 +694,41 @@ bool MainWindow::copySessionFiles(const QString &fromPath, const QString &toPath
         }
     });
     return succeeded;
+}
+
+void MainWindow::saveSessionState(const QString &sessionFileName)
+{
+    const auto sessionStateFile = QString(sessionFileName + ".state");
+    auto settings = QSettings(sessionStateFile, QSettings::IniFormat);
+    auto openEditors = QStringList();
+    mSingletons->sessionModel().forEachFileItem([&](const FileItem& item) {
+        if (auto editor = mEditorManager.getEditor(item.fileName))
+            openEditors += QString("%1|%2").arg(item.id)
+                .arg(mEditorManager.getEditorObjectName(editor));
+    });
+    settings.setValue("editorState", mEditorManager.saveState());
+    settings.setValue("openEditors", openEditors);
+}
+
+void MainWindow::restoreSessionState(const QString &sessionFileName)
+{
+    const auto sessionStateFile = QString(sessionFileName + ".state");
+    if (!QFileInfo::exists(sessionStateFile))
+        return;
+    auto &model = Singletons::sessionModel();
+    auto settings = QSettings(sessionStateFile, QSettings::IniFormat);
+    const auto openEditors = settings.value("openEditors").toStringList();
+    mEditorManager.setAutoRaise(false);
+    for (const auto &openEditor : openEditors)
+        if (const auto sep = openEditor.indexOf('|'); sep > 0) {
+            const auto itemId = openEditor.mid(0, sep).toInt();
+            const auto editorObjectName = openEditor.mid(sep + 1);
+            if (auto item = model.findItem(itemId))
+                if (auto editor = mSessionProperties->openItemEditor(model.getIndex(item)))
+                    mEditorManager.setEditorObjectName(editor, editorObjectName);
+        }
+    mEditorManager.restoreState(settings.value("editorState").toByteArray());   
+    mEditorManager.setAutoRaise(true);
 }
 
 bool MainWindow::closeSession()
