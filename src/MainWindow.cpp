@@ -313,8 +313,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    writeSettings();
-
     disconnect(qApp, &QApplication::focusChanged,
         this, &MainWindow::updateCurrentEditor);
 
@@ -386,10 +384,12 @@ void MainWindow::dropEvent(QDropEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (closeSession())
-        event->accept();
-    else
+    if (!closeSession()) {
         event->ignore();
+        return;
+    }
+    event->accept();
+    writeSettings();
 }
 
 void MainWindow::focusNextEditor()

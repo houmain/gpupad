@@ -8,6 +8,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QToolBar>
+#include <QRandomGenerator>
 
 EditorManager::EditorManager(QWidget *parent)
     : DockWindow(parent)
@@ -465,7 +466,7 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     auto fileName = editor->fileName();
     auto dock = new QDockWidget(FileDialog::getWindowTitle(fileName), this);
     dock->setWidget(widget);
-    dock->setObjectName(QString::number(qrand(), 16) + QString::number(qrand(), 16));
+    dock->setObjectName(QString::number(QRandomGenerator::global()->generate64(), 16));
 
     dock->setFeatures(QDockWidget::DockWidgetMovable |
         QDockWidget::DockWidgetClosable | 
