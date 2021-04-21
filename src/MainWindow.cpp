@@ -134,10 +134,10 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->actionDelete->setShortcuts(QKeySequence::Delete);
     mUi->actionSelectAll->setShortcuts(QKeySequence::SelectAll);
     mUi->actionOnlineHelp->setShortcuts(QKeySequence::HelpContents);
-    mUi->actionRename->setShortcut(QKeySequence("F2"));
     mUi->actionFindReplace->setShortcuts(QKeySequence::Find);
     mUi->actionFocusNextEditor->setShortcut(QKeySequence::NextChild);
     mUi->actionFocusPreviousEditor->setShortcut(QKeySequence("Ctrl+Shift+Tab"));
+
     addAction(mUi->actionFocusNextEditor);
     addAction(mUi->actionFocusPreviousEditor);
 
@@ -189,6 +189,8 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::focusPreviousEditor);
     connect(qApp, &QApplication::focusChanged,
         this, &MainWindow::updateCurrentEditor);
+    connect(mUi->actionFullScreen, &QAction::triggered,
+        this, &MainWindow::setFullScreen);
     connect(mSessionEditor->selectionModel(), &QItemSelectionModel::currentChanged,
         mSessionProperties.data(), &SessionProperties::setCurrentModelIndex);
     connect(mSessionEditor.data(), &SessionEditor::itemAdded,
@@ -323,9 +325,11 @@ MainWindow::~MainWindow()
 void MainWindow::writeSettings()
 {
     auto &settings = Singletons::settings();
-    if (!isMaximized())
+    if (!isMaximized() && !isFullScreen())
         settings.setValue("geometry", saveGeometry());
-    settings.setValue("maximized", isMaximized());
+    if (!isFullScreen())
+        settings.setValue("maximized", isMaximized());
+    settings.setValue("fullScreen", isFullScreen());
     settings.setValue("state", saveState());
     settings.setValue("sessionSplitter", mSessionSplitter->saveState());
 
@@ -340,8 +344,10 @@ void MainWindow::readSettings()
     const auto &settings = Singletons::settings();
     if (!restoreGeometry(settings.value("geometry").toByteArray()))
         setGeometry(100, 100, 800, 600);
-    if (settings.value("maximized").toBool())
-        setWindowState(Qt::WindowMaximized);
+    if (settings.value("fullScreen").toBool())
+        showFullScreen();
+    else if (settings.value("maximized").toBool())
+        showMaximized();
 
     // workaround: restore state after geometry is applied, so it is not garbled
     QTimer::singleShot(0, this, [this]() {
@@ -360,6 +366,7 @@ void MainWindow::readSettings()
     mUi->actionSyntaxHighlighting->setChecked(settings.syntaxHighlighting());
     mUi->actionDarkTheme->setChecked(settings.darkTheme());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
+    mUi->actionFullScreen->setChecked(isFullScreen());
     handleDarkThemeChanging(settings.darkTheme());
 }
 
@@ -395,6 +402,19 @@ void MainWindow::focusPreviousEditor()
 {
     if (!mEditorManager.focusPreviousEditor())
         mSessionEditor->setFocus();
+}
+
+void MainWindow::setFullScreen(bool fullScreen)
+{
+    if (fullScreen) {
+        showFullScreen();
+    }
+    else if (mSingletons->settings().value("maximized").toBool()) {
+        showMaximized();
+    }
+    else {
+        showNormal();
+    }
 }
 
 void MainWindow::updateCurrentEditor()

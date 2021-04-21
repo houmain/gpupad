@@ -58,6 +58,7 @@ private:
     void updateFileActions();
     void focusNextEditor();
     void focusPreviousEditor();
+    void setFullScreen(bool fullScreen);
     void stopEvaluation();
     void updateEvaluationMode();
     bool openSession(const QString &fileName);
