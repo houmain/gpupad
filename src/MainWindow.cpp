@@ -68,11 +68,22 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto content = new QWidget(this);
     mEditorManager.setParent(content);
-    auto layout = new QVBoxLayout(content);
+    auto layout = static_cast<QLayout*>(new QVBoxLayout(content));
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     layout->addWidget(&mEditorManager);
     layout->addWidget(&mEditorManager.findReplaceBar());
+
+    mFullScreenBar = new QToolBar(this);
+    mFullScreenTitle = new QLabel(this);
+    auto fullScreenCloseButton = new QToolButton(this);
+    fullScreenCloseButton->setDefaultAction(mUi->actionQuit);
+    fullScreenCloseButton->setIcon(QIcon(":images/16x16/window-close.png"));
+    fullScreenCloseButton->setMaximumSize(24, 24);
+    mFullScreenBar->setVisible(false);
+    mFullScreenBar->addWidget(mFullScreenTitle);
+    mFullScreenBar->addWidget(fullScreenCloseButton);
+    mUi->menubar->setCornerWidget(mFullScreenBar);
 
     mEditorManager.createEditorToolBars(mUi->toolBarMain);
 
@@ -343,7 +354,7 @@ void MainWindow::readSettings()
     if (!restoreGeometry(settings.value("geometry").toByteArray()))
         setGeometry(100, 100, 800, 600);
     if (settings.value("fullScreen").toBool())
-        showFullScreen();
+        setFullScreen(true);
     else if (settings.value("maximized").toBool())
         showMaximized();
 
@@ -408,12 +419,17 @@ void MainWindow::setFullScreen(bool fullScreen)
 {
     if (fullScreen) {
         showFullScreen();
-    }
-    else if (mSingletons->settings().value("maximized").toBool()) {
-        showMaximized();
+        mFullScreenBar->show();
+        updateFileActions();
     }
     else {
-        showNormal();
+        mFullScreenBar->hide();
+        if (mSingletons->settings().value("maximized").toBool()) {
+            showMaximized();
+        }
+        else {
+            showNormal();
+        }
     }
 }
 
@@ -457,11 +473,19 @@ void MainWindow::connectEditActions()
 
 void MainWindow::updateFileActions()
 {
-    auto fileName = mEditActions.windowFileName->text();
-    auto modified = mEditActions.windowFileName->isEnabled();
-    setWindowTitle((modified ? "*" : "") +
+    const auto fileName = mEditActions.windowFileName->text();
+    const auto modified = mEditActions.windowFileName->isEnabled();
+    auto title = QString((modified ? "*" : "") +
         FileDialog::getFullWindowTitle(fileName) +
         " - " + qApp->applicationName());
+    setWindowTitle(title);
+
+    if (isFullScreen()) {
+        title.replace("[*]", "");
+        mFullScreenTitle->setText(title + "  ");
+        mFullScreenBar->hide();
+        mFullScreenBar->show();
+    }
 
     const auto desc = QString(" \"%1\"").arg(FileDialog::getFileTitle(fileName));
     mUi->actionSave->setText(tr("&Save%1").arg(desc));

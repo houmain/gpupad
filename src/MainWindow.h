@@ -10,6 +10,8 @@ class MainWindow;
 }
 
 class QSplitter;
+class QToolBar;
+class QLabel;
 class Singletons;
 class MessageWindow;
 class OutputWindow;
@@ -79,6 +81,8 @@ private:
 
     Ui::MainWindow *mUi{ };
     QSplitter *mSessionSplitter{ };
+    QToolBar* mFullScreenBar{ };
+    QLabel* mFullScreenTitle{ };
     EditActions mEditActions;
     QScopedPointer<MessageWindow> mMessageWindow;
     QScopedPointer<CustomActions> mCustomActions;
