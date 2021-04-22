@@ -50,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
     , mSessionProperties(new SessionProperties())
 {
     mUi->setupUi(this);
-    setContentsMargins(1, 0, 1, 1);
+    setContentsMargins(1, 1, 1, 1);
 
     setAcceptDrops(true);
 
@@ -82,6 +82,7 @@ MainWindow::MainWindow(QWidget *parent)
     mFullScreenBar->setVisible(false);
     mFullScreenBar->addWidget(mFullScreenTitle);
     mFullScreenBar->addWidget(fullScreenCloseButton);
+    mFullScreenBar->setStyleSheet("* { margin:0 }");
     mUi->menubar->setCornerWidget(mFullScreenBar);
 
     mEditorManager.createEditorToolBars(mUi->toolBarMain);
@@ -748,7 +749,8 @@ void MainWindow::restoreSessionState(const QString &sessionFileName)
 {
     const auto sessionStateFile = QString(sessionFileName + ".state");
     if (!QFileInfo::exists(sessionStateFile))
-        return;
+        return openSessionDock();
+
     auto &model = Singletons::sessionModel();
     auto settings = QSettings(sessionStateFile, QSettings::IniFormat);
     const auto openEditors = settings.value("openEditors").toStringList();
@@ -873,6 +875,12 @@ void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
 
 void MainWindow::handleDarkThemeChanging(bool darkTheme)
 {
+#if defined(_WIN32)
+    const auto inWindows = true;
+#else
+    const auto inWindows = false;
+#endif
+
     auto frameDarker = 105;
     auto currentFrameDarker = 120;
     auto palette = qApp->style()->standardPalette();
@@ -916,17 +924,21 @@ void MainWindow::handleDarkThemeChanging(bool darkTheme)
       "QLabel:disabled { color: %1 }\n"
       "QDockWidget > QFrame { border:2px solid %2 }\n"
       "QDockWidget[current=true] > QFrame { border:2px solid %3 }\n"
-      "QMenuBar { background-color: %4; padding-top:2px; }\n"
+      "QMenuBar { background-color: %4; padding-top:0px; }\n"
       "QToolBar { background-color: %4 }\n")
       .arg(color(QPalette::WindowText, QPalette::Disabled),
            color(QPalette::Window, QPalette::Active, frameDarker),
            color(QPalette::Window, QPalette::Active, currentFrameDarker),
            color(QPalette::Base, QPalette::Active));
 
-    if (darkTheme)
+    if (!inWindows || darkTheme)
         styleSheet += "QToolBar { border:none }\n";
 
     setStyleSheet(styleSheet);
+
+    if (darkTheme)
+        palette.setColor(QPalette::Window, 0x666666);
+    mUi->toolBarMain->setPalette(palette);
 
     style()->unpolish(qApp);
     style()->polish(qApp);
