@@ -393,11 +393,18 @@ bool EditorManager::closeEditor()
     return false;
 }
 
-bool EditorManager::closeAllEditors()
+bool EditorManager::promptSaveAllEditors()
 {
     for (auto [dock, editor] : mDocks)
         if (!promptSaveDock(dock))
             return false;
+    return true;
+}
+
+bool EditorManager::closeAllEditors(bool promptSave)
+{
+    if (promptSave && !promptSaveAllEditors())
+        return false;
 
     while (!mDocks.empty())
         closeDock(mDocks.begin()->first, false);

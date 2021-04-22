@@ -50,7 +50,6 @@ MainWindow::MainWindow(QWidget *parent)
     , mSessionProperties(new SessionProperties())
 {
     mUi->setupUi(this);
-    setContentsMargins(1, 1, 1, 1);
 
     setAcceptDrops(true);
 
@@ -361,7 +360,7 @@ void MainWindow::readSettings()
         showMaximized();
 
     // workaround: restore state after geometry is applied, so it is not garbled
-    QTimer::singleShot(0, this, [this]() {
+    QTimer::singleShot(1, this, [this]() {
         const auto &settings = Singletons::settings();
         restoreState(settings.value("state").toByteArray());
         mSessionSplitter->restoreState(settings.value("sessionSplitter").toByteArray());
@@ -397,7 +396,7 @@ void MainWindow::dropEvent(QDropEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (!closeAllFiles()) {
+    if (!closeSession()) {
         event->ignore();
         return;
     }
@@ -420,11 +419,13 @@ void MainWindow::focusPreviousEditor()
 void MainWindow::setFullScreen(bool fullScreen)
 {
     if (fullScreen) {
+        setContentsMargins(0, 0, 0, 0);
         showFullScreen();
         mFullScreenBar->show();
         updateFileActions();
     }
     else {
+        setContentsMargins(1, 1, 1, 1);
         mFullScreenBar->hide();
         if (mSingletons->settings().value("maximized").toBool()) {
             showMaximized();
@@ -640,7 +641,7 @@ bool MainWindow::closeAllFiles()
 
 bool MainWindow::openSession(const QString &fileName)
 {
-    if (!closeAllFiles())
+    if (!closeSession())
         return false;
 
     mSessionEditor->setFileName(fileName);
@@ -757,7 +758,7 @@ void MainWindow::restoreSessionState(const QString &sessionFileName)
     mEditorManager.setAutoRaise(false);
     for (const auto &openEditor : openEditors)
         if (const auto sep = openEditor.indexOf('|'); sep > 0) {
-            const auto itemId = openEditor.mid(0, sep).toInt();
+            const auto itemId = openEditor.midRef(0, sep).toInt();
             const auto editorObjectName = openEditor.mid(sep + 1);
             if (auto item = model.findItem(itemId))
                 if (auto editor = mSessionProperties->openItemEditor(model.getIndex(item)))
@@ -771,6 +772,9 @@ bool MainWindow::closeSession()
 {
     stopEvaluation();
 
+    if (!mEditorManager.promptSaveAllEditors())
+        return false;
+
     if (mSessionEditor->isModified()) {
         auto ret = Singletons::editorManager().openNotSavedDialog(
             mSessionEditor->fileName());
@@ -781,6 +785,9 @@ bool MainWindow::closeSession()
             !saveSession())
             return false;
     }
+
+    mEditorManager.closeAllEditors(false);
+
     return mSessionEditor->clear();
 }
 
@@ -924,7 +931,7 @@ void MainWindow::handleDarkThemeChanging(bool darkTheme)
       "QLabel:disabled { color: %1 }\n"
       "QDockWidget > QFrame { border:2px solid %2 }\n"
       "QDockWidget[current=true] > QFrame { border:2px solid %3 }\n"
-      "QMenuBar { background-color: %4; padding-top:0px; }\n"
+      "QMenuBar { background-color: %4 }\n"
       "QToolBar { background-color: %4 }\n")
       .arg(color(QPalette::WindowText, QPalette::Disabled),
            color(QPalette::Window, QPalette::Active, frameDarker),

@@ -54,7 +54,8 @@ public:
     bool saveAllEditors();
     bool reloadEditor();
     bool closeEditor();
-    bool closeAllEditors();
+    bool promptSaveAllEditors();
+    bool closeAllEditors(bool promptSave = true);
     bool closeAllTextureEditors();
     QString getEditorObjectName(IEditor *editor) const;
     void setEditorObjectName(IEditor *editor, const QString &name);
