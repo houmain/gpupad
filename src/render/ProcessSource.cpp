@@ -152,8 +152,17 @@ void ProcessSource::setProcessType(QString processType)
 
 void ProcessSource::prepare(bool, EvaluationType)
 {
-    if (auto shaderType = getShaderType(mSourceType))
-        mNewShader.reset(new GLShader(shaderType, getShadersInSession(mFileName)));
+    if (auto shaderType = getShaderType(mSourceType)) {
+        auto shaders = getShadersInSession(mFileName);
+        auto shader = Shader{ };
+        if (shaders.empty()) {
+            shader.fileName = mFileName;
+            shader.shaderType = shaderType;
+            shaders.append(&shader);
+        }
+        mNewShader.reset(new GLShader(shaderType, shaders));
+    }
+        
 }
 
 void ProcessSource::render()

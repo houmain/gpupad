@@ -634,10 +634,6 @@ bool MainWindow::closeAllFiles()
         return false;
 
     updateCurrentEditor();
-
-    if (!closeSession())
-        return false;
-
     return true;
 }
 
