@@ -73,7 +73,8 @@ private:
     void addTextureEditor(TextureEditor *editor);
     void handleEditorFilenameChanged(QDockWidget *dock);
     bool saveDock(QDockWidget *dock);
-    bool closeDock(QDockWidget *dock) override;
+    bool promptSaveDock(QDockWidget *dock);
+    bool closeDock(QDockWidget *dock, bool promptSave = true) override;
     void autoRaise(QWidget *editor);
     void updateEditorToolBarVisibility();
 

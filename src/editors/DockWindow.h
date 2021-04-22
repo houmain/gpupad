@@ -12,7 +12,7 @@ public:
 
 protected:
     void raiseDock(QDockWidget *dock);
-    virtual bool closeDock(QDockWidget *dock);
+    virtual bool closeDock(QDockWidget *dock, bool promptSave = true);
 
     QSize sizeHint() const override { return QSize(700, 800); }
     bool event(QEvent *event) override;

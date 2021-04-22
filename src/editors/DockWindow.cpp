@@ -36,7 +36,7 @@ void DockWindow::raiseDock(QDockWidget *dock)
         });
 }
 
-bool DockWindow::closeDock(QDockWidget *dock)
+bool DockWindow::closeDock(QDockWidget *dock, bool promptSave)
 {
     delete dock;
     return true;
@@ -67,10 +67,14 @@ bool DockWindow::eventFilter(QObject *watched, QEvent *event)
 
 void DockWindow::tabbedDockClicked(int index)
 {
-    if (QApplication::mouseButtons() & Qt::MiddleButton) {
-        auto tabBar = static_cast<QTabBar*>(QObject::sender());
-        if (auto dock = getTabBarDock(tabBar, index))
+    auto tabBar = static_cast<QTabBar*>(QObject::sender());
+    if (auto dock = getTabBarDock(tabBar, index)) {
+        if (QApplication::mouseButtons() & Qt::LeftButton) {
+            dock->widget()->setFocus();
+        }
+        else if (QApplication::mouseButtons() & Qt::MiddleButton) {
             closeDock(dock);
+        }
     }
 }
 

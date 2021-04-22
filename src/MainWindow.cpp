@@ -77,8 +77,7 @@ MainWindow::MainWindow(QWidget *parent)
     mFullScreenBar = new QToolBar(this);
     mFullScreenTitle = new QLabel(this);
     auto fullScreenCloseButton = new QToolButton(this);
-    fullScreenCloseButton->setDefaultAction(mUi->actionQuit);
-    fullScreenCloseButton->setIcon(QIcon(":images/16x16/window-close.png"));
+    fullScreenCloseButton->setDefaultAction(mUi->actionFullScreenClose);
     fullScreenCloseButton->setMaximumSize(24, 24);
     mFullScreenBar->setVisible(false);
     mFullScreenBar->addWidget(mFullScreenTitle);
@@ -181,8 +180,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->actionClose, &QAction::triggered,
         this, &MainWindow::closeFile);
     connect(mUi->actionCloseAll, &QAction::triggered,
-        this, &MainWindow::closeSession);
+        this, &MainWindow::closeAllFiles);
     connect(mUi->actionQuit, &QAction::triggered,
+        this, &MainWindow::close);
+    connect(mUi->actionFullScreenClose, &QAction::triggered,
         this, &MainWindow::close);
     connect(mUi->actionOpenContainingFolder, &QAction::triggered,
         this, &MainWindow::openContainingFolder);
@@ -395,7 +396,7 @@ void MainWindow::dropEvent(QDropEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (!closeSession()) {
+    if (!closeAllFiles()) {
         event->ignore();
         return;
     }
@@ -627,9 +628,22 @@ bool MainWindow::closeFile()
     return closeSession();
 }
 
+bool MainWindow::closeAllFiles()
+{
+    if (!mEditorManager.closeAllEditors())
+        return false;
+
+    updateCurrentEditor();
+
+    if (!closeSession())
+        return false;
+
+    return true;
+}
+
 bool MainWindow::openSession(const QString &fileName)
 {
-    if (!closeSession())
+    if (!closeAllFiles())
         return false;
 
     mSessionEditor->setFileName(fileName);
@@ -758,11 +772,6 @@ void MainWindow::restoreSessionState(const QString &sessionFileName)
 bool MainWindow::closeSession()
 {
     stopEvaluation();
-
-    if (!mEditorManager.closeAllEditors())
-        return false;
-
-    updateCurrentEditor();
 
     if (mSessionEditor->isModified()) {
         auto ret = Singletons::editorManager().openNotSavedDialog(

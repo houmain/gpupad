@@ -400,9 +400,13 @@ bool EditorManager::closeEditor()
 
 bool EditorManager::closeAllEditors()
 {
-    while (!mDocks.empty())
-        if (!closeDock(mDocks.begin()->first))
+    for (auto [dock, editor] : mDocks)
+        if (!promptSaveDock(dock))
             return false;
+
+    while (!mDocks.empty())
+        closeDock(mDocks.begin()->first, false);
+
     return true;
 }
 
@@ -508,11 +512,12 @@ bool EditorManager::saveDock(QDockWidget *dock)
     return result;
 }
 
-bool EditorManager::closeDock(QDockWidget *dock)
+bool EditorManager::promptSaveDock(QDockWidget *dock)
 {
     auto editor = mDocks[dock];
-
     if (dock->isWindowModified()) {
+        autoRaise(dock->widget());
+
         auto ret = openNotSavedDialog(editor->fileName());
         if (ret == QMessageBox::Cancel)
             return false;
@@ -521,7 +526,15 @@ bool EditorManager::closeDock(QDockWidget *dock)
             !saveDock(dock))
             return false;
     }
+    return true;
+}
 
+bool EditorManager::closeDock(QDockWidget *dock, bool promptSave)
+{
+    if (promptSave && !promptSaveDock(dock))
+        return false;
+
+    auto editor = mDocks[dock];
     Q_EMIT editorRenamed(editor->fileName(), "");
 
     mSourceEditors.removeAll(static_cast<SourceEditor*>(editor));

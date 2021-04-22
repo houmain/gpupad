@@ -32,7 +32,7 @@
      <x>0</x>
      <y>0</y>
      <width>494</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -588,6 +588,18 @@
    </property>
    <property name="shortcut">
     <string>F11</string>
+   </property>
+  </action>
+  <action name="actionFullScreenClose">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/16x16/window-close.png</normaloff>:/images/16x16/window-close.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::QuitRole</enum>
    </property>
   </action>
  </widget>
