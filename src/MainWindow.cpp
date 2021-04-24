@@ -232,10 +232,8 @@ MainWindow::MainWindow(QWidget *parent)
     auto &settings = Singletons::settings();
     connect(mUi->actionSelectFont, &QAction::triggered,
         &settings, &Settings::selectFont);
-    connect(mUi->actionAutoIndentation, &QAction::toggled,
-        &settings, &Settings::setAutoIndentation);
-    connect(mUi->actionSyntaxHighlighting, &QAction::toggled,
-        &settings, &Settings::setSyntaxHighlighting);
+    connect(mUi->actionShowWhiteSpace, &QAction::toggled,
+        &settings, &Settings::setShowWhiteSpace);
     connect(mUi->actionDarkTheme, &QAction::toggled,
         &settings, &Settings::setDarkTheme);
     connect(mUi->actionLineWrapping, &QAction::toggled,
@@ -372,8 +370,7 @@ void MainWindow::readSettings()
     updateRecentFileActions();
 
     mUi->actionIndentWithSpaces->setChecked(settings.indentWithSpaces());
-    mUi->actionAutoIndentation->setChecked(settings.autoIndentation());
-    mUi->actionSyntaxHighlighting->setChecked(settings.syntaxHighlighting());
+    mUi->actionShowWhiteSpace->setChecked(settings.showWhiteSpace());
     mUi->actionDarkTheme->setChecked(settings.darkTheme());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
     mUi->actionFullScreen->setChecked(isFullScreen());
@@ -895,7 +892,7 @@ void MainWindow::handleDarkThemeChanging(bool darkTheme)
         const auto colors = std::initializer_list<S>{
             { QPalette::WindowText, 0xCFCFCF, 0xCFCFCF, 0x6A6A6A },
             { QPalette::Button, 0x252525, 0x252525, 0x252525 },
-            { QPalette::Light, 0x4B4B51, 0x4B4B51, 0x4B4B51 },
+            { QPalette::Light, 0x4B4B51, 0x4B4B51, 0x111111 },
             { QPalette::Midlight, 0xCBCBCB, 0xCBCBCB, 0xCBCBCB },
             { QPalette::Dark, 0x9F9F9F, 0x9F9F9F, 0xBEBEBE },
             { QPalette::Mid, 0xB8B8B8, 0xB8B8B8, 0xB8B8B8 },
@@ -942,9 +939,11 @@ void MainWindow::handleDarkThemeChanging(bool darkTheme)
 
     setStyleSheet(styleSheet);
 
+    // fix checkbox borders in dark theme
     if (darkTheme)
         palette.setColor(QPalette::Window, 0x666666);
     mUi->toolBarMain->setPalette(palette);
+    mUi->menuView->setPalette(palette);
 
     style()->unpolish(qApp);
     style()->polish(qApp);

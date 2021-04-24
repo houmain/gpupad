@@ -63,7 +63,7 @@ SourceEditor::SourceEditor(QString fileName, FindReplaceBar *findReplaceBar, QWi
     setFont(settings.font());
     setTabSize(settings.tabSize());
     setLineWrap(settings.lineWrap());
-    setAutoIndentation(settings.autoIndentation());
+    setShowWhiteSpace(settings.showWhiteSpace());
     setIndentWithSpaces(settings.indentWithSpaces());
 
     connect(&settings, &Settings::tabSizeChanged,
@@ -72,12 +72,10 @@ SourceEditor::SourceEditor(QString fileName, FindReplaceBar *findReplaceBar, QWi
         this, &SourceEditor::setFont);
     connect(&settings, &Settings::lineWrapChanged,
         this, &SourceEditor::setLineWrap);
-    connect(&settings, &Settings::autoIndentationChanged,
-        this, &SourceEditor::setAutoIndentation);
+    connect(&settings, &Settings::showWhiteSpaceChanged,
+        this, &SourceEditor::setShowWhiteSpace);
     connect(&settings, &Settings::indentWithSpacesChanged,
         this, &SourceEditor::setIndentWithSpaces);
-    connect(&settings, &Settings::syntaxHighlightingChanged,
-        this, &SourceEditor::updateSyntaxHighlighting);
     connect(&settings, &Settings::darkThemeChanged,
         this, &SourceEditor::updateColors);
     connect(&settings, &Settings::darkThemeChanged,
@@ -228,17 +226,17 @@ void SourceEditor::setSourceType(SourceType sourceType)
 
 void SourceEditor::updateColors(bool darkTheme)
 {
+    const auto pal = palette();
     mCurrentLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
-    mCurrentLineFormat.setBackground(palette().base().color().lighter(darkTheme ? 115 : 95));
+    mCurrentLineFormat.setBackground(pal.base().color().lighter(darkTheme ? 120 : 95));
 
-    mOccurrencesFormat.setForeground(palette().text().color().lighter(darkTheme ? 120 : 90));
-    mOccurrencesFormat.setBackground(palette().base().color().lighter(darkTheme ? 150 : 90));
+    mOccurrencesFormat.setForeground(pal.text().color().lighter(darkTheme ? 120 : 90));
+    mOccurrencesFormat.setBackground(pal.base().color().lighter(darkTheme ? 150 : 90));
 
-    mMultiSelectionFormat.setForeground(palette().highlightedText());
-    mMultiSelectionFormat.setBackground(palette().highlight());
+    mMultiSelectionFormat.setForeground(pal.highlightedText());
+    mMultiSelectionFormat.setBackground(pal.highlight());
 
-    auto window = palette().window().color();
-    mLineNumberColor = window.darker(window.value() < 128 ? 50 : 150);
+    mLineNumberColor = pal.window().color().darker(darkTheme ? 40 : 150);
 
     updateExtraSelections();
 }
@@ -247,7 +245,6 @@ void SourceEditor::updateSyntaxHighlighting()
 {
     const auto disabled =
         (document()->characterCount() > (1 << 20) ||
-         !Singletons::settings().syntaxHighlighting() ||
          mSourceType == SourceType::PlainText);
 
     if (disabled) {
@@ -306,9 +303,13 @@ void SourceEditor::setIndentWithSpaces(bool enabled)
     mIndentWithSpaces = enabled;
 }
 
-void SourceEditor::setAutoIndentation(bool enabled)
+void SourceEditor::setShowWhiteSpace(bool enabled)
 {
-    mAutoIndentation = enabled;
+    auto options = document()->defaultTextOption();
+    options.setFlags(enabled
+        ? options.flags() | QTextOption::ShowTabsAndSpaces
+        : options.flags() & ~QTextOption::ShowTabsAndSpaces);
+    document()->setDefaultTextOption(options);
 }
 
 bool SourceEditor::setCursorPosition(int line, int column)
@@ -535,18 +536,17 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
         if (event->key() == Qt::Key_F3)
             mFindReplaceBar.findNext();
     }
-    else if (mAutoIndentation && event->key() == Qt::Key_Escape) {
+    else if (event->key() == Qt::Key_Escape) {
         mFindReplaceBar.cancel();
     }
-    else if (mAutoIndentation && (event->key() == Qt::Key_Return ||
-                                  event->key() == Qt::Key_Enter)) {
+    else if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
         autoIndentNewLine();
         removeTrailingSpace();
     }
-    else if (mAutoIndentation && event->key() == Qt::Key_BraceRight) {
+    else if (event->key() == Qt::Key_BraceRight) {
         autoDeindentBrace();
     }
-    else if (mAutoIndentation && event->key() == Qt::Key_Home) {
+    else if (event->key() == Qt::Key_Home) {
         toggleHomePosition(event->modifiers() & Qt::ShiftModifier);
     }
     else if (event->key() == Qt::Key_Tab) {

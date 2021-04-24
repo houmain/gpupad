@@ -36,26 +36,27 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
     QTextCharFormat quotationFormat;
     QTextCharFormat numberFormat;
     QTextCharFormat functionFormat;
+    QTextCharFormat whiteSpaceFormat;
+
+    functionFormat.setFontWeight(QFont::Bold);
 
     if (darkTheme) {
         functionFormat.setForeground(QColor(0x7AAFFF));
-        functionFormat.setFontWeight(QFont::Bold);
         keywordFormat.setForeground(QColor(0x7AAFFF));
         globalObjectFormat.setForeground(QColor(0x7AAFFF));
         numberFormat.setForeground(QColor(0xB09D30));
         quotationFormat.setForeground(QColor(0xB09D30));
-        singleLineCommentFormat.setForeground(QColor(0x56C056));
-        mMultiLineCommentFormat.setForeground(QColor(0x56C056));
+        mCommentFormat.setForeground(QColor(0x56C056));
+        whiteSpaceFormat.setForeground(QColor(0x666666));
     }
     else {
         functionFormat.setForeground(QColor(0x000066));
-        functionFormat.setFontWeight(QFont::Bold);
         keywordFormat.setForeground(QColor(0x003C98));
         globalObjectFormat.setForeground(QColor(0x003C98));
         numberFormat.setForeground(QColor(0x981111));
         quotationFormat.setForeground(QColor(0x981111));
-        singleLineCommentFormat.setForeground(QColor(0x008700));
-        mMultiLineCommentFormat.setForeground(QColor(0x008700));
+        mCommentFormat.setForeground(QColor(0x008700));
+        whiteSpaceFormat.setForeground(QColor(0xCCCCCC));
     }
 
     auto rule = HighlightingRule();
@@ -102,6 +103,10 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
 
     rule.pattern = QRegularExpression("//.*");
     rule.format = singleLineCommentFormat;
+    mHighlightingRules.append(rule);
+
+    rule.pattern = QRegularExpression("\\s+");
+    rule.format = whiteSpaceFormat;
     mHighlightingRules.append(rule);
 
     mCommentStartExpression = QRegularExpression("/\\*");
@@ -152,7 +157,7 @@ void JsHighlighter::highlightBlock(const QString &text)
         else {
             commentLength = endIndex - startIndex + match.capturedLength();
         }
-        setFormat(startIndex, commentLength, mMultiLineCommentFormat);
+        setFormat(startIndex, commentLength, mCommentFormat);
         startIndex = text.indexOf(mCommentStartExpression, startIndex + commentLength);
     }
 }

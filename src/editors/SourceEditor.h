@@ -36,7 +36,7 @@ public:
     void setFont(const QFont &);
     void setTabSize(int tabSize);
     void setIndentWithSpaces(bool enabled);
-    void setAutoIndentation(bool enabled);
+    void setShowWhiteSpace(bool enabled);
     bool setCursorPosition(int line, int column);
 
 Q_SIGNALS:
@@ -95,7 +95,6 @@ private:
     QColor mLineNumberColor;
     int mTabSize{ };
     bool mIndentWithSpaces{ };
-    bool mAutoIndentation{ };
 };
 
 #endif // SOURCEEDITOR_H

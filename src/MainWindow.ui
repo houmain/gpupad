@@ -146,15 +146,15 @@
     <addaction name="menuSourceType"/>
     <addaction name="actionSourceValidation"/>
     <addaction name="separator"/>
+    <addaction name="menuTabSize"/>
+    <addaction name="actionIndentWithSpaces"/>
+    <addaction name="actionShowWhiteSpace"/>
+    <addaction name="actionLineWrapping"/>
+    <addaction name="separator"/>
     <addaction name="actionSelectFont"/>
     <addaction name="actionDarkTheme"/>
-    <addaction name="actionSyntaxHighlighting"/>
-    <addaction name="actionLineWrapping"/>
-    <addaction name="actionIndentWithSpaces"/>
-    <addaction name="actionAutoIndentation"/>
-    <addaction name="menuTabSize"/>
-    <addaction name="separator"/>
     <addaction name="actionFullScreen"/>
+    <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -402,12 +402,15 @@
     <string>Line Wrapping</string>
    </property>
   </action>
-  <action name="actionAutoIndentation">
+  <action name="actionShowWhiteSpace">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>&amp;Auto Indentation</string>
+    <string>Show White&amp;space</string>
+   </property>
+   <property name="toolTip">
+    <string>Show Whitespace</string>
    </property>
   </action>
   <action name="actionIndentWithSpaces">
@@ -519,14 +522,6 @@
    </property>
    <property name="iconVisibleInMenu">
     <bool>false</bool>
-   </property>
-  </action>
-  <action name="actionSyntaxHighlighting">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Syntax &amp;Highlighting</string>
    </property>
   </action>
   <action name="actionOnlineHelp">

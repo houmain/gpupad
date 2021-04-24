@@ -7,11 +7,10 @@ Settings::Settings(QObject *parent) : QSettings(parent)
     mFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
 
     beginGroup("General");
-    setTabSize(value("tabSize", "4").toInt());
+    setTabSize(value("tabSize", "2").toInt());
     setLineWrap(value("lineWrap", "false").toBool());
-    setIndentWithSpaces(value("indentWithSpaces", "false").toBool());
-    setAutoIndentation(value("autoIndentation", "true").toBool());
-    setSyntaxHighlighting(value("syntaxHighlighting", "true").toBool());
+    setIndentWithSpaces(value("indentWithSpaces", "true").toBool());
+    setShowWhiteSpace(value("showWhiteSpace", "false").toBool());
     setDarkTheme(value("darkTheme", "false").toBool());
 
     auto fontSettings = value("font").toString();
@@ -27,8 +26,7 @@ Settings::~Settings()
     setValue("tabSize", tabSize());
     setValue("lineWrap", lineWrap());
     setValue("indentWithSpaces", indentWithSpaces());
-    setValue("autoIndentation", autoIndentation());
-    setValue("syntaxHighlighting", syntaxHighlighting());
+    setValue("showWhiteSpace", showWhiteSpace());
     setValue("darkTheme", darkTheme());
     setValue("font", font().toString());
     endGroup();
@@ -71,16 +69,10 @@ void Settings::setIndentWithSpaces(bool enabled)
     Q_EMIT indentWithSpacesChanged(enabled);
 }
 
-void Settings::setAutoIndentation(bool enabled)
+void Settings::setShowWhiteSpace(bool enabled)
 {
-    mAutoIndentation = enabled;
-    Q_EMIT autoIndentationChanged(enabled);
-}
-
-void Settings::setSyntaxHighlighting(bool enabled)
-{
-    mSyntaxHighlighting = enabled;
-    Q_EMIT syntaxHighlightingChanged(enabled);
+    mShowWhiteSpace = enabled;
+    Q_EMIT showWhiteSpaceChanged(enabled);
 }
 
 void Settings::setDarkTheme(bool enabled)

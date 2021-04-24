@@ -7,7 +7,7 @@
     <Color role="Button" group="Disabled" value="#252525"/>
     <Color role="Button" group="Inactive" value="#252525"/>
     <Color role="Light" group="Active" value="#4b4b51"/>
-    <Color role="Light" group="Disabled" value="#4b4b51"/>
+    <Color role="Light" group="Disabled" value="#111111"/>
     <Color role="Light" group="Inactive" value="#4b4b51"/>
     <Color role="Midlight" group="Active" value="#cbcbcb"/>
     <Color role="Midlight" group="Disabled" value="#cbcbcb"/>

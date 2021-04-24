@@ -22,7 +22,7 @@ private:
     QVector<HighlightingRule> mHighlightingRules;
     QRegularExpression mCommentStartExpression;
     QRegularExpression mCommentEndExpression;
-    QTextCharFormat mMultiLineCommentFormat;
+    QTextCharFormat mCommentFormat;
 };
 
 #endif // GLSLHIGHLIGHTER_H
