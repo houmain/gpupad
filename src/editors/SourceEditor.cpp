@@ -88,6 +88,7 @@ SourceEditor::SourceEditor(QString fileName, FindReplaceBar *findReplaceBar, QWi
     updateColors(settings.darkTheme());
     setSourceTypeFromExtension();
     setPlainText(document()->toPlainText());
+    setCenterOnScroll(true);
 }
 
 SourceEditor::~SourceEditor()
