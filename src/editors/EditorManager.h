@@ -18,7 +18,6 @@ public:
     void createEditorToolBars(QToolBar *mainToolBar);
 
     FindReplaceBar &findReplaceBar() { return *mFindReplaceBar; }
-    int openNotSavedDialog(const QString &fileName);
     SourceEditor *openNewSourceEditor(const QString &fileName,
         SourceType sourceType = SourceType::PlainText);
     BinaryEditor *openNewBinaryEditor(const QString &fileName);

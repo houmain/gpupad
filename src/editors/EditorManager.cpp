@@ -4,7 +4,6 @@
 #include "FileDialog.h"
 #include <functional>
 #include <QDockWidget>
-#include <QMessageBox>
 #include <QAction>
 #include <QApplication>
 #include <QToolBar>
@@ -46,21 +45,6 @@ void EditorManager::updateEditorToolBarVisibility()
         mCurrentDock && qobject_cast<TextureEditor*>(mCurrentDock->widget()));
     setVisible(mBinaryEditorToolBar->block,
         mCurrentDock && qobject_cast<BinaryEditor*>(mCurrentDock->widget()));
-}
-
-int EditorManager::openNotSavedDialog(const QString& fileName)
-{
-    QMessageBox dialog(this);
-    dialog.setIcon(QMessageBox::Question);
-    dialog.setWindowTitle(tr("Question"));
-    dialog.setText(tr("<h3>The file '%1' is not saved.</h3>"
-           "Do you want to save it before closing?<br>")
-           .arg(FileDialog::getFileTitle(fileName)));
-    dialog.addButton(QMessageBox::Save);
-    dialog.addButton(tr("&Don't Save"), QMessageBox::RejectRole);
-    dialog.addButton(QMessageBox::Cancel);
-    dialog.setDefaultButton(QMessageBox::Save);
-    return dialog.exec();
 }
 
 int EditorManager::getFocusedEditorIndex() const
@@ -520,7 +504,7 @@ bool EditorManager::promptSaveDock(QDockWidget *dock)
     if (dock->isWindowModified()) {
         autoRaise(dock->widget());
 
-        auto ret = openNotSavedDialog(editor->fileName());
+        auto ret = openNotSavedDialog(this, editor->fileName());
         if (ret == QMessageBox::Cancel)
             return false;
 

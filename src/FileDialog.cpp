@@ -211,3 +211,17 @@ bool FileDialog::exec(Options options, QString currentFileName)
     mAsBinaryFile = (dialog.selectedNameFilter() == binaryFileFilter);
     return true;
 }
+
+int openNotSavedDialog(QWidget *parent, const QString& fileName)
+{
+    QMessageBox dialog(parent);
+    dialog.setIcon(QMessageBox::Question);
+    dialog.setText(parent->tr("<h3>The file '%1' is not saved.</h3>"
+           "Do you want to save it before closing?<br>")
+           .arg(FileDialog::getFileTitle(fileName)));
+    dialog.addButton(QMessageBox::Save);
+    dialog.addButton(parent->tr("&Don't Save"), QMessageBox::RejectRole);
+    dialog.addButton(QMessageBox::Cancel);
+    dialog.setDefaultButton(QMessageBox::Save);
+    return dialog.exec();
+}

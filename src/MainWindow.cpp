@@ -776,8 +776,7 @@ bool MainWindow::closeSession()
         return false;
 
     if (mSessionEditor->isModified()) {
-        auto ret = Singletons::editorManager().openNotSavedDialog(
-            mSessionEditor->fileName());
+        auto ret = openNotSavedDialog(this, mSessionEditor->fileName());
         if (ret == QMessageBox::Cancel)
             return false;
 

@@ -1,7 +1,7 @@
 #ifndef FILEDIALOG_H
 #define FILEDIALOG_H
 
-#include <QObject>
+#include <QMessageBox>
 #include <QDir>
 
 class QMainWindow;
@@ -53,5 +53,7 @@ private:
     QDir mDirectory;
     bool mAsBinaryFile{ };
 };
+
+int openNotSavedDialog(QWidget *parent, const QString &fileName);
 
 #endif // FILEDIALOG_H
