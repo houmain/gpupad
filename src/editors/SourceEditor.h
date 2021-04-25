@@ -64,11 +64,13 @@ private:
     void removeTrailingSpace();
     void toggleHomePosition(bool shiftHold);
     QString textUnderCursor(bool identifierOnly = false) const;
+    QTextCursor findMatchingBrace() const;
     void beginMultiSelection();
     void endMultiSelection();
     bool updateMultiSelection(QKeyEvent *event, bool multiSelectionModifierHold);
     void markOccurrences(QString text, QTextDocument::FindFlags =
         QTextDocument::FindCaseSensitively | QTextDocument::FindWholeWords);
+    void handleCursorPositionChanged();
     void handleTextChanged();
     void updateViewportMargins();
     void updateExtraSelections();
@@ -89,6 +91,7 @@ private:
     QTextCharFormat mCurrentLineFormat;
     QTextCharFormat mOccurrencesFormat;
     QTextCharFormat mMultiSelectionFormat;
+    QList<QTextCursor> mMatchingBraces;
     QList<QTextCursor> mMarkedOccurrences;
     QList<QTextCursor> mMultiSelections;
     QTextCursor mMultiEditCursor;

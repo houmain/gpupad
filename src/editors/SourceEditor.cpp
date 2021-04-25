@@ -53,7 +53,7 @@ SourceEditor::SourceEditor(QString fileName, FindReplaceBar *findReplaceBar, QWi
     connect(this, &SourceEditor::updateRequest,
         this, &SourceEditor::updateLineNumberArea);
     connect(this, &SourceEditor::cursorPositionChanged,
-        this, &SourceEditor::updateExtraSelections);
+        this, &SourceEditor::handleCursorPositionChanged);
     connect(this, &SourceEditor::textChanged,
         this, &SourceEditor::handleTextChanged);
     connect(&mFindReplaceBar, &FindReplaceBar::action,
@@ -93,8 +93,8 @@ SourceEditor::~SourceEditor()
 {
     disconnect(this, &SourceEditor::textChanged,
         this, &SourceEditor::handleTextChanged);
-   disconnect(this, &SourceEditor::cursorPositionChanged,
-        this, &SourceEditor::updateExtraSelections);
+    disconnect(this, &SourceEditor::cursorPositionChanged,
+        this, &SourceEditor::handleCursorPositionChanged);
 
     setDocument(nullptr);
 
@@ -230,8 +230,8 @@ void SourceEditor::updateColors(bool darkTheme)
     mCurrentLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
     mCurrentLineFormat.setBackground(pal.base().color().lighter(darkTheme ? 120 : 95));
 
-    mOccurrencesFormat.setForeground(pal.text().color().lighter(darkTheme ? 120 : 90));
-    mOccurrencesFormat.setBackground(pal.base().color().lighter(darkTheme ? 150 : 90));
+    mOccurrencesFormat.setForeground(pal.text().color().lighter(darkTheme ? 140 : 80));
+    mOccurrencesFormat.setBackground(pal.base().color().lighter(darkTheme ? 180 : 80));
 
     mMultiSelectionFormat.setForeground(pal.highlightedText());
     mMultiSelectionFormat.setBackground(pal.highlight());
@@ -782,6 +782,23 @@ void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
     updateExtraSelections();
 }
 
+void SourceEditor::handleCursorPositionChanged()
+{  
+    auto cursor = textCursor();
+    if (auto brace = findMatchingBrace(); !brace.isNull()) {
+        cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
+        brace.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
+        mMatchingBraces.clear();
+        mMatchingBraces.append(cursor);
+        mMatchingBraces.append(brace);
+    }
+    else if (!mMatchingBraces.isEmpty()) {
+        mMatchingBraces.clear();
+    }
+
+    updateExtraSelections();
+}
+
 void SourceEditor::handleTextChanged()
 {
     if (!mMarkedOccurrences.empty()) {
@@ -793,9 +810,13 @@ void SourceEditor::handleTextChanged()
 void SourceEditor::updateExtraSelections()
 {
     auto selections = QList<QTextEdit::ExtraSelection>();
+
     auto cursor = textCursor();
     cursor.clearSelection();
     selections.append({ cursor, mCurrentLineFormat });
+
+    for (const auto &occurrence : qAsConst(mMatchingBraces))
+        selections.append({ occurrence, mOccurrencesFormat });
 
     for (const auto &occurrence : qAsConst(mMarkedOccurrences))
         selections.append({ occurrence, mOccurrencesFormat });
@@ -840,6 +861,58 @@ QString SourceEditor::textUnderCursor(bool identifierOnly) const
     if (identifierOnly)
         text = text.replace(QRegularExpression("[^a-zA-Z0-9_]"), "");
     return text;
+}
+
+QTextCursor SourceEditor::findMatchingBrace() const
+{
+    auto cursor = textCursor();
+    auto block = cursor.block();
+    auto position = cursor.positionInBlock();
+
+    const auto charAfterCursor = [&]() -> QChar {
+        while (position < 0) {
+            block = block.previous();
+            if (!block.isValid())
+                return { };
+            position += block.text().length();
+        }
+        while (position >= block.text().length()) {
+            position -= block.text().length();
+            block = block.next();
+            if (!block.isValid())
+                return { };
+        }
+        return block.text().at(position);
+    };
+
+    const auto beginChar = charAfterCursor();
+    auto endChar = QChar{ };
+    auto direction = 1;
+    switch (beginChar.unicode()) {
+        case '{': endChar = '}'; break;
+        case '[': endChar = ']'; break;
+        case '(': endChar = ')'; break;
+        case '}': endChar = '{'; direction = -1; break;
+        case ']': endChar = '['; direction = -1; break;
+        case ')': endChar = '('; direction = -1; break;
+        default: return { };
+    }
+    for (auto level = 0; ; position += direction) {
+        const auto currentChar = charAfterCursor();
+        if (currentChar.isNull())
+            return { };
+        
+        if (currentChar == beginChar) {
+            ++level;
+        }
+        else if (currentChar == endChar) {
+            --level;
+            if (level == 0) {
+                cursor.setPosition(block.position() + position);
+                return cursor;
+            }
+        }
+    }
 }
 
 void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
