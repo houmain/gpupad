@@ -32,6 +32,10 @@ void EditorManager::createEditorToolBars(QToolBar *mainToolBar)
     mBinaryEditorToolBar = BinaryEditor::createEditorToolBar(widget);
     mainToolBar->addWidget(widget);
 
+    widget = new QWidget(this);
+    mSourceEditorToolBar = SourceEditor::createEditorToolBar(widget);
+    mainToolBar->addWidget(widget);
+
     updateEditorToolBarVisibility();
 }
 
@@ -45,6 +49,8 @@ void EditorManager::updateEditorToolBarVisibility()
         mCurrentDock && qobject_cast<TextureEditor*>(mCurrentDock->widget()));
     setVisible(mBinaryEditorToolBar->block,
         mCurrentDock && qobject_cast<BinaryEditor*>(mCurrentDock->widget()));
+    setVisible(mSourceEditorToolBar->sourceType,
+        mCurrentDock && qobject_cast<SourceEditor*>(mCurrentDock->widget()));
 }
 
 int EditorManager::getFocusedEditorIndex() const
@@ -145,7 +151,7 @@ QList<QMetaObject::Connection> EditorManager::connectEditActions(
 SourceEditor *EditorManager::openNewSourceEditor(const QString &fileName,
     SourceType sourceType)
 {
-    auto editor = new SourceEditor(fileName, mFindReplaceBar);
+    auto editor = new SourceEditor(fileName, mSourceEditorToolBar, mFindReplaceBar);
     editor->setSourceType(sourceType);
     addSourceEditor(editor);
     autoRaise(editor);
@@ -185,7 +191,8 @@ SourceEditor *EditorManager::openSourceEditor(const QString &fileName,
 {
     auto editor = getSourceEditor(fileName);
     if (!editor) {
-        editor = new SourceEditor(fileName, mFindReplaceBar);
+        editor = new SourceEditor(fileName, 
+            mSourceEditorToolBar,  mFindReplaceBar);
         if (!editor->load()) {
             delete editor;
             return nullptr;

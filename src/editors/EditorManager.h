@@ -86,6 +86,7 @@ private:
     FindReplaceBar *mFindReplaceBar{ };
     Ui::TextureEditorToolBar *mTextureEditorToolBar{ };
     Ui::BinaryEditorToolBar *mBinaryEditorToolBar{ };
+    Ui::SourceEditorToolBar *mSourceEditorToolBar{ };
     bool mAutoRaise{ true };
 };
 

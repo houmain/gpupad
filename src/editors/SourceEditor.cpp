@@ -40,8 +40,19 @@ private:
     SourceEditor *mEditor;
 };
 
-SourceEditor::SourceEditor(QString fileName, FindReplaceBar *findReplaceBar, QWidget *parent)
+Ui::SourceEditorToolBar *SourceEditor::createEditorToolBar(QWidget *container)
+{
+    auto toolBarWidgets = new Ui::SourceEditorToolBar();
+    toolBarWidgets->setupUi(container);
+    return toolBarWidgets;
+}
+
+SourceEditor::SourceEditor(QString fileName
+    , const Ui::SourceEditorToolBar* editorToolbar
+    , FindReplaceBar *findReplaceBar
+    , QWidget *parent)
     : QPlainTextEdit(parent)
+    , mEditorToolBar(*editorToolbar)
     , mFileName(fileName)
     , mFindReplaceBar(*findReplaceBar)
     , mLineNumberArea(new LineNumberArea(this))
@@ -138,6 +149,8 @@ QList<QMetaObject::Connection> SourceEditor::connectEditActions(
         actions.windowFileName, &QAction::setText);
     c += connect(document(), &QTextDocument::modificationChanged,
         actions.windowFileName, &QAction::setEnabled);
+
+    updateEditorToolBar();
 
     return c;
 }
@@ -276,6 +289,12 @@ void SourceEditor::updateSyntaxHighlighting()
     mCompleter->popup()->setFont(font());
     connect(mCompleter, qOverload<const QString &>(&QCompleter::activated),
         this, &SourceEditor::insertCompletion);
+}
+
+void SourceEditor::updateEditorToolBar()
+{
+    mEditorToolBar.labelSourceType->setVisible(false);
+    mEditorToolBar.sourceType->setVisible(false);
 }
 
 void SourceEditor::findReplace()

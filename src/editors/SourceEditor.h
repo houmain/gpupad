@@ -3,6 +3,7 @@
 
 #include "IEditor.h"
 #include "FindReplaceBar.h"
+#include "ui_SourceEditorToolBar.h"
 #include <QPlainTextEdit>
 
 class QPaintEvent;
@@ -14,7 +15,9 @@ class SourceEditor final : public QPlainTextEdit, public IEditor
 {
     Q_OBJECT
 public:
-    explicit SourceEditor(QString fileName,
+    static Ui::SourceEditorToolBar *createEditorToolBar(QWidget *container);
+
+    SourceEditor(QString fileName, const Ui::SourceEditorToolBar* editorToolbar, 
         FindReplaceBar *findReplaceBar, QWidget *parent = nullptr);
     ~SourceEditor() override;
 
@@ -81,7 +84,9 @@ private:
         QString replace, QTextDocument::FindFlags flags);
     void updateColors(bool darkTheme);
     void updateSyntaxHighlighting();
+    void updateEditorToolBar();
 
+    const Ui::SourceEditorToolBar &mEditorToolBar;
     QString mFileName;
     FindReplaceBar &mFindReplaceBar;
     SourceType mSourceType{ SourceType::PlainText };

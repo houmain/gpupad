@@ -70,6 +70,7 @@ set(SOURCES
   src/editors/TextureItem.cpp
   src/editors/JsHighlighter.cpp
   src/editors/SourceEditor.cpp
+  src/editors/SourceEditorToolBar.ui
   src/main.cpp
   src/render/GLBuffer.cpp
   src/render/GLCall.cpp
