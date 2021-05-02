@@ -866,26 +866,12 @@ QString SourceEditor::textUnderCursor(bool identifierOnly) const
 QTextCursor SourceEditor::findMatchingBrace() const
 {
     auto cursor = textCursor();
-    auto block = cursor.block();
     auto position = cursor.positionInBlock();
+    auto block = cursor.block();
+    if (position >= block.text().length())
+        return { };
+    const auto beginChar = block.text().at(position);
 
-    const auto charAfterCursor = [&]() -> QChar {
-        while (position < 0) {
-            block = block.previous();
-            if (!block.isValid())
-                return { };
-            position += block.text().length();
-        }
-        while (position >= block.text().length()) {
-            position -= block.text().length();
-            block = block.next();
-            if (!block.isValid())
-                return { };
-        }
-        return block.text().at(position);
-    };
-
-    const auto beginChar = charAfterCursor();
     auto endChar = QChar{ };
     auto direction = 1;
     switch (beginChar.unicode()) {
@@ -898,10 +884,19 @@ QTextCursor SourceEditor::findMatchingBrace() const
         default: return { };
     }
     for (auto level = 0; ; position += direction) {
-        const auto currentChar = charAfterCursor();
-        if (currentChar.isNull())
-            return { };
-        
+        while (position < 0) {
+            block = block.previous();
+            if (!block.isValid())
+                return { };
+            position += block.text().length();
+        }
+        while (position >= block.text().length()) {
+            position -= block.text().length();
+            block = block.next();
+            if (!block.isValid())
+                return { };
+        }
+        const auto currentChar = block.text().at(position);
         if (currentChar == beginChar) {
             ++level;
         }
