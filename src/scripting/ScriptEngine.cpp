@@ -4,6 +4,7 @@
 #include "FileDialog.h"
 #include <QThread>
 #include <QTimer>
+#include <QMutex>
 
 namespace {
     MessagePtrSet* gCurrentMessageList;
@@ -22,7 +23,9 @@ namespace {
     template<typename F>
     void redirectConsoleMessages(MessagePtrSet &messages, F &&function)
     {
-        Q_ASSERT(onMainThread());
+        static QMutex sMutex;
+        QMutexLocker lock(&sMutex);
+
         gCurrentMessageList = &messages;
         auto prevMessageHandler = qInstallMessageHandler(consoleMessageHandler);
         function();
@@ -77,10 +80,9 @@ ScriptValue ScriptVariable::get(int index) const
 
 ScriptEngine::ScriptEngine(QObject *parent)
     : QObject(parent)
+    , mOnThread(*QThread::currentThread())
     , mJsEngine(new QJSEngine(this))
 {
-    Q_ASSERT(onMainThread());
-
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     mInterruptThread = new QThread();
     mInterruptTimer = new QTimer();
@@ -119,7 +121,7 @@ ScriptEngine::~ScriptEngine()
 
 QJSValue ScriptEngine::evaluate(const QString &program, const QString &fileName, int lineNumber)
 {
-    Q_ASSERT(onMainThread());
+    Q_ASSERT(&mOnThread == QThread::currentThread());
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     QMetaObject::invokeMethod(mInterruptTimer, "start", Qt::BlockingQueuedConnection);
     mJsEngine->setInterrupted(false);
@@ -129,13 +131,13 @@ QJSValue ScriptEngine::evaluate(const QString &program, const QString &fileName,
 
 void ScriptEngine::setGlobal(const QString &name, QJSValue value)
 {
-    Q_ASSERT(onMainThread());
+    Q_ASSERT(&mOnThread == QThread::currentThread());
     mJsEngine->globalObject().setProperty(name, value);
 }
 
 void ScriptEngine::setGlobal(const QString &name, QObject *object)
 {
-    Q_ASSERT(onMainThread());
+    Q_ASSERT(&mOnThread == QThread::currentThread());
     mJsEngine->globalObject().setProperty(name, mJsEngine->newQObject(object));
 }
 
@@ -155,7 +157,7 @@ void ScriptEngine::setGlobal(const QString &name, const ScriptValueList &values)
 
 QJSValue ScriptEngine::getGlobal(const QString &name)
 {
-    Q_ASSERT(onMainThread());
+    Q_ASSERT(&mOnThread == QThread::currentThread());
     return mJsEngine->globalObject().property(name);
 }
 

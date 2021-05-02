@@ -64,6 +64,7 @@ private:
     QJSValue evaluate(const QString &program, const QString &fileName = QString(), int lineNumber = 1);
     bool updateVariable(const Variable &variable, ItemId itemId, MessagePtrSet &messages);
 
+    const QThread& mOnThread;
     QJSEngine *mJsEngine{ };
     QThread *mInterruptThread{ };
     QTimer *mInterruptTimer{ };

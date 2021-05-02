@@ -170,6 +170,7 @@ void ProcessSource::render()
     mShader.reset(mNewShader.take());
     mScriptEngine.reset();
     mOutput.clear();
+    mMessages.clear();
 
     if (mValidateSource) {
         if (mShader) {
