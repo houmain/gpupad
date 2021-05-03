@@ -74,7 +74,6 @@ namespace {
     Shader::ShaderType getShaderType(SourceType sourceType)
     {
         switch (sourceType) {
-            case SourceType::None:
             case SourceType::PlainText:
             case SourceType::JavaScript:
                 break;
@@ -133,10 +132,13 @@ QSet<ItemId> ProcessSource::usedItems() const
     return { };
 }
 
-void ProcessSource::setSource(QString fileName,
-        SourceType sourceType)
+void ProcessSource::setFileName(QString fileName)
 {
     mFileName = fileName;
+}
+
+void ProcessSource::setSourceType(SourceType sourceType)
+{
     mSourceType = sourceType;
 }
 
@@ -152,6 +154,8 @@ void ProcessSource::setProcessType(QString processType)
 
 void ProcessSource::prepare(bool, EvaluationType)
 {
+    mMessages.clear();
+
     if (auto shaderType = getShaderType(mSourceType)) {
         auto shaders = getShadersInSession(mFileName);
         auto shader = Shader{ };
@@ -162,7 +166,6 @@ void ProcessSource::prepare(bool, EvaluationType)
         }
         mNewShader.reset(new GLShader(shaderType, shaders));
     }
-        
 }
 
 void ProcessSource::render()
@@ -170,7 +173,6 @@ void ProcessSource::render()
     mShader.reset(mNewShader.take());
     mScriptEngine.reset();
     mOutput.clear();
-    mMessages.clear();
 
     if (mValidateSource) {
         if (mShader) {

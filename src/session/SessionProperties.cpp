@@ -336,21 +336,42 @@ IEditor* SessionProperties::openEditor(const FileItem &fileItem)
 
     auto &editors = Singletons::editorManager();
     switch (fileItem.type) {
-        case Item::Type::Texture:
+        case Item::Type::Texture: {
             if (auto editor = editors.openTextureEditor(fileItem.fileName))
                 return editor;
             return editors.openNewTextureEditor(fileItem.fileName);
+        }
 
         case Item::Type::Shader:
-        case Item::Type::Script:
-            if (auto editor = editors.openSourceEditor(fileItem.fileName))
-                return editor;
-            return editors.openNewSourceEditor(fileItem.fileName);
+        case Item::Type::Script: {
+            auto editor = editors.openSourceEditor(fileItem.fileName);
+            if (!editor)
+                editor = editors.openNewSourceEditor(fileItem.fileName);
 
-        case Item::Type::Buffer:
+            if (auto script = castItem<Script>(fileItem)) {
+                editor->setSourceType(SourceType::JavaScript);
+            }
+            else if (auto shader = castItem<Shader>(fileItem)) {
+                static const auto sMapping = QMap<Shader::ShaderType, SourceType>{
+                    { Shader::ShaderType::Vertex, SourceType::VertexShader },
+                    { Shader::ShaderType::Fragment, SourceType::FragmentShader },
+                    { Shader::ShaderType::Geometry, SourceType::GeometryShader },
+                    { Shader::ShaderType::TessellationControl, SourceType::TessellationControl },
+                    { Shader::ShaderType::TessellationEvaluation, SourceType::TessellationEvaluation },
+                    { Shader::ShaderType::Compute, SourceType::ComputeShader },
+                };
+                const auto sourceType = sMapping[shader->shaderType];
+                if (sourceType != SourceType::PlainText)
+                    editor->setSourceType(sourceType);
+            }
+            return editor;
+        }
+
+        case Item::Type::Buffer: {
             if (auto editor = editors.openBinaryEditor(fileItem.fileName))
                 return editor;
             return editors.openNewBinaryEditor(fileItem.fileName);
+        }
 
         default:
             return nullptr;
@@ -449,33 +470,13 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
         }
     }
 
-    auto editor = std::add_pointer_t<IEditor>();
     if (const auto fileItem = castItem<FileItem>(item)) {
-        editor = openEditor(*fileItem);
-    }
-    if (!editor)
-        return nullptr;
-
-    if (auto script = castItem<Script>(item)) {
-        editor->setSourceType(SourceType::JavaScript);
-    }
-    else if (auto shader = castItem<Shader>(item)) {
-        static const auto sMapping = QMap<Shader::ShaderType, SourceType>{
-            { Shader::ShaderType::Vertex, SourceType::VertexShader },
-            { Shader::ShaderType::Fragment, SourceType::FragmentShader },
-            { Shader::ShaderType::Geometry, SourceType::GeometryShader },
-            { Shader::ShaderType::TessellationControl, SourceType::TessellationControl },
-            { Shader::ShaderType::TessellationEvaluation, SourceType::TessellationEvaluation },
-            { Shader::ShaderType::Compute, SourceType::ComputeShader },
-        };
-        auto sourceType = sMapping[shader->shaderType];
-        if (sourceType != SourceType::None)
-            editor->setSourceType(sourceType);
-    }
-    else {
+        auto editor = openEditor(*fileItem);
         Singletons::synchronizeLogic().updateEditor(item.id, true);
+        return editor;
     }
-    return editor;
+        
+    return nullptr;
 }
 
 QString SessionProperties::currentItemName() const

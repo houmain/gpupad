@@ -18,6 +18,7 @@
 #include <QScrollBar>
 #include <QTextStream>
 #include <QSaveFile>
+#include <QMenu>
 
 class SourceEditor::LineNumberArea final : public QWidget
 {
@@ -40,15 +41,8 @@ private:
     SourceEditor *mEditor;
 };
 
-Ui::SourceEditorToolBar *SourceEditor::createEditorToolBar(QWidget *container)
-{
-    auto toolBarWidgets = new Ui::SourceEditorToolBar();
-    toolBarWidgets->setupUi(container);
-    return toolBarWidgets;
-}
-
 SourceEditor::SourceEditor(QString fileName
-    , const Ui::SourceEditorToolBar* editorToolbar
+    , SourceEditorToolBar* editorToolbar
     , FindReplaceBar *findReplaceBar
     , QWidget *parent)
     : QPlainTextEdit(parent)
@@ -151,6 +145,9 @@ QList<QMetaObject::Connection> SourceEditor::connectEditActions(
         actions.windowFileName, &QAction::setEnabled);
 
     updateEditorToolBar();
+
+    c += connect(&mEditorToolBar, &SourceEditorToolBar::sourceTypeChanged, 
+        this, &SourceEditor::setSourceType);
 
     return c;
 }
@@ -293,8 +290,7 @@ void SourceEditor::updateSyntaxHighlighting()
 
 void SourceEditor::updateEditorToolBar()
 {
-    mEditorToolBar.labelSourceType->setVisible(false);
-    mEditorToolBar.sourceType->setVisible(false);
+    mEditorToolBar.setSourceType(mSourceType);
 }
 
 void SourceEditor::findReplace()

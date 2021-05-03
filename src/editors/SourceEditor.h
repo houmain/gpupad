@@ -3,7 +3,8 @@
 
 #include "IEditor.h"
 #include "FindReplaceBar.h"
-#include "ui_SourceEditorToolBar.h"
+#include "SourceType.h"
+#include "SourceEditorToolBar.h"
 #include <QPlainTextEdit>
 
 class QPaintEvent;
@@ -15,9 +16,7 @@ class SourceEditor final : public QPlainTextEdit, public IEditor
 {
     Q_OBJECT
 public:
-    static Ui::SourceEditorToolBar *createEditorToolBar(QWidget *container);
-
-    SourceEditor(QString fileName, const Ui::SourceEditorToolBar* editorToolbar, 
+    SourceEditor(QString fileName, SourceEditorToolBar* editorToolbar, 
         FindReplaceBar *findReplaceBar, QWidget *parent = nullptr);
     ~SourceEditor() override;
 
@@ -29,10 +28,6 @@ public:
     bool reload() override;
     bool save() override;
     int tabifyGroup() override { return 0; }
-    QString source() const { return toPlainText(); }
-    SourceType sourceType() const override { return mSourceType; }
-    void setSourceType(SourceType sourceType) override;
-    void setSourceTypeFromExtension();
 
     void findReplace();
     void setLineWrap(bool wrap) { setLineWrapMode(wrap ? WidgetWidth : NoWrap); }
@@ -41,6 +36,10 @@ public:
     void setIndentWithSpaces(bool enabled);
     void setShowWhiteSpace(bool enabled);
     bool setCursorPosition(int line, int column);
+    QString source() const { return toPlainText(); }
+    SourceType sourceType() const { return mSourceType; }
+    void setSourceType(SourceType sourceType);
+    void setSourceTypeFromExtension();
 
 Q_SIGNALS:
     void fileNameChanged(const QString &fileName);
@@ -86,7 +85,7 @@ private:
     void updateSyntaxHighlighting();
     void updateEditorToolBar();
 
-    const Ui::SourceEditorToolBar &mEditorToolBar;
+    SourceEditorToolBar& mEditorToolBar;
     QString mFileName;
     FindReplaceBar &mFindReplaceBar;
     SourceType mSourceType{ SourceType::PlainText };

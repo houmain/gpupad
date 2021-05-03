@@ -32,7 +32,7 @@
      <x>0</x>
      <y>0</y>
      <width>494</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -138,14 +138,6 @@
       <string>Tab Size</string>
      </property>
     </widget>
-    <widget class="QMenu" name="menuSourceType">
-     <property name="title">
-      <string>Source &amp;Type</string>
-     </property>
-    </widget>
-    <addaction name="menuSourceType"/>
-    <addaction name="actionSourceValidation"/>
-    <addaction name="separator"/>
     <addaction name="menuTabSize"/>
     <addaction name="actionIndentWithSpaces"/>
     <addaction name="actionShowWhiteSpace"/>
@@ -189,8 +181,6 @@
    <addaction name="actionCopy"/>
    <addaction name="actionPaste"/>
    <addaction name="actionDelete"/>
-   <addaction name="separator"/>
-   <addaction name="actionSourceValidation"/>
    <addaction name="separator"/>
    <addaction name="actionEvalReset"/>
    <addaction name="actionEvalManual"/>
@@ -504,24 +494,6 @@
    </property>
    <property name="shortcut">
     <string>F9</string>
-   </property>
-  </action>
-  <action name="actionSourceValidation">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/help-faq.png</normaloff>:/images/16x16/help-faq.png</iconset>
-   </property>
-   <property name="text">
-    <string>Source &amp;Validation</string>
-   </property>
-   <property name="shortcut">
-    <string>F4</string>
-   </property>
-   <property name="iconVisibleInMenu">
-    <bool>false</bool>
    </property>
   </action>
   <action name="actionOnlineHelp">

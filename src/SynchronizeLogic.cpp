@@ -36,8 +36,6 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
         this, &SynchronizeLogic::handleFileChanged);
     connect(&Singletons::editorManager(), &EditorManager::editorRenamed,
         this, &SynchronizeLogic::handleEditorFileRenamed);
-    connect(&Singletons::editorManager(), &EditorManager::sourceTypeChanged,
-        this, &SynchronizeLogic::handleSourceTypeChanged);
 
     resetRenderSession();
 
@@ -51,18 +49,26 @@ SynchronizeLogic::~SynchronizeLogic() = default;
 
 void SynchronizeLogic::setValidateSource(bool validate)
 {
-    if (mValidateSource != validate) {
-        mValidateSource = validate;
-        processSource();
-    }
+    if (std::exchange(mValidateSource, validate) != validate)
+        mProcessSourceTimer->start();
 }
 
 void SynchronizeLogic::setProcessSourceType(QString type)
 {
-    if (mProcessSourceType != type) {
-        mProcessSourceType = type;
-        processSource();
-    }
+    if (std::exchange(mProcessSourceType, type) != type)
+        mProcessSourceTimer->start();
+}
+
+void SynchronizeLogic::setCurrentEditorFileName(QString fileName)
+{
+    if (std::exchange(mCurrentEditorFileName, fileName) != fileName)
+        mProcessSourceTimer->start();
+}
+
+void SynchronizeLogic::setCurrentEditorSourceType(SourceType sourceType)
+{
+    if (std::exchange(mCurrentEditorSourceType, sourceType) != sourceType)
+        mProcessSourceTimer->start();
 }
 
 void SynchronizeLogic::resetRenderSession()
@@ -277,12 +283,6 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
     Singletons::editorManager().renameEditors(prevFileName, item.fileName);
 }
 
-void SynchronizeLogic::handleSourceTypeChanged(SourceType sourceType)
-{
-    Q_UNUSED(sourceType)
-    processSource();
-}
-
 void SynchronizeLogic::handleEvaluateTimout()
 {
     evaluate(mEvaluationMode == EvaluationMode::Automatic ?
@@ -386,11 +386,14 @@ void SynchronizeLogic::processSource()
     if (!mValidateSource && mProcessSourceType.isEmpty())
         return;
 
+    if (mCurrentEditorFileName.isEmpty() ||
+        !Singletons::editorManager().getSourceEditor(mCurrentEditorFileName))
+        return;
+
     Singletons::fileCache().updateEditorFiles();
 
-    mProcessSource->setSource(
-        Singletons::editorManager().currentEditorFileName(),
-        Singletons::editorManager().currentSourceType());
+    mProcessSource->setFileName(mCurrentEditorFileName);
+    mProcessSource->setSourceType(mCurrentEditorSourceType);
     mProcessSource->setValidateSource(mValidateSource);
     mProcessSource->setProcessType(mProcessSourceType);
     mProcessSource->update();

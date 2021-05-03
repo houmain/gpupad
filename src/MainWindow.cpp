@@ -213,8 +213,6 @@ MainWindow::MainWindow(QWidget *parent)
         mSessionEditor.data(), &SessionEditor::updateItemActions);
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
-    connect(mUi->actionSourceValidation, &QAction::toggled,
-        &synchronizeLogic, &SynchronizeLogic::setValidateSource);
     connect(mOutputWindow.data(), &OutputWindow::typeSelectionChanged,
         &synchronizeLogic, &SynchronizeLogic::setProcessSourceType);
     connect(outputDock, &QDockWidget::visibilityChanged,
@@ -256,41 +254,6 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::updateCustomActionsMenu);
     connect(mUi->actionManageCustomActions, &QAction::triggered,
         mCustomActions.data(), &QDialog::show);
-
-    auto sourceTypeActionGroup = new QActionGroup(this);
-    auto sourceTypeButton = qobject_cast<QToolButton*>(
-        mUi->toolBarMain->widgetForAction(mUi->actionSourceValidation));
-    sourceTypeButton->setMenu(mUi->menuSourceType);
-    sourceTypeButton->setPopupMode(QToolButton::MenuButtonPopup);
-
-    auto addSourceType = [&](const QString &text, SourceType sourceType) {
-        auto action = mUi->menuSourceType->addAction(text);
-        action->setData(static_cast<int>(sourceType));
-        action->setCheckable(true);
-        action->setActionGroup(sourceTypeActionGroup);
-    };
-    addSourceType(tr("Plaintext"), SourceType::PlainText);
-    addSourceType(tr("Vertex Shader"), SourceType::VertexShader);
-    addSourceType(tr("Fragment Shader"), SourceType::FragmentShader);
-    addSourceType(tr("Geometry Shader"), SourceType::GeometryShader);
-    addSourceType(tr("Tessellation Control"), SourceType::TessellationControl);
-    addSourceType(tr("Tessellation Evaluation"), SourceType::TessellationEvaluation);
-    addSourceType(tr("Compute Shader"), SourceType::ComputeShader);
-    addSourceType(tr("JavaScript"), SourceType::JavaScript);
-
-    connect(mUi->menuSourceType, &QMenu::aboutToShow,
-        [this, sourceTypeActionGroup]() {
-            auto sourceType = mEditorManager.currentSourceType();
-            const auto actions = sourceTypeActionGroup->actions();
-            for (QAction *action : actions)
-                action->setChecked(static_cast<SourceType>(
-                    action->data().toInt()) == sourceType);
-        });
-    connect(mUi->menuSourceType, &QMenu::triggered,
-        [this](QAction *action) {
-            mEditorManager.setCurrentSourceType(
-                static_cast<SourceType>(action->data().toInt()));
-        });
 
     auto indentActionGroup = new QActionGroup(this);
     connect(indentActionGroup, &QActionGroup::triggered,
@@ -496,9 +459,6 @@ void MainWindow::updateFileActions()
     mUi->actionReload->setEnabled(hasFile);
     mUi->actionReload->setText(tr("&Reload%1").arg(hasFile ? desc : ""));
     mUi->actionOpenContainingFolder->setEnabled(hasFile);
-
-    auto sourceType = mEditorManager.currentSourceType();
-    mUi->menuSourceType->setEnabled(sourceType != SourceType::None);
 }
 
 void MainWindow::stopEvaluation()

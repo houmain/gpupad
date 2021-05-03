@@ -2,6 +2,7 @@
 #include "Singletons.h"
 #include "FileCache.h"
 #include "FileDialog.h"
+#include "SynchronizeLogic.h"
 #include <functional>
 #include <QDockWidget>
 #include <QAction>
@@ -32,9 +33,15 @@ void EditorManager::createEditorToolBars(QToolBar *mainToolBar)
     mBinaryEditorToolBar = BinaryEditor::createEditorToolBar(widget);
     mainToolBar->addWidget(widget);
 
-    widget = new QWidget(this);
-    mSourceEditorToolBar = SourceEditor::createEditorToolBar(widget);
-    mainToolBar->addWidget(widget);
+    mSourceEditorToolBar = new SourceEditorToolBar(this);
+    mainToolBar->addWidget(mSourceEditorToolBar);
+
+    connect(mSourceEditorToolBar, &SourceEditorToolBar::validateSourceChanged,
+        &Singletons::synchronizeLogic(), &SynchronizeLogic::setValidateSource);
+    connect(mSourceEditorToolBar, &SourceEditorToolBar::sourceTypeChanged,
+        &Singletons::synchronizeLogic(), &SynchronizeLogic::setCurrentEditorSourceType);
+    connect(this, &EditorManager::currentEditorChanged,
+        &Singletons::synchronizeLogic(), &SynchronizeLogic::setCurrentEditorFileName);
 
     updateEditorToolBarVisibility();
 }
@@ -42,14 +49,14 @@ void EditorManager::createEditorToolBars(QToolBar *mainToolBar)
 void EditorManager::updateEditorToolBarVisibility()
 {
     // setting maximumWidth since simply setting visibility did not work
-    const auto setVisible = [](const QWidget* child, bool visible) {
-        child->parentWidget()->setMaximumWidth(visible ? 65536 : 0);
+    const auto setVisible = [](QWidget* widget, bool visible) {
+        widget->setMaximumWidth(visible ? 65536 : 0);
     };
-    setVisible(mTextureEditorToolBar->level, 
+    setVisible(mTextureEditorToolBar->level->parentWidget(), 
         mCurrentDock && qobject_cast<TextureEditor*>(mCurrentDock->widget()));
-    setVisible(mBinaryEditorToolBar->block,
+    setVisible(mBinaryEditorToolBar->block->parentWidget(),
         mCurrentDock && qobject_cast<BinaryEditor*>(mCurrentDock->widget()));
-    setVisible(mSourceEditorToolBar->sourceType,
+    setVisible(mSourceEditorToolBar,
         mCurrentDock && qobject_cast<SourceEditor*>(mCurrentDock->widget()));
 }
 
@@ -93,7 +100,7 @@ void EditorManager::updateCurrentEditor()
         if (dock->isAncestorOf(focusWidget)) {
             mCurrentDock = dock;
             updateDockCurrentProperty(dock, true);
-            Q_EMIT sourceTypeChanged(currentSourceType());
+            Q_EMIT currentEditorChanged(editor->fileName());
             break;
         }
     }
@@ -123,21 +130,6 @@ QDockWidget *EditorManager::findEditorDock(const IEditor *editor) const
           if (editor == dockEditor)
               return dock;
     return nullptr;
-}
-
-SourceType EditorManager::currentSourceType()
-{
-    if (auto editor = currentEditor())
-        return editor->sourceType();
-    return SourceType::None;
-}
-
-void EditorManager::setCurrentSourceType(SourceType sourceType)
-{
-    if (auto editor = currentEditor()) {
-        editor->setSourceType(sourceType);
-        Q_EMIT sourceTypeChanged(sourceType);
-    }
 }
 
 QList<QMetaObject::Connection> EditorManager::connectEditActions(

@@ -582,7 +582,8 @@ bool TextureData::loadGli(const QString &fileName, bool flipVertically) try
     const auto levels = (texture.levels() > 1 ? texture.levels() : 0);
 
     if (!create(target, static_cast<QOpenGLTexture::TextureFormat>(format.Internal),
-          extent.x, extent.y, extent.z, texture.layers(), 1, levels))
+          extent.x, extent.y, extent.z, static_cast<int>(texture.layers()), 1, 
+          static_cast<int>(levels)))
         return false;
 
     for (auto layer = 0u; layer < texture.layers(); ++layer)

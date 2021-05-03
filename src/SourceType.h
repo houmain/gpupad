@@ -3,7 +3,6 @@
 
 enum class SourceType
 {
-    None,
     PlainText,
     VertexShader,
     FragmentShader,

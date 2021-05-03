@@ -16,7 +16,8 @@ public:
     explicit ProcessSource(QObject *parent = nullptr);
     ~ProcessSource() override;
 
-    void setSource(QString fileName, SourceType sourceType);
+    void setFileName(QString fileName);
+    void setSourceType(SourceType sourceType);
     void setValidateSource(bool validate);
     void setProcessType(QString processType);
     QSet<ItemId> usedItems() const override;

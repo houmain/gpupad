@@ -22,12 +22,19 @@ public:
     ~SynchronizeLogic() override;
 
     void resetRenderSession();
-    void setValidateSource(bool validate);
-    void setProcessSourceType(QString type);
+
     void setEvaluationMode(EvaluationMode mode);
     void resetEvaluation();
     void manualEvaluation();
     void updateEditor(ItemId itemId, bool activated);
+
+    void setValidateSource(bool validate);
+    bool validatingSource() const { return mValidateSource; }
+    void setProcessSourceType(QString type);
+    const QString& processSourceType() const { return mProcessSourceType; }
+    void setCurrentEditorFileName(QString fileName);
+    void setCurrentEditorSourceType(SourceType sourceType);
+
     void setMousePosition(QPointF pos) { mMousePosition = pos; }
     const QPointF &mousePosition() const { return mMousePosition; }
 
@@ -38,7 +45,6 @@ private:
     void handleItemModified(const QModelIndex &index);
     void handleItemsModified(const QModelIndex &topLeft,
         const QModelIndex &bottomRight, const QVector<int> &roles);
-    void handleSourceTypeChanged(SourceType sourceType);
     void handleEditorFileRenamed(const QString &prevFileName,
         const QString &fileName);
     void handleFileItemFileChanged(const FileItem &item);
@@ -66,6 +72,8 @@ private:
     EvaluationMode mEvaluationMode{ };
 
     bool mValidateSource{ };
+    QString mCurrentEditorFileName{ };
+    SourceType mCurrentEditorSourceType{ };
     QString mProcessSourceType{ };
     QTimer *mProcessSourceTimer{ };
     ProcessSource* mProcessSource{ };

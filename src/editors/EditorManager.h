@@ -44,8 +44,6 @@ public:
     void updateCurrentEditor();
     bool hasCurrentEditor() const { return (mCurrentDock != nullptr); }
     QString currentEditorFileName();
-    SourceType currentSourceType();
-    void setCurrentSourceType(SourceType sourceType);
     QList<QMetaObject::Connection> connectEditActions(const EditActions &actions);
     void renameEditors(const QString &prevFileName, const QString &fileName);
     bool saveEditor();
@@ -61,7 +59,7 @@ public:
 
 Q_SIGNALS:
     void editorRenamed(const QString &prevFileName, const QString &fileName);
-    void sourceTypeChanged(SourceType sourceType);
+    void currentEditorChanged(QString fileName);
 
 private:
     int getFocusedEditorIndex() const;
@@ -86,7 +84,7 @@ private:
     FindReplaceBar *mFindReplaceBar{ };
     Ui::TextureEditorToolBar *mTextureEditorToolBar{ };
     Ui::BinaryEditorToolBar *mBinaryEditorToolBar{ };
-    Ui::SourceEditorToolBar *mSourceEditorToolBar{ };
+    SourceEditorToolBar *mSourceEditorToolBar{ };
     bool mAutoRaise{ true };
 };
 

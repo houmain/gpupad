@@ -248,8 +248,10 @@ QString formatNvGpuProgram(QString assembly)
     return lines.join('\n');
 }
 
-QString GLShader::getAssembly() {
-    compile(nullptr, true);
+QString GLShader::getAssembly()
+{
+    if (!compile(nullptr, true))
+        return { };
 
     auto assembly = QString("not supported");
     auto &gl = GLContext::currentContext();
