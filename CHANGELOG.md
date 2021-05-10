@@ -5,6 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+
+## [Version 1.19] - 2021-05-10
+## Added
+- Added fullscreen option.
+- Added saving/restoring session state.
+- Added option to show whitespace.
+- Highlighting matching brace.
+
+## Changed
+- Improved closing multiple modified files.
+- Moved source validation/type to source editor toolbar.
+
+## Fixed
+- Fixed standalone shader validation.
+
 ## [Version 1.18] - 2021-04-16
 ## Added
 - Added manual vertical texture flip control.
@@ -281,7 +296,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.0] - 2019-04-14
 
-[Unreleased]: https://github.com/houmain/gpupad/compare/1.18...HEAD
+[Unreleased]: https://github.com/houmain/gpupad/compare/1.19...HEAD
+[Version 1.19]: https://github.com/houmain/gpupad/compare/1.18...1.19
 [Version 1.18]: https://github.com/houmain/gpupad/compare/1.17...1.18
 [Version 1.17]: https://github.com/houmain/gpupad/compare/1.16...1.17
 [Version 1.16]: https://github.com/houmain/gpupad/compare/1.15...1.16

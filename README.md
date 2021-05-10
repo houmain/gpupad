@@ -1,20 +1,31 @@
 
 GPUpad
 ======
+A lightweight editor for GLSL shaders of all kinds and a fully-featured IDE for developing GPU based algorithms.
 
-Aims to be a lightweight editor for GLSL shaders of all kinds and a fully-featured IDE for developing GPU based algorithms.
+<p>
+  <a href="#features">Features</a> |
+  <a href="#screenshots">Screenshots</a> |
+  <a href="#introduction">Introduction</a> |
+  <a href="#download">Download</a> |
+  <a href="#introduction">Building</a> |
+  <a href="https://github.com/houmain/gpupad/blob/main/CHANGELOG.md">Changelog</a>
+<br/>
 
-Screenshots
------------
+<a href="https://github.com/houmain/gpupad/blob/master/LICENSE"><img alt="license" src="https://img.shields.io/github/license/houmain/gpupad"/></a>
+<a href="#download"><img alt="platforms" src="https://img.shields.io/badge/Platforms-Linux%20%7C%20macOS%20%7C%20Windows-blue"/></a>
+<br/>
+<a href="https://github.com/houmain/gpupad/issues">
+<img alt="Issues" src="https://img.shields.io/github/issues-raw/houmain/gpupad.svg"/></a>
+<a href=""><img alt="size" src="https://img.shields.io/github/languages/code-size/houmain/gpupad"/></a>
+</p>
 
-<a href="screenshot2.png"><img src="screenshot2.png" height="380"></a> &nbsp;
-<a href="screenshot1.png"><img src="screenshot1.png" height="280"></a>
 
 Features
 --------
 
 * Cross platform and efficient.
-* Decent source editor with automatic indentation, rectangular selection&hellip;
+* Decent source editor with automatic indentation, brace highlighting, rectangular selection&hellip;
 * GLSL and JavaScript syntax highlighting with basic auto completion (of built-in functions and constants).
 * Continuous validation of standalone shader files (by compiling them using OpenGL).
 * Possibility to evaluate shader programs with completely customizeable input and OpenGL state.
@@ -23,7 +34,14 @@ Features
 * Reading and writing of image files ([KTX](https://github.com/KhronosGroup/KTX-Software) and DDS for 3D/Array textures, block compressed textures, cube maps&hellip;).
 * Streaming video files to textures.
 * Editor for structured binary files.
+* Hot reloading of externally modified files.
 * Sample sessions in the Help menu.
+
+Screenshots
+-----------
+
+<a href="screenshot1.png"><img  style="vertical-align: top" src="screenshot1.png" height="280"></a> &nbsp;
+<a href="screenshot2.png"><img src="screenshot2.png" height="380"></a>
 
 Introduction
 ------------
@@ -75,14 +93,14 @@ Allows to structure more complex sessions. They open a new scope unless *inline 
 Allows to define JavaScript functions and variables in script files, which can subsequently be used in uniform binding expressions.
 There is one JavaScript state for the whole session and the scripts are evaluated in consecutive order (*Group* scopes do not have an effect).
 
-Installation
-------------
+Download
+--------
 
 **Arch Linux and derivatives:**
 
 An up to date build can be installed from the [AUR](https://aur.archlinux.org/packages/gpupad-git/).
 
-**Other Linux distributions, Windows, macOS:**
+**Windows, macOS and other Linux distributions:**
 
 A portable build can be downloaded from the [latest release](https://github.com/houmain/gpupad/releases/latest) page.
 
