@@ -1,24 +1,25 @@
 
 GPUpad
 ======
-A lightweight editor for GLSL shaders of all kinds and a fully-featured IDE for developing GPU based algorithms.
-
 <p>
-  <a href="#features">Features</a> |
-  <a href="#screenshots">Screenshots</a> |
-  <a href="#introduction">Introduction</a> |
-  <a href="#download">Download</a> |
-  <a href="#introduction">Building</a> |
-  <a href="https://github.com/houmain/gpupad/blob/main/CHANGELOG.md">Changelog</a>
-<br/>
-
-<a href="https://github.com/houmain/gpupad/blob/master/LICENSE"><img alt="license" src="https://img.shields.io/github/license/houmain/gpupad"/></a>
-<a href="#download"><img alt="platforms" src="https://img.shields.io/badge/Platforms-Linux%20%7C%20macOS%20%7C%20Windows-blue"/></a>
-<br/>
+<a href="https://ci.appveyor.com/project/houmain/gpupad-windows-x64">
+<img alt="AppVeyor" src="https://img.shields.io/appveyor/build/houmain/gpupad-windows-x64?label=build%20Windows-x64"></a>
+<a href="https://ci.appveyor.com/project/houmain/gpupad-ubuntu-x64">
+<img alt="AppVeyor" src="https://img.shields.io/appveyor/build/houmain/gpupad-ubuntu-x64?label=build%20Linux-x64"></a>
+<a href="https://ci.appveyor.com/project/houmain/gpupad-macos-x64">
+<img alt="AppVeyor" src="https://img.shields.io/appveyor/build/houmain/gpupad-macos-x64?label=build%20macOS-x64"></a>
 <a href="https://github.com/houmain/gpupad/issues">
 <img alt="Issues" src="https://img.shields.io/github/issues-raw/houmain/gpupad.svg"/></a>
-<a href=""><img alt="size" src="https://img.shields.io/github/languages/code-size/houmain/gpupad"/></a>
+
+<a href="#features">Features</a> |
+<a href="#screenshots">Screenshots</a> |
+<a href="#introduction">Introduction</a> |
+<a href="#download">Download</a> |
+<a href="#building">Building</a> |
+<a href="https://github.com/houmain/gpupad/blob/main/CHANGELOG.md">Changelog</a>
 </p>
+
+A lightweight editor for GLSL shaders of all kinds and a fully-featured IDE for developing GPU based algorithms.
 
 
 Features
@@ -118,11 +119,11 @@ sudo apt install build-essential git cmake qtdeclarative5-dev libdrm-dev
 **Checking out the source:**
 ```
 git clone --depth 1 https://github.com/houmain/gpupad
-cd gpupad
 ```
 
 **Building:**
 ```
+cd gpupad
 mkdir build
 cd build
 cmake ..
@@ -133,11 +134,6 @@ On Windows and macOS you might have to pass the path to your Qt installation. e.
 
 ```
 cmake --build . --config Release -DCMAKE_PREFIX_PATH=C:\Qt\5.15\msvc2019_64
-```
-
-**Running:**
-```
-./gpupad
 ```
 
 License
