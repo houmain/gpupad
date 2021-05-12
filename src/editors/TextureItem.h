@@ -2,6 +2,7 @@
 #define TEXTUREITEM_H
 
 #include "TextureData.h"
+#include <QObject>
 #include <QGraphicsView>
 #include <QOpenGLTexture>
 #include <QGraphicsItem>
@@ -12,12 +13,11 @@
 
 class ZeroCopyContext;
 
-class TextureItem final : public QGraphicsItem
+class TextureItem final : public QObject, public QGraphicsItem
 {
+    Q_OBJECT
 public:
-    TextureItem();
-    TextureItem(const TextureItem&) = delete;
-    TextureItem& operator=(const TextureItem&) = delete;
+    explicit TextureItem(QObject *parent = nullptr);
     ~TextureItem() override;
     void releaseGL();
 

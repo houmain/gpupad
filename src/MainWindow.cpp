@@ -887,7 +887,7 @@ void MainWindow::handleDarkThemeChanging(bool darkTheme)
       "QLabel:disabled { color: %1 }\n"
       "QDockWidget > QFrame { border:2px solid %2 }\n"
       "QDockWidget[current=true] > QFrame { border:2px solid %3 }\n"
-      "QMenuBar { background-color: %4 }\n"
+      "QMenuBar { background-color: %4; padding-top:2px }\n"
       "QToolBar { background-color: %4 }\n")
       .arg(color(QPalette::WindowText, QPalette::Disabled),
            color(QPalette::Window, QPalette::Active, frameDarker),

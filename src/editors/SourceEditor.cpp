@@ -1,4 +1,5 @@
 ﻿#include "SourceEditor.h"
+#include "SourceEditorToolBar.h"
 #include "Singletons.h"
 #include "FileCache.h"
 #include "Settings.h"

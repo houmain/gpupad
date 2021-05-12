@@ -212,7 +212,10 @@ void ZeroCopyContext::handleDebugMessage(const QOpenGLDebugMessage &message)
 
 //-------------------------------------------------------------------------
 
-TextureItem::TextureItem() = default;
+TextureItem::TextureItem(QObject *parent)
+    : QObject(parent)
+{
+}
 
 TextureItem::~TextureItem()
 {

@@ -2,6 +2,7 @@
 #include "BinaryEditor_EditableRegion.h"
 #include "BinaryEditor_HexModel.h"
 #include "BinaryEditor_DataModel.h"
+#include "BinaryEditorToolBar.h"
 #include "FileDialog.h"
 #include "Singletons.h"
 #include "FileCache.h"
@@ -59,15 +60,8 @@ int BinaryEditor::getStride(const Block &block)
     return stride;
 }
 
-Ui::BinaryEditorToolBar *BinaryEditor::createEditorToolBar(QWidget *container)
-{
-    auto toolBarWidgets = new Ui::BinaryEditorToolBar();
-    toolBarWidgets->setupUi(container);
-    return toolBarWidgets;
-}
-
 BinaryEditor::BinaryEditor(QString fileName,
-      const Ui::BinaryEditorToolBar* editorToolbar,
+      BinaryEditorToolBar* editorToolbar,
       QWidget *parent)
     : QTableView(parent),
       mEditorToolBar(*editorToolbar),
@@ -109,8 +103,8 @@ QList<QMetaObject::Connection> BinaryEditor::connectEditActions(
 
     updateEditorToolBar();
 
-    c += connect(mEditorToolBar.block,
-        qOverload<int>(&QComboBox::currentIndexChanged),
+    c += connect(&mEditorToolBar,
+        &BinaryEditorToolBar::blockIndexChanged,
         this, &BinaryEditor::setCurrentBlockIndex);
 
     return c;
@@ -272,18 +266,8 @@ void BinaryEditor::refresh()
 
 void BinaryEditor::updateEditorToolBar()
 {
-    if (mBlocks.size() > 1) {
-        mEditorToolBar.block->clear();
-        for (const auto &block : mBlocks)
-            mEditorToolBar.block->addItem(block.name);
-        mEditorToolBar.block->setCurrentIndex(mCurrentBlockIndex);
-        mEditorToolBar.labelBlock->setVisible(true);
-        mEditorToolBar.block->setVisible(true);
-    }
-    else {
-        mEditorToolBar.labelBlock->setVisible(false);
-        mEditorToolBar.block->setVisible(false);
-    }
+    mEditorToolBar.setBlocks(mBlocks);
+    mEditorToolBar.setCurrentBlockIndex(mCurrentBlockIndex);
 }
 
 void BinaryEditor::setBlocks(QList<Block> blocks)

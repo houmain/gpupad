@@ -1,4 +1,5 @@
 #include "TextureEditor.h"
+#include "TextureEditorToolBar.h"
 #include "FileDialog.h"
 #include "Singletons.h"
 #include "FileCache.h"
@@ -8,6 +9,7 @@
 #include "session/Item.h"
 #include "TextureItem.h"
 #include <QAction>
+#include <QApplication>
 #include <QOpenGLWidget>
 #include <QWheelEvent>
 #include <QScrollBar>
@@ -30,15 +32,8 @@ bool createFromRaw(const QByteArray &binary,
     return true;
 }
 
-Ui::TextureEditorToolBar* TextureEditor::createEditorToolBar(QWidget *container)
-{
-    auto toolBarWidgets = new Ui::TextureEditorToolBar();
-    toolBarWidgets->setupUi(container);
-    return toolBarWidgets;
-}
-
 TextureEditor::TextureEditor(QString fileName, 
-      const Ui::TextureEditorToolBar *editorToolBar, 
+      TextureEditorToolBar *editorToolBar, 
       QWidget *parent)
     : QGraphicsView(parent)
     , mEditorToolBar(*editorToolBar)
@@ -102,69 +97,44 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
 
     updateEditorToolBar();
 
-    c += connect(mEditorToolBar.level, 
-        qOverload<double>(&QDoubleSpinBox::valueChanged),
-        [&](double value) { mTextureItem->setLevel(value); });
-    c += connect(mEditorToolBar.z,
-        qOverload<double>(&QDoubleSpinBox::valueChanged),
-        [&](double value) { mTextureItem->setLayer(value); });
-    c += connect(mEditorToolBar.layer, 
-        qOverload<int>(&QSpinBox::valueChanged),
-        [&](int value) { mTextureItem->setLayer(value); });
-    c += connect(mEditorToolBar.sample, 
-        qOverload<int>(&QSpinBox::valueChanged),
-        [&](int value) { mTextureItem->setSample(value); });
-    c += connect(mEditorToolBar.face, 
-        qOverload<int>(&QComboBox::currentIndexChanged),
-        [&](int index) { mTextureItem->setFace(index); });
-    c += connect(mEditorToolBar.filter, 
-        &QCheckBox::stateChanged,
-        [&](int state) { mTextureItem->setMagnifyLinear(state != 0); });
-    c += connect(mEditorToolBar.flipVertically,
-        &QCheckBox::stateChanged,
-        [&](int state) { mTextureItem->setFlipVertically(state != 0); });
+    c += connect(&mEditorToolBar, &TextureEditorToolBar::levelChanged,
+        mTextureItem, &TextureItem::setLevel);
+    c += connect(&mEditorToolBar, &TextureEditorToolBar::layerChanged,
+        mTextureItem, &TextureItem::setLayer);
+    c += connect(&mEditorToolBar, &TextureEditorToolBar::sampleChanged,
+        mTextureItem, &TextureItem::setSample);
+    c += connect(&mEditorToolBar, &TextureEditorToolBar::faceChanged,
+        mTextureItem, &TextureItem::setFace);
+    c += connect(&mEditorToolBar, &TextureEditorToolBar::filterChanged,
+        mTextureItem, &TextureItem::setMagnifyLinear);
+    c += connect(&mEditorToolBar, &TextureEditorToolBar::flipVerticallyChanged,
+        mTextureItem, &TextureItem::setFlipVertically);
 
     return c;
 }
 
 void TextureEditor::updateEditorToolBar() 
 {
-    const auto maxLevel = std::max(mTexture.levels() - 1, 0);
-    mEditorToolBar.level->setMaximum(maxLevel);
-    mEditorToolBar.labelLevel->setVisible(maxLevel);
-    mEditorToolBar.level->setVisible(maxLevel);
-    mEditorToolBar.level->setValue(mTextureItem->level());
+    mEditorToolBar.setMaxLevel(std::max(mTexture.levels() - 1, 0));
+    mEditorToolBar.setLevel(mTextureItem->level());
 
-    const auto hasDepth = (mTexture.depth() > 1);
-    mEditorToolBar.labelZ->setVisible(hasDepth);
-    mEditorToolBar.z->setVisible(hasDepth);
-    mEditorToolBar.z->setSingleStep(hasDepth ? 0.5 / (mTexture.depth() - 1) : 1);
-    mEditorToolBar.z->setValue(mTextureItem->layer());
-
-    const auto maxLayer = std::max(mTexture.layers() - 1, 0);
-    mEditorToolBar.layer->setMaximum(maxLayer);
-    mEditorToolBar.labelLayer->setVisible(maxLayer);
-    mEditorToolBar.layer->setVisible(maxLayer);
-    mEditorToolBar.layer->setValue(mTextureItem->layer());
+    mEditorToolBar.setMaxLayer(
+        std::max(mTexture.layers() - 1, 0), mTexture.depth());
+    mEditorToolBar.setLayer(mTextureItem->layer());
 
     // disabled for now, since all samples are identical after download
-    const auto maxSample = 0; //std::max(mTexture.samples() - 1, 0);
-    mEditorToolBar.sample->setMinimum(-1);
-    mEditorToolBar.sample->setMaximum(maxSample);
-    mEditorToolBar.labelSample->setVisible(maxSample);
-    mEditorToolBar.sample->setVisible(maxSample);
-    mEditorToolBar.sample->setValue(mTextureItem->sample());
+    mEditorToolBar.setMaxSample(0); // std::max(mTexture.samples() - 1, 0)
+    mEditorToolBar.setSample(mTextureItem->sample());
 
-    const auto maxFace = std::max(mTexture.faces() - 1, 0);
-    mEditorToolBar.labelFace->setVisible(maxFace);
-    mEditorToolBar.face->setVisible(maxFace);
-    mEditorToolBar.face->setCurrentIndex(mTextureItem->face());
+    mEditorToolBar.setMaxFace(std::max(mTexture.faces() - 1, 0));
+    mEditorToolBar.setFace(mTextureItem->face());
 
-    mEditorToolBar.filter->setVisible(!mTexture.isMultisample());
-    mEditorToolBar.filter->setChecked(mTextureItem->magnifyLinear());
+    mEditorToolBar.setCanFilter(!mTexture.isMultisample());
+    mEditorToolBar.setFilter(mTextureItem->magnifyLinear());
 
-    mEditorToolBar.flipVertically->setVisible(mTexture.dimensions() == 2 || mTexture.isCubemap());
-    mEditorToolBar.flipVertically->setChecked(mTextureItem->flipVertically());
+    mEditorToolBar.setCanFlipVertically(
+      mTexture.dimensions() == 2 || mTexture.isCubemap());
+    mEditorToolBar.setFlipVertically(mTextureItem->flipVertically());
 }
 
 void TextureEditor::setFileName(QString fileName)

@@ -4,13 +4,13 @@
 #include "IEditor.h"
 #include "FindReplaceBar.h"
 #include "SourceType.h"
-#include "SourceEditorToolBar.h"
 #include <QPlainTextEdit>
 
 class QPaintEvent;
 class QResizeEvent;
 class QSyntaxHighlighter;
 class QCompleter;
+class SourceEditorToolBar;
 
 class SourceEditor final : public QPlainTextEdit, public IEditor
 {

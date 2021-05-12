@@ -3,6 +3,9 @@
 #include "FileCache.h"
 #include "FileDialog.h"
 #include "SynchronizeLogic.h"
+#include "SourceEditorToolBar.h"
+#include "BinaryEditorToolBar.h"
+#include "TextureEditorToolBar.h"
 #include <functional>
 #include <QDockWidget>
 #include <QAction>
@@ -25,13 +28,11 @@ EditorManager::~EditorManager() = default;
 
 void EditorManager::createEditorToolBars(QToolBar *mainToolBar) 
 {
-    auto widget = new QWidget(this);
-    mTextureEditorToolBar = TextureEditor::createEditorToolBar(widget);
-    mainToolBar->addWidget(widget);
+    mTextureEditorToolBar = new TextureEditorToolBar(this);
+    mainToolBar->addWidget(mTextureEditorToolBar);
 
-    widget = new QWidget(this);
-    mBinaryEditorToolBar = BinaryEditor::createEditorToolBar(widget);
-    mainToolBar->addWidget(widget);
+    mBinaryEditorToolBar = new BinaryEditorToolBar(this);
+    mainToolBar->addWidget(mBinaryEditorToolBar);
 
     mSourceEditorToolBar = new SourceEditorToolBar(this);
     mainToolBar->addWidget(mSourceEditorToolBar);
@@ -52,9 +53,9 @@ void EditorManager::updateEditorToolBarVisibility()
     const auto setVisible = [](QWidget* widget, bool visible) {
         widget->setMaximumWidth(visible ? 65536 : 0);
     };
-    setVisible(mTextureEditorToolBar->level->parentWidget(), 
+    setVisible(mTextureEditorToolBar, 
         mCurrentDock && qobject_cast<TextureEditor*>(mCurrentDock->widget()));
-    setVisible(mBinaryEditorToolBar->block->parentWidget(),
+    setVisible(mBinaryEditorToolBar,
         mCurrentDock && qobject_cast<BinaryEditor*>(mCurrentDock->widget()));
     setVisible(mSourceEditorToolBar,
         mCurrentDock && qobject_cast<SourceEditor*>(mCurrentDock->widget()));

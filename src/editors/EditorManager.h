@@ -82,8 +82,8 @@ private:
     std::map<QDockWidget*, IEditor*> mDocks;
     QDockWidget *mCurrentDock{ };
     FindReplaceBar *mFindReplaceBar{ };
-    Ui::TextureEditorToolBar *mTextureEditorToolBar{ };
-    Ui::BinaryEditorToolBar *mBinaryEditorToolBar{ };
+    TextureEditorToolBar *mTextureEditorToolBar{ };
+    BinaryEditorToolBar *mBinaryEditorToolBar{ };
     SourceEditorToolBar *mSourceEditorToolBar{ };
     bool mAutoRaise{ true };
 };

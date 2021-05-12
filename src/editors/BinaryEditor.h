@@ -2,8 +2,9 @@
 #define BINARYEDITOR_H
 
 #include "IEditor.h"
-#include "ui_BinaryEditorToolBar.h"
 #include <QTableView>
+
+class BinaryEditorToolBar;
 
 class BinaryEditor final : public QTableView, public IEditor
 {
@@ -34,10 +35,10 @@ public:
 
     static int getTypeSize(DataType type);
     static int getStride(const Block &block);
-    static Ui::BinaryEditorToolBar *createEditorToolBar(QWidget *container);
 
     BinaryEditor(QString fileName,
-        const Ui::BinaryEditorToolBar* editorToolbar, QWidget *parent = nullptr);
+        BinaryEditorToolBar* editorToolbar,
+        QWidget *parent = nullptr);
     ~BinaryEditor() override;
 
     QList<QMetaObject::Connection> connectEditActions(
@@ -76,7 +77,7 @@ private:
     void refresh();
     void updateEditorToolBar();
 
-    const Ui::BinaryEditorToolBar &mEditorToolBar;
+    BinaryEditorToolBar &mEditorToolBar;
     QString mFileName;
     bool mModified{ };
     QByteArray mData;

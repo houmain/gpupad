@@ -59,12 +59,14 @@ set(SOURCES
   src/TextureData.cpp
   src/VideoPlayer.cpp
   src/editors/BinaryEditor.cpp
+  src/editors/BinaryEditorToolBar.cpp
   src/editors/BinaryEditorToolBar.ui
   src/editors/DockWindow.cpp
   src/editors/EditorManager.cpp
   src/editors/FindReplaceBar.cpp
   src/editors/FindReplaceBar.ui
   src/editors/GlslHighlighter.cpp
+  src/editors/TextureEditorToolBar.cpp
   src/editors/TextureEditorToolBar.ui
   src/editors/TextureEditor.cpp
   src/editors/TextureItem.cpp

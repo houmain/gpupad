@@ -3,11 +3,11 @@
 
 #include "IEditor.h"
 #include "TextureData.h"
-#include "ui_TextureEditorToolBar.h"
 #include <QGraphicsView>
 #include <QOpenGLTexture>
 
 class TextureItem;
+class TextureEditorToolBar;
 
 class TextureEditor final : public QGraphicsView, public IEditor
 {
@@ -19,10 +19,8 @@ public:
         int width, height, depth, layers, samples;
     };
 
-    static Ui::TextureEditorToolBar *createEditorToolBar(QWidget *container);
-
     TextureEditor(QString fileName, 
-        const Ui::TextureEditorToolBar* editorToolbar, 
+        TextureEditorToolBar* editorToolbar, 
         QWidget *parent = nullptr);
     ~TextureEditor() override;
 
@@ -60,7 +58,7 @@ private:
     void setModified(bool modified);
     void updateEditorToolBar();
 
-    const Ui::TextureEditorToolBar &mEditorToolBar;
+    TextureEditorToolBar &mEditorToolBar;
     QString mFileName;
     RawFormat mRawFormat{ };
     bool mIsRaw{ };
