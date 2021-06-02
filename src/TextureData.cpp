@@ -990,13 +990,22 @@ bool TextureData::upload(GLuint *textureId,
     initializeKtxOpenGLFunctions();
 #endif
 
-    const auto originalFormat = mKtxTexture->glInternalformat;
-    mKtxTexture->glInternalformat = static_cast<ktx_uint32_t>(format);
+    const auto originalInternalFormat = mKtxTexture->glInternalformat;
+    const auto originalFormat = mKtxTexture->glFormat;
+    if (format != this->format()) {
+      auto tmp = TextureData();
+      tmp.create(QOpenGLTexture::Target::Target2D, format, 1, 1);
+      mKtxTexture->glInternalformat = tmp.mKtxTexture->glInternalformat;
+      mKtxTexture->glFormat = tmp.mKtxTexture->glFormat;
+    }
+
     auto target = static_cast<GLenum>(mTarget);
     auto error = GLenum{ };
     const auto result = (ktxTexture_GLUpload(
         mKtxTexture.get(), textureId, &target, &error) == KTX_SUCCESS);
-    mKtxTexture->glInternalformat = originalFormat;
+
+    mKtxTexture->glInternalformat = originalInternalFormat;
+    mKtxTexture->glFormat = originalFormat;
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     return result;
