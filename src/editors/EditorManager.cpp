@@ -365,7 +365,7 @@ bool EditorManager::reloadEditor()
         if (FileDialog::isUntitled(editor->fileName()))
             return false;
 
-        return editor->reload();
+        return editor->load();
     }
     return false;
 }

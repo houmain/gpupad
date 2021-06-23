@@ -167,16 +167,6 @@ bool SourceEditor::load()
     if (!Singletons::fileCache().getSource(mFileName, &source))
         return false;
 
-    setPlainText(source);
-    return true;
-}
-
-bool SourceEditor::reload()
-{
-    auto source = QString();
-    if (!Singletons::fileCache().loadSource(mFileName, &source))
-        return false;
-
     auto cursor = textCursor();
     auto position = cursor.position();
     cursor.beginEditBlock();

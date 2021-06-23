@@ -235,7 +235,7 @@ void FileCache::updateFileSystemWatches()
     for (const auto &fileName : qAsConst(filesChanged)) {
         if (auto editor = getEditor(fileName)) {
             if (!mEditorSaveAdvertised.remove(fileName))
-                editor->reload();
+                editor->load();
         }
         else {
             QMutexLocker lock(&mMutex);

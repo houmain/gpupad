@@ -129,17 +129,6 @@ bool BinaryEditor::load()
     return true;
 }
 
-bool BinaryEditor::reload()
-{
-    auto data = QByteArray();
-    if (!Singletons::fileCache().loadBinary(mFileName, &data))
-        return false;
-
-    replace(data);
-    setModified(false);
-    return true;
-}
-
 bool BinaryEditor::save()
 {
     QSaveFile file(fileName());

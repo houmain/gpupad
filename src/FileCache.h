@@ -18,9 +18,6 @@ public:
     explicit FileCache(QObject *parent = nullptr);
     ~FileCache();
 
-    bool loadSource(const QString &fileName, QString *source) const;
-    bool loadTexture(const QString &fileName, bool flipVertically, TextureData *texture) const;
-    bool loadBinary(const QString &fileName, QByteArray *binary) const;
     bool getSource(const QString &fileName, QString *source) const;
     bool getTexture(const QString &fileName, bool flipVertically, TextureData *texture) const;
     bool getBinary(const QString &fileName, QByteArray *binary) const;
@@ -40,6 +37,10 @@ Q_SIGNALS:
 
 private:
     using TextureKey = QPair<QString, bool>;
+
+    bool loadSource(const QString &fileName, QString *source) const;
+    bool loadTexture(const QString &fileName, bool flipVertically, TextureData *texture) const;
+    bool loadBinary(const QString &fileName, QByteArray *binary) const;
 
     void handleFileSystemFileChanged(const QString &fileName);
     void addFileSystemWatch(const QString &fileName, bool changed = false) const;

@@ -30,7 +30,6 @@ public:
     void setFileName(QString fileName) override;
     void setRawFormat(RawFormat rawFormat);
     bool load() override;
-    bool reload() override;
     bool save() override;
     int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }

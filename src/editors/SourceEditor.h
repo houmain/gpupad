@@ -25,7 +25,6 @@ public:
     QString fileName() const override { return mFileName; }
     void setFileName(QString fileName) override;
     bool load() override;
-    bool reload() override;
     bool save() override;
     int tabifyGroup() override { return 0; }
 
