@@ -219,6 +219,13 @@ void FileCache::updateFileSystemWatches()
             ++it;
         }
     }
+
+    for (const auto &fileName : qAsConst(filesChanged)) {
+        mSources.remove(fileName);
+        mBinaries.remove(fileName);
+        mTextures.remove(TextureKey(fileName, true));
+        mTextures.remove(TextureKey(fileName, false));
+    }
     lock.unlock();
 
     const auto getEditor = [](const auto &fileName) -> IEditor* {
@@ -234,15 +241,9 @@ void FileCache::updateFileSystemWatches()
 
     for (const auto &fileName : qAsConst(filesChanged)) {
         if (auto editor = getEditor(fileName)) {
-            if (!mEditorSaveAdvertised.remove(fileName))
+            if (!mEditorSaveAdvertised.remove(fileName)) {
                 editor->load();
-        }
-        else {
-            QMutexLocker lock(&mMutex);
-            mSources.remove(fileName);
-            mBinaries.remove(fileName);
-            mTextures.remove(TextureKey(fileName, true));
-            mTextures.remove(TextureKey(fileName, false));
+            }
         }
         Q_EMIT fileChanged(fileName);
     }

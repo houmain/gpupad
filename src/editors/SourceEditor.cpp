@@ -167,17 +167,39 @@ bool SourceEditor::load()
     if (!Singletons::fileCache().getSource(mFileName, &source))
         return false;
 
+    const auto current = document()->toPlainText();
+    const auto initial = current.isEmpty() && !document()->isUndoAvailable();
+
+    const auto firstDiff = [&]() {
+        const auto n = std::min(source.length(), current.length());
+        for (auto i = 0; i < n; i++)
+            if (source[i] != current[i])
+                return i;
+        return n;
+    }();
+    if (firstDiff == source.length())
+        return true;
+
+    const auto [lastDiffSource, lastDiffCurrent] = [&]() -> std::pair<int, int>{
+        for (auto i = source.length() - 1, 
+                  j = current.length() - 1; ; --i, --j)
+            if (i < 0 || j < 0 || source[i] != current[j])
+                return { i, j };
+        return { };
+    }();
+
     auto cursor = textCursor();
-    auto position = cursor.position();
     cursor.beginEditBlock();
-    cursor.movePosition(QTextCursor::Start);
-    cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
-    cursor.insertText(source);
-    cursor.setPosition(position);
+    cursor.setPosition(firstDiff);
+    cursor.setPosition(lastDiffCurrent + 1, QTextCursor::KeepAnchor);
+    cursor.insertText(source.mid(firstDiff, lastDiffSource - firstDiff));
+    cursor.setPosition(firstDiff);
     cursor.endEditBlock();
     setTextCursor(cursor);
 
     document()->setModified(false);
+    if (initial)
+        document()->clearUndoRedoStacks();
     return true;
 }
 
