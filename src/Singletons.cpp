@@ -3,6 +3,7 @@
 #include "FileDialog.h"
 #include "SynchronizeLogic.h"
 #include "Settings.h"
+#include "VideoManager.h"
 #include "editors/EditorManager.h"
 #include "session/SessionModel.h"
 #include "render/Renderer.h"
@@ -65,6 +66,12 @@ GLShareSynchronizer &Singletons::glShareSynchronizer()
     return *sInstance->mGLShareSynchronizer;
 }
 
+VideoManager &Singletons::videoManager()
+{
+    Q_ASSERT(onMainThread());
+    return *sInstance->mVideoManager;
+}
+
 Singletons::Singletons(QMainWindow *window)
     : mSettings(new Settings())
     , mFileCache(new FileCache())
@@ -72,10 +79,14 @@ Singletons::Singletons(QMainWindow *window)
     , mEditorManager(new EditorManager())
     , mSessionModel(new SessionModel())
     , mGLShareSynchronizer(new GLShareSynchronizer())
+    , mVideoManager(new VideoManager())
 {
     Q_ASSERT(onMainThread());
     sInstance = this;
     mSynchronizeLogic.reset(new SynchronizeLogic());
+
+    QObject::connect(&fileCache(), &FileCache::videoPlayerRequested,
+        &videoManager(), &VideoManager::handleVideoPlayerRequested, Qt::QueuedConnection);
 }
 
 Singletons::~Singletons() = default;

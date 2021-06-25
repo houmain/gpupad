@@ -9,8 +9,6 @@
 #include <QFileSystemWatcher>
 #include "TextureData.h"
 
-class VideoPlayer;
-
 class FileCache final : public QObject
 {
     Q_OBJECT
@@ -27,34 +25,22 @@ public:
     void invalidateEditorFile(const QString &fileName, bool emitFileChanged = true);
     void advertiseEditorSave(const QString &fileName);
     void updateEditorFiles();
-    void playVideoFiles();
-    void pauseVideoFiles();
-    void rewindVideoFiles();
 
 Q_SIGNALS:
     void fileChanged(const QString &fileName);
-    void videoPlayerRequested(const QString &fileName, bool flipVertically, QPrivateSignal) const;
+    void videoPlayerRequested(const QString &fileName, bool flipVertically) const;
 
 private:
     using TextureKey = QPair<QString, bool>;
 
-    bool loadSource(const QString &fileName, QString *source) const;
-    bool loadTexture(const QString &fileName, bool flipVertically, TextureData *texture) const;
-    bool loadBinary(const QString &fileName, QByteArray *binary) const;
-
     void handleFileSystemFileChanged(const QString &fileName);
     void addFileSystemWatch(const QString &fileName, bool changed = false) const;
     void updateFileSystemWatches();
-    void handleVideoPlayerRequested(const QString &fileName, bool flipVertically);
-    void handleVideoPlayerLoaded();
-    void asyncOpenVideoPlayer(const QString &fileName, bool flipVertically) const;
 
     QSet<QString> mEditorFilesInvalidated;
     QTimer mUpdateFileSystemWatchesTimer;
     QSet<QString> mEditorSaveAdvertised;
     QFileSystemWatcher mFileSystemWatcher;
-    std::map<QString, std::unique_ptr<VideoPlayer>> mVideoPlayers;
-    bool mVideosPlaying{ };
 
     mutable QMutex mMutex;
     mutable QMap<QString, QString> mSources;

@@ -1,6 +1,5 @@
 #include "FileCache.h"
 #include "Singletons.h"
-#include "VideoPlayer.h"
 #include "editors/EditorManager.h"
 #include "editors/SourceEditor.h"
 #include "editors/TextureEditor.h"
@@ -8,14 +7,72 @@
 #include <QThread>
 #include <QTextStream>
 
+namespace {
+    bool loadSource(const QString &fileName, QString *source)
+    {
+        if (!source)
+            return false;
+
+        if (FileDialog::isEmptyOrUntitled(fileName)) {
+            *source = "";
+            return true;
+        }
+        QFile file(fileName);
+        if (!file.open(QFile::ReadOnly | QFile::Text))
+            return false;
+
+        const auto unprintable = [](const auto &string) {
+          return (std::find_if(string.constBegin(), string.constEnd(),
+              [](QChar c) { return (!c.isPrint() && !c.isSpace()); }) != string.constEnd());
+        };
+
+        QTextStream stream(&file);
+        auto string = stream.readAll();
+        if (!string.isSimpleText() || unprintable(string)) {
+    #if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+          stream.setCodec("Windows-1250");
+          stream.seek(0);
+          string = stream.readAll();
+    #endif
+          if (unprintable(string))
+              return false;
+        }
+        *source = string;
+        return true;
+    }
+
+    bool loadTexture(const QString &fileName, bool flipVertically, TextureData *texture)
+    {
+        if (!texture || FileDialog::isEmptyOrUntitled(fileName))
+            return false;
+
+        auto file = TextureData();
+        if (!file.load(fileName, flipVertically))
+            return false;
+
+        *texture = file;
+        return true;
+    }
+
+    bool loadBinary(const QString &fileName, QByteArray *binary)
+    {
+        if (!binary || FileDialog::isEmptyOrUntitled(fileName))
+            return false;
+
+        QFile file(fileName);
+        if (!file.open(QFile::ReadOnly))
+            return false;
+        *binary = file.readAll();
+        return true;
+    }
+} // namespace
+
 FileCache::FileCache(QObject *parent) : QObject(parent)
 {
     connect(&mFileSystemWatcher, &QFileSystemWatcher::fileChanged,
         this, &FileCache::handleFileSystemFileChanged);
     connect(&mUpdateFileSystemWatchesTimer, &QTimer::timeout,
         this, &FileCache::updateFileSystemWatches);
-    connect(this, &FileCache::videoPlayerRequested,
-        this, &FileCache::handleVideoPlayerRequested, Qt::QueuedConnection);
 
     updateFileSystemWatches();
 }
@@ -63,73 +120,6 @@ void FileCache::updateEditorFiles()
     mEditorFilesInvalidated.clear();
 }
 
-bool FileCache::loadSource(const QString &fileName, QString *source) const
-{
-    if (!source)
-        return false;
-
-    if (FileDialog::isEmptyOrUntitled(fileName)) {
-        *source = "";
-        return true;
-    }
-    QFile file(fileName);
-    if (!file.open(QFile::ReadOnly | QFile::Text))
-        return false;
-
-    const auto unprintable = [](const auto &string) {
-      return (std::find_if(string.constBegin(), string.constEnd(),
-          [](QChar c) { return (!c.isPrint() && !c.isSpace()); }) != string.constEnd());
-    };
-
-    QTextStream stream(&file);
-    auto string = stream.readAll();
-    if (!string.isSimpleText() || unprintable(string)) {
-#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
-      stream.setCodec("Windows-1250");
-      stream.seek(0);
-      string = stream.readAll();
-#endif
-      if (unprintable(string))
-          return false;
-    }
-
-    *source = string;
-    return true;
-}
-
-bool FileCache::loadTexture(const QString &fileName, bool flipVertically, TextureData *texture) const
-{
-    if (!texture || FileDialog::isEmptyOrUntitled(fileName))
-        return false;
-
-    if (FileDialog::isVideoFileName(fileName)) {
-        texture->create(QOpenGLTexture::Target2D,
-            QOpenGLTexture::RGB8_UNorm, 1, 1, 1, 1, 1);
-        texture->clear();
-        asyncOpenVideoPlayer(fileName, flipVertically);
-        return true;
-    }
-
-    auto file = TextureData();
-    if (!file.load(fileName, flipVertically))
-        return false;
-
-    *texture = file;
-    return true;
-}
-
-bool FileCache::loadBinary(const QString &fileName, QByteArray *binary) const
-{
-    if (!binary || FileDialog::isEmptyOrUntitled(fileName))
-        return false;
-
-    QFile file(fileName);
-    if (!file.open(QFile::ReadOnly))
-        return false;
-    *binary = file.readAll();
-    return true;
-}
-
 bool FileCache::getSource(const QString &fileName, QString *source) const
 {
     Q_ASSERT(source);
@@ -157,8 +147,16 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically, Texture
     }
 
     addFileSystemWatch(fileName);
-    if (!loadTexture(fileName, flipVertically, texture))
+
+    if (FileDialog::isVideoFileName(fileName)) {
+        texture->create(QOpenGLTexture::Target2D,
+            QOpenGLTexture::RGB8_UNorm, 1, 1, 1, 1, 1);
+        texture->clear();
+        Q_EMIT videoPlayerRequested(fileName, flipVertically);
+    }
+    else if (!loadTexture(fileName, flipVertically, texture)) {
         return false;
+    }
     mTextures[key] = *texture;
     return true;
 }
@@ -250,54 +248,4 @@ void FileCache::updateFileSystemWatches()
 
     // enqueue update
     mUpdateFileSystemWatchesTimer.start(5);
-}
-
-void FileCache::asyncOpenVideoPlayer(const QString &fileName, bool flipVertically) const
-{
-    Q_EMIT videoPlayerRequested(fileName, flipVertically, QPrivateSignal());
-}
-
-void FileCache::handleVideoPlayerRequested(const QString &fileName, bool flipVertically)
-{
-    Q_ASSERT(onMainThread());
-    auto videoPlayer = new VideoPlayer(fileName, flipVertically);
-    connect(videoPlayer, &VideoPlayer::loadingFinished,
-        this, &FileCache::handleVideoPlayerLoaded);
-}
-
-void FileCache::handleVideoPlayerLoaded()
-{
-    Q_ASSERT(onMainThread());
-    auto videoPlayer = qobject_cast<VideoPlayer*>(QObject::sender());
-    if (videoPlayer->width()) {
-        if (mVideosPlaying)
-            videoPlayer->play();
-        mVideoPlayers[videoPlayer->fileName()].reset(videoPlayer);
-    }
-    else {
-        videoPlayer->deleteLater();
-    }
-}
-
-void FileCache::playVideoFiles()
-{
-    Q_ASSERT(onMainThread());
-    for (const auto &videoPlayer : mVideoPlayers)
-        videoPlayer.second->play();
-    mVideosPlaying = true;
-}
-
-void FileCache::pauseVideoFiles()
-{
-    Q_ASSERT(onMainThread());
-    for (const auto &videoPlayer : mVideoPlayers)
-        videoPlayer.second->pause();
-    mVideosPlaying = false;
-}
-
-void FileCache::rewindVideoFiles()
-{
-    Q_ASSERT(onMainThread());
-    for (const auto &videoPlayer : mVideoPlayers)
-        videoPlayer.second->rewind();
 }

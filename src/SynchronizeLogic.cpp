@@ -1,6 +1,7 @@
 #include "SynchronizeLogic.h"
 #include "Singletons.h"
 #include "FileCache.h"
+#include "VideoManager.h"
 #include "session/SessionModel.h"
 #include "scripting/ScriptEngine.h"
 #include "editors/EditorManager.h"
@@ -81,7 +82,7 @@ void SynchronizeLogic::resetRenderSession()
 void SynchronizeLogic::resetEvaluation()
 {
     evaluate(EvaluationType::Reset);
-    Singletons::fileCache().rewindVideoFiles();
+    Singletons::videoManager().rewindVideoFiles();
 }
 
 void SynchronizeLogic::manualEvaluation()
@@ -104,19 +105,19 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
     if (mEvaluationMode == EvaluationMode::Steady) {
         mEvaluationTimer->setSingleShot(false);
         mEvaluationTimer->start(10);
-        Singletons::fileCache().playVideoFiles();
+        Singletons::videoManager().playVideoFiles();
     }
     else if (mEvaluationMode == EvaluationMode::Automatic) {
         mEvaluationTimer->stop();
         mEvaluationTimer->setSingleShot(true);
         if (mRenderSessionInvalidated)
             mEvaluationTimer->start(0);
-        Singletons::fileCache().pauseVideoFiles();
+        Singletons::videoManager().pauseVideoFiles();
     }
     else {
         mEvaluationTimer->stop();
         Singletons::sessionModel().setActiveItems({ });
-        Singletons::fileCache().pauseVideoFiles();
+        Singletons::videoManager().pauseVideoFiles();
     }
 }
 

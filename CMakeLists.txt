@@ -58,6 +58,7 @@ set(SOURCES
   src/SynchronizeLogic.cpp
   src/TextureData.cpp
   src/VideoPlayer.cpp
+  src/VideoManager.cpp
   src/editors/BinaryEditor.cpp
   src/editors/BinaryEditorToolBar.cpp
   src/editors/BinaryEditorToolBar.ui

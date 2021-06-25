@@ -12,6 +12,7 @@ class SynchronizeLogic;
 class SessionModel;
 class Renderer;
 class GLShareSynchronizer;
+class VideoManager;
 
 bool onMainThread();
 
@@ -26,6 +27,7 @@ public:
     static SessionModel &sessionModel();
     static SynchronizeLogic &synchronizeLogic();
     static GLShareSynchronizer &glShareSynchronizer();
+    static VideoManager &videoManager();
 
     explicit Singletons(QMainWindow *window);
     ~Singletons();
@@ -41,6 +43,7 @@ private:
     QScopedPointer<SessionModel> mSessionModel;
     QScopedPointer<SynchronizeLogic> mSynchronizeLogic;
     QScopedPointer<GLShareSynchronizer> mGLShareSynchronizer;
+    QScopedPointer<VideoManager> mVideoManager;
 };
 
 #endif // SINGLETONS_H
