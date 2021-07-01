@@ -99,3 +99,5 @@ TextureDataType getTextureDataType(
 int getTextureDataSize(TextureDataType dataType);
 int getTextureComponentCount(
     QOpenGLTexture::TextureFormat format);
+
+Q_DECLARE_METATYPE(TextureData)

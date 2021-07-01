@@ -86,7 +86,7 @@ BinaryEditor::BinaryEditor(QString fileName,
 BinaryEditor::~BinaryEditor()
 {
     if (isModified())
-        Singletons::fileCache().invalidateEditorFile(mFileName);
+        Singletons::fileCache().handleEditorFileChanged(mFileName);
 }
 
 QList<QMetaObject::Connection> BinaryEditor::connectEditActions(
@@ -153,7 +153,7 @@ void BinaryEditor::replace(QByteArray data, bool emitFileChanged)
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
 
-    Singletons::fileCache().invalidateEditorFile(mFileName, emitFileChanged);
+    Singletons::fileCache().handleEditorFileChanged(mFileName, emitFileChanged);
 }
 
 void BinaryEditor::replaceRange(int offset, QByteArray data, bool emitFileChanged)
@@ -172,7 +172,7 @@ void BinaryEditor::replaceRange(int offset, QByteArray data, bool emitFileChange
 void BinaryEditor::handleDataChanged()
 {
     setModified(true);
-    Singletons::fileCache().invalidateEditorFile(mFileName);
+    Singletons::fileCache().handleEditorFileChanged(mFileName);
 }
 
 void BinaryEditor::setModified(bool modified)

@@ -6,6 +6,7 @@
 #include <QSet>
 #include <QMutex>
 #include <QTimer>
+#include <QThread>
 #include <QFileSystemWatcher>
 #include "TextureData.h"
 
@@ -22,31 +23,44 @@ public:
     bool updateTexture(const QString &fileName, bool flippedVertically, TextureData texture) const;
 
     // only call from main thread
-    void invalidateEditorFile(const QString &fileName, bool emitFileChanged = true);
-    void advertiseEditorSave(const QString &fileName);
+    void invalidateFile(const QString &fileName);
+    void handleEditorFileChanged(const QString &fileName, bool emitFileChanged = true);
+    void handleEditorSave(const QString &fileName);
     void updateEditorFiles();
 
 Q_SIGNALS:
     void fileChanged(const QString &fileName);
     void videoPlayerRequested(const QString &fileName, bool flipVertically) const;
+    void reloadSource(const QString &fileName, QPrivateSignal);
+    void reloadTexture(const QString &fileName, bool flipVertically, QPrivateSignal);
+    void reloadBinary(const QString &fileName, QPrivateSignal);
+
+public Q_SLOTS:
+    void handleSourceReloaded(const QString &fileName, QString);
+    void handleTextureReloaded(const QString &fileName, bool flipVertically, TextureData);
+    void handleBinaryReloaded(const QString &fileName, QByteArray);
 
 private:
+    class BackgroundLoader;
     using TextureKey = QPair<QString, bool>;
 
     void handleFileSystemFileChanged(const QString &fileName);
     void addFileSystemWatch(const QString &fileName, bool changed = false) const;
     void updateFileSystemWatches();
-
-    QSet<QString> mEditorFilesInvalidated;
-    QTimer mUpdateFileSystemWatchesTimer;
-    QSet<QString> mEditorSaveAdvertised;
-    QFileSystemWatcher mFileSystemWatcher;
+    bool reloadFileInBackground(const QString &fileName);
+    void purgeFile(const QString &fileName);
 
     mutable QMutex mMutex;
     mutable QMap<QString, QString> mSources;
     mutable QMap<TextureKey, TextureData> mTextures;
     mutable QMap<QString, QByteArray> mBinaries;
     mutable QMap<QString, bool> mFileSystemWatchesToAdd;
+
+    QSet<QString> mEditorFilesChanged;
+    QSet<QString> mEditorSaveAdvertised;
+    QTimer mUpdateFileSystemWatchesTimer;
+    QFileSystemWatcher mFileSystemWatcher;
+    QThread mBackgroundLoaderThread;
 };
 
 #endif // FILECACHE_H

@@ -53,7 +53,7 @@ SourceEditor::SourceEditor(QString fileName
     , mLineNumberArea(new LineNumberArea(this))
 {
     connect(this, &SourceEditor::textChanged,
-        [this]() { Singletons::fileCache().invalidateEditorFile(mFileName); });
+        [this]() { Singletons::fileCache().handleEditorFileChanged(mFileName); });
     connect(this, &SourceEditor::blockCountChanged,
         this, &SourceEditor::updateViewportMargins);
     connect(this, &SourceEditor::updateRequest,

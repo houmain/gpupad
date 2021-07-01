@@ -1,5 +1,6 @@
 #include "FileCache.h"
 #include "Singletons.h"
+#include "session/SessionModel.h"
 #include "editors/EditorManager.h"
 #include "editors/SourceEditor.h"
 #include "editors/TextureEditor.h"
@@ -7,7 +8,8 @@
 #include <QThread>
 #include <QTextStream>
 
-namespace {
+namespace
+{
     bool loadSource(const QString &fileName, QString *source)
     {
         if (!source)
@@ -21,22 +23,27 @@ namespace {
         if (!file.open(QFile::ReadOnly | QFile::Text))
             return false;
 
-        const auto unprintable = [](const auto &string) {
-          return (std::find_if(string.constBegin(), string.constEnd(),
-              [](QChar c) { return (!c.isPrint() && !c.isSpace()); }) != string.constEnd());
+        const auto isNonUtf = [](const auto &string) {
+            return (std::find_if(string.constBegin(), string.constEnd(),
+                [](QChar c) { return c.isNonCharacter(); }) != string.constEnd());
         };
-
         QTextStream stream(&file);
         auto string = stream.readAll();
-        if (!string.isSimpleText() || unprintable(string)) {
-    #if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
-          stream.setCodec("Windows-1250");
-          stream.seek(0);
-          string = stream.readAll();
-    #endif
-          if (unprintable(string))
-              return false;
+        if (isNonUtf(string)) {
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+            stream.setCodec("Windows-1250");
+            stream.seek(0);
+            string = stream.readAll();
+#endif
+
+            const auto isUnprintable = [](const auto &string) {
+              return (std::find_if(string.constBegin(), string.constEnd(),
+                  [](QChar c) { return (!c.isPrint() && !c.isSpace()); }) != string.constEnd());
+            };
+            if (isUnprintable(string))
+                return false;
         }
+
         *source = string;
         return true;
     }
@@ -65,42 +72,119 @@ namespace {
         *binary = file.readAll();
         return true;
     }
+
+    bool isFileInUse(const QString &fileName)
+    {
+        if (Singletons::editorManager().getEditor(fileName))
+            return true;
+        auto fileInUse = false;
+        Singletons::sessionModel().forEachFileItem(
+            [&](const FileItem& item) { fileInUse |= (item.fileName == fileName); });
+        return fileInUse;
+    }
 } // namespace
 
-FileCache::FileCache(QObject *parent) : QObject(parent)
+class FileCache::BackgroundLoader final : public QObject 
 {
+    Q_OBJECT
+
+public Q_SLOTS:
+    void loadSource(const QString &fileName) 
+    {
+        auto source = QString();
+        if (::loadSource(fileName, &source))
+            Q_EMIT sourceLoaded(fileName, std::move(source));
+    }
+
+    void loadTexture(const QString &fileName, bool flipVertically) 
+    {
+        auto texture = TextureData();
+        if (::loadTexture(fileName, flipVertically, &texture))
+            Q_EMIT textureLoaded(fileName, flipVertically, std::move(texture));
+    }
+
+    void loadBinary(const QString &fileName) 
+    {
+        auto binary = QByteArray();
+        if (::loadBinary(fileName, &binary))
+            Q_EMIT binaryLoaded(fileName, std::move(binary));
+    }
+
+Q_SIGNALS:
+    void sourceLoaded(const QString &fileName, QString source);
+    void textureLoaded(const QString &fileName, bool flipVertically, TextureData texture);
+    void binaryLoaded(const QString &fileName, QByteArray binary);
+};
+
+FileCache::FileCache(QObject *parent) 
+    : QObject(parent)
+{
+    qRegisterMetaType<TextureData>();
+
     connect(&mFileSystemWatcher, &QFileSystemWatcher::fileChanged,
         this, &FileCache::handleFileSystemFileChanged);
     connect(&mUpdateFileSystemWatchesTimer, &QTimer::timeout,
         this, &FileCache::updateFileSystemWatches);
 
-    updateFileSystemWatches();
+    auto backgroundLoader = new BackgroundLoader();
+    connect(this, &FileCache::reloadSource,
+        backgroundLoader, &BackgroundLoader::loadSource);
+    connect(this, &FileCache::reloadTexture,
+        backgroundLoader, &BackgroundLoader::loadTexture);
+    connect(this, &FileCache::reloadBinary,
+        backgroundLoader, &BackgroundLoader::loadBinary);
+
+    connect(backgroundLoader, &BackgroundLoader::sourceLoaded,
+        this, &FileCache::handleSourceReloaded);
+    connect(backgroundLoader, &BackgroundLoader::textureLoaded,
+        this, &FileCache::handleTextureReloaded);
+    connect(backgroundLoader, &BackgroundLoader::binaryLoaded,
+        this, &FileCache::handleBinaryReloaded);
+
+    connect(&mBackgroundLoaderThread, &QThread::finished,
+        backgroundLoader, &QObject::deleteLater);
+
+    mBackgroundLoaderThread.start();
+    backgroundLoader->moveToThread(&mBackgroundLoaderThread);
+
+    mUpdateFileSystemWatchesTimer.setInterval(5);
+    mUpdateFileSystemWatchesTimer.setSingleShot(false);
+    mUpdateFileSystemWatchesTimer.start();
 }
 
-FileCache::~FileCache() = default;
-
-void FileCache::advertiseEditorSave(const QString &fileName)
+FileCache::~FileCache() 
 {
-    Q_ASSERT(onMainThread());
+    mBackgroundLoaderThread.quit();
+    mBackgroundLoaderThread.wait();
+}
+
+void FileCache::invalidateFile(const QString &fileName) 
+{
     QMutexLocker lock(&mMutex);
-    mEditorSaveAdvertised.insert(fileName);
+    purgeFile(fileName);
 }
 
-void FileCache::invalidateEditorFile(const QString &fileName, bool emitFileChanged)
+void FileCache::handleEditorFileChanged(const QString &fileName, bool emitFileChanged)
 {
     Q_ASSERT(onMainThread());
-    mEditorFilesInvalidated.insert(fileName);
-
+    mEditorFilesChanged.insert(fileName);
     if (emitFileChanged)
         Q_EMIT fileChanged(fileName);
+}
+
+void FileCache::handleEditorSave(const QString &fileName)
+{
+    Q_ASSERT(onMainThread());
+    mEditorSaveAdvertised.insert(fileName);
 }
 
 void FileCache::updateEditorFiles()
 {
     Q_ASSERT(onMainThread());
     QMutexLocker lock(&mMutex);
+
     auto &editorManager = Singletons::editorManager();
-    for (const auto &fileName : qAsConst(mEditorFilesInvalidated)) {
+    for (const auto &fileName : qAsConst(mEditorFilesChanged)) {
         if (auto editor = editorManager.getSourceEditor(fileName)) {
             mSources[fileName] = editor->source();
         }
@@ -108,22 +192,21 @@ void FileCache::updateEditorFiles()
             mBinaries[fileName] = editor->data();
         }
         else if (auto editor = editorManager.getTextureEditor(fileName)) {
-            mTextures[TextureKey(fileName, false)] = editor->texture();
+            const auto &texture = editor->texture();
+            mTextures[TextureKey(fileName, texture.flippedVertically())] = texture;
         }
         else {
-            mSources.remove(fileName);
-            mBinaries.remove(fileName);
-            mTextures.remove(TextureKey(fileName, true));
-            mTextures.remove(TextureKey(fileName, false));
+            purgeFile(fileName);
         }
     }
-    mEditorFilesInvalidated.clear();
+    mEditorFilesChanged.clear();
 }
 
 bool FileCache::getSource(const QString &fileName, QString *source) const
 {
     Q_ASSERT(source);
     QMutexLocker lock(&mMutex);
+
     if (mSources.contains(fileName)) {
         *source = mSources[fileName];
         return true;
@@ -140,6 +223,7 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically, Texture
 {
     Q_ASSERT(texture);
     QMutexLocker lock(&mMutex);
+
     const auto key = TextureKey(fileName, flipVertically);
     if (mTextures.contains(key)) {
         *texture = mTextures[key];
@@ -163,7 +247,9 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically, Texture
 
 bool FileCache::updateTexture(const QString &fileName, bool flippedVertically, TextureData texture) const
 {
+    Q_ASSERT(!texture.isNull());
     QMutexLocker lock(&mMutex);
+
     const auto key = TextureKey(fileName, flippedVertically);
     if (!mTextures.contains(key))
         return false;
@@ -175,6 +261,7 @@ bool FileCache::getBinary(const QString &fileName, QByteArray *binary) const
 {
     Q_ASSERT(binary);
     QMutexLocker lock(&mMutex);
+
     if (mBinaries.contains(fileName)) {
         *binary = mBinaries[fileName];
         return true;
@@ -187,65 +274,112 @@ bool FileCache::getBinary(const QString &fileName, QByteArray *binary) const
     return true;
 }
 
+void FileCache::handleFileSystemFileChanged(const QString &fileName)
+{
+    Q_ASSERT(onMainThread());
+    addFileSystemWatch(fileName, true);
+}
+
 void FileCache::addFileSystemWatch(const QString &fileName, bool changed) const
 {
     if (!FileDialog::isEmptyOrUntitled(fileName))
         mFileSystemWatchesToAdd[fileName] |= changed;
 }
 
-void FileCache::handleFileSystemFileChanged(const QString &fileName)
-{
-    QMutexLocker lock(&mMutex);
-    addFileSystemWatch(fileName, true);
-}
-
 void FileCache::updateFileSystemWatches()
 {
+    Q_ASSERT(onMainThread());
     QMutexLocker lock(&mMutex);
-    auto filesChanged = QSet<QString>();
+
     for (auto it = mFileSystemWatchesToAdd.begin(); it != mFileSystemWatchesToAdd.end(); ) {
         const auto &fileName = it.key();
         const auto &changed = it.value();
         mFileSystemWatcher.removePath(it.key());
         if (QFileInfo(fileName).exists() &&
             mFileSystemWatcher.addPath(fileName)) {
-            if (changed)
-                filesChanged.insert(fileName);
+            if (changed && !mEditorSaveAdvertised.remove(fileName)) {
+                if (!reloadFileInBackground(fileName)) {
+                    purgeFile(fileName);
+                    Q_EMIT fileChanged(fileName);
+                }
+            }
             it = mFileSystemWatchesToAdd.erase(it);
         }
         else {
             ++it;
         }
     }
+}
 
-    for (const auto &fileName : qAsConst(filesChanged)) {
-        mSources.remove(fileName);
-        mBinaries.remove(fileName);
-        mTextures.remove(TextureKey(fileName, true));
-        mTextures.remove(TextureKey(fileName, false));
+bool FileCache::reloadFileInBackground(const QString &fileName) 
+{
+    if (mSources.contains(fileName)) {
+        Q_EMIT reloadSource(fileName, QPrivateSignal());
+        return true;
     }
+    if (mTextures.contains({ fileName, true })) {
+        Q_EMIT reloadTexture(fileName, true, QPrivateSignal());
+        return true;
+    } 
+    if (mTextures.contains({ fileName, false })) {
+        Q_EMIT reloadTexture(fileName, false, QPrivateSignal());
+        return true;
+    } 
+    if (mBinaries.contains(fileName)) {
+        Q_EMIT reloadBinary(fileName, QPrivateSignal());
+        return true;
+    }
+    return false;
+}
+
+void FileCache::purgeFile(const QString &fileName)
+{
+    mSources.remove(fileName);
+    mBinaries.remove(fileName);
+    mTextures.remove(TextureKey(fileName, true));
+    mTextures.remove(TextureKey(fileName, false));
+}
+
+void FileCache::handleSourceReloaded(const QString &fileName, QString source) 
+{
+    Q_ASSERT(onMainThread());
+    QMutexLocker lock(&mMutex);
+
+    mSources[fileName] = source;
     lock.unlock();
 
-    const auto getEditor = [](const auto &fileName) -> IEditor* {
-        auto &editorManager = Singletons::editorManager();
-        if (auto editor = editorManager.getSourceEditor(fileName))
-            return editor;
-        if (auto editor = editorManager.getBinaryEditor(fileName))
-            return editor;
-        else if (auto editor = editorManager.getTextureEditor(fileName))
-            return editor;
-        return nullptr;
-    };
+    if (auto editor = Singletons::editorManager().getSourceEditor(fileName))
+        editor->load();
 
-    for (const auto &fileName : qAsConst(filesChanged)) {
-        if (auto editor = getEditor(fileName)) {
-            if (!mEditorSaveAdvertised.remove(fileName)) {
-                editor->load();
-            }
-        }
-        Q_EMIT fileChanged(fileName);
-    }
-
-    // enqueue update
-    mUpdateFileSystemWatchesTimer.start(5);
+    Q_EMIT fileChanged(fileName);
 }
+
+void FileCache::handleTextureReloaded(const QString &fileName, bool flipVertically, TextureData texture) 
+{
+    Q_ASSERT(onMainThread());
+    QMutexLocker lock(&mMutex);
+
+    mTextures[TextureKey(fileName, flipVertically)] = texture;
+    lock.unlock();
+
+    if (auto editor = Singletons::editorManager().getTextureEditor(fileName))
+        editor->load();
+    
+    Q_EMIT fileChanged(fileName);
+}
+
+void FileCache::handleBinaryReloaded(const QString &fileName, QByteArray binary) 
+{
+    Q_ASSERT(onMainThread());
+    QMutexLocker lock(&mMutex);
+
+    mBinaries[fileName] = binary;
+    lock.unlock();
+
+    if (auto editor = Singletons::editorManager().getBinaryEditor(fileName))
+        editor->load();
+
+    Q_EMIT fileChanged(fileName);
+}
+
+#include "FileCache.moc"

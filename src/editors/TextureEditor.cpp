@@ -80,7 +80,7 @@ TextureEditor::~TextureEditor()
     delete scene();
 
     if (isModified())
-        Singletons::fileCache().invalidateEditorFile(mFileName);
+        Singletons::fileCache().handleEditorFileChanged(mFileName);
 }
 
 QList<QMetaObject::Connection> TextureEditor::connectEditActions(
@@ -195,7 +195,7 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
 
-    Singletons::fileCache().invalidateEditorFile(mFileName, emitFileChanged);
+    Singletons::fileCache().handleEditorFileChanged(mFileName, emitFileChanged);
 
     if (qApp->focusWidget() == this)
       updateEditorToolBar();

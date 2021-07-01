@@ -304,7 +304,7 @@ bool EditorManager::saveEditor()
         if (FileDialog::isUntitled(editor->fileName()))
             return saveEditorAs();
 
-        Singletons::fileCache().advertiseEditorSave(editor->fileName());
+        Singletons::fileCache().handleEditorSave(editor->fileName());
         if (!editor->save())
             return saveEditorAs();
         return true;
@@ -364,6 +364,8 @@ bool EditorManager::reloadEditor()
     if (auto editor = currentEditor()) {
         if (FileDialog::isUntitled(editor->fileName()))
             return false;
+
+        Singletons::fileCache().invalidateFile(editor->fileName());
 
         return editor->load();
     }
@@ -485,7 +487,7 @@ void EditorManager::handleEditorFilenameChanged(QDockWidget *dock)
 {
     if (auto editor = mDocks[dock]) {
         dock->setWindowTitle(FileDialog::getWindowTitle(editor->fileName()));
-        Singletons::fileCache().invalidateEditorFile(editor->fileName());
+        Singletons::fileCache().handleEditorFileChanged(editor->fileName());
     }
 }
 
