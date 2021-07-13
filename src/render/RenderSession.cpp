@@ -449,7 +449,8 @@ void RenderSession::prepare(bool itemsChanged,
                         }
 
                         if (!updatingPreviewTextures())
-                            mTimerQueries.append({ call.itemId(), call.timerQuery() });
+                            if (auto timerQuery = call.timerQuery())
+                                mTimerQueries.append({ call.itemId(), timerQuery });
                         mUsedItems += call.usedItems();
                     });
             }
