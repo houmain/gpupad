@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <map>
+#include <memory>
 
 class VideoPlayer;
 
@@ -10,6 +11,9 @@ class VideoManager : public QObject
     Q_OBJECT
 public:
     explicit VideoManager(QObject *parent = nullptr);
+    VideoManager(const VideoManager&) = delete;
+    VideoManager& operator=(const VideoManager&) = delete;
+    ~VideoManager();
 
     void playVideoFiles();
     void pauseVideoFiles();

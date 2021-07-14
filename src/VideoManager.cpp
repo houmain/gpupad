@@ -9,6 +9,8 @@ VideoManager::VideoManager(QObject *parent)
 {
 }
 
+VideoManager::~VideoManager() = default;
+
 void VideoManager::handleVideoPlayerRequested(const QString &fileName, bool flipVertically)
 {
     Q_ASSERT(onMainThread());
