@@ -28,6 +28,7 @@ namespace
                 [](QChar c) { return c.isNonCharacter(); }) != string.constEnd());
         };
         QTextStream stream(&file);
+        stream.setCodec("UTF-8");
         auto string = stream.readAll();
         if (isNonUtf(string)) {
 #if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))

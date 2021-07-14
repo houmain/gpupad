@@ -226,7 +226,7 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
     rule.format = mCommentFormat;
     mHighlightingRules.append(rule);
 
-    rule.pattern = QRegularExpression("\\s+");
+    rule.pattern = QRegularExpression("\\s+", QRegularExpression::UseUnicodePropertiesOption);
     rule.format = whiteSpaceFormat;
     mHighlightingRules.append(rule);
 

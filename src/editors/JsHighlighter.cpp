@@ -105,7 +105,7 @@ JsHighlighter::JsHighlighter(bool darkTheme, QObject *parent)
     rule.format = singleLineCommentFormat;
     mHighlightingRules.append(rule);
 
-    rule.pattern = QRegularExpression("\\s+");
+    rule.pattern = QRegularExpression("\\s+", QRegularExpression::UseUnicodePropertiesOption);
     rule.format = whiteSpaceFormat;
     mHighlightingRules.append(rule);
 
