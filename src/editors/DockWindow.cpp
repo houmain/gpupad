@@ -78,6 +78,16 @@ void DockWindow::tabbedDockClicked(int index)
     }
 }
 
+void DockWindow::tabBarDoubleClicked(int index) 
+{
+    auto tabBar = static_cast<QTabBar*>(QObject::sender());
+    if (index == -1) {
+        if (QApplication::mouseButtons() & Qt::LeftButton) {
+            Q_EMIT openNewDock();
+        }
+    }
+}
+
 void DockWindow::updateDocks()
 {
     for (const auto &connection : qAsConst(mDockConnections))
@@ -101,4 +111,7 @@ void DockWindow::updateTabBar(QTabBar *tabBar)
     mDockConnections +=
         connect(tabBar, &QTabBar::tabBarClicked,
             this, &DockWindow::tabbedDockClicked);
+    mDockConnections +=
+        connect(tabBar, &QTabBar::tabBarDoubleClicked,
+            this, &DockWindow::tabBarDoubleClicked);
 }

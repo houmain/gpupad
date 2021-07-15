@@ -10,6 +10,9 @@ public:
     explicit DockWindow(QWidget *parent = nullptr);
     ~DockWindow() override;
 
+Q_SIGNALS:
+    void openNewDock();
+
 protected:
     void raiseDock(QDockWidget *dock);
     virtual bool closeDock(QDockWidget *dock, bool promptSave = true);
@@ -20,6 +23,7 @@ protected:
 
 private:
     void tabbedDockClicked(int index);
+    void tabBarDoubleClicked(int index);
     void updateDocks();
     void updateTabBar(QTabBar *tabBar);
 

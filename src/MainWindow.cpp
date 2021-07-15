@@ -211,6 +211,8 @@ MainWindow::MainWindow(QWidget *parent)
         mSessionProperties.data(), &SessionProperties::openItemEditor);
     connect(mUi->menuSession, &QMenu::aboutToShow,
         mSessionEditor.data(), &SessionEditor::updateItemActions);
+    connect(&mEditorManager, &DockWindow::openNewDock,
+        this, &MainWindow::newFile);
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
     connect(mOutputWindow.data(), &OutputWindow::typeSelectionChanged,
