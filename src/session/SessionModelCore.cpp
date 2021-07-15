@@ -306,7 +306,7 @@ QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
     for (auto i = 2; hasChildWithName(parent, name); ++i)
         name = typeName + QStringLiteral(" %1").arg(i);
     
-    auto insert = [&](auto item) {
+    const auto insert = [&](Item* item) {
         item->type = type;
         item->name = name;
         item->id = id;
@@ -346,13 +346,7 @@ void SessionModelCore::deleteItem(const QModelIndex &index)
 
 const Item* SessionModelCore::findItem(ItemId id) const
 {
-    // TODO: improve performance
-    const Item* result = nullptr;
-    forEachItem(*mRoot, [&](const Item &item) {
-        if (item.id == id)
-            result = &item;
-    });
-    return result;
+    return mItemsById.value(id);
 }
 
 QModelIndex SessionModelCore::getIndex(const Item *item, ColumnType column) const
@@ -398,6 +392,7 @@ Item::Type SessionModelCore::getItemType(const QModelIndex &index) const
 void SessionModelCore::insertItem(QList<Item*> *list, Item *item,
         const QModelIndex &parent, int row)
 {
+    mItemsById[item->id] = item;
     beginInsertRows(parent, row, row);
     list->insert(row, item);
     endInsertRows();
@@ -406,6 +401,7 @@ void SessionModelCore::insertItem(QList<Item*> *list, Item *item,
 void SessionModelCore::removeItem(QList<Item*> *list,
     const QModelIndex &parent, int row)
 {
+    mItemsById.remove(list->at(row)->id);
     beginRemoveRows(parent, row, row);
     list->removeAt(row);
     endRemoveRows();

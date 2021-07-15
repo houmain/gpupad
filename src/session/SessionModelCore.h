@@ -188,6 +188,7 @@ private:
     ItemId mNextItemId{ 1 };
     QScopedPointer<Group> mRoot;
     QUndoStack mUndoStack;
+    QMap<ItemId, const Item*> mItemsById;
 };
 
 #endif // SESSIONMODELCORE_H
