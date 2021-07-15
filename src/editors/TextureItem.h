@@ -16,6 +16,7 @@ class ZeroCopyContext;
 class TextureItem final : public QObject, public QGraphicsItem
 {
     Q_OBJECT
+    Q_INTERFACES(QGraphicsItem)
 public:
     explicit TextureItem(QObject *parent = nullptr);
     ~TextureItem() override;

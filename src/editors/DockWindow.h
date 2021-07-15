@@ -24,6 +24,8 @@ protected:
 private:
     void tabbedDockClicked(int index);
     void tabBarDoubleClicked(int index);
+    void openContextMenu(int index);
+    void closeDocksExcept(QTabBar *tabBar, int index);
     void updateDocks();
     void updateTabBar(QTabBar *tabBar);
 
