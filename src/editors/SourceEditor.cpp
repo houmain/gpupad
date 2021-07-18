@@ -177,23 +177,28 @@ bool SourceEditor::load()
                 return i;
         return n;
     }();
-    if (firstDiff == source.length())
+    if (firstDiff == source.length() &&
+        firstDiff == current.length())
         return true;
 
     const auto [lastDiffSource, lastDiffCurrent] = [&]() -> std::pair<int, int>{
         for (auto i = source.length() - 1, 
                   j = current.length() - 1; ; --i, --j)
-            if (i < 0 || j < 0 || source[i] != current[j])
-                return { i, j };
+            if (i < firstDiff || j < firstDiff || source[i] != current[j])
+                return { i + 1, j + 1 };
         return { };
     }();
 
     auto cursor = textCursor();
+    const auto position = cursor.position();
+    const auto anchor = cursor.anchor();
     cursor.beginEditBlock();
     cursor.setPosition(firstDiff);
-    cursor.setPosition(lastDiffCurrent + 1, QTextCursor::KeepAnchor);
-    cursor.insertText(source.mid(firstDiff, lastDiffSource - firstDiff));
-    cursor.setPosition(firstDiff);
+    cursor.setPosition(lastDiffCurrent, QTextCursor::KeepAnchor);
+    const auto diff = QString(source.mid(firstDiff, lastDiffSource - firstDiff));
+    cursor.insertText(diff);
+    cursor.setPosition(std::min(anchor, firstDiff));
+    cursor.setPosition(std::min(position, firstDiff), QTextCursor::KeepAnchor);
     cursor.endEditBlock();
     setTextCursor(cursor);
 
@@ -206,7 +211,7 @@ bool SourceEditor::load()
 bool SourceEditor::save()
 {
     QSaveFile file(fileName());
-    if (!file.open(QFile::WriteOnly | QFile::Text))
+    if (!file.open(QFile::WriteOnly))
         return false;
     file.write(document()->toPlainText().toUtf8());
     if (!file.commit())

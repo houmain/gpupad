@@ -12,6 +12,7 @@ namespace
 {
     bool loadSource(const QString &fileName, QString *source)
     {
+        const auto detectEncodingSize = 1024;
         if (!source)
             return false;
 
@@ -20,32 +21,38 @@ namespace
             return true;
         }
         QFile file(fileName);
-        if (!file.open(QFile::ReadOnly | QFile::Text))
+        if (!file.open(QFile::ReadOnly))
             return false;
 
-        const auto isNonUtf = [](const auto &string) {
-            return (std::find_if(string.constBegin(), string.constEnd(),
-                [](QChar c) { return c.isNonCharacter(); }) != string.constEnd());
-        };
         QTextStream stream(&file);
-        stream.setCodec("UTF-8");
-        auto string = stream.readAll();
-        if (isNonUtf(string)) {
+        auto string = stream.read(detectEncodingSize);
+
+        const auto isUnprintable = [&]() {
+            return (std::find_if(string.constBegin(), string.constEnd(),
+                [](QChar c) {
+                    const auto code = c.unicode();
+                    if (code == 0xFFFD ||
+                        (code < 31 &&
+                         code != '\n' &&
+                         code != '\r' &&
+                         code != '\t'))
+                        return true;
+                    return false;
+                }) != string.constEnd());
+        };
+
 #if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+        if (isUnprintable()) {
             stream.setCodec("Windows-1250");
             stream.seek(0);
-            string = stream.readAll();
+            string = stream.read(detectEncodingSize);
+        }
 #endif
 
-            const auto isUnprintable = [](const auto &string) {
-              return (std::find_if(string.constBegin(), string.constEnd(),
-                  [](QChar c) { return (!c.isPrint() && !c.isSpace()); }) != string.constEnd());
-            };
-            if (isUnprintable(string))
-                return false;
-        }
+        if (isUnprintable())
+            return false;
 
-        *source = string;
+        *source = string + stream.readAll();
         return true;
     }
 
