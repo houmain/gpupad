@@ -21,7 +21,7 @@ namespace
             return true;
         }
         QFile file(fileName);
-        if (!file.open(QFile::ReadOnly))
+        if (!file.open(QFile::ReadOnly | QFile::Text))
             return false;
 
         QTextStream stream(&file);
