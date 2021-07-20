@@ -192,6 +192,7 @@ bool SourceEditor::load()
     auto cursor = textCursor();
     const auto position = cursor.position();
     const auto anchor = cursor.anchor();
+    const auto scrollPosition = verticalScrollBar()->sliderPosition();
     cursor.beginEditBlock();
     cursor.setPosition(firstDiff);
     cursor.setPosition(lastDiffCurrent, QTextCursor::KeepAnchor);
@@ -201,6 +202,7 @@ bool SourceEditor::load()
     cursor.setPosition(std::min(position, firstDiff), QTextCursor::KeepAnchor);
     cursor.endEditBlock();
     setTextCursor(cursor);
+    verticalScrollBar()->setSliderPosition(scrollPosition);
 
     document()->setModified(false);
     if (initial)
@@ -211,7 +213,7 @@ bool SourceEditor::load()
 bool SourceEditor::save()
 {
     QSaveFile file(fileName());
-    if (!file.open(QFile::WriteOnly))
+    if (!file.open(QFile::WriteOnly | QFile::Text))
         return false;
     file.write(document()->toPlainText().toUtf8());
     if (!file.commit())
