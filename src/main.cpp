@@ -4,6 +4,7 @@
 #include "FileDialog.h"
 #include <QApplication>
 #include <QStyleFactory>
+#include <QSurfaceFormat>
 
 #if defined(_WIN32)
 // use dedicated GPUs by default
@@ -39,6 +40,14 @@ int main(int argc, char *argv[])
 
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
+    auto format = QSurfaceFormat();
+    format.setRenderableType(QSurfaceFormat::OpenGL);
+    format.setMajorVersion(4);
+    format.setMinorVersion(5);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setOption(QSurfaceFormat::DebugContext);
+    QSurfaceFormat::setDefaultFormat(format);
 
     initializeCompositorSync();
 

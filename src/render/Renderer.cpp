@@ -98,14 +98,6 @@ Renderer::Renderer(QObject *parent)
     : QObject(parent)
     , mWorker(new Worker())
 {
-    auto format = QSurfaceFormat();
-    format.setRenderableType(QSurfaceFormat::OpenGL);
-    format.setMajorVersion(4);
-    format.setMinorVersion(5);
-    format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setOption(QSurfaceFormat::DebugContext);
-
-    mWorker->context.setFormat(format);
     mWorker->context.setShareContext(QOpenGLContext::globalShareContext());
     mWorker->context.create();
 

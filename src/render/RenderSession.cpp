@@ -638,6 +638,7 @@ void RenderSession::finish()
 
 void RenderSession::release()
 {
+    mVao.destroy();
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
     mTimerQueries.clear();
