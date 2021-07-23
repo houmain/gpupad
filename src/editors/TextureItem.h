@@ -9,6 +9,7 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions_3_3_Core>
+#include <QOpenGLVertexArrayObject>
 #include <map>
 
 class ZeroCopyContext;
@@ -45,6 +46,7 @@ private:
     bool updateTexture();
     bool renderTexture(const QMatrix4x4 &transform);
 
+    QOpenGLVertexArrayObject mVao;
     QScopedPointer<ZeroCopyContext> mContext;
     QRect mBoundingRect;
     TextureData mImage;

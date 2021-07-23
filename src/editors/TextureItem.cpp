@@ -300,6 +300,7 @@ bool TextureItem::updateTexture()
 bool TextureItem::renderTexture(const QMatrix4x4 &transform)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
+    QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
     auto &gl = context().gl();
 
     auto target = mImage.target();

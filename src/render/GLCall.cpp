@@ -6,7 +6,6 @@
 #include "GLStream.h"
 #include "Renderer.h"
 #include <QOpenGLTimerQuery>
-#include <QOpenGLVertexArrayObject>
 
 GLCall::GLCall(const Call &call, ScriptEngine &scriptEngine)
     : mCall(call)
@@ -140,9 +139,6 @@ void GLCall::execute(MessagePtrSet &messages)
 
 void GLCall::executeDraw(MessagePtrSet &messages)
 {
-    QOpenGLVertexArrayObject vao;
-    QOpenGLVertexArrayObject::Binder vaoBinder(&vao);
-
     if (mTarget) {
         mTarget->bind();
     }

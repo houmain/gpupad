@@ -6,6 +6,7 @@
 #include "TextureData.h"
 #include <QMutex>
 #include <QMap>
+#include <QOpenGLVertexArrayObject>
 #include <memory>
 
 class ScriptEngine;
@@ -45,6 +46,7 @@ private:
     void outputTimerQueries();
     bool updatingPreviewTextures() const;
 
+    QOpenGLVertexArrayObject mVao;
     QScopedPointer<ScriptEngine> mScriptEngine;
     GpupadScriptObject *mGpupadScriptObject{ };
     InputScriptObject *mInputScriptObject{ };

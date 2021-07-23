@@ -491,6 +491,7 @@ void RenderSession::prepare(bool itemsChanged,
 void RenderSession::render()
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
+    QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
 
     auto& gl = GLContext::currentContext();
     if (!gl) {
