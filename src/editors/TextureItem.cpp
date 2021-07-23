@@ -1,6 +1,6 @@
 #include "TextureItem.h"
 #include <QOpenGLWidget>
-#include <QOpenGLTexture>
+#include <QOpenGLDebugMessage>
 #include "Singletons.h"
 #include "render/GLShareSynchronizer.h"
 #include <cmath>
@@ -177,6 +177,7 @@ ZeroCopyContext::ZeroCopyContext(QObject *parent)
 {
     mGL.initializeOpenGLFunctions();
 
+#if !defined(NDEBUG)
     if (mDebugLogger.initialize()) {
         mDebugLogger.disableMessages(QOpenGLDebugMessage::AnySource,
             QOpenGLDebugMessage::AnyType, QOpenGLDebugMessage::NotificationSeverity);
@@ -184,6 +185,7 @@ ZeroCopyContext::ZeroCopyContext(QObject *parent)
             this, &ZeroCopyContext::handleDebugMessage);
         mDebugLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
+#endif
 }
 
 QOpenGLFunctions_3_3_Core &ZeroCopyContext::gl()

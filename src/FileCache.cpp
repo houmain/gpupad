@@ -12,7 +12,7 @@ namespace
 {
     bool loadSource(const QString &fileName, QString *source)
     {
-        const auto detectEncodingSize = 1024;
+        const auto detectEncodingSize = 1024 * 10;
         if (!source)
             return false;
 

@@ -1052,6 +1052,7 @@ bool TextureData::uploadMultisample(GL& gl, GLuint textureId,
             format, width(), height(), layers(), GL_FALSE);
 
         // TODO: upload
+        Q_ASSERT(!"not implemented");
         return false;
     }
 }
@@ -1080,6 +1081,7 @@ bool TextureData::download(GL& gl, GLuint textureId)
 bool TextureData::downloadCubemap(GL& gl, GLuint textureId)
 {
     // TODO: download
+    Q_ASSERT(!"not implemented");
     return true;
 }
 
@@ -1103,6 +1105,7 @@ bool TextureData::downloadMultisample(GL& gl, GLuint textureId)
     else {
         Q_ASSERT(mTarget == QOpenGLTexture::Target2DMultisampleArray);
         // TODO: download
+        Q_ASSERT(!"not implemented");
         return false;
     }
 }

@@ -7,10 +7,7 @@
 #include <QOpenGLTexture>
 #include <QGraphicsItem>
 #include <QOpenGLShaderProgram>
-#include <QOpenGLDebugLogger>
-#include <QOpenGLFunctions_3_3_Core>
 #include <QOpenGLVertexArrayObject>
-#include <map>
 
 class ZeroCopyContext;
 

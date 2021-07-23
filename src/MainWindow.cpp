@@ -144,7 +144,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->actionDelete->setShortcuts(QKeySequence::Delete);
     mUi->actionSelectAll->setShortcuts(QKeySequence::SelectAll);
     mUi->actionOnlineHelp->setShortcuts(QKeySequence::HelpContents);
-    mUi->actionFindReplace->setShortcuts(QKeySequence::Find);
+    mUi->actionFindReplace->setShortcuts({ QKeySequence::Find, QKeySequence::Replace });
     mUi->actionFocusNextEditor->setShortcut(QKeySequence::NextChild);
     mUi->actionFocusPreviousEditor->setShortcut(QKeySequence("Ctrl+Shift+Tab"));
 
