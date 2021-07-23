@@ -276,7 +276,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     mUi->menuRecentFiles->addSeparator();
 
-    for (auto i = 0; i < 9; ++i) {
+    for (auto i = 0; i < 26; ++i) {
         auto action = mUi->menuRecentFiles->addAction("");
         connect(action, &QAction::triggered,
             this, &MainWindow::openRecentFile);
