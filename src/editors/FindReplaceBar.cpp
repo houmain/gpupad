@@ -11,10 +11,6 @@ FindReplaceBar::FindReplaceBar(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    setVisible(false);
-    setAutoFillBackground(true);
-    setBackgroundRole(QPalette::ToolTipBase);
-
     connect(ui->caseSensitive, &QCheckBox::toggled, this,
         &FindReplaceBar::findTextChanged);
     connect(ui->wholeWordsOnly, &QCheckBox::toggled, this,
@@ -34,7 +30,7 @@ FindReplaceBar::FindReplaceBar(QWidget *parent) :
     connect(ui->replaceAll, &QPushButton::clicked, this,
         &FindReplaceBar::replaceAll);
     connect(ui->closeButton, &QPushButton::clicked, this,
-        &FindReplaceBar::hide);
+        &FindReplaceBar::cancel);
 }
 
 FindReplaceBar::~FindReplaceBar()
@@ -58,8 +54,6 @@ void FindReplaceBar::focus(QWidget *target, QString text)
 {
     setTarget(target);
     ui->findText->setText(text);
-
-    show();
     ui->findText->selectAll();
     ui->findText->setFocus();
     findTextChanged();
@@ -68,13 +62,11 @@ void FindReplaceBar::focus(QWidget *target, QString text)
 void FindReplaceBar::cancel()
 {
     Q_EMIT action(Action::FindTextChanged, "", "", findFlags());
-
-    hide();
-
     if (mTarget) {
         mTarget->setFocus();
         mTarget = nullptr;
     }
+    Q_EMIT cancelled();
 }
 
 void FindReplaceBar::findTextChanged()

@@ -1,5 +1,6 @@
 #include "TextureEditor.h"
 #include "TextureEditorToolBar.h"
+#include "TextureInfoBar.h"
 #include "FileDialog.h"
 #include "Singletons.h"
 #include "FileCache.h"
@@ -32,11 +33,13 @@ bool createFromRaw(const QByteArray &binary,
     return true;
 }
 
-TextureEditor::TextureEditor(QString fileName, 
-      TextureEditorToolBar *editorToolBar, 
+TextureEditor::TextureEditor(QString fileName,
+      TextureEditorToolBar *editorToolBar,
+      TextureInfoBar* textureInfoBar,
       QWidget *parent)
     : QGraphicsView(parent)
     , mEditorToolBar(*editorToolBar)
+    , mTextureInfoBar(*textureInfoBar)
     , mFileName(fileName)
 {
     setTransformationAnchor(AnchorUnderMouse);
@@ -86,10 +89,11 @@ TextureEditor::~TextureEditor()
 QList<QMetaObject::Connection> TextureEditor::connectEditActions(
         const EditActions &actions)
 {
-    auto c = QList<QMetaObject::Connection>();
-
+    actions.findReplace->setEnabled(true);
     actions.windowFileName->setText(fileName());
     actions.windowFileName->setEnabled(isModified());
+
+    auto c = QList<QMetaObject::Connection>();
     c += connect(this, &TextureEditor::fileNameChanged,
                  actions.windowFileName, &QAction::setText);
     c += connect(this, &TextureEditor::modificationChanged,
@@ -109,7 +113,8 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
         mTextureItem, &TextureItem::setMagnifyLinear);
     c += connect(&mEditorToolBar, &TextureEditorToolBar::flipVerticallyChanged,
         mTextureItem, &TextureItem::setFlipVertically);
-
+    c += connect(mTextureItem, &TextureItem::pickerColorChanged,
+        &mTextureInfoBar, &TextureInfoBar::setPickerColor);
     return c;
 }
 
@@ -277,9 +282,17 @@ void TextureEditor::updateMousePosition(QMouseEvent *event)
     if (!mTextureItem->flipVertically())
         pos.setY(mTextureItem->boundingRect().height() - pos.y());
 
-    const auto fragmentCoord =
-        QPointF(qRound(pos.x() - 0.5) + 0.5, qRound(pos.y() - 0.5) + 0.5);
-    Singletons::synchronizeLogic().setMousePosition(fragmentCoord);
+    pos = QPointF(qRound(pos.x() - 0.5), qRound(pos.y() - 0.5));
+    mTextureInfoBar.setMousePosition(pos);
+    Singletons::synchronizeLogic().setMousePosition(pos);
+    const auto outsideItem = (pos.x() < 0 || pos.y() < 0 || 
+        pos.x() >= mTexture.width() || pos.y() >= mTexture.height());
+
+    pos = event->pos()- QPoint(1, 1);
+    pos.setY(viewport()->height() - pos.y());
+    mTextureItem->setMousePosition(pos);
+    mTextureItem->setPickerEnabled(
+        mTextureInfoBar.isPickerEnabled() && !outsideItem);
 }
 
 void TextureEditor::mouseReleaseEvent(QMouseEvent *event)
@@ -290,6 +303,14 @@ void TextureEditor::mouseReleaseEvent(QMouseEvent *event)
         return;
     }
     QGraphicsView::mouseReleaseEvent(event);
+}
+
+void TextureEditor::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Escape)
+        Q_EMIT mTextureInfoBar.cancelled();
+
+    QGraphicsView::keyPressEvent(event);
 }
 
 void TextureEditor::setBounds(QRect bounds)

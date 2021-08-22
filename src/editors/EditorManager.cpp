@@ -3,6 +3,7 @@
 #include "FileCache.h"
 #include "FileDialog.h"
 #include "SynchronizeLogic.h"
+#include "TextureInfoBar.h"
 #include "SourceEditorToolBar.h"
 #include "BinaryEditorToolBar.h"
 #include "TextureEditorToolBar.h"
@@ -11,11 +12,14 @@
 #include <QAction>
 #include <QApplication>
 #include <QToolBar>
+#include <QToolButton>
+#include <QBoxLayout>
 #include <QRandomGenerator>
 
 EditorManager::EditorManager(QWidget *parent)
     : DockWindow(parent)
     , mFindReplaceBar(new FindReplaceBar(this))
+    , mTextureInfoBar(new TextureInfoBar(this))
 {
     setWindowFlags(Qt::Widget);
     setTabPosition(Qt::AllDockWidgetAreas, QTabWidget::North);
@@ -25,6 +29,34 @@ EditorManager::EditorManager(QWidget *parent)
 }
 
 EditorManager::~EditorManager() = default;
+
+QWidget *EditorManager::createEditorPropertiesPanel(
+    QAction *showAction)
+{
+    auto propertiesPanel = new QWidget(this);
+    propertiesPanel->setAutoFillBackground(true);
+    propertiesPanel->setBackgroundRole(QPalette::ToolTipBase);
+    propertiesPanel->hide();
+
+    auto layout = new QHBoxLayout(propertiesPanel);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+    layout->addWidget(mFindReplaceBar);
+    layout->addWidget(mTextureInfoBar);
+    layout->setAlignment(mFindReplaceBar, Qt::AlignTop);
+    layout->setAlignment(mTextureInfoBar, Qt::AlignTop);
+
+    connect(showAction, &QAction::triggered,
+        propertiesPanel, &QWidget::show);
+    connect(mFindReplaceBar, &FindReplaceBar::cancelled,
+        propertiesPanel, &QWidget::hide);
+    connect(mTextureInfoBar, &TextureInfoBar::cancelled,
+        propertiesPanel, &QWidget::hide);
+    connect(showAction, &QAction::triggered,
+        this, &EditorManager::updateEditorPropertiesVisibility);
+
+    return propertiesPanel;
+}
 
 void EditorManager::createEditorToolBars(QToolBar *mainToolBar) 
 {
@@ -45,6 +77,9 @@ void EditorManager::createEditorToolBars(QToolBar *mainToolBar)
         &Singletons::synchronizeLogic(), &SynchronizeLogic::setCurrentEditorFileName);
 
     updateEditorToolBarVisibility();
+    updateEditorPropertiesVisibility();
+}
+
 }
 
 void EditorManager::updateEditorToolBarVisibility()
@@ -59,6 +94,16 @@ void EditorManager::updateEditorToolBarVisibility()
         mCurrentDock && qobject_cast<BinaryEditor*>(mCurrentDock->widget()));
     setVisible(mSourceEditorToolBar,
         mCurrentDock && qobject_cast<SourceEditor*>(mCurrentDock->widget()));
+}
+
+void EditorManager::updateEditorPropertiesVisibility()
+{
+    mFindReplaceBar->setVisible(
+        mCurrentDock && qobject_cast<SourceEditor*>(mCurrentDock->widget()));
+    mTextureInfoBar->setVisible(
+        mCurrentDock && qobject_cast<TextureEditor*>(mCurrentDock->widget()));
+    mTextureInfoBar->setPickerEnabled(
+        mTextureInfoBar->parentWidget()->isVisible());
 }
 
 int EditorManager::getFocusedEditorIndex() const
@@ -109,6 +154,7 @@ void EditorManager::updateCurrentEditor()
         updateDockCurrentProperty(previous, false);
 
     updateEditorToolBarVisibility();
+    updateEditorPropertiesVisibility();
 }
 
 QString EditorManager::currentEditorFileName()
@@ -161,7 +207,7 @@ BinaryEditor *EditorManager::openNewBinaryEditor(const QString &fileName)
 
 TextureEditor *EditorManager::openNewTextureEditor(const QString &fileName)
 {
-    auto editor = new TextureEditor(fileName, mTextureEditorToolBar);
+    auto editor = new TextureEditor(fileName, mTextureEditorToolBar, mTextureInfoBar);
     addTextureEditor(editor);
     autoRaise(editor);
     return editor;
@@ -217,7 +263,7 @@ TextureEditor *EditorManager::openTextureEditor(const QString &fileName)
 {
     auto editor = getTextureEditor(fileName);
     if (!editor) {
-        editor = new TextureEditor(fileName, mTextureEditorToolBar);
+        editor = new TextureEditor(fileName, mTextureEditorToolBar, mTextureInfoBar);
         if (!editor->load()) {
             delete editor;
             return nullptr;

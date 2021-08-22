@@ -11,7 +11,6 @@
 #include "Settings.h"
 #include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
-#include "editors/FindReplaceBar.h"
 #include "scripting/CustomActions.h"
 #include <QCloseEvent>
 #include <QMessageBox>
@@ -67,11 +66,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto content = new QWidget(this);
     mEditorManager.setParent(content);
-    auto layout = static_cast<QLayout*>(new QVBoxLayout(content));
+    auto layout = new QVBoxLayout(content);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     layout->addWidget(&mEditorManager);
-    layout->addWidget(&mEditorManager.findReplaceBar());
+    layout->addWidget(mEditorManager.createEditorPropertiesPanel(mUi->actionFindReplace));
 
     mFullScreenBar = new QToolBar(this);
     mFullScreenTitle = new QLabel(this);

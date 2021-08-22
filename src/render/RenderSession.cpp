@@ -195,7 +195,8 @@ void RenderSession::prepare(bool itemsChanged,
         mScriptEngine->setGlobal("input", mInputScriptObject);
     }
 
-    mInputScriptObject->setMouseFragCoord(Singletons::synchronizeLogic().mousePosition());
+    mInputScriptObject->setMouseFragCoord(
+        Singletons::synchronizeLogic().mousePosition() + QPointF(0.5, 0.5));
 
     const auto evaluateScript = [&](const Script &script) {
         if (shouldExecute(script.executeOn, mEvaluationType)) {

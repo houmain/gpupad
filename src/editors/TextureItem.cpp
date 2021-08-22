@@ -3,6 +3,7 @@
 #include <QOpenGLDebugMessage>
 #include "Singletons.h"
 #include "render/GLShareSynchronizer.h"
+#include <optional>
 #include <cmath>
 
 namespace {
@@ -35,6 +36,12 @@ static constexpr auto fragmentShaderSource = R"(
 #extension GL_ARB_texture_cube_map_array: enable
 #endif
 
+#ifdef GL_ARB_shader_image_load_store
+#extension GL_ARB_shader_image_load_store: enable
+layout(rgba32f) uniform image1D uPickerColor;
+uniform vec2 uPickerFragCoord;
+#endif
+
 uniform SAMPLER uTexture;
 uniform vec2 uSize;
 uniform float uLevel;
@@ -42,6 +49,7 @@ uniform float uLayer;
 uniform int uFace;
 uniform int uSample;
 uniform int uSamples;
+uniform bool uPickerEnabled;
 
 in vec2 vTexCoord;
 out vec4 oColor;
@@ -77,6 +85,12 @@ void main() {
   for (int sample = uSample; sample < uSample + uSamples; ++sample)
     color += vec4(SAMPLE);
   color /= float(uSamples);
+
+#ifdef GL_ARB_shader_image_load_store
+  if (uPickerEnabled && gl_FragCoord.xy == uPickerFragCoord)
+    imageStore(uPickerColor, 0, color);
+#endif
+
   color = MAPPING;
   color = SWIZZLE;
   oColor = color;
@@ -160,6 +174,7 @@ public:
     explicit ZeroCopyContext(QObject *parent = nullptr);
 
     QOpenGLFunctions_3_3_Core &gl();
+    QOpenGLFunctions_4_2_Core *gl42();
     QOpenGLShaderProgram *getProgram(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format);
 
@@ -168,6 +183,7 @@ private:
     void handleDebugMessage(const QOpenGLDebugMessage &message);
 
     QOpenGLFunctions_3_3_Core mGL;
+    std::optional<QOpenGLFunctions_4_2_Core> mGL42;
     QOpenGLDebugLogger mDebugLogger;
     std::map<ProgramKey, QOpenGLShaderProgram> mPrograms;
 };
@@ -176,6 +192,9 @@ ZeroCopyContext::ZeroCopyContext(QObject *parent)
     : QObject(parent)
 {
     mGL.initializeOpenGLFunctions();
+    mGL42.emplace();
+    if (!mGL42->initializeOpenGLFunctions())
+        mGL42.reset();
 
 #if !defined(NDEBUG)
     if (mDebugLogger.initialize()) {
@@ -191,6 +210,11 @@ ZeroCopyContext::ZeroCopyContext(QObject *parent)
 QOpenGLFunctions_3_3_Core &ZeroCopyContext::gl()
 {
     return mGL;
+}
+
+QOpenGLFunctions_4_2_Core *ZeroCopyContext::gl42()
+{
+    return (mGL42.has_value() ? &mGL42.value() : nullptr);
 }
 
 QOpenGLShaderProgram *ZeroCopyContext::getProgram(QOpenGLTexture::Target target,
@@ -253,6 +277,13 @@ void TextureItem::setPreviewTexture(QOpenGLTexture::Target target, GLuint textur
 GLuint TextureItem::resetTexture()
 {
     return std::exchange(mImageTextureId, GL_NONE);
+}
+
+void TextureItem::setMousePosition(const QPointF &mousePosition)
+{
+    mMousePosition = mousePosition;
+    if (mPickerEnabled)
+        update();
 }
 
 void TextureItem::paint(QPainter *painter,
@@ -347,7 +378,32 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         program->setUniformValue("uSample", std::max(0, (resolve ? 0 : mSample)));
         program->setUniformValue("uSamples", std::max(1, (resolve ? mImage.samples() : 1)));
         program->setUniformValue("uFlipVertically", mFlipVertically);
-        gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        program->setUniformValue("uPickerEnabled", mPickerEnabled);
+
+        if (mPickerEnabled) {
+            if (auto gl42 = context().gl42()) {
+                if (!mPickerTexture.isCreated()) {
+                    mPickerTexture.setSize(1, 1);
+                    mPickerTexture.setFormat(QOpenGLTexture::RGBA32F);
+                    mPickerTexture.allocateStorage();
+                }
+                gl.glBindTexture(mPickerTexture.target(), mPickerTexture.textureId());
+                gl42->glBindImageTexture(1, mPickerTexture.textureId(), 0, GL_FALSE, 
+                    0, GL_WRITE_ONLY, GL_RGBA32F);
+                program->setUniformValue("uPickerColor", 1);
+                program->setUniformValue("uPickerFragCoord", 
+                    mMousePosition + QPointF(0.5, 0.5));
+            }
+        }
+  
+        gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  
+
+        auto pickerColor = QVector4D{ };
+        if (mPickerEnabled) {
+            gl.glBindTexture(mPickerTexture.target(), mPickerTexture.textureId());
+            gl.glGetTexImage(mPickerTexture.target(), 0,  GL_RGBA, GL_FLOAT, &pickerColor);
+        }
+        Q_EMIT pickerColorChanged(pickerColor);
     }
 
     if (mPreviewTextureId) {

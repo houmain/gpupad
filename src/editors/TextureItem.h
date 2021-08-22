@@ -8,6 +8,7 @@
 #include <QGraphicsItem>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
+#include <QOpenGLTexture>
 
 class ZeroCopyContext;
 
@@ -35,8 +36,14 @@ public:
     int sample() const { return mSample; }
     void setFlipVertically(bool flip) { mFlipVertically = flip; update(); }
     bool flipVertically() const { return mFlipVertically; }
+    void setPickerEnabled(bool enabled) { mPickerEnabled = enabled; }
+    bool pickerEnabled() const { return mPickerEnabled; }
     QRectF boundingRect() const override { return mBoundingRect; }
+    void setMousePosition(const QPointF &mousePosition);
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) override;
+
+Q_SIGNALS:
+    void pickerColorChanged(QVector4D color);
 
 private:
     ZeroCopyContext &context();
@@ -57,6 +64,9 @@ private:
     int mSample{ -1 };
     int mSamples{ };
     bool mFlipVertically{ };
+    bool mPickerEnabled{ };
+    QOpenGLTexture mPickerTexture{ QOpenGLTexture::Target1D };
+    QPointF mMousePosition{ };
     bool mUpload{ };
 };
 

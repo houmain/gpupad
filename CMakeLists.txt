@@ -71,6 +71,8 @@ set(SOURCES
   src/editors/TextureEditorToolBar.ui
   src/editors/TextureEditor.cpp
   src/editors/TextureItem.cpp
+  src/editors/TextureInfoBar.cpp
+  src/editors/TextureInfoBar.ui
   src/editors/JsHighlighter.cpp
   src/editors/SourceEditor.cpp
   src/editors/SourceEditorToolBar.cpp

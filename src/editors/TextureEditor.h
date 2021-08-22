@@ -8,6 +8,7 @@
 
 class TextureItem;
 class TextureEditorToolBar;
+class TextureInfoBar;
 
 class TextureEditor final : public QGraphicsView, public IEditor
 {
@@ -21,6 +22,7 @@ public:
 
     TextureEditor(QString fileName, 
         TextureEditorToolBar* editorToolbar, 
+        TextureInfoBar* textureInfoBar,
         QWidget *parent = nullptr);
     ~TextureEditor() override;
 
@@ -47,6 +49,7 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void keyPressEvent(QKeyEvent *event);
 
 private:
     void updateMousePosition(QMouseEvent *event);
@@ -58,6 +61,7 @@ private:
     void updateEditorToolBar();
 
     TextureEditorToolBar &mEditorToolBar;
+    TextureInfoBar &mTextureInfoBar;
     QString mFileName;
     RawFormat mRawFormat{ };
     bool mIsRaw{ };

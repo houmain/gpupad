@@ -32,6 +32,7 @@ public:
     void replaceAll();
 
 Q_SIGNALS:
+    void cancelled();
     void action(FindReplaceBar::Action action, QString find, QString replace,
         QTextDocument::FindFlags flags);
 

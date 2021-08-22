@@ -15,9 +15,9 @@ class EditorManager final : public DockWindow
 public:
     explicit EditorManager(QWidget *parent = nullptr);
     ~EditorManager() override;
+    QWidget *createEditorPropertiesPanel(QAction *toggleAction);
     void createEditorToolBars(QToolBar *mainToolBar);
 
-    FindReplaceBar &findReplaceBar() { return *mFindReplaceBar; }
     SourceEditor *openNewSourceEditor(const QString &fileName,
         SourceType sourceType = SourceType::PlainText);
     BinaryEditor *openNewBinaryEditor(const QString &fileName);
@@ -75,6 +75,7 @@ private:
     bool closeDock(QDockWidget *dock, bool promptSave = true) override;
     void autoRaise(QWidget *editor);
     void updateEditorToolBarVisibility();
+    void updateEditorPropertiesVisibility();
 
     QList<SourceEditor*> mSourceEditors;
     QList<BinaryEditor*> mBinaryEditors;
@@ -82,6 +83,7 @@ private:
     std::map<QDockWidget*, IEditor*> mDocks;
     QDockWidget *mCurrentDock{ };
     FindReplaceBar *mFindReplaceBar{ };
+    TextureInfoBar *mTextureInfoBar{ };
     TextureEditorToolBar *mTextureEditorToolBar{ };
     BinaryEditorToolBar *mBinaryEditorToolBar{ };
     SourceEditorToolBar *mSourceEditorToolBar{ };

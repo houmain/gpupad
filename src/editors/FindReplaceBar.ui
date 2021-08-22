@@ -30,7 +30,7 @@
     <number>8</number>
    </property>
    <property name="bottomMargin">
-    <number>4</number>
+    <number>5</number>
    </property>
    <item>
     <layout class="QGridLayout" name="gridLayout">
@@ -217,6 +217,7 @@
   <tabstop>closeButton</tabstop>
  </tabstops>
  <resources>
+  <include location="../resources.qrc"/>
   <include location="../resources.qrc"/>
  </resources>
  <connections/>
