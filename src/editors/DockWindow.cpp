@@ -71,6 +71,13 @@ bool DockWindow::eventFilter(QObject *watched, QEvent *event)
                 event->ignore();
             return true;
         }
+
+    // do not undock on double click
+    if (event->type() == QEvent::MouseButtonDblClick) {
+        event->ignore();
+        return true;
+    }
+
     return QMainWindow::eventFilter(watched, event);
 }
 
