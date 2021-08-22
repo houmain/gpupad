@@ -80,6 +80,11 @@ void EditorManager::createEditorToolBars(QToolBar *mainToolBar)
     updateEditorPropertiesVisibility();
 }
 
+void EditorManager::setEditorToolBarPalette(const QPalette &palette)
+{
+    mTextureEditorToolBar->setPalette(palette);
+    mBinaryEditorToolBar->setPalette(palette);
+    mSourceEditorToolBar->setPalette(palette);
 }
 
 void EditorManager::updateEditorToolBarVisibility()

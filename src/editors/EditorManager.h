@@ -17,6 +17,7 @@ public:
     ~EditorManager() override;
     QWidget *createEditorPropertiesPanel(QAction *toggleAction);
     void createEditorToolBars(QToolBar *mainToolBar);
+    void setEditorToolBarPalette(const QPalette &palette);
 
     SourceEditor *openNewSourceEditor(const QString &fileName,
         SourceType sourceType = SourceType::PlainText);

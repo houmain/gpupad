@@ -905,6 +905,7 @@ void MainWindow::handleDarkThemeChanging(bool darkTheme)
         palette.setColor(QPalette::Window, 0x666666);
     mUi->toolBarMain->setPalette(palette);
     mUi->menuView->setPalette(palette);
+    mEditorManager.setEditorToolBarPalette(palette);
 
     style()->unpolish(qApp);
     style()->polish(qApp);
