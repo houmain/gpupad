@@ -276,12 +276,11 @@ TextureEditor *EditorManager::openTextureEditor(const QString &fileName)
 
 IEditor *EditorManager::getEditor(const QString &fileName)
 {
-    auto editor = static_cast<IEditor*>(getSourceEditor(fileName));
-    if (!editor)
-        editor = getBinaryEditor(fileName);
-    if (!editor)
-        editor = getTextureEditor(fileName);
-    return editor;
+    if (auto editor = getSourceEditor(fileName))
+        return editor;
+    if (auto editor = getBinaryEditor(fileName))
+        return editor;
+    return getTextureEditor(fileName);
 }
 
 SourceEditor* EditorManager::getSourceEditor(const QString &fileName)

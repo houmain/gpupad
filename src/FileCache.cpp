@@ -359,7 +359,7 @@ void FileCache::handleSourceReloaded(const QString &fileName, QString source)
     mSources[fileName] = source;
     lock.unlock();
 
-    if (auto editor = Singletons::editorManager().getSourceEditor(fileName))
+    if (auto editor = Singletons::editorManager().getEditor(fileName))
         editor->load();
 
     Q_EMIT fileChanged(fileName);
@@ -373,7 +373,7 @@ void FileCache::handleTextureReloaded(const QString &fileName, bool flipVertical
     mTextures[TextureKey(fileName, flipVertically)] = texture;
     lock.unlock();
 
-    if (auto editor = Singletons::editorManager().getTextureEditor(fileName))
+    if (auto editor = Singletons::editorManager().getEditor(fileName))
         editor->load();
     
     Q_EMIT fileChanged(fileName);
@@ -387,7 +387,7 @@ void FileCache::handleBinaryReloaded(const QString &fileName, QByteArray binary)
     mBinaries[fileName] = binary;
     lock.unlock();
 
-    if (auto editor = Singletons::editorManager().getBinaryEditor(fileName))
+    if (auto editor = Singletons::editorManager().getEditor(fileName))
         editor->load();
 
     Q_EMIT fileChanged(fileName);
