@@ -336,6 +336,10 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
     QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
     auto &gl = context().gl();
 
+    // WORKAROUND: renderer can delete the texture without resetting it
+    if (mPreviewTextureId && !gl.glIsTexture(mPreviewTextureId))
+        mPreviewTextureId = GL_NONE;
+
     auto target = mImage.target();
     if (mPreviewTextureId) {
         Singletons::glShareSynchronizer().beginUsage(gl);

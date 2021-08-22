@@ -73,13 +73,12 @@ TextureEditor::~TextureEditor()
     auto texture = mTextureItem->resetTexture();
     auto glWidget = qobject_cast<QOpenGLWidget*>(viewport());
     if (auto context = glWidget->context())
-        if (auto surface = context->surface())
-            if (context->makeCurrent(surface)) {
-                auto& gl = *context->functions();
-                gl.glDeleteTextures(1, &texture);
-                mTextureItem->releaseGL();
-                context->doneCurrent();
-            }
+        if (context->makeCurrent(nullptr)) {
+            auto& gl = *context->functions();
+            gl.glDeleteTextures(1, &texture);
+            mTextureItem->releaseGL();
+            context->doneCurrent();
+        }
     delete scene();
 
     if (isModified())
