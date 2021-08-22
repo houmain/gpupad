@@ -2,6 +2,8 @@
 #include "session/Item.h"
 #include "tga/tga.h"
 #include "gli/gli.hpp"
+#define TINYEXR_IMPLEMENTATION
+#include "tinyexr/tinyexr.h"
 #include <cstring>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions_3_3_Core>
@@ -14,22 +16,61 @@
 #  include "KTX/lib/gl_funcptrs.h"
 
 static void initializeKtxOpenGLFunctions() {
-  if (pfGlTexImage1D)
-    return;
-  auto gl = QOpenGLContext::currentContext();
+    if (pfGlTexImage1D)
+        return;
+    auto gl = QOpenGLContext::currentContext();
 #define ADD(X) pfGl##X = reinterpret_cast<decltype(pfGl##X)>(gl->getProcAddress("gl"#X))
-  ADD(TexImage1D);
-  ADD(TexImage3D);
-  ADD(CompressedTexImage1D);
-  ADD(CompressedTexImage2D);
-  ADD(CompressedTexImage3D);
-  ADD(GenerateMipmap);
-  ADD(GetStringi);
+    ADD(TexImage1D);
+    ADD(TexImage3D);
+    ADD(CompressedTexImage1D);
+    ADD(CompressedTexImage2D);
+    ADD(CompressedTexImage3D);
+    ADD(GenerateMipmap);
+    ADD(GetStringi);
 #undef ADD
 }
 #endif // _WIN32
 
 namespace {
+    struct FreeEXRImage { void operator()(EXRImage* image) { ::FreeEXRImage(image); } };
+    struct FreeEXRHeader { void operator()(EXRHeader* header) { ::FreeEXRHeader(header); } };
+    using EXRHeaderPtr = std::unique_ptr<EXRHeader, FreeEXRHeader>;
+    using EXRImagePtr = std::unique_ptr<EXRImage, FreeEXRImage>;
+
+    template<typename T>
+    void copy_tiled(const EXRHeader& exr_header, const EXRImage& exr_image,
+                    const std::array<int, 4>& channel_indices, T* rgba, T one) {
+        for (auto t = 0; t < exr_image.num_tiles; ++t) {
+            const auto& tile = exr_image.tiles[t];
+            for (auto tile_y = 0; tile_y < exr_header.tile_size_y; ++tile_y)
+                for (auto tile_x = 0; tile_x < exr_header.tile_size_x; ++tile_x) {
+                    const auto dest_x = tile.offset_x * exr_header.tile_size_x + tile_x;
+                    const auto dest_y = tile.offset_y * exr_header.tile_size_y + tile_y;
+                    if (dest_x >= exr_image.width || dest_y >= exr_image.height)
+                        continue;
+
+                    const auto dest_index = (dest_x + dest_y * exr_image.width) * 4;
+                    const auto tile_index = tile_x + tile_y * exr_header.tile_size_x;
+                    for (auto c = 0; c < 4; ++c) {
+                        const auto channel_index = channel_indices[c];
+                        rgba[dest_index + c] = (channel_index >= 0 ?
+                            reinterpret_cast<const T*>(tile.images[channel_index])[tile_index] : one);
+                    }
+                }
+        }
+    }
+
+    template<typename T>
+    void copy_scanlines(const EXRHeader& exr_header, const EXRImage& exr_image,
+                        const std::array<int, 4>& channel_indices, T* rgba, T one) {
+      for (auto i = 0; i < exr_image.width * exr_image.height; ++i)
+          for (auto c = 0; c < 4; ++c) {
+              const auto channel_index = channel_indices[c];
+              rgba[i * 4 + c] = (channel_index >= 0 ?
+                  reinterpret_cast<const T*>(exr_image.images[channel_index])[i] : one);
+          }
+    }
+
     QImage::Format getNextNativeImageFormat(QImage::Format format)
     {
         switch (format) {
@@ -631,6 +672,96 @@ bool TextureData::loadQImage(const QString &fileName, bool flipVertically)
     return true;
 }
 
+bool TextureData::loadExr(const QString &fileName, bool flipVertically)
+{
+    auto exr_version = EXRVersion{ };
+    if (ParseEXRVersionFromFile(&exr_version,
+        fileName.toUtf8().constData()) != 0)
+        return false;
+
+    if (exr_version.multipart)
+        return false;
+
+    auto exr_header = EXRHeader{ };
+    InitEXRHeader(&exr_header);
+    if (ParseEXRHeaderFromFile(&exr_header, &exr_version,
+        fileName.toUtf8().constData(), nullptr) != 0)
+        return false;
+
+    if (exr_header.num_channels < 1)
+        return false;
+
+    const auto pixel_type = exr_header.pixel_types[0];
+    for (auto i = 1; i < exr_header.num_channels; ++i)
+        if (exr_header.pixel_types[i] != pixel_type)
+            return false;
+
+    const auto width = exr_header.data_window.max_x - exr_header.data_window.min_x + 1;
+    const auto height = exr_header.data_window.max_y - exr_header.data_window.min_y + 1;
+    auto format = QOpenGLTexture::TextureFormat{ };
+    switch (pixel_type) {
+      case TINYEXR_PIXELTYPE_UINT:
+          format = QOpenGLTexture::RGBA32I;
+          break;
+      case TINYEXR_PIXELTYPE_HALF:
+          format = QOpenGLTexture::RGBA16F;
+          break;
+      case TINYEXR_PIXELTYPE_FLOAT:
+          format = QOpenGLTexture::RGBA32F;
+          break;
+      default:
+          return false;
+    }
+
+    if (!create(QOpenGLTexture::Target2D, format, width, height))
+        return false;
+
+    auto exr_image = EXRImage{ };
+    InitEXRImage(&exr_image);
+    if (LoadEXRImageFromFile(&exr_image, &exr_header,
+        fileName.toUtf8().constData(), nullptr) != 0)
+        return false;
+
+    auto image = EXRImagePtr(new EXRImage(exr_image));
+
+    auto channels = std::vector<tinyexr::LayerChannel>();
+    tinyexr::ChannelsInLayer(exr_header, "", channels);
+    auto channel_indices = std::array<int, 4>{ -1, -1, -1, -1 };
+    for (const auto& channel : channels) {
+        auto c = 0;
+        for (auto channel_name : { "R", "G", "B", "A" }) {
+            if (channel.name == channel_name)
+                channel_indices[c] = static_cast<int>(channel.index);
+            ++c;
+        }
+    }
+
+    auto data = static_cast<void*>(getWriteonlyData(0, 0, 0));
+
+    const auto half_float_one = uint16_t{ 15360 };
+    if (exr_header.tiled) {
+        if (exr_header.pixel_types[0] == TINYEXR_PIXELTYPE_HALF) {
+            copy_tiled(exr_header, exr_image, channel_indices,
+              static_cast<uint16_t*>(data), half_float_one);
+        }
+        else if (exr_header.pixel_types[0] == TINYEXR_PIXELTYPE_FLOAT) {
+            copy_tiled(exr_header, exr_image, channel_indices,
+              static_cast<float*>(data), 1.0f);
+        }
+    }
+    else {
+        if (exr_header.pixel_types[0] == TINYEXR_PIXELTYPE_HALF) {
+            copy_scanlines(exr_header, exr_image, channel_indices,
+              static_cast<uint16_t*>(data), half_float_one);
+        }
+        else if (exr_header.pixel_types[0] == TINYEXR_PIXELTYPE_FLOAT) {
+            copy_scanlines(exr_header, exr_image, channel_indices,
+              static_cast<float*>(data), 1.0f);
+        }
+    }
+    return true;
+}
+
 bool TextureData::loadTga(const QString &fileName, bool flipVertically)
 {
     auto f = std::fopen(fileName.toUtf8().constData(), "rb");
@@ -672,6 +803,7 @@ bool TextureData::load(const QString &fileName, bool flipVertically)
 {
     return loadKtx(fileName, flipVertically) ||
            loadGli(fileName, flipVertically) ||
+           loadExr(fileName, flipVertically) ||
            loadTga(fileName, flipVertically) ||
            loadQImage(fileName, flipVertically);
 }
@@ -689,6 +821,7 @@ bool TextureData::saveGli(const QString &fileName, bool flipVertically) const tr
 {
     if (!fileName.endsWith(".ktx", Qt::CaseInsensitive) &&
         !fileName.endsWith(".dds", Qt::CaseInsensitive) &&
+        !fileName.endsWith(".exr", Qt::CaseInsensitive) &&
         !fileName.endsWith(".kmg", Qt::CaseInsensitive))
         return false;
 
@@ -723,6 +856,11 @@ bool TextureData::saveGli(const QString &fileName, bool flipVertically) const tr
     return gli::save(texture, fileName.toUtf8().constData());
 }
 catch (...)
+{
+    return false;
+}
+
+bool TextureData::saveExr(const QString &fileName, bool flipVertically) const
 {
     return false;
 }
@@ -792,6 +930,7 @@ bool TextureData::save(const QString &fileName, bool flipVertically) const
 {
     return saveKtx(fileName, flipVertically) ||
            saveGli(fileName, flipVertically) ||
+           saveExr(fileName, flipVertically) ||
            saveTga(fileName, flipVertically) ||
            saveQImage(fileName, flipVertically);
 }
