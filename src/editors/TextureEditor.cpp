@@ -19,13 +19,14 @@
 bool createFromRaw(const QByteArray &binary,
     const TextureEditor::RawFormat &r, TextureData *texture)
 {
-    if (!texture->create(r.target, r.format, r.width, r.height,
-                         r.depth, r.layers, r.samples))
+    if (!texture->create(r.target, r.format, r.width,
+            r.height, r.depth, r.layers, r.samples))
         return false;
 
     if (!binary.isEmpty()) {
         std::memcpy(texture->getWriteonlyData(0, 0, 0), binary.constData(),
-            static_cast<size_t>(std::min(static_cast<int>(binary.size()), texture->getLevelSize(0))));
+            static_cast<size_t>(std::min(binary.size(),
+                                         texture->getLevelSize(0))));
     }
     else {
         texture->clear();
@@ -165,7 +166,8 @@ bool TextureEditor::load()
     if (!Singletons::fileCache().getTexture(mFileName, true, &texture)) {
         auto binary = QByteArray();
         if (!Singletons::fileCache().getBinary(mFileName, &binary))
-            return false;
+            if (!FileDialog::isEmptyOrUntitled(mFileName))
+                return false;
         if (!createFromRaw(binary, mRawFormat, &texture))
             return false;
         mIsRaw = true;
