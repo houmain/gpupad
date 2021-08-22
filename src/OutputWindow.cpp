@@ -26,11 +26,11 @@ OutputWindow::OutputWindow(QWidget *parent) : QWidget(parent)
     mTextEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
     mTextEdit->setTabStopDistance(
         fontMetrics().horizontalAdvance(QString(2, QChar::Space)));
+    mTextEdit->setFont(Singletons::settings().font());
 
-    setFont(Singletons::settings().font());
     updatePalette();
     connect(&Singletons::settings(), &Settings::fontChanged,
-        this, &QPlainTextEdit::setFont);
+        mTextEdit, &QPlainTextEdit::setFont);
     connect(&Singletons::settings(), &Settings::darkThemeChanged,
         this, &OutputWindow::updatePalette);
 }
