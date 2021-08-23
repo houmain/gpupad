@@ -5,6 +5,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Version 1.20] - 2021-08-23
+## Added
+- Added editor tab bar context menu.
+- Added color picker in Find panel of texture editor [WIP].
+- Added EXR file reading.
+
+## Changed
+- Improved reloading of source editors.
+- Reloading files in background.
+- Opening new editor on tab bar double-click.
+- Not undocking on dock window double-click.
+- Increased number of recent files.
+
+## Fixed
+- Fixed potential crash on texture editor closing.
+- Improved unicode handling.
+- Fixed upload of integer textures.
+- Fixed crash on missing buffer bindings.
+- Correctly setting font of output window.
+- Improved visibility of more checkboxes on dark theme.
 
 ## [Version 1.19] - 2021-05-10
 ## Added
@@ -296,7 +316,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.0] - 2019-04-14
 
-[Unreleased]: https://github.com/houmain/gpupad/compare/1.19...HEAD
+[Unreleased]: https://github.com/houmain/gpupad/compare/1.20...HEAD
+[Version 1.20]: https://github.com/houmain/gpupad/compare/1.19...1.20
 [Version 1.19]: https://github.com/houmain/gpupad/compare/1.18...1.19
 [Version 1.18]: https://github.com/houmain/gpupad/compare/1.17...1.18
 [Version 1.17]: https://github.com/houmain/gpupad/compare/1.16...1.17
