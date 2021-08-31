@@ -25,6 +25,12 @@
 #include <QScreen>
 #include <QProcess>
 
+void setFileDialogDirectory(const QString &fileName)
+{
+    if (!FileDialog::isEmptyOrUntitled(fileName))
+        Singletons::fileDialog().setDirectory(QFileInfo(fileName).dir());
+}
+
 void showInFileManager(const QString &path) {
 #if defined(_WIN32)
     QProcess::startDetached("explorer.exe", { "/select,", QDir::toNativeSeparators(path) });
@@ -411,6 +417,8 @@ void MainWindow::updateCurrentEditor()
     disconnectEditActions();
     connectEditActions();
     updateDockCurrentProperty(mSessionDock, !mEditorManager.hasCurrentEditor());
+    setFileDialogDirectory(mEditorManager.hasCurrentEditor() ? 
+        mEditorManager.currentEditorFileName() : mSessionEditor->fileName());
 }
 
 void MainWindow::disconnectEditActions()
@@ -759,8 +767,7 @@ void MainWindow::addToRecentFileList(QString fileName)
     mRecentFiles.removeAll(fileName);
     mRecentFiles.prepend(fileName);
     updateRecentFileActions();
-
-    Singletons::fileDialog().setDirectory(QFileInfo(fileName).dir());
+    setFileDialogDirectory(fileName);
 }
 
 void MainWindow::updateRecentFileActions()
