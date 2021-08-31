@@ -1,5 +1,6 @@
 #include "ProcessSource.h"
 #include "GLShader.h"
+#include "GLPrintf.h"
 #include "scripting/ScriptEngine.h"
 #include <QProcess>
 #include <QDir>
@@ -176,7 +177,8 @@ void ProcessSource::render()
 
     if (mValidateSource) {
         if (mShader) {
-            mShader->compile();
+            auto glPrintf = GLPrintf();
+            mShader->compile(&glPrintf);
         }
         else if (mSourceType == SourceType::JavaScript) {
             auto scriptSource = QString();
