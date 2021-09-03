@@ -204,9 +204,10 @@ bool SourceEditor::load()
     setTextCursor(cursor);
     verticalScrollBar()->setSliderPosition(scrollPosition);
 
-    document()->setModified(false);
     if (initial)
         document()->clearUndoRedoStacks();
+
+    document()->setModified(false);
     return true;
 }
 
