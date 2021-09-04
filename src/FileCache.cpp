@@ -256,7 +256,7 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically, Texture
     return true;
 }
 
-bool FileCache::updateTexture(const QString &fileName, bool flippedVertically, TextureData texture) const
+bool FileCache::updateTexture(const QString &fileName, bool flippedVertically, TextureData texture)
 {
     Q_ASSERT(!texture.isNull());
     QMutexLocker lock(&mMutex);
@@ -265,6 +265,13 @@ bool FileCache::updateTexture(const QString &fileName, bool flippedVertically, T
     if (!mTextures.contains(key))
         return false;
     mTextures[key] = std::move(texture);
+    lock.unlock();
+
+    if (auto editor = Singletons::editorManager().getEditor(fileName))
+        editor->load();
+    
+    Q_EMIT fileChanged(fileName);
+
     return true;
 }
 

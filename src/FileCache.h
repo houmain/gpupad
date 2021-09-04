@@ -20,7 +20,7 @@ public:
     bool getSource(const QString &fileName, QString *source) const;
     bool getTexture(const QString &fileName, bool flipVertically, TextureData *texture) const;
     bool getBinary(const QString &fileName, QByteArray *binary) const;
-    bool updateTexture(const QString &fileName, bool flippedVertically, TextureData texture) const;
+    bool updateTexture(const QString &fileName, bool flippedVertically, TextureData texture);
 
     // only call from main thread
     void invalidateFile(const QString &fileName);
