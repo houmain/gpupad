@@ -7,6 +7,8 @@ namespace Ui {
 class TextureInfoBar;
 }
 
+class Histogram;
+
 class TextureInfoBar : public QWidget
 {
     Q_OBJECT
@@ -19,6 +21,7 @@ public:
     void setPickerColor(const QVector4D &color);
     void setPickerEnabled(bool enabled);
     bool isPickerEnabled() const { return mIsPickerEnabled; }
+    void updateHistogram(const QVector<quint32> &histogramUpdate);
 
 Q_SIGNALS:
     void cancelled();
@@ -26,6 +29,7 @@ Q_SIGNALS:
 
 private:
     Ui::TextureInfoBar *ui;
+    Histogram *mHistogram;
     bool mIsPickerEnabled{ };
 };
 

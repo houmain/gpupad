@@ -38,8 +38,11 @@ static constexpr auto fragmentShaderSource = R"(
 
 #ifdef GL_ARB_shader_image_load_store
 #extension GL_ARB_shader_image_load_store: enable
-layout(rgba32f) uniform image1D uPickerColor;
+writeonly layout(rgba32f) uniform image1D uPickerColor;
 uniform vec2 uPickerFragCoord;
+layout(r32ui) uniform uimage1D uHistogram;
+uniform float uHistogramOffset;
+uniform float uHistogramFactor;
 #endif
 
 uniform SAMPLER uTexture;
@@ -50,6 +53,7 @@ uniform int uFace;
 uniform int uSample;
 uniform int uSamples;
 uniform bool uPickerEnabled;
+uniform bool uHistogramEnabled;
 
 in vec2 vTexCoord;
 out vec4 oColor;
@@ -82,13 +86,21 @@ vec3 getCubeTexCoord(vec2 tc, int face) {
 
 void main() {
   vec4 color = vec4(0);
-  for (int sample = uSample; sample < uSample + uSamples; ++sample)
+  for (int s = uSample; s < uSample + uSamples; ++s)
     color += vec4(SAMPLE);
   color /= float(uSamples);
 
 #ifdef GL_ARB_shader_image_load_store
   if (uPickerEnabled && gl_FragCoord.xy == uPickerFragCoord)
     imageStore(uPickerColor, 0, color);
+
+  if (uHistogramEnabled && clamp(TC, vec2(0), vec2(1)) == TC) {
+    ivec3 offset = ivec3(color.rgb * uHistogramFactor + vec3(uHistogramOffset));
+    offset = offset * 3 + ivec3(0, 1, 2);
+    imageAtomicAdd(uHistogram, offset.r, 1u);
+    imageAtomicAdd(uHistogram, offset.g, 1u);
+    imageAtomicAdd(uHistogram, offset.b, 1u);
+  }
 #endif
 
   color = MAPPING;
@@ -116,8 +128,8 @@ void main() {
             { QOpenGLTexture::Target3D, { "sampler3D", "textureLod(S, vec3(TC, uLayer), uLevel)" } },
             { QOpenGLTexture::TargetCubeMap, { "samplerCube", "textureLod(S, getCubeTexCoord(TC, uFace), uLevel)" } },
             { QOpenGLTexture::TargetCubeMapArray,  { "samplerCubeArray", "textureLod(S, vec4(getCubeTexCoord(TC, uFace), uLayer), uLevel)" } },
-            { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "texelFetch(S, ivec2(TC * uSize), sample)" } },
-            { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "texelFetch(S, ivec3(TC * uSize, uLayer), sample)" } },
+            { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "texelFetch(S, ivec2(TC * uSize), s)" } },
+            { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "texelFetch(S, ivec3(TC * uSize, uLayer), s)" } },
         };
         static auto sDataTypeVersions = std::map<TextureDataType, DataTypeVersion>{
             { TextureDataType::Normalized, { "", "color" } },
@@ -240,6 +252,7 @@ void ZeroCopyContext::handleDebugMessage(const QOpenGLDebugMessage &message)
 
 TextureItem::TextureItem(QObject *parent)
     : QObject(parent)
+    , mHistogramBins(256 * 3)
 {
 }
 
@@ -383,6 +396,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         program->setUniformValue("uSamples", std::max(1, (resolve ? mImage.samples() : 1)));
         program->setUniformValue("uFlipVertically", mFlipVertically);
         program->setUniformValue("uPickerEnabled", mPickerEnabled);
+        program->setUniformValue("uHistogramEnabled", mHistogramEnabled);
 
         if (mPickerEnabled) {
             if (auto gl42 = context().gl42()) {
@@ -391,7 +405,6 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
                     mPickerTexture.setFormat(QOpenGLTexture::RGBA32F);
                     mPickerTexture.allocateStorage();
                 }
-                gl.glBindTexture(mPickerTexture.target(), mPickerTexture.textureId());
                 gl42->glBindImageTexture(1, mPickerTexture.textureId(), 0, GL_FALSE, 
                     0, GL_WRITE_ONLY, GL_RGBA32F);
                 program->setUniformValue("uPickerColor", 1);
@@ -399,15 +412,42 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
                     mMousePosition + QPointF(0.5, 0.5));
             }
         }
-  
+
+        if (mHistogramEnabled) {
+            if (auto gl42 = context().gl42()) {
+                if (!mHistogramTexture.isCreated()) {
+                    mHistogramTexture.setSize(mHistogramBins.size());
+                    mHistogramTexture.setFormat(QOpenGLTexture::R32U);
+                    mHistogramTexture.allocateStorage();
+                }
+                gl42->glBindImageTexture(2, mHistogramTexture.textureId(), 0, GL_FALSE, 
+                    0, GL_READ_WRITE, GL_R32UI);
+                program->setUniformValue("uHistogram", 2);
+                program->setUniformValue("uHistogramOffset", mHistogramBounds.x());
+                program->setUniformValue("uHistogramFactor", 
+                    mHistogramBounds.y() - mHistogramBounds.x());
+            }
+        }
+
         gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  
+
+        if (auto gl42 = context().gl42())
+            gl42->glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
 
         auto pickerColor = QVector4D{ };
         if (mPickerEnabled) {
             gl.glBindTexture(mPickerTexture.target(), mPickerTexture.textureId());
-            gl.glGetTexImage(mPickerTexture.target(), 0,  GL_RGBA, GL_FLOAT, &pickerColor);
+            gl.glGetTexImage(mPickerTexture.target(), 0,  
+                GL_RGBA, GL_FLOAT, &pickerColor);
         }
         Q_EMIT pickerColorChanged(pickerColor);
+
+        if (mHistogramEnabled) {
+            gl.glBindTexture(mHistogramTexture.target(), mHistogramTexture.textureId());
+            gl.glGetTexImage(mHistogramTexture.target(), 0,  
+                GL_RED_INTEGER, GL_UNSIGNED_INT, mHistogramBins.data());
+            Q_EMIT histogramChanged(mHistogramBins);
+        }
     }
 
     if (mPreviewTextureId) {

@@ -115,6 +115,12 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
         mTextureItem, &TextureItem::setFlipVertically);
     c += connect(mTextureItem, &TextureItem::pickerColorChanged,
         &mTextureInfoBar, &TextureInfoBar::setPickerColor);
+    c += connect(mTextureItem, &TextureItem::histogramChanged,
+        &mTextureInfoBar, &TextureInfoBar::updateHistogram);
+    c += connect(&mTextureInfoBar, &TextureInfoBar::pickerEnabledChanged,
+        mTextureItem, &TextureItem::setHistogramEnabled);
+
+    mTextureItem->setHistogramEnabled(mTextureInfoBar.isPickerEnabled());
     return c;
 }
 

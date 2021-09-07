@@ -38,12 +38,15 @@ public:
     bool flipVertically() const { return mFlipVertically; }
     void setPickerEnabled(bool enabled) { mPickerEnabled = enabled; }
     bool pickerEnabled() const { return mPickerEnabled; }
+    void setHistogramEnabled(bool enabled) { mHistogramEnabled = enabled; }
+    bool histogramEnabled() const { return mHistogramEnabled; }
     QRectF boundingRect() const override { return mBoundingRect; }
     void setMousePosition(const QPointF &mousePosition);
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) override;
 
 Q_SIGNALS:
     void pickerColorChanged(QVector4D color);
+    void histogramChanged(const QVector<quint32> &histogram);
 
 private:
     ZeroCopyContext &context();
@@ -66,6 +69,10 @@ private:
     bool mFlipVertically{ };
     bool mPickerEnabled{ };
     QOpenGLTexture mPickerTexture{ QOpenGLTexture::Target1D };
+    bool mHistogramEnabled{ };
+    QOpenGLTexture mHistogramTexture{ QOpenGLTexture::Target1D };
+    QVector2D mHistogramBounds{ 0, 255 };
+    QVector<quint32> mHistogramBins;
     QPointF mMousePosition{ };
     bool mUpload{ };
 };
