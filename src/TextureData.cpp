@@ -613,9 +613,15 @@ bool TextureData::loadGli(const QString &fileName, bool flipVertically) try
     if (texture.empty())
         return false;
 
-    if (flipVertically)
-        texture = gli::flip(std::move(texture));
-
+    if (flipVertically) {
+        try {
+            texture = gli::flip(std::move(texture));
+        }
+        catch (...) {
+            flipVertically = false;
+        }
+    }
+        
     auto gl = gli::gl(gli::gl::PROFILE_GL33);
     const auto format = gl.translate(texture.format(), texture.swizzles());
     const auto target = static_cast<QOpenGLTexture::Target>(gl.translate(texture.target()));
