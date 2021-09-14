@@ -3,6 +3,8 @@
 #include <QVector4D>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QPainterPath>
+#include <cstring>
 
 class Histogram : public QWidget
 {
