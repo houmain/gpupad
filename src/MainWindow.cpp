@@ -31,7 +31,8 @@ void setFileDialogDirectory(const QString &fileName)
         Singletons::fileDialog().setDirectory(QFileInfo(fileName).dir());
 }
 
-void showInFileManager(const QString &path) {
+void showInFileManager(const QString &path)
+{
 #if defined(_WIN32)
     QProcess::startDetached("explorer.exe", { "/select,", QDir::toNativeSeparators(path) });
 #elif defined(__APPLE__)
@@ -976,19 +977,22 @@ void MainWindow::populateSampleSessions()
 
 void MainWindow::openSampleSession()
 {
-    const auto evalSteady = mUi->actionEvalSteady->isChecked();
-
-    auto &editors = Singletons::editorManager();
     if (auto action = qobject_cast<QAction*>(QObject::sender()))
-        if (openFile(action->data().toString())) {
-            editors.setAutoRaise(false);
-            mSessionEditor->activateFirstItem();
-            editors.setAutoRaise(true);
+        if (openFile(action->data().toString()))
+            autostartSession();
+}
 
-            mUi->actionEvalSteady->setChecked(evalSteady);
-            if (!evalSteady)
-              mUi->actionEvalReset->trigger();
-        }
+void MainWindow::autostartSession()
+{
+    auto &editors = Singletons::editorManager();
+    editors.setAutoRaise(false);
+    mSessionEditor->activateFirstItem();
+    editors.setAutoRaise(true);
+
+    const auto evalSteady = mUi->actionEvalSteady->isChecked();
+    mUi->actionEvalSteady->setChecked(evalSteady);
+    if (!evalSteady)
+        mUi->actionEvalReset->trigger();
 }
 
 void MainWindow::openOnlineHelp()

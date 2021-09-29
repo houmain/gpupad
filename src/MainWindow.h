@@ -79,6 +79,7 @@ private:
     void handleMessageActivated(ItemId itemId,
         QString fileName, int line, int column);
     void handleDarkThemeChanging(bool enabled);
+    void autostartSession();
 
     Ui::MainWindow *mUi{ };
     QSplitter *mSessionSplitter{ };
