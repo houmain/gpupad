@@ -41,6 +41,17 @@ namespace gli
 
 		std::vector<char> Data(static_cast<std::size_t>(End - Beg));
 
+		const size_t MinSize = 
+			  std::max(
+				    sizeof(detail::dds_header),
+				    std::max(sizeof(detail::kmgHeader10), 
+			               sizeof(detail::ktx_header10)));
+		if (Data.size() < MinSize) 
+		{
+			  std::fclose(File);
+				return texture();
+		}
+
 		std::fread(&Data[0], 1, Data.size(), File);
 		std::fclose(File);
 
