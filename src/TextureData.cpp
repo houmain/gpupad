@@ -597,7 +597,7 @@ bool TextureData::create(
 bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
 {
     auto texture = std::add_pointer_t<ktxTexture>{ };
-    if (ktxTexture_CreateFromNamedFile(fileName.toUtf8().constData(),
+    if (ktxTexture_CreateFromNamedFile(qUtf8Printable(fileName),
             KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture) != KTX_SUCCESS)
         return false;
 
@@ -609,7 +609,7 @@ bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
 
 bool TextureData::loadGli(const QString &fileName, bool flipVertically) try
 {
-    auto texture = gli::load(fileName.toUtf8().constData());
+    auto texture = gli::load(qUtf8Printable(fileName));
     if (texture.empty())
         return false;
 
@@ -682,7 +682,7 @@ bool TextureData::loadExr(const QString &fileName, bool flipVertically)
 {
     auto exr_version = EXRVersion{ };
     if (ParseEXRVersionFromFile(&exr_version,
-        fileName.toUtf8().constData()) != 0)
+        qUtf8Printable(fileName)) != 0)
         return false;
 
     if (exr_version.multipart)
@@ -691,7 +691,7 @@ bool TextureData::loadExr(const QString &fileName, bool flipVertically)
     auto exr_header = EXRHeader{ };
     InitEXRHeader(&exr_header);
     if (ParseEXRHeaderFromFile(&exr_header, &exr_version,
-        fileName.toUtf8().constData(), nullptr) != 0)
+        qUtf8Printable(fileName), nullptr) != 0)
         return false;
 
     if (exr_header.num_channels < 1)
@@ -725,7 +725,7 @@ bool TextureData::loadExr(const QString &fileName, bool flipVertically)
     auto exr_image = EXRImage{ };
     InitEXRImage(&exr_image);
     if (LoadEXRImageFromFile(&exr_image, &exr_header,
-        fileName.toUtf8().constData(), nullptr) != 0)
+        qUtf8Printable(fileName), nullptr) != 0)
         return false;
 
     auto image = EXRImagePtr(new EXRImage(exr_image));
@@ -770,7 +770,7 @@ bool TextureData::loadExr(const QString &fileName, bool flipVertically)
 
 bool TextureData::loadTga(const QString &fileName, bool flipVertically)
 {
-    auto f = std::fopen(fileName.toUtf8().constData(), "rb");
+    auto f = std::fopen(qUtf8Printable(fileName), "rb");
     if (!f)
         return false;
     auto guard = qScopeGuard([&]() { std::fclose(f); });
@@ -820,7 +820,7 @@ bool TextureData::saveKtx(const QString &fileName, bool flipVertically) const
         return false;
 
     return (ktxTexture_WriteToNamedFile(
-        mKtxTexture.get(), fileName.toUtf8().constData()) == KTX_SUCCESS);
+        mKtxTexture.get(), qUtf8Printable(fileName)) == KTX_SUCCESS);
 }
 
 bool TextureData::saveGli(const QString &fileName, bool flipVertically) const try
@@ -859,7 +859,7 @@ bool TextureData::saveGli(const QString &fileName, bool flipVertically) const tr
                 std::memcpy(dest, source, std::min(sourceSize, destSize));
             }
 
-    return gli::save(texture, fileName.toUtf8().constData());
+    return gli::save(texture, qUtf8Printable(fileName));
 }
 catch (...)
 {
@@ -908,7 +908,7 @@ bool TextureData::saveTga(const QString &fileName, bool flipVertically) const
     if (image.rowstride * header.height != imageData.sizeInBytes())
         return false;
 
-    auto file = std::fopen(fileName.toUtf8().constData(), "wb");
+    auto file = std::fopen(qUtf8Printable(fileName), "wb");
     if (!file)
         return false;
     auto guard = qScopeGuard([&]() { std::fclose(file); });
