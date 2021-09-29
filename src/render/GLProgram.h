@@ -90,6 +90,8 @@ private:
         QString boundSubroutine;
     };
 
+    bool linkShaders(GLuint program);
+    bool linkProgram(GLuint program);
     QString getUniformBaseName(const QString &name) const;
     void uniformSet(const QString &name);
     void bufferSet(const QString &name);
@@ -99,7 +101,8 @@ private:
     MessagePtrSet mLinkMessages;
     std::vector<GLShader> mShaders;
     QMap<Shader::ShaderType, QList<SubroutineUniform>> mSubroutineUniforms;
-    QMap<QString, std::pair<GLenum, GLint>> mActiveUniforms;
+    QMap<QString, GLint> mAttributeLocations;
+    QMap<QString, std::tuple<int, GLenum, GLint>> mActiveUniforms;
     QMap<QString, std::pair<GLenum, GLint>> mBufferBindingPoints;
     QMap<QString, GLObject> mTextureBufferObjects;
     GLObject mProgramObject;

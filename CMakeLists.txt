@@ -91,6 +91,7 @@ set(SOURCES
   src/render/Renderer.cpp
   src/render/ProcessSource.cpp
   src/render/CompositorSync.cpp
+  src/render/glslang.cpp
   src/scripting/GpupadScriptObject.cpp
   src/scripting/InputScriptObject.cpp
   src/scripting/ScriptEngine.cpp
@@ -155,6 +156,22 @@ elseif(APPLE)
     find_package(OpenGL REQUIRED)
     include_directories(${OPENGL_INCLUDE_DIR})
     target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES})
+endif()
+
+option(OPTION_ENABLE_SPIRV_CROSS "Enable SPIRV-Cross" ON)
+if (OPTION_ENABLE_SPIRV_CROSS)
+    set(SPIRV_CROSS_ENABLE_GLSL TRUE CACHE INTERNAL "SPIRV-Cross GLSL" FORCE)
+    set(SPIRV_CROSS_CLI FALSE CACHE INTERNAL "SPIRV-Cross CLI" FORCE)
+    set(SPIRV_CROSS_ENABLE_CPP FALSE CACHE INTERNAL "SPIRV-Cross CPP" FORCE)
+    set(SPIRV_CROSS_ENABLE_C_API FALSE CACHE INTERNAL "SPIRV-Cross C-API" FORCE)
+    set(SPIRV_CROSS_ENABLE_HLSL FALSE CACHE INTERNAL "SPIRV-Cross HLSL" FORCE)
+    set(SPIRV_CROSS_ENABLE_MSL FALSE CACHE INTERNAL "SPIRV-Cross MSL" FORCE)
+    set(SPIRV_CROSS_ENABLE_REFLECT FALSE CACHE INTERNAL "SPIRV-Cross REFLECT" FORCE)
+    set(SPIRV_CROSS_ENABLE_TESTS FALSE CACHE INTERNAL "SPIRV-Cross TESTS" FORCE)
+    set(SPIRV_CROSS_ENABLE_UTIL FALSE CACHE INTERNAL "SPIRV-Cross UTIL" FORCE)
+    add_subdirectory(libs/SPIRV-Cross)
+    target_link_libraries(${PROJECT_NAME} spirv-cross-core spirv-cross-glsl)
+    add_compile_definitions(SPIRV_CROSS_ENABLED)
 endif()
 
 option(OPTION_USE_WEBENGINE "Use WebEngineWidgets" OFF)

@@ -41,6 +41,9 @@ enum MessageType
     UniformComponentMismatch,
     InvalidIncludeDirective,
     IncludableNotFound,
+    TooManyPrintfCalls,
+    GlslangNotFound,
+    SpirvCrossNotCompiledIn,
 };
 
 struct Message

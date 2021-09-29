@@ -1,4 +1,5 @@
 #include "GLShader.h"
+#include "glslang.h"
 #include <QRegularExpression>
 
 namespace {
@@ -65,23 +66,27 @@ void GLShader::parseLog(const QString &log,
 {
     // Mesa:    0:13(2): error: `gl_Positin' undeclared
     // NVidia:  0(13) : error C1008: undefined variable "gl_Positin"
+    // Linker:  error: struct type mismatch between shaders for uniform
 
     static const auto split = QRegularExpression(
         "("
             "(\\d+)"              // 2. source index
             "(:(\\d+))?"          // 4. [line]
             "\\((\\d+)\\)"        // 5. line or column
-            "\\s*:(\\s*[^:]+):\\s?" // 6. severity/code
+            "\\s*:\\s*"
         ")?"
-        "([^\\n]+)");  // 7. text
+        "([^:]+):\\s*" // 6. severity/code
+        "(.+)");  // 7. text
 
-    for (auto matches = split.globalMatch(log); matches.hasNext(); ) {
-        auto match = matches.next();
+    for (const auto &line : log.split('\n')) {
+        const auto match = split.match(line);
         const auto sourceIndex = match.captured(2).toInt();
-        const auto line = (!match.captured(4).isEmpty() ?
+        const auto lineNumber = (!match.captured(4).isEmpty() ?
             match.captured(4).toInt() : match.captured(5).toInt());
         const auto severity = match.captured(6);
-        const auto text = match.captured(7);
+        const auto text = match.captured(7).trimmed();
+        if (text.isEmpty())
+            continue;
 
         auto messageType = MessageType::ShaderWarning;
         if (severity.contains("Info", Qt::CaseInsensitive))
@@ -91,7 +96,7 @@ void GLShader::parseLog(const QString &log,
 
         if (sourceIndex < fileNames.size())
             messages += MessageList::insert(
-                fileNames[sourceIndex], line, messageType, text);
+                fileNames[sourceIndex], lineNumber, messageType, text);
         else
             messages += MessageList::insert(
                 itemId, messageType, text);
@@ -114,6 +119,8 @@ GLShader::GLShader(Shader::ShaderType type,
 
         mFileNames += shader.fileName;
         (isIncludable ? mIncludableSources : mSources) += source + "\n";
+        mLanguage = shader.language;
+        mEntryPoint = shader.entryPoint;
     };
 
     for (const Shader *shader : shaders)
@@ -124,8 +131,8 @@ GLShader::GLShader(Shader::ShaderType type,
 
 bool GLShader::operator==(const GLShader &rhs) const
 {
-    return std::tie(mType, mSources, mIncludableSources, mFileNames) ==
-           std::tie(rhs.mType, rhs.mSources, rhs.mIncludableSources, rhs.mFileNames);
+    return std::tie(mType, mSources, mIncludableSources, mFileNames, mLanguage, mEntryPoint) ==
+           std::tie(rhs.mType, rhs.mSources, rhs.mIncludableSources, rhs.mFileNames, rhs.mLanguage, rhs.mEntryPoint);
 }
 
 QString GLShader::getSource() const
@@ -162,8 +169,9 @@ bool GLShader::compile(GLPrintf* printf, bool silent)
 
     auto sources = std::vector<std::string>();
     for (const QString &source : getPatchedSources(printf))
-        sources.push_back(source.toUtf8().data());
-
+        sources.push_back(qUtf8Printable(source));
+    if (sources.empty())
+        return false;
     auto sourcePointers = std::vector<const char*>();
     for (const auto &source : sources)
         sourcePointers.push_back(source.data());
@@ -201,6 +209,15 @@ QStringList GLShader::getPatchedSources(GLPrintf *printf)
     for (auto i = 0; i < mSources.size(); ++i)
         sources += substituteIncludes(mSources[i], i, mSources.size(), 
             mIncludableSources, includableFileNames, mItemId, mMessages);
+
+    if (mLanguage != Shader::Language::GLSL)
+        for (auto i = 0; i < mSources.size(); ++i) {
+            auto source = glslang::generateGLSL(sources[i], mType, mLanguage,
+                mEntryPoint, mFileNames[i], mItemId, mMessages);
+            if (source.isEmpty())
+                return { };
+            sources[i] = source;
+        }
 
     auto maxVersion = QString();
     for (auto i = 0; i < sources.size(); ++i)

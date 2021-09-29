@@ -55,6 +55,12 @@ namespace ItemEnums {
     };
     Q_ENUM_NS(ShaderType)
 
+    enum ShaderLanguage {
+        GLSL,
+        HLSL,
+    };
+    Q_ENUM_NS(ShaderLanguage)
+
     enum BindingType {
         Uniform,
         Sampler,

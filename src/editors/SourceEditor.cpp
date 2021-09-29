@@ -350,12 +350,20 @@ bool SourceEditor::setCursorPosition(int line, int column)
     if (line < 0)
         return false;
 
+    const auto prevLineWrapMode = lineWrapMode();
+    if (prevLineWrapMode != QPlainTextEdit::NoWrap)
+        setLineWrapMode(QPlainTextEdit::NoWrap);
+
     auto cursor = textCursor();
     auto block = document()->findBlockByLineNumber(line - 1);
     cursor.setPosition(block.position());
     for (auto i = 0; i < column - 1; i++)
         cursor.movePosition(QTextCursor::Right);
     setTextCursor(cursor);
+
+    if (prevLineWrapMode != QPlainTextEdit::NoWrap)
+        setLineWrapMode(prevLineWrapMode);
+
     ensureCursorVisible();
     setFocus();
     return true;

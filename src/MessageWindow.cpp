@@ -84,10 +84,13 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case InvalidIncludeDirective:
         case IncludableNotFound:
         case InvalidAttribute:
+        case GlslangNotFound:
+        case SpirvCrossNotCompiledIn:
             return mErrorIcon;
 
         case UnformNotSet:
         case ShaderWarning:
+        case TooManyPrintfCalls:
             return mWarningIcon;
 
         case ShaderInfo:
@@ -160,6 +163,12 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Includable shader '%1' not found").arg(message.text);
         case InvalidAttribute:
             return tr("Invalid stream attribute");
+        case TooManyPrintfCalls:
+            return tr("Too many printf calls. Please filter threads by setting printfEnabled");
+        case GlslangNotFound:
+            return tr("glslangValidator not found");
+        case SpirvCrossNotCompiledIn:
+            return tr("SPIRV-Cross not compiled in");
     }
     return message.text;
 }

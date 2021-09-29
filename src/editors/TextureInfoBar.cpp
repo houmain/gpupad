@@ -80,7 +80,7 @@ TextureInfoBar::TextureInfoBar(QWidget *parent)
     ui->horizontalLayout->insertWidget(3, mHistogram);
 
     setMinimumSize(0, 60);
-    setMaximumSize(std::numeric_limits<int>::max(), 60);
+    setMaximumSize(16777215, 60);
 
     connect(ui->closeButton, &QPushButton::clicked, this,
         &TextureInfoBar::cancelled);

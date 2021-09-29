@@ -88,12 +88,15 @@ void setFormEnabled(QLabel *label,
     QWidget *widget, bool enabled);
 
 template <typename T>
-void fillComboBox(QComboBox *c)
+void fillComboBox(QComboBox *c, bool keepPascalCase = false)
 {
     auto metaType = QMetaEnum::fromType<T>();
-    for (auto i = 0; i < metaType.keyCount(); ++i)
-        c->addItem(splitPascalCase(metaType.key(i)),
-            metaType.value(i));
+    for (auto i = 0; i < metaType.keyCount(); ++i) {
+        auto key = QString(metaType.key(i));
+        if (!keepPascalCase)
+            key = splitPascalCase(key);
+        c->addItem(key, metaType.value(i));
+    }
 }
 
 template <typename T>

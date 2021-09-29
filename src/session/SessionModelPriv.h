@@ -24,6 +24,8 @@
     ADD(TextureFlipVertically, Texture, flipVertically) \
     ADD(ScriptExecuteOn, Script, executeOn) \
     ADD(ShaderType, Shader, shaderType) \
+    ADD(ShaderLanguage, Shader, language) \
+    ADD(ShaderEntryPoint, Shader, entryPoint) \
     ADD(BindingType, Binding, bindingType) \
     ADD(BindingEditor, Binding, editor) \
     ADD(BindingValues, Binding, values) \

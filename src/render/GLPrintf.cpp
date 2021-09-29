@@ -595,8 +595,7 @@ MessagePtrSet GLPrintf::formatMessages(ItemId callItemId)
     }
 
     if (readOutside)
-        messages += MessageList::insert(callItemId, MessageType::ShaderWarning,
-            "Too many printf calls. Please filter threads by setting printfEnabled.");
+        messages += MessageList::insert(callItemId, MessageType::TooManyPrintfCalls);
 #endif // GL_VERSION_4_3
 
     return messages;

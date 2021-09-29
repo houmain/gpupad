@@ -25,7 +25,8 @@ GLProgram::GLProgram(const Program &program)
 
 bool GLProgram::operator==(const GLProgram &rhs) const
 {
-    return (mShaders == rhs.mShaders);
+    return (std::tie(mShaders) == 
+            std::tie(rhs.mShaders));
 }
 
 bool GLProgram::link()
@@ -42,29 +43,25 @@ bool GLProgram::link()
 
     auto &gl = GLContext::currentContext();
     auto program = GLObject(gl.glCreateProgram(), freeProgram);
-
-    for (auto &shader : mShaders) {
-        if (!shader.compile(&mPrintf)) {
-            mFailed = true;
-            return false;
-        }
-        gl.glAttachShader(program, shader.shaderObject());
-    }
-
-    auto status = GLint{ };
-    gl.glLinkProgram(program);
-    gl.glGetProgramiv(program, GL_LINK_STATUS, &status);
-
-    auto length = GLint{ };
-    gl.glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-    auto log = std::vector<char>(static_cast<size_t>(length));
-    gl.glGetProgramInfoLog(program, length, nullptr, log.data());
-    GLShader::parseLog(log.data(), mLinkMessages, mItemId, { });
-
-    if (status != GL_TRUE) {
+    if (!linkShaders(program)) {
         mFailed = true;
         return false;
     }
+    mProgramObject = std::move(program);
+    return true;
+}
+
+bool GLProgram::linkShaders(GLuint program)
+{
+    auto &gl = GLContext::currentContext();
+    for (auto &shader : mShaders) {
+        if (!shader.compile(&mPrintf))
+            return false;
+        gl.glAttachShader(program, shader.shaderObject());
+    }
+
+    if (!linkProgram(program))
+        return false;
 
     auto buffer = std::array<char, 256>();
     auto size = GLint{ };
@@ -76,10 +73,14 @@ bool GLProgram::link()
         gl.glGetActiveUniform(program, static_cast<GLuint>(i), static_cast<GLsizei>(buffer.size()),
             &nameLength, &size, &type, buffer.data());
         const auto name = getUniformBaseName(buffer.data());
-        mActiveUniforms[name] = { type, size };
+        mActiveUniforms[name] = { gl.glGetUniformLocation(program, qPrintable(name)), type, size };
         mUniformsSet[getUniformBaseName(name)] = false;
-        for (auto j = 0; j < size; ++j) 
-            mActiveUniforms[QStringLiteral("%1[%2]").arg(name).arg(j)] = { type, 1 };
+        for (auto j = 0; j < size; ++j) {
+            const auto elementName = QStringLiteral("%1[%2]").arg(name).arg(j);
+            if (auto location = gl.glGetUniformLocation(program, qPrintable(elementName));
+                location >= 0)
+                mActiveUniforms[elementName] = { location, type, 1 };
+        }
 
 #if GL_VERSION_4_2
         if (auto gl42 = gl.v4_2) {
@@ -123,8 +124,8 @@ bool GLProgram::link()
         gl.glGetActiveUniformBlockiv(program, i,
             GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, uniformIndices.data());
         for (auto index : uniformIndices) {
-            gl.glGetActiveUniform(program, static_cast<GLuint>(index), static_cast<GLsizei>(buffer.size()),
-                &nameLength, &size, &type, buffer.data());
+            gl.glGetActiveUniform(program, static_cast<GLuint>(index), 
+                static_cast<GLsizei>(buffer.size()), &nameLength, &size, &type, buffer.data());
             const auto name = QString(buffer.data());
             mUniformsSet.erase(getUniformBaseName(name));
         }
@@ -136,6 +137,7 @@ bool GLProgram::link()
         gl.glGetActiveAttrib(program, static_cast<GLuint>(i), static_cast<GLsizei>(buffer.size()),
             &nameLength, &size, &type, buffer.data());
         const auto name = QString(buffer.data());
+        mAttributeLocations[name] = gl.glGetAttribLocation(program, qPrintable(name));
         if (!name.startsWith("gl_"))
             mAttributesSet[name] = false;
     }
@@ -201,8 +203,21 @@ bool GLProgram::link()
         }
     }
 #endif
-    mProgramObject = std::move(program);
     return true;
+}
+
+bool GLProgram::linkProgram(GLuint program) 
+{
+    auto &gl = GLContext::currentContext();
+    gl.glLinkProgram(program);
+    auto status = GLint{ };
+    auto length = GLint{ };
+    gl.glGetProgramiv(program, GL_LINK_STATUS, &status);
+    gl.glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+    auto log = std::vector<char>(static_cast<size_t>(length));
+    gl.glGetProgramInfoLog(program, length, nullptr, log.data());
+    GLShader::parseLog(log.data(), mLinkMessages, mItemId, { });
+    return (status == GL_TRUE);
 }
 
 bool GLProgram::bind(MessagePtrSet *callMessages)
@@ -269,8 +284,7 @@ int GLProgram::getAttributeLocation(const QString &name) const
 {
     if (mAttributesSet.count(name))
         mAttributesSet[name] = true;
-    auto &gl = GLContext::currentContext();
-    return gl.glGetAttribLocation(mProgramObject, qPrintable(name));
+    return mAttributeLocations[name];
 }
 
 template <typename T>
@@ -293,15 +307,11 @@ std::vector<T> getValues(const ScriptVariable &variable,
 bool GLProgram::apply(const GLUniformBinding &binding)
 {
     auto &gl = GLContext::currentContext();
-    const auto location = gl.glGetUniformLocation(
-        mProgramObject, qPrintable(binding.name));
-    if (location < 0)
+    if (!mActiveUniforms.contains(binding.name))
         return false;
-
-    const auto [dataType, size] = 
+    const auto [location, dataType, size] = 
         mActiveUniforms[(mActiveUniforms.contains(binding.name) ? 
            binding.name : getUniformBaseName(binding.name))];
-    Q_ASSERT(dataType);
 
     switch (dataType) {
 #define ADD(TYPE, DATATYPE, COUNT, FUNCTION) \
@@ -363,10 +373,11 @@ bool GLProgram::apply(const GLUniformBinding &binding)
 bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
 {
     auto &gl = GLContext::currentContext();
-    const auto location = gl.glGetUniformLocation(
-        mProgramObject, qPrintable(binding.name));
-    if (location < 0)
+    if (!mActiveUniforms.contains(binding.name))
         return false;
+    const auto [location, dataType, size] = 
+        mActiveUniforms[(mActiveUniforms.contains(binding.name) ? 
+           binding.name : getUniformBaseName(binding.name))];
     if (!binding.texture)
         return false;
 
@@ -382,7 +393,8 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
     texture.updateMipmaps();
     gl.glBindTexture(target, texture.getReadOnlyTextureId());
-    gl.glUniform1i(location, unit);
+    if (location >= 0)
+        gl.glUniform1i(location, unit);
 
     switch (target) {
         case QOpenGLTexture::Target1D:

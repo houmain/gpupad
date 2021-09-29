@@ -78,8 +78,11 @@ struct Program : Item
 struct Shader : FileItem
 {
     using ShaderType = ItemEnums::ShaderType;
+    using Language = ItemEnums::ShaderLanguage;
 
     ShaderType shaderType{ ShaderType::Vertex };
+    Language language{ Language::GLSL };
+    QString entryPoint;
 };
 
 struct Binding : Item

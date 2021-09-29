@@ -32,6 +32,8 @@ public:
         TextureFlipVertically,
         ScriptExecuteOn,
         ShaderType,
+        ShaderLanguage,
+        ShaderEntryPoint,
         BindingType,
         BindingEditor,
         BindingValues,

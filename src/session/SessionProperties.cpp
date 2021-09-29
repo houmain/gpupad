@@ -160,6 +160,7 @@ void SessionProperties::fillComboBoxes()
     fillComboBox<Target::CullMode>(mTargetProperties->cullMode);
     fillComboBox<Target::PolygonMode>(mTargetProperties->polygonMode);
     fillComboBox<Target::LogicOperation>(mTargetProperties->logicOperation);
+    fillComboBox<Shader::Language>(mShaderProperties->language);
     fillComboBox<Shader::ShaderType>(mShaderProperties->type);
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
 }
@@ -277,8 +278,10 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             break;
 
         case Item::Type::Shader:
-            map(mShaderProperties->type, SessionModel::ShaderType);
             map(mShaderProperties->file, SessionModel::FileName);
+            map(mShaderProperties->language, SessionModel::ShaderLanguage);
+            map(mShaderProperties->type, SessionModel::ShaderType);
+            map(mShaderProperties->entryPoint, SessionModel::ShaderEntryPoint);
             break;
 
         case Item::Type::Binding:
