@@ -81,5 +81,8 @@ QString ExpressionLineEdit::text() const
 
 bool ExpressionLineEdit::hasValue(double value) const
 {
+    // allow to reset to exactly zero
+    if (text() == "0" && value != 0)
+        return false;
     return (text() == simpleDoubleString(value));
 }

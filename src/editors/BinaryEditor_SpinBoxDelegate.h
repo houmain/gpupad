@@ -88,8 +88,8 @@ public:
         else if (auto *lineEdit = qobject_cast<ExpressionLineEdit*>(editor)) {
             auto ok = true;
             const auto value = lineEdit->text().toDouble(&ok);
-            const auto current = model->data(index, Qt::EditRole).toDouble();
-            if (ok && !lineEdit->hasValue(current)) {
+            const auto current = model->data(index, Qt::EditRole);
+            if (ok && (current.isNull() || !lineEdit->hasValue(current.toDouble()))) {
                 model->setData(index, value, Qt::EditRole);
                 Q_EMIT model->dataChanged(index, index);
             }
