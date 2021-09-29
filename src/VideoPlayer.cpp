@@ -62,15 +62,13 @@ bool VideoPlayer::present(const QVideoFrame &frame)
         if (frame.pixelFormat() == QVideoFrame::Format_ARGB32)
             texture.setPixelFormat(QOpenGLTexture::BGRA);
     
-        if (auto buffer = frame.buffer()) {
-            auto size = 0;
-            auto stride = 0;
-            if (auto data = buffer->map(QAbstractVideoBuffer::ReadOnly, &size, &stride)) {
-                std::memcpy(texture.getWriteonlyData(0, 0, 0), data, std::min(size, texture.getImageSize(0)));
-                buffer->unmap();
-                return Singletons::fileCache().updateTexture(
-                    mFileName, mFlipVertically, std::move(texture));
-            }
+        auto copy = frame;
+        if (copy.map(QAbstractVideoBuffer::ReadOnly)) {
+            std::memcpy(texture.getWriteonlyData(0, 0, 0), copy.bits(),
+                std::min(copy.mappedBytes(), texture.getImageSize(0)));
+            copy.unmap();
+            return Singletons::fileCache().updateTexture(
+                mFileName, mFlipVertically, std::move(texture));
         }
     }
     return false;
