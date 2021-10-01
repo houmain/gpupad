@@ -171,6 +171,8 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
             mEditorItemsModified.insert(buffer->id);
         }
         else if (auto block = mModel.item<Block>(index)) {
+            block->evaluatedOffset = -1;
+            block->evaluatedRowCount = -1;
             mEditorItemsModified.insert(block->parent->id);
         }
         else if (auto field = mModel.item<Field>(index)) {
@@ -367,9 +369,9 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
                 field.padding
             });
         }
-        const auto offset = (block.evaluatedOffset ? block.evaluatedOffset : 
+        const auto offset = (block.evaluatedOffset >= 0 ? block.evaluatedOffset : 
             evaluateIntExpression(block.offset, &ok));
-        const auto rowCount = (block.evaluatedRowCount ? block.evaluatedRowCount :
+        const auto rowCount = (block.evaluatedRowCount >= 0 ? block.evaluatedRowCount :
             evaluateIntExpression(block.rowCount, &ok));
         blocks.append({
             block.name,

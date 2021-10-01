@@ -578,7 +578,7 @@ void SessionProperties::deduceBlockRowCount()
 {
     const auto &block = *mModel.item<Block>(currentModelIndex());
     auto ok = true;
-    const auto offset = (block.evaluatedOffset ?
+    const auto offset = (block.evaluatedOffset >= 0 ?
         block.evaluatedOffset : evaluateIntExpression(block.offset, &ok));
     if (ok) {
         const auto &buffer = *static_cast<const Buffer*>(block.parent);
