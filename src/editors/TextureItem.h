@@ -46,12 +46,13 @@ public:
 
 Q_SIGNALS:
     void pickerColorChanged(QVector4D color);
-    void histogramChanged(const QVector<quint32> &histogram);
+    void histogramChanged(const QVector<float> &histogram);
 
 private:
     ZeroCopyContext &context();
     bool updateTexture();
     bool renderTexture(const QMatrix4x4 &transform);
+    void updateHistogram();
 
     QOpenGLVertexArrayObject mVao;
     QScopedPointer<ZeroCopyContext> mContext;
@@ -73,6 +74,7 @@ private:
     QOpenGLTexture mHistogramTexture{ QOpenGLTexture::Target1D };
     QVector2D mHistogramBounds{ 0, 255 };
     QVector<quint32> mHistogramBins;
+    QVector<quint32> mPrevHistogramBins;
     QPointF mMousePosition{ };
     bool mUpload{ };
 };

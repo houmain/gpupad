@@ -21,7 +21,7 @@ public:
     void setPickerColor(const QVector4D &color);
     void setPickerEnabled(bool enabled);
     bool isPickerEnabled() const { return mIsPickerEnabled; }
-    void updateHistogram(const QVector<quint32> &histogramUpdate);
+    void updateHistogram(const QVector<float> &histogramUpdate);
 
 Q_SIGNALS:
     void cancelled();

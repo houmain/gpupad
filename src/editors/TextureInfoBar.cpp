@@ -4,14 +4,12 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <QPainterPath>
-#include <cstring>
 
 class Histogram : public QWidget
 {
 private:
     const int height = 50;
-    QVector<quint32> mPrevHistogramUpdate;
-    QVector<quint8> mHistogram;
+    QVector<float> mHistogram;
 
 public:
     Histogram(QWidget *parent)
@@ -21,26 +19,9 @@ public:
         setMaximumSize((256 + 1) * 3 + 2, height + 1);
     }
 
-    void updateHistogram(const QVector<quint32> &histogramUpdate) 
+    void updateHistogram(const QVector<float> &histogram)
     {
-        mPrevHistogramUpdate.resize(histogramUpdate.size());
-        mHistogram.resize(histogramUpdate.size());
-
-        auto maxValue = quint32{ 1 };
-        for (auto i = 0; i < histogramUpdate.size(); ++i) {
-            const auto value = (histogramUpdate[i] - mPrevHistogramUpdate[i]);
-            maxValue = qMax(maxValue, value);
-        }
-        auto s = 1.0f / maxValue;
-        for (auto i = 0; i < histogramUpdate.size(); ++i) {
-            const auto value = (histogramUpdate[i] - mPrevHistogramUpdate[i]);
-            mHistogram[i] = static_cast<quint8>((1.0f - (value * s)) * height);
-        }
-
-        std::memcpy(mPrevHistogramUpdate.data(), 
-            histogramUpdate.constData(), 
-            histogramUpdate.size() * sizeof(quint32));
-
+        mHistogram = histogram;
         update();
     }
 
@@ -57,9 +38,9 @@ public:
         blue.moveTo(1, height);
         auto i = 0;
         for (; i < mHistogram.size(); i += 3) {
-            red.lineTo(i + 3 + 1, mHistogram[i]);
-            green.lineTo(i + 3 + 1, mHistogram[i + 1]);
-            blue.lineTo(i + 3 + 1, mHistogram[i + 2]);
+            red.lineTo(i + 3 + 1, mHistogram[i] * height);
+            green.lineTo(i + 3 + 1, mHistogram[i + 1] * height);
+            blue.lineTo(i + 3 + 1, mHistogram[i + 2] * height);
         }
         red.lineTo(i + 3 + 1, height);
         green.lineTo(i + 3 + 1, height);
@@ -117,7 +98,7 @@ void TextureInfoBar::setPickerEnabled(bool enabled)
     }
 }
 
-void TextureInfoBar::updateHistogram(const QVector<quint32> &histogramUpdate) 
+void TextureInfoBar::updateHistogram(const QVector<float> &histogramUpdate)
 {
     mHistogram->updateHistogram(histogramUpdate);
 }

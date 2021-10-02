@@ -446,7 +446,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
             gl.glBindTexture(mHistogramTexture.target(), mHistogramTexture.textureId());
             gl.glGetTexImage(mHistogramTexture.target(), 0,  
                 GL_RED_INTEGER, GL_UNSIGNED_INT, mHistogramBins.data());
-            Q_EMIT histogramChanged(mHistogramBins);
+            updateHistogram();
         }
     }
 
@@ -455,4 +455,29 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         Singletons::glShareSynchronizer().endUsage(gl);
     }
     return (glGetError() == GL_NO_ERROR);
+}
+
+void TextureItem::updateHistogram()
+{
+    if (mPrevHistogramBins.size() != mHistogramBins.size()) {
+        // cannot compute delta since prev is still undefined - trigger another update
+        mPrevHistogramBins = mHistogramBins;
+        return update();
+    }
+
+    auto maxValue = quint32{ 1 };
+    for (auto i = 0; i < mHistogramBins.size(); ++i) {
+        const auto value = (mHistogramBins[i] - mPrevHistogramBins[i]);
+        maxValue = qMax(maxValue, value);
+    }
+
+    auto histogram = QVector<float>(mHistogramBins.size());
+    const auto s = 1.0f / maxValue;
+    for (auto i = 0; i < mHistogramBins.size(); ++i) {
+        const auto value = (mHistogramBins[i] - mPrevHistogramBins[i]);
+        histogram[i] = (1.0f - (value * s));
+    }
+    mPrevHistogramBins.swap(mHistogramBins);
+
+    Q_EMIT histogramChanged(histogram);
 }
