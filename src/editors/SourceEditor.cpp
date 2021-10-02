@@ -70,6 +70,7 @@ SourceEditor::SourceEditor(QString fileName
     setLineWrap(settings.lineWrap());
     setShowWhiteSpace(settings.showWhiteSpace());
     setIndentWithSpaces(settings.indentWithSpaces());
+    setCenterOnScroll(true);
 
     connect(&settings, &Settings::tabSizeChanged,
         this, &SourceEditor::setTabSize);
@@ -87,11 +88,9 @@ SourceEditor::SourceEditor(QString fileName
         this, &SourceEditor::updateSyntaxHighlighting);
 
     updateViewportMargins();
-    updateExtraSelections();
-    updateColors(settings.darkTheme());
-    setSourceTypeFromExtension();
     setPlainText(document()->toPlainText());
-    setCenterOnScroll(true);
+    deduceSourceType();
+    updateColors(settings.darkTheme());
 }
 
 SourceEditor::~SourceEditor()
@@ -215,33 +214,17 @@ bool SourceEditor::save()
     QFile file(fileName());
     if (!file.open(QFile::WriteOnly | QFile::Text))
         return false;
-    file.write(document()->toPlainText().toUtf8());
 
+    file.write(document()->toPlainText().toUtf8());
     document()->setModified(false);
-    setSourceTypeFromExtension();
+    deduceSourceType();
     return true;
 }
 
-void SourceEditor::setSourceTypeFromExtension()
+void SourceEditor::deduceSourceType()
 {
     const auto extension = QFileInfo(mFileName).suffix();
-
-    if (extension == "glsl" && mSourceType == SourceType::PlainText)
-        setSourceType(SourceType::FragmentShader);
-    else if (extension == "vs" || extension == "vert")
-        setSourceType(SourceType::VertexShader);
-    else if (extension == "fs" || extension == "frag")
-        setSourceType(SourceType::FragmentShader);
-    else if (extension == "gs" || extension == "geom")
-        setSourceType(SourceType::GeometryShader);
-    else if (extension == "tesc")
-        setSourceType(SourceType::TessellationControl);
-    else if (extension == "tese")
-        setSourceType(SourceType::TessellationEvaluation);
-    else if (extension == "comp")
-        setSourceType(SourceType::ComputeShader);
-    else if (extension == "js")
-        setSourceType(SourceType::JavaScript);
+    setSourceType(::deduceSourceType(sourceType(), extension, toPlainText()));
 }
 
 void SourceEditor::setSourceType(SourceType sourceType)

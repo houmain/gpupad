@@ -16,21 +16,30 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
     mUi->sourceTypeButton->setPopupMode(QToolButton::MenuButtonPopup);
     mUi->sourceTypeButton->setIcon(QIcon(":images/16x16/help-faq.png"));
 
-    const auto addSourceType = [&](const QString &text, SourceType sourceType) {
-        const auto action = sourceTypeMenu->addAction(text);
+    const auto addSourceType = [&](QMenu* menu, const QString &text, SourceType sourceType) {
+        const auto action = menu->addAction(text);
         action->setData(static_cast<int>(sourceType));
         action->setCheckable(true);
         action->setActionGroup(sourceTypeActionGroup);
     };
-    addSourceType(tr("Vertex Shader"), SourceType::VertexShader);
-    addSourceType(tr("Fragment Shader"), SourceType::FragmentShader);
-    addSourceType(tr("Geometry Shader"), SourceType::GeometryShader);
-    addSourceType(tr("Tessellation Control"), SourceType::TessellationControl);
-    addSourceType(tr("Tessellation Evaluation"), SourceType::TessellationEvaluation);
-    addSourceType(tr("Compute Shader"), SourceType::ComputeShader);
-    sourceTypeMenu->addSeparator();
-    addSourceType(tr("JavaScript"), SourceType::JavaScript);
-    addSourceType(tr("Plaintext"), SourceType::PlainText);
+    const auto glsl = sourceTypeMenu->addMenu(tr("GLSL"));
+    addSourceType(glsl, tr("Vertex Shader"), SourceType::GLSL_VertexShader);
+    addSourceType(glsl, tr("Fragment Shader"), SourceType::GLSL_FragmentShader);
+    addSourceType(glsl, tr("Geometry Shader"), SourceType::GLSL_GeometryShader);
+    addSourceType(glsl, tr("Tessellation Control"), SourceType::GLSL_TessellationControl);
+    addSourceType(glsl, tr("Tessellation Evaluation"), SourceType::GLSL_TessellationEvaluation);
+    addSourceType(glsl, tr("Compute Shader"), SourceType::GLSL_ComputeShader);
+
+    const auto hlsl = sourceTypeMenu->addMenu(tr("HLSL"));
+    addSourceType(hlsl, tr("Vertex Shader"), SourceType::HLSL_VertexShader);
+    addSourceType(hlsl, tr("Fragment Shader"), SourceType::HLSL_FragmentShader);
+    addSourceType(hlsl, tr("Geometry Shader"), SourceType::HLSL_GeometryShader);
+    addSourceType(hlsl, tr("Tessellation Control"), SourceType::HLSL_TessellationControl);
+    addSourceType(hlsl, tr("Tessellation Evaluation"), SourceType::HLSL_TessellationEvaluation);
+    addSourceType(hlsl, tr("Compute Shader"), SourceType::HLSL_ComputeShader);
+
+    addSourceType(sourceTypeMenu, tr("JavaScript"), SourceType::JavaScript);
+    addSourceType(sourceTypeMenu, tr("Plaintext"), SourceType::PlainText);
 
     connect(sourceTypeMenu, &QMenu::aboutToShow,
         [this, sourceTypeActionGroup]() {

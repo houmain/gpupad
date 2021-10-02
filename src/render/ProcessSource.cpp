@@ -5,29 +5,6 @@
 #include "glslang.h"
 
 namespace {
-    Shader::ShaderType getShaderType(SourceType sourceType)
-    {
-        switch (sourceType) {
-            case SourceType::PlainText:
-            case SourceType::JavaScript:
-                break;
-
-            case SourceType::VertexShader:
-                return Shader::ShaderType::Vertex;
-            case SourceType::FragmentShader:
-                return Shader::ShaderType::Fragment;
-            case SourceType::GeometryShader:
-                return Shader::ShaderType::Geometry;
-            case SourceType::TessellationControl:
-                return Shader::ShaderType::TessellationControl;
-            case SourceType::TessellationEvaluation:
-                return Shader::ShaderType::TessellationEvaluation;
-            case SourceType::ComputeShader:
-                return Shader::ShaderType::Compute;
-        }
-        return { };
-    }
-
     const Item *findShaderInSession(const QString &fileName)
     {
         auto shader = std::add_pointer_t<const Shader>();
@@ -93,10 +70,11 @@ void ProcessSource::prepare(bool, EvaluationType)
     if (auto shaderType = getShaderType(mSourceType)) {
         auto shaders = getShadersInSession(mFileName);
         auto shader = Shader{ };
-        if (shaders.empty()) {
+        if (shaders.size() <= 1) {
             shader.fileName = mFileName;
             shader.shaderType = shaderType;
-            shaders.append(&shader);
+            shader.language = getShaderLanguage(mSourceType);
+            shaders = { &shader };
         }
         mNewShader.reset(new GLShader(shaderType, shaders));
     }

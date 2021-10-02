@@ -59,6 +59,7 @@ set(SOURCES
   src/TextureData.cpp
   src/VideoPlayer.cpp
   src/VideoManager.cpp
+  src/SourceType.cpp
   src/editors/BinaryEditor.cpp
   src/editors/BinaryEditorToolBar.cpp
   src/editors/BinaryEditorToolBar.ui

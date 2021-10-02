@@ -510,7 +510,7 @@ void MainWindow::newFile()
 {
     mEditorManager.openNewSourceEditor(
         FileDialog::generateNextUntitledFileName(tr("Untitled")),
-        SourceType::FragmentShader);
+        SourceType::GLSL_FragmentShader);
 }
 
 void MainWindow::openFile()

@@ -355,15 +355,7 @@ IEditor* SessionProperties::openEditor(const FileItem &fileItem)
                 editor->setSourceType(SourceType::JavaScript);
             }
             else if (auto shader = castItem<Shader>(fileItem)) {
-                static const auto sMapping = QMap<Shader::ShaderType, SourceType>{
-                    { Shader::ShaderType::Vertex, SourceType::VertexShader },
-                    { Shader::ShaderType::Fragment, SourceType::FragmentShader },
-                    { Shader::ShaderType::Geometry, SourceType::GeometryShader },
-                    { Shader::ShaderType::TessellationControl, SourceType::TessellationControl },
-                    { Shader::ShaderType::TessellationEvaluation, SourceType::TessellationEvaluation },
-                    { Shader::ShaderType::Compute, SourceType::ComputeShader },
-                };
-                const auto sourceType = sMapping[shader->shaderType];
+                const auto sourceType = getSourceType(shader->shaderType, shader->language);
                 if (sourceType != SourceType::PlainText)
                     editor->setSourceType(sourceType);
             }

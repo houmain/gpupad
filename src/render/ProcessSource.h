@@ -2,9 +2,9 @@
 #define PROCESSSOURCE_H
 
 #include "RenderTask.h"
-#include "SourceType.h"
 #include "MessageList.h"
 #include "session/Item.h"
+#include "SourceType.h"
 
 class GLShader;
 class ScriptEngine;

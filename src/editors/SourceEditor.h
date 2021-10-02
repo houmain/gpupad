@@ -38,7 +38,7 @@ public:
     QString source() const { return toPlainText(); }
     SourceType sourceType() const { return mSourceType; }
     void setSourceType(SourceType sourceType);
-    void setSourceTypeFromExtension();
+    void deduceSourceType();
 
 Q_SIGNALS:
     void fileNameChanged(const QString &fileName);
