@@ -72,11 +72,12 @@ bool GLProgram::linkShaders(GLuint program)
     for (auto i = 0; i < uniforms; ++i) {
         gl.glGetActiveUniform(program, static_cast<GLuint>(i), static_cast<GLsizei>(buffer.size()),
             &nameLength, &size, &type, buffer.data());
-        const auto name = getUniformBaseName(buffer.data());
-        mActiveUniforms[name] = { gl.glGetUniformLocation(program, qPrintable(name)), type, size };
-        mUniformsSet[getUniformBaseName(name)] = false;
+        const auto name = QString(buffer.data());
+        const auto baseName = getUniformBaseName(name);
+        mActiveUniforms[baseName] = { gl.glGetUniformLocation(program, qPrintable(baseName)), type, size };
+        mUniformsSet[baseName] = false;
         for (auto j = 0; j < size; ++j) {
-            const auto elementName = QStringLiteral("%1[%2]").arg(name).arg(j);
+            const auto elementName = QStringLiteral("%1[%2]").arg(baseName).arg(j);
             if (auto location = gl.glGetUniformLocation(program, qPrintable(elementName));
                 location >= 0)
                 mActiveUniforms[elementName] = { location, type, 1 };
@@ -98,7 +99,7 @@ bool GLProgram::linkShaders(GLuint program)
                     mBufferBindingPoints[name] = bindingPoint;
                     mBuffersSet[name] = false;
                 }
-                mUniformsSet.erase(name);
+                mUniformsSet.erase(baseName);
             }
         }
 #endif
@@ -307,11 +308,12 @@ std::vector<T> getValues(const ScriptVariable &variable,
 bool GLProgram::apply(const GLUniformBinding &binding)
 {
     auto &gl = GLContext::currentContext();
-    if (!mActiveUniforms.contains(binding.name))
-        return false;
     const auto [location, dataType, size] = 
-        mActiveUniforms[(mActiveUniforms.contains(binding.name) ? 
-           binding.name : getUniformBaseName(binding.name))];
+        mActiveUniforms[mActiveUniforms.contains(binding.name) ? 
+            binding.name : getUniformBaseName(binding.name)];
+    uniformSet(getUniformBaseName(binding.name));
+    if (!dataType || location < 0)
+        return false;
 
     switch (dataType) {
 #define ADD(TYPE, DATATYPE, COUNT, FUNCTION) \
@@ -365,8 +367,6 @@ bool GLProgram::apply(const GLUniformBinding &binding)
 #undef ADD
 #undef ADD_MATRIX
     }
-
-    uniformSet(getUniformBaseName(binding.name));
     return true;
 }
 

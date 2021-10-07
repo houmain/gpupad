@@ -109,6 +109,62 @@ namespace
         }
         return hasErrors;
     }
+
+    QString patchGLSL(QString glsl) 
+    {
+        // WORKAROUND - is there no simpler way?
+        // turn:
+        //   layout(binding = 0, std140) uniform _Global
+        //   {
+        //       layout(row_major) mat4 viewProj;
+        //   } _35;
+        //   ...
+        //   _35.viewProj
+        //
+        // into:
+        //   uniform row_major mat4 viewProj;
+        //   ...
+        //   viewProj
+        //
+        auto i = glsl.indexOf("uniform _Global");
+        if (i >= 0) {
+            auto lineBegin = glsl.lastIndexOf('\n', i) + 1;
+            glsl.insert(lineBegin, "//");
+            for (auto level = 0; i < glsl.size(); ++i) {
+                if (glsl[i] == '{') {
+                    if (level == 0) {
+                        glsl.insert(i, "//");
+                        i += 2;
+                    }
+                    ++level;
+                }
+                else if (glsl[i] == 'l' && glsl.indexOf("layout(", i) == i) {
+                    glsl.remove(i, 7);
+                    i = glsl.indexOf(')', i);
+                    glsl.replace(i, 1, " ");
+                    lineBegin = i + 1;
+                }
+                else if (glsl[i] == '\n') {
+                    lineBegin = i + 1;
+                }
+                else if (glsl[i] == ';') {
+                    glsl.insert(lineBegin, "uniform ");
+                    i += 8;
+                }
+                else if (glsl[i] == '}') {
+                    --level;
+                    if (level == 0) {
+                        glsl.insert(i, "//");
+                        i += 4;
+                        const auto var = glsl.mid(i, glsl.indexOf(';', i) - i);
+                        glsl.remove(var + ".");
+                        break;
+                    }
+                }
+            }
+        }
+        return glsl;
+    }
 } // namespace
 
 QString generateSpirV(const QString &source, Shader::ShaderType shaderType)
@@ -180,7 +236,7 @@ QString generateGLSL(const QString &source, Shader::ShaderType shaderType,
                   compiler.get_name(remap.image_id) + "_" +
                         compiler.get_name(remap.sampler_id));
 
-            return QString::fromStdString(compiler.compile());
+            return patchGLSL(QString::fromStdString(compiler.compile()));
         }
         catch (const std::exception &ex) {
             messages += MessageList::insert(fileName, -1,
