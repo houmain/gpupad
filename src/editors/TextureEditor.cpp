@@ -119,8 +119,15 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
         &mTextureInfoBar, &TextureInfoBar::updateHistogram);
     c += connect(&mTextureInfoBar, &TextureInfoBar::pickerEnabledChanged,
         mTextureItem, &TextureItem::setHistogramEnabled);
+    c += connect(&mTextureInfoBar, &TextureInfoBar::mappingRangeChanged,
+        mTextureItem, &TextureItem::setMappingRange);
+    c += connect(&mTextureInfoBar, &TextureInfoBar::histogramBoundsChanged,
+        mTextureItem, &TextureItem::setHistogramBounds);
 
     mTextureItem->setHistogramEnabled(mTextureInfoBar.isPickerEnabled());
+
+    mTextureInfoBar.setHistogramBounds(mTextureItem->histogramBounds());
+    mTextureInfoBar.setMappingRange(mTextureItem->mappingRange());
     return c;
 }
 

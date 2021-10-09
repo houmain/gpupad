@@ -2,6 +2,7 @@
 #define TEXTUREINFOBAR_H
 
 #include <QWidget>
+#include "DoubleRange.h"
 
 namespace Ui {
 class TextureInfoBar;
@@ -22,15 +23,25 @@ public:
     void setPickerEnabled(bool enabled);
     bool isPickerEnabled() const { return mIsPickerEnabled; }
     void updateHistogram(const QVector<float> &histogramUpdate);
+    void setMappingRange(const DoubleRange &range);
+    const DoubleRange &mappingRange() const { return mMappingRange; }
+    void setHistogramBounds(const DoubleRange &bounds);
+    const DoubleRange &histogramBounds() const { return mHistogramBounds; }
+    void resetRange();
+    void autoRange();
 
 Q_SIGNALS:
     void cancelled();
     void pickerEnabledChanged(bool enabled);
+    void mappingRangeChanged(const DoubleRange &range);
+    void histogramBoundsChanged(const DoubleRange &bounds);
 
 private:
     Ui::TextureInfoBar *ui;
     Histogram *mHistogram;
     bool mIsPickerEnabled{ };
+    DoubleRange mMappingRange{ };
+    DoubleRange mHistogramBounds{ };
 };
 
 #endif // TEXTUREINFOBAR_H

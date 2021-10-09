@@ -2,6 +2,7 @@
 #define TEXTUREITEM_H
 
 #include "TextureData.h"
+#include "DoubleRange.h"
 #include <QObject>
 #include <QGraphicsView>
 #include <QOpenGLTexture>
@@ -38,6 +39,10 @@ public:
     bool flipVertically() const { return mFlipVertically; }
     void setPickerEnabled(bool enabled) { mPickerEnabled = enabled; }
     bool pickerEnabled() const { return mPickerEnabled; }
+    void setMappingRange(const DoubleRange &bounds);
+    const DoubleRange &mappingRange() const { return mMappingRange; }
+    void setHistogramBounds(const DoubleRange &range); 
+    const DoubleRange &histogramBounds() const { return mMappingRange; }
     void setHistogramEnabled(bool enabled) { mHistogramEnabled = enabled; }
     bool histogramEnabled() const { return mHistogramEnabled; }
     QRectF boundingRect() const override { return mBoundingRect; }
@@ -72,7 +77,8 @@ private:
     QOpenGLTexture mPickerTexture{ QOpenGLTexture::Target1D };
     bool mHistogramEnabled{ };
     QOpenGLTexture mHistogramTexture{ QOpenGLTexture::Target1D };
-    QVector2D mHistogramBounds{ 0, 255 };
+    DoubleRange mMappingRange{ 0, 1 };
+    DoubleRange mHistogramBounds{ 0, 1 };
     QVector<quint32> mHistogramBins;
     QVector<quint32> mPrevHistogramBins;
     QPointF mMousePosition{ };

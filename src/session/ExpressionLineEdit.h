@@ -11,6 +11,7 @@ class ExpressionLineEdit final : public QLineEdit
 public:
     explicit ExpressionLineEdit(QWidget *parent = nullptr);
 
+    void setValue(double value);
     void setText(const QString &text);
     QString text() const;
     bool hasValue(double value) const;

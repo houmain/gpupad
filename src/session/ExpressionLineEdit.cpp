@@ -52,15 +52,20 @@ void ExpressionLineEdit::stepBy(double steps)
     }
 }
 
+void ExpressionLineEdit::setValue(double value) 
+{
+    auto simplified = simpleDoubleString(value);
+    if (simplified != text()) {
+        QLineEdit::setText(simplified);
+        Q_EMIT textChanged(simplified);
+    }
+}
+
 void ExpressionLineEdit::setText(const QString &string)
 {
     auto ok = false;
     if (auto value = string.toDouble(&ok); ok) {
-        auto simplified = simpleDoubleString(value);
-        if (simplified != text()) {
-            QLineEdit::setText(simplified);
-            Q_EMIT textChanged(simplified);
-        }
+        setValue(value);
     }
     else {
         if (string != QLineEdit::text()) {

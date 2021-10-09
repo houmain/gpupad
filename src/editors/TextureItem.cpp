@@ -52,6 +52,8 @@ uniform float uLayer;
 uniform int uFace;
 uniform int uSample;
 uniform int uSamples;
+uniform float uMappingOffset;
+uniform float uMappingFactor;
 uniform bool uPickerEnabled;
 uniform bool uHistogramEnabled;
 
@@ -93,9 +95,14 @@ void main() {
 #ifdef GL_ARB_shader_image_load_store
   if (uPickerEnabled && gl_FragCoord.xy == uPickerFragCoord)
     imageStore(uPickerColor, 0, color);
+#endif
 
+  color = MAPPING;
+  color = SWIZZLE;
+
+#ifdef GL_ARB_shader_image_load_store
   if (uHistogramEnabled && clamp(TC, vec2(0), vec2(1)) == TC) {
-    ivec3 offset = ivec3(color.rgb * uHistogramFactor + vec3(uHistogramOffset));
+    ivec3 offset = ivec3((color.rgb + vec3(uHistogramOffset)) * uHistogramFactor);
     offset = offset * 3 + ivec3(0, 1, 2);
     imageAtomicAdd(uHistogram, offset.r, 1u);
     imageAtomicAdd(uHistogram, offset.g, 1u);
@@ -103,8 +110,8 @@ void main() {
   }
 #endif
 
-  color = MAPPING;
-  color = SWIZZLE;
+  color.rgb = (color.rgb + vec3(uMappingOffset)) * uMappingFactor;
+
   oColor = color;
 }
 )";
@@ -299,6 +306,23 @@ void TextureItem::setMousePosition(const QPointF &mousePosition)
         update();
 }
 
+void TextureItem::setMappingRange(const DoubleRange &range)
+{
+    if (mMappingRange != range) {
+        mMappingRange = range;
+        update();
+    }
+}
+
+void TextureItem::setHistogramBounds(const DoubleRange &bounds) 
+{
+    if (mHistogramBounds != bounds) {
+        mHistogramBounds = bounds;
+        if (mHistogramEnabled)
+            update();
+    }
+}
+
 void TextureItem::paint(QPainter *painter,
     const QStyleOptionGraphicsItem *, QWidget *)
 {
@@ -395,6 +419,10 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         program->setUniformValue("uSample", std::max(0, (resolve ? 0 : mSample)));
         program->setUniformValue("uSamples", std::max(1, (resolve ? mImage.samples() : 1)));
         program->setUniformValue("uFlipVertically", mFlipVertically);
+        program->setUniformValue("uMappingOffset", 
+            static_cast<float>(-mMappingRange.minimum));
+        program->setUniformValue("uMappingFactor", 
+            static_cast<float>(1 / mMappingRange.range()));
         program->setUniformValue("uPickerEnabled", mPickerEnabled);
         program->setUniformValue("uHistogramEnabled", mHistogramEnabled);
 
@@ -412,7 +440,6 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
                     mMousePosition + QPointF(0.5, 0.5));
             }
         }
-
         if (mHistogramEnabled) {
             if (auto gl42 = context().gl42()) {
                 if (!mHistogramTexture.isCreated()) {
@@ -423,9 +450,11 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
                 gl42->glBindImageTexture(2, mHistogramTexture.textureId(), 0, GL_FALSE, 
                     0, GL_READ_WRITE, GL_R32UI);
                 program->setUniformValue("uHistogram", 2);
-                program->setUniformValue("uHistogramOffset", mHistogramBounds.x());
+                program->setUniformValue("uHistogramOffset", 
+                    static_cast<float>(-mHistogramBounds.minimum));
+                const auto scaleToBins = mHistogramBins.size() / 3 - 1;
                 program->setUniformValue("uHistogramFactor", 
-                    mHistogramBounds.y() - mHistogramBounds.x());
+                    static_cast<float>(1 / mHistogramBounds.range() * scaleToBins));
             }
         }
 

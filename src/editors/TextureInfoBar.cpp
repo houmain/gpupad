@@ -8,7 +8,7 @@
 class Histogram : public QWidget
 {
 private:
-    const int height = 50;
+    const int height = 70;
     QVector<float> mHistogram;
 
 public:
@@ -28,8 +28,8 @@ public:
     void paintEvent(QPaintEvent *ev) override
     {
         QPainter painter(this);
-        painter.fillRect(ev->rect(), QBrush(QColor::fromRgb(0, 0, 0, 220)));
-        painter.setPen(QPen(Qt::black));
+        painter.fillRect(ev->rect(), QBrush(QColor::fromRgb(0, 0, 0, 50)));
+        painter.setPen(QPen(QColor::fromRgb(0, 0, 0, 64)));
         painter.drawRect(ev->rect().adjusted(0, 0, -1, -1));
 
         QPainterPath red, green, blue;
@@ -46,9 +46,13 @@ public:
         green.lineTo(i + 3 + 1, height);
         blue.lineTo(i + 3 + 1, height);
         painter.setCompositionMode(QPainter::CompositionMode_Plus);
-        painter.fillPath(blue, QBrush(QColor::fromRgb(0, 0, 255, 255)));
+        painter.fillPath(blue, QBrush(QColor::fromRgb(0, 32, 255, 255)));
         painter.fillPath(red, QBrush(QColor::fromRgb(255, 0, 0, 255)));
         painter.fillPath(green, QBrush(QColor::fromRgb(0, 255, 0, 255)));
+        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        painter.strokePath(blue, QPen(QColor::fromRgb(0, 0, 255, 64)));
+        painter.strokePath(red, QPen(QColor::fromRgb(255, 0, 0, 64)));
+        painter.strokePath(green, QPen(QColor::fromRgb(0, 255, 0, 64)));
     }
 };
 
@@ -58,13 +62,32 @@ TextureInfoBar::TextureInfoBar(QWidget *parent)
     , mHistogram(new Histogram(this))
 {
     ui->setupUi(this);
+    ui->minimum->setDecimal(true);
+    ui->maximum->setDecimal(true);
     ui->horizontalLayout->insertWidget(3, mHistogram);
 
-    setMinimumSize(0, 60);
-    setMaximumSize(16777215, 60);
+    setMinimumSize(0, 80);
+    setMaximumSize(16777215, 80);
 
-    connect(ui->closeButton, &QPushButton::clicked, this,
+    connect(ui->minimum, &ExpressionLineEdit::textChanged,
+        [this](const QString &text) {
+            auto ok = false;
+            if (auto value = text.toDouble(&ok); ok)
+                setHistogramBounds({ value, mHistogramBounds.maximum });
+        });
+    connect(ui->maximum, &ExpressionLineEdit::textChanged,
+        [this](const QString &text) {
+            auto ok = false;
+            if (auto value = text.toDouble(&ok); ok)
+                setHistogramBounds({ mHistogramBounds.minimum, value });
+        });
+
+    connect(ui->buttonClose, &QPushButton::clicked, this,
         &TextureInfoBar::cancelled);
+    connect(ui->buttonAutoRange, &QPushButton::clicked, 
+        this, &TextureInfoBar::autoRange);
+    connect(ui->buttonResetRange, &QPushButton::clicked, 
+        this, &TextureInfoBar::resetRange);
 }
 
 TextureInfoBar::~TextureInfoBar()
@@ -98,7 +121,37 @@ void TextureInfoBar::setPickerEnabled(bool enabled)
     }
 }
 
+void TextureInfoBar::setMappingRange(const DoubleRange &range)
+{
+    if (mMappingRange != range) {
+        mMappingRange = range;
+        Q_EMIT mappingRangeChanged(range);
+    }
+}
+
+void TextureInfoBar::setHistogramBounds(const DoubleRange &bounds)
+{
+    if (mHistogramBounds != bounds) {
+        mHistogramBounds = bounds;
+        ui->minimum->setValue(bounds.minimum);
+        ui->maximum->setValue(bounds.maximum);
+        Q_EMIT histogramBoundsChanged(bounds);
+    }
+    setMappingRange(bounds);
+}
+
 void TextureInfoBar::updateHistogram(const QVector<float> &histogramUpdate)
 {
     mHistogram->updateHistogram(histogramUpdate);
+}
+
+void TextureInfoBar::resetRange()
+{
+    setHistogramBounds({ 0, 1 });
+}
+
+void TextureInfoBar::autoRange()
+{
+    // TODO:
+    setHistogramBounds({ 0.3, 0.8 });
 }
