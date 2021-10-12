@@ -6,6 +6,7 @@
 #include "FindReplaceBar.h"
 #include "FileDialog.h"
 #include "GlslHighlighter.h"
+#include "HlslHighlighter.h"
 #include "JsHighlighter.h"
 #include "RectangularSelection.h"
 #include <QCompleter>
@@ -258,28 +259,33 @@ void SourceEditor::updateSyntaxHighlighting()
         (document()->characterCount() > (1 << 20) ||
          mSourceType == SourceType::PlainText);
 
-    if (disabled) {
-        delete mHighlighter;
-        mHighlighter = nullptr;
-        mCompleter = nullptr;
+    delete mHighlighter;
+    mHighlighter = nullptr;
+    mCompleter = nullptr;
+    if (disabled)
         return;
-    }
 
     const auto &settings = Singletons::settings();
-
-    if (mSourceType == SourceType::JavaScript) {
-        auto highlighter = new JsHighlighter(settings.darkTheme(), this);
-        delete mHighlighter;
+    const auto set = [&](auto highlighter) {
         mHighlighter = highlighter;
         mCompleter = highlighter->completer();
+    };
+    switch (mSourceType) {
+        case SourceType::JavaScript:
+            set(new JsHighlighter(settings.darkTheme(), this));
+            break;
+        case SourceType::HLSL_VertexShader:
+        case SourceType::HLSL_FragmentShader:
+        case SourceType::HLSL_GeometryShader:
+        case SourceType::HLSL_TessellationControl:
+        case SourceType::HLSL_TessellationEvaluation:
+        case SourceType::HLSL_ComputeShader:
+            set(new HlslHighlighter(settings.darkTheme(), this));
+            break;
+        default:
+            set(new GlslHighlighter(settings.darkTheme(), this));
+            break;
     }
-    else {
-        auto highlighter = new GlslHighlighter(settings.darkTheme(), this);
-        delete mHighlighter;
-        mHighlighter = highlighter;
-        mCompleter = highlighter->completer();
-    }
-
     mHighlighter->setDocument(document());
     mCompleter->setWidget(this);
     mCompleter->setCompletionMode(QCompleter::PopupCompletion);
