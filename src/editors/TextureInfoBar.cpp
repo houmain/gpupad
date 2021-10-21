@@ -15,8 +15,13 @@ public:
     Histogram(QWidget *parent)
         : QWidget(parent)
     {
-        setMinimumSize((256 + 1) * 3 + 2, height + 1);
-        setMaximumSize((256 + 1) * 3 + 2, height + 1);
+        setMinimumSize(1, height + 1);
+        setMaximumSize(4096, height + 1);
+    }
+
+    QSize sizeHint() const override 
+    {
+        return { 4096, height + 1 };
     }
 
     void updateHistogram(const QVector<float> &histogram)
@@ -64,10 +69,10 @@ TextureInfoBar::TextureInfoBar(QWidget *parent)
     ui->setupUi(this);
     ui->minimum->setDecimal(true);
     ui->maximum->setDecimal(true);
-    ui->horizontalLayout->insertWidget(3, mHistogram);
+    ui->horizontalLayout->insertWidget(4, mHistogram);
 
     setMinimumSize(0, 80);
-    setMaximumSize(16777215, 80);
+    setMaximumSize(4096, 80);
 
     connect(ui->minimum, &ExpressionLineEdit::textChanged,
         [this](const QString &text) {
@@ -85,7 +90,7 @@ TextureInfoBar::TextureInfoBar(QWidget *parent)
     connect(ui->buttonClose, &QPushButton::clicked, this,
         &TextureInfoBar::cancelled);
     connect(ui->buttonAutoRange, &QPushButton::clicked, 
-        this, &TextureInfoBar::autoRange);
+        this, &TextureInfoBar::autoRangeRequested);
     connect(ui->buttonResetRange, &QPushButton::clicked, 
         this, &TextureInfoBar::resetRange);
 }
@@ -103,14 +108,34 @@ void TextureInfoBar::setMousePosition(const QPointF &mousePosition)
 
 void TextureInfoBar::setPickerColor(const QVector4D &color)
 {
-    const auto map = [](auto v) { return static_cast<int>(qRound(v * 255)); };
-    ui->pickerColorR->setText(QStringLiteral("R: %1").arg(map(color.x())));
-    ui->pickerColorG->setText(QStringLiteral("G: %1").arg(map(color.y())));
-    ui->pickerColorB->setText(QStringLiteral("B: %1").arg(map(color.z())));
-    ui->pickerColorA->setText(QStringLiteral("A: %1").arg(map(color.w())));
+    auto c = color;
 
-    ui->color->setStyleSheet("background: " +
-        QColor::fromRgbF(color.x(), color.y(), color.z(), color.w()).name(QColor::HexRgb));
+    const auto toString = [](float v) { 
+        return QString::number(v, 'f', 3);
+    };
+    ui->pickerColorR->setText(toString(c.x()));
+    ui->pickerColorG->setText(toString(c.y()));
+    ui->pickerColorB->setText(toString(c.z()));
+    ui->pickerColorA->setText(toString(c.w()));
+
+    // output encoded value and color mapped to range
+    c = (color - QVector4D(1, 1, 1, 1) * mMappingRange.minimum) /
+        (mMappingRange.maximum - mMappingRange.minimum);
+    c.setW(color.w());
+
+    const auto toStringEncoded = [](const char* channel, float v) { 
+        v = std::clamp(std::isnan(v) ? 0 : v, 0.0f, 1.0f) * 255;
+        return QStringLiteral("%1:  %2")
+            .arg(channel).arg(static_cast<int>(v + 0.5f));
+    };
+    ui->pickerColorRE->setText(toStringEncoded("R", c.x()));
+    ui->pickerColorGE->setText(toStringEncoded("G", c.y()));
+    ui->pickerColorBE->setText(toStringEncoded("B", c.z()));
+    ui->pickerColorAE->setText(toStringEncoded("A", c.w()));
+
+    const auto clamp = [](float v) { return std::clamp(v, 0.0f, 1.0f); };
+    ui->color->setStyleSheet("background: " + QColor::fromRgbF(
+        clamp(c.x()), clamp(c.y()), clamp(c.z()), clamp(c.w())).name(QColor::HexArgb));
 }
 
 void TextureInfoBar::setPickerEnabled(bool enabled)
@@ -150,8 +175,14 @@ void TextureInfoBar::resetRange()
     setHistogramBounds({ 0, 1 });
 }
 
-void TextureInfoBar::autoRange()
+int TextureInfoBar::histogramBinCount() const
 {
-    // TODO:
-    setHistogramBounds({ 0.3, 0.8 });
+    return mHistogram->width();
 }
+
+void TextureInfoBar::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    Q_EMIT histogramBinCountChanged(histogramBinCount());
+}
+

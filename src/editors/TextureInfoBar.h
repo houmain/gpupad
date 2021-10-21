@@ -23,18 +23,22 @@ public:
     void setPickerEnabled(bool enabled);
     bool isPickerEnabled() const { return mIsPickerEnabled; }
     void updateHistogram(const QVector<float> &histogramUpdate);
+    int histogramBinCount() const;
     void setMappingRange(const DoubleRange &range);
     const DoubleRange &mappingRange() const { return mMappingRange; }
     void setHistogramBounds(const DoubleRange &bounds);
     const DoubleRange &histogramBounds() const { return mHistogramBounds; }
     void resetRange();
-    void autoRange();
+
+    void resizeEvent(QResizeEvent *event) override;
 
 Q_SIGNALS:
     void cancelled();
     void pickerEnabledChanged(bool enabled);
     void mappingRangeChanged(const DoubleRange &range);
+    void histogramBinCountChanged(int count);
     void histogramBoundsChanged(const DoubleRange &bounds);
+    void autoRangeRequested();
 
 private:
     Ui::TextureInfoBar *ui;

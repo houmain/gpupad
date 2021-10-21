@@ -41,8 +41,10 @@ public:
     bool pickerEnabled() const { return mPickerEnabled; }
     void setMappingRange(const DoubleRange &bounds);
     const DoubleRange &mappingRange() const { return mMappingRange; }
+    void setHistogramBinCount(int count);
     void setHistogramBounds(const DoubleRange &range); 
     const DoubleRange &histogramBounds() const { return mMappingRange; }
+    void computeHistogramBounds();
     void setHistogramEnabled(bool enabled) { mHistogramEnabled = enabled; }
     bool histogramEnabled() const { return mHistogramEnabled; }
     QRectF boundingRect() const override { return mBoundingRect; }
@@ -52,6 +54,7 @@ public:
 Q_SIGNALS:
     void pickerColorChanged(QVector4D color);
     void histogramChanged(const QVector<float> &histogram);
+    void histogramBoundsComputed(const DoubleRange &range);
 
 private:
     ZeroCopyContext &context();

@@ -91,18 +91,15 @@ void main() {
   for (int s = uSample; s < uSample + uSamples; ++s)
     color += vec4(SAMPLE);
   color /= float(uSamples);
-
-#ifdef GL_ARB_shader_image_load_store
-  if (uPickerEnabled && gl_FragCoord.xy == uPickerFragCoord)
-    imageStore(uPickerColor, 0, color);
-#endif
-
   color = MAPPING;
   color = SWIZZLE;
 
 #ifdef GL_ARB_shader_image_load_store
+  if (uPickerEnabled && gl_FragCoord.xy == uPickerFragCoord)
+    imageStore(uPickerColor, 0, color);
+
   if (uHistogramEnabled && clamp(TC, vec2(0), vec2(1)) == TC) {
-    ivec3 offset = ivec3((color.rgb + vec3(uHistogramOffset)) * uHistogramFactor);
+    ivec3 offset = ivec3((color.rgb + vec3(uHistogramOffset)) * uHistogramFactor * vec3(0.5));
     offset = offset * 3 + ivec3(0, 1, 2);
     imageAtomicAdd(uHistogram, offset.r, 1u);
     imageAtomicAdd(uHistogram, offset.g, 1u);
@@ -259,8 +256,8 @@ void ZeroCopyContext::handleDebugMessage(const QOpenGLDebugMessage &message)
 
 TextureItem::TextureItem(QObject *parent)
     : QObject(parent)
-    , mHistogramBins(256 * 3)
 {
+    setHistogramBinCount(1);
 }
 
 TextureItem::~TextureItem()
@@ -314,6 +311,17 @@ void TextureItem::setMappingRange(const DoubleRange &range)
     }
 }
 
+void TextureItem::setHistogramBinCount(int count)
+{
+    count = qMax(count / 3, 1) * 3;
+
+    if (mHistogramBins.size() != count) {
+        mHistogramBins.resize(count);
+        if (mHistogramEnabled)
+            update();
+    }          
+}
+
 void TextureItem::setHistogramBounds(const DoubleRange &bounds) 
 {
     if (mHistogramBounds != bounds) {
@@ -321,6 +329,12 @@ void TextureItem::setHistogramBounds(const DoubleRange &bounds)
         if (mHistogramEnabled)
             update();
     }
+}
+
+void TextureItem::computeHistogramBounds() 
+{
+    // TODO:
+    Q_EMIT histogramBoundsComputed({ 0.0, 2.0 });
 }
 
 void TextureItem::paint(QPainter *painter,
@@ -442,7 +456,11 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         }
         if (mHistogramEnabled) {
             if (auto gl42 = context().gl42()) {
-                if (!mHistogramTexture.isCreated()) {
+                auto created = mHistogramTexture.isCreated();
+                auto size = mHistogramTexture.width();
+                if (!mHistogramTexture.isCreated() ||
+                     mHistogramTexture.width() != mHistogramBins.size()) {
+                    mHistogramTexture.destroy();
                     mHistogramTexture.setSize(mHistogramBins.size());
                     mHistogramTexture.setFormat(QOpenGLTexture::R32U);
                     mHistogramTexture.allocateStorage();
