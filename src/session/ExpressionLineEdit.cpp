@@ -12,6 +12,8 @@ QString simpleDoubleString(double value)
 
 ExpressionLineEdit::ExpressionLineEdit(QWidget *parent) : QLineEdit(parent)
 {
+    connect(this, &QLineEdit::textEdited, 
+        this, &ExpressionLineEdit::textChanged);
 }
 
 void ExpressionLineEdit::wheelEvent(QWheelEvent *event)
@@ -54,7 +56,11 @@ void ExpressionLineEdit::stepBy(double steps)
 
 void ExpressionLineEdit::setValue(double value) 
 {
-    auto simplified = simpleDoubleString(value);
+    // do not simplify 0.00 to 0
+    const auto zero = QRegularExpression("-?0\\.?0*");
+    if (value == 0 && text().replace(zero, "0") == "0")
+        return;
+    const auto simplified = simpleDoubleString(value);
     if (simplified != text()) {
         QLineEdit::setText(simplified);
         Q_EMIT textChanged(simplified);
@@ -87,7 +93,7 @@ QString ExpressionLineEdit::text() const
 bool ExpressionLineEdit::hasValue(double value) const
 {
     // allow to reset to exactly zero
-    if (text() == "0" && value != 0)
+    if (value != 0 && text() == "0")
         return false;
     return (text() == simpleDoubleString(value));
 }
