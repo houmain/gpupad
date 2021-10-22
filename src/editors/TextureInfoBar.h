@@ -2,7 +2,7 @@
 #define TEXTUREINFOBAR_H
 
 #include <QWidget>
-#include "DoubleRange.h"
+#include "Range.h"
 
 namespace Ui {
 class TextureInfoBar;
@@ -22,12 +22,12 @@ public:
     void setPickerColor(const QVector4D &color);
     void setPickerEnabled(bool enabled);
     bool isPickerEnabled() const { return mIsPickerEnabled; }
-    void updateHistogram(const QVector<float> &histogramUpdate);
+    void updateHistogram(const QVector<qreal> &histogramUpdate);
     int histogramBinCount() const;
-    void setMappingRange(const DoubleRange &range);
-    const DoubleRange &mappingRange() const { return mMappingRange; }
-    void setHistogramBounds(const DoubleRange &bounds);
-    const DoubleRange &histogramBounds() const { return mHistogramBounds; }
+    void setMappingRange(const Range &range);
+    const Range &mappingRange() const { return mMappingRange; }
+    void setHistogramBounds(const Range &bounds);
+    const Range &histogramBounds() const { return mHistogramBounds; }
     void resetRange();
 
     void resizeEvent(QResizeEvent *event) override;
@@ -35,17 +35,17 @@ public:
 Q_SIGNALS:
     void cancelled();
     void pickerEnabledChanged(bool enabled);
-    void mappingRangeChanged(const DoubleRange &range);
+    void mappingRangeChanged(const Range &range);
     void histogramBinCountChanged(int count);
-    void histogramBoundsChanged(const DoubleRange &bounds);
+    void histogramBoundsChanged(const Range &bounds);
     void autoRangeRequested();
 
 private:
     Ui::TextureInfoBar *ui;
     Histogram *mHistogram;
     bool mIsPickerEnabled{ };
-    DoubleRange mMappingRange{ };
-    DoubleRange mHistogramBounds{ };
+    Range mMappingRange{ };
+    Range mHistogramBounds{ };
 };
 
 #endif // TEXTUREINFOBAR_H

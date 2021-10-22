@@ -1,65 +1,7 @@
 #include "TextureInfoBar.h"
+#include "Histogram.h"
 #include "ui_TextureInfoBar.h"
 #include <QVector4D>
-#include <QPainter>
-#include <QPaintEvent>
-#include <QPainterPath>
-
-class Histogram : public QWidget
-{
-private:
-    const int height = 70;
-    QVector<float> mHistogram;
-
-public:
-    Histogram(QWidget *parent)
-        : QWidget(parent)
-    {
-        setMinimumSize(1, height + 1);
-        setMaximumSize(4096, height + 1);
-    }
-
-    QSize sizeHint() const override 
-    {
-        return { 4096, height + 1 };
-    }
-
-    void updateHistogram(const QVector<float> &histogram)
-    {
-        mHistogram = histogram;
-        update();
-    }
-
-    void paintEvent(QPaintEvent *ev) override
-    {
-        QPainter painter(this);
-        painter.fillRect(ev->rect(), QBrush(QColor::fromRgb(0, 0, 0, 50)));
-        painter.setPen(QPen(QColor::fromRgb(0, 0, 0, 64)));
-        painter.drawRect(ev->rect().adjusted(0, 0, -1, -1));
-
-        QPainterPath red, green, blue;
-        red.moveTo(1, height);
-        green.moveTo(1, height);
-        blue.moveTo(1, height);
-        auto i = 0;
-        for (; i < mHistogram.size(); i += 3) {
-            red.lineTo(i + 3 + 1, mHistogram[i] * height);
-            green.lineTo(i + 3 + 1, mHistogram[i + 1] * height);
-            blue.lineTo(i + 3 + 1, mHistogram[i + 2] * height);
-        }
-        red.lineTo(i + 3 + 1, height);
-        green.lineTo(i + 3 + 1, height);
-        blue.lineTo(i + 3 + 1, height);
-        painter.setCompositionMode(QPainter::CompositionMode_Plus);
-        painter.fillPath(blue, QBrush(QColor::fromRgb(0, 32, 255, 255)));
-        painter.fillPath(red, QBrush(QColor::fromRgb(255, 0, 0, 255)));
-        painter.fillPath(green, QBrush(QColor::fromRgb(0, 255, 0, 255)));
-        painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-        painter.strokePath(blue, QPen(QColor::fromRgb(0, 0, 255, 64)));
-        painter.strokePath(red, QPen(QColor::fromRgb(255, 0, 0, 64)));
-        painter.strokePath(green, QPen(QColor::fromRgb(0, 255, 0, 64)));
-    }
-};
 
 TextureInfoBar::TextureInfoBar(QWidget *parent)
     : QWidget(parent)
@@ -70,9 +12,10 @@ TextureInfoBar::TextureInfoBar(QWidget *parent)
     ui->minimum->setDecimal(true);
     ui->maximum->setDecimal(true);
     ui->horizontalLayout->insertWidget(4, mHistogram);
-
+    
     setMinimumSize(0, 80);
     setMaximumSize(4096, 80);
+    mHistogram->setFixedHeight(70);
 
     connect(ui->minimum, &ExpressionLineEdit::textChanged,
         [this](const QString &text) {
@@ -146,7 +89,7 @@ void TextureInfoBar::setPickerEnabled(bool enabled)
     }
 }
 
-void TextureInfoBar::setMappingRange(const DoubleRange &range)
+void TextureInfoBar::setMappingRange(const Range &range)
 {
     if (mMappingRange != range) {
         mMappingRange = range;
@@ -154,7 +97,7 @@ void TextureInfoBar::setMappingRange(const DoubleRange &range)
     }
 }
 
-void TextureInfoBar::setHistogramBounds(const DoubleRange &bounds)
+void TextureInfoBar::setHistogramBounds(const Range &bounds)
 {
     if (mHistogramBounds != bounds) {
         mHistogramBounds = bounds;
@@ -165,7 +108,7 @@ void TextureInfoBar::setHistogramBounds(const DoubleRange &bounds)
     setMappingRange(bounds);
 }
 
-void TextureInfoBar::updateHistogram(const QVector<float> &histogramUpdate)
+void TextureInfoBar::updateHistogram(const QVector<qreal> &histogramUpdate)
 {
     mHistogram->updateHistogram(histogramUpdate);
 }
@@ -177,7 +120,9 @@ void TextureInfoBar::resetRange()
 
 int TextureInfoBar::histogramBinCount() const
 {
-    return mHistogram->width();
+    const auto minWidth = 2;
+    const auto multiple = 3 * 128;
+    return qMax(mHistogram->width() / multiple / minWidth, 1) * multiple;
 }
 
 void TextureInfoBar::resizeEvent(QResizeEvent *event)

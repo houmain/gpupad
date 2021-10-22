@@ -5,6 +5,7 @@
 #include "render/GLShareSynchronizer.h"
 #include <optional>
 #include <cmath>
+#include <array>
 
 namespace {
   static constexpr auto vertexShaderSource = R"(
@@ -38,6 +39,7 @@ static constexpr auto fragmentShaderSource = R"(
 
 #ifdef GL_ARB_shader_image_load_store
 #extension GL_ARB_shader_image_load_store: enable
+#extension GL_ARB_shader_image_size: enable
 writeonly layout(rgba32f) uniform image1D uPickerColor;
 uniform vec2 uPickerFragCoord;
 layout(r32ui) uniform uimage1D uHistogram;
@@ -99,15 +101,15 @@ void main() {
     imageStore(uPickerColor, 0, color);
 
   if (uHistogramEnabled && clamp(TC, vec2(0), vec2(1)) == TC) {
-    ivec3 offset = ivec3((color.rgb + vec3(uHistogramOffset)) * uHistogramFactor * vec3(0.5));
-    offset = offset * 3 + ivec3(0, 1, 2);
+    ivec3 offset = ivec3((color.rgb + vec3(uHistogramOffset)) * uHistogramFactor + vec3(0.5));
+    offset = clamp(offset, ivec3(0), ivec3(imageSize(uHistogram) / 3 - 1)) * 3 + ivec3(0, 1, 2);
     imageAtomicAdd(uHistogram, offset.r, 1u);
     imageAtomicAdd(uHistogram, offset.g, 1u);
     imageAtomicAdd(uHistogram, offset.b, 1u);
+
+    color.rgb = (color.rgb + vec3(uMappingOffset)) * uMappingFactor;
   }
 #endif
-
-  color.rgb = (color.rgb + vec3(uMappingOffset)) * uMappingFactor;
 
   oColor = color;
 }
@@ -303,7 +305,7 @@ void TextureItem::setMousePosition(const QPointF &mousePosition)
         update();
 }
 
-void TextureItem::setMappingRange(const DoubleRange &range)
+void TextureItem::setMappingRange(const Range &range)
 {
     if (mMappingRange != range) {
         mMappingRange = range;
@@ -322,7 +324,7 @@ void TextureItem::setHistogramBinCount(int count)
     }          
 }
 
-void TextureItem::setHistogramBounds(const DoubleRange &bounds) 
+void TextureItem::setHistogramBounds(const Range &bounds) 
 {
     if (mHistogramBounds != bounds) {
         mHistogramBounds = bounds;
@@ -333,8 +335,6 @@ void TextureItem::setHistogramBounds(const DoubleRange &bounds)
 
 void TextureItem::computeHistogramBounds() 
 {
-    // TODO:
-    Q_EMIT histogramBoundsComputed({ 0.0, 2.0 });
 }
 
 void TextureItem::paint(QPainter *painter,
@@ -512,17 +512,21 @@ void TextureItem::updateHistogram()
         return update();
     }
 
-    auto maxValue = quint32{ 1 };
-    for (auto i = 0; i < mHistogramBins.size(); ++i) {
+    auto maxValue = std::array<quint32, 3>{ 1, 1, 1 };
+    for (auto i = 0, c = 0; i < mHistogramBins.size(); ++i, c = (c + 1) % 3) {
         const auto value = (mHistogramBins[i] - mPrevHistogramBins[i]);
-        maxValue = qMax(maxValue, value);
+        maxValue[c] = qMax(maxValue[c], value);
     }
 
-    auto histogram = QVector<float>(mHistogramBins.size());
-    const auto s = 1.0f / maxValue;
-    for (auto i = 0; i < mHistogramBins.size(); ++i) {
+    auto histogram = QVector<qreal>(mHistogramBins.size());
+    const auto scale = std::array<qreal, 3>{ 
+        1.0 / maxValue[0], 
+        1.0 / maxValue[1], 
+        1.0 / maxValue[2] 
+    };
+    for (auto i = 0, c = 0; i < mHistogramBins.size(); ++i, c = (c + 1) % 3) {
         const auto value = (mHistogramBins[i] - mPrevHistogramBins[i]);
-        histogram[i] = (1.0f - (value * s));
+        histogram[i] = (1.0 - (value * scale[c]));
     }
     mPrevHistogramBins.swap(mHistogramBins);
 

@@ -2,7 +2,7 @@
 #define TEXTUREITEM_H
 
 #include "TextureData.h"
-#include "DoubleRange.h"
+#include "Range.h"
 #include <QObject>
 #include <QGraphicsView>
 #include <QOpenGLTexture>
@@ -39,11 +39,11 @@ public:
     bool flipVertically() const { return mFlipVertically; }
     void setPickerEnabled(bool enabled) { mPickerEnabled = enabled; }
     bool pickerEnabled() const { return mPickerEnabled; }
-    void setMappingRange(const DoubleRange &bounds);
-    const DoubleRange &mappingRange() const { return mMappingRange; }
+    void setMappingRange(const Range &bounds);
+    const Range &mappingRange() const { return mMappingRange; }
     void setHistogramBinCount(int count);
-    void setHistogramBounds(const DoubleRange &range); 
-    const DoubleRange &histogramBounds() const { return mMappingRange; }
+    void setHistogramBounds(const Range &range); 
+    const Range &histogramBounds() const { return mMappingRange; }
     void computeHistogramBounds();
     void setHistogramEnabled(bool enabled) { mHistogramEnabled = enabled; }
     bool histogramEnabled() const { return mHistogramEnabled; }
@@ -53,8 +53,8 @@ public:
 
 Q_SIGNALS:
     void pickerColorChanged(QVector4D color);
-    void histogramChanged(const QVector<float> &histogram);
-    void histogramBoundsComputed(const DoubleRange &range);
+    void histogramChanged(const QVector<qreal> &histogram);
+    void histogramBoundsComputed(const Range &range);
 
 private:
     ZeroCopyContext &context();
@@ -80,8 +80,8 @@ private:
     QOpenGLTexture mPickerTexture{ QOpenGLTexture::Target1D };
     bool mHistogramEnabled{ };
     QOpenGLTexture mHistogramTexture{ QOpenGLTexture::Target1D };
-    DoubleRange mMappingRange{ 0, 1 };
-    DoubleRange mHistogramBounds{ 0, 1 };
+    Range mMappingRange{ 0, 1 };
+    Range mHistogramBounds{ 0, 1 };
     QVector<quint32> mHistogramBins;
     QVector<quint32> mPrevHistogramBins;
     QPointF mMousePosition{ };

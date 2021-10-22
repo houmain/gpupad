@@ -75,6 +75,7 @@ set(SOURCES
   src/editors/TextureItem.cpp
   src/editors/TextureInfoBar.cpp
   src/editors/TextureInfoBar.ui
+  src/editors/Histogram.cpp
   src/editors/JsHighlighter.cpp
   src/editors/SourceEditor.cpp
   src/editors/SourceEditorToolBar.cpp
