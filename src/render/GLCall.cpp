@@ -284,13 +284,26 @@ void GLCall::executeClearTexture(MessagePtrSet &messages)
         return;
     }
 
-    auto guard = beginTimerQuery();
-    const auto color = std::array<double, 4>{
+    auto color = std::array<double, 4>{
         mCall.clearColor.redF(),
         mCall.clearColor.greenF(),
         mCall.clearColor.blueF(),
         mCall.clearColor.alphaF()
     };
+
+    const auto dataType = getTextureDataType(mTexture->format());
+    if (dataType == TextureDataType::Float) {
+        const auto srgbToLinear = [](double s) {
+            if (s > 0.0031308)
+                return 1.055 * (std::pow(s, (1.0 / 2.4))) - 0.055;
+            return 12.92 * s;
+        };
+        color[0] = srgbToLinear(color[0]);
+        color[1] = srgbToLinear(color[1]);
+        color[2] = srgbToLinear(color[2]);
+    }
+
+    auto guard = beginTimerQuery();
     if (!mTexture->clear(color, mCall.clearDepth, mCall.clearStencil))
         messages += MessageList::insert(
             mCall.id, MessageType::ClearingTextureFailed);

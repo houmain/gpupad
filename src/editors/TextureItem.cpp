@@ -135,13 +135,13 @@ void main() {
             { QOpenGLTexture::Target3D, { "sampler3D", "textureLod(S, vec3(TC, uLayer), uLevel)" } },
             { QOpenGLTexture::TargetCubeMap, { "samplerCube", "textureLod(S, getCubeTexCoord(TC, uFace), uLevel)" } },
             { QOpenGLTexture::TargetCubeMapArray,  { "samplerCubeArray", "textureLod(S, vec4(getCubeTexCoord(TC, uFace), uLayer), uLevel)" } },
-            { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "texelFetch(S, ivec2(TC * uSize), s)" } },
-            { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "texelFetch(S, ivec3(TC * uSize, uLayer), s)" } },
+            { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "texelFetch(S, ivec2(TC * (uSize - 1)), s)" } },
+            { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "texelFetch(S, ivec3(TC * (uSize - 1), uLayer), s)" } },
         };
         static auto sDataTypeVersions = std::map<TextureDataType, DataTypeVersion>{
             { TextureDataType::Normalized, { "", "color" } },
             { TextureDataType::Normalized_sRGB, { "", "vec4(linearToSrgb(color.rgb), color.a)" } },
-            { TextureDataType::Float, { "", "vec4(linearToSrgb(color.rgb), color.a)" } },
+            { TextureDataType::Float, { "", "color" } },
             { TextureDataType::Uint8, { "u", "color / 255.0" } },
             { TextureDataType::Uint16, { "u", "color / 65535.0" } },
             { TextureDataType::Uint32, { "u", "color / 4294967295.0" } },
