@@ -7,7 +7,7 @@ namespace
 {
 static constexpr auto computeShaderSource = R"(
 
-layout (local_size_x = 32, local_size_y = 32) in;
+layout (local_size_x = 8, local_size_y = 8) in;
 
 uniform SAMPLER uTexture;
 uniform uvec2 uSize;
@@ -52,6 +52,7 @@ vec3 getCubeTexCoord(vec2 tc, int face) {
 }
 
 void main() {
+
   // first pass accumulate local
   {
     const uvec3 step_size = gl_WorkGroupSize * gl_NumWorkGroups;
@@ -70,6 +71,7 @@ void main() {
     min_value[gl_LocalInvocationID.x][gl_LocalInvocationID.y] = local_min;
     max_value[gl_LocalInvocationID.x][gl_LocalInvocationID.y] = local_max;
   }
+
   memoryBarrierShared();
   barrier();
   
@@ -259,7 +261,7 @@ void ComputeRange::render()
         gl.glTexParameteri(mTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         gl.glTexParameteri(mTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-        gl.v4_3->glDispatchCompute(8, 1, 1);
+        gl.v4_3->glDispatchCompute(16, 16, 1);
 
         mBuffer.read(0, &result, sizeof(result));
         mRange = {
