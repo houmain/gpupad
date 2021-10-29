@@ -94,6 +94,7 @@ set(SOURCES
   src/render/Renderer.cpp
   src/render/ProcessSource.cpp
   src/render/CompositorSync.cpp
+  src/render/ComputeRange.cpp
   src/render/glslang.cpp
   src/scripting/GpupadScriptObject.cpp
   src/scripting/InputScriptObject.cpp

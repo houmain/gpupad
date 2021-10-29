@@ -2,6 +2,7 @@
 #include "Histogram.h"
 #include "ui_TextureInfoBar.h"
 #include <QVector4D>
+#include <cmath>
 
 TextureInfoBar::TextureInfoBar(QWidget *parent)
     : QWidget(parent)

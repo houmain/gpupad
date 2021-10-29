@@ -3,6 +3,7 @@
 #include <QOpenGLDebugMessage>
 #include "Singletons.h"
 #include "render/GLShareSynchronizer.h"
+#include "render/ComputeRange.h"
 #include <optional>
 #include <cmath>
 #include <array>
@@ -335,6 +336,20 @@ void TextureItem::setHistogramBounds(const Range &bounds)
 
 void TextureItem::computeHistogramBounds() 
 {
+    if (!mComputeRange) {
+        mComputeRange = new ComputeRange(this);
+        connect(mComputeRange, &ComputeRange::rangeComputed,
+            this, &TextureItem::histogramBoundsComputed);
+    }
+
+    mComputeRange->setImage(
+        mPreviewTextureId ? mPreviewTextureId : mImageTextureId,
+        mImage, 
+        static_cast<int>(mLevel), 
+        static_cast<int>(mLayer * mImage.depth() * mImage.layers()),
+        mFace);
+
+    mComputeRange->update();
 }
 
 void TextureItem::paint(QPainter *painter,

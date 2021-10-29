@@ -38,11 +38,6 @@ ProcessSource::~ProcessSource()
     releaseResources();
 }
 
-QSet<ItemId> ProcessSource::usedItems() const
-{
-    return { };
-}
-
 void ProcessSource::setFileName(QString fileName)
 {
     mFileName = fileName;

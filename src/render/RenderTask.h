@@ -15,7 +15,7 @@ public:
     explicit RenderTask(QObject *parent = nullptr);
     ~RenderTask() override;
 
-    virtual QSet<ItemId> usedItems() const = 0;
+    virtual QSet<ItemId> usedItems() const { return { }; }
 
     void update(bool itemChanged = false,
         EvaluationType evaluationType = EvaluationType::Reset);

@@ -12,6 +12,7 @@
 #include <QOpenGLTexture>
 
 class ZeroCopyContext;
+class ComputeRange;
 
 class TextureItem final : public QObject, public QGraphicsItem
 {
@@ -86,6 +87,7 @@ private:
     QVector<quint32> mPrevHistogramBins;
     QPointF mMousePosition{ };
     bool mUpload{ };
+    ComputeRange *mComputeRange{ };
 };
 
 #endif // TEXTUREITEM_H
