@@ -6,6 +6,7 @@
 #include "GLStream.h"
 #include "Renderer.h"
 #include <QOpenGLTimerQuery>
+#include <cmath>
 
 GLCall::GLCall(const Call &call, ScriptEngine &scriptEngine)
     : mCall(call)

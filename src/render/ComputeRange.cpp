@@ -218,6 +218,9 @@ void ComputeRange::render()
     if (!gl.v4_3)
         return;
 
+    const auto min = std::numeric_limits<float>::lowest();
+    const auto max = std::numeric_limits<float>::max();
+
     if (auto program = getProgram(mTarget, mFormat)) {
         program->bind();
         program->setUniformValue("uTexture", 0);
@@ -226,8 +229,8 @@ void ComputeRange::render()
         program->setUniformValue("uLevel", mLevel);
         program->setUniformValue("uLayer", mLayer);
         program->setUniformValue("uFace", mFace);
-        program->setUniformValue("uMin", -FLT_MAX);
-        program->setUniformValue("uMax", FLT_MAX);
+        program->setUniformValue("uMin", min);
+        program->setUniformValue("uMax", max);
 
         struct Result {
             float min[4];
@@ -240,10 +243,7 @@ void ComputeRange::render()
             mBuffer.allocate(sizeof(Result));
         }
 
-        auto result = Result{ 
-            FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX, 
-            -FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX 
-        };
+        auto result = Result{ max, max, max, max, min, min, min, min };
         mBuffer.bind();
         mBuffer.write(0, &result, sizeof(result));
 
