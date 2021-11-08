@@ -753,6 +753,7 @@ bool MainWindow::closeSession()
     }
 
     mEditorManager.closeAllEditors(false);
+    updateCurrentEditor();
 
     return mSessionEditor->clear();
 }

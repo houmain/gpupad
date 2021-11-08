@@ -159,7 +159,9 @@ void EditorManager::updateCurrentEditor()
         updateDockCurrentProperty(previous, false);
 
     updateEditorToolBarVisibility();
-    updateEditorPropertiesVisibility();
+
+    if (hasCurrentEditor() || !hasEditor())
+        updateEditorPropertiesVisibility();
 }
 
 QString EditorManager::currentEditorFileName()
