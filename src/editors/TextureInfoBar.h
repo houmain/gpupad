@@ -29,6 +29,7 @@ public:
     void setHistogramBounds(const Range &bounds);
     const Range &histogramBounds() const { return mHistogramBounds; }
     void resetRange();
+    void invertRange();
 
     void resizeEvent(QResizeEvent *event) override;
 

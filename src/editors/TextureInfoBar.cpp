@@ -37,6 +37,8 @@ TextureInfoBar::TextureInfoBar(QWidget *parent)
         this, &TextureInfoBar::autoRangeRequested);
     connect(ui->buttonResetRange, &QPushButton::clicked, 
         this, &TextureInfoBar::resetRange);
+    connect(ui->buttonInvertRange, &QPushButton::clicked, 
+        this, &TextureInfoBar::invertRange);
 }
 
 TextureInfoBar::~TextureInfoBar()
@@ -117,6 +119,12 @@ void TextureInfoBar::updateHistogram(const QVector<qreal> &histogramUpdate)
 void TextureInfoBar::resetRange()
 {
     setHistogramBounds({ 0, 1 });
+}
+
+void TextureInfoBar::invertRange()
+{
+    const auto bounds = histogramBounds();
+    setHistogramBounds({ bounds.maximum, bounds.minimum });
 }
 
 int TextureInfoBar::histogramBinCount() const
