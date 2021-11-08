@@ -4,35 +4,34 @@
 #include "FileDialog.h"
 #include <QThread>
 #include <QTimer>
-#include <QMutex>
 
-namespace {
-    MessagePtrSet* gCurrentMessageList;
+JSConsole::JSConsole(QObject *parent) :
+    QObject(parent)
+{
+}
 
-    void consoleMessageHandler(QtMsgType type,
-        const QMessageLogContext &context, const QString &msg)
-    {
-        auto fileName = FileDialog::getFileTitle(context.file);
-        auto message = QString(msg).replace(context.file, fileName);
-        auto messageType = (type == QtDebugMsg || type == QtInfoMsg ?
-            MessageType::ScriptMessage : MessageType::ScriptError);
-        (*gCurrentMessageList) += MessageList::insert(
-            context.file, context.line, messageType, message, false);
-    }
+void JSConsole::setMessages(MessagePtrSet *messages, const QString &fileName)
+{
+    mMessages = messages;
+    mFileName = fileName;
+    mItemId = { };
+}
 
-    template<typename F>
-    void redirectConsoleMessages(MessagePtrSet &messages, F &&function)
-    {
-        static QMutex sMutex;
-        QMutexLocker lock(&sMutex);
+void JSConsole::setMessages(MessagePtrSet *messages, ItemId itemId)
+{
+    mMessages = messages;
+    mItemId = itemId;
+    mFileName.clear();
+}
 
-        gCurrentMessageList = &messages;
-        auto prevMessageHandler = qInstallMessageHandler(consoleMessageHandler);
-        function();
-        qInstallMessageHandler(prevMessageHandler);
-        gCurrentMessageList = nullptr;
-    }
-} // namespace
+void JSConsole::log(QString message)
+{
+    (*mMessages) += (!mFileName.isEmpty() ?
+        MessageList::insert(mFileName, 0,
+            MessageType::ScriptMessage, message) :
+        MessageList::insert(
+            mItemId, MessageType::ScriptMessage, message));
+}
 
 ScriptValue evaluateValueExpression(const QString &expression, bool *ok)
 {
@@ -82,6 +81,7 @@ ScriptEngine::ScriptEngine(QObject *parent)
     : QObject(parent)
     , mOnThread(*QThread::currentThread())
     , mJsEngine(new QJSEngine(this))
+    , mConsole(new JSConsole(this))
 {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     mInterruptThread = new QThread();
@@ -94,7 +94,9 @@ ScriptEngine::ScriptEngine(QObject *parent)
     mInterruptThread->start();
 #endif
 
-    mJsEngine->installExtensions(QJSEngine::ConsoleExtension);
+    mJsEngine->globalObject().setProperty("console",
+        mJsEngine->newQObject(mConsole));
+
     evaluate(
         "(function() {"
           "var log = console.log;"
@@ -164,65 +166,64 @@ QJSValue ScriptEngine::getGlobal(const QString &name)
 QJSValue ScriptEngine::call(QJSValue &callable, const QJSValueList &args,
     ItemId itemId, MessagePtrSet &messages)
 {
-    auto result = QJSValue();
-    redirectConsoleMessages(messages, [&]() {
-        result = callable.call(args);
-        if (result.isError())
-            messages += MessageList::insert(
-                itemId, MessageType::ScriptError, result.toString());
-    });
+    mConsole->setMessages(&messages, itemId);
+
+    auto result = callable.call(args);
+    if (result.isError())
+        messages += MessageList::insert(
+            itemId, MessageType::ScriptError, result.toString());
     return result;
 }
 
 void ScriptEngine::evaluateScript(const QString &script,
     const QString &fileName, MessagePtrSet &messages)
 {
-    redirectConsoleMessages(messages, [&]() {
-        auto result = evaluate(script, fileName);
-        if (result.isError())
-            messages += MessageList::insert(
-                fileName, result.property("lineNumber").toInt(),
-                MessageType::ScriptError, result.toString());
-    });
+    mConsole->setMessages(&messages, fileName);
+
+    auto result = evaluate(script, fileName);
+    if (result.isError())
+        messages += MessageList::insert(
+            fileName, result.property("lineNumber").toInt(),
+            MessageType::ScriptError, result.toString());
 }
 
 ScriptValueList ScriptEngine::evaluateValues(const QStringList &valueExpressions,
     ItemId itemId, MessagePtrSet &messages)
 {
+    mConsole->setMessages(&messages, itemId);
+
     auto values = QList<double>();
-    redirectConsoleMessages(messages, [&]() {
-        for (const QString &valueExpression : valueExpressions) {
+    for (const QString &valueExpression : valueExpressions) {
 
-            // fast path, when expression is empty or a number
-            if (valueExpression.isEmpty()) {
-                values.append(0.0);
-                continue;
-            }
-            auto ok = false;
-            auto value = valueExpression.toDouble(&ok);
-            if (ok) {
-                values.append(value);
-                continue;
-            }
+        // fast path, when expression is empty or a number
+        if (valueExpression.isEmpty()) {
+            values.append(0.0);
+            continue;
+        }
+        auto ok = false;
+        auto value = valueExpression.toDouble(&ok);
+        if (ok) {
+            values.append(value);
+            continue;
+        }
 
-            auto result = evaluate(valueExpression);
-            if (result.isError())
-                messages += MessageList::insert(
-                    itemId, MessageType::ScriptError, result.toString());
+        auto result = evaluate(valueExpression);
+        if (result.isError())
+            messages += MessageList::insert(
+                itemId, MessageType::ScriptError, result.toString());
 
-            if (result.isObject()) {
-                for (auto i = 0u; ; ++i) {
-                    auto value = result.property(i);
-                    if (value.isUndefined())
-                        break;
-                    values.append(value.toNumber());
-                }
-            }
-            else {
-                values.append(result.toNumber());
+        if (result.isObject()) {
+            for (auto i = 0u; ; ++i) {
+                auto value = result.property(i);
+                if (value.isUndefined())
+                    break;
+                values.append(value.toNumber());
             }
         }
-    });
+        else {
+            values.append(result.toNumber());
+        }
+    }
     return values;
 }
 

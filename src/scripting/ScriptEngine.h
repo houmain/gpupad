@@ -9,6 +9,24 @@ using ScriptValue = double;
 using ScriptValueList = QList<ScriptValue>;
 class QTimer;
 
+class JSConsole : public QObject
+{
+    Q_OBJECT
+public:
+    explicit JSConsole(QObject *parent = 0);
+
+    void setMessages(MessagePtrSet *messages, const QString &fileName);
+    void setMessages(MessagePtrSet *messages, ItemId itemId);
+
+public Q_SLOTS:
+    void log(QString message);
+
+private:
+    QString mFileName;
+    ItemId mItemId{ };
+    MessagePtrSet *mMessages{ };
+};
+
 class ScriptVariable
 {
 public:
@@ -66,6 +84,7 @@ private:
 
     const QThread& mOnThread;
     QJSEngine *mJsEngine{ };
+    JSConsole *mConsole{ };
     QThread *mInterruptThread{ };
     QTimer *mInterruptTimer{ };
     QList<Variable> mVariables;
