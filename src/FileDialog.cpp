@@ -3,6 +3,7 @@
 #include <QImageReader>
 #include <QMainWindow>
 #include <QMap>
+#include <QProcess>
 
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
@@ -96,6 +97,19 @@ bool FileDialog::isVideoFileName(const QString &fileName)
         if (lowerFileName.endsWith(extension))
             return true;
     return false;
+}
+
+void FileDialog::showInFileManager(const QString &path)
+{
+#if defined(_WIN32)
+    QProcess::startDetached("explorer.exe", { "/select,", QDir::toNativeSeparators(path) });
+#elif defined(__APPLE__)
+    QProcess::execute("/usr/bin/osascript", { "-e", "tell application \"Finder\" to reveal POSIX file \"" + path + "\"" });
+    QProcess::execute("/usr/bin/osascript", { "-e", "tell application \"Finder\" to activate" });
+#else
+    const auto info = QFileInfo(path);
+    QDesktopServices::openUrl(QUrl::fromLocalFile(info.isDir() ? path : info.path()));
+#endif
 }
 
 FileDialog::FileDialog(QMainWindow *window)

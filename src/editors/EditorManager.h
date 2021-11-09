@@ -70,6 +70,7 @@ private:
     void addSourceEditor(SourceEditor *editor);
     void addBinaryEditor(BinaryEditor *editor);
     void addTextureEditor(TextureEditor *editor);
+    void setDockWindowTitle(QDockWidget *dock, const QString &fileName);
     void handleEditorFilenameChanged(QDockWidget *dock);
     bool saveDock(QDockWidget *dock);
     bool promptSaveDock(QDockWidget *dock);

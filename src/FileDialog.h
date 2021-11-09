@@ -19,6 +19,7 @@ public:
     static QString advanceSaveAsSuffix(const QString &fileName);
     static bool isSessionFileName(const QString &fileName);
     static bool isVideoFileName(const QString &fileName);
+    static void showInFileManager(const QString &path);
 
     enum OptionBit
     {

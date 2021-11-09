@@ -23,25 +23,11 @@
 #include <QTimer>
 #include <QMimeData>
 #include <QScreen>
-#include <QProcess>
 
 void setFileDialogDirectory(const QString &fileName)
 {
     if (!FileDialog::isEmptyOrUntitled(fileName))
         Singletons::fileDialog().setDirectory(QFileInfo(fileName).dir());
-}
-
-void showInFileManager(const QString &path)
-{
-#if defined(_WIN32)
-    QProcess::startDetached("explorer.exe", { "/select,", QDir::toNativeSeparators(path) });
-#elif defined(__APPLE__)
-    QProcess::execute("/usr/bin/osascript", { "-e", "tell application \"Finder\" to reveal POSIX file \"" + path + "\"" });
-    QProcess::execute("/usr/bin/osascript", { "-e", "tell application \"Finder\" to activate" });
-#else
-    const auto info = QFileInfo(path);
-    QDesktopServices::openUrl(QUrl::fromLocalFile(info.isDir() ? path : info.path()));
-#endif
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -938,9 +924,9 @@ void MainWindow::openMessageDock()
 void MainWindow::openContainingFolder()
 {
     if (mEditorManager.hasCurrentEditor())
-        return showInFileManager(mEditorManager.currentEditorFileName());
+        return FileDialog::showInFileManager(mEditorManager.currentEditorFileName());
 
-    return showInFileManager(mSessionEditor->fileName());
+    return FileDialog::showInFileManager(mSessionEditor->fileName());
 }
 
 void MainWindow::populateSampleSessions()

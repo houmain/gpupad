@@ -1,10 +1,12 @@
 #include "DockWindow.h"
+#include "FileDialog.h"
 #include <QTabBar>
 #include <QApplication>
 #include <QTimer>
 #include <QDockWidget>
 #include <QPointer>
 #include <QMenu>
+#include <QClipboard>
 
 namespace {
     QDockWidget *getTabBarDock(QTabBar *tabBar, int index)
@@ -114,6 +116,27 @@ void DockWindow::openContextMenu(int index)
                 [=]() { closeDocksExcept(tabBar, index); });
             connect(closeAll, &QAction::triggered, 
                 [=]() { closeDocksExcept(tabBar, -1); });
+
+            if (!dock->statusTip().isEmpty()) {
+                const auto fileName = dock->statusTip();
+                auto copyFullPath = menu.addAction(tr("Copy Full Path"));
+                auto openContainingFolder = menu.addAction(tr("Open Containing Folder"));
+                connect(copyFullPath, &QAction::triggered,
+                    [=]() { QApplication::clipboard()->setText(fileName); });
+                connect(openContainingFolder, &QAction::triggered,
+                    [=]() { FileDialog::showInFileManager(fileName); });
+            }
+
+            menu.addSeparator();
+            for (auto i = 0; i < tabBar->count(); ++i)
+                if (auto dock = getTabBarDock(tabBar, i)) {
+                    const auto title = (dock->statusTip().isEmpty() ? 
+                        dock->windowTitle().replace("[*]", "") :
+                        dock->statusTip());
+                    auto open = menu.addAction(title);
+                    connect(open, &QAction::triggered, 
+                        [=]() { raiseDock(dock); });
+                }
         }
         menu.exec(tabBar->mapToGlobal(
             tabBar->tabRect(index).bottomLeft() + QPoint(0, 2)));

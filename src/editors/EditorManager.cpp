@@ -508,7 +508,8 @@ void EditorManager::addBinaryEditor(BinaryEditor *editor)
 QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
 {
     auto fileName = editor->fileName();
-    auto dock = new QDockWidget(FileDialog::getWindowTitle(fileName), this);
+    auto dock = new QDockWidget(this);
+    setDockWindowTitle(dock, fileName);
     dock->setWidget(widget);
     dock->setObjectName(QString::number(QRandomGenerator::global()->generate64(), 16));
 
@@ -538,9 +539,16 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
 void EditorManager::handleEditorFilenameChanged(QDockWidget *dock) 
 {
     if (auto editor = mDocks[dock]) {
-        dock->setWindowTitle(FileDialog::getWindowTitle(editor->fileName()));
+        setDockWindowTitle(dock, editor->fileName());
         Singletons::fileCache().handleEditorFileChanged(editor->fileName());
     }
+}
+
+void EditorManager::setDockWindowTitle(QDockWidget *dock, const QString &fileName) 
+{
+    dock->setWindowTitle(FileDialog::getWindowTitle(fileName));
+    if (!FileDialog::isEmptyOrUntitled(fileName))
+        dock->setStatusTip(fileName);
 }
 
 bool EditorManager::saveDock(QDockWidget *dock)
