@@ -718,15 +718,19 @@ bool SourceEditor::updateMultiSelection(QKeyEvent *event, bool multiSelectionMod
 
             case Qt::Key_Backspace:
                 withEachSelection([&](QTextCursor& selection) {
-                    if (!selection.atBlockStart())
+                    if (selection.position() == selection.anchor() && !selection.atBlockStart())
                         selection.deletePreviousChar();
+                    else
+                        selection.removeSelectedText();
                 });
                 return true;
 
             case Qt::Key_Delete:
                 withEachSelection([&](QTextCursor& selection) {
-                    if (!selection.atBlockEnd())
+                    if (selection.position() == selection.anchor() && !selection.atBlockEnd())
                         selection.deleteChar();
+                    else
+                        selection.removeSelectedText();
                 });
                 return true;
 
