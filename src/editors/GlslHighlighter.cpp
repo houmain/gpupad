@@ -147,6 +147,7 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
     QTextCharFormat quotationFormat;
     QTextCharFormat numberFormat;
     QTextCharFormat functionFormat;
+    QTextCharFormat commentFormat;
     QTextCharFormat whiteSpaceFormat;
 
     functionFormat.setFontWeight(QFont::Bold);
@@ -159,7 +160,7 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
         numberFormat.setForeground(QColor(0xB09D30));
         quotationFormat.setForeground(QColor(0xB09D30));
         preprocessorFormat.setForeground(QColor(0xC87FFF));
-        mCommentFormat.setForeground(QColor(0x56C056));
+        commentFormat.setForeground(QColor(0x56C056));
         whiteSpaceFormat.setForeground(QColor(0x666666));
     }
     else {
@@ -170,7 +171,7 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
         numberFormat.setForeground(QColor(0x981111));
         quotationFormat.setForeground(QColor(0x981111));
         preprocessorFormat.setForeground(QColor(0x800080));
-        mCommentFormat.setForeground(QColor(0x008700));
+        commentFormat.setForeground(QColor(0x008700));
         whiteSpaceFormat.setForeground(QColor(0xCCCCCC));
     }
 
@@ -222,16 +223,15 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
     rule.format = preprocessorFormat;
     mHighlightingRules.append(rule);
 
-    rule.pattern = QRegularExpression("//.*");
-    rule.format = mCommentFormat;
-    mHighlightingRules.append(rule);
 
-    rule.pattern = QRegularExpression("\\s+", QRegularExpression::UseUnicodePropertiesOption);
-    rule.format = whiteSpaceFormat;
-    mHighlightingRules.append(rule);
-
+    mCommentRule.pattern = QRegularExpression("//.*");
+    mCommentRule.format = commentFormat;    
     mCommentStartExpression = QRegularExpression("/\\*");
     mCommentEndExpression = QRegularExpression("\\*/");
+
+    mWhiteSpaceRule.pattern = QRegularExpression("\\s+", 
+        QRegularExpression::UseUnicodePropertiesOption);
+    mWhiteSpaceRule.format = whiteSpaceFormat;
 
     mCompleter = new QCompleter(this);
     completerStrings.sort(Qt::CaseInsensitive);
@@ -244,17 +244,22 @@ GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
 
 void GlslHighlighter::highlightBlock(const QString &text)
 {
-    for (const HighlightingRule &rule : qAsConst(mHighlightingRules)) {
+    const auto highlight = [&](const HighlightingRule &rule, bool override) {
         auto index = text.indexOf(rule.pattern);
         while (index >= 0) {
             const auto match = rule.pattern.match(text, index);
             const auto length = match.capturedLength();
-            // do not start single line comment in string
-            if (format(index) == QTextCharFormat{ })
+            if (override || format(index) == QTextCharFormat{ })
                 setFormat(index, length, rule.format);
             index = text.indexOf(rule.pattern, index + length);
         }
-    }
+    };
+
+    for (const HighlightingRule &rule : qAsConst(mHighlightingRules))
+        highlight(rule, true);
+
+    highlight(mCommentRule, false);
+    
     setCurrentBlockState(0);
 
     auto startIndex = 0;
@@ -278,7 +283,8 @@ void GlslHighlighter::highlightBlock(const QString &text)
         else {
             commentLength = endIndex - startIndex + match.capturedLength();
         }
-        setFormat(startIndex, commentLength, mCommentFormat);
+        setFormat(startIndex, commentLength, mCommentRule.format);
         startIndex = text.indexOf(mCommentStartExpression, startIndex + commentLength);
     }
+    highlight(mWhiteSpaceRule, true);
 }

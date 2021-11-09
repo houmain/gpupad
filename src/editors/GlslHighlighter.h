@@ -20,9 +20,10 @@ private:
     };
     QCompleter *mCompleter{ };
     QVector<HighlightingRule> mHighlightingRules;
+    HighlightingRule mCommentRule;
     QRegularExpression mCommentStartExpression;
     QRegularExpression mCommentEndExpression;
-    QTextCharFormat mCommentFormat;
+    HighlightingRule mWhiteSpaceRule;
 };
 
 #endif // GLSLHIGHLIGHTER_H
