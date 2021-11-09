@@ -1,16 +1,19 @@
 #include "FileDialog.h"
 #include <QFileDialog>
-#include <QImageReader>
 #include <QMainWindow>
 #include <QMap>
 #include <QProcess>
+#include <QApplication>
 
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
     const auto SessionFileExtension = QStringLiteral("gpjs");
     const auto ShaderFileExtensions = { "glsl", "vs", "fs", "gs",
-        "vert", "tesc", "tese", "geom", "frag", "comp" };
+        "vert", "tesc", "tese", "geom", "frag", "comp", 
+        "ps", "hlsl", "hlsli", "fx" };
     const auto ScriptFileExtensions = { "js" };
+    const auto TextureFileExtensions = { "ktx", "dds", "png", "exr", 
+        "tga", "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
     const auto VideoFileExtensions = std::initializer_list<const char*>{
 #if defined(Qt5Multimedia_FOUND)
     "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi"
@@ -160,37 +163,40 @@ bool FileDialog::exec(Options options, QString currentFileName)
         shaderFileFilter = shaderFileFilter + " *." + ext;
 
     auto textureFileFilter = QString();
-    textureFileFilter += " *.ktx *.dds *.exr *.raw *.tga";
-    for (const QByteArray &format : QImageReader::supportedImageFormats())
+    for (const QByteArray &format : TextureFileExtensions)
         textureFileFilter = textureFileFilter + " *." + QString(format);
-    for (const QByteArray &format : VideoFileExtensions)
-        textureFileFilter = textureFileFilter + " *." + QString(format);
-    textureFileFilter += textureFileFilter.toUpper();
+
+    auto videoFileFilter = QString();
+    if (VideoFileExtensions.size())
+        for (const QByteArray &format : VideoFileExtensions)
+            videoFileFilter = videoFileFilter + " *." + QString(format);
 
     auto scriptFileFilter = QString();
     for (const auto &ext : ScriptFileExtensions)
         scriptFileFilter = scriptFileFilter + " *." + ext;
 
-    auto supportedFileFilter = QString("*." + SessionFileExtension +
-        shaderFileFilter + scriptFileFilter + textureFileFilter);
-
     auto filters = QStringList();
-    const auto binaryFileFilter = QString(tr("Binary files") + " (*)");
-    if (options & SupportedExtensions)
-        filters.append(tr("Supported files") + " (" + supportedFileFilter + ")");
+    if ((options & AllExtensionFilters) == AllExtensionFilters)
+        filters.append(tr("All Files (*)"));
+
     if (options & SessionExtensions)
         filters.append(qApp->applicationName() + tr(" session") +
             " (*." + SessionFileExtension + ")");
     if (options & ShaderExtensions)
-        filters.append(tr("GLSL shader files") + " (" + shaderFileFilter + ")");
+        filters.append(tr("Shader files") + " (" + shaderFileFilter + ")");
     if (options & TextureExtensions)
         filters.append(tr("Texture files") + " (" + textureFileFilter + ")");
-    if (options & BinaryExtensions)
-        filters.append(binaryFileFilter);
+    if ((options & TextureExtensions) && !videoFileFilter.isEmpty())
+        filters.append(tr("Video files") + " (" + videoFileFilter + ")");
     if (options & ScriptExtensions)
         filters.append(tr("JavaScript files") + " (" + scriptFileFilter + ")");
+    const auto binaryFileFilter = QString(tr("Binary files") + " (*)");
+    if (options & BinaryExtensions)
+        filters.append(binaryFileFilter);
 
-    filters.append(tr("All Files (*)"));
+    if ((options & AllExtensionFilters) != AllExtensionFilters)
+        filters.append(tr("All Files (*)"));
+
     dialog.setNameFilters(filters);
 
     dialog.setDefaultSuffix("");

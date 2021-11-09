@@ -31,10 +31,9 @@ public:
         BinaryExtensions    = 1 << 5,
         SessionExtensions   = 1 << 6,
         ScriptExtensions    = 1 << 7,
-        SupportedExtensions = 1 << 8,
-        SavingNon2DTexture  = 1 << 9,
+        SavingNon2DTexture  = 1 << 8,
         AllExtensionFilters = ShaderExtensions | TextureExtensions |
-            BinaryExtensions | ScriptExtensions | SessionExtensions | SupportedExtensions
+            BinaryExtensions | ScriptExtensions | SessionExtensions
     };
     Q_DECLARE_FLAGS(Options, OptionBit)
 
