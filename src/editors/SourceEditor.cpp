@@ -20,6 +20,7 @@
 #include <QScrollBar>
 #include <QTextStream>
 #include <QMenu>
+#include <QMimeData>
 
 class SourceEditor::LineNumberArea final : public QWidget
 {
@@ -797,6 +798,14 @@ void SourceEditor::mouseMoveEvent(QMouseEvent *event)
     else {
         endMultiSelection();
     }
+}
+
+void SourceEditor::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls())
+        return event->ignore();
+
+    QPlainTextEdit::dragEnterEvent(event);
 }
 
 void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)

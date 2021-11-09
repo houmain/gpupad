@@ -67,6 +67,8 @@ TextureEditor::TextureEditor(QString fileName,
     connect(&Singletons::settings(), &Settings::darkThemeChanged,
         this, &TextureEditor::updateBackground);
     updateBackground();
+
+    setAcceptDrops(false);
 }
 
 TextureEditor::~TextureEditor() 
