@@ -175,7 +175,7 @@ if (OPTION_ENABLE_SPIRV_CROSS)
     set(SPIRV_CROSS_ENABLE_TESTS FALSE CACHE INTERNAL "SPIRV-Cross TESTS" FORCE)
     set(SPIRV_CROSS_ENABLE_UTIL FALSE CACHE INTERNAL "SPIRV-Cross UTIL" FORCE)
     add_subdirectory(libs/SPIRV-Cross)
-    target_link_libraries(${PROJECT_NAME} spirv-cross-core spirv-cross-glsl)
+    target_link_libraries(${PROJECT_NAME} spirv-cross-glsl spirv-cross-core)
     add_compile_definitions(SPIRV_CROSS_ENABLED)
 endif()
 
