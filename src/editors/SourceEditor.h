@@ -8,8 +8,8 @@
 
 class QPaintEvent;
 class QResizeEvent;
-class QSyntaxHighlighter;
 class QCompleter;
+class SyntaxHighlighter;
 class SourceEditorToolBar;
 
 class SourceEditor final : public QPlainTextEdit, public IEditor
@@ -89,7 +89,7 @@ private:
     QString mFileName;
     FindReplaceBar &mFindReplaceBar;
     SourceType mSourceType{ SourceType::PlainText };
-    QSyntaxHighlighter *mHighlighter{ };
+    SyntaxHighlighter *mHighlighter{ };
     QCompleter *mCompleter{ };
     LineNumberArea *mLineNumberArea{ };
     QTextCharFormat mCurrentLineFormat;

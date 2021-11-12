@@ -67,8 +67,10 @@ set(SOURCES
   src/editors/EditorManager.cpp
   src/editors/FindReplaceBar.cpp
   src/editors/FindReplaceBar.ui
-  src/editors/GlslHighlighter.cpp
-  src/editors/HlslHighlighter.cpp
+  src/editors/SyntaxHighlighter.cpp
+  src/editors/SyntaxGLSL.cpp
+  src/editors/SyntaxHLSL.cpp
+  src/editors/SyntaxJavaScript.cpp
   src/editors/TextureEditorToolBar.cpp
   src/editors/TextureEditorToolBar.ui
   src/editors/TextureEditor.cpp
@@ -76,7 +78,6 @@ set(SOURCES
   src/editors/TextureInfoBar.cpp
   src/editors/TextureInfoBar.ui
   src/editors/Histogram.cpp
-  src/editors/JsHighlighter.cpp
   src/editors/SourceEditor.cpp
   src/editors/SourceEditorToolBar.cpp
   src/editors/SourceEditorToolBar.ui

@@ -346,6 +346,10 @@ void MainWindow::dropEvent(QDropEvent *event)
     const auto urls = event->mimeData()->urls();
     for (const QUrl &url : urls)
         openFile(url.toLocalFile());
+
+    setWindowState(Qt::WindowState::WindowActive);
+    raise();
+    activateWindow();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

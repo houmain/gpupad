@@ -1,9 +1,9 @@
-#include "GlslHighlighter.h"
-#include <QCompleter>
-#include <QStringListModel>
+
+#include "Syntax.h"
 
 namespace {
-const auto keywords = {
+
+const auto keywords = QStringList{
     "attribute", "const", "uniform", "varying", "coherent",
     "volatile", "restrict", "buffer", "readonly", "shared", "writeonly",
     "atomic_uint", "layout", "centroid", "patch", "flat", "smooth",
@@ -35,7 +35,7 @@ const auto keywords = {
     "image2DMSArray", "uimageCubeArray", "uimage2DMS", "iimage2DMSArray",
     "uimage2DMSArray", "struct" };
 
-const auto builtinFunctions = {
+const auto builtinFunctions = QStringList{
     "printf",
     "abs", "acos", "acosh", "all", "any", "asin",
     "asinh", "atan", "atanh", "atomicCounter", "atomicCounterDecrement",
@@ -72,7 +72,7 @@ const auto builtinFunctions = {
     "unpackHalf2x16", "unpackSnorm2x16", "unpackSnorm4x8", "unpackUnorm2x16",
     "unpackUnorm4x8", "usubBorrow" };
 
-const auto builtinConstants = {
+const auto builtinConstants = QStringList{
     "printfEnabled", "HAS_PRINTF",
     "gl_ClipDistance", "gl_CullDistance",
     "gl_DepthRange", "gl_DepthRangeParameters", "gl_FragCoord", "gl_FragDepth",
@@ -123,7 +123,7 @@ const auto builtinConstants = {
     "gl_TessLevelOuter", "gl_VertexID", "gl_ViewportIndex", "gl_WorkGroupID",
     "gl_WorkGroupSize" };
 
-const auto layoutQualifiers = {
+const auto layoutQualifiers = QStringList{
     "row_major", "column_major", "location", "component", "binding", "offset",
     "index", "shared", "packed", "std140", "std430", "origin_upper_left",
     "pixel_center_integer", "early_fragment_tests", "xfb_buffer", "xfb_offset",
@@ -137,154 +137,20 @@ const auto layoutQualifiers = {
     "rg32ui", "rg16ui", "rg8ui", "r32ui", "r16ui", "r8ui" };
 } // namespace
 
-GlslHighlighter::GlslHighlighter(bool darkTheme, QObject *parent)
-    : QSyntaxHighlighter(parent)
-{
-    QTextCharFormat keywordFormat;
-    QTextCharFormat builtinFunctionFormat;
-    QTextCharFormat builtinConstantsFormat;
-    QTextCharFormat preprocessorFormat;
-    QTextCharFormat quotationFormat;
-    QTextCharFormat numberFormat;
-    QTextCharFormat functionFormat;
-    QTextCharFormat commentFormat;
-    QTextCharFormat whiteSpaceFormat;
-
-    functionFormat.setFontWeight(QFont::Bold);
-
-    if (darkTheme) {
-        functionFormat.setForeground(QColor(0x7AAFFF));
-        keywordFormat.setForeground(QColor(0x7AAFFF));
-        builtinFunctionFormat.setForeground(QColor(0x7AAFFF));
-        builtinConstantsFormat.setForeground(QColor(0xDD8D8D));
-        numberFormat.setForeground(QColor(0xB09D30));
-        quotationFormat.setForeground(QColor(0xB09D30));
-        preprocessorFormat.setForeground(QColor(0xC87FFF));
-        commentFormat.setForeground(QColor(0x56C056));
-        whiteSpaceFormat.setForeground(QColor(0x666666));
+class SyntaxGLSL : public Syntax {
+public:
+    virtual QStringList keywords() const { return ::keywords; }
+    virtual QStringList builtinFunctions() const { return ::builtinFunctions; }
+    virtual QStringList builtinConstants() const { return ::builtinConstants; }
+    virtual QStringList completerStrings() const { 
+        auto strings = (::keywords + ::builtinFunctions + 
+            ::builtinConstants + ::layoutQualifiers);
+        strings.sort(Qt::CaseInsensitive);
+        return strings;
     }
-    else {
-        functionFormat.setForeground(QColor(0x000066));        
-        keywordFormat.setForeground(QColor(0x003C98));
-        builtinFunctionFormat.setForeground(QColor(0x000066));
-        builtinConstantsFormat.setForeground(QColor(0x981111));
-        numberFormat.setForeground(QColor(0x981111));
-        quotationFormat.setForeground(QColor(0x981111));
-        preprocessorFormat.setForeground(QColor(0x800080));
-        commentFormat.setForeground(QColor(0x008700));
-        whiteSpaceFormat.setForeground(QColor(0xCCCCCC));
-    }
+    virtual bool hasPreprocessor() const { return true; }
+    virtual bool hasFunctions() const { return true; }
+    virtual bool hasComments() const { return true; }
+};
 
-    auto rule = HighlightingRule();
-    auto completerStrings = QStringList();
-
-    for (const auto &keyword : keywords) {
-        rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(keyword));
-        rule.format = keywordFormat;
-        mHighlightingRules.append(rule);
-        completerStrings.append(keyword);
-    }
-
-    for (const auto &builtinFunction : builtinFunctions) {
-        rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(builtinFunction));
-        rule.format = builtinFunctionFormat;
-        mHighlightingRules.append(rule);
-        completerStrings.append(builtinFunction);
-    }
-
-    for (const auto &builtinConstant : builtinConstants) {
-        rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(builtinConstant));
-        rule.format = builtinConstantsFormat;
-        mHighlightingRules.append(rule);
-        completerStrings.append(builtinConstant);
-    }
-
-    for (const auto &qaulifier : layoutQualifiers)
-        completerStrings.append(qaulifier);
-
-    rule.pattern = QRegularExpression("\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()");
-    rule.format = functionFormat;
-    mHighlightingRules.append(rule);
-
-    rule.pattern = QRegularExpression("\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?[uUlLfF]{,2}\\b");
-    rule.format = numberFormat;
-    mHighlightingRules.append(rule);
-
-    rule.pattern = QRegularExpression("\\b0x[0-9,A-F,a-f]+[uUlL]\\b");
-    rule.format = numberFormat;
-    mHighlightingRules.append(rule);
-
-    auto quotation = QString("%1([^%1]*(\\\\%1[^%1]*)*)(%1|$)");
-    rule.pattern = QRegularExpression(quotation.arg('"'));
-    rule.format = quotationFormat;
-    mHighlightingRules.append(rule);
-
-    rule.pattern = QRegularExpression("^\\s*#.*");
-    rule.format = preprocessorFormat;
-    mHighlightingRules.append(rule);
-
-
-    mCommentRule.pattern = QRegularExpression("//.*");
-    mCommentRule.format = commentFormat;    
-    mCommentStartExpression = QRegularExpression("/\\*");
-    mCommentEndExpression = QRegularExpression("\\*/");
-
-    mWhiteSpaceRule.pattern = QRegularExpression("\\s+", 
-        QRegularExpression::UseUnicodePropertiesOption);
-    mWhiteSpaceRule.format = whiteSpaceFormat;
-
-    mCompleter = new QCompleter(this);
-    completerStrings.sort(Qt::CaseInsensitive);
-    auto completerModel = new QStringListModel(completerStrings, mCompleter);
-    mCompleter->setModel(completerModel);
-    mCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
-    mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
-    mCompleter->setWrapAround(false);
-}
-
-void GlslHighlighter::highlightBlock(const QString &text)
-{
-    const auto highlight = [&](const HighlightingRule &rule, bool override) {
-        auto index = text.indexOf(rule.pattern);
-        while (index >= 0) {
-            const auto match = rule.pattern.match(text, index);
-            const auto length = match.capturedLength();
-            if (override || format(index) == QTextCharFormat{ })
-                setFormat(index, length, rule.format);
-            index = text.indexOf(rule.pattern, index + length);
-        }
-    };
-
-    for (const HighlightingRule &rule : qAsConst(mHighlightingRules))
-        highlight(rule, true);
-
-    highlight(mCommentRule, false);
-    
-    setCurrentBlockState(0);
-
-    auto startIndex = 0;
-    if (previousBlockState() != 1)
-        startIndex = text.indexOf(mCommentStartExpression);
-
-    while (startIndex >= 0) {
-        // do not start multiline comment in single line comment or string
-        if (startIndex && format(startIndex) != QTextCharFormat{ }) {
-            setCurrentBlockState(0);
-            break;
-        }
-
-        const auto match = mCommentEndExpression.match(text, startIndex);
-        const auto endIndex = match.capturedStart();
-        auto commentLength = 0;
-        if (endIndex == -1) {
-            setCurrentBlockState(1);
-            commentLength = text.length() - startIndex;
-        }
-        else {
-            commentLength = endIndex - startIndex + match.capturedLength();
-        }
-        setFormat(startIndex, commentLength, mCommentRule.format);
-        startIndex = text.indexOf(mCommentStartExpression, startIndex + commentLength);
-    }
-    highlight(mWhiteSpaceRule, true);
-}
+Syntax* makeSyntaxGLSL() { return new SyntaxGLSL(); }

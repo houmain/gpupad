@@ -1,15 +1,16 @@
-#ifndef GLSLHIGHLIGHTER_H
-#define GLSLHIGHLIGHTER_H
+#pragma once
 
 #include <QSyntaxHighlighter>
 #include <QRegularExpression>
+#include "SourceType.h"
 
 class QCompleter;
 
-class GlslHighlighter final : public QSyntaxHighlighter {
+class SyntaxHighlighter final : public QSyntaxHighlighter {
     Q_OBJECT
 public:
-    explicit GlslHighlighter(bool darkTheme, QObject *parent = nullptr);
+    SyntaxHighlighter(SourceType sourceType, 
+        bool darkTheme, QObject *parent = nullptr);
     void highlightBlock(const QString &text) override;
     QCompleter *completer() const { return mCompleter; }
 
@@ -20,10 +21,9 @@ private:
     };
     QCompleter *mCompleter{ };
     QVector<HighlightingRule> mHighlightingRules;
+    HighlightingRule mFunctionsRule;
     HighlightingRule mCommentRule;
     QRegularExpression mCommentStartExpression;
     QRegularExpression mCommentEndExpression;
     HighlightingRule mWhiteSpaceRule;
 };
-
-#endif // GLSLHIGHLIGHTER_H

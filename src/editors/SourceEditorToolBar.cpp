@@ -32,10 +32,10 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
 
     const auto hlsl = sourceTypeMenu->addMenu(tr("HLSL"));
     addSourceType(hlsl, tr("Vertex Shader"), SourceType::HLSL_VertexShader);
-    addSourceType(hlsl, tr("Fragment Shader"), SourceType::HLSL_FragmentShader);
+    addSourceType(hlsl, tr("Pixel Shader"), SourceType::HLSL_PixelShader);
     addSourceType(hlsl, tr("Geometry Shader"), SourceType::HLSL_GeometryShader);
-    addSourceType(hlsl, tr("Tessellation Control"), SourceType::HLSL_TessellationControl);
-    addSourceType(hlsl, tr("Tessellation Evaluation"), SourceType::HLSL_TessellationEvaluation);
+    addSourceType(hlsl, tr("Hull Shader"), SourceType::HLSL_HullShader);
+    addSourceType(hlsl, tr("Domain Shader"), SourceType::HLSL_DomainShader);
     addSourceType(hlsl, tr("Compute Shader"), SourceType::HLSL_ComputeShader);
 
     addSourceType(sourceTypeMenu, tr("JavaScript"), SourceType::JavaScript);

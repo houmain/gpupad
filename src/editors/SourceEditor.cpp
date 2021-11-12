@@ -5,9 +5,7 @@
 #include "Settings.h"
 #include "FindReplaceBar.h"
 #include "FileDialog.h"
-#include "GlslHighlighter.h"
-#include "HlslHighlighter.h"
-#include "JsHighlighter.h"
+#include "SyntaxHighlighter.h"
 #include "RectangularSelection.h"
 #include <QCompleter>
 #include <QTextCharFormat>
@@ -256,9 +254,8 @@ void SourceEditor::updateColors(bool darkTheme)
 
 void SourceEditor::updateSyntaxHighlighting()
 {
-    const auto disabled =
-        (document()->characterCount() > (1 << 20) ||
-         mSourceType == SourceType::PlainText);
+    const auto disabled = 
+        (document()->characterCount() > (1 << 20));
 
     delete mHighlighter;
     mHighlighter = nullptr;
@@ -267,27 +264,10 @@ void SourceEditor::updateSyntaxHighlighting()
         return;
 
     const auto &settings = Singletons::settings();
-    const auto set = [&](auto highlighter) {
-        mHighlighter = highlighter;
-        mCompleter = highlighter->completer();
-    };
-    switch (mSourceType) {
-        case SourceType::JavaScript:
-            set(new JsHighlighter(settings.darkTheme(), this));
-            break;
-        case SourceType::HLSL_VertexShader:
-        case SourceType::HLSL_FragmentShader:
-        case SourceType::HLSL_GeometryShader:
-        case SourceType::HLSL_TessellationControl:
-        case SourceType::HLSL_TessellationEvaluation:
-        case SourceType::HLSL_ComputeShader:
-            set(new HlslHighlighter(settings.darkTheme(), this));
-            break;
-        default:
-            set(new GlslHighlighter(settings.darkTheme(), this));
-            break;
-    }
+    mHighlighter = new SyntaxHighlighter(
+        mSourceType, settings.darkTheme(), this);
     mHighlighter->setDocument(document());
+    mCompleter = mHighlighter->completer();
     mCompleter->setWidget(this);
     mCompleter->setCompletionMode(QCompleter::PopupCompletion);
     mCompleter->setCaseSensitivity(Qt::CaseInsensitive);

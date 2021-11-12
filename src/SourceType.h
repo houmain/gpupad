@@ -13,10 +13,10 @@ enum class SourceType
     GLSL_TessellationEvaluation,
     GLSL_ComputeShader,
     HLSL_VertexShader,
-    HLSL_FragmentShader,
+    HLSL_PixelShader,
     HLSL_GeometryShader,
-    HLSL_TessellationControl,
-    HLSL_TessellationEvaluation,
+    HLSL_HullShader,
+    HLSL_DomainShader,
     HLSL_ComputeShader,
     JavaScript,
 };

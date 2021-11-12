@@ -20,13 +20,13 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
         return SourceType::JavaScript;
 
     if (extension == "ps")
-        return SourceType::HLSL_GeometryShader;
+        return SourceType::HLSL_PixelShader;
 
     if (current == SourceType::PlainText) {
         if (extension == "glsl")
             return SourceType::GLSL_FragmentShader;
         if (extension == "hlsl" || extension == "hlsli" || extension == "fx")
-            return SourceType::HLSL_FragmentShader;
+            return SourceType::HLSL_PixelShader;
     }
     return current;
 }
@@ -42,10 +42,10 @@ SourceType getSourceType(Shader::ShaderType type, Shader::Language language)
         { { Shader::Language::GLSL, Shader::ShaderType::Compute }, SourceType::GLSL_ComputeShader },
 
         { { Shader::Language::HLSL, Shader::ShaderType::Vertex }, SourceType::HLSL_VertexShader },
-        { { Shader::Language::HLSL, Shader::ShaderType::Fragment }, SourceType::HLSL_FragmentShader },
+        { { Shader::Language::HLSL, Shader::ShaderType::Fragment }, SourceType::HLSL_PixelShader },
         { { Shader::Language::HLSL, Shader::ShaderType::Geometry }, SourceType::HLSL_GeometryShader },
-        { { Shader::Language::HLSL, Shader::ShaderType::TessellationControl }, SourceType::HLSL_TessellationControl },
-        { { Shader::Language::HLSL, Shader::ShaderType::TessellationEvaluation }, SourceType::HLSL_TessellationEvaluation },
+        { { Shader::Language::HLSL, Shader::ShaderType::TessellationControl }, SourceType::HLSL_HullShader },
+        { { Shader::Language::HLSL, Shader::ShaderType::TessellationEvaluation }, SourceType::HLSL_DomainShader },
         { { Shader::Language::HLSL, Shader::ShaderType::Compute }, SourceType::HLSL_ComputeShader },
     };
     return sMapping[{ language, type }];
@@ -63,7 +63,7 @@ Shader::ShaderType getShaderType(SourceType sourceType)
             return Shader::ShaderType::Vertex;
 
         case SourceType::GLSL_FragmentShader:
-        case SourceType::HLSL_FragmentShader:
+        case SourceType::HLSL_PixelShader:
             return Shader::ShaderType::Fragment;
 
         case SourceType::GLSL_GeometryShader:
@@ -71,11 +71,11 @@ Shader::ShaderType getShaderType(SourceType sourceType)
             return Shader::ShaderType::Geometry;
 
         case SourceType::GLSL_TessellationControl:
-        case SourceType::HLSL_TessellationControl:
+        case SourceType::HLSL_HullShader:
             return Shader::ShaderType::TessellationControl;
 
         case SourceType::GLSL_TessellationEvaluation:
-        case SourceType::HLSL_TessellationEvaluation:
+        case SourceType::HLSL_DomainShader:
             return Shader::ShaderType::TessellationEvaluation;
 
         case SourceType::GLSL_ComputeShader:
@@ -101,10 +101,10 @@ Shader::Language getShaderLanguage(SourceType sourceType)
             return Shader::Language::GLSL;
 
         case SourceType::HLSL_VertexShader:
-        case SourceType::HLSL_FragmentShader:
+        case SourceType::HLSL_PixelShader:
         case SourceType::HLSL_GeometryShader:
-        case SourceType::HLSL_TessellationControl:
-        case SourceType::HLSL_TessellationEvaluation:
+        case SourceType::HLSL_HullShader:
+        case SourceType::HLSL_DomainShader:
         case SourceType::HLSL_ComputeShader:
             return Shader::Language::HLSL;
     }
