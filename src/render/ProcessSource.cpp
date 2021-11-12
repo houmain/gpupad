@@ -65,8 +65,6 @@ void ProcessSource::clearMessages()
 
 void ProcessSource::prepare(bool, EvaluationType)
 {
-    mMessages.clear();
-
     if (auto shaderType = getShaderType(mSourceType)) {
         auto shaders = getShadersInSession(mFileName);
         auto shader = Shader{ };
@@ -76,13 +74,13 @@ void ProcessSource::prepare(bool, EvaluationType)
             shader.language = getShaderLanguage(mSourceType);
             shaders = { &shader };
         }
-        mNewShader.reset(new GLShader(shaderType, shaders));
+        mShader.reset(new GLShader(shaderType, shaders));
     }
 }
 
 void ProcessSource::render()
 {
-    mShader.reset(mNewShader.take());
+    auto messages = MessagePtrSet();
     mScriptEngine.reset();
     mOutput.clear();
 
@@ -96,26 +94,29 @@ void ProcessSource::render()
             Singletons::fileCache().getSource(mFileName, &scriptSource);
             scriptSource = "if (false) {" + scriptSource + "}";
             mScriptEngine.reset(new ScriptEngine());
-            mScriptEngine->evaluateScript(scriptSource, mFileName, mMessages);
+            mScriptEngine->evaluateScript(scriptSource, mFileName, messages);
         }
     }
 
     if (mShader) {
         if (mProcessType == "preprocess") {
-            mOutput = glslang::preprocess(mShader->getSource(), mMessages);
+            mOutput = glslang::preprocess(mShader->getSource(), messages);
         }
         else if (mProcessType == "spirv") {
             mOutput = glslang::generateSpirV(mShader->getSource(),
-                getShaderType(mSourceType), mMessages);
+                getShaderType(mSourceType), messages);
         }
         else if (mProcessType == "ast") {
             mOutput = glslang::generateAST(mShader->getSource(),
-                getShaderType(mSourceType), mMessages);
+                getShaderType(mSourceType), messages);
         }
         else if (mProcessType == "assembly") {
             mOutput = mShader->getAssembly();
         }
+        messages += mShader->resetMessages();
+        mShader.reset();
     }
+    mMessages = messages;
 }
 
 void ProcessSource::finish()
@@ -125,5 +126,5 @@ void ProcessSource::finish()
 
 void ProcessSource::release()
 {
-    mShader.reset();
+    Q_ASSERT(!mShader);
 }

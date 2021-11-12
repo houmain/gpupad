@@ -31,7 +31,6 @@ private:
     void finish() override;
     void release() override;
 
-    QScopedPointer<GLShader> mNewShader;
     QScopedPointer<GLShader> mShader;
     QString mFileName;
     SourceType mSourceType{ };

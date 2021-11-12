@@ -19,6 +19,7 @@ public:
     const QStringList &sources() const { return mSources; }
     const QStringList &fileNames() const { return mFileNames; }
     const QString &entryPoint() const { return mEntryPoint; }
+    MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
 
     QString getSource() const;
     bool compile(GLPrintf *printf = nullptr, bool silent = false);
