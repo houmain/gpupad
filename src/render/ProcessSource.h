@@ -20,6 +20,7 @@ public:
     void setSourceType(SourceType sourceType);
     void setValidateSource(bool validate);
     void setProcessType(QString processType);
+    void clearMessages();
 
 Q_SIGNALS:
     void outputChanged(QString output);

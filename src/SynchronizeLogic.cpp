@@ -386,8 +386,10 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
 
 void SynchronizeLogic::processSource()
 {
-    if (!mValidateSource && mProcessSourceType.isEmpty())
+    if (!mValidateSource && mProcessSourceType.isEmpty()) {
+        mProcessSource->clearMessages();
         return;
+    }
 
     if (mCurrentEditorFileName.isEmpty() ||
         !Singletons::editorManager().getSourceEditor(mCurrentEditorFileName))

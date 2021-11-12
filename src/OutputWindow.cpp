@@ -51,10 +51,12 @@ void OutputWindow::setText(QString text)
 {
     auto h = mTextEdit->horizontalScrollBar()->value();
     auto v = mTextEdit->verticalScrollBar()->value();
-    if (v > 0 || mTextEdit->verticalScrollBar()->maximum() > 0)
-      mLastScrollPosVertical = v;
-    else
-      v = mLastScrollPosVertical;
+    if (v > 0 || mTextEdit->verticalScrollBar()->maximum() > 0) {
+        mLastScrollPosVertical = v;
+    }
+    else {
+        v = mLastScrollPosVertical;
+    }
 
     mTextEdit->setPlainText(text);
 

@@ -42,7 +42,7 @@ enum MessageType
     InvalidIncludeDirective,
     IncludableNotFound,
     TooManyPrintfCalls,
-    GlslangNotFound,
+    GlslangValidatorNotFound,
     SpirvCrossNotCompiledIn,
 };
 

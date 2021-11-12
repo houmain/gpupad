@@ -30,8 +30,9 @@ namespace
         return nullptr;
     }
 
-    QString executeGLSLangValidator(const QString &source, 
-        QStringList args, Shader::ShaderType shaderType)
+    QString executeGLSLangValidator(const QString &source,
+        QStringList args, Shader::ShaderType shaderType,
+        MessagePtrSet &messages)
     {
         args += "--stdin";
         if (auto sourceType = getGLSLangSourceType(shaderType)) {
@@ -42,8 +43,10 @@ namespace
         process.setProcessChannelMode(QProcess::MergedChannels);
         process.setWorkingDirectory(QDir::temp().path());
         process.start("glslangValidator", args);
-        if (!process.waitForStarted())
-            return "glslangValidator not found";
+        if (!process.waitForStarted()) {
+            messages += MessageList::insert(0, MessageType::GlslangValidatorNotFound);
+            return { };
+        }
         process.write(source.toUtf8());
         process.closeWriteChannel();
 
@@ -167,28 +170,30 @@ namespace
     }
 } // namespace
 
-QString generateSpirV(const QString &source, Shader::ShaderType shaderType)
+QString generateSpirV(const QString &source, Shader::ShaderType shaderType,
+    MessagePtrSet &messages)
 {
     const auto args = QStringList{
       "-H", "--aml", "--amb",
       "--client", "opengl100",
     };
-    return executeGLSLangValidator(source, args, shaderType);
+    return executeGLSLangValidator(source, args, shaderType, messages);
 }
 
-QString generateAST(const QString &source, Shader::ShaderType shaderType)
+QString generateAST(const QString &source,
+    Shader::ShaderType shaderType, MessagePtrSet &messages)
 {
     const auto args = QStringList{
       "-i", "--aml", "--amb",
       "--client", "opengl100",
     };
-    return executeGLSLangValidator(source, args, shaderType);
+    return executeGLSLangValidator(source, args, shaderType, messages);
 }
 
-QString preprocess(const QString &source)
+QString preprocess(const QString &source, MessagePtrSet &messages)
 {
     const auto args = QStringList{ "-E" };
-    return executeGLSLangValidator(source, args, Shader::ShaderType::Vertex);
+    return executeGLSLangValidator(source, args, Shader::ShaderType::Vertex, messages);
 }
 
 QString generateGLSL(const QString &source, Shader::ShaderType shaderType,
@@ -213,7 +218,7 @@ QString generateGLSL(const QString &source, Shader::ShaderType shaderType,
     args += "-o";
     args += output.fileName();
 
-    const auto log = executeGLSLangValidator(source, args, shaderType).trimmed();
+    const auto log = executeGLSLangValidator(source, args, shaderType, messages).trimmed();
     if (!log.isEmpty() && parseGLSLangErrors(log, fileName, itemId, messages))
         return { };
 

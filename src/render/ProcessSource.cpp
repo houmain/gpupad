@@ -58,6 +58,11 @@ void ProcessSource::setProcessType(QString processType)
     mProcessType = processType;
 }
 
+void ProcessSource::clearMessages()
+{
+    mMessages.clear();
+}
+
 void ProcessSource::prepare(bool, EvaluationType)
 {
     mMessages.clear();
@@ -96,14 +101,20 @@ void ProcessSource::render()
     }
 
     if (mShader) {
-        if (mProcessType == "preprocess")
-            mOutput = glslang::preprocess(mShader->getSource());
-        else if (mProcessType == "spirv")
-            mOutput = glslang::generateSpirV(mShader->getSource(), getShaderType(mSourceType));
-        else if (mProcessType == "ast")
-            mOutput = glslang::generateAST(mShader->getSource(), getShaderType(mSourceType));
-        else if (mProcessType == "assembly")
+        if (mProcessType == "preprocess") {
+            mOutput = glslang::preprocess(mShader->getSource(), mMessages);
+        }
+        else if (mProcessType == "spirv") {
+            mOutput = glslang::generateSpirV(mShader->getSource(),
+                getShaderType(mSourceType), mMessages);
+        }
+        else if (mProcessType == "ast") {
+            mOutput = glslang::generateAST(mShader->getSource(),
+                getShaderType(mSourceType), mMessages);
+        }
+        else if (mProcessType == "assembly") {
             mOutput = mShader->getAssembly();
+        }
     }
 }
 

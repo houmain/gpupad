@@ -84,7 +84,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case InvalidIncludeDirective:
         case IncludableNotFound:
         case InvalidAttribute:
-        case GlslangNotFound:
+        case GlslangValidatorNotFound:
         case SpirvCrossNotCompiledIn:
             return mErrorIcon;
 
@@ -165,7 +165,7 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Invalid stream attribute");
         case TooManyPrintfCalls:
             return tr("Too many printf calls. Please filter threads by setting printfEnabled");
-        case GlslangNotFound:
+        case GlslangValidatorNotFound:
             return tr("glslangValidator not found");
         case SpirvCrossNotCompiledIn:
             return tr("SPIRV-Cross not compiled in");
