@@ -351,8 +351,7 @@ const Item* SessionModelCore::findItem(ItemId id) const
 
 QModelIndex SessionModelCore::getIndex(const Item *item, ColumnType column) const
 {
-    Q_ASSERT(item);
-    if (item == mRoot.data())
+    if (!item || item == mRoot.data())
         return { };
 
     auto itemPtr = const_cast<Item*>(item);
