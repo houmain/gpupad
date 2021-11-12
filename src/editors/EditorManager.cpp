@@ -46,14 +46,17 @@ QWidget *EditorManager::createEditorPropertiesPanel(
     layout->setAlignment(mFindReplaceBar, Qt::AlignTop);
     layout->setAlignment(mTextureInfoBar, Qt::AlignTop);
 
-    connect(showAction, &QAction::triggered,
-        propertiesPanel, &QWidget::show);
-    connect(mFindReplaceBar, &FindReplaceBar::cancelled,
-        propertiesPanel, &QWidget::hide);
-    connect(mTextureInfoBar, &TextureInfoBar::cancelled,
-        propertiesPanel, &QWidget::hide);
-    connect(showAction, &QAction::triggered,
-        this, &EditorManager::updateEditorPropertiesVisibility);
+    const auto showPropertiesPanel = [this, propertiesPanel]() {
+        propertiesPanel->show();
+        updateEditorPropertiesVisibility();
+    };
+    const auto hidePropertiesPanel = [this, propertiesPanel]() {
+        propertiesPanel->hide();
+        updateEditorPropertiesVisibility();
+    };
+    connect(showAction, &QAction::triggered, showPropertiesPanel);
+    connect(mFindReplaceBar, &FindReplaceBar::cancelled, hidePropertiesPanel);
+    connect(mTextureInfoBar, &TextureInfoBar::cancelled, hidePropertiesPanel);
 
     return propertiesPanel;
 }
