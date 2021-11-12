@@ -64,7 +64,7 @@ option(SPIRV_CROSS_FORCE_PIC "Force position-independent code for all targets." 
 
 if(${CMAKE_GENERATOR} MATCHES "Makefile")
 	if(${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_BINARY_DIR})
-		message(FATAL_ERROR "Build out of tree to avoid overwriting Makefile")
+		message(WARNING "Build out of tree to avoid overwriting Makefile")
 	endif()
 endif()
 
