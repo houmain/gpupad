@@ -88,8 +88,6 @@ SourceEditor::SourceEditor(QString fileName
         this, &SourceEditor::updateSyntaxHighlighting);
 
     updateViewportMargins();
-    setPlainText(document()->toPlainText());
-    deduceSourceType();
     updateColors(settings.darkTheme());
 }
 
@@ -206,6 +204,7 @@ bool SourceEditor::load()
         document()->clearUndoRedoStacks();
 
     document()->setModified(false);
+    deduceSourceType();
     return true;
 }
 
@@ -229,7 +228,7 @@ void SourceEditor::deduceSourceType()
 
 void SourceEditor::setSourceType(SourceType sourceType)
 {
-    if (mSourceType != sourceType) {
+    if (!mHighlighter || mSourceType != sourceType) {
         mSourceType = sourceType;
         updateSyntaxHighlighting();
     }

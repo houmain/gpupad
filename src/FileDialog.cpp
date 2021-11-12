@@ -4,6 +4,7 @@
 #include <QMap>
 #include <QProcess>
 #include <QApplication>
+#include <QDesktopServices>
 
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");

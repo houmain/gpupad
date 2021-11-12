@@ -22,10 +22,17 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
     if (extension == "ps")
         return SourceType::HLSL_PixelShader;
 
-    if (current == SourceType::PlainText) {
-        if (extension == "glsl")
+    if (extension == "glsl") {
+        if (text.contains("gl_Position"))
+            return SourceType::GLSL_VertexShader;
+        if (text.contains("local_size_x"))
+            return SourceType::GLSL_ComputeShader;
+        if (current == SourceType::PlainText)
             return SourceType::GLSL_FragmentShader;
-        if (extension == "hlsl" || extension == "hlsli" || extension == "fx")
+    }
+
+    if (extension == "hlsl" || extension == "hlsli" || extension == "fx") {
+        if (current == SourceType::PlainText)
             return SourceType::HLSL_PixelShader;
     }
     return current;
