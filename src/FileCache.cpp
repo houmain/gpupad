@@ -186,6 +186,7 @@ void FileCache::handleEditorFileChanged(const QString &fileName, bool emitFileCh
 void FileCache::handleEditorSave(const QString &fileName)
 {
     Q_ASSERT(onMainThread());
+    invalidateFile(fileName);
     mEditorSaveAdvertised.insert(fileName);
 }
 
@@ -313,7 +314,7 @@ void FileCache::updateFileSystemWatches()
         const auto &fileName = it.key();
         const auto &changed = it.value();
         mFileSystemWatcher.removePath(it.key());
-        if (QFileInfo(fileName).exists() &&
+        if (QFileInfo::exists(fileName) &&
             mFileSystemWatcher.addPath(fileName)) {
             if (changed && !mEditorSaveAdvertised.remove(fileName)) {
                 if (!reloadFileInBackground(fileName)) {
