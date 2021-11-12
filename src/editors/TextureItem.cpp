@@ -452,6 +452,11 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
             static_cast<float>(-mMappingRange.minimum));
         program->setUniformValue("uMappingFactor", 
             static_cast<float>(1 / mMappingRange.range()));
+
+#if !GL_VERSION_4_2
+        program->setUniformValue("uPickerEnabled", false);
+        program->setUniformValue("uHistogramEnabled", false);
+#else
         program->setUniformValue("uPickerEnabled", mPickerEnabled);
         program->setUniformValue("uHistogramEnabled", mHistogramEnabled);
 
@@ -490,9 +495,11 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
                     static_cast<float>(1 / mHistogramBounds.range() * scaleToBins));
             }
         }
+#endif
 
         gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  
 
+#if GL_VERSION_4_2
         if (auto gl42 = context().gl42())
             gl42->glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
 
@@ -510,6 +517,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
                 GL_RED_INTEGER, GL_UNSIGNED_INT, mHistogramBins.data());
             updateHistogram();
         }
+#endif
     }
 
     if (mPreviewTextureId) {
