@@ -1,17 +1,54 @@
-
 # Changelog
+
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [Version 1.20] - 2021-08-23
+## [Version 1.21] - 2021-11-12
+
 ## Added
+
+- Added histogram in Find panel of texture editor.
+- Initial HLSL support using glslangValidator/SPIRV-Cross.
+- Added more actions to editor tab context menu.
+- More work on color picker.
+
+## Changed
+
+- Setting file dialog directory to focused editor's.
+- No longer applying sRGB conversion to float target preview.
+- Deducing shader source type also from content.
+- Cleaned up file dialog extension filter.
+- Updating texture editor when video plays.
+- Accepting dropped files on editors.
+- Improved syntax highlighting.
+- Increased maximum zoom level.
+
+## Fixed
+
+- Fixed wrong editor modified indicator.
+- Improved removing messages of source validation.
+- Fixed deleting rectangular selection.
+- Fixed input of 0 in buffer editor.
+- Expression editor does not simplify 0.00 to 0.
+- Ignoring printf in standalone shader validation.
+- Fixed handling of small files in gli and tinyexr.
+- Fixed updating binary editor when buffer block layout changes.
+- Fixed potential crash in JavaScript console redirection.
+- Fixed crash when activating call without program.
+- Invalidating file cache on editor save.
+
+## [Version 1.20] - 2021-08-23
+
+## Added
+
 - Added editor tab bar context menu.
 - Added color picker in Find panel of texture editor [WIP].
 - Added EXR file reading.
 
 ## Changed
+
 - Improved reloading of source editors.
 - Reloading files in background.
 - Opening new editor on tab bar double-click.
@@ -19,6 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Increased number of recent files.
 
 ## Fixed
+
 - Fixed potential crash on texture editor closing.
 - Improved unicode handling.
 - Fixed upload of integer textures.
@@ -27,42 +65,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved visibility of more checkboxes on dark theme.
 
 ## [Version 1.19] - 2021-05-10
+
 ## Added
+
 - Added fullscreen option.
 - Added saving/restoring session state.
 - Added option to show whitespace.
 - Highlighting matching brace.
 
 ## Changed
+
 - Improved closing multiple modified files.
 - Moved source validation/type to source editor toolbar.
 
 ## Fixed
+
 - Fixed standalone shader validation.
 
 ## [Version 1.18] - 2021-04-16
+
 ## Added
+
 - Added manual vertical texture flip control.
 - Added support for integer/double stream attributes.
 - Automatically adding suffix when Saving As.
 
 ## Changed
+
 - Opening more editors on double click.
 - Applying image format on combobox select.
 - Using gli for loading/saving DDS.
 
 ## Fixed
+
 - Better handling of failing save.
 - Evaluating expressions in more contexts.
 - Improved message updates.
 
 ## [Version 1.17] - 2021-03-29
+
 ## Added
+
 - Added menu action for opening containing folder.
 - Added support for the #include directive.
 - Added GPUPAD preprocessor definition.
 
 ## Changed
+
 - Simplified working with multi-file shaders.
 - Showing top-left corner of texture on open.
 - Increased update rate of externally modified files.
@@ -73,17 +122,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved theme.
 
 ## Fixed
+
 - Restoring unmaximized window geometry.
 - Handling different directory separators in Save Session As.
 - Fixed index buffer offset.
 
 ## [Version 1.16] - 2021-01-31
+
 ### Added
+
 - Iteration count for groups.
 - Buffer block bindings.
 - Sessions can be reloaded.
 
 ### Changed
+
 - Binding uniform sets global script variable.
 - Removed Script expression.
 - Keep rendering with previous program version when invalid.
@@ -92,6 +145,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Keeping instance when opening session file.
 
 ### Fixed
+
 - Improved auto completion popup.
 - Fixed error message line number parsing.
 - Fixed opening of buffer block editor.
@@ -100,14 +154,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved video playback on Windows.
 
 ## [Version 1.15] - 2021-01-05
+
 ### Added
- - Providing builds for Linux and macOS.
+
+- Providing builds for Linux and macOS.
 
 ### Fixed
- - Improved Qt and OpenGL version and platform support.
+
+- Improved Qt and OpenGL version and platform support.
 
 ## [Version 1.14] - 2020-12-23
+
 ### Added
+
 - Expressions for texture dimensions.
 - Expressions for block offset and row count.
 - Separating recent files and sessions.
@@ -115,13 +174,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Made source compatible with Qt6.
 
 ### Fixed
+
 - Fixed session modified indicator.
 - Fixed buffer field invalidation.
 - Fixed untitled buffer upload.
 - Improved buffer editing performance.
 
 ## [Version 1.13] - 2020-11-21
+
 ### Added
+
 - Added indirect compute call.
 - Added polygon mode to target.
 - DDS reading/writing.
@@ -131,23 +193,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added indirect sample.
 
 ### Changed
+
 - Replaced buffer column with block and field.
 - Showing full item name in reference comboboxes.
 - Setting default extension of non-2D textures to .ktx.
 - Updated volume sample.
 
 ### Fixed
+
 - Fixed reading/writing of 3D textures.
 - Improved renaming file items.
 - Improved bringing first instance to front (under Windows).
 
 ## [Version 1.12] - 2020-09-10
+
 ### Added
+
 - Copy/paste/cut for rectangular selection.
 - Suggest filename when saving untitled.
 - Added Instancing sample.
 
 ### Changed
+
 - Improved pasting as session item child.
 - Improved binary editor cell editing.
 - Improved syntax highlighting.
@@ -155,12 +222,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Changed dark theme highlight to blue.
 
 ### Fixed
+
 - Ignore unused item references of call.
 - Allow opening missing files in new editor.
 - Improved buffer binding point assignment.
 
 ## [Version 1.11] - 2020-08-04
+
 ### Added
+
 - Supporting printf debugging.
 - Added constant input.mouseFragCoord.
 - Automatically moving #version to front.
@@ -168,18 +238,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Tessellation sample.
 
 ### Changed
+
 - Increased message update interval.
 
 ### Fixed
+
 - Accepting file drops on whole window.
 - Improved GLSL and Javascript highlighter.
 
 ## [Version 1.10] - 2020-07-16
+
 ### Added
+
 - Texture Editor Toolbar.
 - Uploading/downloading of multisample textures.
 
 ### Changed
+
 - ZeroCopy preview no longer optional.
 - Automatically assign result of script expression.
 - Restore evaluation mode after opening sample.
@@ -187,17 +262,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Updated samples.
 
 ## [Version 1.9] - 2020-06-03
+
 ### Added
+
 - Framebuffer without attachment supported.
 - Texture buffers and image binding format.
 - Atomic counters support.
 
 ### Changed
+
 - Automatic manual evaluation after steady evaluation.
 - Active calls no longer bold.
 - Updated dark theme.
 
 ### Fixed
+
 - Improved utf8 detection.
 - Explicitly set shortcut for Reload.
 - Fixed handle leak in KTX lib.
@@ -209,20 +288,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved Save session as.
 
 ## [Version 1.8] - 2020-04-27
+
 ### Fixed
+
 - Fixed the MingW build.
 
 ## [Version 1.7] - 2020-04-02
+
 ### Added
+
 - Added video file playback.
 
 ### Fixed
+
 - Restore hidden editors dock.
 - Prevent deletion of newlines of rectangular selection.
 - Fixed problem with file item renaming.
 
 ## [Version 1.6] - 2020-03-26
+
 ### Added
+
 - Rectangular selection in source editor.
 - Synchronizing file items' names with file system.
 - Tooltip for file items.
@@ -233,6 +319,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reset evaluation button.
 
 ### Changed
+
 - Expand session groups on double click.
 - Enabled HighDpi scaling.
 - Ignoring file modifications on save.
@@ -243,12 +330,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Updated samples.
 
 ### Fixed
+
 - Improved file caching/reloading.
 - Fixed texture editor unload.
 - Not downloading resources without editor.
 
 ## [Version 1.5] - 2020-03-17
+
 ### Added
+
 - Added KTX texture support.
 - Preview of non 2D textures.
 - Added compressed texture formats.
@@ -256,6 +346,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Copy Buffer call.
 
 ### Fixed
+
 - Smarter insertion of new items.
 - Improved autocompletion popup.
 - Improved occurences highlighting.
@@ -264,30 +355,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Logging call errors.
 
 ### Removed
+
 - Removed binary file extensions/deducing from filter.
 
 ## [Version 1.4] - 2019-12-23
+
 ### Added
+
 - Allow to select subroutine by index.
 - Automatically append number to new items' names.
 - Mouse position variables.
 
 ## [Version 1.3] - 2019-12-15
+
 ### Changed
+
 - Zero copy preview of texture made optional.
 
 ## [Version 1.2] - 2019-12-13
+
 ### Added
+
 - Script expression.
 - Copy texture call.
 
 ### Fixed
+
 - Fixed scroll after find bug.
 - Remove trailing spaces/auto indentation improved.
 - Fixed missing file crash.
 
 ## [Version 1.1] - 2019-11-08
+
 ### Added
+
 - Expressions for call arguments.
 - Copy files on session SaveAs.
 - Custom actions.
@@ -300,6 +401,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - SyncTest sample.
 
 ### Changed
+
 - Evaluation revised.
 - Use dedicated GPUs by default.
 - Session tree double click no longer expands.
@@ -307,6 +409,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Updated dark theme.
 
 ### Fixed
+
 - Message window performance improved.
 - Recent file list is updated on save.
 - Call property limits increased.
@@ -316,25 +419,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.0] - 2019-04-14
 
-[Unreleased]: https://github.com/houmain/gpupad/compare/1.20...HEAD
-[Version 1.20]: https://github.com/houmain/gpupad/compare/1.19...1.20
-[Version 1.19]: https://github.com/houmain/gpupad/compare/1.18...1.19
-[Version 1.18]: https://github.com/houmain/gpupad/compare/1.17...1.18
-[Version 1.17]: https://github.com/houmain/gpupad/compare/1.16...1.17
-[Version 1.16]: https://github.com/houmain/gpupad/compare/1.15...1.16
-[Version 1.15]: https://github.com/houmain/gpupad/compare/1.14...1.15
-[Version 1.14]: https://github.com/houmain/gpupad/compare/1.13...1.14
-[Version 1.13]: https://github.com/houmain/gpupad/compare/1.12...1.13
-[Version 1.12]: https://github.com/houmain/gpupad/compare/1.11...1.12
-[Version 1.11]: https://github.com/houmain/gpupad/compare/1.10...1.11
-[Version 1.10]: https://github.com/houmain/gpupad/compare/1.9...1.10
-[Version 1.9]: https://github.com/houmain/gpupad/compare/1.8...1.9
-[Version 1.8]: https://github.com/houmain/gpupad/compare/1.7...1.8
-[Version 1.7]: https://github.com/houmain/gpupad/compare/1.6...1.7
-[Version 1.6]: https://github.com/houmain/gpupad/compare/1.5...1.6
-[Version 1.5]: https://github.com/houmain/gpupad/compare/1.4...1.5
-[Version 1.4]: https://github.com/houmain/gpupad/compare/1.3...1.4
-[Version 1.3]: https://github.com/houmain/gpupad/compare/1.2...1.3
-[Version 1.2]: https://github.com/houmain/gpupad/compare/1.1...1.2
-[Version 1.1]: https://github.com/houmain/gpupad/compare/1.0.0...1.1
-[Version 1.0]: https://github.com/houmain/gpupad/releases/tag/1.0.0
+[unreleased]: https://github.com/houmain/gpupad/compare/1.21...HEAD
+[version 1.21]: https://github.com/houmain/gpupad/compare/1.20...1.21
+[version 1.20]: https://github.com/houmain/gpupad/compare/1.19...1.20
+[version 1.19]: https://github.com/houmain/gpupad/compare/1.18...1.19
+[version 1.18]: https://github.com/houmain/gpupad/compare/1.17...1.18
+[version 1.17]: https://github.com/houmain/gpupad/compare/1.16...1.17
+[version 1.16]: https://github.com/houmain/gpupad/compare/1.15...1.16
+[version 1.15]: https://github.com/houmain/gpupad/compare/1.14...1.15
+[version 1.14]: https://github.com/houmain/gpupad/compare/1.13...1.14
+[version 1.13]: https://github.com/houmain/gpupad/compare/1.12...1.13
+[version 1.12]: https://github.com/houmain/gpupad/compare/1.11...1.12
+[version 1.11]: https://github.com/houmain/gpupad/compare/1.10...1.11
+[version 1.10]: https://github.com/houmain/gpupad/compare/1.9...1.10
+[version 1.9]: https://github.com/houmain/gpupad/compare/1.8...1.9
+[version 1.8]: https://github.com/houmain/gpupad/compare/1.7...1.8
+[version 1.7]: https://github.com/houmain/gpupad/compare/1.6...1.7
+[version 1.6]: https://github.com/houmain/gpupad/compare/1.5...1.6
+[version 1.5]: https://github.com/houmain/gpupad/compare/1.4...1.5
+[version 1.4]: https://github.com/houmain/gpupad/compare/1.3...1.4
+[version 1.3]: https://github.com/houmain/gpupad/compare/1.2...1.3
+[version 1.2]: https://github.com/houmain/gpupad/compare/1.1...1.2
+[version 1.1]: https://github.com/houmain/gpupad/compare/1.0.0...1.1
+[version 1.0]: https://github.com/houmain/gpupad/releases/tag/1.0.0
