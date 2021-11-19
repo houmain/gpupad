@@ -1,0 +1,164 @@
+[
+    {
+        "format": "RGBA8_UNorm",
+        "height": "512",
+        "id": 10,
+        "name": "TargetColor",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": "512"
+    },
+    {
+        "blendConstant": "#ffffffff",
+        "cullMode": "NoCulling",
+        "frontFace": "CCW",
+        "id": 7,
+        "items": [
+            {
+                "blendAlphaDest": "Zero",
+                "blendAlphaEq": "Add",
+                "blendAlphaSource": "One",
+                "blendColorDest": "Zero",
+                "blendColorEq": "Add",
+                "blendColorSource": "One",
+                "colorWriteMask": 15,
+                "id": 8,
+                "level": 0,
+                "name": "Color",
+                "textureId": 10,
+                "type": "Attachment"
+            }
+        ],
+        "logicOperation": "NoLogicOperation",
+        "name": "Target",
+        "polygonMode": "Line",
+        "type": "Target"
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 129,
+        "name": "count",
+        "type": "Binding",
+        "values": [
+            "256"
+        ]
+    },
+    {
+        "executeOn": "ResetEvaluation",
+        "fileName": "delaunay-fast/delaunay.js",
+        "id": 116,
+        "type": "Script"
+    },
+    {
+        "executeOn": "ResetEvaluation",
+        "fileName": "generate.js",
+        "id": 118,
+        "type": "Script"
+    },
+    {
+        "id": 112,
+        "items": [
+            {
+                "id": 120,
+                "items": [
+                    {
+                        "count": 2,
+                        "dataType": "Float",
+                        "id": 121,
+                        "name": "Position",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "Vertices",
+                "offset": "0",
+                "rowCount": "512",
+                "type": "Block"
+            },
+            {
+                "id": 127,
+                "items": [
+                    {
+                        "count": 1,
+                        "dataType": "Uint16",
+                        "id": 128,
+                        "name": "Index",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "Indices",
+                "offset": "2048",
+                "rowCount": "1482",
+                "type": "Block"
+            }
+        ],
+        "name": "Buffer",
+        "type": "Buffer"
+    },
+    {
+        "id": 114,
+        "items": [
+            {
+                "divisor": 0,
+                "fieldId": 121,
+                "id": 115,
+                "name": "aPosition",
+                "normalize": false,
+                "type": "Attribute"
+            }
+        ],
+        "name": "Stream",
+        "type": "Stream"
+    },
+    {
+        "id": 1,
+        "items": [
+            {
+                "fileName": "vertex.vs",
+                "id": 2,
+                "shaderType": "Vertex",
+                "type": "Shader"
+            },
+            {
+                "fileName": "fragment.fs",
+                "id": 3,
+                "shaderType": "Fragment",
+                "type": "Shader"
+            }
+        ],
+        "name": "Program",
+        "type": "Program"
+    },
+    {
+        "callType": "ClearTexture",
+        "checked": true,
+        "clearColor": "#ffffffff",
+        "clearDepth": 1,
+        "clearStencil": 0,
+        "executeOn": "EveryEvaluation",
+        "id": 110,
+        "name": "Clear",
+        "textureId": 10,
+        "type": "Call"
+    },
+    {
+        "baseInstance": "0",
+        "baseVertex": "0",
+        "callType": "DrawIndexed",
+        "checked": true,
+        "count": "1482",
+        "executeOn": "EveryEvaluation",
+        "first": "0",
+        "id": 4,
+        "indexBufferBlockId": 127,
+        "instanceCount": "1",
+        "name": "Draw",
+        "primitiveType": "Triangles",
+        "programId": 1,
+        "targetId": 7,
+        "type": "Call",
+        "vertexStreamId": 114
+    }
+]
