@@ -121,6 +121,12 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
     }
 }
 
+void SynchronizeLogic::cancelAutomaticRevalidation()
+{
+    if (mEvaluationMode == EvaluationMode::Automatic)
+        mEvaluationTimer->stop();
+}
+
 void SynchronizeLogic::handleSessionRendered()
 {
     Singletons::fileCache().updateEditorFiles();

@@ -201,8 +201,12 @@ void RenderSession::prepare(bool itemsChanged,
     const auto evaluateScript = [&](const Script &script) {
         if (shouldExecute(script.executeOn, mEvaluationType)) {
             auto source = QString();
-            if (Singletons::fileCache().getSource(script.fileName, &source))
+            if (Singletons::fileCache().getSource(script.fileName, &source)) {
                 mScriptEngine->evaluateScript(source, script.fileName, mMessages);
+
+                mGpupadScriptObject->applySessionUpdate(*mScriptEngine);
+                Singletons::synchronizeLogic().cancelAutomaticRevalidation();
+            }
         }
     };
 
@@ -215,7 +219,6 @@ void RenderSession::prepare(bool itemsChanged,
             if (auto script = castItem<Script>(item))
                 evaluateScript(*script);
         });
-        mGpupadScriptObject->applySessionUpdate(*mScriptEngine);
         return;
     }
 
@@ -486,7 +489,6 @@ void RenderSession::prepare(bool itemsChanged,
             }
         }
     });
-    mGpupadScriptObject->applySessionUpdate(*mScriptEngine);
 }
 
 void RenderSession::render()

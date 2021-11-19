@@ -31,6 +31,7 @@ public:
 private:
     MessagePtrSet mMessages;
     std::vector<std::function<void()>> mPendingUpdates;
+    std::vector<std::function<void()>> mPendingEditorUpdates;
     bool mEditorDataUpdated{ };
 };
 

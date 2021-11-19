@@ -87,14 +87,17 @@ void GpupadScriptObject::applySessionUpdate(ScriptEngine &scriptEngine)
 {
     scriptEngine.evaluateScript("gpupad.updateItems()", "", mMessages);
 
-    if (mPendingUpdates.empty())
-        return;
+    if (!mPendingUpdates.empty()) {
+        Singletons::sessionModel().beginUndoMacro("Script");
+        for (const auto &update : mPendingUpdates)
+            update();
+        mPendingUpdates.clear();
+        Singletons::sessionModel().endUndoMacro();
+    }
 
-    Singletons::sessionModel().beginUndoMacro("Script");
-    for (const auto &update : mPendingUpdates)
+    for (const auto &update : mPendingEditorUpdates)
         update();
-    mPendingUpdates.clear();
-    Singletons::sessionModel().endUndoMacro();
+    mPendingEditorUpdates.clear();
 
     scriptEngine.updateVariables(mMessages);
 
@@ -126,31 +129,33 @@ void GpupadScriptObject::deleteItem(QJsonValue item)
 
 void GpupadScriptObject::setBlockData(QJsonValue item, QJSValue data)
 {
-    if (auto block = castItem<Block>(findItem(item))) {
-        auto buffer = castItem<Buffer>(block->parent);
-        if (buffer->fileName.isEmpty()) {
-            const auto fileName = FileDialog::generateNextUntitledFileName(buffer->name);
-            Singletons::sessionModel().setData(Singletons::sessionModel().getIndex(
-                buffer, SessionModel::FileName), fileName);
-        }
+    mPendingEditorUpdates.push_back([this, item = std::move(item), data = std::move(data)]() {
+        if (auto block = castItem<Block>(findItem(item))) {
+            auto buffer = castItem<Buffer>(block->parent);
+            if (buffer->fileName.isEmpty()) {
+                const auto fileName = FileDialog::generateNextUntitledFileName(buffer->name);
+                Singletons::sessionModel().setData(Singletons::sessionModel().getIndex(
+                    buffer, SessionModel::FileName), fileName);
+            }
 
-        auto &editors = Singletons::editorManager();
-        editors.setAutoRaise(false);
-        auto editor = editors.openBinaryEditor(buffer->fileName);
-        if (!editor)
-            editor = editors.openNewBinaryEditor(buffer->fileName);
-        editors.setAutoRaise(true);
+            auto &editors = Singletons::editorManager();
+            editors.setAutoRaise(false);
+            auto editor = editors.openBinaryEditor(buffer->fileName);
+            if (!editor)
+                editor = editors.openNewBinaryEditor(buffer->fileName);
+            editors.setAutoRaise(true);
 
-        if (editor) {
-            auto ok = true;
-            const auto offset = (block->evaluatedOffset >= 0 ?
-                block->evaluatedOffset : evaluateIntExpression(block->offset, &ok));
-            if (ok) {
-                editor->replaceRange(offset, toByteArray(data, *block), false);
-                mEditorDataUpdated = true;
+            if (editor) {
+                auto ok = true;
+                const auto offset = (block->evaluatedOffset >= 0 ? block->evaluatedOffset : 
+                  evaluateIntExpression(block->offset, &ok));
+                if (ok) {
+                    editor->replaceRange(offset, toByteArray(data, *block), false);
+                    mEditorDataUpdated = true;
+                }
             }
         }
-    }
+    });
 }
 
 QString GpupadScriptObject::openFileDialog()

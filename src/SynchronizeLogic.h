@@ -26,6 +26,7 @@ public:
     void setEvaluationMode(EvaluationMode mode);
     void resetEvaluation();
     void manualEvaluation();
+    void cancelAutomaticRevalidation();
     void updateEditor(ItemId itemId, bool activated);
 
     void setValidateSource(bool validate);
