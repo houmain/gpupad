@@ -18,7 +18,7 @@ const auto keywords = QStringList{
 const auto globalObjects = QStringList{
     "eval", "isFinite", "isNaN",
     "parseFloat", "parseInt", "decodeURI", "decodeURIComponent", "encodeURI",
-    "encodeURIComponent", "Object", "Boolean", "Error", "EvalError", // "Function",
+    "encodeURIComponent", "Object", "Boolean", "Error", "EvalError", "Function",
     "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError",
     "Number", "Math", "Date", "String", "RegExp", "Array", "Int8Array",
     "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array",

@@ -22,23 +22,67 @@
 
 class SourceEditor::LineNumberArea final : public QWidget
 {
+private:
+    SourceEditor &mEditor;
+    int mSelectionStart{ -1 };
+
 public:
     LineNumberArea(SourceEditor *editor)
-        : QWidget(editor), mEditor(editor) { }
+        : QWidget(editor)
+        , mEditor(*editor) 
+    {
+        setMouseTracking(true);
+    }
 
     QSize sizeHint() const override
     {
-        return QSize(mEditor->lineNumberAreaWidth(), 0);
+        return QSize(mEditor.lineNumberAreaWidth(), 0);
     }
 
 protected:
     void paintEvent(QPaintEvent *event) override
     {
-        mEditor->lineNumberAreaPaintEvent(event);
+        mEditor.lineNumberAreaPaintEvent(event);
     }
 
-private:
-    SourceEditor *mEditor;
+    void mousePressEvent(QMouseEvent *event)
+    {
+        if (event->button() == Qt::LeftButton) {
+            auto cursor = mEditor.cursorForPosition({ 0, event->y() });
+            const auto position = cursor.position();
+            cursor.movePosition(QTextCursor::StartOfBlock);
+            mSelectionStart = cursor.position();
+            cursor.movePosition(QTextCursor::NextBlock);
+            cursor.setPosition(position, QTextCursor::KeepAnchor);
+            mEditor.setTextCursor(cursor);
+        }
+        QWidget::mousePressEvent(event);
+    }
+
+    void mouseMoveEvent(QMouseEvent *event)
+    {
+        auto cursor = mEditor.cursorForPosition({ 0, event->y() });
+        if (mSelectionStart >= 0) {
+            const auto position = cursor.position();
+            cursor.setPosition(mSelectionStart);
+            if (position <= mSelectionStart) {
+                cursor.movePosition(QTextCursor::NextBlock);
+                cursor.setPosition(position, QTextCursor::KeepAnchor);
+            } 
+            else {
+                cursor.setPosition(position, QTextCursor::KeepAnchor);
+                cursor.movePosition(QTextCursor::NextBlock, QTextCursor::KeepAnchor);
+            }
+            mEditor.setTextCursor(cursor);
+        }
+        QWidget::mouseMoveEvent(event);
+    }
+
+    void mouseReleaseEvent(QMouseEvent *event)
+    {
+        mSelectionStart = -1;
+        QWidget::mouseReleaseEvent(event);
+    }
 };
 
 SourceEditor::SourceEditor(QString fileName
