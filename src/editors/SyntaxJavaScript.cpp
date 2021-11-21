@@ -10,11 +10,13 @@ const auto keywords = QStringList{
     "if", "import", "in", "instanceof", "new", "return", "super", "switch", "this",
     "throw", "try", "typeof", "var", "void", "while", "with", "yield", "enum",
     "implements", "interface", "let", "package", "private", "protected", "public",
-    "static", "await", "of" };
+    "static", "await", "of", 
+    "Infinity", "NaN", "undefined", "null", "true", "false"
+};
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
 const auto globalObjects = QStringList{
-    "Infinity", "NaN", "undefined", "null", "eval", "isFinite", "isNaN",
+    "eval", "isFinite", "isNaN",
     "parseFloat", "parseInt", "decodeURI", "decodeURIComponent", "encodeURI",
     "encodeURIComponent", "Object", "Boolean", "Error", "EvalError", // "Function",
     "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError",
@@ -22,8 +24,9 @@ const auto globalObjects = QStringList{
     "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array",
     "Uint32Array", "Float32Array", "Float64Array", "Map", "Set", "WeakMap",
     "WeakSet", "ArrayBuffer", "SharedArrayBuffer", "Atomics", "DataView", "JSON",
+    "console", "gpupad" 
+};
 
-    "true", "false", "console", "print" };
 } // namespace
 
 class SyntaxJavaScript : public Syntax {

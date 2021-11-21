@@ -184,7 +184,6 @@ bool GpupadScriptObject::openWebDock()
         QString fileName() const override { return { }; }
         void setFileName(QString) override { }
         bool load() override { return false; }
-        bool reload() override { return false; }
         bool save() override { return false; }
         int tabifyGroup() override { return 1; }
     };

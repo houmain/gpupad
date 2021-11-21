@@ -51,8 +51,6 @@ SourceEditor::SourceEditor(QString fileName
     , mFindReplaceBar(*findReplaceBar)
     , mLineNumberArea(new LineNumberArea(this))
 {
-    connect(this, &SourceEditor::textChanged,
-        [this]() { Singletons::fileCache().handleEditorFileChanged(mFileName); });
     connect(this, &SourceEditor::blockCountChanged,
         this, &SourceEditor::updateViewportMargins);
     connect(this, &SourceEditor::updateRequest,
@@ -173,32 +171,33 @@ bool SourceEditor::load()
                 return i;
         return n;
     }();
-    if (firstDiff == source.length() &&
-        firstDiff == current.length())
-        return true;
 
-    const auto [lastDiffSource, lastDiffCurrent] = [&]() -> std::pair<int, int>{
-        for (auto i = source.length() - 1, 
-                  j = current.length() - 1; ; --i, --j)
-            if (i < firstDiff || j < firstDiff || source[i] != current[j])
-                return { i + 1, j + 1 };
-        return { };
-    }();
+    if (firstDiff != source.length() || 
+        firstDiff != current.length()) {
 
-    auto cursor = textCursor();
-    const auto position = cursor.position();
-    const auto anchor = cursor.anchor();
-    const auto scrollPosition = verticalScrollBar()->sliderPosition();
-    cursor.beginEditBlock();
-    cursor.setPosition(firstDiff);
-    cursor.setPosition(lastDiffCurrent, QTextCursor::KeepAnchor);
-    const auto diff = QString(source.mid(firstDiff, lastDiffSource - firstDiff));
-    cursor.insertText(diff);
-    cursor.setPosition(std::min(anchor, firstDiff));
-    cursor.setPosition(std::min(position, firstDiff), QTextCursor::KeepAnchor);
-    cursor.endEditBlock();
-    setTextCursor(cursor);
-    verticalScrollBar()->setSliderPosition(scrollPosition);
+        const auto [lastDiffSource, lastDiffCurrent] = [&]() -> std::pair<int, int>{
+            for (auto i = source.length() - 1, 
+                      j = current.length() - 1; ; --i, --j)
+                if (i < firstDiff || j < firstDiff || source[i] != current[j])
+                    return { i + 1, j + 1 };
+            return { };
+        }();
+
+        auto cursor = textCursor();
+        const auto position = cursor.position();
+        const auto anchor = cursor.anchor();
+        const auto scrollPosition = verticalScrollBar()->sliderPosition();
+        cursor.beginEditBlock();
+        cursor.setPosition(firstDiff);
+        cursor.setPosition(lastDiffCurrent, QTextCursor::KeepAnchor);
+        const auto diff = QString(source.mid(firstDiff, lastDiffSource - firstDiff));
+        cursor.insertText(diff);
+        cursor.setPosition(std::min(anchor, firstDiff));
+        cursor.setPosition(std::min(position, firstDiff), QTextCursor::KeepAnchor);
+        cursor.endEditBlock();
+        setTextCursor(cursor);
+        verticalScrollBar()->setSliderPosition(scrollPosition);
+    }
 
     if (initial)
         document()->clearUndoRedoStacks();
@@ -827,6 +826,7 @@ void SourceEditor::handleTextChanged()
         mMarkedOccurrences.clear();
         updateExtraSelections();
     }
+    Singletons::fileCache().handleEditorFileChanged(mFileName);
 }
 
 void SourceEditor::updateExtraSelections()

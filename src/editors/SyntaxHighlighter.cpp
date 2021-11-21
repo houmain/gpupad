@@ -90,7 +90,7 @@ SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
     }
 
     for (const auto &builtinConstant : syntax.builtinConstants()) {
-        rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(builtinConstant));
+        rule.pattern = QRegularExpression(QStringLiteral("\\b%1(\\.[_A-Za-z0-9]+)*\\b").arg(builtinConstant));
         rule.format = builtinConstantsFormat;
         mHighlightingRules.append(rule);
     }
@@ -123,7 +123,7 @@ SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
     }
 
     if (syntax.hasFunctions()) {
-        mFunctionsRule.pattern = QRegularExpression("\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()");
+        mFunctionsRule.pattern = QRegularExpression("\\s[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()");
         mFunctionsRule.format = functionFormat;
     }
 
@@ -160,11 +160,11 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
         }
     };
 
-    for (const HighlightingRule &rule : qAsConst(mHighlightingRules))
-        highlight(rule, true);
-
     if (!mFunctionsRule.format.isEmpty())
         highlight(mFunctionsRule, false);
+
+    for (const HighlightingRule &rule : qAsConst(mHighlightingRules))
+        highlight(rule, true);
 
     if (!mCommentRule.format.isEmpty())
         highlight(mCommentRule, false);
