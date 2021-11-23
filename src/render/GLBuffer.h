@@ -18,6 +18,7 @@ public:
 
     void clear();
     void copy(GLBuffer &source);
+    bool swap(GLBuffer &other);
     GLuint getReadOnlyBufferId();
     GLuint getReadWriteBufferId();
     void bindReadOnly(GLenum target);

@@ -124,6 +124,12 @@ void GLCall::execute(MessagePtrSet &messages)
         case Call::CallType::CopyBuffer:
             executeCopyBuffer(messages);
             break;
+        case Call::CallType::SwapTextures:
+            executeSwapTextures(messages);
+            break;
+        case Call::CallType::SwapBuffers:
+            executeSwapBuffers(messages);
+            break;
     }
 
 #if GL_VERSION_4_2
@@ -351,4 +357,28 @@ void GLCall::executeCopyBuffer(MessagePtrSet &messages)
     mBuffer->copy(*mFromBuffer);
     mUsedItems += mBuffer->usedItems();
     mUsedItems += mFromBuffer->usedItems();
+}
+
+void GLCall::executeSwapTextures(MessagePtrSet &messages)
+{
+    if (!mTexture || !mFromTexture) {
+        messages += MessageList::insert(
+            mCall.id, MessageType::TextureNotAssigned);
+        return;
+    }
+    if (!mTexture->swap(*mFromTexture))
+        messages += MessageList::insert(
+            mCall.id, MessageType::SwappingTexturesFailed);
+}
+
+void GLCall::executeSwapBuffers(MessagePtrSet &messages)
+{
+    if (!mBuffer || !mFromBuffer) {
+        messages += MessageList::insert(
+            mCall.id, MessageType::BufferNotAssigned);
+        return;
+    }
+    if (!mBuffer->swap(*mFromBuffer))
+        messages += MessageList::insert(
+            mCall.id, MessageType::SwappingBuffersFailed);
 }

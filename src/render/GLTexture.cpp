@@ -181,6 +181,25 @@ bool GLTexture::copy(GLTexture &source)
         getReadWriteTextureId(), 0);
 }
 
+bool GLTexture::swap(GLTexture &other)
+{
+    if (mTarget != other.mTarget || 
+        mFormat != other.mFormat || 
+        mWidth != other.mWidth || 
+        mHeight != other.mHeight || 
+        mDepth != other.mDepth || 
+        mLayers != other.mLayers || 
+        mSamples != other.mSamples)
+        return false;
+
+    std::swap(mData, other.mData);
+    std::swap(mTextureObject, other.mTextureObject);
+    std::swap(mSystemCopyModified, other.mSystemCopyModified);
+    std::swap(mDeviceCopyModified, other.mDeviceCopyModified);
+    std::swap(mMipmapsInvalidated, other.mMipmapsInvalidated);
+    return true;
+}
+
 bool GLTexture::updateMipmaps()
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);

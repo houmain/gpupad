@@ -419,6 +419,7 @@ void RenderSession::prepare(bool itemsChanged,
 
                     case Call::CallType::ClearTexture:
                     case Call::CallType::CopyTexture:
+                    case Call::CallType::SwapTextures:
                         glcall.setTextures(
                             addTextureOnce(call->textureId),
                             addTextureOnce(call->fromTextureId));
@@ -426,6 +427,7 @@ void RenderSession::prepare(bool itemsChanged,
 
                     case Call::CallType::ClearBuffer:
                     case Call::CallType::CopyBuffer:
+                    case Call::CallType::SwapBuffers:
                         glcall.setBuffers(
                             addBufferOnce(call->bufferId),
                             addBufferOnce(call->fromBufferId));

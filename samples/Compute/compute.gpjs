@@ -1,21 +1,23 @@
 [
     {
+        "flipVertically": false,
         "format": "RGBA8_UNorm",
-        "height": 256,
+        "height": "256",
         "id": 79,
-        "name": "Buffer 1",
+        "name": "Image 1",
         "target": "Target2D",
         "type": "Texture",
-        "width": 256
+        "width": "256"
     },
     {
+        "flipVertically": false,
         "format": "RGBA8_UNorm",
-        "height": 256,
+        "height": "256",
         "id": 92,
-        "name": "Buffer 2",
+        "name": "Image 2",
         "target": "Target2D",
         "type": "Texture",
-        "width": 256
+        "width": "256"
     },
     {
         "bindingType": "Image",
@@ -75,12 +77,12 @@
         "workGroupsZ": "1"
     },
     {
-        "callType": "CopyTexture",
+        "callType": "SwapTextures",
         "checked": true,
         "executeOn": "EveryEvaluation",
         "fromTextureId": 92,
         "id": 87,
-        "name": "Copy",
+        "name": "Swap",
         "textureId": 79,
         "type": "Call"
     }

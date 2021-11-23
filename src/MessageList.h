@@ -35,6 +35,8 @@ enum MessageType
     TargetNotAssigned,
     TextureNotAssigned,
     BufferNotAssigned,
+    SwappingTexturesFailed,
+    SwappingBuffersFailed,
     InvalidAttribute,
     InvalidSubroutine,
     ImageFormatNotBindable,

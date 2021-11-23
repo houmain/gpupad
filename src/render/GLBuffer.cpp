@@ -69,6 +69,17 @@ void GLBuffer::copy(GLBuffer &source)
     gl.glBindBuffer(GL_COPY_WRITE_BUFFER, GL_NONE);
 }
 
+bool GLBuffer::swap(GLBuffer &other)
+{
+    if (mSize != other.mSize)
+        return false;
+    mData.swap(other.mData);
+    std::swap(mBufferObject, other.mBufferObject);
+    std::swap(mSystemCopyModified, other.mSystemCopyModified);
+    std::swap(mDeviceCopyModified, other.mDeviceCopyModified);
+    return true;
+}
+
 GLuint GLBuffer::getReadOnlyBufferId()
 {
     reload();

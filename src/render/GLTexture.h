@@ -30,6 +30,7 @@ public:
 
     bool clear(std::array<double, 4> color, double depth, int stencil);
     bool copy(GLTexture &source);
+    bool swap(GLTexture &other);
     bool updateMipmaps();
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();

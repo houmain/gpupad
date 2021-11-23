@@ -259,8 +259,11 @@ namespace ItemEnums2 {
         ComputeIndirect,
         ClearTexture,
         CopyTexture,
+        SwapTextures,
         ClearBuffer,
         CopyBuffer,
+        SwapBuffers,
+
     };
     Q_ENUM_NS(CallType)
 

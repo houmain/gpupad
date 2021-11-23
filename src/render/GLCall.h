@@ -41,6 +41,8 @@ private:
     void executeCopyTexture(MessagePtrSet &messages);
     void executeClearBuffer(MessagePtrSet &messages);
     void executeCopyBuffer(MessagePtrSet &messages);
+    void executeSwapTextures(MessagePtrSet &messages);
+    void executeSwapBuffers(MessagePtrSet &messages);
     GLenum getIndexType() const;
 
     MessagePtrSet mMessages;

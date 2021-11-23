@@ -81,6 +81,8 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case CallFailed:
         case ClearingTextureFailed:
         case CopyingTextureFailed:
+        case SwappingTexturesFailed:
+        case SwappingBuffersFailed:
         case InvalidIncludeDirective:
         case IncludableNotFound:
         case InvalidAttribute:
@@ -143,6 +145,10 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Clearing texture failed");
         case CopyingTextureFailed:
             return tr("Copying texture failed");
+        case SwappingTexturesFailed:
+            return tr("Swapping textures failed");
+        case SwappingBuffersFailed:
+            return tr("Swapping buffers failed");
         case ProgramNotAssigned:
             return tr("No program set");
         case TargetNotAssigned:

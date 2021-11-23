@@ -458,9 +458,11 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
                 return openItemEditor(mModel.getIndex(mModel.findItem(call->programId)));
             case Call::CallType::ClearTexture:
             case Call::CallType::CopyTexture:
+            case Call::CallType::SwapTextures:
                 return openItemEditor(mModel.getIndex(mModel.findItem(call->textureId)));
             case Call::CallType::ClearBuffer:
             case Call::CallType::CopyBuffer:
+            case Call::CallType::SwapBuffers:
                 return openItemEditor(mModel.getIndex(mModel.findItem(call->bufferId)));
         }
     }

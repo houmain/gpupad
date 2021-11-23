@@ -159,11 +159,13 @@ void CallProperties::updateWidgets()
         kind.compute && !kind.indirect);
 
     setFormVisibility(mUi->formLayout, mUi->labelFromTexture, mUi->fromTexture,
-        type == Call::CallType::CopyTexture);
+        type == Call::CallType::CopyTexture ||
+        type == Call::CallType::SwapTextures);
 
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
         type == Call::CallType::ClearTexture ||
-        type == Call::CallType::CopyTexture);
+        type == Call::CallType::CopyTexture ||
+        type == Call::CallType::SwapTextures);
 
     const auto texKind = currentTextureKind();
     setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor,
@@ -175,8 +177,10 @@ void CallProperties::updateWidgets()
 
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
         type == Call::CallType::ClearBuffer ||
-        type == Call::CallType::CopyBuffer);
+        type == Call::CallType::CopyBuffer ||
+        type == Call::CallType::SwapBuffers);
 
     setFormVisibility(mUi->formLayout, mUi->labelFromBuffer, mUi->fromBuffer,
-        type == Call::CallType::CopyBuffer);
+        type == Call::CallType::CopyBuffer ||
+        type == Call::CallType::SwapBuffers);
 }
