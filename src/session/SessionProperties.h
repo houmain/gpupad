@@ -56,6 +56,7 @@ public:
 private:
     void updateBlockWidgets(const QModelIndex &index);
     void updateTargetWidgets(const QModelIndex &index);
+    void updateShaderWidgets(const QModelIndex &index);
     void deduceBlockOffset();
     void deduceBlockRowCount();
     IEditor* openEditor(const FileItem &fileItem);

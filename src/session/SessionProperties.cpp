@@ -117,6 +117,8 @@ SessionProperties::SessionProperties(QWidget *parent)
         [this]() { openCurrentItemFile(FileDialog::ShaderExtensions); });
     connect(mShaderProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(Item::Type::Shader); });
+    connect(mShaderProperties->language, &DataComboBox::currentDataChanged,
+        [this]() { updateShaderWidgets(currentModelIndex()); });
 
     connect(mBufferProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::BinaryExtensions); });
@@ -282,6 +284,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             map(mShaderProperties->language, SessionModel::ShaderLanguage);
             map(mShaderProperties->type, SessionModel::ShaderType);
             map(mShaderProperties->entryPoint, SessionModel::ShaderEntryPoint);
+            updateShaderWidgets(index);
             break;
 
         case Item::Type::Binding:
@@ -546,6 +549,14 @@ void SessionProperties::updateTargetWidgets(const QModelIndex &index)
     setFormVisibility(ui.formLayout, ui.labelPolygonMode, ui.polygonMode, true);
     setFormVisibility(ui.formLayout, ui.labelLogicOperation, ui.logicOperation, hasAttachments);
     setFormVisibility(ui.formLayout, ui.labelBlendConstant, ui.blendConstant, hasAttachments);
+}
+
+void SessionProperties::updateShaderWidgets(const QModelIndex &index)
+{
+    auto &ui = *mShaderProperties;
+    const auto language = static_cast<Shader::Language>(ui.language->currentData().toInt());
+    setFormVisibility(ui.formLayout, ui.labelEntryPoint, ui.entryPoint, 
+        language != Shader::Language::GLSL);
 }
 
 void SessionProperties::deduceBlockOffset()

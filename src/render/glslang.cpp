@@ -80,14 +80,15 @@ namespace
         ItemId itemId, MessagePtrSet &messages)
     {
         // ERROR: 0:50: 'output' : unknown variable
+        // WARNING: Linking fragment stage
         static const auto split = QRegularExpression(
             "("
                 "([^:]+):\\s*" // 2. severity/code
-                "(\\d+):"      // 3. source index
-                "(\\d+):"      // 4. line
+                "((\\d+):"     // 4. source index
+                "(\\d+):)?"    // 5. line
                 "\\s*"
             ")?"
-            "([^\\n]+)");  // 5. text
+            "([^\\n]+)");  // 6. text
 
         auto hasErrors = false;
         for (auto matches = split.globalMatch(log); matches.hasNext(); ) {
@@ -96,8 +97,8 @@ namespace
                 continue;
 
             const auto severity = match.captured(2);
-            const auto line = match.captured(4).toInt();
-            const auto text = match.captured(5);
+            const auto line = match.captured(5).toInt();
+            const auto text = match.captured(6);
 
             auto messageType = MessageType::ShaderWarning;
             if (severity.contains("INFO", Qt::CaseInsensitive))

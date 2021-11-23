@@ -465,6 +465,12 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
 {
     auto result = true;
     switch (item.type) {
+        case Item::Type::Shader: {
+            const auto &shader = static_cast<const Shader&>(item);
+            result &= (column != ShaderEntryPoint || (shader.language != Shader::Language::GLSL));
+            break;
+        }
+
         case Item::Type::Texture: {
             const auto &texture = static_cast<const Texture&>(item);
             auto kind = getKind(texture);
