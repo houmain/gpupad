@@ -3,6 +3,7 @@
 
 #include "session/Item.h"
 #include "SourceType.h"
+#include "InputState.h"
 #include "Evaluation.h"
 #include <QObject>
 #include <QSet>
@@ -36,13 +37,16 @@ public:
     void setCurrentEditorFileName(QString fileName);
     void setCurrentEditorSourceType(SourceType sourceType);
 
-    void setMousePosition(QPointF pos) { mMousePosition = pos; }
-    const QPointF &mousePosition() const { return mMousePosition; }
+    void setMousePosition(QPoint position, QSize editorSize);
+    void setMouseButtonPressed(Qt::MouseButton button, bool pressed);
+    const InputState &getInputState();
 
 Q_SIGNALS:
     void outputChanged(QString assembly);
 
 private:
+    void invalidateRenderSession();
+    void handleInputStateChanged();
     void handleItemModified(const QModelIndex &index);
     void handleItemsModified(const QModelIndex &topLeft,
         const QModelIndex &bottomRight, const QVector<int> &roles);
@@ -79,7 +83,8 @@ private:
     QTimer *mProcessSourceTimer{ };
     ProcessSource* mProcessSource{ };
 
-    QPointF mMousePosition{ };
+    InputState mInputState{ };
+    bool mInputStateRead{ };
 };
 
 #endif // SYNCHRONIZELOGIC_H

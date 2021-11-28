@@ -69,6 +69,7 @@ TextureEditor::TextureEditor(QString fileName,
     updateBackground();
 
     setAcceptDrops(false);
+    setMouseTracking(true);
 }
 
 TextureEditor::~TextureEditor() 
@@ -275,6 +276,7 @@ void TextureEditor::mousePressEvent(QMouseEvent *event)
     }
 
     updateMousePosition(event);
+    Singletons::synchronizeLogic().setMouseButtonPressed(event->button(), true);
 
     QGraphicsView::mousePressEvent(event);
 }
@@ -306,7 +308,8 @@ void TextureEditor::updateMousePosition(QMouseEvent *event)
 
     pos = QPointF(qRound(pos.x() - 0.5), qRound(pos.y() - 0.5));
     mTextureInfoBar.setMousePosition(pos);
-    Singletons::synchronizeLogic().setMousePosition(pos);
+    Singletons::synchronizeLogic().setMousePosition(pos.toPoint(), 
+        QSize{ mTexture.width(), mTexture.height() });
     const auto outsideItem = (pos.x() < 0 || pos.y() < 0 || 
         pos.x() >= mTexture.width() || pos.y() >= mTexture.height());
 
@@ -324,6 +327,7 @@ void TextureEditor::mouseReleaseEvent(QMouseEvent *event)
         setCursor(Qt::ArrowCursor);
         return;
     }
+    Singletons::synchronizeLogic().setMouseButtonPressed(event->button(), false);
     QGraphicsView::mouseReleaseEvent(event);
 }
 

@@ -163,6 +163,14 @@ void SynchronizeLogic::handleItemsModified(const QModelIndex &topLeft,
         handleItemModified(topLeft);
 }
 
+void SynchronizeLogic::invalidateRenderSession()
+{
+    mRenderSessionInvalidated = true;
+
+    if (mEvaluationMode == EvaluationMode::Automatic)
+        mEvaluationTimer->start(50);
+}
+
 void SynchronizeLogic::handleItemModified(const QModelIndex &index)
 {
     if (auto fileItem = mModel.item<FileItem>(index)) {
@@ -190,29 +198,26 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
     }
 
     if (mRenderSession->usedItems().contains(mModel.getItemId(index))) {
-        mRenderSessionInvalidated = true;
+        invalidateRenderSession();
     }
     else if (index.column() == SessionModel::Name) {
-        mRenderSessionInvalidated = true;
+        invalidateRenderSession();
     }
     else if (auto call = mModel.item<Call>(index)) {
         if (call->checked)
-            mRenderSessionInvalidated = true;
+            invalidateRenderSession();
     }
     else if (mModel.item<Group>(index)) {
-        mRenderSessionInvalidated = true;
+        invalidateRenderSession();
     }
     else if (mModel.item<Binding>(index)) {
-        mRenderSessionInvalidated = true;
+        invalidateRenderSession();
     }
-
-    if (mEvaluationMode == EvaluationMode::Automatic)
-        mEvaluationTimer->start(50);
 }
 
 void SynchronizeLogic::handleItemReordered(const QModelIndex &parent, int first)
 {
-    mRenderSessionInvalidated = true;
+    invalidateRenderSession();
     handleItemModified(mModel.index(first, 0, parent));
 }
 
@@ -408,4 +413,38 @@ void SynchronizeLogic::processSource()
     mProcessSource->setValidateSource(mValidateSource);
     mProcessSource->setProcessType(mProcessSourceType);
     mProcessSource->update();
+}
+
+void SynchronizeLogic::setMousePosition(QPoint mousePosition, QSize editorSize)
+{
+    if (std::exchange(mInputStateRead, false))
+        mInputState.prevMousePosition = mInputState.mousePosition;
+    mInputState.mousePosition = mousePosition;
+    mInputState.editorSize = editorSize;
+
+    handleInputStateChanged();
+}
+
+void SynchronizeLogic::setMouseButtonPressed(Qt::MouseButton button, bool pressed)
+{
+    if (pressed)
+        mInputState.mouseButtonsPressed |= button;
+    else
+        mInputState.mouseButtonsPressed &= ~button;
+
+    handleInputStateChanged();
+}
+
+const InputState &SynchronizeLogic::getInputState() 
+{
+    mInputStateRead = true;
+    return mInputState; 
+}
+
+void SynchronizeLogic::handleInputStateChanged() 
+{
+    if (mRenderSession->usesInputState()) {
+        if (mEvaluationMode == EvaluationMode::Automatic)
+            evaluate(EvaluationType::Steady);
+    }
 }

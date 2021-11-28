@@ -177,6 +177,12 @@ QSet<ItemId> RenderSession::usedItems() const
     return mUsedItemsCopy;
 }
 
+bool RenderSession::usesInputState() const
+{
+    return (mInputScriptObject && 
+            mInputScriptObject->wasRead());
+}
+
 void RenderSession::prepare(bool itemsChanged,
         EvaluationType evaluationType)
 {
@@ -195,8 +201,7 @@ void RenderSession::prepare(bool itemsChanged,
         mScriptEngine->setGlobal("input", mInputScriptObject);
     }
 
-    mInputScriptObject->setMouseFragCoord(
-        Singletons::synchronizeLogic().mousePosition() + QPointF(0.5, 0.5));
+    mInputScriptObject->update(Singletons::synchronizeLogic().getInputState());
 
     const auto evaluateScript = [&](const Script &script) {
         if (shouldExecute(script.executeOn, mEvaluationType)) {

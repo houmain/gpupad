@@ -22,6 +22,7 @@ public:
     ~RenderSession() override;
 
     QSet<ItemId> usedItems() const override;
+    bool usesInputState() const;
 
 private:
     struct CommandQueue;
