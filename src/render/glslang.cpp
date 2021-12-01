@@ -126,7 +126,7 @@ namespace
         //   _35.viewProj
         //
         // into:
-        //   uniform row_major mat4 viewProj;
+        //   uniform mat4 viewProj;
         //   ...
         //   viewProj
         //
@@ -143,10 +143,8 @@ namespace
                     ++level;
                 }
                 else if (glsl[i] == 'l' && glsl.indexOf("layout(", i) == i) {
-                    glsl.remove(i, 7);
-                    i = glsl.indexOf(')', i);
-                    glsl.replace(i, 1, " ");
-                    lineBegin = i + 1;
+                    lineBegin = i;
+                    glsl.remove(i, glsl.indexOf(')', i) - i + 1);
                 }
                 else if (glsl[i] == '\n') {
                     lineBegin = i + 1;
