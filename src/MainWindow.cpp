@@ -968,22 +968,18 @@ void MainWindow::populateSampleSessions()
 
 void MainWindow::openSampleSession()
 {
-    if (auto action = qobject_cast<QAction*>(QObject::sender()))
-        if (openFile(action->data().toString()))
-            autostartSession();
-}
-
-void MainWindow::autostartSession()
-{
-    auto &editors = Singletons::editorManager();
-    editors.setAutoRaise(false);
-    mSessionEditor->activateFirstItem();
-    editors.setAutoRaise(true);
-
     const auto evalSteady = mUi->actionEvalSteady->isChecked();
-    mUi->actionEvalSteady->setChecked(evalSteady);
-    if (!evalSteady)
-        mUi->actionEvalReset->trigger();
+
+    if (auto action = qobject_cast<QAction*>(QObject::sender()))
+        if (openFile(action->data().toString())) {
+            auto &editors = Singletons::editorManager();
+            editors.setAutoRaise(false);
+            mSessionEditor->activateFirstItem();
+            editors.setAutoRaise(true);
+
+            mUi->actionEvalSteady->setChecked(evalSteady);
+            mUi->actionEvalAuto->setChecked(!evalSteady);
+        }
 }
 
 void MainWindow::openOnlineHelp()
