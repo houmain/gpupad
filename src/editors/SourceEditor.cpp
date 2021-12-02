@@ -515,8 +515,11 @@ void SourceEditor::autoIndentNewLine()
 
 void SourceEditor::autoDeindentBrace()
 {
-    indentSelection(true);
     auto cursor = textCursor();
+    cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
+    if (cursor.selectedText().trimmed().isEmpty())
+        indentSelection(true);
+    cursor = textCursor();
     cursor.joinPreviousEditBlock();
     cursor.insertText("}");
     cursor.endEditBlock();
