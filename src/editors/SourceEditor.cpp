@@ -682,9 +682,6 @@ bool SourceEditor::updateMultiSelection(QKeyEvent *event, bool multiSelectionMod
     const auto ctrlHold = (event->modifiers() & Qt::ControlModifier);
     if (ctrlHold) {
         switch (event->key()) {
-            case Qt::Key_Control:
-                return true;
-
             case Qt::Key_X:
             case Qt::Key_C: {
                 auto lines = QStringList();
@@ -723,69 +720,69 @@ bool SourceEditor::updateMultiSelection(QKeyEvent *event, bool multiSelectionMod
                 return true;
             }
 
-            default:
+            case Qt::Key_A:
                 return false;
         }
     }
 
-    if (!multiSelectionModifierHold) {
+    if (multiSelectionModifierHold) {
+        beginMultiSelection();
+        auto selection = RectangularSelection(&mMultiSelections);
         switch (event->key()) {
-            case Qt::Key_Escape:
-            case Qt::Key_Up:
-            case Qt::Key_Down:
-            case Qt::Key_Left:
-            case Qt::Key_Right:
-            case Qt::Key_Home:
-            case Qt::Key_End:
-            case Qt::Key_PageUp:
-            case Qt::Key_PageDown:
-                return false;
-
-            case Qt::Key_Backspace:
-                withEachSelection([&](QTextCursor& selection) {
-                    if (selection.position() == selection.anchor() && !selection.atBlockStart())
-                        selection.deletePreviousChar();
-                    else
-                        selection.removeSelectedText();
-                });
-                return true;
-
-            case Qt::Key_Delete:
-                withEachSelection([&](QTextCursor& selection) {
-                    if (selection.position() == selection.anchor() && !selection.atBlockEnd())
-                        selection.deleteChar();
-                    else
-                        selection.removeSelectedText();
-                });
-                return true;
-
-            case Qt::Key_Tab:
-                if (!(event->modifiers() & Qt::ShiftModifier))
-                    withEachSelection([&](QTextCursor& selection) {
-                        selection.insertText(tab());
-                    });
-                return true;
-
-            default:
-                if (!event->text().isEmpty())
-                    withEachSelection([&](QTextCursor& selection) {
-                        selection.insertText(event->text());
-                    });
-                return true;
+            case Qt::Key_Up: selection.moveUp(); break;
+            case Qt::Key_Down: selection.moveDown(); break;
+            case Qt::Key_Left: selection.moveLeft(); break;
+            case Qt::Key_Right: selection.moveRight(); break;
         }
+        setTextCursor(mMultiSelections.last());
+        updateExtraSelections();
+        return true;
     }
-
-    beginMultiSelection();
-    auto selection = RectangularSelection(&mMultiSelections);
+    
     switch (event->key()) {
-        case Qt::Key_Up: selection.moveUp(); break;
-        case Qt::Key_Down: selection.moveDown(); break;
-        case Qt::Key_Left: selection.moveLeft(); break;
-        case Qt::Key_Right: selection.moveRight(); break;
+        case Qt::Key_Escape:
+        case Qt::Key_Up:
+        case Qt::Key_Down:
+        case Qt::Key_Left:
+        case Qt::Key_Right:
+        case Qt::Key_Home:
+        case Qt::Key_End:
+        case Qt::Key_PageUp:
+        case Qt::Key_PageDown:
+            return false;
+
+        case Qt::Key_Backspace:
+            withEachSelection([&](QTextCursor& selection) {
+                if (selection.position() == selection.anchor() && !selection.atBlockStart())
+                    selection.deletePreviousChar();
+                else
+                    selection.removeSelectedText();
+            });
+            return true;
+
+        case Qt::Key_Delete:
+            withEachSelection([&](QTextCursor& selection) {
+                if (selection.position() == selection.anchor() && !selection.atBlockEnd())
+                    selection.deleteChar();
+                else
+                    selection.removeSelectedText();
+            });
+            return true;
+
+        case Qt::Key_Tab:
+            if (!(event->modifiers() & Qt::ShiftModifier))
+                withEachSelection([&](QTextCursor& selection) {
+                    selection.insertText(tab());
+                });
+            return true;
+
+        default:
+            if (!event->text().isEmpty())
+                withEachSelection([&](QTextCursor& selection) {
+                    selection.insertText(event->text());
+                });
+            return true;
     }
-    setTextCursor(mMultiSelections.last());
-    updateExtraSelections();
-    return true;
 }
 
 void SourceEditor::wheelEvent(QWheelEvent *event)
