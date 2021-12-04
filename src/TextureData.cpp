@@ -8,6 +8,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions_3_3_Core>
 #include <QScopeGuard>
+#include <QtEndian>
 
 #if defined(_WIN32)
 
@@ -805,12 +806,67 @@ bool TextureData::loadTga(const QString &fileName, bool flipVertically)
     return true;
 }
 
+bool TextureData::loadPfm(const QString &fileName, bool flipVertically)
+{
+    auto f = std::fopen(qUtf8Printable(fileName), "rb");
+    if (!f)
+        return false;
+    auto guard = qScopeGuard([&]() { std::fclose(f); });
+
+    auto c0 = char{ };
+    auto c1 = char{ };
+    std::fscanf(f, "%c%c\n", &c0, &c1);
+    if (c0 != 'P')
+        return false;
+
+    auto channels = 3;
+    if (c1 != 'F') {
+        if (c1 != 'f')
+            return false;
+        channels = 1;
+    }
+    auto width = 0;
+    auto height = 0;
+    auto scale = 1.0;
+    if (!fscanf(f, "%d %d\n", &width, &height))
+        return false;
+    std::fscanf(f, "%lf\n", &scale);
+    auto endianness = QSysInfo::BigEndian;
+    if (scale < 0) {
+        endianness = QSysInfo::LittleEndian;
+        scale = -scale;
+    }
+    std::fscanf(f, "\n");
+
+    const auto format = (channels == 3 ?
+        QOpenGLTexture::TextureFormat::RGB32F :
+        QOpenGLTexture::TextureFormat::R32F);
+    if (!create(QOpenGLTexture::Target2D, format, width, height))
+        return false;
+    const auto size = getImageSize(0);
+    const auto data = getWriteonlyData(0, 0, 0);
+
+    if (endianness == QSysInfo::ByteOrder) {
+        std::fread(data, size, 1, f);
+    }
+    else {
+        auto buffer = QByteArray(getImageSize(0), 0);
+        std::fread(buffer.data(), size, 1, f);
+        if (endianness == QSysInfo::LittleEndian)
+            qFromLittleEndian<float>(buffer.data(), size / 4, data);
+        else
+            qFromBigEndian<float>(buffer.data(), size / 4, data);
+    }
+    return true;
+}
+
 bool TextureData::load(const QString &fileName, bool flipVertically)
 {
     return loadKtx(fileName, flipVertically) ||
            loadGli(fileName, flipVertically) ||
            loadExr(fileName, flipVertically) ||
            loadTga(fileName, flipVertically) ||
+           loadPfm(fileName, flipVertically) ||
            loadQImage(fileName, flipVertically);
 }
 
@@ -868,6 +924,10 @@ catch (...)
 
 bool TextureData::saveExr(const QString &fileName, bool flipVertically) const
 {
+    if (!fileName.endsWith(".exr", Qt::CaseInsensitive))
+        return false;
+
+    // TODO
     return false;
 }
 
@@ -920,6 +980,15 @@ bool TextureData::saveTga(const QString &fileName, bool flipVertically) const
     return true;
 }
 
+bool TextureData::savePfm(const QString &fileName, bool flipVertically) const
+{
+    if (!fileName.endsWith(".pfm", Qt::CaseInsensitive))
+        return false;
+
+    // TODO
+    return false;
+}
+
 bool TextureData::saveQImage(const QString &fileName, bool flipVertically) const
 {
     auto image = toImage();
@@ -938,6 +1007,7 @@ bool TextureData::save(const QString &fileName, bool flipVertically) const
            saveGli(fileName, flipVertically) ||
            saveExr(fileName, flipVertically) ||
            saveTga(fileName, flipVertically) ||
+           savePfm(fileName, flipVertically) ||
            saveQImage(fileName, flipVertically);
 }
 

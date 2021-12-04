@@ -64,11 +64,13 @@ private:
     bool loadQImage(const QString &fileName, bool flipVertically);
     bool loadExr(const QString &fileName, bool flipVertically);
     bool loadTga(const QString &fileName, bool flipVertically);
+    bool loadPfm(const QString &fileName, bool flipVertically);
     bool saveGli(const QString &fileName, bool flipVertically) const;
     bool saveKtx(const QString &fileName, bool flipVertically) const;
     bool saveQImage(const QString &fileName, bool flipVertically) const;
     bool saveExr(const QString &fileName, bool flipVertically) const;
     bool saveTga(const QString &fileName, bool flipVertically) const;
+    bool savePfm(const QString &fileName, bool flipVertically) const;
     bool uploadMultisample(GL& gl, GLuint textureId,
         QOpenGLTexture::TextureFormat format);
     bool download(GL& gl, GLuint textureId);
