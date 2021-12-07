@@ -95,7 +95,7 @@ void main() {
     vec4 local_max = max_value[0][0];
     for (uint x = 1; x < gl_WorkGroupSize.x; ++x) {
       local_min = min(local_min, min_value[x][0]);
-      local_max = min(local_max, max_value[x][0]);
+      local_max = max(local_max, max_value[x][0]);
     }
     
 #define UpdateGlobal(global_value, local_value, op) \
