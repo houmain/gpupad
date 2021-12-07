@@ -720,8 +720,9 @@ bool SourceEditor::updateMultiSelection(QKeyEvent *event, bool multiSelectionMod
                 return true;
             }
 
-            case Qt::Key_A:
-                return false;
+            default:
+                if (event->key() >= Qt::Key_A && event->key() <= Qt::Key_Z)
+                    return false;
         }
     }
 
@@ -982,6 +983,12 @@ void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
         return;
 
     if (show) {
+        const auto blockNumber = textCursor().blockNumber();
+        if (mUpdatedCompleterInBlock != blockNumber) {
+            mHighlighter->updateCompleter(generateCurrentScopeSource());
+            mUpdatedCompleterInBlock = blockNumber;
+        }
+
         mCompleter->setCompletionPrefix(prefix);
         const auto alreadyComplete =
           (mCompleter->currentCompletion() == prefix &&
@@ -1001,6 +1008,39 @@ void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
         }
     }
     mCompleter->popup()->hide();
+}
+
+QString SourceEditor::generateCurrentScopeSource() const
+{
+    auto cursor = textCursor();
+    cursor.movePosition(QTextCursor::PreviousWord);
+    cursor.setPosition(0, QTextCursor::KeepAnchor);
+    auto text = cursor.selectedText().replace(0x2029, '\n');
+
+    const static auto multiLineComment = QRegularExpression(
+        "/\\*.*?\\*/", QRegularExpression::MultilineOption);
+    const static auto singleLineComment = QRegularExpression("//[^\n]*");
+    text.remove(multiLineComment);
+    text.remove(singleLineComment);
+
+    auto level = 0;
+    auto scopeEnd = -1;
+    for (auto i = text.size() - 1; i >= 0; --i) {
+      if (text[i] == '}') {
+          if (level == 0) {
+              scopeEnd = i;
+          }
+          ++level;
+      }
+      else if (text[i] == '{') {
+          if (level == 1) {
+              text = text.remove(i + 1, scopeEnd - i - 1);
+              scopeEnd = -1;
+          }
+          level = std::max(level - 1, 0);
+      }
+    }
+    return text;
 }
 
 void SourceEditor::insertCompletion(const QString &completion)

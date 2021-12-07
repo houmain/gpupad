@@ -138,20 +138,18 @@ SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
         QRegularExpression::UseUnicodePropertiesOption);
     mWhiteSpaceRule.format = whiteSpaceFormat;
 
+    mCompleterStrings = syntax.completerStrings().toSet();
     mCompleter = new QCompleter(this);
-    auto completerModel = new QStringListModel(
-        syntax.completerStrings(), mCompleter);
-    mCompleter->setModel(completerModel);
     mCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
     mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
     mCompleter->setWrapAround(false);
+    updateCompleter("");
 }
 
 void SyntaxHighlighter::highlightBlock(const QString &text)
 {
     const auto highlight = [&](const HighlightingRule &rule, bool override) {
-        auto index = text.indexOf(rule.pattern);
-        while (index >= 0) {
+        for (auto index = text.indexOf(rule.pattern); index >= 0; ) {
             const auto match = rule.pattern.match(text, index);
             const auto length = match.capturedLength();
             if (override || format(index) == QTextCharFormat{ })
@@ -199,4 +197,21 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
     }
 
     highlight(mWhiteSpaceRule, true);
+}
+
+void SyntaxHighlighter::updateCompleter(const QString &contextText)
+{
+    static const auto pattern = QRegularExpression("[_A-Za-z][_A-Za-z0-9]+");
+    auto strings = mCompleterStrings;
+    for (auto index = contextText.indexOf(pattern); index >= 0; ) {
+        const auto match = pattern.match(contextText, index);
+        strings.insert(match.captured());
+        const auto length = match.capturedLength();
+        index = contextText.indexOf(pattern, index + length);
+    }
+
+    auto list = strings.toList();
+    list.sort(Qt::CaseInsensitive);
+    delete mCompleter->model();
+    mCompleter->setModel(new QStringListModel(list, mCompleter));
 }

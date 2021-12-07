@@ -31,15 +31,11 @@ const auto globalObjects = QStringList{
 
 class SyntaxJavaScript : public Syntax {
 public:
-    virtual QStringList keywords() const { return ::keywords; }
-    virtual QStringList builtinConstants() const { return ::globalObjects; }
-    virtual QStringList completerStrings() const { 
-        auto strings = (::keywords + ::globalObjects);
-        strings.sort(Qt::CaseInsensitive);
-        return strings;
-    }
-    virtual bool hasFunctions() const { return true; }
-    virtual bool hasComments() const { return true; }
+    QStringList keywords() const override { return ::keywords; }
+    QStringList builtinConstants() const override { return ::globalObjects; }
+    QStringList completerStrings() const override { return ::keywords + ::globalObjects; }
+    bool hasFunctions() const override { return true; }
+    bool hasComments() const override { return true; }
 };
 
 Syntax* makeSyntaxJavaScript() { return new SyntaxJavaScript(); }

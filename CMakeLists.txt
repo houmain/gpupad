@@ -98,6 +98,7 @@ set(SOURCES
   src/render/ComputeRange.cpp
   src/render/glslang.cpp
   src/scripting/GpupadScriptObject.cpp
+  src/scripting/GpupadScriptObject.js
   src/scripting/InputScriptObject.cpp
   src/scripting/ScriptEngine.cpp
   src/scripting/CustomActions.cpp

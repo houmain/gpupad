@@ -139,18 +139,16 @@ const auto layoutQualifiers = QStringList{
 
 class SyntaxGLSL : public Syntax {
 public:
-    virtual QStringList keywords() const { return ::keywords; }
-    virtual QStringList builtinFunctions() const { return ::builtinFunctions; }
-    virtual QStringList builtinConstants() const { return ::builtinConstants; }
-    virtual QStringList completerStrings() const { 
-        auto strings = (::keywords + ::builtinFunctions + 
-            ::builtinConstants + ::layoutQualifiers);
-        strings.sort(Qt::CaseInsensitive);
-        return strings;
+    QStringList keywords() const override { return ::keywords; }
+    QStringList builtinFunctions() const override { return ::builtinFunctions; }
+    QStringList builtinConstants() const override { return ::builtinConstants; }
+    QStringList completerStrings() const override {
+        return ::keywords + ::builtinFunctions + 
+            ::builtinConstants + ::layoutQualifiers;
     }
-    virtual bool hasPreprocessor() const { return true; }
-    virtual bool hasFunctions() const { return true; }
-    virtual bool hasComments() const { return true; }
+    bool hasPreprocessor() const override { return true; }
+    bool hasFunctions() const override { return true; }
+    bool hasComments() const override { return true; }
 };
 
 Syntax* makeSyntaxGLSL() { return new SyntaxGLSL(); }

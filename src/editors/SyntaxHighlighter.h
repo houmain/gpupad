@@ -12,6 +12,7 @@ public:
     SyntaxHighlighter(SourceType sourceType, 
         bool darkTheme, QObject *parent = nullptr);
     void highlightBlock(const QString &text) override;
+    void updateCompleter(const QString &contextText);
     QCompleter *completer() const { return mCompleter; }
 
 private:
@@ -26,4 +27,5 @@ private:
     QRegularExpression mCommentStartExpression;
     QRegularExpression mCommentEndExpression;
     HighlightingRule mWhiteSpaceRule;
+    QSet<QString> mCompleterStrings;
 };

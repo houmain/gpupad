@@ -78,6 +78,7 @@ private:
     void updateExtraSelections();
     void updateLineNumberArea(const QRect&, int);
     void updateCompleterPopup(const QString &prefix, bool show);
+    QString generateCurrentScopeSource() const;
     void insertCompletion(const QString &completion);
     void findReplaceAction(FindReplaceBar::Action action, QString find,
         QString replace, QTextDocument::FindFlags flags);
@@ -102,6 +103,7 @@ private:
     QColor mLineNumberColor;
     int mTabSize{ };
     bool mIndentWithSpaces{ };
+    int mUpdatedCompleterInBlock{ };
 };
 
 #endif // SOURCEEDITOR_H
