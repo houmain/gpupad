@@ -40,7 +40,7 @@
         "name": "uMouseFragCoord",
         "type": "Binding",
         "values": [
-            "input.mouseFragCoord"
+            "Mouse.fragCoord"
         ]
     },
     {

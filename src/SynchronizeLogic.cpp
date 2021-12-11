@@ -415,32 +415,6 @@ void SynchronizeLogic::processSource()
     mProcessSource->update();
 }
 
-void SynchronizeLogic::setMousePosition(QPoint mousePosition, QSize editorSize)
-{
-    if (std::exchange(mInputStateRead, false))
-        mInputState.prevMousePosition = mInputState.mousePosition;
-    mInputState.mousePosition = mousePosition;
-    mInputState.editorSize = editorSize;
-
-    handleInputStateChanged();
-}
-
-void SynchronizeLogic::setMouseButtonPressed(Qt::MouseButton button, bool pressed)
-{
-    if (pressed)
-        mInputState.mouseButtonsPressed |= button;
-    else
-        mInputState.mouseButtonsPressed &= ~button;
-
-    handleInputStateChanged();
-}
-
-const InputState &SynchronizeLogic::getInputState() 
-{
-    mInputStateRead = true;
-    return mInputState; 
-}
-
 void SynchronizeLogic::handleInputStateChanged() 
 {
     if (mRenderSession->usesInputState()) {

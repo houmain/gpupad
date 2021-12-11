@@ -59,6 +59,7 @@ set(SOURCES
   src/TextureData.cpp
   src/VideoPlayer.cpp
   src/VideoManager.cpp
+  src/InputState.cpp
   src/SourceType.cpp
   src/editors/BinaryEditor.cpp
   src/editors/BinaryEditorToolBar.cpp
@@ -99,7 +100,7 @@ set(SOURCES
   src/render/glslang.cpp
   src/scripting/GpupadScriptObject.cpp
   src/scripting/GpupadScriptObject.js
-  src/scripting/InputScriptObject.cpp
+  src/scripting/MouseScriptObject.cpp
   src/scripting/ScriptEngine.cpp
   src/scripting/CustomActions.cpp
   src/scripting/CustomActions.ui

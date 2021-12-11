@@ -7,7 +7,7 @@
 #include "editors/BinaryEditor.h"
 #include "scripting/ScriptEngine.h"
 #include "scripting/GpupadScriptObject.h"
-#include "scripting/InputScriptObject.h"
+#include "scripting/MouseScriptObject.h"
 #include "FileCache.h"
 #include "GLTexture.h"
 #include "GLBuffer.h"
@@ -179,8 +179,8 @@ QSet<ItemId> RenderSession::usedItems() const
 
 bool RenderSession::usesInputState() const
 {
-    return (mInputScriptObject && 
-            mInputScriptObject->wasRead());
+    return (mMouseScriptObject && 
+            mMouseScriptObject->wasRead());
 }
 
 void RenderSession::prepare(bool itemsChanged,
@@ -197,11 +197,12 @@ void RenderSession::prepare(bool itemsChanged,
         mGpupadScriptObject = new GpupadScriptObject(this);
         mGpupadScriptObject->initialize(*mScriptEngine);
 
-        mInputScriptObject = new InputScriptObject(this);
-        mScriptEngine->setGlobal("input", mInputScriptObject);
+        mMouseScriptObject = new MouseScriptObject(this);
+        mScriptEngine->setGlobal("Mouse", mMouseScriptObject);
     }
 
-    mInputScriptObject->update(Singletons::synchronizeLogic().getInputState());
+    Singletons::inputState().update();
+    mMouseScriptObject->update(Singletons::inputState());
 
     const auto evaluateScript = [&](const Script &script) {
         if (shouldExecute(script.executeOn, mEvaluationType)) {

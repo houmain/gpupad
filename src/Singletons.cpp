@@ -3,6 +3,7 @@
 #include "FileDialog.h"
 #include "SynchronizeLogic.h"
 #include "Settings.h"
+#include "InputState.h"
 #include "VideoManager.h"
 #include "editors/EditorManager.h"
 #include "session/SessionModel.h"
@@ -72,6 +73,12 @@ VideoManager &Singletons::videoManager()
     return *sInstance->mVideoManager;
 }
 
+InputState &Singletons::inputState()
+{
+    Q_ASSERT(onMainThread());
+    return *sInstance->mInputState;
+}
+
 Singletons::Singletons(QMainWindow *window)
     : mSettings(new Settings())
     , mFileCache(new FileCache())
@@ -80,6 +87,7 @@ Singletons::Singletons(QMainWindow *window)
     , mSessionModel(new SessionModel())
     , mGLShareSynchronizer(new GLShareSynchronizer())
     , mVideoManager(new VideoManager())
+    , mInputState(new InputState())
 {
     Q_ASSERT(onMainThread());
     sInstance = this;

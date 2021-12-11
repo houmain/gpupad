@@ -11,7 +11,7 @@
 
 class ScriptEngine;
 class GpupadScriptObject;
-class InputScriptObject;
+class MouseScriptObject;
 class QOpenGLTimerQuery;
 
 class RenderSession final : public RenderTask
@@ -50,7 +50,7 @@ private:
     QOpenGLVertexArrayObject mVao;
     QScopedPointer<ScriptEngine> mScriptEngine;
     GpupadScriptObject *mGpupadScriptObject{ };
-    InputScriptObject *mInputScriptObject{ };
+    MouseScriptObject *mMouseScriptObject{ };
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;
     int mNextCommandQueueIndex{ };

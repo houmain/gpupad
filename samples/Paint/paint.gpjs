@@ -55,7 +55,7 @@
         "name": "uMouseCoord",
         "type": "Binding",
         "values": [
-            "input.mouseCoord"
+            "Mouse.coord"
         ]
     },
     {
@@ -65,7 +65,7 @@
         "name": "uPrevMouseCoord",
         "type": "Binding",
         "values": [
-            "input.prevMouseCoord"
+            "Mouse.prevCoord"
         ]
     },
     {
@@ -75,7 +75,7 @@
         "name": "uMousePressed",
         "type": "Binding",
         "values": [
-            "input.mousePressed[0]"
+            "Mouse.buttons[0]"
         ]
     },
     {
@@ -85,7 +85,7 @@
         "name": "uSize",
         "type": "Binding",
         "values": [
-            "0.1"
+            "0.2"
         ]
     },
     {

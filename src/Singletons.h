@@ -13,6 +13,7 @@ class SessionModel;
 class Renderer;
 class GLShareSynchronizer;
 class VideoManager;
+class InputState;
 
 bool onMainThread();
 
@@ -28,6 +29,7 @@ public:
     static SynchronizeLogic &synchronizeLogic();
     static GLShareSynchronizer &glShareSynchronizer();
     static VideoManager &videoManager();
+    static InputState &inputState();
 
     explicit Singletons(QMainWindow *window);
     ~Singletons();
@@ -44,6 +46,7 @@ private:
     QScopedPointer<SynchronizeLogic> mSynchronizeLogic;
     QScopedPointer<GLShareSynchronizer> mGLShareSynchronizer;
     QScopedPointer<VideoManager> mVideoManager;
+    QScopedPointer<InputState> mInputState;
 };
 
 #endif // SINGLETONS_H

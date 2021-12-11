@@ -10,6 +10,7 @@
 #include "MessageList.h"
 #include "Settings.h"
 #include "SynchronizeLogic.h"
+#include "InputState.h"
 #include "editors/EditorManager.h"
 #include "scripting/CustomActions.h"
 #include <QCloseEvent>
@@ -220,6 +221,8 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::openMessageDock);
     connect(&synchronizeLogic, &SynchronizeLogic::outputChanged,
         mOutputWindow.data(), &OutputWindow::setText);
+    connect(&Singletons::inputState(), &InputState::changed, 
+        &synchronizeLogic, &SynchronizeLogic::handleInputStateChanged);
 
     auto &settings = Singletons::settings();
     connect(mUi->actionSelectFont, &QAction::triggered,
