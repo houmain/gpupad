@@ -195,6 +195,8 @@ void RenderSession::prepare(bool itemsChanged,
 {
     mItemsChanged = itemsChanged;
     mEvaluationType = evaluationType;
+    mPrevMessages.swap(mMessages);
+    mMessages.clear();
 
     if (!mCommandQueue)
         mEvaluationType = EvaluationType::Reset;
@@ -238,9 +240,6 @@ void RenderSession::prepare(bool itemsChanged,
         });
         return;
     }
-
-    mPrevMessages.swap(mMessages);
-    mMessages.clear();
 
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
