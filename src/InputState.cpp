@@ -20,6 +20,7 @@ namespace
 InputState::InputState() 
 {
     mMouseButtonStates.resize(5);
+    mKeyStates.resize(128);
 }
 
 void InputState::update()
@@ -28,34 +29,41 @@ void InputState::update()
     mPrevMousePosition = mMousePosition;
     mMousePosition = mNextMousePosition;
 
-    auto buttonsUpdated = QSet<int>();
-    for (auto it = mNextMouseButtonStates.begin();
-         it != mNextMouseButtonStates.end(); ) {
-        const auto buttonIndex = getMouseButtonIndex(it->first);
-        if (!buttonsUpdated.contains(buttonIndex)) {
-            mMouseButtonStates[buttonIndex] = it->second;
-            buttonsUpdated.insert(buttonIndex);
-            it = mNextMouseButtonStates.erase(it);
+    const auto updateButtonStates = [](ButtonStateQueue &nextButtonStates, QVector<ButtonState> &buttonStates) {
+        // only apply up to one update per button at once
+        auto buttonsUpdated = QSet<int>();
+        for (auto it = nextButtonStates.begin();
+             it != nextButtonStates.end(); ) {
+            const auto [buttonIndex, state] = *it;
+            if (!buttonsUpdated.contains(buttonIndex)) {
+                if (buttonIndex < buttonStates.size())
+                    buttonStates[buttonIndex] = state;
+                buttonsUpdated.insert(buttonIndex);
+                it = nextButtonStates.erase(it);
+            }
+            else {
+                ++it;
+            }
         }
-        else {
-            ++it;
-        }
-    }
 
-    for (auto i = 0; i < mMouseButtonStates.size(); ++i)
-        if (!buttonsUpdated.contains(i)) {
-            if (mMouseButtonStates[i] == ButtonState::Pressed)
-                mMouseButtonStates[i] = ButtonState::Down;
-            else if (mMouseButtonStates[i] == ButtonState::Released)
-                mMouseButtonStates[i] = ButtonState::Up;
-        }
+        // when it was not updated, convert from Pressed to Down...
+        for (auto i = 0; i < buttonStates.size(); ++i)
+            if (!buttonsUpdated.contains(i)) {
+                if (buttonStates[i] == ButtonState::Pressed)
+                    buttonStates[i] = ButtonState::Down;
+                else if (buttonStates[i] == ButtonState::Released)
+                    buttonStates[i] = ButtonState::Up;
+            }
+    };
+    updateButtonStates(mNextMouseButtonStates, mMouseButtonStates);
+    updateButtonStates(mNextKeyStates, mKeyStates);
 }
 
 void InputState::setEditorSize(QSize size)
 {
     if (mNextEditorSize != size) {
         mNextEditorSize = size;
-        Q_EMIT changed();
+        Q_EMIT mouseChanged();
     }
 }
 
@@ -63,18 +71,33 @@ void InputState::setMousePosition(const QPoint &position)
 {
     if (mNextMousePosition != position) {
         mNextMousePosition = position;
-        Q_EMIT changed();
+        Q_EMIT mouseChanged();
     }
 }
 
 void InputState::setMouseButtonPressed(Qt::MouseButton button)
 {
-    mNextMouseButtonStates.emplace_back(button, ButtonState::Pressed);
-    Q_EMIT changed();
+    mNextMouseButtonStates.emplace_back(
+        getMouseButtonIndex(button), ButtonState::Pressed);
+    Q_EMIT mouseChanged();
 }
 
 void InputState::setMouseButtonReleased(Qt::MouseButton button)
 {
-    mNextMouseButtonStates.emplace_back(button, ButtonState::Released);
-    Q_EMIT changed();
+    mNextMouseButtonStates.emplace_back(
+        getMouseButtonIndex(button), ButtonState::Released);
+    Q_EMIT mouseChanged();
+}
+
+void InputState::setKeyPressed(int key, bool isAutoRepeat)
+{
+    if (!isAutoRepeat)
+        mNextKeyStates.emplace_back(key, ButtonState::Pressed);
+    Q_EMIT keysChanged();
+}
+
+void InputState::setKeyReleased(int key)
+{
+    mNextKeyStates.emplace_back(key, ButtonState::Released);
+    Q_EMIT keysChanged();
 }

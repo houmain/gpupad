@@ -12,6 +12,7 @@
 class ScriptEngine;
 class GpupadScriptObject;
 class MouseScriptObject;
+class KeyboardScriptObject;
 class QOpenGLTimerQuery;
 
 class RenderSession final : public RenderTask
@@ -22,7 +23,8 @@ public:
     ~RenderSession() override;
 
     QSet<ItemId> usedItems() const override;
-    bool usesInputState() const;
+    bool usesMouseState() const;
+    bool usesKeyboardState() const;
 
 private:
     struct CommandQueue;
@@ -51,6 +53,7 @@ private:
     QScopedPointer<ScriptEngine> mScriptEngine;
     GpupadScriptObject *mGpupadScriptObject{ };
     MouseScriptObject *mMouseScriptObject{ };
+    KeyboardScriptObject *mKeyboardScriptObject{ };
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;
     int mNextCommandQueueIndex{ };

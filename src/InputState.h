@@ -23,23 +23,31 @@ public:
     void setMousePosition(const QPoint &position);
     void setMouseButtonPressed(Qt::MouseButton button);
     void setMouseButtonReleased(Qt::MouseButton button);
+    void setKeyPressed(int key, bool isAutoRepeat);
+    void setKeyReleased(int key);
     void update();
 
     const QSize &editorSize() const { return mEditorSize; }    
     const QPoint &mousePosition() const { return mMousePosition; }
     const QPoint &prevMousePosition() const { return mPrevMousePosition; }
     const QVector<ButtonState> &mouseButtonStates() const { return mMouseButtonStates; }
+    const QVector<ButtonState> &keyStates() const { return mKeyStates; }
 
 Q_SIGNALS:
-    void changed();
+    void mouseChanged();
+    void keysChanged();
 
 private:
+    using ButtonStateQueue = std::vector<std::pair<int, ButtonState>>;
+
     QSize mNextEditorSize{ };
     QPoint mNextMousePosition{ };
-    std::vector<std::pair<Qt::MouseButton, ButtonState>> mNextMouseButtonStates;
+    ButtonStateQueue mNextMouseButtonStates;
+    ButtonStateQueue mNextKeyStates;
 
     QSize mEditorSize{ };
     QPoint mMousePosition{ };
     QPoint mPrevMousePosition{ };
     QVector<ButtonState> mMouseButtonStates;
+    QVector<ButtonState> mKeyStates;
 };

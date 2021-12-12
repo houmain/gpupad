@@ -8,6 +8,7 @@
 #include "scripting/ScriptEngine.h"
 #include "scripting/GpupadScriptObject.h"
 #include "scripting/MouseScriptObject.h"
+#include "scripting/KeyboardScriptObject.h"
 #include "FileCache.h"
 #include "GLTexture.h"
 #include "GLBuffer.h"
@@ -177,10 +178,16 @@ QSet<ItemId> RenderSession::usedItems() const
     return mUsedItemsCopy;
 }
 
-bool RenderSession::usesInputState() const
+bool RenderSession::usesMouseState() const
 {
     return (mMouseScriptObject && 
             mMouseScriptObject->wasRead());
+}
+
+bool RenderSession::usesKeyboardState() const
+{
+    return (mKeyboardScriptObject && 
+            mKeyboardScriptObject->wasRead());
 }
 
 void RenderSession::prepare(bool itemsChanged,
@@ -199,10 +206,14 @@ void RenderSession::prepare(bool itemsChanged,
 
         mMouseScriptObject = new MouseScriptObject(this);
         mScriptEngine->setGlobal("Mouse", mMouseScriptObject);
+
+        mKeyboardScriptObject = new KeyboardScriptObject(this);
+        mScriptEngine->setGlobal("Keyboard", mKeyboardScriptObject);
     }
 
     Singletons::inputState().update();
     mMouseScriptObject->update(Singletons::inputState());
+    mKeyboardScriptObject->update(Singletons::inputState());
 
     const auto evaluateScript = [&](const Script &script) {
         if (shouldExecute(script.executeOn, mEvaluationType)) {

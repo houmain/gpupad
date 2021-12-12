@@ -221,8 +221,10 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::openMessageDock);
     connect(&synchronizeLogic, &SynchronizeLogic::outputChanged,
         mOutputWindow.data(), &OutputWindow::setText);
-    connect(&Singletons::inputState(), &InputState::changed, 
-        &synchronizeLogic, &SynchronizeLogic::handleInputStateChanged);
+    connect(&Singletons::inputState(), &InputState::mouseChanged, 
+        &synchronizeLogic, &SynchronizeLogic::handleMouseStateChanged);
+    connect(&Singletons::inputState(), &InputState::keysChanged, 
+        &synchronizeLogic, &SynchronizeLogic::handleKeyboardStateChanged);
 
     auto &settings = Singletons::settings();
     connect(mUi->actionSelectFont, &QAction::triggered,

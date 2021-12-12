@@ -337,7 +337,17 @@ void TextureEditor::keyPressEvent(QKeyEvent *event)
     if (event->key() == Qt::Key_Escape)
         Q_EMIT mTextureInfoBar.cancelled();
 
+    Singletons::inputState().setKeyPressed(event->key(), event->isAutoRepeat());
+
     QGraphicsView::keyPressEvent(event);
+}
+
+void TextureEditor::keyReleaseEvent(QKeyEvent *event) 
+{
+    if (!event->isAutoRepeat())
+        Singletons::inputState().setKeyReleased(event->key());
+
+    QGraphicsView::keyReleaseEvent(event);
 }
 
 void TextureEditor::setBounds(QRect bounds)

@@ -415,9 +415,17 @@ void SynchronizeLogic::processSource()
     mProcessSource->update();
 }
 
-void SynchronizeLogic::handleInputStateChanged() 
+void SynchronizeLogic::handleMouseStateChanged() 
 {
-    if (mRenderSession->usesInputState()) {
+    if (mRenderSession->usesMouseState()) {
+        if (mEvaluationMode == EvaluationMode::Automatic)
+            evaluate(EvaluationType::Steady);
+    }
+}
+
+void SynchronizeLogic::handleKeyboardStateChanged() 
+{
+    if (mRenderSession->usesKeyboardState()) {
         if (mEvaluationMode == EvaluationMode::Automatic)
             evaluate(EvaluationType::Steady);
     }

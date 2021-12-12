@@ -36,7 +36,8 @@ public:
     void setCurrentEditorFileName(QString fileName);
     void setCurrentEditorSourceType(SourceType sourceType);
 
-    void handleInputStateChanged();
+    void handleMouseStateChanged();
+    void handleKeyboardStateChanged();
 
 Q_SIGNALS:
     void outputChanged(QString assembly);
