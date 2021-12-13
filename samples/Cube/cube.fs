@@ -6,7 +6,8 @@ in vec3 vNormal;
 out vec4 oColor;
 
 void main() {
+  const vec3 light = vec3(-0.71, 0.71, 0);
   vec3 color = texture(uTexture, vTexCoords).rgb;
-  color *= 0.3 + 0.7 * max(dot(vNormal, vec3(0, 0, 1)), 0.0);
+  color *= 0.1 + 0.9 * max(dot(vNormal, light), 0.0);
   oColor = vec4(color, 1);
 }

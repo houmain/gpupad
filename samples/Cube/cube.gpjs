@@ -1,6 +1,7 @@
 [
     {
-        "format": "RGBA8_UNorm",
+        "flipVertically": false,
+        "format": "SRGB8_Alpha8",
         "height": "512",
         "id": 93,
         "name": "Color",
@@ -9,6 +10,7 @@
         "width": "512"
     },
     {
+        "flipVertically": false,
         "format": "D16",
         "height": "512",
         "id": 98,
@@ -118,7 +120,8 @@
     },
     {
         "fileName": "planks.jpg",
-        "format": "RGBA8_UNorm",
+        "flipVertically": false,
+        "format": "SRGB8_Alpha8",
         "height": "512",
         "id": 104,
         "target": "Target2D",
@@ -126,7 +129,7 @@
         "width": "512"
     },
     {
-        "anisotropic": false,
+        "anisotropic": true,
         "bindingType": "Sampler",
         "borderColor": "#ff000000",
         "comparisonFunc": "NoComparisonFunc",
@@ -217,12 +220,14 @@
             {
                 "fileName": "cube.vs",
                 "id": 89,
+                "language": "GLSL",
                 "shaderType": "Vertex",
                 "type": "Shader"
             },
             {
                 "fileName": "cube.fs",
                 "id": 90,
+                "language": "GLSL",
                 "shaderType": "Fragment",
                 "type": "Shader"
             }

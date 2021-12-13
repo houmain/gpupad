@@ -1,7 +1,7 @@
 [
     {
         "flipVertically": false,
-        "format": "RGBA8_UNorm",
+        "format": "SRGB8_Alpha8",
         "height": "512",
         "id": 93,
         "name": "Color",
@@ -121,7 +121,7 @@
     {
         "fileName": "planks.jpg",
         "flipVertically": false,
-        "format": "RGBA8_UNorm",
+        "format": "SRGB8_Alpha8",
         "height": "512",
         "id": 104,
         "target": "Target2D",
@@ -129,7 +129,7 @@
         "width": "512"
     },
     {
-        "anisotropic": false,
+        "anisotropic": true,
         "bindingType": "Sampler",
         "borderColor": "#ff000000",
         "comparisonFunc": "NoComparisonFunc",

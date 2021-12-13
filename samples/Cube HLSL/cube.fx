@@ -28,7 +28,8 @@ PS_INPUT VS(VS_INPUT input) {
 }
 
 float4 PS(PS_INPUT input) : SV_Target {
+  const float3 light = float3(-0.71, 0.71, 0);
   float3 color = uTexture.Sample(sampleLinear, input.texCoords).rgb;
-  color *= 0.3 + 0.7 * max(dot(input.normal, float3(0, 0, 1)), 0.0);
+  color *= 0.1 + 0.9 * max(dot(input.normal, light), 0.0);
   return float4(color, 1);
 }

@@ -101,6 +101,7 @@ set(SOURCES
   src/scripting/GpupadScriptObject.cpp
   src/scripting/GpupadScriptObject.js
   src/scripting/MouseScriptObject.cpp
+  src/scripting/KeyboardScriptObject.cpp
   src/scripting/ScriptEngine.cpp
   src/scripting/CustomActions.cpp
   src/scripting/CustomActions.ui
