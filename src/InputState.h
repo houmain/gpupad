@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QVector>
 #include <QSize>
+#include <QPoint>
 #include <vector>
 
 enum class ButtonState

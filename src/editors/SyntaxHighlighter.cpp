@@ -2,6 +2,7 @@
 #include "Syntax.h"
 #include <QCompleter>
 #include <QStringListModel>
+#include <QSet>
 
 namespace {
     const Syntax& getSyntax(SourceType sourceType) 
@@ -138,7 +139,8 @@ SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
         QRegularExpression::UseUnicodePropertiesOption);
     mWhiteSpaceRule.format = whiteSpaceFormat;
 
-    mCompleterStrings = syntax.completerStrings().toSet();
+    const auto strings = syntax.completerStrings();
+    mCompleterStrings = { strings.cbegin(), strings.cend() };
     mCompleter = new QCompleter(this);
     mCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
     mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
@@ -210,7 +212,7 @@ void SyntaxHighlighter::updateCompleter(const QString &contextText)
         index = contextText.indexOf(pattern, index + length);
     }
 
-    auto list = strings.toList();
+    auto list = QStringList(strings.cbegin(), strings.cend());
     list.sort(Qt::CaseInsensitive);
     delete mCompleter->model();
     mCompleter->setModel(new QStringListModel(list, mCompleter));
