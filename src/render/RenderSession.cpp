@@ -203,8 +203,7 @@ void RenderSession::prepare(bool itemsChanged,
 
     if (!mScriptEngine || mEvaluationType == EvaluationType::Reset) {
         mScriptEngine.reset(new ScriptEngine());
-        mGpupadScriptObject = new GpupadScriptObject(this);
-        mGpupadScriptObject->initialize(*mScriptEngine);
+        mGpupadScriptObject = new GpupadScriptObject(mScriptEngine.data());
 
         mMouseScriptObject = new MouseScriptObject(this);
         mScriptEngine->setGlobal("Mouse", mMouseScriptObject);

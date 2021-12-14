@@ -14,9 +14,8 @@ class GpupadScriptObject final : public QObject
 {
     Q_OBJECT
 public:
-    explicit GpupadScriptObject(QObject *parent = nullptr);
+    explicit GpupadScriptObject(ScriptEngine *scriptEngine);
 
-    void initialize(ScriptEngine &engine);
     void applySessionUpdate(ScriptEngine &engine);
 
     Q_INVOKABLE QJsonArray getItems() const;
@@ -24,11 +23,14 @@ public:
     Q_INVOKABLE void deleteItem(QJsonValue item);
 
     Q_INVOKABLE void setBlockData(QJsonValue item, QJSValue data);
+    Q_INVOKABLE void setTextureData(QJsonValue item, QJSValue data);
+
     Q_INVOKABLE QString openFileDialog();
     Q_INVOKABLE QString readTextFile(const QString &fileName);
     Q_INVOKABLE bool openWebDock();
 
 private:
+    ScriptEngine &mScriptEngine;
     MessagePtrSet mMessages;
     std::vector<std::function<void()>> mPendingUpdates;
     std::vector<std::function<void()>> mPendingEditorUpdates;

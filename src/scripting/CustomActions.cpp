@@ -18,12 +18,11 @@ class CustomAction final : public QAction
 public:
     CustomAction(const QString &filePath)
         : mFilePath(filePath)
-        , mGpupadScriptObject(new GpupadScriptObject(this))
     {
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
             mScriptEngine.reset(new ScriptEngine());
-            mGpupadScriptObject->initialize(*mScriptEngine);
+            mGpupadScriptObject = new GpupadScriptObject(mScriptEngine.data());
             mScriptEngine->evaluateScript(source, mFilePath, mMessages);
         }
 
@@ -63,7 +62,7 @@ private:
     const QString mFilePath;
     MessagePtrSet mMessages;
     QScopedPointer<ScriptEngine> mScriptEngine;
-    GpupadScriptObject *mGpupadScriptObject;
+    GpupadScriptObject *mGpupadScriptObject{ };
 };
 
 CustomActions::CustomActions(QWidget *parent)
