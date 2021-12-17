@@ -184,6 +184,8 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::openOnlineHelp);
     connect(mUi->menuHelp, &QMenu::aboutToShow,
         this, &MainWindow::populateSampleSessions);
+    connect(mUi->menuRecentFiles, &QMenu::aboutToShow,
+        this, &MainWindow::updateRecentFileActions);
     connect(mUi->actionAbout, &QAction::triggered,
         this, &MainWindow::openAbout);
     connect(windowFileName, &QAction::changed,
@@ -329,8 +331,6 @@ void MainWindow::readSettings()
     Singletons::fileDialog().setDirectory(settings.value("lastDirectory").toString());
 
     mRecentFiles = settings.value("recentFiles").toStringList();
-    updateRecentFileActions();
-
     mUi->actionIndentWithSpaces->setChecked(settings.indentWithSpaces());
     mUi->actionShowWhiteSpace->setChecked(settings.showWhiteSpace());
     mUi->actionDarkTheme->setChecked(settings.darkTheme());
@@ -763,7 +763,6 @@ void MainWindow::addToRecentFileList(QString fileName)
     fileName = QDir::toNativeSeparators(fileName);
     mRecentFiles.removeAll(fileName);
     mRecentFiles.prepend(fileName);
-    updateRecentFileActions();
     setFileDialogDirectory(fileName);
 }
 
@@ -786,7 +785,8 @@ void MainWindow::updateRecentFileActions()
         if (action) {
             action->setText(filename);
             action->setData(filename);
-            action->setEnabled(QFile::exists(filename));
+            if (!filename.startsWith("\\"))
+                action->setEnabled(QFile::exists(filename));
             action->setVisible(true);
         }
         else {
@@ -806,8 +806,6 @@ void MainWindow::updateRecentFileActions()
                     QChar(index < 9 ? '1' + index : 'A' + (index - 9))).arg(action->text()));
                 ++index;
             }
-
-    mUi->menuRecentFiles->setEnabled(!mRecentFiles.empty());
 }
 
 void MainWindow::openRecentFile()
