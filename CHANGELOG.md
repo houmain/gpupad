@@ -5,6 +5,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Version 1.22] - 2021-12-21
+
+## Added
+
+- Context aware autocompletion.
+- Allowing to select source lines by clicking in line number margin.
+- Swap textures/buffers calls.
+- PFM file reading.
+- Added Paint sample.
+- Added Cube HLSL sample.
+- Added JavaScript library sample.
+
+## Changed
+
+- Replaced input with Mouse and Keyboard script objects.
+- Opening sample sessions with active evaluation mode.
+
+## Fixed
+
+- Clearing script output on manual evaluation.
+- Not checking remote files in recent file list for existence.
+- Fixed auto range button.
+- Fixed closing brace on non empty line.
+- Fixed AltGr keys with rectangular selection.
+
 ## [Version 1.21] - 2021-11-12
 
 ## Added
@@ -419,7 +444,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.0] - 2019-04-14
 
-[unreleased]: https://github.com/houmain/gpupad/compare/1.21...HEAD
+[unreleased]: https://github.com/houmain/gpupad/compare/1.22...HEAD
+[version 1.22]: https://github.com/houmain/gpupad/compare/1.21...1.22
 [version 1.21]: https://github.com/houmain/gpupad/compare/1.20...1.21
 [version 1.20]: https://github.com/houmain/gpupad/compare/1.19...1.20
 [version 1.19]: https://github.com/houmain/gpupad/compare/1.18...1.19
