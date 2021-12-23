@@ -1,7 +1,7 @@
 #ifndef VIDEOPLAYER_H
 #define VIDEOPLAYER_H
 
-#if defined(Qt5Multimedia_FOUND)
+#if defined(QtMultimedia_FOUND)
 
 #include <QAbstractVideoSurface>
 #include <QMediaPlayer>

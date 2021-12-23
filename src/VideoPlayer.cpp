@@ -1,4 +1,4 @@
-#if defined(Qt5Multimedia_FOUND)
+#if defined(QtMultimedia_FOUND)
 
 #include "VideoPlayer.h"
 #include "TextureData.h"

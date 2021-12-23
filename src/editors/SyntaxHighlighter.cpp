@@ -5,6 +5,24 @@
 #include <QSet>
 
 namespace {
+    QStringList toList(const QSet<QString> &set)
+    {
+#if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
+        return { set.begin(), set.end() };
+#else
+        return set.toList();
+#endif
+    }
+
+    QSet<QString> toSet(const QStringList &list)
+    {
+#if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
+        return { list.begin(), list.end() };
+#else
+        return list.toSet();
+#endif
+    }
+
     const Syntax& getSyntax(SourceType sourceType) 
     {
         static const auto syntaxPlainText = new Syntax();
@@ -139,8 +157,7 @@ SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
         QRegularExpression::UseUnicodePropertiesOption);
     mWhiteSpaceRule.format = whiteSpaceFormat;
 
-    const auto strings = syntax.completerStrings();
-    mCompleterStrings = { strings.cbegin(), strings.cend() };
+    mCompleterStrings = toSet(syntax.completerStrings());
     mCompleter = new QCompleter(this);
     mCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
     mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
@@ -212,7 +229,7 @@ void SyntaxHighlighter::updateCompleter(const QString &contextText)
         index = contextText.indexOf(pattern, index + length);
     }
 
-    auto list = QStringList(strings.cbegin(), strings.cend());
+    auto list = toList(strings);
     list.sort(Qt::CaseInsensitive);
     delete mCompleter->model();
     mCompleter->setModel(new QStringListModel(list, mCompleter));

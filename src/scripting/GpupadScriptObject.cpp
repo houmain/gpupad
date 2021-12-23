@@ -13,7 +13,7 @@
 #include <QFloat16>
 #include <cstring>
 
-#if defined(Qt5WebEngineWidgets_FOUND)
+#if defined(QtWebEngineWidgets_FOUND)
 #  include <QWebEngineView>
 #  include <QWebChannel>
 #endif
@@ -305,12 +305,12 @@ QString GpupadScriptObject::readTextFile(const QString &fileName)
 
 bool GpupadScriptObject::openWebDock()
 {
-#if defined(Qt5WebEngineWidgets_FOUND)
+#if defined(QtWebEngineWidgets_FOUND)
     class CustomEditor : public IEditor
     {
     public:
         QList<QMetaObject::Connection> connectEditActions(const EditActions &) override { return { }; }
-        QString fileName() const override { return { }; }
+        QString fileName() const override { return FileDialog::generateNextUntitledFileName("Web"); }
         void setFileName(QString) override { }
         bool load() override { return false; }
         bool save() override { return false; }
