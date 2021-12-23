@@ -6,7 +6,7 @@
 #include <QObject>
 #include <QGraphicsView>
 #include <QOpenGLTexture>
-#include <QGraphicsItem>
+#include <QGraphicsObject>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLTexture>
@@ -14,12 +14,11 @@
 class ZeroCopyContext;
 class ComputeRange;
 
-class TextureItem final : public QObject, public QGraphicsItem
+class TextureItem final : public QGraphicsObject
 {
     Q_OBJECT
-    Q_INTERFACES(QGraphicsItem)
 public:
-    explicit TextureItem(QObject *parent = nullptr);
+    explicit TextureItem(QGraphicsItem *parent = nullptr);
     ~TextureItem() override;
     void releaseGL();
 

@@ -257,8 +257,8 @@ void ZeroCopyContext::handleDebugMessage(const QOpenGLDebugMessage &message)
 
 //-------------------------------------------------------------------------
 
-TextureItem::TextureItem(QObject *parent)
-    : QObject(parent)
+TextureItem::TextureItem(QGraphicsItem *parent)
+    : QGraphicsObject(parent)
 {
     setHistogramBinCount(1);
 }
