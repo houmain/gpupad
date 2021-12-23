@@ -197,7 +197,7 @@ if(ENABLE_MULTIMEDIA)
 endif()
 
 option(ENABLE_WEBENGINE "Enable QtWebEngine" OFF)
-if(ENABLE_MULTIMEDIA)
+if(ENABLE_WEBENGINE)
     find_package(Qt${QT_VERSION_MAJOR}WebEngineWidgets CONFIG)
     if(Qt${QT_VERSION_MAJOR}WebEngineWidgets_FOUND)
         target_link_libraries(${PROJECT_NAME} Qt${QT_VERSION_MAJOR}::WebEngineWidgets)

@@ -27,10 +27,6 @@
  * @author Mark Callow, www.edgewise-consulting.com
  */
 
-#ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 #include <stdlib.h>
 
 #include "ktx.h"
