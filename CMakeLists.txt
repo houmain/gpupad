@@ -149,7 +149,7 @@ add_compile_definitions(QAPPLICATION_CLASS=QApplication KTX_OPENGL)
 target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include libs/gli libs/glm)
 
 if (MSVC)
-    add_definitions(_CRT_SECURE_NO_WARNINGS)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
     add_compile_options(/W3)
     add_compile_options($<$<CONFIG:Release>:/GR->)
     add_compile_options($<$<CONFIG:Release>:/GL>)
