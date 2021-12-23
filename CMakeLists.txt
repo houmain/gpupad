@@ -217,6 +217,7 @@ if (ENABLE_SPIRV_CROSS)
     set(SPIRV_CROSS_ENABLE_REFLECT FALSE CACHE INTERNAL "SPIRV-Cross REFLECT" FORCE)
     set(SPIRV_CROSS_ENABLE_TESTS FALSE CACHE INTERNAL "SPIRV-Cross TESTS" FORCE)
     set(SPIRV_CROSS_ENABLE_UTIL FALSE CACHE INTERNAL "SPIRV-Cross UTIL" FORCE)
+    set(SPIRV_CROSS_SKIP_INSTALL TRUE CACHE INTERNAL "SPIRV-Cross Skip Install" FORCE)
     add_subdirectory(libs/SPIRV-Cross)
     target_link_libraries(${PROJECT_NAME} spirv-cross-glsl spirv-cross-core)
     add_compile_definitions(SPIRV_CROSS_ENABLED)
@@ -240,7 +241,7 @@ else()
 
     install(CODE "set(deployqt \"${deployqt}\")" COMPONENT Application)
     install(CODE [===[
-    execute_process(COMMAND "${deployqt}" --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations "${CMAKE_INSTALL_PREFIX}")
+    execute_process(COMMAND "${deployqt}" --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations --no-virtualkeyboard "${CMAKE_INSTALL_PREFIX}")
     ]===] COMPONENT Application)
 endif()
 
