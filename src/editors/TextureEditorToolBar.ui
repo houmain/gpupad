@@ -2,14 +2,6 @@
 <ui version="4.0">
  <class>TextureEditorToolBar</class>
  <widget class="QWidget" name="TextureEditorToolBar">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>571</width>
-    <height>25</height>
-   </rect>
-  </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="spacing">
     <number>4</number>
@@ -27,9 +19,32 @@
     <number>0</number>
    </property>
    <item>
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>8</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="filter">
+     <property name="text">
+      <string>Filter</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QLabel" name="labelLevel">
      <property name="text">
-      <string>  Level</string>
+      <string>Level</string>
      </property>
      <property name="buddy">
       <cstring>level</cstring>
@@ -37,22 +52,15 @@
     </widget>
    </item>
    <item>
-    <widget class="QDoubleSpinBox" name="level"/>
-   </item>
-   <item>
-    <widget class="QLabel" name="labelZ">
-     <property name="text">
-      <string>  Z</string>
+    <widget class="QDoubleSpinBox" name="level">
+     <property name="minimumSize">
+      <size>
+       <width>50</width>
+       <height>0</height>
+      </size>
      </property>
-     <property name="buddy">
-      <cstring>z</cstring>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QDoubleSpinBox" name="z">
-     <property name="maximum">
-      <double>1.000000000000000</double>
+     <property name="decimals">
+      <number>0</number>
      </property>
     </widget>
    </item>
@@ -62,12 +70,25 @@
       <string>  Layer</string>
      </property>
      <property name="buddy">
-      <cstring>z</cstring>
+      <cstring>layer</cstring>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QSpinBox" name="layer"/>
+    <widget class="QDoubleSpinBox" name="layer">
+     <property name="minimumSize">
+      <size>
+       <width>50</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="decimals">
+      <number>0</number>
+     </property>
+     <property name="maximum">
+      <double>1.000000000000000</double>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QLabel" name="labelSample">
@@ -77,7 +98,14 @@
     </widget>
    </item>
    <item>
-    <widget class="QSpinBox" name="sample"/>
+    <widget class="QSpinBox" name="sample">
+     <property name="minimumSize">
+      <size>
+       <width>40</width>
+       <height>0</height>
+      </size>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QLabel" name="labelFace">
@@ -124,7 +152,7 @@
     </widget>
    </item>
    <item>
-    <spacer name="horizontalSpacer">
+    <spacer name="horizontalSpacer_2">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -138,13 +166,6 @@
       </size>
      </property>
     </spacer>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="filter">
-     <property name="text">
-      <string>Filter</string>
-     </property>
-    </widget>
    </item>
    <item>
     <widget class="QCheckBox" name="flipVertically">

@@ -146,8 +146,7 @@ void TextureEditor::updateEditorToolBar()
     mEditorToolBar.setMaxLevel(std::max(mTexture.levels() - 1, 0));
     mEditorToolBar.setLevel(mTextureItem->level());
 
-    mEditorToolBar.setMaxLayer(
-        std::max(mTexture.layers() - 1, 0), mTexture.depth());
+    mEditorToolBar.setMaxLayer(mTexture.layers(), mTexture.depth());
     mEditorToolBar.setLayer(mTextureItem->layer());
 
     // disabled for now, since all samples are identical after download

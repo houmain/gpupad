@@ -346,7 +346,7 @@ void TextureItem::computeHistogramBounds()
         mPreviewTextureId ? mPreviewTextureId : mImageTextureId,
         mImage, 
         static_cast<int>(mLevel), 
-        static_cast<int>(mLayer * mImage.depth() * mImage.layers()),
+        static_cast<int>(mLayer),
         mFace);
 
     mComputeRange->update();
@@ -443,7 +443,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         program->setUniformValue("uSize", QSizeF(mBoundingRect.size()));
         program->setUniformValue("uLevel", mLevel);
         program->setUniformValue("uFace", mFace);
-        program->setUniformValue("uLayer", mLayer);
+        program->setUniformValue("uLayer", mLayer / mImage.depth());
         const auto resolve = (mSample < 0);
         program->setUniformValue("uSample", std::max(0, (resolve ? 0 : mSample)));
         program->setUniformValue("uSamples", std::max(1, (resolve ? mImage.samples() : 1)));

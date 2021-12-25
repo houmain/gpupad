@@ -34,8 +34,9 @@ Q_SIGNALS:
     void flipVerticallyChanged(bool flip);
 
 private:
+    void filterStateChanged(int state);
+
     Ui::TextureEditorToolBar *mUi;
 };
-
 
 #endif // TEXTUREEDITORTOOLBAR_H

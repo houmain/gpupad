@@ -10,16 +10,14 @@ TextureEditorToolBar::TextureEditorToolBar(QWidget *parent)
 
     connect(mUi->level, qOverload<double>(&QDoubleSpinBox::valueChanged),
         [&](double level) { Q_EMIT levelChanged(level); });
-    connect(mUi->z, qOverload<double>(&QDoubleSpinBox::valueChanged),
+    connect(mUi->layer, qOverload<double>(&QDoubleSpinBox::valueChanged),
         [&](double layer) { Q_EMIT layerChanged(layer); });
-    connect(mUi->layer, qOverload<int>(&QSpinBox::valueChanged),
-        [&](int layer) { Q_EMIT layerChanged(layer); });
     connect(mUi->sample, qOverload<int>(&QSpinBox::valueChanged),
         this, &TextureEditorToolBar::sampleChanged);
     connect(mUi->face, qOverload<int>(&QComboBox::currentIndexChanged),
         this, &TextureEditorToolBar::faceChanged);
     connect(mUi->filter, &QCheckBox::stateChanged,
-        [&](int state) { Q_EMIT filterChanged(state != 0); });
+        this, &TextureEditorToolBar::filterStateChanged);
     connect(mUi->flipVertically, &QCheckBox::stateChanged,
         [&](int state) { Q_EMIT flipVerticallyChanged(state != 0); });
 }
@@ -43,20 +41,16 @@ void TextureEditorToolBar::setLevel(float level)
 
 void TextureEditorToolBar::setMaxLayer(int maxLayer, int maxDepth)
 {
-    mUi->layer->setMaximum(maxLayer);
-    mUi->labelLayer->setVisible(maxLayer);
-    mUi->layer->setVisible(maxLayer);
-
-    const auto hasDepth = (maxDepth > 1);
-    mUi->labelZ->setVisible(hasDepth);
-    mUi->z->setVisible(hasDepth);
-    mUi->z->setSingleStep(hasDepth ? 0.5 / (maxDepth - 1) : 1);
+    const auto hasLayers = (maxLayer > 1 || maxDepth > 1);
+    mUi->labelLayer->setVisible(hasLayers);
+    mUi->layer->setVisible(hasLayers);
+    mUi->layer->setMinimum(0);
+    mUi->layer->setMaximum(std::max(maxLayer, maxDepth) - 1);
 }
 
 void TextureEditorToolBar::setLayer(float layer)
 {
-    mUi->z->setValue(layer);
-    mUi->layer->setValue(static_cast<int>(layer));
+    mUi->layer->setValue(layer);
 }
 
 void TextureEditorToolBar::setMaxSample(int maxSample)
@@ -101,4 +95,14 @@ void TextureEditorToolBar::setCanFlipVertically(bool canFlip)
 void TextureEditorToolBar::setFlipVertically(bool flip)
 {
     mUi->flipVertically->setChecked(flip);
+}
+
+void TextureEditorToolBar::filterStateChanged(int state)
+{
+    const auto filter = (state != 0);
+    mUi->level->setDecimals(filter ? 2 : 0);
+    mUi->level->setSingleStep(filter ? 0.25 : 1.0);
+    mUi->layer->setDecimals(filter ? 2 : 0);
+    mUi->layer->setSingleStep(filter ? 0.25 : 1.0);
+    Q_EMIT filterChanged(filter);
 }
