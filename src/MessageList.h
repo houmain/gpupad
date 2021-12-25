@@ -30,6 +30,7 @@ enum MessageType
     ClearingTextureFailed,
     CopyingTextureFailed,
     ScriptError,
+    ScriptWarning,
     ScriptMessage,
     ProgramNotAssigned,
     TargetNotAssigned,

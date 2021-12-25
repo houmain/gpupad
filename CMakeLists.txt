@@ -104,6 +104,7 @@ set(SOURCES
   src/scripting/MouseScriptObject.cpp
   src/scripting/KeyboardScriptObject.cpp
   src/scripting/ScriptEngine.cpp
+  src/scripting/ScriptEngine.js
   src/scripting/CustomActions.cpp
   src/scripting/CustomActions.ui
   src/session/AttachmentProperties.cpp

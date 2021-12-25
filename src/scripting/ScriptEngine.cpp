@@ -24,13 +24,16 @@ void JSConsole::setMessages(MessagePtrSet *messages, ItemId itemId)
     mFileName.clear();
 }
 
-void JSConsole::log(QString message)
+void JSConsole::output(QString message, int level)
 {
+    const auto messageType =
+        level == 2 ? MessageType::ScriptError :
+        level == 1 ? MessageType::ScriptWarning :
+        MessageType::ScriptMessage;
+
     (*mMessages) += (!mFileName.isEmpty() ?
-        MessageList::insert(mFileName, 0,
-            MessageType::ScriptMessage, message) :
-        MessageList::insert(
-            mItemId, MessageType::ScriptMessage, message));
+        MessageList::insert(mFileName, 0, messageType, message) :
+        MessageList::insert(mItemId, messageType, message));
 }
 
 ScriptValue evaluateValueExpression(const QString &expression, bool *ok)
@@ -97,19 +100,11 @@ ScriptEngine::ScriptEngine(QObject *parent)
     mJsEngine->globalObject().setProperty("console",
         mJsEngine->newQObject(mConsole));
 
-    evaluate(
-        "(function() {"
-          "var log = console.log;"
-          "console.log = function() {"
-            "var text = '';"
-            "for (var i = 0, n = arguments.length; i < n; i++)"
-              "if (typeof arguments[i] === 'object')"
-                "text += JSON.stringify(arguments[i], null, 2);"
-              "else "
-                "text += arguments[i];"
-            "log(text);"
-           "};"
-        "})();");
+    auto file = QFile(":/scripting/ScriptEngine.js");
+    if (file.open(QFile::ReadOnly | QFile::Text)) {
+        auto messages = MessagePtrSet();
+        evaluateScript(QTextStream(&file).readAll(), "", messages);
+    }
 }
 
 ScriptEngine::~ScriptEngine() 

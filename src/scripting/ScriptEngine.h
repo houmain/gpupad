@@ -19,7 +19,7 @@ public:
     void setMessages(MessagePtrSet *messages, ItemId itemId);
 
 public Q_SLOTS:
-    void log(QString message);
+    void output(QString message, int level);
 
 private:
     QString mFileName;

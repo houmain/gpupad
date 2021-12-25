@@ -92,6 +92,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
 
         case UnformNotSet:
         case ShaderWarning:
+        case ScriptWarning:
         case TooManyPrintfCalls:
             return mWarningIcon;
 
@@ -110,6 +111,7 @@ QString MessageWindow::getMessageText(const Message &message) const
         case ShaderWarning:
         case ShaderError:
         case ScriptError:
+        case ScriptWarning:
         case ScriptMessage:
             return message.text;
 
