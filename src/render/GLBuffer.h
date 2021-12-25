@@ -24,7 +24,7 @@ public:
     void bindReadOnly(GLenum target);
     void bindIndexedRange(GLenum target, int index, int offset, int size, bool readonly);
     void unbind(GLenum target);
-    bool download();
+    bool download(bool checkModification);
 
 private:
     void reload();

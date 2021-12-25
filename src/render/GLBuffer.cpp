@@ -172,22 +172,25 @@ void GLBuffer::upload()
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
-bool GLBuffer::download()
+bool GLBuffer::download(bool checkModification)
 {
     if (!mDeviceCopyModified)
         return false;
 
-    const auto prevData = mData;
+    auto prevData = QByteArray();
+    if (checkModification)
+        prevData = mData;
+
     auto &gl = GLContext::currentContext();
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
     gl.glGetBufferSubData(GL_ARRAY_BUFFER, 0, mSize, mData.data());
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 
-    if (prevData == mData) {
+    mSystemCopyModified = mDeviceCopyModified = false;
+
+    if (checkModification && prevData == mData) {
         mData = prevData;
         return false;
     }
-
-    mSystemCopyModified = mDeviceCopyModified = false;
     return true;
 }

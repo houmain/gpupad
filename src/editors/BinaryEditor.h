@@ -53,6 +53,7 @@ public:
     void replaceRange(int offset, QByteArray data, bool emitFileChanged = true);
     const QByteArray &data() const { return mData; }
     void setBlocks(QList<Block> blocks);
+    const QList<Block> &blocks() const { return mBlocks; }
     void setCurrentBlockIndex(int index);
     void scrollToOffset();
 

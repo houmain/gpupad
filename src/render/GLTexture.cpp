@@ -298,7 +298,7 @@ void GLTexture::upload()
 bool GLTexture::download()
 {
     if (mTextureBuffer)
-        return mTextureBuffer->download();
+        return mTextureBuffer->download(false);
 
     if (!mDeviceCopyModified)
         return false;
