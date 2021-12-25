@@ -22,6 +22,7 @@ public:
     Q_INVOKABLE void updateItems(QJsonValue update);
     Q_INVOKABLE void deleteItem(QJsonValue item);
 
+    Q_INVOKABLE void setBufferData(QJsonValue item, QJSValue data);
     Q_INVOKABLE void setBlockData(QJsonValue item, QJSValue data);
     Q_INVOKABLE void setTextureData(QJsonValue item, QJSValue data);
 

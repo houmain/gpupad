@@ -260,8 +260,37 @@ void GpupadScriptObject::deleteItem(QJsonValue item)
     });
 }
 
+void GpupadScriptObject::setBufferData(QJsonValue item, QJSValue data)
+{
+    if (!castItem<Buffer>(findItem(item))) {
+        mMessages += MessageList::insert(0, MessageType::ScriptError,
+            "setBufferData failed. Invalid item");
+        return;
+    }
+
+    mPendingEditorUpdates.push_back([this, item = std::move(item), data = std::move(data)]() {
+        if (auto buffer = castItem<Buffer>(findItem(item)))
+            if (auto editor = openBinaryEditor(*buffer))
+                if (buffer->items.size() >= 1)
+                    if (auto block = castItem<Block>(buffer->items[0])) {
+                        editor->replaceRange(0, toByteArray(data, *block), false);
+                        mEditorDataUpdated = true;
+                        return;
+                    }
+
+        mMessages += MessageList::insert(0, MessageType::ScriptError,
+            "setBufferData failed");
+    });
+}
+
 void GpupadScriptObject::setBlockData(QJsonValue item, QJSValue data)
 {
+    if (!castItem<Block>(findItem(item))) {
+        mMessages += MessageList::insert(0, MessageType::ScriptError,
+            "setBlockData failed. Invalid item");
+        return;
+    }
+
     mPendingEditorUpdates.push_back([this, item = std::move(item), data = std::move(data)]() {
         if (auto block = castItem<Block>(findItem(item)))
             if (auto editor = openBinaryEditor(*castItem<Buffer>(block->parent))) {
@@ -271,19 +300,32 @@ void GpupadScriptObject::setBlockData(QJsonValue item, QJSValue data)
                 if (ok) {
                     editor->replaceRange(offset, toByteArray(data, *block), false);
                     mEditorDataUpdated = true;
+                    return;
                 }
             }
+
+        mMessages += MessageList::insert(0, MessageType::ScriptError,
+            "setBlockData failed");
     });
 }
 
 void GpupadScriptObject::setTextureData(QJsonValue item, QJSValue data)
 {
+    if (!castItem<Block>(findItem(item))) {
+        mMessages += MessageList::insert(0, MessageType::ScriptError,
+            "setTextureData failed. Invalid item");
+        return;
+    }
+
     mPendingEditorUpdates.push_back([this, item = std::move(item), data = std::move(data)]() {
         if (auto texture = castItem<Texture>(findItem(item)))
             if (auto editor = openTextureEditor(*texture)) {
                 editor->replace(toTextureData(data, *texture), false);
                 mEditorDataUpdated = true;
+                return;
             }
+        mMessages += MessageList::insert(0, MessageType::ScriptError,
+            "setTextureData failed");
     });
 }
 
