@@ -610,7 +610,13 @@ bool MainWindow::openSession(const QString &fileName)
     if (!mSessionEditor->load())
         return false;
 
-    restoreSessionState(fileName);
+    if (!restoreSessionState(fileName)) {
+        openSessionDock();
+        auto &editors = Singletons::editorManager();
+        editors.setAutoRaise(false);
+        mSessionEditor->activateFirstItem();
+        editors.setAutoRaise(true);
+    }
     return true;
 }
 
@@ -708,11 +714,11 @@ void MainWindow::saveSessionState(const QString &sessionFileName)
     settings.setValue("openEditors", openEditors);
 }
 
-void MainWindow::restoreSessionState(const QString &sessionFileName)
+bool MainWindow::restoreSessionState(const QString &sessionFileName)
 {
     const auto sessionStateFile = QString(sessionFileName + ".state");
     if (!QFileInfo::exists(sessionStateFile))
-        return openSessionDock();
+        return false;
 
     auto &model = Singletons::sessionModel();
     auto settings = QSettings(sessionStateFile, QSettings::IniFormat);
@@ -728,6 +734,7 @@ void MainWindow::restoreSessionState(const QString &sessionFileName)
         }
     mEditorManager.restoreState(settings.value("editorState").toByteArray());   
     mEditorManager.setAutoRaise(true);
+    return true;
 }
 
 bool MainWindow::closeSession()
@@ -975,11 +982,6 @@ void MainWindow::openSampleSession()
 
     if (auto action = qobject_cast<QAction*>(QObject::sender()))
         if (openFile(action->data().toString())) {
-            auto &editors = Singletons::editorManager();
-            editors.setAutoRaise(false);
-            mSessionEditor->activateFirstItem();
-            editors.setAutoRaise(true);
-
             mUi->actionEvalSteady->setChecked(evalSteady);
             mUi->actionEvalAuto->setChecked(!evalSteady);
         }
