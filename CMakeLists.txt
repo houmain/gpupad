@@ -99,12 +99,15 @@ set(SOURCES
   src/render/CompositorSync.cpp
   src/render/ComputeRange.cpp
   src/render/glslang.cpp
+  src/scripting/ScriptConsole.cpp
   src/scripting/GpupadScriptObject.cpp
-  src/scripting/GpupadScriptObject.js
   src/scripting/MouseScriptObject.cpp
   src/scripting/KeyboardScriptObject.cpp
+  src/scripting/SessionScriptObject.cpp
+  src/scripting/SessionScriptObject.js
   src/scripting/ScriptEngine.cpp
   src/scripting/ScriptEngine.js
+  src/scripting/ScriptSession.cpp
   src/scripting/CustomActions.cpp
   src/scripting/CustomActions.ui
   src/session/AttachmentProperties.cpp
@@ -197,6 +200,18 @@ if(ENABLE_MULTIMEDIA)
     endif()
 endif()
 
+option(ENABLE_QUICK "Enable QtQuick" ON)
+if(ENABLE_QUICK)
+    find_package(Qt${QT_VERSION_MAJOR}Quick CONFIG)
+    find_package(Qt${QT_VERSION_MAJOR}QuickWidgets CONFIG)
+    if(Qt${QT_VERSION_MAJOR}Quick_FOUND)
+        target_link_libraries(${PROJECT_NAME}
+            Qt${QT_VERSION_MAJOR}::Quick
+            Qt${QT_VERSION_MAJOR}::QuickWidgets)
+        add_compile_definitions(QtQuick_FOUND)
+    endif()
+endif()
+
 option(ENABLE_WEBENGINE "Enable QtWebEngine" OFF)
 if(ENABLE_WEBENGINE)
     find_package(Qt${QT_VERSION_MAJOR}WebEngineWidgets CONFIG)
@@ -233,7 +248,7 @@ else()
     install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Application)
     install(DIRECTORY samples DESTINATION . COMPONENT Samples)
 
-    get_target_property(uic_location Qt::uic IMPORTED_LOCATION)
+    get_target_property(uic_location Qt${QT_VERSION_MAJOR}::uic IMPORTED_LOCATION)
     get_filename_component(_dir ${uic_location} DIRECTORY)
     set(deployqt "${_dir}/windeployqt.exe")
     if(NOT EXISTS ${deployqt})

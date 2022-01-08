@@ -22,7 +22,6 @@ Q_SIGNALS:
 private:
     using ProgramKey = std::tuple<QOpenGLTexture::Target, QOpenGLTexture::TextureFormat>;
 
-    void prepare(bool itemsChanged, EvaluationType) override;
     void render() override;
     void finish() override;
     void release() override;

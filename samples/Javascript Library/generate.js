@@ -12,14 +12,14 @@ let indices = Delaunay.triangulate(vertices)
 // convert to single array
 vertices = [].concat.apply([], vertices)
 
-let Vertices = gpupad.item('Buffer/Vertices')
+let Vertices = Session.item('Buffer/Vertices')
 Vertices.rowCount = vertices.length
-gpupad.setBlockData(Vertices, vertices)
+Session.setBlockData(Vertices, vertices)
 
-let Indices = gpupad.item('Buffer/Indices')
+let Indices = Session.item('Buffer/Indices')
 Indices.rowCount = indices.length
 Indices.offset = vertices.length * 4
-gpupad.setBlockData(Indices, indices)
+Session.setBlockData(Indices, indices)
 
-let Draw = gpupad.item('Draw')
+let Draw = Session.item('Draw')
 Draw.count = indices.length

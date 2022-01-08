@@ -2,94 +2,21 @@
 #include "Singletons.h"
 #include "session/SessionModel.h"
 #include "FileDialog.h"
+#include "ScriptConsole.h"
+#include <QTextStream>
 #include <QThread>
 #include <QTimer>
-
-JSConsole::JSConsole(QObject *parent) :
-    QObject(parent)
-{
-}
-
-void JSConsole::setMessages(MessagePtrSet *messages, const QString &fileName)
-{
-    mMessages = messages;
-    mFileName = fileName;
-    mItemId = { };
-}
-
-void JSConsole::setMessages(MessagePtrSet *messages, ItemId itemId)
-{
-    mMessages = messages;
-    mItemId = itemId;
-    mFileName.clear();
-}
-
-void JSConsole::output(QString message, int level)
-{
-    const auto messageType =
-        level == 2 ? MessageType::ScriptError :
-        level == 1 ? MessageType::ScriptWarning :
-        MessageType::ScriptMessage;
-
-    (*mMessages) += (!mFileName.isEmpty() ?
-        MessageList::insert(mFileName, 0, messageType, message) :
-        MessageList::insert(mItemId, messageType, message));
-}
-
-ScriptValue evaluateValueExpression(const QString &expression, bool *ok)
-{
-    auto tmp = false;
-    if (!ok)
-        ok = &tmp;
-
-    if (expression.isEmpty()) {
-        *ok = true;
-        return 0;
-    }
-        
-    const auto value = expression.toDouble(ok);
-    if (*ok)
-        return value;
-
-    static QJSEngine sJsEngine;
-    const auto result = sJsEngine.evaluate(expression);
-    if (result.isError()) {
-       *ok = false;
-       return 0;
-    }
-    return result.toVariant().toDouble(ok);
-}
-
-int evaluateIntExpression(const QString &expression, bool *ok)
-{
-    return static_cast<int>(evaluateValueExpression(expression, ok) + 0.5);
-}
-
-int ScriptVariable::count() const
-{
-    return (mValues ? mValues->size() : 0);
-}
-
-ScriptValue ScriptVariable::get() const
-{
-    return (mValues && !mValues->isEmpty() ? mValues->first() : 0.0);
-}
-
-ScriptValue ScriptVariable::get(int index) const
-{
-    return (mValues && index < mValues->size() ? mValues->at(index) : 0.0);
-}
 
 ScriptEngine::ScriptEngine(QObject *parent)
     : QObject(parent)
     , mOnThread(*QThread::currentThread())
+    , mConsole(new ScriptConsole(this))
     , mJsEngine(new QJSEngine(this))
-    , mConsole(new JSConsole(this))
 {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     mInterruptThread = new QThread();
     mInterruptTimer = new QTimer();
-    mInterruptTimer->setInterval(1000);
+    mInterruptTimer->setInterval(250);
     mInterruptTimer->setSingleShot(true);
     connect(mInterruptTimer, &QTimer::timeout,
         [jsEngine = mJsEngine]() { jsEngine->setInterrupted(true); });
@@ -101,10 +28,8 @@ ScriptEngine::ScriptEngine(QObject *parent)
         mJsEngine->newQObject(mConsole));
 
     auto file = QFile(":/scripting/ScriptEngine.js");
-    if (file.open(QFile::ReadOnly | QFile::Text)) {
-        auto messages = MessagePtrSet();
-        evaluateScript(QTextStream(&file).readAll(), "", messages);
-    }
+    file.open(QFile::ReadOnly | QFile::Text);
+    mJsEngine->evaluate(QTextStream(&file).readAll());
 }
 
 ScriptEngine::~ScriptEngine() 
@@ -113,6 +38,13 @@ ScriptEngine::~ScriptEngine()
     QMetaObject::invokeMethod(mInterruptTimer, "stop", Qt::BlockingQueuedConnection);
     connect(mInterruptThread, &QThread::finished, mInterruptThread, &QObject::deleteLater);
     mInterruptThread->requestInterruption();
+#endif
+}
+
+void ScriptEngine::setTimeout(int msec)
+{
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
+    mInterruptTimer->setInterval(msec);
 #endif
 }
 
@@ -234,48 +166,4 @@ int ScriptEngine::evaluateInt(const QString &valueExpression,
       ItemId itemId, MessagePtrSet &messages)
 {
     return static_cast<int>(evaluateValue(valueExpression, itemId, messages) + 0.5);
-}
-
-void ScriptEngine::updateVariables(MessagePtrSet &messages)
-{
-    for (auto it = mVariables.begin(); it != mVariables.end(); )
-        if (updateVariable(*it, 0, messages)) {
-            ++it;
-        }
-        else {
-            it = mVariables.erase(it);
-        }
-}
-
-bool ScriptEngine::updateVariable(const Variable &variable,
-    ItemId itemId, MessagePtrSet &messages)
-{
-    auto values = variable.values.lock();
-    if (!values)
-        return false;
-    *values = evaluateValues(variable.expressions, itemId, messages);
-
-    // set global in script state, when variable name is known
-    if (!variable.name.isEmpty())
-        setGlobal(variable.name, *values);
-    return true;
-}
-
-ScriptVariable ScriptEngine::getVariable(const QString &variableName,
-    const QStringList &valueExpressions,
-    ItemId itemId, MessagePtrSet &messages)
-{
-    auto values = QSharedPointer<ScriptValueList>(new ScriptValueList());
-    mVariables.append({ variableName, valueExpressions, values });
-    updateVariable(mVariables.back(), itemId, messages);
-
-    auto result = ScriptVariable();
-    result.mValues = std::move(values);
-    return result;
-}
-
-ScriptVariable ScriptEngine::getVariable(const QString &valueExpression,
-    ItemId itemId, MessagePtrSet &messages)
-{
-    return getVariable("", QStringList{ valueExpression }, itemId, messages);
 }

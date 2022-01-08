@@ -208,6 +208,7 @@ namespace {
         }
         const auto dataType = getTextureDataType(format);
         return (dataType == TextureDataType::Normalized ||
+                dataType == TextureDataType::Normalized_sRGB ||
                 dataType == TextureDataType::Float);
     }
 

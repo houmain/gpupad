@@ -13,7 +13,7 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
 
     fillComboBox<Call::CallType>(mUi->type);
     fillComboBox<Call::PrimitiveType>(mUi->primitiveType);
-    fillComboBox<Script::ExecuteOn>(mUi->executeOn);
+    fillComboBox<Call::ExecuteOn>(mUi->executeOn);
 
     connect(mUi->type, &DataComboBox::currentDataChanged,
         this, &CallProperties::updateWidgets);

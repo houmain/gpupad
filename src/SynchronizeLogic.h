@@ -4,6 +4,7 @@
 #include "session/Item.h"
 #include "SourceType.h"
 #include "Evaluation.h"
+#include "MessageList.h"
 #include <QObject>
 #include <QSet>
 
@@ -21,6 +22,7 @@ public:
     explicit SynchronizeLogic(QObject *parent = nullptr);
     ~SynchronizeLogic() override;
 
+    MessagePtrSet &getVolatileMessages(ItemId item);
     void resetRenderSession();
 
     void setEvaluationMode(EvaluationMode mode);
@@ -79,6 +81,8 @@ private:
     QString mProcessSourceType{ };
     QTimer *mProcessSourceTimer{ };
     ProcessSource* mProcessSource{ };
+
+    MessagePtrSet mVolatileMessages;
 };
 
 #endif // SYNCHRONIZELOGIC_H

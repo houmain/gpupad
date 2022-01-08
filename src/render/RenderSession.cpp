@@ -5,10 +5,7 @@
 #include "editors/EditorManager.h"
 #include "editors/TextureEditor.h"
 #include "editors/BinaryEditor.h"
-#include "scripting/ScriptEngine.h"
-#include "scripting/GpupadScriptObject.h"
-#include "scripting/MouseScriptObject.h"
-#include "scripting/KeyboardScriptObject.h"
+#include "scripting/ScriptSession.h"
 #include "FileCache.h"
 #include "GLTexture.h"
 #include "GLBuffer.h"
@@ -35,7 +32,8 @@ namespace {
     using BindingState = QStack<BindingScope>;
     using Command = std::function<void(BindingState&)>;
 
-    QSet<ItemId> applyBindings(BindingState &state, GLProgram &program)
+    QSet<ItemId> applyBindings(BindingState &state, GLProgram &program,
+        ScriptEngine &scriptEngine)
     {
         QSet<ItemId> usedItems;
         BindingScope bindings;
@@ -53,7 +51,7 @@ namespace {
         }
 
         for (const auto &kv : bindings.uniforms)
-            if (program.apply(kv.second))
+            if (program.apply(kv.second, scriptEngine))
                 usedItems += kv.second.bindingItemId;
 
         auto unit = 0;
@@ -72,7 +70,7 @@ namespace {
             }
 
         for (const auto &kv : bindings.buffers)
-            if (program.apply(kv.second)) {
+            if (program.apply(kv.second, scriptEngine)) {
                 usedItems += kv.second.bindingItemId;
                 usedItems += kv.second.buffer->usedItems();
             }
@@ -148,8 +146,15 @@ namespace {
                 break;
         }
         return true;
-    }
+      }
 } // namespace
+
+struct RenderSession::GroupIteration
+{
+    int iterations;
+    int commandQueueBeginIndex;
+    int iterationsLeft;
+};
 
 struct RenderSession::CommandQueue
 {
@@ -180,18 +185,15 @@ QSet<ItemId> RenderSession::usedItems() const
 
 bool RenderSession::usesMouseState() const
 {
-    return (mMouseScriptObject && 
-            mMouseScriptObject->wasRead());
+    return (mScriptSession && mScriptSession->usesMouseState());
 }
 
 bool RenderSession::usesKeyboardState() const
 {
-    return (mKeyboardScriptObject && 
-            mKeyboardScriptObject->wasRead());
+    return (mScriptSession && mScriptSession->usesKeyboardState());
 }
 
-void RenderSession::prepare(bool itemsChanged,
-        EvaluationType evaluationType)
+void RenderSession::prepare(bool itemsChanged, EvaluationType evaluationType)
 {
     mItemsChanged = itemsChanged;
     mEvaluationType = evaluationType;
@@ -201,49 +203,60 @@ void RenderSession::prepare(bool itemsChanged,
     if (!mCommandQueue)
         mEvaluationType = EvaluationType::Reset;
 
-    if (!mScriptEngine || mEvaluationType == EvaluationType::Reset) {
-        mScriptEngine.reset(new ScriptEngine());
-        mGpupadScriptObject = new GpupadScriptObject(mScriptEngine.data());
+    if (mEvaluationType == EvaluationType::Reset)
+        mScriptSession.reset(new ScriptSession());
 
-        mMouseScriptObject = new MouseScriptObject(this);
-        mScriptEngine->setGlobal("Mouse", mMouseScriptObject);
+    if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
+        mSessionCopy = Singletons::sessionModel();
 
-        mKeyboardScriptObject = new KeyboardScriptObject(this);
-        mScriptEngine->setGlobal("Keyboard", mKeyboardScriptObject);
-    }
+    mScriptSession->prepare();
+}
 
-    Singletons::inputState().update();
-    mMouseScriptObject->update(Singletons::inputState());
-    mKeyboardScriptObject->update(Singletons::inputState());
+void RenderSession::configure()
+{
+    mScriptSession->beginSessionUpdate(&mSessionCopy);
 
-    const auto evaluateScript = [&](const Script &script) {
-        if (shouldExecute(script.executeOn, mEvaluationType)) {
+    auto &scriptEngine = mScriptSession->engine();
+    const auto &session = mSessionCopy;
+
+    session.forEachItem([&](const Item &item) {
+        if (auto script = castItem<Script>(item)) {
             auto source = QString();
-            if (Singletons::fileCache().getSource(script.fileName, &source)) {
-                mScriptEngine->evaluateScript(source, script.fileName, mMessages);
-
-                mGpupadScriptObject->applySessionUpdate(*mScriptEngine);
-                Singletons::synchronizeLogic().cancelAutomaticRevalidation();
+            if (shouldExecute(script->executeOn, mEvaluationType))
+                if (Singletons::fileCache().getSource(script->fileName, &source))
+                    scriptEngine.evaluateScript(source, script->fileName, mMessages);
+        }
+        else if (auto binding = castItem<Binding>(item)) {
+            const auto &b = *binding;
+            if (b.bindingType == Binding::BindingType::Uniform) {
+                // set global in script state
+                auto values = scriptEngine.evaluateValues(b.values, b.id, mMessages); 
+                scriptEngine.setGlobal(b.name, values);
             }
         }
-    };
+    });
+    mScriptSession->endSessionUpdate();
+}
 
-    const auto &session = Singletons::sessionModel();
+void RenderSession::configured()
+{
+    mScriptSession->applySessionUpdate();
 
-    if (!itemsChanged && mEvaluationType != EvaluationType::Reset) {
-        mScriptEngine->updateVariables(mMessages);
+    if (mEvaluationType == EvaluationType::Automatic)
+        Singletons::synchronizeLogic().cancelAutomaticRevalidation();
 
-        session.forEachItem([&](const Item &item) {
-            if (auto script = castItem<Script>(item))
-                evaluateScript(*script);
-        });
-        return;
-    }
+    mMessages += mScriptSession->resetMessages();
+}
 
+void RenderSession::createCommandQueue()
+{
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
     mCommandQueue.reset(new CommandQueue());
     mUsedItems.clear();
+
+    auto &scriptEngine = mScriptSession->engine();
+    const auto &session = mSessionCopy;
 
     const auto addCommand = [&](auto&& command) {
         mCommandQueue->commands.emplace_back(std::move(command));
@@ -256,18 +269,18 @@ void RenderSession::prepare(bool itemsChanged,
 
     const auto addBufferOnce = [&](ItemId bufferId) {
         return addOnce(mCommandQueue->buffers,
-            session.findItem<Buffer>(bufferId), *mScriptEngine);
+            session.findItem<Buffer>(bufferId), scriptEngine);
     };
 
     const auto addTextureOnce = [&](ItemId textureId) {
         return addOnce(mCommandQueue->textures,
-            session.findItem<Texture>(textureId), *mScriptEngine);
+            session.findItem<Texture>(textureId), scriptEngine);
     };
 
     const auto addTextureBufferOnce = [&](ItemId bufferId,
             GLBuffer *buffer, Texture::Format format) {
         return addOnce(mCommandQueue->textures,
-            session.findItem<Buffer>(bufferId), buffer, format, *mScriptEngine);
+            session.findItem<Buffer>(bufferId), buffer, format, scriptEngine);
     };
 
     const auto addTargetOnce = [&](ItemId targetId) {
@@ -290,17 +303,16 @@ void RenderSession::prepare(bool itemsChanged,
             for (auto i = 0; i < items.size(); ++i)
                 if (auto attribute = castItem<Attribute>(items[i]))
                     if (auto field = session.findItem<Field>(attribute->fieldId))
-                        vs->setAttribute(i, *field, 
-                            addBufferOnce(field->parent->parent->id), *mScriptEngine);
+                        vs->setAttribute(i, *field,
+                            addBufferOnce(field->parent->parent->id), scriptEngine);
         }
         return vs;
     };
 
     session.forEachItem([&](const Item &item) {
-
         if (auto group = castItem<Group>(item)) {
             const auto iterations =
-                mScriptEngine->evaluateInt(group->iterations, group->id, mMessages);
+                scriptEngine.evaluateInt(group->iterations, group->id, mMessages);
 
             // mark begin of iteration
             addCommand([this, groupId = group->id](BindingState &) {
@@ -317,7 +329,6 @@ void RenderSession::prepare(bool itemsChanged,
         }
         else if (auto script = castItem<Script>(item)) {
             mUsedItems += script->id;
-            evaluateScript(*script);
         }
         else if (auto binding = castItem<Binding>(item)) {
             const auto &b = *binding;
@@ -325,9 +336,7 @@ void RenderSession::prepare(bool itemsChanged,
                 case Binding::BindingType::Uniform:
                     addCommand(
                         [binding = GLUniformBinding{
-                            b.id, b.name, b.bindingType,
-                            mScriptEngine->getVariable(b.name, b.values, b.id, mMessages),
-                            false }
+                            b.id, b.name, b.bindingType, b.values, false }
                         ](BindingState &state) {
                             state.top().uniforms[binding.name] = binding;
                         });
@@ -374,24 +383,21 @@ void RenderSession::prepare(bool itemsChanged,
                 case Binding::BindingType::Buffer:
                     addCommand(
                         [binding = GLBufferBinding{
-                            b.id, b.name, addBufferOnce(b.bufferId), 0, 0, false }
+                            b.id, b.name, addBufferOnce(b.bufferId), { }, { }, 0, false }
                         ](BindingState &state) {
                             state.top().buffers[binding.name] = binding;
                         });
                     break;
 
                 case Binding::BindingType::BufferBlock:
-                    if (auto block = session.findItem<Block>(b.blockId)) {
-                        const auto offset = mScriptEngine->evaluateInt(block->offset, b.blockId, mMessages);
-                        const auto rowCount = mScriptEngine->evaluateInt(block->rowCount, b.blockId, mMessages);
-                        const auto stride = getBlockStride(*block);
+                    if (auto block = session.findItem<Block>(b.blockId))
                         addCommand(
                             [binding = GLBufferBinding{
-                                b.id, b.name, addBufferOnce(block->parent->id), offset, rowCount * stride, false }
+                                b.id, b.name, addBufferOnce(block->parent->id),
+                                block->offset, block->rowCount, getBlockStride(*block), false }
                             ](BindingState &state) {
                                 state.top().buffers[binding.name] = binding;
                             });
-                    }
                     break;
 
                 case Binding::BindingType::Subroutine:
@@ -407,7 +413,7 @@ void RenderSession::prepare(bool itemsChanged,
         else if (auto call = castItem<Call>(item)) {
             if (call->checked) {
                 mUsedItems += call->id;
-                auto glcall = GLCall(*call, *mScriptEngine);
+                auto glcall = GLCall(*call);
                 switch (call->callType) {
                     case Call::CallType::Draw:
                     case Call::CallType::DrawIndexed:
@@ -417,19 +423,16 @@ void RenderSession::prepare(bool itemsChanged,
                         glcall.setTarget(addTargetOnce(call->targetId));
                         glcall.setVextexStream(addVertexStreamOnce(call->vertexStreamId));
                         if (auto block = session.findItem<Block>(call->indexBufferBlockId))
-                            glcall.setIndexBuffer(addBufferOnce(block->parent->id), *block,
-                                *mScriptEngine);
+                            glcall.setIndexBuffer(addBufferOnce(block->parent->id), *block);
                         if (auto block = session.findItem<Block>(call->indirectBufferBlockId))
-                            glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block,
-                                *mScriptEngine);
+                            glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block);
                         break;
 
                     case Call::CallType::Compute:
                     case Call::CallType::ComputeIndirect:
                         glcall.setProgram(addProgramOnce(call->programId));
                         if (auto block = session.findItem<Block>(call->indirectBufferBlockId))
-                            glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block,
-                                *mScriptEngine);
+                            glcall.setIndirectBuffer(addBufferOnce(block->parent->id), *block);
                         break;
 
                     case Call::CallType::ClearTexture:
@@ -461,12 +464,13 @@ void RenderSession::prepare(bool itemsChanged,
                             mUsedItems += program->usedItems();
                             if (!program->bind(&mMessages))
                                 return;
-                            mUsedItems += applyBindings(state, *program);
-                            call.execute(mMessages);
+                            mUsedItems += applyBindings(state, *program, 
+                                mScriptSession->engine());
+                            call.execute(mMessages, mScriptSession->engine());
                             program->unbind(call.itemId());
                         }
                         else {
-                            call.execute(mMessages);
+                            call.execute(mMessages, mScriptSession->engine());
                         }
 
                         if (!updatingPreviewTextures())
@@ -510,8 +514,8 @@ void RenderSession::prepare(bool itemsChanged,
 
 void RenderSession::render()
 {
-    Q_ASSERT(glGetError() == GL_NO_ERROR);
-    QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
+    if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
+        createCommandQueue();
 
     auto& gl = GLContext::currentContext();
     if (!gl) {
@@ -519,6 +523,9 @@ void RenderSession::render()
             0, MessageType::OpenGLVersionNotAvailable, "3.3");
         return;
     }
+
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
+    QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
 
     gl.glEnable(GL_FRAMEBUFFER_SRGB);
     gl.glEnable(GL_PROGRAM_POINT_SIZE);
@@ -542,7 +549,6 @@ void RenderSession::render()
 void RenderSession::reuseUnmodifiedItems()
 {
     if (mPrevCommandQueue) {
-
         replaceEqual(mCommandQueue->textures, mPrevCommandQueue->textures);
         replaceEqual(mCommandQueue->buffers, mPrevCommandQueue->buffers);
         replaceEqual(mCommandQueue->programs, mPrevCommandQueue->programs);
@@ -559,7 +565,6 @@ void RenderSession::reuseUnmodifiedItems()
                 }
             }
         }
-
         mPrevCommandQueue.reset();
     }
 }

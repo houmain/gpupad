@@ -561,35 +561,34 @@ void SessionProperties::updateShaderWidgets(const QModelIndex &index)
 
 void SessionProperties::deduceBlockOffset()
 {
-    const auto &block = *mModel.item<Block>(currentModelIndex());
     auto offset = 0;
-    auto ok = true;
+    const auto &block = *mModel.item<Block>(currentModelIndex());
+    auto &scriptEngine = Singletons::defaultScriptEngine();
+    auto &messages = Singletons::synchronizeLogic().getVolatileMessages(block.id);
     for (auto item : qAsConst(block.parent->items)) {
         if (item == &block)
             break;
 
         const auto &prevBlock = *static_cast<const Block*>(item);
         offset = std::max(offset,
-            evaluateIntExpression(prevBlock.offset, &ok) + 
-            getBlockStride(prevBlock) * evaluateIntExpression(prevBlock.rowCount, &ok));
+            scriptEngine.evaluateInt(prevBlock.offset, prevBlock.id, messages) +
+            getBlockStride(prevBlock) *
+            scriptEngine.evaluateInt(prevBlock.rowCount, prevBlock.id, messages));
     }
-
-    if (ok)
-        mModel.setData(mModel.getIndex(currentModelIndex(),
-            SessionModel::BlockOffset), offset);
+    mModel.setData(mModel.getIndex(currentModelIndex(),
+        SessionModel::BlockOffset), offset);
 }
 
 void SessionProperties::deduceBlockRowCount()
 {
     const auto &block = *mModel.item<Block>(currentModelIndex());
-    auto ok = true;
-    const auto offset = (block.evaluatedOffset >= 0 ?
-        block.evaluatedOffset : evaluateIntExpression(block.offset, &ok));
-    if (ok) {
-        const auto &buffer = *static_cast<const Buffer*>(block.parent);
-        auto binary = QByteArray();
-        if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
-            mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::BlockRowCount),
-                (binary.size() - offset) / getBlockStride(block));
-    }
+    const auto &buffer = *static_cast<const Buffer*>(block.parent);
+    auto &scriptEngine = Singletons::defaultScriptEngine();
+    auto &messages = Singletons::synchronizeLogic().getVolatileMessages(block.id);
+    const auto offset = (block.evaluatedOffset >= 0 ? block.evaluatedOffset :
+        scriptEngine.evaluateInt(block.offset, block.id, messages));
+    auto binary = QByteArray();
+    if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
+        mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::BlockRowCount),
+            (binary.size() - offset) / getBlockStride(block));
 }

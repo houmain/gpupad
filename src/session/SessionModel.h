@@ -43,7 +43,6 @@ public:
     QJsonArray getJson(const QModelIndexList &indexes) const;
     void dropJson(const QJsonArray &json,
         int row, const QModelIndex &parent, bool updateExisting);
-    void clear();
     bool save(const QString &fileName);
     bool load(const QString &fileName);
 

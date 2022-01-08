@@ -5,39 +5,11 @@
 #include <QJSEngine>
 #include <QJSValue>
 
+class QTimer;
+class ScriptConsole;
+
 using ScriptValue = double;
 using ScriptValueList = QList<ScriptValue>;
-class QTimer;
-
-class JSConsole : public QObject
-{
-    Q_OBJECT
-public:
-    explicit JSConsole(QObject *parent = 0);
-
-    void setMessages(MessagePtrSet *messages, const QString &fileName);
-    void setMessages(MessagePtrSet *messages, ItemId itemId);
-
-public Q_SLOTS:
-    void output(QString message, int level);
-
-private:
-    QString mFileName;
-    ItemId mItemId{ };
-    MessagePtrSet *mMessages{ };
-};
-
-class ScriptVariable
-{
-public:
-    int count() const;
-    ScriptValue get() const;
-    ScriptValue get(int index) const;
-
-private:
-    friend class ScriptEngine;
-    QSharedPointer<ScriptValueList> mValues;
-};
 
 class ScriptEngine : public QObject
 {
@@ -45,6 +17,8 @@ class ScriptEngine : public QObject
 public:
     explicit ScriptEngine(QObject *parent = nullptr);
     ~ScriptEngine();
+
+    void setTimeout(int msec);
 
     void setGlobal(const QString &name, QJSValue value);
     void setGlobal(const QString &name, QObject *object);
@@ -57,40 +31,21 @@ public:
     ScriptValueList evaluateValues(const QStringList &valueExpressions,
         ItemId itemId, MessagePtrSet &messages);
     ScriptValue evaluateValue(const QString &valueExpression,
-      ItemId itemId, MessagePtrSet &messages);
-    int evaluateInt(const QString &valueExpression,
-      ItemId itemId, MessagePtrSet &messages);
-
-    void updateVariables(MessagePtrSet &messages);
-    ScriptVariable getVariable(const QString &variableName,
-        const QStringList &valueExpressions,
         ItemId itemId, MessagePtrSet &messages);
-    ScriptVariable getVariable(
-        const QString &valueExpression,
+    int evaluateInt(const QString &valueExpression,
         ItemId itemId, MessagePtrSet &messages);
 
     template<typename T>
     QJSValue toJsValue(const T &value) { return mJsEngine->toScriptValue(value); }
 
 private:
-    struct Variable {
-        QString name;
-        QStringList expressions;
-        QWeakPointer<ScriptValueList> values;
-    };
-
     QJSValue evaluate(const QString &program, const QString &fileName = QString(), int lineNumber = 1);
-    bool updateVariable(const Variable &variable, ItemId itemId, MessagePtrSet &messages);
 
     const QThread& mOnThread;
     QJSEngine *mJsEngine{ };
-    JSConsole *mConsole{ };
+    ScriptConsole *mConsole{ };
     QThread *mInterruptThread{ };
     QTimer *mInterruptTimer{ };
-    QList<Variable> mVariables;
 };
-
-ScriptValue evaluateValueExpression(const QString &expression, bool *ok);
-int evaluateIntExpression(const QString &expression, bool *ok);
 
 #endif // SCRIPTENGINE_H

@@ -4,15 +4,13 @@
 #include "RenderTask.h"
 #include "MessageList.h"
 #include "TextureData.h"
+#include "session/SessionModel.h"
 #include <QMutex>
 #include <QMap>
 #include <QOpenGLVertexArrayObject>
 #include <memory>
 
-class ScriptEngine;
-class GpupadScriptObject;
-class MouseScriptObject;
-class KeyboardScriptObject;
+class ScriptSession;
 class QOpenGLTimerQuery;
 
 class RenderSession final : public RenderTask
@@ -29,19 +27,17 @@ public:
 private:
     struct CommandQueue;
     struct TimerQueries;
-
-    struct GroupIteration {
-        int iterations;
-        int commandQueueBeginIndex;
-        int iterationsLeft;
-    };
+    struct GroupIteration;
 
     void prepare(bool itemsChanged,
         EvaluationType evaluationType) override;
+    void configure() override;
+    void configured() override;
     void render() override;
     void finish() override;
     void release() override;
 
+    void createCommandQueue();
     void reuseUnmodifiedItems();
     void executeCommandQueue();
     void setNextCommandQueueIndex(int index);
@@ -49,11 +45,9 @@ private:
     void outputTimerQueries();
     bool updatingPreviewTextures() const;
 
+    SessionModel mSessionCopy;
+    QScopedPointer<ScriptSession> mScriptSession;
     QOpenGLVertexArrayObject mVao;
-    QScopedPointer<ScriptEngine> mScriptEngine;
-    GpupadScriptObject *mGpupadScriptObject{ };
-    MouseScriptObject *mMouseScriptObject{ };
-    KeyboardScriptObject *mKeyboardScriptObject{ };
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;
     int mNextCommandQueueIndex{ };

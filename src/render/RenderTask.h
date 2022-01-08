@@ -31,16 +31,22 @@ private:
 
     // 1. called in main thread
     virtual void prepare(bool itemsChanged,
-        EvaluationType evaluationType) = 0;
+        EvaluationType evaluationType) { }
 
     // 2. called in render thread
-    virtual void render() = 0;
+    virtual void configure() { }
 
     // 3. called in main thread
+    virtual void configured() { }
+
+    // 4. called in render thread
+    virtual void render() = 0;
+
+    // 5. called in main thread
     void handleRendered();
     virtual void finish() = 0;
 
-    // 4. called in render thread
+    // 6. called in render thread
     virtual void release() = 0;
 
     bool mPrepared{ };

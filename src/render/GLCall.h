@@ -15,7 +15,7 @@ class GLTexture;
 class GLCall
 {
 public:
-    GLCall(const Call &call, ScriptEngine &scriptEngine);
+    explicit GLCall(const Call &call);
 
     ItemId itemId() const { return mCall.id; }
     GLProgram *program() { return mProgram; }
@@ -25,18 +25,17 @@ public:
     void setProgram(GLProgram *program);
     void setTarget(GLTarget *target);
     void setVextexStream(GLStream *vertexStream);
-    void setIndexBuffer(GLBuffer *indices, const Block &block,
-        ScriptEngine &scriptEngine);
-    void setIndirectBuffer(GLBuffer *commands, const Block &block,
-        ScriptEngine &scriptEngine);
+    void setIndexBuffer(GLBuffer *indices, const Block &block);
+    void setIndirectBuffer(GLBuffer *commands, const Block &block);
     void setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer);
     void setTextures(GLTexture *texture, GLTexture *fromTexture);
-    void execute(MessagePtrSet &messages);
+    void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
 
 private:
     std::shared_ptr<void> beginTimerQuery();
-    void executeDraw(MessagePtrSet &messages);
-    void executeCompute(MessagePtrSet &messages);
+    int evaluateInt(ScriptEngine &scriptEngine, const QString &expression);
+    void executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine);
+    void executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
     void executeClearTexture(MessagePtrSet &messages);
     void executeCopyTexture(MessagePtrSet &messages);
     void executeClearBuffer(MessagePtrSet &messages);
@@ -56,23 +55,12 @@ private:
     GLTexture *mFromTexture{ };
 
     GLBuffer *mIndexBuffer{ };
-    GLuint mIndirectOffset{ };
+    QString mIndirectOffset;
     int mIndexSize{ };
-    GLuint mIndicesOffset{ };
+    QString mIndicesOffset;
 
     GLBuffer *mIndirectBuffer{ };
     GLint mIndirectStride{ };
-
-    ScriptVariable mFirst;
-    ScriptVariable mCount;
-    ScriptVariable mInstanceCount;
-    ScriptVariable mBaseVertex;
-    ScriptVariable mBaseInstance;
-    ScriptVariable mDrawCount;
-    ScriptVariable mPatchVertices;
-    ScriptVariable mWorkgroupsX;
-    ScriptVariable mWorkgroupsY;
-    ScriptVariable mWorkgroupsZ;
 
     QSet<ItemId> mUsedItems;
     std::shared_ptr<QOpenGLTimerQuery> mTimerQuery;

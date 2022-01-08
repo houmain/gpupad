@@ -55,7 +55,7 @@
         <file>images/16x16/media-seek-forward.png</file>
         <file>images/16x16/media-skip-forward.png</file>
         <file>images/16x16/format-justify-left.png</file>
-        <file>scripting/GpupadScriptObject.js</file>
         <file>scripting/ScriptEngine.js</file>
+        <file>scripting/SessionScriptObject.js</file>
     </qresource>
 </RCC>

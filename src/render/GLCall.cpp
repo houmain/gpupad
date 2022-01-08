@@ -8,19 +8,9 @@
 #include <QOpenGLTimerQuery>
 #include <cmath>
 
-GLCall::GLCall(const Call &call, ScriptEngine &scriptEngine)
+GLCall::GLCall(const Call &call)
     : mCall(call)
 {
-    mFirst = scriptEngine.getVariable(call.first, call.id, mMessages);
-    mCount = scriptEngine.getVariable(call.count, call.id, mMessages);
-    mInstanceCount = scriptEngine.getVariable(call.instanceCount, call.id, mMessages);
-    mBaseVertex = scriptEngine.getVariable(call.baseVertex, call.id, mMessages);
-    mBaseInstance = scriptEngine.getVariable(call.baseInstance, call.id, mMessages);
-    mDrawCount = scriptEngine.getVariable(call.drawCount, call.id, mMessages);
-    mPatchVertices = scriptEngine.getVariable(call.patchVertices, call.id, mMessages);
-    mWorkgroupsX = scriptEngine.getVariable(call.workGroupsX, call.id, mMessages);
-    mWorkgroupsY = scriptEngine.getVariable(call.workGroupsY, call.id, mMessages);
-    mWorkgroupsZ = scriptEngine.getVariable(call.workGroupsZ, call.id, mMessages);
 }
 
 void GLCall::setProgram(GLProgram *program)
@@ -38,8 +28,7 @@ void GLCall::setVextexStream(GLStream *stream)
     mVertexStream = stream;
 }
 
-void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block,
-    ScriptEngine &scriptEngine)
+void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block)
 {
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
@@ -48,8 +37,7 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block,
 
     mIndexBuffer = indices;
     mIndexSize = getBlockStride(block);
-    mIndicesOffset = scriptEngine.evaluateValue(
-        block.offset, block.id, mMessages);
+    mIndicesOffset = block.offset;
 }
 
 GLenum GLCall::getIndexType() const
@@ -62,8 +50,7 @@ GLenum GLCall::getIndexType() const
     }
 }
 
-void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block,
-    ScriptEngine &scriptEngine)
+void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block)
 {
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
@@ -72,8 +59,7 @@ void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block,
 
     mIndirectBuffer = commands;
     mIndirectStride = getBlockStride(block);
-    mIndirectOffset = scriptEngine.evaluateValue(
-        block.offset, block.id, mMessages);
+    mIndirectOffset = block.offset;
 }
 
 void GLCall::setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer)
@@ -99,18 +85,18 @@ std::shared_ptr<void> GLCall::beginTimerQuery()
         [this](void*) { mTimerQuery->end(); });
 }
 
-void GLCall::execute(MessagePtrSet &messages)
+void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
     switch (mCall.callType) {
         case Call::CallType::Draw:
         case Call::CallType::DrawIndexed:
         case Call::CallType::DrawIndirect:
         case Call::CallType::DrawIndexedIndirect:
-            executeDraw(messages);
+            executeDraw(messages, scriptEngine);
             break;
         case Call::CallType::Compute:
         case Call::CallType::ComputeIndirect:
-            executeCompute(messages);
+            executeCompute(messages, scriptEngine);
             break;
         case Call::CallType::ClearTexture:
             executeClearTexture(messages);
@@ -144,7 +130,12 @@ void GLCall::execute(MessagePtrSet &messages)
             mCall.id, MessageType::CallFailed, getFirstGLError());
 }
 
-void GLCall::executeDraw(MessagePtrSet &messages)
+int GLCall::evaluateInt(ScriptEngine &scriptEngine, const QString &expression)
+{
+    return scriptEngine.evaluateInt(expression, mCall.id, mMessages);
+}
+
+void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
     if (mTarget) {
         mTarget->bind();
@@ -171,14 +162,15 @@ void GLCall::executeDraw(MessagePtrSet &messages)
         auto &gl = GLContext::currentContext();
 
         if (mCall.primitiveType == Call::PrimitiveType::Patches && gl.v4_0)
-            gl.v4_0->glPatchParameteri(GL_PATCH_VERTICES, mPatchVertices.get());
+            gl.v4_0->glPatchParameteri(GL_PATCH_VERTICES, 
+                evaluateInt(scriptEngine, mCall.patchVertices));
 
-        const auto first = mFirst.get();
-        const auto count = mCount.get();
-        const auto instanceCount = mInstanceCount.get();
-        const auto baseVertex = mBaseVertex.get();
-        const auto baseInstance = mBaseInstance.get();
-        const auto drawCount = mDrawCount.get();
+        const auto first = evaluateInt(scriptEngine, mCall.first);
+        const auto count = evaluateInt(scriptEngine, mCall.count);
+        const auto instanceCount = evaluateInt(scriptEngine, mCall.instanceCount);
+        const auto baseVertex = evaluateInt(scriptEngine, mCall.baseVertex);
+        const auto baseInstance = evaluateInt(scriptEngine, mCall.baseInstance);
+        const auto drawCount = evaluateInt(scriptEngine, mCall.drawCount);
 
         auto guard = beginTimerQuery();
         if (mCall.callType == Call::CallType::Draw) {
@@ -195,8 +187,8 @@ void GLCall::executeDraw(MessagePtrSet &messages)
         }
         else if (mCall.callType == Call::CallType::DrawIndexed) {
             // DrawElements(InstancedBaseVertexBaseInstance)
-            const auto offset =
-                reinterpret_cast<void*>(static_cast<intptr_t>(mIndicesOffset + first * mIndexSize));
+            const auto offset = reinterpret_cast<void*>(static_cast<intptr_t>(
+                evaluateInt(scriptEngine, mIndicesOffset) + first * mIndexSize));
             if (!baseVertex && !baseInstance) {
                 gl.glDrawElementsInstanced(mCall.primitiveType, count, 
                     getIndexType(), offset, instanceCount);
@@ -210,8 +202,8 @@ void GLCall::executeDraw(MessagePtrSet &messages)
         }
         else if (mCall.callType == Call::CallType::DrawIndirect) {
             // (Multi)DrawArraysIndirect
-            const auto offset =
-                reinterpret_cast<void*>(static_cast<intptr_t>(mIndirectOffset));
+            const auto offset = reinterpret_cast<void*>(static_cast<intptr_t>(
+                evaluateInt(scriptEngine, mIndirectOffset)));
             if (drawCount == 1) {
                 if (auto gl40 = check(gl.v4_0, mCall.id, messages))
                     gl40->glDrawArraysIndirect(mCall.primitiveType, offset);
@@ -223,8 +215,8 @@ void GLCall::executeDraw(MessagePtrSet &messages)
         }
         else if (mCall.callType == Call::CallType::DrawIndexedIndirect) {
             // (Multi)DrawElementsIndirect
-            const auto offset =
-                reinterpret_cast<void*>(static_cast<intptr_t>(mIndirectOffset));
+            const auto offset = reinterpret_cast<void*>(static_cast<intptr_t>(
+                evaluateInt(scriptEngine, mIndirectOffset)));
             if (drawCount == 1) {
                 if (auto gl40 = check(gl.v4_0, mCall.id, messages))
                     gl40->glDrawElementsIndirect(mCall.primitiveType, 
@@ -250,7 +242,7 @@ void GLCall::executeDraw(MessagePtrSet &messages)
         mUsedItems += mTarget->usedItems();
 }
 
-void GLCall::executeCompute(MessagePtrSet &messages)
+void GLCall::executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
 #if GL_VERSION_4_3
     if (mIndirectBuffer)
@@ -267,12 +259,13 @@ void GLCall::executeCompute(MessagePtrSet &messages)
         if (auto gl43 = check(gl.v4_3, mCall.id, messages)) {
             if (mCall.callType == Call::CallType::Compute) {
                 gl43->glDispatchCompute(
-                    mWorkgroupsX.get(),
-                    mWorkgroupsY.get(),
-                    mWorkgroupsZ.get());
+                    evaluateInt(scriptEngine, mCall.workGroupsX),
+                    evaluateInt(scriptEngine, mCall.workGroupsY),
+                    evaluateInt(scriptEngine, mCall.workGroupsZ));
             }
             else if (mCall.callType == Call::CallType::ComputeIndirect) {
-                const auto offset = static_cast<GLintptr>(mIndirectOffset);
+                const auto offset = static_cast<GLintptr>(
+                    evaluateInt(scriptEngine, mIndirectOffset));
                 gl43->glDispatchComputeIndirect(offset);
             }
         }

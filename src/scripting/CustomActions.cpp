@@ -5,7 +5,6 @@
 #include "FileCache.h"
 #include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
-#include "GpupadScriptObject.h"
 #include <QListView>
 #include <QFileSystemModel>
 #include <QInputDialog>
@@ -22,7 +21,6 @@ public:
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
             mScriptEngine.reset(new ScriptEngine());
-            mGpupadScriptObject = new GpupadScriptObject(mScriptEngine.data());
             mScriptEngine->evaluateScript(source, mFilePath, mMessages);
         }
 
@@ -53,8 +51,6 @@ public:
             mScriptEngine->call(execute,
                 { mScriptEngine->toJsValue(selection) },
                 0, messages);
-
-            mGpupadScriptObject->applySessionUpdate(*mScriptEngine);
         }
     }
 
@@ -62,7 +58,6 @@ private:
     const QString mFilePath;
     MessagePtrSet mMessages;
     QScopedPointer<ScriptEngine> mScriptEngine;
-    GpupadScriptObject *mGpupadScriptObject{ };
 };
 
 CustomActions::CustomActions(QWidget *parent)

@@ -9,6 +9,7 @@
 #include "session/SessionModel.h"
 #include "render/Renderer.h"
 #include "render/GLShareSynchronizer.h"
+#include "scripting/ScriptEngine.h"
 #include <QApplication>
 
 Singletons *Singletons::sInstance;
@@ -79,6 +80,12 @@ InputState &Singletons::inputState()
     return *sInstance->mInputState;
 }
 
+ScriptEngine &Singletons::defaultScriptEngine()
+{
+    Q_ASSERT(onMainThread());
+    return *sInstance->mDefaultScriptEngine;
+}
+
 Singletons::Singletons(QMainWindow *window)
     : mSettings(new Settings())
     , mFileCache(new FileCache())
@@ -88,6 +95,7 @@ Singletons::Singletons(QMainWindow *window)
     , mGLShareSynchronizer(new GLShareSynchronizer())
     , mVideoManager(new VideoManager())
     , mInputState(new InputState())
+    , mDefaultScriptEngine(new ScriptEngine())
 {
     Q_ASSERT(onMainThread());
     sInstance = this;

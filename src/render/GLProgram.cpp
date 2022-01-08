@@ -289,41 +289,46 @@ int GLProgram::getAttributeLocation(const QString &name) const
 }
 
 template <typename T>
-std::vector<T> getValues(const ScriptVariable &variable,
-    ItemId itemId, int count, MessagePtrSet &messages)
+std::vector<T> getValues(ScriptEngine &scriptEngine, 
+    const QStringList &expressions, ItemId itemId, int count, 
+    MessagePtrSet &messages)
 {
-    if (count != variable.count())
-        if (count != 3 || variable.count() != 4)
+    const auto values = scriptEngine.evaluateValues(expressions, itemId, messages); 
+    if (count != values.count())
+        if (count != 3 || values.count() != 4)
             messages += MessageList::insert(itemId,
                 MessageType::UniformComponentMismatch,
-                QString("(%1/%2)").arg(variable.count()).arg(count));
-
-    auto result = std::vector<T>{ };
-    result.resize(count);
-    for (auto i = 0; i < std::min(count, variable.count()); ++i)
-        result[i] = variable.get(i);
-    return result;
+                QString("(%1/%2)").arg(values.count()).arg(count));
+    
+    auto results = std::vector<T>();
+    results.reserve(count);
+    for (const auto &value : values)
+        results.push_back(static_cast<T>(value));
+    return results;
 }
 
-bool GLProgram::apply(const GLUniformBinding &binding)
+bool GLProgram::apply(const GLUniformBinding &binding, 
+    ScriptEngine &scriptEngine)
 {
     auto &gl = GLContext::currentContext();
+    const auto baseName = getUniformBaseName(binding.name);
     const auto [location, dataType, size] = 
-        mActiveUniforms[mActiveUniforms.contains(binding.name) ? 
-            binding.name : getUniformBaseName(binding.name)];
-    uniformSet(getUniformBaseName(binding.name));
+        mActiveUniforms[mActiveUniforms.contains(binding.name) ? binding.name : baseName];
+    uniformSet(baseName);
     if (!dataType || location < 0)
         return false;
 
     switch (dataType) {
 #define ADD(TYPE, DATATYPE, COUNT, FUNCTION) \
         case TYPE: FUNCTION(location, size, \
-                getValues<DATATYPE>(binding.values, binding.bindingItemId, \
+                getValues<DATATYPE>(scriptEngine, \
+                    binding.values, binding.bindingItemId, \
                     COUNT * size, *mCallMessages).data()); break
 
 #define ADD_MATRIX(TYPE, DATATYPE, COUNT, FUNCTION) \
         case TYPE: FUNCTION(location, size, binding.transpose, \
-                getValues<DATATYPE>(binding.values, binding.bindingItemId, \
+                getValues<DATATYPE>(scriptEngine, \
+                    binding.values, binding.bindingItemId, \
                     COUNT * size, *mCallMessages).data()); break
 
         ADD(GL_FLOAT, GLfloat, 1, gl.glUniform1fv);
@@ -474,7 +479,7 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
     return true;
 }
 
-bool GLProgram::apply(const GLBufferBinding &binding)
+bool GLProgram::apply(const GLBufferBinding &binding, ScriptEngine &scriptEngine)
 {
     if (!binding.buffer)
         return false;
@@ -482,9 +487,16 @@ bool GLProgram::apply(const GLBufferBinding &binding)
     if (!mBufferBindingPoints.contains(binding.name))
         return false;
 
+    const auto offset = scriptEngine.evaluateInt(
+        binding.offset, mItemId,  *mCallMessages);
+    const auto rowCount = scriptEngine.evaluateInt(
+        binding.rowCount, mItemId,  *mCallMessages);
+
     const auto [target, index] = mBufferBindingPoints[binding.name];
     binding.buffer->bindIndexedRange(target, index,
-        binding.offset, binding.size, binding.readonly);
+        offset,
+        rowCount * binding.stride,
+        binding.readonly);
     bufferSet(binding.name);
     return true;
 }

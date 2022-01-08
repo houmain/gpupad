@@ -1,16 +1,17 @@
 
-gpupad = function(gpupad) {
+Session = (function(Session) {
+
   const internal = {}
 
   const getItems = function() {
     if (typeof internal.root === 'undefined')
-      internal.root = gpupad.getItems()
+      internal.root = Session.getItems()
     return internal.root
   }
 
   const updateItems = function() {
     if (typeof internal.root !== 'undefined') {
-      gpupad.updateItems(internal.root)
+      Session.updateItems(internal.root)
       delete internal.root
     }
   }
@@ -55,10 +56,10 @@ gpupad = function(gpupad) {
     const parent = getItem(keys.join('/'))
     const items = (parent.items ? parent.items : parent)
     delete items[items.indexOf(item)]
-    gpupad.deleteItem(item)
+    Session.deleteItem(item)
   }
 
-  const gpupadProxy = {
+  const SessionProxy = {
     get(target, key) {
       switch(key) {
         case 'getItems': return getItems
@@ -70,5 +71,5 @@ gpupad = function(gpupad) {
       return target[key]
     }
   }
-  return new Proxy(gpupad, gpupadProxy)
-}(gpupad)
+  return new Proxy(Session, SessionProxy)
+})(Session)

@@ -14,6 +14,7 @@ class Renderer;
 class GLShareSynchronizer;
 class VideoManager;
 class InputState;
+class ScriptEngine;
 
 bool onMainThread();
 
@@ -30,6 +31,7 @@ public:
     static GLShareSynchronizer &glShareSynchronizer();
     static VideoManager &videoManager();
     static InputState &inputState();
+    static ScriptEngine &defaultScriptEngine();
 
     explicit Singletons(QMainWindow *window);
     ~Singletons();
@@ -47,6 +49,7 @@ private:
     QScopedPointer<GLShareSynchronizer> mGLShareSynchronizer;
     QScopedPointer<VideoManager> mVideoManager;
     QScopedPointer<InputState> mInputState;
+    QScopedPointer<ScriptEngine> mDefaultScriptEngine;
 };
 
 #endif // SINGLETONS_H

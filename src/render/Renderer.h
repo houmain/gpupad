@@ -17,11 +17,13 @@ public:
     void release(RenderTask *task);
 
 Q_SIGNALS:
+    void configureTask(RenderTask* renderTask, QPrivateSignal);
     void renderTask(RenderTask* renderTask, QPrivateSignal);
     void releaseTask(RenderTask *renderTask, void *userData, QPrivateSignal);
 
 private:
     class Worker;
+    void handleTaskConfigured();
     void handleTaskRendered();
     void renderNextTask();
 

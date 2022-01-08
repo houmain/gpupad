@@ -13,7 +13,7 @@ struct GLUniformBinding
     ItemId bindingItemId;
     QString name;
     Binding::BindingType type;
-    ScriptVariable values;
+    QStringList values;
     bool transpose;
 };
 
@@ -48,8 +48,9 @@ struct GLBufferBinding
     ItemId bindingItemId;
     QString name;
     GLBuffer *buffer;
-    int offset;
-    int size;
+    QString offset;
+    QString rowCount;
+    int stride;
     bool readonly;
 };
 
@@ -71,10 +72,12 @@ public:
     bool bind(MessagePtrSet *callMessages);
     void unbind(ItemId callItemId);
     int getAttributeLocation(const QString &name) const;
-    bool apply(const GLUniformBinding &binding);
+    bool apply(const GLUniformBinding &binding, 
+        ScriptEngine &scriptEngine);
     bool apply(const GLSamplerBinding &binding, int unit);
     bool apply(const GLImageBinding &binding, int unit);
-    bool apply(const GLBufferBinding &binding);
+    bool apply(const GLBufferBinding &binding, 
+        ScriptEngine &scriptEngine);
     bool applyPrintfBindings();
     bool apply(const GLSubroutineBinding &subroutine);
     void reapplySubroutines();

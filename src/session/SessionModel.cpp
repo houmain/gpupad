@@ -32,10 +32,7 @@ SessionModel::SessionModel(QObject *parent)
         this, &SessionModel::undoStackCleanChanged);
 }
 
-SessionModel::~SessionModel()
-{
-    clear();
-}
+SessionModel::~SessionModel() = default;
 
 QList<QMetaObject::Connection> SessionModel::connectUndoActions(
     QAction *undo, QAction *redo)
@@ -228,17 +225,6 @@ bool SessionModel::canDropMimeData(const QMimeData *data,
             return false;
     }
     return true;
-}
-
-void SessionModel::clear()
-{
-    undoStack().clear();
-    undoStack().setUndoLimit(1);
-
-    deleteItem(QModelIndex());
-
-    undoStack().clear();
-    undoStack().setUndoLimit(0);
 }
 
 bool SessionModel::load(const QString &fileName)

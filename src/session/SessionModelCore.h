@@ -122,8 +122,11 @@ public:
     };
 
     explicit SessionModelCore(QObject *parent = nullptr);
+    SessionModelCore(const SessionModelCore& rhs);
+    SessionModelCore &operator=(const SessionModelCore &rhs);
     ~SessionModelCore() override;
 
+    void clear();
     QModelIndex index(int row, int column,
           const QModelIndex &parent = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex &child) const override;

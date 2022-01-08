@@ -67,6 +67,58 @@ namespace {
         const int mId;
         mutable QList<QUndoCommand*> mCommands;
     };
+
+    Item *allocateItem(Item::Type type)
+    {
+        switch (type) {
+            case Item::Type::Group: return new Group();
+            case Item::Type::Buffer: return new Buffer();
+            case Item::Type::Block: return new Block();
+            case Item::Type::Field: return new Field();
+            case Item::Type::Texture: return new Texture();
+            case Item::Type::Program: return new Program();
+            case Item::Type::Shader: return new Shader();
+            case Item::Type::Binding: return new Binding();
+            case Item::Type::Stream: return new Stream();
+            case Item::Type::Attribute: return new Attribute();
+            case Item::Type::Target: return new Target();
+            case Item::Type::Attachment: return new Attachment();
+            case Item::Type::Call: return new Call();
+            case Item::Type::Script: return new Script();
+        }
+        Q_UNREACHABLE();
+        return nullptr;
+    }
+
+    Item *cloneItem(const Item &item)
+    {
+        const auto copy = [&]() -> Item * {
+            switch (item.type) {
+                case Item::Type::Group: return new Group(static_cast<const Group&>(item));
+                case Item::Type::Buffer: return new Buffer(static_cast<const Buffer&>(item));
+                case Item::Type::Block: return new Block(static_cast<const Block&>(item));
+                case Item::Type::Field: return new Field(static_cast<const Field&>(item));
+                case Item::Type::Texture: return new Texture(static_cast<const Texture&>(item));
+                case Item::Type::Program: return new Program(static_cast<const Program&>(item));
+                case Item::Type::Shader: return new Shader(static_cast<const Shader&>(item));
+                case Item::Type::Binding: return new Binding(static_cast<const Binding&>(item));
+                case Item::Type::Stream: return new Stream(static_cast<const Stream&>(item));
+                case Item::Type::Target: return new Target(static_cast<const Target&>(item));
+                case Item::Type::Attribute: return new Attribute(static_cast<const Attribute&>(item));
+                case Item::Type::Attachment: return new Attachment(static_cast<const Attachment&>(item));
+                case Item::Type::Call: return new Call(static_cast<const Call&>(item));
+                case Item::Type::Script: return new Script(static_cast<const Script&>(item));
+            }
+            Q_UNREACHABLE();
+            return nullptr;
+        }();
+
+        for (auto &child : copy->items) {
+            child = cloneItem(*child);
+            child->parent = copy;
+        }
+        return copy;
+    }
 } // namespace
 
 SessionModelCore::SessionModelCore(QObject *parent)
@@ -75,7 +127,41 @@ SessionModelCore::SessionModelCore(QObject *parent)
 {
 }
 
-SessionModelCore::~SessionModelCore() = default;
+SessionModelCore &SessionModelCore::operator=(const SessionModelCore &rhs)
+{
+    if (this != &rhs) {
+        clear();
+
+        for (auto item : qAsConst(rhs.mRoot->items)) {
+            mRoot->items.append(cloneItem(*item));
+            mRoot->items.back()->parent = mRoot.get();
+        }
+
+        forEachItem(*mRoot,
+            [&](const Item &item) {
+                mItemsById.insert(item.id, &item);
+            });
+
+        mNextItemId = rhs.mNextItemId;
+    }
+    return *this;
+}
+
+SessionModelCore::~SessionModelCore()
+{
+    clear();
+}
+
+void SessionModelCore::clear()
+{
+    undoStack().clear();
+    undoStack().setUndoLimit(1);
+
+    deleteItem(QModelIndex());
+
+    undoStack().clear();
+    undoStack().setUndoLimit(0);
+}
 
 QString SessionModelCore::getTypeName(Item::Type type) const
 {
@@ -306,31 +392,12 @@ QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
     for (auto i = 2; hasChildWithName(parent, name); ++i)
         name = typeName + QStringLiteral(" %1").arg(i);
     
-    const auto insert = [&](Item* item) {
-        item->type = type;
-        item->name = name;
-        item->id = id;
-        insertItem(item, parent, row);
-        return getIndex(item, ColumnType::Name);
-    };
-
-    switch (type) {
-        case Item::Type::Group: return insert(new Group());
-        case Item::Type::Buffer: return insert(new Buffer());
-        case Item::Type::Block: return insert(new Block());
-        case Item::Type::Field: return insert(new Field());
-        case Item::Type::Texture: return insert(new Texture());
-        case Item::Type::Program: return insert(new Program());
-        case Item::Type::Shader: return insert(new Shader());
-        case Item::Type::Binding: return insert(new Binding());
-        case Item::Type::Stream: return insert(new Stream());
-        case Item::Type::Attribute: return insert(new Attribute());
-        case Item::Type::Target: return insert(new Target());
-        case Item::Type::Attachment: return insert(new Attachment());
-        case Item::Type::Call: return insert(new Call());
-        case Item::Type::Script: return insert(new Script());
-    }
-    return { };
+    auto item = allocateItem(type);
+    item->type = type;
+    item->name = name;
+    item->id = id;
+    insertItem(item, parent, row);
+    return getIndex(item, ColumnType::Name);
 }
 
 void SessionModelCore::deleteItem(const QModelIndex &index)

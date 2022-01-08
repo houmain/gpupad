@@ -336,14 +336,15 @@ void SynchronizeLogic::updateEditor(ItemId itemId, bool activated)
 void SynchronizeLogic::updateTextureEditor(const Texture &texture,
     TextureEditor &editor)
 {
-    auto ok = true;
+    auto &scriptEngine = Singletons::defaultScriptEngine();
+    auto &messages = getVolatileMessages(texture.id);
     const auto format = TextureEditor::RawFormat{
         texture.target,
         texture.format,
-        evaluateIntExpression(texture.width, &ok),
-        evaluateIntExpression(texture.height, &ok),
-        evaluateIntExpression(texture.depth, &ok),
-        evaluateIntExpression(texture.layers, &ok),
+        scriptEngine.evaluateInt(texture.width, texture.id, messages),
+        scriptEngine.evaluateInt(texture.height, texture.id, messages),
+        scriptEngine.evaluateInt(texture.depth, texture.id, messages),
+        scriptEngine.evaluateInt(texture.layers, texture.id, messages),
         texture.samples,
     };
     editor.setRawFormat(format);
@@ -366,7 +367,8 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
         return BinaryEditor::DataType::Int8;
     };
 
-    auto ok = true;
+    auto &scriptEngine = Singletons::defaultScriptEngine();
+    auto &messages = getVolatileMessages(buffer.id);
     auto blocks = QList<BinaryEditor::Block>();
     for (const auto *item : qAsConst(buffer.items)) {
         const auto &block = static_cast<const Block&>(*item);
@@ -380,10 +382,12 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
                 field.padding
             });
         }
-        const auto offset = (block.evaluatedOffset >= 0 ? block.evaluatedOffset : 
-            evaluateIntExpression(block.offset, &ok));
-        const auto rowCount = (block.evaluatedRowCount >= 0 ? block.evaluatedRowCount :
-            evaluateIntExpression(block.rowCount, &ok));
+        const auto offset = (block.evaluatedOffset >= 0 ?
+            block.evaluatedOffset :
+            scriptEngine.evaluateInt(block.offset, block.id, messages));
+        const auto rowCount = (block.evaluatedRowCount >= 0 ?
+            block.evaluatedRowCount :
+            scriptEngine.evaluateInt(block.rowCount, block.id, messages));
         blocks.append({
             block.name,
             offset,
@@ -391,8 +395,7 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
             fields
         });
     }
-    if (ok)
-        editor.setBlocks(blocks);
+    editor.setBlocks(blocks);
 }
 
 void SynchronizeLogic::processSource()
@@ -429,4 +432,12 @@ void SynchronizeLogic::handleKeyboardStateChanged()
         if (mEvaluationMode == EvaluationMode::Automatic)
             evaluate(EvaluationType::Steady);
     }
+}
+
+MessagePtrSet &SynchronizeLogic::getVolatileMessages(ItemId item)
+{
+    Q_ASSERT(onMainThread());
+    // TODO: keep a while
+    mVolatileMessages.clear();
+    return mVolatileMessages;
 }

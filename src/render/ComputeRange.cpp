@@ -209,10 +209,6 @@ void ComputeRange::setImage(GLuint textureId,
     mTextureId = textureId;
 }
 
-void ComputeRange::prepare(bool, EvaluationType)
-{
-}
-
 void ComputeRange::render()
 {
 #if GL_VERSION_4_3

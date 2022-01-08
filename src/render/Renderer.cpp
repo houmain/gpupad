@@ -27,6 +27,12 @@ public:
     GLContext context;
     QOffscreenSurface surface;
 
+    void handleConfigureTask(RenderTask* renderTask)
+    {
+        renderTask->configure();
+        Q_EMIT taskConfigured();
+    }
+
     void handleRenderTask(RenderTask* renderTask)
     {
         context.makeCurrent(&surface);
@@ -61,6 +67,7 @@ public Q_SLOTS:
     }
 
 Q_SIGNALS:
+    void taskConfigured();
     void taskRendered();
 
 private:
@@ -108,6 +115,10 @@ Renderer::Renderer(QObject *parent)
     mWorker->surface.moveToThread(&mThread);
     mWorker->moveToThread(&mThread);
 
+    connect(this, &Renderer::configureTask,
+        mWorker.data(), &Worker::handleConfigureTask);
+    connect(mWorker.data(), &Worker::taskConfigured,
+        this, &Renderer::handleTaskConfigured);
     connect(this, &Renderer::renderTask,
         mWorker.data(), &Worker::handleRenderTask);
     connect(mWorker.data(), &Worker::taskRendered,
@@ -157,6 +168,13 @@ void Renderer::renderNextTask()
         return;
 
     mCurrentTask = mPendingTasks.takeFirst();
+    Q_EMIT configureTask(mCurrentTask, QPrivateSignal());
+}
+
+void Renderer::handleTaskConfigured()
+{
+    mCurrentTask->configured();
+
     Q_EMIT renderTask(mCurrentTask, QPrivateSignal());
 }
 
