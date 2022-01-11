@@ -10,6 +10,9 @@
 
 namespace
 {
+    const auto textureUpdateInterval = 5;
+    const auto nonTextureUpdateInterval = 1000;
+
     bool loadSource(const QString &fileName, QString *source)
     {
         const auto detectEncodingSize = 1024 * 10;
@@ -158,7 +161,7 @@ FileCache::FileCache(QObject *parent)
     mBackgroundLoaderThread.start();
     backgroundLoader->moveToThread(&mBackgroundLoaderThread);
 
-    mUpdateFileSystemWatchesTimer.setInterval(5);
+    mUpdateFileSystemWatchesTimer.setInterval(textureUpdateInterval);
     mUpdateFileSystemWatchesTimer.setSingleShot(false);
     mUpdateFileSystemWatchesTimer.start();
 }
@@ -310,11 +313,20 @@ void FileCache::updateFileSystemWatches()
     Q_ASSERT(onMainThread());
     QMutexLocker lock(&mMutex);
 
+    const auto updatingNonTextures = ((mFileSystemWatcherUpdate++ % 
+        (nonTextureUpdateInterval / textureUpdateInterval)) == 0);
+
     for (auto it = mFileSystemWatchesToAdd.begin(); it != mFileSystemWatchesToAdd.end(); ) {
         const auto &fileName = it.key();
         const auto &changed = it.value();
+
+        const auto deferUpdate = (!updatingNonTextures && 
+            (mSources.contains(fileName) || mBinaries.contains(fileName)));
+
         mFileSystemWatcher.removePath(it.key());
-        if (QFileInfo::exists(fileName) &&
+
+        if (!deferUpdate &&
+            QFileInfo::exists(fileName) &&
             mFileSystemWatcher.addPath(fileName)) {
             if (changed && !mEditorSaveAdvertised.remove(fileName)) {
                 if (!reloadFileInBackground(fileName)) {

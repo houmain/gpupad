@@ -60,6 +60,7 @@ private:
     QSet<QString> mEditorSaveAdvertised;
     QTimer mUpdateFileSystemWatchesTimer;
     QFileSystemWatcher mFileSystemWatcher;
+    int mFileSystemWatcherUpdate{ };
     QThread mBackgroundLoaderThread;
 };
 
