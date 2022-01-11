@@ -185,6 +185,7 @@ void TextureEditor::setRawFormat(RawFormat rawFormat)
 bool TextureEditor::load()
 {
     auto texture = TextureData();
+    auto isRaw = false;
     if (!Singletons::fileCache().getTexture(mFileName, true, &texture)) {
         auto binary = QByteArray();
         if (!Singletons::fileCache().getBinary(mFileName, &binary))
@@ -192,11 +193,11 @@ bool TextureEditor::load()
                 return false;
         if (!createFromRaw(binary, mRawFormat, &texture))
             return false;
-        mIsRaw = true;
+        isRaw = true;
     }
-
     replace(texture);
     setModified(false);
+    mIsRaw = isRaw;
     return true;
 }
 
@@ -219,6 +220,7 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
     if (mTexture.isNull())
         centerOn(mTextureItem->boundingRect().topLeft());
     mTexture = texture;
+    mIsRaw = false;
 
     if (!FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
