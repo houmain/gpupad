@@ -224,7 +224,7 @@ QStringList GLShader::getPatchedSources(GLPrintf *printf)
             sources[i] = source;
         }
 
-    auto maxVersion = QString();
+    auto maxVersion = QString("#version 100");
     for (auto i = 0; i < sources.size(); ++i)
         removeVersion(&sources[i], &maxVersion, (i > 0));
 
