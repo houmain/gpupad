@@ -140,6 +140,7 @@ SourceEditor::~SourceEditor()
     disconnect(this, &SourceEditor::cursorPositionChanged,
         this, &SourceEditor::handleCursorPositionChanged);
 
+    Q_EMIT handleTextChanged();
     setDocument(nullptr);
 
     if (mFindReplaceBar.target() == this)
@@ -207,6 +208,8 @@ bool SourceEditor::load()
 
     const auto current = document()->toPlainText();
     const auto initial = current.isEmpty() && !document()->isUndoAvailable();
+    if (initial)
+        document()->setUndoRedoEnabled(false);
 
     const auto firstDiff = [&]() {
         const auto n = std::min(source.length(), current.length());
@@ -243,9 +246,7 @@ bool SourceEditor::load()
         verticalScrollBar()->setSliderPosition(scrollPosition);
     }
 
-    if (initial)
-        document()->clearUndoRedoStacks();
-
+    document()->setUndoRedoEnabled(true);
     document()->setModified(false);
     deduceSourceType();
     return true;
@@ -871,7 +872,8 @@ void SourceEditor::handleTextChanged()
         mMarkedOccurrences.clear();
         updateExtraSelections();
     }
-    Singletons::fileCache().handleEditorFileChanged(mFileName);
+    if (document()->isUndoAvailable())
+        Singletons::fileCache().handleEditorFileChanged(mFileName);
 }
 
 void SourceEditor::updateExtraSelections()
