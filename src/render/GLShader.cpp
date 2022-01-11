@@ -15,10 +15,13 @@ namespace {
         }
     }
 
-    int countLines(const QString &source, int offset) 
+    int countLines(const QString &source, int offset = -1) 
     {
+        auto end = source.size();
+        if (offset >= 0)
+            end = qMin(source.size(), offset);
         auto line = 1;
-        for (auto i = 0; i < qMin(source.size(), offset); ++i)
+        for (auto i = 0; i < end; ++i)
             if (source[i] == '\n')
                 ++line;
         return line;
@@ -28,6 +31,7 @@ namespace {
         const QStringList &includableSources, const QStringList &includableFileNames,
         ItemId itemId, MessagePtrSet &messages) 
     {
+        auto linesInserted = 0;
         const auto regex = QRegularExpression(R"(#include([^\n]*))");
         for (auto match = regex.match(source); match.hasMatch(); match = regex.match(source)) {
             source.remove(match.capturedStart(), match.capturedLength());
@@ -38,13 +42,14 @@ namespace {
 
                 if (const auto index = includableFileNames.indexOf(fileName); index >= 0) {
                     const auto lineNo = countLines(source, match.capturedStart());
-
-                    const auto includableSource = substituteIncludes(
-                        includableSources[index], sourceFileCount + index, sourceFileCount, 
-                        includableSources, includableFileNames, itemId, messages);
-
-                    source.insert(match.capturedStart(), 
-                        includableSource + QString("\n#line %1 %2\n").arg(lineNo).arg(fileNo));
+                    const auto includableSource = QString("%1\n#line %2 %3\n")
+                        .arg(substituteIncludes(
+                            includableSources[index], sourceFileCount + index, sourceFileCount, 
+                            includableSources, includableFileNames, itemId, messages))
+                        .arg(lineNo - linesInserted)
+                        .arg(fileNo);
+                    source.insert(match.capturedStart(), includableSource); 
+                    linesInserted += countLines(includableSource) - 1;
                 }
                 else {
                     messages += MessageList::insert(itemId,
@@ -117,7 +122,7 @@ GLShader::GLShader(Shader::ShaderType type,
             mMessages += MessageList::insert(shader.id,
                 MessageType::LoadingFileFailed, shader.fileName);
 
-        mFileNames += shader.fileName;
+        mFileNames += (FileDialog::isEmptyOrUntitled(shader.fileName) ? shader.name : shader.fileName);
         (isIncludable ? mIncludableSources : mSources) += source + "\n";
         mLanguage = shader.language;
         mEntryPoint = shader.entryPoint;
