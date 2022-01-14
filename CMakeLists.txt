@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.12.0)
 project(gpupad LANGUAGES CXX C)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+endif()
+
 set(GIT_COMMIT_LAST_TAG "0.0.0")
 find_package(Git)
 if(GIT_FOUND)
