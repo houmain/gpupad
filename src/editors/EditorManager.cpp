@@ -240,11 +240,17 @@ SourceEditor *EditorManager::openSourceEditor(const QString &fileName,
 {
     auto editor = getSourceEditor(fileName);
     if (!editor) {
-        editor = new SourceEditor(fileName, 
+        editor = new SourceEditor(fileName,
             mSourceEditorToolBar,  mFindReplaceBar);
         if (!editor->load()) {
             delete editor;
             return nullptr;
+        }
+        // replace untouched untitled editor
+        if (mCurrentDock &&
+            !mCurrentDock->isWindowModified() &&
+            FileDialog::isUntitled(mDocks[mCurrentDock]->fileName())) {
+            closeEditor();
         }
         addSourceEditor(editor);
     }
