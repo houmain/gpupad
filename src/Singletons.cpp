@@ -5,11 +5,11 @@
 #include "Settings.h"
 #include "InputState.h"
 #include "VideoManager.h"
+#include "EvaluatedPropertyCache.h"
 #include "editors/EditorManager.h"
 #include "session/SessionModel.h"
 #include "render/Renderer.h"
 #include "render/GLShareSynchronizer.h"
-#include "scripting/ScriptEngine.h"
 #include <QApplication>
 
 Singletons *Singletons::sInstance;
@@ -80,10 +80,9 @@ InputState &Singletons::inputState()
     return *sInstance->mInputState;
 }
 
-ScriptEngine &Singletons::defaultScriptEngine()
+EvaluatedPropertyCache &Singletons::evaluatedPropertyCache()
 {
-    Q_ASSERT(onMainThread());
-    return *sInstance->mDefaultScriptEngine;
+    return *sInstance->mEvaluatedPropertyCache;
 }
 
 Singletons::Singletons(QMainWindow *window)
@@ -95,7 +94,7 @@ Singletons::Singletons(QMainWindow *window)
     , mGLShareSynchronizer(new GLShareSynchronizer())
     , mVideoManager(new VideoManager())
     , mInputState(new InputState())
-    , mDefaultScriptEngine(new ScriptEngine())
+    , mEvaluatedPropertyCache(new EvaluatedPropertyCache())
 {
     Q_ASSERT(onMainThread());
     sInstance = this;

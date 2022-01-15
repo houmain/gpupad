@@ -42,9 +42,6 @@ struct Block : Item
 {
     QString offset{ "0" };
     QString rowCount{ "1" };
-
-    mutable int evaluatedOffset{ -1 };
-    mutable int evaluatedRowCount{ -1 };
 };
 
 struct Field : Item

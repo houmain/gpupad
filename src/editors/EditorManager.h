@@ -1,13 +1,23 @@
 #ifndef EDITORMANAGER_H
 #define EDITORMANAGER_H
 
+#include "EditActions.h"
+#include "SourceType.h"
 #include "FileDialog.h"
 #include "DockWindow.h"
-#include "SourceEditor.h"
-#include "BinaryEditor.h"
-#include "TextureEditor.h"
 #include <QList>
 #include <QMap>
+
+class IEditor;
+class SourceEditor;
+class BinaryEditor;
+class TextureEditor;
+class FindReplaceBar;
+class TextureInfoBar;
+class TextureEditorToolBar;
+class BinaryEditorToolBar;
+class SourceEditorToolBar;
+class QmlView;
 
 class EditorManager final : public DockWindow
 {
@@ -28,13 +38,14 @@ public:
         int line = -1, int column = -1);
     BinaryEditor *openBinaryEditor(const QString &fileName);
     TextureEditor *openTextureEditor(const QString &fileName);
-    QDockWidget *createDock(QWidget *widget, IEditor *editor);
+    QmlView *openQmlView(const QString &fileName);
     void setAutoRaise(bool raise) { mAutoRaise = raise; }
 
     IEditor *getEditor(const QString &fileName);
     SourceEditor *getSourceEditor(const QString &fileName);
     BinaryEditor *getBinaryEditor(const QString &fileName);
     TextureEditor *getTextureEditor(const QString &fileName);
+    QmlView *getQmlView(const QString &fileName);
     QStringList getSourceFileNames() const;
     QStringList getBinaryFileNames() const;
     QStringList getImageFileNames() const;
@@ -78,10 +89,12 @@ private:
     void autoRaise(QWidget *editor);
     void updateEditorToolBarVisibility();
     void updateEditorPropertiesVisibility();
+    QDockWidget *createDock(QWidget *widget, IEditor *editor);
 
     QList<SourceEditor*> mSourceEditors;
     QList<BinaryEditor*> mBinaryEditors;
     QList<TextureEditor*> mTextureEditors;
+    QList<QmlView*> mQmlViews;
     std::map<QDockWidget*, IEditor*> mDocks;
     QDockWidget *mCurrentDock{ };
     FindReplaceBar *mFindReplaceBar{ };

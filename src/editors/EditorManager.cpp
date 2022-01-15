@@ -4,9 +4,13 @@
 #include "FileDialog.h"
 #include "SynchronizeLogic.h"
 #include "TextureInfoBar.h"
+#include "SourceEditor.h"
+#include "BinaryEditor.h"
+#include "TextureEditor.h"
 #include "SourceEditorToolBar.h"
 #include "BinaryEditorToolBar.h"
 #include "TextureEditorToolBar.h"
+#include "QmlView.h"
 #include <functional>
 #include <QDockWidget>
 #include <QAction>
@@ -227,6 +231,11 @@ IEditor* EditorManager::openEditor(const QString &fileName,
     bool asBinaryFile)
 {
     if (!asBinaryFile) {
+        if (fileName.endsWith(".qml", Qt::CaseInsensitive))
+            if (!(QApplication::keyboardModifiers() & Qt::ControlModifier))
+                if (auto editor = openQmlView(fileName))
+                    return editor;
+
         if (auto editor = openTextureEditor(fileName))
             return editor;
         if (auto editor = openSourceEditor(fileName))
@@ -290,6 +299,22 @@ TextureEditor *EditorManager::openTextureEditor(const QString &fileName)
     return editor;
 }
 
+QmlView *EditorManager::openQmlView(const QString &fileName)
+{
+    auto editor = getQmlView(fileName);
+    if (!editor) {
+        editor = new QmlView(fileName);
+        if (!editor->load()) {
+            delete editor;
+            return nullptr;
+        }
+        mQmlViews.append(editor);
+        createDock(editor, editor);
+    }
+    autoRaise(editor);
+    return editor;
+}
+
 IEditor *EditorManager::getEditor(const QString &fileName)
 {
     if (auto editor = getSourceEditor(fileName))
@@ -318,6 +343,14 @@ BinaryEditor* EditorManager::getBinaryEditor(const QString &fileName)
 TextureEditor* EditorManager::getTextureEditor(const QString &fileName)
 {
     for (TextureEditor *editor : qAsConst(mTextureEditors))
+        if (editor->fileName() == fileName)
+            return editor;
+    return nullptr;
+}
+
+QmlView* EditorManager::getQmlView(const QString &fileName)
+{
+    for (QmlView *editor : qAsConst(mQmlViews))
         if (editor->fileName() == fileName)
             return editor;
     return nullptr;
@@ -426,7 +459,9 @@ bool EditorManager::reloadEditor()
         if (FileDialog::isUntitled(editor->fileName()))
             return false;
 
-        Singletons::fileCache().invalidateFile(editor->fileName());
+        // do not purge when reloading qml view
+        if (mQmlViews.indexOf(static_cast<QmlView*>(editor)) < 0)
+            Singletons::fileCache().invalidateFile(editor->fileName());
 
         return editor->load();
     }
@@ -597,6 +632,7 @@ bool EditorManager::closeDock(QDockWidget *dock, bool promptSave)
     mSourceEditors.removeAll(static_cast<SourceEditor*>(editor));
     mBinaryEditors.removeAll(static_cast<BinaryEditor*>(editor));
     mTextureEditors.removeAll(static_cast<TextureEditor*>(editor));
+    mQmlViews.removeAll(static_cast<QmlView*>(editor));
 
     mDocks.erase(dock);
 

@@ -18,6 +18,7 @@ public:
     explicit ScriptEngine(QObject *parent = nullptr);
     ~ScriptEngine();
 
+    QJSEngine *jsEngine() { return mJsEngine; }
     void setTimeout(int msec);
 
     void setGlobal(const QString &name, QJSValue value);

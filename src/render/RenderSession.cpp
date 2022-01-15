@@ -235,12 +235,11 @@ void RenderSession::configure()
             }
         }
     });
-    mScriptSession->endSessionUpdate();
 }
 
 void RenderSession::configured()
 {
-    mScriptSession->applySessionUpdate();
+    mScriptSession->endSessionUpdate();
 
     if (mEvaluationType == EvaluationType::Automatic)
         Singletons::synchronizeLogic().cancelAutomaticRevalidation();

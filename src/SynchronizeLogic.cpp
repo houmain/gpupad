@@ -2,9 +2,10 @@
 #include "Singletons.h"
 #include "FileCache.h"
 #include "VideoManager.h"
+#include "EvaluatedPropertyCache.h"
 #include "session/SessionModel.h"
-#include "scripting/ScriptEngine.h"
 #include "editors/EditorManager.h"
+#include "editors/TextureEditor.h"
 #include "editors/BinaryEditor.h"
 #include "render/RenderSession.h"
 #include "render/ProcessSource.h"
@@ -185,14 +186,14 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
             mEditorItemsModified.insert(buffer->id);
         }
         else if (auto block = mModel.item<Block>(index)) {
-            block->evaluatedOffset = -1;
-            block->evaluatedRowCount = -1;
+            Singletons::evaluatedPropertyCache().invalidate(block->id);
             mEditorItemsModified.insert(block->parent->id);
         }
         else if (auto field = mModel.item<Field>(index)) {
             mEditorItemsModified.insert(field->parent->parent->id);
         }
         else if (auto texture = mModel.item<Texture>(index)) {
+            Singletons::evaluatedPropertyCache().invalidate(texture->id);
             mEditorItemsModified.insert(texture->id);
         }
     }
@@ -336,18 +337,13 @@ void SynchronizeLogic::updateEditor(ItemId itemId, bool activated)
 void SynchronizeLogic::updateTextureEditor(const Texture &texture,
     TextureEditor &editor)
 {
-    auto &scriptEngine = Singletons::defaultScriptEngine();
-    auto &messages = getVolatileMessages(texture.id);
-    const auto format = TextureEditor::RawFormat{
-        texture.target,
-        texture.format,
-        scriptEngine.evaluateInt(texture.width, texture.id, messages),
-        scriptEngine.evaluateInt(texture.height, texture.id, messages),
-        scriptEngine.evaluateInt(texture.depth, texture.id, messages),
-        scriptEngine.evaluateInt(texture.layers, texture.id, messages),
-        texture.samples,
-    };
-    editor.setRawFormat(format);
+    auto width = 0, height = 0, depth = 0, layers = 0;
+    Singletons::evaluatedPropertyCache().evaluateTextureProperties(
+        texture, &width, &height, &depth, &layers);
+    editor.setRawFormat({
+        texture.target, texture.format, width, height, depth, 
+        layers, texture.samples,
+    });
 }
 
 void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
@@ -367,8 +363,6 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
         return BinaryEditor::DataType::Int8;
     };
 
-    auto &scriptEngine = Singletons::defaultScriptEngine();
-    auto &messages = getVolatileMessages(buffer.id);
     auto blocks = QList<BinaryEditor::Block>();
     for (const auto *item : qAsConst(buffer.items)) {
         const auto &block = static_cast<const Block&>(*item);
@@ -382,12 +376,8 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
                 field.padding
             });
         }
-        const auto offset = (block.evaluatedOffset >= 0 ?
-            block.evaluatedOffset :
-            scriptEngine.evaluateInt(block.offset, block.id, messages));
-        const auto rowCount = (block.evaluatedRowCount >= 0 ?
-            block.evaluatedRowCount :
-            scriptEngine.evaluateInt(block.rowCount, block.id, messages));
+        auto offset = 0, rowCount = 0;
+        Singletons::evaluatedPropertyCache().evaluateBlockProperties(block, &offset, &rowCount);
         blocks.append({
             block.name,
             offset,
@@ -432,12 +422,4 @@ void SynchronizeLogic::handleKeyboardStateChanged()
         if (mEvaluationMode == EvaluationMode::Automatic)
             evaluate(EvaluationType::Steady);
     }
-}
-
-MessagePtrSet &SynchronizeLogic::getVolatileMessages(ItemId item)
-{
-    Q_ASSERT(onMainThread());
-    // TODO: keep a while
-    mVolatileMessages.clear();
-    return mVolatileMessages;
 }

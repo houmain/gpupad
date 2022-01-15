@@ -23,18 +23,17 @@ public:
 
     // 2. called in render thread
     void beginSessionUpdate(SessionModel *sessionCopy);
-    void endSessionUpdate();
     ScriptEngine& engine();
 
     // 3. called in main thread
-    void applySessionUpdate();
+    void endSessionUpdate();
 
 private:
     void initializeEngine();
 
     MessagePtrSet mMessages;
 
-    ScriptEngine *mScriptEngine{ };
+    QScopedPointer<ScriptEngine> mScriptEngine;
     SessionScriptObject *mSessionScriptObject{ };
     MouseScriptObject *mMouseScriptObject{ };
     KeyboardScriptObject *mKeyboardScriptObject{ };

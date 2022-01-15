@@ -13,11 +13,14 @@
 #include "ui_AttributeProperties.h"
 #include "ui_TargetProperties.h"
 #include "ui_ScriptProperties.h"
-#include "editors/EditorManager.h"
-#include "scripting/ScriptEngine.h"
 #include "Singletons.h"
 #include "SessionModel.h"
 #include "SynchronizeLogic.h"
+#include "EvaluatedPropertyCache.h"
+#include "editors/EditorManager.h"
+#include "editors/TextureEditor.h"
+#include "editors/BinaryEditor.h"
+#include "editors/SourceEditor.h"
 #include "FileCache.h"
 #include <QStackedWidget>
 #include <QDataWidgetMapper>
@@ -563,17 +566,17 @@ void SessionProperties::deduceBlockOffset()
 {
     auto offset = 0;
     const auto &block = *mModel.item<Block>(currentModelIndex());
-    auto &scriptEngine = Singletons::defaultScriptEngine();
-    auto &messages = Singletons::synchronizeLogic().getVolatileMessages(block.id);
     for (auto item : qAsConst(block.parent->items)) {
         if (item == &block)
             break;
 
         const auto &prevBlock = *static_cast<const Block*>(item);
-        offset = std::max(offset,
-            scriptEngine.evaluateInt(prevBlock.offset, prevBlock.id, messages) +
-            getBlockStride(prevBlock) *
-            scriptEngine.evaluateInt(prevBlock.rowCount, prevBlock.id, messages));
+        auto prevOffset = 0, prevRowCount = 0;
+        Singletons::evaluatedPropertyCache().evaluateBlockProperties(
+            prevBlock, &prevOffset, &prevRowCount);
+
+        offset = std::max(offset, prevOffset) + 
+            getBlockStride(prevBlock) * prevRowCount;
     }
     mModel.setData(mModel.getIndex(currentModelIndex(),
         SessionModel::BlockOffset), offset);
@@ -583,10 +586,8 @@ void SessionProperties::deduceBlockRowCount()
 {
     const auto &block = *mModel.item<Block>(currentModelIndex());
     const auto &buffer = *static_cast<const Buffer*>(block.parent);
-    auto &scriptEngine = Singletons::defaultScriptEngine();
-    auto &messages = Singletons::synchronizeLogic().getVolatileMessages(block.id);
-    const auto offset = (block.evaluatedOffset >= 0 ? block.evaluatedOffset :
-        scriptEngine.evaluateInt(block.offset, block.id, messages));
+    auto offset = 0, rowCount = 0;
+    Singletons::evaluatedPropertyCache().evaluateBlockProperties(block, &offset, &rowCount);
     auto binary = QByteArray();
     if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
         mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::BlockRowCount),

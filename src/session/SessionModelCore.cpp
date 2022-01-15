@@ -202,6 +202,19 @@ bool SessionModelCore::canContainType(const QModelIndex &index, Item::Type type)
     }
 }
 
+Item::Type SessionModelCore::getDefaultChildType(const QModelIndex &index) const
+{
+    switch (getItemType(index)) {
+        case Item::Type::Buffer: return Item::Type::Block;
+        case Item::Type::Block: return Item::Type::Field;
+        case Item::Type::Program: return Item::Type::Shader;
+        case Item::Type::Stream: return Item::Type::Attribute;
+        case Item::Type::Target: return Item::Type::Attachment;
+        default:
+            return Item::Type::Group;
+    }
+}
+
 QModelIndex SessionModelCore::index(int row, int column,
     const QModelIndex &parent) const
 {
@@ -352,13 +365,15 @@ ItemId SessionModelCore::getNextItemId()
     return mNextItemId;
 }
 
-bool SessionModelCore::hasChildWithName(const QModelIndex &parent, 
-    const QString &name) 
+QModelIndex SessionModelCore::findChildByName(const QModelIndex &parent,
+    const QString &name) const
 {
-    for (auto i = 0; i < rowCount(parent); ++i)
-        if (getItem(index(i, 0, parent)).name == name)
-            return true;
-    return false;
+    for (auto i = 0; i < rowCount(parent); ++i) {
+        auto child = index(i, 0, parent);
+        if (getItem(child).name == name)
+            return child;
+    }
+    return { };
 }
 
 QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
@@ -389,7 +404,7 @@ QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
 
     const auto typeName = getTypeName(type);
     auto name = typeName;
-    for (auto i = 2; hasChildWithName(parent, name); ++i)
+    for (auto i = 2; findChildByName(parent, name).isValid(); ++i)
         name = typeName + QStringLiteral(" %1").arg(i);
     
     auto item = allocateItem(type);

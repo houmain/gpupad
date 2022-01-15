@@ -8,33 +8,43 @@
 #include <functional>
 
 class SessionModel;
-class ScriptEngine;
 struct Item;
 
 class SessionScriptObject : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QJSValue items READ rootItems)
 
 public:
-    explicit SessionScriptObject(QObject *parent = nullptr);
+    explicit SessionScriptObject(QJSEngine *engine);
 
-    void beginUpdate(ScriptEngine *scriptEndine, SessionModel *sessionCopy);
-    void endUpdate();
-    void applyUpdate();
+    void beginBackgroundUpdate(SessionModel *sessionCopy);
+    void endBackgroundUpdate();
 
-    Q_INVOKABLE QJsonArray getItems() const;
-    Q_INVOKABLE void updateItems(QJsonValue update);
-    Q_INVOKABLE void deleteItem(QJsonValue item);
-    Q_INVOKABLE void setBufferData(QJsonValue item, QJSValue data);
-    Q_INVOKABLE void setBlockData(QJsonValue item, QJSValue data);
-    Q_INVOKABLE void setTextureData(QJsonValue item, QJSValue data);
+    QJSValue rootItems();
+    Q_INVOKABLE QJSValue item(QJSValue itemDesc);
+    Q_INVOKABLE void clear();
+    Q_INVOKABLE void clearItem(QJSValue itemDesc);
+    Q_INVOKABLE void deleteItem(QJSValue itemDesc);
+
+    Q_INVOKABLE void setBufferData(QJSValue itemDesc, QJSValue data);
+    Q_INVOKABLE void setBlockData(QJSValue itemDesc, QJSValue data);
+    Q_INVOKABLE void setTextureData(QJSValue itemDesc, QJSValue data);
 
 private:
-    const Item *findItem(QJsonValue objectOrId) const;
+    class ItemObject;
+    class ItemListObject;
+    using UpdateFunction = std::function<void(SessionModel &)>;
 
+    SessionModel &threadSessionModel();
+    QJSEngine &engine();
+    void withSessionModel(UpdateFunction &&updateFunction);
+    ItemId getItemId(QJSValue itemDesc);
+
+    QJSEngine *mEngine{ };
+    QJSValue mRootItemsList;
     MessagePtrSet mMessages;
-    SessionModel *mSession{ };
-    ScriptEngine *mScriptEngine{ };
-    std::vector<std::function<void()>> mPendingUpdates;
-    std::vector<std::function<void()>> mPendingEditorUpdates;
+    SessionModel *mSessionCopy{ };
+    std::vector<UpdateFunction> mPendingUpdates;
+    bool mUpdatedEditor{ };
 };

@@ -1,10 +1,13 @@
 #include "SessionScriptObject.h"
 #include "ScriptEngine.h"
+#include "EvaluatedPropertyCache.h"
 #include "editors/EditorManager.h"
+#include "editors/TextureEditor.h"
 #include "editors/BinaryEditor.h"
 #include "session/SessionModel.h"
 #include "FileCache.h"
 #include "Singletons.h"
+#include <QQmlPropertyMap>
 #include <QTextStream>
 #include <QFloat16>
 #include <cstring>
@@ -155,12 +158,11 @@ namespace
         return textureData;
     }
 
-    QString ensureFileName(SessionModel &session, const FileItem *item)
+    void ensureFileName(SessionModel &session, const FileItem *item)
     {
         if (item->fileName.isEmpty())
             session.setData(session.getIndex(item, SessionModel::FileName),
                 FileDialog::generateNextUntitledFileName(item->name));
-        return item->fileName;
     }
 
     BinaryEditor *openBinaryEditor(const Buffer &buffer)
@@ -184,140 +186,288 @@ namespace
         editors.setAutoRaise(true);
         return editor;
     }
+
+    bool canHaveItems(Item::Type type) 
+    {
+        switch (type) {
+            case Item::Type::Group:
+            case Item::Type::Buffer:
+            case Item::Type::Block:
+            case Item::Type::Program:
+            case Item::Type::Stream:
+            case Item::Type::Target:
+                return true;
+            default:
+                return false;
+        }
+    }
 } // namespace
 
-SessionScriptObject::SessionScriptObject(QObject *parent)
-    : QObject{parent}
-{
-}
+//-------------------------------------------------------------------------
 
-void SessionScriptObject::beginUpdate(ScriptEngine *scriptEngine, SessionModel *sessionCopy)
+class SessionScriptObject::ItemObject : public QQmlPropertyMap
 {
-    mScriptEngine = scriptEngine;
-    mSession = sessionCopy;
+private:
+    SessionScriptObject &mSessionObject;
+    ItemId mItemId;
 
-    if (scriptEngine->getGlobal("Session").isUndefined()) {
-        scriptEngine->setGlobal("Session", this);
-        auto file = QFile(":/scripting/SessionScriptObject.js");
-        file.open(QFile::ReadOnly | QFile::Text);
-        scriptEngine->evaluateScript(QTextStream(&file).readAll(), "", mMessages);
+    QVariant updateValue(const QString &key, const QVariant &input) override;
+
+public:
+    ItemObject(SessionScriptObject *sessionObject, ItemId itemId);
+};
+
+class SessionScriptObject::ItemListObject : public QQmlPropertyMap
+{
+private:
+    SessionScriptObject &mSessionObject;
+    ItemId mParentItemId;
+
+    QVariant updateValue(const QString &key, const QVariant &input) override;
+
+public:
+    ItemListObject(SessionScriptObject *sessionObject, ItemId parentItemId);
+};
+
+//-------------------------------------------------------------------------
+
+SessionScriptObject::ItemObject::ItemObject(SessionScriptObject *sessionObject, ItemId itemId)
+    : mSessionObject(*sessionObject)
+    , mItemId(itemId)
+{
+    auto& session = mSessionObject.threadSessionModel();
+    const auto index = session.getIndex(session.findItem(mItemId));
+    if (index.isValid()) {
+        const auto json = session.getJson({ index }).first().toObject();
+        for (auto it = json.begin(); it != json.end(); ++it)
+            insert(it.key(), it.value().toVariant());
+
+        if (canHaveItems(session.getItemType(index)))
+            insert("items", QVariant::fromValue(new ItemListObject(&mSessionObject, mItemId)));
     }
 }
 
-void SessionScriptObject::endUpdate()
+QVariant SessionScriptObject::ItemObject::updateValue(const QString &key, const QVariant &input)
 {
-    mScriptEngine->evaluateScript("Session.updateItems()", "", mMessages);
-    mSession = nullptr;
-    mScriptEngine = nullptr;
-}
+    auto update = QJsonObject();
+    update.insert("id", mItemId);
+    update.insert(key, input.toJsonValue());
 
-void SessionScriptObject::applyUpdate()
-{
-    mSession = &Singletons::sessionModel();
-
-    if (!mPendingUpdates.empty()) {
-        mSession->beginUndoMacro("Script");
-        for (const auto &update : mPendingUpdates)
-            update();
-        mPendingUpdates.clear();
-        mSession->endUndoMacro();
-    }
-
-    if (!mPendingEditorUpdates.empty()) {
-        for (const auto &update : mPendingEditorUpdates)
-            update();
-        mPendingEditorUpdates.clear();
-        Singletons::fileCache().updateEditorFiles();
-    }
-
-    mSession = nullptr;
-}
-
-QJsonArray SessionScriptObject::getItems() const
-{
-    return mSession->getJson({ QModelIndex() });
-}
-
-void SessionScriptObject::updateItems(QJsonValue update)
-{
-    auto array = (update.isArray() ? update.toArray() : QJsonArray({ update }));
-    mSession->dropJson(array, -1, { }, true);
-
-    mPendingUpdates.push_back([this, array = std::move(array)]() {
-        mSession->dropJson(array, -1, { }, true);
-    });
-}
-
-void SessionScriptObject::deleteItem(QJsonValue item)
-{
-    mPendingUpdates.push_back([this, item = std::move(item)]() {
-        const auto index = mSession->getIndex(findItem(item));
+    mSessionObject.withSessionModel([itemId = mItemId, update](SessionModel &session){
+        const auto index = session.getIndex(session.findItem(itemId));
         if (index.isValid())
-            mSession->deleteItem(index);
+            session.dropJson({ update }, index.row(), index.parent(), true);
+    });
+    return input;
+}
+
+//-------------------------------------------------------------------------
+
+SessionScriptObject::ItemListObject::ItemListObject(SessionScriptObject *sessionObject, ItemId parentItemId)
+    : mSessionObject(*sessionObject)
+    , mParentItemId(parentItemId)
+{
+    auto& session = mSessionObject.threadSessionModel();
+    const auto parent = session.getIndex(session.findItem(mParentItemId));
+    for (auto row = 0; row < session.rowCount(parent); ++row) {
+        auto index = session.index(row, 0, parent);
+        auto id = session.getItemId(index);
+        auto name = session.data(index, SessionModel::Name).toString();
+        auto item = QVariant::fromValue(new ItemObject(&mSessionObject, id));
+        insert(name, item);
+    }
+}
+
+QVariant SessionScriptObject::ItemListObject::updateValue(const QString &key, const QVariant &input)
+{
+    auto update = mSessionObject.engine().toScriptValue(input).toVariant().toJsonObject();
+    const auto id = (update.contains("id") ? update["id"].toInt() :
+        mSessionObject.threadSessionModel().getNextItemId());
+    update.insert("id", id);
+    update.insert("name", key);
+
+    mSessionObject.withSessionModel([parentItemId = mParentItemId, update](SessionModel &session){
+        const auto parent = session.getIndex(session.findItem(parentItemId), SessionModel::ColumnType::Name);
+        session.dropJson({ update }, session.rowCount(parent), parent, true);
+    });
+
+    return QVariant::fromValue(new ItemObject(&mSessionObject, id));
+}
+
+//-------------------------------------------------------------------------
+
+SessionScriptObject::SessionScriptObject(QJSEngine *engine)
+    : QObject(engine)
+    , mEngine(engine)
+{
+}
+
+SessionModel &SessionScriptObject::threadSessionModel()
+{
+    if (mSessionCopy) {
+        Q_ASSERT(!onMainThread());
+        return *mSessionCopy;
+    }
+    else {
+        Q_ASSERT(onMainThread());
+        return Singletons::sessionModel();
+    }
+}
+
+QJSEngine &SessionScriptObject::engine()
+{
+    return *mEngine;
+}
+
+void SessionScriptObject::withSessionModel(UpdateFunction &&updateFunction)
+{
+    if (onMainThread()) {
+        Q_ASSERT(!mSessionCopy);
+        updateFunction(Singletons::sessionModel());
+    }
+    else {
+        Q_ASSERT(mSessionCopy);
+        updateFunction(*mSessionCopy);
+        mPendingUpdates.push_back(std::move(updateFunction));
+    }
+}
+
+void SessionScriptObject::beginBackgroundUpdate(SessionModel *sessionCopy)
+{
+    Q_ASSERT(!onMainThread());
+    mSessionCopy = sessionCopy;
+}
+
+void SessionScriptObject::endBackgroundUpdate()
+{
+    Q_ASSERT(onMainThread());
+    mSessionCopy = nullptr;
+
+    auto &session = Singletons::sessionModel();
+    if (!mPendingUpdates.empty()) {
+        session.beginUndoMacro("Script");
+        for (const auto &update : mPendingUpdates)
+            update(session);
+        mPendingUpdates.clear();
+        session.endUndoMacro();
+
+        if (mUpdatedEditor)
+            Singletons::fileCache().updateEditorFiles();
+
+        mUpdatedEditor = false;
+    }
+}
+
+QJSValue SessionScriptObject::rootItems()
+{
+    if (mRootItemsList.isUndefined())
+        mRootItemsList = engine().newQObject(new ItemListObject(this, 0));
+    return mRootItemsList;
+}
+
+ItemId SessionScriptObject::getItemId(QJSValue itemDesc)
+{
+    if (itemDesc.isObject())
+        return itemDesc.property("id").toInt();
+
+    if (itemDesc.isString()) {
+        auto &session = threadSessionModel();
+        const auto parts = itemDesc.toString().split('/');
+        auto index = QModelIndex();
+        for (const auto &part : parts) {
+            index = session.findChildByName(index, part);
+            if (!index.isValid())
+                return 0;
+        }
+        return session.getItemId(index);
+    }
+    return itemDesc.toInt();
+}
+
+QJSValue SessionScriptObject::item(QJSValue itemDesc)
+{
+    return engine().newQObject(new ItemObject(this, getItemId(itemDesc)));
+}
+
+void SessionScriptObject::clear()
+{
+    withSessionModel([](SessionModel &session) {
+        session.clear();
     });
 }
 
-void SessionScriptObject::setBufferData(QJsonValue item, QJSValue data)
+void SessionScriptObject::clearItem(QJSValue itemDesc)
 {
-    if (auto buffer = castItem<Buffer>(findItem(item)))
+    withSessionModel([itemId = getItemId(itemDesc)](SessionModel &session) {
+        const auto index = session.getIndex(session.findItem(itemId));
+        if (index.isValid())
+            session.removeRows(0, session.rowCount(index), index);
+    });
+}
+
+void SessionScriptObject::deleteItem(QJSValue itemDesc)
+{
+    withSessionModel([itemId = getItemId(itemDesc)](SessionModel &session) {
+        const auto index = session.getIndex(session.findItem(itemId));
+        if (index.isValid())
+            session.deleteItem(index);
+    });
+}
+
+void SessionScriptObject::setBufferData(QJSValue itemDesc, QJSValue data)
+{
+    if (auto buffer = threadSessionModel().findItem<Buffer>(getItemId(itemDesc)))
         if (!buffer->items.isEmpty())
             if (auto block = castItem<Block>(buffer->items[0]))
-                return mPendingEditorUpdates.push_back([this, bufferId = buffer->id,
-                        fileName = ensureFileName(*mSession, castItem<Buffer>(block->parent)), 
-                        data = toByteArray(data, *block)]() {
-                    if (auto buffer = castItem<Buffer>(mSession->findItem(bufferId))) {
-                        mSession->setData(mSession->getIndex(buffer, SessionModel::FileName), fileName);
-                        if (auto editor = openBinaryEditor(*buffer))
-                            editor->replace(data, false);
-                    }
-                });
+                return withSessionModel(
+                    [bufferId = buffer->id, data = toByteArray(data, *block)](SessionModel &session) {
+                        if (auto buffer = session.findItem<Buffer>(bufferId)) {
+                            ensureFileName(session, buffer);
+                            if (onMainThread())
+                                if (auto editor = openBinaryEditor(*buffer))
+                                    editor->replace(data, false);
+                        }
+                    });
 
     mMessages += MessageList::insert(0,
         MessageType::ScriptError, "setBufferData failed");
 }
 
-void SessionScriptObject::setBlockData(QJsonValue item, QJSValue data)
+void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
 {
-    if (auto block = castItem<Block>(findItem(item)))
-        return mPendingEditorUpdates.push_back([this, blockId = block->id,
-                fileName = ensureFileName(*mSession, castItem<Buffer>(block->parent)), 
-                data = toByteArray(data, *block)]() {
-            if (auto block = castItem<Block>(mSession->findItem(blockId)))
-                if (auto buffer = castItem<Buffer>(block->parent)) {
-                    mSession->setData(mSession->getIndex(buffer, SessionModel::FileName), fileName);
-                    if (auto editor = openBinaryEditor(*buffer)) {
-                        const auto offset = Singletons::defaultScriptEngine().evaluateInt(
-                            block->offset, 0, mMessages);
-                        editor->replaceRange(offset, data, false);
+    if (auto block = threadSessionModel().findItem<Block>(getItemId(itemDesc)))
+        return withSessionModel(
+            [this, blockId = block->id, data = toByteArray(data, *block)](SessionModel &session) {
+                if (auto block = session.findItem<Block>(blockId))
+                    if (auto buffer = castItem<Buffer>(block->parent)) {
+                        ensureFileName(session, castItem<Buffer>(block->parent));
+                        if (onMainThread())
+                            if (auto editor = openBinaryEditor(*buffer)){
+                                auto offset = 0, rowCount = 0;
+                                Singletons::evaluatedPropertyCache().evaluateBlockProperties(
+                                    *block, &offset, &rowCount);
+                                editor->replaceRange(offset, data, false);
+                            }
                     }
-                }
-        });
+            });
 
     mMessages += MessageList::insert(0,
         MessageType::ScriptError, "setBlockData failed");
 }
 
-void SessionScriptObject::setTextureData(QJsonValue item, QJSValue data)
+void SessionScriptObject::setTextureData(QJSValue itemDesc, QJSValue data)
 {
-    if (auto texture = castItem<Texture>(findItem(item)))
-        return mPendingEditorUpdates.push_back([this, textureId = texture->id,
-                fileName = ensureFileName(*mSession, castItem<Buffer>(texture)),
-                data = toTextureData(data, *texture)]() {
-            if (auto texture = castItem<Texture>(mSession->findItem(textureId))) {
-                mSession->setData(mSession->getIndex(texture, SessionModel::FileName), fileName);
-                if (auto editor = openTextureEditor(*texture))
-                    editor->replace(data, false);
-            }
-        });
+    if (auto texture = threadSessionModel().findItem<Texture>(getItemId(itemDesc)))
+        return withSessionModel(
+            [textureId = texture->id, data = toTextureData(data, *texture)](SessionModel &session) {
+                if (auto texture = session.findItem<Texture>(textureId)) {
+                    ensureFileName(session, texture);
+                    if (onMainThread())
+                        if (auto editor = openTextureEditor(*texture))
+                            editor->replace(data, false);
+                }
+            });
 
     mMessages += MessageList::insert(0,
         MessageType::ScriptError, "setTextureData failed");
-}
-
-const Item *SessionScriptObject::findItem(QJsonValue objectOrId) const
-{
-    const auto id = (objectOrId.isObject() ?
-        objectOrId.toObject()["id"].toInt() :
-        objectOrId.toInt());
-    return mSession->findItem(id);
 }

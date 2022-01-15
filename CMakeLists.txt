@@ -57,6 +57,7 @@ set(SOURCES
   src/MessageList.cpp
   src/MessageWindow.cpp
   src/OutputWindow.cpp
+  src/EvaluatedPropertyCache.cpp
   src/FileCache.cpp
   src/Settings.cpp
   src/Singletons.cpp
@@ -87,6 +88,7 @@ set(SOURCES
   src/editors/SourceEditor.cpp
   src/editors/SourceEditorToolBar.cpp
   src/editors/SourceEditorToolBar.ui
+  src/editors/QmlView.cpp
   src/main.cpp
   src/render/GLBuffer.cpp
   src/render/GLCall.cpp
@@ -104,11 +106,9 @@ set(SOURCES
   src/render/ComputeRange.cpp
   src/render/glslang.cpp
   src/scripting/ScriptConsole.cpp
-  src/scripting/GpupadScriptObject.cpp
   src/scripting/MouseScriptObject.cpp
   src/scripting/KeyboardScriptObject.cpp
   src/scripting/SessionScriptObject.cpp
-  src/scripting/SessionScriptObject.js
   src/scripting/ScriptEngine.cpp
   src/scripting/ScriptEngine.js
   src/scripting/ScriptSession.cpp

@@ -1,6 +1,7 @@
 #include "GLTexture.h"
 #include "GLBuffer.h"
-#include "scripting/ScriptEngine.h"
+#include "SynchronizeLogic.h"
+#include "EvaluatedPropertyCache.h"
 #include <QOpenGLPixelTransferOptions>
 #include <cmath>
 
@@ -10,13 +11,12 @@ GLTexture::GLTexture(const Texture &texture, ScriptEngine &scriptEngine)
     , mFlipVertically(texture.flipVertically)
     , mTarget(texture.target)
     , mFormat(texture.format)
-    , mWidth(std::max(scriptEngine.evaluateInt(texture.width, mItemId, mMessages), 1))
-    , mHeight(std::max(scriptEngine.evaluateInt(texture.height, mItemId, mMessages), 1))
-    , mDepth(std::max(scriptEngine.evaluateInt(texture.depth, mItemId, mMessages), 1))
-    , mLayers(std::max(scriptEngine.evaluateInt(texture.layers, mItemId, mMessages), 1))
     , mSamples(texture.samples)
     , mKind(getKind(texture))
 {
+    Singletons::evaluatedPropertyCache().evaluateTextureProperties(
+        texture, &mWidth, &mHeight, &mDepth, &mLayers, &scriptEngine);
+
     if (mKind.dimensions < 2)
         mHeight = 1;
     if (mKind.dimensions < 3)

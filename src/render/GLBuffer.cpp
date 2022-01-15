@@ -1,4 +1,6 @@
 #include "GLBuffer.h"
+#include "Singletons.h"
+#include "EvaluatedPropertyCache.h"
 
 int getBufferSize(const Buffer &buffer,
     ScriptEngine &scriptEngine, MessagePtrSet &messages)
@@ -6,13 +8,10 @@ int getBufferSize(const Buffer &buffer,
     auto size = 1;
     for (const Item* item : buffer.items) {
         const auto &block = *static_cast<const Block*>(item);
-        const auto blockOffset = scriptEngine.evaluateInt(block.offset, block.id, messages);
-        const auto blockRowCount = scriptEngine.evaluateInt(block.rowCount, block.id, messages);
-        size = std::max(size,
-            blockOffset + blockRowCount * getBlockStride(block));
-        
-        block.evaluatedOffset = blockOffset;
-        block.evaluatedRowCount = blockRowCount;
+        auto offset = 0, rowCount = 0;
+        Singletons::evaluatedPropertyCache().evaluateBlockProperties(
+            block, &offset, &rowCount, &scriptEngine);
+        size = std::max(size, offset + rowCount * getBlockStride(block));
     }
     return size;
 }

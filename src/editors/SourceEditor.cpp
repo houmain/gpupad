@@ -45,7 +45,7 @@ protected:
         mEditor.lineNumberAreaPaintEvent(event);
     }
 
-    void mousePressEvent(QMouseEvent *event)
+    void mousePressEvent(QMouseEvent *event) override
     {
         if (event->button() == Qt::LeftButton) {
             auto cursor = mEditor.cursorForPosition({ 0, event->y() });
@@ -59,7 +59,7 @@ protected:
         QWidget::mousePressEvent(event);
     }
 
-    void mouseMoveEvent(QMouseEvent *event)
+    void mouseMoveEvent(QMouseEvent *event) override
     {
         auto cursor = mEditor.cursorForPosition({ 0, event->y() });
         if (mSelectionStart >= 0) {
@@ -78,7 +78,7 @@ protected:
         QWidget::mouseMoveEvent(event);
     }
 
-    void mouseReleaseEvent(QMouseEvent *event)
+    void mouseReleaseEvent(QMouseEvent *event) override
     {
         mSelectionStart = -1;
         QWidget::mouseReleaseEvent(event);

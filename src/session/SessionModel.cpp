@@ -354,22 +354,24 @@ void SessionModel::dropJson(const QJsonArray &jsonArray,
 void SessionModel::deserialize(const QJsonObject &object,
     const QModelIndex &parent, int row, bool updateExisting)
 {
-    auto ok = false;
-    auto type = getTypeByName(object["type"].toString(), ok);
-    if (!ok || !canContainType(parent, type))
-        return;
-
-    auto id = object["id"].toInt();
-    if (!id)
-        id = getNextItemId();
+    auto id = (object.contains("id") ?
+        object["id"].toInt() : getNextItemId());
 
     auto existingItem = findItem(id);
     if (existingItem && !updateExisting) {
         // generate new id when it collides with an existing item
-        auto prevId = std::exchange(id, getNextItemId());
+        const auto prevId = std::exchange(id, getNextItemId());
         mDroppedIdsReplaced.insert(prevId, id);
         existingItem = nullptr;
     }
+
+    auto ok = true;
+    const auto type = (existingItem ? existingItem->type :
+        object.contains("type") ? getTypeByName(object["type"].toString(), ok) :
+        getDefaultChildType(parent));
+    if (!ok || !canContainType(parent, type))
+        return;
+
     const auto index = (existingItem ?
         getIndex(existingItem) : insertItem(type, parent, row, id));
 

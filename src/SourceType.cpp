@@ -16,7 +16,7 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
         return SourceType::GLSL_TessellationEvaluation;
     if (extension == "comp")
         return SourceType::GLSL_ComputeShader;
-    if (extension == "js")
+    if (extension == "js" || extension == "qml")
         return SourceType::JavaScript;
 
     if (extension == "ps")

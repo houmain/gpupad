@@ -142,15 +142,18 @@ public:
     Item::Type getTypeByName(const QString &name, bool &ok) const;
     QString getTypeName(Item::Type type) const;
     bool canContainType(const QModelIndex &index, Item::Type type) const;
+    Item::Type getDefaultChildType(const QModelIndex &index) const;
     QModelIndex insertItem(Item::Type type, QModelIndex parent,
         int row = -1, ItemId id = 0);
     void deleteItem(const QModelIndex &index);
     QModelIndex getIndex(const Item *item, ColumnType column = ColumnType::None) const;
     QModelIndex getIndex(const QModelIndex &index, ColumnType column) const;
+    QModelIndex findChildByName(const QModelIndex &parent, const QString &name) const;
     const Item* findItem(ItemId id) const;
     const Item &getItem(const QModelIndex &index) const;
     ItemId getItemId(const QModelIndex &index) const;
     Item::Type getItemType(const QModelIndex &index) const;
+    ItemId getNextItemId();
 
     template<typename T>
     const T *item(const QModelIndex &index) const
@@ -166,7 +169,6 @@ public:
 
 protected:
     const Group &root() const { return *mRoot; }
-    ItemId getNextItemId();
     QUndoStack &undoStack() { return mUndoStack; }
 
 private:
@@ -188,7 +190,6 @@ private:
         int mergeId = -1);
     void undoableFileNameAssignment(const QModelIndex &index, FileItem &item,
         QString fileName);
-    bool hasChildWithName(const QModelIndex &parent, const QString &name);
 
     ItemId mNextItemId{ 1 };
     QScopedPointer<Group> mRoot;
