@@ -213,7 +213,7 @@ QString generateGLSL(const QString &source, Shader::ShaderType shaderType,
     if (language == Shader::Language::HLSL)
         args += "-D";
     args += "-e";
-    args += entryPoint;
+    args += (entryPoint.isEmpty() ? "main" : entryPoint);
     args += "-o";
     args += output.fileName();
 

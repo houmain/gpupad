@@ -140,14 +140,6 @@ bool GLShader::operator==(const GLShader &rhs) const
            std::tie(rhs.mType, rhs.mSources, rhs.mIncludableSources, rhs.mFileNames, rhs.mLanguage, rhs.mEntryPoint);
 }
 
-QString GLShader::getSource() const
-{
-    auto result = QString();
-    for (const auto &source : mSources)
-        result += source + "\n";
-    return result;
-}
-
 bool GLShader::compile(GLPrintf* printf, bool silent)
 {
     if (!GLContext::currentContext()) {
@@ -173,7 +165,7 @@ bool GLShader::compile(GLPrintf* printf, bool silent)
     }
 
     auto sources = std::vector<std::string>();
-    for (const QString &source : getPatchedSources(printf))
+    for (const QString &source : getPatchedSources(mMessages, printf))
         sources.push_back(qUtf8Printable(source));
     if (sources.empty())
         return false;
@@ -202,10 +194,8 @@ bool GLShader::compile(GLPrintf* printf, bool silent)
     return true;
 }
 
-QStringList GLShader::getPatchedSources(GLPrintf *printf)
+QStringList GLShader::getPatchedSources(MessagePtrSet &messages, GLPrintf *printf) const
 {
-    Q_ASSERT(!mSources.isEmpty());
-    
     auto includableFileNames = QStringList();
     for (auto i = mSources.size(); i < mFileNames.size(); ++i)
         includableFileNames += QFileInfo(mFileNames[i]).fileName();
@@ -213,37 +203,38 @@ QStringList GLShader::getPatchedSources(GLPrintf *printf)
     auto sources = QStringList();
     for (auto i = 0; i < mSources.size(); ++i)
         sources += substituteIncludes(mSources[i], i, mSources.size(), 
-            mIncludableSources, includableFileNames, mItemId, mMessages);
+            mIncludableSources, includableFileNames, mItemId, messages);
 
-    if (mLanguage != Shader::Language::GLSL)
+    if (mLanguage != Shader::Language::GLSL) {
         for (auto i = 0; i < mSources.size(); ++i) {
             auto source = glslang::generateGLSL(sources[i], mType, mLanguage,
-                mEntryPoint, mFileNames[i], mItemId, mMessages);
+                mEntryPoint, mFileNames[i], mItemId, messages);
             if (source.isEmpty())
                 return { };
             sources[i] = source;
         }
+    }
 
     auto maxVersion = QString("#version 100");
     for (auto i = 0; i < sources.size(); ++i)
         removeVersion(&sources[i], &maxVersion, (i > 0));
 
-    if (printf) {
-        for (auto i = 0; i < sources.size(); ++i)
-            sources[i] = printf->patchSource(mType, mFileNames[i], sources[i]);
+    if (!sources.isEmpty()) {
+        if (printf)
+            sources.front().prepend("#define GPUPAD 1\n");
+
+        sources.front().prepend(maxVersion + "\n");
+
+        if (printf) {
+            for (auto i = 0; i < sources.size(); ++i)
+                sources[i] = printf->patchSource(mType, mFileNames[i], sources[i]);
     
-        if (printf->isUsed(mType)) {
-            sources.front().prepend(GLPrintf::preamble());
-            maxVersion = std::max(maxVersion, GLPrintf::requiredVersion());
+            if (printf->isUsed(mType)) {
+                sources.front().prepend(GLPrintf::preamble());
+                maxVersion = std::max(maxVersion, GLPrintf::requiredVersion());
+            }
         }
     }
-
-    sources.front().prepend("#define GPUPAD 1\n");
-    sources.front().prepend(maxVersion + "\n");
-
-    // workaround: to prevent unesthetic "unexpected end" error,
-    // ensure shader is not empty
-    sources.back().append("\nstruct XXX_gpupad { float a; };\n");
     return sources;
 }
 

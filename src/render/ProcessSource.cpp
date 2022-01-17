@@ -99,15 +99,17 @@ void ProcessSource::render()
     }
 
     if (mShader) {
+        const auto source = mShader->getPatchedSources(messages).join("\n");
+
         if (mProcessType == "preprocess") {
-            mOutput = glslang::preprocess(mShader->getSource(), messages);
+            mOutput = glslang::preprocess(source, messages);
         }
         else if (mProcessType == "spirv") {
-            mOutput = glslang::generateSpirV(mShader->getSource(),
+            mOutput = glslang::generateSpirV(source,
                 getShaderType(mSourceType), messages);
         }
         else if (mProcessType == "ast") {
-            mOutput = glslang::generateAST(mShader->getSource(),
+            mOutput = glslang::generateAST(source,
                 getShaderType(mSourceType), messages);
         }
         else if (mProcessType == "assembly") {

@@ -21,14 +21,12 @@ public:
     const QString &entryPoint() const { return mEntryPoint; }
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
 
-    QString getSource() const;
+    QStringList getPatchedSources(MessagePtrSet &messages, GLPrintf *printf = nullptr) const;
     bool compile(GLPrintf *printf = nullptr, bool silent = false);
     GLuint shaderObject() const { return mShaderObject; }
     QString getAssembly();
 
 private:
-    QStringList getPatchedSources(GLPrintf *printf);
-
     ItemId mItemId{ };
     MessagePtrSet mMessages;
     QStringList mFileNames;
