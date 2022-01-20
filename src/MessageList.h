@@ -25,6 +25,7 @@ enum MessageType
     ShaderInfo,
     ShaderWarning,
     ShaderError,
+    TotalDuration,
     CallDuration,
     CallFailed,
     ClearingTextureFailed,

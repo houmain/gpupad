@@ -142,7 +142,7 @@ SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
     }
 
     if (syntax.hasFunctions()) {
-        mFunctionsRule.pattern = QRegularExpression("\\s[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()");
+        mFunctionsRule.pattern = QRegularExpression("\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()");
         mFunctionsRule.format = functionFormat;
     }
 

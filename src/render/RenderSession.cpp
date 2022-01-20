@@ -158,6 +158,9 @@ struct RenderSession::GroupIteration
 
 struct RenderSession::CommandQueue
 {
+    QOpenGLTimerQuery beginTimestamp;
+    QOpenGLTimerQuery endTimestamp;
+
     std::map<ItemId, GLTexture> textures;
     std::map<ItemId, GLBuffer> buffers;
     std::map<ItemId, GLProgram> programs;
@@ -253,6 +256,9 @@ void RenderSession::createCommandQueue()
     mPrevCommandQueue.swap(mCommandQueue);
     mCommandQueue.reset(new CommandQueue());
     mUsedItems.clear();
+    
+    mCommandQueue->beginTimestamp.create();
+    mCommandQueue->endTimestamp.create();
 
     auto &scriptEngine = mScriptSession->engine();
     const auto &session = mSessionCopy;
@@ -579,6 +585,7 @@ void RenderSession::executeCommandQueue()
     Singletons::glShareSynchronizer().beginUpdate(context);
 
     BindingState state;
+    mCommandQueue->beginTimestamp.recordTimestamp();
 
     mNextCommandQueueIndex = 0;
     while (mNextCommandQueueIndex < static_cast<int>(mCommandQueue->commands.size())) {
@@ -586,6 +593,7 @@ void RenderSession::executeCommandQueue()
         // executing command might call setNextCommandQueueIndex
         mCommandQueue->commands[index](state);
     }
+    mCommandQueue->endTimestamp.recordTimestamp();
 
     Singletons::glShareSynchronizer().endUpdate(context);
 }
@@ -616,6 +624,15 @@ void RenderSession::downloadModifiedResources()
 void RenderSession::outputTimerQueries()
 {
     mTimerMessages.clear();
+
+    if (mTimerQueries.size() > 1) {
+        const auto duration = std::chrono::nanoseconds(
+            mCommandQueue->endTimestamp.waitForResult() -
+            mCommandQueue->beginTimestamp.waitForResult());
+        mTimerMessages += MessageList::insert(0, MessageType::TotalDuration,
+            formatQueryDuration(duration), false);
+    }
+
     for (const auto &[itemId, query] : qAsConst(mTimerQueries)) {
         const auto duration = std::chrono::nanoseconds(query->waitForResult());
         mTimerMessages += MessageList::insert(

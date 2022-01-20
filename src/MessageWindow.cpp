@@ -99,6 +99,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case ShaderInfo:
         case ScriptMessage:
         case CallDuration:
+        case TotalDuration:
             return mInfoIcon;
     }
     return mWarningIcon;
@@ -141,6 +142,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Attribute '%1' not set").arg(message.text);
         case CallDuration:
             return tr("Call took %1").arg(message.text);
+        case TotalDuration:
+            return tr("Total duration %1").arg(message.text);
         case CallFailed:
             return tr("Call failed: %1").arg(message.text);
         case ClearingTextureFailed:
