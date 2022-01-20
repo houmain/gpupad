@@ -1,0 +1,32 @@
+#version 450
+
+#define BITONIC_BLOCK_SIZE 512
+
+layout(local_size_x = BITONIC_BLOCK_SIZE) in;
+layout(binding = 0, std430) buffer bData { uint data[]; };
+
+uniform uvec4 uConstants;
+
+shared uint shared_data[BITONIC_BLOCK_SIZE];
+
+void main() {
+  uvec3 DTid = gl_GlobalInvocationID;
+  uint GI = gl_LocalInvocationIndex;
+  uint level = uConstants.x;
+  uint levelMask = uConstants.y;
+  
+  // Load shared data
+  shared_data[GI] = data[DTid.x];
+  barrier();
+  
+  // Sort the shared data
+  for (uint j = level >> 1 ; j > 0 ; j >>= 1) {
+  	uint result = ((shared_data[GI & ~j] <= shared_data[GI | j]) ==
+  	  bool(levelMask & DTid.x)) ? shared_data[GI ^ j] : shared_data[GI];
+  	barrier();
+  	shared_data[GI] = result;
+  	barrier();
+  }
+  // Store shared data
+  data[DTid.x] = shared_data[GI];
+}

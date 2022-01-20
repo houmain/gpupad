@@ -872,7 +872,7 @@ void SourceEditor::handleTextChanged()
         mMarkedOccurrences.clear();
         updateExtraSelections();
     }
-    if (document()->isUndoAvailable())
+    if (document()->isUndoAvailable() || document()->isRedoAvailable())
         Singletons::fileCache().handleEditorFileChanged(mFileName);
 }
 

@@ -1,0 +1,25 @@
+#version 450
+
+#define TRANSPOSE_BLOCK_SIZE 16
+
+layout(local_size_x = TRANSPOSE_BLOCK_SIZE, local_size_y = TRANSPOSE_BLOCK_SIZE) in;
+layout(binding = 0, std430) buffer bData { uint data[]; };
+layout(binding = 1, std430) readonly buffer bInput { uint inputData[]; };
+
+uniform uvec4 uConstants;
+
+shared uint transpose_shared_data[TRANSPOSE_BLOCK_SIZE * TRANSPOSE_BLOCK_SIZE];
+
+void main() {
+  uvec3 DTid = gl_GlobalInvocationID;
+  uvec3 GTid = gl_LocalInvocationID;
+  uint GI = gl_LocalInvocationIndex;
+  uint width = uConstants.z;
+  uint height = uConstants.w;
+
+  transpose_shared_data[GI] = inputData[DTid.y * width + DTid.x];
+  barrier();
+  uvec2 XY = DTid.yx - GTid.yx + GTid.xy;
+  data[XY.y * height + XY.x] =
+	transpose_shared_data[GTid.x * TRANSPOSE_BLOCK_SIZE + GTid.y];
+}

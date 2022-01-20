@@ -1,0 +1,11 @@
+#version 450
+
+layout(local_size_x = 32) in;
+layout(binding = 0, std430) writeonly buffer bData { uint data[]; };
+
+void main() {
+  uint gid = gl_GlobalInvocationID.x;
+  if(gid < data.length()) {
+    data[gid] = (gid * 123456789) % 1000000;
+  }
+}
