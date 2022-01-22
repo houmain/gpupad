@@ -13,7 +13,7 @@ let indices = Delaunay.triangulate(vertices)
 vertices = [].concat.apply([], vertices)
 
 let Vertices = Session.item('Buffer/Vertices')
-Vertices.rowCount = vertices.length
+Vertices.rowCount = vertices.length / 2
 Session.setBlockData(Vertices, vertices)
 
 let Indices = Session.item('Buffer/Indices')

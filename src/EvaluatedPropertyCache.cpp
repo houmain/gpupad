@@ -20,7 +20,7 @@ void EvaluatedPropertyCache::evaluateBlockProperties(const Block &block,
     const auto updateCache = (scriptEngine != nullptr);
     if (!updateCache) {
         const auto it = mEvaluatedProperties.find(block.id);
-        if (it != mEvaluatedProperties.cend()) {
+        if (it != mEvaluatedProperties.end()) {
             *offset = (*it)[0];
             *rowCount = (*it)[1];
         }
@@ -48,7 +48,7 @@ void EvaluatedPropertyCache::evaluateTextureProperties(const Texture &texture,
     const auto updateCache = (scriptEngine != nullptr);
     if (!updateCache) {
         const auto it = mEvaluatedProperties.find(texture.id);
-        if (it != mEvaluatedProperties.cend()) {
+        if (it != mEvaluatedProperties.end()) {
             *width = (*it)[0];
             *height = (*it)[1];
             *depth = (*it)[2];

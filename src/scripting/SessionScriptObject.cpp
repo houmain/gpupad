@@ -420,12 +420,14 @@ void SessionScriptObject::setBufferData(QJSValue itemDesc, QJSValue data)
         if (!buffer->items.isEmpty())
             if (auto block = castItem<Block>(buffer->items[0]))
                 return withSessionModel(
-                    [bufferId = buffer->id, data = toByteArray(data, *block)](SessionModel &session) {
+                    [this, bufferId = buffer->id, data = toByteArray(data, *block)](SessionModel &session) {
                         if (auto buffer = session.findItem<Buffer>(bufferId)) {
                             ensureFileName(session, buffer);
                             if (onMainThread())
-                                if (auto editor = openBinaryEditor(*buffer))
+                                if (auto editor = openBinaryEditor(*buffer)) {
                                     editor->replace(data, false);
+                                    mUpdatedEditor = true;
+                                }
                         }
                     });
 
@@ -435,7 +437,8 @@ void SessionScriptObject::setBufferData(QJSValue itemDesc, QJSValue data)
 
 void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
 {
-    if (auto block = threadSessionModel().findItem<Block>(getItemId(itemDesc)))
+    if (auto block = threadSessionModel().findItem<Block>(getItemId(itemDesc))) {
+        Singletons::evaluatedPropertyCache().invalidate(block->id);
         return withSessionModel(
             [this, blockId = block->id, data = toByteArray(data, *block)](SessionModel &session) {
                 if (auto block = session.findItem<Block>(blockId))
@@ -447,9 +450,11 @@ void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
                                 Singletons::evaluatedPropertyCache().evaluateBlockProperties(
                                     *block, &offset, &rowCount);
                                 editor->replaceRange(offset, data, false);
+                                mUpdatedEditor = true;
                             }
                     }
             });
+    }
 
     mMessages += MessageList::insert(0,
         MessageType::ScriptError, "setBlockData failed");
@@ -459,12 +464,14 @@ void SessionScriptObject::setTextureData(QJSValue itemDesc, QJSValue data)
 {
     if (auto texture = threadSessionModel().findItem<Texture>(getItemId(itemDesc)))
         return withSessionModel(
-            [textureId = texture->id, data = toTextureData(data, *texture)](SessionModel &session) {
+            [this, textureId = texture->id, data = toTextureData(data, *texture)](SessionModel &session) {
                 if (auto texture = session.findItem<Texture>(textureId)) {
                     ensureFileName(session, texture);
                     if (onMainThread())
-                        if (auto editor = openTextureEditor(*texture))
+                        if (auto editor = openTextureEditor(*texture)) {
                             editor->replace(data, false);
+                            mUpdatedEditor = true;
+                        }
                 }
             });
 
