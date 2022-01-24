@@ -1,5 +1,6 @@
 
 #include "QmlView.h"
+#include <QQmlNetworkAccessManagerFactory>
 #include <QAction>
 
 #if !defined(QtQuick_FOUND)
@@ -25,7 +26,6 @@ bool QmlView::load()
 #include <QQmlEngine>
 #include <QQmlAbstractUrlInterceptor>
 #include <QNetworkAccessManager>
-#include <QQmlNetworkAccessManagerFactory>
 #include <QNetworkReply>
 #include <QDir>
 #include <cstring>
@@ -93,15 +93,24 @@ namespace
 
     class NetworkAccessManager : public QNetworkAccessManager
     {
+    private:
+        QmlView &mView;
+
     public:
-        using QNetworkAccessManager::QNetworkAccessManager;
+        NetworkAccessManager(QmlView *view, QObject *parent)
+            : QNetworkAccessManager(parent)
+            , mView(*view)
+        {
+        }
 
         QNetworkReply *createRequest(Operation op, const QNetworkRequest &request,
                                          QIODevice *outgoingData) override
         {
             if (request.url().scheme() == "cache") {
+                const auto fileName = toAbsolutePath(request.url());
+                mView.addDependency(fileName);
                 auto source = QString();
-                if (Singletons::fileCache().getSource(toAbsolutePath(request.url()), &source))
+                if (Singletons::fileCache().getSource(fileName, &source))
                     return new NetworkReply(source.toUtf8(), this);
             }
             return QNetworkAccessManager::createRequest(op, request, outgoingData);
@@ -110,10 +119,18 @@ namespace
 
     class NetworkAccessManagerFactory : public QQmlNetworkAccessManagerFactory
     {
+    private:
+        QmlView &mView;
+
     public:
+        NetworkAccessManagerFactory(QmlView *view)
+            : mView(*view)
+        {
+        }
+
         QNetworkAccessManager *create(QObject *parent) override
         {
-            return new NetworkAccessManager(parent);
+            return new NetworkAccessManager(&mView, parent);
         }
     };
 } // namespace
@@ -135,7 +152,10 @@ bool QmlView::load()
 {
     mMessages.clear();
 
-    delete mQuickWidget;
+    if (mQuickWidget) {
+        layout()->removeWidget(mQuickWidget);
+        mQuickWidget->deleteLater();
+    }
     mQuickWidget = new QQuickWidget(this);
     layout()->addWidget(mQuickWidget);
 
@@ -146,8 +166,8 @@ bool QmlView::load()
             if (status == QQuickWidget::Error) {
                 const auto errors = mQuickWidget->errors();
                 for (const QQmlError &error : errors)
-                    mMessages += MessageList::insert(error.url().toString(),
-                        error.line(), MessageType::ScriptError, error.toString());
+                    mMessages += MessageList::insert(toAbsolutePath(error.url()),
+                        error.line(), MessageType::ScriptError, error.description());
             }
         });
 
@@ -157,8 +177,16 @@ bool QmlView::load()
                 0, MessageType::ScriptError, message);
         });
 
-    static NetworkAccessManagerFactory sNetworkAccessManagerFactory;
-    mQuickWidget->engine()->setNetworkAccessManagerFactory(&sNetworkAccessManagerFactory);
+    connect(mQuickWidget->engine(), &QQmlEngine::warnings, 
+        [this](const QList<QQmlError> &warnings) {
+            for (auto &warning : warnings) 
+                mMessages += MessageList::insert(toAbsolutePath(warning.url()),
+                    warning.line(), MessageType::ScriptWarning, warning.description());
+        });
+
+    mNetworkAccessManagerFactory.reset(new NetworkAccessManagerFactory(this));
+    mQuickWidget->engine()->setNetworkAccessManagerFactory(
+        mNetworkAccessManagerFactory.data());
 
     static UrlInterceptor sUrlInterceptor;
     mQuickWidget->engine()->setUrlInterceptor(&sUrlInterceptor);
@@ -172,9 +200,14 @@ bool QmlView::load()
 
 #endif // defined(QtQuick_FOUND)
 
+QmlView::~QmlView() = default;
+
 QList<QMetaObject::Connection> QmlView::connectEditActions(
     const EditActions &actions)
 {
+    if (std::exchange(mReloadOnFocus, false))
+        load();
+
     actions.windowFileName->setText(fileName());
     actions.windowFileName->setEnabled(false);
     actions.undo->setEnabled(false);
@@ -186,6 +219,7 @@ QList<QMetaObject::Connection> QmlView::connectEditActions(
     actions.selectAll->setEnabled(false);
     actions.rename->setEnabled(false);
     actions.findReplace->setEnabled(false);
+
     return { };
 }
 
@@ -206,4 +240,19 @@ bool QmlView::save()
 int QmlView::tabifyGroup()
 {
     return 3;
+}
+
+void QmlView::addDependency(const QString &fileName)
+{
+    mDependencies.insert(fileName);
+}
+
+bool QmlView::dependsOn(const QString &fileName) const
+{
+    return mDependencies.contains(fileName);
+}
+
+void QmlView::reloadOnFocus()
+{
+    mReloadOnFocus = true;
 }

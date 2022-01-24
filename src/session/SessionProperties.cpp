@@ -344,6 +344,9 @@ IEditor* SessionProperties::openEditor(const FileItem &fileItem)
     }
 
     auto &editors = Singletons::editorManager();
+    if (!(QApplication::queryKeyboardModifiers() & Qt::ControlModifier))
+        return editors.openEditor(fileItem.fileName);
+
     switch (fileItem.type) {
         case Item::Type::Texture: {
             if (auto editor = editors.openTextureEditor(fileItem.fileName))

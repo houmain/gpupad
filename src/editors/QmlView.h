@@ -3,8 +3,10 @@
 #include "IEditor.h"
 #include "MessageList.h"
 #include <QFrame>
+#include <QSet>
 
 class QQuickWidget;
+class QQmlNetworkAccessManagerFactory;
 
 class QmlView : public QFrame, public IEditor
 {
@@ -12,6 +14,7 @@ class QmlView : public QFrame, public IEditor
 
 public:
     explicit QmlView(QString fileName, QWidget *parent = nullptr);
+    ~QmlView();
 
     QList<QMetaObject::Connection> connectEditActions(
         const EditActions &actions) override;
@@ -21,8 +24,15 @@ public:
     bool save() override;
     int tabifyGroup() override;
 
+    void addDependency(const QString &fileName);
+    bool dependsOn(const QString &fileName) const;
+    void reloadOnFocus();
+
 private:
     const QString mFileName;
+    QScopedPointer<QQmlNetworkAccessManagerFactory> mNetworkAccessManagerFactory;
     MessagePtrSet mMessages;
     QQuickWidget *mQuickWidget{ };
+    QSet<QString> mDependencies;
+    bool mReloadOnFocus{ };
 };

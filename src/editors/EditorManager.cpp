@@ -231,10 +231,12 @@ IEditor* EditorManager::openEditor(const QString &fileName,
     bool asBinaryFile)
 {
     if (!asBinaryFile) {
-        if (fileName.endsWith(".qml", Qt::CaseInsensitive))
-            if (!(QApplication::keyboardModifiers() & Qt::ControlModifier))
+        if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
+            const auto modifiers = QApplication::queryKeyboardModifiers();
+            if (!(modifiers & Qt::ControlModifier))
                 if (auto editor = openQmlView(fileName))
                     return editor;
+        }
 
         if (auto editor = openTextureEditor(fileName))
             return editor;
@@ -390,6 +392,13 @@ void EditorManager::renameEditors(const QString &prevFileName, const QString &fi
     for (auto [dock, editor] : mDocks)
         if (editor->fileName() == prevFileName)
             editor->setFileName(fileName);
+}
+
+void EditorManager::reloadQmlViewsDependingOn(const QString &fileName)
+{
+    for (auto qmlView : mQmlViews)
+        if (qmlView->dependsOn(fileName))
+            qmlView->reloadOnFocus();
 }
 
 bool EditorManager::saveEditor()

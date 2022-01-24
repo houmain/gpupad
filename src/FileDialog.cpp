@@ -228,6 +228,8 @@ bool FileDialog::exec(Options options, QString currentFileName)
         return false;
 
     mFileNames = dialog.selectedFiles();
+    for (auto &fileName : mFileNames)
+        fileName = QDir::toNativeSeparators(fileName);
     mDirectory = dialog.directory();
     mAsBinaryFile = (dialog.selectedNameFilter() == binaryFileFilter);
     return true;
