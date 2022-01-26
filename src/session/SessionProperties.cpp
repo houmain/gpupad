@@ -344,9 +344,6 @@ IEditor* SessionProperties::openEditor(const FileItem &fileItem)
     }
 
     auto &editors = Singletons::editorManager();
-    if (!(QApplication::queryKeyboardModifiers() & Qt::ControlModifier))
-        return editors.openEditor(fileItem.fileName);
-
     switch (fileItem.type) {
         case Item::Type::Texture: {
             if (auto editor = editors.openTextureEditor(fileItem.fileName))
@@ -354,16 +351,14 @@ IEditor* SessionProperties::openEditor(const FileItem &fileItem)
             return editors.openNewTextureEditor(fileItem.fileName);
         }
 
-        case Item::Type::Shader:
-        case Item::Type::Script: {
+        case Item::Type::Script:
+            return editors.openEditor(fileItem.fileName);
+
+        case Item::Type::Shader: {
             auto editor = editors.openSourceEditor(fileItem.fileName);
             if (!editor)
                 editor = editors.openNewSourceEditor(fileItem.fileName);
-
-            if (auto script = castItem<Script>(fileItem)) {
-                editor->setSourceType(SourceType::JavaScript);
-            }
-            else if (auto shader = castItem<Shader>(fileItem)) {
+            if (auto shader = castItem<Shader>(fileItem)) {
                 const auto sourceType = getSourceType(shader->shaderType, shader->language);
                 if (sourceType != SourceType::PlainText)
                     editor->setSourceType(sourceType);
