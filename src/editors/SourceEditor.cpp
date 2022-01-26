@@ -297,8 +297,8 @@ void SourceEditor::updateColors(bool darkTheme)
 
 void SourceEditor::updateSyntaxHighlighting()
 {
-    const auto disabled = 
-        (document()->characterCount() > (1 << 20));
+    const auto limit = (1 << 17); // 100k
+    const auto disabled = (document()->characterCount() > limit);
 
     delete mHighlighter;
     mHighlighter = nullptr;
@@ -934,6 +934,7 @@ QString SourceEditor::textUnderCursor(bool identifierOnly) const
 
 QTextCursor SourceEditor::findMatchingBrace() const
 {
+    const auto limit = (1 << 12); // 4k
     auto cursor = textCursor();
     auto position = cursor.positionInBlock();
     auto block = cursor.block();
@@ -952,7 +953,7 @@ QTextCursor SourceEditor::findMatchingBrace() const
         case ')': endChar = '('; direction = -1; break;
         default: return { };
     }
-    for (auto level = 0; ; position += direction) {
+    for (auto level = 0, i = 0; i < limit; position += direction, ++i) {
         while (position < 0) {
             block = block.previous();
             if (!block.isValid())
@@ -977,6 +978,7 @@ QTextCursor SourceEditor::findMatchingBrace() const
             }
         }
     }
+    return { };
 }
 
 void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
