@@ -154,7 +154,7 @@ void SynchronizeLogic::handleFileChanged(const QString &fileName)
     if (editorManager.currentEditorFileName() == fileName)
         mProcessSourceTimer->start();
 
-    editorManager.reloadQmlViewsDependingOn(fileName);
+    editorManager.resetQmlViewsDependingOn(fileName);
 }
 
 void SynchronizeLogic::handleItemsModified(const QModelIndex &topLeft,

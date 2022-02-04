@@ -31,6 +31,10 @@ public:
     Q_INVOKABLE void setBlockData(QJSValue itemDesc, QJSValue data);
     Q_INVOKABLE void setTextureData(QJSValue itemDesc, QJSValue data);
 
+    Q_INVOKABLE QJSValue enumerateFiles(const QString &pattern);
+    Q_INVOKABLE QJSValue writeTextFile(const QString &fileName, const QString &string);
+    Q_INVOKABLE QJSValue readTextFile(const QString &fileName);
+
 private:
     class ItemObject;
     class ItemListObject;

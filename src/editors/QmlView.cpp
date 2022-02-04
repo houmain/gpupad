@@ -11,11 +11,6 @@ QmlView::QmlView(QString fileName, QWidget *parent)
 {
 }
 
-bool QmlView::load()
-{
-    return false;
-}
-
 #else // defined(QtQuick_FOUND)
 
 #include "FileCache.h"
@@ -28,6 +23,7 @@ bool QmlView::load()
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QDir>
+#include <QFileInfo>
 #include <cstring>
 
 namespace
@@ -49,7 +45,7 @@ namespace
         QUrl intercept(const QUrl &path, DataType type) override
         {
             // redirect file requests to custom NetworkAccessManager
-            if (type == DataType::QmlFile && path.scheme() == "file") {
+            if (path.isLocalFile() && (type == DataType::QmlFile || type == DataType::JavaScriptFile)) {
                 auto cachePath = path;
                 cachePath.setScheme("cache");
                 return cachePath;
@@ -146,16 +142,22 @@ QmlView::QmlView(QString fileName, QWidget *parent)
         [&](QQmlEngine *, QJSEngine *jsEngine) -> QObject * {
             return new SessionScriptObject(jsEngine);
         });
+
+    reset();
 }
 
-bool QmlView::load()
+void QmlView::reset()
 {
-    mMessages.clear();
-
     if (mQuickWidget) {
         layout()->removeWidget(mQuickWidget);
+        connect(mQuickWidget, &QQuickWidget::destroyed, this, &QmlView::reset);
         mQuickWidget->deleteLater();
+        mQuickWidget = nullptr;
+        return;
     }
+
+    mMessages.clear();
+
     mQuickWidget = new QQuickWidget(this);
     layout()->addWidget(mQuickWidget);
 
@@ -190,12 +192,11 @@ bool QmlView::load()
 
     static UrlInterceptor sUrlInterceptor;
     mQuickWidget->engine()->setUrlInterceptor(&sUrlInterceptor);
+    mQuickWidget->engine()->addImportPath(QFileInfo(mFileName).dir().path());
 
     Singletons::fileCache().updateEditorFiles();
 
     mQuickWidget->setSource(QUrl::fromLocalFile(mFileName));
-
-    return true;
 }
 
 #endif // defined(QtQuick_FOUND)
@@ -205,8 +206,8 @@ QmlView::~QmlView() = default;
 QList<QMetaObject::Connection> QmlView::connectEditActions(
     const EditActions &actions)
 {
-    if (std::exchange(mReloadOnFocus, false))
-        load();
+    if (std::exchange(mResetOnFocus, false))
+        reset();
 
     actions.windowFileName->setText(fileName());
     actions.windowFileName->setEnabled(false);
@@ -232,6 +233,12 @@ void QmlView::setFileName(QString fileName)
 {
 }
 
+bool QmlView::load()
+{
+    reset();
+    return true;
+}
+
 bool QmlView::save()
 {
     return false;
@@ -252,7 +259,7 @@ bool QmlView::dependsOn(const QString &fileName) const
     return mDependencies.contains(fileName);
 }
 
-void QmlView::reloadOnFocus()
+void QmlView::resetOnFocus()
 {
-    mReloadOnFocus = true;
+    mResetOnFocus = true;
 }

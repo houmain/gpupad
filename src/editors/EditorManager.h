@@ -58,7 +58,7 @@ public:
     QString currentEditorFileName();
     QList<QMetaObject::Connection> connectEditActions(const EditActions &actions);
     void renameEditors(const QString &prevFileName, const QString &fileName);
-    void reloadQmlViewsDependingOn(const QString &fileName);
+    void resetQmlViewsDependingOn(const QString &fileName);
     bool saveEditor();
     bool saveEditorAs();
     bool saveAllEditors();

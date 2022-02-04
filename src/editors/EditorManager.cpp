@@ -394,11 +394,11 @@ void EditorManager::renameEditors(const QString &prevFileName, const QString &fi
             editor->setFileName(fileName);
 }
 
-void EditorManager::reloadQmlViewsDependingOn(const QString &fileName)
+void EditorManager::resetQmlViewsDependingOn(const QString &fileName)
 {
     for (auto qmlView : mQmlViews)
         if (qmlView->dependsOn(fileName))
-            qmlView->reloadOnFocus();
+            qmlView->resetOnFocus();
 }
 
 bool EditorManager::saveEditor()

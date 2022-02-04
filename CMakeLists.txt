@@ -209,11 +209,13 @@ if(ENABLE_QUICK)
     find_package(Qt${QT_VERSION_MAJOR}Quick CONFIG)
     find_package(Qt${QT_VERSION_MAJOR}QuickWidgets CONFIG)
     find_package(Qt${QT_VERSION_MAJOR}QuickShapes CONFIG)
+    find_package(Qt${QT_VERSION_MAJOR}QuickControls2 CONFIG)
     if(Qt${QT_VERSION_MAJOR}Quick_FOUND)
         target_link_libraries(${PROJECT_NAME}
             Qt${QT_VERSION_MAJOR}::Quick
             Qt${QT_VERSION_MAJOR}::QuickWidgets
-            Qt${QT_VERSION_MAJOR}::QuickShapes)
+            Qt${QT_VERSION_MAJOR}::QuickShapes
+            Qt${QT_VERSION_MAJOR}::QuickControls2)
         add_compile_definitions(QtQuick_FOUND)
     endif()
 endif()

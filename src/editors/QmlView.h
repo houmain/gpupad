@@ -26,13 +26,15 @@ public:
 
     void addDependency(const QString &fileName);
     bool dependsOn(const QString &fileName) const;
-    void reloadOnFocus();
+    void resetOnFocus();
 
 private:
+    void reset();
+
     const QString mFileName;
     QScopedPointer<QQmlNetworkAccessManagerFactory> mNetworkAccessManagerFactory;
     MessagePtrSet mMessages;
     QQuickWidget *mQuickWidget{ };
     QSet<QString> mDependencies;
-    bool mReloadOnFocus{ };
+    bool mResetOnFocus{ };
 };
