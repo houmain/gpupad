@@ -201,16 +201,18 @@ bool FileDialog::exec(Options options, QString currentFileName)
     dialog.setNameFilters(filters);
 
     dialog.setDefaultSuffix("");
-    if (options & ShaderExtensions)
-        dialog.setDefaultSuffix(*begin(ShaderFileExtensions));
-    else if (options & SessionExtensions)
-        dialog.setDefaultSuffix(SessionFileExtension);
-    else if (options & ScriptExtensions)
-        dialog.setDefaultSuffix(*begin(ScriptFileExtensions));
-    else if (options & BinaryExtensions)
-        dialog.setDefaultSuffix("bin");
-    else if (options & TextureExtensions)
-        dialog.setDefaultSuffix(options & SavingNon2DTexture ? "ktx" : "png");
+    if (options & Saving) {
+        if (options & ShaderExtensions)
+            dialog.setDefaultSuffix(*begin(ShaderFileExtensions));
+        else if (options & SessionExtensions)
+            dialog.setDefaultSuffix(SessionFileExtension);
+        else if (options & ScriptExtensions)
+            dialog.setDefaultSuffix(*begin(ScriptFileExtensions));
+        else if (options & BinaryExtensions)
+            dialog.setDefaultSuffix("bin");
+        else if (options & TextureExtensions)
+            dialog.setDefaultSuffix(options & SavingNon2DTexture ? "ktx" : "png");
+    }
 
     if (isUntitled(currentFileName)) {
         currentFileName = getFileTitle(currentFileName);

@@ -51,7 +51,7 @@
         "type": "Script"
     },
     {
-        "executeOn": "ResetEvaluation",
+        "executeOn": "EveryEvaluation",
         "fileName": "generate.js",
         "id": 118,
         "type": "Script"
