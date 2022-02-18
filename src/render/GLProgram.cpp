@@ -17,10 +17,9 @@ GLProgram::GLProgram(const Program &program)
             shaders[shader->shaderType].append(shader);
         }
 
-    const auto includables = shaders[Shader::ShaderType::Includable];
     for (const auto &[type, list] : shaders)
         if (type != Shader::ShaderType::Includable)
-            mShaders.emplace_back(type, list, includables);
+            mShaders.emplace_back(type, list);
 }
 
 bool GLProgram::operator==(const GLProgram &rhs) const

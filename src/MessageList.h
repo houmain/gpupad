@@ -45,6 +45,7 @@ enum MessageType
     UniformComponentMismatch,
     InvalidIncludeDirective,
     IncludableNotFound,
+    RecursiveInclude,
     TooManyPrintfCalls,
     GlslangValidatorNotFound,
     SpirvCrossNotCompiledIn,

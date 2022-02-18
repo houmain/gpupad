@@ -85,6 +85,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case SwappingBuffersFailed:
         case InvalidIncludeDirective:
         case IncludableNotFound:
+        case RecursiveInclude:
         case InvalidAttribute:
         case GlslangValidatorNotFound:
         case SpirvCrossNotCompiledIn:
@@ -172,6 +173,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Invalid #include directive");
         case IncludableNotFound:
             return tr("Includable shader '%1' not found").arg(message.text);
+        case RecursiveInclude:
+            return tr("Recursive #include '%1'").arg(message.text);
         case InvalidAttribute:
             return tr("Invalid stream attribute");
         case TooManyPrintfCalls:

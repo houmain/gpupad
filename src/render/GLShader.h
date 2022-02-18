@@ -8,11 +8,9 @@ class GLShader
 public:
     static void parseLog(const QString &log,
         MessagePtrSet &messages, ItemId itemId,
-        QStringList fileNames);
+        const QStringList& fileNames);
 
-    GLShader(Shader::ShaderType type,
-        const QList<const Shader*> &shaders,
-        const QList<const Shader*> &includables = { });
+    GLShader(Shader::ShaderType type, const QList<const Shader*> &shaders);
     bool operator==(const GLShader &rhs) const;
     Shader::ShaderType type() const { return mType; }
     Shader::Language language() const { return mLanguage; }
@@ -21,8 +19,9 @@ public:
     const QString &entryPoint() const { return mEntryPoint; }
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
 
-    QStringList getPatchedSources(MessagePtrSet &messages, GLPrintf *printf = nullptr) const;
-    bool compile(GLPrintf *printf = nullptr, bool silent = false);
+    QStringList getPatchedSources(MessagePtrSet &messages, 
+        QStringList &usedFileNames, GLPrintf *printf = nullptr) const;
+    bool compile(GLPrintf *printf = nullptr, bool failSilently = false);
     GLuint shaderObject() const { return mShaderObject; }
     QString getAssembly();
 
@@ -31,11 +30,11 @@ private:
     MessagePtrSet mMessages;
     QStringList mFileNames;
     QStringList mSources;
-    QStringList mIncludableSources;
     Shader::ShaderType mType{ };
     Shader::Language mLanguage{ };
     QString mEntryPoint;
     GLObject mShaderObject;
+    QStringList mPatchedSources;
 };
 
 #endif // GLSHADER_H

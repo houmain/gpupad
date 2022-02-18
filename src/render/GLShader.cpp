@@ -1,12 +1,19 @@
 #include "GLShader.h"
 #include "glslang.h"
 #include <QRegularExpression>
+#include <QFileInfo>
+#include <QDir>
 
 namespace {
-    void removeVersion(QString *source, QString *maxVersion, bool removeNewline)
+    QString getAbsolutePath(const QString &currentFile, const QString &relative)
     {
-        const auto regex = QRegularExpression(
-            (removeNewline ? "(#version[^\n]*\n?)" : "(#version[^\n]*)"),
+        return QDir::toNativeSeparators(
+            QFileInfo(currentFile).dir().absoluteFilePath(relative));
+    }
+
+    void removeVersion(QString *source, QString *maxVersion)
+    {
+        const auto regex = QRegularExpression("(#version[^\n]*\n?)",
             QRegularExpression::MultilineOption);
 
         for (auto match = regex.match(*source); match.hasMatch(); match = regex.match(*source)) {
@@ -27,25 +34,36 @@ namespace {
         return line;
     }
 
-    QString substituteIncludes(QString source, int fileNo, int sourceFileCount,
-        const QStringList &includableSources, const QStringList &includableFileNames,
-        ItemId itemId, MessagePtrSet &messages) 
+    QString substituteIncludes(QString source, const QString &fileName, 
+        QStringList &usedFileNames, ItemId itemId, MessagePtrSet &messages, 
+        int recursionDepth = 0)
     {
+        if (!usedFileNames.contains(fileName)) {
+            usedFileNames.append(fileName);
+        }
+        else if (recursionDepth++ > 3) {
+            messages += MessageList::insert(
+                itemId, MessageType::RecursiveInclude, fileName);
+            return { };
+        }
+        const auto fileNo = usedFileNames.indexOf(fileName);
+
         auto linesInserted = 0;
         const auto regex = QRegularExpression(R"(#include([^\n]*))");
         for (auto match = regex.match(source); match.hasMatch(); match = regex.match(source)) {
             source.remove(match.capturedStart(), match.capturedLength());
-            auto fileName = match.captured(1).trimmed();
-            if ((fileName.startsWith('<') && fileName.endsWith('>')) ||
-                (fileName.startsWith('"') && fileName.endsWith('"'))) {
-                fileName = fileName.mid(1, fileName.size() - 2);
+            auto include = match.captured(1).trimmed();
+            if ((include.startsWith('<') && include.endsWith('>')) ||
+                (include.startsWith('"') && include.endsWith('"'))) {
+                include = include.mid(1, include.size() - 2);
 
-                if (const auto index = includableFileNames.indexOf(fileName); index >= 0) {
+                auto includeFileName = getAbsolutePath(fileName, include);
+                auto includeSource = QString();
+                if (Singletons::fileCache().getSource(includeFileName, &includeSource)) {
                     const auto lineNo = countLines(source, match.capturedStart());
                     const auto includableSource = QString("%1\n#line %2 %3\n")
-                        .arg(substituteIncludes(
-                            includableSources[index], sourceFileCount + index, sourceFileCount, 
-                            includableSources, includableFileNames, itemId, messages))
+                        .arg(substituteIncludes(includeSource, includeFileName, 
+                            usedFileNames, itemId, messages, recursionDepth))
                         .arg(lineNo - linesInserted)
                         .arg(fileNo);
                     source.insert(match.capturedStart(), includableSource); 
@@ -53,7 +71,7 @@ namespace {
                 }
                 else {
                     messages += MessageList::insert(itemId,
-                        MessageType::IncludableNotFound, fileName);
+                        MessageType::IncludableNotFound, include);
                 }
             }
             else {
@@ -67,7 +85,7 @@ namespace {
 
 void GLShader::parseLog(const QString &log,
         MessagePtrSet &messages, ItemId itemId,
-        QStringList fileNames)
+        const QStringList &fileNames)
 {
     // Mesa:    0:13(2): error: `gl_Positin' undeclared
     // NVidia:  0(13) : error C1008: undefined variable "gl_Positin"
@@ -108,39 +126,32 @@ void GLShader::parseLog(const QString &log,
     }
 }
 
-GLShader::GLShader(Shader::ShaderType type, 
-    const QList<const Shader*> &shaders,
-    const QList<const Shader*> &includables)
+GLShader::GLShader(Shader::ShaderType type, const QList<const Shader*> &shaders)
 {
     Q_ASSERT(!shaders.isEmpty());
     mType = type;
     mItemId = shaders.front()->id;
 
-    const auto add = [&](const Shader& shader, bool isIncludable) {
+    for (const Shader *shader : shaders) {
         auto source = QString();
-        if (!Singletons::fileCache().getSource(shader.fileName, &source))
-            mMessages += MessageList::insert(shader.id,
-                MessageType::LoadingFileFailed, shader.fileName);
+        if (!Singletons::fileCache().getSource(shader->fileName, &source))
+            mMessages += MessageList::insert(shader->id,
+                MessageType::LoadingFileFailed, shader->fileName);
 
-        mFileNames += (FileDialog::isEmptyOrUntitled(shader.fileName) ? shader.name : shader.fileName);
-        (isIncludable ? mIncludableSources : mSources) += source + "\n";
-        mLanguage = shader.language;
-        mEntryPoint = shader.entryPoint;
-    };
-
-    for (const Shader *shader : shaders)
-        add(*shader, false);
-    for (const Shader *shader : includables)
-        add(*shader, true);
+        mFileNames += shader->fileName;
+        mSources += source + "\n";
+        mLanguage = shader->language;
+        mEntryPoint = shader->entryPoint;
+    }
 }
 
 bool GLShader::operator==(const GLShader &rhs) const
 {
-    return std::tie(mType, mSources, mIncludableSources, mFileNames, mLanguage, mEntryPoint) ==
-           std::tie(rhs.mType, rhs.mSources, rhs.mIncludableSources, rhs.mFileNames, rhs.mLanguage, rhs.mEntryPoint);
+    return std::tie(mType, mSources, mFileNames, mLanguage, mEntryPoint, mPatchedSources) ==
+           std::tie(rhs.mType, rhs.mSources, rhs.mFileNames, rhs.mLanguage, rhs.mEntryPoint, rhs.mPatchedSources);
 }
 
-bool GLShader::compile(GLPrintf* printf, bool silent)
+bool GLShader::compile(GLPrintf *printf, bool failSilently)
 {
     if (!GLContext::currentContext()) {
         mMessages += MessageList::insert(
@@ -164,11 +175,14 @@ bool GLShader::compile(GLPrintf* printf, bool silent)
         return false;
     }
 
-    auto sources = std::vector<std::string>();
-    for (const QString &source : getPatchedSources(mMessages, printf))
-        sources.push_back(qUtf8Printable(source));
-    if (sources.empty())
+    auto usedFileNames = QStringList();
+    mPatchedSources = getPatchedSources(mMessages, usedFileNames, printf);
+    if (mPatchedSources.isEmpty())
         return false;
+
+    auto sources = std::vector<std::string>();
+    for (const QString &source : mPatchedSources)
+        sources.push_back(qUtf8Printable(source));
     auto sourcePointers = std::vector<const char*>();
     for (const auto &source : sources)
         sourcePointers.push_back(source.data());
@@ -180,12 +194,12 @@ bool GLShader::compile(GLPrintf* printf, bool silent)
     auto status = GLint{ };
     gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
-    if (!silent) {
+    if (!failSilently) {
         auto length = GLint{ };
         gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
         auto log = std::vector<char>(static_cast<size_t>(length));
         gl.glGetShaderInfoLog(shader, length, nullptr, log.data());
-        GLShader::parseLog(log.data(), mMessages, mItemId, mFileNames);
+        GLShader::parseLog(log.data(), mMessages, mItemId, usedFileNames);
     }
     if (status != GL_TRUE)
         return false;
@@ -194,16 +208,16 @@ bool GLShader::compile(GLPrintf* printf, bool silent)
     return true;
 }
 
-QStringList GLShader::getPatchedSources(MessagePtrSet &messages, GLPrintf *printf) const
+QStringList GLShader::getPatchedSources(MessagePtrSet &messages, 
+    QStringList &usedFileNames, GLPrintf *printf) const
 {
-    auto includableFileNames = QStringList();
-    for (auto i = mSources.size(); i < mFileNames.size(); ++i)
-        includableFileNames += QFileInfo(mFileNames[i]).fileName();
+    if (mSources.isEmpty())
+        return { };
 
     auto sources = QStringList();
     for (auto i = 0; i < mSources.size(); ++i)
-        sources += substituteIncludes(mSources[i], i, mSources.size(), 
-            mIncludableSources, includableFileNames, mItemId, messages);
+        sources += substituteIncludes(mSources[i], 
+            mFileNames[i], usedFileNames, mItemId, messages);
 
     if (mLanguage != Shader::Language::GLSL) {
         for (auto i = 0; i < mSources.size(); ++i) {
@@ -215,26 +229,26 @@ QStringList GLShader::getPatchedSources(MessagePtrSet &messages, GLPrintf *print
         }
     }
 
-    auto maxVersion = QString("#version 100");
-    for (auto i = 0; i < sources.size(); ++i)
-        removeVersion(&sources[i], &maxVersion, (i > 0));
+    auto maxVersion = QString();
+    for (auto &source : sources)
+        removeVersion(&source, &maxVersion);
 
-    if (!sources.isEmpty()) {
-        if (printf)
-            sources.front().prepend("#define GPUPAD 1\n");
-
-        sources.front().prepend(maxVersion + "\n");
-
-        if (printf) {
-            for (auto i = 0; i < sources.size(); ++i)
-                sources[i] = printf->patchSource(mType, mFileNames[i], sources[i]);
+    if (printf) {
+        for (auto i = 0; i < sources.size(); ++i)
+            sources[i] = printf->patchSource(mType, mFileNames[i], sources[i]);
     
-            if (printf->isUsed(mType)) {
-                sources.front().prepend(GLPrintf::preamble());
-                maxVersion = std::max(maxVersion, GLPrintf::requiredVersion());
-            }
+        if (printf->isUsed(mType)) {
+            sources.front().prepend(GLPrintf::preamble());
+            maxVersion = std::max(maxVersion, GLPrintf::requiredVersion());
         }
     }
+
+    sources.front().prepend("#define GPUPAD 1\n");
+
+    if (maxVersion.isEmpty())
+        maxVersion = "#version 450";
+    sources.front().prepend(maxVersion + "\n");
+
     return sources;
 }
 

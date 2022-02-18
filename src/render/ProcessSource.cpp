@@ -5,6 +5,16 @@
 #include "glslang.h"
 
 namespace {
+    QString removeLineDirectives(QString source)
+    {
+        const auto regex = QRegularExpression("(\\s*#line[^\n]*)",
+            QRegularExpression::MultilineOption);
+
+        for (auto match = regex.match(source); match.hasMatch(); match = regex.match(source))
+            source.remove(match.capturedStart(), match.capturedLength());
+        return source;
+    }
+
     const Item *findShaderInSession(const QString &fileName)
     {
         auto shader = std::add_pointer_t<const Shader>();
@@ -99,10 +109,13 @@ void ProcessSource::render()
     }
 
     if (mShader) {
-        const auto source = mShader->getPatchedSources(messages).join("\n");
+        auto usedFileNames = QStringList();
+        auto glPrintf = GLPrintf();
+        const auto source = mShader->getPatchedSources(
+            messages, usedFileNames, &glPrintf).join("\n");
 
         if (mProcessType == "preprocess") {
-            mOutput = glslang::preprocess(source, messages);
+            mOutput = removeLineDirectives(glslang::preprocess(source, messages));
         }
         else if (mProcessType == "spirv") {
             mOutput = glslang::generateSpirV(source,
