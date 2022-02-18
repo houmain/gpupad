@@ -584,10 +584,13 @@ void SessionProperties::deduceBlockRowCount()
 {
     const auto &block = *mModel.item<Block>(currentModelIndex());
     const auto &buffer = *static_cast<const Buffer*>(block.parent);
-    auto offset = 0, rowCount = 0;
-    Singletons::evaluatedPropertyCache().evaluateBlockProperties(block, &offset, &rowCount);
-    auto binary = QByteArray();
-    if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
-        mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::BlockRowCount),
-            (binary.size() - offset) / getBlockStride(block));
+    const auto stride = getBlockStride(block);
+    if (stride) {
+        auto offset = 0, rowCount = 0;
+        Singletons::evaluatedPropertyCache().evaluateBlockProperties(block, &offset, &rowCount);
+        auto binary = QByteArray();
+        if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
+            mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::BlockRowCount),
+                (binary.size() - offset) / stride);
+    }
 }
