@@ -550,7 +550,7 @@ void SourceEditor::toggleHomePosition(bool shiftHold)
         // line starts with a word, always move to line start
         cursor.movePosition(QTextCursor::StartOfLine, moveMode);
     }
-    else {
+    else if (!cursor.atBlockEnd()) {
         // line starts with whitespace
         // toggle between line start and end of whitespace
         cursor.movePosition(QTextCursor::NextWord, moveMode);
