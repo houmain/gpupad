@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.12.0)
 project(gpupad LANGUAGES CXX C)
+message("CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
@@ -257,15 +258,20 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Application)
     install(DIRECTORY samples DESTINATION . COMPONENT Samples)
 
-    find_program(WINDEPLOYQT windeployqt HINTS "${_qt_bin_dir}")
+    find_program(deployqt windeployqt HINTS "${_qt_bin_dir}")
+    install(CODE "set(deployqt \"${deployqt}\")" COMPONENT Application)
+    install(CODE [===[
+    execute_process(COMMAND "${deployqt}" --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations --no-virtualkeyboard "${CMAKE_INSTALL_PREFIX}")
+    ]===] COMPONENT Application)
     
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Application)
     install(DIRECTORY samples DESTINATION . COMPONENT Samples)
 
-    find_program(MACDEPLOYQT macdeployqt HINTS "${_qt_bin_dir}")    
+    find_program(deployqt macdeployqt HINTS "${_qt_bin_dir}")
+    install(CODE "set(deployqt \"${deployqt}\")" COMPONENT Application)
     install(CODE [===[
-    execute_process(COMMAND "${MACDEPLOYQT}" ${PROJECT_NAME}.app)
+    execute_process(COMMAND "${deployqt}" ${PROJECT_NAME}.app)
     ]===] COMPONENT Application)
 endif()
 
