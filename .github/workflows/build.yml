@@ -74,7 +74,7 @@ jobs:
     - name: Install
       run: cmake --install ${{github.workspace}}/build --config Release
     - name: Package
-      run: cpack -G ${{ matrix.config.package }} --config ${{github.workspace}}/build/CPackConfig.cmake
+      run: cpack --config ${{github.workspace}}/build/CPackConfig.cmake
 
     - name: Build AppImage
       if: runner.os == 'Linux'
