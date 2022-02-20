@@ -26,6 +26,12 @@ jobs:
             , QT_VERSION: 5.15.2, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/5.15.2/msvc2019_64", QT_ARCH: win64_msvc2019_64
             , package: WIX
           }
+        - {
+            name: "MacOS-x64"
+            , os: macos-10.15
+            , QT_VERSION: 5.15.2, QT_INST_DIR: /Users/runner, QTDIR: /Users/runner/Qt/5.15.2/clang_64
+            , package: TGZ
+          }          
     steps:
     - name: Setup Windows/MSVC
       if: runner.os == 'Windows'
@@ -73,11 +79,27 @@ jobs:
     - name: Package
       run: cpack -G ${{ matrix.config.package }} --config ${{github.workspace}}/build/CPackConfig.cmake
 
+    - name: Build AppImage (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        wget -qc "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
+        wget -qc "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
+        chmod a+x linuxdeploy*.AppImage
+        export VERSION=continuous
+        mkdir -p ./appdir/usr/plugins/iconengines
+        cp /opt/Qt/${{ matrix.config.QT_VERSION }}/gcc_64/plugins/iconengines/libqsvgicon.so ./appdir/usr/plugins/iconengines/libqsvgicon.so
+        ${{matrix.config.linuxDeployQtPath}}
+        ./linuxdeploy-x86_64.AppImage --appdir=appdir --output appimage \
+          -e gpupad \
+          -d share/applications/gpupad.desktop \
+          -i share/pixmaps/gpupad.png \
+          --plugin=qt
+
     - name: Upload to Github release
       uses: xresloader/upload-to-github-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        file: "*.msi;*.tar.gz"
+        file: "*.msi;*.tar.gz;*.AppImage"
         tags: true
         draft: true
