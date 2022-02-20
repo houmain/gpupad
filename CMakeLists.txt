@@ -151,7 +151,7 @@ if(WIN32)
 endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
-add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
+add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SOURCES} ${HEADERS})
 
 add_compile_definitions(QAPPLICATION_CLASS=QApplication KTX_OPENGL)
 target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include libs/gli libs/glm)
@@ -248,24 +248,24 @@ if (ENABLE_SPIRV_CROSS)
 endif()
 
 # install
-if(NOT WIN32)
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     install(TARGETS ${PROJECT_NAME} DESTINATION "bin")
     install(DIRECTORY share DESTINATION . COMPONENT Application)
     install(DIRECTORY samples DESTINATION "share/gpupad" COMPONENT Samples)
-else()
+
+elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Application)
     install(DIRECTORY samples DESTINATION . COMPONENT Samples)
 
-    get_target_property(uic_location Qt${QT_VERSION_MAJOR}::uic IMPORTED_LOCATION)
-    get_filename_component(_dir ${uic_location} DIRECTORY)
-    set(deployqt "${_dir}/windeployqt.exe")
-    if(NOT EXISTS ${deployqt})
-        message(FATAL_ERROR "Failed to locate deployqt executable: [${deployqt}]")
-    endif()
+    find_program(WINDEPLOYQT windeployqt HINTS "${_qt_bin_dir}")
+    
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Application)
+    install(DIRECTORY samples DESTINATION . COMPONENT Samples)
 
-    install(CODE "set(deployqt \"${deployqt}\")" COMPONENT Application)
+    find_program(MACDEPLOYQT macdeployqt HINTS "${_qt_bin_dir}")    
     install(CODE [===[
-    execute_process(COMMAND "${deployqt}" --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations --no-virtualkeyboard "${CMAKE_INSTALL_PREFIX}")
+    execute_process(COMMAND "${MACDEPLOYQT}" ${PROJECT_NAME}.app)
     ]===] COMPONENT Application)
 endif()
 
@@ -283,8 +283,11 @@ list(GET VERSION_LIST 0 CPACK_PACKAGE_VERSION_MAJOR)
 list(GET VERSION_LIST 1 CPACK_PACKAGE_VERSION_MINOR)
 list(GET VERSION_LIST 2 CPACK_PACKAGE_VERSION_PATCH)
 
-if(WIN32)
-    set(CPACK_GENERATOR ${CPACK_GENERATOR} WIX)
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    set(CPACK_GENERATOR TGZ)
+    
+elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
+    set(CPACK_GENERATOR WIX)
     file(COPY "${CMAKE_SOURCE_DIR}/LICENSE"
         DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
     file(RENAME "${CMAKE_CURRENT_BINARY_DIR}/LICENSE"
@@ -292,5 +295,12 @@ if(WIN32)
     set(CPACK_RESOURCE_FILE_LICENSE  "${CMAKE_CURRENT_BINARY_DIR}/LICENSE.txt")
     set(CPACK_WIX_PRODUCT_ICON "${CMAKE_SOURCE_DIR}/src/images/icon.ico")
     set(CPACK_WIX_UPGRADE_GUID "13B245EB-E587-444F-95AA-D1AD22C22A26")
+
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set(CPACK_GENERATOR "DragNDrop")
+    #set(CPACK_DMG_BACKGROUND_IMAGE "${PROJECT_SOURCE_DIR}/deploy/dmg_background.png")
+    #set(CPACK_DMG_DS_STORE "${PROJECT_SOURCE_DIR}/deploy/dmg_ds_store")
+    set(CPACK_DMG_VOLUME_NAME "${PROJECT_NAME}")
 endif()
+
 include(CPack)
