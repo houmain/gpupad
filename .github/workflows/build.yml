@@ -14,21 +14,24 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - os: windows-latest
-            package: WIX
-
-          - os: ubuntu-18.04
-            package: TGZ
-
-          - os: macos-latest
-            package: TGZ
-
+        - {
+           name: "Linux-x64"
+           , os: ubuntu-18.04
+           , QT_VERSION: 5.15.2, QT_INST_DIR: /opt, QTDIR: /opt/Qt/5.15.2/gcc_64
+           , package: TGZ
+          }
+        - {
+            name: "Windows-x64", WIN_ARCH: "x64"
+            , os: windows-2019
+            , QT_VERSION: 5.15.2, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/5.15.2/msvc2019_64", QT_ARCH: win64_msvc2019_64
+            , package: WIX
+          }
     steps:
     - name: Setup Windows/MSVC
       if: runner.os == 'Windows'
       uses: ilammy/msvc-dev-cmd@v1
       with:
-        arch: amd64_x86
+        arch: ${{matrix.config.WIN_ARCH}}
 
     - name: Setup Linux/gcc-8
       if: runner.os == 'Linux'
@@ -37,10 +40,23 @@ jobs:
         echo 'CC=gcc-8' >> $GITHUB_ENV
         echo 'CXX=g++-8' >> $GITHUB_ENV
 
-    - name: Install Qt
-      uses: jurplel/install-qt-action@v2.14.0
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v2
       with:
-        version: '5.15.2'        
+        path: ${{matrix.config.QT_INST_DIR}}/Qt
+        key: ${{ runner.os }}${{ matrix.config.WIN_ARCH }}-qt-${{ matrix.config.QT_VERSION }}
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+       aqtversion: ==2.0.0
+       py7zrversion: ==0.16.2
+       dir: ${{matrix.config.QT_INST_DIR}}
+       arch: ${{ matrix.config.QT_ARCH }}
+       version: ${{ matrix.config.QT_VERSION }}
+       modules: ${{ matrix.config.QT_MODULES }}
+       cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
     - name: Checkout
       uses: actions/checkout@v2
