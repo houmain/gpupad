@@ -269,7 +269,7 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     find_program(WINDEPLOYQT windeployqt HINTS "${_qt_bin_dir}")
     install(CODE "set(WINDEPLOYQT \"${WINDEPLOYQT}\")" COMPONENT Application)
     install(CODE [===[
-    execute_process(COMMAND "${WINDEPLOYQT}" --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations --no-virtualkeyboard "${CMAKE_INSTALL_PREFIX}")
+    execute_process(COMMAND "${WINDEPLOYQT}" --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations --no-virtualkeyboard --no-compiler-runtime "${CMAKE_INSTALL_PREFIX}")
     ]===] COMPONENT Application)
     
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
