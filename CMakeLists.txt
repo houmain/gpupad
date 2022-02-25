@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.12.0)
 project(gpupad LANGUAGES CXX C)
-message("CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
@@ -209,15 +208,24 @@ option(ENABLE_QUICK "Enable QtQuick" ON)
 if(ENABLE_QUICK)
     find_package(Qt${QT_VERSION_MAJOR}Quick CONFIG)
     find_package(Qt${QT_VERSION_MAJOR}QuickWidgets CONFIG)
-    find_package(Qt${QT_VERSION_MAJOR}QuickShapes CONFIG)
-    find_package(Qt${QT_VERSION_MAJOR}QuickControls2 CONFIG)
-    if(Qt${QT_VERSION_MAJOR}Quick_FOUND)
+    if(Qt${QT_VERSION_MAJOR}Quick_FOUND AND
+       Qt${QT_VERSION_MAJOR}QuickWidgets_FOUND)
         target_link_libraries(${PROJECT_NAME}
             Qt${QT_VERSION_MAJOR}::Quick
-            Qt${QT_VERSION_MAJOR}::QuickWidgets
-            Qt${QT_VERSION_MAJOR}::QuickShapes
-            Qt${QT_VERSION_MAJOR}::QuickControls2)
+            Qt${QT_VERSION_MAJOR}::QuickWidgets)
         add_compile_definitions(QtQuick_FOUND)
+    endif()
+
+    find_package(Qt${QT_VERSION_MAJOR}QuickShapes CONFIG)
+    if(Qt${QT_VERSION_MAJOR}QuickShapes_FOUND)
+        target_link_libraries(${PROJECT_NAME} Qt${QT_VERSION_MAJOR}::QuickShapes)
+        add_compile_definitions(QtQuickShapes_FOUND)
+    endif()
+
+    find_package(Qt${QT_VERSION_MAJOR}QuickControls2 CONFIG)
+    if(Qt${QT_VERSION_MAJOR}QuickControls2_FOUND)
+        target_link_libraries(${PROJECT_NAME} Qt${QT_VERSION_MAJOR}::QuickControls2)
+        add_compile_definitions(QtQuickControls2_FOUND)
     endif()
 endif()
 
@@ -258,20 +266,21 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Application)
     install(DIRECTORY samples DESTINATION . COMPONENT Samples)
 
-    find_program(deployqt windeployqt HINTS "${_qt_bin_dir}")
-    install(CODE "set(deployqt \"${deployqt}\")" COMPONENT Application)
+    find_program(WINDEPLOYQT windeployqt HINTS "${_qt_bin_dir}")
+    install(CODE "set(WINDEPLOYQT \"${WINDEPLOYQT}\")" COMPONENT Application)
     install(CODE [===[
-    execute_process(COMMAND "${deployqt}" --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations --no-virtualkeyboard "${CMAKE_INSTALL_PREFIX}")
+    execute_process(COMMAND "${WINDEPLOYQT}" --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations --no-virtualkeyboard "${CMAKE_INSTALL_PREFIX}")
     ]===] COMPONENT Application)
     
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Application)
     install(DIRECTORY samples DESTINATION . COMPONENT Samples)
 
-    find_program(deployqt macdeployqt HINTS "${_qt_bin_dir}")
-    install(CODE "set(deployqt \"${deployqt}\")" COMPONENT Application)
+    find_program(MACDEPLOYQT macdeployqt HINTS "${_qt_bin_dir}")
+    install(CODE "set(MACDEPLOYQT \"${MACDEPLOYQT}\")" COMPONENT Application)
+    install(CODE "set(APPLICATION \"${PROJECT_NAME}.app\")" COMPONENT Application)
     install(CODE [===[
-    execute_process(COMMAND "${deployqt}" ${PROJECT_NAME}.app)
+    execute_process(COMMAND "${MACDEPLOYQT}" "${APPLICATION}")
     ]===] COMPONENT Application)
 endif()
 
