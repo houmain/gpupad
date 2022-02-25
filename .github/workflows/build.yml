@@ -1,0 +1,99 @@
+# Github Actions configuration file
+name: Build
+
+on:
+  push:
+  release:
+    types:
+      - prereleased
+
+jobs:
+  build:
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+           name: "Linux-x64"
+           , os: ubuntu-18.04
+           , QT_VERSION: 5.15.2, QT_INST_DIR: /opt, QTDIR: /opt/Qt/5.15.2/gcc_64
+          }
+        - {
+            name: "Windows-x64", WIN_ARCH: "x64"
+            , os: windows-2019
+            , QT_VERSION: 5.15.2, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/5.15.2/msvc2019_64", QT_ARCH: win64_msvc2019_64
+          }
+        - {
+            name: "MacOS-x64"
+            , os: macos-10.15
+            , QT_VERSION: 5.15.2, QT_INST_DIR: /Users/runner, QTDIR: /Users/runner/Qt/5.15.2/clang_64
+          }          
+    steps:
+    - name: Setup Windows/MSVC
+      if: runner.os == 'Windows'
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{matrix.config.WIN_ARCH}}
+
+    - name: Setup Linux/gcc-8
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get install g++-8
+        echo 'CC=gcc-8' >> $GITHUB_ENV
+        echo 'CXX=g++-8' >> $GITHUB_ENV
+
+    - name: Cache Qt
+      id: cache-qt
+      uses: actions/cache@v2
+      with:
+        path: ${{matrix.config.QT_INST_DIR}}/Qt
+        key: ${{ runner.os }}${{ matrix.config.WIN_ARCH }}-qt-${{ matrix.config.QT_VERSION }}
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+       aqtversion: ==2.0.0
+       py7zrversion: ==0.16.2
+       dir: ${{matrix.config.QT_INST_DIR}}
+       arch: ${{ matrix.config.QT_ARCH }}
+       version: ${{ matrix.config.QT_VERSION }}
+       modules: ${{ matrix.config.QT_MODULES }}
+       cached: ${{ steps.cache-qt.outputs.cache-hit }}
+
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        submodules: recursive
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_INSTALL_PREFIX=dist
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release
+    - name: Install
+      run: cmake --install ${{github.workspace}}/build --config Release
+    - name: Package
+      run: cpack --config ${{github.workspace}}/build/CPackConfig.cmake
+
+    - name: Build AppImage
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+        mkdir -p AppDir
+        cp -R dist AppDir/usr
+        cp AppDir/usr/share/applications/gpupad.desktop AppDir
+        cp AppDir/usr/share/pixmaps/gpupad.png AppDir
+        wget -nv -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+        chmod a+x linuxdeployqt*.AppImage
+        unset QTDIR; unset QT_PLUGIN_PATH; unset LD_LIBRARY_PATH
+        ./linuxdeployqt*.AppImage AppDir/usr/bin/gpupad -appimage -extra-plugins=iconengines,imageformats -no-translations -no-copy-copyright-files
+
+    - name: Upload to Github release
+      uses: xresloader/upload-to-github-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        file: "*.msi;*.tar.gz;*.dmg;*.AppImage"
+        tags: true
+        draft: true

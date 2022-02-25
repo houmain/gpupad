@@ -1,6 +1,5 @@
 [Desktop Entry]
 Type=Application
-Version=1.0
 Name=GPUpad
 Comment=GLSL Shader Editor
 Exec=gpupad %F
@@ -9,19 +8,3 @@ Terminal=false
 Categories=Development;IDE;
 StartupNotify=true
 Keywords=Text;Editor;
-Keywords[ca]=Text;Editor;
-Keywords[de]=Text;Editor;
-Keywords[el]=Κείμενο.Επεξεργαστής.
-Keywords[es]=Texto;Editor;
-Keywords[fr]=Texte;Éditeur;
-Keywords[it]=Testo;Editor;
-Keywords[ja]=Text;Editor;
-Keywords[kk]=Мәтін;Түзеткіш;
-Keywords[lt]=Redaktorius
-Keywords[nl]=Tekst;Editor;
-Keywords[pt]=Texto;Editor;
-Keywords[ru]=Текст;Редактор;
-Keywords[sk]=Text;Editor;
-Keywords[sv]=Text;Editor;
-Keywords[tr]=Metin;Düzenleyici;
-Keywords[zh_CN]=文本;编辑器;
