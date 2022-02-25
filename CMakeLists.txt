@@ -278,7 +278,7 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 
     find_program(MACDEPLOYQT macdeployqt HINTS "${_qt_bin_dir}")
     install(CODE "set(MACDEPLOYQT \"${MACDEPLOYQT}\")" COMPONENT Application)
-    install(CODE "set(APPLICATION \"${PROJECT_NAME}.app\")" COMPONENT Application)
+    install(CODE "set(APPLICATION \"${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app\")" COMPONENT Application)
     install(CODE [===[
     execute_process(COMMAND "${MACDEPLOYQT}" "${APPLICATION}")
     ]===] COMPONENT Application)
