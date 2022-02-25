@@ -79,18 +79,14 @@ jobs:
     - name: Build AppImage
       if: runner.os == 'Linux'
       run: |
-        wget -qc "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
-        wget -qc "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
-        chmod a+x linuxdeploy*.AppImage
-        export VERSION=continuous
-        mkdir -p ./appdir/usr/plugins/iconengines
-        cp /opt/Qt/${{ matrix.config.QT_VERSION }}/gcc_64/plugins/iconengines/libqsvgicon.so ./appdir/usr/plugins/iconengines/libqsvgicon.so
-        ${{matrix.config.linuxDeployQtPath}}
-        ./linuxdeploy-x86_64.AppImage --appdir=appdir --output appimage \
-          -e bin/gpupad \
-          -d share/applications/gpupad.desktop \
-          -i share/pixmaps/gpupad.png \
-          --plugin=qt
+        mkdir -p AppDir
+        cp -R dist AppDir/usr
+        cp AppDir/usr/share/applications/gpupad.desktop AppDir
+        cp AppDir/usr/share/pixmaps/gpupad.png AppDir
+        wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+        chmod a+x linuxdeployqt*.AppImage
+        unset QTDIR; unset QT_PLUGIN_PATH; unset LD_LIBRARY_PATH
+        ./linuxdeployqt*.AppImage AppDir/usr/bin/gpupad -appimage -extra-plugins=iconengines,imageformats -no-translations -no-copy-copyright-files
 
     - name: Upload to Github release
       uses: xresloader/upload-to-github-release@v1
