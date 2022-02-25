@@ -2,12 +2,8 @@
 GPUpad
 ======
 <p>
-<a href="https://ci.appveyor.com/project/houmain/gpupad-windows-x64">
-<img alt="AppVeyor" src="https://img.shields.io/appveyor/build/houmain/gpupad-windows-x64?label=build%20Windows-x64"></a>
-<a href="https://ci.appveyor.com/project/houmain/gpupad-ubuntu-x64">
-<img alt="AppVeyor" src="https://img.shields.io/appveyor/build/houmain/gpupad-ubuntu-x64?label=build%20Linux-x64"></a>
-<a href="https://ci.appveyor.com/project/houmain/gpupad-macos-x64">
-<img alt="AppVeyor" src="https://img.shields.io/appveyor/build/houmain/gpupad-macos-x64?label=build%20macOS-x64"></a>
+<a href="https://github.com/houmain/gpupad/actions/workflows/build.yml">
+<img alt="Build" src="https://github.com/houmain/gpupad/actions/workflows/build.yml/badge.svg"/></a>
 <a href="https://github.com/houmain/gpupad/issues">
 <img alt="Issues" src="https://img.shields.io/github/issues-raw/houmain/gpupad.svg"/></a>
 
@@ -21,21 +17,20 @@ GPUpad
 
 A lightweight editor for GLSL shaders of all kinds and a fully-featured IDE for developing GPU based algorithms.
 
-
 Features
 --------
 
 * Cross platform and efficient.
 * Decent source editor with automatic indentation, brace highlighting, rectangular selection&hellip;
-* GLSL and JavaScript syntax highlighting with basic auto completion (of built-in functions and constants).
-* Continuous validation of standalone shader files (by compiling them using OpenGL).
+* GLSL, HLSL and JavaScript syntax highlighting with basic auto completion.
+* Continuous validation of standalone shader files.
 * Possibility to evaluate shader programs with completely customizeable input and OpenGL state.
 * Automatically defined printf function for printf-debugging.
 * JavaScript expressions and scripts to define uniform input.
 * Reading and writing of image files ([KTX](https://github.com/KhronosGroup/KTX-Software) and DDS for 3D/Array textures, block compressed textures, cube maps&hellip;).
 * Streaming video files to textures.
 * Editor for structured binary files.
-* Hot reloading of externally modified files.
+* Advanced hot reloading of externally modified files.
 * Sample sessions in the Help menu.
 
 Screenshots
@@ -92,6 +87,7 @@ Allows to structure more complex sessions. They open a new scope unless *inline 
 
 - **Script** -
 Allows to define JavaScript functions and variables in script files, which can subsequently be used in uniform binding expressions.
+Scripts can also be used to dynamically populate the session and generate buffer and texture data.
 There is one JavaScript state for the whole session and the scripts are evaluated in consecutive order (*Group* scopes do not have an effect).
 
 Download
@@ -118,22 +114,20 @@ sudo apt install build-essential git cmake qtdeclarative5-dev libdrm-dev
 
 **Checking out the source:**
 ```
-git clone --depth 1 https://github.com/houmain/gpupad
+git clone https://github.com/houmain/gpupad
 ```
 
 **Building:**
 ```
 cd gpupad
-mkdir build
-cd build
-cmake ..
-cmake --build . --config Release
+cmake -B _build
+cmake --build _build
 ```
 
 On Windows and macOS you might have to pass the path to your Qt installation. e.g:
 
 ```
-cmake --build . --config Release -DCMAKE_PREFIX_PATH=C:\Qt\5.15\msvc2019_64
+cmake --build _build -DCMAKE_PREFIX_PATH=C:\Qt\5.15\msvc2019_64
 ```
 
 License

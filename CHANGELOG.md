@@ -5,6 +5,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [Version 1.23] - 2021-02-25
+
+## Added
+
+- Added QmlView.
+- Automatically prepending default #version when missing.
+- Outputting total evaluation time.
+- Added Bitonic sort sample.
+
+## Changed
+
+- Moved script evaluation to render thread.
+- Replacing untouched untitled editor when opening source file.
+- Reloading text and binary files less often.
+- Merged Z selector into layer selector in texture editor.
+- Activating first item when not restoring session state.
+- Generating output from generated shaders.
+
+## Fixed
+
+- Fixed line numbers when #including multiple files.
+- Limiting matching brace highlighting.
+- Improved cache invalidation on source editor open/close.
+- Only invalidating raw texture on format change.
+- Autocompleting extension only when saving.
+- Fixed potential crash when deducing block row count.
+- Fixed console.log script function.
+- Showing initially downloaded empty buffer in editor.
+
 ## [Version 1.22] - 2021-12-21
 
 ## Added
@@ -444,7 +473,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.0] - 2019-04-14
 
-[unreleased]: https://github.com/houmain/gpupad/compare/1.22...HEAD
+[unreleased]: https://github.com/houmain/gpupad/compare/1.23...HEAD
+[version 1.23]: https://github.com/houmain/gpupad/compare/1.22...1.23
 [version 1.22]: https://github.com/houmain/gpupad/compare/1.21...1.22
 [version 1.21]: https://github.com/houmain/gpupad/compare/1.20...1.21
 [version 1.20]: https://github.com/houmain/gpupad/compare/1.19...1.20
