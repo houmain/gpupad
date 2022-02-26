@@ -952,7 +952,9 @@ void MainWindow::populateSampleSessions()
         QCoreApplication::applicationDirPath() + "/../samples",
         QCoreApplication::applicationDirPath() + "/../../samples",
 #endif
-        "/usr/share/gpupad/samples",
+#if defined(__linux__)
+        qEnvironmentVariable("APPDIR") + "/usr/share/gpupad/samples",
+#endif
     };
     for (const auto &path : paths) {
         if (!mUi->menuSampleSessions->actions().empty())

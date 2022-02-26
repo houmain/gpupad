@@ -229,15 +229,6 @@ if(ENABLE_QUICK)
     endif()
 endif()
 
-option(ENABLE_WEBENGINE "Enable QtWebEngine" OFF)
-if(ENABLE_WEBENGINE)
-    find_package(Qt${QT_VERSION_MAJOR}WebEngineWidgets CONFIG)
-    if(Qt${QT_VERSION_MAJOR}WebEngineWidgets_FOUND)
-        target_link_libraries(${PROJECT_NAME} Qt${QT_VERSION_MAJOR}::WebEngineWidgets)
-        add_compile_definitions(QtWebEngineWidgets_FOUND)
-    endif()
-endif()
-
 # include SPIRV-Cross
 option(ENABLE_SPIRV_CROSS "Enable SPIRV-Cross" ON)
 if (ENABLE_SPIRV_CROSS)
@@ -278,9 +269,9 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 
     find_program(MACDEPLOYQT macdeployqt HINTS "${_qt_bin_dir}")
     install(CODE "set(MACDEPLOYQT \"${MACDEPLOYQT}\")" COMPONENT Application)
-    install(CODE "set(APPLICATION \"${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app\")" COMPONENT Application)
+    install(CODE "set(APPLICATION \"${PROJECT_NAME}.app\")" COMPONENT Application)
     install(CODE [===[
-    execute_process(COMMAND "${MACDEPLOYQT}" "${APPLICATION}")
+    execute_process(COMMAND cd "${CMAKE_INSTALL_PREFIX}" && "${MACDEPLOYQT}" "${APPLICATION}" -always-overwrite)
     ]===] COMPONENT Application)
 endif()
 
@@ -313,8 +304,6 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
 
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CPACK_GENERATOR "DragNDrop")
-    #set(CPACK_DMG_BACKGROUND_IMAGE "${PROJECT_SOURCE_DIR}/deploy/dmg_background.png")
-    #set(CPACK_DMG_DS_STORE "${PROJECT_SOURCE_DIR}/deploy/dmg_ds_store")
     set(CPACK_DMG_VOLUME_NAME "${PROJECT_NAME}")
 endif()
 
