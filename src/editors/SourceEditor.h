@@ -39,9 +39,11 @@ public:
     SourceType sourceType() const { return mSourceType; }
     void setSourceType(SourceType sourceType);
     void deduceSourceType();
+    void restoreNavigationPosition(const QString &position);
 
 Q_SIGNALS:
     void fileNameChanged(const QString &fileName);
+    void navigationPositionChanged(const QString &position, bool replace);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -85,6 +87,7 @@ private:
     void updateColors(bool darkTheme);
     void updateSyntaxHighlighting();
     void updateEditorToolBar();
+    void emitNavigationPositionChanged();
 
     SourceEditorToolBar& mEditorToolBar;
     QString mFileName;
@@ -104,6 +107,7 @@ private:
     int mTabSize{ };
     bool mIndentWithSpaces{ };
     int mUpdatedCompleterInBlock{ };
+    QString mPrevNavigationPosition;
 };
 
 #endif // SOURCEEDITOR_H

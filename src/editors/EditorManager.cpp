@@ -534,6 +534,8 @@ void EditorManager::addSourceEditor(SourceEditor *editor)
         dock, &QDockWidget::setWindowModified);
     connect(editor, &SourceEditor::fileNameChanged,
         [this, dock]() { handleEditorFilenameChanged(dock); });
+    connect(editor, &SourceEditor::navigationPositionChanged,
+        this, &EditorManager::addNavigationPosition);
 }
 
 void EditorManager::addTextureEditor(TextureEditor *editor)
@@ -672,4 +674,80 @@ void updateDockCurrentProperty(QDockWidget *dock, bool current)
             frame->update();
         }
     }
+}
+
+void EditorManager::addNavigationPosition(const QString &position, bool update) 
+{
+    const auto couldNavigateForward = canNavigateForward();
+    const auto couldNavigateBackward = canNavigateBackward();
+
+    mNavigationStack.resize(mNavigationStackPosition);
+
+    const auto editor = QObject::sender();
+    if (update && !mNavigationStack.isEmpty() &&
+          mNavigationStack.back().first == editor) {
+        mNavigationStack.back().second = position;
+    }
+    else {
+        mNavigationStack.push({ editor, position });
+        ++mNavigationStackPosition;
+    }
+
+    if (canNavigateForward() != couldNavigateForward)
+        Q_EMIT canNavigateForwardChanged(false);
+    if (canNavigateBackward() != couldNavigateBackward)
+        Q_EMIT canNavigateBackwardChanged(true);
+}
+
+bool EditorManager::restoreNavigationPosition(int index)
+{
+    // validate pointer, editor might have been closed
+    const auto [object, position] = mNavigationStack[index];
+    const auto editor = static_cast<SourceEditor*>(object);
+    if (mSourceEditors.indexOf(editor) == -1)
+        return false;
+
+    editor->restoreNavigationPosition(position);
+    autoRaise(editor);
+    return true;
+}
+
+bool EditorManager::canNavigateBackward() const
+{
+    return (mNavigationStackPosition > 1);
+}
+
+bool EditorManager::canNavigateForward() const
+{
+    return (mNavigationStackPosition < mNavigationStack.size());
+}
+
+void EditorManager::navigateBackward()
+{
+    const auto couldNavigateBackward = canNavigateBackward();
+    const auto couldNavigateForward = canNavigateForward();
+    while (canNavigateBackward()) {
+        --mNavigationStackPosition;
+        if (restoreNavigationPosition(mNavigationStackPosition - 1))
+            break;
+    }
+    if (canNavigateForward() != couldNavigateForward)
+        Q_EMIT canNavigateForwardChanged(true);
+    if (canNavigateBackward() != couldNavigateBackward)
+        Q_EMIT canNavigateBackwardChanged(false);
+}
+
+void EditorManager::navigateForward()
+{
+    const auto couldNavigateForward = canNavigateForward();
+    const auto couldNavigateBackward = canNavigateBackward();
+    while (canNavigateForward()) {
+        ++mNavigationStackPosition;
+        if (restoreNavigationPosition(mNavigationStackPosition - 1))
+            break;
+    }
+    if (canNavigateForward() != couldNavigateForward)
+        Q_EMIT canNavigateForwardChanged(false);
+    if (canNavigateBackward() != couldNavigateBackward)
+        Q_EMIT canNavigateBackwardChanged(true);
 }

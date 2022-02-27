@@ -32,7 +32,7 @@
      <x>0</x>
      <y>0</y>
      <width>494</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -136,6 +136,9 @@
       <string>Tab Size</string>
      </property>
     </widget>
+    <addaction name="actionNavigateBackward"/>
+    <addaction name="actionNavigateForward"/>
+    <addaction name="separator"/>
     <addaction name="menuTabSize"/>
     <addaction name="actionIndentWithSpaces"/>
     <addaction name="actionShowWhiteSpace"/>
@@ -566,6 +569,28 @@
    </property>
    <property name="menuRole">
     <enum>QAction::QuitRole</enum>
+   </property>
+  </action>
+  <action name="actionNavigateBackward">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Navigate &amp;Backward</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+-</string>
+   </property>
+  </action>
+  <action name="actionNavigateForward">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Navigate &amp;Forward</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+-</string>
    </property>
   </action>
  </widget>

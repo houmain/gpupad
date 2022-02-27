@@ -270,6 +270,40 @@ void SourceEditor::deduceSourceType()
     setSourceType(::deduceSourceType(sourceType(), extension, toPlainText()));
 }
 
+void SourceEditor::emitNavigationPositionChanged()
+{
+    const auto cursor = textCursor();
+    const auto block = cursor.block();
+    const auto offset = cursor.position() - block.position();
+    const auto position = QString("%1;%2").arg(block.blockNumber()).arg(offset);
+
+    // update previous when block number did not change
+    const auto update = (mPrevNavigationPosition.startsWith(
+      QString("%1;").arg(block.blockNumber())));
+
+    Q_EMIT navigationPositionChanged(position, update);
+    mPrevNavigationPosition = position;
+}
+
+void SourceEditor::restoreNavigationPosition(const QString &position)
+{
+    const auto semicolon = position.indexOf(";");
+    const auto blockNumber = position.left(semicolon).toInt();
+    const auto offset = position.mid(semicolon + 1).toInt();
+
+    const auto prevLineWrapMode = lineWrapMode();
+    if (prevLineWrapMode != QPlainTextEdit::NoWrap)
+        setLineWrapMode(QPlainTextEdit::NoWrap);
+
+    auto cursor = textCursor();
+    const auto block = document()->findBlockByNumber(blockNumber);
+    cursor.setPosition(block.position() + offset);
+    setTextCursor(cursor);
+
+    if (prevLineWrapMode != QPlainTextEdit::NoWrap)
+        setLineWrapMode(prevLineWrapMode);
+}
+
 void SourceEditor::setSourceType(SourceType sourceType)
 {
     if (!mHighlighter || mSourceType != sourceType) {
@@ -614,6 +648,9 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
     }
     else {
         QPlainTextEdit::keyPressEvent(event);
+
+        if (!event->text().isEmpty() && event->isAccepted())
+            emitNavigationPositionChanged();
 
         const auto hitCtrlOrShift = event->modifiers() &
             (Qt::ControlModifier | Qt::ShiftModifier);

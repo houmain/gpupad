@@ -194,6 +194,14 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::focusNextEditor);
     connect(mUi->actionFocusPreviousEditor, &QAction::triggered,
         this, &MainWindow::focusPreviousEditor);
+    connect(mUi->actionNavigateBackward, &QAction::triggered,
+        &mEditorManager, &EditorManager::navigateBackward);
+    connect(mUi->actionNavigateForward, &QAction::triggered,
+        &mEditorManager, &EditorManager::navigateForward);
+    connect(&mEditorManager, &EditorManager::canNavigateBackwardChanged,
+        mUi->actionNavigateBackward, &QAction::setEnabled);
+    connect(&mEditorManager, &EditorManager::canNavigateForwardChanged,
+        mUi->actionNavigateForward, &QAction::setEnabled);
     connect(qApp, &QApplication::focusChanged,
         this, &MainWindow::updateCurrentEditor);
     connect(mUi->actionFullScreen, &QAction::triggered,

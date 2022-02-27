@@ -7,6 +7,7 @@
 #include "DockWindow.h"
 #include <QList>
 #include <QMap>
+#include <QStack>
 
 class IEditor;
 class SourceEditor;
@@ -51,6 +52,10 @@ public:
     QStringList getImageFileNames() const;
 
     bool hasEditor() const { return !mDocks.empty(); }
+    bool canNavigateBackward() const;
+    bool canNavigateForward() const;
+    void navigateBackward();
+    void navigateForward();
     bool focusNextEditor();
     bool focusPreviousEditor();
     void updateCurrentEditor();
@@ -73,6 +78,8 @@ public:
 Q_SIGNALS:
     void editorRenamed(const QString &prevFileName, const QString &fileName);
     void currentEditorChanged(QString fileName);
+    void canNavigateBackwardChanged(bool canNavigate);
+    void canNavigateForwardChanged(bool canNavigate);
 
 private:
     int getFocusedEditorIndex() const;
@@ -91,6 +98,8 @@ private:
     void updateEditorToolBarVisibility();
     void updateEditorPropertiesVisibility();
     QDockWidget *createDock(QWidget *widget, IEditor *editor);
+    void addNavigationPosition(const QString &position, bool update);
+    bool restoreNavigationPosition(int index);
 
     QList<SourceEditor*> mSourceEditors;
     QList<BinaryEditor*> mBinaryEditors;
@@ -104,6 +113,8 @@ private:
     BinaryEditorToolBar *mBinaryEditorToolBar{ };
     SourceEditorToolBar *mSourceEditorToolBar{ };
     bool mAutoRaise{ true };
+    QStack<QPair<QObject*, QString>> mNavigationStack;
+    int mNavigationStackPosition{ };
 };
 
 void updateDockCurrentProperty(QDockWidget *dock, bool current);
