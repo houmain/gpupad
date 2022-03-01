@@ -7,6 +7,7 @@
 Histogram::Histogram(QWidget *parent)
     : QWidget(parent)
 {
+    setCursor(Qt::SizeHorCursor);
 }
 
 QSize Histogram::sizeHint() const
@@ -27,8 +28,22 @@ void Histogram::paintEvent(QPaintEvent *ev)
     const auto height = this->height() - 5;
     const auto width = this->width() - 5;
 
+    const auto makeRelative = [&](auto pos) {
+        return std::clamp((pos - mHistogramBounds.minimum) /
+          (mHistogramBounds.maximum - mHistogramBounds.minimum), 
+          0.0, 1.0);
+    };
+    auto minimum = makeRelative(mMappingRange.minimum);
+    auto maximum = makeRelative(mMappingRange.maximum);
+    if (minimum > maximum)
+        std::swap(minimum, maximum);
+
     QPainter painter(this);
-    painter.fillRect(ev->rect(), QBrush(QColor::fromRgb(0, 0, 0, 50)));
+    auto fill = ev->rect();
+    painter.fillRect(fill, QBrush(QColor::fromRgb(0, 0, 0, 15)));
+    fill.adjust(static_cast<int>(minimum * width) + 1, 0,
+                static_cast<int>((maximum - 1) * width) - 1, 0);
+    painter.fillRect(fill, QBrush(QColor::fromRgb(0, 0, 0, 35)));
     painter.setPen(QPen(QColor::fromRgb(0, 0, 0, 64)));
     painter.drawRect(ev->rect().adjusted(0, 0, -1, -1));
 
@@ -62,3 +77,46 @@ void Histogram::paintEvent(QPaintEvent *ev)
     painter.strokePath(red, QPen(QColor::fromRgb(255, 0, 0, 96)));
     painter.strokePath(blue, QPen(QColor::fromRgb(0, 0, 255, 96)));
 }
+
+void Histogram::mousePressEvent(QMouseEvent *event)
+{
+    if (event->buttons() & Qt::LeftButton)
+        updateRange(event->x());
+    QWidget::mousePressEvent(event);
+}
+
+void Histogram::mouseMoveEvent(QMouseEvent *event)
+{
+    if (event->buttons() & Qt::LeftButton)
+        updateRange(event->x());
+    QWidget::mouseMoveEvent(event);
+}
+
+void Histogram::setHistogramBounds(const Range &bounds)
+{
+    mHistogramBounds = bounds;
+    setMappingRange(bounds);
+}
+
+void Histogram::setMappingRange(const Range &range)
+{
+    if (std::exchange(mMappingRange, range) != range) {
+        Q_EMIT mappingRangeChanged(mMappingRange);
+        update();
+    }
+}
+
+void Histogram::updateRange(int mouseX) 
+{
+    const auto x = 2;
+    const auto width = this->width() - 5;
+    const auto pos = std::clamp((mouseX - x) / static_cast<double>(width), 0.0, 1.0) *
+        (mHistogramBounds.maximum - mHistogramBounds.minimum) + mHistogramBounds.minimum;
+    
+    auto range = mMappingRange;
+    (std::abs(range.minimum - pos) < std::abs(range.maximum - pos) ? 
+        range.minimum : range.maximum) = pos;
+
+    setMappingRange(range);
+}
+

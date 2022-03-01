@@ -39,6 +39,8 @@ TextureInfoBar::TextureInfoBar(QWidget *parent)
         this, &TextureInfoBar::resetRange);
     connect(ui->buttonInvertRange, &QPushButton::clicked, 
         this, &TextureInfoBar::invertRange);
+    connect(mHistogram, &Histogram::mappingRangeChanged, 
+        this, &TextureInfoBar::mappingRangeChanged);
 }
 
 TextureInfoBar::~TextureInfoBar()
@@ -65,8 +67,9 @@ void TextureInfoBar::setPickerColor(const QVector4D &color)
     ui->pickerColorA->setText(toString(c.w()));
 
     // output encoded value and color mapped to range
-    c = (color - QVector4D(1, 1, 1, 1) * mMappingRange.minimum) /
-        (mMappingRange.maximum - mMappingRange.minimum);
+    const auto range = mappingRange();
+    c = (color - QVector4D(1, 1, 1, 1) * range.minimum) /
+        (range.maximum - range.minimum);
     c.setW(color.w());
 
     const auto toStringEncoded = [](const char* channel, float v) { 
@@ -94,10 +97,12 @@ void TextureInfoBar::setPickerEnabled(bool enabled)
 
 void TextureInfoBar::setMappingRange(const Range &range)
 {
-    if (mMappingRange != range) {
-        mMappingRange = range;
-        Q_EMIT mappingRangeChanged(range);
-    }
+    mHistogram->setMappingRange(range);
+}
+
+const Range &TextureInfoBar::mappingRange() const
+{
+    return mHistogram->mappingRange();
 }
 
 void TextureInfoBar::setHistogramBounds(const Range &bounds)
@@ -108,7 +113,7 @@ void TextureInfoBar::setHistogramBounds(const Range &bounds)
         ui->maximum->setValue(bounds.maximum);
         Q_EMIT histogramBoundsChanged(bounds);
     }
-    setMappingRange(bounds);
+    mHistogram->setHistogramBounds(bounds);
 }
 
 void TextureInfoBar::updateHistogram(const QVector<qreal> &histogramUpdate)

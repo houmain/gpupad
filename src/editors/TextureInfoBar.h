@@ -25,7 +25,7 @@ public:
     void updateHistogram(const QVector<qreal> &histogramUpdate);
     int histogramBinCount() const;
     void setMappingRange(const Range &range);
-    const Range &mappingRange() const { return mMappingRange; }
+    const Range &mappingRange() const;
     void setHistogramBounds(const Range &bounds);
     const Range &histogramBounds() const { return mHistogramBounds; }
     void resetRange();
@@ -45,7 +45,6 @@ private:
     Ui::TextureInfoBar *ui;
     Histogram *mHistogram;
     bool mIsPickerEnabled{ };
-    Range mMappingRange{ };
     Range mHistogramBounds{ };
 };
 
