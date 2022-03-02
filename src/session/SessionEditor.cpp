@@ -287,21 +287,24 @@ void SessionEditor::paste()
         if (!mModel.canDropMimeData(mimeData, Qt::CopyAction, row, column, parent))
             return false;
         mModel.beginUndoMacro("Paste");
-        mModel.dropMimeData(mimeData, Qt::CopyAction, row, column, parent);
+        const auto dropped = mModel.dropMimeData(mimeData, 
+            Qt::CopyAction, row, column, parent);
         mModel.endUndoMacro();
-        return true;
+        if (dropped) {
+            if (row < 0)
+                row = mModel.rowCount(parent) - 1;
+            setCurrentItem(mModel.getItemId(mModel.index(row, column, parent)));
+        }
+        return dropped;
     };
 
     // try to drop as child first
-    if (drop(-1, 0, currentIndex())) {
-        expand(currentIndex());
+    if (drop(-1, 0, currentIndex()))
         return;
-    }
 
     // drop as sibling
-    if (currentIndex().isValid() &&
-        drop(currentIndex().row() + 1, 0, currentIndex().parent()))
-        return;
+    if (currentIndex().isValid())
+        drop(currentIndex().row() + 1, 0, currentIndex().parent());
 }
 
 void SessionEditor::delete_()
@@ -318,7 +321,8 @@ void SessionEditor::delete_()
 void SessionEditor::setCurrentItem(ItemId itemId)
 {
     if (auto item = mModel.findItem(itemId)) {
-        auto index = mModel.getIndex(item);
+        auto index = mModel.getIndex(item, SessionModel::Name);
+        selectionModel()->clear();
         setCurrentIndex(index);
         scrollTo(index);
     }
