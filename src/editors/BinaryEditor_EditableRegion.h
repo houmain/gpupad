@@ -115,34 +115,22 @@ public:
         if (selectedIndexes().isEmpty())
             return;
 
-        const auto text = QApplication::clipboard()->text();
-        const auto separator = guessSeparator(text);
+        const auto rows = convertToVectors(QApplication::clipboard()->text());
         const auto begin = selectedIndexes().constFirst();
-        auto r = begin.row();
-        auto c = begin.column();
-        const auto rows = text.split('\n');
-        for (const auto &row : rows) {
-            if (row.trimmed().isEmpty())
-                continue;
-            c = begin.column();
-            const auto values = row.split(separator);
+        auto row = begin.row();
+        auto maxColumn = begin.column();
+        for (const auto &values : rows) {
+            auto column = begin.column();
             for (const auto &value : values) {
-                const auto index = model()->index(r, c);
+                const auto index = model()->index(row, column);
                 if (index.flags() & Qt::ItemIsEditable)
-                    model()->setData(index, toNumber(value));
-                ++c;
+                    model()->setData(index, value);
+                ++column;
             }
-            ++r;
+            maxColumn = qMax(maxColumn, column);
+            ++row;
         }
-        Q_EMIT model()->dataChanged(begin, model()->index(r, c));
-    }
-
-    double toNumber(QString value)
-    {
-        value = value.trimmed();
-        if (value.endsWith('f') || value.endsWith('F'))
-            value.resize(value.size() - 1);
-        return value.toDouble();
+        Q_EMIT model()->dataChanged(begin, model()->index(row, maxColumn));
     }
 
     void cut()
@@ -172,15 +160,40 @@ public:
     }
 
 private:
-    static char guessSeparator(const QString &text)
+    static char guessSeparator(QStringView text)
     {
         const auto commas = text.count(',');
         const auto tabs = text.count('\t');
         const auto semicolons = text.count(';');
-        if (commas > tabs)
-            return (commas > semicolons ? ',' : ';');
-        else
-            return (tabs > semicolons ? '\t' : ';');
+        return (commas > tabs ? 
+            (commas > semicolons ? ',' : ';') :
+            (tabs > semicolons ? '\t' : ';'));
+    }
+
+    static double toNumber(QStringView value)
+    {
+        value = value.trimmed();
+        if (value.endsWith('f') || value.endsWith('F'))
+            value = value.left(value.size() - 1);
+        if (value.size() > 2 && value[0] == '0' && QChar(value[1]).toLower() == 'x')
+            return value.mid(2).toInt(nullptr, 16);
+        return value.toDouble();
+    }
+
+    QVector<QVariantList> convertToVectors(QStringView text) const
+    {
+         const auto separator = guessSeparator(text);
+         auto result = QVector<QVariantList>();
+         for (auto line : text.split('\n')) {
+             line = line.trimmed();
+             if (!line.isEmpty()) {
+                 auto row = QVariantList();
+                 for (auto value : line.split(separator)) 
+                     row.append(toNumber(value.trimmed()));
+                 result.append(row);
+             }
+         }
+         return result;
     }
 
     QMenu *mContextMenu{ };
