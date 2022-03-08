@@ -17,6 +17,7 @@ public:
         int depth = 1, int layers = 1, int samples = 1,
         int levels = 0);
     bool load(const QString &fileName, bool flipVertically);
+    bool loadQImage(QImage image, bool flipVertically);
     bool save(const QString &fileName, bool flipVertically) const;
     bool isNull() const;
     void clear();

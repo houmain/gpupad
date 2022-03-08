@@ -206,6 +206,25 @@ bool SourceEditor::load()
     if (!Singletons::fileCache().getSource(mFileName, &source))
         return false;
 
+    replace(source);
+    document()->setModified(false);
+    return true;
+}
+
+bool SourceEditor::save()
+{
+    QFile file(fileName());
+    if (!file.open(QFile::WriteOnly | QFile::Text))
+        return false;
+
+    file.write(document()->toPlainText().toUtf8());
+    document()->setModified(false);
+    deduceSourceType();
+    return true;
+}
+
+void SourceEditor::replace(QString source)
+{
     const auto current = document()->toPlainText();
     const auto initial = current.isEmpty() && !document()->isUndoAvailable();
     if (initial)
@@ -247,21 +266,7 @@ bool SourceEditor::load()
     }
 
     document()->setUndoRedoEnabled(true);
-    document()->setModified(false);
     deduceSourceType();
-    return true;
-}
-
-bool SourceEditor::save()
-{
-    QFile file(fileName());
-    if (!file.open(QFile::WriteOnly | QFile::Text))
-        return false;
-
-    file.write(document()->toPlainText().toUtf8());
-    document()->setModified(false);
-    deduceSourceType();
-    return true;
 }
 
 void SourceEditor::deduceSourceType()

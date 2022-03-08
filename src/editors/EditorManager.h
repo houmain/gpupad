@@ -74,18 +74,22 @@ public:
     bool closeAllTextureEditors();
     QString getEditorObjectName(IEditor *editor) const;
     void setEditorObjectName(IEditor *editor, const QString &name);
+    void pasteInNewEditor();
+    bool canPasteInNewEditor() const;
 
 Q_SIGNALS:
     void editorRenamed(const QString &prevFileName, const QString &fileName);
     void currentEditorChanged(QString fileName);
     void canNavigateBackwardChanged(bool canNavigate);
     void canNavigateForwardChanged(bool canNavigate);
+    void canPasteInNewEditorChanged(bool canPaste);
 
 private:
     int getFocusedEditorIndex() const;
     bool focusEditorByIndex(int index);
     IEditor *currentEditor();
     QDockWidget *findEditorDock(const IEditor *editor) const;
+    void closeUntitledUntouchedEditor();
     void addSourceEditor(SourceEditor *editor);
     void addBinaryEditor(BinaryEditor *editor);
     void addTextureEditor(TextureEditor *editor);

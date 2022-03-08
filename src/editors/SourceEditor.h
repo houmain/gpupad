@@ -27,6 +27,7 @@ public:
     bool load() override;
     bool save() override;
     int tabifyGroup() override { return 0; }
+    void replace(QString source);
 
     void findReplace();
     void setLineWrap(bool wrap) { setLineWrapMode(wrap ? WidgetWidth : NoWrap); }

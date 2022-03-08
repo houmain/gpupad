@@ -661,6 +661,11 @@ bool TextureData::loadQImage(const QString &fileName, bool flipVertically)
     if (!image.load(fileName))
         return false;
 
+    return loadQImage(image, flipVertically);
+}
+
+bool TextureData::loadQImage(QImage image, bool flipVertically) 
+{
     image = std::move(image).convertToFormat(getNextNativeImageFormat(image.format()));
 
     if (flipVertically)

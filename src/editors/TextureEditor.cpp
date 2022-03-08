@@ -222,7 +222,7 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
     mTexture = texture;
     mIsRaw = false;
 
-    if (!FileDialog::isEmptyOrUntitled(mFileName))
+    if (emitFileChanged || !FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
 
     Singletons::fileCache().handleEditorFileChanged(mFileName, emitFileChanged);

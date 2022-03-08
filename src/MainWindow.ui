@@ -78,6 +78,7 @@
     <addaction name="actionCut"/>
     <addaction name="actionCopy"/>
     <addaction name="actionPaste"/>
+    <addaction name="actionPasteInNewEditor"/>
     <addaction name="actionDelete"/>
     <addaction name="separator"/>
     <addaction name="actionSelectAll"/>
@@ -346,6 +347,9 @@
    <property name="text">
     <string>Reload</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
   </action>
   <action name="actionSelectAll">
    <property name="enabled">
@@ -534,10 +538,16 @@
    <property name="text">
     <string>Focus next editor</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Tab</string>
+   </property>
   </action>
   <action name="actionFocusPreviousEditor">
    <property name="text">
     <string>Focus previous editor</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+Tab</string>
    </property>
   </action>
   <action name="actionOpenContainingFolder">
@@ -591,6 +601,24 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+-</string>
+   </property>
+  </action>
+  <action name="actionPasteInNewEditor">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/16x16/edit-paste.png</normaloff>:/images/16x16/edit-paste.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Paste in new Editor</string>
+   </property>
+   <property name="toolTip">
+    <string>Paste in new Editor</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+V</string>
    </property>
   </action>
  </widget>

@@ -19,6 +19,8 @@
 #include <QToolButton>
 #include <QBoxLayout>
 #include <QRandomGenerator>
+#include <QClipboard>
+#include <QMimeData>
 
 EditorManager::EditorManager(QWidget *parent)
     : DockWindow(parent)
@@ -30,6 +32,9 @@ EditorManager::EditorManager(QWidget *parent)
     setDockOptions(AnimatedDocks | AllowNestedDocks | AllowTabbedDocks);
     setDocumentMode(true);
     setContentsMargins(0, 1, 0, 0);
+
+     connect(QApplication::clipboard(), &QClipboard::changed,
+        [this]() { Q_EMIT canPasteInNewEditorChanged(canPasteInNewEditor()); });
 }
 
 EditorManager::~EditorManager() = default;
@@ -227,6 +232,15 @@ TextureEditor *EditorManager::openNewTextureEditor(const QString &fileName)
     return editor;
 }
 
+void EditorManager::closeUntitledUntouchedEditor()
+{
+    if (mCurrentDock &&
+        !mCurrentDock->isWindowModified() &&
+        FileDialog::isUntitled(mDocks[mCurrentDock]->fileName())) {
+        closeEditor();
+    }
+}
+
 IEditor* EditorManager::openEditor(const QString &fileName,
     bool asBinaryFile)
 {
@@ -257,12 +271,7 @@ SourceEditor *EditorManager::openSourceEditor(const QString &fileName,
             delete editor;
             return nullptr;
         }
-        // replace untouched untitled editor
-        if (mCurrentDock &&
-            !mCurrentDock->isWindowModified() &&
-            FileDialog::isUntitled(mDocks[mCurrentDock]->fileName())) {
-            closeEditor();
-        }
+        closeUntitledUntouchedEditor();
         addSourceEditor(editor);
     }
     autoRaise(editor);
@@ -523,6 +532,40 @@ void EditorManager::setEditorObjectName(IEditor *editor, const QString &name)
 {
     if (auto dock = findEditorDock(editor))
         dock->setObjectName(name);
+}
+
+bool EditorManager::canPasteInNewEditor() const 
+{
+    return (QApplication::clipboard()->mimeData() != nullptr);
+}
+
+void EditorManager::pasteInNewEditor()
+{
+    auto mimeData = QApplication::clipboard()->mimeData();
+    if (!mimeData)
+        return;
+
+    const auto fileName = FileDialog::generateNextUntitledFileName(tr("Untitled"));
+    closeUntitledUntouchedEditor();
+
+    if (mimeData->hasImage())
+        if (auto editor = openNewTextureEditor(fileName)) {
+            auto texture = TextureData();
+            if (texture.loadQImage(mimeData->imageData().value<QImage>(), true)) {
+                editor->replace(std::move(texture));
+                return;
+            }
+        }
+
+    if (mimeData->hasText())
+        if (auto editor = openNewSourceEditor(fileName)) {
+            editor->replace(mimeData->text());
+            return;
+        }
+
+    if (!mimeData->formats().isEmpty())
+        if (auto editor = openNewBinaryEditor(fileName))
+            editor->replace(mimeData->data(mimeData->formats()[0]));
 }
 
 void EditorManager::addSourceEditor(SourceEditor *editor)

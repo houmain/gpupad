@@ -127,7 +127,6 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->actionOpen->setShortcuts(QKeySequence::Open);
     mUi->actionSave->setShortcuts(QKeySequence::Save);
     mUi->actionSaveAs->setShortcuts(QKeySequence::SaveAs);
-    mUi->actionReload->setShortcut(QKeySequence("Ctrl+R"));
     mUi->actionClose->setShortcuts(QKeySequence::Close);
     mUi->actionUndo->setShortcuts(QKeySequence::Undo);
     mUi->actionRedo->setShortcuts(QKeySequence::Redo);
@@ -138,8 +137,6 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->actionSelectAll->setShortcuts(QKeySequence::SelectAll);
     mUi->actionOnlineHelp->setShortcuts(QKeySequence::HelpContents);
     mUi->actionFindReplace->setShortcuts({ QKeySequence::Find, QKeySequence::Replace });
-    mUi->actionFocusNextEditor->setShortcut(QKeySequence::NextChild);
-    mUi->actionFocusPreviousEditor->setShortcut(QKeySequence("Ctrl+Shift+Tab"));
 
     addAction(mUi->actionFocusNextEditor);
     addAction(mUi->actionFocusPreviousEditor);
@@ -202,6 +199,10 @@ MainWindow::MainWindow(QWidget *parent)
         mUi->actionNavigateBackward, &QAction::setEnabled);
     connect(&mEditorManager, &EditorManager::canNavigateForwardChanged,
         mUi->actionNavigateForward, &QAction::setEnabled);
+    connect(&mEditorManager, &EditorManager::canPasteInNewEditorChanged,
+        mUi->actionPasteInNewEditor, &QAction::setEnabled);
+    connect(mUi->actionPasteInNewEditor, &QAction::triggered,
+        &mEditorManager, &EditorManager::pasteInNewEditor);
     connect(qApp, &QApplication::focusChanged,
         this, &MainWindow::updateCurrentEditor);
     connect(mUi->actionFullScreen, &QAction::triggered,
@@ -263,6 +264,8 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::updateCustomActionsMenu);
     connect(mUi->actionManageCustomActions, &QAction::triggered,
         mCustomActions.data(), &QDialog::show);
+
+    mUi->actionPasteInNewEditor->setEnabled(mEditorManager.canPasteInNewEditor());
 
     auto indentActionGroup = new QActionGroup(this);
     connect(indentActionGroup, &QActionGroup::triggered,
