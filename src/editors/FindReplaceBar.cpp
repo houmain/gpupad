@@ -50,13 +50,16 @@ void FindReplaceBar::resetTarget()
     mTarget = nullptr;
 }
 
-void FindReplaceBar::focus(QWidget *target, QString text)
+void FindReplaceBar::setText(const QString &text)
 {
-    setTarget(target);
     ui->findText->setText(text);
+    findTextChanged();
+}
+
+void FindReplaceBar::focus() 
+{
     ui->findText->selectAll();
     ui->findText->setFocus();
-    findTextChanged();
 }
 
 void FindReplaceBar::cancel()

@@ -365,7 +365,13 @@ void SourceEditor::updateEditorToolBar()
 
 void SourceEditor::findReplace()
 {
-    mFindReplaceBar.focus(this, textUnderCursor());
+    endMultiSelection();
+    mFindReplaceBar.setTarget(this);
+    const auto text = textUnderCursor().trimmed();
+    if (!text.contains('\n') && !text.contains('\r'))
+        mFindReplaceBar.setText(text);
+    if (mFindReplaceBar.isVisible())
+        mFindReplaceBar.focus();
 }
 
 void SourceEditor::setFont(const QFont &font)
@@ -626,10 +632,16 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
     }
 
     if (ctrlHold && (event->key() == Qt::Key_F || event->key() == Qt::Key_F3)) {
-        endMultiSelection();
         findReplace();
-
         if (event->key() == Qt::Key_F3)
+            mFindReplaceBar.findNext();
+    }
+    else if (event->key() == Qt::Key_F3) {
+        endMultiSelection();
+        mFindReplaceBar.setTarget(this);
+        if (event->modifiers() & Qt::ShiftModifier)
+            mFindReplaceBar.findPrevious();
+        else
             mFindReplaceBar.findNext();
     }
     else if (event->key() == Qt::Key_Escape) {

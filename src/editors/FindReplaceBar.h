@@ -19,11 +19,12 @@ public:
     explicit FindReplaceBar(QWidget *parent = nullptr);
     ~FindReplaceBar() override;
 
-    void focus(QWidget* target, QString text);
+    void setTarget(QWidget* target);
+    void setText(const QString &text);
+    void focus();
+    void resetTarget();
     void cancel();
     QWidget *target() const { return mTarget; }
-    void setTarget(QWidget* target);
-    void resetTarget();
 
     void findTextChanged();
     void findNext();
