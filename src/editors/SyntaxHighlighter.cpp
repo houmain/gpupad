@@ -55,6 +55,7 @@ namespace {
 
 SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
     , bool darkTheme
+    , bool showWhiteSpace
     , QObject *parent)
     : QSyntaxHighlighter(parent)
 {
@@ -153,10 +154,11 @@ SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
         mCommentEndExpression = QRegularExpression("\\*/");
     }
 
-    mWhiteSpaceRule.pattern = QRegularExpression("\\s+", 
-        QRegularExpression::UseUnicodePropertiesOption);
-    mWhiteSpaceRule.format = whiteSpaceFormat;
-
+    if (showWhiteSpace) {
+        mWhiteSpaceRule.pattern = QRegularExpression("\\s+", 
+            QRegularExpression::UseUnicodePropertiesOption);
+        mWhiteSpaceRule.format = whiteSpaceFormat;
+    }
     mCompleterStrings = toSet(syntax.completerStrings());
     mCompleter = new QCompleter(this);
     mCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
@@ -215,7 +217,8 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
         }
     }
 
-    highlight(mWhiteSpaceRule, true);
+    if (!mWhiteSpaceRule.format.isEmpty())
+        highlight(mWhiteSpaceRule, true);
 }
 
 void SyntaxHighlighter::updateCompleter(const QString &contextText)

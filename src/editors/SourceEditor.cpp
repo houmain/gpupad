@@ -347,7 +347,8 @@ void SourceEditor::updateSyntaxHighlighting()
 
     const auto &settings = Singletons::settings();
     mHighlighter = new SyntaxHighlighter(
-        mSourceType, settings.darkTheme(), this);
+        mSourceType, settings.darkTheme(), 
+        settings.showWhiteSpace(), this);
     mHighlighter->setDocument(document());
     mCompleter = mHighlighter->completer();
     mCompleter->setWidget(this);
@@ -401,6 +402,7 @@ void SourceEditor::setShowWhiteSpace(bool enabled)
         ? options.flags() | QTextOption::ShowTabsAndSpaces
         : options.flags() & ~QTextOption::ShowTabsAndSpaces);
     document()->setDefaultTextOption(options);
+    updateSyntaxHighlighting();
 }
 
 bool SourceEditor::setCursorPosition(int line, int column)

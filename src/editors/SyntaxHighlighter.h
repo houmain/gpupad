@@ -10,7 +10,7 @@ class SyntaxHighlighter final : public QSyntaxHighlighter {
     Q_OBJECT
 public:
     SyntaxHighlighter(SourceType sourceType, 
-        bool darkTheme, QObject *parent = nullptr);
+        bool darkTheme, bool showWhiteSpace, QObject *parent = nullptr);
     void highlightBlock(const QString &text) override;
     void updateCompleter(const QString &contextText);
     QCompleter *completer() const { return mCompleter; }
