@@ -8,6 +8,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions_3_3_Core>
 #include <QScopeGuard>
+#include <QImageReader>
 #include <QtEndian>
 
 #if defined(_WIN32)
@@ -657,11 +658,13 @@ catch (...)
 
 bool TextureData::loadQImage(const QString &fileName, bool flipVertically)
 {
+    auto imageReader = QImageReader(fileName);
+    imageReader.setAutoTransform(true);
     auto image = QImage();
-    if (!image.load(fileName))
+    if (!imageReader.read(&image))
         return false;
 
-    return loadQImage(image, flipVertically);
+    return loadQImage(std::move(image), flipVertically);
 }
 
 bool TextureData::loadQImage(QImage image, bool flipVertically) 
