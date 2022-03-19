@@ -85,7 +85,6 @@ private:
     void updateSyntaxHighlighting();
     void updateEditorToolBar();
     void emitNavigationPositionChanged();
-    void clearSelection();
     void findReplaceAction(FindReplaceBar::Action action, QString find,
         QString replace, QTextDocument::FindFlags flags);
     void markOccurrences(QString text, QTextDocument::FindFlags =

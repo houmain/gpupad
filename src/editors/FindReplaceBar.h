@@ -31,6 +31,7 @@ public:
     void findPrevious();
     void replace();
     void replaceAll();
+    bool replacing() const { return mReplacing; }
 
 Q_SIGNALS:
     void cancelled();
@@ -46,6 +47,7 @@ private:
 
     Ui::FindReplaceBar *ui;
     QWidget *mTarget{ };
+    bool mReplacing{ };
 };
 
 #endif // FINDREPLACEBAR_H

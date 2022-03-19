@@ -918,6 +918,8 @@ void SourceEditor::handleCursorPositionChanged()
 void SourceEditor::handleTextChanged()
 {
     clearMarkedOccurrences();
+    if (!mFindReplaceBar.replacing())
+        clearFindReplaceRange();
     if (document()->isUndoAvailable() || document()->isRedoAvailable())
         Singletons::fileCache().handleEditorFileChanged(mFileName);
 }
@@ -1105,13 +1107,6 @@ void SourceEditor::insertCompletion(const QString &completion)
     setTextCursor(cursor);
 }
 
-void SourceEditor::clearSelection()
-{
-    auto cursor = textCursor();
-    cursor.setPosition(cursor.position());
-    setTextCursor(cursor);
-}
-
 void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
     QString find, QString replace, QTextDocument::FindFlags flags)
 {
@@ -1120,6 +1115,7 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
 
     if (action == FindReplaceBar::Cancel) {
         clearMarkedOccurrences();
+        clearFindReplaceRange();
         return;
     }
 
@@ -1127,7 +1123,9 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
 
     if (action == FindReplaceBar::FindTextChanged && 
         mMarkedOccurrences.isEmpty()) {
-        clearSelection();
+        auto cursor = textCursor();
+        cursor.clearSelection();
+        setTextCursor(cursor);
         return;
     }
 
@@ -1218,16 +1216,19 @@ QTextCursor SourceEditor::updateFindReplaceRange()
 
 void SourceEditor::clearMarkedOccurrences() 
 {
-    if (!mMarkedOccurrences.empty() || !mFindReplaceRange.isNull()) {
-        mFindReplaceRange = { };
+    if (!mMarkedOccurrences.empty()) {
         mMarkedOccurrences.clear();
         mMarkedOccurrencesString.clear();
         updateExtraSelections();
     }
 }
 
-void SourceEditor::clearFindReplaceRange() {
-    // only clear occurrences when they were constrainted by range
-    if (!mFindReplaceRange.isNull())
+void SourceEditor::clearFindReplaceRange()
+{
+    if (!mFindReplaceRange.isNull()) {
+        mFindReplaceRange = { };
+        // clear occurrences when they were constrainted by range
         clearMarkedOccurrences();
+        updateExtraSelections();
+    }
 }

@@ -98,12 +98,16 @@ void FindReplaceBar::findPrevious()
 
 void FindReplaceBar::replace()
 {
+    mReplacing = true;
     triggerAction(Action::Replace);
+    mReplacing = false;
 }
 
 void FindReplaceBar::replaceAll()
 {
+    mReplacing = true;
     triggerAction(Action::ReplaceAll);
+    mReplacing = false;
 }
 
 QTextDocument::FindFlags FindReplaceBar::findFlags() const
