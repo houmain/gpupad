@@ -13,7 +13,7 @@ class FindReplaceBar final : public QWidget
     Q_OBJECT
 public:
     enum Action {
-        FindTextChanged, Find, Replace, ReplaceAll
+        FindTextChanged, Find, Replace, ReplaceAll, Refresh, Cancel
     };
 
     explicit FindReplaceBar(QWidget *parent = nullptr);
@@ -34,13 +34,14 @@ public:
 
 Q_SIGNALS:
     void cancelled();
-    void action(FindReplaceBar::Action action, QString find, QString replace,
+    void action(Action action, QString find, QString replace,
         QTextDocument::FindFlags flags);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private:
+    void triggerAction(Action action, QTextDocument::FindFlag extraFlags = { });
     QTextDocument::FindFlags findFlags() const;
 
     Ui::FindReplaceBar *ui;

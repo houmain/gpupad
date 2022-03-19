@@ -73,8 +73,6 @@ private:
     void beginMultiSelection();
     void endMultiSelection();
     bool updateMultiSelection(QKeyEvent *event, bool multiSelectionModifierHold);
-    void markOccurrences(QString text, QTextDocument::FindFlags =
-        QTextDocument::FindCaseSensitively | QTextDocument::FindWholeWords);
     void handleCursorPositionChanged();
     void handleTextChanged();
     void updateViewportMargins();
@@ -83,12 +81,18 @@ private:
     void updateCompleterPopup(const QString &prefix, bool show);
     QString generateCurrentScopeSource() const;
     void insertCompletion(const QString &completion);
-    void findReplaceAction(FindReplaceBar::Action action, QString find,
-        QString replace, QTextDocument::FindFlags flags);
     void updateColors(bool darkTheme);
     void updateSyntaxHighlighting();
     void updateEditorToolBar();
     void emitNavigationPositionChanged();
+    void clearSelection();
+    void findReplaceAction(FindReplaceBar::Action action, QString find,
+        QString replace, QTextDocument::FindFlags flags);
+    void markOccurrences(QString text, QTextDocument::FindFlags =
+        QTextDocument::FindCaseSensitively | QTextDocument::FindWholeWords);
+    void clearMarkedOccurrences();
+    void clearFindReplaceRange();
+    QTextCursor updateFindReplaceRange();
 
     SourceEditorToolBar& mEditorToolBar;
     QString mFileName;
@@ -99,11 +103,15 @@ private:
     LineNumberArea *mLineNumberArea{ };
     QTextCharFormat mCurrentLineFormat;
     QTextCharFormat mOccurrencesFormat;
+    QTextCharFormat mFindReplaceRangeFormat;
     QTextCharFormat mMultiSelectionFormat;
     QList<QTextCursor> mMatchingBraces;
     QList<QTextCursor> mMarkedOccurrences;
     QList<QTextCursor> mMultiSelections;
     QTextCursor mMultiEditCursor;
+    QString mMarkedOccurrencesString;
+    QTextDocument::FindFlags mMarkedOccurrencesFindFlags{ };
+    QTextCursor mFindReplaceRange;
     QColor mLineNumberColor;
     int mTabSize{ };
     bool mIndentWithSpaces{ };

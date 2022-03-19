@@ -323,8 +323,10 @@ void SourceEditor::updateColors(bool darkTheme)
     mCurrentLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
     mCurrentLineFormat.setBackground(pal.base().color().lighter(darkTheme ? 120 : 95));
 
+    mFindReplaceRangeFormat.setBackground(pal.base().color().lighter(darkTheme ? 170 : 90));
+
     mOccurrencesFormat.setForeground(pal.text().color().lighter(darkTheme ? 140 : 80));
-    mOccurrencesFormat.setBackground(pal.base().color().lighter(darkTheme ? 180 : 80));
+    mOccurrencesFormat.setBackground(pal.base().color().lighter(darkTheme ? 220 : 80));
 
     mMultiSelectionFormat.setForeground(pal.highlightedText());
     mMultiSelectionFormat.setBackground(pal.highlight());
@@ -368,11 +370,14 @@ void SourceEditor::findReplace()
 {
     endMultiSelection();
     mFindReplaceBar.setTarget(this);
-    const auto text = textUnderCursor().trimmed();
-    if (!text.contains('\n') && !text.contains('\r'))
+
+    if (auto text = textUnderCursor(); 
+        !text.isEmpty() && !text.contains(0x2029))
         mFindReplaceBar.setText(text);
+
     if (mFindReplaceBar.isVisible())
         mFindReplaceBar.focus();
+    updateExtraSelections();
 }
 
 void SourceEditor::setFont(const QFont &font)
@@ -865,6 +870,7 @@ void SourceEditor::mouseDoubleClickEvent(QMouseEvent *event)
 void SourceEditor::mousePressEvent(QMouseEvent *event)
 {
     endMultiSelection();
+    clearFindReplaceRange();
     QPlainTextEdit::mousePressEvent(event);
 }
 
@@ -892,19 +898,6 @@ void SourceEditor::dragEnterEvent(QDragEnterEvent *event)
     QPlainTextEdit::dragEnterEvent(event);
 }
 
-void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
-{
-    mMarkedOccurrences.clear();
-    if (!text.isEmpty()) {
-        auto cursor = textCursor();
-        cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
-        for (auto it = document()->find(text, cursor, flags);
-                !it.isNull(); it = document()->find(text, it, flags))
-            mMarkedOccurrences.append(it);
-    }
-    updateExtraSelections();
-}
-
 void SourceEditor::handleCursorPositionChanged()
 {  
     auto cursor = textCursor();
@@ -924,10 +917,7 @@ void SourceEditor::handleCursorPositionChanged()
 
 void SourceEditor::handleTextChanged()
 {
-    if (!mMarkedOccurrences.empty()) {
-        mMarkedOccurrences.clear();
-        updateExtraSelections();
-    }
+    clearMarkedOccurrences();
     if (document()->isUndoAvailable() || document()->isRedoAvailable())
         Singletons::fileCache().handleEditorFileChanged(mFileName);
 }
@@ -939,6 +929,9 @@ void SourceEditor::updateExtraSelections()
     auto cursor = textCursor();
     cursor.clearSelection();
     selections.append({ cursor, mCurrentLineFormat });
+
+    if (mFindReplaceRange.hasSelection())
+        selections.append({ mFindReplaceRange, mFindReplaceRangeFormat });
 
     for (const auto &occurrence : qAsConst(mMatchingBraces))
         selections.append({ occurrence, mOccurrencesFormat });
@@ -1112,16 +1105,31 @@ void SourceEditor::insertCompletion(const QString &completion)
     setTextCursor(cursor);
 }
 
+void SourceEditor::clearSelection()
+{
+    auto cursor = textCursor();
+    cursor.setPosition(cursor.position());
+    setTextCursor(cursor);
+}
+
 void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
     QString find, QString replace, QTextDocument::FindFlags flags)
 {
     if (mFindReplaceBar.target() != this)
         return;
 
+    if (action == FindReplaceBar::Cancel) {
+        clearMarkedOccurrences();
+        return;
+    }
+
     markOccurrences(find, flags & (~QTextDocument::FindBackward));
 
-    if (find.isEmpty())
+    if (action == FindReplaceBar::FindTextChanged && 
+        mMarkedOccurrences.isEmpty()) {
+        clearSelection();
         return;
+    }
 
     if (action == FindReplaceBar::ReplaceAll) {
         auto cursor = textCursor();
@@ -1137,28 +1145,89 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
 
     if (action == FindReplaceBar::Replace) {
         auto cursor = textCursor();
-        if (!cursor.selectedText().compare(find, Qt::CaseInsensitive))
+        if (!cursor.selectedText().compare(find, Qt::CaseInsensitive)) {
             cursor.insertText(replace);
+            markOccurrences(find, flags & (~QTextDocument::FindBackward));
+        }
     }
+    
+    // select occurrence
+    if (!mMarkedOccurrences.isEmpty()) {
+        auto cursor = textCursor();
+        if (action == FindReplaceBar::FindTextChanged)
+            cursor.movePosition(QTextCursor::PreviousWord);
+    
+        auto index = std::distance(mMarkedOccurrences.begin(), 
+            std::lower_bound(mMarkedOccurrences.begin(), 
+                mMarkedOccurrences.end(), cursor));
 
+        if (action == FindReplaceBar::Find)
+            index += (flags & QTextDocument::FindBackward ? 
+                mMarkedOccurrences.size() - 1 : 1);
+
+        setTextCursor(mMarkedOccurrences[index % mMarkedOccurrences.size()]);
+
+        if (action != FindReplaceBar::Refresh)
+            ensureCursorVisible();
+    }
+}
+
+void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
+{
+    const auto findReplaceRange = updateFindReplaceRange();
+
+    if (mMarkedOccurrencesString == text && 
+        mMarkedOccurrencesFindFlags == flags)
+        return;
+    mMarkedOccurrencesString = text;
+    mMarkedOccurrencesFindFlags = flags;
+
+    mMarkedOccurrences.clear();
+    if (!text.isEmpty()) {
+        for (auto it = document()->find(text, findReplaceRange.anchor(), flags); 
+                !it.isNull() && it.position() <= findReplaceRange.position();
+                it = document()->find(text, it, flags)) {
+            mMarkedOccurrences.append(it);
+        }
+    }
+    updateExtraSelections();
+}
+
+QTextCursor SourceEditor::updateFindReplaceRange()
+{
     auto cursor = textCursor();
-    if (action == FindReplaceBar::FindTextChanged)
-        cursor.movePosition(QTextCursor::PreviousWord);
-
-    cursor = document()->find(find, cursor, flags);
-    if (cursor.isNull()) {
-        cursor = textCursor();
-        auto start = ((flags & QTextDocument::FindBackward) ?
-            QTextCursor::End : QTextCursor::Start);
-        cursor.movePosition(start, QTextCursor::MoveAnchor);
-        cursor = document()->find(find, cursor, flags);
+    if (cursor.selectedText().contains(0x2029)) {
+        if (cursor.position() < cursor.anchor()) {
+            const auto tmp = cursor.anchor();
+            cursor.setPosition(cursor.position());
+            cursor.setPosition(tmp, QTextCursor::KeepAnchor);            
+        }
+        mFindReplaceRange = cursor;
+        // invalidate current occurrences when selection changes
+        mMarkedOccurrencesString.clear();
     }
-
-    if (cursor.isNull()) {
-        cursor = textCursor();
-        cursor.clearSelection();
+    else if (!mFindReplaceRange.isNull()) {
+        cursor = mFindReplaceRange;
     }
+    else {
+        cursor.movePosition(QTextCursor::Start);
+        cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+    }
+    return cursor;
+}
 
-    setTextCursor(cursor);
-    centerCursor();
+void SourceEditor::clearMarkedOccurrences() 
+{
+    if (!mMarkedOccurrences.empty() || !mFindReplaceRange.isNull()) {
+        mFindReplaceRange = { };
+        mMarkedOccurrences.clear();
+        mMarkedOccurrencesString.clear();
+        updateExtraSelections();
+    }
+}
+
+void SourceEditor::clearFindReplaceRange() {
+    // only clear occurrences when they were constrainted by range
+    if (!mFindReplaceRange.isNull())
+        clearMarkedOccurrences();
 }

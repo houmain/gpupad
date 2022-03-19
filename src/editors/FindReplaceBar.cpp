@@ -18,7 +18,12 @@ FindReplaceBar::FindReplaceBar(QWidget *parent) :
     connect(ui->findText, &QLineEdit::textChanged, this,
         &FindReplaceBar::findTextChanged);
     connect(ui->findText, &QLineEdit::returnPressed, this,
-        &FindReplaceBar::findNext);
+        [this]() {
+            if (QApplication::keyboardModifiers() & Qt::ShiftModifier)
+                Q_EMIT findPrevious();
+            else
+                Q_EMIT findNext();
+        });
     connect(ui->replaceText, &QLineEdit::returnPressed, this,
         &FindReplaceBar::replace);
     connect(ui->findNext, &QPushButton::clicked, this,
@@ -40,8 +45,6 @@ FindReplaceBar::~FindReplaceBar()
 
 void FindReplaceBar::setTarget(QWidget *target)
 {
-    Q_EMIT action(Action::FindTextChanged, "", "", findFlags());
-
     mTarget = target;
 }
 
@@ -53,51 +56,54 @@ void FindReplaceBar::resetTarget()
 void FindReplaceBar::setText(const QString &text)
 {
     ui->findText->setText(text);
-    findTextChanged();
 }
 
 void FindReplaceBar::focus() 
 {
     ui->findText->selectAll();
     ui->findText->setFocus();
+    triggerAction(Action::Refresh);
 }
 
 void FindReplaceBar::cancel()
 {
-    Q_EMIT action(Action::FindTextChanged, "", "", findFlags());
     if (mTarget) {
         mTarget->setFocus();
-        mTarget = nullptr;
+        triggerAction(Action::Cancel);
+        setTarget(nullptr);
     }
     Q_EMIT cancelled();
 }
 
+void FindReplaceBar::triggerAction(Action type, QTextDocument::FindFlag extraFlags) 
+{
+    Q_EMIT action(type, ui->findText->text(), 
+        ui->replaceText->text(), findFlags() | extraFlags);
+}
+
 void FindReplaceBar::findTextChanged()
 {
-    Q_EMIT action(Action::FindTextChanged, ui->findText->text(), "", findFlags());
+    triggerAction(Action::FindTextChanged);
 }
 
 void FindReplaceBar::findNext()
 {
-    Q_EMIT action(Action::Find, ui->findText->text(), "", findFlags());
+    triggerAction(Action::Find);
 }
 
 void FindReplaceBar::findPrevious()
 {
-    Q_EMIT action(Action::Find, ui->findText->text(), "",
-        findFlags() | QTextDocument::FindBackward);
+    triggerAction(Action::Find, QTextDocument::FindBackward);
 }
 
 void FindReplaceBar::replace()
 {
-    Q_EMIT action(Action::Replace, ui->findText->text(),
-        ui->replaceText->text(), findFlags());
+    triggerAction(Action::Replace);
 }
 
 void FindReplaceBar::replaceAll()
 {
-    Q_EMIT action(Action::ReplaceAll, ui->findText->text(),
-        ui->replaceText->text(), findFlags());
+    triggerAction(Action::ReplaceAll);
 }
 
 QTextDocument::FindFlags FindReplaceBar::findFlags() const
