@@ -42,7 +42,7 @@ public:
 private:
     QJSValue evaluate(const QString &program, const QString &fileName = QString(), int lineNumber = 1);
 
-    const QThread& mOnThread;
+    const QThread &mOnThread;
     QJSEngine *mJsEngine{ };
     ScriptConsole *mConsole{ };
     QThread *mInterruptThread{ };

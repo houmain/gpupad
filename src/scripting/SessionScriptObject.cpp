@@ -486,7 +486,7 @@ QJSValue SessionScriptObject::enumerateFiles(const QString &pattern)
     dir.setFilter(QDir::Files);
     dir.setSorting(QDir::Name);
     auto it = QDirIterator(dir, QDirIterator::Subdirectories);
-    auto result = mEngine->newArray();
+    auto result = engine().newArray();
     for (auto i = 0; it.hasNext();)
         result.setProperty(i++, it.next());
     return result;
@@ -509,6 +509,6 @@ QJSValue SessionScriptObject::readTextFile(const QString &fileName)
 {
     auto source = QString{ };
     if (!Singletons::fileCache().getSource(fileName, &source))
-      return QJSValue::UndefinedValue;
+        return QJSValue::UndefinedValue;
     return source;
 }

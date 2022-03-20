@@ -78,6 +78,7 @@ set(SOURCES
   src/editors/SyntaxGLSL.cpp
   src/editors/SyntaxHLSL.cpp
   src/editors/SyntaxJavaScript.cpp
+  src/editors/SyntaxLua.cpp
   src/editors/TextureEditorToolBar.cpp
   src/editors/TextureEditorToolBar.ui
   src/editors/TextureEditor.cpp

@@ -12,7 +12,7 @@ namespace {
     const auto ShaderFileExtensions = { "glsl", "vs", "fs", "gs",
         "vert", "tesc", "tese", "geom", "frag", "comp", 
         "ps", "hlsl", "hlsli", "fx" };
-    const auto ScriptFileExtensions = { "js", "qml" };
+    const auto ScriptFileExtensions = { "js", "qml", "lua" };
     const auto TextureFileExtensions = { "ktx", "dds", "png", "exr", 
         "tga", "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
     const auto VideoFileExtensions = std::initializer_list<const char*>{
@@ -190,7 +190,7 @@ bool FileDialog::exec(Options options, QString currentFileName)
     if ((options & TextureExtensions) && !videoFileFilter.isEmpty())
         filters.append(tr("Video files") + " (" + videoFileFilter + ")");
     if (options & ScriptExtensions)
-        filters.append(tr("JavaScript files") + " (" + scriptFileFilter + ")");
+        filters.append(tr("Script files") + " (" + scriptFileFilter + ")");
     const auto binaryFileFilter = QString(tr("Binary files") + " (*)");
     if (options & BinaryExtensions)
         filters.append(binaryFileFilter);

@@ -39,6 +39,7 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
     addSourceType(hlsl, tr("Compute Shader"), SourceType::HLSL_ComputeShader);
 
     addSourceType(sourceTypeMenu, tr("JavaScript"), SourceType::JavaScript);
+    addSourceType(sourceTypeMenu, tr("Lua"), SourceType::Lua);
     addSourceType(sourceTypeMenu, tr("Plaintext"), SourceType::PlainText);
 
     connect(sourceTypeMenu, &QMenu::aboutToShow,

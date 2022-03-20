@@ -29,6 +29,7 @@ namespace {
         static const auto syntaxGLSL = makeSyntaxGLSL();
         static const auto syntaxHLSL = makeSyntaxHLSL();
         static const auto syntaxJavaScript = makeSyntaxJavaScript();
+        static const auto syntaxLua = makeSyntaxLua();
         switch (sourceType) {
             case SourceType::PlainText:
                   return *syntaxPlainText;
@@ -48,6 +49,8 @@ namespace {
                 return *syntaxHLSL;
             case SourceType::JavaScript: 
                 return *syntaxJavaScript;
+            case SourceType::Lua:
+                return *syntaxLua;
         }
         return *syntaxPlainText;
     }
@@ -148,10 +151,10 @@ SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
     }
 
     if (syntax.hasComments()) {
-        mCommentRule.pattern = QRegularExpression("//.*");
+        mCommentRule.pattern = QRegularExpression(syntax.singleLineCommentBegin());
         mCommentRule.format = commentFormat;    
-        mCommentStartExpression = QRegularExpression("/\\*");
-        mCommentEndExpression = QRegularExpression("\\*/");
+        mCommentStartExpression = QRegularExpression(syntax.multiLineCommentBegin());
+        mCommentEndExpression = QRegularExpression(syntax.multiLineCommentEnd());
     }
 
     if (showWhiteSpace) {

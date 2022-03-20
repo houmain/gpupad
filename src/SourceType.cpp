@@ -18,6 +18,8 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
         return SourceType::GLSL_ComputeShader;
     if (extension == "js" || extension == "qml")
         return SourceType::JavaScript;
+    if (extension == "lua")
+        return SourceType::Lua;
 
     if (extension == "ps")
         return SourceType::HLSL_PixelShader;
@@ -63,6 +65,7 @@ Shader::ShaderType getShaderType(SourceType sourceType)
     switch (sourceType) {
         case SourceType::PlainText:
         case SourceType::JavaScript:
+        case SourceType::Lua:
             break;
 
         case SourceType::GLSL_VertexShader:
@@ -97,6 +100,7 @@ Shader::Language getShaderLanguage(SourceType sourceType)
     switch (sourceType) {
         case SourceType::PlainText:
         case SourceType::JavaScript:
+        case SourceType::Lua:
             break;
 
         case SourceType::GLSL_VertexShader:

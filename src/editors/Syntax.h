@@ -13,8 +13,12 @@ public:
     virtual bool hasPreprocessor() const { return false; }
     virtual bool hasFunctions() const { return false; }
     virtual bool hasComments() const { return false; }
+    virtual QString singleLineCommentBegin() const { return "//.*"; }
+    virtual QString multiLineCommentBegin() const { return "/\\*"; }
+    virtual QString multiLineCommentEnd() const { return "\\*/"; }
 };
 
 Syntax* makeSyntaxGLSL();
 Syntax* makeSyntaxHLSL();
 Syntax* makeSyntaxJavaScript();
+Syntax* makeSyntaxLua();
