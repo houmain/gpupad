@@ -1,7 +1,7 @@
 #include "CustomActions.h"
 #include "ui_CustomActions.h"
 #include "Singletons.h"
-#include "ScriptEngine.h"
+#include "ScriptEngineJavaScript.h"
 #include "FileCache.h"
 #include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
@@ -20,7 +20,7 @@ public:
     {
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
-            mScriptEngine.reset(new ScriptEngine());
+            mScriptEngine.reset(new ScriptEngineJavaScript());
             mScriptEngine->evaluateScript(source, mFilePath, mMessages);
         }
 
@@ -57,7 +57,7 @@ public:
 private:
     const QString mFilePath;
     MessagePtrSet mMessages;
-    QScopedPointer<ScriptEngine> mScriptEngine;
+    QScopedPointer<ScriptEngineJavaScript> mScriptEngine;
 };
 
 CustomActions::CustomActions(QWidget *parent)

@@ -143,7 +143,9 @@ set(SOURCES
   src/scripting/KeyboardScriptObject.cpp
   src/scripting/SessionScriptObject.cpp
   src/scripting/ScriptEngine.cpp
-  src/scripting/ScriptEngine.js
+  src/scripting/ScriptEngineJavaScript.cpp
+  src/scripting/ScriptEngineJavaScript.js
+  src/scripting/ScriptEngineLua.cpp
   src/scripting/ScriptSession.cpp
   src/scripting/CustomActions.cpp
   src/scripting/CustomActions.ui

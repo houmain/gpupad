@@ -1,9 +1,9 @@
 
 #include "EvaluatedPropertyCache.h"
-#include "scripting/ScriptEngine.h"
+#include "scripting/ScriptEngineJavaScript.h"
 
 EvaluatedPropertyCache::EvaluatedPropertyCache() 
-    : mDefaultScriptEngine(new ScriptEngine())
+    : mDefaultScriptEngine(new ScriptEngineJavaScript())
 {
 }
 

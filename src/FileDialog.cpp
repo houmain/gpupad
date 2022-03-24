@@ -12,7 +12,7 @@ namespace {
     const auto ShaderFileExtensions = { "glsl", "vs", "fs", "gs",
         "vert", "tesc", "tese", "geom", "frag", "comp", 
         "ps", "hlsl", "hlsli", "fx" };
-    const auto ScriptFileExtensions = { "js", "qml", "lua" };
+    const auto ScriptFileExtensions = { "js", "json", "qml", "lua" };
     const auto TextureFileExtensions = { "ktx", "dds", "png", "exr", 
         "tga", "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
     const auto VideoFileExtensions = std::initializer_list<const char*>{

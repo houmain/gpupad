@@ -1,8 +1,11 @@
 #ifndef SCRIPTSESSION_H
 #define SCRIPTSESSION_H
 
-#include "ScriptEngine.h"
+#include <QObject>
+#include "SourceType.h"
+#include "MessageList.h"
 
+class ScriptEngine;
 class SessionModel;
 class SessionScriptObject;
 class MouseScriptObject;
@@ -11,9 +14,9 @@ class KeyboardScriptObject;
 class ScriptSession : public QObject
 {
     Q_OBJECT
-
 public:
-    explicit ScriptSession(QObject *parent = nullptr);
+    explicit ScriptSession(SourceType type = SourceType::JavaScript, 
+        QObject *parent = nullptr);
 
     // 1. called in main thread
     void prepare();
@@ -31,6 +34,7 @@ public:
 private:
     void initializeEngine();
 
+    const SourceType mSourceType;
     MessagePtrSet mMessages;
 
     QScopedPointer<ScriptEngine> mScriptEngine;

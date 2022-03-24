@@ -7,6 +7,7 @@
 #include "session/SessionModel.h"
 #include "FileCache.h"
 #include "Singletons.h"
+#include <QJSEngine>
 #include <QDirIterator>
 #include <QQmlPropertyMap>
 #include <QTextStream>

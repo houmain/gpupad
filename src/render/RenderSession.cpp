@@ -146,7 +146,18 @@ namespace {
                 break;
         }
         return true;
-      }
+    }
+
+    SourceType getScriptingSourceType(const SessionModel &session) 
+    {
+        auto sourceType = SourceType::JavaScript;
+        session.forEachItem([&](const Item &item) {
+            if (auto script = castItem<Script>(item))
+                if (script->fileName.endsWith(".lua", Qt::CaseInsensitive))
+                    sourceType = SourceType::Lua;
+        });
+        return sourceType;
+    }
 } // namespace
 
 struct RenderSession::GroupIteration
@@ -206,11 +217,12 @@ void RenderSession::prepare(bool itemsChanged, EvaluationType evaluationType)
     if (!mCommandQueue)
         mEvaluationType = EvaluationType::Reset;
 
-    if (mEvaluationType == EvaluationType::Reset)
-        mScriptSession.reset(new ScriptSession());
-
     if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
         mSessionCopy = Singletons::sessionModel();
+
+    if (mEvaluationType == EvaluationType::Reset)
+        mScriptSession.reset(new ScriptSession(
+            getScriptingSourceType(mSessionCopy)));
 
     mScriptSession->prepare();
 }

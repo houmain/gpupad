@@ -129,7 +129,9 @@ void TextureInfoBar::resetRange()
 void TextureInfoBar::invertRange()
 {
     const auto bounds = histogramBounds();
+    const auto range = mappingRange();
     setHistogramBounds({ bounds.maximum, bounds.minimum });
+    setMappingRange({ range.maximum, range.minimum });
 }
 
 int TextureInfoBar::histogramBinCount() const

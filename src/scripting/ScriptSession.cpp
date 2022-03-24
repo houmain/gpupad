@@ -3,9 +3,12 @@
 #include "MouseScriptObject.h"
 #include "KeyboardScriptObject.h"
 #include "Singletons.h"
+#include "ScriptEngineJavaScript.h"
+#include "ScriptEngineLua.h"
 
-ScriptSession::ScriptSession(QObject *parent)
+ScriptSession::ScriptSession(SourceType sourceType, QObject *parent)
     : QObject(parent)
+    , mSourceType(sourceType)
     , mMouseScriptObject(new MouseScriptObject(this))
     , mKeyboardScriptObject(new KeyboardScriptObject(this))
 {
@@ -24,13 +27,15 @@ void ScriptSession::beginSessionUpdate(SessionModel *sessionCopy)
     Q_ASSERT(!onMainThread());
     if (!mScriptEngine)
         initializeEngine();
-    mSessionScriptObject->beginBackgroundUpdate(sessionCopy);
+    if (mSessionScriptObject)
+        mSessionScriptObject->beginBackgroundUpdate(sessionCopy);
 }
 
 void ScriptSession::endSessionUpdate()
 {
     Q_ASSERT(onMainThread());
-    mSessionScriptObject->endBackgroundUpdate();
+    if (mSessionScriptObject)
+        mSessionScriptObject->endBackgroundUpdate();
 }
 
 bool ScriptSession::usesMouseState() const
@@ -52,10 +57,16 @@ ScriptEngine& ScriptSession::engine()
 void ScriptSession::initializeEngine()
 {
     Q_ASSERT(!mScriptEngine);
-    mScriptEngine.reset(new ScriptEngine());
+    if (mSourceType == SourceType::Lua) {
+        mScriptEngine.reset(new ScriptEngineLua());
+    }
+    else {
+        auto scriptEngine = new ScriptEngineJavaScript();
+        mScriptEngine.reset(scriptEngine);
+        mSessionScriptObject = new SessionScriptObject(scriptEngine->jsEngine());
+        mScriptEngine->setGlobal("Session", mSessionScriptObject);
+    }
     mScriptEngine->setTimeout(5000);
-    mSessionScriptObject = new SessionScriptObject(mScriptEngine->jsEngine());
-    mScriptEngine->setGlobal("Session", mSessionScriptObject);
     mScriptEngine->setGlobal("Mouse", mMouseScriptObject);
     mScriptEngine->setGlobal("Keyboard", mKeyboardScriptObject);
 }

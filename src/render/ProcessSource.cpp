@@ -1,7 +1,8 @@
 #include "ProcessSource.h"
 #include "GLShader.h"
 #include "GLPrintf.h"
-#include "scripting/ScriptEngine.h"
+#include "scripting/ScriptEngineJavaScript.h"
+#include "scripting/ScriptEngineLua.h"
 #include "glslang.h"
 
 namespace {
@@ -99,12 +100,17 @@ void ProcessSource::render()
             auto glPrintf = GLPrintf();
             mShader->compile(&glPrintf);
         }
-        else if (mSourceType == SourceType::JavaScript) {
-            auto scriptSource = QString();
-            Singletons::fileCache().getSource(mFileName, &scriptSource);
-            scriptSource = "if (false) {" + scriptSource + "}";
-            mScriptEngine.reset(new ScriptEngine());
-            mScriptEngine->evaluateScript(scriptSource, mFileName, messages);
+        else {
+            if (mSourceType == SourceType::JavaScript)
+                mScriptEngine.reset(new ScriptEngineJavaScript());
+            else if (mSourceType == SourceType::Lua)
+                mScriptEngine.reset(new ScriptEngineLua());
+
+            if (mScriptEngine) {
+                  auto scriptSource = QString();
+                  Singletons::fileCache().getSource(mFileName, &scriptSource);
+                  mScriptEngine->validateScript(scriptSource, mFileName, messages);
+            }
         }
     }
 
