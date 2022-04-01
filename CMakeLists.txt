@@ -121,6 +121,7 @@ set(SOURCES
   src/editors/SourceEditor.cpp
   src/editors/SourceEditorToolBar.cpp
   src/editors/SourceEditorToolBar.ui
+  src/editors/MultiTextCursors.cpp
   src/editors/QmlView.cpp
   src/main.cpp
   src/render/GLBuffer.cpp

@@ -4,6 +4,7 @@
 #include "IEditor.h"
 #include "FindReplaceBar.h"
 #include "SourceType.h"
+#include "MultiTextCursors.h"
 #include <QPlainTextEdit>
 
 class QPaintEvent;
@@ -70,9 +71,6 @@ private:
     void toggleHomePosition(bool shiftHold);
     QString textUnderCursor(bool identifierOnly = false) const;
     QTextCursor findMatchingBrace() const;
-    void beginMultiSelection();
-    void endMultiSelection();
-    bool updateMultiSelection(QKeyEvent *event, bool multiSelectionModifierHold);
     void handleCursorPositionChanged();
     void handleTextChanged();
     void updateViewportMargins();
@@ -106,13 +104,13 @@ private:
     QTextCharFormat mMultiSelectionFormat;
     QList<QTextCursor> mMatchingBraces;
     QList<QTextCursor> mMarkedOccurrences;
-    QList<QTextCursor> mMultiSelections;
-    QTextCursor mMultiEditCursor;
     QString mMarkedOccurrencesString;
+    MultiTextCursors mMultiTextCursors;
     QTextDocument::FindFlags mMarkedOccurrencesFindFlags{ };
     QTextCursor mFindReplaceRange;
     QColor mLineNumberColor;
     int mTabSize{ };
+    int mInitialCursorWidth{ };
     bool mIndentWithSpaces{ };
     int mUpdatedCompleterInBlock{ };
     QString mPrevNavigationPosition;

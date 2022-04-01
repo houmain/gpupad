@@ -6,7 +6,6 @@
 #include "FindReplaceBar.h"
 #include "FileDialog.h"
 #include "SyntaxHighlighter.h"
-#include "RectangularSelection.h"
 #include <QCompleter>
 #include <QTextCharFormat>
 #include <QPainter>
@@ -94,6 +93,7 @@ SourceEditor::SourceEditor(QString fileName
     , mFileName(fileName)
     , mFindReplaceBar(*findReplaceBar)
     , mLineNumberArea(new LineNumberArea(this))
+    , mInitialCursorWidth(2)
 {
     connect(this, &SourceEditor::blockCountChanged,
         this, &SourceEditor::updateViewportMargins);
@@ -105,6 +105,10 @@ SourceEditor::SourceEditor(QString fileName
         this, &SourceEditor::handleTextChanged);
     connect(&mFindReplaceBar, &FindReplaceBar::action,
         this, &SourceEditor::findReplaceAction);
+    connect(&mMultiTextCursors, &MultiTextCursors::cursorsChanged,
+        this, &SourceEditor::updateExtraSelections);
+    connect(&mMultiTextCursors, &MultiTextCursors::cursorChanged,
+        this, &SourceEditor::setTextCursor);
 
     const auto &settings = Singletons::settings();
     setFont(settings.font());
@@ -140,7 +144,7 @@ SourceEditor::~SourceEditor()
     disconnect(this, &SourceEditor::cursorPositionChanged,
         this, &SourceEditor::handleCursorPositionChanged);
 
-    Q_EMIT handleTextChanged();
+    handleTextChanged();
     setDocument(nullptr);
 
     if (mFindReplaceBar.target() == this)
@@ -368,7 +372,7 @@ void SourceEditor::updateEditorToolBar()
 
 void SourceEditor::findReplace()
 {
-    endMultiSelection();
+    mMultiTextCursors.clear();
     mFindReplaceBar.setTarget(this);
 
     if (auto text = textUnderCursor(); 
@@ -393,11 +397,13 @@ void SourceEditor::setTabSize(int tabSize)
     mTabSize = tabSize;
     setTabStopDistance(fontMetrics().horizontalAdvance(
         QString(tabSize, QChar::Space)));
+    mMultiTextCursors.setTab(tab());
 }
 
 void SourceEditor::setIndentWithSpaces(bool enabled)
 {
     mIndentWithSpaces = enabled;
+    mMultiTextCursors.setTab(tab());
 }
 
 void SourceEditor::setShowWhiteSpace(bool enabled)
@@ -466,14 +472,13 @@ void SourceEditor::paintEvent(QPaintEvent *event)
 {
     QPlainTextEdit::paintEvent(event);
 
-    if (!mMultiSelections.empty()) {
+    if (!mMultiTextCursors.cursors().empty()) {
         QPainter painter(viewport());
-        for (const auto &selection : qAsConst(mMultiSelections))
-            if (selection.anchor() == selection.position()) {
-                const auto rect = cursorRect(selection);
-                painter.fillRect(rect.x(), rect.y(), 1, rect.height(),
-                    QPalette().text());
-            }
+        for (const auto &selection : mMultiTextCursors.cursors()) {
+            const auto rect = cursorRect(selection);
+            painter.fillRect(rect.x(), rect.y() + 1, mInitialCursorWidth,
+                rect.height() - 1, QPalette().text());
+        }
     }
 }
 
@@ -556,7 +561,7 @@ void SourceEditor::autoIndentNewLine()
     while (!line.isEmpty() && (line.back() == ' ' || line.back() == '\t'))
         line.chop(1);
     if (line.isEmpty())
-      line = cursor.selectedText();
+        line = cursor.selectedText();
     auto spaces = QString(line).replace(QRegularExpression("^(\\s*).*"), "\\1");
     if (line.endsWith('{'))
         spaces += tab();
@@ -629,14 +634,9 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
     }
 
     const auto ctrlHold = (event->modifiers() & Qt::ControlModifier);
-    const auto multiSelectionModifierHold = (event->modifiers() & Qt::AltModifier) &&
-                                            (event->modifiers() & Qt::ShiftModifier);
 
-    if (!mMultiSelections.empty() || multiSelectionModifierHold) {
-        if (updateMultiSelection(event, multiSelectionModifierHold))
-            return;
-        endMultiSelection();
-    }
+    if (mMultiTextCursors.handleKeyPressEvent(event, textCursor()))
+        return;
 
     if (ctrlHold && (event->key() == Qt::Key_F || event->key() == Qt::Key_F3)) {
         findReplace();
@@ -644,7 +644,7 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
             mFindReplaceBar.findNext();
     }
     else if (event->key() == Qt::Key_F3) {
-        endMultiSelection();
+        mMultiTextCursors.clear();
         mFindReplaceBar.setTarget(this);
         if (event->modifiers() & Qt::ShiftModifier)
             mFindReplaceBar.findPrevious();
@@ -693,161 +693,6 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
     }
 }
 
-void SourceEditor::beginMultiSelection()
-{
-    mMultiEditCursor = { };
-    setCursorWidth(0);
-    if (mMultiSelections.empty())
-        mMultiSelections.append(textCursor());
-}
-
-void SourceEditor::endMultiSelection()
-{
-    if (!mMultiSelections.isEmpty()) {
-        auto cursor = textCursor();
-        auto position = cursor.position();
-        cursor.setPosition(mMultiSelections.front().anchor());
-        cursor.setPosition(position, QTextCursor::KeepAnchor);
-        setTextCursor(cursor);
-
-        mMultiSelections.clear();
-        updateExtraSelections();
-        setCursorWidth(1);
-    }
-}
-
-bool SourceEditor::updateMultiSelection(QKeyEvent *event, bool multiSelectionModifierHold)
-{
-    const auto withEachSelection = [&](const auto& function) {
-        if (mMultiEditCursor.isNull()) {
-            mMultiEditCursor = textCursor();
-            mMultiEditCursor.beginEditBlock();
-        }
-        else {
-            mMultiEditCursor.joinPreviousEditBlock();
-        }
-        for (auto &selection : mMultiSelections) {
-            mMultiEditCursor.setPosition(selection.anchor());
-            mMultiEditCursor.setPosition(selection.position(), QTextCursor::KeepAnchor);
-            function(mMultiEditCursor);
-            selection = mMultiEditCursor;
-        }
-        mMultiEditCursor.endEditBlock();
-    };
-
-    const auto reverseOnBottomUpSelection = [&](QStringList &lines) {
-        if (mMultiSelections.size() > 1 &&
-            mMultiSelections.front().position() > mMultiSelections.back().position())
-            std::reverse(lines.begin(), lines.end());
-    };
-
-    const auto ctrlHold = (event->modifiers() & Qt::ControlModifier);
-    if (ctrlHold) {
-        switch (event->key()) {
-            case Qt::Key_X:
-            case Qt::Key_C: {
-                auto lines = QStringList();
-                withEachSelection([&](QTextCursor& selection) {
-                    lines.append(selection.selectedText());
-                });
-                reverseOnBottomUpSelection(lines);
-                QApplication::clipboard()->setText(lines.join("\n"));
-
-                if (event->key() ==  Qt::Key_X)
-                    withEachSelection([&](QTextCursor& selection) {
-                        selection.insertText("");
-                    });
-                return true;
-            }
-
-            case Qt::Key_V: {
-                auto lines = QApplication::clipboard()->text().remove("\r").split("\n");
-                if (lines.size() == 1) {
-                    withEachSelection([&](QTextCursor& selection) {
-                        selection.insertText(lines[0]);
-                    });
-                }
-                else {
-                    if (lines.size() > mMultiSelections.size())
-                        lines = lines.mid(0, mMultiSelections.size());
-                    while (lines.size() < mMultiSelections.size())
-                        lines.append("");
-                    reverseOnBottomUpSelection(lines);
-
-                    auto i = 0;
-                    withEachSelection([&](QTextCursor& selection) {
-                        selection.insertText(lines[i++]);
-                    });
-                }
-                return true;
-            }
-
-            default:
-                if (event->key() >= Qt::Key_A && event->key() <= Qt::Key_Z)
-                    return false;
-        }
-    }
-
-    if (multiSelectionModifierHold) {
-        beginMultiSelection();
-        auto selection = RectangularSelection(&mMultiSelections);
-        switch (event->key()) {
-            case Qt::Key_Up: selection.moveUp(); break;
-            case Qt::Key_Down: selection.moveDown(); break;
-            case Qt::Key_Left: selection.moveLeft(); break;
-            case Qt::Key_Right: selection.moveRight(); break;
-        }
-        setTextCursor(mMultiSelections.last());
-        updateExtraSelections();
-        return true;
-    }
-    
-    switch (event->key()) {
-        case Qt::Key_Escape:
-        case Qt::Key_Up:
-        case Qt::Key_Down:
-        case Qt::Key_Left:
-        case Qt::Key_Right:
-        case Qt::Key_Home:
-        case Qt::Key_End:
-        case Qt::Key_PageUp:
-        case Qt::Key_PageDown:
-            return false;
-
-        case Qt::Key_Backspace:
-            withEachSelection([&](QTextCursor& selection) {
-                if (selection.position() == selection.anchor() && !selection.atBlockStart())
-                    selection.deletePreviousChar();
-                else
-                    selection.removeSelectedText();
-            });
-            return true;
-
-        case Qt::Key_Delete:
-            withEachSelection([&](QTextCursor& selection) {
-                if (selection.position() == selection.anchor() && !selection.atBlockEnd())
-                    selection.deleteChar();
-                else
-                    selection.removeSelectedText();
-            });
-            return true;
-
-        case Qt::Key_Tab:
-            if (!(event->modifiers() & Qt::ShiftModifier))
-                withEachSelection([&](QTextCursor& selection) {
-                    selection.insertText(tab());
-                });
-            return true;
-
-        default:
-            if (!event->text().isEmpty())
-                withEachSelection([&](QTextCursor& selection) {
-                    selection.insertText(event->text());
-                });
-            return true;
-    }
-}
-
 void SourceEditor::wheelEvent(QWheelEvent *event)
 {
     setFocus();
@@ -863,31 +708,25 @@ void SourceEditor::wheelEvent(QWheelEvent *event)
 
 void SourceEditor::mouseDoubleClickEvent(QMouseEvent *event)
 {
+    if (mMultiTextCursors.handleMouseDoubleClickEvent(event, textCursor()))
+        return;
     QPlainTextEdit::mouseDoubleClickEvent(event);
     markOccurrences(textUnderCursor(true));
 }
 
 void SourceEditor::mousePressEvent(QMouseEvent *event)
 {
-    endMultiSelection();
     clearFindReplaceRange();
+    const auto prevCursor = textCursor();
+    mMultiTextCursors.handleBeforeMousePressEvent(event, cursorForPosition(event->pos()));
     QPlainTextEdit::mousePressEvent(event);
+    mMultiTextCursors.handleMousePressedEvent(event, textCursor(), prevCursor);
 }
 
 void SourceEditor::mouseMoveEvent(QMouseEvent *event)
 {
     QPlainTextEdit::mouseMoveEvent(event);
-    if (event->modifiers() & Qt::AltModifier) {
-        beginMultiSelection();
-        mMultiSelections.last() = textCursor();
-        RectangularSelection selection(&mMultiSelections);
-        selection.create();
-        setTextCursor(mMultiSelections.last());
-        updateExtraSelections();
-    }
-    else {
-        endMultiSelection();
-    }
+    mMultiTextCursors.handleMouseMoveEvent(event, textCursor());
 }
 
 void SourceEditor::dragEnterEvent(QDragEnterEvent *event)
@@ -941,7 +780,9 @@ void SourceEditor::updateExtraSelections()
     for (const auto &occurrence : qAsConst(mMarkedOccurrences))
         selections.append({ occurrence, mOccurrencesFormat });
 
-    for (const auto &selection : qAsConst(mMultiSelections))
+    setCursorWidth(mMultiTextCursors.cursors().isEmpty() ? 
+        mInitialCursorWidth : 0);
+    for (const auto &selection : mMultiTextCursors.cursors())
         selections.append({ selection, mMultiSelectionFormat });
 
     setExtraSelections(selections);
