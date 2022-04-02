@@ -23,8 +23,6 @@ public:
     QStringList builtinFunctions() const override { return ::builtinFunctions; }
     QStringList completerStrings() const override { return ::keywords + ::builtinFunctions + ::layoutQualifiers; }
     bool hasPreprocessor() const override { return true; }
-    bool hasFunctions() const override { return true; }
-    bool hasComments() const override { return true; }
 };
 
 Syntax* makeSyntaxHLSL() { return new SyntaxHLSL(); }

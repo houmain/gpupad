@@ -25,7 +25,7 @@ namespace {
 
     const Syntax& getSyntax(SourceType sourceType) 
     {
-        static const auto syntaxPlainText = new Syntax();
+        static const auto syntaxPlainText = makeSyntaxPlain();
         static const auto syntaxGLSL = makeSyntaxGLSL();
         static const auto syntaxHLSL = makeSyntaxHLSL();
         static const auto syntaxJavaScript = makeSyntaxJavaScript();
@@ -150,11 +150,14 @@ SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
         mFunctionsRule.format = functionFormat;
     }
 
-    if (syntax.hasComments()) {
-        mCommentRule.pattern = QRegularExpression(syntax.singleLineCommentBegin());
-        mCommentRule.format = commentFormat;    
-        mCommentStartExpression = QRegularExpression(syntax.multiLineCommentBegin());
-        mCommentEndExpression = QRegularExpression(syntax.multiLineCommentEnd());
+    if (!syntax.singleLineCommentBegin().isEmpty()) {
+        mSingleLineCommentRule.pattern = QRegularExpression(syntax.singleLineCommentBegin());
+        mSingleLineCommentRule.format = commentFormat;
+    }
+    if (!syntax.multiLineCommentBegin().isEmpty()) {
+        mMultiLineCommentStart = QRegularExpression(syntax.multiLineCommentBegin());
+        mMultiLineCommentEnd = QRegularExpression(syntax.multiLineCommentEnd());
+        mMultiLineCommentFormat = commentFormat;
     }
 
     if (showWhiteSpace) {
@@ -188,15 +191,15 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
     for (const HighlightingRule &rule : qAsConst(mHighlightingRules))
         highlight(rule, true);
 
-    if (!mCommentRule.format.isEmpty())
-        highlight(mCommentRule, false);
+    if (!mSingleLineCommentRule.format.isEmpty())
+        highlight(mSingleLineCommentRule, false);
     
-    setCurrentBlockState(0);
+    if (!mMultiLineCommentFormat.isEmpty()) {
+        setCurrentBlockState(0);
 
-    if (!mCommentRule.format.isEmpty()) {
         auto startIndex = 0;
         if (previousBlockState() != 1)
-            startIndex = text.indexOf(mCommentStartExpression);
+            startIndex = text.indexOf(mMultiLineCommentStart);
 
         while (startIndex >= 0) {
             // do not start multiline comment in single line comment or string
@@ -205,7 +208,7 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
                 break;
             }
 
-            const auto match = mCommentEndExpression.match(text, startIndex);
+            const auto match = mMultiLineCommentEnd.match(text, startIndex);
             const auto endIndex = match.capturedStart();
             auto commentLength = 0;
             if (endIndex == -1) {
@@ -215,8 +218,8 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
             else {
                 commentLength = endIndex - startIndex + match.capturedLength();
             }
-            setFormat(startIndex, commentLength, mCommentRule.format);
-            startIndex = text.indexOf(mCommentStartExpression, startIndex + commentLength);
+            setFormat(startIndex, commentLength, mMultiLineCommentFormat);
+            startIndex = text.indexOf(mMultiLineCommentStart, startIndex + commentLength);
         }
     }
 

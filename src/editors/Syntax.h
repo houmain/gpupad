@@ -11,13 +11,13 @@ public:
     virtual QStringList builtinConstants() const { return { }; }
     virtual QStringList completerStrings() const { return { }; }
     virtual bool hasPreprocessor() const { return false; }
-    virtual bool hasFunctions() const { return false; }
-    virtual bool hasComments() const { return false; }
+    virtual bool hasFunctions() const { return true; }
     virtual QString singleLineCommentBegin() const { return "//.*"; }
     virtual QString multiLineCommentBegin() const { return "/\\*"; }
     virtual QString multiLineCommentEnd() const { return "\\*/"; }
 };
 
+Syntax* makeSyntaxPlain();
 Syntax* makeSyntaxGLSL();
 Syntax* makeSyntaxHLSL();
 Syntax* makeSyntaxJavaScript();

@@ -23,9 +23,10 @@ private:
     QCompleter *mCompleter{ };
     QVector<HighlightingRule> mHighlightingRules;
     HighlightingRule mFunctionsRule;
-    HighlightingRule mCommentRule;
-    QRegularExpression mCommentStartExpression;
-    QRegularExpression mCommentEndExpression;
+    HighlightingRule mSingleLineCommentRule;
+    QTextCharFormat mMultiLineCommentFormat;
+    QRegularExpression mMultiLineCommentStart;
+    QRegularExpression mMultiLineCommentEnd;
     HighlightingRule mWhiteSpaceRule;
     QSet<QString> mCompleterStrings;
 };

@@ -147,8 +147,6 @@ public:
             ::builtinConstants + ::layoutQualifiers;
     }
     bool hasPreprocessor() const override { return true; }
-    bool hasFunctions() const override { return true; }
-    bool hasComments() const override { return true; }
 };
 
 Syntax* makeSyntaxGLSL() { return new SyntaxGLSL(); }

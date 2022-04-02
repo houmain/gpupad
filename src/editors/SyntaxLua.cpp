@@ -26,8 +26,6 @@ public:
     QStringList keywords() const override { return ::keywords; }
     QStringList builtinConstants() const override { return ::globalObjects; }
     QStringList completerStrings() const override { return ::keywords + ::globalObjects; }
-    bool hasFunctions() const override { return true; }
-    bool hasComments() const override { return true; }
     QString singleLineCommentBegin() const override { return R"(\-\-.*)"; }
     QString multiLineCommentBegin() const override { return R"(\-\-\[\[)"; }
     QString multiLineCommentEnd() const override { return R"(\]\])"; }

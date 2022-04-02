@@ -111,6 +111,7 @@ set(SOURCES
   src/editors/SyntaxHLSL.cpp
   src/editors/SyntaxJavaScript.cpp
   src/editors/SyntaxLua.cpp
+  src/editors/SyntaxPlain.cpp
   src/editors/TextureEditorToolBar.cpp
   src/editors/TextureEditorToolBar.ui
   src/editors/TextureEditor.cpp

@@ -34,8 +34,6 @@ public:
     QStringList keywords() const override { return ::keywords; }
     QStringList builtinConstants() const override { return ::globalObjects; }
     QStringList completerStrings() const override { return ::keywords + ::globalObjects; }
-    bool hasFunctions() const override { return true; }
-    bool hasComments() const override { return true; }
 };
 
 Syntax* makeSyntaxJavaScript() { return new SyntaxJavaScript(); }
