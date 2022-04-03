@@ -26,12 +26,6 @@
 #include <QtCore/QtGlobal>
 #include <QtNetwork/QLocalSocket>
 
-#ifndef QAPPLICATION_CLASS
-  #define QAPPLICATION_CLASS QCoreApplication
-#endif
-
-#include QT_STRINGIFY(QAPPLICATION_CLASS)
-
 class SingleApplicationPrivate;
 
 /**
@@ -39,11 +33,9 @@ class SingleApplicationPrivate;
  * Application
  * @see QCoreApplication
  */
-class SingleApplication : public QAPPLICATION_CLASS
+class SingleApplication : public QObject
 {
     Q_OBJECT
-
-    typedef QAPPLICATION_CLASS app_t;
 
 public:
     /**
@@ -66,26 +58,20 @@ public:
     Q_DECLARE_FLAGS(Options, Mode)
 
     /**
-     * @brief Intitializes a SingleApplication instance with argc command line
-     * arguments in argv
-     * @arg {int &} argc - Number of arguments in argv
-     * @arg {const char *[]} argv - Supplied command line arguments
+     * @brief Intitializes a SingleApplication instance
      * @arg {bool} allowSecondary - Whether to start the instance as secondary
      * if there is already a primary instance.
      * @arg {Mode} mode - Whether for the SingleApplication block to be applied
      * User wide or System wide.
      * @arg {int} timeout - Timeout to wait in miliseconds.
-     * @note argc and argv may be changed as Qt removes arguments that it
-     * recognizes
      * @note Mode::SecondaryNotification only works if set on both the primary
      * instance and the secondary instance.
      * @note The timeout is just a hint for the maximum time of blocking
      * operations. It does not guarantee that the SingleApplication
      * initialisation will be completed in given time, though is a good hint.
      * Usually 4*timeout would be the worst case (fail) scenario.
-     * @see See the corresponding QAPPLICATION_CLASS constructor for reference
      */
-    explicit SingleApplication( int &argc, char *argv[], bool allowSecondary = false, Options options = Mode::User, int timeout = 100 );
+    explicit SingleApplication( bool allowSecondary = false, Options options = Mode::User, int timeout = 100 );
     ~SingleApplication();
 
     /**

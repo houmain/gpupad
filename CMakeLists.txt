@@ -190,7 +190,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SOURCES} ${HEADERS})
 
-add_compile_definitions(QAPPLICATION_CLASS=QApplication KTX_OPENGL)
+add_compile_definitions(KTX_OPENGL)
 target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include libs/gli libs/glm)
 
 if (MSVC)

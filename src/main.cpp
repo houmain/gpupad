@@ -29,17 +29,49 @@ void SetForegroundWindowInternal(HWND hWnd) {
 }
 #endif
 
+bool forwardToInstance(int argc, char *argv[]) 
+{
+    auto app = QCoreApplication(argc, argv);
+    auto instance = SingleApplication(true);
+    if (!instance.isSecondary())
+        return false;
+
+    auto arguments = app.arguments();
+    arguments.removeFirst();
+    if (arguments.empty() || std::find_if(arguments.begin(), arguments.end(), 
+            &FileDialog::isSessionFileName) != arguments.end())
+        return false;
+
+    for (const auto &argument : qAsConst(arguments))
+        instance.sendMessage(argument.toUtf8());
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
+    QCoreApplication::setOrganizationName("gpupad");
+    QCoreApplication::setApplicationName("GPUpad");
+#if __has_include("_version.h")
+    QCoreApplication::setApplicationVersion(
+# include "_version.h"
+    );
+#endif
+
+    if (forwardToInstance(argc, argv))
+        return 0;
+
 #if defined(__linux)
     // try to increase device/driver support
     // does not seem to cause any problems
     setenv("MESA_GL_VERSION_OVERRIDE", "4.5", 0);
     setenv("MESA_GLSL_VERSION_OVERRIDE", "450", 0);
 #endif
+    // format floats independent of locale
+    QLocale::setDefault(QLocale::c());
 
-    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QApplication::setStyle(QStyleFactory::create("Fusion"));
 
     auto format = QSurfaceFormat();
     format.setRenderableType(QSurfaceFormat::OpenGL);
@@ -49,47 +81,16 @@ int main(int argc, char *argv[])
     format.setOption(QSurfaceFormat::DebugContext);
     QSurfaceFormat::setDefaultFormat(format);
 
-    initializeCompositorSync();
+    auto app = QApplication(argc, argv);
+    auto instance = SingleApplication(true);
+    auto window = MainWindow();
 
-    SingleApplication app(argc, argv, true);
-    auto arguments = app.arguments();
-    arguments.removeFirst();
-
-    if(app.isSecondary() && !arguments.empty()) {
-        const auto openingSessionFile = (std::count_if(
-            arguments.begin(), arguments.end(), [](const QString &argument) { 
-                    return FileDialog::isSessionFileName(argument); 
-                }) != 0);
-        
-        if (!openingSessionFile) {
-            for (const auto &argument : qAsConst(arguments))
-                app.sendMessage(argument.toUtf8());
-            return 0;
-        }
-    }
-
-    // format floats independent of local
-    QLocale::setDefault(QLocale::c());
-
-#if __has_include("_version.h")
-    app.setApplicationVersion(
-# include "_version.h"
-    );
-#endif
-    app.setOrganizationName("gpupad");
-    app.setApplicationName("GPUpad");
-
-    app.setStyle(QStyleFactory::create("Fusion"));
-
-    MainWindow window;
-    window.show();
-
-    QObject::connect(&app, &SingleApplication::receivedMessage,
+    QObject::connect(&instance, &SingleApplication::receivedMessage,
         [&](quint32 instanceId, QByteArray argument) {
             Q_UNUSED(instanceId);
             window.openFile(QString::fromUtf8(argument));
-            window.setWindowState((window.windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
-
+            window.setWindowState(
+                (window.windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
 #if defined(_WIN32)
             SetForegroundWindowInternal(reinterpret_cast<HWND>(window.winId()));
 #else
@@ -98,6 +99,11 @@ int main(int argc, char *argv[])
 #endif
         });
 
+    initializeCompositorSync();
+    window.show();
+
+    auto arguments = app.arguments();
+    arguments.removeFirst();
     for (const QString &argument : qAsConst(arguments))
         window.openFile(argument);
 

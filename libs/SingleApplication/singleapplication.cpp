@@ -31,6 +31,7 @@
 #include <QtCore/QCryptographicHash>
 #include <QtNetwork/QLocalServer>
 #include <QtNetwork/QLocalSocket>
+#include <QtCore/QCoreApplication>
 
 #ifdef Q_OS_UNIX
     #include <signal.h>
@@ -76,19 +77,19 @@ void SingleApplicationPrivate::genBlockServerName( int timeout )
 {
     QCryptographicHash appData( QCryptographicHash::Sha256 );
     appData.addData( "SingleApplication", 17 );
-    appData.addData( SingleApplication::app_t::applicationName().toUtf8() );
-    appData.addData( SingleApplication::app_t::organizationName().toUtf8() );
-    appData.addData( SingleApplication::app_t::organizationDomain().toUtf8() );
+    appData.addData( QCoreApplication::applicationName().toUtf8() );
+    appData.addData( QCoreApplication::organizationName().toUtf8() );
+    appData.addData( QCoreApplication::organizationDomain().toUtf8() );
 
     if( ! (options & SingleApplication::Mode::ExcludeAppVersion) ) {
-        appData.addData( SingleApplication::app_t::applicationVersion().toUtf8() );
+        appData.addData( QCoreApplication::applicationVersion().toUtf8() );
     }
 
     if( ! (options & SingleApplication::Mode::ExcludeAppPath) ) {
 #ifdef Q_OS_WIN
-        appData.addData( SingleApplication::app_t::applicationFilePath().toLower().toUtf8() );
+        appData.addData( QCoreApplication::applicationFilePath().toLower().toUtf8() );
 #else
-        appData.addData( SingleApplication::app_t::applicationFilePath().toUtf8() );
+        appData.addData( QCoreApplication::applicationFilePath().toUtf8() );
 #endif
     }
 
@@ -361,12 +362,10 @@ void SingleApplicationPrivate::slotClientConnectionClosed( QLocalSocket *closedS
 /**
  * @brief Constructor. Checks and fires up LocalServer or closes the program
  * if another instance already exists
- * @param argc
- * @param argv
  * @param {bool} allowSecondaryInstances
  */
-SingleApplication::SingleApplication( int &argc, char *argv[], bool allowSecondary, Options options, int timeout )
-    : app_t( argc, argv ), d_ptr( new SingleApplicationPrivate( this ) )
+SingleApplication::SingleApplication( bool allowSecondary, Options options, int timeout )
+    : d_ptr( new SingleApplicationPrivate( this ) )
 {
     Q_D(SingleApplication);
 
