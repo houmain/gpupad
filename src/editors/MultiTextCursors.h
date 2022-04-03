@@ -23,6 +23,9 @@ public:
     void clear();
     void clear(QTextCursor cursor);
     void setTab(QString tab) { mTab = tab; }
+    bool cut();
+    bool copy();
+    bool paste();
 
 Q_SIGNALS:
     void cursorChanged(const QTextCursor &);
@@ -43,6 +46,7 @@ private:
     void emitChanged();
     void mergeCursors();
     void moveEachSelection(QTextCursor::MoveOperation op, QTextCursor::MoveMode mode);
+    void reverseOnBottomUpSelection(QStringList &lines);
 
     QList<QTextCursor> mPrevCursors;
     QList<QTextCursor> mCursors;

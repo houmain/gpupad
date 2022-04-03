@@ -273,6 +273,24 @@ void SourceEditor::replace(QString source)
     deduceSourceType();
 }
 
+void SourceEditor::cut()
+{
+    if (!mMultiTextCursors.cut())
+        QPlainTextEdit::cut();
+}
+
+void SourceEditor::copy()
+{
+    if (!mMultiTextCursors.copy())
+        QPlainTextEdit::copy();
+}
+
+void SourceEditor::paste()
+{
+    if (!mMultiTextCursors.paste())
+        QPlainTextEdit::paste();
+}
+
 void SourceEditor::deduceSourceType()
 {
     const auto extension = QFileInfo(mFileName).suffix();
@@ -709,7 +727,7 @@ void SourceEditor::wheelEvent(QWheelEvent *event)
 void SourceEditor::mouseDoubleClickEvent(QMouseEvent *event)
 {
     if (mMultiTextCursors.handleMouseDoubleClickEvent(event, textCursor()))
-        return;
+        return clearMarkedOccurrences();
     QPlainTextEdit::mouseDoubleClickEvent(event);
     markOccurrences(textUnderCursor(true));
 }
@@ -780,7 +798,7 @@ void SourceEditor::updateExtraSelections()
     for (const auto &occurrence : qAsConst(mMarkedOccurrences))
         selections.append({ occurrence, mOccurrencesFormat });
 
-    setCursorWidth(mMultiTextCursors.cursors().isEmpty() ? 
+    setCursorWidth(mMultiTextCursors.cursors().isEmpty() ?
         mInitialCursorWidth : 0);
     for (const auto &selection : mMultiTextCursors.cursors())
         selections.append({ selection, mMultiSelectionFormat });

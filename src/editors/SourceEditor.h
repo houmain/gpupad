@@ -29,6 +29,9 @@ public:
     bool save() override;
     int tabifyGroup() override { return 0; }
     void replace(QString source);
+    void cut();
+    void copy();
+    void paste();
 
     void findReplace();
     void setLineWrap(bool wrap) { setLineWrapMode(wrap ? WidgetWidth : NoWrap); }
