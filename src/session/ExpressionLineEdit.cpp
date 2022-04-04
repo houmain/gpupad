@@ -4,9 +4,9 @@
 
 QString simpleDoubleString(double value)
 {
-     static QRegularExpression sRegex("\\.?0+$");
+     static const auto regex = QRegularExpression("\\.?0+$");
      auto string = QString::number(value, 'f', 6);
-     string.remove(sRegex);
+     string.remove(regex);
      return string;
 }
 
@@ -57,7 +57,7 @@ void ExpressionLineEdit::stepBy(double steps)
 void ExpressionLineEdit::setValue(double value) 
 {
     // do not simplify 0.00 to 0
-    const auto zero = QRegularExpression("-?0\\.?0*");
+    static const auto zero = QRegularExpression("-?0\\.?0*");
     if (value == 0 && text().replace(zero, "0") == "0")
         return;
     const auto simplified = simpleDoubleString(value);

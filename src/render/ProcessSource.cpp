@@ -8,7 +8,7 @@
 namespace {
     QString removeLineDirectives(QString source)
     {
-        const auto regex = QRegularExpression("(\\s*#line[^\n]*)",
+        static const auto regex = QRegularExpression("(\\s*#line[^\n]*)",
             QRegularExpression::MultilineOption);
 
         for (auto match = regex.match(source); match.hasMatch(); match = regex.match(source))

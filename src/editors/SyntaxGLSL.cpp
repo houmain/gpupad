@@ -3,7 +3,9 @@
 
 namespace {
 
-const auto keywords = QStringList{
+QStringList keywords()
+{
+    return {
     "attribute", "const", "uniform", "varying", "coherent",
     "volatile", "restrict", "buffer", "readonly", "shared", "writeonly",
     "atomic_uint", "layout", "centroid", "patch", "flat", "smooth",
@@ -33,9 +35,13 @@ const auto keywords = QStringList{
     "uimage1DArray", "image2DArray", "iimage2DArray", "uimage2DArray",
     "imageCubeArray", "image2DMS", "iimageCubeArray", "iimage2DMS",
     "image2DMSArray", "uimageCubeArray", "uimage2DMS", "iimage2DMSArray",
-    "uimage2DMSArray", "struct" };
+    "uimage2DMSArray", "struct"
+    };
+}
 
-const auto builtinFunctions = QStringList{
+QStringList builtinFunctions()
+{
+    return {
     "printf",
     "abs", "acos", "acosh", "all", "any", "asin",
     "asinh", "atan", "atanh", "atomicCounter", "atomicCounterDecrement",
@@ -70,9 +76,13 @@ const auto builtinFunctions = QStringList{
     "textureProjOffset", "textureQueryLod", "textureSize", "transpose", "trunc",
     "uaddCarry", "uintBitsToFloat", "umulExtended", "unpackDouble2x32",
     "unpackHalf2x16", "unpackSnorm2x16", "unpackSnorm4x8", "unpackUnorm2x16",
-    "unpackUnorm4x8", "usubBorrow" };
+    "unpackUnorm4x8", "usubBorrow"
+    };
+}
 
-const auto builtinConstants = QStringList{
+QStringList builtinConstants()
+{
+    return {
     "printfEnabled", "HAS_PRINTF",
     "gl_ClipDistance", "gl_CullDistance",
     "gl_DepthRange", "gl_DepthRangeParameters", "gl_FragCoord", "gl_FragDepth",
@@ -121,9 +131,13 @@ const auto builtinConstants = QStringList{
     "gl_PrimitiveID", "gl_PrimitiveIDIn", "gl_SampleID", "gl_SampleMask",
     "gl_SampleMaskIn", "gl_SamplePosition", "gl_TessCoord", "gl_TessLevelInner",
     "gl_TessLevelOuter", "gl_VertexID", "gl_ViewportIndex", "gl_WorkGroupID",
-    "gl_WorkGroupSize" };
+    "gl_WorkGroupSize"
+    };
+}
 
-const auto layoutQualifiers = QStringList{
+QStringList layoutQualifiers()
+{
+    return {
     "row_major", "column_major", "location", "component", "binding", "offset",
     "index", "shared", "packed", "std140", "std430", "origin_upper_left",
     "pixel_center_integer", "early_fragment_tests", "xfb_buffer", "xfb_offset",
@@ -134,17 +148,20 @@ const auto layoutQualifiers = QStringList{
     "rgba16_snorm", "rgba8_snorm", "rg16_snorm", "rg8_snorm", "r16_snorm",
     "r8_snorm", "rgba32i", "rgba16i", "rgba8i", "rg32i", "rg16i", "rg8i",
     "r32i", "r16i", "r8i", "rgba32ui", "rgba16ui", "rgb10_a2ui", "rgba8ui",
-    "rg32ui", "rg16ui", "rg8ui", "r32ui", "r16ui", "r8ui" };
+    "rg32ui", "rg16ui", "rg8ui", "r32ui", "r16ui", "r8ui"
+    };
+}
+
 } // namespace
 
 class SyntaxGLSL : public Syntax {
 public:
-    QStringList keywords() const override { return ::keywords; }
-    QStringList builtinFunctions() const override { return ::builtinFunctions; }
-    QStringList builtinConstants() const override { return ::builtinConstants; }
+    QStringList keywords() const override { return ::keywords(); }
+    QStringList builtinFunctions() const override { return ::builtinFunctions(); }
+    QStringList builtinConstants() const override { return ::builtinConstants(); }
     QStringList completerStrings() const override {
-        return ::keywords + ::builtinFunctions + 
-            ::builtinConstants + ::layoutQualifiers;
+        return ::keywords() + ::builtinFunctions() +
+            ::builtinConstants() + ::layoutQualifiers();
     }
     bool hasPreprocessor() const override { return true; }
 };

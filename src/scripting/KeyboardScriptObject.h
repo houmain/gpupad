@@ -7,7 +7,7 @@
 class KeyboardScriptObject final : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QJsonValue keys READ keys)
+    Q_PROPERTY(QJsonValue keys READ keys CONSTANT)
 
 public:
     explicit KeyboardScriptObject(QObject *parent = nullptr);

@@ -476,8 +476,6 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         }
         if (mHistogramEnabled) {
             if (auto gl42 = context().gl42()) {
-                auto created = mHistogramTexture.isCreated();
-                auto size = mHistogramTexture.width();
                 if (!mHistogramTexture.isCreated() ||
                      mHistogramTexture.width() != mHistogramBins.size()) {
                     mHistogramTexture.destroy();

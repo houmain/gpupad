@@ -100,19 +100,22 @@ SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
     const auto& syntax = getSyntax(sourceType);
     auto rule = HighlightingRule();
 
-    for (const auto &keyword : syntax.keywords()) {
+    const auto keywords = syntax.keywords();
+    for (const auto &keyword : keywords) {
         rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(keyword));
         rule.format = keywordFormat;
         mHighlightingRules.append(rule);
     }
 
-    for (const auto &builtinFunction : syntax.builtinFunctions()) {
+    const auto builtinFunctions = syntax.builtinFunctions();
+    for (const auto &builtinFunction : builtinFunctions) {
         rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(builtinFunction));
         rule.format = builtinFunctionFormat;
         mHighlightingRules.append(rule);
     }
 
-    for (const auto &builtinConstant : syntax.builtinConstants()) {
+    const auto builtinConstants = syntax.builtinConstants();
+    for (const auto &builtinConstant : builtinConstants) {
         rule.pattern = QRegularExpression(QStringLiteral("\\b%1(\\.[_A-Za-z0-9]+)*\\b").arg(builtinConstant));
         rule.format = builtinConstantsFormat;
         mHighlightingRules.append(rule);

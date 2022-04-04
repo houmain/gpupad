@@ -4,7 +4,9 @@
 namespace {
 
 // https://developer.mozilla.org/de/docs/Web/JavaScript/Reference/Lexical_grammar
-const auto keywords = QStringList{
+QStringList keywords()
+{
+    return {
     "break", "case", "catch", "class", "const", "continue", "debugger", "default",
     "delete", "do", "else", "export", "extends", "finally", "for", "function",
     "if", "import", "in", "instanceof", "new", "return", "super", "switch", "this",
@@ -12,10 +14,13 @@ const auto keywords = QStringList{
     "implements", "interface", "let", "package", "private", "protected", "public",
     "static", "await", "of", 
     "Infinity", "NaN", "undefined", "null", "true", "false"
-};
+    };
+}
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
-const auto globalObjects = QStringList{
+QStringList globalObjects()
+{
+    return {
     "eval", "isFinite", "isNaN",
     "parseFloat", "parseInt", "decodeURI", "decodeURIComponent", "encodeURI",
     "encodeURIComponent", "Object", "Boolean", "Error", "EvalError", "Function",
@@ -25,15 +30,16 @@ const auto globalObjects = QStringList{
     "Uint32Array", "Float32Array", "Float64Array", "Map", "Set", "WeakMap",
     "WeakSet", "ArrayBuffer", "SharedArrayBuffer", "Atomics", "DataView", "JSON",
     "console", "Session", "Mouse", "Keyboard"
-};
+    };
+}
 
 } // namespace
 
 class SyntaxJavaScript : public Syntax {
 public:
-    QStringList keywords() const override { return ::keywords; }
-    QStringList builtinConstants() const override { return ::globalObjects; }
-    QStringList completerStrings() const override { return ::keywords + ::globalObjects; }
+    QStringList keywords() const override { return ::keywords(); }
+    QStringList builtinConstants() const override { return ::globalObjects(); }
+    QStringList completerStrings() const override { return ::keywords() + ::globalObjects(); }
 };
 
 Syntax* makeSyntaxJavaScript() { return new SyntaxJavaScript(); }

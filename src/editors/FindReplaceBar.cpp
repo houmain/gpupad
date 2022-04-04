@@ -20,9 +20,9 @@ FindReplaceBar::FindReplaceBar(QWidget *parent) :
     connect(ui->findText, &QLineEdit::returnPressed, this,
         [this]() {
             if (QApplication::keyboardModifiers() & Qt::ShiftModifier)
-                Q_EMIT findPrevious();
+                findPrevious();
             else
-                Q_EMIT findNext();
+                findNext();
         });
     connect(ui->replaceText, &QLineEdit::returnPressed, this,
         &FindReplaceBar::replace);

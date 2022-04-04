@@ -315,8 +315,8 @@ void SourceEditor::emitNavigationPositionChanged()
 void SourceEditor::restoreNavigationPosition(const QString &position)
 {
     const auto semicolon = position.indexOf(";");
-    const auto blockNumber = position.left(semicolon).toInt();
-    const auto offset = position.mid(semicolon + 1).toInt();
+    const auto blockNumber = position.leftRef(semicolon).toInt();
+    const auto offset = position.midRef(semicolon + 1).toInt();
 
     const auto prevLineWrapMode = lineWrapMode();
     if (prevLineWrapMode != QPlainTextEdit::NoWrap)
@@ -580,7 +580,9 @@ void SourceEditor::autoIndentNewLine()
         line.chop(1);
     if (line.isEmpty())
         line = cursor.selectedText();
-    auto spaces = QString(line).replace(QRegularExpression("^(\\s*).*"), "\\1");
+
+    static const auto selectSpaces = QRegularExpression("^(\\s*).*");
+    auto spaces = QString(line).replace(selectSpaces, "\\1");
     if (line.endsWith('{'))
         spaces += tab();
 
@@ -837,8 +839,10 @@ QString SourceEditor::textUnderCursor(bool identifierOnly) const
         cursor.select(QTextCursor::WordUnderCursor);
     }
     auto text = cursor.selectedText();
-    if (identifierOnly)
-        text = text.replace(QRegularExpression("[^a-zA-Z0-9_]"), "");
+    if (identifierOnly) {
+        static const auto regex = QRegularExpression("[^a-zA-Z0-9_]");
+        text = text.replace(regex, "");
+    }
     return text;
 }
 

@@ -184,11 +184,13 @@ private:
     {
          const auto separator = guessSeparator(text);
          auto result = QVector<QVariantList>();
-         for (auto line : text.split('\n')) {
+         const auto lines = text.split('\n');
+         for (auto line : lines) {
              line = line.trimmed();
              if (!line.isEmpty()) {
                  auto row = QVariantList();
-                 for (auto value : line.split(separator)) 
+                 const auto values = line.split(separator);
+                 for (const auto &value : values)
                      row.append(toNumber(value.trimmed()));
                  result.append(row);
              }

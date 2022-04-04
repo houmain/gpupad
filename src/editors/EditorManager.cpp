@@ -405,7 +405,7 @@ void EditorManager::renameEditors(const QString &prevFileName, const QString &fi
 
 void EditorManager::resetQmlViewsDependingOn(const QString &fileName)
 {
-    for (auto qmlView : mQmlViews)
+    for (auto qmlView : qAsConst(mQmlViews))
         if (qmlView->dependsOn(fileName))
             qmlView->resetOnFocus();
 }

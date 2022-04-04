@@ -35,7 +35,7 @@ public:
 
 Q_SIGNALS:
     void cancelled();
-    void action(Action action, QString find, QString replace,
+    void action(FindReplaceBar::Action action, QString find, QString replace,
         QTextDocument::FindFlags flags);
 
 protected:

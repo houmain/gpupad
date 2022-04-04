@@ -47,7 +47,8 @@ namespace {
 
 QString splitPascalCase(QString str)
 {
-    return str.replace(QRegularExpression("([a-z])([A-Z])"), "\\1 \\2");
+    static const auto regex = QRegularExpression("([a-z])([A-Z])");
+    return str.replace(regex, "\\1 \\2");
 }
 
 void setFormVisibility(QFormLayout *layout, QLabel *label,

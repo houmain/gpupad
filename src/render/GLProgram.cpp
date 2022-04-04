@@ -260,8 +260,8 @@ void GLProgram::unbind(ItemId callItemId)
 
 QString GLProgram::getUniformBaseName(const QString &name) const
 {
-    const auto base = QString(name).remove(QRegularExpression("\\[.*\\]"));
-    return base;
+    static const auto regex = QRegularExpression("\\[.*\\]");
+    return QString(name).remove(regex);
 }
 
 void GLProgram::uniformSet(const QString &name)

@@ -13,7 +13,7 @@ struct Item;
 class SessionScriptObject : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QJSValue items READ rootItems)
+    Q_PROPERTY(QJSValue items READ rootItems CONSTANT)
 
 public:
     explicit SessionScriptObject(QJSEngine *engine);

@@ -145,7 +145,6 @@ void DockWindow::openContextMenu(int index)
 
 void DockWindow::tabBarDoubleClicked(int index) 
 {
-    auto tabBar = static_cast<QTabBar*>(QObject::sender());
     if (index == -1) {
         if (QApplication::mouseButtons() & Qt::LeftButton) {
             Q_EMIT openNewDock();

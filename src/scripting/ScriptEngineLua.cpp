@@ -141,7 +141,8 @@ void ScriptEngineLua::popErrorMessage(MessagePtrSet &messages, ItemId itemId)
         "\\]:(\\d+): " // 2. line
         "(.+)");       // 3. text
 
-    for (const auto &line : message.split('\n')) {
+    const auto lines = message.split('\n');
+    for (const auto &line : lines) {
         const auto match = split.match(line);
         const auto fileName = match.captured(1);
         const auto lineNumber = match.captured(2).toInt();

@@ -13,7 +13,7 @@ namespace {
 
     void removeVersion(QString *source, QString *maxVersion)
     {
-        const auto regex = QRegularExpression("(#version[^\n]*\n?)",
+        static const auto regex = QRegularExpression("(#version[^\n]*\n?)",
             QRegularExpression::MultilineOption);
 
         for (auto match = regex.match(*source); match.hasMatch(); match = regex.match(*source)) {
@@ -49,7 +49,7 @@ namespace {
         const auto fileNo = usedFileNames.indexOf(fileName);
 
         auto linesInserted = 0;
-        const auto regex = QRegularExpression(R"(#include([^\n]*))");
+        static const auto regex = QRegularExpression(R"(#include([^\n]*))");
         for (auto match = regex.match(source); match.hasMatch(); match = regex.match(source)) {
             source.remove(match.capturedStart(), match.capturedLength());
             auto include = match.captured(1).trimmed();
@@ -101,7 +101,8 @@ void GLShader::parseLog(const QString &log,
         "([^:]+):\\s*" // 6. severity/code
         "(.+)");  // 7. text
 
-    for (const auto &line : log.split('\n')) {
+    const auto lines = log.split('\n');
+    for (const auto &line : lines) {
         const auto match = split.match(line);
         const auto sourceIndex = match.captured(2).toInt();
         const auto lineNumber = (!match.captured(4).isEmpty() ?
@@ -181,7 +182,7 @@ bool GLShader::compile(GLPrintf *printf, bool failSilently)
         return false;
 
     auto sources = std::vector<std::string>();
-    for (const QString &source : mPatchedSources)
+    for (const QString &source : qAsConst(mPatchedSources))
         sources.push_back(qUtf8Printable(source));
     auto sourcePointers = std::vector<const char*>();
     for (const auto &source : sources)

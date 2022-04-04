@@ -7,11 +7,11 @@
 class MouseScriptObject final : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QJsonValue coord READ coord)
-    Q_PROPERTY(QJsonValue fragCoord READ fragCoord)
-    Q_PROPERTY(QJsonValue prevCoord READ prevCoord)
-    Q_PROPERTY(QJsonValue prevFragCoord READ prevFragCoord)
-    Q_PROPERTY(QJsonValue buttons READ buttons)
+    Q_PROPERTY(QJsonValue coord READ coord CONSTANT)
+    Q_PROPERTY(QJsonValue fragCoord READ fragCoord CONSTANT)
+    Q_PROPERTY(QJsonValue prevCoord READ prevCoord CONSTANT)
+    Q_PROPERTY(QJsonValue prevFragCoord READ prevFragCoord CONSTANT)
+    Q_PROPERTY(QJsonValue buttons READ buttons CONSTANT)
 
 public:
     explicit MouseScriptObject(QObject *parent = nullptr);
