@@ -1,5 +1,23 @@
 #include "SyntaxHighlighter.h"
 #include "Syntax.h"
+#include <QMap>
+
+struct SyntaxHighlighter::Data
+{
+    struct HighlightingRule {
+        QRegularExpression pattern;
+        QTextCharFormat format;
+    };
+
+    QVector<HighlightingRule> highlightingRules;
+    HighlightingRule functionsRule;
+    HighlightingRule singleLineCommentRule;
+    QTextCharFormat multiLineCommentFormat;
+    QRegularExpression multiLineCommentStart;
+    QRegularExpression multiLineCommentEnd;
+    HighlightingRule whiteSpaceRule;
+    QStringList completerStrings;
+};
 
 namespace {
     const Syntax& getSyntax(SourceType sourceType) 
@@ -33,6 +51,133 @@ namespace {
         }
         return *syntaxPlainText;
     }
+
+    QSharedPointer<const SyntaxHighlighter::Data> createData(
+        const Syntax& syntax, bool darkTheme, bool showWhiteSpace)
+    {
+        auto keywordFormat = QTextCharFormat();
+        auto builtinFunctionFormat = QTextCharFormat();
+        auto builtinConstantsFormat = QTextCharFormat();
+        auto preprocessorFormat = QTextCharFormat();
+        auto quotationFormat = QTextCharFormat();
+        auto numberFormat = QTextCharFormat();
+        auto functionFormat = QTextCharFormat();
+        auto commentFormat = QTextCharFormat();
+        auto whiteSpaceFormat = QTextCharFormat();
+
+        functionFormat.setFontWeight(QFont::Bold);
+
+        if (darkTheme) {
+            functionFormat.setForeground(QColor(0x7AAFFF));
+            keywordFormat.setForeground(QColor(0x7AAFFF));
+            builtinFunctionFormat.setForeground(QColor(0x7AAFFF));
+            builtinConstantsFormat.setForeground(QColor(0xDD8D8D));
+            numberFormat.setForeground(QColor(0xB09D30));
+            quotationFormat.setForeground(QColor(0xB09D30));
+            preprocessorFormat.setForeground(QColor(0xC87FFF));
+            commentFormat.setForeground(QColor(0x56C056));
+            whiteSpaceFormat.setForeground(QColor(0x666666));
+        }
+        else {
+            functionFormat.setForeground(QColor(0x000066));        
+            keywordFormat.setForeground(QColor(0x003C98));
+            builtinFunctionFormat.setForeground(QColor(0x000066));
+            builtinConstantsFormat.setForeground(QColor(0x981111));
+            numberFormat.setForeground(QColor(0x981111));
+            quotationFormat.setForeground(QColor(0x981111));
+            preprocessorFormat.setForeground(QColor(0x800080));
+            commentFormat.setForeground(QColor(0x008700));
+            whiteSpaceFormat.setForeground(QColor(0xCCCCCC));
+        }
+
+        auto d = SyntaxHighlighter::Data{ };
+        auto rule = SyntaxHighlighter::Data::HighlightingRule{ };
+
+        const auto keywords = syntax.keywords();
+        for (const auto &keyword : keywords) {
+            rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(keyword));
+            rule.format = keywordFormat;
+            d.highlightingRules.append(rule);
+        }
+
+        const auto builtinFunctions = syntax.builtinFunctions();
+        for (const auto &builtinFunction : builtinFunctions) {
+            rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(builtinFunction));
+            rule.format = builtinFunctionFormat;
+            d.highlightingRules.append(rule);
+        }
+
+        const auto builtinConstants = syntax.builtinConstants();
+        for (const auto &builtinConstant : builtinConstants) {
+            rule.pattern = QRegularExpression(QStringLiteral("\\b%1(\\.[_A-Za-z0-9]+)*\\b").arg(builtinConstant));
+            rule.format = builtinConstantsFormat;
+            d.highlightingRules.append(rule);
+        }
+
+        rule.pattern = QRegularExpression("\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?[uU]*[lLfF]?\\b");
+        rule.format = numberFormat;
+        d.highlightingRules.append(rule);
+
+        rule.pattern = QRegularExpression("\\b0x[0-9,A-F,a-f]+[uU]*[lL]?\\b");
+        rule.format = numberFormat;
+        d.highlightingRules.append(rule);
+
+        const auto quotation = QString("%1([^%1]*(\\\\%1[^%1]*)*)(%1|$)");
+        rule.pattern = QRegularExpression(quotation.arg('"'));
+        rule.format = quotationFormat;
+        d.highlightingRules.append(rule);
+
+        rule.pattern = QRegularExpression(quotation.arg('\''));
+        rule.format = quotationFormat;
+        d.highlightingRules.append(rule);
+
+        rule.pattern = QRegularExpression(quotation.arg('`'));
+        rule.format = quotationFormat;
+        d.highlightingRules.append(rule);
+
+        if (syntax.hasPreprocessor()) {
+            rule.pattern = QRegularExpression("^\\s*#.*");
+            rule.format = preprocessorFormat;
+            d.highlightingRules.append(rule);
+        }
+
+        if (syntax.hasFunctions()) {
+            d.functionsRule.pattern = QRegularExpression("\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()");
+            d.functionsRule.format = functionFormat;
+        }
+
+        if (!syntax.singleLineCommentBegin().isEmpty()) {
+            d.singleLineCommentRule.pattern = QRegularExpression(syntax.singleLineCommentBegin());
+            d.singleLineCommentRule.format = commentFormat;
+        }
+        if (!syntax.multiLineCommentBegin().isEmpty()) {
+            d.multiLineCommentStart = QRegularExpression(syntax.multiLineCommentBegin());
+            d.multiLineCommentEnd = QRegularExpression(syntax.multiLineCommentEnd());
+            d.multiLineCommentFormat = commentFormat;
+        }
+
+        if (showWhiteSpace) {
+            d.whiteSpaceRule.pattern = QRegularExpression("\\s+", 
+                QRegularExpression::UseUnicodePropertiesOption);
+            d.whiteSpaceRule.format = whiteSpaceFormat;
+        }
+        d.completerStrings = syntax.completerStrings();
+
+        return QSharedPointer<const SyntaxHighlighter::Data>(
+            new SyntaxHighlighter::Data(std::move(d)));
+    }
+
+    QSharedPointer<const SyntaxHighlighter::Data> getData(
+        SourceType sourceType, bool darkTheme, bool showWhiteSpace)
+    {
+        const auto &syntax = getSyntax(sourceType);
+        const auto key = std::make_tuple(&syntax, darkTheme, showWhiteSpace);
+        static auto cache = std::map<decltype(key), 
+            QSharedPointer<const SyntaxHighlighter::Data>>();
+        if (!cache[key])
+            cache[key] = createData(syntax, darkTheme, showWhiteSpace);
+        return cache[key];
+    }
 } // namespace
 
 SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
@@ -40,119 +185,18 @@ SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
     , bool showWhiteSpace
     , QObject *parent)
     : QSyntaxHighlighter(parent)
+    , mData(getData(sourceType, darkTheme, showWhiteSpace))
 {
-    QTextCharFormat keywordFormat;
-    QTextCharFormat builtinFunctionFormat;
-    QTextCharFormat builtinConstantsFormat;
-    QTextCharFormat preprocessorFormat;
-    QTextCharFormat quotationFormat;
-    QTextCharFormat numberFormat;
-    QTextCharFormat functionFormat;
-    QTextCharFormat commentFormat;
-    QTextCharFormat whiteSpaceFormat;
+}
 
-    functionFormat.setFontWeight(QFont::Bold);
-
-    if (darkTheme) {
-        functionFormat.setForeground(QColor(0x7AAFFF));
-        keywordFormat.setForeground(QColor(0x7AAFFF));
-        builtinFunctionFormat.setForeground(QColor(0x7AAFFF));
-        builtinConstantsFormat.setForeground(QColor(0xDD8D8D));
-        numberFormat.setForeground(QColor(0xB09D30));
-        quotationFormat.setForeground(QColor(0xB09D30));
-        preprocessorFormat.setForeground(QColor(0xC87FFF));
-        commentFormat.setForeground(QColor(0x56C056));
-        whiteSpaceFormat.setForeground(QColor(0x666666));
-    }
-    else {
-        functionFormat.setForeground(QColor(0x000066));        
-        keywordFormat.setForeground(QColor(0x003C98));
-        builtinFunctionFormat.setForeground(QColor(0x000066));
-        builtinConstantsFormat.setForeground(QColor(0x981111));
-        numberFormat.setForeground(QColor(0x981111));
-        quotationFormat.setForeground(QColor(0x981111));
-        preprocessorFormat.setForeground(QColor(0x800080));
-        commentFormat.setForeground(QColor(0x008700));
-        whiteSpaceFormat.setForeground(QColor(0xCCCCCC));
-    }
-
-    const auto& syntax = getSyntax(sourceType);
-    auto rule = HighlightingRule();
-
-    const auto keywords = syntax.keywords();
-    for (const auto &keyword : keywords) {
-        rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(keyword));
-        rule.format = keywordFormat;
-        mHighlightingRules.append(rule);
-    }
-
-    const auto builtinFunctions = syntax.builtinFunctions();
-    for (const auto &builtinFunction : builtinFunctions) {
-        rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(builtinFunction));
-        rule.format = builtinFunctionFormat;
-        mHighlightingRules.append(rule);
-    }
-
-    const auto builtinConstants = syntax.builtinConstants();
-    for (const auto &builtinConstant : builtinConstants) {
-        rule.pattern = QRegularExpression(QStringLiteral("\\b%1(\\.[_A-Za-z0-9]+)*\\b").arg(builtinConstant));
-        rule.format = builtinConstantsFormat;
-        mHighlightingRules.append(rule);
-    }
-
-    rule.pattern = QRegularExpression("\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?[uU]*[lLfF]?\\b");
-    rule.format = numberFormat;
-    mHighlightingRules.append(rule);
-
-    rule.pattern = QRegularExpression("\\b0x[0-9,A-F,a-f]+[uU]*[lL]?\\b");
-    rule.format = numberFormat;
-    mHighlightingRules.append(rule);
-
-    auto quotation = QString("%1([^%1]*(\\\\%1[^%1]*)*)(%1|$)");
-    rule.pattern = QRegularExpression(quotation.arg('"'));
-    rule.format = quotationFormat;
-    mHighlightingRules.append(rule);
-
-    rule.pattern = QRegularExpression(quotation.arg('\''));
-    rule.format = quotationFormat;
-    mHighlightingRules.append(rule);
-
-    rule.pattern = QRegularExpression(quotation.arg('`'));
-    rule.format = quotationFormat;
-    mHighlightingRules.append(rule);
-
-    if (syntax.hasPreprocessor()) {
-        rule.pattern = QRegularExpression("^\\s*#.*");
-        rule.format = preprocessorFormat;
-        mHighlightingRules.append(rule);
-    }
-
-    if (syntax.hasFunctions()) {
-        mFunctionsRule.pattern = QRegularExpression("\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()");
-        mFunctionsRule.format = functionFormat;
-    }
-
-    if (!syntax.singleLineCommentBegin().isEmpty()) {
-        mSingleLineCommentRule.pattern = QRegularExpression(syntax.singleLineCommentBegin());
-        mSingleLineCommentRule.format = commentFormat;
-    }
-    if (!syntax.multiLineCommentBegin().isEmpty()) {
-        mMultiLineCommentStart = QRegularExpression(syntax.multiLineCommentBegin());
-        mMultiLineCommentEnd = QRegularExpression(syntax.multiLineCommentEnd());
-        mMultiLineCommentFormat = commentFormat;
-    }
-
-    if (showWhiteSpace) {
-        mWhiteSpaceRule.pattern = QRegularExpression("\\s+", 
-            QRegularExpression::UseUnicodePropertiesOption);
-        mWhiteSpaceRule.format = whiteSpaceFormat;
-    }
-    mCompleterStrings = syntax.completerStrings();
+const QStringList &SyntaxHighlighter::completerStrings() const
+{
+    return mData->completerStrings;
 }
 
 void SyntaxHighlighter::highlightBlock(const QString &text)
 {
-    const auto highlight = [&](const HighlightingRule &rule, bool override) {
+    const auto highlight = [&](const auto &rule, bool override) {
         for (auto index = text.indexOf(rule.pattern); index >= 0; ) {
             const auto match = rule.pattern.match(text, index);
             const auto length = match.capturedLength();
@@ -162,21 +206,23 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
         }
     };
 
-    if (!mFunctionsRule.format.isEmpty())
-        highlight(mFunctionsRule, false);
+    const auto &d = *mData;
 
-    for (const HighlightingRule &rule : qAsConst(mHighlightingRules))
+    if (!d.functionsRule.format.isEmpty())
+        highlight(d.functionsRule, false);
+
+    for (const auto &rule : qAsConst(d.highlightingRules))
         highlight(rule, true);
 
-    if (!mSingleLineCommentRule.format.isEmpty())
-        highlight(mSingleLineCommentRule, false);
+    if (!d.singleLineCommentRule.format.isEmpty())
+        highlight(d.singleLineCommentRule, false);
     
-    if (!mMultiLineCommentFormat.isEmpty()) {
+    if (!d.multiLineCommentFormat.isEmpty()) {
         setCurrentBlockState(0);
 
         auto startIndex = 0;
         if (previousBlockState() != 1)
-            startIndex = text.indexOf(mMultiLineCommentStart);
+            startIndex = text.indexOf(d.multiLineCommentStart);
 
         while (startIndex >= 0) {
             // do not start multiline comment in single line comment or string
@@ -185,7 +231,7 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
                 break;
             }
 
-            const auto match = mMultiLineCommentEnd.match(text, startIndex);
+            const auto match = d.multiLineCommentEnd.match(text, startIndex);
             const auto endIndex = match.capturedStart();
             auto commentLength = 0;
             if (endIndex == -1) {
@@ -195,11 +241,11 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
             else {
                 commentLength = endIndex - startIndex + match.capturedLength();
             }
-            setFormat(startIndex, commentLength, mMultiLineCommentFormat);
-            startIndex = text.indexOf(mMultiLineCommentStart, startIndex + commentLength);
+            setFormat(startIndex, commentLength, d.multiLineCommentFormat);
+            startIndex = text.indexOf(d.multiLineCommentStart, startIndex + commentLength);
         }
     }
 
-    if (!mWhiteSpaceRule.format.isEmpty())
-        highlight(mWhiteSpaceRule, true);
+    if (!d.whiteSpaceRule.format.isEmpty())
+        highlight(d.whiteSpaceRule, true);
 }

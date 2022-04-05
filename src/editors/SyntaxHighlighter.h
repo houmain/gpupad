@@ -6,25 +6,17 @@
 
 class QCompleter;
 
-class SyntaxHighlighter final : public QSyntaxHighlighter {
+class SyntaxHighlighter final : public QSyntaxHighlighter 
+{
     Q_OBJECT
 public:
+    struct Data;
+
     SyntaxHighlighter(SourceType sourceType, 
         bool darkTheme, bool showWhiteSpace, QObject *parent = nullptr);
     void highlightBlock(const QString &text) override;
-    const QStringList &completerStrings() const { return mCompleterStrings; }
+    const QStringList &completerStrings() const;
 
 private:
-    struct HighlightingRule {
-        QRegularExpression pattern;
-        QTextCharFormat format;
-    };
-    QVector<HighlightingRule> mHighlightingRules;
-    HighlightingRule mFunctionsRule;
-    HighlightingRule mSingleLineCommentRule;
-    QTextCharFormat mMultiLineCommentFormat;
-    QRegularExpression mMultiLineCommentStart;
-    QRegularExpression mMultiLineCommentEnd;
-    HighlightingRule mWhiteSpaceRule;
-    QStringList mCompleterStrings;
+    QSharedPointer<const Data> mData;
 };
