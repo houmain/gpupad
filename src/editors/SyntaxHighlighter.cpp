@@ -1,28 +1,7 @@
 #include "SyntaxHighlighter.h"
 #include "Syntax.h"
-#include <QCompleter>
-#include <QStringListModel>
-#include <QSet>
 
 namespace {
-    QStringList toList(const QSet<QString> &set)
-    {
-#if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
-        return { set.begin(), set.end() };
-#else
-        return set.toList();
-#endif
-    }
-
-    QSet<QString> toSet(const QStringList &list)
-    {
-#if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
-        return { list.begin(), list.end() };
-#else
-        return list.toSet();
-#endif
-    }
-
     const Syntax& getSyntax(SourceType sourceType) 
     {
         static const auto syntaxPlainText = makeSyntaxPlain();
@@ -168,12 +147,7 @@ SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
             QRegularExpression::UseUnicodePropertiesOption);
         mWhiteSpaceRule.format = whiteSpaceFormat;
     }
-    mCompleterStrings = toSet(syntax.completerStrings());
-    mCompleter = new QCompleter(this);
-    mCompleter->setModelSorting(QCompleter::CaseInsensitivelySortedModel);
-    mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
-    mCompleter->setWrapAround(false);
-    updateCompleter("");
+    mCompleterStrings = syntax.completerStrings();
 }
 
 void SyntaxHighlighter::highlightBlock(const QString &text)
@@ -228,21 +202,4 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
 
     if (!mWhiteSpaceRule.format.isEmpty())
         highlight(mWhiteSpaceRule, true);
-}
-
-void SyntaxHighlighter::updateCompleter(const QString &contextText)
-{
-    static const auto pattern = QRegularExpression("[_A-Za-z][_A-Za-z0-9]+");
-    auto strings = mCompleterStrings;
-    for (auto index = contextText.indexOf(pattern); index >= 0; ) {
-        const auto match = pattern.match(contextText, index);
-        strings.insert(match.captured());
-        const auto length = match.capturedLength();
-        index = contextText.indexOf(pattern, index + length);
-    }
-
-    auto list = toList(strings);
-    list.sort(Qt::CaseInsensitive);
-    delete mCompleter->model();
-    mCompleter->setModel(new QStringListModel(list, mCompleter));
 }

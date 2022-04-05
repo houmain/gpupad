@@ -112,6 +112,7 @@ set(SOURCES
   src/editors/SyntaxJavaScript.cpp
   src/editors/SyntaxLua.cpp
   src/editors/SyntaxPlain.cpp
+  src/editors/Completer.cpp
   src/editors/TextureEditorToolBar.cpp
   src/editors/TextureEditorToolBar.ui
   src/editors/TextureEditor.cpp

@@ -123,9 +123,11 @@ bool MultiTextCursors::handleKeyPressEvent(QKeyEvent *event, QTextCursor cursor)
             case Qt::Key_X: return cut();
             case Qt::Key_C: return copy();
             case Qt::Key_V: return paste();
+            case Qt::Key_A: 
+                clear(cursor);
+                return false;
             default:
-                if (event->key() >= Qt::Key_A && event->key() <= Qt::Key_Z)
-                    clear(cursor);
+                return false;
         }
     }
 

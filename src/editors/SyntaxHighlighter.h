@@ -12,15 +12,13 @@ public:
     SyntaxHighlighter(SourceType sourceType, 
         bool darkTheme, bool showWhiteSpace, QObject *parent = nullptr);
     void highlightBlock(const QString &text) override;
-    void updateCompleter(const QString &contextText);
-    QCompleter *completer() const { return mCompleter; }
+    const QStringList &completerStrings() const { return mCompleterStrings; }
 
 private:
     struct HighlightingRule {
         QRegularExpression pattern;
         QTextCharFormat format;
     };
-    QCompleter *mCompleter{ };
     QVector<HighlightingRule> mHighlightingRules;
     HighlightingRule mFunctionsRule;
     HighlightingRule mSingleLineCommentRule;
@@ -28,5 +26,5 @@ private:
     QRegularExpression mMultiLineCommentStart;
     QRegularExpression mMultiLineCommentEnd;
     HighlightingRule mWhiteSpaceRule;
-    QSet<QString> mCompleterStrings;
+    QStringList mCompleterStrings;
 };

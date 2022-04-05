@@ -6,6 +6,7 @@
 #include "FindReplaceBar.h"
 #include "FileDialog.h"
 #include "SyntaxHighlighter.h"
+#include "Completer.h"
 #include <QCompleter>
 #include <QTextCharFormat>
 #include <QPainter>
@@ -92,9 +93,12 @@ SourceEditor::SourceEditor(QString fileName
     , mEditorToolBar(*editorToolbar)
     , mFileName(fileName)
     , mFindReplaceBar(*findReplaceBar)
+    , mCompleter(new Completer(this))
     , mLineNumberArea(new LineNumberArea(this))
     , mInitialCursorWidth(2)
 {
+    mCompleter->setWidget(this);
+
     connect(this, &SourceEditor::blockCountChanged,
         this, &SourceEditor::updateViewportMargins);
     connect(this, &SourceEditor::updateRequest,
@@ -113,6 +117,8 @@ SourceEditor::SourceEditor(QString fileName
         this, &SourceEditor::disableLineWrap);
     connect(&mMultiTextCursors, &MultiTextCursors::restoreLineWrap,
         this, &SourceEditor::restoreLineWrap);
+    connect(mCompleter, qOverload<const QString &>(&QCompleter::activated),
+        this, &SourceEditor::insertCompletion);
 
     const auto &settings = Singletons::settings();
     setFont(settings.font());
@@ -366,7 +372,6 @@ void SourceEditor::updateSyntaxHighlighting()
 
     delete mHighlighter;
     mHighlighter = nullptr;
-    mCompleter = nullptr;
     if (disabled)
         return;
 
@@ -375,13 +380,7 @@ void SourceEditor::updateSyntaxHighlighting()
         mSourceType, settings.darkTheme(), 
         settings.showWhiteSpace(), this);
     mHighlighter->setDocument(document());
-    mCompleter = mHighlighter->completer();
-    mCompleter->setWidget(this);
-    mCompleter->setCompletionMode(QCompleter::PopupCompletion);
-    mCompleter->setCaseSensitivity(Qt::CaseInsensitive);
-    mCompleter->popup()->setFont(font());
-    connect(mCompleter, qOverload<const QString &>(&QCompleter::activated),
-        this, &SourceEditor::insertCompletion);
+    mCompleter->setStrings(mHighlighter->completerStrings());
 }
 
 void SourceEditor::updateEditorToolBar()
@@ -423,8 +422,7 @@ void SourceEditor::restoreLineWrap()
 void SourceEditor::setFont(const QFont &font)
 {
     QPlainTextEdit::setFont(font);
-    if (mCompleter)
-        mCompleter->popup()->setFont(font);
+    mCompleter->popup()->setFont(font);
     setTabSize(mTabSize);
 }
 
@@ -657,7 +655,7 @@ void SourceEditor::toggleHomePosition(bool shiftHold)
 
 void SourceEditor::keyPressEvent(QKeyEvent *event)
 {
-    if (mCompleter && mCompleter->popup()->isVisible()) {
+    if (mCompleter->popup()->isVisible()) {
        switch (event->key()) {
            case Qt::Key_Enter:
            case Qt::Key_Return:
@@ -747,7 +745,7 @@ void SourceEditor::wheelEvent(QWheelEvent *event)
 void SourceEditor::mouseDoubleClickEvent(QMouseEvent *event)
 {
     if (mMultiTextCursors.handleMouseDoubleClickEvent(event, textCursor()))
-        return clearMarkedOccurrences();
+        return;
     QPlainTextEdit::mouseDoubleClickEvent(event);
     markOccurrences(textUnderCursor(true));
 }
@@ -915,13 +913,10 @@ QTextCursor SourceEditor::findMatchingBrace() const
 
 void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
 {
-    if (!mCompleter)
-        return;
-
     if (show) {
         const auto blockNumber = textCursor().blockNumber();
         if (mUpdatedCompleterInBlock != blockNumber) {
-            mHighlighter->updateCompleter(generateCurrentScopeSource());
+            mCompleter->setContextText(generateCurrentScopeSource());
             mUpdatedCompleterInBlock = blockNumber;
         }
 

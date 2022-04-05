@@ -11,6 +11,7 @@ class QPaintEvent;
 class QResizeEvent;
 class QCompleter;
 class SyntaxHighlighter;
+class Completer;
 class SourceEditorToolBar;
 
 class SourceEditor final : public QPlainTextEdit, public IEditor
@@ -101,7 +102,7 @@ private:
     FindReplaceBar &mFindReplaceBar;
     SourceType mSourceType{ SourceType::PlainText };
     SyntaxHighlighter *mHighlighter{ };
-    QCompleter *mCompleter{ };
+    Completer *mCompleter{ };
     LineNumberArea *mLineNumberArea{ };
     QTextCharFormat mCurrentLineFormat;
     QTextCharFormat mOccurrencesFormat;
