@@ -30,6 +30,8 @@ public:
 Q_SIGNALS:
     void cursorChanged(const QTextCursor &);
     void cursorsChanged();
+    void disableLineWrap();
+    void restoreLineWrap();
 
 private:
     void createRectangularSelection(QTextCursor cursor);

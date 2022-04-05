@@ -34,7 +34,9 @@ public:
     void paste();
 
     void findReplace();
-    void setLineWrap(bool wrap) { setLineWrapMode(wrap ? WidgetWidth : NoWrap); }
+    void setLineWrap(bool wrap);
+    void disableLineWrap();
+    void restoreLineWrap();
     void setFont(const QFont &);
     void setTabSize(int tabSize);
     void setIndentWithSpaces(bool enabled);
@@ -117,6 +119,7 @@ private:
     bool mIndentWithSpaces{ };
     int mUpdatedCompleterInBlock{ };
     QString mPrevNavigationPosition;
+    LineWrapMode mSetLineWrapMode{ };
 };
 
 #endif // SOURCEEDITOR_H

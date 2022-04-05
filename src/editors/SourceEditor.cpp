@@ -109,6 +109,10 @@ SourceEditor::SourceEditor(QString fileName
         this, &SourceEditor::updateExtraSelections);
     connect(&mMultiTextCursors, &MultiTextCursors::cursorChanged,
         this, &SourceEditor::setTextCursor);
+    connect(&mMultiTextCursors, &MultiTextCursors::disableLineWrap,
+        this, &SourceEditor::disableLineWrap);
+    connect(&mMultiTextCursors, &MultiTextCursors::restoreLineWrap,
+        this, &SourceEditor::restoreLineWrap);
 
     const auto &settings = Singletons::settings();
     setFont(settings.font());
@@ -318,17 +322,14 @@ void SourceEditor::restoreNavigationPosition(const QString &position)
     const auto blockNumber = position.leftRef(semicolon).toInt();
     const auto offset = position.midRef(semicolon + 1).toInt();
 
-    const auto prevLineWrapMode = lineWrapMode();
-    if (prevLineWrapMode != QPlainTextEdit::NoWrap)
-        setLineWrapMode(QPlainTextEdit::NoWrap);
+    disableLineWrap();
 
     auto cursor = textCursor();
     const auto block = document()->findBlockByNumber(blockNumber);
     cursor.setPosition(block.position() + offset);
     setTextCursor(cursor);
 
-    if (prevLineWrapMode != QPlainTextEdit::NoWrap)
-        setLineWrapMode(prevLineWrapMode);
+    restoreLineWrap();
 }
 
 void SourceEditor::setSourceType(SourceType sourceType)
@@ -400,6 +401,23 @@ void SourceEditor::findReplace()
     if (mFindReplaceBar.isVisible())
         mFindReplaceBar.focus();
     updateExtraSelections();
+}
+
+void SourceEditor::setLineWrap(bool wrap)
+{
+    setLineWrapMode(mSetLineWrapMode = (wrap ? WidgetWidth : NoWrap));
+}
+
+void SourceEditor::disableLineWrap()
+{
+    if (mSetLineWrapMode != NoWrap)
+        setLineWrapMode(NoWrap);
+}
+
+void SourceEditor::restoreLineWrap()
+{
+    if (mSetLineWrapMode != NoWrap)
+        setLineWrapMode(mSetLineWrapMode);
 }
 
 void SourceEditor::setFont(const QFont &font)
