@@ -112,8 +112,12 @@ bool MultiTextCursors::handleKeyPressEvent(QKeyEvent *event, QTextCursor cursor)
 
             Q_EMIT restoreLineWrap();
             emitChanged();
+            return true;
         }
-        return true;
+
+        // allow { to pass...
+        if (event->text().isEmpty())
+            return false;
     }
 
     mHasRectangularSelection = false;
@@ -127,7 +131,9 @@ bool MultiTextCursors::handleKeyPressEvent(QKeyEvent *event, QTextCursor cursor)
                 clear(cursor);
                 return false;
             default:
-                return false;
+                // allow { to pass but ignore Ctrl-Z...
+                if (event->key() >= Qt::Key_A && event->key() <= Qt::Key_Z)
+                    return false;
         }
     }
 

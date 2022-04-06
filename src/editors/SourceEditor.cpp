@@ -816,12 +816,12 @@ void SourceEditor::updateExtraSelections()
     for (const auto &occurrence : qAsConst(mMarkedOccurrences))
         selections.append({ occurrence, mOccurrencesFormat });
 
-    setCursorWidth(mMultiTextCursors.cursors().isEmpty() ?
-        mInitialCursorWidth : 0);
     for (const auto &selection : mMultiTextCursors.cursors())
         selections.append({ selection, mMultiSelectionFormat });
 
     setExtraSelections(selections);
+    setCursorWidth(mMultiTextCursors.cursors().isEmpty() ?
+        mInitialCursorWidth : 0);
 }
 
 void SourceEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
