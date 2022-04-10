@@ -48,6 +48,7 @@ set(SOURCES
   libs/KTX/lib/writer.c
   libs/KTX/lib/writer_v1.c
   libs/KTX/lib/glloader.c
+  libs/miniz/miniz.c
   libs/lua/src/lapi.c
   libs/lua/src/lauxlib.c
   libs/lua/src/lbaselib.c

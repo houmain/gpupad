@@ -12,7 +12,7 @@
 
 `tinyexr` is a small, single header-only library to load and save OpenEXR (.exr) images.
 `tinyexr` is written in portable C++ (no library dependency except for STL), thus `tinyexr` is good to embed into your application.
-To use `tinyexr`, simply copy `tinyexr.h` into your project.
+To use `tinyexr`, simply copy `tinyexr.h`, `miniz.c` and `miniz.h`(for zlib. You can use system-installed zlib instead of miniz. Controlled with `TINYEXR_USE_MINIZ` compile flag) into your project.
 
 # Features
 
@@ -82,7 +82,7 @@ Current status of `tinyexr` is:
   * [x] aarch64 linux(e.g. Raspberry Pi)
   * [x] Android
   * [x] iOS
-  * [ ] macOS(Should work)
+  * [x] macOS
 * [ ] RISC-V(Should work)
 * [x] Big endian machine(not maintained, but should work)
   * SPARC, PowerPC, ...
@@ -144,7 +144,7 @@ Include `tinyexr.h` with `TINYEXR_IMPLEMENTATION` flag (do this only for **one**
 
 ### Compile flags
 
-* `TINYEXR_USE_MINIZ` Use embedded miniz (default = 1). Please include `zlib.h` header (before `tinyexr.h`) if you disable miniz support.
+* `TINYEXR_USE_MINIZ` Use miniz (default = 1). Please include `zlib.h` header before `tinyexr.h` if you disable miniz support(e.g. use system's zlib).
 * `TINYEXR_USE_PIZ` Enable PIZ compression support (default = 1)
 * `TINYEXR_USE_ZFP` Enable ZFP compression supoort (TinyEXR extension, default = 0)
 * `TINYEXR_USE_THREAD` Enable threaded loading using C++11 thread (Requires C++11 compiler, default = 0)
