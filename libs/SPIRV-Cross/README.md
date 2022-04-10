@@ -1,13 +1,8 @@
-<!--
-    Copyright 2020-2021 The Khronos Group, Inc.
-    SPDX-License-Identifier: CC-BY-4.0
--->
-
 # SPIRV-Cross
 
 SPIRV-Cross is a tool designed for parsing and converting SPIR-V to other shader languages.
 
-[![CI](https://github.com/KhronosGroup/SPIRV-Cross/actions/workflows/main.yml/badge.svg)](https://github.com/KhronosGroup/SPIRV-Cross/actions/workflows/main.yml)
+[![Build Status](https://travis-ci.org/KhronosGroup/SPIRV-Cross.svg?branch=master)](https://travis-ci.org/KhronosGroup/SPIRV-Cross)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/KhronosGroup/SPIRV-Cross?svg=true&branch=master)](https://ci.appveyor.com/project/HansKristian-Work/SPIRV-Cross)
 
 ## Features
@@ -15,8 +10,8 @@ SPIRV-Cross is a tool designed for parsing and converting SPIR-V to other shader
   - Convert SPIR-V to readable, usable and efficient GLSL
   - Convert SPIR-V to readable, usable and efficient Metal Shading Language (MSL)
   - Convert SPIR-V to readable, usable and efficient HLSL
-  - Convert SPIR-V to a JSON reflection format
   - Convert SPIR-V to debuggable C++ [DEPRECATED]
+  - Convert SPIR-V to a JSON reflection format [EXPERIMENTAL]
   - Reflection API to simplify the creation of Vulkan pipeline layouts
   - Reflection API to modify and tweak OpDecorations
   - Supports "all" of vertex, fragment, tessellation, geometry and compute shaders.
@@ -166,12 +161,12 @@ for (i = 0; i < count; i++)
 }
 
 // Modify options.
-spvc_compiler_create_compiler_options(compiler_glsl, &options);
+spvc_compiler_create_compiler_options(context, &options);
 spvc_compiler_options_set_uint(options, SPVC_COMPILER_OPTION_GLSL_VERSION, 330);
 spvc_compiler_options_set_bool(options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_FALSE);
 spvc_compiler_install_compiler_options(compiler_glsl, options);
 
-spvc_compiler_compile(compiler_glsl, &result);
+spvc_compiler_compile(compiler, &result);
 printf("Cross-compiled source: %s\n", result);
 
 // Frees all memory we allocated so far.
