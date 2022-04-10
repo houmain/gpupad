@@ -5,6 +5,7 @@
 #include "session/SessionProperties.h"
 #include "session/SessionModel.h"
 #include "Singletons.h"
+#include "AboutDialog.h"
 #include "MessageWindow.h"
 #include "OutputWindow.h"
 #include "MessageList.h"
@@ -1007,22 +1008,7 @@ void MainWindow::openOnlineHelp()
 
 void MainWindow::openAbout()
 {
-    const auto title = tr("About %1").arg(QApplication::applicationName());
-    const auto text = QStringLiteral(
-       "<h3>%1 %2</h3>"
-       "%3<br>"
-       "<a href='%4'>%4</a><br><br>"
-       "Copyright &copy; 2016-2021<br>"
-       "Albert Kalchmair<br>"
-       "%5<br><br>"
-       "%6<br>"
-       "%7<br>")
-       .arg(QApplication::applicationName(),
-            QApplication::applicationVersion(),
-            tr("A text editor for efficiently editing GLSL shaders of all kinds."),
-            "https://github.com/houmain/gpupad",
-            tr("All Rights Reserved."),
-            tr("This program comes with absolutely no warranty."),
-            tr("See the GNU General Public License, version 3 for details."));
-    QMessageBox::about(this, title, text);
+    auto about = AboutDialog(this);
+    about.setModal(true);
+    about.exec();
 }

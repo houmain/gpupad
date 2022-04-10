@@ -85,6 +85,7 @@ set(SOURCES
   libs/tga/decoder.cpp
   libs/tga/image_iterator.cpp
   libs/tga/stdio.cpp
+  src/AboutDialog.cpp
   src/FileDialog.cpp
   src/MainWindow.cpp
   src/MainWindow.ui

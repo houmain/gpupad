@@ -510,8 +510,8 @@ void SourceEditor::paintEvent(QPaintEvent *event)
         QPainter painter(viewport());
         for (const auto &selection : mMultiTextCursors.cursors()) {
             const auto rect = cursorRect(selection);
-            painter.fillRect(rect.x(), rect.y() + 1, mInitialCursorWidth,
-                rect.height() - 1, QPalette().text());
+            painter.fillRect(rect.x(), rect.y(), mInitialCursorWidth,
+                rect.height(), QPalette().text());
         }
     }
 }
