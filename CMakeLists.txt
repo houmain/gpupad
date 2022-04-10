@@ -36,6 +36,7 @@ add_definitions(-DQT_NO_CAST_TO_ASCII
 
 set(SOURCES
   libs/SingleApplication/singleapplication.cpp
+  libs/SingleApplication/singleapplication_p.cpp
   libs/KTX/lib/checkheader.c
   libs/KTX/lib/errstr.c
   libs/KTX/lib/filestream.c
