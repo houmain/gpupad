@@ -17,6 +17,9 @@ namespace
     {
         const auto paths = std::initializer_list<QString>{
             QCoreApplication::applicationDirPath(),
+#if !defined(NDEBUG)
+            QCoreApplication::applicationDirPath() + "/../..",
+#endif
 #if defined(__linux__)
             qEnvironmentVariable("APPDIR") + "/usr/share/gpupad",
 #endif
@@ -88,10 +91,10 @@ AboutDialog::AboutDialog(QWidget *parent)
         tabs->addTab(textbox, title);
     };
     addTab(tr("Change Log"), tweakChangeLog(loadTextFile("CHANGELOG.md")));
-    addTab(tr("Third-Party Libraries"), loadTextFile("THIRD-PARTY.md"));
     addTab(tr("License"), loadTextFile("LICENSE"),
         tr("This program comes with absolutely no warranty.\n"
-           "See the GNU General Public License, version 3 for details"));
+           "See the GNU General Public License, version 3 for details."));
+    addTab(tr("Third-Party Libraries"), loadTextFile("THIRD-PARTY.md"));
 
     auto buttons = new QDialogButtonBox(this);
     buttons->setStandardButtons(QDialogButtonBox::Close);

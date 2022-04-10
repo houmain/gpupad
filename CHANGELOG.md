@@ -7,14 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.23] - 2021-02-25
 
-## Added
+### Added
 
 - Added QmlView.
 - Automatically prepending default #version when missing.
 - Outputting total evaluation time.
 - Added Bitonic sort sample.
 
-## Changed
+### Changed
 
 - Moved script evaluation to render thread.
 - Replacing untouched untitled editor when opening source file.
@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Activating first item when not restoring session state.
 - Generating output from generated shaders.
 
-## Fixed
+### Fixed
 
 - Fixed line numbers when #including multiple files.
 - Limiting matching brace highlighting.
@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.22] - 2021-12-21
 
-## Added
+### Added
 
 - Context aware autocompletion.
 - Allowing to select source lines by clicking in line number margin.
@@ -46,12 +46,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added Cube HLSL sample.
 - Added JavaScript library sample.
 
-## Changed
+### Changed
 
 - Replaced input with Mouse and Keyboard script objects.
 - Opening sample sessions with active evaluation mode.
 
-## Fixed
+### Fixed
 
 - Clearing script output on manual evaluation.
 - Not checking remote files in recent file list for existence.
@@ -61,14 +61,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.21] - 2021-11-12
 
-## Added
+### Added
 
 - Added histogram in Find panel of texture editor.
 - Initial HLSL support using glslangValidator/SPIRV-Cross.
 - Added more actions to editor tab context menu.
 - More work on color picker.
 
-## Changed
+### Changed
 
 - Setting file dialog directory to focused editor's.
 - No longer applying sRGB conversion to float target preview.
@@ -79,7 +79,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved syntax highlighting.
 - Increased maximum zoom level.
 
-## Fixed
+### Fixed
 
 - Fixed wrong editor modified indicator.
 - Improved removing messages of source validation.
@@ -95,13 +95,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.20] - 2021-08-23
 
-## Added
+### Added
 
 - Added editor tab bar context menu.
 - Added color picker in Find panel of texture editor [WIP].
 - Added EXR file reading.
 
-## Changed
+### Changed
 
 - Improved reloading of source editors.
 - Reloading files in background.
@@ -109,7 +109,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Not undocking on dock window double-click.
 - Increased number of recent files.
 
-## Fixed
+### Fixed
 
 - Fixed potential crash on texture editor closing.
 - Improved unicode handling.
@@ -120,37 +120,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.19] - 2021-05-10
 
-## Added
+### Added
 
 - Added fullscreen option.
 - Added saving/restoring session state.
 - Added option to show whitespace.
 - Highlighting matching brace.
 
-## Changed
+### Changed
 
 - Improved closing multiple modified files.
 - Moved source validation/type to source editor toolbar.
 
-## Fixed
+### Fixed
 
 - Fixed standalone shader validation.
 
 ## [Version 1.18] - 2021-04-16
 
-## Added
+### Added
 
 - Added manual vertical texture flip control.
 - Added support for integer/double stream attributes.
 - Automatically adding suffix when Saving As.
 
-## Changed
+### Changed
 
 - Opening more editors on double click.
 - Applying image format on combobox select.
 - Using gli for loading/saving DDS.
 
-## Fixed
+### Fixed
 
 - Better handling of failing save.
 - Evaluating expressions in more contexts.
@@ -158,13 +158,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Version 1.17] - 2021-03-29
 
-## Added
+### Added
 
 - Added menu action for opening containing folder.
 - Added support for the #include directive.
 - Added GPUPAD preprocessor definition.
 
-## Changed
+### Changed
 
 - Simplified working with multi-file shaders.
 - Showing top-left corner of texture on open.
@@ -175,7 +175,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Changed default indentation.
 - Improved theme.
 
-## Fixed
+### Fixed
 
 - Restoring unmaximized window geometry.
 - Handling different directory separators in Save Session As.

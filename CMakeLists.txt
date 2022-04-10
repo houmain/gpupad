@@ -289,13 +289,16 @@ if (ENABLE_SPIRV_CROSS)
 endif()
 
 # install
+set(DOC_FILES LICENSE CHANGELOG.md THIRD-PARTY.md)
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-    install(TARGETS ${PROJECT_NAME} DESTINATION "bin")
+    install(TARGETS ${PROJECT_NAME} DESTINATION "bin" COMPONENT Application)
+    install(FILES ${DOC_FILES} DESTINATION "share/gpupad" COMPONENT Application)
     install(DIRECTORY share DESTINATION . COMPONENT Application)
     install(DIRECTORY samples DESTINATION "share/gpupad" COMPONENT Samples)
 
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Application)
+    install(FILES ${DOC_FILES} DESTINATION . COMPONENT Application)
     install(DIRECTORY samples DESTINATION . COMPONENT Samples)
 
     find_program(WINDEPLOYQT windeployqt HINTS "${_qt_bin_dir}")
@@ -306,6 +309,7 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Application)
+    install(FILES ${DOC_FILES} DESTINATION . COMPONENT Application)
     install(DIRECTORY samples DESTINATION . COMPONENT Samples)
 
     find_program(MACDEPLOYQT macdeployqt HINTS "${_qt_bin_dir}")
@@ -323,7 +327,6 @@ set(CPACK_PACKAGE_VENDOR "Albert Kalchmair")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "GPUpad")
 set(CPACK_PACKAGE_EXECUTABLES "gpupad;GPUpad")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/houmain/gpupad")
-set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 string(REGEX MATCHALL "[0-9]+" VERSION_LIST "${GIT_COMMIT_LAST_TAG}")
 list(GET VERSION_LIST 0 CPACK_PACKAGE_VERSION_MAJOR)
