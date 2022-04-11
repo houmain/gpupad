@@ -354,7 +354,7 @@ void SessionScriptObject::endBackgroundUpdate()
         session.endUndoMacro();
 
         if (mUpdatedEditor)
-            Singletons::fileCache().updateEditorFiles();
+            Singletons::fileCache().updateFromEditors();
 
         mUpdatedEditor = false;
     }

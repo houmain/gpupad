@@ -26,7 +26,7 @@ public:
     void invalidateFile(const QString &fileName);
     void handleEditorFileChanged(const QString &fileName, bool emitFileChanged = true);
     void handleEditorSave(const QString &fileName);
-    void updateEditorFiles();
+    void updateFromEditors();
 
 Q_SIGNALS:
     void fileChanged(const QString &fileName);
@@ -48,6 +48,7 @@ private:
     void addFileSystemWatch(const QString &fileName, bool changed = false) const;
     void updateFileSystemWatches();
     bool reloadFileInBackground(const QString &fileName);
+    bool updateFromEditor(const QString &fileName);
     void purgeFile(const QString &fileName);
 
     mutable QMutex mMutex;

@@ -189,31 +189,37 @@ void FileCache::handleEditorFileChanged(const QString &fileName, bool emitFileCh
 void FileCache::handleEditorSave(const QString &fileName)
 {
     Q_ASSERT(onMainThread());
-    invalidateFile(fileName);
+    QMutexLocker lock(&mMutex);
+    updateFromEditor(fileName);
     mEditorSaveAdvertised.insert(fileName);
 }
 
-void FileCache::updateEditorFiles()
+bool FileCache::updateFromEditor(const QString &fileName)
+{
+    auto &editorManager = Singletons::editorManager();
+    if (auto editor = editorManager.getSourceEditor(fileName)) {
+        mSources[fileName] = editor->source();
+        return true;
+    }
+    if (auto editor = editorManager.getBinaryEditor(fileName)) {
+        mBinaries[fileName] = editor->data();
+        return true;
+    }
+    if (auto editor = editorManager.getTextureEditor(fileName)) {
+        const auto &texture = editor->texture();
+        mTextures[TextureKey(fileName, texture.flippedVertically())] = texture;
+        return true;
+    }
+    return false;
+}
+
+void FileCache::updateFromEditors()
 {
     Q_ASSERT(onMainThread());
     QMutexLocker lock(&mMutex);
-
-    auto &editorManager = Singletons::editorManager();
-    for (const auto &fileName : qAsConst(mEditorFilesChanged)) {
-        if (auto editor = editorManager.getSourceEditor(fileName)) {
-            mSources[fileName] = editor->source();
-        }
-        else if (auto editor = editorManager.getBinaryEditor(fileName)) {
-            mBinaries[fileName] = editor->data();
-        }
-        else if (auto editor = editorManager.getTextureEditor(fileName)) {
-            const auto &texture = editor->texture();
-            mTextures[TextureKey(fileName, texture.flippedVertically())] = texture;
-        }
-        else {
+    for (const auto &fileName : qAsConst(mEditorFilesChanged))
+        if (!updateFromEditor(fileName))
             purgeFile(fileName);
-        }
-    }
     mEditorFilesChanged.clear();
 }
 

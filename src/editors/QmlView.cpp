@@ -194,7 +194,7 @@ void QmlView::reset()
     mQuickWidget->engine()->setUrlInterceptor(&sUrlInterceptor);
     mQuickWidget->engine()->addImportPath(QFileInfo(mFileName).dir().path());
 
-    Singletons::fileCache().updateEditorFiles();
+    Singletons::fileCache().updateFromEditors();
 
     mQuickWidget->setSource(QUrl::fromLocalFile(mFileName));
 }

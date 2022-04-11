@@ -171,7 +171,7 @@ void CustomActions::updateWidgets()
 
 void CustomActions::updateActions()
 {
-    Singletons::fileCache().updateEditorFiles();
+    Singletons::fileCache().updateFromEditors();
 
     mActions.clear();
     auto root = mModel->index(mModel->rootPath());

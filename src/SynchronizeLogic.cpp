@@ -130,7 +130,7 @@ void SynchronizeLogic::cancelAutomaticRevalidation()
 
 void SynchronizeLogic::handleSessionRendered()
 {
-    Singletons::fileCache().updateEditorFiles();
+    Singletons::fileCache().updateFromEditors();
 
     if (mEvaluationMode != EvaluationMode::Paused)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
@@ -308,7 +308,7 @@ void SynchronizeLogic::handleEvaluateTimout()
 
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
-    Singletons::fileCache().updateEditorFiles();
+    Singletons::fileCache().updateFromEditors();
     const auto itemsChanged = std::exchange(mRenderSessionInvalidated, false);
     mRenderSession->update(itemsChanged, evaluationType);
 }
@@ -401,7 +401,7 @@ void SynchronizeLogic::processSource()
         !Singletons::editorManager().getSourceEditor(mCurrentEditorFileName))
         return;
 
-    Singletons::fileCache().updateEditorFiles();
+    Singletons::fileCache().updateFromEditors();
 
     mProcessSource->setFileName(mCurrentEditorFileName);
     mProcessSource->setSourceType(mCurrentEditorSourceType);
