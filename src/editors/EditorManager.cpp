@@ -213,6 +213,7 @@ SourceEditor *EditorManager::openNewSourceEditor(const QString &fileName,
     editor->setSourceType(sourceType);
     addSourceEditor(editor);
     autoRaise(editor);
+    editor->setCursorPosition(0, 0);
     return editor;
 }
 
@@ -275,8 +276,7 @@ SourceEditor *EditorManager::openSourceEditor(const QString &fileName,
         addSourceEditor(editor);
     }
     autoRaise(editor);
-    if (editor)
-        editor->setCursorPosition(line, column);
+    editor->setCursorPosition(line, column);
     return editor;
 }
 
@@ -698,6 +698,8 @@ bool EditorManager::closeDock(QDockWidget *dock, bool promptSave)
     }
 
     DockWindow::closeDock(dock);
+    if (mDocks.empty())
+        clearNavigationStack();
     return true;
 }
 
@@ -717,6 +719,16 @@ void updateDockCurrentProperty(QDockWidget *dock, bool current)
             frame->update();
         }
     }
+}
+
+void EditorManager::clearNavigationStack()
+{
+    if (!mNavigationStackPosition)
+        return;
+    mNavigationStack.clear();
+    mNavigationStackPosition = 0;
+    Q_EMIT canNavigateForwardChanged(false);
+    Q_EMIT canNavigateBackwardChanged(false);
 }
 
 void EditorManager::addNavigationPosition(const QString &position, bool update) 

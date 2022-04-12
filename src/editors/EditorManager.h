@@ -102,6 +102,7 @@ private:
     void updateEditorToolBarVisibility();
     void updateEditorPropertiesVisibility();
     QDockWidget *createDock(QWidget *widget, IEditor *editor);
+    void clearNavigationStack();
     void addNavigationPosition(const QString &position, bool update);
     bool restoreNavigationPosition(int index);
 

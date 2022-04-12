@@ -32,7 +32,7 @@
      <x>0</x>
      <y>0</y>
      <width>494</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -586,10 +586,10 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Navigate &amp;Backward</string>
+    <string>Go &amp;Back</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+-</string>
+    <string>Alt+Left</string>
    </property>
   </action>
   <action name="actionNavigateForward">
@@ -597,10 +597,10 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Navigate &amp;Forward</string>
+    <string>Go &amp;Forward</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Shift+-</string>
+    <string>Alt+Right</string>
    </property>
   </action>
   <action name="actionPasteInNewEditor">
@@ -623,7 +623,6 @@
   </action>
  </widget>
  <resources>
-  <include location="resources.qrc"/>
   <include location="resources.qrc"/>
  </resources>
  <connections/>

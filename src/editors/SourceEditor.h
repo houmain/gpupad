@@ -42,7 +42,7 @@ public:
     void setTabSize(int tabSize);
     void setIndentWithSpaces(bool enabled);
     void setShowWhiteSpace(bool enabled);
-    bool setCursorPosition(int line, int column);
+    void setCursorPosition(int line, int column);
     QString source() const { return toPlainText(); }
     SourceType sourceType() const { return mSourceType; }
     void setSourceType(SourceType sourceType);

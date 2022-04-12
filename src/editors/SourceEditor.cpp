@@ -451,28 +451,20 @@ void SourceEditor::setShowWhiteSpace(bool enabled)
         updateSyntaxHighlighting();
 }
 
-bool SourceEditor::setCursorPosition(int line, int column)
+void SourceEditor::setCursorPosition(int line, int column)
 {
-    if (line < 0)
-        return false;
-
-    const auto prevLineWrapMode = lineWrapMode();
-    if (prevLineWrapMode != QPlainTextEdit::NoWrap)
-        setLineWrapMode(QPlainTextEdit::NoWrap);
-
+    disableLineWrap();
     auto cursor = textCursor();
     auto block = document()->findBlockByLineNumber(line - 1);
     cursor.setPosition(block.position());
     for (auto i = 0; i < column - 1; i++)
         cursor.movePosition(QTextCursor::Right);
     setTextCursor(cursor);
-
-    if (prevLineWrapMode != QPlainTextEdit::NoWrap)
-        setLineWrapMode(prevLineWrapMode);
+    restoreLineWrap();
 
     ensureCursorVisible();
     setFocus();
-    return true;
+    emitNavigationPositionChanged();
 }
 
 int SourceEditor::lineNumberAreaWidth()
@@ -710,9 +702,6 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
     else {
         QPlainTextEdit::keyPressEvent(event);
 
-        if (!event->text().isEmpty() && event->isAccepted())
-            emitNavigationPositionChanged();
-
         const auto hitCtrlOrShift = event->modifiers() &
             (Qt::ControlModifier | Qt::ShiftModifier);
         if (hitCtrlOrShift && event->text().isEmpty())
@@ -728,6 +717,9 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
         const auto show = ((textEntered && prefix.size() >= 1) || hitCtrlSpace);
         updateCompleterPopup(prefix, show);
     }
+
+    if (!event->text().isEmpty() && event->isAccepted())
+        emitNavigationPositionChanged();
 }
 
 void SourceEditor::wheelEvent(QWheelEvent *event)
