@@ -447,7 +447,8 @@ void SourceEditor::setShowWhiteSpace(bool enabled)
         ? options.flags() | QTextOption::ShowTabsAndSpaces
         : options.flags() & ~QTextOption::ShowTabsAndSpaces);
     document()->setDefaultTextOption(options);
-    updateSyntaxHighlighting();
+    if (mHighlighter)
+        updateSyntaxHighlighting();
 }
 
 bool SourceEditor::setCursorPosition(int line, int column)
