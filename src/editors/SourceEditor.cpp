@@ -27,10 +27,14 @@ private:
     int mSelectionStart{ -1 };
 
 public:
+    static const auto margin = 6;
+
     LineNumberArea(SourceEditor *editor)
         : QWidget(editor)
         , mEditor(*editor) 
     {
+        setBackgroundRole(QPalette::Base);
+        setAutoFillBackground(true);
         setMouseTracking(true);
     }
 
@@ -47,7 +51,7 @@ protected:
 
     void mousePressEvent(QMouseEvent *event) override
     {
-        if (event->button() == Qt::LeftButton) {
+        if (event->button() == Qt::LeftButton && event->x() < width() - margin / 2) {
             auto cursor = mEditor.cursorForPosition({ 0, event->y() });
             const auto position = cursor.position();
             cursor.movePosition(QTextCursor::StartOfBlock);
@@ -95,7 +99,7 @@ SourceEditor::SourceEditor(QString fileName
     , mFindReplaceBar(*findReplaceBar)
     , mCompleter(new Completer(this))
     , mLineNumberArea(new LineNumberArea(this))
-    , mInitialCursorWidth(2)
+    , mInitialCursorWidth(1)
 {
     mCompleter->setWidget(this);
 
@@ -127,6 +131,7 @@ SourceEditor::SourceEditor(QString fileName
     setShowWhiteSpace(settings.showWhiteSpace());
     setIndentWithSpaces(settings.indentWithSpaces());
     setCenterOnScroll(true);
+    setCursorWidth(mInitialCursorWidth);
 
     connect(&settings, &Settings::tabSizeChanged,
         this, &SourceEditor::setTabSize);
@@ -360,7 +365,8 @@ void SourceEditor::updateColors(bool darkTheme)
     mMultiSelectionFormat.setForeground(pal.highlightedText());
     mMultiSelectionFormat.setBackground(pal.highlight());
 
-    mLineNumberColor = pal.window().color().darker(darkTheme ? 40 : 150);
+    mLineNumberColor = pal.base().color().darker(darkTheme ? 40 : 140);
+    mCurrenLineNumberColor = mLineNumberColor.darker(darkTheme ? 60 : 120);
 
     updateExtraSelections();
 }
@@ -475,12 +481,13 @@ int SourceEditor::lineNumberAreaWidth()
         max /= 10;
         ++digits;
     }
-    return fontMetrics().horizontalAdvance(QString(digits, '9'));
+    return fontMetrics().horizontalAdvance(QString(digits, '9')) + 
+        2 * LineNumberArea::margin;
 }
 
 void SourceEditor::updateViewportMargins()
 {
-    setViewportMargins(lineNumberAreaWidth() + 6, 0, 0, 0);
+    setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
 }
 
 void SourceEditor::updateLineNumberArea(const QRect &rect, int dy)
@@ -515,7 +522,7 @@ void SourceEditor::resizeEvent(QResizeEvent *e)
 
     const auto rect = contentsRect();
     mLineNumberArea->setGeometry(QRect(rect.left(), rect.top(),
-        lineNumberAreaWidth() + 3, rect.height()));
+        lineNumberAreaWidth(), rect.height()));
 }
 
 void SourceEditor::focusInEvent(QFocusEvent *event)
@@ -750,6 +757,7 @@ void SourceEditor::mousePressEvent(QMouseEvent *event)
     mMultiTextCursors.handleBeforeMousePressEvent(event, cursorForPosition(event->pos()));
     QPlainTextEdit::mousePressEvent(event);
     mMultiTextCursors.handleMousePressedEvent(event, textCursor(), prevCursor);
+    emitNavigationPositionChanged();
 }
 
 void SourceEditor::mouseMoveEvent(QMouseEvent *event)
@@ -820,19 +828,29 @@ void SourceEditor::updateExtraSelections()
 void SourceEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
 {
     QPainter painter{ mLineNumberArea };
-    painter.setPen(mLineNumberColor);
-    painter.setFont(font());
 
+    const auto currentBlockNumber = textCursor().block().blockNumber();
     auto block = firstVisibleBlock();
     auto blockNumber = block.blockNumber();
     auto top = static_cast<int>(blockBoundingGeometry(block)
         .translated(contentOffset()).top());
     auto bottom = top + static_cast<int>(blockBoundingRect(block).height());
     while (block.isValid() && top <= event->rect().bottom()) {
-        if (block.isVisible() && bottom >= event->rect().top())
-            painter.drawText(0, top, mLineNumberArea->width(),
+        if (block.isVisible() && bottom >= event->rect().top()) {
+            if (blockNumber == currentBlockNumber) {
+                auto boldFont = font();
+                boldFont.setBold(true);
+                painter.setFont(boldFont);
+                painter.setPen(mCurrenLineNumberColor);
+            }
+            else {
+                painter.setFont(font());
+                painter.setPen(mLineNumberColor);
+            }
+            painter.drawText(-LineNumberArea::margin, top, mLineNumberArea->width(),
                 fontMetrics().height(), Qt::AlignRight,
                 QString::number(blockNumber + 1));
+        }
         block = block.next();
         top = bottom;
         bottom = top + static_cast<int>(blockBoundingRect(block).height());

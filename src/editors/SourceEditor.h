@@ -115,6 +115,7 @@ private:
     QTextDocument::FindFlags mMarkedOccurrencesFindFlags{ };
     QTextCursor mFindReplaceRange;
     QColor mLineNumberColor;
+    QColor mCurrenLineNumberColor;
     int mTabSize{ };
     int mInitialCursorWidth{ };
     bool mIndentWithSpaces{ };

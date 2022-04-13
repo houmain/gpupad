@@ -276,7 +276,8 @@ SourceEditor *EditorManager::openSourceEditor(const QString &fileName,
         addSourceEditor(editor);
     }
     autoRaise(editor);
-    editor->setCursorPosition(line, column);
+    if (line >= 0)
+        editor->setCursorPosition(line, column);
     return editor;
 }
 
