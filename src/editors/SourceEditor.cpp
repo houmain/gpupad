@@ -706,6 +706,11 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
     else if (event->key() == Qt::Key_Backtab) {
         indentSelection(true);
     }
+    else if (event->key() == Qt::Key_Backspace || 
+             event->key() == Qt::Key_Delete) {
+        QPlainTextEdit::keyPressEvent(event);
+        removeTrailingSpace();
+    }
     else {
         QPlainTextEdit::keyPressEvent(event);
 
