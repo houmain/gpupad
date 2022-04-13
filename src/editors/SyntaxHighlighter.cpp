@@ -135,6 +135,11 @@ namespace {
         rule.format = quotationFormat;
         d.highlightingRules.append(rule);
 
+        // TODO: properly handle Lua [[ comments only in Lua Syntax...
+        rule.pattern = QRegularExpression(R"(\[\[.*\]\])");
+        rule.format = quotationFormat;
+        d.highlightingRules.append(rule);
+
         if (syntax.hasPreprocessor()) {
             rule.pattern = QRegularExpression("^\\s*#.*");
             rule.format = preprocessorFormat;
