@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Version 1.24] - 2021-04-15
+## [Version 1.24] - 2022-04-15
 
 ### Added
 
@@ -33,7 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed disabling syntax highlighting for big files.
 - Improved syntax highlighting performance.
 
-## [Version 1.23] - 2021-02-25
+## [Version 1.23] - 2022-02-25
 
 ### Added
 
@@ -499,7 +499,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
-## Version 1.0 - 2019-04-14
 
 [version 1.24]: https://github.com/houmain/gpupad/compare/1.23...1.24
 [version 1.23]: https://github.com/houmain/gpupad/compare/1.22...1.23
