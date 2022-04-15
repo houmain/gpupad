@@ -3,13 +3,41 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [Version 1.24] - 2021-04-15
+
+### Added
+
+- Initial Lua scripting support.
+- Added multi-cursor-editing.
+- Added more advanced About dialog.
+- Editor back/forward navigation.
+- Allow pasting hex values in Binary Editor.
+- Allow pasting clipboard in new editor.
+- Allow to reduce histogram range using mouse.
+
+### Changed
+
+- Improved rectangular selection.
+- Highlighting lines starting with # in plaintext files.
+- Applying EXIF transformation on load.
+- Highlighting current line in line number margin.
+- Removing trailing space on backspace/delete.
+- Selecting item when dropping in session.
+- Resume previous search on F3.
+
+### Fixed
+
+- Improved performance of single instance check.
+- Find/Replace only in selection.
+- Fixed cache update on save.
+- Fixed disabling syntax highlighting for big files.
+- Improved syntax highlighting performance.
 
 ## [Version 1.23] - 2021-02-25
 
 ### Added
 
-- Added QmlView.
+- Initial QML support.
 - Automatically prepending default #version when missing.
 - Outputting total evaluation time.
 - Added Bitonic sort sample.
@@ -471,9 +499,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
-## [Version 1.0] - 2019-04-14
+## Version 1.0 - 2019-04-14
 
-[unreleased]: https://github.com/houmain/gpupad/compare/1.23...HEAD
+[version 1.24]: https://github.com/houmain/gpupad/compare/1.23...1.24
 [version 1.23]: https://github.com/houmain/gpupad/compare/1.22...1.23
 [version 1.22]: https://github.com/houmain/gpupad/compare/1.21...1.22
 [version 1.21]: https://github.com/houmain/gpupad/compare/1.20...1.21
@@ -497,4 +525,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 [version 1.3]: https://github.com/houmain/gpupad/compare/1.2...1.3
 [version 1.2]: https://github.com/houmain/gpupad/compare/1.1...1.2
 [version 1.1]: https://github.com/houmain/gpupad/compare/1.0.0...1.1
-[version 1.0]: https://github.com/houmain/gpupad/releases/tag/1.0.0
+
