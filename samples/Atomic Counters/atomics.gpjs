@@ -16,35 +16,11 @@
                 ],
                 "name": "RGBA",
                 "offset": "0",
-                "rowCount": "32",
+                "rowCount": "16",
                 "type": "Block"
             }
         ],
         "name": "Data",
-        "type": "Buffer"
-    },
-    {
-        "id": 1,
-        "items": [
-            {
-                "id": 903,
-                "items": [
-                    {
-                        "count": 1,
-                        "dataType": "Uint32",
-                        "id": 904,
-                        "name": "Counter0",
-                        "padding": 0,
-                        "type": "Field"
-                    }
-                ],
-                "name": "Counter",
-                "offset": "0",
-                "rowCount": "1",
-                "type": "Block"
-            }
-        ],
-        "name": "Counter Buffer",
         "type": "Buffer"
     },
     {
@@ -76,21 +52,53 @@
                 "type": "Block"
             }
         ],
-        "name": "Counters Buffer",
+        "name": "Atomic Counters Buffer",
         "type": "Buffer"
     },
     {
-        "bindingType": "Buffer",
-        "bufferId": 1,
-        "id": 8,
-        "name": "uCounter0",
-        "type": "Binding"
+        "id": 1,
+        "items": [
+            {
+                "id": 913,
+                "items": [
+                    {
+                        "count": 1,
+                        "dataType": "Uint32",
+                        "id": 914,
+                        "name": "Counter1",
+                        "padding": 0,
+                        "type": "Field"
+                    },
+                    {
+                        "count": 1,
+                        "dataType": "Uint32",
+                        "id": 915,
+                        "name": "Counter2",
+                        "padding": 0,
+                        "type": "Field"
+                    }
+                ],
+                "name": "Counters",
+                "offset": "0",
+                "rowCount": "1",
+                "type": "Block"
+            }
+        ],
+        "name": "Shader Storage Buffer",
+        "type": "Buffer"
     },
     {
         "bindingType": "Buffer",
         "bufferId": 3,
         "id": 9,
-        "name": "uCounter1",
+        "name": "uCounters1",
+        "type": "Binding"
+    },
+    {
+        "bindingType": "Buffer",
+        "bufferId": 1,
+        "id": 916,
+        "name": "uCounters2",
         "type": "Binding"
     },
     {
@@ -107,6 +115,7 @@
             {
                 "fileName": "atomics.comp",
                 "id": 6,
+                "language": "GLSL",
                 "shaderType": "Compute",
                 "type": "Shader"
             }
@@ -115,12 +124,21 @@
         "type": "Program"
     },
     {
-        "bufferId": 1,
+        "bufferId": 3,
         "callType": "ClearBuffer",
         "checked": true,
         "executeOn": "ResetEvaluation",
         "id": 10,
-        "name": "Reset Counter",
+        "name": "Reset Atomic Counters Buffer",
+        "type": "Call"
+    },
+    {
+        "bufferId": 1,
+        "callType": "ClearBuffer",
+        "checked": true,
+        "executeOn": "ResetEvaluation",
+        "id": 912,
+        "name": "Reset Shader Storage Buffer",
         "type": "Call"
     },
     {
@@ -140,7 +158,7 @@
         "name": "Compute",
         "programId": 5,
         "type": "Call",
-        "workGroupsX": "1",
+        "workGroupsX": "16",
         "workGroupsY": "1",
         "workGroupsZ": "1"
     }
