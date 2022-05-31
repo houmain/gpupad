@@ -12,7 +12,7 @@ public:
         const Field &column, GLBuffer *buffer,
         ScriptEngine& scriptEngine);
 
-    void bind(const GLProgram &program);
+    bool bind(const GLProgram &program);
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:

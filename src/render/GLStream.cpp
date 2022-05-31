@@ -55,16 +55,21 @@ bool GLStream::validateAttribute(const GLAttribute &attribute) const
     return true;
 }
 
-void GLStream::bind(const GLProgram &program)
+bool GLStream::bind(const GLProgram &program)
 {
+    auto succeeded = true;
+
     auto &gl = GLContext::currentContext();
     for (const GLAttribute &attribute : qAsConst(mAttributes)) {
         const auto attribLocation = program.getAttributeLocation(attribute.name);
         if (attribLocation < 0)
             continue;
         mUsedItems += attribute.usedItems;
-        if (!attribute.buffer)
+
+        if (!attribute.buffer) {
+            succeeded = false;
             continue;
+        }
 
         const auto location = static_cast<GLuint>(attribLocation);
         attribute.buffer->bindReadOnly(GL_ARRAY_BUFFER);
@@ -112,4 +117,5 @@ void GLStream::bind(const GLProgram &program)
         gl.glEnableVertexAttribArray(location);
         attribute.buffer->unbind(GL_ARRAY_BUFFER);
     }
+    return succeeded;
 }

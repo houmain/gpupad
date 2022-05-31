@@ -145,8 +145,11 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             mCall.id, MessageType::TargetNotAssigned);
     }
 
+    auto inputBound = mProgram->allBuffersBound();
+
     if (mVertexStream && mProgram)
-        mVertexStream->bind(*mProgram);
+        if (!mVertexStream->bind(*mProgram))
+            inputBound = false;
 
     if (mIndexBuffer)
         mIndexBuffer->bindReadOnly(GL_ELEMENT_ARRAY_BUFFER);
@@ -157,8 +160,10 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     if (!mProgram) {
         messages += MessageList::insert(
             mCall.id, MessageType::ProgramNotAssigned);
+        inputBound = false;
     }
-    else if (mProgram->allBuffersBound()) {
+
+    if (inputBound) {
         auto &gl = GLContext::currentContext();
 
         if (mCall.primitiveType == Call::PrimitiveType::Patches && gl.v4_0)
