@@ -119,3 +119,11 @@ bool GLStream::bind(const GLProgram &program)
     }
     return succeeded;
 }
+
+void GLStream::unbind(const GLProgram &program)
+{
+    auto &gl = GLContext::currentContext();
+    for (const GLAttribute &attribute : qAsConst(mAttributes))
+        if (const auto location = program.getAttributeLocation(attribute.name); location >= 0)
+            gl.glDisableVertexAttribArray(static_cast<GLuint>(location));
+}

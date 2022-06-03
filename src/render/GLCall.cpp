@@ -240,8 +240,10 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     if (mIndexBuffer)
         mIndexBuffer->unbind(GL_ELEMENT_ARRAY_BUFFER);
 
-    if (mVertexStream)
+    if (mVertexStream && mProgram) {
+        mVertexStream->unbind(*mProgram);
         mUsedItems += mVertexStream->usedItems();
+    }
 
     if (mTarget)
         mUsedItems += mTarget->usedItems();

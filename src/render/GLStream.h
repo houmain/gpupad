@@ -13,6 +13,7 @@ public:
         ScriptEngine& scriptEngine);
 
     bool bind(const GLProgram &program);
+    void unbind(const GLProgram &program);
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
