@@ -115,7 +115,7 @@ public:
         if (selectedIndexes().isEmpty())
             return;
 
-        const auto rows = convertToVectors(QApplication::clipboard()->text());
+        const auto rows = convertToVectors(QApplication::clipboard()->text(), model()->columnCount());
         const auto begin = selectedIndexes().constFirst();
         auto row = begin.row();
         auto maxColumn = begin.column();
@@ -180,19 +180,39 @@ private:
         return value.toDouble();
     }
 
-    QVector<QVariantList> convertToVectors(QStringView text) const
+    QVector<QVariantList> convertToVectors(QStringView text, int columnCount) const
     {
          const auto separator = guessSeparator(text);
          auto result = QVector<QVariantList>();
-         const auto lines = text.split('\n');
-         for (auto line : lines) {
-             line = line.trimmed();
-             if (!line.isEmpty()) {
-                 auto row = QVariantList();
-                 const auto values = line.split(separator);
-                 for (const auto &value : values)
-                     row.append(toNumber(value.trimmed()));
-                 result.append(row);
+         auto lines = text.split('\n');
+         while (lines.back().trimmed().isEmpty())
+             lines.pop_back();
+
+         if (lines.size() == 1) {
+              // single row of values
+              const auto values = lines.first().trimmed().split(separator);
+              auto row = QVariantList();
+              for (const auto &value : values) {
+                  row.append(toNumber(value.trimmed()));
+                  if (row.size() == columnCount) {
+                      result.append(std::move(row));
+                      row.clear();
+                  }
+              }
+              if (!row.isEmpty())
+                  result.append(row);
+         }
+         else {
+             // multiple rows
+             for (auto line : lines) {
+                 line = line.trimmed();
+                 if (!line.isEmpty()) {
+                     auto row = QVariantList();
+                     const auto values = line.split(separator);
+                     for (const auto &value : values)
+                         row.append(toNumber(value.trimmed()));
+                     result.append(row);
+                 }
              }
          }
          return result;
