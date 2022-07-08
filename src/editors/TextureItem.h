@@ -23,7 +23,8 @@ public:
     void releaseGL();
 
     void setImage(TextureData image);
-    void setPreviewTexture(QOpenGLTexture::Target target, GLuint textureId);
+    void setPreviewTexture(QOpenGLTexture::Target target,
+        QOpenGLTexture::TextureFormat format, GLuint textureId);
     GLuint resetTexture();
     void setMagnifyLinear(bool magnifyLinear) { mMagnifyLinear = magnifyLinear; update(); }
     bool magnifyLinear() const { return mMagnifyLinear; }
@@ -68,6 +69,7 @@ private:
     TextureData mImage;
     GLuint mImageTextureId{ };
     QOpenGLTexture::Target mPreviewTarget{ };
+    QOpenGLTexture::TextureFormat mPreviewFormat{ };
     GLuint mPreviewTextureId{ };
     bool mMagnifyLinear{ };
     float mLevel{ };

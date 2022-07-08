@@ -285,10 +285,12 @@ void TextureItem::setImage(TextureData image)
     update();
 }
 
-void TextureItem::setPreviewTexture(QOpenGLTexture::Target target, GLuint textureId)
+void TextureItem::setPreviewTexture(QOpenGLTexture::Target target,
+    QOpenGLTexture::TextureFormat format, GLuint textureId)
 {
     if (!mImage.isNull()) {
         mPreviewTarget = target;
+        mPreviewFormat = format;
         mPreviewTextureId = textureId;
         update();
     }
@@ -407,9 +409,11 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         mPreviewTextureId = GL_NONE;
 
     auto target = mImage.target();
+    auto format = mImage.format();
     if (mPreviewTextureId) {
         Singletons::glShareSynchronizer().beginUsage(gl);
         target = mPreviewTarget;
+        format = mPreviewFormat;
         gl.glBindTexture(target, mPreviewTextureId);
     }
     else {
@@ -436,7 +440,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         }
     }
 
-    if (auto *program = context().getProgram(target, mImage.format())) {
+    if (auto *program = context().getProgram(target, format)) {
         program->bind();
         program->setUniformValue("uTexture", 0);
         program->setUniformValue("uTransform", transform);

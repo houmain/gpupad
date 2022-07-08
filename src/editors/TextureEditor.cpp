@@ -236,10 +236,10 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
       updateEditorToolBar();
 }
 
-void TextureEditor::updatePreviewTexture(
-    QOpenGLTexture::Target target, GLuint textureId)
+void TextureEditor::updatePreviewTexture(QOpenGLTexture::Target target,
+    QOpenGLTexture::TextureFormat format, GLuint textureId)
 {
-    mTextureItem->setPreviewTexture(target, textureId);
+    mTextureItem->setPreviewTexture(target, format, textureId);
 }
 
 void TextureEditor::setModified(bool modified)
