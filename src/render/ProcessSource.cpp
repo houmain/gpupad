@@ -3,6 +3,9 @@
 #include "GLPrintf.h"
 #include "scripting/ScriptEngineJavaScript.h"
 #include "scripting/ScriptEngineLua.h"
+#include "Singletons.h"
+#include "Settings.h"
+#include "session/SessionModel.h"
 #include "glslang.h"
 
 namespace {
@@ -76,6 +79,9 @@ void ProcessSource::clearMessages()
 
 void ProcessSource::prepare(bool, EvaluationType)
 {
+    auto shaderPreamble = Singletons::settings().shaderPreamble();
+    auto shaderIncludePaths = Singletons::settings().shaderIncludePaths();
+
     if (auto shaderType = getShaderType(mSourceType)) {
         auto shaders = getShadersInSession(mFileName);
         auto shader = Shader{ };
@@ -85,7 +91,8 @@ void ProcessSource::prepare(bool, EvaluationType)
             shader.language = getShaderLanguage(mSourceType);
             shaders = { &shader };
         }
-        mShader.reset(new GLShader(shaderType, shaders));
+        mShader.reset(new GLShader(shaderType, shaders, 
+            shaderPreamble, shaderIncludePaths));
     }
 }
 

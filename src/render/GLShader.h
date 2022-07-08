@@ -10,7 +10,8 @@ public:
         MessagePtrSet &messages, ItemId itemId,
         const QStringList& fileNames);
 
-    GLShader(Shader::ShaderType type, const QList<const Shader*> &shaders);
+    GLShader(Shader::ShaderType type, const QList<const Shader*> &shaders,
+        const QString &preamble, const QString &includePaths);
     bool operator==(const GLShader &rhs) const;
     Shader::ShaderType type() const { return mType; }
     Shader::Language language() const { return mLanguage; }
@@ -30,6 +31,8 @@ private:
     MessagePtrSet mMessages;
     QStringList mFileNames;
     QStringList mSources;
+    QString mPreamble;
+    QString mIncludePaths;
     Shader::ShaderType mType{ };
     Shader::Language mLanguage{ };
     QString mEntryPoint;

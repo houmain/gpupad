@@ -456,6 +456,8 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         case Item::Type::Shader: {
             const auto &shader = static_cast<const Shader&>(item);
             result &= (column != ShaderEntryPoint || (shader.language != Shader::Language::GLSL));
+            result &= (column != ShaderPreamble || !shader.preamble.isEmpty());
+            result &= (column != ShaderIncludePaths || !shader.includePaths.isEmpty());
             break;
         }
 

@@ -65,7 +65,7 @@ struct GLSubroutineBinding
 class GLProgram
 {
 public:
-    explicit GLProgram(const Program &program);
+    GLProgram(const Program &program, const QString &shaderPreamble, const QString &shaderIncludePaths);
     bool operator==(const GLProgram &rhs) const;
 
     bool link();

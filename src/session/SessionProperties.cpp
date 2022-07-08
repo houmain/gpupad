@@ -15,6 +15,7 @@
 #include "ui_ScriptProperties.h"
 #include "Singletons.h"
 #include "SessionModel.h"
+#include "Settings.h"
 #include "SynchronizeLogic.h"
 #include "EvaluatedPropertyCache.h"
 #include "editors/EditorManager.h"
@@ -122,7 +123,7 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mShaderProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(Item::Type::Shader); });
     connect(mShaderProperties->language, &DataComboBox::currentDataChanged,
-        [this]() { updateShaderWidgets(currentModelIndex()); });
+        this, &SessionProperties::updateShaderWidgets);
 
     connect(mBufferProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::BinaryExtensions); });
@@ -152,6 +153,28 @@ SessionProperties::SessionProperties(QWidget *parent)
     for (auto comboBox : { mAttributeProperties->field })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant data) { return getItemName(data.toInt()); });
+
+    auto &settings = Singletons::settings();
+    connect(&settings, &Settings::shaderPreambleChanged,
+        mShaderProperties->globalPreamble, &ExpressionEditor::setText);
+    connect(&settings, &Settings::shaderIncludePathsChanged,
+        mShaderProperties->globalIncludePaths, &ExpressionEditor::setText);
+    connect(mShaderProperties->globalPreamble, &ExpressionEditor::textChanged, 
+        [this]() { Singletons::settings().setShaderPreamble(
+            mShaderProperties->globalPreamble->text()); });
+    connect(mShaderProperties->globalIncludePaths, &ExpressionEditor::textChanged, 
+        [this]() { Singletons::settings().setShaderIncludePaths(
+            mShaderProperties->globalIncludePaths->text()); });
+    connect(&settings, &Settings::fontChanged, 
+        this, &SessionProperties::updateShaderWidgets);
+    mShaderProperties->globalPreamble->setText(
+        settings.shaderPreamble());
+    mShaderProperties->globalIncludePaths->setText(
+        settings.shaderIncludePaths());
+    mShaderProperties->tabScope->setStyleSheet(
+        "QTabWidget::pane { border: none; }");
+    // TODO: not implemented
+    mShaderProperties->tabScope->setTabEnabled(1, false);
 
     setCurrentModelIndex({ });
     fillComboBoxes();
@@ -288,7 +311,9 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
             map(mShaderProperties->language, SessionModel::ShaderLanguage);
             map(mShaderProperties->type, SessionModel::ShaderType);
             map(mShaderProperties->entryPoint, SessionModel::ShaderEntryPoint);
-            updateShaderWidgets(index);
+            map(mShaderProperties->shaderPreamble, SessionModel::ShaderPreamble);
+            map(mShaderProperties->shaderIncludePaths, SessionModel::ShaderIncludePaths);
+            updateShaderWidgets();
             break;
 
         case Item::Type::Binding:
@@ -553,12 +578,20 @@ void SessionProperties::updateTargetWidgets(const QModelIndex &index)
     setFormVisibility(ui.formLayout, ui.labelBlendConstant, ui.blendConstant, hasAttachments);
 }
 
-void SessionProperties::updateShaderWidgets(const QModelIndex &index)
+void SessionProperties::updateShaderWidgets()
 {
     auto &ui = *mShaderProperties;
     const auto language = static_cast<Shader::Language>(ui.language->currentData().toInt());
     setFormVisibility(ui.formLayout, ui.labelEntryPoint, ui.entryPoint, 
         language != Shader::Language::GLSL);
+
+    const auto font = Singletons::settings().font();
+    for (auto editor : { 
+        mShaderProperties->shaderPreamble,
+        mShaderProperties->sessionPreamble,
+        mShaderProperties->globalPreamble,
+        })
+        editor->setFont(font);
 }
 
 void SessionProperties::deduceBlockOffset()

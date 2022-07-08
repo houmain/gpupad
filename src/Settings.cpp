@@ -12,6 +12,8 @@ Settings::Settings(QObject *parent) : QSettings(parent)
     setIndentWithSpaces(value("indentWithSpaces", "true").toBool());
     setShowWhiteSpace(value("showWhiteSpace", "false").toBool());
     setDarkTheme(value("darkTheme", "false").toBool());
+    setShaderPreamble(value("shaderPreamble", "").toString());
+    setShaderIncludePaths(value("shaderIncludePaths", "").toString());
 
     auto fontSettings = value("font").toString();
     if (!fontSettings.isEmpty()) {
@@ -29,6 +31,8 @@ Settings::~Settings()
     setValue("showWhiteSpace", showWhiteSpace());
     setValue("darkTheme", darkTheme());
     setValue("font", font().toString());
+    setValue("shaderPreamble", shaderPreamble());
+    setValue("shaderIncludePaths", shaderIncludePaths());
     endGroup();
 }
 
@@ -80,4 +84,20 @@ void Settings::setDarkTheme(bool enabled)
     mDarkTheme = enabled;
     Q_EMIT darkThemeChanging(enabled);
     Q_EMIT darkThemeChanged(enabled);
+}
+
+void Settings::setShaderPreamble(const QString &preamble)
+{
+    if (mShaderPreamble != preamble) {
+        mShaderPreamble = preamble;
+        Q_EMIT shaderPreambleChanged(preamble);
+    }
+}
+
+void Settings::setShaderIncludePaths(const QString &includePaths)
+{
+    if (mShaderIncludePaths != includePaths) {
+        mShaderIncludePaths = includePaths;
+        Q_EMIT shaderIncludePathsChanged(includePaths);
+    }
 }

@@ -34,6 +34,8 @@ public:
         ShaderType,
         ShaderLanguage,
         ShaderEntryPoint,
+        ShaderPreamble,
+        ShaderIncludePaths,
         BindingType,
         BindingEditor,
         BindingValues,

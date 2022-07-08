@@ -5,7 +5,8 @@
 #include <array>
 #include <QRegularExpression>
 
-GLProgram::GLProgram(const Program &program)
+GLProgram::GLProgram(const Program &program, 
+      const QString &shaderPreamble, const QString &shaderIncludePaths)
     : mItemId(program.id)
 {
     mUsedItems += program.id;
@@ -19,7 +20,7 @@ GLProgram::GLProgram(const Program &program)
 
     for (const auto &[type, list] : shaders)
         if (type != Shader::ShaderType::Includable)
-            mShaders.emplace_back(type, list);
+            mShaders.emplace_back(type, list, shaderPreamble, shaderIncludePaths);
 }
 
 bool GLProgram::operator==(const GLProgram &rhs) const

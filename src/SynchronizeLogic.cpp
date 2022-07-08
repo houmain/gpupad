@@ -1,5 +1,6 @@
 #include "SynchronizeLogic.h"
 #include "Singletons.h"
+#include "Settings.h"
 #include "FileCache.h"
 #include "VideoManager.h"
 #include "EvaluatedPropertyCache.h"
@@ -38,7 +39,14 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
         this, &SynchronizeLogic::handleFileChanged);
     connect(&Singletons::editorManager(), &EditorManager::editorRenamed,
         this, &SynchronizeLogic::handleEditorFileRenamed);
-
+    connect(&Singletons::settings(), &Settings::shaderIncludePathsChanged,
+        this, &SynchronizeLogic::invalidateRenderSession);
+    connect(&Singletons::settings(), &Settings::shaderPreambleChanged,
+        this, &SynchronizeLogic::invalidateRenderSession);
+    connect(&Singletons::sessionModel(), &SessionModel::shaderIncludePathsChanged,
+        this, &SynchronizeLogic::invalidateRenderSession);
+    connect(&Singletons::sessionModel(), &SessionModel::shaderPreambleChanged,
+        this, &SynchronizeLogic::invalidateRenderSession);
     resetRenderSession();
 
     mUpdateEditorsTimer->start(100);

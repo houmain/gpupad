@@ -1,5 +1,6 @@
 #include "RenderSession.h"
 #include "Singletons.h"
+#include "Settings.h"
 #include "SynchronizeLogic.h"
 #include "session/SessionModel.h"
 #include "editors/EditorManager.h"
@@ -224,6 +225,9 @@ void RenderSession::prepare(bool itemsChanged, EvaluationType evaluationType)
         mScriptSession.reset(new ScriptSession(
             getScriptingSourceType(mSessionCopy)));
 
+    mShaderPreamble = Singletons::settings().shaderPreamble();
+    mShaderIncludePaths = Singletons::settings().shaderIncludePaths();
+
     mScriptSession->prepare();
 }
 
@@ -281,7 +285,7 @@ void RenderSession::createCommandQueue()
 
     const auto addProgramOnce = [&](ItemId programId) {
         return addOnce(mCommandQueue->programs,
-            session.findItem<Program>(programId));
+            session.findItem<Program>(programId), mShaderPreamble, mShaderIncludePaths);
     };
 
     const auto addBufferOnce = [&](ItemId bufferId) {

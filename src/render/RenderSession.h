@@ -46,6 +46,8 @@ private:
     bool updatingPreviewTextures() const;
 
     SessionModel mSessionCopy;
+    QString mShaderPreamble;
+    QString mShaderIncludePaths;
     QScopedPointer<ScriptSession> mScriptSession;
     QOpenGLVertexArrayObject mVao;
     QScopedPointer<CommandQueue> mCommandQueue;

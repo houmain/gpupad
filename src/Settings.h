@@ -24,6 +24,10 @@ public:
     bool showWhiteSpace() const { return mShowWhiteSpace; }
     void setDarkTheme(bool enabled);
     bool darkTheme() const { return mDarkTheme; }
+    void setShaderPreamble(const QString &preamble);
+    QString shaderPreamble() const { return mShaderPreamble; }
+    void setShaderIncludePaths(const QString &includePaths);
+    QString shaderIncludePaths() const { return mShaderIncludePaths; }
 
 Q_SIGNALS:
     void tabSizeChanged(int tabSize);
@@ -33,6 +37,8 @@ Q_SIGNALS:
     void showWhiteSpaceChanged(bool enabled);
     void darkThemeChanging(bool enabled);
     void darkThemeChanged(bool enabled);
+    void shaderPreambleChanged(const QString &preamble);
+    void shaderIncludePathsChanged(const QString &includePaths);
 
 private:
     int mTabSize{ 2 };
@@ -41,6 +47,8 @@ private:
     bool mIndentWithSpaces{ true };
     bool mShowWhiteSpace{ };
     bool mDarkTheme{ };
+    QString mShaderPreamble;
+    QString mShaderIncludePaths;
 };
 
 #endif // SETTINGS_H

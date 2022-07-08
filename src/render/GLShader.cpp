@@ -5,13 +5,24 @@
 #include <QDir>
 
 namespace {
-    QString getAbsolutePath(const QString &currentFile, const QString &relative)
+    QString getAbsolutePath(const QString &currentFile, 
+        const QString &relative, const QString &includePaths)
     {
-        return QDir::toNativeSeparators(
-            QFileInfo(currentFile).dir().absoluteFilePath(relative));
+        const auto workdir = QFileInfo(currentFile).dir();
+        auto absolute = workdir.absoluteFilePath(relative);
+        if (!QFile::exists(absolute))
+            for (auto path : includePaths.split('\n'))
+                if (path = path.trimmed(); !path.isEmpty()) {
+                    path = workdir.absoluteFilePath(path) + '/' + relative;
+                    if (QFile::exists(path)) {
+                        absolute = QFileInfo(path).canonicalFilePath();
+                        break;
+                    }
+                }
+        return QDir::toNativeSeparators(absolute);
     }
 
-    void removeVersion(QString *source, QString *maxVersion)
+    bool removeVersion(QString *source, QString *maxVersion)
     {
         static const auto regex = QRegularExpression("(#version[^\n]*\n?)",
             QRegularExpression::MultilineOption);
@@ -19,7 +30,9 @@ namespace {
         for (auto match = regex.match(*source); match.hasMatch(); match = regex.match(*source)) {
             *maxVersion = qMax(*maxVersion, match.captured().trimmed());
             source->remove(match.capturedStart(), match.capturedLength());
+            return true;
         }
+        return false;
     }
 
     int countLines(const QString &source, int offset = -1) 
@@ -36,7 +49,7 @@ namespace {
 
     QString substituteIncludes(QString source, const QString &fileName, 
         QStringList &usedFileNames, ItemId itemId, MessagePtrSet &messages, 
-        int recursionDepth = 0)
+        const QString &includePaths, QString *maxVersion, int recursionDepth = 0)
     {
         if (!usedFileNames.contains(fileName)) {
             usedFileNames.append(fileName);
@@ -47,8 +60,9 @@ namespace {
             return { };
         }
         const auto fileNo = usedFileNames.indexOf(fileName);
+        const auto versionRemoved = removeVersion(&source, maxVersion);
 
-        auto linesInserted = 0;
+        auto linesInserted = (versionRemoved ? -1 : 0);
         static const auto regex = QRegularExpression(R"(#include([^\n]*))");
         for (auto match = regex.match(source); match.hasMatch(); match = regex.match(source)) {
             source.remove(match.capturedStart(), match.capturedLength());
@@ -57,13 +71,14 @@ namespace {
                 (include.startsWith('"') && include.endsWith('"'))) {
                 include = include.mid(1, include.size() - 2);
 
-                auto includeFileName = getAbsolutePath(fileName, include);
+                auto includeFileName = getAbsolutePath(fileName, include, includePaths);
                 auto includeSource = QString();
                 if (Singletons::fileCache().getSource(includeFileName, &includeSource)) {
                     const auto lineNo = countLines(source, match.capturedStart());
                     const auto includableSource = QString("%1\n#line %2 %3\n")
                         .arg(substituteIncludes(includeSource, includeFileName, 
-                            usedFileNames, itemId, messages, recursionDepth))
+                            usedFileNames, itemId, messages, 
+                            includePaths, maxVersion, recursionDepth))
                         .arg(lineNo - linesInserted)
                         .arg(fileNo);
                     source.insert(match.capturedStart(), includableSource); 
@@ -79,7 +94,16 @@ namespace {
                     MessageType::InvalidIncludeDirective, fileName);
             }
         }
-        return QString("#line 1 %1\n").arg(fileNo) + source;
+        return QString("#line %1 %2\n").arg(versionRemoved ? 2 : 1).arg(fileNo) + source;
+    }
+
+    void appendLines(QString &dest, const QString &source) 
+    {
+        if (source.isEmpty())
+            return;
+        if (!dest.isEmpty())
+            dest += "\n";
+        dest += source;
     }
 } // namespace
 
@@ -127,11 +151,14 @@ void GLShader::parseLog(const QString &log,
     }
 }
 
-GLShader::GLShader(Shader::ShaderType type, const QList<const Shader*> &shaders)
+GLShader::GLShader(Shader::ShaderType type, const QList<const Shader*> &shaders,
+    const QString &preamble, const QString &includePaths)
 {
     Q_ASSERT(!shaders.isEmpty());
     mType = type;
     mItemId = shaders.front()->id;
+    mPreamble = preamble;
+    mIncludePaths = includePaths;
 
     for (const Shader *shader : shaders) {
         auto source = QString();
@@ -143,13 +170,17 @@ GLShader::GLShader(Shader::ShaderType type, const QList<const Shader*> &shaders)
         mSources += source + "\n";
         mLanguage = shader->language;
         mEntryPoint = shader->entryPoint;
+        appendLines(mPreamble, shader->preamble);
+        appendLines(mIncludePaths, shader->includePaths);
     }
 }
 
 bool GLShader::operator==(const GLShader &rhs) const
 {
-    return std::tie(mType, mSources, mFileNames, mLanguage, mEntryPoint, mPatchedSources) ==
-           std::tie(rhs.mType, rhs.mSources, rhs.mFileNames, rhs.mLanguage, rhs.mEntryPoint, rhs.mPatchedSources);
+    return std::tie(mType, mSources, mFileNames, mLanguage, 
+                    mEntryPoint, mPreamble, mIncludePaths, mPatchedSources) ==
+           std::tie(rhs.mType, rhs.mSources, rhs.mFileNames, rhs.mLanguage, 
+                    rhs.mEntryPoint, rhs.mPreamble, rhs.mIncludePaths, rhs.mPatchedSources);
 }
 
 bool GLShader::compile(GLPrintf *printf, bool failSilently)
@@ -215,10 +246,12 @@ QStringList GLShader::getPatchedSources(MessagePtrSet &messages,
     if (mSources.isEmpty())
         return { };
 
+    auto maxVersion = QString();
     auto sources = QStringList();
     for (auto i = 0; i < mSources.size(); ++i)
         sources += substituteIncludes(mSources[i], 
-            mFileNames[i], usedFileNames, mItemId, messages);
+            mFileNames[i], usedFileNames, mItemId, messages, 
+            mIncludePaths, &maxVersion);
 
     if (mLanguage != Shader::Language::GLSL) {
         for (auto i = 0; i < mSources.size(); ++i) {
@@ -226,13 +259,11 @@ QStringList GLShader::getPatchedSources(MessagePtrSet &messages,
                 mEntryPoint, mFileNames[i], mItemId, messages);
             if (source.isEmpty())
                 return { };
+            
+            removeVersion(&source, &maxVersion);
             sources[i] = source;
         }
     }
-
-    auto maxVersion = QString();
-    for (auto &source : sources)
-        removeVersion(&source, &maxVersion);
 
     if (printf) {
         for (auto i = 0; i < sources.size(); ++i)
@@ -243,6 +274,9 @@ QStringList GLShader::getPatchedSources(MessagePtrSet &messages,
             maxVersion = std::max(maxVersion, GLPrintf::requiredVersion());
         }
     }
+
+    if (!mPreamble.isEmpty())
+        sources.front().prepend("#line 1 0\n" + mPreamble + "\n");
 
     sources.front().prepend("#define GPUPAD 1\n");
 

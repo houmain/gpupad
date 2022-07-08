@@ -26,6 +26,8 @@
     ADD(ShaderType, Shader, shaderType) \
     ADD(ShaderLanguage, Shader, language) \
     ADD(ShaderEntryPoint, Shader, entryPoint) \
+    ADD(ShaderPreamble, Shader, preamble) \
+    ADD(ShaderIncludePaths, Shader, includePaths) \
     ADD(BindingType, Binding, bindingType) \
     ADD(BindingEditor, Binding, editor) \
     ADD(BindingValues, Binding, values) \
