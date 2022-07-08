@@ -85,11 +85,13 @@ void ProcessSource::prepare(bool, EvaluationType)
     if (auto shaderType = getShaderType(mSourceType)) {
         auto shaders = getShadersInSession(mFileName);
         auto shader = Shader{ };
-        if (shaders.size() <= 1) {
+        if (shaders.empty()) {
             shader.fileName = mFileName;
+            shaders = { &shader };
+        }
+        if (shader.fileName == mFileName) {
             shader.shaderType = shaderType;
             shader.language = getShaderLanguage(mSourceType);
-            shaders = { &shader };
         }
         mShader.reset(new GLShader(shaderType, shaders, 
             shaderPreamble, shaderIncludePaths));
