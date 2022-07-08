@@ -130,10 +130,10 @@ void AttachmentProperties::updateWidgets()
     };
     mUi->tabDepthStencil->setVisible(kind.depth || kind.stencil);
     mUi->tabDepthStencil->clear();
-    if (kind.depth)
-        mUi->tabDepthStencil->addTab(mUi->tabDepth, tabTitles[0]);
     if (kind.stencil) {
+        mUi->tabDepthStencil->addTab(mUi->tabStencilBack, tabTitles[0]);
         mUi->tabDepthStencil->addTab(mUi->tabStencilFront, tabTitles[1]);
-        mUi->tabDepthStencil->addTab(mUi->tabStencilBack, tabTitles[2]);
     }
+    if (kind.depth)
+        mUi->tabDepthStencil->addTab(mUi->tabDepth, tabTitles[2]);
 }
