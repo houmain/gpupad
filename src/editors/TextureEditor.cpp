@@ -186,7 +186,7 @@ bool TextureEditor::load()
 {
     auto texture = TextureData();
     auto isRaw = false;
-    if (!Singletons::fileCache().getTexture(mFileName, true, &texture)) {
+    if (!Singletons::fileCache().getTexture(mFileName, false, &texture)) {
         auto binary = QByteArray();
         if (!Singletons::fileCache().getBinary(mFileName, &binary))
             if (!FileDialog::isEmptyOrUntitled(mFileName))
@@ -195,6 +195,11 @@ bool TextureEditor::load()
             return false;
         isRaw = true;
     }
+
+    // automatically flip in editor when opening an image file
+    if (mTexture.isNull() && !FileDialog::isEmptyOrUntitled(mFileName))
+        mTextureItem->setFlipVertically(true);
+
     replace(texture);
     setModified(false);
     mIsRaw = isRaw;
