@@ -1,4 +1,5 @@
 # Copyright 2016-2021 Google Inc.
+# SPDX-License-Identifier: Apache-2.0 OR MIT
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +17,6 @@
 # At your option, you may choose to accept this material under either:
 #  1. The Apache License, Version 2.0, found at <http://www.apache.org/licenses/LICENSE-2.0>, or
 #  2. The MIT License, found at <http://opensource.org/licenses/MIT>.
-# SPDX-License-Identifier: Apache-2.0 OR MIT.
 #
 
 cmake_minimum_required(VERSION 3.0)
@@ -141,7 +141,8 @@ if (CMAKE_COMPILER_IS_GNUCXX OR ((${CMAKE_CXX_COMPILER_ID} MATCHES "Clang") AND 
 		set(spirv-cross-link-flags "${spirv-cross-link-flags} -fsanitize=thread")
 	endif()
 elseif (MSVC)
-	set(spirv-compiler-options ${spirv-compiler-options} /wd4267 /wd4996)
+	# AppVeyor spuriously fails in debug build on older MSVC without /bigobj.
+	set(spirv-compiler-options ${spirv-compiler-options} /wd4267 /wd4996 $<$<CONFIG:DEBUG>:/bigobj>)
 endif()
 
 macro(extract_headers out_abs file_list)
@@ -331,7 +332,7 @@ if (SPIRV_CROSS_STATIC)
 endif()
 
 set(spirv-cross-abi-major 0)
-set(spirv-cross-abi-minor 44)
+set(spirv-cross-abi-minor 49)
 set(spirv-cross-abi-patch 0)
 
 if (SPIRV_CROSS_SHARED)
@@ -441,7 +442,7 @@ if (SPIRV_CROSS_CLI)
 	target_compile_definitions(spirv-cross PRIVATE ${spirv-compiler-defines} HAVE_SPIRV_CROSS_GIT_VERSION)
 	set_target_properties(spirv-cross PROPERTIES LINK_FLAGS "${spirv-cross-link-flags}")
 	if (NOT SPIRV_CROSS_SKIP_INSTALL)
-		install(TARGETS spirv-cross RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+		install(TARGETS spirv-cross DESTINATION ${CMAKE_INSTALL_BINDIR})
 	endif()
 	target_link_libraries(spirv-cross PRIVATE
 			spirv-cross-glsl

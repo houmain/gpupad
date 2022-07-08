@@ -82,7 +82,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ---------------------------------------------------------------------
 
-## SPIRV-Cross v2021-01-15 (Apache 2.0 license)
+## SPIRV-Cross 2022-07-04 #d8d0513 (Apache 2.0 license)
 https://github.com/KhronosGroup/SPIRV-Cross
 
 Copyright 2015-2021 Arm Limited
