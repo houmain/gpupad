@@ -91,7 +91,7 @@
         "bindingType": "Buffer",
         "bufferId": 3,
         "id": 9,
-        "name": "uCounters1",
+        "name": "uCounter0",
         "type": "Binding"
     },
     {
