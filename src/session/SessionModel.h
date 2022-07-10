@@ -71,8 +71,6 @@ public:
 
 Q_SIGNALS:
     void undoStackCleanChanged(bool isClean);
-    void shaderPreambleChanged(const QString &preamble);
-    void shaderIncludePathsChanged(const QString &includePaths);
 
 private:
     bool shouldSerializeColumn(const Item &item, ColumnType column) const;
@@ -118,8 +116,6 @@ private:
     mutable QModelIndexList mDraggedIndices;
     mutable QString mDraggedText;
     mutable QJsonArray mDraggedJson;
-    QString mShaderPreamble;
-    QString mShaderIncludePaths;
 };
 
 #endif // SESSIONMODEL_H

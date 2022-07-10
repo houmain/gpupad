@@ -43,9 +43,9 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
         this, &SynchronizeLogic::invalidateRenderSession);
     connect(&Singletons::settings(), &Settings::shaderPreambleChanged,
         this, &SynchronizeLogic::invalidateRenderSession);
-    connect(&Singletons::sessionModel(), &SessionModel::shaderIncludePathsChanged,
+    connect(this, &SynchronizeLogic::sessionShaderIncludePathsChanged,
         this, &SynchronizeLogic::invalidateRenderSession);
-    connect(&Singletons::sessionModel(), &SessionModel::shaderPreambleChanged,
+    connect(this, &SynchronizeLogic::sessionShaderPreambleChanged,
         this, &SynchronizeLogic::invalidateRenderSession);
     resetRenderSession();
 
@@ -431,5 +431,21 @@ void SynchronizeLogic::handleKeyboardStateChanged()
     if (mRenderSession->usesKeyboardState()) {
         if (mEvaluationMode == EvaluationMode::Automatic)
             evaluate(EvaluationType::Steady);
+    }
+}
+
+void SynchronizeLogic::setSessionShaderPreamble(const QString &preamble)
+{
+    if (mSessionShaderPreamble != preamble) {
+        mSessionShaderPreamble = preamble;
+        Q_EMIT sessionShaderPreambleChanged(preamble);
+    }
+}
+
+void SynchronizeLogic::setSessionShaderIncludePaths(const QString &includePaths)
+{
+    if (mSessionShaderIncludePaths != includePaths) {
+        mSessionShaderIncludePaths = includePaths;
+        Q_EMIT sessionShaderIncludePathsChanged(includePaths);
     }
 }

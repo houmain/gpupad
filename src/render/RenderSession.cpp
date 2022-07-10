@@ -225,8 +225,10 @@ void RenderSession::prepare(bool itemsChanged, EvaluationType evaluationType)
         mScriptSession.reset(new ScriptSession(
             getScriptingSourceType(mSessionCopy)));
 
-    mShaderPreamble = Singletons::settings().shaderPreamble();
-    mShaderIncludePaths = Singletons::settings().shaderIncludePaths();
+    mShaderPreamble = Singletons::settings().shaderPreamble() + "\n" +
+        Singletons::synchronizeLogic().sessionShaderPreamble();
+    mShaderIncludePaths = Singletons::settings().shaderIncludePaths() + "\n" +
+        Singletons::synchronizeLogic().sessionShaderIncludePaths();
 
     mScriptSession->prepare();
 }

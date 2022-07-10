@@ -165,6 +165,19 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mShaderProperties->globalIncludePaths, &ExpressionEditor::textChanged, 
         [this]() { Singletons::settings().setShaderIncludePaths(
             mShaderProperties->globalIncludePaths->text()); });
+
+    auto &synchronizeLogic = Singletons::synchronizeLogic();
+    connect(&synchronizeLogic, &SynchronizeLogic::sessionShaderPreambleChanged,
+        mShaderProperties->sessionPreamble, &ExpressionEditor::setText);
+    connect(&synchronizeLogic, &SynchronizeLogic::sessionShaderIncludePathsChanged,
+        mShaderProperties->sessionIncludePaths, &ExpressionEditor::setText);
+    connect(mShaderProperties->sessionPreamble, &ExpressionEditor::textChanged, 
+        [this]() { Singletons::synchronizeLogic().setSessionShaderPreamble(
+            mShaderProperties->sessionPreamble->text()); });
+    connect(mShaderProperties->sessionIncludePaths, &ExpressionEditor::textChanged, 
+        [this]() { Singletons::synchronizeLogic().setSessionShaderIncludePaths(
+            mShaderProperties->sessionIncludePaths->text()); });
+
     connect(&settings, &Settings::fontChanged, 
         this, &SessionProperties::updateShaderWidgets);
     mShaderProperties->globalPreamble->setText(
@@ -173,8 +186,6 @@ SessionProperties::SessionProperties(QWidget *parent)
         settings.shaderIncludePaths());
     mShaderProperties->tabScope->setStyleSheet(
         "QTabWidget::pane { border: none; }");
-    // TODO: not implemented
-    mShaderProperties->tabScope->setTabEnabled(1, false);
 
     setCurrentModelIndex({ });
     fillComboBoxes();

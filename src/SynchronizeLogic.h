@@ -37,11 +37,18 @@ public:
     void setCurrentEditorFileName(QString fileName);
     void setCurrentEditorSourceType(SourceType sourceType);
 
+    void setSessionShaderPreamble(const QString &preamble);
+    QString sessionShaderPreamble() const { return mSessionShaderPreamble; }
+    void setSessionShaderIncludePaths(const QString &includePaths);
+    QString sessionShaderIncludePaths() const { return mSessionShaderIncludePaths; }
+
     void handleMouseStateChanged();
     void handleKeyboardStateChanged();
 
 Q_SIGNALS:
     void outputChanged(QString assembly);
+    void sessionShaderPreambleChanged(const QString &preamble);
+    void sessionShaderIncludePathsChanged(const QString &includePaths);
 
 private:
     void invalidateRenderSession();
@@ -80,6 +87,9 @@ private:
     QString mProcessSourceType{ };
     QTimer *mProcessSourceTimer{ };
     ProcessSource* mProcessSource{ };
+
+    QString mSessionShaderPreamble;
+    QString mSessionShaderIncludePaths;
 };
 
 #endif // SYNCHRONIZELOGIC_H

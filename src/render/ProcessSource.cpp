@@ -5,7 +5,7 @@
 #include "scripting/ScriptEngineLua.h"
 #include "Singletons.h"
 #include "Settings.h"
-#include "session/SessionModel.h"
+#include "SynchronizeLogic.h"
 #include "glslang.h"
 
 namespace {
@@ -79,8 +79,10 @@ void ProcessSource::clearMessages()
 
 void ProcessSource::prepare(bool, EvaluationType)
 {
-    auto shaderPreamble = Singletons::settings().shaderPreamble();
-    auto shaderIncludePaths = Singletons::settings().shaderIncludePaths();
+    auto shaderPreamble = Singletons::settings().shaderPreamble() + "\n" +
+        Singletons::synchronizeLogic().sessionShaderPreamble();
+    auto shaderIncludePaths = Singletons::settings().shaderIncludePaths() + "\n" +
+        Singletons::synchronizeLogic().sessionShaderIncludePaths();
 
     if (auto shaderType = getShaderType(mSourceType)) {
         auto shaders = getShadersInSession(mFileName);
