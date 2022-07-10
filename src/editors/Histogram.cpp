@@ -95,7 +95,6 @@ void Histogram::mouseMoveEvent(QMouseEvent *event)
 void Histogram::setHistogramBounds(const Range &bounds)
 {
     mHistogramBounds = bounds;
-    setMappingRange(bounds);
 }
 
 void Histogram::setMappingRange(const Range &range)

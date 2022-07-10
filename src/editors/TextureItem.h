@@ -44,7 +44,7 @@ public:
     const Range &mappingRange() const { return mMappingRange; }
     void setHistogramBinCount(int count);
     void setHistogramBounds(const Range &range); 
-    const Range &histogramBounds() const { return mMappingRange; }
+    const Range &histogramBounds() const { return mHistogramBounds; }
     void computeHistogramBounds();
     void setHistogramEnabled(bool enabled) { mHistogramEnabled = enabled; }
     bool histogramEnabled() const { return mHistogramEnabled; }

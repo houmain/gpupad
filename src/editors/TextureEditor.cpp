@@ -133,6 +133,8 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
         mTextureItem, &TextureItem::computeHistogramBounds);
     c += connect(mTextureItem, &TextureItem::histogramBoundsComputed,
         &mTextureInfoBar, &TextureInfoBar::setHistogramBounds);
+    c += connect(mTextureItem, &TextureItem::histogramBoundsComputed,
+        &mTextureInfoBar, &TextureInfoBar::setMappingRange);
 
     mTextureItem->setHistogramEnabled(mTextureInfoBar.isPickerEnabled());
     mTextureItem->setHistogramBinCount(mTextureInfoBar.histogramBinCount());

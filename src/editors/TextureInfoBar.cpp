@@ -124,6 +124,7 @@ void TextureInfoBar::updateHistogram(const QVector<qreal> &histogramUpdate)
 void TextureInfoBar::resetRange()
 {
     setHistogramBounds({ 0, 1 });
+    setMappingRange({ 0, 1 });
 }
 
 void TextureInfoBar::invertRange()
