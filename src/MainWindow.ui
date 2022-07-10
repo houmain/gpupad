@@ -427,6 +427,9 @@
    </property>
   </action>
   <action name="actionFindReplace">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="resources.qrc">
      <normaloff>:/images/16x16/edit-find-replace.png</normaloff>:/images/16x16/edit-find-replace.png</iconset>
