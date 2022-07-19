@@ -65,7 +65,9 @@ QWidget *EditorManager::createEditorPropertiesPanel(
         updateEditorPropertiesVisibility();
         showAction->setChecked(false);
     };
-    connect(showAction, &QAction::triggered, showPropertiesPanel);
+    connect(showAction, &QAction::toggled, [=](bool show) { 
+      show ? showPropertiesPanel() : hidePropertiesPanel(); 
+    });
     connect(mFindReplaceBar, &FindReplaceBar::cancelled, hidePropertiesPanel);
     connect(mTextureInfoBar, &TextureInfoBar::cancelled, hidePropertiesPanel);
 
