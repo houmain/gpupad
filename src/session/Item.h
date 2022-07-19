@@ -162,8 +162,8 @@ struct Attachment : Item
     unsigned int colorWriteMask{ 0xF };
 
     ComparisonFunc depthComparisonFunc{ ComparisonFunc::Less };
-    double depthOffsetFactor{ };
-    double depthOffsetUnits{ };
+    double depthOffsetSlope{ };
+    double depthOffsetConstant{ };
     bool depthClamp{ };
     bool depthWrite{ true };
 

@@ -85,8 +85,8 @@ void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
     //mapper.addMapping(mUi->colorWriteMask, SessionModel::AttachmentColorWriteMask);
 
     mapper.addMapping(mUi->depthComparisonFunc, SessionModel::AttachmentDepthComparisonFunc);
-    mapper.addMapping(mUi->depthOffsetFactor, SessionModel::AttachmentDepthOffsetFactor);
-    mapper.addMapping(mUi->depthOffsetUnits, SessionModel::AttachmentDepthOffsetUnits);
+    mapper.addMapping(mUi->depthOffsetSlope, SessionModel::AttachmentDepthOffsetSlope);
+    mapper.addMapping(mUi->depthOffsetConstant, SessionModel::AttachmentDepthOffsetConstant);
     mapper.addMapping(mUi->depthClamp, SessionModel::AttachmentDepthClamp);
     mapper.addMapping(mUi->depthWrite, SessionModel::AttachmentDepthWrite);
 

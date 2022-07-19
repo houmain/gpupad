@@ -60,8 +60,8 @@
     ADD(AttachmentBlendAlphaDest, Attachment, blendAlphaDest) \
     ADD(AttachmentColorWriteMask, Attachment, colorWriteMask) \
     ADD(AttachmentDepthComparisonFunc, Attachment, depthComparisonFunc) \
-    ADD(AttachmentDepthOffsetFactor, Attachment, depthOffsetFactor) \
-    ADD(AttachmentDepthOffsetUnits, Attachment, depthOffsetUnits) \
+    ADD(AttachmentDepthOffsetSlope, Attachment, depthOffsetSlope) \
+    ADD(AttachmentDepthOffsetConstant, Attachment, depthOffsetConstant) \
     ADD(AttachmentDepthClamp, Attachment, depthClamp) \
     ADD(AttachmentDepthWrite, Attachment, depthWrite) \
     ADD(AttachmentStencilFrontComparisonFunc, Attachment, stencilFrontComparisonFunc) \

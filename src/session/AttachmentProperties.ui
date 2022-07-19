@@ -568,14 +568,14 @@
           <widget class="DataComboBox" name="depthComparisonFunc"/>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="labelOffsetFactor">
+          <widget class="QLabel" name="labelDepthOffsetSlope">
            <property name="text">
-            <string>Offset Factor</string>
+            <string>Offset Slope</string>
            </property>
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="depthOffsetFactor">
+          <widget class="QDoubleSpinBox" name="depthOffsetSlope">
            <property name="decimals">
             <number>3</number>
            </property>
@@ -591,9 +591,9 @@
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="labelOffsetUnits">
+          <widget class="QLabel" name="labelDepthOffsetConstant">
            <property name="text">
-            <string>Offset Units</string>
+            <string>Offset Constant</string>
            </property>
           </widget>
          </item>
@@ -638,9 +638,15 @@
           </widget>
          </item>
          <item row="2" column="1">
-          <widget class="QSpinBox" name="depthOffsetUnits">
+          <widget class="QDoubleSpinBox" name="depthOffsetConstant">
+           <property name="decimals">
+            <number>3</number>
+           </property>
            <property name="minimum">
-            <number>-99</number>
+            <double>-1000.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>1000.000000000000000</double>
            </property>
           </widget>
          </item>

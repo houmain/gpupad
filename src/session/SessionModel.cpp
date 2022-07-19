@@ -514,8 +514,8 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             result &= (column != AttachmentBlendAlphaDest || kind.color);
             result &= (column != AttachmentColorWriteMask || kind.color);
             result &= (column != AttachmentDepthComparisonFunc || kind.depth);
-            result &= (column != AttachmentDepthOffsetFactor || kind.depth);
-            result &= (column != AttachmentDepthOffsetUnits || kind.depth);
+            result &= (column != AttachmentDepthOffsetSlope || kind.depth);
+            result &= (column != AttachmentDepthOffsetConstant || kind.depth);
             result &= (column != AttachmentDepthClamp || kind.depth);
             result &= (column != AttachmentDepthWrite || kind.depth);
             result &= (column != AttachmentStencilFrontComparisonFunc || kind.stencil);

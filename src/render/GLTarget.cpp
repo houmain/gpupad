@@ -216,8 +216,8 @@ void GLTarget::applyAttachmentStates(const GLAttachment &a)
         gl.glEnable(GL_POLYGON_OFFSET_LINE);
         gl.glEnable(GL_POLYGON_OFFSET_FILL);
         gl.glPolygonOffset(
-            static_cast<float>(a.depthOffsetFactor),
-            static_cast<float>(a.depthOffsetUnits));
+            static_cast<float>(a.depthOffsetSlope),
+            static_cast<float>(a.depthOffsetConstant));
         if (a.depthClamp)
             gl.glEnable(GL_DEPTH_CLAMP);
         else
