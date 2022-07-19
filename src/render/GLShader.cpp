@@ -284,6 +284,8 @@ QStringList GLShader::getPatchedSources(MessagePtrSet &messages,
         maxVersion = "#version 450";
     sources.front().prepend(maxVersion + "\n");
 
+    sources.back().append(";");
+
     return sources;
 }
 

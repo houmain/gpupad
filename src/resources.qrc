@@ -58,5 +58,6 @@
         <file>scripting/ScriptEngineJavaScript.js</file>
         <file>images/16x16/format-indent-more.png</file>
         <file>images/16x16/hamburger.png</file>
+        <file>images/16x16/utilities-terminal.png</file>
     </qresource>
 </RCC>

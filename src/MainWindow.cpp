@@ -52,7 +52,8 @@ MainWindow::MainWindow(QWidget *parent)
     icon.addFile(":images/64x64/icon.png");
     setWindowIcon(icon);
 
-    mUi->menuView->addAction(mUi->toolBarMain->toggleViewAction());
+    mUi->toolBarMain->setIconSize(QSize(20, 20));
+    mUi->toolBarMain->toggleViewAction()->setVisible(false);
 #if defined(_WIN32)
     mUi->toolBarMain->setContentsMargins(0, 0, 0, 4);
 #endif
@@ -80,6 +81,26 @@ MainWindow::MainWindow(QWidget *parent)
 
     mEditorManager.createEditorToolBars(mUi->toolBarMain);
 
+    auto menuHamburger = new QMenu(this);
+    for (auto action : mUi->menuFile->actions()) 
+        menuHamburger->addAction(action);
+    menuHamburger->insertSeparator(mUi->actionQuit);
+    menuHamburger->insertMenu(mUi->actionQuit, mUi->menuEdit);
+    menuHamburger->insertMenu(mUi->actionQuit, mUi->menuSession);
+    menuHamburger->insertMenu(mUi->actionQuit, mUi->menuView);
+    menuHamburger->insertMenu(mUi->actionQuit, mUi->menuHelp);
+    menuHamburger->insertSeparator(mUi->actionQuit);
+
+    mMenuButton = new QToolButton(this);
+    mMenuButton->setVisible(false);
+    mMenuButton->setMenu(menuHamburger);
+    mMenuButton->setStyleSheet("*::menu-indicator { image: none; }");
+    mMenuButton->setArrowType(Qt::NoArrow);
+    mMenuButton->setText("Menu");
+    mMenuButton->setToolTip("Menu");
+    mMenuButton->setIcon(QIcon(":images/16x16/hamburger.png"));
+    mMenuButton->setPopupMode(QToolButton::InstantPopup);
+
     auto dock = new QDockWidget(this);
     dock->setWidget(content);
     dock->setObjectName("Editors");
@@ -99,6 +120,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setWidget(mSessionSplitter);
     dock->setVisible(false);
     auto action = dock->toggleViewAction();
+    action->setText(tr("Show &") + action->text());
     action->setIcon(QIcon(":images/16x16/format-indent-more.png"));
     mUi->menuView->addAction(action);
     mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
@@ -113,6 +135,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setWidget(mMessageWindow.data());
     dock->setVisible(false);
     action = dock->toggleViewAction();
+    action->setText(tr("Show &") + action->text());
     action->setIcon(QIcon(":images/16x16/help-faq.png"));
     mUi->menuView->addAction(action);
     mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
@@ -126,7 +149,8 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setWidget(mOutputWindow.data());
     dock->setVisible(false);
     action = dock->toggleViewAction();
-    action->setIcon(QIcon(":images/16x16/text-x-generic.png"));
+    action->setText(tr("Show &") + action->text());
+    action->setIcon(QIcon(":images/16x16/utilities-terminal.png"));
     mUi->menuView->addAction(action);
     mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
     addDockWidget(Qt::RightDockWidgetArea, dock);
@@ -256,12 +280,16 @@ MainWindow::MainWindow(QWidget *parent)
         &settings, &Settings::setShowWhiteSpace);
     connect(mUi->actionDarkTheme, &QAction::toggled,
         &settings, &Settings::setDarkTheme);
+    connect(mUi->actionHideMenuBar, &QAction::toggled,
+        &settings, &Settings::setHideMenuBar);
     connect(mUi->actionLineWrapping, &QAction::toggled,
         &settings, &Settings::setLineWrap);
     connect(mUi->actionIndentWithSpaces, &QAction::toggled,
         &settings, &Settings::setIndentWithSpaces);
     connect(&settings, &Settings::darkThemeChanging,
         this, &MainWindow::handleDarkThemeChanging);
+    connect(&settings, &Settings::hideMenuBarChanged,
+        this, &MainWindow::handleHideMenuBarChanged);
 
     connect(mUi->actionEvalReset, &QAction::triggered,
         this, &MainWindow::updateEvaluationMode);
@@ -276,6 +304,8 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::updateCustomActionsMenu);
     connect(mUi->actionManageCustomActions, &QAction::triggered,
         mCustomActions.data(), &QDialog::show);
+
+    qApp->installEventFilter(this);
 
     mUi->actionPasteInNewEditor->setEnabled(mEditorManager.canPasteInNewEditor());
 
@@ -357,9 +387,12 @@ void MainWindow::readSettings()
     mUi->actionIndentWithSpaces->setChecked(settings.indentWithSpaces());
     mUi->actionShowWhiteSpace->setChecked(settings.showWhiteSpace());
     mUi->actionDarkTheme->setChecked(settings.darkTheme());
+    mUi->actionHideMenuBar->setChecked(settings.hideMenuBar());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
     mUi->actionFullScreen->setChecked(isFullScreen());
     handleDarkThemeChanging(settings.darkTheme());
+    if (settings.hideMenuBar())
+       handleHideMenuBarChanged(true);
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
@@ -378,6 +411,32 @@ void MainWindow::dropEvent(QDropEvent *event)
     setWindowState(Qt::WindowState::WindowActive);
     raise();
     activateWindow();
+}
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event)
+{
+    switch (event->type()) {
+        case QEvent::KeyPress:
+          mLastPressWasAlt = false;
+          break;
+     }
+     return QMainWindow::eventFilter(watched, event);
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event) 
+{
+    if (event->key() == Qt::Key_Alt)
+        mLastPressWasAlt = true;
+
+    QMainWindow::keyPressEvent(event);
+}
+
+void MainWindow::keyReleaseEvent(QKeyEvent *event) 
+{
+    if (event->key() == Qt::Key_Alt && mLastPressWasAlt)
+        return mMenuButton->click();
+    
+    QMainWindow::keyReleaseEvent(event);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -952,6 +1011,20 @@ void MainWindow::handleDarkThemeChanging(bool darkTheme)
     style()->polish(qApp);
 }
 
+void MainWindow::handleHideMenuBarChanged(bool hide) 
+{
+    mUi->menubar->setVisible(!hide);
+    mMenuButton->setVisible(hide);
+    if (hide) {
+        mUi->toolBarMain->insertWidget(mUi->actionNew, mMenuButton);
+        mUi->toolBarMain->insertSeparator(mUi->actionNew);
+    }
+    else {
+        mUi->toolBarMain->removeAction(mUi->toolBarMain->actions().front());
+        mUi->toolBarMain->removeAction(mUi->toolBarMain->actions().front());
+    }
+}
+
 void MainWindow::openSessionDock()
 {
     mSessionDock->setVisible(true);
@@ -960,8 +1033,9 @@ void MainWindow::openSessionDock()
 void MainWindow::openMessageDock()
 {
     // only open once automatically
-    disconnect(mMessageWindow.data(), &MessageWindow::messagesAdded,
-        this, &MainWindow::openMessageDock);
+    if (QObject::sender() == mMessageWindow.data())
+        disconnect(mMessageWindow.data(), &MessageWindow::messagesAdded,
+            this, &MainWindow::openMessageDock);
 
     for (auto p = mMessageWindow->parentWidget(); p; p = p->parentWidget())
         p->setVisible(true);

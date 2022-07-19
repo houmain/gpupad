@@ -14,7 +14,7 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
     const auto sourceTypeActionGroup = new QActionGroup(this);
     mUi->sourceTypeButton->setMenu(sourceTypeMenu);
     mUi->sourceTypeButton->setPopupMode(QToolButton::MenuButtonPopup);
-    mUi->sourceTypeButton->setIcon(QIcon(":images/16x16/help-faq.png"));
+    mUi->sourceTypeButton->setIcon(QIcon(":images/16x16/dialog-information.png"));
 
     const auto addSourceType = [&](QMenu* menu, const QString &text, SourceType sourceType) {
         const auto action = menu->addAction(text);

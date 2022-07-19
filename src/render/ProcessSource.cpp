@@ -79,22 +79,28 @@ void ProcessSource::clearMessages()
 
 void ProcessSource::prepare(bool, EvaluationType)
 {
-    auto shaderPreamble = Singletons::settings().shaderPreamble() + "\n" +
-        Singletons::synchronizeLogic().sessionShaderPreamble();
-    auto shaderIncludePaths = Singletons::settings().shaderIncludePaths() + "\n" +
-        Singletons::synchronizeLogic().sessionShaderIncludePaths();
+    const auto shaderPreamble = QString{ Singletons::settings().shaderPreamble() + "\n" +
+        Singletons::synchronizeLogic().sessionShaderPreamble() };
+    const auto shaderIncludePaths = QString{ Singletons::settings().shaderIncludePaths() + "\n" +
+        Singletons::synchronizeLogic().sessionShaderIncludePaths() };
 
     if (auto shaderType = getShaderType(mSourceType)) {
         auto shaders = getShadersInSession(mFileName);
+        // ensure shader is in list
         auto shader = Shader{ };
         if (shaders.empty()) {
             shader.fileName = mFileName;
             shaders = { &shader };
         }
-        if (shader.fileName == mFileName) {
-            shader.shaderType = shaderType;
-            shader.language = getShaderLanguage(mSourceType);
-        }
+        // replace shader's type and language
+        for (auto& s : shaders)
+            if (s->fileName == mFileName) {
+                shader = *s;
+                shader.shaderType = shaderType;
+                shader.language = getShaderLanguage(mSourceType);
+                s = &shader;
+                break;
+            }
         mShader.reset(new GLShader(shaderType, shaders, 
             shaderPreamble, shaderIncludePaths));
     }

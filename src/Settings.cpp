@@ -12,6 +12,7 @@ Settings::Settings(QObject *parent) : QSettings(parent)
     setIndentWithSpaces(value("indentWithSpaces", "true").toBool());
     setShowWhiteSpace(value("showWhiteSpace", "false").toBool());
     setDarkTheme(value("darkTheme", "false").toBool());
+    setHideMenuBar(value("hideMenuBar", "false").toBool());
     setShaderPreamble(value("shaderPreamble", "").toString());
     setShaderIncludePaths(value("shaderIncludePaths", "").toString());
 
@@ -30,6 +31,7 @@ Settings::~Settings()
     setValue("indentWithSpaces", indentWithSpaces());
     setValue("showWhiteSpace", showWhiteSpace());
     setValue("darkTheme", darkTheme());
+    setValue("hideMenuBar", hideMenuBar());
     setValue("font", font().toString());
     setValue("shaderPreamble", shaderPreamble());
     setValue("shaderIncludePaths", shaderIncludePaths());
@@ -84,6 +86,14 @@ void Settings::setDarkTheme(bool enabled)
     mDarkTheme = enabled;
     Q_EMIT darkThemeChanging(enabled);
     Q_EMIT darkThemeChanged(enabled);
+}
+
+void Settings::setHideMenuBar(bool hide)
+{
+    if (mHideMenuBar != hide) {
+        mHideMenuBar = hide;
+        Q_EMIT hideMenuBarChanged(hide);
+    }
 }
 
 void Settings::setShaderPreamble(const QString &preamble)

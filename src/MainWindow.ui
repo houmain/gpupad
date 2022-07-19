@@ -32,7 +32,7 @@
      <x>0</x>
      <y>0</y>
      <width>494</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -149,6 +149,7 @@
     <addaction name="actionDarkTheme"/>
     <addaction name="actionFullScreen"/>
     <addaction name="separator"/>
+    <addaction name="actionHideMenuBar"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -622,6 +623,21 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+V</string>
+   </property>
+  </action>
+  <action name="actionHideMenuBar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/16x16/hamburger.png</normaloff>:/images/16x16/hamburger.png</iconset>
+   </property>
+   <property name="text">
+    <string>Hide &amp;Menu Bar</string>
+   </property>
+   <property name="toolTip">
+    <string>Hide Menu Bar</string>
    </property>
   </action>
  </widget>

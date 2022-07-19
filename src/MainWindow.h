@@ -11,6 +11,7 @@ class MainWindow;
 
 class QSplitter;
 class QToolBar;
+class QToolButton;
 class QLabel;
 class Singletons;
 class MessageWindow;
@@ -51,6 +52,9 @@ protected:
     void closeEvent(QCloseEvent *event) override;
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
 
 private:
     void writeSettings();
@@ -79,8 +83,10 @@ private:
     void handleMessageActivated(ItemId itemId,
         QString fileName, int line, int column);
     void handleDarkThemeChanging(bool enabled);
+    void handleHideMenuBarChanged(bool hide);
 
     Ui::MainWindow *mUi{ };
+    QToolButton* mMenuButton{ };
     QSplitter *mSessionSplitter{ };
     QToolBar* mFullScreenBar{ };
     QLabel* mFullScreenTitle{ };
@@ -97,6 +103,7 @@ private:
     QStringList mRecentFiles;
     QList<QAction*> mRecentSessionActions;
     QList<QAction*> mRecentFileActions;
+    bool mLastPressWasAlt{ };
 };
 
 #endif // MAINWINDOW_H

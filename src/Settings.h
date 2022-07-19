@@ -24,6 +24,8 @@ public:
     bool showWhiteSpace() const { return mShowWhiteSpace; }
     void setDarkTheme(bool enabled);
     bool darkTheme() const { return mDarkTheme; }
+    void setHideMenuBar(bool hide);
+    bool hideMenuBar() const { return mHideMenuBar; }
     void setShaderPreamble(const QString &preamble);
     QString shaderPreamble() const { return mShaderPreamble; }
     void setShaderIncludePaths(const QString &includePaths);
@@ -37,6 +39,7 @@ Q_SIGNALS:
     void showWhiteSpaceChanged(bool enabled);
     void darkThemeChanging(bool enabled);
     void darkThemeChanged(bool enabled);
+    void hideMenuBarChanged(bool hide);
     void shaderPreambleChanged(const QString &preamble);
     void shaderIncludePathsChanged(const QString &includePaths);
 
@@ -47,6 +50,7 @@ private:
     bool mIndentWithSpaces{ true };
     bool mShowWhiteSpace{ };
     bool mDarkTheme{ };
+    bool mHideMenuBar{ };
     QString mShaderPreamble;
     QString mShaderIncludePaths;
 };
