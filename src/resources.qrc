@@ -56,5 +56,7 @@
         <file>images/16x16/media-skip-forward.png</file>
         <file>images/16x16/format-justify-left.png</file>
         <file>scripting/ScriptEngineJavaScript.js</file>
+        <file>images/16x16/format-indent-more.png</file>
+        <file>images/16x16/hamburger.png</file>
     </qresource>
 </RCC>

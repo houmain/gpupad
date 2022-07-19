@@ -98,7 +98,10 @@ MainWindow::MainWindow(QWidget *parent)
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mSessionSplitter);
     dock->setVisible(false);
-    mUi->menuView->addAction(dock->toggleViewAction());
+    auto action = dock->toggleViewAction();
+    action->setIcon(QIcon(":images/16x16/format-indent-more.png"));
+    mUi->menuView->addAction(action);
+    mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
     mSessionEditor->addItemActions(mUi->menuSession);
     mSessionDock = dock;
@@ -109,7 +112,10 @@ MainWindow::MainWindow(QWidget *parent)
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mMessageWindow.data());
     dock->setVisible(false);
-    mUi->menuView->addAction(dock->toggleViewAction());
+    action = dock->toggleViewAction();
+    action->setIcon(QIcon(":images/16x16/help-faq.png"));
+    mUi->menuView->addAction(action);
+    mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
     addDockWidget(Qt::RightDockWidgetArea, dock);
 
     dock = new QDockWidget(tr("Output"), this);
@@ -119,9 +125,14 @@ MainWindow::MainWindow(QWidget *parent)
                       QDockWidget::DockWidgetFloatable);
     dock->setWidget(mOutputWindow.data());
     dock->setVisible(false);
-    mUi->menuView->addAction(dock->toggleViewAction());
+    action = dock->toggleViewAction();
+    action->setIcon(QIcon(":images/16x16/text-x-generic.png"));
+    mUi->menuView->addAction(action);
+    mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
     addDockWidget(Qt::RightDockWidgetArea, dock);
     auto outputDock = dock;
+
+    mUi->toolBarMain->insertSeparator(mUi->actionEvalReset);
 
     mUi->actionQuit->setShortcuts(QKeySequence::Quit);
     mUi->actionNew->setShortcuts(QKeySequence::New);
@@ -991,7 +1002,7 @@ void MainWindow::populateSampleSessions()
                 auto sessions = sample.entryInfoList();
                 if (!sessions.empty()) {
                     auto action = mUi->menuSampleSessions->addAction(
-                        entry.fileName(), this, SLOT(openSampleSession()));
+                        "&" + entry.fileName(), this, SLOT(openSampleSession()));
                     action->setData(sessions.first().absoluteFilePath());
                 }
             }
