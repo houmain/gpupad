@@ -29,10 +29,15 @@ void SetForegroundWindowInternal(HWND hWnd) {
 }
 #endif
 
+const auto singleApplicationMode = 
+    SingleApplication::Mode::User |
+    SingleApplication::Mode::ExcludeAppPath |
+    SingleApplication::Mode::ExcludeAppVersion;
+
 bool forwardToInstance(int argc, char *argv[]) 
 {
     auto app = QCoreApplication(argc, argv);
-    auto instance = SingleApplication(true);
+    auto instance = SingleApplication(true, singleApplicationMode);
     if (!instance.isSecondary())
         return false;
 
@@ -82,7 +87,7 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     auto app = QApplication(argc, argv);
-    auto instance = SingleApplication(true);
+    auto instance = SingleApplication(true, singleApplicationMode);
     auto window = MainWindow();
 
     QObject::connect(&instance, &SingleApplication::receivedMessage,
