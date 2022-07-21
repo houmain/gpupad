@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 1.25] - 2022-07-21
+
+### Added
+
+- Added shader preamble and include paths.
+- Added toolbar buttons to show/hide dock windows.
+- Allow to hide menu bar.
+- Splitting single line of values pasted in binary editor.
+
+### Changed
+
+- Flipping textures from files in editor by default.
+- Renamed attachment depth offset factor/units to slope/constant.
+- Getting entry point for shader validation from session.
+- Improved Atomic-Counter sample.
+- Made find/replace button toggleable.
+- Updated SPIRV-Cross to 2022-07-04 master.
+
+### Fixed
+
+- Fixed crash on invalid stream attribute.
+- Fixed crash on stream attribute count change.
+- Fixed potentially wrong preview texture format.
+- Fixed restoring histogram state.
+
 ## [Version 1.24] - 2022-04-15
 
 ### Added
@@ -499,7 +524,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
-
+[version 1.25]: https://github.com/houmain/gpupad/compare/1.24...1.25
 [version 1.24]: https://github.com/houmain/gpupad/compare/1.23...1.24
 [version 1.23]: https://github.com/houmain/gpupad/compare/1.22...1.23
 [version 1.22]: https://github.com/houmain/gpupad/compare/1.21...1.22
@@ -524,4 +549,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 [version 1.3]: https://github.com/houmain/gpupad/compare/1.2...1.3
 [version 1.2]: https://github.com/houmain/gpupad/compare/1.1...1.2
 [version 1.1]: https://github.com/houmain/gpupad/compare/1.0.0...1.1
-
