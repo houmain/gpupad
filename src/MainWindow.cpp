@@ -434,7 +434,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 void MainWindow::keyReleaseEvent(QKeyEvent *event) 
 {
     if (event->key() == Qt::Key_Alt && mLastPressWasAlt)
-        return mMenuButton->click();
+        if (!std::exchange(mIgnoreNextAlt, false))
+            return mMenuButton->click();
     
     QMainWindow::keyReleaseEvent(event);
 }

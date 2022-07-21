@@ -47,6 +47,7 @@ public Q_SLOTS:
     void populateSampleSessions();
     void openSampleSession();
     void openAbout();
+    void ignoreNextAlt() { mIgnoreNextAlt = true; }
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -104,6 +105,7 @@ private:
     QList<QAction*> mRecentSessionActions;
     QList<QAction*> mRecentFileActions;
     bool mLastPressWasAlt{ };
+    bool mIgnoreNextAlt{ };
 };
 
 #endif // MAINWINDOW_H

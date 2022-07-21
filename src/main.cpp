@@ -92,6 +92,7 @@ int main(int argc, char *argv[])
             window.setWindowState(
                 (window.windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
 #if defined(_WIN32)
+            window.ignoreNextAlt();
             SetForegroundWindowInternal(reinterpret_cast<HWND>(window.winId()));
 #else
             window.raise();
