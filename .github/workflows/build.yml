@@ -25,7 +25,7 @@ jobs:
           }
         - {
             name: "MacOS-x64"
-            , os: macos-10.15
+            , os: macos-11
             , QT_VERSION: 5.15.2, QT_INST_DIR: /Users/runner, QTDIR: /Users/runner/Qt/5.15.2/clang_64
           }          
     steps:
@@ -88,4 +88,4 @@ jobs:
       with:
         file: "*.msi;*.dmg;GPUpad*.AppImage"
         tags: true
-        draft: true
+        draft: false
