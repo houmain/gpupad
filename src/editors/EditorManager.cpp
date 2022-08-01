@@ -66,7 +66,12 @@ QWidget *EditorManager::createEditorPropertiesPanel(
         showAction->setChecked(false);
     };
     connect(showAction, &QAction::toggled, [=](bool show) { 
-      show ? showPropertiesPanel() : hidePropertiesPanel(); 
+        if (show) {
+            showPropertiesPanel();
+        }
+        else if (!qApp->keyboardModifiers()) {
+            hidePropertiesPanel(); 
+        }
     });
     connect(mFindReplaceBar, &FindReplaceBar::cancelled, hidePropertiesPanel);
     connect(mTextureInfoBar, &TextureInfoBar::cancelled, hidePropertiesPanel);
