@@ -110,9 +110,10 @@ private:
     QTextCharFormat mMultiSelectionFormat;
     QList<QTextCursor> mMatchingBraces;
     QList<QTextCursor> mMarkedOccurrences;
+    QRect mMarkedOccurrencesRect;
     QString mMarkedOccurrencesString;
-    MultiTextCursors mMultiTextCursors;
     QTextDocument::FindFlags mMarkedOccurrencesFindFlags{ };
+    MultiTextCursors mMultiTextCursors;
     QTextCursor mFindReplaceRange;
     QColor mLineNumberColor;
     QColor mCurrenLineNumberColor;
