@@ -130,7 +130,6 @@ SourceEditor::SourceEditor(QString fileName
     setLineWrap(settings.lineWrap());
     setShowWhiteSpace(settings.showWhiteSpace());
     setIndentWithSpaces(settings.indentWithSpaces());
-    setCenterOnScroll(true);
     setCursorWidth(mInitialCursorWidth);
 
     connect(&settings, &Settings::tabSizeChanged,
@@ -272,6 +271,7 @@ void SourceEditor::replace(QString source)
         const auto position = cursor.position();
         const auto anchor = cursor.anchor();
         const auto scrollPosition = verticalScrollBar()->sliderPosition();
+        const auto scrollToEnd = (scrollPosition == verticalScrollBar()->maximum());
         cursor.beginEditBlock();
         cursor.setPosition(firstDiff);
         cursor.setPosition(lastDiffCurrent, QTextCursor::KeepAnchor);
@@ -281,11 +281,13 @@ void SourceEditor::replace(QString source)
         cursor.setPosition(std::min(position, firstDiff), QTextCursor::KeepAnchor);
         cursor.endEditBlock();
         setTextCursor(cursor);
-        verticalScrollBar()->setSliderPosition(scrollPosition);
+        verticalScrollBar()->setSliderPosition(scrollToEnd ? 
+            verticalScrollBar()->maximum() : scrollPosition);
     }
 
     document()->setUndoRedoEnabled(true);
-    deduceSourceType();
+    if (initial)
+        deduceSourceType();
 }
 
 void SourceEditor::cut()
