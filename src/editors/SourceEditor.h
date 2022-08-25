@@ -89,6 +89,8 @@ private:
     void updateSyntaxHighlighting();
     void updateEditorToolBar();
     void emitNavigationPositionChanged();
+    QTextCursor find(const QString &subString, int from, int to, 
+        QTextDocument::FindFlags options = QTextDocument::FindFlags()) const;
     void findReplaceAction(FindReplaceBar::Action action, QString find,
         QString replace, QTextDocument::FindFlags flags);
     void markOccurrences(QString text, QTextDocument::FindFlags =

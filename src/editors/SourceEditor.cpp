@@ -1003,8 +1003,60 @@ void SourceEditor::insertCompletion(const QString &completion)
     setTextCursor(cursor);
 }
 
+// manually searching blocks since QTextDocument::find() has no 'to' parameter...
+QTextCursor SourceEditor::find(const QString &string, int from, int to, 
+    QTextDocument::FindFlags options) const
+{
+    const auto forward = ((options & QTextDocument::FindBackward) == 0);
+    const auto backward = !forward;
+    const auto wholeWord = ((options & QTextDocument::FindWholeWords) != 0);
+    const auto caseSensitivity = (options & QTextDocument::FindCaseSensitively ?
+        Qt::CaseSensitive : Qt::CaseInsensitive);
+    if (forward ? from > to : from < to)
+        return { };
+
+    auto block = document()->findBlock(from);
+    for (;;) {
+        if (!block.isValid() ||
+            (forward && block.position() >= to) || 
+            (backward && block.position() + block.length() <= to))
+            return { };
+
+        const auto text = block.text();
+        auto offset = std::min(std::max(from - block.position(), 0), text.length() - 1);
+        for (; offset >= 0; offset += (forward ? 1 : -1)) {
+            offset = (forward ? text.indexOf(string, offset, caseSensitivity) : 
+                      text.lastIndexOf(string, offset, caseSensitivity));
+            if (offset < 0)
+                break;
+
+            const auto begin = block.position() + offset;
+            const auto end = begin + string.length();
+            if (backward && end > from)
+                continue;
+            if (forward && end > to)
+                return { };
+            if (backward && begin < to)
+                return { };
+            if (wholeWord && 
+                offset - 1 >= 0 && text[offset - 1].isLetterOrNumber())
+                continue;
+            if (wholeWord && 
+                offset + string.length() < text.length() && 
+                text[offset + string.length()].isLetterOrNumber())
+                continue;
+                                
+            auto cursor = textCursor();
+            cursor.setPosition(begin);
+            cursor.setPosition(end, QTextCursor::KeepAnchor);
+            return cursor;
+        }
+        block = (forward ? block.next() : block.previous());
+    }
+}
+
 void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
-    QString find, QString replace, QTextDocument::FindFlags flags)
+    QString string, QString replace, QTextDocument::FindFlags flags)
 {
     if (mFindReplaceBar.target() != this)
         return;
@@ -1015,42 +1067,52 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
         return;
     }
 
-    markOccurrences(find, flags);
-
     const auto range = updateFindReplaceRange();
     const auto top = std::min(range.anchor(), range.position());
-    const auto bottom = std::max(range.anchor(), range.position());
+    auto bottom = std::max(range.anchor(), range.position());
     const auto inRange = [&](const QTextCursor &cursor) {
         return !(cursor.isNull() || cursor.position() < top || cursor.position() > bottom);
     };
 
     if (action == FindReplaceBar::Replace) {
         auto cursor = textCursor();
-        if (!cursor.selectedText().compare(find, 
+        if (!cursor.selectedText().compare(string, 
             QTextDocument::FindCaseSensitively ? 
                 Qt::CaseSensitive : Qt::CaseInsensitive)) {
             cursor.insertText(replace);
         }
         action = FindReplaceBar::Find;
+        mMarkedOccurrencesString.clear();
     }
     else if (action == FindReplaceBar::ReplaceAll) {
-        auto cursor = document()->find(find, top, flags); 
-        if (inRange(cursor)) {
-            cursor.beginEditBlock();
-            while (inRange(cursor)) {
-                cursor.insertText(replace);
-                cursor = document()->find(find, cursor, 
-                    (flags & ~QTextDocument::FindBackward));
+        if (!string.isEmpty()) {
+            Q_ASSERT(!(flags & QTextDocument::FindBackward));
+            auto cursor = find(string, top, bottom, flags);
+            if (inRange(cursor)) {
+                cursor.beginEditBlock();
+                while (inRange(cursor)) {
+                    const auto delta = replace.length() - string.length();
+                    const auto position = cursor.position() + delta;
+                    cursor.insertText(replace);
+                    bottom += delta;
+                    const auto next = find(string, position, bottom, flags);
+                    if (next.isNull())
+                        break;
+                    cursor.setPosition(next.anchor());
+                    cursor.setPosition(next.position(), QTextCursor::KeepAnchor);
+                }
+                cursor.endEditBlock();
             }
-            cursor.endEditBlock();
         }
-        action = FindReplaceBar::Find;
+        action = FindReplaceBar::Refresh;
+        mMarkedOccurrencesString.clear();
     }
 
     if (action == FindReplaceBar::FindTextChanged ||
         action == FindReplaceBar::Refresh) {
 
-        auto cursor = document()->find(find, top, flags); 
+        auto cursor = find(string, textCursor().anchor(), bottom, 
+            (flags & ~QTextDocument::FindBackward)); 
         if (inRange(cursor)) {
             setTextCursor(cursor);
             if (action != FindReplaceBar::Refresh)
@@ -1063,17 +1125,21 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
         }
     }
     else if (action == FindReplaceBar::Find) {
-        auto cursor = document()->find(find, textCursor(), flags); 
+        auto cursor = find(string, 
+            (flags & QTextDocument::FindBackward ? 
+                textCursor().position() - 1 : textCursor().anchor() + 1), 
+            (flags & QTextDocument::FindBackward ? top : bottom), flags); 
         if (!inRange(cursor))
-            cursor = document()->find(find, 
-                (flags & QTextDocument::FindBackward ? bottom : top), flags); 
-        if (!inRange(cursor))
-            cursor = document()->find(find, cursor, flags); 
+            cursor = find(string, 
+                (flags & QTextDocument::FindBackward ? bottom : top),
+                textCursor().position(), flags); 
         if (inRange(cursor)) {
             setTextCursor(cursor);
             ensureCursorVisible();
         }
     }
+
+    markOccurrences(string, flags);
 }
 
 void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
@@ -1101,11 +1167,9 @@ void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
         auto bottom = cursorForPosition(QPoint{ width(), height() }).position();
         top = std::max(top, findReplaceRange.anchor());
         bottom = std::min(bottom, findReplaceRange.position());
-        for (auto it = document()->find(text, top, flags); 
-                !it.isNull() && it.position() <= bottom;
-                it = document()->find(text, it, flags)) {
+        for (auto it = find(text, top, bottom, flags); !it.isNull(); 
+                it = find(text, it.position() + text.length(), bottom, flags))
             mMarkedOccurrences.append(it);
-        }
     }
     updateExtraSelections();
 }
