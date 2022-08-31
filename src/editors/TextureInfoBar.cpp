@@ -2,6 +2,7 @@
 #include "Histogram.h"
 #include "ui_TextureInfoBar.h"
 #include <QVector4D>
+#include <QAction>
 #include <cmath>
 
 TextureInfoBar::TextureInfoBar(QWidget *parent)
@@ -12,7 +13,7 @@ TextureInfoBar::TextureInfoBar(QWidget *parent)
     ui->setupUi(this);
     ui->minimum->setDecimal(true);
     ui->maximum->setDecimal(true);
-    ui->horizontalLayout->insertWidget(4, mHistogram);
+    ui->horizontalLayout->insertWidget(5, mHistogram);
     
     setMinimumSize(0, 80);
     setMaximumSize(4096, 80);
@@ -41,6 +42,11 @@ TextureInfoBar::TextureInfoBar(QWidget *parent)
         this, &TextureInfoBar::invertRange);
     connect(mHistogram, &Histogram::mappingRangeChanged, 
         this, &TextureInfoBar::mappingRangeChanged);
+
+    for (auto button : { ui->buttonColorR, ui->buttonColorG, 
+                         ui->buttonColorB, ui->buttonColorA })
+        connect(button, &QToolButton::toggled, 
+            this, &TextureInfoBar::handleColorMaskToggled);
 }
 
 TextureInfoBar::~TextureInfoBar()
@@ -146,5 +152,27 @@ void TextureInfoBar::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     Q_EMIT histogramBinCountChanged(histogramBinCount());
+}
+
+void TextureInfoBar::handleColorMaskToggled()
+{
+    auto colorMask = unsigned int{ };
+    colorMask |= (ui->buttonColorR->isChecked() ? 1 : 0);
+    colorMask |= (ui->buttonColorG->isChecked() ? 2 : 0);
+    colorMask |= (ui->buttonColorB->isChecked() ? 4 : 0);
+    colorMask |= (ui->buttonColorA->isChecked() ? 8 : 0);
+    setColorMask(colorMask);
+}
+
+void TextureInfoBar::setColorMask(unsigned int colorMask) 
+{
+    if (mColorMask != colorMask) {
+        mColorMask = colorMask;
+        ui->buttonColorR->setChecked(colorMask & 1);
+        ui->buttonColorG->setChecked(colorMask & 2);
+        ui->buttonColorB->setChecked(colorMask & 4);
+        ui->buttonColorA->setChecked(colorMask & 8);
+        Q_EMIT colorMaskChanged(mColorMask);
+    }
 }
 

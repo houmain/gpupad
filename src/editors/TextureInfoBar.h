@@ -30,6 +30,8 @@ public:
     const Range &histogramBounds() const { return mHistogramBounds; }
     void resetRange();
     void invertRange();
+    void setColorMask(unsigned int colorMask);
+    unsigned int colorMask() const { return mColorMask; }
 
     void resizeEvent(QResizeEvent *event) override;
 
@@ -40,12 +42,16 @@ Q_SIGNALS:
     void histogramBinCountChanged(int count);
     void histogramBoundsChanged(const Range &bounds);
     void autoRangeRequested();
+    void colorMaskChanged(unsigned int colorMask);
 
 private:
+    void handleColorMaskToggled();
+
     Ui::TextureInfoBar *ui;
     Histogram *mHistogram;
     bool mIsPickerEnabled{ };
     Range mHistogramBounds{ };
+    unsigned int mColorMask{ };
 };
 
 #endif // TEXTUREINFOBAR_H

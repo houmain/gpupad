@@ -48,6 +48,8 @@ public:
     void computeHistogramBounds();
     void setHistogramEnabled(bool enabled) { mHistogramEnabled = enabled; }
     bool histogramEnabled() const { return mHistogramEnabled; }
+    void setColorMask(unsigned int colorMask);
+    unsigned int colorMask() const { return mColorMask; }
     QRectF boundingRect() const override { return mBoundingRect; }
     void setMousePosition(const QPointF &mousePosition);
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) override;
@@ -89,6 +91,7 @@ private:
     QPointF mMousePosition{ };
     bool mUpload{ };
     ComputeRange *mComputeRange{ };
+    unsigned int mColorMask{ };
 };
 
 #endif // TEXTUREITEM_H

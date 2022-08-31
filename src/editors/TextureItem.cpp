@@ -59,6 +59,7 @@ uniform float uMappingOffset;
 uniform float uMappingFactor;
 uniform bool uPickerEnabled;
 uniform bool uHistogramEnabled;
+uniform int uColorMask;
 
 in vec2 vTexCoord;
 out vec4 oColor;
@@ -96,6 +97,11 @@ void main() {
   color /= float(uSamples);
   color = MAPPING;
   color = SWIZZLE;
+
+  if ((uColorMask & 1) != 0) color.r = 0.0;
+  if ((uColorMask & 2) != 0) color.g = 0.0;
+  if ((uColorMask & 4) != 0) color.b = 0.0;
+  if ((uColorMask & 8) != 0) color.a = 1.0;
 
 #ifdef GL_ARB_shader_image_load_store
   if (uPickerEnabled && gl_FragCoord.xy == uPickerFragCoord)
@@ -456,6 +462,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
             static_cast<float>(-mMappingRange.minimum));
         program->setUniformValue("uMappingFactor", 
             static_cast<float>(1 / mMappingRange.range()));
+        program->setUniformValue("uColorMask", mColorMask);
 
 #if !GL_VERSION_4_2
         program->setUniformValue("uPickerEnabled", false);
@@ -556,4 +563,12 @@ void TextureItem::updateHistogram()
     mPrevHistogramBins.swap(mHistogramBins);
 
     Q_EMIT histogramChanged(histogram);
+}
+
+void TextureItem::setColorMask(unsigned int colorMask)
+{
+    if (mColorMask != colorMask) {
+        mColorMask = colorMask;
+        update();
+    }
 }
