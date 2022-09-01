@@ -7,6 +7,7 @@
 #include <QPointer>
 #include <QMenu>
 #include <QClipboard>
+#include <map>
 
 namespace {
     QDockWidget *getTabBarDock(QTabBar *tabBar, int index)
@@ -128,15 +129,19 @@ void DockWindow::openContextMenu(int index)
             }
 
             menu.addSeparator();
+
+            auto docks = std::multimap<QString, QDockWidget *>();
             for (auto i = 0; i < tabBar->count(); ++i)
                 if (auto dock = getTabBarDock(tabBar, i)) {
                     const auto title = (dock->statusTip().isEmpty() ? 
                         dock->windowTitle().replace("[*]", "") :
                         dock->statusTip());
-                    auto open = menu.addAction(title);
-                    connect(open, &QAction::triggered, 
-                        [=]() { raiseDock(dock); });
+                    docks.emplace(title, dock);
                 }
+
+            for (const auto &[title, dock] : docks)
+                connect(menu.addAction(title), &QAction::triggered, 
+                    [this, dock = dock]() { raiseDock(dock); });
         }
         menu.exec(tabBar->mapToGlobal(
             tabBar->tabRect(index).bottomLeft() + QPoint(0, 2)));
