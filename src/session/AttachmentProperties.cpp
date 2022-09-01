@@ -80,9 +80,7 @@ void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->blendAlphaEq, SessionModel::AttachmentBlendAlphaEq);
     mapper.addMapping(mUi->blendAlphaSource, SessionModel::AttachmentBlendAlphaSource);
     mapper.addMapping(mUi->blendAlphaDest, SessionModel::AttachmentBlendAlphaDest);
-
-    // TODO: generate mask from checkboxes
-    //mapper.addMapping(mUi->colorWriteMask, SessionModel::AttachmentColorWriteMask);
+    mapper.addMapping(mUi->colorWriteMask, SessionModel::AttachmentColorWriteMask);
 
     mapper.addMapping(mUi->depthComparisonFunc, SessionModel::AttachmentDepthComparisonFunc);
     mapper.addMapping(mUi->depthOffsetSlope, SessionModel::AttachmentDepthOffsetSlope);
@@ -119,9 +117,7 @@ void AttachmentProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaEq, mUi->blendAlphaEq, kind.color);
     setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaSource, mUi->blendAlphaSource, kind.color);
     setFormVisibility(mUi->formLayout, mUi->labelBlendAlphaDest, mUi->blendAlphaDest, kind.color);
-
-    // TODO: implement
-    setFormVisibility(mUi->formLayout, mUi->labelColorWriteMask, mUi->colorWriteMask, false && kind.color);
+    setFormVisibility(mUi->formLayout, mUi->labelColorWriteMask, mUi->colorWriteMask, kind.color);
 
     static const QStringList tabTitles = {
         mUi->tabDepthStencil->tabText(0),

@@ -164,6 +164,7 @@ set(SOURCES
   src/session/BlockProperties.ui
   src/session/CallProperties.cpp
   src/session/CallProperties.ui
+  src/session/ColorMask.cpp
   src/session/ColorPicker.cpp
   src/session/FieldProperties.ui
   src/session/DataComboBox.cpp
