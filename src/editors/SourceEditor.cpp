@@ -1168,7 +1168,7 @@ void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
         top = std::max(top, findReplaceRange.anchor());
         bottom = std::min(bottom, findReplaceRange.position());
         for (auto it = find(text, top, bottom, flags); !it.isNull(); 
-                it = find(text, it.position() + text.length(), bottom, flags))
+                it = find(text, it.position() + 1, bottom, flags))
             mMarkedOccurrences.append(it);
     }
     updateExtraSelections();
