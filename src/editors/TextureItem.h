@@ -23,6 +23,7 @@ public:
     void releaseGL();
 
     void setImage(TextureData image);
+    const TextureData &image() const { return mImage; }
     void setPreviewTexture(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format, GLuint textureId);
     GLuint resetTexture();

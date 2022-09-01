@@ -14,6 +14,8 @@
 #include <QApplication>
 #include <QOpenGLWidget>
 #include <QWheelEvent>
+#include <QMimeData>
+#include <QClipboard>
 #include <QScrollBar>
 #include <cstring>
 
@@ -93,11 +95,14 @@ TextureEditor::~TextureEditor()
 QList<QMetaObject::Connection> TextureEditor::connectEditActions(
         const EditActions &actions)
 {
+    actions.copy->setEnabled(true);
     actions.findReplace->setEnabled(true);
     actions.windowFileName->setText(fileName());
     actions.windowFileName->setEnabled(isModified());
 
     auto c = QList<QMetaObject::Connection>();
+    c += connect(actions.copy, &QAction::triggered,
+                 this, &TextureEditor::copy);
     c += connect(this, &TextureEditor::fileNameChanged,
                  actions.windowFileName, &QAction::setText);
     c += connect(this, &TextureEditor::modificationChanged,
@@ -203,12 +208,17 @@ bool TextureEditor::load()
 
     // automatically flip in editor when opening an image file
     if (mTexture.isNull() && !FileDialog::isEmptyOrUntitled(mFileName))
-        mTextureItem->setFlipVertically(true);
+        setFlipVertically(true);
 
     replace(texture);
     setModified(false);
     mIsRaw = isRaw;
     return true;
+}
+
+void TextureEditor::setFlipVertically(bool flipVertically)
+{
+    mTextureItem->setFlipVertically(flipVertically);
 }
 
 bool TextureEditor::save()
@@ -239,6 +249,16 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
 
     if (qApp->focusWidget() == this)
       updateEditorToolBar();
+}
+
+void TextureEditor::copy()
+{
+    auto image = mTextureItem->image().toImage();
+    if (!image.isNull()) {
+        auto *data = new QMimeData();
+        data->setImageData(image);
+        QApplication::clipboard()->setMimeData(data);
+    }
 }
 
 void TextureEditor::updatePreviewTexture(QOpenGLTexture::Target target,

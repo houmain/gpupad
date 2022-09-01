@@ -561,8 +561,9 @@ void EditorManager::pasteInNewEditor()
     if (mimeData->hasImage())
         if (auto editor = openNewTextureEditor(fileName)) {
             auto texture = TextureData();
-            if (texture.loadQImage(mimeData->imageData().value<QImage>(), true)) {
+            if (texture.loadQImage(mimeData->imageData().value<QImage>(), false)) {
                 editor->replace(std::move(texture));
+                editor->setFlipVertically(true);
                 return;
             }
         }

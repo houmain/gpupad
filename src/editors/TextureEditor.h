@@ -33,9 +33,11 @@ public:
     void setRawFormat(RawFormat rawFormat);
     bool load() override;
     bool save() override;
+    void copy();
     int tabifyGroup() override { return 1; }
     bool isModified() const { return mModified; }
     void replace(TextureData texture, bool emitFileChanged = true);
+    void setFlipVertically(bool flipVertically);
     void updatePreviewTexture(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format, GLuint textureId);
     const TextureData &texture() const { return mTexture; }
