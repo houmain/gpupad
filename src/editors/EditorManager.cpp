@@ -124,10 +124,14 @@ void EditorManager::updateEditorToolBarVisibility()
 
 void EditorManager::updateEditorPropertiesVisibility()
 {
-    mFindReplaceBar->setVisible(
-        mCurrentDock && qobject_cast<SourceEditor*>(mCurrentDock->widget()));
-    mTextureInfoBar->setVisible(
-        mCurrentDock && qobject_cast<TextureEditor*>(mCurrentDock->widget()));
+    // do not hide when non-editor dock is selected
+    mTextureInfoBar->setEnabled(hasCurrentEditor());
+    if (hasEditor() && !hasCurrentEditor())
+        return;
+
+    const auto widget = (mCurrentDock ? mCurrentDock->widget() : nullptr);
+    mFindReplaceBar->setVisible(qobject_cast<SourceEditor*>(widget));
+    mTextureInfoBar->setVisible(qobject_cast<TextureEditor*>(widget));
     mTextureInfoBar->setPickerEnabled(
         mTextureInfoBar->parentWidget()->isVisible());
 }
@@ -180,9 +184,7 @@ void EditorManager::updateCurrentEditor()
         updateDockCurrentProperty(previous, false);
 
     updateEditorToolBarVisibility();
-
-    if (hasCurrentEditor() || !hasEditor())
-        updateEditorPropertiesVisibility();
+    updateEditorPropertiesVisibility();
 }
 
 QString EditorManager::currentEditorFileName()
