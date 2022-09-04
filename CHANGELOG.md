@@ -3,7 +3,24 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Version 1.25] - 2022-07-21
+## [Version 1.26.0] - 2022-09-04
+
+### Added
+
+- Allow to disable channel in texture editor.
+- Allow to copy texture editor content to clipboard.
+- Implemented Attachment colorWriteMask.
+
+### Changed
+
+- Conditionally scrolling to end when reloading externally modified file.
+- Sorting editors in dock tab context menu.
+
+### Fixed
+
+- Improved Find/Replace performance.
+
+## [Version 1.25.0] - 2022-07-21
 
 ### Added
 
@@ -28,7 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed potentially wrong preview texture format.
 - Fixed restoring histogram state.
 
-## [Version 1.24] - 2022-04-15
+## [Version 1.24.0] - 2022-04-15
 
 ### Added
 
@@ -58,7 +75,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed disabling syntax highlighting for big files.
 - Improved syntax highlighting performance.
 
-## [Version 1.23] - 2022-02-25
+## [Version 1.23.0] - 2022-02-25
 
 ### Added
 
@@ -524,9 +541,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
-[version 1.25]: https://github.com/houmain/gpupad/compare/1.24...1.25
-[version 1.24]: https://github.com/houmain/gpupad/compare/1.23...1.24
-[version 1.23]: https://github.com/houmain/gpupad/compare/1.22...1.23
+[version 1.26.0]: https://github.com/houmain/gpupad/compare/1.25.0...1.26.0
+[version 1.25.0]: https://github.com/houmain/gpupad/compare/1.24.0...1.25.0
+[version 1.24.0]: https://github.com/houmain/gpupad/compare/1.23.0...1.24.0
+[version 1.23.0]: https://github.com/houmain/gpupad/compare/1.22...1.23.0
 [version 1.22]: https://github.com/houmain/gpupad/compare/1.21...1.22
 [version 1.21]: https://github.com/houmain/gpupad/compare/1.20...1.21
 [version 1.20]: https://github.com/houmain/gpupad/compare/1.19...1.20
