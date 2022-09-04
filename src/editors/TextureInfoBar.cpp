@@ -156,7 +156,7 @@ void TextureInfoBar::resizeEvent(QResizeEvent *event)
 
 void TextureInfoBar::handleColorMaskToggled()
 {
-    auto colorMask = unsigned int{ };
+    auto colorMask = 0u;
     colorMask |= (ui->buttonColorR->isChecked() ? 1 : 0);
     colorMask |= (ui->buttonColorG->isChecked() ? 2 : 0);
     colorMask |= (ui->buttonColorB->isChecked() ? 4 : 0);

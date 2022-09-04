@@ -39,7 +39,7 @@ unsigned int ColorMask::colorMask() const
 
 void ColorMask::handleColorMaskToggled() 
 {
-    auto colorMask = unsigned int{ };
+    auto colorMask = 0u;
     colorMask |= (mColorR->isChecked() ? 1 : 0);
     colorMask |= (mColorG->isChecked() ? 2 : 0);
     colorMask |= (mColorB->isChecked() ? 4 : 0);
