@@ -60,6 +60,7 @@ private:
     void setBounds(QRect bounds);
     void setZoom(int zoom);
     QTransform getZoomTransform() const;
+    void updateMargin();
     void updateBackground();
     void setModified(bool modified);
     void updateEditorToolBar();

@@ -393,9 +393,7 @@ void TextureEditor::setBounds(QRect bounds)
     inside.addRect(bounds);
     mBorder->setPath(inside);
 
-    const auto margin = 15;
-    bounds.adjust(-margin, -margin, margin, margin);
-    setSceneRect(bounds);
+    updateMargin();
 }
 
 void TextureEditor::setZoom(int zoom)
@@ -406,7 +404,19 @@ void TextureEditor::setZoom(int zoom)
     mZoom = zoom;
     setTransform(getZoomTransform());
 
+    updateMargin();
     updateBackground();
+}
+
+void TextureEditor::updateMargin() 
+{
+    auto margin = 15;
+    if (mZoom > 0)
+        margin = std::max(margin / mZoom, 1);
+
+    auto bounds = mBounds;
+    bounds.adjust(-margin, -margin, margin, margin);
+    setSceneRect(bounds);
 }
 
 QTransform TextureEditor::getZoomTransform() const
