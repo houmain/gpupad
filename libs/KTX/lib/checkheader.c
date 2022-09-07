@@ -38,6 +38,7 @@
 
 #include "ktx.h"
 #include "ktxint.h"
+#include "gl_format.h"
 
 /**
  * @internal
@@ -102,7 +103,11 @@ KTX_error_code _ktxCheckHeader(KTX_header* pHeader,
     if (pHeader->glFormat == pHeader->glInternalformat) {
         // glInternalFormat is either unsized (which is no longer and should
         // never have been supported by libktx) or glFormat is sized.
-        return KTX_FILE_DATA_ERROR;
+        //return KTX_FILE_DATA_ERROR;
+
+        //@ accept some corrupt files
+        pHeader->glType = glGetTypeFromInternalFormat(pHeader->glInternalformat);
+        pHeader->glFormat = glGetFormatFromInternalFormat(pHeader->glInternalformat);
     }
 
     /* Check texture dimensions. KTX files can store 8 types of textures:
