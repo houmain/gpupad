@@ -207,7 +207,9 @@ bool TextureEditor::load()
     }
 
     // automatically flip in editor when opening an image file
-    if (mTexture.isNull() && !FileDialog::isEmptyOrUntitled(mFileName))
+    if (mTexture.isNull() && 
+        !FileDialog::isEmptyOrUntitled(mFileName) && 
+        texture.dimensions() == 2 && !texture.isCubemap())
         setFlipVertically(true);
 
     replace(texture);
