@@ -223,6 +223,12 @@ void TextureEditor::setFlipVertically(bool flipVertically)
     mTextureItem->setFlipVertically(flipVertically);
 }
 
+int TextureEditor::tabifyGroup() 
+{
+    // open untitled textures next to other editors
+    return (FileDialog::isEmptyOrUntitled(mFileName) ? 1 : 0);
+}
+
 bool TextureEditor::save()
 {
     if (!mTexture.save(fileName(), !mTextureItem->flipVertically()))
