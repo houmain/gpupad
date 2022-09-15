@@ -13,6 +13,7 @@ public:
     GLShader(Shader::ShaderType type, const QList<const Shader*> &shaders,
         const QString &preamble, const QString &includePaths);
     bool operator==(const GLShader &rhs) const;
+    ItemId itemId() const { return mItemId; }
     Shader::ShaderType type() const { return mType; }
     Shader::Language language() const { return mLanguage; }
     const QStringList &sources() const { return mSources; }

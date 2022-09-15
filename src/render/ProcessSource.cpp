@@ -41,6 +41,24 @@ namespace {
                             shaders.append(shader);
         return shaders;
     }
+
+    void tryToGetLinkerWarnings(GLShader &shader, MessagePtrSet &messages) 
+    {
+        auto &gl = GLContext::currentContext();
+        auto program = gl.glCreateProgram();
+        gl.glAttachShader(program, shader.shaderObject());
+        gl.glLinkProgram(program);
+        auto status = GLint{ };
+        gl.glGetProgramiv(program, GL_LINK_STATUS, &status);
+        if (status == GL_TRUE) {
+            auto length = GLint{ };
+            gl.glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+            auto log = std::vector<char>(static_cast<size_t>(length));
+            gl.glGetProgramInfoLog(program, length, nullptr, log.data());
+            GLShader::parseLog(log.data(), messages, shader.itemId(), shader.fileNames());
+        }
+        gl.glDeleteProgram(program);
+    }
 } // namespace
 
 ProcessSource::ProcessSource(QObject *parent) : RenderTask(parent)
@@ -115,7 +133,11 @@ void ProcessSource::render()
     if (mValidateSource) {
         if (mShader) {
             auto glPrintf = GLPrintf();
-            mShader->compile(&glPrintf);
+            if (mShader->compile(&glPrintf)) {
+                // try to link and if it also succeeds,
+                // output messages from linking to get potential warnings
+                tryToGetLinkerWarnings(*mShader, messages);
+            }
         }
         else {
             if (mSourceType == SourceType::JavaScript)
