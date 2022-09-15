@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>SourceEditorToolBar</class>
  <widget class="QWidget" name="SourceEditorToolBar">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>27</width>
+    <height>22</height>
+   </rect>
+  </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="spacing">
     <number>4</number>
@@ -21,7 +29,7 @@
    <item>
     <widget class="QToolButton" name="sourceTypeButton">
      <property name="toolTip">
-      <string>Validate source</string>
+      <string>Validate source [F9]</string>
      </property>
      <property name="checkable">
       <bool>true</bool>

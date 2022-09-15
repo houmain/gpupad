@@ -448,7 +448,7 @@
     <string>&amp;Manual</string>
    </property>
    <property name="toolTip">
-    <string>Manual Evaluation</string>
+    <string>Manual Evaluation [F6]</string>
    </property>
    <property name="shortcut">
     <string>F6</string>
@@ -466,7 +466,7 @@
     <string>&amp;Automatic</string>
    </property>
    <property name="toolTip">
-    <string>Automatic Evaluation</string>
+    <string>Automatic Evaluation [F7]</string>
    </property>
    <property name="shortcut">
     <string>F7</string>
@@ -492,7 +492,7 @@
     <string>&amp;Steady</string>
    </property>
    <property name="toolTip">
-    <string>Steady Evaluation</string>
+    <string>Steady Evaluation [F8]</string>
    </property>
    <property name="shortcut">
     <string>F8</string>
@@ -503,7 +503,7 @@
     <string>&amp;Manage...</string>
    </property>
    <property name="shortcut">
-    <string>F9</string>
+    <string>F10</string>
    </property>
   </action>
   <action name="actionOnlineHelp">
@@ -532,7 +532,7 @@
     <string>&amp;Reset</string>
    </property>
    <property name="toolTip">
-    <string>Reset Evaluation</string>
+    <string>Reset Evaluation [F5]</string>
    </property>
    <property name="shortcut">
     <string>F5</string>
