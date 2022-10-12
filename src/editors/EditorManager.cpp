@@ -443,9 +443,11 @@ bool EditorManager::saveEditorAs()
 
     if (auto editor = currentEditor()) {
         auto options = FileDialog::Options{ FileDialog::Saving };
-        if (qobject_cast<SourceEditor*>(mCurrentDock->widget())) {
+        auto sourceType = SourceType{ };
+        if (const auto editor = qobject_cast<SourceEditor*>(mCurrentDock->widget())) {
             options |= FileDialog::ShaderExtensions;
             options |= FileDialog::ScriptExtensions;
+            sourceType = editor->sourceType();
         }
         else if (qobject_cast<BinaryEditor*>(mCurrentDock->widget())) {
             options |= FileDialog::BinaryExtensions;
@@ -461,7 +463,7 @@ bool EditorManager::saveEditorAs()
 
         const auto prevFileName = editor->fileName();
         auto fileName = FileDialog::advanceSaveAsSuffix(editor->fileName());
-        while (Singletons::fileDialog().exec(options, fileName)) {
+        while (Singletons::fileDialog().exec(options, fileName, sourceType)) {
             editor->setFileName(Singletons::fileDialog().fileName());
             if (editor->save()) {
                 Q_EMIT editorRenamed(prevFileName, editor->fileName());

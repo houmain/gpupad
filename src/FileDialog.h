@@ -3,6 +3,7 @@
 
 #include <QMessageBox>
 #include <QDir>
+#include "SourceType.h"
 
 class QMainWindow;
 
@@ -45,7 +46,8 @@ public:
     QString fileName() const;
     QStringList fileNames() const { return mFileNames; }
     bool asBinaryFile() const { return mAsBinaryFile; }
-    bool exec(Options options, QString fileName = "");
+    bool exec(Options options, QString fileName = "", 
+        SourceType sourceType = SourceType::PlainText);
 
 private:
     QMainWindow *mWindow;

@@ -22,6 +22,30 @@ namespace {
     };
 
     int gNextUntitledFileIndex;
+
+    QString getDefaultSourceTypeExtension(SourceType sourceType) 
+    {
+        switch (sourceType) {
+            case SourceType::PlainText:
+            case SourceType::Configuration:
+                break;
+            case SourceType::GLSL_VertexShader: return "vert";
+            case SourceType::GLSL_FragmentShader: return "frag";
+            case SourceType::GLSL_GeometryShader: return "geom";
+            case SourceType::GLSL_TessellationControl: return "tesc";
+            case SourceType::GLSL_TessellationEvaluation: return "tese";
+            case SourceType::GLSL_ComputeShader: return "comp";
+            case SourceType::HLSL_VertexShader: 
+            case SourceType::HLSL_PixelShader:
+            case SourceType::HLSL_GeometryShader:
+            case SourceType::HLSL_HullShader:
+            case SourceType::HLSL_DomainShader:
+            case SourceType::HLSL_ComputeShader: return "hlsl";
+            case SourceType::JavaScript: return "js";
+            case SourceType::Lua: return "lua";
+        }
+        return "txt";
+    }
 } // namespace
 
 QString FileDialog::generateNextUntitledFileName(QString base)
@@ -135,7 +159,8 @@ QString FileDialog::fileName() const
     return mFileNames.first();
 }
 
-bool FileDialog::exec(Options options, QString currentFileName)
+bool FileDialog::exec(Options options, QString currentFileName, 
+      SourceType sourceType)
 {
     QFileDialog dialog(mWindow);
     dialog.setOption(QFileDialog::HideNameFilterDetails);
@@ -202,12 +227,10 @@ bool FileDialog::exec(Options options, QString currentFileName)
 
     dialog.setDefaultSuffix("");
     if (options & Saving) {
-        if (options & ShaderExtensions)
-            dialog.setDefaultSuffix(*begin(ShaderFileExtensions));
+        if (options & (ShaderExtensions | ScriptExtensions))
+            dialog.setDefaultSuffix(getDefaultSourceTypeExtension(sourceType));
         else if (options & SessionExtensions)
             dialog.setDefaultSuffix(SessionFileExtension);
-        else if (options & ScriptExtensions)
-            dialog.setDefaultSuffix(*begin(ScriptFileExtensions));
         else if (options & BinaryExtensions)
             dialog.setDefaultSuffix("bin");
         else if (options & TextureExtensions)
