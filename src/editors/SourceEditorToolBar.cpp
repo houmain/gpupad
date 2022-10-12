@@ -42,6 +42,7 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
     addSourceType(sourceTypeMenu, tr("JavaScript"), SourceType::JavaScript);
     addSourceType(sourceTypeMenu, tr("Lua"), SourceType::Lua);
     sourceTypeMenu->addSeparator();
+    addSourceType(sourceTypeMenu, tr("Configuration"), SourceType::Configuration);
     addSourceType(sourceTypeMenu, tr("Plaintext"), SourceType::PlainText);
 
     connect(sourceTypeMenu, &QMenu::aboutToShow,

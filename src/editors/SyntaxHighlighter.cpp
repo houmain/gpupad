@@ -22,14 +22,15 @@ struct SyntaxHighlighter::Data
 namespace {
     const Syntax& getSyntax(SourceType sourceType) 
     {
-        static const auto syntaxPlainText = makeSyntaxPlain();
+        static const auto syntaxConfiguration = makeSyntaxConfiguration();
         static const auto syntaxGLSL = makeSyntaxGLSL();
         static const auto syntaxHLSL = makeSyntaxHLSL();
         static const auto syntaxJavaScript = makeSyntaxJavaScript();
         static const auto syntaxLua = makeSyntaxLua();
         switch (sourceType) {
             case SourceType::PlainText:
-                  return *syntaxPlainText;
+            case SourceType::Configuration:
+                break;
             case SourceType::GLSL_VertexShader:
             case SourceType::GLSL_FragmentShader:
             case SourceType::GLSL_GeometryShader:
@@ -49,7 +50,7 @@ namespace {
             case SourceType::Lua:
                 return *syntaxLua;
         }
-        return *syntaxPlainText;
+        return *syntaxConfiguration;
     }
 
     QSharedPointer<const SyntaxHighlighter::Data> createData(

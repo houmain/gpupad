@@ -37,6 +37,12 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
         if (current == SourceType::PlainText)
             return SourceType::HLSL_PixelShader;
     }
+
+    if (extension == "txt" || extension == "log")
+        return SourceType::PlainText;
+    if (extension == "cfg" || extension == "conf" || extension == "sh")
+        return SourceType::Configuration;
+
     return current;
 }
 
@@ -64,6 +70,7 @@ Shader::ShaderType getShaderType(SourceType sourceType)
 {
     switch (sourceType) {
         case SourceType::PlainText:
+        case SourceType::Configuration:
         case SourceType::JavaScript:
         case SourceType::Lua:
             break;
@@ -99,6 +106,7 @@ Shader::Language getShaderLanguage(SourceType sourceType)
 {
     switch (sourceType) {
         case SourceType::PlainText:
+        case SourceType::Configuration:
         case SourceType::JavaScript:
         case SourceType::Lua:
             break;

@@ -587,8 +587,7 @@ bool MainWindow::hasEditor() const
 void MainWindow::newFile()
 {
     mEditorManager.openNewSourceEditor(
-        FileDialog::generateNextUntitledFileName(tr("Untitled")),
-        SourceType::GLSL_FragmentShader);
+        FileDialog::generateNextUntitledFileName(tr("Untitled")));
 }
 
 void MainWindow::openFile()

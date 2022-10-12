@@ -286,8 +286,10 @@ void SourceEditor::replace(QString source)
     }
 
     document()->setUndoRedoEnabled(true);
-    if (initial)
+    if (initial) {
+        mSourceType = SourceType::Configuration;
         deduceSourceType();
+    }
 }
 
 void SourceEditor::cut()
@@ -380,7 +382,7 @@ void SourceEditor::updateSyntaxHighlighting()
 
     delete mHighlighter;
     mHighlighter = nullptr;
-    if (disabled)
+    if (mSourceType == SourceType::PlainText || disabled)
         return;
 
     const auto &settings = Singletons::settings();

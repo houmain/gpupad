@@ -6,6 +6,7 @@
 enum class SourceType
 {
     PlainText,
+    Configuration,
     GLSL_VertexShader,
     GLSL_FragmentShader,
     GLSL_GeometryShader,
