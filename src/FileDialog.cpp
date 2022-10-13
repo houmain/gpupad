@@ -27,7 +27,7 @@ namespace {
     {
         switch (sourceType) {
             case SourceType::PlainText:
-            case SourceType::Configuration:
+            case SourceType::Generic:
                 break;
             case SourceType::GLSL_VertexShader: return "vert";
             case SourceType::GLSL_FragmentShader: return "frag";

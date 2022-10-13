@@ -287,7 +287,7 @@ void SourceEditor::replace(QString source)
 
     document()->setUndoRedoEnabled(true);
     if (initial) {
-        mSourceType = SourceType::Configuration;
+        mSourceType = SourceType::Generic;
         deduceSourceType();
     }
 }

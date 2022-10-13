@@ -29,7 +29,7 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
             return SourceType::GLSL_VertexShader;
         if (text.contains("local_size_x"))
             return SourceType::GLSL_ComputeShader;
-        if (current == SourceType::PlainText)
+        if (current == SourceType::PlainText || current == SourceType::Generic)
             return SourceType::GLSL_FragmentShader;
     }
 
@@ -41,7 +41,7 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
     if (extension == "txt" || extension == "log")
         return SourceType::PlainText;
     if (extension == "cfg" || extension == "conf" || extension == "sh")
-        return SourceType::Configuration;
+        return SourceType::Generic;
 
     return current;
 }
@@ -70,7 +70,7 @@ Shader::ShaderType getShaderType(SourceType sourceType)
 {
     switch (sourceType) {
         case SourceType::PlainText:
-        case SourceType::Configuration:
+        case SourceType::Generic:
         case SourceType::JavaScript:
         case SourceType::Lua:
             break;
@@ -106,7 +106,7 @@ Shader::Language getShaderLanguage(SourceType sourceType)
 {
     switch (sourceType) {
         case SourceType::PlainText:
-        case SourceType::Configuration:
+        case SourceType::Generic:
         case SourceType::JavaScript:
         case SourceType::Lua:
             break;

@@ -17,7 +17,7 @@ public:
     virtual QString multiLineCommentEnd() const { return "\\*/"; }
 };
 
-Syntax* makeSyntaxConfiguration();
+Syntax* makeSyntaxGeneric();
 Syntax* makeSyntaxGLSL();
 Syntax* makeSyntaxHLSL();
 Syntax* makeSyntaxJavaScript();
