@@ -2,7 +2,7 @@
 #include "session/Item.h"
 #include "SourceType.h"
 
-SourceType deduceSourceType(SourceType current, const QString &extension, const QString &text)
+SourceType deduceSourceType(SourceType current, const QString &extension, const QString &source)
 {
     if (extension == "vs" || extension == "vert")
         return SourceType::GLSL_VertexShader;
@@ -25,20 +25,33 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
         return SourceType::HLSL_PixelShader;
 
     if (extension == "glsl") {
-        if (text.contains("gl_Position"))
+        if (source.contains("gl_Position"))
             return SourceType::GLSL_VertexShader;
-        if (text.contains("local_size_x"))
+        if (source.contains("local_size_x"))
             return SourceType::GLSL_ComputeShader;
         if (current == SourceType::PlainText || current == SourceType::Generic)
             return SourceType::GLSL_FragmentShader;
     }
 
     if (extension == "hlsl" || extension == "hlsli" || extension == "fx") {
-        if (current == SourceType::PlainText)
+        if (current == SourceType::PlainText || current == SourceType::Generic) {
+            if (source.contains("PS"))
+                return SourceType::HLSL_PixelShader;
+            if (source.contains("VS"))
+                return SourceType::HLSL_VertexShader;
+            if (source.contains("CS"))
+                return SourceType::HLSL_ComputeShader;
+            if (source.contains("GS"))
+                return SourceType::HLSL_GeometryShader;
+            if (source.contains("HS"))
+                return SourceType::HLSL_HullShader;
+            if (source.contains("DS"))
+                return SourceType::HLSL_DomainShader;
             return SourceType::HLSL_PixelShader;
+        }
     }
 
-    if (extension == "txt" || extension == "log")
+    if (extension == "txt" || extension == "log" || extension == "")
         return SourceType::PlainText;
     if (extension == "cfg" || extension == "conf" || extension == "sh")
         return SourceType::Generic;

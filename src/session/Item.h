@@ -79,7 +79,7 @@ struct Shader : FileItem
 
     ShaderType shaderType{ ShaderType::Vertex };
     Language language{ Language::GLSL };
-    QString entryPoint{ "main" };
+    QString entryPoint;
     QString preamble;
     QString includePaths;
 };

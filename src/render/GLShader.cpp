@@ -213,12 +213,9 @@ bool GLShader::compile(GLPrintf *printf, bool failSilently)
         return false;
 
     auto sources = std::vector<std::string>();
-    for (const QString &source : qAsConst(mPatchedSources)) {
+    for (const QString &source : qAsConst(mPatchedSources))
         sources.push_back(qUtf8Printable(source));
 
-        // prevent unaesthetic "syntax error, unexpected end of file"
-        sources.back() += ";";
-    }
     auto sourcePointers = std::vector<const char*>();
     for (const auto &source : sources)
         sourcePointers.push_back(source.data());

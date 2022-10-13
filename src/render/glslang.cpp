@@ -167,6 +167,60 @@ namespace
         }
         return glsl;
     }
+
+    QString completeFunctionName(const QString &source, const QString& prefix)
+    {
+        for (auto begin = source.indexOf(prefix); begin > 0; begin = source.indexOf(prefix, begin + 1)) {
+            // must be beginning of word
+            if (!source[begin - 1].isSpace())
+                continue;
+
+            // must not follow struct
+            if (source.midRef(std::max(begin - 10, 0), 10).contains("struct"))
+                continue;
+
+            // complete word
+            auto it = begin;
+            while (it < source.size() && (source[it].isLetterOrNumber() || source[it] == '_'))
+                ++it;
+
+            // ( must follow
+            if (it == source.size() || source[it] != '(')
+                continue;
+
+            return source.mid(begin, it - begin);
+        }
+        return { };
+    }
+
+    QString findHLSLEntryPoint(Shader::ShaderType shaderType, const QString &source)
+    {
+        const auto prefix = [&]() {
+            switch (shaderType) {
+                default:
+                case Shader::ShaderType::Fragment: return "PS";
+                case Shader::ShaderType::Vertex: return "VS";
+                case Shader::ShaderType::Geometry: return "GS";
+                case Shader::ShaderType::TessellationControl: return "HS";
+                case Shader::ShaderType::TessellationEvaluation: return "DS";
+                case Shader::ShaderType::Compute: return "CS";
+            }
+        }();
+        return completeFunctionName(source, prefix);
+    }
+
+    QString getEntryPoint(const QString &entryPoint, Shader::Language language, 
+        Shader::ShaderType shaderType, const QString &source)
+    {
+      if (!entryPoint.isEmpty())
+          return entryPoint;
+
+      if (language == Shader::Language::HLSL)
+          if (auto found = findHLSLEntryPoint(shaderType, source); !found.isEmpty())
+              return found;
+      
+      return "main";
+    }
 } // namespace
 
 QString generateSpirV(const QString &source, Shader::ShaderType shaderType,
@@ -213,7 +267,7 @@ QString generateGLSL(const QString &source, Shader::ShaderType shaderType,
     if (language == Shader::Language::HLSL)
         args += "-D";
     args += "-e";
-    args += (entryPoint.isEmpty() ? "main" : entryPoint);
+    args += getEntryPoint(entryPoint, language, shaderType, source);
     args += "-o";
     args += output.fileName();
 
