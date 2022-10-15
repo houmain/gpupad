@@ -555,7 +555,6 @@ void MainWindow::stopEvaluation()
 {
     mUi->actionEvalAuto->setChecked(false);
     mUi->actionEvalSteady->setChecked(false);
-    Singletons::synchronizeLogic().resetRenderSession();
 }
 
 void MainWindow::updateEvaluationMode()
@@ -846,7 +845,8 @@ bool MainWindow::closeSession()
             !saveSession())
             return false;
     }
-
+    
+    Singletons::synchronizeLogic().resetRenderSession();
     mEditorManager.closeAllEditors(false);
     updateCurrentEditor();
 
