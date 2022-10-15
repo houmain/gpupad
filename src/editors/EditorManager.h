@@ -56,8 +56,8 @@ public:
     bool canNavigateForward() const;
     void navigateBackward();
     void navigateForward();
-    bool focusNextEditor();
-    bool focusPreviousEditor();
+    bool focusNextEditor(bool wrap);
+    bool focusPreviousEditor(bool wrap);
     void updateCurrentEditor();
     bool hasCurrentEditor() const { return (mCurrentDock != nullptr); }
     QString currentEditorFileName();
@@ -86,7 +86,7 @@ Q_SIGNALS:
 
 private:
     int getFocusedEditorIndex() const;
-    bool focusEditorByIndex(int index);
+    bool focusEditorByIndex(int index, bool wrap);
     IEditor *currentEditor();
     QDockWidget *findEditorDock(const IEditor *editor) const;
     void closeUntitledUntouchedEditor();

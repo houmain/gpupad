@@ -454,13 +454,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::focusNextEditor()
 {
-    if (!mEditorManager.focusNextEditor())
+    if (!mEditorManager.focusNextEditor(!mSessionDock->isVisible()))
         mSessionEditor->setFocus();
 }
 
 void MainWindow::focusPreviousEditor()
 {
-    if (!mEditorManager.focusPreviousEditor())
+    if (!mEditorManager.focusPreviousEditor(!mSessionDock->isVisible()))
         mSessionEditor->setFocus();
 }
 

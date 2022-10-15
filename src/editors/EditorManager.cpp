@@ -147,24 +147,27 @@ int EditorManager::getFocusedEditorIndex() const
     return -1;
 }
 
-bool EditorManager::focusEditorByIndex(int index)
+bool EditorManager::focusEditorByIndex(int index, bool wrap)
 {
-    if (index < 0 || index >= static_cast<int>(mDocks.size()))
+    const auto count = static_cast<int>(mDocks.size());
+    if (wrap)
+        index = (index + count) % count;
+    if (index < 0 || index >= count)
         return false;
     raiseDock(std::next(mDocks.begin(), index)->first);
     return true;
 }
 
-bool EditorManager::focusNextEditor()
+bool EditorManager::focusNextEditor(bool wrap)
 {
-    return focusEditorByIndex(getFocusedEditorIndex() + 1);
+    return focusEditorByIndex(getFocusedEditorIndex() + 1, wrap);
 }
 
-bool EditorManager::focusPreviousEditor()
+bool EditorManager::focusPreviousEditor(bool wrap)
 {
     const auto current = getFocusedEditorIndex();
     return focusEditorByIndex((current == -1 ? 
-        static_cast<int>(mDocks.size()) : current) - 1);
+        static_cast<int>(mDocks.size()) : current) - 1, wrap);
 }
 
 void EditorManager::updateCurrentEditor()
