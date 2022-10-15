@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 1.27.0] - 2022-10-15
+
+### Added
+
+- Trying to link shader in standalone validation to get warnings.
+- Standalone validation automatically selects common HLSL entry point.
+- Added keyboard shortcut to standalone validation toolbar button.
+- Completing extension when saving depending on source type.
+
+### Changed
+
+- No Syntax Highlighting for Plaintext, added source type Generic.
+- Only flipping 2D textures in editor automatically.
+- Only opening untitled textures automatically next to other editors.
+- Reduced margin when zooming in texture editor.
+
+### Fixed
+
+- Prevent menu from popping up on Alt-key shortcut.
+- Not focusing hidden session dock on Ctrl-Tab.
+
 ## [Version 1.26.0] - 2022-09-04
 
 ### Added
@@ -541,6 +562,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 1.27.0]: https://github.com/houmain/gpupad/compare/1.26.0...1.27.0
 [version 1.26.0]: https://github.com/houmain/gpupad/compare/1.25.0...1.26.0
 [version 1.25.0]: https://github.com/houmain/gpupad/compare/1.24.0...1.25.0
 [version 1.24.0]: https://github.com/houmain/gpupad/compare/1.23.0...1.24.0
