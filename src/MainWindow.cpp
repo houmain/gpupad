@@ -417,8 +417,11 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
     switch (event->type()) {
         case QEvent::KeyPress:
-          mLastPressWasAlt = false;
-          break;
+        case QEvent::MouseButtonPress:
+        case QEvent::MouseButtonRelease:
+        case QEvent::MouseMove:
+            mLastPressWasAlt = false;
+            break;
      }
      return QMainWindow::eventFilter(watched, event);
 }
