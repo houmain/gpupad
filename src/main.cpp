@@ -87,6 +87,13 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     auto app = QApplication(argc, argv);
+
+#if defined(_WIN32)
+    // workaround for consistent font size on Windows
+    auto font = QApplication::font("QMenu");
+    app.setFont(font);
+#endif
+
     auto instance = SingleApplication(true, singleApplicationMode);
     auto window = MainWindow();
 

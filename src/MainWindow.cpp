@@ -44,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
     , mSessionProperties(new SessionProperties())
 {
     mUi->setupUi(this);
+    setFont(qApp->font());
 
     setAcceptDrops(true);
 
@@ -55,7 +56,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->toolBarMain->setIconSize(QSize(20, 20));
     mUi->toolBarMain->toggleViewAction()->setVisible(false);
 #if defined(_WIN32)
-    mUi->toolBarMain->setContentsMargins(0, 0, 0, 4);
+    mUi->toolBarMain->setContentsMargins(0, 0, 0, 2);
 #endif
 
     takeCentralWidget();
