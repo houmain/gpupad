@@ -51,7 +51,7 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
         }
     }
 
-    if (extension == "txt" || extension == "log" || extension == "")
+    if (extension == "txt" || extension == "log" || extension == "csv" || extension == "")
         return SourceType::PlainText;
     if (extension == "cfg" || extension == "conf" || extension == "sh")
         return SourceType::Generic;

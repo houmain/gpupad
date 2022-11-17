@@ -32,7 +32,7 @@
      <x>0</x>
      <y>0</y>
      <width>494</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -140,10 +140,10 @@
     <addaction name="actionNavigateBackward"/>
     <addaction name="actionNavigateForward"/>
     <addaction name="separator"/>
-    <addaction name="menuTabSize"/>
-    <addaction name="actionIndentWithSpaces"/>
-    <addaction name="actionShowWhiteSpace"/>
     <addaction name="actionLineWrapping"/>
+    <addaction name="actionShowWhiteSpace"/>
+    <addaction name="actionIndentWithSpaces"/>
+    <addaction name="menuTabSize"/>
     <addaction name="separator"/>
     <addaction name="actionSelectFont"/>
     <addaction name="actionDarkTheme"/>
