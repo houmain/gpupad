@@ -16,11 +16,25 @@ Settings::Settings(QObject *parent) : QSettings(parent)
     setShaderPreamble(value("shaderPreamble", "").toString());
     setShaderIncludePaths(value("shaderIncludePaths", "").toString());
 
-    auto fontSettings = value("font").toString();
-    if (!fontSettings.isEmpty()) {
-        auto font = QFont();
-        if (font.fromString(fontSettings))
-            setFont(font);
+    const auto fontSettings = value("font").toString();
+    auto font = QFont();
+    if (!fontSettings.isEmpty() &&
+         font.fromString(fontSettings)) {
+        setFont(font);
+    }
+    else {
+        for (const auto family : {
+            "Cascadia Mono",
+            "Consolas",
+            "Courier New",
+        }) {
+            font = QFont(family);
+            if (font.exactMatch()) {
+                font.setPointSize(10);
+                setFont(font);
+                break;
+            }
+        }
     }
 }
 
@@ -54,6 +68,8 @@ void Settings::selectFont()
 {
     auto prevFont = mFont;
     QFontDialog dialog{ mFont };
+    dialog.setMinimumSize({ 700, 500 });
+    dialog.setMinimumSize({ 500, 400 });
     connect(&dialog, &QFontDialog::currentFontChanged,
         this, &Settings::setFont);
     if (dialog.exec() == QDialog::Accepted)
