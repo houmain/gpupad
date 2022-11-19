@@ -90,8 +90,7 @@ int main(int argc, char *argv[])
 
 #if defined(_WIN32)
     // workaround for consistent font size on Windows
-    auto font = QApplication::font("QMenu");
-    app.setFont(font);
+    app.setFont(QApplication::font("QMenu"));
 #endif
 
     auto instance = SingleApplication(true, singleApplicationMode);
