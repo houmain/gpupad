@@ -66,12 +66,12 @@ QWidget *EditorManager::createEditorPropertiesPanel(
         showAction->setChecked(false);
     };
     connect(showAction, &QAction::toggled, [=](bool show) { 
-        if (show) {
-            showPropertiesPanel();
+        // make keyboard shortcut show instead of toggle
+        if (qApp->keyboardModifiers()) {
+            showAction->setChecked(true);
+            show = true;
         }
-        else if (!qApp->keyboardModifiers()) {
-            hidePropertiesPanel(); 
-        }
+        (show ? showPropertiesPanel() : hidePropertiesPanel()); 
     });
     connect(mFindReplaceBar, &FindReplaceBar::cancelled, hidePropertiesPanel);
     connect(mTextureInfoBar, &TextureInfoBar::cancelled, hidePropertiesPanel);
