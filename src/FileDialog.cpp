@@ -244,10 +244,11 @@ bool FileDialog::exec(Options options, QString currentFileName,
             currentFileName += "." + dialog.defaultSuffix();
     }
 
+    if (!currentFileName.isEmpty())
+        dialog.setDirectory(QFileInfo(currentFileName).dir());
+    else if (mDirectory.exists())
+        dialog.setDirectory(mDirectory);
     dialog.selectFile(currentFileName);
-    if (currentFileName.isEmpty())
-        dialog.setDirectory(mDirectory.exists() ?
-            mDirectory : QDir::current());
 
     if (dialog.exec() != QDialog::Accepted)
         return false;
