@@ -56,6 +56,8 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
 
     connect(mUi->sourceTypeButton, &QToolButton::toggled,
         this, &SourceEditorToolBar::validateSourceChanged);
+    connect(mUi->lineWrapButton, &QToolButton::toggled,
+        this, &SourceEditorToolBar::lineWrapChanged);
 }
 
 SourceEditorToolBar::~SourceEditorToolBar() 
@@ -79,4 +81,14 @@ void SourceEditorToolBar::setSourceType(SourceType sourceType)
         mSourceType = sourceType;
         Q_EMIT sourceTypeChanged(sourceType);
     }
+}
+
+bool SourceEditorToolBar::lineWrap() const
+{
+    return mUi->lineWrapButton->isChecked();
+}
+
+void SourceEditorToolBar::setLineWrap(bool wrap)
+{
+    mUi->lineWrapButton->setChecked(wrap);
 }

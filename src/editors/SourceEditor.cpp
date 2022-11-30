@@ -204,8 +204,11 @@ QList<QMetaObject::Connection> SourceEditor::connectEditActions(
 
     updateEditorToolBar();
 
+    const auto& settings = Singletons::settings();
     c += connect(&mEditorToolBar, &SourceEditorToolBar::sourceTypeChanged, 
         this, &SourceEditor::setSourceType);
+    c += connect(&mEditorToolBar, &SourceEditorToolBar::lineWrapChanged, 
+        &settings, &Settings::setLineWrap);
 
     return c;
 }
@@ -395,7 +398,9 @@ void SourceEditor::updateSyntaxHighlighting()
 
 void SourceEditor::updateEditorToolBar()
 {
+    const auto &settings = Singletons::settings();
     mEditorToolBar.setSourceType(mSourceType);
+    mEditorToolBar.setLineWrap(settings.lineWrap());
 }
 
 void SourceEditor::findReplace()
@@ -414,7 +419,10 @@ void SourceEditor::findReplace()
 
 void SourceEditor::setLineWrap(bool wrap)
 {
-    setLineWrapMode(mSetLineWrapMode = (wrap ? WidgetWidth : NoWrap));
+    const auto scrollPosition = verticalScrollBar()->sliderPosition();
+    mSetLineWrapMode = (wrap ? WidgetWidth : NoWrap);
+    setLineWrapMode(mSetLineWrapMode);
+    verticalScrollBar()->setSliderPosition(scrollPosition);
 }
 
 void SourceEditor::disableLineWrap()

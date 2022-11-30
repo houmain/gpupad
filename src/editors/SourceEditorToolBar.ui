@@ -2,14 +2,6 @@
 <ui version="4.0">
  <class>SourceEditorToolBar</class>
  <widget class="QWidget" name="SourceEditorToolBar">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>46</width>
-    <height>26</height>
-   </rect>
-  </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="spacing">
     <number>4</number>
@@ -43,6 +35,23 @@
      </property>
      <property name="popupMode">
       <enum>QToolButton::MenuButtonPopup</enum>
+     </property>
+     <property name="autoRaise">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QToolButton" name="lineWrapButton">
+     <property name="toolTip">
+      <string>Wrap Lines</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../resources.qrc">
+       <normaloff>:/images/16x16/edit-undo.png</normaloff>:/images/16x16/edit-undo.png</iconset>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
      </property>
      <property name="autoRaise">
       <bool>true</bool>
