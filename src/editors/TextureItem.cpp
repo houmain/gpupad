@@ -118,6 +118,10 @@ void main() {
   }
 #endif
 
+#if LINEAR_TO_SRGB
+  color = vec4(linearToSrgb(color.rgb), color.a);
+#endif
+
   oColor = color;
 }
 )";
@@ -146,7 +150,7 @@ void main() {
         };
         static auto sDataTypeVersions = std::map<TextureDataType, DataTypeVersion>{
             { TextureDataType::Normalized, { "", "color" } },
-            { TextureDataType::Normalized_sRGB, { "", "vec4(linearToSrgb(color.rgb), color.a)" } },
+            { TextureDataType::Normalized_sRGB, { "", "color" } },
             { TextureDataType::Float, { "", "color" } },
             { TextureDataType::Uint8, { "u", "color / 255.0" } },
             { TextureDataType::Uint16, { "u", "color / 65535.0" } },
@@ -167,6 +171,8 @@ void main() {
         const auto targetVersion = sTargetVersions[target];
         const auto dataTypeVersion = sDataTypeVersions[dataType];
         const auto swizzle = sComponetSwizzle[getTextureComponentCount(format)];
+        const auto linearToSrgb = (dataType == TextureDataType::Normalized_sRGB ||
+                                   dataType == TextureDataType::Float);
         return "#version 330\n"
                "#define S uTexture\n"
                "#define TC vTexCoord\n"
@@ -174,6 +180,7 @@ void main() {
                "#define SAMPLE " + targetVersion.sample + "\n" +
                "#define MAPPING " + dataTypeVersion.mapping + "\n" +
                "#define SWIZZLE " + swizzle + "\n" +
+               "#define LINEAR_TO_SRGB " + QString::number(linearToSrgb) + "\n" +
                fragmentShaderSource;
     }
 

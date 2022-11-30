@@ -25,18 +25,6 @@ layout (std430) buffer result_ssbo {
 shared vec4 min_value[gl_WorkGroupSize.x][gl_WorkGroupSize.y]; 
 shared vec4 max_value[gl_WorkGroupSize.x][gl_WorkGroupSize.y];
 
-float linearToSrgb(float value) {
-  if (value > 0.0031308)
-    return 1.055 * pow(value, 1.0 / 2.4) - 0.055;
-  return 12.92 * value;
-}
-vec3 linearToSrgb(vec3 value) {
-  return vec3(
-    linearToSrgb(value.r),
-    linearToSrgb(value.g),
-    linearToSrgb(value.b)
-  );
-}
 vec3 getCubeTexCoord(vec2 tc, int face) {
   float rx = 0.5 - tc.x;
   float ry = 0.5 - tc.y;
@@ -149,7 +137,7 @@ void main() {
         };
         static auto sDataTypeVersions = std::map<TextureDataType, DataTypeVersion>{
             { TextureDataType::Normalized, { "", "color" } },
-            { TextureDataType::Normalized_sRGB, { "", "vec4(linearToSrgb(color.rgb), color.a)" } },
+            { TextureDataType::Normalized_sRGB, { "", "color" } },
             { TextureDataType::Float, { "", "color" } },
             { TextureDataType::Uint8, { "u", "color / 255.0" } },
             { TextureDataType::Uint16, { "u", "color / 65535.0" } },
