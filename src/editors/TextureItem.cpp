@@ -57,8 +57,6 @@ uniform int uSample;
 uniform int uSamples;
 uniform float uMappingOffset;
 uniform float uMappingFactor;
-uniform bool uPickerEnabled;
-uniform bool uHistogramEnabled;
 uniform int uColorMask;
 
 in vec2 vTexCoord;
@@ -103,11 +101,13 @@ void main() {
   if ((uColorMask & 4) != 0) color.b = 0.0;
   if ((uColorMask & 8) != 0) color.a = 1.0;
 
-#ifdef GL_ARB_shader_image_load_store
-  if (uPickerEnabled && gl_FragCoord.xy == uPickerFragCoord)
+#if PICKER_ENABLED && defined(GL_ARB_shader_image_load_store)
+  if (gl_FragCoord.xy == uPickerFragCoord)
     imageStore(uPickerColor, 0, color);
+#endif
 
-  if (uHistogramEnabled && clamp(TC, vec2(0), vec2(1)) == TC) {
+#if HISTOGRAM_ENABLED && defined(GL_ARB_shader_image_load_store)
+  if (clamp(TC, vec2(0), vec2(1)) == TC) {
     ivec3 offset = ivec3((color.rgb + vec3(uHistogramOffset)) * uHistogramFactor + vec3(0.5));
     offset = clamp(offset, ivec3(0), ivec3(imageSize(uHistogram) / 3 - 1)) * 3 + ivec3(0, 1, 2);
     imageAtomicAdd(uHistogram, offset.r, 1u);
@@ -126,8 +126,20 @@ void main() {
 }
 )";
 
-    QString buildFragmentShader(QOpenGLTexture::Target target,
-        QOpenGLTexture::TextureFormat format)
+    struct ProgramDesc 
+    {
+        QOpenGLTexture::Target target{ };
+        QOpenGLTexture::TextureFormat format{ };
+        bool picker{ };
+        bool histogram{ };
+
+        friend bool operator<(const ProgramDesc& a, const ProgramDesc& b) {
+            return std::tie(a.target, a.format, a.picker, a.histogram) < 
+                   std::tie(b.target, b.format, b.picker, b.histogram);
+        }
+    };
+
+    QString buildFragmentShader(const ProgramDesc &desc)
     {
         struct TargetVersion {
             QString sampler;
@@ -167,10 +179,10 @@ void main() {
             { 3, "vec4(color.rgb, 1)" },
             { 4, "color" },
         };
-        const auto dataType = getTextureDataType(format);
-        const auto targetVersion = sTargetVersions[target];
+        const auto dataType = getTextureDataType(desc.format);
+        const auto targetVersion = sTargetVersions[desc.target];
         const auto dataTypeVersion = sDataTypeVersions[dataType];
-        const auto swizzle = sComponetSwizzle[getTextureComponentCount(format)];
+        const auto swizzle = sComponetSwizzle[getTextureComponentCount(desc.format)];
         const auto linearToSrgb = (dataType == TextureDataType::Normalized_sRGB ||
                                    dataType == TextureDataType::Float);
         return "#version 330\n"
@@ -181,17 +193,18 @@ void main() {
                "#define MAPPING " + dataTypeVersion.mapping + "\n" +
                "#define SWIZZLE " + swizzle + "\n" +
                "#define LINEAR_TO_SRGB " + QString::number(linearToSrgb) + "\n" +
+               "#define PICKER_ENABLED " + QString::number(desc.picker) + "\n" +
+               "#define HISTOGRAM_ENABLED " + QString::number(desc.histogram) + "\n" +
                fragmentShaderSource;
     }
 
-    bool buildProgram(QOpenGLShaderProgram &program,
-        QOpenGLTexture::Target target, QOpenGLTexture::TextureFormat format)
+    bool buildProgram(QOpenGLShaderProgram &program, const ProgramDesc &desc)
     {
         program.create();
         auto vertexShader = new QOpenGLShader(QOpenGLShader::Vertex, &program);
         auto fragmentShader = new QOpenGLShader(QOpenGLShader::Fragment, &program);
         vertexShader->compileSourceCode(vertexShaderSource);
-        fragmentShader->compileSourceCode(buildFragmentShader(target, format));
+        fragmentShader->compileSourceCode(buildFragmentShader(desc));
         program.addShader(vertexShader);
         program.addShader(fragmentShader);
         return program.link();
@@ -204,20 +217,17 @@ class ZeroCopyContext final : public QObject
 {
 public:
     explicit ZeroCopyContext(QObject *parent = nullptr);
-
     QOpenGLFunctions_3_3_Core &gl();
     QOpenGLFunctions_4_2_Core *gl42();
-    QOpenGLShaderProgram *getProgram(QOpenGLTexture::Target target,
-        QOpenGLTexture::TextureFormat format);
+    QOpenGLShaderProgram *getProgram(const ProgramDesc &desc);
 
 private:
-    using ProgramKey = std::tuple<QOpenGLTexture::Target, QOpenGLTexture::TextureFormat>;
     void handleDebugMessage(const QOpenGLDebugMessage &message);
 
     QOpenGLFunctions_3_3_Core mGL;
     std::optional<QOpenGLFunctions_4_2_Core> mGL42;
     QOpenGLDebugLogger mDebugLogger;
-    std::map<ProgramKey, QOpenGLShaderProgram> mPrograms;
+    std::map<ProgramDesc, QOpenGLShaderProgram> mPrograms;
 };
 
 ZeroCopyContext::ZeroCopyContext(QObject *parent)
@@ -249,14 +259,12 @@ QOpenGLFunctions_4_2_Core *ZeroCopyContext::gl42()
     return (mGL42.has_value() ? &mGL42.value() : nullptr);
 }
 
-QOpenGLShaderProgram *ZeroCopyContext::getProgram(QOpenGLTexture::Target target,
-    QOpenGLTexture::TextureFormat format)
+QOpenGLShaderProgram *ZeroCopyContext::getProgram(const ProgramDesc &desc)
 {
-    const auto key = std::make_tuple(target, format);
-    auto &program = mPrograms[key];
+    auto &program = mPrograms[desc];
     if (!program.isLinked())
-        if (!buildProgram(program, target, format)) {
-            mPrograms.erase(key);
+        if (!buildProgram(program, desc)) {
+            mPrograms.erase(desc);
             return nullptr;
         }
     return &program;
@@ -453,7 +461,13 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         }
     }
 
-    if (auto *program = context().getProgram(target, format)) {
+    const auto desc = ProgramDesc{
+        target,
+        format,
+        mPickerEnabled,
+        mHistogramEnabled
+    };
+    if (auto *program = context().getProgram(desc)) {
         program->bind();
         program->setUniformValue("uTexture", 0);
         program->setUniformValue("uTransform", transform);
@@ -471,13 +485,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
             static_cast<float>(1 / mMappingRange.range()));
         program->setUniformValue("uColorMask", mColorMask);
 
-#if !GL_VERSION_4_2
-        program->setUniformValue("uPickerEnabled", false);
-        program->setUniformValue("uHistogramEnabled", false);
-#else
-        program->setUniformValue("uPickerEnabled", mPickerEnabled);
-        program->setUniformValue("uHistogramEnabled", mHistogramEnabled);
-
+#if GL_VERSION_4_2
         if (mPickerEnabled) {
             if (auto gl42 = context().gl42()) {
                 if (!mPickerTexture.isCreated()) {
