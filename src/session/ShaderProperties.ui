@@ -157,56 +157,47 @@
       </attribute>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <property name="leftMargin">
-        <number>0</number>
+        <number>4</number>
        </property>
        <property name="topMargin">
-        <number>0</number>
+        <number>4</number>
        </property>
        <property name="rightMargin">
-        <number>0</number>
+        <number>4</number>
        </property>
        <property name="bottomMargin">
-        <number>0</number>
+        <number>4</number>
        </property>
        <item>
-        <layout class="QFormLayout" name="formLayout3">
-         <property name="labelAlignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="horizontalSpacing">
-          <number>8</number>
-         </property>
-         <property name="verticalSpacing">
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <property name="spacing">
           <number>4</number>
          </property>
-         <item row="0" column="0">
+         <item>
           <widget class="QLabel" name="labelGlobalPreamble">
            <property name="text">
             <string>Preamble</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
+         <item>
           <widget class="ExpressionEditor" name="globalPreamble">
            <property name="lineWrapMode">
             <enum>QPlainTextEdit::NoWrap</enum>
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
+         <item>
           <widget class="QLabel" name="labelGlobalIncludePaths">
            <property name="text">
-            <string>Include Paths</string>
+            <string>Include Paths (one per line)</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
+         <item>
           <widget class="ExpressionEditor" name="globalIncludePaths">
            <property name="lineWrapMode">
             <enum>QPlainTextEdit::NoWrap</enum>
-           </property>
-           <property name="placeholderText">
-            <string>one per line</string>
            </property>
           </widget>
          </item>
@@ -223,56 +214,47 @@
       </attribute>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <property name="leftMargin">
-        <number>0</number>
+        <number>4</number>
        </property>
        <property name="topMargin">
-        <number>0</number>
+        <number>4</number>
        </property>
        <property name="rightMargin">
-        <number>0</number>
+        <number>4</number>
        </property>
        <property name="bottomMargin">
-        <number>0</number>
+        <number>4</number>
        </property>
        <item>
-        <layout class="QFormLayout" name="formLayout2">
-         <property name="labelAlignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="horizontalSpacing">
-          <number>8</number>
-         </property>
-         <property name="verticalSpacing">
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <property name="spacing">
           <number>4</number>
          </property>
-         <item row="0" column="0">
+         <item>
           <widget class="QLabel" name="labelSessionPreamble">
            <property name="text">
             <string>Preamble</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
+         <item>
           <widget class="ExpressionEditor" name="sessionPreamble">
            <property name="lineWrapMode">
             <enum>QPlainTextEdit::NoWrap</enum>
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
+         <item>
           <widget class="QLabel" name="labelSessionludePaths">
            <property name="text">
-            <string>Include Paths</string>
+            <string>Include Paths (one per line)</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
+         <item>
           <widget class="ExpressionEditor" name="sessionIncludePaths">
            <property name="lineWrapMode">
             <enum>QPlainTextEdit::NoWrap</enum>
-           </property>
-           <property name="placeholderText">
-            <string>one per line</string>
            </property>
           </widget>
          </item>
@@ -289,56 +271,47 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <property name="leftMargin">
-        <number>0</number>
+        <number>4</number>
        </property>
        <property name="topMargin">
-        <number>0</number>
+        <number>4</number>
        </property>
        <property name="rightMargin">
-        <number>0</number>
+        <number>4</number>
        </property>
        <property name="bottomMargin">
-        <number>0</number>
+        <number>4</number>
        </property>
        <item>
-        <layout class="QFormLayout" name="formLayout1">
-         <property name="labelAlignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="horizontalSpacing">
-          <number>8</number>
-         </property>
-         <property name="verticalSpacing">
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="spacing">
           <number>4</number>
          </property>
-         <item row="0" column="0">
+         <item>
           <widget class="QLabel" name="labelShaderPreamble">
            <property name="text">
             <string>Preamble</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
+         <item>
           <widget class="ExpressionEditor" name="shaderPreamble">
            <property name="lineWrapMode">
             <enum>QPlainTextEdit::NoWrap</enum>
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
+         <item>
           <widget class="QLabel" name="labelShaderIncludePaths">
            <property name="text">
-            <string>Include Paths</string>
+            <string>Include Paths (one per line)</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
+         <item>
           <widget class="ExpressionEditor" name="shaderIncludePaths">
            <property name="lineWrapMode">
             <enum>QPlainTextEdit::NoWrap</enum>
-           </property>
-           <property name="placeholderText">
-            <string>one per line</string>
            </property>
           </widget>
          </item>

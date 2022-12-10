@@ -204,7 +204,7 @@
       <attribute name="title">
        <string>Stencil Back</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout3">
+      <layout class="QVBoxLayout" name="layoutTabStencilBack">
        <property name="spacing">
         <number>0</number>
        </property>
@@ -221,7 +221,7 @@
         <number>0</number>
        </property>
        <item>
-        <layout class="QFormLayout" name="formLayout3">
+        <layout class="QFormLayout" name="layoutStencilBack">
          <property name="labelAlignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
@@ -327,7 +327,7 @@
       <attribute name="title">
        <string>Stencil Front</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout2">
+      <layout class="QVBoxLayout" name="layoutTabStencilFront">
        <property name="spacing">
         <number>0</number>
        </property>
@@ -344,7 +344,7 @@
         <number>0</number>
        </property>
        <item>
-        <layout class="QFormLayout" name="formLayout2">
+        <layout class="QFormLayout" name="layoutStencilFront">
          <property name="labelAlignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
@@ -450,7 +450,7 @@
       <attribute name="title">
        <string>Depth</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_4">
+      <layout class="QVBoxLayout" name="layoutTabDepth">
        <property name="spacing">
         <number>0</number>
        </property>
@@ -467,7 +467,7 @@
         <number>0</number>
        </property>
        <item>
-        <layout class="QFormLayout" name="formLayout4">
+        <layout class="QFormLayout" name="layoutDepth">
          <property name="labelAlignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>

@@ -13,7 +13,6 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
     mUi->setupUi(this);
 
     QCoreApplication::setAttribute(Qt::AA_UseStyleSheetPropagationInWidgetStyles, true);
-    mUi->tabDepthStencil->setStyleSheet("QTabWidget::pane { border: none; }");
 
     connect(mUi->texture, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Texture); });
@@ -132,4 +131,10 @@ void AttachmentProperties::updateWidgets()
     }
     if (kind.depth)
         mUi->tabDepthStencil->addTab(mUi->tabDepth, tabTitles[2]);
+
+    const auto showTabbed = (mUi->tabDepthStencil->count() > 1);
+    mUi->tabDepthStencil->setStyleSheet(showTabbed ? "" :
+        "QTabWidget::pane { border: none; }");
+    for (auto& layout : { mUi->layoutTabDepth, mUi->layoutTabStencilBack, mUi->layoutTabStencilFront })
+        layout->setContentsMargins(showTabbed ? QMargins(4, 4, 4, 4) : QMargins(0, 0, 0, 0));
 }

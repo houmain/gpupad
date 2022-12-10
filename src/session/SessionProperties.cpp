@@ -184,8 +184,6 @@ SessionProperties::SessionProperties(QWidget *parent)
         settings.shaderPreamble());
     mShaderProperties->globalIncludePaths->setText(
         settings.shaderIncludePaths());
-    mShaderProperties->tabScope->setStyleSheet(
-        "QTabWidget::pane { border: none; }");
 
     setCurrentModelIndex({ });
     fillComboBoxes();
