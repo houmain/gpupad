@@ -59,5 +59,7 @@
         <file>images/16x16/format-indent-more.png</file>
         <file>images/16x16/hamburger.png</file>
         <file>images/16x16/utilities-terminal.png</file>
+        <file>images/dock-close.png</file>
+        <file>images/dock-restore.png</file>
     </qresource>
 </RCC>

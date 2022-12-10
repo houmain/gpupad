@@ -2,8 +2,8 @@
 #include "SingleApplication/singleapplication.h"
 #include "render/CompositorSync.h"
 #include "FileDialog.h"
+#include "Style.h"
 #include <QApplication>
-#include <QStyleFactory>
 #include <QSurfaceFormat>
 
 #if defined(_WIN32)
@@ -76,7 +76,6 @@ int main(int argc, char *argv[])
 
     QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QApplication::setStyle(QStyleFactory::create("Fusion"));
 
     auto format = QSurfaceFormat();
     format.setRenderableType(QSurfaceFormat::OpenGL);
@@ -87,6 +86,8 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     auto app = QApplication(argc, argv);
+    auto style = Style();
+    app.setStyle(&style);
 
 #if defined(_WIN32)
     // workaround for consistent font size on Windows

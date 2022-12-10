@@ -102,6 +102,7 @@ set(SOURCES
   src/VideoManager.cpp
   src/InputState.cpp
   src/SourceType.cpp
+  src/Style.cpp
   src/editors/BinaryEditor.cpp
   src/editors/BinaryEditorToolBar.cpp
   src/editors/BinaryEditorToolBar.ui

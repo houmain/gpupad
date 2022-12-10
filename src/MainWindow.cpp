@@ -423,6 +423,8 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
         case QEvent::MouseMove:
             mLastPressWasAlt = false;
             break;
+        default:
+            break;
      }
      return QMainWindow::eventFilter(watched, event);
 }
