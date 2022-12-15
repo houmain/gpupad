@@ -56,8 +56,7 @@
            <string>Save As</string>
           </property>
           <property name="icon">
-           <iconset resource="../resources.qrc">
-            <normaloff>:/images/16x16/document-save-as.png</normaloff>:/images/16x16/document-save-as.png</iconset>
+           <iconset theme="document-save-as"/>
           </property>
           <property name="iconSize">
            <size>
@@ -73,8 +72,7 @@
            <string>Open</string>
           </property>
           <property name="icon">
-           <iconset resource="../resources.qrc">
-            <normaloff>:/images/16x16/document-open.png</normaloff>:/images/16x16/document-open.png</iconset>
+           <iconset theme="document-open"/>
           </property>
           <property name="iconSize">
            <size>
@@ -220,8 +218,6 @@
    <header>session/ExpressionLineEdit.h</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

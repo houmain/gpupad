@@ -68,8 +68,7 @@
            <string>Deduce offset from end of previous block</string>
           </property>
           <property name="icon">
-           <iconset resource="../resources.qrc">
-            <normaloff>:/images/16x16/view-refresh.png</normaloff>:/images/16x16/view-refresh.png</iconset>
+           <iconset theme="view-refresh"/>
           </property>
          </widget>
         </item>
@@ -110,8 +109,7 @@
            <string>Deduce row count from stride and file size</string>
           </property>
           <property name="icon">
-           <iconset resource="../resources.qrc">
-            <normaloff>:/images/16x16/view-refresh.png</normaloff>:/images/16x16/view-refresh.png</iconset>
+           <iconset theme="view-refresh"/>
           </property>
          </widget>
         </item>
@@ -143,8 +141,6 @@
    <header>session/ExpressionLineEdit.h</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

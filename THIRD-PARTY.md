@@ -3,6 +3,19 @@ This application makes use of the following third party libraries:
 
 ---------------------------------------------------------------------
 
+## Adwaita Icon Theme (CC-BY-SA)
+https://gitlab.gnome.org/GNOME/adwaita-icon-theme
+
+This work is licenced under the Creative Commons Attribution-Share Alike 3.0
+United States License. To view a copy of this licence, visit
+http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative
+Commons, 171 Second Street, Suite 300, San Francisco, California 94105, USA.
+
+When attributing the artwork, using "GNOME Project" is enough. 
+Please link to http://www.gnome.org where available.
+
+---------------------------------------------------------------------
+
 ## SingleApplication v3.3.4 (MIT license)
 https://github.com/itay-grudev/SingleApplication
 

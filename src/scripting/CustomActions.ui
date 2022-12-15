@@ -54,8 +54,7 @@
           <string>New Action</string>
          </property>
          <property name="icon">
-          <iconset resource="../resources.qrc">
-           <normaloff>:/images/16x16/document-new.png</normaloff>:/images/16x16/document-new.png</iconset>
+          <iconset theme="document-new"/>
          </property>
         </widget>
        </item>
@@ -71,8 +70,7 @@
           <string>Import Action</string>
          </property>
          <property name="icon">
-          <iconset resource="../resources.qrc">
-           <normaloff>:/images/16x16/document-open.png</normaloff>:/images/16x16/document-open.png</iconset>
+          <iconset theme="document-open"/>
          </property>
         </widget>
        </item>
@@ -91,8 +89,7 @@
           <string>Edit Action</string>
          </property>
          <property name="icon">
-          <iconset resource="../resources.qrc">
-           <normaloff>:/images/16x16/document-properties.png</normaloff>:/images/16x16/document-properties.png</iconset>
+          <iconset theme="document-properties"/>
          </property>
         </widget>
        </item>
@@ -111,8 +108,7 @@
           <string>Delete Action</string>
          </property>
          <property name="icon">
-          <iconset resource="../resources.qrc">
-           <normaloff>:/images/16x16/edit-delete.png</normaloff>:/images/16x16/edit-delete.png</iconset>
+          <iconset theme="edit-delete"/>
          </property>
         </widget>
        </item>
@@ -185,8 +181,6 @@
   <tabstop>help</tabstop>
   <tabstop>close</tabstop>
  </tabstops>
- <resources>
-  <include location="../resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

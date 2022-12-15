@@ -53,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
     icon.addFile(":images/64x64/icon.png");
     setWindowIcon(icon);
 
-    mUi->toolBarMain->setIconSize(QSize(20, 20));
+    mUi->toolBarMain->setStyleSheet("QToolButton { margin:0px; padding:2px; }");
     mUi->toolBarMain->toggleViewAction()->setVisible(false);
 #if defined(_WIN32)
     mUi->toolBarMain->setContentsMargins(0, 0, 0, 2);
@@ -99,7 +99,7 @@ MainWindow::MainWindow(QWidget *parent)
     mMenuButton->setArrowType(Qt::NoArrow);
     mMenuButton->setText("Menu");
     mMenuButton->setToolTip("Menu");
-    mMenuButton->setIcon(QIcon(":images/16x16/hamburger.png"));
+    mMenuButton->setIcon(QIcon::fromTheme("hamburger-menu"));
     mMenuButton->setPopupMode(QToolButton::InstantPopup);
 
     auto dock = new QDockWidget(this);
@@ -122,7 +122,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setVisible(false);
     auto action = dock->toggleViewAction();
     action->setText(tr("Show &") + action->text());
-    action->setIcon(QIcon(":images/16x16/format-indent-more.png"));
+    action->setIcon(QIcon::fromTheme("format-indent-more"));
     mUi->menuView->addAction(action);
     mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
     addDockWidget(Qt::LeftDockWidgetArea, dock);
@@ -137,7 +137,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setVisible(false);
     action = dock->toggleViewAction();
     action->setText(tr("Show &") + action->text());
-    action->setIcon(QIcon(":images/16x16/help-faq.png"));
+    action->setIcon(QIcon::fromTheme("help-faq"));
     mUi->menuView->addAction(action);
     mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
     addDockWidget(Qt::RightDockWidgetArea, dock);
@@ -151,7 +151,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setVisible(false);
     action = dock->toggleViewAction();
     action->setText(tr("Show &") + action->text());
-    action->setIcon(QIcon(":images/16x16/utilities-terminal.png"));
+    action->setIcon(QIcon::fromTheme("utilities-terminal"));
     mUi->menuView->addAction(action);
     mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
     addDockWidget(Qt::RightDockWidgetArea, dock);
@@ -1015,6 +1015,8 @@ void MainWindow::handleDarkThemeChanging(bool darkTheme)
     mUi->toolBarMain->setPalette(palette);
     mUi->menuView->setPalette(palette);
     mEditorManager.setEditorToolBarPalette(palette);
+
+    QIcon::setThemeName(darkTheme ? "dark" : "light");
 
     style()->unpolish(qApp);
     style()->polish(qApp);

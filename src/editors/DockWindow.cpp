@@ -106,7 +106,7 @@ void DockWindow::openContextMenu(int index)
     if (auto dock = getTabBarDock(tabBar, index)) {
         auto menu = QMenu();
         auto close = menu.addAction(tr("Close"));
-        close->setIcon(QIcon(QString::fromUtf8(":/images/16x16/window-close.png")));
+        close->setIcon(QIcon::fromTheme("process-stop"));
         close->setShortcut(QKeySequence::Close);
         connect(close, &QAction::triggered, 
             [=]() { closeDock(dock); });

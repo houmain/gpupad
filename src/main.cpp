@@ -76,6 +76,7 @@ int main(int argc, char *argv[])
 
     QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
     auto format = QSurfaceFormat();
     format.setRenderableType(QSurfaceFormat::OpenGL);

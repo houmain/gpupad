@@ -13,20 +13,20 @@
 SessionModel::SessionModel(QObject *parent)
     : SessionModelCore(parent)
 {
-    mTypeIcons[Item::Type::Group].addFile(QStringLiteral(":/images/16x16/folder.png"));
-    mTypeIcons[Item::Type::Buffer].addFile(QStringLiteral(":/images/16x16/x-office-spreadsheet.png"));
-    mTypeIcons[Item::Type::Block].addFile(QStringLiteral(":/images/16x16/format-justify-left.png"));
-    mTypeIcons[Item::Type::Field].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
-    mTypeIcons[Item::Type::Texture].addFile(QStringLiteral(":/images/16x16/image-x-generic.png"));
-    mTypeIcons[Item::Type::Program].addFile(QStringLiteral(":/images/16x16/applications-system.png"));
-    mTypeIcons[Item::Type::Shader].addFile(QStringLiteral(":/images/16x16/font.png"));
-    mTypeIcons[Item::Type::Binding].addFile(QStringLiteral(":/images/16x16/insert-text.png"));
-    mTypeIcons[Item::Type::Stream].addFile(QStringLiteral(":/images/16x16/media-playback-start-rtl.png"));
-    mTypeIcons[Item::Type::Attribute].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
-    mTypeIcons[Item::Type::Target].addFile(QStringLiteral(":/images/16x16/emblem-photos.png"));
-    mTypeIcons[Item::Type::Attachment].addFile(QStringLiteral(":/images/16x16/mail-attachment.png"));
-    mTypeIcons[Item::Type::Call].addFile(QStringLiteral(":/images/16x16/dialog-information.png"));
-    mTypeIcons[Item::Type::Script].addFile(QStringLiteral(":/images/16x16/font.png"));
+    mTypeIcons[Item::Type::Group] = QIcon::fromTheme("folder");
+    mTypeIcons[Item::Type::Buffer] = QIcon::fromTheme("x-office-spreadsheet");
+    mTypeIcons[Item::Type::Block] = QIcon::fromTheme("format-justify-left");
+    mTypeIcons[Item::Type::Field] = QIcon::fromTheme("mail-attachment");
+    mTypeIcons[Item::Type::Texture] = QIcon::fromTheme("folder-pictures");
+    mTypeIcons[Item::Type::Program] = QIcon::fromTheme("applications-system");
+    mTypeIcons[Item::Type::Shader] = QIcon::fromTheme("accessories-text-editor");
+    mTypeIcons[Item::Type::Binding] = QIcon::fromTheme("insert-text");
+    mTypeIcons[Item::Type::Stream] = QIcon::fromTheme("media-playback-start-rtl");
+    mTypeIcons[Item::Type::Attribute] = QIcon::fromTheme("mail-attachment");
+    mTypeIcons[Item::Type::Target] = QIcon::fromTheme("video-display");
+    mTypeIcons[Item::Type::Attachment] = QIcon::fromTheme("mail-attachment");
+    mTypeIcons[Item::Type::Call] = QIcon::fromTheme("dialog-information");
+    mTypeIcons[Item::Type::Script] = QIcon::fromTheme("accessories-text-editor");
 
     connect(&undoStack(), &QUndoStack::cleanChanged,
         this, &SessionModel::undoStackCleanChanged);

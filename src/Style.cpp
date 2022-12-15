@@ -1,6 +1,7 @@
 
 #include "Style.h"
 #include <QStyleFactory>
+#include <QPainter>
 
 Style::Style()
     : QProxyStyle(QStyleFactory::create("Fusion"))
@@ -23,4 +24,17 @@ QIcon Style::standardIcon(QStyle::StandardPixmap standardIcon,
         default:
             return QProxyStyle::standardIcon(standardIcon, option, widget);
     }
+}
+
+QPixmap Style::generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap,
+        const QStyleOption *opt) const
+{
+    if (iconMode == QIcon::Mode::Disabled) {
+        auto dark = pixmap;
+        QPainter p(&dark);
+        p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        p.fillRect(dark.rect(), QColor(0, 0, 0, 128));
+        return dark;
+    }
+    return pixmap;
 }

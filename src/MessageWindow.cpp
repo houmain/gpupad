@@ -33,9 +33,9 @@ MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
     setAlternatingRowColors(true);
     setWordWrap(true);
 
-    mInfoIcon.addFile(QStringLiteral(":/images/16x16/dialog-information.png"));
-    mWarningIcon.addFile(QStringLiteral(":/images/16x16/dialog-warning.png"));
-    mErrorIcon.addFile(QStringLiteral(":/images/16x16/dialog-error.png"));
+    mInfoIcon = QIcon::fromTheme("dialog-information");
+    mWarningIcon = QIcon::fromTheme("dialog-warning");
+    mErrorIcon = QIcon::fromTheme("dialog-error");
 }
 
 void MessageWindow::updateMessages()

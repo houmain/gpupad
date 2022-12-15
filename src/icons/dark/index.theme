@@ -1,0 +1,13 @@
+[Icon Theme]
+Name=Dark-icons
+Comment=icon theme
+
+# Directory list
+Directories=icons
+
+[icons]
+Size=48
+Context=Icons
+MinSize=8
+MaxSize=512
+Type=Scalable

@@ -32,7 +32,7 @@
      <x>0</x>
      <y>0</y>
      <width>494</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -44,8 +44,8 @@
       <string>&amp;Recent Files</string>
      </property>
      <property name="icon">
-      <iconset resource="resources.qrc">
-       <normaloff>:/images/16x16/document-open-recent.png</normaloff>:/images/16x16/document-open-recent.png</iconset>
+      <iconset theme="document-open-recent">
+       <normaloff>.</normaloff>.</iconset>
      </property>
     </widget>
     <addaction name="actionNew"/>
@@ -98,8 +98,8 @@
       <string>Open &amp;Sample</string>
      </property>
      <property name="icon">
-      <iconset resource="resources.qrc">
-       <normaloff>:/images/16x16/document-open.png</normaloff>:/images/16x16/document-open.png</iconset>
+      <iconset theme="document-open">
+       <normaloff>.</normaloff>.</iconset>
      </property>
     </widget>
     <addaction name="separator"/>
@@ -117,8 +117,8 @@
       <string>&amp;Evaluation</string>
      </property>
      <property name="icon">
-      <iconset resource="resources.qrc">
-       <normaloff>:/images/16x16/view-refresh.png</normaloff>:/images/16x16/view-refresh.png</iconset>
+      <iconset theme="view-refresh">
+       <normaloff>.</normaloff>.</iconset>
      </property>
      <addaction name="actionEvalReset"/>
      <addaction name="actionEvalManual"/>
@@ -147,9 +147,9 @@
     <addaction name="separator"/>
     <addaction name="actionSelectFont"/>
     <addaction name="actionDarkTheme"/>
+    <addaction name="actionHideMenuBar"/>
     <addaction name="actionFullScreen"/>
     <addaction name="separator"/>
-    <addaction name="actionHideMenuBar"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -194,8 +194,8 @@
   </widget>
   <action name="actionOpen">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/document-open.png</normaloff>:/images/16x16/document-open.png</iconset>
+    <iconset theme="document-open">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Open...</string>
@@ -203,8 +203,8 @@
   </action>
   <action name="actionSave">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/document-save.png</normaloff>:/images/16x16/document-save.png</iconset>
+    <iconset theme="document-save">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Save</string>
@@ -212,8 +212,8 @@
   </action>
   <action name="actionQuit">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/application-exit.png</normaloff>:/images/16x16/application-exit.png</iconset>
+    <iconset theme="application-exit">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Quit</string>
@@ -227,8 +227,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/edit-copy.png</normaloff>:/images/16x16/edit-copy.png</iconset>
+    <iconset theme="edit-copy">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Copy</string>
@@ -239,8 +239,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/edit-paste.png</normaloff>:/images/16x16/edit-paste.png</iconset>
+    <iconset theme="edit-paste">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Paste</string>
@@ -248,8 +248,8 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/help-about.png</normaloff>:/images/16x16/help-about.png</iconset>
+    <iconset theme="help-about">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;About GPUpad</string>
@@ -260,8 +260,8 @@
   </action>
   <action name="actionSaveAs">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/document-save-as.png</normaloff>:/images/16x16/document-save-as.png</iconset>
+    <iconset theme="document-save-as">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Save &amp;As...</string>
@@ -269,8 +269,8 @@
   </action>
   <action name="actionNew">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/document-new.png</normaloff>:/images/16x16/document-new.png</iconset>
+    <iconset theme="document-new">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;New</string>
@@ -278,8 +278,8 @@
   </action>
   <action name="actionClose">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/window-close.png</normaloff>:/images/16x16/window-close.png</iconset>
+    <iconset theme="process-stop">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Close</string>
@@ -290,8 +290,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/edit-cut.png</normaloff>:/images/16x16/edit-cut.png</iconset>
+    <iconset theme="edit-cut">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Cu&amp;t</string>
@@ -299,8 +299,8 @@
   </action>
   <action name="actionPreferences">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/document-properties.png</normaloff>:/images/16x16/document-properties.png</iconset>
+    <iconset theme="document-properties">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Pre&amp;ferences...</string>
@@ -322,8 +322,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/edit-delete.png</normaloff>:/images/16x16/edit-delete.png</iconset>
+    <iconset theme="edit-delete">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Delete</string>
@@ -342,8 +342,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/view-refresh.png</normaloff>:/images/16x16/view-refresh.png</iconset>
+    <iconset theme="view-refresh">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Reload</string>
@@ -357,8 +357,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/edit-select-all.png</normaloff>:/images/16x16/edit-select-all.png</iconset>
+    <iconset theme="edit-select-all">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Select &amp;All</string>
@@ -369,8 +369,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/edit-undo.png</normaloff>:/images/16x16/edit-undo.png</iconset>
+    <iconset theme="edit-undo">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Undo</string>
@@ -381,8 +381,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/edit-redo.png</normaloff>:/images/16x16/edit-redo.png</iconset>
+    <iconset theme="edit-redo">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Redo</string>
@@ -420,8 +420,7 @@
   </action>
   <action name="actionSelectFont">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/preferences-desktop-font.png</normaloff>:/images/16x16/preferences-desktop-font.png</iconset>
+    <iconset theme="preferences-desktop-font"/>
    </property>
    <property name="text">
     <string>Select &amp;Font...</string>
@@ -432,8 +431,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/edit-find-replace.png</normaloff>:/images/16x16/edit-find-replace.png</iconset>
+    <iconset theme="edit-find-replace">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Find/Replace</string>
@@ -441,8 +440,8 @@
   </action>
   <action name="actionEvalManual">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/media-playback-start.png</normaloff>:/images/16x16/media-playback-start.png</iconset>
+    <iconset theme="media-skip-forward">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Manual</string>
@@ -459,8 +458,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/media-skip-forward.png</normaloff>:/images/16x16/media-skip-forward.png</iconset>
+    <iconset theme="media-playback-start">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Automatic</string>
@@ -485,8 +484,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/media-seek-forward.png</normaloff>:/images/16x16/media-seek-forward.png</iconset>
+    <iconset theme="media-seek-forward">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Steady</string>
@@ -508,8 +507,8 @@
   </action>
   <action name="actionOnlineHelp">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/help-faq.png</normaloff>:/images/16x16/help-faq.png</iconset>
+    <iconset theme="help-browser">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Online Help</string>
@@ -525,8 +524,8 @@
   </action>
   <action name="actionEvalReset">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/view-refresh.png</normaloff>:/images/16x16/view-refresh.png</iconset>
+    <iconset theme="view-refresh">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Reset</string>
@@ -575,8 +574,8 @@
   </action>
   <action name="actionFullScreenClose">
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/window-close.png</normaloff>:/images/16x16/window-close.png</iconset>
+    <iconset theme="process-stop">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Quit</string>
@@ -589,6 +588,10 @@
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset theme="pan-start">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
     <string>Go &amp;Back</string>
    </property>
@@ -599,6 +602,10 @@
   <action name="actionNavigateForward">
    <property name="enabled">
     <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="pan-end">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Go &amp;Forward</string>
@@ -612,8 +619,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/edit-paste.png</normaloff>:/images/16x16/edit-paste.png</iconset>
+    <iconset theme="edit-paste">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Paste in new Editor</string>
@@ -629,10 +636,6 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
-   <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/16x16/hamburger.png</normaloff>:/images/16x16/hamburger.png</iconset>
-   </property>
    <property name="text">
     <string>Hide &amp;Menu Bar</string>
    </property>
@@ -641,8 +644,6 @@
    </property>
   </action>
  </widget>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
