@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 1.28.0] - 2022-12-16
+
+### Added
+
+- Added toolbar button for toggling line wrapping.
+- Setting default editor font.
+
+### Changed
+
+- Replaced icons with symbolic icons.
+- Set custom dock close/restore icons.
+
+### Fixed
+
+- Fixed setting file dialog directory to current file's.
+- Improved layout of shader/attachment property panel.
+- Gamma correcting floating point formats in preview.
+- Made font size of Windows consistent.
+- Prevent opening menu on Alt-mouse action.
+
 ## [Version 1.27.0] - 2022-10-15
 
 ### Added
@@ -562,6 +582,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 1.28.0]: https://github.com/houmain/gpupad/compare/1.27.0...1.28.0
 [version 1.27.0]: https://github.com/houmain/gpupad/compare/1.26.0...1.27.0
 [version 1.26.0]: https://github.com/houmain/gpupad/compare/1.25.0...1.26.0
 [version 1.25.0]: https://github.com/houmain/gpupad/compare/1.24.0...1.25.0
