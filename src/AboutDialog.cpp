@@ -94,7 +94,11 @@ AboutDialog::AboutDialog(QWidget *parent)
     addTab(tr("License"), loadTextFile("LICENSE"),
         tr("This program comes with absolutely no warranty.\n"
            "See the GNU General Public License, version 3 for details."));
-    addTab(tr("Third-Party Libraries"), loadTextFile("THIRD-PARTY.md"));
+
+    auto licenses = loadTextFile("THIRD-PARTY.md");
+    const auto qtHeader = QString("## Qt Toolkit");
+    licenses.replace(qtHeader, qtHeader + " v" + QT_VERSION_STR);
+    addTab(tr("Third-Party Libraries"), licenses);
 
     auto buttons = new QDialogButtonBox(this);
     buttons->setStandardButtons(QDialogButtonBox::Close);

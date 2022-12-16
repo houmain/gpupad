@@ -3,6 +3,18 @@ This application makes use of the following third party libraries:
 
 ---------------------------------------------------------------------
 
+## Qt Toolkit (GNU LGPL version 3)
+https://www.qt.io
+
+Qt is available under the GNU Lesser General Public License version 3.
+
+The Qt Toolkit is Copyright (C) 2018 The Qt Company Ltd. and other contributors.
+Contact: https://www.qt.io/licensing/
+
+Reference: https://doc.qt.io/qt-6/lgpl.html
+
+---------------------------------------------------------------------
+
 ## Adwaita Icon Theme (CC-BY-SA)
 https://gitlab.gnome.org/GNOME/adwaita-icon-theme
 
