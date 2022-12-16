@@ -1,15 +1,15 @@
 #include "TextureData.h"
 #include "session/Item.h"
-#include "tga/tga.h"
-#include "gli/gli.hpp"
-#define TINYEXR_IMPLEMENTATION
-#include "tinyexr/tinyexr.h"
 #include <cstring>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions_3_3_Core>
 #include <QScopeGuard>
 #include <QImageReader>
 #include <QtEndian>
+#include "tga/tga.h"
+#include "gli/gli.hpp"
+#define TINYEXR_IMPLEMENTATION
+#include "tinyexr/tinyexr.h"
 
 #if defined(_WIN32)
 

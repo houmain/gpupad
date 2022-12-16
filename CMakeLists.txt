@@ -110,6 +110,7 @@ set(SOURCES
   src/editors/EditorManager.cpp
   src/editors/FindReplaceBar.cpp
   src/editors/FindReplaceBar.ui
+  src/editors/getMousePosition.h
   src/editors/SyntaxHighlighter.cpp
   src/editors/SyntaxGLSL.cpp
   src/editors/SyntaxHLSL.cpp

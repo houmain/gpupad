@@ -2,6 +2,7 @@
 
 #include <QImage>
 #include <QOpenGLTexture>
+#include <QMetaType>
 #include <memory>
 #include "ktx.h"
 

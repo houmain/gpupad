@@ -147,9 +147,10 @@ SessionModelCore &SessionModelCore::operator=(const SessionModelCore &rhs)
     return *this;
 }
 
-SessionModelCore::~SessionModelCore()
+SessionModelCore::~SessionModelCore() 
 {
-    clear();
+    Q_ASSERT(rowCount() == 0);
+    Q_ASSERT(undoStack().isClean());
 }
 
 void SessionModelCore::clear()

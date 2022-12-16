@@ -7,6 +7,7 @@
 #include "FileDialog.h"
 #include "SyntaxHighlighter.h"
 #include "Completer.h"
+#include "getMousePosition.h"
 #include <QCompleter>
 #include <QTextCharFormat>
 #include <QPainter>
@@ -51,8 +52,9 @@ protected:
 
     void mousePressEvent(QMouseEvent *event) override
     {
-        if (event->button() == Qt::LeftButton && event->x() < width() - margin / 2) {
-            auto cursor = mEditor.cursorForPosition({ 0, event->y() });
+        const auto pos = getMousePosition(event);
+        if (event->button() == Qt::LeftButton && pos.x() < width() - margin / 2) {
+            auto cursor = mEditor.cursorForPosition({ 0, pos.y() });
             const auto position = cursor.position();
             cursor.movePosition(QTextCursor::StartOfBlock);
             mSelectionStart = cursor.position();
@@ -65,7 +67,8 @@ protected:
 
     void mouseMoveEvent(QMouseEvent *event) override
     {
-        auto cursor = mEditor.cursorForPosition({ 0, event->y() });
+        const auto pos = getMousePosition(event);
+        auto cursor = mEditor.cursorForPosition({ 0, pos.y() });
         if (mSelectionStart >= 0) {
             const auto position = cursor.position();
             cursor.setPosition(mSelectionStart);
@@ -252,7 +255,7 @@ void SourceEditor::replace(QString source)
         document()->setUndoRedoEnabled(false);
 
     const auto firstDiff = [&]() {
-        const auto n = std::min(source.length(), current.length());
+        const auto n = static_cast<int>(std::min(source.length(), current.length()));
         for (auto i = 0; i < n; i++)
             if (source[i] != current[i])
                 return i;
@@ -337,8 +340,8 @@ void SourceEditor::emitNavigationPositionChanged()
 void SourceEditor::restoreNavigationPosition(const QString &position)
 {
     const auto semicolon = position.indexOf(";");
-    const auto blockNumber = position.leftRef(semicolon).toInt();
-    const auto offset = position.midRef(semicolon + 1).toInt();
+    const auto blockNumber = position.left(semicolon).toInt();
+    const auto offset = position.mid(semicolon + 1).toInt();
 
     disableLineWrap();
 
@@ -409,7 +412,7 @@ void SourceEditor::findReplace()
     mFindReplaceBar.setTarget(this);
 
     if (auto text = textUnderCursor(); 
-        !text.isEmpty() && !text.contains(0x2029))
+        !text.isEmpty() && !text.contains(QChar::ParagraphSeparator))
         mFindReplaceBar.setText(text);
 
     if (mFindReplaceBar.isVisible())
@@ -976,7 +979,7 @@ QString SourceEditor::generateCurrentScopeSource() const
     auto cursor = textCursor();
     cursor.movePosition(QTextCursor::PreviousWord);
     cursor.setPosition(0, QTextCursor::KeepAnchor);
-    auto text = cursor.selectedText().replace(0x2029, '\n');
+    auto text = cursor.selectedText().replace(QChar::ParagraphSeparator, '\n');
 
     const static auto multiLineComment = QRegularExpression(
         "/\\*.*?\\*/", QRegularExpression::MultilineOption);
@@ -1033,7 +1036,8 @@ QTextCursor SourceEditor::find(const QString &string, int from, int to,
             return { };
 
         const auto text = block.text();
-        auto offset = std::min(std::max(from - block.position(), 0), text.length() - 1);
+        auto offset = std::min(std::max(from - block.position(), 0), 
+            static_cast<int>(text.length()) - 1);
         for (; offset >= 0; offset += (forward ? 1 : -1)) {
             offset = (forward ? text.indexOf(string, offset, caseSensitivity) : 
                       text.lastIndexOf(string, offset, caseSensitivity));
@@ -1187,7 +1191,7 @@ void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
 QTextCursor SourceEditor::updateFindReplaceRange()
 {
     auto cursor = textCursor();
-    if (cursor.selectedText().contains(0x2029)) {
+    if (cursor.selectedText().contains(QChar::ParagraphSeparator)) {
         if (cursor.position() < cursor.anchor()) {
             const auto tmp = cursor.anchor();
             cursor.setPosition(cursor.position());

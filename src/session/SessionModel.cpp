@@ -32,7 +32,10 @@ SessionModel::SessionModel(QObject *parent)
         this, &SessionModel::undoStackCleanChanged);
 }
 
-SessionModel::~SessionModel() = default;
+SessionModel::~SessionModel() 
+{
+    clear();
+}
 
 QList<QMetaObject::Connection> SessionModel::connectUndoActions(
     QAction *undo, QAction *redo)

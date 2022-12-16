@@ -53,11 +53,8 @@ MainWindow::MainWindow(QWidget *parent)
     icon.addFile(":images/64x64/icon.png");
     setWindowIcon(icon);
 
-    mUi->toolBarMain->setStyleSheet("QToolButton { margin:0px; padding:2px; }");
+    mUi->menubar->setFixedHeight(24);
     mUi->toolBarMain->toggleViewAction()->setVisible(false);
-#if defined(_WIN32)
-    mUi->toolBarMain->setContentsMargins(0, 0, 0, 2);
-#endif
 
     takeCentralWidget();
 
@@ -819,7 +816,7 @@ bool MainWindow::restoreSessionState(const QString &sessionFileName)
     mEditorManager.setAutoRaise(false);
     for (const auto &openEditor : openEditors)
         if (const auto sep = openEditor.indexOf('|'); sep > 0) {
-            const auto itemId = openEditor.midRef(0, sep).toInt();
+            const auto itemId = openEditor.mid(0, sep).toInt();
             const auto editorObjectName = openEditor.mid(sep + 1);
             if (auto item = model.findItem(itemId))
                 if (auto editor = mSessionProperties->openItemEditor(model.getIndex(item)))
@@ -997,15 +994,13 @@ void MainWindow::handleDarkThemeChanging(bool darkTheme)
       "QLabel:disabled { color: %1 }\n"
       "QDockWidget > QFrame { border:2px solid %2 }\n"
       "QDockWidget[current=true] > QFrame { border:2px solid %3 }\n"
-      "QMenuBar { background-color: %4; padding-top:2px }\n"
-      "QToolBar { background-color: %4 }\n")
+      "QMenuBar { background-color: %4; border:none; margin:0; padding:0; padding-top:2px; }\n"
+      "QToolButton { margin:2; margin:0px; padding:2px; }\n"
+      "QToolBar { spacing:1px; margin:0; padding:2px; padding-left:4px; background-color: %4; border:none }\n")
       .arg(color(QPalette::WindowText, QPalette::Disabled),
            color(QPalette::Window, QPalette::Active, frameDarker),
            color(QPalette::Window, QPalette::Active, currentFrameDarker),
            color(QPalette::Base, QPalette::Active));
-
-    if (!inWindows || darkTheme)
-        styleSheet += "QToolBar { border:none }\n";
 
     setStyleSheet(styleSheet);
 
@@ -1015,8 +1010,6 @@ void MainWindow::handleDarkThemeChanging(bool darkTheme)
     mUi->toolBarMain->setPalette(palette);
     mUi->menuView->setPalette(palette);
     mEditorManager.setEditorToolBarPalette(palette);
-
-    QIcon::setThemeName(darkTheme ? "dark" : "light");
 
     style()->unpolish(qApp);
     style()->polish(qApp);

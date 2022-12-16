@@ -176,7 +176,7 @@ namespace
                 continue;
 
             // must not follow struct
-            if (source.midRef(std::max(begin - 10, 0), 10).contains("struct"))
+            if (source.mid(std::max(static_cast<int>(begin) - 10, 0), 10).contains("struct"))
                 continue;
 
             // complete word

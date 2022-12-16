@@ -1,6 +1,7 @@
 #include "Settings.h"
 #include <QFontDialog>
 #include <QFontDatabase>
+#include <QIcon>
 
 Settings::Settings(QObject *parent) : QSettings(parent)
 {
@@ -100,6 +101,7 @@ void Settings::setShowWhiteSpace(bool enabled)
 void Settings::setDarkTheme(bool enabled)
 {
     mDarkTheme = enabled;
+    QIcon::setThemeName(mDarkTheme ? "dark" : "light");
     Q_EMIT darkThemeChanging(enabled);
     Q_EMIT darkThemeChanged(enabled);
 }

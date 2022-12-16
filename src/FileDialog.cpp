@@ -103,7 +103,7 @@ QString FileDialog::advanceSaveAsSuffix(const QString &fileName)
     const auto suffix = fileName.lastIndexOf('(');
     if (suffix >= 0) {
         auto ok = false;
-        const auto number = fileName.midRef(suffix + 1, dot - suffix - 2).toInt(&ok);
+        const auto number = fileName.mid(suffix + 1, dot - suffix - 2).toInt(&ok);
         if (ok)
             return QString("%1(%2)%3")
                 .arg(fileName.mid(0, suffix))

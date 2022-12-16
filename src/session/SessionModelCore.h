@@ -124,7 +124,7 @@ public:
     };
 
     explicit SessionModelCore(QObject *parent = nullptr);
-    SessionModelCore(const SessionModelCore& rhs);
+    SessionModelCore(const SessionModelCore& rhs) = delete;
     SessionModelCore &operator=(const SessionModelCore &rhs);
     ~SessionModelCore() override;
 

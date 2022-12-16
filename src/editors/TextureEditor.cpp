@@ -10,6 +10,7 @@
 #include "render/GLContext.h"
 #include "session/Item.h"
 #include "TextureItem.h"
+#include "getMousePosition.h"
 #include <QAction>
 #include <QApplication>
 #include <QOpenGLWidget>
@@ -28,8 +29,8 @@ bool createFromRaw(const QByteArray &binary,
 
     if (!binary.isEmpty()) {
         std::memcpy(texture->getWriteonlyData(0, 0, 0), binary.constData(),
-            static_cast<size_t>(std::min(binary.size(),
-                                         texture->getLevelSize(0))));
+            std::min(static_cast<size_t>(binary.size()),
+                     static_cast<size_t>(texture->getLevelSize(0))));
     }
     else {
         texture->clear();
@@ -309,8 +310,9 @@ void TextureEditor::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::MiddleButton) {
         mPan = true;
-        mPanStartX = event->x();
-        mPanStartY = event->y();
+        const auto pos = getMousePosition(event);
+        mPanStartX = pos.x();
+        mPanStartY = pos.y();
         setCursor(Qt::ClosedHandCursor);
         return;
     }
@@ -324,12 +326,13 @@ void TextureEditor::mousePressEvent(QMouseEvent *event)
 void TextureEditor::mouseMoveEvent(QMouseEvent *event)
 {
     if (mPan) {
+        const auto pos = getMousePosition(event);
         horizontalScrollBar()->setValue(
-            horizontalScrollBar()->value() - (event->x() - mPanStartX));
+            horizontalScrollBar()->value() - (pos.x() - mPanStartX));
         verticalScrollBar()->setValue(
-            verticalScrollBar()->value() - (event->y() - mPanStartY));
-        mPanStartX = event->x();
-        mPanStartY = event->y();
+            verticalScrollBar()->value() - (pos.y() - mPanStartY));
+        mPanStartX = pos.x();
+        mPanStartY = pos.y();
         return;
     }
 

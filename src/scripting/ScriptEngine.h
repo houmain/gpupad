@@ -2,6 +2,7 @@
 #define SCRIPTENGINE_H
 
 #include "MessageList.h"
+#include <QObject>
 
 using ScriptValue = double;
 using ScriptValueList = QList<ScriptValue>;

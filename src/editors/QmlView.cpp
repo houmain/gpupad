@@ -142,15 +142,14 @@ QmlView::QmlView(QString fileName, QWidget *parent)
         [&](QQmlEngine *, QJSEngine *jsEngine) -> QObject * {
             return new SessionScriptObject(jsEngine);
         });
-
-    reset();
 }
 
 void QmlView::reset()
 {
     if (mQuickWidget) {
         layout()->removeWidget(mQuickWidget);
-        connect(mQuickWidget, &QQuickWidget::destroyed, this, &QmlView::reset);
+        connect(mQuickWidget, &QQuickWidget::destroyed, 
+            this, &QmlView::reset, Qt::QueuedConnection);
         mQuickWidget->deleteLater();
         mQuickWidget = nullptr;
         return;
@@ -164,9 +163,9 @@ void QmlView::reset()
     mQuickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
 
     connect(mQuickWidget, &QQuickWidget::statusChanged,
-        [this](QQuickWidget::Status status) {
+        [this, widget = mQuickWidget](QQuickWidget::Status status) {
             if (status == QQuickWidget::Error) {
-                const auto errors = mQuickWidget->errors();
+                const auto errors = widget->errors();
                 for (const QQmlError &error : errors)
                     mMessages += MessageList::insert(toAbsolutePath(error.url()),
                         error.line(), MessageType::ScriptError, error.description());
@@ -191,7 +190,11 @@ void QmlView::reset()
         mNetworkAccessManagerFactory.data());
 
     static UrlInterceptor sUrlInterceptor;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     mQuickWidget->engine()->setUrlInterceptor(&sUrlInterceptor);
+#else
+    mQuickWidget->engine()->addUrlInterceptor(&sUrlInterceptor);
+#endif
     mQuickWidget->engine()->addImportPath(QFileInfo(mFileName).dir().path());
 
     Singletons::fileCache().updateFromEditors();
@@ -201,7 +204,7 @@ void QmlView::reset()
 
 #endif // defined(QtQuick_FOUND)
 
-QmlView::~QmlView() = default;
+QmlView::~QmlView() { }
 
 QList<QMetaObject::Connection> QmlView::connectEditActions(
     const EditActions &actions)

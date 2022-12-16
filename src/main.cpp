@@ -75,8 +75,11 @@ int main(int argc, char *argv[])
     QLocale::setDefault(QLocale::c());
 
     QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+#endif
 
     auto format = QSurfaceFormat();
     format.setRenderableType(QSurfaceFormat::OpenGL);
@@ -87,12 +90,15 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     auto app = QApplication(argc, argv);
-    auto style = Style();
-    app.setStyle(&style);
+
+    QApplication::setStyle(new Style());
 
 #if defined(_WIN32)
     // workaround for consistent font size on Windows
-    app.setFont(QApplication::font("QMenu"));
+    auto ratio = QWidget().devicePixelRatio();
+    auto font = QApplication::font("QMenu");
+    font.setPointSizeF(font.pointSizeF() / ratio);
+    app.setFont(font);
 #endif
 
     auto instance = SingleApplication(true, singleApplicationMode);
