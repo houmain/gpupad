@@ -20,7 +20,6 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
         return SourceType::JavaScript;
     if (extension == "lua")
         return SourceType::Lua;
-
     if (extension == "ps")
         return SourceType::HLSL_PixelShader;
 
@@ -29,12 +28,13 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
             return SourceType::GLSL_VertexShader;
         if (source.contains("local_size_x"))
             return SourceType::GLSL_ComputeShader;
-        if (current == SourceType::PlainText || current == SourceType::Generic)
+        if (getShaderLanguage(current) != Shader::Language::GLSL)
             return SourceType::GLSL_FragmentShader;
+        return current;
     }
 
     if (extension == "hlsl" || extension == "hlsli" || extension == "fx") {
-        if (current == SourceType::PlainText || current == SourceType::Generic) {
+        if (getShaderLanguage(current) == Shader::Language::HLSL) {
             if (source.contains("PS"))
                 return SourceType::HLSL_PixelShader;
             if (source.contains("VS"))
@@ -49,11 +49,13 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
                 return SourceType::HLSL_DomainShader;
             return SourceType::HLSL_PixelShader;
         }
+        return current;
     }
 
-    if (extension == "txt" || extension == "log" || extension == "csv" || extension == "")
+    if (extension == "txt" || extension == "log" || extension == "csv")
         return SourceType::PlainText;
-    if (extension == "cfg" || extension == "conf" || extension == "sh")
+
+    if (extension == "cfg" || extension == "conf" || source.startsWith("#!"))
         return SourceType::Generic;
 
     return current;
