@@ -58,6 +58,7 @@ private:
     int mLayers{ };
     int mSamples{ };
     TextureData mData;
+    bool mDataWritten{ };
     QSet<ItemId> mUsedItems;
     TextureKind mKind{ };
     GLObject mTextureObject;

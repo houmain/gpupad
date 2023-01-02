@@ -193,6 +193,7 @@ bool GLTexture::swap(GLTexture &other)
         return false;
 
     std::swap(mData, other.mData);
+    std::swap(mDataWritten, other.mDataWritten);
     std::swap(mTextureObject, other.mTextureObject);
     std::swap(mSystemCopyModified, other.mSystemCopyModified);
     std::swap(mDeviceCopyModified, other.mDeviceCopyModified);
@@ -229,23 +230,25 @@ void GLTexture::reload(bool forWriting)
                 MessageType::LoadingFileFailed, mFileName);
 
     // reload file as long as targets match
-    // and when when writing to it also dimensions match (format is ignored)
-    const auto useFileData = [&]() {
-        if (fileData.isNull() ||
-            mTarget != fileData.target())
-            return false;
-        if (!forWriting)
-            return true;
-        return (mWidth == fileData.width() &&
-                mHeight == fileData.height() &&
-                mDepth == fileData.depth() &&
-                mLayers == fileData.layers());
+    // ignore dimension mismatch when reading
+    // do not ignore when writing (format is ignored)
+    const auto hasSameDimensions = [&](const TextureData &data) {
+        return (mWidth == data.width() &&
+                mHeight == data.height() &&
+                mDepth == data.depth() &&
+                mLayers == data.layers());
     };
-    if (useFileData()) {
+    mDataWritten |= forWriting;
+    if (!fileData.isNull() &&
+            mTarget == fileData.target() &&
+            (!mDataWritten || hasSameDimensions(fileData))) {
         mSystemCopyModified |= !mData.isSharedWith(fileData);
         mData = fileData;
     }
-    else if (mData.isNull()) {
+
+    // validate dimensions when writing
+    if (mData.isNull() ||
+            (forWriting && !hasSameDimensions(mData))) {
         if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples)) {
             mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1, 1);
             mMessages += MessageList::insert(mItemId,
