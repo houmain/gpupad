@@ -465,14 +465,12 @@ bool EditorManager::saveEditorAs()
         }
 
         const auto prevFileName = editor->fileName();
-        auto fileName = FileDialog::advanceSaveAsSuffix(editor->fileName());
-        while (Singletons::fileDialog().exec(options, fileName, sourceType)) {
+        while (Singletons::fileDialog().exec(options, editor->fileName(), sourceType)) {
             editor->setFileName(Singletons::fileDialog().fileName());
             if (editor->save()) {
                 Q_EMIT editorRenamed(prevFileName, editor->fileName());
                 return true;
             }
-            fileName = editor->fileName();
         }
         editor->setFileName(prevFileName);
     }
