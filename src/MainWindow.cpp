@@ -25,6 +25,7 @@
 #include <QTimer>
 #include <QMimeData>
 #include <QScreen>
+#include <QOpenGLWidget>
 
 void setFileDialogDirectory(const QString &fileName)
 {
@@ -57,6 +58,12 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->toolBarMain->toggleViewAction()->setVisible(false);
 
     takeCentralWidget();
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // WORKAROUND: trigger initialization of OpenGL immediately, otherwise
+    // application window disappears momentaryly when the first texture editor is opened
+    (new QOpenGLWidget(this))->setVisible(false);
+#endif
 
     auto content = new QWidget(this);
     mEditorManager.setParent(content);

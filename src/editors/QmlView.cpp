@@ -11,6 +11,9 @@ QmlView::QmlView(QString fileName, QWidget *parent)
 {
 }
 
+void QmlView::reset() {
+}
+
 #else // defined(QtQuick_FOUND)
 
 #include "FileCache.h"

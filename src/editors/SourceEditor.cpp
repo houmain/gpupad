@@ -363,7 +363,7 @@ void SourceEditor::setSourceType(SourceType sourceType)
 
 void SourceEditor::updateColors(bool darkTheme)
 {
-    const auto pal = palette();
+    const auto pal = qApp->palette();
     mCurrentLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
     mCurrentLineFormat.setBackground(pal.base().color().lighter(darkTheme ? 120 : 95));
 
