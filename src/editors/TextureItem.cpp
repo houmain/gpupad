@@ -1,6 +1,5 @@
 #include "TextureItem.h"
-#include <QOpenGLWidget>
-#include <QOpenGLDebugMessage>
+#include "GLWidget.h"
 #include "Singletons.h"
 #include "render/GLShareSynchronizer.h"
 #include "render/ComputeRange.h"
@@ -8,8 +7,9 @@
 #include <cmath>
 #include <array>
 
-namespace {
-  static constexpr auto vertexShaderSource = R"(
+namespace 
+{
+    const auto vertexShaderSource = R"(
 #version 330
 
 uniform mat4 uTransform;
@@ -32,7 +32,7 @@ void main() {
 }
 )";
 
-static constexpr auto fragmentShaderSource = R"(
+    const auto fragmentShaderSource = R"(
 
 #ifdef GL_ARB_texture_cube_map_array
 #extension GL_ARB_texture_cube_map_array: enable
@@ -213,90 +213,42 @@ void main() {
 
 //-------------------------------------------------------------------------
 
-class ZeroCopyContext final : public QObject
+class TextureItem::ProgramCache
 {
 public:
-    explicit ZeroCopyContext(QObject *parent = nullptr);
-    QOpenGLFunctions_3_3_Core &gl();
-    QOpenGLFunctions_4_2_Core *gl42();
-    QOpenGLShaderProgram *getProgram(const ProgramDesc &desc);
+    QOpenGLShaderProgram *getProgram(const ProgramDesc &desc)
+    {
+        auto &program = mPrograms[desc];
+        if (!program.isLinked())
+            if (!buildProgram(program, desc)) {
+                mPrograms.erase(desc);
+                return nullptr;
+            }
+        return &program;
+    }
 
 private:
-    void handleDebugMessage(const QOpenGLDebugMessage &message);
-
-    QOpenGLFunctions_3_3_Core mGL;
-    std::optional<QOpenGLFunctions_4_2_Core> mGL42;
-    QOpenGLDebugLogger mDebugLogger;
     std::map<ProgramDesc, QOpenGLShaderProgram> mPrograms;
 };
 
-ZeroCopyContext::ZeroCopyContext(QObject *parent)
-    : QObject(parent)
-{
-    mGL.initializeOpenGLFunctions();
-    mGL42.emplace();
-    if (!mGL42->initializeOpenGLFunctions())
-        mGL42.reset();
-
-#if !defined(NDEBUG)
-    if (mDebugLogger.initialize()) {
-        mDebugLogger.disableMessages(QOpenGLDebugMessage::AnySource,
-            QOpenGLDebugMessage::AnyType, QOpenGLDebugMessage::NotificationSeverity);
-        QObject::connect(&mDebugLogger, &QOpenGLDebugLogger::messageLogged,
-            this, &ZeroCopyContext::handleDebugMessage);
-        mDebugLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
-    }
-#endif
-}
-
-QOpenGLFunctions_3_3_Core &ZeroCopyContext::gl()
-{
-    return mGL;
-}
-
-QOpenGLFunctions_4_2_Core *ZeroCopyContext::gl42()
-{
-    return (mGL42.has_value() ? &mGL42.value() : nullptr);
-}
-
-QOpenGLShaderProgram *ZeroCopyContext::getProgram(const ProgramDesc &desc)
-{
-    auto &program = mPrograms[desc];
-    if (!program.isLinked())
-        if (!buildProgram(program, desc)) {
-            mPrograms.erase(desc);
-            return nullptr;
-        }
-    return &program;
-}
-
-void ZeroCopyContext::handleDebugMessage(const QOpenGLDebugMessage &message)
-{
-    const auto text = message.message();
-    qDebug() << text;
-}
-
 //-------------------------------------------------------------------------
 
-TextureItem::TextureItem(QGraphicsItem *parent)
-    : QGraphicsObject(parent)
+TextureItem::TextureItem(GLWidget *widget)
+    : QObject(widget)
+    , mProgramCache(new ProgramCache())
 {
     setHistogramBinCount(1);
 }
 
-TextureItem::~TextureItem()
-{
-    Q_ASSERT(!mContext);
-}
+TextureItem::~TextureItem() = default;
 
 void TextureItem::releaseGL()
 {
-    mContext.reset();
+    mProgramCache.reset();
 }
 
 void TextureItem::setImage(TextureData image)
 {
-    prepareGeometryChange();
     const auto w = image.width();
     const auto h = image.height();
     mBoundingRect = { -w / 2, -h / 2, w, h };
@@ -375,43 +327,31 @@ void TextureItem::computeHistogramBounds()
     mComputeRange->update();
 }
 
-void TextureItem::paint(QPainter *painter,
-    const QStyleOptionGraphicsItem *, QWidget *)
+GLWidget &TextureItem::widget() 
+{
+    return *qobject_cast<GLWidget*>(parent());
+}
+
+void TextureItem::update()
+{
+    widget().update();
+}
+
+void TextureItem::paintGL(const QMatrix4x4 &transform)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    painter->beginNativePainting();
-
-    const auto s = mBoundingRect.size();
-    const auto x = painter->clipBoundingRect().left() - (s.width() % 2 ? 0.5 : 0.0);
-    const auto y = painter->clipBoundingRect().top() - (s.height() % 2 ? 0.5 : 0.0);
-    const auto scale = painter->combinedTransform().m11();
-    const auto width = static_cast<qreal>(painter->window().width());
-    const auto height = static_cast<qreal>(painter->window().height());
-    const auto transform = QTransform(
-        s.width() / width * scale, 0, 0,
-        0, -s.height() / height * scale, 0,
-        2 * -(x * scale + width / 2) / width,
-        2 * (y * scale + height / 2) / height, 1);
 
     if (updateTexture())
         renderTexture(transform);
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    painter->endNativePainting();
-}
-
-ZeroCopyContext &TextureItem::context()
-{
-    if (!mContext)
-        mContext.reset(new ZeroCopyContext());
-    return *mContext;
 }
 
 bool TextureItem::updateTexture()
 {
     if (!mPreviewTextureId && std::exchange(mUpload, false)) {
         // upload/replace texture
-        context().gl().glDeleteTextures(1, &mImageTextureId);
+        widget().gl().glDeleteTextures(1, &mImageTextureId);
         mImageTextureId = GL_NONE;
         mImage.upload(&mImageTextureId);
         // last version is deleted in QGraphicsView destructor
@@ -422,8 +362,7 @@ bool TextureItem::updateTexture()
 bool TextureItem::renderTexture(const QMatrix4x4 &transform)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
-    auto &gl = context().gl();
+    auto &gl = widget().gl();
 
     // WORKAROUND: renderer can delete the texture without resetting it
     if (mPreviewTextureId && !gl.glIsTexture(mPreviewTextureId))
@@ -467,7 +406,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         mPickerEnabled,
         mHistogramEnabled
     };
-    if (auto *program = context().getProgram(desc)) {
+    if (auto *program = mProgramCache->getProgram(desc)) {
         program->bind();
         program->setUniformValue("uTexture", 0);
         program->setUniformValue("uTransform", transform);
@@ -487,7 +426,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
 
 #if GL_VERSION_4_2
         if (mPickerEnabled) {
-            if (auto gl42 = context().gl42()) {
+            if (auto gl42 = widget().gl42()) {
                 if (!mPickerTexture.isCreated()) {
                     mPickerTexture.setSize(1, 1);
                     mPickerTexture.setFormat(QOpenGLTexture::RGBA32F);
@@ -501,7 +440,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
             }
         }
         if (mHistogramEnabled) {
-            if (auto gl42 = context().gl42()) {
+            if (auto gl42 = widget().gl42()) {
                 if (!mHistogramTexture.isCreated() ||
                      mHistogramTexture.width() != mHistogramBins.size()) {
                     mHistogramTexture.destroy();
@@ -524,7 +463,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  
 
 #if GL_VERSION_4_2
-        if (auto gl42 = context().gl42())
+        if (auto gl42 = widget().gl42())
             gl42->glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
 
         auto pickerColor = QVector4D{ };

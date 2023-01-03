@@ -103,6 +103,7 @@ set(SOURCES
   src/InputState.cpp
   src/SourceType.cpp
   src/Style.cpp
+  src/editors/GLWidget.cpp
   src/editors/BinaryEditor.cpp
   src/editors/BinaryEditorToolBar.cpp
   src/editors/BinaryEditorToolBar.ui
@@ -143,7 +144,6 @@ set(SOURCES
   src/render/RenderTask.cpp
   src/render/Renderer.cpp
   src/render/ProcessSource.cpp
-  src/render/CompositorSync.cpp
   src/render/ComputeRange.cpp
   src/render/glslang.cpp
   src/scripting/ScriptConsole.cpp

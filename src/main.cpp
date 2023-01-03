@@ -1,6 +1,5 @@
 #include "MainWindow.h"
 #include "SingleApplication/singleapplication.h"
-#include "render/CompositorSync.h"
 #include "FileDialog.h"
 #include "Style.h"
 #include <QApplication>
@@ -87,6 +86,7 @@ int main(int argc, char *argv[])
     format.setMinorVersion(5);
     format.setProfile(QSurfaceFormat::CoreProfile);
     format.setOption(QSurfaceFormat::DebugContext);
+    format.setSwapInterval(1);
     QSurfaceFormat::setDefaultFormat(format);
 
     auto app = QApplication(argc, argv);
@@ -119,7 +119,6 @@ int main(int argc, char *argv[])
 #endif
         });
 
-    initializeCompositorSync();
     window.show();
 
     auto arguments = app.arguments();

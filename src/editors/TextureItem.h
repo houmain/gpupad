@@ -4,29 +4,25 @@
 #include "TextureData.h"
 #include "Range.h"
 #include <QObject>
-#include <QGraphicsView>
-#include <QOpenGLTexture>
-#include <QGraphicsObject>
-#include <QOpenGLShaderProgram>
-#include <QOpenGLVertexArrayObject>
 #include <QOpenGLTexture>
 
-class ZeroCopyContext;
+class GLWidget;
 class ComputeRange;
 
-class TextureItem final : public QGraphicsObject
+class TextureItem final : public QObject
 {
     Q_OBJECT
 public:
-    explicit TextureItem(QGraphicsItem *parent = nullptr);
+    explicit TextureItem(GLWidget *parent);
     ~TextureItem() override;
     void releaseGL();
-
+    void paintGL(const QMatrix4x4 &transform);
     void setImage(TextureData image);
     const TextureData &image() const { return mImage; }
     void setPreviewTexture(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format, GLuint textureId);
     GLuint resetTexture();
+
     void setMagnifyLinear(bool magnifyLinear) { mMagnifyLinear = magnifyLinear; update(); }
     bool magnifyLinear() const { return mMagnifyLinear; }
     void setLevel(float level) { mLevel = level; update(); }
@@ -51,9 +47,8 @@ public:
     bool histogramEnabled() const { return mHistogramEnabled; }
     void setColorMask(unsigned int colorMask);
     unsigned int colorMask() const { return mColorMask; }
-    QRectF boundingRect() const override { return mBoundingRect; }
+    QRectF boundingRect() const { return mBoundingRect; }
     void setMousePosition(const QPointF &mousePosition);
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) override;
 
 Q_SIGNALS:
     void pickerColorChanged(QVector4D color);
@@ -61,13 +56,15 @@ Q_SIGNALS:
     void histogramBoundsComputed(const Range &range);
 
 private:
-    ZeroCopyContext &context();
+    class ProgramCache;
+
+    GLWidget &widget();
+    void update();
     bool updateTexture();
     bool renderTexture(const QMatrix4x4 &transform);
     void updateHistogram();
 
-    QOpenGLVertexArrayObject mVao;
-    QScopedPointer<ZeroCopyContext> mContext;
+    QScopedPointer<ProgramCache> mProgramCache;
     QRect mBoundingRect;
     TextureData mImage;
     GLuint mImageTextureId{ };

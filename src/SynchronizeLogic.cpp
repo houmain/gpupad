@@ -10,7 +10,6 @@
 #include "editors/BinaryEditor.h"
 #include "render/RenderSession.h"
 #include "render/ProcessSource.h"
-#include "render/CompositorSync.h"
 #include <QTimer>
 
 SynchronizeLogic::SynchronizeLogic(QObject *parent)
@@ -50,6 +49,7 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     resetRenderSession();
 
     mUpdateEditorsTimer->start(100);
+    mEvaluationTimer->setTimerType(Qt::PreciseTimer);
 
     mProcessSourceTimer->setInterval(50);
     mProcessSourceTimer->setSingleShot(true);
@@ -113,7 +113,7 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
 
     if (mEvaluationMode == EvaluationMode::Steady) {
         mEvaluationTimer->setSingleShot(false);
-        mEvaluationTimer->start(10);
+        mEvaluationTimer->start(1);
         Singletons::videoManager().playVideoFiles();
     }
     else if (mEvaluationMode == EvaluationMode::Automatic) {
@@ -143,9 +143,6 @@ void SynchronizeLogic::handleSessionRendered()
     if (mEvaluationMode != EvaluationMode::Paused)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
 
-    if (mEvaluationMode == EvaluationMode::Steady &&
-        synchronizeToCompositor())
-        mEvaluationTimer->setInterval(1);
 }
 
 void SynchronizeLogic::handleFileChanged(const QString &fileName)

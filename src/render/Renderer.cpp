@@ -35,28 +35,22 @@ public:
 
     void handleRenderTask(RenderTask* renderTask)
     {
-        context.makeCurrent(&surface);
-
         if (!std::exchange(mInitialized, true))
             initialize();
 
         renderTask->render();
-        context.doneCurrent();
         Q_EMIT taskRendered();
     }
 
     void handleReleaseTask(RenderTask* renderTask, void* userData)
     {
-        context.makeCurrent(&surface);
         renderTask->release();
-        context.doneCurrent();
         static_cast<QSemaphore*>(userData)->release(1);
     }
 
 public Q_SLOTS:
     void stop()
     {
-        context.makeCurrent(&surface);
         mDebugLogger.reset();
         context.doneCurrent();
 
@@ -73,6 +67,7 @@ Q_SIGNALS:
 private:
     void initialize()
     {
+        context.makeCurrent(&surface);
         context.initializeOpenGLFunctions();
 
         mDebugLogger.reset(new QOpenGLDebugLogger());

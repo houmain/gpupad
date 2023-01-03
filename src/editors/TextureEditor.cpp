@@ -11,13 +11,14 @@
 #include "session/Item.h"
 #include "TextureItem.h"
 #include "getMousePosition.h"
+#include "GLWidget.h"
 #include <QAction>
 #include <QApplication>
-#include <QOpenGLWidget>
 #include <QWheelEvent>
 #include <QMimeData>
 #include <QClipboard>
 #include <QScrollBar>
+#include <QMatrix4x4>
 #include <cstring>
 
 bool createFromRaw(const QByteArray &binary,
@@ -42,35 +43,22 @@ TextureEditor::TextureEditor(QString fileName,
       TextureEditorToolBar *editorToolBar,
       TextureInfoBar* textureInfoBar,
       QWidget *parent)
-    : QGraphicsView(parent)
+    : QAbstractScrollArea(parent)
     , mEditorToolBar(*editorToolBar)
     , mTextureInfoBar(*textureInfoBar)
     , mFileName(fileName)
+    , mMargin(15)
 {
-    setTransformationAnchor(AnchorUnderMouse);
+    mGLWidget = new GLWidget(this);
+    setViewport(mGLWidget);
+    mTextureItem = new TextureItem(mGLWidget);
 
-    setViewport(new QOpenGLWidget(this));
-    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
-
-    setScene(new QGraphicsScene(this));
-
-    auto pen = QPen();
-    auto color = QColor(Qt::gray);
-    pen.setWidth(1);
-    pen.setCosmetic(true);
-    pen.setColor(color);
-    mBorder = new QGraphicsPathItem();
-    mBorder->setPen(pen);
-    mBorder->setBrush(Qt::NoBrush);
-    mBorder->setZValue(1);
-    scene()->addItem(mBorder);
-
-    mTextureItem = new TextureItem();
-    scene()->addItem(mTextureItem);
-
+    connect(mGLWidget, &GLWidget::releasingGL, 
+        this, &TextureEditor::releaseGL);
+    connect(mGLWidget, &GLWidget::paintingGL, 
+        this, &TextureEditor::paintGL);
     connect(&Singletons::settings(), &Settings::darkThemeChanged,
-        this, &TextureEditor::updateBackground);
-    updateBackground();
+        [this]() { update(); });
 
     setAcceptDrops(false);
     setMouseTracking(true);
@@ -78,19 +66,29 @@ TextureEditor::TextureEditor(QString fileName,
 
 TextureEditor::~TextureEditor() 
 {
-    auto texture = mTextureItem->resetTexture();
-    auto glWidget = qobject_cast<QOpenGLWidget*>(viewport());
-    if (auto context = glWidget->context())
-        if (context->makeCurrent(nullptr)) {
-            auto& gl = *context->functions();
-            gl.glDeleteTextures(1, &texture);
-            mTextureItem->releaseGL();
-            context->doneCurrent();
-        }
-    delete scene();
+    delete mGLWidget;
 
     if (isModified())
         Singletons::fileCache().handleEditorFileChanged(mFileName);
+}
+
+void TextureEditor::resizeEvent(QResizeEvent * event)
+{
+    mGLWidget->resizeEvent(event);
+    updateScrollBars();
+}
+
+void TextureEditor::paintEvent(QPaintEvent *event)
+{
+    mGLWidget->paintEvent(event);
+} 
+
+void TextureEditor::releaseGL() 
+{
+    auto texture = mTextureItem->resetTexture();
+    auto& gl = *mGLWidget->context()->functions();
+    gl.glDeleteTextures(1, &texture);
+    mTextureItem->releaseGL();
 }
 
 QList<QMetaObject::Connection> TextureEditor::connectEditActions(
@@ -246,8 +244,6 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
 
     mTextureItem->setImage(texture);
     setBounds(mTextureItem->boundingRect().toRect());
-    if (mTexture.isNull())
-        centerOn(mTextureItem->boundingRect().topLeft());
     mTexture = texture;
     mIsRaw = false;
 
@@ -297,13 +293,13 @@ void TextureEditor::wheelEvent(QWheelEvent *event)
     }
 
     event->setModifiers(event->modifiers() & ~(Qt::ShiftModifier | Qt::ControlModifier));
-    QGraphicsView::wheelEvent(event);
+    QAbstractScrollArea::wheelEvent(event);
 }
 
 void TextureEditor::mouseDoubleClickEvent(QMouseEvent *event)
 {
     setZoom(0);
-    QGraphicsView::mouseDoubleClickEvent(event);
+    QAbstractScrollArea::mouseDoubleClickEvent(event);
 }
 
 void TextureEditor::mousePressEvent(QMouseEvent *event)
@@ -320,7 +316,7 @@ void TextureEditor::mousePressEvent(QMouseEvent *event)
     updateMousePosition(event);
     Singletons::inputState().setMouseButtonPressed(event->button());
 
-    QGraphicsView::mousePressEvent(event);
+    QAbstractScrollArea::mousePressEvent(event);
 }
 
 void TextureEditor::mouseMoveEvent(QMouseEvent *event)
@@ -338,13 +334,15 @@ void TextureEditor::mouseMoveEvent(QMouseEvent *event)
 
     updateMousePosition(event);
 
-    QGraphicsView::mouseMoveEvent(event);
+    QAbstractScrollArea::mouseMoveEvent(event);
 }
 
 void TextureEditor::updateMousePosition(QMouseEvent *event)
 {
-    auto pos = mTextureItem->mapFromScene(
-        mapToScene(event->pos() - QPoint(1, 1))) - mTextureItem->boundingRect().topLeft();
+    // TODO:
+    auto pos = QPointF(getMousePosition(event) - QPoint(1, 1));
+    //auto pos = mTextureItem->mapFromScene(
+    //    mapToScene(event->pos() - QPoint(1, 1))) - mTextureItem->boundingRect().topLeft();
 
     if (!mTextureItem->flipVertically())
         pos.setY(mTextureItem->boundingRect().height() - pos.y());
@@ -371,7 +369,7 @@ void TextureEditor::mouseReleaseEvent(QMouseEvent *event)
         return;
     }
     Singletons::inputState().setMouseButtonReleased(event->button());
-    QGraphicsView::mouseReleaseEvent(event);
+    QAbstractScrollArea::mouseReleaseEvent(event);
 }
 
 void TextureEditor::keyPressEvent(QKeyEvent *event)
@@ -381,7 +379,7 @@ void TextureEditor::keyPressEvent(QKeyEvent *event)
 
     Singletons::inputState().setKeyPressed(event->key(), event->isAutoRepeat());
 
-    QGraphicsView::keyPressEvent(event);
+    QAbstractScrollArea::keyPressEvent(event);
 }
 
 void TextureEditor::keyReleaseEvent(QKeyEvent *event) 
@@ -389,7 +387,7 @@ void TextureEditor::keyReleaseEvent(QKeyEvent *event)
     if (!event->isAutoRepeat())
         Singletons::inputState().setKeyReleased(event->key());
 
-    QGraphicsView::keyReleaseEvent(event);
+    QAbstractScrollArea::keyReleaseEvent(event);
 }
 
 void TextureEditor::setBounds(QRect bounds)
@@ -397,59 +395,54 @@ void TextureEditor::setBounds(QRect bounds)
     if (bounds == mBounds)
         return;
     mBounds = bounds;
-
-    auto inside = QPainterPath();
-    inside.addRect(bounds);
-    mBorder->setPath(inside);
-
-    updateMargin();
+    updateScrollBars();
 }
 
 void TextureEditor::setZoom(int zoom)
 {
     if (mZoom == zoom)
         return;
-
     mZoom = zoom;
-    setTransform(getZoomTransform());
-
-    updateMargin();
-    updateBackground();
+    updateScrollBars();
 }
 
-void TextureEditor::updateMargin() 
+double TextureEditor::getZoomScale() const
 {
-    auto margin = 15;
-    if (mZoom > 0)
-        margin = std::max(margin / mZoom, 1);
-
-    auto bounds = mBounds;
-    bounds.adjust(-margin, -margin, margin, margin);
-    setSceneRect(bounds);
-}
-
-QTransform TextureEditor::getZoomTransform() const
-{
-    const auto scale = (mZoom < 0 ?
+    return (mZoom < 0 ?
         1.0 / (1 << (-mZoom)) :
         1 << (mZoom));
-    return QTransform().scale(scale, scale);
 }
 
-void TextureEditor::updateBackground()
+void TextureEditor::updateScrollBars() 
 {
-    const auto color1 = QPalette().window().color().darker(115);
-    const auto color2 = QPalette().window().color().darker(110);
+    const auto size = viewport()->size();
+    const auto scale = getZoomScale() / 2;
+    auto bounds = mBounds;
+    bounds.setWidth(bounds.width() * scale);
+    bounds.setHeight(bounds.height() * scale);
+    bounds.adjust(-mMargin, -mMargin, mMargin, mMargin);
 
-    QPixmap pm(2, 2);
-    QPainter pmp(&pm);
-    pmp.fillRect(0, 0, 1, 1, color1);
-    pmp.fillRect(1, 1, 1, 1, color1);
-    pmp.fillRect(0, 1, 1, 1, color2);
-    pmp.fillRect(1, 0, 1, 1, color2);
-    pmp.end();
+    horizontalScrollBar()->setPageStep(size.width());
+    verticalScrollBar()->setPageStep(size.height());
+    const auto sx = std::max(bounds.width() - size.width(), 0);
+    const auto sy = std::max(bounds.height() - size.height(), 0);
+    horizontalScrollBar()->setRange(-sx, sx);
+    verticalScrollBar()->setRange(-sy, sy);
 
-    auto brush = QBrush(pm);
-    brush.setTransform(getZoomTransform().inverted().translate(0, 1).scale(16, 16));
-    setBackgroundBrush(brush);
+    mGLWidget->update();
+}
+
+void TextureEditor::paintGL()
+{
+    const auto scale = getZoomScale() / 2;
+    const auto width = QSizeF(viewport()->size()).width();
+    const auto height = QSizeF(viewport()->size()).height();
+    const auto bounds = QSizeF(mBounds.size());
+    const auto sx = scale * bounds.width() / width;
+    const auto sy = scale * bounds.height() / height;
+    const auto x = horizontalScrollBar()->value() / width;
+    const auto y = verticalScrollBar()->value() / height;
+    mTextureItem->paintGL(QTransform(sx, 0, 0,
+                                     0, -sy, 0,
+                                     -x, y, 1));
 }

@@ -3,14 +3,15 @@
 
 #include "IEditor.h"
 #include "TextureData.h"
-#include <QGraphicsView>
 #include <QOpenGLTexture>
+#include <QScrollArea>
 
 class TextureItem;
 class TextureEditorToolBar;
 class TextureInfoBar;
+class GLWidget;
 
-class TextureEditor final : public QGraphicsView, public IEditor
+class TextureEditor final : public QAbstractScrollArea, public IEditor
 {
     Q_OBJECT
 public:
@@ -54,17 +55,21 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
+    void resizeEvent(QResizeEvent * event) override;
+    void paintEvent(QPaintEvent *event) override;
 
 private:
+    void paintGL();
+    void releaseGL();
     void updateMousePosition(QMouseEvent *event);
     void setBounds(QRect bounds);
     void setZoom(int zoom);
-    QTransform getZoomTransform() const;
-    void updateMargin();
-    void updateBackground();
+    double getZoomScale() const;
     void setModified(bool modified);
     void updateEditorToolBar();
+    void updateScrollBars();
 
+    GLWidget *mGLWidget{ };
     TextureEditorToolBar &mEditorToolBar;
     TextureInfoBar &mTextureInfoBar;
     QString mFileName;
@@ -74,12 +79,11 @@ private:
     TextureData mTexture;
     bool mPan{ };
     QRect mBounds{ };
+    int mMargin{ };
     int mZoom{ };
     int mPanStartX{ };
     int mPanStartY{ };
-    QGraphicsPathItem *mBorder{ };
     TextureItem *mTextureItem{ };
-    QGraphicsPixmapItem *mPixmapItem{ };
 };
 
 #endif // TEXTUREEDITOR_H
