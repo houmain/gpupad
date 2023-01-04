@@ -414,7 +414,6 @@ void MainWindow::dropEvent(QDropEvent *event)
     for (const QUrl &url : urls)
         openFile(url.toLocalFile());
 
-    setWindowState(Qt::WindowState::WindowActive);
     raise();
     activateWindow();
 }
