@@ -90,15 +90,15 @@ void TextureBackground::paintGL(const QSizeF &size, const QPointF &offset)
     }
 
     const auto color = QPalette().window().color();
-    const auto color0 = color.darker(115);
-    const auto color1 = color.darker(105);
+    const auto color0 = color.darker(103);
+    const auto color1 = color.lighter(103);
 
     mProgram->bind();
     mProgram->setUniformValue("uSize", size);
     mProgram->setUniformValue("uOffset", offset);
     mProgram->setUniformValue("uColor0", color0);
     mProgram->setUniformValue("uColor1", color1);
-    mProgram->setUniformValue("uLineColor", color.lighter());
+    mProgram->setUniformValue("uLineColor", QColor(Qt::gray));
 
     gl.glDisable(GL_BLEND);
     gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  

@@ -371,7 +371,7 @@ void MainWindow::writeSettings()
 
 void MainWindow::readSettings()
 {
-    const auto &settings = Singletons::settings();
+    auto &settings = Singletons::settings();
     if (!restoreGeometry(settings.value("geometry").toByteArray()))
         setGeometry(100, 100, 800, 600);
     if (settings.value("fullScreen").toBool())
@@ -391,13 +391,12 @@ void MainWindow::readSettings()
     mRecentFiles = settings.value("recentFiles").toStringList();
     mUi->actionIndentWithSpaces->setChecked(settings.indentWithSpaces());
     mUi->actionShowWhiteSpace->setChecked(settings.showWhiteSpace());
-    mUi->actionDarkTheme->setChecked(settings.darkTheme());
     mUi->actionHideMenuBar->setChecked(settings.hideMenuBar());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
     mUi->actionFullScreen->setChecked(isFullScreen());
-    handleDarkThemeChanging(settings.darkTheme());
     if (settings.hideMenuBar())
        handleHideMenuBarChanged(true);
+    mUi->actionDarkTheme->setChecked(settings.darkTheme());
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
