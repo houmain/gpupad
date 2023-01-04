@@ -307,10 +307,10 @@ void TextureEditor::mouseDoubleClickEvent(QMouseEvent *event)
 void TextureEditor::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::MiddleButton) {
+        const auto dpr = devicePixelRatio();
+        const auto pos = getMousePosition(event) * dpr * 2;
         mPan = true;
-        const auto pos = getMousePosition(event);
-        mPanStartX = pos.x();
-        mPanStartY = pos.y();
+        mPanStart = pos;
         setCursor(Qt::ClosedHandCursor);
         return;
     }
@@ -324,13 +324,13 @@ void TextureEditor::mousePressEvent(QMouseEvent *event)
 void TextureEditor::mouseMoveEvent(QMouseEvent *event)
 {
     if (mPan) {
-        const auto pos = getMousePosition(event);
+        const auto dpr = devicePixelRatio();
+        const auto pos = getMousePosition(event) * dpr * 2;
         horizontalScrollBar()->setValue(
-            horizontalScrollBar()->value() - (pos.x() - mPanStartX));
+            horizontalScrollBar()->value() - pos.x() + mPanStart.x());
         verticalScrollBar()->setValue(
-            verticalScrollBar()->value() - (pos.y() - mPanStartY));
-        mPanStartX = pos.x();
-        mPanStartY = pos.y();
+            verticalScrollBar()->value() - pos.y() + mPanStart.y());
+        mPanStart = pos;
         return;
     }
 

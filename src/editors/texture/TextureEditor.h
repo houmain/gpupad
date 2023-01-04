@@ -82,8 +82,7 @@ private:
     QRect mBounds{ };
     int mMargin{ };
     int mZoom{ };
-    int mPanStartX{ };
-    int mPanStartY{ };
+    QPoint mPanStart{ };
     TextureItem *mTextureItem{ };
     TextureBackground *mTextureBackground{ };
 };
