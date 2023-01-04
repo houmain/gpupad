@@ -128,6 +128,7 @@ set(SOURCES
   src/editors/texture/TextureEditorToolBar.ui
   src/editors/texture/TextureInfoBar.cpp
   src/editors/texture/TextureInfoBar.ui
+  src/editors/texture/TextureBackground.cpp
   src/editors/texture/TextureItem.cpp
   src/editors/qml/QmlView.cpp
   src/main.cpp

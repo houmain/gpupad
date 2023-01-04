@@ -21,7 +21,6 @@ public:
     const TextureData &image() const { return mImage; }
     void setPreviewTexture(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format, GLuint textureId);
-    GLuint resetTexture();
 
     void setMagnifyLinear(bool magnifyLinear) { mMagnifyLinear = magnifyLinear; update(); }
     bool magnifyLinear() const { return mMagnifyLinear; }

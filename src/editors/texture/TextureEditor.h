@@ -7,6 +7,7 @@
 #include <QScrollArea>
 
 class TextureItem;
+class TextureBackground;
 class TextureEditorToolBar;
 class TextureInfoBar;
 class GLWidget;
@@ -84,6 +85,7 @@ private:
     int mPanStartX{ };
     int mPanStartY{ };
     TextureItem *mTextureItem{ };
+    TextureBackground *mTextureBackground{ };
 };
 
 #endif // TEXTUREEDITOR_H

@@ -244,6 +244,9 @@ TextureItem::~TextureItem() = default;
 
 void TextureItem::releaseGL()
 {
+    auto& gl = widget().gl();
+    gl.glDeleteTextures(1, &mImageTextureId);
+
     mProgramCache.reset();
 }
 
@@ -267,11 +270,6 @@ void TextureItem::setPreviewTexture(QOpenGLTexture::Target target,
         mPreviewTextureId = textureId;
         update();
     }
-}
-
-GLuint TextureItem::resetTexture()
-{
-    return std::exchange(mImageTextureId, GL_NONE);
 }
 
 void TextureItem::setMousePosition(const QPointF &mousePosition)

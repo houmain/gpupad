@@ -29,6 +29,7 @@ OutputWindow::OutputWindow(QWidget *parent) : QWidget(parent)
     mTextEdit->setFont(Singletons::settings().font());
 
     updatePalette();
+
     connect(&Singletons::settings(), &Settings::fontChanged,
         mTextEdit, &QPlainTextEdit::setFont);
     connect(&Singletons::settings(), &Settings::darkThemeChanged,
@@ -42,9 +43,9 @@ QString OutputWindow::selectedType() const
 
 void OutputWindow::updatePalette()
 {
-    auto p = palette();
-    p.setColor(QPalette::Base, p.toolTipBase().color());
-    setPalette(p);
+    auto palette = QPalette();
+    palette.setColor(QPalette::Base, palette.toolTipBase().color());
+    setPalette(palette);
 }
 
 void OutputWindow::setText(QString text)

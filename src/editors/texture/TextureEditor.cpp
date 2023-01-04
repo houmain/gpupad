@@ -1,17 +1,18 @@
 #include "TextureEditor.h"
 #include "TextureEditorToolBar.h"
 #include "TextureInfoBar.h"
+#include "TextureItem.h"
+#include "TextureBackground.h"
+#include "GLWidget.h"
 #include "FileDialog.h"
 #include "Singletons.h"
 #include "FileCache.h"
 #include "SynchronizeLogic.h"
 #include "InputState.h"
 #include "Settings.h"
+#include "getMousePosition.h"
 #include "render/GLContext.h"
 #include "session/Item.h"
-#include "TextureItem.h"
-#include "getMousePosition.h"
-#include "GLWidget.h"
 #include <QAction>
 #include <QApplication>
 #include <QWheelEvent>
@@ -47,18 +48,17 @@ TextureEditor::TextureEditor(QString fileName,
     , mEditorToolBar(*editorToolBar)
     , mTextureInfoBar(*textureInfoBar)
     , mFileName(fileName)
-    , mMargin(15)
+    , mMargin(20)
 {
     mGLWidget = new GLWidget(this);
     setViewport(mGLWidget);
     mTextureItem = new TextureItem(mGLWidget);
+    mTextureBackground = new TextureBackground(mGLWidget);
 
     connect(mGLWidget, &GLWidget::releasingGL, 
         this, &TextureEditor::releaseGL);
     connect(mGLWidget, &GLWidget::paintingGL, 
         this, &TextureEditor::paintGL);
-    connect(&Singletons::settings(), &Settings::darkThemeChanged,
-        [this]() { update(); });
 
     setAcceptDrops(false);
     setMouseTracking(true);
@@ -85,9 +85,7 @@ void TextureEditor::paintEvent(QPaintEvent *event)
 
 void TextureEditor::releaseGL() 
 {
-    auto texture = mTextureItem->resetTexture();
-    auto& gl = *mGLWidget->context()->functions();
-    gl.glDeleteTextures(1, &texture);
+    mTextureBackground->releaseGL();
     mTextureItem->releaseGL();
 }
 
@@ -415,8 +413,9 @@ double TextureEditor::getZoomScale() const
 
 void TextureEditor::updateScrollBars() 
 {
-    const auto size = viewport()->size();
-    const auto scale = getZoomScale() / 2;
+    const auto dpr = devicePixelRatio();
+    const auto size = viewport()->size() * dpr;
+    const auto scale = getZoomScale();
     auto bounds = mBounds;
     bounds.setWidth(bounds.width() * scale);
     bounds.setHeight(bounds.height() * scale);
@@ -434,15 +433,28 @@ void TextureEditor::updateScrollBars()
 
 void TextureEditor::paintGL()
 {
-    const auto scale = getZoomScale() / 2;
-    const auto width = QSizeF(viewport()->size()).width();
-    const auto height = QSizeF(viewport()->size()).height();
-    const auto bounds = QSizeF(mBounds.size());
-    const auto sx = scale * bounds.width() / width;
-    const auto sy = scale * bounds.height() / height;
-    const auto x = horizontalScrollBar()->value() / width;
-    const auto y = verticalScrollBar()->value() / height;
+    const auto dpr = devicePixelRatio();
+    const auto scale = getZoomScale();
+    const auto width = viewport()->width() * dpr;
+    const auto height = viewport()->height() * dpr;
+    const auto bounds = scale * QSizeF(mBounds.size());
+    const auto scrollX = horizontalScrollBar()->value();
+    const auto scrollY = verticalScrollBar()->value();
+    const auto scrollOffsetX = horizontalScrollBar()->minimum();
+    const auto scrollOffsetY = verticalScrollBar()->minimum();
+    const auto offset = 
+        QPointF(std::max(width - bounds.width(), 0.0),
+                std::max(height - bounds.height(), 0.0)) +
+        QPointF(std::min(scrollOffsetX + 2 * mMargin, 0), 
+                std::min(scrollOffsetY + 2 * mMargin, 0)) +
+        QPointF(-scrollX, scrollY);
+    mTextureBackground->paintGL(bounds, offset / 2);
+
+    const auto sx = bounds.width() / width;
+    const auto sy = -bounds.height() / height;
+    const auto x  = -scrollX / width;
+    const auto y  = scrollY / height;
     mTextureItem->paintGL(QTransform(sx, 0, 0,
-                                     0, -sy, 0,
-                                     -x, y, 1));
+                                      0, sy, 0,
+                                      x,  y, 1));
 }
