@@ -242,6 +242,10 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
 
     mTextureItem->setImage(texture);
     setBounds(mTextureItem->boundingRect().toRect());
+    if (mTexture.isNull()) {
+        horizontalScrollBar()->setSliderPosition(horizontalScrollBar()->minimum());
+        verticalScrollBar()->setSliderPosition(verticalScrollBar()->minimum());
+    }
     mTexture = texture;
     mIsRaw = false;
 
@@ -337,10 +341,23 @@ void TextureEditor::mouseMoveEvent(QMouseEvent *event)
 
 void TextureEditor::updateMousePosition(QMouseEvent *event)
 {
-    // TODO:
-    auto pos = QPointF(getMousePosition(event) - QPoint(1, 1));
-    //auto pos = mTextureItem->mapFromScene(
-    //    mapToScene(event->pos() - QPoint(1, 1))) - mTextureItem->boundingRect().topLeft();
+    const auto dpr = devicePixelRatio();
+    const auto scale = getZoomScale();
+    const auto width = viewport()->width() * dpr;
+    const auto height = viewport()->height() * dpr;
+    const auto bounds = scale * QSizeF(mBounds.size());
+    const auto scrollX = horizontalScrollBar()->value();
+    const auto scrollY = verticalScrollBar()->value();
+    const auto scrollOffsetX = horizontalScrollBar()->minimum();
+    const auto scrollOffsetY = verticalScrollBar()->minimum();
+    auto offset = 
+        QPointF(std::max(width - bounds.width(), 0.0),
+                std::max(height - bounds.height(), 0.0)) +
+        QPointF(std::min(scrollOffsetX + 2 * mMargin, 0), 
+                std::min(scrollOffsetY + 2 * mMargin, 0)) +
+        QPointF(-scrollX, -scrollY);
+
+    auto pos = (QPointF(getMousePosition(event)) * dpr - offset / 2) / scale;
 
     if (!mTextureItem->flipVertically())
         pos.setY(mTextureItem->boundingRect().height() - pos.y());
@@ -352,7 +369,7 @@ void TextureEditor::updateMousePosition(QMouseEvent *event)
     const auto outsideItem = (pos.x() < 0 || pos.y() < 0 || 
         pos.x() >= mTexture.width() || pos.y() >= mTexture.height());
 
-    pos = event->pos()- QPoint(1, 1);
+    pos = event->pos() - QPoint(1, 1);
     pos.setY(viewport()->height() - pos.y());
     mTextureItem->setMousePosition(pos);
     mTextureItem->setPickerEnabled(
@@ -414,17 +431,18 @@ double TextureEditor::getZoomScale() const
 void TextureEditor::updateScrollBars() 
 {
     const auto dpr = devicePixelRatio();
-    const auto size = viewport()->size() * dpr;
     const auto scale = getZoomScale();
+    const auto width = viewport()->width() * dpr;
+    const auto height = viewport()->height() * dpr;
     auto bounds = mBounds;
     bounds.setWidth(bounds.width() * scale);
     bounds.setHeight(bounds.height() * scale);
     bounds.adjust(-mMargin, -mMargin, mMargin, mMargin);
 
-    horizontalScrollBar()->setPageStep(size.width());
-    verticalScrollBar()->setPageStep(size.height());
-    const auto sx = std::max(bounds.width() - size.width(), 0);
-    const auto sy = std::max(bounds.height() - size.height(), 0);
+    horizontalScrollBar()->setPageStep(width);
+    verticalScrollBar()->setPageStep(height);
+    const auto sx = std::max(bounds.width() - width, 0.0);
+    const auto sy = std::max(bounds.height() - height, 0.0);
     horizontalScrollBar()->setRange(-sx, sx);
     verticalScrollBar()->setRange(-sy, sy);
 

@@ -396,6 +396,8 @@ void MainWindow::readSettings()
     mUi->actionFullScreen->setChecked(isFullScreen());
     if (settings.hideMenuBar())
        handleHideMenuBarChanged(true);
+
+    mUi->actionDarkTheme->setChecked(!settings.darkTheme());
     mUi->actionDarkTheme->setChecked(settings.darkTheme());
 }
 
