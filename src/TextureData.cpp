@@ -531,6 +531,10 @@ bool TextureData::create(
     int width, int height, int depth, int layers, 
     int samples, int levels)
 {
+    if (width <= 0 || height <= 0 || depth <= 0 ||
+        layers <= 0 || samples <= 0 || levels < 0)
+      return false;
+
     auto createInfo = ktxTextureCreateInfo{ };
     createInfo.glInternalformat = format;
     createInfo.baseWidth = static_cast<ktx_uint32_t>(width);
