@@ -19,9 +19,9 @@
 #include "SynchronizeLogic.h"
 #include "EvaluatedPropertyCache.h"
 #include "editors/EditorManager.h"
-#include "editors/TextureEditor.h"
-#include "editors/BinaryEditor.h"
-#include "editors/SourceEditor.h"
+#include "editors/texture/TextureEditor.h"
+#include "editors/binary/BinaryEditor.h"
+#include "editors/source/SourceEditor.h"
 #include "FileCache.h"
 #include <QStackedWidget>
 #include <QDataWidgetMapper>

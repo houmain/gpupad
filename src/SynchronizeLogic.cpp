@@ -6,8 +6,8 @@
 #include "EvaluatedPropertyCache.h"
 #include "session/SessionModel.h"
 #include "editors/EditorManager.h"
-#include "editors/TextureEditor.h"
-#include "editors/BinaryEditor.h"
+#include "editors/texture/TextureEditor.h"
+#include "editors/binary/BinaryEditor.h"
 #include "render/RenderSession.h"
 #include "render/ProcessSource.h"
 #include <QTimer>

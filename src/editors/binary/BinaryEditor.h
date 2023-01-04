@@ -1,7 +1,7 @@
 #ifndef BINARYEDITOR_H
 #define BINARYEDITOR_H
 
-#include "IEditor.h"
+#include "editors/IEditor.h"
 #include <QTableView>
 
 class BinaryEditorToolBar;

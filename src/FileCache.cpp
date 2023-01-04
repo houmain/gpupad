@@ -2,9 +2,9 @@
 #include "Singletons.h"
 #include "session/SessionModel.h"
 #include "editors/EditorManager.h"
-#include "editors/SourceEditor.h"
-#include "editors/TextureEditor.h"
-#include "editors/BinaryEditor.h"
+#include "editors/source/SourceEditor.h"
+#include "editors/texture/TextureEditor.h"
+#include "editors/binary/BinaryEditor.h"
 #include <QThread>
 #include <QTextStream>
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IEditor.h"
+#include "editors/IEditor.h"
 #include "MessageList.h"
 #include <QFrame>
 #include <QSet>

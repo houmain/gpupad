@@ -103,34 +103,33 @@ set(SOURCES
   src/InputState.cpp
   src/SourceType.cpp
   src/Style.cpp
-  src/editors/GLWidget.cpp
-  src/editors/BinaryEditor.cpp
-  src/editors/BinaryEditorToolBar.cpp
-  src/editors/BinaryEditorToolBar.ui
   src/editors/DockWindow.cpp
   src/editors/EditorManager.cpp
-  src/editors/FindReplaceBar.cpp
-  src/editors/FindReplaceBar.ui
-  src/editors/getMousePosition.h
-  src/editors/SyntaxHighlighter.cpp
-  src/editors/SyntaxGLSL.cpp
-  src/editors/SyntaxHLSL.cpp
-  src/editors/SyntaxJavaScript.cpp
-  src/editors/SyntaxLua.cpp
-  src/editors/SyntaxGeneric.cpp
-  src/editors/Completer.cpp
-  src/editors/TextureEditorToolBar.cpp
-  src/editors/TextureEditorToolBar.ui
-  src/editors/TextureEditor.cpp
-  src/editors/TextureItem.cpp
-  src/editors/TextureInfoBar.cpp
-  src/editors/TextureInfoBar.ui
-  src/editors/Histogram.cpp
-  src/editors/SourceEditor.cpp
-  src/editors/SourceEditorToolBar.cpp
-  src/editors/SourceEditorToolBar.ui
-  src/editors/MultiTextCursors.cpp
-  src/editors/QmlView.cpp
+  src/editors/binary/BinaryEditor.cpp
+  src/editors/binary/BinaryEditorToolBar.cpp
+  src/editors/binary/BinaryEditorToolBar.ui
+  src/editors/source/Completer.cpp
+  src/editors/source/FindReplaceBar.cpp
+  src/editors/source/FindReplaceBar.ui
+  src/editors/source/MultiTextCursors.cpp
+  src/editors/source/SourceEditor.cpp
+  src/editors/source/SourceEditorToolBar.cpp
+  src/editors/source/SourceEditorToolBar.ui
+  src/editors/source/SyntaxGeneric.cpp
+  src/editors/source/SyntaxGLSL.cpp
+  src/editors/source/SyntaxHighlighter.cpp
+  src/editors/source/SyntaxHLSL.cpp
+  src/editors/source/SyntaxJavaScript.cpp
+  src/editors/source/SyntaxLua.cpp
+  src/editors/texture/GLWidget.cpp
+  src/editors/texture/Histogram.cpp
+  src/editors/texture/TextureEditor.cpp
+  src/editors/texture/TextureEditorToolBar.cpp
+  src/editors/texture/TextureEditorToolBar.ui
+  src/editors/texture/TextureInfoBar.cpp
+  src/editors/texture/TextureInfoBar.ui
+  src/editors/texture/TextureItem.cpp
+  src/editors/qml/QmlView.cpp
   src/main.cpp
   src/render/GLBuffer.cpp
   src/render/GLCall.cpp

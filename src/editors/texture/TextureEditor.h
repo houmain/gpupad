@@ -1,7 +1,7 @@
 #ifndef TEXTUREEDITOR_H
 #define TEXTUREEDITOR_H
 
-#include "IEditor.h"
+#include "editors/IEditor.h"
 #include "TextureData.h"
 #include <QOpenGLTexture>
 #include <QScrollArea>

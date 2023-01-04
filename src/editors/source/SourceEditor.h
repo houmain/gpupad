@@ -1,7 +1,7 @@
 #ifndef SOURCEEDITOR_H
 #define SOURCEEDITOR_H
 
-#include "IEditor.h"
+#include "editors/IEditor.h"
 #include "FindReplaceBar.h"
 #include "SourceType.h"
 #include "MultiTextCursors.h"
