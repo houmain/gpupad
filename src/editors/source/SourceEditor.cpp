@@ -277,7 +277,8 @@ void SourceEditor::replace(QString source)
         const auto position = cursor.position();
         const auto anchor = cursor.anchor();
         const auto scrollPosition = verticalScrollBar()->sliderPosition();
-        const auto scrollToEnd = (scrollPosition == verticalScrollBar()->maximum());
+        const auto scrollToEnd = 
+            (!initial && scrollPosition == verticalScrollBar()->maximum());
         cursor.beginEditBlock();
         cursor.setPosition(firstDiff);
         cursor.setPosition(lastDiffCurrent, QTextCursor::KeepAnchor);
