@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 1.29.0] - 2022-01-05
+
+### Changed
+
+- Improved texture viewer performance.
+- Improved source type deduction.
+- No longer adding suffix when Saving As.
+
+### Fixed
+
+- Fixed crash when creating Texture without width.
+- Not updating Item filename when Saving As fails.
+- Fixed resizing file backed target texture.
+- Not restoring maximized window when dropping file.
+
 ## [Version 1.28.0] - 2022-12-16
 
 ### Added
@@ -582,6 +597,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 1.29.0]: https://github.com/houmain/gpupad/compare/1.28.0...1.29.0
 [version 1.28.0]: https://github.com/houmain/gpupad/compare/1.27.0...1.28.0
 [version 1.27.0]: https://github.com/houmain/gpupad/compare/1.26.0...1.27.0
 [version 1.26.0]: https://github.com/houmain/gpupad/compare/1.25.0...1.26.0
