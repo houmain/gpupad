@@ -50,7 +50,7 @@ public:
     void setMousePosition(const QPointF &mousePosition);
 
 Q_SIGNALS:
-    void pickerColorChanged(QVector4D color);
+    void pickerColorChanged(const QVector4D &color);
     void histogramChanged(const QVector<qreal> &histogram);
     void histogramBoundsComputed(const Range &range);
 

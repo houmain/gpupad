@@ -307,7 +307,7 @@ void TextureEditor::mouseDoubleClickEvent(QMouseEvent *event)
 void TextureEditor::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::MiddleButton) {
-        const auto dpr = devicePixelRatio();
+        const auto dpr = devicePixelRatioF();
         const auto pos = getMousePosition(event) * dpr * 2;
         mPan = true;
         mPanStart = pos;
@@ -324,7 +324,7 @@ void TextureEditor::mousePressEvent(QMouseEvent *event)
 void TextureEditor::mouseMoveEvent(QMouseEvent *event)
 {
     if (mPan) {
-        const auto dpr = devicePixelRatio();
+        const auto dpr = devicePixelRatioF();
         const auto pos = getMousePosition(event) * dpr * 2;
         horizontalScrollBar()->setValue(
             horizontalScrollBar()->value() - pos.x() + mPanStart.x());
@@ -341,7 +341,7 @@ void TextureEditor::mouseMoveEvent(QMouseEvent *event)
 
 void TextureEditor::updateMousePosition(QMouseEvent *event)
 {
-    const auto dpr = devicePixelRatio();
+    const auto dpr = devicePixelRatioF();
     const auto scale = getZoomScale();
     const auto width = viewport()->width() * dpr;
     const auto height = viewport()->height() * dpr;
@@ -430,7 +430,7 @@ double TextureEditor::getZoomScale() const
 
 void TextureEditor::updateScrollBars() 
 {
-    const auto dpr = devicePixelRatio();
+    const auto dpr = devicePixelRatioF();
     const auto scale = getZoomScale();
     const auto width = viewport()->width() * dpr;
     const auto height = viewport()->height() * dpr;
@@ -451,7 +451,7 @@ void TextureEditor::updateScrollBars()
 
 void TextureEditor::paintGL()
 {
-    const auto dpr = devicePixelRatio();
+    const auto dpr = devicePixelRatioF();
     const auto scale = getZoomScale();
     const auto width = viewport()->width() * dpr;
     const auto height = viewport()->height() * dpr;
