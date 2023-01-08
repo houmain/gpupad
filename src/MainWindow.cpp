@@ -394,11 +394,11 @@ void MainWindow::readSettings()
     mUi->actionHideMenuBar->setChecked(settings.hideMenuBar());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
     mUi->actionFullScreen->setChecked(isFullScreen());
+    mUi->actionDarkTheme->setChecked(settings.darkTheme());
     if (settings.hideMenuBar())
        handleHideMenuBarChanged(true);
 
-    mUi->actionDarkTheme->setChecked(!settings.darkTheme());
-    mUi->actionDarkTheme->setChecked(settings.darkTheme());
+    settings.setDarkTheme(settings.darkTheme());
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
