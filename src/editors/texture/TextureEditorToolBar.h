@@ -12,6 +12,8 @@ public:
     explicit TextureEditorToolBar(QWidget *parent);
     ~TextureEditorToolBar() override;
 
+    void setZoom(int zoom);
+    void setZoomToFit(bool fit);
     void setMaxLevel(int maxLevel);
     void setLevel(float level);
     void setMaxLayer(int maxLayer, int maxDepth);
@@ -26,6 +28,8 @@ public:
     void setFlipVertically(bool flip);
 
 Q_SIGNALS:
+    void zoomChanged(int zoom);
+    void zoomToFitChanged(bool fit);
     void levelChanged(float level);
     void layerChanged(float layer);
     void faceChanged(int index);

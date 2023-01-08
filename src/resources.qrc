@@ -97,5 +97,9 @@
         <file>icons/light/icons/preferences-desktop-font.svg</file>
         <file>images/dock-close.png</file>
         <file>images/dock-restore.png</file>
+        <file>icons/dark/icons/zoom-fit-best.svg</file>
+        <file>icons/dark/icons/zoom-original.svg</file>
+        <file>icons/light/icons/zoom-fit-best.svg</file>
+        <file>icons/light/icons/zoom-original.svg</file>
     </qresource>
 </RCC>

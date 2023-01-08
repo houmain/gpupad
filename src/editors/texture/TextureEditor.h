@@ -47,6 +47,8 @@ public:
 Q_SIGNALS:
     void modificationChanged(bool modified);
     void fileNameChanged(const QString &fileName);
+    void zoomChanged(int zoom);
+    void zoomToFitChanged(bool fit);
 
 protected:
     void wheelEvent(QWheelEvent *event) override;
@@ -62,13 +64,16 @@ protected:
 private:
     void paintGL();
     void releaseGL();
-    void updateMousePosition(QMouseEvent *event);
+    void updateMousePosition(const QPoint &position);
     void setBounds(QRect bounds);
+    void setZoomToFit(bool fit);
     void setZoom(int zoom);
     double getZoomScale() const;
     void setModified(bool modified);
     void updateEditorToolBar();
     void updateScrollBars();
+    int margin() const;
+    void zoomToFit();
 
     GLWidget *mGLWidget{ };
     TextureEditorToolBar &mEditorToolBar;
@@ -80,8 +85,8 @@ private:
     TextureData mTexture;
     bool mPan{ };
     QRect mBounds{ };
-    int mMargin{ };
-    int mZoom{ };
+    bool mZoomToFit{ true };
+    int mZoom{ 100 };
     QPoint mPanStart{ };
     TextureItem *mTextureItem{ };
     TextureBackground *mTextureBackground{ };

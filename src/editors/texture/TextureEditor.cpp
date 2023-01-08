@@ -48,7 +48,6 @@ TextureEditor::TextureEditor(QString fileName,
     , mEditorToolBar(*editorToolBar)
     , mTextureInfoBar(*textureInfoBar)
     , mFileName(fileName)
-    , mMargin(20)
 {
     mGLWidget = new GLWidget(this);
     setViewport(mGLWidget);
@@ -75,6 +74,8 @@ TextureEditor::~TextureEditor()
 void TextureEditor::resizeEvent(QResizeEvent * event)
 {
     mGLWidget->resizeEvent(event);
+    if (mZoomToFit)
+        zoomToFit();
     updateScrollBars();
 }
 
@@ -106,6 +107,15 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
                  actions.windowFileName, &QAction::setEnabled);
 
     updateEditorToolBar();
+
+    c += connect(&mEditorToolBar, &TextureEditorToolBar::zoomToFitChanged,
+        this, &TextureEditor::setZoomToFit);
+    c += connect(&mEditorToolBar, &TextureEditorToolBar::zoomChanged,
+        this, &TextureEditor::setZoom);
+    c += connect(this, &TextureEditor::zoomToFitChanged,
+        &mEditorToolBar, &TextureEditorToolBar::setZoomToFit);
+    c += connect(this, &TextureEditor::zoomChanged,
+        &mEditorToolBar, &TextureEditorToolBar::setZoom);
 
     c += connect(&mEditorToolBar, &TextureEditorToolBar::levelChanged,
         mTextureItem, &TextureItem::setLevel);
@@ -150,6 +160,9 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
 
 void TextureEditor::updateEditorToolBar() 
 {
+    mEditorToolBar.setZoom(mZoom);
+    mEditorToolBar.setZoomToFit(mZoomToFit);
+
     mEditorToolBar.setMaxLevel(std::max(mTexture.levels() - 1, 0));
     mEditorToolBar.setLevel(mTextureItem->level());
 
@@ -286,21 +299,31 @@ void TextureEditor::wheelEvent(QWheelEvent *event)
 {
     setFocus();
 
-    if (!event->modifiers()) {
-        const auto min = -3;
-        const auto max = 8;
-        auto delta = (event->angleDelta().y() > 0 ? 1 : -1);
-        setZoom(std::max(min, std::min(mZoom + delta, max)));
-        return;
-    }
+    if (event->modifiers() & Qt::ControlModifier) {
+        auto delta = 0;
+        auto steps = event->angleDelta().y() / 120.0;
+        while (steps) {
+            const auto scale = std::min(steps, 1.0);
+            steps -= scale;
 
-    event->setModifiers(event->modifiers() & ~(Qt::ShiftModifier | Qt::ControlModifier));
-    QAbstractScrollArea::wheelEvent(event);
+            if (mZoom < 10 + (scale > 0 ? 0 : 1))
+                delta += (scale > 0 ? 1 : -1);
+            else if (mZoom < 100 + (scale > 0 ? 0 : 50))
+                delta += static_cast<int>(scale * 5);
+            else
+                delta += static_cast<int>(scale * 50);
+        }
+        setZoom(mZoom + delta);
+    }
+    else {
+        QAbstractScrollArea::wheelEvent(event);
+    }
+    updateMousePosition(event->position().toPoint());
 }
 
 void TextureEditor::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    setZoom(0);
+    setZoom(100);
     QAbstractScrollArea::mouseDoubleClickEvent(event);
 }
 
@@ -314,11 +337,9 @@ void TextureEditor::mousePressEvent(QMouseEvent *event)
         setCursor(Qt::ClosedHandCursor);
         return;
     }
-
-    updateMousePosition(event);
-    Singletons::inputState().setMouseButtonPressed(event->button());
-
     QAbstractScrollArea::mousePressEvent(event);
+    updateMousePosition(getMousePosition(event));
+    Singletons::inputState().setMouseButtonPressed(event->button());
 }
 
 void TextureEditor::mouseMoveEvent(QMouseEvent *event)
@@ -333,13 +354,11 @@ void TextureEditor::mouseMoveEvent(QMouseEvent *event)
         mPanStart = pos;
         return;
     }
-
-    updateMousePosition(event);
-
     QAbstractScrollArea::mouseMoveEvent(event);
+    updateMousePosition(getMousePosition(event));
 }
 
-void TextureEditor::updateMousePosition(QMouseEvent *event)
+void TextureEditor::updateMousePosition(const QPoint &position)
 {
     const auto dpr = devicePixelRatioF();
     const auto scale = getZoomScale();
@@ -353,11 +372,11 @@ void TextureEditor::updateMousePosition(QMouseEvent *event)
     auto offset = 
         QPointF(std::max(width - bounds.width(), 0.0),
                 std::max(height - bounds.height(), 0.0)) +
-        QPointF(std::min(scrollOffsetX + 2 * mMargin, 0), 
-                std::min(scrollOffsetY + 2 * mMargin, 0)) +
+        QPointF(std::min(scrollOffsetX + 2 * margin(), 0),
+                std::min(scrollOffsetY + 2 * margin(), 0)) +
         QPointF(-scrollX, -scrollY);
 
-    auto pos = (QPointF(getMousePosition(event)) * dpr - offset / 2) / scale;
+    auto pos = (QPointF(position) * dpr - offset / 2) / scale;
 
     if (!mTextureItem->flipVertically())
         pos.setY(mTextureItem->boundingRect().height() - pos.y());
@@ -369,7 +388,7 @@ void TextureEditor::updateMousePosition(QMouseEvent *event)
     const auto outsideItem = (pos.x() < 0 || pos.y() < 0 || 
         pos.x() >= mTexture.width() || pos.y() >= mTexture.height());
 
-    pos = event->pos() - QPoint(1, 1);
+    pos = position - QPoint(1, 1);
     pos.setY(viewport()->height() - pos.y());
     mTextureItem->setMousePosition(pos);
     mTextureItem->setPickerEnabled(
@@ -407,25 +426,56 @@ void TextureEditor::keyReleaseEvent(QKeyEvent *event)
 
 void TextureEditor::setBounds(QRect bounds)
 {
-    if (bounds == mBounds)
-        return;
-    mBounds = bounds;
-    updateScrollBars();
+    if (bounds != mBounds) {
+        mBounds = bounds;
+        if (mZoomToFit)
+            zoomToFit();
+        updateScrollBars();
+    }
+}
+
+int TextureEditor::margin() const
+{
+    return (mZoomToFit ? 0 : 20);
+}
+
+void TextureEditor::zoomToFit()
+{
+    const auto dpr = devicePixelRatioF();
+    const auto width = viewport()->width() * dpr;
+    const auto height = viewport()->height() * dpr;
+    const auto scale = std::min(width / mBounds.width(),
+                                height / mBounds.height());
+    mZoom = std::max(static_cast<int>(scale * 100), 1);
+    Q_EMIT zoomChanged(mZoom);
+}
+
+void TextureEditor::setZoomToFit(bool fit)
+{
+    if (mZoomToFit != fit) {
+        mZoomToFit = fit;
+        Q_EMIT zoomToFitChanged(fit);
+        if (fit) {
+            zoomToFit();
+            updateScrollBars();
+        }
+    }
 }
 
 void TextureEditor::setZoom(int zoom)
 {
-    if (mZoom == zoom)
-        return;
-    mZoom = zoom;
-    updateScrollBars();
+    zoom = std::max(zoom, 1);
+    if (mZoom != zoom) {
+        mZoom = zoom;
+        Q_EMIT zoomChanged(zoom);
+        setZoomToFit(false);
+        updateScrollBars();
+    }
 }
 
 double TextureEditor::getZoomScale() const
 {
-    return (mZoom < 0 ?
-        1.0 / (1 << (-mZoom)) :
-        1 << (mZoom));
+    return mZoom / 100.0;
 }
 
 void TextureEditor::updateScrollBars() 
@@ -437,10 +487,13 @@ void TextureEditor::updateScrollBars()
     auto bounds = mBounds;
     bounds.setWidth(bounds.width() * scale);
     bounds.setHeight(bounds.height() * scale);
-    bounds.adjust(-mMargin, -mMargin, mMargin, mMargin);
+    const auto m = margin();
+    bounds.adjust(-m, -m, m, m);
 
     horizontalScrollBar()->setPageStep(width);
     verticalScrollBar()->setPageStep(height);
+    horizontalScrollBar()->setSingleStep(32);
+    verticalScrollBar()->setSingleStep(32);
     const auto sx = std::max(bounds.width() - width, 0.0);
     const auto sy = std::max(bounds.height() - height, 0.0);
     horizontalScrollBar()->setRange(-sx, sx);
@@ -463,8 +516,8 @@ void TextureEditor::paintGL()
     const auto offset = 
         QPointF(std::max(width - bounds.width(), 0.0),
                 std::max(height - bounds.height(), 0.0)) +
-        QPointF(std::min(scrollOffsetX + 2 * mMargin, 0), 
-                std::min(scrollOffsetY + 2 * mMargin, 0)) +
+        QPointF(std::min(scrollOffsetX + 2 * margin(), 0),
+                std::min(scrollOffsetY + 2 * margin(), 0)) +
         QPointF(-scrollX, scrollY);
     mTextureBackground->paintGL(bounds, offset / 2);
 

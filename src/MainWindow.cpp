@@ -425,6 +425,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
         case QEvent::MouseButtonPress:
         case QEvent::MouseButtonRelease:
         case QEvent::MouseMove:
+        case QEvent::Wheel:
             mLastPressWasAlt = false;
             break;
         default:

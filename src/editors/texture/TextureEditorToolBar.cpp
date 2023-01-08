@@ -8,6 +8,10 @@ TextureEditorToolBar::TextureEditorToolBar(QWidget *parent)
 {
     mUi->setupUi(this);
 
+    connect(mUi->zoom, qOverload<int>(&QSpinBox::valueChanged),
+        this, &TextureEditorToolBar::zoomChanged);
+    connect(mUi->zoomToFit, &QToolButton::toggled,
+        this, &TextureEditorToolBar::zoomToFitChanged);
     connect(mUi->level, qOverload<double>(&QDoubleSpinBox::valueChanged),
         [&](double level) { Q_EMIT levelChanged(level); });
     connect(mUi->layer, qOverload<double>(&QDoubleSpinBox::valueChanged),
@@ -25,6 +29,16 @@ TextureEditorToolBar::TextureEditorToolBar(QWidget *parent)
 TextureEditorToolBar::~TextureEditorToolBar() 
 {
     delete mUi;
+}
+
+void TextureEditorToolBar::setZoom(int zoom)
+{
+    mUi->zoom->setValue(zoom);
+}
+
+void TextureEditorToolBar::setZoomToFit(bool fit)
+{
+    mUi->zoomToFit->setChecked(fit);
 }
 
 void TextureEditorToolBar::setMaxLevel(int maxLevel)
