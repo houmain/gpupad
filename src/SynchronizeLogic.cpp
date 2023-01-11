@@ -232,13 +232,13 @@ void SynchronizeLogic::handleItemReordered(const QModelIndex &parent, int first)
 void SynchronizeLogic::handleEditorFileRenamed(const QString &prevFileName,
     const QString &fileName)
 {
-    // update item filenames
-    mModel.forEachFileItem([&](const FileItem &item) {
-        if (item.fileName == prevFileName)
-            if (!fileName.isEmpty() || FileDialog::isUntitled(item.fileName))
+    // update references to untitled file
+    if (FileDialog::isUntitled(prevFileName))
+        mModel.forEachFileItem([&](const FileItem &item) {
+            if (item.fileName == prevFileName)
                 mModel.setData(mModel.getIndex(&item, SessionModel::FileName),
-                    fileName);
-    });
+                        fileName);
+        });
 }
 
 void SynchronizeLogic::handleFileItemFileChanged(const FileItem &item)
