@@ -533,16 +533,19 @@ void SessionProperties::setCurrentItemFile(const QString &fileName)
 void SessionProperties::saveCurrentItemFileAs(FileDialog::Options options)
 {
     options |= FileDialog::Saving;
-    while (Singletons::fileDialog().exec(options, currentItemFileName())) {
-        const auto fileName = Singletons::fileDialog().fileName();
+    const auto prevFileName = currentItemFileName();
+    auto fileName = prevFileName;
+    while (Singletons::fileDialog().exec(options, fileName)) {
+        fileName = Singletons::fileDialog().fileName();
         if (auto editor = openItemEditor(currentModelIndex())) {
-            const auto prevFileName = editor->fileName();
             editor->setFileName(fileName);
-            if (editor->save()) {
-                setCurrentItemFile(fileName);
-                break;
+            if (!editor->save()) {
+                editor->setFileName(prevFileName);
+                if (!showSavingFailedMessage(this, fileName))
+                    break;
+                continue;
             }
-            editor->setFileName(prevFileName);
+            return setCurrentItemFile(fileName);
         }
     }
 }

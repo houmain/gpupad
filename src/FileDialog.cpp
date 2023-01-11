@@ -92,6 +92,15 @@ bool FileDialog::isSessionFileName(const QString &fileName)
     return fileName.endsWith(SessionFileExtension);
 }
 
+bool FileDialog::isTextureFileName(const QString &fileName)
+{
+    const auto lowerFileName = fileName.toLower();
+    for (auto extension : TextureFileExtensions)
+        if (lowerFileName.endsWith(extension))
+            return true;
+    return false;
+}
+
 bool FileDialog::isVideoFileName(const QString &fileName)
 {
     const auto lowerFileName = fileName.toLower();
@@ -235,16 +244,41 @@ bool FileDialog::exec(Options options, QString currentFileName,
     return true;
 }
 
-int openNotSavedDialog(QWidget *parent, const QString& fileName)
+bool showNotSavedDialog(QWidget *parent, const QString& fileName)
 {
-    QMessageBox dialog(parent);
+    auto dialog = QMessageBox(parent);
     dialog.setIcon(QMessageBox::Question);
     dialog.setText(parent->tr("<h3>The file '%1' is not saved.</h3>"
-           "Do you want to save it before closing?<br>")
-           .arg(FileDialog::getFileTitle(fileName)));
+        "Do you want to save it before closing?<br>")
+        .arg(FileDialog::getFileTitle(fileName)));
     dialog.addButton(QMessageBox::Save);
     dialog.addButton(parent->tr("&Don't Save"), QMessageBox::RejectRole);
     dialog.addButton(QMessageBox::Cancel);
     dialog.setDefaultButton(QMessageBox::Save);
-    return dialog.exec();
+    return (dialog.exec() == QMessageBox::Save);
+}
+
+bool showSavingFailedMessage(QWidget *parent, const QString &fileName)
+{
+    auto dialog = QMessageBox(parent);
+    dialog.setIcon(QMessageBox::Critical);
+    auto text = parent->tr("<h3>Saving file '%1' failed.</h3>")
+        .arg(FileDialog::getFileTitle(fileName));
+    text += parent->tr("Is the path writeable");
+    if (FileDialog::isTextureFileName(fileName))
+        text += parent->tr(" and does the file format support the texture format");
+    text += "?";
+    dialog.setText(text);
+    dialog.addButton(QMessageBox::Retry);
+    dialog.addButton(QMessageBox::Cancel);
+    return (dialog.exec() == QMessageBox::Retry);
+}
+
+void showCopyingSessionFailedMessage(QWidget *parent) 
+{
+    auto dialog = QMessageBox(parent);
+    dialog.setIcon(QMessageBox::Warning);
+    dialog.setText(parent->tr("<h3>Copying session files failed.</h3>"));
+    dialog.addButton(QMessageBox::Ok);
+    dialog.exec();
 }

@@ -1029,9 +1029,17 @@ bool TextureData::isNull() const
     return (mKtxTexture == nullptr);
 }
 
-QImage TextureData::toImage() const 
+bool TextureData::isConvertibleToImage() const 
 {
     if (depth() > 1 || layers() > 1 || isCubemap())
+        return false;
+
+    return getImageFormat(pixelFormat(), pixelType()) != QImage::Format_Invalid;
+}
+
+QImage TextureData::toImage() const 
+{
+    if (!isConvertibleToImage())
         return { };
 
     const auto imageFormat = getImageFormat(pixelFormat(), pixelType());

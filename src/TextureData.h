@@ -23,6 +23,7 @@ public:
     bool isNull() const;
     void clear();
     QImage toImage() const;
+    bool isConvertibleToImage() const;
 
     bool isArray() const;
     bool isCubemap() const;

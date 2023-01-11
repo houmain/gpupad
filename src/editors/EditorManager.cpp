@@ -432,8 +432,11 @@ bool EditorManager::saveEditor()
             return saveEditorAs();
 
         Singletons::fileCache().handleEditorSave(editor->fileName());
-        if (!editor->save())
+        if (!editor->save()) {
+            if (!showSavingFailedMessage(this, editor->fileName()))
+                return false;
             return saveEditorAs();
+        }
         return true;
     }
     return false;
@@ -441,9 +444,6 @@ bool EditorManager::saveEditor()
 
 bool EditorManager::saveEditorAs()
 {
-    if (!mCurrentDock)
-        return false;
-
     if (auto editor = currentEditor()) {
         auto options = FileDialog::Options{ FileDialog::Saving };
         auto sourceType = SourceType{ };
@@ -457,20 +457,20 @@ bool EditorManager::saveEditorAs()
         }
         else if (auto textureEditor = qobject_cast<TextureEditor*>(mCurrentDock->widget())) {
             options |= FileDialog::TextureExtensions;
-            if (textureEditor->texture().dimensions() != 2 ||
-                textureEditor->texture().isArray() ||
-                textureEditor->texture().isCubemap() ||
-                textureEditor->texture().isCompressed())
+            if (!textureEditor->texture().isConvertibleToImage())
                 options |= FileDialog::SavingNon2DTexture;
         }
 
         const auto prevFileName = editor->fileName();
         while (Singletons::fileDialog().exec(options, editor->fileName(), sourceType)) {
             editor->setFileName(Singletons::fileDialog().fileName());
-            if (editor->save()) {
-                Q_EMIT editorRenamed(prevFileName, editor->fileName());
-                return true;
+            if (!editor->save()) {
+                if (!showSavingFailedMessage(this, editor->fileName()))
+                    break;
+                continue;
             }
+            Q_EMIT editorRenamed(prevFileName, editor->fileName());
+            return true;
         }
         editor->setFileName(prevFileName);
     }
@@ -680,11 +680,7 @@ bool EditorManager::promptSaveDock(QDockWidget *dock)
     if (dock->isWindowModified()) {
         autoRaise(dock->widget());
 
-        auto ret = openNotSavedDialog(this, editor->fileName());
-        if (ret == QMessageBox::Cancel)
-            return false;
-
-        if (ret == QMessageBox::Save &&
+        if (!showNotSavedDialog(this, editor->fileName()) ||
             !saveDock(dock))
             return false;
     }

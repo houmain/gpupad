@@ -744,14 +744,8 @@ bool MainWindow::saveSessionAs()
     }
 
     if (!copySessionFiles(QFileInfo(prevFileName).path(), 
-            QFileInfo(mSessionEditor->fileName()).path())) {
-        QMessageBox dialog(this);
-        dialog.setIcon(QMessageBox::Warning);
-        dialog.setWindowTitle(tr("File Error"));
-        dialog.setText(tr("Copying session files failed."));
-        dialog.addButton(QMessageBox::Ok);
-        dialog.exec();
-    }
+            QFileInfo(mSessionEditor->fileName()).path()))
+        showCopyingSessionFailedMessage(this);
 
     mSessionEditor->save();
     mSessionEditor->clearUndo();
@@ -849,11 +843,7 @@ bool MainWindow::closeSession()
         return false;
 
     if (mSessionEditor->isModified()) {
-        auto ret = openNotSavedDialog(this, mSessionEditor->fileName());
-        if (ret == QMessageBox::Cancel)
-            return false;
-
-        if (ret == QMessageBox::Save &&
+        if (!showNotSavedDialog(this, mSessionEditor->fileName()) ||
             !saveSession())
             return false;
     }

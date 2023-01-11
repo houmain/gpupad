@@ -18,6 +18,7 @@ public:
     static QString getWindowTitle(const QString &fileName);
     static QString getFullWindowTitle(const QString &fileName);
     static bool isSessionFileName(const QString &fileName);
+    static bool isTextureFileName(const QString &fileName);
     static bool isVideoFileName(const QString &fileName);
     static void showInFileManager(const QString &path);
 
@@ -55,6 +56,8 @@ private:
     bool mAsBinaryFile{ };
 };
 
-int openNotSavedDialog(QWidget *parent, const QString &fileName);
+bool showNotSavedDialog(QWidget *parent, const QString &fileName);
+bool showSavingFailedMessage(QWidget *parent, const QString &fileName);
+void showCopyingSessionFailedMessage(QWidget *parent);
 
 #endif // FILEDIALOG_H
