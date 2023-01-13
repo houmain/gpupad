@@ -5,6 +5,7 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
 
 jobs:
   build:
@@ -21,7 +22,7 @@ jobs:
         - {
             name: "Windows-x64", WIN_ARCH: "x64"
             , os: windows-2019
-            , QT_VERSION: 5.15.2, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/5.15.2/msvc2019_64", QT_ARCH: win64_msvc2019_64
+            , QT_VERSION: 6.1.2, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/6.1.2/msvc2019_64", QT_ARCH: win64_msvc2019_64
           }
         - {
             name: "MacOS-x64"
