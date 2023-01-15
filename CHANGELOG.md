@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 1.30.0] - 2022-01-15
+
+### Added
+
+- Added zoom to texture editor toolbar.
+- Added saving failed message.
+
+### Changed
+
+- Only updating untitled file items when Saving As.
+- Building Windows binary releases with Qt 6.4.1.
+
 ## [Version 1.29.0] - 2022-01-05
 
 ### Changed
@@ -597,6 +609,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 1.30.0]: https://github.com/houmain/gpupad/compare/1.29.0...1.30.0
 [version 1.29.0]: https://github.com/houmain/gpupad/compare/1.28.0...1.29.0
 [version 1.28.0]: https://github.com/houmain/gpupad/compare/1.27.0...1.28.0
 [version 1.27.0]: https://github.com/houmain/gpupad/compare/1.26.0...1.27.0
