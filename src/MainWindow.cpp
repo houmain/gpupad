@@ -843,7 +843,10 @@ bool MainWindow::closeSession()
         return false;
 
     if (mSessionEditor->isModified()) {
-        if (!showNotSavedDialog(this, mSessionEditor->fileName()) ||
+        const auto ret = showNotSavedDialog(this, mSessionEditor->fileName());
+        if (ret == QMessageBox::Cancel)
+            return false;
+        if (ret == QMessageBox::Save &&
             !saveSession())
             return false;
     }

@@ -244,7 +244,7 @@ bool FileDialog::exec(Options options, QString currentFileName,
     return true;
 }
 
-bool showNotSavedDialog(QWidget *parent, const QString& fileName)
+int showNotSavedDialog(QWidget *parent, const QString &fileName)
 {
     auto dialog = QMessageBox(parent);
     dialog.setIcon(QMessageBox::Question);
@@ -255,7 +255,7 @@ bool showNotSavedDialog(QWidget *parent, const QString& fileName)
     dialog.addButton(parent->tr("&Don't Save"), QMessageBox::RejectRole);
     dialog.addButton(QMessageBox::Cancel);
     dialog.setDefaultButton(QMessageBox::Save);
-    return (dialog.exec() == QMessageBox::Save);
+    return dialog.exec();
 }
 
 bool showSavingFailedMessage(QWidget *parent, const QString &fileName)
@@ -267,7 +267,7 @@ bool showSavingFailedMessage(QWidget *parent, const QString &fileName)
     text += parent->tr("Is the path writeable");
     if (FileDialog::isTextureFileName(fileName))
         text += parent->tr(" and does the file format support the texture format");
-    text += "?";
+    text += "?<br>";
     dialog.setText(text);
     dialog.addButton(QMessageBox::Retry);
     dialog.addButton(QMessageBox::Cancel);
@@ -278,7 +278,8 @@ void showCopyingSessionFailedMessage(QWidget *parent)
 {
     auto dialog = QMessageBox(parent);
     dialog.setIcon(QMessageBox::Warning);
-    dialog.setText(parent->tr("<h3>Copying session files failed.</h3>"));
+    dialog.setText(parent->tr("<h3>Copying session files failed.</h3>"
+        "Not all files in session could be copied.<br>"));
     dialog.addButton(QMessageBox::Ok);
     dialog.exec();
 }

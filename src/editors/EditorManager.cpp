@@ -680,7 +680,10 @@ bool EditorManager::promptSaveDock(QDockWidget *dock)
     if (dock->isWindowModified()) {
         autoRaise(dock->widget());
 
-        if (!showNotSavedDialog(this, editor->fileName()) ||
+        const auto ret = showNotSavedDialog(this, editor->fileName());
+        if (ret == QMessageBox::Cancel)
+            return false;
+        if (ret == QMessageBox::Save &&
             !saveDock(dock))
             return false;
     }

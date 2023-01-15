@@ -56,7 +56,7 @@ private:
     bool mAsBinaryFile{ };
 };
 
-bool showNotSavedDialog(QWidget *parent, const QString &fileName);
+int showNotSavedDialog(QWidget *parent, const QString &fileName);
 bool showSavingFailedMessage(QWidget *parent, const QString &fileName);
 void showCopyingSessionFailedMessage(QWidget *parent);
 
