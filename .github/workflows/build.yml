@@ -80,7 +80,7 @@ jobs:
         cp AppDir/usr/share/pixmaps/io.github.houmain.gpupad.png AppDir
         wget -nv -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
         chmod a+x linuxdeployqt*.AppImage
-        export VERSION='${{ steps.vars.outputs.version }}'        
+        export VERSION='${{ github.ref }}'        
         unset QTDIR; unset QT_PLUGIN_PATH; unset LD_LIBRARY_PATH
         ./linuxdeployqt*.AppImage AppDir/usr/bin/gpupad -appimage -extra-plugins=iconengines,imageformats -no-translations -no-copy-copyright-files
 
