@@ -16,7 +16,7 @@ jobs:
         config:
         - {
            name: "Linux-x64"
-           , os: ubuntu-18.04
+           , os: ubuntu-20.04
            , QT_VERSION: 5.15.2, QT_INST_DIR: /opt, QTDIR: /opt/Qt/5.15.2/gcc_64
           }
         - {
@@ -24,11 +24,12 @@ jobs:
             , os: windows-2019
             , QT_VERSION: 6.1.2, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/6.1.2/msvc2019_64", QT_ARCH: win64_msvc2019_64
           }
-        - {
-            name: "MacOS-x64"
-            , os: macos-11
-            , QT_VERSION: 5.15.2, QT_INST_DIR: /Users/runner, QTDIR: /Users/runner/Qt/5.15.2/clang_64
-          }          
+#        - {
+#            name: "MacOS-x64"
+#            , os: macos-11
+#            , QT_VERSION: 5.15.2, QT_INST_DIR: /Users/runner, QTDIR: /Users/runner/Qt/5.15.2/clang_64
+#          }
+
     steps:
     - name: Setup Windows/MSVC
       if: runner.os == 'Windows'
@@ -36,12 +37,12 @@ jobs:
       with:
         arch: ${{matrix.config.WIN_ARCH}}
 
-    - name: Cache Qt
-      id: cache-qt
-      uses: actions/cache@v2
-      with:
-        path: ${{matrix.config.QT_INST_DIR}}/Qt
-        key: ${{ runner.os }}${{ matrix.config.WIN_ARCH }}-qt-${{ matrix.config.QT_VERSION }}
+#    - name: Cache Qt
+#      id: cache-qt
+#      uses: actions/cache@v2
+#      with:
+#        path: ${{matrix.config.QT_INST_DIR}}/Qt
+#        key: ${{ runner.os }}${{ matrix.config.WIN_ARCH }}-qt-${{ matrix.config.QT_VERSION }}
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
@@ -81,6 +82,7 @@ jobs:
         chmod a+x linuxdeployqt*.AppImage
         unset QTDIR; unset QT_PLUGIN_PATH; unset LD_LIBRARY_PATH
         ./linuxdeployqt*.AppImage AppDir/usr/bin/gpupad -appimage -extra-plugins=iconengines,imageformats -no-translations -no-copy-copyright-files
+        mv gpupad*.AppImage gpupad.AppImage
 
     - name: Upload to Github release
       uses: xresloader/upload-to-github-release@v1
