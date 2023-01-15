@@ -76,13 +76,13 @@ jobs:
         sudo apt-get install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good
         mkdir -p AppDir
         cp -R dist AppDir/usr
-        cp AppDir/usr/share/applications/gpupad.desktop AppDir
-        cp AppDir/usr/share/pixmaps/gpupad.png AppDir
+        cp AppDir/usr/share/applications/io.github.houmain.gpupad.desktop AppDir
+        cp AppDir/usr/share/pixmaps/io.github.houmain.gpupad.png AppDir
         wget -nv -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
         chmod a+x linuxdeployqt*.AppImage
+        export VERSION='${{ steps.vars.outputs.version }}'        
         unset QTDIR; unset QT_PLUGIN_PATH; unset LD_LIBRARY_PATH
         ./linuxdeployqt*.AppImage AppDir/usr/bin/gpupad -appimage -extra-plugins=iconengines,imageformats -no-translations -no-copy-copyright-files
-        mv GPUpad-*-x86_64.AppImage GPUpad-x86_64.AppImage
 
     - name: Upload to Github release
       uses: xresloader/upload-to-github-release@v1
