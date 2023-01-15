@@ -72,6 +72,9 @@
          <height>27</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>Zoom in window using CTRL-mouse wheel</string>
+       </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
