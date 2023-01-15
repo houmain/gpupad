@@ -17,7 +17,7 @@ jobs:
         - {
            name: "Linux-x64"
            , os: ubuntu-18.04
-           , QT_VERSION: 6.4.1, QT_INST_DIR: /opt, QTDIR: /opt/Qt/6.4.1/gcc_64
+           , QT_VERSION: 5.15.2, QT_INST_DIR: /opt, QTDIR: /opt/Qt/5.15.2/gcc_64
           }
         - {
             name: "Windows-x64", WIN_ARCH: "x64"
