@@ -708,6 +708,10 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
     else if (event->key() == Qt::Key_Escape) {
         mFindReplaceBar.cancel();
     }
+    else if (event->key() == Qt::Key_Insert && !event->modifiers()) {
+        setOverwriteMode(!overwriteMode());
+        update();
+    }
     else if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
         autoIndentNewLine();
         removeTrailingSpace();
