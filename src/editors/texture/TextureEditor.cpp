@@ -299,7 +299,9 @@ void TextureEditor::wheelEvent(QWheelEvent *event)
 {
     setFocus();
 
-    if (event->modifiers() & Qt::ControlModifier) {
+    if (!event->modifiers()) {
+        const auto scenePosition = mapToScene(event->position());
+
         auto delta = 0;
         auto steps = event->angleDelta().y() / 120.0;
         while (steps) {
@@ -314,8 +316,14 @@ void TextureEditor::wheelEvent(QWheelEvent *event)
                 delta += static_cast<int>(scale * 50);
         }
         setZoom(mZoom + delta);
+
+        // scroll to restore mouse cursor's scene position
+        const auto offset = (event->position() - mapFromScene(scenePosition)) * 2;
+        horizontalScrollBar()->setValue(horizontalScrollBar()->value() - offset.x());
+        verticalScrollBar()->setValue(verticalScrollBar()->value() - offset.y());
     }
     else {
+        event->setModifiers(event->modifiers() & ~(Qt::ShiftModifier | Qt::ControlModifier));
         QAbstractScrollArea::wheelEvent(event);
     }
     updateMousePosition(event->position().toPoint());
@@ -358,7 +366,7 @@ void TextureEditor::mouseMoveEvent(QMouseEvent *event)
     updateMousePosition(getMousePosition(event));
 }
 
-void TextureEditor::updateMousePosition(const QPoint &position)
+QPointF TextureEditor::getScrollOffset() const
 {
     const auto dpr = devicePixelRatioF();
     const auto scale = getZoomScale();
@@ -369,19 +377,38 @@ void TextureEditor::updateMousePosition(const QPoint &position)
     const auto scrollY = verticalScrollBar()->value();
     const auto scrollOffsetX = horizontalScrollBar()->minimum();
     const auto scrollOffsetY = verticalScrollBar()->minimum();
-    auto offset = 
+    const auto offset =
         QPointF(std::max(width - bounds.width(), 0.0),
                 std::max(height - bounds.height(), 0.0)) +
         QPointF(std::min(scrollOffsetX + 2 * margin(), 0),
                 std::min(scrollOffsetY + 2 * margin(), 0)) +
         QPointF(-scrollX, -scrollY);
+    return offset / 2;
+}
 
-    auto pos = (QPointF(position) * dpr - offset / 2) / scale;
+QPointF TextureEditor::mapToScene(const QPointF &position) const
+{
+    const auto dpr = devicePixelRatioF();
+    const auto offset = getScrollOffset();
+    const auto scale = getZoomScale();
+    return (position * dpr - offset) / scale;
+}
 
+QPointF TextureEditor::mapFromScene(const QPointF &position) const
+{
+    const auto dpr = devicePixelRatioF();
+    const auto offset = getScrollOffset();
+    const auto scale = getZoomScale();
+    return (position * scale + offset) / dpr;
+}
+
+void TextureEditor::updateMousePosition(const QPoint &position)
+{
+    auto pos = mapToScene(position);
     if (!mTextureItem->flipVertically())
         pos.setY(mTextureItem->boundingRect().height() - pos.y());
-
     pos = QPointF(qRound(pos.x() - 0.5), qRound(pos.y() - 0.5));
+
     mTextureInfoBar.setMousePosition(pos);
     Singletons::inputState().setMousePosition(pos.toPoint());
     Singletons::inputState().setEditorSize({ mTexture.width(), mTexture.height() });
@@ -513,7 +540,7 @@ void TextureEditor::paintGL()
     const auto scrollY = verticalScrollBar()->value();
     const auto scrollOffsetX = horizontalScrollBar()->minimum();
     const auto scrollOffsetY = verticalScrollBar()->minimum();
-    const auto offset = 
+    const auto offset =
         QPointF(std::max(width - bounds.width(), 0.0),
                 std::max(height - bounds.height(), 0.0)) +
         QPointF(std::min(scrollOffsetX + 2 * margin(), 0),

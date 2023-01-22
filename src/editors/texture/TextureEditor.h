@@ -74,6 +74,9 @@ private:
     void updateScrollBars();
     int margin() const;
     void zoomToFit();
+    QPointF getScrollOffset() const;
+    QPointF mapToScene(const QPointF &position) const;
+    QPointF mapFromScene(const QPointF &position) const;
 
     GLWidget *mGLWidget{ };
     TextureEditorToolBar &mEditorToolBar;
