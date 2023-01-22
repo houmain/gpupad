@@ -38,6 +38,7 @@ Q_SIGNALS:
     void flipVerticallyChanged(bool flip);
 
 private:
+    void zoomIndexChanged(int index);
     void filterStateChanged(int state);
 
     Ui::TextureEditorToolBar *mUi;

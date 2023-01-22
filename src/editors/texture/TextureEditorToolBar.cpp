@@ -8,8 +8,16 @@ TextureEditorToolBar::TextureEditorToolBar(QWidget *parent)
 {
     mUi->setupUi(this);
 
-    connect(mUi->zoom, qOverload<int>(&QSpinBox::valueChanged),
-        this, &TextureEditorToolBar::zoomChanged);
+    const auto zoomPresets = { 
+        10, 25, 50, 75, 100, 200, 300, 400, 500, 1000 
+    };
+    mUi->zoom->addItem("100%", 100);
+    mUi->zoom->insertSeparator(1);
+    for (auto zoomPreset : zoomPresets)
+        mUi->zoom->addItem(QString::number(zoomPreset) + '%', zoomPreset);
+
+    connect(mUi->zoom, &QComboBox::currentIndexChanged,
+        this, &TextureEditorToolBar::zoomIndexChanged);
     connect(mUi->zoomToFit, &QToolButton::toggled,
         this, &TextureEditorToolBar::zoomToFitChanged);
     connect(mUi->level, qOverload<double>(&QDoubleSpinBox::valueChanged),
@@ -33,7 +41,9 @@ TextureEditorToolBar::~TextureEditorToolBar()
 
 void TextureEditorToolBar::setZoom(int zoom)
 {
-    mUi->zoom->setValue(zoom);
+    mUi->zoom->setItemText(0, QString::number(zoom) + '%');
+    mUi->zoom->setItemData(0, zoom);
+    mUi->zoom->setCurrentIndex(0);
 }
 
 void TextureEditorToolBar::setZoomToFit(bool fit)
@@ -109,6 +119,12 @@ void TextureEditorToolBar::setCanFlipVertically(bool canFlip)
 void TextureEditorToolBar::setFlipVertically(bool flip)
 {
     mUi->flipVertically->setChecked(flip);
+}
+
+void TextureEditorToolBar::zoomIndexChanged(int index)
+{
+    const auto zoom = mUi->zoom->itemData(index).toInt();
+    Q_EMIT zoomChanged(zoom);
 }
 
 void TextureEditorToolBar::filterStateChanged(int state)

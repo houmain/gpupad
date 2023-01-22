@@ -318,7 +318,8 @@ void TextureEditor::wheelEvent(QWheelEvent *event)
         setZoom(mZoom + delta);
 
         // scroll to restore mouse cursor's scene position
-        const auto offset = (event->position() - mapFromScene(scenePosition)) * 2;
+        const auto dpr = devicePixelRatioF();
+        const auto offset = (event->position() - mapFromScene(scenePosition)) * dpr * 2;
         horizontalScrollBar()->setValue(horizontalScrollBar()->value() - offset.x());
         verticalScrollBar()->setValue(verticalScrollBar()->value() - offset.y());
     }
