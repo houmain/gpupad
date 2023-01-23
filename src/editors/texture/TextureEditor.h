@@ -88,7 +88,7 @@ private:
     TextureData mTexture;
     bool mPan{ };
     QRect mBounds{ };
-    bool mZoomToFit{ true };
+    bool mZoomToFit{ };
     int mZoom{ 100 };
     QPoint mPanStart{ };
     TextureItem *mTextureItem{ };

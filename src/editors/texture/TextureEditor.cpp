@@ -216,11 +216,23 @@ bool TextureEditor::load()
         isRaw = true;
     }
 
-    // automatically flip in editor when opening an image file
-    if (mTexture.isNull() && 
-        !FileDialog::isEmptyOrUntitled(mFileName) && 
-        texture.dimensions() == 2 && !texture.isCubemap())
-        setFlipVertically(true);
+    if (mTexture.isNull()) {
+        // automatically flip in editor when opening an image file
+        if (!FileDialog::isEmptyOrUntitled(mFileName) && 
+             texture.dimensions() == 2 && !texture.isCubemap()) {
+            setFlipVertically(true);
+
+            // automatically fit big images in window and enable filtering
+            const auto big = 1024;
+            if (texture.width() > big || texture.height() > big) {
+                setZoomToFit(true);
+                mTextureItem->setMagnifyLinear(true);
+            }
+        }
+        else {
+            setZoomToFit(true);
+        }        
+    }
 
     replace(texture);
     setModified(false);
