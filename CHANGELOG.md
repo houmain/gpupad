@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+
+## [Version 1.31.0] - 2022-01-26
+
+### Added
+
+- Allow to activate overwrite mode in source editors.
+
+### Changed
+
+- Not automatically zooming small images to fit.
+- Made zoom control a combobox.
+
+### Fixed
+
+- Restored zoom under mouse cursor.
+
 ## [Version 1.30.0] - 2022-01-15
 
 ### Added
@@ -609,6 +625,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 1.31.0]: https://github.com/houmain/gpupad/compare/1.30.0...1.31.0
 [version 1.30.0]: https://github.com/houmain/gpupad/compare/1.29.0...1.30.0
 [version 1.29.0]: https://github.com/houmain/gpupad/compare/1.28.0...1.29.0
 [version 1.28.0]: https://github.com/houmain/gpupad/compare/1.27.0...1.28.0
