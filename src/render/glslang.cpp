@@ -253,6 +253,8 @@ QString generateGLSL(const QString &source, Shader::ShaderType shaderType,
     Shader::Language language, const QString &entryPoint, 
     const QString &fileName, ItemId itemId, MessagePtrSet &messages)
 {
+    Q_ASSERT(language != Shader::Language::None);
+
     auto output = QTemporaryFile();
     output.open();
     output.close();

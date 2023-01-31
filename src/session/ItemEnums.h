@@ -58,6 +58,7 @@ namespace ItemEnums {
     enum ShaderLanguage {
         GLSL,
         HLSL,
+        None,
     };
     Q_ENUM_NS(ShaderLanguage)
 

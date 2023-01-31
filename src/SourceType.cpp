@@ -34,7 +34,7 @@ SourceType deduceSourceType(SourceType current, const QString &extension, const 
     }
 
     if (extension == "hlsl" || extension == "hlsli" || extension == "fx") {
-        if (getShaderLanguage(current) == Shader::Language::HLSL) {
+        if (getShaderLanguage(current) != Shader::Language::HLSL) {
             if (source.contains("PS"))
                 return SourceType::HLSL_PixelShader;
             if (source.contains("VS"))
@@ -142,5 +142,5 @@ Shader::Language getShaderLanguage(SourceType sourceType)
         case SourceType::HLSL_ComputeShader:
             return Shader::Language::HLSL;
     }
-    return { };
+    return Shader::Language::None;
 }

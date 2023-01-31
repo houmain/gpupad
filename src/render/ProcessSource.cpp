@@ -108,6 +108,7 @@ void ProcessSource::prepare(bool, EvaluationType)
         auto shader = Shader{ };
         if (shaders.empty()) {
             shader.fileName = mFileName;
+            shader.language = Shader::Language::GLSL;
             shaders = { &shader };
         }
         // replace shader's type and language
