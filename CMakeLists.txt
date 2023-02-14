@@ -191,7 +191,7 @@ set(SOURCES
 
 file(GLOB_RECURSE HEADERS include *.h *.hpp)
 if(WIN32)
-    set(HEADERS ${HEADERS} src/resources.rc src/qt5.natvis)
+    set(HEADERS ${HEADERS} src/resources.rc src/qt6.natvis)
 endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
