@@ -1049,42 +1049,24 @@ void MainWindow::openMessageDock()
 void MainWindow::openContainingFolder()
 {
     if (mEditorManager.hasCurrentEditor())
-        return FileDialog::showInFileManager(mEditorManager.currentEditorFileName());
+        return showInFileManager(mEditorManager.currentEditorFileName());
 
-    return FileDialog::showInFileManager(mSessionEditor->fileName());
+    return showInFileManager(mSessionEditor->fileName());
 }
 
 void MainWindow::populateSampleSessions()
 {
-    const auto paths = std::initializer_list<QString>{
-        QCoreApplication::applicationDirPath() + "/samples",
-#if !defined(NDEBUG)
-        QCoreApplication::applicationDirPath() + "/../share/gpupad/samples",
-        QCoreApplication::applicationDirPath() + "/../samples",
-        QCoreApplication::applicationDirPath() + "/../../samples",
-#endif
-#if defined(__linux__)
-        qEnvironmentVariable("APPDIR") + "/usr/share/gpupad/samples",
-#endif
-    };
-    for (const auto &path : paths) {
-        if (!mUi->menuSampleSessions->actions().empty())
-            return;
-
-        auto samples = QDir(path);
-        if (samples.exists()) {
-            samples.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
-            const auto entries = samples.entryInfoList();
-            for (const auto &entry : entries) {
-                auto sample = QDir(entry.absoluteFilePath());
-                sample.setNameFilters({ "*.gpjs" });
-                auto sessions = sample.entryInfoList();
-                if (!sessions.empty()) {
-                    auto action = mUi->menuSampleSessions->addAction(
-                        "&" + entry.fileName(), this, SLOT(openSampleSession()));
-                    action->setData(sessions.first().absoluteFilePath());
-                }
-            }
+    if (!mUi->menuSampleSessions->actions().empty())
+        return;
+    const auto entries = enumerateApplicationDirectories("samples");
+    for (const auto &entry : entries) {
+        auto sample = QDir(entry.absoluteFilePath());
+        sample.setNameFilters({ "*.gpjs" });
+        auto sessions = sample.entryInfoList();
+        if (!sessions.empty()) {
+            auto action = mUi->menuSampleSessions->addAction(
+                "&" + entry.fileName(), this, SLOT(openSampleSession()));
+            action->setData(sessions.first().absoluteFilePath());
         }
     }
 }

@@ -125,7 +125,7 @@ void DockWindow::openContextMenu(int index)
                 connect(copyFullPath, &QAction::triggered,
                     [=]() { QApplication::clipboard()->setText(fileName); });
                 connect(openContainingFolder, &QAction::triggered,
-                    [=]() { FileDialog::showInFileManager(fileName); });
+                    [=]() { showInFileManager(fileName); });
             }
 
             menu.addSeparator();

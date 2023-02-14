@@ -5,6 +5,7 @@
 #include <QProcess>
 #include <QApplication>
 #include <QDesktopServices>
+#include <QStandardPaths>
 
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
@@ -108,19 +109,6 @@ bool FileDialog::isVideoFileName(const QString &fileName)
         if (lowerFileName.endsWith(extension))
             return true;
     return false;
-}
-
-void FileDialog::showInFileManager(const QString &path)
-{
-#if defined(_WIN32)
-    QProcess::startDetached("explorer.exe", { "/select,", QDir::toNativeSeparators(path) });
-#elif defined(__APPLE__)
-    QProcess::execute("/usr/bin/osascript", { "-e", "tell application \"Finder\" to reveal POSIX file \"" + path + "\"" });
-    QProcess::execute("/usr/bin/osascript", { "-e", "tell application \"Finder\" to activate" });
-#else
-    const auto info = QFileInfo(path);
-    QDesktopServices::openUrl(QUrl::fromLocalFile(info.isDir() ? path : info.path()));
-#endif
 }
 
 FileDialog::FileDialog(QMainWindow *window)
@@ -244,6 +232,19 @@ bool FileDialog::exec(Options options, QString currentFileName,
     return true;
 }
 
+void showInFileManager(const QString &path)
+{
+#if defined(_WIN32)
+    QProcess::startDetached("explorer.exe", { "/select,", QDir::toNativeSeparators(path) });
+#elif defined(__APPLE__)
+    QProcess::execute("/usr/bin/osascript", { "-e", "tell application \"Finder\" to reveal POSIX file \"" + path + "\"" });
+    QProcess::execute("/usr/bin/osascript", { "-e", "tell application \"Finder\" to activate" });
+#else
+    const auto info = QFileInfo(path);
+    QDesktopServices::openUrl(QUrl::fromLocalFile(info.isDir() ? path : info.path()));
+#endif
+}
+
 int showNotSavedDialog(QWidget *parent, const QString &fileName)
 {
     auto dialog = QMessageBox(parent);
@@ -282,4 +283,50 @@ void showCopyingSessionFailedMessage(QWidget *parent)
         "Not all files in session could be copied.<br>"));
     dialog.addButton(QMessageBox::Ok);
     dialog.exec();
+}
+
+QDir getInstallDirectory(const QString &dirName)
+{
+    const auto paths = std::initializer_list<QString>{
+        QCoreApplication::applicationDirPath() + "/",
+#if !defined(NDEBUG)
+        QCoreApplication::applicationDirPath() + "/../",
+        QCoreApplication::applicationDirPath() + "/../../",
+#endif
+#if defined(__linux__)
+        qEnvironmentVariable("APPDIR") + "/usr/share/" +
+            QCoreApplication::organizationName(),
+#endif
+    };
+    for (const auto &path : paths) {
+        auto dir = QDir(path + dirName);
+        if (dir.exists())
+            return dir;
+    }
+    return QDir();
+}
+
+QDir getUserDirectory(const QString &dirName)
+{
+    auto config = QStandardPaths::writableLocation(
+        QStandardPaths::AppConfigLocation);
+    auto dir = QDir::cleanPath(config + "/../actions");
+    QDir().mkpath(dir);
+    return dir;
+}
+
+QFileInfoList enumerateApplicationDirectories(const QString &dirName) 
+{
+    auto dirs = QList<QDir>{ 
+        getInstallDirectory(dirName),
+        getUserDirectory(dirName)
+    };
+    auto entries = QFileInfoList();
+    for (auto &dir : dirs) {
+        if (dir.exists()) {
+            dir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
+            entries += dir.entryInfoList();
+        }
+    }
+    return entries;
 }

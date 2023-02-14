@@ -20,7 +20,6 @@ public:
     static bool isSessionFileName(const QString &fileName);
     static bool isTextureFileName(const QString &fileName);
     static bool isVideoFileName(const QString &fileName);
-    static void showInFileManager(const QString &path);
 
     enum OptionBit
     {
@@ -56,8 +55,12 @@ private:
     bool mAsBinaryFile{ };
 };
 
+void showInFileManager(const QString &path);
 int showNotSavedDialog(QWidget *parent, const QString &fileName);
 bool showSavingFailedMessage(QWidget *parent, const QString &fileName);
 void showCopyingSessionFailedMessage(QWidget *parent);
+QDir getInstallDirectory(const QString &dirName);
+QDir getUserDirectory(const QString &dirName);
+QFileInfoList enumerateApplicationDirectories(const QString &dirName);
 
 #endif // FILEDIALOG_H

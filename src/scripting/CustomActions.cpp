@@ -4,6 +4,7 @@
 #include "ScriptEngineJavaScript.h"
 #include "FileCache.h"
 #include "SynchronizeLogic.h"
+#include "FileDialog.h"
 #include "editors/EditorManager.h"
 #include <QListView>
 #include <QFileSystemModel>
@@ -75,11 +76,7 @@ CustomActions::CustomActions(QWidget *parent)
     mModel->setNameFilters({ "*.js" });
     ui->actions->setModel(mModel);
 
-    auto config = QStandardPaths::writableLocation(
-        QStandardPaths::AppConfigLocation);
-    auto actions = QDir::cleanPath(config + "/../actions");
-    QDir().mkpath(actions);
-    mModel->setRootPath(actions);
+    mModel->setRootPath(getUserDirectory("actions").path());
     ui->actions->setRootIndex(mModel->index(mModel->rootPath()));
 
     connect(ui->actions, &QListView::activated,
