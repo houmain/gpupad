@@ -5,8 +5,6 @@
 #include <QMimeData>
 #include <QJsonDocument>
 #include <QDir>
-#include <QApplication>
-#include <QPalette>
 #include <QSaveFile>
 #include <QAction>
 
@@ -85,7 +83,7 @@ QVariant SessionModel::data(const QModelIndex &index, int role) const
     const auto &item = getItem(index);
     if (role == Qt::ForegroundRole) {
         if (mActiveItemIds.contains(item.id))
-            return qApp->palette().color(QPalette::Active, QPalette::Link);
+            return mActiveItemsColor;
         return QVariant();
     }
 
@@ -158,6 +156,11 @@ void SessionModel::setItemActive(ItemId id, bool active)
     auto item = findItem(id);
     Q_EMIT dataChanged(getIndex(item), getIndex(item),
         { Qt::ForegroundRole });
+}
+
+void SessionModel::setActiveItemColor(QColor color)
+{
+    mActiveItemsColor = color;
 }
 
 QString SessionModel::getItemName(ItemId id) const

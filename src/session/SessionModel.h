@@ -39,6 +39,7 @@ public:
     QString getFullItemName(ItemId id) const;
     void setActiveItems(QSet<ItemId> itemIds);
     void setItemActive(ItemId id, bool active);
+    void setActiveItemColor(QColor color);
 
     QJsonArray getJson(const QModelIndexList &indexes) const;
     void dropJson(const QJsonArray &json,
@@ -113,6 +114,7 @@ private:
     QSet<ItemId> mActiveItemIds;
     QMap<ItemId, ItemId> mDroppedIdsReplaced;
     QModelIndexList mDroppedReferences;
+    QColor mActiveItemsColor;
     mutable QModelIndexList mDraggedIndices;
     mutable QString mDraggedText;
     mutable QJsonArray mDraggedJson;

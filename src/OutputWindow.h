@@ -5,6 +5,7 @@
 
 class QPlainTextEdit;
 class DataComboBox;
+class Theme;
 
 class OutputWindow final : public QWidget
 {
@@ -20,7 +21,7 @@ Q_SIGNALS:
     void typeSelectionChanged(QString type);
 
 private:
-    void updatePalette();
+    void handleThemeChanged(const Theme &theme);
 
     DataComboBox *mTypeSelector{ };
     QPlainTextEdit *mTextEdit{ };

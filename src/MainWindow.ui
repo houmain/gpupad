@@ -27,6 +27,14 @@
   </property>
   <widget class="QWidget" name="centralwidget"/>
   <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>494</width>
+     <height>21</height>
+    </rect>
+   </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>&amp;File</string>
@@ -126,7 +134,17 @@
     </property>
     <widget class="QMenu" name="menuTabSize">
      <property name="title">
-      <string>Tab Size</string>
+      <string>&amp;Tab Size</string>
+     </property>
+    </widget>
+    <widget class="QMenu" name="menuWindowThemes">
+     <property name="title">
+      <string>&amp;Window Theme</string>
+     </property>
+    </widget>
+    <widget class="QMenu" name="menuEditorThemes">
+     <property name="title">
+      <string>&amp;Editor Theme</string>
      </property>
     </widget>
     <addaction name="actionNavigateBackward"/>
@@ -138,7 +156,8 @@
     <addaction name="menuTabSize"/>
     <addaction name="separator"/>
     <addaction name="actionSelectFont"/>
-    <addaction name="actionDarkTheme"/>
+    <addaction name="menuWindowThemes"/>
+    <addaction name="menuEditorThemes"/>
     <addaction name="actionHideMenuBar"/>
     <addaction name="actionFullScreen"/>
     <addaction name="separator"/>
@@ -407,15 +426,16 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Indent With &amp;Spaces</string>
+    <string>&amp;Indent With Spaces</string>
    </property>
   </action>
   <action name="actionSelectFont">
    <property name="icon">
-    <iconset theme="preferences-desktop-font"/>
+    <iconset theme="preferences-desktop-font">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Select &amp;Font...</string>
+    <string>Select F&amp;ont...</string>
    </property>
   </action>
   <action name="actionFindReplace">
@@ -506,12 +526,12 @@
     <string>&amp;Online Help</string>
    </property>
   </action>
-  <action name="actionDarkTheme">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
+  <action name="actionEditorTheme">
    <property name="text">
-    <string>&amp;Dark Theme</string>
+    <string>&amp;Editor Theme</string>
+   </property>
+   <property name="toolTip">
+    <string>Editor Theme</string>
    </property>
   </action>
   <action name="actionEvalReset">
@@ -555,7 +575,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Fullscreen</string>
+    <string>&amp;Fullscreen</string>
    </property>
    <property name="toolTip">
     <string>&amp;Fullscreen</string>
@@ -600,7 +620,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Go &amp;Forward</string>
+    <string>&amp;Go Forward</string>
    </property>
    <property name="shortcut">
     <string>Alt+Right</string>
@@ -629,7 +649,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Hide &amp;Menu Bar</string>
+    <string>Collapse &amp;Menu Bar</string>
    </property>
    <property name="toolTip">
     <string>Hide Menu Bar</string>

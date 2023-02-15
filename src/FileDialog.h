@@ -61,6 +61,7 @@ bool showSavingFailedMessage(QWidget *parent, const QString &fileName);
 void showCopyingSessionFailedMessage(QWidget *parent);
 QDir getInstallDirectory(const QString &dirName);
 QDir getUserDirectory(const QString &dirName);
-QFileInfoList enumerateApplicationDirectories(const QString &dirName);
+QFileInfoList enumerateApplicationPaths(const QString &dirName,
+    QDir::Filters filters);
 
 #endif // FILEDIALOG_H

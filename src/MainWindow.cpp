@@ -12,6 +12,7 @@
 #include "Settings.h"
 #include "SynchronizeLogic.h"
 #include "InputState.h"
+#include "Theme.h"
 #include "editors/EditorManager.h"
 #include "scripting/CustomActions.h"
 #include <QCloseEvent>
@@ -220,7 +221,11 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::openContainingFolder);
     connect(mUi->actionOnlineHelp, &QAction::triggered,
         this, &MainWindow::openOnlineHelp);
-    connect(mUi->menuHelp, &QMenu::aboutToShow,
+    connect(mUi->menuWindowThemes, &QMenu::aboutToShow,
+        this, &MainWindow::populateThemesMenu);
+    connect(mUi->menuEditorThemes, &QMenu::aboutToShow,
+        this, &MainWindow::populateThemesMenu);
+    connect(mUi->menuSampleSessions, &QMenu::aboutToShow,
         this, &MainWindow::populateSampleSessions);
     connect(mUi->menuRecentFiles, &QMenu::aboutToShow,
         this, &MainWindow::updateRecentFileActions);
@@ -283,16 +288,14 @@ MainWindow::MainWindow(QWidget *parent)
         &settings, &Settings::selectFont);
     connect(mUi->actionShowWhiteSpace, &QAction::toggled,
         &settings, &Settings::setShowWhiteSpace);
-    connect(mUi->actionDarkTheme, &QAction::toggled,
-        &settings, &Settings::setDarkTheme);
     connect(mUi->actionHideMenuBar, &QAction::toggled,
         &settings, &Settings::setHideMenuBar);
     connect(mUi->actionLineWrapping, &QAction::toggled,
         &settings, &Settings::setLineWrap);
     connect(mUi->actionIndentWithSpaces, &QAction::toggled,
         &settings, &Settings::setIndentWithSpaces);
-    connect(&settings, &Settings::darkThemeChanging,
-        this, &MainWindow::handleDarkThemeChanging);
+    connect(&settings, &Settings::windowThemeChanging,
+        this, &MainWindow::handleThemeChanging);
     connect(&settings, &Settings::hideMenuBarChanged,
         this, &MainWindow::handleHideMenuBarChanged);
 
@@ -341,6 +344,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     readSettings();
+    settings.applyTheme();
 }
 
 MainWindow::~MainWindow()
@@ -394,11 +398,8 @@ void MainWindow::readSettings()
     mUi->actionHideMenuBar->setChecked(settings.hideMenuBar());
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
     mUi->actionFullScreen->setChecked(isFullScreen());
-    mUi->actionDarkTheme->setChecked(settings.darkTheme());
     if (settings.hideMenuBar())
        handleHideMenuBarChanged(true);
-
-    settings.setDarkTheme(settings.darkTheme());
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
@@ -944,49 +945,13 @@ void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
     }
 }
 
-void MainWindow::handleDarkThemeChanging(bool darkTheme)
+void MainWindow::handleThemeChanging(const Theme &theme)
 {
-#if defined(_WIN32)
-    const auto inWindows = true;
-#else
-    const auto inWindows = false;
-#endif
-
-    auto frameDarker = 105;
-    auto currentFrameDarker = 120;
-    auto palette = qApp->style()->standardPalette();
-    if (darkTheme) {
-        struct S { QPalette::ColorRole role; QColor a; QColor i; QColor d; };
-        const auto colors = std::initializer_list<S>{
-            { QPalette::WindowText, 0xCFCFCF, 0xCFCFCF, 0x6A6A6A },
-            { QPalette::Button, 0x252525, 0x252525, 0x252525 },
-            { QPalette::Light, 0x4B4B51, 0x4B4B51, 0x111111 },
-            { QPalette::Midlight, 0xCBCBCB, 0xCBCBCB, 0xCBCBCB },
-            { QPalette::Dark, 0x9F9F9F, 0x9F9F9F, 0xBEBEBE },
-            { QPalette::Mid, 0xB8B8B8, 0xB8B8B8, 0xB8B8B8 },
-            { QPalette::Text, 0xCFCFCF, 0xCFCFCF, 0x8F8F8F },
-            { QPalette::ButtonText, 0xCFCFCF, 0xCFCFCF, 0x8B8B8B },
-            { QPalette::Base, 0x232323, 0x232323, 0x2A2A2A },
-            { QPalette::Window, 0x252525, 0x252525, 0x252525 },
-            { QPalette::Shadow, 0x767472, 0x767472, 0x767472 },
-            { QPalette::Highlight, 0x405D86, 0x405D86, 0x343434 },
-            { QPalette::Link, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF },
-            { QPalette::AlternateBase, 0x212121, 0x212121, 0x212121 },
-            { QPalette::ToolTipBase, 0x2F2F2F, 0x2F2F2F, 0x45454B },
-            { QPalette::ToolTipText, 0xCACACA, 0xCACACA, 0x8A8A8A },
-            { QPalette::PlaceholderText, 0xCFCFCF, 0xCFCFCF, 0xCFCFCF },
-        };
-        for (const auto &s : colors) {
-            palette.setColor(QPalette::Active, s.role, s.a);
-            palette.setColor(QPalette::Inactive, s.role, s.i);
-            palette.setColor(QPalette::Disabled, s.role, s.d);
-        }
-        frameDarker = 90;
-        currentFrameDarker = 70;
-    }
-
+    auto palette = theme.palette();
     qApp->setPalette(palette);
 
+    const auto frameDarker = (theme.isDarkTheme() ? 90 : 105);
+    const auto currentFrameDarker = (theme.isDarkTheme() ? 70 : 120);
     const auto color = [&](QPalette::ColorRole role,
           QPalette::ColorGroup group, int darker = 100) {
         return palette.brush(group, role).color().darker(darker).name(QColor::HexRgb);
@@ -1006,11 +971,14 @@ void MainWindow::handleDarkThemeChanging(bool darkTheme)
     setStyleSheet(styleSheet);
 
     // fix checkbox borders in dark theme
-    if (darkTheme)
+    if (theme.isDarkTheme())
         palette.setColor(QPalette::Window, 0x666666);
     mUi->toolBarMain->setPalette(palette);
     mUi->menuView->setPalette(palette);
     mEditorManager.setEditorToolBarPalette(palette);
+
+    Singletons::sessionModel().setActiveItemColor(
+        theme.getColor(ThemeColor::Function));
 
     style()->unpolish(qApp);
     style()->polish(qApp);
@@ -1054,15 +1022,55 @@ void MainWindow::openContainingFolder()
     return showInFileManager(mSessionEditor->fileName());
 }
 
+void MainWindow::populateThemesMenu()
+{
+    if (!mUi->menuWindowThemes->actions().empty())
+        return;
+
+    const auto *currentWindowTheme = &Singletons::settings().windowTheme();
+    const auto *currentEditorTheme = &Singletons::settings().editorTheme();
+    auto windowThemeActionGroup = new QActionGroup(this);
+    auto editorThemeActionGroup = new QActionGroup(this);
+
+    auto fileNames = Theme::getThemeFileNames();
+    for (const auto &fileName : fileNames) {
+        const auto &theme = Theme::getTheme(fileName);
+        for (auto menu : { mUi->menuWindowThemes, mUi->menuEditorThemes }) {
+            auto action = menu->addAction(theme.name(), this, SLOT(setSelectedTheme()));
+            action->setData(QVariant::fromValue(&theme));
+            action->setCheckable(true);
+            action->setChecked(&theme == (menu == mUi->menuWindowThemes ? 
+                currentWindowTheme : currentEditorTheme));
+            action->setActionGroup(menu == mUi->menuWindowThemes ? 
+                windowThemeActionGroup : editorThemeActionGroup);
+            if (fileName.isEmpty()) {
+                action->setText("Default");
+                menu->addSeparator();
+            }
+        }
+    }
+}
+
+void MainWindow::setSelectedTheme()
+{
+    const auto action = qobject_cast<QAction*>(QObject::sender());
+    const auto menu = qobject_cast<QMenu*>(action->parent());
+    const auto &theme = *action->data().value<const Theme*>();
+    if (menu == mUi->menuWindowThemes)
+        Singletons::settings().setWindowTheme(theme);
+    else
+        Singletons::settings().setEditorTheme(theme);
+}
+
 void MainWindow::populateSampleSessions()
 {
     if (!mUi->menuSampleSessions->actions().empty())
         return;
-    const auto entries = enumerateApplicationDirectories("samples");
+    const auto entries = enumerateApplicationPaths("samples", QDir::Dirs);
     for (const auto &entry : entries) {
-        auto sample = QDir(entry.absoluteFilePath());
-        sample.setNameFilters({ "*.gpjs" });
-        auto sessions = sample.entryInfoList();
+        auto dir = QDir(entry.absoluteFilePath());
+        dir.setNameFilters({ "*.gpjs" });
+        auto sessions = dir.entryInfoList();
         if (!sessions.empty()) {
             auto action = mUi->menuSampleSessions->addAction(
                 "&" + entry.fileName(), this, SLOT(openSampleSession()));

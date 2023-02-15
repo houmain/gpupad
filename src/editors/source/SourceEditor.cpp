@@ -8,6 +8,7 @@
 #include "SyntaxHighlighter.h"
 #include "Completer.h"
 #include "getMousePosition.h"
+#include "Theme.h"
 #include <QCompleter>
 #include <QTextCharFormat>
 #include <QPainter>
@@ -145,13 +146,13 @@ SourceEditor::SourceEditor(QString fileName
         this, &SourceEditor::setShowWhiteSpace);
     connect(&settings, &Settings::indentWithSpacesChanged,
         this, &SourceEditor::setIndentWithSpaces);
-    connect(&settings, &Settings::darkThemeChanged,
+    connect(&settings, &Settings::editorThemeChanged,
         this, &SourceEditor::updateColors);
-    connect(&settings, &Settings::darkThemeChanged,
+    connect(&settings, &Settings::editorThemeChanged,
         this, &SourceEditor::updateSyntaxHighlighting);
 
     updateViewportMargins();
-    updateColors(settings.darkTheme());
+    updateColors(settings.editorTheme());
 }
 
 SourceEditor::~SourceEditor()
@@ -362,9 +363,11 @@ void SourceEditor::setSourceType(SourceType sourceType)
     }
 }
 
-void SourceEditor::updateColors(bool darkTheme)
+void SourceEditor::updateColors(const Theme &theme)
 {
-    const auto pal = qApp->palette();
+    const auto pal = theme.palette();
+    const auto darkTheme = theme.isDarkTheme();
+    setPalette(pal);
     mCurrentLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
     mCurrentLineFormat.setBackground(pal.base().color().lighter(darkTheme ? 120 : 95));
 
@@ -394,7 +397,7 @@ void SourceEditor::updateSyntaxHighlighting()
 
     const auto &settings = Singletons::settings();
     mHighlighter = new SyntaxHighlighter(
-        mSourceType, settings.darkTheme(), 
+        mSourceType, settings.editorTheme(), 
         settings.showWhiteSpace(), this);
     mHighlighter->setDocument(document());
     mCompleter->setStrings(mHighlighter->completerStrings());

@@ -20,6 +20,7 @@ class EditorManager;
 class SessionEditor;
 class SessionProperties;
 class CustomActions;
+class Theme;
 
 class MainWindow final : public QMainWindow
 {
@@ -44,7 +45,9 @@ public Q_SLOTS:
     void openSessionDock();
     void openMessageDock();
     void openOnlineHelp();
+    void populateThemesMenu();
     void populateSampleSessions();
+    void setSelectedTheme();
     void openSampleSession();
     void openAbout();
     void ignoreNextAlt() { mIgnoreNextAlt = true; }
@@ -83,7 +86,7 @@ private:
     void updateCustomActionsMenu();
     void handleMessageActivated(ItemId itemId,
         QString fileName, int line, int column);
-    void handleDarkThemeChanging(bool enabled);
+    void handleThemeChanging(const Theme &theme);
     void handleHideMenuBarChanged(bool hide);
 
     Ui::MainWindow *mUi{ };

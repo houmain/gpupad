@@ -1,5 +1,6 @@
 #include "SyntaxHighlighter.h"
 #include "Syntax.h"
+#include "Theme.h"
 #include <QMap>
 
 struct SyntaxHighlighter::Data
@@ -54,7 +55,7 @@ namespace {
     }
 
     QSharedPointer<const SyntaxHighlighter::Data> createData(
-        const Syntax& syntax, bool darkTheme, bool showWhiteSpace)
+        const Syntax& syntax, const Theme &theme, bool showWhiteSpace)
     {
         auto keywordFormat = QTextCharFormat();
         auto builtinFunctionFormat = QTextCharFormat();
@@ -67,29 +68,15 @@ namespace {
         auto whiteSpaceFormat = QTextCharFormat();
 
         functionFormat.setFontWeight(QFont::Bold);
-
-        if (darkTheme) {
-            functionFormat.setForeground(QColor(0x7AAFFF));
-            keywordFormat.setForeground(QColor(0x7AAFFF));
-            builtinFunctionFormat.setForeground(QColor(0x7AAFFF));
-            builtinConstantsFormat.setForeground(QColor(0xDD8D8D));
-            numberFormat.setForeground(QColor(0xB09D30));
-            quotationFormat.setForeground(QColor(0xB09D30));
-            preprocessorFormat.setForeground(QColor(0xC87FFF));
-            commentFormat.setForeground(QColor(0x56C056));
-            whiteSpaceFormat.setForeground(QColor(0x666666));
-        }
-        else {
-            functionFormat.setForeground(QColor(0x000066));        
-            keywordFormat.setForeground(QColor(0x003C98));
-            builtinFunctionFormat.setForeground(QColor(0x000066));
-            builtinConstantsFormat.setForeground(QColor(0x981111));
-            numberFormat.setForeground(QColor(0x981111));
-            quotationFormat.setForeground(QColor(0x981111));
-            preprocessorFormat.setForeground(QColor(0x800080));
-            commentFormat.setForeground(QColor(0x008700));
-            whiteSpaceFormat.setForeground(QColor(0xCCCCCC));
-        }
+        functionFormat.setForeground(theme.getColor(ThemeColor::Function));
+        keywordFormat.setForeground(theme.getColor(ThemeColor::Keyword));
+        builtinFunctionFormat.setForeground(theme.getColor(ThemeColor::BuiltinFunction));
+        builtinConstantsFormat.setForeground(theme.getColor(ThemeColor::BuiltinConstant));
+        numberFormat.setForeground(theme.getColor(ThemeColor::Number));
+        quotationFormat.setForeground(theme.getColor(ThemeColor::Quotation));
+        preprocessorFormat.setForeground(theme.getColor(ThemeColor::Preprocessor));
+        commentFormat.setForeground(theme.getColor(ThemeColor::Comment));
+        whiteSpaceFormat.setForeground(theme.getColor(ThemeColor::WhiteSpace));
 
         auto d = SyntaxHighlighter::Data{ };
         auto rule = SyntaxHighlighter::Data::HighlightingRule{ };
@@ -174,24 +161,24 @@ namespace {
     }
 
     QSharedPointer<const SyntaxHighlighter::Data> getData(
-        SourceType sourceType, bool darkTheme, bool showWhiteSpace)
+        SourceType sourceType, const Theme &theme, bool showWhiteSpace)
     {
         const auto &syntax = getSyntax(sourceType);
-        const auto key = std::make_tuple(&syntax, darkTheme, showWhiteSpace);
+        const auto key = std::make_tuple(&syntax, theme.fileName(), showWhiteSpace);
         static auto cache = std::map<decltype(key), 
             QSharedPointer<const SyntaxHighlighter::Data>>();
         if (!cache[key])
-            cache[key] = createData(syntax, darkTheme, showWhiteSpace);
+            cache[key] = createData(syntax, theme, showWhiteSpace);
         return cache[key];
     }
 } // namespace
 
 SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
-    , bool darkTheme
+    , const Theme &theme
     , bool showWhiteSpace
     , QObject *parent)
     : QSyntaxHighlighter(parent)
-    , mData(getData(sourceType, darkTheme, showWhiteSpace))
+    , mData(getData(sourceType, theme, showWhiteSpace))
 {
 }
 

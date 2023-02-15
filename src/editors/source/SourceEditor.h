@@ -13,6 +13,7 @@ class QCompleter;
 class SyntaxHighlighter;
 class Completer;
 class SourceEditorToolBar;
+class Theme;
 
 class SourceEditor final : public QPlainTextEdit, public IEditor
 {
@@ -85,7 +86,7 @@ private:
     void updateCompleterPopup(const QString &prefix, bool show);
     QString generateCurrentScopeSource() const;
     void insertCompletion(const QString &completion);
-    void updateColors(bool darkTheme);
+    void updateColors(const Theme &theme);
     void updateSyntaxHighlighting();
     void updateEditorToolBar();
     void emitNavigationPositionChanged();

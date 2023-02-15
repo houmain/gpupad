@@ -3,6 +3,7 @@
 
 #include <QSettings>
 #include <QFont>
+class Theme;
 
 class Settings final : public QSettings
 {
@@ -10,6 +11,7 @@ class Settings final : public QSettings
 public:
     explicit Settings(QObject *parent = nullptr);
     ~Settings();
+    void applyTheme();
 
     void setTabSize(int tabSize);
     int tabSize() const { return mTabSize; }
@@ -22,8 +24,10 @@ public:
     bool indentWithSpaces() const { return mIndentWithSpaces; }
     void setShowWhiteSpace(bool enabled);
     bool showWhiteSpace() const { return mShowWhiteSpace; }
-    void setDarkTheme(bool enabled);
-    bool darkTheme() const { return mDarkTheme; }
+    void setWindowTheme(const Theme &theme);
+    const Theme &windowTheme() const { return *mWindowTheme; }
+    void setEditorTheme(const Theme &theme);
+    const Theme &editorTheme() const { return *mEditorTheme; }
     void setHideMenuBar(bool hide);
     bool hideMenuBar() const { return mHideMenuBar; }
     void setShaderPreamble(const QString &preamble);
@@ -37,8 +41,10 @@ Q_SIGNALS:
     void lineWrapChanged(bool wrap);
     void indentWithSpacesChanged(bool enabled);
     void showWhiteSpaceChanged(bool enabled);
-    void darkThemeChanging(bool enabled);
-    void darkThemeChanged(bool enabled);
+    void windowThemeChanging(const Theme &theme);
+    void windowThemeChanged(const Theme &theme);
+    void editorThemeChanging(const Theme &theme);
+    void editorThemeChanged(const Theme &theme);
     void hideMenuBarChanged(bool hide);
     void shaderPreambleChanged(const QString &preamble);
     void shaderIncludePathsChanged(const QString &includePaths);
@@ -49,7 +55,8 @@ private:
     bool mLineWrap{ };
     bool mIndentWithSpaces{ true };
     bool mShowWhiteSpace{ };
-    bool mDarkTheme{ };
+    const Theme *mWindowTheme{ };
+    const Theme *mEditorTheme{ };
     bool mHideMenuBar{ };
     QString mShaderPreamble;
     QString mShaderIncludePaths;

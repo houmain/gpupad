@@ -103,6 +103,7 @@ set(SOURCES
   src/InputState.cpp
   src/SourceType.cpp
   src/Style.cpp
+  src/Theme.cpp
   src/editors/DockWindow.cpp
   src/editors/EditorManager.cpp
   src/editors/binary/BinaryEditor.cpp

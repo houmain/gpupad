@@ -1,6 +1,7 @@
 #include "OutputWindow.h"
 #include "Singletons.h"
 #include "Settings.h"
+#include "Theme.h"
 #include "session/DataComboBox.h"
 #include <QScrollBar>
 #include <QVBoxLayout>
@@ -28,12 +29,10 @@ OutputWindow::OutputWindow(QWidget *parent) : QWidget(parent)
         fontMetrics().horizontalAdvance(QString(2, QChar::Space)));
     mTextEdit->setFont(Singletons::settings().font());
 
-    updatePalette();
-
     connect(&Singletons::settings(), &Settings::fontChanged,
         mTextEdit, &QPlainTextEdit::setFont);
-    connect(&Singletons::settings(), &Settings::darkThemeChanged,
-        this, &OutputWindow::updatePalette);
+    connect(&Singletons::settings(), &Settings::windowThemeChanged,
+        this, &OutputWindow::handleThemeChanged);
 }
 
 QString OutputWindow::selectedType() const
@@ -41,9 +40,9 @@ QString OutputWindow::selectedType() const
     return mTypeSelector->currentData().toString();
 }
 
-void OutputWindow::updatePalette()
+void OutputWindow::handleThemeChanged(const Theme &theme)
 {
-    auto palette = QPalette();
+    auto palette = theme.palette();
     palette.setColor(QPalette::Base, palette.toolTipBase().color());
     setPalette(palette);
 }

@@ -310,23 +310,22 @@ QDir getUserDirectory(const QString &dirName)
 {
     auto config = QStandardPaths::writableLocation(
         QStandardPaths::AppConfigLocation);
-    auto dir = QDir::cleanPath(config + "/../actions");
+    auto dir = QDir::cleanPath(config + "/../" + dirName);
     QDir().mkpath(dir);
     return dir;
 }
 
-QFileInfoList enumerateApplicationDirectories(const QString &dirName) 
+QFileInfoList enumerateApplicationPaths(
+    const QString &dirName, QDir::Filters filters)
 {
+    auto entries = QFileInfoList();
     auto dirs = QList<QDir>{ 
         getInstallDirectory(dirName),
         getUserDirectory(dirName)
     };
-    auto entries = QFileInfoList();
     for (auto &dir : dirs) {
-        if (dir.exists()) {
-            dir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
-            entries += dir.entryInfoList();
-        }
+        dir.setFilter(filters | QDir::NoDotAndDotDot);
+        entries += dir.entryInfoList();
     }
     return entries;
 }

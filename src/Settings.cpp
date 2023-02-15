@@ -1,4 +1,5 @@
 #include "Settings.h"
+#include "Theme.h"
 #include <QFontDialog>
 #include <QFontDatabase>
 #include <QIcon>
@@ -6,13 +7,13 @@
 Settings::Settings(QObject *parent) : QSettings(parent)
 {
     mFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    QIcon::setThemeName("light");
 
     beginGroup("General");
     setTabSize(value("tabSize", "2").toInt());
     setLineWrap(value("lineWrap", "false").toBool());
     setIndentWithSpaces(value("indentWithSpaces", "true").toBool());
     setShowWhiteSpace(value("showWhiteSpace", "false").toBool());
-    setDarkTheme(value("darkTheme", "false").toBool());
     setHideMenuBar(value("hideMenuBar", "false").toBool());
     setShaderPreamble(value("shaderPreamble", "").toString());
     setShaderIncludePaths(value("shaderIncludePaths", "").toString());
@@ -45,12 +46,19 @@ Settings::~Settings()
     setValue("lineWrap", lineWrap());
     setValue("indentWithSpaces", indentWithSpaces());
     setValue("showWhiteSpace", showWhiteSpace());
-    setValue("darkTheme", darkTheme());
+    setValue("windowTheme", windowTheme().fileName());
+    setValue("editorTheme", editorTheme().fileName());
     setValue("hideMenuBar", hideMenuBar());
     setValue("font", font().toString());
     setValue("shaderPreamble", shaderPreamble());
     setValue("shaderIncludePaths", shaderIncludePaths());
     endGroup();
+}
+
+void Settings::applyTheme()
+{
+    setWindowTheme(Theme::getTheme(value("windowTheme").toString()));
+    setEditorTheme(Theme::getTheme(value("editorTheme").toString()));
 }
 
 void Settings::setTabSize(int tabSize)
@@ -98,12 +106,19 @@ void Settings::setShowWhiteSpace(bool enabled)
     Q_EMIT showWhiteSpaceChanged(enabled);
 }
 
-void Settings::setDarkTheme(bool enabled)
+void Settings::setWindowTheme(const Theme &theme)
 {
-    mDarkTheme = enabled;
-    QIcon::setThemeName(mDarkTheme ? "dark" : "light");
-    Q_EMIT darkThemeChanging(enabled);
-    Q_EMIT darkThemeChanged(enabled);
+    mWindowTheme = &theme;
+    QIcon::setThemeName(mWindowTheme->isDarkTheme() ? "dark" : "light");
+    Q_EMIT windowThemeChanging(theme);
+    Q_EMIT windowThemeChanged(theme);
+}
+
+void Settings::setEditorTheme(const Theme &theme)
+{
+    mEditorTheme = &theme;
+    Q_EMIT editorThemeChanging(theme);
+    Q_EMIT editorThemeChanged(theme);
 }
 
 void Settings::setHideMenuBar(bool hide)
