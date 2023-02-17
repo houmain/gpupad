@@ -288,10 +288,10 @@ void showCopyingSessionFailedMessage(QWidget *parent)
 QDir getInstallDirectory(const QString &dirName)
 {
     const auto paths = std::initializer_list<QString>{
-        QCoreApplication::applicationDirPath() + "/",
+        QCoreApplication::applicationDirPath(),
 #if !defined(NDEBUG)
-        QCoreApplication::applicationDirPath() + "/../",
-        QCoreApplication::applicationDirPath() + "/../../",
+        QCoreApplication::applicationDirPath() + "/..",
+        QCoreApplication::applicationDirPath() + "/../..",
 #endif
 #if defined(__linux__)
         qEnvironmentVariable("APPDIR") + "/usr/share/" +
@@ -299,7 +299,7 @@ QDir getInstallDirectory(const QString &dirName)
 #endif
     };
     for (const auto &path : paths) {
-        auto dir = QDir(path + dirName);
+        auto dir = QDir(path + "/" + dirName);
         if (dir.exists())
             return dir;
     }
