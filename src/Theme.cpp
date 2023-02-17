@@ -64,6 +64,14 @@ namespace
         return isDarkColor(palette.color(QPalette::Window));
     }
 
+    QColor middle(const QColor &a, const QColor &b)
+    {
+        return QColor(
+            (a.red() + b.red()) / 2,
+            (a.green() + b.green()) / 2,
+            (a.blue() + b.blue()) / 2);
+    }
+
     QPalette getThemePalette(const Base16Theme &theme)
     {
         struct S { QPalette::ColorRole role; int baseIndex; };
@@ -71,36 +79,39 @@ namespace
             { QPalette::WindowText,      0x05 },
             { QPalette::Button,          0x00 },
             { QPalette::Light,           0x00 }, // shadow of disabled menu entries
-            //{ QPalette::Midlight,        0x00 },
-            //{ QPalette::Dark,            0x00 },
-            //{ QPalette::Mid,             0x00 },
+            { QPalette::Midlight,        0x00 }, // unused
+            { QPalette::Dark,            0x00 }, // unused
+            { QPalette::Mid,             0x00 }, // unused
             { QPalette::Text,            0x05 },
+            { QPalette::BrightText,      0x0A },
             { QPalette::ButtonText,      0x05 },
             { QPalette::Base,            0x00 },
             { QPalette::Window,          0x00 },
-            //{ QPalette::Shadow,          0x00 },
+            { QPalette::Shadow,          0x00 }, // unused
             { QPalette::Highlight,       0x02 },
-            //{ QPalette::Link,            0x06 },
+            { QPalette::HighlightedText, 0x05 },
+            { QPalette::Link,            0x0A }, // unused
+            { QPalette::LinkVisited,     0x0A }, // unused
             { QPalette::AlternateBase,   0x00 },
             { QPalette::ToolTipBase,     0x01 },
             { QPalette::ToolTipText,     0x04 },
             { QPalette::PlaceholderText, 0x05 },
         };
-        const auto dark = isDarkColor(theme.colors[0]);
+        const auto dark = isDarkColor(theme.colors[0x00]);
         auto palette = QPalette();
         for (const auto [role, base] : roles) {
             auto color = theme.colors[base];
             switch (role) {
                 case QPalette::AlternateBase:
-                    color = color.lighter(dark ? 110 : 90);
+                    color = color.lighter(dark ? 95 : 105);
                     break;
                 default:
                     break;
             }
             palette.setColor(QPalette::Active, role, color);
             palette.setColor(QPalette::Inactive, role, color);
-            palette.setColor(QPalette::Disabled, role, 
-                color.lighter(dark ? 120 : 90));
+            palette.setColor(QPalette::Disabled, role,
+                middle(color, theme.colors[0x00]));
         }
         return palette;
     }

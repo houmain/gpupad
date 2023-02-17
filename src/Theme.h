@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QObject>
 #include <QPalette>
 #include <QMap>
 
@@ -38,3 +39,5 @@ private:
     QPalette mPalette;
     QMap<ThemeColor, QColor> mColors;
 };
+
+Q_DECLARE_METATYPE(const Theme*);

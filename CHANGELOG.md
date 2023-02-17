@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 1.32.0] - 2022-02-17
+
+### Added
+
+- Added [Base16](https://github.com/chriskempson/base16) theme support.
+
+### Fixed
+
+- Fixed deducing shader type from file extension.
 
 ## [Version 1.31.0] - 2022-01-26
 
@@ -625,6 +634,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 1.32.0]: https://github.com/houmain/gpupad/compare/1.31.0...1.32.0
 [version 1.31.0]: https://github.com/houmain/gpupad/compare/1.30.0...1.31.0
 [version 1.30.0]: https://github.com/houmain/gpupad/compare/1.29.0...1.30.0
 [version 1.29.0]: https://github.com/houmain/gpupad/compare/1.28.0...1.29.0
