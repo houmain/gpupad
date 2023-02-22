@@ -282,10 +282,12 @@ void GLProgram::bufferSet(const QString &name)
 }
 
 int GLProgram::getAttributeLocation(const QString &name) const
-{
-    if (mAttributesSet.count(name))
-        mAttributesSet[name] = true;
-    return mAttributeLocations[name];
+{       
+    auto it = mAttributeLocations.find(name);
+    if (it == mAttributeLocations.end())
+        return -1;
+    mAttributesSet[name] = true;
+    return it.value();
 }
 
 template <typename T>
