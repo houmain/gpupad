@@ -1,20 +1,15 @@
-#ifndef VIDEOPLAYER_H
-#define VIDEOPLAYER_H
+#pragma once
 
-#if defined(QtMultimedia_FOUND)
+#if defined(Qt6Multimedia_FOUND)
 
-#include <QAbstractVideoSurface>
+#include <QVideoSink>
 #include <QMediaPlayer>
 
-class VideoPlayer final : public QAbstractVideoSurface
+class VideoPlayer final : public QVideoSink
 {
     Q_OBJECT
 public:
     VideoPlayer(QString fileName, bool flipVertically, QObject *parent = nullptr);
-
-    QList<QVideoFrame::PixelFormat> supportedPixelFormats(
-        QAbstractVideoBuffer::HandleType) const override;
-    bool present(const QVideoFrame &frame) override;
 
     const QString &fileName() const { return mFileName; }
     int width() const { return mWidth; }
@@ -28,6 +23,7 @@ Q_SIGNALS:
 
 private:
     void handleStatusChanged(QMediaPlayer::MediaStatus status);
+    void handleVideoFrame(const QVideoFrame &frame);
 
     QMediaPlayer *mPlayer{ };
     QString mFileName;
@@ -36,7 +32,7 @@ private:
     bool mFlipVertically{ };
 };
 
-#else // !Qt5Multimedia_FOUND
+#else // !Qt6Multimedia_FOUND
 
 #include <QObject>
 
@@ -60,6 +56,4 @@ private:
     QString mFileName;
 };
 
-#endif // !Qt5Multimedia_FOUND
-
-#endif // VIDEOPLAYER_H
+#endif // !Qt6Multimedia_FOUND

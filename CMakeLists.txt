@@ -247,7 +247,7 @@ if(ENABLE_MULTIMEDIA)
     find_package(Qt${QT_VERSION_MAJOR}Multimedia CONFIG)
     if(Qt${QT_VERSION_MAJOR}Multimedia_FOUND)
         target_link_libraries(${PROJECT_NAME} Qt${QT_VERSION_MAJOR}::Multimedia)
-        add_compile_definitions(QtMultimedia_FOUND)
+        add_compile_definitions(Qt${QT_VERSION_MAJOR}Multimedia_FOUND)
     endif()
 endif()
 

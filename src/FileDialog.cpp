@@ -17,7 +17,7 @@ namespace {
     const auto TextureFileExtensions = { "ktx", "dds", "png", "exr", 
         "tga", "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
     const auto VideoFileExtensions = std::initializer_list<const char*>{
-#if defined(QtMultimedia_FOUND)
+#if defined(Qt6Multimedia_FOUND)
     "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi"
 #endif
     };

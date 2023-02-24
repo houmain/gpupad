@@ -1,53 +1,43 @@
-#if defined(QtMultimedia_FOUND)
+#if defined(Qt6Multimedia_FOUND)
 
 #include "VideoPlayer.h"
 #include "TextureData.h"
 #include "Singletons.h"
 #include "FileCache.h"
-#include <QMediaPlaylist>
+#include <QVideoFrame>
 #include <cstring>
 
 VideoPlayer::VideoPlayer(QString fileName, bool flipVertically, QObject *parent)
-    : QAbstractVideoSurface(parent)
+    : QVideoSink(parent)
     , mFileName(fileName)
     , mFlipVertically(flipVertically)
 {
     mPlayer = new QMediaPlayer(this);
     connect(mPlayer, &QMediaPlayer::mediaStatusChanged,
         this, &VideoPlayer::handleStatusChanged);
-    mPlayer->setVideoOutput(this);
-    mPlayer->setMuted(true);
-
-    auto playlist = new QMediaPlaylist(this);
-    playlist->setPlaybackMode(QMediaPlaylist::PlaybackMode::CurrentItemInLoop);
-    playlist->addMedia(QUrl::fromLocalFile(fileName));
-    mPlayer->setPlaylist(playlist);
-}
-
-QList<QVideoFrame::PixelFormat> VideoPlayer::supportedPixelFormats(
-    QAbstractVideoBuffer::HandleType handleType) const
-{
-    if (handleType != QAbstractVideoBuffer::NoHandle)
-        return { };
-
-    return { 
-        QVideoFrame::Format_ARGB32,
-        QVideoFrame::Format_BGRA32,
-    };
+    connect(this, &QVideoSink::videoFrameChanged,
+        this, &VideoPlayer::handleVideoFrame);
+    mPlayer->setSource(QUrl::fromLocalFile(fileName));
+    mPlayer->setLoops(QMediaPlayer::Infinite);
+    mPlayer->setVideoSink(this);
 }
 
 void VideoPlayer::handleStatusChanged(QMediaPlayer::MediaStatus status)
 {
     if (status == QMediaPlayer::InvalidMedia) {
         mPlayer->deleteLater();
+        mPlayer = nullptr;
         Q_EMIT loadingFinished();
     }
     else if (status == QMediaPlayer::LoadedMedia) {
         mPlayer->pause();
     }
+    else if (status == QMediaPlayer::EndOfMedia) {
+        mPlayer->play();
+    }
 }
 
-bool VideoPlayer::present(const QVideoFrame &frame)
+void VideoPlayer::handleVideoFrame(const QVideoFrame &frame)
 {
     if (!mWidth) {
         mWidth = frame.width();
@@ -55,23 +45,9 @@ bool VideoPlayer::present(const QVideoFrame &frame)
         Q_EMIT loadingFinished();
     }
     auto texture = TextureData();
-    if (texture.create(QOpenGLTexture::Target2D,
-            QOpenGLTexture::RGBA8_UNorm, frame.width(), frame.height(), 1, 1, 1, 0)) {
-        texture.clear();
-
-        if (frame.pixelFormat() == QVideoFrame::Format_ARGB32)
-            texture.setPixelFormat(QOpenGLTexture::BGRA);
-    
-        auto copy = frame;
-        if (copy.map(QAbstractVideoBuffer::ReadOnly)) {
-            std::memcpy(texture.getWriteonlyData(0, 0, 0), copy.bits(),
-                std::min(copy.mappedBytes(), texture.getImageSize(0)));
-            copy.unmap();
-            return Singletons::fileCache().updateTexture(
-                mFileName, mFlipVertically, std::move(texture));
-        }
-    }
-    return false;
+    if (texture.loadQImage(frame.toImage(), mFlipVertically))
+        Singletons::fileCache().updateTexture(mFileName,
+            mFlipVertically, std::move(texture));
 }
 
 void VideoPlayer::play()
@@ -92,4 +68,4 @@ void VideoPlayer::rewind()
         mPlayer->setPosition(0);
 }
 
-#endif // Qt5Multimedia_FOUND
+#endif // Qt6Multimedia_FOUND
