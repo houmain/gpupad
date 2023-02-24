@@ -71,9 +71,8 @@ TextureEditor::~TextureEditor()
         Singletons::fileCache().handleEditorFileChanged(mFileName);
 }
 
-void TextureEditor::resizeEvent(QResizeEvent * event)
+void TextureEditor::resizeEvent(QResizeEvent *event)
 {
-    mGLWidget->resizeEvent(event);
     if (mZoomToFit)
         zoomToFit();
     updateScrollBars();

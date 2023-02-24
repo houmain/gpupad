@@ -21,7 +21,6 @@ public:
     QOpenGLFunctions_4_2_Core *gl42();
 
     using QOpenGLWidget::paintEvent;
-    using QOpenGLWidget::resizeEvent;
 
 Q_SIGNALS:
     void initializingGL();

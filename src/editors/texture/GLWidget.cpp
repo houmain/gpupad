@@ -58,7 +58,6 @@ QOpenGLFunctions_4_2_Core *GLWidget::gl42()
     return (mGL42.has_value() ? &mGL42.value() : nullptr);
 }
 
-
 void GLWidget::handleDebugMessage(const QOpenGLDebugMessage &message)
 {
     const auto text = message.message();
