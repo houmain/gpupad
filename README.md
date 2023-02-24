@@ -22,15 +22,17 @@ Features
 
 * Cross platform and efficient.
 * Decent source editor with automatic indentation, brace highlighting, rectangular selection&hellip;
-* GLSL, HLSL and JavaScript syntax highlighting with basic auto completion.
-* Continuous validation of standalone shader files.
+* GLSL, HLSL, JavaScript and Lua syntax highlighting with basic auto completion.
+* Continuous validation of standalone shader and script files.
 * Possibility to evaluate shader programs with completely customizeable input and OpenGL state.
 * Automatically defined printf function for printf-debugging.
 * JavaScript expressions and scripts to define uniform input.
+* Dumping of preprocessed source, SPIR-V and glslang AST (only when [glslangValidator](https://github.com/KhronosGroup/glslang) is installed).
 * Reading and writing of image files ([KTX](https://github.com/KhronosGroup/KTX-Software) and DDS for 3D/Array textures, block compressed textures, cube maps&hellip;).
-* Streaming video files to textures.
+* Streaming video files to textures (only when built with the optional dependency Qt6Multimedia).
 * Editor for structured binary files.
 * Advanced hot reloading of externally modified files.
+* [Base16](https://github.com/chriskempson/base16-schemes-source) theme support.
 * Sample sessions in the Help menu.
 
 Screenshots
@@ -125,9 +127,8 @@ cmake --build _build
 ```
 
 On Windows and macOS you might have to pass the path to your Qt installation. e.g:
-
 ```
-cmake --build _build -DCMAKE_PREFIX_PATH=C:\Qt\5.15\msvc2019_64
+cmake -B _build -DCMAKE_PREFIX_PATH=C:\Qt\5.15\msvc2019_64
 ```
 
 License
