@@ -27,7 +27,7 @@ Features
 * Possibility to evaluate shader programs with completely customizeable input and OpenGL state.
 * Automatically defined printf function for printf-debugging.
 * JavaScript expressions and scripts to define uniform input.
-* Dumping of preprocessed source, SPIR-V and glslang AST (only when [glslangValidator](https://github.com/KhronosGroup/glslang) is installed).
+* Dumping of preprocessed source, SPIR-V and glslang AST (only when [glslangValidator](https://github.com/KhronosGroup/glslang/releases/tag/master-tot) is found).
 * Reading and writing of image files ([KTX](https://github.com/KhronosGroup/KTX-Software) and DDS for 3D/Array textures, block compressed textures, cube maps&hellip;).
 * Streaming video files to textures (only when built with the optional dependency Qt6Multimedia).
 * Editor for structured binary files.
