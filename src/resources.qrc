@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
+        <file>images/16x16/window-close.png</file>    
         <file>images/32x32/icon.png</file>
         <file>images/64x64/icon.png</file>
         <file>scripting/ScriptEngineJavaScript.js</file>
