@@ -664,6 +664,11 @@ bool TextureData::loadQImage(const QString &fileName, bool flipVertically)
 {
     auto imageReader = QImageReader(fileName);
     imageReader.setAutoTransform(true);
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    imageReader.setAllocationLimit(0);
+#endif
+
     auto image = QImage();
     if (!imageReader.read(&image))
         return false;
