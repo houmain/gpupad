@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 1.33.0] - 2022-03-09
+
+### Fixed
+
+- Disabled maximum image limit introduced in Qt6.
+- Fixed Find/Replace bar close button icon.
+- Fixed TextureEditor repaint under Qt6/Linux.
+- Fixed video playback for Qt6, removed Qt5 support.
+- Not replacing first attribute source when another is missing.
+
 ## [Version 1.32.0] - 2022-02-17
 
 ### Added
@@ -634,6 +644,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 1.33.0]: https://github.com/houmain/gpupad/compare/1.32.0...1.33.0
 [version 1.32.0]: https://github.com/houmain/gpupad/compare/1.31.0...1.32.0
 [version 1.31.0]: https://github.com/houmain/gpupad/compare/1.30.0...1.31.0
 [version 1.30.0]: https://github.com/houmain/gpupad/compare/1.29.0...1.30.0
