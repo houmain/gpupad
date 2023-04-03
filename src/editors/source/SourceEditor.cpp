@@ -620,8 +620,12 @@ void SourceEditor::autoIndentNewLine()
 
     static const auto selectSpaces = QRegularExpression("^(\\s*).*");
     auto spaces = QString(line).replace(selectSpaces, "\\1");
-    if (line.endsWith('{'))
-        spaces += tab();
+    if (line.endsWith('{')) {
+        auto nextLineCursor = cursor;
+        nextLineCursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+        if (!nextLineCursor.selectedText().trimmed().startsWith('}'))
+            spaces += tab();
+    }
 
     cursor.insertText(line + newParagraph + spaces);
     cursor.endEditBlock();
