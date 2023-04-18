@@ -34,6 +34,17 @@ namespace {
         }
         return false;
     }
+        
+    void removeExtensions(QString *source, QString *extensions)
+    {
+        static const auto regex = QRegularExpression("(#extension[^\n\r]*)([\n\r])+",
+            QRegularExpression::MultilineOption);
+
+        for (auto match = regex.match(*source); match.hasMatch(); match = regex.match(*source)) {
+            *extensions += match.captured();
+            source->remove(match.capturedStart(1), match.capturedLength(1));
+        }
+    }
 
     int countLines(const QString &source, int offset = -1) 
     {
@@ -49,7 +60,7 @@ namespace {
 
     QString substituteIncludes(QString source, const QString &fileName, 
         QStringList &usedFileNames, ItemId itemId, MessagePtrSet &messages, 
-        const QString &includePaths, QString *maxVersion, int recursionDepth = 0)
+        const QString &includePaths, QString *maxVersion, QString *extensions, int recursionDepth = 0)
     {
         if (!usedFileNames.contains(fileName)) {
             usedFileNames.append(fileName);
@@ -61,6 +72,7 @@ namespace {
         }
         const auto fileNo = usedFileNames.indexOf(fileName);
         const auto versionRemoved = removeVersion(&source, maxVersion);
+        removeExtensions(&source, extensions);
 
         auto linesInserted = (versionRemoved ? -1 : 0);
         static const auto regex = QRegularExpression(R"(#include([^\n]*))");
@@ -78,7 +90,7 @@ namespace {
                     const auto includableSource = QString("%1\n#line %2 %3\n")
                         .arg(substituteIncludes(includeSource, includeFileName, 
                             usedFileNames, itemId, messages, 
-                            includePaths, maxVersion, recursionDepth))
+                            includePaths, maxVersion, extensions, recursionDepth))
                         .arg(lineNo - linesInserted)
                         .arg(fileNo);
                     source.insert(match.capturedStart(), includableSource); 
@@ -249,10 +261,11 @@ QStringList GLShader::getPatchedSources(MessagePtrSet &messages,
 
     auto maxVersion = QString();
     auto sources = QStringList();
+    auto extensions = QString();
     for (auto i = 0; i < mSources.size(); ++i)
         sources += substituteIncludes(mSources[i], 
             mFileNames[i], usedFileNames, mItemId, messages, 
-            mIncludePaths, &maxVersion);
+            mIncludePaths, &maxVersion, &extensions);
 
     if (mLanguage != Shader::Language::GLSL) {
         for (auto i = 0; i < mSources.size(); ++i) {
@@ -262,6 +275,7 @@ QStringList GLShader::getPatchedSources(MessagePtrSet &messages,
                 return { };
             
             removeVersion(&source, &maxVersion);
+            removeExtensions(&source, &extensions);
             sources[i] = source;
         }
     }
@@ -280,6 +294,8 @@ QStringList GLShader::getPatchedSources(MessagePtrSet &messages,
         sources.front().prepend("#line 1 0\n" + mPreamble + "\n");
 
     sources.front().prepend("#define GPUPAD 1\n");
+
+    sources.front().prepend(extensions);
 
     if (maxVersion.isEmpty())
         maxVersion = "#version 450";
