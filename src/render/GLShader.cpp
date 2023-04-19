@@ -15,11 +15,11 @@ namespace {
                 if (path = path.trimmed(); !path.isEmpty()) {
                     path = workdir.absoluteFilePath(path) + '/' + relative;
                     if (QFile::exists(path)) {
-                        absolute = QFileInfo(path).canonicalFilePath();
+                        absolute = path;
                         break;
                     }
                 }
-        return QDir::toNativeSeparators(absolute);
+        return QDir::toNativeSeparators(QFileInfo(absolute).canonicalFilePath());
     }
 
     bool removeVersion(QString *source, QString *maxVersion)
