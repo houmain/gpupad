@@ -1,4 +1,4 @@
-#include "MainWindow.h"
+#include "windows/MainWindow.h"
 #include "SingleApplication/singleapplication.h"
 #include "FileDialog.h"
 #include "Style.h"

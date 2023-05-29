@@ -85,15 +85,10 @@ set(SOURCES
   libs/tga/decoder.cpp
   libs/tga/image_iterator.cpp
   libs/tga/stdio.cpp
-  src/AboutDialog.cpp
   src/FileDialog.cpp
-  src/MainWindow.cpp
-  src/MainWindow.ui
-  src/MessageList.cpp
-  src/MessageWindow.cpp
-  src/OutputWindow.cpp
   src/EvaluatedPropertyCache.cpp
   src/FileCache.cpp
+  src/MessageList.cpp
   src/Settings.cpp
   src/Singletons.cpp
   src/SynchronizeLogic.cpp
@@ -104,6 +99,11 @@ set(SOURCES
   src/SourceType.cpp
   src/Style.cpp
   src/Theme.cpp
+  src/windows/AboutDialog.cpp
+  src/windows/MainWindow.cpp
+  src/windows/MainWindow.ui
+  src/windows/MessageWindow.cpp
+  src/windows/OutputWindow.cpp
   src/editors/DockWindow.cpp
   src/editors/EditorManager.cpp
   src/editors/binary/BinaryEditor.cpp
