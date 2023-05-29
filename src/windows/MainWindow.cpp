@@ -8,6 +8,7 @@
 #include "AboutDialog.h"
 #include "MessageWindow.h"
 #include "OutputWindow.h"
+#include "FileBrowserWindow.h"
 #include "MessageList.h"
 #include "Settings.h"
 #include "SynchronizeLogic.h"
@@ -41,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     , mCustomActions(new CustomActions(this))
     , mSingletons(new Singletons(this))
     , mOutputWindow(new OutputWindow())
+    , mFileBrowserWindow(new FileBrowserWindow())
     , mEditorManager(Singletons::editorManager())
     , mSessionEditor(new SessionEditor())
     , mSessionProperties(new SessionProperties())
@@ -163,6 +165,19 @@ MainWindow::MainWindow(QWidget *parent)
     addDockWidget(Qt::RightDockWidgetArea, dock);
     auto outputDock = dock;
 
+    dock = new QDockWidget(tr("Files"), this);
+    dock->setObjectName("FileBrowser");
+    dock->setFeatures(QDockWidget::DockWidgetClosable |
+                      QDockWidget::DockWidgetMovable);
+    dock->setWidget(mFileBrowserWindow.data());
+    dock->setVisible(false);
+    action = dock->toggleViewAction();
+    action->setText(tr("Show &") + action->text());
+    action->setIcon(QIcon::fromTheme("folder"));
+    mUi->menuView->addAction(action);
+    mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
+    tabifyDockWidget(mSessionDock, dock);
+
     mUi->toolBarMain->insertSeparator(mUi->actionEvalReset);
 
     mUi->actionQuit->setShortcuts(QKeySequence::Quit);
@@ -264,6 +279,8 @@ MainWindow::MainWindow(QWidget *parent)
         mSessionEditor.data(), &SessionEditor::updateItemActions);
     connect(&mEditorManager, &DockWindow::openNewDock,
         this, &MainWindow::newFile);
+    connect(mFileBrowserWindow.data(), &FileBrowserWindow::fileActivated,
+        [this](const QString &fileName) { openFile(fileName); });
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
     connect(mOutputWindow.data(), &OutputWindow::typeSelectionChanged,

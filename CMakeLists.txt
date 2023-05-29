@@ -100,6 +100,7 @@ set(SOURCES
   src/Style.cpp
   src/Theme.cpp
   src/windows/AboutDialog.cpp
+  src/windows/FileBrowserWindow.cpp
   src/windows/MainWindow.cpp
   src/windows/MainWindow.ui
   src/windows/MessageWindow.cpp

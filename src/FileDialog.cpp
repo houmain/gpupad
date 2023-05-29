@@ -120,7 +120,10 @@ FileDialog::~FileDialog() = default;
 
 void FileDialog::setDirectory(QDir directory)
 {
-    mDirectory = directory;
+    if (mDirectory != directory) {
+        mDirectory = directory;
+        Q_EMIT directoryChanged(directory);
+    }
 }
 
 QString FileDialog::fileName() const

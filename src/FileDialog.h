@@ -48,6 +48,9 @@ public:
     bool exec(Options options, QString fileName = "", 
         SourceType sourceType = SourceType::PlainText);
 
+Q_SIGNALS:
+    void directoryChanged(QDir directory);
+
 private:
     QMainWindow *mWindow;
     QStringList mFileNames;

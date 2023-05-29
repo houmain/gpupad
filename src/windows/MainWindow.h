@@ -16,6 +16,7 @@ class QLabel;
 class Singletons;
 class MessageWindow;
 class OutputWindow;
+class FileBrowserWindow;
 class EditorManager;
 class SessionEditor;
 class SessionProperties;
@@ -99,6 +100,7 @@ private:
     QScopedPointer<CustomActions> mCustomActions;
     QScopedPointer<Singletons> mSingletons;
     QScopedPointer<OutputWindow> mOutputWindow;
+    QScopedPointer<FileBrowserWindow> mFileBrowserWindow;
     EditorManager &mEditorManager;
     QScopedPointer<SessionEditor> mSessionEditor;
     QDockWidget *mSessionDock{ };
