@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
     QLocale::setDefault(QLocale::c());
 
     QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+    QApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);

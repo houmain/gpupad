@@ -105,6 +105,7 @@ set(SOURCES
   src/windows/MessageWindow.cpp
   src/windows/OutputWindow.cpp
   src/editors/DockWindow.cpp
+  src/editors/DockTitle.cpp
   src/editors/EditorManager.cpp
   src/editors/binary/BinaryEditor.cpp
   src/editors/binary/BinaryEditorToolBar.cpp

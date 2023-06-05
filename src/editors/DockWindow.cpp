@@ -1,5 +1,7 @@
 #include "DockWindow.h"
 #include "FileDialog.h"
+#include "DockTitle.h"
+#include <QChildEvent>
 #include <QTabBar>
 #include <QApplication>
 #include <QTimer>
@@ -7,7 +9,6 @@
 #include <QPointer>
 #include <QMenu>
 #include <QClipboard>
-#include <map>
 
 namespace {
     QDockWidget *getTabBarDock(QTabBar *tabBar, int index)
@@ -21,17 +22,12 @@ namespace {
 DockWindow::DockWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    mUpdateDocksTimer = new QTimer(this);
-}
-
-DockWindow::~DockWindow()
-{
 }
 
 void DockWindow::raiseDock(QDockWidget *dock)
 {
     // it seems like raising only works when the dock was layouted
-    mUpdateDocksTimer->singleShot(0,
+    QTimer::singleShot(0,
         [dock = QPointer<QDockWidget>(dock)]() {
             if (dock) {
                 dock->raise();
@@ -40,147 +36,144 @@ void DockWindow::raiseDock(QDockWidget *dock)
         });
 }
 
-bool DockWindow::closeDock(QDockWidget *dock, bool promptSave)
+void DockWindow::closeDock(QDockWidget *dock)
 {
-    delete dock;
-    return true;
+    dock->setParent(nullptr);
+    dock->deleteLater();
 }
 
-void DockWindow::closeDocksExcept(QTabBar *tabBar, int index)
+void DockWindow::closeDocksExcept(QTabBar *tabBar, QDockWidget *except)
 {
     for (auto i = tabBar->count() - 1; i >= 0; --i)
-        if (i != index)
-            if (auto dock = getTabBarDock(tabBar, i))
-                closeDock(dock);
+        if (auto dock = getTabBarDock(tabBar, i))
+            if (dock != except)
+                Q_EMIT dockCloseRequested(dock);
+  
 }
 
-bool DockWindow::event(QEvent *event)
+void DockWindow::childEvent(QChildEvent *event)
 {
-    if (mUpdateDocksTimer && !mUpdateDocksTimer->isActive()) {
-        if (event->type() == QEvent::ChildAdded ||
-            event->type() == QEvent::ChildRemoved) {
-            mUpdateDocksTimer->singleShot(0,
-                this, &DockWindow::updateDocks);
-        }
-    }
-    return QMainWindow::event(event);
+    // install event handler for added children (QTabBar, QDockWidget)
+    if (event->added() && event->child()->isWidgetType())
+        event->child()->installEventFilter(this);
 }
 
 bool DockWindow::eventFilter(QObject *watched, QEvent *event)
 {
-    if (event->type() == QEvent::Close)
-        if (auto dock = qobject_cast<QDockWidget*>(watched)) {
-            if (!closeDock(dock))
-                event->ignore();
-            return true;
-        }
+    // hide QTabBar automatically added by QMainWindow as soon as possible
+    if (event->type() == QEvent::ChildPolished)
+        if (auto tabBar = qobject_cast<QTabBar*>(watched))
+            initializeTabBar(tabBar);
+        
+    // set custom titlebar of QDockWidget as soon as possible
+    if (event->type() == QEvent::Polish)
+        if (auto dock = qobject_cast<QDockWidget*>(watched))
+            initializeDock(dock);
+    
+    // inform titlebars of corresponding tabbar, whenever tabbar children change
+    if (event->type() == QEvent::ChildAdded || event->type() == QEvent::ChildRemoved)
+        if (qobject_cast<QTabBar*>(watched)) {
+            for (auto title : findChildren<DockTitle*>())
+                title->setTabBar(nullptr);
 
-    // do not undock on double click
-    if (event->type() == QEvent::MouseButtonDblClick) {
-        event->ignore();
-        return true;
-    }
+            for (auto tabBar : findChildren<QTabBar*>())
+                for (auto i = 0; i < tabBar->count(); i++)
+                    if (auto dock = qobject_cast<QDockWidget*>(getTabBarDock(tabBar, i)))
+                        if (auto title = qobject_cast<DockTitle*>(dock->titleBarWidget()))
+                            title->setTabBar(tabBar);
+        }
 
     return QMainWindow::eventFilter(watched, event);
 }
 
-void DockWindow::tabbedDockClicked(int index)
+void DockWindow::initializeTabBar(QTabBar *tabBar)
 {
-    auto tabBar = static_cast<QTabBar*>(QObject::sender());
-    if (auto dock = getTabBarDock(tabBar, index)) {
-        if (QApplication::mouseButtons() & Qt::LeftButton) {
-            dock->widget()->setFocus();
-        }
-        else if (QApplication::mouseButtons() & Qt::MiddleButton) {
-            closeDock(dock);
-        }
-        else if (QApplication::mouseButtons() & Qt::RightButton) {
-            openContextMenu(index);
-        }
-    }
+    if (!tabBar->property("initialized").isNull())
+        return;
+    tabBar->setProperty("initialized", true);
+
+    tabBar->setStyleSheet("QTabBar::tab { max-height:0px }");
 }
 
-void DockWindow::openContextMenu(int index)
+void DockWindow::initializeDock(QDockWidget *dock)
 {
-    auto tabBar = static_cast<QTabBar*>(QObject::sender());
-    if (auto dock = getTabBarDock(tabBar, index)) {
-        auto menu = QMenu();
-        auto close = menu.addAction(tr("Close"));
-        close->setIcon(QIcon::fromTheme("process-stop"));
-        close->setShortcut(QKeySequence::Close);
-        connect(close, &QAction::triggered, 
-            [=]() { closeDock(dock); });
-        if (tabBar->count() > 1) {
-            auto closeAll = menu.addAction(tr("Close All Tabs"));
-            auto closeOthers = menu.addAction(tr("Close All But This"));
-            connect(closeOthers, &QAction::triggered, 
-                [=]() { closeDocksExcept(tabBar, index); });
-            connect(closeAll, &QAction::triggered, 
-                [=]() { closeDocksExcept(tabBar, -1); });
+    if (!dock->property("initialized").isNull())
+        return;
+    dock->setProperty("initialized", true);
 
-            if (!dock->statusTip().isEmpty()) {
-                const auto fileName = dock->statusTip();
-                auto copyFullPath = menu.addAction(tr("Copy Full Path"));
-                auto openContainingFolder = menu.addAction(tr("Open Containing Folder"));
-                connect(copyFullPath, &QAction::triggered,
-                    [=]() { QApplication::clipboard()->setText(fileName); });
-                connect(openContainingFolder, &QAction::triggered,
-                    [=]() { showInFileManager(fileName); });
+    connect(dock, &QDockWidget::topLevelChanged, 
+        this, &DockWindow::onDockTopLevelChanged);
+    setDockTitleBar(dock);
+}
+
+void DockWindow::openContextMenu(QPoint pos, QTabBar *tabBar, QDockWidget *dock)
+{
+    auto menu = QMenu();
+    auto close = menu.addAction(tr("Close"));
+    close->setIcon(QIcon::fromTheme("process-stop"));
+    close->setShortcut(QKeySequence::Close);
+    connect(close, &QAction::triggered, 
+        [=]() { Q_EMIT dockCloseRequested(dock); });
+    if (tabBar && tabBar->count() > 1) {
+        auto closeAll = menu.addAction(tr("Close All"));
+        auto closeOthers = menu.addAction(tr("Close Others"));
+        connect(closeOthers, &QAction::triggered, 
+            [=]() { closeDocksExcept(tabBar, dock); });
+        connect(closeAll, &QAction::triggered, 
+            [=]() { closeDocksExcept(tabBar, nullptr); });
+    }
+
+    if (!dock->statusTip().isEmpty()) {
+        const auto fileName = dock->statusTip();
+        auto copyFullPath = menu.addAction(tr("Copy Full Path"));
+        auto openContainingFolder = menu.addAction(tr("Open Containing Folder"));
+        connect(copyFullPath, &QAction::triggered,
+            [=]() { QApplication::clipboard()->setText(fileName); });
+        connect(openContainingFolder, &QAction::triggered,
+            [=]() { showInFileManager(fileName); });
+    }
+
+    if (tabBar && tabBar->count() > 1) {
+        menu.addSeparator();
+
+        auto docks = std::multimap<QString, QDockWidget *>();
+        for (auto i = 0; i < tabBar->count(); ++i)
+            if (auto dock = getTabBarDock(tabBar, i)) {
+                const auto title = (dock->statusTip().isEmpty() ? 
+                    dock->windowTitle().replace("[*]", 
+                        dock->isWindowModified() ? "*" : "") :
+                    dock->statusTip());
+                docks.emplace(title, dock);
             }
 
-            menu.addSeparator();
-
-            auto docks = std::multimap<QString, QDockWidget *>();
-            for (auto i = 0; i < tabBar->count(); ++i)
-                if (auto dock = getTabBarDock(tabBar, i)) {
-                    const auto title = (dock->statusTip().isEmpty() ? 
-                        dock->windowTitle().replace("[*]", "") :
-                        dock->statusTip());
-                    docks.emplace(title, dock);
-                }
-
-            for (const auto &[title, dock] : docks)
-                connect(menu.addAction(title), &QAction::triggered, 
-                    [this, dock = dock]() { raiseDock(dock); });
-        }
-        menu.exec(tabBar->mapToGlobal(
-            tabBar->tabRect(index).bottomLeft() + QPoint(0, 2)));
+        for (const auto &[title, dock] : docks)
+            connect(menu.addAction(title), &QAction::triggered, 
+                [this, dock = dock]() { raiseDock(dock); });
     }
+    menu.exec(pos);
 }
 
-void DockWindow::tabBarDoubleClicked(int index) 
+void DockWindow::onDockTopLevelChanged(bool floating)
 {
-    if (index == -1) {
-        if (QApplication::mouseButtons() & Qt::LeftButton) {
-            Q_EMIT openNewDock();
-        }
+    auto dock = qobject_cast<QDockWidget*>(sender());
+    setDockTitleBar(dock);
+    dock->resize(QSize(300, 300));
+}
+
+void DockWindow::setDockTitleBar(QDockWidget *dock) {
+    if (dock->isFloating()) {
+        delete dock->titleBarWidget();
+        dock->setTitleBarWidget(nullptr);
     }
-}
+    else if (!dock->titleBarWidget()) {
+        auto title = new DockTitle(dock);
+        dock->setTitleBarWidget(title);
 
-void DockWindow::updateDocks()
-{
-    for (const auto &connection : qAsConst(mDockConnections))
-       disconnect(connection);
-    mDockConnections.clear();
-
-    const auto children = findChildren<QTabBar*>();
-    for (QTabBar* tabBar : children)
-        updateTabBar(tabBar);
-}
-
-void DockWindow::updateTabBar(QTabBar *tabBar)
-{
-    tabBar->setUsesScrollButtons(true);
-    tabBar->setElideMode(Qt::ElideLeft);
-
-    QCoreApplication::setAttribute(Qt::AA_UseStyleSheetPropagationInWidgetStyles, true);
-    tabBar->setStyleSheet(
-        "QTabBar::tab { min-width:100px; max-width: 200px; }");
-
-    mDockConnections +=
-        connect(tabBar, &QTabBar::tabBarClicked,
-            this, &DockWindow::tabbedDockClicked);
-    mDockConnections +=
-        connect(tabBar, &QTabBar::tabBarDoubleClicked,
-            this, &DockWindow::tabBarDoubleClicked);
+        connect(title, &DockTitle::openNewDock,
+            this, &DockWindow::openNewDock);
+        connect(title, &DockTitle::dockCloseRequested,
+            this, &DockWindow::dockCloseRequested);
+        connect(title, &DockTitle::contextMenuRequested,
+            this, &DockWindow::openContextMenu);
+    }
 }

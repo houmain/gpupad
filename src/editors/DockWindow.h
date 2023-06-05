@@ -1,5 +1,4 @@
-#ifndef DOCKWINDOW_H
-#define DOCKWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 
@@ -8,29 +7,26 @@ class DockWindow : public QMainWindow
     Q_OBJECT
 public:
     explicit DockWindow(QWidget *parent = nullptr);
-    ~DockWindow() override;
+  
+    void raiseDock(QDockWidget *dock);
+    void closeDock(QDockWidget *dock);
+    void closeDocksExcept(QTabBar *tabBar, QDockWidget *dock);
 
+    bool eventFilter(QObject *watched, QEvent *event) override;
+  
 Q_SIGNALS:
     void openNewDock();
+    void dockCloseRequested(QDockWidget *dock);
+
+private Q_SLOTS:
+    void openContextMenu(QPoint pos, QTabBar *tabBar, QDockWidget *dock);
+    void onDockTopLevelChanged(bool topLevel);
 
 protected:
-    void raiseDock(QDockWidget *dock);
-    virtual bool closeDock(QDockWidget *dock, bool promptSave = true);
-
-    QSize sizeHint() const override { return QSize(700, 800); }
-    bool event(QEvent *event) override;
-    bool eventFilter(QObject *watched, QEvent *event) override;
-
+    void childEvent(QChildEvent *event) override;
+   
 private:
-    void tabbedDockClicked(int index);
-    void tabBarDoubleClicked(int index);
-    void openContextMenu(int index);
-    void closeDocksExcept(QTabBar *tabBar, int index);
-    void updateDocks();
-    void updateTabBar(QTabBar *tabBar);
-
-    QTimer *mUpdateDocksTimer{ };
-    QList<QMetaObject::Connection> mDockConnections;
+    void initializeTabBar(QTabBar *tabBar);
+    void initializeDock(QDockWidget *dock);
+    void setDockTitleBar(QDockWidget *dock);
 };
-
-#endif // DOCKWINDOW_H

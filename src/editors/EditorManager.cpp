@@ -33,7 +33,12 @@ EditorManager::EditorManager(QWidget *parent)
     setDocumentMode(true);
     setContentsMargins(0, 1, 0, 0);
 
-     connect(QApplication::clipboard(), &QClipboard::changed,
+    connect(this, &DockWindow::dockCloseRequested, this, 
+        [this](QDockWidget *dock) { 
+            if (promptSaveDock(dock)) 
+                closeDock(dock); 
+        });
+    connect(QApplication::clipboard(), &QClipboard::changed,
         [this]() { Q_EMIT canPasteInNewEditorChanged(canPasteInNewEditor()); });
 }
 
@@ -503,9 +508,10 @@ bool EditorManager::reloadEditor()
 
 bool EditorManager::closeEditor()
 {
-    if (mCurrentDock)
-        return closeDock(mCurrentDock);
-    return false;
+    if (!mCurrentDock || !promptSaveDock(mCurrentDock))
+        return false;
+    closeDock(mCurrentDock);
+    return true;
 }
 
 bool EditorManager::promptSaveAllEditors()
@@ -522,7 +528,7 @@ bool EditorManager::closeAllEditors(bool promptSave)
         return false;
 
     while (!mDocks.empty())
-        closeDock(mDocks.begin()->first, false);
+        closeDock(mDocks.begin()->first);
 
     return true;
 }
@@ -530,9 +536,11 @@ bool EditorManager::closeAllEditors(bool promptSave)
 bool EditorManager::closeAllTextureEditors()
 {
     for (auto [dock, editor] : mDocks)
-        if (qobject_cast<TextureEditor*>(dock->widget()))
-            if (!closeDock(dock))
+        if (qobject_cast<TextureEditor*>(dock->widget())) {
+            if (!promptSaveDock(dock))
                 return false;
+            closeDock(dock);
+        }
     return true;
 }
 
@@ -690,11 +698,8 @@ bool EditorManager::promptSaveDock(QDockWidget *dock)
     return true;
 }
 
-bool EditorManager::closeDock(QDockWidget *dock, bool promptSave)
+void EditorManager::closeDock(QDockWidget *dock)
 {
-    if (promptSave && !promptSaveDock(dock))
-        return false;
-
     auto editor = mDocks[dock];
     Q_EMIT editorRenamed(editor->fileName(), "");
 
@@ -705,6 +710,8 @@ bool EditorManager::closeDock(QDockWidget *dock, bool promptSave)
 
     mDocks.erase(dock);
 
+    DockWindow::closeDock(dock);
+
     if (mCurrentDock == dock) {
         updateDockCurrentProperty(dock, false);
         mCurrentDock = nullptr;
@@ -712,10 +719,8 @@ bool EditorManager::closeDock(QDockWidget *dock, bool promptSave)
             autoRaise(mDocks.rbegin()->first->widget());
     }
 
-    DockWindow::closeDock(dock);
     if (mDocks.empty())
         clearNavigationStack();
-    return true;
 }
 
 void EditorManager::autoRaise(QWidget *editor)

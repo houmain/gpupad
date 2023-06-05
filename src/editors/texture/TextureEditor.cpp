@@ -61,6 +61,7 @@ TextureEditor::TextureEditor(QString fileName,
 
     setAcceptDrops(false);
     setMouseTracking(true);
+    setFrameStyle(QFrame::NoFrame);
 }
 
 TextureEditor::~TextureEditor() 

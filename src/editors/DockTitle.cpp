@@ -1,0 +1,178 @@
+#include "DockTitle.h"
+#include <QStylePainter>
+#include <QStyleOption>
+#include <QPaintEvent>
+#include <QDockWidget>
+
+namespace {
+    const auto minimumTabWidth = 120;
+    const auto maximumTabWidth = 150;
+} // namespace
+
+DockTitle::DockTitle(QDockWidget *parent) 
+    : QWidget(parent)
+{
+}
+
+QSize DockTitle::sizeHint() const 
+{
+    return tabSize(0);
+}
+
+void DockTitle::setTabBar(QTabBar *tabBar)
+{
+    if (mTabBar != tabBar) {
+        mTabBar = tabBar;
+        update();
+    }
+}
+
+int DockTitle::tabCount() const 
+{
+    return qMax(1, mTabBar ? mTabBar->count() : 0);
+}
+
+int DockTitle::currentTabIndex() const
+{
+    return (mTabBar && mTabBar->count() > 1 ? 
+        mTabBar->currentIndex() : 0);
+}
+
+QString DockTitle::tabText(int index) const
+{
+    const auto dock = tabDock(index);
+    auto title = dock->windowTitle();
+    if (title.startsWith("[*]"))
+        title.replace(0, 3, (dock->isWindowModified() ? "*" : ""));
+    return title;
+}
+
+QRect DockTitle::tabRect(int index) const 
+{
+    auto rect = QRect(QPoint(), sizeHint());
+    const auto count = tabCount();        
+    for (auto i = 0; i <= index; ++i) {
+        rect.setWidth(tabSize(i).width());
+        if (i < index)
+            rect.translate(rect.width(), 0);
+    }
+    return rect;
+}
+
+QDockWidget *DockTitle::tabDock(int index)
+{
+    return const_cast<QDockWidget *>(
+        static_cast<const DockTitle*>(this)->tabDock(index));
+}
+
+const QDockWidget *DockTitle::tabDock(int index) const
+{
+    if (mTabBar && mTabBar->count() > 1) {
+        // source: https://bugreports.qt.io/browse/QTBUG-39489
+        return reinterpret_cast<QDockWidget*>(
+            mTabBar->tabData(index).toULongLong());
+    }
+    return static_cast<QDockWidget*>(parentWidget());
+}
+
+QSize DockTitle::tabSize(int index) const
+{
+    auto text = tabText(index);
+    auto opt = QStyleOptionTab();
+    opt.initFrom(this);
+    auto contentSize = fontMetrics().size(Qt::TextShowMnemonic, text);
+    contentSize += QSize(
+        style()->pixelMetric(QStyle::PM_TabBarTabHSpace, &opt, this),
+        style()->pixelMetric(QStyle::PM_TabBarTabVSpace, &opt, this));
+    auto size = style()->sizeFromContents(QStyle::CT_TabBarTab, &opt, contentSize, this);
+    size.setWidth(qMin(qMax(size.width(), minimumTabWidth), maximumTabWidth));
+    return size;
+}
+
+int DockTitle::tabContainingPoint(const QPoint &point)
+{
+    auto rect = QRect(QPoint(), sizeHint());
+    const auto count = tabCount();        
+    for (auto i = 0; i < count; ++i) {
+        rect.setWidth(tabSize(i).width());
+        if (rect.contains(point))
+            return i;
+        rect.translate(rect.width(), 0);
+    }
+    return -1;
+}
+
+void DockTitle::mousePressEvent(QMouseEvent *event)
+{
+    const auto index = tabContainingPoint(event->pos());
+    if (index >= 0) {
+        auto dock = tabDock(index);
+        if (event->button() == Qt::MiddleButton) {
+            Q_EMIT dockCloseRequested(dock);
+        }
+        else if (event->button() == Qt::LeftButton) {
+            if (index != currentTabIndex() || !dock->widget()->hasFocus()) {
+                const auto switched = (index != currentTabIndex());
+                dock->raise();
+                dock->widget()->setFocus();
+
+                // intercept event when when switching tabs, 
+                // so it does not start dragging previous
+                if (switched)
+                    return;
+            }
+        }
+    }
+    QWidget::mousePressEvent(event);
+}
+
+void DockTitle::mouseReleaseEvent(QMouseEvent *event)
+{
+    QWidget::mouseReleaseEvent(event);
+
+    if (event->button() == Qt::RightButton) {
+        const auto index = tabContainingPoint(event->pos());
+        if (index >= 0) {
+            auto dock = tabDock(index);
+            Q_EMIT contextMenuRequested(event->globalPosition().toPoint(), mTabBar, dock);
+        }
+    }
+}
+
+void DockTitle::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    const auto index = tabContainingPoint(event->pos());
+    if (index == -1)
+        Q_EMIT openNewDock();
+}
+
+void DockTitle::paintEvent(QPaintEvent *event) 
+{
+    auto rect = QRect(QPoint(), sizeHint());
+    const auto current = currentTabIndex();
+    const auto count = tabCount();        
+    for (auto i = 0; i < count; ++i) {
+        rect.setWidth(tabSize(i).width());
+        paintTab(rect, tabText(i), i == current);
+        rect.translate(rect.width(), 0);
+    }
+}
+
+void DockTitle::paintTab(const QRect &rect, const QString &text, bool current)
+{
+    auto opt = QStyleOptionTab();
+    opt.initFrom(this);
+    opt.state = QStyle::State_Active | QStyle::State_Enabled;
+    if (current) 
+        opt.state |= QStyle::State_Selected;
+           
+    opt.rect = rect;
+    // this is a hack to also fill space below tab
+    opt.rect.setBottom(opt.rect.bottom() + 2);
+
+    auto textRect = style()->subElementRect(QStyle::SE_TabBarTabText, &opt, this);
+    opt.text = fontMetrics().elidedText(text,
+        Qt::ElideRight, textRect.width(), Qt::TextShowMnemonic);
+    auto painter = QStylePainter(this);
+    painter.drawControl(QStyle::CE_TabBarTab, opt);
+}

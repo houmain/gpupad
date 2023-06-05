@@ -66,6 +66,7 @@ MainWindow::MainWindow(QWidget *parent)
     (new QOpenGLWidget(this))->setVisible(false);
 #endif
 
+    setContentsMargins(2, 0, 2, 2);
     auto content = new QWidget(this);
     mEditorManager.setParent(content);
     auto layout = new QVBoxLayout(content);
@@ -950,16 +951,16 @@ void MainWindow::handleThemeChanging(const Theme &theme)
     auto palette = theme.palette();
     qApp->setPalette(palette);
 
-    const auto frameDarker = (theme.isDarkTheme() ? 90 : 105);
-    const auto currentFrameDarker = (theme.isDarkTheme() ? 70 : 120);
+    const auto frameDarker = (theme.isDarkTheme() ? 70 : 120);
+    const auto currentFrameDarker = (theme.isDarkTheme() ? 50 : 180);
     const auto color = [&](QPalette::ColorRole role,
           QPalette::ColorGroup group, int darker = 100) {
         return palette.brush(group, role).color().darker(darker).name(QColor::HexRgb);
     };
     auto styleSheet = QString(
       "QLabel:disabled { color: %1 }\n"
-      "QDockWidget > QFrame { border:2px solid %2 }\n"
-      "QDockWidget[current=true] > QFrame { border:2px solid %3 }\n"
+      "QDockWidget > QFrame { border:1px solid %2 }\n"
+      "QDockWidget[current=true] > QFrame { border:1px solid %3 }\n"
       "QMenuBar { background-color: %4; border:none; margin:0; padding:0; padding-top:2px; }\n"
       "QToolButton { margin:2; margin:0px; padding:2px; }\n"
       "QToolBar { spacing:1px; margin:0; padding:2px; padding-left:4px; background-color: %4; border:none }\n")

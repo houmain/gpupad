@@ -97,7 +97,7 @@ private:
     void handleEditorFilenameChanged(QDockWidget *dock);
     bool saveDock(QDockWidget *dock);
     bool promptSaveDock(QDockWidget *dock);
-    bool closeDock(QDockWidget *dock, bool promptSave = true) override;
+    void closeDock(QDockWidget *dock);
     void autoRaise(QWidget *editor);
     void updateEditorToolBarVisibility();
     void updateEditorPropertiesVisibility();
