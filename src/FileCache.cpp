@@ -108,6 +108,8 @@ public Q_SLOTS:
         auto source = QString();
         if (::loadSource(fileName, &source))
             Q_EMIT sourceLoaded(fileName, std::move(source));
+        else
+            Q_EMIT loadingFailed(fileName);
     }
 
     void loadTexture(const QString &fileName, bool flipVertically) 
@@ -115,6 +117,8 @@ public Q_SLOTS:
         auto texture = TextureData();
         if (::loadTexture(fileName, flipVertically, &texture))
             Q_EMIT textureLoaded(fileName, flipVertically, std::move(texture));
+        else
+            Q_EMIT loadingFailed(fileName);
     }
 
     void loadBinary(const QString &fileName) 
@@ -122,12 +126,15 @@ public Q_SLOTS:
         auto binary = QByteArray();
         if (::loadBinary(fileName, &binary))
             Q_EMIT binaryLoaded(fileName, std::move(binary));
+        else
+            Q_EMIT loadingFailed(fileName);
     }
 
 Q_SIGNALS:
     void sourceLoaded(const QString &fileName, QString source);
     void textureLoaded(const QString &fileName, bool flipVertically, TextureData texture);
     void binaryLoaded(const QString &fileName, QByteArray binary);
+    void loadingFailed(const QString &fileName);
 };
 
 FileCache::FileCache(QObject *parent) 
@@ -154,6 +161,8 @@ FileCache::FileCache(QObject *parent)
         this, &FileCache::handleTextureReloaded);
     connect(backgroundLoader, &BackgroundLoader::binaryLoaded,
         this, &FileCache::handleBinaryReloaded);
+    connect(backgroundLoader, &BackgroundLoader::loadingFailed,
+        this, &FileCache::handleReloadingFailed);
 
     connect(&mBackgroundLoaderThread, &QThread::finished,
         backgroundLoader, &QObject::deleteLater);
@@ -326,14 +335,20 @@ void FileCache::updateFileSystemWatches()
         const auto &fileName = it.key();
         const auto &changed = it.value();
 
-        const auto deferUpdate = (!updatingNonTextures && 
+        auto deferUpdate = (!updatingNonTextures && 
             (mSources.contains(fileName) || mBinaries.contains(fileName)));
 
-        mFileSystemWatcher.removePath(it.key());
+        if (!deferUpdate) {
+            if (!mFileSystemWatcher.files().contains(fileName)) {
+                if (!mFileSystemWatcher.addPath(fileName))
+                    deferUpdate = true;
+            }
+            else if (!QFileInfo::exists(fileName)) {
+                mFileSystemWatcher.removePath(fileName);
+            }
+        }
 
-        if (!deferUpdate &&
-            QFileInfo::exists(fileName) &&
-            mFileSystemWatcher.addPath(fileName)) {
+        if (!deferUpdate) {
             if (changed && !mEditorSaveAdvertised.remove(fileName)) {
                 if (!reloadFileInBackground(fileName)) {
                     purgeFile(fileName);
@@ -352,21 +367,21 @@ bool FileCache::reloadFileInBackground(const QString &fileName)
 {
     if (mSources.contains(fileName)) {
         Q_EMIT reloadSource(fileName, QPrivateSignal());
-        return true;
     }
-    if (mTextures.contains({ fileName, true })) {
+    else if (mTextures.contains({ fileName, true })) {
         Q_EMIT reloadTexture(fileName, true, QPrivateSignal());
-        return true;
     } 
-    if (mTextures.contains({ fileName, false })) {
+    else if (mTextures.contains({ fileName, false })) {
         Q_EMIT reloadTexture(fileName, false, QPrivateSignal());
-        return true;
     } 
-    if (mBinaries.contains(fileName)) {
+    else if (mBinaries.contains(fileName)) {
         Q_EMIT reloadBinary(fileName, QPrivateSignal());
-        return true;
     }
-    return false;
+    else {
+        return false;
+    }
+    mUpdateFileSystemWatchesTimer.stop();
+    return true;
 }
 
 void FileCache::purgeFile(const QString &fileName)
@@ -381,7 +396,6 @@ void FileCache::handleSourceReloaded(const QString &fileName, QString source)
 {
     Q_ASSERT(onMainThread());
     QMutexLocker lock(&mMutex);
-
     mSources[fileName] = source;
     lock.unlock();
 
@@ -389,13 +403,13 @@ void FileCache::handleSourceReloaded(const QString &fileName, QString source)
         editor->load();
 
     Q_EMIT fileChanged(fileName);
+    mUpdateFileSystemWatchesTimer.start();
 }
 
 void FileCache::handleTextureReloaded(const QString &fileName, bool flipVertically, TextureData texture) 
 {
     Q_ASSERT(onMainThread());
     QMutexLocker lock(&mMutex);
-
     mTextures[TextureKey(fileName, flipVertically)] = texture;
     lock.unlock();
 
@@ -403,13 +417,13 @@ void FileCache::handleTextureReloaded(const QString &fileName, bool flipVertical
         editor->load();
     
     Q_EMIT fileChanged(fileName);
+    mUpdateFileSystemWatchesTimer.start();
 }
 
 void FileCache::handleBinaryReloaded(const QString &fileName, QByteArray binary) 
 {
     Q_ASSERT(onMainThread());
     QMutexLocker lock(&mMutex);
-
     mBinaries[fileName] = binary;
     lock.unlock();
 
@@ -417,6 +431,13 @@ void FileCache::handleBinaryReloaded(const QString &fileName, QByteArray binary)
         editor->load();
 
     Q_EMIT fileChanged(fileName);
+    mUpdateFileSystemWatchesTimer.start();
+}
+
+void FileCache::handleReloadingFailed(const QString &fileName) 
+{
+    Q_ASSERT(onMainThread());
+    mUpdateFileSystemWatchesTimer.start();
 }
 
 #include "FileCache.moc"

@@ -39,6 +39,7 @@ public Q_SLOTS:
     void handleSourceReloaded(const QString &fileName, QString);
     void handleTextureReloaded(const QString &fileName, bool flipVertically, TextureData);
     void handleBinaryReloaded(const QString &fileName, QByteArray);
+    void handleReloadingFailed(const QString &fileName);
 
 private:
     class BackgroundLoader;
