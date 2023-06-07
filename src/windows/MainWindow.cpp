@@ -909,8 +909,11 @@ void MainWindow::updateRecentFileActions()
     for (const auto &actions : { mRecentSessionActions, mRecentFileActions })
         for (const auto action : actions)
             if (action->isVisible()) {
+                auto text = action->text();
+                if (text.size() > 100)
+                    text = text.replace(45, text.size() - 90, "...  ...");
                 action->setText(QStringLiteral("  &%1 %2").arg(
-                    QChar(index < 9 ? '1' + index : 'A' + (index - 9))).arg(action->text()));
+                    QChar(index < 9 ? '1' + index : 'A' + (index - 9))).arg(text));
                 ++index;
             }
 }
