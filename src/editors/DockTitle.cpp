@@ -1,4 +1,5 @@
 #include "DockTitle.h"
+#include "../getMousePosition.h"
 #include <QStylePainter>
 #include <QStyleOption>
 #include <QPaintEvent>
@@ -104,7 +105,7 @@ int DockTitle::tabContainingPoint(const QPoint &point)
 
 void DockTitle::mousePressEvent(QMouseEvent *event)
 {
-    const auto index = tabContainingPoint(event->pos());
+    const auto index = tabContainingPoint(getMousePosition(event));
     if (index >= 0) {
         auto dock = tabDock(index);
         if (event->button() == Qt::MiddleButton) {
@@ -131,17 +132,17 @@ void DockTitle::mouseReleaseEvent(QMouseEvent *event)
     QWidget::mouseReleaseEvent(event);
 
     if (event->button() == Qt::RightButton) {
-        const auto index = tabContainingPoint(event->pos());
+        const auto index = tabContainingPoint(getMousePosition(event));
         if (index >= 0) {
             auto dock = tabDock(index);
-            Q_EMIT contextMenuRequested(event->globalPosition().toPoint(), mTabBar, dock);
+            Q_EMIT contextMenuRequested(getGlobalMousePosition(event), mTabBar, dock);
         }
     }
 }
 
 void DockTitle::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    const auto index = tabContainingPoint(event->pos());
+    const auto index = tabContainingPoint(getMousePosition(event));
     if (index == -1)
         Q_EMIT openNewDock();
 }

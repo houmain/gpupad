@@ -788,7 +788,8 @@ void SourceEditor::mousePressEvent(QMouseEvent *event)
 {
     clearFindReplaceRange();
     const auto prevCursor = textCursor();
-    mMultiTextCursors.handleBeforeMousePressEvent(event, cursorForPosition(event->pos()));
+    mMultiTextCursors.handleBeforeMousePressEvent(event,
+        cursorForPosition(getMousePosition(event)));
     QPlainTextEdit::mousePressEvent(event);
     mMultiTextCursors.handleMousePressedEvent(event, textCursor(), prevCursor);
     emitNavigationPositionChanged();

@@ -49,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     mUi->setupUi(this);
     setFont(qApp->font());
+    setMinimumSize(200, 200);
 
     setAcceptDrops(true);
 
@@ -116,11 +117,14 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setFeatures(QDockWidget::NoDockWidgetFeatures);
     dock->setTitleBarWidget(new QWidget(this));
     dock->toggleViewAction()->setVisible(false);
+    dock->setMinimumSize(150, 150);
     addDockWidget(Qt::RightDockWidgetArea, dock);
 
     mSessionSplitter = new AutoOrientationSplitter(this);
     mSessionSplitter->addWidget(mSessionEditor.data());
     mSessionSplitter->addWidget(mSessionProperties.data());
+    mSessionEditor->setMinimumSize(100, 100);
+    mSessionProperties->setMinimumSize(100, 100);
 
     dock = new QDockWidget(tr("Session"), this);
     dock->setObjectName("Session");
@@ -128,6 +132,7 @@ MainWindow::MainWindow(QWidget *parent)
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mSessionSplitter);
     dock->setVisible(false);
+    dock->setMinimumSize(150, 150);
     auto action = dock->toggleViewAction();
     action->setText(tr("Show &") + action->text());
     action->setIcon(QIcon::fromTheme("format-indent-more"));
@@ -143,6 +148,7 @@ MainWindow::MainWindow(QWidget *parent)
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mMessageWindow.data());
     dock->setVisible(false);
+    dock->setMinimumSize(150, 150);
     action = dock->toggleViewAction();
     action->setText(tr("Show &") + action->text());
     action->setIcon(QIcon::fromTheme("help-faq"));
@@ -157,6 +163,7 @@ MainWindow::MainWindow(QWidget *parent)
                       QDockWidget::DockWidgetFloatable);
     dock->setWidget(mOutputWindow.data());
     dock->setVisible(false);
+    dock->setMinimumSize(150, 150);
     action = dock->toggleViewAction();
     action->setText(tr("Show &") + action->text());
     action->setIcon(QIcon::fromTheme("utilities-terminal"));
@@ -171,6 +178,7 @@ MainWindow::MainWindow(QWidget *parent)
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mFileBrowserWindow.data());
     dock->setVisible(false);
+    dock->setMinimumSize(150, 150);
     action = dock->toggleViewAction();
     action->setText(tr("Show &") + action->text());
     action->setIcon(QIcon::fromTheme("folder"));

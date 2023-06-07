@@ -15,7 +15,7 @@ public:
 
     void resizeEvent(QResizeEvent *event) override
     {
-        setOrientation(2 * width() > 3 * height() ?
+        setOrientation(width() > height() ?
             Qt::Horizontal : Qt::Vertical);
 
         const auto vertical = (orientation() == Qt::Vertical);

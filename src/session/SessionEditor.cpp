@@ -28,7 +28,6 @@ SessionEditor::SessionEditor(QWidget *parent)
     setContextMenuPolicy(Qt::CustomContextMenu);
     setAutoExpandDelay(750);
     setFileName({ });
-    setMinimumWidth(150);
 
     connect(this, &QTreeView::activated,
         this, &SessionEditor::handleItemActivated);
