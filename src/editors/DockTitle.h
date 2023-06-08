@@ -35,6 +35,10 @@ private:
     QRect tabRect(int index) const;
     QDockWidget *tabDock(int index);
     const QDockWidget *tabDock(int index) const;
+    void updateTabSizes();
+    QSize calculateMinimumTabSize(const QString &text) const;
 
     QTabBar *mTabBar{ };
+    QSize mMinimumSize;
+    QList<QSize> mTabSizes;
 };

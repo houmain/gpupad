@@ -6,8 +6,8 @@
 #include <QDockWidget>
 
 namespace {
-    const auto minimumTabWidth = 120;
-    const auto maximumTabWidth = 150;
+    const auto minimumTabWidth = 60;
+    const auto targetTabWidth = 120;
 } // namespace
 
 DockTitle::DockTitle(QDockWidget *parent) 
@@ -15,9 +15,10 @@ DockTitle::DockTitle(QDockWidget *parent)
 {
 }
 
-QSize DockTitle::sizeHint() const 
+QSize DockTitle::sizeHint() const
 {
-    return tabSize(0);
+    return (!mMinimumSize.isEmpty() ? mMinimumSize :
+        calculateMinimumTabSize(tabText(0))); 
 }
 
 void DockTitle::setTabBar(QTabBar *tabBar)
@@ -78,16 +79,46 @@ const QDockWidget *DockTitle::tabDock(int index) const
 
 QSize DockTitle::tabSize(int index) const
 {
-    auto text = tabText(index);
+    return mTabSizes[index];
+}
+
+QSize DockTitle::calculateMinimumTabSize(const QString &text) const
+{
     auto opt = QStyleOptionTab();
     opt.initFrom(this);
     auto contentSize = fontMetrics().size(Qt::TextShowMnemonic, text);
     contentSize += QSize(
         style()->pixelMetric(QStyle::PM_TabBarTabHSpace, &opt, this),
         style()->pixelMetric(QStyle::PM_TabBarTabVSpace, &opt, this));
-    auto size = style()->sizeFromContents(QStyle::CT_TabBarTab, &opt, contentSize, this);
-    size.setWidth(qMin(qMax(size.width(), minimumTabWidth), maximumTabWidth));
-    return size;
+    return style()->sizeFromContents(QStyle::CT_TabBarTab, &opt, contentSize, this);
+}
+
+void DockTitle::updateTabSizes() 
+{
+    auto minimumSizes = QList<QSize>();
+    const auto count = tabCount();
+    for (auto i = 0; i < count; ++i)
+        minimumSizes.append(calculateMinimumTabSize(tabText(i)));
+
+    auto minimumWidth = 0;
+    auto widthGrowRequest = 0;
+    for (const auto& size : qAsConst(minimumSizes)) {
+        minimumWidth += size.width();
+        widthGrowRequest += qMax(targetTabWidth - size.width(), 0);
+    }
+    mMinimumSize = { minimumWidth, minimumSizes[0].height() };
+       
+    const auto maximumWidth = width() - count;
+    const auto widthLeft = qMax(maximumWidth - minimumWidth, 0);
+
+    mTabSizes.clear();
+    for (auto size : qAsConst(minimumSizes)) {
+        if (auto grow = qMax(targetTabWidth - size.width(), 0))
+            size.setWidth(size.width() + qMin(widthLeft * grow / widthGrowRequest, grow));
+        if (auto shrink = qMax(minimumWidth - maximumWidth, 0) / count)
+            size.setWidth(qMax(size.width() - shrink, minimumTabWidth));
+        mTabSizes.append(size);
+    }
 }
 
 int DockTitle::tabContainingPoint(const QPoint &point)
@@ -149,6 +180,8 @@ void DockTitle::mouseDoubleClickEvent(QMouseEvent *event)
 
 void DockTitle::paintEvent(QPaintEvent *event) 
 {
+    updateTabSizes();
+
     auto rect = QRect(QPoint(), sizeHint());
     const auto current = currentTabIndex();
     const auto count = tabCount();        
