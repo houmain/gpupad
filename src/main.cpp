@@ -93,6 +93,8 @@ int main(int argc, char *argv[])
     auto app = QApplication(argc, argv);
 
     QApplication::setStyle(new Style());
+    QApplication::setEffectEnabled(Qt::UI_AnimateTooltip, false);
+    QApplication::setEffectEnabled(Qt::UI_FadeTooltip, true);
 
 #if defined(_WIN32)
     // workaround for consistent font size on Windows

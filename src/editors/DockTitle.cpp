@@ -13,6 +13,7 @@ namespace {
 DockTitle::DockTitle(QDockWidget *parent) 
     : QWidget(parent)
 {
+    setMouseTracking(true);
 }
 
 QSize DockTitle::sizeHint() const
@@ -176,6 +177,23 @@ void DockTitle::mouseDoubleClickEvent(QMouseEvent *event)
     const auto index = tabContainingPoint(getMousePosition(event));
     if (index == -1)
         Q_EMIT openNewDock();
+}
+
+void DockTitle::mouseMoveEvent(QMouseEvent *event) 
+{
+    const auto index = tabContainingPoint(getMousePosition(event));
+    if (index >= 0) {
+        auto dock = tabDock(index);
+        const auto text = (dock->statusTip().isEmpty() ? 
+            dock->windowTitle().replace("[*]", 
+                dock->isWindowModified() ? "*" : "") :
+            dock->statusTip());
+        setToolTip(text);
+    }
+    else {
+        setToolTip("");
+    }
+    QWidget::mouseMoveEvent(event);
 }
 
 void DockTitle::paintEvent(QPaintEvent *event) 
