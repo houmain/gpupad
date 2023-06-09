@@ -6,8 +6,8 @@
 #include <QDockWidget>
 
 namespace {
-    const auto minimumTabWidth = 60;
-    const auto targetTabWidth = 120;
+    const auto minimumTabWidth = 50;
+    const auto targetTabWidth = 100;
 } // namespace
 
 DockTitle::DockTitle(QDockWidget *parent) 

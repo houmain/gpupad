@@ -183,6 +183,7 @@ void EditorManager::updateCurrentEditor()
     for (const auto [dock, editor] : mDocks) {
         if (dock->isAncestorOf(focusWidget)) {
             mCurrentDock = dock;
+            mLastFocusedTabifyGroupDock[editor->tabifyGroup()] = dock;
             updateDockCurrentProperty(dock, true);
             Q_EMIT currentEditorChanged(editor->fileName());
             break;
@@ -627,6 +628,20 @@ void EditorManager::addBinaryEditor(BinaryEditor *editor)
         [this, dock]() { handleEditorFilenameChanged(dock); });
 }
 
+QDockWidget *EditorManager::findDockToAddTab(int tabifyGroup) 
+{
+    if (auto dock = mLastFocusedTabifyGroupDock[tabifyGroup])
+        if (auto editor = mDocks[dock])
+            if (!dock->isFloating())
+                return dock;
+
+    for (auto [dock, editor] : mDocks)
+        if (!dock->isFloating() && editor->tabifyGroup() == tabifyGroup)
+            return dock;
+
+    return nullptr;
+}
+
 QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
 {
     auto fileName = editor->fileName();
@@ -641,19 +656,13 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     dock->toggleViewAction()->setVisible(false);
     dock->installEventFilter(this);
 
-    auto tabified = false;
-    for (auto [d, e] : mDocks) {
-        if (!d->isFloating() && e->tabifyGroup() == editor->tabifyGroup()) {
-            tabifyDockWidget(d, dock);
-            tabified = true;
-            break;
-        }
+    if (const auto tabDock = findDockToAddTab(editor->tabifyGroup())) {
+        tabifyDockWidget(tabDock, dock);
     }
-    if (!tabified) {
+    else {
         addDockWidget(Qt::TopDockWidgetArea, dock);
         resizeDocks({ dock }, { width() }, Qt::Horizontal);
     }
-
     mDocks.emplace(dock, editor);
     return dock;
 }

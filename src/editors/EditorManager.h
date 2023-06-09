@@ -101,6 +101,7 @@ private:
     void autoRaise(QWidget *editor);
     void updateEditorToolBarVisibility();
     void updateEditorPropertiesVisibility();
+    QDockWidget *findDockToAddTab(int tabifyGroup);
     QDockWidget *createDock(QWidget *widget, IEditor *editor);
     void clearNavigationStack();
     void addNavigationPosition(const QString &position, bool update);
@@ -111,6 +112,7 @@ private:
     QList<TextureEditor*> mTextureEditors;
     QList<QmlView*> mQmlViews;
     std::map<QDockWidget*, IEditor*> mDocks;
+    std::map<int, QDockWidget*> mLastFocusedTabifyGroupDock;
     QDockWidget *mCurrentDock{ };
     FindReplaceBar *mFindReplaceBar{ };
     TextureInfoBar *mTextureInfoBar{ };
