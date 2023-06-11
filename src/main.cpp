@@ -3,6 +3,7 @@
 #include "FileDialog.h"
 #include "Style.h"
 #include <QApplication>
+#include <QSettings>
 #include <QSurfaceFormat>
 
 #if defined(_WIN32)
@@ -53,13 +54,14 @@ bool forwardToInstance(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setOrganizationName("gpupad");
+    QCoreApplication::setOrganizationName("GPUpad");
     QCoreApplication::setApplicationName("GPUpad");
 #if __has_include("_version.h")
     QCoreApplication::setApplicationVersion(
 # include "_version.h"
     );
 #endif
+    QSettings::setDefaultFormat(QSettings::IniFormat);
 
     if (forwardToInstance(argc, argv))
         return 0;
