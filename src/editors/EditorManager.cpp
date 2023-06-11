@@ -631,7 +631,7 @@ void EditorManager::addBinaryEditor(BinaryEditor *editor)
 QDockWidget *EditorManager::findDockToAddTab(int tabifyGroup) 
 {
     if (auto dock = mLastFocusedTabifyGroupDock[tabifyGroup])
-        if (auto editor = mDocks[dock])
+        if (mDocks.count(dock))
             if (!dock->isFloating())
                 return dock;
 
