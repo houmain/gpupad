@@ -13,7 +13,7 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QWidget(parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(mFileSystemTree);
     
-    mFileSystemTree->setModel(mModel);    
+    mFileSystemTree->setModel(mModel);
     mFileSystemTree->setHeaderHidden(true);
     mFileSystemTree->setColumnHidden(1, true);
     mFileSystemTree->setColumnHidden(2, true);
@@ -21,12 +21,11 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QWidget(parent)
 
     mFileSystemTree->setDragEnabled(true);
 
-    connect(&Singletons::fileDialog(), &FileDialog::directoryChanged,
-        this, &FileBrowserWindow::setRootDirectory);
-    setRootDirectory(Singletons::fileDialog().directory());
-
     connect(mFileSystemTree, &QTreeView::activated,
         this, &FileBrowserWindow::itemActivated);
+    connect(&Singletons::fileDialog(), &FileDialog::directoryChanged,
+        this, &FileBrowserWindow::currentDirectoryChanged);
+    setRootPath(Singletons::fileDialog().directory().path());
 }
 
 void FileBrowserWindow::setRootPath(const QString &path)
@@ -34,9 +33,16 @@ void FileBrowserWindow::setRootPath(const QString &path)
     mFileSystemTree->setRootIndex(mModel->setRootPath(path));
 }
 
-void FileBrowserWindow::setRootDirectory(const QDir &dir)
+void FileBrowserWindow::currentDirectoryChanged(const QDir &dir)
 {
-    setRootPath(dir.path());
+    const auto path = dir.path();
+    const auto index = mModel->index(path);
+    mFileSystemTree->setExpanded(index, true);
+    if (!mFileSystemTree->contentsRect().intersects(mFileSystemTree->visualRect(index))) {
+        mFileSystemTree->scrollTo(index, QTreeView::PositionAtTop);
+        if (mFileSystemTree->visualRect(index).isEmpty())
+            setRootPath(dir.path());
+    }
 }
 
 void FileBrowserWindow::itemActivated(const QModelIndex &index)

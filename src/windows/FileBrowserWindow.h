@@ -15,10 +15,10 @@ public:
     explicit FileBrowserWindow(QWidget *parent = nullptr);
 
     void setRootPath(const QString &path);
-    void setRootDirectory(const QDir &dir);
 
 private Q_SLOTS:
     void itemActivated(const QModelIndex &index);
+    void currentDirectoryChanged(const QDir &dir);
 
 Q_SIGNALS:
     void fileActivated(const QString &filename);
