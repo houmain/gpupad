@@ -7,12 +7,15 @@
 #include <QVBoxLayout>
 #include <QPlainTextEdit>
 
-OutputWindow::OutputWindow(QWidget *parent) : QWidget(parent)
+OutputWindow::OutputWindow(QWidget *parent) : QFrame(parent)
     , mTypeSelector(new DataComboBox(this))
     , mTextEdit(new QPlainTextEdit(this))
 {
+    setFrameShape(QFrame::Box);
+
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(1);
     layout->addWidget(mTypeSelector);
     layout->addWidget(mTextEdit);
 
@@ -23,6 +26,7 @@ OutputWindow::OutputWindow(QWidget *parent) : QWidget(parent)
     connect(mTypeSelector, &DataComboBox::currentDataChanged,
         [this](QVariant data) { Q_EMIT typeSelectionChanged(data.toString()); });
 
+    mTextEdit->setFrameShape(QFrame::NoFrame);
     mTextEdit->setReadOnly(true);
     mTextEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
     mTextEdit->setTabStopDistance(
@@ -44,7 +48,7 @@ void OutputWindow::handleThemeChanged(const Theme &theme)
 {
     auto palette = theme.palette();
     palette.setColor(QPalette::Base, palette.toolTipBase().color());
-    setPalette(palette);
+    mTextEdit->setPalette(palette);
 }
 
 void OutputWindow::setText(QString text)

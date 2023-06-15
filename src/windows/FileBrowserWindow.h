@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QWidget>
+#include <QFrame>
 
 class QFileSystemModel;
 class QTreeView;
 class QDir;
 class QModelIndex;
 
-class FileBrowserWindow final : public QWidget
+class FileBrowserWindow final : public QFrame
 {
     Q_OBJECT
 

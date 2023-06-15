@@ -5,7 +5,7 @@
 #include <QFileSystemModel>
 #include <QBoxLayout>
 
-FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QWidget(parent)
+FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QFrame(parent)
     , mModel(new QFileSystemModel(this))
     , mFileSystemTree(new QTreeView(this))
 {
@@ -18,8 +18,9 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QWidget(parent)
     mFileSystemTree->setColumnHidden(1, true);
     mFileSystemTree->setColumnHidden(2, true);
     mFileSystemTree->setColumnHidden(3, true);
-
+    
     mFileSystemTree->setDragEnabled(true);
+    mFileSystemTree->setFrameShape(QFrame::NoFrame);
 
     connect(mFileSystemTree, &QTreeView::activated,
         this, &FileBrowserWindow::itemActivated);

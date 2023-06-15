@@ -16,6 +16,7 @@
 #include "Theme.h"
 #include "editors/EditorManager.h"
 #include "scripting/CustomActions.h"
+#include "TitleBar.h"
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QDockWidget>
@@ -49,7 +50,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     mUi->setupUi(this);
     setFont(qApp->font());
-    setMinimumSize(200, 200);
 
     setAcceptDrops(true);
 
@@ -129,6 +129,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     dock = new QDockWidget(tr("File-Browser"), this);
     dock->setObjectName("FileBrowser");
+    dock->setTitleBarWidget(new TitleBar(dock));
     dock->setFeatures(QDockWidget::DockWidgetClosable |
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mFileBrowserWindow.data());
@@ -144,6 +145,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     dock = new QDockWidget(tr("Session"), this);
     dock->setObjectName("Session");
+    dock->setTitleBarWidget(new TitleBar(dock));
     dock->setFeatures(QDockWidget::DockWidgetClosable |
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mSessionSplitter);
@@ -160,6 +162,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     dock = new QDockWidget(tr("Messages"), this);
     dock->setObjectName("Messages");
+    dock->setTitleBarWidget(new TitleBar(dock));
     dock->setFeatures(QDockWidget::DockWidgetClosable |
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mMessageWindow.data());
@@ -174,9 +177,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     dock = new QDockWidget(tr("Output"), this);
     dock->setObjectName("Output");
+    dock->setTitleBarWidget(new TitleBar(dock));
     dock->setFeatures(QDockWidget::DockWidgetClosable |
-                      QDockWidget::DockWidgetMovable |
-                      QDockWidget::DockWidgetFloatable);
+                      QDockWidget::DockWidgetMovable);
     dock->setWidget(mOutputWindow.data());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
@@ -187,7 +190,6 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
     splitDockWidget(editorsDock, dock, Qt::Horizontal);
     auto outputDock = dock;
-
 
     mUi->toolBarMain->insertSeparator(mUi->actionEvalReset);
 
@@ -992,9 +994,10 @@ void MainWindow::handleThemeChanging(const Theme &theme)
       "QLabel:disabled { color: %1 }\n"
       "QDockWidget > QFrame { border:1px solid %2 }\n"
       "QDockWidget[current=true] > QFrame { border:1px solid %3 }\n"
+      "QDockWidget > QFrame[no-bottom-border=true] { border-bottom: none }\n"
       "QMenuBar { background-color: %4; border:none; margin:0; padding:0; padding-top:2px; }\n"
       "QToolButton { margin:2; margin:0px; padding:2px; }\n"
-      "QToolBar { spacing:1px; margin:0; padding:2px; padding-left:4px; background-color: %4; border:none }\n")
+      "QToolBar { spacing:2px; margin:0; padding:2px; padding-left:4px; background-color: %4; border:none }\n")
       .arg(color(QPalette::WindowText, QPalette::Disabled),
            color(QPalette::Window, QPalette::Active, frameDarker),
            color(QPalette::Window, QPalette::Active, currentFrameDarker),

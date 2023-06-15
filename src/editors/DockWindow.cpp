@@ -158,13 +158,11 @@ void DockWindow::onDockTopLevelChanged(bool floating)
     auto dock = qobject_cast<QDockWidget*>(sender());
     setDockTitleBar(dock);
 
-    auto size = dock->size();
-    size.setWidth(static_cast<int>(size.width() * 0.9));
-    size.setHeight(static_cast<int>(size.height() * 0.9));
-    dock->resize(size.expandedTo(QSize(300, 300)));
+    dock->setMinimumSize(floating ? dock->size() / 2 : QSize(0, 0));
 }
 
-void DockWindow::setDockTitleBar(QDockWidget *dock) {
+void DockWindow::setDockTitleBar(QDockWidget *dock) 
+{
     if (dock->isFloating()) {
         delete dock->titleBarWidget();
         dock->setTitleBarWidget(nullptr);

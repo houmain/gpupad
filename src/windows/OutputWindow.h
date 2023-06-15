@@ -1,13 +1,13 @@
 #ifndef OUTPUTWINDOW_H
 #define OUTPUTWINDOW_H
 
-#include <QWidget>
+#include <QFrame>
 
 class QPlainTextEdit;
 class DataComboBox;
 class Theme;
 
-class OutputWindow final : public QWidget
+class OutputWindow final : public QFrame
 {
     Q_OBJECT
 
