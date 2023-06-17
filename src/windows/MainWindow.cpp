@@ -127,22 +127,6 @@ MainWindow::MainWindow(QWidget *parent)
     mSessionEditor->setMinimumSize(100, 100);
     mSessionProperties->setMinimumSize(100, 100);
 
-    dock = new QDockWidget(tr("File-Browser"), this);
-    dock->setObjectName("FileBrowser");
-    dock->setTitleBarWidget(new TitleBar(dock));
-    dock->setFeatures(QDockWidget::DockWidgetClosable |
-                      QDockWidget::DockWidgetMovable);
-    dock->setWidget(mFileBrowserWindow.data());
-    dock->setVisible(false);
-    dock->setMinimumSize(150, 150);
-    auto action = dock->toggleViewAction();
-    action->setText(tr("Show &") + action->text());
-    action->setIcon(QIcon::fromTheme("folder"));
-    mUi->menuView->addAction(action);
-    mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
-    addDockWidget(Qt::LeftDockWidgetArea, dock);
-    auto filesDock = dock;
-
     dock = new QDockWidget(tr("Session"), this);
     dock->setObjectName("Session");
     dock->setTitleBarWidget(new TitleBar(dock));
@@ -150,15 +134,30 @@ MainWindow::MainWindow(QWidget *parent)
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mSessionSplitter);
     dock->setVisible(false);
-    dock->setMinimumSize(150, 150);
-    action = dock->toggleViewAction();
+    dock->setMinimumSize(200, 150);
+    auto action = dock->toggleViewAction();
     action->setText(tr("Show &") + action->text());
     action->setIcon(QIcon::fromTheme("format-indent-more"));
     mUi->menuView->addAction(action);
     mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
-    splitDockWidget(filesDock, dock, Qt::Vertical);
+    addDockWidget(Qt::LeftDockWidgetArea, dock);
     mSessionEditor->addItemActions(mUi->menuSession);
     mSessionDock = dock;
+
+    dock = new QDockWidget(tr("File-Browser"), this);
+    dock->setObjectName("FileBrowser");
+    dock->setTitleBarWidget(mFileBrowserWindow->titleBar());
+    dock->setFeatures(QDockWidget::DockWidgetClosable |
+                      QDockWidget::DockWidgetMovable);
+    dock->setWidget(mFileBrowserWindow.data());
+    dock->setVisible(false);
+    dock->setMinimumSize(150, 150);
+    action = dock->toggleViewAction();
+    action->setText(tr("Show &") + action->text());
+    action->setIcon(QIcon::fromTheme("folder"));
+    mUi->menuView->addAction(action);
+    mUi->toolBarMain->insertAction(mUi->actionEvalReset, action);
+    splitDockWidget(mSessionDock, dock, Qt::Vertical);
 
     dock = new QDockWidget(tr("Messages"), this);
     dock->setObjectName("Messages");
@@ -177,7 +176,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     dock = new QDockWidget(tr("Output"), this);
     dock->setObjectName("Output");
-    dock->setTitleBarWidget(new TitleBar(dock));
+    dock->setTitleBarWidget(mOutputWindow->titleBar());
     dock->setFeatures(QDockWidget::DockWidgetClosable |
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mOutputWindow.data());

@@ -4,20 +4,26 @@
 #include <QLabel>
 #include <QBoxLayout>
 #include <QToolButton>
+#include <QEvent>
 
-TitleBar::TitleBar(QDockWidget *parent) 
+TitleBar::TitleBar(QWidget *parent) 
     : QFrame(parent)
 {
     setFrameShape(QFrame::Box);
     setProperty("no-bottom-border", true);
 
-    auto layout = new QHBoxLayout(this);
-    layout->setContentsMargins(4, 4, 4, 4);
+    auto layout = new QVBoxLayout(this);
+    auto widget = new QWidget();
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+    layout->addWidget(widget);
 
-    auto title = new QLabel(parent->windowTitle(), this);
-    layout->addWidget(title);
+    auto titleLayout = new QHBoxLayout(widget);
+    titleLayout->setContentsMargins(4, 4, 4, 4);
+    mTitle = new QLabel(this);
+    titleLayout->addWidget(mTitle);
 
-    layout->addStretch(10);
+    titleLayout->addStretch(1);
 
     auto closeButton = new QToolButton(this);
     closeButton->setObjectName("fileNew");
@@ -25,7 +31,42 @@ TitleBar::TitleBar(QDockWidget *parent)
     closeButton->setIcon(icon);
     closeButton->setAutoRaise(true);
     closeButton->setMaximumSize(16, 16);
-    layout->addWidget(closeButton);
+    titleLayout->addWidget(closeButton);
+    mCloseButton = closeButton;
 
-    connect(closeButton, &QToolButton::clicked, parent, &QDockWidget::close);
+    parentChanged(parent);
+}
+
+bool TitleBar::event(QEvent *event)
+{
+    if (event->type() == QEvent::ParentAboutToChange) {
+        if (auto parent = parentWidget()) 
+            disconnect(parent);
+    }
+    else if (event->type() == QEvent::ParentChange) {
+        parentChanged(parentWidget());
+    }
+    return QFrame::event(event);
+}
+
+void TitleBar::parentChanged(QWidget *parent) {
+    if (!parent)
+        return;
+
+    connect(mCloseButton, &QToolButton::clicked, parent, &QWidget::close);
+    connect(parent, &QWidget::windowTitleChanged, mTitle, &QLabel::setText);
+    mTitle->setText(parent->windowTitle());
+}
+
+void TitleBar::setWidget(QWidget *widget)
+{
+    if (mWidget)
+        layout()->removeWidget(mWidget);
+
+    mWidget = widget;
+
+    if (widget) {
+        widget->setParent(this);
+        layout()->addWidget(widget);
+    }
 }

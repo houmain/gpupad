@@ -6,6 +6,8 @@ class QFileSystemModel;
 class QTreeView;
 class QDir;
 class QModelIndex;
+class QComboBox;
+class QToolButton;
 
 class FileBrowserWindow final : public QFrame
 {
@@ -13,8 +15,10 @@ class FileBrowserWindow final : public QFrame
 
 public:
     explicit FileBrowserWindow(QWidget *parent = nullptr);
+    QWidget *titleBar() { return mTitleBar; }
 
     void setRootPath(const QString &path);
+    void browseDirectory();
 
 private Q_SLOTS:
     void itemActivated(const QModelIndex &index);
@@ -24,6 +28,9 @@ Q_SIGNALS:
     void fileActivated(const QString &filename);
 
 private:
+    QWidget *mTitleBar{ };
     QFileSystemModel *mModel{ };
     QTreeView *mFileSystemTree{ };
+    QComboBox *mRootDirectory{ };
+    QToolButton *mBrowseButton{ };
 };

@@ -6,7 +6,7 @@
 #include <QDockWidget>
 
 namespace {
-    const auto minimumTabWidth = 50;
+    const auto minimumTabWidth = 70;
     const auto targetTabWidth = 100;
 } // namespace
 
@@ -175,8 +175,13 @@ void DockTitle::mouseReleaseEvent(QMouseEvent *event)
 void DockTitle::mouseDoubleClickEvent(QMouseEvent *event)
 {
     const auto index = tabContainingPoint(getMousePosition(event));
-    if (index == -1)
+    if (index == -1) {
+        auto dock = tabDock(currentTabIndex());
+        dock->raise();
+        dock->widget()->setFocus();
+    
         Q_EMIT openNewDock();
+    }
 }
 
 void DockTitle::mouseMoveEvent(QMouseEvent *event) 

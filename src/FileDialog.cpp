@@ -139,7 +139,12 @@ bool FileDialog::exec(Options options, QString currentFileName,
     QFileDialog dialog(mWindow);
     dialog.setOption(QFileDialog::HideNameFilterDetails);
 
-    if (options & Saving) {
+    if (options & Directory) {
+        dialog.setWindowTitle(tr("Select Directory"));
+        dialog.setAcceptMode(QFileDialog::AcceptOpen);
+        dialog.setFileMode(QFileDialog::Directory);
+    }
+    else if (options & Saving) {
         if (currentFileName.isEmpty())
             dialog.setWindowTitle(tr("New File"));
         else
@@ -230,8 +235,8 @@ bool FileDialog::exec(Options options, QString currentFileName,
     mFileNames = dialog.selectedFiles();
     for (auto &fileName : mFileNames)
         fileName = QDir::toNativeSeparators(fileName);
-    mDirectory = dialog.directory();
     mAsBinaryFile = (dialog.selectedNameFilter() == binaryFileFilter);
+    setDirectory(dialog.directory());
     return true;
 }
 

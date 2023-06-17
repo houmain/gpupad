@@ -2,6 +2,7 @@
 #include "Singletons.h"
 #include "Settings.h"
 #include "Theme.h"
+#include "TitleBar.h"
 #include "session/DataComboBox.h"
 #include <QScrollBar>
 #include <QVBoxLayout>
@@ -15,8 +16,7 @@ OutputWindow::OutputWindow(QWidget *parent) : QFrame(parent)
 
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(1);
-    layout->addWidget(mTypeSelector);
+    layout->setSpacing(0);
     layout->addWidget(mTextEdit);
 
     mTypeSelector->addItem(tr("Preprocess"), "preprocess");
@@ -32,6 +32,16 @@ OutputWindow::OutputWindow(QWidget *parent) : QFrame(parent)
     mTextEdit->setTabStopDistance(
         fontMetrics().horizontalAdvance(QString(2, QChar::Space)));
     mTextEdit->setFont(Singletons::settings().font());
+
+    auto header = new QWidget(this);
+    auto headerLayout = new QHBoxLayout(header);
+    headerLayout->setContentsMargins(4, 4, 4, 4);
+    headerLayout->addWidget(mTypeSelector);
+    headerLayout->addStretch(1);
+
+    auto titleBar = new TitleBar();
+    titleBar->setWidget(header);
+    mTitleBar = titleBar;
 
     connect(&Singletons::settings(), &Settings::fontChanged,
         mTextEdit, &QPlainTextEdit::setFont);
