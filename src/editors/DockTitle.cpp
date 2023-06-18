@@ -4,10 +4,11 @@
 #include <QStyleOption>
 #include <QPaintEvent>
 #include <QDockWidget>
+#include <QMenu>
 
 namespace {
-    const auto minimumTabWidth = 70;
     const auto targetTabWidth = 100;
+    const auto tabsListButtonWidth = 30;
 } // namespace
 
 DockTitle::DockTitle(QDockWidget *parent) 
@@ -18,7 +19,7 @@ DockTitle::DockTitle(QDockWidget *parent)
 
 QSize DockTitle::sizeHint() const
 {
-    return (!mMinimumSize.isEmpty() ? mMinimumSize :
+    return (!mSizeHint.isEmpty() ? mSizeHint :
         calculateMinimumTabSize(tabText(0))); 
 }
 
@@ -80,7 +81,7 @@ const QDockWidget *DockTitle::tabDock(int index) const
 
 QSize DockTitle::tabSize(int index) const
 {
-    return mTabSizes[index];
+    return (index < mTabSizes.size() ? mTabSizes[index] : QSize());
 }
 
 QSize DockTitle::calculateMinimumTabSize(const QString &text) const
@@ -96,29 +97,62 @@ QSize DockTitle::calculateMinimumTabSize(const QString &text) const
 
 void DockTitle::updateTabSizes() 
 {
-    auto minimumSizes = QList<QSize>();
-    const auto count = tabCount();
-    for (auto i = 0; i < count; ++i)
-        minimumSizes.append(calculateMinimumTabSize(tabText(i)));
+    mTabSizes.clear();
+    auto &sizes = mTabSizes;
 
     auto minimumWidth = 0;
-    auto widthGrowRequest = 0;
-    for (const auto& size : qAsConst(minimumSizes)) {
+    const auto count = tabCount();
+    for (auto i = 0; i < count; ++i) {
+        const auto size = calculateMinimumTabSize(tabText(i));
+        sizes.append(size);
         minimumWidth += size.width();
-        widthGrowRequest += qMax(targetTabWidth - size.width(), 0);
     }
-    mMinimumSize = { minimumWidth, minimumSizes[0].height() };
-       
-    const auto maximumWidth = width() - count;
-    const auto widthLeft = qMax(maximumWidth - minimumWidth, 0);
 
-    mTabSizes.clear();
-    for (auto size : qAsConst(minimumSizes)) {
-        if (auto grow = qMax(targetTabWidth - size.width(), 0))
-            size.setWidth(size.width() + qMin(widthLeft * grow / widthGrowRequest, grow));
-        if (auto shrink = qMax(minimumWidth - maximumWidth, 0) / count)
-            size.setWidth(qMax(size.width() - shrink, minimumTabWidth));
-        mTabSizes.append(size);
+    mShowTabsListButton = false;
+    auto maximumWidth = width() - 1;
+    if (count > 1 && minimumWidth > maximumWidth) {
+        mShowTabsListButton = true;
+        maximumWidth -= tabsListButtonWidth;
+
+        // when width is exceeded, undo adding (non-current) 
+        // tabs to the end until they fit
+        for (auto i = sizes.size() - 1; i >= 0; --i) 
+            if (i != currentTabIndex()) {
+                minimumWidth -= sizes[i].width();
+                sizes[i] = QSize{ };
+                if (minimumWidth <= maximumWidth)
+                    break;
+            }
+    }
+
+    mSizeHint = { minimumWidth, sizes[0].height() };
+
+    // elide text, when single tab does not fit
+    if (minimumWidth > maximumWidth) {
+        sizes[currentTabIndex()].setWidth(maximumWidth);
+        return;
+    }
+
+    // grow tabs to target size
+    auto widthGrowRequest = 0;
+    for (auto size : qAsConst(sizes)) 
+        if (!size.isEmpty())
+            widthGrowRequest += qMax(targetTabWidth - size.width(), 0);
+
+    const auto widthLeft = qMax(maximumWidth - minimumWidth, 0);
+    if (widthLeft)
+        for (auto &size : sizes)
+            if (!size.isEmpty())
+                if (auto grow = qMax(targetTabWidth - size.width(), 0)) {
+                    grow = qMin(widthLeft * grow / widthGrowRequest, grow);
+                    size.setWidth(size.width() + grow);
+                    minimumWidth += grow;
+                }
+
+    // add rounding errors to current tab size
+    if (widthGrowRequest > widthLeft) {
+        auto &size = mTabSizes[currentTabIndex()];
+        size.setWidth(size.width() + (maximumWidth - minimumWidth));
     }
 }
 
@@ -126,12 +160,13 @@ int DockTitle::tabContainingPoint(const QPoint &point)
 {
     auto rect = QRect(QPoint(), sizeHint());
     const auto count = tabCount();        
-    for (auto i = 0; i < count; ++i) {
-        rect.setWidth(tabSize(i).width());
-        if (rect.contains(point))
-            return i;
-        rect.translate(rect.width(), 0);
-    }
+    for (auto i = 0; i < count; ++i) 
+        if (const auto size = tabSize(i); !size.isEmpty()) {
+            rect.setWidth(size.width());
+            if (rect.contains(point))
+                return i;
+            rect.translate(size.width(), 0);
+        }
     return -1;
 }
 
@@ -146,25 +181,33 @@ void DockTitle::mousePressEvent(QMouseEvent *event)
         else if (event->button() == Qt::LeftButton) {
             if (index != currentTabIndex() || !dock->widget()->hasFocus()) {
                 const auto switched = (index != currentTabIndex());
-                dock->raise();
-                dock->widget()->setFocus();
+                setCurrentTab(index);
 
                 // intercept event when when switching tabs, 
                 // so it does not start dragging previous
-                if (switched)
+                if (switched) {
+                    mMousePressIntercepted = true;
                     return;
+                }
             }
         }
     }
+    mMousePressIntercepted = false;
     QWidget::mousePressEvent(event);
 }
 
 void DockTitle::mouseReleaseEvent(QMouseEvent *event)
 {
+    if (mMousePressIntercepted)
+        return;
+
     QWidget::mouseReleaseEvent(event);
 
-    if (event->button() == Qt::RightButton) {
-        const auto index = tabContainingPoint(getMousePosition(event));
+    const auto index = tabContainingPoint(getMousePosition(event));
+    if (event->button() == Qt::LeftButton && mShowTabsListButton && index == -1) {
+        openTabsList(getGlobalMousePosition(event));
+    }
+    else if (event->button() == Qt::RightButton) {
         if (index >= 0) {
             auto dock = tabDock(index);
             Q_EMIT contextMenuRequested(getGlobalMousePosition(event), mTabBar, dock);
@@ -175,12 +218,13 @@ void DockTitle::mouseReleaseEvent(QMouseEvent *event)
 void DockTitle::mouseDoubleClickEvent(QMouseEvent *event)
 {
     const auto index = tabContainingPoint(getMousePosition(event));
-    if (index == -1) {
-        auto dock = tabDock(currentTabIndex());
-        dock->raise();
-        dock->widget()->setFocus();
-    
+    if (event->button() == Qt::LeftButton && index == -1) {
+        setCurrentTab(currentTabIndex());
         Q_EMIT openNewDock();
+    }
+    else if (event->button() == Qt::MiddleButton && index >= 0) {
+        auto dock = tabDock(index);
+        Q_EMIT dockCloseRequested(dock);
     }
 }
 
@@ -208,10 +252,16 @@ void DockTitle::paintEvent(QPaintEvent *event)
     auto rect = QRect(QPoint(), sizeHint());
     const auto current = currentTabIndex();
     const auto count = tabCount();        
-    for (auto i = 0; i < count; ++i) {
-        rect.setWidth(tabSize(i).width());
-        paintTab(rect, tabText(i), i == current);
-        rect.translate(rect.width(), 0);
+    for (auto i = 0; i < count; ++i)
+        if (!tabSize(i).isEmpty()) {
+            rect.setWidth(tabSize(i).width());
+            paintTab(rect, tabText(i), i == current);
+            rect.translate(rect.width(), 0);
+        }
+
+    if (mShowTabsListButton) {
+        rect.setWidth(tabsListButtonWidth);
+        paintTab(rect, QChar(0x2026), false);
     }
 }
 
@@ -232,4 +282,23 @@ void DockTitle::paintTab(const QRect &rect, const QString &text, bool current)
         Qt::ElideRight, textRect.width(), Qt::TextShowMnemonic);
     auto painter = QStylePainter(this);
     painter.drawControl(QStyle::CE_TabBarTab, opt);
+}
+
+void DockTitle::setCurrentTab(int index) 
+{
+    if (auto dock = tabDock(index)) {
+        dock->raise();
+        dock->widget()->setFocus();
+    }
+}
+
+void DockTitle::openTabsList(const QPoint &position)
+{
+    auto menu = QMenu();
+    for (auto i = 0; i < tabCount(); ++i)
+        if (tabRect(i).isEmpty())
+            connect(menu.addAction(tabText(i)), &QAction::triggered,
+                [this, i]() { setCurrentTab(i); });
+
+    menu.exec(position);
 }

@@ -38,8 +38,12 @@ private:
     const QDockWidget *tabDock(int index) const;
     void updateTabSizes();
     QSize calculateMinimumTabSize(const QString &text) const;
+    void setCurrentTab(int index);
+    void openTabsList(const QPoint &position);
 
     QTabBar *mTabBar{ };
-    QSize mMinimumSize;
+    QSize mSizeHint;
     QList<QSize> mTabSizes;
+    bool mShowTabsListButton{ };
+    bool mMousePressIntercepted{ };
 };
