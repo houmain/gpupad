@@ -85,8 +85,7 @@ BinaryEditor::BinaryEditor(QString fileName,
 
 BinaryEditor::~BinaryEditor()
 {
-    if (isModified())
-        Singletons::fileCache().handleEditorFileChanged(mFileName);
+    Singletons::fileCache().invalidateFile(mFileName);
 }
 
 QList<QMetaObject::Connection> BinaryEditor::connectEditActions(

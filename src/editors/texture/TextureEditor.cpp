@@ -68,8 +68,7 @@ TextureEditor::~TextureEditor()
 {
     delete mGLWidget;
 
-    if (isModified())
-        Singletons::fileCache().handleEditorFileChanged(mFileName);
+    Singletons::fileCache().invalidateFile(mFileName);
 }
 
 void TextureEditor::resizeEvent(QResizeEvent *event)
