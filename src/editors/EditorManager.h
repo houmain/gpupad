@@ -89,7 +89,7 @@ private:
     bool focusEditorByIndex(int index, bool wrap);
     IEditor *currentEditor();
     QDockWidget *findEditorDock(const IEditor *editor) const;
-    void closeUntitledUntouchedEditor();
+    void closeUntitledUntouchedSourceEditor();
     void addSourceEditor(SourceEditor *editor);
     void addBinaryEditor(BinaryEditor *editor);
     void addTextureEditor(TextureEditor *editor);

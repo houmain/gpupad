@@ -253,12 +253,12 @@ TextureEditor *EditorManager::openNewTextureEditor(const QString &fileName)
     return editor;
 }
 
-void EditorManager::closeUntitledUntouchedEditor()
+void EditorManager::closeUntitledUntouchedSourceEditor()
 {
-    if (mCurrentDock &&
-        !mCurrentDock->isWindowModified() &&
-        FileDialog::isUntitled(mDocks[mCurrentDock]->fileName())) {
-        closeEditor();
+    if (mCurrentDock && !mCurrentDock->isWindowModified()) {
+        const auto fileName = mDocks[mCurrentDock]->fileName();
+        if (FileDialog::isUntitled(fileName) && getSourceEditor(fileName))
+            closeEditor();
     }
 }
 
@@ -292,7 +292,7 @@ SourceEditor *EditorManager::openSourceEditor(const QString &fileName,
             delete editor;
             return nullptr;
         }
-        closeUntitledUntouchedEditor();
+        closeUntitledUntouchedSourceEditor();
         addSourceEditor(editor);
     }
     autoRaise(editor);
@@ -570,7 +570,7 @@ void EditorManager::pasteInNewEditor()
         return;
 
     const auto fileName = FileDialog::generateNextUntitledFileName(tr("Untitled"));
-    closeUntitledUntouchedEditor();
+    closeUntitledUntouchedSourceEditor();
 
     if (mimeData->hasImage())
         if (auto editor = openNewTextureEditor(fileName)) {
