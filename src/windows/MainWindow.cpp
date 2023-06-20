@@ -441,8 +441,13 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 
 void MainWindow::dropEvent(QDropEvent *event)
 {
+    // drop on editor at position
+    if (auto widget = qApp->widgetAt(mapToGlobal(event->position().toPoint()))) {
+        widget->setFocus();
+        updateCurrentEditor();
+    }
     const auto urls = event->mimeData()->urls();
-    for (const QUrl &url : urls)
+    for (const QUrl &url : qAsConst(urls))
         openFile(url.toLocalFile());
 
     raise();
