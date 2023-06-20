@@ -42,8 +42,7 @@ private:
     void openTabsList(const QPoint &position);
 
     QTabBar *mTabBar{ };
-    QSize mSizeHint;
     QList<QSize> mTabSizes;
-    bool mShowTabsListButton{ };
+    int mTabsListButtonWidth{ };
     bool mMousePressIntercepted{ };
 };
