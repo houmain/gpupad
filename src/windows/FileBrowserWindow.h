@@ -8,6 +8,7 @@ class QDir;
 class QModelIndex;
 class QComboBox;
 class QToolButton;
+class QStringListModel;
 
 class FileBrowserWindow final : public QFrame
 {
@@ -28,9 +29,15 @@ Q_SIGNALS:
     void fileActivated(const QString &filename);
 
 private:
+    bool revealDirectory(const QDir &dir);
+    void focusDirectory(const QDir &dir);
+    void updateRecentDirectories(const QString &path);
+    QString completeToRecentDirectory(const QString &path);
+    
     QWidget *mTitleBar{ };
     QFileSystemModel *mModel{ };
     QTreeView *mFileSystemTree{ };
     QComboBox *mRootDirectory{ };
     QToolButton *mBrowseButton{ };
+    QStringListModel *mRecentDirectories{ };
 };

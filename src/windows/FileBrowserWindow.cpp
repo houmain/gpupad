@@ -9,12 +9,14 @@
 #include <QComboBox>
 #include <QToolButton>
 #include <QStyle>
+#include <QStringListModel>
 
 FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QFrame(parent)
     , mModel(new QFileSystemModel(this))
     , mFileSystemTree(new QTreeView(this))
     , mRootDirectory(new QComboBox(this))
     , mBrowseButton(new QToolButton(this))
+    , mRecentDirectories(new QStringListModel(this))
 {
     setFrameShape(QFrame::Box);
 
@@ -28,6 +30,7 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QFrame(parent)
     mBrowseButton->setAutoRaise(true);
 
     mRootDirectory->setMinimumWidth(100);
+    mRootDirectory->setModel(mRecentDirectories);
 
     auto header = new QWidget(this);
     auto headerLayout = new QHBoxLayout(header);
@@ -56,31 +59,50 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QFrame(parent)
         this, &FileBrowserWindow::itemActivated);
     connect(&Singletons::fileDialog(), &FileDialog::directoryChanged,
         this, &FileBrowserWindow::currentDirectoryChanged);
-    setRootPath(Singletons::fileDialog().directory().path());
+    connect(mRootDirectory, &QComboBox::currentTextChanged,
+        this, &FileBrowserWindow::setRootPath);
 }
 
 void FileBrowserWindow::setRootPath(const QString &path)
 {
-    auto index = mModel->setRootPath(path);
+    const auto index = mModel->setRootPath(path);
     if (index != mFileSystemTree->rootIndex()) {
         mFileSystemTree->setRootIndex(index);
         mFileSystemTree->collapseAll();
 
-        // TODO:
-        mRootDirectory->clear();
-        mRootDirectory->addItem(path);
+        updateRecentDirectories(path);
     }
 }
 
-void FileBrowserWindow::currentDirectoryChanged(const QDir &dir)
+bool FileBrowserWindow::revealDirectory(const QDir &dir) 
 {
-    const auto path = dir.path();
+    const auto path = dir.absolutePath();
     const auto index = mModel->index(path);
     mFileSystemTree->setExpanded(index, true);
     if (!mFileSystemTree->contentsRect().intersects(mFileSystemTree->visualRect(index))) {
         mFileSystemTree->scrollTo(index, QTreeView::PositionAtTop);
         if (mFileSystemTree->visualRect(index).isEmpty())
-            setRootPath(dir.path());
+            return false;
+    }
+    return true;
+}
+
+void FileBrowserWindow::focusDirectory(const QDir &dir) 
+{
+    const auto path = dir.absolutePath();
+    mFileSystemTree->setCurrentIndex(mModel->index(path));
+}
+
+void FileBrowserWindow::currentDirectoryChanged(const QDir &dir)
+{
+    if (!mFileSystemTree->rootIndex().isValid())
+        setRootPath(dir.absolutePath());
+
+    if (!revealDirectory(dir)) {
+        auto path = completeToRecentDirectory(dir.absolutePath());
+        setRootPath(path);
+        revealDirectory(dir);
+        focusDirectory(dir);
     }
 }
 
@@ -93,7 +115,23 @@ void FileBrowserWindow::browseDirectory()
 {
     auto options = FileDialog::Options{ };
     options.setFlag(FileDialog::Directory);
-    if (Singletons::fileDialog().exec(options)) {
+    if (Singletons::fileDialog().exec(options))
         setRootPath(Singletons::fileDialog().fileName());
-    }
+}
+
+void FileBrowserWindow::updateRecentDirectories(const QString &path)
+{
+    auto paths = mRecentDirectories->stringList();
+    paths.removeAll(path);
+    paths.insert(0, path);
+    mRecentDirectories->setStringList(paths);
+}
+
+QString FileBrowserWindow::completeToRecentDirectory(const QString &path)
+{
+    const auto &recentPaths = mRecentDirectories->stringList();
+    for (const auto &recent : recentPaths)
+        if (path.startsWith(recent))
+            return recent;
+    return path;
 }
