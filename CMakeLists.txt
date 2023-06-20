@@ -105,7 +105,7 @@ set(SOURCES
   src/windows/MainWindow.ui
   src/windows/MessageWindow.cpp
   src/windows/OutputWindow.cpp
-  src/windows/TitleBar.cpp
+  src/windows/WindowTitle.cpp
   src/editors/DockWindow.cpp
   src/editors/DockTitle.cpp
   src/editors/EditorManager.cpp

@@ -1,12 +1,12 @@
 
-#include "TitleBar.h"
+#include "WindowTitle.h"
 #include <QDockWidget>
 #include <QLabel>
 #include <QBoxLayout>
 #include <QToolButton>
 #include <QEvent>
 
-TitleBar::TitleBar(QWidget *parent) 
+WindowTitle::WindowTitle(QWidget *parent) 
     : QFrame(parent)
 {
     setFrameShape(QFrame::Box);
@@ -37,7 +37,7 @@ TitleBar::TitleBar(QWidget *parent)
     parentChanged(parent);
 }
 
-bool TitleBar::event(QEvent *event)
+bool WindowTitle::event(QEvent *event)
 {
     if (event->type() == QEvent::ParentAboutToChange) {
         if (auto parent = parentWidget()) 
@@ -49,7 +49,7 @@ bool TitleBar::event(QEvent *event)
     return QFrame::event(event);
 }
 
-void TitleBar::parentChanged(QWidget *parent) {
+void WindowTitle::parentChanged(QWidget *parent) {
     if (!parent)
         return;
 
@@ -58,7 +58,7 @@ void TitleBar::parentChanged(QWidget *parent) {
     mTitle->setText(parent->windowTitle());
 }
 
-void TitleBar::setWidget(QWidget *widget)
+void WindowTitle::setWidget(QWidget *widget)
 {
     if (mWidget)
         layout()->removeWidget(mWidget);

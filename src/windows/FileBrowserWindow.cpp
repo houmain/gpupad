@@ -1,7 +1,7 @@
 #include "FileBrowserWindow.h"
 #include "Singletons.h"
 #include "FileDialog.h"
-#include "TitleBar.h"
+#include "WindowTitle.h"
 #include <QTreeView>
 #include <QFileSystemModel>
 #include <QFileIconProvider>
@@ -36,7 +36,7 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QFrame(parent)
     headerLayout->addWidget(mRootDirectory);
     headerLayout->addWidget(mBrowseButton);
 
-    auto titleBar = new TitleBar();
+    auto titleBar = new WindowTitle();
     titleBar->setWidget(header);
     mTitleBar = titleBar;
 

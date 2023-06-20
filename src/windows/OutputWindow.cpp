@@ -2,7 +2,7 @@
 #include "Singletons.h"
 #include "Settings.h"
 #include "Theme.h"
-#include "TitleBar.h"
+#include "WindowTitle.h"
 #include "session/DataComboBox.h"
 #include <QScrollBar>
 #include <QVBoxLayout>
@@ -39,7 +39,7 @@ OutputWindow::OutputWindow(QWidget *parent) : QFrame(parent)
     headerLayout->addWidget(mTypeSelector);
     headerLayout->addStretch(1);
 
-    auto titleBar = new TitleBar();
+    auto titleBar = new WindowTitle();
     titleBar->setWidget(header);
     mTitleBar = titleBar;
 

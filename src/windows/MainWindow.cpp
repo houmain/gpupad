@@ -16,7 +16,7 @@
 #include "Theme.h"
 #include "editors/EditorManager.h"
 #include "scripting/CustomActions.h"
-#include "TitleBar.h"
+#include "WindowTitle.h"
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QDockWidget>
@@ -129,7 +129,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     dock = new QDockWidget(tr("Session"), this);
     dock->setObjectName("Session");
-    dock->setTitleBarWidget(new TitleBar(dock));
+    dock->setTitleBarWidget(new WindowTitle(dock));
     dock->setFeatures(QDockWidget::DockWidgetClosable |
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mSessionSplitter);
@@ -161,7 +161,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     dock = new QDockWidget(tr("Messages"), this);
     dock->setObjectName("Messages");
-    dock->setTitleBarWidget(new TitleBar(dock));
+    dock->setTitleBarWidget(new WindowTitle(dock));
     dock->setFeatures(QDockWidget::DockWidgetClosable |
                       QDockWidget::DockWidgetMovable);
     dock->setWidget(mMessageWindow.data());

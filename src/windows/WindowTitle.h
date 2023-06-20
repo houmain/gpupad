@@ -6,12 +6,12 @@ class QDockWidget;
 class QAbstractButton;
 class QLabel;
 
-class TitleBar : public QFrame
+class WindowTitle : public QFrame
 {
     Q_OBJECT
 
 public:
-    explicit TitleBar(QWidget *parent = nullptr);
+    explicit WindowTitle(QWidget *parent = nullptr);
 
     void setWidget(QWidget *widget);
     QWidget *widget() const { return mWidget; }
