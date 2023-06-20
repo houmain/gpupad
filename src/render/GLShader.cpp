@@ -19,7 +19,7 @@ namespace {
                         break;
                     }
                 }
-        return QDir::toNativeSeparators(QFileInfo(absolute).canonicalFilePath());
+        return toNativeCanonicalFilePath(absolute);
     }
 
     bool removeVersion(QString *source, QString *maxVersion)

@@ -183,6 +183,7 @@ FileCache::~FileCache()
 
 void FileCache::invalidateFile(const QString &fileName) 
 {
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     QMutexLocker lock(&mMutex);
     purgeFile(fileName);
 }
@@ -190,6 +191,7 @@ void FileCache::invalidateFile(const QString &fileName)
 void FileCache::handleEditorFileChanged(const QString &fileName, bool emitFileChanged)
 {
     Q_ASSERT(onMainThread());
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     mEditorFilesChanged.insert(fileName);
     if (emitFileChanged)
         Q_EMIT fileChanged(fileName);
@@ -198,6 +200,7 @@ void FileCache::handleEditorFileChanged(const QString &fileName, bool emitFileCh
 void FileCache::handleEditorSave(const QString &fileName)
 {
     Q_ASSERT(onMainThread());
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     QMutexLocker lock(&mMutex);
     updateFromEditor(fileName);
     mEditorSaveAdvertised.insert(fileName);
@@ -235,6 +238,7 @@ void FileCache::updateFromEditors()
 bool FileCache::getSource(const QString &fileName, QString *source) const
 {
     Q_ASSERT(source);
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     QMutexLocker lock(&mMutex);
 
     if (mSources.contains(fileName)) {
@@ -252,6 +256,7 @@ bool FileCache::getSource(const QString &fileName, QString *source) const
 bool FileCache::getTexture(const QString &fileName, bool flipVertically, TextureData *texture) const
 {
     Q_ASSERT(texture);
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     QMutexLocker lock(&mMutex);
 
     const auto key = TextureKey(fileName, flipVertically);
@@ -278,6 +283,7 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically, Texture
 bool FileCache::updateTexture(const QString &fileName, bool flippedVertically, TextureData texture)
 {
     Q_ASSERT(!texture.isNull());
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     QMutexLocker lock(&mMutex);
 
     const auto key = TextureKey(fileName, flippedVertically);
@@ -297,6 +303,7 @@ bool FileCache::updateTexture(const QString &fileName, bool flippedVertically, T
 bool FileCache::getBinary(const QString &fileName, QByteArray *binary) const
 {
     Q_ASSERT(binary);
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     QMutexLocker lock(&mMutex);
 
     if (mBinaries.contains(fileName)) {
@@ -319,6 +326,7 @@ void FileCache::handleFileSystemFileChanged(const QString &fileName)
 
 void FileCache::addFileSystemWatch(const QString &fileName, bool changed) const
 {
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     if (!FileDialog::isEmptyOrUntitled(fileName))
         mFileSystemWatchesToAdd[fileName] |= changed;
 }

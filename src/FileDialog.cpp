@@ -234,10 +234,22 @@ bool FileDialog::exec(Options options, QString currentFileName,
 
     mFileNames = dialog.selectedFiles();
     for (auto &fileName : mFileNames)
-        fileName = QDir::toNativeSeparators(fileName);
+        fileName = toNativeCanonicalFilePath(fileName);
     mAsBinaryFile = (dialog.selectedNameFilter() == binaryFileFilter);
     setDirectory(dialog.directory());
     return true;
+}
+
+bool isNativeCanonicalFilePath(const QString &fileName) {
+    return (toNativeCanonicalFilePath(fileName) == fileName);
+}
+
+QString toNativeCanonicalFilePath(const QString &fileName) {
+    if (FileDialog::isEmptyOrUntitled(fileName))
+        return fileName;
+    auto fileInfo = QFileInfo(fileName);
+    Q_ASSERT(fileInfo.isAbsolute());
+    return QDir::toNativeSeparators(fileInfo.exists() ? fileInfo.canonicalFilePath() : fileName);
 }
 
 void showInFileManager(const QString &path)
