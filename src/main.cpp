@@ -13,7 +13,8 @@ extern "C" { __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001; }
 extern "C" { __declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001; }
 
 // https://www.codeproject.com/Tips/76427/How-to-bring-window-to-top-with-SetForegroundWindo
-void SetForegroundWindowInternal(HWND hWnd) {
+void SetForegroundWindowInternal(HWND hWnd) 
+{
     // Press the "Alt" key
     auto ip = INPUT{ };
     ip.type = INPUT_KEYBOARD;
@@ -27,6 +28,25 @@ void SetForegroundWindowInternal(HWND hWnd) {
     ip.ki.dwFlags = KEYEVENTF_KEYUP;
     SendInput(1, &ip, sizeof(INPUT));
 }
+
+void raiseProcessPriority() 
+{
+    SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+}
+
+void restoreProcessPriority() 
+{
+    SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
+}
+
+#else // !_WIN32
+
+void raiseProcessPriority() {
+}
+
+void restoreProcessPriority() {
+}
+
 #endif
 
 const auto singleApplicationMode = 
@@ -54,6 +74,8 @@ bool forwardToInstance(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+    raiseProcessPriority();
+
     QCoreApplication::setOrganizationName("GPUpad");
     QCoreApplication::setApplicationName("GPUpad");
 #if __has_include("_version.h")
@@ -112,6 +134,8 @@ int main(int argc, char *argv[])
     QObject::connect(&instance, &SingleApplication::receivedMessage,
         [&](quint32 instanceId, QByteArray argument) {
             Q_UNUSED(instanceId);
+            raiseProcessPriority();
+
             window.openFile(QString::fromUtf8(argument));
             window.setWindowState(
                 (window.windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
@@ -122,6 +146,7 @@ int main(int argc, char *argv[])
             window.raise();
             window.activateWindow();
 #endif
+            restoreProcessPriority();
         });
 
     window.show();
@@ -133,6 +158,8 @@ int main(int argc, char *argv[])
 
     if (!window.hasEditor())
         window.newFile();
+
+    restoreProcessPriority();
 
     return app.exec();
 }
