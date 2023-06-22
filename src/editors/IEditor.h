@@ -15,7 +15,8 @@ public:
     virtual void setFileName(QString fileName) = 0;
     virtual bool load() = 0;
     virtual bool save() = 0;
-    virtual int tabifyGroup() = 0;
+    virtual void setModified() = 0;
+    virtual int tabifyGroup() const = 0;
 };
 
 #endif // IEDITOR_H

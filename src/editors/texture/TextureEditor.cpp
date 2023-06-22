@@ -244,7 +244,7 @@ void TextureEditor::setFlipVertically(bool flipVertically)
     mTextureItem->setFlipVertically(flipVertically);
 }
 
-int TextureEditor::tabifyGroup() 
+int TextureEditor::tabifyGroup() const
 {
     // open untitled textures next to other editors
     return (FileDialog::isEmptyOrUntitled(mFileName) ? 1 : 0);
@@ -296,6 +296,11 @@ void TextureEditor::updatePreviewTexture(QOpenGLTexture::Target target,
     QOpenGLTexture::TextureFormat format, GLuint textureId)
 {
     mTextureItem->setPreviewTexture(target, format, textureId);
+}
+
+void TextureEditor::setModified()
+{
+    setModified(true);
 }
 
 void TextureEditor::setModified(bool modified)

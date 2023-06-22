@@ -448,7 +448,7 @@ void MainWindow::dropEvent(QDropEvent *event)
     }
     const auto urls = event->mimeData()->urls();
     for (const QUrl &url : qAsConst(urls))
-        openFile(url.toLocalFile());
+        openFile(toNativeCanonicalFilePath(url.toLocalFile()));
 
     raise();
     activateWindow();

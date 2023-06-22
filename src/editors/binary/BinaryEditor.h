@@ -47,7 +47,8 @@ public:
     void setFileName(QString fileName) override;
     bool load() override;
     bool save() override;
-    int tabifyGroup() override { return 0; }
+    int tabifyGroup() const override { return 0; }
+    void setModified() override;
     bool isModified() const { return mModified; }
     void replace(QByteArray data, bool emitFileChanged = true);
     void replaceRange(int offset, QByteArray data, bool emitFileChanged = true);

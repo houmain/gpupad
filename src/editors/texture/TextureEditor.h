@@ -36,7 +36,8 @@ public:
     bool load() override;
     bool save() override;
     void copy();
-    int tabifyGroup() override;
+    int tabifyGroup() const override;
+    void setModified() override;
     bool isModified() const { return mModified; }
     void replace(TextureData texture, bool emitFileChanged = true);
     void setFlipVertically(bool flipVertically);

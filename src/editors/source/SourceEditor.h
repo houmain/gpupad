@@ -29,7 +29,8 @@ public:
     void setFileName(QString fileName) override;
     bool load() override;
     bool save() override;
-    int tabifyGroup() override { return 0; }
+    int tabifyGroup() const override { return 0; }
+    void setModified() override;
     void replace(QString source);
     void cut();
     void copy();

@@ -174,6 +174,11 @@ void BinaryEditor::handleDataChanged()
     Singletons::fileCache().handleEditorFileChanged(mFileName);
 }
 
+void BinaryEditor::setModified()
+{
+    setModified(true);
+}
+
 void BinaryEditor::setModified(bool modified)
 {
     if (mModified != modified) {

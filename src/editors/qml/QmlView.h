@@ -22,7 +22,8 @@ public:
     void setFileName(QString fileName) override;
     bool load() override;
     bool save() override;
-    int tabifyGroup() override;
+    void setModified() override;
+    int tabifyGroup() const override { return 3; }
 
     void addDependency(const QString &fileName);
     bool dependsOn(const QString &fileName) const;

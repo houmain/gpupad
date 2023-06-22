@@ -348,8 +348,13 @@ void FileCache::updateFileSystemWatches()
 
         if (!deferUpdate) {
             if (!mFileSystemWatcher.files().contains(fileName)) {
-                if (!mFileSystemWatcher.addPath(fileName))
+                if (!mFileSystemWatcher.addPath(fileName)) {
                     deferUpdate = true;
+
+                    // inform editor that file does no longer exist
+                    if (auto editor = Singletons::editorManager().getEditor(fileName))
+                        editor->setModified();
+                }
             }
             else if (!QFileInfo::exists(fileName)) {
                 mFileSystemWatcher.removePath(fileName);

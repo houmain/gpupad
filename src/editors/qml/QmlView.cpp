@@ -250,9 +250,8 @@ bool QmlView::save()
     return false;
 }
 
-int QmlView::tabifyGroup()
+void QmlView::setModified()
 {
-    return 3;
 }
 
 void QmlView::addDependency(const QString &fileName)

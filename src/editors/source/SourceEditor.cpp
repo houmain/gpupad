@@ -248,6 +248,11 @@ bool SourceEditor::save()
     return true;
 }
 
+void SourceEditor::setModified() 
+{
+    document()->setModified(true);
+}
+
 void SourceEditor::replace(QString source)
 {
     const auto current = document()->toPlainText();
