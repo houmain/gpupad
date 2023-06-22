@@ -13,7 +13,7 @@ class MultiTextCursors : public QObject
 public:
     explicit MultiTextCursors(QObject *parent = nullptr);
 
-    const QList<QTextCursor> &cursors() const { return mCursors; }
+    const QList<QTextCursor> &cursors() const { return mVisibleCursors; }
 
     bool handleKeyPressEvent(QKeyEvent *event, QTextCursor cursor);
     bool handleMouseDoubleClickEvent(QMouseEvent *event, QTextCursor cursor);
@@ -35,6 +35,7 @@ Q_SIGNALS:
 
 private:
     void createRectangularSelection(QTextCursor cursor);
+    void endRectangularSelection();
     int getVerticallyMoved(QTextCursor cursor, int inBlockNumber);
     void addLine(QTextCursor::MoveOperation operation);
     QTextCursor getMaxColumnCursor() const;
@@ -45,6 +46,7 @@ private:
     void rectangularSelectPageUp();
     void rectangularSelectPageDown();
     bool isBottomUp() const;
+    void updateVisibleCursors();
     void emitChanged();
     void mergeCursors();
     void moveEachSelection(QTextCursor::MoveOperation op, QTextCursor::MoveMode mode);
@@ -52,6 +54,7 @@ private:
 
     QList<QTextCursor> mPrevCursors;
     QList<QTextCursor> mCursors;
+    QList<QTextCursor> mVisibleCursors;
     bool mCursorRemoved{ };
     bool mHasRectangularSelection{ };
     int mPageSize{ 20 };

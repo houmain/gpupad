@@ -99,7 +99,7 @@ bool MultiTextCursors::handleKeyPressEvent(QKeyEvent *event, QTextCursor cursor)
             Q_EMIT disableLineWrap();
 
             if (!mHasRectangularSelection)
-              createRectangularSelection(cursor);
+                createRectangularSelection(cursor);
 
             switch (event->key()) {
                 case Qt::Key_Up: rectangularSelectUp(); break;
@@ -120,7 +120,7 @@ bool MultiTextCursors::handleKeyPressEvent(QKeyEvent *event, QTextCursor cursor)
             return false;
     }
 
-    mHasRectangularSelection = false;
+    endRectangularSelection();
 
     if (event->modifiers() & Qt::ControlModifier) {
         switch (event->key()) {
@@ -147,6 +147,7 @@ bool MultiTextCursors::handleKeyPressEvent(QKeyEvent *event, QTextCursor cursor)
 
     Q_EMIT disableLineWrap();
 
+    auto &cursors = mVisibleCursors;
     const auto mode = (event->modifiers() & Qt::ShiftModifier ?
         QTextCursor::KeepAnchor : QTextCursor::MoveAnchor);
     const auto ctrlDown = (event->modifiers() & Qt::ControlModifier);
@@ -161,7 +162,7 @@ bool MultiTextCursors::handleKeyPressEvent(QKeyEvent *event, QTextCursor cursor)
         case Qt::Key_End: moveEachSelection(QTextCursor::EndOfBlock, mode); break;
 
         case Qt::Key_Backspace:
-            editEachSelection(mCursors, [&](QTextCursor& s) {
+            editEachSelection(cursors, [&](QTextCursor& s) {
                 if (mHasRectangularSelection && (s.position() != s.anchor() || s.atBlockStart()))
                     s.removeSelectedText();
                 else
@@ -170,7 +171,7 @@ bool MultiTextCursors::handleKeyPressEvent(QKeyEvent *event, QTextCursor cursor)
             break;
 
         case Qt::Key_Delete:
-            editEachSelection(mCursors, [&](QTextCursor& s) {
+            editEachSelection(cursors, [&](QTextCursor& s) {
                 if (mHasRectangularSelection && (s.position() != s.anchor() || s.atBlockEnd()))
                     s.removeSelectedText();
                 else
@@ -180,14 +181,14 @@ bool MultiTextCursors::handleKeyPressEvent(QKeyEvent *event, QTextCursor cursor)
 
         case Qt::Key_Tab:
             if (!(event->modifiers() & Qt::ShiftModifier))
-                editEachSelection(mCursors, [&](QTextCursor& selection) {
+                editEachSelection(cursors, [&](QTextCursor& selection) {
                     selection.insertText(mTab);
                 });
             break;
 
         default:
             if (const auto text = event->text(); !text.isEmpty())
-                editEachSelection(mCursors, [&](QTextCursor& s) { s.insertText(text); });
+                editEachSelection(cursors, [&](QTextCursor& s) { s.insertText(text); });
             break;
     }
     Q_EMIT restoreLineWrap();
@@ -237,11 +238,11 @@ void MultiTextCursors::handleMousePressedEvent(
         }
 
         if (!mCursorRemoved) {
+            endRectangularSelection();
             if (mCursors.isEmpty())
                 mCursors.append(prevCursor);
 
             mCursors.append(cursor);
-            mHasRectangularSelection = false;
             emitChanged();
         }
     }
@@ -260,8 +261,8 @@ void MultiTextCursors::handleMouseMoveEvent(QMouseEvent *event, QTextCursor curs
             mCursors.append(cursor);
 
         if (!mCursors.isEmpty() && mCursors.last() != cursor) {
+            endRectangularSelection();
             mCursors.last() = cursor;
-            mHasRectangularSelection = false;
             emitChanged();
         }
     }
@@ -278,12 +279,14 @@ void MultiTextCursors::clear()
 
 void MultiTextCursors::clear(QTextCursor cursor)
 {
+    endRectangularSelection();
     if (!mCursors.isEmpty()) {
+        mPrevCursors.clear();
         mCursors.clear();
+        mVisibleCursors.clear();
         Q_EMIT cursorChanged(cursor);
         Q_EMIT cursorsChanged();
     }
-    mHasRectangularSelection = false;
 }
 
 int MultiTextCursors::getVerticallyMoved(QTextCursor cursor, int inBlockNumber)
@@ -313,8 +316,7 @@ void MultiTextCursors::createRectangularSelection(QTextCursor cursor)
     Q_EMIT disableLineWrap();
 
     auto first = cursor;
-    if (!mCursors.isEmpty())
-        first.setPosition(mCursors.first().anchor());
+    first.setPosition(!mCursors.isEmpty() ? mCursors.first().anchor() : first.anchor());
     mCursors = { cursor };
     auto& last = mCursors.last();
 
@@ -344,10 +346,35 @@ void MultiTextCursors::createRectangularSelection(QTextCursor cursor)
     emitChanged();
 }
 
+void MultiTextCursors::endRectangularSelection()
+{
+    if (mHasRectangularSelection) {
+        updateVisibleCursors();
+        mCursors = mVisibleCursors;
+        mHasRectangularSelection = false;
+    }
+}
+
+void MultiTextCursors::updateVisibleCursors()
+{
+   if (mHasRectangularSelection && !mCursors.isEmpty()) {
+        mVisibleCursors.clear();
+        const auto firstColumnNumber = mCursors.first().columnNumber();
+        for (const auto &cursor : mCursors)
+            if (cursor.position() != cursor.anchor() ||
+                    cursor.columnNumber() >= firstColumnNumber)
+                mVisibleCursors.append(cursor);
+    }
+    else {
+        mVisibleCursors = mCursors;
+    }
+}
+
 void MultiTextCursors::emitChanged()
 {
     mergeCursors();
-
+    updateVisibleCursors();
+ 
     if (!equal(mCursors, mPrevCursors)) {
         Q_EMIT cursorChanged(!mCursors.isEmpty() ?
             mCursors.last() : mPrevCursors.last());
@@ -461,12 +488,13 @@ void MultiTextCursors::reverseOnBottomUpSelection(QStringList &lines) {
 
 bool MultiTextCursors::cut() 
 {
-    if (mCursors.isEmpty())
+    auto &cursors = mVisibleCursors;
+    if (cursors.isEmpty())
         return false;
 
     copy();
 
-    editEachSelection(mCursors, 
+    editEachSelection(cursors, 
         [&](QTextCursor& selection) { selection.insertText(""); });
 
     emitChanged();
@@ -475,11 +503,12 @@ bool MultiTextCursors::cut()
 
 bool MultiTextCursors::copy()
 {
-    if (mCursors.isEmpty())
+    const auto &cursors = mVisibleCursors;
+    if (cursors.isEmpty())
         return false;
 
     auto lines = QStringList();
-    for (auto &cursor : mCursors)
+    for (auto &cursor : cursors)
         lines.append(cursor.selectedText());
     reverseOnBottomUpSelection(lines);
     QApplication::clipboard()->setText(lines.join("\n"));
@@ -488,24 +517,25 @@ bool MultiTextCursors::copy()
 
 bool MultiTextCursors::paste()
 {
-    if (mCursors.isEmpty())
+    auto &cursors = mVisibleCursors;
+    if (cursors.isEmpty())
         return false;
 
     auto lines = QApplication::clipboard()->text().remove("\r").split("\n");
     if (lines.size() == 1) {
-        editEachSelection(mCursors, [&](QTextCursor& selection) {
+        editEachSelection(cursors, [&](QTextCursor& selection) {
             selection.insertText(lines[0]);
         });
     }
     else {
-        if (lines.size() > mCursors.size())
-            lines = lines.mid(0, mCursors.size());
-        while (lines.size() < mCursors.size())
+        if (lines.size() > cursors.size())
+            lines = lines.mid(0, cursors.size());
+        while (lines.size() < cursors.size())
             lines.append("");
         reverseOnBottomUpSelection(lines);
 
         auto i = 0;
-        editEachSelection(mCursors, [&](QTextCursor& selection) {
+        editEachSelection(cursors, [&](QTextCursor& selection) {
             selection.insertText(lines[i++]);
         });
     }
