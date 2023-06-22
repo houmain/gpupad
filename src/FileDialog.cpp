@@ -93,20 +93,38 @@ bool FileDialog::isSessionFileName(const QString &fileName)
     return fileName.endsWith(SessionFileExtension);
 }
 
+bool FileDialog::isShaderFileName(const QString &fileName)
+{
+    const auto extension = QFileInfo(fileName).suffix().toLower();
+    for (const auto &ext : ShaderFileExtensions)
+        if (ext == extension)
+            return true;
+    return false;
+}
+
+bool FileDialog::isScriptFileName(const QString &fileName)
+{
+    const auto extension = QFileInfo(fileName).suffix().toLower();
+    for (const auto &ext : ScriptFileExtensions)
+        if (ext == extension)
+            return true;
+    return false;
+}
+
 bool FileDialog::isTextureFileName(const QString &fileName)
 {
-    const auto lowerFileName = fileName.toLower();
-    for (auto extension : TextureFileExtensions)
-        if (lowerFileName.endsWith(extension))
+    const auto extension = QFileInfo(fileName).suffix().toLower();
+    for (const auto &ext : TextureFileExtensions)
+        if (ext == extension)
             return true;
     return false;
 }
 
 bool FileDialog::isVideoFileName(const QString &fileName)
 {
-    const auto lowerFileName = fileName.toLower();
-    for (auto extension : VideoFileExtensions)
-        if (lowerFileName.endsWith(extension))
+    const auto extension = QFileInfo(fileName).suffix().toLower();
+    for (const auto &ext : VideoFileExtensions)
+        if (ext == extension)
             return true;
     return false;
 }

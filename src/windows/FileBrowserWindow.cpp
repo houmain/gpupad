@@ -46,6 +46,8 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QFrame(parent)
     mModel->setIconProvider(new QFileIconProvider());
     
     mFileSystemTree->setModel(mModel);
+    mFileSystemTree->setSelectionMode(QTreeView::ExtendedSelection);
+    mFileSystemTree->setSelectionBehavior(QTreeView::SelectRows);
     mFileSystemTree->setDragEnabled(true);
     mFileSystemTree->setFrameShape(QFrame::NoFrame);
     mFileSystemTree->setHeaderHidden(true);

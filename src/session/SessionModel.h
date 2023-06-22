@@ -75,7 +75,8 @@ Q_SIGNALS:
 
 private:
     bool shouldSerializeColumn(const Item &item, ColumnType column) const;
-    QJsonArray parseDraggedJson(const QMimeData *data) const;
+    QJsonArray generateJsonFromUrls(QModelIndex target, const QList<QUrl> &urls) const;
+    QJsonArray parseDraggedJson(QModelIndex target, const QMimeData *data) const;
     void serialize(QJsonObject &object, const Item &item, bool relativeFilePaths) const;
     void deserialize(const QJsonObject &object, const QModelIndex &parent, int row,
         bool updateExisting);

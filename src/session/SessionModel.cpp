@@ -185,7 +185,10 @@ QString SessionModel::getFullItemName(ItemId id) const
 
 QStringList SessionModel::mimeTypes() const
 {
-    return { QStringLiteral("text/plain") };
+    return { 
+        QStringLiteral("text/plain"), 
+        QStringLiteral("text/uri-list")
+    };
 }
 
 Qt::DropActions SessionModel::supportedDragActions() const
@@ -198,11 +201,65 @@ Qt::DropActions SessionModel::supportedDropActions() const
     return Qt::CopyAction | Qt::MoveAction;
 }
 
-QJsonArray SessionModel::parseDraggedJson(const QMimeData *data) const
+QJsonArray SessionModel::generateJsonFromUrls(
+    QModelIndex target, const QList<QUrl> &urls) const
 {
+    auto itemArray = QJsonArray();
+    const auto addFileItem = [&](auto &item, const QUrl &url) {
+        item.name = url.fileName();
+        item.fileName = toNativeCanonicalFilePath(url.toLocalFile());
+
+        auto object = QJsonObject();
+        serialize(object, item, true);
+        itemArray.append(object);
+    };
+
+    for (const auto &url : urls) {
+        const auto fileName = url.toLocalFile();
+        if (canContainType(target, Item::Type::Shader) &&
+              FileDialog::isShaderFileName(fileName)) {
+            auto item = Shader();
+            item.type = Item::Type::Shader;
+            addFileItem(item, url);
+        }
+        else if (canContainType(target, Item::Type::Script) &&
+              FileDialog::isScriptFileName(fileName)) {
+            auto item = Script();
+            item.type = Item::Type::Script;
+            addFileItem(item, url);
+        }
+        else if (canContainType(target, Item::Type::Texture) &&
+                (FileDialog::isTextureFileName(fileName) || 
+                 FileDialog::isVideoFileName(fileName))) {
+            auto item = Texture();
+            item.type = Item::Type::Texture;
+            addFileItem(item, url);
+        }
+        else if (canContainType(target, Item::Type::Buffer) && 
+               !FileDialog::isShaderFileName(fileName) &&
+               !FileDialog::isScriptFileName(fileName) &&
+               !FileDialog::isTextureFileName(fileName) &&
+               !FileDialog::isVideoFileName(fileName)) {
+            auto item = Buffer();
+            item.type = Item::Type::Buffer;
+            addFileItem(item, url);
+        }
+    }
+    return itemArray;
+}
+
+QJsonArray SessionModel::parseDraggedJson(
+    QModelIndex target, const QMimeData *data) const
+{
+    if (data->hasUrls()) {
+        mDraggedJson = generateJsonFromUrls(target, data->urls());
+        return mDraggedJson;
+    }
+
     auto text = data->text();
     if (text != mDraggedText) {
         mDraggedText = text;
+
         auto document = QJsonDocument::fromJson(text.toUtf8());
         mDraggedJson =
             document.isNull() ? QJsonArray() :
@@ -220,7 +277,7 @@ bool SessionModel::canDropMimeData(const QMimeData *data,
             data, action, row, column, parent))
         return false;
 
-    auto jsonArray = parseDraggedJson(data);
+    auto jsonArray = parseDraggedJson(parent, data);
     if (jsonArray.empty())
         return false;
 
@@ -295,7 +352,7 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     if (action == Qt::IgnoreAction)
         return true;
 
-    auto jsonArray = parseDraggedJson(data);
+    auto jsonArray = parseDraggedJson(parent, data);
     if (jsonArray.empty())
         return false;
 
