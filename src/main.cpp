@@ -83,7 +83,9 @@ int main(int argc, char *argv[])
 # include "_version.h"
     );
 #endif
+#if defined(_WIN32)
     QSettings::setDefaultFormat(QSettings::IniFormat);
+#endif
 
     if (forwardToInstance(argc, argv))
         return 0;
