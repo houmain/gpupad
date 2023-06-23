@@ -10,7 +10,7 @@
 #include "SynchronizeLogic.h"
 #include "InputState.h"
 #include "Settings.h"
-#include "getMousePosition.h"
+#include "getEventPosition.h"
 #include "render/GLContext.h"
 #include "session/Item.h"
 #include <QAction>
@@ -356,14 +356,14 @@ void TextureEditor::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::MiddleButton) {
         const auto dpr = devicePixelRatioF();
-        const auto pos = getMousePosition(event) * dpr * 2;
+        const auto pos = getEventPosition(event) * dpr * 2;
         mPan = true;
         mPanStart = pos;
         setCursor(Qt::ClosedHandCursor);
         return;
     }
     QAbstractScrollArea::mousePressEvent(event);
-    updateMousePosition(getMousePosition(event));
+    updateMousePosition(getEventPosition(event));
     Singletons::inputState().setMouseButtonPressed(event->button());
 }
 
@@ -371,7 +371,7 @@ void TextureEditor::mouseMoveEvent(QMouseEvent *event)
 {
     if (mPan) {
         const auto dpr = devicePixelRatioF();
-        const auto pos = getMousePosition(event) * dpr * 2;
+        const auto pos = getEventPosition(event) * dpr * 2;
         horizontalScrollBar()->setValue(
             horizontalScrollBar()->value() - pos.x() + mPanStart.x());
         verticalScrollBar()->setValue(
@@ -380,7 +380,7 @@ void TextureEditor::mouseMoveEvent(QMouseEvent *event)
         return;
     }
     QAbstractScrollArea::mouseMoveEvent(event);
-    updateMousePosition(getMousePosition(event));
+    updateMousePosition(getEventPosition(event));
 }
 
 QPointF TextureEditor::getScrollOffset() const

@@ -7,7 +7,7 @@
 #include "FileDialog.h"
 #include "SyntaxHighlighter.h"
 #include "Completer.h"
-#include "getMousePosition.h"
+#include "getEventPosition.h"
 #include "Theme.h"
 #include <QCompleter>
 #include <QTextCharFormat>
@@ -53,7 +53,7 @@ protected:
 
     void mousePressEvent(QMouseEvent *event) override
     {
-        const auto pos = getMousePosition(event);
+        const auto pos = getEventPosition(event);
         if (event->button() == Qt::LeftButton && pos.x() < width() - margin / 2) {
             auto cursor = mEditor.cursorForPosition({ 0, pos.y() });
             const auto position = cursor.position();
@@ -68,7 +68,7 @@ protected:
 
     void mouseMoveEvent(QMouseEvent *event) override
     {
-        const auto pos = getMousePosition(event);
+        const auto pos = getEventPosition(event);
         auto cursor = mEditor.cursorForPosition({ 0, pos.y() });
         if (mSelectionStart >= 0) {
             const auto position = cursor.position();
@@ -794,7 +794,7 @@ void SourceEditor::mousePressEvent(QMouseEvent *event)
     clearFindReplaceRange();
     const auto prevCursor = textCursor();
     mMultiTextCursors.handleBeforeMousePressEvent(event,
-        cursorForPosition(getMousePosition(event)));
+        cursorForPosition(getEventPosition(event)));
     QPlainTextEdit::mousePressEvent(event);
     mMultiTextCursors.handleMousePressedEvent(event, textCursor(), prevCursor);
     emitNavigationPositionChanged();

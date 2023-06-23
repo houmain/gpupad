@@ -5,6 +5,7 @@
 #include <QBoxLayout>
 #include <QToolButton>
 #include <QEvent>
+#include <QVariant>
 
 WindowTitle::WindowTitle(QWidget *parent) 
     : QFrame(parent)

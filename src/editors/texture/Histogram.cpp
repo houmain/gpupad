@@ -1,6 +1,6 @@
 
 #include "Histogram.h"
-#include "getMousePosition.h"
+#include "getEventPosition.h"
 #include <QPainter>
 #include <QPaintEvent>
 #include <QPainterPath>
@@ -81,7 +81,7 @@ void Histogram::paintEvent(QPaintEvent *ev)
 
 void Histogram::mousePressEvent(QMouseEvent *event)
 {
-    const auto pos = getMousePosition(event);
+    const auto pos = getEventPosition(event);
     if (event->buttons() & Qt::LeftButton)
         updateRange(pos.x());
     QWidget::mousePressEvent(event);
@@ -89,7 +89,7 @@ void Histogram::mousePressEvent(QMouseEvent *event)
 
 void Histogram::mouseMoveEvent(QMouseEvent *event)
 {
-    const auto pos = getMousePosition(event);
+    const auto pos = getEventPosition(event);
     if (event->buttons() & Qt::LeftButton)
         updateRange(pos.x());
     QWidget::mouseMoveEvent(event);

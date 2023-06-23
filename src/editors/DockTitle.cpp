@@ -1,5 +1,5 @@
 #include "DockTitle.h"
-#include "../getMousePosition.h"
+#include "../getEventPosition.h"
 #include <QStylePainter>
 #include <QStyleOption>
 #include <QPaintEvent>
@@ -172,7 +172,7 @@ int DockTitle::tabContainingPoint(const QPoint &point)
 
 void DockTitle::mousePressEvent(QMouseEvent *event)
 {
-    const auto index = tabContainingPoint(getMousePosition(event));
+    const auto index = tabContainingPoint(getEventPosition(event));
     if (index >= 0) {
         auto dock = tabDock(index);
         if (event->button() == Qt::MiddleButton) {
@@ -203,21 +203,21 @@ void DockTitle::mouseReleaseEvent(QMouseEvent *event)
 
     QWidget::mouseReleaseEvent(event);
 
-    const auto index = tabContainingPoint(getMousePosition(event));
+    const auto index = tabContainingPoint(getEventPosition(event));
     if (event->button() == Qt::LeftButton && mTabsListButtonWidth && index == -1) {
-        openTabsList(getGlobalMousePosition(event));
+        openTabsList(getGlobalEventPosition(event));
     }
     else if (event->button() == Qt::RightButton) {
         if (index >= 0) {
             auto dock = tabDock(index);
-            Q_EMIT contextMenuRequested(getGlobalMousePosition(event), mTabBar, dock);
+            Q_EMIT contextMenuRequested(getGlobalEventPosition(event), mTabBar, dock);
         }
     }
 }
 
 void DockTitle::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    const auto index = tabContainingPoint(getMousePosition(event));
+    const auto index = tabContainingPoint(getEventPosition(event));
     if (event->button() == Qt::LeftButton && index == -1) {
         setCurrentTab(currentTabIndex());
         Q_EMIT openNewDock();
@@ -230,7 +230,7 @@ void DockTitle::mouseDoubleClickEvent(QMouseEvent *event)
 
 void DockTitle::mouseMoveEvent(QMouseEvent *event) 
 {
-    const auto index = tabContainingPoint(getMousePosition(event));
+    const auto index = tabContainingPoint(getEventPosition(event));
     if (index >= 0) {
         auto dock = tabDock(index);
         const auto text = (dock->statusTip().isEmpty() ? 

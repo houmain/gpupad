@@ -1,8 +1,9 @@
 #pragma once
 
-#include <QMouseEvent>
+#include <QEvent>
 
-inline QPoint getMousePosition(const QMouseEvent *event)
+template<typename Event>
+QPoint getEventPosition(const Event *event)
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     return event->pos();
@@ -11,7 +12,8 @@ inline QPoint getMousePosition(const QMouseEvent *event)
 #endif
 }
 
-inline QPoint getGlobalMousePosition(const QMouseEvent *event)
+template<typename Event>
+QPoint getGlobalEventPosition(const Event *event)
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     return event->globalPos();

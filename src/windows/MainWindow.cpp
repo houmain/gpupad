@@ -17,6 +17,7 @@
 #include "editors/EditorManager.h"
 #include "scripting/CustomActions.h"
 #include "WindowTitle.h"
+#include "getEventPosition.h"
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QDockWidget>
@@ -442,7 +443,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 void MainWindow::dropEvent(QDropEvent *event)
 {
     // drop on editor at position
-    if (auto widget = qApp->widgetAt(mapToGlobal(event->position().toPoint()))) {
+    if (auto widget = qApp->widgetAt(mapToGlobal(getEventPosition(event)))) {
         widget->setFocus();
         updateCurrentEditor();
     }
