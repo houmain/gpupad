@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 1.34.0] - 2022-06-23
+
+### Added
+
+- Added Files dock.
+- Allow dropping files on session window.
+
+### Changed
+
+- Set custom tool and dock window titlebars.
+- Automatically moving #extension to front.
+- Not automatically indenting lines which start with }.
+- Eliding long paths in recent file list.
+- Saving settings on Windows in Ini file.
+- Raising process priority while bringing window to front.
+- Rectangular selection does not create cursors left of rect.
+
+### Fixed
+
+- Fixed performance problem when file is reloaded very quickly.
+- Only replacing untitled untouched source editors.
+- Purging textures/binaries from cache when closing editor.
+- Mark editor as modified when file is deleted.
+- Fixed canonical path of included shaders.
+
 ## [Version 1.33.0] - 2022-03-09
 
 ### Fixed
@@ -644,6 +669,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 1.34.0]: https://github.com/houmain/gpupad/compare/1.33.0...1.34.0
 [version 1.33.0]: https://github.com/houmain/gpupad/compare/1.32.0...1.33.0
 [version 1.32.0]: https://github.com/houmain/gpupad/compare/1.31.0...1.32.0
 [version 1.31.0]: https://github.com/houmain/gpupad/compare/1.30.0...1.31.0
