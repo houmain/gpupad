@@ -16,7 +16,7 @@ jobs:
         config:
         - {
            name: "Linux-x64"
-           , os: ubuntu-18.04
+           , os: ubuntu-20.04
            , QT_VERSION: 5.15.2, QT_INST_DIR: /opt, QTDIR: /opt/Qt/5.15.2/gcc_64
           }
         - {
