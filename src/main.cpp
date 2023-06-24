@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 {
     raiseProcessPriority();
 
-    QCoreApplication::setOrganizationName("GPUpad");
+    QCoreApplication::setOrganizationName("gpupad");
     QCoreApplication::setApplicationName("GPUpad");
 #if __has_include("_version.h")
     QCoreApplication::setApplicationVersion(
