@@ -61,6 +61,7 @@ public:
     void updateCurrentEditor();
     bool hasCurrentEditor() const { return (mCurrentDock != nullptr); }
     QString currentEditorFileName();
+    void forEachEditor(const std::function<void(IEditor&)> &function) const;
     QList<QMetaObject::Connection> connectEditActions(const EditActions &actions);
     void renameEditors(const QString &prevFileName, const QString &fileName);
     void resetQmlViewsDependingOn(const QString &fileName);
@@ -72,7 +73,7 @@ public:
     bool promptSaveAllEditors();
     bool closeAllEditors(bool promptSave = true);
     bool closeAllTextureEditors();
-    QString getEditorObjectName(IEditor *editor) const;
+    QString getEditorObjectName(const IEditor *editor) const;
     void setEditorObjectName(IEditor *editor, const QString &name);
     void pasteInNewEditor();
     bool canPasteInNewEditor() const;

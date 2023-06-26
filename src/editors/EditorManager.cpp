@@ -218,6 +218,12 @@ QDockWidget *EditorManager::findEditorDock(const IEditor *editor) const
     return nullptr;
 }
 
+void EditorManager::forEachEditor(const std::function<void(IEditor&)> &function) const 
+{
+    for (auto [dock, dockEditor] : mDocks)
+        function(*dockEditor);
+}
+
 QList<QMetaObject::Connection> EditorManager::connectEditActions(
     const EditActions &actions)
 {
@@ -545,7 +551,7 @@ bool EditorManager::closeAllTextureEditors()
     return true;
 }
 
-QString EditorManager::getEditorObjectName(IEditor *editor) const
+QString EditorManager::getEditorObjectName(const IEditor *editor) const
 {
     if (auto dock = findEditorDock(editor))
         return dock->objectName();

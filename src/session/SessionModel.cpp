@@ -277,10 +277,7 @@ bool SessionModel::canDropMimeData(const QMimeData *data,
             data, action, row, column, parent))
         return false;
 
-    auto jsonArray = parseDraggedJson(parent, data);
-    if (jsonArray.empty())
-        return false;
-
+    const auto jsonArray = parseDraggedJson(parent, data);
     for (const QJsonValue &value : jsonArray) {
         auto ok = false;
         const auto type = getTypeByName(value.toObject()["type"].toString(), ok);

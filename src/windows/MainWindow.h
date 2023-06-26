@@ -3,6 +3,7 @@
 
 #include "EditActions.h"
 #include "session/Item.h"
+#include "Evaluation.h"
 #include <QMainWindow>
 
 namespace Ui {
@@ -72,6 +73,7 @@ private:
     void focusPreviousEditor();
     void setFullScreen(bool fullScreen);
     void stopEvaluation();
+    void setEvaluationMode(EvaluationMode evaluationMode);
     void updateEvaluationMode();
     bool openSession(const QString &fileName);
     bool saveSession();

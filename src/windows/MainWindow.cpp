@@ -15,6 +15,7 @@
 #include "InputState.h"
 #include "Theme.h"
 #include "editors/EditorManager.h"
+#include "editors/IEditor.h"
 #include "scripting/CustomActions.h"
 #include "WindowTitle.h"
 #include "getEventPosition.h"
@@ -198,6 +199,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->actionOpen->setShortcuts(QKeySequence::Open);
     mUi->actionSave->setShortcuts(QKeySequence::Save);
     mUi->actionSaveAs->setShortcuts(QKeySequence::SaveAs);
+    mUi->actionSaveAll->setShortcut(QKeySequence("Ctrl+Shift+S"));
     mUi->actionClose->setShortcuts(QKeySequence::Close);
     mUi->actionUndo->setShortcuts(QKeySequence::Undo);
     mUi->actionRedo->setShortcuts(QKeySequence::Redo);
@@ -602,8 +604,21 @@ void MainWindow::updateFileActions()
 
 void MainWindow::stopEvaluation()
 {
-    mUi->actionEvalAuto->setChecked(false);
-    mUi->actionEvalSteady->setChecked(false);
+    setEvaluationMode(EvaluationMode::Paused);
+}
+
+void MainWindow::setEvaluationMode(EvaluationMode evaluationMode)
+{
+    if (evaluationMode == EvaluationMode::Automatic) {
+        mUi->actionEvalAuto->setChecked(true);
+    }
+    else if (evaluationMode == EvaluationMode::Steady) {
+        mUi->actionEvalSteady->setChecked(true);
+    }
+    else {
+        mUi->actionEvalSteady->setChecked(false);
+        mUi->actionEvalAuto->setChecked(false);
+    }
 }
 
 void MainWindow::updateEvaluationMode()
@@ -703,8 +718,7 @@ bool MainWindow::saveAllFiles()
 {
     if (!mEditorManager.saveAllEditors())
         return false;
-    if (!mSessionEditor->isModified())
-        return true;
+
     return saveSession();
 }
 
@@ -829,23 +843,41 @@ bool MainWindow::copySessionFiles(const QString &fromPath, const QString &toPath
 void MainWindow::saveSessionState(const QString &sessionFileName)
 {
     const auto sessionStateFile = QString(sessionFileName + ".state");
+    const auto sessionDir = QFileInfo(sessionFileName).dir();
     auto settings = QSettings(sessionStateFile, QSettings::IniFormat);
+
+    // add file items by id (may not have a filename)
     auto openEditors = QStringList();
+    auto filesAdded = QStringList();
     mSingletons->sessionModel().forEachFileItem([&](const FileItem& item) {
-        if (auto editor = mEditorManager.getEditor(item.fileName))
+        if (auto editor = mEditorManager.getEditor(item.fileName)) {
             openEditors += QString("%1|%2").arg(item.id)
                 .arg(mEditorManager.getEditorObjectName(editor));
+            filesAdded += item.fileName;
+        }
     });
+
+    // add other editors by relative filename
+    mEditorManager.forEachEditor([&](const IEditor &editor) {
+        if (!filesAdded.contains(editor.fileName()))
+            openEditors += QString("%1|%2").arg(
+                QDir::fromNativeSeparators(
+                    sessionDir.relativeFilePath(editor.fileName())))
+                .arg(mEditorManager.getEditorObjectName(&editor));
+    });
+
     settings.setValue("editorState", mEditorManager.saveState());
     settings.setValue("openEditors", openEditors);
     auto &synchronizeLogic = Singletons::synchronizeLogic();
     settings.setValue("shaderPreamble", synchronizeLogic.sessionShaderPreamble());
     settings.setValue("shaderIncludePaths", synchronizeLogic.sessionShaderIncludePaths());
+    settings.setValue("evaluationMode", static_cast<int>(synchronizeLogic.evaluationMode()));
 }
 
 bool MainWindow::restoreSessionState(const QString &sessionFileName)
 {
     const auto sessionStateFile = QString(sessionFileName + ".state");
+    const auto sessionDir = QFileInfo(sessionFileName).dir();
     if (!QFileInfo::exists(sessionStateFile))
         return false;
 
@@ -855,11 +887,21 @@ bool MainWindow::restoreSessionState(const QString &sessionFileName)
     mEditorManager.setAutoRaise(false);
     for (const auto &openEditor : openEditors)
         if (const auto sep = openEditor.indexOf('|'); sep > 0) {
-            const auto itemId = openEditor.mid(0, sep).toInt();
+            const auto identifier = openEditor.mid(0, sep);
             const auto editorObjectName = openEditor.mid(sep + 1);
-            if (auto item = model.findItem(itemId))
-                if (auto editor = mSessionProperties->openItemEditor(model.getIndex(item)))
+
+            auto isItemId = false;
+            if (const auto itemId = identifier.toInt(&isItemId); isItemId) {
+                if (auto item = model.findItem(itemId))
+                    if (auto editor = mSessionProperties->openItemEditor(model.getIndex(item)))
+                        mEditorManager.setEditorObjectName(editor, editorObjectName);
+            }
+            else {
+                const auto fileName = toNativeCanonicalFilePath(
+                    sessionDir.absoluteFilePath(identifier));
+                if (auto editor = mEditorManager.openEditor(fileName))
                     mEditorManager.setEditorObjectName(editor, editorObjectName);
+            }
         }
     mEditorManager.restoreState(settings.value("editorState").toByteArray());   
     mEditorManager.setAutoRaise(true);
@@ -869,6 +911,7 @@ bool MainWindow::restoreSessionState(const QString &sessionFileName)
         settings.value("shaderPreamble").toString());
     synchronizeLogic.setSessionShaderIncludePaths(
         settings.value("shaderIncludePaths").toString());
+    setEvaluationMode(static_cast<EvaluationMode>(settings.value("evaluationMode").toInt()));
     return true;
 }
 
@@ -1121,13 +1164,11 @@ void MainWindow::populateSampleSessions()
 
 void MainWindow::openSampleSession()
 {
-    const auto evalSteady = mUi->actionEvalSteady->isChecked();
+    const auto evaluationMode = Singletons::synchronizeLogic().evaluationMode();
 
     if (auto action = qobject_cast<QAction*>(QObject::sender()))
-        if (openFile(action->data().toString())) {
-            mUi->actionEvalSteady->setChecked(evalSteady);
-            mUi->actionEvalAuto->setChecked(!evalSteady);
-        }
+        if (openFile(action->data().toString()))
+            setEvaluationMode(evaluationMode);
 }
 
 void MainWindow::openOnlineHelp()

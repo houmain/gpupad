@@ -25,6 +25,7 @@ public:
     void resetRenderSession();
 
     void setEvaluationMode(EvaluationMode mode);
+    EvaluationMode evaluationMode() const { return mEvaluationMode; }
     void resetEvaluation();
     void manualEvaluation();
     void cancelAutomaticRevalidation();
