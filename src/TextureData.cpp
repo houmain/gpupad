@@ -1082,7 +1082,7 @@ bool TextureData::saveTiff(const QString &fileName, bool flipVertically) const
         return false;
 
     const auto dataType = getTextureDataType(format());
-    const auto sampleFormat = [&]() {
+    const auto sampleFormat = [&]() -> TinyTIFFWriterSampleFormat {
         switch (dataType) {
             case TextureDataType::Normalized:
             case TextureDataType::Normalized_sRGB:
@@ -1099,6 +1099,7 @@ bool TextureData::saveTiff(const QString &fileName, bool flipVertically) const
             case TextureDataType::Compressed:
                 return TinyTIFFWriter_UInt;
         }
+        return { };
     }();
     const auto sampleCount = getTextureComponentCount(format());
     const auto bitsPerSample = getTextureDataSize(dataType) * 8;

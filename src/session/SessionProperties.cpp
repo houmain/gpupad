@@ -525,6 +525,13 @@ QString SessionProperties::currentItemFileName() const
     return mModel.data(currentModelIndex(SessionModel::FileName)).toString();
 }
 
+void SessionProperties::switchToCurrentFileItemDirectory()
+{
+    const auto fileName = currentItemFileName();
+    if (!FileDialog::isEmptyOrUntitled(fileName))
+        Singletons::fileDialog().setDirectory(QFileInfo(fileName).dir());
+}
+
 void SessionProperties::setCurrentItemFile(const QString &fileName)
 {
     mModel.setData(currentModelIndex(SessionModel::FileName), fileName);
@@ -535,6 +542,8 @@ void SessionProperties::saveCurrentItemFileAs(FileDialog::Options options)
     options |= FileDialog::Saving;
     const auto prevFileName = currentItemFileName();
     auto fileName = prevFileName;
+
+    switchToCurrentFileItemDirectory();
     while (Singletons::fileDialog().exec(options, fileName)) {
         fileName = Singletons::fileDialog().fileName();
         if (auto editor = openItemEditor(currentModelIndex())) {
@@ -552,6 +561,7 @@ void SessionProperties::saveCurrentItemFileAs(FileDialog::Options options)
 
 void SessionProperties::openCurrentItemFile(FileDialog::Options options)
 {
+    switchToCurrentFileItemDirectory();
     if (Singletons::fileDialog().exec(options))
         setCurrentItemFile(Singletons::fileDialog().fileName());
 }

@@ -61,6 +61,7 @@ private:
     void deduceBlockRowCount();
     IEditor* openEditor(const FileItem &fileItem);
     void fillComboBoxes();
+    void switchToCurrentFileItemDirectory();
 
     SessionModel &mModel;
     QStackedWidget *mStack;
