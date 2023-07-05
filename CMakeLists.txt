@@ -85,6 +85,8 @@ set(SOURCES
   libs/tga/decoder.cpp
   libs/tga/image_iterator.cpp
   libs/tga/stdio.cpp
+  libs/TinyTIFF/src/tinytiffreader.c
+  libs/TinyTIFF/src/tinytiffwriter.c
   src/FileDialog.cpp
   src/EvaluatedPropertyCache.cpp
   src/FileCache.cpp

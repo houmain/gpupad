@@ -1164,11 +1164,11 @@ void MainWindow::populateSampleSessions()
 
 void MainWindow::openSampleSession()
 {
-    const auto evaluationMode = Singletons::synchronizeLogic().evaluationMode();
+    const auto evalSteady = mUi->actionEvalSteady->isChecked();
 
     if (auto action = qobject_cast<QAction*>(QObject::sender()))
         if (openFile(action->data().toString()))
-            setEvaluationMode(evaluationMode);
+            setEvaluationMode(evalSteady ? EvaluationMode::Steady : EvaluationMode::Automatic);
 }
 
 void MainWindow::openOnlineHelp()

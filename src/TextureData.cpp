@@ -10,6 +10,8 @@
 #include "gli/gli.hpp"
 #define TINYEXR_IMPLEMENTATION
 #include "tinyexr/tinyexr.h"
+#include "TinyTIFF/src/tinytiffreader.h"
+#include "TinyTIFF/src/tinytiffwriter.h"
 
 #if defined(_WIN32)
 
@@ -281,18 +283,6 @@ namespace {
         }
         return { };
     }
-
-    void flipImageVertically(uchar * data, int pitch, int height)
-    {
-        auto buffer = std::vector<std::byte>(pitch);
-        auto low = data;
-        auto high = &data[(height - 1) * pitch];
-        for (; low < high; low += pitch, high -= pitch) {
-            std::memcpy(buffer.data(), low, pitch);
-            std::memcpy(low, high, pitch);
-            std::memcpy(high, buffer.data(), pitch);
-        }
-      }
 } // namespace
 
 TextureDataType getTextureDataType(
@@ -610,7 +600,10 @@ bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
 
     mTarget = getTarget(*texture);
     mKtxTexture.reset(texture, &ktxTexture_Destroy);
-    mFlippedVertically = false;
+    
+    if (flipVertically)
+        this->flipVertically();
+
     return true;
 }
 
@@ -816,11 +809,94 @@ bool TextureData::loadTga(const QString &fileName, bool flipVertically)
     if (!decoder.readImage(header, image, nullptr))
         return false;
 
-    if (flipVertically)
-        flipImageVertically(image.pixels, image.rowstride, header.height);
-
     decoder.postProcessImage(header, image);
-    mFlippedVertically = flipVertically;
+
+    if (flipVertically)
+        this->flipVertically();
+
+    return true;
+}
+
+bool TextureData::loadTiff(const QString &fileName, bool flipVertically)
+{
+    auto f = TinyTIFFReader_open(qUtf8Printable(fileName)); 
+    if (!f)
+        return false;
+    auto guard = qScopeGuard([&]() { TinyTIFFReader_close(f); });
+    if (TinyTIFFReader_wasError(f))
+        return false;
+
+    const auto width = TinyTIFFReader_getWidth(f); 
+    const auto height = TinyTIFFReader_getHeight(f); 
+    const auto sampleCount = TinyTIFFReader_getSamplesPerPixel(f);
+    const auto bytesPerSample = TinyTIFFReader_getBitsPerSample(f, 0) / 8u;
+    const auto sampleFormat = TinyTIFFReader_getSampleFormat(f);
+
+    const auto isInt = sampleFormat == TINYTIFF_SAMPLEFORMAT_INT;
+    const auto isFloat = sampleFormat == TINYTIFF_SAMPLEFORMAT_FLOAT;
+    using Format = QOpenGLTexture::TextureFormat;
+    auto format = Format::NoFormat;
+    switch (sampleCount) {
+        case 1: 
+            switch (bytesPerSample) {
+                case 1: format = Format::R8_UNorm; break;
+                case 2: format = Format::R16_UNorm; break;
+                case 4: format = (isInt ? Format::R32I : isFloat ? Format::R32F : Format::R8U); break;
+            }
+            break;
+        case 2: 
+            switch (bytesPerSample) {
+                case 1: format = Format::RG8_UNorm; break;
+                case 2: format = Format::RG16_UNorm; break;
+                case 4: format = (isInt ? Format::RG32I : isFloat ? Format::RG32F : Format::RG8U); break;
+            }
+            break;
+        case 3: 
+            switch (bytesPerSample) {
+                case 1: format = Format::RGB8_UNorm; break;
+                case 2: format = Format::RGB16_UNorm; break;
+                case 4: format = (isInt ? Format::RGB32I : isFloat ? Format::RGB32F : Format::RGB8U); break;
+            }
+            break;
+        case 4: 
+            switch (bytesPerSample) {
+                case 1: format = Format::RGBA8_UNorm; break;
+                case 2: format = Format::RGBA16_UNorm; break;
+                case 4: format = (isInt ? Format::RGBA32I : isFloat ? Format::RGBA32F : Format::RGBA8U); break;
+            }
+            break;
+    }
+    if (!format)
+        return false;
+
+    if (!create(QOpenGLTexture::Target2D, format, width, height))
+        return false;
+
+    const auto planeSize = width * height * bytesPerSample;
+    auto data = std::vector<uchar>(planeSize * sampleCount);
+    auto plane = std::vector<uchar*>();
+    auto p = data.data();
+    for (auto i = 0; i < sampleCount; ++i) {
+        TinyTIFFReader_getSampleData(f, p, i); 
+        plane.push_back(p);
+        p += planeSize;
+    }
+    if (TinyTIFFReader_wasError(f))
+        return false;
+
+    auto imageData = getWriteonlyData(0, 0, 0);
+    const auto padding = (getImageSize(0) / height) - (width * sampleCount * bytesPerSample);
+    for (auto y = 0u; y < height; ++y) {
+        for (auto x = 0u; x < width; ++x)
+            for (auto s = 0u; s < sampleCount; ++s)
+                for (auto b = 0u; b < bytesPerSample; ++b)
+                    *imageData++ = *plane[s]++;
+        imageData += padding;
+    }
+
+    if (flipVertically)
+        this->flipVertically();
+
     return true;
 }
 
@@ -884,6 +960,7 @@ bool TextureData::load(const QString &fileName, bool flipVertically)
            loadGli(fileName, flipVertically) ||
            loadExr(fileName, flipVertically) ||
            loadTga(fileName, flipVertically) ||
+           loadTiff(fileName, flipVertically) ||
            loadPfm(fileName, flipVertically) ||
            loadQImage(fileName, flipVertically);
 }
@@ -998,6 +1075,44 @@ bool TextureData::saveTga(const QString &fileName, bool flipVertically) const
     return true;
 }
 
+bool TextureData::saveTiff(const QString &fileName, bool flipVertically) const
+{
+    if (!fileName.endsWith(".tif", Qt::CaseInsensitive) &&
+        !fileName.endsWith(".tiff", Qt::CaseInsensitive))
+        return false;
+
+    const auto dataType = getTextureDataType(format());
+    const auto sampleFormat = [&]() {
+        switch (dataType) {
+            case TextureDataType::Normalized:
+            case TextureDataType::Normalized_sRGB:
+            case TextureDataType::Float:
+                return TinyTIFFWriter_Float;
+            case TextureDataType::Int8:
+            case TextureDataType::Int16:
+            case TextureDataType::Int32:
+                return TinyTIFFWriter_Int;
+            case TextureDataType::Uint8:
+            case TextureDataType::Uint16:
+            case TextureDataType::Uint32:
+            case TextureDataType::Uint_10_10_10_2:
+            case TextureDataType::Compressed:
+                return TinyTIFFWriter_UInt;
+        }
+    }();
+    const auto sampleCount = getTextureComponentCount(format());
+    const auto bitsPerSample = getTextureDataSize(dataType) * 8;
+
+    auto f = TinyTIFFWriter_open(qUtf8Printable(fileName), bitsPerSample, 
+        sampleFormat, sampleCount, width(), height(),
+        TinyTIFFWriter_AutodetectSampleInterpetation);
+    if (!f)
+        return false;
+    auto guard = qScopeGuard([&]() { TinyTIFFWriter_close(f); });
+    
+    return (TinyTIFFWriter_writeImage(f, getData(0, 0, 0)) == TINYTIFF_TRUE);
+}
+
 bool TextureData::savePfm(const QString &fileName, bool flipVertically) const
 {
     if (!fileName.endsWith(".pfm", Qt::CaseInsensitive))
@@ -1025,6 +1140,7 @@ bool TextureData::save(const QString &fileName, bool flipVertically) const
            saveGli(fileName, flipVertically) ||
            saveExr(fileName, flipVertically) ||
            saveTga(fileName, flipVertically) ||
+           saveTiff(fileName, flipVertically) ||
            savePfm(fileName, flipVertically) ||
            saveQImage(fileName, flipVertically);
 }
@@ -1195,6 +1311,21 @@ void TextureData::clear()
         for (auto face = 0; face < faces(); ++face)
             std::memset(getWriteonlyData(level, layer, face),
                 0x00, static_cast<size_t>(getImageSize(level)));
+}
+
+void TextureData::flipVertically() 
+{
+    const auto pitch = getLevelSize(0) / height();
+    const auto data = getWriteonlyData(0, 0, 0);
+    auto buffer = std::vector<std::byte>(pitch);
+    auto low = data;
+    auto high = &data[(height() - 1) * pitch];
+    for (; low < high; low += pitch, high -= pitch) {
+        std::memcpy(buffer.data(), low, pitch);
+        std::memcpy(low, high, pitch);
+        std::memcpy(high, buffer.data(), pitch);
+    }
+    mFlippedVertically = !mFlippedVertically;
 }
 
 void TextureData::setPixelFormat(QOpenGLTexture::PixelFormat pixelFormat)
