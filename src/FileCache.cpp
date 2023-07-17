@@ -13,6 +13,38 @@ namespace
     const auto textureUpdateInterval = 5;
     const auto nonTextureUpdateInterval = 1000;
 
+    void setUtf8Encoding(QTextStream &stream) 
+    {
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0)) && defined(_WIN32)
+        stream.setCodec("UTF-8");
+#else
+        stream.setEncoding(QStringConverter::Utf8);
+#endif
+    }
+
+    void setSystemEncoding(QTextStream &stream) 
+    {
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+        stream.setCodec("Windows-1250");
+#else
+        stream.setEncoding(QStringConverter::System);
+#endif
+    }
+
+    qsizetype countUnprintable(const QString &string) {
+        return std::count_if(string.constBegin(), string.constEnd(),
+            [](QChar c) {
+                const auto code = c.unicode();
+                if (code == 0xFFFD ||
+                    (code < 31 &&
+                      code != '\n' &&
+                      code != '\r' &&
+                      code != '\t'))
+                    return true;
+                return false;
+            });
+    };
+
     bool loadSource(const QString &fileName, QString *source)
     {
         const auto detectEncodingSize = 1024 * 10;
@@ -28,35 +60,24 @@ namespace
             return false;
 
         QTextStream stream(&file);
-#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0)) && defined(_WIN32)
-        stream.setCodec("UTF-8");
-#endif
+        setUtf8Encoding(stream);
         auto string = stream.read(detectEncodingSize);
 
-        const auto isUnprintable = [&]() {
-            return (std::find_if(string.constBegin(), string.constEnd(),
-                [](QChar c) {
-                    const auto code = c.unicode();
-                    if (code == 0xFFFD ||
-                        (code < 31 &&
-                         code != '\n' &&
-                         code != '\r' &&
-                         code != '\t'))
-                        return true;
-                    return false;
-                }) != string.constEnd());
-        };
-
-#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
-        if (isUnprintable()) {
-            stream.setCodec("Windows-1250");
+        const auto unprintableUtf8 = countUnprintable(string);
+        if (unprintableUtf8 > 0) {
+            setSystemEncoding(stream);
             stream.seek(0);
             string = stream.read(detectEncodingSize);
+            
+            if (countUnprintable(string) > 0) {
+                // allow up to 5 percent mojibake
+                if (unprintableUtf8 * 20 > string.length())
+                    return false;
+                setUtf8Encoding(stream);
+                stream.seek(0);
+                string = stream.read(detectEncodingSize);
+            }
         }
-#endif
-
-        if (isUnprintable())
-            return false;
 
         *source = string + stream.readAll();
         return true;
