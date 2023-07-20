@@ -297,8 +297,14 @@ QStringList GLShader::getPatchedSources(MessagePtrSet &messages,
 
     sources.front().prepend(extensions);
 
-    if (maxVersion.isEmpty())
+    if (maxVersion.isEmpty()) {
         maxVersion = "#version 450";
+        for (const auto &source : sources)
+            if (source.contains("gl_FragColor")) {
+                maxVersion = "#version 120";
+                break;
+            }
+    }
     sources.front().prepend(maxVersion + "\n");
     return sources;
 }
