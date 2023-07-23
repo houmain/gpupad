@@ -15,7 +15,7 @@ namespace
 
     void setUtf8Encoding(QTextStream &stream) 
     {
-#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0)) && defined(_WIN32)
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
         stream.setCodec("UTF-8");
 #else
         stream.setEncoding(QStringConverter::Utf8);
