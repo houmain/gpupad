@@ -249,32 +249,65 @@ void DockTitle::paintEvent(QPaintEvent *event)
 {
     updateTabSizes();
 
-    auto rect = QRect(QPoint(), sizeHint());
-    const auto current = currentTabIndex();
-    const auto count = tabCount();        
-    for (auto i = 0; i < count; ++i)
-        if (!tabSize(i).isEmpty()) {
-            rect.setWidth(tabSize(i).width());
-            paintTab(rect, tabText(i), i == current);
-            rect.translate(rect.width(), 0);
-        }
+    // collect visible tabs including tab list button
+    struct Tab {
+        QString text;
+        QRect rect;
+    };
+    auto current = 0;
+    const auto tabs = [&]() {
+        const auto count = tabCount();
+        auto tabs = QVector<Tab>();
+        tabs.reserve(count + 1);
 
-    if (mTabsListButtonWidth) {
-        rect.setWidth(mTabsListButtonWidth);
-        paintTab(rect, tabsListButtonText, false);
-    }
+        auto rect = QRect(QPoint(), sizeHint());
+        for (auto i = 0; i < count; ++i)
+            if (!tabSize(i).isEmpty()) {
+                rect.setWidth(tabSize(i).width());
+                if (i == currentTabIndex())
+                    current = tabs.size();
+                tabs.append({ tabText(i), rect });
+                rect.translate(rect.width(), 0);
+            }
+
+        if (mTabsListButtonWidth) {
+            rect.setWidth(mTabsListButtonWidth);
+            tabs.append({ tabsListButtonText, rect });
+        }
+        return tabs;
+    }();
+
+    // paint tabs, current last because it may overlap others
+    const auto count = tabs.size();
+    for (auto i = 0; i < count; ++i)
+        if (i != current)
+            paintTab(tabs[i].rect, tabs[i].text, i, current, count - 1);
+
+    paintTab(tabs[current].rect, tabs[current].text, current, current, count - 1);
 }
 
-void DockTitle::paintTab(const QRect &rect, const QString &text, bool current)
+void DockTitle::paintTab(const QRect &rect, const QString &text, 
+    int index, int current, int last)
 {
     auto opt = QStyleOptionTab();
     opt.initFrom(this);
     opt.state = QStyle::State_Active | QStyle::State_Enabled;
-    if (current) 
+    if (index == current) 
         opt.state |= QStyle::State_Selected;
+
+    opt.position = (
+        last == 0 ? QStyleOptionTab::OnlyOneTab :
+        index == 0 ? QStyleOptionTab::Beginning : 
+        index == last ? QStyleOptionTab::End : 
+        QStyleOptionTab::Middle);
+
+    opt.selectedPosition = (
+        current == index + 1 ? QStyleOptionTab::NextIsSelected :
+        current == index - 1 ? QStyleOptionTab::PreviousIsSelected :
+        QStyleOptionTab::NotAdjacent);
            
     opt.rect = rect;
-    // this is a hack to also fill space below tab
+    // this is a hack to also fill space below tab (beneficial for Fusion style)
     opt.rect.setBottom(opt.rect.bottom() + 2);
 
     auto textRect = style()->subElementRect(QStyle::SE_TabBarTabText, &opt, this);

@@ -73,10 +73,12 @@ bool DockWindow::eventFilter(QObject *watched, QEvent *event)
     // inform titlebars of corresponding tabbar, whenever tabbar children change
     if (event->type() == QEvent::ChildAdded || event->type() == QEvent::ChildRemoved)
         if (qobject_cast<QTabBar*>(watched)) {
-            for (auto title : findChildren<DockTitle*>())
+            const auto dockTitles = findChildren<DockTitle*>();
+            for (auto title : dockTitles)
                 title->setTabBar(nullptr);
 
-            for (auto tabBar : findChildren<QTabBar*>())
+            const auto tabBars = findChildren<QTabBar*>();
+            for (auto tabBar : tabBars)
                 for (auto i = 0; i < tabBar->count(); i++)
                     if (auto dock = qobject_cast<QDockWidget*>(getTabBarDock(tabBar, i)))
                         if (auto title = qobject_cast<DockTitle*>(dock->titleBarWidget()))

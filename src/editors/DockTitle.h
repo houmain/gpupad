@@ -24,10 +24,11 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseDoubleClickEvent(QMouseEvent *event);
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
 
 private:
-    void paintTab(const QRect &rect, const QString &text, bool current);
+    void paintTab(const QRect &rect, const QString &text, 
+        int index, int current, int last);
     int tabCount() const;
     int currentTabIndex() const;
     int tabContainingPoint(const QPoint &point);
