@@ -104,10 +104,8 @@ enum class TextureDataType
     Compressed,
 };
 
-TextureDataType getTextureDataType(
-    const QOpenGLTexture::TextureFormat &format);
-int getTextureDataSize(TextureDataType dataType);
-int getTextureComponentCount(
-    QOpenGLTexture::TextureFormat format);
+TextureDataType getTextureDataType(QOpenGLTexture::TextureFormat format);
+int getTextureDataSize(QOpenGLTexture::TextureFormat dataType);
+int getTextureComponentCount(QOpenGLTexture::TextureFormat format);
 
 Q_DECLARE_METATYPE(TextureData)

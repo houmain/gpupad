@@ -285,8 +285,7 @@ namespace {
     }
 } // namespace
 
-TextureDataType getTextureDataType(
-    const QOpenGLTexture::TextureFormat &format)
+TextureDataType getTextureDataType(QOpenGLTexture::TextureFormat format)
 {
     switch (format) {
         case QOpenGLTexture::R8_UNorm:
@@ -372,11 +371,30 @@ TextureDataType getTextureDataType(
     }
 }
 
-int getTextureDataSize(TextureDataType dataType)
+int getTextureDataSize(QOpenGLTexture::TextureFormat format)
 {
-    switch (dataType) {
+    switch (getTextureDataType(format)) {
         case TextureDataType::Normalized:
         case TextureDataType::Normalized_sRGB:
+            switch (format) {
+                case QOpenGLTexture::R16_UNorm:
+                case QOpenGLTexture::RG16_UNorm:
+                case QOpenGLTexture::RGB16_UNorm:
+                case QOpenGLTexture::RGBA16_UNorm:
+                case QOpenGLTexture::R16_SNorm:
+                case QOpenGLTexture::RG16_SNorm:
+                case QOpenGLTexture::RGB16_SNorm:
+                case QOpenGLTexture::RGBA16_SNorm:
+                case QOpenGLTexture::R5G6B5:
+                case QOpenGLTexture::RGB5A1:
+                case QOpenGLTexture::RGBA4:
+                    return 2;
+
+                default:
+                    return 1;
+            }
+            break;
+
         case TextureDataType::Uint8:
         case TextureDataType::Int8:
             return 1;
@@ -1102,7 +1120,7 @@ bool TextureData::saveTiff(const QString &fileName, bool flipVertically) const
         return { };
     }();
     const auto sampleCount = getTextureComponentCount(format());
-    const auto bitsPerSample = getTextureDataSize(dataType) * 8;
+    const auto bitsPerSample = getTextureDataSize(format()) * 8;
 
     auto f = TinyTIFFWriter_open(qUtf8Printable(fileName), bitsPerSample, 
         sampleFormat, sampleCount, width(), height(),
