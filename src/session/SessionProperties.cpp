@@ -199,6 +199,7 @@ void SessionProperties::fillComboBoxes()
     fillComboBox<Target::PolygonMode>(mTargetProperties->polygonMode);
     fillComboBox<Target::LogicOperation>(mTargetProperties->logicOperation);
     fillComboBox<Shader::Language>(mShaderProperties->language);
+    mShaderProperties->language->removeItem(mShaderProperties->language->findText("None"));
     fillComboBox<Shader::ShaderType>(mShaderProperties->type);
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
 }
