@@ -59,6 +59,7 @@ private:
     void updateShaderWidgets();
     void deduceBlockOffset();
     void deduceBlockRowCount();
+    void deduceShaderType();
     IEditor* openEditor(const FileItem &fileItem);
     void fillComboBoxes();
     void switchToCurrentFileItemDirectory();

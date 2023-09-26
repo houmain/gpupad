@@ -88,14 +88,21 @@ QString FileDialog::getWindowTitle(const QString &fileName)
     return "[*]" + getFileTitle(fileName);
 }
 
+QString FileDialog::getFileExtension(const QString &fileName)
+{
+    if (isEmptyOrUntitled(fileName))
+        return "";
+    return QFileInfo(fileName).suffix().toLower();
+}
+
 bool FileDialog::isSessionFileName(const QString &fileName)
 {
-    return fileName.endsWith(SessionFileExtension);
+    return (getFileExtension(fileName) == SessionFileExtension);
 }
 
 bool FileDialog::isShaderFileName(const QString &fileName)
 {
-    const auto extension = QFileInfo(fileName).suffix().toLower();
+    const auto extension = getFileExtension(fileName);
     for (const auto &ext : ShaderFileExtensions)
         if (ext == extension)
             return true;
@@ -104,7 +111,7 @@ bool FileDialog::isShaderFileName(const QString &fileName)
 
 bool FileDialog::isScriptFileName(const QString &fileName)
 {
-    const auto extension = QFileInfo(fileName).suffix().toLower();
+    const auto extension = getFileExtension(fileName);
     for (const auto &ext : ScriptFileExtensions)
         if (ext == extension)
             return true;
@@ -113,7 +120,7 @@ bool FileDialog::isScriptFileName(const QString &fileName)
 
 bool FileDialog::isTextureFileName(const QString &fileName)
 {
-    const auto extension = QFileInfo(fileName).suffix().toLower();
+    const auto extension = getFileExtension(fileName);
     for (const auto &ext : TextureFileExtensions)
         if (ext == extension)
             return true;
@@ -122,7 +129,7 @@ bool FileDialog::isTextureFileName(const QString &fileName)
 
 bool FileDialog::isVideoFileName(const QString &fileName)
 {
-    const auto extension = QFileInfo(fileName).suffix().toLower();
+    const auto extension = getFileExtension(fileName);
     for (const auto &ext : VideoFileExtensions)
         if (ext == extension)
             return true;

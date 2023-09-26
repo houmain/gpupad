@@ -124,6 +124,8 @@ SessionProperties::SessionProperties(QWidget *parent)
         [this]() { return getFileNames(Item::Type::Shader); });
     connect(mShaderProperties->language, &DataComboBox::currentDataChanged,
         this, &SessionProperties::updateShaderWidgets);
+    connect(mShaderProperties->file, &ReferenceComboBox::activated,
+        this, &SessionProperties::deduceShaderType);
 
     connect(mBufferProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::BinaryExtensions); });
@@ -653,5 +655,24 @@ void SessionProperties::deduceBlockRowCount()
         if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
             mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::BlockRowCount),
                 (binary.size() - offset) / stride);
+    }
+}
+
+void SessionProperties::deduceShaderType() 
+{
+    const auto &shader = *mModel.item<Shader>(currentModelIndex());
+    const auto fileName = mShaderProperties->file->currentData().toString();
+    auto source = QString();
+    if (Singletons::fileCache().getSource(fileName, &source)) {
+        const auto currentSourceType = (shader.fileName.isEmpty() ? SourceType::PlainText : 
+            getSourceType(shader.shaderType, shader.language));
+        const auto extension = FileDialog::getFileExtension(fileName);
+        const auto sourceType = deduceSourceType(currentSourceType, extension, source);
+        if (sourceType != currentSourceType) {
+            const auto shaderType = getShaderType(sourceType);
+            const auto shaderLanguage = getShaderLanguage(sourceType);
+            mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::ShaderType), shaderType);
+            mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::ShaderLanguage), shaderLanguage);
+        }
     }
 }

@@ -14,6 +14,7 @@ public:
     static QString generateNextUntitledFileName(QString base);
     static bool isEmptyOrUntitled(const QString &fileName);
     static bool isUntitled(const QString &fileName);
+    static QString getFileExtension(const QString &fileName);
     static QString getFileTitle(const QString &fileName);
     static QString getWindowTitle(const QString &fileName);
     static QString getFullWindowTitle(const QString &fileName);
