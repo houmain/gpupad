@@ -50,13 +50,6 @@ set(SOURCES
   libs/KTX/lib/writer.c
   libs/KTX/lib/writer_v1.c
   libs/KTX/lib/glloader.c
-  libs/miniz/miniz.c
-  libs/tga/encoder.cpp
-  libs/tga/decoder.cpp
-  libs/tga/image_iterator.cpp
-  libs/tga/stdio.cpp
-  libs/TinyTIFF/src/tinytiffreader.c
-  libs/TinyTIFF/src/tinytiffwriter.c
   src/FileDialog.cpp
   src/EvaluatedPropertyCache.cpp
   src/FileCache.cpp
@@ -253,6 +246,14 @@ if(ENABLE_QUICK)
         target_link_libraries(${PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::QuickControls2)
         add_compile_definitions(QtQuickControls2_FOUND)
     endif()
+endif()
+
+# include OpenImageIO
+option(ENABLE_OPENIMEAGEIO "Enable OpenImageIO" ON)
+    if (ENABLE_OPENIMEAGEIO)
+    find_package(OpenImageIO CONFIG REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE OpenImageIO::OpenImageIO)
+    add_compile_definitions(OPENIMAGEIO_ENABLED)
 endif()
 
 # include SPIRV-Cross

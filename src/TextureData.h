@@ -4,7 +4,7 @@
 #include <QOpenGLTexture>
 #include <QMetaType>
 #include <memory>
-#include "ktx.h"
+#include <ktx.h>
 
 class QOpenGLFunctions_3_3_Core;
 
@@ -63,18 +63,12 @@ private:
     using GL = QOpenGLFunctions_3_3_Core;
 
     bool loadKtx(const QString &fileName, bool flipVertically);
-    bool loadGli(const QString &fileName, bool flipVertically);
+    bool loadOpenImageIO(const QString &fileName, bool flipVertically);
     bool loadQImage(const QString &fileName, bool flipVertically);
-    bool loadExr(const QString &fileName, bool flipVertically);
-    bool loadTga(const QString &fileName, bool flipVertically);
-    bool loadTiff(const QString &fileName, bool flipVertically);
     bool loadPfm(const QString &fileName, bool flipVertically);
-    bool saveGli(const QString &fileName, bool flipVertically) const;
     bool saveKtx(const QString &fileName, bool flipVertically) const;
     bool saveQImage(const QString &fileName, bool flipVertically) const;
-    bool saveExr(const QString &fileName, bool flipVertically) const;
-    bool saveTga(const QString &fileName, bool flipVertically) const;
-    bool saveTiff(const QString &fileName, bool flipVertically) const;
+    bool saveOpenImageIO(const QString &fileName, bool flipVertically) const;
     bool savePfm(const QString &fileName, bool flipVertically) const;
     void flipVertically();
     bool uploadMultisample(GL& gl, GLuint textureId,
@@ -89,7 +83,7 @@ private:
     bool mFlippedVertically{ };
 };
 
-enum class TextureDataType
+enum class TextureSampleType
 {
     Normalized,
     Normalized_sRGB,
@@ -101,10 +95,23 @@ enum class TextureDataType
     Uint16,
     Uint32,
     Uint_10_10_10_2,
-    Compressed,
 };
 
-TextureDataType getTextureDataType(QOpenGLTexture::TextureFormat format);
+enum class TextureDataType
+{
+    Other,
+    Int8,
+    Int16,
+    Int32,
+    Uint8,
+    Uint16,
+    Uint32,
+    Float16,
+    Float32,
+};
+
+TextureSampleType getTextureSampleType(QOpenGLTexture::TextureFormat format);
+TextureDataType getDataSampleType(QOpenGLTexture::TextureFormat format);
 int getTextureDataSize(QOpenGLTexture::TextureFormat dataType);
 int getTextureComponentCount(QOpenGLTexture::TextureFormat format);
 

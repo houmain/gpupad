@@ -120,7 +120,7 @@ void main() {
             QString sampler;
             QString sample;
         };
-        struct DataTypeVersion {
+        struct SampleTypeVersion {
             QString prefix;
             QString mapping;
         };
@@ -135,18 +135,17 @@ void main() {
             { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "texelFetch(S, ivec2(x, y), uLevel)" } },
             { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "texelFetch(S, ivec3(x, y, uLayer), uLevel)" } },
         };
-        static auto sDataTypeVersions = std::map<TextureDataType, DataTypeVersion>{
-            { TextureDataType::Normalized, { "", "color" } },
-            { TextureDataType::Normalized_sRGB, { "", "color" } },
-            { TextureDataType::Float, { "", "color" } },
-            { TextureDataType::Uint8, { "u", "color / 255.0" } },
-            { TextureDataType::Uint16, { "u", "color / 65535.0" } },
-            { TextureDataType::Uint32, { "u", "color / 4294967295.0" } },
-            { TextureDataType::Uint_10_10_10_2, { "u", "color / vec4(vec3(1023.0), 3.0)" } },
-            { TextureDataType::Int8, { "i", "color / 127.0" } },
-            { TextureDataType::Int16, { "i", "color / 32767.0" } },
-            { TextureDataType::Int32, { "i", "color / 2147483647.0" } },
-            { TextureDataType::Compressed, { "", "color" } },
+        static auto sSampleTypeVersions = std::map<TextureSampleType, SampleTypeVersion>{
+            { TextureSampleType::Normalized, { "", "color" } },
+            { TextureSampleType::Normalized_sRGB, { "", "color" } },
+            { TextureSampleType::Float, { "", "color" } },
+            { TextureSampleType::Uint8, { "u", "color / 255.0" } },
+            { TextureSampleType::Uint16, { "u", "color / 65535.0" } },
+            { TextureSampleType::Uint32, { "u", "color / 4294967295.0" } },
+            { TextureSampleType::Uint_10_10_10_2, { "u", "color / vec4(vec3(1023.0), 3.0)" } },
+            { TextureSampleType::Int8, { "i", "color / 127.0" } },
+            { TextureSampleType::Int16, { "i", "color / 32767.0" } },
+            { TextureSampleType::Int32, { "i", "color / 2147483647.0" } },
         };
         static auto sComponetSwizzle = std::map<int, QString>{
             { 1, "vec4(vec3(color.r), 1)" },
@@ -154,15 +153,15 @@ void main() {
             { 3, "vec4(color.rgb, 1)" },
             { 4, "color" },
         };
-        const auto dataType = getTextureDataType(format);
+        const auto sampleType = getTextureSampleType(format);
         const auto targetVersion = sTargetVersions[target];
-        const auto dataTypeVersion = sDataTypeVersions[dataType];
+        const auto sampleTypeVersion = sSampleTypeVersions[sampleType];
         const auto swizzle = sComponetSwizzle[getTextureComponentCount(format)];
         return "#version 430\n"
                "#define S uTexture\n"
-               "#define SAMPLER " + dataTypeVersion.prefix + targetVersion.sampler + "\n"
+               "#define SAMPLER " + sampleTypeVersion.prefix + targetVersion.sampler + "\n"
                "#define SAMPLE " + targetVersion.sample + "\n" +
-               "#define MAPPING " + dataTypeVersion.mapping + "\n" +
+               "#define MAPPING " + sampleTypeVersion.mapping + "\n" +
                "#define SWIZZLE " + swizzle + "\n" +
                computeShaderSource;
     }

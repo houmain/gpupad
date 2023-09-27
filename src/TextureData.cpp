@@ -6,12 +6,11 @@
 #include <QScopeGuard>
 #include <QImageReader>
 #include <QtEndian>
-#include "tga/tga.h"
-#include "gli/gli.hpp"
-#define TINYEXR_IMPLEMENTATION
-#include "tinyexr/tinyexr.h"
-#include "TinyTIFF/src/tinytiffreader.h"
-#include "TinyTIFF/src/tinytiffwriter.h"
+
+#if defined(OPENIMAGEIO_ENABLED)
+#  pragma warning(disable: 4267)
+#  include <OpenImageIO/imageio.h>
+#endif
 
 #if defined(_WIN32)
 
@@ -36,45 +35,6 @@ static void initializeKtxOpenGLFunctions() {
 #endif // _WIN32
 
 namespace {
-    struct FreeEXRImage { void operator()(EXRImage* image) { ::FreeEXRImage(image); } };
-    struct FreeEXRHeader { void operator()(EXRHeader* header) { ::FreeEXRHeader(header); } };
-    using EXRHeaderPtr = std::unique_ptr<EXRHeader, FreeEXRHeader>;
-    using EXRImagePtr = std::unique_ptr<EXRImage, FreeEXRImage>;
-
-    template<typename T>
-    void copy_tiled(const EXRHeader& exr_header, const EXRImage& exr_image,
-                    const std::array<int, 4>& channel_indices, T* rgba, T one) {
-        for (auto t = 0; t < exr_image.num_tiles; ++t) {
-            const auto& tile = exr_image.tiles[t];
-            for (auto tile_y = 0; tile_y < exr_header.tile_size_y; ++tile_y)
-                for (auto tile_x = 0; tile_x < exr_header.tile_size_x; ++tile_x) {
-                    const auto dest_x = tile.offset_x * exr_header.tile_size_x + tile_x;
-                    const auto dest_y = tile.offset_y * exr_header.tile_size_y + tile_y;
-                    if (dest_x >= exr_image.width || dest_y >= exr_image.height)
-                        continue;
-
-                    const auto dest_index = (dest_x + dest_y * exr_image.width) * 4;
-                    const auto tile_index = tile_x + tile_y * exr_header.tile_size_x;
-                    for (auto c = 0; c < 4; ++c) {
-                        const auto channel_index = channel_indices[c];
-                        rgba[dest_index + c] = (channel_index >= 0 ?
-                            reinterpret_cast<const T*>(tile.images[channel_index])[tile_index] : one);
-                    }
-                }
-        }
-    }
-
-    template<typename T>
-    void copy_scanlines(const EXRHeader& exr_header, const EXRImage& exr_image,
-                        const std::array<int, 4>& channel_indices, T* rgba, T one) {
-      for (auto i = 0; i < exr_image.width * exr_image.height; ++i)
-          for (auto c = 0; c < 4; ++c) {
-              const auto channel_index = channel_indices[c];
-              rgba[i * 4 + c] = (channel_index >= 0 ?
-                  reinterpret_cast<const T*>(exr_image.images[channel_index])[i] : one);
-          }
-    }
-
     QImage::Format getNextNativeImageFormat(QImage::Format format)
     {
         switch (format) {
@@ -236,10 +196,10 @@ namespace {
             default:
                 return false;
         }
-        const auto dataType = getTextureDataType(format);
-        return (dataType == TextureDataType::Normalized ||
-                dataType == TextureDataType::Normalized_sRGB ||
-                dataType == TextureDataType::Float);
+        const auto sampleType = getTextureSampleType(format);
+        return (sampleType == TextureSampleType::Normalized ||
+                sampleType == TextureSampleType::Normalized_sRGB ||
+                sampleType == TextureSampleType::Float);
     }
 
     GLuint createFramebuffer(QOpenGLFunctions_3_3_Core& gl, GLenum target, GLuint textureId, GLenum attachment)
@@ -292,54 +252,14 @@ namespace {
         gl.glBindFramebuffer(GL_FRAMEBUFFER, previousTarget);
         return (glGetError() == GL_NONE);
     }
-
-    gli::target getGliTarget(QOpenGLTexture::Target target)
-    {
-        switch (target) {
-            case QOpenGLTexture::TargetBuffer:
-            case QOpenGLTexture::Target1D: return gli::TARGET_1D;
-            case QOpenGLTexture::Target1DArray: return gli::TARGET_1D_ARRAY;
-            case QOpenGLTexture::Target2DMultisample:
-            case QOpenGLTexture::Target2D: return gli::TARGET_2D;
-            case QOpenGLTexture::Target2DMultisampleArray:
-            case QOpenGLTexture::Target2DArray: return gli::TARGET_2D_ARRAY;
-            case QOpenGLTexture::Target3D: return gli::TARGET_3D;
-            case QOpenGLTexture::TargetCubeMap: return gli::TARGET_CUBE;
-            case QOpenGLTexture::TargetCubeMapArray: return gli::TARGET_CUBE_ARRAY;
-            case QOpenGLTexture::TargetRectangle: return gli::TARGET_RECT;
-        }
-        return { };
-    }
 } // namespace
 
-TextureDataType getTextureDataType(QOpenGLTexture::TextureFormat format)
+TextureSampleType getTextureSampleType(QOpenGLTexture::TextureFormat format)
 {
     switch (format) {
-        case QOpenGLTexture::R8_UNorm:
-        case QOpenGLTexture::RG8_UNorm:
-        case QOpenGLTexture::RGB8_UNorm:
-        case QOpenGLTexture::RGBA8_UNorm:
-        case QOpenGLTexture::R16_UNorm:
-        case QOpenGLTexture::RG16_UNorm:
-        case QOpenGLTexture::RGB16_UNorm:
-        case QOpenGLTexture::RGBA16_UNorm:
-        case QOpenGLTexture::R8_SNorm:
-        case QOpenGLTexture::RG8_SNorm:
-        case QOpenGLTexture::RGB8_SNorm:
-        case QOpenGLTexture::RGBA8_SNorm:
-        case QOpenGLTexture::R16_SNorm:
-        case QOpenGLTexture::RG16_SNorm:
-        case QOpenGLTexture::RGB16_SNorm:
-        case QOpenGLTexture::RGBA16_SNorm:
-        case QOpenGLTexture::RG3B2:
-        case QOpenGLTexture::R5G6B5:
-        case QOpenGLTexture::RGB5A1:
-        case QOpenGLTexture::RGBA4:
-            return TextureDataType::Normalized;
-
         case QOpenGLTexture::SRGB8:
         case QOpenGLTexture::SRGB8_Alpha8:
-            return TextureDataType::Normalized_sRGB;
+            return TextureSampleType::Normalized_sRGB;
 
         case QOpenGLTexture::R16F:
         case QOpenGLTexture::RG16F:
@@ -351,8 +271,62 @@ TextureDataType getTextureDataType(QOpenGLTexture::TextureFormat format)
         case QOpenGLTexture::RGBA32F:
         case QOpenGLTexture::RGB9E5:
         case QOpenGLTexture::RG11B10F:
-            return TextureDataType::Float;
+            return TextureSampleType::Float;
 
+        case QOpenGLTexture::R8U:
+        case QOpenGLTexture::RG8U:
+        case QOpenGLTexture::RGB8U:
+        case QOpenGLTexture::RGBA8U:
+        case QOpenGLTexture::S8:
+            return TextureSampleType::Uint8;
+
+        case QOpenGLTexture::R16U:
+        case QOpenGLTexture::RG16U:
+        case QOpenGLTexture::RGB16U:
+        case QOpenGLTexture::RGBA16U:
+            return TextureSampleType::Uint16;
+
+        case QOpenGLTexture::R32U:
+        case QOpenGLTexture::RG32U:
+        case QOpenGLTexture::RGB32U:
+        case QOpenGLTexture::RGBA32U:
+            return TextureSampleType::Uint32;
+
+        case QOpenGLTexture::R8I:
+        case QOpenGLTexture::RG8I:
+        case QOpenGLTexture::RGB8I:
+        case QOpenGLTexture::RGBA8I:
+            return TextureSampleType::Int8;
+
+        case QOpenGLTexture::R16I:
+        case QOpenGLTexture::RG16I:
+        case QOpenGLTexture::RGB16I:
+        case QOpenGLTexture::RGBA16I:
+            return TextureSampleType::Int16;
+
+        case QOpenGLTexture::R32I:
+        case QOpenGLTexture::RG32I:
+        case QOpenGLTexture::RGB32I:
+        case QOpenGLTexture::RGBA32I:
+            return TextureSampleType::Int32;
+
+        case QOpenGLTexture::RGB10A2:
+            return TextureSampleType::Uint_10_10_10_2;
+
+        default:
+            return TextureSampleType::Normalized;
+    }
+}
+
+TextureDataType getTextureDataType(QOpenGLTexture::TextureFormat format)
+{
+    switch (format) {
+        case QOpenGLTexture::R8_UNorm:
+        case QOpenGLTexture::RG8_UNorm:
+        case QOpenGLTexture::RGB8_UNorm:
+        case QOpenGLTexture::RGBA8_UNorm:
+        case QOpenGLTexture::SRGB8:
+        case QOpenGLTexture::SRGB8_Alpha8:
         case QOpenGLTexture::R8U:
         case QOpenGLTexture::RG8U:
         case QOpenGLTexture::RGB8U:
@@ -360,29 +334,43 @@ TextureDataType getTextureDataType(QOpenGLTexture::TextureFormat format)
         case QOpenGLTexture::S8:
             return TextureDataType::Uint8;
 
+        case QOpenGLTexture::R16_UNorm:
+        case QOpenGLTexture::RG16_UNorm:
+        case QOpenGLTexture::RGB16_UNorm:
+        case QOpenGLTexture::RGBA16_UNorm:
         case QOpenGLTexture::R16U:
         case QOpenGLTexture::RG16U:
         case QOpenGLTexture::RGB16U:
         case QOpenGLTexture::RGBA16U:
+        case QOpenGLTexture::D16:
             return TextureDataType::Uint16;
 
-        case QOpenGLTexture::R32U:
-        case QOpenGLTexture::RG32U:
-        case QOpenGLTexture::RGB32U:
-        case QOpenGLTexture::RGBA32U:
-            return TextureDataType::Uint32;
-
+        case QOpenGLTexture::R8_SNorm:
+        case QOpenGLTexture::RG8_SNorm:
+        case QOpenGLTexture::RGB8_SNorm:
+        case QOpenGLTexture::RGBA8_SNorm:
         case QOpenGLTexture::R8I:
         case QOpenGLTexture::RG8I:
         case QOpenGLTexture::RGB8I:
         case QOpenGLTexture::RGBA8I:
             return TextureDataType::Int8;
 
+        case QOpenGLTexture::R16_SNorm:
+        case QOpenGLTexture::RG16_SNorm:
+        case QOpenGLTexture::RGB16_SNorm:
+        case QOpenGLTexture::RGBA16_SNorm:
         case QOpenGLTexture::R16I:
         case QOpenGLTexture::RG16I:
         case QOpenGLTexture::RGB16I:
         case QOpenGLTexture::RGBA16I:
             return TextureDataType::Int16;
+
+        case QOpenGLTexture::R32U:
+        case QOpenGLTexture::RG32U:
+        case QOpenGLTexture::RGB32U:
+        case QOpenGLTexture::RGBA32U:
+        case QOpenGLTexture::D32:
+            return TextureDataType::Uint32;
 
         case QOpenGLTexture::R32I:
         case QOpenGLTexture::RG32I:
@@ -390,54 +378,36 @@ TextureDataType getTextureDataType(QOpenGLTexture::TextureFormat format)
         case QOpenGLTexture::RGBA32I:
             return TextureDataType::Int32;
 
-        case QOpenGLTexture::RGB10A2:
-            return TextureDataType::Uint_10_10_10_2;
+        case QOpenGLTexture::R16F:
+        case QOpenGLTexture::RG16F:
+        case QOpenGLTexture::RGB16F:
+        case QOpenGLTexture::RGBA16F:
+            return TextureDataType::Float16;
+
+        case QOpenGLTexture::R32F:
+        case QOpenGLTexture::RG32F:
+        case QOpenGLTexture::RGB32F:
+        case QOpenGLTexture::RGBA32F:
+        case QOpenGLTexture::D32F:
+            return TextureDataType::Float32;
 
         default:
-            return TextureDataType::Compressed;
+            return TextureDataType::Other;
     }
 }
 
 int getTextureDataSize(QOpenGLTexture::TextureFormat format)
 {
     switch (getTextureDataType(format)) {
-        case TextureDataType::Normalized:
-        case TextureDataType::Normalized_sRGB:
-            switch (format) {
-                case QOpenGLTexture::R16_UNorm:
-                case QOpenGLTexture::RG16_UNorm:
-                case QOpenGLTexture::RGB16_UNorm:
-                case QOpenGLTexture::RGBA16_UNorm:
-                case QOpenGLTexture::R16_SNorm:
-                case QOpenGLTexture::RG16_SNorm:
-                case QOpenGLTexture::RGB16_SNorm:
-                case QOpenGLTexture::RGBA16_SNorm:
-                case QOpenGLTexture::R5G6B5:
-                case QOpenGLTexture::RGB5A1:
-                case QOpenGLTexture::RGBA4:
-                    return 2;
-
-                default:
-                    return 1;
-            }
-            break;
-
-        case TextureDataType::Uint8:
-        case TextureDataType::Int8:
-            return 1;
-
-        case TextureDataType::Uint16:
-        case TextureDataType::Int16:
-            return 2;
-
-        case TextureDataType::Uint32:
-        case TextureDataType::Int32:
-        case TextureDataType::Float:
-        case TextureDataType::Uint_10_10_10_2:
-            return 4;
-
-        case TextureDataType::Compressed:
-            break;
+        case TextureDataType::Int8: return 1;
+        case TextureDataType::Int16: return 2;
+        case TextureDataType::Int32: return 4;
+        case TextureDataType::Uint8: return 1;
+        case TextureDataType::Uint16: return 2;
+        case TextureDataType::Uint32: return 4;
+        case TextureDataType::Float16: return 2;
+        case TextureDataType::Float32: return 4;
+        case TextureDataType::Other: return 0;
     }
     return 0;
 }
@@ -652,50 +622,52 @@ bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
     return true;
 }
 
-bool TextureData::loadGli(const QString &fileName, bool flipVertically) try
+bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
 {
-    auto texture = gli::load(qUtf8Printable(fileName));
-    if (texture.empty())
+    using namespace OIIO;
+    auto input = ImageInput::open(fileName.toStdWString());
+    if (!input)
         return false;
 
-    if (flipVertically) {
-        try {
-            texture = gli::flip(std::move(texture));
-        }
-        catch (...) {
-            flipVertically = false;
-        }
-    }
-        
-    auto gl = gli::gl(gli::gl::PROFILE_GL33);
-    const auto format = gl.translate(texture.format(), texture.swizzles());
-    const auto target = static_cast<QOpenGLTexture::Target>(gl.translate(texture.target()));
-    const auto extent = texture.extent();
-    const auto levels = (texture.levels() > 1 ? texture.levels() : 0);
+    using F = QOpenGLTexture::TextureFormat;
+    const ImageSpec &spec = input->spec();
 
-    if (!create(target, static_cast<QOpenGLTexture::TextureFormat>(format.Internal),
-          extent.x, extent.y, extent.z, static_cast<int>(texture.layers()), 1, 
-          static_cast<int>(levels)))
+    const auto channel = [&](auto c1, auto c2, auto c3, auto c4) {
+        switch (spec.nchannels) {
+            case 1: return c1;
+            case 2: return c2;
+            case 3: return c3;
+            case 4: return c4;
+        }
+        return F::NoFormat;
+    };
+    const auto format = [&]() {
+        switch (spec.format.basetype) {
+            case TypeDesc::UINT8: return channel(F::R8_UNorm, F::RG8_UNorm, F::RGB8_UNorm, F::RGBA8_UNorm);
+            case TypeDesc::INT8: return channel(F::R8_SNorm, F::RG8_SNorm, F::RGB8_SNorm, F::RGBA8_SNorm);
+            case TypeDesc::UINT16: return channel(F::R16_UNorm, F::RG16_UNorm, F::RGB16_UNorm, F::RGBA16_UNorm);
+            case TypeDesc::INT16: return channel(F::R16_SNorm, F::RG16_SNorm, F::RGB16_SNorm, F::RGBA16_SNorm);
+            case TypeDesc::UINT32: return channel(F::R32U, F::RG32U, F::RGB32U, F::RGBA32U);
+            case TypeDesc::INT32: return channel(F::R32I, F::RG32I, F::RGB32I, F::RGBA32I);
+            //case TypeDesc::UINT64: return channel(F::R64U, F::RG64U, F::RGB64U, F::RGBA64U);
+            //case TypeDesc::INT64: return channel(F::R64I, F::RG64I, F::RGB64I, F::RGBA64I);
+            case TypeDesc::HALF: return channel(F::R16F, F::RG16F, F::RGB16F, F::RGBA16F);
+            case TypeDesc::FLOAT: return channel(F::R32F, F::RG32F, F::RGB32F, F::RGBA32F);
+            //case TypeDesc::TOUBLE: return channel(F::R64F, F::RG64F, F::RGB64F, F::RGBA64F);
+        }
+        return F::NoFormat;
+    }();
+    const auto target = (spec.depth > 1 ?
+        QOpenGLTexture::Target3D : QOpenGLTexture::Target2D);
+
+    if (!create(target, format, spec.width, spec.height, spec.depth))
         return false;
 
-    for (auto layer = 0u; layer < texture.layers(); ++layer)
-        for (auto face = 0u; face < texture.faces(); ++face)
-            for (auto level = 0u; level < texture.levels(); ++level) {
-                auto dest = getWriteonlyData(level, layer, face);
-                const auto source = texture.data(layer, face, level);
-                const auto sourceSize = static_cast<int>(texture.size(level));
-                const auto destSize = getImageSize(level);
-                if (!source || !dest)
-                    return false;
+    // TODO: load all layers/levels
+    if (!input->read_image(0, 0, 0, -1, spec.format, getWriteonlyData(0, 0, 0)))
+        return false;
 
-                std::memcpy(dest, source, std::min(sourceSize, destSize));
-            }
-    mFlippedVertically = flipVertically;
     return true;
-}
-catch (...)
-{
-    return false;
 }
 
 bool TextureData::loadQImage(const QString &fileName, bool flipVertically)
@@ -732,216 +704,6 @@ bool TextureData::loadQImage(QImage image, bool flipVertically)
         static_cast<size_t>(getImageSize(0)));
 
     mFlippedVertically = flipVertically;
-    return true;
-}
-
-bool TextureData::loadExr(const QString &fileName, bool flipVertically)
-{
-    auto exr_version = EXRVersion{ };
-    if (ParseEXRVersionFromFile(&exr_version,
-        qUtf8Printable(fileName)) != 0)
-        return false;
-
-    if (exr_version.multipart)
-        return false;
-
-    auto exr_header = EXRHeader{ };
-    InitEXRHeader(&exr_header);
-    if (ParseEXRHeaderFromFile(&exr_header, &exr_version,
-        qUtf8Printable(fileName), nullptr) != 0)
-        return false;
-
-    if (exr_header.num_channels < 1)
-        return false;
-
-    const auto pixel_type = exr_header.pixel_types[0];
-    for (auto i = 1; i < exr_header.num_channels; ++i)
-        if (exr_header.pixel_types[i] != pixel_type)
-            return false;
-
-    const auto width = exr_header.data_window.max_x - exr_header.data_window.min_x + 1;
-    const auto height = exr_header.data_window.max_y - exr_header.data_window.min_y + 1;
-    auto format = QOpenGLTexture::TextureFormat{ };
-    switch (pixel_type) {
-      case TINYEXR_PIXELTYPE_UINT:
-          format = QOpenGLTexture::RGBA32I;
-          break;
-      case TINYEXR_PIXELTYPE_HALF:
-          format = QOpenGLTexture::RGBA16F;
-          break;
-      case TINYEXR_PIXELTYPE_FLOAT:
-          format = QOpenGLTexture::RGBA32F;
-          break;
-      default:
-          return false;
-    }
-
-    if (!create(QOpenGLTexture::Target2D, format, width, height))
-        return false;
-
-    auto exr_image = EXRImage{ };
-    InitEXRImage(&exr_image);
-    if (LoadEXRImageFromFile(&exr_image, &exr_header,
-        qUtf8Printable(fileName), nullptr) != 0)
-        return false;
-
-    auto image = EXRImagePtr(new EXRImage(exr_image));
-
-    auto channels = std::vector<tinyexr::LayerChannel>();
-    tinyexr::ChannelsInLayer(exr_header, "", channels);
-    auto channel_indices = std::array<int, 4>{ -1, -1, -1, -1 };
-    for (const auto& channel : channels) {
-        auto c = 0;
-        for (auto channel_name : { "R", "G", "B", "A" }) {
-            if (channel.name == channel_name)
-                channel_indices[c] = static_cast<int>(channel.index);
-            ++c;
-        }
-    }
-
-    auto data = static_cast<void*>(getWriteonlyData(0, 0, 0));
-
-    const auto half_float_one = uint16_t{ 15360 };
-    if (exr_header.tiled) {
-        if (exr_header.pixel_types[0] == TINYEXR_PIXELTYPE_HALF) {
-            copy_tiled(exr_header, exr_image, channel_indices,
-              static_cast<uint16_t*>(data), half_float_one);
-        }
-        else if (exr_header.pixel_types[0] == TINYEXR_PIXELTYPE_FLOAT) {
-            copy_tiled(exr_header, exr_image, channel_indices,
-              static_cast<float*>(data), 1.0f);
-        }
-    }
-    else {
-        if (exr_header.pixel_types[0] == TINYEXR_PIXELTYPE_HALF) {
-            copy_scanlines(exr_header, exr_image, channel_indices,
-              static_cast<uint16_t*>(data), half_float_one);
-        }
-        else if (exr_header.pixel_types[0] == TINYEXR_PIXELTYPE_FLOAT) {
-            copy_scanlines(exr_header, exr_image, channel_indices,
-              static_cast<float*>(data), 1.0f);
-        }
-    }
-    return true;
-}
-
-bool TextureData::loadTga(const QString &fileName, bool flipVertically)
-{
-    auto f = std::fopen(qUtf8Printable(fileName), "rb");
-    if (!f)
-        return false;
-    auto guard = qScopeGuard([&]() { std::fclose(f); });
-
-    auto file = tga::StdioFileInterface(f);
-    auto decoder = tga::Decoder(&file);
-    auto header = tga::Header();
-    if (!decoder.readHeader(header))
-        return false;
-
-    const auto format = (header.bytesPerPixel() == 4 ? 
-        QOpenGLTexture::TextureFormat::RGBA8_UNorm : 
-        QOpenGLTexture::TextureFormat::R8_UNorm);
-    if (!create(QOpenGLTexture::Target2D, format, header.width, header.height))
-        return false;
-
-    auto image = tga::Image();
-    image.bytesPerPixel = header.bytesPerPixel();
-    image.rowstride = header.width * header.bytesPerPixel();
-    image.pixels = getWriteonlyData(0, 0, 0);
-    if (static_cast<int>(image.rowstride * header.height) != getImageSize(0))
-        return false;
-
-    if (!decoder.readImage(header, image, nullptr))
-        return false;
-
-    decoder.postProcessImage(header, image);
-
-    if (flipVertically)
-        this->flipVertically();
-
-    return true;
-}
-
-bool TextureData::loadTiff(const QString &fileName, bool flipVertically)
-{
-    auto f = TinyTIFFReader_open(qUtf8Printable(fileName)); 
-    if (!f)
-        return false;
-    auto guard = qScopeGuard([&]() { TinyTIFFReader_close(f); });
-    if (TinyTIFFReader_wasError(f))
-        return false;
-
-    const auto width = TinyTIFFReader_getWidth(f); 
-    const auto height = TinyTIFFReader_getHeight(f); 
-    const auto sampleCount = TinyTIFFReader_getSamplesPerPixel(f);
-    const auto bytesPerSample = TinyTIFFReader_getBitsPerSample(f, 0) / 8u;
-    const auto sampleFormat = TinyTIFFReader_getSampleFormat(f);
-
-    const auto isInt = sampleFormat == TINYTIFF_SAMPLEFORMAT_INT;
-    const auto isFloat = sampleFormat == TINYTIFF_SAMPLEFORMAT_FLOAT;
-    using Format = QOpenGLTexture::TextureFormat;
-    auto format = Format::NoFormat;
-    switch (sampleCount) {
-        case 1: 
-            switch (bytesPerSample) {
-                case 1: format = Format::R8_UNorm; break;
-                case 2: format = Format::R16_UNorm; break;
-                case 4: format = (isInt ? Format::R32I : isFloat ? Format::R32F : Format::R8U); break;
-            }
-            break;
-        case 2: 
-            switch (bytesPerSample) {
-                case 1: format = Format::RG8_UNorm; break;
-                case 2: format = Format::RG16_UNorm; break;
-                case 4: format = (isInt ? Format::RG32I : isFloat ? Format::RG32F : Format::RG8U); break;
-            }
-            break;
-        case 3: 
-            switch (bytesPerSample) {
-                case 1: format = Format::RGB8_UNorm; break;
-                case 2: format = Format::RGB16_UNorm; break;
-                case 4: format = (isInt ? Format::RGB32I : isFloat ? Format::RGB32F : Format::RGB8U); break;
-            }
-            break;
-        case 4: 
-            switch (bytesPerSample) {
-                case 1: format = Format::RGBA8_UNorm; break;
-                case 2: format = Format::RGBA16_UNorm; break;
-                case 4: format = (isInt ? Format::RGBA32I : isFloat ? Format::RGBA32F : Format::RGBA8U); break;
-            }
-            break;
-    }
-    if (!format)
-        return false;
-
-    if (!create(QOpenGLTexture::Target2D, format, width, height))
-        return false;
-
-    const auto planeSize = width * height * bytesPerSample;
-    auto data = std::vector<uchar>(planeSize * sampleCount);
-    auto plane = std::vector<uchar*>();
-    auto p = data.data();
-    for (auto i = 0; i < sampleCount; ++i) {
-        TinyTIFFReader_getSampleData(f, p, i); 
-        plane.push_back(p);
-        p += planeSize;
-    }
-    if (TinyTIFFReader_wasError(f))
-        return false;
-
-    auto imageData = getWriteonlyData(0, 0, 0);
-    const auto padding = (getImageSize(0) / height) - (width * sampleCount * bytesPerSample);
-    for (auto y = 0u; y < height; ++y) {
-        for (auto x = 0u; x < width; ++x)
-            for (auto s = 0u; s < sampleCount; ++s)
-                for (auto b = 0u; b < bytesPerSample; ++b)
-                    *imageData++ = *plane[s]++;
-        imageData += padding;
-    }
-
-    if (flipVertically)
-        this->flipVertically();
-
     return true;
 }
 
@@ -1002,11 +764,8 @@ bool TextureData::loadPfm(const QString &fileName, bool flipVertically)
 bool TextureData::load(const QString &fileName, bool flipVertically)
 {
     return loadKtx(fileName, flipVertically) ||
-           loadGli(fileName, flipVertically) ||
-           loadExr(fileName, flipVertically) ||
-           loadTga(fileName, flipVertically) ||
-           loadTiff(fileName, flipVertically) ||
            loadPfm(fileName, flipVertically) ||
+           loadOpenImageIO(fileName, flipVertically) ||
            loadQImage(fileName, flipVertically);
 }
 
@@ -1019,146 +778,6 @@ bool TextureData::saveKtx(const QString &fileName, bool flipVertically) const
         mKtxTexture.get(), qUtf8Printable(fileName)) == KTX_SUCCESS);
 }
 
-bool TextureData::saveGli(const QString &fileName, bool flipVertically) const try
-{
-    if (!fileName.endsWith(".ktx", Qt::CaseInsensitive) &&
-        !fileName.endsWith(".dds", Qt::CaseInsensitive) &&
-        !fileName.endsWith(".exr", Qt::CaseInsensitive) &&
-        !fileName.endsWith(".kmg", Qt::CaseInsensitive))
-        return false;
-
-    auto gl = gli::gl(gli::gl::PROFILE_GL33);
-    const auto gli_format = gl.find(
-        static_cast<gli::gl::internal_format>(format()),
-        static_cast<gli::gl::external_format>(pixelFormat()),
-        static_cast<gli::gl::type_format>(pixelType()));
-    if (!gli_format)
-        return false;
-
-    auto texture = gli::texture(getGliTarget(target()),
-        gli_format, gli::extent3d{ width(), height(), depth() },
-        layers(), faces(), levels());
-
-    if (flipVertically)
-        texture = gli::flip(std::move(texture));
-
-    for (auto layer = 0u; layer < texture.layers(); ++layer)
-        for (auto face = 0u; face < texture.faces(); ++face)
-            for (auto level = 0u; level < texture.levels(); ++level) {
-                auto dest = texture.data(layer, face, level);
-                const auto source = getData(level, layer, face);
-                const auto sourceSize = static_cast<int>(texture.size(level));
-                const auto destSize = getImageSize(level);
-                if (!source || !dest)
-                    return false;
-
-                std::memcpy(dest, source, std::min(sourceSize, destSize));
-            }
-
-    return gli::save(texture, qUtf8Printable(fileName));
-}
-catch (...)
-{
-    return false;
-}
-
-bool TextureData::saveExr(const QString &fileName, bool flipVertically) const
-{
-    if (!fileName.endsWith(".exr", Qt::CaseInsensitive))
-        return false;
-
-    // TODO
-    return false;
-}
-
-bool TextureData::saveTga(const QString &fileName, bool flipVertically) const
-{
-    if (!fileName.endsWith(".tga", Qt::CaseInsensitive))
-        return false;
-
-    auto imageData = toImage();
-    if (imageData.isNull())
-        return false;
-
-    if (flipVertically)
-        imageData = std::move(imageData).mirrored();
-
-    auto header = tga::Header();
-    header.width = width();
-    header.height = height();
-    if (imageData.isGrayscale()) {
-        imageData = std::move(imageData).convertToFormat(QImage::Format_Grayscale8);
-        header.imageType = tga::UncompressedGray;
-        header.bitsPerPixel = 8;
-    }
-    else if (imageData.hasAlphaChannel()) {
-        imageData = std::move(imageData).convertToFormat(QImage::Format_RGBA8888);
-        header.imageType = tga::UncompressedRgb;
-        header.bitsPerPixel = 32;
-    }
-    else {
-        imageData = std::move(imageData).convertToFormat(QImage::Format_RGB888);
-        header.imageType = tga::UncompressedRgb;
-        header.bitsPerPixel = 24;
-    }
-    auto image = tga::Image();
-    image.bytesPerPixel = header.bytesPerPixel();
-    image.rowstride = header.width * header.bytesPerPixel();
-    image.pixels = imageData.bits();
-    if (image.rowstride * header.height != imageData.sizeInBytes())
-        return false;
-
-    auto file = std::fopen(qUtf8Printable(fileName), "wb");
-    if (!file)
-        return false;
-    auto guard = qScopeGuard([&]() { std::fclose(file); });
-    auto fileInterface = tga::StdioFileInterface(file);
-    auto encoder = tga::Encoder(&fileInterface);
-    encoder.writeHeader(header);
-    encoder.writeImage(header, image, nullptr);
-    encoder.writeFooter();
-    return true;
-}
-
-bool TextureData::saveTiff(const QString &fileName, bool flipVertically) const
-{
-    if (!fileName.endsWith(".tif", Qt::CaseInsensitive) &&
-        !fileName.endsWith(".tiff", Qt::CaseInsensitive))
-        return false;
-
-    const auto dataType = getTextureDataType(format());
-    const auto sampleFormat = [&]() -> TinyTIFFWriterSampleFormat {
-        switch (dataType) {
-            case TextureDataType::Normalized:
-            case TextureDataType::Normalized_sRGB:
-            case TextureDataType::Float:
-                return TinyTIFFWriter_Float;
-            case TextureDataType::Int8:
-            case TextureDataType::Int16:
-            case TextureDataType::Int32:
-                return TinyTIFFWriter_Int;
-            case TextureDataType::Uint8:
-            case TextureDataType::Uint16:
-            case TextureDataType::Uint32:
-            case TextureDataType::Uint_10_10_10_2:
-            case TextureDataType::Compressed:
-                return TinyTIFFWriter_UInt;
-        }
-        return { };
-    }();
-    const auto sampleCount = getTextureComponentCount(format());
-    const auto bitsPerSample = getTextureDataSize(format()) * 8;
-
-    auto f = TinyTIFFWriter_open(qUtf8Printable(fileName), bitsPerSample, 
-        sampleFormat, sampleCount, width(), height(),
-        TinyTIFFWriter_AutodetectSampleInterpetation);
-    if (!f)
-        return false;
-    auto guard = qScopeGuard([&]() { TinyTIFFWriter_close(f); });
-    
-    return (TinyTIFFWriter_writeImage(f, getData(0, 0, 0)) == TINYTIFF_TRUE);
-}
-
 bool TextureData::savePfm(const QString &fileName, bool flipVertically) const
 {
     if (!fileName.endsWith(".pfm", Qt::CaseInsensitive))
@@ -1166,6 +785,40 @@ bool TextureData::savePfm(const QString &fileName, bool flipVertically) const
 
     // TODO
     return false;
+}
+
+bool TextureData::saveOpenImageIO(const QString &fileName, bool flipVertically) const
+{
+    using namespace OIIO;
+
+    const auto typeDesc = [&]() {
+        switch (getTextureDataType(format())) {
+            case TextureDataType::Uint8: return TypeDesc::UINT8;
+            case TextureDataType::Int8: return TypeDesc::INT8;
+            case TextureDataType::Uint16: return TypeDesc::UINT16;
+            case TextureDataType::Int16: return TypeDesc::INT16;
+            case TextureDataType::Uint32: return TypeDesc::UINT32;
+            case TextureDataType::Int32: return TypeDesc::INT32;
+            case TextureDataType::Float16: return TypeDesc::HALF;
+            case TextureDataType::Float32: return TypeDesc::FLOAT;
+            case TextureDataType::Other: return TypeDesc::NONE;
+        }
+        return TypeDesc::NONE;
+    }();
+    if (typeDesc == TypeDesc::NONE)
+        return false;
+
+    auto output = ImageOutput::create(fileName.toStdWString());
+    if (!output)
+        return false;
+
+    const auto channelCount = getTextureComponentCount(format());
+    const auto spec = ImageSpec(width(), height(), channelCount, typeDesc);
+    if (!output->open(fileName.toStdWString(), spec))
+        return false;
+    if (!output->write_image(typeDesc, getData(0, 0, 0)))
+        return false;
+    return true;
 }
 
 bool TextureData::saveQImage(const QString &fileName, bool flipVertically) const
@@ -1183,11 +836,8 @@ bool TextureData::saveQImage(const QString &fileName, bool flipVertically) const
 bool TextureData::save(const QString &fileName, bool flipVertically) const
 {
     return saveKtx(fileName, flipVertically) ||
-           saveGli(fileName, flipVertically) ||
-           saveExr(fileName, flipVertically) ||
-           saveTga(fileName, flipVertically) ||
-           saveTiff(fileName, flipVertically) ||
            savePfm(fileName, flipVertically) ||
+           saveOpenImageIO(fileName, flipVertically) ||
            saveQImage(fileName, flipVertically);
 }
 
@@ -1391,8 +1041,20 @@ bool TextureData::upload(GLuint *textureId,
 {
     if (isNull() || !textureId)
         return false;
-    if (!format)
+
+    if (format) {
+        const auto texelSizeA =
+            getTextureDataSize(format) *
+            getTextureComponentCount(format);
+        const auto texelSizeB =
+            getTextureDataSize(this->format()) *
+            getTextureComponentCount(this->format());
+        if (texelSizeA != texelSizeB)
+            return false;
+    }
+    else {
         format = this->format();
+    }
 
     if (isMultisampleTarget(mTarget)) {
         QOpenGLFunctions_3_3_Core gl;
@@ -1404,9 +1066,6 @@ bool TextureData::upload(GLuint *textureId,
     }
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-#if defined(_WIN32)
-    initializeKtxOpenGLFunctions();
-#endif
 
     const auto originalInternalFormat = mKtxTexture->glInternalformat;
     const auto originalFormat = mKtxTexture->glFormat;
@@ -1424,6 +1083,7 @@ bool TextureData::upload(GLuint *textureId,
 
     mKtxTexture->glInternalformat = originalInternalFormat;
     mKtxTexture->glFormat = originalFormat;
+    mKtxTexture->glType = originalType;
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     return result;
