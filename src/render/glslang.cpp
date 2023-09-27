@@ -7,7 +7,7 @@
 #include <cstring>
 
 #if defined(SPIRV_CROSS_ENABLED)
-#  include "SPIRV-Cross/spirv_glsl.hpp"
+#  include "spirv_glsl.hpp"
 #endif
 
 namespace glslang 
