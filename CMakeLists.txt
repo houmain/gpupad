@@ -39,17 +39,6 @@ add_definitions(-DQT_NO_CAST_TO_ASCII
 set(SOURCES
   libs/SingleApplication/singleapplication.cpp
   libs/SingleApplication/singleapplication_p.cpp
-  libs/KTX/lib/checkheader.c
-  libs/KTX/lib/errstr.c
-  libs/KTX/lib/filestream.c
-  libs/KTX/lib/hashlist.c
-  libs/KTX/lib/hashtable.c
-  libs/KTX/lib/memstream.c
-  libs/KTX/lib/swap.c
-  libs/KTX/lib/texture.c
-  libs/KTX/lib/writer.c
-  libs/KTX/lib/writer_v1.c
-  libs/KTX/lib/glloader.c
   src/FileDialog.cpp
   src/EvaluatedPropertyCache.cpp
   src/FileCache.cpp
@@ -166,12 +155,14 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SOURCES} ${HEADERS})
 
+find_package(Ktx CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE KTX::ktx)
+
 find_package(Lua REQUIRED)
 target_include_directories(${PROJECT_NAME} PRIVATE ${LUA_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LUA_LIBRARIES})
 
-add_compile_definitions(KTX_OPENGL)
-target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include libs/gli libs/glm)
+target_include_directories(${PROJECT_NAME} PRIVATE src libs)
 
 if (MSVC)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)

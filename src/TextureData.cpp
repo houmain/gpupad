@@ -12,28 +12,6 @@
 #  include <OpenImageIO/imageio.h>
 #endif
 
-#if defined(_WIN32)
-
-// tweaked KTX glloader a bit to prevent glew dependency, look for //@ when updating
-#  include "GL/glcorearb.h"
-#  include "KTX/lib/gl_funcptrs.h"
-
-static void initializeKtxOpenGLFunctions() {
-    if (pfGlTexImage1D)
-        return;
-    auto gl = QOpenGLContext::currentContext();
-#define ADD(X) pfGl##X = reinterpret_cast<decltype(pfGl##X)>(gl->getProcAddress("gl"#X))
-    ADD(TexImage1D);
-    ADD(TexImage3D);
-    ADD(CompressedTexImage1D);
-    ADD(CompressedTexImage2D);
-    ADD(CompressedTexImage3D);
-    ADD(GenerateMipmap);
-    ADD(GetStringi);
-#undef ADD
-}
-#endif // _WIN32
-
 namespace {
     QImage::Format getNextNativeImageFormat(QImage::Format format)
     {
@@ -143,7 +121,7 @@ namespace {
         }
     }
 
-    QOpenGLTexture::Target getTarget(const ktxTexture &texture)
+    QOpenGLTexture::Target getTarget(const ktxTexture1 &texture)
     {
         if (texture.isCubemap)
             return (texture.isArray ?
@@ -595,10 +573,10 @@ bool TextureData::create(
       (!canGenerateMipmaps(target, format) ? 1 :
         getLevelCount(createInfo)));
 
-    auto texture = std::add_pointer_t<ktxTexture>{ };
-    if (ktxTexture_Create(&createInfo, KTX_TEXTURE_CREATE_ALLOC_STORAGE,
+      auto texture = std::add_pointer_t<ktxTexture1>{ };
+    if (ktxTexture1_Create(&createInfo, KTX_TEXTURE_CREATE_ALLOC_STORAGE,
             &texture) == KTX_SUCCESS) {
-        mKtxTexture.reset(texture, &ktxTexture_Destroy);
+        mKtxTexture.reset(texture, [](ktxTexture1* tex) { ktxTexture_Destroy(ktxTexture(tex)); });
         mTarget = target;
         mSamples = (isMultisampleTarget(target) ? samples : 1);
         return true;
@@ -608,13 +586,13 @@ bool TextureData::create(
 
 bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
 {
-    auto texture = std::add_pointer_t<ktxTexture>{ };
-    if (ktxTexture_CreateFromNamedFile(qUtf8Printable(fileName),
+    auto texture = std::add_pointer_t<ktxTexture1>{ };
+    if (ktxTexture1_CreateFromNamedFile(qUtf8Printable(fileName),
             KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture) != KTX_SUCCESS)
         return false;
 
     mTarget = getTarget(*texture);
-    mKtxTexture.reset(texture, &ktxTexture_Destroy);
+    mKtxTexture.reset(texture, [](ktxTexture1* tex) { ktxTexture_Destroy(ktxTexture(tex)); });
     
     if (flipVertically)
         this->flipVertically();
@@ -774,8 +752,8 @@ bool TextureData::saveKtx(const QString &fileName, bool flipVertically) const
     if (!fileName.endsWith(".ktx", Qt::CaseInsensitive))
         return false;
 
-    return (ktxTexture_WriteToNamedFile(
-        mKtxTexture.get(), qUtf8Printable(fileName)) == KTX_SUCCESS);
+    return (ktxTexture_WriteToNamedFile(ktxTexture(mKtxTexture.get()), 
+        qUtf8Printable(fileName)) == KTX_SUCCESS);
 }
 
 bool TextureData::savePfm(const QString &fileName, bool flipVertically) const
@@ -976,11 +954,11 @@ const uchar *TextureData::getData(int level, int layer, int faceSlice) const
         return nullptr;
     
     auto offset = ktx_size_t{ };
-    if (ktxTexture_GetImageOffset(mKtxTexture.get(), 
+    if (ktxTexture_GetImageOffset(ktxTexture(mKtxTexture.get()), 
             static_cast<ktx_uint32_t>(level),
             static_cast<ktx_uint32_t>(layer),
             static_cast<ktx_uint32_t>(faceSlice), &offset) == KTX_SUCCESS)
-        return ktxTexture_GetData(mKtxTexture.get()) + offset;
+        return ktxTexture_GetData(ktxTexture(mKtxTexture.get())) + offset;
 
     return nullptr;
 }
@@ -988,7 +966,7 @@ const uchar *TextureData::getData(int level, int layer, int faceSlice) const
 int TextureData::getImageSize(int level) const
 {
     return (isNull() ? 0 :
-      static_cast<int>(ktxTexture_GetImageSize(mKtxTexture.get(),
+      static_cast<int>(ktxTexture_GetImageSize(ktxTexture(mKtxTexture.get()),
           static_cast<ktx_uint32_t>(level)))) * std::max(depth() >> level, 1);
 }
 
@@ -1069,21 +1047,21 @@ bool TextureData::upload(GLuint *textureId,
 
     const auto originalInternalFormat = mKtxTexture->glInternalformat;
     const auto originalFormat = mKtxTexture->glFormat;
+
     if (format != this->format()) {
-      auto tmp = TextureData();
-      tmp.create(QOpenGLTexture::Target::Target2D, format, 1, 1);
-      mKtxTexture->glInternalformat = tmp.mKtxTexture->glInternalformat;
-      mKtxTexture->glFormat = tmp.mKtxTexture->glFormat;
+        auto tmp = TextureData();
+        tmp.create(QOpenGLTexture::Target::Target2D, format, 1, 1);
+        mKtxTexture->glInternalformat = tmp.mKtxTexture->glInternalformat;
+        mKtxTexture->glFormat = tmp.mKtxTexture->glFormat;
     }
 
     auto target = static_cast<GLenum>(mTarget);
     auto error = GLenum{ };
     const auto result = (ktxTexture_GLUpload(
-        mKtxTexture.get(), textureId, &target, &error) == KTX_SUCCESS);
+        ktxTexture(mKtxTexture.get()), textureId, &target, &error) == KTX_SUCCESS);
 
     mKtxTexture->glInternalformat = originalInternalFormat;
     mKtxTexture->glFormat = originalFormat;
-    mKtxTexture->glType = originalType;
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     return result;
