@@ -81,9 +81,30 @@ namespace {
             case QImage::Format_Mono:
             case QImage::Format_MonoLSB:
             case QImage::Format_Alpha8:
+            case QImage::Format_Grayscale8:
                 return QImage::Format_Grayscale8;
+            case QImage::Format_BGR30:
+            case QImage::Format_A2BGR30_Premultiplied:
+            case QImage::Format_RGB30:
+            case QImage::Format_A2RGB30_Premultiplied:
             case QImage::Format_RGBX64:
+            case QImage::Format_RGBA64:
+            case QImage::Format_RGBA64_Premultiplied:
                 return QImage::Format_RGBA64;
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 13, 0))
+            case QImage::Format_Grayscale16:
+                return QImage::Format_Grayscale16;
+#endif
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 2, 0))
+            case QImage::Format_RGBX16FPx4:
+            case QImage::Format_RGBA16FPx4:
+            case QImage::Format_RGBA16FPx4_Premultiplied:
+                return QImage::Format_RGBA16FPx4;
+            case QImage::Format_RGBX32FPx4:
+            case QImage::Format_RGBA32FPx4:
+            case QImage::Format_RGBA32FPx4_Premultiplied:
+                return QImage::Format_RGBA32FPx4;
+#endif
             default:
                 return QImage::Format_RGBA8888;
         }
@@ -105,6 +126,12 @@ namespace {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 13, 0))
             case QImage::Format_Grayscale16:
                 return QOpenGLTexture::R16_UNorm;
+#endif
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 2, 0))
+            case QImage::Format_RGBA16FPx4:
+                return QOpenGLTexture::RGBA16F;
+            case QImage::Format_RGBA32FPx4:
+                return QOpenGLTexture::RGBA32F;
 #endif
             default:
                 return QOpenGLTexture::NoFormat;
