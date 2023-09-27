@@ -1,6 +1,7 @@
-cmake_minimum_required(VERSION 3.12.0)
+cmake_minimum_required(VERSION 3.15)
 project(gpupad LANGUAGES CXX C)
 
+# setup version -------------------------
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
 endif()
@@ -16,6 +17,7 @@ endif()
 
 configure_file("src/version.h.in" "${CMAKE_SOURCE_DIR}/src/_version.h")
 
+# -------------------------
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
@@ -49,38 +51,6 @@ set(SOURCES
   libs/KTX/lib/writer_v1.c
   libs/KTX/lib/glloader.c
   libs/miniz/miniz.c
-  libs/lua/src/lapi.c
-  libs/lua/src/lauxlib.c
-  libs/lua/src/lbaselib.c
-  libs/lua/src/lcode.c
-  libs/lua/src/lcorolib.c
-  libs/lua/src/lctype.c
-  libs/lua/src/ldblib.c
-  libs/lua/src/ldebug.c
-  libs/lua/src/ldo.c
-  libs/lua/src/ldump.c
-  libs/lua/src/lfunc.c
-  libs/lua/src/lgc.c
-  libs/lua/src/linit.c
-  libs/lua/src/liolib.c
-  libs/lua/src/llex.c
-  libs/lua/src/lmathlib.c
-  libs/lua/src/lmem.c
-  libs/lua/src/loadlib.c
-  libs/lua/src/lobject.c
-  libs/lua/src/lopcodes.c
-  libs/lua/src/loslib.c
-  libs/lua/src/lparser.c
-  libs/lua/src/lstate.c
-  libs/lua/src/lstring.c
-  libs/lua/src/lstrlib.c
-  libs/lua/src/ltable.c
-  libs/lua/src/ltablib.c
-  libs/lua/src/ltm.c
-  libs/lua/src/lundump.c
-  libs/lua/src/lutf8lib.c
-  libs/lua/src/lvm.c
-  libs/lua/src/lzio.c
   libs/tga/encoder.cpp
   libs/tga/decoder.cpp
   libs/tga/image_iterator.cpp
@@ -203,6 +173,10 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SOURCES} ${HEADERS})
 
+find_package(Lua REQUIRED)
+target_include_directories(${PROJECT_NAME} PRIVATE ${LUA_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${LUA_LIBRARIES})
+
 add_compile_definitions(KTX_OPENGL)
 target_include_directories(${PROJECT_NAME} PRIVATE src libs libs/KTX/include libs/gli libs/glm)
 
@@ -299,7 +273,7 @@ if (ENABLE_SPIRV_CROSS)
     add_compile_definitions(SPIRV_CROSS_ENABLED)
 endif()
 
-# install
+# install -------------------------
 set(DOC_FILES LICENSE CHANGELOG.md THIRD-PARTY.md)
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     install(TARGETS ${PROJECT_NAME} DESTINATION "bin" COMPONENT Application)
@@ -334,7 +308,7 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     ]===] COMPONENT Application)
 endif()
 
-# package
+# package -------------------------
 set(CPACK_PACKAGE_NAME "GPUpad")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GPUpad")
 set(CPACK_PACKAGE_VENDOR "Albert Kalchmair")

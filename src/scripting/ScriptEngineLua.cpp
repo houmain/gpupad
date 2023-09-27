@@ -1,6 +1,6 @@
 
 #include "ScriptEngineLua.h"
-#include "lua/src/lua.hpp"
+#include "lua.hpp"
 #include <QRegularExpression>
 #include <cstring>
 
