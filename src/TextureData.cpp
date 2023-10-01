@@ -13,6 +13,49 @@
 #endif
 
 namespace {
+    // TODO: remove when libKTX is fixed
+    void fixFormat(ktxTexture1 &texture)
+    {
+        auto glGetFormatFromInternalFormat = [](const GLenum internalFormat) {
+            switch (internalFormat) {
+                case GL_R8UI:     return GL_RED_INTEGER;    // 1-component, 8-bit unsigned integer
+                case GL_RG8UI:    return GL_RG_INTEGER;   // 2-component, 8-bit unsigned integer
+                case GL_RGB8UI:   return GL_RGB_INTEGER;    // 3-component, 8-bit unsigned integer
+                case GL_RGBA8UI:  return GL_RGBA_INTEGER;   // 4-component, 8-bit unsigned integer
+
+                case GL_R8I:      return GL_RED_INTEGER;    // 1-component, 8-bit signed integer
+                case GL_RG8I:     return GL_RG_INTEGER;   // 2-component, 8-bit signed integer
+                case GL_RGB8I:    return GL_RGB_INTEGER;    // 3-component, 8-bit signed integer
+                case GL_RGBA8I:   return GL_RGBA_INTEGER;   // 4-component, 8-bit signed integer
+
+                case GL_R16UI:    return GL_RED_INTEGER;    // 1-component, 16-bit unsigned integer
+                case GL_RG16UI:   return GL_RG_INTEGER;   // 2-component, 16-bit unsigned integer
+                case GL_RGB16UI:  return GL_RGB_INTEGER;    // 3-component, 16-bit unsigned integer
+                case GL_RGBA16UI: return GL_RGBA_INTEGER;   // 4-component, 16-bit unsigned integer
+
+                case GL_R16I:     return GL_RED_INTEGER;    // 1-component, 16-bit signed integer
+                case GL_RG16I:    return GL_RG_INTEGER;   // 2-component, 16-bit signed integer
+                case GL_RGB16I:   return GL_RGB_INTEGER;    // 3-component, 16-bit signed integer
+                case GL_RGBA16I:  return GL_RGBA_INTEGER;   // 4-component, 16-bit signed integer
+
+                case GL_R32UI:    return GL_RED_INTEGER;    // 1-component, 32-bit unsigned integer
+                case GL_RG32UI:   return GL_RG_INTEGER;   // 2-component, 32-bit unsigned integer
+                case GL_RGB32UI:  return GL_RGB_INTEGER;    // 3-component, 32-bit unsigned integer
+                case GL_RGBA32UI: return GL_RGBA_INTEGER;   // 4-component, 32-bit unsigned integer
+
+                case GL_R32I:     return GL_RED_INTEGER;    // 1-component, 32-bit signed integer
+                case GL_RG32I:    return GL_RG_INTEGER;   // 2-component, 32-bit signed integer
+                case GL_RGB32I:   return GL_RGB_INTEGER;    // 3-component, 32-bit signed integer
+                case GL_RGBA32I:  return GL_RGBA_INTEGER;   // 4-component, 32-bit signed integer
+
+                case GL_RGB10_A2UI: return GL_RGBA_INTEGER;   // 4-component 10:10:10:2,  unsigned 
+                default: return GL_NONE;
+            }
+        };
+        if (auto format = glGetFormatFromInternalFormat(texture.glInternalformat))
+            texture.glFormat = format;
+    }
+
     QImage::Format getNextNativeImageFormat(QImage::Format format)
     {
         switch (format) {
@@ -576,6 +619,7 @@ bool TextureData::create(
       auto texture = std::add_pointer_t<ktxTexture1>{ };
     if (ktxTexture1_Create(&createInfo, KTX_TEXTURE_CREATE_ALLOC_STORAGE,
             &texture) == KTX_SUCCESS) {
+        fixFormat(*texture);
         mKtxTexture.reset(texture, [](ktxTexture1* tex) { ktxTexture_Destroy(ktxTexture(tex)); });
         mTarget = target;
         mSamples = (isMultisampleTarget(target) ? samples : 1);
@@ -586,8 +630,13 @@ bool TextureData::create(
 
 bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
 {
+    auto f = std::fopen(qUtf8Printable(fileName), "rb");
+    if (!f)
+        return false;
+    auto guard = qScopeGuard([&]() { std::fclose(f); });
+
     auto texture = std::add_pointer_t<ktxTexture1>{ };
-    if (ktxTexture1_CreateFromNamedFile(qUtf8Printable(fileName),
+    if (ktxTexture1_CreateFromStdioStream(f,
             KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture) != KTX_SUCCESS)
         return false;
 
@@ -1047,12 +1096,14 @@ bool TextureData::upload(GLuint *textureId,
 
     const auto originalInternalFormat = mKtxTexture->glInternalformat;
     const auto originalFormat = mKtxTexture->glFormat;
+    const auto originalType = mKtxTexture->glType;
 
     if (format != this->format()) {
         auto tmp = TextureData();
         tmp.create(QOpenGLTexture::Target::Target2D, format, 1, 1);
         mKtxTexture->glInternalformat = tmp.mKtxTexture->glInternalformat;
         mKtxTexture->glFormat = tmp.mKtxTexture->glFormat;
+        mKtxTexture->glType = tmp.mKtxTexture->glType;
     }
 
     auto target = static_cast<GLenum>(mTarget);
@@ -1062,6 +1113,7 @@ bool TextureData::upload(GLuint *textureId,
 
     mKtxTexture->glInternalformat = originalInternalFormat;
     mKtxTexture->glFormat = originalFormat;
+    mKtxTexture->glType = originalType;
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     return result;
