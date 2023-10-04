@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 1.35.0]
+
+### Added
+
+- Added TIFF reading and writing.
+
+### Changed
+
+- Automatically defining #version 120 for shaders using gl_FragColor.
+- Saving non-session filenames and evaluation mode in session state.
+
+### Fixed
+
+- Fixed 16 bit texture binding custom format filter.
+- Supporting non-utf8 text files with system codepage again.
+
 ## [Version 1.34.0] - 2022-06-23
 
 ### Added
@@ -669,6 +685,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 1.35.0]: https://github.com/houmain/gpupad/compare/1.34.0...1.35.0
 [version 1.34.0]: https://github.com/houmain/gpupad/compare/1.33.0...1.34.0
 [version 1.33.0]: https://github.com/houmain/gpupad/compare/1.32.0...1.33.0
 [version 1.32.0]: https://github.com/houmain/gpupad/compare/1.31.0...1.32.0
