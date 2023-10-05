@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QSet>
 #include <optional>
+#include "Renderer.h"
 #include "Evaluation.h"
 
 using ItemId = int;
@@ -27,7 +28,10 @@ protected:
     void releaseResources();
 
 private:
-    friend class Renderer;
+    friend class GLRenderer;
+
+    // 0. called in main thread
+    virtual bool initialize(RenderAPI api) = 0;
 
     // 1. called in main thread
     virtual void prepare(bool itemsChanged,
@@ -49,7 +53,7 @@ private:
     // 6. called in render thread
     virtual void release() = 0;
 
-    bool mPrepared{ };
+    bool mInitialized{ };
     bool mReleased{ };
     bool mUpdating{ };
     bool mItemsChanged{ };

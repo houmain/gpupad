@@ -1,4 +1,4 @@
-#include "RenderSession.h"
+#include "GLRenderSession.h"
 #include "Singletons.h"
 #include "Settings.h"
 #include "SynchronizeLogic.h"
@@ -161,14 +161,14 @@ namespace {
     }
 } // namespace
 
-struct RenderSession::GroupIteration
+struct GLRenderSession::GroupIteration
 {
     int iterations;
     int commandQueueBeginIndex;
     int iterationsLeft;
 };
 
-struct RenderSession::CommandQueue
+struct GLRenderSession::CommandQueue
 {
     QOpenGLTimerQuery beginTimestamp;
     QOpenGLTimerQuery endTimestamp;
@@ -182,33 +182,26 @@ struct RenderSession::CommandQueue
     std::vector<GLProgram> failedPrograms;
 };
 
-RenderSession::RenderSession(QObject *parent)
-    : RenderTask(parent)
-{
-}
+GLRenderSession::GLRenderSession() = default;
+GLRenderSession::~GLRenderSession() = default;
 
-RenderSession::~RenderSession()
-{
-    releaseResources();
-}
-
-QSet<ItemId> RenderSession::usedItems() const
+QSet<ItemId> GLRenderSession::usedItems() const
 {
     QMutexLocker lock{ &mUsedItemsCopyMutex };
     return mUsedItemsCopy;
 }
 
-bool RenderSession::usesMouseState() const
+bool GLRenderSession::usesMouseState() const
 {
     return (mScriptSession && mScriptSession->usesMouseState());
 }
 
-bool RenderSession::usesKeyboardState() const
+bool GLRenderSession::usesKeyboardState() const
 {
     return (mScriptSession && mScriptSession->usesKeyboardState());
 }
 
-void RenderSession::prepare(bool itemsChanged, EvaluationType evaluationType)
+void GLRenderSession::prepare(bool itemsChanged, EvaluationType evaluationType)
 {
     mItemsChanged = itemsChanged;
     mEvaluationType = evaluationType;
@@ -233,7 +226,7 @@ void RenderSession::prepare(bool itemsChanged, EvaluationType evaluationType)
     mScriptSession->prepare();
 }
 
-void RenderSession::configure()
+void GLRenderSession::configure()
 {
     mScriptSession->beginSessionUpdate(&mSessionCopy);
 
@@ -258,7 +251,7 @@ void RenderSession::configure()
     });
 }
 
-void RenderSession::configured()
+void GLRenderSession::configured()
 {
     mScriptSession->endSessionUpdate();
 
@@ -268,7 +261,7 @@ void RenderSession::configured()
     mMessages += mScriptSession->resetMessages();
 }
 
-void RenderSession::createCommandQueue()
+void GLRenderSession::createCommandQueue()
 {
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
@@ -535,7 +528,7 @@ void RenderSession::createCommandQueue()
     });
 }
 
-void RenderSession::render()
+void GLRenderSession::render()
 {
     if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
         createCommandQueue();
@@ -569,7 +562,7 @@ void RenderSession::render()
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 }
 
-void RenderSession::reuseUnmodifiedItems()
+void GLRenderSession::reuseUnmodifiedItems()
 {
     if (mPrevCommandQueue) {
         replaceEqual(mCommandQueue->textures, mPrevCommandQueue->textures);
@@ -592,12 +585,12 @@ void RenderSession::reuseUnmodifiedItems()
     }
 }
 
-void RenderSession::setNextCommandQueueIndex(int index)
+void GLRenderSession::setNextCommandQueueIndex(int index)
 {
     mNextCommandQueueIndex = index;
 }
 
-void RenderSession::executeCommandQueue()
+void GLRenderSession::executeCommandQueue()
 {
     auto& context = GLContext::currentContext();
     Singletons::glShareSynchronizer().beginUpdate(context);
@@ -616,13 +609,13 @@ void RenderSession::executeCommandQueue()
     Singletons::glShareSynchronizer().endUpdate(context);
 }
 
-bool RenderSession::updatingPreviewTextures() const
+bool GLRenderSession::updatingPreviewTextures() const
 {
     return (!mItemsChanged &&
         mEvaluationType == EvaluationType::Steady);
 }
 
-void RenderSession::downloadModifiedResources()
+void GLRenderSession::downloadModifiedResources()
 {
     for (auto &[itemId, texture] : mCommandQueue->textures) {
         texture.updateMipmaps();
@@ -639,7 +632,7 @@ void RenderSession::downloadModifiedResources()
             mModifiedBuffers[buffer.itemId()] = buffer.data();
 }
 
-void RenderSession::outputTimerQueries()
+void GLRenderSession::outputTimerQueries()
 {
     mTimerMessages.clear();
 
@@ -660,7 +653,7 @@ void RenderSession::outputTimerQueries()
     mTimerQueries.clear();
 }
 
-void RenderSession::finish()
+void GLRenderSession::finish()
 {
     auto &editors = Singletons::editorManager();
     auto &session = Singletons::sessionModel();
@@ -696,7 +689,7 @@ void RenderSession::finish()
     mUsedItemsCopy = mUsedItems;
 }
 
-void RenderSession::release()
+void GLRenderSession::release()
 {
     mVao.destroy();
     mCommandQueue.reset();

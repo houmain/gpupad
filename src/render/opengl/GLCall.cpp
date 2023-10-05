@@ -4,7 +4,7 @@
 #include "GLProgram.h"
 #include "GLTarget.h"
 #include "GLStream.h"
-#include "Renderer.h"
+#include "GLRenderer.h"
 #include <QOpenGLTimerQuery>
 #include <cmath>
 

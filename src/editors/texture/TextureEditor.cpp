@@ -11,7 +11,7 @@
 #include "InputState.h"
 #include "Settings.h"
 #include "getEventPosition.h"
-#include "render/GLContext.h"
+#include "render/opengl/GLContext.h"
 #include "session/Item.h"
 #include <QAction>
 #include <QApplication>

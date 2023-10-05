@@ -1,6 +1,6 @@
-#include "Renderer.h"
-#include "RenderTask.h"
+#include "GLRenderer.h"
 #include "GLContext.h"
+#include "../RenderTask.h"
 #include <QApplication>
 #include <QOpenGLFunctions>
 #include <QOffscreenSurface>
@@ -19,7 +19,7 @@ QString getFirstGLError()
     return std::exchange(gFirstGLError, "");
 }
 
-class Renderer::Worker final : public QObject
+class GLRenderer::Worker final : public QObject
 {
     Q_OBJECT
 
@@ -96,7 +96,7 @@ private:
     QScopedPointer<QOpenGLDebugLogger> mDebugLogger;
 };
 
-Renderer::Renderer(QObject *parent)
+GLRenderer::GLRenderer(QObject *parent)
     : QObject(parent)
     , mWorker(new Worker())
 {
@@ -110,21 +110,21 @@ Renderer::Renderer(QObject *parent)
     mWorker->surface.moveToThread(&mThread);
     mWorker->moveToThread(&mThread);
 
-    connect(this, &Renderer::configureTask,
+    connect(this, &GLRenderer::configureTask,
         mWorker.data(), &Worker::handleConfigureTask);
     connect(mWorker.data(), &Worker::taskConfigured,
-        this, &Renderer::handleTaskConfigured);
-    connect(this, &Renderer::renderTask,
+        this, &GLRenderer::handleTaskConfigured);
+    connect(this, &GLRenderer::renderTask,
         mWorker.data(), &Worker::handleRenderTask);
     connect(mWorker.data(), &Worker::taskRendered,
-        this, &Renderer::handleTaskRendered);
-    connect(this, &Renderer::releaseTask,
+        this, &GLRenderer::handleTaskRendered);
+    connect(this, &GLRenderer::releaseTask,
         mWorker.data(), &Worker::handleReleaseTask);
 
     mThread.start();
 }
 
-Renderer::~Renderer()
+GLRenderer::~GLRenderer()
 {
     mPendingTasks.clear();
     
@@ -134,7 +134,7 @@ Renderer::~Renderer()
     mWorker.reset();
 }
 
-void Renderer::render(RenderTask *task)
+void GLRenderer::render(RenderTask *task)
 {
     Q_ASSERT(!mPendingTasks.contains(task));
     mPendingTasks.append(task);
@@ -142,7 +142,7 @@ void Renderer::render(RenderTask *task)
     renderNextTask();
 }
 
-void Renderer::release(RenderTask *task)
+void GLRenderer::release(RenderTask *task)
 {
     mPendingTasks.removeAll(task);
     while (mCurrentTask == task)
@@ -157,7 +157,7 @@ void Renderer::release(RenderTask *task)
     done.release(1);
 }
 
-void Renderer::renderNextTask()
+void GLRenderer::renderNextTask()
 {
     if (mCurrentTask || mPendingTasks.isEmpty())
         return;
@@ -166,14 +166,14 @@ void Renderer::renderNextTask()
     Q_EMIT configureTask(mCurrentTask, QPrivateSignal());
 }
 
-void Renderer::handleTaskConfigured()
+void GLRenderer::handleTaskConfigured()
 {
     mCurrentTask->configured();
 
     Q_EMIT renderTask(mCurrentTask, QPrivateSignal());
 }
 
-void Renderer::handleTaskRendered()
+void GLRenderer::handleTaskRendered()
 {
     auto currentTask = std::exchange(mCurrentTask, nullptr);
     currentTask->handleRendered();
@@ -181,4 +181,4 @@ void Renderer::handleTaskRendered()
     renderNextTask();
 }
 
-#include "Renderer.moc"
+#include "GLRenderer.moc"

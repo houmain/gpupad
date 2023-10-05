@@ -90,20 +90,22 @@ set(SOURCES
   src/editors/texture/TextureItem.cpp
   src/editors/qml/QmlView.cpp
   src/main.cpp
-  src/render/GLBuffer.cpp
-  src/render/GLCall.cpp
-  src/render/GLProgram.cpp
-  src/render/GLShader.cpp
-  src/render/GLStream.cpp
-  src/render/GLTarget.cpp
-  src/render/GLTexture.cpp
-  src/render/GLPrintf.cpp
-  src/render/RenderSession.cpp
-  src/render/RenderTask.cpp
-  src/render/Renderer.cpp
-  src/render/ProcessSource.cpp
-  src/render/ComputeRange.cpp
-  src/render/glslang.cpp
+  src/render/opengl/GLBuffer.cpp
+  src/render/opengl/GLCall.cpp
+  src/render/opengl/GLProgram.cpp
+  src/render/opengl/GLShader.cpp
+  src/render/opengl/GLStream.cpp
+  src/render/opengl/GLTarget.cpp
+  src/render/opengl/GLTexture.cpp
+  src/render/opengl/GLPrintf.cpp
+  src/render/opengl/GLRenderSession.cpp
+  src/render/opengl/GLRenderer.cpp
+  src/render/opengl/GLProcessSource.cpp
+  src/render/opengl/GLComputeRange.cpp
+  src/render/opengl/glslang.cpp
+  src/render/RendererBase.cpp
+  src/render/RenderTask.cpp  
+  src/render/RenderSessionBase.cpp
   src/scripting/ScriptConsole.cpp
   src/scripting/MouseScriptObject.cpp
   src/scripting/KeyboardScriptObject.cpp

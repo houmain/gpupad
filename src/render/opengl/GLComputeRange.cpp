@@ -1,4 +1,4 @@
-#include "ComputeRange.h"
+#include "GLComputeRange.h"
 #include "GLContext.h"
 #include "TextureData.h"
 #include <QOpenGLBuffer>
@@ -175,16 +175,7 @@ void main() {
     }
 } // namespace
 
-ComputeRange::ComputeRange(QObject *parent) : RenderTask(parent)
-{
-}
-
-ComputeRange::~ComputeRange()
-{
-    releaseResources();
-}
-
-void ComputeRange::setImage(GLuint textureId, 
+void GLComputeRange::setImage(GLuint textureId, 
     const TextureData &texture, int level, int layer, int face) 
 {
     mTarget = texture.target();
@@ -196,7 +187,7 @@ void ComputeRange::setImage(GLuint textureId,
     mTextureId = textureId;
 }
 
-void ComputeRange::render()
+void GLComputeRange::render()
 {
 #if GL_VERSION_4_3
     auto &gl = GLContext::currentContext();
@@ -255,17 +246,12 @@ void ComputeRange::render()
 #endif
 }
 
-void ComputeRange::finish()
-{
-    Q_EMIT rangeComputed(mRange);
-}
-
-void ComputeRange::release()
+void GLComputeRange::release()
 {
     mPrograms.clear();
 }
 
-QOpenGLShaderProgram *ComputeRange::getProgram(QOpenGLTexture::Target target,
+QOpenGLShaderProgram *GLComputeRange::getProgram(QOpenGLTexture::Target target,
     QOpenGLTexture::TextureFormat format)
 {
     const auto key = std::make_tuple(target, format);

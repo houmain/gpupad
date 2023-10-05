@@ -1,38 +1,32 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#pragma once
 
-#include <QObject>
-#include <QThread>
+#include "RendererBase.h"
 
-class RenderTask;
-
-class Renderer final : public QObject
+class Renderer
 {
-    Q_OBJECT
 public:
-    explicit Renderer(QObject *parent = nullptr);
-    ~Renderer() override;
+    explicit Renderer(RenderAPI api = RenderAPI::OpenGL) 
+        : mImpl(RendererBase::create(api))
+        , mApi(api)
+    {
+    }
 
-    void render(RenderTask *task);
-    void release(RenderTask *task);
+    RenderAPI api() const 
+    {
+        return mApi;
+    }
 
-Q_SIGNALS:
-    void configureTask(RenderTask* renderTask, QPrivateSignal);
-    void renderTask(RenderTask* renderTask, QPrivateSignal);
-    void releaseTask(RenderTask *renderTask, void *userData, QPrivateSignal);
+    void render(RenderTask *task)
+    {
+        mImpl->render(task);
+    }
+
+    void release(RenderTask *task)
+    {
+        mImpl->release(task);
+    }
 
 private:
-    class Worker;
-    void handleTaskConfigured();
-    void handleTaskRendered();
-    void renderNextTask();
-
-    QThread mThread;
-    QScopedPointer<Worker> mWorker;
-    QList<RenderTask*> mPendingTasks;
-    RenderTask* mCurrentTask{ };
+    RenderAPI mApi;
+    std::unique_ptr<RendererBase> mImpl;
 };
-
-QString getFirstGLError();
-
-#endif // RENDERER_H

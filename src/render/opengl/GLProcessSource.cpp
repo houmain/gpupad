@@ -1,5 +1,4 @@
-#include "ProcessSource.h"
-#include "GLShader.h"
+#include "GLProcessSource.h"
 #include "GLPrintf.h"
 #include "scripting/ScriptEngineJavaScript.h"
 #include "scripting/ScriptEngineLua.h"
@@ -61,41 +60,32 @@ namespace {
     }
 } // namespace
 
-ProcessSource::ProcessSource(QObject *parent) : RenderTask(parent)
-{
-}
-
-ProcessSource::~ProcessSource()
-{
-    releaseResources();
-}
-
-void ProcessSource::setFileName(QString fileName)
+void GLProcessSource::setFileName(QString fileName)
 {
     mFileName = fileName;
 }
 
-void ProcessSource::setSourceType(SourceType sourceType)
+void GLProcessSource::setSourceType(SourceType sourceType)
 {
     mSourceType = sourceType;
 }
 
-void ProcessSource::setValidateSource(bool validate)
+void GLProcessSource::setValidateSource(bool validate)
 {
     mValidateSource = validate;
 }
 
-void ProcessSource::setProcessType(QString processType)
+void GLProcessSource::setProcessType(QString processType)
 {
     mProcessType = processType;
 }
 
-void ProcessSource::clearMessages()
+void GLProcessSource::clearMessages()
 {
     mMessages.clear();
 }
 
-void ProcessSource::prepare(bool, EvaluationType)
+void GLProcessSource::prepare()
 {
     const auto shaderPreamble = QString{ Singletons::settings().shaderPreamble() + "\n" +
         Singletons::synchronizeLogic().sessionShaderPreamble() };
@@ -125,7 +115,7 @@ void ProcessSource::prepare(bool, EvaluationType)
     }
 }
 
-void ProcessSource::render()
+void GLProcessSource::render()
 {
     auto messages = MessagePtrSet();
     mScriptEngine.reset();
@@ -180,12 +170,7 @@ void ProcessSource::render()
     mMessages = messages;
 }
 
-void ProcessSource::finish()
-{
-    Q_EMIT outputChanged(mOutput);
-}
-
-void ProcessSource::release()
+void GLProcessSource::release()
 {
     Q_ASSERT(!mShader);
 }

@@ -1,7 +1,7 @@
 #include "TextureItem.h"
 #include "GLWidget.h"
 #include "Singletons.h"
-#include "render/GLShareSynchronizer.h"
+#include "render/opengl/GLShareSynchronizer.h"
 #include "render/ComputeRange.h"
 #include <optional>
 #include <cmath>

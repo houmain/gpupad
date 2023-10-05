@@ -9,7 +9,7 @@
 #include "editors/EditorManager.h"
 #include "session/SessionModel.h"
 #include "render/Renderer.h"
-#include "render/GLShareSynchronizer.h"
+#include "render/opengl/GLShareSynchronizer.h"
 #include <QApplication>
 
 Singletons *Singletons::sInstance;

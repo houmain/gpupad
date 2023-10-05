@@ -2,13 +2,14 @@
 #include "Singletons.h"
 #include "Renderer.h"
 
-RenderTask::RenderTask(QObject *parent) : QObject(parent)
+RenderTask::RenderTask(QObject *parent)
+    : QObject(parent)
 {
 }
 
 RenderTask::~RenderTask()
 {
-    Q_ASSERT(!mPrepared || mReleased);
+    Q_ASSERT(!mInitialized || mReleased);
 }
 
 void RenderTask::releaseResources()
@@ -24,9 +25,13 @@ void RenderTask::update(bool itemsChanged, EvaluationType evaluationType)
 {
     Q_ASSERT(!mReleased);
     if (!std::exchange(mUpdating, true)) {
-        mPrepared = true;
+        auto &renderer = Singletons::renderer();
+        if (!mInitialized) {
+            initialize(renderer.api());
+            mInitialized = true;
+        }
         prepare(itemsChanged, evaluationType);
-        Singletons::renderer().render(this);
+        renderer.render(this);
     }
     else {
         mItemsChanged |= itemsChanged;

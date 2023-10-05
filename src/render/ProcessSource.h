@@ -2,45 +2,75 @@
 #define PROCESSSOURCE_H
 
 #include "RenderTask.h"
-#include "MessageList.h"
-#include "session/Item.h"
-#include "SourceType.h"
-
-class GLShader;
-class ScriptEngine;
+#include "opengl/GLProcessSource.h"
 
 class ProcessSource final : public RenderTask
 {
     Q_OBJECT
 public:
-    explicit ProcessSource(QObject *parent = nullptr);
-    ~ProcessSource() override;
+    explicit ProcessSource(QObject *parent = nullptr)
+        : RenderTask(parent) { }
 
-    void setFileName(QString fileName);
-    void setSourceType(SourceType sourceType);
-    void setValidateSource(bool validate);
-    void setProcessType(QString processType);
-    void clearMessages();
+    ~ProcessSource() override
+    {
+        releaseResources();
+    }
+
+    void setFileName(QString fileName) 
+    {
+        mImpl.setFileName(fileName);
+    }
+
+    void setSourceType(SourceType sourceType)
+    {
+        mImpl.setSourceType(sourceType);
+    }
+
+    void setValidateSource(bool validate)
+    {
+        mImpl.setValidateSource(validate);
+    }
+
+    void setProcessType(QString processType)
+    {
+        mImpl.setProcessType(processType);
+    }
+
+    void clearMessages()
+    {
+        mImpl.clearMessages();
+    }
 
 Q_SIGNALS:
     void outputChanged(QString output);
 
 private:
-    void prepare(bool itemsChanged, EvaluationType) override;
-    void render() override;
-    void finish() override;
-    void release() override;
+    bool initialize(RenderAPI api) override
+    {
+        return (api == RenderAPI::OpenGL);
+    }
 
-    QScopedPointer<GLShader> mShader;
-    QString mFileName;
-    SourceType mSourceType{ };
+    void prepare(bool itemsChanged, EvaluationType) override
+    {
+        mImpl.prepare();
+    }
 
-    QScopedPointer<ScriptEngine> mScriptEngine;
-    MessagePtrSet mMessages;
+    void render() override
+    {
+        mImpl.render();
+    }
 
-    bool mValidateSource{ };
-    QString mProcessType{ };
-    QString mOutput;
+    void finish() override
+    {
+        Q_EMIT outputChanged(mImpl.output());
+    }
+
+    void release() override
+    {
+        mImpl.release();
+    }
+
+    GLProcessSource mImpl;
 };
 
 #endif // PROCESSSOURCE_H
