@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.21)
 project(gpupad LANGUAGES CXX C)
 
 # setup version -------------------------
@@ -273,6 +273,13 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     install(FILES ${DOC_FILES} DESTINATION . COMPONENT Application)
     install(DIRECTORY samples DESTINATION . COMPONENT Samples)
     install(DIRECTORY themes DESTINATION . COMPONENT Themes)
+
+    install(TARGETS ${PROJECT_NAME} RUNTIME_DEPENDENCIES
+        PRE_INCLUDE_REGEXES dep
+        PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-"
+        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+        DESTINATION . COMPONENT Application
+    )
 
     find_program(WINDEPLOYQT windeployqt HINTS "${_qt_bin_dir}")
     install(CODE "set(WINDEPLOYQT \"${WINDEPLOYQT}\")" COMPONENT Application)
