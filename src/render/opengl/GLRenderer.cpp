@@ -98,6 +98,7 @@ private:
 
 GLRenderer::GLRenderer(QObject *parent)
     : QObject(parent)
+    , Renderer(RenderAPI::OpenGL)
     , mWorker(new Worker())
 {
     mWorker->context.setShareContext(QOpenGLContext::globalShareContext());

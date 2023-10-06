@@ -3,15 +3,19 @@
 #include <QThread>
 #include "../Renderer.h"
 
-class GLRenderer : public QObject, public Renderer
+namespace KDGpu { class Device; }
+
+class VKRenderer : public QObject, public Renderer
 {
     Q_OBJECT
 public:
-    explicit GLRenderer(QObject *parent = nullptr);
-    ~GLRenderer() override;
+    explicit VKRenderer(QObject *parent = nullptr);
+    ~VKRenderer() override;
 
     void render(RenderTask *task) override;
     void release(RenderTask *task) override;
+
+    KDGpu::Device *device() { return mDevice; }
 
 Q_SIGNALS:
     void configureTask(RenderTask* renderTask, QPrivateSignal);
@@ -27,7 +31,6 @@ private:
     QThread mThread;
     QScopedPointer<Worker> mWorker;
     QList<RenderTask*> mPendingTasks;
-    RenderTask* mCurrentTask{ };
+    RenderTask *mCurrentTask{ };
+    KDGpu::Device *mDevice{ };
 };
-
-QString getFirstGLError();

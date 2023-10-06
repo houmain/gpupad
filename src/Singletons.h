@@ -1,7 +1,7 @@
 #ifndef SINGLETONS_H
 #define SINGLETONS_H
 
-#include <QScopedPointer>
+#include <memory>
 
 class QMainWindow;
 class Settings;
@@ -15,13 +15,17 @@ class GLShareSynchronizer;
 class VideoManager;
 class InputState;
 class EvaluatedPropertyCache;
+enum class RenderAPI : int;
+
+using RendererPtr = std::shared_ptr<Renderer>;
 
 bool onMainThread();
 
 class Singletons
 {
 public:
-    static Renderer &renderer();
+    static void resetRenderer(RenderAPI api);
+    static RendererPtr renderer();
     static Settings &settings();
     static FileCache &fileCache();
     static FileDialog &fileDialog();
@@ -39,17 +43,18 @@ public:
 private:
     static Singletons *sInstance;
 
-    QScopedPointer<Renderer> mRenderer;
-    QScopedPointer<Settings> mSettings;
-    QScopedPointer<FileCache> mFileCache;
-    QScopedPointer<FileDialog> mFileDialog;
-    QScopedPointer<EditorManager> mEditorManager;
-    QScopedPointer<SessionModel> mSessionModel;
-    QScopedPointer<SynchronizeLogic> mSynchronizeLogic;
-    QScopedPointer<GLShareSynchronizer> mGLShareSynchronizer;
-    QScopedPointer<VideoManager> mVideoManager;
-    QScopedPointer<InputState> mInputState;
-    QScopedPointer<EvaluatedPropertyCache> mEvaluatedPropertyCache;
+    RenderAPI mRenderApi{ };
+    std::shared_ptr<Renderer> mRenderer;
+    std::unique_ptr<Settings> mSettings;
+    std::unique_ptr<FileCache> mFileCache;
+    std::unique_ptr<FileDialog> mFileDialog;
+    std::unique_ptr<EditorManager> mEditorManager;
+    std::unique_ptr<SessionModel> mSessionModel;
+    std::unique_ptr<SynchronizeLogic> mSynchronizeLogic;
+    std::unique_ptr<GLShareSynchronizer> mGLShareSynchronizer;
+    std::unique_ptr<VideoManager> mVideoManager;
+    std::unique_ptr<InputState> mInputState;
+    std::unique_ptr<EvaluatedPropertyCache> mEvaluatedPropertyCache;
 };
 
 #endif // SINGLETONS_H

@@ -321,7 +321,7 @@ void TextureItem::computeHistogramBounds()
         static_cast<int>(mLayer),
         mFace);
 
-    mComputeRange->update();
+    mComputeRange->update(Singletons::renderer());
 }
 
 GLWidget &TextureItem::widget() 

@@ -1,5 +1,4 @@
-#ifndef PROCESSSOURCE_H
-#define PROCESSSOURCE_H
+#pragma once
 
 #include "RenderTask.h"
 #include "opengl/GLProcessSource.h"
@@ -45,9 +44,9 @@ Q_SIGNALS:
     void outputChanged(QString output);
 
 private:
-    bool initialize(RenderAPI api) override
+    bool initialize(Renderer &renderer) override
     {
-        return (api == RenderAPI::OpenGL);
+        return (renderer.api() == RenderAPI::OpenGL);
     }
 
     void prepare(bool itemsChanged, EvaluationType) override
@@ -72,5 +71,3 @@ private:
 
     GLProcessSource mImpl;
 };
-
-#endif // PROCESSSOURCE_H

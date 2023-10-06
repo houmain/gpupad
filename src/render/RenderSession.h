@@ -33,10 +33,10 @@ public:
     }
 
 private:
-    bool initialize(RenderAPI api) override
+    bool initialize(Renderer &renderer) override
     {
         if (!mImpl)
-            mImpl = RenderSessionBase::create(api);
+            mImpl = RenderSessionBase::create(renderer);
         return static_cast<bool>(mImpl);
     }
 

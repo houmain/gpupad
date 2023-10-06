@@ -1,32 +1,33 @@
 #pragma once
 
-#include "RendererBase.h"
+#include <memory>
+
+enum class RenderAPI : int
+{
+    OpenGL,
+    Vulkan,
+};
+
+using RendererPtr = std::shared_ptr<class Renderer>;
+class RenderTask;
 
 class Renderer
 {
 public:
-    explicit Renderer(RenderAPI api = RenderAPI::OpenGL) 
-        : mImpl(RendererBase::create(api))
-        , mApi(api)
+    explicit Renderer(RenderAPI api) 
+        : mApi(api)
     {
     }
+
+    virtual ~Renderer() = default;
+    virtual void render(RenderTask *task) = 0;
+    virtual void release(RenderTask *task) = 0;
 
     RenderAPI api() const 
     {
         return mApi;
     }
 
-    void render(RenderTask *task)
-    {
-        mImpl->render(task);
-    }
-
-    void release(RenderTask *task)
-    {
-        mImpl->release(task);
-    }
-
 private:
     RenderAPI mApi;
-    std::unique_ptr<RendererBase> mImpl;
 };

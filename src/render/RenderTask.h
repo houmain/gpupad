@@ -18,7 +18,7 @@ public:
 
     virtual QSet<ItemId> usedItems() const { return { }; }
 
-    void update(bool itemChanged = false,
+    void update(RendererPtr renderer, bool itemChanged = false,
         EvaluationType evaluationType = EvaluationType::Reset);
 
 Q_SIGNALS:
@@ -29,9 +29,10 @@ protected:
 
 private:
     friend class GLRenderer;
+    friend class VKRenderer;
 
     // 0. called in main thread
-    virtual bool initialize(RenderAPI api) = 0;
+    virtual bool initialize(Renderer &renderer) = 0;
 
     // 1. called in main thread
     virtual void prepare(bool itemsChanged,
@@ -53,8 +54,7 @@ private:
     // 6. called in render thread
     virtual void release() = 0;
 
-    bool mInitialized{ };
-    bool mReleased{ };
+    RendererPtr mRenderer;
     bool mUpdating{ };
     bool mItemsChanged{ };
     std::optional<EvaluationType> mPendingEvaluation;

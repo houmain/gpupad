@@ -103,7 +103,8 @@ set(SOURCES
   src/render/opengl/GLProcessSource.cpp
   src/render/opengl/GLComputeRange.cpp
   src/render/opengl/glslang.cpp
-  src/render/RendererBase.cpp
+  src/render/vulkan/VKRenderer.cpp
+  src/render/vulkan/VKRenderSession.cpp
   src/render/RenderTask.cpp  
   src/render/RenderSessionBase.cpp
   src/scripting/ScriptConsole.cpp

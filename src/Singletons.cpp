@@ -8,8 +8,9 @@
 #include "EvaluatedPropertyCache.h"
 #include "editors/EditorManager.h"
 #include "session/SessionModel.h"
-#include "render/Renderer.h"
+#include "render/opengl/GLRenderer.h"
 #include "render/opengl/GLShareSynchronizer.h"
+#include "render/vulkan/VKRenderer.h"
 #include <QApplication>
 
 Singletons *Singletons::sInstance;
@@ -20,12 +21,21 @@ bool onMainThread()
         QApplication::instance()->thread());
 }
 
-Renderer &Singletons::renderer()
+void Singletons::resetRenderer(RenderAPI api)
+{
+    Q_ASSERT(onMainThread());
+    sInstance->mRenderApi = api;
+    sInstance->mRenderer.reset();
+}
+
+RendererPtr Singletons::renderer()
 {
     Q_ASSERT(onMainThread());
     if (!sInstance->mRenderer)
-        sInstance->mRenderer.reset(new Renderer());
-    return *sInstance->mRenderer;
+        sInstance->mRenderer.reset(
+            sInstance->mRenderApi == RenderAPI::Vulkan ? new VKRenderer() : 
+            static_cast<Renderer*>(new GLRenderer()));
+    return sInstance->mRenderer;
 }
 
 Settings &Singletons::settings()
@@ -99,6 +109,8 @@ Singletons::Singletons(QMainWindow *window)
     Q_ASSERT(onMainThread());
     sInstance = this;
     mSynchronizeLogic.reset(new SynchronizeLogic());
+    
+    resetRenderer(RenderAPI::Vulkan);
 
     QObject::connect(&fileCache(), &FileCache::videoPlayerRequested,
         &videoManager(), &VideoManager::handleVideoPlayerRequested, Qt::QueuedConnection);

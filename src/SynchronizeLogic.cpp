@@ -315,7 +315,7 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
     Singletons::fileCache().updateFromEditors();
     const auto itemsChanged = std::exchange(mRenderSessionInvalidated, false);
-    mRenderSession->update(itemsChanged, evaluationType);
+    mRenderSession->update(Singletons::renderer(), itemsChanged, evaluationType);
 }
 
 void SynchronizeLogic::updateEditors()
@@ -412,7 +412,7 @@ void SynchronizeLogic::processSource()
     mProcessSource->setSourceType(mCurrentEditorSourceType);
     mProcessSource->setValidateSource(mValidateSource);
     mProcessSource->setProcessType(mProcessSourceType);
-    mProcessSource->update();
+    mProcessSource->update(Singletons::renderer());
 }
 
 void SynchronizeLogic::handleMouseStateChanged() 

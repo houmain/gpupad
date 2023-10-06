@@ -7,7 +7,7 @@
 class RenderSessionBase
 {
 public:
-    static std::unique_ptr<RenderSessionBase> create(RenderAPI api);
+    static std::unique_ptr<RenderSessionBase> create(Renderer &renderer);
 
     virtual ~RenderSessionBase() = default;
     virtual void prepare(bool itemsChanged, EvaluationType evaluationType) = 0;
