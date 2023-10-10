@@ -4,6 +4,7 @@
 #include "SessionModelCore.h"
 #include <QSet>
 #include <QFont>
+#include <QIcon>
 #include <QJsonObject>
 #include <QJsonArray>
 

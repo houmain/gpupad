@@ -61,3 +61,20 @@ QList<MessagePtr> messages()
 }
 
 } // namespace
+
+QString formatDuration(const std::chrono::duration<double> &duration)
+{
+    auto toString = [](double v) { return QString::number(v, 'f', 2); };
+
+    auto seconds = duration.count();
+    if (duration > std::chrono::seconds(1))
+        return toString(seconds) + "s";
+
+    if (duration > std::chrono::milliseconds(1))
+        return toString(seconds * 1000) + "ms";
+
+    if (duration > std::chrono::microseconds(1))
+        return toString(seconds * 1000000ull) + QChar(181) + "s";
+
+    return toString(seconds * 1000000000ull) + "ns";
+}

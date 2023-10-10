@@ -102,11 +102,11 @@ set(SOURCES
   src/render/opengl/GLRenderer.cpp
   src/render/opengl/GLProcessSource.cpp
   src/render/opengl/GLComputeRange.cpp
-  src/render/opengl/glslang.cpp
   src/render/vulkan/VKRenderer.cpp
   src/render/vulkan/VKRenderSession.cpp
   src/render/RenderTask.cpp  
   src/render/RenderSessionBase.cpp
+  src/render/glslang.cpp
   src/scripting/ScriptConsole.cpp
   src/scripting/MouseScriptObject.cpp
   src/scripting/KeyboardScriptObject.cpp

@@ -1,5 +1,5 @@
 #include "GLShader.h"
-#include "glslang.h"
+#include "../glslang.h"
 #include <QRegularExpression>
 #include <QFileInfo>
 #include <QDir>

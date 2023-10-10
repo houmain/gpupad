@@ -4,6 +4,7 @@
 #include <QSharedPointer>
 #include <QString>
 #include <QSet>
+#include <chrono>
 
 using ItemId = int;
 using MessageId = qulonglong;
@@ -69,5 +70,7 @@ namespace MessageList
         QString text = "", bool deduplicate = true);
     QList<MessagePtr> messages();
 };
+
+QString formatDuration(const std::chrono::duration<double> &duration);
 
 #endif // MESSAGELIST_H

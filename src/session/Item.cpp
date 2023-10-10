@@ -137,3 +137,19 @@ CallKind getKind(const Call &call)
 
     return kind;
 }
+
+bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType)
+{
+    switch (executeOn) {
+        case Call::ExecuteOn::ResetEvaluation:
+            return (evaluationType == EvaluationType::Reset);
+
+        case Call::ExecuteOn::ManualEvaluation:
+            return (evaluationType == EvaluationType::Reset ||
+                    evaluationType == EvaluationType::Manual);
+
+        case Call::ExecuteOn::EveryEvaluation:
+            break;
+    }
+    return true;
+}

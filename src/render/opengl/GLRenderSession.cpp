@@ -2,12 +2,9 @@
 #include "Singletons.h"
 #include "Settings.h"
 #include "SynchronizeLogic.h"
-#include "session/SessionModel.h"
 #include "editors/EditorManager.h"
 #include "editors/texture/TextureEditor.h"
-#include "editors/binary/BinaryEditor.h"
 #include "scripting/ScriptSession.h"
-#include "FileCache.h"
 #include "GLTexture.h"
 #include "GLBuffer.h"
 #include "GLProgram.h"
@@ -115,50 +112,6 @@ namespace {
             }
         }
     }
-
-    QString formatQueryDuration(std::chrono::duration<double> duration)
-    {
-        auto toString = [](double v) { return QString::number(v, 'f', 2); };
-
-        auto seconds = duration.count();
-        if (duration > std::chrono::seconds(1))
-            return toString(seconds) + "s";
-
-        if (duration > std::chrono::milliseconds(1))
-            return toString(seconds * 1000) + "ms";
-
-        if (duration > std::chrono::microseconds(1))
-            return toString(seconds * 1000000ull) + QChar(181) + "s";
-
-        return toString(seconds * 1000000000ull) + "ns";
-    }
-
-    bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType)
-    {
-        switch (executeOn) {
-            case Call::ExecuteOn::ResetEvaluation:
-                return (evaluationType == EvaluationType::Reset);
-
-            case Call::ExecuteOn::ManualEvaluation:
-                return (evaluationType == EvaluationType::Reset ||
-                        evaluationType == EvaluationType::Manual);
-
-            case Call::ExecuteOn::EveryEvaluation:
-                break;
-        }
-        return true;
-    }
-
-    SourceType getScriptingSourceType(const SessionModel &session) 
-    {
-        auto sourceType = SourceType::JavaScript;
-        session.forEachItem([&](const Item &item) {
-            if (auto script = castItem<Script>(item))
-                if (script->fileName.endsWith(".lua", Qt::CaseInsensitive))
-                    sourceType = SourceType::Lua;
-        });
-        return sourceType;
-    }
 } // namespace
 
 struct GLRenderSession::GroupIteration
@@ -184,82 +137,6 @@ struct GLRenderSession::CommandQueue
 
 GLRenderSession::GLRenderSession() = default;
 GLRenderSession::~GLRenderSession() = default;
-
-QSet<ItemId> GLRenderSession::usedItems() const
-{
-    QMutexLocker lock{ &mUsedItemsCopyMutex };
-    return mUsedItemsCopy;
-}
-
-bool GLRenderSession::usesMouseState() const
-{
-    return (mScriptSession && mScriptSession->usesMouseState());
-}
-
-bool GLRenderSession::usesKeyboardState() const
-{
-    return (mScriptSession && mScriptSession->usesKeyboardState());
-}
-
-void GLRenderSession::prepare(bool itemsChanged, EvaluationType evaluationType)
-{
-    mItemsChanged = itemsChanged;
-    mEvaluationType = evaluationType;
-    mPrevMessages.swap(mMessages);
-    mMessages.clear();
-
-    if (!mCommandQueue)
-        mEvaluationType = EvaluationType::Reset;
-
-    if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
-        mSessionCopy = Singletons::sessionModel();
-
-    if (mEvaluationType == EvaluationType::Reset)
-        mScriptSession.reset(new ScriptSession(
-            getScriptingSourceType(mSessionCopy)));
-
-    mShaderPreamble = Singletons::settings().shaderPreamble() + "\n" +
-        Singletons::synchronizeLogic().sessionShaderPreamble();
-    mShaderIncludePaths = Singletons::settings().shaderIncludePaths() + "\n" +
-        Singletons::synchronizeLogic().sessionShaderIncludePaths();
-
-    mScriptSession->prepare();
-}
-
-void GLRenderSession::configure()
-{
-    mScriptSession->beginSessionUpdate(&mSessionCopy);
-
-    auto &scriptEngine = mScriptSession->engine();
-    const auto &session = mSessionCopy;
-
-    session.forEachItem([&](const Item &item) {
-        if (auto script = castItem<Script>(item)) {
-            auto source = QString();
-            if (shouldExecute(script->executeOn, mEvaluationType))
-                if (Singletons::fileCache().getSource(script->fileName, &source))
-                    scriptEngine.evaluateScript(source, script->fileName, mMessages);
-        }
-        else if (auto binding = castItem<Binding>(item)) {
-            const auto &b = *binding;
-            if (b.bindingType == Binding::BindingType::Uniform) {
-                // set global in script state
-                auto values = scriptEngine.evaluateValues(b.values, b.id, mMessages); 
-                scriptEngine.setGlobal(b.name, values);
-            }
-        }
-    });
-}
-
-void GLRenderSession::configured()
-{
-    mScriptSession->endSessionUpdate();
-
-    if (mEvaluationType == EvaluationType::Automatic)
-        Singletons::synchronizeLogic().cancelAutomaticRevalidation();
-
-    mMessages += mScriptSession->resetMessages();
-}
 
 void GLRenderSession::createCommandQueue()
 {
@@ -609,12 +486,6 @@ void GLRenderSession::executeCommandQueue()
     Singletons::glShareSynchronizer().endUpdate(context);
 }
 
-bool GLRenderSession::updatingPreviewTextures() const
-{
-    return (!mItemsChanged &&
-        mEvaluationType == EvaluationType::Steady);
-}
-
 void GLRenderSession::downloadModifiedResources()
 {
     for (auto &[itemId, texture] : mCommandQueue->textures) {
@@ -641,38 +512,24 @@ void GLRenderSession::outputTimerQueries()
             mCommandQueue->endTimestamp.waitForResult() -
             mCommandQueue->beginTimestamp.waitForResult());
         mTimerMessages += MessageList::insert(0, MessageType::TotalDuration,
-            formatQueryDuration(duration), false);
+            formatDuration(duration), false);
     }
 
     for (const auto &[itemId, query] : qAsConst(mTimerQueries)) {
         const auto duration = std::chrono::nanoseconds(query->waitForResult());
         mTimerMessages += MessageList::insert(
             itemId, MessageType::CallDuration,
-            formatQueryDuration(duration), false);
+            formatDuration(duration), false);
     }
     mTimerQueries.clear();
 }
 
 void GLRenderSession::finish()
 {
+    RenderSessionBase::finish();
+
     auto &editors = Singletons::editorManager();
     auto &session = Singletons::sessionModel();
-
-    editors.setAutoRaise(false);
-
-    for (auto itemId : mModifiedTextures.keys())
-        if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
-            if (auto editor = editors.openTextureEditor(fileItem->fileName))
-                editor->replace(mModifiedTextures[itemId], false);
-    mModifiedTextures.clear();
-
-    for (auto itemId : mModifiedBuffers.keys())
-        if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
-            if (auto editor = editors.openBinaryEditor(fileItem->fileName))
-                editor->replace(mModifiedBuffers[itemId], false);
-    mModifiedBuffers.clear();
-
-    editors.setAutoRaise(true);
 
     if (updatingPreviewTextures())
         for (const auto& [itemId, texture] : mCommandQueue->textures)
@@ -682,11 +539,6 @@ void GLRenderSession::finish()
                         if (auto textureId = texture.textureId())
                             editor->updatePreviewTexture(texture.target(),
                                 texture.format(), textureId);
-
-    mPrevMessages.clear();
-
-    QMutexLocker lock{ &mUsedItemsCopyMutex };
-    mUsedItemsCopy = mUsedItems;
 }
 
 void GLRenderSession::release()

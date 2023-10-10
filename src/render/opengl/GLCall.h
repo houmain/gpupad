@@ -3,7 +3,6 @@
 
 #include "GLItem.h"
 #include "scripting/ScriptEngine.h"
-#include <chrono>
 
 class QOpenGLTimerQuery;
 class GLProgram;

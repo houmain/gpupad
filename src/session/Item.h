@@ -2,6 +2,7 @@
 #define ITEM_H
 
 #include "ItemEnums.h"
+#include "Evaluation.h"
 #include <array>
 #include <QList>
 #include <QVariant>
@@ -258,6 +259,7 @@ int getFieldRowOffset(const Field &field);
 int getBlockStride(const Block &block);
 TextureKind getKind(const Texture &texture);
 CallKind getKind(const Call &call);
+bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType);
 
 template<typename T> Item::Type getItemType();
 template<> inline Item::Type getItemType<Group>() { return Item::Type::Group; }

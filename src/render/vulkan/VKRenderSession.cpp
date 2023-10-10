@@ -9,18 +9,6 @@ VKRenderSession::VKRenderSession(VKRenderer &renderer)
 
 VKRenderSession::~VKRenderSession() = default;
 
-void VKRenderSession::prepare(bool itemsChanged, EvaluationType evaluationType)
-{
-}
-
-void VKRenderSession::configure()
-{
-}
-
-void VKRenderSession::configured()
-{
-}
-
 void VKRenderSession::render()
 {
     Q_ASSERT(mRenderer.device());
@@ -28,23 +16,9 @@ void VKRenderSession::render()
 
 void VKRenderSession::finish()
 {
+    RenderSessionBase::finish();
 }
 
 void VKRenderSession::release()
 {
-}
-
-QSet<ItemId> VKRenderSession::usedItems() const
-{
-    return { };
-}
-
-bool VKRenderSession::usesMouseState() const
-{
-    return { };
-}
-
-bool VKRenderSession::usesKeyboardState() const
-{
-    return { };
 }
