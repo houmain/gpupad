@@ -103,20 +103,20 @@ bool GLTexture::clear(std::array<double, 4> color, double depth, int stencil)
                 c *= factor;
         };
 
-        const auto dataType = getTextureDataType(mFormat);
-        switch (dataType) {
-            case TextureDataType::Normalized_sRGB:
-            case TextureDataType::Float:
+        const auto sampleType = getTextureSampleType(mFormat);
+        switch (sampleType) {
+            case TextureSampleType::Normalized_sRGB:
+            case TextureSampleType::Float:
                 for (auto i = 0u; i < 3; ++i)
                     color[i] = srgbToLinear(color[i]);
                 break;
-            case TextureDataType::Int8: multiplyRGBA(0x7F); break;
-            case TextureDataType::Int16: multiplyRGBA(0x7FFF); break;
-            case TextureDataType::Int32: multiplyRGBA(0x7FFFFFFF); break;
-            case TextureDataType::Uint8: multiplyRGBA(0xFF); break;
-            case TextureDataType::Uint16: multiplyRGBA(0xFFFF); break;
-            case TextureDataType::Uint32: multiplyRGBA(0xFFFFFFFF); break;
-            case TextureDataType::Uint_10_10_10_2:
+            case TextureSampleType::Int8: multiplyRGBA(0x7F); break;
+            case TextureSampleType::Int16: multiplyRGBA(0x7FFF); break;
+            case TextureSampleType::Int32: multiplyRGBA(0x7FFFFFFF); break;
+            case TextureSampleType::Uint8: multiplyRGBA(0xFF); break;
+            case TextureSampleType::Uint16: multiplyRGBA(0xFFFF); break;
+            case TextureSampleType::Uint32: multiplyRGBA(0xFFFFFFFF); break;
+            case TextureSampleType::Uint_10_10_10_2:
                 for (auto i = 0u; i < 3; ++i)
                     color[i] *= 1024.0;
                 color[3] *= 4.0;
@@ -125,10 +125,10 @@ bool GLTexture::clear(std::array<double, 4> color, double depth, int stencil)
                 break;
         }
 
-        switch (dataType) {
-            case TextureDataType::Normalized:
-            case TextureDataType::Normalized_sRGB:
-            case TextureDataType::Float: {
+        switch (sampleType) {
+            case TextureSampleType::Normalized:
+            case TextureSampleType::Normalized_sRGB:
+            case TextureSampleType::Float: {
                 const auto values = std::array<float, 4>{
                     static_cast<float>(color[0]),
                     static_cast<float>(color[1]),
@@ -139,10 +139,10 @@ bool GLTexture::clear(std::array<double, 4> color, double depth, int stencil)
                 break;
             }
 
-            case TextureDataType::Uint8:
-            case TextureDataType::Uint16:
-            case TextureDataType::Uint32:
-            case TextureDataType::Uint_10_10_10_2: {
+            case TextureSampleType::Uint8:
+            case TextureSampleType::Uint16:
+            case TextureSampleType::Uint32:
+            case TextureSampleType::Uint_10_10_10_2: {
                 const auto values = std::array<GLuint, 4>{
                     static_cast<GLuint>(color[0]),
                     static_cast<GLuint>(color[1]),
@@ -153,9 +153,9 @@ bool GLTexture::clear(std::array<double, 4> color, double depth, int stencil)
                 break;
             }
 
-            case TextureDataType::Int8:
-            case TextureDataType::Int16:
-            case TextureDataType::Int32: {
+            case TextureSampleType::Int8:
+            case TextureSampleType::Int16:
+            case TextureSampleType::Int32: {
                 const auto values = std::array<GLint, 4>{
                     static_cast<GLint>(color[0]),
                     static_cast<GLint>(color[1]),

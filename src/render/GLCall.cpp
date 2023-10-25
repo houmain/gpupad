@@ -300,8 +300,8 @@ void GLCall::executeClearTexture(MessagePtrSet &messages)
         mCall.clearColor.alphaF()
     };
 
-    const auto dataType = getTextureDataType(mTexture->format());
-    if (dataType == TextureDataType::Float) {
+    const auto sampleType = getTextureSampleType(mTexture->format());
+    if (sampleType == TextureSampleType::Float) {
         const auto srgbToLinear = [](double s) {
             if (s > 0.0031308)
                 return 1.055 * (std::pow(s, (1.0 / 2.4))) - 0.055;

@@ -89,7 +89,7 @@ private:
     bool mFlippedVertically{ };
 };
 
-enum class TextureDataType
+enum class TextureSampleType
 {
     Normalized,
     Normalized_sRGB,
@@ -101,10 +101,23 @@ enum class TextureDataType
     Uint16,
     Uint32,
     Uint_10_10_10_2,
-    Compressed,
 };
 
-TextureDataType getTextureDataType(QOpenGLTexture::TextureFormat format);
+enum class TextureDataType
+{
+    Other,
+    Int8,
+    Int16,
+    Int32,
+    Uint8,
+    Uint16,
+    Uint32,
+    Float16,
+    Float32,
+};
+
+TextureSampleType getTextureSampleType(QOpenGLTexture::TextureFormat format);
+TextureDataType getDataSampleType(QOpenGLTexture::TextureFormat format);
 int getTextureDataSize(QOpenGLTexture::TextureFormat dataType);
 int getTextureComponentCount(QOpenGLTexture::TextureFormat format);
 
