@@ -310,12 +310,13 @@ bool SessionModelCore::setData(const QModelIndex &index,
     }
 
     switch (static_cast<ColumnType>(index.column())) {
-        case ColumnType::Name:
-            if (value.toString().isEmpty())
-                return false;
-            undoableAssignment(index, &item.name, value.toString());
+        case ColumnType::Name: {
+            auto name = value.toString();
+            if (name.isEmpty())
+                name = getTypeName(getItemType(index));
+            undoableAssignment(index, &item.name, name);
             return true;
-
+        }
         case ColumnType::None:
             return true;
 
