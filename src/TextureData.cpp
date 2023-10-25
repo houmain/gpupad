@@ -1095,8 +1095,65 @@ bool TextureData::saveExr(const QString &fileName, bool flipVertically) const
     if (!fileName.endsWith(".exr", Qt::CaseInsensitive))
         return false;
 
-    // TODO
-    return false;
+    const auto numChannels = getTextureComponentCount(format());
+
+    // Split RGBRGBRGB... into R, G and B layer
+    const auto pixels = width() * height();
+    auto planes = std::vector<std::vector<float>>(numChannels);
+    auto planePtrs = std::vector<float*>();
+    for (auto& plane : planes) {
+        plane.resize(pixels);
+        planePtrs.push_back(plane.data());
+    }
+    std::reverse(planePtrs.begin(), planePtrs.end());
+    const auto data = static_cast<const void*>(getData(0, 0, 0));    
+    const auto dataType = getTextureDataType(format());
+    for (auto i = 0; i < pixels; i++) {
+        const auto cast = [&](auto t, bool normalize = true) {
+            using T = decltype(t);
+            for (auto c = 0; c < numChannels; ++c)
+                planes[c][i] = static_cast<const T*>(data)[numChannels * i + c] / 
+                    float(normalize ? std::numeric_limits<T>::max() : T{ 1 });
+        };
+        switch (dataType) {
+            case TextureDataType::Other: return false;
+            case TextureDataType::Int8: cast(int8_t{ }); break;
+            case TextureDataType::Int16: cast(int16_t{ }); break;
+            case TextureDataType::Int32: cast(int32_t{ }); break;
+            case TextureDataType::Uint8: cast(uint8_t{ }); break;
+            case TextureDataType::Uint16: cast(uint16_t{ }); break;
+            case TextureDataType::Uint32: cast(uint32_t{ }); break;
+            case TextureDataType::Float16: cast(qfloat16{ }, false); break;
+            case TextureDataType::Float32: cast(float{ }, false); break;
+        }
+    }
+
+    auto image = EXRImage{ };
+    InitEXRImage(&image);
+    image.images = reinterpret_cast<unsigned char**>(planePtrs.data());
+    image.num_channels = numChannels;
+    image.width = width();
+    image.height = height();
+
+    auto header = EXRHeader{ };
+    InitEXRHeader(&header);
+    auto channels = std::vector<EXRChannelInfo>(numChannels);
+    auto pixelTypes = std::vector<int>(numChannels);
+    auto requestedPixelTypes = std::vector<int>(numChannels);
+    header.num_channels = numChannels;
+    header.channels = channels.data();
+    header.pixel_types = pixelTypes.data();
+    header.requested_pixel_types = requestedPixelTypes.data();
+
+    const auto dataSize = getTextureDataSize(format());
+    const auto channelNames = std::array<const char*, 4>{ "R", "G", "B", "A" };
+    for (auto i = 0; i < numChannels; ++i) {
+        std::strcpy(header.channels[i].name, channelNames[i]);
+        header.pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
+        header.requested_pixel_types[i] = (dataSize > 2 ? TINYEXR_PIXELTYPE_FLOAT : TINYEXR_PIXELTYPE_HALF);
+    }
+    std::reverse(channels.begin(), channels.end());
+    return (SaveEXRImageToFile(&image, &header, qUtf8Printable(fileName), nullptr) == TINYEXR_SUCCESS);
 }
 
 bool TextureData::saveTga(const QString &fileName, bool flipVertically) const
