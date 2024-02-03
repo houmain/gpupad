@@ -1,6 +1,27 @@
 cmake_minimum_required(VERSION 3.21)
 project(gpupad LANGUAGES CXX C)
 
+if (MSVC)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+    add_compile_options(/W1 /MP)
+    add_compile_options($<$<CONFIG:Release>:/GL>)
+    add_compile_options($<$<CONFIG:Release>:/GR->)
+    add_link_options($<$<CONFIG:Release>:/LTCG>)
+else()
+    add_compile_options($<$<CONFIG:Release>:-fno-rtti>)
+endif()
+
+# build KDGpu --------------------
+find_package(spdlog CONFIG REQUIRED)
+
+find_package(Vulkan)
+find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+add_library(vulkan-memory-allocator::vulkan-memory-allocator ALIAS GPUOpen::VulkanMemoryAllocator)
+
+set(PROJECT_VERSION "0.4.4")
+add_compile_definitions(KDGPU_STATIC_DEFINE)
+add_subdirectory(libs/KDGpu/src/KDGpu)
+
 # setup version -------------------------
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
@@ -18,7 +39,8 @@ endif()
 configure_file("src/version.h.in" "${CMAKE_SOURCE_DIR}/src/_version.h")
 
 # -------------------------
-set(CMAKE_CXX_STANDARD 17)
+
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -150,13 +172,21 @@ set(SOURCES
   src/session/TextureProperties.cpp
   src/session/TextureProperties.ui)
 
-file(GLOB_RECURSE HEADERS include *.h *.hpp)
+file(GLOB_RECURSE HEADERS include src/*.h)
 if(WIN32)
     set(HEADERS ${HEADERS} src/resources.rc src/qt6.natvis)
 endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
+if (MSVC)
+    add_compile_options(/W3)
+else()
+    add_compile_options(-Wall)
+endif()
+
 add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SOURCES} ${HEADERS})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu spdlog::spdlog)
 
 find_package(Ktx CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE KTX::ktx)
@@ -167,19 +197,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${LUA_LIBRARIES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE src libs)
 
-if (MSVC)
-    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
-    add_compile_options(/W3)
-    add_compile_options($<$<CONFIG:Release>:/GR->)
-    add_compile_options($<$<CONFIG:Release>:/GL>)
-    add_compile_options($<$<CONFIG:Release>:/Os>)
-    add_link_options($<$<CONFIG:Release>:/LTCG>)
-else()
-    add_compile_options(-Wall)
-    add_compile_options($<$<CONFIG:Release>:-fno-rtti>)
-    add_link_options($<$<CONFIG:Release>:-s>)
-endif()
-
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_libraries(${PROJECT_NAME} PRIVATE GL)
 elseif(WIN32)
@@ -189,6 +206,7 @@ elseif(APPLE)
     include_directories(${OPENGL_INCLUDE_DIR})
     target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
 endif()
+
 
 # link Qt
 if(NOT DEFINED QT_VERSION_MAJOR)
@@ -250,15 +268,18 @@ option(ENABLE_OPENIMEAGEIO "Enable OpenImageIO" ON)
     add_compile_definitions(OPENIMAGEIO_ENABLED)
 endif()
 
+# include glslang
+find_package(glslang CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE glslang::OSDependent glslang::glslang 
+    glslang::MachineIndependent glslang::GenericCodeGen glslang::glslang-default-resource-limits 
+    glslang::OGLCompiler glslang::SPVRemapper glslang::SPIRV glslang::HLSL)
+
 # include SPIRV-Cross
-option(ENABLE_SPIRV_CROSS "Enable SPIRV-Cross" ON)
-if (ENABLE_SPIRV_CROSS)
-    find_package(spirv_cross_core CONFIG REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE spirv-cross-core)
-    find_package(spirv_cross_glsl CONFIG REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE spirv-cross-glsl)
-    add_compile_definitions(SPIRV_CROSS_ENABLED)
-endif()
+find_package(spirv_cross_core CONFIG REQUIRED)
+find_package(spirv_cross_glsl CONFIG REQUIRED)
+find_package(spirv_cross_reflect CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} 
+    PRIVATE spirv-cross-core spirv-cross-glsl spirv-cross-reflect)
 
 # install -------------------------
 set(DOC_FILES LICENSE CHANGELOG.md THIRD-PARTY.md)
