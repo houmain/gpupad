@@ -110,8 +110,6 @@ Singletons::Singletons(QMainWindow *window)
     sInstance = this;
     mSynchronizeLogic.reset(new SynchronizeLogic());
     
-    resetRenderer(RenderAPI::Vulkan);
-
     QObject::connect(&fileCache(), &FileCache::videoPlayerRequested,
         &videoManager(), &VideoManager::handleVideoPlayerRequested, Qt::QueuedConnection);
 }

@@ -34,6 +34,8 @@ public:
     QString shaderPreamble() const { return mShaderPreamble; }
     void setShaderIncludePaths(const QString &includePaths);
     QString shaderIncludePaths() const { return mShaderIncludePaths; }
+    void setRenderer(const QString &renderer);
+    QString renderer() const { return mRenderer; }
 
 Q_SIGNALS:
     void tabSizeChanged(int tabSize);
@@ -48,6 +50,7 @@ Q_SIGNALS:
     void hideMenuBarChanged(bool hide);
     void shaderPreambleChanged(const QString &preamble);
     void shaderIncludePathsChanged(const QString &includePaths);
+    void rendererChanged(const QString &renderer);
 
 private:
     int mTabSize{ 2 };
@@ -60,6 +63,7 @@ private:
     bool mHideMenuBar{ };
     QString mShaderPreamble;
     QString mShaderIncludePaths;
+    QString mRenderer;
 };
 
 #endif // SETTINGS_H

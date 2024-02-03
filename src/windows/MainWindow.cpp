@@ -19,6 +19,7 @@
 #include "scripting/CustomActions.h"
 #include "WindowTitle.h"
 #include "getEventPosition.h"
+#include "render/Renderer.h"
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QDockWidget>
@@ -340,6 +341,28 @@ MainWindow::MainWindow(QWidget *parent)
         this, &MainWindow::updateEvaluationMode);
     connect(mUi->actionEvalSteady, &QAction::toggled,
         this, &MainWindow::updateEvaluationMode);
+
+    auto menuRenderer = new QMenu("Renderer", this);
+    mUi->menuSession->insertMenu(mUi->menuSession->actions().first(), menuRenderer);
+    auto renderApiActionGroup = new QActionGroup(this);
+    connect(renderApiActionGroup, &QActionGroup::triggered, 
+        [](QAction* a) { 
+            Singletons::settings().setRenderer(a->text());
+            Singletons::resetRenderer(static_cast<RenderAPI>(a->data().toInt()));
+            if (Singletons::synchronizeLogic().evaluationMode() != EvaluationMode::Paused)
+                Singletons::synchronizeLogic().resetEvaluation();
+        });
+    for (const auto [renderApiName, renderApi] : { 
+        std::make_pair("OpenGL", RenderAPI::OpenGL), 
+        std::make_pair("Vulkan", RenderAPI::Vulkan) 
+    }) {
+        auto action = menuRenderer->addAction(renderApiName);
+        action->setData(static_cast<int>(renderApi));
+        action->setCheckable(true);
+        action->setActionGroup(renderApiActionGroup);
+        if (action->text() == settings.renderer())
+            action->trigger();
+    }
 
     connect(mUi->menuCustomActions, &QMenu::aboutToShow,
         this, &MainWindow::updateCustomActionsMenu);

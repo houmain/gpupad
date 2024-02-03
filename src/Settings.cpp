@@ -17,6 +17,7 @@ Settings::Settings(QObject *parent) : QSettings(parent)
     setHideMenuBar(value("hideMenuBar", "false").toBool());
     setShaderPreamble(value("shaderPreamble", "").toString());
     setShaderIncludePaths(value("shaderIncludePaths", "").toString());
+    setRenderer(value("renderer", "").toString());
 
     const auto fontSettings = value("font").toString();
     auto font = QFont();
@@ -52,6 +53,7 @@ Settings::~Settings()
     setValue("font", font().toString());
     setValue("shaderPreamble", shaderPreamble());
     setValue("shaderIncludePaths", shaderIncludePaths());
+    setValue("renderer", renderer());
     endGroup();
 }
 
@@ -142,5 +144,13 @@ void Settings::setShaderIncludePaths(const QString &includePaths)
     if (mShaderIncludePaths != includePaths) {
         mShaderIncludePaths = includePaths;
         Q_EMIT shaderIncludePathsChanged(includePaths);
+    }
+}
+
+void Settings::setRenderer(const QString &renderer)
+{
+    if (mRenderer != renderer) {
+      mRenderer = renderer;
+      Q_EMIT rendererChanged(renderer);
     }
 }
