@@ -270,7 +270,7 @@ QStringList GLShader::getPatchedSources(MessagePtrSet &messages,
     if (mLanguage != Shader::Language::GLSL) {
         for (auto i = 0; i < mSources.size(); ++i) {
             auto source = glslang::generateGLSL(sources[i], mType, mLanguage,
-                mEntryPoint, mFileNames[i], mItemId, messages);
+                mEntryPoint, mFileNames[i], messages);
             if (source.isEmpty())
                 return { };
             

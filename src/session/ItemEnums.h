@@ -226,7 +226,7 @@ namespace ItemEnums {
     enum PrimitiveType {
         Points = GL_POINTS,
         LineStrip = GL_LINE_STRIP,
-        LineLoop = GL_LINE_LOOP,
+        //LineLoop = GL_LINE_LOOP,
         Lines = GL_LINES,
         LineStripAdjacency = GL_LINE_STRIP_ADJACENCY,
         LinesAdjacency = GL_LINES_ADJACENCY,

@@ -1,5 +1,7 @@
 #include "VKRenderer.h"
 #include "../RenderTask.h"
+#include "TextureData.h"
+#include "MessageList.h"
 #include <QApplication>
 #include <QSemaphore>
 #include <QMutex>
@@ -9,9 +11,10 @@
 #include <KDGpu/vulkan/vulkan_graphics_api.h>
 
 #if defined(KDGPU_PLATFORM_WIN32)
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#include <vulkan/vulkan_win32.h>
+# define NOMINMAX
+# define WIN32_LEAN_AND_MEAN
+# include <vulkan/vulkan_win32.h>
+# include <spdlog/sinks/msvc_sink.h>
 #endif
 
 class VKRenderer::Worker final : public QObject
@@ -32,23 +35,30 @@ public:
 
     void handleRenderTask(RenderTask* renderTask)
     {
-        if (!std::exchange(mInitialized, true))
-            initialize();
+        try {
+            if (!std::exchange(mInitialized, true))
+                initialize();
 
-        renderTask->render();
+            if (mDevice.isValid())
+                renderTask->render();
+        }
+        catch (const std::exception &ex) {
+            mMessages += MessageList::insert(0, MessageType::RenderingFailed, ex.what());
+        }
         Q_EMIT taskRendered();
     }
 
     void handleReleaseTask(RenderTask* renderTask, void* userData)
     {
-        renderTask->release();
+        if (mDevice.isValid())
+            renderTask->release();
         static_cast<QSemaphore*>(userData)->release(1);
     }
 
 public Q_SLOTS:
     void stop()
     {
-        mRenderer.mDevice = nullptr;
+        shutdown();
         QThread::currentThread()->exit(0);
     }
 
@@ -59,6 +69,10 @@ Q_SIGNALS:
 private:
     void initialize()
     {
+#if defined(KDGPU_PLATFORM_WIN32)
+        static auto l = spdlog::synchronous_factory::create<spdlog::sinks::msvc_sink_mt>("KDGpu");
+#endif
+
         mApi = std::make_unique<KDGpu::VulkanGraphicsApi>();
 
         auto instanceOptions = KDGpu::InstanceOptions{
@@ -86,7 +100,37 @@ private:
 #endif
         };
         mDevice = mAdapter->createDevice(deviceOptions);
+        
+        auto &rm = *mDevice.graphicsApi()->resourceManager();
+        auto vkInstance = static_cast<KDGpu::VulkanInstance*>(rm.getInstance(mInstance));
+        auto vkAdapter = static_cast<KDGpu::VulkanAdapter*>(rm.getAdapter(*mAdapter));
+        auto vkDevice = static_cast<KDGpu::VulkanDevice*>(rm.getDevice(mDevice));
+        auto vkQueue = static_cast<KDGpu::VulkanQueue*>(rm.getQueue(mDevice.queues()[0]));
+        
+        auto poolInfo = VkCommandPoolCreateInfo{ };
+        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolInfo.queueFamilyIndex = 0;
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        vkCreateCommandPool(vkDevice->device, &poolInfo, nullptr, &mKtxCommandPool);
+
+        ktxVulkanDeviceInfo_ConstructEx(&mKtxDeviceInfo,
+          vkInstance->instance, vkAdapter->physicalDevice, vkDevice->device,
+          vkQueue->queue, mKtxCommandPool, nullptr, nullptr);
+
         mRenderer.mDevice = &mDevice;
+        mRenderer.mKtxDeviceInfo = &mKtxDeviceInfo;
+    }
+
+    void shutdown()
+    {
+        ktxVulkanDeviceInfo_Destruct(&mKtxDeviceInfo);
+
+        auto &rm = *mDevice.graphicsApi()->resourceManager();
+        auto vkDevice = static_cast<KDGpu::VulkanDevice*>(rm.getDevice(mDevice));
+        vkDestroyCommandPool(vkDevice->device, mKtxCommandPool, nullptr);
+
+        mRenderer.mDevice = nullptr;
+        mRenderer.mKtxDeviceInfo = nullptr;
     }
 
     VKRenderer &mRenderer;
@@ -95,6 +139,9 @@ private:
     KDGpu::Instance mInstance;
     KDGpu::Adapter *mAdapter{ };
     KDGpu::Device mDevice;
+    ktxVulkanDeviceInfo mKtxDeviceInfo{ };
+    VkCommandPool mKtxCommandPool;
+    MessagePtrSet mMessages;
 };
 
 VKRenderer::VKRenderer(QObject *parent)
@@ -151,6 +198,18 @@ void VKRenderer::release(RenderTask *task)
     done.release(1);
 }
 
+KDGpu::Device &VKRenderer::device()
+{
+    Q_ASSERT(mDevice);
+    return *mDevice;
+}
+
+ktxVulkanDeviceInfo &VKRenderer::ktxDeviceInfo()
+{
+    Q_ASSERT(mKtxDeviceInfo);
+    return *mKtxDeviceInfo;
+}
+
 void VKRenderer::renderNextTask()
 {
     if (mCurrentTask || mPendingTasks.isEmpty())
@@ -176,4 +235,3 @@ void VKRenderer::handleTaskRendered()
 }
 
 #include "VKRenderer.moc"
-

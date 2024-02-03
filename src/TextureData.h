@@ -5,6 +5,8 @@
 #include <QMetaType>
 #include <memory>
 #include <ktx.h>
+#include <vulkan/vulkan.h>
+#include <ktxvulkan.h>
 
 class QOpenGLFunctions_3_3_Core;
 
@@ -54,6 +56,8 @@ public:
         QOpenGLTexture::TextureFormat::NoFormat);
     bool upload(GLuint *textureId, QOpenGLTexture::TextureFormat format =
         QOpenGLTexture::TextureFormat::NoFormat);
+    bool upload(ktxVulkanDeviceInfo* vdi, ktxVulkanTexture* vkTexture,
+        VkImageUsageFlags usageFlags, VkImageLayout initialLayout);
     bool download(GLuint textureId);
 
     friend bool operator==(const TextureData &a, const TextureData &b);

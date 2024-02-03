@@ -4,6 +4,7 @@
 #include "../Renderer.h"
 
 namespace KDGpu { class Device; }
+struct ktxVulkanDeviceInfo;
 
 class VKRenderer : public QObject, public Renderer
 {
@@ -15,7 +16,8 @@ public:
     void render(RenderTask *task) override;
     void release(RenderTask *task) override;
 
-    KDGpu::Device *device() { return mDevice; }
+    KDGpu::Device &device();
+    ktxVulkanDeviceInfo &ktxDeviceInfo();
 
 Q_SIGNALS:
     void configureTask(RenderTask* renderTask, QPrivateSignal);
@@ -33,4 +35,5 @@ private:
     QList<RenderTask*> mPendingTasks;
     RenderTask *mCurrentTask{ };
     KDGpu::Device *mDevice{ };
+    ktxVulkanDeviceInfo *mKtxDeviceInfo{ };
 };

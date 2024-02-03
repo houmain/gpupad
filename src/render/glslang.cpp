@@ -1,19 +1,31 @@
 
 #include "glslang.h"
+#include "opengl/GLShader.h"
 #include <QProcess>
 #include <QDir>
 #include <QTemporaryFile>
 #include <QRegularExpression>
+#include <QScopeGuard>
 #include <cstring>
-
-#if defined(SPIRV_CROSS_ENABLED)
-#  include "spirv_glsl.hpp"
-#endif
+#include <glslang/Include/glslang_c_interface.h>
+#include <glslang/Public/resource_limits_c.h>
+#include "spirvCross.h"
 
 namespace glslang 
 {
 namespace 
 {
+    void staticInitGlslang() {
+        static struct Init {
+            Init() {
+                glslang_initialize_process();
+            }
+            ~Init() {
+                glslang_finalize_process();
+            }
+        } s;
+    }
+
     const char *getGLSLangSourceType(Shader::ShaderType shaderType)
     {
         switch (shaderType) {
@@ -30,6 +42,28 @@ namespace
         return nullptr;
     }
 
+    glslang_source_t getLanguage(Shader::Language language)
+    {
+        switch (language) {
+            case Shader::Language::GLSL: return GLSLANG_SOURCE_GLSL;
+            case Shader::Language::HLSL: return GLSLANG_SOURCE_HLSL;
+        }
+        return { };
+    }
+
+    glslang_stage_t getStage(Shader::ShaderType shaderType)
+    {
+        switch (shaderType) {
+            case Shader::ShaderType::Vertex: return GLSLANG_STAGE_VERTEX;
+            case Shader::ShaderType::Fragment: return GLSLANG_STAGE_FRAGMENT;
+            case Shader::ShaderType::Geometry: return GLSLANG_STAGE_GEOMETRY;
+            case Shader::ShaderType::TessellationControl: return GLSLANG_STAGE_TESSCONTROL;
+            case Shader::ShaderType::TessellationEvaluation: return GLSLANG_STAGE_TESSEVALUATION;
+            case Shader::ShaderType::Compute: return GLSLANG_STAGE_COMPUTE;
+        }
+        return { };
+    }
+
     QString executeGLSLangValidator(const QString &source,
         QStringList args, Shader::ShaderType shaderType,
         MessagePtrSet &messages)
@@ -44,7 +78,6 @@ namespace
         process.setWorkingDirectory(QDir::temp().path());
         process.start("glslangValidator", args);
         if (!process.waitForStarted()) {
-            messages += MessageList::insert(0, MessageType::GlslangValidatorNotFound);
             return { };
         }
         process.write(source.toUtf8());
@@ -60,24 +93,9 @@ namespace
         return result;
     }
 
-#if defined(SPIRV_CROSS_ENABLED)
-    spv::ExecutionModel getExecutionModel(Shader::ShaderType shaderType)
-    {
-        switch (shaderType) {
-            case Shader::ShaderType::Vertex: return spv::ExecutionModelVertex;
-            case Shader::ShaderType::Fragment: return spv::ExecutionModelFragment;
-            case Shader::ShaderType::Geometry: return spv::ExecutionModelGeometry;
-            case Shader::ShaderType::TessellationControl: return spv::ExecutionModelTessellationControl;
-            case Shader::ShaderType::TessellationEvaluation: return spv::ExecutionModelTessellationEvaluation;
-            case Shader::ShaderType::Compute: return spv::ExecutionModelGLCompute;
-            case Shader::ShaderType::Includable: break;
-        }
-        return { };
-    }
-#endif
-
-    bool parseGLSLangErrors(const QString &log, const QString &fileName,
-        ItemId itemId, MessagePtrSet &messages)
+    bool parseGLSLangErrors(const QString &log,
+          MessagePtrSet &messages, ItemId itemId,
+          const QStringList &fileNames)
     {
         // ERROR: 0:50: 'output' : unknown variable
         // WARNING: Linking fragment stage
@@ -97,8 +115,13 @@ namespace
                 continue;
 
             const auto severity = match.captured(2);
-            const auto line = match.captured(5).toInt();
+            const auto sourceIndex = match.captured(4).toInt();
+            const auto lineNumber = match.captured(5).toInt();
             const auto text = match.captured(6);
+
+            if (text.contains("No code generated") || 
+                text.contains("compilation terminated"))
+                continue;
 
             auto messageType = MessageType::ShaderWarning;
             if (severity.contains("INFO", Qt::CaseInsensitive))
@@ -108,64 +131,16 @@ namespace
                 hasErrors = true;
             }
 
-            messages += MessageList::insert(
-                fileName, line, messageType, text);
-        }
-        return hasErrors;
-    }
-
-    QString patchGLSL(QString glsl) 
-    {
-        // WORKAROUND - is there no simpler way?
-        // turn:
-        //   layout(binding = 0, std140) uniform _Global
-        //   {
-        //       layout(row_major) mat4 viewProj;
-        //   } _35;
-        //   ...
-        //   _35.viewProj
-        //
-        // into:
-        //   uniform mat4 viewProj;
-        //   ...
-        //   viewProj
-        //
-        auto i = glsl.indexOf("uniform _Global");
-        if (i >= 0) {
-            auto lineBegin = glsl.lastIndexOf('\n', i) + 1;
-            glsl.insert(lineBegin, "//");
-            for (auto level = 0; i < glsl.size(); ++i) {
-                if (glsl[i] == '{') {
-                    if (level == 0) {
-                        glsl.insert(i, "//");
-                        i += 2;
-                    }
-                    ++level;
-                }
-                else if (glsl[i] == 'l' && glsl.indexOf("layout(", i) == i) {
-                    lineBegin = i;
-                    glsl.remove(i, glsl.indexOf(')', i) - i + 1);
-                }
-                else if (glsl[i] == '\n') {
-                    lineBegin = i + 1;
-                }
-                else if (glsl[i] == ';') {
-                    glsl.insert(lineBegin, "uniform ");
-                    i += 8;
-                }
-                else if (glsl[i] == '}') {
-                    --level;
-                    if (level == 0) {
-                        glsl.insert(i, "//");
-                        i += 4;
-                        const auto var = glsl.mid(i, glsl.indexOf(';', i) - i);
-                        glsl.remove(var + ".");
-                        break;
-                    }
-                }
+            if (sourceIndex < fileNames.size()) {
+                messages += MessageList::insert(
+                    fileNames[sourceIndex], lineNumber, messageType, text);
+            }
+            else {
+                messages += MessageList::insert(
+                    itemId, messageType, text);
             }
         }
-        return glsl;
+        return hasErrors;
     }
 
     QString completeFunctionName(const QString &source, const QString& prefix)
@@ -251,7 +226,7 @@ QString preprocess(const QString &source, MessagePtrSet &messages)
 
 QString generateGLSL(const QString &source, Shader::ShaderType shaderType,
     Shader::Language language, const QString &entryPoint, 
-    const QString &fileName, ItemId itemId, MessagePtrSet &messages)
+    const QString &fileName, MessagePtrSet &messages)
 {
     Q_ASSERT(language != Shader::Language::None);
 
@@ -274,40 +249,89 @@ QString generateGLSL(const QString &source, Shader::ShaderType shaderType,
     args += output.fileName();
 
     const auto log = executeGLSLangValidator(source, args, shaderType, messages).trimmed();
-    if (!log.isEmpty() && parseGLSLangErrors(log, fileName, itemId, messages))
+    if (!log.isEmpty() && parseGLSLangErrors(log, messages, 0, { fileName }))
         return { };
 
-#if defined(SPIRV_CROSS_ENABLED)
     output.open();
     auto spirv = output.readAll();
     if (!spirv.isEmpty()) {
-        try {
-            auto data = std::vector<uint32_t>(spirv.size() / sizeof(uint32_t), 0);
-            std::memcpy(data.data(), spirv.data(), data.size() * sizeof(uint32_t));
-
-            auto compiler = spirv_cross::CompilerGLSL(std::move(data));
-            auto options = spirv_cross::CompilerGLSL::Options{ };
-            options.emit_line_directives = true;
-            compiler.set_common_options(options);
-
-            compiler.build_combined_image_samplers();
-            for (auto &remap : compiler.get_combined_image_samplers())
-               compiler.set_name(remap.combined_id,
-                  compiler.get_name(remap.image_id) + "_" +
-                        compiler.get_name(remap.sampler_id));
-
-            return patchGLSL(QString::fromStdString(compiler.compile()));
-        }
-        catch (const std::exception &ex) {
-            messages += MessageList::insert(fileName, -1,
-                MessageType::ShaderError, ex.what());
-        }
+        auto data = std::vector<uint32_t>(spirv.size() / sizeof(uint32_t), 0);
+        std::memcpy(data.data(), spirv.data(), data.size() * sizeof(uint32_t));
+        return spirvCross::generateGLSL(std::move(data), fileName, messages);
     }
-#else
-    messages += MessageList::insert(itemId, MessageType::SpirvCrossNotCompiledIn);
-#endif
 
     return { };
+}
+
+std::vector<uint32_t> generateSpirVBinary(Shader::Language shaderLanguage, 
+        Shader::ShaderType shaderType, const QStringList &sources, 
+        const QStringList &fileNames, const QString &entryPoint, 
+        MessagePtrSet &messages) {
+
+    staticInitGlslang();
+
+    const auto itemId = 0;
+    const auto language = getLanguage(shaderLanguage);
+    const auto stage = getStage(shaderType);
+    auto program = glslang_program_create();
+    auto shaders = std::vector<glslang_shader_t*>();
+    auto cleanup = qScopeGuard([&]() {
+        glslang_program_delete(program);
+        for (auto shader : shaders)
+            glslang_shader_delete(shader);            
+    });
+
+    for (auto i = 0; i < sources.size(); ++i) {
+        const auto source = sources[i].toUtf8();
+
+        const auto input = glslang_input_t{
+            .language = language,
+            .stage = stage,
+            .client = GLSLANG_CLIENT_VULKAN,
+            .client_version = GLSLANG_TARGET_VULKAN_1_2,
+            .target_language = GLSLANG_TARGET_SPV,
+            .target_language_version = GLSLANG_TARGET_SPV_1_5,
+            .code = source.constData(),
+            .default_version = 100,
+            .default_profile = GLSLANG_NO_PROFILE,
+            .force_default_version_and_profile = false,
+            .forward_compatible = false,
+            .messages = GLSLANG_MSG_DEFAULT_BIT,
+            .resource = glslang_default_resource(),
+        };
+
+        auto shader = glslang_shader_create(&input);
+        glslang_shader_set_options(shader, 
+            GLSLANG_SHADER_AUTO_MAP_BINDINGS | 
+            GLSLANG_SHADER_AUTO_MAP_LOCATIONS | 
+            GLSLANG_SHADER_VULKAN_RULES_RELAXED);
+        shaders.push_back(shader);
+
+        if (!glslang_shader_preprocess(shader, &input) ||
+            !glslang_shader_parse(shader, &input))	{
+
+            parseGLSLangErrors(QString::fromUtf8(glslang_shader_get_info_log(shader)), 
+                messages, itemId, fileNames);
+            return { };
+        }
+        glslang_program_add_shader(program, shader);
+    }
+
+    if (!glslang_program_link(program, GLSLANG_MSG_SPV_RULES_BIT | GLSLANG_MSG_VULKAN_RULES_BIT)) {
+        parseGLSLangErrors(QString::fromUtf8(glslang_program_get_info_log(program)), 
+            messages, itemId, fileNames);
+        return { };
+    }
+    
+    glslang_program_SPIRV_generate(program, stage);
+    const auto size = glslang_program_SPIRV_get_size(program);
+    auto result = std::vector<uint32_t>(size);
+    glslang_program_SPIRV_get(program, result.data());
+
+    if (const char* log = glslang_program_SPIRV_get_messages(program)) {
+        parseGLSLangErrors(QString::fromUtf8(log), messages, itemId, fileNames);
+    }
+    return result;
 }
 
 } // namespace

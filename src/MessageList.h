@@ -48,8 +48,9 @@ enum MessageType
     IncludableNotFound,
     RecursiveInclude,
     TooManyPrintfCalls,
-    GlslangValidatorNotFound,
-    SpirvCrossNotCompiledIn,
+    RenderingFailed,
+    MoreThanOneDepthStencilAttachment,
+    IncompatibleBindings,
 };
 
 struct Message

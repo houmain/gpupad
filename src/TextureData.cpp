@@ -616,9 +616,8 @@ bool TextureData::create(
       (!canGenerateMipmaps(target, format) ? 1 :
         getLevelCount(createInfo)));
 
-      auto texture = std::add_pointer_t<ktxTexture1>{ };
-    if (ktxTexture1_Create(&createInfo, KTX_TEXTURE_CREATE_ALLOC_STORAGE,
-            &texture) == KTX_SUCCESS) {
+    auto texture = std::add_pointer_t<ktxTexture1>{ };
+    if (ktxTexture1_Create(&createInfo, KTX_TEXTURE_CREATE_ALLOC_STORAGE, &texture) == KTX_SUCCESS) {
         fixFormat(*texture);
         mKtxTexture.reset(texture, [](ktxTexture1* tex) { ktxTexture_Destroy(ktxTexture(tex)); });
         mTarget = target;
@@ -1108,15 +1107,15 @@ bool TextureData::upload(GLuint *textureId,
 
     auto target = static_cast<GLenum>(mTarget);
     auto error = GLenum{ };
-    const auto result = (ktxTexture_GLUpload(
-        ktxTexture(mKtxTexture.get()), textureId, &target, &error) == KTX_SUCCESS);
+    const auto result = ktxTexture_GLUpload(ktxTexture(mKtxTexture.get()), 
+        textureId, &target, &error);
 
     mKtxTexture->glInternalformat = originalInternalFormat;
     mKtxTexture->glFormat = originalFormat;
     mKtxTexture->glType = originalType;
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    return result;
+    return (result == KTX_SUCCESS);
 }
 
 bool TextureData::download(GLuint textureId)
@@ -1218,4 +1217,19 @@ bool TextureData::downloadMultisample(GL& gl, GLuint textureId)
     }
 }
 
+bool TextureData::upload(ktxVulkanDeviceInfo* vdi, ktxVulkanTexture* vkTexture,
+    VkImageUsageFlags usageFlags, VkImageLayout initialLayout)
+{
+    if (isNull() || !vkTexture || !vdi)
+        return false;
 
+    // TODO: because of attachments
+    mKtxTexture->numLevels = 1;
+    mKtxTexture->generateMipmaps = KTX_FALSE;
+
+    const auto tiling = VK_IMAGE_TILING_OPTIMAL;
+    const auto result = ktxTexture_VkUploadEx(ktxTexture(mKtxTexture.get()), 
+        vdi, vkTexture, tiling, usageFlags, initialLayout);
+
+    return (result == KTX_SUCCESS);;
+}

@@ -87,8 +87,9 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case IncludableNotFound:
         case RecursiveInclude:
         case InvalidAttribute:
-        case GlslangValidatorNotFound:
-        case SpirvCrossNotCompiledIn:
+        case RenderingFailed:
+        case MoreThanOneDepthStencilAttachment:
+        case IncompatibleBindings:
             return mErrorIcon;
 
         case UnformNotSet:
@@ -179,10 +180,12 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Invalid stream attribute");
         case TooManyPrintfCalls:
             return tr("Too many printf calls. Please filter threads by setting printfEnabled");
-        case GlslangValidatorNotFound:
-            return tr("glslangValidator not found");
-        case SpirvCrossNotCompiledIn:
-            return tr("SPIRV-Cross not compiled in");
+        case RenderingFailed:
+            return tr("Rendering failed: %1").arg(message.text);
+        case MoreThanOneDepthStencilAttachment:
+            return tr("Only a single depth or stencil attachment is supported");
+        case IncompatibleBindings:
+            return tr("Incompatible bindings to the same set/location");
     }
     return message.text;
 }

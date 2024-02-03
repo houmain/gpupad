@@ -19,6 +19,7 @@ find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 add_library(vulkan-memory-allocator::vulkan-memory-allocator ALIAS GPUOpen::VulkanMemoryAllocator)
 
 set(PROJECT_VERSION "0.4.4")
+include(FeatureSummary)
 add_compile_definitions(KDGPU_STATIC_DEFINE)
 add_subdirectory(libs/KDGpu/src/KDGpu)
 
@@ -124,11 +125,21 @@ set(SOURCES
   src/render/opengl/GLRenderer.cpp
   src/render/opengl/GLProcessSource.cpp
   src/render/opengl/GLComputeRange.cpp
+  src/render/vulkan/KDGpuEnums.cpp
+  src/render/vulkan/VKBuffer.cpp
+  src/render/vulkan/VKCall.cpp
+  src/render/vulkan/VKPipeline.cpp
+  src/render/vulkan/VKProgram.cpp
+  src/render/vulkan/VKShader.cpp
+  src/render/vulkan/VKStream.cpp
+  src/render/vulkan/VKTarget.cpp
+  src/render/vulkan/VKTexture.cpp
   src/render/vulkan/VKRenderer.cpp
   src/render/vulkan/VKRenderSession.cpp
   src/render/RenderTask.cpp  
   src/render/RenderSessionBase.cpp
   src/render/glslang.cpp
+  src/render/spirvCross.cpp
   src/scripting/ScriptConsole.cpp
   src/scripting/MouseScriptObject.cpp
   src/scripting/KeyboardScriptObject.cpp
