@@ -138,6 +138,8 @@ set(SOURCES
   src/render/vulkan/VKRenderSession.cpp
   src/render/RenderTask.cpp  
   src/render/RenderSessionBase.cpp
+  src/render/ShaderBase.cpp
+  src/render/ShaderPrintf.cpp
   src/render/glslang.cpp
   src/render/spirvCross.cpp
   src/scripting/ScriptConsole.cpp
