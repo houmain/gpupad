@@ -14,6 +14,7 @@ public:
 
     void link(KDGpu::Device &device);
     std::vector<KDGpu::ShaderStage> getShaderStages();
+    ItemId itemId() const { return mItemId; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     const StageInterface& interface() const { return mInterface; }
 

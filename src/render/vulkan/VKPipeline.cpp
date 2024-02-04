@@ -134,7 +134,7 @@ auto VKPipeline::getBindGroup(uint32_t set) -> BindGroup& {
     return mBindGroups[set];
 }
 
-void VKPipeline::createOrUpdateBindGroup(
+bool VKPipeline::createOrUpdateBindGroup(
     uint32_t set, uint32_t binding,
     const KDGpu::ResourceBindingLayout &layout)
 {
@@ -146,15 +146,17 @@ void VKPipeline::createOrUpdateBindGroup(
             return layout.binding == binding; 
         });
     if (it != end(bindings)) {
-        if (!it->isCompatible(layout)) {
-            mAllBuffersBound = false;
-            mMessages += MessageList::insert(mItemId, MessageType::IncompatibleBindings);
-        }
         it->shaderStages |= layout.shaderStages;
+        if (!it->isCompatible(layout)) {
+            mMessages += MessageList::insert(
+                mProgram.itemId(), MessageType::IncompatibleBindings);
+            return false;
+        }
     }
     else {
         bindings.push_back(layout);
     }
+    return true;
 }
 
 template <typename T>
@@ -277,28 +279,31 @@ bool VKPipeline::createLayout(VKContext &context)
 {    
     for (const auto &[stage, interface] : mProgram.interface()) {
         for (const auto &buffer : interface.buffers)
-            createOrUpdateBindGroup(buffer.set, buffer.binding,
+            if (!createOrUpdateBindGroup(buffer.set, buffer.binding,
                 KDGpu::ResourceBindingLayout{
                     .binding = buffer.binding,
                     .resourceType = KDGpu::ResourceBindingType::UniformBuffer,
                     .shaderStages = stage
-                });
+                }))
+                return false;
 
         for (const auto &texture : interface.textures)
-            createOrUpdateBindGroup(texture.set, texture.binding,
+            if (!createOrUpdateBindGroup(texture.set, texture.binding,
                 KDGpu::ResourceBindingLayout{
                     .binding = texture.binding,
                     .resourceType = KDGpu::ResourceBindingType::CombinedImageSampler,
                     .shaderStages = stage
-                });
+                }))
+                return false;
 
         for (const auto &image : interface.images)
-            createOrUpdateBindGroup(image.set, image.binding,
+            if (!createOrUpdateBindGroup(image.set, image.binding,
                 KDGpu::ResourceBindingLayout{
                     .binding = image.binding,
                     .resourceType = KDGpu::ResourceBindingType::StorageImage,
                     .shaderStages = stage
-                });
+                }))
+                return false;
     }
 
     for (const auto &bindGroup : mBindGroups)
@@ -318,11 +323,10 @@ bool VKPipeline::updateBindings(VKContext &context)
     mSamplers.clear();
 
     for (auto &bindGroup : mBindGroups) {
-        bindGroup.bindGroup = { };
         bindGroup.resources = { };
+        bindGroup.bindGroup = { };
     }
     
-    mAllBuffersBound = true;
     for (const auto &[stage, interface] : mProgram.interface()) {
         // buffer bindings
         for (const auto &buffer : interface.buffers) {
@@ -337,10 +341,9 @@ bool VKPipeline::updateBindings(VKContext &context)
             }
             else {
                 const auto bufferBinding = findByName(mBufferBindings, buffer.name);
-                if (!bufferBinding) {
-                    mAllBuffersBound = false;
-                    continue;
-                }
+                if (!bufferBinding)
+                    return false;
+
                 getBindGroup(buffer.set).resources.push_back({
                     .binding = buffer.binding,
                     .resource = KDGpu::UniformBufferBinding{ 
@@ -353,10 +356,8 @@ bool VKPipeline::updateBindings(VKContext &context)
         // sampler/texture bindings
         for (const auto &texture : interface.textures) {
             const auto samplerBinding = findByName(mSamplerBindings, texture.name);
-            if (!samplerBinding || !samplerBinding->texture->prepareImageSampler(context)) {
-                mAllBuffersBound = false;
-                continue;
-            }
+            if (!samplerBinding || !samplerBinding->texture->prepareImageSampler(context))
+                return false;
 
             // TODO: do not recreated every time
             const auto& sampler = mSamplers.emplace_back(
@@ -377,10 +378,8 @@ bool VKPipeline::updateBindings(VKContext &context)
         // image bindings
         for (const auto &image : interface.images) {
             const auto imageBinding = findByName(mImageBindings, image.name);
-            if (!imageBinding || !imageBinding->texture->prepareStorageImage(context)) {
-                mAllBuffersBound = false;
-                continue;
-            }
+            if (!imageBinding || !imageBinding->texture->prepareStorageImage(context))
+                return false;
 
             getBindGroup(image.set).resources.push_back({
                 .binding = image.binding,
@@ -391,17 +390,15 @@ bool VKPipeline::updateBindings(VKContext &context)
         }
     }
 
-    if (!mAllBuffersBound)
-        return false;
-
     Q_ASSERT(mBindGroups.size() == mBindGroupLayouts.size());
     for (auto i = 0; i < mBindGroups.size(); ++i) {
         auto &bindGroup = mBindGroups[i];
-        if (!bindGroup.resources.empty())
-            bindGroup.bindGroup = context.device.createBindGroup({
-                .layout = mBindGroupLayouts[i],
-                .resources = bindGroup.resources
-            });
+        Q_ASSERT(!bindGroup.resources.empty());
+        Q_ASSERT(bindGroup.resources.size() == bindGroup.bindings.size());
+        bindGroup.bindGroup = context.device.createBindGroup({
+            .layout = mBindGroupLayouts[i],
+            .resources = bindGroup.resources
+        });
     }
     return true;
 }

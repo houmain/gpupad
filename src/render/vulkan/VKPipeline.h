@@ -85,7 +85,7 @@ private:
     };
 
     BindGroup& getBindGroup(uint32_t set);
-    void createOrUpdateBindGroup(uint32_t set, uint32_t binding,
+    bool createOrUpdateBindGroup(uint32_t set, uint32_t binding,
         const KDGpu::ResourceBindingLayout &layout);
     bool updateBindings(VKContext &context);
     bool createLayout(VKContext &context);
@@ -107,7 +107,6 @@ private:
     std::vector<VKImageBinding> mImageBindings;
     std::vector<KDGpu::Sampler> mSamplers;
     std::map<KDGpu::ShaderStageFlagBits, KDGpu::Buffer> mDefaultUniformBlocks;
-    bool mAllBuffersBound{ };
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
 };
