@@ -1,5 +1,5 @@
 #include "DockTitle.h"
-#include "../getEventPosition.h"
+#include "getEventPosition.h"
 #include <QStylePainter>
 #include <QStyleOption>
 #include <QPaintEvent>

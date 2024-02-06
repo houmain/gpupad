@@ -2,7 +2,6 @@
 #include "VKTexture.h"
 #include "VKBuffer.h"
 #include "scripting/ScriptEngine.h"
-#include <array>
 #include <QRegularExpression>
 
 VKProgram::VKProgram(const Program &program, 
@@ -35,7 +34,7 @@ void VKProgram::link(KDGpu::Device &device)
 
     auto succeeded = true;
     for (auto &shader : mShaders)
-        succeeded &= shader.compile(device);
+        succeeded &= shader.compile(device, &mPrintf);
     
     if (succeeded) {
         for (const auto &shader : mShaders) {

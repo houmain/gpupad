@@ -1,7 +1,7 @@
 #pragma once
 
 #include "GLItem.h"
-#include "../ShaderPrintf.h"
+#include "render/ShaderPrintf.h"
 
 class GLPrintf : public ShaderPrintf
 {

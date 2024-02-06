@@ -1,6 +1,6 @@
 #include "GLRenderer.h"
 #include "GLContext.h"
-#include "../RenderTask.h"
+#include "render/RenderTask.h"
 #include <QApplication>
 #include <QOpenGLFunctions>
 #include <QOffscreenSurface>

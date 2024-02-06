@@ -25,4 +25,5 @@ private:
     std::vector<VKShader> mShaders;
     MessagePtrSet mPrintfMessages;
     StageInterface mInterface;
+    VKPrintf mPrintf;
 };

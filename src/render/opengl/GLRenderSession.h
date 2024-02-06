@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../RenderSessionBase.h"
+#include "render/RenderSessionBase.h"
 #include <QOpenGLVertexArrayObject>
 
 class QOpenGLTimerQuery;

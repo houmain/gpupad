@@ -2,7 +2,7 @@
 #define GLSHADER_H
 
 #include "GLPrintf.h"
-#include "../ShaderBase.h"
+#include "render/ShaderBase.h"
 
 class GLShader : public ShaderBase
 {

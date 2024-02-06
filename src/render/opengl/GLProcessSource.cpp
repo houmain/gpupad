@@ -5,7 +5,7 @@
 #include "Singletons.h"
 #include "Settings.h"
 #include "SynchronizeLogic.h"
-#include "../glslang.h"
+#include "render/glslang.h"
 
 namespace {
     QString removeLineDirectives(QString source)

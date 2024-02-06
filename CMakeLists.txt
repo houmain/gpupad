@@ -130,6 +130,7 @@ set(SOURCES
   src/render/vulkan/VKCall.cpp
   src/render/vulkan/VKPipeline.cpp
   src/render/vulkan/VKProgram.cpp
+  src/render/vulkan/VKPrintf.cpp
   src/render/vulkan/VKShader.cpp
   src/render/vulkan/VKStream.cpp
   src/render/vulkan/VKTarget.cpp

@@ -1,7 +1,7 @@
 
 #include <QObject>
 #include <QThread>
-#include "../Renderer.h"
+#include "render/Renderer.h"
 
 namespace KDGpu { class Device; }
 struct ktxVulkanDeviceInfo;

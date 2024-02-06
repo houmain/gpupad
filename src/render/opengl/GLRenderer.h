@@ -1,7 +1,7 @@
 
 #include <QObject>
 #include <QThread>
-#include "../Renderer.h"
+#include "render/Renderer.h"
 
 class GLRenderer : public QObject, public Renderer
 {

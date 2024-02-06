@@ -1,16 +1,7 @@
 #include "VKShader.h"
-#include "../glslang.h"
+#include "render/glslang.h"
 
 namespace {
-    void appendLines(QString &dest, const QString &source) 
-    {
-        if (source.isEmpty())
-            return;
-        if (!dest.isEmpty())
-            dest += "\n";
-        dest += source;
-    }
-
     KDGpu::ShaderStageFlagBits getStageFlags(Shader::ShaderType type)
     {
         using KD = KDGpu::ShaderStageFlagBits;
@@ -28,49 +19,28 @@ namespace {
 } // namespace
 
 VKShader::VKShader(Shader::ShaderType type, const QList<const Shader*> &shaders,
-    const QString &preamble, const QString &includePaths)
+                   const QString &preamble, const QString &includePaths)
+    : ShaderBase(type, shaders, preamble, includePaths)
 {
-    Q_ASSERT(!shaders.isEmpty());
-    mType = type;
-    mItemId = shaders.front()->id;
-    mPreamble = preamble;
-    mIncludePaths = includePaths;
-
-    for (const Shader *shader : shaders) {
-        auto source = QString();
-        if (!Singletons::fileCache().getSource(shader->fileName, &source))
-            mMessages += MessageList::insert(shader->id,
-                MessageType::LoadingFileFailed, shader->fileName);
-
-        mFileNames += shader->fileName;
-        mSources += source + "\n";
-        mLanguage = shader->language;
-        mEntryPoint = shader->entryPoint;
-        appendLines(mPreamble, shader->preamble);
-        appendLines(mIncludePaths, shader->includePaths);
-    }
 }
 
-bool VKShader::operator==(const VKShader &rhs) const
+bool VKShader::compile(KDGpu::Device &device, VKPrintf *printf)
 {
-    return std::tie(mType, mSources, mFileNames, mLanguage, 
-                    mEntryPoint, mPreamble, mIncludePaths, mPatchedSources) ==
-           std::tie(rhs.mType, rhs.mSources, rhs.mFileNames, rhs.mLanguage, 
-                    rhs.mEntryPoint, rhs.mPreamble, rhs.mIncludePaths, rhs.mPatchedSources);
-}
+    if (!mPatchedSources.isEmpty())
+        return mShaderModule.isValid();
 
-bool VKShader::compile(KDGpu::Device &device)
-{
-    if (mShaderModule.isValid())
-        return true;
+    auto usedFileNames = QStringList();
+    mPatchedSources = getPatchedSources(mMessages, usedFileNames, printf);
+    if (mPatchedSources.isEmpty())
+        return false;
 
     const auto spirv = glslang::generateSpirVBinary(mLanguage, mType, 
-        mSources, mFileNames, mEntryPoint, mMessages);
+        mPatchedSources, mFileNames, mEntryPoint, mMessages);
+    if (spirv.empty())
+        return false;
 
-    if (!spirv.empty()) {
-        mShaderModule = device.createShaderModule(spirv);
-        mInterface = spirvCross::getInterface(spirv);
-    }
+    mShaderModule = device.createShaderModule(spirv);
+    mInterface = spirvCross::getInterface(spirv);
     return true;
 }
 
