@@ -119,7 +119,9 @@ Interface getInterface(const std::vector<uint32_t> &spirv)
     }
 
     for (const auto &key : document.keys()) {
-        if (key == "entryPoints") {
+        if (key == "types") {
+        }
+        else if (key == "entryPoints") {
             for (auto item : document[key].toArray()) {
                 auto object = item.toObject();
                 interface.entryPoints.append({
@@ -171,7 +173,8 @@ Interface getInterface(const std::vector<uint32_t> &spirv)
                 });
             }
         }
-        else if (key == "ubos") {
+        else if (key == "ubos" ||
+                 key == "ssbos") {
             for (auto item : document[key].toArray()) {
                 auto object = item.toObject();
                 const auto &type = types[object["type"].toString()];
@@ -182,8 +185,15 @@ Interface getInterface(const std::vector<uint32_t> &spirv)
                     object["blockSize"].toInt(),
                     static_cast<uint32_t>(object["set"].toInt()),
                     static_cast<uint32_t>(object["binding"].toInt()),
+                    (key == "ubos" ? 
+                        Interface::BindingType::UniformBuffer : 
+                        Interface::BindingType::StorageBuffer)
                 });
             }
+        }
+        else {
+            auto value = key.toStdString();
+            Q_ASSERT(!"not handled category");
         }
     }
     return interface;

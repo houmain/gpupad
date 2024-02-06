@@ -282,7 +282,10 @@ bool VKPipeline::createLayout(VKContext &context)
             if (!createOrUpdateBindGroup(buffer.set, buffer.binding,
                 KDGpu::ResourceBindingLayout{
                     .binding = buffer.binding,
-                    .resourceType = KDGpu::ResourceBindingType::UniformBuffer,
+                    .resourceType = (buffer.bindingType ==
+                        spirvCross::Interface::BindingType::UniformBuffer ?
+                        KDGpu::ResourceBindingType::UniformBuffer :
+                        KDGpu::ResourceBindingType::StorageBuffer),
                     .shaderStages = stage
                 }))
                 return false;
@@ -344,12 +347,22 @@ bool VKPipeline::updateBindings(VKContext &context)
                 if (!bufferBinding)
                     return false;
 
-                getBindGroup(buffer.set).resources.push_back({
-                    .binding = buffer.binding,
-                    .resource = KDGpu::UniformBufferBinding{ 
-                        .buffer = bufferBinding->buffer->getReadOnlyBuffer(context) 
-                    }
-                });
+                if (buffer.bindingType == spirvCross::Interface::BindingType::UniformBuffer) {
+                    getBindGroup(buffer.set).resources.push_back({
+                        .binding = buffer.binding,
+                        .resource = KDGpu::UniformBufferBinding{ 
+                            .buffer = bufferBinding->buffer->getReadOnlyBuffer(context) 
+                        }
+                    });
+                }
+                else {
+                    getBindGroup(buffer.set).resources.push_back({
+                        .binding = buffer.binding,
+                        .resource = KDGpu::StorageBufferBinding{ 
+                            .buffer = bufferBinding->buffer->getReadOnlyBuffer(context) 
+                        }
+                    });
+                }
             }
         }
 

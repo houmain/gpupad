@@ -8,6 +8,12 @@ namespace spirvCross
 
 struct Interface
 {
+    enum class BindingType
+    {
+        UniformBuffer,
+        StorageBuffer,
+    };
+
     struct EntryPoint
     {
         QString name;
@@ -61,6 +67,7 @@ struct Interface
         int blockSize;
         uint32_t set;
         uint32_t binding;
+        BindingType bindingType;
     };
 
     QList<EntryPoint> entryPoints;

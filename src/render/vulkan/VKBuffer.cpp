@@ -46,7 +46,7 @@ bool VKBuffer::swap(VKBuffer &other)
     if (mSize != other.mSize)
         return false;
     mData.swap(other.mData);
-    //std::swap(mBufferObject, other.mBufferObject);
+    std::swap(mBuffer, other.mBuffer);
     std::swap(mSystemCopyModified, other.mSystemCopyModified);
     std::swap(mDeviceCopyModified, other.mDeviceCopyModified);
     return true;
