@@ -147,7 +147,7 @@ bool VKPipeline::createOrUpdateBindGroup(
         });
     if (it != end(bindings)) {
         it->shaderStages |= layout.shaderStages;
-        if (!it->isCompatible(layout)) {
+        if (*it != layout) {
             mMessages += MessageList::insert(
                 mProgram.itemId(), MessageType::IncompatibleBindings);
             return false;
