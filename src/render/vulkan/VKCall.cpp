@@ -85,6 +85,9 @@ VKPipeline *VKCall::createPipeline(VKContext &context)
 
 void VKCall::execute(VKContext &context, MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
+    context.commandRecorder = context.device.createCommandRecorder();
+    auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
+
     switch (mCall.callType) {
         case Call::CallType::Draw:
         case Call::CallType::DrawIndexed:
@@ -97,7 +100,7 @@ void VKCall::execute(VKContext &context, MessagePtrSet &messages, ScriptEngine &
             executeCompute(context, messages, scriptEngine);
             break;
         case Call::CallType::ClearTexture:
-            executeClearTexture(messages);
+            executeClearTexture(context, messages);
             break;
         case Call::CallType::CopyTexture:
             executeCopyTexture(messages);
@@ -115,6 +118,8 @@ void VKCall::execute(VKContext &context, MessagePtrSet &messages, ScriptEngine &
             executeSwapBuffers(messages);
             break;
     }
+
+    context.commandBuffers.push_back(context.commandRecorder->finish());
 }
 
 int VKCall::evaluateInt(ScriptEngine &scriptEngine, const QString &expression)
@@ -135,9 +140,6 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
             mCall.id, MessageType::TargetNotAssigned);
         return;
     }
-
-    context.commandRecorder = context.device.createCommandRecorder();
-    auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
 
     auto primitiveOptions = mTarget->getPrimitiveOptions();
     //primitiveOptions.primitiveRestart = true;
@@ -203,14 +205,10 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
         });
     }
     renderPass.end();
-    context.commandBuffers.push_back(context.commandRecorder->finish());
 }
 
 void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
-    context.commandRecorder = context.device.createCommandRecorder();
-    auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
-
     if (!mPipeline || !mPipeline->createCompute(context))
         return;
 
@@ -223,10 +221,9 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages, ScriptE
         .workGroupZ = evaluateUInt(scriptEngine, mCall.workGroupsZ)
     });
     computePass.end();
-    context.commandBuffers.push_back(context.commandRecorder->finish());
 }
 
-void VKCall::executeClearTexture(MessagePtrSet &messages)
+void VKCall::executeClearTexture(VKContext &context, MessagePtrSet &messages)
 {
     if (!mTexture) {
         messages += MessageList::insert(
@@ -234,7 +231,29 @@ void VKCall::executeClearTexture(MessagePtrSet &messages)
         return;
     }
 
-    // TODO:
+    auto color = std::array<double, 4>{
+        mCall.clearColor.redF(),
+        mCall.clearColor.greenF(),
+        mCall.clearColor.blueF(),
+        mCall.clearColor.alphaF()
+    };
+
+    const auto sampleType = getTextureSampleType(mTexture->format());
+    if (sampleType == TextureSampleType::Float) {
+        const auto srgbToLinear = [](double s) {
+            if (s > 0.0031308)
+                return 1.055 * (std::pow(s, (1.0 / 2.4))) - 0.055;
+            return 12.92 * s;
+        };
+        color[0] = srgbToLinear(color[0]);
+        color[1] = srgbToLinear(color[1]);
+        color[2] = srgbToLinear(color[2]);
+    }
+
+    //auto guard = beginTimerQuery();
+    if (!mTexture->clear(context, color, mCall.clearDepth, mCall.clearStencil))
+        messages += MessageList::insert(
+            mCall.id, MessageType::ClearingTextureFailed);
 
     mUsedItems += mTexture->usedItems();
 }

@@ -35,9 +35,9 @@ void VKStream::setAttribute(int attributeIndex, const Field &field,
     }
 
     if (!validateAttribute(attribute)) {
-        attribute.buffer = nullptr;
         mMessages += MessageList::insert(field.id,
             MessageType::InvalidAttribute);
+        mAttributes.remove(attributeIndex);
     }
     invalidateVertexOptions();
 }

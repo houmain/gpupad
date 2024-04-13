@@ -23,12 +23,13 @@ public:
     TextureData data() const { return mData; }
     KDGpu::Texture &texture() { return mTexture; }
     KDGpu::TextureView &textureView() { return mTextureView; }
+    KDGpu::TextureLayout currentLayout() const { return mCurrentLayout; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
     bool prepareImageSampler(VKContext &context);
     bool prepareStorageImage(VKContext &context);
     bool prepareAttachment(VKContext &context);
-    bool clear(std::array<double, 4> color, double depth, int stencil);
+    bool clear(VKContext &context, std::array<double, 4> color, double depth, int stencil);
     bool copy(VKTexture &source);
     bool swap(VKTexture &other);
     bool updateMipmaps();

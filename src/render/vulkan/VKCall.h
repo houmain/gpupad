@@ -33,7 +33,7 @@ private:
     uint32_t evaluateUInt(ScriptEngine &scriptEngine, const QString &expression);
     void executeDraw(VKContext &context, MessagePtrSet &messages, ScriptEngine &scriptEngine);
     void executeCompute(VKContext &context, MessagePtrSet &messages, ScriptEngine &scriptEngine);
-    void executeClearTexture(MessagePtrSet &messages);
+    void executeClearTexture(VKContext &context, MessagePtrSet &messages);
     void executeCopyTexture(MessagePtrSet &messages);
     void executeClearBuffer(MessagePtrSet &messages);
     void executeCopyBuffer(MessagePtrSet &messages);

@@ -49,14 +49,14 @@ bool VKTexture::prepareStorageImage(VKContext &context)
 {
     reload(false);
     createAndUpload(context);
+    mDeviceCopyModified = true;
+    mMipmapsInvalidated = true;
 
     memoryBarrier(*context.commandRecorder, 
         KDGpu::TextureLayout::General,
         KDGpu::AccessFlagBit::MemoryWriteBit | KDGpu::AccessFlagBit::MemoryReadBit, 
         KDGpu::PipelineStageFlagBit::AllGraphicsBit);
 
-    mDeviceCopyModified = true;
-    mMipmapsInvalidated = true;
     return mTextureView.isValid();
 }
 
@@ -64,10 +64,13 @@ bool VKTexture::prepareAttachment(VKContext &context)
 {
     reload(true);
     createAndUpload(context);
+    mDeviceCopyModified = true;
+    mMipmapsInvalidated = true;
 
     const auto layout =
-        mKind.stencil ? KDGpu::TextureLayout::StencilAttachmentOptimal :
-        mKind.depth ? KDGpu::TextureLayout::DepthAttachmentOptimal :
+        mKind.depth || mKind.stencil ? KDGpu::TextureLayout::DepthStencilAttachmentOptimal :
+        //mKind.stencil ? KDGpu::TextureLayout::StencilAttachmentOptimal :
+        //mKind.depth ? KDGpu::TextureLayout::DepthAttachmentOptimal :
                       KDGpu::TextureLayout::ColorAttachmentOptimal;
 
     memoryBarrier(*context.commandRecorder, 
@@ -75,15 +78,56 @@ bool VKTexture::prepareAttachment(VKContext &context)
         KDGpu::AccessFlagBit::MemoryReadBit, 
         KDGpu::PipelineStageFlagBit::AllGraphicsBit);
 
-    mDeviceCopyModified = true;
-    mMipmapsInvalidated = true;
     return mTextureView.isValid();
 }
 
-bool VKTexture::clear(std::array<double, 4> color, double depth, int stencil)
+bool VKTexture::clear(VKContext &context, std::array<double, 4> color, double depth, int stencil)
 {
-    // TODO:
-    return false;
+    reload(true);
+    createAndUpload(context);
+    mDeviceCopyModified = true;
+    mMipmapsInvalidated = true;
+
+    if (!mTextureView.isValid())
+        return false;
+
+    memoryBarrier(*context.commandRecorder, 
+        KDGpu::TextureLayout::General,
+        KDGpu::AccessFlagBit::TransferWriteBit, 
+        KDGpu::PipelineStageFlagBit::TransferBit);
+
+    auto succeeded = true;
+    if (mKind.depth || mKind.stencil) {
+        context.commandRecorder->clearDepthStencilTexture({
+            .texture = mTexture,
+            .layout = mCurrentLayout,
+            .depthClearValue = static_cast<float>(depth),
+            .stencilClearValue = static_cast<uint32_t>(stencil),
+            .ranges = {
+                KDGpu::TextureSubresourceRange {
+                    .aspectMask = aspectMask()
+                }
+            }
+        });
+    }
+    else {
+        context.commandRecorder->clearColorTexture({
+            .texture = mTexture,
+            .layout = mCurrentLayout,
+            .clearValue = KDGpu::ColorClearValue{ 
+                static_cast<float>(color[0]),
+                static_cast<float>(color[1]),
+                static_cast<float>(color[2]),
+                static_cast<float>(color[3])    
+            },
+            .ranges = {
+                KDGpu::TextureSubresourceRange {
+                    .aspectMask = aspectMask()
+                }
+            }
+        });
+    }
+    return succeeded;
 }
 
 bool VKTexture::copy(VKTexture &source)
@@ -123,9 +167,11 @@ bool VKTexture::swap(VKTexture &other)
 void VKTexture::reset(KDGpu::Device& device)
 {
     if (std::exchange(mCreated, false)) {
-        auto vkDevice = static_cast<KDGpu::VulkanDevice*>(
-            device.graphicsApi()->resourceManager()->getDevice(device));
-        ktxVulkanTexture_Destruct(&mKtxTexture, vkDevice->device, nullptr);
+        if (mKtxTexture.vkDestroyImage) {
+            auto vkDevice = static_cast<KDGpu::VulkanDevice*>(
+                device.graphicsApi()->resourceManager()->getDevice(device));
+            ktxVulkanTexture_Destruct(&mKtxTexture, vkDevice->device, nullptr);
+        }
         mTexture = { };
         mTextureView = { };
     }

@@ -42,11 +42,19 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
             if (kind.depth || kind.stencil) {
                 auto &depthStencil = renderPassOptions.depthStencilAttachment;
                 Q_ASSERT(!depthStencil.view.isValid());
-                depthStencil.view = texture->textureView();
+                depthStencil = {
+                    .view = texture->textureView(),
+                    .depthLoadOperation = KDGpu::AttachmentLoadOperation::Load,
+                    .stencilLoadOperation = KDGpu::AttachmentLoadOperation::Load,
+                    .initialLayout = texture->currentLayout(),
+                };
             }
             else {
-                auto &color = renderPassOptions.colorAttachments.emplace_back();
-                color.view = texture->textureView();
+                renderPassOptions.colorAttachments.push_back(KDGpu::ColorAttachment{
+                    .view = texture->textureView(),
+                    .loadOperation = KDGpu::AttachmentLoadOperation::Load,
+                    .initialLayout = texture->currentLayout(),
+                });
             }
             mUsedItems += texture->usedItems();
         }

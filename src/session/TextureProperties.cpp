@@ -36,7 +36,7 @@ namespace {
         SignedInt32,
         Float16,
         Float32,
-        Normalized332,
+//        Normalized332,
         Normalized4,
         Normalized555_1,
         Normalized565,
@@ -122,7 +122,7 @@ namespace {
         ADD(Texture::Format::RG32I, FormatType::RG_Integer, FormatData::SignedInt32)
         ADD(Texture::Format::RG32U, FormatType::RG_Integer, FormatData::UnsignedInt32)
 
-        ADD(Texture::Format::RG3B2, FormatType::RGB, FormatData::Normalized332)
+//        ADD(Texture::Format::RG3B2, FormatType::RGB, FormatData::Normalized332)
 //        ADD(GL_RGB4, FormatType::RGB, FormatData::Normalized4)
 //        ADD(GL_RGB5, FormatType::RGB, FormatData::Normalized5)
         ADD(Texture::Format::R5G6B5, FormatType::RGB, FormatData::Normalized565)
@@ -340,7 +340,7 @@ void TextureProperties::updateFormatDataWidget(QVariant formatType)
     mUi->formatData->clear();
 
     const auto formats = std::initializer_list<std::pair<const char*, FormatData>> {
-        { "3/3/2 Bit", FormatData::Normalized332 },
+//        { "3/3/2 Bit", FormatData::Normalized332 },
         { "4 Bit", FormatData::Normalized4 },
         { "5/6/5 Bit", FormatData::Normalized565 },
         { "5/5/5/1 Bit", FormatData::Normalized555_1 },

@@ -86,14 +86,16 @@ KDGpu::Format toKDGpu(QOpenGLTexture::TextureFormat format)
         case E::SRGB_Alpha_DXT3       : return KD::BC2_SRGB_BLOCK;
         case E::SRGB_Alpha_DXT5       : return KD::BC3_SRGB_BLOCK;
         case E::SRGB_BP_UNorm         : return KD::BC7_SRGB_BLOCK;
+        default: break;
     }
-    Q_UNREACHABLE();
-    return { };
+    return KD::UNDEFINED;
 }
 
 KDGpu::Format toKDGpu(Field::DataType dataType, int count)
 {
     using KD = KDGpu::Format;
+    if (!count)
+        return KDGpu::Format::UNDEFINED;
 
 #define ADD(DATATYPE, BITS, TYPE) case DATATYPE: switch(count) { \
         case 1: return KD::R##BITS##_##TYPE; \
