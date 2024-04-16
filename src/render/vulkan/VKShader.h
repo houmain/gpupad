@@ -2,7 +2,7 @@
 
 #include "VKPrintf.h"
 #include "render/ShaderBase.h"
-#include "render/spirvCross.h"
+#include "render/Spirv.h"
 
 class VKShader : public ShaderBase
 {
@@ -11,10 +11,10 @@ public:
         const QString &preamble, const QString &includePaths);
 
     bool compile(KDGpu::Device &device, VKPrintf *printf);
-    const spirvCross::Interface &getInterface() const { return mInterface; }
+    const Spirv::Interface &interface() const { return mInterface; }
     KDGpu::ShaderStage getShaderStage() const;
 
 private:
     KDGpu::ShaderModule mShaderModule;
-    spirvCross::Interface mInterface;
+    Spirv::Interface mInterface;
 };

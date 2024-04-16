@@ -1,5 +1,4 @@
 #include "VKShader.h"
-#include "render/glslang.h"
 
 namespace {
     KDGpu::ShaderStageFlagBits getStageFlags(Shader::ShaderType type)
@@ -34,13 +33,13 @@ bool VKShader::compile(KDGpu::Device &device, VKPrintf *printf)
     if (mPatchedSources.isEmpty())
         return false;
 
-    const auto spirv = glslang::generateSpirVBinary(mLanguage, mType, 
+    auto spirv = Spirv::generate(mLanguage, mType, 
         mPatchedSources, mFileNames, mEntryPoint, mMessages);
-    if (spirv.empty())
+    if (!spirv)
         return false;
 
-    mShaderModule = device.createShaderModule(spirv);
-    mInterface = spirvCross::getInterface(spirv);
+    mShaderModule = device.createShaderModule(spirv.spirv());
+    mInterface = spirv.getInterface();
     return true;
 }
 

@@ -185,7 +185,7 @@ QString MessageWindow::getMessageText(const Message &message) const
         case MoreThanOneDepthStencilAttachment:
             return tr("Only a single depth or stencil attachment is supported");
         case IncompatibleBindings:
-            return tr("Incompatible bindings to the same set/location");
+            return tr("Incompatible assignment to the same set/binding");
     }
     return message.text;
 }

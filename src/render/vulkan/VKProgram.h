@@ -2,12 +2,11 @@
 
 #include "VKShader.h"
 #include "scripting/ScriptEngine.h"
-#include "render/spirvCross.h"
 
 class VKProgram
 {
 public:
-    using StageInterface = std::map<KDGpu::ShaderStageFlagBits, spirvCross::Interface>;
+    using StageInterface = std::map<KDGpu::ShaderStageFlagBits, Spirv::Interface>;
 
     VKProgram(const Program &program, const QString &shaderPreamble, const QString &shaderIncludePaths);
     bool operator==(const VKProgram &rhs) const;

@@ -37,15 +37,8 @@ void VKProgram::link(KDGpu::Device &device)
         succeeded &= shader.compile(device, &mPrintf);
     
     if (succeeded) {
-        for (const auto &shader : mShaders) {
-            const auto &shaderInterface = shader.getInterface();
-            auto &stageInterface = mInterface[shader.getShaderStage().stage];
-            stageInterface.inputs += shaderInterface.inputs;
-            stageInterface.outputs += shaderInterface.outputs;
-            stageInterface.textures += shaderInterface.textures;
-            stageInterface.images += shaderInterface.images;
-            stageInterface.buffers += shaderInterface.buffers;
-        }
+        for (const auto &shader : mShaders)
+            mInterface[shader.getShaderStage().stage] = shader.interface();
     }
 }
 

@@ -62,6 +62,7 @@ add_definitions(-DQT_NO_CAST_TO_ASCII
 set(SOURCES
   libs/SingleApplication/singleapplication.cpp
   libs/SingleApplication/singleapplication_p.cpp
+  libs/spirv-reflect/spirv_reflect.cpp
   src/FileDialog.cpp
   src/EvaluatedPropertyCache.cpp
   src/FileCache.cpp
@@ -142,7 +143,7 @@ set(SOURCES
   src/render/ShaderBase.cpp
   src/render/ShaderPrintf.cpp
   src/render/glslang.cpp
-  src/render/spirvCross.cpp
+  src/render/Spirv.cpp
   src/scripting/ScriptConsole.cpp
   src/scripting/MouseScriptObject.cpp
   src/scripting/KeyboardScriptObject.cpp
