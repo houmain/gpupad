@@ -72,6 +72,7 @@ public:
     bool createGraphics(VKContext &context, KDGpu::PrimitiveOptions &primitiveOptions);
     bool createCompute(VKContext &context);
     void updateDefaultUniformBlock(VKContext &context, ScriptEngine &scriptEngine);
+    bool updateBindings(VKContext &context);
     KDGpu::RenderPassCommandRecorder beginRenderPass(VKContext &context);
     KDGpu::ComputePassCommandRecorder beginComputePass(VKContext &context);
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
@@ -87,7 +88,7 @@ private:
     BindGroup& getBindGroup(uint32_t set);
     bool createOrUpdateBindGroup(uint32_t set, uint32_t binding,
         const KDGpu::ResourceBindingLayout &layout);
-    bool updateBindings(VKContext &context);
+    
     bool createLayout(VKContext &context);
 
     VKProgram &mProgram;

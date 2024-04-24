@@ -145,10 +145,12 @@ Spirv Spirv::generate(Shader::Language language,
     shader.setEnvClient(client, clientVersion);
     shader.setEnvTarget(glslang::EShTargetLanguage::EShTargetSpv, targetVersion);
 
-    // TOOD:
+    // TODO:
     shader.setAutoMapBindings(true);
     shader.setAutoMapLocations(true);
     shader.setEnvInputVulkanRulesRelaxed();
+    shader.setGlobalUniformSet(15);
+    shader.setGlobalUniformBinding(static_cast<int>(getStage(shaderType)));
 
     if (!shader.parse(GetDefaultResources(), defaultVersion, forwardCompatible, requestedMessages)) {
         parseGLSLangErrors(QString::fromUtf8(shader.getInfoLog()), messages, itemId, fileNames);
@@ -161,6 +163,9 @@ Spirv Spirv::generate(Shader::Language language,
         parseGLSLangErrors(QString::fromUtf8(shader.getInfoLog()), messages, itemId, fileNames);
         return { };
     }
+
+    // TODO:
+    program.mapIO();
 
     auto spvOptions = glslang::SpvOptions{ };
     spvOptions.generateDebugInfo = true;

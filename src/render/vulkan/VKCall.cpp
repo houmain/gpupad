@@ -150,6 +150,8 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
         return;
 
     mPipeline->updateDefaultUniformBlock(context, scriptEngine);
+    if (!mPipeline->updateBindings(context))
+        return;
 
     auto renderPass = mPipeline->beginRenderPass(context);
     if (!renderPass.isValid())
@@ -213,6 +215,8 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages, ScriptE
         return;
 
     mPipeline->updateDefaultUniformBlock(context, scriptEngine);
+    if (!mPipeline->updateBindings(context))
+        return;
 
     auto computePass = mPipeline->beginComputePass(context);
     computePass.dispatchCompute(KDGpu::ComputeCommand{ 

@@ -98,8 +98,6 @@ bool VKPipeline::applyPrintfBindings()
 
 KDGpu::RenderPassCommandRecorder VKPipeline::beginRenderPass(VKContext &context)
 {
-    updateBindings(context);
-
     auto passOptions = mTarget->prepare(context);
     auto renderPass = context.commandRecorder->beginRenderPass(passOptions);
     renderPass.setPipeline(mGraphicsPipeline);
@@ -118,8 +116,6 @@ KDGpu::RenderPassCommandRecorder VKPipeline::beginRenderPass(VKContext &context)
 
 KDGpu::ComputePassCommandRecorder VKPipeline::beginComputePass(VKContext &context)
 {
-    updateBindings(context);
-
     auto computePass = context.commandRecorder->beginComputePass();
     computePass.setPipeline(mComputePipeline);
 
@@ -320,25 +316,26 @@ bool VKPipeline::updateBindings(VKContext &context)
 
     for (const auto &[stage, interface] : mProgram.interface())
         for (auto i = 0u; i < interface->descriptor_binding_count; ++i) {
-            const auto& descriptor = interface->descriptor_bindings[i];
-            const auto& name = descriptor.type_description->type_name;
-            switch (descriptor.descriptor_type) {
+            const auto& desc = interface->descriptor_bindings[i];
+            switch (desc.descriptor_type) {
                 case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-                    if (name == gl_DefaultUniformBlock) {
+                    if (desc.type_description->type_name == gl_DefaultUniformBlock) {
                         Q_ASSERT(mDefaultUniformBlocks[stage].isValid());
-                        getBindGroup(descriptor.set).resources.push_back({
-                            .binding = descriptor.binding,
+                        getBindGroup(desc.set).resources.push_back({
+                            .binding = desc.binding,
                             .resource = KDGpu::UniformBufferBinding{ 
                                 .buffer = mDefaultUniformBlocks[stage]
                             }
                         });
                     }
                     else {
-                        const auto bufferBinding = findByName(mBufferBindings, name);
+                        const auto bufferBinding = findByName(mBufferBindings, 
+                            desc.type_description->type_name);
                         if (!bufferBinding)
                             return false;
-                        getBindGroup(descriptor.set).resources.push_back({
-                            .binding = descriptor.binding,
+
+                        getBindGroup(desc.set).resources.push_back({
+                            .binding = desc.binding,
                             .resource = KDGpu::UniformBufferBinding{ 
                                 .buffer = bufferBinding->buffer->getReadOnlyBuffer(context) 
                             }
@@ -347,11 +344,13 @@ bool VKPipeline::updateBindings(VKContext &context)
                     break;
 
                 case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
-                    const auto bufferBinding = findByName(mBufferBindings, name);
+                    const auto bufferBinding = findByName(mBufferBindings, 
+                        desc.type_description->type_name);
                     if (!bufferBinding)
                         return false;
-                    getBindGroup(descriptor.set).resources.push_back({
-                        .binding = descriptor.binding,
+
+                    getBindGroup(desc.set).resources.push_back({
+                        .binding = desc.binding,
                         .resource = KDGpu::StorageBufferBinding{ 
                             .buffer = bufferBinding->buffer->getReadOnlyBuffer(context) 
                         }
@@ -359,20 +358,20 @@ bool VKPipeline::updateBindings(VKContext &context)
                     break;
                 }
 
-                case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER: {
-                    const auto samplerBinding = findByName(mSamplerBindings, name);
+                case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: {
+                    const auto samplerBinding = findByName(mSamplerBindings, desc.name);
                     if (!samplerBinding || !samplerBinding->texture->prepareImageSampler(context))
                         return false;
 
-                    // TODO: do not recreated every time
+                    // TODO: do not recreate every time
                     const auto& sampler = mSamplers.emplace_back(
                         context.device.createSampler(KDGpu::SamplerOptions{ 
                             .magFilter = KDGpu::FilterMode::Linear, 
                             .minFilter = KDGpu::FilterMode::Linear
                         }));
 
-                    getBindGroup(descriptor.set).resources.push_back({
-                        .binding = descriptor.binding,
+                    getBindGroup(desc.set).resources.push_back({
+                        .binding = desc.binding,
                         .resource = KDGpu::TextureViewSamplerBinding{ 
                             .textureView = samplerBinding->texture->textureView(), 
                             .sampler = sampler
@@ -381,13 +380,14 @@ bool VKPipeline::updateBindings(VKContext &context)
                     break;
                 }
 
-                case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE: {
-                    const auto imageBinding = findByName(mImageBindings, name);
+                case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+                case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE: {
+                    const auto imageBinding = findByName(mImageBindings, desc.name);
                     if (!imageBinding || !imageBinding->texture->prepareStorageImage(context))
                         return false;
 
-                    getBindGroup(descriptor.set).resources.push_back({
-                        .binding = descriptor.binding,
+                    getBindGroup(desc.set).resources.push_back({
+                        .binding = desc.binding,
                         .resource = KDGpu::ImageBinding{ 
                             .textureView = imageBinding->texture->textureView(),
                         }
@@ -404,7 +404,9 @@ bool VKPipeline::updateBindings(VKContext &context)
     Q_ASSERT(mBindGroups.size() == mBindGroupLayouts.size());
     for (auto i = 0; i < mBindGroups.size(); ++i) {
         auto &bindGroup = mBindGroups[i];
-        Q_ASSERT(!bindGroup.resources.empty());
+        if (bindGroup.resources.empty())
+            continue;
+
         Q_ASSERT(bindGroup.resources.size() == bindGroup.bindings.size());
         bindGroup.bindGroup = context.device.createBindGroup({
             .layout = mBindGroupLayouts[i],
