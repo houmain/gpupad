@@ -352,7 +352,7 @@ MainWindow::MainWindow(QWidget *parent)
             if (Singletons::synchronizeLogic().evaluationMode() != EvaluationMode::Paused)
                 Singletons::synchronizeLogic().resetEvaluation();
         });
-    for (const auto [renderApiName, renderApi] : { 
+    for (const auto &[renderApiName, renderApi] : {
         std::make_pair("OpenGL", RenderAPI::OpenGL), 
         std::make_pair("Vulkan", RenderAPI::Vulkan) 
     }) {

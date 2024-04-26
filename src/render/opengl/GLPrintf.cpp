@@ -70,7 +70,7 @@ MessagePtrSet GLPrintf::formatMessages(ItemId callItemId)
             const auto argumentType = read(argumentOffset++);
             const auto argumentComponents = argumentType % 100;
             auto argument = Argument{ argumentType, { } };
-            for (auto j = 0; j < argumentComponents; ++j)
+            for (auto j = 0u; j < argumentComponents; ++j)
                 argument.values.append(read(argumentOffset++));
             arguments.append(argument);
         }

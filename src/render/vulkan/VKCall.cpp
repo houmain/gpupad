@@ -5,6 +5,7 @@
 #include "VKProgram.h"
 #include "VKTarget.h"
 #include "VKStream.h"
+#include <QScopeGuard>
 #include <cmath>
 
 VKCall::VKCall(const Call &call)

@@ -12,7 +12,9 @@ namespace {
             case ST::TessellationControl: return KD::TessellationControlBit;
             case ST::TessellationEvaluation: return KD::TessellationEvaluationBit;
             case ST::Compute: return KD::ComputeBit;
+            case ST::Includable: break;
         }
+        Q_UNREACHABLE();
         return { };
     }
 } // namespace

@@ -509,8 +509,8 @@ void SessionModelCore::undoableInsertItem(QList<Item*> *list, Item *item,
     const QModelIndex &parent, int row)
 {
     pushUndoCommand(makeUndoCommand("Insert",
-        [=](){ insertItem(list, item, parent, row); },
-        [=](){ removeItem(list, parent, row); },
+        [=, this](){ insertItem(list, item, parent, row); },
+        [=, this](){ removeItem(list, parent, row); },
         [=](){ delete item; },
         true));
 }
@@ -519,8 +519,8 @@ void SessionModelCore::undoableRemoveItem(QList<Item*> *list, Item *item,
     const QModelIndex &index)
 {
     pushUndoCommand(makeUndoCommand("Remove",
-        [=](){ removeItem(list, index.parent(), index.row()); },
-        [=](){ insertItem(list, item, index.parent(), index.row()); },
+        [=, this](){ removeItem(list, index.parent(), index.row()); },
+        [=, this](){ insertItem(list, item, index.parent(), index.row()); },
         [=](){ delete item; },
         false));
 }
@@ -547,9 +547,9 @@ void SessionModelCore::undoableAssignment(const QModelIndex &index, T *to,
 
         pushUndoCommand(new MergingUndoCommand(mergeId,
             makeUndoCommand("Edit ",
-                [=, value = std::forward<S>(value)]()
+                [=, this, value = std::forward<S>(value)]()
                 { *to = static_cast<T>(value); Q_EMIT dataChanged(index, index); },
-                [=, orig = *to]()
+                [=, this, orig = *to]()
                 { *to = orig; Q_EMIT dataChanged(index, index); },
                 [](){})));
     }

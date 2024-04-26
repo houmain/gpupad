@@ -30,6 +30,7 @@ namespace
             case SpvOpTypeMatrix:
                 return (variable.numeric.scalar.width == 32 ?
                     Field::DataType::Float : Field::DataType::Double);
+            default: break;
         }
         Q_ASSERT(!"variable type not handled");
         return Field::DataType::Float;
@@ -42,6 +43,7 @@ namespace
             case SpvOpTypeVector: return variable.numeric.vector.component_count;
             case SpvOpTypeMatrix: return variable.numeric.matrix.row_count * 
                                          variable.numeric.matrix.column_count;
+            default: break;
         }
         return 1;
     }
@@ -198,7 +200,6 @@ void VKPipeline::updateDefaultUniformBlock(VKContext &context,
             });
 
         auto bufferData = static_cast<std::byte*>(buffer.map());
-        auto offset = 0;
         for (auto i = 0u; i < descriptor->block.member_count; ++i) {
             const auto& member = descriptor->block.members[i];
             const auto it = std::find_if(begin(mUniformBindings), end(mUniformBindings),
@@ -402,7 +403,7 @@ bool VKPipeline::updateBindings(VKContext &context)
         }
 
     Q_ASSERT(mBindGroups.size() == mBindGroupLayouts.size());
-    for (auto i = 0; i < mBindGroups.size(); ++i) {
+    for (auto i = 0u; i < mBindGroups.size(); ++i) {
         auto &bindGroup = mBindGroups[i];
         if (bindGroup.resources.empty())
             continue;

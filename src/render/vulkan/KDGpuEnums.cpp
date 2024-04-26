@@ -95,7 +95,7 @@ KDGpu::Format toKDGpu(Field::DataType dataType, int count)
 {
     using KD = KDGpu::Format;
     if (!count)
-        return KDGpu::Format::UNDEFINED;
+        return KD::UNDEFINED;
 
 #define ADD(DATATYPE, BITS, TYPE) case DATATYPE: switch(count) { \
         case 1: return KD::R##BITS##_##TYPE; \
@@ -111,6 +111,7 @@ KDGpu::Format toKDGpu(Field::DataType dataType, int count)
         ADD(Field::DataType::Uint16, 16, UINT);
         ADD(Field::DataType::Uint32, 32, UINT);
         ADD(Field::DataType::Float, 32, SFLOAT);
+        case Field::DataType::Double: return KD::UNDEFINED;
     }
 #undef ADD
     Q_UNREACHABLE();
@@ -220,6 +221,7 @@ KDGpu::CompareOperation toKDGpu(Attachment::ComparisonFunc func)
     using E = Attachment::ComparisonFunc;
     using KD = KDGpu::CompareOperation;
     switch (func) {
+        case E::NoComparisonFunc:
         case E::Never: return KD::Never;
         case E::Less: return KD::Less;
         case E::Equal: return KD::Equal;

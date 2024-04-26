@@ -10,8 +10,8 @@
 ScriptEngineJavaScript::ScriptEngineJavaScript(QObject *parent)
     : ScriptEngine(parent)
     , mOnThread(*QThread::currentThread())
-    , mConsole(new ScriptConsole(this))
     , mJsEngine(new QJSEngine(this))
+    , mConsole(new ScriptConsole(this))
 {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     mInterruptThread = new QThread();

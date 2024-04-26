@@ -107,16 +107,6 @@ namespace
         *binary = file.readAll();
         return true;
     }
-
-    bool isFileInUse(const QString &fileName)
-    {
-        if (Singletons::editorManager().getEditor(fileName))
-            return true;
-        auto fileInUse = false;
-        Singletons::sessionModel().forEachFileItem(
-            [&](const FileItem& item) { fileInUse |= (item.fileName == fileName); });
-        return fileInUse;
-    }
 } // namespace
 
 class FileCache::BackgroundLoader final : public QObject 

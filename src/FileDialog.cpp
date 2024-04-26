@@ -193,12 +193,12 @@ bool FileDialog::exec(Options options, QString currentFileName,
         shaderFileFilter = shaderFileFilter + " *." + ext;
 
     auto textureFileFilter = QString();
-    for (const QByteArray &format : TextureFileExtensions)
+    for (auto format : TextureFileExtensions)
         textureFileFilter = textureFileFilter + " *." + QString(format);
 
     auto videoFileFilter = QString();
     if (VideoFileExtensions.size())
-        for (const QByteArray &format : VideoFileExtensions)
+        for (auto format : VideoFileExtensions)
             videoFileFilter = videoFileFilter + " *." + QString(format);
 
     auto scriptFileFilter = QString();

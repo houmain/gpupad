@@ -91,11 +91,11 @@ private:
     
     bool createLayout(VKContext &context);
 
+    ItemId mItemId;
     VKProgram &mProgram;
     VKTarget *mTarget{ };
     VKStream *mVertexStream{ };
 
-    ItemId mItemId;
     bool mCreated{ };
     KDGpu::GraphicsPipeline mGraphicsPipeline;
     KDGpu::ComputePipeline mComputePipeline;

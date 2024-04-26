@@ -1108,9 +1108,9 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
 
     if (action == FindReplaceBar::Replace) {
         auto cursor = textCursor();
-        if (!cursor.selectedText().compare(string, 
-            QTextDocument::FindCaseSensitively ? 
-                Qt::CaseSensitive : Qt::CaseInsensitive)) {
+        if (!cursor.selectedText().compare(string,
+            (flags & QTextDocument::FindCaseSensitively ?
+                Qt::CaseSensitive : Qt::CaseInsensitive))) {
             cursor.insertText(replace);
         }
         action = FindReplaceBar::Find;

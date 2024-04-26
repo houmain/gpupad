@@ -516,8 +516,8 @@ void VKRenderSession::finish()
 {
     RenderSessionBase::finish();
 
-    auto &editors = Singletons::editorManager();
-    auto &session = Singletons::sessionModel();
+    //auto &editors = Singletons::editorManager();
+    //auto &session = Singletons::sessionModel();
 
     //if (updatingPreviewTextures())
     //    for (const auto& [itemId, texture] : mCommandQueue->textures)

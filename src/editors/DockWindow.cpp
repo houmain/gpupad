@@ -114,15 +114,15 @@ void DockWindow::openContextMenu(QPoint pos, QTabBar *tabBar, QDockWidget *dock)
     auto close = menu.addAction(tr("Close"));
     close->setIcon(QIcon::fromTheme("process-stop"));
     close->setShortcut(QKeySequence::Close);
-    connect(close, &QAction::triggered, 
-        [=]() { Q_EMIT dockCloseRequested(dock); });
+    connect(close, &QAction::triggered,
+        [=, this]() { Q_EMIT dockCloseRequested(dock); });
     if (tabBar && tabBar->count() > 1) {
         auto closeAll = menu.addAction(tr("Close All"));
         auto closeOthers = menu.addAction(tr("Close Others"));
         connect(closeOthers, &QAction::triggered, 
-            [=]() { closeDocksExcept(tabBar, dock); });
+            [=, this]() { closeDocksExcept(tabBar, dock); });
         connect(closeAll, &QAction::triggered, 
-            [=]() { closeDocksExcept(tabBar, nullptr); });
+            [=, this]() { closeDocksExcept(tabBar, nullptr); });
     }
 
     if (!dock->statusTip().isEmpty()) {
@@ -130,9 +130,9 @@ void DockWindow::openContextMenu(QPoint pos, QTabBar *tabBar, QDockWidget *dock)
         auto copyFullPath = menu.addAction(tr("Copy Full Path"));
         auto openContainingFolder = menu.addAction(tr("Open Containing Folder"));
         connect(copyFullPath, &QAction::triggered,
-            [=]() { QApplication::clipboard()->setText(fileName); });
+            [=, this]() { QApplication::clipboard()->setText(fileName); });
         connect(openContainingFolder, &QAction::triggered,
-            [=]() { showInFileManager(fileName); });
+            [=, this]() { showInFileManager(fileName); });
     }
 
     if (tabBar && tabBar->count() > 1) {

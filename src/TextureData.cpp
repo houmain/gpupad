@@ -8,7 +8,9 @@
 #include <QtEndian>
 
 #if defined(OPENIMAGEIO_ENABLED)
-#  pragma warning(disable: 4267)
+#  if defined(_MSC_VER)
+#    pragma warning(disable: 4267)
+#  endif
 #  include <OpenImageIO/imageio.h>
 #endif
 
