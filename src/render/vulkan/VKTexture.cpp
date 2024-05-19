@@ -215,7 +215,7 @@ void VKTexture::createAndUpload(VKContext &context)
     else {
         mCurrentLayout = KDGpu::TextureLayout::TransferDstOptimal;
 
-        if (!mData.upload(&context.ktxDeviceInfo, &mKtxTexture, 
+        if (!mData.uploadVK(&context.ktxDeviceInfo, &mKtxTexture, 
                 static_cast<VkImageUsageFlags>(usage.toInt()),
                 static_cast<VkImageLayout>(mCurrentLayout))) {
             mMessages += MessageList::insert(mItemId, MessageType::CreatingTextureFailed);

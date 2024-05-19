@@ -10,6 +10,11 @@ class ScriptEngine;
 class GLTexture
 {
 public:
+    static bool upload(QOpenGLFunctions_3_3_Core &gl,
+        const TextureData &data, GLuint* textureId);
+    static bool download(QOpenGLFunctions_3_3_Core &gl,
+        TextureData &data, GLuint textureId);
+
     GLTexture(const Texture &texture, ScriptEngine &scriptEngine);
     GLTexture(const Buffer &buffer, GLBuffer *textureBuffer, 
         Texture::Format format, ScriptEngine &scriptEngine);
@@ -22,6 +27,7 @@ public:
     int width() const { return mWidth; }
     int height() const { return mHeight; }
     int depth() const { return mDepth; }
+    int samples() const { return mSamples; }
     int layers() const { return mLayers; }
     Texture::Format format() const { return mFormat; }
     TextureData data() const { return mData; }
@@ -38,12 +44,9 @@ public:
     bool download();
 
 private:
-    GLObject createFramebuffer(GLuint textureId, int level) const;
     void reload(bool forWriting);
     void createTexture();
     void upload();
-    bool copyTexture(GLuint sourceTextureId,
-        GLuint destTextureId, int level);
 
     ItemId mItemId{ };
     MessagePtrSet mMessages;

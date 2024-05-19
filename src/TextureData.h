@@ -16,9 +16,11 @@ public:
     bool isSharedWith(const TextureData &other) const;
     bool create(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format,
-        int width, int height, 
-        int depth = 1, int layers = 1, int samples = 1,
-        int levels = 0);
+        int width, int height, int depth, 
+        int layers, int samples);
+    void setTarget(QOpenGLTexture::Target target) { mTarget = target; }
+    void setSamples(int samples) { mSamples = samples; }
+    TextureData convert(QOpenGLTexture::TextureFormat format);
     bool load(const QString &fileName, bool flipVertically);
     bool loadQImage(QImage image, bool flipVertically);
     bool save(const QString &fileName, bool flipVertically) const;
@@ -51,21 +53,14 @@ public:
     const uchar *getData(int level, int layer, int faceSlice) const;
     int getImageSize(int level) const;
     int getLevelSize(int level) const;
-    void setPixelFormat(QOpenGLTexture::PixelFormat pixelFormat);
-    bool upload(GLuint textureId, QOpenGLTexture::TextureFormat format =
-        QOpenGLTexture::TextureFormat::NoFormat);
-    bool upload(GLuint *textureId, QOpenGLTexture::TextureFormat format =
-        QOpenGLTexture::TextureFormat::NoFormat);
-    bool upload(ktxVulkanDeviceInfo* vdi, ktxVulkanTexture* vkTexture,
-        VkImageUsageFlags usageFlags, VkImageLayout initialLayout);
-    bool download(GLuint textureId);
+    bool uploadGL(GLuint *textureId) const;
+    bool uploadVK(ktxVulkanDeviceInfo* vdi, ktxVulkanTexture* vkTexture,
+        VkImageUsageFlags usageFlags, VkImageLayout initialLayout) const;
 
     friend bool operator==(const TextureData &a, const TextureData &b);
     friend bool operator!=(const TextureData &a, const TextureData &b);
 
 private:
-    using GL = QOpenGLFunctions_3_3_Core;
-
     bool loadKtx(const QString &fileName, bool flipVertically);
     bool loadOpenImageIO(const QString &fileName, bool flipVertically);
     bool loadQImage(const QString &fileName, bool flipVertically);
@@ -75,11 +70,6 @@ private:
     bool saveOpenImageIO(const QString &fileName, bool flipVertically) const;
     bool savePfm(const QString &fileName, bool flipVertically) const;
     void flipVertically();
-    bool uploadMultisample(GL& gl, GLuint textureId,
-        QOpenGLTexture::TextureFormat format);
-    bool download(GL& gl, GLuint textureId);
-    bool downloadCubemap(GL& gl, GLuint textureId);
-    bool downloadMultisample(GL& gl, GLuint textureId);
 
     std::shared_ptr<ktxTexture1> mKtxTexture;
     QOpenGLTexture::Target mTarget{ QOpenGLTexture::Target2D };
@@ -114,8 +104,10 @@ enum class TextureDataType
     Float32,
 };
 
+bool isMultisampleTarget(QOpenGLTexture::Target target);
+bool isCubemapTarget(QOpenGLTexture::Target target);
 TextureSampleType getTextureSampleType(QOpenGLTexture::TextureFormat format);
-TextureDataType getDataSampleType(QOpenGLTexture::TextureFormat format);
+TextureDataType getTextureDataType(QOpenGLTexture::TextureFormat format);
 int getTextureDataSize(QOpenGLTexture::TextureFormat dataType);
 int getTextureComponentCount(QOpenGLTexture::TextureFormat format);
 

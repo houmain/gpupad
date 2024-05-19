@@ -2,6 +2,7 @@
 #include "GLWidget.h"
 #include "Singletons.h"
 #include "render/opengl/GLShareSynchronizer.h"
+#include "render/opengl/GLTexture.h"
 #include "render/ComputeRange.h"
 #include <optional>
 #include <cmath>
@@ -348,9 +349,12 @@ bool TextureItem::updateTexture()
 {
     if (!mPreviewTextureId && std::exchange(mUpload, false)) {
         // upload/replace texture
-        widget().gl().glDeleteTextures(1, &mImageTextureId);
+        auto &gl = widget().gl();
+        gl.glDeleteTextures(1, &mImageTextureId);
         mImageTextureId = GL_NONE;
-        mImage.upload(&mImageTextureId);
+
+        const auto result = GLTexture::upload(gl, mImage, &mImageTextureId);
+        Q_ASSERT(result);
         // last version is deleted in QGraphicsView destructor
     }
     return (mPreviewTextureId || mImageTextureId);

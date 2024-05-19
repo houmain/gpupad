@@ -5,6 +5,254 @@
 #include <QOpenGLPixelTransferOptions>
 #include <cmath>
 
+namespace {
+    GLuint createFramebuffer(QOpenGLFunctions_3_3_Core &gl,
+        GLenum target, GLuint textureId, GLenum attachment)
+    {
+        auto fbo = GLuint{ };
+        gl.glGenFramebuffers(1, &fbo);
+        gl.glBindFramebuffer(target, fbo);
+        gl.glFramebufferTexture(target, attachment, textureId, 0);
+        return fbo;
+    }
+
+    bool resolveTexture(QOpenGLFunctions_3_3_Core &gl,
+        GLuint sourceTextureId, GLuint destTextureId, 
+        int width, int height, QOpenGLTexture::TextureFormat format)
+    {
+        auto blitMask = GLbitfield{ };
+        auto attachment = GLenum{ };
+        switch (format) {
+            default:
+                blitMask = GL_COLOR_BUFFER_BIT;
+                attachment = GL_COLOR_ATTACHMENT0;
+                break;
+
+            case QOpenGLTexture::D16:
+            case QOpenGLTexture::D24:
+            case QOpenGLTexture::D32:
+            case QOpenGLTexture::D32F:
+                blitMask = GL_DEPTH_BUFFER_BIT;
+                attachment = GL_DEPTH_ATTACHMENT;
+                break;
+
+            case QOpenGLTexture::S8:
+                blitMask = GL_STENCIL_BUFFER_BIT;
+                attachment = GL_STENCIL_ATTACHMENT;
+                break;
+
+            case QOpenGLTexture::D24S8:
+            case QOpenGLTexture::D32FS8X24:
+                blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
+                attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+                break;
+        }
+
+        auto previousTarget = GLint{ };
+        gl.glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousTarget);
+        const auto sourceFbo = createFramebuffer(gl,
+            GL_READ_FRAMEBUFFER, sourceTextureId, attachment);
+        const auto destFbo = createFramebuffer(gl,
+            GL_DRAW_FRAMEBUFFER, destTextureId, attachment);
+        gl.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, blitMask, GL_NEAREST);
+        gl.glDeleteFramebuffers(1, &sourceFbo);
+        gl.glDeleteFramebuffers(1, &destFbo);
+        gl.glBindFramebuffer(GL_FRAMEBUFFER, previousTarget);
+        return (glGetError() == GL_NONE);
+    }
+
+    bool uploadMultisample(QOpenGLFunctions_3_3_Core &gl,
+        const TextureData &data, GLuint textureId)
+    {
+        gl.glBindTexture(data.target(), textureId);
+        if (data.target() == QOpenGLTexture::Target2DMultisample) {
+            gl.glTexImage2DMultisample(data.target(), data.samples(),
+                data.format(), data.width(), data.height(), GL_FALSE);
+
+            // upload single sample and resolve
+            auto singleSampleTexture = data;
+            singleSampleTexture.setTarget(QOpenGLTexture::Target2D);
+            singleSampleTexture.setSamples(1);
+            auto singleSampleTextureId = GLuint{ };
+            const auto cleanup = qScopeGuard([&] { 
+                gl.glDeleteTextures(1, &singleSampleTextureId);
+            });
+            return (singleSampleTexture.uploadGL(&singleSampleTextureId) &&
+                    resolveTexture(gl, singleSampleTextureId, textureId, 
+                        data.width(), data.height(), data.format()));
+        }
+        else {
+            Q_ASSERT(data.target() == QOpenGLTexture::Target2DMultisampleArray);
+            gl.glTexImage3DMultisample(data.target(), data.samples(),
+                data.format(), data.width(), data.height(), data.layers(), GL_FALSE);
+
+            // TODO: upload
+        }
+        Q_ASSERT(!"not implemented");
+        return false;
+    }
+
+    bool download(QOpenGLFunctions_3_3_Core &gl, 
+        TextureData &data, GLuint textureId)
+    {
+        gl.glBindTexture(data.target(), textureId);
+        for (auto level = 0; level < data.levels(); ++level) {
+            if (data.isCompressed()) {
+                auto size = GLint{ };
+                gl.glGetTexLevelParameteriv(data.target(), level,
+                    GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size);
+                if (glGetError() != GL_NO_ERROR || size > data.getImageSize(level))
+                    return false;
+                gl.glGetCompressedTexImage(data.target(), level, 
+                    data.getWriteonlyData(level, 0, 0));
+            }
+            else {
+                gl.glGetTexImage(data.target(), level,
+                    data.pixelFormat(), data.pixelType(), 
+                    data.getWriteonlyData(level, 0, 0));
+            }
+        }
+        return (glGetError() == GL_NO_ERROR);
+    }
+
+    bool downloadCubemap(QOpenGLFunctions_3_3_Core &gl,
+        TextureData &data, GLuint textureId)
+    {
+        // TODO: download
+        Q_ASSERT(!"not implemented");
+        return true;
+    }
+
+    bool downloadMultisample(QOpenGLFunctions_3_3_Core &gl,
+        TextureData &data, GLuint textureId)
+    {
+        if (data.target() == QOpenGLTexture::Target2DMultisample) {
+            // create single sample texture (=upload), resolve, download and copy plane
+            auto singleSampleTexture = data;
+            singleSampleTexture.setTarget(QOpenGLTexture::Target2D);
+            singleSampleTexture.setSamples(1);
+            auto singleSampleTextureId = GLuint{ };
+            const auto cleanup = qScopeGuard([&] { 
+                gl.glDeleteTextures(1, &singleSampleTextureId);
+            });
+            if (!singleSampleTexture.uploadGL(&singleSampleTextureId) ||
+                !resolveTexture(gl, textureId, singleSampleTextureId, 
+                    data.width(), data.height(), data.format()) ||
+                !download(gl, singleSampleTexture, singleSampleTextureId))
+                return false;
+
+            std::memcpy(data.getWriteonlyData(0, 0, 0), 
+                singleSampleTexture.getData(0, 0, 0), data.getImageSize(0));
+            return true;
+        }
+        else {
+            Q_ASSERT(data.target() == QOpenGLTexture::Target2DMultisampleArray);
+            // TODO: download
+        }
+        Q_ASSERT(!"not implemented");
+        return false;
+    }
+
+    GLObject createFramebuffer(QOpenGLFunctions_3_3_Core &gl,
+        const TextureKind &kind, GLuint textureId, int level)
+    {
+        const auto createFBO = [&]() {
+            auto fbo = GLuint{ };
+            gl.glGenFramebuffers(1, &fbo);
+            return fbo;
+        };
+        const auto freeFBO = [](GLuint fbo) {
+            auto &gl = GLContext::currentContext();
+            gl.glDeleteFramebuffers(1, &fbo);
+        };
+
+        auto attachment = GLenum{ GL_COLOR_ATTACHMENT0 };
+        if (kind.depth && kind.stencil)
+            attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+        else if (kind.depth)
+            attachment = GL_DEPTH_ATTACHMENT;
+        else if (kind.stencil)
+            attachment = GL_STENCIL_ATTACHMENT;
+
+        auto fbo = GLObject(createFBO(), freeFBO);
+        gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment, textureId, level);
+        auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (status != GL_FRAMEBUFFER_COMPLETE)
+            fbo.reset();
+        return fbo;
+    }
+
+    bool copyTexture(QOpenGLFunctions_3_3_Core &gl,
+        const TextureKind &kind, GLuint sourceTextureId, 
+        GLuint destTextureId, int width, int height, int level)
+    {
+        const auto sourceFbo = createFramebuffer(gl, kind, sourceTextureId, level);
+        const auto destFbo = createFramebuffer(gl, kind, destTextureId, level);
+        if (!sourceFbo || !destFbo)
+            return false;
+
+        auto blitMask = GLbitfield{ GL_COLOR_BUFFER_BIT };
+        if (kind.depth && kind.stencil)
+            blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
+        else if (kind.depth)
+            blitMask = GL_DEPTH_BUFFER_BIT;
+        else if (kind.stencil)
+            blitMask = GL_STENCIL_BUFFER_BIT;
+
+        gl.glBindFramebuffer(GL_READ_FRAMEBUFFER, sourceFbo);
+        gl.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destFbo);
+        gl.glBlitFramebuffer(0, 0, width, height, 0, 0,
+            width, height, blitMask, GL_NEAREST);
+        return true;
+    }
+} // namespace
+
+bool GLTexture::upload(QOpenGLFunctions_3_3_Core &gl,
+        const TextureData &data, GLuint* textureId)
+{
+    Q_ASSERT(textureId);
+    if (data.isNull())
+        return false;
+
+    auto cleanup = qScopeGuard([&] { 
+        gl.glDeleteTextures(1, textureId);
+        *textureId = GL_NONE;
+    });
+
+    if (!*textureId) {
+        gl.glGenTextures(1, textureId);
+    }
+    else {
+        cleanup.dismiss();
+    }
+
+    if (isMultisampleTarget(data.target())) {
+        if (!uploadMultisample(gl, data, *textureId))
+            return false;
+    }
+    else {
+        if (!data.uploadGL(textureId))
+            return false;
+    }
+    cleanup.dismiss();
+    return true;
+}
+
+bool GLTexture::download(QOpenGLFunctions_3_3_Core &gl,
+    TextureData &data, GLuint textureId)
+{
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
+
+    if (isMultisampleTarget(data.target()))
+        return downloadMultisample(gl, data, textureId);
+
+    if (isCubemapTarget(data.target()))
+        return downloadCubemap(gl, data, textureId);
+
+    return ::download(gl, data, textureId);
+}
+
 GLTexture::GLTexture(const Texture &texture, ScriptEngine &scriptEngine)
     : mItemId(texture.id)
     , mFileName(texture.fileName)
@@ -71,7 +319,7 @@ GLuint GLTexture::getReadWriteTextureId()
 bool GLTexture::clear(std::array<double, 4> color, double depth, int stencil)
 {
     auto &gl = GLContext::currentContext();
-    auto fbo = createFramebuffer(getReadWriteTextureId(), 0);
+    auto fbo = createFramebuffer(gl, mKind, getReadWriteTextureId(), 0);
     if (!fbo)
         return false;
 
@@ -177,8 +425,12 @@ bool GLTexture::clear(std::array<double, 4> color, double depth, int stencil)
 
 bool GLTexture::copy(GLTexture &source)
 {
-    return copyTexture(source.getReadOnlyTextureId(),
-        getReadWriteTextureId(), 0);
+    const auto level = 0;
+    auto &gl = GLContext::currentContext();
+    return copyTexture(gl, mKind, source.getReadOnlyTextureId(),
+        getReadWriteTextureId(), 
+        mData.getLevelWidth(level),
+        mData.getLevelHeight(level), level);
 }
 
 bool GLTexture::swap(GLTexture &other)
@@ -224,38 +476,37 @@ void GLTexture::reload(bool forWriting)
     }
 
     auto fileData = TextureData{ };
-    if (!FileDialog::isEmptyOrUntitled(mFileName))
+    if (!FileDialog::isEmptyOrUntitled(mFileName)) {
         if (!Singletons::fileCache().getTexture(mFileName, mFlipVertically, &fileData))
             mMessages += MessageList::insert(mItemId,
                 MessageType::LoadingFileFailed, mFileName);
 
-    // reload file as long as targets match
-    // ignore dimension mismatch when reading
-    // do not ignore when writing (format is ignored)
-    const auto hasSameDimensions = [&](const TextureData &data) {
-        return (mWidth == data.width() &&
-                mHeight == data.height() &&
-                mDepth == data.depth() &&
-                mLayers == data.layers());
-    };
-    mDataWritten |= forWriting;
-    if (!fileData.isNull() &&
-            mTarget == fileData.target() &&
-            (!mDataWritten || hasSameDimensions(fileData))) {
-        mSystemCopyModified |= !mData.isSharedWith(fileData);
-        mData = fileData;
+        const auto hasSameDimensions = [&](const TextureData &data) {
+            return (mTarget == data.target() &&
+                    mFormat == data.format() &&
+                    mWidth == data.width() &&
+                    mHeight == data.height() &&
+                    mDepth == data.depth() &&
+                    mLayers == data.layers());
+        };
+
+        // validate dimensions when writing
+        if (!forWriting || hasSameDimensions(fileData)) {
+            mSystemCopyModified |= !mData.isSharedWith(fileData);
+            mData = fileData;
+        }
     }
 
-    // validate dimensions when writing
-    if (mData.isNull() ||
-            (forWriting && !hasSameDimensions(mData))) {
-        if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples)) {
-            mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1, 1);
+    if (mData.isNull()) {
+        if (!mData.create(mTarget, mFormat, mWidth, mHeight, 
+                mDepth, mLayers, mSamples)) {
+            mData.create(mTarget, Texture::Format::RGBA8_UNorm, 
+                1, 1, 1, 1, 1);
             mMessages += MessageList::insert(mItemId,
                 MessageType::CreatingTextureFailed);
         }
         mData.clear();
-        mSystemCopyModified |= true;
+        mSystemCopyModified = true;
     }
 }
 
@@ -290,7 +541,14 @@ void GLTexture::upload()
     if (!mSystemCopyModified)
         return;
 
-    if (!mData.upload(mTextureObject, mFormat)) {
+    auto &gl = GLContext::currentContext();
+
+    auto data = mData;
+    if (mData.format() != mFormat)
+        data = mData.convert(mFormat);
+
+    auto textureId = static_cast<GLuint>(mTextureObject);
+    if (!upload(gl, data, &textureId)) {
         mMessages += MessageList::insert(
             mItemId, MessageType::UploadingImageFailed);
         return;
@@ -306,67 +564,12 @@ bool GLTexture::download()
     if (!mDeviceCopyModified)
         return false;
 
-    if (!mData.download(mTextureObject)) {
+    auto &gl = GLContext::currentContext();
+    if (!download(gl, mData, mTextureObject)) {
         mMessages += MessageList::insert(
             mItemId, MessageType::DownloadingImageFailed);
         return false;
     }
     mSystemCopyModified = mDeviceCopyModified = false;
-    return true;
-}
-
-GLObject GLTexture::createFramebuffer(GLuint textureId, int level) const
-{
-    auto &gl = GLContext::currentContext();
-    const auto createFBO = [&]() {
-        auto fbo = GLuint{ };
-        gl.glGenFramebuffers(1, &fbo);
-        return fbo;
-    };
-    const auto freeFBO = [](GLuint fbo) {
-        auto &gl = GLContext::currentContext();
-        gl.glDeleteFramebuffers(1, &fbo);
-    };
-
-    auto attachment = GLenum{ GL_COLOR_ATTACHMENT0 };
-    if (mKind.depth && mKind.stencil)
-        attachment = GL_DEPTH_STENCIL_ATTACHMENT;
-    else if (mKind.depth)
-        attachment = GL_DEPTH_ATTACHMENT;
-    else if (mKind.stencil)
-        attachment = GL_STENCIL_ATTACHMENT;
-
-    auto fbo = GLObject(createFBO(), freeFBO);
-    gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment, textureId, level);
-    auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE)
-        fbo.reset();
-    return fbo;
-}
-
-bool GLTexture::copyTexture(GLuint sourceTextureId,
-    GLuint destTextureId, int level)
-{
-    auto &gl = GLContext::currentContext();
-    const auto sourceFbo = createFramebuffer(sourceTextureId, level);
-    const auto destFbo = createFramebuffer(destTextureId, level);
-    if (!sourceFbo || !destFbo)
-        return false;
-
-    const auto width = mData.getLevelWidth(level);
-    const auto height = mData.getLevelHeight(level);
-    auto blitMask = GLbitfield{ GL_COLOR_BUFFER_BIT };
-    if (mKind.depth && mKind.stencil)
-        blitMask = GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
-    else if (mKind.depth)
-        blitMask = GL_DEPTH_BUFFER_BIT;
-    else if (mKind.stencil)
-        blitMask = GL_STENCIL_BUFFER_BIT;
-
-    gl.glBindFramebuffer(GL_READ_FRAMEBUFFER, sourceFbo);
-    gl.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destFbo);
-    gl.glBlitFramebuffer(0, 0, width, height, 0, 0,
-        width, height, blitMask, GL_NEAREST);
     return true;
 }
