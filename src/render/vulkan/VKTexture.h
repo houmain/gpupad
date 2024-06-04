@@ -24,11 +24,13 @@ public:
     KDGpu::Texture &texture() { return mTexture; }
     KDGpu::TextureView &textureView() { return mTextureView; }
     KDGpu::TextureLayout currentLayout() const { return mCurrentLayout; }
+    KDGpu::TextureAspectFlagBits aspectMask() const;
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
     bool prepareImageSampler(VKContext &context);
     bool prepareStorageImage(VKContext &context);
     bool prepareAttachment(VKContext &context);
+    bool prepareDownload(VKContext &context);
     bool clear(VKContext &context, std::array<double, 4> color, double depth, int stencil);
     bool copy(VKTexture &source);
     bool swap(VKTexture &other);
@@ -40,7 +42,6 @@ private:
     void reset(KDGpu::Device& device);
     void createAndUpload(VKContext &context);
     void reload(bool forWriting);
-    KDGpu::TextureAspectFlagBits aspectMask() const;
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder, 
         KDGpu::TextureLayout layout, KDGpu::AccessFlags accessMask, 
         KDGpu::PipelineStageFlags stage);

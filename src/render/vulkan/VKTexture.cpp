@@ -4,6 +4,87 @@
 #include "EvaluatedPropertyCache.h"
 #include <cmath>
 
+namespace
+{
+    class TransferTexture
+    {
+    private:
+        KDGpu::Texture mTexture;
+
+    public:
+        TransferTexture(KDGpu::Device &device, const VKTexture &texture)
+        {
+            mTexture = device.createTexture({
+                .type = KDGpu::TextureType::TextureType2D, // TODO
+                .format = toKDGpu(texture.format()),
+                .extent = { static_cast<uint32_t>(texture.width()), 
+                            static_cast<uint32_t>(texture.height()), 1 },
+                .mipLevels = 1,
+                .samples = KDGpu::SampleCountFlagBits::Samples1Bit,
+                .tiling = KDGpu::TextureTiling::Linear,
+                .usage = KDGpu::TextureUsageFlagBits::TransferDstBit | 
+                         KDGpu::TextureUsageFlagBits::TransferSrcBit,
+                .memoryUsage = KDGpu::MemoryUsage::CpuOnly
+            });    
+        }
+
+        bool download(VKContext &context, VKTexture &texture)
+        {
+            texture.prepareDownload(context);
+            
+            context.commandRecorder->textureMemoryBarrier({
+                .srcStages = KDGpu::PipelineStageFlagBit::TransferBit,
+                .srcMask = KDGpu::AccessFlagBit::None,
+                .dstStages = KDGpu::PipelineStageFlagBit::TransferBit,
+                .dstMask = KDGpu::AccessFlagBit::TransferWriteBit,
+                .oldLayout = KDGpu::TextureLayout::Undefined,
+                .newLayout = KDGpu::TextureLayout::TransferDstOptimal,
+                .texture = mTexture,
+                .range = { .aspectMask = texture.aspectMask() }
+            });
+
+            context.commandRecorder->copyTextureToTexture({
+                .srcTexture = texture.texture(),
+                .srcLayout = KDGpu::TextureLayout::TransferSrcOptimal,
+                .dstTexture = mTexture,
+                .dstLayout = KDGpu::TextureLayout::TransferDstOptimal,
+                .regions = {{
+                    .extent = { 
+                        .width = static_cast<uint32_t>(texture.width()), 
+                        .height = static_cast<uint32_t>(texture.height()), 
+                        .depth = 1
+                    }
+                }}
+            });
+
+            context.commandRecorder->textureMemoryBarrier({
+                .srcStages = KDGpu::PipelineStageFlagBit::TransferBit,
+                .srcMask = KDGpu::AccessFlagBit::TransferWriteBit,
+                .dstStages = KDGpu::PipelineStageFlagBit::TransferBit,
+                .dstMask = KDGpu::AccessFlagBit::MemoryReadBit,
+                .oldLayout = KDGpu::TextureLayout::TransferDstOptimal,
+                .newLayout = KDGpu::TextureLayout::General,
+                .texture = mTexture,
+                .range = { .aspectMask = texture.aspectMask() }
+            });
+            return true;
+        }
+
+        std::byte *map()
+        {
+            const auto subresourceLayout = mTexture.getSubresourceLayout();
+            auto data = static_cast<std::byte*>(mTexture.map());
+            data += subresourceLayout.offset;
+            return data;
+        }
+
+        void unmap()
+        {
+            mTexture.unmap();
+        }
+    };
+} // namespace
+
 VKTexture::VKTexture(const Texture &texture, ScriptEngine &scriptEngine)
     : mItemId(texture.id)
     , mFileName(texture.fileName)
@@ -81,7 +162,21 @@ bool VKTexture::prepareAttachment(VKContext &context)
     return mTextureView.isValid();
 }
 
-bool VKTexture::clear(VKContext &context, std::array<double, 4> color, double depth, int stencil)
+bool VKTexture::prepareDownload(VKContext &context)
+{
+    reload(false);
+    createAndUpload(context);
+
+    memoryBarrier(*context.commandRecorder, 
+        KDGpu::TextureLayout::TransferSrcOptimal,
+        KDGpu::AccessFlagBit::MemoryReadBit, 
+        KDGpu::PipelineStageFlagBit::TransferBit);
+
+    return mTextureView.isValid();
+}
+
+bool VKTexture::clear(VKContext &context, std::array<double, 4> color, 
+    double depth, int stencil)
 {
     reload(true);
     createAndUpload(context);
@@ -283,142 +378,27 @@ bool VKTexture::download(VKContext &context)
     if (!mTexture.isValid())
         return false;
 
-    //if (!mData.download(mTextureObject)) {
-    //    mMessages += MessageList::insert(
-    //        mItemId, MessageType::DownloadingImageFailed);
-    //    return false;
-    //}
+    auto transferTexture = TransferTexture(context.device, *this);
 
-    using namespace KDGpu;
+    context.commandRecorder = context.device.createCommandRecorder();
+    auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
 
-    auto &m_device = context.device;
-    auto &m_queue = context.queue;
-    auto commandRecorder = m_device.createCommandRecorder();
+    if (!transferTexture.download(context, *this)) {
+        mMessages += MessageList::insert(
+            mItemId, MessageType::DownloadingImageFailed);
+        return false;
+    }
 
-    KDGpu::Texture m_cpuColorTexture;
-
-    // Create a color texture that is host visible and in linear layout. We will copy into this.
-    const TextureOptions cpuColorTextureOptions = {
-        .type = TextureType::TextureType2D,
-        .format = toKDGpu(mFormat),
-        .extent = { static_cast<uint32_t>(mWidth), 
-                    static_cast<uint32_t>(mHeight), 1 },
-        .mipLevels = 1,
-        .samples = SampleCountFlagBits::Samples1Bit,
-        .tiling = TextureTiling::Linear, // Linear so we can manipulate it on the host
-        .usage = TextureUsageFlagBits::TransferDstBit,
-        .memoryUsage = MemoryUsage::CpuOnly
-    };
-    m_cpuColorTexture = m_device.createTexture(cpuColorTextureOptions);
-
-    enum class TextureBarriers : uint8_t {
-        CopySrcPre = 0,
-        CopyDstPre,
-        CopyDstPost,
-        CopySrcPost,
-        Count
-    };
-    TextureMemoryBarrierOptions m_barriers[uint8_t(TextureBarriers::Count)];
-
-    //![12]
-    // Insert a texture memory barrier to ensure the rendering to the color render target
-    // is completed and to transition it into a layout suitable for copying from
-    m_barriers[uint8_t(TextureBarriers::CopySrcPre)] = {
-        .srcStages = PipelineStageFlagBit::TransferBit,
-        .srcMask = AccessFlagBit::MemoryReadBit,
-        .dstStages = PipelineStageFlagBit::TransferBit,
-        .dstMask = AccessFlagBit::TransferReadBit,
-        .oldLayout = mCurrentLayout,
-        .newLayout = TextureLayout::TransferSrcOptimal,
-        .texture = mTexture,
-        .range = { .aspectMask = aspectMask() }
-    };
-
-    // Insert another texture memory barrier to transition the destination cpu visible
-    // texture into a suitable layout for copying into
-    m_barriers[uint8_t(TextureBarriers::CopyDstPre)] = {
-        .srcStages = PipelineStageFlagBit::TransferBit,
-        .srcMask = AccessFlagBit::None,
-        .dstStages = PipelineStageFlagBit::TransferBit,
-        .dstMask = AccessFlagBit::TransferWriteBit,
-        .oldLayout = TextureLayout::Undefined,
-        .newLayout = TextureLayout::TransferDstOptimal,
-        .texture = m_cpuColorTexture,
-        .range = { .aspectMask = aspectMask() }
-    };
-
-    // Transition the destination texture to general layout so that we can map it to the cpu
-    // address space later.
-    m_barriers[uint8_t(TextureBarriers::CopyDstPost)] = {
-        .srcStages = PipelineStageFlagBit::TransferBit,
-        .srcMask = AccessFlagBit::TransferWriteBit,
-        .dstStages = PipelineStageFlagBit::TransferBit,
-        .dstMask = AccessFlagBit::MemoryReadBit,
-        .oldLayout = TextureLayout::TransferDstOptimal,
-        .newLayout = TextureLayout::General,
-        .texture = m_cpuColorTexture,
-        .range = { .aspectMask = aspectMask() }
-    };
-
-    // Transition the color target back to the color attachment optimal layout, ready
-    // to render again later.
-    m_barriers[uint8_t(TextureBarriers::CopySrcPost)] = {
-        .srcStages = PipelineStageFlagBit::TransferBit,
-        .srcMask = AccessFlagBit::TransferReadBit,
-        .dstStages = PipelineStageFlagBit::TransferBit,
-        .dstMask = AccessFlagBit::MemoryReadBit,
-        .oldLayout = TextureLayout::TransferSrcOptimal,
-        .newLayout = mCurrentLayout,
-        .texture = mTexture,
-        .range = { .aspectMask = aspectMask() }
-    };
-    //![12]
-
-    // Likewise, we can specify the copy operation parameters once here and reuse them many
-    // times in calls to render().
-    // clang-format off
-    //![13]
-    auto m_copyOptions = TextureToTextureCopy{
-        .srcTexture = mTexture,
-        .srcLayout = TextureLayout::TransferSrcOptimal,
-        .dstTexture = m_cpuColorTexture,
-        .dstLayout = TextureLayout::TransferDstOptimal,
-        .regions = {{
-            .extent = { .width = static_cast<uint32_t>(mWidth), 
-            .height = static_cast<uint32_t>(mHeight), .depth = 1 }
-        }}
-    };
-
-    // Copy from the color render target to the CPU visible color texture. The barriers ensure
-    // that we correctly serialize the operations performed on the GPU and also act to transition
-    // the textures into the correct layout for each step. See the explanations in the
-    // createRenderTargets() function for more information.
-    //![11]
-    commandRecorder.textureMemoryBarrier(m_barriers[uint8_t(TextureBarriers::CopySrcPre)]);
-    commandRecorder.textureMemoryBarrier(m_barriers[uint8_t(TextureBarriers::CopyDstPre)]);
-    commandRecorder.copyTextureToTexture(m_copyOptions);
-    commandRecorder.textureMemoryBarrier(m_barriers[uint8_t(TextureBarriers::CopyDstPost)]);
-    commandRecorder.textureMemoryBarrier(m_barriers[uint8_t(TextureBarriers::CopySrcPost)]);
-    //![11]
-
-    // Finish recording and submit
-    auto m_commandBuffer = commandRecorder.finish();
-    const SubmitOptions submitOptions = {
-        .commandBuffers = { m_commandBuffer }
-    };
-    m_queue.submit(submitOptions);
-    m_queue.waitUntilIdle();
-
-    // Map the host texture to cpu address space so we can save it to disk
-    const auto subresourceLayout = m_cpuColorTexture.getSubresourceLayout();
-    const uint8_t *data = static_cast<uint8_t *>(m_cpuColorTexture.map());
-    data += subresourceLayout.offset;
+    auto commandBuffer = context.commandRecorder->finish();
+    context.queue.submit({ .commandBuffers = { commandBuffer} });
+    context.queue.waitUntilIdle();
 
     if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples))
         return false;
 
+    auto data = transferTexture.map();
     std::memcpy(mData.getWriteonlyData(0, 0, 0), data, mData.getLevelSize(0));
-    m_cpuColorTexture.unmap();
+    transferTexture.unmap();
 
     mSystemCopyModified = mDeviceCopyModified = false;
     return true;

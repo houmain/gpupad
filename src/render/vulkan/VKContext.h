@@ -27,6 +27,5 @@ struct VKContext
     KDGpu::Queue& queue;
     ktxVulkanDeviceInfo& ktxDeviceInfo;
     std::vector<KDGpu::CommandBuffer> commandBuffers;
-    std::vector<KDGpu::UploadStagingBuffer> stagingBuffers;
     std::optional<KDGpu::CommandRecorder> commandRecorder;
 };

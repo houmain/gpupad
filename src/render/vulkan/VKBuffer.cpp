@@ -80,18 +80,16 @@ void VKBuffer::createBuffer(KDGpu::Device &device)
     if (mBuffer.isValid())
         return;
 
-    using namespace KDGpu;
-    auto bufferOptions = BufferOptions{
-        .size = static_cast<DeviceSize>(mSize),
-        .usage = BufferUsageFlagBits::UniformBufferBit |
-                 BufferUsageFlagBits::StorageBufferBit |
-                 BufferUsageFlagBits::VertexBufferBit |
-                 BufferUsageFlagBits::IndexBufferBit |
-                 BufferUsageFlagBits::IndirectBufferBit |
-                 BufferUsageFlagBits::TransferDstBit,
-        .memoryUsage = MemoryUsage::GpuOnly
-    };
-    mBuffer = device.createBuffer(bufferOptions);
+    mBuffer = device.createBuffer({
+        .size = static_cast<KDGpu::DeviceSize>(mSize),
+        .usage = KDGpu::BufferUsageFlagBits::UniformBufferBit |
+                 KDGpu::BufferUsageFlagBits::StorageBufferBit |
+                 KDGpu::BufferUsageFlagBits::VertexBufferBit |
+                 KDGpu::BufferUsageFlagBits::IndexBufferBit |
+                 KDGpu::BufferUsageFlagBits::IndirectBufferBit |
+                 KDGpu::BufferUsageFlagBits::TransferDstBit,
+        .memoryUsage = KDGpu::MemoryUsage::GpuOnly
+    });
 }
 
 void VKBuffer::upload(VKContext &context)
@@ -99,16 +97,11 @@ void VKBuffer::upload(VKContext &context)
     if (!mSystemCopyModified)
         return;
 
-    using namespace KDGpu;
-    const auto uploadOptions = BufferUploadOptions {
+    context.queue.waitForUploadBufferData({
         .destinationBuffer = mBuffer,
-        .dstStages = PipelineStageFlagBit::VertexAttributeInputBit,
-        .dstMask = AccessFlagBit::VertexAttributeReadBit,
         .data = mData.constData(),
-        .byteSize = static_cast<DeviceSize>(mSize)
-    };
-    context.stagingBuffers.emplace_back(context.queue.uploadBufferData(uploadOptions));
-
+        .byteSize = static_cast<KDGpu::DeviceSize>(mSize)
+    });
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
