@@ -12,7 +12,8 @@ public:
     void render();
     void release();
 
-    void setImage(GLuint textureId, const TextureData &texture, int level, int layer, int face);
+    void setImage(QOpenGLTexture::Target target, GLuint textureId, 
+        const TextureData &texture, int level, int layer, int face);
     const Range &range() const { return mRange; }
 
 private:

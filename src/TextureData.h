@@ -16,10 +16,7 @@ public:
     bool isSharedWith(const TextureData &other) const;
     bool create(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format,
-        int width, int height, int depth, 
-        int layers, int samples);
-    void setTarget(QOpenGLTexture::Target target) { mTarget = target; }
-    void setSamples(int samples) { mSamples = samples; }
+        int width, int height, int depth, int layers);
     TextureData convert(QOpenGLTexture::TextureFormat format);
     bool load(const QString &fileName, bool flipVertically);
     bool loadQImage(QImage image, bool flipVertically);
@@ -32,9 +29,8 @@ public:
     bool isArray() const;
     bool isCubemap() const;
     bool isCompressed() const;
-    bool isMultisample() const;
     int dimensions() const;
-    QOpenGLTexture::Target target() const { return mTarget; }
+    QOpenGLTexture::Target getTarget() const;
     QOpenGLTexture::TextureFormat format() const;
     QOpenGLTexture::PixelFormat pixelFormat() const;
     QOpenGLTexture::PixelType pixelType() const;
@@ -47,7 +43,6 @@ public:
     int levels() const;
     int layers() const;
     int faces() const;
-    int samples() const { return mSamples; }
     bool flippedVertically() const { return mFlippedVertically; }
     uchar *getWriteonlyData(int level, int layer, int faceSlice);
     const uchar *getData(int level, int layer, int faceSlice) const;
@@ -72,8 +67,6 @@ private:
     void flipVertically();
 
     std::shared_ptr<ktxTexture1> mKtxTexture;
-    QOpenGLTexture::Target mTarget{ QOpenGLTexture::Target2D };
-    int mSamples{ };
     bool mFlippedVertically{ };
 };
 

@@ -280,7 +280,7 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically, Texture
 
     if (FileDialog::isVideoFileName(fileName)) {
         texture->create(QOpenGLTexture::Target2D,
-            QOpenGLTexture::RGB8_UNorm, 1, 1, 1, 1, 1);
+            QOpenGLTexture::RGB8_UNorm, 1, 1, 1, 1);
         texture->clear();
         Q_EMIT videoPlayerRequested(fileName, flipVertically);
     }

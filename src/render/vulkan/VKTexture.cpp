@@ -339,7 +339,7 @@ void VKTexture::reload(bool forWriting)
 
     // reload file as long as targets match
     // ignore dimension mismatch when reading
-    // do not ignore when writing (format is ignored)
+    // do not ignore when writing
     const auto hasSameDimensions = [&](const TextureData &data) {
         return (mWidth == data.width() &&
                 mHeight == data.height() &&
@@ -348,7 +348,6 @@ void VKTexture::reload(bool forWriting)
     };
     mDataWritten |= forWriting;
     if (!fileData.isNull() &&
-            mTarget == fileData.target() &&
             (!mDataWritten || hasSameDimensions(fileData))) {
         mSystemCopyModified |= !mData.isSharedWith(fileData);
         mData = fileData;
@@ -357,8 +356,8 @@ void VKTexture::reload(bool forWriting)
     // validate dimensions when writing
     if (mData.isNull() ||
             (forWriting && !hasSameDimensions(mData))) {
-        if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples)) {
-            mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1, 1);
+        if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers)) {
+            mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1);
             mMessages += MessageList::insert(mItemId,
                 MessageType::CreatingTextureFailed);
         }
@@ -393,7 +392,7 @@ bool VKTexture::download(VKContext &context)
     context.queue.submit({ .commandBuffers = { commandBuffer} });
     context.queue.waitUntilIdle();
 
-    if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples))
+    if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers))
         return false;
 
     auto data = transferTexture.map();

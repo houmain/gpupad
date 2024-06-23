@@ -261,15 +261,23 @@ void TextureItem::setImage(TextureData image)
     update();
 }
 
-void TextureItem::setPreviewTexture(QOpenGLTexture::Target target,
-    QOpenGLTexture::TextureFormat format, GLuint textureId)
+void TextureItem::setPreviewTexture(GLuint textureId, 
+    QOpenGLTexture::Target target,
+    QOpenGLTexture::TextureFormat format, int samples)
 {
     if (!mImage.isNull()) {
         mPreviewTarget = target;
         mPreviewFormat = format;
         mPreviewTextureId = textureId;
+        mPreviewSamples = samples;
         update();
     }
+}
+
+bool TextureItem::canFilter() const
+{
+    return (!mImage.isNull() && 
+        (!mPreviewTextureId || !isMultisampleTarget(mPreviewTarget)));
 }
 
 void TextureItem::setMousePosition(const QPointF &mousePosition)
@@ -316,7 +324,8 @@ void TextureItem::computeHistogramBounds()
     }
 
     mComputeRange->setImage(
-        mPreviewTextureId ? mPreviewTextureId : mImageTextureId,
+        (mPreviewTextureId ? mPreviewTarget : mImage.getTarget()),
+        (mPreviewTextureId ? mPreviewTextureId : mImageTextureId),
         mImage, 
         static_cast<int>(mLevel), 
         static_cast<int>(mLayer),
@@ -353,7 +362,8 @@ bool TextureItem::updateTexture()
         gl.glDeleteTextures(1, &mImageTextureId);
         mImageTextureId = GL_NONE;
 
-        const auto result = GLTexture::upload(gl, mImage, &mImageTextureId);
+        const auto result = GLTexture::upload(gl, mImage, 
+            mImage.getTarget(), 1,  &mImageTextureId);
         Q_ASSERT(result);
         // last version is deleted in QGraphicsView destructor
     }
@@ -369,7 +379,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
     if (mPreviewTextureId && !gl.glIsTexture(mPreviewTextureId))
         mPreviewTextureId = GL_NONE;
 
-    auto target = mImage.target();
+    auto target = mImage.getTarget();
     auto format = mImage.format();
     if (mPreviewTextureId) {
         Singletons::glShareSynchronizer().beginUsage(gl);
@@ -417,7 +427,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         program->setUniformValue("uLayer", mLayer / mImage.depth());
         const auto resolve = (mSample < 0);
         program->setUniformValue("uSample", std::max(0, (resolve ? 0 : mSample)));
-        program->setUniformValue("uSamples", std::max(1, (resolve ? mImage.samples() : 1)));
+        program->setUniformValue("uSamples", std::max(1, (resolve ? mPreviewSamples : 1)));
         program->setUniformValue("uFlipVertically", mFlipVertically);
         program->setUniformValue("uMappingOffset", 
             static_cast<float>(-mMappingRange.minimum));

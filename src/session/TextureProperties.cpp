@@ -417,8 +417,14 @@ void TextureProperties::applyFileFormat()
     const auto fileName = mUi->file->currentData().toString();
     auto texture = TextureData();
     if (Singletons::fileCache().getTexture(fileName, false, &texture)) {
-        setFormat(texture.format());
-        mUi->target->setCurrentData(texture.target());
+        // automatically expand to 4 components
+        // since 3 are usually to supported by device
+        auto format = texture.format();
+        if (format == QOpenGLTexture::RGB8_UNorm)
+            format = QOpenGLTexture::RGBA8_UNorm;
+        setFormat(format);
+
+        mUi->target->setCurrentData(texture.getTarget());
         mUi->width->setText(QString::number(texture.width()));
         mUi->height->setText(QString::number(texture.height()));
         mUi->depth->setText(QString::number(texture.depth()));

@@ -41,8 +41,8 @@ public:
     bool isModified() const { return mModified; }
     void replace(TextureData texture, bool emitFileChanged = true);
     void setFlipVertically(bool flipVertically);
-    void updatePreviewTexture(QOpenGLTexture::Target target,
-        QOpenGLTexture::TextureFormat format, GLuint textureId);
+    void updatePreviewTexture(GLuint textureId, QOpenGLTexture::Target target,
+        QOpenGLTexture::TextureFormat format, int samples);
     const TextureData &texture() const { return mTexture; }
 
 Q_SIGNALS:

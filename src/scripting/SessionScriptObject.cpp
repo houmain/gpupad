@@ -64,7 +64,7 @@ namespace
         auto textureData = TextureData();
         if (!textureData.create(texture.target, texture.format,
                 texture.width.toInt(), texture.height.toInt(), texture.depth.toInt(),
-                texture.layers.toInt(), texture.samples))
+                texture.layers.toInt()))
             return { };
 
         const auto components = getTextureComponentCount(texture.format);

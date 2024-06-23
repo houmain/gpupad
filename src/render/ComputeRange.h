@@ -15,10 +15,10 @@ public:
         releaseResources();
     }
 
-    void setImage(GLuint textureId, const TextureData &texture, 
-        int level, int layer, int face) 
+    void setImage(QOpenGLTexture::Target target, GLuint textureId, 
+        const TextureData &texture, int level, int layer, int face) 
     {
-        mImpl.setImage(textureId, texture, level, layer, face);
+        mImpl.setImage(target, textureId, texture, level, layer, face);
     }
 
 Q_SIGNALS:

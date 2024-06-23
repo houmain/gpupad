@@ -11,9 +11,11 @@ class GLTexture
 {
 public:
     static bool upload(QOpenGLFunctions_3_3_Core &gl,
-        const TextureData &data, GLuint* textureId);
+        const TextureData &data, QOpenGLTexture::Target target, 
+        int samples, GLuint* textureId);
     static bool download(QOpenGLFunctions_3_3_Core &gl,
-        TextureData &data, GLuint textureId);
+        TextureData &data, QOpenGLTexture::Target target, 
+        GLuint textureId);
 
     GLTexture(const Texture &texture, ScriptEngine &scriptEngine);
     GLTexture(const Buffer &buffer, GLBuffer *textureBuffer, 

@@ -26,7 +26,7 @@ bool createFromRaw(const QByteArray &binary,
     const TextureEditor::RawFormat &r, TextureData *texture)
 {
     if (!texture->create(r.target, r.format, r.width,
-            r.height, r.depth, r.layers, r.samples))
+            r.height, r.depth, r.layers))
         return false;
 
     if (!binary.isEmpty()) {
@@ -175,7 +175,7 @@ void TextureEditor::updateEditorToolBar()
     mEditorToolBar.setMaxFace(std::max(mTexture.faces() - 1, 0));
     mEditorToolBar.setFace(mTextureItem->face());
 
-    mEditorToolBar.setCanFilter(!mTexture.isMultisample());
+    mEditorToolBar.setCanFilter(mTextureItem->canFilter());
     mEditorToolBar.setFilter(mTextureItem->magnifyLinear());
 
     mEditorToolBar.setCanFlipVertically(
@@ -292,10 +292,10 @@ void TextureEditor::copy()
     }
 }
 
-void TextureEditor::updatePreviewTexture(QOpenGLTexture::Target target,
-    QOpenGLTexture::TextureFormat format, GLuint textureId)
+void TextureEditor::updatePreviewTexture(GLuint textureId, 
+    QOpenGLTexture::Target target, QOpenGLTexture::TextureFormat format, int samples)
 {
-    mTextureItem->setPreviewTexture(target, format, textureId);
+    mTextureItem->setPreviewTexture(textureId, target, format, samples);
 }
 
 void TextureEditor::setModified()

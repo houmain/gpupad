@@ -61,29 +61,26 @@ namespace {
         return (glGetError() == GL_NONE);
     }
 
-    bool uploadMultisample(QOpenGLFunctions_3_3_Core &gl,
-        const TextureData &data, GLuint textureId)
+    bool uploadMultisample(QOpenGLFunctions_3_3_Core &gl, const TextureData &data, 
+        QOpenGLTexture::Target target, int samples, GLuint textureId)
     {
-        gl.glBindTexture(data.target(), textureId);
-        if (data.target() == QOpenGLTexture::Target2DMultisample) {
-            gl.glTexImage2DMultisample(data.target(), data.samples(),
+        gl.glBindTexture(target, textureId);
+        if (target == QOpenGLTexture::Target2DMultisample) {
+            gl.glTexImage2DMultisample(target, samples,
                 data.format(), data.width(), data.height(), GL_FALSE);
 
             // upload single sample and resolve
-            auto singleSampleTexture = data;
-            singleSampleTexture.setTarget(QOpenGLTexture::Target2D);
-            singleSampleTexture.setSamples(1);
             auto singleSampleTextureId = GLuint{ };
             const auto cleanup = qScopeGuard([&] { 
                 gl.glDeleteTextures(1, &singleSampleTextureId);
             });
-            return (singleSampleTexture.uploadGL(&singleSampleTextureId) &&
+            return (data.uploadGL(&singleSampleTextureId) &&
                     resolveTexture(gl, singleSampleTextureId, textureId, 
                         data.width(), data.height(), data.format()));
         }
         else {
-            Q_ASSERT(data.target() == QOpenGLTexture::Target2DMultisampleArray);
-            gl.glTexImage3DMultisample(data.target(), data.samples(),
+            Q_ASSERT(target == QOpenGLTexture::Target2DMultisampleArray);
+            gl.glTexImage3DMultisample(target, samples,
                 data.format(), data.width(), data.height(), data.layers(), GL_FALSE);
 
             // TODO: upload
@@ -92,22 +89,22 @@ namespace {
         return false;
     }
 
-    bool download(QOpenGLFunctions_3_3_Core &gl, 
-        TextureData &data, GLuint textureId)
+    bool download(QOpenGLFunctions_3_3_Core &gl, TextureData &data, 
+        QOpenGLTexture::Target target, GLuint textureId)
     {
-        gl.glBindTexture(data.target(), textureId);
+        gl.glBindTexture(target, textureId);
         for (auto level = 0; level < data.levels(); ++level) {
             if (data.isCompressed()) {
                 auto size = GLint{ };
-                gl.glGetTexLevelParameteriv(data.target(), level,
+                gl.glGetTexLevelParameteriv(target, level,
                     GL_TEXTURE_COMPRESSED_IMAGE_SIZE, &size);
                 if (glGetError() != GL_NO_ERROR || size > data.getImageSize(level))
                     return false;
-                gl.glGetCompressedTexImage(data.target(), level, 
+                gl.glGetCompressedTexImage(target, level, 
                     data.getWriteonlyData(level, 0, 0));
             }
             else {
-                gl.glGetTexImage(data.target(), level,
+                gl.glGetTexImage(target, level,
                     data.pixelFormat(), data.pixelType(), 
                     data.getWriteonlyData(level, 0, 0));
             }
@@ -115,38 +112,33 @@ namespace {
         return (glGetError() == GL_NO_ERROR);
     }
 
-    bool downloadCubemap(QOpenGLFunctions_3_3_Core &gl,
-        TextureData &data, GLuint textureId)
+    bool downloadCubemap(QOpenGLFunctions_3_3_Core &gl, TextureData &data, 
+        QOpenGLTexture::Target target, GLuint textureId)
     {
         // TODO: download
         Q_ASSERT(!"not implemented");
         return true;
     }
 
-    bool downloadMultisample(QOpenGLFunctions_3_3_Core &gl,
-        TextureData &data, GLuint textureId)
+    bool downloadMultisample(QOpenGLFunctions_3_3_Core &gl, TextureData &data, 
+        QOpenGLTexture::Target target, GLuint textureId)
     {
-        if (data.target() == QOpenGLTexture::Target2DMultisample) {
-            // create single sample texture (=upload), resolve, download and copy plane
-            auto singleSampleTexture = data;
-            singleSampleTexture.setTarget(QOpenGLTexture::Target2D);
-            singleSampleTexture.setSamples(1);
+        if (target == QOpenGLTexture::Target2DMultisample) {
+            // create single sample texture (=upload), resolve, download
             auto singleSampleTextureId = GLuint{ };
             const auto cleanup = qScopeGuard([&] { 
                 gl.glDeleteTextures(1, &singleSampleTextureId);
             });
-            if (!singleSampleTexture.uploadGL(&singleSampleTextureId) ||
+            if (!data.uploadGL(&singleSampleTextureId) ||
                 !resolveTexture(gl, textureId, singleSampleTextureId, 
                     data.width(), data.height(), data.format()) ||
-                !download(gl, singleSampleTexture, singleSampleTextureId))
+                !download(gl, data, QOpenGLTexture::Target2D, singleSampleTextureId))
                 return false;
 
-            std::memcpy(data.getWriteonlyData(0, 0, 0), 
-                singleSampleTexture.getData(0, 0, 0), data.getImageSize(0));
             return true;
         }
         else {
-            Q_ASSERT(data.target() == QOpenGLTexture::Target2DMultisampleArray);
+            Q_ASSERT(target == QOpenGLTexture::Target2DMultisampleArray);
             // TODO: download
         }
         Q_ASSERT(!"not implemented");
@@ -209,9 +201,10 @@ namespace {
 } // namespace
 
 bool GLTexture::upload(QOpenGLFunctions_3_3_Core &gl,
-        const TextureData &data, GLuint* textureId)
+        const TextureData &data, QOpenGLTexture::Target target, 
+        int samples, GLuint* textureId)
 {
-    Q_ASSERT(textureId);
+    Q_ASSERT(target && textureId);
     if (data.isNull())
         return false;
 
@@ -227,8 +220,8 @@ bool GLTexture::upload(QOpenGLFunctions_3_3_Core &gl,
         cleanup.dismiss();
     }
 
-    if (isMultisampleTarget(data.target())) {
-        if (!uploadMultisample(gl, data, *textureId))
+    if (isMultisampleTarget(target)) {
+        if (!uploadMultisample(gl, data, target, samples, *textureId))
             return false;
     }
     else {
@@ -240,17 +233,17 @@ bool GLTexture::upload(QOpenGLFunctions_3_3_Core &gl,
 }
 
 bool GLTexture::download(QOpenGLFunctions_3_3_Core &gl,
-    TextureData &data, GLuint textureId)
+    TextureData &data, QOpenGLTexture::Target target, GLuint textureId)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 
-    if (isMultisampleTarget(data.target()))
-        return downloadMultisample(gl, data, textureId);
+    if (isMultisampleTarget(target))
+        return downloadMultisample(gl, data, target, textureId);
 
-    if (isCubemapTarget(data.target()))
-        return downloadCubemap(gl, data, textureId);
+    if (isCubemapTarget(target))
+        return downloadCubemap(gl, data, target, textureId);
 
-    return ::download(gl, data, textureId);
+    return ::download(gl, data, target, textureId);
 }
 
 GLTexture::GLTexture(const Texture &texture, ScriptEngine &scriptEngine)
@@ -482,8 +475,7 @@ void GLTexture::reload(bool forWriting)
                 MessageType::LoadingFileFailed, mFileName);
 
         const auto hasSameDimensions = [&](const TextureData &data) {
-            return (mTarget == data.target() &&
-                    mFormat == data.format() &&
+            return (mFormat == data.format() &&
                     mWidth == data.width() &&
                     mHeight == data.height() &&
                     mDepth == data.depth() &&
@@ -498,10 +490,8 @@ void GLTexture::reload(bool forWriting)
     }
 
     if (mData.isNull()) {
-        if (!mData.create(mTarget, mFormat, mWidth, mHeight, 
-                mDepth, mLayers, mSamples)) {
-            mData.create(mTarget, Texture::Format::RGBA8_UNorm, 
-                1, 1, 1, 1, 1);
+        if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers)) {
+            mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1);
             mMessages += MessageList::insert(mItemId,
                 MessageType::CreatingTextureFailed);
         }
@@ -548,7 +538,7 @@ void GLTexture::upload()
         data = mData.convert(mFormat);
 
     auto textureId = static_cast<GLuint>(mTextureObject);
-    if (!upload(gl, data, &textureId)) {
+    if (!upload(gl, data, mTarget, mSamples, &textureId)) {
         mMessages += MessageList::insert(
             mItemId, MessageType::UploadingImageFailed);
         return;
@@ -565,7 +555,7 @@ bool GLTexture::download()
         return false;
 
     auto &gl = GLContext::currentContext();
-    if (!download(gl, mData, mTextureObject)) {
+    if (!download(gl, mData, mTarget, mTextureObject)) {
         mMessages += MessageList::insert(
             mItemId, MessageType::DownloadingImageFailed);
         return false;

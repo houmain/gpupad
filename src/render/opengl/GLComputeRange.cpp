@@ -175,10 +175,10 @@ void main() {
     }
 } // namespace
 
-void GLComputeRange::setImage(GLuint textureId, 
+void GLComputeRange::setImage(QOpenGLTexture::Target target, GLuint textureId,
     const TextureData &texture, int level, int layer, int face) 
 {
-    mTarget = texture.target();
+    mTarget = target;
     mFormat = texture.format();
     mSize = { texture.width(), texture.height() };
     mLevel = level;

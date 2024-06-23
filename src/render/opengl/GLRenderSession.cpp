@@ -537,8 +537,8 @@ void GLRenderSession::finish()
                 if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
                     if (auto editor = editors.getTextureEditor(fileItem->fileName))
                         if (auto textureId = texture.textureId())
-                            editor->updatePreviewTexture(texture.target(),
-                                texture.format(), textureId);
+                            editor->updatePreviewTexture(textureId, 
+                                texture.target(), texture.format(), texture.samples());
 }
 
 void GLRenderSession::release()
