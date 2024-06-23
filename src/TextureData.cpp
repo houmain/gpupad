@@ -6,6 +6,7 @@
 #include <QScopeGuard>
 #include <QImageReader>
 #include <QtEndian>
+#include <limits>
 
 #if defined(OPENIMAGEIO_ENABLED)
 #  if defined(_MSC_VER)
@@ -198,6 +199,27 @@ namespace {
                 sampleType == TextureSampleType::Float);
     }
 
+    template<typename Source, typename Dest, int Shift>
+    void convert(const Source *source, Dest *dest, int pixels, 
+        int sourceComponents, int destComponents)
+    {
+        for (auto i = 0; i < pixels; ++i) {
+            for (auto c = 0; c < destComponents; ++c) {
+                const auto v = (c < sourceComponents ? source[c] : 
+                    c < 3 ? Source{ } : 
+                    std::numeric_limits<Source>::max());
+                if constexpr (Shift < 0) {
+                    dest[c] = static_cast<Dest>(v >> -Shift);
+                }
+                else {
+                    dest[c] = static_cast<Dest>(v << Shift);
+                }
+            }
+            source += sourceComponents;
+            dest += destComponents;
+        }
+    }
+
     bool convertPlane(
         const uchar *source, QOpenGLTexture::TextureFormat sourceFormat, 
         uchar *dest, QOpenGLTexture::TextureFormat destFormat, 
@@ -206,28 +228,41 @@ namespace {
         if (!source || !dest)
             return false;
 
-        const auto sourceComponents = getTextureComponentCount(sourceFormat);
-        const auto destComponents = getTextureComponentCount(destFormat);
-        const auto sourceDataSize = getTextureDataSize(sourceFormat);
-        const auto destDataSize = getTextureDataSize(destFormat);
         const auto sourceDataType = getTextureDataType(sourceFormat);
         const auto destDataType = getTextureDataType(destFormat);
-        const auto sourceStride = sourceDataSize * sourceComponents;
-        const auto destStride = destDataSize * destComponents;
-        if (!sourceStride || !destStride)
-            return false;
+        const auto sourceComponents = getTextureComponentCount(sourceFormat);
+        const auto destComponents = getTextureComponentCount(destFormat);
 
-        if (sourceDataType == TextureDataType::Uint8 &&
-            destDataType == TextureDataType::Uint8) {
-            for (auto i = 0; i < pixels; ++i) {
-                for (auto c = 0; c < destComponents; ++c)
-                    dest[c] = (c < sourceComponents ? 
-                      source[c] : c < 3 ? 0x00 : 0xFF);
-                source += sourceStride;
-                dest += destStride;
-            }
-            return true;
+#define ADD(SOURCE_TYPE, SOURCE, DEST_TYPE, DEST, SHIFT) \
+        if (sourceDataType == TextureDataType::SOURCE_TYPE && \
+            destDataType == TextureDataType::DEST_TYPE) { \
+            convert<SOURCE, DEST, SHIFT>( \
+                reinterpret_cast<const SOURCE*>(source), \
+                reinterpret_cast<DEST*>(dest), \
+                pixels, sourceComponents, destComponents); \
+            return true; \
         } 
+        ADD(Uint8, uint8_t, Uint8, uint8_t, 0)
+        ADD(Uint8, uint8_t, Uint16, uint16_t, 8)
+        ADD(Uint8, uint8_t, Uint32, uint32_t, 16)
+        ADD(Uint8, uint8_t, Int8, int8_t, -1)
+        ADD(Uint8, uint8_t, Int16, int16_t, 7)
+        ADD(Uint8, uint8_t, Int32, int32_t, 15)
+
+        ADD(Uint16, uint16_t, Uint8, uint8_t, -8)
+        ADD(Uint16, uint16_t, Uint16, uint16_t, 0)
+        ADD(Uint16, uint16_t, Uint32, uint32_t, 8)
+        ADD(Uint16, uint16_t, Int8, int8_t, -9)
+        ADD(Uint16, uint16_t, Int16, int16_t, -1)
+        ADD(Uint16, uint16_t, Int32, int32_t, 7)
+
+        ADD(Uint32, uint32_t, Uint8, uint8_t, -16)
+        ADD(Uint32, uint32_t, Uint16, uint16_t, -8)
+        ADD(Uint32, uint32_t, Uint32, uint32_t, 0)
+        ADD(Uint32, uint32_t, Int8, int8_t, -17)
+        ADD(Uint32, uint32_t, Int16, int16_t, -9)
+        ADD(Uint32, uint32_t, Int32, int32_t, -1)
+#undef ADD
         return false;
     }
 } // namespace
