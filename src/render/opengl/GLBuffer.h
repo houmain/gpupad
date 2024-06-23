@@ -42,7 +42,4 @@ private:
     bool mDeviceCopyModified{ };
 };
 
-int getBufferSize(const Buffer &buffer,
-    ScriptEngine &scriptEngine, MessagePtrSet &messages);
-
 #endif // GLBUFFER_H

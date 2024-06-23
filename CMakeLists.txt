@@ -141,6 +141,7 @@ set(SOURCES
   src/render/RenderTask.cpp  
   src/render/RenderSessionBase.cpp
   src/render/ShaderBase.cpp
+  src/render/TextureBase.cpp
   src/render/ShaderPrintf.cpp
   src/render/glslang.cpp
   src/render/Spirv.cpp

@@ -86,31 +86,8 @@ namespace
 } // namespace
 
 VKTexture::VKTexture(const Texture &texture, ScriptEngine &scriptEngine)
-    : mItemId(texture.id)
-    , mFileName(texture.fileName)
-    , mFlipVertically(texture.flipVertically)
-    , mTarget(texture.target)
-    , mFormat(texture.format)
-    , mSamples(texture.samples)
-    , mKind(getKind(texture))
+    : TextureBase(texture, scriptEngine)
 {
-    Singletons::evaluatedPropertyCache().evaluateTextureProperties(
-        texture, &mWidth, &mHeight, &mDepth, &mLayers, &scriptEngine);
-
-    if (mKind.dimensions < 2)
-        mHeight = 1;
-    if (mKind.dimensions < 3)
-        mDepth = 1;
-    if (!mKind.array)
-        mLayers = 1;
-
-    mUsedItems += texture.id;
-}
-
-bool VKTexture::operator==(const VKTexture &rhs) const
-{
-    return std::tie(mMessages, mFileName, mFlipVertically, mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples) ==
-           std::tie(rhs.mMessages, rhs.mFileName, rhs.mFlipVertically, rhs.mTarget, rhs.mFormat, rhs.mWidth, rhs.mHeight, rhs.mDepth, rhs.mLayers, rhs.mSamples);
 }
 
 bool VKTexture::prepareImageSampler(VKContext &context)
@@ -233,17 +210,8 @@ bool VKTexture::copy(VKTexture &source)
 
 bool VKTexture::swap(VKTexture &other)
 {
-    if (mTarget != other.mTarget || 
-        mFormat != other.mFormat || 
-        mWidth != other.mWidth || 
-        mHeight != other.mHeight || 
-        mDepth != other.mDepth || 
-        mLayers != other.mLayers || 
-        mSamples != other.mSamples)
+    if (!TextureBase::swap(other))
         return false;
-
-    std::swap(mData, other.mData);
-    std::swap(mDataWritten, other.mDataWritten);
 
     std::swap(mKtxTexture, other.mKtxTexture);
     std::swap(mTexture, other.mTexture);
@@ -252,10 +220,6 @@ bool VKTexture::swap(VKTexture &other)
     std::swap(mCurrentLayout, other.mCurrentLayout);
     std::swap(mCurrentAccessMask, other.mCurrentAccessMask);
     std::swap(mCurrentStage, other.mCurrentStage);
-
-    std::swap(mSystemCopyModified, other.mSystemCopyModified);
-    std::swap(mDeviceCopyModified, other.mDeviceCopyModified);
-    std::swap(mMipmapsInvalidated, other.mMipmapsInvalidated);
     return true;
 }
 
@@ -310,10 +274,16 @@ void VKTexture::createAndUpload(VKContext &context)
     else {
         mCurrentLayout = KDGpu::TextureLayout::TransferDstOptimal;
 
-        if (!mData.uploadVK(&context.ktxDeviceInfo, &mKtxTexture, 
+        auto data = mData;
+        if (mData.format() != mFormat)
+            data = mData.convert(mFormat);
+
+        if (!data.uploadVK(&context.ktxDeviceInfo, &mKtxTexture, 
                 static_cast<VkImageUsageFlags>(usage.toInt()),
                 static_cast<VkImageLayout>(mCurrentLayout))) {
-            mMessages += MessageList::insert(mItemId, MessageType::CreatingTextureFailed);
+            mMessages += MessageList::insert(mItemId,
+                (data.isNull() ? MessageType::UploadingImageFailed :
+                                 MessageType::CreatingTextureFailed));
             return;
         }
         auto vkApi = static_cast<KDGpu::VulkanGraphicsApi*>(context.device.graphicsApi());
@@ -327,43 +297,6 @@ void VKTexture::createAndUpload(VKContext &context)
         mTextureView = mTexture.createView(options);
     }
     mSystemCopyModified = mDeviceCopyModified = false;
-}
-
-void VKTexture::reload(bool forWriting)
-{
-    auto fileData = TextureData{ };
-    if (!FileDialog::isEmptyOrUntitled(mFileName))
-        if (!Singletons::fileCache().getTexture(mFileName, mFlipVertically, &fileData))
-            mMessages += MessageList::insert(mItemId,
-                MessageType::LoadingFileFailed, mFileName);
-
-    // reload file as long as targets match
-    // ignore dimension mismatch when reading
-    // do not ignore when writing
-    const auto hasSameDimensions = [&](const TextureData &data) {
-        return (mWidth == data.width() &&
-                mHeight == data.height() &&
-                mDepth == data.depth() &&
-                mLayers == data.layers());
-    };
-    mDataWritten |= forWriting;
-    if (!fileData.isNull() &&
-            (!mDataWritten || hasSameDimensions(fileData))) {
-        mSystemCopyModified |= !mData.isSharedWith(fileData);
-        mData = fileData;
-    }
-
-    // validate dimensions when writing
-    if (mData.isNull() ||
-            (forWriting && !hasSameDimensions(mData))) {
-        if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers)) {
-            mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1);
-            mMessages += MessageList::insert(mItemId,
-                MessageType::CreatingTextureFailed);
-        }
-        mData.clear();
-        mSystemCopyModified |= true;
-    }
 }
 
 bool VKTexture::download(VKContext &context)

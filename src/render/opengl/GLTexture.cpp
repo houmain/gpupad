@@ -1,7 +1,5 @@
 #include "GLTexture.h"
 #include "GLBuffer.h"
-#include "SynchronizeLogic.h"
-#include "EvaluatedPropertyCache.h"
 #include <QOpenGLPixelTransferOptions>
 #include <cmath>
 
@@ -247,48 +245,14 @@ bool GLTexture::download(QOpenGLFunctions_3_3_Core &gl,
 }
 
 GLTexture::GLTexture(const Texture &texture, ScriptEngine &scriptEngine)
-    : mItemId(texture.id)
-    , mFileName(texture.fileName)
-    , mFlipVertically(texture.flipVertically)
-    , mTarget(texture.target)
-    , mFormat(texture.format)
-    , mSamples(texture.samples)
-    , mKind(getKind(texture))
-{
-    Singletons::evaluatedPropertyCache().evaluateTextureProperties(
-        texture, &mWidth, &mHeight, &mDepth, &mLayers, &scriptEngine);
-
-    if (mKind.dimensions < 2)
-        mHeight = 1;
-    if (mKind.dimensions < 3)
-        mDepth = 1;
-    if (!mKind.array)
-        mLayers = 1;
-
-    mUsedItems += texture.id;
+    : TextureBase(texture, scriptEngine) {
 }
 
-GLTexture::GLTexture(const Buffer &buffer,
-        GLBuffer *textureBuffer, Texture::Format format,
-        ScriptEngine &scriptEngine)
-    : mItemId(buffer.id)
+GLTexture::GLTexture(const Buffer &buffer, GLBuffer *textureBuffer,
+      Texture::Format format, ScriptEngine &scriptEngine)
+    : TextureBase(buffer, format, scriptEngine)
     , mTextureBuffer(textureBuffer)
-    , mTarget(Texture::Target::TargetBuffer)
-    , mFormat(format)
-    , mWidth(getBufferSize(buffer, scriptEngine, mMessages))
-    , mHeight(1)
-    , mDepth(1)
-    , mLayers(1)
-    , mSamples(1)
-    , mKind()
 {
-    mUsedItems += buffer.id;
-}
-
-bool GLTexture::operator==(const GLTexture &rhs) const
-{
-    return std::tie(mMessages, mFileName, mFlipVertically, mTextureBuffer, mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, mSamples) ==
-           std::tie(rhs.mMessages, rhs.mFileName, rhs.mFlipVertically, rhs.mTextureBuffer, rhs.mTarget, rhs.mFormat, rhs.mWidth, rhs.mHeight, rhs.mDepth, rhs.mLayers, rhs.mSamples);
 }
 
 GLuint GLTexture::getReadOnlyTextureId()
@@ -428,21 +392,11 @@ bool GLTexture::copy(GLTexture &source)
 
 bool GLTexture::swap(GLTexture &other)
 {
-    if (mTarget != other.mTarget || 
-        mFormat != other.mFormat || 
-        mWidth != other.mWidth || 
-        mHeight != other.mHeight || 
-        mDepth != other.mDepth || 
-        mLayers != other.mLayers || 
-        mSamples != other.mSamples)
+    if (!TextureBase::swap(other))
         return false;
 
-    std::swap(mData, other.mData);
-    std::swap(mDataWritten, other.mDataWritten);
+    std::swap(mTextureBuffer, other.mTextureBuffer);
     std::swap(mTextureObject, other.mTextureObject);
-    std::swap(mSystemCopyModified, other.mSystemCopyModified);
-    std::swap(mDeviceCopyModified, other.mDeviceCopyModified);
-    std::swap(mMipmapsInvalidated, other.mMipmapsInvalidated);
     return true;
 }
 
@@ -468,36 +422,7 @@ void GLTexture::reload(bool forWriting)
         return;
     }
 
-    auto fileData = TextureData{ };
-    if (!FileDialog::isEmptyOrUntitled(mFileName)) {
-        if (!Singletons::fileCache().getTexture(mFileName, mFlipVertically, &fileData))
-            mMessages += MessageList::insert(mItemId,
-                MessageType::LoadingFileFailed, mFileName);
-
-        const auto hasSameDimensions = [&](const TextureData &data) {
-            return (mFormat == data.format() &&
-                    mWidth == data.width() &&
-                    mHeight == data.height() &&
-                    mDepth == data.depth() &&
-                    mLayers == data.layers());
-        };
-
-        // validate dimensions when writing
-        if (!forWriting || hasSameDimensions(fileData)) {
-            mSystemCopyModified |= !mData.isSharedWith(fileData);
-            mData = fileData;
-        }
-    }
-
-    if (mData.isNull()) {
-        if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers)) {
-            mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1);
-            mMessages += MessageList::insert(mItemId,
-                MessageType::CreatingTextureFailed);
-        }
-        mData.clear();
-        mSystemCopyModified = true;
-    }
+    TextureBase::reload(forWriting);
 }
 
 void GLTexture::createTexture()
@@ -539,8 +464,9 @@ void GLTexture::upload()
 
     auto textureId = static_cast<GLuint>(mTextureObject);
     if (!upload(gl, data, mTarget, mSamples, &textureId)) {
-        mMessages += MessageList::insert(
-            mItemId, MessageType::UploadingImageFailed);
+        mMessages += MessageList::insert(mItemId,
+            (data.isNull() ? MessageType::UploadingImageFailed :
+                             MessageType::CreatingTextureFailed));
         return;
     }
     mSystemCopyModified = mDeviceCopyModified = false;

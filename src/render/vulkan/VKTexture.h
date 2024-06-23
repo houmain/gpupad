@@ -1,31 +1,20 @@
 #pragma once
 
 #include "VKItem.h"
+#include "render/TextureBase.h"
 
 class VKBuffer;
 class ScriptEngine;
 
-class VKTexture
+class VKTexture : public TextureBase
 {
 public:
     VKTexture(const Texture &texture, ScriptEngine &scriptEngine);
-    bool operator==(const VKTexture &rhs) const;
 
-    ItemId itemId() const { return mItemId; }
-    const QString &fileName() const { return mFileName; }
-    TextureKind kind() const { return mKind; }
-    Texture::Target target() const { return mTarget; }
-    int width() const { return mWidth; }
-    int height() const { return mHeight; }
-    int depth() const { return mDepth; }
-    int layers() const { return mLayers; }
-    Texture::Format format() const { return mFormat; }
-    TextureData data() const { return mData; }
     KDGpu::Texture &texture() { return mTexture; }
     KDGpu::TextureView &textureView() { return mTextureView; }
     KDGpu::TextureLayout currentLayout() const { return mCurrentLayout; }
     KDGpu::TextureAspectFlagBits aspectMask() const;
-    const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
     bool prepareImageSampler(VKContext &context);
     bool prepareStorageImage(VKContext &context);
@@ -41,26 +30,10 @@ public:
 private:
     void reset(KDGpu::Device& device);
     void createAndUpload(VKContext &context);
-    void reload(bool forWriting);
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder, 
         KDGpu::TextureLayout layout, KDGpu::AccessFlags accessMask, 
         KDGpu::PipelineStageFlags stage);
 
-    ItemId mItemId{ };
-    MessagePtrSet mMessages;
-    QString mFileName;
-    bool mFlipVertically{ };
-    Texture::Target mTarget{ };
-    Texture::Format mFormat{ };
-    int mWidth{ };
-    int mHeight{ };
-    int mDepth{ };
-    int mLayers{ };
-    int mSamples{ };
-    TextureData mData;
-    bool mDataWritten{ };
-    QSet<ItemId> mUsedItems;
-    TextureKind mKind{ };
     bool mCreated{ };
     ktxVulkanTexture mKtxTexture{ };
     KDGpu::Texture mTexture;
@@ -68,7 +41,4 @@ private:
     KDGpu::TextureLayout mCurrentLayout{ };
     KDGpu::AccessFlags mCurrentAccessMask{ };
     KDGpu::PipelineStageFlags mCurrentStage{ };
-    bool mSystemCopyModified{ };
-    bool mDeviceCopyModified{ };
-    bool mMipmapsInvalidated{ };
 };
