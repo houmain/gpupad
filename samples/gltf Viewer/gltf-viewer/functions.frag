@@ -1,24 +1,4 @@
 
-const float M_PI = 3.141592653589793;
-const float c_MinReflectance = 0.04;
-
-varying vec3 v_Position;
-
-#ifdef HAS_NORMALS
-#ifdef HAS_TANGENTS
-varying mat3 v_TBN;
-#else
-varying vec3 v_Normal;
-#endif
-#endif
-
-#ifdef HAS_VERTEX_COLOR_VEC3
-varying vec3 v_Color;
-#endif
-#ifdef HAS_VERTEX_COLOR_VEC4
-varying vec4 v_Color;
-#endif
-
 struct AngularInfo
 {
     float NdotL;                  // cos angle between normal and light direction
