@@ -6,6 +6,46 @@
 
 namespace
 {
+    KDGpu::TextureType getKDTextureType(const TextureKind &kind)
+    {
+        if (kind.cubeMap)
+            return KDGpu::TextureType::TextureTypeCube;
+
+        switch (kind.dimensions) {
+            case 1: return KDGpu::TextureType::TextureType1D;
+            case 2: return KDGpu::TextureType::TextureType2D;
+            case 3: return KDGpu::TextureType::TextureType3D;
+        }
+        return { };
+    }
+
+    KDGpu::ViewType getKDViewType(const TextureKind &kind)
+    {
+        if (kind.cubeMap)
+            return (kind.array ? KDGpu::ViewType::ViewTypeCubeArray :
+                                 KDGpu::ViewType::ViewTypeCube);
+
+        switch (kind.dimensions) {
+            case 1: return (kind.array ? KDGpu::ViewType::ViewType1DArray :
+                                         KDGpu::ViewType::ViewType1D);
+            case 2: return (kind.array ? KDGpu::ViewType::ViewType2DArray :
+                                         KDGpu::ViewType::ViewType2D);
+            case 3: return KDGpu::ViewType::ViewType3D;
+        }
+        return { };
+    }
+
+    KDGpu::SampleCountFlagBits getKDSampleCount(int samples)
+    {
+        if (samples <= 1) return KDGpu::SampleCountFlagBits::Samples1Bit;
+        if (samples <= 2) return KDGpu::SampleCountFlagBits::Samples2Bit;
+        if (samples <= 4) return KDGpu::SampleCountFlagBits::Samples4Bit;
+        if (samples <= 8) return KDGpu::SampleCountFlagBits::Samples8Bit;
+        if (samples <= 16) return KDGpu::SampleCountFlagBits::Samples16Bit;
+        if (samples <= 32) return KDGpu::SampleCountFlagBits::Samples32Bit;
+        return KDGpu::SampleCountFlagBits::Samples64Bit;
+    }
+
     class TransferTexture
     {
     private:
@@ -15,10 +55,13 @@ namespace
         TransferTexture(KDGpu::Device &device, const VKTexture &texture)
         {
             mTexture = device.createTexture({
-                .type = KDGpu::TextureType::TextureType2D, // TODO
+                .type = getKDTextureType(texture.kind()),
                 .format = toKDGpu(texture.format()),
-                .extent = { static_cast<uint32_t>(texture.width()), 
-                            static_cast<uint32_t>(texture.height()), 1 },
+                .extent = {
+                    static_cast<uint32_t>(texture.width()), 
+                    static_cast<uint32_t>(texture.height()),
+                    static_cast<uint32_t>(texture.depth())
+                },
                 .mipLevels = 1,
                 .samples = KDGpu::SampleCountFlagBits::Samples1Bit,
                 .tiling = KDGpu::TextureTiling::Linear,
@@ -258,15 +301,16 @@ void VKTexture::createAndUpload(VKContext &context)
     };
 
     const auto textureOptions = KDGpu::TextureOptions{
-        .type = KDGpu::TextureType::TextureType2D,
+        .type = getKDTextureType(mKind),
         .format = toKDGpu(mFormat),
         .extent = { 
             static_cast<uint32_t>(mWidth), 
             static_cast<uint32_t>(mHeight),
             static_cast<uint32_t>(mDepth),
         },
-        .mipLevels = 1, // TODO
-        .samples = KDGpu::SampleCountFlagBits::Samples1Bit, //mSamples,
+        .mipLevels = static_cast<uint32_t>(mData.levels()),
+        .arrayLayers = static_cast<uint32_t>(mLayers),
+        .samples = getKDSampleCount(1),//mSamples),
         .usage = usage,
         .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
     };
@@ -295,6 +339,8 @@ void VKTexture::createAndUpload(VKContext &context)
     }
     if (mTexture.isValid()) {
         auto options = KDGpu::TextureViewOptions{
+            .viewType = getKDViewType(mKind),
+            .format = KDGpu::Format::UNDEFINED,
             .range = { .aspectMask = aspectMask() }
         };
         mTextureView = mTexture.createView(options);
