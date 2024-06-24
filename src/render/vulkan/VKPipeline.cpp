@@ -109,9 +109,12 @@ KDGpu::RenderPassCommandRecorder VKPipeline::beginRenderPass(VKContext &context)
             renderPass.setBindGroup(i, mBindGroups[i].bindGroup);
     
     if (mVertexStream) {
-        const auto buffers = mVertexStream->getBuffers();
+        const auto &buffers = mVertexStream->getBuffers();
+        const auto &offsets = mVertexStream->getBufferOffsets();
         for (auto i = 0u; i < buffers.size(); ++i)
-            renderPass.setVertexBuffer(i, buffers[i]->getReadOnlyBuffer(context));
+            renderPass.setVertexBuffer(i, 
+                buffers[i]->getReadOnlyBuffer(context), 
+                static_cast<KDGpu::DeviceSize>(offsets[i]));
     }
     return renderPass;
 }

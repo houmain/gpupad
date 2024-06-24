@@ -25,6 +25,7 @@ public:
         ScriptEngine& scriptEngine);
     
     const std::vector<VKBuffer*> &getBuffers();
+    const std::vector<int> &getBufferOffsets();
     const KDGpu::VertexOptions &getVertexOptions();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
@@ -37,5 +38,6 @@ private:
     QSet<ItemId> mUsedItems;
     QMap<int, VKAttribute> mAttributes;
     std::vector<VKBuffer*> mBuffers;
+    std::vector<int> mBufferOffsets;
     KDGpu::VertexOptions mVertexOptions;
 };

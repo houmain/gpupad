@@ -60,6 +60,7 @@ void VKStream::invalidateVertexOptions()
 {
     mVertexOptions = { };
     mBuffers = { };
+    mBufferOffsets = { };
 }
 
 void VKStream::updateVertexOptions()
@@ -67,27 +68,24 @@ void VKStream::updateVertexOptions()
     if (!mBuffers.empty())
         return;
 
-    using Key = std::tuple<VKBuffer*, int>;
-    auto buffers = std::vector<Key>{ };
     auto location = 0;
     for (const auto &attribute : mAttributes) {
-        const auto key = Key{ attribute.buffer, attribute.stride };
-        auto it = std::find(begin(buffers), end(buffers), key);
-        if (it == buffers.end()) {
-            mVertexOptions.buffers.push_back(KDGpu::VertexBufferLayout{
-                .binding = static_cast<uint32_t>(buffers.size()),
-                .stride = static_cast<uint32_t>(attribute.stride),
-                .inputRate = KDGpu::VertexRate::Vertex,
-            });
-            it = buffers.insert(buffers.end(), key);
-            mBuffers.push_back(attribute.buffer);
-        }
-        const auto binding = std::distance(begin(buffers), it);
+        const auto binding = static_cast<uint32_t>(mBuffers.size());
+
+        mVertexOptions.buffers.push_back(KDGpu::VertexBufferLayout{
+            .binding = binding,
+            .stride = static_cast<uint32_t>(attribute.stride),
+            .inputRate = (attribute.divisor ? 
+                KDGpu::VertexRate::Instance : KDGpu::VertexRate::Vertex),
+        });
+        mBuffers.push_back(attribute.buffer);
+        mBufferOffsets.push_back(attribute.offset);
+
         mVertexOptions.attributes.push_back(KDGpu::VertexAttribute{
             .location = static_cast<uint32_t>(location++),
-            .binding = static_cast<uint32_t>(binding),
+            .binding = binding,
             .format = toKDGpu(attribute.type, attribute.count),
-            .offset = static_cast<KDGpu::DeviceSize>(attribute.offset),
+            .offset = 0,
         });
     }
 }
@@ -96,6 +94,12 @@ const std::vector<VKBuffer*> &VKStream::getBuffers()
 {
     updateVertexOptions();
     return mBuffers;
+}
+
+const std::vector<int> &VKStream::getBufferOffsets()
+{
+    updateVertexOptions();
+    return mBufferOffsets;
 }
 
 const KDGpu::VertexOptions &VKStream::getVertexOptions()

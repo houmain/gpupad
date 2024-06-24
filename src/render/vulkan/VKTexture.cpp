@@ -30,6 +30,9 @@ namespace
 
         bool download(VKContext &context, VKTexture &texture)
         {
+            if (!mTexture.isValid())
+                return false;
+
             texture.prepareDownload(context);
             
             context.commandRecorder->textureMemoryBarrier({
