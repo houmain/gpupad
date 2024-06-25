@@ -484,11 +484,11 @@ void VKRenderSession::downloadModifiedResources()
             mModifiedTextures[texture.itemId()] = texture.data();
     }
     
-    //for (auto &[itemId, buffer] : mCommandQueue->buffers)
-    //    if (!buffer.fileName().isEmpty() &&
-    //        (mItemsChanged || mEvaluationType != EvaluationType::Steady) &&
-    //        buffer.download(mEvaluationType != EvaluationType::Reset))
-    //        mModifiedBuffers[buffer.itemId()] = buffer.data();
+    for (auto &[itemId, buffer] : mCommandQueue->buffers)
+        if (!buffer.fileName().isEmpty() &&
+            (mItemsChanged || mEvaluationType != EvaluationType::Steady) &&
+            buffer.download(mCommandQueue->context, mEvaluationType != EvaluationType::Reset))
+            mModifiedBuffers[buffer.itemId()] = buffer.data();
 }
 
 void VKRenderSession::outputTimerQueries()

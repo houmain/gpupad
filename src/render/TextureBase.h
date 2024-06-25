@@ -51,3 +51,6 @@ protected:
     bool mDeviceCopyModified{ };
     bool mMipmapsInvalidated{ };
 };
+
+int getBufferSize(const Buffer &buffer,
+    ScriptEngine &scriptEngine, MessagePtrSet &messages);

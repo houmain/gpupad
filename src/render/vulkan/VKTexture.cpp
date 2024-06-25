@@ -63,6 +63,7 @@ namespace
                     static_cast<uint32_t>(texture.depth())
                 },
                 .mipLevels = 1,
+                .arrayLayers = static_cast<uint32_t>(texture.layers()),
                 .samples = KDGpu::SampleCountFlagBits::Samples1Bit,
                 .tiling = KDGpu::TextureTiling::Linear,
                 .usage = KDGpu::TextureUsageFlagBits::TransferDstBit | 

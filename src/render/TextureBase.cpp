@@ -5,9 +5,6 @@
 #include "FileDialog.h"
 #include "FileCache.h"
 
-extern int getBufferSize(const Buffer &buffer,
-    ScriptEngine &scriptEngine, MessagePtrSet &messages);
-
 TextureBase::TextureBase(const Texture &texture, ScriptEngine &scriptEngine)
     : mItemId(texture.id)
     , mFileName(texture.fileName)

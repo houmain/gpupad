@@ -14,13 +14,14 @@ public:
     const QByteArray &data() const { return mData; }
     const QString &fileName() const { return mFileName; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
+    int size() const { return mSize; }
 
     void clear();
     void copy(VKBuffer &source);
     bool swap(VKBuffer &other);
     const KDGpu::Buffer &getReadOnlyBuffer(VKContext &context);
     const KDGpu::Buffer &getReadWriteBuffer(VKContext &context);
-    bool download(bool checkModification);
+    bool download(VKContext &context, bool checkModification);
 
 private:
     void reload();

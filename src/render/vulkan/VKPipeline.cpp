@@ -356,7 +356,7 @@ bool VKPipeline::updateBindings(VKContext &context)
                     getBindGroup(desc.set).resources.push_back({
                         .binding = desc.binding,
                         .resource = KDGpu::StorageBufferBinding{ 
-                            .buffer = bufferBinding->buffer->getReadOnlyBuffer(context) 
+                            .buffer = bufferBinding->buffer->getReadWriteBuffer(context) 
                         }
                     });
                     break;
