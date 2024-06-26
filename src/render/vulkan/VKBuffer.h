@@ -41,3 +41,6 @@ private:
 
 int getBufferSize(const Buffer &buffer,
     ScriptEngine &scriptEngine, MessagePtrSet &messages);
+bool downloadBuffer(VKContext &context, 
+    const KDGpu::Buffer &buffer, uint64_t size, 
+    std::function<void(const std::byte*)>&& callback);

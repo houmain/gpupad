@@ -60,4 +60,5 @@ private:
 
     QSet<ItemId> mUsedItems;
     std::unique_ptr<VKPipeline> mPipeline;
+    MessagePtrSet mPrintfMessages;
 };

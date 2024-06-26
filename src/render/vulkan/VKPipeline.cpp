@@ -92,12 +92,6 @@ bool VKPipeline::apply(const VKBufferBinding &binding)
     return true;
 }
 
-bool VKPipeline::applyPrintfBindings()
-{
-    // TODO:
-    return true;
-}
-
 KDGpu::RenderPassCommandRecorder VKPipeline::beginRenderPass(VKContext &context)
 {
     auto passOptions = mTarget->prepare(context);
@@ -335,8 +329,12 @@ bool VKPipeline::updateBindings(VKContext &context)
                     else {
                         const auto bufferBinding = findByName(mBufferBindings, 
                             desc.type_description->type_name);
-                        if (!bufferBinding)
+                        if (!bufferBinding) {
+                            mMessages += MessageList::insert(mItemId,
+                                MessageType::BufferNotSet,
+                                desc.type_description->type_name);
                             return false;
+                        }
 
                         getBindGroup(desc.set).resources.push_back({
                             .binding = desc.binding,
@@ -348,24 +346,41 @@ bool VKPipeline::updateBindings(VKContext &context)
                     break;
 
                 case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
-                    const auto bufferBinding = findByName(mBufferBindings, 
-                        desc.type_description->type_name);
-                    if (!bufferBinding)
-                        return false;
-
-                    getBindGroup(desc.set).resources.push_back({
-                        .binding = desc.binding,
-                        .resource = KDGpu::StorageBufferBinding{ 
-                            .buffer = bufferBinding->buffer->getReadWriteBuffer(context) 
+                    if (desc.type_description->type_name == ShaderPrintf::bufferBindingName()) {
+                        getBindGroup(desc.set).resources.push_back({
+                            .binding = desc.binding,
+                            .resource = KDGpu::StorageBufferBinding{ 
+                                .buffer = mProgram.printf().getInitializedBuffer(context)
+                            }
+                        });
+                    }
+                    else {
+                        const auto bufferBinding = findByName(mBufferBindings, 
+                            desc.type_description->type_name);
+                        if (!bufferBinding) {
+                            mMessages += MessageList::insert(mItemId,
+                                MessageType::BufferNotSet,
+                                desc.type_description->type_name);
+                            return false;
                         }
-                    });
+
+                        getBindGroup(desc.set).resources.push_back({
+                            .binding = desc.binding,
+                            .resource = KDGpu::StorageBufferBinding{ 
+                                .buffer = bufferBinding->buffer->getReadWriteBuffer(context) 
+                            }
+                        });
+                    }
                     break;
                 }
 
                 case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: {
                     const auto samplerBinding = findByName(mSamplerBindings, desc.name);
-                    if (!samplerBinding || !samplerBinding->texture->prepareImageSampler(context))
+                    if (!samplerBinding || !samplerBinding->texture->prepareImageSampler(context)) {
+                        mMessages += MessageList::insert(mItemId,
+                            MessageType::UnformNotSet, desc.name);
                         return false;
+                    }
 
                     // TODO: do not recreate every time
                     const auto& sampler = mSamplers.emplace_back(
@@ -387,8 +402,11 @@ bool VKPipeline::updateBindings(VKContext &context)
                 case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
                 case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE: {
                     const auto imageBinding = findByName(mImageBindings, desc.name);
-                    if (!imageBinding || !imageBinding->texture->prepareStorageImage(context))
+                    if (!imageBinding || !imageBinding->texture->prepareStorageImage(context)) {
+                        mMessages += MessageList::insert(mItemId,
+                            MessageType::UnformNotSet, desc.name);
                         return false;
+                    }
 
                     getBindGroup(desc.set).resources.push_back({
                         .binding = desc.binding,

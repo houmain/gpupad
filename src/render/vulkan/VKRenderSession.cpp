@@ -69,8 +69,6 @@ namespace {
                 usedItems += kv.second.buffer->usedItems();
             }
 
-        pipeline.applyPrintfBindings();
-        
         //for (const auto &kv : bindings.subroutines)
         //    if (pipeline.apply(kv.second))
         //        usedItems += kv.second.bindingItemId;
@@ -476,6 +474,11 @@ void VKRenderSession::executeCommandQueue()
 
 void VKRenderSession::downloadModifiedResources()
 {
+    for (auto &[itemId, program] : mCommandQueue->programs) 
+        if (program.printf().isUsed())
+            mMessages += program.printf().formatMessages(
+                mCommandQueue->context, program.itemId());
+
     for (auto &[itemId, texture] : mCommandQueue->textures) {
         //texture.updateMipmaps();
         if (!updatingPreviewTextures() &&

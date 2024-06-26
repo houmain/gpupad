@@ -67,7 +67,6 @@ public:
     bool apply(const VKSamplerBinding &binding);
     bool apply(const VKImageBinding &binding);
     bool apply(const VKBufferBinding &binding);
-    bool applyPrintfBindings();
 
     bool createGraphics(VKContext &context, KDGpu::PrimitiveOptions &primitiveOptions);
     bool createCompute(VKContext &context);

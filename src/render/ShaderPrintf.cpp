@@ -423,6 +423,13 @@ QString ShaderPrintf::patchSource(Shader::ShaderType stage,
     return patchedSource;
 }
 
+auto ShaderPrintf::initializeHeader() -> BufferHeader
+{
+    // data[0] is already reserved for head of linked list
+    // and prevBegin points to it
+    return BufferHeader{ 1, 0 };
+}
+
 auto ShaderPrintf::parseFormatString(QStringView string_) -> ParsedFormatString
 {
     auto parsed = ParsedFormatString{ };
@@ -497,4 +504,52 @@ QString ShaderPrintf::formatMessage(const ParsedFormatString &format,
         string += format.text[i + 1];
     }
     return string;
+}
+
+MessagePtrSet ShaderPrintf::formatMessages(ItemId callItemId, 
+    const BufferHeader &header, std::span<const uint32_t> data)
+{
+    const auto count = data.size();
+    auto readOutside = false;
+    const auto read = [&](auto offset) -> uint32_t { 
+        if (offset < count)
+            return data[offset];
+        readOutside = true;
+        return { };
+    };
+
+    auto messages = MessagePtrSet{ };
+    const auto lastBegin = header.prevBegin;
+    for (auto offset = data[0];;) {
+        const auto lastMessage = (offset == lastBegin);
+        const auto nextBegin = read(offset++);
+        const auto &formatString = mFormatStrings[read(offset++)];
+        const auto argumentCount = read(offset++);
+
+        auto arguments = QList<Argument>();
+        for (auto i = 0u; i < argumentCount; i++) {
+            auto argumentOffset = read(offset++);
+            const auto argumentType = read(argumentOffset++);
+            const auto argumentComponents = argumentType % 100;
+            auto argument = Argument{ argumentType, { } };
+            for (auto j = 0u; j < argumentComponents; ++j)
+                argument.values.append(read(argumentOffset++));
+            arguments.append(argument);
+        }
+        if (readOutside)
+            break;
+
+        messages += MessageList::insert(formatString.fileName, formatString.line,
+            MessageType::ShaderInfo, formatMessage(formatString, arguments), false);
+
+        if (lastMessage)
+            break;
+
+        offset = nextBegin;
+    }
+
+    if (readOutside)
+        messages += MessageList::insert(callItemId, MessageType::TooManyPrintfCalls);
+
+    return messages;
 }

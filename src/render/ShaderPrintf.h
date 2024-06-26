@@ -2,14 +2,15 @@
 
 #include "MessageList.h"
 #include "session/Item.h"
+#include <span>
 
 class ShaderPrintf
 {
 public:
-    static QString requiredVersion() { return "#version 430"; }
+    static QString requiredVersion() { return QStringLiteral("#version 430"); }
+    static QString bufferBindingName() { return QStringLiteral("_printfBuffer"); }
     static QString preamble();
-
-    const char *bufferBindingName() const { return "_printfBuffer"; }
+    
     bool isUsed() const;
     bool isUsed(Shader::ShaderType stage) const;
     QString patchSource(Shader::ShaderType stage,
@@ -33,9 +34,12 @@ protected:
         uint32_t prevBegin; 
     };
 
+    static BufferHeader initializeHeader();
     static ParsedFormatString parseFormatString(QStringView string);
     static QString formatMessage(const ParsedFormatString &format,
         const QList<Argument>& arguments);
+    MessagePtrSet formatMessages(ItemId callItemId,
+        const BufferHeader &header, std::span<const uint32_t> data);
 
     QSet<Shader::ShaderType> mUsedInStages;
     QList<ParsedFormatString> mFormatStrings;

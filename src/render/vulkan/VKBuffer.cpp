@@ -20,15 +20,15 @@ namespace
             });
         }
 
-        bool download(VKContext &context, VKBuffer &buffer)
+        bool download(VKContext &context, const KDGpu::Buffer &buffer, uint64_t size)
         {
-            if (!mBuffer.isValid())
+            if (!buffer.isValid() || !mBuffer.isValid())
                 return false;
 
             context.commandRecorder->copyBuffer({
-                .src = buffer.getReadOnlyBuffer(context),
+                .src = buffer,
                 .dst = mBuffer,
-                .byteSize = static_cast<uint64_t>(buffer.size()),
+                .byteSize = size,
             });
             return true;
         }
@@ -44,6 +44,28 @@ namespace
         }
     };
 } // namespace
+
+bool downloadBuffer(VKContext &context, 
+    const KDGpu::Buffer &buffer, uint64_t size, 
+    std::function<void(const std::byte*)>&& callback)
+{
+    auto transferBuffer = TransferBuffer(context.device, size);
+
+    context.commandRecorder = context.device.createCommandRecorder();
+    auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
+
+    if (!transferBuffer.download(context, buffer, size))
+        return false;
+
+    auto commandBuffer = context.commandRecorder->finish();
+    context.queue.submit({ .commandBuffers = { commandBuffer} });
+    context.queue.waitUntilIdle();
+
+    auto data = transferBuffer.map();
+    callback(data);
+    transferBuffer.unmap();
+    return true;
+}
 
 VKBuffer::VKBuffer(const Buffer &buffer, ScriptEngine &scriptEngine)
     : mItemId(buffer.id)
@@ -163,35 +185,20 @@ bool VKBuffer::download(VKContext &context, bool checkModification)
     if (!mDeviceCopyModified)
         return false;
 
-    auto prevData = QByteArray();
-    if (checkModification)
-        prevData = mData;
-
-    auto transferBuffer = TransferBuffer(context.device, 
-        static_cast<uint64_t>(mSize));
-
-    context.commandRecorder = context.device.createCommandRecorder();
-    auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
-
-    if (!transferBuffer.download(context, *this)) {
+    auto modified = false;
+    if (!downloadBuffer(context, getReadOnlyBuffer(context), mSize,
+            [&](const void* data) {
+                if (!checkModification 
+                    || std::memcmp(mData.data(), data, mData.size()) != 0) {
+                    std::memcpy(mData.data(), data, mData.size());
+                    modified = true;
+                }
+            })) {
         mMessages += MessageList::insert(
             mItemId, MessageType::DownloadingImageFailed);
         return false;
     }
 
-    auto commandBuffer = context.commandRecorder->finish();
-    context.queue.submit({ .commandBuffers = { commandBuffer} });
-    context.queue.waitUntilIdle();
-
-    auto data = transferBuffer.map();
-    std::memcpy(mData.data(), data, mData.size());
-    transferBuffer.unmap();
-
     mSystemCopyModified = mDeviceCopyModified = false;
-
-    if (checkModification && prevData == mData) {
-        mData = prevData;
-        return false;
-    }
-    return true;
+    return modified;
 }
