@@ -54,3 +54,5 @@ protected:
 
 int getBufferSize(const Buffer &buffer,
     ScriptEngine &scriptEngine, MessagePtrSet &messages);
+void transformClearColor(std::array<double, 4> &color, 
+    TextureSampleType sampleType);

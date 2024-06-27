@@ -153,7 +153,7 @@ bool VKTexture::prepareImageSampler(VKContext &context)
 bool VKTexture::prepareStorageImage(VKContext &context)
 {
     reload(false);
-    createAndUpload(context);
+    createAndUpload(context, KDGpu::TextureUsageFlagBits::StorageBit);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
 
@@ -230,6 +230,9 @@ bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
         });
     }
     else {
+        const auto sampleType = getTextureSampleType(mFormat);
+        transformClearColor(color, sampleType);
+
         context.commandRecorder->clearColorTexture({
             .texture = mTexture,
             .layout = mCurrentLayout,
@@ -283,7 +286,8 @@ void VKTexture::reset(KDGpu::Device& device)
     }
 }
 
-void VKTexture::createAndUpload(VKContext &context)
+void VKTexture::createAndUpload(VKContext &context, 
+    KDGpu::TextureUsageFlags extraUsageFlags)
 {
     if (mSystemCopyModified) 
         reset(context.device);
@@ -298,7 +302,7 @@ void VKTexture::createAndUpload(VKContext &context)
             KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit :
             KDGpu::TextureUsageFlagBits::ColorAttachmentBit |
             KDGpu::TextureUsageFlagBits::SampledBit |
-            KDGpu::TextureUsageFlagBits::StorageBit)
+            extraUsageFlags)
     };
 
     const auto textureOptions = KDGpu::TextureOptions{

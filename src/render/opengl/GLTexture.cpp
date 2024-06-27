@@ -298,37 +298,8 @@ bool GLTexture::clear(std::array<double, 4> color, double depth, int stencil)
         gl.glClearBufferiv(GL_STENCIL, 0, &stencil);
     }
     else {
-        const auto srgbToLinear = [](auto value) {
-            if (value <= 0.0404482362771082)
-                return value / 12.92;
-            return std::pow((value + 0.055) / 1.055, 2.4);
-        };
-        const auto multiplyRGBA = [&](auto factor) {
-            for (auto &c : color)
-                c *= factor;
-        };
-
         const auto sampleType = getTextureSampleType(mFormat);
-        switch (sampleType) {
-            case TextureSampleType::Normalized_sRGB:
-            case TextureSampleType::Float:
-                for (auto i = 0u; i < 3; ++i)
-                    color[i] = srgbToLinear(color[i]);
-                break;
-            case TextureSampleType::Int8: multiplyRGBA(0x7F); break;
-            case TextureSampleType::Int16: multiplyRGBA(0x7FFF); break;
-            case TextureSampleType::Int32: multiplyRGBA(0x7FFFFFFF); break;
-            case TextureSampleType::Uint8: multiplyRGBA(0xFF); break;
-            case TextureSampleType::Uint16: multiplyRGBA(0xFFFF); break;
-            case TextureSampleType::Uint32: multiplyRGBA(0xFFFFFFFF); break;
-            case TextureSampleType::Uint_10_10_10_2:
-                for (auto i = 0u; i < 3; ++i)
-                    color[i] *= 1024.0;
-                color[3] *= 4.0;
-                break;
-            default:
-                break;
-        }
+        transformClearColor(color, sampleType);
 
         switch (sampleType) {
             case TextureSampleType::Normalized:

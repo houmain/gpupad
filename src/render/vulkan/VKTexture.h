@@ -23,13 +23,13 @@ public:
     bool clear(VKContext &context, std::array<double, 4> color, double depth, int stencil);
     bool copy(VKTexture &source);
     bool swap(VKTexture &other);
-    bool updateMipmaps();
     bool deviceCopyModified() const { return mDeviceCopyModified; }
     bool download(VKContext &context);
 
 private:
     void reset(KDGpu::Device& device);
-    void createAndUpload(VKContext &context);
+    void createAndUpload(VKContext &context, 
+        KDGpu::TextureUsageFlags extraUsageFlags = { });
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder, 
         KDGpu::TextureLayout layout, KDGpu::AccessFlags accessMask, 
         KDGpu::PipelineStageFlags stage);
