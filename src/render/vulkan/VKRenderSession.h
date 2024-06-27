@@ -36,6 +36,5 @@ private:
     QScopedPointer<CommandQueue> mPrevCommandQueue;
     int mNextCommandQueueIndex{ };
     QMap<ItemId, GroupIteration> mGroupIterations;
-    //QList<std::pair<ItemId, std::shared_ptr<const QOpenGLTimerQuery>>> mTimerQueries;
     MessagePtrSet mTimerMessages;
 };

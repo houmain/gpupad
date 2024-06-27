@@ -10,6 +10,7 @@ class GLTarget;
 class GLStream;
 class GLBuffer;
 class GLTexture;
+using TimerQueryPtr = std::shared_ptr<const QOpenGLTimerQuery>;
 
 class GLCall
 {
@@ -18,7 +19,7 @@ public:
 
     ItemId itemId() const { return mCall.id; }
     GLProgram *program() { return mProgram; }
-    std::shared_ptr<const QOpenGLTimerQuery> timerQuery() const { return mTimerQuery; }
+    TimerQueryPtr timerQuery() const { return mTimerQuery; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
     void setProgram(GLProgram *program);

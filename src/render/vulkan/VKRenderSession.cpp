@@ -118,8 +118,6 @@ struct VKRenderSession::GroupIteration
 struct VKRenderSession::CommandQueue
 {
     VKContext context;
-    //QOpenVKTimerQuery beginTimestamp;
-    //QOpenVKTimerQuery endTimestamp;
 
     std::map<ItemId, VKTexture> textures;
     std::map<ItemId, VKBuffer> buffers;
@@ -150,9 +148,6 @@ void VKRenderSession::createCommandQueue()
     });
     mUsedItems.clear();
     
-    //mCommandQueue->beginTimestamp.create();
-    //mCommandQueue->endTimestamp.create();
-
     auto &scriptEngine = mScriptSession->engine();
     const auto &session = mSessionCopy;
 
@@ -449,7 +444,7 @@ void VKRenderSession::executeCommandQueue()
     //Singletons::vkShareSynchronizer().beginUpdate(context);
 
     auto state = BindingState{ };
-    //mCommandQueue->beginTimestamp.recordTimestamp();
+    mCommandQueue->context.timestampQueries.clear();
 
     mNextCommandQueueIndex = 0;
     while (mNextCommandQueueIndex < static_cast<int>(mCommandQueue->commands.size())) {
@@ -466,8 +461,6 @@ void VKRenderSession::executeCommandQueue()
     mCommandQueue->context.queue.submit(submitOptions);
     mCommandQueue->context.queue.waitUntilIdle();
     mCommandQueue->context.commandBuffers.clear();
-
-    //mCommandQueue->endTimestamp.recordTimestamp();
 
     //Singletons::vkShareSynchronizer().endUpdate(context);
 }
@@ -498,21 +491,18 @@ void VKRenderSession::outputTimerQueries()
 {
     mTimerMessages.clear();
 
-    //if (mTimerQueries.size() > 1) {
-    //    const auto duration = std::chrono::nanoseconds(
-    //        mCommandQueue->endTimestamp.waitForResult() -
-    //        mCommandQueue->beginTimestamp.waitForResult());
-    //    mTimerMessages += MessageList::insert(0, MessageType::TotalDuration,
-    //        formatDuration(duration), false);
-    //}
-
-    //for (const auto &[itemId, query] : qAsConst(mTimerQueries)) {
-    //    const auto duration = std::chrono::nanoseconds(query->waitForResult());
-    //    mTimerMessages += MessageList::insert(
-    //        itemId, MessageType::CallDuration,
-    //        formatDuration(duration), false);
-    //}
-    //mTimerQueries.clear();
+    auto total = std::chrono::nanoseconds::zero();
+    auto &queries = mCommandQueue->context.timestampQueries;
+    for (auto &[itemId, query] : queries) {
+        const auto duration = std::chrono::nanoseconds(query.nsInterval(0, 1));
+        mTimerMessages += MessageList::insert(
+            itemId, MessageType::CallDuration,
+            formatDuration(duration), false);
+        total += duration;
+    }
+    if (queries.size() > 1)
+        mTimerMessages += MessageList::insert(0, MessageType::TotalDuration,
+            formatDuration(total), false);
 }
 
 void VKRenderSession::finish()

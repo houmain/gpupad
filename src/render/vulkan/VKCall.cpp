@@ -89,6 +89,10 @@ void VKCall::execute(VKContext &context, MessagePtrSet &messages, ScriptEngine &
     context.commandRecorder = context.device.createCommandRecorder();
     auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
 
+    auto &recorder = context.timestampQueries[mCall.id];
+    recorder = context.commandRecorder->beginTimestampRecording({ .queryCount = 2});
+    recorder.writeTimestamp(KDGpu::PipelineStageFlagBit::TopOfPipeBit);
+
     switch (mCall.callType) {
         case Call::CallType::Draw:
         case Call::CallType::DrawIndexed:
@@ -120,6 +124,7 @@ void VKCall::execute(VKContext &context, MessagePtrSet &messages, ScriptEngine &
             break;
     }
 
+    recorder.writeTimestamp(KDGpu::PipelineStageFlagBit::BottomOfPipeBit);
     context.commandBuffers.push_back(context.commandRecorder->finish());
 }
 
