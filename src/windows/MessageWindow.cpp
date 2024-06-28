@@ -90,9 +90,12 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case RenderingFailed:
         case MoreThanOneDepthStencilAttachment:
         case IncompatibleBindings:
+        case CreatingPipelineFailed:
             return mErrorIcon;
 
-        case UnformNotSet:
+        case UniformNotSet:
+        case ImageNotSet:
+        case SamplerNotSet:
         case ShaderWarning:
         case ScriptWarning:
         case TooManyPrintfCalls:
@@ -136,10 +139,14 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Uploading image failed");
         case DownloadingImageFailed:
             return tr("Downloading image failed");
-        case UnformNotSet:
+        case UniformNotSet:
             return tr("Uniform '%1' not set").arg(message.text);
         case BufferNotSet:
             return tr("Buffer '%1' not set").arg(message.text);
+        case SamplerNotSet:
+            return tr("Sampler '%1' not set").arg(message.text);
+        case ImageNotSet:
+            return tr("Image '%1' not set").arg(message.text);
         case AttributeNotSet:
             return tr("Attribute '%1' not set").arg(message.text);
         case CallDuration:
@@ -186,6 +193,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Only a single depth or stencil attachment is supported");
         case IncompatibleBindings:
             return tr("Incompatible assignment to the same set/binding");
+        case CreatingPipelineFailed:
+            return tr("Creating pipeline failed");
     }
     return message.text;
 }

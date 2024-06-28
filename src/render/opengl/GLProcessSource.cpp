@@ -146,9 +146,9 @@ void GLProcessSource::render()
 
     if (mShader) {
         auto usedFileNames = QStringList();
-        auto glPrintf = GLPrintf();
+        auto printf = GLPrintf();
         const auto source = mShader->getPatchedSources(
-            messages, usedFileNames, &glPrintf).join("\n");
+            messages, usedFileNames, &printf).join("\n");
 
         if (mProcessType == "preprocess") {
             mOutput = removeLineDirectives(glslang::preprocess(source, messages));

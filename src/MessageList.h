@@ -20,8 +20,10 @@ enum MessageType
     CreatingTextureFailed,
     UploadingImageFailed,
     DownloadingImageFailed,
-    UnformNotSet,
+    UniformNotSet,
     BufferNotSet,
+    SamplerNotSet,
+    ImageNotSet,
     AttributeNotSet,
     ShaderInfo,
     ShaderWarning,
@@ -51,6 +53,7 @@ enum MessageType
     RenderingFailed,
     MoreThanOneDepthStencilAttachment,
     IncompatibleBindings,
+    CreatingPipelineFailed,
 };
 
 struct Message

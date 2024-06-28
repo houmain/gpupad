@@ -47,6 +47,8 @@ namespace {
             //    bindings.subroutines[kv.first] = kv.second;
         }
 
+        pipeline.clearBindings();
+
         for (const auto &kv : bindings.uniforms)
             if (pipeline.apply(kv.second))
                 usedItems += kv.second.bindingItemId;
@@ -54,7 +56,8 @@ namespace {
         for (const auto &kv : bindings.samplers)
             if (pipeline.apply(kv.second)) {
                 usedItems += kv.second.bindingItemId;
-                usedItems += kv.second.texture->usedItems();
+                if (kv.second.texture)
+                    usedItems += kv.second.texture->usedItems();
             }
         
         for (const auto &kv : bindings.images)

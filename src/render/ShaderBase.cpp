@@ -1,6 +1,6 @@
 
 #include "ShaderBase.h"
-#include "glslang.h"
+#include "Spirv.h"
 #include "Singletons.h"
 #include "FileCache.h"
 #include "FileDialog.h"
@@ -64,7 +64,10 @@ namespace {
 
     QString substituteIncludes(QString source, const QString &fileName, 
         QStringList &usedFileNames, ItemId itemId, MessagePtrSet &messages, 
-        const QString &includePaths, QString *maxVersion, QString *extensions, int recursionDepth = 0)
+        const QString &includePaths, 
+        QString *maxVersion = nullptr, 
+        QString *extensions = nullptr,
+        int recursionDepth = 0)
     {
         if (!usedFileNames.contains(fileName)) {
             usedFileNames.append(fileName);
@@ -75,8 +78,10 @@ namespace {
             return { };
         }
         const auto fileNo = usedFileNames.indexOf(fileName);
-        const auto versionRemoved = removeVersion(&source, maxVersion);
-        removeExtensions(&source, extensions);
+        const auto versionRemoved = (maxVersion ? 
+            removeVersion(&source, maxVersion) : false);
+        if (extensions)
+            removeExtensions(&source, extensions);
 
         auto linesInserted = (versionRemoved ? -1 : 0);
         static const auto regex = QRegularExpression(R"(#include([^\n]*))");
@@ -142,10 +147,14 @@ ShaderBase::ShaderBase(Shader::ShaderType type, const QList<const Shader*> &shad
         mFileNames += shader->fileName;
         mSources += source + "\n";
         mLanguage = shader->language;
-        mEntryPoint = shader->entryPoint;
+        if (!shader->entryPoint.isEmpty())
+            mEntryPoint = shader->entryPoint;
         appendLines(mPreamble, shader->preamble);
         appendLines(mIncludePaths, shader->includePaths);
     }
+
+    if (mEntryPoint.isEmpty())
+        mEntryPoint = "main";
 }
 
 bool ShaderBase::operator==(const ShaderBase &rhs) const
@@ -157,6 +166,15 @@ bool ShaderBase::operator==(const ShaderBase &rhs) const
 }
 
 QStringList ShaderBase::getPatchedSources(MessagePtrSet &messages, 
+    QStringList &usedFileNames, ShaderPrintf *printf) const
+{
+    if (mLanguage == Shader::Language::HLSL)
+        return getPatchedSourcesHLSL(messages, usedFileNames, printf);
+
+    return getPatchedSourcesGLSL(messages, usedFileNames, printf);
+}
+
+QStringList ShaderBase::getPatchedSourcesGLSL(MessagePtrSet &messages, 
     QStringList &usedFileNames, ShaderPrintf *printf) const
 {
     if (mSources.isEmpty())
@@ -172,11 +190,15 @@ QStringList ShaderBase::getPatchedSources(MessagePtrSet &messages,
 
     if (mLanguage != Shader::Language::GLSL) {
         for (auto i = 0; i < mSources.size(); ++i) {
-            auto source = glslang::generateGLSL(sources[i], mType, mLanguage,
-                mEntryPoint, mFileNames[i], messages);
+            const auto spirv = Spirv::generate(mLanguage, mType, 
+                { sources[i] }, { mFileNames[i] }, mEntryPoint, messages);
+            if (!spirv)
+                return { };
+
+            auto source = spirv.generateGLSL(mFileNames[i], messages);
             if (source.isEmpty())
                 return { };
-            
+
             removeVersion(&source, &maxVersion);
             removeExtensions(&source, &extensions);
             sources[i] = source;
@@ -185,11 +207,12 @@ QStringList ShaderBase::getPatchedSources(MessagePtrSet &messages,
 
     if (printf) {
         for (auto i = 0; i < sources.size(); ++i)
-            sources[i] = printf->patchSource(mType, mFileNames[i], sources[i]);
+            sources[i] = printf->patchSource(mType, 
+                mFileNames[i], sources[i]);
     
         if (printf->isUsed(mType)) {
-            sources.front().prepend(ShaderPrintf::preamble());
-            maxVersion = std::max(maxVersion, ShaderPrintf::requiredVersion());
+            sources.front().prepend(ShaderPrintf::preambleGLSL());
+            maxVersion = std::max(maxVersion, ShaderPrintf::requiredVersionGLSL());
         }
     }
 
@@ -209,5 +232,32 @@ QStringList ShaderBase::getPatchedSources(MessagePtrSet &messages,
             }
     }
     sources.front().prepend(maxVersion + "\n");
+    return sources;
+}
+
+QStringList ShaderBase::getPatchedSourcesHLSL(MessagePtrSet &messages, 
+    QStringList &usedFileNames, ShaderPrintf *printf) const
+{
+    if (mSources.isEmpty())
+        return { };
+
+    auto sources = QStringList();
+    for (auto i = 0; i < mSources.size(); ++i)
+        sources += substituteIncludes(mSources[i], 
+            mFileNames[i], usedFileNames, mItemId, messages, mIncludePaths);
+
+    if (printf) {
+        for (auto i = 0; i < sources.size(); ++i)
+            sources[i] = printf->patchSource(mType, 
+                mFileNames[i], sources[i]);
+    
+        if (printf->isUsed(mType))
+            sources.front().prepend(ShaderPrintf::preambleHLSL());
+    }
+
+    if (!mPreamble.isEmpty())
+        sources.front().prepend("#line 1 0\n" + mPreamble + "\n");
+
+    sources.front().prepend("#define GPUPAD 1\n");
     return sources;
 }

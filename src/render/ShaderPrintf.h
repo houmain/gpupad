@@ -7,9 +7,10 @@
 class ShaderPrintf
 {
 public:
-    static QString requiredVersion() { return QStringLiteral("#version 430"); }
+    static QString requiredVersionGLSL() { return QStringLiteral("#version 430"); }
     static QString bufferBindingName() { return QStringLiteral("_printfBuffer"); }
-    static QString preamble();
+    static QString preambleGLSL();
+    static QString preambleHLSL();
     
     bool isUsed() const;
     bool isUsed(Shader::ShaderType stage) const;

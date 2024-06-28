@@ -63,6 +63,7 @@ public:
         VKTarget *target, VKStream *vertexStream);
     ~VKPipeline();
 
+    void clearBindings();
     bool apply(const VKUniformBinding &binding);
     bool apply(const VKSamplerBinding &binding);
     bool apply(const VKImageBinding &binding);
@@ -84,10 +85,19 @@ private:
         KDGpu::BindGroup bindGroup;
     };
 
-    BindGroup& getBindGroup(uint32_t set);
+    struct DefaultUniformBlock
+    {
+        uint32_t set;
+        uint32_t binding;
+        uint64_t size;
+        KDGpu::Buffer buffer;
+    };
+
+    BindGroup &getBindGroup(uint32_t set);
     bool createOrUpdateBindGroup(uint32_t set, uint32_t binding,
         const KDGpu::ResourceBindingLayout &layout);
-    
+    void setBindGroupResource(uint32_t set, KDGpu::BindGroupEntry &&resource);
+    DefaultUniformBlock &getDefaultUniformBlock(uint32_t set, uint32_t binding);
     bool createLayout(VKContext &context);
 
     ItemId mItemId;
@@ -106,7 +116,7 @@ private:
     std::vector<VKSamplerBinding> mSamplerBindings;
     std::vector<VKImageBinding> mImageBindings;
     std::vector<KDGpu::Sampler> mSamplers;
-    std::map<KDGpu::ShaderStageFlagBits, KDGpu::Buffer> mDefaultUniformBlocks;
+    std::vector<std::unique_ptr<DefaultUniformBlock>> mDefaultUniformBlocks;
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
 };

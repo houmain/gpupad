@@ -1,9 +1,14 @@
 
 #include "Spirv.h"
 #include <QRegularExpression>
+
+#define ENABLE_HLSL
 #include <glslang/Public/ShaderLang.h>
 #include <glslang/Public/ResourceLimits.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
+
+#include <spirv_glsl.hpp>
+#include <spirv_hlsl.hpp>
 
 namespace 
 {
@@ -91,6 +96,135 @@ namespace
         }
         return hasErrors;
     }
+
+    QString completeFunctionName(const QString &source, const QString& prefix)
+    {
+        for (auto begin = source.indexOf(prefix); begin > 0; begin = source.indexOf(prefix, begin + 1)) {
+            // must be beginning of word
+            if (!source[begin - 1].isSpace())
+                continue;
+
+            // must not follow struct
+            if (source.mid(std::max(static_cast<int>(begin) - 10, 0), 10).contains("struct"))
+                continue;
+
+            // complete word
+            auto it = begin;
+            while (it < source.size() && (source[it].isLetterOrNumber() || source[it] == '_'))
+                ++it;
+
+            // ( must follow
+            if (it == source.size() || source[it] != '(')
+                continue;
+
+            return source.mid(begin, it - begin);
+        }
+        return { };
+    }
+
+    QString findHLSLEntryPoint(Shader::ShaderType shaderType, const QString &source)
+    {
+        const auto prefix = [&]() {
+            switch (shaderType) {
+                default:
+                case Shader::ShaderType::Fragment: return "PS";
+                case Shader::ShaderType::Vertex: return "VS";
+                case Shader::ShaderType::Geometry: return "GS";
+                case Shader::ShaderType::TessellationControl: return "HS";
+                case Shader::ShaderType::TessellationEvaluation: return "DS";
+                case Shader::ShaderType::Compute: return "CS";
+            }
+        }();
+        return completeFunctionName(source, prefix);
+    }
+
+    QString getEntryPoint(const QString &entryPoint, Shader::Language language, 
+        Shader::ShaderType shaderType, const QString &source)
+    {
+      if (!entryPoint.isEmpty())
+          return entryPoint;
+
+      if (language == Shader::Language::HLSL)
+          if (auto found = findHLSLEntryPoint(shaderType, source); !found.isEmpty())
+              return found;
+      
+      return "main";
+    }
+
+    QString patchGLSL(QString glsl) 
+    {
+        // WORKAROUND - is there no simpler way?
+        // turn:
+        //   layout(binding = 0, std140) uniform _Global
+        //   {
+        //       layout(row_major) mat4 viewProj;
+        //   } _35;
+        //   ...
+        //   _35.viewProj
+        //
+        // into:
+        //   uniform mat4 viewProj;
+        //   ...
+        //   viewProj
+        //
+        auto i = glsl.indexOf("uniform _Global");
+        if (i >= 0) {
+            auto lineBegin = glsl.lastIndexOf('\n', i) + 1;
+            glsl.insert(lineBegin, "//");
+            for (auto level = 0; i < glsl.size(); ++i) {
+                if (glsl[i] == '{') {
+                    if (level == 0) {
+                        glsl.insert(i, "//");
+                        i += 2;
+                    }
+                    ++level;
+                }
+                else if (glsl[i] == 'l' && glsl.indexOf("layout(", i) == i) {
+                    lineBegin = i;
+                    glsl.remove(i, glsl.indexOf(')', i) - i + 1);
+                }
+                else if (glsl[i] == '\n') {
+                    lineBegin = i + 1;
+                }
+                else if (glsl[i] == ';') {
+                    glsl.insert(lineBegin, "uniform ");
+                    i += 8;
+                }
+                else if (glsl[i] == '}') {
+                    --level;
+                    if (level == 0) {
+                        glsl.insert(i, "//");
+                        i += 4;
+                        const auto var = glsl.mid(i, glsl.indexOf(';', i) - i);
+                        glsl.remove(var + ".");
+                        break;
+                    }
+                }
+            }
+        }
+        return glsl;
+    }
+
+    QString generateGLSL(std::vector<uint32_t> spirv, 
+        const QString &fileName, MessagePtrSet &messages)
+    try {   
+        auto compiler = spirv_cross::CompilerGLSL(std::move(spirv));
+        auto options = spirv_cross::CompilerGLSL::Options{ };
+        compiler.set_common_options(options);
+
+        compiler.build_combined_image_samplers();
+        for (auto &remap : compiler.get_combined_image_samplers())
+            compiler.set_name(remap.combined_id,
+              compiler.get_name(remap.image_id) + "_" +
+                    compiler.get_name(remap.sampler_id));
+
+        return patchGLSL(QString::fromStdString(compiler.compile()));
+    }
+    catch (const std::exception &ex) {
+        messages += MessageList::insert(fileName, -1,
+            MessageType::ShaderError, ex.what());
+        return { };
+    }
 } // namespace
 
 Spirv::Interface::Interface(const std::vector<uint32_t>& spirv)
@@ -123,6 +257,9 @@ Spirv Spirv::generate(Shader::Language language,
     const QStringList &fileNames, const QString &entryPoint, 
     MessagePtrSet &messages)
 {
+    if (sources.empty() || sources.size() != fileNames.size())
+        return { };
+
     staticInitGlslang();
 
     const auto itemId = 0;
@@ -131,7 +268,9 @@ Spirv Spirv::generate(Shader::Language language,
     const auto targetVersion = glslang::EShTargetLanguageVersion::EShTargetSpv_1_4;
     const auto defaultVersion = 100;
     const auto forwardCompatible = false;
-    const auto requestedMessages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
+    auto requestedMessages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
+    if (language == Shader::Language::HLSL)
+        requestedMessages = static_cast<EShMessages>(requestedMessages | EShMsgReadHlsl);
 
     auto sourcesUtf8 = std::vector<QByteArray>();
     auto sourcesCStr = std::vector<const char*>();
@@ -145,12 +284,17 @@ Spirv Spirv::generate(Shader::Language language,
     shader.setEnvClient(client, clientVersion);
     shader.setEnvTarget(glslang::EShTargetLanguage::EShTargetSpv, targetVersion);
 
+    const auto entryPointU8 = 
+        getEntryPoint(entryPoint, language, shaderType, sources.front()).toUtf8();
+    shader.setEntryPoint(entryPointU8.constData());
+
     // TODO:
     shader.setAutoMapBindings(true);
     shader.setAutoMapLocations(true);
     shader.setEnvInputVulkanRulesRelaxed();
     shader.setGlobalUniformSet(15);
     shader.setGlobalUniformBinding(static_cast<int>(getStage(shaderType)));
+    shader.setHlslIoMapping(true);
 
     if (!shader.parse(GetDefaultResources(), defaultVersion, forwardCompatible, requestedMessages)) {
         parseGLSLangErrors(QString::fromUtf8(shader.getInfoLog()), messages, itemId, fileNames);
@@ -187,4 +331,9 @@ Spirv::Spirv(std::vector<uint32_t> spirv)
 Spirv::Interface Spirv::getInterface() const
 {
     return Spirv::Interface(mSpirv);
+}
+
+QString Spirv::generateGLSL(const QString &fileName, MessagePtrSet &messages) const
+{
+    return ::generateGLSL(mSpirv, fileName, messages);
 }

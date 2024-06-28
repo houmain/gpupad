@@ -50,6 +50,6 @@ KDGpu::ShaderStage VKShader::getShaderStage() const
     return KDGpu::ShaderStage{
         .shaderModule = mShaderModule,
         .stage = getStageFlags(mType),
-        //.entryPoint = mEntryPoint.toStdString()
+        .entryPoint = mEntryPoint.toStdString(),
     };
 }

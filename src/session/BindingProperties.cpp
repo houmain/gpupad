@@ -135,7 +135,7 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
     connect(mUi->texture, &ReferenceComboBox::currentDataChanged,
         this, &BindingProperties::updateWidgets);
     connect(mUi->texture, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(Item::Type::Texture); });
+        [this]() { return mSessionProperties.getItemIds(Item::Type::Texture, true); });
     connect(mUi->buffer, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
     connect(mUi->block, &ReferenceComboBox::listRequired,

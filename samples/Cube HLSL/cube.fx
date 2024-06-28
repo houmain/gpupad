@@ -2,7 +2,10 @@
 matrix uModel;
 matrix uView;
 matrix uProjection;
+
+[[vk::binding(1, 0)]]
 Texture2D uTexture;
+[[vk::binding(1, 1)]]
 SamplerState sampleLinear;
 
 struct VS_INPUT {
@@ -19,10 +22,8 @@ struct PS_INPUT {
 
 PS_INPUT VS(VS_INPUT input) {
   PS_INPUT output = (PS_INPUT)0;
-  output.position = mul(input.position, uModel);
-  output.position = mul(output.position, uView);
-  output.position = mul(output.position, uProjection);
-  output.normal = (uModel * float4(input.normal, 0)).xyz;
+  output.position = mul(mul(mul(uProjection, uView), uModel), input.position);
+  output.normal = mul(uModel, float4(input.normal, 0)).xyz;
   output.texCoords = input.texCoords;
   return output;
 }

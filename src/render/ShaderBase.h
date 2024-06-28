@@ -18,6 +18,10 @@ public:
 
     QStringList getPatchedSources(MessagePtrSet &messages, 
         QStringList &usedFileNames, ShaderPrintf *printf = nullptr) const;
+    QStringList getPatchedSourcesGLSL(MessagePtrSet &messages, 
+        QStringList &usedFileNames, ShaderPrintf *printf = nullptr) const;
+    QStringList getPatchedSourcesHLSL(MessagePtrSet &messages, 
+        QStringList &usedFileNames, ShaderPrintf *printf = nullptr) const;
 
 protected:
     ItemId mItemId{ };

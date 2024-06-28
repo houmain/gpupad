@@ -17,7 +17,7 @@ public:
     KDGpu::TextureAspectFlagBits aspectMask() const;
 
     void addUsage(KDGpu::TextureUsageFlags usage);
-    bool prepareImageSampler(VKContext &context);
+    bool prepareSampledImage(VKContext &context);
     bool prepareStorageImage(VKContext &context);
     bool prepareAttachment(VKContext &context);
     bool prepareDownload(VKContext &context);

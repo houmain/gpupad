@@ -150,7 +150,7 @@ void VKTexture::addUsage(KDGpu::TextureUsageFlags usage)
     mUsage |= usage;
 }
 
-bool VKTexture::prepareImageSampler(VKContext &context)
+bool VKTexture::prepareSampledImage(VKContext &context)
 {
     reload(false);
     createAndUpload(context);

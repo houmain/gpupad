@@ -241,7 +241,7 @@ void GLProgram::unbind(ItemId callItemId)
     for (auto &kv : mUniformsSet)
         if (!std::exchange(kv.second, false))
             *mCallMessages += MessageList::insert(callItemId,
-                MessageType::UnformNotSet, kv.first);
+                MessageType::UniformNotSet, kv.first);
 
     for (auto &kv : mBuffersSet)
         if (!std::exchange(kv.second, false))

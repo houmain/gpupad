@@ -75,7 +75,7 @@ bool GLShader::compile(GLPrintf *printf, bool failSilently)
     }
 
     auto usedFileNames = QStringList();
-    mPatchedSources = getPatchedSources(mMessages, usedFileNames, printf);
+    mPatchedSources = getPatchedSourcesGLSL(mMessages, usedFileNames, printf);
     if (mPatchedSources.isEmpty())
         return false;
 

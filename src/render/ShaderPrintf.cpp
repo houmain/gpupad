@@ -259,7 +259,7 @@ namespace {
     }
 } // namespace
 
-QString ShaderPrintf::preamble() 
+QString ShaderPrintf::preambleGLSL() 
 {
     return QStringLiteral(R"(
 
@@ -377,6 +377,15 @@ void _printf(dmat4x2 m) { _printf(mat4x2(m)); }
 void _printf(dmat4x3 m) { _printf(mat4x3(m)); }
 void _printf(dmat4x4 m) { _printf(mat4x4(m)); }
 
+)");
+}
+
+QString ShaderPrintf::preambleHLSL() 
+{
+    // TODO:
+    return QStringLiteral(R"(
+
+bool printfEnabled = true;
 )");
 }
 
