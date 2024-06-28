@@ -16,8 +16,8 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     int size() const { return mSize; }
 
-    void clear();
-    void copy(VKBuffer &source);
+    void clear(VKContext &context);
+    void copy(VKContext &context, VKBuffer &source);
     bool swap(VKBuffer &other);
     const KDGpu::Buffer &getReadOnlyBuffer(VKContext &context);
     const KDGpu::Buffer &getReadWriteBuffer(VKContext &context);

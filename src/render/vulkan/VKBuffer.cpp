@@ -96,14 +96,21 @@ bool VKBuffer::operator==(const VKBuffer &rhs) const
            std::tie(rhs.mFileName, rhs.mSize,rhs.mMessages);
 }
 
-void VKBuffer::clear()
+void VKBuffer::clear(VKContext &context)
 {
-    // TODO:
+    context.commandRecorder->clearBuffer({
+        .dstBuffer = getReadWriteBuffer(context),
+        .byteSize = static_cast<uint64_t>(mSize)
+    });
 }
 
-void VKBuffer::copy(VKBuffer &source)
+void VKBuffer::copy(VKContext &context, VKBuffer &source)
 {
-    // TODO:
+    context.commandRecorder->copyBuffer({
+        .src = source.getReadOnlyBuffer(context),
+        .dst = getReadWriteBuffer(context),
+        .byteSize = static_cast<uint64_t>(mSize)
+    });
 }
 
 bool VKBuffer::swap(VKBuffer &other)

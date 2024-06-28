@@ -248,16 +248,19 @@ void VKRenderSession::createCommandQueue()
                         });
                     break;
 
-                case Binding::BindingType::Image:
+                case Binding::BindingType::Image: {
+                    auto texture = addTextureOnce(b.textureId);
+                    texture->addUsage(KDGpu::TextureUsageFlagBits::StorageBit);
                     addCommand(
                         [binding = VKImageBinding{
-                            b.id, b.name, addTextureOnce(b.textureId),
+                            b.id, b.name, std::move(texture),
                             b.level, b.layer,
                             b.imageFormat }
                         ](BindingState &state) {
                             state.top().images[binding.name] = binding;
                         });
                     break;
+                }
 
                 case Binding::BindingType::TextureBuffer: {
                     //addCommand(

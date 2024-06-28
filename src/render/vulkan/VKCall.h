@@ -34,9 +34,9 @@ private:
     void executeDraw(VKContext &context, MessagePtrSet &messages, ScriptEngine &scriptEngine);
     void executeCompute(VKContext &context, MessagePtrSet &messages, ScriptEngine &scriptEngine);
     void executeClearTexture(VKContext &context, MessagePtrSet &messages);
-    void executeCopyTexture(MessagePtrSet &messages);
-    void executeClearBuffer(MessagePtrSet &messages);
-    void executeCopyBuffer(MessagePtrSet &messages);
+    void executeCopyTexture(VKContext &context, MessagePtrSet &messages);
+    void executeClearBuffer(VKContext &context, MessagePtrSet &messages);
+    void executeCopyBuffer(VKContext &context, MessagePtrSet &messages);
     void executeSwapTextures(MessagePtrSet &messages);
     void executeSwapBuffers(MessagePtrSet &messages);
 

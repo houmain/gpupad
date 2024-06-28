@@ -108,13 +108,13 @@ void VKCall::execute(VKContext &context, MessagePtrSet &messages, ScriptEngine &
             executeClearTexture(context, messages);
             break;
         case Call::CallType::CopyTexture:
-            executeCopyTexture(messages);
+            executeCopyTexture(context, messages);
             break;
         case Call::CallType::ClearBuffer:
-            executeClearBuffer(messages);
+            executeClearBuffer(context, messages);
             break;
         case Call::CallType::CopyBuffer:
-            executeCopyBuffer(messages);
+            executeCopyBuffer(context, messages);
             break;
         case Call::CallType::SwapTextures:
             executeSwapTextures(messages);
@@ -268,15 +268,14 @@ void VKCall::executeClearTexture(VKContext &context, MessagePtrSet &messages)
     mUsedItems += mTexture->usedItems();
 }
 
-void VKCall::executeCopyTexture(MessagePtrSet &messages)
+void VKCall::executeCopyTexture(VKContext &context, MessagePtrSet &messages)
 {
     if (!mTexture || !mFromTexture) {
         messages += MessageList::insert(
             mCall.id, MessageType::TextureNotAssigned);
         return;
     }
-    //auto guard = beginTimerQuery();
-    if (!mTexture->copy(*mFromTexture))
+    if (!mTexture->copy(context, *mFromTexture))
         messages += MessageList::insert(
             mCall.id, MessageType::CopyingTextureFailed);
 
@@ -284,27 +283,25 @@ void VKCall::executeCopyTexture(MessagePtrSet &messages)
     mUsedItems += mFromTexture->usedItems();
 }
 
-void VKCall::executeClearBuffer(MessagePtrSet &messages)
+void VKCall::executeClearBuffer(VKContext &context, MessagePtrSet &messages)
 {
     if (!mBuffer) {
         messages += MessageList::insert(
             mCall.id, MessageType::BufferNotAssigned);
         return;
     }
-    //auto guard = beginTimerQuery();
-    mBuffer->clear();
+    mBuffer->clear(context);
     mUsedItems += mBuffer->usedItems();
 }
 
-void VKCall::executeCopyBuffer(MessagePtrSet &messages)
+void VKCall::executeCopyBuffer(VKContext &context, MessagePtrSet &messages)
 {
     if (!mBuffer || !mFromBuffer) {
         messages += MessageList::insert(
             mCall.id, MessageType::BufferNotAssigned);
         return;
     }
-    //auto guard = beginTimerQuery();
-    mBuffer->copy(*mFromBuffer);
+    mBuffer->copy(context, *mFromBuffer);
     mUsedItems += mBuffer->usedItems();
     mUsedItems += mFromBuffer->usedItems();
 }

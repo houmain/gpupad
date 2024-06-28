@@ -135,6 +135,19 @@ namespace
 VKTexture::VKTexture(const Texture &texture, ScriptEngine &scriptEngine)
     : TextureBase(texture, scriptEngine)
 {
+    mUsage = KDGpu::TextureUsageFlags{
+        KDGpu::TextureUsageFlagBits::TransferSrcBit |
+        KDGpu::TextureUsageFlagBits::TransferDstBit |
+        (mKind.depth ? 
+            KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit :
+            KDGpu::TextureUsageFlagBits::ColorAttachmentBit |
+            KDGpu::TextureUsageFlagBits::SampledBit)
+    };
+}
+
+void VKTexture::addUsage(KDGpu::TextureUsageFlags usage)
+{
+    mUsage |= usage;
 }
 
 bool VKTexture::prepareImageSampler(VKContext &context)
@@ -153,7 +166,7 @@ bool VKTexture::prepareImageSampler(VKContext &context)
 bool VKTexture::prepareStorageImage(VKContext &context)
 {
     reload(false);
-    createAndUpload(context, KDGpu::TextureUsageFlagBits::StorageBit);
+    createAndUpload(context);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
 
@@ -252,10 +265,26 @@ bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
     return succeeded;
 }
 
-bool VKTexture::copy(VKTexture &source)
+bool VKTexture::copy(VKContext &context, VKTexture &source)
 {
-    // TODO:
-    return false;
+    context.commandRecorder->copyTextureToTexture({
+        .srcTexture = source.texture(),
+        .srcLayout = mCurrentLayout,
+        .dstTexture = texture(),
+        .dstLayout = KDGpu::TextureLayout::General,
+        .regions = {
+            KDGpu::TextureCopyRegion{ 
+                .srcSubresource{ .aspectMask = source.aspectMask() },
+                .dstSubresource{ .aspectMask = aspectMask() },
+                .extent = {
+                    static_cast<uint32_t>(mWidth), 
+                    static_cast<uint32_t>(mHeight),
+                    static_cast<uint32_t>(mDepth),
+                }
+            }
+        }
+    });
+    return true;
 }
 
 bool VKTexture::swap(VKTexture &other)
@@ -286,24 +315,13 @@ void VKTexture::reset(KDGpu::Device& device)
     }
 }
 
-void VKTexture::createAndUpload(VKContext &context, 
-    KDGpu::TextureUsageFlags extraUsageFlags)
+void VKTexture::createAndUpload(VKContext &context)
 {
-    if (mSystemCopyModified) 
+    if (mSystemCopyModified)
         reset(context.device);
 
     if (std::exchange(mCreated, true))
-        return;
-
-    const auto usage = KDGpu::TextureUsageFlags{ 
-        KDGpu::TextureUsageFlagBits::TransferSrcBit |
-        KDGpu::TextureUsageFlagBits::TransferDstBit |
-        (mKind.depth ? 
-            KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit :
-            KDGpu::TextureUsageFlagBits::ColorAttachmentBit |
-            KDGpu::TextureUsageFlagBits::SampledBit |
-            extraUsageFlags)
-    };
+      return;
 
     const auto textureOptions = KDGpu::TextureOptions{
         .type = getKDTextureType(mKind),
@@ -316,7 +334,7 @@ void VKTexture::createAndUpload(VKContext &context,
         .mipLevels = static_cast<uint32_t>(mData.levels()),
         .arrayLayers = static_cast<uint32_t>(mLayers),
         .samples = getKDSampleCount(1),//mSamples),
-        .usage = usage,
+        .usage = mUsage,
         .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
     };
 
@@ -331,7 +349,7 @@ void VKTexture::createAndUpload(VKContext &context,
             data = mData.convert(mFormat);
 
         if (!data.uploadVK(&context.ktxDeviceInfo, &mKtxTexture, 
-                static_cast<VkImageUsageFlags>(usage.toInt()),
+                static_cast<VkImageUsageFlags>(mUsage.toInt()),
                 static_cast<VkImageLayout>(mCurrentLayout))) {
             mMessages += MessageList::insert(mItemId,
                 (data.isNull() ? MessageType::UploadingImageFailed :
