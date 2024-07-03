@@ -13,3 +13,4 @@ KDGpu::BlendOperation toKDGpu(Attachment::BlendEquation eq);
 KDGpu::BlendFactor toKDGpu(Attachment::BlendFactor factor);
 KDGpu::CompareOperation toKDGpu(Attachment::ComparisonFunc func);
 KDGpu::StencilOperation toKDGpu(Attachment::StencilOperation op);
+KDGpu::SampleCountFlagBits getKDSampleCount(int samples);

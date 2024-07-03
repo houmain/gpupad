@@ -35,17 +35,6 @@ namespace
         return { };
     }
 
-    KDGpu::SampleCountFlagBits getKDSampleCount(int samples)
-    {
-        if (samples <= 1) return KDGpu::SampleCountFlagBits::Samples1Bit;
-        if (samples <= 2) return KDGpu::SampleCountFlagBits::Samples2Bit;
-        if (samples <= 4) return KDGpu::SampleCountFlagBits::Samples4Bit;
-        if (samples <= 8) return KDGpu::SampleCountFlagBits::Samples8Bit;
-        if (samples <= 16) return KDGpu::SampleCountFlagBits::Samples16Bit;
-        if (samples <= 32) return KDGpu::SampleCountFlagBits::Samples32Bit;
-        return KDGpu::SampleCountFlagBits::Samples64Bit;
-    }
-
     class TransferTexture
     {
     private:
@@ -138,7 +127,7 @@ VKTexture::VKTexture(const Texture &texture, ScriptEngine &scriptEngine)
     mUsage = KDGpu::TextureUsageFlags{
         KDGpu::TextureUsageFlagBits::TransferSrcBit |
         KDGpu::TextureUsageFlagBits::TransferDstBit |
-        (mKind.depth ? 
+        (mKind.depth || mKind.stencil ? 
             KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit :
             KDGpu::TextureUsageFlagBits::ColorAttachmentBit |
             KDGpu::TextureUsageFlagBits::SampledBit)

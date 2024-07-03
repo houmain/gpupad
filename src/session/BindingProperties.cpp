@@ -200,7 +200,9 @@ TextureKind BindingProperties::currentTextureKind() const
     auto itemId = mUi->texture->currentData().toInt();
     if (auto texture = mSessionProperties.model().findItem<Texture>(itemId))
         return getKind(*texture);
-    return { };
+
+    // sampler without texture
+    return TextureKind{ 2, true };
 }
 
 int BindingProperties::getTextureStride(QVariant textureId) const
@@ -288,6 +290,12 @@ void BindingProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelImageFormat, mUi->imageFormat,
         stride);
 
+    setFormVisibility(mUi->formLayout, mUi->labelWrapModeX, mUi->wrapModeX,
+        sampler && textureKind.dimensions > 0);
+    setFormVisibility(mUi->formLayout, mUi->labelWrapModeY, mUi->wrapModeY,
+        sampler && textureKind.dimensions > 1);
+    setFormVisibility(mUi->formLayout, mUi->labelWrapModeZ, mUi->wrapModeZ,
+        sampler && textureKind.dimensions > 2);
     setFormVisibility(mUi->formLayout, mUi->labelComparisonFunc, mUi->comparisonFunc,
         sampler && textureKind.depth);
     setFormVisibility(mUi->formLayout, mUi->labelMagFilter, mUi->magFilter,
@@ -296,12 +304,6 @@ void BindingProperties::updateWidgets()
         sampler);
     setFormVisibility(mUi->formLayout, mUi->labelAnisotropic, mUi->anisotropic,
         sampler);
-    setFormVisibility(mUi->formLayout, mUi->labelWrapModeX, mUi->wrapModeX,
-        sampler && textureKind.dimensions > 0);
-    setFormVisibility(mUi->formLayout, mUi->labelWrapModeY, mUi->wrapModeY,
-        sampler && textureKind.dimensions > 1);
-    setFormVisibility(mUi->formLayout, mUi->labelWrapModeZ, mUi->wrapModeZ,
-        sampler && textureKind.dimensions > 2);
     setFormVisibility(mUi->formLayout, mUi->labelBorderColor, mUi->borderColor,
         sampler);
 

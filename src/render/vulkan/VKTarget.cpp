@@ -56,9 +56,24 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
                     .initialLayout = texture->currentLayout(),
                 });
             }
+
+            const auto min = [](uint32_t &var, const uint32_t value) {
+                var = (var == 0 || value < var ? value : var);
+            };
+            min(renderPassOptions.framebufferWidth,
+                static_cast<uint32_t>(texture->width()));
+            min(renderPassOptions.framebufferHeight,
+                static_cast<uint32_t>(texture->height()));
+
             mUsedItems += texture->usedItems();
         }
 
+    if (!renderPassOptions.framebufferWidth
+        || !renderPassOptions.framebufferHeight) {
+        renderPassOptions.framebufferWidth = mDefaultWidth;
+        renderPassOptions.framebufferHeight = mDefaultHeight;
+        renderPassOptions.samples = getKDSampleCount(mDefaultSamples);
+    }
     return renderPassOptions;
 }
 

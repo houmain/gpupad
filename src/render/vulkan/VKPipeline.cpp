@@ -88,6 +88,8 @@ namespace
                 case Binding::WrapMode::ClampToBorder: return KDGpu::AddressMode::ClampToBorder;
                 //case Binding::WrapMode::MirrorClampToEdge: return KDGpu::AddressMode::MirrorClampToEdge;
             }
+            Q_UNREACHABLE();
+            return KDGpu::AddressMode{ };
         };
 
         return KDGpu::SamplerOptions{
@@ -421,6 +423,12 @@ bool VKPipeline::updateBindings(VKContext &context)
         bindGroup.bindGroup = { };
     }
 
+    auto allBound = true;
+    const auto notBoundError = [&](MessageType message, QString name) {
+        mMessages += MessageList::insert(mItemId, message, name);
+        allBound = false;
+    };
+
     for (const auto &[stage, interface] : mProgram.interface())
         for (auto i = 0u; i < interface->descriptor_binding_count; ++i) {
             const auto& desc = interface->descriptor_bindings[i];
@@ -441,10 +449,9 @@ bool VKPipeline::updateBindings(VKContext &context)
                         const auto bufferBinding = findByName(mBufferBindings, 
                             desc.type_description->type_name);
                         if (!bufferBinding) {
-                            mMessages += MessageList::insert(mItemId,
-                                MessageType::BufferNotSet,
+                            notBoundError(MessageType::BufferNotSet,
                                 desc.type_description->type_name);
-                            return false;
+                            continue;
                         }
 
                         setBindGroupResource(desc.set, {
@@ -469,10 +476,9 @@ bool VKPipeline::updateBindings(VKContext &context)
                         const auto bufferBinding = findByName(mBufferBindings, 
                             desc.type_description->type_name);
                         if (!bufferBinding) {
-                            mMessages += MessageList::insert(mItemId,
-                                MessageType::BufferNotSet,
+                            notBoundError(MessageType::BufferNotSet,
                                 desc.type_description->type_name);
-                            return false;
+                            continue;
                         }
 
                         setBindGroupResource(desc.set, {
@@ -490,9 +496,9 @@ bool VKPipeline::updateBindings(VKContext &context)
                 case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: {
                     const auto samplerBinding = findByName(mSamplerBindings, desc.name);
                     if (!samplerBinding) {
-                        mMessages += MessageList::insert(mItemId,
-                            MessageType::SamplerNotSet, desc.name);
-                        return false;
+                        if (desc.accessed)
+                            notBoundError(MessageType::SamplerNotSet, desc.name);
+                        continue;
                     }
 
                     // TODO: do not recreate every time
@@ -509,8 +515,10 @@ bool VKPipeline::updateBindings(VKContext &context)
                     }
                     else {
                         if (!samplerBinding->texture
-                            || !samplerBinding->texture->prepareSampledImage(context))
-                            return false;
+                            || !samplerBinding->texture->prepareSampledImage(context)) {
+                            notBoundError(MessageType::SamplerNotSet, desc.name);
+                            continue;
+                        }
 
                         if (desc.descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE) {
                             setBindGroupResource(desc.set, {
@@ -535,13 +543,12 @@ bool VKPipeline::updateBindings(VKContext &context)
 
                 case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE: {
                     const auto imageBinding = findByName(mImageBindings, desc.name);
-                    if (!imageBinding) {
-                        mMessages += MessageList::insert(mItemId,
-                            MessageType::ImageNotSet, desc.name);
-                        return false;
+                    if (!imageBinding
+                        || !imageBinding->texture->prepareStorageImage(context)) {
+                        if (desc.accessed)
+                            notBoundError(MessageType::ImageNotSet, desc.name);
+                        continue;
                     }
-                    if (!imageBinding->texture->prepareStorageImage(context))
-                        return false;
 
                     setBindGroupResource(desc.set, {
                         .binding = desc.binding,
@@ -557,6 +564,9 @@ bool VKPipeline::updateBindings(VKContext &context)
                     break;
             }
         }
+
+    if (!allBound)
+        return false;
 
     Q_ASSERT(mBindGroups.size() == mBindGroupLayouts.size());
     for (auto i = 0u; i < mBindGroups.size(); ++i) {

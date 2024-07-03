@@ -69,6 +69,8 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case DownloadingImageFailed:
         case BufferNotSet:
         case AttributeNotSet:
+        case ImageNotSet:
+        case SamplerNotSet:
         case ShaderError:
         case ScriptError:
         case ProgramNotAssigned:
@@ -94,8 +96,6 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
             return mErrorIcon;
 
         case UniformNotSet:
-        case ImageNotSet:
-        case SamplerNotSet:
         case ShaderWarning:
         case ScriptWarning:
         case TooManyPrintfCalls:
