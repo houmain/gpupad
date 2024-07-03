@@ -23,18 +23,12 @@ namespace
 
     Field::DataType getBufferMemberDataType(const SpvReflectBlockVariable &variable)
     {
-        // TODO: complete
-        switch (variable.type_description->op) {
-            case SpvOpTypeInt: 
-                return (variable.numeric.scalar.signedness ? 
-                    Field::DataType::Int32 : Field::DataType::Uint32);
-
-            case SpvOpTypeFloat:
-            case SpvOpTypeVector:
-            case SpvOpTypeMatrix:
-                return (variable.numeric.scalar.width == 32 ?
-                    Field::DataType::Float : Field::DataType::Double);
-            default: break;
+        const auto &type_desc = *variable.type_description;
+        if (type_desc.traits.numeric.scalar.width == 32) {
+            if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_FLOAT)
+                return Field::DataType::Float;
+            return (type_desc.traits.numeric.scalar.signedness ?
+                Field::DataType::Int32 : Field::DataType::Uint32);
         }
         Q_ASSERT(!"variable type not handled");
         return Field::DataType::Float;
@@ -42,14 +36,23 @@ namespace
 
     int getBufferMemberElementCount(const SpvReflectBlockVariable &variable) 
     {
-        // TODO: complete
-        switch (variable.type_description->op) {
-            case SpvOpTypeVector: return variable.numeric.vector.component_count;
-            case SpvOpTypeMatrix: return variable.numeric.matrix.row_count * 
-                                         variable.numeric.matrix.column_count;
-            default: break;
-        }
+        const auto &type_desc = *variable.type_description;
+        if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX)
+            return variable.numeric.matrix.row_count * 
+                   variable.numeric.matrix.column_count;
+        if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_VECTOR)
+            return variable.numeric.vector.component_count;
         return 1;
+    }
+
+    int getBufferMemberArraySize(const SpvReflectBlockVariable &variable) 
+    {
+        const auto &type_desc = *variable.type_description;
+        auto count = 1u;
+        if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_ARRAY)
+            for (auto i = 0u; i < variable.array.dims_count; ++i)
+                count *= variable.array.dims[i];
+        return static_cast<int>(count);
     }
 
     KDGpu::ResourceBindingType getResourceType(SpvReflectDescriptorType type)
@@ -306,33 +309,31 @@ void VKPipeline::updateDefaultUniformBlock(VKContext &context,
             const auto it = std::find_if(begin(mUniformBindings), end(mUniformBindings),
                 [&](const VKUniformBinding &binding) { return binding.name == member.name; });
             if (it == mUniformBindings.end()) {
-                mMessages += MessageList::insert(mItemId, 
-                    MessageType::UniformNotSet, member.name);
+                if ((member.flags & SPV_REFLECT_VARIABLE_FLAGS_UNUSED) == 0)
+                    mMessages += MessageList::insert(mItemId, 
+                        MessageType::UniformNotSet, member.name);
                 continue;
             }
 
             const auto &binding = *it;
             const auto type = getBufferMemberDataType(member);
             const auto count = getBufferMemberElementCount(member);
+            const auto arraySize = getBufferMemberArraySize(member);
             switch (type) {
 #define ADD(DATATYPE, TYPE) \
                 case DATATYPE: { \
                     auto values = getValues<TYPE>(scriptEngine, \
-                        binding.values, binding.bindingItemId, count, mMessages); \
-                    std::memcpy(&bufferData[member.offset], values.data(), \
-                        values.size() * sizeof(values[0])); \
+                        binding.values, binding.bindingItemId, count * arraySize, mMessages); \
+                    for (auto a = 0; a < arraySize; ++a) \
+                        std::memcpy( \
+                            &bufferData[member.offset + member.array.stride * a], \
+                            values.data() + count * a, \
+                            count * sizeof(TYPE)); \
                     break; \
                 }
-                ADD(Field::DataType::Int8, int8_t);
-                ADD(Field::DataType::Int16, int16_t);
                 ADD(Field::DataType::Int32, int32_t);
-                //ADD(Field::DataType::Int64, int64_t);
-                ADD(Field::DataType::Uint8, uint8_t);
-                ADD(Field::DataType::Uint16, uint16_t);
                 ADD(Field::DataType::Uint32, uint32_t);
-                //ADD(Field::DataType::Uint64, uint64_t);
                 ADD(Field::DataType::Float, float);
-                ADD(Field::DataType::Double, double);
 #undef ADD
             }
             mUsedItems += binding.bindingItemId;
