@@ -10,6 +10,8 @@ class VKTexture : public TextureBase
 {
 public:
     VKTexture(const Texture &texture, ScriptEngine &scriptEngine);
+    VKTexture(const Buffer &buffer, VKBuffer *textureBuffer, 
+        Texture::Format format, ScriptEngine &scriptEngine);
 
     KDGpu::Texture &texture() { return mTexture; }
     KDGpu::TextureView &textureView() { return mTextureView; }
@@ -34,6 +36,7 @@ private:
         KDGpu::TextureLayout layout, KDGpu::AccessFlags accessMask, 
         KDGpu::PipelineStageFlags stage);
 
+    VKBuffer *mTextureBuffer{ };
     bool mCreated{ };
     KDGpu::TextureUsageFlags mUsage{ };
     ktxVulkanTexture mKtxTexture{ };

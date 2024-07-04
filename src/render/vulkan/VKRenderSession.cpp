@@ -173,11 +173,11 @@ void VKRenderSession::createCommandQueue()
             session.findItem<Texture>(textureId), scriptEngine);
     };
 
-    //const auto addTextureBufferOnce = [&](ItemId bufferId,
-    //        VKBuffer *buffer, Texture::Format format) {
-    //    return addOnce(mCommandQueue->textures,
-    //        session.findItem<Buffer>(bufferId), buffer, format, scriptEngine);
-    //};
+    const auto addTextureBufferOnce = [&](ItemId bufferId,
+            VKBuffer *buffer, Texture::Format format) {
+        return addOnce(mCommandQueue->textures,
+            session.findItem<Buffer>(bufferId), buffer, format, scriptEngine);
+    };
 
     const auto addTargetOnce = [&](ItemId targetId) {
         auto target = session.findItem<Target>(targetId);
@@ -266,16 +266,16 @@ void VKRenderSession::createCommandQueue()
                 }
 
                 case Binding::BindingType::TextureBuffer: {
-                    //addCommand(
-                    //    [binding = VKImageBinding{
-                    //        b.id, b.name,
-                    //        addTextureBufferOnce(b.bufferId, addBufferOnce(b.bufferId),
-                    //            static_cast<Texture::Format>(b.imageFormat)),
-                    //        b.level, b.layer,
-                    //        b.imageFormat }
-                    //    ](BindingState &state) {
-                    //        state.top().images[binding.name] = binding;
-                    //    });
+                    addCommand(
+                        [binding = VKImageBinding{
+                            b.id, b.name,
+                            addTextureBufferOnce(b.bufferId, addBufferOnce(b.bufferId),
+                                static_cast<Texture::Format>(b.imageFormat)),
+                            b.level, b.layer,
+                            b.imageFormat }
+                        ](BindingState &state) {
+                            state.top().images[binding.name] = binding;
+                        });
                     break;
                 }
 

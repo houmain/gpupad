@@ -134,6 +134,13 @@ VKTexture::VKTexture(const Texture &texture, ScriptEngine &scriptEngine)
     };
 }
 
+VKTexture::VKTexture(const Buffer &buffer, VKBuffer *textureBuffer,
+      Texture::Format format, ScriptEngine &scriptEngine)
+    : TextureBase(buffer, format, scriptEngine)
+    , mTextureBuffer(textureBuffer)
+{
+}
+
 void VKTexture::addUsage(KDGpu::TextureUsageFlags usage)
 {
     mUsage |= usage;
@@ -281,10 +288,12 @@ bool VKTexture::swap(VKTexture &other)
     if (!TextureBase::swap(other))
         return false;
 
+    std::swap(mTextureBuffer, other.mTextureBuffer);
+    std::swap(mCreated, other.mCreated);
+    std::swap(mUsage, other.mUsage);
     std::swap(mKtxTexture, other.mKtxTexture);
     std::swap(mTexture, other.mTexture);
     std::swap(mTextureView, other.mTextureView);
-
     std::swap(mCurrentLayout, other.mCurrentLayout);
     std::swap(mCurrentAccessMask, other.mCurrentAccessMask);
     std::swap(mCurrentStage, other.mCurrentStage);
