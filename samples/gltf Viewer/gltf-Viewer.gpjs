@@ -1,5 +1,6 @@
 [
     {
+        "flipVertically": false,
         "format": "RGBA8_UNorm",
         "height": "512",
         "id": 10,
@@ -10,6 +11,7 @@
         "width": "512"
     },
     {
+        "flipVertically": false,
         "format": "D16",
         "height": "512",
         "id": 47,
@@ -42,8 +44,8 @@
             {
                 "depthClamp": false,
                 "depthComparisonFunc": "Less",
-                "depthOffsetFactor": 0,
-                "depthOffsetUnits": 0,
+                "depthOffsetConstant": 0,
+                "depthOffsetSlope": 0,
                 "depthWrite": true,
                 "id": 48,
                 "level": 0,
@@ -79,48 +81,53 @@
         "items": [
             {
                 "fileName": "DamagedHelmet/Default_emissive.jpg",
+                "flipVertically": false,
                 "format": "RGBA8_UNorm",
-                "height": "2048",
+                "height": "1024",
                 "id": 1,
                 "target": "Target2D",
                 "type": "Texture",
-                "width": "2048"
+                "width": "1024"
             },
             {
                 "fileName": "DamagedHelmet/Default_normal.jpg",
+                "flipVertically": false,
                 "format": "RGBA8_UNorm",
-                "height": "2048",
+                "height": "1024",
                 "id": 2,
                 "target": "Target2D",
                 "type": "Texture",
-                "width": "2048"
+                "width": "1024"
             },
             {
                 "fileName": "DamagedHelmet/Default_AO.jpg",
-                "format": "RGBA8_UNorm",
-                "height": "2048",
+                "flipVertically": false,
+                "format": "R8_UNorm",
+                "height": "1024",
                 "id": 865,
                 "target": "Target2D",
                 "type": "Texture",
-                "width": "2048"
+                "width": "1024"
             },
             {
                 "fileName": "DamagedHelmet/Default_albedo.jpg",
+                "flipVertically": false,
                 "format": "RGBA8_UNorm",
-                "height": "2048",
+                "height": "1024",
                 "id": 867,
                 "target": "Target2D",
                 "type": "Texture",
-                "width": "2048"
+                "width": "1024"
             },
             {
                 "fileName": "DamagedHelmet/Default_metalRoughness.jpg",
+                "flipVertically": false,
                 "format": "RGBA8_UNorm",
-                "height": "2048",
+                "height": "512",
                 "id": 869,
                 "target": "Target2D",
                 "type": "Texture",
-                "width": "2048"
+                "width": "512"
             },
             {
                 "fileName": "DamagedHelmet/DamagedHelmet.bin",
@@ -243,6 +250,7 @@
                 "items": [
                     {
                         "fileName": "gltf-viewer/papermill/papermill_irr.ktx",
+                        "flipVertically": false,
                         "format": "RGBA16F",
                         "id": 667,
                         "target": "TargetCubeMap",
@@ -251,6 +259,7 @@
                     },
                     {
                         "fileName": "gltf-viewer/papermill/papermill_pmrem.ktx",
+                        "flipVertically": false,
                         "format": "RGBA16F",
                         "id": 606,
                         "target": "TargetCubeMap",
@@ -259,6 +268,7 @@
                     },
                     {
                         "fileName": "gltf-viewer/brdfLUT.png",
+                        "flipVertically": false,
                         "format": "RGBA8_UNorm",
                         "height": "512",
                         "id": 127,
@@ -687,48 +697,56 @@
                     {
                         "fileName": "gltf-viewer/header.vert",
                         "id": 12,
+                        "language": "GLSL",
                         "shaderType": "Vertex",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/animation.vert",
                         "id": 11,
+                        "language": "GLSL",
                         "shaderType": "Vertex",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/primitive.vert",
                         "id": 7,
+                        "language": "GLSL",
                         "shaderType": "Vertex",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/header.frag",
                         "id": 16,
+                        "language": "GLSL",
                         "shaderType": "Fragment",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/tonemapping.frag",
                         "id": 17,
+                        "language": "GLSL",
                         "shaderType": "Fragment",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/textures.frag",
                         "id": 18,
+                        "language": "GLSL",
                         "shaderType": "Fragment",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/functions.frag",
                         "id": 19,
+                        "language": "GLSL",
                         "shaderType": "Fragment",
                         "type": "Shader"
                     },
                     {
                         "fileName": "gltf-viewer/metallic-roughness.frag",
                         "id": 15,
+                        "language": "GLSL",
                         "shaderType": "Fragment",
                         "type": "Shader"
                     }

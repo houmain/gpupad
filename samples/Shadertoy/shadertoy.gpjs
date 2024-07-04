@@ -1,5 +1,6 @@
 [
     {
+        "flipVertically": false,
         "format": "RGBA8_UNorm",
         "height": "512",
         "id": 70,
@@ -35,6 +36,28 @@
         "type": "Target"
     },
     {
+        "flipVertically": false,
+        "format": "RGBA8_UNorm",
+        "height": "256",
+        "id": 927,
+        "name": "Input Texture",
+        "target": "Target2D",
+        "type": "Texture",
+        "width": "256"
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression3",
+        "id": 81,
+        "name": "iResolution",
+        "type": "Binding",
+        "values": [
+            "512",
+            "512",
+            "0"
+        ]
+    },
+    {
         "bindingType": "Uniform",
         "editor": "Expression",
         "id": 74,
@@ -49,11 +72,56 @@
         "bindingType": "Sampler",
         "borderColor": "#ff000000",
         "comparisonFunc": "NoComparisonFunc",
-        "id": 75,
+        "id": 928,
         "magFilter": "Nearest",
         "minFilter": "Nearest",
-        "name": "iTarget",
-        "textureId": 70,
+        "name": "iChannel0",
+        "textureId": 927,
+        "type": "Binding",
+        "wrapModeX": "Repeat",
+        "wrapModeY": "Repeat",
+        "wrapModeZ": "Repeat"
+    },
+    {
+        "anisotropic": false,
+        "bindingType": "Sampler",
+        "borderColor": "#ff000000",
+        "comparisonFunc": "NoComparisonFunc",
+        "id": 929,
+        "magFilter": "Nearest",
+        "minFilter": "Nearest",
+        "name": "iChannel1",
+        "textureId": 927,
+        "type": "Binding",
+        "wrapModeX": "Repeat",
+        "wrapModeY": "Repeat",
+        "wrapModeZ": "Repeat"
+    },
+    {
+        "anisotropic": false,
+        "bindingType": "Sampler",
+        "borderColor": "#ff000000",
+        "comparisonFunc": "NoComparisonFunc",
+        "id": 930,
+        "magFilter": "Nearest",
+        "minFilter": "Nearest",
+        "name": "iChannel2",
+        "textureId": 927,
+        "type": "Binding",
+        "wrapModeX": "Repeat",
+        "wrapModeY": "Repeat",
+        "wrapModeZ": "Repeat"
+    },
+    {
+        "anisotropic": false,
+        "bindingType": "Sampler",
+        "borderColor": "#ff000000",
+        "comparisonFunc": "NoComparisonFunc",
+        "id": 931,
+        "magFilter": "Nearest",
+        "minFilter": "Nearest",
+        "name": "iChannel3",
+        "textureId": 927,
         "type": "Binding",
         "wrapModeX": "Repeat",
         "wrapModeY": "Repeat",
@@ -65,18 +133,21 @@
             {
                 "fileName": "attributeless.vs",
                 "id": 77,
+                "language": "GLSL",
                 "shaderType": "Vertex",
                 "type": "Shader"
             },
             {
                 "fileName": "shadertoy.fs",
                 "id": 78,
+                "language": "GLSL",
                 "shaderType": "Fragment",
                 "type": "Shader"
             },
             {
                 "fileName": "image.fs",
                 "id": 79,
+                "language": "GLSL",
                 "shaderType": "Fragment",
                 "type": "Shader"
             }

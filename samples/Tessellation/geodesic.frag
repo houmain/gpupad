@@ -6,9 +6,8 @@
 
 out vec4 FragColor;
 in vec3 gFacetNormal;
-in vec3 gTriDistance;
 in vec3 gPatchDistance;
-in float gPrimitive;
+in vec3 gTriDistance;
 uniform vec3 LightPosition;
 uniform vec3 DiffuseMaterial;
 uniform vec3 AmbientMaterial;

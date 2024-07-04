@@ -1,6 +1,7 @@
 [
     {
-        "format": "RGB8_UNorm",
+        "flipVertically": false,
+        "format": "RGBA8_UNorm",
         "height": "512",
         "id": 77,
         "name": "Texture",
@@ -125,12 +126,14 @@
             {
                 "fileName": "particle.comp",
                 "id": 76,
+                "language": "GLSL",
                 "shaderType": "Includable",
                 "type": "Shader"
             },
             {
                 "fileName": "reset.comp",
                 "id": 63,
+                "language": "GLSL",
                 "shaderType": "Compute",
                 "type": "Shader"
             }
@@ -144,12 +147,14 @@
             {
                 "fileName": "particle.comp",
                 "id": 75,
+                "language": "GLSL",
                 "shaderType": "Includable",
                 "type": "Shader"
             },
             {
                 "fileName": "update.comp",
                 "id": 73,
+                "language": "GLSL",
                 "shaderType": "Compute",
                 "type": "Shader"
             }
@@ -163,12 +168,14 @@
             {
                 "fileName": "particle.vs",
                 "id": 81,
+                "language": "GLSL",
                 "shaderType": "Vertex",
                 "type": "Shader"
             },
             {
                 "fileName": "particle.fs",
                 "id": 85,
+                "language": "GLSL",
                 "shaderType": "Fragment",
                 "type": "Shader"
             }
