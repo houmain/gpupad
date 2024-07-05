@@ -28,18 +28,20 @@ bool VKProgram::operator==(const VKProgram &rhs) const
             std::tie(rhs.mShaders));
 }
 
-void VKProgram::link(KDGpu::Device &device) 
+bool VKProgram::link(KDGpu::Device &device) 
 {
-    mInterface = { };
+    if (!mInterface.empty())
+        return true;
 
     auto succeeded = true;
     for (auto &shader : mShaders)
         succeeded &= shader.compile(device, &mPrintf);
-    
-    if (succeeded) {
-        for (const auto &shader : mShaders)
-            mInterface[shader.getShaderStage().stage] = shader.interface();
-    }
+    if (!succeeded)
+        return false;
+
+    for (const auto &shader : mShaders)
+        mInterface[shader.getShaderStage().stage] = shader.interface();
+    return true;
 }
 
 std::vector<KDGpu::ShaderStage> VKProgram::getShaderStages() 

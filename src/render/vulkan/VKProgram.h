@@ -11,7 +11,7 @@ public:
     VKProgram(const Program &program, const QString &shaderPreamble, const QString &shaderIncludePaths);
     bool operator==(const VKProgram &rhs) const;
 
-    void link(KDGpu::Device &device);
+    bool link(KDGpu::Device &device);
     std::vector<KDGpu::ShaderStage> getShaderStages();
     ItemId itemId() const { return mItemId; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }

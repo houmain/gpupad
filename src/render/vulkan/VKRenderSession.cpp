@@ -366,9 +366,6 @@ void VKRenderSession::createCommandQueue()
                         call.execute(mCommandQueue->context, mMessages, 
                             mScriptSession->engine());
 
-                        //if (!updatingPreviewTextures())
-                        //    if (auto timerQuery = call.timerQuery())
-                        //        mTimerQueries.append({ call.itemId(), timerQuery });
                         mUsedItems += call.usedItems();
                     });
             }
@@ -426,16 +423,17 @@ void VKRenderSession::reuseUnmodifiedItems()
 
         // immediately try to link programs
         // when failing restore previous version but keep error messages
-        //for (auto &[id, program] : mCommandQueue->programs) {
-        //    auto it = mPrevCommandQueue->programs.find(id);
-        //    if (it != mPrevCommandQueue->programs.end()) {
-        //        auto &prev = it->second;
-        //        if (!program.link() && prev.link()) {
-        //            mCommandQueue->failedPrograms.push_back(std::move(program));
-        //            program = std::move(prev);
-        //        }
-        //    }
-        //}
+        auto &device = mCommandQueue->context.device;
+        for (auto &[id, program] : mCommandQueue->programs) {
+            auto it = mPrevCommandQueue->programs.find(id);
+            if (it != mPrevCommandQueue->programs.end()) {
+                auto &prev = it->second;
+                if (!program.link(device) && prev.link(device)) {
+                    mCommandQueue->failedPrograms.push_back(std::move(program));
+                    program = std::move(prev);
+                }
+            }
+        }
         mPrevCommandQueue.reset();
     }
 }
