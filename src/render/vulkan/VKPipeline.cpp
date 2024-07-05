@@ -30,6 +30,10 @@ namespace
             return (type_desc.traits.numeric.scalar.signedness ?
                 Field::DataType::Int32 : Field::DataType::Uint32);
         }
+        else if (type_desc.traits.numeric.scalar.width == 64) {
+            if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_FLOAT)
+                return Field::DataType::Double;
+        }
         Q_ASSERT(!"variable type not handled");
         return Field::DataType::Float;
     }
@@ -334,6 +338,7 @@ void VKPipeline::updateDefaultUniformBlock(VKContext &context,
                 ADD(Field::DataType::Int32, int32_t);
                 ADD(Field::DataType::Uint32, uint32_t);
                 ADD(Field::DataType::Float, float);
+                ADD(Field::DataType::Double, double);
 #undef ADD
             }
             mUsedItems += binding.bindingItemId;

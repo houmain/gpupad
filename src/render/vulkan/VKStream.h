@@ -8,7 +8,6 @@ class VKStream
 public:
     struct VKAttribute
     {
-        QSet<ItemId> usedItems;
         QString name;
         bool normalize;
         int divisor;

@@ -5,14 +5,15 @@ VKStream::VKStream(const Stream &stream)
     mUsedItems += stream.id;
 
     auto attributeIndex = 0;
-    for (const auto &item : stream.items) {
-        if (auto attribute = castItem<Attribute>(item))
+    for (const auto *item : stream.items) {
+        if (auto attribute = castItem<Attribute>(item)) {
+            mUsedItems += item->id;
             mAttributes[attributeIndex] = VKAttribute{
-                { item->id },
                 attribute->name,
                 attribute->normalize,
                 attribute->divisor,
                 nullptr, { }, 0, 0, 0 };
+        }
         ++attributeIndex;
     }
 }
@@ -23,13 +24,12 @@ void VKStream::setAttribute(int attributeIndex, const Field &field,
     const auto &block = *castItem<Block>(field.parent);
     const auto blockOffset = scriptEngine.evaluateValue(block.offset, block.id, mMessages);
     auto &attribute = mAttributes[attributeIndex];
-    attribute.usedItems += field.id;
     attribute.buffer = buffer;
     attribute.type = field.dataType;
     attribute.count = field.count;
     if (auto block = castItem<Block>(field.parent)) {
-        attribute.usedItems += block->id;
-        attribute.usedItems += block->parent->id;
+        mUsedItems += block->id;
+        mUsedItems += block->parent->id;
         attribute.stride = getBlockStride(*block);
         attribute.offset = blockOffset + getFieldRowOffset(field);
     }
