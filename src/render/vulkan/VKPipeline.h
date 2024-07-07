@@ -41,7 +41,6 @@ struct VKImageBinding
     VKTexture *texture;
     int level;
     int layer;
-    //VKenum access;
     Binding::ImageFormat format;
 };
 

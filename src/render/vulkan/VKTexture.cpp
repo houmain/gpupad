@@ -146,6 +146,32 @@ void VKTexture::addUsage(KDGpu::TextureUsageFlags usage)
     mUsage |= usage;
 }
 
+KDGpu::TextureView &VKTexture::getView(int level, int layer, KDGpu::Format format)
+{
+    auto &view = mTextureViews[ViewOptions{
+        .level = level,
+        .layer = layer,
+        .format = format,
+    }];
+    if (!view.isValid()) {
+        auto options = KDGpu::TextureViewOptions{
+            .viewType = getKDViewType(mKind),
+            .format = format,
+            .range = { .aspectMask = aspectMask() }
+        };
+        if (level >= 0) {
+            options.range.baseMipLevel = level;
+            options.range.levelCount = 1;
+        }
+        if (layer >= 0) {
+            options.range.baseArrayLayer = layer;
+            options.range.layerCount = 1;
+        }
+        view = mTexture.createView(options);
+    }
+    return view;
+}
+
 bool VKTexture::prepareSampledImage(VKContext &context)
 {
     reload(false);
@@ -156,7 +182,7 @@ bool VKTexture::prepareSampledImage(VKContext &context)
         KDGpu::AccessFlagBit::MemoryReadBit, 
         KDGpu::PipelineStageFlagBit::AllGraphicsBit);
 
-    return mTextureView.isValid();
+    return mTexture.isValid();
 }
 
 bool VKTexture::prepareStorageImage(VKContext &context)
@@ -171,7 +197,7 @@ bool VKTexture::prepareStorageImage(VKContext &context)
         KDGpu::AccessFlagBit::MemoryWriteBit | KDGpu::AccessFlagBit::MemoryReadBit, 
         KDGpu::PipelineStageFlagBit::AllGraphicsBit);
 
-    return mTextureView.isValid();
+    return mTexture.isValid();
 }
 
 bool VKTexture::prepareAttachment(VKContext &context)
@@ -192,7 +218,7 @@ bool VKTexture::prepareAttachment(VKContext &context)
         KDGpu::AccessFlagBit::MemoryReadBit, 
         KDGpu::PipelineStageFlagBit::AllGraphicsBit);
 
-    return mTextureView.isValid();
+    return mTexture.isValid();
 }
 
 bool VKTexture::prepareDownload(VKContext &context)
@@ -205,7 +231,7 @@ bool VKTexture::prepareDownload(VKContext &context)
         KDGpu::AccessFlagBit::MemoryReadBit, 
         KDGpu::PipelineStageFlagBit::TransferBit);
 
-    return mTextureView.isValid();
+    return mTexture.isValid();
 }
 
 bool VKTexture::clear(VKContext &context, std::array<double, 4> color, 
@@ -216,7 +242,7 @@ bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
 
-    if (!mTextureView.isValid())
+    if (!mTexture.isValid())
         return false;
 
     memoryBarrier(*context.commandRecorder, 
@@ -293,10 +319,21 @@ bool VKTexture::swap(VKTexture &other)
     std::swap(mUsage, other.mUsage);
     std::swap(mKtxTexture, other.mKtxTexture);
     std::swap(mTexture, other.mTexture);
-    std::swap(mTextureView, other.mTextureView);
+    std::swap(mTextureViews, other.mTextureViews);
     std::swap(mCurrentLayout, other.mCurrentLayout);
     std::swap(mCurrentAccessMask, other.mCurrentAccessMask);
     std::swap(mCurrentStage, other.mCurrentStage);
+    return true;
+}
+
+bool VKTexture::updateMipmaps(VKContext& context)
+{
+    if (mMipmapsInvalidated) {
+        if (mData.levels() > 1) {
+            // TODO: copy from KDGpu::Texture::generateMipMaps
+        }
+        mMipmapsInvalidated = false;
+    }
     return true;
 }
 
@@ -309,7 +346,7 @@ void VKTexture::reset(KDGpu::Device& device)
             ktxVulkanTexture_Destruct(&mKtxTexture, vkDevice->device, nullptr);
         }
         mTexture = { };
-        mTextureView = { };
+        mTextureViews.clear();
     }
 }
 
@@ -357,14 +394,6 @@ void VKTexture::createAndUpload(VKContext &context)
         auto vkApi = static_cast<KDGpu::VulkanGraphicsApi*>(context.device.graphicsApi());
         mTexture = vkApi->createTextureFromExistingVkImage(context.device, 
             textureOptions, mKtxTexture.image);
-    }
-    if (mTexture.isValid()) {
-        auto options = KDGpu::TextureViewOptions{
-            .viewType = getKDViewType(mKind),
-            .format = KDGpu::Format::UNDEFINED,
-            .range = { .aspectMask = aspectMask() }
-        };
-        mTextureView = mTexture.createView(options);
     }
     mSystemCopyModified = mDeviceCopyModified = false;
 }
@@ -416,7 +445,7 @@ KDGpu::TextureAspectFlagBits VKTexture::aspectMask() const
 void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder, 
     KDGpu::TextureLayout layout, KDGpu::AccessFlags accessMask, KDGpu::PipelineStageFlags stage) 
 {
-    if (!mTextureView.isValid())
+    if (!mTexture.isValid())
         return;
 
     commandRecorder.textureMemoryBarrier(KDGpu::TextureMemoryBarrierOptions{

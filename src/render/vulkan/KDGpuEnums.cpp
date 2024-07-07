@@ -118,6 +118,58 @@ KDGpu::Format toKDGpu(Field::DataType dataType, int count)
     return { };
 }
 
+KDGpu::Format toKDGpu(Binding::ImageFormat format)
+{
+    using KD = KDGpu::Format;
+    using E = Binding::ImageFormat;
+    switch (format) {
+        case E::Internal: return KD::UNDEFINED;    
+        case E::r8: return KD::R8_SNORM;
+        case E::r8ui: return KD::R8_UINT;
+        case E::r8i: return KD::R8_SINT;
+        case E::r16: return KD::R16_SINT;
+        case E::r16_snorm: return KD::R16_SNORM;
+        case E::r16f: return KD::R16_SFLOAT;
+        case E::r16ui: return KD::R16_UINT;
+        case E::r16i: return KD::R16_SINT;
+        case E::rg8: return KD::R8G8_UNORM;
+        case E::rg8_snorm: return KD::R8G8_SNORM;
+        case E::rg8ui: return KD::R8G8_UINT;
+        case E::rg8i: return KD::R8G8_SINT;
+        case E::rgb32f: return KD::R32G32B32_SFLOAT;
+        case E::rgb32i: return KD::R32G32B32_SINT;
+        case E::rgb32ui: return KD::R32G32B32_UINT;
+        case E::r32f: return KD::R32_SFLOAT;
+        case E::r32ui: return KD::R32_UINT;
+        case E::r32i: return KD::R32_SINT;
+        case E::rg16: return KD::R16G16_UNORM;
+        case E::rg16_snorm: return KD::R16G16_SNORM;
+        case E::rg16ui: return KD::R16G16_UINT;
+        case E::rg16i: return KD::R16G16_SINT;
+        case E::rg16f: return KD::R16G16_SFLOAT;
+        case E::rgba8: return KD::R8G8B8A8_UNORM;
+        case E::rgba8_snorm: return KD::R8G8B8A8_SNORM;
+        case E::rgba8ui: return KD::R8G8B8A8_UINT;
+        case E::rgba8i: return KD::R8G8B8A8_SINT;
+        case E::rgb10_a2: return KD::A2B10G10R10_SNORM_PACK32;
+        case E::rgb10_a2ui: return KD::A2B10G10R10_UINT_PACK32;
+        case E::r11f_g11f_b10f: return KD::B10G11R11_UFLOAT_PACK32;
+        case E::rg32f: return KD::R32G32_SFLOAT;
+        case E::rg32ui: return KD::R32G32_UINT;
+        case E::rg32i: return KD::R32G32_SINT;
+        case E::rgba16: return KD::R16G16B16A16_UNORM;
+        case E::rgba16_snorm: return KD::R16G16B16A16_SNORM;
+        case E::rgba16f: return KD::R16G16B16A16_SFLOAT;
+        case E::rgba16ui: return KD::R16G16B16A16_UINT;
+        case E::rgba16i: return KD::R16G16B16A16_SINT;
+        case E::rgba32f: return KD::R32G32B32A32_SFLOAT;
+        case E::rgba32i: return KD::R32G32B32A32_SINT;
+        case E::rgba32ui: return KD::R32G32B32A32_UINT;
+    }
+    Q_UNREACHABLE();
+    return { };
+}
+
 KDGpu::PrimitiveTopology toKDGpu(Call::PrimitiveType primitiveType)
 {
     using E = Call::PrimitiveType;

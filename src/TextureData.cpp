@@ -1100,13 +1100,8 @@ bool TextureData::uploadVK(ktxVulkanDeviceInfo* vdi, ktxVulkanTexture* vkTexture
     if (isNull() || !vkTexture || !vdi)
         return false;
 
-    // TODO: because of attachments
-    mKtxTexture->numLevels = 1;
-    mKtxTexture->generateMipmaps = KTX_FALSE;
-
-    const auto tiling = VK_IMAGE_TILING_OPTIMAL;
     const auto result = ktxTexture_VkUploadEx(ktxTexture(mKtxTexture.get()), 
-        vdi, vkTexture, tiling, usageFlags, initialLayout);
+        vdi, vkTexture, VK_IMAGE_TILING_OPTIMAL, usageFlags, initialLayout);
 
     return (result == KTX_SUCCESS);
 }

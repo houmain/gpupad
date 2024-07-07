@@ -530,7 +530,7 @@ bool VKPipeline::updateBindings(VKContext &context)
                             setBindGroupResource(desc.set, {
                                 .binding = desc.binding,
                                 .resource = KDGpu::TextureViewBinding{
-                                    .textureView = samplerBinding->texture->textureView(),
+                                    .textureView = samplerBinding->texture->getView(),
                                 }
                             });
                         }
@@ -538,7 +538,7 @@ bool VKPipeline::updateBindings(VKContext &context)
                             setBindGroupResource(desc.set, {
                               .binding = desc.binding,
                               .resource = KDGpu::TextureViewSamplerBinding{ 
-                                  .textureView = samplerBinding->texture->textureView(), 
+                                  .textureView = samplerBinding->texture->getView(), 
                                   .sampler = sampler
                               }
                           });
@@ -559,7 +559,9 @@ bool VKPipeline::updateBindings(VKContext &context)
                     setBindGroupResource(desc.set, {
                         .binding = desc.binding,
                         .resource = KDGpu::ImageBinding{ 
-                            .textureView = imageBinding->texture->textureView(),
+                            .textureView = imageBinding->texture->getView(
+                                imageBinding->level, imageBinding->layer, 
+                                toKDGpu(imageBinding->format)),
                         }
                     });
                     break;

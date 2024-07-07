@@ -5,6 +5,7 @@
 
 KDGpu::Format toKDGpu(QOpenGLTexture::TextureFormat format);
 KDGpu::Format toKDGpu(Field::DataType dataType, int count);
+KDGpu::Format toKDGpu(Binding::ImageFormat format);
 KDGpu::PrimitiveTopology toKDGpu(Call::PrimitiveType primitiveType);
 KDGpu::CullModeFlags toKDGpu(Target::CullMode cullMode);
 KDGpu::FrontFace toKDGpu(Target::FrontFace frontFace);

@@ -14,10 +14,11 @@ public:
         Texture::Format format, ScriptEngine &scriptEngine);
 
     KDGpu::Texture &texture() { return mTexture; }
-    KDGpu::TextureView &textureView() { return mTextureView; }
     KDGpu::TextureLayout currentLayout() const { return mCurrentLayout; }
     KDGpu::TextureAspectFlagBits aspectMask() const;
 
+    KDGpu::TextureView &getView(int level = -1, int layer = -1, 
+        KDGpu::Format format = KDGpu::Format::UNDEFINED);
     void addUsage(KDGpu::TextureUsageFlags usage);
     bool prepareSampledImage(VKContext &context);
     bool prepareStorageImage(VKContext &context);
@@ -26,10 +27,23 @@ public:
     bool clear(VKContext &context, std::array<double, 4> color, double depth, int stencil);
     bool copy(VKContext &context, VKTexture &source);
     bool swap(VKTexture &other);
+    bool updateMipmaps(VKContext &context);
     bool deviceCopyModified() const { return mDeviceCopyModified; }
     bool download(VKContext &context);
 
 private:
+    struct ViewOptions 
+    {
+        int level;
+        int layer;
+        KDGpu::Format format;
+
+        friend bool operator<(const ViewOptions &a, const ViewOptions &b) {
+            return std::tie(a.level, a.layer, a.format) <
+                   std::tie(b.level, b.layer, b.format);
+        }
+    };
+
     void reset(KDGpu::Device& device);
     void createAndUpload(VKContext &context);
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder, 
@@ -41,7 +55,7 @@ private:
     KDGpu::TextureUsageFlags mUsage{ };
     ktxVulkanTexture mKtxTexture{ };
     KDGpu::Texture mTexture;
-    KDGpu::TextureView mTextureView;
+    std::map<ViewOptions, KDGpu::TextureView> mTextureViews;
     KDGpu::TextureLayout mCurrentLayout{ };
     KDGpu::AccessFlags mCurrentAccessMask{ };
     KDGpu::PipelineStageFlags mCurrentStage{ };

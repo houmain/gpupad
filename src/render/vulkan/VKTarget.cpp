@@ -38,12 +38,12 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
             const auto kind = texture->kind();
             if (!texture->prepareAttachment(context))
                 throw std::runtime_error("invalid attachment");
-
+            auto &view = texture->getView(attachment.level, attachment.layer);
             if (kind.depth || kind.stencil) {
                 auto &depthStencil = renderPassOptions.depthStencilAttachment;
                 Q_ASSERT(!depthStencil.view.isValid());
                 depthStencil = {
-                    .view = texture->textureView(),
+                    .view = view,
                     .depthLoadOperation = KDGpu::AttachmentLoadOperation::Load,
                     .stencilLoadOperation = KDGpu::AttachmentLoadOperation::Load,
                     .initialLayout = texture->currentLayout(),
@@ -51,7 +51,7 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
             }
             else {
                 renderPassOptions.colorAttachments.push_back(KDGpu::ColorAttachment{
-                    .view = texture->textureView(),
+                    .view = view,
                     .loadOperation = KDGpu::AttachmentLoadOperation::Load,
                     .initialLayout = texture->currentLayout(),
                 });
