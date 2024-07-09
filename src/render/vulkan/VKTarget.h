@@ -30,8 +30,8 @@ private:
     Target::LogicOperation mLogicOperation{ };
     QColor mBlendConstant{ };
     QMap<int, VKAttachment> mAttachments;
+    int mSamples{ };
     int mDefaultWidth{ };
     int mDefaultHeight{ };
     int mDefaultLayers{ };
-    int mDefaultSamples{ };
 };

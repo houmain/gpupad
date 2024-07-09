@@ -23,7 +23,7 @@ public:
     bool prepareSampledImage(VKContext &context);
     bool prepareStorageImage(VKContext &context);
     bool prepareAttachment(VKContext &context);
-    bool prepareDownload(VKContext &context);
+    bool prepareTransferSource(VKContext &context);
     bool clear(VKContext &context, std::array<double, 4> color, double depth, int stencil);
     bool copy(VKContext &context, VKTexture &source);
     bool swap(VKTexture &other);

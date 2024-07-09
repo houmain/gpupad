@@ -10,7 +10,7 @@ VKTarget::VKTarget(const Target &target)
     , mDefaultWidth(target.defaultWidth)
     , mDefaultHeight(target.defaultHeight)
     , mDefaultLayers(target.defaultLayers)
-    , mDefaultSamples(target.defaultSamples)
+    , mSamples(target.defaultSamples)
 {
     mUsedItems += target.id;
 
@@ -27,6 +27,9 @@ VKTarget::VKTarget(const Target &target)
 void VKTarget::setTexture(int index, VKTexture *texture)
 {
     mAttachments[index].texture = texture;
+
+    if (texture)
+        mSamples = texture->samples();
 }
 
 KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
@@ -72,8 +75,9 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
         || !renderPassOptions.framebufferHeight) {
         renderPassOptions.framebufferWidth = mDefaultWidth;
         renderPassOptions.framebufferHeight = mDefaultHeight;
-        renderPassOptions.samples = getKDSampleCount(mDefaultSamples);
     }
+       
+    renderPassOptions.samples = getKDSampleCount(mSamples);
     return renderPassOptions;
 }
 
@@ -149,8 +153,9 @@ KDGpu::DepthStencilOptions VKTarget::getDepthStencilOptions()
 
 KDGpu::MultisampleOptions VKTarget::getMultisampleOptions()
 {
-    // TODO:
-    return {};
+    return {
+        .samples = getKDSampleCount(mSamples),
+    };
 }
 
 KDGpu::PrimitiveOptions VKTarget::getPrimitiveOptions()

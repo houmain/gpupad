@@ -307,6 +307,7 @@ KDGpu::StencilOperation toKDGpu(Attachment::StencilOperation op)
 
 KDGpu::SampleCountFlagBits getKDSampleCount(int samples)
 {
+    Q_ASSERT(samples > 0 && samples <= 64);
     if (samples <= 1) return KDGpu::SampleCountFlagBits::Samples1Bit;
     if (samples <= 2) return KDGpu::SampleCountFlagBits::Samples2Bit;
     if (samples <= 4) return KDGpu::SampleCountFlagBits::Samples4Bit;
