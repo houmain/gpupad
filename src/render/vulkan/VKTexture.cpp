@@ -175,11 +175,7 @@ VKTexture::VKTexture(const Texture &texture, ScriptEngine &scriptEngine)
 {
     mUsage = KDGpu::TextureUsageFlags{
         KDGpu::TextureUsageFlagBits::TransferSrcBit |
-        KDGpu::TextureUsageFlagBits::TransferDstBit |
-        (mKind.depth || mKind.stencil ? 
-            KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit :
-            KDGpu::TextureUsageFlagBits::ColorAttachmentBit |
-            KDGpu::TextureUsageFlagBits::SampledBit)
+        KDGpu::TextureUsageFlagBits::TransferDstBit 
     };
 }
 
@@ -407,7 +403,7 @@ void VKTexture::createAndUpload(VKContext &context)
     if (std::exchange(mCreated, true))
       return;
 
-    const auto textureOptions = KDGpu::TextureOptions{
+    auto textureOptions = KDGpu::TextureOptions{
         .type = getKDTextureType(mKind),
         .format = toKDGpu(mFormat),
         .extent = { 
@@ -420,14 +416,20 @@ void VKTexture::createAndUpload(VKContext &context)
         .samples = getKDSampleCount(mSamples),
         .usage = mUsage,
         .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
-#if defined(KDGPU_PLATFORM_WIN32)
-        .externalMemoryHandleType = KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueWin32,
-#else
-        .externalMemoryHandleType = KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueFD,
-#endif
     };
 
-    if (mKind.depth || mKind.stencil || mSamples > 1) {
+    const auto isAttachment (mUsage & (
+        KDGpu::TextureUsageFlagBits::ColorAttachmentBit |
+        KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit));
+    if (isAttachment) {
+#if defined(KDGPU_PLATFORM_WIN32)
+        textureOptions.externalMemoryHandleType = KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueWin32;
+#else
+        textureOptions.externalMemoryHandleType = KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueFD;
+#endif
+    }
+
+    if (isAttachment || mSamples > 1) {
         mTexture = context.device.createTexture(textureOptions);
     }
     else {
@@ -522,6 +524,8 @@ void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
 SharedMemoryHandle VKTexture::getSharedMemoryHandle() const
 {
     const auto memory = mTexture.externalMemoryHandle();
+    if (memory.handle.index() == 0)
+        return { };
 #if defined(KDGPU_PLATFORM_WIN32)
     return { 
         std::get<HANDLE>(memory.handle),

@@ -361,7 +361,6 @@ void TextureItem::setPreviewTexture(GLuint textureId, int samples)
 
 void TextureItem::setPreviewTexture(SharedMemoryHandle handle, int samples)
 {
-    Q_ASSERT(handle.handle);
     if (!mImage.isNull() && handle.handle) {
         if (mSharedTextureHandle != handle.handle) {
             mSharedTextureHandle = handle.handle;

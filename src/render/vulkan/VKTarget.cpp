@@ -26,10 +26,16 @@ VKTarget::VKTarget(const Target &target)
 
 void VKTarget::setTexture(int index, VKTexture *texture)
 {
-    mAttachments[index].texture = texture;
+    if (!texture)
+        return;
 
-    if (texture)
-        mSamples = texture->samples();
+    const auto kind = texture->kind();
+    texture->addUsage(kind.depth || kind.stencil ? 
+        KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit :
+        KDGpu::TextureUsageFlagBits::ColorAttachmentBit);
+
+    mAttachments[index].texture = texture;
+    mSamples = texture->samples();
 }
 
 KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)

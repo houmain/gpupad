@@ -238,10 +238,13 @@ void VKRenderSession::createCommandQueue()
                         });
                     break;
 
-                case Binding::BindingType::Sampler:
+                case Binding::BindingType::Sampler: {
+                    auto texture = addTextureOnce(b.textureId);
+                    if (texture)
+                        texture->addUsage(KDGpu::TextureUsageFlagBits::SampledBit);
                     addCommand(
                         [binding = VKSamplerBinding{
-                            b.id, b.name, addTextureOnce(b.textureId),
+                            b.id, b.name, std::move(texture),
                             b.minFilter, b.magFilter, b.anisotropic,
                             b.wrapModeX, b.wrapModeY, b.wrapModeZ,
                             b.borderColor,
@@ -250,10 +253,11 @@ void VKRenderSession::createCommandQueue()
                             state.top().samplers[binding.name] = binding;
                         });
                     break;
-
+                }
                 case Binding::BindingType::Image: {
                     auto texture = addTextureOnce(b.textureId);
-                    texture->addUsage(KDGpu::TextureUsageFlagBits::StorageBit);
+                    if (texture)
+                        texture->addUsage(KDGpu::TextureUsageFlagBits::StorageBit);
                     addCommand(
                         [binding = VKImageBinding{
                             b.id, b.name, std::move(texture),
