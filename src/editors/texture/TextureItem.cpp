@@ -212,8 +212,7 @@ void main() {
     }
 
     bool importSharedTexture(SharedMemoryHandle handle, 
-        const TextureData &data, QOpenGLTexture::Target target, int samples,
-        GLuint textureId)
+        const TextureData &data, int samples, GLuint textureId)
     {            
 #if defined(_WIN32)
         auto& context = *QOpenGLContext::currentContext();
@@ -262,12 +261,14 @@ void main() {
         glImportMemoryWin32HandleEXT(memoryObject, handle.allocationSize,
             GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, handle.handle);            
 #endif
-        if (data.dimensions() == 1) {
+        const auto target = data.getTarget(samples);
+        const auto dimensions = data.dimensions() + (data.isArray() ? 1 : 0);
+        if (dimensions == 1) {
             glTextureStorageMem1DEXT(textureId, data.levels(),
                 static_cast<GLenum>(data.format()), data.width(), 
                 memoryObject, handle.allocationOffset);
         }
-        else if (data.dimensions() == 2) {
+        else if (dimensions == 2) {
             if (isMultisampleTarget(target)) {
                 glTextureStorageMem2DMultisampleEXT(textureId, samples, 
                     static_cast<GLenum>(data.format()), data.width(), 
@@ -279,7 +280,7 @@ void main() {
                     data.height(), memoryObject, handle.allocationOffset);
             }
         }
-        else if (data.dimensions() == 3) {
+        else if (dimensions == 3) {
             if (isMultisampleTarget(target)) {
                 glTextureStorageMem3DMultisampleEXT(textureId, samples, 
                     static_cast<GLenum>(data.format()), data.width(), data.depth(),
@@ -349,19 +350,16 @@ void TextureItem::setImage(TextureData image)
     update();
 }
 
-void TextureItem::setPreviewTexture(GLuint textureId, 
-    QOpenGLTexture::Target target, int samples)
+void TextureItem::setPreviewTexture(GLuint textureId, int samples)
 {
     if (!mImage.isNull()) {
-        mPreviewTarget = target;
         mPreviewTextureId = textureId;
         mPreviewSamples = samples;
         update();
     }
 }
 
-void TextureItem::setPreviewTexture(SharedMemoryHandle handle, 
-    QOpenGLTexture::Target target, int samples)
+void TextureItem::setPreviewTexture(SharedMemoryHandle handle, int samples)
 {
     Q_ASSERT(handle.handle);
     if (!mImage.isNull() && handle.handle) {
@@ -370,13 +368,12 @@ void TextureItem::setPreviewTexture(SharedMemoryHandle handle,
             if (auto gl = widget().gl45(); gl) {
                 if (mSharedTextureId)
                     gl->glDeleteTextures(1, &mSharedTextureId);
-                gl->glCreateTextures(target, 1, &mSharedTextureId);
+                gl->glCreateTextures(mImage.getTarget(samples), 1, &mSharedTextureId);
                 gl->glTextureParameteri(mSharedTextureId,
                     GL_TEXTURE_TILING_EXT, GL_OPTIMAL_TILING_EXT);
             }
-            importSharedTexture(handle, mImage, target, samples, mSharedTextureId);
+            importSharedTexture(handle, mImage, samples, mSharedTextureId);
         }
-        mPreviewTarget = target;
         mPreviewTextureId = mSharedTextureId;
         mPreviewSamples = samples;
         update();
@@ -386,7 +383,7 @@ void TextureItem::setPreviewTexture(SharedMemoryHandle handle,
 bool TextureItem::canFilter() const
 {
     return (!mImage.isNull() && 
-        (!mPreviewTextureId || !isMultisampleTarget(mPreviewTarget)));
+        (!mPreviewTextureId || mPreviewSamples == 1));
 }
 
 void TextureItem::setMousePosition(const QPointF &mousePosition)
@@ -433,7 +430,7 @@ void TextureItem::computeHistogramBounds()
     }
 
     mComputeRange->setImage(
-        (mPreviewTextureId ? mPreviewTarget : mImage.getTarget()),
+        mImage.getTarget(mPreviewSamples),
         (mPreviewTextureId ? mPreviewTextureId : mImageTextureId),
         mImage, 
         static_cast<int>(mLevel), 
@@ -488,10 +485,9 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
     if (mPreviewTextureId && !gl.glIsTexture(mPreviewTextureId))
         mPreviewTextureId = GL_NONE;
 
-    auto target = mImage.getTarget();
+    const auto target = mImage.getTarget(mPreviewTextureId ? mPreviewSamples : 0);
     if (mPreviewTextureId) {
         Singletons::glShareSynchronizer().beginUsage(gl);
-        target = mPreviewTarget;
         gl.glBindTexture(target, mPreviewTextureId);
     }
     else {

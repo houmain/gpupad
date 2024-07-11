@@ -236,9 +236,9 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
         { "1D Texture", QOpenGLTexture::Target1D },
         { "1D Texture Array", QOpenGLTexture::Target1DArray },
         { "2D Texture", QOpenGLTexture::Target2D },
-        { "2D Texture Multisample", QOpenGLTexture::Target2DMultisample },
+        //{ "2D Texture Multisample", QOpenGLTexture::Target2DMultisample },
         { "2D Texture Array", QOpenGLTexture::Target2DArray },
-        { "2D Texture Multisample Array", QOpenGLTexture::Target2DMultisampleArray },
+        //{ "2D Texture Multisample Array", QOpenGLTexture::Target2DMultisampleArray },
         { "3D Texture", QOpenGLTexture::Target3D },
         { "CubeMap Texture", QOpenGLTexture::TargetCubeMap },
         { "CubeMap Texture Array", QOpenGLTexture::TargetCubeMapArray },
@@ -325,7 +325,7 @@ void TextureProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelHeight, mUi->height, (kind.dimensions > 1 && !kind.cubeMap));
     setFormVisibility(mUi->formLayout, mUi->labelDepth, mUi->depth, kind.dimensions > 2);
     setFormVisibility(mUi->formLayout, mUi->labelLayers, mUi->layers, kind.array);
-    setFormVisibility(mUi->formLayout, mUi->labelSamples, mUi->samples, kind.multisample);
+    setFormVisibility(mUi->formLayout, mUi->labelSamples, mUi->samples, true);
     setFormVisibility(mUi->formLayout, mUi->labelFlipVertically, mUi->flipVertically,
         !FileDialog::isEmptyOrUntitled(fileName) && (kind.dimensions == 2 || kind.cubeMap));
 }

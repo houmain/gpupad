@@ -19,8 +19,8 @@ public:
     void paintGL(const QMatrix4x4 &transform);
     void setImage(TextureData image);
     const TextureData &image() const { return mImage; }
-    void setPreviewTexture(GLuint textureId, QOpenGLTexture::Target target, int samples);
-    void setPreviewTexture(SharedMemoryHandle handle, QOpenGLTexture::Target target, int samples);
+    void setPreviewTexture(GLuint textureId, int samples);
+    void setPreviewTexture(SharedMemoryHandle handle, int samples);
 
     bool canFilter() const;
     void setMagnifyLinear(bool magnifyLinear) { mMagnifyLinear = magnifyLinear; update(); }
@@ -68,7 +68,6 @@ private:
     QRect mBoundingRect;
     TextureData mImage;
     GLuint mImageTextureId{ };
-    QOpenGLTexture::Target mPreviewTarget{ };
     int mPreviewSamples{ 1 };
     GLuint mPreviewTextureId{ };
     GLuint mSharedTextureId{ };
@@ -78,7 +77,6 @@ private:
     int mFace{ };
     float mLayer{ };
     int mSample{ -1 };
-    int mSamples{ };
     bool mFlipVertically{ };
     bool mPickerEnabled{ };
     QOpenGLTexture mPickerTexture{ QOpenGLTexture::Target1D };

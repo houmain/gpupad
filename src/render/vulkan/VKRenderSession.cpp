@@ -522,8 +522,7 @@ void VKRenderSession::finish()
                 if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
                     if (auto editor = editors.getTextureEditor(fileItem->fileName))
                         if (auto handle = texture.getSharedMemoryHandle(); handle.handle)
-                            editor->updatePreviewTexture(handle, texture.target(),
-                                texture.samples());
+                            editor->updatePreviewTexture(handle, texture.samples());
 }
 
 void VKRenderSession::release()

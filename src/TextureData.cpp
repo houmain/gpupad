@@ -570,10 +570,7 @@ bool TextureData::create(
     createInfo.numFaces = 1;
     createInfo.isArray = KTX_FALSE;
 
-    if (target == QOpenGLTexture::Target2DMultisample)
-        target = QOpenGLTexture::Target2D;
-    else if (target == QOpenGLTexture::Target2DMultisampleArray)
-        target = QOpenGLTexture::Target2DArray;
+    Q_ASSERT(!isMultisampleTarget(target));
 
     switch (target) {
         case QOpenGLTexture::Target1DArray:
@@ -938,7 +935,7 @@ int TextureData::dimensions() const
         static_cast<int>(mKtxTexture->numDimensions));
 }
 
-QOpenGLTexture::Target TextureData::getTarget() const 
+QOpenGLTexture::Target TextureData::getTarget(int samples) const 
 {
     if (!mKtxTexture)
         return { };
@@ -949,8 +946,13 @@ QOpenGLTexture::Target TextureData::getTarget() const
     switch (texture.numDimensions) {
         case 1: return (texture.isArray ?
             QOpenGLTexture::Target1DArray : QOpenGLTexture::Target1D);
-        case 2: return (texture.isArray ?
-            QOpenGLTexture::Target2DArray : QOpenGLTexture::Target2D);
+        case 2: 
+            if (samples > 1)
+                return (texture.isArray ?
+                    QOpenGLTexture::Target2DMultisampleArray :
+                    QOpenGLTexture::Target2DMultisample);
+            return (texture.isArray ?
+                QOpenGLTexture::Target2DArray : QOpenGLTexture::Target2D);
         case 3: return QOpenGLTexture::Target3D;
     }
     return { };

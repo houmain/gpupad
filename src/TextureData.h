@@ -30,7 +30,7 @@ public:
     bool isCubemap() const;
     bool isCompressed() const;
     int dimensions() const;
-    QOpenGLTexture::Target getTarget() const;
+    QOpenGLTexture::Target getTarget(int samples = 0) const;
     QOpenGLTexture::TextureFormat format() const;
     QOpenGLTexture::PixelFormat pixelFormat() const;
     QOpenGLTexture::PixelType pixelType() const;

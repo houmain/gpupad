@@ -527,7 +527,6 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
             result &= (column != TextureHeight || (kind.dimensions > 1 && !kind.cubeMap));
             result &= (column != TextureDepth || kind.dimensions > 2);
             result &= (column != TextureLayers || kind.array);
-            result &= (column != TextureSamples || kind.multisample);
             break;
         }
 

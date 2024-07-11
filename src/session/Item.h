@@ -241,7 +241,6 @@ struct TextureKind
     bool depth;
     bool stencil;
     bool array;
-    bool multisample;
     bool cubeMap;
 };
 

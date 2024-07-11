@@ -394,6 +394,9 @@ void GLTexture::reload(bool forWriting)
     }
 
     TextureBase::reload(forWriting);
+
+    // set multisample target
+    mTarget = mData.getTarget(mSamples);
 }
 
 void GLTexture::createTexture()

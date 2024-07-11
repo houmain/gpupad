@@ -68,15 +68,6 @@ TextureKind getKind(const Texture &texture)
     }
 
     switch (texture.target) {
-        case QOpenGLTexture::Target2DMultisample:
-        case QOpenGLTexture::Target2DMultisampleArray:
-            kind.multisample = true;
-            break;
-        default:
-            break;
-    }
-
-    switch (texture.target) {
         case QOpenGLTexture::TargetCubeMap:
         case QOpenGLTexture::TargetCubeMapArray:
             kind.cubeMap = true;
