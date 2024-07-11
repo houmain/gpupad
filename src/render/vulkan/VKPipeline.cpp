@@ -64,7 +64,8 @@ namespace
         return static_cast<KDGpu::ResourceBindingType>(type);
     }
 
-    KDGpu::SamplerOptions getSamplerOptions(const VKSamplerBinding &binding)
+    KDGpu::SamplerOptions getSamplerOptions(const VKSamplerBinding &binding,
+        float maxAnisotropy)
     {
         const auto getFilter = [](Binding::Filter filter) {
             switch (filter) {
@@ -109,7 +110,7 @@ namespace
             // .lodMinClamp = 0.0f,
             // .lodMaxClamp = MipmapLodClamping::NoClamping,
             .anisotropyEnabled = binding.anisotropic,
-            // .maxAnisotropy = 1.0f,
+            .maxAnisotropy = maxAnisotropy,
             .compareEnabled = (binding.comparisonFunc != Binding::ComparisonFunc::NoComparisonFunc),
             .compare = toKDGpu(binding.comparisonFunc),
             //.normalizedCoordinates = true
@@ -508,8 +509,10 @@ bool VKPipeline::updateBindings(VKContext &context)
                     }
 
                     // TODO: do not recreate every time
+                    const auto maxSamplerAnisotropy = 
+                        context.device.adapter()->properties().limits.maxSamplerAnisotropy;
                     const auto& sampler = mSamplers.emplace_back(
-                        context.device.createSampler(getSamplerOptions(*samplerBinding)));
+                        context.device.createSampler(getSamplerOptions(*samplerBinding, maxSamplerAnisotropy)));
 
                     if (desc.descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER) {
                         setBindGroupResource(desc.set, {
