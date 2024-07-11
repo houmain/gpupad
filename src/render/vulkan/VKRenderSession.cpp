@@ -480,13 +480,13 @@ void VKRenderSession::downloadModifiedResources()
             mMessages += program.printf().formatMessages(
                 mCommandQueue->context, program.itemId());
 
-    for (auto &[itemId, texture] : mCommandQueue->textures) {
-        texture.updateMipmaps(mCommandQueue->context);
-        if (!updatingPreviewTextures() &&
-            !texture.fileName().isEmpty() &&
-            texture.download(mCommandQueue->context))
-            mModifiedTextures[texture.itemId()] = texture.data();
-    }
+    for (auto &[itemId, texture] : mCommandQueue->textures)
+        if (!texture.fileName().isEmpty()) {
+            texture.updateMipmaps(mCommandQueue->context);
+            if (!updatingPreviewTextures() &&
+                texture.download(mCommandQueue->context))
+                mModifiedTextures[texture.itemId()] = texture.data();
+        }
     
     for (auto &[itemId, buffer] : mCommandQueue->buffers)
         if (!buffer.fileName().isEmpty() &&

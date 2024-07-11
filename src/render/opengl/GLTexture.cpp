@@ -375,7 +375,7 @@ bool GLTexture::updateMipmaps()
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     if (mMipmapsInvalidated) {
-        if (mData.levels() > 1) {
+        if (levels() > 1) {
             auto &gl = GLContext::currentContext();
             gl.glBindTexture(target(), getReadWriteTextureId());
             gl.glGenerateMipmap(target());

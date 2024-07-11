@@ -484,13 +484,13 @@ void GLRenderSession::executeCommandQueue()
 
 void GLRenderSession::downloadModifiedResources()
 {
-    for (auto &[itemId, texture] : mCommandQueue->textures) {
-        texture.updateMipmaps();
-        if (!updatingPreviewTextures() &&
-            !texture.fileName().isEmpty() &&
-            texture.download())
-            mModifiedTextures[texture.itemId()] = texture.data();
-    }
+    for (auto &[itemId, texture] : mCommandQueue->textures)
+        if (!texture.fileName().isEmpty()) {
+            texture.updateMipmaps();
+            if (!updatingPreviewTextures() &&
+                texture.download())
+                mModifiedTextures[texture.itemId()] = texture.data();
+        }
 
     for (auto &[itemId, buffer] : mCommandQueue->buffers)
         if (!buffer.fileName().isEmpty() &&

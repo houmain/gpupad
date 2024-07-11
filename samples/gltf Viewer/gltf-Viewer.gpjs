@@ -6,7 +6,7 @@
         "id": 10,
         "name": "Target",
         "samples": 4,
-        "target": "Target2DMultisample",
+        "target": "Target2D",
         "type": "Texture",
         "width": "512"
     },
@@ -17,7 +17,7 @@
         "id": 47,
         "name": "Depth",
         "samples": 4,
-        "target": "Target2DMultisample",
+        "target": "Target2D",
         "type": "Texture",
         "width": "512"
     },
@@ -85,6 +85,7 @@
                 "format": "RGBA8_UNorm",
                 "height": "1024",
                 "id": 1,
+                "samples": 1,
                 "target": "Target2D",
                 "type": "Texture",
                 "width": "1024"
@@ -95,6 +96,7 @@
                 "format": "RGBA8_UNorm",
                 "height": "1024",
                 "id": 2,
+                "samples": 1,
                 "target": "Target2D",
                 "type": "Texture",
                 "width": "1024"
@@ -105,6 +107,7 @@
                 "format": "R8_UNorm",
                 "height": "1024",
                 "id": 865,
+                "samples": 1,
                 "target": "Target2D",
                 "type": "Texture",
                 "width": "1024"
@@ -115,6 +118,7 @@
                 "format": "RGBA8_UNorm",
                 "height": "1024",
                 "id": 867,
+                "samples": 1,
                 "target": "Target2D",
                 "type": "Texture",
                 "width": "1024"
@@ -125,6 +129,7 @@
                 "format": "RGBA8_UNorm",
                 "height": "512",
                 "id": 869,
+                "samples": 1,
                 "target": "Target2D",
                 "type": "Texture",
                 "width": "512"
@@ -253,6 +258,7 @@
                         "flipVertically": false,
                         "format": "RGBA16F",
                         "id": 667,
+                        "samples": 1,
                         "target": "TargetCubeMap",
                         "type": "Texture",
                         "width": "256"
@@ -262,6 +268,7 @@
                         "flipVertically": false,
                         "format": "RGBA16F",
                         "id": 606,
+                        "samples": 1,
                         "target": "TargetCubeMap",
                         "type": "Texture",
                         "width": "256"
@@ -272,6 +279,7 @@
                         "format": "RGBA8_UNorm",
                         "height": "512",
                         "id": 127,
+                        "samples": 1,
                         "target": "Target2D",
                         "type": "Texture",
                         "width": "512"

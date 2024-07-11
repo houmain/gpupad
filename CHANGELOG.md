@@ -3,7 +3,18 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Version 1.35.0]
+## [Version 1.35.1] - 2023-10-26
+
+### Added
+
+- Added EXR Writing.
+
+### Fixed
+
+- Fixed TIFF writing.
+- Resetting item name to default when clearing filename.
+
+## [Version 1.35.0] - 2023-10-01
 
 ### Added
 
@@ -685,6 +696,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 1.35.1]: https://github.com/houmain/gpupad/compare/1.35.0...1.35.1
 [version 1.35.0]: https://github.com/houmain/gpupad/compare/1.34.0...1.35.0
 [version 1.34.0]: https://github.com/houmain/gpupad/compare/1.33.0...1.34.0
 [version 1.33.0]: https://github.com/houmain/gpupad/compare/1.32.0...1.33.0

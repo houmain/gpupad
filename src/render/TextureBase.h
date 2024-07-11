@@ -23,6 +23,7 @@ public:
     int depth() const { return mDepth; }
     int samples() const { return mSamples; }
     int layers() const { return mLayers; }
+    int levels() const { return mData.levels(); }
     Texture::Format format() const { return mFormat; }
     const TextureData &data() const { return mData; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }

@@ -252,11 +252,9 @@ bool VKTexture::prepareAttachment(VKContext &context)
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
 
-    const auto layout =
-        mKind.depth || mKind.stencil ? KDGpu::TextureLayout::DepthStencilAttachmentOptimal :
-        //mKind.stencil ? KDGpu::TextureLayout::StencilAttachmentOptimal :
-        //mKind.depth ? KDGpu::TextureLayout::DepthAttachmentOptimal :
-                      KDGpu::TextureLayout::ColorAttachmentOptimal;
+    const auto layout = (mKind.depth || mKind.stencil ?
+        KDGpu::TextureLayout::DepthStencilAttachmentOptimal :
+        KDGpu::TextureLayout::ColorAttachmentOptimal);
 
     memoryBarrier(*context.commandRecorder, 
         layout,
@@ -373,11 +371,25 @@ bool VKTexture::swap(VKTexture &other)
 
 bool VKTexture::updateMipmaps(VKContext& context)
 {
-    if (mMipmapsInvalidated) {
-        if (mData.levels() > 1) {
-            // TODO: copy from KDGpu::Texture::generateMipMaps
+    if (std::exchange(mMipmapsInvalidated, false) && levels() > 1) {
+        const auto options = KDGpu::GenerateMipMapsOptions{
+            .texture = mTexture,
+            .layout = mCurrentLayout,
+            .extent = {
+                .width = static_cast<uint32_t>(mWidth),
+                .height = static_cast<uint32_t>(mHeight),
+            },
+            .mipLevels = static_cast<uint32_t>(levels()),
+        };
+        if (context.commandRecorder) {
+            prepareTransferSource(context);
+            context.commandRecorder->generateMipMaps(options);
         }
-        mMipmapsInvalidated = false;
+        else {
+            mTexture.generateMipMaps(context.device, context.queue,
+                toKDGpu(mFormat), KDGpu::TextureTiling::Optimal, options);
+            mCurrentLayout = KDGpu::TextureLayout::TransferSrcOptimal;
+        }
     }
     return true;
 }
@@ -411,7 +423,7 @@ void VKTexture::createAndUpload(VKContext &context)
             static_cast<uint32_t>(mHeight),
             static_cast<uint32_t>(mDepth),
         },
-        .mipLevels = static_cast<uint32_t>(mData.levels()),
+        .mipLevels = static_cast<uint32_t>(levels()),
         .arrayLayers = static_cast<uint32_t>(mLayers),
         .samples = getKDSampleCount(mSamples),
         .usage = mUsage,

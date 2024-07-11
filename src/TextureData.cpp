@@ -178,8 +178,23 @@ namespace {
         return levels;
     }
 
-    bool canGenerateMipmaps(const QOpenGLTexture::Target target,
-        const QOpenGLTexture::TextureFormat format)
+    bool isDepthStencilFormat(QOpenGLTexture::TextureFormat format)
+    {
+        switch (format) {
+            case QOpenGLTexture::D16:
+            case QOpenGLTexture::D24:
+            case QOpenGLTexture::D24S8:
+            case QOpenGLTexture::D32:
+            case QOpenGLTexture::D32F:
+            case QOpenGLTexture::D32FS8X24:
+            case QOpenGLTexture::S8:
+                return true;
+        }
+        return false;
+    }
+
+    bool canGenerateMipmaps(QOpenGLTexture::Target target,
+        QOpenGLTexture::TextureFormat format)
     {
         switch (target) {
             case QOpenGLTexture::Target1D:
@@ -193,6 +208,10 @@ namespace {
             default:
                 return false;
         }
+
+        if (isDepthStencilFormat(format))
+            return false;
+
         const auto sampleType = getTextureSampleType(format);
         return (sampleType == TextureSampleType::Normalized ||
                 sampleType == TextureSampleType::Normalized_sRGB ||
@@ -612,9 +631,8 @@ bool TextureData::create(
             return false;
     }
 
-    createInfo.numLevels = (
-        canGenerateMipmaps(target, format) ? 1 :
-        getLevelCount(createInfo));
+    createInfo.numLevels = (canGenerateMipmaps(target, format) ? 
+        getLevelCount(createInfo) : 1);
 
     auto texture = std::add_pointer_t<ktxTexture1>{ };
     if (ktxTexture1_Create(&createInfo, KTX_TEXTURE_CREATE_ALLOC_STORAGE, &texture) == KTX_SUCCESS) {
@@ -631,14 +649,15 @@ TextureData TextureData::convert(QOpenGLTexture::TextureFormat format)
     if (!copy.create(getTarget(), format, width(), height(), depth(), layers()))
         return { };
 
-    for (auto level = 0; level < levels(); ++level)
-        for (auto layer = 0; layer < depth() * layers(); ++layer)
-            for (auto face = 0; face < faces(); ++face)
-                if (!convertPlane(
-                        getData(level, layer, face), this->format(),
-                        copy.getWriteonlyData(level, layer, face), format,
-                        getLevelWidth(level) * getLevelHeight(level)))
-                  return { };
+    // only write first level, it will trigger the mipmap generation
+    const auto level = 0;
+    for (auto layer = 0; layer < depth() * layers(); ++layer)
+        for (auto face = 0; face < faces(); ++face)
+            if (!convertPlane(
+                    getData(level, layer, face), this->format(),
+                    copy.getWriteonlyData(level, layer, face), format,
+                    getLevelWidth(level) * getLevelHeight(level)))
+              return { };
 
     return copy;
 }
