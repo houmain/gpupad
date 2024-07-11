@@ -19,8 +19,8 @@ public:
     void paintGL(const QMatrix4x4 &transform);
     void setImage(TextureData image);
     const TextureData &image() const { return mImage; }
-    void setPreviewTexture(GLuint textureId, QOpenGLTexture::Target target,
-        QOpenGLTexture::TextureFormat format, int samples);
+    void setPreviewTexture(GLuint textureId, QOpenGLTexture::Target target, int samples);
+    void setPreviewTexture(SharedMemoryHandle handle, QOpenGLTexture::Target target, int samples);
 
     bool canFilter() const;
     void setMagnifyLinear(bool magnifyLinear) { mMagnifyLinear = magnifyLinear; update(); }
@@ -69,9 +69,10 @@ private:
     TextureData mImage;
     GLuint mImageTextureId{ };
     QOpenGLTexture::Target mPreviewTarget{ };
-    QOpenGLTexture::TextureFormat mPreviewFormat{ };
     int mPreviewSamples{ 1 };
     GLuint mPreviewTextureId{ };
+    GLuint mSharedTextureId{ };
+    void* mSharedTextureHandle{ };
     bool mMagnifyLinear{ };
     float mLevel{ };
     int mFace{ };

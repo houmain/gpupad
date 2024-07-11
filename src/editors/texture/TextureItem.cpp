@@ -1,3 +1,4 @@
+
 #include "TextureItem.h"
 #include "GLWidget.h"
 #include "Singletons.h"
@@ -209,6 +210,90 @@ void main() {
         program.addShader(fragmentShader);
         return program.link();
     }
+
+    bool importSharedTexture(SharedMemoryHandle handle, 
+        const TextureData &data, QOpenGLTexture::Target target, int samples,
+        GLuint textureId)
+    {            
+#if defined(_WIN32)
+        auto& context = *QOpenGLContext::currentContext();
+        static auto glCreateMemoryObjectsEXT = 
+            reinterpret_cast<PFNGLCREATEMEMORYOBJECTSEXTPROC>(
+                context.getProcAddress("glCreateMemoryObjectsEXT"));
+        static auto glDeleteMemoryObjectsEXT = 
+            reinterpret_cast<PFNGLDELETEMEMORYOBJECTSEXTPROC>(
+                context.getProcAddress("glDeleteMemoryObjectsEXT"));
+        static auto glImportMemoryWin32HandleEXT =
+            reinterpret_cast<PFNGLIMPORTMEMORYWIN32HANDLEEXTPROC>(
+                context.getProcAddress("glImportMemoryWin32HandleEXT"));
+        static auto glTextureStorageMem1DEXT =
+            reinterpret_cast<PFNGLTEXTURESTORAGEMEM1DEXTPROC>(
+                context.getProcAddress("glTextureStorageMem1DEXT"));
+        static auto glTextureStorageMem2DEXT =
+            reinterpret_cast<PFNGLTEXTURESTORAGEMEM2DEXTPROC>(
+                context.getProcAddress("glTextureStorageMem2DEXT"));
+        static auto glTextureStorageMem2DMultisampleEXT =
+            reinterpret_cast<PFNGLTEXTURESTORAGEMEM2DMULTISAMPLEEXTPROC>(
+                context.getProcAddress("glTextureStorageMem2DMultisampleEXT"));
+        static auto glTextureStorageMem3DEXT =
+            reinterpret_cast<PFNGLTEXTURESTORAGEMEM3DEXTPROC>(
+                context.getProcAddress("glTextureStorageMem3DEXT"));
+        static auto glTextureStorageMem3DMultisampleEXT =
+            reinterpret_cast<PFNGLTEXTURESTORAGEMEM3DMULTISAMPLEEXTPROC>(
+                context.getProcAddress("glTextureStorageMem3DMultisampleEXT"));
+
+        if (!glCreateMemoryObjectsEXT ||
+            !glDeleteMemoryObjectsEXT ||
+            !glImportMemoryWin32HandleEXT || 
+            !glTextureStorageMem1DEXT ||
+            !glTextureStorageMem2DEXT ||
+            !glTextureStorageMem2DMultisampleEXT ||
+            !glTextureStorageMem3DEXT ||
+            !glTextureStorageMem3DMultisampleEXT)
+            return false;
+#endif
+
+        auto memoryObject = GLuint{ };
+        glCreateMemoryObjectsEXT(1, &memoryObject);
+#if defined(_WIN32)
+        glImportMemoryWin32HandleEXT(memoryObject, handle.allocationSize,
+            GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, handle.handle);
+#else
+        glImportMemoryWin32HandleEXT(memoryObject, handle.allocationSize,
+            GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, handle.handle);            
+#endif
+        if (data.dimensions() == 1) {
+            glTextureStorageMem1DEXT(textureId, data.levels(),
+                static_cast<GLenum>(data.format()), data.width(), 
+                memoryObject, handle.allocationOffset);
+        }
+        else if (data.dimensions() == 2) {
+            if (isMultisampleTarget(target)) {
+                glTextureStorageMem2DMultisampleEXT(textureId, samples, 
+                    static_cast<GLenum>(data.format()), data.width(), 
+                    data.height(), true, memoryObject, handle.allocationOffset);
+            }
+            else {
+                glTextureStorageMem2DEXT(textureId, data.levels(),
+                    static_cast<GLenum>(data.format()), data.width(), 
+                    data.height(), memoryObject, handle.allocationOffset);
+            }
+        }
+        else if (data.dimensions() == 3) {
+            if (isMultisampleTarget(target)) {
+                glTextureStorageMem3DMultisampleEXT(textureId, samples, 
+                    static_cast<GLenum>(data.format()), data.width(), data.depth(),
+                    data.height(), true, memoryObject, handle.allocationOffset);
+            }
+            else {
+                glTextureStorageMem3DEXT(textureId, data.levels(),
+                    static_cast<GLenum>(data.format()), data.width(), data.depth(),
+                    data.height(), memoryObject, handle.allocationOffset);
+            }
+        }
+        glDeleteMemoryObjectsEXT(1, &memoryObject);
+        return true;
+    }
 } // namespace
 
 //-------------------------------------------------------------------------
@@ -245,7 +330,10 @@ TextureItem::~TextureItem() = default;
 void TextureItem::releaseGL()
 {
     auto& gl = widget().gl();
-    gl.glDeleteTextures(1, &mImageTextureId);
+    if (mImageTextureId)
+        gl.glDeleteTextures(1, &mImageTextureId);
+    if (mSharedTextureHandle)
+        gl.glDeleteTextures(1, &mSharedTextureId);
 
     mProgramCache.reset();
 }
@@ -262,13 +350,34 @@ void TextureItem::setImage(TextureData image)
 }
 
 void TextureItem::setPreviewTexture(GLuint textureId, 
-    QOpenGLTexture::Target target,
-    QOpenGLTexture::TextureFormat format, int samples)
+    QOpenGLTexture::Target target, int samples)
 {
     if (!mImage.isNull()) {
         mPreviewTarget = target;
-        mPreviewFormat = format;
         mPreviewTextureId = textureId;
+        mPreviewSamples = samples;
+        update();
+    }
+}
+
+void TextureItem::setPreviewTexture(SharedMemoryHandle handle, 
+    QOpenGLTexture::Target target, int samples)
+{
+    Q_ASSERT(handle.handle);
+    if (!mImage.isNull() && handle.handle) {
+        if (mSharedTextureHandle != handle.handle) {
+            mSharedTextureHandle = handle.handle;
+            if (auto gl = widget().gl45(); gl) {
+                if (mSharedTextureId)
+                    gl->glDeleteTextures(1, &mSharedTextureId);
+                gl->glCreateTextures(target, 1, &mSharedTextureId);
+                gl->glTextureParameteri(mSharedTextureId,
+                    GL_TEXTURE_TILING_EXT, GL_OPTIMAL_TILING_EXT);
+            }
+            importSharedTexture(handle, mImage, target, samples, mSharedTextureId);
+        }
+        mPreviewTarget = target;
+        mPreviewTextureId = mSharedTextureId;
         mPreviewSamples = samples;
         update();
     }
@@ -380,11 +489,9 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         mPreviewTextureId = GL_NONE;
 
     auto target = mImage.getTarget();
-    auto format = mImage.format();
     if (mPreviewTextureId) {
         Singletons::glShareSynchronizer().beginUsage(gl);
         target = mPreviewTarget;
-        format = mPreviewFormat;
         gl.glBindTexture(target, mPreviewTextureId);
     }
     else {
@@ -413,7 +520,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
 
     const auto desc = ProgramDesc{
         target,
-        format,
+        mImage.format(),
         mPickerEnabled,
         mHistogramEnabled
     };

@@ -477,7 +477,7 @@ void VKRenderSession::downloadModifiedResources()
                 mCommandQueue->context, program.itemId());
 
     for (auto &[itemId, texture] : mCommandQueue->textures) {
-        //texture.updateMipmaps();
+        texture.updateMipmaps(mCommandQueue->context);
         if (!updatingPreviewTextures() &&
             !texture.fileName().isEmpty() &&
             texture.download(mCommandQueue->context))
@@ -513,22 +513,21 @@ void VKRenderSession::finish()
 {
     RenderSessionBase::finish();
 
-    //auto &editors = Singletons::editorManager();
-    //auto &session = Singletons::sessionModel();
+    auto &editors = Singletons::editorManager();
+    auto &session = Singletons::sessionModel();
 
-    //if (updatingPreviewTextures())
-    //    for (const auto& [itemId, texture] : mCommandQueue->textures)
-    //        if (texture.deviceCopyModified())
-    //            if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
-    //                if (auto editor = editors.getTextureEditor(fileItem->fileName))
-    //                    if (auto textureId = texture.textureId())
-    //                        editor->updatePreviewTexture(texture.target(),
-    //                            texture.format(), textureId);
+    if (updatingPreviewTextures())
+        for (const auto& [itemId, texture] : mCommandQueue->textures)
+            if (texture.deviceCopyModified())
+                if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
+                    if (auto editor = editors.getTextureEditor(fileItem->fileName))
+                        if (auto handle = texture.getSharedMemoryHandle(); handle.handle)
+                            editor->updatePreviewTexture(handle, texture.target(),
+                                texture.samples());
 }
 
 void VKRenderSession::release()
 {
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
-    //mTimerQueries.clear();
 }

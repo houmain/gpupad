@@ -97,6 +97,13 @@ enum class TextureDataType
     Float32,
 };
 
+struct SharedMemoryHandle
+{
+    void* handle;
+    size_t allocationSize;
+    size_t allocationOffset;
+};
+
 bool isMultisampleTarget(QOpenGLTexture::Target target);
 bool isCubemapTarget(QOpenGLTexture::Target target);
 TextureSampleType getTextureSampleType(QOpenGLTexture::TextureFormat format);

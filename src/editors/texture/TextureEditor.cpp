@@ -293,9 +293,15 @@ void TextureEditor::copy()
 }
 
 void TextureEditor::updatePreviewTexture(GLuint textureId, 
-    QOpenGLTexture::Target target, QOpenGLTexture::TextureFormat format, int samples)
+    QOpenGLTexture::Target target, int samples)
 {
-    mTextureItem->setPreviewTexture(textureId, target, format, samples);
+    mTextureItem->setPreviewTexture(textureId, target, samples);
+}
+
+void TextureEditor::updatePreviewTexture(SharedMemoryHandle handle, 
+    QOpenGLTexture::Target target, int samples)
+{
+    mTextureItem->setPreviewTexture(handle, target, samples);
 }
 
 void TextureEditor::setModified()

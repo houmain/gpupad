@@ -420,6 +420,11 @@ void VKTexture::createAndUpload(VKContext &context)
         .samples = getKDSampleCount(mSamples),
         .usage = mUsage,
         .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
+#if defined(KDGPU_PLATFORM_WIN32)
+        .externalMemoryHandleType = KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueWin32,
+#else
+        .externalMemoryHandleType = KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueFD,
+#endif
     };
 
     if (mKind.depth || mKind.stencil || mSamples > 1) {
@@ -512,4 +517,22 @@ void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
     mCurrentStage = stage;
     mCurrentLayout = layout;
     mCurrentAccessMask = accessMask;
+}
+
+SharedMemoryHandle VKTexture::getSharedMemoryHandle() const
+{
+    const auto memory = mTexture.externalMemoryHandle();
+#if defined(KDGPU_PLATFORM_WIN32)
+    return { 
+        std::get<HANDLE>(memory.handle),
+        memory.allocationSize,
+        memory.allocationOffset,
+    };
+#else
+    return { 
+        reinterpret_cast<void*>(intptr_t{ std::get<int>(memory.handle) }),
+        memory.allocationSize,
+        memory.allocationOffset,
+    };
+#endif
 }

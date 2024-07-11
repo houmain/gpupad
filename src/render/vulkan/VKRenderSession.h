@@ -15,11 +15,6 @@ public:
     void finish() override;
     void release() override;
 
-    bool updatingPreviewTextures() const override {
-      // TODO: implement texture sharing with preview
-      return false;
-    }
-
 private:
     struct CommandQueue;
     struct GroupIteration;

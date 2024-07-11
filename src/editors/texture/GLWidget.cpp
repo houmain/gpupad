@@ -21,9 +21,14 @@ void GLWidget::initializeGL()
 {
     mInitialized = true;
     mGL.initializeOpenGLFunctions();
+
     mGL42.emplace();
     if (!mGL42->initializeOpenGLFunctions())
         mGL42.reset();
+
+    mGL45.emplace();
+    if (!mGL45->initializeOpenGLFunctions())
+        mGL45.reset();
 
 #if !defined(NDEBUG)
     if (mDebugLogger.initialize()) {
@@ -56,6 +61,11 @@ QOpenGLFunctions_3_3_Core &GLWidget::gl()
 QOpenGLFunctions_4_2_Core *GLWidget::gl42()
 {
     return (mGL42.has_value() ? &mGL42.value() : nullptr);
+}
+
+QOpenGLFunctions_4_5_Core *GLWidget::gl45()
+{
+    return (mGL45.has_value() ? &mGL45.value() : nullptr);
 }
 
 void GLWidget::handleDebugMessage(const QOpenGLDebugMessage &message)
