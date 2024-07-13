@@ -44,6 +44,9 @@ public:
     int layers() const;
     int faces() const;
     bool flippedVertically() const { return mFlippedVertically; }
+    uchar *getWriteonlyData();
+    const uchar *getData() const;
+    int getDataSize() const;
     uchar *getWriteonlyData(int level, int layer, int faceSlice);
     const uchar *getData(int level, int layer, int faceSlice) const;
     int getImageSize(int level) const;

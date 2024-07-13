@@ -651,11 +651,11 @@ TextureData TextureData::convert(QOpenGLTexture::TextureFormat format)
 
     // only write first level, it will trigger the mipmap generation
     const auto level = 0;
-    for (auto layer = 0; layer < depth() * layers(); ++layer)
-        for (auto face = 0; face < faces(); ++face)
+    for (auto layer = 0; layer < layers(); ++layer)
+        for (auto faceSlice = 0; faceSlice < depth() * faces(); ++faceSlice)
             if (!convertPlane(
-                    getData(level, layer, face), this->format(),
-                    copy.getWriteonlyData(level, layer, face), format,
+                    getData(level, layer, faceSlice), this->format(),
+                    copy.getWriteonlyData(level, layer, faceSlice), format,
                     getLevelWidth(level) * getLevelHeight(level)))
               return { };
 
@@ -1029,6 +1029,21 @@ int TextureData::layers() const
 int TextureData::faces() const
 {
     return (isNull() ? 0 : static_cast<int>(mKtxTexture->numFaces));
+}
+
+uchar *TextureData::getWriteonlyData()
+{
+    return getWriteonlyData(0, 0, 0);
+}
+
+const uchar *TextureData::getData() const
+{
+    return getData(0, 0, 0);
+}
+
+int TextureData::getDataSize() const
+{
+    return static_cast<int>(ktxTexture_GetDataSize(ktxTexture(mKtxTexture.get())));
 }
 
 uchar *TextureData::getWriteonlyData(int level, int layer, int face)

@@ -283,13 +283,15 @@ void main() {
         else if (dimensions == 3) {
             if (isMultisampleTarget(target)) {
                 glTextureStorageMem3DMultisampleEXT(textureId, samples, 
-                    static_cast<GLenum>(data.format()), data.width(), data.depth(),
-                    data.height(), true, memoryObject, handle.allocationOffset);
+                    static_cast<GLenum>(data.format()), 
+                    data.width(), data.height(), data.depth(), 
+                    true, memoryObject, handle.allocationOffset);
             }
             else {
                 glTextureStorageMem3DEXT(textureId, data.levels(),
-                    static_cast<GLenum>(data.format()), data.width(), data.depth(),
-                    data.height(), memoryObject, handle.allocationOffset);
+                    static_cast<GLenum>(data.format()), 
+                    data.width(), data.height(), data.depth(), 
+                    memoryObject, handle.allocationOffset);
             }
         }
         glDeleteMemoryObjectsEXT(1, &memoryObject);
