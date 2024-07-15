@@ -37,7 +37,6 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
     addSourceType(hlsl, tr("Compute Shader"), SourceType::HLSL_ComputeShader);
 
     addSourceType(sourceTypeMenu, tr("JavaScript"), SourceType::JavaScript);
-    addSourceType(sourceTypeMenu, tr("Lua"), SourceType::Lua);
     sourceTypeMenu->addSeparator();
     addSourceType(sourceTypeMenu, tr("Generic"), SourceType::Generic);
     addSourceType(sourceTypeMenu, tr("Plaintext"), SourceType::PlainText);

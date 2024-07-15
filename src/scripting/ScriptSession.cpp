@@ -4,7 +4,6 @@
 #include "KeyboardScriptObject.h"
 #include "Singletons.h"
 #include "ScriptEngineJavaScript.h"
-#include "ScriptEngineLua.h"
 
 ScriptSession::ScriptSession(SourceType sourceType, QObject *parent)
     : QObject(parent)
@@ -57,15 +56,10 @@ ScriptEngine& ScriptSession::engine()
 void ScriptSession::initializeEngine()
 {
     Q_ASSERT(!mScriptEngine);
-    if (mSourceType == SourceType::Lua) {
-        mScriptEngine.reset(new ScriptEngineLua());
-    }
-    else {
-        auto scriptEngine = new ScriptEngineJavaScript();
-        mScriptEngine.reset(scriptEngine);
-        mSessionScriptObject = new SessionScriptObject(scriptEngine->jsEngine());
-        mScriptEngine->setGlobal("Session", mSessionScriptObject);
-    }
+    auto scriptEngine = new ScriptEngineJavaScript();
+    mScriptEngine.reset(scriptEngine);
+    mSessionScriptObject = new SessionScriptObject(scriptEngine->jsEngine());
+    mScriptEngine->setGlobal("Session", mSessionScriptObject);
     mScriptEngine->setTimeout(5000);
     mScriptEngine->setGlobal("Mouse", mMouseScriptObject);
     mScriptEngine->setGlobal("Keyboard", mKeyboardScriptObject);

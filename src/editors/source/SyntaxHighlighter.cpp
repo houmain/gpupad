@@ -27,7 +27,6 @@ namespace {
         static const auto syntaxGLSL = makeSyntaxGLSL();
         static const auto syntaxHLSL = makeSyntaxHLSL();
         static const auto syntaxJavaScript = makeSyntaxJavaScript();
-        static const auto syntaxLua = makeSyntaxLua();
         switch (sourceType) {
             case SourceType::PlainText:
             case SourceType::Generic:
@@ -48,8 +47,6 @@ namespace {
                 return *syntaxHLSL;
             case SourceType::JavaScript: 
                 return *syntaxJavaScript;
-            case SourceType::Lua:
-                return *syntaxLua;
         }
         return *SyntaxGeneric;
     }
@@ -120,11 +117,6 @@ namespace {
         d.highlightingRules.append(rule);
 
         rule.pattern = QRegularExpression(quotation.arg('`'));
-        rule.format = quotationFormat;
-        d.highlightingRules.append(rule);
-
-        // TODO: properly handle Lua [[ comments only in Lua Syntax...
-        rule.pattern = QRegularExpression(R"(\[\[.*\]\])");
         rule.format = quotationFormat;
         d.highlightingRules.append(rule);
 

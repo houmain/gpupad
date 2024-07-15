@@ -102,7 +102,6 @@ set(SOURCES
   src/editors/source/SyntaxHighlighter.cpp
   src/editors/source/SyntaxHLSL.cpp
   src/editors/source/SyntaxJavaScript.cpp
-  src/editors/source/SyntaxLua.cpp
   src/editors/texture/GLWidget.cpp
   src/editors/texture/Histogram.cpp
   src/editors/texture/TextureEditor.cpp
@@ -152,7 +151,6 @@ set(SOURCES
   src/scripting/ScriptEngine.cpp
   src/scripting/ScriptEngineJavaScript.cpp
   src/scripting/ScriptEngineJavaScript.js
-  src/scripting/ScriptEngineLua.cpp
   src/scripting/ScriptSession.cpp
   src/scripting/CustomActions.cpp
   src/scripting/CustomActions.ui
@@ -206,10 +204,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu spdlog::spdlog)
 
 find_package(Ktx CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE KTX::ktx)
-
-find_package(Lua REQUIRED)
-target_include_directories(${PROJECT_NAME} PRIVATE ${LUA_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${LUA_LIBRARIES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE src libs)
 

@@ -43,7 +43,6 @@ namespace {
             case SourceType::HLSL_DomainShader:
             case SourceType::HLSL_ComputeShader: return "hlsl";
             case SourceType::JavaScript: return "js";
-            case SourceType::Lua: return "lua";
         }
         return "txt";
     }

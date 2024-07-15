@@ -20,7 +20,6 @@ enum class SourceType
     HLSL_DomainShader,
     HLSL_ComputeShader,
     JavaScript,
-    Lua,
 };
 
 SourceType deduceSourceType(SourceType current, const QString &extension, const QString &text);

@@ -14,20 +14,6 @@
 #include "editors/texture/TextureEditor.h"
 #include "editors/binary/BinaryEditor.h"
 
-namespace
-{
-    SourceType getScriptingSourceType(const SessionModel &session) 
-    {
-        auto sourceType = SourceType::JavaScript;
-        session.forEachItem([&](const Item &item) {
-            if (auto script = castItem<Script>(item))
-                if (script->fileName.endsWith(".lua", Qt::CaseInsensitive))
-                    sourceType = SourceType::Lua;
-        });
-        return sourceType;
-    }
-} // namespace
-
 std::unique_ptr<RenderSessionBase> RenderSessionBase::create(Renderer &renderer)
 {
     switch (renderer.api()) {
@@ -55,8 +41,7 @@ void RenderSessionBase::prepare(bool itemsChanged, EvaluationType evaluationType
         mSessionCopy = Singletons::sessionModel();
 
     if (mEvaluationType == EvaluationType::Reset)
-        mScriptSession.reset(new ScriptSession(
-            getScriptingSourceType(mSessionCopy)));
+        mScriptSession.reset(new ScriptSession(SourceType::JavaScript));
 
     mShaderPreamble = Singletons::settings().shaderPreamble() + "\n" +
         Singletons::synchronizeLogic().sessionShaderPreamble();

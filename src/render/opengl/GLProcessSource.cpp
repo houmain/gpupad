@@ -1,7 +1,6 @@
 #include "GLProcessSource.h"
 #include "GLPrintf.h"
 #include "scripting/ScriptEngineJavaScript.h"
-#include "scripting/ScriptEngineLua.h"
 #include "Singletons.h"
 #include "Settings.h"
 #include "SynchronizeLogic.h"
@@ -133,8 +132,6 @@ void GLProcessSource::render()
         else {
             if (mSourceType == SourceType::JavaScript)
                 mScriptEngine.reset(new ScriptEngineJavaScript());
-            else if (mSourceType == SourceType::Lua)
-                mScriptEngine.reset(new ScriptEngineLua());
 
             if (mScriptEngine) {
                   auto scriptSource = QString();
