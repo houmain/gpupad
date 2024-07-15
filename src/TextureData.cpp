@@ -575,7 +575,7 @@ bool operator!=(const TextureData &a, const TextureData &b)
 bool TextureData::create(
     QOpenGLTexture::Target target,
     QOpenGLTexture::TextureFormat format,
-    int width, int height, int depth, int layers)
+    int width, int height, int depth, int layers, int levels)
 {
     if (width <= 0 || height <= 0 || depth <= 0 || layers <= 0)
       return false;
@@ -631,7 +631,8 @@ bool TextureData::create(
             return false;
     }
 
-    createInfo.numLevels = (canGenerateMipmaps(target, format) ? 
+    createInfo.numLevels = 
+        (levels == 0 && canGenerateMipmaps(target, format) ? 
         getLevelCount(createInfo) : 1);
 
     auto texture = std::add_pointer_t<ktxTexture1>{ };
@@ -646,7 +647,8 @@ bool TextureData::create(
 TextureData TextureData::convert(QOpenGLTexture::TextureFormat format)
 {
     auto copy = TextureData();
-    if (!copy.create(getTarget(), format, width(), height(), depth(), layers()))
+    if (!copy.create(getTarget(), format, width(), height(), depth(), 
+                     layers(), levels()))
         return { };
 
     // only write first level, it will trigger the mipmap generation
@@ -1052,11 +1054,11 @@ uchar *TextureData::getWriteonlyData(int level, int layer, int face)
         return nullptr;
 
     if (mKtxTexture.use_count() > 1)
-        create(getTarget(), format(), width(), height(), depth(), layers());
+        create(getTarget(), format(), width(), height(), depth(), layers(), levels());
 
     // generate mipmaps on next upload when level 0 is written
-    mKtxTexture->generateMipmaps = (level == 0 &&
-        canGenerateMipmaps(getTarget(), format()) ? KTX_TRUE : KTX_FALSE);
+    mKtxTexture->generateMipmaps = 
+        (level == 0 && levels() > 1 ? KTX_TRUE : KTX_FALSE);
 
     return const_cast<uchar*>(
         static_cast<const TextureData*>(this)->getData(level, layer, face));

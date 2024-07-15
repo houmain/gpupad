@@ -499,9 +499,6 @@ bool VKTexture::download(VKContext &context)
 
     auto transferTexture = TransferTexture(context.device, *this);
 
-    if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers))
-        return false;
-
     context.commandRecorder = context.device.createCommandRecorder();
     auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
 

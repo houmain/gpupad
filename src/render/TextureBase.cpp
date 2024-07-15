@@ -128,8 +128,9 @@ void TextureBase::reload(bool forWriting)
     }
 
     if (mData.isNull()) {
-        if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers)) {
-            mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1);
+        if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers, 
+                          mSamples > 1 ? 1 : 0)) {
+            mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1, 1);
             mMessages += MessageList::insert(mItemId,
                 MessageType::CreatingTextureFailed);
         }

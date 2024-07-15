@@ -16,7 +16,7 @@ public:
     bool isSharedWith(const TextureData &other) const;
     bool create(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format,
-        int width, int height, int depth, int layers);
+        int width, int height, int depth, int layers, int levels = 0);
     TextureData convert(QOpenGLTexture::TextureFormat format);
     bool load(const QString &fileName, bool flipVertically);
     bool loadQImage(QImage image, bool flipVertically);
