@@ -32,7 +32,6 @@ public:
     explicit operator bool() const { return !mSpirv.empty(); }
     const std::vector<uint32_t> &spirv() const { return mSpirv; }
     Interface getInterface() const;
-    QString generateGLSL(const QString &fileName, MessagePtrSet &messages) const;
 
 private:
     std::vector<uint32_t> mSpirv;

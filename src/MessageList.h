@@ -54,6 +54,7 @@ enum MessageType
     MoreThanOneDepthStencilAttachment,
     IncompatibleBindings,
     CreatingPipelineFailed,
+    OpenGLRendererRequiresGLSL,
 };
 
 struct Message

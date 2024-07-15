@@ -60,41 +60,6 @@ void MessageWindow::updateMessages()
 QIcon MessageWindow::getMessageIcon(const Message &message) const
 {
     switch (message.type) {
-        case OpenGLVersionNotAvailable:
-        case LoadingFileFailed:
-        case UnsupportedShaderType:
-        case CreatingFramebufferFailed:
-        case CreatingTextureFailed:
-        case UploadingImageFailed:
-        case DownloadingImageFailed:
-        case BufferNotSet:
-        case AttributeNotSet:
-        case ImageNotSet:
-        case SamplerNotSet:
-        case ShaderError:
-        case ScriptError:
-        case ProgramNotAssigned:
-        case TargetNotAssigned:
-        case TextureNotAssigned:
-        case BufferNotAssigned:
-        case InvalidSubroutine:
-        case ImageFormatNotBindable:
-        case UniformComponentMismatch:
-        case CallFailed:
-        case ClearingTextureFailed:
-        case CopyingTextureFailed:
-        case SwappingTexturesFailed:
-        case SwappingBuffersFailed:
-        case InvalidIncludeDirective:
-        case IncludableNotFound:
-        case RecursiveInclude:
-        case InvalidAttribute:
-        case RenderingFailed:
-        case MoreThanOneDepthStencilAttachment:
-        case IncompatibleBindings:
-        case CreatingPipelineFailed:
-            return mErrorIcon;
-
         case UniformNotSet:
         case ShaderWarning:
         case ScriptWarning:
@@ -106,8 +71,10 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
         case CallDuration:
         case TotalDuration:
             return mInfoIcon;
+
+        default:
+            return mErrorIcon;
     }
-    return mWarningIcon;
 }
 
 QString MessageWindow::getMessageText(const Message &message) const
@@ -195,6 +162,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("Incompatible assignment to the same set/binding");
         case CreatingPipelineFailed:
             return tr("Creating pipeline failed");
+        case OpenGLRendererRequiresGLSL:
+            return tr("The OpenGL renderer only supports GLSL shaders");
     }
     return message.text;
 }

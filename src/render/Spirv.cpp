@@ -150,81 +150,6 @@ namespace
       
       return "main";
     }
-
-    QString patchGLSL(QString glsl) 
-    {
-        // WORKAROUND - is there no simpler way?
-        // turn:
-        //   layout(binding = 0, std140) uniform _Global
-        //   {
-        //       layout(row_major) mat4 viewProj;
-        //   } _35;
-        //   ...
-        //   _35.viewProj
-        //
-        // into:
-        //   uniform mat4 viewProj;
-        //   ...
-        //   viewProj
-        //
-        auto i = glsl.indexOf("uniform _Global");
-        if (i >= 0) {
-            auto lineBegin = glsl.lastIndexOf('\n', i) + 1;
-            glsl.insert(lineBegin, "//");
-            for (auto level = 0; i < glsl.size(); ++i) {
-                if (glsl[i] == '{') {
-                    if (level == 0) {
-                        glsl.insert(i, "//");
-                        i += 2;
-                    }
-                    ++level;
-                }
-                else if (glsl[i] == 'l' && glsl.indexOf("layout(", i) == i) {
-                    lineBegin = i;
-                    glsl.remove(i, glsl.indexOf(')', i) - i + 1);
-                }
-                else if (glsl[i] == '\n') {
-                    lineBegin = i + 1;
-                }
-                else if (glsl[i] == ';') {
-                    glsl.insert(lineBegin, "uniform ");
-                    i += 8;
-                }
-                else if (glsl[i] == '}') {
-                    --level;
-                    if (level == 0) {
-                        glsl.insert(i, "//");
-                        i += 4;
-                        const auto var = glsl.mid(i, glsl.indexOf(';', i) - i);
-                        glsl.remove(var + ".");
-                        break;
-                    }
-                }
-            }
-        }
-        return glsl;
-    }
-
-    QString generateGLSL(std::vector<uint32_t> spirv, 
-        const QString &fileName, MessagePtrSet &messages)
-    try {   
-        auto compiler = spirv_cross::CompilerGLSL(std::move(spirv));
-        auto options = spirv_cross::CompilerGLSL::Options{ };
-        compiler.set_common_options(options);
-
-        compiler.build_combined_image_samplers();
-        for (auto &remap : compiler.get_combined_image_samplers())
-            compiler.set_name(remap.combined_id,
-              compiler.get_name(remap.image_id) + "_" +
-                    compiler.get_name(remap.sampler_id));
-
-        return patchGLSL(QString::fromStdString(compiler.compile()));
-    }
-    catch (const std::exception &ex) {
-        messages += MessageList::insert(fileName, -1,
-            MessageType::ShaderError, ex.what());
-        return { };
-    }
 } // namespace
 
 Spirv::Interface::Interface(const std::vector<uint32_t>& spirv)
@@ -331,9 +256,4 @@ Spirv::Spirv(std::vector<uint32_t> spirv)
 Spirv::Interface Spirv::getInterface() const
 {
     return Spirv::Interface(mSpirv);
-}
-
-QString Spirv::generateGLSL(const QString &fileName, MessagePtrSet &messages) const
-{
-    return ::generateGLSL(mSpirv, fileName, messages);
 }

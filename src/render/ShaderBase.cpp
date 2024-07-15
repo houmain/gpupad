@@ -189,20 +189,8 @@ QStringList ShaderBase::getPatchedSourcesGLSL(MessagePtrSet &messages,
             mIncludePaths, &maxVersion, &extensions);
 
     if (mLanguage != Shader::Language::GLSL) {
-        for (auto i = 0; i < mSources.size(); ++i) {
-            const auto spirv = Spirv::generate(mLanguage, mType, 
-                { sources[i] }, { mFileNames[i] }, mEntryPoint, messages);
-            if (!spirv)
-                return { };
-
-            auto source = spirv.generateGLSL(mFileNames[i], messages);
-            if (source.isEmpty())
-                return { };
-
-            removeVersion(&source, &maxVersion);
-            removeExtensions(&source, &extensions);
-            sources[i] = source;
-        }
+        messages += MessageList::insert(mItemId, MessageType::OpenGLRendererRequiresGLSL);
+        return { };
     }
 
     if (printf) {
