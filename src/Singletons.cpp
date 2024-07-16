@@ -25,17 +25,29 @@ void Singletons::resetRenderer(RenderAPI api)
 {
     Q_ASSERT(onMainThread());
     sInstance->mRenderApi = api;
-    sInstance->mRenderer.reset();
 }
 
 RendererPtr Singletons::renderer()
 {
     Q_ASSERT(onMainThread());
-    if (!sInstance->mRenderer)
-        sInstance->mRenderer.reset(
-            sInstance->mRenderApi == RenderAPI::Vulkan ? new VKRenderer() : 
-            static_cast<Renderer*>(new GLRenderer()));
-    return sInstance->mRenderer;
+    return (sInstance->mRenderApi == RenderAPI::Vulkan ? 
+        vkRenderer() : glRenderer());
+}
+
+RendererPtr Singletons::glRenderer()
+{
+    Q_ASSERT(onMainThread());
+    if (!sInstance->mGLRenderer)
+        sInstance->mGLRenderer.reset(new GLRenderer());
+    return sInstance->mGLRenderer;
+}
+
+RendererPtr Singletons::vkRenderer()
+{
+    Q_ASSERT(onMainThread());
+    if (!sInstance->mVKRenderer)
+        sInstance->mVKRenderer.reset(new VKRenderer());
+    return sInstance->mVKRenderer;
 }
 
 Settings &Singletons::settings()

@@ -25,9 +25,11 @@ void RenderTask::update(RendererPtr renderer, bool itemsChanged, EvaluationType 
     if (!std::exchange(mUpdating, true)) {
         if (mRenderer != renderer) {
             releaseResources();
-            if (!renderer || !initialize(*renderer))
-                return;
             mRenderer = renderer;
+            if (!renderer || !initialize()) {
+                mRenderer.reset();
+                return;
+            }
         }
         prepare(itemsChanged, evaluationType);
         mRenderer->render(this);

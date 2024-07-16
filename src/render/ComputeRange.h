@@ -25,9 +25,9 @@ Q_SIGNALS:
      void rangeComputed(const Range &range);
 
 private:
-    bool initialize(Renderer &renderer) override 
+    bool initialize() override 
     {
-        return (renderer.api() == RenderAPI::OpenGL);
+        return (renderer().api() == RenderAPI::OpenGL);
     }
 
     void render() override

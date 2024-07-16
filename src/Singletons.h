@@ -26,6 +26,8 @@ class Singletons
 public:
     static void resetRenderer(RenderAPI api);
     static RendererPtr renderer();
+    static RendererPtr glRenderer();
+    static RendererPtr vkRenderer();
     static Settings &settings();
     static FileCache &fileCache();
     static FileDialog &fileDialog();
@@ -44,7 +46,8 @@ private:
     static Singletons *sInstance;
 
     RenderAPI mRenderApi{ };
-    std::shared_ptr<Renderer> mRenderer;
+    std::shared_ptr<Renderer> mVKRenderer;
+    std::shared_ptr<Renderer> mGLRenderer;
     std::unique_ptr<Settings> mSettings;
     std::unique_ptr<FileCache> mFileCache;
     std::unique_ptr<FileDialog> mFileDialog;

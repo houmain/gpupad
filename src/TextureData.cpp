@@ -631,8 +631,8 @@ bool TextureData::create(
             return false;
     }
 
-    createInfo.numLevels = 
-        (levels == 0 && canGenerateMipmaps(target, format) ? 
+    createInfo.numLevels = (levels > 0 ? levels :
+        canGenerateMipmaps(target, format) ? 
         getLevelCount(createInfo) : 1);
 
     auto texture = std::add_pointer_t<ktxTexture1>{ };

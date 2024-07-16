@@ -412,7 +412,7 @@ void SynchronizeLogic::processSource()
     mProcessSource->setSourceType(mCurrentEditorSourceType);
     mProcessSource->setValidateSource(mValidateSource);
     mProcessSource->setProcessType(mProcessSourceType);
-    mProcessSource->update(Singletons::renderer());
+    mProcessSource->update(Singletons::glRenderer());
 }
 
 void SynchronizeLogic::handleMouseStateChanged() 
