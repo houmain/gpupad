@@ -265,7 +265,9 @@ QString ShaderPrintf::preambleGLSL()
 
 bool printfEnabled = true;
 uint _printfArgumentOffset = 0;
-layout(std430) buffer _printfBuffer {
+
+// TODO: dynamically assign with glslang
+layout(std430, set = 4) buffer _printfBuffer {
   uint _printfOffset;
   uint _printfPrevBegin;
   uint _printfData[];
@@ -382,10 +384,161 @@ void _printf(dmat4x4 m) { _printf(mat4x4(m)); }
 
 QString ShaderPrintf::preambleHLSL() 
 {
-    // TODO:
     return QStringLiteral(R"(
 
-bool printfEnabled = true;
+static bool printfEnabled = true;
+static uint _printfArgumentOffset = 0;
+
+// TODO: dynamically assign with glslang
+[[vk::binding(4, 0)]]
+RWByteAddressBuffer _printfBuffer;
+
+void _printfBegin(int whichFormatString, int argumentCount) {
+  uint offset;
+  _printfBuffer.InterlockedAdd(0, uint(3 + argumentCount), offset);
+  uint prevBegin;
+  _printfBuffer.InterlockedExchange(4, offset, prevBegin);
+  _printfBuffer.Store(prevBegin * 4 + 8, offset);
+  _printfBuffer.Store((offset + 1u) * 4 + 8, uint(whichFormatString));
+  _printfBuffer.Store((offset + 2u) * 4 + 8, uint(argumentCount));
+  _printfArgumentOffset = offset + 3u;
+}
+
+#define W(N) \
+void _printfWrite(uint typeBase, uint v[N]) { \
+  uint offset; \
+  _printfBuffer.InterlockedAdd(0, 1 + N, offset); \
+  _printfBuffer.Store(_printfArgumentOffset++ * 4 + 8, offset); \
+  _printfBuffer.Store(offset++ * 4 + 8, typeBase + N); \
+  for (int i = 0; i < N; ++i) \
+    _printfBuffer.Store(offset++ * 4 + 8, v[i]); \
+}
+W(1) W(2) W(3) W(4) W(6) W(8) W(9) W(12) W(16)
+#undef W
+
+void _printf(uint u) { 
+  uint a[] = { u };
+  _printfWrite(1000, a);
+}
+void _printf(uint2 u) { 
+  uint a[] = { u.x, u.y };
+  _printfWrite(1000, a); 
+}
+void _printf(uint3 u) {
+  uint a[] = { u.x, u.y, u.z };
+  _printfWrite(1000, a);
+}
+void _printf(uint4 u) {
+  uint a[] = { u.x, u.y, u.z, u.w };
+  _printfWrite(1000, a);
+}
+void _printf(float v) { 
+  uint u = asuint(v);
+  uint a[] = { u };
+  _printfWrite(2000, a);
+}
+void _printf(float2 v) { 
+  uint2 u = asuint(v); 
+  uint a[] = { u.x, u.y };
+  _printfWrite(2000, a);
+}
+void _printf(float3 v) { 
+  uint3 u = asuint(v); 
+  uint a[] = { u.x, u.y, u.z };
+  _printfWrite(2000, a);
+}
+void _printf(float4 v) { 
+  uint4 u = asuint(v);
+  uint a[] = { u.x, u.y, u.z, u.w }; 
+  _printfWrite(2000, a); 
+}
+
+void _printf(float2x2 m) {
+  uint2 u0 = asuint(m[0]);
+  uint2 u1 = asuint(m[1]);
+  uint a[] = { u0[0], u0[1], u1[0], u1[1] };
+  _printfWrite(3200, a);
+}
+void _printf(float2x3 m) {
+  uint3 u0 = asuint(m[0]);
+  uint3 u1 = asuint(m[1]);
+  uint a[] = { u0[0], u0[1], u0[2], u1[0], u1[1], u1[2] };
+  _printfWrite(3300, a);
+}
+void _printf(float2x4 m) {
+  uint4 u0 = asuint(m[0]);
+  uint4 u1 = asuint(m[1]);
+  uint a[] = { u0[0], u0[1], u0[2], u0[3], u1[0], u1[1], u1[2], u1[3] };
+  _printfWrite(3400, a);
+}
+void _printf(float3x2 m) {
+  uint2 u0 = asuint(m[0]);
+  uint2 u1 = asuint(m[1]);
+  uint2 u2 = asuint(m[2]);
+  uint a[] = { u0[0], u0[1], u1[0], u1[1], u2[0], u2[1] };
+  _printfWrite(3200, a);
+}
+void _printf(float3x3 m) {
+  uint3 u0 = asuint(m[0]);
+  uint3 u1 = asuint(m[1]);
+  uint3 u2 = asuint(m[2]);
+  uint a[] = { u0[0], u0[1], u0[2], u1[0], u1[1], u1[2], u2[0], u2[1], u2[2] };
+  _printfWrite(3300, a);
+}
+void _printf(float3x4 m) {
+  uint4 u0 = asuint(m[0]);
+  uint4 u1 = asuint(m[1]);
+  uint4 u2 = asuint(m[2]);
+  uint a[] = { u0[0], u0[1], u0[2], u0[3], u1[0], u1[1], u1[2], u1[3], u2[0], u2[1], u2[2], u2[3] };
+  _printfWrite(3400, a);
+}
+void _printf(float4x2 m) {
+  uint2 u0 = asuint(m[0]);
+  uint2 u1 = asuint(m[1]);
+  uint2 u2 = asuint(m[2]);
+  uint2 u3 = asuint(m[3]);
+  uint a[] = { u0[0], u0[1], u1[0], u1[1], u2[0], u2[1], u3[0], u3[1] };
+  _printfWrite(4200, a);
+}
+void _printf(float4x3 m) {
+  uint3 u0 = asuint(m[0]);
+  uint3 u1 = asuint(m[1]);
+  uint3 u2 = asuint(m[2]);
+  uint3 u3 = asuint(m[3]);
+  uint a[] = { u0[0], u0[1], u0[2], u1[0], u1[1], u1[2], u2[0], u2[1], u2[2], u3[0], u3[1], u3[2] };
+  _printfWrite(3300, a);
+}
+void _printf(float4x4 m) {
+  uint4 u0 = asuint(m[0]);
+  uint4 u1 = asuint(m[1]);
+  uint4 u2 = asuint(m[2]);
+  uint4 u3 = asuint(m[3]);
+  uint a[] = { u0[0], u0[1], u0[2], u0[3], u1[0], u1[1], u1[2], u1[3], u2[0], u2[1], u2[2], u2[3], u3[0], u3[1], u3[2], u3[3] };
+  _printfWrite(3400, a);
+}
+
+void _printf(int v) { _printf(uint(v)); }
+void _printf(int2 v) { _printf(uint2(v)); }
+void _printf(int3 v) { _printf(uint3(v)); }
+void _printf(int4 v) { _printf(uint4(v)); }
+void _printf(bool v) { _printf(uint(v)); }
+void _printf(bool2 v) { _printf(uint2(v)); }
+void _printf(bool3 v) { _printf(uint3(v)); }
+void _printf(bool4 v) { _printf(uint4(v)); }
+void _printf(double v) { _printf(float(v)); }
+void _printf(double2 v) { _printf(float2(v)); }
+void _printf(double3 v) { _printf(float3(v)); }
+void _printf(double4 v) { _printf(float4(v)); }
+void _printf(double2x2 m) { _printf(float2x2(m)); }
+void _printf(double2x3 m) { _printf(float2x3(m)); }
+void _printf(double2x4 m) { _printf(float2x4(m)); }
+void _printf(double3x2 m) { _printf(float3x2(m)); }
+void _printf(double3x3 m) { _printf(float3x3(m)); }
+void _printf(double3x4 m) { _printf(float3x4(m)); }
+void _printf(double4x2 m) { _printf(float4x2(m)); }
+void _printf(double4x3 m) { _printf(float4x3(m)); }
+void _printf(double4x4 m) { _printf(float4x4(m)); }
+
 )");
 }
 
