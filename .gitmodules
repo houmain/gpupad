@@ -1,4 +1,4 @@
 [submodule "libs/KDGpu"]
 	path = libs/KDGpu
-	url = https://github.com/KDAB/KDGpu
+	url = https://github.com/houmain/KDGpu
 	branch = main
