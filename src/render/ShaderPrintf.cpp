@@ -253,9 +253,9 @@ namespace {
 
     int getColumnCount(uint32_t argumentType)
     {
-        if ((argumentType / 1000) == 3)
-            return (argumentType - 3000) / 100;
-        return 0;
+        if (!isFloatType(argumentType))
+            return 0;
+        return ((argumentType % 1000) / 100);
     }
 } // namespace
 
@@ -305,17 +305,17 @@ void _printf(vec4 v) { uvec4 u = floatBitsToUint(v); _printfWrite(2000, uint[](u
 void _printf(mat2x2 m) {
   uvec2 u0 = floatBitsToUint(m[0]);
   uvec2 u1 = floatBitsToUint(m[1]);
-  _printfWrite(3200, uint[](u0[0], u0[1], u1[0], u1[1]));
+  _printfWrite(2200, uint[](u0[0], u0[1], u1[0], u1[1]));
 }
 void _printf(mat2x3 m) {
   uvec3 u0 = floatBitsToUint(m[0]);
   uvec3 u1 = floatBitsToUint(m[1]);
-  _printfWrite(3300, uint[](u0[0], u0[1], u0[2], u1[0], u1[1], u1[2]));
+  _printfWrite(2300, uint[](u0[0], u0[1], u0[2], u1[0], u1[1], u1[2]));
 }
 void _printf(mat2x4 m) {
   uvec4 u0 = floatBitsToUint(m[0]);
   uvec4 u1 = floatBitsToUint(m[1]);
-  _printfWrite(3400, uint[](u0[0], u0[1], u0[2], u0[3], u1[0], u1[1], u1[2], u1[3]));
+  _printfWrite(2400, uint[](u0[0], u0[1], u0[2], u0[3], u1[0], u1[1], u1[2], u1[3]));
 }
 void _printf(mat3x2 m) {
   uvec2 u0 = floatBitsToUint(m[0]);
@@ -347,14 +347,14 @@ void _printf(mat4x3 m) {
   uvec3 u1 = floatBitsToUint(m[1]);
   uvec3 u2 = floatBitsToUint(m[2]);
   uvec3 u3 = floatBitsToUint(m[3]);
-  _printfWrite(3300, uint[](u0[0], u0[1], u0[2], u1[0], u1[1], u1[2], u2[0], u2[1], u2[2], u3[0], u3[1], u3[2]));
+  _printfWrite(4300, uint[](u0[0], u0[1], u0[2], u1[0], u1[1], u1[2], u2[0], u2[1], u2[2], u3[0], u3[1], u3[2]));
 }
 void _printf(mat4x4 m) {
   uvec4 u0 = floatBitsToUint(m[0]);
   uvec4 u1 = floatBitsToUint(m[1]);
   uvec4 u2 = floatBitsToUint(m[2]);
   uvec4 u3 = floatBitsToUint(m[3]);
-  _printfWrite(3400, uint[](u0[0], u0[1], u0[2], u0[3], u1[0], u1[1], u1[2], u1[3], u2[0], u2[1], u2[2], u2[3], u3[0], u3[1], u3[2], u3[3]));
+  _printfWrite(4400, uint[](u0[0], u0[1], u0[2], u0[3], u1[0], u1[1], u1[2], u1[3], u2[0], u2[1], u2[2], u2[3], u3[0], u3[1], u3[2], u3[3]));
 }
 
 void _printf(int v) { _printf(uint(v)); }
@@ -457,19 +457,19 @@ void _printf(float2x2 m) {
   uint2 u0 = asuint(m[0]);
   uint2 u1 = asuint(m[1]);
   uint a[] = { u0[0], u0[1], u1[0], u1[1] };
-  _printfWrite(3200, a);
+  _printfWrite(2200, a);
 }
 void _printf(float2x3 m) {
   uint3 u0 = asuint(m[0]);
   uint3 u1 = asuint(m[1]);
   uint a[] = { u0[0], u0[1], u0[2], u1[0], u1[1], u1[2] };
-  _printfWrite(3300, a);
+  _printfWrite(2300, a);
 }
 void _printf(float2x4 m) {
   uint4 u0 = asuint(m[0]);
   uint4 u1 = asuint(m[1]);
   uint a[] = { u0[0], u0[1], u0[2], u0[3], u1[0], u1[1], u1[2], u1[3] };
-  _printfWrite(3400, a);
+  _printfWrite(2400, a);
 }
 void _printf(float3x2 m) {
   uint2 u0 = asuint(m[0]);
@@ -506,7 +506,7 @@ void _printf(float4x3 m) {
   uint3 u2 = asuint(m[2]);
   uint3 u3 = asuint(m[3]);
   uint a[] = { u0[0], u0[1], u0[2], u1[0], u1[1], u1[2], u2[0], u2[1], u2[2], u3[0], u3[1], u3[2] };
-  _printfWrite(3300, a);
+  _printfWrite(4300, a);
 }
 void _printf(float4x4 m) {
   uint4 u0 = asuint(m[0]);
@@ -514,7 +514,7 @@ void _printf(float4x4 m) {
   uint4 u2 = asuint(m[2]);
   uint4 u3 = asuint(m[3]);
   uint a[] = { u0[0], u0[1], u0[2], u0[3], u1[0], u1[1], u1[2], u1[3], u2[0], u2[1], u2[2], u2[3], u3[0], u3[1], u3[2], u3[3] };
-  _printfWrite(3400, a);
+  _printfWrite(4400, a);
 }
 
 void _printf(int v) { _printf(uint(v)); }
