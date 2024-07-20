@@ -7,10 +7,10 @@ VKTarget::VKTarget(const Target &target)
     , mPolygonMode(target.polygonMode)
     , mLogicOperation(target.logicOperation)
     , mBlendConstant(target.blendConstant)
+    , mSamples(target.defaultSamples)
     , mDefaultWidth(target.defaultWidth)
     , mDefaultHeight(target.defaultHeight)
     , mDefaultLayers(target.defaultLayers)
-    , mSamples(target.defaultSamples)
 {
     mUsedItems += target.id;
 

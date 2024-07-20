@@ -4,6 +4,7 @@
 #include "EvaluatedPropertyCache.h"
 #include "FileDialog.h"
 #include "FileCache.h"
+#include <cmath>
 
 void transformClearColor(std::array<double, 4> &color, 
         TextureSampleType sampleType)

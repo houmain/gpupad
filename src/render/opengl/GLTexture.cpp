@@ -1,6 +1,7 @@
 #include "GLTexture.h"
 #include "GLBuffer.h"
 #include <QOpenGLPixelTransferOptions>
+#include <QScopeGuard>
 #include <cmath>
 
 namespace {

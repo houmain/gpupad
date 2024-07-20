@@ -189,8 +189,9 @@ namespace {
             case QOpenGLTexture::D32FS8X24:
             case QOpenGLTexture::S8:
                 return true;
+            default:
+                return false;
         }
-        return false;
     }
 
     bool canGenerateMipmaps(QOpenGLTexture::Target target,

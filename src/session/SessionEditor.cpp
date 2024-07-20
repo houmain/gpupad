@@ -97,16 +97,16 @@ void SessionEditor::addItemActions(QMenu* menu)
 void SessionEditor::updateItemActions()
 {
     auto index = selectionModel()->currentIndex();
-    for (const auto &pair : {
+    for (const auto [type, action] : {
             std::make_pair(Item::Type::Block, mAddBlockAction),
             std::make_pair(Item::Type::Field, mAddFieldAction),
             std::make_pair(Item::Type::Shader, mAddShaderAction),
             std::make_pair(Item::Type::Attribute, mAddAttributeAction),
             std::make_pair(Item::Type::Attachment, mAddAttachmentAction),
         })
-        pair.second->setVisible(
-            mModel.canContainType(index, pair.first) ||
-            mModel.canContainType(index.parent(), pair.first));
+        action->setVisible(
+            mModel.canContainType(index, type) ||
+            mModel.canContainType(index.parent(), type));
 }
 
 QList<QMetaObject::Connection> SessionEditor::connectEditActions(

@@ -29,6 +29,7 @@ namespace
         switch (language) {
             case Shader::Language::GLSL: return glslang::EShSourceGlsl;
             case Shader::Language::HLSL: return glslang::EShSourceHlsl;
+            case Shader::Language::None: break;
         }
         return { };
     }

@@ -214,7 +214,6 @@ void main() {
     bool importSharedTexture(SharedMemoryHandle handle, 
         const TextureData &data, int samples, GLuint textureId)
     {            
-#if defined(_WIN32)
         auto& context = *QOpenGLContext::currentContext();
         static auto glCreateMemoryObjectsEXT = 
             reinterpret_cast<PFNGLCREATEMEMORYOBJECTSEXTPROC>(
@@ -222,9 +221,18 @@ void main() {
         static auto glDeleteMemoryObjectsEXT = 
             reinterpret_cast<PFNGLDELETEMEMORYOBJECTSEXTPROC>(
                 context.getProcAddress("glDeleteMemoryObjectsEXT"));
+        static auto glMemoryObjectParameterivEXT =
+            reinterpret_cast<PFNGLGETMEMORYOBJECTPARAMETERIVEXTPROC>(
+                context.getProcAddress("glMemoryObjectParameterivEXT"));
+#if defined(_WIN32)
         static auto glImportMemoryWin32HandleEXT =
             reinterpret_cast<PFNGLIMPORTMEMORYWIN32HANDLEEXTPROC>(
                 context.getProcAddress("glImportMemoryWin32HandleEXT"));
+#else
+        static auto glImportMemoryFdEXT =
+            reinterpret_cast<PFNGLIMPORTMEMORYFDEXTPROC>(
+                context.getProcAddress("glImportMemoryFdEXT"));
+#endif
         static auto glTextureStorageMem1DEXT =
             reinterpret_cast<PFNGLTEXTURESTORAGEMEM1DEXTPROC>(
                 context.getProcAddress("glTextureStorageMem1DEXT"));
@@ -243,23 +251,23 @@ void main() {
 
         if (!glCreateMemoryObjectsEXT ||
             !glDeleteMemoryObjectsEXT ||
-            !glImportMemoryWin32HandleEXT || 
             !glTextureStorageMem1DEXT ||
             !glTextureStorageMem2DEXT ||
             !glTextureStorageMem2DMultisampleEXT ||
             !glTextureStorageMem3DEXT ||
             !glTextureStorageMem3DMultisampleEXT)
             return false;
-#endif
 
         auto memoryObject = GLuint{ };
         glCreateMemoryObjectsEXT(1, &memoryObject);
+        auto dedicated = GLint{ handle.dedicated ? GL_TRUE : GL_FALSE };
+        glMemoryObjectParameterivEXT(memoryObject, GL_DEDICATED_MEMORY_OBJECT_EXT, &dedicated);
 #if defined(_WIN32)
         glImportMemoryWin32HandleEXT(memoryObject, handle.allocationSize,
             GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, handle.handle);
 #else
-        glImportMemoryWin32HandleEXT(memoryObject, handle.allocationSize,
-            GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, handle.handle);            
+        glImportMemoryFdEXT(memoryObject, handle.allocationSize,
+            GL_HANDLE_TYPE_OPAQUE_FD_EXT, reinterpret_cast<intptr_t>(handle.handle));
 #endif
         const auto target = data.getTarget(samples);
         const auto dimensions = data.dimensions() + (data.isArray() ? 1 : 0);

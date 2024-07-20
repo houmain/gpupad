@@ -105,6 +105,7 @@ struct SharedMemoryHandle
     void* handle;
     size_t allocationSize;
     size_t allocationOffset;
+    bool dedicated;
 };
 
 bool isMultisampleTarget(QOpenGLTexture::Target target);

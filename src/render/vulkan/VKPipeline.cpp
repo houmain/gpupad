@@ -5,6 +5,7 @@
 #include "VKBuffer.h"
 #include "VKTexture.h"
 #include "VKStream.h"
+#include <QScopeGuard>
 
 namespace
 {
@@ -341,6 +342,8 @@ void VKPipeline::updateDefaultUniformBlock(VKContext &context,
                 ADD(Field::DataType::Float, float);
                 ADD(Field::DataType::Double, double);
 #undef ADD
+                default:
+                    Q_ASSERT(!"not handled data type");
             }
             mUsedItems += binding.bindingItemId;
         }

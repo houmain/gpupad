@@ -2,6 +2,7 @@
 #include "VKBuffer.h"
 #include "SynchronizeLogic.h"
 #include "EvaluatedPropertyCache.h"
+#include <QScopeGuard>
 #include <cmath>
 
 namespace
@@ -560,12 +561,14 @@ SharedMemoryHandle VKTexture::getSharedMemoryHandle() const
         std::get<HANDLE>(memory.handle),
         memory.allocationSize,
         memory.allocationOffset,
+        true,
     };
 #else
     return { 
         reinterpret_cast<void*>(intptr_t{ std::get<int>(memory.handle) }),
         memory.allocationSize,
         memory.allocationOffset,
+        true,
     };
 #endif
 }

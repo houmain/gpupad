@@ -1,6 +1,7 @@
 #include "VKBuffer.h"
 #include "Singletons.h"
 #include "EvaluatedPropertyCache.h"
+#include <QScopeGuard>
 
 namespace
 {

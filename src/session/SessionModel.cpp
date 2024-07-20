@@ -460,6 +460,14 @@ void SessionModel::deserialize(const QJsonObject &object,
             const auto absolutePath = QDir::current().absoluteFilePath(value.toString());
             setData(getIndex(index, FileName), toNativeCanonicalFilePath(absolutePath));
         }
+        else if (property == "target") {
+            // TODO: remove, added for backward compatibility
+            if (value == "Target2DMultisample")
+                value = "Target2D";
+            if (value == "Target2DMultisampleArray")
+                value = "Target2DArray";
+            dropColumn(property, getIndex(index, TextureTarget), value);
+        }
 #define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
         else if (Item::Type::ITEM_TYPE == type && #PROPERTY == property) \
             dropColumn(property, getIndex(index, COLUMN_TYPE), value);
