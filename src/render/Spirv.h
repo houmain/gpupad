@@ -24,7 +24,7 @@ public:
     static Spirv generate(Shader::Language language, 
         Shader::ShaderType shaderType, const QStringList &sources, 
         const QStringList &fileNames, const QString &entryPoint, 
-        MessagePtrSet &messages);
+        int shiftBindingsInSet0, MessagePtrSet &messages);
 
     Spirv() = default;
     explicit Spirv(std::vector<uint32_t> spirv);

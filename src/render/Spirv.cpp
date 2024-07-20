@@ -180,7 +180,7 @@ const SpvReflectShaderModule* Spirv::Interface::operator->() const
 Spirv Spirv::generate(Shader::Language language, 
     Shader::ShaderType shaderType, const QStringList &sources, 
     const QStringList &fileNames, const QString &entryPoint, 
-    MessagePtrSet &messages)
+    int shiftBindingsInSet0, MessagePtrSet &messages)
 {
     if (sources.empty() || sources.size() != fileNames.size())
         return { };
@@ -213,13 +213,15 @@ Spirv Spirv::generate(Shader::Language language,
         getEntryPoint(entryPoint, language, shaderType, sources.front()).toUtf8();
     shader.setEntryPoint(entryPointU8.constData());
 
-    // TODO:
+    // TODO: allow to select compiler options
     shader.setAutoMapBindings(true);
     shader.setAutoMapLocations(true);
     shader.setEnvInputVulkanRulesRelaxed();
-    shader.setGlobalUniformSet(15);
-    shader.setGlobalUniformBinding(static_cast<int>(getStage(shaderType)));
-    shader.setHlslIoMapping(true);
+    shader.setHlslIoMapping(language == Shader::Language::HLSL);
+
+    using ResTypes = glslang::TResourceType;
+    for (auto e = ResTypes{ }; e != ResTypes::EResCount; e = static_cast<ResTypes>(e + 1))
+        shader.setShiftBindingForSet(e, shiftBindingsInSet0, 0);
 
     if (!shader.parse(GetDefaultResources(), defaultVersion, forwardCompatible, requestedMessages)) {
         parseGLSLangErrors(QString::fromUtf8(shader.getInfoLog()), messages, itemId, fileNames);
@@ -233,7 +235,6 @@ Spirv Spirv::generate(Shader::Language language,
         return { };
     }
 
-    // TODO:
     program.mapIO();
 
     auto spvOptions = glslang::SpvOptions{ };

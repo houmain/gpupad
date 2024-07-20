@@ -25,7 +25,7 @@ VKShader::VKShader(Shader::ShaderType type, const QList<const Shader*> &shaders,
 {
 }
 
-bool VKShader::compile(KDGpu::Device &device, VKPrintf *printf)
+bool VKShader::compile(KDGpu::Device &device, VKPrintf *printf, int shiftBindingsInSet0)
 {
     if (!mPatchedSources.isEmpty())
         return mShaderModule.isValid();
@@ -36,7 +36,8 @@ bool VKShader::compile(KDGpu::Device &device, VKPrintf *printf)
         return false;
 
     auto spirv = Spirv::generate(mLanguage, mType, 
-        mPatchedSources, mFileNames, mEntryPoint, mMessages);
+        mPatchedSources, mFileNames, mEntryPoint, 
+        shiftBindingsInSet0, mMessages);
     if (!spirv)
         return false;
 
@@ -52,4 +53,13 @@ KDGpu::ShaderStage VKShader::getShaderStage() const
         .stage = getStageFlags(mType),
         .entryPoint = mEntryPoint.toStdString(),
     };
+}
+
+int VKShader::getMaxBindingInSet0() const
+{
+    auto max = -1;
+    for (auto i = 0u; i < mInterface->descriptor_binding_count; ++i)
+        if (mInterface->descriptor_bindings[i].set == 0)
+            max = std::max(max, static_cast<int>(mInterface->descriptor_bindings[i].binding));
+    return max;
 }

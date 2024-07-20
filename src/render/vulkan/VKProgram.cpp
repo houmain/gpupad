@@ -34,8 +34,11 @@ bool VKProgram::link(KDGpu::Device &device)
         return true;
 
     auto succeeded = true;
-    for (auto &shader : mShaders)
-        succeeded &= shader.compile(device, &mPrintf);
+    auto shiftBindingsInSet0 = 0;
+    for (auto &shader : mShaders) {
+        succeeded &= shader.compile(device, &mPrintf, shiftBindingsInSet0);
+        shiftBindingsInSet0 = std::max(shiftBindingsInSet0, shader.getMaxBindingInSet0() + 1);
+    }
     if (!succeeded)
         return false;
 

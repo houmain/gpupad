@@ -266,8 +266,7 @@ QString ShaderPrintf::preambleGLSL()
 bool printfEnabled = true;
 uint _printfArgumentOffset = 0;
 
-// TODO: dynamically assign with glslang
-layout(std430, set = 4) buffer _printfBuffer {
+layout(std430) buffer _printfBuffer {
   uint _printfOffset;
   uint _printfPrevBegin;
   uint _printfData[];
@@ -389,8 +388,6 @@ QString ShaderPrintf::preambleHLSL()
 static bool printfEnabled = true;
 static uint _printfArgumentOffset = 0;
 
-// TODO: dynamically assign with glslang
-[[vk::binding(4, 0)]]
 RWByteAddressBuffer _printfBuffer;
 
 void _printfBegin(int whichFormatString, int argumentCount) {
