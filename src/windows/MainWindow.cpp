@@ -885,8 +885,8 @@ void MainWindow::saveSessionState(const QString &sessionFileName)
         if (!filesAdded.contains(editor.fileName()))
             openEditors += QString("%1|%2").arg(
                 QDir::fromNativeSeparators(
-                    sessionDir.relativeFilePath(editor.fileName())))
-                .arg(mEditorManager.getEditorObjectName(&editor));
+                    sessionDir.relativeFilePath(editor.fileName())),
+                mEditorManager.getEditorObjectName(&editor));
     });
 
     settings.setValue("editorState", mEditorManager.saveState());

@@ -130,9 +130,9 @@ void DockWindow::openContextMenu(QPoint pos, QTabBar *tabBar, QDockWidget *dock)
         auto copyFullPath = menu.addAction(tr("Copy Full Path"));
         auto openContainingFolder = menu.addAction(tr("Open Containing Folder"));
         connect(copyFullPath, &QAction::triggered,
-            [=, this]() { QApplication::clipboard()->setText(fileName); });
+            [fileName]() { QApplication::clipboard()->setText(fileName); });
         connect(openContainingFolder, &QAction::triggered,
-            [=, this]() { showInFileManager(fileName); });
+            [fileName]() { showInFileManager(fileName); });
     }
 
     if (tabBar && tabBar->count() > 1) {

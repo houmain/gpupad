@@ -90,7 +90,7 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
 std::vector<KDGpu::RenderTargetOptions> VKTarget::getRenderTargetOptions()
 {
     auto options = std::vector<KDGpu::RenderTargetOptions>{ };
-    for (const auto &attachment : mAttachments) {
+    for (const auto &attachment : qAsConst(mAttachments)) {
         const auto kind = attachment.texture->kind();
         if (!kind.depth && !kind.stencil) {
             options.push_back({
@@ -119,7 +119,7 @@ std::vector<KDGpu::RenderTargetOptions> VKTarget::getRenderTargetOptions()
 KDGpu::DepthStencilOptions VKTarget::getDepthStencilOptions()
 {
     auto options = KDGpu::DepthStencilOptions{ };
-    for (const auto &attachment : mAttachments) {
+    for (const auto &attachment : qAsConst(mAttachments)) {
         const auto kind = attachment.texture->kind();
         if (kind.depth || kind.stencil) {
             if (options.format != KDGpu::Format::UNDEFINED) {
@@ -167,7 +167,7 @@ KDGpu::MultisampleOptions VKTarget::getMultisampleOptions()
 KDGpu::PrimitiveOptions VKTarget::getPrimitiveOptions()
 {
     auto depthBias = KDGpu::DepthBiasOptions{ };
-    for (const auto &attachment : mAttachments) {
+    for (const auto &attachment : qAsConst(mAttachments)) {
         if (attachment.texture->kind().depth) {
               depthBias.enabled = (attachment.depthClamp || 
                                    attachment.depthOffsetSlope || 

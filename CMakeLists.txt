@@ -220,7 +220,10 @@ endif()
 
 # link Qt
 if(NOT DEFINED QT_VERSION_MAJOR)
-    find_package(QT NAMES Qt5 Qt6 COMPONENTS Widgets REQUIRED)
+    find_package(QT NAMES Qt6 COMPONENTS Widgets)
+    if(NOT DEFINED QT_VERSION_MAJOR)
+        find_package(QT NAMES Qt5 COMPONENTS Widgets REQUIRED)
+    endif()
     set(QT_VERSION_MAJOR ${QT_VERSION_MAJOR} CACHE STRING "Qt version" FORCE)
 endif()
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
