@@ -1,7 +1,7 @@
 
+#include "render/Renderer.h"
 #include <QObject>
 #include <QThread>
-#include "render/Renderer.h"
 
 class GLRenderer : public QObject, public Renderer
 {
@@ -14,8 +14,8 @@ public:
     void release(RenderTask *task) override;
 
 Q_SIGNALS:
-    void configureTask(RenderTask* renderTask, QPrivateSignal);
-    void renderTask(RenderTask* renderTask, QPrivateSignal);
+    void configureTask(RenderTask *renderTask, QPrivateSignal);
+    void renderTask(RenderTask *renderTask, QPrivateSignal);
     void releaseTask(RenderTask *renderTask, void *userData, QPrivateSignal);
 
 private:
@@ -26,8 +26,8 @@ private:
 
     QThread mThread;
     QScopedPointer<Worker> mWorker;
-    QList<RenderTask*> mPendingTasks;
-    RenderTask* mCurrentTask{ };
+    QList<RenderTask *> mPendingTasks;
+    RenderTask *mCurrentTask{};
 };
 
 QString getFirstGLError();

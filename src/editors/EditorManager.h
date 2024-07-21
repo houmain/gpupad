@@ -1,9 +1,9 @@
 #pragma once
 
-#include "EditActions.h"
-#include "SourceType.h"
-#include "FileDialog.h"
 #include "DockWindow.h"
+#include "EditActions.h"
+#include "FileDialog.h"
+#include "SourceType.h"
 #include <QList>
 #include <QMap>
 #include <QStack>
@@ -34,8 +34,8 @@ public:
     BinaryEditor *openNewBinaryEditor(const QString &fileName);
     TextureEditor *openNewTextureEditor(const QString &fileName);
     IEditor *openEditor(const QString &fileName, bool asBinaryFile = false);
-    SourceEditor *openSourceEditor(const QString &fileName,
-        int line = -1, int column = -1);
+    SourceEditor *openSourceEditor(const QString &fileName, int line = -1,
+        int column = -1);
     BinaryEditor *openBinaryEditor(const QString &fileName);
     TextureEditor *openTextureEditor(const QString &fileName);
     QmlView *openQmlView(const QString &fileName);
@@ -60,8 +60,9 @@ public:
     void updateCurrentEditor();
     bool hasCurrentEditor() const { return (mCurrentDock != nullptr); }
     QString currentEditorFileName();
-    void forEachEditor(const std::function<void(IEditor&)> &function) const;
-    QList<QMetaObject::Connection> connectEditActions(const EditActions &actions);
+    void forEachEditor(const std::function<void(IEditor &)> &function) const;
+    QList<QMetaObject::Connection> connectEditActions(
+        const EditActions &actions);
     void renameEditors(const QString &prevFileName, const QString &fileName);
     void resetQmlViewsDependingOn(const QString &fileName);
     bool saveEditor();
@@ -107,22 +108,21 @@ private:
     void addNavigationPosition(const QString &position, bool update);
     bool restoreNavigationPosition(int index);
 
-    QList<SourceEditor*> mSourceEditors;
-    QList<BinaryEditor*> mBinaryEditors;
-    QList<TextureEditor*> mTextureEditors;
-    QList<QmlView*> mQmlViews;
-    std::map<QDockWidget*, IEditor*> mDocks;
-    std::map<int, QDockWidget*> mLastFocusedTabifyGroupDock;
-    QDockWidget *mCurrentDock{ };
-    FindReplaceBar *mFindReplaceBar{ };
-    TextureInfoBar *mTextureInfoBar{ };
-    TextureEditorToolBar *mTextureEditorToolBar{ };
-    BinaryEditorToolBar *mBinaryEditorToolBar{ };
-    SourceEditorToolBar *mSourceEditorToolBar{ };
+    QList<SourceEditor *> mSourceEditors;
+    QList<BinaryEditor *> mBinaryEditors;
+    QList<TextureEditor *> mTextureEditors;
+    QList<QmlView *> mQmlViews;
+    std::map<QDockWidget *, IEditor *> mDocks;
+    std::map<int, QDockWidget *> mLastFocusedTabifyGroupDock;
+    QDockWidget *mCurrentDock{};
+    FindReplaceBar *mFindReplaceBar{};
+    TextureInfoBar *mTextureInfoBar{};
+    TextureEditorToolBar *mTextureEditorToolBar{};
+    BinaryEditorToolBar *mBinaryEditorToolBar{};
+    SourceEditorToolBar *mSourceEditorToolBar{};
     bool mAutoRaise{ true };
-    QStack<QPair<QObject*, QString>> mNavigationStack;
-    int mNavigationStackPosition{ };
+    QStack<QPair<QObject *, QString>> mNavigationStack;
+    int mNavigationStackPosition{};
 };
 
 void updateDockCurrentProperty(QDockWidget *dock, bool current);
-

@@ -1,33 +1,35 @@
 
 #include "RenderSessionBase.h"
+#include "FileCache.h"
+#include "Settings.h"
+#include "Singletons.h"
+#include "SynchronizeLogic.h"
+#include "editors/EditorManager.h"
+#include "editors/binary/BinaryEditor.h"
+#include "editors/texture/TextureEditor.h"
 #include "opengl/GLRenderSession.h"
+#include "scripting/ScriptEngine.h"
+#include "scripting/ScriptSession.h"
+#include "session/SessionModel.h"
 #include "vulkan/VKRenderSession.h"
 #include "vulkan/VKRenderer.h"
-#include "Singletons.h"
-#include "Settings.h"
-#include "SynchronizeLogic.h"
-#include "FileCache.h"
-#include "session/SessionModel.h"
-#include "scripting/ScriptSession.h"
-#include "scripting/ScriptEngine.h"
-#include "editors/EditorManager.h"
-#include "editors/texture/TextureEditor.h"
-#include "editors/binary/BinaryEditor.h"
 
 std::unique_ptr<RenderSessionBase> RenderSessionBase::create(Renderer &renderer)
 {
     switch (renderer.api()) {
-        case RenderAPI::OpenGL: return std::make_unique<GLRenderSession>();
-        case RenderAPI::Vulkan: return std::make_unique<VKRenderSession>(
-            static_cast<VKRenderer&>(renderer));
+    case RenderAPI::OpenGL: return std::make_unique<GLRenderSession>();
+    case RenderAPI::Vulkan:
+        return std::make_unique<VKRenderSession>(
+            static_cast<VKRenderer &>(renderer));
     }
-    return { };
+    return {};
 }
 
 RenderSessionBase::RenderSessionBase() = default;
 RenderSessionBase::~RenderSessionBase() = default;
 
-void RenderSessionBase::prepare(bool itemsChanged, EvaluationType evaluationType)
+void RenderSessionBase::prepare(bool itemsChanged,
+    EvaluationType evaluationType)
 {
     mItemsChanged = itemsChanged;
     mEvaluationType = evaluationType;
@@ -43,10 +45,10 @@ void RenderSessionBase::prepare(bool itemsChanged, EvaluationType evaluationType
     if (mEvaluationType == EvaluationType::Reset)
         mScriptSession.reset(new ScriptSession(SourceType::JavaScript));
 
-    mShaderPreamble = Singletons::settings().shaderPreamble() + "\n" +
-        Singletons::synchronizeLogic().sessionShaderPreamble();
-    mShaderIncludePaths = Singletons::settings().shaderIncludePaths() + "\n" +
-        Singletons::synchronizeLogic().sessionShaderIncludePaths();
+    mShaderPreamble = Singletons::settings().shaderPreamble() + "\n"
+        + Singletons::synchronizeLogic().sessionShaderPreamble();
+    mShaderIncludePaths = Singletons::settings().shaderIncludePaths() + "\n"
+        + Singletons::synchronizeLogic().sessionShaderIncludePaths();
 
     mScriptSession->prepare();
 }
@@ -62,14 +64,16 @@ void RenderSessionBase::configure()
         if (auto script = castItem<Script>(item)) {
             auto source = QString();
             if (shouldExecute(script->executeOn, mEvaluationType))
-                if (Singletons::fileCache().getSource(script->fileName, &source))
-                    scriptEngine.evaluateScript(source, script->fileName, mMessages);
-        }
-        else if (auto binding = castItem<Binding>(item)) {
+                if (Singletons::fileCache().getSource(script->fileName,
+                        &source))
+                    scriptEngine.evaluateScript(source, script->fileName,
+                        mMessages);
+        } else if (auto binding = castItem<Binding>(item)) {
             const auto &b = *binding;
             if (b.bindingType == Binding::BindingType::Uniform) {
                 // set global in script state
-                auto values = scriptEngine.evaluateValues(b.values, b.id, mMessages); 
+                auto values =
+                    scriptEngine.evaluateValues(b.values, b.id, mMessages);
                 scriptEngine.setGlobal(b.name, values);
             }
         }
@@ -107,7 +111,6 @@ void RenderSessionBase::finish()
 
     editors.setAutoRaise(true);
 
-
     mPrevMessages.clear();
 
     QMutexLocker lock{ &mUsedItemsCopyMutex };
@@ -132,6 +135,5 @@ bool RenderSessionBase::usesKeyboardState() const
 
 bool RenderSessionBase::updatingPreviewTextures() const
 {
-    return (!mItemsChanged &&
-        mEvaluationType == EvaluationType::Steady);
+    return (!mItemsChanged && mEvaluationType == EvaluationType::Steady);
 }

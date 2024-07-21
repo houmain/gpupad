@@ -1,16 +1,16 @@
 #include "GLBuffer.h"
-#include "Singletons.h"
 #include "EvaluatedPropertyCache.h"
+#include "Singletons.h"
 
-int getBufferSize(const Buffer &buffer,
-    ScriptEngine &scriptEngine, MessagePtrSet &messages)
+int getBufferSize(const Buffer &buffer, ScriptEngine &scriptEngine,
+    MessagePtrSet &messages)
 {
     auto size = 1;
-    for (const Item* item : buffer.items) {
-        const auto &block = *static_cast<const Block*>(item);
+    for (const Item *item : buffer.items) {
+        const auto &block = *static_cast<const Block *>(item);
         auto offset = 0, rowCount = 0;
-        Singletons::evaluatedPropertyCache().evaluateBlockProperties(
-            block, &offset, &rowCount, &scriptEngine);
+        Singletons::evaluatedPropertyCache().evaluateBlockProperties(block,
+            &offset, &rowCount, &scriptEngine);
         size = std::max(size, offset + rowCount * getBlockStride(block));
     }
     return size;
@@ -23,26 +23,25 @@ GLBuffer::GLBuffer(const Buffer &buffer, ScriptEngine &scriptEngine)
 {
     mUsedItems += buffer.id;
     for (const auto item : buffer.items)
-        if (auto block = static_cast<const Block*>(item)) {
+        if (auto block = static_cast<const Block *>(item)) {
             mUsedItems += block->id;
             for (const auto item : block->items)
-                if (auto field = static_cast<const Block*>(item))
+                if (auto field = static_cast<const Block *>(item))
                     mUsedItems += field->id;
         }
 }
 
 void GLBuffer::updateUntitledFilename(const GLBuffer &rhs)
 {
-    if (mSize == rhs.mSize &&
-        FileDialog::isEmptyOrUntitled(mFileName) &&
-        FileDialog::isEmptyOrUntitled(rhs.mFileName))
+    if (mSize == rhs.mSize && FileDialog::isEmptyOrUntitled(mFileName)
+        && FileDialog::isEmptyOrUntitled(rhs.mFileName))
         mFileName = rhs.mFileName;
 }
 
 bool GLBuffer::operator==(const GLBuffer &rhs) const
 {
-    return std::tie(mFileName, mSize, mMessages) ==
-           std::tie(rhs.mFileName, rhs.mSize,rhs.mMessages);
+    return std::tie(mFileName, mSize, mMessages)
+        == std::tie(rhs.mFileName, rhs.mSize, rhs.mMessages);
 }
 
 void GLBuffer::clear()
@@ -51,8 +50,8 @@ void GLBuffer::clear()
     if (auto gl43 = check(gl.v4_3, mItemId, mMessages)) {
         auto data = uint8_t();
         gl.glBindBuffer(GL_ARRAY_BUFFER, getReadWriteBufferId());
-        gl43->glClearBufferData(GL_ARRAY_BUFFER, GL_R8,
-            GL_RED, GL_UNSIGNED_BYTE, &data);
+        gl43->glClearBufferData(GL_ARRAY_BUFFER, GL_R8, GL_RED,
+            GL_UNSIGNED_BYTE, &data);
         gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
     }
 }
@@ -62,8 +61,8 @@ void GLBuffer::copy(GLBuffer &source)
     auto &gl = GLContext::currentContext();
     gl.glBindBuffer(GL_COPY_READ_BUFFER, source.getReadOnlyBufferId());
     gl.glBindBuffer(GL_COPY_WRITE_BUFFER, getReadWriteBufferId());
-    gl.glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER,
-        0, 0, std::min(source.mSize, mSize));
+    gl.glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0,
+        std::min(source.mSize, mSize));
     gl.glBindBuffer(GL_COPY_READ_BUFFER, GL_NONE);
     gl.glBindBuffer(GL_COPY_WRITE_BUFFER, GL_NONE);
 }
@@ -96,15 +95,15 @@ GLuint GLBuffer::getReadWriteBufferId()
     return mBufferObject;
 }
 
-void GLBuffer::bindIndexedRange(GLenum target, int index, int offset, int size, bool readonly)
+void GLBuffer::bindIndexedRange(GLenum target, int index, int offset, int size,
+    bool readonly)
 {
-    const auto bufferObject = (readonly ?
-        getReadOnlyBufferId() : getReadWriteBufferId());
+    const auto bufferObject =
+        (readonly ? getReadOnlyBufferId() : getReadWriteBufferId());
     auto &gl = GLContext::currentContext();
     if (size <= 0) {
         gl.glBindBufferBase(target, index, bufferObject);
-    }
-    else {
+    } else {
         gl.glBindBufferRange(target, index, bufferObject, offset, size);
     }
 }
@@ -127,8 +126,8 @@ void GLBuffer::reload()
     if (!mFileName.isEmpty())
         if (!Singletons::fileCache().getBinary(mFileName, &mData))
             if (!FileDialog::isEmptyOrUntitled(mFileName))
-                mMessages += MessageList::insert(
-                    mItemId, MessageType::LoadingFileFailed, mFileName);
+                mMessages += MessageList::insert(mItemId,
+                    MessageType::LoadingFileFailed, mFileName);
 
     if (mSize > mData.size())
         mData.append(QByteArray(mSize - mData.size(), 0));
@@ -143,13 +142,13 @@ void GLBuffer::createBuffer()
 
     auto &gl = GLContext::currentContext();
     auto createBuffer = [&]() {
-      auto buffer = GLuint{};
-      gl.glGenBuffers(1, &buffer);
-      return buffer;
+        auto buffer = GLuint{};
+        gl.glGenBuffers(1, &buffer);
+        return buffer;
     };
     auto freeBuffer = [](GLuint buffer) {
-      auto &gl = GLContext::currentContext();
-      gl.glDeleteBuffers(1, &buffer);
+        auto &gl = GLContext::currentContext();
+        gl.glDeleteBuffers(1, &buffer);
     };
 
     mBufferObject = GLObject(createBuffer(), freeBuffer);

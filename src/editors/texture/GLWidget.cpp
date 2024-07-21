@@ -2,12 +2,9 @@
 #include "GLWidget.h"
 #include <QOpenGLContext>
 
-GLWidget::GLWidget(QWidget *parent) 
-    : QOpenGLWidget(parent) 
-{
-}
+GLWidget::GLWidget(QWidget *parent) : QOpenGLWidget(parent) { }
 
-GLWidget::~GLWidget() 
+GLWidget::~GLWidget()
 {
     if (mInitialized) {
         if (context()->makeCurrent(nullptr)) {
@@ -17,7 +14,7 @@ GLWidget::~GLWidget()
     }
 }
 
-void GLWidget::initializeGL() 
+void GLWidget::initializeGL()
 {
     mInitialized = true;
     mGL.initializeOpenGLFunctions();
@@ -33,7 +30,8 @@ void GLWidget::initializeGL()
 #if !defined(NDEBUG)
     if (mDebugLogger.initialize()) {
         mDebugLogger.disableMessages(QOpenGLDebugMessage::AnySource,
-            QOpenGLDebugMessage::AnyType, QOpenGLDebugMessage::NotificationSeverity);
+            QOpenGLDebugMessage::AnyType,
+            QOpenGLDebugMessage::NotificationSeverity);
         QObject::connect(&mDebugLogger, &QOpenGLDebugLogger::messageLogged,
             this, &GLWidget::handleDebugMessage);
         mDebugLogger.startLogging(QOpenGLDebugLogger::SynchronousLogging);
@@ -48,7 +46,7 @@ void GLWidget::paintGL()
     Q_EMIT paintingGL();
 }
 
-void GLWidget::releaseGL() 
+void GLWidget::releaseGL()
 {
     Q_EMIT releasingGL();
 }

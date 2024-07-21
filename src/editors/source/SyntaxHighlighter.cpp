@@ -5,7 +5,8 @@
 
 struct SyntaxHighlighter::Data
 {
-    struct HighlightingRule {
+    struct HighlightingRule
+    {
         QRegularExpression pattern;
         QTextCharFormat format;
     };
@@ -21,38 +22,34 @@ struct SyntaxHighlighter::Data
 };
 
 namespace {
-    const Syntax& getSyntax(SourceType sourceType) 
+    const Syntax &getSyntax(SourceType sourceType)
     {
         static const auto SyntaxGeneric = makeSyntaxGeneric();
         static const auto syntaxGLSL = makeSyntaxGLSL();
         static const auto syntaxHLSL = makeSyntaxHLSL();
         static const auto syntaxJavaScript = makeSyntaxJavaScript();
         switch (sourceType) {
-            case SourceType::PlainText:
-            case SourceType::Generic:
-                break;
-            case SourceType::GLSL_VertexShader:
-            case SourceType::GLSL_FragmentShader:
-            case SourceType::GLSL_GeometryShader:
-            case SourceType::GLSL_TessellationControl:
-            case SourceType::GLSL_TessellationEvaluation:
-            case SourceType::GLSL_ComputeShader:
-                return *syntaxGLSL;
-            case SourceType::HLSL_VertexShader:
-            case SourceType::HLSL_PixelShader:
-            case SourceType::HLSL_GeometryShader:
-            case SourceType::HLSL_DomainShader:
-            case SourceType::HLSL_HullShader:
-            case SourceType::HLSL_ComputeShader:
-                return *syntaxHLSL;
-            case SourceType::JavaScript: 
-                return *syntaxJavaScript;
+        case SourceType::PlainText:
+        case SourceType::Generic:                     break;
+        case SourceType::GLSL_VertexShader:
+        case SourceType::GLSL_FragmentShader:
+        case SourceType::GLSL_GeometryShader:
+        case SourceType::GLSL_TessellationControl:
+        case SourceType::GLSL_TessellationEvaluation:
+        case SourceType::GLSL_ComputeShader:          return *syntaxGLSL;
+        case SourceType::HLSL_VertexShader:
+        case SourceType::HLSL_PixelShader:
+        case SourceType::HLSL_GeometryShader:
+        case SourceType::HLSL_DomainShader:
+        case SourceType::HLSL_HullShader:
+        case SourceType::HLSL_ComputeShader:          return *syntaxHLSL;
+        case SourceType::JavaScript:                  return *syntaxJavaScript;
         }
         return *SyntaxGeneric;
     }
 
     QSharedPointer<const SyntaxHighlighter::Data> createData(
-        const Syntax& syntax, const Theme &theme, bool showWhiteSpace)
+        const Syntax &syntax, const Theme &theme, bool showWhiteSpace)
     {
         auto keywordFormat = QTextCharFormat();
         auto builtinFunctionFormat = QTextCharFormat();
@@ -67,39 +64,47 @@ namespace {
         functionFormat.setFontWeight(QFont::Bold);
         functionFormat.setForeground(theme.getColor(ThemeColor::Function));
         keywordFormat.setForeground(theme.getColor(ThemeColor::Keyword));
-        builtinFunctionFormat.setForeground(theme.getColor(ThemeColor::BuiltinFunction));
-        builtinConstantsFormat.setForeground(theme.getColor(ThemeColor::BuiltinConstant));
+        builtinFunctionFormat.setForeground(
+            theme.getColor(ThemeColor::BuiltinFunction));
+        builtinConstantsFormat.setForeground(
+            theme.getColor(ThemeColor::BuiltinConstant));
         numberFormat.setForeground(theme.getColor(ThemeColor::Number));
         quotationFormat.setForeground(theme.getColor(ThemeColor::Quotation));
-        preprocessorFormat.setForeground(theme.getColor(ThemeColor::Preprocessor));
+        preprocessorFormat.setForeground(
+            theme.getColor(ThemeColor::Preprocessor));
         commentFormat.setForeground(theme.getColor(ThemeColor::Comment));
         whiteSpaceFormat.setForeground(theme.getColor(ThemeColor::WhiteSpace));
 
-        auto d = SyntaxHighlighter::Data{ };
-        auto rule = SyntaxHighlighter::Data::HighlightingRule{ };
+        auto d = SyntaxHighlighter::Data{};
+        auto rule = SyntaxHighlighter::Data::HighlightingRule{};
 
         const auto keywords = syntax.keywords();
         for (const auto &keyword : keywords) {
-            rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(keyword));
+            rule.pattern =
+                QRegularExpression(QStringLiteral("\\b%1\\b").arg(keyword));
             rule.format = keywordFormat;
             d.highlightingRules.append(rule);
         }
 
         const auto builtinFunctions = syntax.builtinFunctions();
         for (const auto &builtinFunction : builtinFunctions) {
-            rule.pattern = QRegularExpression(QStringLiteral("\\b%1\\b").arg(builtinFunction));
+            rule.pattern = QRegularExpression(
+                QStringLiteral("\\b%1\\b").arg(builtinFunction));
             rule.format = builtinFunctionFormat;
             d.highlightingRules.append(rule);
         }
 
         const auto builtinConstants = syntax.builtinConstants();
         for (const auto &builtinConstant : builtinConstants) {
-            rule.pattern = QRegularExpression(QStringLiteral("\\b%1(\\.[_A-Za-z0-9]+)*\\b").arg(builtinConstant));
+            rule.pattern =
+                QRegularExpression(QStringLiteral("\\b%1(\\.[_A-Za-z0-9]+)*\\b")
+                                       .arg(builtinConstant));
             rule.format = builtinConstantsFormat;
             d.highlightingRules.append(rule);
         }
 
-        rule.pattern = QRegularExpression("\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?[uU]*[lLfF]?\\b");
+        rule.pattern = QRegularExpression(
+            "\\b[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?[uU]*[lLfF]?\\b");
         rule.format = numberFormat;
         d.highlightingRules.append(rule);
 
@@ -127,22 +132,26 @@ namespace {
         }
 
         if (syntax.hasFunctions()) {
-            d.functionsRule.pattern = QRegularExpression("\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()");
+            d.functionsRule.pattern =
+                QRegularExpression("\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()");
             d.functionsRule.format = functionFormat;
         }
 
         if (!syntax.singleLineCommentBegin().isEmpty()) {
-            d.singleLineCommentRule.pattern = QRegularExpression(syntax.singleLineCommentBegin());
+            d.singleLineCommentRule.pattern =
+                QRegularExpression(syntax.singleLineCommentBegin());
             d.singleLineCommentRule.format = commentFormat;
         }
         if (!syntax.multiLineCommentBegin().isEmpty()) {
-            d.multiLineCommentStart = QRegularExpression(syntax.multiLineCommentBegin());
-            d.multiLineCommentEnd = QRegularExpression(syntax.multiLineCommentEnd());
+            d.multiLineCommentStart =
+                QRegularExpression(syntax.multiLineCommentBegin());
+            d.multiLineCommentEnd =
+                QRegularExpression(syntax.multiLineCommentEnd());
             d.multiLineCommentFormat = commentFormat;
         }
 
         if (showWhiteSpace) {
-            d.whiteSpaceRule.pattern = QRegularExpression("\\s+", 
+            d.whiteSpaceRule.pattern = QRegularExpression("\\s+",
                 QRegularExpression::UseUnicodePropertiesOption);
             d.whiteSpaceRule.format = whiteSpaceFormat;
         }
@@ -152,12 +161,13 @@ namespace {
             new SyntaxHighlighter::Data(std::move(d)));
     }
 
-    QSharedPointer<const SyntaxHighlighter::Data> getData(
-        SourceType sourceType, const Theme &theme, bool showWhiteSpace)
+    QSharedPointer<const SyntaxHighlighter::Data> getData(SourceType sourceType,
+        const Theme &theme, bool showWhiteSpace)
     {
         const auto &syntax = getSyntax(sourceType);
-        const auto key = std::make_tuple(&syntax, theme.fileName(), showWhiteSpace);
-        static auto cache = std::map<decltype(key), 
+        const auto key =
+            std::make_tuple(&syntax, theme.fileName(), showWhiteSpace);
+        static auto cache = std::map<decltype(key),
             QSharedPointer<const SyntaxHighlighter::Data>>();
         if (!cache[key])
             cache[key] = createData(syntax, theme, showWhiteSpace);
@@ -165,10 +175,8 @@ namespace {
     }
 } // namespace
 
-SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType
-    , const Theme &theme
-    , bool showWhiteSpace
-    , QObject *parent)
+SyntaxHighlighter::SyntaxHighlighter(SourceType sourceType, const Theme &theme,
+    bool showWhiteSpace, QObject *parent)
     : QSyntaxHighlighter(parent)
     , mData(getData(sourceType, theme, showWhiteSpace))
 {
@@ -182,10 +190,10 @@ const QStringList &SyntaxHighlighter::completerStrings() const
 void SyntaxHighlighter::highlightBlock(const QString &text)
 {
     const auto highlight = [&](const auto &rule, bool override) {
-        for (auto index = text.indexOf(rule.pattern); index >= 0; ) {
+        for (auto index = text.indexOf(rule.pattern); index >= 0;) {
             const auto match = rule.pattern.match(text, index);
             const auto length = match.capturedLength();
-            if (override || format(index) == QTextCharFormat{ })
+            if (override || format(index) == QTextCharFormat{})
                 setFormat(index, length, rule.format);
             index = text.indexOf(rule.pattern, index + length);
         }
@@ -201,7 +209,7 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
 
     if (!d.singleLineCommentRule.format.isEmpty())
         highlight(d.singleLineCommentRule, false);
-    
+
     if (!d.multiLineCommentFormat.isEmpty()) {
         setCurrentBlockState(0);
 
@@ -211,7 +219,7 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
 
         while (startIndex >= 0) {
             // do not start multiline comment in single line comment or string
-            if (startIndex && format(startIndex) != QTextCharFormat{ }) {
+            if (startIndex && format(startIndex) != QTextCharFormat{}) {
                 setCurrentBlockState(0);
                 break;
             }
@@ -222,12 +230,12 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
             if (endIndex == -1) {
                 setCurrentBlockState(1);
                 commentLength = text.length() - startIndex;
-            }
-            else {
+            } else {
                 commentLength = endIndex - startIndex + match.capturedLength();
             }
             setFormat(startIndex, commentLength, d.multiLineCommentFormat);
-            startIndex = text.indexOf(d.multiLineCommentStart, startIndex + commentLength);
+            startIndex = text.indexOf(d.multiLineCommentStart,
+                startIndex + commentLength);
         }
     }
 

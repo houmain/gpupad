@@ -5,8 +5,8 @@
 class ExpressionLineEdit final : public QLineEdit
 {
     Q_OBJECT
-    Q_PROPERTY(QString text READ text WRITE
-        setText NOTIFY textChanged USER true)
+    Q_PROPERTY(
+        QString text READ text WRITE setText NOTIFY textChanged USER true)
 public:
     explicit ExpressionLineEdit(QWidget *parent = nullptr);
 
@@ -28,7 +28,6 @@ private:
     void stepBy(int steps);
     void stepBy(double steps);
 
-    int mWheelDeltaRemainder{ };
-    bool mDecimal{ };
+    int mWheelDeltaRemainder{};
+    bool mDecimal{};
 };
-

@@ -1,9 +1,11 @@
 
+#include "render/Renderer.h"
 #include <QObject>
 #include <QThread>
-#include "render/Renderer.h"
 
-namespace KDGpu { class Device; }
+namespace KDGpu {
+    class Device;
+}
 struct ktxVulkanDeviceInfo;
 
 class VKRenderer : public QObject, public Renderer
@@ -20,8 +22,8 @@ public:
     ktxVulkanDeviceInfo &ktxDeviceInfo();
 
 Q_SIGNALS:
-    void configureTask(RenderTask* renderTask, QPrivateSignal);
-    void renderTask(RenderTask* renderTask, QPrivateSignal);
+    void configureTask(RenderTask *renderTask, QPrivateSignal);
+    void renderTask(RenderTask *renderTask, QPrivateSignal);
     void releaseTask(RenderTask *renderTask, void *userData, QPrivateSignal);
 
 private:
@@ -32,8 +34,8 @@ private:
 
     QThread mThread;
     QScopedPointer<Worker> mWorker;
-    QList<RenderTask*> mPendingTasks;
-    RenderTask *mCurrentTask{ };
-    KDGpu::Device *mDevice{ };
-    ktxVulkanDeviceInfo *mKtxDeviceInfo{ };
+    QList<RenderTask *> mPendingTasks;
+    RenderTask *mCurrentTask{};
+    KDGpu::Device *mDevice{};
+    ktxVulkanDeviceInfo *mKtxDeviceInfo{};
 };

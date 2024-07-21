@@ -5,7 +5,8 @@
 class ColorPicker final : public QToolButton
 {
     Q_OBJECT
-    Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged USER true)
+    Q_PROPERTY(
+        QColor color READ color WRITE setColor NOTIFY colorChanged USER true)
 public:
     explicit ColorPicker(QWidget *parent = nullptr);
     QColor color() const { return mColor; }
@@ -19,4 +20,3 @@ private:
 
     QColor mColor{ Qt::white };
 };
-

@@ -1,19 +1,19 @@
 #include "ExpressionLineEdit.h"
-#include <QWheelEvent>
 #include <QRegularExpression>
+#include <QWheelEvent>
 
 QString simpleDoubleString(double value)
 {
-     static const auto regex = QRegularExpression("\\.?0+$");
-     auto string = QString::number(value, 'f', 6);
-     string.remove(regex);
-     return string;
+    static const auto regex = QRegularExpression("\\.?0+$");
+    auto string = QString::number(value, 'f', 6);
+    string.remove(regex);
+    return string;
 }
 
 ExpressionLineEdit::ExpressionLineEdit(QWidget *parent) : QLineEdit(parent)
 {
-    connect(this, &QLineEdit::textEdited, 
-        this, &ExpressionLineEdit::textChanged);
+    connect(this, &QLineEdit::textEdited, this,
+        &ExpressionLineEdit::textChanged);
 }
 
 void ExpressionLineEdit::wheelEvent(QWheelEvent *event)
@@ -22,10 +22,10 @@ void ExpressionLineEdit::wheelEvent(QWheelEvent *event)
     const auto steps = mWheelDeltaRemainder / 120;
     mWheelDeltaRemainder -= steps * 120;
     if (mDecimal) {
-        stepBy(event->modifiers() & Qt::ShiftModifier ? steps / 10.0 :
-               event->modifiers() & Qt::ControlModifier ? steps * 10.0 : steps);
-    }
-    else {
+        stepBy(event->modifiers() & Qt::ShiftModifier      ? steps / 10.0
+                : event->modifiers() & Qt::ControlModifier ? steps * 10.0
+                                                           : steps);
+    } else {
         stepBy(event->modifiers() & Qt::ControlModifier ? steps * 10 : steps);
     }
     event->accept();
@@ -54,7 +54,7 @@ void ExpressionLineEdit::stepBy(double steps)
     }
 }
 
-void ExpressionLineEdit::setValue(double value) 
+void ExpressionLineEdit::setValue(double value)
 {
     // do not simplify 0.00 to 0
     static const auto zero = QRegularExpression("-?0\\.?0*");
@@ -72,8 +72,7 @@ void ExpressionLineEdit::setText(const QString &string)
     auto ok = false;
     if (auto value = string.toDouble(&ok); ok) {
         setValue(value);
-    }
-    else {
+    } else {
         if (string != QLineEdit::text()) {
             QLineEdit::setText(string);
             Q_EMIT textChanged(string);

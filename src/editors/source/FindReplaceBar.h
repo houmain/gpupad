@@ -1,24 +1,22 @@
 #pragma once
 
-#include <QWidget>
 #include <QTextDocument>
+#include <QWidget>
 
 namespace Ui {
-class FindReplaceBar;
+    class FindReplaceBar;
 }
 
 class FindReplaceBar final : public QWidget
 {
     Q_OBJECT
 public:
-    enum Action {
-        FindTextChanged, Find, Replace, ReplaceAll, Refresh, Cancel
-    };
+    enum Action { FindTextChanged, Find, Replace, ReplaceAll, Refresh, Cancel };
 
     explicit FindReplaceBar(QWidget *parent = nullptr);
     ~FindReplaceBar() override;
 
-    void setTarget(QWidget* target);
+    void setTarget(QWidget *target);
     void setText(const QString &text);
     void focus();
     void resetTarget();
@@ -41,11 +39,10 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
 
 private:
-    void triggerAction(Action action, QTextDocument::FindFlag extraFlags = { });
+    void triggerAction(Action action, QTextDocument::FindFlag extraFlags = {});
     QTextDocument::FindFlags findFlags() const;
 
     Ui::FindReplaceBar *ui;
-    QWidget *mTarget{ };
-    bool mReplacing{ };
+    QWidget *mTarget{};
+    bool mReplacing{};
 };
-

@@ -5,8 +5,8 @@
 class ReferenceComboBox final : public QComboBox
 {
     Q_OBJECT
-    Q_PROPERTY(QVariant currentData READ currentData WRITE
-        setCurrentData NOTIFY currentDataChanged USER true)
+    Q_PROPERTY(QVariant currentData READ currentData WRITE setCurrentData NOTIFY
+            currentDataChanged USER true)
 public:
     explicit ReferenceComboBox(QWidget *parent = nullptr);
     void setCurrentData(QVariant data);
@@ -28,6 +28,5 @@ private:
     void refreshList();
     void insertItem(int index, QVariant data);
 
-    bool mSuspendDataChangedSignal{ };
+    bool mSuspendDataChangedSignal{};
 };
-

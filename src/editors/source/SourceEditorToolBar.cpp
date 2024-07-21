@@ -14,7 +14,8 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
     const auto sourceTypeActionGroup = new QActionGroup(this);
     mUi->sourceTypeButton->setMenu(sourceTypeMenu);
 
-    const auto addSourceType = [&](QMenu* menu, const QString &text, SourceType sourceType) {
+    const auto addSourceType = [&](QMenu *menu, const QString &text,
+                                   SourceType sourceType) {
         const auto action = menu->addAction(text);
         action->setData(static_cast<int>(sourceType));
         action->setCheckable(true);
@@ -24,8 +25,10 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
     addSourceType(glsl, tr("Vertex Shader"), SourceType::GLSL_VertexShader);
     addSourceType(glsl, tr("Fragment Shader"), SourceType::GLSL_FragmentShader);
     addSourceType(glsl, tr("Geometry Shader"), SourceType::GLSL_GeometryShader);
-    addSourceType(glsl, tr("Tessellation Control"), SourceType::GLSL_TessellationControl);
-    addSourceType(glsl, tr("Tessellation Evaluation"), SourceType::GLSL_TessellationEvaluation);
+    addSourceType(glsl, tr("Tessellation Control"),
+        SourceType::GLSL_TessellationControl);
+    addSourceType(glsl, tr("Tessellation Evaluation"),
+        SourceType::GLSL_TessellationEvaluation);
     addSourceType(glsl, tr("Compute Shader"), SourceType::GLSL_ComputeShader);
 
     const auto hlsl = sourceTypeMenu->addMenu(tr("HLSL"));
@@ -45,21 +48,21 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
         [this, sourceTypeActionGroup]() {
             const auto actions = sourceTypeActionGroup->actions();
             for (QAction *action : actions)
-                action->setChecked(static_cast<SourceType>(
-                    action->data().toInt()) == sourceType());
+                action->setChecked(
+                    static_cast<SourceType>(action->data().toInt())
+                    == sourceType());
         });
-    connect(sourceTypeMenu, &QMenu::triggered, this, 
-        [this](QAction *action) {
-            setSourceType(static_cast<SourceType>(action->data().toInt()));
-        });
+    connect(sourceTypeMenu, &QMenu::triggered, this, [this](QAction *action) {
+        setSourceType(static_cast<SourceType>(action->data().toInt()));
+    });
 
-    connect(mUi->sourceTypeButton, &QToolButton::toggled,
-        this, &SourceEditorToolBar::validateSourceChanged);
-    connect(mUi->lineWrapButton, &QToolButton::toggled,
-        this, &SourceEditorToolBar::lineWrapChanged);
+    connect(mUi->sourceTypeButton, &QToolButton::toggled, this,
+        &SourceEditorToolBar::validateSourceChanged);
+    connect(mUi->lineWrapButton, &QToolButton::toggled, this,
+        &SourceEditorToolBar::lineWrapChanged);
 }
 
-SourceEditorToolBar::~SourceEditorToolBar() 
+SourceEditorToolBar::~SourceEditorToolBar()
 {
     delete mUi;
 }
@@ -74,7 +77,7 @@ void SourceEditorToolBar::setValidateSource(bool validate)
     mUi->sourceTypeButton->setChecked(validate);
 }
 
-void SourceEditorToolBar::setSourceType(SourceType sourceType) 
+void SourceEditorToolBar::setSourceType(SourceType sourceType)
 {
     if (mSourceType != sourceType) {
         mSourceType = sourceType;

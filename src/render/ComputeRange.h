@@ -7,43 +7,30 @@ class ComputeRange final : public RenderTask
 {
     Q_OBJECT
 public:
-    explicit ComputeRange(QObject *parent = nullptr) 
-        : RenderTask(parent) {  }
+    explicit ComputeRange(QObject *parent = nullptr) : RenderTask(parent) { }
 
-    ~ComputeRange() override 
-    {
-        releaseResources();
-    }
+    ~ComputeRange() override { releaseResources(); }
 
-    void setImage(QOpenGLTexture::Target target, GLuint textureId, 
-        const TextureData &texture, int level, int layer, int face) 
+    void setImage(QOpenGLTexture::Target target, GLuint textureId,
+        const TextureData &texture, int level, int layer, int face)
     {
         mImpl.setImage(target, textureId, texture, level, layer, face);
     }
 
 Q_SIGNALS:
-     void rangeComputed(const Range &range);
+    void rangeComputed(const Range &range);
 
 private:
-    bool initialize() override 
+    bool initialize() override
     {
         return (renderer().api() == RenderAPI::OpenGL);
     }
 
-    void render() override
-    {
-        mImpl.render();
-    }
+    void render() override { mImpl.render(); }
 
-    void finish() override
-    {
-        Q_EMIT rangeComputed(mImpl.range());
-    }
+    void finish() override { Q_EMIT rangeComputed(mImpl.range()); }
 
-    void release() override
-    {
-        mImpl.release();
-    }
+    void release() override { mImpl.release(); }
 
     GLComputeRange mImpl;
 };

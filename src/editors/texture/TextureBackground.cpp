@@ -2,8 +2,7 @@
 #include "GLWidget.h"
 #include <QOpenGLShaderProgram>
 
-namespace 
-{
+namespace {
     const auto vertexShaderSource = R"(
 #version 330
 
@@ -53,7 +52,8 @@ void main() {
     {
         program.create();
         auto vertexShader = new QOpenGLShader(QOpenGLShader::Vertex, &program);
-        auto fragmentShader = new QOpenGLShader(QOpenGLShader::Fragment, &program);
+        auto fragmentShader =
+            new QOpenGLShader(QOpenGLShader::Fragment, &program);
         vertexShader->compileSourceCode(vertexShaderSource);
         fragmentShader->compileSourceCode(fragmentShaderSource);
         program.addShader(vertexShader);
@@ -62,16 +62,13 @@ void main() {
     }
 } // namespace
 
-TextureBackground::TextureBackground(GLWidget *parent) 
-    : QObject(parent) 
-{
-}
+TextureBackground::TextureBackground(GLWidget *parent) : QObject(parent) { }
 
 TextureBackground::~TextureBackground() = default;
 
 GLWidget &TextureBackground::widget()
 {
-    return *qobject_cast<GLWidget*>(parent());
+    return *qobject_cast<GLWidget *>(parent());
 }
 
 void TextureBackground::releaseGL()
@@ -101,7 +98,7 @@ void TextureBackground::paintGL(const QSizeF &size, const QPointF &offset)
     mProgram->setUniformValue("uLineColor", QColor(Qt::gray));
 
     gl.glDisable(GL_BLEND);
-    gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  
+    gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     mProgram->release();
 }

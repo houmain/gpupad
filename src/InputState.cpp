@@ -2,22 +2,21 @@
 #include "InputState.h"
 #include <QSet>
 
-namespace
-{
+namespace {
     int getMouseButtonIndex(Qt::MouseButton button)
     {
         switch (button) {
-            case Qt::LeftButton: return 0;
-            case Qt::MiddleButton: return 1;
-            case Qt::RightButton: return 2;
-            case Qt::BackButton: return 3;
-            case Qt::ForwardButton: return 4;
-            default: return 5;
+        case Qt::LeftButton:    return 0;
+        case Qt::MiddleButton:  return 1;
+        case Qt::RightButton:   return 2;
+        case Qt::BackButton:    return 3;
+        case Qt::ForwardButton: return 4;
+        default:                return 5;
         }
     }
 } // namespace
 
-InputState::InputState() 
+InputState::InputState()
 {
     mMouseButtonStates.resize(5);
     mKeyStates.resize(128);
@@ -29,19 +28,19 @@ void InputState::update()
     mPrevMousePosition = mMousePosition;
     mMousePosition = mNextMousePosition;
 
-    const auto updateButtonStates = [](ButtonStateQueue &nextButtonStates, QVector<ButtonState> &buttonStates) {
+    const auto updateButtonStates = [](ButtonStateQueue &nextButtonStates,
+                                        QVector<ButtonState> &buttonStates) {
         // only apply up to one update per button at once
         auto buttonsUpdated = QSet<int>();
         for (auto it = nextButtonStates.begin();
-             it != nextButtonStates.end(); ) {
+             it != nextButtonStates.end();) {
             const auto [buttonIndex, state] = *it;
             if (!buttonsUpdated.contains(buttonIndex)) {
                 if (buttonIndex < buttonStates.size())
                     buttonStates[buttonIndex] = state;
                 buttonsUpdated.insert(buttonIndex);
                 it = nextButtonStates.erase(it);
-            }
-            else {
+            } else {
                 ++it;
             }
         }
@@ -77,15 +76,15 @@ void InputState::setMousePosition(const QPoint &position)
 
 void InputState::setMouseButtonPressed(Qt::MouseButton button)
 {
-    mNextMouseButtonStates.emplace_back(
-        getMouseButtonIndex(button), ButtonState::Pressed);
+    mNextMouseButtonStates.emplace_back(getMouseButtonIndex(button),
+        ButtonState::Pressed);
     Q_EMIT mouseChanged();
 }
 
 void InputState::setMouseButtonReleased(Qt::MouseButton button)
 {
-    mNextMouseButtonStates.emplace_back(
-        getMouseButtonIndex(button), ButtonState::Released);
+    mNextMouseButtonStates.emplace_back(getMouseButtonIndex(button),
+        ButtonState::Released);
     Q_EMIT mouseChanged();
 }
 

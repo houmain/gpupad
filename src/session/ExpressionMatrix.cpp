@@ -1,7 +1,7 @@
 #include "ExpressionMatrix.h"
 #include "ExpressionEditor.h"
-#include <QStyledItemDelegate>
 #include <QHeaderView>
+#include <QStyledItemDelegate>
 #include <QToolTip>
 
 namespace {
@@ -9,13 +9,11 @@ namespace {
     {
     public:
         ExpressionItemDelegate(QWidget *parent)
-            : QStyledItemDelegate(parent)
-        {
-        }
+            : QStyledItemDelegate(parent) { }
 
     protected:
-        QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem&,
-                              const QModelIndex&) const override
+        QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &,
+            const QModelIndex &) const override
         {
             auto editor = new ExpressionEditor(parent);
             editor->setFont(parent->font());
@@ -25,16 +23,17 @@ namespace {
             editor->document()->setDocumentMargin(0);
             editor->setViewportMargins(3, 0, 0, 0);
 
-            connect(editor, &ExpressionEditor::textChanged,
-                this, &ExpressionItemDelegate::valueChanged);
+            connect(editor, &ExpressionEditor::textChanged, this,
+                &ExpressionItemDelegate::valueChanged);
 
             return editor;
         }
 
-        void setEditorData(QWidget *editor_, const QModelIndex &index) const override
+        void setEditorData(QWidget *editor_,
+            const QModelIndex &index) const override
         {
             if (!mEditing) {
-                auto editor = static_cast<ExpressionEditor*>(editor_);
+                auto editor = static_cast<ExpressionEditor *>(editor_);
                 auto text = index.model()->data(index, Qt::EditRole).toString();
                 editor->setText(text);
                 editor->selectAll();
@@ -42,14 +41,15 @@ namespace {
         }
 
         void setModelData(QWidget *editor, QAbstractItemModel *model,
-                          const QModelIndex &index) const override
+            const QModelIndex &index) const override
         {
             model->setData(index,
-                static_cast<ExpressionEditor*>(editor)->text());
+                static_cast<ExpressionEditor *>(editor)->text());
         }
 
         bool helpEvent(QHelpEvent *event, QAbstractItemView *view,
-            const QStyleOptionViewItem &option, const QModelIndex &index) override
+            const QStyleOptionViewItem &option,
+            const QModelIndex &index) override
         {
             if (event->type() == QEvent::ToolTip) {
                 auto value = index.data(Qt::DisplayRole).toString();
@@ -65,11 +65,12 @@ namespace {
         void valueChanged()
         {
             mEditing = true;
-            Q_EMIT commitData(static_cast<ExpressionEditor*>(QObject::sender()));
+            Q_EMIT commitData(
+                static_cast<ExpressionEditor *>(QObject::sender()));
             mEditing = false;
         }
 
-        bool mEditing{ };
+        bool mEditing{};
     };
 } // namespace
 
@@ -99,8 +100,7 @@ void ExpressionMatrix::setValues(QStringList values)
     for (auto r = 0; r < rowCount(); ++r)
         for (auto c = 0; c < columnCount(); ++c) {
             const auto index = r * columnCount() + c;
-            const auto text = (index < values.size() ?
-                values.at(index) : "0");
+            const auto text = (index < values.size() ? values.at(index) : "0");
             auto item = new QTableWidgetItem(text);
             item->setTextAlignment(Qt::AlignLeft | Qt::AlignTop);
             setItem(r, c, item);
@@ -112,8 +112,7 @@ QStringList ExpressionMatrix::values() const
     auto values = QStringList();
     for (auto r = 0; r < rowCount(); ++r)
         for (auto c = 0; c < columnCount(); ++c) {
-            auto value = (item(r, c) ?
-                item(r, c)->text().trimmed() : "");
+            auto value = (item(r, c) ? item(r, c)->text().trimmed() : "");
             values.append(!value.isEmpty() ? value : "0");
         }
     return values;

@@ -1,18 +1,17 @@
 #include "AboutDialog.h"
 #include <QApplication>
+#include <QDesktopServices>
+#include <QDialogButtonBox>
+#include <QFile>
+#include <QGridLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QRegularExpression>
 #include <QTabWidget>
 #include <QTextBrowser>
-#include <QDesktopServices>
-#include <QLabel>
-#include <QDialogButtonBox>
-#include <QGridLayout>
-#include <QPushButton>
 #include <QTextStream>
-#include <QFile>
-#include <QRegularExpression>
 
-namespace 
-{
+namespace {
     QString loadTextFile(const QString &fileName)
     {
         const auto paths = std::initializer_list<QString>{
@@ -29,40 +28,39 @@ namespace
             if (file.open(QFile::ReadOnly | QFile::Text))
                 return QTextStream(&file).readAll();
         }
-        return { };
+        return {};
     }
 
     QString tweakChangeLog(QString text)
     {
-        static const auto header = QRegularExpression(R"((^.*)(## \[Version))", 
-            QRegularExpression::DotMatchesEverythingOption | QRegularExpression::InvertedGreedinessOption);
-        static const auto h2link = QRegularExpression(R"(^##\s*\[([^\]]+)\]\s*\-(.+))",
-            QRegularExpression::MultilineOption);
+        static const auto header = QRegularExpression(R"((^.*)(## \[Version))",
+            QRegularExpression::DotMatchesEverythingOption
+                | QRegularExpression::InvertedGreedinessOption);
+        static const auto h2link =
+            QRegularExpression(R"(^##\s*\[([^\]]+)\]\s*\-(.+))",
+                QRegularExpression::MultilineOption);
         return text.replace(header, "\\2")
-                   .replace(h2link, "-------\n"
-                                    "<h2>\\1</h2>\n\n"
-                                    "<b>Release date: </b>\\2\n\n"
-                                    "<b>All commits: </b>[\\1]")
-                   .mid(7);
+            .replace(h2link,
+                "-------\n"
+                "<h2>\\1</h2>\n\n"
+                "<b>Release date: </b>\\2\n\n"
+                "<b>All commits: </b>[\\1]")
+            .mid(7);
     }
 } // namespace
 
-AboutDialog::AboutDialog(QWidget *parent)
-    : QDialog(parent)
+AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent)
 {
     const auto title = tr("About %1").arg(QApplication::applicationName());
-    const auto header = QStringLiteral(
-       "<h3>%1 %2</h3>"
-       "Copyright &copy; %3-%4<br>"
-       "Albert Kalchmair<br>"
-       "%5<br><br>"
-       "<a href='%6'>%6</a><br>")
-       .arg(QApplication::applicationName(),
-            QApplication::applicationVersion(),
-            "2016", 
-            QStringLiteral(__DATE__).mid(7),
-            tr("All Rights Reserved."),
-         "https://github.com/houmain/gpupad");
+    const auto format = QStringLiteral("<h3>%1 %2</h3>"
+                                       "Copyright &copy; %3-%4<br>"
+                                       "Albert Kalchmair<br>"
+                                       "%5<br><br>"
+                                       "<a href='%6'>%6</a><br>");
+    const auto header = format.arg(QApplication::applicationName(),
+        QApplication::applicationVersion(), "2016",
+        QStringLiteral(__DATE__).mid(7), tr("All Rights Reserved."),
+        "https://github.com/houmain/gpupad");
 
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setMinimumSize(400, 400);
@@ -74,9 +72,10 @@ AboutDialog::AboutDialog(QWidget *parent)
     icon->setPixmap(parent->windowIcon().pixmap(128, 128));
     icon->setMargin(15);
     icon->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
-    
+
     auto tabs = new QTabWidget(this);
-    const auto addTab = [&](QString title, QString text, QString defaultText = "") {
+    const auto addTab = [&](QString title, QString text,
+                            QString defaultText = "") {
         if (text.isEmpty())
             text = defaultText;
         if (text.isEmpty())
@@ -86,7 +85,7 @@ AboutDialog::AboutDialog(QWidget *parent)
         textbox->setMarkdown(text);
         textbox->setOpenLinks(false);
         textbox->document()->setDocumentMargin(10);
-        connect(textbox, &QTextBrowser::anchorClicked, 
+        connect(textbox, &QTextBrowser::anchorClicked,
             &QDesktopServices::openUrl);
         tabs->addTab(textbox, title);
     };
@@ -105,7 +104,8 @@ AboutDialog::AboutDialog(QWidget *parent)
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
     buttons->button(QDialogButtonBox::Close)->setDefault(true);
-    auto aboutQt = buttons->addButton(tr("About Qt"), QDialogButtonBox::ActionRole);
+    auto aboutQt =
+        buttons->addButton(tr("About Qt"), QDialogButtonBox::ActionRole);
     connect(aboutQt, &QPushButton::clicked, this, QApplication::aboutQt);
 
     auto layout = new QGridLayout(this);

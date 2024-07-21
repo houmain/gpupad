@@ -44,7 +44,7 @@ public:
 private:
     static Singletons *sInstance;
 
-    RenderAPI mRenderApi{ };
+    RenderAPI mRenderApi{};
     std::shared_ptr<Renderer> mVKRenderer;
     std::shared_ptr<Renderer> mGLRenderer;
     std::unique_ptr<Settings> mSettings;
@@ -58,4 +58,3 @@ private:
     std::unique_ptr<InputState> mInputState;
     std::unique_ptr<EvaluatedPropertyCache> mEvaluatedPropertyCache;
 };
-

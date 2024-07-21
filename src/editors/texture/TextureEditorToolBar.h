@@ -2,7 +2,9 @@
 
 #include <QWidget>
 
-namespace Ui { class TextureEditorToolBar; }
+namespace Ui {
+    class TextureEditorToolBar;
+}
 
 class TextureEditorToolBar final : public QWidget
 {
@@ -42,4 +44,3 @@ private:
 
     Ui::TextureEditorToolBar *mUi;
 };
-

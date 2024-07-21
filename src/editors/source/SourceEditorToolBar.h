@@ -1,9 +1,11 @@
 #pragma once
 
-#include <QWidget>
 #include "SourceType.h"
+#include <QWidget>
 
-namespace Ui { class SourceEditorToolBar; }
+namespace Ui {
+    class SourceEditorToolBar;
+}
 
 class SourceEditorToolBar final : public QWidget
 {
@@ -28,7 +30,5 @@ Q_SIGNALS:
 
 private:
     Ui::SourceEditorToolBar *mUi;
-    SourceType mSourceType{ };
+    SourceType mSourceType{};
 };
-
-

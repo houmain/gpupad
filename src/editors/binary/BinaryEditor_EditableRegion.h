@@ -1,12 +1,12 @@
 #pragma once
 
 #include "BinaryEditor_SpinBoxDelegate.h"
-#include <QTableView>
-#include <QHeaderView>
-#include <QMenu>
 #include <QApplication>
 #include <QClipboard>
+#include <QHeaderView>
+#include <QMenu>
 #include <QMimeData>
+#include <QTableView>
 
 class BinaryEditor::EditableRegion final : public QTableView
 {
@@ -36,11 +36,12 @@ public:
 
         setItemDelegate(new SpinBoxDelegate(this));
 
-        connect(this, &EditableRegion::customContextMenuRequested,
-            this, &EditableRegion::openContextMenu);
+        connect(this, &EditableRegion::customContextMenuRequested, this,
+            &EditableRegion::openContextMenu);
     }
 
-    QList<QMetaObject::Connection> connectEditActions(const EditActions &actions)
+    QList<QMetaObject::Connection> connectEditActions(
+        const EditActions &actions)
     {
         auto c = QList<QMetaObject::Connection>();
         if (!isVisible()) {
@@ -51,10 +52,14 @@ public:
             return c;
         }
 
-        c += connect(actions.cut, &QAction::triggered, this, &EditableRegion::cut);
-        c += connect(actions.copy, &QAction::triggered, this, &EditableRegion::copy);
-        c += connect(actions.paste, &QAction::triggered, this, &EditableRegion::paste);
-        c += connect(actions.delete_, &QAction::triggered, this, &EditableRegion::delete_);
+        c += connect(actions.cut, &QAction::triggered, this,
+            &EditableRegion::cut);
+        c += connect(actions.copy, &QAction::triggered, this,
+            &EditableRegion::copy);
+        c += connect(actions.paste, &QAction::triggered, this,
+            &EditableRegion::paste);
+        c += connect(actions.delete_, &QAction::triggered, this,
+            &EditableRegion::delete_);
 
         actions.cut->setEnabled(true);
         actions.copy->setEnabled(true);
@@ -114,7 +119,8 @@ public:
         if (selectedIndexes().isEmpty())
             return;
 
-        const auto rows = convertToVectors(QApplication::clipboard()->text(), model()->columnCount());
+        const auto rows = convertToVectors(QApplication::clipboard()->text(),
+            model()->columnCount());
         const auto begin = selectedIndexes().constFirst();
         auto row = begin.row();
         auto maxColumn = begin.column();
@@ -129,7 +135,7 @@ public:
             maxColumn = qMax(maxColumn, column);
             ++row;
         }
-        Q_EMIT model()->dataChanged(begin, model()->index(row, maxColumn));
+        Q_EMIT model() -> dataChanged(begin, model()->index(row, maxColumn));
     }
 
     void cut()
@@ -148,14 +154,12 @@ public:
         for (const QModelIndex &index : indices)
             if (index.flags() & Qt::ItemIsEditable) {
                 model()->setData(index, 0.0);
-                minIndex = model()->index(
-                    std::min(index.row(), minIndex.row()),
+                minIndex = model()->index(std::min(index.row(), minIndex.row()),
                     std::min(index.column(), minIndex.column()));
-                maxIndex = model()->index(
-                    std::max(index.row(), maxIndex.row()),
+                maxIndex = model()->index(std::max(index.row(), maxIndex.row()),
                     std::max(index.column(), maxIndex.column()));
             }
-        Q_EMIT model()->dataChanged(minIndex, maxIndex);
+        Q_EMIT model() -> dataChanged(minIndex, maxIndex);
     }
 
 private:
@@ -164,9 +168,8 @@ private:
         const auto commas = text.count(',');
         const auto tabs = text.count('\t');
         const auto semicolons = text.count(';');
-        return (commas > tabs ? 
-            (commas > semicolons ? ',' : ';') :
-            (tabs > semicolons ? '\t' : ';'));
+        return (commas > tabs ? (commas > semicolons ? ',' : ';')
+                              : (tabs > semicolons ? '\t' : ';'));
     }
 
     static double toNumber(QStringView value)
@@ -174,50 +177,51 @@ private:
         value = value.trimmed();
         if (value.endsWith('f') || value.endsWith('F'))
             value = value.left(value.size() - 1);
-        if (value.size() > 2 && value[0] == '0' && QChar(value[1]).toLower() == 'x')
+        if (value.size() > 2 && value[0] == '0'
+            && QChar(value[1]).toLower() == 'x')
             return value.mid(2).toInt(nullptr, 16);
         return value.toDouble();
     }
 
-    QVector<QVariantList> convertToVectors(QStringView text, int columnCount) const
+    QVector<QVariantList> convertToVectors(QStringView text,
+        int columnCount) const
     {
-         const auto separator = guessSeparator(text);
-         auto result = QVector<QVariantList>();
-         auto lines = text.split('\n');
-         while (lines.back().trimmed().isEmpty())
-             lines.pop_back();
+        const auto separator = guessSeparator(text);
+        auto result = QVector<QVariantList>();
+        auto lines = text.split('\n');
+        while (lines.back().trimmed().isEmpty())
+            lines.pop_back();
 
-         if (lines.size() == 1) {
-              // single row of values
-              const auto values = lines.first().trimmed().split(separator);
-              auto row = QVariantList();
-              for (const auto &value : values) {
-                  row.append(toNumber(value.trimmed()));
-                  if (row.size() == columnCount) {
-                      result.append(std::move(row));
-                      row.clear();
-                  }
-              }
-              if (!row.isEmpty())
-                  result.append(row);
-         }
-         else {
-             // multiple rows
-             for (auto line : lines) {
-                 line = line.trimmed();
-                 if (!line.isEmpty()) {
-                     auto row = QVariantList();
-                     const auto values = line.split(separator);
-                     for (const auto &value : values)
-                         row.append(toNumber(value.trimmed()));
-                     result.append(row);
-                 }
-             }
-         }
-         return result;
+        if (lines.size() == 1) {
+            // single row of values
+            const auto values = lines.first().trimmed().split(separator);
+            auto row = QVariantList();
+            for (const auto &value : values) {
+                row.append(toNumber(value.trimmed()));
+                if (row.size() == columnCount) {
+                    result.append(std::move(row));
+                    row.clear();
+                }
+            }
+            if (!row.isEmpty())
+                result.append(row);
+        } else {
+            // multiple rows
+            for (auto line : lines) {
+                line = line.trimmed();
+                if (!line.isEmpty()) {
+                    auto row = QVariantList();
+                    const auto values = line.split(separator);
+                    for (const auto &value : values)
+                        row.append(toNumber(value.trimmed()));
+                    result.append(row);
+                }
+            }
+        }
+        return result;
     }
 
-    QMenu *mContextMenu{ };
+    QMenu *mContextMenu{};
 };
 
 //-------------------------------------------------------------------------
@@ -241,17 +245,15 @@ public:
 
     void destroyEditor(QWidget *editor, const QModelIndex &) const override
     {
-        editor->setParent(static_cast<QWidget*>(parent()));
+        editor->setParent(static_cast<QWidget *>(parent()));
     }
 
     void updateEditorGeometry(QWidget *editor,
-        const QStyleOptionViewItem &option,
-        const QModelIndex &) const override
+        const QStyleOptionViewItem &option, const QModelIndex &) const override
     {
         editor->setGeometry(option.rect);
     }
 
 private:
-    QWidget *mEditableRegion{ };
+    QWidget *mEditableRegion{};
 };
-

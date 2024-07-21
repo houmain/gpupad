@@ -1,19 +1,19 @@
 #pragma once
 
+#include <QMap>
 #include <QObject>
 #include <QPalette>
-#include <QMap>
 
 enum class ThemeColor {
-  Function,
-  Keyword,
-  BuiltinFunction,
-  BuiltinConstant,
-  Number,
-  Quotation,
-  Preprocessor,
-  Comment,
-  WhiteSpace,
+    Function,
+    Keyword,
+    BuiltinFunction,
+    BuiltinConstant,
+    Number,
+    Quotation,
+    Preprocessor,
+    Comment,
+    WhiteSpace,
 };
 
 class Theme
@@ -35,9 +35,9 @@ private:
     QString mFileName;
     QString mName;
     QString mAuthor;
-    bool mIsDarkTheme{ };
+    bool mIsDarkTheme{};
     QPalette mPalette;
     QMap<ThemeColor, QColor> mColors;
 };
 
-Q_DECLARE_METATYPE(const Theme*);
+Q_DECLARE_METATYPE(const Theme *);

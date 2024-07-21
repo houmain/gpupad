@@ -2,8 +2,7 @@
 
 #include <QString>
 
-enum class SourceType
-{
+enum class SourceType {
     PlainText,
     Generic,
     GLSL_VertexShader,
@@ -21,11 +20,5 @@ enum class SourceType
     JavaScript,
 };
 
-SourceType deduceSourceType(SourceType current, const QString &extension, const QString &text);
-
-#ifdef ITEM_H
-SourceType getSourceType(Shader::ShaderType type, Shader::Language language);
-Shader::ShaderType getShaderType(SourceType sourceType);
-Shader::Language getShaderLanguage(SourceType sourceType);
-#endif
-
+SourceType deduceSourceType(SourceType current, const QString &extension,
+    const QString &text);

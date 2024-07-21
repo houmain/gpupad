@@ -1,9 +1,10 @@
 #pragma once
 
-#include "render/ShaderPrintf.h"
 #include "VKItem.h"
+#include "render/ShaderPrintf.h"
 
-class VKPrintf : public ShaderPrintf {
+class VKPrintf : public ShaderPrintf
+{
 public:
     KDGpu::Buffer &getInitializedBuffer(VKContext &context);
     MessagePtrSet formatMessages(VKContext &context, ItemId callItemId);

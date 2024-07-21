@@ -1,17 +1,17 @@
 #include "GLProgram.h"
-#include "GLTexture.h"
 #include "GLBuffer.h"
+#include "GLTexture.h"
 #include "scripting/ScriptEngine.h"
-#include <array>
 #include <QRegularExpression>
+#include <array>
 
-GLProgram::GLProgram(const Program &program, 
-      const QString &shaderPreamble, const QString &shaderIncludePaths)
+GLProgram::GLProgram(const Program &program, const QString &shaderPreamble,
+    const QString &shaderIncludePaths)
     : mItemId(program.id)
 {
     mUsedItems += program.id;
 
-    auto shaders = std::map<Shader::ShaderType, QList<const Shader*>>();
+    auto shaders = std::map<Shader::ShaderType, QList<const Shader *>>();
     for (const auto &item : program.items)
         if (auto shader = castItem<Shader>(item)) {
             mUsedItems += shader->id;
@@ -20,13 +20,13 @@ GLProgram::GLProgram(const Program &program,
 
     for (const auto &[type, list] : shaders)
         if (type != Shader::ShaderType::Includable)
-            mShaders.emplace_back(type, list, shaderPreamble, shaderIncludePaths);
+            mShaders.emplace_back(type, list, shaderPreamble,
+                shaderIncludePaths);
 }
 
 bool GLProgram::operator==(const GLProgram &rhs) const
 {
-    return (std::tie(mShaders) == 
-            std::tie(rhs.mShaders));
+    return (std::tie(mShaders) == std::tie(rhs.mShaders));
 }
 
 bool GLProgram::link()
@@ -64,21 +64,26 @@ bool GLProgram::linkShaders(GLuint program)
         return false;
 
     auto buffer = std::array<char, 256>();
-    auto size = GLint{ };
-    auto type = GLenum{ };
-    auto nameLength = GLint{ };
-    auto uniforms = GLint{ };
+    auto size = GLint{};
+    auto type = GLenum{};
+    auto nameLength = GLint{};
+    auto uniforms = GLint{};
     gl.glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniforms);
     for (auto i = 0; i < uniforms; ++i) {
-        gl.glGetActiveUniform(program, static_cast<GLuint>(i), static_cast<GLsizei>(buffer.size()),
-            &nameLength, &size, &type, buffer.data());
+        gl.glGetActiveUniform(program, static_cast<GLuint>(i),
+            static_cast<GLsizei>(buffer.size()), &nameLength, &size, &type,
+            buffer.data());
         const auto name = QString(buffer.data());
         const auto baseName = getUniformBaseName(name);
-        mActiveUniforms[baseName] = { gl.glGetUniformLocation(program, qPrintable(baseName)), type, size };
+        mActiveUniforms[baseName] = {
+            gl.glGetUniformLocation(program, qPrintable(baseName)), type, size
+        };
         mUniformsSet[baseName] = false;
         for (auto j = 0; j < size; ++j) {
-            const auto elementName = QStringLiteral("%1[%2]").arg(baseName).arg(j);
-            if (auto location = gl.glGetUniformLocation(program, qPrintable(elementName));
+            const auto elementName =
+                QStringLiteral("%1[%2]").arg(baseName).arg(j);
+            if (auto location =
+                    gl.glGetUniformLocation(program, qPrintable(elementName));
                 location >= 0)
                 mActiveUniforms[elementName] = { location, type, 1 };
         }
@@ -90,11 +95,11 @@ bool GLProgram::linkShaders(GLuint program)
             gl.glGetActiveUniformsiv(program, 1, &indices,
                 GL_UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX, &atomicCounterIndex);
             if (atomicCounterIndex >= 0) {
-                auto bindingPoint = std::pair<GLenum, GLint>{
-                    GL_ATOMIC_COUNTER_BUFFER, 0
-                };
-                gl42->glGetActiveAtomicCounterBufferiv(program, atomicCounterIndex,
-                    GL_ATOMIC_COUNTER_BUFFER_BINDING, &bindingPoint.second);
+                auto bindingPoint =
+                    std::pair<GLenum, GLint>{ GL_ATOMIC_COUNTER_BUFFER, 0 };
+                gl42->glGetActiveAtomicCounterBufferiv(program,
+                    atomicCounterIndex, GL_ATOMIC_COUNTER_BUFFER_BINDING,
+                    &bindingPoint.second);
                 if (!mBufferBindingPoints.values().contains(bindingPoint)) {
                     mBufferBindingPoints[name] = bindingPoint;
                     mBuffersSet[name] = false;
@@ -105,16 +110,17 @@ bool GLProgram::linkShaders(GLuint program)
 #endif
     }
 
-    auto uniformBlocks = GLint{ };
+    auto uniformBlocks = GLint{};
     gl.glGetProgramiv(program, GL_ACTIVE_UNIFORM_BLOCKS, &uniformBlocks);
     for (auto i = 0u; i < static_cast<GLuint>(uniformBlocks); ++i) {
         gl.glGetActiveUniformBlockName(program, i,
             static_cast<GLsizei>(buffer.size()), &nameLength, buffer.data());
         const auto name = QString(buffer.data());
-        const auto uniformBlockIndex = gl.glGetUniformBlockIndex(
-            program, qPrintable(name));
+        const auto uniformBlockIndex =
+            gl.glGetUniformBlockIndex(program, qPrintable(name));
         const auto uniformBlockBinding = i;
-        gl.glUniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding);
+        gl.glUniformBlockBinding(program, uniformBlockIndex,
+            uniformBlockBinding);
         mBufferBindingPoints[name] = { GL_UNIFORM_BUFFER, uniformBlockBinding };
         mBuffersSet[name] = false;
 
@@ -125,20 +131,23 @@ bool GLProgram::linkShaders(GLuint program)
         gl.glGetActiveUniformBlockiv(program, i,
             GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, uniformIndices.data());
         for (auto index : uniformIndices) {
-            gl.glGetActiveUniform(program, static_cast<GLuint>(index), 
-                static_cast<GLsizei>(buffer.size()), &nameLength, &size, &type, buffer.data());
+            gl.glGetActiveUniform(program, static_cast<GLuint>(index),
+                static_cast<GLsizei>(buffer.size()), &nameLength, &size, &type,
+                buffer.data());
             const auto name = QString(buffer.data());
             mUniformsSet.erase(getUniformBaseName(name));
         }
     }
 
-    auto attributes = GLint{ };
+    auto attributes = GLint{};
     gl.glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributes);
     for (auto i = 0; i < attributes; ++i) {
-        gl.glGetActiveAttrib(program, static_cast<GLuint>(i), static_cast<GLsizei>(buffer.size()),
-            &nameLength, &size, &type, buffer.data());
+        gl.glGetActiveAttrib(program, static_cast<GLuint>(i),
+            static_cast<GLsizei>(buffer.size()), &nameLength, &size, &type,
+            buffer.data());
         const auto name = QString(buffer.data());
-        mAttributeLocations[name] = gl.glGetAttribLocation(program, qPrintable(name));
+        mAttributeLocations[name] =
+            gl.glGetAttribLocation(program, qPrintable(name));
         if (!name.startsWith("gl_"))
             mAttributesSet[name] = false;
     }
@@ -155,10 +164,11 @@ bool GLProgram::linkShaders(GLuint program)
                 GL_ACTIVE_SUBROUTINE_UNIFORMS, &uniforms);
             for (auto i = 0u; i < static_cast<GLuint>(uniforms); ++i) {
                 gl40->glGetActiveSubroutineUniformName(program, stage, i,
-                    static_cast<GLsizei>(buffer.size()), &nameLength, buffer.data());
+                    static_cast<GLsizei>(buffer.size()), &nameLength,
+                    buffer.data());
                 auto name = QString(buffer.data());
 
-                auto compatible = GLint{ };
+                auto compatible = GLint{};
                 gl40->glGetActiveSubroutineUniformiv(program, stage, i,
                     GL_NUM_COMPATIBLE_SUBROUTINES, &compatible);
 
@@ -170,7 +180,8 @@ bool GLProgram::linkShaders(GLuint program)
                 for (auto index : subroutineIndices) {
                     gl40->glGetActiveSubroutineName(program, stage,
                         static_cast<GLuint>(index),
-                        static_cast<GLsizei>(buffer.size()), &nameLength, buffer.data());
+                        static_cast<GLsizei>(buffer.size()), &nameLength,
+                        buffer.data());
                     subroutines += QString(buffer.data());
                 }
                 mSubroutineUniforms[stage] +=
@@ -182,24 +193,25 @@ bool GLProgram::linkShaders(GLuint program)
 
 #if GL_VERSION_4_3
     if (auto gl43 = gl.v4_3) {
-        auto maxNameLength = GLint{ };
-        gl43->glGetProgramInterfaceiv(program, 
-            GL_SHADER_STORAGE_BLOCK, GL_MAX_NAME_LENGTH, &maxNameLength);
+        auto maxNameLength = GLint{};
+        gl43->glGetProgramInterfaceiv(program, GL_SHADER_STORAGE_BLOCK,
+            GL_MAX_NAME_LENGTH, &maxNameLength);
         auto buffer = std::vector<char>(maxNameLength);
 
-        auto shaderStorageBlocks = GLint{ };
-        gl43->glGetProgramInterfaceiv(program, 
-            GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &shaderStorageBlocks);
+        auto shaderStorageBlocks = GLint{};
+        gl43->glGetProgramInterfaceiv(program, GL_SHADER_STORAGE_BLOCK,
+            GL_ACTIVE_RESOURCES, &shaderStorageBlocks);
         for (auto i = 0u; i < static_cast<GLuint>(shaderStorageBlocks); ++i) {
-            gl43->glGetProgramResourceName(program, GL_SHADER_STORAGE_BLOCK, i, 
+            gl43->glGetProgramResourceName(program, GL_SHADER_STORAGE_BLOCK, i,
                 static_cast<GLsizei>(buffer.size()), nullptr, buffer.data());
             const auto name = QString(buffer.data());
             const auto storageBlockIndex = gl.v4_3->glGetProgramResourceIndex(
                 program, GL_SHADER_STORAGE_BLOCK, qPrintable(name));
             const auto storageBlockBinding = i;
-            gl43->glShaderStorageBlockBinding(program,
-                storageBlockIndex, storageBlockBinding);
-            mBufferBindingPoints[name] = { GL_SHADER_STORAGE_BUFFER, storageBlockBinding };
+            gl43->glShaderStorageBlockBinding(program, storageBlockIndex,
+                storageBlockBinding);
+            mBufferBindingPoints[name] = { GL_SHADER_STORAGE_BUFFER,
+                storageBlockBinding };
             mBuffersSet[name] = false;
         }
     }
@@ -207,17 +219,17 @@ bool GLProgram::linkShaders(GLuint program)
     return true;
 }
 
-bool GLProgram::linkProgram(GLuint program) 
+bool GLProgram::linkProgram(GLuint program)
 {
     auto &gl = GLContext::currentContext();
     gl.glLinkProgram(program);
-    auto status = GLint{ };
-    auto length = GLint{ };
+    auto status = GLint{};
+    auto length = GLint{};
     gl.glGetProgramiv(program, GL_LINK_STATUS, &status);
     gl.glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
     auto log = std::vector<char>(static_cast<size_t>(length));
     gl.glGetProgramInfoLog(program, length, nullptr, log.data());
-    GLShader::parseLog(log.data(), mLinkMessages, mItemId, { });
+    GLShader::parseLog(log.data(), mLinkMessages, mItemId, {});
     return (status == GL_TRUE);
 }
 
@@ -245,13 +257,13 @@ void GLProgram::unbind(ItemId callItemId)
 
     for (auto &kv : mBuffersSet)
         if (!std::exchange(kv.second, false))
-            *mCallMessages += MessageList::insert(
-                callItemId, MessageType::BufferNotSet, kv.first);
+            *mCallMessages += MessageList::insert(callItemId,
+                MessageType::BufferNotSet, kv.first);
 
     for (auto &kv : mAttributesSet)
         if (!std::exchange(kv.second, false))
-            *mCallMessages += MessageList::insert(
-                callItemId, MessageType::AttributeNotSet, kv.first);
+            *mCallMessages += MessageList::insert(callItemId,
+                MessageType::AttributeNotSet, kv.first);
 
     if (mPrintf.isUsed())
         mPrintfMessages = mPrintf.formatMessages(mItemId);
@@ -282,7 +294,7 @@ void GLProgram::bufferSet(const QString &name)
 }
 
 int GLProgram::getAttributeLocation(const QString &name) const
-{       
+{
     auto it = mAttributeLocations.find(name);
     if (it == mAttributeLocations.end())
         return -1;
@@ -291,17 +303,18 @@ int GLProgram::getAttributeLocation(const QString &name) const
 }
 
 template <typename T>
-std::vector<T> getValues(ScriptEngine &scriptEngine, 
-    const QStringList &expressions, ItemId itemId, int count, 
+std::vector<T> getValues(ScriptEngine &scriptEngine,
+    const QStringList &expressions, ItemId itemId, int count,
     MessagePtrSet &messages)
 {
-    const auto values = scriptEngine.evaluateValues(expressions, itemId, messages); 
+    const auto values =
+        scriptEngine.evaluateValues(expressions, itemId, messages);
     if (count != values.count())
         if (count != 3 || values.count() != 4)
             messages += MessageList::insert(itemId,
                 MessageType::UniformComponentMismatch,
                 QString("(%1/%2)").arg(values.count()).arg(count));
-    
+
     auto results = std::vector<T>();
     results.reserve(count);
     for (const auto &value : values)
@@ -309,29 +322,34 @@ std::vector<T> getValues(ScriptEngine &scriptEngine,
     return results;
 }
 
-bool GLProgram::apply(const GLUniformBinding &binding, 
+bool GLProgram::apply(const GLUniformBinding &binding,
     ScriptEngine &scriptEngine)
 {
     auto &gl = GLContext::currentContext();
     const auto baseName = getUniformBaseName(binding.name);
-    const auto [location, dataType, size] = 
-        mActiveUniforms[mActiveUniforms.contains(binding.name) ? binding.name : baseName];
+    const auto [location, dataType, size] =
+        mActiveUniforms[mActiveUniforms.contains(binding.name) ? binding.name
+                                                               : baseName];
     uniformSet(baseName);
     if (!dataType || location < 0)
         return false;
 
     switch (dataType) {
-#define ADD(TYPE, DATATYPE, COUNT, FUNCTION) \
-        case TYPE: FUNCTION(location, size, \
-                getValues<DATATYPE>(scriptEngine, \
-                    binding.values, binding.bindingItemId, \
-                    COUNT * size, *mCallMessages).data()); break
+#define ADD(TYPE, DATATYPE, COUNT, FUNCTION)                         \
+    case TYPE:                                                       \
+        FUNCTION(location, size,                                     \
+            getValues<DATATYPE>(scriptEngine, binding.values,        \
+                binding.bindingItemId, COUNT * size, *mCallMessages) \
+                .data());                                            \
+        break
 
-#define ADD_MATRIX(TYPE, DATATYPE, COUNT, FUNCTION) \
-        case TYPE: FUNCTION(location, size, binding.transpose, \
-                getValues<DATATYPE>(scriptEngine, \
-                    binding.values, binding.bindingItemId, \
-                    COUNT * size, *mCallMessages).data()); break
+#define ADD_MATRIX(TYPE, DATATYPE, COUNT, FUNCTION)                  \
+    case TYPE:                                                       \
+        FUNCTION(location, size, binding.transpose,                  \
+            getValues<DATATYPE>(scriptEngine, binding.values,        \
+                binding.bindingItemId, COUNT * size, *mCallMessages) \
+                .data());                                            \
+        break
 
         ADD(GL_FLOAT, GLfloat, 1, gl.glUniform1fv);
         ADD(GL_FLOAT_VEC2, GLfloat, 2, gl.glUniform2fv);
@@ -365,12 +383,18 @@ bool GLProgram::apply(const GLUniformBinding &binding,
         ADD_MATRIX(GL_DOUBLE_MAT2, GLdouble, 4, gl.v4_0->glUniformMatrix2dv);
         ADD_MATRIX(GL_DOUBLE_MAT3, GLdouble, 9, gl.v4_0->glUniformMatrix3dv);
         ADD_MATRIX(GL_DOUBLE_MAT4, GLdouble, 16, gl.v4_0->glUniformMatrix4dv);
-        ADD_MATRIX(GL_DOUBLE_MAT2x3, GLdouble, 6, gl.v4_0->glUniformMatrix2x3dv);
-        ADD_MATRIX(GL_DOUBLE_MAT3x2, GLdouble, 6, gl.v4_0->glUniformMatrix3x2dv);
-        ADD_MATRIX(GL_DOUBLE_MAT2x4, GLdouble, 8, gl.v4_0->glUniformMatrix2x4dv);
-        ADD_MATRIX(GL_DOUBLE_MAT4x2, GLdouble, 8, gl.v4_0->glUniformMatrix4x2dv);
-        ADD_MATRIX(GL_DOUBLE_MAT3x4, GLdouble, 12, gl.v4_0->glUniformMatrix3x4dv);
-        ADD_MATRIX(GL_DOUBLE_MAT4x3, GLdouble, 12, gl.v4_0->glUniformMatrix4x3dv);
+        ADD_MATRIX(GL_DOUBLE_MAT2x3, GLdouble, 6,
+            gl.v4_0->glUniformMatrix2x3dv);
+        ADD_MATRIX(GL_DOUBLE_MAT3x2, GLdouble, 6,
+            gl.v4_0->glUniformMatrix3x2dv);
+        ADD_MATRIX(GL_DOUBLE_MAT2x4, GLdouble, 8,
+            gl.v4_0->glUniformMatrix2x4dv);
+        ADD_MATRIX(GL_DOUBLE_MAT4x2, GLdouble, 8,
+            gl.v4_0->glUniformMatrix4x2dv);
+        ADD_MATRIX(GL_DOUBLE_MAT3x4, GLdouble, 12,
+            gl.v4_0->glUniformMatrix3x4dv);
+        ADD_MATRIX(GL_DOUBLE_MAT4x3, GLdouble, 12,
+            gl.v4_0->glUniformMatrix4x3dv);
 #undef ADD
 #undef ADD_MATRIX
     }
@@ -382,18 +406,17 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
     auto &gl = GLContext::currentContext();
     if (!mActiveUniforms.contains(binding.name))
         return false;
-    const auto [location, dataType, size] = 
-        mActiveUniforms[(mActiveUniforms.contains(binding.name) ? 
-           binding.name : getUniformBaseName(binding.name))];
+    const auto [location, dataType, size] =
+        mActiveUniforms[(mActiveUniforms.contains(binding.name)
+                ? binding.name
+                : getUniformBaseName(binding.name))];
     if (!binding.texture)
         return false;
 
-    float borderColor[] = {
-        static_cast<float>(binding.borderColor.redF()),
+    float borderColor[] = { static_cast<float>(binding.borderColor.redF()),
         static_cast<float>(binding.borderColor.greenF()),
         static_cast<float>(binding.borderColor.blueF()),
-        static_cast<float>(binding.borderColor.alphaF())
-    };
+        static_cast<float>(binding.borderColor.alphaF()) };
 
     auto &texture = *binding.texture;
     const auto target = texture.target();
@@ -404,37 +427,38 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
         gl.glUniform1i(location, unit);
 
     switch (target) {
-        case QOpenGLTexture::Target1D:
-        case QOpenGLTexture::Target1DArray:
-        case QOpenGLTexture::Target2D:
-        case QOpenGLTexture::Target2DArray:
-        case QOpenGLTexture::Target3D:
-        case QOpenGLTexture::TargetCubeMap:
-        case QOpenGLTexture::TargetCubeMapArray:
-        case QOpenGLTexture::TargetRectangle:
-            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, binding.minFilter);
-            gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, binding.magFilter);
-            if (binding.minFilter != Binding::Filter::Nearest) {
-                auto anisotropy = 1.0f;
-                if (binding.anisotropic)
-                    gl.glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &anisotropy);
-                gl.glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
-            }
-            gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, binding.wrapModeX);
-            gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, binding.wrapModeY);
-            gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, binding.wrapModeZ);
-            gl.glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, borderColor);
-            if (binding.comparisonFunc) {
-                gl.glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-                gl.glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, binding.comparisonFunc);
-            }
-            else {
-                gl.glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-            }
-            break;
+    case QOpenGLTexture::Target1D:
+    case QOpenGLTexture::Target1DArray:
+    case QOpenGLTexture::Target2D:
+    case QOpenGLTexture::Target2DArray:
+    case QOpenGLTexture::Target3D:
+    case QOpenGLTexture::TargetCubeMap:
+    case QOpenGLTexture::TargetCubeMapArray:
+    case QOpenGLTexture::TargetRectangle:
+        gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, binding.minFilter);
+        gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, binding.magFilter);
+        if (binding.minFilter != Binding::Filter::Nearest) {
+            auto anisotropy = 1.0f;
+            if (binding.anisotropic)
+                gl.glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &anisotropy);
+            gl.glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+                anisotropy);
+        }
+        gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, binding.wrapModeX);
+        gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, binding.wrapModeY);
+        gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, binding.wrapModeZ);
+        gl.glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, borderColor);
+        if (binding.comparisonFunc) {
+            gl.glTexParameteri(target, GL_TEXTURE_COMPARE_MODE,
+                GL_COMPARE_REF_TO_TEXTURE);
+            gl.glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC,
+                binding.comparisonFunc);
+        } else {
+            gl.glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+        }
+        break;
 
-        default:
-            break;
+    default: break;
     }
     uniformSet(binding.name);
     return true;
@@ -443,8 +467,8 @@ bool GLProgram::apply(const GLSamplerBinding &binding, int unit)
 bool GLProgram::apply(const GLImageBinding &binding, int unit)
 {
     auto &gl = GLContext::currentContext();
-    const auto location = gl.glGetUniformLocation(
-        mProgramObject, qPrintable(binding.name));
+    const auto location =
+        gl.glGetUniformLocation(mProgramObject, qPrintable(binding.name));
     if (location < 0)
         return false;
 
@@ -457,31 +481,31 @@ bool GLProgram::apply(const GLImageBinding &binding, int unit)
     auto &texture = *binding.texture;
     const auto target = texture.target();
     const auto textureId = texture.getReadWriteTextureId();
-    const auto format = (binding.format ?
-        static_cast<GLenum>(binding.format) :
-        static_cast<GLenum>(texture.format()));
+    const auto format = (binding.format
+            ? static_cast<GLenum>(binding.format)
+            : static_cast<GLenum>(texture.format()));
 
     auto formatSupported = GLint();
-    gl.v4_2->glGetInternalformativ(target, format,
-        GL_SHADER_IMAGE_LOAD, 1, &formatSupported);
+    gl.v4_2->glGetInternalformativ(target, format, GL_SHADER_IMAGE_LOAD, 1,
+        &formatSupported);
     if (formatSupported == GL_NONE) {
-        *mCallMessages += MessageList::insert(
-            binding.bindingItemId, MessageType::ImageFormatNotBindable);
-    }
-    else {
+        *mCallMessages += MessageList::insert(binding.bindingItemId,
+            MessageType::ImageFormatNotBindable);
+    } else {
         gl.v4_2->glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
         gl.v4_2->glBindTexture(target, textureId);
         gl.v4_2->glUniform1i(location, unit);
-        gl.v4_2->glBindImageTexture(static_cast<GLuint>(unit),
-            textureId, binding.level, (binding.layer < 0),
-            std::max(binding.layer, 0), binding.access, format);
+        gl.v4_2->glBindImageTexture(static_cast<GLuint>(unit), textureId,
+            binding.level, (binding.layer < 0), std::max(binding.layer, 0),
+            binding.access, format);
     }
     uniformSet(binding.name);
 #endif
     return true;
 }
 
-bool GLProgram::apply(const GLBufferBinding &binding, ScriptEngine &scriptEngine)
+bool GLProgram::apply(const GLBufferBinding &binding,
+    ScriptEngine &scriptEngine)
 {
     if (!binding.buffer)
         return false;
@@ -489,16 +513,14 @@ bool GLProgram::apply(const GLBufferBinding &binding, ScriptEngine &scriptEngine
     if (!mBufferBindingPoints.contains(binding.name))
         return false;
 
-    const auto offset = scriptEngine.evaluateInt(
-        binding.offset, mItemId,  *mCallMessages);
-    const auto rowCount = scriptEngine.evaluateInt(
-        binding.rowCount, mItemId,  *mCallMessages);
+    const auto offset =
+        scriptEngine.evaluateInt(binding.offset, mItemId, *mCallMessages);
+    const auto rowCount =
+        scriptEngine.evaluateInt(binding.rowCount, mItemId, *mCallMessages);
 
     const auto [target, index] = mBufferBindingPoints[binding.name];
-    binding.buffer->bindIndexedRange(target, index,
-        offset,
-        rowCount * binding.stride,
-        binding.readonly);
+    binding.buffer->bindIndexedRange(target, index, offset,
+        rowCount * binding.stride, binding.readonly);
     bufferSet(binding.name);
     return true;
 }
@@ -548,12 +570,11 @@ void GLProgram::reapplySubroutines()
             auto isIndex = false;
             auto index = uniform.boundSubroutine.toUInt(&isIndex);
             if (!isIndex)
-                index = gl.v4_0->glGetSubroutineIndex(mProgramObject,
-                    stage, qPrintable(uniform.boundSubroutine));
+                index = gl.v4_0->glGetSubroutineIndex(mProgramObject, stage,
+                    qPrintable(uniform.boundSubroutine));
             subroutineIndices.push_back(index);
             if (index == GL_INVALID_INDEX && !uniform.boundSubroutine.isEmpty())
-                *mCallMessages +=
-                    MessageList::insert(uniform.bindingItemId,
+                *mCallMessages += MessageList::insert(uniform.bindingItemId,
                     MessageType::InvalidSubroutine, uniform.boundSubroutine);
         }
         gl.v4_0->glUniformSubroutinesuiv(stage,
@@ -565,7 +586,7 @@ void GLProgram::reapplySubroutines()
 
 bool GLProgram::allBuffersBound() const
 {
-    for (const auto &[buffer, set]  : mBuffersSet)
+    for (const auto &[buffer, set] : mBuffersSet)
         if (!set)
             return false;
     return true;

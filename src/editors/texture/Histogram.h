@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QWidget>
 #include "Range.h"
+#include <QWidget>
 
 class Histogram : public QWidget
 {
@@ -27,8 +27,8 @@ protected:
 private:
     void updateRange(int mouseX);
 
-    int mHeight{ };
+    int mHeight{};
     QVector<qreal> mHistogram;
-    Range mHistogramBounds{ };
-    Range mMappingRange{ };
+    Range mHistogramBounds{};
+    Range mMappingRange{};
 };

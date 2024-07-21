@@ -7,7 +7,8 @@ class QCheckBox;
 class ColorMask final : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(unsigned int colorMask READ colorMask WRITE setColorMask NOTIFY colorMaskChanged USER true)
+    Q_PROPERTY(unsigned int colorMask READ colorMask WRITE setColorMask NOTIFY
+            colorMaskChanged USER true)
 public:
     explicit ColorMask(QWidget *parent = nullptr);
     unsigned int colorMask() const;
@@ -19,10 +20,9 @@ Q_SIGNALS:
 private:
     void handleColorMaskToggled();
 
-    QCheckBox *mColorR{ };
-    QCheckBox *mColorG{ };
-    QCheckBox *mColorB{ };
-    QCheckBox *mColorA{ };
-    unsigned int mColorMask{ };
+    QCheckBox *mColorR{};
+    QCheckBox *mColorG{};
+    QCheckBox *mColorB{};
+    QCheckBox *mColorA{};
+    unsigned int mColorMask{};
 };
-

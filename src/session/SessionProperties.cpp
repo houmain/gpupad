@@ -1,49 +1,49 @@
 #include "SessionProperties.h"
-#include "TextureProperties.h"
-#include "BindingProperties.h"
 #include "AttachmentProperties.h"
+#include "BindingProperties.h"
 #include "CallProperties.h"
-#include "ui_GroupProperties.h"
-#include "ui_BufferProperties.h"
-#include "ui_BlockProperties.h"
-#include "ui_FieldProperties.h"
-#include "ui_ProgramProperties.h"
-#include "ui_ShaderProperties.h"
-#include "ui_StreamProperties.h"
-#include "ui_AttributeProperties.h"
-#include "ui_TargetProperties.h"
-#include "ui_ScriptProperties.h"
-#include "Singletons.h"
+#include "EvaluatedPropertyCache.h"
+#include "FileCache.h"
 #include "SessionModel.h"
 #include "Settings.h"
+#include "Singletons.h"
 #include "SynchronizeLogic.h"
-#include "EvaluatedPropertyCache.h"
+#include "TextureProperties.h"
 #include "editors/EditorManager.h"
-#include "editors/texture/TextureEditor.h"
 #include "editors/binary/BinaryEditor.h"
 #include "editors/source/SourceEditor.h"
-#include "FileCache.h"
-#include <QStackedWidget>
+#include "editors/texture/TextureEditor.h"
+#include "ui_AttributeProperties.h"
+#include "ui_BlockProperties.h"
+#include "ui_BufferProperties.h"
+#include "ui_FieldProperties.h"
+#include "ui_GroupProperties.h"
+#include "ui_ProgramProperties.h"
+#include "ui_ScriptProperties.h"
+#include "ui_ShaderProperties.h"
+#include "ui_StreamProperties.h"
+#include "ui_TargetProperties.h"
 #include <QDataWidgetMapper>
+#include <QStackedWidget>
 #include <QTimer>
 
 namespace {
-  class StackedWidget final : public QStackedWidget
-  {
-  public:
-      using QStackedWidget::QStackedWidget;
+    class StackedWidget final : public QStackedWidget
+    {
+    public:
+        using QStackedWidget::QStackedWidget;
 
-      QSize minimumSizeHint() const override
-      {
-          return currentWidget()->minimumSizeHint();
-      }
-  };
+        QSize minimumSizeHint() const override
+        {
+            return currentWidget()->minimumSizeHint();
+        }
+    };
 
-  template <typename T>
-  void instantiate(QScopedPointer<T> &ptr)
-  {
-      ptr.reset(new T());
-  }
+    template <typename T>
+    void instantiate(QScopedPointer<T> &ptr)
+    {
+        ptr.reset(new T());
+    }
 } // namespace
 
 QString splitPascalCase(QString str)
@@ -52,8 +52,8 @@ QString splitPascalCase(QString str)
     return str.replace(regex, "\\1 \\2");
 }
 
-void setFormVisibility(QFormLayout *layout, QLabel *label,
-    QWidget *widget, bool visible)
+void setFormVisibility(QFormLayout *layout, QLabel *label, QWidget *widget,
+    bool visible)
 {
     if (label)
         layout->removeWidget(label);
@@ -65,8 +65,7 @@ void setFormVisibility(QFormLayout *layout, QLabel *label,
     widget->setVisible(visible);
 }
 
-void setFormEnabled(QLabel *label,
-    QWidget* widget, bool enabled)
+void setFormEnabled(QLabel *label, QWidget *widget, bool enabled)
 {
     label->setEnabled(enabled);
     widget->setEnabled(enabled);
@@ -83,8 +82,8 @@ SessionProperties::SessionProperties(QWidget *parent)
     setBackgroundRole(QPalette::ToolTipBase);
 
     mMapper->setModel(&mModel);
-    connect(mSubmitTimer, &QTimer::timeout,
-        mMapper, &QDataWidgetMapper::submit);
+    connect(mSubmitTimer, &QTimer::timeout, mMapper,
+        &QDataWidgetMapper::submit);
     mSubmitTimer->start(100);
 
     const auto add = [&](auto &ui) {
@@ -124,8 +123,8 @@ SessionProperties::SessionProperties(QWidget *parent)
         [this]() { return getFileNames(Item::Type::Shader); });
     connect(mShaderProperties->language, &DataComboBox::currentDataChanged,
         this, &SessionProperties::updateShaderWidgets);
-    connect(mShaderProperties->file, &ReferenceComboBox::activated,
-        this, &SessionProperties::deduceShaderType);
+    connect(mShaderProperties->file, &ReferenceComboBox::activated, this,
+        &SessionProperties::deduceShaderType);
 
     connect(mBufferProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::BinaryExtensions); });
@@ -133,10 +132,10 @@ SessionProperties::SessionProperties(QWidget *parent)
         [this]() { openCurrentItemFile(FileDialog::BinaryExtensions); });
     connect(mBufferProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(Item::Type::Buffer, true); });
-    connect(mBlockProperties->deduceOffset, &QToolButton::clicked,
-        this, &SessionProperties::deduceBlockOffset);
-    connect(mBlockProperties->deduceRowCount, &QToolButton::clicked,
-        this, &SessionProperties::deduceBlockRowCount);
+    connect(mBlockProperties->deduceOffset, &QToolButton::clicked, this,
+        &SessionProperties::deduceBlockOffset);
+    connect(mBlockProperties->deduceRowCount, &QToolButton::clicked, this,
+        &SessionProperties::deduceBlockRowCount);
 
     connect(mScriptProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::ScriptExtensions); });
@@ -148,9 +147,11 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mAttributeProperties->field, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(Item::Type::Field); });
 
-    for (auto comboBox : { mShaderProperties->file, mBufferProperties->file, mScriptProperties->file })
-        connect(comboBox, &ReferenceComboBox::textRequired,
-            [](auto data) { return FileDialog::getFileTitle(data.toString()); });
+    for (auto comboBox : { mShaderProperties->file, mBufferProperties->file,
+             mScriptProperties->file })
+        connect(comboBox, &ReferenceComboBox::textRequired, [](auto data) {
+            return FileDialog::getFileTitle(data.toString());
+        });
 
     for (auto comboBox : { mAttributeProperties->field })
         connect(comboBox, &ReferenceComboBox::textRequired,
@@ -161,33 +162,41 @@ SessionProperties::SessionProperties(QWidget *parent)
         mShaderProperties->globalPreamble, &ExpressionEditor::setText);
     connect(&settings, &Settings::shaderIncludePathsChanged,
         mShaderProperties->globalIncludePaths, &ExpressionEditor::setText);
-    connect(mShaderProperties->globalPreamble, &ExpressionEditor::textChanged, 
-        [this]() { Singletons::settings().setShaderPreamble(
-            mShaderProperties->globalPreamble->text()); });
-    connect(mShaderProperties->globalIncludePaths, &ExpressionEditor::textChanged, 
-        [this]() { Singletons::settings().setShaderIncludePaths(
-            mShaderProperties->globalIncludePaths->text()); });
+    connect(mShaderProperties->globalPreamble, &ExpressionEditor::textChanged,
+        [this]() {
+            Singletons::settings().setShaderPreamble(
+                mShaderProperties->globalPreamble->text());
+        });
+    connect(mShaderProperties->globalIncludePaths,
+        &ExpressionEditor::textChanged, [this]() {
+            Singletons::settings().setShaderIncludePaths(
+                mShaderProperties->globalIncludePaths->text());
+        });
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
     connect(&synchronizeLogic, &SynchronizeLogic::sessionShaderPreambleChanged,
         mShaderProperties->sessionPreamble, &ExpressionEditor::setText);
-    connect(&synchronizeLogic, &SynchronizeLogic::sessionShaderIncludePathsChanged,
+    connect(&synchronizeLogic,
+        &SynchronizeLogic::sessionShaderIncludePathsChanged,
         mShaderProperties->sessionIncludePaths, &ExpressionEditor::setText);
-    connect(mShaderProperties->sessionPreamble, &ExpressionEditor::textChanged, 
-        [this]() { Singletons::synchronizeLogic().setSessionShaderPreamble(
-            mShaderProperties->sessionPreamble->text()); });
-    connect(mShaderProperties->sessionIncludePaths, &ExpressionEditor::textChanged, 
-        [this]() { Singletons::synchronizeLogic().setSessionShaderIncludePaths(
-            mShaderProperties->sessionIncludePaths->text()); });
+    connect(mShaderProperties->sessionPreamble, &ExpressionEditor::textChanged,
+        [this]() {
+            Singletons::synchronizeLogic().setSessionShaderPreamble(
+                mShaderProperties->sessionPreamble->text());
+        });
+    connect(mShaderProperties->sessionIncludePaths,
+        &ExpressionEditor::textChanged, [this]() {
+            Singletons::synchronizeLogic().setSessionShaderIncludePaths(
+                mShaderProperties->sessionIncludePaths->text());
+        });
 
-    connect(&settings, &Settings::fontChanged, 
-        this, &SessionProperties::updateShaderWidgets);
-    mShaderProperties->globalPreamble->setText(
-        settings.shaderPreamble());
+    connect(&settings, &Settings::fontChanged, this,
+        &SessionProperties::updateShaderWidgets);
+    mShaderProperties->globalPreamble->setText(settings.shaderPreamble());
     mShaderProperties->globalIncludePaths->setText(
         settings.shaderIncludePaths());
 
-    setCurrentModelIndex({ });
+    setCurrentModelIndex({});
     fillComboBoxes();
 }
 
@@ -201,12 +210,14 @@ void SessionProperties::fillComboBoxes()
     fillComboBox<Target::PolygonMode>(mTargetProperties->polygonMode);
     fillComboBox<Target::LogicOperation>(mTargetProperties->logicOperation);
     fillComboBox<Shader::Language>(mShaderProperties->language);
-    mShaderProperties->language->removeItem(mShaderProperties->language->findText("None"));
+    mShaderProperties->language->removeItem(
+        mShaderProperties->language->findText("None"));
     fillComboBox<Shader::ShaderType>(mShaderProperties->type);
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
 }
 
-QVariantList SessionProperties::getFileNames(Item::Type type, bool addNull) const
+QVariantList SessionProperties::getFileNames(Item::Type type,
+    bool addNull) const
 {
     auto result = QVariantList();
     if (addNull)
@@ -218,26 +229,25 @@ QVariantList SessionProperties::getFileNames(Item::Type type, bool addNull) cons
                 result.append(fileName);
     };
     switch (type) {
-        case Item::Type::Shader:
-        case Item::Type::Script:
-            append(Singletons::editorManager().getSourceFileNames());
-            break;
+    case Item::Type::Shader:
+    case Item::Type::Script:
+        append(Singletons::editorManager().getSourceFileNames());
+        break;
 
-        case Item::Type::Buffer:
-            append(Singletons::editorManager().getBinaryFileNames());
-            break;
+    case Item::Type::Buffer:
+        append(Singletons::editorManager().getBinaryFileNames());
+        break;
 
-        case Item::Type::Texture:
-            append(Singletons::editorManager().getImageFileNames());
-            break;
+    case Item::Type::Texture:
+        append(Singletons::editorManager().getImageFileNames());
+        break;
 
-        default:
-            break;
+    default: break;
     }
 
     mModel.forEachItem([&](const Item &item) {
         if (item.type == type) {
-            const auto &fileName = static_cast<const FileItem&>(item).fileName;
+            const auto &fileName = static_cast<const FileItem &>(item).fileName;
             if (!result.contains(fileName))
                 result.append(fileName);
         }
@@ -296,82 +306,77 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
     };
 
     switch (mModel.getItemType(index)) {
-        case Item::Type::Group:
-            map(mGroupProperties->inlineScope, SessionModel::GroupInlineScope);
-            map(mGroupProperties->iterations, SessionModel::GroupIterations);
-            break;
+    case Item::Type::Group:
+        map(mGroupProperties->inlineScope, SessionModel::GroupInlineScope);
+        map(mGroupProperties->iterations, SessionModel::GroupIterations);
+        break;
 
-        case Item::Type::Buffer:
-            map(mBufferProperties->file, SessionModel::FileName);
-            break;
+    case Item::Type::Buffer:
+        map(mBufferProperties->file, SessionModel::FileName);
+        break;
 
-        case Item::Type::Block:
-            map(mBlockProperties->offset, SessionModel::BlockOffset);
-            map(mBlockProperties->rowCount, SessionModel::BlockRowCount);
-            updateBlockWidgets(index);
-            break;
+    case Item::Type::Block:
+        map(mBlockProperties->offset, SessionModel::BlockOffset);
+        map(mBlockProperties->rowCount, SessionModel::BlockRowCount);
+        updateBlockWidgets(index);
+        break;
 
-        case Item::Type::Field:
-            map(mFieldProperties->type, SessionModel::FieldDataType);
-            map(mFieldProperties->count, SessionModel::FieldCount);
-            map(mFieldProperties->padding, SessionModel::FieldPadding);
-            break;
+    case Item::Type::Field:
+        map(mFieldProperties->type, SessionModel::FieldDataType);
+        map(mFieldProperties->count, SessionModel::FieldCount);
+        map(mFieldProperties->padding, SessionModel::FieldPadding);
+        break;
 
-        case Item::Type::Texture:
-            mTextureProperties->addMappings(*mMapper);
-            break;
+    case Item::Type::Texture: mTextureProperties->addMappings(*mMapper); break;
 
-        case Item::Type::Program:
-            break;
+    case Item::Type::Program: break;
 
-        case Item::Type::Shader:
-            map(mShaderProperties->file, SessionModel::FileName);
-            map(mShaderProperties->language, SessionModel::ShaderLanguage);
-            map(mShaderProperties->type, SessionModel::ShaderType);
-            map(mShaderProperties->entryPoint, SessionModel::ShaderEntryPoint);
-            map(mShaderProperties->shaderPreamble, SessionModel::ShaderPreamble);
-            map(mShaderProperties->shaderIncludePaths, SessionModel::ShaderIncludePaths);
-            updateShaderWidgets();
-            break;
+    case Item::Type::Shader:
+        map(mShaderProperties->file, SessionModel::FileName);
+        map(mShaderProperties->language, SessionModel::ShaderLanguage);
+        map(mShaderProperties->type, SessionModel::ShaderType);
+        map(mShaderProperties->entryPoint, SessionModel::ShaderEntryPoint);
+        map(mShaderProperties->shaderPreamble, SessionModel::ShaderPreamble);
+        map(mShaderProperties->shaderIncludePaths,
+            SessionModel::ShaderIncludePaths);
+        updateShaderWidgets();
+        break;
 
-        case Item::Type::Binding:
-            mBindingProperties->addMappings(*mMapper);
-            break;
+    case Item::Type::Binding: mBindingProperties->addMappings(*mMapper); break;
 
-        case Item::Type::Stream:
-            break;
+    case Item::Type::Stream: break;
 
-        case Item::Type::Attribute:
-            map(mAttributeProperties->field, SessionModel::AttributeFieldId);
-            map(mAttributeProperties->normalize, SessionModel::AttributeNormalize);
-            map(mAttributeProperties->divisor, SessionModel::AttributeDivisor);
-            break;
+    case Item::Type::Attribute:
+        map(mAttributeProperties->field, SessionModel::AttributeFieldId);
+        map(mAttributeProperties->normalize, SessionModel::AttributeNormalize);
+        map(mAttributeProperties->divisor, SessionModel::AttributeDivisor);
+        break;
 
-        case Item::Type::Target:
-            map(mTargetProperties->width, SessionModel::TargetDefaultWidth);
-            map(mTargetProperties->height, SessionModel::TargetDefaultHeight);
-            map(mTargetProperties->layers, SessionModel::TargetDefaultLayers);
-            map(mTargetProperties->samples, SessionModel::TargetDefaultSamples);
-            map(mTargetProperties->frontFace, SessionModel::TargetFrontFace);
-            map(mTargetProperties->cullMode, SessionModel::TargetCullMode);
-            map(mTargetProperties->polygonMode, SessionModel::TargetPolygonMode);
-            map(mTargetProperties->logicOperation, SessionModel::TargetLogicOperation);
-            map(mTargetProperties->blendConstant, SessionModel::TargetBlendConstant);
-            updateTargetWidgets(index);
-            break;
+    case Item::Type::Target:
+        map(mTargetProperties->width, SessionModel::TargetDefaultWidth);
+        map(mTargetProperties->height, SessionModel::TargetDefaultHeight);
+        map(mTargetProperties->layers, SessionModel::TargetDefaultLayers);
+        map(mTargetProperties->samples, SessionModel::TargetDefaultSamples);
+        map(mTargetProperties->frontFace, SessionModel::TargetFrontFace);
+        map(mTargetProperties->cullMode, SessionModel::TargetCullMode);
+        map(mTargetProperties->polygonMode, SessionModel::TargetPolygonMode);
+        map(mTargetProperties->logicOperation,
+            SessionModel::TargetLogicOperation);
+        map(mTargetProperties->blendConstant,
+            SessionModel::TargetBlendConstant);
+        updateTargetWidgets(index);
+        break;
 
-        case Item::Type::Attachment:
-            mAttachmentProperties->addMappings(*mMapper);
-            break;
+    case Item::Type::Attachment:
+        mAttachmentProperties->addMappings(*mMapper);
+        break;
 
-        case Item::Type::Call:
-            mCallProperties->addMappings(*mMapper);
-            break;
+    case Item::Type::Call: mCallProperties->addMappings(*mMapper); break;
 
-        case Item::Type::Script:
-            map(mScriptProperties->file, SessionModel::FileName);
-            map(mScriptProperties->executeOn, SessionModel::ScriptExecuteOn);
-            break;
+    case Item::Type::Script:
+        map(mScriptProperties->file, SessionModel::FileName);
+        map(mScriptProperties->executeOn, SessionModel::ScriptExecuteOn);
+        break;
     }
 
     mMapper->setRootIndex(mModel.parent(index));
@@ -380,50 +385,51 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
     mStack->setCurrentIndex(static_cast<int>(mModel.getItemType(index)));
 }
 
-IEditor* SessionProperties::openEditor(const FileItem &fileItem)
+IEditor *SessionProperties::openEditor(const FileItem &fileItem)
 {
     if (fileItem.fileName.isEmpty()) {
-        const auto fileName = FileDialog::generateNextUntitledFileName(fileItem.name);
-        mModel.setData(mModel.getIndex(&fileItem, SessionModel::FileName), fileName);
+        const auto fileName =
+            FileDialog::generateNextUntitledFileName(fileItem.name);
+        mModel.setData(mModel.getIndex(&fileItem, SessionModel::FileName),
+            fileName);
     }
 
     auto &editors = Singletons::editorManager();
     switch (fileItem.type) {
-        case Item::Type::Texture: {
-            if (auto editor = editors.openTextureEditor(fileItem.fileName))
-                return editor;
-            return editors.openNewTextureEditor(fileItem.fileName);
-        }
-
-        case Item::Type::Script:
-            return editors.openEditor(fileItem.fileName);
-
-        case Item::Type::Shader: {
-            auto editor = editors.openSourceEditor(fileItem.fileName);
-            if (!editor)
-                editor = editors.openNewSourceEditor(fileItem.fileName);
-            if (auto shader = castItem<Shader>(fileItem)) {
-                const auto sourceType = getSourceType(shader->shaderType, shader->language);
-                if (sourceType != SourceType::PlainText)
-                    editor->setSourceType(sourceType);
-            }
+    case Item::Type::Texture: {
+        if (auto editor = editors.openTextureEditor(fileItem.fileName))
             return editor;
-        }
+        return editors.openNewTextureEditor(fileItem.fileName);
+    }
 
-        case Item::Type::Buffer: {
-            if (auto editor = editors.openBinaryEditor(fileItem.fileName))
-                return editor;
-            return editors.openNewBinaryEditor(fileItem.fileName);
-        }
+    case Item::Type::Script: return editors.openEditor(fileItem.fileName);
 
-        default:
-            return nullptr;
+    case Item::Type::Shader: {
+        auto editor = editors.openSourceEditor(fileItem.fileName);
+        if (!editor)
+            editor = editors.openNewSourceEditor(fileItem.fileName);
+        if (auto shader = castItem<Shader>(fileItem)) {
+            const auto sourceType =
+                getSourceType(shader->shaderType, shader->language);
+            if (sourceType != SourceType::PlainText)
+                editor->setSourceType(sourceType);
+        }
+        return editor;
+    }
+
+    case Item::Type::Buffer: {
+        if (auto editor = editors.openBinaryEditor(fileItem.fileName))
+            return editor;
+        return editors.openNewBinaryEditor(fileItem.fileName);
+    }
+
+    default: return nullptr;
     }
 }
 
-IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
+IEditor *SessionProperties::openItemEditor(const QModelIndex &index)
 {
-    const auto& item = mModel.getItem(index);
+    const auto &item = mModel.getItem(index);
 
     // open all shaders of program
     if (auto program = castItem<Program>(item)) {
@@ -440,7 +446,8 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
     if (auto target = castItem<Target>(item)) {
         for (auto item : target->items) {
             if (auto attachment = castItem<Attachment>(item))
-                if (auto texture = castItem<Texture>(mModel.findItem(attachment->textureId))) {
+                if (auto texture = castItem<Texture>(
+                        mModel.findItem(attachment->textureId))) {
                     openEditor(*texture);
                     Singletons::editorManager().setAutoRaise(false);
                 }
@@ -448,7 +455,7 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
         Singletons::editorManager().setAutoRaise(true);
         return nullptr;
     }
-        
+
     // open first attribute of stream
     if (auto stream = castItem<Stream>(item))
         for (auto item : stream->items)
@@ -467,9 +474,9 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
 
     // open buffer of block
     if (auto block = castItem<Block>(item)) {
-        const auto &buffer = *static_cast<Buffer*>(block->parent);
+        const auto &buffer = *static_cast<Buffer *>(block->parent);
         auto editor = openItemEditor(mModel.getIndex(&buffer));
-        if (auto binaryEditor = static_cast<BinaryEditor*>(editor))
+        if (auto binaryEditor = static_cast<BinaryEditor *>(editor))
             for (auto i = 0; i < buffer.items.size(); ++i)
                 if (buffer.items[i] == block) {
                     binaryEditor->setCurrentBlockIndex(i);
@@ -481,37 +488,42 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
     // open item of binding
     if (auto binding = castItem<Binding>(item)) {
         switch (binding->bindingType) {
-            case Binding::BindingType::Sampler:
-            case Binding::BindingType::Image:
-                return openItemEditor(mModel.getIndex(mModel.findItem(binding->textureId)));
-            case Binding::BindingType::Buffer:
-            case Binding::BindingType::TextureBuffer:
-                return openItemEditor(mModel.getIndex(mModel.findItem(binding->bufferId)));
-            case Binding::BindingType::BufferBlock:
-                return openItemEditor(mModel.getIndex(mModel.findItem(binding->blockId)));
-            default:
-                break;
+        case Binding::BindingType::Sampler:
+        case Binding::BindingType::Image:
+            return openItemEditor(
+                mModel.getIndex(mModel.findItem(binding->textureId)));
+        case Binding::BindingType::Buffer:
+        case Binding::BindingType::TextureBuffer:
+            return openItemEditor(
+                mModel.getIndex(mModel.findItem(binding->bufferId)));
+        case Binding::BindingType::BufferBlock:
+            return openItemEditor(
+                mModel.getIndex(mModel.findItem(binding->blockId)));
+        default: break;
         }
     }
 
     // open item of call
     if (auto call = castItem<Call>(item)) {
         switch (call->callType) {
-            case Call::CallType::Draw:
-            case Call::CallType::DrawIndexed:
-            case Call::CallType::DrawIndirect:
-            case Call::CallType::DrawIndexedIndirect:
-            case Call::CallType::Compute:
-            case Call::CallType::ComputeIndirect:
-                return openItemEditor(mModel.getIndex(mModel.findItem(call->programId)));
-            case Call::CallType::ClearTexture:
-            case Call::CallType::CopyTexture:
-            case Call::CallType::SwapTextures:
-                return openItemEditor(mModel.getIndex(mModel.findItem(call->textureId)));
-            case Call::CallType::ClearBuffer:
-            case Call::CallType::CopyBuffer:
-            case Call::CallType::SwapBuffers:
-                return openItemEditor(mModel.getIndex(mModel.findItem(call->bufferId)));
+        case Call::CallType::Draw:
+        case Call::CallType::DrawIndexed:
+        case Call::CallType::DrawIndirect:
+        case Call::CallType::DrawIndexedIndirect:
+        case Call::CallType::Compute:
+        case Call::CallType::ComputeIndirect:
+            return openItemEditor(
+                mModel.getIndex(mModel.findItem(call->programId)));
+        case Call::CallType::ClearTexture:
+        case Call::CallType::CopyTexture:
+        case Call::CallType::SwapTextures:
+            return openItemEditor(
+                mModel.getIndex(mModel.findItem(call->textureId)));
+        case Call::CallType::ClearBuffer:
+        case Call::CallType::CopyBuffer:
+        case Call::CallType::SwapBuffers:
+            return openItemEditor(
+                mModel.getIndex(mModel.findItem(call->bufferId)));
         }
     }
 
@@ -520,7 +532,7 @@ IEditor* SessionProperties::openItemEditor(const QModelIndex &index)
         Singletons::synchronizeLogic().updateEditor(item.id, true);
         return editor;
     }
-        
+
     return nullptr;
 }
 
@@ -582,7 +594,7 @@ void SessionProperties::updateBlockWidgets(const QModelIndex &index)
     auto isLastBlock = true;
     auto hasFile = false;
     if (auto block = mModel.item<Block>(index)) {
-        const auto &buffer = *static_cast<Buffer*>(block->parent);
+        const auto &buffer = *static_cast<Buffer *>(block->parent);
         stride = getBlockStride(*block);
         isFirstBlock = (buffer.items.first() == block);
         isLastBlock = (buffer.items.last() == block);
@@ -603,29 +615,35 @@ void SessionProperties::updateTargetWidgets(const QModelIndex &index)
 
     auto &ui = *mTargetProperties;
     setFormVisibility(ui.formLayout, ui.labelWidth, ui.width, !hasAttachments);
-    setFormVisibility(ui.formLayout, ui.labelHeight, ui.height, !hasAttachments);
-    setFormVisibility(ui.formLayout, ui.labelLayers, ui.layers, !hasAttachments);
-    setFormVisibility(ui.formLayout, ui.labelSamples, ui.samples, !hasAttachments);
+    setFormVisibility(ui.formLayout, ui.labelHeight, ui.height,
+        !hasAttachments);
+    setFormVisibility(ui.formLayout, ui.labelLayers, ui.layers,
+        !hasAttachments);
+    setFormVisibility(ui.formLayout, ui.labelSamples, ui.samples,
+        !hasAttachments);
     setFormVisibility(ui.formLayout, ui.labelFrontFace, ui.frontFace, true);
     setFormVisibility(ui.formLayout, ui.labelCullMode, ui.cullMode, true);
     setFormVisibility(ui.formLayout, ui.labelPolygonMode, ui.polygonMode, true);
-    setFormVisibility(ui.formLayout, ui.labelLogicOperation, ui.logicOperation, hasAttachments);
-    setFormVisibility(ui.formLayout, ui.labelBlendConstant, ui.blendConstant, hasAttachments);
+    setFormVisibility(ui.formLayout, ui.labelLogicOperation, ui.logicOperation,
+        hasAttachments);
+    setFormVisibility(ui.formLayout, ui.labelBlendConstant, ui.blendConstant,
+        hasAttachments);
 }
 
 void SessionProperties::updateShaderWidgets()
 {
     auto &ui = *mShaderProperties;
-    const auto language = static_cast<Shader::Language>(ui.language->currentData().toInt());
-    setFormVisibility(ui.formLayout, ui.labelEntryPoint, ui.entryPoint, 
+    const auto language =
+        static_cast<Shader::Language>(ui.language->currentData().toInt());
+    setFormVisibility(ui.formLayout, ui.labelEntryPoint, ui.entryPoint,
         language != Shader::Language::GLSL);
 
     const auto font = Singletons::settings().font();
-    for (auto editor : { 
-        mShaderProperties->shaderPreamble,
-        mShaderProperties->sessionPreamble,
-        mShaderProperties->globalPreamble,
-        })
+    for (auto editor : {
+             mShaderProperties->shaderPreamble,
+             mShaderProperties->sessionPreamble,
+             mShaderProperties->globalPreamble,
+         })
         editor->setFont(font);
 }
 
@@ -637,48 +655,57 @@ void SessionProperties::deduceBlockOffset()
         if (item == &block)
             break;
 
-        const auto &prevBlock = *static_cast<const Block*>(item);
+        const auto &prevBlock = *static_cast<const Block *>(item);
         auto prevOffset = 0, prevRowCount = 0;
-        Singletons::evaluatedPropertyCache().evaluateBlockProperties(
-            prevBlock, &prevOffset, &prevRowCount);
+        Singletons::evaluatedPropertyCache().evaluateBlockProperties(prevBlock,
+            &prevOffset, &prevRowCount);
 
-        offset = std::max(offset, prevOffset) + 
-            getBlockStride(prevBlock) * prevRowCount;
+        offset = std::max(offset, prevOffset)
+            + getBlockStride(prevBlock) * prevRowCount;
     }
-    mModel.setData(mModel.getIndex(currentModelIndex(),
-        SessionModel::BlockOffset), offset);
+    mModel.setData(
+        mModel.getIndex(currentModelIndex(), SessionModel::BlockOffset),
+        offset);
 }
 
 void SessionProperties::deduceBlockRowCount()
 {
     const auto &block = *mModel.item<Block>(currentModelIndex());
-    const auto &buffer = *static_cast<const Buffer*>(block.parent);
+    const auto &buffer = *static_cast<const Buffer *>(block.parent);
     const auto stride = getBlockStride(block);
     if (stride) {
         auto offset = 0, rowCount = 0;
-        Singletons::evaluatedPropertyCache().evaluateBlockProperties(block, &offset, &rowCount);
+        Singletons::evaluatedPropertyCache().evaluateBlockProperties(block,
+            &offset, &rowCount);
         auto binary = QByteArray();
         if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
-            mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::BlockRowCount),
+            mModel.setData(mModel.getIndex(currentModelIndex(),
+                               SessionModel::BlockRowCount),
                 (binary.size() - offset) / stride);
     }
 }
 
-void SessionProperties::deduceShaderType() 
+void SessionProperties::deduceShaderType()
 {
     const auto &shader = *mModel.item<Shader>(currentModelIndex());
     const auto fileName = mShaderProperties->file->currentData().toString();
     auto source = QString();
     if (Singletons::fileCache().getSource(fileName, &source)) {
-        const auto currentSourceType = (shader.fileName.isEmpty() ? SourceType::PlainText : 
-            getSourceType(shader.shaderType, shader.language));
+        const auto currentSourceType = (shader.fileName.isEmpty()
+                ? SourceType::PlainText
+                : getSourceType(shader.shaderType, shader.language));
         const auto extension = FileDialog::getFileExtension(fileName);
-        const auto sourceType = deduceSourceType(currentSourceType, extension, source);
+        const auto sourceType =
+            deduceSourceType(currentSourceType, extension, source);
         if (sourceType != currentSourceType) {
             const auto shaderType = getShaderType(sourceType);
             const auto shaderLanguage = getShaderLanguage(sourceType);
-            mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::ShaderType), shaderType);
-            mModel.setData(mModel.getIndex(currentModelIndex(), SessionModel::ShaderLanguage), shaderLanguage);
+            mModel.setData(
+                mModel.getIndex(currentModelIndex(), SessionModel::ShaderType),
+                shaderType);
+            mModel.setData(mModel.getIndex(currentModelIndex(),
+                               SessionModel::ShaderLanguage),
+                shaderLanguage);
         }
     }
 }

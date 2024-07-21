@@ -1,7 +1,7 @@
 
 #include "QmlView.h"
-#include <QQmlNetworkAccessManagerFactory>
 #include <QAction>
+#include <QQmlNetworkAccessManagerFactory>
 
 #if !defined(QtQuick_FOUND)
 
@@ -11,35 +11,33 @@ QmlView::QmlView(QString fileName, QWidget *parent)
 {
 }
 
-void QmlView::reset() {
-}
+void QmlView::reset() { }
 
 #else // defined(QtQuick_FOUND)
 
-#include "FileCache.h"
-#include "Singletons.h"
-#include "scripting/SessionScriptObject.h"
-#include <QQuickWidget>
-#include <QBoxLayout>
-#include <QQmlEngine>
-#include <QQmlAbstractUrlInterceptor>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QDir>
-#include <QFileInfo>
-#include <cstring>
+#  include "FileCache.h"
+#  include "Singletons.h"
+#  include "scripting/SessionScriptObject.h"
+#  include <QBoxLayout>
+#  include <QDir>
+#  include <QFileInfo>
+#  include <QNetworkAccessManager>
+#  include <QNetworkReply>
+#  include <QQmlAbstractUrlInterceptor>
+#  include <QQmlEngine>
+#  include <QQuickWidget>
+#  include <cstring>
 
-namespace
-{
+namespace {
     QString toAbsolutePath(const QUrl &url)
     {
         auto fileName = url.toString(QUrl::RemoveScheme);
         if (fileName.startsWith("//"))
             fileName = fileName.mid(2);
-#if defined(_WIN32)
+#  if defined(_WIN32)
         if (fileName.startsWith("/"))
             fileName = fileName.mid(1);
-#endif
+#  endif
         return QDir::toNativeSeparators(fileName);
     }
 
@@ -48,7 +46,9 @@ namespace
         QUrl intercept(const QUrl &path, DataType type) override
         {
             // redirect file requests to custom NetworkAccessManager
-            if (path.isLocalFile() && (type == DataType::QmlFile || type == DataType::JavaScriptFile)) {
+            if (path.isLocalFile()
+                && (type == DataType::QmlFile
+                    || type == DataType::JavaScriptFile)) {
                 auto cachePath = path;
                 cachePath.setScheme("cache");
                 return cachePath;
@@ -60,7 +60,7 @@ namespace
     class NetworkReply : public QNetworkReply
     {
         const QByteArray mData;
-        qint64 mReadPosition{ };
+        qint64 mReadPosition{};
 
     public:
         NetworkReply(QByteArray data, QObject *parent = nullptr)
@@ -71,10 +71,7 @@ namespace
             setFinished(true);
         }
 
-        qint64 size() const override
-        {
-            return mData.size();
-        }
+        qint64 size() const override { return mData.size(); }
 
         qint64 readData(char *data, qint64 maxlen) override
         {
@@ -84,10 +81,7 @@ namespace
             return len;
         }
 
-        void abort() override
-        {
-            Q_ASSERT(false);
-        }
+        void abort() override { Q_ASSERT(false); }
     };
 
     class NetworkAccessManager : public QNetworkAccessManager
@@ -102,8 +96,8 @@ namespace
         {
         }
 
-        QNetworkReply *createRequest(Operation op, const QNetworkRequest &request,
-                                         QIODevice *outgoingData) override
+        QNetworkReply *createRequest(Operation op,
+            const QNetworkRequest &request, QIODevice *outgoingData) override
         {
             if (request.url().scheme() == "cache") {
                 const auto fileName = toAbsolutePath(request.url());
@@ -112,7 +106,8 @@ namespace
                 if (Singletons::fileCache().getSource(fileName, &source))
                     return new NetworkReply(source.toUtf8(), this);
             }
-            return QNetworkAccessManager::createRequest(op, request, outgoingData);
+            return QNetworkAccessManager::createRequest(op, request,
+                outgoingData);
         }
     };
 
@@ -122,10 +117,7 @@ namespace
         QmlView &mView;
 
     public:
-        NetworkAccessManagerFactory(QmlView *view)
-            : mView(*view)
-        {
-        }
+        NetworkAccessManagerFactory(QmlView *view) : mView(*view) { }
 
         QNetworkAccessManager *create(QObject *parent) override
         {
@@ -151,8 +143,8 @@ void QmlView::reset()
 {
     if (mQuickWidget) {
         layout()->removeWidget(mQuickWidget);
-        connect(mQuickWidget, &QQuickWidget::destroyed, 
-            this, &QmlView::reset, Qt::QueuedConnection);
+        connect(mQuickWidget, &QQuickWidget::destroyed, this, &QmlView::reset,
+            Qt::QueuedConnection);
         mQuickWidget->deleteLater();
         mQuickWidget = nullptr;
         return;
@@ -170,22 +162,24 @@ void QmlView::reset()
             if (status == QQuickWidget::Error) {
                 const auto errors = widget->errors();
                 for (const QQmlError &error : errors)
-                    mMessages += MessageList::insert(toAbsolutePath(error.url()),
-                        error.line(), MessageType::ScriptError, error.description());
+                    mMessages += MessageList::insert(
+                        toAbsolutePath(error.url()), error.line(),
+                        MessageType::ScriptError, error.description());
             }
         });
 
     connect(mQuickWidget, &QQuickWidget::sceneGraphError,
         [this](QQuickWindow::SceneGraphError error, const QString &message) {
-            mMessages += MessageList::insert(mFileName,
-                0, MessageType::ScriptError, message);
+            mMessages += MessageList::insert(mFileName, 0,
+                MessageType::ScriptError, message);
         });
 
-    connect(mQuickWidget->engine(), &QQmlEngine::warnings, 
+    connect(mQuickWidget->engine(), &QQmlEngine::warnings,
         [this](const QList<QQmlError> &warnings) {
-            for (auto &warning : warnings) 
+            for (auto &warning : warnings)
                 mMessages += MessageList::insert(toAbsolutePath(warning.url()),
-                    warning.line(), MessageType::ScriptWarning, warning.description());
+                    warning.line(), MessageType::ScriptWarning,
+                    warning.description());
         });
 
     mNetworkAccessManagerFactory.reset(new NetworkAccessManagerFactory(this));
@@ -193,11 +187,11 @@ void QmlView::reset()
         mNetworkAccessManagerFactory.data());
 
     static UrlInterceptor sUrlInterceptor;
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#  if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     mQuickWidget->engine()->setUrlInterceptor(&sUrlInterceptor);
-#else
+#  else
     mQuickWidget->engine()->addUrlInterceptor(&sUrlInterceptor);
-#endif
+#  endif
     mQuickWidget->engine()->addImportPath(QFileInfo(mFileName).dir().path());
 
     Singletons::fileCache().updateFromEditors();
@@ -227,7 +221,7 @@ QList<QMetaObject::Connection> QmlView::connectEditActions(
     actions.rename->setEnabled(false);
     actions.findReplace->setEnabled(false);
 
-    return { };
+    return {};
 }
 
 QString QmlView::fileName() const
@@ -235,9 +229,7 @@ QString QmlView::fileName() const
     return mFileName;
 }
 
-void QmlView::setFileName(QString fileName)
-{
-}
+void QmlView::setFileName(QString fileName) { }
 
 bool QmlView::load()
 {
@@ -250,9 +242,7 @@ bool QmlView::save()
     return false;
 }
 
-void QmlView::setModified()
-{
-}
+void QmlView::setModified() { }
 
 void QmlView::addDependency(const QString &fileName)
 {

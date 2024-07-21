@@ -1,9 +1,9 @@
 #pragma once
 
-#include "session/Item.h"
-#include "SourceType.h"
 #include "Evaluation.h"
 #include "MessageList.h"
+#include "SourceType.h"
+#include "session/Item.h"
 #include <QObject>
 #include <QSet>
 
@@ -33,14 +33,17 @@ public:
     void setValidateSource(bool validate);
     bool validatingSource() const { return mValidateSource; }
     void setProcessSourceType(QString type);
-    const QString& processSourceType() const { return mProcessSourceType; }
+    const QString &processSourceType() const { return mProcessSourceType; }
     void setCurrentEditorFileName(QString fileName);
     void setCurrentEditorSourceType(SourceType sourceType);
 
     void setSessionShaderPreamble(const QString &preamble);
     QString sessionShaderPreamble() const { return mSessionShaderPreamble; }
     void setSessionShaderIncludePaths(const QString &includePaths);
-    QString sessionShaderIncludePaths() const { return mSessionShaderIncludePaths; }
+    QString sessionShaderIncludePaths() const
+    {
+        return mSessionShaderIncludePaths;
+    }
 
     void handleMouseStateChanged();
     void handleKeyboardStateChanged();
@@ -63,32 +66,29 @@ private:
     void handleItemReordered(const QModelIndex &parent, int first);
     void handleSessionRendered();
     void updateEditors();
-    void updateTextureEditor(const Texture &texture,
-        TextureEditor &editor);
-    void updateBinaryEditor(const Buffer &buffer,
-        BinaryEditor &editor);
+    void updateTextureEditor(const Texture &texture, TextureEditor &editor);
+    void updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor);
     void handleEvaluateTimout();
     void evaluate(EvaluationType evaluationType);
     void processSource();
 
     SessionModel &mModel;
 
-    QTimer *mUpdateEditorsTimer{ };
+    QTimer *mUpdateEditorsTimer{};
     QSet<ItemId> mEditorItemsModified;
 
-    QTimer *mEvaluationTimer{ };
+    QTimer *mEvaluationTimer{};
     QScopedPointer<RenderSession> mRenderSession;
-    bool mRenderSessionInvalidated{ };
-    EvaluationMode mEvaluationMode{ };
+    bool mRenderSessionInvalidated{};
+    EvaluationMode mEvaluationMode{};
 
-    bool mValidateSource{ };
-    QString mCurrentEditorFileName{ };
-    SourceType mCurrentEditorSourceType{ };
-    QString mProcessSourceType{ };
-    QTimer *mProcessSourceTimer{ };
-    ProcessSource* mProcessSource{ };
+    bool mValidateSource{};
+    QString mCurrentEditorFileName{};
+    SourceType mCurrentEditorSourceType{};
+    QString mProcessSourceType{};
+    QTimer *mProcessSourceTimer{};
+    ProcessSource *mProcessSource{};
 
     QString mSessionShaderPreamble;
     QString mSessionShaderIncludePaths;
 };
-

@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QOpenGLWidget>
 #include <QOpenGLContext>
+#include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions>
 #include <QOpenGLFunctions_3_3_Core>
 #include <QOpenGLFunctions_4_2_Core>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLVertexArrayObject>
-#include <QOpenGLDebugLogger>
+#include <QOpenGLWidget>
 #include <optional>
 
 class GLWidget : public QOpenGLWidget
@@ -37,7 +37,7 @@ private:
     void handleDebugMessage(const QOpenGLDebugMessage &message);
     void releaseGL();
 
-    bool mInitialized{ };
+    bool mInitialized{};
     QOpenGLFunctions_3_3_Core mGL;
     std::optional<QOpenGLFunctions_4_2_Core> mGL42;
     std::optional<QOpenGLFunctions_4_5_Core> mGL45;

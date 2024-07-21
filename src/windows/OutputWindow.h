@@ -13,7 +13,7 @@ class OutputWindow final : public QFrame
 public:
     explicit OutputWindow(QWidget *parent = nullptr);
     QWidget *titleBar() const { return mTitleBar; }
-    
+
     QString selectedType() const;
     void setText(QString text);
 
@@ -23,9 +23,8 @@ Q_SIGNALS:
 private:
     void handleThemeChanged(const Theme &theme);
 
-    QWidget *mTitleBar{ };
-    DataComboBox *mTypeSelector{ };
-    QPlainTextEdit *mTextEdit{ };
-    int mLastScrollPosVertical{ };
+    QWidget *mTitleBar{};
+    DataComboBox *mTypeSelector{};
+    QPlainTextEdit *mTextEdit{};
+    int mLastScrollPosVertical{};
 };
-

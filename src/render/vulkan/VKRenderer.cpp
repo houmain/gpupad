@@ -1,20 +1,20 @@
 #include "VKRenderer.h"
-#include "render/RenderTask.h"
-#include "TextureData.h"
 #include "MessageList.h"
+#include "TextureData.h"
+#include "render/RenderTask.h"
 #include <QApplication>
-#include <QSemaphore>
 #include <QMutex>
+#include <QSemaphore>
 
 #include <KDGpu/device.h>
 #include <KDGpu/instance.h>
 #include <KDGpu/vulkan/vulkan_graphics_api.h>
 
 #if defined(KDGPU_PLATFORM_WIN32)
-# define NOMINMAX
-# define WIN32_LEAN_AND_MEAN
-# include <vulkan/vulkan_win32.h>
-# include <spdlog/sinks/msvc_sink.h>
+#  define NOMINMAX
+#  define WIN32_LEAN_AND_MEAN
+#  include <spdlog/sinks/msvc_sink.h>
+#  include <vulkan/vulkan_win32.h>
 #endif
 
 class VKRenderer::Worker final : public QObject
@@ -22,18 +22,15 @@ class VKRenderer::Worker final : public QObject
     Q_OBJECT
 
 public:
-    explicit Worker(VKRenderer *renderer)
-        : mRenderer(*renderer)
-    {
-    }
+    explicit Worker(VKRenderer *renderer) : mRenderer(*renderer) { }
 
-    void handleConfigureTask(RenderTask* renderTask)
+    void handleConfigureTask(RenderTask *renderTask)
     {
         renderTask->configure();
         Q_EMIT taskConfigured();
     }
 
-    void handleRenderTask(RenderTask* renderTask)
+    void handleRenderTask(RenderTask *renderTask)
     {
         try {
             if (!std::exchange(mInitialized, true))
@@ -41,18 +38,18 @@ public:
 
             if (mDevice.isValid())
                 renderTask->render();
-        }
-        catch (const std::exception &ex) {
-            mMessages += MessageList::insert(0, MessageType::RenderingFailed, ex.what());
+        } catch (const std::exception &ex) {
+            mMessages +=
+                MessageList::insert(0, MessageType::RenderingFailed, ex.what());
         }
         Q_EMIT taskRendered();
     }
 
-    void handleReleaseTask(RenderTask* renderTask, void* userData)
+    void handleReleaseTask(RenderTask *renderTask, void *userData)
     {
         if (mDevice.isValid())
             renderTask->release();
-        static_cast<QSemaphore*>(userData)->release(1);
+        static_cast<QSemaphore *>(userData)->release(1);
     }
 
 public Q_SLOTS:
@@ -70,27 +67,26 @@ private:
     void initialize()
     {
 #if defined(KDGPU_PLATFORM_WIN32)
-        static auto l = spdlog::synchronous_factory::create<spdlog::sinks::msvc_sink_mt>("KDGpu");
+        static auto l =
+            spdlog::synchronous_factory::create<spdlog::sinks::msvc_sink_mt>(
+                "KDGpu");
 #endif
 
         mApi = std::make_unique<KDGpu::VulkanGraphicsApi>();
 
         auto instanceOptions = KDGpu::InstanceOptions{
 #if !defined(NDEBUG)
-          .layers = {
-            "VK_LAYER_KHRONOS_validation"
-          },
+            .layers = { "VK_LAYER_KHRONOS_validation" },
 #endif
-          .extensions = {
-            VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
-            VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME
-          }
+            .extensions = { VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
+                VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME }
         };
         mInstance = mApi->createInstance(instanceOptions);
 
         mAdapter = mInstance.selectAdapter(KDGpu::AdapterDeviceType::Default);
 
-        auto deviceOptions = KDGpu::DeviceOptions{ .requestedFeatures = mAdapter->features() };
+        auto deviceOptions =
+            KDGpu::DeviceOptions{ .requestedFeatures = mAdapter->features() };
         deviceOptions.extensions = {
             VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME,
             VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME,
@@ -100,22 +96,27 @@ private:
 #endif
         };
         mDevice = mAdapter->createDevice(deviceOptions);
-        
+
         auto &rm = *mDevice.graphicsApi()->resourceManager();
-        auto vkInstance = static_cast<KDGpu::VulkanInstance*>(rm.getInstance(mInstance));
-        auto vkAdapter = static_cast<KDGpu::VulkanAdapter*>(rm.getAdapter(*mAdapter));
-        auto vkDevice = static_cast<KDGpu::VulkanDevice*>(rm.getDevice(mDevice));
-        auto vkQueue = static_cast<KDGpu::VulkanQueue*>(rm.getQueue(mDevice.queues()[0]));
-        
-        auto poolInfo = VkCommandPoolCreateInfo{ };
+        auto vkInstance =
+            static_cast<KDGpu::VulkanInstance *>(rm.getInstance(mInstance));
+        auto vkAdapter =
+            static_cast<KDGpu::VulkanAdapter *>(rm.getAdapter(*mAdapter));
+        auto vkDevice =
+            static_cast<KDGpu::VulkanDevice *>(rm.getDevice(mDevice));
+        auto vkQueue =
+            static_cast<KDGpu::VulkanQueue *>(rm.getQueue(mDevice.queues()[0]));
+
+        auto poolInfo = VkCommandPoolCreateInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.queueFamilyIndex = 0;
         poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        vkCreateCommandPool(vkDevice->device, &poolInfo, nullptr, &mKtxCommandPool);
+        vkCreateCommandPool(vkDevice->device, &poolInfo, nullptr,
+            &mKtxCommandPool);
 
-        ktxVulkanDeviceInfo_ConstructEx(&mKtxDeviceInfo,
-          vkInstance->instance, vkAdapter->physicalDevice, vkDevice->device,
-          vkQueue->queue, mKtxCommandPool, nullptr, nullptr);
+        ktxVulkanDeviceInfo_ConstructEx(&mKtxDeviceInfo, vkInstance->instance,
+            vkAdapter->physicalDevice, vkDevice->device, vkQueue->queue,
+            mKtxCommandPool, nullptr, nullptr);
 
         mRenderer.mDevice = &mDevice;
         mRenderer.mKtxDeviceInfo = &mKtxDeviceInfo;
@@ -126,7 +127,8 @@ private:
         ktxVulkanDeviceInfo_Destruct(&mKtxDeviceInfo);
 
         auto &rm = *mDevice.graphicsApi()->resourceManager();
-        auto vkDevice = static_cast<KDGpu::VulkanDevice*>(rm.getDevice(mDevice));
+        auto vkDevice =
+            static_cast<KDGpu::VulkanDevice *>(rm.getDevice(mDevice));
         vkDestroyCommandPool(vkDevice->device, mKtxCommandPool, nullptr);
 
         mRenderer.mDevice = nullptr;
@@ -134,12 +136,12 @@ private:
     }
 
     VKRenderer &mRenderer;
-    bool mInitialized{ };
+    bool mInitialized{};
     std::unique_ptr<KDGpu::VulkanGraphicsApi> mApi;
     KDGpu::Instance mInstance;
-    KDGpu::Adapter *mAdapter{ };
+    KDGpu::Adapter *mAdapter{};
     KDGpu::Device mDevice;
-    ktxVulkanDeviceInfo mKtxDeviceInfo{ };
+    ktxVulkanDeviceInfo mKtxDeviceInfo{};
     VkCommandPool mKtxCommandPool;
     MessagePtrSet mMessages;
 };
@@ -151,16 +153,16 @@ VKRenderer::VKRenderer(QObject *parent)
 {
     mWorker->moveToThread(&mThread);
 
-    connect(this, &VKRenderer::configureTask,
-        mWorker.data(), &Worker::handleConfigureTask);
-    connect(mWorker.data(), &Worker::taskConfigured,
-        this, &VKRenderer::handleTaskConfigured);
-    connect(this, &VKRenderer::renderTask,
-        mWorker.data(), &Worker::handleRenderTask);
-    connect(mWorker.data(), &Worker::taskRendered,
-        this, &VKRenderer::handleTaskRendered);
-    connect(this, &VKRenderer::releaseTask,
-        mWorker.data(), &Worker::handleReleaseTask);
+    connect(this, &VKRenderer::configureTask, mWorker.data(),
+        &Worker::handleConfigureTask);
+    connect(mWorker.data(), &Worker::taskConfigured, this,
+        &VKRenderer::handleTaskConfigured);
+    connect(this, &VKRenderer::renderTask, mWorker.data(),
+        &Worker::handleRenderTask);
+    connect(mWorker.data(), &Worker::taskRendered, this,
+        &VKRenderer::handleTaskRendered);
+    connect(this, &VKRenderer::releaseTask, mWorker.data(),
+        &Worker::handleReleaseTask);
 
     mThread.start();
 }
@@ -168,7 +170,7 @@ VKRenderer::VKRenderer(QObject *parent)
 VKRenderer::~VKRenderer()
 {
     mPendingTasks.clear();
-    
+
     QMetaObject::invokeMethod(mWorker.data(), "stop", Qt::QueuedConnection);
     mThread.wait();
 

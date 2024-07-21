@@ -29,7 +29,7 @@ private:
     VKRenderer &mRenderer;
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;
-    int mNextCommandQueueIndex{ };
+    int mNextCommandQueueIndex{};
     QMap<ItemId, GroupIteration> mGroupIterations;
     MessagePtrSet mTimerMessages;
 };

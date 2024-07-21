@@ -1,10 +1,10 @@
 #include "GLProcessSource.h"
 #include "GLPrintf.h"
-#include "scripting/ScriptEngineJavaScript.h"
-#include "Singletons.h"
 #include "Settings.h"
+#include "Singletons.h"
 #include "SynchronizeLogic.h"
 #include "render/glslang.h"
+#include "scripting/ScriptEngineJavaScript.h"
 
 namespace {
     QString removeLineDirectives(QString source)
@@ -12,7 +12,8 @@ namespace {
         static const auto regex = QRegularExpression("(\\s*#line[^\n]*)",
             QRegularExpression::MultilineOption);
 
-        for (auto match = regex.match(source); match.hasMatch(); match = regex.match(source))
+        for (auto match = regex.match(source); match.hasMatch();
+             match = regex.match(source))
             source.remove(match.capturedStart(), match.capturedLength());
         return source;
     }
@@ -28,10 +29,11 @@ namespace {
         return shader;
     }
 
-    QList<const Shader*> getShadersInSession(const QString &fileName)
+    QList<const Shader *> getShadersInSession(const QString &fileName)
     {
-        auto shaders = QList<const Shader*>();
-        if (auto currentShader = castItem<Shader>(findShaderInSession(fileName)))
+        auto shaders = QList<const Shader *>();
+        if (auto currentShader =
+                castItem<Shader>(findShaderInSession(fileName)))
             if (auto program = castItem<Program>(currentShader->parent))
                 for (auto child : program->items)
                     if (auto shader = castItem<Shader>(child))
@@ -40,20 +42,21 @@ namespace {
         return shaders;
     }
 
-    void tryToGetLinkerWarnings(GLShader &shader, MessagePtrSet &messages) 
+    void tryToGetLinkerWarnings(GLShader &shader, MessagePtrSet &messages)
     {
         auto &gl = GLContext::currentContext();
         auto program = gl.glCreateProgram();
         gl.glAttachShader(program, shader.shaderObject());
         gl.glLinkProgram(program);
-        auto status = GLint{ };
+        auto status = GLint{};
         gl.glGetProgramiv(program, GL_LINK_STATUS, &status);
         if (status == GL_TRUE) {
-            auto length = GLint{ };
+            auto length = GLint{};
             gl.glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
             auto log = std::vector<char>(static_cast<size_t>(length));
             gl.glGetProgramInfoLog(program, length, nullptr, log.data());
-            GLShader::parseLog(log.data(), messages, shader.itemId(), shader.fileNames());
+            GLShader::parseLog(log.data(), messages, shader.itemId(),
+                shader.fileNames());
         }
         gl.glDeleteProgram(program);
     }
@@ -86,22 +89,23 @@ void GLProcessSource::clearMessages()
 
 void GLProcessSource::prepare()
 {
-    const auto shaderPreamble = QString{ Singletons::settings().shaderPreamble() + "\n" +
-        Singletons::synchronizeLogic().sessionShaderPreamble() };
-    const auto shaderIncludePaths = QString{ Singletons::settings().shaderIncludePaths() + "\n" +
-        Singletons::synchronizeLogic().sessionShaderIncludePaths() };
+    const auto shaderPreamble = QString{ Singletons::settings().shaderPreamble()
+        + "\n" + Singletons::synchronizeLogic().sessionShaderPreamble() };
+    const auto shaderIncludePaths =
+        QString{ Singletons::settings().shaderIncludePaths() + "\n"
+            + Singletons::synchronizeLogic().sessionShaderIncludePaths() };
 
     if (auto shaderType = getShaderType(mSourceType)) {
         auto shaders = getShadersInSession(mFileName);
         // ensure shader is in list
-        auto shader = Shader{ };
+        auto shader = Shader{};
         if (shaders.empty()) {
             shader.fileName = mFileName;
             shader.language = Shader::Language::GLSL;
             shaders = { &shader };
         }
         // replace shader's type and language
-        for (auto& s : shaders)
+        for (auto &s : shaders)
             if (s->fileName == mFileName) {
                 shader = *s;
                 shader.shaderType = shaderType;
@@ -109,8 +113,8 @@ void GLProcessSource::prepare()
                 s = &shader;
                 break;
             }
-        mShader.reset(new GLShader(shaderType, shaders, 
-            shaderPreamble, shaderIncludePaths));
+        mShader.reset(new GLShader(shaderType, shaders, shaderPreamble,
+            shaderIncludePaths));
     }
 }
 
@@ -128,15 +132,15 @@ void GLProcessSource::render()
                 // output messages from linking to get potential warnings
                 tryToGetLinkerWarnings(*mShader, messages);
             }
-        }
-        else {
+        } else {
             if (mSourceType == SourceType::JavaScript)
                 mScriptEngine.reset(new ScriptEngineJavaScript());
 
             if (mScriptEngine) {
-                  auto scriptSource = QString();
-                  Singletons::fileCache().getSource(mFileName, &scriptSource);
-                  mScriptEngine->validateScript(scriptSource, mFileName, messages);
+                auto scriptSource = QString();
+                Singletons::fileCache().getSource(mFileName, &scriptSource);
+                mScriptEngine->validateScript(scriptSource, mFileName,
+                    messages);
             }
         }
     }
@@ -144,21 +148,20 @@ void GLProcessSource::render()
     if (mShader) {
         auto usedFileNames = QStringList();
         auto printf = GLPrintf();
-        const auto source = mShader->getPatchedSources(
-            messages, usedFileNames, &printf).join("\n");
+        const auto source =
+            mShader->getPatchedSources(messages, usedFileNames, &printf)
+                .join("\n");
 
         if (mProcessType == "preprocess") {
-            mOutput = removeLineDirectives(glslang::preprocess(source, messages));
-        }
-        else if (mProcessType == "spirv") {
-            mOutput = glslang::generateSpirV(source,
-                getShaderType(mSourceType), messages);
-        }
-        else if (mProcessType == "ast") {
-            mOutput = glslang::generateAST(source,
-                getShaderType(mSourceType), messages);
-        }
-        else if (mProcessType == "assembly") {
+            mOutput =
+                removeLineDirectives(glslang::preprocess(source, messages));
+        } else if (mProcessType == "spirv") {
+            mOutput = glslang::generateSpirV(source, getShaderType(mSourceType),
+                messages);
+        } else if (mProcessType == "ast") {
+            mOutput = glslang::generateAST(source, getShaderType(mSourceType),
+                messages);
+        } else if (mProcessType == "assembly") {
             mOutput = mShader->getAssembly();
         }
         messages += mShader->resetMessages();

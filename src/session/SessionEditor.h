@@ -13,7 +13,7 @@ class SessionEditor final : public QTreeView
 public:
     explicit SessionEditor(QWidget *parent = nullptr);
 
-    void addItemActions(QMenu* menu);
+    void addItemActions(QMenu *menu);
     void updateItemActions();
     QList<QMetaObject::Connection> connectEditActions(
         const EditActions &actions);
@@ -38,7 +38,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
     void selectionChanged(const QItemSelection &selected,
-                          const QItemSelection &deselected) override;
+        const QItemSelection &deselected) override;
     void focusInEvent(QFocusEvent *event) override;
     void focusOutEvent(QFocusEvent *event) override;
 
@@ -54,24 +54,23 @@ private:
     void handleItemActivated(const QModelIndex &index);
 
     SessionModel &mModel;
-    QMenu *mContextMenu{ };
+    QMenu *mContextMenu{};
     QString mFileName;
-    QAction *mRenameAction{ };
-    QAction *mAddGroupAction{ };
-    QAction *mAddBufferAction{ };
-    QAction *mAddBlockAction{ };
-    QAction *mAddFieldAction{ };
-    QAction *mAddTextureAction{ };
-    QAction *mAddImageAction{ };
-    QAction *mAddSamplerAction{ };
-    QAction *mAddProgramAction{ };
-    QAction *mAddShaderAction{ };
-    QAction *mAddBindingAction{ };
-    QAction *mAddStreamAction{ };
-    QAction *mAddAttributeAction{ };
-    QAction *mAddTargetAction{ };
-    QAction *mAddAttachmentAction{ };
-    QAction *mAddCallAction{ };
-    QAction *mAddScriptAction{ };
+    QAction *mRenameAction{};
+    QAction *mAddGroupAction{};
+    QAction *mAddBufferAction{};
+    QAction *mAddBlockAction{};
+    QAction *mAddFieldAction{};
+    QAction *mAddTextureAction{};
+    QAction *mAddImageAction{};
+    QAction *mAddSamplerAction{};
+    QAction *mAddProgramAction{};
+    QAction *mAddShaderAction{};
+    QAction *mAddBindingAction{};
+    QAction *mAddStreamAction{};
+    QAction *mAddAttributeAction{};
+    QAction *mAddTargetAction{};
+    QAction *mAddAttachmentAction{};
+    QAction *mAddCallAction{};
+    QAction *mAddScriptAction{};
 };
-

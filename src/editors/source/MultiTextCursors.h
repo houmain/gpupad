@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QObject>
 #include <QList>
+#include <QObject>
 #include <QTextCursor>
 
 class QKeyEvent;
@@ -18,7 +18,8 @@ public:
     bool handleKeyPressEvent(QKeyEvent *event, QTextCursor cursor);
     bool handleMouseDoubleClickEvent(QMouseEvent *event, QTextCursor cursor);
     void handleBeforeMousePressEvent(QMouseEvent *event, QTextCursor cursor);
-    void handleMousePressedEvent(QMouseEvent *event, QTextCursor cursor, QTextCursor prevCursor);
+    void handleMousePressedEvent(QMouseEvent *event, QTextCursor cursor,
+        QTextCursor prevCursor);
     void handleMouseMoveEvent(QMouseEvent *event, QTextCursor cursor);
     void clear();
     void clear(QTextCursor cursor);
@@ -49,14 +50,15 @@ private:
     void updateVisibleCursors();
     void emitChanged();
     void mergeCursors();
-    void moveEachSelection(QTextCursor::MoveOperation op, QTextCursor::MoveMode mode);
+    void moveEachSelection(QTextCursor::MoveOperation op,
+        QTextCursor::MoveMode mode);
     void reverseOnBottomUpSelection(QStringList &lines);
 
     QList<QTextCursor> mPrevCursors;
     QList<QTextCursor> mCursors;
     QList<QTextCursor> mVisibleCursors;
-    bool mCursorRemoved{ };
-    bool mHasRectangularSelection{ };
+    bool mCursorRemoved{};
+    bool mHasRectangularSelection{};
     int mPageSize{ 20 };
     QString mTab{ "  " };
 };

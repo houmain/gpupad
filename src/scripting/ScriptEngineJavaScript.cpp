@@ -1,8 +1,8 @@
 #include "ScriptEngineJavaScript.h"
-#include "Singletons.h"
-#include "session/SessionModel.h"
 #include "FileDialog.h"
 #include "ScriptConsole.h"
+#include "Singletons.h"
+#include "session/SessionModel.h"
 #include <QTextStream>
 #include <QThread>
 #include <QTimer>
@@ -32,11 +32,13 @@ ScriptEngineJavaScript::ScriptEngineJavaScript(QObject *parent)
     mJsEngine->evaluate(QTextStream(&file).readAll());
 }
 
-ScriptEngineJavaScript::~ScriptEngineJavaScript() 
+ScriptEngineJavaScript::~ScriptEngineJavaScript()
 {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
-    QMetaObject::invokeMethod(mInterruptTimer, "stop", Qt::BlockingQueuedConnection);
-    connect(mInterruptThread, &QThread::finished, mInterruptThread, &QObject::deleteLater);
+    QMetaObject::invokeMethod(mInterruptTimer, "stop",
+        Qt::BlockingQueuedConnection);
+    connect(mInterruptThread, &QThread::finished, mInterruptThread,
+        &QObject::deleteLater);
     mInterruptThread->requestInterruption();
 #endif
 }
@@ -48,11 +50,13 @@ void ScriptEngineJavaScript::setTimeout(int msec)
 #endif
 }
 
-QJSValue ScriptEngineJavaScript::evaluate(const QString &program, const QString &fileName, int lineNumber)
+QJSValue ScriptEngineJavaScript::evaluate(const QString &program,
+    const QString &fileName, int lineNumber)
 {
     Q_ASSERT(&mOnThread == QThread::currentThread());
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
-    QMetaObject::invokeMethod(mInterruptTimer, "start", Qt::BlockingQueuedConnection);
+    QMetaObject::invokeMethod(mInterruptTimer, "start",
+        Qt::BlockingQueuedConnection);
     mJsEngine->setInterrupted(false);
 #endif
     return mJsEngine->evaluate(program, fileName, lineNumber);
@@ -70,12 +74,12 @@ void ScriptEngineJavaScript::setGlobal(const QString &name, QObject *object)
     mJsEngine->globalObject().setProperty(name, mJsEngine->newQObject(object));
 }
 
-void ScriptEngineJavaScript::setGlobal(const QString &name, const ScriptValueList &values)
+void ScriptEngineJavaScript::setGlobal(const QString &name,
+    const ScriptValueList &values)
 {
     if (values.size() == 1) {
         setGlobal(name, values.at(0));
-    }
-    else {
+    } else {
         auto i = 0;
         auto array = QJSValue();
         for (const auto &value : values)
@@ -90,23 +94,23 @@ QJSValue ScriptEngineJavaScript::getGlobal(const QString &name)
     return mJsEngine->globalObject().property(name);
 }
 
-QJSValue ScriptEngineJavaScript::call(QJSValue &callable, const QJSValueList &args,
-    ItemId itemId, MessagePtrSet &messages)
+QJSValue ScriptEngineJavaScript::call(QJSValue &callable,
+    const QJSValueList &args, ItemId itemId, MessagePtrSet &messages)
 {
     mConsole->setMessages(&messages, itemId);
 
     auto result = callable.call(args);
     if (result.isError())
-        messages += MessageList::insert(
-            itemId, MessageType::ScriptError, result.toString());
+        messages += MessageList::insert(itemId, MessageType::ScriptError,
+            result.toString());
     return result;
 }
 
 void ScriptEngineJavaScript::validateScript(const QString &script,
-        const QString &fileName, MessagePtrSet &messages) 
+    const QString &fileName, MessagePtrSet &messages)
 {
     if (script.trimmed().startsWith('{'))
-        evaluateScript("json = " + script, fileName, messages);       
+        evaluateScript("json = " + script, fileName, messages);
     else
         evaluateScript("if (false) {" + script + "}", fileName, messages);
 }
@@ -118,34 +122,31 @@ void ScriptEngineJavaScript::evaluateScript(const QString &script,
 
     auto result = evaluate(script, fileName);
     if (result.isError())
-        messages += MessageList::insert(
-            fileName, result.property("lineNumber").toInt(),
-            MessageType::ScriptError, result.toString());
+        messages += MessageList::insert(fileName,
+            result.property("lineNumber").toInt(), MessageType::ScriptError,
+            result.toString());
 }
 
 ScriptValueList ScriptEngineJavaScript::evaluateValues(
-    const QString &valueExpression,
-    ItemId itemId, MessagePtrSet &messages)
+    const QString &valueExpression, ItemId itemId, MessagePtrSet &messages)
 {
     mConsole->setMessages(&messages, itemId);
 
     auto result = evaluate(valueExpression);
     if (result.isError())
-        messages += MessageList::insert(
-            itemId, MessageType::ScriptError, result.toString());
+        messages += MessageList::insert(itemId, MessageType::ScriptError,
+            result.toString());
 
     auto values = ScriptValueList();
     if (result.isObject()) {
-        for (auto i = 0u; ; ++i) {
+        for (auto i = 0u;; ++i) {
             auto value = result.property(i);
             if (value.isUndefined())
                 break;
             values.append(value.toNumber());
         }
-    }
-    else {
+    } else {
         values.append(result.toNumber());
     }
     return values;
 }
-

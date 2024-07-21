@@ -1,7 +1,7 @@
 #pragma once
 
-#include "session/Item.h"
 #include "VKContext.h"
+#include "session/Item.h"
 
 KDGpu::Format toKDGpu(QOpenGLTexture::TextureFormat format);
 KDGpu::Format toKDGpu(Field::DataType dataType, int count);

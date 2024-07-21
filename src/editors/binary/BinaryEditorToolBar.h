@@ -1,9 +1,11 @@
 #pragma once
 
-#include <QWidget>
 #include "BinaryEditor.h"
+#include <QWidget>
 
-namespace Ui { class BinaryEditorToolBar; }
+namespace Ui {
+    class BinaryEditorToolBar;
+}
 
 class BinaryEditorToolBar final : public QWidget
 {
@@ -21,5 +23,3 @@ Q_SIGNALS:
 private:
     Ui::BinaryEditorToolBar *mUi;
 };
-
-

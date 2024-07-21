@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Item.h"
-#include <QWidget>
 #include <QVariant>
+#include <QWidget>
 
 namespace Ui {
-class AttachmentProperties;
+    class AttachmentProperties;
 }
 
 class QDataWidgetMapper;
@@ -30,4 +30,3 @@ private:
     SessionProperties &mSessionProperties;
     Ui::AttachmentProperties *mUi;
 };
-

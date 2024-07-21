@@ -1,13 +1,13 @@
 #pragma once
 
 #include "MessageList.h"
-#include <memory>
-#include <vector>
 #include <QDialog>
 #include <QJsonValue>
+#include <memory>
+#include <vector>
 
 namespace Ui {
-class CustomActions;
+    class CustomActions;
 }
 
 class QFileSystemModel;
@@ -21,7 +21,7 @@ public:
     ~CustomActions();
 
     void setSelection(QJsonValue selection);
-    QList<QAction*> getApplicableActions();
+    QList<QAction *> getApplicableActions();
 
 private:
     void newAction();
@@ -38,4 +38,3 @@ private:
     MessagePtrSet mMessages;
     QJsonValue mSelection;
 };
-

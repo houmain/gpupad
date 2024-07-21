@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QObject>
-#include <QMap>
-#include <QSet>
-#include <QMutex>
-#include <QTimer>
-#include <QThread>
-#include <QFileSystemWatcher>
 #include "TextureData.h"
+#include <QFileSystemWatcher>
+#include <QMap>
+#include <QMutex>
+#include <QObject>
+#include <QSet>
+#include <QThread>
+#include <QTimer>
 
 class FileCache final : public QObject
 {
@@ -17,26 +17,32 @@ public:
     ~FileCache();
 
     bool getSource(const QString &fileName, QString *source) const;
-    bool getTexture(const QString &fileName, bool flipVertically, TextureData *texture) const;
+    bool getTexture(const QString &fileName, bool flipVertically,
+        TextureData *texture) const;
     bool getBinary(const QString &fileName, QByteArray *binary) const;
-    bool updateTexture(const QString &fileName, bool flippedVertically, TextureData texture);
+    bool updateTexture(const QString &fileName, bool flippedVertically,
+        TextureData texture);
 
     // only call from main thread
     void invalidateFile(const QString &fileName);
-    void handleEditorFileChanged(const QString &fileName, bool emitFileChanged = true);
+    void handleEditorFileChanged(const QString &fileName,
+        bool emitFileChanged = true);
     void handleEditorSave(const QString &fileName);
     void updateFromEditors();
 
 Q_SIGNALS:
     void fileChanged(const QString &fileName);
-    void videoPlayerRequested(const QString &fileName, bool flipVertically) const;
+    void videoPlayerRequested(const QString &fileName,
+        bool flipVertically) const;
     void reloadSource(const QString &fileName, QPrivateSignal);
-    void reloadTexture(const QString &fileName, bool flipVertically, QPrivateSignal);
+    void reloadTexture(const QString &fileName, bool flipVertically,
+        QPrivateSignal);
     void reloadBinary(const QString &fileName, QPrivateSignal);
 
 public Q_SLOTS:
     void handleSourceReloaded(const QString &fileName, QString);
-    void handleTextureReloaded(const QString &fileName, bool flipVertically, TextureData);
+    void handleTextureReloaded(const QString &fileName, bool flipVertically,
+        TextureData);
     void handleBinaryReloaded(const QString &fileName, QByteArray);
     void handleReloadingFailed(const QString &fileName);
 
@@ -45,7 +51,8 @@ private:
     using TextureKey = QPair<QString, bool>;
 
     void handleFileSystemFileChanged(const QString &fileName);
-    void addFileSystemWatch(const QString &fileName, bool changed = false) const;
+    void addFileSystemWatch(const QString &fileName,
+        bool changed = false) const;
     void updateFileSystemWatches();
     bool reloadFileInBackground(const QString &fileName);
     bool updateFromEditor(const QString &fileName);
@@ -61,7 +68,6 @@ private:
     QSet<QString> mEditorSaveAdvertised;
     QTimer mUpdateFileSystemWatchesTimer;
     QFileSystemWatcher mFileSystemWatcher;
-    int mFileSystemWatcherUpdate{ };
+    int mFileSystemWatcherUpdate{};
     QThread mBackgroundLoaderThread;
 };
-

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "editors/IEditor.h"
 #include "FindReplaceBar.h"
-#include "SourceType.h"
 #include "MultiTextCursors.h"
+#include "SourceType.h"
+#include "editors/IEditor.h"
 #include <QPlainTextEdit>
 
 class QPaintEvent;
@@ -18,7 +18,7 @@ class SourceEditor final : public QPlainTextEdit, public IEditor
 {
     Q_OBJECT
 public:
-    SourceEditor(QString fileName, SourceEditorToolBar* editorToolbar, 
+    SourceEditor(QString fileName, SourceEditorToolBar *editorToolbar,
         FindReplaceBar *findReplaceBar, QWidget *parent = nullptr);
     ~SourceEditor() override;
 
@@ -82,7 +82,7 @@ private:
     void handleTextChanged();
     void updateViewportMargins();
     void updateExtraSelections();
-    void updateLineNumberArea(const QRect&, int);
+    void updateLineNumberArea(const QRect &, int);
     void updateCompleterPopup(const QString &prefix, bool show);
     QString generateCurrentScopeSource() const;
     void insertCompletion(const QString &completion);
@@ -90,23 +90,24 @@ private:
     void updateSyntaxHighlighting();
     void updateEditorToolBar();
     void emitNavigationPositionChanged();
-    QTextCursor find(const QString &subString, int from, int to, 
+    QTextCursor find(const QString &subString, int from, int to,
         QTextDocument::FindFlags options = QTextDocument::FindFlags()) const;
     void findReplaceAction(FindReplaceBar::Action action, QString find,
         QString replace, QTextDocument::FindFlags flags);
-    void markOccurrences(QString text, QTextDocument::FindFlags =
-        QTextDocument::FindCaseSensitively | QTextDocument::FindWholeWords);
+    void markOccurrences(QString text,
+        QTextDocument::FindFlags = QTextDocument::FindCaseSensitively
+            | QTextDocument::FindWholeWords);
     void clearMarkedOccurrences();
     void clearFindReplaceRange();
     QTextCursor updateFindReplaceRange();
 
-    SourceEditorToolBar& mEditorToolBar;
+    SourceEditorToolBar &mEditorToolBar;
     QString mFileName;
     FindReplaceBar &mFindReplaceBar;
     SourceType mSourceType{ SourceType::PlainText };
-    SyntaxHighlighter *mHighlighter{ };
-    Completer *mCompleter{ };
-    LineNumberArea *mLineNumberArea{ };
+    SyntaxHighlighter *mHighlighter{};
+    Completer *mCompleter{};
+    LineNumberArea *mLineNumberArea{};
     QTextCharFormat mCurrentLineFormat;
     QTextCharFormat mOccurrencesFormat;
     QTextCharFormat mFindReplaceRangeFormat;
@@ -115,16 +116,15 @@ private:
     QList<QTextCursor> mMarkedOccurrences;
     QRect mMarkedOccurrencesRect;
     QString mMarkedOccurrencesString;
-    QTextDocument::FindFlags mMarkedOccurrencesFindFlags{ };
+    QTextDocument::FindFlags mMarkedOccurrencesFindFlags{};
     MultiTextCursors mMultiTextCursors;
     QTextCursor mFindReplaceRange;
     QColor mLineNumberColor;
     QColor mCurrenLineNumberColor;
-    int mTabSize{ };
-    int mInitialCursorWidth{ };
-    bool mIndentWithSpaces{ };
-    int mUpdatedCompleterInBlock{ };
+    int mTabSize{};
+    int mInitialCursorWidth{};
+    bool mIndentWithSpaces{};
+    int mUpdatedCompleterInBlock{};
     QString mPrevNavigationPosition;
-    LineWrapMode mSetLineWrapMode{ };
+    LineWrapMode mSetLineWrapMode{};
 };
-

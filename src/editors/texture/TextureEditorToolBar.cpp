@@ -8,33 +8,31 @@ TextureEditorToolBar::TextureEditorToolBar(QWidget *parent)
 {
     mUi->setupUi(this);
 
-    const auto zoomPresets = { 
-        10, 25, 50, 75, 100, 200, 300, 400, 500, 1000 
-    };
+    const auto zoomPresets = { 10, 25, 50, 75, 100, 200, 300, 400, 500, 1000 };
     mUi->zoom->addItem("100%", 100);
     mUi->zoom->insertSeparator(1);
     for (auto zoomPreset : zoomPresets)
         mUi->zoom->addItem(QString::number(zoomPreset) + '%', zoomPreset);
 
-    connect(mUi->zoom, &QComboBox::currentIndexChanged,
-        this, &TextureEditorToolBar::zoomIndexChanged);
-    connect(mUi->zoomToFit, &QToolButton::toggled,
-        this, &TextureEditorToolBar::zoomToFitChanged);
+    connect(mUi->zoom, &QComboBox::currentIndexChanged, this,
+        &TextureEditorToolBar::zoomIndexChanged);
+    connect(mUi->zoomToFit, &QToolButton::toggled, this,
+        &TextureEditorToolBar::zoomToFitChanged);
     connect(mUi->level, qOverload<double>(&QDoubleSpinBox::valueChanged),
         [&](double level) { Q_EMIT levelChanged(level); });
     connect(mUi->layer, qOverload<double>(&QDoubleSpinBox::valueChanged),
         [&](double layer) { Q_EMIT layerChanged(layer); });
-    connect(mUi->sample, qOverload<int>(&QSpinBox::valueChanged),
-        this, &TextureEditorToolBar::sampleChanged);
-    connect(mUi->face, qOverload<int>(&QComboBox::currentIndexChanged),
-        this, &TextureEditorToolBar::faceChanged);
-    connect(mUi->filter, &QCheckBox::stateChanged,
-        this, &TextureEditorToolBar::filterStateChanged);
+    connect(mUi->sample, qOverload<int>(&QSpinBox::valueChanged), this,
+        &TextureEditorToolBar::sampleChanged);
+    connect(mUi->face, qOverload<int>(&QComboBox::currentIndexChanged), this,
+        &TextureEditorToolBar::faceChanged);
+    connect(mUi->filter, &QCheckBox::stateChanged, this,
+        &TextureEditorToolBar::filterStateChanged);
     connect(mUi->flipVertically, &QCheckBox::stateChanged,
         [&](int state) { Q_EMIT flipVerticallyChanged(state != 0); });
 }
 
-TextureEditorToolBar::~TextureEditorToolBar() 
+TextureEditorToolBar::~TextureEditorToolBar()
 {
     delete mUi;
 }

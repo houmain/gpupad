@@ -1,33 +1,24 @@
 #pragma once
 
-#include "RenderTask.h"
 #include "RenderSessionBase.h"
+#include "RenderTask.h"
 
 class RenderSession final : public RenderTask
 {
     Q_OBJECT
 public:
-    explicit RenderSession(QObject *parent = nullptr)
-        : RenderTask(parent)
-    {
-    }
+    explicit RenderSession(QObject *parent = nullptr) : RenderTask(parent) { }
 
-    ~RenderSession() override
-    {
-        releaseResources();
-    }
+    ~RenderSession() override { releaseResources(); }
 
     QSet<ItemId> usedItems() const override
     {
         return (mImpl ? mImpl->usedItems() : QSet<ItemId>());
     }
 
-    bool usesMouseState() const
-    {
-        return (mImpl && mImpl->usesMouseState());
-    }
+    bool usesMouseState() const { return (mImpl && mImpl->usesMouseState()); }
 
-    bool usesKeyboardState() const 
+    bool usesKeyboardState() const
     {
         return (mImpl && mImpl->usesKeyboardState());
     }
@@ -40,36 +31,20 @@ private:
         return static_cast<bool>(mImpl);
     }
 
-    void prepare(bool itemsChanged,
-        EvaluationType evaluationType) override
+    void prepare(bool itemsChanged, EvaluationType evaluationType) override
     {
         mImpl->prepare(itemsChanged, evaluationType);
     }
 
-    void configure() override
-    {
-        mImpl->configure();
-    }
+    void configure() override { mImpl->configure(); }
 
-    void configured() override
-    {
-        mImpl->configured();
-    }
+    void configured() override { mImpl->configured(); }
 
-    void render() override
-    {
-        mImpl->render();
-    }
+    void render() override { mImpl->render(); }
 
-    void finish() override  
-    {
-        mImpl->finish();
-    }
+    void finish() override { mImpl->finish(); }
 
-    void release() override
-    {
-        mImpl.reset();
-    }
+    void release() override { mImpl.reset(); }
 
     std::unique_ptr<RenderSessionBase> mImpl;
 };

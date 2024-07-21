@@ -5,7 +5,7 @@
 namespace {
     QStringList toList(const QSet<QString> &set)
     {
-#if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
         return { set.begin(), set.end() };
 #else
         return set.toList();
@@ -14,7 +14,7 @@ namespace {
 
     QSet<QString> toSet(const QStringList &list)
     {
-#if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
         return { list.begin(), list.end() };
 #else
         return list.toSet();
@@ -22,8 +22,7 @@ namespace {
     }
 } // namespace
 
-Completer::Completer(QObject *parent)
-    : QCompleter(parent)
+Completer::Completer(QObject *parent) : QCompleter(parent)
 {
     setModelSorting(QCompleter::CaseInsensitivelySortedModel);
     setCompletionMode(QCompleter::PopupCompletion);
@@ -41,7 +40,7 @@ void Completer::setContextText(const QString &contextText)
 {
     static const auto pattern = QRegularExpression("[_A-Za-z][_A-Za-z0-9]+");
     auto strings = mStrings;
-    for (auto index = contextText.indexOf(pattern); index >= 0; ) {
+    for (auto index = contextText.indexOf(pattern); index >= 0;) {
         const auto match = pattern.match(contextText, index);
         strings.insert(match.captured());
         const auto length = match.capturedLength();

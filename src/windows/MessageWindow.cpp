@@ -1,20 +1,20 @@
 #include "MessageWindow.h"
-#include "Singletons.h"
-#include "MessageList.h"
-#include "session/SessionModel.h"
 #include "FileDialog.h"
-#include <QTimer>
+#include "MessageList.h"
+#include "Singletons.h"
+#include "session/SessionModel.h"
 #include <QHeaderView>
 #include <QStandardItemModel>
+#include <QTimer>
 
 MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
 {
-    connect(this, &MessageWindow::itemActivated,
-        this, &MessageWindow::handleItemActivated);
+    connect(this, &MessageWindow::itemActivated, this,
+        &MessageWindow::handleItemActivated);
 
     mUpdateItemsTimer = new QTimer(this);
-    connect(mUpdateItemsTimer, &QTimer::timeout,
-        this, &MessageWindow::updateMessages);
+    connect(mUpdateItemsTimer, &QTimer::timeout, this,
+        &MessageWindow::updateMessages);
     mUpdateItemsTimer->setSingleShot(true);
     mUpdateItemsTimer->start();
 
@@ -43,8 +43,8 @@ void MessageWindow::updateMessages()
     auto added = false;
     auto messages = MessageList::messages();
     auto messageIds = QSet<MessageId>();
-    for (auto it = messages.begin(); it != messages.end(); ) {
-        const auto& message = **it;
+    for (auto it = messages.begin(); it != messages.end();) {
+        const auto &message = **it;
         added |= addMessageOnce(message);
         messageIds += message.id;
         ++it;
@@ -60,110 +60,82 @@ void MessageWindow::updateMessages()
 QIcon MessageWindow::getMessageIcon(const Message &message) const
 {
     switch (message.type) {
-        case UniformNotSet:
-        case ShaderWarning:
-        case ScriptWarning:
-        case TooManyPrintfCalls:
-            return mWarningIcon;
+    case UniformNotSet:
+    case ShaderWarning:
+    case ScriptWarning:
+    case TooManyPrintfCalls: return mWarningIcon;
 
-        case ShaderInfo:
-        case ScriptMessage:
-        case CallDuration:
-        case TotalDuration:
-            return mInfoIcon;
+    case ShaderInfo:
+    case ScriptMessage:
+    case CallDuration:
+    case TotalDuration: return mInfoIcon;
 
-        default:
-            return mErrorIcon;
+    default: return mErrorIcon;
     }
 }
 
 QString MessageWindow::getMessageText(const Message &message) const
 {
     switch (message.type) {
-        case ShaderInfo:
-        case ShaderWarning:
-        case ShaderError:
-        case ScriptError:
-        case ScriptWarning:
-        case ScriptMessage:
-            return message.text;
+    case ShaderInfo:
+    case ShaderWarning:
+    case ShaderError:
+    case ScriptError:
+    case ScriptWarning:
+    case ScriptMessage: return message.text;
 
-        case OpenGLVersionNotAvailable:
-            return tr("The required OpenGL version %1 is not available").arg(
-                message.text);
-        case LoadingFileFailed:
-            if (message.text.isEmpty())
-                return tr("No file set");
-            return tr("Loading file '%1' failed").arg(
-                FileDialog::getFileTitle(message.text));
-        case UnsupportedShaderType:
-            return tr("Unsupported shader type");
-        case CreatingFramebufferFailed:
-            return tr("Creating framebuffer failed %1").arg(message.text);
-        case CreatingTextureFailed:
-           return tr("Creating texture failed");
-        case UploadingImageFailed:
-            return tr("Uploading image failed");
-        case DownloadingImageFailed:
-            return tr("Downloading image failed");
-        case UniformNotSet:
-            return tr("Uniform '%1' not set").arg(message.text);
-        case BufferNotSet:
-            return tr("Buffer '%1' not set").arg(message.text);
-        case SamplerNotSet:
-            return tr("Sampler '%1' not set").arg(message.text);
-        case ImageNotSet:
-            return tr("Image '%1' not set").arg(message.text);
-        case AttributeNotSet:
-            return tr("Attribute '%1' not set").arg(message.text);
-        case CallDuration:
-            return tr("Call took %1").arg(message.text);
-        case TotalDuration:
-            return tr("Total duration %1").arg(message.text);
-        case CallFailed:
-            return tr("Call failed: %1").arg(message.text);
-        case ClearingTextureFailed:
-            return tr("Clearing texture failed");
-        case CopyingTextureFailed:
-            return tr("Copying texture failed");
-        case SwappingTexturesFailed:
-            return tr("Swapping textures failed");
-        case SwappingBuffersFailed:
-            return tr("Swapping buffers failed");
-        case ProgramNotAssigned:
-            return tr("No program set");
-        case TargetNotAssigned:
-            return tr("No target set");
-        case TextureNotAssigned:
-            return tr("No texture set");
-        case BufferNotAssigned:
-            return tr("No buffer set");
-        case InvalidSubroutine:
-            return tr("Invalid subroutine '%1'").arg(message.text);
-        case ImageFormatNotBindable:
-            return tr("Image format not bindable");
-        case UniformComponentMismatch:
-            return tr("Uniform component mismatch %1").arg(message.text);
-        case InvalidIncludeDirective:
-            return tr("Invalid #include directive");
-        case IncludableNotFound:
-            return tr("Includable shader '%1' not found").arg(message.text);
-        case RecursiveInclude:
-            return tr("Recursive #include '%1'").arg(message.text);
-        case InvalidAttribute:
-            return tr("Invalid stream attribute");
-        case TooManyPrintfCalls:
-            return tr("Too many printf calls. Please filter threads by setting printfEnabled");
-        case RenderingFailed:
-            return tr("Rendering failed: %1").arg(message.text);
-        case MoreThanOneDepthStencilAttachment:
-            return tr("Only a single depth or stencil attachment is supported");
-        case IncompatibleBindings:
-            return tr("Incompatible assignment to the same set/binding");
-        case CreatingPipelineFailed:
-            return tr("Creating pipeline failed");
-        case OpenGLRendererRequiresGLSL:
-            return tr("The OpenGL renderer only supports GLSL shaders");
+    case OpenGLVersionNotAvailable:
+        return tr("The required OpenGL version %1 is not available")
+            .arg(message.text);
+    case LoadingFileFailed:
+        if (message.text.isEmpty())
+            return tr("No file set");
+        return tr("Loading file '%1' failed")
+            .arg(FileDialog::getFileTitle(message.text));
+    case UnsupportedShaderType: return tr("Unsupported shader type");
+    case CreatingFramebufferFailed:
+        return tr("Creating framebuffer failed %1").arg(message.text);
+    case CreatingTextureFailed:  return tr("Creating texture failed");
+    case UploadingImageFailed:   return tr("Uploading image failed");
+    case DownloadingImageFailed: return tr("Downloading image failed");
+    case UniformNotSet:          return tr("Uniform '%1' not set").arg(message.text);
+    case BufferNotSet:           return tr("Buffer '%1' not set").arg(message.text);
+    case SamplerNotSet:          return tr("Sampler '%1' not set").arg(message.text);
+    case ImageNotSet:            return tr("Image '%1' not set").arg(message.text);
+    case AttributeNotSet:        return tr("Attribute '%1' not set").arg(message.text);
+    case CallDuration:           return tr("Call took %1").arg(message.text);
+    case TotalDuration:          return tr("Total duration %1").arg(message.text);
+    case CallFailed:             return tr("Call failed: %1").arg(message.text);
+    case ClearingTextureFailed:  return tr("Clearing texture failed");
+    case CopyingTextureFailed:   return tr("Copying texture failed");
+    case SwappingTexturesFailed: return tr("Swapping textures failed");
+    case SwappingBuffersFailed:  return tr("Swapping buffers failed");
+    case ProgramNotAssigned:     return tr("No program set");
+    case TargetNotAssigned:      return tr("No target set");
+    case TextureNotAssigned:     return tr("No texture set");
+    case BufferNotAssigned:      return tr("No buffer set");
+    case InvalidSubroutine:
+        return tr("Invalid subroutine '%1'").arg(message.text);
+    case ImageFormatNotBindable: return tr("Image format not bindable");
+    case UniformComponentMismatch:
+        return tr("Uniform component mismatch %1").arg(message.text);
+    case InvalidIncludeDirective: return tr("Invalid #include directive");
+    case IncludableNotFound:
+        return tr("Includable shader '%1' not found").arg(message.text);
+    case RecursiveInclude:
+        return tr("Recursive #include '%1'").arg(message.text);
+    case InvalidAttribute: return tr("Invalid stream attribute");
+    case TooManyPrintfCalls:
+        return tr("Too many printf calls. Please filter threads by setting "
+                  "printfEnabled");
+    case RenderingFailed: return tr("Rendering failed: %1").arg(message.text);
+    case MoreThanOneDepthStencilAttachment:
+        return tr("Only a single depth or stencil attachment is supported");
+    case IncompatibleBindings:
+        return tr("Incompatible assignment to the same set/binding");
+    case CreatingPipelineFailed: return tr("Creating pipeline failed");
+    case OpenGLRendererRequiresGLSL:
+        return tr("The OpenGL renderer only supports GLSL shaders");
     }
     return message.text;
 }
@@ -172,9 +144,9 @@ QString MessageWindow::getLocationText(const Message &message) const
 {
     auto locationText = QString();
     if (message.itemId) {
-        locationText += Singletons::sessionModel().getFullItemName(message.itemId);
-    }
-    else if (!message.fileName.isEmpty()) {
+        locationText +=
+            Singletons::sessionModel().getFullItemName(message.itemId);
+    } else if (!message.fileName.isEmpty()) {
         locationText = FileDialog::getFileTitle(message.fileName);
         if (message.line > 0)
             locationText += ":" + QString::number(message.line);
@@ -184,19 +156,19 @@ QString MessageWindow::getLocationText(const Message &message) const
 
 void MessageWindow::removeMessagesExcept(const QSet<MessageId> &messageIds)
 {
-    for (auto row = 0; row < mMessageIds.size(); )
+    for (auto row = 0; row < mMessageIds.size();)
         if (!messageIds.contains(mMessageIds[row])) {
             removeRow(row);
             mMessageIds.removeAt(row);
-        }
-        else {
+        } else {
             ++row;
         }
 }
 
 bool MessageWindow::addMessageOnce(const Message &message)
 {
-    auto it = std::lower_bound(mMessageIds.begin(), mMessageIds.end(), message.id);
+    auto it =
+        std::lower_bound(mMessageIds.begin(), mMessageIds.end(), message.id);
     if (it != mMessageIds.end() && *it == message.id)
         return false;
     const auto row = std::distance(mMessageIds.begin(), it);

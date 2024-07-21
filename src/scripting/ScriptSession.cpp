@@ -1,9 +1,9 @@
 #include "ScriptSession.h"
-#include "SessionScriptObject.h"
-#include "MouseScriptObject.h"
 #include "KeyboardScriptObject.h"
-#include "Singletons.h"
+#include "MouseScriptObject.h"
 #include "ScriptEngineJavaScript.h"
+#include "SessionScriptObject.h"
+#include "Singletons.h"
 
 ScriptSession::ScriptSession(SourceType sourceType, QObject *parent)
     : QObject(parent)
@@ -47,7 +47,7 @@ bool ScriptSession::usesKeyboardState() const
     return mKeyboardScriptObject->wasRead();
 }
 
-ScriptEngine& ScriptSession::engine()
+ScriptEngine &ScriptSession::engine()
 {
     Q_ASSERT(mScriptEngine);
     return *mScriptEngine;

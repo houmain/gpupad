@@ -1,18 +1,17 @@
 #include "BinaryEditor.h"
-#include "BinaryEditor_EditableRegion.h"
+#include "BinaryEditorToolBar.h"
 #include "BinaryEditor_HexModel.h"
 #include "BinaryEditor_DataModel.h"
-#include "BinaryEditorToolBar.h"
+#include "BinaryEditor_EditableRegion.h"
+#include "FileCache.h"
 #include "FileDialog.h"
 #include "Singletons.h"
-#include "FileCache.h"
 #include <QHeaderView>
 #include <QSaveFile>
 #include <cstdint>
 #include <cstring>
 
-namespace
-{
+namespace {
     template <typename T>
     bool set(T &property, const T &value)
     {
@@ -23,31 +22,33 @@ namespace
     }
 } // namespace
 
-[[maybe_unused]] bool operator==(const BinaryEditor::Field &a, const BinaryEditor::Field &b)
+[[maybe_unused]] bool operator==(const BinaryEditor::Field &a,
+    const BinaryEditor::Field &b)
 {
-    return std::tie(a.name, a.dataType, a.count, a.padding) ==
-           std::tie(b.name, b.dataType, b.count, b.padding);
+    return std::tie(a.name, a.dataType, a.count, a.padding)
+        == std::tie(b.name, b.dataType, b.count, b.padding);
 }
 
-[[maybe_unused]] bool operator==(const BinaryEditor::Block &a, const BinaryEditor::Block &b)
+[[maybe_unused]] bool operator==(const BinaryEditor::Block &a,
+    const BinaryEditor::Block &b)
 {
-    return std::tie(a.name, a.offset, a.rowCount, a.fields) ==
-           std::tie(b.name, b.offset, b.rowCount, b.fields);
+    return std::tie(a.name, a.offset, a.rowCount, a.fields)
+        == std::tie(b.name, b.offset, b.rowCount, b.fields);
 }
 
 int BinaryEditor::getTypeSize(DataType type)
 {
     switch (type) {
-        case DataType::Int8: return 1;
-        case DataType::Int16: return 2;
-        case DataType::Int32: return 4;
-        case DataType::Int64: return 8;
-        case DataType::Uint8: return 1;
-        case DataType::Uint16: return 2;
-        case DataType::Uint32: return 4;
-        case DataType::Uint64: return 8;
-        case DataType::Float: return 4;
-        case DataType::Double: return 8;
+    case DataType::Int8:   return 1;
+    case DataType::Int16:  return 2;
+    case DataType::Int32:  return 4;
+    case DataType::Int64:  return 8;
+    case DataType::Uint8:  return 1;
+    case DataType::Uint16: return 2;
+    case DataType::Uint32: return 4;
+    case DataType::Uint64: return 8;
+    case DataType::Float:  return 4;
+    case DataType::Double: return 8;
     }
     return 0;
 }
@@ -60,12 +61,11 @@ int BinaryEditor::getStride(const Block &block)
     return stride;
 }
 
-BinaryEditor::BinaryEditor(QString fileName,
-      BinaryEditorToolBar* editorToolbar,
-      QWidget *parent)
-    : QTableView(parent),
-      mEditorToolBar(*editorToolbar),
-      mFileName(fileName)
+BinaryEditor::BinaryEditor(QString fileName, BinaryEditorToolBar *editorToolbar,
+    QWidget *parent)
+    : QTableView(parent)
+    , mEditorToolBar(*editorToolbar)
+    , mFileName(fileName)
 {
     horizontalHeader()->setVisible(false);
     horizontalHeader()->setDefaultSectionSize(mColumnWidth);
@@ -95,16 +95,15 @@ QList<QMetaObject::Connection> BinaryEditor::connectEditActions(
 
     actions.windowFileName->setText(fileName());
     actions.windowFileName->setEnabled(isModified());
-    c += connect(this, &BinaryEditor::fileNameChanged,
-        actions.windowFileName, &QAction::setText);
+    c += connect(this, &BinaryEditor::fileNameChanged, actions.windowFileName,
+        &QAction::setText);
     c += connect(this, &BinaryEditor::modificationChanged,
         actions.windowFileName, &QAction::setEnabled);
 
     updateEditorToolBar();
 
-    c += connect(&mEditorToolBar,
-        &BinaryEditorToolBar::blockIndexChanged,
-        this, &BinaryEditor::setCurrentBlockIndex);
+    c += connect(&mEditorToolBar, &BinaryEditorToolBar::blockIndexChanged, this,
+        &BinaryEditor::setCurrentBlockIndex);
 
     return c;
 }
@@ -155,17 +154,17 @@ void BinaryEditor::replace(QByteArray data, bool emitFileChanged)
     Singletons::fileCache().handleEditorFileChanged(mFileName, emitFileChanged);
 }
 
-void BinaryEditor::replaceRange(int offset, QByteArray data, bool emitFileChanged)
+void BinaryEditor::replaceRange(int offset, QByteArray data,
+    bool emitFileChanged)
 {
     if (offset == 0 && data.size() >= mData.size()) {
         mData = data;
-    }
-    else {
+    } else {
         if (offset + data.size() > mData.size())
             mData.resize(offset + data.size());
         std::memcpy(mData.data() + offset, data.constData(), data.size());
     }
-    replace(std::exchange(mData, { }), emitFileChanged);
+    replace(std::exchange(mData, {}), emitFileChanged);
 }
 
 void BinaryEditor::handleDataChanged()
@@ -189,8 +188,9 @@ void BinaryEditor::setModified(bool modified)
 
 auto BinaryEditor::currentBlock() const -> const Block *
 {
-    return (mBlocks.empty() ? nullptr :
-        &mBlocks[std::min(mCurrentBlockIndex, static_cast<int>(mBlocks.size()) - 1)]);
+    return (mBlocks.empty() ? nullptr
+                            : &mBlocks[std::min(mCurrentBlockIndex,
+                                  static_cast<int>(mBlocks.size()) - 1)]);
 }
 
 void BinaryEditor::setCurrentBlockIndex(int index)
@@ -215,8 +215,7 @@ void BinaryEditor::refresh()
     if (stride) {
         rowCount = block->rowCount;
         offset = block->offset;
-    }
-    else {
+    } else {
         stride = 16;
     }
 
@@ -238,11 +237,11 @@ void BinaryEditor::refresh()
         mEditableRegion->setModel(dataModel);
         delete prevModel;
 
-        connect(dataModel, &DataModel::dataChanged,
-            this, &BinaryEditor::handleDataChanged);
+        connect(dataModel, &DataModel::dataChanged, this,
+            &BinaryEditor::handleDataChanged);
 
         mEditableRegion->horizontalHeader()->setMinimumSectionSize(1);
-        for (auto i = 0; i < dataModel->columnCount({ }); ++i)
+        for (auto i = 0; i < dataModel->columnCount({}); ++i)
             mEditableRegion->horizontalHeader()->resizeSection(i,
                 dataModel->getColumnSize(i) * mColumnWidth);
 

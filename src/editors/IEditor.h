@@ -17,4 +17,3 @@ public:
     virtual void setModified() = 0;
     virtual int tabifyGroup() const = 0;
 };
-

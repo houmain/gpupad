@@ -2,14 +2,15 @@
 
 #if defined(Qt6Multimedia_FOUND)
 
-#include <QVideoSink>
-#include <QMediaPlayer>
+#  include <QMediaPlayer>
+#  include <QVideoSink>
 
 class VideoPlayer final : public QVideoSink
 {
     Q_OBJECT
 public:
-    VideoPlayer(QString fileName, bool flipVertically, QObject *parent = nullptr);
+    VideoPlayer(QString fileName, bool flipVertically,
+        QObject *parent = nullptr);
 
     const QString &fileName() const { return mFileName; }
     int width() const { return mWidth; }
@@ -25,23 +26,27 @@ private:
     void handleStatusChanged(QMediaPlayer::MediaStatus status);
     void handleVideoFrame(const QVideoFrame &frame);
 
-    QMediaPlayer *mPlayer{ };
+    QMediaPlayer *mPlayer{};
     QString mFileName;
-    int mWidth{ };
-    int mHeight{ };
-    bool mFlipVertically{ };
+    int mWidth{};
+    int mHeight{};
+    bool mFlipVertically{};
 };
 
 #else // !Qt6Multimedia_FOUND
 
-#include <QObject>
+#  include <QObject>
 
 class VideoPlayer final : public QObject
 {
     Q_OBJECT
 public:
-    explicit VideoPlayer(QString fileName, bool flipVertically, QObject *parent = nullptr)
-        : QObject(parent), mFileName(fileName) { }
+    explicit VideoPlayer(QString fileName, bool flipVertically,
+        QObject *parent = nullptr)
+        : QObject(parent)
+        , mFileName(fileName)
+    {
+    }
     const QString &fileName() const { return mFileName; }
     int width() const { return 0; }
     int height() const { return 0; }

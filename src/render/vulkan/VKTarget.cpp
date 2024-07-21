@@ -17,7 +17,8 @@ VKTarget::VKTarget(const Target &target)
     auto attachmentIndex = 0;
     for (const auto &item : target.items) {
         if (auto attachment = castItem<Attachment>(item)) {
-            static_cast<Attachment&>(mAttachments[attachmentIndex]) = *attachment;
+            static_cast<Attachment &>(mAttachments[attachmentIndex]) =
+                *attachment;
             mUsedItems += attachment->id;
         }
         attachmentIndex++;
@@ -30,9 +31,9 @@ void VKTarget::setTexture(int index, VKTexture *texture)
         return;
 
     const auto kind = texture->kind();
-    texture->addUsage(kind.depth || kind.stencil ? 
-        KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit :
-        KDGpu::TextureUsageFlagBits::ColorAttachmentBit);
+    texture->addUsage(kind.depth || kind.stencil
+            ? KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit
+            : KDGpu::TextureUsageFlagBits::ColorAttachmentBit);
 
     mAttachments[index].texture = texture;
     mSamples = texture->samples();
@@ -40,7 +41,7 @@ void VKTarget::setTexture(int index, VKTexture *texture)
 
 KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
 {
-    auto renderPassOptions = KDGpu::RenderPassCommandRecorderOptions{ };
+    auto renderPassOptions = KDGpu::RenderPassCommandRecorderOptions{};
 
     for (auto &attachment : mAttachments)
         if (auto texture = attachment.texture) {
@@ -54,16 +55,17 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
                 depthStencil = {
                     .view = view,
                     .depthLoadOperation = KDGpu::AttachmentLoadOperation::Load,
-                    .stencilLoadOperation = KDGpu::AttachmentLoadOperation::Load,
+                    .stencilLoadOperation =
+                        KDGpu::AttachmentLoadOperation::Load,
                     .initialLayout = texture->currentLayout(),
                 };
-            }
-            else {
-                renderPassOptions.colorAttachments.push_back(KDGpu::ColorAttachment{
-                    .view = view,
-                    .loadOperation = KDGpu::AttachmentLoadOperation::Load,
-                    .initialLayout = texture->currentLayout(),
-                });
+            } else {
+                renderPassOptions.colorAttachments.push_back(
+                    KDGpu::ColorAttachment{
+                        .view = view,
+                        .loadOperation = KDGpu::AttachmentLoadOperation::Load,
+                        .initialLayout = texture->currentLayout(),
+                    });
             }
 
             const auto min = [](uint32_t &var, const uint32_t value) {
@@ -82,34 +84,27 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
         renderPassOptions.framebufferWidth = mDefaultWidth;
         renderPassOptions.framebufferHeight = mDefaultHeight;
     }
-       
+
     renderPassOptions.samples = getKDSampleCount(mSamples);
     return renderPassOptions;
 }
 
 std::vector<KDGpu::RenderTargetOptions> VKTarget::getRenderTargetOptions()
 {
-    auto options = std::vector<KDGpu::RenderTargetOptions>{ };
+    auto options = std::vector<KDGpu::RenderTargetOptions>{};
     for (const auto &attachment : qAsConst(mAttachments)) {
         const auto kind = attachment.texture->kind();
         if (!kind.depth && !kind.stencil) {
-            options.push_back({
+            options.push_back({ 
                 .format = toKDGpu(attachment.texture->format()),
-                .writeMask = static_cast<KDGpu::ColorComponentFlagBits>(
-                    attachment.colorWriteMask),
+                .writeMask = static_cast<KDGpu::ColorComponentFlagBits>(attachment.colorWriteMask),
                 .blending = {
                     .blendingEnabled = true,
-                    .color = {
-                        toKDGpu(attachment.blendColorEq), 
-                        toKDGpu(attachment.blendColorSource),
-                        toKDGpu(attachment.blendColorDest)
-                    },
-                    .alpha = {
-                        toKDGpu(attachment.blendAlphaEq), 
-                        toKDGpu(attachment.blendAlphaSource),
-                        toKDGpu(attachment.blendAlphaDest)
-                    }
-                }
+                    .color = { toKDGpu(attachment.blendColorEq),
+                        toKDGpu(attachment.blendColorSource), toKDGpu(attachment.blendColorDest) },
+                    .alpha = { toKDGpu(attachment.blendAlphaEq),
+                        toKDGpu(attachment.blendAlphaSource), toKDGpu(attachment.blendAlphaDest) },
+                }, 
             });
         }
     }
@@ -118,12 +113,13 @@ std::vector<KDGpu::RenderTargetOptions> VKTarget::getRenderTargetOptions()
 
 KDGpu::DepthStencilOptions VKTarget::getDepthStencilOptions()
 {
-    auto options = KDGpu::DepthStencilOptions{ };
+    auto options = KDGpu::DepthStencilOptions{};
     for (const auto &attachment : qAsConst(mAttachments)) {
         const auto kind = attachment.texture->kind();
         if (kind.depth || kind.stencil) {
             if (options.format != KDGpu::Format::UNDEFINED) {
-                mMessages += MessageList::insert(mItemId, MessageType::MoreThanOneDepthStencilAttachment);
+                mMessages += MessageList::insert(mItemId,
+                    MessageType::MoreThanOneDepthStencilAttachment);
                 continue;
             }
             options = {
@@ -166,15 +162,15 @@ KDGpu::MultisampleOptions VKTarget::getMultisampleOptions()
 
 KDGpu::PrimitiveOptions VKTarget::getPrimitiveOptions()
 {
-    auto depthBias = KDGpu::DepthBiasOptions{ };
+    auto depthBias = KDGpu::DepthBiasOptions{};
     for (const auto &attachment : qAsConst(mAttachments)) {
         if (attachment.texture->kind().depth) {
-              depthBias.enabled = (attachment.depthClamp || 
-                                   attachment.depthOffsetSlope || 
-                                   attachment.depthOffsetConstant);
-              depthBias.biasClamp = attachment.depthClamp;
-              depthBias.biasSlopeFactor = attachment.depthOffsetSlope;
-              depthBias.biasConstantFactor = attachment.depthOffsetConstant;
+            depthBias.enabled = (attachment.depthClamp
+                || attachment.depthOffsetSlope
+                || attachment.depthOffsetConstant);
+            depthBias.biasClamp = attachment.depthClamp;
+            depthBias.biasSlopeFactor = attachment.depthOffsetSlope;
+            depthBias.biasConstantFactor = attachment.depthOffsetConstant;
         }
     }
 
@@ -183,6 +179,6 @@ KDGpu::PrimitiveOptions VKTarget::getPrimitiveOptions()
         .frontFace = toKDGpu(mFrontFace),
         .polygonMode = toKDGpu(mPolygonMode),
         .depthBias = depthBias,
-        .lineWidth = 1.0f
+        .lineWidth = 1.0f,
     };
 }

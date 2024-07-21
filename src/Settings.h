@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QSettings>
 #include <QFont>
+#include <QSettings>
 class Theme;
 
 class Settings final : public QSettings
@@ -54,14 +54,13 @@ Q_SIGNALS:
 private:
     int mTabSize{ 2 };
     QFont mFont;
-    bool mLineWrap{ };
+    bool mLineWrap{};
     bool mIndentWithSpaces{ true };
-    bool mShowWhiteSpace{ };
-    const Theme *mWindowTheme{ };
-    const Theme *mEditorTheme{ };
-    bool mHideMenuBar{ };
+    bool mShowWhiteSpace{};
+    const Theme *mWindowTheme{};
+    const Theme *mEditorTheme{};
+    bool mHideMenuBar{};
     QString mShaderPreamble;
     QString mShaderIncludePaths;
     QString mRenderer;
 };
-

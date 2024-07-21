@@ -1,8 +1,8 @@
 #pragma once
 
-#include <QObject>
-#include <QJsonValue>
 #include "InputState.h"
+#include <QJsonValue>
+#include <QObject>
 
 class MouseScriptObject final : public QObject
 {
@@ -29,9 +29,9 @@ private:
     QJsonValue toCoord(QPoint coord) const;
     QJsonValue toFragCoord(QPoint coord) const;
 
-    QSize mEditorSize{ };
-    QPoint mPosition{ };
-    QPoint mPrevPosition{ };
+    QSize mEditorSize{};
+    QPoint mPosition{};
+    QPoint mPrevPosition{};
     QVector<ButtonState> mButtons;
-    mutable bool mWasRead{ };
+    mutable bool mWasRead{};
 };

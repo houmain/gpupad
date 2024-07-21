@@ -2,16 +2,16 @@
 #include "EvaluatedPropertyCache.h"
 #include "scripting/ScriptEngineJavaScript.h"
 
-EvaluatedPropertyCache::EvaluatedPropertyCache() 
+EvaluatedPropertyCache::EvaluatedPropertyCache()
     : mDefaultScriptEngine(new ScriptEngineJavaScript())
 {
 }
 
 EvaluatedPropertyCache::~EvaluatedPropertyCache() = default;
 
-// when a script engine is passed then evaluate and update cache, 
+// when a script engine is passed then evaluate and update cache,
 // otherwise load from cache or evaluate using default engine
-void EvaluatedPropertyCache::evaluateBlockProperties(const Block &block, 
+void EvaluatedPropertyCache::evaluateBlockProperties(const Block &block,
     int *offset, int *rowCount, ScriptEngine *scriptEngine)
 {
     QMutexLocker lock{ &mMutex };
@@ -23,8 +23,7 @@ void EvaluatedPropertyCache::evaluateBlockProperties(const Block &block,
         if (it != mEvaluatedProperties.end()) {
             *offset = (*it)[0];
             *rowCount = (*it)[1];
-        }
-        else {
+        } else {
             scriptEngine = mDefaultScriptEngine.data();
         }
     }
@@ -32,15 +31,17 @@ void EvaluatedPropertyCache::evaluateBlockProperties(const Block &block,
         auto &messages = mMessages[block.id];
         messages.clear();
         *offset = scriptEngine->evaluateInt(block.offset, block.id, messages);
-        *rowCount = scriptEngine->evaluateInt(block.rowCount, block.id, messages);
+        *rowCount =
+            scriptEngine->evaluateInt(block.rowCount, block.id, messages);
     }
     if (updateCache) {
         mEvaluatedProperties[block.id] = { *offset, *rowCount };
     }
 }
 
-void EvaluatedPropertyCache::evaluateTextureProperties(const Texture &texture, 
-    int *width, int *height, int *depth, int *layers, ScriptEngine *scriptEngine)
+void EvaluatedPropertyCache::evaluateTextureProperties(const Texture &texture,
+    int *width, int *height, int *depth, int *layers,
+    ScriptEngine *scriptEngine)
 {
     QMutexLocker lock{ &mMutex };
     Q_ASSERT(width && height && depth && layers);
@@ -53,8 +54,7 @@ void EvaluatedPropertyCache::evaluateTextureProperties(const Texture &texture,
             *height = (*it)[1];
             *depth = (*it)[2];
             *layers = (*it)[3];
-        }
-        else {
+        } else {
             scriptEngine = mDefaultScriptEngine.data();
         }
     }
@@ -62,9 +62,11 @@ void EvaluatedPropertyCache::evaluateTextureProperties(const Texture &texture,
         auto &messages = mMessages[texture.id];
         messages.clear();
         *width = scriptEngine->evaluateInt(texture.width, texture.id, messages);
-        *height = scriptEngine->evaluateInt(texture.height, texture.id, messages);
+        *height =
+            scriptEngine->evaluateInt(texture.height, texture.id, messages);
         *depth = scriptEngine->evaluateInt(texture.depth, texture.id, messages);
-        *layers = scriptEngine->evaluateInt(texture.layers, texture.id, messages);
+        *layers =
+            scriptEngine->evaluateInt(texture.layers, texture.id, messages);
     }
     if (updateCache) {
         mEvaluatedProperties[texture.id] = { *width, *height, *depth, *layers };

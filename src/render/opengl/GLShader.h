@@ -6,11 +6,10 @@
 class GLShader : public ShaderBase
 {
 public:
-    static void parseLog(const QString &log,
-        MessagePtrSet &messages, ItemId itemId,
-        const QStringList& fileNames);
+    static void parseLog(const QString &log, MessagePtrSet &messages,
+        ItemId itemId, const QStringList &fileNames);
 
-    GLShader(Shader::ShaderType type, const QList<const Shader*> &shaders,
+    GLShader(Shader::ShaderType type, const QList<const Shader *> &shaders,
         const QString &preamble, const QString &includePaths);
 
     bool compile(GLPrintf *printf = nullptr, bool failSilently = false);
@@ -20,4 +19,3 @@ public:
 private:
     GLObject mShaderObject;
 };
-

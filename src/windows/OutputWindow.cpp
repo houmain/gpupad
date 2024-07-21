@@ -1,14 +1,15 @@
 #include "OutputWindow.h"
-#include "Singletons.h"
 #include "Settings.h"
+#include "Singletons.h"
 #include "Theme.h"
 #include "WindowTitle.h"
 #include "session/DataComboBox.h"
+#include <QPlainTextEdit>
 #include <QScrollBar>
 #include <QVBoxLayout>
-#include <QPlainTextEdit>
 
-OutputWindow::OutputWindow(QWidget *parent) : QFrame(parent)
+OutputWindow::OutputWindow(QWidget *parent)
+    : QFrame(parent)
     , mTypeSelector(new DataComboBox(this))
     , mTextEdit(new QPlainTextEdit(this))
 {
@@ -24,7 +25,9 @@ OutputWindow::OutputWindow(QWidget *parent) : QFrame(parent)
     mTypeSelector->addItem(tr("Dump glslang AST"), "ast");
     mTypeSelector->addItem(tr("Dump assembly (NV_gpu_program)"), "assembly");
     connect(mTypeSelector, &DataComboBox::currentDataChanged,
-        [this](QVariant data) { Q_EMIT typeSelectionChanged(data.toString()); });
+        [this](QVariant data) {
+            Q_EMIT typeSelectionChanged(data.toString());
+        });
 
     mTextEdit->setFrameShape(QFrame::NoFrame);
     mTextEdit->setReadOnly(true);
@@ -43,10 +46,10 @@ OutputWindow::OutputWindow(QWidget *parent) : QFrame(parent)
     titleBar->setWidget(header);
     mTitleBar = titleBar;
 
-    connect(&Singletons::settings(), &Settings::fontChanged,
-        mTextEdit, &QPlainTextEdit::setFont);
-    connect(&Singletons::settings(), &Settings::windowThemeChanged,
-        this, &OutputWindow::handleThemeChanged);
+    connect(&Singletons::settings(), &Settings::fontChanged, mTextEdit,
+        &QPlainTextEdit::setFont);
+    connect(&Singletons::settings(), &Settings::windowThemeChanged, this,
+        &OutputWindow::handleThemeChanged);
 }
 
 QString OutputWindow::selectedType() const
@@ -67,8 +70,7 @@ void OutputWindow::setText(QString text)
     auto v = mTextEdit->verticalScrollBar()->value();
     if (v > 0 || mTextEdit->verticalScrollBar()->maximum() > 0) {
         mLastScrollPosVertical = v;
-    }
-    else {
+    } else {
         v = mLastScrollPosVertical;
     }
 

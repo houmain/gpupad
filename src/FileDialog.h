@@ -1,8 +1,8 @@
 #pragma once
 
-#include <QMessageBox>
-#include <QDir>
 #include "SourceType.h"
+#include <QDir>
+#include <QMessageBox>
 
 class QMainWindow;
 
@@ -23,20 +23,19 @@ public:
     static bool isTextureFileName(const QString &fileName);
     static bool isVideoFileName(const QString &fileName);
 
-    enum OptionBit
-    {
-        Saving              = 1 << 0,
-        Importing           = 1 << 1,
-        Multiselect         = 1 << 2,
-        ShaderExtensions    = 1 << 3,
-        TextureExtensions   = 1 << 4,
-        BinaryExtensions    = 1 << 5,
-        SessionExtensions   = 1 << 6,
-        ScriptExtensions    = 1 << 7,
-        SavingNon2DTexture  = 1 << 8,
-        Directory           = 1 << 9,
-        AllExtensionFilters = ShaderExtensions | TextureExtensions |
-            BinaryExtensions | ScriptExtensions | SessionExtensions
+    enum OptionBit {
+        Saving = 1 << 0,
+        Importing = 1 << 1,
+        Multiselect = 1 << 2,
+        ShaderExtensions = 1 << 3,
+        TextureExtensions = 1 << 4,
+        BinaryExtensions = 1 << 5,
+        SessionExtensions = 1 << 6,
+        ScriptExtensions = 1 << 7,
+        SavingNon2DTexture = 1 << 8,
+        Directory = 1 << 9,
+        AllExtensionFilters = ShaderExtensions | TextureExtensions
+            | BinaryExtensions | ScriptExtensions | SessionExtensions
     };
     Q_DECLARE_FLAGS(Options, OptionBit)
 
@@ -48,7 +47,7 @@ public:
     QString fileName() const;
     QStringList fileNames() const { return mFileNames; }
     bool asBinaryFile() const { return mAsBinaryFile; }
-    bool exec(Options options, QString fileName = "", 
+    bool exec(Options options, QString fileName = "",
         SourceType sourceType = SourceType::PlainText);
 
 Q_SIGNALS:
@@ -58,7 +57,7 @@ private:
     QMainWindow *mWindow;
     QStringList mFileNames;
     QDir mDirectory;
-    bool mAsBinaryFile{ };
+    bool mAsBinaryFile{};
 };
 
 bool isNativeCanonicalFilePath(const QString &fileName);
@@ -71,4 +70,3 @@ QDir getInstallDirectory(const QString &dirName);
 QDir getUserDirectory(const QString &dirName);
 QFileInfoList enumerateApplicationPaths(const QString &dirName,
     QDir::Filters filters);
-

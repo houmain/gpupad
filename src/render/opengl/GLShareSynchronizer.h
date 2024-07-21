@@ -7,18 +7,18 @@
 class GLShareSynchronizer
 {
 public:
-    void beginUpdate(QOpenGLFunctions_3_3_Core& gl)
+    void beginUpdate(QOpenGLFunctions_3_3_Core &gl)
     {
         mMutex.lock();
         // synchronize with end of usage
-        for (const auto& usageSync : qAsConst(mUsageFenceSyncs)) {
+        for (const auto &usageSync : qAsConst(mUsageFenceSyncs)) {
             gl.glWaitSync(usageSync, 0, GL_TIMEOUT_IGNORED);
             gl.glDeleteSync(usageSync);
         }
         mUsageFenceSyncs.clear();
     }
 
-    void endUpdate(QOpenGLFunctions_3_3_Core& gl)
+    void endUpdate(QOpenGLFunctions_3_3_Core &gl)
     {
         // mark end of update
         if (mUpdateFenceSync)
@@ -28,7 +28,7 @@ public:
         mMutex.unlock();
     }
 
-    void beginUsage(QOpenGLFunctions_3_3_Core& gl)
+    void beginUsage(QOpenGLFunctions_3_3_Core &gl)
     {
         mMutex.lock();
         // synchronize with end of update
@@ -36,7 +36,7 @@ public:
             gl.glWaitSync(mUpdateFenceSync, 0, GL_TIMEOUT_IGNORED);
     }
 
-    void endUsage(QOpenGLFunctions_3_3_Core& gl)
+    void endUsage(QOpenGLFunctions_3_3_Core &gl)
     {
         // mark end of usage
         mUsageFenceSyncs.append(
@@ -47,7 +47,6 @@ public:
 
 private:
     QMutex mMutex;
-    GLsync mUpdateFenceSync{ };
+    GLsync mUpdateFenceSync{};
     QList<GLsync> mUsageFenceSyncs;
 };
-

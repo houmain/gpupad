@@ -1,26 +1,26 @@
 #include "EditorManager.h"
-#include "Singletons.h"
 #include "FileCache.h"
 #include "FileDialog.h"
+#include "Singletons.h"
 #include "SynchronizeLogic.h"
 #include "binary/BinaryEditor.h"
 #include "binary/BinaryEditorToolBar.h"
+#include "qml/QmlView.h"
 #include "source/SourceEditor.h"
 #include "source/SourceEditorToolBar.h"
 #include "texture/TextureEditor.h"
 #include "texture/TextureEditorToolBar.h"
 #include "texture/TextureInfoBar.h"
-#include "qml/QmlView.h"
-#include <functional>
-#include <QDockWidget>
 #include <QAction>
 #include <QApplication>
+#include <QBoxLayout>
+#include <QClipboard>
+#include <QDockWidget>
+#include <QMimeData>
+#include <QRandomGenerator>
 #include <QToolBar>
 #include <QToolButton>
-#include <QBoxLayout>
-#include <QRandomGenerator>
-#include <QClipboard>
-#include <QMimeData>
+#include <functional>
 
 EditorManager::EditorManager(QWidget *parent)
     : DockWindow(parent)
@@ -33,10 +33,10 @@ EditorManager::EditorManager(QWidget *parent)
     setDocumentMode(true);
     setContentsMargins(0, 1, 0, 0);
 
-    connect(this, &DockWindow::dockCloseRequested, this, 
-        [this](QDockWidget *dock) { 
-            if (promptSaveDock(dock)) 
-                closeDock(dock); 
+    connect(this, &DockWindow::dockCloseRequested, this,
+        [this](QDockWidget *dock) {
+            if (promptSaveDock(dock))
+                closeDock(dock);
         });
     connect(QApplication::clipboard(), &QClipboard::changed,
         [this]() { Q_EMIT canPasteInNewEditorChanged(canPasteInNewEditor()); });
@@ -44,8 +44,7 @@ EditorManager::EditorManager(QWidget *parent)
 
 EditorManager::~EditorManager() = default;
 
-QWidget *EditorManager::createEditorPropertiesPanel(
-    QAction *showAction)
+QWidget *EditorManager::createEditorPropertiesPanel(QAction *showAction)
 {
     auto propertiesPanel = new QWidget(this);
     propertiesPanel->setAutoFillBackground(true);
@@ -70,13 +69,13 @@ QWidget *EditorManager::createEditorPropertiesPanel(
         updateEditorPropertiesVisibility();
         showAction->setChecked(false);
     };
-    connect(showAction, &QAction::toggled, [=](bool show) { 
+    connect(showAction, &QAction::toggled, [=](bool show) {
         // make keyboard shortcut show instead of toggle
         if (qApp->keyboardModifiers()) {
             showAction->setChecked(true);
             show = true;
         }
-        (show ? showPropertiesPanel() : hidePropertiesPanel()); 
+        (show ? showPropertiesPanel() : hidePropertiesPanel());
     });
     connect(mFindReplaceBar, &FindReplaceBar::cancelled, hidePropertiesPanel);
     connect(mTextureInfoBar, &TextureInfoBar::cancelled, hidePropertiesPanel);
@@ -84,7 +83,7 @@ QWidget *EditorManager::createEditorPropertiesPanel(
     return propertiesPanel;
 }
 
-void EditorManager::createEditorToolBars(QToolBar *mainToolBar) 
+void EditorManager::createEditorToolBars(QToolBar *mainToolBar)
 {
     mTextureEditorToolBar = new TextureEditorToolBar(this);
     mainToolBar->addWidget(mTextureEditorToolBar);
@@ -98,9 +97,11 @@ void EditorManager::createEditorToolBars(QToolBar *mainToolBar)
     connect(mSourceEditorToolBar, &SourceEditorToolBar::validateSourceChanged,
         &Singletons::synchronizeLogic(), &SynchronizeLogic::setValidateSource);
     connect(mSourceEditorToolBar, &SourceEditorToolBar::sourceTypeChanged,
-        &Singletons::synchronizeLogic(), &SynchronizeLogic::setCurrentEditorSourceType);
+        &Singletons::synchronizeLogic(),
+        &SynchronizeLogic::setCurrentEditorSourceType);
     connect(this, &EditorManager::currentEditorChanged,
-        &Singletons::synchronizeLogic(), &SynchronizeLogic::setCurrentEditorFileName);
+        &Singletons::synchronizeLogic(),
+        &SynchronizeLogic::setCurrentEditorFileName);
 
     updateEditorToolBarVisibility();
     updateEditorPropertiesVisibility();
@@ -116,15 +117,15 @@ void EditorManager::setEditorToolBarPalette(const QPalette &palette)
 void EditorManager::updateEditorToolBarVisibility()
 {
     // setting maximumWidth since simply setting visibility did not work
-    const auto setVisible = [](QWidget* widget, bool visible) {
+    const auto setVisible = [](QWidget *widget, bool visible) {
         widget->setMaximumWidth(visible ? 65536 : 0);
     };
-    setVisible(mTextureEditorToolBar, 
-        mCurrentDock && qobject_cast<TextureEditor*>(mCurrentDock->widget()));
+    setVisible(mTextureEditorToolBar,
+        mCurrentDock && qobject_cast<TextureEditor *>(mCurrentDock->widget()));
     setVisible(mBinaryEditorToolBar,
-        mCurrentDock && qobject_cast<BinaryEditor*>(mCurrentDock->widget()));
+        mCurrentDock && qobject_cast<BinaryEditor *>(mCurrentDock->widget()));
     setVisible(mSourceEditorToolBar,
-        mCurrentDock && qobject_cast<SourceEditor*>(mCurrentDock->widget()));
+        mCurrentDock && qobject_cast<SourceEditor *>(mCurrentDock->widget()));
 }
 
 void EditorManager::updateEditorPropertiesVisibility()
@@ -135,8 +136,8 @@ void EditorManager::updateEditorPropertiesVisibility()
         return;
 
     const auto widget = (mCurrentDock ? mCurrentDock->widget() : nullptr);
-    mFindReplaceBar->setVisible(qobject_cast<SourceEditor*>(widget));
-    mTextureInfoBar->setVisible(qobject_cast<TextureEditor*>(widget));
+    mFindReplaceBar->setVisible(qobject_cast<SourceEditor *>(widget));
+    mTextureInfoBar->setVisible(qobject_cast<TextureEditor *>(widget));
     mTextureInfoBar->setPickerEnabled(
         mTextureInfoBar->parentWidget()->isVisible());
 }
@@ -171,8 +172,8 @@ bool EditorManager::focusNextEditor(bool wrap)
 bool EditorManager::focusPreviousEditor(bool wrap)
 {
     const auto current = getFocusedEditorIndex();
-    return focusEditorByIndex((current == -1 ? 
-        static_cast<int>(mDocks.size()) : current) - 1, wrap);
+    return focusEditorByIndex(
+        (current == -1 ? static_cast<int>(mDocks.size()) : current) - 1, wrap);
 }
 
 void EditorManager::updateCurrentEditor()
@@ -213,12 +214,13 @@ IEditor *EditorManager::currentEditor()
 QDockWidget *EditorManager::findEditorDock(const IEditor *editor) const
 {
     for (auto [dock, dockEditor] : mDocks)
-          if (editor == dockEditor)
-              return dock;
+        if (editor == dockEditor)
+            return dock;
     return nullptr;
 }
 
-void EditorManager::forEachEditor(const std::function<void(IEditor&)> &function) const 
+void EditorManager::forEachEditor(
+    const std::function<void(IEditor &)> &function) const
 {
     for (auto [dock, dockEditor] : mDocks)
         function(*dockEditor);
@@ -229,13 +231,14 @@ QList<QMetaObject::Connection> EditorManager::connectEditActions(
 {
     if (auto editor = currentEditor())
         return editor->connectEditActions(actions);
-    return { };
+    return {};
 }
 
 SourceEditor *EditorManager::openNewSourceEditor(const QString &fileName,
     SourceType sourceType)
 {
-    auto editor = new SourceEditor(fileName, mSourceEditorToolBar, mFindReplaceBar);
+    auto editor =
+        new SourceEditor(fileName, mSourceEditorToolBar, mFindReplaceBar);
     editor->setSourceType(sourceType);
     addSourceEditor(editor);
     autoRaise(editor);
@@ -253,7 +256,8 @@ BinaryEditor *EditorManager::openNewBinaryEditor(const QString &fileName)
 
 TextureEditor *EditorManager::openNewTextureEditor(const QString &fileName)
 {
-    auto editor = new TextureEditor(fileName, mTextureEditorToolBar, mTextureInfoBar);
+    auto editor =
+        new TextureEditor(fileName, mTextureEditorToolBar, mTextureInfoBar);
     addTextureEditor(editor);
     autoRaise(editor);
     return editor;
@@ -268,8 +272,7 @@ void EditorManager::closeUntitledUntouchedSourceEditor()
     }
 }
 
-IEditor* EditorManager::openEditor(const QString &fileName,
-    bool asBinaryFile)
+IEditor *EditorManager::openEditor(const QString &fileName, bool asBinaryFile)
 {
     if (!asBinaryFile) {
         if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
@@ -287,13 +290,13 @@ IEditor* EditorManager::openEditor(const QString &fileName,
     return openBinaryEditor(fileName);
 }
 
-SourceEditor *EditorManager::openSourceEditor(const QString &fileName, 
-    int line, int column)
+SourceEditor *EditorManager::openSourceEditor(const QString &fileName, int line,
+    int column)
 {
     auto editor = getSourceEditor(fileName);
     if (!editor) {
-        editor = new SourceEditor(fileName,
-            mSourceEditorToolBar,  mFindReplaceBar);
+        editor =
+            new SourceEditor(fileName, mSourceEditorToolBar, mFindReplaceBar);
         if (!editor->load()) {
             delete editor;
             return nullptr;
@@ -326,7 +329,8 @@ TextureEditor *EditorManager::openTextureEditor(const QString &fileName)
 {
     auto editor = getTextureEditor(fileName);
     if (!editor) {
-        editor = new TextureEditor(fileName, mTextureEditorToolBar, mTextureInfoBar);
+        editor =
+            new TextureEditor(fileName, mTextureEditorToolBar, mTextureInfoBar);
         if (!editor->load()) {
             delete editor;
             return nullptr;
@@ -362,7 +366,7 @@ IEditor *EditorManager::getEditor(const QString &fileName)
     return getTextureEditor(fileName);
 }
 
-SourceEditor* EditorManager::getSourceEditor(const QString &fileName)
+SourceEditor *EditorManager::getSourceEditor(const QString &fileName)
 {
     for (SourceEditor *editor : qAsConst(mSourceEditors))
         if (editor->fileName() == fileName)
@@ -370,7 +374,7 @@ SourceEditor* EditorManager::getSourceEditor(const QString &fileName)
     return nullptr;
 }
 
-BinaryEditor* EditorManager::getBinaryEditor(const QString &fileName)
+BinaryEditor *EditorManager::getBinaryEditor(const QString &fileName)
 {
     for (BinaryEditor *editor : qAsConst(mBinaryEditors))
         if (editor->fileName() == fileName)
@@ -378,7 +382,7 @@ BinaryEditor* EditorManager::getBinaryEditor(const QString &fileName)
     return nullptr;
 }
 
-TextureEditor* EditorManager::getTextureEditor(const QString &fileName)
+TextureEditor *EditorManager::getTextureEditor(const QString &fileName)
 {
     for (TextureEditor *editor : qAsConst(mTextureEditors))
         if (editor->fileName() == fileName)
@@ -386,7 +390,7 @@ TextureEditor* EditorManager::getTextureEditor(const QString &fileName)
     return nullptr;
 }
 
-QmlView* EditorManager::getQmlView(const QString &fileName)
+QmlView *EditorManager::getQmlView(const QString &fileName)
 {
     for (QmlView *editor : qAsConst(mQmlViews))
         if (editor->fileName() == fileName)
@@ -418,11 +422,11 @@ QStringList EditorManager::getImageFileNames() const
     return result;
 }
 
-void EditorManager::renameEditors(const QString &prevFileName, const QString &fileName)
+void EditorManager::renameEditors(const QString &prevFileName,
+    const QString &fileName)
 {
-    if (prevFileName.isEmpty() ||
-        fileName.isEmpty() ||
-        prevFileName == fileName)
+    if (prevFileName.isEmpty() || fileName.isEmpty()
+        || prevFileName == fileName)
         return;
 
     for (auto [dock, editor] : mDocks)
@@ -458,23 +462,24 @@ bool EditorManager::saveEditorAs()
 {
     if (auto editor = currentEditor()) {
         auto options = FileDialog::Options{ FileDialog::Saving };
-        auto sourceType = SourceType{ };
-        if (const auto editor = qobject_cast<SourceEditor*>(mCurrentDock->widget())) {
+        auto sourceType = SourceType{};
+        if (const auto editor =
+                qobject_cast<SourceEditor *>(mCurrentDock->widget())) {
             options |= FileDialog::ShaderExtensions;
             options |= FileDialog::ScriptExtensions;
             sourceType = editor->sourceType();
-        }
-        else if (qobject_cast<BinaryEditor*>(mCurrentDock->widget())) {
+        } else if (qobject_cast<BinaryEditor *>(mCurrentDock->widget())) {
             options |= FileDialog::BinaryExtensions;
-        }
-        else if (auto textureEditor = qobject_cast<TextureEditor*>(mCurrentDock->widget())) {
+        } else if (auto textureEditor =
+                       qobject_cast<TextureEditor *>(mCurrentDock->widget())) {
             options |= FileDialog::TextureExtensions;
             if (!textureEditor->texture().isConvertibleToImage())
                 options |= FileDialog::SavingNon2DTexture;
         }
 
         const auto prevFileName = editor->fileName();
-        while (Singletons::fileDialog().exec(options, editor->fileName(), sourceType)) {
+        while (Singletons::fileDialog().exec(options, editor->fileName(),
+            sourceType)) {
             editor->setFileName(Singletons::fileDialog().fileName());
             if (!editor->save()) {
                 if (!showSavingFailedMessage(this, editor->fileName()))
@@ -505,7 +510,7 @@ bool EditorManager::reloadEditor()
             return false;
 
         // do not purge when reloading qml view
-        if (mQmlViews.indexOf(static_cast<QmlView*>(editor)) < 0)
+        if (mQmlViews.indexOf(static_cast<QmlView *>(editor)) < 0)
             Singletons::fileCache().invalidateFile(editor->fileName());
 
         return editor->load();
@@ -543,7 +548,7 @@ bool EditorManager::closeAllEditors(bool promptSave)
 bool EditorManager::closeAllTextureEditors()
 {
     for (auto [dock, editor] : mDocks)
-        if (qobject_cast<TextureEditor*>(dock->widget())) {
+        if (qobject_cast<TextureEditor *>(dock->widget())) {
             if (!promptSaveDock(dock))
                 return false;
             closeDock(dock);
@@ -564,7 +569,7 @@ void EditorManager::setEditorObjectName(IEditor *editor, const QString &name)
         dock->setObjectName(name);
 }
 
-bool EditorManager::canPasteInNewEditor() const 
+bool EditorManager::canPasteInNewEditor() const
 {
     return (QApplication::clipboard()->mimeData() != nullptr);
 }
@@ -575,13 +580,15 @@ void EditorManager::pasteInNewEditor()
     if (!mimeData)
         return;
 
-    const auto fileName = FileDialog::generateNextUntitledFileName(tr("Untitled"));
+    const auto fileName =
+        FileDialog::generateNextUntitledFileName(tr("Untitled"));
     closeUntitledUntouchedSourceEditor();
 
     if (mimeData->hasImage())
         if (auto editor = openNewTextureEditor(fileName)) {
             auto texture = TextureData();
-            if (texture.loadQImage(mimeData->imageData().value<QImage>(), false)) {
+            if (texture.loadQImage(mimeData->imageData().value<QImage>(),
+                    false)) {
                 editor->replace(std::move(texture));
                 editor->setFlipVertically(true);
                 return;
@@ -604,12 +611,12 @@ void EditorManager::addSourceEditor(SourceEditor *editor)
     mSourceEditors.append(editor);
 
     auto dock = createDock(editor, editor);
-    connect(editor, &SourceEditor::modificationChanged,
-        dock, &QDockWidget::setWindowModified);
+    connect(editor, &SourceEditor::modificationChanged, dock,
+        &QDockWidget::setWindowModified);
     connect(editor, &SourceEditor::fileNameChanged,
         [this, dock]() { handleEditorFilenameChanged(dock); });
-    connect(editor, &SourceEditor::navigationPositionChanged,
-        this, &EditorManager::addNavigationPosition);
+    connect(editor, &SourceEditor::navigationPositionChanged, this,
+        &EditorManager::addNavigationPosition);
 }
 
 void EditorManager::addTextureEditor(TextureEditor *editor)
@@ -617,8 +624,8 @@ void EditorManager::addTextureEditor(TextureEditor *editor)
     mTextureEditors.append(editor);
 
     auto dock = createDock(editor, editor);
-    connect(editor, &TextureEditor::modificationChanged,
-        dock, &QDockWidget::setWindowModified);
+    connect(editor, &TextureEditor::modificationChanged, dock,
+        &QDockWidget::setWindowModified);
     connect(editor, &TextureEditor::fileNameChanged,
         [this, dock]() { handleEditorFilenameChanged(dock); });
 }
@@ -628,13 +635,13 @@ void EditorManager::addBinaryEditor(BinaryEditor *editor)
     mBinaryEditors.append(editor);
 
     auto dock = createDock(editor, editor);
-    connect(editor, &BinaryEditor::modificationChanged,
-        dock, &QDockWidget::setWindowModified);
+    connect(editor, &BinaryEditor::modificationChanged, dock,
+        &QDockWidget::setWindowModified);
     connect(editor, &BinaryEditor::fileNameChanged,
         [this, dock]() { handleEditorFilenameChanged(dock); });
 }
 
-QDockWidget *EditorManager::findDockToAddTab(int tabifyGroup) 
+QDockWidget *EditorManager::findDockToAddTab(int tabifyGroup)
 {
     if (mCurrentDock)
         return mCurrentDock;
@@ -657,18 +664,17 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     auto dock = new QDockWidget(this);
     setDockWindowTitle(dock, fileName);
     dock->setWidget(widget);
-    dock->setObjectName(QString::number(QRandomGenerator::global()->generate64(), 16));
+    dock->setObjectName(
+        QString::number(QRandomGenerator::global()->generate64(), 16));
 
-    dock->setFeatures(QDockWidget::DockWidgetMovable |
-        QDockWidget::DockWidgetClosable | 
-        QDockWidget::DockWidgetFloatable);
+    dock->setFeatures(QDockWidget::DockWidgetMovable
+        | QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetFloatable);
     dock->toggleViewAction()->setVisible(false);
     dock->installEventFilter(this);
 
     if (const auto tabDock = findDockToAddTab(editor->tabifyGroup())) {
         tabifyDockWidget(tabDock, dock);
-    }
-    else {
+    } else {
         addDockWidget(Qt::TopDockWidgetArea, dock);
         resizeDocks({ dock }, { width() }, Qt::Horizontal);
     }
@@ -676,7 +682,7 @@ QDockWidget *EditorManager::createDock(QWidget *widget, IEditor *editor)
     return dock;
 }
 
-void EditorManager::handleEditorFilenameChanged(QDockWidget *dock) 
+void EditorManager::handleEditorFilenameChanged(QDockWidget *dock)
 {
     if (auto editor = mDocks[dock]) {
         setDockWindowTitle(dock, editor->fileName());
@@ -684,7 +690,8 @@ void EditorManager::handleEditorFilenameChanged(QDockWidget *dock)
     }
 }
 
-void EditorManager::setDockWindowTitle(QDockWidget *dock, const QString &fileName) 
+void EditorManager::setDockWindowTitle(QDockWidget *dock,
+    const QString &fileName)
 {
     dock->setWindowTitle(FileDialog::getWindowTitle(fileName));
     if (!FileDialog::isEmptyOrUntitled(fileName))
@@ -709,8 +716,7 @@ bool EditorManager::promptSaveDock(QDockWidget *dock)
         const auto ret = showNotSavedDialog(this, editor->fileName());
         if (ret == QMessageBox::Cancel)
             return false;
-        if (ret == QMessageBox::Save &&
-            !saveDock(dock))
+        if (ret == QMessageBox::Save && !saveDock(dock))
             return false;
     }
     return true;
@@ -721,10 +727,10 @@ void EditorManager::closeDock(QDockWidget *dock)
     auto editor = mDocks[dock];
     Q_EMIT editorRenamed(editor->fileName(), "");
 
-    mSourceEditors.removeAll(static_cast<SourceEditor*>(editor));
-    mBinaryEditors.removeAll(static_cast<BinaryEditor*>(editor));
-    mTextureEditors.removeAll(static_cast<TextureEditor*>(editor));
-    mQmlViews.removeAll(static_cast<QmlView*>(editor));
+    mSourceEditors.removeAll(static_cast<SourceEditor *>(editor));
+    mBinaryEditors.removeAll(static_cast<BinaryEditor *>(editor));
+    mTextureEditors.removeAll(static_cast<TextureEditor *>(editor));
+    mQmlViews.removeAll(static_cast<QmlView *>(editor));
 
     mDocks.erase(dock);
 
@@ -744,14 +750,14 @@ void EditorManager::closeDock(QDockWidget *dock)
 void EditorManager::autoRaise(QWidget *editor)
 {
     if (mAutoRaise && editor)
-        raiseDock(qobject_cast<QDockWidget*>(editor->parentWidget()));
+        raiseDock(qobject_cast<QDockWidget *>(editor->parentWidget()));
 }
 
 void updateDockCurrentProperty(QDockWidget *dock, bool current)
 {
     if (dock && dock->property("current") != current) {
         dock->setProperty("current", current);
-        if (auto frame = qobject_cast<QFrame*>(dock->widget())) {
+        if (auto frame = qobject_cast<QFrame *>(dock->widget())) {
             frame->style()->unpolish(frame);
             frame->style()->polish(frame);
             frame->update();
@@ -769,7 +775,7 @@ void EditorManager::clearNavigationStack()
     Q_EMIT canNavigateBackwardChanged(false);
 }
 
-void EditorManager::addNavigationPosition(const QString &position, bool update) 
+void EditorManager::addNavigationPosition(const QString &position, bool update)
 {
     const auto couldNavigateForward = canNavigateForward();
     const auto couldNavigateBackward = canNavigateBackward();
@@ -777,11 +783,10 @@ void EditorManager::addNavigationPosition(const QString &position, bool update)
     mNavigationStack.resize(mNavigationStackPosition);
 
     const auto editor = QObject::sender();
-    if (update && !mNavigationStack.isEmpty() &&
-          mNavigationStack.back().first == editor) {
+    if (update && !mNavigationStack.isEmpty()
+        && mNavigationStack.back().first == editor) {
         mNavigationStack.back().second = position;
-    }
-    else {
+    } else {
         mNavigationStack.push({ editor, position });
         ++mNavigationStackPosition;
     }
@@ -796,7 +801,7 @@ bool EditorManager::restoreNavigationPosition(int index)
 {
     // validate pointer, editor might have been closed
     const auto [object, position] = mNavigationStack[index];
-    const auto editor = static_cast<SourceEditor*>(object);
+    const auto editor = static_cast<SourceEditor *>(object);
     if (mSourceEditors.indexOf(editor) == -1)
         return false;
 

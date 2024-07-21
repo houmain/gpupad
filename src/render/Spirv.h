@@ -1,29 +1,29 @@
 #pragma once
 
-#include "session/Item.h"
 #include "MessageList.h"
+#include "session/Item.h"
 #include "spirv-reflect/spirv_reflect.h"
 
-class Spirv 
+class Spirv
 {
 public:
-    class Interface 
+    class Interface
     {
     public:
         Interface() = default;
-        explicit Interface(const std::vector<uint32_t>& spirv);
+        explicit Interface(const std::vector<uint32_t> &spirv);
         ~Interface();
 
         explicit operator bool() const;
-        const SpvReflectShaderModule* operator->() const;
+        const SpvReflectShaderModule *operator->() const;
 
     private:
         std::shared_ptr<SpvReflectShaderModule> mModule;
     };
 
-    static Spirv generate(Shader::Language language, 
-        Shader::ShaderType shaderType, const QStringList &sources, 
-        const QStringList &fileNames, const QString &entryPoint, 
+    static Spirv generate(Shader::Language language,
+        Shader::ShaderType shaderType, const QStringList &sources,
+        const QStringList &fileNames, const QString &entryPoint,
         int shiftBindingsInSet0, MessagePtrSet &messages);
 
     Spirv() = default;

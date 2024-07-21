@@ -29,18 +29,17 @@ private:
     void upload(VKContext &context);
 
     MessagePtrSet mMessages;
-    ItemId mItemId{ };
+    ItemId mItemId{};
     QString mFileName;
-    int mSize{ };
+    int mSize{};
     QByteArray mData;
     QSet<ItemId> mUsedItems;
     KDGpu::Buffer mBuffer;
-    bool mSystemCopyModified{ };
-    bool mDeviceCopyModified{ };
+    bool mSystemCopyModified{};
+    bool mDeviceCopyModified{};
 };
 
-int getBufferSize(const Buffer &buffer,
-    ScriptEngine &scriptEngine, MessagePtrSet &messages);
-bool downloadBuffer(VKContext &context, 
-    const KDGpu::Buffer &buffer, uint64_t size, 
-    std::function<void(const std::byte*)>&& callback);
+int getBufferSize(const Buffer &buffer, ScriptEngine &scriptEngine,
+    MessagePtrSet &messages);
+bool downloadBuffer(VKContext &context, const KDGpu::Buffer &buffer,
+    uint64_t size, std::function<void(const std::byte *)> &&callback);

@@ -9,11 +9,17 @@ class BinaryEditor final : public QTableView, public IEditor
 {
     Q_OBJECT
 public:
-    enum class DataType
-    {
-        Int8, Int16, Int32, Int64,
-        Uint8, Uint16, Uint32, Uint64,
-        Float, Double,
+    enum class DataType {
+        Int8,
+        Int16,
+        Int32,
+        Int64,
+        Uint8,
+        Uint16,
+        Uint32,
+        Uint64,
+        Float,
+        Double,
     };
 
     struct Field
@@ -35,8 +41,7 @@ public:
     static int getTypeSize(DataType type);
     static int getStride(const Block &block);
 
-    BinaryEditor(QString fileName,
-        BinaryEditorToolBar* editorToolbar,
+    BinaryEditor(QString fileName, BinaryEditorToolBar *editorToolbar,
         QWidget *parent = nullptr);
     ~BinaryEditor() override;
 
@@ -79,13 +84,12 @@ private:
 
     BinaryEditorToolBar &mEditorToolBar;
     QString mFileName;
-    bool mModified{ };
+    bool mModified{};
     QByteArray mData;
-    EditableRegion *mEditableRegion{ };
+    EditableRegion *mEditableRegion{};
     int mRowHeight{ 20 };
     int mColumnWidth{ 32 };
     QList<Block> mBlocks;
-    int mCurrentBlockIndex{ };
-    int mPrevFirstRow{ };
+    int mCurrentBlockIndex{};
+    int mPrevFirstRow{};
 };
-

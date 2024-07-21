@@ -6,12 +6,13 @@ class GLObject
 {
 public:
     using GLuint = unsigned int;
-    using Free = void(*)(GLuint object);
+    using Free = void (*)(GLuint object);
 
     GLObject() = default;
 
-    GLObject(GLuint object, Free free) noexcept
-        : mObject(object), mFree(free) { }
+    GLObject(GLuint object, Free free) noexcept : mObject(object), mFree(free)
+    {
+    }
 
     GLObject(GLObject &&rhs) noexcept
     {
@@ -27,10 +28,7 @@ public:
         return *this;
     }
 
-    ~GLObject()
-    {
-        reset();
-    }
+    ~GLObject() { reset(); }
 
     explicit operator bool() const { return (mObject != 0); }
     operator GLuint() const { return mObject; }
@@ -39,13 +37,12 @@ public:
     {
         if (mFree) {
             mFree(mObject);
-            mObject = { };
+            mObject = {};
             mFree = nullptr;
         }
     }
 
 private:
-    GLuint mObject{ };
-    Free mFree{ };
+    GLuint mObject{};
+    Free mFree{};
 };
-

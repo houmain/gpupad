@@ -1,25 +1,25 @@
 #pragma once
 
-#include "Item.h"
 #include "FileDialog.h"
-#include <QScrollArea>
+#include "Item.h"
 #include <QComboBox>
 #include <QFormLayout>
 #include <QLabel>
 #include <QMetaEnum>
+#include <QScrollArea>
 
 namespace Ui {
-class GroupProperties;
-class BufferProperties;
-class BlockProperties;
-class FieldProperties;
-class ProgramProperties;
-class ShaderProperties;
-class StreamProperties;
-class AttributeProperties;
-class TargetProperties;
-class ScriptProperties;
-}
+    class GroupProperties;
+    class BufferProperties;
+    class BlockProperties;
+    class FieldProperties;
+    class ProgramProperties;
+    class ShaderProperties;
+    class StreamProperties;
+    class AttributeProperties;
+    class TargetProperties;
+    class ScriptProperties;
+} // namespace Ui
 
 class QStackedWidget;
 class QDataWidgetMapper;
@@ -59,7 +59,7 @@ private:
     void deduceBlockOffset();
     void deduceBlockRowCount();
     void deduceShaderType();
-    IEditor* openEditor(const FileItem &fileItem);
+    IEditor *openEditor(const FileItem &fileItem);
     void fillComboBoxes();
     void switchToCurrentFileItemDirectory();
 
@@ -71,23 +71,22 @@ private:
     QScopedPointer<Ui::BlockProperties> mBlockProperties;
     QScopedPointer<Ui::BufferProperties> mBufferProperties;
     QScopedPointer<Ui::FieldProperties> mFieldProperties;
-    TextureProperties *mTextureProperties{ };
+    TextureProperties *mTextureProperties{};
     QScopedPointer<Ui::ProgramProperties> mProgramProperties;
     QScopedPointer<Ui::ShaderProperties> mShaderProperties;
-    BindingProperties *mBindingProperties{ };
+    BindingProperties *mBindingProperties{};
     QScopedPointer<Ui::AttributeProperties> mAttributeProperties;
     QScopedPointer<Ui::TargetProperties> mTargetProperties;
     QScopedPointer<Ui::StreamProperties> mStreamProperties;
-    AttachmentProperties *mAttachmentProperties{ };
-    CallProperties *mCallProperties{ };
+    AttachmentProperties *mAttachmentProperties{};
+    CallProperties *mCallProperties{};
     QScopedPointer<Ui::ScriptProperties> mScriptProperties;
 };
 
 QString splitPascalCase(QString str);
-void setFormVisibility(QFormLayout *layout, QLabel *label,
-    QWidget *widget, bool visible);
-void setFormEnabled(QLabel *label,
-    QWidget *widget, bool enabled);
+void setFormVisibility(QFormLayout *layout, QLabel *label, QWidget *widget,
+    bool visible);
+void setFormEnabled(QLabel *label, QWidget *widget, bool enabled);
 
 template <typename T>
 void fillComboBox(QComboBox *c, bool keepPascalCase = false)
@@ -102,10 +101,10 @@ void fillComboBox(QComboBox *c, bool keepPascalCase = false)
 }
 
 template <typename T>
-void fillComboBox(QComboBox *c, std::initializer_list<std::pair<const char*, T>> items)
+void fillComboBox(QComboBox *c,
+    std::initializer_list<std::pair<const char *, T>> items)
 {
     for (const auto &kv : items)
         if (kv.first)
             c->addItem(kv.first, kv.second);
 }
-

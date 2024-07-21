@@ -1,8 +1,8 @@
 #pragma once
 
+#include <QSet>
 #include <QSharedPointer>
 #include <QString>
-#include <QSet>
 #include <chrono>
 
 using ItemId = int;
@@ -10,8 +10,7 @@ using MessageId = qulonglong;
 using MessagePtr = QSharedPointer<const struct Message>;
 using MessagePtrSet = QSet<MessagePtr>;
 
-enum MessageType
-{
+enum MessageType {
     OpenGLVersionNotAvailable,
     LoadingFileFailed,
     UnsupportedShaderType,
@@ -66,14 +65,12 @@ struct Message
     int line;
 };
 
-namespace MessageList
-{
+namespace MessageList {
     MessagePtr insert(QString fileName, int line, MessageType type,
         QString text = "", bool deduplicate = true);
-    MessagePtr insert(ItemId itemId, MessageType type,
-        QString text = "", bool deduplicate = true);
+    MessagePtr insert(ItemId itemId, MessageType type, QString text = "",
+        bool deduplicate = true);
     QList<MessagePtr> messages();
-};
+}; // namespace MessageList
 
 QString formatDuration(const std::chrono::duration<double> &duration);
-

@@ -5,7 +5,7 @@
 
 namespace {
     template <typename It>
-    bool skip(It &it, const It &end,char c)
+    bool skip(It &it, const It &end, char c)
     {
         if (it != end && *it == c) {
             ++it;
@@ -15,7 +15,7 @@ namespace {
     }
 
     template <typename It>
-    bool skip(It &it, const It &end, const char* str)
+    bool skip(It &it, const It &end, const char *str)
     {
         const auto start = it;
         while (*str) {
@@ -46,11 +46,9 @@ namespace {
         while (it != end) {
             if (skip(it, end, '\\')) {
                 afterEscape = true;
-            }
-            else {
-                if (skip(it, end, "\r\n") ||
-                    skip(it, end, "\n\r") ||
-                    skip(it, end, '\n')) {
+            } else {
+                if (skip(it, end, "\r\n") || skip(it, end, "\n\r")
+                    || skip(it, end, '\n')) {
                     if (!afterEscape)
                         return true;
                 }
@@ -101,13 +99,11 @@ namespace {
         while (it != end) {
             if (*it == '(') {
                 ++parenthesesLevel;
-            }
-            else if (*it == ')') {
+            } else if (*it == ')') {
                 --parenthesesLevel;
                 if (parenthesesLevel < 0)
                     break;
-            }
-            else if (parenthesesLevel == 0 && *it == ',') {
+            } else if (parenthesesLevel == 0 && *it == ',') {
                 break;
             }
             ++it;
@@ -121,19 +117,19 @@ namespace {
             ++it;
     }
 
-
     bool isPartOfIdentifier(QChar c)
     {
         return (c.isLetterOrNumber() || c == '_');
     }
 
     template <typename It>
-    bool skipUntilIdentifier(It &it, const It &begin, const It &end, const char *identifier)
+    bool skipUntilIdentifier(It &it, const It &begin, const It &end,
+        const char *identifier)
     {
         while (skipUntil(it, end, identifier)) {
             const auto identifierBegin = std::prev(it, std::strlen(identifier));
-            const auto startOfToken = (identifierBegin == begin ||
-                                       !isPartOfIdentifier(*std::prev(identifierBegin)));
+            const auto startOfToken = (identifierBegin == begin
+                || !isPartOfIdentifier(*std::prev(identifierBegin)));
             const auto endOfToken = (it != end && !isPartOfIdentifier(*it));
             if (startOfToken && endOfToken)
                 return true;
@@ -150,7 +146,8 @@ namespace {
     bool containsIdentifier(const QString &string, const char *identifier)
     {
         auto it = string.begin();
-        return skipUntilIdentifier(it, string.begin(), string.end(), identifier);
+        return skipUntilIdentifier(it, string.begin(), string.end(),
+            identifier);
     }
 
     QString blankComments(QString string)
@@ -168,21 +165,18 @@ namespace {
             const auto commentBegin = it - 1;
             if (skip(it, end, '/')) {
                 skipLine(it, end);
-            }
-            else if (skip(it, end, '*')) {
+            } else if (skip(it, end, '*')) {
                 skipUntil(it, end, "*/");
-            }
-            else {
+            } else {
                 continue;
             }
-            std::replace_if(commentBegin, it,
-                [](QChar c) { return !c.isSpace(); },
-                ' ');
+            std::replace_if(
+                commentBegin, it, [](QChar c) { return !c.isSpace(); }, ' ');
         }
         return string;
     }
 
-    QString unquoteString(QStringView string) 
+    QString unquoteString(QStringView string)
     {
         auto it = string.begin();
         const auto end = string.end();
@@ -190,11 +184,9 @@ namespace {
         auto result = QString();
         while (it != end) {
             if (skip(it, end, "\\\\")) {
-            }
-            else if (skip(it, end, '"')) {
+            } else if (skip(it, end, '"')) {
                 inside = !inside;
-            }
-            else {
+            } else {
                 if (inside)
                     result.append(*it);
                 ++it;
@@ -217,7 +209,7 @@ namespace {
         const auto end = source.end();
         while (skipUntilIdentifier(it, source.begin(), end, "printf")) {
             const auto statementBegin = std::prev(it, 6);
-            auto call = PrintfCall{ };
+            auto call = PrintfCall{};
             skipSpace(it, end);
             if (skip(it, end, '(')) {
                 skipSpace(it, end);
@@ -259,7 +251,7 @@ namespace {
     }
 } // namespace
 
-QString ShaderPrintf::preambleGLSL() 
+QString ShaderPrintf::preambleGLSL()
 {
     return QStringLiteral(R"(
 
@@ -381,7 +373,7 @@ void _printf(dmat4x4 m) { _printf(mat4x4(m)); }
 )");
 }
 
-QString ShaderPrintf::preambleHLSL() 
+QString ShaderPrintf::preambleHLSL()
 {
     return QStringLiteral(R"(
 
@@ -564,21 +556,27 @@ QString ShaderPrintf::patchSource(Shader::ShaderType stage,
     auto prevOffset = 0;
     auto patchedSource = QString();
     for (const auto &call : calls) {
-        const auto offset = std::distance(sourceWithoutComments.begin(), call.statement.begin());
-        patchedSource += QString(source.data() + prevOffset, offset - prevOffset);
+        const auto offset = std::distance(sourceWithoutComments.begin(),
+            call.statement.begin());
+        patchedSource +=
+            QString(source.data() + prevOffset, offset - prevOffset);
         patchedSource += QStringLiteral("(printfEnabled ? _printfBegin(%1, %2)")
-            .arg(mFormatStrings.size()).arg(call.arguments.size());
+                             .arg(mFormatStrings.size())
+                             .arg(call.arguments.size());
         for (const auto &argument : call.arguments)
             patchedSource += QStringLiteral(", _printf(%1)").arg(argument);
         patchedSource += ", 1 : 0)";
-        patchedSource += QString(countLines(call.statement.begin(), call.statement.end()), '\n');
+        patchedSource += QString(
+            countLines(call.statement.begin(), call.statement.end()), '\n');
         auto formatString = parseFormatString(call.formatString);
         formatString.fileName = fileName;
-        formatString.line = countLines(sourceWithoutComments.begin(), call.statement.begin());
+        formatString.line =
+            countLines(sourceWithoutComments.begin(), call.statement.begin());
         mFormatStrings.append(formatString);
         prevOffset = offset + call.statement.size();
     }
-    patchedSource += QString(source.data() + prevOffset, source.size() - prevOffset);
+    patchedSource +=
+        QString(source.data() + prevOffset, source.size() - prevOffset);
     return patchedSource;
 }
 
@@ -591,7 +589,7 @@ auto ShaderPrintf::initializeHeader() -> BufferHeader
 
 auto ShaderPrintf::parseFormatString(QStringView string_) -> ParsedFormatString
 {
-    auto parsed = ParsedFormatString{ };
+    auto parsed = ParsedFormatString{};
 
     const auto string = unquoteString(string_);
     auto it = string.begin();
@@ -614,8 +612,8 @@ auto ShaderPrintf::parseFormatString(QStringView string_) -> ParsedFormatString
             valid = std::strchr("diufFeEgGxXoaA", it->toLatin1());
             ++it;
         }
-        parsed.argumentFormats.append(valid ?
-            QStringView(formatBegin, it).toString() : "%%");
+        parsed.argumentFormats.append(
+            valid ? QStringView(formatBegin, it).toString() : "%%");
         textBegin = it;
     }
     parsed.text.append(QStringView(textBegin, end).toString());
@@ -623,20 +621,24 @@ auto ShaderPrintf::parseFormatString(QStringView string_) -> ParsedFormatString
 }
 
 QString ShaderPrintf::formatMessage(const ParsedFormatString &format,
-        const QList<Argument>& arguments)
+    const QList<Argument> &arguments)
 {
     Q_ASSERT(!format.text.empty());
     Q_ASSERT(format.text.size() == format.argumentFormats.size() + 1);
 
     auto buffer = std::array<char, 64>();
     const auto formatUInt = [&](const QString &format, uint32_t value) {
-        snprintf(buffer.data(), buffer.size(), format.toLatin1().constData(), value);
+        snprintf(buffer.data(), buffer.size(), format.toLatin1().constData(),
+            value);
         return buffer.data();
     };
     const auto formatFloat = [&](const QString &format, uint32_t value) {
-        union { uint32_t u; float f; } unionCast { value };
-        snprintf(buffer.data(), buffer.size(), 
-            format.toLatin1().constData(), unionCast.f);
+        union {
+            uint32_t u;
+            float f;
+        } unionCast{ value };
+        snprintf(buffer.data(), buffer.size(), format.toLatin1().constData(),
+            unionCast.f);
         return buffer.data();
     };
 
@@ -651,10 +653,11 @@ QString ShaderPrintf::formatMessage(const ParsedFormatString &format,
             auto j = 0;
             for (const auto &value : argument.values) {
                 if (j > 0)
-                    string += (columnCount && j % columnCount == 0 ? "/" : ", ");
-                string += (isFloatType(argument.type) ? 
-                    formatFloat(argumentFormat, value) : 
-                    formatUInt(argumentFormat, value));
+                    string +=
+                        (columnCount && j % columnCount == 0 ? "/" : ", ");
+                string += (isFloatType(argument.type)
+                        ? formatFloat(argumentFormat, value)
+                        : formatUInt(argumentFormat, value));
                 ++j;
             }
             if (argument.values.size() > 1)
@@ -665,19 +668,19 @@ QString ShaderPrintf::formatMessage(const ParsedFormatString &format,
     return string;
 }
 
-MessagePtrSet ShaderPrintf::formatMessages(ItemId callItemId, 
+MessagePtrSet ShaderPrintf::formatMessages(ItemId callItemId,
     const BufferHeader &header, std::span<const uint32_t> data)
 {
     const auto count = data.size();
     auto readOutside = false;
-    const auto read = [&](auto offset) -> uint32_t { 
+    const auto read = [&](auto offset) -> uint32_t {
         if (offset < count)
             return data[offset];
         readOutside = true;
-        return { };
+        return {};
     };
 
-    auto messages = MessagePtrSet{ };
+    auto messages = MessagePtrSet{};
     const auto lastBegin = header.prevBegin;
     for (auto offset = data[0];;) {
         const auto lastMessage = (offset == lastBegin);
@@ -690,7 +693,7 @@ MessagePtrSet ShaderPrintf::formatMessages(ItemId callItemId,
             auto argumentOffset = read(offset++);
             const auto argumentType = read(argumentOffset++);
             const auto argumentComponents = argumentType % 100;
-            auto argument = Argument{ argumentType, { } };
+            auto argument = Argument{ argumentType, {} };
             for (auto j = 0u; j < argumentComponents; ++j)
                 argument.values.append(read(argumentOffset++));
             arguments.append(argument);
@@ -698,8 +701,9 @@ MessagePtrSet ShaderPrintf::formatMessages(ItemId callItemId,
         if (readOutside)
             break;
 
-        messages += MessageList::insert(formatString.fileName, formatString.line,
-            MessageType::ShaderInfo, formatMessage(formatString, arguments), false);
+        messages += MessageList::insert(formatString.fileName,
+            formatString.line, MessageType::ShaderInfo,
+            formatMessage(formatString, arguments), false);
 
         if (lastMessage)
             break;
@@ -708,7 +712,8 @@ MessagePtrSet ShaderPrintf::formatMessages(ItemId callItemId,
     }
 
     if (readOutside)
-        messages += MessageList::insert(callItemId, MessageType::TooManyPrintfCalls);
+        messages +=
+            MessageList::insert(callItemId, MessageType::TooManyPrintfCalls);
 
     return messages;
 }

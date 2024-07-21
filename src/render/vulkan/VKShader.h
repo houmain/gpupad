@@ -7,10 +7,11 @@
 class VKShader : public ShaderBase
 {
 public:
-    VKShader(Shader::ShaderType type, const QList<const Shader*> &shaders,
+    VKShader(Shader::ShaderType type, const QList<const Shader *> &shaders,
         const QString &preamble, const QString &includePaths);
 
-    bool compile(KDGpu::Device &device, VKPrintf *printf, int shiftBindingsInSet0);
+    bool compile(KDGpu::Device &device, VKPrintf *printf,
+        int shiftBindingsInSet0);
     const Spirv::Interface &interface() const { return mInterface; }
     KDGpu::ShaderStage getShaderStage() const;
     int getMaxBindingInSet0() const;

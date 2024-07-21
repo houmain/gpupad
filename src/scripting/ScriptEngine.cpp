@@ -1,13 +1,10 @@
 
 #include "ScriptEngine.h"
 
-ScriptEngine::ScriptEngine(QObject *parent)
-  : QObject(parent)
-{
-}
+ScriptEngine::ScriptEngine(QObject *parent) : QObject(parent) { }
 
-ScriptValueList ScriptEngine::evaluateValues(const QStringList &valueExpressions,
-    ItemId itemId, MessagePtrSet &messages)
+ScriptValueList ScriptEngine::evaluateValues(
+    const QStringList &valueExpressions, ItemId itemId, MessagePtrSet &messages)
 {
     auto values = QList<double>();
     for (const QString &valueExpression : valueExpressions) {
@@ -29,14 +26,15 @@ ScriptValueList ScriptEngine::evaluateValues(const QStringList &valueExpressions
 }
 
 ScriptValue ScriptEngine::evaluateValue(const QString &valueExpression,
-    ItemId itemId, MessagePtrSet &messages) 
+    ItemId itemId, MessagePtrSet &messages)
 {
     const auto values = evaluateValues(valueExpression, itemId, messages);
     return (values.isEmpty() ? 0.0 : values.first());
 }
 
-int ScriptEngine::evaluateInt(const QString &valueExpression,
-      ItemId itemId, MessagePtrSet &messages)
+int ScriptEngine::evaluateInt(const QString &valueExpression, ItemId itemId,
+    MessagePtrSet &messages)
 {
-    return static_cast<int>(evaluateValue(valueExpression, itemId, messages) + 0.5);
+    return static_cast<int>(
+        evaluateValue(valueExpression, itemId, messages) + 0.5);
 }

@@ -10,8 +10,8 @@ public:
     Style();
 
     QIcon standardIcon(StandardPixmap standardIcon,
-                       const QStyleOption *opt = nullptr,
-                       const QWidget *widget = nullptr) const override;
+        const QStyleOption *opt = nullptr,
+        const QWidget *widget = nullptr) const override;
 
     QPixmap generatedIconPixmap(QIcon::Mode iconMode, const QPixmap &pixmap,
         const QStyleOption *opt) const override;

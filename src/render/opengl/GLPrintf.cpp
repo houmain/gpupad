@@ -4,7 +4,7 @@
 void GLPrintf::clear()
 {
 #if GL_VERSION_4_3
-    auto& gl = GLContext::currentContext();
+    auto &gl = GLContext::currentContext();
     const auto createBuffer = [&]() {
         auto buffer = GLuint{};
         gl.glGenBuffers(1, &buffer);
@@ -19,8 +19,8 @@ void GLPrintf::clear()
         mBufferObject = GLObject(createBuffer(), freeBuffer);
         gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferObject);
         gl.glBufferData(GL_SHADER_STORAGE_BUFFER,
-            maxBufferValues * sizeof(uint32_t) + sizeof(BufferHeader),
-            nullptr, GL_STREAM_READ);
+            maxBufferValues * sizeof(uint32_t) + sizeof(BufferHeader), nullptr,
+            GL_STREAM_READ);
     }
 
     auto header = initializeHeader();
@@ -33,20 +33,21 @@ MessagePtrSet GLPrintf::formatMessages(ItemId callItemId)
 {
 #if GL_VERSION_4_3
     auto &gl = GLContext::currentContext();
-    auto header = BufferHeader{ };
+    auto header = BufferHeader{};
     gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferObject);
     gl.glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(header), &header);
-    const auto count = (header.offset > maxBufferValues ? maxBufferValues : header.offset);
+    const auto count =
+        (header.offset > maxBufferValues ? maxBufferValues : header.offset);
     if (count <= 1)
-        return { };
+        return {};
 
     auto data = std::vector<uint32_t>(count);
-    gl.glGetBufferSubData(GL_SHADER_STORAGE_BUFFER,
-        sizeof(BufferHeader), count * sizeof(uint32_t), data.data());
+    gl.glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(BufferHeader),
+        count * sizeof(uint32_t), data.data());
     gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, GL_NONE);
 
     return ShaderPrintf::formatMessages(callItemId, header, data);
 #else
-    return { };
+    return {};
 #endif // GL_VERSION_4_3
 }

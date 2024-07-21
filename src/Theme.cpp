@@ -1,15 +1,14 @@
 
 #include "Theme.h"
 #include "FileDialog.h"
-#include <QFile>
-#include <QTextStream>
 #include <QApplication>
+#include <QFile>
+#include <QMap>
 #include <QRegularExpression>
 #include <QStyle>
-#include <QMap>
+#include <QTextStream>
 
-namespace 
-{
+namespace {
     QMap<QString, Theme> gThemes;
 
     // base00 - Default Background
@@ -29,7 +28,7 @@ namespace
     // base0E - Keywords, Storage, Selector, Markup Italic, Diff Changed
     // base0F - Deprecated, Opening/Closing Embedded Language Tags, e.g. <?php ?>
 
-    struct Base16Theme 
+    struct Base16Theme
     {
         QString name;
         QString author;
@@ -40,11 +39,11 @@ namespace
     {
         auto file = QFile(fileName);
         if (!file.open(QFile::ReadOnly | QFile::Text))
-            return { };
+            return {};
         const auto lines = QTextStream(&file).readAll().split("\n");
         if (lines.size() < 18)
-            return { };
-        auto theme = Base16Theme{ };
+            return {};
+        auto theme = Base16Theme{};
         static const auto extractString = QRegularExpression("\"([^\"]+)\"");
         theme.name = extractString.match(lines[0]).captured(1);
         theme.author = extractString.match(lines[1]).captured(1);
@@ -54,7 +53,7 @@ namespace
         return theme;
     }
 
-    bool isDarkColor(const QColor &color) 
+    bool isDarkColor(const QColor &color)
     {
         return (color.value() < 128);
     }
@@ -66,35 +65,37 @@ namespace
 
     QColor middle(const QColor &a, const QColor &b)
     {
-        return QColor(
-            (a.red() + b.red()) / 2,
-            (a.green() + b.green()) / 2,
+        return QColor((a.red() + b.red()) / 2, (a.green() + b.green()) / 2,
             (a.blue() + b.blue()) / 2);
     }
 
     QPalette getThemePalette(const Base16Theme &theme)
     {
-        struct S { QPalette::ColorRole role; int baseIndex; };
+        struct S
+        {
+            QPalette::ColorRole role;
+            int baseIndex;
+        };
         const auto roles = std::initializer_list<S>{
-            { QPalette::WindowText,      0x05 },
-            { QPalette::Button,          0x00 },
-            { QPalette::Light,           0x00 }, // shadow of disabled menu entries
-            { QPalette::Midlight,        0x00 }, // unused
-            { QPalette::Dark,            0x00 }, // unused
-            { QPalette::Mid,             0x00 }, // unused
-            { QPalette::Text,            0x05 },
-            { QPalette::BrightText,      0x0A },
-            { QPalette::ButtonText,      0x05 },
-            { QPalette::Base,            0x00 },
-            { QPalette::Window,          0x00 },
-            { QPalette::Shadow,          0x00 }, // unused
-            { QPalette::Highlight,       0x02 },
+            { QPalette::WindowText, 0x05 },
+            { QPalette::Button, 0x00 },
+            { QPalette::Light, 0x00 }, // shadow of disabled menu entries
+            { QPalette::Midlight, 0x00 }, // unused
+            { QPalette::Dark, 0x00 }, // unused
+            { QPalette::Mid, 0x00 }, // unused
+            { QPalette::Text, 0x05 },
+            { QPalette::BrightText, 0x0A },
+            { QPalette::ButtonText, 0x05 },
+            { QPalette::Base, 0x00 },
+            { QPalette::Window, 0x00 },
+            { QPalette::Shadow, 0x00 }, // unused
+            { QPalette::Highlight, 0x02 },
             { QPalette::HighlightedText, 0x05 },
-            { QPalette::Link,            0x0A }, // unused
-            { QPalette::LinkVisited,     0x0A }, // unused
-            { QPalette::AlternateBase,   0x00 },
-            { QPalette::ToolTipBase,     0x01 },
-            { QPalette::ToolTipText,     0x04 },
+            { QPalette::Link, 0x0A }, // unused
+            { QPalette::LinkVisited, 0x0A }, // unused
+            { QPalette::AlternateBase, 0x00 },
+            { QPalette::ToolTipBase, 0x01 },
+            { QPalette::ToolTipText, 0x04 },
             { QPalette::PlaceholderText, 0x05 },
         };
         const auto dark = isDarkColor(theme.colors[0x00]);
@@ -102,11 +103,10 @@ namespace
         for (const auto [role, base] : roles) {
             auto color = theme.colors[base];
             switch (role) {
-                case QPalette::AlternateBase:
-                    color = color.lighter(dark ? 95 : 105);
-                    break;
-                default:
-                    break;
+            case QPalette::AlternateBase:
+                color = color.lighter(dark ? 95 : 105);
+                break;
+            default: break;
             }
             palette.setColor(QPalette::Active, role, color);
             palette.setColor(QPalette::Inactive, role, color);
@@ -116,7 +116,7 @@ namespace
         return palette;
     }
 
-    QMap<ThemeColor, QColor> getThemeColors(const Base16Theme &theme) 
+    QMap<ThemeColor, QColor> getThemeColors(const Base16Theme &theme)
     {
         const auto dark = isDarkColor(theme.colors[0]);
         auto colors = QMap<ThemeColor, QColor>();
@@ -128,11 +128,12 @@ namespace
         colors[ThemeColor::Quotation] = theme.colors[0x0B];
         colors[ThemeColor::Preprocessor] = theme.colors[0x0C];
         colors[ThemeColor::Comment] = theme.colors[0x03];
-        colors[ThemeColor::WhiteSpace] = theme.colors[0x05].lighter(dark ? 110 : 90);
+        colors[ThemeColor::WhiteSpace] =
+            theme.colors[0x05].lighter(dark ? 110 : 90);
         return colors;
     }
 
-    QMap<ThemeColor, QColor> getDefaultThemeColors(bool darkTheme) 
+    QMap<ThemeColor, QColor> getDefaultThemeColors(bool darkTheme)
     {
         auto colors = QMap<ThemeColor, QColor>();
         if (darkTheme) {
@@ -145,8 +146,7 @@ namespace
             colors[ThemeColor::Preprocessor] = QColor(0xC87FFF);
             colors[ThemeColor::Comment] = QColor(0x56C056);
             colors[ThemeColor::WhiteSpace] = QColor(0x666666);
-        }
-        else {
+        } else {
             colors[ThemeColor::Function] = QColor(0x000066);
             colors[ThemeColor::Keyword] = QColor(0x003C98);
             colors[ThemeColor::BuiltinFunction] = QColor(0x000066);
@@ -161,8 +161,7 @@ namespace
     }
 } // namespace
 
-Theme::Theme(const QString &fileName)
-    :  mFileName(fileName)
+Theme::Theme(const QString &fileName) : mFileName(fileName)
 {
     if (mFileName.isEmpty()) {
         mPalette = qApp->style()->standardPalette();
@@ -173,8 +172,7 @@ Theme::Theme(const QString &fileName)
             mPalette.setColor(QPalette::ToolTipBase, QColor(0x333333));
             mPalette.setColor(QPalette::ToolTipText, QColor(0xCCCCCC));
         }
-    }
-    else {
+    } else {
         const auto theme = loadBase16Theme(fileName);
         if (!theme.name.isNull()) {
             mName = theme.name;
@@ -196,7 +194,7 @@ const Theme &Theme::getTheme(const QString &fileName)
     auto it = gThemes.find(fileName);
     if (it == gThemes.end()) {
         auto theme = Theme(fileName);
-        if (theme.mColors.isEmpty()) 
+        if (theme.mColors.isEmpty())
             return getTheme("");
         it = gThemes.insert(fileName, std::move(theme));
     }

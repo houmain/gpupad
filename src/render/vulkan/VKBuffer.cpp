@@ -1,10 +1,9 @@
 #include "VKBuffer.h"
-#include "Singletons.h"
 #include "EvaluatedPropertyCache.h"
+#include "Singletons.h"
 #include <QScopeGuard>
 
-namespace
-{
+namespace {
     class TransferBuffer
     {
     private:
@@ -15,13 +14,14 @@ namespace
         {
             mBuffer = device.createBuffer({
                 .size = size,
-                .usage = KDGpu::BufferUsageFlagBits::TransferDstBit | 
-                         KDGpu::BufferUsageFlagBits::TransferSrcBit,
-                .memoryUsage = KDGpu::MemoryUsage::CpuOnly
+                .usage = KDGpu::BufferUsageFlagBits::TransferDstBit
+                    | KDGpu::BufferUsageFlagBits::TransferSrcBit,
+                .memoryUsage = KDGpu::MemoryUsage::CpuOnly,
             });
         }
 
-        bool download(VKContext &context, const KDGpu::Buffer &buffer, uint64_t size)
+        bool download(VKContext &context, const KDGpu::Buffer &buffer,
+            uint64_t size)
         {
             if (!buffer.isValid() || !mBuffer.isValid())
                 return false;
@@ -34,21 +34,14 @@ namespace
             return true;
         }
 
-        std::byte *map()
-        {
-            return static_cast<std::byte*>(mBuffer.map());
-        }
+        std::byte *map() { return static_cast<std::byte *>(mBuffer.map()); }
 
-        void unmap()
-        {
-            mBuffer.unmap();
-        }
+        void unmap() { mBuffer.unmap(); }
     };
 } // namespace
 
-bool downloadBuffer(VKContext &context, 
-    const KDGpu::Buffer &buffer, uint64_t size, 
-    std::function<void(const std::byte*)>&& callback)
+bool downloadBuffer(VKContext &context, const KDGpu::Buffer &buffer,
+    uint64_t size, std::function<void(const std::byte *)> &&callback)
 {
     auto transferBuffer = TransferBuffer(context.device, size);
 
@@ -59,7 +52,7 @@ bool downloadBuffer(VKContext &context,
         return false;
 
     auto commandBuffer = context.commandRecorder->finish();
-    context.queue.submit({ .commandBuffers = { commandBuffer} });
+    context.queue.submit({ .commandBuffers = { commandBuffer } });
     context.queue.waitUntilIdle();
 
     auto data = transferBuffer.map();
@@ -75,33 +68,32 @@ VKBuffer::VKBuffer(const Buffer &buffer, ScriptEngine &scriptEngine)
 {
     mUsedItems += buffer.id;
     for (const auto item : buffer.items)
-        if (auto block = static_cast<const Block*>(item)) {
+        if (auto block = static_cast<const Block *>(item)) {
             mUsedItems += block->id;
             for (const auto item : block->items)
-                if (auto field = static_cast<const Block*>(item))
+                if (auto field = static_cast<const Block *>(item))
                     mUsedItems += field->id;
         }
 }
 
 void VKBuffer::updateUntitledFilename(const VKBuffer &rhs)
 {
-    if (mSize == rhs.mSize &&
-        FileDialog::isEmptyOrUntitled(mFileName) &&
-        FileDialog::isEmptyOrUntitled(rhs.mFileName))
+    if (mSize == rhs.mSize && FileDialog::isEmptyOrUntitled(mFileName)
+        && FileDialog::isEmptyOrUntitled(rhs.mFileName))
         mFileName = rhs.mFileName;
 }
 
 bool VKBuffer::operator==(const VKBuffer &rhs) const
 {
-    return std::tie(mFileName, mSize, mMessages) ==
-           std::tie(rhs.mFileName, rhs.mSize,rhs.mMessages);
+    return std::tie(mFileName, mSize, mMessages)
+        == std::tie(rhs.mFileName, rhs.mSize, rhs.mMessages);
 }
 
 void VKBuffer::clear(VKContext &context)
 {
     context.commandRecorder->clearBuffer({
         .dstBuffer = getReadWriteBuffer(context),
-        .byteSize = static_cast<uint64_t>(mSize)
+        .byteSize = static_cast<uint64_t>(mSize),
     });
 }
 
@@ -110,7 +102,7 @@ void VKBuffer::copy(VKContext &context, VKBuffer &source)
     context.commandRecorder->copyBuffer({
         .src = source.getReadOnlyBuffer(context),
         .dst = getReadWriteBuffer(context),
-        .byteSize = static_cast<uint64_t>(mSize)
+        .byteSize = static_cast<uint64_t>(mSize),
     });
 }
 
@@ -139,7 +131,7 @@ const KDGpu::Buffer &VKBuffer::getReadWriteBuffer(VKContext &context)
     createBuffer(context.device);
     upload(context);
     mDeviceCopyModified = true;
-    return mBuffer;    
+    return mBuffer;
 }
 
 void VKBuffer::reload()
@@ -148,8 +140,8 @@ void VKBuffer::reload()
     if (!mFileName.isEmpty())
         if (!Singletons::fileCache().getBinary(mFileName, &mData))
             if (!FileDialog::isEmptyOrUntitled(mFileName))
-                mMessages += MessageList::insert(
-                    mItemId, MessageType::LoadingFileFailed, mFileName);
+                mMessages += MessageList::insert(mItemId,
+                    MessageType::LoadingFileFailed, mFileName);
 
     if (mSize > mData.size())
         mData.append(QByteArray(mSize - mData.size(), 0));
@@ -164,14 +156,14 @@ void VKBuffer::createBuffer(KDGpu::Device &device)
 
     mBuffer = device.createBuffer({
         .size = static_cast<KDGpu::DeviceSize>(mSize),
-        .usage = KDGpu::BufferUsageFlagBits::UniformBufferBit |
-                 KDGpu::BufferUsageFlagBits::StorageBufferBit |
-                 KDGpu::BufferUsageFlagBits::VertexBufferBit |
-                 KDGpu::BufferUsageFlagBits::IndexBufferBit |
-                 KDGpu::BufferUsageFlagBits::IndirectBufferBit |
-                 KDGpu::BufferUsageFlagBits::TransferSrcBit |
-                 KDGpu::BufferUsageFlagBits::TransferDstBit,
-        .memoryUsage = KDGpu::MemoryUsage::GpuOnly
+        .usage = KDGpu::BufferUsageFlagBits::UniformBufferBit
+            | KDGpu::BufferUsageFlagBits::StorageBufferBit
+            | KDGpu::BufferUsageFlagBits::VertexBufferBit
+            | KDGpu::BufferUsageFlagBits::IndexBufferBit
+            | KDGpu::BufferUsageFlagBits::IndirectBufferBit
+            | KDGpu::BufferUsageFlagBits::TransferSrcBit
+            | KDGpu::BufferUsageFlagBits::TransferDstBit,
+        .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
     });
 }
 
@@ -183,7 +175,7 @@ void VKBuffer::upload(VKContext &context)
     context.queue.waitForUploadBufferData({
         .destinationBuffer = mBuffer,
         .data = mData.constData(),
-        .byteSize = static_cast<KDGpu::DeviceSize>(mSize)
+        .byteSize = static_cast<KDGpu::DeviceSize>(mSize),
     });
     mSystemCopyModified = mDeviceCopyModified = false;
 }
@@ -195,15 +187,15 @@ bool VKBuffer::download(VKContext &context, bool checkModification)
 
     auto modified = false;
     if (!downloadBuffer(context, getReadOnlyBuffer(context), mSize,
-            [&](const void* data) {
-                if (!checkModification 
+            [&](const void *data) {
+                if (!checkModification
                     || std::memcmp(mData.data(), data, mData.size()) != 0) {
                     std::memcpy(mData.data(), data, mData.size());
                     modified = true;
                 }
             })) {
-        mMessages += MessageList::insert(
-            mItemId, MessageType::DownloadingImageFailed);
+        mMessages +=
+            MessageList::insert(mItemId, MessageType::DownloadingImageFailed);
         return false;
     }
 

@@ -4,14 +4,13 @@
 #include <QOpenGLTexture>
 
 #if !defined(GL_COMPUTE_SHADER)
-# define GL_COMPUTE_SHADER 0x91B9
+#  define GL_COMPUTE_SHADER 0x91B9
 #endif
 
 namespace ItemEnums {
     Q_NAMESPACE
 
-    enum class ItemType
-    {
+    enum class ItemType {
         Group,
         Buffer,
         Block,
@@ -86,69 +85,78 @@ namespace ItemEnums {
     Q_ENUM_NS(ComparisonFunc)
 
     enum BindingEditor {
-        Expression, Expression2, Expression3, Expression4,
-        Expression2x2, Expression2x3, Expression2x4,
-        Expression3x2, Expression3x3, Expression3x4,
-        Expression4x2, Expression4x3, Expression4x4,
+        Expression,
+        Expression2,
+        Expression3,
+        Expression4,
+        Expression2x2,
+        Expression2x3,
+        Expression2x4,
+        Expression3x2,
+        Expression3x3,
+        Expression3x4,
+        Expression4x2,
+        Expression4x3,
+        Expression4x4,
         Color
     };
     Q_ENUM_NS(BindingEditor)
 
     enum ImageBindingFormat {
-        Internal       = GL_NONE,
+        Internal = GL_NONE,
 
         // 8 bit
-        r8             = GL_R8,
-        r8ui           = GL_R8UI,
-        r8i            = GL_R8I,
+        r8 = GL_R8,
+        r8ui = GL_R8UI,
+        r8i = GL_R8I,
 
         // 16 bit
-        r16            = GL_R16,
-        r16_snorm      = GL_R16_SNORM, // not supported by glTexBuffer
-        r16f           = GL_R16F,
-        r16ui          = GL_R16UI,
-        r16i           = GL_R16I,
-        rg8            = GL_RG8,
-        rg8_snorm      = GL_RG8_SNORM, // not supported by glTexBuffer
-        rg8ui          = GL_RG8UI,
-        rg8i           = GL_RG8I,
+        r16 = GL_R16,
+        r16_snorm = GL_R16_SNORM, // not supported by glTexBuffer
+        r16f = GL_R16F,
+        r16ui = GL_R16UI,
+        r16i = GL_R16I,
+        rg8 = GL_RG8,
+        rg8_snorm = GL_RG8_SNORM, // not supported by glTexBuffer
+        rg8ui = GL_RG8UI,
+        rg8i = GL_RG8I,
 
         // 24 bit - not supported by glBindImageTexture
-        rgb32f         = GL_RGB32F,
-        rgb32i         = GL_RGB32I,
-        rgb32ui        = GL_RGB32UI,
+        rgb32f = GL_RGB32F,
+        rgb32i = GL_RGB32I,
+        rgb32ui = GL_RGB32UI,
 
         // 32 bit
-        r32f           = GL_R32F,
-        r32ui          = GL_R32UI,
-        r32i           = GL_R32I,
-        rg16           = GL_RG16,
-        rg16_snorm     = GL_RG16_SNORM, // not supported by glTexBuffer
-        rg16ui         = GL_RG16UI,
-        rg16i          = GL_RG16I,
-        rg16f          = GL_RG16F,
-        rgba8          = GL_RGBA8,
-        rgba8_snorm    = GL_RGBA8_SNORM, // not supported by glTexBuffer
-        rgba8ui        = GL_RGBA8UI,
-        rgba8i         = GL_RGBA8I,
-        rgb10_a2       = GL_RGB10_A2, // not supported by glTexBuffer
-        rgb10_a2ui     = GL_RGB10_A2UI, // not supported by glTexBuffer
+        r32f = GL_R32F,
+        r32ui = GL_R32UI,
+        r32i = GL_R32I,
+        rg16 = GL_RG16,
+        rg16_snorm = GL_RG16_SNORM, // not supported by glTexBuffer
+        rg16ui = GL_RG16UI,
+        rg16i = GL_RG16I,
+        rg16f = GL_RG16F,
+        rgba8 = GL_RGBA8,
+        rgba8_snorm = GL_RGBA8_SNORM, // not supported by glTexBuffer
+        rgba8ui = GL_RGBA8UI,
+        rgba8i = GL_RGBA8I,
+        rgb10_a2 = GL_RGB10_A2, // not supported by glTexBuffer
+        rgb10_a2ui = GL_RGB10_A2UI, // not supported by glTexBuffer
         r11f_g11f_b10f = GL_R11F_G11F_B10F, // not supported by glTexBuffer
 
         // 64 bit
-        rg32f          = GL_RG32F,
-        rg32ui         = GL_RG32UI,
-        rg32i          = GL_RG32I,
-        rgba16         = GL_RGBA16,
-        rgba16_snorm   = GL_RGBA16_SNORM, // not supported by glTexBuffer
-        rgba16f        = GL_RGBA16F,
-        rgba16ui       = GL_RGBA16UI,
-        rgba16i        = GL_RGBA16I,
+        rg32f = GL_RG32F,
+        rg32ui = GL_RG32UI,
+        rg32i = GL_RG32I,
+        rgba16 = GL_RGBA16,
+        rgba16_snorm = GL_RGBA16_SNORM, // not supported by glTexBuffer
+        rgba16f = GL_RGBA16F,
+        rgba16ui = GL_RGBA16UI,
+        rgba16i = GL_RGBA16I,
 
         // 128 bit
-        rgba32f        = GL_RGBA32F,
-        rgba32i        = GL_RGBA32I,
-        rgba32ui       = GL_RGBA32UI,
+        rgba32f = GL_RGBA32F,
+        rgba32i = GL_RGBA32I,
+        rgba32ui = GL_RGBA32UI,
     };
     Q_ENUM_NS(ImageBindingFormat)
 
@@ -244,7 +252,7 @@ namespace ItemEnums {
         EveryEvaluation,
     };
     Q_ENUM_NS(ExecuteOn)
-}
+} // namespace ItemEnums
 
 // enums moved to another namespace because of name clashes
 namespace ItemEnums2 {
@@ -278,5 +286,4 @@ namespace ItemEnums2 {
         Invert = GL_INVERT,
     };
     Q_ENUM_NS(StencilOperation)
-}
-
+} // namespace ItemEnums2

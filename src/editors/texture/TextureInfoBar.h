@@ -1,10 +1,10 @@
 #pragma once
 
-#include <QWidget>
 #include "Range.h"
+#include <QWidget>
 
 namespace Ui {
-class TextureInfoBar;
+    class TextureInfoBar;
 }
 
 class Histogram;
@@ -48,8 +48,7 @@ private:
 
     Ui::TextureInfoBar *ui;
     Histogram *mHistogram;
-    bool mIsPickerEnabled{ };
-    Range mHistogramBounds{ };
-    unsigned int mColorMask{ };
+    bool mIsPickerEnabled{};
+    Range mHistogramBounds{};
+    unsigned int mColorMask{};
 };
-

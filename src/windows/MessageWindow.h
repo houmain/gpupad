@@ -1,8 +1,8 @@
 #pragma once
 
 #include "MessageList.h"
-#include <QTableWidget>
 #include <QMutex>
+#include <QTableWidget>
 
 class QTimer;
 
@@ -32,4 +32,3 @@ private:
     QIcon mErrorIcon;
     QList<MessageId> mMessageIds;
 };
-

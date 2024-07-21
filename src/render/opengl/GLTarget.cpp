@@ -17,7 +17,8 @@ GLTarget::GLTarget(const Target &target)
     auto attachmentIndex = 0;
     for (const auto &item : target.items) {
         if (auto attachment = castItem<Attachment>(item)) {
-            static_cast<Attachment&>(mAttachments[attachmentIndex]) = *attachment;
+            static_cast<Attachment &>(mAttachments[attachmentIndex]) =
+                *attachment;
             mUsedItems += attachment->id;
         }
         attachmentIndex++;
@@ -66,7 +67,7 @@ bool GLTarget::create()
 
     auto &gl = GLContext::currentContext();
     auto createFBO = [&]() {
-        auto fbo = GLuint{ };
+        auto fbo = GLuint{};
         gl.glGenFramebuffers(1, &fbo);
         return fbo;
     };
@@ -87,26 +88,24 @@ bool GLTarget::create()
             if (kind.depth && kind.stencil) {
                 attachment.attachmentPoint = GL_DEPTH_STENCIL_ATTACHMENT;
                 level = 0;
-            }
-            else if (kind.depth) {
+            } else if (kind.depth) {
                 attachment.attachmentPoint = GL_DEPTH_ATTACHMENT;
                 level = 0;
-            }
-            else if (kind.stencil) {
+            } else if (kind.stencil) {
                 attachment.attachmentPoint = GL_STENCIL_ATTACHMENT;
                 level = 0;
-            }
-            else {
+            } else {
                 attachment.attachmentPoint = nextColorAttachment++;
             }
 
             if (kind.array && attachment.layer >= 0) {
-                gl.glFramebufferTextureLayer(GL_FRAMEBUFFER, attachment.attachmentPoint,
-                    texture->getReadOnlyTextureId(), level, attachment.layer);
-            }
-            else {
-                gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment.attachmentPoint,
-                    texture->getReadOnlyTextureId(), level);
+                gl.glFramebufferTextureLayer(GL_FRAMEBUFFER,
+                    attachment.attachmentPoint, texture->getReadOnlyTextureId(),
+                    level, attachment.layer);
+            } else {
+                gl.glFramebufferTexture(GL_FRAMEBUFFER,
+                    attachment.attachmentPoint, texture->getReadOnlyTextureId(),
+                    level);
             }
             mUsedItems += texture->usedItems();
         }
@@ -114,10 +113,14 @@ bool GLTarget::create()
 #if GL_VERSION_4_3
     auto gl43 = gl.v4_3;
     if (gl43 && mAttachments.empty()) {
-        gl43->glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_WIDTH, mDefaultWidth);
-        gl43->glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_HEIGHT, mDefaultHeight);
-        gl43->glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_LAYERS, mDefaultLayers);
-        gl43->glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_SAMPLES, mDefaultSamples);
+        gl43->glFramebufferParameteri(GL_FRAMEBUFFER,
+            GL_FRAMEBUFFER_DEFAULT_WIDTH, mDefaultWidth);
+        gl43->glFramebufferParameteri(GL_FRAMEBUFFER,
+            GL_FRAMEBUFFER_DEFAULT_HEIGHT, mDefaultHeight);
+        gl43->glFramebufferParameteri(GL_FRAMEBUFFER,
+            GL_FRAMEBUFFER_DEFAULT_LAYERS, mDefaultLayers);
+        gl43->glFramebufferParameteri(GL_FRAMEBUFFER,
+            GL_FRAMEBUFFER_DEFAULT_SAMPLES, mDefaultSamples);
     }
 #endif
 
@@ -125,10 +128,14 @@ bool GLTarget::create()
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         mMessages += MessageList::insert(mItemId,
             MessageType::CreatingFramebufferFailed,
-            (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT ? "(incomplete attachment)" :
-             status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT ? "(missing attachment)" :
-             status == GL_FRAMEBUFFER_UNSUPPORTED ? "(unsupported)" :
-             status == GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE ? "(sample mismatch)" : ""));
+            (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT
+                    ? "(incomplete attachment)"
+                    : status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT
+                    ? "(missing attachment)"
+                    : status == GL_FRAMEBUFFER_UNSUPPORTED ? "(unsupported)"
+                    : status == GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE
+                    ? "(sample mismatch)"
+                    : ""));
         mFramebufferObject.reset();
     }
     gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
@@ -143,8 +150,7 @@ void GLTarget::applyStates()
     if (mCullMode != Target::CullMode::NoCulling) {
         gl.glEnable(GL_CULL_FACE);
         gl.glCullFace(mCullMode);
-    }
-    else {
+    } else {
         gl.glDisable(GL_CULL_FACE);
     }
 
@@ -153,12 +159,10 @@ void GLTarget::applyStates()
     if (mLogicOperation != Target::LogicOperation::NoLogicOperation) {
         gl.glEnable(GL_COLOR_LOGIC_OP);
         gl.glLogicOp(mLogicOperation);
-    }
-    else {
+    } else {
         gl.glDisable(GL_COLOR_LOGIC_OP);
     }
-    gl.glBlendColor(
-        static_cast<float>(mBlendConstant.redF()),
+    gl.glBlendColor(static_cast<float>(mBlendConstant.redF()),
         static_cast<float>(mBlendConstant.greenF()),
         static_cast<float>(mBlendConstant.blueF()),
         static_cast<float>(mBlendConstant.alphaF()));
@@ -168,15 +172,16 @@ void GLTarget::applyStates()
         auto minHeight = 0;
         for (const GLAttachment &attachment : qAsConst(mAttachments))
             if (auto texture = attachment.texture) {
-                const auto width = std::max(texture->width() >> attachment.level, 1);
-                const auto height = std::max(texture->height() >> attachment.level, 1);
+                const auto width =
+                    std::max(texture->width() >> attachment.level, 1);
+                const auto height =
+                    std::max(texture->height() >> attachment.level, 1);
                 minWidth = (!minWidth ? width : std::min(minWidth, width));
                 minHeight = (!minHeight ? height : std::min(minHeight, height));
                 applyAttachmentStates(attachment);
             }
         gl.glViewport(0, 0, minWidth, minHeight);
-    }
-    else {
+    } else {
         gl.glViewport(0, 0, mDefaultWidth, mDefaultHeight);
     }
 }
@@ -193,19 +198,17 @@ void GLTarget::applyAttachmentStates(const GLAttachment &a)
             gl.glBlendEquationSeparate(a.blendColorEq, a.blendAlphaEq);
             gl.glBlendFuncSeparate(a.blendColorSource, a.blendColorDest,
                 a.blendAlphaSource, a.blendAlphaDest);
-        }
-        else if (auto gl40 = check(gl.v4_0, mItemId, mMessages)) {
+        } else if (auto gl40 = check(gl.v4_0, mItemId, mMessages)) {
             gl40->glEnablei(GL_BLEND, index);
-            gl40->glBlendEquationSeparatei(index, a.blendColorEq, a.blendAlphaEq);
-            gl40->glBlendFuncSeparatei(index, a.blendColorSource, a.blendColorDest,
-                a.blendAlphaSource, a.blendAlphaDest);
+            gl40->glBlendEquationSeparatei(index, a.blendColorEq,
+                a.blendAlphaEq);
+            gl40->glBlendFuncSeparatei(index, a.blendColorSource,
+                a.blendColorDest, a.blendAlphaSource, a.blendAlphaDest);
         }
 
         auto isSet = [](auto v, auto bit) { return (v & (1 << bit)) != 0; };
-        gl.glColorMaski(index,
-            isSet(a.colorWriteMask, 0),
-            isSet(a.colorWriteMask, 1),
-            isSet(a.colorWriteMask, 2),
+        gl.glColorMaski(index, isSet(a.colorWriteMask, 0),
+            isSet(a.colorWriteMask, 1), isSet(a.colorWriteMask, 2),
             isSet(a.colorWriteMask, 3));
     }
 
@@ -215,8 +218,7 @@ void GLTarget::applyAttachmentStates(const GLAttachment &a)
         gl.glEnable(GL_POLYGON_OFFSET_POINT);
         gl.glEnable(GL_POLYGON_OFFSET_LINE);
         gl.glEnable(GL_POLYGON_OFFSET_FILL);
-        gl.glPolygonOffset(
-            static_cast<float>(a.depthOffsetSlope),
+        gl.glPolygonOffset(static_cast<float>(a.depthOffsetSlope),
             static_cast<float>(a.depthOffsetConstant));
         if (a.depthClamp)
             gl.glEnable(GL_DEPTH_CLAMP);

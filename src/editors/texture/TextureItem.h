@@ -1,7 +1,7 @@
 #pragma once
 
-#include "TextureData.h"
 #include "Range.h"
+#include "TextureData.h"
 #include <QObject>
 #include <QOpenGLTexture>
 
@@ -22,24 +22,48 @@ public:
     void setPreviewTexture(SharedMemoryHandle handle, int samples);
 
     bool canFilter() const;
-    void setMagnifyLinear(bool magnifyLinear) { mMagnifyLinear = magnifyLinear; update(); }
+    void setMagnifyLinear(bool magnifyLinear)
+    {
+        mMagnifyLinear = magnifyLinear;
+        update();
+    }
     bool magnifyLinear() const { return mMagnifyLinear; }
-    void setLevel(float level) { mLevel = level; update(); }
+    void setLevel(float level)
+    {
+        mLevel = level;
+        update();
+    }
     float level() const { return mLevel; }
-    void setFace(int face) { mFace = face; update(); }
+    void setFace(int face)
+    {
+        mFace = face;
+        update();
+    }
     int face() const { return mFace; }
-    void setLayer(float layer) { mLayer = layer; update(); }
+    void setLayer(float layer)
+    {
+        mLayer = layer;
+        update();
+    }
     float layer() const { return mLayer; }
-    void setSample(int sample) { mSample = sample; update(); }
+    void setSample(int sample)
+    {
+        mSample = sample;
+        update();
+    }
     int sample() const { return mSample; }
-    void setFlipVertically(bool flip) { mFlipVertically = flip; update(); }
+    void setFlipVertically(bool flip)
+    {
+        mFlipVertically = flip;
+        update();
+    }
     bool flipVertically() const { return mFlipVertically; }
     void setPickerEnabled(bool enabled) { mPickerEnabled = enabled; }
     bool pickerEnabled() const { return mPickerEnabled; }
     void setMappingRange(const Range &bounds);
     const Range &mappingRange() const { return mMappingRange; }
     void setHistogramBinCount(int count);
-    void setHistogramBounds(const Range &range); 
+    void setHistogramBounds(const Range &range);
     const Range &histogramBounds() const { return mHistogramBounds; }
     void computeHistogramBounds();
     void setHistogramEnabled(bool enabled) { mHistogramEnabled = enabled; }
@@ -66,28 +90,27 @@ private:
     QScopedPointer<ProgramCache> mProgramCache;
     QRect mBoundingRect;
     TextureData mImage;
-    GLuint mImageTextureId{ };
+    GLuint mImageTextureId{};
     int mPreviewSamples{ 1 };
-    GLuint mPreviewTextureId{ };
-    GLuint mSharedTextureId{ };
-    void* mSharedTextureHandle{ };
-    bool mMagnifyLinear{ };
-    float mLevel{ };
-    int mFace{ };
-    float mLayer{ };
+    GLuint mPreviewTextureId{};
+    GLuint mSharedTextureId{};
+    void *mSharedTextureHandle{};
+    bool mMagnifyLinear{};
+    float mLevel{};
+    int mFace{};
+    float mLayer{};
     int mSample{ -1 };
-    bool mFlipVertically{ };
-    bool mPickerEnabled{ };
+    bool mFlipVertically{};
+    bool mPickerEnabled{};
     QOpenGLTexture mPickerTexture{ QOpenGLTexture::Target1D };
-    bool mHistogramEnabled{ };
+    bool mHistogramEnabled{};
     QOpenGLTexture mHistogramTexture{ QOpenGLTexture::Target1D };
     Range mMappingRange{ 0, 1 };
     Range mHistogramBounds{ 0, 1 };
     QVector<quint32> mHistogramBins;
     QVector<quint32> mPrevHistogramBins;
-    QPointF mMousePosition{ };
-    bool mUpload{ };
-    ComputeRange *mComputeRange{ };
-    unsigned int mColorMask{ };
+    QPointF mMousePosition{};
+    bool mUpload{};
+    ComputeRange *mComputeRange{};
+    unsigned int mColorMask{};
 };
-

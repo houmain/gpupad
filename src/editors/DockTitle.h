@@ -13,12 +13,12 @@ public:
 
     void setTabBar(QTabBar *tabBar);
     QSize sizeHint() const override;
-        
+
 Q_SIGNALS:
     void openNewDock();
     void dockCloseRequested(QDockWidget *dock);
     void contextMenuRequested(QPoint pos, QTabBar *tabBar, QDockWidget *dock);
-    
+
 protected:
     void paintEvent(QPaintEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
@@ -27,8 +27,8 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override;
 
 private:
-    void paintTab(const QRect &rect, const QString &text, 
-        int index, int current, int last);
+    void paintTab(const QRect &rect, const QString &text, int index,
+        int current, int last);
     int tabCount() const;
     int currentTabIndex() const;
     int tabContainingPoint(const QPoint &point);
@@ -42,8 +42,8 @@ private:
     void setCurrentTab(int index);
     void openTabsList(const QPoint &position);
 
-    QTabBar *mTabBar{ };
+    QTabBar *mTabBar{};
     QList<QSize> mTabSizes;
-    int mTabsListButtonWidth{ };
-    bool mMousePressIntercepted{ };
+    int mTabsListButtonWidth{};
+    bool mMousePressIntercepted{};
 };

@@ -1,7 +1,7 @@
 #include "Settings.h"
 #include "Theme.h"
-#include <QFontDialog>
 #include <QFontDatabase>
+#include <QFontDialog>
 #include <QIcon>
 
 Settings::Settings(QObject *parent) : QSettings(parent)
@@ -21,16 +21,14 @@ Settings::Settings(QObject *parent) : QSettings(parent)
 
     const auto fontSettings = value("font").toString();
     auto font = QFont();
-    if (!fontSettings.isEmpty() &&
-         font.fromString(fontSettings)) {
+    if (!fontSettings.isEmpty() && font.fromString(fontSettings)) {
         setFont(font);
-    }
-    else {
+    } else {
         for (const auto family : {
-            "Cascadia Mono",
-            "Consolas",
-            "Courier New",
-        }) {
+                 "Cascadia Mono",
+                 "Consolas",
+                 "Courier New",
+             }) {
             font = QFont(family);
             if (font.exactMatch()) {
                 font.setPointSize(10);
@@ -81,8 +79,8 @@ void Settings::selectFont()
     QFontDialog dialog{ mFont };
     dialog.setMinimumSize({ 700, 500 });
     dialog.setMinimumSize({ 500, 400 });
-    connect(&dialog, &QFontDialog::currentFontChanged,
-        this, &Settings::setFont);
+    connect(&dialog, &QFontDialog::currentFontChanged, this,
+        &Settings::setFont);
     if (dialog.exec() == QDialog::Accepted)
         mFont = dialog.selectedFont();
     else
@@ -150,7 +148,7 @@ void Settings::setShaderIncludePaths(const QString &includePaths)
 void Settings::setRenderer(const QString &renderer)
 {
     if (mRenderer != renderer) {
-      mRenderer = renderer;
-      Q_EMIT rendererChanged(renderer);
+        mRenderer = renderer;
+        Q_EMIT rendererChanged(renderer);
     }
 }

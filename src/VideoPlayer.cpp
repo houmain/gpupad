@@ -1,11 +1,11 @@
 #if defined(Qt6Multimedia_FOUND)
 
-#include "VideoPlayer.h"
-#include "TextureData.h"
-#include "Singletons.h"
-#include "FileCache.h"
-#include <QVideoFrame>
-#include <cstring>
+#  include "VideoPlayer.h"
+#  include "FileCache.h"
+#  include "Singletons.h"
+#  include "TextureData.h"
+#  include <QVideoFrame>
+#  include <cstring>
 
 VideoPlayer::VideoPlayer(QString fileName, bool flipVertically, QObject *parent)
     : QVideoSink(parent)
@@ -13,10 +13,10 @@ VideoPlayer::VideoPlayer(QString fileName, bool flipVertically, QObject *parent)
     , mFlipVertically(flipVertically)
 {
     mPlayer = new QMediaPlayer(this);
-    connect(mPlayer, &QMediaPlayer::mediaStatusChanged,
-        this, &VideoPlayer::handleStatusChanged);
-    connect(this, &QVideoSink::videoFrameChanged,
-        this, &VideoPlayer::handleVideoFrame);
+    connect(mPlayer, &QMediaPlayer::mediaStatusChanged, this,
+        &VideoPlayer::handleStatusChanged);
+    connect(this, &QVideoSink::videoFrameChanged, this,
+        &VideoPlayer::handleVideoFrame);
     mPlayer->setSource(QUrl::fromLocalFile(fileName));
     mPlayer->setLoops(QMediaPlayer::Infinite);
     mPlayer->setVideoSink(this);
@@ -28,11 +28,9 @@ void VideoPlayer::handleStatusChanged(QMediaPlayer::MediaStatus status)
         mPlayer->deleteLater();
         mPlayer = nullptr;
         Q_EMIT loadingFinished();
-    }
-    else if (status == QMediaPlayer::LoadedMedia) {
+    } else if (status == QMediaPlayer::LoadedMedia) {
         mPlayer->pause();
-    }
-    else if (status == QMediaPlayer::EndOfMedia) {
+    } else if (status == QMediaPlayer::EndOfMedia) {
         mPlayer->play();
     }
 }
@@ -46,8 +44,8 @@ void VideoPlayer::handleVideoFrame(const QVideoFrame &frame)
     }
     auto texture = TextureData();
     if (texture.loadQImage(frame.toImage(), mFlipVertically))
-        Singletons::fileCache().updateTexture(mFileName,
-            mFlipVertically, std::move(texture));
+        Singletons::fileCache().updateTexture(mFileName, mFlipVertically,
+            std::move(texture));
 }
 
 void VideoPlayer::play()

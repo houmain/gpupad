@@ -1,17 +1,14 @@
 #pragma once
 
-enum class EvaluationMode
-{
+enum class EvaluationMode {
     Paused,
     Automatic,
     Steady,
 };
 
-enum class EvaluationType
-{
+enum class EvaluationType {
     Steady,
     Automatic,
     Manual,
     Reset,
 };
-

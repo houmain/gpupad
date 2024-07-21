@@ -33,11 +33,11 @@ private:
     void focusDirectory(const QDir &dir);
     void updateRecentDirectories(const QString &path);
     QString completeToRecentDirectory(const QString &path);
-    
-    QWidget *mTitleBar{ };
-    QFileSystemModel *mModel{ };
-    QTreeView *mFileSystemTree{ };
-    QComboBox *mRootDirectory{ };
-    QToolButton *mBrowseButton{ };
-    QStringListModel *mRecentDirectories{ };
+
+    QWidget *mTitleBar{};
+    QFileSystemModel *mModel{};
+    QTreeView *mFileSystemTree{};
+    QComboBox *mRootDirectory{};
+    QToolButton *mBrowseButton{};
+    QStringListModel *mRecentDirectories{};
 };

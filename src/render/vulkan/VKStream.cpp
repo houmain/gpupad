@@ -12,17 +12,18 @@ VKStream::VKStream(const Stream &stream)
                 attribute->name,
                 attribute->normalize,
                 attribute->divisor,
-                nullptr, { }, 0, 0, 0 };
+            };
         }
         ++attributeIndex;
     }
 }
 
-void VKStream::setAttribute(int attributeIndex, const Field &field, 
-    VKBuffer *buffer, ScriptEngine& scriptEngine)
+void VKStream::setAttribute(int attributeIndex, const Field &field,
+    VKBuffer *buffer, ScriptEngine &scriptEngine)
 {
     const auto &block = *castItem<Block>(field.parent);
-    const auto blockOffset = scriptEngine.evaluateValue(block.offset, block.id, mMessages);
+    const auto blockOffset =
+        scriptEngine.evaluateValue(block.offset, block.id, mMessages);
     auto &attribute = mAttributes[attributeIndex];
     attribute.buffer = buffer;
     attribute.type = field.dataType;
@@ -35,8 +36,8 @@ void VKStream::setAttribute(int attributeIndex, const Field &field,
     }
 
     if (!validateAttribute(attribute)) {
-        mMessages += MessageList::insert(field.id,
-            MessageType::InvalidAttribute);
+        mMessages +=
+            MessageList::insert(field.id, MessageType::InvalidAttribute);
         mAttributes.remove(attributeIndex);
     }
     invalidateVertexOptions();
@@ -45,22 +46,20 @@ void VKStream::setAttribute(int attributeIndex, const Field &field,
 bool VKStream::validateAttribute(const VKAttribute &attribute) const
 {
     switch (attribute.count) {
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-            break;
-        default: 
-            return false;
+    case 1:
+    case 2:
+    case 3:
+    case 4:  break;
+    default: return false;
     }
     return true;
 }
 
 void VKStream::invalidateVertexOptions()
 {
-    mVertexOptions = { };
-    mBuffers = { };
-    mBufferOffsets = { };
+    mVertexOptions = {};
+    mBuffers = {};
+    mBufferOffsets = {};
 }
 
 void VKStream::updateVertexOptions()
@@ -75,8 +74,8 @@ void VKStream::updateVertexOptions()
         mVertexOptions.buffers.push_back(KDGpu::VertexBufferLayout{
             .binding = binding,
             .stride = static_cast<uint32_t>(attribute.stride),
-            .inputRate = (attribute.divisor ? 
-                KDGpu::VertexRate::Instance : KDGpu::VertexRate::Vertex),
+            .inputRate = (attribute.divisor ? KDGpu::VertexRate::Instance
+                                            : KDGpu::VertexRate::Vertex),
         });
         mBuffers.push_back(attribute.buffer);
         mBufferOffsets.push_back(attribute.offset);
@@ -90,7 +89,7 @@ void VKStream::updateVertexOptions()
     }
 }
 
-const std::vector<VKBuffer*> &VKStream::getBuffers()
+const std::vector<VKBuffer *> &VKStream::getBuffers()
 {
     updateVertexOptions();
     return mBuffers;

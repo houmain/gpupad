@@ -1,8 +1,8 @@
 #pragma once
 
-#include <QObject>
-#include <QJsonValue>
 #include "InputState.h"
+#include <QJsonValue>
+#include <QObject>
 
 class KeyboardScriptObject final : public QObject
 {
@@ -19,5 +19,5 @@ public:
 
 private:
     QJsonValue mKeys;
-    mutable bool mWasRead{ };
+    mutable bool mWasRead{};
 };

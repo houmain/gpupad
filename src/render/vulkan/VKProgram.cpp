@@ -1,16 +1,16 @@
 #include "VKProgram.h"
-#include "VKTexture.h"
 #include "VKBuffer.h"
+#include "VKTexture.h"
 #include "scripting/ScriptEngine.h"
 #include <QRegularExpression>
 
-VKProgram::VKProgram(const Program &program, 
-      const QString &shaderPreamble, const QString &shaderIncludePaths)
+VKProgram::VKProgram(const Program &program, const QString &shaderPreamble,
+    const QString &shaderIncludePaths)
     : mItemId(program.id)
 {
     mUsedItems += program.id;
 
-    auto shaders = std::map<Shader::ShaderType, QList<const Shader*>>();
+    auto shaders = std::map<Shader::ShaderType, QList<const Shader *>>();
     for (const auto &item : program.items)
         if (auto shader = castItem<Shader>(item)) {
             mUsedItems += shader->id;
@@ -19,16 +19,16 @@ VKProgram::VKProgram(const Program &program,
 
     for (const auto &[type, list] : shaders)
         if (type != Shader::ShaderType::Includable)
-            mShaders.emplace_back(type, list, shaderPreamble, shaderIncludePaths);
+            mShaders.emplace_back(type, list, shaderPreamble,
+                shaderIncludePaths);
 }
 
 bool VKProgram::operator==(const VKProgram &rhs) const
 {
-    return (std::tie(mShaders) == 
-            std::tie(rhs.mShaders));
+    return (std::tie(mShaders) == std::tie(rhs.mShaders));
 }
 
-bool VKProgram::link(KDGpu::Device &device) 
+bool VKProgram::link(KDGpu::Device &device)
 {
     if (!mInterface.empty())
         return true;
@@ -37,7 +37,8 @@ bool VKProgram::link(KDGpu::Device &device)
     auto shiftBindingsInSet0 = 0;
     for (auto &shader : mShaders) {
         succeeded &= shader.compile(device, &mPrintf, shiftBindingsInSet0);
-        shiftBindingsInSet0 = std::max(shiftBindingsInSet0, shader.getMaxBindingInSet0() + 1);
+        shiftBindingsInSet0 =
+            std::max(shiftBindingsInSet0, shader.getMaxBindingInSet0() + 1);
     }
     if (!succeeded)
         return false;
@@ -47,7 +48,7 @@ bool VKProgram::link(KDGpu::Device &device)
     return true;
 }
 
-std::vector<KDGpu::ShaderStage> VKProgram::getShaderStages() 
+std::vector<KDGpu::ShaderStage> VKProgram::getShaderStages()
 {
     auto stages = std::vector<KDGpu::ShaderStage>();
     for (const auto &shader : mShaders)

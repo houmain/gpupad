@@ -1,7 +1,7 @@
 #pragma once
 
-#include "editors/IEditor.h"
 #include "MessageList.h"
+#include "editors/IEditor.h"
 #include <QFrame>
 #include <QSet>
 
@@ -33,9 +33,10 @@ private:
     void reset();
 
     const QString mFileName;
-    QScopedPointer<QQmlNetworkAccessManagerFactory> mNetworkAccessManagerFactory;
+    QScopedPointer<QQmlNetworkAccessManagerFactory>
+        mNetworkAccessManagerFactory;
     MessagePtrSet mMessages;
-    QQuickWidget *mQuickWidget{ };
+    QQuickWidget *mQuickWidget{};
     QSet<QString> mDependencies;
-    bool mResetOnFocus{ };
+    bool mResetOnFocus{};
 };

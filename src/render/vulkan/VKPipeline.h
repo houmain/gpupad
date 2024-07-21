@@ -58,8 +58,8 @@ struct VKBufferBinding
 class VKPipeline
 {
 public:
-    VKPipeline(ItemId itemId, VKProgram *program, 
-        VKTarget *target, VKStream *vertexStream);
+    VKPipeline(ItemId itemId, VKProgram *program, VKTarget *target,
+        VKStream *vertexStream);
     ~VKPipeline();
 
     void clearBindings();
@@ -68,9 +68,11 @@ public:
     bool apply(const VKImageBinding &binding);
     bool apply(const VKBufferBinding &binding);
 
-    bool createGraphics(VKContext &context, KDGpu::PrimitiveOptions &primitiveOptions);
+    bool createGraphics(VKContext &context,
+        KDGpu::PrimitiveOptions &primitiveOptions);
     bool createCompute(VKContext &context);
-    void updateDefaultUniformBlock(VKContext &context, ScriptEngine &scriptEngine);
+    void updateDefaultUniformBlock(VKContext &context,
+        ScriptEngine &scriptEngine);
     bool updateBindings(VKContext &context);
     KDGpu::RenderPassCommandRecorder beginRenderPass(VKContext &context);
     KDGpu::ComputePassCommandRecorder beginComputePass(VKContext &context);
@@ -101,10 +103,10 @@ private:
 
     ItemId mItemId;
     VKProgram &mProgram;
-    VKTarget *mTarget{ };
-    VKStream *mVertexStream{ };
+    VKTarget *mTarget{};
+    VKStream *mVertexStream{};
 
-    bool mCreated{ };
+    bool mCreated{};
     KDGpu::GraphicsPipeline mGraphicsPipeline;
     KDGpu::ComputePipeline mComputePipeline;
     KDGpu::PipelineLayout mPipelineLayout;

@@ -14,8 +14,8 @@ public:
 
     void resizeEvent(QResizeEvent *event) override
     {
-        setOrientation(2 * width() > 3 * height() ?
-            Qt::Horizontal : Qt::Vertical);
+        setOrientation(2 * width() > 3 * height() ? Qt::Horizontal
+                                                  : Qt::Vertical);
 
         const auto vertical = (orientation() == Qt::Vertical);
         setStretchFactor(vertical ? 1 : 0, 0);
@@ -24,4 +24,3 @@ public:
         QSplitter::resizeEvent(event);
     }
 };
-

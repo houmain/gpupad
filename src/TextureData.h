@@ -1,12 +1,12 @@
 #pragma once
 
 #include <QImage>
-#include <QOpenGLTexture>
 #include <QMetaType>
-#include <memory>
+#include <QOpenGLTexture>
 #include <ktx.h>
 #include <vulkan/vulkan.h>
 #include <ktxvulkan.h>
+#include <memory>
 
 class QOpenGLFunctions_3_3_Core;
 
@@ -15,8 +15,8 @@ class TextureData
 public:
     bool isSharedWith(const TextureData &other) const;
     bool create(QOpenGLTexture::Target target,
-        QOpenGLTexture::TextureFormat format,
-        int width, int height, int depth, int layers, int levels = 0);
+        QOpenGLTexture::TextureFormat format, int width, int height, int depth,
+        int layers, int levels = 0);
     TextureData convert(QOpenGLTexture::TextureFormat format);
     bool load(const QString &fileName, bool flipVertically);
     bool loadQImage(QImage image, bool flipVertically);
@@ -52,7 +52,7 @@ public:
     int getImageSize(int level) const;
     int getLevelSize(int level) const;
     bool uploadGL(GLuint *textureId) const;
-    bool uploadVK(ktxVulkanDeviceInfo* vdi, ktxVulkanTexture* vkTexture,
+    bool uploadVK(ktxVulkanDeviceInfo *vdi, ktxVulkanTexture *vkTexture,
         VkImageUsageFlags usageFlags, VkImageLayout initialLayout) const;
 
     friend bool operator==(const TextureData &a, const TextureData &b);
@@ -70,11 +70,10 @@ private:
     void flipVertically();
 
     std::shared_ptr<ktxTexture1> mKtxTexture;
-    bool mFlippedVertically{ };
+    bool mFlippedVertically{};
 };
 
-enum class TextureSampleType
-{
+enum class TextureSampleType {
     Normalized,
     Normalized_sRGB,
     Float,
@@ -87,8 +86,7 @@ enum class TextureSampleType
     Uint_10_10_10_2,
 };
 
-enum class TextureDataType
-{
+enum class TextureDataType {
     Other,
     Int8,
     Int16,
@@ -102,7 +100,7 @@ enum class TextureDataType
 
 struct SharedMemoryHandle
 {
-    void* handle;
+    void *handle;
     size_t allocationSize;
     size_t allocationOffset;
     bool dedicated;

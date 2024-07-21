@@ -1,17 +1,18 @@
 #include "FileBrowserWindow.h"
-#include "Singletons.h"
 #include "FileDialog.h"
+#include "Singletons.h"
 #include "WindowTitle.h"
-#include <QTreeView>
-#include <QFileSystemModel>
-#include <QFileIconProvider>
 #include <QBoxLayout>
 #include <QComboBox>
-#include <QToolButton>
-#include <QStyle>
+#include <QFileIconProvider>
+#include <QFileSystemModel>
 #include <QStringListModel>
+#include <QStyle>
+#include <QToolButton>
+#include <QTreeView>
 
-FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QFrame(parent)
+FileBrowserWindow::FileBrowserWindow(QWidget *parent)
+    : QFrame(parent)
     , mModel(new QFileSystemModel(this))
     , mFileSystemTree(new QTreeView(this))
     , mRootDirectory(new QComboBox(this))
@@ -25,8 +26,8 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QFrame(parent)
     layout->setSpacing(0);
     layout->addWidget(mFileSystemTree);
 
-    mBrowseButton->setIcon(QIcon(QIcon::fromTheme(
-        QString::fromUtf8("document-open"))));
+    mBrowseButton->setIcon(
+        QIcon(QIcon::fromTheme(QString::fromUtf8("document-open"))));
     mBrowseButton->setAutoRaise(true);
 
     mRootDirectory->setMinimumWidth(100);
@@ -44,7 +45,7 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QFrame(parent)
     mTitleBar = titleBar;
 
     mModel->setIconProvider(new QFileIconProvider());
-    
+
     mFileSystemTree->setModel(mModel);
     mFileSystemTree->setSelectionMode(QTreeView::ExtendedSelection);
     mFileSystemTree->setSelectionBehavior(QTreeView::SelectRows);
@@ -55,14 +56,14 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent) : QFrame(parent)
     mFileSystemTree->setColumnHidden(2, true);
     mFileSystemTree->setColumnHidden(3, true);
 
-    connect(mBrowseButton, &QToolButton::clicked, 
-        this, &FileBrowserWindow::browseDirectory);
-    connect(mFileSystemTree, &QTreeView::activated,
-        this, &FileBrowserWindow::itemActivated);
-    connect(&Singletons::fileDialog(), &FileDialog::directoryChanged,
-        this, &FileBrowserWindow::currentDirectoryChanged);
-    connect(mRootDirectory, &QComboBox::currentTextChanged,
-        this, &FileBrowserWindow::setRootPath);
+    connect(mBrowseButton, &QToolButton::clicked, this,
+        &FileBrowserWindow::browseDirectory);
+    connect(mFileSystemTree, &QTreeView::activated, this,
+        &FileBrowserWindow::itemActivated);
+    connect(&Singletons::fileDialog(), &FileDialog::directoryChanged, this,
+        &FileBrowserWindow::currentDirectoryChanged);
+    connect(mRootDirectory, &QComboBox::currentTextChanged, this,
+        &FileBrowserWindow::setRootPath);
 }
 
 void FileBrowserWindow::setRootPath(const QString &path)
@@ -76,12 +77,13 @@ void FileBrowserWindow::setRootPath(const QString &path)
     }
 }
 
-bool FileBrowserWindow::revealDirectory(const QDir &dir) 
+bool FileBrowserWindow::revealDirectory(const QDir &dir)
 {
     const auto path = dir.absolutePath();
     const auto index = mModel->index(path);
     mFileSystemTree->setExpanded(index, true);
-    if (!mFileSystemTree->contentsRect().intersects(mFileSystemTree->visualRect(index))) {
+    if (!mFileSystemTree->contentsRect().intersects(
+            mFileSystemTree->visualRect(index))) {
         mFileSystemTree->scrollTo(index, QTreeView::PositionAtTop);
         if (mFileSystemTree->visualRect(index).isEmpty())
             return false;
@@ -89,7 +91,7 @@ bool FileBrowserWindow::revealDirectory(const QDir &dir)
     return true;
 }
 
-void FileBrowserWindow::focusDirectory(const QDir &dir) 
+void FileBrowserWindow::focusDirectory(const QDir &dir)
 {
     const auto path = dir.absolutePath();
     mFileSystemTree->setCurrentIndex(mModel->index(path));
@@ -110,12 +112,13 @@ void FileBrowserWindow::currentDirectoryChanged(const QDir &dir)
 
 void FileBrowserWindow::itemActivated(const QModelIndex &index)
 {
-    Q_EMIT fileActivated(toNativeCanonicalFilePath(mModel->fileInfo(index).filePath()));
+    Q_EMIT fileActivated(
+        toNativeCanonicalFilePath(mModel->fileInfo(index).filePath()));
 }
 
 void FileBrowserWindow::browseDirectory()
 {
-    auto options = FileDialog::Options{ };
+    auto options = FileDialog::Options{};
     options.setFlag(FileDialog::Directory);
     if (Singletons::fileDialog().exec(options))
         setRootPath(Singletons::fileDialog().fileName());

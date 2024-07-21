@@ -1,7 +1,7 @@
-#include "windows/MainWindow.h"
-#include "SingleApplication/singleapplication.h"
 #include "FileDialog.h"
+#include "SingleApplication/singleapplication.h"
 #include "Style.h"
+#include "windows/MainWindow.h"
 #include <QApplication>
 #include <QSettings>
 #include <QSurfaceFormat>
@@ -9,14 +9,18 @@
 #if defined(_WIN32)
 // use dedicated GPUs by default
 // http://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf
-extern "C" { __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001; }
-extern "C" { __declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001; }
+extern "C" {
+__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}
+extern "C" {
+__declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
+}
 
 // https://www.codeproject.com/Tips/76427/How-to-bring-window-to-top-with-SetForegroundWindo
-void SetForegroundWindowInternal(HWND hWnd) 
+void SetForegroundWindowInternal(HWND hWnd)
 {
     // Press the "Alt" key
-    auto ip = INPUT{ };
+    auto ip = INPUT{};
     ip.type = INPUT_KEYBOARD;
     ip.ki.wVk = VK_MENU;
     SendInput(1, &ip, sizeof(INPUT));
@@ -29,32 +33,29 @@ void SetForegroundWindowInternal(HWND hWnd)
     SendInput(1, &ip, sizeof(INPUT));
 }
 
-void raiseProcessPriority() 
+void raiseProcessPriority()
 {
     SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 }
 
-void restoreProcessPriority() 
+void restoreProcessPriority()
 {
     SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 }
 
 #else // !_WIN32
 
-void raiseProcessPriority() {
-}
+void raiseProcessPriority() { }
 
-void restoreProcessPriority() {
-}
+void restoreProcessPriority() { }
 
 #endif
 
-const auto singleApplicationMode = 
-    SingleApplication::Mode::User |
-    SingleApplication::Mode::ExcludeAppPath |
-    SingleApplication::Mode::ExcludeAppVersion;
+const auto singleApplicationMode = SingleApplication::Mode::User
+    | SingleApplication::Mode::ExcludeAppPath
+    | SingleApplication::Mode::ExcludeAppVersion;
 
-bool forwardToInstance(int argc, char *argv[]) 
+bool forwardToInstance(int argc, char *argv[])
 {
     auto app = QCoreApplication(argc, argv);
     auto instance = SingleApplication(true, singleApplicationMode);
@@ -63,8 +64,10 @@ bool forwardToInstance(int argc, char *argv[])
 
     auto arguments = app.arguments();
     arguments.removeFirst();
-    if (arguments.empty() || std::find_if(arguments.begin(), arguments.end(), 
-            &FileDialog::isSessionFileName) != arguments.end())
+    if (arguments.empty()
+        || std::find_if(arguments.begin(), arguments.end(),
+               &FileDialog::isSessionFileName)
+            != arguments.end())
         return false;
 
     for (const auto &argument : qAsConst(arguments))
@@ -80,7 +83,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("GPUpad");
 #if __has_include("_version.h")
     QCoreApplication::setApplicationVersion(
-# include "_version.h"
+#  include "_version.h"
     );
 #endif
 #if defined(_WIN32)
@@ -139,8 +142,8 @@ int main(int argc, char *argv[])
             raiseProcessPriority();
 
             window.openFile(QString::fromUtf8(argument));
-            window.setWindowState(
-                (window.windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
+            window.setWindowState((window.windowState() & ~Qt::WindowMinimized)
+                | Qt::WindowActive);
 #if defined(_WIN32)
             window.ignoreNextAlt();
             SetForegroundWindowInternal(reinterpret_cast<HWND>(window.winId()));

@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Item.h"
-#include <QWidget>
 #include <QVariant>
+#include <QWidget>
 
 namespace Ui {
-class BindingProperties;
+    class BindingProperties;
 }
 
 class SessionProperties;
@@ -14,8 +14,8 @@ class QDataWidgetMapper;
 class BindingProperties final : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(QStringList values READ values WRITE setValues
-        NOTIFY valuesChanged USER true)
+    Q_PROPERTY(QStringList values READ values WRITE setValues NOTIFY
+            valuesChanged USER true)
 public:
     explicit BindingProperties(SessionProperties *sessionProperties);
     ~BindingProperties();
@@ -39,6 +39,5 @@ private:
     SessionProperties &mSessionProperties;
     Ui::BindingProperties *mUi;
     QStringList mValues;
-    bool mSuspendSetValues{ };
+    bool mSuspendSetValues{};
 };
-

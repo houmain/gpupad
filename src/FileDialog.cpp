@@ -1,48 +1,46 @@
 #include "FileDialog.h"
+#include <QApplication>
+#include <QDesktopServices>
 #include <QFileDialog>
 #include <QMainWindow>
 #include <QMap>
 #include <QProcess>
-#include <QApplication>
-#include <QDesktopServices>
 #include <QStandardPaths>
 
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
     const auto SessionFileExtension = QStringLiteral("gpjs");
-    const auto ShaderFileExtensions = { "glsl", "vs", "fs", "gs",
-        "vert", "tesc", "tese", "geom", "frag", "comp", 
-        "ps", "hlsl", "hlsli", "fx" };
+    const auto ShaderFileExtensions = { "glsl", "vs", "fs", "gs", "vert",
+        "tesc", "tese", "geom", "frag", "comp", "ps", "hlsl", "hlsli", "fx" };
     const auto ScriptFileExtensions = { "js", "json", "qml", "lua" };
-    const auto TextureFileExtensions = { "ktx", "dds", "png", "exr", 
-        "tga", "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
-    const auto VideoFileExtensions = std::initializer_list<const char*>{
+    const auto TextureFileExtensions = { "ktx", "dds", "png", "exr", "tga",
+        "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
+    const auto VideoFileExtensions = std::initializer_list<const char *>{
 #if defined(Qt6Multimedia_FOUND)
-    "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi"
+        "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi"
 #endif
     };
 
     int gNextUntitledFileIndex;
 
-    QString getDefaultSourceTypeExtension(SourceType sourceType) 
+    QString getDefaultSourceTypeExtension(SourceType sourceType)
     {
         switch (sourceType) {
-            case SourceType::PlainText:
-            case SourceType::Generic:
-                break;
-            case SourceType::GLSL_VertexShader: return "vert";
-            case SourceType::GLSL_FragmentShader: return "frag";
-            case SourceType::GLSL_GeometryShader: return "geom";
-            case SourceType::GLSL_TessellationControl: return "tesc";
-            case SourceType::GLSL_TessellationEvaluation: return "tese";
-            case SourceType::GLSL_ComputeShader: return "comp";
-            case SourceType::HLSL_VertexShader: 
-            case SourceType::HLSL_PixelShader:
-            case SourceType::HLSL_GeometryShader:
-            case SourceType::HLSL_HullShader:
-            case SourceType::HLSL_DomainShader:
-            case SourceType::HLSL_ComputeShader: return "hlsl";
-            case SourceType::JavaScript: return "js";
+        case SourceType::PlainText:
+        case SourceType::Generic:                     break;
+        case SourceType::GLSL_VertexShader:           return "vert";
+        case SourceType::GLSL_FragmentShader:         return "frag";
+        case SourceType::GLSL_GeometryShader:         return "geom";
+        case SourceType::GLSL_TessellationControl:    return "tesc";
+        case SourceType::GLSL_TessellationEvaluation: return "tese";
+        case SourceType::GLSL_ComputeShader:          return "comp";
+        case SourceType::HLSL_VertexShader:
+        case SourceType::HLSL_PixelShader:
+        case SourceType::HLSL_GeometryShader:
+        case SourceType::HLSL_HullShader:
+        case SourceType::HLSL_DomainShader:
+        case SourceType::HLSL_ComputeShader:          return "hlsl";
+        case SourceType::JavaScript:                  return "js";
         }
         return "txt";
     }
@@ -76,8 +74,8 @@ QString FileDialog::getFileTitle(const QString &fileName)
 QString FileDialog::getFullWindowTitle(const QString &fileName)
 {
     if (!fileName.startsWith(UntitledTag))
-        return "[*]" + QFileInfo(fileName).fileName() + " - " + 
-            QDir::toNativeSeparators(QFileInfo(fileName).path());
+        return "[*]" + QFileInfo(fileName).fileName() + " - "
+            + QDir::toNativeSeparators(QFileInfo(fileName).path());
 
     return "[*]" + getFileTitle(fileName);
 }
@@ -135,10 +133,7 @@ bool FileDialog::isVideoFileName(const QString &fileName)
     return false;
 }
 
-FileDialog::FileDialog(QMainWindow *window)
-    : mWindow(window)
-{
-}
+FileDialog::FileDialog(QMainWindow *window) : mWindow(window) { }
 
 FileDialog::~FileDialog() = default;
 
@@ -153,12 +148,12 @@ void FileDialog::setDirectory(QDir directory)
 QString FileDialog::fileName() const
 {
     if (mFileNames.isEmpty())
-        return { };
+        return {};
     return mFileNames.first();
 }
 
-bool FileDialog::exec(Options options, QString currentFileName, 
-      SourceType sourceType)
+bool FileDialog::exec(Options options, QString currentFileName,
+    SourceType sourceType)
 {
     QFileDialog dialog(mWindow);
     dialog.setOption(QFileDialog::HideNameFilterDetails);
@@ -167,24 +162,22 @@ bool FileDialog::exec(Options options, QString currentFileName,
         dialog.setWindowTitle(tr("Select Directory"));
         dialog.setAcceptMode(QFileDialog::AcceptOpen);
         dialog.setFileMode(QFileDialog::Directory);
-    }
-    else if (options & Saving) {
+    } else if (options & Saving) {
         if (currentFileName.isEmpty())
             dialog.setWindowTitle(tr("New File"));
         else
-            dialog.setWindowTitle(tr("Save '%1' As")
-                .arg(getFileTitle(currentFileName)));
+            dialog.setWindowTitle(
+                tr("Save '%1' As").arg(getFileTitle(currentFileName)));
 
         dialog.setAcceptMode(QFileDialog::AcceptSave);
         dialog.setFileMode(QFileDialog::AnyFile);
-    }
-    else {
+    } else {
         const auto importing = ((options & Importing) != 0);
         const auto multiselect = ((options & Multiselect) != 0);
         dialog.setWindowTitle(importing ? tr("Import File") : tr("Open File"));
         dialog.setAcceptMode(QFileDialog::AcceptOpen);
-        dialog.setFileMode(multiselect ?
-            QFileDialog::ExistingFiles : QFileDialog::ExistingFile);
+        dialog.setFileMode(multiselect ? QFileDialog::ExistingFiles
+                                       : QFileDialog::ExistingFile);
     }
 
     auto shaderFileFilter = QString();
@@ -209,8 +202,8 @@ bool FileDialog::exec(Options options, QString currentFileName,
         filters.append(tr("All Files (*)"));
 
     if (options & SessionExtensions)
-        filters.append(qApp->applicationName() + tr(" session") +
-            " (*." + SessionFileExtension + ")");
+        filters.append(qApp->applicationName() + tr(" session") + " (*."
+            + SessionFileExtension + ")");
     if (options & ShaderExtensions)
         filters.append(tr("Shader files") + " (" + shaderFileFilter + ")");
     if (options & TextureExtensions)
@@ -237,13 +230,14 @@ bool FileDialog::exec(Options options, QString currentFileName,
         else if (options & BinaryExtensions)
             dialog.setDefaultSuffix("bin");
         else if (options & TextureExtensions)
-            dialog.setDefaultSuffix(options & SavingNon2DTexture ? "ktx" : "png");
+            dialog.setDefaultSuffix(options & SavingNon2DTexture ? "ktx"
+                                                                 : "png");
     }
 
     if (isUntitled(currentFileName)) {
         currentFileName = getFileTitle(currentFileName);
-        if (QFileInfo(currentFileName).suffix().isEmpty() &&
-            !dialog.defaultSuffix().isEmpty())
+        if (QFileInfo(currentFileName).suffix().isEmpty()
+            && !dialog.defaultSuffix().isEmpty())
             currentFileName += "." + dialog.defaultSuffix();
     }
 
@@ -264,28 +258,37 @@ bool FileDialog::exec(Options options, QString currentFileName,
     return true;
 }
 
-bool isNativeCanonicalFilePath(const QString &fileName) {
+bool isNativeCanonicalFilePath(const QString &fileName)
+{
     return (toNativeCanonicalFilePath(fileName) == fileName);
 }
 
-QString toNativeCanonicalFilePath(const QString &fileName) {
+QString toNativeCanonicalFilePath(const QString &fileName)
+{
     if (FileDialog::isEmptyOrUntitled(fileName))
         return fileName;
     auto fileInfo = QFileInfo(fileName);
     Q_ASSERT(fileInfo.isAbsolute());
-    return QDir::toNativeSeparators(fileInfo.exists() ? fileInfo.canonicalFilePath() : fileName);
+    return QDir::toNativeSeparators(
+        fileInfo.exists() ? fileInfo.canonicalFilePath() : fileName);
 }
 
 void showInFileManager(const QString &path)
 {
 #if defined(_WIN32)
-    QProcess::startDetached("explorer.exe", { "/select,", QDir::toNativeSeparators(path) });
+    QProcess::startDetached("explorer.exe",
+        { "/select,", QDir::toNativeSeparators(path) });
 #elif defined(__APPLE__)
-    QProcess::execute("/usr/bin/osascript", { "-e", "tell application \"Finder\" to reveal POSIX file \"" + path + "\"" });
-    QProcess::execute("/usr/bin/osascript", { "-e", "tell application \"Finder\" to activate" });
+    QProcess::execute("/usr/bin/osascript",
+        { "-e",
+            "tell application \"Finder\" to reveal POSIX file \"" + path
+                + "\"" });
+    QProcess::execute("/usr/bin/osascript",
+        { "-e", "tell application \"Finder\" to activate" });
 #else
     const auto info = QFileInfo(path);
-    QDesktopServices::openUrl(QUrl::fromLocalFile(info.isDir() ? path : info.path()));
+    QDesktopServices::openUrl(
+        QUrl::fromLocalFile(info.isDir() ? path : info.path()));
 #endif
 }
 
@@ -293,9 +296,10 @@ int showNotSavedDialog(QWidget *parent, const QString &fileName)
 {
     auto dialog = QMessageBox(parent);
     dialog.setIcon(QMessageBox::Question);
-    dialog.setText(parent->tr("<h3>The file '%1' is not saved.</h3>"
-        "Do you want to save it before closing?<br>")
-        .arg(FileDialog::getFileTitle(fileName)));
+    dialog.setText(parent
+                       ->tr("<h3>The file '%1' is not saved.</h3>"
+                            "Do you want to save it before closing?<br>")
+                       .arg(FileDialog::getFileTitle(fileName)));
     dialog.addButton(QMessageBox::Save);
     dialog.addButton(parent->tr("&Don't Save"), QMessageBox::RejectRole);
     dialog.addButton(QMessageBox::Cancel);
@@ -308,10 +312,11 @@ bool showSavingFailedMessage(QWidget *parent, const QString &fileName)
     auto dialog = QMessageBox(parent);
     dialog.setIcon(QMessageBox::Critical);
     auto text = parent->tr("<h3>Saving file '%1' failed.</h3>")
-        .arg(FileDialog::getFileTitle(fileName));
+                    .arg(FileDialog::getFileTitle(fileName));
     text += parent->tr("Is the path writeable");
     if (FileDialog::isTextureFileName(fileName))
-        text += parent->tr(" and does the file format support the texture format");
+        text +=
+            parent->tr(" and does the file format support the texture format");
     text += "?<br>";
     dialog.setText(text);
     dialog.addButton(QMessageBox::Retry);
@@ -319,12 +324,12 @@ bool showSavingFailedMessage(QWidget *parent, const QString &fileName)
     return (dialog.exec() == QMessageBox::Retry);
 }
 
-void showCopyingSessionFailedMessage(QWidget *parent) 
+void showCopyingSessionFailedMessage(QWidget *parent)
 {
     auto dialog = QMessageBox(parent);
     dialog.setIcon(QMessageBox::Warning);
     dialog.setText(parent->tr("<h3>Copying session files failed.</h3>"
-        "Not all files in session could be copied.<br>"));
+                              "Not all files in session could be copied.<br>"));
     dialog.addButton(QMessageBox::Ok);
     dialog.exec();
 }
@@ -338,8 +343,8 @@ QDir getInstallDirectory(const QString &dirName)
         QCoreApplication::applicationDirPath() + "/../..",
 #endif
 #if defined(__linux__)
-        qEnvironmentVariable("APPDIR") + "/usr/share/" +
-            QCoreApplication::organizationName(),
+        qEnvironmentVariable("APPDIR") + "/usr/share/"
+            + QCoreApplication::organizationName(),
 #endif
     };
     for (const auto &path : paths) {
@@ -352,21 +357,19 @@ QDir getInstallDirectory(const QString &dirName)
 
 QDir getUserDirectory(const QString &dirName)
 {
-    auto config = QStandardPaths::writableLocation(
-        QStandardPaths::AppConfigLocation);
+    auto config =
+        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     auto dir = QDir::cleanPath(config + "/../" + dirName);
     QDir().mkpath(dir);
     return dir;
 }
 
-QFileInfoList enumerateApplicationPaths(
-    const QString &dirName, QDir::Filters filters)
+QFileInfoList enumerateApplicationPaths(const QString &dirName,
+    QDir::Filters filters)
 {
     auto entries = QFileInfoList();
-    auto dirs = QList<QDir>{ 
-        getInstallDirectory(dirName),
-        getUserDirectory(dirName)
-    };
+    auto dirs =
+        QList<QDir>{ getInstallDirectory(dirName), getUserDirectory(dirName) };
     for (auto &dir : dirs) {
         dir.setFilter(filters | QDir::NoDotAndDotDot);
         entries += dir.entryInfoList();

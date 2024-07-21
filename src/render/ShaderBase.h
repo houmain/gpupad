@@ -5,7 +5,7 @@
 class ShaderBase
 {
 public:
-    ShaderBase(Shader::ShaderType type, const QList<const Shader*> &shaders,
+    ShaderBase(Shader::ShaderType type, const QList<const Shader *> &shaders,
         const QString &preamble, const QString &includePaths);
     bool operator==(const ShaderBase &rhs) const;
     ItemId itemId() const { return mItemId; }
@@ -16,22 +16,22 @@ public:
     const QString &entryPoint() const { return mEntryPoint; }
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
 
-    QStringList getPatchedSources(MessagePtrSet &messages, 
+    QStringList getPatchedSources(MessagePtrSet &messages,
         QStringList &usedFileNames, ShaderPrintf *printf = nullptr) const;
-    QStringList getPatchedSourcesGLSL(MessagePtrSet &messages, 
+    QStringList getPatchedSourcesGLSL(MessagePtrSet &messages,
         QStringList &usedFileNames, ShaderPrintf *printf = nullptr) const;
-    QStringList getPatchedSourcesHLSL(MessagePtrSet &messages, 
+    QStringList getPatchedSourcesHLSL(MessagePtrSet &messages,
         QStringList &usedFileNames, ShaderPrintf *printf = nullptr) const;
 
 protected:
-    ItemId mItemId{ };
+    ItemId mItemId{};
     MessagePtrSet mMessages;
     QStringList mFileNames;
     QStringList mSources;
     QString mPreamble;
     QString mIncludePaths;
-    Shader::ShaderType mType{ };
-    Shader::Language mLanguage{ };
+    Shader::ShaderType mType{};
+    Shader::Language mLanguage{};
     QString mEntryPoint;
     QStringList mPatchedSources;
 };

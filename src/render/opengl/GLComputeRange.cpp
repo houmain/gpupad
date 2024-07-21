@@ -3,9 +3,8 @@
 #include "TextureData.h"
 #include <QOpenGLBuffer>
 
-namespace
-{
-static constexpr auto computeShaderSource = R"(
+namespace {
+    static constexpr auto computeShaderSource = R"(
 
 layout (local_size_x = 8, local_size_y = 8) in;
 
@@ -113,14 +112,17 @@ void main() {
 }
 )";
 
+    // clang-format off
     QString buildComputeShader(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format)
     {
-        struct TargetVersion {
+        struct TargetVersion
+        {
             QString sampler;
             QString sample;
         };
-        struct SampleTypeVersion {
+        struct SampleTypeVersion
+        {
             QString prefix;
             QString mapping;
         };
@@ -165,18 +167,20 @@ void main() {
                "#define SWIZZLE " + swizzle + "\n" +
                computeShaderSource;
     }
+    // clang-format on
 
     bool buildProgram(QOpenGLShaderProgram &program,
         QOpenGLTexture::Target target, QOpenGLTexture::TextureFormat format)
     {
         program.create();
-        program.addShaderFromSourceCode(QOpenGLShader::Compute, buildComputeShader(target, format));
+        program.addShaderFromSourceCode(QOpenGLShader::Compute,
+            buildComputeShader(target, format));
         return program.link();
     }
 } // namespace
 
 void GLComputeRange::setImage(QOpenGLTexture::Target target, GLuint textureId,
-    const TextureData &texture, int level, int layer, int face) 
+    const TextureData &texture, int level, int layer, int face)
 {
     mTarget = target;
     mFormat = texture.format();
@@ -200,7 +204,7 @@ void GLComputeRange::render()
     if (auto program = getProgram(mTarget, mFormat)) {
         program->bind();
         program->setUniformValue("uTexture", 0);
-        gl.v4_3->glProgramUniform2ui(program->programId(), 
+        gl.v4_3->glProgramUniform2ui(program->programId(),
             program->uniformLocation("uSize"), mSize.width(), mSize.height());
         program->setUniformValue("uLevel", mLevel);
         program->setUniformValue("uLayer", mLayer);
@@ -208,7 +212,8 @@ void GLComputeRange::render()
         program->setUniformValue("uMin", min);
         program->setUniformValue("uMax", max);
 
-        struct Result {
+        struct Result
+        {
             float min[4];
             float max[4];
         };
@@ -224,8 +229,8 @@ void GLComputeRange::render()
         mBuffer.write(0, &result, sizeof(result));
 
         const auto bindingIndex = 0;
-        gl.glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 
-            bindingIndex, mBuffer.bufferId());
+        gl.glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex,
+            mBuffer.bufferId());
 
         gl.glActiveTexture(GL_TEXTURE0);
         gl.glBindTexture(mTarget, mTextureId);
@@ -240,7 +245,7 @@ void GLComputeRange::render()
         mBuffer.read(0, &result, sizeof(result));
         mRange = {
             qMin(qMin(result.min[0], result.min[1]), result.min[2]),
-            qMax(qMax(result.max[0], result.max[1]), result.max[2])
+            qMax(qMax(result.max[0], result.max[1]), result.max[2]),
         };
     }
 #endif

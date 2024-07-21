@@ -1,14 +1,13 @@
 
 #include "WindowTitle.h"
-#include <QDockWidget>
-#include <QLabel>
 #include <QBoxLayout>
-#include <QToolButton>
+#include <QDockWidget>
 #include <QEvent>
+#include <QLabel>
+#include <QToolButton>
 #include <QVariant>
 
-WindowTitle::WindowTitle(QWidget *parent) 
-    : QFrame(parent)
+WindowTitle::WindowTitle(QWidget *parent) : QFrame(parent)
 {
     setFrameShape(QFrame::Box);
     setProperty("no-bottom-border", true);
@@ -41,16 +40,16 @@ WindowTitle::WindowTitle(QWidget *parent)
 bool WindowTitle::event(QEvent *event)
 {
     if (event->type() == QEvent::ParentAboutToChange) {
-        if (auto parent = parentWidget()) 
+        if (auto parent = parentWidget())
             disconnect(parent);
-    }
-    else if (event->type() == QEvent::ParentChange) {
+    } else if (event->type() == QEvent::ParentChange) {
         parentChanged(parentWidget());
     }
     return QFrame::event(event);
 }
 
-void WindowTitle::parentChanged(QWidget *parent) {
+void WindowTitle::parentChanged(QWidget *parent)
+{
     if (!parent)
         return;
 

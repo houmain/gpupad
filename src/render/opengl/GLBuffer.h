@@ -21,7 +21,8 @@ public:
     GLuint getReadOnlyBufferId();
     GLuint getReadWriteBufferId();
     void bindReadOnly(GLenum target);
-    void bindIndexedRange(GLenum target, int index, int offset, int size, bool readonly);
+    void bindIndexedRange(GLenum target, int index, int offset, int size,
+        bool readonly);
     void unbind(GLenum target);
     bool download(bool checkModification);
 
@@ -31,13 +32,12 @@ private:
     void upload();
 
     MessagePtrSet mMessages;
-    ItemId mItemId{ };
+    ItemId mItemId{};
     QString mFileName;
-    int mSize{ };
+    int mSize{};
     QByteArray mData;
     QSet<ItemId> mUsedItems;
     GLObject mBufferObject;
-    bool mSystemCopyModified{ };
-    bool mDeviceCopyModified{ };
+    bool mSystemCopyModified{};
+    bool mDeviceCopyModified{};
 };
-

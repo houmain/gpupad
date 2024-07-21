@@ -22,7 +22,7 @@ protected:
 private:
     void parentChanged(QWidget *parent);
 
-    QLabel *mTitle{ };
-    QAbstractButton *mCloseButton{ };
-    QWidget *mWidget{ };
+    QLabel *mTitle{};
+    QAbstractButton *mCloseButton{};
+    QWidget *mWidget{};
 };

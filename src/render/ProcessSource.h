@@ -7,38 +7,25 @@ class ProcessSource final : public RenderTask
 {
     Q_OBJECT
 public:
-    explicit ProcessSource(QObject *parent = nullptr)
-        : RenderTask(parent) { }
+    explicit ProcessSource(QObject *parent = nullptr) : RenderTask(parent) { }
 
-    ~ProcessSource() override
-    {
-        releaseResources();
-    }
+    ~ProcessSource() override { releaseResources(); }
 
-    void setFileName(QString fileName) 
-    {
-        mImpl.setFileName(fileName);
-    }
+    void setFileName(QString fileName) { mImpl.setFileName(fileName); }
 
     void setSourceType(SourceType sourceType)
     {
         mImpl.setSourceType(sourceType);
     }
 
-    void setValidateSource(bool validate)
-    {
-        mImpl.setValidateSource(validate);
-    }
+    void setValidateSource(bool validate) { mImpl.setValidateSource(validate); }
 
     void setProcessType(QString processType)
     {
         mImpl.setProcessType(processType);
     }
 
-    void clearMessages()
-    {
-        mImpl.clearMessages();
-    }
+    void clearMessages() { mImpl.clearMessages(); }
 
 Q_SIGNALS:
     void outputChanged(QString output);
@@ -54,20 +41,11 @@ private:
         mImpl.prepare();
     }
 
-    void render() override
-    {
-        mImpl.render();
-    }
+    void render() override { mImpl.render(); }
 
-    void finish() override
-    {
-        Q_EMIT outputChanged(mImpl.output());
-    }
+    void finish() override { Q_EMIT outputChanged(mImpl.output()); }
 
-    void release() override
-    {
-        mImpl.release();
-    }
+    void release() override { mImpl.release(); }
 
     GLProcessSource mImpl;
 };

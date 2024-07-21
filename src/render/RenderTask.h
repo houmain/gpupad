@@ -1,10 +1,10 @@
 #pragma once
 
+#include "Evaluation.h"
+#include "Renderer.h"
 #include <QObject>
 #include <QSet>
 #include <optional>
-#include "Renderer.h"
-#include "Evaluation.h"
 
 using ItemId = int;
 
@@ -15,7 +15,7 @@ public:
     explicit RenderTask(QObject *parent = nullptr);
     ~RenderTask() override;
 
-    virtual QSet<ItemId> usedItems() const { return { }; }
+    virtual QSet<ItemId> usedItems() const { return {}; }
 
     void update(RendererPtr renderer, bool itemChanged = false,
         EvaluationType evaluationType = EvaluationType::Reset);
@@ -35,8 +35,7 @@ private:
     virtual bool initialize() { return true; }
 
     // 1. called per update in main thread
-    virtual void prepare(bool itemsChanged,
-        EvaluationType evaluationType) { }
+    virtual void prepare(bool itemsChanged, EvaluationType evaluationType) { }
 
     // 2. called per update in render thread
     virtual void configure() { }
@@ -55,8 +54,7 @@ private:
     virtual void release() { }
 
     RendererPtr mRenderer;
-    bool mUpdating{ };
-    bool mItemsChanged{ };
+    bool mUpdating{};
+    bool mItemsChanged{};
     std::optional<EvaluationType> mPendingEvaluation;
 };
-

@@ -9,15 +9,13 @@ class GLBuffer;
 class GLTexture : public TextureBase
 {
 public:
-    static bool upload(QOpenGLFunctions_3_3_Core &gl,
-        const TextureData &data, QOpenGLTexture::Target target, 
-        int samples, GLuint* textureId);
-    static bool download(QOpenGLFunctions_3_3_Core &gl,
-        TextureData &data, QOpenGLTexture::Target target, 
-        GLuint textureId);
+    static bool upload(QOpenGLFunctions_3_3_Core &gl, const TextureData &data,
+        QOpenGLTexture::Target target, int samples, GLuint *textureId);
+    static bool download(QOpenGLFunctions_3_3_Core &gl, TextureData &data,
+        QOpenGLTexture::Target target, GLuint textureId);
 
     GLTexture(const Texture &texture, ScriptEngine &scriptEngine);
-    GLTexture(const Buffer &buffer, GLBuffer *textureBuffer, 
+    GLTexture(const Buffer &buffer, GLBuffer *textureBuffer,
         Texture::Format format, ScriptEngine &scriptEngine);
 
     GLuint textureId() const { return mTextureObject; }
@@ -34,7 +32,6 @@ private:
     void createTexture();
     void upload();
 
-    GLBuffer *mTextureBuffer{ };
+    GLBuffer *mTextureBuffer{};
     GLObject mTextureObject;
 };
-

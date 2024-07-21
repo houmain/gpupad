@@ -1,10 +1,10 @@
 #pragma once
 
 #include "MessageList.h"
-#include <QJsonValue>
+#include <QJSValue>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QJSValue>
+#include <QJsonValue>
 #include <functional>
 
 class SessionModel;
@@ -32,7 +32,8 @@ public:
     Q_INVOKABLE void setTextureData(QJSValue itemDesc, QJSValue data);
 
     Q_INVOKABLE QJSValue enumerateFiles(const QString &pattern);
-    Q_INVOKABLE QJSValue writeTextFile(const QString &fileName, const QString &string);
+    Q_INVOKABLE QJSValue writeTextFile(const QString &fileName,
+        const QString &string);
     Q_INVOKABLE QJSValue readTextFile(const QString &fileName);
 
 private:
@@ -45,10 +46,10 @@ private:
     void withSessionModel(UpdateFunction &&updateFunction);
     ItemId getItemId(QJSValue itemDesc);
 
-    QJSEngine *mEngine{ };
+    QJSEngine *mEngine{};
     QJSValue mRootItemsList;
     MessagePtrSet mMessages;
-    SessionModel *mSessionCopy{ };
+    SessionModel *mSessionCopy{};
     std::vector<UpdateFunction> mPendingUpdates;
-    bool mUpdatedEditor{ };
+    bool mUpdatedEditor{};
 };

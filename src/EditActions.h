@@ -15,4 +15,3 @@ struct EditActions
     QAction *rename;
     QAction *findReplace;
 };
-

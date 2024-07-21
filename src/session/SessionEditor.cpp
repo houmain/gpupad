@@ -1,12 +1,12 @@
 #include "SessionEditor.h"
-#include "Singletons.h"
-#include "SessionModel.h"
 #include "EditActions.h"
 #include "FileDialog.h"
+#include "SessionModel.h"
+#include "Singletons.h"
 #include <QApplication>
 #include <QClipboard>
-#include <QMimeData>
 #include <QMenu>
+#include <QMimeData>
 
 SessionEditor::SessionEditor(QWidget *parent)
     : QTreeView(parent)
@@ -27,12 +27,12 @@ SessionEditor::SessionEditor(QWidget *parent)
     setEditTriggers(QTreeView::EditKeyPressed | QTreeView::SelectedClicked);
     setContextMenuPolicy(Qt::CustomContextMenu);
     setAutoExpandDelay(750);
-    setFileName({ });
+    setFileName({});
 
-    connect(this, &QTreeView::activated,
-        this, &SessionEditor::handleItemActivated);
-    connect(this, &QTreeView::customContextMenuRequested,
-        this, &SessionEditor::openContextMenu);
+    connect(this, &QTreeView::activated, this,
+        &SessionEditor::handleItemActivated);
+    connect(this, &QTreeView::customContextMenuRequested, this,
+        &SessionEditor::openContextMenu);
 
     auto usedLetters = QSet<QChar>();
     auto addAction = [&](auto &action, auto type) {
@@ -47,10 +47,9 @@ SessionEditor::SessionEditor(QWidget *parent)
                 break;
             }
         }
-        action = new QAction(mModel.getTypeIcon(type),
-            tr("Add ") + typeName, this);
-        connect(action, &QAction::triggered,
-            [this, type]() { addItem(type); });
+        action =
+            new QAction(mModel.getTypeIcon(type), tr("Add ") + typeName, this);
+        connect(action, &QAction::triggered, [this, type]() { addItem(type); });
     };
     addAction(mAddGroupAction, Item::Type::Group);
     addAction(mAddScriptAction, Item::Type::Script);
@@ -75,7 +74,7 @@ SessionEditor::SessionEditor(QWidget *parent)
     setPalette(p);
 }
 
-void SessionEditor::addItemActions(QMenu* menu)
+void SessionEditor::addItemActions(QMenu *menu)
 {
     menu->addAction(mAddBlockAction);
     menu->addAction(mAddFieldAction);
@@ -98,15 +97,14 @@ void SessionEditor::updateItemActions()
 {
     auto index = selectionModel()->currentIndex();
     for (const auto [type, action] : {
-            std::make_pair(Item::Type::Block, mAddBlockAction),
-            std::make_pair(Item::Type::Field, mAddFieldAction),
-            std::make_pair(Item::Type::Shader, mAddShaderAction),
-            std::make_pair(Item::Type::Attribute, mAddAttributeAction),
-            std::make_pair(Item::Type::Attachment, mAddAttachmentAction),
-        })
-        action->setVisible(
-            mModel.canContainType(index, type) ||
-            mModel.canContainType(index.parent(), type));
+             std::make_pair(Item::Type::Block, mAddBlockAction),
+             std::make_pair(Item::Type::Field, mAddFieldAction),
+             std::make_pair(Item::Type::Shader, mAddShaderAction),
+             std::make_pair(Item::Type::Attribute, mAddAttributeAction),
+             std::make_pair(Item::Type::Attachment, mAddAttachmentAction),
+         })
+        action->setVisible(mModel.canContainType(index, type)
+            || mModel.canContainType(index.parent(), type));
 }
 
 QList<QMetaObject::Connection> SessionEditor::connectEditActions(
@@ -115,8 +113,8 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
     auto c = QList<QMetaObject::Connection>();
     actions.windowFileName->setText(fileName());
     actions.windowFileName->setEnabled(isModified());
-    c += connect(this, &SessionEditor::fileNameChanged,
-        actions.windowFileName, &QAction::setText);
+    c += connect(this, &SessionEditor::fileNameChanged, actions.windowFileName,
+        &QAction::setText);
     c += connect(this, &SessionEditor::modificationChanged,
         actions.windowFileName, &QAction::setEnabled);
 
@@ -133,16 +131,14 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
     actions.copy->setEnabled(hasSelection);
     actions.delete_->setEnabled(hasSelection);
     actions.paste->setEnabled(canPaste());
-    c += connect(actions.cut, &QAction::triggered,
-        this, &SessionEditor::cut);
-    c += connect(actions.copy, &QAction::triggered,
-        this, &SessionEditor::copy);
-    c += connect(actions.paste, &QAction::triggered,
-        this, &SessionEditor::paste);
-    c += connect(actions.delete_, &QAction::triggered,
-        this, &SessionEditor::delete_);
-    c += connect(actions.rename, &QAction::triggered,
-        this, &SessionEditor::renameCurrentItem);
+    c += connect(actions.cut, &QAction::triggered, this, &SessionEditor::cut);
+    c += connect(actions.copy, &QAction::triggered, this, &SessionEditor::copy);
+    c += connect(actions.paste, &QAction::triggered, this,
+        &SessionEditor::paste);
+    c += connect(actions.delete_, &QAction::triggered, this,
+        &SessionEditor::delete_);
+    c += connect(actions.rename, &QAction::triggered, this,
+        &SessionEditor::renameCurrentItem);
 
     auto updateEditActions = [this, actions]() {
         actions.cut->setEnabled(hasFocus() && currentIndex().isValid());
@@ -162,8 +158,8 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
         mContextMenu->insertAction(pos, actions.undo);
         mContextMenu->insertAction(pos, actions.redo);
         mContextMenu->insertSeparator(pos);
-        mContextMenu->insertActions(pos, {
-            actions.cut, actions.copy, actions.paste, actions.delete_ });
+        mContextMenu->insertActions(pos,
+            { actions.cut, actions.copy, actions.paste, actions.delete_ });
         mContextMenu->insertSeparator(pos);
     }
     return c;
@@ -174,10 +170,8 @@ void SessionEditor::mouseReleaseEvent(QMouseEvent *event)
     QTreeView::mouseReleaseEvent(event);
 
     // keep current selected
-    if (selectionModel()->selection().isEmpty() &&
-        currentIndex().isValid())
-        selectionModel()->select(
-            currentIndex(), QItemSelectionModel::Select);
+    if (selectionModel()->selection().isEmpty() && currentIndex().isValid())
+        selectionModel()->select(currentIndex(), QItemSelectionModel::Select);
 
     // ensure selected item is still visible
     scrollTo(currentIndex());
@@ -190,7 +184,7 @@ void SessionEditor::wheelEvent(QWheelEvent *event)
 }
 
 void SessionEditor::selectionChanged(const QItemSelection &selected,
-                                     const QItemSelection &deselected)
+    const QItemSelection &deselected)
 {
     // do not allow to select item with different parents
     const auto parent = currentIndex().parent();
@@ -232,15 +226,15 @@ bool SessionEditor::clear()
 {
     mModel.clear();
     if (!FileDialog::isUntitled(mFileName))
-        setFileName({ });
+        setFileName({});
     return true;
 }
 
 void SessionEditor::setFileName(QString fileName)
 {
     if (fileName.isEmpty())
-        fileName = FileDialog::generateNextUntitledFileName(
-            tr("Untitled Session"));
+        fileName =
+            FileDialog::generateNextUntitledFileName(tr("Untitled Session"));
 
     if (mFileName != fileName) {
         mFileName = fileName;
@@ -286,11 +280,12 @@ void SessionEditor::paste()
 {
     const auto drop = [&](auto row, auto column, auto parent) {
         auto mimeData = QApplication::clipboard()->mimeData();
-        if (!mModel.canDropMimeData(mimeData, Qt::CopyAction, row, column, parent))
+        if (!mModel.canDropMimeData(mimeData, Qt::CopyAction, row, column,
+                parent))
             return false;
         mModel.beginUndoMacro("Paste");
-        const auto dropped = mModel.dropMimeData(mimeData, 
-            Qt::CopyAction, row, column, parent);
+        const auto dropped =
+            mModel.dropMimeData(mimeData, Qt::CopyAction, row, column, parent);
         mModel.endUndoMacro();
         if (dropped) {
             if (row < 0)
@@ -333,7 +328,7 @@ void SessionEditor::setCurrentItem(ItemId itemId)
 void SessionEditor::openContextMenu(const QPoint &pos)
 {
     if (!indexAt(pos).isValid())
-        setCurrentIndex({ });
+        setCurrentIndex({});
 
     updateItemActions();
 
@@ -344,16 +339,16 @@ void SessionEditor::addItem(Item::Type type)
 {
     mModel.beginUndoMacro("Add");
 
-    auto addingToGroup = (currentIndex().isValid() &&
-        mModel.getItemType(currentIndex()) == Item::Type::Group);
-    auto index = mModel.insertItem(type, currentIndex(), addingToGroup ? 0 : -1);
+    auto addingToGroup = (currentIndex().isValid()
+        && mModel.getItemType(currentIndex()) == Item::Type::Group);
+    auto index =
+        mModel.insertItem(type, currentIndex(), addingToGroup ? 0 : -1);
 
     if (type == Item::Type::Buffer) {
         const auto block = mModel.insertItem(Item::Type::Block, index);
         mModel.insertItem(Item::Type::Field, block);
         setExpanded(block, true);
-    }
-    else if (type == Item::Type::Target)
+    } else if (type == Item::Type::Target)
         mModel.insertItem(Item::Type::Attachment, index);
     else if (type == Item::Type::Stream)
         mModel.insertItem(Item::Type::Attribute, index);
@@ -376,10 +371,9 @@ void SessionEditor::handleItemActivated(const QModelIndex &index)
 {
     if (mModel.getItemType(index) == Item::Type::Group) {
         setExpanded(index, !isExpanded(index));
-    }
-    else {
+    } else {
         Q_EMIT itemActivated(index);
-   }
+    }
 }
 
 void SessionEditor::renameCurrentItem()

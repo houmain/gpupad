@@ -8,8 +8,7 @@ class SessionModelCore : public QAbstractItemModel
 {
     Q_OBJECT
 public:
-    enum ColumnType
-    {
+    enum ColumnType {
         Name = 0,
         None,
         FileName,
@@ -123,19 +122,20 @@ public:
     };
 
     explicit SessionModelCore(QObject *parent = nullptr);
-    SessionModelCore(const SessionModelCore& rhs) = delete;
+    SessionModelCore(const SessionModelCore &rhs) = delete;
     SessionModelCore &operator=(const SessionModelCore &rhs);
     ~SessionModelCore() override;
 
     void clear();
     QModelIndex index(int row, int column,
-          const QModelIndex &parent = QModelIndex()) const override;
+        const QModelIndex &parent = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex &child) const override;
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    QVariant data(const QModelIndex &index,
+        int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex &index, const QVariant &value,
         int role = Qt::EditRole) override;
     bool removeRows(int row, int count, const QModelIndex &parent) override;
@@ -144,25 +144,27 @@ public:
     QString getTypeName(Item::Type type) const;
     bool canContainType(const QModelIndex &index, Item::Type type) const;
     Item::Type getDefaultChildType(const QModelIndex &index) const;
-    QModelIndex insertItem(Item::Type type, QModelIndex parent,
-        int row = -1, ItemId id = 0);
+    QModelIndex insertItem(Item::Type type, QModelIndex parent, int row = -1,
+        ItemId id = 0);
     void deleteItem(const QModelIndex &index);
-    QModelIndex getIndex(const Item *item, ColumnType column = ColumnType::None) const;
+    QModelIndex getIndex(const Item *item,
+        ColumnType column = ColumnType::None) const;
     QModelIndex getIndex(const QModelIndex &index, ColumnType column) const;
-    QModelIndex findChildByName(const QModelIndex &parent, const QString &name) const;
-    const Item* findItem(ItemId id) const;
+    QModelIndex findChildByName(const QModelIndex &parent,
+        const QString &name) const;
+    const Item *findItem(ItemId id) const;
     const Item &getItem(const QModelIndex &index) const;
     ItemId getItemId(const QModelIndex &index) const;
     Item::Type getItemType(const QModelIndex &index) const;
     ItemId getNextItemId();
 
-    template<typename T>
+    template <typename T>
     const T *item(const QModelIndex &index) const
     {
         return castItem<T>(&getItem(index));
     }
 
-    template<typename T>
+    template <typename T>
     const T *findItem(ItemId id) const
     {
         return castItem<T>(SessionModelCore::findItem(id));
@@ -175,18 +177,17 @@ protected:
 private:
     Item &getItemRef(const QModelIndex &index);
     void insertItem(Item *item, const QModelIndex &parent, int row = -1);
-    void insertItem(QList<Item*> *list, Item *item,
-        const QModelIndex &parent, int row);
-    void removeItem(QList<Item*> *list,
-        const QModelIndex &parent, int row);
+    void insertItem(QList<Item *> *list, Item *item, const QModelIndex &parent,
+        int row);
+    void removeItem(QList<Item *> *list, const QModelIndex &parent, int row);
     void pushUndoCommand(QUndoCommand *command);
-    void undoableInsertItem(QList<Item*> *list, Item *item,
+    void undoableInsertItem(QList<Item *> *list, Item *item,
         const QModelIndex &parent, int row);
-    void undoableRemoveItem(QList<Item*> *list, Item *item,
+    void undoableRemoveItem(QList<Item *> *list, Item *item,
         const QModelIndex &index);
-    template<typename T, typename S>
+    template <typename T, typename S>
     void assignment(const QModelIndex &index, T *to, S &&value);
-    template<typename T, typename S>
+    template <typename T, typename S>
     void undoableAssignment(const QModelIndex &index, T *to, S &&value,
         int mergeId = -1);
     void undoableFileNameAssignment(const QModelIndex &index, FileItem &item,
@@ -195,6 +196,5 @@ private:
     ItemId mNextItemId{ 1 };
     QScopedPointer<Group> mRoot;
     QUndoStack mUndoStack;
-    QMap<ItemId, const Item*> mItemsById;
+    QMap<ItemId, const Item *> mItemsById;
 };
-

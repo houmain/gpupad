@@ -4,11 +4,10 @@
 
 ReferenceComboBox::ReferenceComboBox(QWidget *parent) : QComboBox(parent)
 {
-    connect(this, qOverload<int>(&QComboBox::currentIndexChanged),
-        [this]() {
-            if (!mSuspendDataChangedSignal)
-                Q_EMIT currentDataChanged(currentData());
-        });
+    connect(this, qOverload<int>(&QComboBox::currentIndexChanged), [this]() {
+        if (!mSuspendDataChangedSignal)
+            Q_EMIT currentDataChanged(currentData());
+    });
 }
 
 void ReferenceComboBox::setCurrentData(QVariant data)
@@ -60,8 +59,7 @@ void ReferenceComboBox::paintEvent(QPaintEvent *event)
     if (opt.currentText != text) {
         setToolTip(opt.currentText);
         opt.currentText = text;
-    }
-    else {
+    } else {
         setToolTip("");
     }
 
@@ -86,7 +84,7 @@ void ReferenceComboBox::refreshList()
 
 void ReferenceComboBox::insertItem(int index, QVariant data)
 {
-    if (auto model = qobject_cast<QStandardItemModel*>(this->model())) {
+    if (auto model = qobject_cast<QStandardItemModel *>(this->model())) {
         const auto text = Q_EMIT textRequired(data);
         auto item = new QStandardItem(text);
         item->setData(data, Qt::UserRole);

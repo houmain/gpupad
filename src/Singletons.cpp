@@ -1,24 +1,23 @@
 #include "Singletons.h"
+#include "EvaluatedPropertyCache.h"
 #include "FileCache.h"
 #include "FileDialog.h"
-#include "SynchronizeLogic.h"
-#include "Settings.h"
 #include "InputState.h"
+#include "Settings.h"
+#include "SynchronizeLogic.h"
 #include "VideoManager.h"
-#include "EvaluatedPropertyCache.h"
 #include "editors/EditorManager.h"
-#include "session/SessionModel.h"
 #include "render/opengl/GLRenderer.h"
 #include "render/opengl/GLShareSynchronizer.h"
 #include "render/vulkan/VKRenderer.h"
+#include "session/SessionModel.h"
 #include <QApplication>
 
 Singletons *Singletons::sInstance;
 
 bool onMainThread()
 {
-    return (QThread::currentThread() ==
-        QApplication::instance()->thread());
+    return (QThread::currentThread() == QApplication::instance()->thread());
 }
 
 void Singletons::resetRenderer(RenderAPI api)
@@ -30,8 +29,8 @@ void Singletons::resetRenderer(RenderAPI api)
 RendererPtr Singletons::renderer()
 {
     Q_ASSERT(onMainThread());
-    return (sInstance->mRenderApi == RenderAPI::Vulkan ? 
-        vkRenderer() : glRenderer());
+    return (sInstance->mRenderApi == RenderAPI::Vulkan ? vkRenderer()
+                                                       : glRenderer());
 }
 
 RendererPtr Singletons::glRenderer()
@@ -121,9 +120,10 @@ Singletons::Singletons(QMainWindow *window)
     Q_ASSERT(onMainThread());
     sInstance = this;
     mSynchronizeLogic.reset(new SynchronizeLogic());
-    
+
     QObject::connect(&fileCache(), &FileCache::videoPlayerRequested,
-        &videoManager(), &VideoManager::handleVideoPlayerRequested, Qt::QueuedConnection);
+        &videoManager(), &VideoManager::handleVideoPlayerRequested,
+        Qt::QueuedConnection);
 }
 
 Singletons::~Singletons() = default;

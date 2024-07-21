@@ -44,24 +44,23 @@ private:
     GLenum getIndexType() const;
 
     MessagePtrSet mMessages;
-    Call mCall{ };
-    GLProgram *mProgram{ };
-    GLTarget *mTarget{ };
-    GLStream *mVertexStream{ };
-    GLBuffer *mBuffer{ };
-    GLBuffer *mFromBuffer{ };
-    GLTexture *mTexture{ };
-    GLTexture *mFromTexture{ };
+    Call mCall{};
+    GLProgram *mProgram{};
+    GLTarget *mTarget{};
+    GLStream *mVertexStream{};
+    GLBuffer *mBuffer{};
+    GLBuffer *mFromBuffer{};
+    GLTexture *mTexture{};
+    GLTexture *mFromTexture{};
 
-    GLBuffer *mIndexBuffer{ };
+    GLBuffer *mIndexBuffer{};
     QString mIndirectOffset;
-    int mIndexSize{ };
+    int mIndexSize{};
     QString mIndicesOffset;
 
-    GLBuffer *mIndirectBuffer{ };
-    GLint mIndirectStride{ };
+    GLBuffer *mIndirectBuffer{};
+    GLint mIndirectStride{};
 
     QSet<ItemId> mUsedItems;
     std::shared_ptr<QOpenGLTimerQuery> mTimerQuery;
 };
-

@@ -1,12 +1,12 @@
 #pragma once
 
 #include "EditActions.h"
-#include "session/Item.h"
 #include "Evaluation.h"
+#include "session/Item.h"
 #include <QMainWindow>
 
 namespace Ui {
-class MainWindow;
+    class MainWindow;
 }
 
 class QSplitter;
@@ -34,8 +34,7 @@ public:
 public Q_SLOTS:
     void newFile();
     void openFile();
-    bool openFile(const QString &fileName,
-        bool asBinaryFile = false);
+    bool openFile(const QString &fileName, bool asBinaryFile = false);
     bool saveFile();
     bool saveFileAs();
     bool saveAllFiles();
@@ -86,16 +85,16 @@ private:
     void updateRecentFileActions();
     void openRecentFile();
     void updateCustomActionsMenu();
-    void handleMessageActivated(ItemId itemId,
-        QString fileName, int line, int column);
+    void handleMessageActivated(ItemId itemId, QString fileName, int line,
+        int column);
     void handleThemeChanging(const Theme &theme);
     void handleHideMenuBarChanged(bool hide);
 
-    Ui::MainWindow *mUi{ };
-    QToolButton* mMenuButton{ };
-    QSplitter *mSessionSplitter{ };
-    QToolBar* mFullScreenBar{ };
-    QLabel* mFullScreenTitle{ };
+    Ui::MainWindow *mUi{};
+    QToolButton *mMenuButton{};
+    QSplitter *mSessionSplitter{};
+    QToolBar *mFullScreenBar{};
+    QLabel *mFullScreenTitle{};
     EditActions mEditActions;
     QScopedPointer<MessageWindow> mMessageWindow;
     QScopedPointer<CustomActions> mCustomActions;
@@ -104,13 +103,12 @@ private:
     QScopedPointer<FileBrowserWindow> mFileBrowserWindow;
     EditorManager &mEditorManager;
     QScopedPointer<SessionEditor> mSessionEditor;
-    QDockWidget *mSessionDock{ };
+    QDockWidget *mSessionDock{};
     QScopedPointer<SessionProperties> mSessionProperties;
     QList<QMetaObject::Connection> mConnectedEditActions;
     QStringList mRecentFiles;
-    QList<QAction*> mRecentSessionActions;
-    QList<QAction*> mRecentFileActions;
-    bool mLastPressWasAlt{ };
-    bool mIgnoreNextAlt{ };
+    QList<QAction *> mRecentSessionActions;
+    QList<QAction *> mRecentFileActions;
+    bool mLastPressWasAlt{};
+    bool mIgnoreNextAlt{};
 };
-

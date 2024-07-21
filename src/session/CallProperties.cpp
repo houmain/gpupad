@@ -15,34 +15,41 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
     fillComboBox<Call::PrimitiveType>(mUi->primitiveType);
     fillComboBox<Call::ExecuteOn>(mUi->executeOn);
 
-    connect(mUi->type, &DataComboBox::currentDataChanged,
-        this, &CallProperties::updateWidgets);
-    connect(mUi->texture, &ReferenceComboBox::currentDataChanged,
-        this, &CallProperties::updateWidgets);
-    connect(mUi->primitiveType, &DataComboBox::currentDataChanged,
-        this, &CallProperties::updateWidgets);
+    connect(mUi->type, &DataComboBox::currentDataChanged, this,
+        &CallProperties::updateWidgets);
+    connect(mUi->texture, &ReferenceComboBox::currentDataChanged, this,
+        &CallProperties::updateWidgets);
+    connect(mUi->primitiveType, &DataComboBox::currentDataChanged, this,
+        &CallProperties::updateWidgets);
 
-    for (auto combobox : { mUi->program, mUi->vertexStream, mUi->target, 
-            mUi->indexBufferBlock, mUi->indirectBufferBlock, mUi->texture,
-            mUi->fromTexture, mUi->buffer, mUi->fromBuffer })
+    for (auto combobox : { mUi->program, mUi->vertexStream, mUi->target,
+             mUi->indexBufferBlock, mUi->indirectBufferBlock, mUi->texture,
+             mUi->fromTexture, mUi->buffer, mUi->fromBuffer })
         connect(combobox, &ReferenceComboBox::textRequired,
-            [this](QVariant data) { return mSessionProperties.getItemName(data.toInt()); });
+            [this](QVariant data) {
+                return mSessionProperties.getItemName(data.toInt());
+            });
 
-    connect(mUi->program, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(Item::Type::Program); });
-    connect(mUi->vertexStream, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(Item::Type::Stream, true); });
+    connect(mUi->program, &ReferenceComboBox::listRequired, [this]() {
+        return mSessionProperties.getItemIds(Item::Type::Program);
+    });
+    connect(mUi->vertexStream, &ReferenceComboBox::listRequired, [this]() {
+        return mSessionProperties.getItemIds(Item::Type::Stream, true);
+    });
     connect(mUi->target, &ReferenceComboBox::listRequired,
         [this]() { return mSessionProperties.getItemIds(Item::Type::Target); });
     for (auto block : { mUi->indexBufferBlock, mUi->indirectBufferBlock })
-        connect(block, &ReferenceComboBox::listRequired,
-            [this]() { return mSessionProperties.getItemIds(Item::Type::Block); });
+        connect(block, &ReferenceComboBox::listRequired, [this]() {
+            return mSessionProperties.getItemIds(Item::Type::Block);
+        });
     for (auto buffer : { mUi->buffer, mUi->fromBuffer })
-        connect(buffer, &ReferenceComboBox::listRequired,
-            [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
+        connect(buffer, &ReferenceComboBox::listRequired, [this]() {
+            return mSessionProperties.getItemIds(Item::Type::Buffer);
+        });
     for (auto texture : { mUi->texture, mUi->fromTexture })
-        connect(texture, &ReferenceComboBox::listRequired,
-            [this]() { return mSessionProperties.getItemIds(Item::Type::Texture); });
+        connect(texture, &ReferenceComboBox::listRequired, [this]() {
+            return mSessionProperties.getItemIds(Item::Type::Texture);
+        });
 
     updateWidgets();
 }
@@ -71,7 +78,7 @@ CallKind CallProperties::currentCallKind() const
     if (auto call = mSessionProperties.model().item<Call>(
             mSessionProperties.currentModelIndex()))
         return getKind(*call);
-    return { };
+    return {};
 }
 
 TextureKind CallProperties::currentTextureKind() const
@@ -79,7 +86,7 @@ TextureKind CallProperties::currentTextureKind() const
     if (auto texture = castItem<Texture>(mSessionProperties.model().findItem(
             mUi->texture->currentData().toInt())))
         return getKind(*texture);
-    return { };
+    return {};
 }
 
 void CallProperties::addMappings(QDataWidgetMapper &mapper)
@@ -96,13 +103,15 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->vertexCount, SessionModel::CallCount);
     mapper.addMapping(mUi->firstVertex, SessionModel::CallFirst);
 
-    mapper.addMapping(mUi->indexBufferBlock, SessionModel::CallIndexBufferBlockId);
+    mapper.addMapping(mUi->indexBufferBlock,
+        SessionModel::CallIndexBufferBlockId);
     mapper.addMapping(mUi->baseVertex, SessionModel::CallBaseVertex);
 
     mapper.addMapping(mUi->instanceCount, SessionModel::CallInstanceCount);
     mapper.addMapping(mUi->baseInstance, SessionModel::CallBaseInstance);
 
-    mapper.addMapping(mUi->indirectBufferBlock, SessionModel::CallIndirectBufferBlockId);
+    mapper.addMapping(mUi->indirectBufferBlock,
+        SessionModel::CallIndirectBufferBlockId);
     mapper.addMapping(mUi->drawCount, SessionModel::CallDrawCount);
 
     mapper.addMapping(mUi->workGroupsX, SessionModel::CallWorkGroupsX);
@@ -127,27 +136,28 @@ void CallProperties::updateWidgets()
         kind.draw || kind.compute);
     setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target,
         kind.draw);
-    setFormVisibility(mUi->formLayout, mUi->labelVertexStream, mUi->vertexStream,
-        kind.draw);
-    setFormVisibility(mUi->formLayout, mUi->labelIndexBufferBlock, mUi->indexBufferBlock,
-        kind.indexed);
-    setFormVisibility(mUi->formLayout, mUi->labelPrimitiveType, mUi->primitiveType,
-        kind.draw);
-    setFormVisibility(mUi->formLayout, mUi->labelIndirectBufferBlock, mUi->indirectBufferBlock,
-        kind.indirect);
+    setFormVisibility(mUi->formLayout, mUi->labelVertexStream,
+        mUi->vertexStream, kind.draw);
+    setFormVisibility(mUi->formLayout, mUi->labelIndexBufferBlock,
+        mUi->indexBufferBlock, kind.indexed);
+    setFormVisibility(mUi->formLayout, mUi->labelPrimitiveType,
+        mUi->primitiveType, kind.draw);
+    setFormVisibility(mUi->formLayout, mUi->labelIndirectBufferBlock,
+        mUi->indirectBufferBlock, kind.indirect);
 
-    setFormVisibility(mUi->formLayout, mUi->labelPatchVertices, mUi->patchVertices,
+    setFormVisibility(mUi->formLayout, mUi->labelPatchVertices,
+        mUi->patchVertices,
         currentPrimitiveType() == Call::PrimitiveType::Patches);
     setFormVisibility(mUi->formLayout, mUi->labelVertexCount, mUi->vertexCount,
         kind.draw && !kind.indirect);
-    setFormVisibility(mUi->formLayout, mUi->labelInstanceCount, mUi->instanceCount,
-        kind.draw && !kind.indirect);
+    setFormVisibility(mUi->formLayout, mUi->labelInstanceCount,
+        mUi->instanceCount, kind.draw && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelFirstVertex, mUi->firstVertex,
         kind.draw && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelBaseVertex, mUi->baseVertex,
         kind.draw && kind.indexed && !kind.indirect);
-    setFormVisibility(mUi->formLayout, mUi->labelBaseInstance, mUi->baseInstance,
-        kind.draw && !kind.indirect);
+    setFormVisibility(mUi->formLayout, mUi->labelBaseInstance,
+        mUi->baseInstance, kind.draw && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelDrawCount, mUi->drawCount,
         kind.draw && kind.indirect);
 
@@ -159,28 +169,29 @@ void CallProperties::updateWidgets()
         kind.compute && !kind.indirect);
 
     setFormVisibility(mUi->formLayout, mUi->labelFromTexture, mUi->fromTexture,
-        type == Call::CallType::CopyTexture ||
-        type == Call::CallType::SwapTextures);
+        type == Call::CallType::CopyTexture
+            || type == Call::CallType::SwapTextures);
 
     setFormVisibility(mUi->formLayout, mUi->labelTexture, mUi->texture,
-        type == Call::CallType::ClearTexture ||
-        type == Call::CallType::CopyTexture ||
-        type == Call::CallType::SwapTextures);
+        type == Call::CallType::ClearTexture
+            || type == Call::CallType::CopyTexture
+            || type == Call::CallType::SwapTextures);
 
     const auto texKind = currentTextureKind();
     setFormVisibility(mUi->formLayout, mUi->labelClearColor, mUi->clearColor,
         type == Call::CallType::ClearTexture && texKind.color);
     setFormVisibility(mUi->formLayout, mUi->labelClearDepth, mUi->clearDepth,
         type == Call::CallType::ClearTexture && texKind.depth);
-    setFormVisibility(mUi->formLayout, mUi->labelClearStencil, mUi->clearStencil,
+    setFormVisibility(mUi->formLayout, mUi->labelClearStencil,
+        mUi->clearStencil,
         type == Call::CallType::ClearTexture && texKind.stencil);
 
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
-        type == Call::CallType::ClearBuffer ||
-        type == Call::CallType::CopyBuffer ||
-        type == Call::CallType::SwapBuffers);
+        type == Call::CallType::ClearBuffer
+            || type == Call::CallType::CopyBuffer
+            || type == Call::CallType::SwapBuffers);
 
     setFormVisibility(mUi->formLayout, mUi->labelFromBuffer, mUi->fromBuffer,
-        type == Call::CallType::CopyBuffer ||
-        type == Call::CallType::SwapBuffers);
+        type == Call::CallType::CopyBuffer
+            || type == Call::CallType::SwapBuffers);
 }

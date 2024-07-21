@@ -2,7 +2,7 @@
 
 #include <QEvent>
 
-template<typename Event>
+template <typename Event>
 QPoint getEventPosition(const Event *event)
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -12,7 +12,7 @@ QPoint getEventPosition(const Event *event)
 #endif
 }
 
-template<typename Event>
+template <typename Event>
 QPoint getGlobalEventPosition(const Event *event)
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)

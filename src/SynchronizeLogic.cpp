@@ -1,15 +1,15 @@
 #include "SynchronizeLogic.h"
-#include "Singletons.h"
-#include "Settings.h"
-#include "FileCache.h"
-#include "VideoManager.h"
 #include "EvaluatedPropertyCache.h"
-#include "session/SessionModel.h"
+#include "FileCache.h"
+#include "Settings.h"
+#include "Singletons.h"
+#include "VideoManager.h"
 #include "editors/EditorManager.h"
-#include "editors/texture/TextureEditor.h"
 #include "editors/binary/BinaryEditor.h"
-#include "render/RenderSession.h"
+#include "editors/texture/TextureEditor.h"
 #include "render/ProcessSource.h"
+#include "render/RenderSession.h"
+#include "session/SessionModel.h"
 #include <QTimer>
 
 SynchronizeLogic::SynchronizeLogic(QObject *parent)
@@ -20,32 +20,32 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     , mProcessSourceTimer(new QTimer(this))
     , mProcessSource(new ProcessSource(this))
 {
-    connect(mUpdateEditorsTimer, &QTimer::timeout,
-        this, &SynchronizeLogic::updateEditors);
-    connect(mEvaluationTimer, &QTimer::timeout,
-        this, &SynchronizeLogic::handleEvaluateTimout);
-    connect(mProcessSourceTimer, &QTimer::timeout,
-        this, &SynchronizeLogic::processSource);
-    connect(&mModel, &SessionModel::dataChanged,
-        this, &SynchronizeLogic::handleItemsModified);
-    connect(&mModel, &SessionModel::rowsInserted,
-        this, &SynchronizeLogic::handleItemReordered);
-    connect(&mModel, &SessionModel::rowsAboutToBeRemoved,
-        this, &SynchronizeLogic::handleItemReordered);
-    connect(mProcessSource, &ProcessSource::outputChanged,
-        this, &SynchronizeLogic::outputChanged);
-    connect(&Singletons::fileCache(), &FileCache::fileChanged,
-        this, &SynchronizeLogic::handleFileChanged);
-    connect(&Singletons::editorManager(), &EditorManager::editorRenamed,
-        this, &SynchronizeLogic::handleEditorFileRenamed);
-    connect(&Singletons::settings(), &Settings::shaderIncludePathsChanged,
-        this, &SynchronizeLogic::invalidateRenderSession);
-    connect(&Singletons::settings(), &Settings::shaderPreambleChanged,
-        this, &SynchronizeLogic::invalidateRenderSession);
-    connect(this, &SynchronizeLogic::sessionShaderIncludePathsChanged,
-        this, &SynchronizeLogic::invalidateRenderSession);
-    connect(this, &SynchronizeLogic::sessionShaderPreambleChanged,
-        this, &SynchronizeLogic::invalidateRenderSession);
+    connect(mUpdateEditorsTimer, &QTimer::timeout, this,
+        &SynchronizeLogic::updateEditors);
+    connect(mEvaluationTimer, &QTimer::timeout, this,
+        &SynchronizeLogic::handleEvaluateTimout);
+    connect(mProcessSourceTimer, &QTimer::timeout, this,
+        &SynchronizeLogic::processSource);
+    connect(&mModel, &SessionModel::dataChanged, this,
+        &SynchronizeLogic::handleItemsModified);
+    connect(&mModel, &SessionModel::rowsInserted, this,
+        &SynchronizeLogic::handleItemReordered);
+    connect(&mModel, &SessionModel::rowsAboutToBeRemoved, this,
+        &SynchronizeLogic::handleItemReordered);
+    connect(mProcessSource, &ProcessSource::outputChanged, this,
+        &SynchronizeLogic::outputChanged);
+    connect(&Singletons::fileCache(), &FileCache::fileChanged, this,
+        &SynchronizeLogic::handleFileChanged);
+    connect(&Singletons::editorManager(), &EditorManager::editorRenamed, this,
+        &SynchronizeLogic::handleEditorFileRenamed);
+    connect(&Singletons::settings(), &Settings::shaderIncludePathsChanged, this,
+        &SynchronizeLogic::invalidateRenderSession);
+    connect(&Singletons::settings(), &Settings::shaderPreambleChanged, this,
+        &SynchronizeLogic::invalidateRenderSession);
+    connect(this, &SynchronizeLogic::sessionShaderIncludePathsChanged, this,
+        &SynchronizeLogic::invalidateRenderSession);
+    connect(this, &SynchronizeLogic::sessionShaderPreambleChanged, this,
+        &SynchronizeLogic::invalidateRenderSession);
     resetRenderSession();
 
     mUpdateEditorsTimer->start(100);
@@ -84,8 +84,8 @@ void SynchronizeLogic::setCurrentEditorSourceType(SourceType sourceType)
 void SynchronizeLogic::resetRenderSession()
 {
     mRenderSession.reset(new RenderSession());
-    connect(mRenderSession.data(), &RenderTask::updated,
-        this, &SynchronizeLogic::handleSessionRendered);
+    connect(mRenderSession.data(), &RenderTask::updated, this,
+        &SynchronizeLogic::handleSessionRendered);
 }
 
 void SynchronizeLogic::resetEvaluation()
@@ -115,17 +115,15 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
         mEvaluationTimer->setSingleShot(false);
         mEvaluationTimer->start(1);
         Singletons::videoManager().playVideoFiles();
-    }
-    else if (mEvaluationMode == EvaluationMode::Automatic) {
+    } else if (mEvaluationMode == EvaluationMode::Automatic) {
         mEvaluationTimer->stop();
         mEvaluationTimer->setSingleShot(true);
         if (mRenderSessionInvalidated)
             mEvaluationTimer->start(0);
         Singletons::videoManager().pauseVideoFiles();
-    }
-    else {
+    } else {
         mEvaluationTimer->stop();
-        Singletons::sessionModel().setActiveItems({ });
+        Singletons::sessionModel().setActiveItems({});
         Singletons::videoManager().pauseVideoFiles();
     }
 }
@@ -142,18 +140,16 @@ void SynchronizeLogic::handleSessionRendered()
 
     if (mEvaluationMode != EvaluationMode::Paused)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
-
 }
 
 void SynchronizeLogic::handleFileChanged(const QString &fileName)
 {
-    mModel.forEachFileItem(
-        [&](const FileItem &item) {
-            if (item.fileName == fileName) {
-                auto index = mModel.getIndex(&item);
-                Q_EMIT mModel.dataChanged(index, index);
-            }
-        });
+    mModel.forEachFileItem([&](const FileItem &item) {
+        if (item.fileName == fileName) {
+            auto index = mModel.getIndex(&item);
+            Q_EMIT mModel.dataChanged(index, index);
+        }
+    });
 
     auto &editorManager = Singletons::editorManager();
     if (editorManager.currentEditorFileName() == fileName)
@@ -191,15 +187,12 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
     if (index.column() != SessionModel::None) {
         if (auto buffer = mModel.item<Buffer>(index)) {
             mEditorItemsModified.insert(buffer->id);
-        }
-        else if (auto block = mModel.item<Block>(index)) {
+        } else if (auto block = mModel.item<Block>(index)) {
             Singletons::evaluatedPropertyCache().invalidate(block->id);
             mEditorItemsModified.insert(block->parent->id);
-        }
-        else if (auto field = mModel.item<Field>(index)) {
+        } else if (auto field = mModel.item<Field>(index)) {
             mEditorItemsModified.insert(field->parent->parent->id);
-        }
-        else if (auto texture = mModel.item<Texture>(index)) {
+        } else if (auto texture = mModel.item<Texture>(index)) {
             Singletons::evaluatedPropertyCache().invalidate(texture->id);
             mEditorItemsModified.insert(texture->id);
         }
@@ -207,18 +200,14 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
 
     if (mRenderSession->usedItems().contains(mModel.getItemId(index))) {
         invalidateRenderSession();
-    }
-    else if (index.column() == SessionModel::Name) {
+    } else if (index.column() == SessionModel::Name) {
         invalidateRenderSession();
-    }
-    else if (auto call = mModel.item<Call>(index)) {
+    } else if (auto call = mModel.item<Call>(index)) {
         if (call->checked)
             invalidateRenderSession();
-    }
-    else if (mModel.item<Group>(index)) {
+    } else if (mModel.item<Group>(index)) {
         invalidateRenderSession();
-    }
-    else if (mModel.item<Binding>(index)) {
+    } else if (mModel.item<Binding>(index)) {
         invalidateRenderSession();
     }
 }
@@ -237,7 +226,7 @@ void SynchronizeLogic::handleEditorFileRenamed(const QString &prevFileName,
         mModel.forEachFileItem([&](const FileItem &item) {
             if (item.fileName == prevFileName)
                 mModel.setData(mModel.getIndex(&item, SessionModel::FileName),
-                        fileName);
+                    fileName);
         });
 }
 
@@ -251,22 +240,24 @@ void SynchronizeLogic::handleFileItemFileChanged(const FileItem &item)
 
 void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
 {
-    if (item.fileName.isEmpty() ||
-        FileDialog::getFileTitle(item.fileName) == item.name)
+    if (item.fileName.isEmpty()
+        || FileDialog::getFileTitle(item.fileName) == item.name)
         return;
 
     mModel.beginUndoMacro("Update filename");
 
     const auto prevFileName = item.fileName;
     if (!FileDialog::isEmptyOrUntitled(item.fileName)) {
-        const auto fileName = QFileInfo(item.fileName).dir().filePath(item.name);
+        const auto fileName =
+            QFileInfo(item.fileName).dir().filePath(item.name);
         const auto file = QFileInfo(fileName);
         const auto prevFile = QFileInfo(prevFileName);
 
         const auto identical = [](const QFileInfo &a, const QFileInfo &b) {
             if (!a.exists() || !b.exists() || a.size() != b.size())
                 return false;
-            return (QFile(a.fileName()).readAll() == QFile(b.fileName()).readAll());
+            return (QFile(a.fileName()).readAll()
+                == QFile(b.fileName()).readAll());
         };
 
         const auto mergeRenameOrCopy = [&]() {
@@ -274,7 +265,7 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
                 return QFile::remove(prevFileName);
 
             auto fileReferencedByOtherItem = false;
-            mModel.forEachFileItem([&](const FileItem& other) {
+            mModel.forEachFileItem([&](const FileItem &other) {
                 if (&item != &other && item.fileName == other.fileName)
                     fileReferencedByOtherItem = true;
             });
@@ -291,12 +282,14 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
         }
 
         // update item filename
-        mModel.setData(mModel.getIndex(&item, SessionModel::FileName), fileName);
-    }
-    else {
+        mModel.setData(mModel.getIndex(&item, SessionModel::FileName),
+            fileName);
+    } else {
         // update item filename
-        const auto fileName = FileDialog::generateNextUntitledFileName(item.name);
-        mModel.setData(mModel.getIndex(&item, SessionModel::FileName), fileName);
+        const auto fileName =
+            FileDialog::generateNextUntitledFileName(item.name);
+        mModel.setData(mModel.getIndex(&item, SessionModel::FileName),
+            fileName);
     }
 
     mModel.endUndoMacro();
@@ -307,15 +300,17 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
 
 void SynchronizeLogic::handleEvaluateTimout()
 {
-    evaluate(mEvaluationMode == EvaluationMode::Automatic ?
-        EvaluationType::Automatic : EvaluationType::Steady);
+    evaluate(mEvaluationMode == EvaluationMode::Automatic
+            ? EvaluationType::Automatic
+            : EvaluationType::Steady);
 }
 
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
     Singletons::fileCache().updateFromEditors();
     const auto itemsChanged = std::exchange(mRenderSessionInvalidated, false);
-    mRenderSession->update(Singletons::renderer(), itemsChanged, evaluationType);
+    mRenderSession->update(Singletons::renderer(), itemsChanged,
+        evaluationType);
 }
 
 void SynchronizeLogic::updateEditors()
@@ -331,8 +326,7 @@ void SynchronizeLogic::updateEditor(ItemId itemId, bool activated)
     if (auto texture = mModel.findItem<Texture>(itemId)) {
         if (auto editor = editors.getTextureEditor(texture->fileName))
             updateTextureEditor(*texture, *editor);
-    }
-    else if (auto buffer = mModel.findItem<Buffer>(itemId)) {
+    } else if (auto buffer = mModel.findItem<Buffer>(itemId)) {
         if (auto editor = editors.getBinaryEditor(buffer->fileName)) {
             updateBinaryEditor(*buffer, *editor);
             if (activated)
@@ -345,11 +339,16 @@ void SynchronizeLogic::updateTextureEditor(const Texture &texture,
     TextureEditor &editor)
 {
     auto width = 0, height = 0, depth = 0, layers = 0;
-    Singletons::evaluatedPropertyCache().evaluateTextureProperties(
-        texture, &width, &height, &depth, &layers);
+    Singletons::evaluatedPropertyCache().evaluateTextureProperties(texture,
+        &width, &height, &depth, &layers);
     editor.setRawFormat({
-        texture.target, texture.format, width, height, depth, 
-        layers, texture.samples,
+        texture.target,
+        texture.format,
+        width,
+        height,
+        depth,
+        layers,
+        texture.samples,
     });
 }
 
@@ -358,39 +357,31 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
 {
     const auto getDataType = [](Field::DataType type) {
         switch (type) {
-            case Field::DataType::Int8: return BinaryEditor::DataType::Int8;
-            case Field::DataType::Int16: return BinaryEditor::DataType::Int16;
-            case Field::DataType::Int32: return BinaryEditor::DataType::Int32;
-            case Field::DataType::Uint8: return BinaryEditor::DataType::Uint8;
-            case Field::DataType::Uint16: return BinaryEditor::DataType::Uint16;
-            case Field::DataType::Uint32: return BinaryEditor::DataType::Uint32;
-            case Field::DataType::Float: return BinaryEditor::DataType::Float;
-            case Field::DataType::Double: return BinaryEditor::DataType::Double;
+        case Field::DataType::Int8:   return BinaryEditor::DataType::Int8;
+        case Field::DataType::Int16:  return BinaryEditor::DataType::Int16;
+        case Field::DataType::Int32:  return BinaryEditor::DataType::Int32;
+        case Field::DataType::Uint8:  return BinaryEditor::DataType::Uint8;
+        case Field::DataType::Uint16: return BinaryEditor::DataType::Uint16;
+        case Field::DataType::Uint32: return BinaryEditor::DataType::Uint32;
+        case Field::DataType::Float:  return BinaryEditor::DataType::Float;
+        case Field::DataType::Double: return BinaryEditor::DataType::Double;
         }
         return BinaryEditor::DataType::Int8;
     };
 
     auto blocks = QList<BinaryEditor::Block>();
     for (const auto *item : qAsConst(buffer.items)) {
-        const auto &block = static_cast<const Block&>(*item);
+        const auto &block = static_cast<const Block &>(*item);
         auto fields = QList<BinaryEditor::Field>();
         for (const auto *item : qAsConst(block.items)) {
-            const auto &field = static_cast<const Field&>(*item);
-            fields.append({
-                field.name,
-                getDataType(field.dataType),
-                field.count,
-                field.padding
-            });
+            const auto &field = static_cast<const Field &>(*item);
+            fields.append({ field.name, getDataType(field.dataType),
+                field.count, field.padding });
         }
         auto offset = 0, rowCount = 0;
-        Singletons::evaluatedPropertyCache().evaluateBlockProperties(block, &offset, &rowCount);
-        blocks.append({
-            block.name,
-            offset,
-            rowCount,
-            fields
-        });
+        Singletons::evaluatedPropertyCache().evaluateBlockProperties(block,
+            &offset, &rowCount);
+        blocks.append({ block.name, offset, rowCount, fields });
     }
     editor.setBlocks(blocks);
 }
@@ -402,8 +393,8 @@ void SynchronizeLogic::processSource()
         return;
     }
 
-    if (mCurrentEditorFileName.isEmpty() ||
-        !Singletons::editorManager().getSourceEditor(mCurrentEditorFileName))
+    if (mCurrentEditorFileName.isEmpty()
+        || !Singletons::editorManager().getSourceEditor(mCurrentEditorFileName))
         return;
 
     Singletons::fileCache().updateFromEditors();
@@ -415,7 +406,7 @@ void SynchronizeLogic::processSource()
     mProcessSource->update(Singletons::glRenderer());
 }
 
-void SynchronizeLogic::handleMouseStateChanged() 
+void SynchronizeLogic::handleMouseStateChanged()
 {
     if (mRenderSession->usesMouseState()) {
         if (mEvaluationMode == EvaluationMode::Automatic)
@@ -423,7 +414,7 @@ void SynchronizeLogic::handleMouseStateChanged()
     }
 }
 
-void SynchronizeLogic::handleKeyboardStateChanged() 
+void SynchronizeLogic::handleKeyboardStateChanged()
 {
     if (mRenderSession->usesKeyboardState()) {
         if (mEvaluationMode == EvaluationMode::Automatic)

@@ -2,15 +2,14 @@
 #include "TextureItem.h"
 #include "GLWidget.h"
 #include "Singletons.h"
+#include "render/ComputeRange.h"
 #include "render/opengl/GLShareSynchronizer.h"
 #include "render/opengl/GLTexture.h"
-#include "render/ComputeRange.h"
-#include <optional>
-#include <cmath>
 #include <array>
+#include <cmath>
+#include <optional>
 
-namespace 
-{
+namespace {
     const auto vertexShaderSource = R"(
 #version 330
 
@@ -128,52 +127,75 @@ void main() {
 }
 )";
 
-    struct ProgramDesc 
+    struct ProgramDesc
     {
-        QOpenGLTexture::Target target{ };
-        QOpenGLTexture::TextureFormat format{ };
-        bool picker{ };
-        bool histogram{ };
+        QOpenGLTexture::Target target{};
+        QOpenGLTexture::TextureFormat format{};
+        bool picker{};
+        bool histogram{};
 
-        friend bool operator<(const ProgramDesc& a, const ProgramDesc& b) {
-            return std::tie(a.target, a.format, a.picker, a.histogram) < 
-                   std::tie(b.target, b.format, b.picker, b.histogram);
+        friend bool operator<(const ProgramDesc &a, const ProgramDesc &b)
+        {
+            return std::tie(a.target, a.format, a.picker, a.histogram)
+                < std::tie(b.target, b.format, b.picker, b.histogram);
         }
     };
 
     QString buildFragmentShader(const ProgramDesc &desc)
     {
-        struct TargetVersion {
+        struct TargetVersion
+        {
             QString sampler;
             QString sample;
         };
-        struct SampleTypeVersion {
+        struct SampleTypeVersion
+        {
             QString prefix;
             QString mapping;
         };
-        static auto sTargetVersions = std::map<QOpenGLTexture::Target, TargetVersion>{
-            { QOpenGLTexture::Target1D, { "sampler1D", "textureLod(S, TC.x, uLevel)" } },
-            { QOpenGLTexture::Target1DArray, { "sampler1DArray", "textureLod(S, vec2(TC.x, uLayer), uLevel)" } },
-            { QOpenGLTexture::Target2D, { "sampler2D", "textureLod(S, TC, uLevel)" } },
-            { QOpenGLTexture::Target2DArray, { "sampler2DArray", "textureLod(S, vec3(TC, uLayer), uLevel)" } },
-            { QOpenGLTexture::Target3D, { "sampler3D", "textureLod(S, vec3(TC, uLayer), uLevel)" } },
-            { QOpenGLTexture::TargetCubeMap, { "samplerCube", "textureLod(S, getCubeTexCoord(TC, uFace), uLevel)" } },
-            { QOpenGLTexture::TargetCubeMapArray,  { "samplerCubeArray", "textureLod(S, vec4(getCubeTexCoord(TC, uFace), uLayer), uLevel)" } },
-            { QOpenGLTexture::Target2DMultisample, { "sampler2DMS", "texelFetch(S, ivec2(TC * (uSize - 1)), s)" } },
-            { QOpenGLTexture::Target2DMultisampleArray, { "sampler2DMSArray", "texelFetch(S, ivec3(TC * (uSize - 1), uLayer), s)" } },
-        };
-        static auto sSampleTypeVersions = std::map<TextureSampleType, SampleTypeVersion>{
-            { TextureSampleType::Normalized, { "", "color" } },
-            { TextureSampleType::Normalized_sRGB, { "", "color" } },
-            { TextureSampleType::Float, { "", "color" } },
-            { TextureSampleType::Uint8, { "u", "color / 255.0" } },
-            { TextureSampleType::Uint16, { "u", "color / 65535.0" } },
-            { TextureSampleType::Uint32, { "u", "color / 4294967295.0" } },
-            { TextureSampleType::Uint_10_10_10_2, { "u", "color / vec4(vec3(1023.0), 3.0)" } },
-            { TextureSampleType::Int8, { "i", "color / 127.0" } },
-            { TextureSampleType::Int16, { "i", "color / 32767.0" } },
-            { TextureSampleType::Int32, { "i", "color / 2147483647.0" } },
-        };
+        static auto sTargetVersions =
+            std::map<QOpenGLTexture::Target, TargetVersion>{
+                { QOpenGLTexture::Target1D,
+                    { "sampler1D", "textureLod(S, TC.x, uLevel)" } },
+                { QOpenGLTexture::Target1DArray,
+                    { "sampler1DArray",
+                        "textureLod(S, vec2(TC.x, uLayer), uLevel)" } },
+                { QOpenGLTexture::Target2D,
+                    { "sampler2D", "textureLod(S, TC, uLevel)" } },
+                { QOpenGLTexture::Target2DArray,
+                    { "sampler2DArray",
+                        "textureLod(S, vec3(TC, uLayer), uLevel)" } },
+                { QOpenGLTexture::Target3D,
+                    { "sampler3D",
+                        "textureLod(S, vec3(TC, uLayer), uLevel)" } },
+                { QOpenGLTexture::TargetCubeMap,
+                    { "samplerCube",
+                        "textureLod(S, getCubeTexCoord(TC, uFace), uLevel)" } },
+                { QOpenGLTexture::TargetCubeMapArray,
+                    { "samplerCubeArray",
+                        "textureLod(S, vec4(getCubeTexCoord(TC, uFace), "
+                        "uLayer), uLevel)" } },
+                { QOpenGLTexture::Target2DMultisample,
+                    { "sampler2DMS",
+                        "texelFetch(S, ivec2(TC * (uSize - 1)), s)" } },
+                { QOpenGLTexture::Target2DMultisampleArray,
+                    { "sampler2DMSArray",
+                        "texelFetch(S, ivec3(TC * (uSize - 1), uLayer), s)" } },
+            };
+        static auto sSampleTypeVersions =
+            std::map<TextureSampleType, SampleTypeVersion>{
+                { TextureSampleType::Normalized, { "", "color" } },
+                { TextureSampleType::Normalized_sRGB, { "", "color" } },
+                { TextureSampleType::Float, { "", "color" } },
+                { TextureSampleType::Uint8, { "u", "color / 255.0" } },
+                { TextureSampleType::Uint16, { "u", "color / 65535.0" } },
+                { TextureSampleType::Uint32, { "u", "color / 4294967295.0" } },
+                { TextureSampleType::Uint_10_10_10_2,
+                    { "u", "color / vec4(vec3(1023.0), 3.0)" } },
+                { TextureSampleType::Int8, { "i", "color / 127.0" } },
+                { TextureSampleType::Int16, { "i", "color / 32767.0" } },
+                { TextureSampleType::Int32, { "i", "color / 2147483647.0" } },
+            };
         static auto sComponetSwizzle = std::map<int, QString>{
             { 1, "vec4(vec3(color.r), 1)" },
             { 2, "vec4(vec3(color.rg, 0), 1)" },
@@ -183,27 +205,32 @@ void main() {
         const auto sampleType = getTextureSampleType(desc.format);
         const auto targetVersion = sTargetVersions[desc.target];
         const auto sampleTypeVersion = sSampleTypeVersions[sampleType];
-        const auto swizzle = sComponetSwizzle[getTextureComponentCount(desc.format)];
-        const auto linearToSrgb = (sampleType == TextureSampleType::Normalized_sRGB ||
-                                   sampleType == TextureSampleType::Float);
+        const auto swizzle =
+            sComponetSwizzle[getTextureComponentCount(desc.format)];
+        const auto linearToSrgb =
+            (sampleType == TextureSampleType::Normalized_sRGB
+                || sampleType == TextureSampleType::Float);
         return "#version 330\n"
                "#define S uTexture\n"
                "#define TC vTexCoord\n"
-               "#define SAMPLER " + sampleTypeVersion.prefix + targetVersion.sampler + "\n"
-               "#define SAMPLE " + targetVersion.sample + "\n" +
-               "#define MAPPING " + sampleTypeVersion.mapping + "\n" +
-               "#define SWIZZLE " + swizzle + "\n" +
-               "#define LINEAR_TO_SRGB " + QString::number(linearToSrgb) + "\n" +
-               "#define PICKER_ENABLED " + QString::number(desc.picker) + "\n" +
-               "#define HISTOGRAM_ENABLED " + QString::number(desc.histogram) + "\n" +
-               fragmentShaderSource;
+               "#define SAMPLER "
+            + sampleTypeVersion.prefix + targetVersion.sampler
+            + "\n"
+              "#define SAMPLE "
+            + targetVersion.sample + "\n" + "#define MAPPING "
+            + sampleTypeVersion.mapping + "\n" + "#define SWIZZLE " + swizzle
+            + "\n" + "#define LINEAR_TO_SRGB " + QString::number(linearToSrgb)
+            + "\n" + "#define PICKER_ENABLED " + QString::number(desc.picker)
+            + "\n" + "#define HISTOGRAM_ENABLED "
+            + QString::number(desc.histogram) + "\n" + fragmentShaderSource;
     }
 
     bool buildProgram(QOpenGLShaderProgram &program, const ProgramDesc &desc)
     {
         program.create();
         auto vertexShader = new QOpenGLShader(QOpenGLShader::Vertex, &program);
-        auto fragmentShader = new QOpenGLShader(QOpenGLShader::Fragment, &program);
+        auto fragmentShader =
+            new QOpenGLShader(QOpenGLShader::Fragment, &program);
         vertexShader->compileSourceCode(vertexShaderSource);
         fragmentShader->compileSourceCode(buildFragmentShader(desc));
         program.addShader(vertexShader);
@@ -211,14 +238,14 @@ void main() {
         return program.link();
     }
 
-    bool importSharedTexture(SharedMemoryHandle handle, 
-        const TextureData &data, int samples, GLuint textureId)
-    {            
-        auto& context = *QOpenGLContext::currentContext();
-        static auto glCreateMemoryObjectsEXT = 
+    bool importSharedTexture(SharedMemoryHandle handle, const TextureData &data,
+        int samples, GLuint textureId)
+    {
+        auto &context = *QOpenGLContext::currentContext();
+        static auto glCreateMemoryObjectsEXT =
             reinterpret_cast<PFNGLCREATEMEMORYOBJECTSEXTPROC>(
                 context.getProcAddress("glCreateMemoryObjectsEXT"));
-        static auto glDeleteMemoryObjectsEXT = 
+        static auto glDeleteMemoryObjectsEXT =
             reinterpret_cast<PFNGLDELETEMEMORYOBJECTSEXTPROC>(
                 context.getProcAddress("glDeleteMemoryObjectsEXT"));
         static auto glMemoryObjectParameterivEXT =
@@ -249,57 +276,52 @@ void main() {
             reinterpret_cast<PFNGLTEXTURESTORAGEMEM3DMULTISAMPLEEXTPROC>(
                 context.getProcAddress("glTextureStorageMem3DMultisampleEXT"));
 
-        if (!glCreateMemoryObjectsEXT ||
-            !glDeleteMemoryObjectsEXT ||
-            !glTextureStorageMem1DEXT ||
-            !glTextureStorageMem2DEXT ||
-            !glTextureStorageMem2DMultisampleEXT ||
-            !glTextureStorageMem3DEXT ||
-            !glTextureStorageMem3DMultisampleEXT)
+        if (!glCreateMemoryObjectsEXT || !glDeleteMemoryObjectsEXT
+            || !glTextureStorageMem1DEXT || !glTextureStorageMem2DEXT
+            || !glTextureStorageMem2DMultisampleEXT || !glTextureStorageMem3DEXT
+            || !glTextureStorageMem3DMultisampleEXT)
             return false;
 
-        auto memoryObject = GLuint{ };
+        auto memoryObject = GLuint{};
         glCreateMemoryObjectsEXT(1, &memoryObject);
         auto dedicated = GLint{ handle.dedicated ? GL_TRUE : GL_FALSE };
-        glMemoryObjectParameterivEXT(memoryObject, GL_DEDICATED_MEMORY_OBJECT_EXT, &dedicated);
+        glMemoryObjectParameterivEXT(memoryObject,
+            GL_DEDICATED_MEMORY_OBJECT_EXT, &dedicated);
 #if defined(_WIN32)
         glImportMemoryWin32HandleEXT(memoryObject, handle.allocationSize,
             GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, handle.handle);
 #else
         glImportMemoryFdEXT(memoryObject, handle.allocationSize,
-            GL_HANDLE_TYPE_OPAQUE_FD_EXT, reinterpret_cast<intptr_t>(handle.handle));
+            GL_HANDLE_TYPE_OPAQUE_FD_EXT,
+            reinterpret_cast<intptr_t>(handle.handle));
 #endif
         const auto target = data.getTarget(samples);
         const auto dimensions = data.dimensions() + (data.isArray() ? 1 : 0);
         if (dimensions == 1) {
             glTextureStorageMem1DEXT(textureId, data.levels(),
-                static_cast<GLenum>(data.format()), data.width(), 
-                memoryObject, handle.allocationOffset);
-        }
-        else if (dimensions == 2) {
+                static_cast<GLenum>(data.format()), data.width(), memoryObject,
+                handle.allocationOffset);
+        } else if (dimensions == 2) {
             if (isMultisampleTarget(target)) {
-                glTextureStorageMem2DMultisampleEXT(textureId, samples, 
-                    static_cast<GLenum>(data.format()), data.width(), 
+                glTextureStorageMem2DMultisampleEXT(textureId, samples,
+                    static_cast<GLenum>(data.format()), data.width(),
                     data.height(), true, memoryObject, handle.allocationOffset);
-            }
-            else {
+            } else {
                 glTextureStorageMem2DEXT(textureId, data.levels(),
-                    static_cast<GLenum>(data.format()), data.width(), 
+                    static_cast<GLenum>(data.format()), data.width(),
                     data.height(), memoryObject, handle.allocationOffset);
             }
-        }
-        else if (dimensions == 3) {
+        } else if (dimensions == 3) {
             if (isMultisampleTarget(target)) {
-                glTextureStorageMem3DMultisampleEXT(textureId, samples, 
-                    static_cast<GLenum>(data.format()), 
-                    data.width(), data.height(), data.depth(), 
-                    true, memoryObject, handle.allocationOffset);
-            }
-            else {
+                glTextureStorageMem3DMultisampleEXT(textureId, samples,
+                    static_cast<GLenum>(data.format()), data.width(),
+                    data.height(), data.depth(), true, memoryObject,
+                    handle.allocationOffset);
+            } else {
                 glTextureStorageMem3DEXT(textureId, data.levels(),
-                    static_cast<GLenum>(data.format()), 
-                    data.width(), data.height(), data.depth(), 
-                    memoryObject, handle.allocationOffset);
+                    static_cast<GLenum>(data.format()), data.width(),
+                    data.height(), data.depth(), memoryObject,
+                    handle.allocationOffset);
             }
         }
         glDeleteMemoryObjectsEXT(1, &memoryObject);
@@ -340,7 +362,7 @@ TextureItem::~TextureItem() = default;
 
 void TextureItem::releaseGL()
 {
-    auto& gl = widget().gl();
+    auto &gl = widget().gl();
     if (mImageTextureId)
         gl.glDeleteTextures(1, &mImageTextureId);
     if (mSharedTextureHandle)
@@ -377,9 +399,10 @@ void TextureItem::setPreviewTexture(SharedMemoryHandle handle, int samples)
             if (auto gl = widget().gl45(); gl) {
                 if (mSharedTextureId)
                     gl->glDeleteTextures(1, &mSharedTextureId);
-                gl->glCreateTextures(mImage.getTarget(samples), 1, &mSharedTextureId);
-                gl->glTextureParameteri(mSharedTextureId,
-                    GL_TEXTURE_TILING_EXT, GL_OPTIMAL_TILING_EXT);
+                gl->glCreateTextures(mImage.getTarget(samples), 1,
+                    &mSharedTextureId);
+                gl->glTextureParameteri(mSharedTextureId, GL_TEXTURE_TILING_EXT,
+                    GL_OPTIMAL_TILING_EXT);
             }
             importSharedTexture(handle, mImage, samples, mSharedTextureId);
         }
@@ -391,8 +414,7 @@ void TextureItem::setPreviewTexture(SharedMemoryHandle handle, int samples)
 
 bool TextureItem::canFilter() const
 {
-    return (!mImage.isNull() && 
-        (!mPreviewTextureId || mPreviewSamples == 1));
+    return (!mImage.isNull() && (!mPreviewTextureId || mPreviewSamples == 1));
 }
 
 void TextureItem::setMousePosition(const QPointF &mousePosition)
@@ -418,10 +440,10 @@ void TextureItem::setHistogramBinCount(int count)
         mHistogramBins.resize(count);
         if (mHistogramEnabled)
             update();
-    }          
+    }
 }
 
-void TextureItem::setHistogramBounds(const Range &bounds) 
+void TextureItem::setHistogramBounds(const Range &bounds)
 {
     if (mHistogramBounds != bounds) {
         mHistogramBounds = bounds;
@@ -430,28 +452,24 @@ void TextureItem::setHistogramBounds(const Range &bounds)
     }
 }
 
-void TextureItem::computeHistogramBounds() 
+void TextureItem::computeHistogramBounds()
 {
     if (!mComputeRange) {
         mComputeRange = new ComputeRange(this);
-        connect(mComputeRange, &ComputeRange::rangeComputed,
-            this, &TextureItem::histogramBoundsComputed);
+        connect(mComputeRange, &ComputeRange::rangeComputed, this,
+            &TextureItem::histogramBoundsComputed);
     }
 
-    mComputeRange->setImage(
-        mImage.getTarget(mPreviewSamples),
-        (mPreviewTextureId ? mPreviewTextureId : mImageTextureId),
-        mImage, 
-        static_cast<int>(mLevel), 
-        static_cast<int>(mLayer),
-        mFace);
+    mComputeRange->setImage(mImage.getTarget(mPreviewSamples),
+        (mPreviewTextureId ? mPreviewTextureId : mImageTextureId), mImage,
+        static_cast<int>(mLevel), static_cast<int>(mLayer), mFace);
 
     mComputeRange->update(Singletons::glRenderer());
 }
 
-GLWidget &TextureItem::widget() 
+GLWidget &TextureItem::widget()
 {
-    return *qobject_cast<GLWidget*>(parent());
+    return *qobject_cast<GLWidget *>(parent());
 }
 
 void TextureItem::update()
@@ -477,8 +495,8 @@ bool TextureItem::updateTexture()
         gl.glDeleteTextures(1, &mImageTextureId);
         mImageTextureId = GL_NONE;
 
-        const auto result = GLTexture::upload(gl, mImage, 
-            mImage.getTarget(), 1,  &mImageTextureId);
+        const auto result = GLTexture::upload(gl, mImage, mImage.getTarget(), 1,
+            &mImageTextureId);
         Q_ASSERT(result);
         // last version is deleted in QGraphicsView destructor
     }
@@ -494,12 +512,12 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
     if (mPreviewTextureId && !gl.glIsTexture(mPreviewTextureId))
         mPreviewTextureId = GL_NONE;
 
-    const auto target = mImage.getTarget(mPreviewTextureId ? mPreviewSamples : 0);
+    const auto target =
+        mImage.getTarget(mPreviewTextureId ? mPreviewSamples : 0);
     if (mPreviewTextureId) {
         Singletons::glShareSynchronizer().beginUsage(gl);
         gl.glBindTexture(target, mPreviewTextureId);
-    }
-    else {
+    } else {
         gl.glBindTexture(target, mImageTextureId);
     }
 
@@ -507,28 +525,25 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
     gl.glBlendEquation(GL_FUNC_ADD);
     gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    if (target != QOpenGLTexture::Target2DMultisample &&
-        target != QOpenGLTexture::Target2DMultisampleArray) {
+    if (target != QOpenGLTexture::Target2DMultisample
+        && target != QOpenGLTexture::Target2DMultisampleArray) {
 
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
         if (mMagnifyLinear) {
             gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        }
-        else {
+            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER,
+                GL_LINEAR_MIPMAP_LINEAR);
+        } else {
             gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+            gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER,
+                GL_NEAREST_MIPMAP_NEAREST);
         }
     }
 
-    const auto desc = ProgramDesc{
-        target,
-        mImage.format(),
-        mPickerEnabled,
-        mHistogramEnabled
-    };
+    const auto desc = ProgramDesc{ target, mImage.format(), mPickerEnabled,
+        mHistogramEnabled };
     if (auto *program = mProgramCache->getProgram(desc)) {
         program->bind();
         program->setUniformValue("uTexture", 0);
@@ -538,12 +553,14 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         program->setUniformValue("uFace", mFace);
         program->setUniformValue("uLayer", mLayer / mImage.depth());
         const auto resolve = (mSample < 0);
-        program->setUniformValue("uSample", std::max(0, (resolve ? 0 : mSample)));
-        program->setUniformValue("uSamples", std::max(1, (resolve ? mPreviewSamples : 1)));
+        program->setUniformValue("uSample",
+            std::max(0, (resolve ? 0 : mSample)));
+        program->setUniformValue("uSamples",
+            std::max(1, (resolve ? mPreviewSamples : 1)));
         program->setUniformValue("uFlipVertically", mFlipVertically);
-        program->setUniformValue("uMappingOffset", 
+        program->setUniformValue("uMappingOffset",
             static_cast<float>(-mMappingRange.minimum));
-        program->setUniformValue("uMappingFactor", 
+        program->setUniformValue("uMappingFactor",
             static_cast<float>(1 / mMappingRange.range()));
         program->setUniformValue("uColorMask", mColorMask);
 
@@ -555,52 +572,55 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
                     mPickerTexture.setFormat(QOpenGLTexture::RGBA32F);
                     mPickerTexture.allocateStorage();
                 }
-                gl42->glBindImageTexture(1, mPickerTexture.textureId(), 0, GL_FALSE, 
-                    0, GL_WRITE_ONLY, GL_RGBA32F);
+                gl42->glBindImageTexture(1, mPickerTexture.textureId(), 0,
+                    GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
                 program->setUniformValue("uPickerColor", 1);
-                program->setUniformValue("uPickerFragCoord", 
+                program->setUniformValue("uPickerFragCoord",
                     mMousePosition + QPointF(0.5, 0.5));
             }
         }
         if (mHistogramEnabled) {
             if (auto gl42 = widget().gl42()) {
-                if (!mHistogramTexture.isCreated() ||
-                     mHistogramTexture.width() != mHistogramBins.size()) {
+                if (!mHistogramTexture.isCreated()
+                    || mHistogramTexture.width() != mHistogramBins.size()) {
                     mHistogramTexture.destroy();
                     mHistogramTexture.setSize(mHistogramBins.size());
                     mHistogramTexture.setFormat(QOpenGLTexture::R32U);
                     mHistogramTexture.allocateStorage();
                 }
-                gl42->glBindImageTexture(2, mHistogramTexture.textureId(), 0, GL_FALSE, 
-                    0, GL_READ_WRITE, GL_R32UI);
+                gl42->glBindImageTexture(2, mHistogramTexture.textureId(), 0,
+                    GL_FALSE, 0, GL_READ_WRITE, GL_R32UI);
                 program->setUniformValue("uHistogram", 2);
-                program->setUniformValue("uHistogramOffset", 
+                program->setUniformValue("uHistogramOffset",
                     static_cast<float>(-mHistogramBounds.minimum));
                 const auto scaleToBins = mHistogramBins.size() / 3 - 1;
-                program->setUniformValue("uHistogramFactor", 
-                    static_cast<float>(1 / mHistogramBounds.range() * scaleToBins));
+                program->setUniformValue("uHistogramFactor",
+                    static_cast<float>(
+                        1 / mHistogramBounds.range() * scaleToBins));
             }
         }
 #endif
 
-        gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  
+        gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 #if GL_VERSION_4_2
         if (auto gl42 = widget().gl42())
             gl42->glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
 
-        auto pickerColor = QVector4D{ };
+        auto pickerColor = QVector4D{};
         if (mPickerEnabled) {
-            gl.glBindTexture(mPickerTexture.target(), mPickerTexture.textureId());
-            gl.glGetTexImage(mPickerTexture.target(), 0,  
-                GL_RGBA, GL_FLOAT, &pickerColor);
+            gl.glBindTexture(mPickerTexture.target(),
+                mPickerTexture.textureId());
+            gl.glGetTexImage(mPickerTexture.target(), 0, GL_RGBA, GL_FLOAT,
+                &pickerColor);
         }
         Q_EMIT pickerColorChanged(pickerColor);
 
         if (mHistogramEnabled) {
-            gl.glBindTexture(mHistogramTexture.target(), mHistogramTexture.textureId());
-            gl.glGetTexImage(mHistogramTexture.target(), 0,  
-                GL_RED_INTEGER, GL_UNSIGNED_INT, mHistogramBins.data());
+            gl.glBindTexture(mHistogramTexture.target(),
+                mHistogramTexture.textureId());
+            gl.glGetTexImage(mHistogramTexture.target(), 0, GL_RED_INTEGER,
+                GL_UNSIGNED_INT, mHistogramBins.data());
             updateHistogram();
         }
 #endif
@@ -628,11 +648,8 @@ void TextureItem::updateHistogram()
     }
 
     auto histogram = QVector<qreal>(mHistogramBins.size());
-    const auto scale = std::array<qreal, 3>{ 
-        1.0 / maxValue[0], 
-        1.0 / maxValue[1], 
-        1.0 / maxValue[2] 
-    };
+    const auto scale = std::array<qreal, 3>{ 1.0 / maxValue[0],
+        1.0 / maxValue[1], 1.0 / maxValue[2] };
     for (auto i = 0, c = 0; i < mHistogramBins.size(); ++i, c = (c + 1) % 3) {
         const auto value = (mHistogramBins[i] - mPrevHistogramBins[i]);
         histogram[i] = (1.0 - (value * scale[c]));

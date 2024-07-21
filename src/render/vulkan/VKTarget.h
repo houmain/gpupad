@@ -17,21 +17,22 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; };
 
 private:
-    struct VKAttachment : Attachment {
-        VKTexture* texture{ };
+    struct VKAttachment : Attachment
+    {
+        VKTexture *texture{};
     };
 
-    ItemId mItemId{ };
+    ItemId mItemId{};
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
-    Target::FrontFace mFrontFace{ };
-    Target::CullMode mCullMode{ };
-    Target::PolygonMode mPolygonMode{ };
-    Target::LogicOperation mLogicOperation{ };
-    QColor mBlendConstant{ };
+    Target::FrontFace mFrontFace{};
+    Target::CullMode mCullMode{};
+    Target::PolygonMode mPolygonMode{};
+    Target::LogicOperation mLogicOperation{};
+    QColor mBlendConstant{};
     QMap<int, VKAttachment> mAttachments;
-    int mSamples{ };
-    int mDefaultWidth{ };
-    int mDefaultHeight{ };
-    int mDefaultLayers{ };
+    int mSamples{};
+    int mDefaultWidth{};
+    int mDefaultHeight{};
+    int mDefaultLayers{};
 };

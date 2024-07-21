@@ -1,8 +1,8 @@
 #pragma once
 
-#include <QObject>
-#include "SourceType.h"
 #include "MessageList.h"
+#include "SourceType.h"
+#include <QObject>
 
 class ScriptEngine;
 class SessionModel;
@@ -14,7 +14,7 @@ class ScriptSession : public QObject
 {
     Q_OBJECT
 public:
-    explicit ScriptSession(SourceType type = SourceType::JavaScript, 
+    explicit ScriptSession(SourceType type = SourceType::JavaScript,
         QObject *parent = nullptr);
 
     // 1. called in main thread
@@ -25,7 +25,7 @@ public:
 
     // 2. called in render thread
     void beginSessionUpdate(SessionModel *sessionCopy);
-    ScriptEngine& engine();
+    ScriptEngine &engine();
 
     // 3. called in main thread
     void endSessionUpdate();
@@ -37,8 +37,7 @@ private:
     MessagePtrSet mMessages;
 
     QScopedPointer<ScriptEngine> mScriptEngine;
-    SessionScriptObject *mSessionScriptObject{ };
-    MouseScriptObject *mMouseScriptObject{ };
-    KeyboardScriptObject *mKeyboardScriptObject{ };
+    SessionScriptObject *mSessionScriptObject{};
+    MouseScriptObject *mMouseScriptObject{};
+    KeyboardScriptObject *mKeyboardScriptObject{};
 };
-

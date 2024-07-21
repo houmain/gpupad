@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QObject>
 #include "MessageList.h"
+#include <QObject>
 
 class ScriptConsole : public QObject
 {
@@ -17,7 +17,6 @@ public Q_SLOTS:
 
 private:
     QString mFileName;
-    ItemId mItemId{ };
-    MessagePtrSet *mMessages{ };
+    ItemId mItemId{};
+    MessagePtrSet *mMessages{};
 };
-

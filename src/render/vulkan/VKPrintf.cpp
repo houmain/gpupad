@@ -8,10 +8,10 @@ KDGpu::Buffer &VKPrintf::getInitializedBuffer(VKContext &context)
         mBuffer = context.device.createBuffer({
             .size = static_cast<KDGpu::DeviceSize>(
                 maxBufferValues * sizeof(uint32_t) + sizeof(BufferHeader)),
-            .usage = KDGpu::BufferUsageFlagBits::StorageBufferBit |
-                     KDGpu::BufferUsageFlagBits::TransferSrcBit |
-                     KDGpu::BufferUsageFlagBits::TransferDstBit,
-            .memoryUsage = KDGpu::MemoryUsage::GpuOnly
+            .usage = KDGpu::BufferUsageFlagBits::StorageBufferBit
+                | KDGpu::BufferUsageFlagBits::TransferSrcBit
+                | KDGpu::BufferUsageFlagBits::TransferDstBit,
+            .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
         });
     }
 
@@ -19,7 +19,7 @@ KDGpu::Buffer &VKPrintf::getInitializedBuffer(VKContext &context)
     context.queue.waitForUploadBufferData({
         .destinationBuffer = mBuffer,
         .data = &header,
-        .byteSize = sizeof(BufferHeader)
+        .byteSize = sizeof(BufferHeader),
     });
     return mBuffer;
 }
@@ -27,18 +27,21 @@ KDGpu::Buffer &VKPrintf::getInitializedBuffer(VKContext &context)
 MessagePtrSet VKPrintf::formatMessages(VKContext &context, ItemId callItemId)
 {
     if (!mBuffer.isValid())
-        return { };
+        return {};
 
-    auto messages = MessagePtrSet{ };
+    auto messages = MessagePtrSet{};
     downloadBuffer(context, mBuffer,
         uint64_t{ maxBufferValues * sizeof(uint32_t) + sizeof(BufferHeader) },
         [&](const std::byte *data) {
-            const auto &header = *reinterpret_cast<const BufferHeader*>(data);
-            const auto count = (header.offset > maxBufferValues ? 
-                maxBufferValues : header.offset);
+            const auto &header = *reinterpret_cast<const BufferHeader *>(data);
+            const auto count = (header.offset > maxBufferValues
+                    ? maxBufferValues
+                    : header.offset);
             if (count > 1)
-                messages = ShaderPrintf::formatMessages(callItemId, header, 
-                  { reinterpret_cast<const uint32_t*>(data + sizeof(BufferHeader)), count });
+                messages = ShaderPrintf::formatMessages(callItemId, header,
+                    { reinterpret_cast<const uint32_t *>(
+                          data + sizeof(BufferHeader)),
+                        count });
         });
 
     return messages;

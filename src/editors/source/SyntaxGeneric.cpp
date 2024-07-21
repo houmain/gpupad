@@ -1,7 +1,8 @@
 
 #include "Syntax.h"
 
-class SyntaxGeneric : public Syntax {
+class SyntaxGeneric : public Syntax
+{
 public:
     bool hasFunctions() const override { return false; }
     QString singleLineCommentBegin() const override { return "^\\s*(#|//).*"; }
@@ -9,4 +10,7 @@ public:
     QString multiLineCommentEnd() const override { return ""; }
 };
 
-Syntax* makeSyntaxGeneric() { return new SyntaxGeneric(); }
+Syntax *makeSyntaxGeneric()
+{
+    return new SyntaxGeneric();
+}

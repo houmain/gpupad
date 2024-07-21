@@ -1,8 +1,8 @@
 #include "TextureInfoBar.h"
 #include "Histogram.h"
 #include "ui_TextureInfoBar.h"
-#include <QVector4D>
 #include <QAction>
+#include <QVector4D>
 #include <cmath>
 
 TextureInfoBar::TextureInfoBar(QWidget *parent)
@@ -14,7 +14,7 @@ TextureInfoBar::TextureInfoBar(QWidget *parent)
     ui->minimum->setDecimal(true);
     ui->maximum->setDecimal(true);
     ui->horizontalLayout->insertWidget(5, mHistogram);
-    
+
     setMinimumSize(0, 80);
     setMaximumSize(4096, 80);
     mHistogram->setFixedHeight(70);
@@ -34,19 +34,19 @@ TextureInfoBar::TextureInfoBar(QWidget *parent)
 
     connect(ui->buttonClose, &QPushButton::clicked, this,
         &TextureInfoBar::cancelled);
-    connect(ui->buttonAutoRange, &QPushButton::clicked, 
-        this, &TextureInfoBar::autoRangeRequested);
-    connect(ui->buttonResetRange, &QPushButton::clicked, 
-        this, &TextureInfoBar::resetRange);
-    connect(ui->buttonInvertRange, &QPushButton::clicked, 
-        this, &TextureInfoBar::invertRange);
-    connect(mHistogram, &Histogram::mappingRangeChanged, 
-        this, &TextureInfoBar::mappingRangeChanged);
+    connect(ui->buttonAutoRange, &QPushButton::clicked, this,
+        &TextureInfoBar::autoRangeRequested);
+    connect(ui->buttonResetRange, &QPushButton::clicked, this,
+        &TextureInfoBar::resetRange);
+    connect(ui->buttonInvertRange, &QPushButton::clicked, this,
+        &TextureInfoBar::invertRange);
+    connect(mHistogram, &Histogram::mappingRangeChanged, this,
+        &TextureInfoBar::mappingRangeChanged);
 
-    for (auto button : { ui->buttonColorR, ui->buttonColorG, 
-                         ui->buttonColorB, ui->buttonColorA })
-        connect(button, &QToolButton::toggled, 
-            this, &TextureInfoBar::handleColorMaskToggled);
+    for (auto button : { ui->buttonColorR, ui->buttonColorG, ui->buttonColorB,
+             ui->buttonColorA })
+        connect(button, &QToolButton::toggled, this,
+            &TextureInfoBar::handleColorMaskToggled);
 }
 
 TextureInfoBar::~TextureInfoBar()
@@ -64,9 +64,7 @@ void TextureInfoBar::setPickerColor(const QVector4D &color)
 {
     auto c = color;
 
-    const auto toString = [](float v) { 
-        return QString::number(v, 'f', 3);
-    };
+    const auto toString = [](float v) { return QString::number(v, 'f', 3); };
     ui->pickerColorR->setText(toString(c.x()));
     ui->pickerColorG->setText(toString(c.y()));
     ui->pickerColorB->setText(toString(c.z()));
@@ -74,14 +72,14 @@ void TextureInfoBar::setPickerColor(const QVector4D &color)
 
     // output encoded value and color mapped to range
     const auto range = mappingRange();
-    c = (color - QVector4D(1, 1, 1, 1) * range.minimum) /
-        (range.maximum - range.minimum);
+    c = (color - QVector4D(1, 1, 1, 1) * range.minimum)
+        / (range.maximum - range.minimum);
     c.setW(color.w());
 
-    const auto toStringEncoded = [](const char* channel, float v) { 
+    const auto toStringEncoded = [](const char *channel, float v) {
         v = std::clamp(std::isnan(v) ? 0 : v, 0.0f, 1.0f) * 255;
-        return QStringLiteral("%1:  %2")
-            .arg(channel).arg(static_cast<int>(v + 0.5f));
+        return QStringLiteral("%1:  %2").arg(channel).arg(
+            static_cast<int>(v + 0.5f));
     };
     ui->pickerColorRE->setText(toStringEncoded("R", c.x()));
     ui->pickerColorGE->setText(toStringEncoded("G", c.y()));
@@ -89,8 +87,10 @@ void TextureInfoBar::setPickerColor(const QVector4D &color)
     ui->pickerColorAE->setText(toStringEncoded("A", c.w()));
 
     const auto clamp = [](float v) { return std::clamp(v, 0.0f, 1.0f); };
-    ui->color->setStyleSheet("background: " + QColor::fromRgbF(
-        clamp(c.x()), clamp(c.y()), clamp(c.z()), clamp(c.w())).name(QColor::HexArgb));
+    ui->color->setStyleSheet("background: "
+        + QColor::fromRgbF(clamp(c.x()), clamp(c.y()), clamp(c.z()),
+            clamp(c.w()))
+              .name(QColor::HexArgb));
 }
 
 void TextureInfoBar::setPickerEnabled(bool enabled)
@@ -164,7 +164,7 @@ void TextureInfoBar::handleColorMaskToggled()
     setColorMask(colorMask);
 }
 
-void TextureInfoBar::setColorMask(unsigned int colorMask) 
+void TextureInfoBar::setColorMask(unsigned int colorMask)
 {
     if (mColorMask != colorMask) {
         mColorMask = colorMask;
@@ -175,4 +175,3 @@ void TextureInfoBar::setColorMask(unsigned int colorMask)
         Q_EMIT colorMaskChanged(mColorMask);
     }
 }
-

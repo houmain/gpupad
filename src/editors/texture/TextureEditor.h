@@ -1,7 +1,7 @@
 #pragma once
 
-#include "editors/IEditor.h"
 #include "TextureData.h"
+#include "editors/IEditor.h"
 #include <QOpenGLTexture>
 #include <QScrollArea>
 
@@ -15,20 +15,19 @@ class TextureEditor final : public QAbstractScrollArea, public IEditor
 {
     Q_OBJECT
 public:
-    struct RawFormat {
+    struct RawFormat
+    {
         QOpenGLTexture::Target target;
         QOpenGLTexture::TextureFormat format;
         int width, height, depth, layers, samples;
     };
 
-    TextureEditor(QString fileName, 
-        TextureEditorToolBar* editorToolbar, 
-        TextureInfoBar* textureInfoBar,
-        QWidget *parent = nullptr);
+    TextureEditor(QString fileName, TextureEditorToolBar *editorToolbar,
+        TextureInfoBar *textureInfoBar, QWidget *parent = nullptr);
     ~TextureEditor() override;
 
-    QList<QMetaObject::Connection>
-        connectEditActions(const EditActions &actions) override;
+    QList<QMetaObject::Connection> connectEditActions(
+        const EditActions &actions) override;
     QString fileName() const override { return mFileName; }
     void setFileName(QString fileName) override;
     void setRawFormat(RawFormat rawFormat);
@@ -78,20 +77,19 @@ private:
     QPointF mapToScene(const QPointF &position) const;
     QPointF mapFromScene(const QPointF &position) const;
 
-    GLWidget *mGLWidget{ };
+    GLWidget *mGLWidget{};
     TextureEditorToolBar &mEditorToolBar;
     TextureInfoBar &mTextureInfoBar;
     QString mFileName;
-    RawFormat mRawFormat{ };
-    bool mIsRaw{ };
-    bool mModified{ };
+    RawFormat mRawFormat{};
+    bool mIsRaw{};
+    bool mModified{};
     TextureData mTexture;
-    bool mPan{ };
-    QRect mBounds{ };
-    bool mZoomToFit{ };
+    bool mPan{};
+    QRect mBounds{};
+    bool mZoomToFit{};
     int mZoom{ 100 };
-    QPoint mPanStart{ };
-    TextureItem *mTextureItem{ };
-    TextureBackground *mTextureBackground{ };
+    QPoint mPanStart{};
+    TextureItem *mTextureItem{};
+    TextureBackground *mTextureBackground{};
 };
-

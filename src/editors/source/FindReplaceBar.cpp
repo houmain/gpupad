@@ -1,13 +1,13 @@
 #include "FindReplaceBar.h"
 #include "ui_FindReplaceBar.h"
-#include <QPushButton>
-#include <QLineEdit>
 #include <QCheckBox>
 #include <QKeyEvent>
+#include <QLineEdit>
+#include <QPushButton>
 
-FindReplaceBar::FindReplaceBar(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::FindReplaceBar)
+FindReplaceBar::FindReplaceBar(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::FindReplaceBar)
 {
     ui->setupUi(this);
 
@@ -17,21 +17,19 @@ FindReplaceBar::FindReplaceBar(QWidget *parent) :
         &FindReplaceBar::findTextChanged);
     connect(ui->findText, &QLineEdit::textChanged, this,
         &FindReplaceBar::findTextChanged);
-    connect(ui->findText, &QLineEdit::returnPressed, this,
-        [this]() {
-            if (QApplication::keyboardModifiers() & Qt::ShiftModifier)
-                findPrevious();
-            else
-                findNext();
-        });
+    connect(ui->findText, &QLineEdit::returnPressed, this, [this]() {
+        if (QApplication::keyboardModifiers() & Qt::ShiftModifier)
+            findPrevious();
+        else
+            findNext();
+    });
     connect(ui->replaceText, &QLineEdit::returnPressed, this,
         &FindReplaceBar::replace);
     connect(ui->findNext, &QPushButton::clicked, this,
         &FindReplaceBar::findNext);
     connect(ui->findPrevious, &QPushButton::clicked, this,
         &FindReplaceBar::findPrevious);
-    connect(ui->replace, &QPushButton::clicked, this,
-        &FindReplaceBar::replace);
+    connect(ui->replace, &QPushButton::clicked, this, &FindReplaceBar::replace);
     connect(ui->replaceAll, &QPushButton::clicked, this,
         &FindReplaceBar::replaceAll);
     connect(ui->closeButton, &QPushButton::clicked, this,
@@ -58,7 +56,7 @@ void FindReplaceBar::setText(const QString &text)
     ui->findText->setText(text);
 }
 
-void FindReplaceBar::focus() 
+void FindReplaceBar::focus()
 {
     ui->findText->selectAll();
     ui->findText->setFocus();
@@ -75,10 +73,11 @@ void FindReplaceBar::cancel()
     Q_EMIT cancelled();
 }
 
-void FindReplaceBar::triggerAction(Action type, QTextDocument::FindFlag extraFlags) 
+void FindReplaceBar::triggerAction(Action type,
+    QTextDocument::FindFlag extraFlags)
 {
-    Q_EMIT action(type, ui->findText->text(), 
-        ui->replaceText->text(), findFlags() | extraFlags);
+    Q_EMIT action(type, ui->findText->text(), ui->replaceText->text(),
+        findFlags() | extraFlags);
 }
 
 void FindReplaceBar::findTextChanged()
@@ -112,7 +111,7 @@ void FindReplaceBar::replaceAll()
 
 QTextDocument::FindFlags FindReplaceBar::findFlags() const
 {
-    auto flags = QTextDocument::FindFlags{ };
+    auto flags = QTextDocument::FindFlags{};
     if (ui->caseSensitive->isChecked())
         flags |= QTextDocument::FindCaseSensitively;
     if (ui->wholeWordsOnly->isChecked())

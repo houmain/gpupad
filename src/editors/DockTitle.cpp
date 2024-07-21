@@ -1,26 +1,26 @@
 #include "DockTitle.h"
 #include "getEventPosition.h"
-#include <QStylePainter>
-#include <QStyleOption>
-#include <QPaintEvent>
 #include <QDockWidget>
 #include <QMenu>
+#include <QPaintEvent>
+#include <QStyleOption>
+#include <QStylePainter>
 
 namespace {
     const auto targetTabWidth = 100;
     const auto tabsListButtonText = QChar(0x2026);
 } // namespace
 
-DockTitle::DockTitle(QDockWidget *parent) 
-    : QWidget(parent)
+DockTitle::DockTitle(QDockWidget *parent) : QWidget(parent)
 {
     setMouseTracking(true);
 }
 
 QSize DockTitle::sizeHint() const
 {
-    return (!mTabSizes.isEmpty() && !mTabSizes[0].isEmpty() ? 
-        mTabSizes[0] : calculateMinimumTabSize(tabText(0)));
+    return (!mTabSizes.isEmpty() && !mTabSizes[0].isEmpty()
+            ? mTabSizes[0]
+            : calculateMinimumTabSize(tabText(0)));
 }
 
 void DockTitle::setTabBar(QTabBar *tabBar)
@@ -31,15 +31,14 @@ void DockTitle::setTabBar(QTabBar *tabBar)
     }
 }
 
-int DockTitle::tabCount() const 
+int DockTitle::tabCount() const
 {
     return qMax(1, mTabBar ? mTabBar->count() : 0);
 }
 
 int DockTitle::currentTabIndex() const
 {
-    return (mTabBar && mTabBar->count() > 1 ? 
-        mTabBar->currentIndex() : 0);
+    return (mTabBar && mTabBar->count() > 1 ? mTabBar->currentIndex() : 0);
 }
 
 QString DockTitle::tabText(int index) const
@@ -51,7 +50,7 @@ QString DockTitle::tabText(int index) const
     return title;
 }
 
-QRect DockTitle::tabRect(int index) const 
+QRect DockTitle::tabRect(int index) const
 {
     auto rect = QRect(QPoint(), sizeHint());
     for (auto i = 0; i <= index; ++i) {
@@ -65,17 +64,17 @@ QRect DockTitle::tabRect(int index) const
 QDockWidget *DockTitle::tabDock(int index)
 {
     return const_cast<QDockWidget *>(
-        static_cast<const DockTitle*>(this)->tabDock(index));
+        static_cast<const DockTitle *>(this)->tabDock(index));
 }
 
 const QDockWidget *DockTitle::tabDock(int index) const
 {
     if (mTabBar && mTabBar->count() > 1) {
         // source: https://bugreports.qt.io/browse/QTBUG-39489
-        return reinterpret_cast<QDockWidget*>(
+        return reinterpret_cast<QDockWidget *>(
             mTabBar->tabData(index).toULongLong());
     }
-    return static_cast<QDockWidget*>(parentWidget());
+    return static_cast<QDockWidget *>(parentWidget());
 }
 
 QSize DockTitle::tabSize(int index) const
@@ -88,13 +87,14 @@ QSize DockTitle::calculateMinimumTabSize(const QString &text) const
     auto opt = QStyleOptionTab();
     opt.initFrom(this);
     auto contentSize = fontMetrics().size(Qt::TextShowMnemonic, text);
-    contentSize += QSize(
-        style()->pixelMetric(QStyle::PM_TabBarTabHSpace, &opt, this),
-        style()->pixelMetric(QStyle::PM_TabBarTabVSpace, &opt, this));
-    return style()->sizeFromContents(QStyle::CT_TabBarTab, &opt, contentSize, this);
+    contentSize +=
+        QSize(style()->pixelMetric(QStyle::PM_TabBarTabHSpace, &opt, this),
+            style()->pixelMetric(QStyle::PM_TabBarTabVSpace, &opt, this));
+    return style()->sizeFromContents(QStyle::CT_TabBarTab, &opt, contentSize,
+        this);
 }
 
-void DockTitle::updateTabSizes() 
+void DockTitle::updateTabSizes()
 {
     mTabSizes.clear();
     auto &sizes = mTabSizes;
@@ -110,15 +110,16 @@ void DockTitle::updateTabSizes()
     mTabsListButtonWidth = 0;
     auto maximumWidth = width() - 1;
     if (count > 1 && minimumWidth > maximumWidth) {
-        mTabsListButtonWidth = calculateMinimumTabSize(tabsListButtonText).width();
+        mTabsListButtonWidth =
+            calculateMinimumTabSize(tabsListButtonText).width();
         maximumWidth -= mTabsListButtonWidth;
 
-        // when width is exceeded, undo adding (non-current) 
+        // when width is exceeded, undo adding (non-current)
         // tabs to the end until they fit
-        for (auto i = sizes.size() - 1; i >= 0; --i) 
+        for (auto i = sizes.size() - 1; i >= 0; --i)
             if (i != currentTabIndex()) {
                 minimumWidth -= sizes[i].width();
-                sizes[i] = QSize{ };
+                sizes[i] = QSize{};
                 if (minimumWidth <= maximumWidth)
                     break;
             }
@@ -132,7 +133,7 @@ void DockTitle::updateTabSizes()
 
     // grow tabs to target size
     auto widthGrowRequest = 0;
-    for (auto size : qAsConst(sizes)) 
+    for (auto size : qAsConst(sizes))
         if (!size.isEmpty())
             widthGrowRequest += qMax(targetTabWidth - size.width(), 0);
 
@@ -159,8 +160,8 @@ void DockTitle::updateTabSizes()
 int DockTitle::tabContainingPoint(const QPoint &point)
 {
     auto rect = QRect(QPoint(), sizeHint());
-    const auto count = tabCount();        
-    for (auto i = 0; i < count; ++i) 
+    const auto count = tabCount();
+    for (auto i = 0; i < count; ++i)
         if (const auto size = tabSize(i); !size.isEmpty()) {
             rect.setWidth(size.width());
             if (rect.contains(point))
@@ -177,13 +178,12 @@ void DockTitle::mousePressEvent(QMouseEvent *event)
         auto dock = tabDock(index);
         if (event->button() == Qt::MiddleButton) {
             Q_EMIT dockCloseRequested(dock);
-        }
-        else if (event->button() == Qt::LeftButton) {
+        } else if (event->button() == Qt::LeftButton) {
             if (index != currentTabIndex() || !dock->widget()->hasFocus()) {
                 const auto switched = (index != currentTabIndex());
                 setCurrentTab(index);
 
-                // intercept event when when switching tabs, 
+                // intercept event when when switching tabs,
                 // so it does not start dragging previous
                 if (switched) {
                     mMousePressIntercepted = true;
@@ -204,13 +204,14 @@ void DockTitle::mouseReleaseEvent(QMouseEvent *event)
     QWidget::mouseReleaseEvent(event);
 
     const auto index = tabContainingPoint(getEventPosition(event));
-    if (event->button() == Qt::LeftButton && mTabsListButtonWidth && index == -1) {
+    if (event->button() == Qt::LeftButton && mTabsListButtonWidth
+        && index == -1) {
         openTabsList(getGlobalEventPosition(event));
-    }
-    else if (event->button() == Qt::RightButton) {
+    } else if (event->button() == Qt::RightButton) {
         if (index >= 0) {
             auto dock = tabDock(index);
-            Q_EMIT contextMenuRequested(getGlobalEventPosition(event), mTabBar, dock);
+            Q_EMIT contextMenuRequested(getGlobalEventPosition(event), mTabBar,
+                dock);
         }
     }
 }
@@ -221,36 +222,35 @@ void DockTitle::mouseDoubleClickEvent(QMouseEvent *event)
     if (event->button() == Qt::LeftButton && index == -1) {
         setCurrentTab(currentTabIndex());
         Q_EMIT openNewDock();
-    }
-    else if (event->button() == Qt::MiddleButton && index >= 0) {
+    } else if (event->button() == Qt::MiddleButton && index >= 0) {
         auto dock = tabDock(index);
         Q_EMIT dockCloseRequested(dock);
     }
 }
 
-void DockTitle::mouseMoveEvent(QMouseEvent *event) 
+void DockTitle::mouseMoveEvent(QMouseEvent *event)
 {
     const auto index = tabContainingPoint(getEventPosition(event));
     if (index >= 0) {
         auto dock = tabDock(index);
-        const auto text = (dock->statusTip().isEmpty() ? 
-            dock->windowTitle().replace("[*]", 
-                dock->isWindowModified() ? "*" : "") :
-            dock->statusTip());
+        const auto text = (dock->statusTip().isEmpty()
+                ? dock->windowTitle().replace("[*]",
+                      dock->isWindowModified() ? "*" : "")
+                : dock->statusTip());
         setToolTip(text);
-    }
-    else {
+    } else {
         setToolTip("");
     }
     QWidget::mouseMoveEvent(event);
 }
 
-void DockTitle::paintEvent(QPaintEvent *event) 
+void DockTitle::paintEvent(QPaintEvent *event)
 {
     updateTabSizes();
 
     // collect visible tabs including tab list button
-    struct Tab {
+    struct Tab
+    {
         QString text;
         QRect rect;
     };
@@ -283,41 +283,42 @@ void DockTitle::paintEvent(QPaintEvent *event)
         if (i != current)
             paintTab(tabs[i].rect, tabs[i].text, i, current, count - 1);
 
-    paintTab(tabs[current].rect, tabs[current].text, current, current, count - 1);
+    paintTab(tabs[current].rect, tabs[current].text, current, current,
+        count - 1);
 }
 
-void DockTitle::paintTab(const QRect &rect, const QString &text, 
-    int index, int current, int last)
+void DockTitle::paintTab(const QRect &rect, const QString &text, int index,
+    int current, int last)
 {
     auto opt = QStyleOptionTab();
     opt.initFrom(this);
     opt.state = QStyle::State_Active | QStyle::State_Enabled;
-    if (index == current) 
+    if (index == current)
         opt.state |= QStyle::State_Selected;
 
-    opt.position = (
-        last == 0 ? QStyleOptionTab::OnlyOneTab :
-        index == 0 ? QStyleOptionTab::Beginning : 
-        index == last ? QStyleOptionTab::End : 
-        QStyleOptionTab::Middle);
+    opt.position = (last == 0 ? QStyleOptionTab::OnlyOneTab
+            : index == 0      ? QStyleOptionTab::Beginning
+            : index == last   ? QStyleOptionTab::End
+                              : QStyleOptionTab::Middle);
 
-    opt.selectedPosition = (
-        current == index + 1 ? QStyleOptionTab::NextIsSelected :
-        current == index - 1 ? QStyleOptionTab::PreviousIsSelected :
-        QStyleOptionTab::NotAdjacent);
-           
+    opt.selectedPosition = (current == index + 1
+            ? QStyleOptionTab::NextIsSelected
+            : current == index - 1 ? QStyleOptionTab::PreviousIsSelected
+                                   : QStyleOptionTab::NotAdjacent);
+
     opt.rect = rect;
     // this is a hack to also fill space below tab (beneficial for Fusion style)
     opt.rect.setBottom(opt.rect.bottom() + 2);
 
-    auto textRect = style()->subElementRect(QStyle::SE_TabBarTabText, &opt, this);
-    opt.text = fontMetrics().elidedText(text,
-        Qt::ElideRight, textRect.width(), Qt::TextShowMnemonic);
+    auto textRect =
+        style()->subElementRect(QStyle::SE_TabBarTabText, &opt, this);
+    opt.text = fontMetrics().elidedText(text, Qt::ElideRight, textRect.width(),
+        Qt::TextShowMnemonic);
     auto painter = QStylePainter(this);
     painter.drawControl(QStyle::CE_TabBarTab, opt);
 }
 
-void DockTitle::setCurrentTab(int index) 
+void DockTitle::setCurrentTab(int index)
 {
     if (auto dock = tabDock(index)) {
         dock->raise();

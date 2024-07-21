@@ -8,12 +8,11 @@ BinaryEditorToolBar::BinaryEditorToolBar(QWidget *parent)
 {
     mUi->setupUi(this);
 
-    connect(mUi->block,
-        qOverload<int>(&QComboBox::currentIndexChanged),
-        this, &BinaryEditorToolBar::blockIndexChanged);
+    connect(mUi->block, qOverload<int>(&QComboBox::currentIndexChanged), this,
+        &BinaryEditorToolBar::blockIndexChanged);
 }
 
-BinaryEditorToolBar::~BinaryEditorToolBar() 
+BinaryEditorToolBar::~BinaryEditorToolBar()
 {
     delete mUi;
 }

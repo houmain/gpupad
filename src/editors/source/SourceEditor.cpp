@@ -1,26 +1,26 @@
 ﻿#include "SourceEditor.h"
-#include "SourceEditorToolBar.h"
-#include "Singletons.h"
-#include "FileCache.h"
-#include "Settings.h"
-#include "FindReplaceBar.h"
-#include "FileDialog.h"
-#include "SyntaxHighlighter.h"
 #include "Completer.h"
-#include "getEventPosition.h"
+#include "FileCache.h"
+#include "FileDialog.h"
+#include "FindReplaceBar.h"
+#include "Settings.h"
+#include "Singletons.h"
+#include "SourceEditorToolBar.h"
+#include "SyntaxHighlighter.h"
 #include "Theme.h"
-#include <QCompleter>
-#include <QTextCharFormat>
-#include <QPainter>
+#include "getEventPosition.h"
+#include <QAbstractItemView>
+#include <QAction>
 #include <QApplication>
 #include <QClipboard>
-#include <QAction>
-#include <QRegularExpression>
-#include <QAbstractItemView>
-#include <QScrollBar>
-#include <QTextStream>
+#include <QCompleter>
 #include <QMenu>
 #include <QMimeData>
+#include <QPainter>
+#include <QRegularExpression>
+#include <QScrollBar>
+#include <QTextCharFormat>
+#include <QTextStream>
 
 class SourceEditor::LineNumberArea final : public QWidget
 {
@@ -31,9 +31,7 @@ private:
 public:
     static const auto margin = 6;
 
-    LineNumberArea(SourceEditor *editor)
-        : QWidget(editor)
-        , mEditor(*editor) 
+    LineNumberArea(SourceEditor *editor) : QWidget(editor), mEditor(*editor)
     {
         setBackgroundRole(QPalette::Base);
         setAutoFillBackground(true);
@@ -54,7 +52,8 @@ protected:
     void mousePressEvent(QMouseEvent *event) override
     {
         const auto pos = getEventPosition(event);
-        if (event->button() == Qt::LeftButton && pos.x() < width() - margin / 2) {
+        if (event->button() == Qt::LeftButton
+            && pos.x() < width() - margin / 2) {
             auto cursor = mEditor.cursorForPosition({ 0, pos.y() });
             const auto position = cursor.position();
             cursor.movePosition(QTextCursor::StartOfBlock);
@@ -76,10 +75,10 @@ protected:
             if (position <= mSelectionStart) {
                 cursor.movePosition(QTextCursor::NextBlock);
                 cursor.setPosition(position, QTextCursor::KeepAnchor);
-            } 
-            else {
+            } else {
                 cursor.setPosition(position, QTextCursor::KeepAnchor);
-                cursor.movePosition(QTextCursor::NextBlock, QTextCursor::KeepAnchor);
+                cursor.movePosition(QTextCursor::NextBlock,
+                    QTextCursor::KeepAnchor);
             }
             mEditor.setTextCursor(cursor);
         }
@@ -93,10 +92,8 @@ protected:
     }
 };
 
-SourceEditor::SourceEditor(QString fileName
-    , SourceEditorToolBar* editorToolbar
-    , FindReplaceBar *findReplaceBar
-    , QWidget *parent)
+SourceEditor::SourceEditor(QString fileName, SourceEditorToolBar *editorToolbar,
+    FindReplaceBar *findReplaceBar, QWidget *parent)
     : QPlainTextEdit(parent)
     , mEditorToolBar(*editorToolbar)
     , mFileName(fileName)
@@ -107,24 +104,24 @@ SourceEditor::SourceEditor(QString fileName
 {
     mCompleter->setWidget(this);
 
-    connect(this, &SourceEditor::blockCountChanged,
-        this, &SourceEditor::updateViewportMargins);
-    connect(this, &SourceEditor::updateRequest,
-        this, &SourceEditor::updateLineNumberArea);
-    connect(this, &SourceEditor::cursorPositionChanged,
-        this, &SourceEditor::handleCursorPositionChanged);
-    connect(this, &SourceEditor::textChanged,
-        this, &SourceEditor::handleTextChanged);
-    connect(&mFindReplaceBar, &FindReplaceBar::action,
-        this, &SourceEditor::findReplaceAction);
-    connect(&mMultiTextCursors, &MultiTextCursors::cursorsChanged,
-        this, &SourceEditor::updateExtraSelections);
-    connect(&mMultiTextCursors, &MultiTextCursors::cursorChanged,
-        this, &SourceEditor::setTextCursor);
-    connect(&mMultiTextCursors, &MultiTextCursors::disableLineWrap,
-        this, &SourceEditor::disableLineWrap);
-    connect(&mMultiTextCursors, &MultiTextCursors::restoreLineWrap,
-        this, &SourceEditor::restoreLineWrap);
+    connect(this, &SourceEditor::blockCountChanged, this,
+        &SourceEditor::updateViewportMargins);
+    connect(this, &SourceEditor::updateRequest, this,
+        &SourceEditor::updateLineNumberArea);
+    connect(this, &SourceEditor::cursorPositionChanged, this,
+        &SourceEditor::handleCursorPositionChanged);
+    connect(this, &SourceEditor::textChanged, this,
+        &SourceEditor::handleTextChanged);
+    connect(&mFindReplaceBar, &FindReplaceBar::action, this,
+        &SourceEditor::findReplaceAction);
+    connect(&mMultiTextCursors, &MultiTextCursors::cursorsChanged, this,
+        &SourceEditor::updateExtraSelections);
+    connect(&mMultiTextCursors, &MultiTextCursors::cursorChanged, this,
+        &SourceEditor::setTextCursor);
+    connect(&mMultiTextCursors, &MultiTextCursors::disableLineWrap, this,
+        &SourceEditor::disableLineWrap);
+    connect(&mMultiTextCursors, &MultiTextCursors::restoreLineWrap, this,
+        &SourceEditor::restoreLineWrap);
     connect(mCompleter, qOverload<const QString &>(&QCompleter::activated),
         this, &SourceEditor::insertCompletion);
 
@@ -136,20 +133,19 @@ SourceEditor::SourceEditor(QString fileName
     setIndentWithSpaces(settings.indentWithSpaces());
     setCursorWidth(mInitialCursorWidth);
 
-    connect(&settings, &Settings::tabSizeChanged,
-        this, &SourceEditor::setTabSize);
-    connect(&settings, &Settings::fontChanged,
-        this, &SourceEditor::setFont);
-    connect(&settings, &Settings::lineWrapChanged,
-        this, &SourceEditor::setLineWrap);
-    connect(&settings, &Settings::showWhiteSpaceChanged,
-        this, &SourceEditor::setShowWhiteSpace);
-    connect(&settings, &Settings::indentWithSpacesChanged,
-        this, &SourceEditor::setIndentWithSpaces);
-    connect(&settings, &Settings::editorThemeChanged,
-        this, &SourceEditor::updateColors);
-    connect(&settings, &Settings::editorThemeChanged,
-        this, &SourceEditor::updateSyntaxHighlighting);
+    connect(&settings, &Settings::tabSizeChanged, this,
+        &SourceEditor::setTabSize);
+    connect(&settings, &Settings::fontChanged, this, &SourceEditor::setFont);
+    connect(&settings, &Settings::lineWrapChanged, this,
+        &SourceEditor::setLineWrap);
+    connect(&settings, &Settings::showWhiteSpaceChanged, this,
+        &SourceEditor::setShowWhiteSpace);
+    connect(&settings, &Settings::indentWithSpacesChanged, this,
+        &SourceEditor::setIndentWithSpaces);
+    connect(&settings, &Settings::editorThemeChanged, this,
+        &SourceEditor::updateColors);
+    connect(&settings, &Settings::editorThemeChanged, this,
+        &SourceEditor::updateSyntaxHighlighting);
 
     updateViewportMargins();
     updateColors(settings.editorTheme());
@@ -157,10 +153,10 @@ SourceEditor::SourceEditor(QString fileName
 
 SourceEditor::~SourceEditor()
 {
-    disconnect(this, &SourceEditor::textChanged,
-        this, &SourceEditor::handleTextChanged);
-    disconnect(this, &SourceEditor::cursorPositionChanged,
-        this, &SourceEditor::handleCursorPositionChanged);
+    disconnect(this, &SourceEditor::textChanged, this,
+        &SourceEditor::handleTextChanged);
+    disconnect(this, &SourceEditor::cursorPositionChanged, this,
+        &SourceEditor::handleCursorPositionChanged);
 
     handleTextChanged();
     setDocument(nullptr);
@@ -186,32 +182,41 @@ QList<QMetaObject::Connection> SourceEditor::connectEditActions(
     c += connect(actions.redo, &QAction::triggered, this, &SourceEditor::redo);
     c += connect(actions.cut, &QAction::triggered, this, &SourceEditor::cut);
     c += connect(actions.copy, &QAction::triggered, this, &SourceEditor::copy);
-    c += connect(actions.paste, &QAction::triggered, this, &SourceEditor::paste);
-    c += connect(actions.delete_, &QAction::triggered, [this]() { textCursor().removeSelectedText(); });
-    c += connect(actions.selectAll, &QAction::triggered, this, &SourceEditor::selectAll);
-    c += connect(actions.findReplace, &QAction::triggered, this, &SourceEditor::findReplace);
+    c +=
+        connect(actions.paste, &QAction::triggered, this, &SourceEditor::paste);
+    c += connect(actions.delete_, &QAction::triggered,
+        [this]() { textCursor().removeSelectedText(); });
+    c += connect(actions.selectAll, &QAction::triggered, this,
+        &SourceEditor::selectAll);
+    c += connect(actions.findReplace, &QAction::triggered, this,
+        &SourceEditor::findReplace);
 
-    c += connect(this, &SourceEditor::undoAvailable, actions.undo, &QAction::setEnabled);
-    c += connect(this, &SourceEditor::redoAvailable, actions.redo, &QAction::setEnabled);
-    c += connect(this, &SourceEditor::copyAvailable, actions.cut, &QAction::setEnabled);
-    c += connect(this, &SourceEditor::copyAvailable, actions.copy, &QAction::setEnabled);
-    c += connect(this, &SourceEditor::copyAvailable, actions.delete_, &QAction::setEnabled);
+    c += connect(this, &SourceEditor::undoAvailable, actions.undo,
+        &QAction::setEnabled);
+    c += connect(this, &SourceEditor::redoAvailable, actions.redo,
+        &QAction::setEnabled);
+    c += connect(this, &SourceEditor::copyAvailable, actions.cut,
+        &QAction::setEnabled);
+    c += connect(this, &SourceEditor::copyAvailable, actions.copy,
+        &QAction::setEnabled);
+    c += connect(this, &SourceEditor::copyAvailable, actions.delete_,
+        &QAction::setEnabled);
     c += connect(QApplication::clipboard(), &QClipboard::changed,
         [this, actions]() { actions.paste->setEnabled(canPaste()); });
 
     actions.windowFileName->setText(fileName());
     actions.windowFileName->setEnabled(document()->isModified());
-    c += connect(this, &SourceEditor::fileNameChanged,
-        actions.windowFileName, &QAction::setText);
+    c += connect(this, &SourceEditor::fileNameChanged, actions.windowFileName,
+        &QAction::setText);
     c += connect(document(), &QTextDocument::modificationChanged,
         actions.windowFileName, &QAction::setEnabled);
 
     updateEditorToolBar();
 
-    const auto& settings = Singletons::settings();
-    c += connect(&mEditorToolBar, &SourceEditorToolBar::sourceTypeChanged, 
-        this, &SourceEditor::setSourceType);
-    c += connect(&mEditorToolBar, &SourceEditorToolBar::lineWrapChanged, 
+    const auto &settings = Singletons::settings();
+    c += connect(&mEditorToolBar, &SourceEditorToolBar::sourceTypeChanged, this,
+        &SourceEditor::setSourceType);
+    c += connect(&mEditorToolBar, &SourceEditorToolBar::lineWrapChanged,
         &settings, &Settings::setLineWrap);
 
     return c;
@@ -248,7 +253,7 @@ bool SourceEditor::save()
     return true;
 }
 
-void SourceEditor::setModified() 
+void SourceEditor::setModified()
 {
     document()->setModified(true);
 }
@@ -261,41 +266,44 @@ void SourceEditor::replace(QString source)
         document()->setUndoRedoEnabled(false);
 
     const auto firstDiff = [&]() {
-        const auto n = static_cast<int>(std::min(source.length(), current.length()));
+        const auto n =
+            static_cast<int>(std::min(source.length(), current.length()));
         for (auto i = 0; i < n; i++)
             if (source[i] != current[i])
                 return i;
         return n;
     }();
 
-    if (firstDiff != source.length() || 
-        firstDiff != current.length()) {
+    if (firstDiff != source.length() || firstDiff != current.length()) {
 
-        const auto [lastDiffSource, lastDiffCurrent] = [&]() -> std::pair<int, int>{
-            for (auto i = source.length() - 1, 
-                      j = current.length() - 1; ; --i, --j)
+        const auto [lastDiffSource,
+            lastDiffCurrent] = [&]() -> std::pair<int, int> {
+            for (auto i = source.length() - 1, j = current.length() - 1;;
+                 --i, --j)
                 if (i < firstDiff || j < firstDiff || source[i] != current[j])
                     return { i + 1, j + 1 };
-            return { };
+            return {};
         }();
 
         auto cursor = textCursor();
         const auto position = cursor.position();
         const auto anchor = cursor.anchor();
         const auto scrollPosition = verticalScrollBar()->sliderPosition();
-        const auto scrollToEnd = 
+        const auto scrollToEnd =
             (!initial && scrollPosition == verticalScrollBar()->maximum());
         cursor.beginEditBlock();
         cursor.setPosition(firstDiff);
         cursor.setPosition(lastDiffCurrent, QTextCursor::KeepAnchor);
-        const auto diff = QString(source.mid(firstDiff, lastDiffSource - firstDiff));
+        const auto diff =
+            QString(source.mid(firstDiff, lastDiffSource - firstDiff));
         cursor.insertText(diff);
         cursor.setPosition(std::min(anchor, firstDiff));
-        cursor.setPosition(std::min(position, firstDiff), QTextCursor::KeepAnchor);
+        cursor.setPosition(std::min(position, firstDiff),
+            QTextCursor::KeepAnchor);
         cursor.endEditBlock();
         setTextCursor(cursor);
-        verticalScrollBar()->setSliderPosition(scrollToEnd ? 
-            verticalScrollBar()->maximum() : scrollPosition);
+        verticalScrollBar()->setSliderPosition(
+            scrollToEnd ? verticalScrollBar()->maximum() : scrollPosition);
     }
 
     document()->setUndoRedoEnabled(true);
@@ -338,7 +346,7 @@ void SourceEditor::emitNavigationPositionChanged()
 
     // update previous when block number did not change
     const auto update = (mPrevNavigationPosition.startsWith(
-      QString("%1;").arg(block.blockNumber())));
+        QString("%1;").arg(block.blockNumber())));
 
     Q_EMIT navigationPositionChanged(position, update);
     mPrevNavigationPosition = position;
@@ -374,12 +382,16 @@ void SourceEditor::updateColors(const Theme &theme)
     const auto darkTheme = theme.isDarkTheme();
     setPalette(pal);
     mCurrentLineFormat.setProperty(QTextFormat::FullWidthSelection, true);
-    mCurrentLineFormat.setBackground(pal.base().color().lighter(darkTheme ? 120 : 95));
+    mCurrentLineFormat.setBackground(
+        pal.base().color().lighter(darkTheme ? 120 : 95));
 
-    mFindReplaceRangeFormat.setBackground(pal.base().color().lighter(darkTheme ? 170 : 90));
+    mFindReplaceRangeFormat.setBackground(
+        pal.base().color().lighter(darkTheme ? 170 : 90));
 
-    mOccurrencesFormat.setForeground(pal.text().color().lighter(darkTheme ? 140 : 80));
-    mOccurrencesFormat.setBackground(pal.base().color().lighter(darkTheme ? 220 : 80));
+    mOccurrencesFormat.setForeground(
+        pal.text().color().lighter(darkTheme ? 140 : 80));
+    mOccurrencesFormat.setBackground(
+        pal.base().color().lighter(darkTheme ? 220 : 80));
 
     mMultiSelectionFormat.setForeground(pal.highlightedText());
     mMultiSelectionFormat.setBackground(pal.highlight());
@@ -401,8 +413,7 @@ void SourceEditor::updateSyntaxHighlighting()
         return;
 
     const auto &settings = Singletons::settings();
-    mHighlighter = new SyntaxHighlighter(
-        mSourceType, settings.editorTheme(), 
+    mHighlighter = new SyntaxHighlighter(mSourceType, settings.editorTheme(),
         settings.showWhiteSpace(), this);
     mHighlighter->setDocument(document());
     mCompleter->setStrings(mHighlighter->completerStrings());
@@ -420,7 +431,7 @@ void SourceEditor::findReplace()
     mMultiTextCursors.clear();
     mFindReplaceBar.setTarget(this);
 
-    if (auto text = textUnderCursor(); 
+    if (auto text = textUnderCursor();
         !text.isEmpty() && !text.contains(QChar::ParagraphSeparator))
         mFindReplaceBar.setText(text);
 
@@ -459,8 +470,8 @@ void SourceEditor::setFont(const QFont &font)
 void SourceEditor::setTabSize(int tabSize)
 {
     mTabSize = tabSize;
-    setTabStopDistance(fontMetrics().horizontalAdvance(
-        QString(tabSize, QChar::Space)));
+    setTabStopDistance(
+        fontMetrics().horizontalAdvance(QString(tabSize, QChar::Space)));
     mMultiTextCursors.setTab(tab());
 }
 
@@ -474,8 +485,8 @@ void SourceEditor::setShowWhiteSpace(bool enabled)
 {
     auto options = document()->defaultTextOption();
     options.setFlags(enabled
-        ? options.flags() | QTextOption::ShowTabsAndSpaces
-        : options.flags() & ~QTextOption::ShowTabsAndSpaces);
+            ? options.flags() | QTextOption::ShowTabsAndSpaces
+            : options.flags() & ~QTextOption::ShowTabsAndSpaces);
     document()->setDefaultTextOption(options);
     if (mHighlighter)
         updateSyntaxHighlighting();
@@ -505,8 +516,8 @@ int SourceEditor::lineNumberAreaWidth()
         max /= 10;
         ++digits;
     }
-    return fontMetrics().horizontalAdvance(QString(digits, '9')) + 
-        2 * LineNumberArea::margin;
+    return fontMetrics().horizontalAdvance(QString(digits, '9'))
+        + 2 * LineNumberArea::margin;
 }
 
 void SourceEditor::updateViewportMargins()
@@ -519,8 +530,8 @@ void SourceEditor::updateLineNumberArea(const QRect &rect, int dy)
     if (dy)
         mLineNumberArea->scroll(0, dy);
     else
-        mLineNumberArea->update(0, rect.y(),
-            mLineNumberArea->width(), rect.height());
+        mLineNumberArea->update(0, rect.y(), mLineNumberArea->width(),
+            rect.height());
 
     if (rect.contains(viewport()->rect()))
         updateViewportMargins();
@@ -547,8 +558,8 @@ void SourceEditor::resizeEvent(QResizeEvent *e)
     QPlainTextEdit::resizeEvent(e);
 
     const auto rect = contentsRect();
-    mLineNumberArea->setGeometry(QRect(rect.left(), rect.top(),
-        lineNumberAreaWidth(), rect.height()));
+    mLineNumberArea->setGeometry(
+        QRect(rect.left(), rect.top(), lineNumberAreaWidth(), rect.height()));
 }
 
 void SourceEditor::focusInEvent(QFocusEvent *event)
@@ -561,9 +572,8 @@ void SourceEditor::focusInEvent(QFocusEvent *event)
 
 QString SourceEditor::tab() const
 {
-    return (mIndentWithSpaces ?
-            QString(mTabSize, QChar::Space) :
-            QString(QChar::Tabulation));
+    return (mIndentWithSpaces ? QString(mTabSize, QChar::Space)
+                              : QString(QChar::Tabulation));
 }
 
 void SourceEditor::indentSelection(bool reverse)
@@ -572,18 +582,18 @@ void SourceEditor::indentSelection(bool reverse)
     const auto tabSelector = QString("(\\t| {1,%1})").arg(mTabSize);
     auto cursor = textCursor();
     cursor.beginEditBlock();
-    if (!cursor.hasSelection() || cursor.selectedText().indexOf(newParagraph) < 0) {
+    if (!cursor.hasSelection()
+        || cursor.selectedText().indexOf(newParagraph) < 0) {
         if (reverse) {
-            cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
+            cursor.movePosition(QTextCursor::StartOfBlock,
+                QTextCursor::KeepAnchor);
             auto text = cursor.selectedText();
             text.remove(QRegularExpression(tabSelector + "$"));
             cursor.insertText(text);
-        }
-        else {
+        } else {
             cursor.insertText(tab());
         }
-    }
-    else {
+    } else {
         auto begin = std::min(cursor.selectionStart(), cursor.selectionEnd());
         auto end = std::max(cursor.selectionStart(), cursor.selectionEnd());
         cursor.setPosition(begin);
@@ -592,9 +602,9 @@ void SourceEditor::indentSelection(bool reverse)
         auto text = cursor.selectedText();
         if (reverse) {
             text.remove(QRegularExpression("^" + tabSelector));
-            text.replace(QRegularExpression(newParagraph + tabSelector), newParagraph);
-        }
-        else {
+            text.replace(QRegularExpression(newParagraph + tabSelector),
+                newParagraph);
+        } else {
             text.replace(newParagraph, newParagraph + tab());
             text.prepend(tab());
         }
@@ -627,7 +637,8 @@ void SourceEditor::autoIndentNewLine()
     auto spaces = QString(line).replace(selectSpaces, "\\1");
     if (line.endsWith('{')) {
         auto nextLineCursor = cursor;
-        nextLineCursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+        nextLineCursor.movePosition(QTextCursor::EndOfBlock,
+            QTextCursor::KeepAnchor);
         if (!nextLineCursor.selectedText().trimmed().startsWith('}'))
             spaces += tab();
     }
@@ -666,14 +677,13 @@ void SourceEditor::toggleHomePosition(bool shiftHold)
 {
     auto cursor = textCursor();
     const auto initial = cursor.columnNumber();
-    const auto moveMode = (shiftHold ?
-        QTextCursor::KeepAnchor : QTextCursor::MoveAnchor);
+    const auto moveMode =
+        (shiftHold ? QTextCursor::KeepAnchor : QTextCursor::MoveAnchor);
     cursor.movePosition(QTextCursor::StartOfLine, moveMode);
     if (cursor.movePosition(QTextCursor::EndOfWord, moveMode)) {
         // line starts with a word, always move to line start
         cursor.movePosition(QTextCursor::StartOfLine, moveMode);
-    }
-    else if (!cursor.atBlockEnd()) {
+    } else if (!cursor.atBlockEnd()) {
         // line starts with whitespace
         // toggle between line start and end of whitespace
         cursor.movePosition(QTextCursor::NextWord, moveMode);
@@ -686,17 +696,14 @@ void SourceEditor::toggleHomePosition(bool shiftHold)
 void SourceEditor::keyPressEvent(QKeyEvent *event)
 {
     if (mCompleter->popup()->isVisible()) {
-       switch (event->key()) {
-           case Qt::Key_Enter:
-           case Qt::Key_Return:
-           case Qt::Key_Escape:
-           case Qt::Key_Tab:
-           case Qt::Key_Backtab:
-                event->ignore();
-                return;
-           default:
-               break;
-       }
+        switch (event->key()) {
+        case Qt::Key_Enter:
+        case Qt::Key_Return:
+        case Qt::Key_Escape:
+        case Qt::Key_Tab:
+        case Qt::Key_Backtab: event->ignore(); return;
+        default:              break;
+        }
     }
 
     const auto ctrlHold = (event->modifiers() & Qt::ControlModifier);
@@ -708,57 +715,48 @@ void SourceEditor::keyPressEvent(QKeyEvent *event)
         findReplace();
         if (event->key() == Qt::Key_F3)
             mFindReplaceBar.findNext();
-    }
-    else if (event->key() == Qt::Key_F3) {
+    } else if (event->key() == Qt::Key_F3) {
         mMultiTextCursors.clear();
         mFindReplaceBar.setTarget(this);
         if (event->modifiers() & Qt::ShiftModifier)
             mFindReplaceBar.findPrevious();
         else
             mFindReplaceBar.findNext();
-    }
-    else if (event->key() == Qt::Key_Escape) {
+    } else if (event->key() == Qt::Key_Escape) {
         mFindReplaceBar.cancel();
-    }
-    else if (event->key() == Qt::Key_Insert && !event->modifiers()) {
+    } else if (event->key() == Qt::Key_Insert && !event->modifiers()) {
         setOverwriteMode(!overwriteMode());
         update();
-    }
-    else if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+    } else if (event->key() == Qt::Key_Return
+        || event->key() == Qt::Key_Enter) {
         autoIndentNewLine();
         removeTrailingSpace();
-    }
-    else if (event->key() == Qt::Key_BraceRight) {
+    } else if (event->key() == Qt::Key_BraceRight) {
         autoDeindentBrace();
-    }
-    else if (event->key() == Qt::Key_Home) {
+    } else if (event->key() == Qt::Key_Home) {
         toggleHomePosition(event->modifiers() & Qt::ShiftModifier);
-    }
-    else if (event->key() == Qt::Key_Tab) {
+    } else if (event->key() == Qt::Key_Tab) {
         indentSelection();
-    }
-    else if (event->key() == Qt::Key_Backtab) {
+    } else if (event->key() == Qt::Key_Backtab) {
         indentSelection(true);
-    }
-    else if (event->key() == Qt::Key_Backspace || 
-             event->key() == Qt::Key_Delete) {
+    } else if (event->key() == Qt::Key_Backspace
+        || event->key() == Qt::Key_Delete) {
         QPlainTextEdit::keyPressEvent(event);
         removeTrailingSpace();
-    }
-    else {
+    } else {
         QPlainTextEdit::keyPressEvent(event);
 
-        const auto hitCtrlOrShift = event->modifiers() &
-            (Qt::ControlModifier | Qt::ShiftModifier);
+        const auto hitCtrlOrShift = event->modifiers()
+            & (Qt::ControlModifier | Qt::ShiftModifier);
         if (hitCtrlOrShift && event->text().isEmpty())
             return;
 
         const auto prefix = textUnderCursor().trimmed();
         const auto text = event->text();
-        const auto textEntered = !text.isEmpty() && 
-            (text.at(0).isLetterOrNumber() || text.at(0) == '_');
-        const auto hitCtrlSpace = ((event->modifiers() & Qt::ControlModifier) &&
-            event->key() == Qt::Key_Space);
+        const auto textEntered = !text.isEmpty()
+            && (text.at(0).isLetterOrNumber() || text.at(0) == '_');
+        const auto hitCtrlSpace = ((event->modifiers() & Qt::ControlModifier)
+            && event->key() == Qt::Key_Space);
 
         const auto show = ((textEntered && prefix.size() >= 1) || hitCtrlSpace);
         updateCompleterPopup(prefix, show);
@@ -774,7 +772,8 @@ void SourceEditor::wheelEvent(QWheelEvent *event)
 
     if (event->modifiers() == Qt::ControlModifier) {
         auto font = this->font();
-        font.setPointSize(font.pointSize() + (event->angleDelta().y() > 0 ? 1 : -1));
+        font.setPointSize(
+            font.pointSize() + (event->angleDelta().y() > 0 ? 1 : -1));
         Singletons::settings().setFont(font);
         return;
     }
@@ -815,7 +814,7 @@ void SourceEditor::dragEnterEvent(QDragEnterEvent *event)
 }
 
 void SourceEditor::handleCursorPositionChanged()
-{  
+{
     auto cursor = textCursor();
     if (auto brace = findMatchingBrace(); !brace.isNull()) {
         cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
@@ -823,8 +822,7 @@ void SourceEditor::handleCursorPositionChanged()
         mMatchingBraces.clear();
         mMatchingBraces.append(cursor);
         mMatchingBraces.append(brace);
-    }
-    else if (!mMatchingBraces.isEmpty()) {
+    } else if (!mMatchingBraces.isEmpty()) {
         mMatchingBraces.clear();
     }
 
@@ -861,8 +859,8 @@ void SourceEditor::updateExtraSelections()
         selections.append({ selection, mMultiSelectionFormat });
 
     setExtraSelections(selections);
-    setCursorWidth(mMultiTextCursors.cursors().isEmpty() ?
-        mInitialCursorWidth : 0);
+    setCursorWidth(mMultiTextCursors.cursors().isEmpty() ? mInitialCursorWidth
+                                                         : 0);
 }
 
 void SourceEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
@@ -872,8 +870,8 @@ void SourceEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
     const auto currentBlockNumber = textCursor().block().blockNumber();
     auto block = firstVisibleBlock();
     auto blockNumber = block.blockNumber();
-    auto top = static_cast<int>(blockBoundingGeometry(block)
-        .translated(contentOffset()).top());
+    auto top = static_cast<int>(
+        blockBoundingGeometry(block).translated(contentOffset()).top());
     auto bottom = top + static_cast<int>(blockBoundingRect(block).height());
     while (block.isValid() && top <= event->rect().bottom()) {
         if (block.isVisible() && bottom >= event->rect().top()) {
@@ -882,14 +880,13 @@ void SourceEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
                 boldFont.setBold(true);
                 painter.setFont(boldFont);
                 painter.setPen(mCurrenLineNumberColor);
-            }
-            else {
+            } else {
                 painter.setFont(font());
                 painter.setPen(mLineNumberColor);
             }
-            painter.drawText(-LineNumberArea::margin, top, mLineNumberArea->width(),
-                fontMetrics().height(), Qt::AlignRight,
-                QString::number(blockNumber + 1));
+            painter.drawText(-LineNumberArea::margin, top,
+                mLineNumberArea->width(), fontMetrics().height(),
+                Qt::AlignRight, QString::number(blockNumber + 1));
         }
         block = block.next();
         top = bottom;
@@ -920,38 +917,46 @@ QTextCursor SourceEditor::findMatchingBrace() const
     auto position = cursor.positionInBlock();
     auto block = cursor.block();
     if (position >= block.text().length())
-        return { };
+        return {};
     const auto beginChar = block.text().at(position);
 
-    auto endChar = QChar{ };
+    auto endChar = QChar{};
     auto direction = 1;
     switch (beginChar.unicode()) {
-        case '{': endChar = '}'; break;
-        case '[': endChar = ']'; break;
-        case '(': endChar = ')'; break;
-        case '}': endChar = '{'; direction = -1; break;
-        case ']': endChar = '['; direction = -1; break;
-        case ')': endChar = '('; direction = -1; break;
-        default: return { };
+    case '{': endChar = '}'; break;
+    case '[': endChar = ']'; break;
+    case '(': endChar = ')'; break;
+    case '}':
+        endChar = '{';
+        direction = -1;
+        break;
+    case ']':
+        endChar = '[';
+        direction = -1;
+        break;
+    case ')':
+        endChar = '(';
+        direction = -1;
+        break;
+    default: return {};
     }
     for (auto level = 0, i = 0; i < limit; position += direction, ++i) {
         while (position < 0) {
             block = block.previous();
             if (!block.isValid())
-                return { };
+                return {};
             position += block.text().length();
         }
         while (position >= block.text().length()) {
             position -= block.text().length();
             block = block.next();
             if (!block.isValid())
-                return { };
+                return {};
         }
         const auto currentChar = block.text().at(position);
         if (currentChar == beginChar) {
             ++level;
-        }
-        else if (currentChar == endChar) {
+        } else if (currentChar == endChar) {
             --level;
             if (level == 0) {
                 cursor.setPosition(block.position() + position);
@@ -959,7 +964,7 @@ QTextCursor SourceEditor::findMatchingBrace() const
             }
         }
     }
-    return { };
+    return {};
 }
 
 void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
@@ -972,9 +977,8 @@ void SourceEditor::updateCompleterPopup(const QString &prefix, bool show)
         }
 
         mCompleter->setCompletionPrefix(prefix);
-        const auto alreadyComplete =
-          (mCompleter->currentCompletion() == prefix &&
-           mCompleter->completionCount() == 1);
+        const auto alreadyComplete = (mCompleter->currentCompletion() == prefix
+            && mCompleter->completionCount() == 1);
 
         if (!alreadyComplete) {
             mCompleter->popup()->setCurrentIndex(
@@ -999,8 +1003,8 @@ QString SourceEditor::generateCurrentScopeSource() const
     cursor.setPosition(0, QTextCursor::KeepAnchor);
     auto text = cursor.selectedText().replace(QChar::ParagraphSeparator, '\n');
 
-    const static auto multiLineComment = QRegularExpression(
-        "/\\*.*?\\*/", QRegularExpression::MultilineOption);
+    const static auto multiLineComment =
+        QRegularExpression("/\\*.*?\\*/", QRegularExpression::MultilineOption);
     const static auto singleLineComment = QRegularExpression("//[^\n]*");
     text.remove(multiLineComment);
     text.remove(singleLineComment);
@@ -1008,19 +1012,18 @@ QString SourceEditor::generateCurrentScopeSource() const
     auto level = 0;
     auto scopeEnd = -1;
     for (auto i = text.size() - 1; i >= 0; --i) {
-      if (text[i] == '}') {
-          if (level == 0) {
-              scopeEnd = i;
-          }
-          ++level;
-      }
-      else if (text[i] == '{') {
-          if (level == 1) {
-              text = text.remove(i + 1, scopeEnd - i - 1);
-              scopeEnd = -1;
-          }
-          level = std::max(level - 1, 0);
-      }
+        if (text[i] == '}') {
+            if (level == 0) {
+                scopeEnd = i;
+            }
+            ++level;
+        } else if (text[i] == '{') {
+            if (level == 1) {
+                text = text.remove(i + 1, scopeEnd - i - 1);
+                scopeEnd = -1;
+            }
+            level = std::max(level - 1, 0);
+        }
     }
     return text;
 }
@@ -1035,30 +1038,31 @@ void SourceEditor::insertCompletion(const QString &completion)
 }
 
 // manually searching blocks since QTextDocument::find() has no 'to' parameter...
-QTextCursor SourceEditor::find(const QString &string, int from, int to, 
+QTextCursor SourceEditor::find(const QString &string, int from, int to,
     QTextDocument::FindFlags options) const
 {
     const auto forward = ((options & QTextDocument::FindBackward) == 0);
     const auto backward = !forward;
     const auto wholeWord = ((options & QTextDocument::FindWholeWords) != 0);
-    const auto caseSensitivity = (options & QTextDocument::FindCaseSensitively ?
-        Qt::CaseSensitive : Qt::CaseInsensitive);
+    const auto caseSensitivity = (options & QTextDocument::FindCaseSensitively
+            ? Qt::CaseSensitive
+            : Qt::CaseInsensitive);
     if (forward ? from > to : from < to)
-        return { };
+        return {};
 
     auto block = document()->findBlock(from);
     for (;;) {
-        if (!block.isValid() ||
-            (forward && block.position() >= to) || 
-            (backward && block.position() + block.length() <= to))
-            return { };
+        if (!block.isValid() || (forward && block.position() >= to)
+            || (backward && block.position() + block.length() <= to))
+            return {};
 
         const auto text = block.text();
-        auto offset = std::min(std::max(from - block.position(), 0), 
+        auto offset = std::min(std::max(from - block.position(), 0),
             static_cast<int>(text.length()) - 1);
         for (; offset >= 0; offset += (forward ? 1 : -1)) {
-            offset = (forward ? text.indexOf(string, offset, caseSensitivity) : 
-                      text.lastIndexOf(string, offset, caseSensitivity));
+            offset = (forward
+                    ? text.indexOf(string, offset, caseSensitivity)
+                    : text.lastIndexOf(string, offset, caseSensitivity));
             if (offset < 0)
                 break;
 
@@ -1067,17 +1071,16 @@ QTextCursor SourceEditor::find(const QString &string, int from, int to,
             if (backward && end > from)
                 continue;
             if (forward && end > to)
-                return { };
+                return {};
             if (backward && begin < to)
-                return { };
-            if (wholeWord && 
-                offset - 1 >= 0 && text[offset - 1].isLetterOrNumber())
+                return {};
+            if (wholeWord && offset - 1 >= 0
+                && text[offset - 1].isLetterOrNumber())
                 continue;
-            if (wholeWord && 
-                offset + string.length() < text.length() && 
-                text[offset + string.length()].isLetterOrNumber())
+            if (wholeWord && offset + string.length() < text.length()
+                && text[offset + string.length()].isLetterOrNumber())
                 continue;
-                                
+
             auto cursor = textCursor();
             cursor.setPosition(begin);
             cursor.setPosition(end, QTextCursor::KeepAnchor);
@@ -1103,20 +1106,21 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
     const auto top = std::min(range.anchor(), range.position());
     auto bottom = std::max(range.anchor(), range.position());
     const auto inRange = [&](const QTextCursor &cursor) {
-        return !(cursor.isNull() || cursor.position() < top || cursor.position() > bottom);
+        return !(cursor.isNull() || cursor.position() < top
+            || cursor.position() > bottom);
     };
 
     if (action == FindReplaceBar::Replace) {
         auto cursor = textCursor();
         if (!cursor.selectedText().compare(string,
-            (flags & QTextDocument::FindCaseSensitively ?
-                Qt::CaseSensitive : Qt::CaseInsensitive))) {
+                (flags & QTextDocument::FindCaseSensitively
+                        ? Qt::CaseSensitive
+                        : Qt::CaseInsensitive))) {
             cursor.insertText(replace);
         }
         action = FindReplaceBar::Find;
         mMarkedOccurrencesString.clear();
-    }
-    else if (action == FindReplaceBar::ReplaceAll) {
+    } else if (action == FindReplaceBar::ReplaceAll) {
         if (!string.isEmpty()) {
             Q_ASSERT(!(flags & QTextDocument::FindBackward));
             auto cursor = find(string, top, bottom, flags);
@@ -1131,7 +1135,8 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
                     if (next.isNull())
                         break;
                     cursor.setPosition(next.anchor());
-                    cursor.setPosition(next.position(), QTextCursor::KeepAnchor);
+                    cursor.setPosition(next.position(),
+                        QTextCursor::KeepAnchor);
                 }
                 cursor.endEditBlock();
             }
@@ -1140,31 +1145,29 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
         mMarkedOccurrencesString.clear();
     }
 
-    if (action == FindReplaceBar::FindTextChanged ||
-        action == FindReplaceBar::Refresh) {
+    if (action == FindReplaceBar::FindTextChanged
+        || action == FindReplaceBar::Refresh) {
 
-        auto cursor = find(string, textCursor().anchor(), bottom, 
-            (flags & ~QTextDocument::FindBackward)); 
+        auto cursor = find(string, textCursor().anchor(), bottom,
+            (flags & ~QTextDocument::FindBackward));
         if (inRange(cursor)) {
             setTextCursor(cursor);
             if (action != FindReplaceBar::Refresh)
                 ensureCursorVisible();
-        }
-        else {
+        } else {
             cursor = textCursor();
             cursor.clearSelection();
-            setTextCursor(cursor);          
+            setTextCursor(cursor);
         }
-    }
-    else if (action == FindReplaceBar::Find) {
-        auto cursor = find(string, 
-            (flags & QTextDocument::FindBackward ? 
-                textCursor().position() - 1 : textCursor().anchor() + 1), 
-            (flags & QTextDocument::FindBackward ? top : bottom), flags); 
+    } else if (action == FindReplaceBar::Find) {
+        auto cursor = find(string,
+            (flags & QTextDocument::FindBackward ? textCursor().position() - 1
+                                                 : textCursor().anchor() + 1),
+            (flags & QTextDocument::FindBackward ? top : bottom), flags);
         if (!inRange(cursor))
-            cursor = find(string, 
+            cursor = find(string,
                 (flags & QTextDocument::FindBackward ? bottom : top),
-                textCursor().position(), flags); 
+                textCursor().position(), flags);
         if (inRange(cursor)) {
             setTextCursor(cursor);
             ensureCursorVisible();
@@ -1183,9 +1186,8 @@ void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
     const auto rect = QRect(horizontalScrollBar()->sliderPosition(),
         verticalScrollBar()->sliderPosition(), width(), height());
 
-    if (mMarkedOccurrencesString == text && 
-        mMarkedOccurrencesFindFlags == flags &&
-        mMarkedOccurrencesRect == rect)
+    if (mMarkedOccurrencesString == text && mMarkedOccurrencesFindFlags == flags
+        && mMarkedOccurrencesRect == rect)
         return;
 
     mMarkedOccurrencesString = text;
@@ -1199,8 +1201,8 @@ void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
         auto bottom = cursorForPosition(QPoint{ width(), height() }).position();
         top = std::max(top, findReplaceRange.anchor());
         bottom = std::min(bottom, findReplaceRange.position());
-        for (auto it = find(text, top, bottom, flags); !it.isNull(); 
-                it = find(text, it.position() + 1, bottom, flags))
+        for (auto it = find(text, top, bottom, flags); !it.isNull();
+             it = find(text, it.position() + 1, bottom, flags))
             mMarkedOccurrences.append(it);
     }
     updateExtraSelections();
@@ -1213,23 +1215,21 @@ QTextCursor SourceEditor::updateFindReplaceRange()
         if (cursor.position() < cursor.anchor()) {
             const auto tmp = cursor.anchor();
             cursor.setPosition(cursor.position());
-            cursor.setPosition(tmp, QTextCursor::KeepAnchor);            
+            cursor.setPosition(tmp, QTextCursor::KeepAnchor);
         }
         mFindReplaceRange = cursor;
         // invalidate current occurrences when selection changes
         mMarkedOccurrencesString.clear();
-    }
-    else if (!mFindReplaceRange.isNull()) {
+    } else if (!mFindReplaceRange.isNull()) {
         cursor = mFindReplaceRange;
-    }
-    else {
+    } else {
         cursor.movePosition(QTextCursor::Start);
         cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
     }
     return cursor;
 }
 
-void SourceEditor::clearMarkedOccurrences() 
+void SourceEditor::clearMarkedOccurrences()
 {
     if (!mMarkedOccurrences.empty()) {
         mMarkedOccurrences.clear();
@@ -1241,7 +1241,7 @@ void SourceEditor::clearMarkedOccurrences()
 void SourceEditor::clearFindReplaceRange()
 {
     if (!mFindReplaceRange.isNull()) {
-        mFindReplaceRange = { };
+        mFindReplaceRange = {};
         // clear occurrences when they were constrainted by range
         clearMarkedOccurrences();
         updateExtraSelections();

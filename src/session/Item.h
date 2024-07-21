@@ -1,13 +1,14 @@
 #pragma once
 
-#include "ItemEnums.h"
 #include "Evaluation.h"
-#include <array>
+#include "ItemEnums.h"
+#include "SourceType.h"
 #include <QList>
-#include <QVariant>
 #include <QOpenGLTexture>
+#include <QVariant>
+#include <array>
 
-using ItemId = int; 
+using ItemId = int;
 struct Item;
 
 struct Item
@@ -16,10 +17,10 @@ struct Item
 
     virtual ~Item() = default;
 
-    ItemId id{ };
-    Type type{ };
-    Item *parent{ };
-    QList<Item*> items;
+    ItemId id{};
+    Type type{};
+    Item *parent{};
+    QList<Item *> items;
     QString name;
 };
 
@@ -30,7 +31,7 @@ struct FileItem : Item
 
 struct Group : Item
 {
-    bool inlineScope{ };
+    bool inlineScope{};
     QString iterations{ "1" };
 };
 
@@ -38,7 +39,7 @@ struct Buffer : FileItem
 {
 };
 
-struct Block : Item 
+struct Block : Item
 {
     QString offset{ "0" };
     QString rowCount{ "1" };
@@ -65,7 +66,7 @@ struct Texture : FileItem
     QString depth{ "1" };
     QString layers{ "1" };
     int samples{ 1 };
-    bool flipVertically{ };
+    bool flipVertically{};
 };
 
 struct Program : Item
@@ -96,14 +97,14 @@ struct Binding : Item
     BindingType bindingType{ BindingType::Uniform };
     Editor editor{ Editor::Expression };
     QStringList values{ "0" };
-    ItemId textureId{ };
-    ItemId bufferId{ };
-    ItemId blockId{ };
-    int level{ };
+    ItemId textureId{};
+    ItemId bufferId{};
+    ItemId blockId{};
+    int level{};
     int layer{ -1 };
     Filter minFilter{ QOpenGLTexture::Nearest };
     Filter magFilter{ QOpenGLTexture::Nearest };
-    bool anisotropic{ };
+    bool anisotropic{};
     WrapMode wrapModeX{ QOpenGLTexture::Repeat };
     WrapMode wrapModeY{ QOpenGLTexture::Repeat };
     WrapMode wrapModeZ{ QOpenGLTexture::Repeat };
@@ -119,9 +120,9 @@ struct Stream : Item
 
 struct Attribute : Item
 {
-    ItemId fieldId{ };
-    bool normalize{ };
-    int divisor{ };
+    ItemId fieldId{};
+    bool normalize{};
+    int divisor{};
 };
 
 struct Target : Item
@@ -149,8 +150,8 @@ struct Attachment : Item
     using ComparisonFunc = ItemEnums::ComparisonFunc;
     using StencilOperation = ItemEnums2::StencilOperation;
 
-    ItemId textureId{ };
-    int level{ };
+    ItemId textureId{};
+    int level{};
     int layer{ -1 };
 
     BlendEquation blendColorEq{ BlendEquation::Add };
@@ -162,13 +163,13 @@ struct Attachment : Item
     unsigned int colorWriteMask{ 0xF };
 
     ComparisonFunc depthComparisonFunc{ ComparisonFunc::Less };
-    double depthOffsetSlope{ };
-    double depthOffsetConstant{ };
-    bool depthClamp{ };
+    double depthOffsetSlope{};
+    double depthOffsetConstant{};
+    bool depthClamp{};
     bool depthWrite{ true };
 
     ComparisonFunc stencilFrontComparisonFunc{ ComparisonFunc::Always };
-    int stencilFrontReference{ };
+    int stencilFrontReference{};
     unsigned int stencilFrontReadMask{ 0xFF };
     StencilOperation stencilFrontFailOp{ StencilOperation::Keep };
     StencilOperation stencilFrontDepthFailOp{ StencilOperation::Keep };
@@ -176,7 +177,7 @@ struct Attachment : Item
     unsigned int stencilFrontWriteMask{ 0xFF };
 
     ComparisonFunc stencilBackComparisonFunc{ ComparisonFunc::Always };
-    int stencilBackReference{ };
+    int stencilBackReference{};
     unsigned int stencilBackReadMask{ 0xFF };
     StencilOperation stencilBackFailOp{ StencilOperation::Keep };
     StencilOperation stencilBackDepthFailOp{ StencilOperation::Keep };
@@ -192,22 +193,22 @@ struct Call : Item
 
     ExecuteOn executeOn{ ExecuteOn::EveryEvaluation };
     bool checked{ true };
-    CallType callType{ };
-    ItemId programId{ };
-    ItemId targetId{ };
-    ItemId vertexStreamId{ };
+    CallType callType{};
+    ItemId programId{};
+    ItemId targetId{};
+    ItemId vertexStreamId{};
 
     PrimitiveType primitiveType{ PrimitiveType::Triangles };
     QString count{ "3" };
     QString first{ "0" };
 
-    ItemId indexBufferBlockId{ };
+    ItemId indexBufferBlockId{};
     QString baseVertex{ "0" };
 
     QString instanceCount{ "1" };
     QString baseInstance{ "0" };
 
-    ItemId indirectBufferBlockId{ };
+    ItemId indirectBufferBlockId{};
     QString drawCount{ "1" };
 
     QString patchVertices{ "3" };
@@ -216,14 +217,14 @@ struct Call : Item
     QString workGroupsY{ "1" };
     QString workGroupsZ{ "1" };
 
-    ItemId textureId{ };
-    ItemId fromTextureId{ };
+    ItemId textureId{};
+    ItemId fromTextureId{};
     QColor clearColor{ Qt::black };
     double clearDepth{ 1.0 };
-    int clearStencil{ };
+    int clearStencil{};
 
-    ItemId bufferId{ };
-    ItemId fromBufferId{ };
+    ItemId bufferId{};
+    ItemId fromBufferId{};
 };
 
 struct Script : FileItem
@@ -259,43 +260,102 @@ TextureKind getKind(const Texture &texture);
 CallKind getKind(const Call &call);
 bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType);
 
-template<typename T> Item::Type getItemType();
-template<> inline Item::Type getItemType<Group>() { return Item::Type::Group; }
-template<> inline Item::Type getItemType<Buffer>() { return Item::Type::Buffer; }
-template<> inline Item::Type getItemType<Block>() { return Item::Type::Block; }
-template<> inline Item::Type getItemType<Field>() { return Item::Type::Field; }
-template<> inline Item::Type getItemType<Texture>() { return Item::Type::Texture; }
-template<> inline Item::Type getItemType<Program>() { return Item::Type::Program; }
-template<> inline Item::Type getItemType<Shader>() { return Item::Type::Shader; }
-template<> inline Item::Type getItemType<Binding>() { return Item::Type::Binding; }
-template<> inline Item::Type getItemType<Stream>() { return Item::Type::Stream; }
-template<> inline Item::Type getItemType<Attribute>() { return Item::Type::Attribute; }
-template<> inline Item::Type getItemType<Target>() { return Item::Type::Target; }
-template<> inline Item::Type getItemType<Attachment>() { return Item::Type::Attachment; }
-template<> inline Item::Type getItemType<Call>() { return Item::Type::Call; }
-template<> inline Item::Type getItemType<Script>() { return Item::Type::Script; }
+SourceType getSourceType(Shader::ShaderType type, Shader::Language language);
+Shader::ShaderType getShaderType(SourceType sourceType);
+Shader::Language getShaderLanguage(SourceType sourceType);
 
 template <typename T>
-const T* castItem(const Item &item)
+Item::Type getItemType();
+template <>
+inline Item::Type getItemType<Group>()
+{
+    return Item::Type::Group;
+}
+template <>
+inline Item::Type getItemType<Buffer>()
+{
+    return Item::Type::Buffer;
+}
+template <>
+inline Item::Type getItemType<Block>()
+{
+    return Item::Type::Block;
+}
+template <>
+inline Item::Type getItemType<Field>()
+{
+    return Item::Type::Field;
+}
+template <>
+inline Item::Type getItemType<Texture>()
+{
+    return Item::Type::Texture;
+}
+template <>
+inline Item::Type getItemType<Program>()
+{
+    return Item::Type::Program;
+}
+template <>
+inline Item::Type getItemType<Shader>()
+{
+    return Item::Type::Shader;
+}
+template <>
+inline Item::Type getItemType<Binding>()
+{
+    return Item::Type::Binding;
+}
+template <>
+inline Item::Type getItemType<Stream>()
+{
+    return Item::Type::Stream;
+}
+template <>
+inline Item::Type getItemType<Attribute>()
+{
+    return Item::Type::Attribute;
+}
+template <>
+inline Item::Type getItemType<Target>()
+{
+    return Item::Type::Target;
+}
+template <>
+inline Item::Type getItemType<Attachment>()
+{
+    return Item::Type::Attachment;
+}
+template <>
+inline Item::Type getItemType<Call>()
+{
+    return Item::Type::Call;
+}
+template <>
+inline Item::Type getItemType<Script>()
+{
+    return Item::Type::Script;
+}
+
+template <typename T>
+const T *castItem(const Item &item)
 {
     if (item.type == getItemType<T>())
-        return static_cast<const T*>(&item);
+        return static_cast<const T *>(&item);
     return nullptr;
 }
 
 template <>
-inline const FileItem* castItem<FileItem>(const Item &item) {
-    if (item.type == Item::Type::Buffer ||
-        item.type == Item::Type::Texture ||
-        item.type == Item::Type::Shader ||
-        item.type == Item::Type::Script)
-        return static_cast<const FileItem*>(&item);
+inline const FileItem *castItem<FileItem>(const Item &item)
+{
+    if (item.type == Item::Type::Buffer || item.type == Item::Type::Texture
+        || item.type == Item::Type::Shader || item.type == Item::Type::Script)
+        return static_cast<const FileItem *>(&item);
     return nullptr;
 }
 
 template <typename T>
-const T* castItem(const Item *item)
+const T *castItem(const Item *item)
 {
     return (item ? castItem<T>(*item) : nullptr);
 }
-

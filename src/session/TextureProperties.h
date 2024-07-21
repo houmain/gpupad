@@ -4,7 +4,7 @@
 #include <QWidget>
 
 namespace Ui {
-class TextureProperties;
+    class TextureProperties;
 }
 
 class SessionProperties;
@@ -13,8 +13,8 @@ class QDataWidgetMapper;
 class TextureProperties final : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(QVariant format READ format WRITE setFormat
-        NOTIFY formatChanged USER true)
+    Q_PROPERTY(QVariant format READ format WRITE setFormat NOTIFY formatChanged
+            USER true)
 public:
     explicit TextureProperties(SessionProperties *sessionProperties);
     ~TextureProperties();
@@ -36,7 +36,6 @@ private:
 
     SessionProperties &mSessionProperties;
     Ui::TextureProperties *mUi;
-    Texture::Format mFormat{ };
-    bool mSuspendUpdateFormat{ };
+    Texture::Format mFormat{};
+    bool mSuspendUpdateFormat{};
 };
-

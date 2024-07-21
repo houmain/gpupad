@@ -1,37 +1,37 @@
 #include "MainWindow.h"
-#include "ui_MainWindow.h"
-#include "AutoOrientationSplitter.h"
-#include "session/SessionEditor.h"
-#include "session/SessionProperties.h"
-#include "session/SessionModel.h"
-#include "Singletons.h"
 #include "AboutDialog.h"
+#include "AutoOrientationSplitter.h"
+#include "FileBrowserWindow.h"
+#include "InputState.h"
+#include "MessageList.h"
 #include "MessageWindow.h"
 #include "OutputWindow.h"
-#include "FileBrowserWindow.h"
-#include "MessageList.h"
 #include "Settings.h"
+#include "Singletons.h"
 #include "SynchronizeLogic.h"
-#include "InputState.h"
 #include "Theme.h"
+#include "WindowTitle.h"
 #include "editors/EditorManager.h"
 #include "editors/IEditor.h"
-#include "scripting/CustomActions.h"
-#include "WindowTitle.h"
 #include "getEventPosition.h"
 #include "render/Renderer.h"
-#include <QCloseEvent>
-#include <QMessageBox>
-#include <QDockWidget>
-#include <QDesktopServices>
+#include "scripting/CustomActions.h"
+#include "session/SessionEditor.h"
+#include "session/SessionModel.h"
+#include "session/SessionProperties.h"
+#include "ui_MainWindow.h"
 #include <QActionGroup>
-#include <QMenu>
-#include <QToolButton>
+#include <QCloseEvent>
 #include <QCoreApplication>
-#include <QTimer>
+#include <QDesktopServices>
+#include <QDockWidget>
+#include <QMenu>
+#include <QMessageBox>
 #include <QMimeData>
-#include <QScreen>
 #include <QOpenGLWidget>
+#include <QScreen>
+#include <QTimer>
+#include <QToolButton>
 
 void setFileDialogDirectory(const QString &fileName)
 {
@@ -79,7 +79,8 @@ MainWindow::MainWindow(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     layout->addWidget(&mEditorManager);
-    layout->addWidget(mEditorManager.createEditorPropertiesPanel(mUi->actionFindReplace));
+    layout->addWidget(
+        mEditorManager.createEditorPropertiesPanel(mUi->actionFindReplace));
 
     mFullScreenBar = new QToolBar(this);
     mFullScreenTitle = new QLabel(this);
@@ -95,7 +96,7 @@ MainWindow::MainWindow(QWidget *parent)
     mEditorManager.createEditorToolBars(mUi->toolBarMain);
 
     auto menuHamburger = new QMenu(this);
-    for (auto action : mUi->menuFile->actions()) 
+    for (auto action : mUi->menuFile->actions())
         menuHamburger->addAction(action);
     menuHamburger->insertSeparator(mUi->actionQuit);
     menuHamburger->insertMenu(mUi->actionQuit, mUi->menuEdit);
@@ -133,8 +134,8 @@ MainWindow::MainWindow(QWidget *parent)
     dock = new QDockWidget(tr("Session"), this);
     dock->setObjectName("Session");
     dock->setTitleBarWidget(new WindowTitle(dock));
-    dock->setFeatures(QDockWidget::DockWidgetClosable |
-                      QDockWidget::DockWidgetMovable);
+    dock->setFeatures(QDockWidget::DockWidgetClosable
+        | QDockWidget::DockWidgetMovable);
     dock->setWidget(mSessionSplitter);
     dock->setVisible(false);
     dock->setMinimumSize(200, 150);
@@ -150,8 +151,8 @@ MainWindow::MainWindow(QWidget *parent)
     dock = new QDockWidget(tr("File-Browser"), this);
     dock->setObjectName("FileBrowser");
     dock->setTitleBarWidget(mFileBrowserWindow->titleBar());
-    dock->setFeatures(QDockWidget::DockWidgetClosable |
-                      QDockWidget::DockWidgetMovable);
+    dock->setFeatures(QDockWidget::DockWidgetClosable
+        | QDockWidget::DockWidgetMovable);
     dock->setWidget(mFileBrowserWindow.data());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
@@ -165,8 +166,8 @@ MainWindow::MainWindow(QWidget *parent)
     dock = new QDockWidget(tr("Messages"), this);
     dock->setObjectName("Messages");
     dock->setTitleBarWidget(new WindowTitle(dock));
-    dock->setFeatures(QDockWidget::DockWidgetClosable |
-                      QDockWidget::DockWidgetMovable);
+    dock->setFeatures(QDockWidget::DockWidgetClosable
+        | QDockWidget::DockWidgetMovable);
     dock->setWidget(mMessageWindow.data());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
@@ -180,8 +181,8 @@ MainWindow::MainWindow(QWidget *parent)
     dock = new QDockWidget(tr("Output"), this);
     dock->setObjectName("Output");
     dock->setTitleBarWidget(mOutputWindow->titleBar());
-    dock->setFeatures(QDockWidget::DockWidgetClosable |
-                      QDockWidget::DockWidgetMovable);
+    dock->setFeatures(QDockWidget::DockWidgetClosable
+        | QDockWidget::DockWidgetMovable);
     dock->setWidget(mOutputWindow.data());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
@@ -210,152 +211,142 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->actionDelete->setShortcuts(QKeySequence::Delete);
     mUi->actionSelectAll->setShortcuts(QKeySequence::SelectAll);
     mUi->actionOnlineHelp->setShortcuts(QKeySequence::HelpContents);
-    mUi->actionFindReplace->setShortcuts({ QKeySequence::Find, QKeySequence::Replace });
+    mUi->actionFindReplace->setShortcuts(
+        { QKeySequence::Find, QKeySequence::Replace });
 
     addAction(mUi->actionFocusNextEditor);
     addAction(mUi->actionFocusPreviousEditor);
 
     auto windowFileName = new QAction(this);
-    mEditActions = EditActions{
-        windowFileName,
-        mUi->actionUndo,
-        mUi->actionRedo,
-        mUi->actionCut,
-        mUi->actionCopy,
-        mUi->actionPaste,
-        mUi->actionDelete,
-        mUi->actionSelectAll,
-        mUi->actionRename,
-        mUi->actionFindReplace
-    };
+    mEditActions = EditActions{ windowFileName, mUi->actionUndo,
+        mUi->actionRedo, mUi->actionCut, mUi->actionCopy, mUi->actionPaste,
+        mUi->actionDelete, mUi->actionSelectAll, mUi->actionRename,
+        mUi->actionFindReplace };
 
-    connect(mUi->actionNew, &QAction::triggered,
-        this, &MainWindow::newFile);
-    connect(mUi->actionOpen, &QAction::triggered,
-        this, static_cast<void(MainWindow::*)()>(&MainWindow::openFile));
-    connect(mUi->actionReload, &QAction::triggered,
-        this, &MainWindow::reloadFile);
-    connect(mUi->actionSave, &QAction::triggered,
-        this, &MainWindow::saveFile);
-    connect(mUi->actionSaveAs, &QAction::triggered,
-        this, &MainWindow::saveFileAs);
-    connect(mUi->actionSaveAll, &QAction::triggered,
-        this, &MainWindow::saveAllFiles);
-    connect(mUi->actionClose, &QAction::triggered,
-        this, &MainWindow::closeFile);
-    connect(mUi->actionCloseAll, &QAction::triggered,
-        this, &MainWindow::closeAllFiles);
-    connect(mUi->actionQuit, &QAction::triggered,
-        this, &MainWindow::close);
-    connect(mUi->actionFullScreenClose, &QAction::triggered,
-        this, &MainWindow::close);
-    connect(mUi->actionOpenContainingFolder, &QAction::triggered,
-        this, &MainWindow::openContainingFolder);
-    connect(mUi->actionOnlineHelp, &QAction::triggered,
-        this, &MainWindow::openOnlineHelp);
-    connect(mUi->menuWindowThemes, &QMenu::aboutToShow,
-        this, &MainWindow::populateThemesMenu);
-    connect(mUi->menuEditorThemes, &QMenu::aboutToShow,
-        this, &MainWindow::populateThemesMenu);
-    connect(mUi->menuSampleSessions, &QMenu::aboutToShow,
-        this, &MainWindow::populateSampleSessions);
-    connect(mUi->menuRecentFiles, &QMenu::aboutToShow,
-        this, &MainWindow::updateRecentFileActions);
-    connect(mUi->actionAbout, &QAction::triggered,
-        this, &MainWindow::openAbout);
-    connect(windowFileName, &QAction::changed,
-        this, &MainWindow::updateFileActions);
-    connect(mUi->actionFocusNextEditor, &QAction::triggered,
-        this, &MainWindow::focusNextEditor);
-    connect(mUi->actionFocusPreviousEditor, &QAction::triggered,
-        this, &MainWindow::focusPreviousEditor);
-    connect(mUi->actionNavigateBackward, &QAction::triggered,
-        &mEditorManager, &EditorManager::navigateBackward);
-    connect(mUi->actionNavigateForward, &QAction::triggered,
-        &mEditorManager, &EditorManager::navigateForward);
+    connect(mUi->actionNew, &QAction::triggered, this, &MainWindow::newFile);
+    connect(mUi->actionOpen, &QAction::triggered, this,
+        static_cast<void (MainWindow::*)()>(&MainWindow::openFile));
+    connect(mUi->actionReload, &QAction::triggered, this,
+        &MainWindow::reloadFile);
+    connect(mUi->actionSave, &QAction::triggered, this, &MainWindow::saveFile);
+    connect(mUi->actionSaveAs, &QAction::triggered, this,
+        &MainWindow::saveFileAs);
+    connect(mUi->actionSaveAll, &QAction::triggered, this,
+        &MainWindow::saveAllFiles);
+    connect(mUi->actionClose, &QAction::triggered, this,
+        &MainWindow::closeFile);
+    connect(mUi->actionCloseAll, &QAction::triggered, this,
+        &MainWindow::closeAllFiles);
+    connect(mUi->actionQuit, &QAction::triggered, this, &MainWindow::close);
+    connect(mUi->actionFullScreenClose, &QAction::triggered, this,
+        &MainWindow::close);
+    connect(mUi->actionOpenContainingFolder, &QAction::triggered, this,
+        &MainWindow::openContainingFolder);
+    connect(mUi->actionOnlineHelp, &QAction::triggered, this,
+        &MainWindow::openOnlineHelp);
+    connect(mUi->menuWindowThemes, &QMenu::aboutToShow, this,
+        &MainWindow::populateThemesMenu);
+    connect(mUi->menuEditorThemes, &QMenu::aboutToShow, this,
+        &MainWindow::populateThemesMenu);
+    connect(mUi->menuSampleSessions, &QMenu::aboutToShow, this,
+        &MainWindow::populateSampleSessions);
+    connect(mUi->menuRecentFiles, &QMenu::aboutToShow, this,
+        &MainWindow::updateRecentFileActions);
+    connect(mUi->actionAbout, &QAction::triggered, this,
+        &MainWindow::openAbout);
+    connect(windowFileName, &QAction::changed, this,
+        &MainWindow::updateFileActions);
+    connect(mUi->actionFocusNextEditor, &QAction::triggered, this,
+        &MainWindow::focusNextEditor);
+    connect(mUi->actionFocusPreviousEditor, &QAction::triggered, this,
+        &MainWindow::focusPreviousEditor);
+    connect(mUi->actionNavigateBackward, &QAction::triggered, &mEditorManager,
+        &EditorManager::navigateBackward);
+    connect(mUi->actionNavigateForward, &QAction::triggered, &mEditorManager,
+        &EditorManager::navigateForward);
     connect(&mEditorManager, &EditorManager::canNavigateBackwardChanged,
         mUi->actionNavigateBackward, &QAction::setEnabled);
     connect(&mEditorManager, &EditorManager::canNavigateForwardChanged,
         mUi->actionNavigateForward, &QAction::setEnabled);
     connect(&mEditorManager, &EditorManager::canPasteInNewEditorChanged,
         mUi->actionPasteInNewEditor, &QAction::setEnabled);
-    connect(mUi->actionPasteInNewEditor, &QAction::triggered,
-        &mEditorManager, &EditorManager::pasteInNewEditor);
-    connect(qApp, &QApplication::focusChanged,
-        this, &MainWindow::updateCurrentEditor);
-    connect(mUi->actionFullScreen, &QAction::triggered,
-        this, &MainWindow::setFullScreen);
-    connect(mSessionEditor->selectionModel(), &QItemSelectionModel::currentChanged,
-        mSessionProperties.data(), &SessionProperties::setCurrentModelIndex);
-    connect(mSessionEditor.data(), &SessionEditor::itemAdded,
-        this, &MainWindow::openSessionDock);
+    connect(mUi->actionPasteInNewEditor, &QAction::triggered, &mEditorManager,
+        &EditorManager::pasteInNewEditor);
+    connect(qApp, &QApplication::focusChanged, this,
+        &MainWindow::updateCurrentEditor);
+    connect(mUi->actionFullScreen, &QAction::triggered, this,
+        &MainWindow::setFullScreen);
+    connect(mSessionEditor->selectionModel(),
+        &QItemSelectionModel::currentChanged, mSessionProperties.data(),
+        &SessionProperties::setCurrentModelIndex);
+    connect(mSessionEditor.data(), &SessionEditor::itemAdded, this,
+        &MainWindow::openSessionDock);
     connect(mSessionEditor.data(), &SessionEditor::itemActivated,
         mSessionProperties.data(), &SessionProperties::openItemEditor);
-    connect(mUi->menuSession, &QMenu::aboutToShow,
-        mSessionEditor.data(), &SessionEditor::updateItemActions);
-    connect(&mEditorManager, &DockWindow::openNewDock,
-        this, &MainWindow::newFile);
+    connect(mUi->menuSession, &QMenu::aboutToShow, mSessionEditor.data(),
+        &SessionEditor::updateItemActions);
+    connect(&mEditorManager, &DockWindow::openNewDock, this,
+        &MainWindow::newFile);
     connect(mFileBrowserWindow.data(), &FileBrowserWindow::fileActivated,
         [this](const QString &fileName) { openFile(fileName); });
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
     connect(mOutputWindow.data(), &OutputWindow::typeSelectionChanged,
         &synchronizeLogic, &SynchronizeLogic::setProcessSourceType);
-    connect(outputDock, &QDockWidget::visibilityChanged,
-        [this](bool visible) {
-            Singletons::synchronizeLogic().setProcessSourceType(
-                visible ? mOutputWindow->selectedType() : "");
-        });
-    connect(mMessageWindow.data(), &MessageWindow::messageActivated,
-        this, &MainWindow::handleMessageActivated);
-    connect(mMessageWindow.data(), &MessageWindow::messagesAdded,
-        this, &MainWindow::openMessageDock);
+    connect(outputDock, &QDockWidget::visibilityChanged, [this](bool visible) {
+        Singletons::synchronizeLogic().setProcessSourceType(
+            visible ? mOutputWindow->selectedType() : "");
+    });
+    connect(mMessageWindow.data(), &MessageWindow::messageActivated, this,
+        &MainWindow::handleMessageActivated);
+    connect(mMessageWindow.data(), &MessageWindow::messagesAdded, this,
+        &MainWindow::openMessageDock);
     connect(&synchronizeLogic, &SynchronizeLogic::outputChanged,
         mOutputWindow.data(), &OutputWindow::setText);
-    connect(&Singletons::inputState(), &InputState::mouseChanged, 
+    connect(&Singletons::inputState(), &InputState::mouseChanged,
         &synchronizeLogic, &SynchronizeLogic::handleMouseStateChanged);
-    connect(&Singletons::inputState(), &InputState::keysChanged, 
+    connect(&Singletons::inputState(), &InputState::keysChanged,
         &synchronizeLogic, &SynchronizeLogic::handleKeyboardStateChanged);
 
     auto &settings = Singletons::settings();
-    connect(mUi->actionSelectFont, &QAction::triggered,
-        &settings, &Settings::selectFont);
-    connect(mUi->actionShowWhiteSpace, &QAction::toggled,
-        &settings, &Settings::setShowWhiteSpace);
-    connect(mUi->actionHideMenuBar, &QAction::toggled,
-        &settings, &Settings::setHideMenuBar);
-    connect(mUi->actionLineWrapping, &QAction::toggled,
-        &settings, &Settings::setLineWrap);
-    connect(mUi->actionIndentWithSpaces, &QAction::toggled,
-        &settings, &Settings::setIndentWithSpaces);
-    connect(&settings, &Settings::windowThemeChanging,
-        this, &MainWindow::handleThemeChanging);
-    connect(&settings, &Settings::hideMenuBarChanged,
-        this, &MainWindow::handleHideMenuBarChanged);
+    connect(mUi->actionSelectFont, &QAction::triggered, &settings,
+        &Settings::selectFont);
+    connect(mUi->actionShowWhiteSpace, &QAction::toggled, &settings,
+        &Settings::setShowWhiteSpace);
+    connect(mUi->actionHideMenuBar, &QAction::toggled, &settings,
+        &Settings::setHideMenuBar);
+    connect(mUi->actionLineWrapping, &QAction::toggled, &settings,
+        &Settings::setLineWrap);
+    connect(mUi->actionIndentWithSpaces, &QAction::toggled, &settings,
+        &Settings::setIndentWithSpaces);
+    connect(&settings, &Settings::windowThemeChanging, this,
+        &MainWindow::handleThemeChanging);
+    connect(&settings, &Settings::hideMenuBarChanged, this,
+        &MainWindow::handleHideMenuBarChanged);
 
-    connect(mUi->actionEvalReset, &QAction::triggered,
-        this, &MainWindow::updateEvaluationMode);
-    connect(mUi->actionEvalManual, &QAction::triggered,
-        this, &MainWindow::updateEvaluationMode);
-    connect(mUi->actionEvalAuto, &QAction::toggled,
-        this, &MainWindow::updateEvaluationMode);
-    connect(mUi->actionEvalSteady, &QAction::toggled,
-        this, &MainWindow::updateEvaluationMode);
+    connect(mUi->actionEvalReset, &QAction::triggered, this,
+        &MainWindow::updateEvaluationMode);
+    connect(mUi->actionEvalManual, &QAction::triggered, this,
+        &MainWindow::updateEvaluationMode);
+    connect(mUi->actionEvalAuto, &QAction::toggled, this,
+        &MainWindow::updateEvaluationMode);
+    connect(mUi->actionEvalSteady, &QAction::toggled, this,
+        &MainWindow::updateEvaluationMode);
 
     auto menuRenderer = new QMenu("Renderer", this);
-    mUi->menuSession->insertMenu(mUi->menuSession->actions().first(), menuRenderer);
+    mUi->menuSession->insertMenu(mUi->menuSession->actions().first(),
+        menuRenderer);
     auto renderApiActionGroup = new QActionGroup(this);
-    connect(renderApiActionGroup, &QActionGroup::triggered, 
-        [](QAction* a) { 
-            Singletons::settings().setRenderer(a->text());
-            Singletons::resetRenderer(static_cast<RenderAPI>(a->data().toInt()));
-            if (Singletons::synchronizeLogic().evaluationMode() != EvaluationMode::Paused)
-                Singletons::synchronizeLogic().resetEvaluation();
-        });
-    for (const auto &[renderApiName, renderApi] : {
-        std::make_pair("OpenGL", RenderAPI::OpenGL), 
-        std::make_pair("Vulkan", RenderAPI::Vulkan) 
-    }) {
+    connect(renderApiActionGroup, &QActionGroup::triggered, [](QAction *a) {
+        Singletons::settings().setRenderer(a->text());
+        Singletons::resetRenderer(static_cast<RenderAPI>(a->data().toInt()));
+        if (Singletons::synchronizeLogic().evaluationMode()
+            != EvaluationMode::Paused)
+            Singletons::synchronizeLogic().resetEvaluation();
+    });
+    for (const auto &[renderApiName, renderApi] :
+        { std::make_pair("OpenGL", RenderAPI::OpenGL),
+            std::make_pair("Vulkan", RenderAPI::Vulkan) }) {
         auto action = menuRenderer->addAction(renderApiName);
         action->setData(static_cast<int>(renderApi));
         action->setCheckable(true);
@@ -364,18 +355,20 @@ MainWindow::MainWindow(QWidget *parent)
             action->trigger();
     }
 
-    connect(mUi->menuCustomActions, &QMenu::aboutToShow,
-        this, &MainWindow::updateCustomActionsMenu);
+    connect(mUi->menuCustomActions, &QMenu::aboutToShow, this,
+        &MainWindow::updateCustomActionsMenu);
     connect(mUi->actionManageCustomActions, &QAction::triggered,
         mCustomActions.data(), &QDialog::show);
 
     qApp->installEventFilter(this);
 
-    mUi->actionPasteInNewEditor->setEnabled(mEditorManager.canPasteInNewEditor());
+    mUi->actionPasteInNewEditor->setEnabled(
+        mEditorManager.canPasteInNewEditor());
 
     auto indentActionGroup = new QActionGroup(this);
-    connect(indentActionGroup, &QActionGroup::triggered,
-        [](QAction* a) { Singletons::settings().setTabSize(a->text().toInt()); });
+    connect(indentActionGroup, &QActionGroup::triggered, [](QAction *a) {
+        Singletons::settings().setTabSize(a->text().toInt());
+    });
     for (auto i = 1; i <= 8; i++) {
         auto action = mUi->menuTabSize->addAction(QString::number(i));
         action->setCheckable(true);
@@ -385,8 +378,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     for (auto i = 0; i < 9; ++i) {
         auto action = mUi->menuRecentFiles->addAction("");
-        connect(action, &QAction::triggered,
-            this, &MainWindow::openRecentFile);
+        connect(action, &QAction::triggered, this, &MainWindow::openRecentFile);
         mRecentSessionActions += action;
     }
 
@@ -394,8 +386,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     for (auto i = 0; i < 26; ++i) {
         auto action = mUi->menuRecentFiles->addAction("");
-        connect(action, &QAction::triggered,
-            this, &MainWindow::openRecentFile);
+        connect(action, &QAction::triggered, this, &MainWindow::openRecentFile);
         mRecentFileActions += action;
     }
 
@@ -405,8 +396,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    disconnect(qApp, &QApplication::focusChanged,
-        this, &MainWindow::updateCurrentEditor);
+    disconnect(qApp, &QApplication::focusChanged, this,
+        &MainWindow::updateCurrentEditor);
 
     mSingletons.reset();
     delete mUi;
@@ -443,10 +434,12 @@ void MainWindow::readSettings()
     QTimer::singleShot(1, this, [this]() {
         const auto &settings = Singletons::settings();
         restoreState(settings.value("state").toByteArray());
-        mSessionSplitter->restoreState(settings.value("sessionSplitter").toByteArray());
+        mSessionSplitter->restoreState(
+            settings.value("sessionSplitter").toByteArray());
     });
 
-    Singletons::fileDialog().setDirectory(settings.value("lastDirectory").toString());
+    Singletons::fileDialog().setDirectory(
+        settings.value("lastDirectory").toString());
 
     mRecentFiles = settings.value("recentFiles").toStringList();
     mUi->actionIndentWithSpaces->setChecked(settings.indentWithSpaces());
@@ -455,7 +448,7 @@ void MainWindow::readSettings()
     mUi->actionLineWrapping->setChecked(settings.lineWrap());
     mUi->actionFullScreen->setChecked(isFullScreen());
     if (settings.hideMenuBar())
-       handleHideMenuBarChanged(true);
+        handleHideMenuBarChanged(true);
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
@@ -483,20 +476,17 @@ void MainWindow::dropEvent(QDropEvent *event)
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
     switch (event->type()) {
-        case QEvent::KeyPress:
-        case QEvent::MouseButtonPress:
-        case QEvent::MouseButtonRelease:
-        case QEvent::MouseMove:
-        case QEvent::Wheel:
-            mLastPressWasAlt = false;
-            break;
-        default:
-            break;
-     }
-     return QMainWindow::eventFilter(watched, event);
+    case QEvent::KeyPress:
+    case QEvent::MouseButtonPress:
+    case QEvent::MouseButtonRelease:
+    case QEvent::MouseMove:
+    case QEvent::Wheel:              mLastPressWasAlt = false; break;
+    default:                         break;
+    }
+    return QMainWindow::eventFilter(watched, event);
 }
 
-void MainWindow::keyPressEvent(QKeyEvent *event) 
+void MainWindow::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Alt)
         mLastPressWasAlt = true;
@@ -504,13 +494,13 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     QMainWindow::keyPressEvent(event);
 }
 
-void MainWindow::keyReleaseEvent(QKeyEvent *event) 
+void MainWindow::keyReleaseEvent(QKeyEvent *event)
 {
     if (mMenuButton->isVisible())
         if (event->key() == Qt::Key_Alt && mLastPressWasAlt)
             if (!std::exchange(mIgnoreNextAlt, false))
                 return mMenuButton->click();
-    
+
     mLastPressWasAlt = false;
 
     QMainWindow::keyReleaseEvent(event);
@@ -545,14 +535,12 @@ void MainWindow::setFullScreen(bool fullScreen)
         showFullScreen();
         mFullScreenBar->show();
         updateFileActions();
-    }
-    else {
+    } else {
         setContentsMargins(1, 1, 1, 1);
         mFullScreenBar->hide();
         if (mSingletons->settings().value("maximized").toBool()) {
             showMaximized();
-        }
-        else {
+        } else {
             showNormal();
         }
     }
@@ -563,17 +551,17 @@ void MainWindow::updateCurrentEditor()
     // do not switch, when there are both
     // session and editors, but none is focused
     auto focusWidget = qApp->focusWidget();
-    if (mEditorManager.hasEditor() &&
-        !mEditorManager.isAncestorOf(focusWidget) &&
-        !mSessionSplitter->isAncestorOf(focusWidget))
+    if (mEditorManager.hasEditor() && !mEditorManager.isAncestorOf(focusWidget)
+        && !mSessionSplitter->isAncestorOf(focusWidget))
         return;
 
     mEditorManager.updateCurrentEditor();
     disconnectEditActions();
     connectEditActions();
     updateDockCurrentProperty(mSessionDock, !mEditorManager.hasCurrentEditor());
-    setFileDialogDirectory(mEditorManager.hasCurrentEditor() ? 
-        mEditorManager.currentEditorFileName() : mSessionEditor->fileName());
+    setFileDialogDirectory(mEditorManager.hasCurrentEditor()
+            ? mEditorManager.currentEditorFileName()
+            : mSessionEditor->fileName());
 }
 
 void MainWindow::disconnectEditActions()
@@ -582,29 +570,27 @@ void MainWindow::disconnectEditActions()
         disconnect(connection);
     mConnectedEditActions.clear();
 
-    auto actions = {
-        mEditActions.undo, mEditActions.redo, mEditActions.cut,
+    auto actions = { mEditActions.undo, mEditActions.redo, mEditActions.cut,
         mEditActions.copy, mEditActions.paste, mEditActions.delete_,
-        mEditActions.selectAll, mEditActions.rename, mEditActions.findReplace
-    };
+        mEditActions.selectAll, mEditActions.rename, mEditActions.findReplace };
     for (auto action : actions)
         action->setEnabled(false);
 }
 
 void MainWindow::connectEditActions()
 {
-    mConnectedEditActions = mEditorManager.hasCurrentEditor() ?
-        mEditorManager.connectEditActions(mEditActions) :
-        mSessionEditor->connectEditActions(mEditActions);
+    mConnectedEditActions = mEditorManager.hasCurrentEditor()
+        ? mEditorManager.connectEditActions(mEditActions)
+        : mSessionEditor->connectEditActions(mEditActions);
 }
 
 void MainWindow::updateFileActions()
 {
     const auto fileName = mEditActions.windowFileName->text();
     const auto modified = mEditActions.windowFileName->isEnabled();
-    auto title = QString((modified ? "*" : "") +
-        FileDialog::getFullWindowTitle(fileName) +
-        " - " + qApp->applicationName());
+    auto title = QString((modified ? "*" : "")
+        + FileDialog::getFullWindowTitle(fileName) + " - "
+        + qApp->applicationName());
     setWindowTitle(title);
 
     if (isFullScreen()) {
@@ -614,7 +600,8 @@ void MainWindow::updateFileActions()
         mFullScreenBar->show();
     }
 
-    const auto desc = QString(" \"%1\"").arg(FileDialog::getFileTitle(fileName));
+    const auto desc =
+        QString(" \"%1\"").arg(FileDialog::getFileTitle(fileName));
     mUi->actionSave->setText(tr("&Save%1").arg(desc));
     mUi->actionSaveAs->setText(tr("Save%1 &As...").arg(desc));
     mUi->actionClose->setText(tr("&Close%1").arg(desc));
@@ -634,11 +621,9 @@ void MainWindow::setEvaluationMode(EvaluationMode evaluationMode)
 {
     if (evaluationMode == EvaluationMode::Automatic) {
         mUi->actionEvalAuto->setChecked(true);
-    }
-    else if (evaluationMode == EvaluationMode::Steady) {
+    } else if (evaluationMode == EvaluationMode::Steady) {
         mUi->actionEvalSteady->setChecked(true);
-    }
-    else {
+    } else {
         mUi->actionEvalSteady->setChecked(false);
         mUi->actionEvalAuto->setChecked(false);
     }
@@ -648,23 +633,20 @@ void MainWindow::updateEvaluationMode()
 {
     if (QObject::sender() == mUi->actionEvalReset) {
         Singletons::synchronizeLogic().resetEvaluation();
-    }
-    else if (QObject::sender() == mUi->actionEvalManual) {
+    } else if (QObject::sender() == mUi->actionEvalManual) {
         Singletons::synchronizeLogic().manualEvaluation();
-    }
-    else if (QObject::sender() == mUi->actionEvalAuto) {
+    } else if (QObject::sender() == mUi->actionEvalAuto) {
         if (mUi->actionEvalAuto->isChecked())
             mUi->actionEvalSteady->setChecked(false);
-    }
-    else {
+    } else {
         if (mUi->actionEvalSteady->isChecked())
             mUi->actionEvalAuto->setChecked(false);
     }
 
     Singletons::synchronizeLogic().setEvaluationMode(
-        mUi->actionEvalAuto->isChecked() ? EvaluationMode::Automatic :
-        mUi->actionEvalSteady->isChecked() ? EvaluationMode::Steady :
-        EvaluationMode::Paused);
+        mUi->actionEvalAuto->isChecked()         ? EvaluationMode::Automatic
+            : mUi->actionEvalSteady->isChecked() ? EvaluationMode::Steady
+                                                 : EvaluationMode::Paused);
 }
 
 bool MainWindow::hasEditor() const
@@ -680,11 +662,9 @@ void MainWindow::newFile()
 
 void MainWindow::openFile()
 {
-    auto options = FileDialog::Options{
-        FileDialog::Multiselect |
-        FileDialog::AllExtensionFilters
-    };
-    auto& dialog = Singletons::fileDialog();
+    auto options = FileDialog::Options{ FileDialog::Multiselect
+        | FileDialog::AllExtensionFilters };
+    auto &dialog = Singletons::fileDialog();
     if (dialog.exec(options)) {
         const auto fileNames = dialog.fileNames();
         for (const QString &fileName : fileNames)
@@ -692,14 +672,12 @@ void MainWindow::openFile()
     }
 }
 
-bool MainWindow::openFile(const QString &fileName,
-    bool asBinaryFile)
+bool MainWindow::openFile(const QString &fileName, bool asBinaryFile)
 {
     if (FileDialog::isSessionFileName(fileName)) {
         if (!openSession(fileName))
             return false;
-    }
-    else {
+    } else {
         if (!mEditorManager.openEditor(fileName, asBinaryFile))
             return false;
     }
@@ -713,8 +691,7 @@ bool MainWindow::saveFile()
         if (!saveSession())
             return false;
         addToRecentFileList(mSessionEditor->fileName());
-    }
-    else {
+    } else {
         if (!mEditorManager.saveEditor())
             return false;
         addToRecentFileList(mEditorManager.currentEditorFileName());
@@ -728,8 +705,7 @@ bool MainWindow::saveFileAs()
         if (!saveSessionAs())
             return false;
         addToRecentFileList(mSessionEditor->fileName());
-    }
-    else {
+    } else {
         if (!mEditorManager.saveEditorAs())
             return false;
         addToRecentFileList(mEditorManager.currentEditorFileName());
@@ -791,8 +767,8 @@ bool MainWindow::openSession(const QString &fileName)
 
 bool MainWindow::saveSession()
 {
-    if (FileDialog::isUntitled(mSessionEditor->fileName()) ||
-        !mSessionEditor->save())
+    if (FileDialog::isUntitled(mSessionEditor->fileName())
+        || !mSessionEditor->save())
         return saveSessionAs();
 
     saveSessionState(mSessionEditor->fileName());
@@ -802,13 +778,12 @@ bool MainWindow::saveSession()
 
 bool MainWindow::saveSessionAs()
 {
-    auto options = FileDialog::Options{
-        FileDialog::Saving |
-        FileDialog::SessionExtensions
-    };
+    auto options = FileDialog::Options{ FileDialog::Saving
+        | FileDialog::SessionExtensions };
     const auto prevFileName = mSessionEditor->fileName();
     for (;;) {
-        if (!Singletons::fileDialog().exec(options, mSessionEditor->fileName())) {
+        if (!Singletons::fileDialog().exec(options,
+                mSessionEditor->fileName())) {
             mSessionEditor->setFileName(prevFileName);
             return false;
         }
@@ -817,7 +792,7 @@ bool MainWindow::saveSessionAs()
             break;
     }
 
-    if (!copySessionFiles(QFileInfo(prevFileName).path(), 
+    if (!copySessionFiles(QFileInfo(prevFileName).path(),
             QFileInfo(mSessionEditor->fileName()).path()))
         showCopyingSessionFailedMessage(this);
 
@@ -828,14 +803,17 @@ bool MainWindow::saveSessionAs()
     return true;
 }
 
-bool MainWindow::copySessionFiles(const QString &fromPath, const QString &toPath) 
+bool MainWindow::copySessionFiles(const QString &fromPath,
+    const QString &toPath)
 {
-    const auto startsWithPath = [](const QString& string, const QString& start) {
+    const auto startsWithPath = [](const QString &string,
+                                    const QString &start) {
         if (start.length() > string.length())
             return false;
         const auto isSlash = [](QChar c) { return (c == '/' || c == '\\'); };
         for (auto i = 0; i < start.length(); ++i)
-            if (start[i] != string[i] && (!isSlash(string[i]) || !isSlash(start[i])))
+            if (start[i] != string[i]
+                && (!isSlash(string[i]) || !isSlash(start[i])))
                 return false;
         return true;
     };
@@ -845,7 +823,8 @@ bool MainWindow::copySessionFiles(const QString &fromPath, const QString &toPath
     model.forEachFileItem([&](const FileItem &fileItem) {
         const auto prevFileName = fileItem.fileName;
         if (startsWithPath(prevFileName, fromPath)) {
-            const auto newFileName = QString(toPath + prevFileName.mid(fromPath.length()));
+            const auto newFileName =
+                QString(toPath + prevFileName.mid(fromPath.length()));
             if (QFileInfo::exists(newFileName))
                 return;
 
@@ -854,10 +833,12 @@ bool MainWindow::copySessionFiles(const QString &fromPath, const QString &toPath
                 succeeded = false;
                 return;
             }
-            model.setData(model.getIndex(&fileItem, SessionModel::FileName), newFileName);
+            model.setData(model.getIndex(&fileItem, SessionModel::FileName),
+                newFileName);
 
             // rename editor filenames
-            Singletons::editorManager().renameEditors(prevFileName, newFileName);
+            Singletons::editorManager().renameEditors(prevFileName,
+                newFileName);
         }
     });
     return succeeded;
@@ -872,10 +853,10 @@ void MainWindow::saveSessionState(const QString &sessionFileName)
     // add file items by id (may not have a filename)
     auto openEditors = QStringList();
     auto filesAdded = QStringList();
-    mSingletons->sessionModel().forEachFileItem([&](const FileItem& item) {
+    mSingletons->sessionModel().forEachFileItem([&](const FileItem &item) {
         if (auto editor = mEditorManager.getEditor(item.fileName)) {
-            openEditors += QString("%1|%2").arg(item.id)
-                .arg(mEditorManager.getEditorObjectName(editor));
+            openEditors += QString("%1|%2").arg(item.id).arg(
+                mEditorManager.getEditorObjectName(editor));
             filesAdded += item.fileName;
         }
     });
@@ -892,9 +873,12 @@ void MainWindow::saveSessionState(const QString &sessionFileName)
     settings.setValue("editorState", mEditorManager.saveState());
     settings.setValue("openEditors", openEditors);
     auto &synchronizeLogic = Singletons::synchronizeLogic();
-    settings.setValue("shaderPreamble", synchronizeLogic.sessionShaderPreamble());
-    settings.setValue("shaderIncludePaths", synchronizeLogic.sessionShaderIncludePaths());
-    settings.setValue("evaluationMode", static_cast<int>(synchronizeLogic.evaluationMode()));
+    settings.setValue("shaderPreamble",
+        synchronizeLogic.sessionShaderPreamble());
+    settings.setValue("shaderIncludePaths",
+        synchronizeLogic.sessionShaderIncludePaths());
+    settings.setValue("evaluationMode",
+        static_cast<int>(synchronizeLogic.evaluationMode()));
 }
 
 bool MainWindow::restoreSessionState(const QString &sessionFileName)
@@ -916,17 +900,19 @@ bool MainWindow::restoreSessionState(const QString &sessionFileName)
             auto isItemId = false;
             if (const auto itemId = identifier.toInt(&isItemId); isItemId) {
                 if (auto item = model.findItem(itemId))
-                    if (auto editor = mSessionProperties->openItemEditor(model.getIndex(item)))
-                        mEditorManager.setEditorObjectName(editor, editorObjectName);
-            }
-            else {
+                    if (auto editor = mSessionProperties->openItemEditor(
+                            model.getIndex(item)))
+                        mEditorManager.setEditorObjectName(editor,
+                            editorObjectName);
+            } else {
                 const auto fileName = toNativeCanonicalFilePath(
                     sessionDir.absoluteFilePath(identifier));
                 if (auto editor = mEditorManager.openEditor(fileName))
-                    mEditorManager.setEditorObjectName(editor, editorObjectName);
+                    mEditorManager.setEditorObjectName(editor,
+                        editorObjectName);
             }
         }
-    mEditorManager.restoreState(settings.value("editorState").toByteArray());   
+    mEditorManager.restoreState(settings.value("editorState").toByteArray());
     mEditorManager.setAutoRaise(true);
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
@@ -934,7 +920,8 @@ bool MainWindow::restoreSessionState(const QString &sessionFileName)
         settings.value("shaderPreamble").toString());
     synchronizeLogic.setSessionShaderIncludePaths(
         settings.value("shaderIncludePaths").toString());
-    setEvaluationMode(static_cast<EvaluationMode>(settings.value("evaluationMode").toInt()));
+    setEvaluationMode(
+        static_cast<EvaluationMode>(settings.value("evaluationMode").toInt()));
     return true;
 }
 
@@ -949,11 +936,10 @@ bool MainWindow::closeSession()
         const auto ret = showNotSavedDialog(this, mSessionEditor->fileName());
         if (ret == QMessageBox::Cancel)
             return false;
-        if (ret == QMessageBox::Save &&
-            !saveSession())
+        if (ret == QMessageBox::Save && !saveSession())
             return false;
     }
-    
+
     Singletons::synchronizeLogic().resetRenderSession();
     mEditorManager.closeAllEditors(false);
     updateCurrentEditor();
@@ -985,8 +971,7 @@ void MainWindow::updateRecentFileActions()
         if (FileDialog::isSessionFileName(filename)) {
             if (recentSessionIndex < mRecentSessionActions.size())
                 action = mRecentSessionActions[recentSessionIndex++];
-        }
-        else {
+        } else {
             if (recentFileIndex < mRecentFileActions.size())
                 action = mRecentFileActions[recentFileIndex++];
         }
@@ -996,8 +981,7 @@ void MainWindow::updateRecentFileActions()
             if (!filename.startsWith("\\"))
                 action->setEnabled(QFile::exists(filename));
             action->setVisible(true);
-        }
-        else {
+        } else {
             i.remove();
         }
     }
@@ -1013,8 +997,10 @@ void MainWindow::updateRecentFileActions()
                 auto text = action->text();
                 if (text.size() > 100)
                     text = text.replace(45, text.size() - 90, "...  ...");
-                action->setText(QStringLiteral("  &%1 %2").arg(
-                    QChar(index < 9 ? '1' + index : 'A' + (index - 9))).arg(text));
+                action->setText(
+                    QStringLiteral("  &%1 %2")
+                        .arg(QChar(index < 9 ? '1' + index : 'A' + (index - 9)))
+                        .arg(text));
                 ++index;
             }
 }
@@ -1038,15 +1024,13 @@ void MainWindow::updateCustomActionsMenu()
 }
 
 void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
-        int line, int column)
+    int line, int column)
 {
     if (itemId) {
         mSessionEditor->setCurrentItem(itemId);
         openSessionDock();
-    }
-    else if (!fileName.isEmpty()) {
-        Singletons::editorManager().openSourceEditor(
-            fileName, line, column);
+    } else if (!fileName.isEmpty()) {
+        Singletons::editorManager().openSourceEditor(fileName, line, column);
     }
 }
 
@@ -1057,22 +1041,28 @@ void MainWindow::handleThemeChanging(const Theme &theme)
 
     const auto frameDarker = (theme.isDarkTheme() ? 70 : 120);
     const auto currentFrameDarker = (theme.isDarkTheme() ? 50 : 180);
-    const auto color = [&](QPalette::ColorRole role,
-          QPalette::ColorGroup group, int darker = 100) {
-        return palette.brush(group, role).color().darker(darker).name(QColor::HexRgb);
+    const auto color = [&](QPalette::ColorRole role, QPalette::ColorGroup group,
+                           int darker = 100) {
+        return palette.brush(group, role)
+            .color()
+            .darker(darker)
+            .name(QColor::HexRgb);
     };
-    auto styleSheet = QString(
-      "QLabel:disabled { color: %1 }\n"
-      "QDockWidget > QFrame { border:1px solid %2 }\n"
-      "QDockWidget[current=true] > QFrame { border:1px solid %3 }\n"
-      "QDockWidget > QFrame[no-bottom-border=true] { border-bottom: none }\n"
-      "QMenuBar { background-color: %4; border:none; margin:0; padding:0; padding-top:2px; }\n"
-      "QToolButton { margin:2; margin:0px; padding:2px; }\n"
-      "QToolBar { spacing:2px; margin:0; padding:2px; padding-left:4px; background-color: %4; border:none }\n")
-      .arg(color(QPalette::WindowText, QPalette::Disabled),
-           color(QPalette::Window, QPalette::Active, frameDarker),
-           color(QPalette::Window, QPalette::Active, currentFrameDarker),
-           color(QPalette::Base, QPalette::Active));
+    const auto format = QStringLiteral(
+        "QLabel:disabled { color: %1 }\n"
+        "QDockWidget > QFrame { border:1px solid %2 }\n"
+        "QDockWidget[current=true] > QFrame { border:1px solid %3 }\n"
+        "QDockWidget > QFrame[no-bottom-border=true] { border-bottom: none }\n"
+        "QMenuBar { background-color: %4; border:none; margin:0; padding:0; "
+        "padding-top:2px; }\n"
+        "QToolButton { margin:2; margin:0px; padding:2px; }\n"
+        "QToolBar { spacing:2px; margin:0; padding:2px; padding-left:4px; "
+        "background-color: %4; border:none }\n");
+    const auto styleSheet =
+        format.arg(color(QPalette::WindowText, QPalette::Disabled),
+            color(QPalette::Window, QPalette::Active, frameDarker),
+            color(QPalette::Window, QPalette::Active, currentFrameDarker),
+            color(QPalette::Base, QPalette::Active));
 
     setStyleSheet(styleSheet);
 
@@ -1090,15 +1080,14 @@ void MainWindow::handleThemeChanging(const Theme &theme)
     style()->polish(qApp);
 }
 
-void MainWindow::handleHideMenuBarChanged(bool hide) 
+void MainWindow::handleHideMenuBarChanged(bool hide)
 {
     mUi->menubar->setVisible(!hide);
     mMenuButton->setVisible(hide);
     if (hide) {
         mUi->toolBarMain->insertWidget(mUi->actionNew, mMenuButton);
         mUi->toolBarMain->insertSeparator(mUi->actionNew);
-    }
-    else {
+    } else {
         mUi->toolBarMain->removeAction(mUi->toolBarMain->actions().front());
         mUi->toolBarMain->removeAction(mUi->toolBarMain->actions().front());
     }
@@ -1113,8 +1102,8 @@ void MainWindow::openMessageDock()
 {
     // only open once automatically
     if (QObject::sender() == mMessageWindow.data())
-        disconnect(mMessageWindow.data(), &MessageWindow::messagesAdded,
-            this, &MainWindow::openMessageDock);
+        disconnect(mMessageWindow.data(), &MessageWindow::messagesAdded, this,
+            &MainWindow::openMessageDock);
 
     for (auto p = mMessageWindow->parentWidget(); p; p = p->parentWidget())
         p->setVisible(true);
@@ -1142,13 +1131,16 @@ void MainWindow::populateThemesMenu()
     for (const auto &fileName : fileNames) {
         const auto &theme = Theme::getTheme(fileName);
         for (auto menu : { mUi->menuWindowThemes, mUi->menuEditorThemes }) {
-            auto action = menu->addAction(theme.name(), this, SLOT(setSelectedTheme()));
+            auto action =
+                menu->addAction(theme.name(), this, SLOT(setSelectedTheme()));
             action->setData(QVariant::fromValue(&theme));
             action->setCheckable(true);
-            action->setChecked(&theme == (menu == mUi->menuWindowThemes ? 
-                currentWindowTheme : currentEditorTheme));
-            action->setActionGroup(menu == mUi->menuWindowThemes ? 
-                windowThemeActionGroup : editorThemeActionGroup);
+            action->setChecked(&theme
+                == (menu == mUi->menuWindowThemes ? currentWindowTheme
+                                                  : currentEditorTheme));
+            action->setActionGroup(menu == mUi->menuWindowThemes
+                    ? windowThemeActionGroup
+                    : editorThemeActionGroup);
             if (fileName.isEmpty()) {
                 action->setText("Default");
                 menu->addSeparator();
@@ -1159,9 +1151,9 @@ void MainWindow::populateThemesMenu()
 
 void MainWindow::setSelectedTheme()
 {
-    const auto action = qobject_cast<QAction*>(QObject::sender());
-    const auto menu = qobject_cast<QMenu*>(action->parent());
-    const auto &theme = *action->data().value<const Theme*>();
+    const auto action = qobject_cast<QAction *>(QObject::sender());
+    const auto menu = qobject_cast<QMenu *>(action->parent());
+    const auto &theme = *action->data().value<const Theme *>();
     if (menu == mUi->menuWindowThemes)
         Singletons::settings().setWindowTheme(theme);
     else
@@ -1189,9 +1181,10 @@ void MainWindow::openSampleSession()
 {
     const auto evalSteady = mUi->actionEvalSteady->isChecked();
 
-    if (auto action = qobject_cast<QAction*>(QObject::sender()))
+    if (auto action = qobject_cast<QAction *>(QObject::sender()))
         if (openFile(action->data().toString()))
-            setEvaluationMode(evalSteady ? EvaluationMode::Steady : EvaluationMode::Automatic);
+            setEvaluationMode(evalSteady ? EvaluationMode::Steady
+                                         : EvaluationMode::Automatic);
 }
 
 void MainWindow::openOnlineHelp()

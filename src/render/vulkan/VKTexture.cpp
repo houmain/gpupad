@@ -1,39 +1,36 @@
 #include "VKTexture.h"
-#include "VKBuffer.h"
-#include "SynchronizeLogic.h"
 #include "EvaluatedPropertyCache.h"
+#include "SynchronizeLogic.h"
+#include "VKBuffer.h"
 #include <QScopeGuard>
 #include <cmath>
 
-namespace
-{
+namespace {
     KDGpu::TextureType getKDTextureType(const TextureKind &kind)
     {
         if (kind.cubeMap)
             return KDGpu::TextureType::TextureTypeCube;
 
         switch (kind.dimensions) {
-            case 1: return KDGpu::TextureType::TextureType1D;
-            case 2: return KDGpu::TextureType::TextureType2D;
-            case 3: return KDGpu::TextureType::TextureType3D;
+        case 1: return KDGpu::TextureType::TextureType1D;
+        case 2: return KDGpu::TextureType::TextureType2D;
+        case 3: return KDGpu::TextureType::TextureType3D;
         }
-        return { };
+        return {};
     }
 
     KDGpu::ViewType getKDViewType(const TextureKind &kind)
     {
+        using KD = KDGpu::ViewType;
         if (kind.cubeMap)
-            return (kind.array ? KDGpu::ViewType::ViewTypeCubeArray :
-                                 KDGpu::ViewType::ViewTypeCube);
+            return (kind.array ? KD::ViewTypeCubeArray : KD::ViewTypeCube);
 
         switch (kind.dimensions) {
-            case 1: return (kind.array ? KDGpu::ViewType::ViewType1DArray :
-                                         KDGpu::ViewType::ViewType1D);
-            case 2: return (kind.array ? KDGpu::ViewType::ViewType2DArray :
-                                         KDGpu::ViewType::ViewType2D);
-            case 3: return KDGpu::ViewType::ViewType3D;
+        case 1: return (kind.array ? KD::ViewType1DArray : KD::ViewType1D);
+        case 2: return (kind.array ? KD::ViewType2DArray : KD::ViewType2D);
+        case 3: return KD::ViewType3D;
         }
-        return { };
+        return {};
     }
 
     class TransferTexture
@@ -47,9 +44,9 @@ namespace
         {
             mStagingBuffer = device.createBuffer(KDGpu::BufferOptions{
                 .size = static_cast<size_t>(texture.data().getDataSize()),
-                .usage = KDGpu::BufferUsageFlagBits::TransferDstBit | 
-                          KDGpu::BufferUsageFlagBits::TransferSrcBit,
-                .memoryUsage = KDGpu::MemoryUsage::CpuOnly
+                .usage = KDGpu::BufferUsageFlagBits::TransferDstBit
+                    | KDGpu::BufferUsageFlagBits::TransferSrcBit,
+                .memoryUsage = KDGpu::MemoryUsage::CpuOnly,
             });
 
             if (texture.samples() > 1) {
@@ -57,18 +54,16 @@ namespace
                 mResolveTexture = device.createTexture(KDGpu::TextureOptions{
                     .type = KDGpu::TextureType::TextureType2D,
                     .format = toKDGpu(texture.format()),
-                    .extent = {
-                        static_cast<uint32_t>(texture.width()), 
+                    .extent = { static_cast<uint32_t>(texture.width()),
                         static_cast<uint32_t>(texture.height()),
-                        static_cast<uint32_t>(1)
-                    },
+                        static_cast<uint32_t>(1) },
                     .mipLevels = 1,
                     .arrayLayers = static_cast<uint32_t>(texture.layers()),
                     .samples = KDGpu::SampleCountFlagBits::Samples1Bit,
                     .tiling = KDGpu::TextureTiling::Optimal,
-                    .usage = KDGpu::TextureUsageFlagBits::TransferDstBit | 
-                             KDGpu::TextureUsageFlagBits::TransferSrcBit,
-                    .memoryUsage = KDGpu::MemoryUsage::GpuOnly
+                    .usage = KDGpu::TextureUsageFlagBits::TransferDstBit
+                        | KDGpu::TextureUsageFlagBits::TransferSrcBit,
+                    .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
                 });
                 Q_ASSERT(mResolveTexture.isValid());
             }
@@ -76,13 +71,14 @@ namespace
 
         bool download(VKContext &context, VKTexture &texture)
         {
-            const auto range = KDGpu::TextureSubresourceRange{ 
+            const auto range = KDGpu::TextureSubresourceRange{
                 .aspectMask = texture.aspectMask()
             };
 
             texture.prepareTransferSource(context);
-            
-            auto copySource = KDGpu::Handle<KDGpu::Texture_t>(texture.texture());
+
+            auto copySource =
+                KDGpu::Handle<KDGpu::Texture_t>(texture.texture());
 
             if (mResolveTexture.isValid()) {
                 context.commandRecorder->textureMemoryBarrier({
@@ -93,24 +89,20 @@ namespace
                     .oldLayout = KDGpu::TextureLayout::Undefined,
                     .newLayout = KDGpu::TextureLayout::TransferDstOptimal,
                     .texture = mResolveTexture,
-                    .range = range
+                    .range = range,
                 });
 
-                context.commandRecorder->resolveTexture({
+                context.commandRecorder->resolveTexture({ 
                     .srcTexture = texture.texture(),
                     .srcLayout = KDGpu::TextureLayout::TransferSrcOptimal,
                     .dstTexture = mResolveTexture,
                     .dstLayout = KDGpu::TextureLayout::TransferDstOptimal,
-                    .regions = {
-                        {
-                            .extent = { 
-                                .width = static_cast<uint32_t>(texture.width()), 
-                                .height = static_cast<uint32_t>(texture.height()), 
-                                .depth = 1
-                            }
-                        }
-                    }
-                });
+                    .regions = { { .extent = {
+                                       .width = static_cast<uint32_t>(texture.width()),
+                                       .height = static_cast<uint32_t>(texture.height()),
+                                       .depth = 1,
+                                   }, } }, 
+                  });
 
                 context.commandRecorder->textureMemoryBarrier({
                     .srcStages = KDGpu::PipelineStageFlagBit::TransferBit,
@@ -120,7 +112,7 @@ namespace
                     .oldLayout = KDGpu::TextureLayout::TransferDstOptimal,
                     .newLayout = KDGpu::TextureLayout::TransferSrcOptimal,
                     .texture = mResolveTexture,
-                    .range = range
+                    .range = range,
                 });
 
                 copySource = mResolveTexture;
@@ -140,68 +132,64 @@ namespace
             auto regions = std::vector<KDGpu::BufferTextureCopyRegion>();
             for (auto layer = 0; layer < data.layers(); ++layer) {
                 for (auto faceSlice = 0; faceSlice < faceSlices; ++faceSlice) {
-                    const auto offset = std::distance(start, 
-                        data.getData(0, layer, faceSlice)); 
+                    const auto offset =
+                        std::distance(start, data.getData(0, layer, faceSlice));
                     regions.push_back(KDGpu::BufferTextureCopyRegion{
                         .bufferOffset{ static_cast<size_t>(offset) },
                         .textureSubResource{
-                                .aspectMask = texture.aspectMask(),
-                                .baseArrayLayer = static_cast<uint32_t>(layer),
+                            .aspectMask = texture.aspectMask(),
+                            .baseArrayLayer = static_cast<uint32_t>(layer),
                         },
                         .textureOffset{
-                                .x = 0,
-                                .y = 0,
-                                .z = static_cast<int32_t>(faceSlice),
+                            .x = 0,
+                            .y = 0,
+                            .z = static_cast<int32_t>(faceSlice),
                         },
-                        .textureExtent{ 
-                                .width = static_cast<uint32_t>(texture.width()), 
-                                .height = static_cast<uint32_t>(texture.height()), 
-                                .depth = 1
+                        .textureExtent{
+                            .width = static_cast<uint32_t>(texture.width()),
+                            .height = static_cast<uint32_t>(texture.height()),
+                            .depth = 1,
                         },
                     });
                 }
             }
 
             context.commandRecorder->copyTextureToBuffer({
-                    .srcTexture = copySource,
-                    .srcTextureLayout = KDGpu::TextureLayout::TransferSrcOptimal,
-                    .dstBuffer = mStagingBuffer,
-                    .regions = regions
+                .srcTexture = copySource,
+                .srcTextureLayout = KDGpu::TextureLayout::TransferSrcOptimal,
+                .dstBuffer = mStagingBuffer,
+                .regions = regions,
             });
 
             context.commandRecorder->bufferMemoryBarrier({
-                    .srcStages = KDGpu::PipelineStageFlagBit::TransferBit,
-                    .srcMask = KDGpu::AccessFlagBit::TransferWriteBit,
-                    .dstStages = KDGpu::PipelineStageFlagBit::TransferBit,
-                    .dstMask = KDGpu::AccessFlagBit::MemoryReadBit,
-                    .buffer = mStagingBuffer,
+                .srcStages = KDGpu::PipelineStageFlagBit::TransferBit,
+                .srcMask = KDGpu::AccessFlagBit::TransferWriteBit,
+                .dstStages = KDGpu::PipelineStageFlagBit::TransferBit,
+                .dstMask = KDGpu::AccessFlagBit::MemoryReadBit,
+                .buffer = mStagingBuffer,
             });
             return true;
         }
 
         std::byte *map()
         {
-            return static_cast<std::byte*>(mStagingBuffer.map());
+            return static_cast<std::byte *>(mStagingBuffer.map());
         }
 
-        void unmap()
-        {
-            mStagingBuffer.unmap();
-        }
+        void unmap() { mStagingBuffer.unmap(); }
     };
 } // namespace
 
 VKTexture::VKTexture(const Texture &texture, ScriptEngine &scriptEngine)
     : TextureBase(texture, scriptEngine)
 {
-    mUsage = KDGpu::TextureUsageFlags{
-        KDGpu::TextureUsageFlagBits::TransferSrcBit |
-        KDGpu::TextureUsageFlagBits::TransferDstBit 
-    };
+    mUsage =
+        KDGpu::TextureUsageFlags{ KDGpu::TextureUsageFlagBits::TransferSrcBit
+            | KDGpu::TextureUsageFlagBits::TransferDstBit };
 }
 
 VKTexture::VKTexture(const Buffer &buffer, VKBuffer *textureBuffer,
-      Texture::Format format, ScriptEngine &scriptEngine)
+    Texture::Format format, ScriptEngine &scriptEngine)
     : TextureBase(buffer, format, scriptEngine)
     , mTextureBuffer(textureBuffer)
 {
@@ -212,7 +200,8 @@ void VKTexture::addUsage(KDGpu::TextureUsageFlags usage)
     mUsage |= usage;
 }
 
-KDGpu::TextureView &VKTexture::getView(int level, int layer, KDGpu::Format format)
+KDGpu::TextureView &VKTexture::getView(int level, int layer,
+    KDGpu::Format format)
 {
     auto &view = mTextureViews[ViewOptions{
         .level = level,
@@ -223,7 +212,7 @@ KDGpu::TextureView &VKTexture::getView(int level, int layer, KDGpu::Format forma
         auto options = KDGpu::TextureViewOptions{
             .viewType = getKDViewType(mKind),
             .format = format,
-            .range = { .aspectMask = aspectMask() }
+            .range = { .aspectMask = aspectMask() },
         };
         if (level >= 0) {
             options.range.baseMipLevel = level;
@@ -243,9 +232,9 @@ bool VKTexture::prepareSampledImage(VKContext &context)
     reload(false);
     createAndUpload(context);
 
-    memoryBarrier(*context.commandRecorder, 
+    memoryBarrier(*context.commandRecorder,
         KDGpu::TextureLayout::ShaderReadOnlyOptimal,
-        KDGpu::AccessFlagBit::MemoryReadBit, 
+        KDGpu::AccessFlagBit::MemoryReadBit,
         KDGpu::PipelineStageFlagBit::AllGraphicsBit);
 
     return mTexture.isValid();
@@ -258,9 +247,9 @@ bool VKTexture::prepareStorageImage(VKContext &context)
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
 
-    memoryBarrier(*context.commandRecorder, 
-        KDGpu::TextureLayout::General,
-        KDGpu::AccessFlagBit::MemoryWriteBit | KDGpu::AccessFlagBit::MemoryReadBit, 
+    memoryBarrier(*context.commandRecorder, KDGpu::TextureLayout::General,
+        KDGpu::AccessFlagBit::MemoryWriteBit
+            | KDGpu::AccessFlagBit::MemoryReadBit,
         KDGpu::PipelineStageFlagBit::AllGraphicsBit);
 
     return mTexture.isValid();
@@ -273,13 +262,12 @@ bool VKTexture::prepareAttachment(VKContext &context)
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
 
-    const auto layout = (mKind.depth || mKind.stencil ?
-        KDGpu::TextureLayout::DepthStencilAttachmentOptimal :
-        KDGpu::TextureLayout::ColorAttachmentOptimal);
+    const auto layout = (mKind.depth || mKind.stencil
+            ? KDGpu::TextureLayout::DepthStencilAttachmentOptimal
+            : KDGpu::TextureLayout::ColorAttachmentOptimal);
 
-    memoryBarrier(*context.commandRecorder, 
-        layout,
-        KDGpu::AccessFlagBit::MemoryReadBit, 
+    memoryBarrier(*context.commandRecorder, layout,
+        KDGpu::AccessFlagBit::MemoryReadBit,
         KDGpu::PipelineStageFlagBit::AllGraphicsBit);
 
     return mTexture.isValid();
@@ -290,15 +278,15 @@ bool VKTexture::prepareTransferSource(VKContext &context)
     reload(false);
     createAndUpload(context);
 
-    memoryBarrier(*context.commandRecorder, 
+    memoryBarrier(*context.commandRecorder,
         KDGpu::TextureLayout::TransferSrcOptimal,
-        KDGpu::AccessFlagBit::MemoryReadBit, 
+        KDGpu::AccessFlagBit::MemoryReadBit,
         KDGpu::PipelineStageFlagBit::TransferBit);
 
     return mTexture.isValid();
 }
 
-bool VKTexture::clear(VKContext &context, std::array<double, 4> color, 
+bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
     double depth, int stencil)
 {
     reload(true);
@@ -309,9 +297,8 @@ bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
     if (!mTexture.isValid())
         return false;
 
-    memoryBarrier(*context.commandRecorder, 
-        KDGpu::TextureLayout::General,
-        KDGpu::AccessFlagBit::TransferWriteBit, 
+    memoryBarrier(*context.commandRecorder, KDGpu::TextureLayout::General,
+        KDGpu::AccessFlagBit::TransferWriteBit,
         KDGpu::PipelineStageFlagBit::TransferBit);
 
     auto succeeded = true;
@@ -321,31 +308,21 @@ bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
             .layout = mCurrentLayout,
             .depthClearValue = static_cast<float>(depth),
             .stencilClearValue = static_cast<uint32_t>(stencil),
-            .ranges = {
-                KDGpu::TextureSubresourceRange {
-                    .aspectMask = aspectMask()
-                }
-            }
+            .ranges = { KDGpu::TextureSubresourceRange{
+                .aspectMask = aspectMask() } },
         });
-    }
-    else {
+    } else {
         const auto sampleType = getTextureSampleType(mFormat);
         transformClearColor(color, sampleType);
 
         context.commandRecorder->clearColorTexture({
             .texture = mTexture,
             .layout = mCurrentLayout,
-            .clearValue = KDGpu::ColorClearValue{ 
-                static_cast<float>(color[0]),
-                static_cast<float>(color[1]),
-                static_cast<float>(color[2]),
-                static_cast<float>(color[3])    
-            },
-            .ranges = {
-                KDGpu::TextureSubresourceRange {
-                    .aspectMask = aspectMask()
-                }
-            }
+            .clearValue = KDGpu::ColorClearValue{ static_cast<float>(color[0]),
+                static_cast<float>(color[1]), static_cast<float>(color[2]),
+                static_cast<float>(color[3]) },
+            .ranges = { KDGpu::TextureSubresourceRange{
+                .aspectMask = aspectMask() } },
         });
     }
     return succeeded;
@@ -353,23 +330,20 @@ bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
 
 bool VKTexture::copy(VKContext &context, VKTexture &source)
 {
-    context.commandRecorder->copyTextureToTexture({
+    context.commandRecorder->copyTextureToTexture({ 
         .srcTexture = source.texture(),
         .srcLayout = mCurrentLayout,
         .dstTexture = texture(),
         .dstLayout = KDGpu::TextureLayout::General,
-        .regions = {
-            KDGpu::TextureCopyRegion{ 
-                .srcSubresource{ .aspectMask = source.aspectMask() },
-                .dstSubresource{ .aspectMask = aspectMask() },
-                .extent = {
-                    static_cast<uint32_t>(mWidth), 
-                    static_cast<uint32_t>(mHeight),
-                    static_cast<uint32_t>(mDepth),
-                }
-            }
-        }
-    });
+        .regions = { KDGpu::TextureCopyRegion{ 
+            .srcSubresource{ .aspectMask = source.aspectMask() },
+            .dstSubresource{ .aspectMask = aspectMask() },
+            .extent = {
+                static_cast<uint32_t>(mWidth),
+                static_cast<uint32_t>(mHeight),
+                static_cast<uint32_t>(mDepth),
+            }, }, }, 
+        });
     return true;
 }
 
@@ -390,7 +364,7 @@ bool VKTexture::swap(VKTexture &other)
     return true;
 }
 
-bool VKTexture::updateMipmaps(VKContext& context)
+bool VKTexture::updateMipmaps(VKContext &context)
 {
     if (std::exchange(mMipmapsInvalidated, false) && levels() > 1) {
         const auto options = KDGpu::GenerateMipMapsOptions{
@@ -407,8 +381,7 @@ bool VKTexture::updateMipmaps(VKContext& context)
         if (context.commandRecorder) {
             prepareTransferSource(context);
             context.commandRecorder->generateMipMaps(options);
-        }
-        else {
+        } else {
             mTexture.generateMipMaps(context.device, context.queue,
                 toKDGpu(mFormat), KDGpu::TextureTiling::Optimal, options);
             mCurrentLayout = KDGpu::TextureLayout::TransferSrcOptimal;
@@ -417,15 +390,15 @@ bool VKTexture::updateMipmaps(VKContext& context)
     return true;
 }
 
-void VKTexture::reset(KDGpu::Device& device)
+void VKTexture::reset(KDGpu::Device &device)
 {
     if (std::exchange(mCreated, false)) {
         if (mKtxTexture.vkDestroyImage) {
-            auto vkDevice = static_cast<KDGpu::VulkanDevice*>(
+            auto vkDevice = static_cast<KDGpu::VulkanDevice *>(
                 device.graphicsApi()->resourceManager()->getDevice(device));
             ktxVulkanTexture_Destruct(&mKtxTexture, vkDevice->device, nullptr);
         }
-        mTexture = { };
+        mTexture = {};
         mTextureViews.clear();
     }
 }
@@ -436,7 +409,7 @@ void VKTexture::createAndUpload(VKContext &context)
         reset(context.device);
 
     if (std::exchange(mCreated, true))
-      return;
+        return;
 
     auto textureOptions = KDGpu::TextureOptions{
         .type = getKDTextureType(mKind),
@@ -453,35 +426,38 @@ void VKTexture::createAndUpload(VKContext &context)
         .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
     };
 
-    const auto isWritten = (mUsage & (
-        KDGpu::TextureUsageFlagBits::ColorAttachmentBit |
-        KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit | KDGpu::TextureUsageFlagBits::StorageBit));
+    const auto isWritten = (mUsage
+        & (KDGpu::TextureUsageFlagBits::ColorAttachmentBit
+            | KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit
+            | KDGpu::TextureUsageFlagBits::StorageBit));
 
     if (isWritten || mSamples > 1) {
 #if defined(KDGPU_PLATFORM_WIN32)
-        textureOptions.externalMemoryHandleType = KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueWin32;
+        textureOptions.externalMemoryHandleType =
+            KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueWin32;
 #else
-        textureOptions.externalMemoryHandleType = KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueFD;
+        textureOptions.externalMemoryHandleType =
+            KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueFD;
 #endif
         mTexture = context.device.createTexture(textureOptions);
-    }
-    else {
+    } else {
         mCurrentLayout = KDGpu::TextureLayout::TransferDstOptimal;
 
         auto data = mData;
         if (mData.format() != mFormat)
             data = mData.convert(mFormat);
 
-        if (!data.uploadVK(&context.ktxDeviceInfo, &mKtxTexture, 
+        if (!data.uploadVK(&context.ktxDeviceInfo, &mKtxTexture,
                 static_cast<VkImageUsageFlags>(mUsage.toInt()),
                 static_cast<VkImageLayout>(mCurrentLayout))) {
             mMessages += MessageList::insert(mItemId,
-                (data.isNull() ? MessageType::UploadingImageFailed :
-                                 MessageType::CreatingTextureFailed));
+                (data.isNull() ? MessageType::UploadingImageFailed
+                               : MessageType::CreatingTextureFailed));
             return;
         }
-        auto vkApi = static_cast<KDGpu::VulkanGraphicsApi*>(context.device.graphicsApi());
-        mTexture = vkApi->createTextureFromExistingVkImage(context.device, 
+        auto vkApi = static_cast<KDGpu::VulkanGraphicsApi *>(
+            context.device.graphicsApi());
+        mTexture = vkApi->createTextureFromExistingVkImage(context.device,
             textureOptions, mKtxTexture.image);
     }
     mSystemCopyModified = mDeviceCopyModified = false;
@@ -504,13 +480,13 @@ bool VKTexture::download(VKContext &context)
     auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
 
     if (!transferTexture.download(context, *this)) {
-        mMessages += MessageList::insert(
-            mItemId, MessageType::DownloadingImageFailed);
+        mMessages +=
+            MessageList::insert(mItemId, MessageType::DownloadingImageFailed);
         return false;
     }
 
     auto commandBuffer = context.commandRecorder->finish();
-    context.queue.submit({ .commandBuffers = { commandBuffer} });
+    context.queue.submit({ .commandBuffers = { commandBuffer } });
     context.queue.waitUntilIdle();
 
     auto data = transferTexture.map();
@@ -525,13 +501,14 @@ bool VKTexture::download(VKContext &context)
 
 KDGpu::TextureAspectFlagBits VKTexture::aspectMask() const
 {
-    return mKind.stencil ? KDGpu::TextureAspectFlagBits::StencilBit :
-           mKind.depth ? KDGpu::TextureAspectFlagBits::DepthBit :
-           KDGpu::TextureAspectFlagBits::ColorBit;
+    return mKind.stencil ? KDGpu::TextureAspectFlagBits::StencilBit
+        : mKind.depth    ? KDGpu::TextureAspectFlagBits::DepthBit
+                         : KDGpu::TextureAspectFlagBits::ColorBit;
 }
 
-void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder, 
-    KDGpu::TextureLayout layout, KDGpu::AccessFlags accessMask, KDGpu::PipelineStageFlags stage) 
+void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
+    KDGpu::TextureLayout layout, KDGpu::AccessFlags accessMask,
+    KDGpu::PipelineStageFlags stage)
 {
     if (!mTexture.isValid())
         return;
@@ -544,7 +521,7 @@ void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
         .oldLayout = mCurrentLayout,
         .newLayout = layout,
         .texture = mTexture,
-        .range = { .aspectMask = aspectMask() }
+        .range = { .aspectMask = aspectMask() },
     });
     mCurrentStage = stage;
     mCurrentLayout = layout;
@@ -555,17 +532,17 @@ SharedMemoryHandle VKTexture::getSharedMemoryHandle() const
 {
     const auto memory = mTexture.externalMemoryHandle();
     if (memory.handle.index() == 0)
-        return { };
+        return {};
 #if defined(KDGPU_PLATFORM_WIN32)
-    return { 
+    return {
         std::get<HANDLE>(memory.handle),
         memory.allocationSize,
         memory.allocationOffset,
         true,
     };
 #else
-    return { 
-        reinterpret_cast<void*>(intptr_t{ std::get<int>(memory.handle) }),
+    return {
+        reinterpret_cast<void *>(intptr_t{ std::get<int>(memory.handle) }),
         memory.allocationSize,
         memory.allocationOffset,
         true,

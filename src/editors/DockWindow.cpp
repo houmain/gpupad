@@ -1,39 +1,35 @@
 #include "DockWindow.h"
-#include "FileDialog.h"
 #include "DockTitle.h"
-#include <QChildEvent>
-#include <QTabBar>
+#include "FileDialog.h"
 #include <QApplication>
-#include <QTimer>
-#include <QDockWidget>
-#include <QPointer>
-#include <QMenu>
+#include <QChildEvent>
 #include <QClipboard>
+#include <QDockWidget>
+#include <QMenu>
+#include <QPointer>
+#include <QTabBar>
+#include <QTimer>
 
 namespace {
     QDockWidget *getTabBarDock(QTabBar *tabBar, int index)
     {
         // source: https://bugreports.qt.io/browse/QTBUG-39489
-        return reinterpret_cast<QDockWidget*>(
+        return reinterpret_cast<QDockWidget *>(
             tabBar->tabData(index).toULongLong());
     }
 } // namespace
 
-DockWindow::DockWindow(QWidget *parent)
-    : QMainWindow(parent)
-{
-}
+DockWindow::DockWindow(QWidget *parent) : QMainWindow(parent) { }
 
 void DockWindow::raiseDock(QDockWidget *dock)
 {
     // it seems like raising only works when the dock was layouted
-    QTimer::singleShot(0,
-        [dock = QPointer<QDockWidget>(dock)]() {
-            if (dock) {
-                dock->raise();
-                dock->widget()->setFocus();
-            }
-        });
+    QTimer::singleShot(0, [dock = QPointer<QDockWidget>(dock)]() {
+        if (dock) {
+            dock->raise();
+            dock->widget()->setFocus();
+        }
+    });
 }
 
 void DockWindow::closeDock(QDockWidget *dock)
@@ -48,7 +44,6 @@ void DockWindow::closeDocksExcept(QTabBar *tabBar, QDockWidget *except)
         if (auto dock = getTabBarDock(tabBar, i))
             if (dock != except)
                 Q_EMIT dockCloseRequested(dock);
-  
 }
 
 void DockWindow::childEvent(QChildEvent *event)
@@ -62,26 +57,29 @@ bool DockWindow::eventFilter(QObject *watched, QEvent *event)
 {
     // hide QTabBar automatically added by QMainWindow as soon as possible
     if (event->type() == QEvent::ChildPolished)
-        if (auto tabBar = qobject_cast<QTabBar*>(watched))
+        if (auto tabBar = qobject_cast<QTabBar *>(watched))
             initializeTabBar(tabBar);
-        
+
     // set custom titlebar of QDockWidget as soon as possible
     if (event->type() == QEvent::Polish)
-        if (auto dock = qobject_cast<QDockWidget*>(watched))
+        if (auto dock = qobject_cast<QDockWidget *>(watched))
             initializeDock(dock);
-    
+
     // inform titlebars of corresponding tabbar, whenever tabbar children change
-    if (event->type() == QEvent::ChildAdded || event->type() == QEvent::ChildRemoved)
-        if (qobject_cast<QTabBar*>(watched)) {
-            const auto dockTitles = findChildren<DockTitle*>();
+    if (event->type() == QEvent::ChildAdded
+        || event->type() == QEvent::ChildRemoved)
+        if (qobject_cast<QTabBar *>(watched)) {
+            const auto dockTitles = findChildren<DockTitle *>();
             for (auto title : dockTitles)
                 title->setTabBar(nullptr);
 
-            const auto tabBars = findChildren<QTabBar*>();
+            const auto tabBars = findChildren<QTabBar *>();
             for (auto tabBar : tabBars)
                 for (auto i = 0; i < tabBar->count(); i++)
-                    if (auto dock = qobject_cast<QDockWidget*>(getTabBarDock(tabBar, i)))
-                        if (auto title = qobject_cast<DockTitle*>(dock->titleBarWidget()))
+                    if (auto dock = qobject_cast<QDockWidget *>(
+                            getTabBarDock(tabBar, i)))
+                        if (auto title = qobject_cast<DockTitle *>(
+                                dock->titleBarWidget()))
                             title->setTabBar(tabBar);
         }
 
@@ -103,8 +101,8 @@ void DockWindow::initializeDock(QDockWidget *dock)
         return;
     dock->setProperty("initialized", true);
 
-    connect(dock, &QDockWidget::topLevelChanged, 
-        this, &DockWindow::onDockTopLevelChanged);
+    connect(dock, &QDockWidget::topLevelChanged, this,
+        &DockWindow::onDockTopLevelChanged);
     setDockTitleBar(dock);
 }
 
@@ -119,16 +117,17 @@ void DockWindow::openContextMenu(QPoint pos, QTabBar *tabBar, QDockWidget *dock)
     if (tabBar && tabBar->count() > 1) {
         auto closeAll = menu.addAction(tr("Close All"));
         auto closeOthers = menu.addAction(tr("Close Others"));
-        connect(closeOthers, &QAction::triggered, 
+        connect(closeOthers, &QAction::triggered,
             [=, this]() { closeDocksExcept(tabBar, dock); });
-        connect(closeAll, &QAction::triggered, 
+        connect(closeAll, &QAction::triggered,
             [=, this]() { closeDocksExcept(tabBar, nullptr); });
     }
 
     if (!dock->statusTip().isEmpty()) {
         const auto fileName = dock->statusTip();
         auto copyFullPath = menu.addAction(tr("Copy Full Path"));
-        auto openContainingFolder = menu.addAction(tr("Open Containing Folder"));
+        auto openContainingFolder =
+            menu.addAction(tr("Open Containing Folder"));
         connect(copyFullPath, &QAction::triggered,
             [fileName]() { QApplication::clipboard()->setText(fileName); });
         connect(openContainingFolder, &QAction::triggered,
@@ -141,15 +140,15 @@ void DockWindow::openContextMenu(QPoint pos, QTabBar *tabBar, QDockWidget *dock)
         auto docks = std::multimap<QString, QDockWidget *>();
         for (auto i = 0; i < tabBar->count(); ++i)
             if (auto dock = getTabBarDock(tabBar, i)) {
-                const auto title = (dock->statusTip().isEmpty() ? 
-                    dock->windowTitle().replace("[*]", 
-                        dock->isWindowModified() ? "*" : "") :
-                    dock->statusTip());
+                const auto title = (dock->statusTip().isEmpty()
+                        ? dock->windowTitle().replace("[*]",
+                              dock->isWindowModified() ? "*" : "")
+                        : dock->statusTip());
                 docks.emplace(title, dock);
             }
 
         for (const auto &[title, dock] : docks)
-            connect(menu.addAction(title), &QAction::triggered, 
+            connect(menu.addAction(title), &QAction::triggered,
                 [this, dock = dock]() { raiseDock(dock); });
     }
     menu.exec(pos);
@@ -157,27 +156,25 @@ void DockWindow::openContextMenu(QPoint pos, QTabBar *tabBar, QDockWidget *dock)
 
 void DockWindow::onDockTopLevelChanged(bool floating)
 {
-    auto dock = qobject_cast<QDockWidget*>(sender());
+    auto dock = qobject_cast<QDockWidget *>(sender());
     setDockTitleBar(dock);
 
     dock->setMinimumSize(floating ? dock->size() / 2 : QSize(0, 0));
 }
 
-void DockWindow::setDockTitleBar(QDockWidget *dock) 
+void DockWindow::setDockTitleBar(QDockWidget *dock)
 {
     if (dock->isFloating()) {
         delete dock->titleBarWidget();
         dock->setTitleBarWidget(nullptr);
-    }
-    else if (!dock->titleBarWidget()) {
+    } else if (!dock->titleBarWidget()) {
         auto title = new DockTitle(dock);
         dock->setTitleBarWidget(title);
 
-        connect(title, &DockTitle::openNewDock,
-            this, &DockWindow::openNewDock);
-        connect(title, &DockTitle::dockCloseRequested,
-            this, &DockWindow::dockCloseRequested);
-        connect(title, &DockTitle::contextMenuRequested,
-            this, &DockWindow::openContextMenu);
+        connect(title, &DockTitle::openNewDock, this, &DockWindow::openNewDock);
+        connect(title, &DockTitle::dockCloseRequested, this,
+            &DockWindow::dockCloseRequested);
+        connect(title, &DockTitle::contextMenuRequested, this,
+            &DockWindow::openContextMenu);
     }
 }

@@ -3,17 +3,16 @@
 
 extern QString simpleDoubleString(double value);
 
-ExpressionEditor::ExpressionEditor(QWidget *parent) : QPlainTextEdit(parent)
-{
-}
+ExpressionEditor::ExpressionEditor(QWidget *parent) : QPlainTextEdit(parent) { }
 
 void ExpressionEditor::wheelEvent(QWheelEvent *event)
 {
     mWheelDeltaRemainder += event->angleDelta().y();
     const int steps = mWheelDeltaRemainder / 120;
     mWheelDeltaRemainder -= steps * 120;
-    stepBy(event->modifiers() & Qt::ShiftModifier ? steps / 10.0 :
-           event->modifiers() & Qt::ControlModifier ? steps * 10.0 : steps);
+    stepBy(event->modifiers() & Qt::ShiftModifier      ? steps / 10.0
+            : event->modifiers() & Qt::ControlModifier ? steps * 10.0
+                                                       : steps);
     event->accept();
 }
 

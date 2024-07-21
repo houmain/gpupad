@@ -1,9 +1,7 @@
 #include "MouseScriptObject.h"
 #include <QJsonArray>
 
-MouseScriptObject::MouseScriptObject(QObject *parent) : QObject(parent)
-{
-}
+MouseScriptObject::MouseScriptObject(QObject *parent) : QObject(parent) { }
 
 void MouseScriptObject::update(const InputState &state)
 {
@@ -38,7 +36,7 @@ QJsonValue MouseScriptObject::prevFragCoord() const
     return toFragCoord(mPrevPosition);
 }
 
-QJsonValue MouseScriptObject::buttons() const 
+QJsonValue MouseScriptObject::buttons() const
 {
     mWasRead = true;
     auto array = QJsonArray();

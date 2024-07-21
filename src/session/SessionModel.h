@@ -1,11 +1,11 @@
 #pragma once
 
 #include "SessionModelCore.h"
-#include <QSet>
 #include <QFont>
 #include <QIcon>
-#include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonObject>
+#include <QSet>
 
 class SessionModel final : public SessionModelCore
 {
@@ -14,21 +14,23 @@ public:
     explicit SessionModel(QObject *parent = nullptr);
     ~SessionModel() override;
 
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    QVariant data(const QModelIndex &index,
+        int role = Qt::DisplayRole) const override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 
     Qt::DropActions supportedDragActions() const override;
     Qt::DropActions supportedDropActions() const override;
     QStringList mimeTypes() const override;
     QMimeData *mimeData(const QModelIndexList &indexes) const override;
-    bool canDropMimeData(const QMimeData *data, Qt::DropAction action,
-        int row, int column, const QModelIndex &parent) const override;
-    bool dropMimeData(const QMimeData *data, Qt::DropAction action,
-        int row, int column, const QModelIndex &parent) override;
+    bool canDropMimeData(const QMimeData *data, Qt::DropAction action, int row,
+        int column, const QModelIndex &parent) const override;
+    bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row,
+        int column, const QModelIndex &parent) override;
     bool removeRows(int row, int count,
         const QModelIndex &parent = QModelIndex()) override;
 
-    QList<QMetaObject::Connection> connectUndoActions(QAction *undo, QAction *redo);
+    QList<QMetaObject::Connection> connectUndoActions(QAction *undo,
+        QAction *redo);
     bool isUndoStackClean();
     void clearUndoStack();
     void beginUndoMacro(const QString &text);
@@ -42,18 +44,18 @@ public:
     void setActiveItemColor(QColor color);
 
     QJsonArray getJson(const QModelIndexList &indexes) const;
-    void dropJson(const QJsonArray &json,
-        int row, const QModelIndex &parent, bool updateExisting);
+    void dropJson(const QJsonArray &json, int row, const QModelIndex &parent,
+        bool updateExisting);
     bool save(const QString &fileName);
     bool load(const QString &fileName);
 
-    template<typename F> // F(const Item&)
+    template <typename F> // F(const Item&)
     void forEachItem(const F &function) const
     {
-        forEachItemRec(getItem(QModelIndex{ }), false, function);
+        forEachItemRec(getItem(QModelIndex{}), false, function);
     }
 
-    template<typename F> // F(const Item&)
+    template <typename F> // F(const Item&)
     void forEachItemScoped(const QModelIndex &index, const F &function) const
     {
         const auto &pos = getItem(index);
@@ -61,7 +63,7 @@ public:
             forEachItemRecUp(*pos.parent, pos, function);
     }
 
-    template<typename F> // F(const FileItem&)
+    template <typename F> // F(const FileItem&)
     void forEachFileItem(const F &function)
     {
         forEachItem([&](const Item &item) {
@@ -75,13 +77,16 @@ Q_SIGNALS:
 
 private:
     bool shouldSerializeColumn(const Item &item, ColumnType column) const;
-    QJsonArray generateJsonFromUrls(QModelIndex target, const QList<QUrl> &urls) const;
-    QJsonArray parseDraggedJson(QModelIndex target, const QMimeData *data) const;
-    void serialize(QJsonObject &object, const Item &item, bool relativeFilePaths) const;
-    void deserialize(const QJsonObject &object, const QModelIndex &parent, int row,
-        bool updateExisting);
+    QJsonArray generateJsonFromUrls(QModelIndex target,
+        const QList<QUrl> &urls) const;
+    QJsonArray parseDraggedJson(QModelIndex target,
+        const QMimeData *data) const;
+    void serialize(QJsonObject &object, const Item &item,
+        bool relativeFilePaths) const;
+    void deserialize(const QJsonObject &object, const QModelIndex &parent,
+        int row, bool updateExisting);
 
-    template<typename F>
+    template <typename F>
     void forEachItemRec(const Item &item, bool scoped, const F &function) const
     {
         function(item);
@@ -95,7 +100,7 @@ private:
         }
     }
 
-    template<typename F> // F(const Item&)
+    template <typename F> // F(const Item&)
     void forEachItemRecUp(const Item &parent, const Item &pos,
         const F &function) const
     {
@@ -120,4 +125,3 @@ private:
     mutable QString mDraggedText;
     mutable QJsonArray mDraggedJson;
 };
-

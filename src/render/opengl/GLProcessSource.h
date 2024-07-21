@@ -1,10 +1,10 @@
 #pragma once
 
-#include "MessageList.h"
-#include "session/Item.h"
-#include "SourceType.h"
 #include "GLShader.h"
+#include "MessageList.h"
+#include "SourceType.h"
 #include "scripting/ScriptEngine.h"
+#include "session/Item.h"
 
 class GLProcessSource
 {
@@ -23,12 +23,12 @@ public:
 private:
     QScopedPointer<GLShader> mShader;
     QString mFileName;
-    SourceType mSourceType{ };
+    SourceType mSourceType{};
 
     QScopedPointer<ScriptEngine> mScriptEngine;
     MessagePtrSet mMessages;
 
-    bool mValidateSource{ };
-    QString mProcessType{ };
+    bool mValidateSource{};
+    QString mProcessType{};
     QString mOutput;
 };

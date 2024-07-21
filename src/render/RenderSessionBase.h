@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Evaluation.h"
+#include "MessageList.h"
 #include "Renderer.h"
 #include "TextureData.h"
-#include "MessageList.h"
 #include "session/SessionModel.h"
-#include <QMutex>
 #include <QMap>
+#include <QMutex>
 
 class ScriptSession;
 
@@ -17,8 +17,8 @@ public:
 
     RenderSessionBase();
     virtual ~RenderSessionBase();
-    RenderSessionBase(const RenderSessionBase&) = delete;
-    RenderSessionBase& operator=(const RenderSessionBase&) = delete;
+    RenderSessionBase(const RenderSessionBase &) = delete;
+    RenderSessionBase &operator=(const RenderSessionBase &) = delete;
 
     void prepare(bool itemsChanged, EvaluationType evaluationType);
     void configure();
@@ -40,8 +40,8 @@ protected:
     QScopedPointer<ScriptSession> mScriptSession;
     QSet<ItemId> mUsedItems;
     MessagePtrSet mMessages;
-    bool mItemsChanged{ };
-    EvaluationType mEvaluationType{ };
+    bool mItemsChanged{};
+    EvaluationType mEvaluationType{};
     QMap<ItemId, TextureData> mModifiedTextures;
     QMap<ItemId, QByteArray> mModifiedBuffers;
 

@@ -14,13 +14,15 @@ ColorMask::ColorMask(QWidget *parent) : QWidget(parent)
     layout->addWidget(mColorG);
     layout->addWidget(mColorB);
     layout->addWidget(mColorA);
-    layout->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    layout->addItem(
+        new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Minimum));
 
     for (auto color : { mColorR, mColorG, mColorB, mColorA })
-        connect(color, &QCheckBox::toggled, this, &ColorMask::handleColorMaskToggled);
+        connect(color, &QCheckBox::toggled, this,
+            &ColorMask::handleColorMaskToggled);
 }
 
-void ColorMask::setColorMask(unsigned int colorMask) 
+void ColorMask::setColorMask(unsigned int colorMask)
 {
     if (mColorMask != colorMask) {
         mColorMask = colorMask;
@@ -32,12 +34,12 @@ void ColorMask::setColorMask(unsigned int colorMask)
     }
 }
 
-unsigned int ColorMask::colorMask() const 
+unsigned int ColorMask::colorMask() const
 {
     return mColorMask;
 }
 
-void ColorMask::handleColorMaskToggled() 
+void ColorMask::handleColorMaskToggled()
 {
     auto colorMask = 0u;
     colorMask |= (mColorR->isChecked() ? 1 : 0);

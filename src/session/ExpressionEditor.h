@@ -5,8 +5,8 @@
 class ExpressionEditor final : public QPlainTextEdit
 {
     Q_OBJECT
-    Q_PROPERTY(QString text READ text WRITE
-        setText NOTIFY textChanged USER true)
+    Q_PROPERTY(
+        QString text READ text WRITE setText NOTIFY textChanged USER true)
 public:
     explicit ExpressionEditor(QWidget *parent = nullptr);
 
@@ -21,6 +21,5 @@ protected:
 private:
     void stepBy(double steps);
 
-    int mWheelDeltaRemainder{ };
+    int mWheelDeltaRemainder{};
 };
-

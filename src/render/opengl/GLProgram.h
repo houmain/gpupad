@@ -64,19 +64,18 @@ struct GLSubroutineBinding
 class GLProgram
 {
 public:
-    GLProgram(const Program &program, const QString &shaderPreamble, const QString &shaderIncludePaths);
+    GLProgram(const Program &program, const QString &shaderPreamble,
+        const QString &shaderIncludePaths);
     bool operator==(const GLProgram &rhs) const;
 
     bool link();
     bool bind(MessagePtrSet *callMessages);
     void unbind(ItemId callItemId);
     int getAttributeLocation(const QString &name) const;
-    bool apply(const GLUniformBinding &binding, 
-        ScriptEngine &scriptEngine);
+    bool apply(const GLUniformBinding &binding, ScriptEngine &scriptEngine);
     bool apply(const GLSamplerBinding &binding, int unit);
     bool apply(const GLImageBinding &binding, int unit);
-    bool apply(const GLBufferBinding &binding, 
-        ScriptEngine &scriptEngine);
+    bool apply(const GLBufferBinding &binding, ScriptEngine &scriptEngine);
     bool applyPrintfBindings();
     bool apply(const GLSubroutineBinding &subroutine);
     void reapplySubroutines();
@@ -98,7 +97,7 @@ private:
     void uniformSet(const QString &name);
     void bufferSet(const QString &name);
 
-    ItemId mItemId{ };
+    ItemId mItemId{};
     QSet<ItemId> mUsedItems;
     MessagePtrSet mLinkMessages;
     std::vector<GLShader> mShaders;
@@ -108,12 +107,11 @@ private:
     QMap<QString, std::pair<GLenum, GLint>> mBufferBindingPoints;
     QMap<QString, GLObject> mTextureBufferObjects;
     GLObject mProgramObject;
-    bool mFailed{ };
-    MessagePtrSet *mCallMessages{ };
+    bool mFailed{};
+    MessagePtrSet *mCallMessages{};
     std::map<QString, bool> mUniformsSet;
     std::map<QString, bool> mBuffersSet;
     mutable std::map<QString, bool> mAttributesSet;
     GLPrintf mPrintf;
     MessagePtrSet mPrintfMessages;
 };
-

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "MessageList.h"
-#include "session/Item.h"
 #include "TextureData.h"
+#include "session/Item.h"
 
 class ScriptEngine;
 
@@ -31,29 +31,29 @@ public:
 
 protected:
     bool swap(TextureBase &other);
-    void reload(bool forWriting);  
+    void reload(bool forWriting);
 
-    ItemId mItemId{ };
+    ItemId mItemId{};
     MessagePtrSet mMessages;
     QString mFileName;
-    bool mFlipVertically{ };
-    Texture::Target mTarget{ };
-    Texture::Format mFormat{ };
-    int mWidth{ };
-    int mHeight{ };
-    int mDepth{ };
-    int mLayers{ };
-    int mSamples{ };
+    bool mFlipVertically{};
+    Texture::Target mTarget{};
+    Texture::Format mFormat{};
+    int mWidth{};
+    int mHeight{};
+    int mDepth{};
+    int mLayers{};
+    int mSamples{};
     TextureData mData;
-    bool mDataWritten{ };
+    bool mDataWritten{};
     QSet<ItemId> mUsedItems;
-    TextureKind mKind{ };
-    bool mSystemCopyModified{ };
-    bool mDeviceCopyModified{ };
-    bool mMipmapsInvalidated{ };
+    TextureKind mKind{};
+    bool mSystemCopyModified{};
+    bool mDeviceCopyModified{};
+    bool mMipmapsInvalidated{};
 };
 
-int getBufferSize(const Buffer &buffer,
-    ScriptEngine &scriptEngine, MessagePtrSet &messages);
-void transformClearColor(std::array<double, 4> &color, 
+int getBufferSize(const Buffer &buffer, ScriptEngine &scriptEngine,
+    MessagePtrSet &messages);
+void transformClearColor(std::array<double, 4> &color,
     TextureSampleType sampleType);

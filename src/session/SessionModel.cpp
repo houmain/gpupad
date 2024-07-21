@@ -1,15 +1,14 @@
 #include "SessionModel.h"
-#include "SessionModelPriv.h"
 #include "FileDialog.h"
-#include <QIcon>
-#include <QMimeData>
-#include <QJsonDocument>
-#include <QDir>
-#include <QSaveFile>
+#include "SessionModelPriv.h"
 #include <QAction>
+#include <QDir>
+#include <QIcon>
+#include <QJsonDocument>
+#include <QMimeData>
+#include <QSaveFile>
 
-SessionModel::SessionModel(QObject *parent)
-    : SessionModelCore(parent)
+SessionModel::SessionModel(QObject *parent) : SessionModelCore(parent)
 {
     mTypeIcons[Item::Type::Group] = QIcon::fromTheme("folder");
     mTypeIcons[Item::Type::Buffer] = QIcon::fromTheme("x-office-spreadsheet");
@@ -17,34 +16,39 @@ SessionModel::SessionModel(QObject *parent)
     mTypeIcons[Item::Type::Field] = QIcon::fromTheme("mail-attachment");
     mTypeIcons[Item::Type::Texture] = QIcon::fromTheme("folder-pictures");
     mTypeIcons[Item::Type::Program] = QIcon::fromTheme("applications-system");
-    mTypeIcons[Item::Type::Shader] = QIcon::fromTheme("accessories-text-editor");
+    mTypeIcons[Item::Type::Shader] =
+        QIcon::fromTheme("accessories-text-editor");
     mTypeIcons[Item::Type::Binding] = QIcon::fromTheme("insert-text");
-    mTypeIcons[Item::Type::Stream] = QIcon::fromTheme("media-playback-start-rtl");
+    mTypeIcons[Item::Type::Stream] =
+        QIcon::fromTheme("media-playback-start-rtl");
     mTypeIcons[Item::Type::Attribute] = QIcon::fromTheme("mail-attachment");
     mTypeIcons[Item::Type::Target] = QIcon::fromTheme("video-display");
     mTypeIcons[Item::Type::Attachment] = QIcon::fromTheme("mail-attachment");
     mTypeIcons[Item::Type::Call] = QIcon::fromTheme("dialog-information");
-    mTypeIcons[Item::Type::Script] = QIcon::fromTheme("accessories-text-editor");
+    mTypeIcons[Item::Type::Script] =
+        QIcon::fromTheme("accessories-text-editor");
 
-    connect(&undoStack(), &QUndoStack::cleanChanged,
-        this, &SessionModel::undoStackCleanChanged);
+    connect(&undoStack(), &QUndoStack::cleanChanged, this,
+        &SessionModel::undoStackCleanChanged);
 }
 
-SessionModel::~SessionModel() 
+SessionModel::~SessionModel()
 {
     clear();
 }
 
-QList<QMetaObject::Connection> SessionModel::connectUndoActions(
-    QAction *undo, QAction *redo)
+QList<QMetaObject::Connection> SessionModel::connectUndoActions(QAction *undo,
+    QAction *redo)
 {
     auto c = QList<QMetaObject::Connection>();
     undo->setEnabled(undoStack().canUndo());
     redo->setEnabled(undoStack().canRedo());
     c += connect(undo, &QAction::triggered, &undoStack(), &QUndoStack::undo);
     c += connect(redo, &QAction::triggered, &undoStack(), &QUndoStack::redo);
-    c += connect(&undoStack(), &QUndoStack::canUndoChanged, undo, &QAction::setEnabled);
-    c += connect(&undoStack(), &QUndoStack::canRedoChanged, redo, &QAction::setEnabled);
+    c += connect(&undoStack(), &QUndoStack::canUndoChanged, undo,
+        &QAction::setEnabled);
+    c += connect(&undoStack(), &QUndoStack::canRedoChanged, redo,
+        &QAction::setEnabled);
     return c;
 }
 
@@ -106,17 +110,14 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     flags |= Qt::ItemIsDragEnabled;
     flags |= Qt::ItemIsUserCheckable;
     switch (type) {
-        case Item::Type::Group:
-        case Item::Type::Buffer:
-        case Item::Type::Block:
-        case Item::Type::Texture:
-        case Item::Type::Program:
-        case Item::Type::Stream:
-        case Item::Type::Target:
-            flags |= Qt::ItemIsDropEnabled;
-            break;
-        default:
-            break;
+    case Item::Type::Group:
+    case Item::Type::Buffer:
+    case Item::Type::Block:
+    case Item::Type::Texture:
+    case Item::Type::Program:
+    case Item::Type::Stream:
+    case Item::Type::Target:  flags |= Qt::ItemIsDropEnabled; break;
+    default:                  break;
     }
     // workaround to optimize D&D (do not snap to not droppable targets)
     if (!mDraggedIndices.empty() && (flags & Qt::ItemIsDropEnabled))
@@ -154,8 +155,7 @@ void SessionModel::setItemActive(ItemId id, bool active)
         mActiveItemIds.remove(id);
 
     auto item = findItem(id);
-    Q_EMIT dataChanged(getIndex(item), getIndex(item),
-        { Qt::ForegroundRole });
+    Q_EMIT dataChanged(getIndex(item), getIndex(item), { Qt::ForegroundRole });
 }
 
 void SessionModel::setActiveItemColor(QColor color)
@@ -167,8 +167,8 @@ QString SessionModel::getItemName(ItemId id) const
 {
     if (auto item = findItem(id))
         return item->name;
-    return { };
- }
+    return {};
+}
 
 QString SessionModel::getFullItemName(ItemId id) const
 {
@@ -176,19 +176,18 @@ QString SessionModel::getFullItemName(ItemId id) const
         const auto fullwidthHyphenMinus = QChar(0xFF0D);
         auto name = item->name;
         for (item = item->parent; item && item != &root(); item = item->parent)
-            name = item->name + (item->type == Item::Type::Block ?
-                QChar('.') : fullwidthHyphenMinus) + name;
+            name = item->name
+                + (item->type == Item::Type::Block ? QChar('.')
+                                                   : fullwidthHyphenMinus)
+                + name;
         return name;
     }
-    return { };
- }
+    return {};
+}
 
 QStringList SessionModel::mimeTypes() const
 {
-    return { 
-        QStringLiteral("text/plain"), 
-        QStringLiteral("text/uri-list")
-    };
+    return { QStringLiteral("text/plain"), QStringLiteral("text/uri-list") };
 }
 
 Qt::DropActions SessionModel::supportedDragActions() const
@@ -201,8 +200,8 @@ Qt::DropActions SessionModel::supportedDropActions() const
     return Qt::CopyAction | Qt::MoveAction;
 }
 
-QJsonArray SessionModel::generateJsonFromUrls(
-    QModelIndex target, const QList<QUrl> &urls) const
+QJsonArray SessionModel::generateJsonFromUrls(QModelIndex target,
+    const QList<QUrl> &urls) const
 {
     auto itemArray = QJsonArray();
     const auto addFileItem = [&](auto &item, const QUrl &url) {
@@ -216,30 +215,27 @@ QJsonArray SessionModel::generateJsonFromUrls(
 
     for (const auto &url : urls) {
         const auto fileName = url.toLocalFile();
-        if (canContainType(target, Item::Type::Shader) &&
-              FileDialog::isShaderFileName(fileName)) {
+        if (canContainType(target, Item::Type::Shader)
+            && FileDialog::isShaderFileName(fileName)) {
             auto item = Shader();
             item.type = Item::Type::Shader;
             addFileItem(item, url);
-        }
-        else if (canContainType(target, Item::Type::Script) &&
-              FileDialog::isScriptFileName(fileName)) {
+        } else if (canContainType(target, Item::Type::Script)
+            && FileDialog::isScriptFileName(fileName)) {
             auto item = Script();
             item.type = Item::Type::Script;
             addFileItem(item, url);
-        }
-        else if (canContainType(target, Item::Type::Texture) &&
-                (FileDialog::isTextureFileName(fileName) || 
-                 FileDialog::isVideoFileName(fileName))) {
+        } else if (canContainType(target, Item::Type::Texture)
+            && (FileDialog::isTextureFileName(fileName)
+                || FileDialog::isVideoFileName(fileName))) {
             auto item = Texture();
             item.type = Item::Type::Texture;
             addFileItem(item, url);
-        }
-        else if (canContainType(target, Item::Type::Buffer) && 
-               !FileDialog::isShaderFileName(fileName) &&
-               !FileDialog::isScriptFileName(fileName) &&
-               !FileDialog::isTextureFileName(fileName) &&
-               !FileDialog::isVideoFileName(fileName)) {
+        } else if (canContainType(target, Item::Type::Buffer)
+            && !FileDialog::isShaderFileName(fileName)
+            && !FileDialog::isScriptFileName(fileName)
+            && !FileDialog::isTextureFileName(fileName)
+            && !FileDialog::isVideoFileName(fileName)) {
             auto item = Buffer();
             item.type = Item::Type::Buffer;
             addFileItem(item, url);
@@ -248,8 +244,8 @@ QJsonArray SessionModel::generateJsonFromUrls(
     return itemArray;
 }
 
-QJsonArray SessionModel::parseDraggedJson(
-    QModelIndex target, const QMimeData *data) const
+QJsonArray SessionModel::parseDraggedJson(QModelIndex target,
+    const QMimeData *data) const
 {
     if (data->hasUrls()) {
         mDraggedJson = generateJsonFromUrls(target, data->urls());
@@ -261,26 +257,24 @@ QJsonArray SessionModel::parseDraggedJson(
         mDraggedText = text;
 
         auto document = QJsonDocument::fromJson(text.toUtf8());
-        mDraggedJson =
-            document.isNull() ? QJsonArray() :
-            document.isArray() ? document.array() :
-            QJsonArray({ document.object() });
+        mDraggedJson = document.isNull() ? QJsonArray()
+            : document.isArray()         ? document.array()
+                                         : QJsonArray({ document.object() });
     }
     return mDraggedJson;
 }
 
-bool SessionModel::canDropMimeData(const QMimeData *data,
-        Qt::DropAction action, int row, int column,
-        const QModelIndex &parent) const
+bool SessionModel::canDropMimeData(const QMimeData *data, Qt::DropAction action,
+    int row, int column, const QModelIndex &parent) const
 {
-    if (!QAbstractItemModel::canDropMimeData(
-            data, action, row, column, parent))
+    if (!QAbstractItemModel::canDropMimeData(data, action, row, column, parent))
         return false;
 
     const auto jsonArray = parseDraggedJson(parent, data);
     for (const QJsonValue &value : jsonArray) {
         auto ok = false;
-        const auto type = getTypeByName(value.toObject()["type"].toString(), ok);
+        const auto type =
+            getTypeByName(value.toObject()["type"].toString(), ok);
         if (!ok || !canContainType(parent, type))
             return false;
     }
@@ -321,7 +315,7 @@ bool SessionModel::save(const QString &fileName)
         return false;
 
     file.write(mime->text().toUtf8());
-    if  (!file.commit())
+    if (!file.commit())
         return false;
 
     undoStack().setClean();
@@ -331,10 +325,9 @@ bool SessionModel::save(const QString &fileName)
 QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
 {
     auto jsonArray = getJson(indexes);
-    auto document =
-        (jsonArray.size() != 1 ?
-          QJsonDocument(jsonArray) :
-          QJsonDocument(jsonArray.first().toObject()));
+    auto document = (jsonArray.size() != 1
+            ? QJsonDocument(jsonArray)
+            : QJsonDocument(jsonArray.first().toObject()));
     auto data = new QMimeData();
     data->setText(document.toJson());
 
@@ -343,7 +336,7 @@ QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
 }
 
 bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
-        int row, int column, const QModelIndex &parent)
+    int row, int column, const QModelIndex &parent)
 {
     Q_UNUSED(column);
     if (action == Qt::IgnoreAction)
@@ -356,14 +349,13 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     if (row < 0)
         row = rowCount(parent);
 
-    beginUndoMacro("Move");    
+    beginUndoMacro("Move");
 
     if (action == Qt::MoveAction && !mDraggedIndices.empty()) {
         std::stable_sort(mDraggedIndices.begin(), mDraggedIndices.end(),
             [](const auto &a, const auto &b) { return a.row() > b.row(); });
         for (const auto &index : qAsConst(mDraggedIndices)) {
-            if (index.parent() == parent &&
-                index.row() < row)
+            if (index.parent() == parent && index.row() < row)
                 --row;
             deleteItem(index);
         }
@@ -380,13 +372,12 @@ QJsonArray SessionModel::getJson(const QModelIndexList &indexes) const
 {
     auto itemArray = QJsonArray();
     if (indexes.size() == 1 && !indexes.first().isValid()) {
-        for (const Item *item : getItem({ }).items) {
+        for (const Item *item : getItem({}).items) {
             auto object = QJsonObject();
             serialize(object, *item, true);
             itemArray.append(object);
         }
-    }
-    else {
+    } else {
         for (QModelIndex index : indexes) {
             auto object = QJsonObject();
             serialize(object, getItem(index), false);
@@ -396,8 +387,8 @@ QJsonArray SessionModel::getJson(const QModelIndexList &indexes) const
     return itemArray;
 }
 
-void SessionModel::dropJson(const QJsonArray &jsonArray,
-    int row, const QModelIndex &parent, bool updateExisting)
+void SessionModel::dropJson(const QJsonArray &jsonArray, int row,
+    const QModelIndex &parent, bool updateExisting)
 {
     for (const QJsonValue &value : jsonArray)
         deserialize(value.toObject(), parent, row++, updateExisting);
@@ -414,8 +405,7 @@ void SessionModel::dropJson(const QJsonArray &jsonArray,
 void SessionModel::deserialize(const QJsonObject &object,
     const QModelIndex &parent, int row, bool updateExisting)
 {
-    auto id = (object.contains("id") ?
-        object["id"].toInt() : getNextItemId());
+    auto id = (object.contains("id") ? object["id"].toInt() : getNextItemId());
 
     auto existingItem = findItem(id);
     if (existingItem && !updateExisting) {
@@ -426,17 +416,19 @@ void SessionModel::deserialize(const QJsonObject &object,
     }
 
     auto ok = true;
-    const auto type = (existingItem ? existingItem->type :
-        object.contains("type") ? getTypeByName(object["type"].toString(), ok) :
-        getDefaultChildType(parent));
+    const auto type = (existingItem ? existingItem->type
+            : object.contains("type")
+            ? getTypeByName(object["type"].toString(), ok)
+            : getDefaultChildType(parent));
     if (!ok || !canContainType(parent, type))
         return;
 
-    const auto index = (existingItem ?
-        getIndex(existingItem) : insertItem(type, parent, row, id));
+    const auto index = (existingItem ? getIndex(existingItem)
+                                     : insertItem(type, parent, row, id));
 
     const auto dropColumn = [&](const QString &property,
-            const QModelIndex &index, const QVariant &value) {
+                                const QModelIndex &index,
+                                const QVariant &value) {
         if (property.endsWith("Id")) {
             // reference to an already patched id?
             auto it = mDroppedIdsReplaced.find(value.toInt());
@@ -455,12 +447,12 @@ void SessionModel::deserialize(const QJsonObject &object,
 
         if (property == "name") {
             setData(getIndex(index, Name), value);
-        }
-        else if (property == "fileName") {
-            const auto absolutePath = QDir::current().absoluteFilePath(value.toString());
-            setData(getIndex(index, FileName), toNativeCanonicalFilePath(absolutePath));
-        }
-        else if (property == "target") {
+        } else if (property == "fileName") {
+            const auto absolutePath =
+                QDir::current().absoluteFilePath(value.toString());
+            setData(getIndex(index, FileName),
+                toNativeCanonicalFilePath(absolutePath));
+        } else if (property == "target") {
             // TODO: remove, added for backward compatibility
             if (value == "Target2DMultisample")
                 value = "Target2D";
@@ -468,9 +460,9 @@ void SessionModel::deserialize(const QJsonObject &object,
                 value = "Target2DArray";
             dropColumn(property, getIndex(index, TextureTarget), value);
         }
-#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
-        else if (Item::Type::ITEM_TYPE == type && #PROPERTY == property) \
-            dropColumn(property, getIndex(index, COLUMN_TYPE), value);
+#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY)                        \
+    else if (Item::Type::ITEM_TYPE == type && #PROPERTY == property) \
+        dropColumn(property, getIndex(index, COLUMN_TYPE), value);
 
         ADD_EACH_COLUMN_TYPE()
 #undef ADD
@@ -490,17 +482,19 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
     if (auto fileItem = castItem<FileItem>(item)) {
         const auto &fileName = fileItem->fileName;
         if (!FileDialog::isEmptyOrUntitled(fileName))
-            object["fileName"] = (relativeFilePaths ?
-                QDir::fromNativeSeparators(QDir::current().relativeFilePath(fileName)) : fileName);
+            object["fileName"] = (relativeFilePaths
+                    ? QDir::fromNativeSeparators(
+                          QDir::current().relativeFilePath(fileName))
+                    : fileName);
     }
     if (!object.contains("fileName"))
         object["name"] = item.name;
 
-#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
-    if (item.type == Item::Type::ITEM_TYPE && \
-            shouldSerializeColumn(item, COLUMN_TYPE)) \
-        object[#PROPERTY] = toJsonValue(\
-            static_cast<const ITEM_TYPE&>(item).PROPERTY);
+#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY)        \
+    if (item.type == Item::Type::ITEM_TYPE           \
+        && shouldSerializeColumn(item, COLUMN_TYPE)) \
+        object[#PROPERTY] =                          \
+            toJsonValue(static_cast<const ITEM_TYPE &>(item).PROPERTY);
 
     ADD_EACH_COLUMN_TYPE()
 #undef ADD
@@ -521,145 +515,163 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
 {
     auto result = true;
     switch (item.type) {
-        case Item::Type::Shader: {
-            const auto &shader = static_cast<const Shader&>(item);
-            result &= (column != ShaderEntryPoint || (shader.language != Shader::Language::GLSL));
-            result &= (column != ShaderPreamble || !shader.preamble.isEmpty());
-            result &= (column != ShaderIncludePaths || !shader.includePaths.isEmpty());
-            break;
-        }
+    case Item::Type::Shader: {
+        const auto &shader = static_cast<const Shader &>(item);
+        result &= (column != ShaderEntryPoint
+            || (shader.language != Shader::Language::GLSL));
+        result &= (column != ShaderPreamble || !shader.preamble.isEmpty());
+        result &=
+            (column != ShaderIncludePaths || !shader.includePaths.isEmpty());
+        break;
+    }
 
-        case Item::Type::Texture: {
-            const auto &texture = static_cast<const Texture&>(item);
-            auto kind = getKind(texture);
-            result &= (column != TextureHeight || (kind.dimensions > 1 && !kind.cubeMap));
-            result &= (column != TextureDepth || kind.dimensions > 2);
-            result &= (column != TextureLayers || kind.array);
-            break;
-        }
+    case Item::Type::Texture: {
+        const auto &texture = static_cast<const Texture &>(item);
+        auto kind = getKind(texture);
+        result &=
+            (column != TextureHeight || (kind.dimensions > 1 && !kind.cubeMap));
+        result &= (column != TextureDepth || kind.dimensions > 2);
+        result &= (column != TextureLayers || kind.array);
+        break;
+    }
 
-        case Item::Type::Binding: {
-            const auto &binding = static_cast<const Binding&>(item);
-            const auto uniform = (binding.bindingType == Binding::BindingType::Uniform);
-            const auto sampler = (binding.bindingType == Binding::BindingType::Sampler);
-            const auto image = (binding.bindingType == Binding::BindingType::Image);
-            const auto textureBuffer = (binding.bindingType == Binding::BindingType::TextureBuffer);
-            const auto buffer = (binding.bindingType == Binding::BindingType::Buffer);
-            const auto block = (binding.bindingType == Binding::BindingType::BufferBlock);
-            const auto subroutine = (binding.bindingType == Binding::BindingType::Subroutine);
-            result &= (column != BindingEditor || uniform);
-            result &= (column != BindingValues || uniform);
-            result &= (column != BindingTextureId || image || sampler);
-            result &= (column != BindingLevel || image);
-            result &= (column != BindingLayer || image);
-            result &= (column != BindingImageFormat || image || textureBuffer);
-            result &= (column != BindingMinFilter || sampler);
-            result &= (column != BindingMagFilter || sampler);
-            result &= (column != BindingAnisotropic || sampler);
-            result &= (column != BindingWrapModeX || sampler);
-            result &= (column != BindingWrapModeY || sampler);
-            result &= (column != BindingWrapModeZ || sampler);
-            result &= (column != BindingBorderColor || sampler);
-            result &= (column != BindingComparisonFunc || sampler);
-            result &= (column != BindingBufferId || buffer || textureBuffer);
-            result &= (column != BindingBlockId || block);
-            result &= (column != BindingSubroutine || subroutine);
-            break;
-        }
+    case Item::Type::Binding: {
+        const auto &binding = static_cast<const Binding &>(item);
+        const auto uniform =
+            (binding.bindingType == Binding::BindingType::Uniform);
+        const auto sampler =
+            (binding.bindingType == Binding::BindingType::Sampler);
+        const auto image = (binding.bindingType == Binding::BindingType::Image);
+        const auto textureBuffer =
+            (binding.bindingType == Binding::BindingType::TextureBuffer);
+        const auto buffer =
+            (binding.bindingType == Binding::BindingType::Buffer);
+        const auto block =
+            (binding.bindingType == Binding::BindingType::BufferBlock);
+        const auto subroutine =
+            (binding.bindingType == Binding::BindingType::Subroutine);
+        result &= (column != BindingEditor || uniform);
+        result &= (column != BindingValues || uniform);
+        result &= (column != BindingTextureId || image || sampler);
+        result &= (column != BindingLevel || image);
+        result &= (column != BindingLayer || image);
+        result &= (column != BindingImageFormat || image || textureBuffer);
+        result &= (column != BindingMinFilter || sampler);
+        result &= (column != BindingMagFilter || sampler);
+        result &= (column != BindingAnisotropic || sampler);
+        result &= (column != BindingWrapModeX || sampler);
+        result &= (column != BindingWrapModeY || sampler);
+        result &= (column != BindingWrapModeZ || sampler);
+        result &= (column != BindingBorderColor || sampler);
+        result &= (column != BindingComparisonFunc || sampler);
+        result &= (column != BindingBufferId || buffer || textureBuffer);
+        result &= (column != BindingBlockId || block);
+        result &= (column != BindingSubroutine || subroutine);
+        break;
+    }
 
-        case Item::Type::Attachment: {
-            const auto &attachment = static_cast<const Attachment&>(item);
-            auto kind = TextureKind();
-            if (auto texture = findItem<Texture>(attachment.textureId))
-                kind = getKind(*texture);
-            result &= (column != AttachmentLayer || kind.array);
-            result &= (column != AttachmentBlendColorEq || kind.color);
-            result &= (column != AttachmentBlendColorSource || kind.color);
-            result &= (column != AttachmentBlendColorDest || kind.color);
-            result &= (column != AttachmentBlendAlphaEq || kind.color);
-            result &= (column != AttachmentBlendAlphaSource || kind.color);
-            result &= (column != AttachmentBlendAlphaDest || kind.color);
-            result &= (column != AttachmentColorWriteMask || kind.color);
-            result &= (column != AttachmentDepthComparisonFunc || kind.depth);
-            result &= (column != AttachmentDepthOffsetSlope || kind.depth);
-            result &= (column != AttachmentDepthOffsetConstant || kind.depth);
-            result &= (column != AttachmentDepthClamp || kind.depth);
-            result &= (column != AttachmentDepthWrite || kind.depth);
-            result &= (column != AttachmentStencilFrontComparisonFunc || kind.stencil);
-            result &= (column != AttachmentStencilFrontReference || kind.stencil);
-            result &= (column != AttachmentStencilFrontReadMask || kind.stencil);
-            result &= (column != AttachmentStencilFrontFailOp || kind.stencil);
-            result &= (column != AttachmentStencilFrontDepthFailOp || kind.stencil);
-            result &= (column != AttachmentStencilFrontDepthPassOp || kind.stencil);
-            result &= (column != AttachmentStencilFrontWriteMask || kind.stencil);
-            result &= (column != AttachmentStencilBackComparisonFunc || kind.stencil);
-            result &= (column != AttachmentStencilBackReference || kind.stencil);
-            result &= (column != AttachmentStencilBackReadMask || kind.stencil);
-            result &= (column != AttachmentStencilBackFailOp || kind.stencil);
-            result &= (column != AttachmentStencilBackDepthFailOp || kind.stencil);
-            result &= (column != AttachmentStencilBackDepthPassOp || kind.stencil);
-            result &= (column != AttachmentStencilBackWriteMask || kind.stencil);
-            break;
-        }
+    case Item::Type::Attachment: {
+        const auto &attachment = static_cast<const Attachment &>(item);
+        auto kind = TextureKind();
+        if (auto texture = findItem<Texture>(attachment.textureId))
+            kind = getKind(*texture);
+        result &= (column != AttachmentLayer || kind.array);
+        result &= (column != AttachmentBlendColorEq || kind.color);
+        result &= (column != AttachmentBlendColorSource || kind.color);
+        result &= (column != AttachmentBlendColorDest || kind.color);
+        result &= (column != AttachmentBlendAlphaEq || kind.color);
+        result &= (column != AttachmentBlendAlphaSource || kind.color);
+        result &= (column != AttachmentBlendAlphaDest || kind.color);
+        result &= (column != AttachmentColorWriteMask || kind.color);
+        result &= (column != AttachmentDepthComparisonFunc || kind.depth);
+        result &= (column != AttachmentDepthOffsetSlope || kind.depth);
+        result &= (column != AttachmentDepthOffsetConstant || kind.depth);
+        result &= (column != AttachmentDepthClamp || kind.depth);
+        result &= (column != AttachmentDepthWrite || kind.depth);
+        result &=
+            (column != AttachmentStencilFrontComparisonFunc || kind.stencil);
+        result &= (column != AttachmentStencilFrontReference || kind.stencil);
+        result &= (column != AttachmentStencilFrontReadMask || kind.stencil);
+        result &= (column != AttachmentStencilFrontFailOp || kind.stencil);
+        result &= (column != AttachmentStencilFrontDepthFailOp || kind.stencil);
+        result &= (column != AttachmentStencilFrontDepthPassOp || kind.stencil);
+        result &= (column != AttachmentStencilFrontWriteMask || kind.stencil);
+        result &=
+            (column != AttachmentStencilBackComparisonFunc || kind.stencil);
+        result &= (column != AttachmentStencilBackReference || kind.stencil);
+        result &= (column != AttachmentStencilBackReadMask || kind.stencil);
+        result &= (column != AttachmentStencilBackFailOp || kind.stencil);
+        result &= (column != AttachmentStencilBackDepthFailOp || kind.stencil);
+        result &= (column != AttachmentStencilBackDepthPassOp || kind.stencil);
+        result &= (column != AttachmentStencilBackWriteMask || kind.stencil);
+        break;
+    }
 
-        case Item::Type::Call: {
-            const auto &call = static_cast<const Call&>(item);
-            const auto kind = getKind(call);
-            const auto callType = call.callType;
-            result &= (column != CallProgramId || kind.draw || kind.compute);
-            result &= (column != CallTargetId || kind.draw);
-            result &= (column != CallVertexStreamId || kind.draw);
-            result &= (column != CallPrimitiveType || kind.draw);
-            result &= (column != CallPatchVertices || kind.patches);
-            result &= (column != CallIndexBufferBlockId || kind.indexed);
-            result &= (column != CallCount || (kind.draw && !kind.indirect));
-            result &= (column != CallFirst || (kind.draw && !kind.indirect));
-            result &= (column != CallInstanceCount || (kind.draw && !kind.indirect));
-            result &= (column != CallBaseInstance || (kind.draw && !kind.indirect));
-            result &= (column != CallBaseVertex || (kind.draw && kind.indexed && !kind.indirect));
-            result &= (column != CallIndirectBufferBlockId || kind.indirect);
-            result &= (column != CallDrawCount || (kind.draw && kind.indirect));
-            result &= (column != CallWorkGroupsX || (kind.compute && !kind.indirect));
-            result &= (column != CallWorkGroupsY || (kind.compute && !kind.indirect));
-            result &= (column != CallWorkGroupsZ || (kind.compute && !kind.indirect));
-            result &= (column != CallTextureId ||
-                callType == Call::CallType::ClearTexture ||
-                callType == Call::CallType::CopyTexture ||
-                callType == Call::CallType::SwapTextures);
-            result &= (column != CallFromTextureId ||
-                callType == Call::CallType::CopyTexture ||
-                callType == Call::CallType::SwapTextures);
-            result &= (column != CallClearColor || callType == Call::CallType::ClearTexture);
-            result &= (column != CallClearDepth || callType == Call::CallType::ClearTexture);
-            result &= (column != CallClearStencil || callType == Call::CallType::ClearTexture);
-            result &= (column != CallBufferId || 
-                callType == Call::CallType::ClearBuffer ||
-                callType == Call::CallType::CopyBuffer ||
-                callType == Call::CallType::SwapBuffers);
-            result &= (column != CallFromBufferId ||
-                callType == Call::CallType::CopyBuffer ||
-                callType == Call::CallType::SwapBuffers);
-            break;
-        }
+    case Item::Type::Call: {
+        const auto &call = static_cast<const Call &>(item);
+        const auto kind = getKind(call);
+        const auto callType = call.callType;
+        result &= (column != CallProgramId || kind.draw || kind.compute);
+        result &= (column != CallTargetId || kind.draw);
+        result &= (column != CallVertexStreamId || kind.draw);
+        result &= (column != CallPrimitiveType || kind.draw);
+        result &= (column != CallPatchVertices || kind.patches);
+        result &= (column != CallIndexBufferBlockId || kind.indexed);
+        result &= (column != CallCount || (kind.draw && !kind.indirect));
+        result &= (column != CallFirst || (kind.draw && !kind.indirect));
+        result &=
+            (column != CallInstanceCount || (kind.draw && !kind.indirect));
+        result &= (column != CallBaseInstance || (kind.draw && !kind.indirect));
+        result &= (column != CallBaseVertex
+            || (kind.draw && kind.indexed && !kind.indirect));
+        result &= (column != CallIndirectBufferBlockId || kind.indirect);
+        result &= (column != CallDrawCount || (kind.draw && kind.indirect));
+        result &=
+            (column != CallWorkGroupsX || (kind.compute && !kind.indirect));
+        result &=
+            (column != CallWorkGroupsY || (kind.compute && !kind.indirect));
+        result &=
+            (column != CallWorkGroupsZ || (kind.compute && !kind.indirect));
+        result &= (column != CallTextureId
+            || callType == Call::CallType::ClearTexture
+            || callType == Call::CallType::CopyTexture
+            || callType == Call::CallType::SwapTextures);
+        result &= (column != CallFromTextureId
+            || callType == Call::CallType::CopyTexture
+            || callType == Call::CallType::SwapTextures);
+        result &= (column != CallClearColor
+            || callType == Call::CallType::ClearTexture);
+        result &= (column != CallClearDepth
+            || callType == Call::CallType::ClearTexture);
+        result &= (column != CallClearStencil
+            || callType == Call::CallType::ClearTexture);
+        result &= (column != CallBufferId
+            || callType == Call::CallType::ClearBuffer
+            || callType == Call::CallType::CopyBuffer
+            || callType == Call::CallType::SwapBuffers);
+        result &= (column != CallFromBufferId
+            || callType == Call::CallType::CopyBuffer
+            || callType == Call::CallType::SwapBuffers);
+        break;
+    }
 
-        case Item::Type::Script: {
-            const auto &script = static_cast<const Script&>(item);
-            result &= (column != FileName || !script.fileName.isEmpty());
-            break;
-        }
+    case Item::Type::Script: {
+        const auto &script = static_cast<const Script &>(item);
+        result &= (column != FileName || !script.fileName.isEmpty());
+        break;
+    }
 
-        case Item::Type::Target: {
-            const auto &target = static_cast<const Target&>(item);
-            const auto hasAttachments = !target.items.empty();
-            result &= (column != TargetDefaultWidth || !hasAttachments);
-            result &= (column != TargetDefaultHeight || !hasAttachments);
-            result &= (column != TargetDefaultLayers || !hasAttachments);
-            result &= (column != TargetDefaultSamples || !hasAttachments);
-            break;
-        }
+    case Item::Type::Target: {
+        const auto &target = static_cast<const Target &>(item);
+        const auto hasAttachments = !target.items.empty();
+        result &= (column != TargetDefaultWidth || !hasAttachments);
+        result &= (column != TargetDefaultHeight || !hasAttachments);
+        result &= (column != TargetDefaultLayers || !hasAttachments);
+        result &= (column != TargetDefaultSamples || !hasAttachments);
+        break;
+    }
 
-        default:
-            break;
+    default: break;
     }
     return result;
 }
