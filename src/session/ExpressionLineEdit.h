@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONLINEEDIT_H
-#define EXPRESSIONLINEEDIT_H
+#pragma once
 
 #include <QLineEdit>
 
@@ -33,4 +32,3 @@ private:
     bool mDecimal{ };
 };
 
-#endif // EXPRESSIONLINEEDIT_H

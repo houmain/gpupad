@@ -1,5 +1,4 @@
-#ifndef COLORMASK_H
-#define COLORMASK_H
+#pragma once
 
 #include <QWidget>
 
@@ -27,4 +26,3 @@ private:
     unsigned int mColorMask{ };
 };
 
-#endif // COLORMASK_H

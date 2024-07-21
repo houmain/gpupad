@@ -1,5 +1,4 @@
-#ifndef BINDINGPROPERTIES_H
-#define BINDINGPROPERTIES_H
+#pragma once
 
 #include "Item.h"
 #include <QWidget>
@@ -43,4 +42,3 @@ private:
     bool mSuspendSetValues{ };
 };
 
-#endif // BINDINGPROPERTIES_H

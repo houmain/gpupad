@@ -1,5 +1,4 @@
-#ifndef IEDITOR_H
-#define IEDITOR_H
+#pragma once
 
 #include "EditActions.h"
 #include <QList>
@@ -19,4 +18,3 @@ public:
     virtual int tabifyGroup() const = 0;
 };
 
-#endif // IEDITOR_H

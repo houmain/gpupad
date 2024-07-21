@@ -1,5 +1,4 @@
-#ifndef BINARYEDITOR_H
-#define BINARYEDITOR_H
+#pragma once
 
 #include "editors/IEditor.h"
 #include <QTableView>
@@ -90,4 +89,3 @@ private:
     int mPrevFirstRow{ };
 };
 
-#endif // BINARYEDITOR_H

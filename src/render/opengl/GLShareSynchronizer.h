@@ -1,5 +1,4 @@
-#ifndef GLSHARESYNCHRONIZER_H
-#define GLSHARESYNCHRONIZER_H
+#pragma once
 
 #include "GLContext.h"
 #include <QMutex>
@@ -52,4 +51,3 @@ private:
     QList<GLsync> mUsageFenceSyncs;
 };
 
-#endif // GLSHARESYNCHRONIZER_H

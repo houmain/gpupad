@@ -1,5 +1,4 @@
-#ifndef GLCONTEXT_H
-#define GLCONTEXT_H
+#pragma once
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
@@ -54,4 +53,3 @@ public:
     }
 };
 
-#endif // GLCONTEXT_H

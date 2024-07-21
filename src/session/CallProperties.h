@@ -1,5 +1,4 @@
-#ifndef CALLPROPERTIES_H
-#define CALLPROPERTIES_H
+#pragma once
 
 #include "Item.h"
 #include <QWidget>
@@ -32,4 +31,3 @@ private:
     Ui::CallProperties *mUi;
 };
 
-#endif // CALLPROPERTIES_H

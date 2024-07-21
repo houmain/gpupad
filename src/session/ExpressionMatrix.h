@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONMATRIX_H
-#define EXPRESSIONMATRIX_H
+#pragma once
 
 #include <QTableWidget>
 
@@ -22,4 +21,3 @@ private:
     void updateCells();
 };
 
-#endif // EXPRESSIONMATRIX_H

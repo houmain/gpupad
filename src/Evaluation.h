@@ -1,5 +1,4 @@
-#ifndef EVALUATION_H
-#define EVALUATION_H
+#pragma once
 
 enum class EvaluationMode
 {
@@ -16,4 +15,3 @@ enum class EvaluationType
     Reset,
 };
 
-#endif // EVALUATION_H

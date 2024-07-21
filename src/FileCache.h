@@ -1,5 +1,4 @@
-#ifndef FILECACHE_H
-#define FILECACHE_H
+#pragma once
 
 #include <QObject>
 #include <QMap>
@@ -66,4 +65,3 @@ private:
     QThread mBackgroundLoaderThread;
 };
 
-#endif // FILECACHE_H

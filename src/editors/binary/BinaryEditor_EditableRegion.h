@@ -1,5 +1,4 @@
-#ifndef BINARYEDITOR_EDITABLEREGION_H
-#define BINARYEDITOR_EDITABLEREGION_H
+#pragma once
 
 #include "BinaryEditor_SpinBoxDelegate.h"
 #include <QTableView>
@@ -256,4 +255,3 @@ private:
     QWidget *mEditableRegion{ };
 };
 
-#endif // BINARYEDITOR_EDITABLEREGION_H

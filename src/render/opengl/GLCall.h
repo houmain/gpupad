@@ -1,5 +1,4 @@
-#ifndef GLCALL_H
-#define GLCALL_H
+#pragma once
 
 #include "GLItem.h"
 #include "scripting/ScriptEngine.h"
@@ -66,4 +65,3 @@ private:
     std::shared_ptr<QOpenGLTimerQuery> mTimerQuery;
 };
 
-#endif // GLCALL_H

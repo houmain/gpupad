@@ -1,5 +1,4 @@
-#ifndef COLORPICKER_H
-#define COLORPICKER_H
+#pragma once
 
 #include <QToolButton>
 
@@ -21,4 +20,3 @@ private:
     QColor mColor{ Qt::white };
 };
 
-#endif // COLORPICKER_H

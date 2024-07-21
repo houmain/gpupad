@@ -1,5 +1,4 @@
-#ifndef TEXTUREPROPERTIES_H
-#define TEXTUREPROPERTIES_H
+#pragma once
 
 #include "Item.h"
 #include <QWidget>
@@ -41,4 +40,3 @@ private:
     bool mSuspendUpdateFormat{ };
 };
 
-#endif // TEXTUREPROPERTIES_H

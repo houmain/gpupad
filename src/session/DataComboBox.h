@@ -1,5 +1,4 @@
-#ifndef DATACOMBOBOX_H
-#define DATACOMBOBOX_H
+#pragma once
 
 #include <QComboBox>
 
@@ -18,4 +17,3 @@ Q_SIGNALS:
     void currentDataChanged(QVariant data);
 };
 
-#endif // DATACOMBOBOX_H

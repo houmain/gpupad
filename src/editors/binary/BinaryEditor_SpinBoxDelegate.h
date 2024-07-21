@@ -1,5 +1,4 @@
-#ifndef BINARYEDITOR_SPINBOXDELEGATE_H
-#define BINARYEDITOR_SPINBOXDELEGATE_H
+#pragma once
 
 #include "BinaryEditor.h"
 #include "session/ExpressionLineEdit.h"
@@ -103,4 +102,3 @@ public:
     }
 };
 
-#endif // BINARYEDITOR_SPINBOXDELEGATE_H

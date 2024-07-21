@@ -1,5 +1,4 @@
-#ifndef MESSAGEWINDOW_H
-#define MESSAGEWINDOW_H
+#pragma once
 
 #include "MessageList.h"
 #include <QTableWidget>
@@ -34,4 +33,3 @@ private:
     QList<MessageId> mMessageIds;
 };
 
-#endif // MESSAGEWINDOW_H

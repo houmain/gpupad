@@ -1,5 +1,4 @@
-#ifndef TEXTUREEDITOR_H
-#define TEXTUREEDITOR_H
+#pragma once
 
 #include "editors/IEditor.h"
 #include "TextureData.h"
@@ -96,4 +95,3 @@ private:
     TextureBackground *mTextureBackground{ };
 };
 
-#endif // TEXTUREEDITOR_H

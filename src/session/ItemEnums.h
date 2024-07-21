@@ -1,5 +1,4 @@
-#ifndef ITEMENUMS_H
-#define ITEMENUMS_H
+#pragma once
 
 #include <QObject>
 #include <QOpenGLTexture>
@@ -281,4 +280,3 @@ namespace ItemEnums2 {
     Q_ENUM_NS(StencilOperation)
 }
 
-#endif // ITEMENUMS_H

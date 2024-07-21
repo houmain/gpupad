@@ -1,5 +1,4 @@
-#ifndef RENDERTASK_H
-#define RENDERTASK_H
+#pragma once
 
 #include <QObject>
 #include <QSet>
@@ -61,4 +60,3 @@ private:
     std::optional<EvaluationType> mPendingEvaluation;
 };
 
-#endif // RENDERTASK_H

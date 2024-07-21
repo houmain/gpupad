@@ -1,5 +1,4 @@
-#ifndef BINARYEDITOR_DATAMODEL_H
-#define BINARYEDITOR_DATAMODEL_H
+#pragma once
 
 #include "BinaryEditor.h"
 #include <QAbstractTableModel>
@@ -253,4 +252,3 @@ private:
     int mColumnCount{ };
 };
 
-#endif // BINARYEDITOR_DATAMODEL_H

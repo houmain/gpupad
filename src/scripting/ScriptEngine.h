@@ -1,5 +1,4 @@
-#ifndef SCRIPTENGINE_H
-#define SCRIPTENGINE_H
+#pragma once
 
 #include "MessageList.h"
 #include <QObject>
@@ -31,4 +30,3 @@ protected:
     explicit ScriptEngine(QObject *parent = nullptr);
 };
 
-#endif // SCRIPTENGINE_H

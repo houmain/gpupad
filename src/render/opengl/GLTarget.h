@@ -1,5 +1,4 @@
-#ifndef GLTARGET_H
-#define GLTARGET_H
+#pragma once
 
 #include "GLTexture.h"
 
@@ -39,4 +38,3 @@ private:
     GLObject mFramebufferObject;
 };
 
-#endif // GLTARGET_H

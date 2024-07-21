@@ -1,5 +1,4 @@
-#ifndef GL_STREAM_H
-#define GL_STREAM_H
+#pragma once
 
 #include "GLProgram.h"
 #include "GLBuffer.h"
@@ -37,4 +36,3 @@ private:
     QMap<int, GLAttribute> mAttributes;
 };
 
-#endif // GL_STREAM_H

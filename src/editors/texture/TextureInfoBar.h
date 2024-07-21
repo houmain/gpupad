@@ -1,5 +1,4 @@
-#ifndef TEXTUREINFOBAR_H
-#define TEXTUREINFOBAR_H
+#pragma once
 
 #include <QWidget>
 #include "Range.h"
@@ -54,4 +53,3 @@ private:
     unsigned int mColorMask{ };
 };
 
-#endif // TEXTUREINFOBAR_H

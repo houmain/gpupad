@@ -1,5 +1,4 @@
-#ifndef OUTPUTWINDOW_H
-#define OUTPUTWINDOW_H
+#pragma once
 
 #include <QFrame>
 
@@ -30,4 +29,3 @@ private:
     int mLastScrollPosVertical{ };
 };
 
-#endif // OUTPUTWINDOW_H

@@ -1,5 +1,4 @@
-#ifndef ATTACHMENTPROPERTIES_H
-#define ATTACHMENTPROPERTIES_H
+#pragma once
 
 #include "Item.h"
 #include <QWidget>
@@ -32,4 +31,3 @@ private:
     Ui::AttachmentProperties *mUi;
 };
 
-#endif // ATTACHMENTPROPERTIES_H

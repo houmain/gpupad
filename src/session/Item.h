@@ -1,5 +1,4 @@
-#ifndef ITEM_H
-#define ITEM_H
+#pragma once
 
 #include "ItemEnums.h"
 #include "Evaluation.h"
@@ -300,4 +299,3 @@ const T* castItem(const Item *item)
     return (item ? castItem<T>(*item) : nullptr);
 }
 
-#endif // ITEM_H

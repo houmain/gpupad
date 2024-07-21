@@ -1,5 +1,4 @@
-#ifndef GLTEXTURE_H
-#define GLTEXTURE_H
+#pragma once
 
 #include "GLItem.h"
 #include "render/TextureBase.h"
@@ -39,4 +38,3 @@ private:
     GLObject mTextureObject;
 };
 
-#endif // GLTEXTURE_H

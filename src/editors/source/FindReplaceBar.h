@@ -1,5 +1,4 @@
-#ifndef FINDREPLACEBAR_H
-#define FINDREPLACEBAR_H
+#pragma once
 
 #include <QWidget>
 #include <QTextDocument>
@@ -50,4 +49,3 @@ private:
     bool mReplacing{ };
 };
 
-#endif // FINDREPLACEBAR_H

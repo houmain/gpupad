@@ -1,5 +1,4 @@
-#ifndef BINARYEDITORTOOLBAR_H
-#define BINARYEDITORTOOLBAR_H
+#pragma once
 
 #include <QWidget>
 #include "BinaryEditor.h"
@@ -24,4 +23,3 @@ private:
 };
 
 
-#endif // BINARYEDITORTOOLBAR_H

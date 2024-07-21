@@ -1,5 +1,4 @@
-#ifndef FILEDIALOG_H
-#define FILEDIALOG_H
+#pragma once
 
 #include <QMessageBox>
 #include <QDir>
@@ -73,4 +72,3 @@ QDir getUserDirectory(const QString &dirName);
 QFileInfoList enumerateApplicationPaths(const QString &dirName,
     QDir::Filters filters);
 
-#endif // FILEDIALOG_H

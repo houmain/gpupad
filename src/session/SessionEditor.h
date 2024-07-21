@@ -1,5 +1,4 @@
-#ifndef SESSIONEDITOR_H
-#define SESSIONEDITOR_H
+#pragma once
 
 #include "Item.h"
 #include <QTreeView>
@@ -76,4 +75,3 @@ private:
     QAction *mAddScriptAction{ };
 };
 
-#endif // SESSIONEDITOR_H

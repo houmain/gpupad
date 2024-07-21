@@ -1,5 +1,4 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include "EditActions.h"
 #include "session/Item.h"
@@ -115,4 +114,3 @@ private:
     bool mIgnoreNextAlt{ };
 };
 
-#endif // MAINWINDOW_H

@@ -1,5 +1,4 @@
-#ifndef REFERENCECOMBOBOX_H
-#define REFERENCECOMBOBOX_H
+#pragma once
 
 #include <QComboBox>
 
@@ -32,4 +31,3 @@ private:
     bool mSuspendDataChangedSignal{ };
 };
 
-#endif // REFERENCECOMBOBOX_H

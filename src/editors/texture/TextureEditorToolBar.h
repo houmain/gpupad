@@ -1,5 +1,4 @@
-#ifndef TEXTUREEDITORTOOLBAR_H
-#define TEXTUREEDITORTOOLBAR_H
+#pragma once
 
 #include <QWidget>
 
@@ -44,4 +43,3 @@ private:
     Ui::TextureEditorToolBar *mUi;
 };
 
-#endif // TEXTUREEDITORTOOLBAR_H

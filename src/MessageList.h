@@ -1,5 +1,4 @@
-#ifndef MESSAGELIST_H
-#define MESSAGELIST_H
+#pragma once
 
 #include <QSharedPointer>
 #include <QString>
@@ -78,4 +77,3 @@ namespace MessageList
 
 QString formatDuration(const std::chrono::duration<double> &duration);
 
-#endif // MESSAGELIST_H

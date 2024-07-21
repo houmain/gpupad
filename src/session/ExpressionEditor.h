@@ -1,5 +1,4 @@
-#ifndef EXPRESSIONEDITOR_H
-#define EXPRESSIONEDITOR_H
+#pragma once
 
 #include <QPlainTextEdit>
 
@@ -25,4 +24,3 @@ private:
     int mWheelDeltaRemainder{ };
 };
 
-#endif // EXPRESSIONEDITOR_H

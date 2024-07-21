@@ -1,5 +1,4 @@
-#ifndef SCRIPTSESSION_H
-#define SCRIPTSESSION_H
+#pragma once
 
 #include <QObject>
 #include "SourceType.h"
@@ -43,4 +42,3 @@ private:
     KeyboardScriptObject *mKeyboardScriptObject{ };
 };
 
-#endif // SCRIPTSESSION_H

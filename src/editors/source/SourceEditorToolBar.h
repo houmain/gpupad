@@ -1,5 +1,4 @@
-#ifndef SOURCEEDITORTOOLBAR_H
-#define SOURCEEDITORTOOLBAR_H
+#pragma once
 
 #include <QWidget>
 #include "SourceType.h"
@@ -33,4 +32,3 @@ private:
 };
 
 
-#endif // SOURCEEDITORTOOLBAR_H

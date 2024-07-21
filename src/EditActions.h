@@ -1,5 +1,4 @@
-#ifndef EDITACTIONS_H
-#define EDITACTIONS_H
+#pragma once
 
 class QAction;
 
@@ -17,4 +16,3 @@ struct EditActions
     QAction *findReplace;
 };
 
-#endif // EDITACTIONS_H

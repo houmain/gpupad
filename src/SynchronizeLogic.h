@@ -1,5 +1,4 @@
-#ifndef SYNCHRONIZELOGIC_H
-#define SYNCHRONIZELOGIC_H
+#pragma once
 
 #include "session/Item.h"
 #include "SourceType.h"
@@ -93,4 +92,3 @@ private:
     QString mSessionShaderIncludePaths;
 };
 
-#endif // SYNCHRONIZELOGIC_H

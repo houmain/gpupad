@@ -1,5 +1,4 @@
-#ifndef SOURCEEDITOR_H
-#define SOURCEEDITOR_H
+#pragma once
 
 #include "editors/IEditor.h"
 #include "FindReplaceBar.h"
@@ -129,4 +128,3 @@ private:
     LineWrapMode mSetLineWrapMode{ };
 };
 
-#endif // SOURCEEDITOR_H

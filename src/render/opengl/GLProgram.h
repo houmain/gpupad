@@ -1,5 +1,4 @@
-#ifndef GLPROGRAM_H
-#define GLPROGRAM_H
+#pragma once
 
 #include "GLShader.h"
 #include "scripting/ScriptEngine.h"
@@ -118,4 +117,3 @@ private:
     MessagePtrSet mPrintfMessages;
 };
 
-#endif // GLPROGRAM_H

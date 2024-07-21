@@ -1,5 +1,4 @@
-#ifndef AUTOORIENTATIONSPLITTER_H
-#define AUTOORIENTATIONSPLITTER_H
+#pragma once
 
 #include <QSplitter>
 
@@ -26,4 +25,3 @@ public:
     }
 };
 
-#endif // AUTOORIENTATIONSPLITTER_H

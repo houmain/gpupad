@@ -1,5 +1,4 @@
-#ifndef GLOBJECT_H
-#define GLOBJECT_H
+#pragma once
 
 #include <utility>
 
@@ -50,4 +49,3 @@ private:
     Free mFree{ };
 };
 
-#endif // GLOBJECT_H

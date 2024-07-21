@@ -1,5 +1,4 @@
-#ifndef TEXTUREITEM_H
-#define TEXTUREITEM_H
+#pragma once
 
 #include "TextureData.h"
 #include "Range.h"
@@ -92,4 +91,3 @@ private:
     unsigned int mColorMask{ };
 };
 
-#endif // TEXTUREITEM_H

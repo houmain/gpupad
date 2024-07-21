@@ -1,5 +1,4 @@
-#ifndef EDITORMANAGER_H
-#define EDITORMANAGER_H
+#pragma once
 
 #include "EditActions.h"
 #include "SourceType.h"
@@ -127,4 +126,3 @@ private:
 
 void updateDockCurrentProperty(QDockWidget *dock, bool current);
 
-#endif // EDITORMANAGER_H

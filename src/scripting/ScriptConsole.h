@@ -1,5 +1,4 @@
-#ifndef SCRIPTCONSOLE_H
-#define SCRIPTCONSOLE_H
+#pragma once
 
 #include <QObject>
 #include "MessageList.h"
@@ -22,4 +21,3 @@ private:
     MessagePtrSet *mMessages{ };
 };
 
-#endif // SCRIPTCONSOLE_H

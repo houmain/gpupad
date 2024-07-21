@@ -1,5 +1,4 @@
-#ifndef SESSIONMODEL_H
-#define SESSIONMODEL_H
+#pragma once
 
 #include "SessionModelCore.h"
 #include <QSet>
@@ -122,4 +121,3 @@ private:
     mutable QJsonArray mDraggedJson;
 };
 
-#endif // SESSIONMODEL_H

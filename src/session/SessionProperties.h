@@ -1,5 +1,4 @@
-#ifndef SESSIONPROPERTIES_H
-#define SESSIONPROPERTIES_H
+#pragma once
 
 #include "Item.h"
 #include "FileDialog.h"
@@ -110,4 +109,3 @@ void fillComboBox(QComboBox *c, std::initializer_list<std::pair<const char*, T>>
             c->addItem(kv.first, kv.second);
 }
 
-#endif // SESSIONPROPERTIES_H

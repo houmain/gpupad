@@ -1,5 +1,4 @@
-#ifndef SINGLETONS_H
-#define SINGLETONS_H
+#pragma once
 
 #include <memory>
 
@@ -60,4 +59,3 @@ private:
     std::unique_ptr<EvaluatedPropertyCache> mEvaluatedPropertyCache;
 };
 
-#endif // SINGLETONS_H

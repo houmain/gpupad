@@ -1,5 +1,4 @@
-#ifndef GLSHADER_H
-#define GLSHADER_H
+#pragma once
 
 #include "GLPrintf.h"
 #include "render/ShaderBase.h"
@@ -22,4 +21,3 @@ private:
     GLObject mShaderObject;
 };
 
-#endif // GLSHADER_H

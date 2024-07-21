@@ -1,5 +1,4 @@
-#ifndef GLITEM_H
-#define GLITEM_H
+#pragma once
 
 #include "GLContext.h"
 #include "GLObject.h"
@@ -47,4 +46,3 @@ inline auto check(QOpenGLFunctions_4_5_Core *gl,
     return checkVersion(gl, "4.5", itemId, messages);
 }
 
-#endif // GLITEM_H

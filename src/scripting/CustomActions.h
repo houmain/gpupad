@@ -1,5 +1,4 @@
-#ifndef CustomACTIONS_H
-#define CustomACTIONS_H
+#pragma once
 
 #include "MessageList.h"
 #include <memory>
@@ -40,4 +39,3 @@ private:
     QJsonValue mSelection;
 };
 
-#endif // CustomACTIONS_H

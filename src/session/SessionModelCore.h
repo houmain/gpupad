@@ -1,5 +1,4 @@
-#ifndef SESSIONMODELCORE_H
-#define SESSIONMODELCORE_H
+#pragma once
 
 #include "Item.h"
 #include <QAbstractItemModel>
@@ -199,4 +198,3 @@ private:
     QMap<ItemId, const Item*> mItemsById;
 };
 
-#endif // SESSIONMODELCORE_H

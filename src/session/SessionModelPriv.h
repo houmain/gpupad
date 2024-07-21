@@ -1,5 +1,4 @@
-#ifndef SESSIONMODELPRIV_H
-#define SESSIONMODELPRIV_H
+#pragma once
 
 #include "Item.h"
 #include <QMetaEnum>
@@ -219,4 +218,3 @@ inline QJsonValue toJsonValue(const QColor &v)
     return v.name(QColor::HexArgb);
 }
 
-#endif // SESSIONMODELPRIV_H

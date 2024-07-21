@@ -1,5 +1,4 @@
-#ifndef BINARYEDITOR_HEXMODEL_H
-#define BINARYEDITOR_HEXMODEL_H
+#pragma once
 
 #include "BinaryEditor.h"
 #include <QAbstractTableModel>
@@ -105,4 +104,3 @@ private:
     int mRowCount{ };
 };
 
-#endif // BINARYEDITOR_HEXMODEL_H

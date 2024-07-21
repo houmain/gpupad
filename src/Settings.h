@@ -1,5 +1,4 @@
-#ifndef SETTINGS_H
-#define SETTINGS_H
+#pragma once
 
 #include <QSettings>
 #include <QFont>
@@ -66,4 +65,3 @@ private:
     QString mRenderer;
 };
 
-#endif // SETTINGS_H

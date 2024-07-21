@@ -1,5 +1,4 @@
-#ifndef GLBUFFER_H
-#define GLBUFFER_H
+#pragma once
 
 #include "GLItem.h"
 #include "scripting/ScriptEngine.h"
@@ -42,4 +41,3 @@ private:
     bool mDeviceCopyModified{ };
 };
 
-#endif // GLBUFFER_H

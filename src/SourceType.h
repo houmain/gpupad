@@ -1,5 +1,4 @@
-#ifndef SOURCETYPE_H
-#define SOURCETYPE_H
+#pragma once
 
 #include <QString>
 
@@ -30,4 +29,3 @@ Shader::ShaderType getShaderType(SourceType sourceType);
 Shader::Language getShaderLanguage(SourceType sourceType);
 #endif
 
-#endif // SOURCETYPE_H
