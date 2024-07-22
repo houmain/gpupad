@@ -178,6 +178,9 @@ void SessionEditor::mouseReleaseEvent(QMouseEvent *event)
         currentIndex().isValid())
         selectionModel()->select(
             currentIndex(), QItemSelectionModel::Select);
+
+    // ensure selected item is still visible
+    scrollTo(currentIndex());
 }
 
 void SessionEditor::wheelEvent(QWheelEvent *event)

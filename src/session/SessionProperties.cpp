@@ -283,7 +283,13 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
         setVisible(false);
         return;
     }
-    setVisible(true);
+
+    // show when item has properties
+    switch (mModel.getItemType(index)) {
+    case Item::Type::Program:
+    case Item::Type::Stream:  break;
+    default:                  setVisible(true);
+    }
 
     const auto map = [&](QWidget *control, SessionModel::ColumnType column) {
         mMapper->addMapping(control, column);
