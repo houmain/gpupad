@@ -7,12 +7,13 @@
 #include <QSurfaceFormat>
 
 #if defined(_WIN32)
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+
 // use dedicated GPUs by default
 // http://developer.download.nvidia.com/devzone/devcenter/gamegraphics/files/OptimusRenderingPolicies.pdf
 extern "C" {
 __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-}
-extern "C" {
 __declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
 }
 
