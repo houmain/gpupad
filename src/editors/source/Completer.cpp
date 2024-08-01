@@ -5,20 +5,12 @@
 namespace {
     QStringList toList(const QSet<QString> &set)
     {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
         return { set.begin(), set.end() };
-#else
-        return set.toList();
-#endif
     }
 
     QSet<QString> toSet(const QStringList &list)
     {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
         return { list.begin(), list.end() };
-#else
-        return list.toSet();
-#endif
     }
 } // namespace
 

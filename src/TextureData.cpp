@@ -99,9 +99,7 @@ namespace {
         case QImage::Format_RGBX64:
         case QImage::Format_RGBA64:
         case QImage::Format_RGBA64_Premultiplied:  return QImage::Format_RGBA64;
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 13, 0))
         case QImage::Format_Grayscale16: return QImage::Format_Grayscale16;
-#endif
 #if (QT_VERSION >= QT_VERSION_CHECK(6, 2, 0))
         case QImage::Format_RGBX16FPx4:
         case QImage::Format_RGBA16FPx4:
@@ -124,9 +122,7 @@ namespace {
         case QImage::Format_RGBA8888:   return QOpenGLTexture::RGBA8_UNorm;
         case QImage::Format_RGBA64:     return QOpenGLTexture::RGBA16_UNorm;
         case QImage::Format_Grayscale8: return QOpenGLTexture::R8_UNorm;
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 13, 0))
         case QImage::Format_Grayscale16: return QOpenGLTexture::R16_UNorm;
-#endif
 #if (QT_VERSION >= QT_VERSION_CHECK(6, 2, 0))
         case QImage::Format_RGBA16FPx4: return QOpenGLTexture::RGBA16F;
         case QImage::Format_RGBA32FPx4: return QOpenGLTexture::RGBA32F;
@@ -724,10 +720,7 @@ bool TextureData::loadQImage(const QString &fileName, bool flipVertically)
 {
     auto imageReader = QImageReader(fileName);
     imageReader.setAutoTransform(true);
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     imageReader.setAllocationLimit(0);
-#endif
 
     auto image = QImage();
     if (!imageReader.read(&image))

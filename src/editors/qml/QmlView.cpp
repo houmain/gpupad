@@ -187,11 +187,7 @@ void QmlView::reset()
         mNetworkAccessManagerFactory.data());
 
     static UrlInterceptor sUrlInterceptor;
-#  if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    mQuickWidget->engine()->setUrlInterceptor(&sUrlInterceptor);
-#  else
     mQuickWidget->engine()->addUrlInterceptor(&sUrlInterceptor);
-#  endif
     mQuickWidget->engine()->addImportPath(QFileInfo(mFileName).dir().path());
 
     Singletons::fileCache().updateFromEditors();

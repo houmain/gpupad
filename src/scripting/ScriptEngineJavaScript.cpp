@@ -13,7 +13,6 @@ ScriptEngineJavaScript::ScriptEngineJavaScript(QObject *parent)
     , mJsEngine(new QJSEngine(this))
     , mConsole(new ScriptConsole(this))
 {
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     mInterruptThread = new QThread();
     mInterruptTimer = new QTimer();
     mInterruptTimer->setInterval(250);
@@ -22,7 +21,6 @@ ScriptEngineJavaScript::ScriptEngineJavaScript(QObject *parent)
         [jsEngine = mJsEngine]() { jsEngine->setInterrupted(true); });
     mInterruptTimer->moveToThread(mInterruptThread);
     mInterruptThread->start();
-#endif
 
     mJsEngine->globalObject().setProperty("console",
         mJsEngine->newQObject(mConsole));
@@ -34,31 +32,25 @@ ScriptEngineJavaScript::ScriptEngineJavaScript(QObject *parent)
 
 ScriptEngineJavaScript::~ScriptEngineJavaScript()
 {
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     QMetaObject::invokeMethod(mInterruptTimer, "stop",
         Qt::BlockingQueuedConnection);
     connect(mInterruptThread, &QThread::finished, mInterruptThread,
         &QObject::deleteLater);
     mInterruptThread->requestInterruption();
-#endif
 }
 
 void ScriptEngineJavaScript::setTimeout(int msec)
 {
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     mInterruptTimer->setInterval(msec);
-#endif
 }
 
 QJSValue ScriptEngineJavaScript::evaluate(const QString &program,
     const QString &fileName, int lineNumber)
 {
     Q_ASSERT(&mOnThread == QThread::currentThread());
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     QMetaObject::invokeMethod(mInterruptTimer, "start",
         Qt::BlockingQueuedConnection);
     mJsEngine->setInterrupted(false);
-#endif
     return mJsEngine->evaluate(program, fileName, lineNumber);
 }
 

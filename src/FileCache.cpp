@@ -14,20 +14,12 @@ namespace {
 
     void setUtf8Encoding(QTextStream &stream)
     {
-#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
-        stream.setCodec("UTF-8");
-#else
         stream.setEncoding(QStringConverter::Utf8);
-#endif
     }
 
     void setSystemEncoding(QTextStream &stream)
     {
-#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
-        stream.setCodec("Windows-1250");
-#else
         stream.setEncoding(QStringConverter::System);
-#endif
     }
 
     qsizetype countUnprintable(const QString &string)

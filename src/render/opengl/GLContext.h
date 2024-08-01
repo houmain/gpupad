@@ -7,10 +7,7 @@
 #include <QOpenGLFunctions_4_2_Core>
 #include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLFunctions_4_5_Core>
-
-#if (QT_VERSION > QT_VERSION_CHECK(6, 0, 0))
-#  include <QOpenGLVersionFunctionsFactory>
-#endif
+#include <QOpenGLVersionFunctionsFactory>
 
 class GLContext final : public QOpenGLContext, public QOpenGLFunctions_3_3_Core
 {
@@ -33,17 +30,10 @@ public:
         if (!QOpenGLFunctions_3_3_Core::initializeOpenGLFunctions())
             return false;
 
-#if (QT_VERSION > QT_VERSION_CHECK(6, 0, 0))
         v4_0 = QOpenGLVersionFunctionsFactory::get<QOpenGLFunctions_4_0_Core>();
         v4_2 = QOpenGLVersionFunctionsFactory::get<QOpenGLFunctions_4_2_Core>();
         v4_3 = QOpenGLVersionFunctionsFactory::get<QOpenGLFunctions_4_3_Core>();
         v4_5 = QOpenGLVersionFunctionsFactory::get<QOpenGLFunctions_4_5_Core>();
-#else
-        v4_0 = versionFunctions<QOpenGLFunctions_4_0_Core>();
-        v4_2 = versionFunctions<QOpenGLFunctions_4_2_Core>();
-        v4_3 = versionFunctions<QOpenGLFunctions_4_3_Core>();
-        v4_5 = versionFunctions<QOpenGLFunctions_4_5_Core>();
-#endif
         return true;
     }
 
