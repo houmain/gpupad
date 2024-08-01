@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(Qt6Multimedia_FOUND)
+#if defined(QtMultimedia_FOUND)
 
 #  include <QMediaPlayer>
 #  include <QVideoSink>
@@ -33,7 +33,7 @@ private:
     bool mFlipVertically{};
 };
 
-#else // !Qt6Multimedia_FOUND
+#else // !QtMultimedia_FOUND
 
 #  include <QObject>
 
@@ -61,4 +61,4 @@ private:
     QString mFileName;
 };
 
-#endif // !Qt6Multimedia_FOUND
+#endif // !QtMultimedia_FOUND

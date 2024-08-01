@@ -228,26 +228,21 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::OpenGL
     Qt6::Qml)
 
+find_package(Qt6Multimedia CONFIG)
 option(ENABLE_MULTIMEDIA "Enable QtMultimedia" ON)
-if(ENABLE_MULTIMEDIA)
-    find_package(Qt6Multimedia CONFIG)
-    if(Qt6Multimedia_FOUND)
-        target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Multimedia)
-        add_compile_definitions(Qt6Multimedia_FOUND)
-    endif()
+if(ENABLE_MULTIMEDIA AND Qt6Multimedia_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Multimedia)
+    add_compile_definitions(QtMultimedia_FOUND)
 endif()
 
+find_package(Qt6Quick CONFIG)
+find_package(Qt6QuickWidgets CONFIG)
 option(ENABLE_QUICK "Enable QtQuick" ON)
-if(ENABLE_QUICK)
-    find_package(Qt6Quick CONFIG)
-    find_package(Qt6QuickWidgets CONFIG)
-    if(Qt6Quick_FOUND AND
-       Qt6QuickWidgets_FOUND)
-        target_link_libraries(${PROJECT_NAME} PRIVATE
-            Qt6::Quick
-            Qt6::QuickWidgets)
-        add_compile_definitions(QtQuick_FOUND)
-    endif()
+if(ENABLE_QUICK AND Qt6Quick_FOUND AND Qt6QuickWidgets_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        Qt6::Quick
+        Qt6::QuickWidgets)
+    add_compile_definitions(QtQuick_FOUND)
 
     find_package(Qt6QuickShapes CONFIG)
     if(Qt6QuickShapes_FOUND)
@@ -263,11 +258,11 @@ if(ENABLE_QUICK)
 endif()
 
 # link OpenImageIO
+find_package(OpenImageIO CONFIG)
 option(ENABLE_OPENIMEAGEIO "Enable OpenImageIO" ON)
-if (ENABLE_OPENIMEAGEIO)
-    find_package(OpenImageIO CONFIG REQUIRED)
+if (ENABLE_OPENIMEAGEIO AND OpenImageIO_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenImageIO::OpenImageIO)
-    add_compile_definitions(OPENIMAGEIO_ENABLED)
+    add_compile_definitions(OpenImageIO_FOUND)
 endif()
 
 # link glslang

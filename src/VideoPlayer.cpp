@@ -1,4 +1,4 @@
-#if defined(Qt6Multimedia_FOUND)
+#if defined(QtMultimedia_FOUND)
 
 #  include "VideoPlayer.h"
 #  include "FileCache.h"
@@ -66,4 +66,4 @@ void VideoPlayer::rewind()
         mPlayer->setPosition(0);
 }
 
-#endif // Qt6Multimedia_FOUND
+#endif // QtMultimedia_FOUND

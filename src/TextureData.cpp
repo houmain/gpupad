@@ -8,7 +8,7 @@
 #include <cstring>
 #include <limits>
 
-#if defined(OPENIMAGEIO_ENABLED)
+#if defined(OpenImageIO_FOUND)
 #  if defined(_MSC_VER)
 #    pragma warning(disable : 4267)
 #  endif
@@ -658,6 +658,9 @@ bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
 
 bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
 {
+#if !defined(OpenImageIO_FOUND)
+    return false;
+#else // OpenImageIO_FOUND
     using namespace OIIO;
     auto input = ImageInput::open(fileName.toStdWString());
     if (!input)
@@ -714,6 +717,7 @@ bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
         return false;
 
     return true;
+#endif // OpenImageIO_FOUND
 }
 
 bool TextureData::loadQImage(const QString &fileName, bool flipVertically)
@@ -837,6 +841,9 @@ bool TextureData::savePfm(const QString &fileName, bool flipVertically) const
 bool TextureData::saveOpenImageIO(const QString &fileName,
     bool flipVertically) const
 {
+#if !defined(OpenImageIO_FOUND)
+    return false;
+#else // OpenImageIO_FOUND
     using namespace OIIO;
 
     const auto typeDesc = [&]() {
@@ -867,6 +874,7 @@ bool TextureData::saveOpenImageIO(const QString &fileName,
     if (!output->write_image(typeDesc, getData(0, 0, 0)))
         return false;
     return true;
+#endif // OpenImageIO_FOUND
 }
 
 bool TextureData::saveQImage(const QString &fileName, bool flipVertically) const
