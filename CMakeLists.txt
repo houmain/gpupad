@@ -217,77 +217,66 @@ elseif(APPLE)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
 endif()
 
-
-# link Qt
-if(NOT DEFINED QT_VERSION_MAJOR)
-    find_package(QT NAMES Qt6 COMPONENTS Widgets)
-    if(NOT DEFINED QT_VERSION_MAJOR)
-        find_package(QT NAMES Qt5 COMPONENTS Widgets REQUIRED)
-    endif()
-    set(QT_VERSION_MAJOR ${QT_VERSION_MAJOR} CACHE STRING "Qt version" FORCE)
-endif()
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS OpenGL REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Qml REQUIRED)
+# link Qt6
+find_package(Qt6 COMPONENTS Widgets REQUIRED)
+find_package(Qt6 COMPONENTS OpenGLWidgets)
+find_package(Qt6 COMPONENTS OpenGL REQUIRED)
+find_package(Qt6 COMPONENTS Qml REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Qt${QT_VERSION_MAJOR}::OpenGL
-    Qt${QT_VERSION_MAJOR}::Qml)
-
-if(${QT_VERSION_MAJOR} EQUAL 6)
-    find_package(Qt${QT_VERSION_MAJOR} COMPONENTS OpenGLWidgets)
-    target_link_libraries(${PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::OpenGLWidgets)
-endif()
+    Qt6::Widgets
+    Qt6::OpenGLWidgets
+    Qt6::OpenGL
+    Qt6::Qml)
 
 option(ENABLE_MULTIMEDIA "Enable QtMultimedia" ON)
 if(ENABLE_MULTIMEDIA)
-    find_package(Qt${QT_VERSION_MAJOR}Multimedia CONFIG)
-    if(Qt${QT_VERSION_MAJOR}Multimedia_FOUND)
-        target_link_libraries(${PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::Multimedia)
-        add_compile_definitions(Qt${QT_VERSION_MAJOR}Multimedia_FOUND)
+    find_package(Qt6Multimedia CONFIG)
+    if(Qt6Multimedia_FOUND)
+        target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Multimedia)
+        add_compile_definitions(Qt6Multimedia_FOUND)
     endif()
 endif()
 
 option(ENABLE_QUICK "Enable QtQuick" ON)
 if(ENABLE_QUICK)
-    find_package(Qt${QT_VERSION_MAJOR}Quick CONFIG)
-    find_package(Qt${QT_VERSION_MAJOR}QuickWidgets CONFIG)
-    if(Qt${QT_VERSION_MAJOR}Quick_FOUND AND
-       Qt${QT_VERSION_MAJOR}QuickWidgets_FOUND)
+    find_package(Qt6Quick CONFIG)
+    find_package(Qt6QuickWidgets CONFIG)
+    if(Qt6Quick_FOUND AND
+       Qt6QuickWidgets_FOUND)
         target_link_libraries(${PROJECT_NAME} PRIVATE
-            Qt${QT_VERSION_MAJOR}::Quick
-            Qt${QT_VERSION_MAJOR}::QuickWidgets)
+            Qt6::Quick
+            Qt6::QuickWidgets)
         add_compile_definitions(QtQuick_FOUND)
     endif()
 
-    find_package(Qt${QT_VERSION_MAJOR}QuickShapes CONFIG)
-    if(Qt${QT_VERSION_MAJOR}QuickShapes_FOUND)
-        target_link_libraries(${PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::QuickShapes)
+    find_package(Qt6QuickShapes CONFIG)
+    if(Qt6QuickShapes_FOUND)
+        target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::QuickShapes)
         add_compile_definitions(QtQuickShapes_FOUND)
     endif()
 
-    find_package(Qt${QT_VERSION_MAJOR}QuickControls2 CONFIG)
-    if(Qt${QT_VERSION_MAJOR}QuickControls2_FOUND)
-        target_link_libraries(${PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::QuickControls2)
+    find_package(Qt6QuickControls2 CONFIG)
+    if(Qt6QuickControls2_FOUND)
+        target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::QuickControls2)
         add_compile_definitions(QtQuickControls2_FOUND)
     endif()
 endif()
 
-# include OpenImageIO
+# link OpenImageIO
 option(ENABLE_OPENIMEAGEIO "Enable OpenImageIO" ON)
-    if (ENABLE_OPENIMEAGEIO)
+if (ENABLE_OPENIMEAGEIO)
     find_package(OpenImageIO CONFIG REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenImageIO::OpenImageIO)
     add_compile_definitions(OPENIMAGEIO_ENABLED)
 endif()
 
-# include glslang
+# link glslang
 find_package(glslang CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE glslang::OSDependent glslang::glslang 
     glslang::MachineIndependent glslang::GenericCodeGen glslang::glslang-default-resource-limits 
     glslang::SPVRemapper glslang::SPIRV)
 
-# include SPIRV-Cross
+# link SPIRV-Cross
 find_package(spirv_cross_core CONFIG REQUIRED)
 find_package(spirv_cross_glsl CONFIG REQUIRED)
 find_package(spirv_cross_reflect CONFIG REQUIRED)
@@ -319,7 +308,7 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     find_program(WINDEPLOYQT windeployqt HINTS "${_qt_bin_dir}")
     install(CODE "set(WINDEPLOYQT \"${WINDEPLOYQT}\")" COMPONENT Application)
     install(CODE [===[
-    execute_process(COMMAND "${WINDEPLOYQT}" --release --no-qmltooling --no-opengl-sw --no-system-d3d-compiler --no-translations --no-virtualkeyboard --no-compiler-runtime "${CMAKE_INSTALL_PREFIX}")
+    execute_process(COMMAND "${WINDEPLOYQT}" --release --no-opengl-sw --no-system-d3d-compiler --no-translations --no-compiler-runtime "${CMAKE_INSTALL_PREFIX}")
     ]===] COMPONENT Application)
     
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
