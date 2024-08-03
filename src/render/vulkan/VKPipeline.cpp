@@ -40,15 +40,30 @@ namespace {
         return Field::DataType::Float;
     }
 
-    int getBufferMemberElementCount(const SpvReflectBlockVariable &variable)
+    int getBufferMemberColumnCount(const SpvReflectBlockVariable &variable)
     {
         const auto &type_desc = *variable.type_description;
         if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX)
-            return variable.numeric.matrix.row_count
-                * variable.numeric.matrix.column_count;
+            return variable.numeric.matrix.column_count;
         if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_VECTOR)
             return variable.numeric.vector.component_count;
         return 1;
+    }
+
+    int getBufferMemberRowCount(const SpvReflectBlockVariable &variable)
+    {
+        const auto &type_desc = *variable.type_description;
+        if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX)
+            return variable.numeric.matrix.row_count;
+        return 1;
+    }
+
+    int getBufferMemberColumnStride(const SpvReflectBlockVariable &variable)
+    {
+        const auto &type_desc = *variable.type_description;
+        if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX)
+            return variable.numeric.matrix.stride;
+        return 0;
     }
 
     int getBufferMemberArraySize(const SpvReflectBlockVariable &variable)
@@ -59,6 +74,43 @@ namespace {
             for (auto i = 0u; i < variable.array.dims_count; ++i)
                 count *= variable.array.dims[i];
         return static_cast<int>(count);
+    }
+
+    int getBufferMemberArrayStride(const SpvReflectBlockVariable &variable)
+    {
+        const auto &type_desc = *variable.type_description;
+        if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_ARRAY)
+            return variable.array.stride;
+        return 0;
+    }
+
+    int getBufferMemberElementCount(const SpvReflectBlockVariable &variable)
+    {
+        return getBufferMemberArraySize(variable)
+            * getBufferMemberColumnCount(variable)
+            * getBufferMemberRowCount(variable);
+    }
+
+    template <typename T>
+    void copyBufferMember(const SpvReflectBlockVariable &member,
+        std::byte *dest, const T *source)
+    {
+        const auto arraySize = getBufferMemberArraySize(member);
+        const auto columns = getBufferMemberColumnCount(member);
+        const auto rows = getBufferMemberRowCount(member);
+        const auto arrayStride = getBufferMemberArrayStride(member);
+        const auto columnStride = getBufferMemberColumnStride(member);
+        const auto sourceStride = rows * sizeof(T);
+        const auto destStride = (columnStride ? columnStride : sourceStride);
+        const auto arrayPadding =
+            (arrayStride ? arrayStride - (columns * destStride) : 0);
+
+        for (auto a = 0; a < arraySize; ++a, dest += arrayPadding)
+            for (auto c = 0; c < columns; ++c) {
+                std::memcpy(dest, source, sourceStride);
+                dest += destStride;
+                source += rows;
+            }
     }
 
     KDGpu::ResourceBindingType getResourceType(SpvReflectDescriptorType type)
@@ -337,16 +389,14 @@ void VKPipeline::updateDefaultUniformBlock(VKContext &context,
             const auto &binding = *it;
             const auto type = getBufferMemberDataType(member);
             const auto count = getBufferMemberElementCount(member);
-            const auto arraySize = getBufferMemberArraySize(member);
+            auto data = &bufferData[member.offset];
             switch (type) {
-#define ADD(DATATYPE, TYPE)                                                   \
-    case DATATYPE: {                                                          \
-        auto values = getValues<TYPE>(scriptEngine, binding.values,           \
-            binding.bindingItemId, count * arraySize, mMessages);             \
-        for (auto a = 0; a < arraySize; ++a)                                  \
-            std::memcpy(&bufferData[member.offset + member.array.stride * a], \
-                values.data() + count * a, count * sizeof(TYPE));             \
-        break;                                                                \
+#define ADD(DATATYPE, TYPE)                                               \
+    case DATATYPE: {                                                      \
+        const auto values = getValues<TYPE>(scriptEngine, binding.values, \
+            binding.bindingItemId, count, mMessages);                     \
+        copyBufferMember<TYPE>(member, data, values.data());              \
+        break;                                                            \
     }
                 ADD(Field::DataType::Int32, int32_t);
                 ADD(Field::DataType::Uint32, uint32_t);
