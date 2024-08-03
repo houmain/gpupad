@@ -303,7 +303,7 @@ void VKPipeline::updateDefaultUniformBlock(VKContext &context,
                 descriptor = &interface->descriptor_bindings[i];
                 break;
             }
-        if (!descriptor)
+        if (!descriptor || !descriptor->accessed)
             continue;
 
         auto &block =
@@ -415,6 +415,9 @@ bool VKPipeline::createLayout(VKContext &context)
     for (const auto &[stage, interface] : mProgram.interface())
         for (auto i = 0u; i < interface->descriptor_binding_count; ++i) {
             const auto &descriptor = interface->descriptor_bindings[i];
+            if (!descriptor.accessed)
+                continue;
+
             if (!createOrUpdateBindGroup(descriptor.set, descriptor.binding,
                     KDGpu::ResourceBindingLayout{
                         .binding = descriptor.binding,
@@ -453,6 +456,9 @@ bool VKPipeline::updateBindings(VKContext &context)
     for (const auto &[stage, interface] : mProgram.interface())
         for (auto i = 0u; i < interface->descriptor_binding_count; ++i) {
             const auto &desc = interface->descriptor_bindings[i];
+            if (!desc.accessed)
+                continue;
+
             switch (desc.descriptor_type) {
             case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
                 if (isDefaultUniformBlock(desc.type_description->type_name)) {
