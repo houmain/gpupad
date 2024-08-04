@@ -1,6 +1,6 @@
 
-GPUpad
-======
+# GPUpad
+
 <p>
 <a href="https://github.com/houmain/gpupad/actions/workflows/build.yml">
 <img alt="Build" src="https://github.com/houmain/gpupad/actions/workflows/build.yml/badge.svg"/></a>
@@ -10,39 +10,36 @@ GPUpad
 <a href="#features">Features</a> |
 <a href="#screenshots">Screenshots</a> |
 <a href="#introduction">Introduction</a> |
-<a href="#download">Download</a> |
+<a href="#installation">Installation</a> |
 <a href="#building">Building</a> |
 <a href="https://github.com/houmain/gpupad/blob/main/CHANGELOG.md">Changelog</a>
 </p>
 
-A lightweight editor for GLSL shaders of all kinds and a fully-featured IDE for developing GPU based algorithms.
+A lightweight editor for GLSL and HLSL shaders and a fully-featured IDE for developing GPU based algorithms.
 
-Features
---------
+## Features
 
-* Cross platform and efficient.
+* OpenGL and Vulkan renderer.
 * Decent source editor with automatic indentation, brace highlighting, rectangular selection&hellip;
-* GLSL, HLSL, JavaScript and Lua syntax highlighting with basic auto completion.
+* GLSL, HLSL and JavaScript syntax highlighting with basic auto completion.
+* Possibility to evaluate shader programs with completely customizeable input and render state.
 * Continuous validation of standalone shader and script files.
-* Possibility to evaluate shader programs with completely customizeable input and OpenGL state.
 * Automatically defined printf function for printf-debugging.
 * JavaScript expressions and scripts to define uniform input.
 * Dumping of preprocessed source, SPIR-V and glslang AST (only when [glslangValidator](https://github.com/KhronosGroup/glslang/releases/tag/main-tot) is found).
 * Reading and writing of image files ([KTX](https://github.com/KhronosGroup/KTX-Software) and DDS for 3D/Array textures, block compressed textures, cube maps&hellip;).
-* Streaming video files to textures (only when built with the optional dependency Qt6Multimedia).
+* Streaming video files to textures (only when built with the optional dependency `Qt6Multimedia`).
 * Editor for structured binary files.
 * Advanced hot reloading of externally modified files.
 * [Base16](https://github.com/chriskempson/base16-schemes-source) theme support.
 * Sample sessions in the Help menu.
 
-Screenshots
------------
+## Screenshots
 
 <a href="screenshot1.png"><img  style="vertical-align: top" src="screenshot1.png" height="280"></a> &nbsp;
 <a href="screenshot2.png"><img src="screenshot2.png" height="380"></a>
 
-Introduction
-------------
+## Introduction
 
 ### Getting Started
 To get started, you can open and play around with the sample sessions in the *Help* menu.
@@ -64,19 +61,19 @@ The items of a session pretty much correspond the concepts known from writing Op
 
 - **Call** -
 Most prominently are the draw and the compute calls. Whenever the session is evaluated, all active calls are evaluated in consecutive order. They can be de-/activated using the checkbox.
-The elapsed time of each call is output to the *Message* window (measured using OpenGL timer queries).
+The elapsed time of each call is output to the *Message* window (measured using GPU timer queries).
 
 - **Program** -
 Consists of one or multiple shaders, which are linked together, so they can be used by draw or compute calls.
 
 - **Texture** -
-All kind of color, depth or stencil textures can be created. They serve as sample sources, image in- and outputs and target attachments. They can be backed by files. The texture's images can also be explicitly set (for custom mip levels, cube maps&hellip;).
+All kind of color, depth or stencil textures can be created. They serve as sample sources, image in- and outputs and target attachments. They can be backed by files.
 
 - **Target** -
-Specifies where draws calls should render to (it corresponds to an OpenGL *FBO*). Multiple images can be attached. Depending on the attached image's type, different OpenGL states can be configured.
+Specifies where draws calls should render to. Multiple images can be attached. Depending on the attached image's type, different render states can be configured.
 
 - **Binding** -
-Allows to bind data to a program's uniforms, samplers, images, buffers and to select shader subroutines. A binding affects all subsequent calls, until it is replaced by a binding with the same name, or the scope ends (see *Groups*). The name of a binding needs to match the name of a program's binding points.
+Allows to bind data to a program's uniforms, samplers, images and buffers. A binding affects all subsequent calls, until it is replaced by a binding with the same name, or the scope ends (see *Groups*). The name of a binding needs to match the name of a program's binding points.
 
 - **Buffer** -
 Buffer blocks define the structure of a region within a binary. They consist of rows with multiple fields of some data type. Buffers can be backed by binary files.
@@ -92,45 +89,75 @@ Allows to define JavaScript functions and variables in script files, which can s
 Scripts can also be used to dynamically populate the session and generate buffer and texture data.
 There is one JavaScript state for the whole session and the scripts are evaluated in consecutive order (*Group* scopes do not have an effect).
 
-Download
---------
+## Installation
 
-**Arch Linux and derivatives:**
+### Arch Linux and derivatives
 
 An up to date build can be installed from the [AUR](https://aur.archlinux.org/packages/gpupad-git/).
 
-**Windows, macOS and other Linux distributions:**
+### Windows and other Linux distributions
 
 A portable build can be downloaded from the [latest release](https://github.com/houmain/gpupad/releases/latest) page.
 
-Building
---------
+## Building
 
-A C++17 conforming compiler and [Qt5](https://www.qt.io/) (or Qt6) are required. A script for the
+A C++20 conforming compiler is required. A script for the
 [CMake](https://cmake.org) build system is provided.
+It depends on the following libraries, which can be installed using a package manager like [vcpkg](https://github.com/microsoft/vcpkg/) or by other means:
 
-**Installing dependencies on Debian Linux and derivatives:**
-```
-sudo apt install build-essential git cmake qtdeclarative5-dev libdrm-dev
-```
+- [Qt6](https://doc.qt.io/qt-6/get-and-install-qt.html)
+- [KDGpu](https://github.com/houmain/KDGpu) (automatically pulled as submodule)
+- [glslang](https://github.com/KhronosGroup/glslang)
+- [spirv-cross](https://github.com/KhronosGroup/SPIRV-Cross)
+- [libktx](https://github.com/KhronosGroup/KTX-Software)
+- [vulkan-memory-allocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)
+- [spdlog](https://github.com/gabime/spdlog)
+- [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO) (optional)
 
-**Checking out the source:**
-```
-git clone https://github.com/houmain/gpupad
-```
+### Building on Debian Linux and derivatives:
 
-**Building:**
-```
+```bash
+# install dependencies
+sudo apt install build-essential git cmake qtdeclarative6-dev libdrm-dev pkg-config libxcb*-dev libx11-dev libxrandr-dev
+
+# check out source
+git clone --recurse-submodules https://github.com/houmain/gpupad
 cd gpupad
-cmake -B _build
-cmake --build _build
+
+# install vcpkg
+git clone --depth=1 https://github.com/microsoft/vcpkg.git
+vcpkg/bootstrap-vcpkg.sh
+
+# install additional dependencies using vcpkg
+vcpkg/vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator spdlog
+
+# build
+cmake -B build -DCMAKE_TOOLCHAIN_FILE=/vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake --build build -j8
 ```
 
-On Windows and macOS you might have to pass the path to your Qt installation. e.g:
-```
-cmake -B _build -DCMAKE_PREFIX_PATH=C:\Qt\5.15\msvc2019_64
+### Building on Windows:
+
+```bash
+# install Qt6
+# https://doc.qt.io/qt-6/get-and-install-qt.html
+
+# check out source
+git clone --recurse-submodules https://github.com/houmain/gpupad
+cd gpupad
+
+# install vcpkg
+git clone --depth=1 https://github.com/microsoft/vcpkg.git
+vcpkg\bootstrap-vcpkg
+
+# install dependencies using vcpkg
+vcpkg\vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator spdlog
+
+# build
+cmake -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.7.2\msvc2022_64 -DCMAKE_TOOLCHAIN_FILE=vcpkg\scripts\buildsystems\vcpkg.cmake
+cmake --build build -j8
 ```
 
-License
--------
-It is released under the GNU GPLv3. Please see `LICENSE` for license details.
+## License
+
+GPUpad is released under the GNU GPLv3. Please see `LICENSE` for license details.
