@@ -2,11 +2,11 @@
 name: Build
 
 on:
+  #push:    # execute on every push
   release:
     types:
       - published
-  workflow_dispatch:
-
+  
 jobs:
   build:
     runs-on: ${{ matrix.config.os }}
@@ -16,18 +16,21 @@ jobs:
         config:
         - {
            name: "Linux-x64"
-           , os: ubuntu-20.04
-           , QT_VERSION: 5.15.2, QT_INST_DIR: /opt, QTDIR: /opt/Qt/5.15.2/gcc_64
+           , os: ubuntu-22.04
+           , QT_VERSION: 6.2.4, QT_INST_DIR: /opt, QTDIR: /opt/Qt/6.2.4/gcc_64
+           , VCPKG_TRIPLET: "x64-linux-release"
           }
         - {
             name: "Windows-x64", WIN_ARCH: "x64"
             , os: windows-2019
-            , QT_VERSION: 6.4.1, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/6.4.1/msvc2019_64", QT_ARCH: win64_msvc2019_64
+            , QT_VERSION: 6.7.2, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/6.7.2/msvc2019_64", QT_ARCH: win64_msvc2019_64
+            , VCPKG_TRIPLET: "x64-windows-release"
           }
 #        - {
 #            name: "MacOS-x64"
-#            , os: macos-11
-#            , QT_VERSION: 5.15.2, QT_INST_DIR: /Users/runner, QTDIR: /Users/runner/Qt/5.15.2/clang_64
+#            , os: macos-14
+#            , QT_VERSION: 6.2.4, QT_INST_DIR: /Users/runner, QTDIR: /Users/runner/Qt/6.2.4/clang_64
+#            , VCPKG_TRIPLET: "x64-osx-release"
 #          }
 
     steps:
@@ -37,12 +40,9 @@ jobs:
       with:
         arch: ${{matrix.config.WIN_ARCH}}
 
-#    - name: Cache Qt
-#      id: cache-qt
-#      uses: actions/cache@v2
-#      with:
-#        path: ${{matrix.config.QT_INST_DIR}}/Qt
-#        key: ${{ runner.os }}${{ matrix.config.WIN_ARCH }}-qt-${{ matrix.config.QT_VERSION }}
+    - name: Setup Linux
+      if: runner.os == 'Linux'
+      run: sudo apt -y install pkg-config libxcb*-dev libx11-dev libxrandr-dev
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v2
@@ -61,8 +61,17 @@ jobs:
         fetch-depth: 0
         submodules: recursive
 
+    - name: Install vcpkg packages
+      uses: johnwason/vcpkg-action@v6
+      with:
+          revision: 'cacf5994341f27e9a14a7b8724b0634b138ecb30'
+          pkgs: 'vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator spdlog OpenImageIO'
+          triplet: '${{ matrix.config.VCPKG_TRIPLET }}'
+          token: ${{ github.token }}
+          github-binarycache: true
+
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_INSTALL_PREFIX=dist
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_INSTALL_PREFIX=dist -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.config.VCPKG_TRIPLET }}
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
     - name: Install
