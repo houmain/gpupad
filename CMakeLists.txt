@@ -43,9 +43,6 @@ configure_file("src/version.h.in" "${CMAKE_SOURCE_DIR}/src/_version.h")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTORCC ON)
 
 add_definitions(-DQT_NO_CAST_TO_ASCII
                 #-DQT_NO_CAST_FROM_ASCII
@@ -198,7 +195,15 @@ else()
     add_compile_options(-Wall)
 endif()
 
-add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SOURCES} ${HEADERS})
+find_package(Qt6 REQUIRED COMPONENTS Core)
+qt_standard_project_setup()
+set(CMAKE_AUTORCC ON)
+
+qt_add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    WIN32_EXECUTABLE TRUE
+    MACOSX_BUNDLE TRUE
+)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu spdlog::spdlog)
 
@@ -218,10 +223,7 @@ elseif(APPLE)
 endif()
 
 # link Qt6
-find_package(Qt6 COMPONENTS Widgets REQUIRED)
-find_package(Qt6 COMPONENTS OpenGLWidgets)
-find_package(Qt6 COMPONENTS OpenGL REQUIRED)
-find_package(Qt6 COMPONENTS Qml REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets OpenGL Qml)
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Widgets
     Qt6::OpenGLWidgets
@@ -243,12 +245,6 @@ if(ENABLE_QUICK AND Qt6Quick_FOUND AND Qt6QuickWidgets_FOUND)
         Qt6::Quick
         Qt6::QuickWidgets)
     add_compile_definitions(QtQuick_FOUND)
-
-    find_package(Qt6QuickShapes CONFIG)
-    if(Qt6QuickShapes_FOUND)
-        target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::QuickShapes)
-        add_compile_definitions(QtQuickShapes_FOUND)
-    endif()
 
     find_package(Qt6QuickControls2 CONFIG)
     if(Qt6QuickControls2_FOUND)
@@ -280,44 +276,44 @@ target_link_libraries(${PROJECT_NAME}
 
 # install -------------------------
 set(DOC_FILES LICENSE CHANGELOG.md THIRD-PARTY.md)
+set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Application)
+
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-    install(TARGETS ${PROJECT_NAME} DESTINATION "bin" COMPONENT Application)
-    install(FILES ${DOC_FILES} DESTINATION "share/gpupad" COMPONENT Application)
-    install(DIRECTORY share DESTINATION . COMPONENT Application)
+    install(TARGETS ${PROJECT_NAME} DESTINATION "bin")
+    install(FILES ${DOC_FILES} DESTINATION "share/gpupad")
+    install(DIRECTORY share DESTINATION .)
     install(DIRECTORY samples DESTINATION "share/gpupad" COMPONENT Samples)
     install(DIRECTORY themes DESTINATION "share/gpupad" COMPONENT Themes)
 
-elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Application)
-    install(FILES ${DOC_FILES} DESTINATION . COMPONENT Application)
+else()
+    install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(FILES ${DOC_FILES} DESTINATION .)
     install(DIRECTORY samples DESTINATION . COMPONENT Samples)
     install(DIRECTORY themes DESTINATION . COMPONENT Themes)
 
+    # install Qt dependencies (requries Qt 5.7)
+    set(DEPLOY_TOOL_OPTIONS "")
+    if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+        set(DEPLOY_TOOL_OPTIONS --no-opengl-sw --no-system-d3d-compiler --no-system-dxc-compiler)
+    endif()
+    qt_generate_deploy_app_script(
+        TARGET ${PROJECT_NAME}
+        OUTPUT_SCRIPT deploy_script
+        NO_TRANSLATIONS
+        NO_COMPILER_RUNTIME
+        DEPLOY_TOOL_OPTIONS ${DEPLOY_TOOL_OPTIONS}
+    )
+    install(SCRIPT ${deploy_script})
+
+    # install other dependencies
+    set(QT_BIN_DIR "${Qt6_DIR}/../../../bin")
     install(TARGETS ${PROJECT_NAME} RUNTIME_DEPENDENCIES
+        DIRECTORIES ${QT_BIN_DIR}
         PRE_INCLUDE_REGEXES dep
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-        DESTINATION . COMPONENT Application
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
-
-    find_program(WINDEPLOYQT windeployqt HINTS "${_qt_bin_dir}")
-    install(CODE "set(WINDEPLOYQT \"${WINDEPLOYQT}\")" COMPONENT Application)
-    install(CODE [===[
-    execute_process(COMMAND "${WINDEPLOYQT}" --release --no-opengl-sw --no-system-d3d-compiler --no-translations --no-compiler-runtime "${CMAKE_INSTALL_PREFIX}")
-    ]===] COMPONENT Application)
-    
-elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    install(TARGETS ${PROJECT_NAME} DESTINATION . COMPONENT Application)
-    install(FILES ${DOC_FILES} DESTINATION . COMPONENT Application)
-    install(DIRECTORY samples DESTINATION . COMPONENT Samples)
-    install(DIRECTORY themes DESTINATION . COMPONENT Themes)
-
-    find_program(MACDEPLOYQT macdeployqt HINTS "${_qt_bin_dir}")
-    install(CODE "set(MACDEPLOYQT \"${MACDEPLOYQT}\")" COMPONENT Application)
-    install(CODE "set(APPLICATION \"${PROJECT_NAME}.app\")" COMPONENT Application)
-    install(CODE [===[
-    execute_process(COMMAND cd "${CMAKE_INSTALL_PREFIX}" && "${MACDEPLOYQT}" "${APPLICATION}" -always-overwrite)
-    ]===] COMPONENT Application)
 endif()
 
 # package -------------------------
@@ -334,6 +330,12 @@ if(VERSION MATCHES "^[0-9]+\.[0-9]+\.[0-9]+")
     list(GET VERSION_LIST 1 CPACK_PACKAGE_VERSION_MINOR)
     list(GET VERSION_LIST 2 CPACK_PACKAGE_VERSION_PATCH)
 endif()
+
+# do not pack files installed by KDGpu
+set(CPACK_COMPONENT_APPLICATION_HIDDEN TRUE)
+set(CPACK_COMPONENT_APPLICATION_REQUIRED TRUE)
+set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
+set(CPACK_COMPONENTS_ALL Application Samples Themes)
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CPACK_GENERATOR TGZ)
