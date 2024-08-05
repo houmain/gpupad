@@ -82,7 +82,7 @@ jobs:
     - name: Build AppImage
       if: runner.os == 'Linux'
       run: |
-        sudo apt-get install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+        sudo apt-get install libfuse2
         mkdir -p AppDir
         cp -R dist AppDir/usr
         cp AppDir/usr/share/applications/io.github.houmain.gpupad.desktop AppDir
