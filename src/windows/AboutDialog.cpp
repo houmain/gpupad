@@ -15,7 +15,7 @@ namespace {
     QString loadTextFile(const QString &fileName)
     {
         const auto paths = std::initializer_list<QString>{
-            QCoreApplication::applicationDirPath(),
+            QCoreApplication::applicationDirPath() + "/..",
 #if !defined(NDEBUG)
             QCoreApplication::applicationDirPath() + "/../..",
 #endif

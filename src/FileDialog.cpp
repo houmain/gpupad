@@ -338,9 +338,10 @@ QDir getInstallDirectory(const QString &dirName)
 {
     const auto paths = std::initializer_list<QString>{
         QCoreApplication::applicationDirPath(),
-#if !defined(NDEBUG)
         QCoreApplication::applicationDirPath() + "/..",
+#if !defined(NDEBUG)
         QCoreApplication::applicationDirPath() + "/../..",
+        QCoreApplication::applicationDirPath() + "/../../extra",
 #endif
 #if defined(__linux__)
         qEnvironmentVariable("APPDIR") + "/usr/share/"

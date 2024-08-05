@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 2.0.0] - 2024-08-05
+
+### Added
+
+- Vulkan renderer can be used for evaluating sessions.
+- Using OpenImageIO for reading/writing most image formats.
+
+### Changed
+
+- Removed Qt5 support.
+- Remove Lua scripting support.
+
 ## [Version 1.35.1] - 2023-10-26
 
 ### Added
@@ -696,6 +708,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 2.0.0]: https://github.com/houmain/gpupad/compare/1.35.1...2.0.0
 [version 1.35.1]: https://github.com/houmain/gpupad/compare/1.35.0...1.35.1
 [version 1.35.0]: https://github.com/houmain/gpupad/compare/1.34.0...1.35.0
 [version 1.34.0]: https://github.com/houmain/gpupad/compare/1.33.0...1.34.0
