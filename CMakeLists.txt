@@ -11,6 +11,10 @@ else()
     add_compile_options($<$<CONFIG:Release>:-fno-rtti>)
 endif()
 
+find_package(Qt6 REQUIRED COMPONENTS Core)
+qt_standard_project_setup()
+set(CMAKE_AUTORCC ON)
+
 # build KDGpu --------------------
 find_package(spdlog CONFIG REQUIRED)
 
@@ -18,10 +22,10 @@ find_package(Vulkan)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 add_library(vulkan-memory-allocator::vulkan-memory-allocator ALIAS GPUOpen::VulkanMemoryAllocator)
 
-set(PROJECT_VERSION "0.4.4")
+set(PROJECT_VERSION "0.6.0")
 include(FeatureSummary)
 add_compile_definitions(KDGPU_STATIC_DEFINE)
-add_subdirectory(libs/KDGpu/src/KDGpu)
+add_subdirectory(libs/KDGpu/src/KDGpu EXCLUDE_FROM_ALL)
 
 # setup version -------------------------
 if(NOT CMAKE_BUILD_TYPE)
@@ -195,10 +199,6 @@ else()
     add_compile_options(-Wall)
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Core)
-qt_standard_project_setup()
-set(CMAKE_AUTORCC ON)
-
 qt_add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 set_target_properties(${PROJECT_NAME} PROPERTIES
     WIN32_EXECUTABLE TRUE
@@ -327,18 +327,15 @@ set(CPACK_PACKAGE_CONTACT ${CPACK_PACKAGE_HOMEPAGE_URL})
 set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/src/images/icon.ico")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 
+set(CPACK_COMPONENT_APPLICATION_HIDDEN TRUE)
+set(CPACK_COMPONENT_APPLICATION_REQUIRED TRUE)
+
 if(VERSION MATCHES "^[0-9]+\.[0-9]+\.[0-9]+")
     string(REGEX MATCHALL "[0-9]+" VERSION_LIST "${VERSION}")
     list(GET VERSION_LIST 0 CPACK_PACKAGE_VERSION_MAJOR)
     list(GET VERSION_LIST 1 CPACK_PACKAGE_VERSION_MINOR)
     list(GET VERSION_LIST 2 CPACK_PACKAGE_VERSION_PATCH)
 endif()
-
-# do not pack files installed by KDGpu
-set(CPACK_COMPONENT_APPLICATION_HIDDEN TRUE)
-set(CPACK_COMPONENT_APPLICATION_REQUIRED TRUE)
-set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-set(CPACK_COMPONENTS_ALL Application Samples Themes)
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CPACK_GENERATOR TGZ)
