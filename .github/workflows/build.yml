@@ -17,13 +17,13 @@ jobs:
         - {
            name: "Linux-x64"
            , os: ubuntu-22.04
-           , QT_VERSION: 6.7.*, QT_INST_DIR: /opt, QTDIR: /opt/Qt/6.2.4/gcc_64
+           , QT_VERSION: 6.7.2, QT_INST_DIR: /opt, QTDIR: /opt/Qt/6.2.4/gcc_64
            , VCPKG_TRIPLET: "x64-linux-release"
           }
         - {
             name: "Windows-x64", WIN_ARCH: "x64"
             , os: windows-2019
-            , QT_VERSION: 6.7.*, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/6.7.2/msvc2019_64", QT_ARCH: win64_msvc2019_64
+            , QT_VERSION: 6.7.2, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/6.7.2/msvc2019_64", QT_ARCH: win64_msvc2019_64
             , VCPKG_TRIPLET: "x64-windows-release"
           }
 #        - {
