@@ -80,7 +80,7 @@ jobs:
       run: cpack --config ${{github.workspace}}/build/CPackConfig.cmake
 
     - name: Build AppImage
-      if: runner.os == 'Linux'
+      if: false # runner.os == 'Linux'   # retry when Ubuntu 20.04 is endoflife (02 Apr 2025)
       run: |
         sudo apt-get install libfuse2
         mkdir -p AppDir
@@ -98,6 +98,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        file: "*.msi;*.dmg;GPUpad*.AppImage"
+        file: "*.msi;*.dmg;*.tar.gz;GPUpad*.AppImage"
         tags: true
         draft: false
