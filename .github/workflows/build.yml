@@ -17,7 +17,7 @@ jobs:
         - {
            name: "Linux-x64"
            , os: ubuntu-22.04
-           , QT_VERSION: 6.7.2, QT_INST_DIR: /opt, QTDIR: /opt/Qt/6.2.4/gcc_64
+           , QT_VERSION: 6.5.3, QT_INST_DIR: /opt, QTDIR: /opt/Qt/6.2.4/gcc_64
            , VCPKG_TRIPLET: "x64-linux-release"
           }
         - {
