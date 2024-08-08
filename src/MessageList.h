@@ -53,6 +53,7 @@ enum MessageType {
     IncompatibleBindings,
     CreatingPipelineFailed,
     OpenGLRendererRequiresGLSL,
+    SubroutinesNotAvailableInVulkan,
 };
 
 struct Message

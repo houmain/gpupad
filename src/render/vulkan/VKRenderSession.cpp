@@ -25,7 +25,6 @@ namespace {
         std::map<QString, VKSamplerBinding> samplers;
         std::map<QString, VKImageBinding> images;
         std::map<QString, VKBufferBinding> buffers;
-        //std::map<QString, VKSubroutineBinding> subroutines;
     };
     using BindingState = QStack<BindingScope>;
     using Command = std::function<void(BindingState &)>;
@@ -43,8 +42,6 @@ namespace {
                 bindings.images[kv.first] = kv.second;
             for (const auto &kv : scope.buffers)
                 bindings.buffers[kv.first] = kv.second;
-            //for (const auto &kv : scope.subroutines)
-            //    bindings.subroutines[kv.first] = kv.second;
         }
 
         pipeline.clearBindings();
@@ -71,11 +68,6 @@ namespace {
                 usedItems += kv.second.bindingItemId;
                 usedItems += kv.second.buffer->usedItems();
             }
-
-        //for (const auto &kv : bindings.subroutines)
-        //    if (pipeline.apply(kv.second))
-        //        usedItems += kv.second.bindingItemId;
-        //call.reapplySubroutines();
 
         return usedItems;
     }
@@ -295,14 +287,10 @@ void VKRenderSession::createCommandQueue()
                         });
                 break;
 
-                //case Binding::BindingType::Subroutine:
-                //    addCommand(
-                //        [binding = VKSubroutineBinding{
-                //            b.id, b.name, b.subroutine, {} }
-                //        ](BindingState &state) {
-                //            state.top().subroutines[binding.name] = binding;
-                //        });
-                //    break;
+            case Binding::BindingType::Subroutine:
+                mMessages += MessageList::insert(b.id,
+                    MessageType::SubroutinesNotAvailableInVulkan);
+                break;
             }
         } else if (auto call = castItem<Call>(item)) {
             if (call->checked) {

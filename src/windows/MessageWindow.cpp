@@ -136,6 +136,8 @@ QString MessageWindow::getMessageText(const Message &message) const
     case CreatingPipelineFailed: return tr("Creating pipeline failed");
     case OpenGLRendererRequiresGLSL:
         return tr("The OpenGL renderer only supports GLSL shaders");
+    case SubroutinesNotAvailableInVulkan:
+        return tr("Subroutines not available in Vulkan");
     }
     return message.text;
 }
