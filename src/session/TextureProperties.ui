@@ -14,7 +14,7 @@
    <item>
     <layout class="QFormLayout" name="formLayout">
      <property name="labelAlignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="horizontalSpacing">
       <number>8</number>
@@ -162,13 +162,42 @@
       </widget>
      </item>
      <item row="8" column="1">
-      <widget class="QSpinBox" name="samples">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>256</number>
-       </property>
+      <widget class="QComboBox" name="samples">
+       <item>
+        <property name="text">
+         <string>1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>4</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>8</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>16</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>32</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>64</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item row="9" column="0">
@@ -177,7 +206,7 @@
         <string>Flip Vert.</string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
        </property>
        <property name="buddy">
         <cstring>flipVertically</cstring>
