@@ -632,12 +632,6 @@ void SessionProperties::updateTargetWidgets(const QModelIndex &index)
 
 void SessionProperties::updateShaderWidgets()
 {
-    auto &ui = *mShaderProperties;
-    const auto language =
-        static_cast<Shader::Language>(ui.language->currentData().toInt());
-    setFormVisibility(ui.formLayout, ui.labelEntryPoint, ui.entryPoint,
-        language != Shader::Language::GLSL);
-
     const auto font = Singletons::settings().font();
     for (auto editor : {
              mShaderProperties->shaderPreamble,

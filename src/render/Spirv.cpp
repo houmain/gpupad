@@ -91,65 +91,6 @@ namespace {
         }
         return hasErrors;
     }
-
-    QString completeFunctionName(const QString &source, const QString &prefix)
-    {
-        for (auto begin = source.indexOf(prefix); begin > 0;
-             begin = source.indexOf(prefix, begin + 1)) {
-            // must be beginning of word
-            if (!source[begin - 1].isSpace())
-                continue;
-
-            // must not follow struct
-            if (source.mid(std::max(static_cast<int>(begin) - 10, 0), 10)
-                    .contains("struct"))
-                continue;
-
-            // complete word
-            auto it = begin;
-            while (it < source.size()
-                && (source[it].isLetterOrNumber() || source[it] == '_'))
-                ++it;
-
-            // ( must follow
-            if (it == source.size() || source[it] != '(')
-                continue;
-
-            return source.mid(begin, it - begin);
-        }
-        return {};
-    }
-
-    QString findHLSLEntryPoint(Shader::ShaderType shaderType,
-        const QString &source)
-    {
-        const auto prefix = [&]() {
-            switch (shaderType) {
-            default:
-            case Shader::ShaderType::Fragment:               return "PS";
-            case Shader::ShaderType::Vertex:                 return "VS";
-            case Shader::ShaderType::Geometry:               return "GS";
-            case Shader::ShaderType::TessellationControl:    return "HS";
-            case Shader::ShaderType::TessellationEvaluation: return "DS";
-            case Shader::ShaderType::Compute:                return "CS";
-            }
-        }();
-        return completeFunctionName(source, prefix);
-    }
-
-    QString getEntryPoint(const QString &entryPoint, Shader::Language language,
-        Shader::ShaderType shaderType, const QString &source)
-    {
-        if (!entryPoint.isEmpty())
-            return entryPoint;
-
-        if (language == Shader::Language::HLSL)
-            if (auto found = findHLSLEntryPoint(shaderType, source);
-                !found.isEmpty())
-                return found;
-
-        return "main";
-    }
 } // namespace
 
 Spirv::Interface::Interface(const std::vector<uint32_t> &spirv)
@@ -214,10 +155,9 @@ Spirv Spirv::generate(Shader::Language language, Shader::ShaderType shaderType,
     shader.setEnvTarget(glslang::EShTargetLanguage::EShTargetSpv,
         targetVersion);
 
-    const auto entryPointU8 =
-        getEntryPoint(entryPoint, language, shaderType, sources.front())
-            .toUtf8();
+    const auto entryPointU8 = entryPoint.toUtf8();
     shader.setEntryPoint(entryPointU8.constData());
+    shader.setSourceEntryPoint(entryPointU8.constData());
 
     // TODO: allow to select compiler options
     shader.setAutoMapBindings(true);
@@ -240,7 +180,7 @@ Spirv Spirv::generate(Shader::Language language, Shader::ShaderType shaderType,
     auto program = glslang::TProgram();
     program.addShader(&shader);
     if (!program.link(requestedMessages)) {
-        parseGLSLangErrors(QString::fromUtf8(shader.getInfoLog()), messages,
+        parseGLSLangErrors(QString::fromUtf8(program.getInfoLog()), messages,
             itemId, fileNames);
         return {};
     }
@@ -255,6 +195,7 @@ Spirv Spirv::generate(Shader::Language language, Shader::ShaderType shaderType,
     auto spirv = std::vector<uint32_t>();
     glslang::GlslangToSpv(*program.getIntermediate(getStage(shaderType)), spirv,
         &spvOptions);
+    Q_ASSERT(!spirv.empty());
 
     return Spirv(std::move(spirv));
 }

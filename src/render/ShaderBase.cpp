@@ -131,6 +131,65 @@ namespace {
             dest += "\n";
         dest += source;
     }
+
+    QString completeFunctionName(const QString &source, const QString &prefix)
+    {
+        for (auto begin = source.indexOf(prefix); begin > 0;
+             begin = source.indexOf(prefix, begin + 1)) {
+            // must be beginning of word
+            if (!source[begin - 1].isSpace())
+                continue;
+
+            // must not follow struct
+            if (source.mid(std::max(static_cast<int>(begin) - 10, 0), 10)
+                    .contains("struct"))
+                continue;
+
+            // complete word
+            auto it = begin;
+            while (it < source.size()
+                && (source[it].isLetterOrNumber() || source[it] == '_'))
+                ++it;
+
+            // ( must follow
+            if (it == source.size() || source[it] != '(')
+                continue;
+
+            return source.mid(begin, it - begin);
+        }
+        return {};
+    }
+
+    QString findHLSLEntryPoint(Shader::ShaderType shaderType,
+        const QString &source)
+    {
+        const auto prefix = [&]() {
+            switch (shaderType) {
+            default:
+            case Shader::ShaderType::Fragment:               return "PS";
+            case Shader::ShaderType::Vertex:                 return "VS";
+            case Shader::ShaderType::Geometry:               return "GS";
+            case Shader::ShaderType::TessellationControl:    return "HS";
+            case Shader::ShaderType::TessellationEvaluation: return "DS";
+            case Shader::ShaderType::Compute:                return "CS";
+            }
+        }();
+        return completeFunctionName(source, prefix);
+    }
+
+    QString getEntryPoint(const QString &entryPoint, Shader::Language language,
+        Shader::ShaderType shaderType, const QString &source)
+    {
+        if (!entryPoint.isEmpty())
+            return entryPoint;
+
+        if (language == Shader::Language::HLSL)
+            if (auto found = findHLSLEntryPoint(shaderType, source);
+                !found.isEmpty())
+                return found;
+
+        return "main";
+    }
 } // namespace
 
 ShaderBase::ShaderBase(Shader::ShaderType type,
@@ -158,8 +217,7 @@ ShaderBase::ShaderBase(Shader::ShaderType type,
         appendLines(mIncludePaths, shader->includePaths);
     }
 
-    if (mEntryPoint.isEmpty())
-        mEntryPoint = "main";
+    mEntryPoint = getEntryPoint(mEntryPoint, mLanguage, mType, mSources.first());
 }
 
 bool ShaderBase::operator==(const ShaderBase &rhs) const
