@@ -17,6 +17,8 @@ public:
     int getMaxBindingInSet0() const;
 
 private:
+    QStringList preprocessorDefinitions() const override;
+
     KDGpu::ShaderModule mShaderModule;
     Spirv::Interface mInterface;
 };

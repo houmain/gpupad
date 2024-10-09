@@ -160,3 +160,10 @@ QString GLShader::getAssembly()
     }
     return assembly;
 }
+
+QStringList GLShader::preprocessorDefinitions() const
+{
+    auto definitions = ShaderBase::preprocessorDefinitions();
+    definitions.append("GPUPAD_OPENGL 1");
+    return definitions;
+}

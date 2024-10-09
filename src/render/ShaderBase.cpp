@@ -238,6 +238,10 @@ QStringList ShaderBase::getPatchedSources(MessagePtrSet &messages,
     return getPatchedSourcesGLSL(messages, usedFileNames, printf);
 }
 
+QStringList ShaderBase::preprocessorDefinitions() const {
+  return { "GPUPAD 1" };
+}
+
 QStringList ShaderBase::getPatchedSourcesGLSL(MessagePtrSet &messages,
     QStringList &usedFileNames, ShaderPrintf *printf) const
 {
@@ -271,7 +275,8 @@ QStringList ShaderBase::getPatchedSourcesGLSL(MessagePtrSet &messages,
     if (!mPreamble.isEmpty())
         sources.front().prepend("#line 1 0\n" + mPreamble + "\n");
 
-    sources.front().prepend("#define GPUPAD 1\n");
+    for (const auto &definition : preprocessorDefinitions())
+        sources.front().prepend("#define " + definition + "\n");
 
     sources.front().prepend(extensions);
 
@@ -309,6 +314,8 @@ QStringList ShaderBase::getPatchedSourcesHLSL(MessagePtrSet &messages,
     if (!mPreamble.isEmpty())
         sources.front().prepend("#line 1 0\n" + mPreamble + "\n");
 
-    sources.front().prepend("#define GPUPAD 1\n");
+    for (const auto &definition : preprocessorDefinitions())
+        sources.front().prepend("#define " + definition + "\n");
+
     return sources;
 }

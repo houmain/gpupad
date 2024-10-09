@@ -66,3 +66,10 @@ int VKShader::getMaxBindingInSet0() const
                 static_cast<int>(mInterface->descriptor_bindings[i].binding));
     return max;
 }
+
+QStringList VKShader::preprocessorDefinitions() const
+{
+    auto definitions = ShaderBase::preprocessorDefinitions();
+    definitions.append("GPUPAD_VULKAN 1");
+    return definitions;
+}

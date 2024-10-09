@@ -17,5 +17,7 @@ public:
     QString getAssembly();
 
 private:
+    QStringList preprocessorDefinitions() const override;
+
     GLObject mShaderObject;
 };

@@ -21,4 +21,3 @@ Syntax *makeSyntaxGeneric();
 Syntax *makeSyntaxGLSL();
 Syntax *makeSyntaxHLSL();
 Syntax *makeSyntaxJavaScript();
-Syntax *makeSyntaxLua();

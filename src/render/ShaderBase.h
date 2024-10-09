@@ -24,6 +24,8 @@ public:
         QStringList &usedFileNames, ShaderPrintf *printf = nullptr) const;
 
 protected:
+    virtual QStringList preprocessorDefinitions() const;
+
     ItemId mItemId{};
     MessagePtrSet mMessages;
     QStringList mFileNames;
