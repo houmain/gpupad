@@ -708,8 +708,11 @@ bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
     if (!create(target, format, spec.width, spec.height, spec.depth, 1))
         return false;
 
+    const auto stride = getLevelSize(0) / getLevelHeight(0);
+
     // TODO: load all layers/levels
-    if (!input->read_image(0, 0, 0, -1, spec.format, getWriteonlyData(0, 0, 0)))
+    if (!input->read_image(0, 0, 0, -1, spec.format,
+          getWriteonlyData(0, 0, 0), OIIO::AutoStride, stride))
         return false;
 
     return true;
