@@ -71,6 +71,8 @@ public:
     bool createGraphics(VKContext &context,
         KDGpu::PrimitiveOptions &primitiveOptions);
     bool createCompute(VKContext &context);
+    void updatePushConstants(KDGpu::RenderPassCommandRecorder &renderPass,
+        ScriptEngine &scriptEngine);
     void updateDefaultUniformBlock(VKContext &context,
         ScriptEngine &scriptEngine);
     bool updateBindings(VKContext &context);
@@ -100,6 +102,8 @@ private:
     void setBindGroupResource(uint32_t set, KDGpu::BindGroupEntry &&resource);
     DefaultUniformBlock &getDefaultUniformBlock(uint32_t set, uint32_t binding);
     bool createLayout(VKContext &context);
+    void updateUniformBlockData(std::byte *bufferData,
+        const SpvReflectBlockVariable &block, ScriptEngine &scriptEngine);
 
     ItemId mItemId;
     VKProgram &mProgram;
@@ -118,6 +122,8 @@ private:
     std::vector<VKImageBinding> mImageBindings;
     std::vector<KDGpu::Sampler> mSamplers;
     std::vector<std::unique_ptr<DefaultUniformBlock>> mDefaultUniformBlocks;
+    std::vector<std::byte> mPushConstantData;
+    KDGpu::PushConstantRange mPushConstantRange{};
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
 };

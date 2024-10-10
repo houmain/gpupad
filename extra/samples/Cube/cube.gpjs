@@ -5,6 +5,7 @@
         "height": "512",
         "id": 93,
         "name": "Color",
+        "samples": 1,
         "target": "Target2D",
         "type": "Texture",
         "width": "512"
@@ -15,6 +16,7 @@
         "height": "512",
         "id": 98,
         "name": "Depth",
+        "samples": 1,
         "target": "Target2D",
         "type": "Texture",
         "width": "512"
@@ -42,8 +44,8 @@
             {
                 "depthClamp": false,
                 "depthComparisonFunc": "Less",
-                "depthOffsetFactor": 0,
-                "depthOffsetUnits": 0,
+                "depthOffsetConstant": 0,
+                "depthOffsetSlope": 0,
                 "depthWrite": true,
                 "id": 102,
                 "level": 0,
@@ -124,6 +126,7 @@
         "format": "SRGB8_Alpha8",
         "height": "512",
         "id": 104,
+        "samples": 1,
         "target": "Target2D",
         "type": "Texture",
         "width": "512"
@@ -142,6 +145,19 @@
         "wrapModeX": "ClampToEdge",
         "wrapModeY": "ClampToEdge",
         "wrapModeZ": "Repeat"
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Color",
+        "id": 896,
+        "name": "uAmbient",
+        "type": "Binding",
+        "values": [
+            "0.333333",
+            "0",
+            "0",
+            "0"
+        ]
     },
     {
         "fileName": "cube_position_normal_texcoords.bin",

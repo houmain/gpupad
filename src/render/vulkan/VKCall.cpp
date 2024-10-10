@@ -161,6 +161,8 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     if (!renderPass.isValid())
         return;
 
+    mPipeline->updatePushConstants(renderPass, scriptEngine);
+
     if (mIndexBuffer) {
         const auto indicesOffset = evaluateUInt(scriptEngine, mIndicesOffset);
         renderPass.setIndexBuffer(mIndexBuffer->getReadOnlyBuffer(context),

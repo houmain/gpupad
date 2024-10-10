@@ -343,6 +343,61 @@ auto VKPipeline::getDefaultUniformBlock(uint32_t set,
     return **it;
 }
 
+void VKPipeline::updateUniformBlockData(std::byte *bufferData,
+    const SpvReflectBlockVariable &block, ScriptEngine &scriptEngine)
+{
+    for (auto i = 0u; i < block.member_count; ++i) {
+        const auto &member = block.members[i];
+        const auto it = std::find_if(begin(mUniformBindings),
+            end(mUniformBindings), [&](const VKUniformBinding &binding) {
+                return binding.name == member.name;
+            });
+        if (it == mUniformBindings.end()) {
+            if ((member.flags & SPV_REFLECT_VARIABLE_FLAGS_UNUSED) == 0)
+                mMessages += MessageList::insert(mItemId,
+                    MessageType::UniformNotSet, member.name);
+            continue;
+        }
+
+        const auto &binding = *it;
+        const auto type = getBufferMemberDataType(member);
+        const auto count = getBufferMemberElementCount(member);
+        const auto memberData = &bufferData[member.offset];
+        switch (type) {
+#define ADD(DATATYPE, TYPE)                                               \
+    case DATATYPE: {                                                      \
+        const auto values = getValues<TYPE>(scriptEngine, binding.values, \
+            binding.bindingItemId, count, mMessages);                     \
+        copyBufferMember<TYPE>(member, memberData, values.data());        \
+        break;                                                            \
+    }
+            ADD(Field::DataType::Int32, int32_t);
+            ADD(Field::DataType::Uint32, uint32_t);
+            ADD(Field::DataType::Float, float);
+            ADD(Field::DataType::Double, double);
+#undef ADD
+        default: Q_ASSERT(!"not handled data type");
+        }
+        mUsedItems += binding.bindingItemId;
+    }
+}
+
+void VKPipeline::updatePushConstants(
+    KDGpu::RenderPassCommandRecorder &renderPass, ScriptEngine &scriptEngine)
+{
+    if (mPushConstantRange.size == 0)
+        return;
+
+    for (const auto &[stage, interface] : mProgram.interface()) {
+        for (auto i = 0u; i < interface->push_constant_block_count; ++i) {
+            auto &block = interface->push_constant_blocks[i];
+            updateUniformBlockData(mPushConstantData.data(), block,
+                scriptEngine);
+        }
+    }
+    renderPass.pushConstant(mPushConstantRange, mPushConstantData.data());
+}
+
 void VKPipeline::updateDefaultUniformBlock(VKContext &context,
     ScriptEngine &scriptEngine)
 {
@@ -373,40 +428,7 @@ void VKPipeline::updateDefaultUniformBlock(VKContext &context,
         auto bufferData = static_cast<std::byte *>(block.buffer.map());
         const auto guard = qScopeGuard([&] { block.buffer.unmap(); });
 
-        for (auto i = 0u; i < descriptor->block.member_count; ++i) {
-            const auto &member = descriptor->block.members[i];
-            const auto it = std::find_if(begin(mUniformBindings),
-                end(mUniformBindings), [&](const VKUniformBinding &binding) {
-                    return binding.name == member.name;
-                });
-            if (it == mUniformBindings.end()) {
-                if ((member.flags & SPV_REFLECT_VARIABLE_FLAGS_UNUSED) == 0)
-                    mMessages += MessageList::insert(mItemId,
-                        MessageType::UniformNotSet, member.name);
-                continue;
-            }
-
-            const auto &binding = *it;
-            const auto type = getBufferMemberDataType(member);
-            const auto count = getBufferMemberElementCount(member);
-            auto data = &bufferData[member.offset];
-            switch (type) {
-#define ADD(DATATYPE, TYPE)                                               \
-    case DATATYPE: {                                                      \
-        const auto values = getValues<TYPE>(scriptEngine, binding.values, \
-            binding.bindingItemId, count, mMessages);                     \
-        copyBufferMember<TYPE>(member, data, values.data());              \
-        break;                                                            \
-    }
-                ADD(Field::DataType::Int32, int32_t);
-                ADD(Field::DataType::Uint32, uint32_t);
-                ADD(Field::DataType::Float, float);
-                ADD(Field::DataType::Double, double);
-#undef ADD
-            default: Q_ASSERT(!"not handled data type");
-            }
-            mUsedItems += binding.bindingItemId;
-        }
+        updateUniformBlockData(bufferData, descriptor->block, scriptEngine);
     }
 }
 
@@ -462,7 +484,8 @@ bool VKPipeline::createCompute(VKContext &context)
 
 bool VKPipeline::createLayout(VKContext &context)
 {
-    for (const auto &[stage, interface] : mProgram.interface())
+    mPushConstantRange = KDGpu::PushConstantRange{};
+    for (const auto &[stage, interface] : mProgram.interface()) {
         for (auto i = 0u; i < interface->descriptor_binding_count; ++i) {
             const auto &descriptor = interface->descriptor_bindings[i];
             if (!descriptor.accessed)
@@ -478,13 +501,26 @@ bool VKPipeline::createLayout(VKContext &context)
                 return false;
         }
 
+        for (auto i = 0u; i < interface->push_constant_block_count; ++i) {
+            const auto &block = interface->push_constant_blocks[i];
+            mPushConstantRange.shaderStages |= stage;
+            mPushConstantRange.size =
+                std::max(mPushConstantRange.size, block.size);
+        }
+    }
+
     for (const auto &bindGroup : mBindGroups)
         mBindGroupLayouts.emplace_back(context.device.createBindGroupLayout(
             { .bindings = bindGroup.bindings }));
 
-    mPipelineLayout = context.device.createPipelineLayout(
-        { .bindGroupLayouts = {
-              mBindGroupLayouts.begin(), mBindGroupLayouts.end() } });
+    auto options = KDGpu::PipelineLayoutOptions{
+        .bindGroupLayouts = { mBindGroupLayouts.begin(),
+            mBindGroupLayouts.end() }
+    };
+    if (mPushConstantRange.size > 0)
+        options.pushConstantRanges = { mPushConstantRange };
+    mPipelineLayout = context.device.createPipelineLayout(options);
+    mPushConstantData.resize(mPushConstantRange.size);
     return true;
 }
 
