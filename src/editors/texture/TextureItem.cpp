@@ -102,6 +102,10 @@ void main() {
   if ((uColorMask & 4) != 0) color.b = 0.0;
   if ((uColorMask & 8) != 0) color.a = 1.0;
 
+#if LINEAR_TO_SRGB
+  color = vec4(linearToSrgb(color.rgb), color.a);
+#endif
+
 #if PICKER_ENABLED && defined(GL_ARB_shader_image_load_store)
   if (gl_FragCoord.xy == uPickerFragCoord)
     imageStore(uPickerColor, 0, color);
@@ -117,10 +121,6 @@ void main() {
 
     color.rgb = (color.rgb + vec3(uMappingOffset)) * uMappingFactor;
   }
-#endif
-
-#if LINEAR_TO_SRGB
-  color = vec4(linearToSrgb(color.rgb), color.a);
 #endif
 
   oColor = color;

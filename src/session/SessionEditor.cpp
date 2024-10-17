@@ -96,12 +96,13 @@ void SessionEditor::addItemActions(QMenu *menu)
 void SessionEditor::updateItemActions()
 {
     auto index = selectionModel()->currentIndex();
+    struct TypeAction { Item::Type type; QAction *action; };
     for (const auto [type, action] : {
-             std::make_pair(Item::Type::Block, mAddBlockAction),
-             std::make_pair(Item::Type::Field, mAddFieldAction),
-             std::make_pair(Item::Type::Shader, mAddShaderAction),
-             std::make_pair(Item::Type::Attribute, mAddAttributeAction),
-             std::make_pair(Item::Type::Attachment, mAddAttachmentAction),
+             TypeAction{ Item::Type::Block, mAddBlockAction },
+             TypeAction{ Item::Type::Field, mAddFieldAction },
+             TypeAction{ Item::Type::Shader, mAddShaderAction },
+             TypeAction{ Item::Type::Attribute, mAddAttributeAction },
+             TypeAction{ Item::Type::Attachment, mAddAttachmentAction },
          })
         action->setVisible(mModel.canContainType(index, type)
             || mModel.canContainType(index.parent(), type));
