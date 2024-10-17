@@ -434,8 +434,10 @@ void TextureEditor::updateMousePosition(const QPoint &position)
     const auto outsideItem = (pos.x() < 0 || pos.y() < 0
         || pos.x() >= mTexture.width() || pos.y() >= mTexture.height());
 
-    pos = position - QPoint(1, 1);
+    pos = position;
     pos.setY(viewport()->height() - pos.y());
+    pos *= devicePixelRatioF();
+    pos = QPointF(qRound(pos.x() - 0.5), qRound(pos.y() - 0.5));
     mTextureItem->setMousePosition(pos);
     mTextureItem->setPickerEnabled(mTextureInfoBar.isPickerEnabled()
         && !outsideItem);
