@@ -52,12 +52,16 @@ TextureBase::TextureBase(const Texture &texture, ScriptEngine &scriptEngine)
     Singletons::evaluatedPropertyCache().evaluateTextureProperties(texture,
         &mWidth, &mHeight, &mDepth, &mLayers, &scriptEngine);
 
-    if (mKind.dimensions < 2)
+    if (mWidth <= 0)
+        mWidth = 1;
+    if (mHeight <= 0 || mKind.dimensions < 2)
         mHeight = 1;
-    if (mKind.dimensions < 3)
+    if (mDepth <= 0 || mKind.dimensions < 3)
         mDepth = 1;
-    if (!mKind.array)
+    if (mLayers <= 0 || !mKind.array)
         mLayers = 1;
+    if (mSamples <= 0)
+        mSamples = 1;
 
     mUsedItems += texture.id;
 }

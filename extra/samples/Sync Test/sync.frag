@@ -1,14 +1,14 @@
 #version 330
 
 uniform int frame;
-uniform sampler2D target;
+uniform ivec2 resolution;
 out vec4 color;
 
 void main() {
   float interval = 4;
   float frameRate = 60;
   int barWidth = 8;
-  int width = textureSize(target, 0).x - barWidth;
+  int width = resolution.x - barWidth;
   float speed = width / frameRate / interval;
   float pos = abs(int(frame * speed) % (width * 2) - width);
   float onLine =

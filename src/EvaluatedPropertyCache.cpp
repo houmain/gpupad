@@ -2,12 +2,16 @@
 #include "EvaluatedPropertyCache.h"
 #include "scripting/ScriptEngineJavaScript.h"
 
-EvaluatedPropertyCache::EvaluatedPropertyCache()
-    : mDefaultScriptEngine(new ScriptEngineJavaScript())
-{
-}
+EvaluatedPropertyCache::EvaluatedPropertyCache() { }
 
 EvaluatedPropertyCache::~EvaluatedPropertyCache() = default;
+
+ScriptEngine *EvaluatedPropertyCache::defaultScriptEngine()
+{
+    if (!mDefaultScriptEngine)
+        mDefaultScriptEngine.reset(new ScriptEngineJavaScript());
+    return mDefaultScriptEngine.data();
+}
 
 // when a script engine is passed then evaluate and update cache,
 // otherwise load from cache or evaluate using default engine
@@ -24,7 +28,7 @@ void EvaluatedPropertyCache::evaluateBlockProperties(const Block &block,
             *offset = (*it)[0];
             *rowCount = (*it)[1];
         } else {
-            scriptEngine = mDefaultScriptEngine.data();
+            scriptEngine = defaultScriptEngine();
         }
     }
     if (scriptEngine) {
@@ -55,7 +59,7 @@ void EvaluatedPropertyCache::evaluateTextureProperties(const Texture &texture,
             *depth = (*it)[2];
             *layers = (*it)[3];
         } else {
-            scriptEngine = mDefaultScriptEngine.data();
+            scriptEngine = defaultScriptEngine();
         }
     }
     if (scriptEngine) {

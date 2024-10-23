@@ -24,6 +24,7 @@ public:
 
 private:
     Q_DISABLE_COPY(EvaluatedPropertyCache)
+    ScriptEngine* defaultScriptEngine();
 
     QMutex mMutex;
     QScopedPointer<ScriptEngine> mDefaultScriptEngine;

@@ -73,7 +73,7 @@ void ScriptEngineJavaScript::setGlobal(const QString &name,
         setGlobal(name, values.at(0));
     } else {
         auto i = 0;
-        auto array = QJSValue();
+        auto array = mJsEngine->newArray(values.size());
         for (const auto &value : values)
             array.setProperty(i++, value);
         setGlobal(name, array);

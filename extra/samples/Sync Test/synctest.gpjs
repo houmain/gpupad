@@ -1,12 +1,35 @@
 [
     {
+        "bindingType": "Uniform",
+        "editor": "Expression2",
+        "id": 82,
+        "name": "resolution",
+        "type": "Binding",
+        "values": [
+            "1920",
+            "1080"
+        ]
+    },
+    {
+        "bindingType": "Uniform",
+        "editor": "Expression",
+        "id": 74,
+        "name": "frame",
+        "type": "Binding",
+        "values": [
+            "frame = (this.frame || 0) + 1"
+        ]
+    },
+    {
+        "flipVertically": false,
         "format": "RGBA8_UNorm",
-        "height": 1080,
+        "height": "resolution[1]",
         "id": 70,
         "name": "Texture",
+        "samples": 1,
         "target": "Target2D",
         "type": "Texture",
-        "width": 1920
+        "width": "resolution[0]"
     },
     {
         "blendConstant": "#ff000000",
@@ -31,31 +54,8 @@
         ],
         "logicOperation": "NoLogicOperation",
         "name": "Target",
+        "polygonMode": "Fill",
         "type": "Target"
-    },
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression",
-        "id": 74,
-        "name": "frame",
-        "type": "Binding",
-        "values": [
-            "frame = (this.frame || 0) + 1"
-        ]
-    },
-    {
-        "bindingType": "Sampler",
-        "borderColor": "#ff000000",
-        "comparisonFunc": "NoComparisonFunc",
-        "id": 81,
-        "magFilter": "Nearest",
-        "minFilter": "Nearest",
-        "name": "target",
-        "textureId": 70,
-        "type": "Binding",
-        "wrapModeX": "Repeat",
-        "wrapModeY": "Repeat",
-        "wrapModeZ": "Repeat"
     },
     {
         "id": 76,
@@ -63,12 +63,14 @@
             {
                 "fileName": "attributeless.vs",
                 "id": 77,
+                "language": "GLSL",
                 "shaderType": "Vertex",
                 "type": "Shader"
             },
             {
                 "fileName": "sync.frag",
                 "id": 79,
+                "language": "GLSL",
                 "shaderType": "Fragment",
                 "type": "Shader"
             }
