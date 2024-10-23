@@ -759,7 +759,7 @@ bool MainWindow::openSession(const QString &fileName)
         openSessionDock();
         auto &editors = Singletons::editorManager();
         editors.setAutoRaise(false);
-        mSessionEditor->activateFirstItem();
+        mSessionEditor->activateFirstTextureItem();
         editors.setAutoRaise(true);
     }
     return true;

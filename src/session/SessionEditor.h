@@ -25,7 +25,7 @@ public:
     bool clear();
     bool load();
     bool save();
-    void activateFirstItem();
+    void activateFirstTextureItem();
 
 Q_SIGNALS:
     void itemAdded(const QModelIndex &index);

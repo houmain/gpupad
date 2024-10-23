@@ -96,7 +96,11 @@ void SessionEditor::addItemActions(QMenu *menu)
 void SessionEditor::updateItemActions()
 {
     auto index = selectionModel()->currentIndex();
-    struct TypeAction { Item::Type type; QAction *action; };
+    struct TypeAction
+    {
+        Item::Type type;
+        QAction *action;
+    };
     for (const auto [type, action] : {
              TypeAction{ Item::Type::Block, mAddBlockAction },
              TypeAction{ Item::Type::Field, mAddFieldAction },
@@ -363,9 +367,15 @@ void SessionEditor::addItem(Item::Type type)
     Q_EMIT itemAdded(index);
 }
 
-void SessionEditor::activateFirstItem()
+void SessionEditor::activateFirstTextureItem()
 {
-    Q_EMIT itemActivated(model()->index(0, 0));
+    auto index = QModelIndex{};
+    mModel.forEachItem([&](const Item &item) {
+        if (item.type == Item::Type::Texture && !index.isValid())
+            index = mModel.getIndex(&item);
+    });
+    if (index.isValid())
+        Q_EMIT itemActivated(index);
 }
 
 void SessionEditor::handleItemActivated(const QModelIndex &index)
