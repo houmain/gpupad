@@ -14,6 +14,7 @@ public:
     KDGpu::MultisampleOptions getMultisampleOptions();
     KDGpu::PrimitiveOptions getPrimitiveOptions();
 
+    bool hasAttachment(const VKTexture *texture) const;
     const QSet<ItemId> &usedItems() const { return mUsedItems; };
 
 private:

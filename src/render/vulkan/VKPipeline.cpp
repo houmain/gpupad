@@ -643,6 +643,11 @@ bool VKPipeline::updateBindings(VKContext &context)
                                 KDGpu::SamplerBinding{ .sampler = sampler },
                         });
                 } else {
+                    if (mTarget->hasAttachment(samplerBinding->texture)) {
+                        notBoundError(MessageType::CantSampleAttachment, desc.name);
+                        continue;
+                    }
+
                     if (!samplerBinding->texture
                         || !samplerBinding->texture->prepareSampledImage(
                             context)) {

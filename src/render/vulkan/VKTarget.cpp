@@ -182,3 +182,11 @@ KDGpu::PrimitiveOptions VKTarget::getPrimitiveOptions()
         .lineWidth = 1.0f,
     };
 }
+
+bool VKTarget::hasAttachment(const VKTexture *texture) const
+{
+    for (const auto &attachment : mAttachments)
+        if (attachment.texture == texture)
+            return true;
+    return false;
+}

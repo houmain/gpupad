@@ -530,6 +530,8 @@ void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
 
 SharedMemoryHandle VKTexture::getSharedMemoryHandle() const
 {
+    if (!mTexture.isValid())
+        return {};
     const auto memory = mTexture.externalMemoryHandle();
     if (memory.handle.index() == 0)
         return {};

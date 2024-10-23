@@ -54,6 +54,7 @@ enum MessageType {
     CreatingPipelineFailed,
     OpenGLRendererRequiresGLSL,
     SubroutinesNotAvailableInVulkan,
+    CantSampleAttachment,
 };
 
 struct Message

@@ -3,7 +3,10 @@
 
 extern QString simpleDoubleString(double value);
 
-ExpressionEditor::ExpressionEditor(QWidget *parent) : QPlainTextEdit(parent) { }
+ExpressionEditor::ExpressionEditor(QWidget *parent) : QPlainTextEdit(parent)
+{
+    setTabChangesFocus(true);
+}
 
 void ExpressionEditor::wheelEvent(QWheelEvent *event)
 {

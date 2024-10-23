@@ -101,6 +101,7 @@ QString MessageWindow::getMessageText(const Message &message) const
     case UniformNotSet:          return tr("Uniform '%1' not set").arg(message.text);
     case BufferNotSet:           return tr("Buffer '%1' not set").arg(message.text);
     case SamplerNotSet:          return tr("Sampler '%1' not set").arg(message.text);
+    case CantSampleAttachment:   return tr("Cannot sample attachment '%1'").arg(message.text);
     case ImageNotSet:            return tr("Image '%1' not set").arg(message.text);
     case AttributeNotSet:        return tr("Attribute '%1' not set").arg(message.text);
     case CallDuration:           return tr("Call took %1").arg(message.text);

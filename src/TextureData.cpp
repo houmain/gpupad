@@ -715,6 +715,9 @@ bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
           getWriteonlyData(0, 0, 0), OIIO::AutoStride, stride))
         return false;
 
+    if (flipVertically)
+        this->flipVertically();
+
     return true;
 #endif // OpenImageIO_FOUND
 }
