@@ -30,6 +30,13 @@ void VKTarget::setTexture(int index, VKTexture *texture)
     if (!texture)
         return;
 
+    if (const auto first = mAttachments.first().texture;
+        first && texture->samples() != first->samples()) {
+        mMessages +=
+            MessageList::insert(mItemId, MessageType::SampleCountMismatch);
+        return;
+    }
+
     const auto kind = texture->kind();
     texture->addUsage(kind.depth || kind.stencil
             ? KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit
@@ -93,6 +100,8 @@ std::vector<KDGpu::RenderTargetOptions> VKTarget::getRenderTargetOptions()
 {
     auto options = std::vector<KDGpu::RenderTargetOptions>{};
     for (const auto &attachment : qAsConst(mAttachments)) {
+        if (!attachment.texture)
+            continue;
         const auto kind = attachment.texture->kind();
         if (!kind.depth && !kind.stencil) {
             options.push_back({ 
@@ -115,6 +124,8 @@ KDGpu::DepthStencilOptions VKTarget::getDepthStencilOptions()
 {
     auto options = KDGpu::DepthStencilOptions{};
     for (const auto &attachment : qAsConst(mAttachments)) {
+        if (!attachment.texture)
+            continue;
         const auto kind = attachment.texture->kind();
         if (kind.depth || kind.stencil) {
             if (options.format != KDGpu::Format::UNDEFINED) {
@@ -163,8 +174,8 @@ KDGpu::MultisampleOptions VKTarget::getMultisampleOptions()
 KDGpu::PrimitiveOptions VKTarget::getPrimitiveOptions()
 {
     auto depthBias = KDGpu::DepthBiasOptions{};
-    for (const auto &attachment : qAsConst(mAttachments)) {
-        if (attachment.texture->kind().depth) {
+    for (const auto &attachment : qAsConst(mAttachments))
+        if (attachment.texture && attachment.texture->kind().depth) {
             depthBias.enabled = (attachment.depthClamp
                 || attachment.depthOffsetSlope
                 || attachment.depthOffsetConstant);
@@ -172,7 +183,6 @@ KDGpu::PrimitiveOptions VKTarget::getPrimitiveOptions()
             depthBias.biasSlopeFactor = attachment.depthOffsetSlope;
             depthBias.biasConstantFactor = attachment.depthOffsetConstant;
         }
-    }
 
     return KDGpu::PrimitiveOptions{
         .cullMode = toKDGpu(mCullMode),

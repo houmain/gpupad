@@ -139,6 +139,8 @@ QString MessageWindow::getMessageText(const Message &message) const
         return tr("The OpenGL renderer only supports GLSL shaders");
     case SubroutinesNotAvailableInVulkan:
         return tr("Subroutines not available in Vulkan");
+    case SampleCountMismatch:
+        return tr("Sample count of attachments does not match");
     }
     return message.text;
 }

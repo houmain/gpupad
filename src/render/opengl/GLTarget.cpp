@@ -27,6 +27,15 @@ GLTarget::GLTarget(const Target &target)
 
 void GLTarget::setAttachment(int index, GLTexture *texture)
 {
+    if (!texture)
+        return;
+
+    if (const auto first = mAttachments.first().texture;
+        first && texture->samples() != first->samples()) {
+        mMessages +=
+            MessageList::insert(mItemId, MessageType::SampleCountMismatch);
+        return;
+    }
     mAttachments[index].texture = texture;
 }
 

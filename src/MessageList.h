@@ -55,6 +55,7 @@ enum MessageType {
     OpenGLRendererRequiresGLSL,
     SubroutinesNotAvailableInVulkan,
     CantSampleAttachment,
+    SampleCountMismatch,
 };
 
 struct Message
