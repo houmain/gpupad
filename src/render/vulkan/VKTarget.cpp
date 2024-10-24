@@ -82,6 +82,8 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
                 static_cast<uint32_t>(texture->width()));
             min(renderPassOptions.framebufferHeight,
                 static_cast<uint32_t>(texture->height()));
+            min(renderPassOptions.framebufferArrayLayers,
+                static_cast<uint32_t>(texture->layers()));
 
             mUsedItems += texture->usedItems();
         }
@@ -90,6 +92,7 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
         || !renderPassOptions.framebufferHeight) {
         renderPassOptions.framebufferWidth = mDefaultWidth;
         renderPassOptions.framebufferHeight = mDefaultHeight;
+        renderPassOptions.framebufferArrayLayers = mDefaultLayers;
     }
 
     renderPassOptions.samples = getKDSampleCount(mSamples);

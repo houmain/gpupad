@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>194</width>
-    <height>248</height>
+    <width>214</width>
+    <height>264</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -34,6 +34,103 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelWidth">
+       <property name="text">
+        <string>Width</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QSpinBox" name="width">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>65536</number>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelHeight">
+       <property name="text">
+        <string>Height</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QSpinBox" name="height">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>65536</number>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelLayers">
+       <property name="text">
+        <string>Layers</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QSpinBox" name="layers">
+        <property name="minimum">
+          <number>1</number>
+        </property>
+       <property name="maximum">
+        <number>256</number>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelSamples">
+       <property name="text">
+        <string>Samples</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="samples">
+       <item>
+        <property name="text">
+         <string>1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>4</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>8</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>16</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>32</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>64</string>
+        </property>
+       </item>
+      </widget>
+     </item>
      <item row="4" column="0">
       <widget class="QLabel" name="labelCullMode">
        <property name="text">
@@ -53,6 +150,16 @@
      </item>
      <item row="5" column="1">
       <widget class="DataComboBox" name="frontFace"/>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="labelPolygonMode">
+       <property name="text">
+        <string>Polygon Mode</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="DataComboBox" name="polygonMode"/>
      </item>
      <item row="7" column="0">
       <widget class="QLabel" name="labelLogicOperation">
@@ -81,78 +188,6 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="labelWidth">
-       <property name="text">
-        <string>Width</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QSpinBox" name="width">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>65536</number>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="labelHeight">
-       <property name="text">
-        <string>Height</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="labelLayers">
-       <property name="text">
-        <string>Layers</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="labelSamples">
-       <property name="text">
-        <string>Samples</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QSpinBox" name="height">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>65536</number>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QSpinBox" name="layers">
-       <property name="maximum">
-        <number>256</number>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QSpinBox" name="samples">
-       <property name="maximum">
-        <number>256</number>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
-      <widget class="QLabel" name="labelPolygonMode">
-       <property name="text">
-        <string>Polygon Mode</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
-      <widget class="DataComboBox" name="polygonMode"/>
-     </item>
     </layout>
    </item>
   </layout>
@@ -173,7 +208,6 @@
   <tabstop>width</tabstop>
   <tabstop>height</tabstop>
   <tabstop>layers</tabstop>
-  <tabstop>samples</tabstop>
   <tabstop>cullMode</tabstop>
   <tabstop>frontFace</tabstop>
   <tabstop>polygonMode</tabstop>

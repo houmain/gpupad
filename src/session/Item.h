@@ -139,8 +139,8 @@ struct Target : Item
     QColor blendConstant{ Qt::white };
     int defaultWidth{ 1 };
     int defaultHeight{ 1 };
-    int defaultLayers{ 0 };
-    int defaultSamples{ 0 };
+    int defaultLayers{ 1 };
+    int defaultSamples{ 1 };
 };
 
 struct Attachment : Item
