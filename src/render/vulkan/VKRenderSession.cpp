@@ -104,13 +104,6 @@ namespace {
     }
 } // namespace
 
-struct VKRenderSession::GroupIteration
-{
-    int iterations;
-    int commandQueueBeginIndex;
-    int iterationsLeft;
-};
-
 struct VKRenderSession::CommandQueue
 {
     VKContext context;
@@ -377,7 +370,7 @@ void VKRenderSession::createCommandQueue()
                             iteration.commandQueueBeginIndex);
                 });
 
-                // undo pushing commands, when there is not a sinvke iteration
+                // undo pushing commands, when there is not a single iteration
                 const auto &iteration = mGroupIterations[group->id];
                 if (!iteration.iterations)
                     mCommandQueue->commands.resize(
@@ -423,11 +416,6 @@ void VKRenderSession::reuseUnmodifiedItems()
         }
         mPrevCommandQueue.reset();
     }
-}
-
-void VKRenderSession::setNextCommandQueueIndex(int index)
-{
-    mNextCommandQueueIndex = index;
 }
 
 void VKRenderSession::executeCommandQueue()

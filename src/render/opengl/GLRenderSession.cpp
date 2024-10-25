@@ -115,13 +115,6 @@ namespace {
     }
 } // namespace
 
-struct GLRenderSession::GroupIteration
-{
-    int iterations;
-    int commandQueueBeginIndex;
-    int iterationsLeft;
-};
-
 struct GLRenderSession::CommandQueue
 {
     std::vector<std::pair<ItemId, TimerQueryPtr>> timerQueries;
@@ -451,11 +444,6 @@ void GLRenderSession::reuseUnmodifiedItems()
         }
         mPrevCommandQueue.reset();
     }
-}
-
-void GLRenderSession::setNextCommandQueueIndex(int index)
-{
-    mNextCommandQueueIndex = index;
 }
 
 void GLRenderSession::executeCommandQueue()

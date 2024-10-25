@@ -32,6 +32,14 @@ public:
     bool usesKeyboardState() const;
 
 protected:
+    struct GroupIteration
+    {
+        int iterations;
+        int commandQueueBeginIndex;
+        int iterationsLeft;
+    };
+
+    void setNextCommandQueueIndex(int index);
     virtual bool updatingPreviewTextures() const;
 
     SessionModel mSessionCopy;
@@ -44,6 +52,8 @@ protected:
     EvaluationType mEvaluationType{};
     QMap<ItemId, TextureData> mModifiedTextures;
     QMap<ItemId, QByteArray> mModifiedBuffers;
+    int mNextCommandQueueIndex{};
+    QMap<ItemId, GroupIteration> mGroupIterations;
 
 private:
     MessagePtrSet mPrevMessages;

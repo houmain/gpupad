@@ -17,19 +17,15 @@ public:
 
 private:
     struct CommandQueue;
-    struct GroupIteration;
 
     void createCommandQueue();
     void reuseUnmodifiedItems();
     void executeCommandQueue();
-    void setNextCommandQueueIndex(int index);
     void downloadModifiedResources();
     void outputTimerQueries();
 
     VKRenderer &mRenderer;
     QScopedPointer<CommandQueue> mCommandQueue;
     QScopedPointer<CommandQueue> mPrevCommandQueue;
-    int mNextCommandQueueIndex{};
-    QMap<ItemId, GroupIteration> mGroupIterations;
     MessagePtrSet mTimerMessages;
 };

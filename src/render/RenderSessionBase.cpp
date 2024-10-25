@@ -137,3 +137,8 @@ bool RenderSessionBase::updatingPreviewTextures() const
 {
     return (!mItemsChanged && mEvaluationType == EvaluationType::Steady);
 }
+
+void RenderSessionBase::setNextCommandQueueIndex(int index)
+{
+    mNextCommandQueueIndex = index;
+}
