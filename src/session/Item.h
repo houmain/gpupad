@@ -29,20 +29,20 @@ struct FileItem : Item
     QString fileName;
 };
 
-struct GroupItem : Item
+struct ScopeItem : Item
 {
 };
 
-struct Root : GroupItem
+struct Root : ScopeItem
 {
 };
 
-struct Session : GroupItem
+struct Session : ScopeItem
 {
     QString renderer;
 };
 
-struct Group : GroupItem
+struct Group : ScopeItem
 {
     bool inlineScope{};
     QString iterations{ "1" };
@@ -373,11 +373,11 @@ inline const FileItem *castItem<FileItem>(const Item &item)
 }
 
 template <>
-inline const GroupItem *castItem<GroupItem>(const Item &item)
+inline const ScopeItem *castItem<ScopeItem>(const Item &item)
 {
     if (item.type == Item::Type::Root || item.type == Item::Type::Session
         || item.type == Item::Type::Group)
-        return static_cast<const GroupItem *>(&item);
+        return static_cast<const ScopeItem *>(&item);
     return nullptr;
 }
 

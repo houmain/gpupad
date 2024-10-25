@@ -193,28 +193,25 @@ void VKRenderSession::createCommandQueue()
     };
 
     session.forEachItem([&](const Item &item) {
-        if (auto groupItem = castItem<GroupItem>(item)) {
-            auto iterations = 1;
-            auto inlineScope = false;
-            if (const auto group = castItem<Group>(item)) {
-                iterations = scriptEngine.evaluateInt(group->iterations,
-                    group->id, mMessages);
-                inlineScope = group->inlineScope;
-            }
-
+        if (auto group = castItem<Group>(item)) {
             // mark begin of iteration
-            addCommand([this, groupId = groupItem->id](BindingState &) {
-                auto &iterations = mGroupIterations[groupId];
-                iterations.iterationsLeft = iterations.iterations;
+            addCommand([this, groupId = group->id](BindingState &) {
+                auto &iteration = mGroupIterations[groupId];
+                iteration.iterationsLeft = iteration.iterations;
             });
-            const auto commandQueueBeginIndex =
-                static_cast<int>(mCommandQueue->commands.size());
-            mGroupIterations[groupItem->id] = { iterations,
-                commandQueueBeginIndex, 0 };
+            auto &iteration = mGroupIterations[group->id];
+            iteration.commandQueueBeginIndex = mCommandQueue->commands.size();
+            const auto max_iterations = 1000;
+            iteration.iterations = std::min(max_iterations,
+                scriptEngine.evaluateInt(group->iterations, group->id,
+                    mMessages));
 
             // push binding scope
-            if (!inlineScope)
+            if (!group->inlineScope)
                 addCommand([](BindingState &state) { state.push({}); });
+        } else if (castItem<ScopeItem>(item)) {
+            // push binding scope
+            addCommand([](BindingState &state) { state.push({}); });
         } else if (auto script = castItem<Script>(item)) {
             mUsedItems += script->id;
         } else if (auto binding = castItem<Binding>(item)) {
@@ -356,37 +353,31 @@ void VKRenderSession::createCommandQueue()
             }
         }
 
-        // pop binding scope(s) after group's last item
-        if (!castItem<GroupItem>(&item)) {
-            auto it = &item;
-            while (it && it->parent && it->parent->items.back() == it) {
-                auto groupItem = castItem<GroupItem>(it->parent);
-                if (!groupItem)
-                    break;
+        // pop binding scope(s) after scopes's last item
+        if (!castItem<ScopeItem>(&item))
+            for (auto it = &item; it && castItem<ScopeItem>(it->parent)
+                 && it->parent->items.back() == it;
+                 it = it->parent)
+                if (auto group = castItem<Group>(it->parent)) {
+                    if (!group->inlineScope)
+                        addCommand([](BindingState &state) { state.pop(); });
 
-                auto inlineScope = false;
-                if (auto group = castItem<Group>(groupItem))
-                    inlineScope = group->inlineScope;
-                if (!inlineScope)
-                    addCommand([](BindingState &state) { state.pop(); });
-
-                addCommand([this, groupId = groupItem->id](BindingState &) {
                     // jump to begin of group
-                    auto &iteration = mGroupIterations[groupId];
-                    if (--iteration.iterationsLeft > 0)
-                        setNextCommandQueueIndex(
+                    addCommand([this, groupId = group->id](BindingState &) {
+                        auto &iteration = mGroupIterations[groupId];
+                        if (--iteration.iterationsLeft > 0)
+                            setNextCommandQueueIndex(
+                                iteration.commandQueueBeginIndex);
+                    });
+
+                    // undo pushing commands, when there is not a single iteration
+                    const auto &iteration = mGroupIterations[group->id];
+                    if (!iteration.iterations)
+                        mCommandQueue->commands.resize(
                             iteration.commandQueueBeginIndex);
-                });
-
-                // undo pushing commands, when there is not a single iteration
-                const auto &iteration = mGroupIterations[groupItem->id];
-                if (!iteration.iterations)
-                    mCommandQueue->commands.resize(
-                        iteration.commandQueueBeginIndex);
-
-                it = it->parent;
-            }
-        }
+                } else {
+                    addCommand([](BindingState &state) { state.pop(); });
+                }
     });
 }
 
@@ -434,8 +425,7 @@ void VKRenderSession::executeCommandQueue()
     mCommandQueue->context.timestampQueries.clear();
 
     mNextCommandQueueIndex = 0;
-    while (mNextCommandQueueIndex
-        < static_cast<int>(mCommandQueue->commands.size())) {
+    while (mNextCommandQueueIndex < mCommandQueue->commands.size()) {
         const auto index = mNextCommandQueueIndex++;
         // executing command might call setNextCommandQueueIndex
         mCommandQueue->commands[index](state);

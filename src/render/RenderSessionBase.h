@@ -34,12 +34,12 @@ public:
 protected:
     struct GroupIteration
     {
+        size_t commandQueueBeginIndex;
         int iterations;
-        int commandQueueBeginIndex;
         int iterationsLeft;
     };
 
-    void setNextCommandQueueIndex(int index);
+    void setNextCommandQueueIndex(size_t index);
     virtual bool updatingPreviewTextures() const;
 
     SessionModel mSessionCopy;
@@ -52,7 +52,7 @@ protected:
     EvaluationType mEvaluationType{};
     QMap<ItemId, TextureData> mModifiedTextures;
     QMap<ItemId, QByteArray> mModifiedBuffers;
-    int mNextCommandQueueIndex{};
+    size_t mNextCommandQueueIndex{};
     QMap<ItemId, GroupIteration> mGroupIterations;
 
 private:
