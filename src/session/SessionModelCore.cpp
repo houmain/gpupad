@@ -85,6 +85,7 @@ namespace {
     Item *allocateItem(Item::Type type)
     {
         switch (type) {
+        case Item::Type::Session:    return new Session();
         case Item::Type::Group:      return new Group();
         case Item::Type::Buffer:     return new Buffer();
         case Item::Type::Block:      return new Block();
@@ -151,7 +152,6 @@ namespace {
 
 SessionModelCore::SessionModelCore(QObject *parent)
     : QAbstractItemModel(parent)
-    , mRoot(new Group())
 {
 }
 
@@ -160,12 +160,12 @@ SessionModelCore &SessionModelCore::operator=(const SessionModelCore &rhs)
     if (this != &rhs) {
         clear();
 
-        for (auto item : qAsConst(rhs.mRoot->items)) {
-            mRoot->items.append(cloneItem(*item));
-            mRoot->items.back()->parent = mRoot.get();
+        for (auto item : qAsConst(rhs.mRoot.items)) {
+            mRoot.items.append(cloneItem(*item));
+            mRoot.items.back()->parent = &mRoot;
         }
 
-        forEachItem(*mRoot,
+        forEachItem(mRoot,
             [&](const Item &item) { mItemsById.insert(item.id, &item); });
 
         mNextItemId = rhs.mNextItemId;
@@ -206,6 +206,8 @@ bool SessionModelCore::canContainType(const QModelIndex &index,
     Item::Type type) const
 {
     switch (getItemType(index)) {
+    case Item::Type::Root:
+    case Item::Type::Session:
     case Item::Type::Group:
         switch (type) {
         case Item::Type::Group:
@@ -262,7 +264,7 @@ int SessionModelCore::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return getItem(parent).items.size();
-    return mRoot->items.size();
+    return mRoot.items.size();
 }
 
 int SessionModelCore::columnCount(const QModelIndex &parent) const
@@ -452,7 +454,7 @@ const Item *SessionModelCore::findItem(ItemId id) const
 QModelIndex SessionModelCore::getIndex(const Item *item,
     ColumnType column) const
 {
-    if (!item || item == mRoot.data())
+    if (!item || item == &mRoot)
         return {};
 
     auto itemPtr = const_cast<Item *>(item);
@@ -469,14 +471,14 @@ const Item &SessionModelCore::getItem(const QModelIndex &index) const
 {
     if (index.isValid())
         return *static_cast<const Item *>(index.internalPointer());
-    return *mRoot;
+    return mRoot;
 }
 
 Item &SessionModelCore::getItemRef(const QModelIndex &index)
 {
     if (index.isValid())
         return *static_cast<Item *>(index.internalPointer());
-    return *mRoot;
+    return mRoot;
 }
 
 ItemId SessionModelCore::getItemId(const QModelIndex &index) const

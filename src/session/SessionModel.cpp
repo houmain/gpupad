@@ -10,6 +10,7 @@
 
 SessionModel::SessionModel(QObject *parent) : SessionModelCore(parent)
 {
+    mTypeIcons[Item::Type::Session] = QIcon::fromTheme("mail-attachment");
     mTypeIcons[Item::Type::Group] = QIcon::fromTheme("folder");
     mTypeIcons[Item::Type::Buffer] = QIcon::fromTheme("x-office-spreadsheet");
     mTypeIcons[Item::Type::Block] = QIcon::fromTheme("format-justify-left");
@@ -110,6 +111,7 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     flags |= Qt::ItemIsDragEnabled;
     flags |= Qt::ItemIsUserCheckable;
     switch (type) {
+    case Item::Type::Session:
     case Item::Type::Group:
     case Item::Type::Buffer:
     case Item::Type::Block:

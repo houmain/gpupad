@@ -193,22 +193,27 @@ void VKRenderSession::createCommandQueue()
     };
 
     session.forEachItem([&](const Item &item) {
-        if (auto group = castItem<Group>(item)) {
-            const auto iterations = scriptEngine.evaluateInt(group->iterations,
-                group->id, mMessages);
+        if (auto groupItem = castItem<GroupItem>(item)) {
+            auto iterations = 1;
+            auto inlineScope = false;
+            if (const auto group = castItem<Group>(item)) {
+                iterations = scriptEngine.evaluateInt(group->iterations,
+                    group->id, mMessages);
+                inlineScope = group->inlineScope;
+            }
 
             // mark begin of iteration
-            addCommand([this, groupId = group->id](BindingState &) {
+            addCommand([this, groupId = groupItem->id](BindingState &) {
                 auto &iterations = mGroupIterations[groupId];
                 iterations.iterationsLeft = iterations.iterations;
             });
             const auto commandQueueBeginIndex =
                 static_cast<int>(mCommandQueue->commands.size());
-            mGroupIterations[group->id] = { iterations, commandQueueBeginIndex,
-                0 };
+            mGroupIterations[groupItem->id] = { iterations,
+                commandQueueBeginIndex, 0 };
 
             // push binding scope
-            if (!group->inlineScope)
+            if (!inlineScope)
                 addCommand([](BindingState &state) { state.push({}); });
         } else if (auto script = castItem<Script>(item)) {
             mUsedItems += script->id;
@@ -351,18 +356,21 @@ void VKRenderSession::createCommandQueue()
             }
         }
 
-        // pop binding scope(s) after last group item
-        if (!castItem<Group>(&item)) {
+        // pop binding scope(s) after group's last item
+        if (!castItem<GroupItem>(&item)) {
             auto it = &item;
             while (it && it->parent && it->parent->items.back() == it) {
-                auto group = castItem<Group>(it->parent);
-                if (!group)
+                auto groupItem = castItem<GroupItem>(it->parent);
+                if (!groupItem)
                     break;
 
-                if (!group->inlineScope)
+                auto inlineScope = false;
+                if (auto group = castItem<Group>(groupItem))
+                    inlineScope = group->inlineScope;
+                if (!inlineScope)
                     addCommand([](BindingState &state) { state.pop(); });
 
-                addCommand([this, groupId = group->id](BindingState &) {
+                addCommand([this, groupId = groupItem->id](BindingState &) {
                     // jump to begin of group
                     auto &iteration = mGroupIterations[groupId];
                     if (--iteration.iterationsLeft > 0)
@@ -371,7 +379,7 @@ void VKRenderSession::createCommandQueue()
                 });
 
                 // undo pushing commands, when there is not a single iteration
-                const auto &iteration = mGroupIterations[group->id];
+                const auto &iteration = mGroupIterations[groupItem->id];
                 if (!iteration.iterations)
                     mCommandQueue->commands.resize(
                         iteration.commandQueueBeginIndex);

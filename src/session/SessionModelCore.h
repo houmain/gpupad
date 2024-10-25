@@ -13,6 +13,7 @@ public:
         None,
         FileName,
 
+        SessionRenderer,
         GroupInlineScope,
         GroupIterations,
         BlockOffset,
@@ -171,7 +172,7 @@ public:
     }
 
 protected:
-    const Group &root() const { return *mRoot; }
+    const Root &root() const { return mRoot; }
     QUndoStack &undoStack() { return mUndoStack; }
 
 private:
@@ -194,7 +195,7 @@ private:
         QString fileName);
 
     ItemId mNextItemId{ 1 };
-    QScopedPointer<Group> mRoot;
+    Root mRoot;
     QUndoStack mUndoStack;
     QMap<ItemId, const Item *> mItemsById;
 };

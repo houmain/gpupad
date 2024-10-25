@@ -344,10 +344,8 @@ void SessionEditor::addItem(Item::Type type)
 {
     mModel.beginUndoMacro("Add");
 
-    auto addingToGroup = (currentIndex().isValid()
-        && mModel.getItemType(currentIndex()) == Item::Type::Group);
-    auto index =
-        mModel.insertItem(type, currentIndex(), addingToGroup ? 0 : -1);
+    const auto index = mModel.insertItem(type, currentIndex(),
+        mModel.item<GroupItem>(currentIndex()) ? 0 : -1);
 
     if (type == Item::Type::Buffer) {
         const auto block = mModel.insertItem(Item::Type::Block, index);
@@ -380,7 +378,7 @@ void SessionEditor::activateFirstTextureItem()
 
 void SessionEditor::handleItemActivated(const QModelIndex &index)
 {
-    if (mModel.getItemType(index) == Item::Type::Group) {
+    if (mModel.item<GroupItem>(index)) {
         setExpanded(index, !isExpanded(index));
     } else {
         Q_EMIT itemActivated(index);

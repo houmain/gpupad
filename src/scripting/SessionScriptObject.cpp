@@ -206,6 +206,7 @@ namespace {
     bool canHaveItems(Item::Type type)
     {
         switch (type) {
+        case Item::Type::Session:
         case Item::Type::Group:
         case Item::Type::Buffer:
         case Item::Type::Block:

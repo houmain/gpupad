@@ -29,7 +29,20 @@ struct FileItem : Item
     QString fileName;
 };
 
-struct Group : Item
+struct GroupItem : Item
+{
+};
+
+struct Root : GroupItem
+{
+};
+
+struct Session : GroupItem
+{
+    QString renderer;
+};
+
+struct Group : GroupItem
 {
     bool inlineScope{};
     QString iterations{ "1" };
@@ -267,6 +280,11 @@ Shader::Language getShaderLanguage(SourceType sourceType);
 template <typename T>
 Item::Type getItemType();
 template <>
+inline Item::Type getItemType<Session>()
+{
+    return Item::Type::Session;
+}
+template <>
 inline Item::Type getItemType<Group>()
 {
     return Item::Type::Group;
@@ -351,6 +369,15 @@ inline const FileItem *castItem<FileItem>(const Item &item)
     if (item.type == Item::Type::Buffer || item.type == Item::Type::Texture
         || item.type == Item::Type::Shader || item.type == Item::Type::Script)
         return static_cast<const FileItem *>(&item);
+    return nullptr;
+}
+
+template <>
+inline const GroupItem *castItem<GroupItem>(const Item &item)
+{
+    if (item.type == Item::Type::Root || item.type == Item::Type::Session
+        || item.type == Item::Type::Group)
+        return static_cast<const GroupItem *>(&item);
     return nullptr;
 }
 

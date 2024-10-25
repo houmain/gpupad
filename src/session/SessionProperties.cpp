@@ -92,6 +92,10 @@ SessionProperties::SessionProperties(QWidget *parent)
         ui->setupUi(widget);
         mStack->addWidget(widget);
     };
+    mRootProperties = new QWidget(this);
+    mStack->addWidget(mRootProperties);
+    mSessionProperties = new QWidget(this);
+    mStack->addWidget(mSessionProperties);
     add(mGroupProperties);
     add(mBufferProperties);
     add(mBlockProperties);
@@ -110,7 +114,6 @@ SessionProperties::SessionProperties(QWidget *parent)
     mCallProperties = new CallProperties(this);
     mStack->addWidget(mCallProperties);
     add(mScriptProperties);
-    mStack->addWidget(new QWidget(this));
 
     setWidgetResizable(true);
     setWidget(mStack);
@@ -289,7 +292,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
     mMapper->clearMapping();
 
     if (!index.isValid()) {
-        mStack->setCurrentIndex(mStack->count() - 1);
+        mStack->setCurrentIndex(0);
         setVisible(false);
         return;
     }
@@ -306,6 +309,10 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
     };
 
     switch (mModel.getItemType(index)) {
+    case Item::Type::Root: break;
+
+    case Item::Type::Session: break;
+
     case Item::Type::Group:
         map(mGroupProperties->inlineScope, SessionModel::GroupInlineScope);
         map(mGroupProperties->iterations, SessionModel::GroupIterations);
@@ -382,7 +389,14 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
     mMapper->setRootIndex(mModel.parent(index));
     mMapper->setCurrentModelIndex(index);
 
-    mStack->setCurrentIndex(static_cast<int>(mModel.getItemType(index)));
+    // values of Item::Type must match order of Stack Widgets
+    static_assert(static_cast<int>(Item::Type::Root) == 0);
+    static_assert(static_cast<int>(Item::Type::Script) == 15);
+    const auto lastStackWidget = static_cast<Item::Type>(mStack->count() - 1);
+    Q_ASSERT(lastStackWidget == Item::Type::Script);
+    
+    const auto stackIndex = static_cast<int>(mModel.getItemType(index));
+    mStack->setCurrentIndex(stackIndex);
 }
 
 IEditor *SessionProperties::openEditor(const FileItem &fileItem)

@@ -67,6 +67,8 @@ private:
     QStackedWidget *mStack;
     QDataWidgetMapper *mMapper;
     QTimer *mSubmitTimer;
+    QWidget *mRootProperties{};
+    QWidget *mSessionProperties{};
     QScopedPointer<Ui::GroupProperties> mGroupProperties;
     QScopedPointer<Ui::BlockProperties> mBlockProperties;
     QScopedPointer<Ui::BufferProperties> mBufferProperties;

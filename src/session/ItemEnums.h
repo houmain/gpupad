@@ -11,6 +11,8 @@ namespace ItemEnums {
     Q_NAMESPACE
 
     enum class ItemType {
+        Root,
+        Session,
         Group,
         Buffer,
         Block,
