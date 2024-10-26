@@ -10,7 +10,7 @@
 
 SessionModel::SessionModel(QObject *parent) : SessionModelCore(parent)
 {
-    mTypeIcons[Item::Type::Session] = QIcon::fromTheme("mail-attachment");
+    mTypeIcons[Item::Type::Session] = QIcon::fromTheme("folder");
     mTypeIcons[Item::Type::Group] = QIcon::fromTheme("folder");
     mTypeIcons[Item::Type::Buffer] = QIcon::fromTheme("x-office-spreadsheet");
     mTypeIcons[Item::Type::Block] = QIcon::fromTheme("format-justify-left");
@@ -108,9 +108,11 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     flags |= Qt::ItemIsSelectable;
     flags |= Qt::ItemIsEnabled;
     flags |= Qt::ItemIsEditable;
-    flags |= Qt::ItemIsDragEnabled;
     flags |= Qt::ItemIsUserCheckable;
+    if (type != Item::Type::Session)
+        flags |= Qt::ItemIsDragEnabled;
     switch (type) {
+    case Item::Type::Root:
     case Item::Type::Session:
     case Item::Type::Group:
     case Item::Type::Buffer:
@@ -292,13 +294,21 @@ bool SessionModel::load(const QString &fileName)
     QDir::setCurrent(QFileInfo(fileName).path());
     QMimeData data;
     data.setText(file.readAll());
-    if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, {}))
-        return false;
+    
+    // try to drop items in session
+    auto target = index(0, 0);
+    if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, target)) {
+        // try to replace session with dropped session
+        if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, { }))
+            return false;
+        deleteItem(QModelIndex());
+        target = { };            
+    }
 
     undoStack().clear();
     undoStack().setUndoLimit(1);
 
-    dropMimeData(&data, Qt::CopyAction, 0, 0, {});
+    dropMimeData(&data, Qt::CopyAction, 0, 0, target);
 
     undoStack().clear();
     undoStack().setUndoLimit(0);

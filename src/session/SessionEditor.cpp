@@ -28,6 +28,7 @@ SessionEditor::SessionEditor(QWidget *parent)
     setContextMenuPolicy(Qt::CustomContextMenu);
     setAutoExpandDelay(750);
     setFileName({});
+    setRootIsDecorated(false);
 
     connect(this, &QTreeView::activated, this,
         &SessionEditor::handleItemActivated);
@@ -131,11 +132,6 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
     if (qApp->focusWidget() != this)
         return c;
 
-    const auto hasSelection = currentIndex().isValid();
-    actions.cut->setEnabled(hasSelection);
-    actions.copy->setEnabled(hasSelection);
-    actions.delete_->setEnabled(hasSelection);
-    actions.paste->setEnabled(canPaste());
     c += connect(actions.cut, &QAction::triggered, this, &SessionEditor::cut);
     c += connect(actions.copy, &QAction::triggered, this, &SessionEditor::copy);
     c += connect(actions.paste, &QAction::triggered, this,
@@ -145,18 +141,21 @@ QList<QMetaObject::Connection> SessionEditor::connectEditActions(
     c += connect(actions.rename, &QAction::triggered, this,
         &SessionEditor::renameCurrentItem);
 
-    auto updateEditActions = [this, actions]() {
-        actions.cut->setEnabled(hasFocus() && currentIndex().isValid());
-        actions.copy->setEnabled(hasFocus() && currentIndex().isValid());
-        actions.delete_->setEnabled(hasFocus() && currentIndex().isValid());
+    const auto updateEditActions = [this, actions]() {
+        const auto isItemSelected = hasFocus() && currentIndex().isValid()
+            && mModel.getItemType(currentIndex()) != Item::Type::Session;
+        actions.cut->setEnabled(isItemSelected);
+        actions.copy->setEnabled(isItemSelected);
+        actions.delete_->setEnabled(isItemSelected);
+        actions.rename->setEnabled(isItemSelected);
         actions.paste->setEnabled(hasFocus() && canPaste());
-        actions.rename->setEnabled(hasFocus() && currentIndex().isValid());
     };
     c += connect(selectionModel(), &QItemSelectionModel::currentChanged,
         updateEditActions);
     c += connect(this, &SessionEditor::focusChanged, updateEditActions);
     c += connect(QApplication::clipboard(), &QClipboard::changed,
         updateEditActions);
+    updateEditActions();
 
     auto pos = mContextMenu->actions().constFirst();
     if (pos != actions.undo) {
@@ -288,10 +287,9 @@ void SessionEditor::paste()
         if (!mModel.canDropMimeData(mimeData, Qt::CopyAction, row, column,
                 parent))
             return false;
-        mModel.beginUndoMacro("Paste");
+
         const auto dropped =
             mModel.dropMimeData(mimeData, Qt::CopyAction, row, column, parent);
-        mModel.endUndoMacro();
         if (dropped) {
             if (row < 0)
                 row = mModel.rowCount(parent) - 1;
@@ -328,6 +326,13 @@ void SessionEditor::setCurrentItem(ItemId itemId)
         setCurrentIndex(index);
         scrollTo(index);
     }
+}
+
+void SessionEditor::selectSession()
+{
+    const auto index = mModel.index(0, 0);
+    setCurrentIndex(index);
+    expand(index);
 }
 
 void SessionEditor::openContextMenu(const QPoint &pos)
@@ -378,7 +383,7 @@ void SessionEditor::activateFirstTextureItem()
 
 void SessionEditor::handleItemActivated(const QModelIndex &index)
 {
-    if (mModel.item<ScopeItem>(index)) {
+    if (mModel.item<Group>(index)) {
         setExpanded(index, !isExpanded(index));
     } else {
         Q_EMIT itemActivated(index);

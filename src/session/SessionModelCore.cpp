@@ -109,6 +109,8 @@ namespace {
     {
         const auto copy = [&]() -> Item * {
             switch (item.type) {
+            case Item::Type::Session:
+                return new Session(static_cast<const Session &>(item));
             case Item::Type::Group:
                 return new Group(static_cast<const Group &>(item));
             case Item::Type::Buffer:
@@ -150,9 +152,9 @@ namespace {
     }
 } // namespace
 
-SessionModelCore::SessionModelCore(QObject *parent)
-    : QAbstractItemModel(parent)
+SessionModelCore::SessionModelCore(QObject *parent) : QAbstractItemModel(parent)
 {
+    clear();
 }
 
 SessionModelCore &SessionModelCore::operator=(const SessionModelCore &rhs)
@@ -175,7 +177,7 @@ SessionModelCore &SessionModelCore::operator=(const SessionModelCore &rhs)
 
 SessionModelCore::~SessionModelCore()
 {
-    Q_ASSERT(rowCount() == 0);
+    Q_ASSERT(rowCount() == 1);
     Q_ASSERT(undoStack().isClean());
 }
 
@@ -185,6 +187,7 @@ void SessionModelCore::clear()
     undoStack().setUndoLimit(1);
 
     deleteItem(QModelIndex());
+    insertItem(Item::Type::Session, QModelIndex());
 
     undoStack().clear();
     undoStack().setUndoLimit(0);
@@ -206,7 +209,7 @@ bool SessionModelCore::canContainType(const QModelIndex &index,
     Item::Type type) const
 {
     switch (getItemType(index)) {
-    case Item::Type::Root:
+    case Item::Type::Root: return (type == Item::Type::Session);
     case Item::Type::Session:
     case Item::Type::Group:
         switch (type) {
