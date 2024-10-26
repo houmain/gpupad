@@ -28,6 +28,14 @@ ScriptValueList ScriptEngine::evaluateValues(
 ScriptValue ScriptEngine::evaluateValue(const QString &valueExpression,
     ItemId itemId, MessagePtrSet &messages)
 {
+    // fast path, when expression is empty or a number
+    if (valueExpression.isEmpty())
+        return 0.0;
+    auto ok = false;
+    auto value = valueExpression.toDouble(&ok);
+    if (ok)
+        return value;
+
     const auto values = evaluateValues(valueExpression, itemId, messages);
     return (values.isEmpty() ? 0.0 : values.first());
 }
@@ -35,6 +43,9 @@ ScriptValue ScriptEngine::evaluateValue(const QString &valueExpression,
 int ScriptEngine::evaluateInt(const QString &valueExpression, ItemId itemId,
     MessagePtrSet &messages)
 {
-    return static_cast<int>(
-        evaluateValue(valueExpression, itemId, messages) + 0.5);
+    const auto value = evaluateValue(valueExpression, itemId, messages);
+    Q_ASSERT(std::isfinite(value));
+    if (!std::isfinite(value))
+        return 0;
+    return static_cast<int>(value + 0.5);
 }
