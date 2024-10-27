@@ -184,6 +184,8 @@ set(SOURCES
   src/session/ShaderProperties.ui
   src/session/StreamProperties.ui
   src/session/TargetProperties.ui
+  src/session/SessionProperties.cpp
+  src/session/SessionProperties.ui
   src/session/TextureProperties.cpp
   src/session/TextureProperties.ui)
 

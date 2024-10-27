@@ -30,9 +30,8 @@ CallProperties::CallProperties(PropertiesEditor *propertiesEditor)
                 return mPropertiesEditor.getItemName(data.toInt());
             });
 
-    connect(mUi->program, &ReferenceComboBox::listRequired, [this]() {
-        return mPropertiesEditor.getItemIds(Item::Type::Program);
-    });
+    connect(mUi->program, &ReferenceComboBox::listRequired,
+        [this]() { return mPropertiesEditor.getItemIds(Item::Type::Program); });
     connect(mUi->vertexStream, &ReferenceComboBox::listRequired, [this]() {
         return mPropertiesEditor.getItemIds(Item::Type::Stream, true);
     });

@@ -30,6 +30,7 @@ class TextureProperties;
 class BindingProperties;
 class CallProperties;
 class AttachmentProperties;
+class SessionProperties;
 
 class PropertiesEditor final : public QScrollArea
 {
@@ -68,7 +69,7 @@ private:
     QDataWidgetMapper *mMapper;
     QTimer *mSubmitTimer;
     QWidget *mRootProperties{};
-    QWidget *mPropertiesEditor{};
+    SessionProperties *mSessionProperties{};
     QScopedPointer<Ui::GroupProperties> mGroupProperties;
     QScopedPointer<Ui::BlockProperties> mBlockProperties;
     QScopedPointer<Ui::BufferProperties> mBufferProperties;

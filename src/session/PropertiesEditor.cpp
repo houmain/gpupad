@@ -2,6 +2,7 @@
 #include "AttachmentProperties.h"
 #include "BindingProperties.h"
 #include "CallProperties.h"
+#include "SessionProperties.h"
 #include "EvaluatedPropertyCache.h"
 #include "FileCache.h"
 #include "SessionModel.h"
@@ -94,8 +95,8 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     };
     mRootProperties = new QWidget(this);
     mStack->addWidget(mRootProperties);
-    mPropertiesEditor = new QWidget(this);
-    mStack->addWidget(mPropertiesEditor);
+    mSessionProperties = new SessionProperties(this);
+    mStack->addWidget(mSessionProperties);
     add(mGroupProperties);
     add(mBufferProperties);
     add(mBlockProperties);
@@ -199,7 +200,7 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     mShaderProperties->globalIncludePaths->setText(
         settings.shaderIncludePaths());
 
-    setCurrentModelIndex({});
+    setCurrentModelIndex(mModel.index(0, 0));
     fillComboBoxes();
 }
 
@@ -219,8 +220,7 @@ void PropertiesEditor::fillComboBoxes()
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
 }
 
-QVariantList PropertiesEditor::getFileNames(Item::Type type,
-    bool addNull) const
+QVariantList PropertiesEditor::getFileNames(Item::Type type, bool addNull) const
 {
     auto result = QVariantList();
     if (addNull)
@@ -291,18 +291,8 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
     mMapper->submit();
     mMapper->clearMapping();
 
-    if (!index.isValid()) {
-        mStack->setCurrentIndex(0);
-        setVisible(false);
-        return;
-    }
-
-    // show when item has properties
-    switch (mModel.getItemType(index)) {
-    case Item::Type::Program:
-    case Item::Type::Stream:  break;
-    default:                  setVisible(true);
-    }
+    if (!index.isValid())
+        return mStack->setCurrentIndex(0);
 
     const auto map = [&](QWidget *control, SessionModel::ColumnType column) {
         mMapper->addMapping(control, column);
@@ -311,7 +301,7 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
     switch (mModel.getItemType(index)) {
     case Item::Type::Root: break;
 
-    case Item::Type::Session: break;
+    case Item::Type::Session: mSessionProperties->addMappings(*mMapper); break;
 
     case Item::Type::Group:
         map(mGroupProperties->inlineScope, SessionModel::GroupInlineScope);
@@ -394,7 +384,7 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
     static_assert(static_cast<int>(Item::Type::Script) == 15);
     const auto lastStackWidget = static_cast<Item::Type>(mStack->count() - 1);
     Q_ASSERT(lastStackWidget == Item::Type::Script);
-    
+
     const auto stackIndex = static_cast<int>(mModel.getItemType(index));
     mStack->setCurrentIndex(stackIndex);
 }

@@ -15,9 +15,8 @@ AttachmentProperties::AttachmentProperties(PropertiesEditor *propertiesEditor)
     QCoreApplication::setAttribute(
         Qt::AA_UseStyleSheetPropagationInWidgetStyles, true);
 
-    connect(mUi->texture, &ReferenceComboBox::listRequired, [this]() {
-        return mPropertiesEditor.getItemIds(Item::Type::Texture);
-    });
+    connect(mUi->texture, &ReferenceComboBox::listRequired,
+        [this]() { return mPropertiesEditor.getItemIds(Item::Type::Texture); });
     connect(mUi->texture, &ReferenceComboBox::textRequired,
         [this](QVariant data) {
             return mPropertiesEditor.getItemName(data.toInt());

@@ -73,6 +73,8 @@ SessionEditor::SessionEditor(QWidget *parent)
     QPalette p = palette();
     p.setColor(QPalette::Window, 0xCCCCCC);
     setPalette(p);
+
+    selectSession();
 }
 
 void SessionEditor::addItemActions(QMenu *menu)
@@ -231,6 +233,7 @@ bool SessionEditor::clear()
     mModel.clear();
     if (!FileDialog::isUntitled(mFileName))
         setFileName({});
+    selectSession();
     return true;
 }
 
@@ -250,7 +253,7 @@ bool SessionEditor::load()
 {
     if (!mModel.load(mFileName))
         return false;
-
+    selectSession();
     return true;
 }
 
@@ -338,7 +341,7 @@ void SessionEditor::selectSession()
 void SessionEditor::openContextMenu(const QPoint &pos)
 {
     if (!indexAt(pos).isValid())
-        setCurrentIndex({});
+        selectSession();
 
     updateItemActions();
 
@@ -349,8 +352,7 @@ void SessionEditor::addItem(Item::Type type)
 {
     mModel.beginUndoMacro("Add");
 
-    const auto index = mModel.insertItem(type, currentIndex(),
-        mModel.item<ScopeItem>(currentIndex()) ? 0 : -1);
+    const auto index = mModel.insertItem(type, currentIndex(), -1);
 
     if (type == Item::Type::Buffer) {
         const auto block = mModel.insertItem(Item::Type::Block, index);

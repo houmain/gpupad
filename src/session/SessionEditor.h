@@ -52,6 +52,7 @@ private:
     void renameCurrentItem();
     bool canPaste() const;
     void handleItemActivated(const QModelIndex &index);
+    void selectSession();
 
     SessionModel &mModel;
     QMenu *mContextMenu{};
