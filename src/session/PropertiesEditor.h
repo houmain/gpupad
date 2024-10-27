@@ -31,12 +31,12 @@ class BindingProperties;
 class CallProperties;
 class AttachmentProperties;
 
-class SessionProperties final : public QScrollArea
+class PropertiesEditor final : public QScrollArea
 {
     Q_OBJECT
 public:
-    explicit SessionProperties(QWidget *parent = nullptr);
-    ~SessionProperties();
+    explicit PropertiesEditor(QWidget *parent = nullptr);
+    ~PropertiesEditor();
 
     SessionModel &model() { return mModel; }
     void updateModel();
@@ -68,7 +68,7 @@ private:
     QDataWidgetMapper *mMapper;
     QTimer *mSubmitTimer;
     QWidget *mRootProperties{};
-    QWidget *mSessionProperties{};
+    QWidget *mPropertiesEditor{};
     QScopedPointer<Ui::GroupProperties> mGroupProperties;
     QScopedPointer<Ui::BlockProperties> mBlockProperties;
     QScopedPointer<Ui::BufferProperties> mBufferProperties;

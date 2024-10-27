@@ -9,13 +9,13 @@ namespace Ui {
 }
 
 class QDataWidgetMapper;
-class SessionProperties;
+class PropertiesEditor;
 
 class CallProperties final : public QWidget
 {
     Q_OBJECT
 public:
-    explicit CallProperties(SessionProperties *sessionProperties);
+    explicit CallProperties(PropertiesEditor *propertiesEditor);
     ~CallProperties();
 
     Call::CallType currentType() const;
@@ -27,6 +27,6 @@ public:
 private:
     void updateWidgets();
 
-    SessionProperties &mSessionProperties;
+    PropertiesEditor &mPropertiesEditor;
     Ui::CallProperties *mUi;
 };

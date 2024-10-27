@@ -7,7 +7,7 @@ namespace Ui {
     class TextureProperties;
 }
 
-class SessionProperties;
+class PropertiesEditor;
 class QDataWidgetMapper;
 
 class TextureProperties final : public QWidget
@@ -16,7 +16,7 @@ class TextureProperties final : public QWidget
     Q_PROPERTY(QVariant format READ format WRITE setFormat NOTIFY formatChanged
             USER true)
 public:
-    explicit TextureProperties(SessionProperties *sessionProperties);
+    explicit TextureProperties(PropertiesEditor *propertiesEditor);
     ~TextureProperties();
 
     QVariant format() const { return static_cast<int>(mFormat); }
@@ -34,7 +34,7 @@ private:
     void updateFormat(QVariant formatData);
     void applyFileFormat();
 
-    SessionProperties &mSessionProperties;
+    PropertiesEditor &mPropertiesEditor;
     Ui::TextureProperties *mUi;
     Texture::Format mFormat{};
     bool mSuspendUpdateFormat{};

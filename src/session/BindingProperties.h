@@ -8,7 +8,7 @@ namespace Ui {
     class BindingProperties;
 }
 
-class SessionProperties;
+class PropertiesEditor;
 class QDataWidgetMapper;
 
 class BindingProperties final : public QWidget
@@ -17,7 +17,7 @@ class BindingProperties final : public QWidget
     Q_PROPERTY(QStringList values READ values WRITE setValues NOTIFY
             valuesChanged USER true)
 public:
-    explicit BindingProperties(SessionProperties *sessionProperties);
+    explicit BindingProperties(PropertiesEditor *propertiesEditor);
     ~BindingProperties();
 
     void addMappings(QDataWidgetMapper &mapper);
@@ -36,7 +36,7 @@ private:
     int getBufferStride(QVariant blockId) const;
     void filterImageFormats(int stride);
 
-    SessionProperties &mSessionProperties;
+    PropertiesEditor &mPropertiesEditor;
     Ui::BindingProperties *mUi;
     QStringList mValues;
     bool mSuspendSetValues{};

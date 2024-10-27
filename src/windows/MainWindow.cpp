@@ -18,7 +18,7 @@
 #include "scripting/CustomActions.h"
 #include "session/SessionEditor.h"
 #include "session/SessionModel.h"
-#include "session/SessionProperties.h"
+#include "session/PropertiesEditor.h"
 #include "ui_MainWindow.h"
 #include <QActionGroup>
 #include <QCloseEvent>
@@ -49,7 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
     , mFileBrowserWindow(new FileBrowserWindow())
     , mEditorManager(Singletons::editorManager())
     , mSessionEditor(new SessionEditor())
-    , mSessionProperties(new SessionProperties())
+    , mPropertiesEditor(new PropertiesEditor())
 {
     mUi->setupUi(this);
     setFont(qApp->font());
@@ -127,9 +127,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     mSessionSplitter = new AutoOrientationSplitter(this);
     mSessionSplitter->addWidget(mSessionEditor.data());
-    mSessionSplitter->addWidget(mSessionProperties.data());
+    mSessionSplitter->addWidget(mPropertiesEditor.data());
     mSessionEditor->setMinimumSize(100, 100);
-    mSessionProperties->setMinimumSize(100, 100);
+    mPropertiesEditor->setMinimumSize(100, 100);
 
     dock = new QDockWidget(tr("Session"), this);
     dock->setObjectName("Session");
@@ -277,12 +277,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->actionFullScreen, &QAction::triggered, this,
         &MainWindow::setFullScreen);
     connect(mSessionEditor->selectionModel(),
-        &QItemSelectionModel::currentChanged, mSessionProperties.data(),
-        &SessionProperties::setCurrentModelIndex);
+        &QItemSelectionModel::currentChanged, mPropertiesEditor.data(),
+        &PropertiesEditor::setCurrentModelIndex);
     connect(mSessionEditor.data(), &SessionEditor::itemAdded, this,
         &MainWindow::openSessionDock);
     connect(mSessionEditor.data(), &SessionEditor::itemActivated,
-        mSessionProperties.data(), &SessionProperties::openItemEditor);
+        mPropertiesEditor.data(), &PropertiesEditor::openItemEditor);
     connect(mUi->menuSession, &QMenu::aboutToShow, mSessionEditor.data(),
         &SessionEditor::updateItemActions);
     connect(&mEditorManager, &DockWindow::openNewDock, this,
@@ -900,7 +900,7 @@ bool MainWindow::restoreSessionState(const QString &sessionFileName)
             auto isItemId = false;
             if (const auto itemId = identifier.toInt(&isItemId); isItemId) {
                 if (auto item = model.findItem(itemId))
-                    if (auto editor = mSessionProperties->openItemEditor(
+                    if (auto editor = mPropertiesEditor->openItemEditor(
                             model.getIndex(item)))
                         mEditorManager.setEditorObjectName(editor,
                             editorObjectName);

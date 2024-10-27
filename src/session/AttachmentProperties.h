@@ -9,13 +9,13 @@ namespace Ui {
 }
 
 class QDataWidgetMapper;
-class SessionProperties;
+class PropertiesEditor;
 
 class AttachmentProperties final : public QWidget
 {
     Q_OBJECT
 public:
-    explicit AttachmentProperties(SessionProperties *sessionProperties);
+    explicit AttachmentProperties(PropertiesEditor *propertiesEditor);
     ~AttachmentProperties();
 
     TextureKind currentTextureKind() const;
@@ -27,6 +27,6 @@ protected:
 private:
     void updateWidgets();
 
-    SessionProperties &mSessionProperties;
+    PropertiesEditor &mPropertiesEditor;
     Ui::AttachmentProperties *mUi;
 };

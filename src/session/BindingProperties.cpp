@@ -1,6 +1,6 @@
 #include "BindingProperties.h"
 #include "SessionModel.h"
-#include "SessionProperties.h"
+#include "PropertiesEditor.h"
 #include "TextureData.h"
 #include "ui_BindingProperties.h"
 #include <QDataWidgetMapper>
@@ -77,9 +77,9 @@ namespace {
     }
 } // namespace
 
-BindingProperties::BindingProperties(SessionProperties *sessionProperties)
-    : QWidget(sessionProperties)
-    , mSessionProperties(*sessionProperties)
+BindingProperties::BindingProperties(PropertiesEditor *propertiesEditor)
+    : QWidget(propertiesEditor)
+    , mPropertiesEditor(*propertiesEditor)
     , mUi(new Ui::BindingProperties)
 {
     mUi->setupUi(this);
@@ -138,18 +138,18 @@ BindingProperties::BindingProperties(SessionProperties *sessionProperties)
     connect(mUi->texture, &ReferenceComboBox::currentDataChanged, this,
         &BindingProperties::updateWidgets);
     connect(mUi->texture, &ReferenceComboBox::listRequired, [this]() {
-        return mSessionProperties.getItemIds(Item::Type::Texture, true);
+        return mPropertiesEditor.getItemIds(Item::Type::Texture, true);
     });
     connect(mUi->buffer, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(Item::Type::Buffer); });
+        [this]() { return mPropertiesEditor.getItemIds(Item::Type::Buffer); });
     connect(mUi->block, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(Item::Type::Block); });
+        [this]() { return mPropertiesEditor.getItemIds(Item::Type::Block); });
     connect(mUi->buffer, &ReferenceComboBox::currentDataChanged, this,
         &BindingProperties::updateWidgets);
     for (auto comboBox : { mUi->texture, mUi->buffer, mUi->block })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant id) {
-                return mSessionProperties.getItemName(id.toInt());
+                return mPropertiesEditor.getItemName(id.toInt());
             });
 
     // TODO: set layer to -1 when disabled...
@@ -202,7 +202,7 @@ Binding::Editor BindingProperties::currentEditor() const
 TextureKind BindingProperties::currentTextureKind() const
 {
     auto itemId = mUi->texture->currentData().toInt();
-    if (auto texture = mSessionProperties.model().findItem<Texture>(itemId))
+    if (auto texture = mPropertiesEditor.model().findItem<Texture>(itemId))
         return getKind(*texture);
 
     // sampler without texture
@@ -212,7 +212,7 @@ TextureKind BindingProperties::currentTextureKind() const
 int BindingProperties::getTextureStride(QVariant textureId) const
 {
     const auto itemId = textureId.toInt();
-    if (auto texture = mSessionProperties.model().findItem<Texture>(itemId))
+    if (auto texture = mPropertiesEditor.model().findItem<Texture>(itemId))
         return getTextureDataSize(texture->format)
             * getTextureComponentCount(texture->format);
     return 0;
@@ -221,7 +221,7 @@ int BindingProperties::getTextureStride(QVariant textureId) const
 int BindingProperties::getBufferStride(QVariant bufferId) const
 {
     const auto itemId = bufferId.toInt();
-    if (auto buffer = mSessionProperties.model().findItem<Buffer>(itemId))
+    if (auto buffer = mPropertiesEditor.model().findItem<Buffer>(itemId))
         if (!buffer->items.empty())
             if (auto firstBlock = castItem<Block>(buffer->items.first()))
                 return ::getBlockStride(*firstBlock);

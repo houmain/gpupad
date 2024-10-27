@@ -19,7 +19,7 @@ class OutputWindow;
 class FileBrowserWindow;
 class EditorManager;
 class SessionEditor;
-class SessionProperties;
+class PropertiesEditor;
 class CustomActions;
 class Theme;
 
@@ -104,7 +104,7 @@ private:
     EditorManager &mEditorManager;
     QScopedPointer<SessionEditor> mSessionEditor;
     QDockWidget *mSessionDock{};
-    QScopedPointer<SessionProperties> mSessionProperties;
+    QScopedPointer<PropertiesEditor> mPropertiesEditor;
     QList<QMetaObject::Connection> mConnectedEditActions;
     QStringList mRecentFiles;
     QList<QAction *> mRecentSessionActions;

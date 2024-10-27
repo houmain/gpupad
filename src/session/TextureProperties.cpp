@@ -1,6 +1,6 @@
 #include "TextureProperties.h"
 #include "FileCache.h"
-#include "SessionProperties.h"
+#include "PropertiesEditor.h"
 #include "Singletons.h"
 #include "editors/EditorManager.h"
 #include "session/SessionModel.h"
@@ -257,9 +257,9 @@ namespace {
     }
 } // namespace
 
-TextureProperties::TextureProperties(SessionProperties *sessionProperties)
-    : QWidget(sessionProperties)
-    , mSessionProperties(*sessionProperties)
+TextureProperties::TextureProperties(PropertiesEditor *propertiesEditor)
+    : QWidget(propertiesEditor)
+    , mPropertiesEditor(*propertiesEditor)
     , mUi(new Ui::TextureProperties)
 {
     mUi->setupUi(this);
@@ -267,10 +267,10 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
     buildFormatMappings();
 
     connect(mUi->fileNew, &QToolButton::clicked, [this]() {
-        mSessionProperties.saveCurrentItemFileAs(FileDialog::TextureExtensions);
+        mPropertiesEditor.saveCurrentItemFileAs(FileDialog::TextureExtensions);
     });
     connect(mUi->fileBrowse, &QToolButton::clicked, [this]() {
-        mSessionProperties.openCurrentItemFile(FileDialog::TextureExtensions);
+        mPropertiesEditor.openCurrentItemFile(FileDialog::TextureExtensions);
         updateWidgets();
         applyFileFormat();
     });
@@ -279,7 +279,7 @@ TextureProperties::TextureProperties(SessionProperties *sessionProperties)
     connect(mUi->file, &ReferenceComboBox::textRequired,
         [](auto data) { return FileDialog::getFileTitle(data.toString()); });
     connect(mUi->file, &ReferenceComboBox::listRequired, [this]() {
-        return mSessionProperties.getFileNames(Item::Type::Texture, true);
+        return mPropertiesEditor.getFileNames(Item::Type::Texture, true);
     });
     connect(mUi->file, &ReferenceComboBox::currentDataChanged, this,
         &TextureProperties::updateWidgets);
@@ -330,10 +330,10 @@ TextureProperties::~TextureProperties()
 TextureKind TextureProperties::currentTextureKind() const
 {
     if (QObject::sender() == mUi->target)
-        mSessionProperties.updateModel();
+        mPropertiesEditor.updateModel();
 
-    if (auto texture = mSessionProperties.model().item<Texture>(
-            mSessionProperties.currentModelIndex()))
+    if (auto texture = mPropertiesEditor.model().item<Texture>(
+            mPropertiesEditor.currentModelIndex()))
         return getKind(*texture);
     return {};
 }
@@ -341,10 +341,10 @@ TextureKind TextureProperties::currentTextureKind() const
 bool TextureProperties::hasFile() const
 {
     if (QObject::sender() == mUi->file)
-        mSessionProperties.updateModel();
+        mPropertiesEditor.updateModel();
 
-    if (auto texture = mSessionProperties.model().item<Texture>(
-            mSessionProperties.currentModelIndex()))
+    if (auto texture = mPropertiesEditor.model().item<Texture>(
+            mPropertiesEditor.currentModelIndex()))
         return !texture->fileName.isEmpty();
     return false;
 }

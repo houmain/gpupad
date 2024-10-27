@@ -1,12 +1,12 @@
 #include "CallProperties.h"
 #include "SessionModel.h"
-#include "SessionProperties.h"
+#include "PropertiesEditor.h"
 #include "ui_CallProperties.h"
 #include <QDataWidgetMapper>
 
-CallProperties::CallProperties(SessionProperties *sessionProperties)
-    : QWidget(sessionProperties)
-    , mSessionProperties(*sessionProperties)
+CallProperties::CallProperties(PropertiesEditor *propertiesEditor)
+    : QWidget(propertiesEditor)
+    , mPropertiesEditor(*propertiesEditor)
     , mUi(new Ui::CallProperties)
 {
     mUi->setupUi(this);
@@ -27,28 +27,28 @@ CallProperties::CallProperties(SessionProperties *sessionProperties)
              mUi->fromTexture, mUi->buffer, mUi->fromBuffer })
         connect(combobox, &ReferenceComboBox::textRequired,
             [this](QVariant data) {
-                return mSessionProperties.getItemName(data.toInt());
+                return mPropertiesEditor.getItemName(data.toInt());
             });
 
     connect(mUi->program, &ReferenceComboBox::listRequired, [this]() {
-        return mSessionProperties.getItemIds(Item::Type::Program);
+        return mPropertiesEditor.getItemIds(Item::Type::Program);
     });
     connect(mUi->vertexStream, &ReferenceComboBox::listRequired, [this]() {
-        return mSessionProperties.getItemIds(Item::Type::Stream, true);
+        return mPropertiesEditor.getItemIds(Item::Type::Stream, true);
     });
     connect(mUi->target, &ReferenceComboBox::listRequired,
-        [this]() { return mSessionProperties.getItemIds(Item::Type::Target); });
+        [this]() { return mPropertiesEditor.getItemIds(Item::Type::Target); });
     for (auto block : { mUi->indexBufferBlock, mUi->indirectBufferBlock })
         connect(block, &ReferenceComboBox::listRequired, [this]() {
-            return mSessionProperties.getItemIds(Item::Type::Block);
+            return mPropertiesEditor.getItemIds(Item::Type::Block);
         });
     for (auto buffer : { mUi->buffer, mUi->fromBuffer })
         connect(buffer, &ReferenceComboBox::listRequired, [this]() {
-            return mSessionProperties.getItemIds(Item::Type::Buffer);
+            return mPropertiesEditor.getItemIds(Item::Type::Buffer);
         });
     for (auto texture : { mUi->texture, mUi->fromTexture })
         connect(texture, &ReferenceComboBox::listRequired, [this]() {
-            return mSessionProperties.getItemIds(Item::Type::Texture);
+            return mPropertiesEditor.getItemIds(Item::Type::Texture);
         });
 
     updateWidgets();
@@ -73,17 +73,17 @@ Call::PrimitiveType CallProperties::currentPrimitiveType() const
 CallKind CallProperties::currentCallKind() const
 {
     if (QObject::sender() == mUi->type)
-        mSessionProperties.updateModel();
+        mPropertiesEditor.updateModel();
 
-    if (auto call = mSessionProperties.model().item<Call>(
-            mSessionProperties.currentModelIndex()))
+    if (auto call = mPropertiesEditor.model().item<Call>(
+            mPropertiesEditor.currentModelIndex()))
         return getKind(*call);
     return {};
 }
 
 TextureKind CallProperties::currentTextureKind() const
 {
-    if (auto texture = castItem<Texture>(mSessionProperties.model().findItem(
+    if (auto texture = castItem<Texture>(mPropertiesEditor.model().findItem(
             mUi->texture->currentData().toInt())))
         return getKind(*texture);
     return {};

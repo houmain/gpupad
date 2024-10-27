@@ -1,4 +1,4 @@
-#include "SessionProperties.h"
+#include "PropertiesEditor.h"
 #include "AttachmentProperties.h"
 #include "BindingProperties.h"
 #include "CallProperties.h"
@@ -71,7 +71,7 @@ void setFormEnabled(QLabel *label, QWidget *widget, bool enabled)
     widget->setEnabled(enabled);
 }
 
-SessionProperties::SessionProperties(QWidget *parent)
+PropertiesEditor::PropertiesEditor(QWidget *parent)
     : QScrollArea(parent)
     , mModel(Singletons::sessionModel())
     , mStack(new StackedWidget(this))
@@ -94,8 +94,8 @@ SessionProperties::SessionProperties(QWidget *parent)
     };
     mRootProperties = new QWidget(this);
     mStack->addWidget(mRootProperties);
-    mSessionProperties = new QWidget(this);
-    mStack->addWidget(mSessionProperties);
+    mPropertiesEditor = new QWidget(this);
+    mStack->addWidget(mPropertiesEditor);
     add(mGroupProperties);
     add(mBufferProperties);
     add(mBlockProperties);
@@ -125,9 +125,9 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mShaderProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(Item::Type::Shader); });
     connect(mShaderProperties->language, &DataComboBox::currentDataChanged,
-        this, &SessionProperties::updateShaderWidgets);
+        this, &PropertiesEditor::updateShaderWidgets);
     connect(mShaderProperties->file, &ReferenceComboBox::activated, this,
-        &SessionProperties::deduceShaderType);
+        &PropertiesEditor::deduceShaderType);
 
     connect(mBufferProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::BinaryExtensions); });
@@ -136,9 +136,9 @@ SessionProperties::SessionProperties(QWidget *parent)
     connect(mBufferProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(Item::Type::Buffer, true); });
     connect(mBlockProperties->deduceOffset, &QToolButton::clicked, this,
-        &SessionProperties::deduceBlockOffset);
+        &PropertiesEditor::deduceBlockOffset);
     connect(mBlockProperties->deduceRowCount, &QToolButton::clicked, this,
-        &SessionProperties::deduceBlockRowCount);
+        &PropertiesEditor::deduceBlockRowCount);
 
     connect(mScriptProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::ScriptExtensions); });
@@ -194,7 +194,7 @@ SessionProperties::SessionProperties(QWidget *parent)
         });
 
     connect(&settings, &Settings::fontChanged, this,
-        &SessionProperties::updateShaderWidgets);
+        &PropertiesEditor::updateShaderWidgets);
     mShaderProperties->globalPreamble->setText(settings.shaderPreamble());
     mShaderProperties->globalIncludePaths->setText(
         settings.shaderIncludePaths());
@@ -203,9 +203,9 @@ SessionProperties::SessionProperties(QWidget *parent)
     fillComboBoxes();
 }
 
-SessionProperties::~SessionProperties() = default;
+PropertiesEditor::~PropertiesEditor() = default;
 
-void SessionProperties::fillComboBoxes()
+void PropertiesEditor::fillComboBoxes()
 {
     fillComboBox<Field::DataType>(mFieldProperties->type);
     fillComboBox<Target::FrontFace>(mTargetProperties->frontFace);
@@ -219,7 +219,7 @@ void SessionProperties::fillComboBoxes()
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
 }
 
-QVariantList SessionProperties::getFileNames(Item::Type type,
+QVariantList PropertiesEditor::getFileNames(Item::Type type,
     bool addNull) const
 {
     auto result = QVariantList();
@@ -258,12 +258,12 @@ QVariantList SessionProperties::getFileNames(Item::Type type,
     return result;
 }
 
-QString SessionProperties::getItemName(ItemId itemId) const
+QString PropertiesEditor::getItemName(ItemId itemId) const
 {
     return mModel.getFullItemName(itemId);
 }
 
-QVariantList SessionProperties::getItemIds(Item::Type type, bool addNull) const
+QVariantList PropertiesEditor::getItemIds(Item::Type type, bool addNull) const
 {
     auto result = QVariantList();
     if (addNull)
@@ -276,17 +276,17 @@ QVariantList SessionProperties::getItemIds(Item::Type type, bool addNull) const
     return result;
 }
 
-void SessionProperties::updateModel()
+void PropertiesEditor::updateModel()
 {
     mMapper->submit();
 }
 
-QModelIndex SessionProperties::currentModelIndex(int column) const
+QModelIndex PropertiesEditor::currentModelIndex(int column) const
 {
     return mModel.index(mMapper->currentIndex(), column, mMapper->rootIndex());
 }
 
-void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
+void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
 {
     mMapper->submit();
     mMapper->clearMapping();
@@ -399,7 +399,7 @@ void SessionProperties::setCurrentModelIndex(const QModelIndex &index)
     mStack->setCurrentIndex(stackIndex);
 }
 
-IEditor *SessionProperties::openEditor(const FileItem &fileItem)
+IEditor *PropertiesEditor::openEditor(const FileItem &fileItem)
 {
     if (fileItem.fileName.isEmpty()) {
         const auto fileName =
@@ -441,7 +441,7 @@ IEditor *SessionProperties::openEditor(const FileItem &fileItem)
     }
 }
 
-IEditor *SessionProperties::openItemEditor(const QModelIndex &index)
+IEditor *PropertiesEditor::openItemEditor(const QModelIndex &index)
 {
     const auto &item = mModel.getItem(index);
 
@@ -550,29 +550,29 @@ IEditor *SessionProperties::openItemEditor(const QModelIndex &index)
     return nullptr;
 }
 
-QString SessionProperties::currentItemName() const
+QString PropertiesEditor::currentItemName() const
 {
     return mModel.data(currentModelIndex(SessionModel::Name)).toString();
 }
 
-QString SessionProperties::currentItemFileName() const
+QString PropertiesEditor::currentItemFileName() const
 {
     return mModel.data(currentModelIndex(SessionModel::FileName)).toString();
 }
 
-void SessionProperties::switchToCurrentFileItemDirectory()
+void PropertiesEditor::switchToCurrentFileItemDirectory()
 {
     const auto fileName = currentItemFileName();
     if (!FileDialog::isEmptyOrUntitled(fileName))
         Singletons::fileDialog().setDirectory(QFileInfo(fileName).dir());
 }
 
-void SessionProperties::setCurrentItemFile(const QString &fileName)
+void PropertiesEditor::setCurrentItemFile(const QString &fileName)
 {
     mModel.setData(currentModelIndex(SessionModel::FileName), fileName);
 }
 
-void SessionProperties::saveCurrentItemFileAs(FileDialog::Options options)
+void PropertiesEditor::saveCurrentItemFileAs(FileDialog::Options options)
 {
     options |= FileDialog::Saving;
     const auto prevFileName = currentItemFileName();
@@ -594,14 +594,14 @@ void SessionProperties::saveCurrentItemFileAs(FileDialog::Options options)
     }
 }
 
-void SessionProperties::openCurrentItemFile(FileDialog::Options options)
+void PropertiesEditor::openCurrentItemFile(FileDialog::Options options)
 {
     switchToCurrentFileItemDirectory();
     if (Singletons::fileDialog().exec(options))
         setCurrentItemFile(Singletons::fileDialog().fileName());
 }
 
-void SessionProperties::updateBlockWidgets(const QModelIndex &index)
+void PropertiesEditor::updateBlockWidgets(const QModelIndex &index)
 {
     auto stride = 0;
     auto isFirstBlock = true;
@@ -622,7 +622,7 @@ void SessionProperties::updateBlockWidgets(const QModelIndex &index)
     ui.deduceRowCount->setVisible(hasFile && isLastBlock);
 }
 
-void SessionProperties::updateTargetWidgets(const QModelIndex &index)
+void PropertiesEditor::updateTargetWidgets(const QModelIndex &index)
 {
     const auto target = mModel.item<Target>(index);
     const auto hasAttachments = !target->items.empty();
@@ -644,7 +644,7 @@ void SessionProperties::updateTargetWidgets(const QModelIndex &index)
         hasAttachments);
 }
 
-void SessionProperties::updateShaderWidgets()
+void PropertiesEditor::updateShaderWidgets()
 {
     const auto font = Singletons::settings().font();
     for (auto editor : {
@@ -655,7 +655,7 @@ void SessionProperties::updateShaderWidgets()
         editor->setFont(font);
 }
 
-void SessionProperties::deduceBlockOffset()
+void PropertiesEditor::deduceBlockOffset()
 {
     auto offset = 0;
     const auto &block = *mModel.item<Block>(currentModelIndex());
@@ -676,7 +676,7 @@ void SessionProperties::deduceBlockOffset()
         offset);
 }
 
-void SessionProperties::deduceBlockRowCount()
+void PropertiesEditor::deduceBlockRowCount()
 {
     const auto &block = *mModel.item<Block>(currentModelIndex());
     const auto &buffer = *static_cast<const Buffer *>(block.parent);
@@ -693,7 +693,7 @@ void SessionProperties::deduceBlockRowCount()
     }
 }
 
-void SessionProperties::deduceShaderType()
+void PropertiesEditor::deduceShaderType()
 {
     const auto &shader = *mModel.item<Shader>(currentModelIndex());
     const auto fileName = mShaderProperties->file->currentData().toString();

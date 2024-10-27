@@ -1,13 +1,13 @@
 #include "AttachmentProperties.h"
 #include "SessionModel.h"
-#include "SessionProperties.h"
+#include "PropertiesEditor.h"
 #include "ui_AttachmentProperties.h"
 #include <QCheckBox>
 #include <QDataWidgetMapper>
 
-AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
-    : QWidget(sessionProperties)
-    , mSessionProperties(*sessionProperties)
+AttachmentProperties::AttachmentProperties(PropertiesEditor *propertiesEditor)
+    : QWidget(propertiesEditor)
+    , mPropertiesEditor(*propertiesEditor)
     , mUi(new Ui::AttachmentProperties)
 {
     mUi->setupUi(this);
@@ -16,11 +16,11 @@ AttachmentProperties::AttachmentProperties(SessionProperties *sessionProperties)
         Qt::AA_UseStyleSheetPropagationInWidgetStyles, true);
 
     connect(mUi->texture, &ReferenceComboBox::listRequired, [this]() {
-        return mSessionProperties.getItemIds(Item::Type::Texture);
+        return mPropertiesEditor.getItemIds(Item::Type::Texture);
     });
     connect(mUi->texture, &ReferenceComboBox::textRequired,
         [this](QVariant data) {
-            return mSessionProperties.getItemName(data.toInt());
+            return mPropertiesEditor.getItemName(data.toInt());
         });
     connect(mUi->texture, &ReferenceComboBox::currentDataChanged, this,
         &AttachmentProperties::updateWidgets);
@@ -59,7 +59,7 @@ AttachmentProperties::~AttachmentProperties()
 
 TextureKind AttachmentProperties::currentTextureKind() const
 {
-    if (auto texture = mSessionProperties.model().findItem<Texture>(
+    if (auto texture = mPropertiesEditor.model().findItem<Texture>(
             mUi->texture->currentData().toInt()))
         return getKind(*texture);
     return {};

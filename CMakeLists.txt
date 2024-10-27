@@ -179,7 +179,7 @@ set(SOURCES
   src/session/SessionEditor.cpp
   src/session/SessionModel.cpp
   src/session/SessionModelCore.cpp
-  src/session/SessionProperties.cpp
+  src/session/PropertiesEditor.cpp
   src/resources.qrc
   src/session/ShaderProperties.ui
   src/session/StreamProperties.ui
