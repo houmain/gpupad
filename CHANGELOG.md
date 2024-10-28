@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 2.0.1] - 2024-10-28
+
+### Added
+
+- Added definition of `GPUPAD_OPENGL` and `GPUPAD_VULKAN`.
+- Added push constant support.
+- Allow to select entry point for Vulkan/GLSL.
+
+### Fixed
+
+- Fixed RGB image loader stride.
+- Fixed color picker on HiDPI displays.
+- Prevent sampling attachment.
+- Fixed setting script globals by uniform bindings.
+- Fixed evaluation of empty expression for integer values.
+- Validating that all attachments have the same sample count.
+- Improved attachmentless rendering.
+
+### Changed
+
+- Moved assets to extra directory.
+- Opening first texture item of sample sessions.
+- Changed texture sample editor to a combobox.
+- Removed "default" themes.
+
 ## [Version 2.0.0] - 2024-08-05
 
 ### Added
@@ -708,6 +733,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 2.0.1]: https://github.com/houmain/gpupad/compare/2.0.0...2.0.1
 [version 2.0.0]: https://github.com/houmain/gpupad/compare/1.35.1...2.0.0
 [version 1.35.1]: https://github.com/houmain/gpupad/compare/1.35.0...1.35.1
 [version 1.35.0]: https://github.com/houmain/gpupad/compare/1.34.0...1.35.0
