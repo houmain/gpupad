@@ -15,8 +15,6 @@ Settings::Settings(QObject *parent) : QSettings(parent)
     setIndentWithSpaces(value("indentWithSpaces", "true").toBool());
     setShowWhiteSpace(value("showWhiteSpace", "false").toBool());
     setHideMenuBar(value("hideMenuBar", "false").toBool());
-    setShaderPreamble(value("shaderPreamble", "").toString());
-    setShaderIncludePaths(value("shaderIncludePaths", "").toString());
     setRenderer(value("renderer", "").toString());
 
     const auto fontSettings = value("font").toString();
@@ -49,8 +47,6 @@ Settings::~Settings()
     setValue("editorTheme", editorTheme().fileName());
     setValue("hideMenuBar", hideMenuBar());
     setValue("font", font().toString());
-    setValue("shaderPreamble", shaderPreamble());
-    setValue("shaderIncludePaths", shaderIncludePaths());
     setValue("renderer", renderer());
     endGroup();
 }
@@ -126,22 +122,6 @@ void Settings::setHideMenuBar(bool hide)
     if (mHideMenuBar != hide) {
         mHideMenuBar = hide;
         Q_EMIT hideMenuBarChanged(hide);
-    }
-}
-
-void Settings::setShaderPreamble(const QString &preamble)
-{
-    if (mShaderPreamble != preamble) {
-        mShaderPreamble = preamble;
-        Q_EMIT shaderPreambleChanged(preamble);
-    }
-}
-
-void Settings::setShaderIncludePaths(const QString &includePaths)
-{
-    if (mShaderIncludePaths != includePaths) {
-        mShaderIncludePaths = includePaths;
-        Q_EMIT shaderIncludePathsChanged(includePaths);
     }
 }
 

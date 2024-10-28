@@ -89,12 +89,6 @@ void GLProcessSource::clearMessages()
 
 void GLProcessSource::prepare()
 {
-    const auto shaderPreamble = QString{ Singletons::settings().shaderPreamble()
-        + "\n" + Singletons::synchronizeLogic().sessionShaderPreamble() };
-    const auto shaderIncludePaths =
-        QString{ Singletons::settings().shaderIncludePaths() + "\n"
-            + Singletons::synchronizeLogic().sessionShaderIncludePaths() };
-
     if (auto shaderType = getShaderType(mSourceType)) {
         auto shaders = getShadersInSession(mFileName);
         // ensure shader is in list
@@ -113,8 +107,10 @@ void GLProcessSource::prepare()
                 s = &shader;
                 break;
             }
-        mShader.reset(new GLShader(shaderType, shaders, shaderPreamble,
-            shaderIncludePaths));
+
+        auto &session = Singletons::sessionModel();
+        if (auto sessionItem = session.item<Session>(session.index(0, 0)))
+            mShader.reset(new GLShader(shaderType, shaders, *sessionItem));
     }
 }
 

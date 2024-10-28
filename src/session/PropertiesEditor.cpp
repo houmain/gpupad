@@ -125,8 +125,6 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
         [this]() { openCurrentItemFile(FileDialog::ShaderExtensions); });
     connect(mShaderProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(Item::Type::Shader); });
-    connect(mShaderProperties->language, &DataComboBox::currentDataChanged,
-        this, &PropertiesEditor::updateShaderWidgets);
     connect(mShaderProperties->file, &ReferenceComboBox::activated, this,
         &PropertiesEditor::deduceShaderType);
 
@@ -162,43 +160,9 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
             [this](QVariant data) { return getItemName(data.toInt()); });
 
     auto &settings = Singletons::settings();
-    connect(&settings, &Settings::shaderPreambleChanged,
-        mShaderProperties->globalPreamble, &ExpressionEditor::setText);
-    connect(&settings, &Settings::shaderIncludePathsChanged,
-        mShaderProperties->globalIncludePaths, &ExpressionEditor::setText);
-    connect(mShaderProperties->globalPreamble, &ExpressionEditor::textChanged,
-        [this]() {
-            Singletons::settings().setShaderPreamble(
-                mShaderProperties->globalPreamble->text());
-        });
-    connect(mShaderProperties->globalIncludePaths,
-        &ExpressionEditor::textChanged, [this]() {
-            Singletons::settings().setShaderIncludePaths(
-                mShaderProperties->globalIncludePaths->text());
-        });
-
-    auto &synchronizeLogic = Singletons::synchronizeLogic();
-    connect(&synchronizeLogic, &SynchronizeLogic::sessionShaderPreambleChanged,
-        mShaderProperties->sessionPreamble, &ExpressionEditor::setText);
-    connect(&synchronizeLogic,
-        &SynchronizeLogic::sessionShaderIncludePathsChanged,
-        mShaderProperties->sessionIncludePaths, &ExpressionEditor::setText);
-    connect(mShaderProperties->sessionPreamble, &ExpressionEditor::textChanged,
-        [this]() {
-            Singletons::synchronizeLogic().setSessionShaderPreamble(
-                mShaderProperties->sessionPreamble->text());
-        });
-    connect(mShaderProperties->sessionIncludePaths,
-        &ExpressionEditor::textChanged, [this]() {
-            Singletons::synchronizeLogic().setSessionShaderIncludePaths(
-                mShaderProperties->sessionIncludePaths->text());
-        });
-
-    connect(&settings, &Settings::fontChanged, this,
-        &PropertiesEditor::updateShaderWidgets);
-    mShaderProperties->globalPreamble->setText(settings.shaderPreamble());
-    mShaderProperties->globalIncludePaths->setText(
-        settings.shaderIncludePaths());
+    connect(&settings, &Settings::fontChanged,
+        mShaderProperties->shaderPreamble, &QPlainTextEdit::setFont);
+    mShaderProperties->shaderPreamble->setFont(settings.font());
 
     setCurrentModelIndex(mModel.index(0, 0));
     fillComboBoxes();
@@ -336,7 +300,6 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
         map(mShaderProperties->shaderPreamble, SessionModel::ShaderPreamble);
         map(mShaderProperties->shaderIncludePaths,
             SessionModel::ShaderIncludePaths);
-        updateShaderWidgets();
         break;
 
     case Item::Type::Binding: mBindingProperties->addMappings(*mMapper); break;
@@ -632,17 +595,6 @@ void PropertiesEditor::updateTargetWidgets(const QModelIndex &index)
         hasAttachments);
     setFormVisibility(ui.formLayout, ui.labelBlendConstant, ui.blendConstant,
         hasAttachments);
-}
-
-void PropertiesEditor::updateShaderWidgets()
-{
-    const auto font = Singletons::settings().font();
-    for (auto editor : {
-             mShaderProperties->shaderPreamble,
-             mShaderProperties->sessionPreamble,
-             mShaderProperties->globalPreamble,
-         })
-        editor->setFont(font);
 }
 
 void PropertiesEditor::deduceBlockOffset()

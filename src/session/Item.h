@@ -39,7 +39,9 @@ struct Root : ScopeItem
 
 struct Session : ScopeItem
 {
-    QString renderer;
+    QString renderer{ "OpenGL" };
+    QString shaderPreamble;
+    QString shaderIncludePaths;
 };
 
 struct Group : ScopeItem

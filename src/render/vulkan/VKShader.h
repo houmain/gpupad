@@ -7,8 +7,8 @@
 class VKShader : public ShaderBase
 {
 public:
-    VKShader(Shader::ShaderType type, const QList<const Shader *> &shaders,
-        const QString &preamble, const QString &includePaths);
+    VKShader(Shader::ShaderType type,
+        const QList<const Shader *> &shaders, const Session &session);
 
     bool compile(KDGpu::Device &device, VKPrintf *printf,
         int shiftBindingsInSet0);

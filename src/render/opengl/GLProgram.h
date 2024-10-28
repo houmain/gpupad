@@ -64,8 +64,7 @@ struct GLSubroutineBinding
 class GLProgram
 {
 public:
-    GLProgram(const Program &program, const QString &shaderPreamble,
-        const QString &shaderIncludePaths);
+    GLProgram(const Program &program, const Session &session);
     bool operator==(const GLProgram &rhs) const;
 
     bool link();
@@ -98,6 +97,7 @@ private:
     void bufferSet(const QString &name);
 
     ItemId mItemId{};
+    Session mSession{};
     QSet<ItemId> mUsedItems;
     MessagePtrSet mLinkMessages;
     std::vector<GLShader> mShaders;

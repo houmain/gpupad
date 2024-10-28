@@ -9,8 +9,7 @@ public:
     using StageInterface =
         std::map<KDGpu::ShaderStageFlagBits, Spirv::Interface>;
 
-    VKProgram(const Program &program, const QString &shaderPreamble,
-        const QString &shaderIncludePaths);
+    VKProgram(const Program &program, const Session &session);
     bool operator==(const VKProgram &rhs) const;
 
     bool link(KDGpu::Device &device);
@@ -22,6 +21,7 @@ public:
 
 private:
     ItemId mItemId{};
+    Session mSession{ };
     QSet<ItemId> mUsedItems;
     MessagePtrSet mLinkMessages;
     std::vector<VKShader> mShaders;

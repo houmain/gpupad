@@ -44,9 +44,8 @@ void GLShader::parseLog(const QString &log, MessagePtrSet &messages,
 }
 
 GLShader::GLShader(Shader::ShaderType type,
-    const QList<const Shader *> &shaders, const QString &preamble,
-    const QString &includePaths)
-    : ShaderBase(type, shaders, preamble, includePaths)
+    const QList<const Shader *> &shaders, const Session &session)
+    : ShaderBase(type, shaders, session)
 {
 }
 

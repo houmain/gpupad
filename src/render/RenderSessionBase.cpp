@@ -45,11 +45,6 @@ void RenderSessionBase::prepare(bool itemsChanged,
     if (mEvaluationType == EvaluationType::Reset)
         mScriptSession.reset(new ScriptSession(SourceType::JavaScript));
 
-    mShaderPreamble = Singletons::settings().shaderPreamble() + "\n"
-        + Singletons::synchronizeLogic().sessionShaderPreamble();
-    mShaderIncludePaths = Singletons::settings().shaderIncludePaths() + "\n"
-        + Singletons::synchronizeLogic().sessionShaderIncludePaths();
-
     mScriptSession->prepare();
 }
 

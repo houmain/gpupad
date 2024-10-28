@@ -873,10 +873,6 @@ void MainWindow::saveSessionState(const QString &sessionFileName)
     settings.setValue("editorState", mEditorManager.saveState());
     settings.setValue("openEditors", openEditors);
     auto &synchronizeLogic = Singletons::synchronizeLogic();
-    settings.setValue("shaderPreamble",
-        synchronizeLogic.sessionShaderPreamble());
-    settings.setValue("shaderIncludePaths",
-        synchronizeLogic.sessionShaderIncludePaths());
     settings.setValue("evaluationMode",
         static_cast<int>(synchronizeLogic.evaluationMode()));
 }
@@ -916,10 +912,6 @@ bool MainWindow::restoreSessionState(const QString &sessionFileName)
     mEditorManager.setAutoRaise(true);
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
-    synchronizeLogic.setSessionShaderPreamble(
-        settings.value("shaderPreamble").toString());
-    synchronizeLogic.setSessionShaderIncludePaths(
-        settings.value("shaderIncludePaths").toString());
     setEvaluationMode(
         static_cast<EvaluationMode>(settings.value("evaluationMode").toInt()));
     return true;

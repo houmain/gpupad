@@ -56,7 +56,6 @@ public:
 private:
     void updateBlockWidgets(const QModelIndex &index);
     void updateTargetWidgets(const QModelIndex &index);
-    void updateShaderWidgets();
     void deduceBlockOffset();
     void deduceBlockRowCount();
     void deduceShaderType();

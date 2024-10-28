@@ -11,9 +11,6 @@
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="spacing">
-    <number>2</number>
-   </property>
    <item>
     <layout class="QFormLayout" name="formLayout">
      <property name="labelAlignment">
@@ -49,6 +46,47 @@
      </item>
     </layout>
    </item>
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <property name="spacing">
+      <number>4</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="labelShaderPreamble">
+       <property name="text">
+        <string>Shader Preamble</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="ExpressionEditor" name="shaderPreamble">
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="lineWrapMode">
+        <enum>QPlainTextEdit::NoWrap</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelShaderIncludePaths">
+       <property name="text">
+        <string>Shader Include Paths (one per line)</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="ExpressionEditor" name="shaderIncludePaths">
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
+       </property>
+       <property name="lineWrapMode">
+        <enum>QPlainTextEdit::NoWrap</enum>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
   </layout>
  </widget>
  <customwidgets>
@@ -56,6 +94,11 @@
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
    <header>session/DataComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ExpressionEditor</class>
+   <extends>QPlainTextEdit</extends>
+   <header>session/ExpressionEditor.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

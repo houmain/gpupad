@@ -12,7 +12,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
-    <number>2</number>
+    <number>0</number>
    </property>
    <item>
     <layout class="QFormLayout" name="formLayout">
@@ -71,7 +71,8 @@
            <string>Save As</string>
           </property>
           <property name="icon">
-           <iconset theme="document-save-as"/>
+           <iconset theme="document-save-as">
+            <normaloff>.</normaloff>.</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -87,7 +88,8 @@
            <string>Open</string>
           </property>
           <property name="icon">
-           <iconset theme="document-open"/>
+           <iconset theme="document-open">
+            <normaloff>.</normaloff>.</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -133,191 +135,54 @@
     </layout>
    </item>
    <item>
-    <widget class="QTabWidget" name="tabScope">
-     <property name="layoutDirection">
-      <enum>Qt::RightToLeft</enum>
+    <layout class="QVBoxLayout" name="verticalLayout2">
+     <property name="spacing">
+      <number>4</number>
      </property>
-     <property name="currentIndex">
-      <number>2</number>
+     <property name="leftMargin">
+      <number>0</number>
      </property>
-     <property name="elideMode">
-      <enum>Qt::ElideRight</enum>
+     <property name="topMargin">
+      <number>8</number>
      </property>
-     <property name="usesScrollButtons">
-      <bool>false</bool>
+     <property name="rightMargin">
+      <number>0</number>
      </property>
-     <widget class="QWidget" name="tabGlobal">
-      <property name="layoutDirection">
-       <enum>Qt::LeftToRight</enum>
-      </property>
-      <attribute name="title">
-       <string>Global</string>
-      </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
-       <property name="leftMargin">
-        <number>4</number>
+     <item>
+      <widget class="QLabel" name="labelShaderPreamble">
+       <property name="text">
+        <string>Preamble</string>
        </property>
-       <property name="topMargin">
-        <number>4</number>
+      </widget>
+     </item>
+     <item>
+      <widget class="ExpressionEditor" name="shaderPreamble">
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
        </property>
-       <property name="rightMargin">
-        <number>4</number>
+       <property name="lineWrapMode">
+        <enum>QPlainTextEdit::NoWrap</enum>
        </property>
-       <property name="bottomMargin">
-        <number>4</number>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelShaderIncludePaths">
+       <property name="text">
+        <string>Include Paths (one per line)</string>
        </property>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_5">
-         <property name="spacing">
-          <number>4</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="labelGlobalPreamble">
-           <property name="text">
-            <string>Preamble</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="ExpressionEditor" name="globalPreamble">
-           <property name="lineWrapMode">
-            <enum>QPlainTextEdit::NoWrap</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="labelGlobalIncludePaths">
-           <property name="text">
-            <string>Include Paths (one per line)</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="ExpressionEditor" name="globalIncludePaths">
-           <property name="lineWrapMode">
-            <enum>QPlainTextEdit::NoWrap</enum>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tabSession">
-      <property name="layoutDirection">
-       <enum>Qt::LeftToRight</enum>
-      </property>
-      <attribute name="title">
-       <string>Session</string>
-      </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <property name="leftMargin">
-        <number>4</number>
+      </widget>
+     </item>
+     <item>
+      <widget class="ExpressionEditor" name="shaderIncludePaths">
+       <property name="frameShape">
+        <enum>QFrame::Box</enum>
        </property>
-       <property name="topMargin">
-        <number>4</number>
+       <property name="lineWrapMode">
+        <enum>QPlainTextEdit::NoWrap</enum>
        </property>
-       <property name="rightMargin">
-        <number>4</number>
-       </property>
-       <property name="bottomMargin">
-        <number>4</number>
-       </property>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <property name="spacing">
-          <number>4</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="labelSessionPreamble">
-           <property name="text">
-            <string>Preamble</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="ExpressionEditor" name="sessionPreamble">
-           <property name="lineWrapMode">
-            <enum>QPlainTextEdit::NoWrap</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="labelSessionludePaths">
-           <property name="text">
-            <string>Include Paths (one per line)</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="ExpressionEditor" name="sessionIncludePaths">
-           <property name="lineWrapMode">
-            <enum>QPlainTextEdit::NoWrap</enum>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="tabShader">
-      <property name="layoutDirection">
-       <enum>Qt::LeftToRight</enum>
-      </property>
-      <attribute name="title">
-       <string>Shader</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_4">
-       <property name="leftMargin">
-        <number>4</number>
-       </property>
-       <property name="topMargin">
-        <number>4</number>
-       </property>
-       <property name="rightMargin">
-        <number>4</number>
-       </property>
-       <property name="bottomMargin">
-        <number>4</number>
-       </property>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-         <property name="spacing">
-          <number>4</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="labelShaderPreamble">
-           <property name="text">
-            <string>Preamble</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="ExpressionEditor" name="shaderPreamble">
-           <property name="lineWrapMode">
-            <enum>QPlainTextEdit::NoWrap</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="labelShaderIncludePaths">
-           <property name="text">
-            <string>Include Paths (one per line)</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="ExpressionEditor" name="shaderIncludePaths">
-           <property name="lineWrapMode">
-            <enum>QPlainTextEdit::NoWrap</enum>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-      </layout>
-     </widget>
-    </widget>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

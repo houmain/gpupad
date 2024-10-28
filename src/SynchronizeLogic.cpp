@@ -38,14 +38,6 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
         &SynchronizeLogic::handleFileChanged);
     connect(&Singletons::editorManager(), &EditorManager::editorRenamed, this,
         &SynchronizeLogic::handleEditorFileRenamed);
-    connect(&Singletons::settings(), &Settings::shaderIncludePathsChanged, this,
-        &SynchronizeLogic::invalidateRenderSession);
-    connect(&Singletons::settings(), &Settings::shaderPreambleChanged, this,
-        &SynchronizeLogic::invalidateRenderSession);
-    connect(this, &SynchronizeLogic::sessionShaderIncludePathsChanged, this,
-        &SynchronizeLogic::invalidateRenderSession);
-    connect(this, &SynchronizeLogic::sessionShaderPreambleChanged, this,
-        &SynchronizeLogic::invalidateRenderSession);
     resetRenderSession();
 
     mUpdateEditorsTimer->start(100);
@@ -422,18 +414,3 @@ void SynchronizeLogic::handleKeyboardStateChanged()
     }
 }
 
-void SynchronizeLogic::setSessionShaderPreamble(const QString &preamble)
-{
-    if (mSessionShaderPreamble != preamble) {
-        mSessionShaderPreamble = preamble;
-        Q_EMIT sessionShaderPreambleChanged(preamble);
-    }
-}
-
-void SynchronizeLogic::setSessionShaderIncludePaths(const QString &includePaths)
-{
-    if (mSessionShaderIncludePaths != includePaths) {
-        mSessionShaderIncludePaths = includePaths;
-        Q_EMIT sessionShaderIncludePathsChanged(includePaths);
-    }
-}

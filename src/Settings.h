@@ -29,10 +29,6 @@ public:
     const Theme &editorTheme() const { return *mEditorTheme; }
     void setHideMenuBar(bool hide);
     bool hideMenuBar() const { return mHideMenuBar; }
-    void setShaderPreamble(const QString &preamble);
-    QString shaderPreamble() const { return mShaderPreamble; }
-    void setShaderIncludePaths(const QString &includePaths);
-    QString shaderIncludePaths() const { return mShaderIncludePaths; }
     void setRenderer(const QString &renderer);
     QString renderer() const { return mRenderer; }
 
@@ -47,8 +43,6 @@ Q_SIGNALS:
     void editorThemeChanging(const Theme &theme);
     void editorThemeChanged(const Theme &theme);
     void hideMenuBarChanged(bool hide);
-    void shaderPreambleChanged(const QString &preamble);
-    void shaderIncludePathsChanged(const QString &includePaths);
     void rendererChanged(const QString &renderer);
 
 private:
@@ -60,7 +54,5 @@ private:
     const Theme *mWindowTheme{};
     const Theme *mEditorTheme{};
     bool mHideMenuBar{};
-    QString mShaderPreamble;
-    QString mShaderIncludePaths;
     QString mRenderer;
 };

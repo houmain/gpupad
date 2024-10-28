@@ -192,15 +192,20 @@ namespace {
     }
 } // namespace
 
+bool shaderSessionSettingsDiffer(const Session &a, const Session &b)
+{
+    return (std::tie(a.renderer, a.shaderPreamble, a.shaderIncludePaths)
+        != std::tie(b.renderer, b.shaderPreamble, b.shaderIncludePaths));
+}
+
 ShaderBase::ShaderBase(Shader::ShaderType type,
-    const QList<const Shader *> &shaders, const QString &preamble,
-    const QString &includePaths)
+    const QList<const Shader *> &shaders, const Session &session)
 {
     Q_ASSERT(!shaders.isEmpty());
     mType = type;
     mItemId = shaders.front()->id;
-    mPreamble = preamble;
-    mIncludePaths = includePaths;
+    mPreamble = session.shaderPreamble;
+    mIncludePaths = session.shaderIncludePaths;
 
     for (const Shader *shader : shaders) {
         auto source = QString();
@@ -217,16 +222,17 @@ ShaderBase::ShaderBase(Shader::ShaderType type,
         appendLines(mIncludePaths, shader->includePaths);
     }
 
-    mEntryPoint = getEntryPoint(mEntryPoint, mLanguage, mType, mSources.first());
+    mEntryPoint =
+        getEntryPoint(mEntryPoint, mLanguage, mType, mSources.first());
 }
 
 bool ShaderBase::operator==(const ShaderBase &rhs) const
 {
+    // TODO: check included files for modifications
     return std::tie(mType, mSources, mFileNames, mLanguage, mEntryPoint,
-               mPreamble, mIncludePaths, mPatchedSources)
+               mPreamble, mIncludePaths)
         == std::tie(rhs.mType, rhs.mSources, rhs.mFileNames, rhs.mLanguage,
-            rhs.mEntryPoint, rhs.mPreamble, rhs.mIncludePaths,
-            rhs.mPatchedSources);
+            rhs.mEntryPoint, rhs.mPreamble, rhs.mIncludePaths);
 }
 
 QStringList ShaderBase::getPatchedSources(MessagePtrSet &messages,
@@ -238,8 +244,9 @@ QStringList ShaderBase::getPatchedSources(MessagePtrSet &messages,
     return getPatchedSourcesGLSL(messages, usedFileNames, printf);
 }
 
-QStringList ShaderBase::preprocessorDefinitions() const {
-  return { "GPUPAD 1" };
+QStringList ShaderBase::preprocessorDefinitions() const
+{
+    return { "GPUPAD 1" };
 }
 
 QStringList ShaderBase::getPatchedSourcesGLSL(MessagePtrSet &messages,

@@ -6,7 +6,7 @@ class ShaderBase
 {
 public:
     ShaderBase(Shader::ShaderType type, const QList<const Shader *> &shaders,
-        const QString &preamble, const QString &includePaths);
+        const Session &session);
     bool operator==(const ShaderBase &rhs) const;
     ItemId itemId() const { return mItemId; }
     Shader::ShaderType type() const { return mType; }
@@ -37,3 +37,5 @@ protected:
     QString mEntryPoint;
     QStringList mPatchedSources;
 };
+
+bool shaderSessionSettingsDiffer(const Session &a, const Session &b);

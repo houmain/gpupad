@@ -5,11 +5,12 @@
 #include <QRegularExpression>
 #include <array>
 
-GLProgram::GLProgram(const Program &program, const QString &shaderPreamble,
-    const QString &shaderIncludePaths)
+GLProgram::GLProgram(const Program &program, const Session &session)
     : mItemId(program.id)
+    , mSession(session)
 {
     mUsedItems += program.id;
+    mUsedItems += session.id;
 
     auto shaders = std::map<Shader::ShaderType, QList<const Shader *>>();
     for (const auto &item : program.items)
@@ -20,13 +21,13 @@ GLProgram::GLProgram(const Program &program, const QString &shaderPreamble,
 
     for (const auto &[type, list] : shaders)
         if (type != Shader::ShaderType::Includable)
-            mShaders.emplace_back(type, list, shaderPreamble,
-                shaderIncludePaths);
+            mShaders.emplace_back(type, list, session);
 }
 
 bool GLProgram::operator==(const GLProgram &rhs) const
 {
-    return (std::tie(mShaders) == std::tie(rhs.mShaders));
+    return (std::tie(mShaders) == std::tie(rhs.mShaders)
+        && !shaderSessionSettingsDiffer(mSession, rhs.mSession));
 }
 
 bool GLProgram::link()

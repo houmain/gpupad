@@ -10,7 +10,7 @@ public:
         ItemId itemId, const QStringList &fileNames);
 
     GLShader(Shader::ShaderType type, const QList<const Shader *> &shaders,
-        const QString &preamble, const QString &includePaths);
+        const Session &session);
 
     bool compile(GLPrintf *printf = nullptr, bool failSilently = false);
     GLuint shaderObject() const { return mShaderObject; }

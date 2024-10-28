@@ -26,6 +26,8 @@ SessionProperties::~SessionProperties()
 void SessionProperties::addMappings(QDataWidgetMapper &mapper)
 {
     mapper.addMapping(mUi->renderer, SessionModel::SessionRenderer);
+    mapper.addMapping(mUi->shaderPreamble, SessionModel::SessionShaderPreamble);
+    mapper.addMapping(mUi->shaderIncludePaths, SessionModel::SessionShaderIncludePaths);
 }
 
 void SessionProperties::updateWidgets() { }

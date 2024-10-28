@@ -7,6 +7,8 @@
 
 #define ADD_EACH_COLUMN_TYPE()                                                \
     ADD(SessionRenderer, Session, renderer)                                   \
+    ADD(SessionShaderPreamble, Session, shaderPreamble)                       \
+    ADD(SessionShaderIncludePaths, Session, shaderIncludePaths)               \
     ADD(GroupInlineScope, Group, inlineScope)                                 \
     ADD(GroupIterations, Group, iterations)                                   \
     ADD(BlockOffset, Block, offset)                                           \

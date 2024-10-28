@@ -43,8 +43,6 @@ protected:
     virtual bool updatingPreviewTextures() const;
 
     SessionModel mSessionCopy;
-    QString mShaderPreamble;
-    QString mShaderIncludePaths;
     QScopedPointer<ScriptSession> mScriptSession;
     QSet<ItemId> mUsedItems;
     MessagePtrSet mMessages;

@@ -20,9 +20,8 @@ namespace {
 } // namespace
 
 VKShader::VKShader(Shader::ShaderType type,
-    const QList<const Shader *> &shaders, const QString &preamble,
-    const QString &includePaths)
-    : ShaderBase(type, shaders, preamble, includePaths)
+    const QList<const Shader *> &shaders, const Session &session)
+    : ShaderBase(type, shaders, session)
 {
 }
 

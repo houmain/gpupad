@@ -14,6 +14,8 @@ public:
         FileName,
 
         SessionRenderer,
+        SessionShaderPreamble,
+        SessionShaderIncludePaths,
         GroupInlineScope,
         GroupIterations,
         BlockOffset,

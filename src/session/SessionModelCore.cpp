@@ -162,10 +162,12 @@ SessionModelCore &SessionModelCore::operator=(const SessionModelCore &rhs)
     if (this != &rhs) {
         clear();
 
-        for (auto item : qAsConst(rhs.mRoot.items)) {
-            mRoot.items.append(cloneItem(*item));
-            mRoot.items.back()->parent = &mRoot;
-        }
+        // replace session item
+        Q_ASSERT(mRoot.items.size() == 1);
+        Q_ASSERT(rhs.mRoot.items.size() == 1);
+        delete mRoot.items[0];
+        mRoot.items[0] = cloneItem(*rhs.mRoot.items[0]);
+        mRoot.items[0]->parent = &mRoot;
 
         forEachItem(mRoot,
             [&](const Item &item) { mItemsById.insert(item.id, &item); });
