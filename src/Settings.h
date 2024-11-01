@@ -29,8 +29,6 @@ public:
     const Theme &editorTheme() const { return *mEditorTheme; }
     void setHideMenuBar(bool hide);
     bool hideMenuBar() const { return mHideMenuBar; }
-    void setRenderer(const QString &renderer);
-    QString renderer() const { return mRenderer; }
 
 Q_SIGNALS:
     void tabSizeChanged(int tabSize);
@@ -43,7 +41,6 @@ Q_SIGNALS:
     void editorThemeChanging(const Theme &theme);
     void editorThemeChanged(const Theme &theme);
     void hideMenuBarChanged(bool hide);
-    void rendererChanged(const QString &renderer);
 
 private:
     int mTabSize{ 2 };
@@ -54,5 +51,4 @@ private:
     const Theme *mWindowTheme{};
     const Theme *mEditorTheme{};
     bool mHideMenuBar{};
-    QString mRenderer;
 };

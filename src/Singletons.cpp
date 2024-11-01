@@ -20,17 +20,13 @@ bool onMainThread()
     return (QThread::currentThread() == QApplication::instance()->thread());
 }
 
-void Singletons::resetRenderer(RenderAPI api)
+RendererPtr Singletons::sessionRenderer()
 {
     Q_ASSERT(onMainThread());
-    sInstance->mRenderApi = api;
-}
-
-RendererPtr Singletons::renderer()
-{
-    Q_ASSERT(onMainThread());
-    return (sInstance->mRenderApi == RenderAPI::Vulkan ? vkRenderer()
-                                                       : glRenderer());
+    auto sessionItem = sessionModel().item<Session>(sessionModel().index(0, 0));
+    Q_ASSERT(sessionItem);
+    return (sessionItem && sessionItem->renderer == "Vulkan" ? vkRenderer()
+                                                             : glRenderer());
 }
 
 RendererPtr Singletons::glRenderer()

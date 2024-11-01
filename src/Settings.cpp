@@ -15,7 +15,6 @@ Settings::Settings(QObject *parent) : QSettings(parent)
     setIndentWithSpaces(value("indentWithSpaces", "true").toBool());
     setShowWhiteSpace(value("showWhiteSpace", "false").toBool());
     setHideMenuBar(value("hideMenuBar", "false").toBool());
-    setRenderer(value("renderer", "").toString());
 
     const auto fontSettings = value("font").toString();
     auto font = QFont();
@@ -47,7 +46,6 @@ Settings::~Settings()
     setValue("editorTheme", editorTheme().fileName());
     setValue("hideMenuBar", hideMenuBar());
     setValue("font", font().toString());
-    setValue("renderer", renderer());
     endGroup();
 }
 
@@ -122,13 +120,5 @@ void Settings::setHideMenuBar(bool hide)
     if (mHideMenuBar != hide) {
         mHideMenuBar = hide;
         Q_EMIT hideMenuBarChanged(hide);
-    }
-}
-
-void Settings::setRenderer(const QString &renderer)
-{
-    if (mRenderer != renderer) {
-        mRenderer = renderer;
-        Q_EMIT rendererChanged(renderer);
     }
 }

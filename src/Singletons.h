@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QString>
 #include <memory>
 
 class QMainWindow;
@@ -14,7 +15,6 @@ class GLShareSynchronizer;
 class VideoManager;
 class InputState;
 class EvaluatedPropertyCache;
-enum class RenderAPI : int;
 
 using RendererPtr = std::shared_ptr<Renderer>;
 
@@ -23,8 +23,7 @@ bool onMainThread();
 class Singletons
 {
 public:
-    static void resetRenderer(RenderAPI api);
-    static RendererPtr renderer();
+    static RendererPtr sessionRenderer();
     static RendererPtr glRenderer();
     static RendererPtr vkRenderer();
     static Settings &settings();
@@ -44,7 +43,6 @@ public:
 private:
     static Singletons *sInstance;
 
-    RenderAPI mRenderApi{};
     std::shared_ptr<Renderer> mVKRenderer;
     std::shared_ptr<Renderer> mGLRenderer;
     std::unique_ptr<Settings> mSettings;

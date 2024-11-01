@@ -301,7 +301,7 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
     Singletons::fileCache().updateFromEditors();
     const auto itemsChanged = std::exchange(mRenderSessionInvalidated, false);
-    mRenderSession->update(Singletons::renderer(), itemsChanged,
+    mRenderSession->update(Singletons::sessionRenderer(), itemsChanged,
         evaluationType);
 }
 
@@ -413,4 +413,3 @@ void SynchronizeLogic::handleKeyboardStateChanged()
             evaluate(EvaluationType::Steady);
     }
 }
-
