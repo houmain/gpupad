@@ -42,6 +42,11 @@ struct Session : ScopeItem
     QString renderer{ "OpenGL" };
     QString shaderPreamble;
     QString shaderIncludePaths;
+
+    // glslang compiler options
+    bool autoMapBindings{ true };
+    bool autoMapLocations{ true };
+    bool vulkanRulesRelaxed{ true };
 };
 
 struct Group : ScopeItem

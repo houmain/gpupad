@@ -294,15 +294,15 @@ bool SessionModel::load(const QString &fileName)
     QDir::setCurrent(QFileInfo(fileName).path());
     QMimeData data;
     data.setText(file.readAll());
-    
+
     // try to drop items in session
     auto target = index(0, 0);
     if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, target)) {
         // try to replace session with dropped session
-        if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, { }))
+        if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, {}))
             return false;
         deleteItem(QModelIndex());
-        target = { };            
+        target = {};
     }
 
     undoStack().clear();
@@ -527,6 +527,15 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
 {
     auto result = true;
     switch (item.type) {
+    case Item::Type::Session: {
+        const auto &session = static_cast<const Session &>(item);
+        const auto hasVulkanRenderer = (session.renderer == "Vulkan");
+        result &= (column != SessionAutoMapBindings || hasVulkanRenderer);
+        result &= (column != SessionAutoMapLocations || hasVulkanRenderer);
+        result &= (column != SessionVulkanRulesRelaxed || hasVulkanRenderer);
+        break;
+    }
+
     case Item::Type::Shader: {
         const auto &shader = static_cast<const Shader &>(item);
         result &= (column != ShaderEntryPoint

@@ -118,16 +118,16 @@ const SpvReflectShaderModule *Spirv::Interface::operator->() const
 
 //-------------------------------------------------------------------------
 
-Spirv Spirv::generate(Shader::Language language, Shader::ShaderType shaderType,
-    const QStringList &sources, const QStringList &fileNames,
-    const QString &entryPoint, int shiftBindingsInSet0, MessagePtrSet &messages)
+Spirv Spirv::generate(const Session &session, Shader::Language language,
+    Shader::ShaderType shaderType, const QStringList &sources,
+    const QStringList &fileNames, const QString &entryPoint,
+    int shiftBindingsInSet0, ItemId itemId, MessagePtrSet &messages)
 {
     if (sources.empty() || sources.size() != fileNames.size())
         return {};
 
     staticInitGlslang();
 
-    const auto itemId = 0;
     const auto client = glslang::EShClient::EShClientVulkan;
     const auto clientVersion =
         glslang::EShTargetClientVersion::EShTargetVulkan_1_2;
@@ -159,10 +159,12 @@ Spirv Spirv::generate(Shader::Language language, Shader::ShaderType shaderType,
     shader.setEntryPoint(entryPointU8.constData());
     shader.setSourceEntryPoint(entryPointU8.constData());
 
-    // TODO: allow to select compiler options
-    shader.setAutoMapBindings(true);
-    shader.setAutoMapLocations(true);
-    shader.setEnvInputVulkanRulesRelaxed();
+    if (session.autoMapBindings)
+        shader.setAutoMapBindings(true);
+    if (session.autoMapLocations)
+        shader.setAutoMapLocations(true);
+    if (session.vulkanRulesRelaxed)
+        shader.setEnvInputVulkanRulesRelaxed();
     shader.setHlslIoMapping(language == Shader::Language::HLSL);
 
     using ResTypes = glslang::TResourceType;
@@ -187,10 +189,11 @@ Spirv Spirv::generate(Shader::Language language, Shader::ShaderType shaderType,
 
     program.mapIO();
 
-    auto spvOptions = glslang::SpvOptions{};
-    spvOptions.generateDebugInfo = true;
-    spvOptions.disableOptimizer = false;
-    spvOptions.optimizeSize = false;
+    auto spvOptions = glslang::SpvOptions{
+        .generateDebugInfo = true,
+        .disableOptimizer = false,
+        .optimizeSize = false,
+    };
 
     auto spirv = std::vector<uint32_t>();
     glslang::GlslangToSpv(*program.getIntermediate(getStage(shaderType)), spirv,

@@ -25,8 +25,8 @@ VKShader::VKShader(Shader::ShaderType type,
 {
 }
 
-bool VKShader::compile(KDGpu::Device &device, VKPrintf *printf,
-    int shiftBindingsInSet0)
+bool VKShader::compile(const Session &session, KDGpu::Device &device,
+    VKPrintf *printf, int shiftBindingsInSet0)
 {
     if (!mPatchedSources.isEmpty())
         return mShaderModule.isValid();
@@ -36,8 +36,8 @@ bool VKShader::compile(KDGpu::Device &device, VKPrintf *printf,
     if (mPatchedSources.isEmpty())
         return false;
 
-    auto spirv = Spirv::generate(mLanguage, mType, mPatchedSources, mFileNames,
-        mEntryPoint, shiftBindingsInSet0, mMessages);
+    auto spirv = Spirv::generate(session, mLanguage, mType, mPatchedSources,
+        mFileNames, mEntryPoint, shiftBindingsInSet0, mItemId, mMessages);
     if (!spirv)
         return false;
 

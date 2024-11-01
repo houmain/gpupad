@@ -21,10 +21,10 @@ public:
         std::shared_ptr<SpvReflectShaderModule> mModule;
     };
 
-    static Spirv generate(Shader::Language language,
+    static Spirv generate(const Session &session, Shader::Language language,
         Shader::ShaderType shaderType, const QStringList &sources,
         const QStringList &fileNames, const QString &entryPoint,
-        int shiftBindingsInSet0, MessagePtrSet &messages);
+        int shiftBindingsInSet0, ItemId itemId, MessagePtrSet &messages);
 
     Spirv() = default;
     explicit Spirv(std::vector<uint32_t> spirv);

@@ -83,11 +83,11 @@ TextureBase::TextureBase(const Buffer &buffer, Texture::Format format,
 
 bool TextureBase::operator==(const TextureBase &rhs) const
 {
-    return std::tie(mMessages, mFileName, mFlipVertically, mTarget, mFormat,
-               mWidth, mHeight, mDepth, mLayers, mSamples)
-        == std::tie(rhs.mMessages, rhs.mFileName, rhs.mFlipVertically,
-            rhs.mTarget, rhs.mFormat, rhs.mWidth, rhs.mHeight, rhs.mDepth,
-            rhs.mLayers, rhs.mSamples);
+    const auto properties = [](const TextureBase &a) {
+        return std::tie(a.mMessages, a.mFileName, a.mFlipVertically, a.mTarget,
+            a.mFormat, a.mWidth, a.mHeight, a.mDepth, a.mLayers, a.mSamples);
+    };
+    return properties(*this) == properties(rhs);
 }
 
 bool TextureBase::swap(TextureBase &other)

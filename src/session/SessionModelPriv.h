@@ -9,6 +9,9 @@
     ADD(SessionRenderer, Session, renderer)                                   \
     ADD(SessionShaderPreamble, Session, shaderPreamble)                       \
     ADD(SessionShaderIncludePaths, Session, shaderIncludePaths)               \
+    ADD(SessionAutoMapBindings, Session, autoMapBindings)                     \
+    ADD(SessionAutoMapLocations, Session, autoMapLocations)                   \
+    ADD(SessionVulkanRulesRelaxed, Session, vulkanRulesRelaxed)               \
     ADD(GroupInlineScope, Group, inlineScope)                                 \
     ADD(GroupIterations, Group, iterations)                                   \
     ADD(BlockOffset, Block, offset)                                           \

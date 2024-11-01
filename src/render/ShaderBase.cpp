@@ -194,8 +194,18 @@ namespace {
 
 bool shaderSessionSettingsDiffer(const Session &a, const Session &b)
 {
-    return (std::tie(a.renderer, a.shaderPreamble, a.shaderIncludePaths)
-        != std::tie(b.renderer, b.shaderPreamble, b.shaderIncludePaths));
+    const auto vulkanCompilerSettings = [](const Session &a) {
+        return std::tie(a.autoMapBindings, a.autoMapLocations,
+            a.vulkanRulesRelaxed);
+    };
+    if (a.renderer == "Vulkan"
+        && vulkanCompilerSettings(a) != vulkanCompilerSettings(b))
+        return true;
+
+    const auto common = [](const Session &a) {
+        return std::tie(a.renderer, a.shaderPreamble, a.shaderIncludePaths);
+    };
+    return common(a) != common(b);
 }
 
 ShaderBase::ShaderBase(Shader::ShaderType type,
