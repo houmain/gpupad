@@ -66,18 +66,19 @@ namespace {
     }
 
     QString substituteIncludes(QString source, const QString &fileName,
-        QStringList &usedFileNames, ItemId itemId, MessagePtrSet &messages,
+        QStringList *usedFileNames, ItemId itemId, MessagePtrSet &messages,
         const QString &includePaths, QString *maxVersion = nullptr,
         QString *extensions = nullptr, int recursionDepth = 0)
     {
-        if (!usedFileNames.contains(fileName)) {
-            usedFileNames.append(fileName);
+        if (usedFileNames && !usedFileNames->contains(fileName)) {
+            usedFileNames->append(fileName);
         } else if (recursionDepth++ > 3) {
             messages += MessageList::insert(itemId,
                 MessageType::RecursiveInclude, fileName);
             return {};
         }
-        const auto fileNo = usedFileNames.indexOf(fileName);
+        const auto fileNo =
+            (usedFileNames ? usedFileNames->indexOf(fileName) : 0);
         const auto versionRemoved =
             (maxVersion ? removeVersion(&source, maxVersion) : false);
         if (extensions)
@@ -210,6 +211,7 @@ bool shaderSessionSettingsDiffer(const Session &a, const Session &b)
 
 ShaderBase::ShaderBase(Shader::ShaderType type,
     const QList<const Shader *> &shaders, const Session &session)
+    : mSession(session)
 {
     Q_ASSERT(!shaders.isEmpty());
     mType = type;
@@ -239,6 +241,9 @@ ShaderBase::ShaderBase(Shader::ShaderType type,
 bool ShaderBase::operator==(const ShaderBase &rhs) const
 {
     // TODO: check included files for modifications
+    if (shaderSessionSettingsDiffer(mSession, rhs.mSession))
+        return false;
+
     return std::tie(mType, mSources, mFileNames, mLanguage, mEntryPoint,
                mPreamble, mIncludePaths)
         == std::tie(rhs.mType, rhs.mSources, rhs.mFileNames, rhs.mLanguage,
@@ -246,12 +251,12 @@ bool ShaderBase::operator==(const ShaderBase &rhs) const
 }
 
 QStringList ShaderBase::getPatchedSources(MessagePtrSet &messages,
-    QStringList &usedFileNames, ShaderPrintf *printf) const
+    ShaderPrintf &printf, QStringList *usedFileNames) const
 {
     if (mLanguage == Shader::Language::HLSL)
-        return getPatchedSourcesHLSL(messages, usedFileNames, printf);
+        return getPatchedSourcesHLSL(messages, printf, usedFileNames);
 
-    return getPatchedSourcesGLSL(messages, usedFileNames, printf);
+    return getPatchedSourcesGLSL(messages, printf, usedFileNames);
 }
 
 QStringList ShaderBase::preprocessorDefinitions() const
@@ -260,7 +265,7 @@ QStringList ShaderBase::preprocessorDefinitions() const
 }
 
 QStringList ShaderBase::getPatchedSourcesGLSL(MessagePtrSet &messages,
-    QStringList &usedFileNames, ShaderPrintf *printf) const
+    ShaderPrintf &printf, QStringList *usedFileNames) const
 {
     if (mSources.isEmpty())
         return {};
@@ -278,15 +283,12 @@ QStringList ShaderBase::getPatchedSourcesGLSL(MessagePtrSet &messages,
         return {};
     }
 
-    if (printf) {
-        for (auto i = 0; i < sources.size(); ++i)
-            sources[i] = printf->patchSource(mType, mFileNames[i], sources[i]);
+    for (auto i = 0; i < sources.size(); ++i)
+        sources[i] = printf.patchSource(mType, mFileNames[i], sources[i]);
 
-        if (printf->isUsed(mType)) {
-            sources.front().prepend(ShaderPrintf::preambleGLSL());
-            maxVersion =
-                std::max(maxVersion, ShaderPrintf::requiredVersionGLSL());
-        }
+    if (printf.isUsed(mType)) {
+        sources.front().prepend(ShaderPrintf::preambleGLSL());
+        maxVersion = std::max(maxVersion, ShaderPrintf::requiredVersionGLSL());
     }
 
     if (!mPreamble.isEmpty())
@@ -310,7 +312,7 @@ QStringList ShaderBase::getPatchedSourcesGLSL(MessagePtrSet &messages,
 }
 
 QStringList ShaderBase::getPatchedSourcesHLSL(MessagePtrSet &messages,
-    QStringList &usedFileNames, ShaderPrintf *printf) const
+    ShaderPrintf &printf, QStringList *usedFileNames) const
 {
     if (mSources.isEmpty())
         return {};
@@ -320,13 +322,11 @@ QStringList ShaderBase::getPatchedSourcesHLSL(MessagePtrSet &messages,
         sources += substituteIncludes(mSources[i], mFileNames[i], usedFileNames,
             mItemId, messages, mIncludePaths);
 
-    if (printf) {
-        for (auto i = 0; i < sources.size(); ++i)
-            sources[i] = printf->patchSource(mType, mFileNames[i], sources[i]);
+    for (auto i = 0; i < sources.size(); ++i)
+        sources[i] = printf.patchSource(mType, mFileNames[i], sources[i]);
 
-        if (printf->isUsed(mType))
-            sources.front().prepend(ShaderPrintf::preambleHLSL());
-    }
+    if (printf.isUsed(mType))
+        sources.front().prepend(ShaderPrintf::preambleHLSL());
 
     if (!mPreamble.isEmpty())
         sources.front().prepend("#line 1 0\n" + mPreamble + "\n");

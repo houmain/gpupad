@@ -17,11 +17,11 @@ public:
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
 
     QStringList getPatchedSources(MessagePtrSet &messages,
-        QStringList &usedFileNames, ShaderPrintf *printf = nullptr) const;
+        ShaderPrintf &printf, QStringList *usedFileNames = nullptr) const;
     QStringList getPatchedSourcesGLSL(MessagePtrSet &messages,
-        QStringList &usedFileNames, ShaderPrintf *printf = nullptr) const;
+        ShaderPrintf &printf, QStringList *usedFileNames = nullptr) const;
     QStringList getPatchedSourcesHLSL(MessagePtrSet &messages,
-        QStringList &usedFileNames, ShaderPrintf *printf = nullptr) const;
+        ShaderPrintf &printf, QStringList *usedFileNames = nullptr) const;
 
 protected:
     virtual QStringList preprocessorDefinitions() const;
@@ -34,6 +34,7 @@ protected:
     QString mIncludePaths;
     Shader::ShaderType mType{};
     Shader::Language mLanguage{};
+    Session mSession{};
     QString mEntryPoint;
     QStringList mPatchedSources;
 };

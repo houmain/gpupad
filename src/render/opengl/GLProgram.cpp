@@ -56,7 +56,7 @@ bool GLProgram::linkShaders(GLuint program)
 {
     auto &gl = GLContext::currentContext();
     for (auto &shader : mShaders) {
-        if (!shader.compile(&mPrintf))
+        if (!shader.compile(mPrintf))
             return false;
         gl.glAttachShader(program, shader.shaderObject());
     }

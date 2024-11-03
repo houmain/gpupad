@@ -49,7 +49,7 @@ GLShader::GLShader(Shader::ShaderType type,
 {
 }
 
-bool GLShader::compile(GLPrintf *printf, bool failSilently)
+bool GLShader::compile(ShaderPrintf &printf)
 {
     if (!GLContext::currentContext()) {
         mMessages += MessageList::insert(0,
@@ -74,7 +74,7 @@ bool GLShader::compile(GLPrintf *printf, bool failSilently)
     }
 
     auto usedFileNames = QStringList();
-    mPatchedSources = getPatchedSourcesGLSL(mMessages, usedFileNames, printf);
+    mPatchedSources = getPatchedSourcesGLSL(mMessages, printf, &usedFileNames);
     if (mPatchedSources.isEmpty())
         return false;
 
@@ -93,13 +93,11 @@ bool GLShader::compile(GLPrintf *printf, bool failSilently)
     auto status = GLint{};
     gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
-    if (!failSilently) {
-        auto length = GLint{};
-        gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-        auto log = std::vector<char>(static_cast<size_t>(length));
-        gl.glGetShaderInfoLog(shader, length, nullptr, log.data());
-        GLShader::parseLog(log.data(), mMessages, mItemId, usedFileNames);
-    }
+    auto length = GLint{};
+    gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
+    auto log = std::vector<char>(static_cast<size_t>(length));
+    gl.glGetShaderInfoLog(shader, length, nullptr, log.data());
+    GLShader::parseLog(log.data(), mMessages, mItemId, usedFileNames);
     if (status != GL_TRUE)
         return false;
 
@@ -128,16 +126,20 @@ QString formatNvGpuProgram(QString assembly)
     return lines.join('\n');
 }
 
-QString GLShader::getAssembly()
+QStringList GLShader::preprocessorDefinitions() const
 {
-    if (!compile(nullptr, true))
-        return {};
+    auto definitions = ShaderBase::preprocessorDefinitions();
+    definitions.append("GPUPAD_OPENGL 1");
+    return definitions;
+}
 
+QString tryGetProgramBinary(const GLShader &shader)
+{
     auto assembly = QString("not supported");
     auto &gl = GLContext::currentContext();
-    if (gl.v4_2 && mShaderObject) {
+    if (gl.v4_2 && shader.shaderObject()) {
         auto program = gl.glCreateProgram();
-        gl.glAttachShader(program, mShaderObject);
+        gl.glAttachShader(program, shader.shaderObject());
         gl.glLinkProgram(program);
 
         auto length = GLint{};
@@ -160,9 +162,21 @@ QString GLShader::getAssembly()
     return assembly;
 }
 
-QStringList GLShader::preprocessorDefinitions() const
+void tryGetLinkerWarnings(const GLShader &shader, MessagePtrSet &messages)
 {
-    auto definitions = ShaderBase::preprocessorDefinitions();
-    definitions.append("GPUPAD_OPENGL 1");
-    return definitions;
+    auto &gl = GLContext::currentContext();
+    auto program = gl.glCreateProgram();
+    gl.glAttachShader(program, shader.shaderObject());
+    gl.glLinkProgram(program);
+    auto status = GLint{};
+    gl.glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (status == GL_TRUE) {
+        auto length = GLint{};
+        gl.glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+        auto log = std::vector<char>(static_cast<size_t>(length));
+        gl.glGetProgramInfoLog(program, length, nullptr, log.data());
+        GLShader::parseLog(log.data(), messages, shader.itemId(),
+            shader.fileNames());
+    }
+    gl.glDeleteProgram(program);
 }

@@ -1,10 +1,15 @@
-#include "GLProcessSource.h"
-#include "GLPrintf.h"
+#include "ProcessSource.h"
+#include "ShaderPrintf.h"
 #include "Settings.h"
 #include "Singletons.h"
+#include "FileCache.h"
 #include "SynchronizeLogic.h"
-#include "render/glslang.h"
+#include "glslang.h"
+#include "opengl/GLShader.h"
+#include "vulkan/VKShader.h"
+#include "session/SessionModel.h"
 #include "scripting/ScriptEngineJavaScript.h"
+#include <QRegularExpression>
 
 namespace {
     QString removeLineDirectives(QString source)
@@ -41,53 +46,46 @@ namespace {
                             shaders.append(shader);
         return shaders;
     }
-
-    void tryToGetLinkerWarnings(GLShader &shader, MessagePtrSet &messages)
-    {
-        auto &gl = GLContext::currentContext();
-        auto program = gl.glCreateProgram();
-        gl.glAttachShader(program, shader.shaderObject());
-        gl.glLinkProgram(program);
-        auto status = GLint{};
-        gl.glGetProgramiv(program, GL_LINK_STATUS, &status);
-        if (status == GL_TRUE) {
-            auto length = GLint{};
-            gl.glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-            auto log = std::vector<char>(static_cast<size_t>(length));
-            gl.glGetProgramInfoLog(program, length, nullptr, log.data());
-            GLShader::parseLog(log.data(), messages, shader.itemId(),
-                shader.fileNames());
-        }
-        gl.glDeleteProgram(program);
-    }
 } // namespace
 
-void GLProcessSource::setFileName(QString fileName)
+ProcessSource::ProcessSource(QObject *parent) : RenderTask(parent) { }
+
+ProcessSource::~ProcessSource()
+{
+    releaseResources();
+}
+
+void ProcessSource::setFileName(QString fileName)
 {
     mFileName = fileName;
 }
 
-void GLProcessSource::setSourceType(SourceType sourceType)
+void ProcessSource::setSourceType(SourceType sourceType)
 {
     mSourceType = sourceType;
 }
 
-void GLProcessSource::setValidateSource(bool validate)
+void ProcessSource::setValidateSource(bool validate)
 {
     mValidateSource = validate;
 }
 
-void GLProcessSource::setProcessType(QString processType)
+void ProcessSource::setProcessType(QString processType)
 {
     mProcessType = processType;
 }
 
-void GLProcessSource::clearMessages()
+void ProcessSource::clearMessages()
 {
     mMessages.clear();
 }
 
-void GLProcessSource::prepare()
+bool ProcessSource::initialize()
+{
+    return true;
+}
+
+void ProcessSource::prepare(bool itemsChanged, EvaluationType)
 {
     if (auto shaderType = getShaderType(mSourceType)) {
         auto shaders = getShadersInSession(mFileName);
@@ -109,12 +107,19 @@ void GLProcessSource::prepare()
             }
 
         auto &session = Singletons::sessionModel();
-        if (auto sessionItem = session.item<Session>(session.index(0, 0)))
+        auto sessionItem = session.item<Session>(session.index(0, 0));
+        switch (renderer().api()) {
+        case RenderAPI::OpenGL:
             mShader.reset(new GLShader(shaderType, shaders, *sessionItem));
+            break;
+        case RenderAPI::Vulkan:
+            mShader.reset(new VKShader(shaderType, shaders, *sessionItem));
+            break;
+        }
     }
 }
 
-void GLProcessSource::render()
+void ProcessSource::render()
 {
     auto messages = MessagePtrSet();
     mScriptEngine.reset();
@@ -122,11 +127,21 @@ void GLProcessSource::render()
 
     if (mValidateSource) {
         if (mShader) {
-            auto glPrintf = GLPrintf();
-            if (mShader->compile(&glPrintf)) {
-                // try to link and if it also succeeds,
-                // output messages from linking to get potential warnings
-                tryToGetLinkerWarnings(*mShader, messages);
+            auto printf = ShaderPrintf();
+            auto device = KDGpu::Device();
+            switch (renderer().api()) {
+            case RenderAPI::OpenGL:
+                if (auto shader = static_cast<GLShader *>(mShader.get()))
+                    if (shader->compile(printf)) {
+                        // try to link and if it also succeeds,
+                        // output messages from linking to get potential warnings
+                        tryGetLinkerWarnings(*shader, messages);
+                    }
+                break;
+
+            case RenderAPI::Vulkan:
+                static_cast<VKShader &>(*mShader).compile(device, printf, 0);
+                break;
             }
         } else {
             if (mSourceType == SourceType::JavaScript)
@@ -141,12 +156,10 @@ void GLProcessSource::render()
         }
     }
 
-    if (mShader) {
-        auto usedFileNames = QStringList();
-        auto printf = GLPrintf();
+    if (mShader && !mProcessType.isEmpty()) {
+        auto printf = ShaderPrintf();
         const auto source =
-            mShader->getPatchedSources(messages, usedFileNames, &printf)
-                .join("\n");
+            mShader->getPatchedSources(messages, printf).join("\n");
 
         if (mProcessType == "preprocess") {
             mOutput =
@@ -158,7 +171,10 @@ void GLProcessSource::render()
             mOutput = glslang::generateAST(source, getShaderType(mSourceType),
                 messages);
         } else if (mProcessType == "assembly") {
-            mOutput = mShader->getAssembly();
+            if (renderer().api() == RenderAPI::OpenGL)
+                if (auto shader = static_cast<GLShader *>(mShader.get()))
+                    if (shader->compile(printf))
+                        mOutput = tryGetProgramBinary(*shader);
         }
         messages += mShader->resetMessages();
         mShader.reset();
@@ -166,7 +182,12 @@ void GLProcessSource::render()
     mMessages = messages;
 }
 
-void GLProcessSource::release()
+void ProcessSource::finish()
+{
+    Q_EMIT outputChanged(mOutput);
+}
+
+void ProcessSource::release()
 {
     Q_ASSERT(!mShader);
 }

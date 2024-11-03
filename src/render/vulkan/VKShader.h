@@ -10,8 +10,8 @@ public:
     VKShader(Shader::ShaderType type, const QList<const Shader *> &shaders,
         const Session &session);
 
-    bool compile(const Session &session, KDGpu::Device &device,
-        VKPrintf *printf, int shiftBindingsInSet0);
+    bool compile(KDGpu::Device &device, ShaderPrintf &printf,
+        int shiftBindingsInSet0);
     const Spirv::Interface &interface() const { return mInterface; }
     KDGpu::ShaderStage getShaderStage() const;
     int getMaxBindingInSet0() const;

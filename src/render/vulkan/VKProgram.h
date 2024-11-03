@@ -21,7 +21,6 @@ public:
 
 private:
     ItemId mItemId{};
-    Session mSession{ };
     QSet<ItemId> mUsedItems;
     MessagePtrSet mLinkMessages;
     std::vector<VKShader> mShaders;

@@ -1,51 +1,44 @@
 #pragma once
 
 #include "RenderTask.h"
-#include "opengl/GLProcessSource.h"
+#include "SourceType.h"
+#include "MessageList.h"
+
+class ShaderBase;
+class ScriptEngine;
 
 class ProcessSource final : public RenderTask
 {
     Q_OBJECT
 public:
-    explicit ProcessSource(QObject *parent = nullptr) : RenderTask(parent) { }
+    explicit ProcessSource(QObject *parent = nullptr);
+    ~ProcessSource() override;
 
-    ~ProcessSource() override { releaseResources(); }
-
-    void setFileName(QString fileName) { mImpl.setFileName(fileName); }
-
-    void setSourceType(SourceType sourceType)
-    {
-        mImpl.setSourceType(sourceType);
-    }
-
-    void setValidateSource(bool validate) { mImpl.setValidateSource(validate); }
-
-    void setProcessType(QString processType)
-    {
-        mImpl.setProcessType(processType);
-    }
-
-    void clearMessages() { mImpl.clearMessages(); }
+    void setFileName(QString fileName);
+    void setSourceType(SourceType sourceType);
+    void setValidateSource(bool validate);
+    void setProcessType(QString processType);
+    void clearMessages();
 
 Q_SIGNALS:
     void outputChanged(QString output);
 
 private:
-    bool initialize() override
-    {
-        return (renderer().api() == RenderAPI::OpenGL);
-    }
+    bool initialize() override;
+    void prepare(bool itemsChanged, EvaluationType);
+    void render() override;
+    void finish() override;
+    void release() override;
 
-    void prepare(bool itemsChanged, EvaluationType) override
-    {
-        mImpl.prepare();
-    }
+private:
+    QScopedPointer<ShaderBase> mShader;
+    QString mFileName;
+    SourceType mSourceType{};
 
-    void render() override { mImpl.render(); }
+    QScopedPointer<ScriptEngine> mScriptEngine;
+    MessagePtrSet mMessages;
 
-    void finish() override { Q_EMIT outputChanged(mImpl.output()); }
-
-    void release() override { mImpl.release(); }
-
-    GLProcessSource mImpl;
+    bool mValidateSource{};
+    QString mProcessType{};
+    QString mOutput;
 };

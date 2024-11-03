@@ -124,7 +124,6 @@ set(SOURCES
   src/render/opengl/GLPrintf.cpp
   src/render/opengl/GLRenderSession.cpp
   src/render/opengl/GLRenderer.cpp
-  src/render/opengl/GLProcessSource.cpp
   src/render/opengl/GLComputeRange.cpp
   src/render/vulkan/KDGpuEnums.cpp
   src/render/vulkan/VKBuffer.cpp
@@ -138,7 +137,8 @@ set(SOURCES
   src/render/vulkan/VKTexture.cpp
   src/render/vulkan/VKRenderer.cpp
   src/render/vulkan/VKRenderSession.cpp
-  src/render/RenderTask.cpp  
+  src/render/ProcessSource.cpp
+  src/render/RenderTask.cpp
   src/render/RenderSessionBase.cpp
   src/render/ShaderBase.cpp
   src/render/TextureBase.cpp

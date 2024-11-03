@@ -6,7 +6,6 @@
 
 VKProgram::VKProgram(const Program &program, const Session &session)
     : mItemId(program.id)
-    , mSession(session)
 {
     mUsedItems += program.id;
     mUsedItems += session.id;
@@ -25,8 +24,7 @@ VKProgram::VKProgram(const Program &program, const Session &session)
 
 bool VKProgram::operator==(const VKProgram &rhs) const
 {
-    return (std::tie(mShaders) == std::tie(rhs.mShaders)
-        && !shaderSessionSettingsDiffer(mSession, rhs.mSession));
+    return (mShaders == rhs.mShaders);
 }
 
 bool VKProgram::link(KDGpu::Device &device)
@@ -37,8 +35,7 @@ bool VKProgram::link(KDGpu::Device &device)
     auto succeeded = true;
     auto shiftBindingsInSet0 = 0;
     for (auto &shader : mShaders) {
-        succeeded &=
-            shader.compile(mSession, device, &mPrintf, shiftBindingsInSet0);
+        succeeded &= shader.compile(device, mPrintf, shiftBindingsInSet0);
         shiftBindingsInSet0 =
             std::max(shiftBindingsInSet0, shader.getMaxBindingInSet0() + 1);
     }

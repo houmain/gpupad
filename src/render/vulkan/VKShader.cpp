@@ -25,23 +25,24 @@ VKShader::VKShader(Shader::ShaderType type,
 {
 }
 
-bool VKShader::compile(const Session &session, KDGpu::Device &device,
-    VKPrintf *printf, int shiftBindingsInSet0)
+bool VKShader::compile(KDGpu::Device &device, ShaderPrintf &printf,
+    int shiftBindingsInSet0)
 {
     if (!mPatchedSources.isEmpty())
         return mShaderModule.isValid();
 
     auto usedFileNames = QStringList();
-    mPatchedSources = getPatchedSources(mMessages, usedFileNames, printf);
+    mPatchedSources = getPatchedSources(mMessages, printf, &usedFileNames);
     if (mPatchedSources.isEmpty())
         return false;
 
-    auto spirv = Spirv::generate(session, mLanguage, mType, mPatchedSources,
-        mFileNames, mEntryPoint, shiftBindingsInSet0, mItemId, mMessages);
+    auto spirv = Spirv::generate(mSession, mLanguage, mType, mPatchedSources,
+        usedFileNames, mEntryPoint, shiftBindingsInSet0, mItemId, mMessages);
     if (!spirv)
         return false;
 
-    mShaderModule = device.createShaderModule(spirv.spirv());
+    if (device.isValid())
+        mShaderModule = device.createShaderModule(spirv.spirv());
     mInterface = spirv.getInterface();
     return true;
 }

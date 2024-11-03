@@ -12,12 +12,14 @@ public:
     GLShader(Shader::ShaderType type, const QList<const Shader *> &shaders,
         const Session &session);
 
-    bool compile(GLPrintf *printf = nullptr, bool failSilently = false);
+    bool compile(ShaderPrintf &printf);
     GLuint shaderObject() const { return mShaderObject; }
-    QString getAssembly();
 
 private:
     QStringList preprocessorDefinitions() const override;
 
     GLObject mShaderObject;
 };
+
+QString tryGetProgramBinary(const GLShader &shader);
+void tryGetLinkerWarnings(const GLShader &shader, MessagePtrSet &messages);
