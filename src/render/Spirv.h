@@ -26,6 +26,18 @@ public:
         const QStringList &fileNames, const QString &entryPoint,
         int shiftBindingsInSet0, ItemId itemId, MessagePtrSet &messages);
 
+    static QString preprocess(const Session &session, Shader::Language language,
+        Shader::ShaderType shaderType, const QStringList &sources,
+        const QStringList &fileNames, const QString &entryPoint, ItemId itemId,
+        MessagePtrSet &messages);
+
+    static QString disassemble(const Spirv &spirv);
+
+    static QString generateAST(const Session &session, Shader::Language language,
+        Shader::ShaderType shaderType, const QStringList &sources,
+        const QStringList &fileNames, const QString &entryPoint, ItemId itemId,
+        MessagePtrSet &messages);
+
     Spirv() = default;
     explicit Spirv(std::vector<uint32_t> spirv);
 

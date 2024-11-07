@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ShaderPrintf.h"
+#include "Spirv.h"
 
 class ShaderBase
 {
@@ -15,16 +16,19 @@ public:
     const QStringList &fileNames() const { return mFileNames; }
     const QString &entryPoint() const { return mEntryPoint; }
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
-
-    QStringList getPatchedSources(MessagePtrSet &messages,
-        ShaderPrintf &printf, QStringList *usedFileNames = nullptr) const;
-    QStringList getPatchedSourcesGLSL(MessagePtrSet &messages,
-        ShaderPrintf &printf, QStringList *usedFileNames = nullptr) const;
-    QStringList getPatchedSourcesHLSL(MessagePtrSet &messages,
-        ShaderPrintf &printf, QStringList *usedFileNames = nullptr) const;
+    Spirv generateSpirv(ShaderPrintf &printf, int shiftBindingsInSet0 = 0);
+    QString preprocess();
+    QString generateSpirvReadable();
+    QString generateGLSLangAST();
 
 protected:
     virtual QStringList preprocessorDefinitions() const;
+    QStringList getPatchedSources(ShaderPrintf &printf,
+        QStringList *usedFileNames);
+    QStringList getPatchedSourcesGLSL(ShaderPrintf &printf,
+        QStringList *usedFileNames);
+    QStringList getPatchedSourcesHLSL(ShaderPrintf &printf,
+        QStringList *usedFileNames);
 
     ItemId mItemId{};
     MessagePtrSet mMessages;
@@ -34,9 +38,8 @@ protected:
     QString mIncludePaths;
     Shader::ShaderType mType{};
     Shader::Language mLanguage{};
-    Session mSession{};
     QString mEntryPoint;
-    QStringList mPatchedSources;
+    Session mSession{};
 };
 
 bool shaderSessionSettingsDiffer(const Session &a, const Session &b);

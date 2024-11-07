@@ -20,11 +20,13 @@ public:
 
     bool isUsed() const;
     bool isUsed(Shader::ShaderType stage) const;
-    QString patchSource(Shader::ShaderType stage, const QString &fileName,
-        const QString &source);
+    virtual QString patchSource(Shader::ShaderType stage,
+        const QString &fileName, const QString &source);
 
 protected:
     static const auto maxBufferValues = 1024 - 2;
+
+    ShaderPrintf() = default;
 
     struct ParsedFormatString
     {
@@ -53,4 +55,11 @@ protected:
 
     QSet<Shader::ShaderType> mUsedInStages;
     QList<ParsedFormatString> mFormatStrings;
+};
+
+class RemoveShaderPrintf : public ShaderPrintf
+{
+public:
+    QString patchSource(Shader::ShaderType stage, const QString &fileName,
+        const QString &source) override;
 };

@@ -74,12 +74,12 @@ bool GLShader::compile(ShaderPrintf &printf)
     }
 
     auto usedFileNames = QStringList();
-    mPatchedSources = getPatchedSourcesGLSL(mMessages, printf, &usedFileNames);
-    if (mPatchedSources.isEmpty())
+    auto patchedSources = getPatchedSourcesGLSL(printf, &usedFileNames);
+    if (patchedSources.isEmpty())
         return false;
 
     auto sources = std::vector<std::string>();
-    for (const QString &source : qAsConst(mPatchedSources))
+    for (const QString &source : qAsConst(patchedSources))
         sources.push_back(qUtf8Printable(source));
 
     auto sourcePointers = std::vector<const char *>();

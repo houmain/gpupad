@@ -2,7 +2,6 @@
 
 #include "VKPrintf.h"
 #include "render/ShaderBase.h"
-#include "render/Spirv.h"
 
 class VKShader : public ShaderBase
 {

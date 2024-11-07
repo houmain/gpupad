@@ -143,7 +143,6 @@ set(SOURCES
   src/render/ShaderBase.cpp
   src/render/TextureBase.cpp
   src/render/ShaderPrintf.cpp
-  src/render/glslang.cpp
   src/render/Spirv.cpp
   src/scripting/ScriptConsole.cpp
   src/scripting/MouseScriptObject.cpp

@@ -4,7 +4,6 @@
 #include "Singletons.h"
 #include "FileCache.h"
 #include "SynchronizeLogic.h"
-#include "glslang.h"
 #include "opengl/GLShader.h"
 #include "vulkan/VKShader.h"
 #include "session/SessionModel.h"
@@ -127,21 +126,16 @@ void ProcessSource::render()
 
     if (mValidateSource) {
         if (mShader) {
-            auto printf = ShaderPrintf();
-            auto device = KDGpu::Device();
-            switch (renderer().api()) {
-            case RenderAPI::OpenGL:
+            auto printf = RemoveShaderPrintf();
+            if (renderer().api() == RenderAPI::OpenGL) {
                 if (auto shader = static_cast<GLShader *>(mShader.get()))
                     if (shader->compile(printf)) {
                         // try to link and if it also succeeds,
                         // output messages from linking to get potential warnings
                         tryGetLinkerWarnings(*shader, messages);
                     }
-                break;
-
-            case RenderAPI::Vulkan:
-                static_cast<VKShader &>(*mShader).compile(device, printf, 0);
-                break;
+            } else {
+                mShader->generateSpirv(printf);
             }
         } else {
             if (mSourceType == SourceType::JavaScript)
@@ -157,24 +151,19 @@ void ProcessSource::render()
     }
 
     if (mShader && !mProcessType.isEmpty()) {
-        auto printf = ShaderPrintf();
-        const auto source =
-            mShader->getPatchedSources(messages, printf).join("\n");
-
         if (mProcessType == "preprocess") {
-            mOutput =
-                removeLineDirectives(glslang::preprocess(source, messages));
+            mOutput = removeLineDirectives(mShader->preprocess());
         } else if (mProcessType == "spirv") {
-            mOutput = glslang::generateSpirV(source, getShaderType(mSourceType),
-                messages);
+            mOutput = mShader->generateSpirvReadable();
         } else if (mProcessType == "ast") {
-            mOutput = glslang::generateAST(source, getShaderType(mSourceType),
-                messages);
+            mOutput = mShader->generateGLSLangAST();
         } else if (mProcessType == "assembly") {
             if (renderer().api() == RenderAPI::OpenGL)
-                if (auto shader = static_cast<GLShader *>(mShader.get()))
+                if (auto shader = static_cast<GLShader *>(mShader.get())) {
+                    auto printf = RemoveShaderPrintf();
                     if (shader->compile(printf))
                         mOutput = tryGetProgramBinary(*shader);
+                }
         }
         messages += mShader->resetMessages();
         mShader.reset();

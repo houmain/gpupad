@@ -250,22 +250,21 @@ bool ShaderBase::operator==(const ShaderBase &rhs) const
             rhs.mEntryPoint, rhs.mPreamble, rhs.mIncludePaths);
 }
 
-QStringList ShaderBase::getPatchedSources(MessagePtrSet &messages,
-    ShaderPrintf &printf, QStringList *usedFileNames) const
-{
-    if (mLanguage == Shader::Language::HLSL)
-        return getPatchedSourcesHLSL(messages, printf, usedFileNames);
-
-    return getPatchedSourcesGLSL(messages, printf, usedFileNames);
-}
-
 QStringList ShaderBase::preprocessorDefinitions() const
 {
     return { "GPUPAD 1" };
 }
 
-QStringList ShaderBase::getPatchedSourcesGLSL(MessagePtrSet &messages,
-    ShaderPrintf &printf, QStringList *usedFileNames) const
+QStringList ShaderBase::getPatchedSources(ShaderPrintf &printf,
+    QStringList *usedFileNames)
+{
+    return (mLanguage == Shader::Language::HLSL
+            ? getPatchedSourcesHLSL(printf, usedFileNames)
+            : getPatchedSourcesGLSL(printf, usedFileNames));
+}
+
+QStringList ShaderBase::getPatchedSourcesGLSL(ShaderPrintf &printf,
+    QStringList *usedFileNames)
 {
     if (mSources.isEmpty())
         return {};
@@ -275,10 +274,10 @@ QStringList ShaderBase::getPatchedSourcesGLSL(MessagePtrSet &messages,
     auto extensions = QString();
     for (auto i = 0; i < mSources.size(); ++i)
         sources += substituteIncludes(mSources[i], mFileNames[i], usedFileNames,
-            mItemId, messages, mIncludePaths, &maxVersion, &extensions);
+            mItemId, mMessages, mIncludePaths, &maxVersion, &extensions);
 
     if (mLanguage != Shader::Language::GLSL) {
-        messages += MessageList::insert(mItemId,
+        mMessages += MessageList::insert(mItemId,
             MessageType::OpenGLRendererRequiresGLSL);
         return {};
     }
@@ -311,8 +310,8 @@ QStringList ShaderBase::getPatchedSourcesGLSL(MessagePtrSet &messages,
     return sources;
 }
 
-QStringList ShaderBase::getPatchedSourcesHLSL(MessagePtrSet &messages,
-    ShaderPrintf &printf, QStringList *usedFileNames) const
+QStringList ShaderBase::getPatchedSourcesHLSL(ShaderPrintf &printf,
+    QStringList *usedFileNames)
 {
     if (mSources.isEmpty())
         return {};
@@ -320,7 +319,7 @@ QStringList ShaderBase::getPatchedSourcesHLSL(MessagePtrSet &messages,
     auto sources = QStringList();
     for (auto i = 0; i < mSources.size(); ++i)
         sources += substituteIncludes(mSources[i], mFileNames[i], usedFileNames,
-            mItemId, messages, mIncludePaths);
+            mItemId, mMessages, mIncludePaths);
 
     for (auto i = 0; i < sources.size(); ++i)
         sources[i] = printf.patchSource(mType, mFileNames[i], sources[i]);
@@ -335,4 +334,36 @@ QStringList ShaderBase::getPatchedSourcesHLSL(MessagePtrSet &messages,
         sources.front().prepend("#define " + definition + "\n");
 
     return sources;
+}
+
+Spirv ShaderBase::generateSpirv(ShaderPrintf &printf, int shiftBindingsInSet0)
+{
+    auto usedFileNames = QStringList();
+    auto patchedSources = getPatchedSources(printf, &usedFileNames);
+    return Spirv::generate(mSession, mLanguage, mType, patchedSources,
+        usedFileNames, mEntryPoint, shiftBindingsInSet0, mItemId, mMessages);
+}
+
+QString ShaderBase::preprocess()
+{
+    auto usedFileNames = QStringList();
+    auto printf = RemoveShaderPrintf();
+    auto patchedSources = getPatchedSources(printf, &usedFileNames);
+    return Spirv::preprocess(mSession, mLanguage, mType, patchedSources,
+        usedFileNames, mEntryPoint, mItemId, mMessages);
+}
+
+QString ShaderBase::generateSpirvReadable()
+{
+    auto printf = RemoveShaderPrintf();
+    return Spirv::disassemble(generateSpirv(printf, 0));
+}
+
+QString ShaderBase::generateGLSLangAST()
+{
+    auto usedFileNames = QStringList();
+    auto printf = RemoveShaderPrintf();
+    auto patchedSources = getPatchedSources(printf, &usedFileNames);
+    return Spirv::generateAST(mSession, mLanguage, mType, patchedSources,
+        usedFileNames, mEntryPoint, mItemId, mMessages);
 }
