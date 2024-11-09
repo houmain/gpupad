@@ -202,6 +202,10 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
     } else if (mModel.item<Binding>(index)) {
         invalidateRenderSession();
     }
+
+    if (mModel.item<Session>(index)) {
+        mProcessSourceTimer->start();
+    }
 }
 
 void SynchronizeLogic::handleItemReordered(const QModelIndex &parent, int first)

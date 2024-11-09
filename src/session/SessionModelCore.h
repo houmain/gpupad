@@ -14,6 +14,7 @@ public:
         FileName,
 
         SessionRenderer,
+        SessionShaderCompiler,
         SessionShaderPreamble,
         SessionShaderIncludePaths,
         SessionAutoMapBindings,

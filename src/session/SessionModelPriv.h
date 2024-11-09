@@ -7,6 +7,7 @@
 
 #define ADD_EACH_COLUMN_TYPE()                                                \
     ADD(SessionRenderer, Session, renderer)                                   \
+    ADD(SessionShaderCompiler, Session, shaderCompiler)                       \
     ADD(SessionShaderPreamble, Session, shaderPreamble)                       \
     ADD(SessionShaderIncludePaths, Session, shaderIncludePaths)               \
     ADD(SessionAutoMapBindings, Session, autoMapBindings)                     \

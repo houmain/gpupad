@@ -40,6 +40,7 @@ struct Root : ScopeItem
 struct Session : ScopeItem
 {
     QString renderer{ "OpenGL" };
+    QString shaderCompiler;
     QString shaderPreamble;
     QString shaderIncludePaths;
 
@@ -47,7 +48,7 @@ struct Session : ScopeItem
     bool autoMapBindings{ true };
     bool autoMapLocations{ true };
     bool vulkanRulesRelaxed{ true };
-    int spirvVersion{ };
+    int spirvVersion{};
 };
 
 struct Group : ScopeItem

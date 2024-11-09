@@ -229,17 +229,18 @@ Spirv Spirv::generate(const Session &session, Shader::Language language,
     const auto defaultProfile = ENoProfile;
     const auto forwardCompatible = true;
 
-    auto requestedMessages =
-        static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
+    auto requestedMessages = unsigned{ EShMsgSpvRules };
+    if (session.renderer == "Vulkan")
+        requestedMessages |= EShMsgVulkanRules;
     if (language == Shader::Language::HLSL)
-        requestedMessages = static_cast<EShMessages>(requestedMessages
-            | EShMsgReadHlsl | EShMsgHlslOffsets);
+        requestedMessages |= EShMsgReadHlsl | EShMsgHlslOffsets;
 
     auto shader = createShader(session, language, shaderType, sources,
         entryPoint, shiftBindingsInSet0);
 
     if (!shader->parse(GetDefaultResources(), defaultVersion, defaultProfile,
-            false, forwardCompatible, requestedMessages)) {
+            false, forwardCompatible,
+            static_cast<EShMessages>(requestedMessages))) {
         parseGLSLangErrors(QString::fromUtf8(shader->getInfoLog()), messages,
             itemId, fileNames);
         return {};
@@ -247,7 +248,7 @@ Spirv Spirv::generate(const Session &session, Shader::Language language,
 
     auto program = glslang::TProgram();
     program.addShader(shader.get());
-    if (!program.link(requestedMessages)) {
+    if (!program.link(static_cast<EShMessages>(requestedMessages))) {
         parseGLSLangErrors(QString::fromUtf8(program.getInfoLog()), messages,
             itemId, fileNames);
         return {};

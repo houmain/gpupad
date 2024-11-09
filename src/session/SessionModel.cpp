@@ -530,10 +530,14 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
     case Item::Type::Session: {
         const auto &session = static_cast<const Session &>(item);
         const auto hasVulkanRenderer = (session.renderer == "Vulkan");
-        result &= (column != SessionAutoMapBindings || hasVulkanRenderer);
-        result &= (column != SessionAutoMapLocations || hasVulkanRenderer);
-        result &= (column != SessionVulkanRulesRelaxed || hasVulkanRenderer);
-        result &= (column != SessionSpirvVersion || (hasVulkanRenderer && session.spirvVersion != 0));
+        const auto hasShaderCompiler =
+            (!session.shaderCompiler.isEmpty() || hasVulkanRenderer);
+        result &= (column != SessionShaderCompiler || !hasVulkanRenderer);
+        result &= (column != SessionAutoMapBindings || hasShaderCompiler);
+        result &= (column != SessionAutoMapLocations || hasShaderCompiler);
+        result &= (column != SessionVulkanRulesRelaxed || hasShaderCompiler);
+        result &= (column != SessionSpirvVersion
+            || (hasShaderCompiler && session.spirvVersion != 0));
         break;
     }
 

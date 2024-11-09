@@ -52,9 +52,14 @@ GLShader::GLShader(Shader::ShaderType type,
 bool GLShader::compile(ShaderPrintf &printf)
 {
     if (!GLContext::currentContext()) {
-        mMessages += MessageList::insert(0,
+        mMessages += MessageList::insert(mItemId,
             MessageType::OpenGLVersionNotAvailable, "3.3");
         return false;
+    }
+    if (mLanguage != Shader::Language::GLSL) {
+        mMessages += MessageList::insert(mItemId,
+            MessageType::OpenGLRendererRequiresGLSL);
+        return {};
     }
 
     if (mShaderObject)
@@ -74,30 +79,58 @@ bool GLShader::compile(ShaderPrintf &printf)
     }
 
     auto usedFileNames = QStringList();
-    auto patchedSources = getPatchedSourcesGLSL(printf, &usedFileNames);
-    if (patchedSources.isEmpty())
-        return false;
+    if (mSession.shaderCompiler.isEmpty()) {
+        auto patchedSources = getPatchedSourcesGLSL(printf, &usedFileNames);
+        if (patchedSources.isEmpty())
+            return false;
 
-    auto sources = std::vector<std::string>();
-    for (const QString &source : qAsConst(patchedSources))
-        sources.push_back(qUtf8Printable(source));
+        auto sources = std::vector<std::string>();
+        for (const QString &source : qAsConst(patchedSources))
+            sources.push_back(qUtf8Printable(source));
 
-    auto sourcePointers = std::vector<const char *>();
-    for (const auto &source : sources)
-        sourcePointers.push_back(source.data());
-    gl.glShaderSource(shader, static_cast<GLsizei>(sourcePointers.size()),
-        sourcePointers.data(), nullptr);
+        auto sourcePointers = std::vector<const char *>();
+        for (const auto &source : sources)
+            sourcePointers.push_back(source.data());
+        gl.glShaderSource(shader, static_cast<GLsizei>(sourcePointers.size()),
+            sourcePointers.data(), nullptr);
 
-    gl.glCompileShader(shader);
+        gl.glCompileShader(shader);
 
-    auto status = GLint{};
-    gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+    } else {
+        // TODO:
+        const auto shiftBindingsInSet0 = 0;
+        const auto spirv = generateSpirv(printf, shiftBindingsInSet0);
+        if (!spirv)
+            return false;
+
+        void (*glSpecializeShader)(GLuint, const GLchar *, GLuint,
+            const GLuint *, const GLuint *);
+        glSpecializeShader = reinterpret_cast<decltype(glSpecializeShader)>(
+            gl.getProcAddress("glSpecializeShader"));
+        if (!glSpecializeShader) {
+            mMessages += MessageList::insert(mItemId,
+                MessageType::OpenGLVersionNotAvailable, "4.6");
+            return false;
+        }
+        const auto shaderObject = static_cast<GLuint>(shader);
+        gl.v4_2->glShaderBinary(1, &shaderObject,
+            GL_SHADER_BINARY_FORMAT_SPIR_V_ARB, spirv.spirv().data(),
+            static_cast<GLsizei>(spirv.spirv().size() * sizeof(uint32_t)));
+
+        glSpecializeShader(shader, qPrintable(mEntryPoint), 0, 0, 0);
+        
+        // clear error state
+        glGetError();
+    }
 
     auto length = GLint{};
     gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
     auto log = std::vector<char>(static_cast<size_t>(length));
     gl.glGetShaderInfoLog(shader, length, nullptr, log.data());
     GLShader::parseLog(log.data(), mMessages, mItemId, usedFileNames);
+
+    auto status = GLint{};
+    gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (status != GL_TRUE)
         return false;
 

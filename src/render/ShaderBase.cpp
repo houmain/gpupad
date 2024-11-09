@@ -204,7 +204,8 @@ bool shaderSessionSettingsDiffer(const Session &a, const Session &b)
         return true;
 
     const auto common = [](const Session &a) {
-        return std::tie(a.renderer, a.shaderPreamble, a.shaderIncludePaths);
+        return std::tie(a.renderer, a.shaderCompiler, a.shaderPreamble,
+            a.shaderIncludePaths);
     };
     return common(a) != common(b);
 }
@@ -218,6 +219,12 @@ ShaderBase::ShaderBase(Shader::ShaderType type,
     mItemId = shaders.front()->id;
     mPreamble = session.shaderPreamble;
     mIncludePaths = session.shaderIncludePaths;
+
+    // override hidden properties which are only used for generating Output
+    if (mSession.shaderCompiler.isEmpty()) {
+        mSession.autoMapBindings = true;
+        mSession.autoMapLocations = true;
+    }
 
     for (const Shader *shader : shaders) {
         auto source = QString();
@@ -275,12 +282,6 @@ QStringList ShaderBase::getPatchedSourcesGLSL(ShaderPrintf &printf,
     for (auto i = 0; i < mSources.size(); ++i)
         sources += substituteIncludes(mSources[i], mFileNames[i], usedFileNames,
             mItemId, mMessages, mIncludePaths, &maxVersion, &extensions);
-
-    if (mLanguage != Shader::Language::GLSL) {
-        mMessages += MessageList::insert(mItemId,
-            MessageType::OpenGLRendererRequiresGLSL);
-        return {};
-    }
 
     for (auto i = 0; i < sources.size(); ++i)
         sources[i] = printf.patchSource(mType, mFileNames[i], sources[i]);

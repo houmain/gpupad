@@ -105,14 +105,14 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
                 break;
             }
 
-        auto &session = Singletons::sessionModel();
-        auto sessionItem = session.item<Session>(session.index(0, 0));
+        const auto &session = Singletons::sessionModel();
+        const auto &sessionItem = *session.item<Session>(session.index(0, 0));
         switch (renderer().api()) {
         case RenderAPI::OpenGL:
-            mShader.reset(new GLShader(shaderType, shaders, *sessionItem));
+            mShader.reset(new GLShader(shaderType, shaders, sessionItem));
             break;
         case RenderAPI::Vulkan:
-            mShader.reset(new VKShader(shaderType, shaders, *sessionItem));
+            mShader.reset(new VKShader(shaderType, shaders, sessionItem));
             break;
         }
     }
@@ -158,7 +158,6 @@ void ProcessSource::render()
         } else if (mProcessType == "ast") {
             mOutput = mShader->generateGLSLangAST();
         } else if (mProcessType == "assembly") {
-            mOutput = "not supported";
             if (renderer().api() == RenderAPI::OpenGL)
                 if (auto shader = static_cast<GLShader *>(mShader.get())) {
                     auto printf = RemoveShaderPrintf();
@@ -166,6 +165,8 @@ void ProcessSource::render()
                         mOutput = tryGetProgramBinary(*shader);
                 }
         }
+        if (mOutput.isEmpty())
+            mOutput = "not available";
         messages += mShader->resetMessages();
         mShader.reset();
     }
