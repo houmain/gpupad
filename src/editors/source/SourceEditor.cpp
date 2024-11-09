@@ -216,8 +216,6 @@ QList<QMetaObject::Connection> SourceEditor::connectEditActions(
     const auto &settings = Singletons::settings();
     c += connect(&mEditorToolBar, &SourceEditorToolBar::sourceTypeChanged, this,
         &SourceEditor::setSourceType);
-    c += connect(&mEditorToolBar, &SourceEditorToolBar::lineWrapChanged,
-        &settings, &Settings::setLineWrap);
 
     return c;
 }
@@ -423,7 +421,6 @@ void SourceEditor::updateEditorToolBar()
 {
     const auto &settings = Singletons::settings();
     mEditorToolBar.setSourceType(mSourceType);
-    mEditorToolBar.setLineWrap(settings.lineWrap());
 }
 
 void SourceEditor::findReplace()

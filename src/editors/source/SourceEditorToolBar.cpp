@@ -1,6 +1,8 @@
 
 #include "SourceEditorToolBar.h"
 #include "ui_SourceEditorToolBar.h"
+#include "Singletons.h"
+#include "Settings.h"
 #include <QActionGroup>
 #include <QMenu>
 
@@ -58,8 +60,13 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
 
     connect(mUi->sourceTypeButton, &QToolButton::toggled, this,
         &SourceEditorToolBar::validateSourceChanged);
-    connect(mUi->lineWrapButton, &QToolButton::toggled, this,
-        &SourceEditorToolBar::lineWrapChanged);
+
+    const auto &settings = Singletons::settings();
+    mUi->lineWrapButton->setChecked(settings.lineWrap());
+    connect(mUi->lineWrapButton, &QToolButton::toggled, &settings,
+        &Settings::setLineWrap);
+    connect(&settings, &Settings::lineWrapChanged, mUi->lineWrapButton,
+        &QToolButton::setChecked);
 }
 
 SourceEditorToolBar::~SourceEditorToolBar()
@@ -83,14 +90,4 @@ void SourceEditorToolBar::setSourceType(SourceType sourceType)
         mSourceType = sourceType;
         Q_EMIT sourceTypeChanged(sourceType);
     }
-}
-
-bool SourceEditorToolBar::lineWrap() const
-{
-    return mUi->lineWrapButton->isChecked();
-}
-
-void SourceEditorToolBar::setLineWrap(bool wrap)
-{
-    mUi->lineWrapButton->setChecked(wrap);
 }
