@@ -165,6 +165,8 @@ public:
     ItemId getItemId(const QModelIndex &index) const;
     Item::Type getItemType(const QModelIndex &index) const;
     ItemId getNextItemId();
+    QModelIndex sessionItemIndex() const;
+    const Session &sessionItem() const;
 
     template <typename T>
     const T *item(const QModelIndex &index) const

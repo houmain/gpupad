@@ -296,7 +296,7 @@ bool SessionModel::load(const QString &fileName)
     data.setText(file.readAll());
 
     // try to drop items in session
-    auto target = index(0, 0);
+    auto target = sessionItemIndex();
     if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, target)) {
         // try to replace session with dropped session
         if (!canDropMimeData(&data, Qt::CopyAction, rowCount(), 0, {}))

@@ -106,7 +106,7 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
             }
 
         const auto &session = Singletons::sessionModel();
-        const auto &sessionItem = *session.item<Session>(session.index(0, 0));
+        const auto &sessionItem = session.sessionItem();
         switch (renderer().api()) {
         case RenderAPI::OpenGL:
             mShader.reset(new GLShader(shaderType, shaders, sessionItem));

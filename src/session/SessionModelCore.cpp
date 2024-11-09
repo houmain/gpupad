@@ -392,6 +392,21 @@ ItemId SessionModelCore::getNextItemId()
     return mNextItemId;
 }
 
+QModelIndex SessionModelCore::sessionItemIndex() const
+{
+    return index(0, 0);
+}
+
+const Session &SessionModelCore::sessionItem() const
+{
+    auto session = item<Session>(sessionItemIndex());
+    Q_ASSERT(session);
+    if (session)
+        return *session;
+    static const Session sEmpty{};
+    return sEmpty;
+}
+
 QModelIndex SessionModelCore::findChildByName(const QModelIndex &parent,
     const QString &name) const
 {

@@ -911,6 +911,7 @@ bool MainWindow::closeSession()
 
     Singletons::synchronizeLogic().resetRenderSession();
     mEditorManager.closeAllEditors(false);
+    mOutputWindow->setText("");
     updateCurrentEditor();
 
     return mSessionEditor->clear();

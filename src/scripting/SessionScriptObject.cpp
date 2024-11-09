@@ -384,8 +384,10 @@ void SessionScriptObject::endBackgroundUpdate()
 
 QJSValue SessionScriptObject::rootItems()
 {
-    if (mRootItemsList.isUndefined())
-        mRootItemsList = engine().newQObject(new ItemListObject(this, 0));
+    if (mRootItemsList.isUndefined()) {
+        const auto itemId = threadSessionModel().sessionItem().id;
+        mRootItemsList = engine().newQObject(new ItemListObject(this, itemId));
+    }
     return mRootItemsList;
 }
 
@@ -397,7 +399,7 @@ ItemId SessionScriptObject::getItemId(QJSValue itemDesc)
     if (itemDesc.isString()) {
         auto &session = threadSessionModel();
         const auto parts = itemDesc.toString().split('/');
-        auto index = QModelIndex();
+        auto index = session.sessionItemIndex();
         for (const auto &part : parts) {
             index = session.findChildByName(index, part);
             if (!index.isValid())

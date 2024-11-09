@@ -137,10 +137,6 @@ void VKRenderSession::createCommandQueue()
 
     auto &scriptEngine = mScriptSession->engine();
     const auto &session = mSessionCopy;
-    const auto sessionItem = session.item<Session>(session.index(0, 0));
-    Q_ASSERT(sessionItem);
-    if (!sessionItem)
-        return;
 
     const auto addCommand = [&](auto &&command) {
         mCommandQueue->commands.emplace_back(std::move(command));
@@ -148,7 +144,7 @@ void VKRenderSession::createCommandQueue()
 
     const auto addProgramOnce = [&](ItemId programId) {
         return addOnce(mCommandQueue->programs,
-            session.findItem<Program>(programId), *sessionItem);
+            session.findItem<Program>(programId), session.sessionItem());
     };
 
     const auto addBufferOnce = [&](ItemId bufferId) {

@@ -23,10 +23,8 @@ bool onMainThread()
 RendererPtr Singletons::sessionRenderer()
 {
     Q_ASSERT(onMainThread());
-    auto sessionItem = sessionModel().item<Session>(sessionModel().index(0, 0));
-    Q_ASSERT(sessionItem);
-    return (sessionItem && sessionItem->renderer == "Vulkan" ? vkRenderer()
-                                                             : glRenderer());
+    const auto &renderer = sessionModel().sessionItem().renderer;
+    return (renderer == "Vulkan" ? vkRenderer() : glRenderer());
 }
 
 RendererPtr Singletons::glRenderer()

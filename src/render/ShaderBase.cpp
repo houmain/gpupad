@@ -199,7 +199,9 @@ bool shaderSessionSettingsDiffer(const Session &a, const Session &b)
         return std::tie(a.autoMapBindings, a.autoMapLocations,
             a.vulkanRulesRelaxed, a.spirvVersion);
     };
-    if (a.renderer == "Vulkan"
+    const auto hasShaderCompiler =
+        (!a.shaderCompiler.isEmpty() || a.renderer == "Vulkan");
+    if (hasShaderCompiler
         && shaderCompilerSettings(a) != shaderCompilerSettings(b))
         return true;
 
@@ -221,7 +223,10 @@ ShaderBase::ShaderBase(Shader::ShaderType type,
     mIncludePaths = session.shaderIncludePaths;
 
     // override hidden properties which are only used for generating Output
-    if (mSession.shaderCompiler.isEmpty()) {
+    const auto hasVulkanRenderer = (session.renderer == "Vulkan");
+    const auto hasShaderCompiler =
+        (!session.shaderCompiler.isEmpty() || hasVulkanRenderer);
+    if (!hasShaderCompiler) {
         mSession.autoMapBindings = true;
         mSession.autoMapLocations = true;
     }

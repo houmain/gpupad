@@ -333,7 +333,7 @@ void SessionEditor::setCurrentItem(ItemId itemId)
 
 void SessionEditor::selectSession()
 {
-    const auto index = mModel.index(0, 0);
+    const auto index = mModel.sessionItemIndex();
     setCurrentIndex(index);
     expand(index);
 }

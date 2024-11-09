@@ -164,7 +164,7 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
         mShaderProperties->shaderPreamble, &QPlainTextEdit::setFont);
     mShaderProperties->shaderPreamble->setFont(settings.font());
 
-    setCurrentModelIndex(mModel.index(0, 0));
+    setCurrentModelIndex(mModel.sessionItemIndex());
     fillComboBoxes();
 }
 
