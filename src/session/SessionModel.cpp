@@ -533,6 +533,7 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         result &= (column != SessionAutoMapBindings || hasVulkanRenderer);
         result &= (column != SessionAutoMapLocations || hasVulkanRenderer);
         result &= (column != SessionVulkanRulesRelaxed || hasVulkanRenderer);
+        result &= (column != SessionSpirvVersion || (hasVulkanRenderer && session.spirvVersion != 0));
         break;
     }
 

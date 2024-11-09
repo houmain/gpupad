@@ -62,6 +62,20 @@
        <number>4</number>
       </property>
       <item>
+       <layout class="QFormLayout" name="formLayout_2">
+        <item row="0" column="0">
+         <widget class="QLabel" name="labelSprivVersion">
+          <property name="text">
+           <string>SPIR-V Version</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="DataComboBox" name="spirvVersion"/>
+        </item>
+       </layout>
+      </item>
+      <item>
        <widget class="QCheckBox" name="autoMapBindings">
         <property name="text">
          <string>Automap Bindings</string>

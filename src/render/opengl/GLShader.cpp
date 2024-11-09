@@ -135,7 +135,7 @@ QStringList GLShader::preprocessorDefinitions() const
 
 QString tryGetProgramBinary(const GLShader &shader)
 {
-    auto assembly = QString("not supported");
+    auto assembly = QString();
     auto &gl = GLContext::currentContext();
     if (gl.v4_2 && shader.shaderObject()) {
         auto program = gl.glCreateProgram();

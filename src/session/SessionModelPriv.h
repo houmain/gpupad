@@ -12,6 +12,7 @@
     ADD(SessionAutoMapBindings, Session, autoMapBindings)                     \
     ADD(SessionAutoMapLocations, Session, autoMapLocations)                   \
     ADD(SessionVulkanRulesRelaxed, Session, vulkanRulesRelaxed)               \
+    ADD(SessionSpirvVersion, Session, spirvVersion)                           \
     ADD(GroupInlineScope, Group, inlineScope)                                 \
     ADD(GroupIterations, Group, iterations)                                   \
     ADD(BlockOffset, Block, offset)                                           \

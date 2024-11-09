@@ -195,12 +195,12 @@ namespace {
 
 bool shaderSessionSettingsDiffer(const Session &a, const Session &b)
 {
-    const auto vulkanCompilerSettings = [](const Session &a) {
+    const auto shaderCompilerSettings = [](const Session &a) {
         return std::tie(a.autoMapBindings, a.autoMapLocations,
-            a.vulkanRulesRelaxed);
+            a.vulkanRulesRelaxed, a.spirvVersion);
     };
     if (a.renderer == "Vulkan"
-        && vulkanCompilerSettings(a) != vulkanCompilerSettings(b))
+        && shaderCompilerSettings(a) != shaderCompilerSettings(b))
         return true;
 
     const auto common = [](const Session &a) {

@@ -158,6 +158,7 @@ void ProcessSource::render()
         } else if (mProcessType == "ast") {
             mOutput = mShader->generateGLSLangAST();
         } else if (mProcessType == "assembly") {
+            mOutput = "not supported";
             if (renderer().api() == RenderAPI::OpenGL)
                 if (auto shader = static_cast<GLShader *>(mShader.get())) {
                     auto printf = RemoveShaderPrintf();

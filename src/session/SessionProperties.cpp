@@ -15,6 +15,15 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
     mUi->renderer->addItem("OpenGL", "OpenGL");
     mUi->renderer->addItem("Vulkan", "Vulkan");
 
+    mUi->spirvVersion->addItem("", 0);
+    mUi->spirvVersion->addItem("1.0", 10);
+    mUi->spirvVersion->addItem("1.1", 11);
+    mUi->spirvVersion->addItem("1.2", 12);
+    mUi->spirvVersion->addItem("1.3", 13);
+    mUi->spirvVersion->addItem("1.4", 14);
+    mUi->spirvVersion->addItem("1.5", 15);
+    mUi->spirvVersion->addItem("1.6", 16);
+
     connect(mUi->renderer, &DataComboBox::currentDataChanged, this,
         &SessionProperties::updateWidgets);
 
@@ -39,6 +48,8 @@ void SessionProperties::addMappings(QDataWidgetMapper &mapper)
         SessionModel::SessionAutoMapLocations);
     mapper.addMapping(mUi->vulkanRulesRelaxed,
         SessionModel::SessionVulkanRulesRelaxed);
+    mapper.addMapping(mUi->spirvVersion,
+        SessionModel::SessionSpirvVersion);
 }
 
 void SessionProperties::updateWidgets()

@@ -19,6 +19,7 @@ public:
         SessionAutoMapBindings,
         SessionAutoMapLocations,
         SessionVulkanRulesRelaxed,
+        SessionSpirvVersion,
         GroupInlineScope,
         GroupIterations,
         BlockOffset,

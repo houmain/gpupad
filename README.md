@@ -26,7 +26,7 @@ A lightweight editor for GLSL and HLSL shaders and a fully-featured IDE for deve
 * Continuous validation of standalone shader and script files.
 * Automatically defined printf function for printf-debugging.
 * JavaScript expressions and scripts to define uniform input.
-* Dumping of preprocessed source, SPIR-V and glslang AST (only when [glslangValidator](https://github.com/KhronosGroup/glslang/releases/tag/main-tot) is found).
+* Dumping of preprocessed source, SPIR-V and glslang AST.
 * Reading and writing of image files ([KTX](https://github.com/KhronosGroup/KTX-Software) and DDS for 3D/Array textures, block compressed textures, cube maps&hellip;).
 * Streaming video files to textures (only when built with the optional dependency `Qt6Multimedia`).
 * Editor for structured binary files.

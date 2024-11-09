@@ -47,6 +47,7 @@ struct Session : ScopeItem
     bool autoMapBindings{ true };
     bool autoMapLocations{ true };
     bool vulkanRulesRelaxed{ true };
+    int spirvVersion{ };
 };
 
 struct Group : ScopeItem

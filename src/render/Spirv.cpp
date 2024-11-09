@@ -46,6 +46,41 @@ namespace {
         return {};
     }
 
+    glslang::EShClient getClient(const QString &renderer)
+    {
+        return (renderer == "OpenGL" ? glslang::EShClient::EShClientOpenGL
+                                     : glslang::EShClient::EShClientVulkan);
+    }
+
+    glslang::EShTargetClientVersion getClientVersion(glslang::EShClient client,
+        int version)
+    {
+        using Version = glslang::EShTargetClientVersion;
+        if (client == glslang::EShClient::EShClientOpenGL)
+            return Version::EShTargetOpenGL_450;
+
+        Q_ASSERT(client == glslang::EShClient::EShClientVulkan);
+        if (!version)
+            return Version::EShTargetVulkan_1_3;
+
+        static_assert(Version::EShTargetVulkan_1_3 == (1 << 22) + (3 << 12));
+        const auto major = version / 10;
+        const auto minor = version % 10;
+        return static_cast<Version>((major << 22) + (minor << 12));
+    }
+
+    glslang::EShTargetLanguageVersion getSpirvVersion(int version)
+    {
+        using Version = glslang::EShTargetLanguageVersion;
+        if (!version)
+            return Version::EShTargetSpv_1_6;
+
+        static_assert(Version::EShTargetSpv_1_6 == (1 << 16) + (6 << 8));
+        const auto major = version / 10;
+        const auto minor = version % 10;
+        return static_cast<Version>((major << 16) + (minor << 8));
+    }
+
     bool parseGLSLangErrors(const QString &log, MessagePtrSet &messages,
         ItemId itemId, const QStringList &fileNames)
     {
@@ -100,11 +135,10 @@ namespace {
     {
         staticInitGlslang();
 
-        const auto client = glslang::EShClient::EShClientVulkan;
-        const auto clientVersion =
-            glslang::EShTargetClientVersion::EShTargetVulkan_1_2;
-        const auto targetVersion =
-            glslang::EShTargetLanguageVersion::EShTargetSpv_1_4;
+        const auto client = getClient(session.renderer);
+        const auto clientVersion = getClientVersion(client, 0);
+        const auto targetLanguage = glslang::EShTargetLanguage::EShTargetSpv;
+        const auto targetVersion = getSpirvVersion(session.spirvVersion);
 
         // capture sources in deleter lambda
         auto sourcesUtf8 = std::vector<QByteArray>();
@@ -125,8 +159,7 @@ namespace {
         shader.setEnvInput(getLanguage(language), getStage(shaderType), client,
             clientVersion);
         shader.setEnvClient(client, clientVersion);
-        shader.setEnvTarget(glslang::EShTargetLanguage::EShTargetSpv,
-            targetVersion);
+        shader.setEnvTarget(targetLanguage, targetVersion);
 
         const auto entryPointU8 = entryPoint.toUtf8();
         shader.setEntryPoint(entryPointU8.constData());
@@ -264,6 +297,9 @@ QString Spirv::preprocess(const Session &session, Shader::Language language,
 
 QString Spirv::disassemble(const Spirv &spirv)
 {
+    if (!spirv)
+        return {};
+
     auto ss = std::ostringstream();
     spv::Disassemble(ss, spirv.spirv());
     return QString::fromStdString(ss.str());
