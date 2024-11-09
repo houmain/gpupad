@@ -18,8 +18,7 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
     mUi->shaderCompiler->addItem("Driver", "");
     mUi->shaderCompiler->addItem("glslang", "glslang");
 
-    mUi->spirvVersion->addItem("Latest", 0);
-    mUi->spirvVersion->addItem("1.0", 10);
+    mUi->spirvVersion->addItem("1.0", 0);
     mUi->spirvVersion->addItem("1.1", 11);
     mUi->spirvVersion->addItem("1.2", 12);
     mUi->spirvVersion->addItem("1.3", 13);

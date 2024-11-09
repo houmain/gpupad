@@ -73,7 +73,7 @@ namespace {
     {
         using Version = glslang::EShTargetLanguageVersion;
         if (!version)
-            return Version::EShTargetSpv_1_6;
+            return Version::EShTargetSpv_1_0;
 
         static_assert(Version::EShTargetSpv_1_6 == (1 << 16) + (6 << 8));
         const auto major = version / 10;
