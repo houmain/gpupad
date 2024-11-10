@@ -601,7 +601,7 @@ void PropertiesEditor::deduceBlockOffset()
 {
     auto offset = 0;
     const auto &block = *mModel.item<Block>(currentModelIndex());
-    for (auto item : qAsConst(block.parent->items)) {
+    for (auto item : std::as_const(block.parent->items)) {
         if (item == &block)
             break;
 

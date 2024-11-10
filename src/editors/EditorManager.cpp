@@ -368,7 +368,7 @@ IEditor *EditorManager::getEditor(const QString &fileName)
 
 SourceEditor *EditorManager::getSourceEditor(const QString &fileName)
 {
-    for (SourceEditor *editor : qAsConst(mSourceEditors))
+    for (SourceEditor *editor : std::as_const(mSourceEditors))
         if (editor->fileName() == fileName)
             return editor;
     return nullptr;
@@ -376,7 +376,7 @@ SourceEditor *EditorManager::getSourceEditor(const QString &fileName)
 
 BinaryEditor *EditorManager::getBinaryEditor(const QString &fileName)
 {
-    for (BinaryEditor *editor : qAsConst(mBinaryEditors))
+    for (BinaryEditor *editor : std::as_const(mBinaryEditors))
         if (editor->fileName() == fileName)
             return editor;
     return nullptr;
@@ -384,7 +384,7 @@ BinaryEditor *EditorManager::getBinaryEditor(const QString &fileName)
 
 TextureEditor *EditorManager::getTextureEditor(const QString &fileName)
 {
-    for (TextureEditor *editor : qAsConst(mTextureEditors))
+    for (TextureEditor *editor : std::as_const(mTextureEditors))
         if (editor->fileName() == fileName)
             return editor;
     return nullptr;
@@ -392,7 +392,7 @@ TextureEditor *EditorManager::getTextureEditor(const QString &fileName)
 
 QmlView *EditorManager::getQmlView(const QString &fileName)
 {
-    for (QmlView *editor : qAsConst(mQmlViews))
+    for (QmlView *editor : std::as_const(mQmlViews))
         if (editor->fileName() == fileName)
             return editor;
     return nullptr;
@@ -436,7 +436,7 @@ void EditorManager::renameEditors(const QString &prevFileName,
 
 void EditorManager::resetQmlViewsDependingOn(const QString &fileName)
 {
-    for (auto qmlView : qAsConst(mQmlViews))
+    for (auto qmlView : std::as_const(mQmlViews))
         if (qmlView->dependsOn(fileName))
             qmlView->resetOnFocus();
 }

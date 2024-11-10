@@ -59,7 +59,7 @@ bool GLStream::bind(const GLProgram &program)
     auto succeeded = true;
 
     auto &gl = GLContext::currentContext();
-    for (const GLAttribute &attribute : qAsConst(mAttributes)) {
+    for (const GLAttribute &attribute : std::as_const(mAttributes)) {
         const auto attribLocation =
             program.getAttributeLocation(attribute.name);
         if (attribLocation < 0)
@@ -119,7 +119,7 @@ bool GLStream::bind(const GLProgram &program)
 void GLStream::unbind(const GLProgram &program)
 {
     auto &gl = GLContext::currentContext();
-    for (const GLAttribute &attribute : qAsConst(mAttributes))
+    for (const GLAttribute &attribute : std::as_const(mAttributes))
         if (const auto location = program.getAttributeLocation(attribute.name);
             location >= 0)
             gl.glDisableVertexAttribArray(static_cast<GLuint>(location));

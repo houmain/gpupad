@@ -11,7 +11,7 @@ public:
     {
         mMutex.lock();
         // synchronize with end of usage
-        for (const auto &usageSync : qAsConst(mUsageFenceSyncs)) {
+        for (const auto &usageSync : std::as_const(mUsageFenceSyncs)) {
             gl.glWaitSync(usageSync, 0, GL_TIMEOUT_IGNORED);
             gl.glDeleteSync(usageSync);
         }

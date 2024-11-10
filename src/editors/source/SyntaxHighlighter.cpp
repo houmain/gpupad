@@ -204,7 +204,7 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
     if (!d.functionsRule.format.isEmpty())
         highlight(d.functionsRule, false);
 
-    for (const auto &rule : qAsConst(d.highlightingRules))
+    for (const auto &rule : std::as_const(d.highlightingRules))
         highlight(rule, true);
 
     if (!d.singleLineCommentRule.format.isEmpty())

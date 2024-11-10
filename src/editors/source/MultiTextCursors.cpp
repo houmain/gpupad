@@ -447,7 +447,7 @@ void MultiTextCursors::rectangularSelectLeft()
 
 void MultiTextCursors::rectangularSelectRight()
 {
-    for (auto position : qAsConst(mCursors))
+    for (auto position : std::as_const(mCursors))
         if (!position.atBlockEnd()) {
             position.setPosition(position.position());
             position.movePosition(QTextCursor::Right);

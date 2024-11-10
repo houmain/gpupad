@@ -85,7 +85,7 @@ bool GLShader::compile(ShaderPrintf &printf)
             return false;
 
         auto sources = std::vector<std::string>();
-        for (const QString &source : qAsConst(patchedSources))
+        for (const QString &source : std::as_const(patchedSources))
             sources.push_back(qUtf8Printable(source));
 
         auto sourcePointers = std::vector<const char *>();

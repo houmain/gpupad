@@ -14,7 +14,7 @@ namespace MessageList {
     {
         QMutexLocker lock(&gMessagesMutex);
         if (deduplicate) {
-            for (const auto &ptr : qAsConst(gMessages))
+            for (const auto &ptr : std::as_const(gMessages))
                 if (MessagePtr message = ptr.lock())
                     if (message->fileName == fileName && message->line == line
                         && message->type == type && message->text == text)
@@ -31,7 +31,7 @@ namespace MessageList {
     {
         QMutexLocker lock(&gMessagesMutex);
         if (deduplicate) {
-            for (const QWeakPointer<const Message> &ptr : qAsConst(gMessages))
+            for (const QWeakPointer<const Message> &ptr : std::as_const(gMessages))
                 if (MessagePtr message = ptr.lock())
                     if ((!itemId || message->itemId == itemId)
                         && message->type == type && message->text == text)

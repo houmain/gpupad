@@ -133,7 +133,7 @@ void DockTitle::updateTabSizes()
 
     // grow tabs to target size
     auto widthGrowRequest = 0;
-    for (auto size : qAsConst(sizes))
+    for (auto size : std::as_const(sizes))
         if (!size.isEmpty())
             widthGrowRequest += qMax(targetTabWidth - size.width(), 0);
 

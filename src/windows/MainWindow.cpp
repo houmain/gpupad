@@ -443,7 +443,7 @@ void MainWindow::dropEvent(QDropEvent *event)
         updateCurrentEditor();
     }
     const auto urls = event->mimeData()->urls();
-    for (const QUrl &url : qAsConst(urls))
+    for (const QUrl &url : std::as_const(urls))
         openFile(toNativeCanonicalFilePath(url.toLocalFile()));
 
     raise();
@@ -543,7 +543,7 @@ void MainWindow::updateCurrentEditor()
 
 void MainWindow::disconnectEditActions()
 {
-    for (const auto &connection : qAsConst(mConnectedEditActions))
+    for (const auto &connection : std::as_const(mConnectedEditActions))
         disconnect(connection);
     mConnectedEditActions.clear();
 

@@ -232,7 +232,7 @@ void FileCache::updateFromEditors()
 {
     Q_ASSERT(onMainThread());
     QMutexLocker lock(&mMutex);
-    for (const auto &fileName : qAsConst(mEditorFilesChanged))
+    for (const auto &fileName : std::as_const(mEditorFilesChanged))
         if (!updateFromEditor(fileName))
             purgeFile(fileName);
     mEditorFilesChanged.clear();

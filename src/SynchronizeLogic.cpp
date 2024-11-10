@@ -311,7 +311,7 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 
 void SynchronizeLogic::updateEditors()
 {
-    for (auto itemId : qAsConst(mEditorItemsModified))
+    for (auto itemId : std::as_const(mEditorItemsModified))
         updateEditor(itemId, false);
     mEditorItemsModified.clear();
 }
@@ -366,10 +366,10 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
     };
 
     auto blocks = QList<BinaryEditor::Block>();
-    for (const auto *item : qAsConst(buffer.items)) {
+    for (const auto *item : std::as_const(buffer.items)) {
         const auto &block = static_cast<const Block &>(*item);
         auto fields = QList<BinaryEditor::Field>();
-        for (const auto *item : qAsConst(block.items)) {
+        for (const auto *item : std::as_const(block.items)) {
             const auto &field = static_cast<const Field &>(*item);
             fields.append({ field.name, getDataType(field.dataType),
                 field.count, field.padding });

@@ -366,7 +366,7 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
     if (action == Qt::MoveAction && !mDraggedIndices.empty()) {
         std::stable_sort(mDraggedIndices.begin(), mDraggedIndices.end(),
             [](const auto &a, const auto &b) { return a.row() > b.row(); });
-        for (const auto &index : qAsConst(mDraggedIndices)) {
+        for (const auto &index : std::as_const(mDraggedIndices)) {
             if (index.parent() == parent && index.row() < row)
                 --row;
             deleteItem(index);
@@ -407,7 +407,7 @@ void SessionModel::dropJson(const QJsonArray &jsonArray, int row,
 
     // fixup item references
     for (ItemId prevId : mDroppedIdsReplaced.keys())
-        for (QModelIndex reference : qAsConst(mDroppedReferences))
+        for (QModelIndex reference : std::as_const(mDroppedReferences))
             if (data(reference).toInt() == prevId)
                 setData(reference, mDroppedIdsReplaced[prevId]);
     mDroppedIdsReplaced.clear();

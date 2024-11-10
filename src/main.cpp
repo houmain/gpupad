@@ -71,7 +71,7 @@ bool forwardToInstance(int argc, char *argv[])
             != arguments.end())
         return false;
 
-    for (const auto &argument : qAsConst(arguments))
+    for (const auto &argument : std::as_const(arguments))
         instance.sendMessage(argument.toUtf8());
     return true;
 }
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 
     auto arguments = app.arguments();
     arguments.removeFirst();
-    for (const QString &argument : qAsConst(arguments))
+    for (const QString &argument : std::as_const(arguments))
         window.openFile(argument);
 
     if (!window.hasEditor())

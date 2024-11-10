@@ -160,7 +160,7 @@ bool GLProgram::linkShaders(GLuint program)
                 stages += shader.type();
 
         auto subroutineIndices = std::vector<GLint>();
-        for (const auto &stage : qAsConst(stages)) {
+        for (const auto &stage : std::as_const(stages)) {
             gl40->glGetProgramStageiv(program, stage,
                 GL_ACTIVE_SUBROUTINE_UNIFORMS, &uniforms);
             for (auto i = 0u; i < static_cast<GLuint>(uniforms); ++i) {
@@ -567,7 +567,7 @@ void GLProgram::reapplySubroutines()
 
     auto subroutineIndices = std::vector<GLuint>();
     for (Shader::ShaderType stage : mSubroutineUniforms.keys()) {
-        for (const auto &uniform : qAsConst(mSubroutineUniforms[stage])) {
+        for (const auto &uniform : std::as_const(mSubroutineUniforms[stage])) {
             auto isIndex = false;
             auto index = uniform.boundSubroutine.toUInt(&isIndex);
             if (!isIndex)

@@ -846,10 +846,10 @@ void SourceEditor::updateExtraSelections()
     if (mFindReplaceRange.hasSelection())
         selections.append({ mFindReplaceRange, mFindReplaceRangeFormat });
 
-    for (const auto &occurrence : qAsConst(mMatchingBraces))
+    for (const auto &occurrence : std::as_const(mMatchingBraces))
         selections.append({ occurrence, mOccurrencesFormat });
 
-    for (const auto &occurrence : qAsConst(mMarkedOccurrences))
+    for (const auto &occurrence : std::as_const(mMarkedOccurrences))
         selections.append({ occurrence, mOccurrencesFormat });
 
     for (const auto &selection : mMultiTextCursors.cursors())

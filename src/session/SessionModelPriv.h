@@ -191,7 +191,7 @@ template <typename F>
 void forEachItem(const Item &item, const F &function)
 {
     function(item);
-    for (const auto *child : qAsConst(item.items))
+    for (const auto *child : std::as_const(item.items))
         forEachItem(*child, function);
 }
 
