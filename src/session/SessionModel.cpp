@@ -318,7 +318,7 @@ bool SessionModel::load(const QString &fileName)
 bool SessionModel::save(const QString &fileName)
 {
     QDir::setCurrent(QFileInfo(fileName).path());
-    QScopedPointer<QMimeData> mime(mimeData({ QModelIndex() }));
+    std::unique_ptr<QMimeData> mime(mimeData({ QModelIndex() }));
     if (!mime)
         return false;
 

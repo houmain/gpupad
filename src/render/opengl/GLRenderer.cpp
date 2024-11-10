@@ -70,12 +70,12 @@ private:
         context.makeCurrent(&surface);
         context.initializeOpenGLFunctions();
 
-        mDebugLogger.reset(new QOpenGLDebugLogger());
+        mDebugLogger = std::make_unique<QOpenGLDebugLogger>();
         if (mDebugLogger->initialize()) {
             mDebugLogger->disableMessages(QOpenGLDebugMessage::AnySource,
                 QOpenGLDebugMessage::AnyType,
                 QOpenGLDebugMessage::NotificationSeverity);
-            connect(mDebugLogger.data(), &QOpenGLDebugLogger::messageLogged,
+            connect(mDebugLogger.get(), &QOpenGLDebugLogger::messageLogged,
                 this, &Worker::handleDebugMessage);
             mDebugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
         }
@@ -93,13 +93,13 @@ private:
     }
 
     bool mInitialized{};
-    QScopedPointer<QOpenGLDebugLogger> mDebugLogger;
+    std::unique_ptr<QOpenGLDebugLogger> mDebugLogger;
 };
 
 GLRenderer::GLRenderer(QObject *parent)
     : QObject(parent)
     , Renderer(RenderAPI::OpenGL)
-    , mWorker(new Worker())
+    , mWorker(std::make_unique<Worker>())
 {
     mWorker->context.setShareContext(QOpenGLContext::globalShareContext());
     mWorker->context.create();
@@ -111,15 +111,15 @@ GLRenderer::GLRenderer(QObject *parent)
     mWorker->surface.moveToThread(&mThread);
     mWorker->moveToThread(&mThread);
 
-    connect(this, &GLRenderer::configureTask, mWorker.data(),
+    connect(this, &GLRenderer::configureTask, mWorker.get(),
         &Worker::handleConfigureTask);
-    connect(mWorker.data(), &Worker::taskConfigured, this,
+    connect(mWorker.get(), &Worker::taskConfigured, this,
         &GLRenderer::handleTaskConfigured);
-    connect(this, &GLRenderer::renderTask, mWorker.data(),
+    connect(this, &GLRenderer::renderTask, mWorker.get(),
         &Worker::handleRenderTask);
-    connect(mWorker.data(), &Worker::taskRendered, this,
+    connect(mWorker.get(), &Worker::taskRendered, this,
         &GLRenderer::handleTaskRendered);
-    connect(this, &GLRenderer::releaseTask, mWorker.data(),
+    connect(this, &GLRenderer::releaseTask, mWorker.get(),
         &Worker::handleReleaseTask);
 
     mThread.start();
@@ -129,7 +129,7 @@ GLRenderer::~GLRenderer()
 {
     mPendingTasks.clear();
 
-    QMetaObject::invokeMethod(mWorker.data(), "stop", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(mWorker.get(), "stop", Qt::QueuedConnection);
     mThread.wait();
 
     mWorker.reset();

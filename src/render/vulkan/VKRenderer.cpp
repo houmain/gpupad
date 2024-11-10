@@ -149,19 +149,19 @@ private:
 VKRenderer::VKRenderer(QObject *parent)
     : QObject(parent)
     , Renderer(RenderAPI::Vulkan)
-    , mWorker(new Worker(this))
+    , mWorker(std::make_unique<Worker>(this))
 {
     mWorker->moveToThread(&mThread);
 
-    connect(this, &VKRenderer::configureTask, mWorker.data(),
+    connect(this, &VKRenderer::configureTask, mWorker.get(),
         &Worker::handleConfigureTask);
-    connect(mWorker.data(), &Worker::taskConfigured, this,
+    connect(mWorker.get(), &Worker::taskConfigured, this,
         &VKRenderer::handleTaskConfigured);
-    connect(this, &VKRenderer::renderTask, mWorker.data(),
+    connect(this, &VKRenderer::renderTask, mWorker.get(),
         &Worker::handleRenderTask);
-    connect(mWorker.data(), &Worker::taskRendered, this,
+    connect(mWorker.get(), &Worker::taskRendered, this,
         &VKRenderer::handleTaskRendered);
-    connect(this, &VKRenderer::releaseTask, mWorker.data(),
+    connect(this, &VKRenderer::releaseTask, mWorker.get(),
         &Worker::handleReleaseTask);
 
     mThread.start();
@@ -171,7 +171,7 @@ VKRenderer::~VKRenderer()
 {
     mPendingTasks.clear();
 
-    QMetaObject::invokeMethod(mWorker.data(), "stop", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(mWorker.get(), "stop", Qt::QueuedConnection);
     mThread.wait();
 
     mWorker.reset();

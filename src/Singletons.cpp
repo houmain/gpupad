@@ -31,7 +31,7 @@ RendererPtr Singletons::glRenderer()
 {
     Q_ASSERT(onMainThread());
     if (!sInstance->mGLRenderer)
-        sInstance->mGLRenderer.reset(new GLRenderer());
+        sInstance->mGLRenderer = std::make_shared<GLRenderer>();
     return sInstance->mGLRenderer;
 }
 
@@ -39,7 +39,7 @@ RendererPtr Singletons::vkRenderer()
 {
     Q_ASSERT(onMainThread());
     if (!sInstance->mVKRenderer)
-        sInstance->mVKRenderer.reset(new VKRenderer());
+        sInstance->mVKRenderer = std::make_shared<VKRenderer>();
     return sInstance->mVKRenderer;
 }
 
@@ -101,19 +101,19 @@ EvaluatedPropertyCache &Singletons::evaluatedPropertyCache()
 }
 
 Singletons::Singletons(QMainWindow *window)
-    : mSettings(new Settings())
-    , mFileCache(new FileCache())
-    , mFileDialog(new FileDialog(window))
-    , mEditorManager(new EditorManager())
-    , mSessionModel(new SessionModel())
-    , mGLShareSynchronizer(new GLShareSynchronizer())
-    , mVideoManager(new VideoManager())
-    , mInputState(new InputState())
-    , mEvaluatedPropertyCache(new EvaluatedPropertyCache())
+    : mSettings(std::make_unique<Settings>())
+    , mFileCache(std::make_unique<FileCache>())
+    , mFileDialog(std::make_unique<FileDialog>(window))
+    , mEditorManager(std::make_unique<EditorManager>())
+    , mSessionModel(std::make_unique<SessionModel>())
+    , mGLShareSynchronizer(std::make_unique<GLShareSynchronizer>())
+    , mVideoManager(std::make_unique<VideoManager>())
+    , mInputState(std::make_unique<InputState>())
+    , mEvaluatedPropertyCache(std::make_unique<EvaluatedPropertyCache>())
 {
     Q_ASSERT(onMainThread());
     sInstance = this;
-    mSynchronizeLogic.reset(new SynchronizeLogic());
+    mSynchronizeLogic = std::make_unique<SynchronizeLogic>();
 
     QObject::connect(&fileCache(), &FileCache::videoPlayerRequested,
         &videoManager(), &VideoManager::handleVideoPlayerRequested,

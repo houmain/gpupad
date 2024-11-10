@@ -33,7 +33,7 @@ private:
     void renderNextTask();
 
     QThread mThread;
-    QScopedPointer<Worker> mWorker;
+    std::unique_ptr<Worker> mWorker;
     QList<RenderTask *> mPendingTasks;
     RenderTask *mCurrentTask{};
     KDGpu::Device *mDevice{};

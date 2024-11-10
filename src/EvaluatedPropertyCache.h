@@ -27,7 +27,7 @@ private:
     ScriptEngine* defaultScriptEngine();
 
     QMutex mMutex;
-    QScopedPointer<ScriptEngine> mDefaultScriptEngine;
+    std::unique_ptr<ScriptEngine> mDefaultScriptEngine;
     QMap<ItemId, QList<int>> mEvaluatedProperties;
     QMap<ItemId, MessagePtrSet> mMessages;
 };

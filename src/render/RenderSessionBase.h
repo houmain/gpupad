@@ -43,7 +43,7 @@ protected:
     virtual bool updatingPreviewTextures() const;
 
     SessionModel mSessionCopy;
-    QScopedPointer<ScriptSession> mScriptSession;
+    std::unique_ptr<ScriptSession> mScriptSession;
     QSet<ItemId> mUsedItems;
     MessagePtrSet mMessages;
     bool mItemsChanged{};

@@ -68,7 +68,7 @@ private:
     QSet<ItemId> mEditorItemsModified;
 
     QTimer *mEvaluationTimer{};
-    QScopedPointer<RenderSession> mRenderSession;
+    std::unique_ptr<RenderSession> mRenderSession;
     bool mRenderSessionInvalidated{};
     EvaluationMode mEvaluationMode{};
 

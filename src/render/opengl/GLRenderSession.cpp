@@ -135,7 +135,7 @@ void GLRenderSession::createCommandQueue()
 {
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
-    mCommandQueue.reset(new CommandQueue());
+    mCommandQueue = std::make_unique<CommandQueue>();
     mUsedItems.clear();
 
     auto &scriptEngine = mScriptSession->engine();
@@ -360,7 +360,7 @@ void GLRenderSession::createCommandQueue()
         }
 
         // pop binding scope(s) after scopes's last item
-        if (!castItem<ScopeItem>(&item))
+        if (!castItem<ScopeItem>(&item)) {
             for (auto it = &item; it && castItem<ScopeItem>(it->parent)
                  && it->parent->items.back() == it;
                  it = it->parent)
@@ -384,6 +384,7 @@ void GLRenderSession::createCommandQueue()
                 } else {
                     addCommand([](BindingState &state) { state.pop(); });
                 }
+        }
     });
 }
 

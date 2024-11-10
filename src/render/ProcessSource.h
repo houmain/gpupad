@@ -31,11 +31,11 @@ private:
     void release() override;
 
 private:
-    QScopedPointer<ShaderBase> mShader;
+    std::unique_ptr<ShaderBase> mShader;
     QString mFileName;
     SourceType mSourceType{};
 
-    QScopedPointer<ScriptEngine> mScriptEngine;
+    std::unique_ptr<ScriptEngine> mScriptEngine;
     MessagePtrSet mMessages;
 
     bool mValidateSource{};

@@ -87,7 +87,7 @@ private:
     bool renderTexture(const QMatrix4x4 &transform);
     void updateHistogram();
 
-    QScopedPointer<ProgramCache> mProgramCache;
+    std::unique_ptr<ProgramCache> mProgramCache;
     QRect mBoundingRect;
     TextureData mImage;
     GLuint mImageTextureId{};

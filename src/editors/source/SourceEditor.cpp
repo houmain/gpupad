@@ -213,7 +213,6 @@ QList<QMetaObject::Connection> SourceEditor::connectEditActions(
 
     updateEditorToolBar();
 
-    const auto &settings = Singletons::settings();
     c += connect(&mEditorToolBar, &SourceEditorToolBar::sourceTypeChanged, this,
         &SourceEditor::setSourceType);
 
@@ -419,7 +418,6 @@ void SourceEditor::updateSyntaxHighlighting()
 
 void SourceEditor::updateEditorToolBar()
 {
-    const auto &settings = Singletons::settings();
     mEditorToolBar.setSourceType(mSourceType);
 }
 

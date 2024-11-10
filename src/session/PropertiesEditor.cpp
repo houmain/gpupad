@@ -41,7 +41,7 @@ namespace {
     };
 
     template <typename T>
-    void instantiate(QScopedPointer<T> &ptr)
+    void instantiate(std::unique_ptr<T> &ptr)
     {
         ptr.reset(new T());
     }

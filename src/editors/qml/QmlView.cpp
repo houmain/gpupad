@@ -182,9 +182,9 @@ void QmlView::reset()
                     warning.description());
         });
 
-    mNetworkAccessManagerFactory.reset(new NetworkAccessManagerFactory(this));
+    mNetworkAccessManagerFactory = std::make_unique<NetworkAccessManagerFactory>(this);
     mQuickWidget->engine()->setNetworkAccessManagerFactory(
-        mNetworkAccessManagerFactory.data());
+        mNetworkAccessManagerFactory.get());
 
     static UrlInterceptor sUrlInterceptor;
     mQuickWidget->engine()->addUrlInterceptor(&sUrlInterceptor);

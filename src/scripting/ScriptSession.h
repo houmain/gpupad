@@ -36,7 +36,7 @@ private:
     const SourceType mSourceType;
     MessagePtrSet mMessages;
 
-    QScopedPointer<ScriptEngine> mScriptEngine;
+    std::unique_ptr<ScriptEngine> mScriptEngine;
     SessionScriptObject *mSessionScriptObject{};
     MouseScriptObject *mMouseScriptObject{};
     KeyboardScriptObject *mKeyboardScriptObject{};

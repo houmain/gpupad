@@ -75,8 +75,8 @@ void SynchronizeLogic::setCurrentEditorSourceType(SourceType sourceType)
 
 void SynchronizeLogic::resetRenderSession()
 {
-    mRenderSession.reset(new RenderSession());
-    connect(mRenderSession.data(), &RenderTask::updated, this,
+    mRenderSession = std::make_unique<RenderSession>();
+    connect(mRenderSession.get(), &RenderTask::updated, this,
         &SynchronizeLogic::handleSessionRendered);
 }
 

@@ -25,7 +25,7 @@ private:
     void outputTimerQueries();
 
     QOpenGLVertexArrayObject mVao;
-    QScopedPointer<CommandQueue> mCommandQueue;
-    QScopedPointer<CommandQueue> mPrevCommandQueue;
+    std::unique_ptr<CommandQueue> mCommandQueue;
+    std::unique_ptr<CommandQueue> mPrevCommandQueue;
     MessagePtrSet mTimerMessages;
 };

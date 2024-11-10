@@ -85,6 +85,7 @@ namespace {
     Item *allocateItem(Item::Type type)
     {
         switch (type) {
+        case Item::Type::Root:       break;
         case Item::Type::Session:    return new Session();
         case Item::Type::Group:      return new Group();
         case Item::Type::Buffer:     return new Buffer();
@@ -109,6 +110,7 @@ namespace {
     {
         const auto copy = [&]() -> Item * {
             switch (item.type) {
+            case Item::Type::Root: break;
             case Item::Type::Session:
                 return new Session(static_cast<const Session &>(item));
             case Item::Type::Group:

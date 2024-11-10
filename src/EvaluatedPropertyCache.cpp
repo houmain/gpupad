@@ -9,8 +9,8 @@ EvaluatedPropertyCache::~EvaluatedPropertyCache() = default;
 ScriptEngine *EvaluatedPropertyCache::defaultScriptEngine()
 {
     if (!mDefaultScriptEngine)
-        mDefaultScriptEngine.reset(new ScriptEngineJavaScript());
-    return mDefaultScriptEngine.data();
+        mDefaultScriptEngine = std::make_unique<ScriptEngineJavaScript>();
+    return mDefaultScriptEngine.get();
 }
 
 // when a script engine is passed then evaluate and update cache,

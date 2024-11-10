@@ -82,7 +82,7 @@ void TextureBackground::paintGL(const QSizeF &size, const QPointF &offset)
     auto &gl = widget().gl();
 
     if (!mProgram) {
-        mProgram.reset(new QOpenGLShaderProgram());
+        mProgram = std::make_unique<QOpenGLShaderProgram>();
         buildProgram(*mProgram);
     }
 

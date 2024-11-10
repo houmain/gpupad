@@ -20,7 +20,7 @@ public:
     {
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
-            mScriptEngine.reset(new ScriptEngineJavaScript());
+            mScriptEngine = std::make_unique<ScriptEngineJavaScript>();
             mScriptEngine->evaluateScript(source, mFilePath, mMessages);
         }
 
@@ -54,7 +54,7 @@ public:
 private:
     const QString mFilePath;
     MessagePtrSet mMessages;
-    QScopedPointer<ScriptEngineJavaScript> mScriptEngine;
+    std::unique_ptr<ScriptEngineJavaScript> mScriptEngine;
 };
 
 CustomActions::CustomActions(QWidget *parent)

@@ -41,14 +41,14 @@ void setFileDialogDirectory(const QString &fileName)
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , mUi(new Ui::MainWindow)
-    , mMessageWindow(new MessageWindow())
+    , mMessageWindow(std::make_unique<MessageWindow>())
     , mCustomActions(new CustomActions(this))
     , mSingletons(new Singletons(this))
-    , mOutputWindow(new OutputWindow())
-    , mFileBrowserWindow(new FileBrowserWindow())
+    , mOutputWindow(std::make_unique<OutputWindow>())
+    , mFileBrowserWindow(std::make_unique<FileBrowserWindow>())
     , mEditorManager(Singletons::editorManager())
-    , mSessionEditor(new SessionEditor())
-    , mPropertiesEditor(new PropertiesEditor())
+    , mSessionEditor(std::make_unique<SessionEditor>())
+    , mPropertiesEditor(std::make_unique<PropertiesEditor>())
 {
     mUi->setupUi(this);
     setFont(qApp->font());
@@ -125,8 +125,8 @@ MainWindow::MainWindow(QWidget *parent)
     auto editorsDock = dock;
 
     mSessionSplitter = new AutoOrientationSplitter(this);
-    mSessionSplitter->addWidget(mSessionEditor.data());
-    mSessionSplitter->addWidget(mPropertiesEditor.data());
+    mSessionSplitter->addWidget(mSessionEditor.get());
+    mSessionSplitter->addWidget(mPropertiesEditor.get());
     mSessionEditor->setMinimumSize(100, 100);
     mPropertiesEditor->setMinimumSize(100, 100);
 
@@ -152,7 +152,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setTitleBarWidget(mFileBrowserWindow->titleBar());
     dock->setFeatures(QDockWidget::DockWidgetClosable
         | QDockWidget::DockWidgetMovable);
-    dock->setWidget(mFileBrowserWindow.data());
+    dock->setWidget(mFileBrowserWindow.get());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
     action = dock->toggleViewAction();
@@ -167,7 +167,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setTitleBarWidget(new WindowTitle(dock));
     dock->setFeatures(QDockWidget::DockWidgetClosable
         | QDockWidget::DockWidgetMovable);
-    dock->setWidget(mMessageWindow.data());
+    dock->setWidget(mMessageWindow.get());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
     action = dock->toggleViewAction();
@@ -182,7 +182,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setTitleBarWidget(mOutputWindow->titleBar());
     dock->setFeatures(QDockWidget::DockWidgetClosable
         | QDockWidget::DockWidgetMovable);
-    dock->setWidget(mOutputWindow.data());
+    dock->setWidget(mOutputWindow.get());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
     action = dock->toggleViewAction();
@@ -276,32 +276,32 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->actionFullScreen, &QAction::triggered, this,
         &MainWindow::setFullScreen);
     connect(mSessionEditor->selectionModel(),
-        &QItemSelectionModel::currentChanged, mPropertiesEditor.data(),
+        &QItemSelectionModel::currentChanged, mPropertiesEditor.get(),
         &PropertiesEditor::setCurrentModelIndex);
-    connect(mSessionEditor.data(), &SessionEditor::itemAdded, this,
+    connect(mSessionEditor.get(), &SessionEditor::itemAdded, this,
         &MainWindow::openSessionDock);
-    connect(mSessionEditor.data(), &SessionEditor::itemActivated,
-        mPropertiesEditor.data(), &PropertiesEditor::openItemEditor);
-    connect(mUi->menuSession, &QMenu::aboutToShow, mSessionEditor.data(),
+    connect(mSessionEditor.get(), &SessionEditor::itemActivated,
+        mPropertiesEditor.get(), &PropertiesEditor::openItemEditor);
+    connect(mUi->menuSession, &QMenu::aboutToShow, mSessionEditor.get(),
         &SessionEditor::updateItemActions);
     connect(&mEditorManager, &DockWindow::openNewDock, this,
         &MainWindow::newFile);
-    connect(mFileBrowserWindow.data(), &FileBrowserWindow::fileActivated,
+    connect(mFileBrowserWindow.get(), &FileBrowserWindow::fileActivated,
         [this](const QString &fileName) { openFile(fileName); });
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
-    connect(mOutputWindow.data(), &OutputWindow::typeSelectionChanged,
+    connect(mOutputWindow.get(), &OutputWindow::typeSelectionChanged,
         &synchronizeLogic, &SynchronizeLogic::setProcessSourceType);
     connect(outputDock, &QDockWidget::visibilityChanged, [this](bool visible) {
         Singletons::synchronizeLogic().setProcessSourceType(
             visible ? mOutputWindow->selectedType() : "");
     });
-    connect(mMessageWindow.data(), &MessageWindow::messageActivated, this,
+    connect(mMessageWindow.get(), &MessageWindow::messageActivated, this,
         &MainWindow::handleMessageActivated);
-    connect(mMessageWindow.data(), &MessageWindow::messagesAdded, this,
+    connect(mMessageWindow.get(), &MessageWindow::messagesAdded, this,
         &MainWindow::openMessageDock);
     connect(&synchronizeLogic, &SynchronizeLogic::outputChanged,
-        mOutputWindow.data(), &OutputWindow::setText);
+        mOutputWindow.get(), &OutputWindow::setText);
     connect(&Singletons::inputState(), &InputState::mouseChanged,
         &synchronizeLogic, &SynchronizeLogic::handleMouseStateChanged);
     connect(&Singletons::inputState(), &InputState::keysChanged,
@@ -335,7 +335,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->menuCustomActions, &QMenu::aboutToShow, this,
         &MainWindow::updateCustomActionsMenu);
     connect(mUi->actionManageCustomActions, &QAction::triggered,
-        mCustomActions.data(), &QDialog::show);
+        mCustomActions.get(), &QDialog::show);
 
     qApp->installEventFilter(this);
 
@@ -888,7 +888,6 @@ bool MainWindow::restoreSessionState(const QString &sessionFileName)
     mEditorManager.restoreState(settings.value("editorState").toByteArray());
     mEditorManager.setAutoRaise(true);
 
-    auto &synchronizeLogic = Singletons::synchronizeLogic();
     setEvaluationMode(
         static_cast<EvaluationMode>(settings.value("evaluationMode").toInt()));
     return true;
@@ -1071,8 +1070,8 @@ void MainWindow::openSessionDock()
 void MainWindow::openMessageDock()
 {
     // only open once automatically
-    if (QObject::sender() == mMessageWindow.data())
-        disconnect(mMessageWindow.data(), &MessageWindow::messagesAdded, this,
+    if (QObject::sender() == mMessageWindow.get())
+        disconnect(mMessageWindow.get(), &MessageWindow::messagesAdded, this,
             &MainWindow::openMessageDock);
 
     for (auto p = mMessageWindow->parentWidget(); p; p = p->parentWidget())

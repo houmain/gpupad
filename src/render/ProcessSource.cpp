@@ -109,10 +109,10 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
         const auto &sessionItem = session.sessionItem();
         switch (renderer().api()) {
         case RenderAPI::OpenGL:
-            mShader.reset(new GLShader(shaderType, shaders, sessionItem));
+            mShader = std::make_unique<GLShader>(shaderType, shaders, sessionItem);
             break;
         case RenderAPI::Vulkan:
-            mShader.reset(new VKShader(shaderType, shaders, sessionItem));
+            mShader = std::make_unique<VKShader>(shaderType, shaders, sessionItem);
             break;
         }
     }
@@ -139,7 +139,7 @@ void ProcessSource::render()
             }
         } else {
             if (mSourceType == SourceType::JavaScript)
-                mScriptEngine.reset(new ScriptEngineJavaScript());
+                mScriptEngine = std::make_unique<ScriptEngineJavaScript>();
 
             if (mScriptEngine) {
                 auto scriptSource = QString();

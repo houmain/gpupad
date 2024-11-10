@@ -33,7 +33,7 @@ private:
     void reset();
 
     const QString mFileName;
-    QScopedPointer<QQmlNetworkAccessManagerFactory>
+    std::unique_ptr<QQmlNetworkAccessManagerFactory>
         mNetworkAccessManagerFactory;
     MessagePtrSet mMessages;
     QQuickWidget *mQuickWidget{};

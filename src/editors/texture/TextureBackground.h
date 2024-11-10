@@ -16,5 +16,5 @@ public:
 
 private:
     GLWidget &widget();
-    QScopedPointer<QOpenGLShaderProgram> mProgram;
+    std::unique_ptr<QOpenGLShaderProgram> mProgram;
 };
