@@ -353,7 +353,7 @@ void VKRenderSession::createCommandQueue()
         }
 
         // pop binding scope(s) after scopes's last item
-        if (!castItem<ScopeItem>(&item))
+        if (!castItem<ScopeItem>(&item)) {
             for (auto it = &item; it && castItem<ScopeItem>(it->parent)
                  && it->parent->items.back() == it;
                  it = it->parent)
@@ -377,6 +377,7 @@ void VKRenderSession::createCommandQueue()
                 } else {
                     addCommand([](BindingState &state) { state.pop(); });
                 }
+        }
     });
 }
 

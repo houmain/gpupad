@@ -26,9 +26,9 @@ TextureEditorToolBar::TextureEditorToolBar(QWidget *parent)
         &TextureEditorToolBar::sampleChanged);
     connect(mUi->face, qOverload<int>(&QComboBox::currentIndexChanged), this,
         &TextureEditorToolBar::faceChanged);
-    connect(mUi->filter, &QCheckBox::stateChanged, this,
+    connect(mUi->filter, &QCheckBox::checkStateChanged, this,
         &TextureEditorToolBar::filterStateChanged);
-    connect(mUi->flipVertically, &QCheckBox::stateChanged,
+    connect(mUi->flipVertically, &QCheckBox::checkStateChanged,
         [&](int state) { Q_EMIT flipVerticallyChanged(state != 0); });
 }
 

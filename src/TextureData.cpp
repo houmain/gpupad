@@ -659,9 +659,10 @@ bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
 #else // OpenImageIO_FOUND
     using namespace OIIO;
     auto input = ImageInput::open(fileName.toStdWString());
-    if (!input)
+    if (!input) {
+        OIIO::geterror();
         return false;
-
+    }
     using F = QOpenGLTexture::TextureFormat;
     const ImageSpec &spec = input->spec();
 
