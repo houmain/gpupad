@@ -1,12 +1,26 @@
 #pragma once
 
 #include "GLContext.h"
+#include "render/ShareSync.h"
 #include <QMutex>
 #include <QSet>
 
-class GLShareSynchronizer
+class GLShareSync : public ShareSync
 {
 public:
+    void cleanup(QOpenGLFunctions_3_3_Core &gl)
+    {
+        QMutexLocker lock{ &mMutex };
+
+        if (mUpdateFenceSync)
+            gl.glDeleteSync(mUpdateFenceSync);
+        mUpdateFenceSync = {};
+
+        for (const auto &usageSync : qAsConst(mUsageFenceSyncs))
+            gl.glDeleteSync(usageSync);
+        mUsageFenceSyncs.clear();
+    }
+
     void beginUpdate(QOpenGLFunctions_3_3_Core &gl)
     {
         mMutex.lock();
@@ -28,7 +42,7 @@ public:
         mMutex.unlock();
     }
 
-    void beginUsage(QOpenGLFunctions_3_3_Core &gl)
+    void beginUsage(QOpenGLFunctions_3_3_Core &gl) override
     {
         mMutex.lock();
         // synchronize with end of update
@@ -36,7 +50,7 @@ public:
             gl.glWaitSync(mUpdateFenceSync, 0, GL_TIMEOUT_IGNORED);
     }
 
-    void endUsage(QOpenGLFunctions_3_3_Core &gl)
+    void endUsage(QOpenGLFunctions_3_3_Core &gl) override
     {
         // mark end of usage
         mUsageFenceSyncs.append(

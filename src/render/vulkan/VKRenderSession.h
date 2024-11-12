@@ -1,8 +1,10 @@
 #pragma once
 
 #include "render/RenderSessionBase.h"
+#include "VKContext.h"
 
 class VKRenderer;
+class VKShareSync;
 class ScriptSession;
 
 class VKRenderSession final : public RenderSessionBase
@@ -25,6 +27,7 @@ private:
     void outputTimerQueries();
 
     VKRenderer &mRenderer;
+    std::shared_ptr<VKShareSync> mShareSync;
     std::unique_ptr<CommandQueue> mCommandQueue;
     std::unique_ptr<CommandQueue> mPrevCommandQueue;
     MessagePtrSet mTimerMessages;

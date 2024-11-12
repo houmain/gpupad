@@ -1,14 +1,13 @@
 #include "GLRenderSession.h"
+#include "GLShareSync.h"
 #include "GLBuffer.h"
 #include "GLCall.h"
 #include "GLProgram.h"
-#include "GLShareSynchronizer.h"
 #include "GLStream.h"
 #include "GLTarget.h"
 #include "GLTexture.h"
 #include "Settings.h"
 #include "Singletons.h"
-#include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
 #include "editors/texture/TextureEditor.h"
 #include "scripting/ScriptSession.h"
@@ -128,7 +127,10 @@ struct GLRenderSession::CommandQueue
     std::vector<GLProgram> failedPrograms;
 };
 
-GLRenderSession::GLRenderSession() = default;
+GLRenderSession::GLRenderSession() : mShareSync(std::make_shared<GLShareSync>())
+{
+}
+
 GLRenderSession::~GLRenderSession() = default;
 
 void GLRenderSession::createCommandQueue()
@@ -448,7 +450,7 @@ void GLRenderSession::reuseUnmodifiedItems()
 void GLRenderSession::executeCommandQueue()
 {
     auto &context = GLContext::currentContext();
-    Singletons::glShareSynchronizer().beginUpdate(context);
+    mShareSync->beginUpdate(context);
 
     BindingState state;
     mCommandQueue->timerQueries.clear();
@@ -460,7 +462,7 @@ void GLRenderSession::executeCommandQueue()
         mCommandQueue->commands[index](state);
     }
 
-    Singletons::glShareSynchronizer().endUpdate(context);
+    mShareSync->endUpdate(context);
 }
 
 void GLRenderSession::downloadModifiedResources()
@@ -511,12 +513,14 @@ void GLRenderSession::finish()
                     if (auto editor =
                             editors.getTextureEditor(fileItem->fileName))
                         if (auto textureId = texture.textureId())
-                            editor->updatePreviewTexture(textureId,
+                            editor->updatePreviewTexture(mShareSync, textureId,
                                 texture.samples());
 }
 
 void GLRenderSession::release()
 {
+    auto &context = GLContext::currentContext();
+    mShareSync->cleanup(context);
     mVao.destroy();
     mCommandQueue.reset();
     mPrevCommandQueue.reset();

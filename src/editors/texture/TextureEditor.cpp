@@ -287,14 +287,16 @@ void TextureEditor::copy()
     }
 }
 
-void TextureEditor::updatePreviewTexture(GLuint textureId, int samples)
+void TextureEditor::updatePreviewTexture(ShareSyncPtr shareSync,
+    GLuint textureId, int samples)
 {
-    mTextureItem->setPreviewTexture(textureId, samples);
+    mTextureItem->setPreviewTexture(std::move(shareSync), textureId, samples);
 }
 
-void TextureEditor::updatePreviewTexture(SharedMemoryHandle handle, int samples)
+void TextureEditor::updatePreviewTexture(ShareSyncPtr shareSync,
+    SharedMemoryHandle handle, int samples)
 {
-    mTextureItem->setPreviewTexture(handle, samples);
+    mTextureItem->setPreviewTexture(std::move(shareSync), handle, samples);
 }
 
 void TextureEditor::setModified()

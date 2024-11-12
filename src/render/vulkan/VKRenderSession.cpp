@@ -1,7 +1,7 @@
 #include "VKRenderSession.h"
 #include "Settings.h"
 #include "Singletons.h"
-#include "SynchronizeLogic.h"
+#include "VKShareSync.h"
 #include "VKBuffer.h"
 #include "VKCall.h"
 #include "VKProgram.h"
@@ -383,6 +383,9 @@ void VKRenderSession::createCommandQueue()
 
 void VKRenderSession::render()
 {
+    if (!mShareSync)
+        mShareSync = std::make_shared<VKShareSync>(mRenderer.device());
+
     if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
         createCommandQueue();
 
@@ -419,7 +422,7 @@ void VKRenderSession::reuseUnmodifiedItems()
 
 void VKRenderSession::executeCommandQueue()
 {
-    //Singletons::vkShareSynchronizer().beginUpdate(context);
+    mShareSync->beginUpdate();
 
     auto state = BindingState{};
     mCommandQueue->context.timestampQueries.clear();
@@ -435,12 +438,14 @@ void VKRenderSession::executeCommandQueue()
         .commandBuffers = std::vector<KDGpu::Handle<KDGpu::CommandBuffer_t>>(
             mCommandQueue->context.commandBuffers.begin(),
             mCommandQueue->context.commandBuffers.end()),
+        .waitSemaphores = { mShareSync->usageSemaphore() },
+        .signalSemaphores = { mShareSync->updateSemaphore() },
     };
     mCommandQueue->context.queue.submit(submitOptions);
     mCommandQueue->context.queue.waitUntilIdle();
     mCommandQueue->context.commandBuffers.clear();
 
-    //Singletons::vkShareSynchronizer().endUpdate(context);
+    mShareSync->endUpdate();
 }
 
 void VKRenderSession::downloadModifiedResources()
@@ -499,12 +504,13 @@ void VKRenderSession::finish()
                             editors.getTextureEditor(fileItem->fileName))
                         if (auto handle = texture.getSharedMemoryHandle();
                             handle.handle)
-                            editor->updatePreviewTexture(handle,
+                            editor->updatePreviewTexture(mShareSync, handle,
                                 texture.samples());
 }
 
 void VKRenderSession::release()
 {
+    mShareSync->cleanup();
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
 }

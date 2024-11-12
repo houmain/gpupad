@@ -11,7 +11,6 @@ class EditorManager;
 class SynchronizeLogic;
 class SessionModel;
 class Renderer;
-class GLShareSynchronizer;
 class VideoManager;
 class InputState;
 class EvaluatedPropertyCache;
@@ -32,7 +31,6 @@ public:
     static EditorManager &editorManager();
     static SessionModel &sessionModel();
     static SynchronizeLogic &synchronizeLogic();
-    static GLShareSynchronizer &glShareSynchronizer();
     static VideoManager &videoManager();
     static InputState &inputState();
     static EvaluatedPropertyCache &evaluatedPropertyCache();
@@ -51,7 +49,6 @@ private:
     std::unique_ptr<EditorManager> mEditorManager;
     std::unique_ptr<SessionModel> mSessionModel;
     std::unique_ptr<SynchronizeLogic> mSynchronizeLogic;
-    std::unique_ptr<GLShareSynchronizer> mGLShareSynchronizer;
     std::unique_ptr<VideoManager> mVideoManager;
     std::unique_ptr<InputState> mInputState;
     std::unique_ptr<EvaluatedPropertyCache> mEvaluatedPropertyCache;

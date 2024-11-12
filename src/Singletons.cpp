@@ -8,7 +8,6 @@
 #include "VideoManager.h"
 #include "editors/EditorManager.h"
 #include "render/opengl/GLRenderer.h"
-#include "render/opengl/GLShareSynchronizer.h"
 #include "render/vulkan/VKRenderer.h"
 #include "session/SessionModel.h"
 #include <QApplication>
@@ -78,11 +77,6 @@ SynchronizeLogic &Singletons::synchronizeLogic()
     return *sInstance->mSynchronizeLogic;
 }
 
-GLShareSynchronizer &Singletons::glShareSynchronizer()
-{
-    return *sInstance->mGLShareSynchronizer;
-}
-
 VideoManager &Singletons::videoManager()
 {
     Q_ASSERT(onMainThread());
@@ -106,7 +100,6 @@ Singletons::Singletons(QMainWindow *window)
     , mFileDialog(std::make_unique<FileDialog>(window))
     , mEditorManager(std::make_unique<EditorManager>())
     , mSessionModel(std::make_unique<SessionModel>())
-    , mGLShareSynchronizer(std::make_unique<GLShareSynchronizer>())
     , mVideoManager(std::make_unique<VideoManager>())
     , mInputState(std::make_unique<InputState>())
     , mEvaluatedPropertyCache(std::make_unique<EvaluatedPropertyCache>())

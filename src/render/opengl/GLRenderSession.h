@@ -3,6 +3,7 @@
 #include "render/RenderSessionBase.h"
 #include <QOpenGLVertexArrayObject>
 
+class GLShareSync;
 class QOpenGLTimerQuery;
 
 class GLRenderSession final : public RenderSessionBase
@@ -25,6 +26,7 @@ private:
     void outputTimerQueries();
 
     QOpenGLVertexArrayObject mVao;
+    std::shared_ptr<GLShareSync> mShareSync;
     std::unique_ptr<CommandQueue> mCommandQueue;
     std::unique_ptr<CommandQueue> mPrevCommandQueue;
     MessagePtrSet mTimerMessages;

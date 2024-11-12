@@ -2,6 +2,7 @@
 
 #include "Range.h"
 #include "TextureData.h"
+#include "render/ShareSync.h"
 #include <QObject>
 #include <QOpenGLTexture>
 
@@ -18,8 +19,9 @@ public:
     void paintGL(const QMatrix4x4 &transform);
     void setImage(TextureData image);
     const TextureData &image() const { return mImage; }
-    void setPreviewTexture(GLuint textureId, int samples);
-    void setPreviewTexture(SharedMemoryHandle handle, int samples);
+    void setPreviewTexture(ShareSyncPtr sync, GLuint textureId, int samples);
+    void setPreviewTexture(ShareSyncPtr sync, SharedMemoryHandle handle,
+        int samples);
 
     bool canFilter() const;
     void setMagnifyLinear(bool magnifyLinear)
@@ -91,6 +93,7 @@ private:
     QRect mBoundingRect;
     TextureData mImage;
     GLuint mImageTextureId{};
+    ShareSyncPtr mShareSync;
     int mPreviewSamples{ 1 };
     GLuint mPreviewTextureId{};
     GLuint mSharedTextureId{};

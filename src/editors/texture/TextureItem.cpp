@@ -3,7 +3,7 @@
 #include "GLWidget.h"
 #include "Singletons.h"
 #include "render/ComputeRange.h"
-#include "render/opengl/GLShareSynchronizer.h"
+#include "render/ShareSync.h"
 #include "render/opengl/GLTexture.h"
 #include <array>
 #include <cmath>
@@ -382,16 +382,19 @@ void TextureItem::setImage(TextureData image)
     update();
 }
 
-void TextureItem::setPreviewTexture(GLuint textureId, int samples)
+void TextureItem::setPreviewTexture(ShareSyncPtr shareSync, GLuint textureId,
+    int samples)
 {
     if (!mImage.isNull()) {
+        mShareSync = std::move(shareSync);
         mPreviewTextureId = textureId;
         mPreviewSamples = samples;
         update();
     }
 }
 
-void TextureItem::setPreviewTexture(SharedMemoryHandle handle, int samples)
+void TextureItem::setPreviewTexture(ShareSyncPtr shareSync,
+    SharedMemoryHandle handle, int samples)
 {
     if (!mImage.isNull() && handle.handle) {
         if (mSharedTextureHandle != handle.handle) {
@@ -406,6 +409,7 @@ void TextureItem::setPreviewTexture(SharedMemoryHandle handle, int samples)
             }
             importSharedTexture(handle, mImage, samples, mSharedTextureId);
         }
+        mShareSync = std::move(shareSync);
         mPreviewTextureId = mSharedTextureId;
         mPreviewSamples = samples;
         update();
@@ -515,7 +519,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
     const auto target =
         mImage.getTarget(mPreviewTextureId ? mPreviewSamples : 0);
     if (mPreviewTextureId) {
-        Singletons::glShareSynchronizer().beginUsage(gl);
+        mShareSync->beginUsage(gl);
         gl.glBindTexture(target, mPreviewTextureId);
     } else {
         gl.glBindTexture(target, mImageTextureId);
@@ -628,7 +632,7 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
 
     if (mPreviewTextureId) {
         gl.glBindTexture(target, 0);
-        Singletons::glShareSynchronizer().endUsage(gl);
+        mShareSync->endUsage(gl);
     }
     return (glGetError() == GL_NO_ERROR);
 }

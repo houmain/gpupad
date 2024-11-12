@@ -2,6 +2,7 @@
 
 #include "TextureData.h"
 #include "editors/IEditor.h"
+#include "render/ShareSync.h"
 #include <QOpenGLTexture>
 #include <QScrollArea>
 
@@ -39,8 +40,10 @@ public:
     bool isModified() const { return mModified; }
     void replace(TextureData texture, bool emitFileChanged = true);
     void setFlipVertically(bool flipVertically);
-    void updatePreviewTexture(GLuint textureId, int samples);
-    void updatePreviewTexture(SharedMemoryHandle handle, int samples);
+    void updatePreviewTexture(ShareSyncPtr shareSync, GLuint textureId,
+        int samples);
+    void updatePreviewTexture(ShareSyncPtr shareSync, SharedMemoryHandle handle,
+        int samples);
     const TextureData &texture() const { return mTexture; }
 
 Q_SIGNALS:
