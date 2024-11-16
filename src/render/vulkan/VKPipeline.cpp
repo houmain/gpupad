@@ -513,6 +513,15 @@ bool VKPipeline::createLayout(VKContext &context)
         mBindGroupLayouts.emplace_back(context.device.createBindGroupLayout(
             { .bindings = bindGroup.bindings }));
 
+    const auto maxPushConstantsSize =
+        context.adapterLimits().maxPushConstantsSize;
+    if (mPushConstantRange.size > maxPushConstantsSize) {
+        mMessages += MessageList::insert(mItemId,
+            MessageType::MaxPushConstantSizeExceeded,
+            QString::number(maxPushConstantsSize));
+        mPushConstantRange.size = maxPushConstantsSize;
+    }
+
     auto options = KDGpu::PipelineLayoutOptions{
         .bindGroupLayouts = { mBindGroupLayouts.begin(),
             mBindGroupLayouts.end() }
@@ -644,7 +653,8 @@ bool VKPipeline::updateBindings(VKContext &context)
                         });
                 } else {
                     if (mTarget->hasAttachment(samplerBinding->texture)) {
-                        notBoundError(MessageType::CantSampleAttachment, desc.name);
+                        notBoundError(MessageType::CantSampleAttachment,
+                            desc.name);
                         continue;
                     }
 

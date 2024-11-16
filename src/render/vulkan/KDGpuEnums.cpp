@@ -324,3 +324,12 @@ KDGpu::SampleCountFlagBits getKDSampleCount(int samples)
         return KDGpu::SampleCountFlagBits::Samples32Bit;
     return KDGpu::SampleCountFlagBits::Samples64Bit;
 }
+
+int getKDSamples(KDGpu::SampleCountFlags sampleCounts)
+{
+    for (auto i = 0u;; ++i) {
+        const auto flag = static_cast<KDGpu::SampleCountFlagBits>(1 << (i + 1));
+        if (!sampleCounts.testFlag(flag))
+            return (1 << i);
+    }
+}

@@ -14,6 +14,7 @@ enum MessageType {
     OpenGLVersionNotAvailable,
     LoadingFileFailed,
     UnsupportedShaderType,
+    UnsupportedTextureFormat,
     CreatingFramebufferFailed,
     CreatingTextureFailed,
     UploadingImageFailed,
@@ -56,6 +57,8 @@ enum MessageType {
     SubroutinesNotAvailableInVulkan,
     CantSampleAttachment,
     SampleCountMismatch,
+    MaxSampleCountExceeded,
+    MaxPushConstantSizeExceeded,
 };
 
 struct Message

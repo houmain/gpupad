@@ -301,7 +301,6 @@ bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
         KDGpu::AccessFlagBit::TransferWriteBit,
         KDGpu::PipelineStageFlagBit::TransferBit);
 
-    auto succeeded = true;
     if (mKind.depth || mKind.stencil) {
         context.commandRecorder->clearDepthStencilTexture({
             .texture = mTexture,
@@ -312,6 +311,10 @@ bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
                 .aspectMask = aspectMask() } },
         });
     } else {
+        // cannot clear compressed formats
+        if (getTextureDataType(mFormat) == TextureDataType::Compressed)
+            return false;
+
         const auto sampleType = getTextureSampleType(mFormat);
         transformClearColor(color, sampleType);
 
@@ -325,7 +328,7 @@ bool VKTexture::clear(VKContext &context, std::array<double, 4> color,
                 .aspectMask = aspectMask() } },
         });
     }
-    return succeeded;
+    return true;
 }
 
 bool VKTexture::copy(VKContext &context, VKTexture &source)
@@ -432,6 +435,15 @@ void VKTexture::createAndUpload(VKContext &context)
             | KDGpu::TextureUsageFlagBits::StorageBit));
 
     if (isWritten || mSamples > 1) {
+        // check if format is supported
+        const auto properties =
+            context.device.adapter()->formatProperties(textureOptions.format);
+        if (!properties.optimalTilingFeatures) {
+            mMessages += MessageList::insert(mItemId,
+                MessageType::UnsupportedTextureFormat);
+            textureOptions.format = KDGpu::Format::R8_UNORM;
+        }
+
 #if defined(KDGPU_PLATFORM_WIN32)
         textureOptions.externalMemoryHandleType =
             KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueWin32;

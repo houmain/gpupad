@@ -49,6 +49,7 @@ void VKTarget::setTexture(int index, VKTexture *texture)
 KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
 {
     auto renderPassOptions = KDGpu::RenderPassCommandRecorderOptions{};
+    auto maxSamples = 64;
 
     for (auto &attachment : mAttachments)
         if (auto texture = attachment.texture) {
@@ -58,7 +59,13 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
             auto &view = texture->getView(attachment.level, attachment.layer);
             if (kind.depth || kind.stencil) {
                 auto &depthStencil = renderPassOptions.depthStencilAttachment;
-                Q_ASSERT(!depthStencil.view.isValid());
+
+                if (depthStencil.view.isValid()) {
+                    mMessages += MessageList::insert(mItemId,
+                        MessageType::MoreThanOneDepthStencilAttachment);
+                    continue;
+                }
+
                 depthStencil = {
                     .view = view,
                     .depthLoadOperation = KDGpu::AttachmentLoadOperation::Load,
@@ -85,6 +92,12 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
             min(renderPassOptions.framebufferArrayLayers,
                 static_cast<uint32_t>(texture->layers()));
 
+            const auto &limits = context.adapterLimits();
+            maxSamples = std::min(maxSamples,
+                getKDSamples(kind.color ? limits.framebufferColorSampleCounts
+                        : kind.depth    ? limits.framebufferDepthSampleCounts
+                                     : limits.framebufferStencilSampleCounts));
+
             mUsedItems += texture->usedItems();
         }
 
@@ -93,6 +106,15 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
         renderPassOptions.framebufferWidth = mDefaultWidth;
         renderPassOptions.framebufferHeight = mDefaultHeight;
         renderPassOptions.framebufferArrayLayers = mDefaultLayers;
+
+        maxSamples = getKDSamples(
+            context.adapterLimits().framebufferNoAttachmentsSampleCounts);
+    }
+
+    if (mSamples > maxSamples) {
+        mMessages += MessageList::insert(mItemId,
+            MessageType::MaxSampleCountExceeded, QString::number(maxSamples));
+        mSamples = maxSamples;
     }
 
     renderPassOptions.samples = getKDSampleCount(mSamples);

@@ -92,7 +92,8 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("No file set");
         return tr("Loading file '%1' failed")
             .arg(FileDialog::getFileTitle(message.text));
-    case UnsupportedShaderType: return tr("Unsupported shader type");
+    case UnsupportedShaderType:    return tr("Unsupported shader type");
+    case UnsupportedTextureFormat: return tr("Unsupported texture format");
     case CreatingFramebufferFailed:
         return tr("Creating framebuffer failed %1").arg(message.text);
     case CreatingTextureFailed:  return tr("Creating texture failed");
@@ -101,7 +102,8 @@ QString MessageWindow::getMessageText(const Message &message) const
     case UniformNotSet:          return tr("Uniform '%1' not set").arg(message.text);
     case BufferNotSet:           return tr("Buffer '%1' not set").arg(message.text);
     case SamplerNotSet:          return tr("Sampler '%1' not set").arg(message.text);
-    case CantSampleAttachment:   return tr("Cannot sample attachment '%1'").arg(message.text);
+    case CantSampleAttachment:
+        return tr("Cannot sample attachment '%1'").arg(message.text);
     case ImageNotSet:            return tr("Image '%1' not set").arg(message.text);
     case AttributeNotSet:        return tr("Attribute '%1' not set").arg(message.text);
     case CallDuration:           return tr("Call took %1").arg(message.text);
@@ -141,6 +143,10 @@ QString MessageWindow::getMessageText(const Message &message) const
         return tr("Subroutines not available in Vulkan");
     case SampleCountMismatch:
         return tr("Sample count of attachments does not match");
+    case MaxSampleCountExceeded:
+        return tr("Maximum sample count exceeded (%1)").arg(message.text);
+    case MaxPushConstantSizeExceeded:
+        return tr("Maximum push constant size exceeded (%1)").arg(message.text);
     }
     return message.text;
 }
