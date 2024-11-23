@@ -776,8 +776,8 @@ bool TextureData::loadPfm(const QString &fileName, bool flipVertically)
 
     auto c0 = char{};
     auto c1 = char{};
-    std::fscanf(f, "%c%c\n", &c0, &c1);
-    if (c0 != 'P')
+    auto read = static_cast<size_t>(std::fscanf(f, "%c%c\n", &c0, &c1));
+    if (c0 != 'P' || read != 2)
         return false;
 
     auto channels = 3;
@@ -789,16 +789,16 @@ bool TextureData::loadPfm(const QString &fileName, bool flipVertically)
     auto width = 0;
     auto height = 0;
     auto scale = 1.0;
-    if (!fscanf(f, "%d %d\n", &width, &height))
+    if (fscanf(f, "%d %d\n", &width, &height) != 2
+        || std::fscanf(f, "%lf\n", &scale) != 1
+        || std::fscanf(f, "\n") != 0)
         return false;
-    std::fscanf(f, "%lf\n", &scale);
+
     auto endianness = QSysInfo::BigEndian;
     if (scale < 0) {
         endianness = QSysInfo::LittleEndian;
         scale = -scale;
     }
-    std::fscanf(f, "\n");
-
     const auto format = (channels == 3 ? QOpenGLTexture::TextureFormat::RGB32F
                                        : QOpenGLTexture::TextureFormat::R32F);
     if (!create(QOpenGLTexture::Target2D, format, width, height, 1, 1))
@@ -807,17 +807,17 @@ bool TextureData::loadPfm(const QString &fileName, bool flipVertically)
     const auto data = getWriteonlyData(0, 0, 0);
 
     if (endianness == QSysInfo::ByteOrder) {
-        std::fread(data, size, 1, f);
+        read = std::fread(data, 1, size, f);
     } else {
         auto buffer = QByteArray(getImageSize(0), 0);
-        std::fread(buffer.data(), size, 1, f);
+        read = std::fread(buffer.data(), 1, size, f);
         if (endianness == QSysInfo::LittleEndian) {
             qFromLittleEndian<float>(buffer.data(), size / 4, data);
         } else {
             qFromBigEndian<float>(buffer.data(), size / 4, data);
         }
     }
-    return true;
+    return (read == size);
 }
 
 bool TextureData::load(const QString &fileName, bool flipVertically)
