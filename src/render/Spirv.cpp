@@ -1,6 +1,7 @@
 
 #include "Spirv.h"
 #include <QRegularExpression>
+#include <sstream>
 
 #define ENABLE_HLSL
 #include <glslang/Public/ResourceLimits.h>
