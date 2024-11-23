@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 2.1.0] - 2024-11-23
+
+### Added
+
+- Showing session item in session editor.
+- Added some shader compiler options to session item.
+- Allow to select glslang compiler for OpenGL.
+
+### Changed
+
+- Generating output with builtin glslang.
+- Moved session shader preamble/include to session properties, removed global.
+- Moved Renderer selection to session item.
+- Using session renderer for validating source.
+
+### Fixed
+
+- Synchronization of Line Wrapping menu and toolbar controls.
+
 ## [Version 2.0.1] - 2024-10-28
 
 ### Added
@@ -733,6 +752,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 2.0.2]: https://github.com/houmain/gpupad/compare/2.0.1...2.0.2
 [version 2.0.1]: https://github.com/houmain/gpupad/compare/2.0.0...2.0.1
 [version 2.0.0]: https://github.com/houmain/gpupad/compare/1.35.1...2.0.0
 [version 1.35.1]: https://github.com/houmain/gpupad/compare/1.35.0...1.35.1
