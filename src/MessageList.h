@@ -12,6 +12,7 @@ using MessagePtrSet = QSet<MessagePtr>;
 
 enum MessageType {
     OpenGLVersionNotAvailable,
+    VulkanNotAvailable,
     LoadingFileFailed,
     UnsupportedShaderType,
     UnsupportedTextureFormat,

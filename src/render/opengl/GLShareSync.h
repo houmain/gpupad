@@ -16,7 +16,7 @@ public:
             gl.glDeleteSync(mUpdateFenceSync);
         mUpdateFenceSync = {};
 
-        for (const auto &usageSync : qAsConst(mUsageFenceSyncs))
+        for (const auto &usageSync : std::as_const(mUsageFenceSyncs))
             gl.glDeleteSync(usageSync);
         mUsageFenceSyncs.clear();
     }

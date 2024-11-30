@@ -803,7 +803,7 @@ bool TextureData::loadPfm(const QString &fileName, bool flipVertically)
                                        : QOpenGLTexture::TextureFormat::R32F);
     if (!create(QOpenGLTexture::Target2D, format, width, height, 1, 1))
         return false;
-    const auto size = getImageSize(0);
+    const auto size = static_cast<size_t>(getImageSize(0));
     const auto data = getWriteonlyData(0, 0, 0);
 
     if (endianness == QSysInfo::ByteOrder) {

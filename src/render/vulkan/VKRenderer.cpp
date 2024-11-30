@@ -82,6 +82,11 @@ private:
                 VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME }
         };
         mInstance = mApi->createInstance(instanceOptions);
+        if (!mInstance.isValid() || mInstance.adapters().empty()) 
+        {
+            mMessages += MessageList::insert(0, MessageType::VulkanNotAvailable);
+            return;
+        }
 
         mAdapter = mInstance.selectAdapter(KDGpu::AdapterDeviceType::Default);
 
