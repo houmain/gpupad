@@ -6,6 +6,7 @@ void GLShader::parseLog(const QString &log, MessagePtrSet &messages,
     // Mesa:    0:13(2): error: `gl_Positin' undeclared
     // NVidia:  0(13) : error C1008: undefined variable "gl_Positin"
     // Linker:  error: struct type mismatch between shaders for uniform
+    // Linker:  Error Duplicate location 0 for uniform uModel
 
     static const auto split = QRegularExpression(
         "("
@@ -14,7 +15,7 @@ void GLShader::parseLog(const QString &log, MessagePtrSet &messages,
         "\\((\\d+)\\)" // 5. line or column
         "\\s*:\\s*"
         ")?"
-        "([^:]+):\\s*" // 6. severity/code
+        "([^:]+:|Error)\\s*" // 6. severity/code
         "(.+)"); // 7. text
 
     const auto lines = log.split('\n');
@@ -56,12 +57,6 @@ bool GLShader::compile(ShaderPrintf &printf)
             MessageType::OpenGLVersionNotAvailable, "3.3");
         return false;
     }
-    if (mLanguage != Shader::Language::GLSL) {
-        mMessages += MessageList::insert(mItemId,
-            MessageType::OpenGLRendererRequiresGLSL);
-        return {};
-    }
-
     if (mShaderObject)
         return true;
 
@@ -80,6 +75,11 @@ bool GLShader::compile(ShaderPrintf &printf)
 
     auto usedFileNames = QStringList();
     if (mSession.shaderCompiler.isEmpty()) {
+        if (mLanguage != Shader::Language::GLSL) {
+            mMessages += MessageList::insert(mItemId,
+                MessageType::OpenGLRendererRequiresGLSL);
+            return {};
+        }
         auto patchedSources = getPatchedSourcesGLSL(printf, &usedFileNames);
         if (patchedSources.isEmpty())
             return false;
@@ -118,17 +118,18 @@ bool GLShader::compile(ShaderPrintf &printf)
             static_cast<GLsizei>(spirv.spirv().size() * sizeof(uint32_t)));
 
         glSpecializeShader(shader, qPrintable(mEntryPoint), 0, 0, 0);
-        
+
         // clear error state
         glGetError();
     }
 
     auto length = GLint{};
     gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-    auto log = std::vector<char>(static_cast<size_t>(length));
-    gl.glGetShaderInfoLog(shader, length, nullptr, log.data());
-    GLShader::parseLog(log.data(), mMessages, mItemId, usedFileNames);
-
+    if (length > 0) {
+        auto log = std::vector<char>(static_cast<size_t>(length));
+        gl.glGetShaderInfoLog(shader, length, nullptr, log.data());
+        GLShader::parseLog(log.data(), mMessages, mItemId, usedFileNames);
+    }
     auto status = GLint{};
     gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (status != GL_TRUE)
@@ -206,10 +207,12 @@ void tryGetLinkerWarnings(const GLShader &shader, MessagePtrSet &messages)
     if (status == GL_TRUE) {
         auto length = GLint{};
         gl.glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-        auto log = std::vector<char>(static_cast<size_t>(length));
-        gl.glGetProgramInfoLog(program, length, nullptr, log.data());
-        GLShader::parseLog(log.data(), messages, shader.itemId(),
-            shader.fileNames());
+        if (length > 0) {
+            auto log = std::vector<char>(static_cast<size_t>(length));
+            gl.glGetProgramInfoLog(program, length, nullptr, log.data());
+            GLShader::parseLog(log.data(), messages, shader.itemId(),
+                shader.fileNames());
+        }
     }
     gl.glDeleteProgram(program);
 }

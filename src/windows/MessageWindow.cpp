@@ -139,7 +139,7 @@ QString MessageWindow::getMessageText(const Message &message) const
         return tr("Incompatible assignment to the same set/binding");
     case CreatingPipelineFailed: return tr("Creating pipeline failed");
     case OpenGLRendererRequiresGLSL:
-        return tr("The OpenGL renderer only supports GLSL shaders");
+        return tr("The OpenGL driver can only compile GLSL shaders");
     case SubroutinesNotAvailableInVulkan:
         return tr("Subroutines not available in Vulkan");
     case SampleCountMismatch:

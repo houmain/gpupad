@@ -22,6 +22,16 @@ namespace {
         return (it == items.end() ? nullptr : &*it);
     };
 
+    QString getBufferMemberFullName(const SpvReflectBlockVariable &block,
+        const SpvReflectBlockVariable &member)
+    {
+        if (isDefaultUniformBlock(block.type_description->type_name))
+            return member.name;
+        return QStringLiteral("%1.%2")
+            .arg(block.type_description->type_name)
+            .arg(member.name);
+    }
+
     Field::DataType getBufferMemberDataType(
         const SpvReflectBlockVariable &variable)
     {
@@ -348,14 +358,15 @@ void VKPipeline::updateUniformBlockData(std::byte *bufferData,
 {
     for (auto i = 0u; i < block.member_count; ++i) {
         const auto &member = block.members[i];
+        const auto fullName = getBufferMemberFullName(block, member);
         const auto it = std::find_if(begin(mUniformBindings),
             end(mUniformBindings), [&](const VKUniformBinding &binding) {
-                return binding.name == member.name;
+                return binding.name == fullName;
             });
         if (it == mUniformBindings.end()) {
             if ((member.flags & SPV_REFLECT_VARIABLE_FLAGS_UNUSED) == 0)
                 mMessages += MessageList::insert(mItemId,
-                    MessageType::UniformNotSet, member.name);
+                    MessageType::UniformNotSet, fullName);
             continue;
         }
 
