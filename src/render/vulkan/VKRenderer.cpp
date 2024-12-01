@@ -55,7 +55,8 @@ public:
 public Q_SLOTS:
     void stop()
     {
-        shutdown();
+        if (mDevice.isValid())
+            shutdown();
         QThread::currentThread()->exit(0);
     }
 
@@ -82,9 +83,9 @@ private:
                 VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME }
         };
         mInstance = mApi->createInstance(instanceOptions);
-        if (!mInstance.isValid() || mInstance.adapters().empty()) 
-        {
-            mMessages += MessageList::insert(0, MessageType::VulkanNotAvailable);
+        if (!mInstance.isValid() || mInstance.adapters().empty()) {
+            mMessages +=
+                MessageList::insert(0, MessageType::VulkanNotAvailable);
             return;
         }
 

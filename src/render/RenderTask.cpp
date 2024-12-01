@@ -1,6 +1,10 @@
 #include "RenderTask.h"
 
-RenderTask::RenderTask(QObject *parent) : QObject(parent) { }
+RenderTask::RenderTask(RendererPtr renderer, QObject *parent)
+    : QObject(parent)
+    , mRenderer(std::move(renderer))
+{
+}
 
 RenderTask::~RenderTask()
 {
@@ -17,18 +21,11 @@ void RenderTask::releaseResources()
     }
 }
 
-void RenderTask::update(RendererPtr renderer, bool itemsChanged,
-    EvaluationType evaluationType)
+void RenderTask::update(bool itemsChanged, EvaluationType evaluationType)
 {
+    if (!mRenderer)
+        return;
     if (!std::exchange(mUpdating, true)) {
-        if (mRenderer != renderer) {
-            releaseResources();
-            mRenderer = renderer;
-            if (!renderer || !initialize()) {
-                mRenderer.reset();
-                return;
-            }
-        }
         prepare(itemsChanged, evaluationType);
         mRenderer->render(this);
     } else {
@@ -48,7 +45,7 @@ void RenderTask::handleRendered()
 
     // restart when items were changed in the meantime
     if (mItemsChanged || mPendingEvaluation.has_value())
-        update(mRenderer, std::exchange(mItemsChanged, false),
+        update(std::exchange(mItemsChanged, false),
             std::exchange(mPendingEvaluation, {})
                 .value_or(EvaluationType::Steady));
 }

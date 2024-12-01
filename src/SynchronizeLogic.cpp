@@ -8,7 +8,7 @@
 #include "editors/binary/BinaryEditor.h"
 #include "editors/texture/TextureEditor.h"
 #include "render/ProcessSource.h"
-#include "render/RenderSession.h"
+#include "render/RenderSessionBase.h"
 #include "session/SessionModel.h"
 #include <QTimer>
 
@@ -18,7 +18,6 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     , mUpdateEditorsTimer(new QTimer(this))
     , mEvaluationTimer(new QTimer(this))
     , mProcessSourceTimer(new QTimer(this))
-    , mProcessSource(new ProcessSource(this))
 {
     connect(mUpdateEditorsTimer, &QTimer::timeout, this,
         &SynchronizeLogic::updateEditors);
@@ -32,13 +31,10 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
         &SynchronizeLogic::handleItemReordered);
     connect(&mModel, &SessionModel::rowsAboutToBeRemoved, this,
         &SynchronizeLogic::handleItemReordered);
-    connect(mProcessSource, &ProcessSource::outputChanged, this,
-        &SynchronizeLogic::outputChanged);
     connect(&Singletons::fileCache(), &FileCache::fileChanged, this,
         &SynchronizeLogic::handleFileChanged);
     connect(&Singletons::editorManager(), &EditorManager::editorRenamed, this,
         &SynchronizeLogic::handleEditorFileRenamed);
-    resetRenderSession();
 
     mUpdateEditorsTimer->start(100);
     mEvaluationTimer->setTimerType(Qt::PreciseTimer);
@@ -73,11 +69,25 @@ void SynchronizeLogic::setCurrentEditorSourceType(SourceType sourceType)
         mProcessSourceTimer->start();
 }
 
-void SynchronizeLogic::resetRenderSession()
+void SynchronizeLogic::updateRenderSession()
 {
-    mRenderSession = std::make_unique<RenderSession>();
+    const auto sessionRenderer = Singletons::sessionRenderer();
+    if (mRenderSession && &mRenderSession->renderer() == sessionRenderer.get())
+        return;
+
+    mRenderSession = RenderSessionBase::create(sessionRenderer);
     connect(mRenderSession.get(), &RenderTask::updated, this,
         &SynchronizeLogic::handleSessionRendered);
+
+    mProcessSource = std::make_unique<ProcessSource>(sessionRenderer);
+    connect(mProcessSource.get(), &ProcessSource::outputChanged, this,
+        &SynchronizeLogic::outputChanged);
+}
+
+void SynchronizeLogic::resetRenderSession()
+{
+    mRenderSession.reset();
+    mProcessSource.reset();
 }
 
 void SynchronizeLogic::resetEvaluation()
@@ -130,7 +140,7 @@ void SynchronizeLogic::handleSessionRendered()
 {
     Singletons::fileCache().updateFromEditors();
 
-    if (mEvaluationMode != EvaluationMode::Paused)
+    if (mEvaluationMode != EvaluationMode::Paused && mRenderSession)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
 }
 
@@ -190,7 +200,8 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
         }
     }
 
-    if (mRenderSession->usedItems().contains(mModel.getItemId(index))) {
+    if (mRenderSession
+        && mRenderSession->usedItems().contains(mModel.getItemId(index))) {
         invalidateRenderSession();
     } else if (index.column() == SessionModel::Name) {
         invalidateRenderSession();
@@ -305,8 +316,8 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
     Singletons::fileCache().updateFromEditors();
     const auto itemsChanged = std::exchange(mRenderSessionInvalidated, false);
-    mRenderSession->update(Singletons::sessionRenderer(), itemsChanged,
-        evaluationType);
+    updateRenderSession();
+    mRenderSession->update(itemsChanged, evaluationType);
 }
 
 void SynchronizeLogic::updateEditors()
@@ -385,7 +396,8 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
 void SynchronizeLogic::processSource()
 {
     if (!mValidateSource && mProcessSourceType.isEmpty()) {
-        mProcessSource->clearMessages();
+        if (mProcessSource)
+            mProcessSource->clearMessages();
         return;
     }
 
@@ -394,17 +406,17 @@ void SynchronizeLogic::processSource()
         return;
 
     Singletons::fileCache().updateFromEditors();
-
+    updateRenderSession();
     mProcessSource->setFileName(mCurrentEditorFileName);
     mProcessSource->setSourceType(mCurrentEditorSourceType);
     mProcessSource->setValidateSource(mValidateSource);
     mProcessSource->setProcessType(mProcessSourceType);
-    mProcessSource->update(Singletons::sessionRenderer());
+    mProcessSource->update();
 }
 
 void SynchronizeLogic::handleMouseStateChanged()
 {
-    if (mRenderSession->usesMouseState()) {
+    if (mRenderSession && mRenderSession->usesMouseState()) {
         if (mEvaluationMode == EvaluationMode::Automatic)
             evaluate(EvaluationType::Steady);
     }
@@ -412,7 +424,7 @@ void SynchronizeLogic::handleMouseStateChanged()
 
 void SynchronizeLogic::handleKeyboardStateChanged()
 {
-    if (mRenderSession->usesKeyboardState()) {
+    if (mRenderSession && mRenderSession->usesKeyboardState()) {
         if (mEvaluationMode == EvaluationMode::Automatic)
             evaluate(EvaluationType::Steady);
     }

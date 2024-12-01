@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Evaluation.h"
+#include "RenderTask.h"
 #include "MessageList.h"
-#include "Renderer.h"
 #include "TextureData.h"
 #include "session/SessionModel.h"
 #include <QMap>
@@ -10,15 +9,13 @@
 
 class ScriptSession;
 
-class RenderSessionBase
+class RenderSessionBase : public RenderTask
 {
 public:
-    static std::unique_ptr<RenderSessionBase> create(Renderer &renderer);
-
-    RenderSessionBase();
+    static std::unique_ptr<RenderSessionBase> create(RendererPtr renderer);
+    
+    RenderSessionBase(RendererPtr renderer, QObject *parent = nullptr);
     virtual ~RenderSessionBase();
-    RenderSessionBase(const RenderSessionBase &) = delete;
-    RenderSessionBase &operator=(const RenderSessionBase &) = delete;
 
     void prepare(bool itemsChanged, EvaluationType evaluationType);
     void configure();

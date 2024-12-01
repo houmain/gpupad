@@ -44,7 +44,8 @@ public:
 
     void handleReleaseTask(RenderTask *renderTask, void *userData)
     {
-        renderTask->release();
+        if (mInitialized)
+            renderTask->release();
         static_cast<QSemaphore *>(userData)->release(1);
     }
 

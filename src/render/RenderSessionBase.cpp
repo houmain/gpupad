@@ -14,18 +14,23 @@
 #include "vulkan/VKRenderSession.h"
 #include "vulkan/VKRenderer.h"
 
-std::unique_ptr<RenderSessionBase> RenderSessionBase::create(Renderer &renderer)
+std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
+    RendererPtr renderer)
 {
-    switch (renderer.api()) {
-    case RenderAPI::OpenGL: return std::make_unique<GLRenderSession>();
+    switch (renderer->api()) {
+    case RenderAPI::OpenGL:
+        return std::make_unique<GLRenderSession>(std::move(renderer));
     case RenderAPI::Vulkan:
-        return std::make_unique<VKRenderSession>(
-            static_cast<VKRenderer &>(renderer));
+        return std::make_unique<VKRenderSession>(std::move(renderer));
     }
     return {};
 }
 
-RenderSessionBase::RenderSessionBase() = default;
+RenderSessionBase::RenderSessionBase(RendererPtr renderer, QObject *parent)
+    : RenderTask(std::move(renderer), parent)
+{
+}
+
 RenderSessionBase::~RenderSessionBase() = default;
 
 void RenderSessionBase::prepare(bool itemsChanged,

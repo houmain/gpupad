@@ -127,11 +127,16 @@ struct GLRenderSession::CommandQueue
     std::vector<GLProgram> failedPrograms;
 };
 
-GLRenderSession::GLRenderSession() : mShareSync(std::make_shared<GLShareSync>())
+GLRenderSession::GLRenderSession(RendererPtr renderer)
+    : RenderSessionBase(std::move(renderer))
+    , mShareSync(std::make_shared<GLShareSync>())
 {
 }
 
-GLRenderSession::~GLRenderSession() = default;
+GLRenderSession::~GLRenderSession()
+{
+    releaseResources();
+}
 
 void GLRenderSession::createCommandQueue()
 {

@@ -11,7 +11,7 @@ class ProcessSource final : public RenderTask
 {
     Q_OBJECT
 public:
-    explicit ProcessSource(QObject *parent = nullptr);
+    explicit ProcessSource(RendererPtr renderer, QObject *parent = nullptr);
     ~ProcessSource() override;
 
     void setFileName(QString fileName);
@@ -24,7 +24,6 @@ Q_SIGNALS:
     void outputChanged(QString output);
 
 private:
-    bool initialize() override;
     void prepare(bool itemsChanged, EvaluationType);
     void render() override;
     void finish() override;

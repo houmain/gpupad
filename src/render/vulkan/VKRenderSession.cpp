@@ -117,9 +117,20 @@ struct VKRenderSession::CommandQueue
     std::vector<VKProgram> failedPrograms;
 };
 
-VKRenderSession::VKRenderSession(VKRenderer &renderer) : mRenderer(renderer) { }
+VKRenderSession::VKRenderSession(RendererPtr renderer)
+    : RenderSessionBase(std::move(renderer))
+{
+}
 
-VKRenderSession::~VKRenderSession() = default;
+VKRenderSession::~VKRenderSession()
+{
+    releaseResources();
+}
+
+VKRenderer &VKRenderSession::renderer()
+{
+    return static_cast<VKRenderer &>(RenderSessionBase::renderer());
+}
 
 void VKRenderSession::createCommandQueue()
 {
@@ -128,9 +139,9 @@ void VKRenderSession::createCommandQueue()
     mCommandQueue.reset(new CommandQueue{
         .context =
             VKContext{
-                .device = mRenderer.device(),
-                .queue = mRenderer.device().queues()[0],
-                .ktxDeviceInfo = mRenderer.ktxDeviceInfo(),
+                .device = renderer().device(),
+                .queue = renderer().device().queues()[0],
+                .ktxDeviceInfo = renderer().ktxDeviceInfo(),
             },
     });
     mUsedItems.clear();
@@ -384,7 +395,7 @@ void VKRenderSession::createCommandQueue()
 void VKRenderSession::render()
 {
     if (!mShareSync)
-        mShareSync = std::make_shared<VKShareSync>(mRenderer.device());
+        mShareSync = std::make_shared<VKShareSync>(renderer().device());
 
     if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
         createCommandQueue();
@@ -491,6 +502,9 @@ void VKRenderSession::outputTimerQueries()
 void VKRenderSession::finish()
 {
     RenderSessionBase::finish();
+
+    if (!mCommandQueue)
+        return;
 
     auto &editors = Singletons::editorManager();
     auto &session = Singletons::sessionModel();

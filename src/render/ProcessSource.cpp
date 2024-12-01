@@ -47,7 +47,10 @@ namespace {
     }
 } // namespace
 
-ProcessSource::ProcessSource(QObject *parent) : RenderTask(parent) { }
+ProcessSource::ProcessSource(RendererPtr renderer, QObject *parent)
+    : RenderTask(std::move(renderer), parent)
+{
+}
 
 ProcessSource::~ProcessSource()
 {
@@ -79,11 +82,6 @@ void ProcessSource::clearMessages()
     mMessages.clear();
 }
 
-bool ProcessSource::initialize()
-{
-    return true;
-}
-
 void ProcessSource::prepare(bool itemsChanged, EvaluationType)
 {
     if (auto shaderType = getShaderType(mSourceType)) {
@@ -109,10 +107,12 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
         const auto &sessionItem = session.sessionItem();
         switch (renderer().api()) {
         case RenderAPI::OpenGL:
-            mShader = std::make_unique<GLShader>(shaderType, shaders, sessionItem);
+            mShader =
+                std::make_unique<GLShader>(shaderType, shaders, sessionItem);
             break;
         case RenderAPI::Vulkan:
-            mShader = std::make_unique<VKShader>(shaderType, shaders, sessionItem);
+            mShader =
+                std::make_unique<VKShader>(shaderType, shaders, sessionItem);
             break;
         }
     }

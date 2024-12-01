@@ -12,27 +12,26 @@ class RenderTask : public QObject
 {
     Q_OBJECT
 public:
-    explicit RenderTask(QObject *parent = nullptr);
+    explicit RenderTask(RendererPtr renderer, QObject *parent = nullptr);
+    RenderTask(const RenderTask &) = delete;
+    RenderTask &operator=(const RenderTask &) = delete;
     ~RenderTask() override;
 
     virtual QSet<ItemId> usedItems() const { return {}; }
 
-    void update(RendererPtr renderer, bool itemChanged = false,
+    Renderer &renderer() { return *mRenderer; }
+    void update(bool itemChanged = false,
         EvaluationType evaluationType = EvaluationType::Reset);
 
 Q_SIGNALS:
     void updated();
 
 protected:
-    Renderer &renderer() { return *mRenderer; }
     void releaseResources();
 
 private:
     friend class GLRenderer;
     friend class VKRenderer;
-
-    // 0. called once in main thread
-    virtual bool initialize() { return true; }
 
     // 1. called per update in main thread
     virtual void prepare(bool itemsChanged, EvaluationType evaluationType) { }

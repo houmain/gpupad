@@ -459,7 +459,7 @@ void TextureItem::setHistogramBounds(const Range &bounds)
 void TextureItem::computeHistogramBounds()
 {
     if (!mComputeRange) {
-        mComputeRange = new ComputeRange(this);
+        mComputeRange = new ComputeRange(Singletons::glRenderer(), this);
         connect(mComputeRange, &ComputeRange::rangeComputed, this,
             &TextureItem::histogramBoundsComputed);
     }
@@ -468,7 +468,7 @@ void TextureItem::computeHistogramBounds()
         (mPreviewTextureId ? mPreviewTextureId : mImageTextureId), mImage,
         static_cast<int>(mLevel), static_cast<int>(mLayer), mFace);
 
-    mComputeRange->update(Singletons::glRenderer());
+    mComputeRange->update();
 }
 
 GLWidget &TextureItem::widget()

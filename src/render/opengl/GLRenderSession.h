@@ -9,7 +9,7 @@ class QOpenGLTimerQuery;
 class GLRenderSession final : public RenderSessionBase
 {
 public:
-    GLRenderSession();
+    explicit GLRenderSession(RendererPtr renderer);
     ~GLRenderSession();
 
     void render() override;

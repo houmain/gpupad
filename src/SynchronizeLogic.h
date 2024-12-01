@@ -11,7 +11,7 @@ class QTimer;
 class SessionModel;
 class TextureEditor;
 class BinaryEditor;
-class RenderSession;
+class RenderSessionBase;
 class ProcessSource;
 
 class SynchronizeLogic final : public QObject
@@ -45,6 +45,7 @@ Q_SIGNALS:
 
 private:
     void invalidateRenderSession();
+    void updateRenderSession();
     void handleItemModified(const QModelIndex &index);
     void handleItemsModified(const QModelIndex &topLeft,
         const QModelIndex &bottomRight, const QVector<int> &roles);
@@ -68,7 +69,7 @@ private:
     QSet<ItemId> mEditorItemsModified;
 
     QTimer *mEvaluationTimer{};
-    std::unique_ptr<RenderSession> mRenderSession;
+    std::unique_ptr<RenderSessionBase> mRenderSession;
     bool mRenderSessionInvalidated{};
     EvaluationMode mEvaluationMode{};
 
@@ -77,5 +78,5 @@ private:
     SourceType mCurrentEditorSourceType{};
     QString mProcessSourceType{};
     QTimer *mProcessSourceTimer{};
-    ProcessSource *mProcessSource{};
+    std::unique_ptr<ProcessSource> mProcessSource;
 };
