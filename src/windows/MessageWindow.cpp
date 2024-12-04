@@ -61,6 +61,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
 {
     switch (message.type) {
     case UniformNotSet:
+    case UniformComponentMismatch:
     case ShaderWarning:
     case ScriptWarning:
     case TooManyPrintfCalls: return mWarningIcon;

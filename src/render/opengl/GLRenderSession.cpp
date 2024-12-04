@@ -18,68 +18,25 @@
 #include <type_traits>
 
 namespace {
-    struct BindingScope
-    {
-        std::map<QString, GLUniformBinding> uniforms;
-        std::map<QString, GLSamplerBinding> samplers;
-        std::map<QString, GLImageBinding> images;
-        std::map<QString, GLBufferBinding> buffers;
-        std::map<QString, GLSubroutineBinding> subroutines;
-    };
-    using BindingState = QStack<BindingScope>;
+    using BindingState = QStack<GLBindings>;
     using Command = std::function<void(BindingState &)>;
 
-    QSet<ItemId> applyBindings(BindingState &state, GLProgram &program,
-        ScriptEngine &scriptEngine)
+    GLBindings mergeBindingState(const BindingState &state)
     {
-        QSet<ItemId> usedItems;
-        BindingScope bindings;
-        for (const BindingScope &scope : state) {
-            for (const auto &kv : scope.uniforms)
-                bindings.uniforms[kv.first] = kv.second;
-            for (const auto &kv : scope.samplers)
-                bindings.samplers[kv.first] = kv.second;
-            for (const auto &kv : scope.images)
-                bindings.images[kv.first] = kv.second;
-            for (const auto &kv : scope.buffers)
-                bindings.buffers[kv.first] = kv.second;
-            for (const auto &kv : scope.subroutines)
-                bindings.subroutines[kv.first] = kv.second;
+        auto merged = GLBindings{};
+        for (const GLBindings &scope : state) {
+            for (const auto &[name, binding] : scope.uniforms)
+                merged.uniforms[name] = binding;
+            for (const auto &[name, binding] : scope.samplers)
+                merged.samplers[name] = binding;
+            for (const auto &[name, binding] : scope.images)
+                merged.images[name] = binding;
+            for (const auto &[name, binding] : scope.buffers)
+                merged.buffers[name] = binding;
+            for (const auto &[name, binding] : scope.subroutines)
+                merged.subroutines[name] = binding;
         }
-
-        for (const auto &kv : bindings.uniforms)
-            if (program.apply(kv.second, scriptEngine))
-                usedItems += kv.second.bindingItemId;
-
-        auto unit = 0;
-        for (const auto &kv : bindings.samplers)
-            if (program.apply(kv.second, unit)) {
-                ++unit;
-                usedItems += kv.second.bindingItemId;
-                usedItems += kv.second.texture->usedItems();
-            }
-
-        for (const auto &kv : bindings.images)
-            if (program.apply(kv.second, unit)) {
-                ++unit;
-                usedItems += kv.second.bindingItemId;
-                usedItems += kv.second.texture->usedItems();
-            }
-
-        for (const auto &kv : bindings.buffers)
-            if (program.apply(kv.second, scriptEngine)) {
-                usedItems += kv.second.bindingItemId;
-                usedItems += kv.second.buffer->usedItems();
-            }
-
-        program.applyPrintfBindings();
-
-        for (const auto &kv : bindings.subroutines)
-            if (program.apply(kv.second))
-                usedItems += kv.second.bindingItemId;
-        program.reapplySubroutines();
-
-        return usedItems;
+        return merged;
     }
 
     template <typename T, typename Item, typename... Args>
@@ -345,22 +302,22 @@ void GLRenderSession::createCommandQueue()
                         if (!shouldExecute(executeOn, mEvaluationType))
                             return;
 
-                        if (auto program = call.program()) {
-                            mUsedItems += program->usedItems();
-                            if (!program->bind(&mMessages))
-                                return;
-                            mUsedItems += applyBindings(state, *program,
-                                mScriptSession->engine());
-                            call.execute(mMessages, mScriptSession->engine());
-                            program->unbind(call.itemId());
+                        auto &scriptEngine = mScriptSession->engine();
+                        if (call.callTypeHasProgram()) {
+                            if (call.bindProgram(mergeBindingState(state),
+                                    scriptEngine)) {
+                                call.execute(mMessages, scriptEngine);
+                                call.unbindProgram();
+                            }
                         } else {
-                            call.execute(mMessages, mScriptSession->engine());
+                            call.execute(mMessages, scriptEngine);
                         }
 
                         if (!updatingPreviewTextures())
                             if (auto timerQuery = call.timerQuery())
                                 mCommandQueue->timerQueries.emplace_back(
                                     call.itemId(), timerQuery);
+
                         mUsedItems += call.usedItems();
                     });
             }

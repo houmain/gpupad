@@ -2,6 +2,7 @@
 
 #include "MessageList.h"
 #include <QObject>
+#include <vector>
 
 using ScriptValue = double;
 using ScriptValueList = QList<ScriptValue>;
@@ -30,3 +31,28 @@ public:
 protected:
     explicit ScriptEngine(QObject *parent = nullptr);
 };
+
+void checkValueCount(const ScriptValueList &values, int count, int offset,
+    ItemId itemId, MessagePtrSet &messages);
+
+template <typename T>
+std::vector<T> getValues(ScriptEngine &scriptEngine,
+    const QStringList &expressions, ItemId itemId, int count,
+    MessagePtrSet &messages, int offset = -1)
+{
+    const auto values =
+        scriptEngine.evaluateValues(expressions, itemId, messages);
+    checkValueCount(values, count, offset, itemId, messages);
+
+    auto results = std::vector<T>();
+    results.reserve(count);
+    for (const auto &value : values) {
+        if (offset > 0) {
+            --offset;
+            continue;
+        }
+        results.push_back(static_cast<T>(value));
+    }
+    results.resize(count);
+    return results;
+}

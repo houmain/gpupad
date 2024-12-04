@@ -316,26 +316,6 @@ void VKPipeline::setBindGroupResource(uint32_t set,
     bindGroup.resources.emplace_back(std::move(resource));
 }
 
-template <typename T>
-std::vector<T> getValues(ScriptEngine &scriptEngine,
-    const QStringList &expressions, ItemId itemId, int count,
-    MessagePtrSet &messages)
-{
-    const auto values =
-        scriptEngine.evaluateValues(expressions, itemId, messages);
-    if (count != values.count())
-        if (count != 3 || values.count() != 4)
-            messages += MessageList::insert(itemId,
-                MessageType::UniformComponentMismatch,
-                QString("(%1/%2)").arg(values.count()).arg(count));
-
-    auto results = std::vector<T>();
-    results.reserve(count);
-    for (const auto &value : values)
-        results.push_back(static_cast<T>(value));
-    return results;
-}
-
 auto VKPipeline::getDefaultUniformBlock(uint32_t set,
     uint32_t binding) -> DefaultUniformBlock &
 {

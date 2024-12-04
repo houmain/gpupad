@@ -1,15 +1,76 @@
 #pragma once
 
-#include "GLItem.h"
-#include "scripting/ScriptEngine.h"
+#include "GLProgram.h"
 
 class QOpenGLTimerQuery;
-class GLProgram;
 class GLTarget;
 class GLStream;
 class GLBuffer;
 class GLTexture;
 using TimerQueryPtr = std::shared_ptr<const QOpenGLTimerQuery>;
+
+struct GLUniformBinding
+{
+    ItemId bindingItemId;
+    QString name;
+    Binding::BindingType type;
+    QStringList values;
+    bool transpose;
+};
+
+struct GLSamplerBinding
+{
+    ItemId bindingItemId;
+    QString name;
+    GLTexture *texture;
+    Binding::Filter minFilter;
+    Binding::Filter magFilter;
+    bool anisotropic;
+    Binding::WrapMode wrapModeX;
+    Binding::WrapMode wrapModeY;
+    Binding::WrapMode wrapModeZ;
+    QColor borderColor;
+    Binding::ComparisonFunc comparisonFunc;
+};
+
+struct GLImageBinding
+{
+    ItemId bindingItemId;
+    QString name;
+    GLTexture *texture;
+    int level;
+    int layer;
+    GLenum access;
+    Binding::ImageFormat format;
+};
+
+struct GLBufferBinding
+{
+    ItemId bindingItemId;
+    QString name;
+    GLBuffer *buffer;
+    QString offset;
+    QString rowCount;
+    int stride;
+    bool readonly;
+};
+
+struct GLSubroutineBinding
+{
+    ItemId bindingItemId;
+    QString name;
+    QString subroutine;
+    Shader::ShaderType type;
+};
+
+struct GLBindings
+{
+    std::map<QString, GLUniformBinding> uniforms;
+    std::map<QString, GLSamplerBinding> samplers;
+    std::map<QString, GLImageBinding> images;
+    std::map<QString, GLBufferBinding> buffers;
+    std::map<QString, GLSubroutineBinding> subroutines;
+};
 
 class GLCall
 {
@@ -17,9 +78,9 @@ public:
     explicit GLCall(const Call &call);
 
     ItemId itemId() const { return mCall.id; }
-    GLProgram *program() { return mProgram; }
     TimerQueryPtr timerQuery() const { return mTimerQuery; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
+    bool callTypeHasProgram() const;
 
     void setProgram(GLProgram *program);
     void setTarget(GLTarget *target);
@@ -28,7 +89,9 @@ public:
     void setIndirectBuffer(GLBuffer *commands, const Block &block);
     void setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer);
     void setTextures(GLTexture *texture, GLTexture *fromTexture);
+    bool bindProgram(const GLBindings &bindings, ScriptEngine &scriptEngine);
     void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
+    void unbindProgram();
 
 private:
     std::shared_ptr<void> beginTimerQuery();
@@ -41,6 +104,22 @@ private:
     void executeCopyBuffer(MessagePtrSet &messages);
     void executeSwapTextures(MessagePtrSet &messages);
     void executeSwapBuffers(MessagePtrSet &messages);
+    bool applyUniformBinding(const QString &name,
+        const GLProgram::Interface::Uniform &uniform,
+        const std::map<QString, GLUniformBinding> &bindings,
+        ScriptEngine &scriptEngine);
+    void applyUniformBinding(const GLProgram::Interface::Uniform &uniform,
+        const GLUniformBinding &bindings, ScriptEngine &scriptEngine,
+        int offset = -1, int size = -1);
+    void applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
+        const GLSamplerBinding &binding, int unit);
+    void applyImageBinding(const GLProgram::Interface::Uniform &uniform,
+        const GLImageBinding &binding, int unit);
+    void applyBufferBinding(
+        const GLProgram::Interface::BufferBindingPoint &bufferBindingPoint,
+        const GLBufferBinding &binding, ScriptEngine &scriptEngine);
+    bool bindVertexStream();
+    void unbindVertexStream();
     GLenum getIndexType() const;
 
     MessagePtrSet mMessages;
