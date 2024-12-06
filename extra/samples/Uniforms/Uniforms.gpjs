@@ -1,0 +1,188 @@
+{
+    "id": 1,
+    "items": [
+        {
+            "id": 4,
+            "items": [
+                {
+                    "fileName": "uniforms.comp",
+                    "id": 5,
+                    "language": "GLSL",
+                    "shaderType": "Compute",
+                    "type": "Shader"
+                }
+            ],
+            "name": "Program",
+            "type": "Program"
+        },
+        {
+            "id": 14,
+            "inlineScope": true,
+            "items": [
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2x2",
+                    "id": 7,
+                    "name": "u_values_0",
+                    "type": "Binding",
+                    "values": [
+                        "1",
+                        "2",
+                        "3",
+                        "4"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2x2",
+                    "id": 8,
+                    "name": "u_values_1",
+                    "type": "Binding",
+                    "values": [
+                        "1",
+                        "2",
+                        "3",
+                        "4"
+                    ]
+                }
+            ],
+            "iterations": "1",
+            "name": "set whole uniform",
+            "type": "Group"
+        },
+        {
+            "id": 13,
+            "inlineScope": true,
+            "items": [
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 12,
+                    "name": "u_values_0[1]",
+                    "type": "Binding",
+                    "values": [
+                        "3.1",
+                        "4.1"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 11,
+                    "name": "u_values_0[1][1]",
+                    "type": "Binding",
+                    "values": [
+                        "4.2"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 21,
+                    "name": "u_values_1[1]",
+                    "type": "Binding",
+                    "values": [
+                        "3.1",
+                        "4.1"
+                    ]
+                }
+            ],
+            "iterations": "1",
+            "name": "set uniform elements",
+            "type": "Group"
+        },
+        {
+            "id": 15,
+            "inlineScope": true,
+            "items": [
+                {
+                    "fileName": "Buffer.bin",
+                    "id": 16,
+                    "items": [
+                        {
+                            "id": 17,
+                            "items": [
+                                {
+                                    "count": 4,
+                                    "dataType": "Float",
+                                    "id": 18,
+                                    "name": "values",
+                                    "padding": 0,
+                                    "type": "Field"
+                                }
+                            ],
+                            "name": "Block",
+                            "offset": "0",
+                            "rowCount": "2",
+                            "type": "Block"
+                        }
+                    ],
+                    "type": "Buffer"
+                },
+                {
+                    "bindingType": "BufferBlock",
+                    "blockId": 17,
+                    "id": 19,
+                    "name": "u_block",
+                    "type": "Binding"
+                }
+            ],
+            "iterations": "1",
+            "name": "set buffer block",
+            "type": "Group"
+        },
+        {
+            "id": 20,
+            "inlineScope": true,
+            "items": [
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2x2",
+                    "id": 9,
+                    "name": "u_block.values_2",
+                    "type": "Binding",
+                    "values": [
+                        "1.1",
+                        "2.1",
+                        "3.1",
+                        "4.1"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2x2",
+                    "id": 10,
+                    "name": "u_block.values_3",
+                    "type": "Binding",
+                    "values": [
+                        "1.1",
+                        "2.1",
+                        "3.1",
+                        "4.1"
+                    ]
+                }
+            ],
+            "iterations": "1",
+            "name": "set block elements (not yet)",
+            "type": "Group"
+        },
+        {
+            "callType": "Compute",
+            "checked": true,
+            "executeOn": "EveryEvaluation",
+            "id": 6,
+            "name": "Call",
+            "programId": 4,
+            "type": "Call",
+            "workGroupsX": "1",
+            "workGroupsY": "1",
+            "workGroupsZ": "1"
+        }
+    ],
+    "name": "Session",
+    "renderer": "OpenGL",
+    "shaderCompiler": "",
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "type": "Session"
+}

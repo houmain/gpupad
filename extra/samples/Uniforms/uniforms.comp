@@ -1,0 +1,30 @@
+
+#define assertEq(X, Y) if ((X) != (Y)) printf("Assertion %.1f == %.1f failed in line %d.", (X), (Y), __LINE__)
+
+layout (local_size_x = 1) in;
+
+uniform float u_values_0[2][2];
+uniform vec2  u_values_1[2];
+
+uniform u_block {
+  uniform float values_2[2][2];
+  uniform vec2  values_3[2];
+};
+
+void main() {
+  assertEq(u_values_0[0][0], 1.0);
+  assertEq(u_values_0[0][1], 2.0);
+  assertEq(u_values_0[1][0], 3.1);
+  assertEq(u_values_0[1][1], 4.2);
+  
+  assertEq(u_values_1[0], vec2(1.0, 2.0));
+  assertEq(u_values_1[1], vec2(3.1, 4.1));
+  
+  assertEq(values_2[0][0], 1.0);
+  assertEq(values_2[0][1], 2.0);
+  assertEq(values_2[1][0], 3.0);
+  assertEq(values_2[1][1], 4.0);
+  
+  assertEq(values_3[0], vec2(1.0, 2.0));
+  assertEq(values_3[1], vec2(3.0, 4.0));
+}
