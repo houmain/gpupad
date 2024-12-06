@@ -615,6 +615,7 @@ void SessionModelCore::undoableFileNameAssignment(const QModelIndex &index,
         return;
     }
 
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     if (item.fileName != fileName)
         undoableAssignment(index, &item.fileName, fileName);
 }

@@ -255,8 +255,8 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
 
     const auto prevFileName = item.fileName;
     if (!FileDialog::isEmptyOrUntitled(item.fileName)) {
-        const auto fileName =
-            QFileInfo(item.fileName).dir().filePath(item.name);
+        const auto fileName = toNativeCanonicalFilePath(
+            QFileInfo(item.fileName).dir().filePath(item.name));
         const auto file = QFileInfo(fileName);
         const auto prevFile = QFileInfo(prevFileName);
 
