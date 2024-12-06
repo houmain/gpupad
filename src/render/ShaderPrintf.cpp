@@ -725,7 +725,7 @@ QString RemoveShaderPrintf::patchSource(Shader::ShaderType stage,
     const QString &fileName, const QString &source_)
 {
     auto source = blankComments(source_);
-    source = source.replace(QRegularExpression("printfEnabled[^;]+;"), "");
-    source = source.replace(QRegularExpression("printf\\([^;]+;"), "");
+    source = source.replace(QRegularExpression("printfEnabled[^;]+"), "");
+    source = source.replace(QRegularExpression("printf\\([^;]+"), "");
     return source;
 }
