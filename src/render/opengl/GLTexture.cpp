@@ -198,6 +198,12 @@ namespace {
     }
 } // namespace
 
+bool GLTexture::operator==(const GLTexture &rhs) const
+{
+    return (TextureBase::operator==(rhs)
+        && mTextureBuffer == rhs.mTextureBuffer);
+}
+
 bool GLTexture::upload(QOpenGLFunctions_3_3_Core &gl, const TextureData &data,
     QOpenGLTexture::Target target, int samples, GLuint *textureId)
 {

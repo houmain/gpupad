@@ -17,6 +17,7 @@ public:
     GLTexture(const Texture &texture, ScriptEngine &scriptEngine);
     GLTexture(const Buffer &buffer, GLBuffer *textureBuffer,
         Texture::Format format, ScriptEngine &scriptEngine);
+    bool operator==(const GLTexture &rhs) const;
 
     GLuint textureId() const { return mTextureObject; }
     bool clear(std::array<double, 4> color, double depth, int stencil);
