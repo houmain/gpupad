@@ -752,11 +752,25 @@ void GLCall::applyBufferBinding(
             MessageType::BufferNotAssigned);
         return;
     }
+
     auto &buffer = *binding.buffer;
     mUsedItems += buffer.itemId();
 
+    const auto bufferSize = (binding.stride ? rowCount * binding.stride : buffer.size());
+    if (!bufferBindingPoint.elements.empty()) {
+        auto expectedSize = 0;
+        for (const auto& [name, element] : bufferBindingPoint.elements)
+            expectedSize = std::max(expectedSize,
+                element.offset + element.size * element.arrayStride);
+
+        if (bufferSize < expectedSize) {
+            mMessages += MessageList::insert(binding.bindingItemId,
+                MessageType::UniformComponentMismatch, QStringLiteral("(%1 bytes < %2 bytes)").arg(bufferSize).arg(expectedSize));
+            return;
+        }
+    }
     buffer.bindIndexedRange(bufferBindingPoint.target, bufferBindingPoint.index,
-        offset, rowCount * binding.stride, binding.readonly);
+        offset, bufferSize, bufferBindingPoint.readonly);
 }
 
 /*

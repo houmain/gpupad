@@ -241,8 +241,7 @@ void VKRenderSession::createCommandQueue()
 
             case Binding::BindingType::Buffer:
                 addCommand([binding = VKBufferBinding{ b.id, b.name,
-                                addBufferOnce(b.bufferId), {}, {}, 0,
-                                false }](BindingState &state) {
+                                addBufferOnce(b.bufferId), {}, {}, 0 }](BindingState &state) {
                     state.top().buffers[binding.name] = binding;
                 });
                 break;
@@ -252,8 +251,7 @@ void VKRenderSession::createCommandQueue()
                     addCommand(
                         [binding = VKBufferBinding{ b.id, b.name,
                              addBufferOnce(block->parent->id), block->offset,
-                             block->rowCount, getBlockStride(*block),
-                             false }](BindingState &state) {
+                             block->rowCount, getBlockStride(*block) }](BindingState &state) {
                             state.top().buffers[binding.name] = binding;
                         });
                 break;

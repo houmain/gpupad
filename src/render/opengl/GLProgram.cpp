@@ -222,6 +222,7 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
             .target = GL_UNIFORM_BUFFER,
             .index = uniformBlockBinding,
             .elements = std::move(elements),
+            .readonly = true,
         };
     }
 

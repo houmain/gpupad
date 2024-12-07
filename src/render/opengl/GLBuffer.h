@@ -14,6 +14,7 @@ public:
     const QByteArray &data() const { return mData; }
     const QString &fileName() const { return mFileName; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
+    int size() const { return mSize; }
 
     void clear();
     void copy(GLBuffer &source);

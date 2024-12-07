@@ -52,7 +52,6 @@ struct GLBufferBinding
     QString offset;
     QString rowCount;
     int stride;
-    bool readonly;
 };
 
 struct GLSubroutineBinding

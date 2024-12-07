@@ -31,6 +31,7 @@ public:
             GLenum target;
             GLuint index;
             std::map<QString, BufferElement> elements;
+            bool readonly;
         };
 
         struct Subroutine
