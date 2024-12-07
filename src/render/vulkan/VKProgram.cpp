@@ -6,6 +6,7 @@
 
 VKProgram::VKProgram(const Program &program, const Session &session)
     : mItemId(program.id)
+    , mSession(session)
 {
     mUsedItems += program.id;
     mUsedItems += session.id;
@@ -24,7 +25,8 @@ VKProgram::VKProgram(const Program &program, const Session &session)
 
 bool VKProgram::operator==(const VKProgram &rhs) const
 {
-    return (mShaders == rhs.mShaders);
+    return (std::tie(mShaders) == std::tie(rhs.mShaders)
+        && !shaderSessionSettingsDiffer(mSession, rhs.mSession));
 }
 
 bool VKProgram::link(KDGpu::Device &device)

@@ -387,7 +387,9 @@ void VKRenderSession::reuseUnmodifiedItems()
             auto it = mPrevCommandQueue->programs.find(id);
             if (it != mPrevCommandQueue->programs.end()) {
                 auto &prev = it->second;
-                if (!program.link(device) && prev.link(device)) {
+                if (!shaderSessionSettingsDiffer(prev.session(), program.session())
+                    && !program.link(device)
+                    && prev.link(device)) {
                     mCommandQueue->failedPrograms.push_back(std::move(program));
                     program = std::move(prev);
                 }

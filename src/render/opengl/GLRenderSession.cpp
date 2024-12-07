@@ -400,7 +400,9 @@ void GLRenderSession::reuseUnmodifiedItems()
             auto it = mPrevCommandQueue->programs.find(id);
             if (it != mPrevCommandQueue->programs.end()) {
                 auto &prev = it->second;
-                if (!program.link() && prev.link()) {
+                if (!shaderSessionSettingsDiffer(prev.session(), program.session())
+                    && !program.link()
+                    && prev.link()) {
                     mCommandQueue->failedPrograms.push_back(std::move(program));
                     program = std::move(prev);
                 }

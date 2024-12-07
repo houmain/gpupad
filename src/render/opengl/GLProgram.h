@@ -51,7 +51,7 @@ public:
     bool link();
     bool bind();
     void unbind();
-
+    const Session &session() const { return mSession; }
     const Interface &interface() const { return mInterface; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 

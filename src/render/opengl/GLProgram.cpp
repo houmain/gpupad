@@ -7,13 +7,6 @@
 #include <array>
 
 namespace {
-    QString getUniformBaseName(QString name)
-    {
-        static const auto brackets = QRegularExpression("\\[.*\\]");
-        name.remove(brackets);
-        return name;
-    }
-
     bool operator==(const GLProgram::Interface::BufferBindingPoint &a,
         const GLProgram::Interface::BufferBindingPoint &b)
     {
