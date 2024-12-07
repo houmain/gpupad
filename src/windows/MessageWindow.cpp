@@ -4,6 +4,7 @@
 #include "Singletons.h"
 #include "session/SessionModel.h"
 #include <QHeaderView>
+#include <QRegularExpression>
 #include <QStandardItemModel>
 #include <QTimer>
 
@@ -210,5 +211,12 @@ void MessageWindow::handleItemActivated(QTableWidgetItem *messageItem)
     auto itemId = messageItem->data(Qt::UserRole + 1).toInt();
     auto fileName = messageItem->data(Qt::UserRole + 2).toString();
     auto line = messageItem->data(Qt::UserRole + 3).toInt();
+
+    // parse line number from text
+    static const auto regex = QRegularExpression("in line (\\d+)",
+        QRegularExpression::MultilineOption);
+    if (auto match = regex.match(messageItem->text()); match.hasMatch())
+        line = match.capturedView(1).toInt();
+
     Q_EMIT messageActivated(itemId, fileName, line, -1);
 }
