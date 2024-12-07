@@ -14,6 +14,9 @@ VKCall::~VKCall() = default;
 
 void VKCall::setProgram(VKProgram *program)
 {
+    if (!callTypeHasProgram(mCall.callType))
+      return;
+
     mProgram = program;
 }
 
@@ -64,7 +67,7 @@ void VKCall::setTextures(VKTexture *texture, VKTexture *fromTexture)
     mFromTexture = fromTexture;
 }
 
-VKPipeline *VKCall::createPipeline(VKContext &context)
+VKPipeline *VKCall::getPipeline(VKContext &context)
 {
     if (!mPipeline && mProgram) {
         mPipeline = std::make_unique<VKPipeline>(mCall.id, mProgram, mTarget,
@@ -154,7 +157,9 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
         return;
 
     mPipeline->updateDefaultUniformBlock(context, scriptEngine);
-    if (!mPipeline->updateBindings(context))
+    const auto canRender = mPipeline->updateBindings(context);
+    mUsedItems += mPipeline->usedItems();
+    if (!canRender)
         return;
 
     auto renderPass = mPipeline->beginRenderPass(context);
@@ -217,10 +222,15 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
         return;
 
     mPipeline->updateDefaultUniformBlock(context, scriptEngine);
-    if (!mPipeline->updateBindings(context))
+    const auto canRender = mPipeline->updateBindings(context);
+    mUsedItems += mPipeline->usedItems();
+    if (!canRender)
         return;
 
     auto computePass = mPipeline->beginComputePass(context);
+    if (!computePass.isValid())
+        return;
+
     computePass.dispatchCompute(KDGpu::ComputeCommand{
         .workGroupX = evaluateUInt(scriptEngine, mCall.workGroupsX),
         .workGroupY = evaluateUInt(scriptEngine, mCall.workGroupsY),

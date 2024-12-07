@@ -8,19 +8,18 @@
 #include <QScopeGuard>
 
 namespace {
+    template <typename C>
+    auto find(C &container, const QString &name)
+    {
+        const auto it = container.find(name);
+        return (it == container.end() ? nullptr : &it->second);
+    }
+
     bool isDefaultUniformBlock(const char *name)
     {
         return (name == QStringLiteral("gl_DefaultUniformBlock")
             || name == QStringLiteral("$Global"));
     }
-
-    template <typename T>
-    T *findByName(std::vector<T> &items, const auto &name)
-    {
-        const auto it = std::find_if(begin(items), end(items),
-            [&](const auto &item) { return item.name == name; });
-        return (it == items.end() ? nullptr : &*it);
-    };
 
     QString getBufferMemberFullName(const SpvReflectBlockVariable &block,
         const SpvReflectBlockVariable &member)
@@ -195,46 +194,6 @@ VKPipeline::VKPipeline(ItemId itemId, VKProgram *program, VKTarget *target,
 
 VKPipeline::~VKPipeline() = default;
 
-void VKPipeline::clearBindings()
-{
-    mUniformBindings.clear();
-    mBufferBindings.clear();
-    mSamplerBindings.clear();
-    mImageBindings.clear();
-    mSamplers.clear();
-}
-
-bool VKPipeline::apply(const VKUniformBinding &binding)
-{
-    mUniformBindings.push_back(binding);
-    return true;
-}
-
-bool VKPipeline::apply(const VKSamplerBinding &binding)
-{
-    // texture is allowed to be empty
-    mSamplerBindings.push_back(binding);
-    return true;
-}
-
-bool VKPipeline::apply(const VKImageBinding &binding)
-{
-    if (!binding.texture)
-        return false;
-
-    mImageBindings.push_back(binding);
-    return true;
-}
-
-bool VKPipeline::apply(const VKBufferBinding &binding)
-{
-    if (!binding.buffer)
-        return false;
-
-    mBufferBindings.push_back(binding);
-    return true;
-}
-
 KDGpu::RenderPassCommandRecorder VKPipeline::beginRenderPass(VKContext &context)
 {
     auto passOptions = mTarget->prepare(context);
@@ -339,28 +298,24 @@ void VKPipeline::updateUniformBlockData(std::byte *bufferData,
     for (auto i = 0u; i < block.member_count; ++i) {
         const auto &member = block.members[i];
         const auto fullName = getBufferMemberFullName(block, member);
-        const auto it = std::find_if(begin(mUniformBindings),
-            end(mUniformBindings), [&](const VKUniformBinding &binding) {
-                return binding.name == fullName;
-            });
-        if (it == mUniformBindings.end()) {
+        const auto binding = find(mBindings.uniforms, fullName);
+        if (!binding) {
             if ((member.flags & SPV_REFLECT_VARIABLE_FLAGS_UNUSED) == 0)
                 mMessages += MessageList::insert(mItemId,
                     MessageType::UniformNotSet, fullName);
             continue;
         }
 
-        const auto &binding = *it;
         const auto type = getBufferMemberDataType(member);
         const auto count = getBufferMemberElementCount(member);
         const auto memberData = &bufferData[member.offset];
         switch (type) {
-#define ADD(DATATYPE, TYPE)                                               \
-    case DATATYPE: {                                                      \
-        const auto values = getValues<TYPE>(scriptEngine, binding.values, \
-            binding.bindingItemId, count, mMessages);                     \
-        copyBufferMember<TYPE>(member, memberData, values.data());        \
-        break;                                                            \
+#define ADD(DATATYPE, TYPE)                                                \
+    case DATATYPE: {                                                       \
+        const auto values = getValues<TYPE>(scriptEngine, binding->values, \
+            binding->bindingItemId, count, mMessages);                     \
+        copyBufferMember<TYPE>(member, memberData, values.data());         \
+        break;                                                             \
     }
             ADD(Field::DataType::Int32, int32_t);
             ADD(Field::DataType::Uint32, uint32_t);
@@ -369,7 +324,7 @@ void VKPipeline::updateUniformBlockData(std::byte *bufferData,
 #undef ADD
         default: Q_ASSERT(!"not handled data type");
         }
-        mUsedItems += binding.bindingItemId;
+        mUsedItems += binding->bindingItemId;
     }
 }
 
@@ -524,6 +479,11 @@ bool VKPipeline::createLayout(VKContext &context)
     return true;
 }
 
+void VKPipeline::setBindings(VKBindings &&bindings)
+{
+    mBindings = std::move(bindings);
+}
+
 bool VKPipeline::updateBindings(VKContext &context)
 {
     mSamplers.clear();
@@ -533,10 +493,10 @@ bool VKPipeline::updateBindings(VKContext &context)
         bindGroup.bindGroup = {};
     }
 
-    auto allBound = true;
+    auto canRender = true;
     const auto notBoundError = [&](MessageType message, QString name) {
         mMessages += MessageList::insert(mItemId, message, name);
-        allBound = false;
+        canRender = false;
     };
 
     for (const auto &[stage, interface] : mProgram.interface())
@@ -560,13 +520,15 @@ bool VKPipeline::updateBindings(VKContext &context)
                                         .buffer = block.buffer },
                             });
                 } else {
-                    const auto bufferBinding = findByName(mBufferBindings,
+                    const auto bufferBinding = find(mBindings.buffers,
                         desc.type_description->type_name);
-                    if (!bufferBinding) {
+                    if (!bufferBinding || !bufferBinding->buffer) {
                         notBoundError(MessageType::BufferNotSet,
                             desc.type_description->type_name);
                         continue;
                     }
+                    mUsedItems += bufferBinding->bindingItemId;
+                    mUsedItems += bufferBinding->buffer->itemId();
 
                     setBindGroupResource(desc.set,
                         {
@@ -593,13 +555,15 @@ bool VKPipeline::updateBindings(VKContext &context)
                                             context) },
                         });
                 } else {
-                    const auto bufferBinding = findByName(mBufferBindings,
+                    const auto bufferBinding = find(mBindings.buffers,
                         desc.type_description->type_name);
-                    if (!bufferBinding) {
+                    if (!bufferBinding || !bufferBinding->buffer) {
                         notBoundError(MessageType::BufferNotSet,
                             desc.type_description->type_name);
                         continue;
                     }
+                    mUsedItems += bufferBinding->bindingItemId;
+                    mUsedItems += bufferBinding->buffer->itemId();
 
                     setBindGroupResource(desc.set,
                         {
@@ -617,13 +581,13 @@ bool VKPipeline::updateBindings(VKContext &context)
             case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
             case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
             case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: {
-                const auto samplerBinding =
-                    findByName(mSamplerBindings, desc.name);
+                const auto samplerBinding = find(mBindings.samplers, desc.name);
                 if (!samplerBinding) {
                     if (desc.accessed)
                         notBoundError(MessageType::SamplerNotSet, desc.name);
                     continue;
                 }
+                mUsedItems += samplerBinding->bindingItemId;
 
                 // TODO: do not recreate every time
                 const auto maxSamplerAnisotropy =
@@ -655,6 +619,7 @@ bool VKPipeline::updateBindings(VKContext &context)
                         notBoundError(MessageType::SamplerNotSet, desc.name);
                         continue;
                     }
+                    mUsedItems += samplerBinding->texture->itemId();
 
                     if (desc.descriptor_type
                         == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE) {
@@ -684,13 +649,16 @@ bool VKPipeline::updateBindings(VKContext &context)
             }
 
             case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE: {
-                const auto imageBinding = findByName(mImageBindings, desc.name);
+                const auto imageBinding = find(mBindings.images, desc.name);
                 if (!imageBinding
+                    || !imageBinding->texture
                     || !imageBinding->texture->prepareStorageImage(context)) {
                     if (desc.accessed)
                         notBoundError(MessageType::ImageNotSet, desc.name);
                     continue;
                 }
+                mUsedItems += imageBinding->bindingItemId;
+                mUsedItems += imageBinding->texture->itemId();
 
                 setBindGroupResource(desc.set,
                     {
@@ -713,7 +681,7 @@ bool VKPipeline::updateBindings(VKContext &context)
             }
         }
 
-    if (!allBound)
+    if (!canRender)
         return false;
 
     Q_ASSERT(mBindGroups.size() == mBindGroupLayouts.size());

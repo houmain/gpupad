@@ -80,7 +80,7 @@ public:
     ItemId itemId() const { return mCall.id; }
     TimerQueryPtr timerQuery() const { return mTimerQuery; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
-    bool callTypeHasProgram() const;
+    GLProgram* program() { return mProgram; }
 
     void setProgram(GLProgram *program);
     void setTarget(GLTarget *target);
@@ -89,9 +89,8 @@ public:
     void setIndirectBuffer(GLBuffer *commands, const Block &block);
     void setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer);
     void setTextures(GLTexture *texture, GLTexture *fromTexture);
-    bool bindProgram(const GLBindings &bindings, ScriptEngine &scriptEngine);
+    bool applyBindings(const GLBindings &bindings, ScriptEngine &scriptEngine);
     void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
-    void unbindProgram();
 
 private:
     std::shared_ptr<void> beginTimerQuery();

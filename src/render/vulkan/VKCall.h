@@ -25,7 +25,7 @@ public:
     void setIndirectBuffer(VKBuffer *commands, const Block &block);
     void setBuffers(VKBuffer *buffer, VKBuffer *fromBuffer);
     void setTextures(VKTexture *texture, VKTexture *fromTexture);
-    VKPipeline *createPipeline(VKContext &context);
+    VKPipeline *getPipeline(VKContext &context);
     void execute(VKContext &context, MessagePtrSet &messages,
         ScriptEngine &scriptEngine);
 

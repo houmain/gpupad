@@ -118,21 +118,11 @@ namespace {
 
 GLCall::GLCall(const Call &call) : mCall(call) { }
 
-bool GLCall::callTypeHasProgram() const
-{
-    switch (mCall.callType) {
-    case Call::CallType::Draw:
-    case Call::CallType::DrawIndexed:
-    case Call::CallType::DrawIndirect:
-    case Call::CallType::DrawIndexedIndirect:
-    case Call::CallType::Compute:
-    case Call::CallType::ComputeIndirect:     return true;
-    default:                                  return false;
-    }
-}
-
 void GLCall::setProgram(GLProgram *program)
 {
+    if (!callTypeHasProgram(mCall.callType))
+        return;
+
     mProgram = program;
     if (program)
         mUsedItems += mProgram->usedItems();
@@ -468,11 +458,11 @@ void GLCall::executeSwapBuffers(MessagePtrSet &messages)
             MessageList::insert(mCall.id, MessageType::SwappingBuffersFailed);
 }
 
-bool GLCall::bindProgram(const GLBindings &bindings, ScriptEngine &scriptEngine)
+bool GLCall::applyBindings(const GLBindings &bindings,
+    ScriptEngine &scriptEngine)
 {
-    if (!mProgram->bind())
+    if (!mProgram)
         return false;
-
     const auto &interface = mProgram->interface();
 
     auto canRender = true;
@@ -514,12 +504,6 @@ bool GLCall::bindProgram(const GLBindings &bindings, ScriptEngine &scriptEngine)
         }
     }
     return canRender;
-}
-
-void GLCall::unbindProgram()
-{
-    if (mProgram)
-        mProgram->unbind();
 }
 
 bool GLCall::applyUniformBinding(const QString &name,

@@ -55,6 +55,14 @@ struct VKBufferBinding
     bool readonly;
 };
 
+struct VKBindings
+{
+    std::map<QString, VKUniformBinding> uniforms;
+    std::map<QString, VKSamplerBinding> samplers;
+    std::map<QString, VKImageBinding> images;
+    std::map<QString, VKBufferBinding> buffers;
+};
+
 class VKPipeline
 {
 public:
@@ -62,12 +70,7 @@ public:
         VKStream *vertexStream);
     ~VKPipeline();
 
-    void clearBindings();
-    bool apply(const VKUniformBinding &binding);
-    bool apply(const VKSamplerBinding &binding);
-    bool apply(const VKImageBinding &binding);
-    bool apply(const VKBufferBinding &binding);
-
+    void setBindings(VKBindings&& bindings);
     bool createGraphics(VKContext &context,
         KDGpu::PrimitiveOptions &primitiveOptions);
     bool createCompute(VKContext &context);
@@ -116,10 +119,7 @@ private:
     KDGpu::PipelineLayout mPipelineLayout;
     std::vector<BindGroup> mBindGroups;
     std::vector<KDGpu::BindGroupLayout> mBindGroupLayouts;
-    std::vector<VKUniformBinding> mUniformBindings;
-    std::vector<VKBufferBinding> mBufferBindings;
-    std::vector<VKSamplerBinding> mSamplerBindings;
-    std::vector<VKImageBinding> mImageBindings;
+    VKBindings mBindings;
     std::vector<KDGpu::Sampler> mSamplers;
     std::vector<std::unique_ptr<DefaultUniformBlock>> mDefaultUniformBlocks;
     std::vector<std::byte> mPushConstantData;

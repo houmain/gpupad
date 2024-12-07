@@ -303,11 +303,12 @@ void GLRenderSession::createCommandQueue()
                             return;
 
                         auto &scriptEngine = mScriptSession->engine();
-                        if (call.callTypeHasProgram()) {
-                            if (call.bindProgram(mergeBindingState(state),
-                                    scriptEngine)) {
-                                call.execute(mMessages, scriptEngine);
-                                call.unbindProgram();
+                        if (auto program = call.program()) {
+                            if (program->bind()) {
+                                if (call.applyBindings(mergeBindingState(state),
+                                        scriptEngine))
+                                    call.execute(mMessages, scriptEngine);
+                                program->unbind();
                             }
                         } else {
                             call.execute(mMessages, scriptEngine);

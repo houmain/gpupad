@@ -116,3 +116,16 @@ bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType)
     }
     return true;
 }
+
+bool callTypeHasProgram(Call::CallType callType)
+{
+    switch (callType) {
+    case Call::CallType::Draw:
+    case Call::CallType::DrawIndexed:
+    case Call::CallType::DrawIndirect:
+    case Call::CallType::DrawIndexedIndirect:
+    case Call::CallType::Compute:
+    case Call::CallType::ComputeIndirect:     return true;
+    default:                                  return false;
+    }
+}

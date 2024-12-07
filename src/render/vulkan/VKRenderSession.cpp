@@ -19,57 +19,23 @@
 #include <type_traits>
 
 namespace {
-    struct BindingScope
-    {
-        std::map<QString, VKUniformBinding> uniforms;
-        std::map<QString, VKSamplerBinding> samplers;
-        std::map<QString, VKImageBinding> images;
-        std::map<QString, VKBufferBinding> buffers;
-    };
-    using BindingState = QStack<BindingScope>;
+    using BindingState = QStack<VKBindings>;
     using Command = std::function<void(BindingState &)>;
 
-    QSet<ItemId> applyBindings(BindingState &state, VKPipeline &pipeline)
+    VKBindings mergeBindingState(const BindingState &state)
     {
-        QSet<ItemId> usedItems;
-        BindingScope bindings;
-        for (const BindingScope &scope : state) {
-            for (const auto &kv : scope.uniforms)
-                bindings.uniforms[kv.first] = kv.second;
-            for (const auto &kv : scope.samplers)
-                bindings.samplers[kv.first] = kv.second;
-            for (const auto &kv : scope.images)
-                bindings.images[kv.first] = kv.second;
-            for (const auto &kv : scope.buffers)
-                bindings.buffers[kv.first] = kv.second;
+        auto merged = VKBindings{};
+        for (const VKBindings &scope : state) {
+            for (const auto &[name, binding] : scope.uniforms)
+                merged.uniforms[name] = binding;
+            for (const auto &[name, binding] : scope.samplers)
+                merged.samplers[name] = binding;
+            for (const auto &[name, binding] : scope.images)
+                merged.images[name] = binding;
+            for (const auto &[name, binding] : scope.buffers)
+                merged.buffers[name] = binding;
         }
-
-        pipeline.clearBindings();
-
-        for (const auto &kv : bindings.uniforms)
-            if (pipeline.apply(kv.second))
-                usedItems += kv.second.bindingItemId;
-
-        for (const auto &kv : bindings.samplers)
-            if (pipeline.apply(kv.second)) {
-                usedItems += kv.second.bindingItemId;
-                if (kv.second.texture)
-                    usedItems += kv.second.texture->usedItems();
-            }
-
-        for (const auto &kv : bindings.images)
-            if (pipeline.apply(kv.second)) {
-                usedItems += kv.second.bindingItemId;
-                usedItems += kv.second.texture->usedItems();
-            }
-
-        for (const auto &kv : bindings.buffers)
-            if (pipeline.apply(kv.second)) {
-                usedItems += kv.second.bindingItemId;
-                usedItems += kv.second.buffer->usedItems();
-            }
-
-        return usedItems;
+        return merged;
     }
 
     template <typename T, typename Item, typename... Args>
@@ -352,8 +318,8 @@ void VKRenderSession::createCommandQueue()
                             return;
 
                         if (auto pipeline =
-                                call.createPipeline(mCommandQueue->context))
-                            mUsedItems += applyBindings(state, *pipeline);
+                                call.getPipeline(mCommandQueue->context))
+                            pipeline->setBindings(mergeBindingState(state));
 
                         call.execute(mCommandQueue->context, mMessages,
                             mScriptSession->engine());
