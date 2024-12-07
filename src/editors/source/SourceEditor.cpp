@@ -1097,6 +1097,9 @@ void SourceEditor::findReplaceAction(FindReplaceBar::Action action,
         return;
     }
 
+    setCenterOnScroll(true);
+    const auto guard = qScopeGuard([&]() { setCenterOnScroll(false); });
+
     const auto range = updateFindReplaceRange();
     const auto top = std::min(range.anchor(), range.position());
     auto bottom = std::max(range.anchor(), range.position());
