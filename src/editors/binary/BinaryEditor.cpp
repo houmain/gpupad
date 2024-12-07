@@ -78,7 +78,7 @@ BinaryEditor::BinaryEditor(QString fileName, BinaryEditorToolBar *editorToolbar,
 
     mEditableRegion = new EditableRegion(mColumnWidth, mRowHeight, this);
     setItemDelegate(new EditableRegionDelegate(mEditableRegion, this));
-    mEditableRegion->setStyleSheet("QTableView { margin: -2px; }");
+    mEditableRegion->setStyleSheet("QTableView { margin-top: 1px; }");
 
     refresh();
 }
