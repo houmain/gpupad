@@ -411,13 +411,15 @@ void VKRenderSession::executeCommandQueue()
         mCommandQueue->commands[index](state);
     }
 
-    const auto submitOptions = KDGpu::SubmitOptions{
+    auto submitOptions = KDGpu::SubmitOptions{
         .commandBuffers = std::vector<KDGpu::Handle<KDGpu::CommandBuffer_t>>(
             mCommandQueue->context.commandBuffers.begin(),
             mCommandQueue->context.commandBuffers.end()),
-        .waitSemaphores = { mShareSync->usageSemaphore() },
-        .signalSemaphores = { mShareSync->updateSemaphore() },
+        .signalSemaphores = { mShareSync->usageSemaphore() },
     };
+    if (auto& semaphore = mShareSync->usageSemaphore(); semaphore.isValid())
+        submitOptions.waitSemaphores.push_back(semaphore);
+
     mCommandQueue->context.queue.submit(submitOptions);
     mCommandQueue->context.queue.waitUntilIdle();
     mCommandQueue->context.commandBuffers.clear();

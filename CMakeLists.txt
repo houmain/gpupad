@@ -9,6 +9,12 @@ if (MSVC)
     add_link_options($<$<CONFIG:Release>:/LTCG>)
 else()
     add_compile_options($<$<CONFIG:Release>:-fno-rtti>)
+
+    # use mold linker when available
+    find_program(MOLD_PATH NAMES mold)
+    if(MOLD_PATH)
+        add_link_options(-fuse-ld=mold)
+    endif()
 endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Core)

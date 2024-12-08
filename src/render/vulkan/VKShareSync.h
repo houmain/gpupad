@@ -57,8 +57,11 @@ public:
                 KDGpu::ExternalSemaphoreHandleTypeFlagBits::OpaqueFD
 #endif
         };
+
         mUpdateSemaphore = device.createGpuSemaphore(options);
+#if 0 // TODO:
         mUsageSemaphore = device.createGpuSemaphore(options);
+#endif
     }
 
     KDGpu::GpuSemaphore &updateSemaphore() { return mUpdateSemaphore; }
