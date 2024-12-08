@@ -469,7 +469,8 @@ bool GLCall::applyBindings(const GLBindings &bindings,
     for (const auto &[name, bindingPoint] : interface.bufferBindingPoints) {
         if (auto bufferBinding = find(bindings.buffers, name)) {
             mUsedItems += bufferBinding->bindingItemId;
-            applyBufferBinding(bindingPoint, *bufferBinding, scriptEngine);
+            if (!applyBufferBinding(bindingPoint, *bufferBinding, scriptEngine))
+                canRender = false;
         } else {
             mMessages +=
                 MessageList::insert(mCall.id, MessageType::BufferNotSet, name);
@@ -738,7 +739,7 @@ void GLCall::applyImageBinding(const GLProgram::Interface::Uniform &uniform,
 #endif
 }
 
-void GLCall::applyBufferBinding(
+bool GLCall::applyBufferBinding(
     const GLProgram::Interface::BufferBindingPoint &bufferBindingPoint,
     const GLBufferBinding &binding, ScriptEngine &scriptEngine)
 {
@@ -750,28 +751,33 @@ void GLCall::applyBufferBinding(
     if (!binding.buffer) {
         mMessages += MessageList::insert(binding.bindingItemId,
             MessageType::BufferNotAssigned);
-        return;
+        return false;
     }
 
     auto &buffer = *binding.buffer;
     mUsedItems += buffer.itemId();
     mUsedItems += binding.blockItemId;
 
-    const auto bufferSize = (binding.stride ? rowCount * binding.stride : buffer.size());
+    const auto bufferSize =
+        (binding.stride ? rowCount * binding.stride : buffer.size());
     if (!bufferBindingPoint.elements.empty()) {
         auto expectedSize = 0;
-        for (const auto& [name, element] : bufferBindingPoint.elements)
+        for (const auto &[name, element] : bufferBindingPoint.elements)
             expectedSize = std::max(expectedSize,
                 element.offset + element.size * element.arrayStride);
 
         if (bufferSize < expectedSize) {
             mMessages += MessageList::insert(binding.bindingItemId,
-                MessageType::UniformComponentMismatch, QStringLiteral("(%1 bytes < %2 bytes)").arg(bufferSize).arg(expectedSize));
-            return;
+                MessageType::UniformComponentMismatch,
+                QStringLiteral("(%1 bytes < %2 bytes)")
+                    .arg(bufferSize)
+                    .arg(expectedSize));
+            return false;
         }
     }
     buffer.bindIndexedRange(bufferBindingPoint.target, bufferBindingPoint.index,
         offset, bufferSize, bufferBindingPoint.readonly);
+    return true;
 }
 
 /*
@@ -817,11 +823,9 @@ bool GLCall::bindVertexStream()
             mUsedItems += attributePtr->usedItems;
 
         if (!attributePtr || !attributePtr->buffer) {
-            if (!name.startsWith("gl_")) {
-                mMessages += MessageList::insert(mCall.id,
-                    MessageType::AttributeNotSet, name);
-                canRender = false;
-            }
+            mMessages += MessageList::insert(mCall.id,
+                MessageType::AttributeNotSet, name);
+            canRender = false;
             continue;
         }
 

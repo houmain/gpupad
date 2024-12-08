@@ -241,8 +241,9 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
         gl.glGetActiveAttrib(program, i, static_cast<GLsizei>(buffer.size()),
             &nameLength, &size, &type, buffer.data());
         const auto name = QString(buffer.data());
-        interface.attributeLocations[name] =
-            gl.glGetAttribLocation(program, qPrintable(name));
+        const auto location = gl.glGetAttribLocation(program, qPrintable(name));
+        if (location >= 0)
+            interface.attributeLocations[name] = static_cast<GLuint>(location);
     }
 
     if (auto gl40 = gl.v4_0) {

@@ -114,7 +114,7 @@ private:
         const GLSamplerBinding &binding, int unit);
     void applyImageBinding(const GLProgram::Interface::Uniform &uniform,
         const GLImageBinding &binding, int unit);
-    void applyBufferBinding(
+    bool applyBufferBinding(
         const GLProgram::Interface::BufferBindingPoint &bufferBindingPoint,
         const GLBufferBinding &binding, ScriptEngine &scriptEngine);
     bool bindVertexStream();
