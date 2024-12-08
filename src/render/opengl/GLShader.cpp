@@ -148,6 +148,8 @@ QStringList GLShader::preprocessorDefinitions() const
 {
     auto definitions = ShaderBase::preprocessorDefinitions();
     definitions.append("GPUPAD_OPENGL 1");
+    if (mSession.shaderCompiler == "glslang")
+        definitions.append("GPUPAD_GLSLANG 1");
     return definitions;
 }
 
