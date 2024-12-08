@@ -28,7 +28,7 @@ namespace {
 
     bool removeVersion(QString *source, QString *maxVersion)
     {
-        static const auto regex = QRegularExpression("(#version[^\n]*\n?)",
+        static const auto regex = QRegularExpression("(^\\s*#version[^\n]*\n?)",
             QRegularExpression::MultilineOption);
 
         for (auto match = regex.match(*source); match.hasMatch();
@@ -43,7 +43,7 @@ namespace {
     void removeExtensions(QString *source, QString *extensions)
     {
         static const auto regex =
-            QRegularExpression("(#extension[^\n\r]*)([\n\r])+",
+            QRegularExpression("(^\\s*#extension[^\n\r]*)([\n\r])+",
                 QRegularExpression::MultilineOption);
 
         for (auto match = regex.match(*source); match.hasMatch();
@@ -286,7 +286,8 @@ QStringList ShaderBase::getPatchedSourcesGLSL(ShaderPrintf &printf,
     auto extensions = QString();
     for (auto i = 0; i < mSources.size(); ++i)
         sources += substituteIncludes(mSources[i], mFileNames[i], usedFileNames,
-            mItemId, mMessages, mIncludePaths, &maxVersion, &extensions);
+            mItemId, mMessages, mIncludePaths, &maxVersion, 
+            (i > 0 ? &extensions : nullptr));
 
     for (auto i = 0; i < sources.size(); ++i)
         sources[i] = printf.patchSource(mType, mFileNames[i], sources[i]);
