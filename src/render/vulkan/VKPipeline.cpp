@@ -529,6 +529,7 @@ bool VKPipeline::updateBindings(VKContext &context)
                     }
                     mUsedItems += bufferBinding->bindingItemId;
                     mUsedItems += bufferBinding->buffer->itemId();
+                    mUsedItems += bufferBinding->blockItemId;
 
                     setBindGroupResource(desc.set,
                         {

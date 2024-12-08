@@ -225,7 +225,8 @@ void GLRenderSession::createCommandQueue()
 
             case Binding::BindingType::Buffer:
                 addCommand([binding = GLBufferBinding{ b.id, b.name,
-                                addBufferOnce(b.bufferId), {}, {}, 0 }](BindingState &state) {
+                                addBufferOnce(b.bufferId), 0, "", "",
+                                0 }](BindingState &state) {
                     state.top().buffers[binding.name] = binding;
                 });
                 break;
@@ -234,8 +235,9 @@ void GLRenderSession::createCommandQueue()
                 if (auto block = session.findItem<Block>(b.blockId))
                     addCommand(
                         [binding = GLBufferBinding{ b.id, b.name,
-                             addBufferOnce(block->parent->id), block->offset,
-                             block->rowCount, getBlockStride(*block) }](BindingState &state) {
+                             addBufferOnce(block->parent->id), block->id,
+                             block->offset, block->rowCount,
+                             getBlockStride(*block) }](BindingState &state) {
                             state.top().buffers[binding.name] = binding;
                         });
                 break;
@@ -398,9 +400,9 @@ void GLRenderSession::reuseUnmodifiedItems()
             auto it = mPrevCommandQueue->programs.find(id);
             if (it != mPrevCommandQueue->programs.end()) {
                 auto &prev = it->second;
-                if (!shaderSessionSettingsDiffer(prev.session(), program.session())
-                    && !program.link()
-                    && prev.link()) {
+                if (!shaderSessionSettingsDiffer(prev.session(),
+                        program.session())
+                    && !program.link() && prev.link()) {
                     mCommandQueue->failedPrograms.push_back(std::move(program));
                     program = std::move(prev);
                 }

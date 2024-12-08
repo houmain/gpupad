@@ -49,6 +49,7 @@ struct GLBufferBinding
     ItemId bindingItemId;
     QString name;
     GLBuffer *buffer;
+    ItemId blockItemId;
     QString offset;
     QString rowCount;
     int stride;

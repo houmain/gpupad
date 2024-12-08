@@ -755,6 +755,7 @@ void GLCall::applyBufferBinding(
 
     auto &buffer = *binding.buffer;
     mUsedItems += buffer.itemId();
+    mUsedItems += binding.blockItemId;
 
     const auto bufferSize = (binding.stride ? rowCount * binding.stride : buffer.size());
     if (!bufferBindingPoint.elements.empty()) {

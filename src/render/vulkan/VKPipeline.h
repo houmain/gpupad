@@ -49,6 +49,7 @@ struct VKBufferBinding
     ItemId bindingItemId;
     QString name;
     VKBuffer *buffer;
+    ItemId blockItemId;
     QString offset;
     QString rowCount;
     int stride;
