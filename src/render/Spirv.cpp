@@ -132,7 +132,7 @@ namespace {
     std::shared_ptr<glslang::TShader> createShader(const Session &session,
         Shader::Language language, Shader::ShaderType shaderType,
         const QStringList &sources, const QString &entryPoint,
-        int shiftBindingsInSet0 = 0)
+        int uniformLocationBase = 0, int shiftBindingsInSet0 = 0)
     {
         staticInitGlslang();
 
@@ -173,6 +173,8 @@ namespace {
         if (session.vulkanRulesRelaxed)
             shader.setEnvInputVulkanRulesRelaxed();
         shader.setHlslIoMapping(language == Shader::Language::HLSL);
+
+        shader.setUniformLocationBase(uniformLocationBase);
 
         using ResTypes = glslang::TResourceType;
         for (auto e = ResTypes{}; e != ResTypes::EResCount;
@@ -221,7 +223,7 @@ Spirv::Interface Spirv::getInterface() const
 Spirv Spirv::generate(const Session &session, Shader::Language language,
     Shader::ShaderType shaderType, const QStringList &sources,
     const QStringList &fileNames, const QString &entryPoint,
-    int shiftBindingsInSet0, ItemId itemId, MessagePtrSet &messages)
+    int uniformLocationBase, int shiftBindingsInSet0, ItemId itemId, MessagePtrSet &messages)
 {
     if (sources.empty() || sources.size() != fileNames.size())
         return {};
@@ -237,7 +239,7 @@ Spirv Spirv::generate(const Session &session, Shader::Language language,
         requestedMessages |= EShMsgReadHlsl | EShMsgHlslOffsets;
 
     auto shader = createShader(session, language, shaderType, sources,
-        entryPoint, shiftBindingsInSet0);
+        entryPoint, uniformLocationBase, shiftBindingsInSet0);
 
     if (!shader->parse(GetDefaultResources(), defaultVersion, defaultProfile,
             false, forwardCompatible,

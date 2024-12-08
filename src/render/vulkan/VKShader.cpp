@@ -31,7 +31,9 @@ bool VKShader::compile(KDGpu::Device &device, ShaderPrintf &printf,
     if (mInterface)
         return mShaderModule.isValid();
 
-    auto spirv = generateSpirv(printf, shiftBindingsInSet0);
+    const auto uniformLocationBase = 0;
+    const auto spirv =
+        generateSpirv(printf, uniformLocationBase, shiftBindingsInSet0);
     mInterface = spirv.getInterface();
     if (!spirv)
         return false;

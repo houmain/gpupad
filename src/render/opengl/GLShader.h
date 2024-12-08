@@ -12,8 +12,11 @@ public:
     GLShader(Shader::ShaderType type, const QList<const Shader *> &shaders,
         const Session &session);
 
+    bool compile(ShaderPrintf &printf, int uniformLocationBase,
+        int shiftBindingsInSet0);
     bool compile(ShaderPrintf &printf);
     GLuint shaderObject() const { return mShaderObject; }
+    int getMaxUniformLocation() const;
 
 private:
     QStringList preprocessorDefinitions() const override;

@@ -73,9 +73,18 @@ bool GLProgram::link()
 
 bool GLProgram::compileShaders()
 {
-    for (auto &shader : mShaders)
-        if (!shader.compile(mPrintf))
+    auto uniformLocationBase = 0;
+    auto shiftBindingsInSet0 = 0;
+    for (auto i = 0u; i < mShaders.size(); ++i) {
+        auto &shader = mShaders[i];
+        if (!shader.compile(mPrintf, uniformLocationBase, shiftBindingsInSet0))
             return false;
+
+        const auto isLastStage = (i + 1 == mShaders.size());
+        if (!isLastStage && mSession.autoMapLocations
+            && !mSession.shaderCompiler.isEmpty())
+            uniformLocationBase += (shader.getMaxUniformLocation() + 1);
+    }
     return true;
 }
 

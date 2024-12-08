@@ -342,12 +342,19 @@ QStringList ShaderBase::getPatchedSourcesHLSL(ShaderPrintf &printf,
     return sources;
 }
 
-Spirv ShaderBase::generateSpirv(ShaderPrintf &printf, int shiftBindingsInSet0)
+Spirv ShaderBase::generateSpirv(ShaderPrintf &printf, int uniformLocationBase,
+    int shiftBindingsInSet0)
 {
     auto usedFileNames = QStringList();
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
     return Spirv::generate(mSession, mLanguage, mType, patchedSources,
-        usedFileNames, mEntryPoint, shiftBindingsInSet0, mItemId, mMessages);
+        usedFileNames, mEntryPoint, uniformLocationBase, shiftBindingsInSet0,
+        mItemId, mMessages);
+}
+
+Spirv ShaderBase::generateSpirv(ShaderPrintf &printf)
+{
+    return generateSpirv(printf, 0, 0);
 }
 
 QString ShaderBase::preprocess()
@@ -362,7 +369,7 @@ QString ShaderBase::preprocess()
 QString ShaderBase::generateSpirvReadable()
 {
     auto printf = RemoveShaderPrintf();
-    return Spirv::disassemble(generateSpirv(printf, 0));
+    return Spirv::disassemble(generateSpirv(printf));
 }
 
 QString ShaderBase::generateGLSLangAST()

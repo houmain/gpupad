@@ -50,7 +50,8 @@ GLShader::GLShader(Shader::ShaderType type,
 {
 }
 
-bool GLShader::compile(ShaderPrintf &printf)
+bool GLShader::compile(ShaderPrintf &printf, int uniformLocationBase,
+    int shiftBindingsInSet0)
 {
     if (!GLContext::currentContext()) {
         mMessages += MessageList::insert(mItemId,
@@ -97,9 +98,8 @@ bool GLShader::compile(ShaderPrintf &printf)
         gl.glCompileShader(shader);
 
     } else {
-        // TODO:
-        const auto shiftBindingsInSet0 = 0;
-        const auto spirv = generateSpirv(printf, shiftBindingsInSet0);
+        const auto spirv =
+            generateSpirv(printf, uniformLocationBase, shiftBindingsInSet0);
         if (!spirv)
             return false;
 
@@ -139,6 +139,55 @@ bool GLShader::compile(ShaderPrintf &printf)
     return true;
 }
 
+bool GLShader::compile(ShaderPrintf &printf)
+{
+    return compile(printf, 0, 0);
+}
+
+QStringList GLShader::preprocessorDefinitions() const
+{
+    auto definitions = ShaderBase::preprocessorDefinitions();
+    definitions.append("GPUPAD_OPENGL 1");
+    return definitions;
+}
+
+int GLShader::getMaxUniformLocation() const
+{
+    if (!mShaderObject)
+        return -1;
+
+    // attach single shader to temporary program to obtain information
+    // spirv_reflect threw an assertion when analyzing OpenGL SPIR-V
+    auto freeProgram = [](GLuint program) {
+        auto &gl = GLContext::currentContext();
+        gl.glDeleteProgram(program);
+    };
+    auto &gl = GLContext::currentContext();
+    auto program = GLObject(gl.glCreateProgram(), freeProgram);
+    gl.glAttachShader(program, mShaderObject);
+    gl.glLinkProgram(program);
+    auto status = GLint{};
+    gl.glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (status != GL_TRUE)
+        return -1;
+
+    auto maxLocation = -1;
+    auto buffer = std::array<char, 256>();
+    auto size = GLint{};
+    auto type = GLenum{};
+    auto nameLength = GLint{};
+    auto uniforms = GLint{};
+    gl.glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniforms);
+    for (auto i = 0u; i < static_cast<GLuint>(uniforms); ++i) {
+        gl.glGetActiveUniform(program, i, static_cast<GLsizei>(buffer.size()),
+            &nameLength, &size, &type, buffer.data());
+
+        const auto location = gl.glGetUniformLocation(program, buffer.data());
+        maxLocation = std::max(maxLocation, location + size);
+    }
+    return maxLocation;
+}
+
 QString formatNvGpuProgram(QString assembly)
 {
     // indent conditional jumps
@@ -158,13 +207,6 @@ QString formatNvGpuProgram(QString assembly)
         line.prepend(QString(lineIndent, ' '));
     }
     return lines.join('\n');
-}
-
-QStringList GLShader::preprocessorDefinitions() const
-{
-    auto definitions = ShaderBase::preprocessorDefinitions();
-    definitions.append("GPUPAD_OPENGL 1");
-    return definitions;
 }
 
 QString tryGetProgramBinary(const GLShader &shader)

@@ -16,7 +16,8 @@ public:
     const QStringList &fileNames() const { return mFileNames; }
     const QString &entryPoint() const { return mEntryPoint; }
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
-    Spirv generateSpirv(ShaderPrintf &printf, int shiftBindingsInSet0 = 0);
+    Spirv generateSpirv(ShaderPrintf &printf, int uniformLocationBase, int shiftBindingsInSet0);
+    Spirv generateSpirv(ShaderPrintf &printf);
     QString preprocess();
     QString generateSpirvReadable();
     QString generateGLSLangAST();

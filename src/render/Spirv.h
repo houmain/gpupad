@@ -24,7 +24,7 @@ public:
     static Spirv generate(const Session &session, Shader::Language language,
         Shader::ShaderType shaderType, const QStringList &sources,
         const QStringList &fileNames, const QString &entryPoint,
-        int shiftBindingsInSet0, ItemId itemId, MessagePtrSet &messages);
+        int uniformLocationBase, int shiftBindingsInSet0, ItemId itemId, MessagePtrSet &messages);
 
     static QString preprocess(const Session &session, Shader::Language language,
         Shader::ShaderType shaderType, const QStringList &sources,
