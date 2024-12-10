@@ -3,7 +3,7 @@
 #include <QOpenGLShaderProgram>
 
 namespace {
-    const auto vertexShaderSource = R"(
+    const auto backgroundVS = R"(
 #version 330
 
 const vec2 data[4]= vec2[] (
@@ -19,7 +19,7 @@ void main() {
 }
 )";
 
-    const auto fragmentShaderSource = R"(
+    const auto backgroundFS = R"(
 #version 330
 
 uniform vec4 uColor0;
@@ -54,8 +54,8 @@ void main() {
         auto vertexShader = new QOpenGLShader(QOpenGLShader::Vertex, &program);
         auto fragmentShader =
             new QOpenGLShader(QOpenGLShader::Fragment, &program);
-        vertexShader->compileSourceCode(vertexShaderSource);
-        fragmentShader->compileSourceCode(fragmentShaderSource);
+        vertexShader->compileSourceCode(backgroundVS);
+        fragmentShader->compileSourceCode(backgroundFS);
         program.addShader(vertexShader);
         program.addShader(fragmentShader);
         return program.link();

@@ -1,7 +1,7 @@
 
 #include "Syntax.h"
 
-namespace {
+namespace glsl {
 
     QStringList keywords()
     {
@@ -38,8 +38,8 @@ namespace {
             "uimage2DMSArray", "image3D", "iimage3D", "uimage3D", "imageCube",
             "iimageCube", "uimageCube", "imageCubeArray", "iimageCubeArray",
             "uimageCubeArray", "imageBuffer", "iimageBuffer", "uimageBuffer",
-            "struct", 
-        
+            "struct",
+
             // when targeting Vulkan
             "texture1D", "texture1DArray", "itexture1D", "itexture1DArray",
             "utexture1D", "utexture1DArray", "texture2D", "texture2DArray",
@@ -184,24 +184,24 @@ namespace {
             "r16ui", "r8ui" };
     }
 
-} // namespace
+} // namespace glsl
 
 class SyntaxGLSL : public Syntax
 {
 public:
-    QStringList keywords() const override { return ::keywords(); }
+    QStringList keywords() const override { return glsl::keywords(); }
     QStringList builtinFunctions() const override
     {
-        return ::builtinFunctions();
+        return glsl::builtinFunctions();
     }
     QStringList builtinConstants() const override
     {
-        return ::builtinConstants();
+        return glsl::builtinConstants();
     }
     QStringList completerStrings() const override
     {
-        return ::keywords() + ::builtinFunctions() + ::builtinConstants()
-            + ::layoutQualifiers();
+        return glsl::keywords() + glsl::builtinFunctions()
+            + glsl::builtinConstants() + glsl::layoutQualifiers();
     }
     bool hasPreprocessor() const override { return true; }
 };

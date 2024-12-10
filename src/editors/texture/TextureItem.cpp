@@ -10,7 +10,7 @@
 #include <optional>
 
 namespace {
-    const auto vertexShaderSource = R"(
+    const auto textureItemVS = R"(
 #version 330
 
 uniform mat4 uTransform;
@@ -33,7 +33,7 @@ void main() {
 }
 )";
 
-    const auto fragmentShaderSource = R"(
+    const auto textureItemFS = R"(
 
 #ifdef GL_ARB_texture_cube_map_array
 #extension GL_ARB_texture_cube_map_array: enable
@@ -222,7 +222,7 @@ void main() {
             + "\n" + "#define LINEAR_TO_SRGB " + QString::number(linearToSrgb)
             + "\n" + "#define PICKER_ENABLED " + QString::number(desc.picker)
             + "\n" + "#define HISTOGRAM_ENABLED "
-            + QString::number(desc.histogram) + "\n" + fragmentShaderSource;
+            + QString::number(desc.histogram) + "\n" + textureItemFS;
     }
 
     bool buildProgram(QOpenGLShaderProgram &program, const ProgramDesc &desc)
@@ -231,7 +231,7 @@ void main() {
         auto vertexShader = new QOpenGLShader(QOpenGLShader::Vertex, &program);
         auto fragmentShader =
             new QOpenGLShader(QOpenGLShader::Fragment, &program);
-        vertexShader->compileSourceCode(vertexShaderSource);
+        vertexShader->compileSourceCode(textureItemVS);
         fragmentShader->compileSourceCode(buildFragmentShader(desc));
         program.addShader(vertexShader);
         program.addShader(fragmentShader);

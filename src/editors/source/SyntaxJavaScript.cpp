@@ -1,7 +1,7 @@
 
 #include "Syntax.h"
 
-namespace {
+namespace js {
 
     // https://developer.mozilla.org/de/docs/Web/JavaScript/Reference/Lexical_grammar
     QStringList keywords()
@@ -36,11 +36,11 @@ namespace {
 class SyntaxJavaScript : public Syntax
 {
 public:
-    QStringList keywords() const override { return ::keywords(); }
-    QStringList builtinConstants() const override { return ::globalObjects(); }
+    QStringList keywords() const override { return js::keywords(); }
+    QStringList builtinConstants() const override { return js::globalObjects(); }
     QStringList completerStrings() const override
     {
-        return ::keywords() + ::globalObjects();
+        return js::keywords() + js::globalObjects();
     }
 };
 

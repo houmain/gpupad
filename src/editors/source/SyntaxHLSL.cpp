@@ -1,7 +1,7 @@
 
 #include "Syntax.h"
 
-namespace {
+namespace hlsl {
 
     QStringList keywords()
     {
@@ -91,19 +91,20 @@ namespace {
             "maxvertexcount", "precise" };
     }
 
-} // namespace
+} // namespace hlsl
 
 class SyntaxHLSL : public Syntax
 {
 public:
-    QStringList keywords() const override { return ::keywords(); }
+    QStringList keywords() const override { return hlsl::keywords(); }
     QStringList builtinFunctions() const override
     {
-        return ::builtinFunctions();
+        return hlsl::builtinFunctions();
     }
     QStringList completerStrings() const override
     {
-        return ::keywords() + ::builtinFunctions() + ::layoutQualifiers();
+        return hlsl::keywords() + hlsl::builtinFunctions()
+            + hlsl::layoutQualifiers();
     }
     bool hasPreprocessor() const override { return true; }
 };
