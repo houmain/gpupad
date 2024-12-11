@@ -73,17 +73,19 @@ bool GLProgram::link()
 
 bool GLProgram::compileShaders()
 {
-    auto uniformLocationBase = 0;
-    auto shiftBindingsInSet0 = 0;
-    for (auto i = 0u; i < mShaders.size(); ++i) {
-        auto &shader = mShaders[i];
-        if (!shader.compile(mPrintf, uniformLocationBase, shiftBindingsInSet0))
-            return false;
+    if (mSession.shaderCompiler.isEmpty()) {
+        for (auto &shader : mShaders)
+            if (!shader.compile(mPrintf))
+                return false;
+    } else {
+        auto inputs = std::vector<Spirv::Input>();
+        for (auto &shader : mShaders)
+            inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
 
-        const auto isLastStage = (i + 1 == mShaders.size());
-        if (!isLastStage && mSession.autoMapLocations
-            && !mSession.shaderCompiler.isEmpty())
-            uniformLocationBase += (shader.getMaxUniformLocation() + 1);
+        auto stages = Spirv::compile(mSession, inputs, mItemId, mLinkMessages);
+        for (auto &shader : mShaders)
+            if (!shader.specialize(stages[shader.type()]))
+                return false;
     }
     return true;
 }
@@ -122,23 +124,24 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
     auto &gl = GLContext::currentContext();
     auto buffer = std::array<char, 256>();
     auto size = GLint{};
-    auto type = GLenum{};
+    auto dataType = GLenum{};
     auto nameLength = GLint{};
 
     auto uniforms = GLint{};
     gl.glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniforms);
     for (auto i = 0u; i < static_cast<GLuint>(uniforms); ++i) {
         gl.glGetActiveUniform(program, i, static_cast<GLsizei>(buffer.size()),
-            &nameLength, &size, &type, buffer.data());
+            &nameLength, &size, &dataType, buffer.data());
 
         const auto name = QString(buffer.data());
         const auto location =
             gl.glGetUniformLocation(program, qPrintable(name));
 
         if (location >= 0) {
+            Q_ASSERT(dataType);
             interface.uniforms[name] = {
                 .location = location,
-                .dataType = type,
+                .dataType = dataType,
                 .size = size,
             };
             if (name.endsWith("[0]")) {
@@ -151,7 +154,7 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
                     Q_ASSERT(location >= 0);
                     interface.uniforms[elementName] = {
                         .location = location,
-                        .dataType = type,
+                        .dataType = dataType,
                         .size = 1,
                     };
                 }
@@ -202,8 +205,8 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
             GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, uniformIndices.data());
         for (GLuint index : uniformIndices) {
             gl.glGetActiveUniform(program, index,
-                static_cast<GLsizei>(buffer.size()), &nameLength, &size, &type,
-                buffer.data());
+                static_cast<GLsizei>(buffer.size()), &nameLength, &size,
+                &dataType, buffer.data());
             const auto name = QString(buffer.data());
             auto offset = GLint{};
             gl.glGetActiveUniformsiv(program, 1, &index, GL_UNIFORM_OFFSET,
@@ -218,7 +221,7 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
             gl.glGetActiveUniformsiv(program, 1, &index,
                 GL_UNIFORM_IS_ROW_MAJOR, &isRowMajor);
             elements[name] = {
-                .dataType = type,
+                .dataType = dataType,
                 .size = size,
                 .offset = offset,
                 .arrayStride = arrayStride,
@@ -239,7 +242,7 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
     gl.glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributes);
     for (auto i = 0u; i < static_cast<GLuint>(attributes); ++i) {
         gl.glGetActiveAttrib(program, i, static_cast<GLsizei>(buffer.size()),
-            &nameLength, &size, &type, buffer.data());
+            &nameLength, &size, &dataType, buffer.data());
         const auto name = QString(buffer.data());
         const auto location = gl.glGetAttribLocation(program, qPrintable(name));
         if (location >= 0)

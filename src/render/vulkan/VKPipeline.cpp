@@ -249,7 +249,8 @@ bool VKPipeline::createOrUpdateBindGroup(uint32_t set, uint32_t binding,
         // TODO: improve check
         if (it->resourceType != layout.resourceType) {
             mMessages += MessageList::insert(mProgram.itemId(),
-                MessageType::IncompatibleBindings);
+                MessageType::IncompatibleBindings,
+                QStringLiteral("(%1/%2)").arg(set).arg(binding));
             return false;
         }
         it->shaderStages |= layout.shaderStages;
@@ -268,7 +269,8 @@ void VKPipeline::setBindGroupResource(uint32_t set,
             // TODO: improve check
             if (res.resource.type() != resource.resource.type())
                 mMessages += MessageList::insert(mProgram.itemId(),
-                    MessageType::IncompatibleBindings);
+                    MessageType::IncompatibleBindings,
+                    QStringLiteral("(set %1)").arg(set));
 
             return;
         }
@@ -651,8 +653,7 @@ bool VKPipeline::updateBindings(VKContext &context)
 
             case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE: {
                 const auto imageBinding = find(mBindings.images, desc.name);
-                if (!imageBinding
-                    || !imageBinding->texture
+                if (!imageBinding || !imageBinding->texture
                     || !imageBinding->texture->prepareStorageImage(context)) {
                     if (desc.accessed)
                         notBoundError(MessageType::ImageNotSet, desc.name);

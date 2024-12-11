@@ -56,6 +56,7 @@ enum MessageType {
     CreatingPipelineFailed,
     OpenGLRendererRequiresGLSL,
     SubroutinesNotAvailableInVulkan,
+    OpenGLRequiresCombinedTextureSamplers,
     CantSampleAttachment,
     SampleCountMismatch,
     MaxSampleCountExceeded,

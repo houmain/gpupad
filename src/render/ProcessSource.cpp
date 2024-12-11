@@ -135,7 +135,7 @@ void ProcessSource::render()
                         tryGetLinkerWarnings(*shader, messages);
                     }
             } else {
-                mShader->generateSpirv(printf);
+                mShader->compileSpirv(printf);
             }
         } else {
             if (mSourceType == SourceType::JavaScript)
@@ -154,7 +154,7 @@ void ProcessSource::render()
         if (mProcessType == "preprocess") {
             mOutput = removeLineDirectives(mShader->preprocess());
         } else if (mProcessType == "spirv") {
-            mOutput = mShader->generateSpirvReadable();
+            mOutput = mShader->generateReadableSpirv();
         } else if (mProcessType == "ast") {
             mOutput = mShader->generateGLSLangAST();
         } else if (mProcessType == "assembly") {

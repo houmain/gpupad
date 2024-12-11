@@ -7,6 +7,16 @@
 class Spirv
 {
 public:
+    struct Input
+    {
+        Shader::Language language;
+        Shader::ShaderType shaderType;
+        QStringList sources;
+        QStringList fileNames;
+        QString entryPoint;
+        ItemId itemId;
+    };
+
     class Interface
     {
     public:
@@ -21,10 +31,9 @@ public:
         std::shared_ptr<SpvReflectShaderModule> mModule;
     };
 
-    static Spirv generate(const Session &session, Shader::Language language,
-        Shader::ShaderType shaderType, const QStringList &sources,
-        const QStringList &fileNames, const QString &entryPoint,
-        int uniformLocationBase, int shiftBindingsInSet0, ItemId itemId, MessagePtrSet &messages);
+    static std::map<Shader::ShaderType, Spirv> compile(const Session &session,
+        const std::vector<Input> &inputs, ItemId programItemId,
+        MessagePtrSet &messages);
 
     static QString preprocess(const Session &session, Shader::Language language,
         Shader::ShaderType shaderType, const QStringList &sources,
@@ -33,10 +42,10 @@ public:
 
     static QString disassemble(const Spirv &spirv);
 
-    static QString generateAST(const Session &session, Shader::Language language,
-        Shader::ShaderType shaderType, const QStringList &sources,
-        const QStringList &fileNames, const QString &entryPoint, ItemId itemId,
-        MessagePtrSet &messages);
+    static QString generateAST(const Session &session,
+        Shader::Language language, Shader::ShaderType shaderType,
+        const QStringList &sources, const QStringList &fileNames,
+        const QString &entryPoint, ItemId itemId, MessagePtrSet &messages);
 
     Spirv() = default;
     explicit Spirv(std::vector<uint32_t> spirv);

@@ -31,23 +31,23 @@ bool VKProgram::operator==(const VKProgram &rhs) const
 
 bool VKProgram::link(KDGpu::Device &device)
 {
+    if (mFailed)
+        return false;
     if (!mInterface.empty())
         return true;
 
-    auto succeeded = true;
-    auto shiftBindingsInSet0 = 0;
-    for (auto &shader : mShaders) {
-        succeeded &= shader.compile(device, mPrintf, shiftBindingsInSet0);
-
-        if (mSession.autoMapBindings)
-            shiftBindingsInSet0 =
-                std::max(shiftBindingsInSet0, shader.getMaxBindingInSet0() + 1);
-    }
-    if (!succeeded)
+    auto inputs = std::vector<Spirv::Input>();
+    for (auto &shader : mShaders)
+        inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
+    auto stages = Spirv::compile(mSession, inputs, mItemId, mLinkMessages);
+    if (stages.empty()) {
+        mFailed = true;
         return false;
-
-    for (const auto &shader : mShaders)
+    }
+    for (auto &shader : mShaders) {
+        shader.create(device, stages[shader.type()]);
         mInterface[shader.getShaderStage().stage] = shader.interface();
+    }
     return true;
 }
 

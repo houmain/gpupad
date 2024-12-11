@@ -65,7 +65,7 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
     case UniformComponentMismatch:
     case ShaderWarning:
     case ScriptWarning:
-    case TooManyPrintfCalls: return mWarningIcon;
+    case TooManyPrintfCalls:       return mWarningIcon;
 
     case ShaderInfo:
     case ScriptMessage:
@@ -138,10 +138,13 @@ QString MessageWindow::getMessageText(const Message &message) const
     case MoreThanOneDepthStencilAttachment:
         return tr("Only a single depth or stencil attachment is supported");
     case IncompatibleBindings:
-        return tr("Incompatible assignment to the same set/binding");
+        return tr("Incompatible assignment to the same set/binding %1")
+            .arg(message.text);
     case CreatingPipelineFailed: return tr("Creating pipeline failed");
     case OpenGLRendererRequiresGLSL:
         return tr("The OpenGL driver can only compile GLSL shaders");
+    case OpenGLRequiresCombinedTextureSamplers:
+        return tr("OpenGL requires combined texture/samplers");
     case SubroutinesNotAvailableInVulkan:
         return tr("Subroutines not available in Vulkan");
     case SampleCountMismatch:

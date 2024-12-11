@@ -114,6 +114,11 @@ namespace {
         default:                                           return false;
         }
     }
+
+    bool isSamplerOnlyUniform(const GLProgram::Interface::Uniform &uniform)
+    {
+        return (uniform.dataType == GL_SAMPLER);
+    }
 } // namespace
 
 GLCall::GLCall(const Call &call) : mCall(call) { }
@@ -483,7 +488,8 @@ bool GLCall::applyBindings(const GLBindings &bindings,
         if (isImageUniform(uniform)) {
             if (auto imageBinding = find(bindings.images, name)) {
                 mUsedItems += imageBinding->bindingItemId;
-                applyImageBinding(uniform, *imageBinding, textureUnit++);
+                if (!applyImageBinding(uniform, *imageBinding, textureUnit++))
+                    canRender = false;
             } else {
                 mMessages += MessageList::insert(mCall.id,
                     MessageType::ImageNotSet, name);
@@ -492,11 +498,16 @@ bool GLCall::applyBindings(const GLBindings &bindings,
         } else if (isSamplerUniform(uniform)) {
             if (auto samplerBinding = find(bindings.samplers, name)) {
                 mUsedItems += samplerBinding->bindingItemId;
-                applySamplerBinding(uniform, *samplerBinding, textureUnit++);
+                if (!applySamplerBinding(uniform, *samplerBinding, textureUnit++))
+                    canRender = false;
             } else {
                 mMessages += MessageList::insert(mCall.id,
                     MessageType::SamplerNotSet, name);
             }
+        } else if (isSamplerOnlyUniform(uniform)) {
+            mMessages += MessageList::insert(mCall.id,
+                MessageType::OpenGLRequiresCombinedTextureSamplers);
+            canRender = false;
         } else {
             if (!applyUniformBinding(name, uniform, bindings.uniforms,
                     scriptEngine))
@@ -512,8 +523,6 @@ bool GLCall::applyUniformBinding(const QString &name,
     const std::map<QString, GLUniformBinding> &bindings,
     ScriptEngine &scriptEngine)
 {
-    Q_ASSERT(uniform.dataType && uniform.location >= 0);
-
     if (const auto binding = find(bindings, name)) {
         applyUniformBinding(uniform, *binding, scriptEngine);
         mUsedItems += binding->bindingItemId;
@@ -635,16 +644,13 @@ void GLCall::applyUniformBinding(const GLProgram::Interface::Uniform &uniform,
     }
 }
 
-void GLCall::applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
+bool GLCall::applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
     const GLSamplerBinding &binding, int unit)
 {
-    if (uniform.location < 0)
-        return;
-
     if (!binding.texture) {
         mMessages += MessageList::insert(binding.bindingItemId,
             MessageType::TextureNotAssigned);
-        return;
+        return false;
     }
     auto &texture = *binding.texture;
     mUsedItems += texture.itemId();
@@ -693,24 +699,25 @@ void GLCall::applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
         }
         break;
 
-    default: break;
+    default: return false;
     }
+    return true;
 }
 
-void GLCall::applyImageBinding(const GLProgram::Interface::Uniform &uniform,
+bool GLCall::applyImageBinding(const GLProgram::Interface::Uniform &uniform,
     const GLImageBinding &binding, int unit)
 {
     auto &gl = GLContext::currentContext();
     if (!gl.v4_2) {
         mMessages += MessageList::insert(mCall.id,
             MessageType::OpenGLVersionNotAvailable, "4.2");
-        return;
+        return false;
     }
 
     if (!binding.texture) {
         mMessages += MessageList::insert(binding.bindingItemId,
             MessageType::TextureNotAssigned);
-        return;
+        return false;
     }
     auto &texture = *binding.texture;
     mUsedItems += texture.itemId();
@@ -728,15 +735,16 @@ void GLCall::applyImageBinding(const GLProgram::Interface::Uniform &uniform,
     if (formatSupported == GL_NONE) {
         mMessages += MessageList::insert(binding.bindingItemId,
             MessageType::ImageFormatNotBindable);
-    } else {
-        gl.v4_2->glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
-        gl.v4_2->glBindTexture(target, textureId);
-        gl.v4_2->glUniform1i(uniform.location, unit);
-        gl.v4_2->glBindImageTexture(static_cast<GLuint>(unit), textureId,
-            binding.level, (binding.layer < 0), std::max(binding.layer, 0),
-            binding.access, format);
+        return false;
     }
+    gl.v4_2->glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
+    gl.v4_2->glBindTexture(target, textureId);
+    gl.v4_2->glUniform1i(uniform.location, unit);
+    gl.v4_2->glBindImageTexture(static_cast<GLuint>(unit), textureId,
+        binding.level, (binding.layer < 0), std::max(binding.layer, 0),
+        binding.access, format);
 #endif
+    return true;
 }
 
 bool GLCall::applyBufferBinding(

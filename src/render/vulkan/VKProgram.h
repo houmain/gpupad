@@ -28,4 +28,5 @@ private:
     std::vector<VKShader> mShaders;
     StageInterface mInterface;
     VKPrintf mPrintf;
+    bool mFailed{};
 };

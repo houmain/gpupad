@@ -25,21 +25,11 @@ VKShader::VKShader(Shader::ShaderType type,
 {
 }
 
-bool VKShader::compile(KDGpu::Device &device, ShaderPrintf &printf,
-    int shiftBindingsInSet0)
+void VKShader::create(KDGpu::Device &device, const Spirv &spirv)
 {
-    if (mInterface)
-        return mShaderModule.isValid();
-
-    const auto uniformLocationBase = 0;
-    const auto spirv =
-        generateSpirv(printf, uniformLocationBase, shiftBindingsInSet0);
-    mInterface = spirv.getInterface();
-    if (!spirv)
-        return false;
-
+    Q_ASSERT(spirv);    
     mShaderModule = device.createShaderModule(spirv.spirv());
-    return true;
+    mInterface = spirv.getInterface();
 }
 
 KDGpu::ShaderStage VKShader::getShaderStage() const
@@ -49,17 +39,6 @@ KDGpu::ShaderStage VKShader::getShaderStage() const
         .stage = getStageFlags(mType),
         .entryPoint = mEntryPoint.toStdString(),
     };
-}
-
-int VKShader::getMaxBindingInSet0() const
-{
-    auto max = -1;
-    const auto count = (mInterface ? mInterface->descriptor_binding_count : 0);
-    for (auto i = 0u; i < count; ++i)
-        if (mInterface->descriptor_bindings[i].set == 0)
-            max = std::max(max,
-                static_cast<int>(mInterface->descriptor_bindings[i].binding));
-    return max;
 }
 
 QStringList VKShader::preprocessorDefinitions() const
