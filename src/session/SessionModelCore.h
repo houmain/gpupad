@@ -19,6 +19,7 @@ public:
         SessionShaderIncludePaths,
         SessionAutoMapBindings,
         SessionAutoMapLocations,
+        SessionAutoSampledTextures,
         SessionVulkanRulesRelaxed,
         SessionSpirvVersion,
         GroupInlineScope,

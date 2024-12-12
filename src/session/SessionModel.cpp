@@ -535,6 +535,7 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         result &= (column != SessionShaderCompiler || !hasVulkanRenderer);
         result &= (column != SessionAutoMapBindings || hasShaderCompiler);
         result &= (column != SessionAutoMapLocations || hasShaderCompiler);
+        result &= (column != SessionAutoSampledTextures || hasShaderCompiler);
         result &= (column != SessionVulkanRulesRelaxed || hasShaderCompiler);
         result &= (column != SessionSpirvVersion
             || (hasShaderCompiler && session.spirvVersion != 0));

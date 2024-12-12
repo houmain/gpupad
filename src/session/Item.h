@@ -47,6 +47,7 @@ struct Session : ScopeItem
     // glslang compiler options
     bool autoMapBindings{ true };
     bool autoMapLocations{ true };
+    bool autoSampledTextures{ true };
     bool vulkanRulesRelaxed{ true };
     int spirvVersion{};
 };

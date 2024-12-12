@@ -12,6 +12,7 @@
     ADD(SessionShaderIncludePaths, Session, shaderIncludePaths)               \
     ADD(SessionAutoMapBindings, Session, autoMapBindings)                     \
     ADD(SessionAutoMapLocations, Session, autoMapLocations)                   \
+    ADD(SessionAutoSampledTextures, Session, autoSampledTextures)             \
     ADD(SessionVulkanRulesRelaxed, Session, vulkanRulesRelaxed)               \
     ADD(SessionSpirvVersion, Session, spirvVersion)                           \
     ADD(GroupInlineScope, Group, inlineScope)                                 \

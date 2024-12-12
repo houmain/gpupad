@@ -51,6 +51,8 @@ void SessionProperties::addMappings(QDataWidgetMapper &mapper)
         SessionModel::SessionAutoMapBindings);
     mapper.addMapping(mUi->autoMapLocations,
         SessionModel::SessionAutoMapLocations);
+    mapper.addMapping(mUi->autoSampledTextures,
+        SessionModel::SessionAutoSampledTextures);
     mapper.addMapping(mUi->vulkanRulesRelaxed,
         SessionModel::SessionVulkanRulesRelaxed);
     mapper.addMapping(mUi->spirvVersion, SessionModel::SessionSpirvVersion);

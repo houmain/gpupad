@@ -172,6 +172,9 @@ namespace {
         if (session.vulkanRulesRelaxed)
             shader.setEnvInputVulkanRulesRelaxed();
         shader.setHlslIoMapping(language == Shader::Language::HLSL);
+        if (session.autoSampledTextures)
+            shader.setTextureSamplerTransformMode(
+                EShTexSampTransUpgradeTextureRemoveSampler);
         return shaderPtr;
     }
 

@@ -197,7 +197,7 @@ bool shaderSessionSettingsDiffer(const Session &a, const Session &b)
 {
     const auto shaderCompilerSettings = [](const Session &a) {
         return std::tie(a.autoMapBindings, a.autoMapLocations,
-            a.vulkanRulesRelaxed, a.spirvVersion);
+            a.autoSampledTextures, a.vulkanRulesRelaxed, a.spirvVersion);
     };
     const auto hasShaderCompiler =
         (!a.shaderCompiler.isEmpty() || a.renderer == "Vulkan");
