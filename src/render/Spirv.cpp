@@ -2,13 +2,17 @@
 #include "Spirv.h"
 #include <QRegularExpression>
 #include <sstream>
+#include <set>
 
 #define ENABLE_HLSL
 #include <glslang/Public/ResourceLimits.h>
 #include <glslang/Public/ShaderLang.h>
-#include <glslang/MachineIndependent/LiveTraverser.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
 #include <glslang/SPIRV/disassemble.h>
+
+#if __has_include(<glslang/MachineIndependent/LiveTraverser.h>)
+#include <glslang/MachineIndependent/LiveTraverser.h>
+#endif
 
 #include <spirv_glsl.hpp>
 #include <spirv_hlsl.hpp>
@@ -180,6 +184,7 @@ namespace {
 
     void patchHLSLGlobalUniformBindingSet(glslang::TShader &shader)
     {
+#if __has_include(<glslang/MachineIndependent/LiveTraverser.h>)
         struct Traverser : glslang::TLiveTraverser
         {
             using glslang::TLiveTraverser::TLiveTraverser;
@@ -200,6 +205,7 @@ namespace {
                 Traverser traverser(*intermediate, false, false, false, true);
                 root->traverse(&traverser);
             }
+#endif
     }
 } // namespace
 
