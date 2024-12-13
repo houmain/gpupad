@@ -53,6 +53,18 @@ namespace {
         }
     }
 
+    void insertAfterExtensions(QString &source, const QString &text) 
+    {
+        static const auto regex =
+            QRegularExpression("^(?!.*#|.*\\/|\\s+).*$",
+                QRegularExpression::MultilineOption);
+
+        // find first line which is not a comment, directive or empty
+        auto match = regex.match(source);
+        auto position = (match.hasMatch() ? match.capturedStart() : 0);
+        source.insert(position, text);
+    }
+
     int countLines(const QString &source, int offset = -1)
     {
         auto end = source.size();
@@ -293,7 +305,7 @@ QStringList ShaderBase::getPatchedSourcesGLSL(ShaderPrintf &printf,
         sources[i] = printf.patchSource(mType, mFileNames[i], sources[i]);
 
     if (printf.isUsed(mType)) {
-        sources.front().prepend(ShaderPrintf::preambleGLSL());
+        insertAfterExtensions(sources.front(), ShaderPrintf::preambleGLSL());
         maxVersion = std::max(maxVersion, ShaderPrintf::requiredVersionGLSL());
     }
 
