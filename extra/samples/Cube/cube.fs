@@ -1,16 +1,6 @@
 #version 450
 
-#if defined(GPUPAD_VULKAN)
-
-layout(push_constant, std430) uniform pc {
-  layout(offset=192) vec3 uAmbient;
-};
-
-#else
-
 uniform vec3 uAmbient;
-
-#endif
 
 uniform sampler2D uTexture;
 

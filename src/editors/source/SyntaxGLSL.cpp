@@ -3,6 +3,7 @@
 
 namespace glsl {
 
+    // https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.60.html#keywords
     QStringList keywords()
     {
         return { "const", "uniform", "buffer", "shared", "attribute", "varying",
@@ -106,11 +107,13 @@ namespace glsl {
 
     QStringList builtinConstants()
     {
-        return { "printfEnabled", "HAS_PRINTF", "gl_ClipDistance",
-            "gl_CullDistance", "gl_DepthRange", "gl_DepthRangeParameters",
-            "gl_FragCoord", "gl_FragDepth", "gl_FrontFacing",
-            "gl_GlobalInvocationID", "gl_HelperInvocation", "gl_in",
-            "gl_InstanceID", "gl_InvocationID", "gl_Layer",
+        return { "GPUPAD", "GPUPAD_OPENGL", "GPUPAD_VULKAN", "GPUPAD_GLSLANG",
+            "VULKAN", "printfEnabled",
+
+            "gl_ClipDistance", "gl_CullDistance", "gl_DepthRange",
+            "gl_DepthRangeParameters", "gl_FragCoord", "gl_FragDepth",
+            "gl_FrontFacing", "gl_GlobalInvocationID", "gl_HelperInvocation",
+            "gl_in", "gl_InstanceID", "gl_InvocationID", "gl_Layer",
             "gl_LocalInvocationID", "gl_LocalInvocationIndex",
             "gl_MaxAtomicCounterBindings", "gl_MaxAtomicCounterBufferSize",
             "gl_MaxClipDistances", "gl_MaxCombinedAtomicCounterBuffers",
@@ -181,7 +184,10 @@ namespace glsl {
             "r16_snorm", "r8_snorm", "rgba32i", "rgba16i", "rgba8i", "rg32i",
             "rg16i", "rg8i", "r32i", "r16i", "r8i", "rgba32ui", "rgba16ui",
             "rgb10_a2ui", "rgba8ui", "rg32ui", "rg16ui", "rg8ui", "r32ui",
-            "r16ui", "r8ui" };
+            "r16ui", "r8ui",
+
+            "set", "local_size_x", "local_size_y", "local_size_z",
+            "push_constant" };
     }
 
 } // namespace glsl

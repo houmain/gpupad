@@ -1,295 +1,324 @@
-[
-    {
-        "flipVertically": false,
-        "format": "SRGB8_Alpha8",
-        "height": "512",
-        "id": 93,
-        "name": "Color",
-        "target": "Target2D",
-        "type": "Texture",
-        "width": "512"
-    },
-    {
-        "flipVertically": false,
-        "format": "D16",
-        "height": "512",
-        "id": 98,
-        "name": "Depth",
-        "target": "Target2D",
-        "type": "Texture",
-        "width": "512"
-    },
-    {
-        "blendConstant": "#ff000000",
-        "cullMode": "Back",
-        "frontFace": "CCW",
-        "id": 100,
-        "items": [
-            {
-                "blendAlphaDest": "Zero",
-                "blendAlphaEq": "Add",
-                "blendAlphaSource": "One",
-                "blendColorDest": "Zero",
-                "blendColorEq": "Add",
-                "blendColorSource": "One",
-                "colorWriteMask": 15,
-                "id": 101,
-                "level": 0,
-                "name": "Color",
-                "textureId": 93,
-                "type": "Attachment"
-            },
-            {
-                "depthClamp": false,
-                "depthComparisonFunc": "Less",
-                "depthOffsetConstant": 0,
-                "depthOffsetSlope": 0,
-                "depthWrite": true,
-                "id": 102,
-                "level": 0,
-                "name": "Depth",
-                "textureId": 98,
-                "type": "Attachment"
-            }
-        ],
-        "logicOperation": "NoLogicOperation",
-        "name": "Target",
-        "polygonMode": "Fill",
-        "type": "Target"
-    },
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression",
-        "id": 895,
-        "name": "frame",
-        "type": "Binding",
-        "values": [
-            "(this.frame || 0) + 1"
-        ]
-    },
-    {
-        "executeOn": "ResetEvaluation",
-        "fileName": "math.js",
-        "id": 103,
-        "type": "Script"
-    },
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression",
-        "id": 77,
-        "name": "uModel",
-        "type": "Binding",
-        "values": [
-            "rotateY(frame / 60)"
-        ]
-    },
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression4x4",
-        "id": 78,
-        "name": "uView",
-        "type": "Binding",
-        "values": [
-            "1",
-            "0",
-            "0",
-            "0",
-            "0",
-            "1",
-            "0",
-            "0",
-            "0",
-            "0",
-            "1",
-            "0",
-            "0.40",
-            "-0.75",
-            "-4.00",
-            "1"
-        ]
-    },
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression",
-        "id": 79,
-        "name": "uProjection",
-        "type": "Binding",
-        "values": [
-            "perspective(45, 1.0, 1, 100)"
-        ]
-    },
-    {
-        "fileName": "planks.jpg",
-        "flipVertically": false,
-        "format": "SRGB8_Alpha8",
-        "height": "512",
-        "id": 104,
-        "target": "Target2D",
-        "type": "Texture",
-        "width": "512"
-    },
-    {
-        "anisotropic": false,
-        "bindingType": "Sampler",
-        "borderColor": "#ff000000",
-        "comparisonFunc": "NoComparisonFunc",
-        "id": 99,
-        "magFilter": "Nearest",
-        "minFilter": "Nearest",
-        "name": "uTexture",
-        "textureId": 104,
-        "type": "Binding",
-        "wrapModeX": "Repeat",
-        "wrapModeY": "Repeat",
-        "wrapModeZ": "Repeat"
-    },
-    {
-        "anisotropic": false,
-        "bindingType": "Sampler",
-        "borderColor": "#ff000000",
-        "comparisonFunc": "NoComparisonFunc",
-        "id": 896,
-        "magFilter": "Linear",
-        "minFilter": "Linear",
-        "name": "sampleLinear",
-        "textureId": 104,
-        "type": "Binding",
-        "wrapModeX": "Repeat",
-        "wrapModeY": "Repeat",
-        "wrapModeZ": "Repeat"
-    },
-    {
-        "fileName": "cube_position_normal_texcoords.bin",
-        "id": 80,
-        "items": [
-            {
-                "id": 890,
-                "items": [
-                    {
-                        "count": 3,
-                        "dataType": "Float",
-                        "id": 891,
-                        "name": "position",
-                        "padding": 0,
-                        "type": "Field"
-                    },
-                    {
-                        "count": 3,
-                        "dataType": "Float",
-                        "id": 892,
-                        "name": "normal",
-                        "padding": 0,
-                        "type": "Field"
-                    },
-                    {
-                        "count": 2,
-                        "dataType": "Float",
-                        "id": 893,
-                        "name": "texcoords",
-                        "padding": 0,
-                        "type": "Field"
-                    }
-                ],
-                "name": "Vertex",
-                "offset": "0",
-                "rowCount": "36",
-                "type": "Block"
-            }
-        ],
-        "type": "Buffer"
-    },
-    {
-        "id": 84,
-        "items": [
-            {
-                "divisor": 0,
-                "fieldId": 891,
-                "id": 85,
-                "name": "input_position",
-                "normalize": false,
-                "type": "Attribute"
-            },
-            {
-                "divisor": 0,
-                "fieldId": 892,
-                "id": 86,
-                "name": "input_normal",
-                "normalize": false,
-                "type": "Attribute"
-            },
-            {
-                "divisor": 0,
-                "fieldId": 893,
-                "id": 87,
-                "name": "input_texCoords",
-                "normalize": false,
-                "type": "Attribute"
-            }
-        ],
-        "name": "Stream",
-        "type": "Stream"
-    },
-    {
-        "id": 88,
-        "items": [
-            {
-                "entryPoint": "VS",
-                "fileName": "cube.fx",
-                "id": 89,
-                "language": "HLSL",
-                "shaderType": "Vertex",
-                "type": "Shader"
-            },
-            {
-                "entryPoint": "PS",
-                "fileName": "cube.fx",
-                "id": 90,
-                "language": "HLSL",
-                "shaderType": "Fragment",
-                "type": "Shader"
-            }
-        ],
-        "name": "Program",
-        "type": "Program"
-    },
-    {
-        "callType": "ClearTexture",
-        "checked": true,
-        "clearColor": "#ff464757",
-        "clearDepth": 1,
-        "clearStencil": 0,
-        "executeOn": "EveryEvaluation",
-        "id": 97,
-        "name": "Clear Color",
-        "textureId": 93,
-        "type": "Call"
-    },
-    {
-        "callType": "ClearTexture",
-        "checked": true,
-        "clearColor": "#ff000000",
-        "clearDepth": 1,
-        "clearStencil": 0,
-        "executeOn": "EveryEvaluation",
-        "id": 91,
-        "name": "Clear Depth",
-        "textureId": 98,
-        "type": "Call"
-    },
-    {
-        "baseInstance": "0",
-        "callType": "Draw",
-        "checked": true,
-        "count": "36",
-        "executeOn": "EveryEvaluation",
-        "first": "0",
-        "id": 92,
-        "instanceCount": "1",
-        "name": "Draw",
-        "primitiveType": "Triangles",
-        "programId": 88,
-        "targetId": 100,
-        "type": "Call",
-        "vertexStreamId": 84
-    }
-]
+{
+    "autoMapBindings": true,
+    "autoMapLocations": true,
+    "autoSampledTextures": true,
+    "id": 897,
+    "items": [
+        {
+            "flipVertically": false,
+            "format": "SRGB8_Alpha8",
+            "height": "512",
+            "id": 93,
+            "name": "Color",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "flipVertically": false,
+            "format": "D16",
+            "height": "512",
+            "id": 98,
+            "name": "Depth",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "blendConstant": "#ff000000",
+            "cullMode": "Back",
+            "frontFace": "CCW",
+            "id": 100,
+            "items": [
+                {
+                    "blendAlphaDest": "Zero",
+                    "blendAlphaEq": "Add",
+                    "blendAlphaSource": "One",
+                    "blendColorDest": "Zero",
+                    "blendColorEq": "Add",
+                    "blendColorSource": "One",
+                    "colorWriteMask": 15,
+                    "id": 101,
+                    "level": 0,
+                    "name": "Color",
+                    "textureId": 93,
+                    "type": "Attachment"
+                },
+                {
+                    "depthClamp": false,
+                    "depthComparisonFunc": "Less",
+                    "depthOffsetConstant": 0,
+                    "depthOffsetSlope": 0,
+                    "depthWrite": true,
+                    "id": 102,
+                    "level": 0,
+                    "name": "Depth",
+                    "textureId": 98,
+                    "type": "Attachment"
+                }
+            ],
+            "logicOperation": "NoLogicOperation",
+            "name": "Target",
+            "polygonMode": "Fill",
+            "type": "Target"
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 895,
+            "name": "frame",
+            "type": "Binding",
+            "values": [
+                "(this.frame || 0) + 1"
+            ]
+        },
+        {
+            "executeOn": "ResetEvaluation",
+            "fileName": "math.js",
+            "id": 103,
+            "type": "Script"
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 77,
+            "name": "uModel",
+            "type": "Binding",
+            "values": [
+                "rotateY(frame / 60)"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression4x4",
+            "id": 78,
+            "name": "uView",
+            "type": "Binding",
+            "values": [
+                "1",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1",
+                "0",
+                "0",
+                "0",
+                "0",
+                "1",
+                "0",
+                "0.40",
+                "-0.75",
+                "-4.00",
+                "1"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 79,
+            "name": "uProjection",
+            "type": "Binding",
+            "values": [
+                "perspective(45, 1.0, 1, 100)"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Color",
+            "id": 900,
+            "name": "uAmbient",
+            "type": "Binding",
+            "values": [
+                "0.333333",
+                "0",
+                "0",
+                "0"
+            ]
+        },
+        {
+            "fileName": "planks.jpg",
+            "flipVertically": false,
+            "format": "SRGB8_Alpha8",
+            "height": "512",
+            "id": 104,
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "anisotropic": false,
+            "bindingType": "Sampler",
+            "borderColor": "#ff000000",
+            "comparisonFunc": "NoComparisonFunc",
+            "id": 99,
+            "magFilter": "Nearest",
+            "minFilter": "Nearest",
+            "name": "uTexture",
+            "textureId": 104,
+            "type": "Binding",
+            "wrapModeX": "Repeat",
+            "wrapModeY": "Repeat",
+            "wrapModeZ": "Repeat"
+        },
+        {
+            "anisotropic": false,
+            "bindingType": "Sampler",
+            "borderColor": "#ff000000",
+            "comparisonFunc": "NoComparisonFunc",
+            "id": 896,
+            "magFilter": "Linear",
+            "minFilter": "Linear",
+            "name": "sampleLinear",
+            "textureId": 104,
+            "type": "Binding",
+            "wrapModeX": "Repeat",
+            "wrapModeY": "Repeat",
+            "wrapModeZ": "Repeat"
+        },
+        {
+            "fileName": "cube_position_normal_texcoords.bin",
+            "id": 80,
+            "items": [
+                {
+                    "id": 890,
+                    "items": [
+                        {
+                            "count": 3,
+                            "dataType": "Float",
+                            "id": 891,
+                            "name": "position",
+                            "padding": 0,
+                            "type": "Field"
+                        },
+                        {
+                            "count": 3,
+                            "dataType": "Float",
+                            "id": 892,
+                            "name": "normal",
+                            "padding": 0,
+                            "type": "Field"
+                        },
+                        {
+                            "count": 2,
+                            "dataType": "Float",
+                            "id": 893,
+                            "name": "texcoords",
+                            "padding": 0,
+                            "type": "Field"
+                        }
+                    ],
+                    "name": "Vertex",
+                    "offset": "0",
+                    "rowCount": "36",
+                    "type": "Block"
+                }
+            ],
+            "type": "Buffer"
+        },
+        {
+            "id": 84,
+            "items": [
+                {
+                    "divisor": 0,
+                    "fieldId": 891,
+                    "id": 85,
+                    "name": "input_position",
+                    "normalize": false,
+                    "type": "Attribute"
+                },
+                {
+                    "divisor": 0,
+                    "fieldId": 892,
+                    "id": 86,
+                    "name": "input_normal",
+                    "normalize": false,
+                    "type": "Attribute"
+                },
+                {
+                    "divisor": 0,
+                    "fieldId": 893,
+                    "id": 87,
+                    "name": "input_texCoords",
+                    "normalize": false,
+                    "type": "Attribute"
+                }
+            ],
+            "name": "Stream",
+            "type": "Stream"
+        },
+        {
+            "id": 88,
+            "items": [
+                {
+                    "entryPoint": "VS",
+                    "fileName": "cube.fx",
+                    "id": 89,
+                    "language": "HLSL",
+                    "shaderType": "Vertex",
+                    "type": "Shader"
+                },
+                {
+                    "entryPoint": "PS",
+                    "fileName": "cube.fx",
+                    "id": 90,
+                    "language": "HLSL",
+                    "shaderType": "Fragment",
+                    "type": "Shader"
+                }
+            ],
+            "name": "Program",
+            "type": "Program"
+        },
+        {
+            "callType": "ClearTexture",
+            "checked": true,
+            "clearColor": "#ff464757",
+            "clearDepth": 1,
+            "clearStencil": 0,
+            "executeOn": "EveryEvaluation",
+            "id": 97,
+            "name": "Clear Color",
+            "textureId": 93,
+            "type": "Call"
+        },
+        {
+            "callType": "ClearTexture",
+            "checked": true,
+            "clearColor": "#ff000000",
+            "clearDepth": 1,
+            "clearStencil": 0,
+            "executeOn": "EveryEvaluation",
+            "id": 91,
+            "name": "Clear Depth",
+            "textureId": 98,
+            "type": "Call"
+        },
+        {
+            "baseInstance": "0",
+            "callType": "Draw",
+            "checked": true,
+            "count": "36",
+            "executeOn": "EveryEvaluation",
+            "first": "0",
+            "id": 92,
+            "instanceCount": "1",
+            "name": "Draw",
+            "primitiveType": "Triangles",
+            "programId": 88,
+            "targetId": 100,
+            "type": "Call",
+            "vertexStreamId": 84
+        }
+    ],
+    "name": "Session",
+    "renderer": "OpenGL",
+    "shaderCompiler": "glslang",
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "type": "Session",
+    "vulkanRulesRelaxed": true
+}

@@ -2,10 +2,9 @@
 matrix uModel;
 matrix uView;
 matrix uProjection;
+float3 uAmbient;
 
-[[vk::binding(1, 0)]]
 Texture2D uTexture;
-[[vk::binding(1, 1)]]
 SamplerState sampleLinear;
 
 struct VS_INPUT {
@@ -30,7 +29,7 @@ PS_INPUT VS(VS_INPUT input) {
 
 float4 PS(PS_INPUT input) : SV_Target {
   const float3 light = float3(-0.71, 0.71, 0);
-  float3 color = uTexture.Sample(sampleLinear, input.texCoords).rgb;
+  float3 color = uAmbient + uTexture.Sample(sampleLinear, input.texCoords).rgb;
   color *= 0.1 + 0.9 * max(dot(input.normal, light), 0.0);
   return float4(color, 1);
 }
