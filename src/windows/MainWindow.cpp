@@ -1043,7 +1043,7 @@ void MainWindow::handleThemeChanging(const Theme &theme)
     mEditorManager.setEditorToolBarPalette(palette);
 
     Singletons::sessionModel().setActiveItemColor(
-        theme.getColor(ThemeColor::Keyword));
+        theme.getColor(ThemeColor::BuiltinConstant));
 
     style()->unpolish(qApp);
     style()->polish(qApp);

@@ -348,9 +348,12 @@ void VKRenderSession::createCommandQueue()
 
                     // undo pushing commands, when there is not a single iteration
                     const auto &iteration = mGroupIterations[group->id];
-                    if (!iteration.iterations)
+                    if (!iteration.iterations) {
                         mCommandQueue->commands.resize(
                             iteration.commandQueueBeginIndex);
+                    } else {
+                        mUsedItems += group->id;
+                    }
                 } else {
                     addCommand([](BindingState &state) { state.pop(); });
                 }
