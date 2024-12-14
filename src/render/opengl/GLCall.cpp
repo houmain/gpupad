@@ -39,6 +39,34 @@ namespace {
         return result;
     }
 
+    std::pair<int, int> getValuesOffsetSize(
+        const std::vector<int> &uniformIndices,
+        const std::vector<int> &bindingIndices, int arraySize)
+    {
+        // bindings can only less specific (contain more values)
+        if (bindingIndices.size() >= uniformIndices.size())
+            return {};
+
+        // but the specified indices must match
+        if (!std::equal(bindingIndices.begin(), bindingIndices.end(),
+                uniformIndices.begin()))
+            return {};
+
+        auto offset = 0;
+        auto size = 1;
+        if (uniformIndices.size() == 2 && bindingIndices.size() == 1) {
+            offset += uniformIndices[1];
+        } else if (uniformIndices.size() == 2 && bindingIndices.size() == 0) {
+            offset += uniformIndices[0] * arraySize + uniformIndices[1];
+        } else if (uniformIndices.size() == 1 && bindingIndices.size() == 0) {
+            offset += uniformIndices[0];
+        } else {
+            Q_ASSERT(!"higher dimensions are not supported yet");
+            return {};
+        }
+        return { offset, size };
+    }
+
     bool isImageUniform(const GLProgram::Interface::Uniform &uniform)
     {
         switch (uniform.dataType) {
@@ -472,11 +500,14 @@ bool GLCall::applyBindings(const GLBindings &bindings,
 
     auto canRender = true;
     for (const auto &[name, bindingPoint] : interface.bufferBindingPoints) {
+
         if (auto bufferBinding = find(bindings.buffers, name)) {
-            mUsedItems += bufferBinding->bindingItemId;
             if (!applyBufferBinding(bindingPoint, *bufferBinding, scriptEngine))
                 canRender = false;
-        } else {
+            mUsedItems += bufferBinding->bindingItemId;
+
+        } else if (!applyDynamicBufferBindings(name, bindingPoint,
+                       bindings.uniforms, scriptEngine)) {
             mMessages +=
                 MessageList::insert(mCall.id, MessageType::BufferNotSet, name);
             canRender = false;
@@ -498,7 +529,8 @@ bool GLCall::applyBindings(const GLBindings &bindings,
         } else if (isSamplerUniform(uniform)) {
             if (auto samplerBinding = find(bindings.samplers, name)) {
                 mUsedItems += samplerBinding->bindingItemId;
-                if (!applySamplerBinding(uniform, *samplerBinding, textureUnit++))
+                if (!applySamplerBinding(uniform, *samplerBinding,
+                        textureUnit++))
                     canRender = false;
             } else {
                 mMessages += MessageList::insert(mCall.id,
@@ -509,7 +541,7 @@ bool GLCall::applyBindings(const GLBindings &bindings,
                 MessageType::OpenGLRequiresCombinedTextureSamplers);
             canRender = false;
         } else {
-            if (!applyUniformBinding(name, uniform, bindings.uniforms,
+            if (!applyUniformBindings(name, uniform, bindings.uniforms,
                     scriptEngine))
                 mMessages += MessageList::insert(mCall.id,
                     MessageType::UniformNotSet, getBaseName(name));
@@ -518,7 +550,7 @@ bool GLCall::applyBindings(const GLBindings &bindings,
     return canRender;
 }
 
-bool GLCall::applyUniformBinding(const QString &name,
+bool GLCall::applyUniformBindings(const QString &name,
     const GLProgram::Interface::Uniform &uniform,
     const std::map<QString, GLUniformBinding> &bindings,
     ScriptEngine &scriptEngine)
@@ -538,30 +570,11 @@ bool GLCall::applyUniformBinding(const QString &name,
     const auto baseName = getBaseName(name);
     for (const auto &[bindingName, binding] : bindings)
         if (getBaseName(bindingName) == baseName) {
-            // bindings can only less specific (contain more values)
             const auto bindingIndices = getArrayIndices(bindingName);
-            if (bindingIndices.size() >= uniformIndices.size())
+            const auto [offset, size] = getValuesOffsetSize(uniformIndices,
+                bindingIndices, uniform.size);
+            if (!size)
                 continue;
-
-            // but the specified indices must match
-            if (!std::equal(bindingIndices.begin(), bindingIndices.end(),
-                    uniformIndices.begin()))
-                continue;
-
-            auto offset = 0;
-            auto size = 1;
-            if (uniformIndices.size() == 2 && bindingIndices.size() == 1) {
-                offset += uniformIndices[1];
-            } else if (uniformIndices.size() == 2
-                && bindingIndices.size() == 0) {
-                offset += uniformIndices[0] * uniform.size + uniformIndices[1];
-            } else if (uniformIndices.size() == 1
-                && bindingIndices.size() == 0) {
-                offset += uniformIndices[0];
-            } else {
-                Q_ASSERT(!"higher dimensions are not supported yet");
-                continue;
-            }
             applyUniformBinding(uniform, binding, scriptEngine, offset, size);
             mUsedItems += binding.bindingItemId;
             bindingSet = true;
@@ -768,23 +781,149 @@ bool GLCall::applyBufferBinding(
 
     const auto bufferSize =
         (binding.stride ? rowCount * binding.stride : buffer.size());
-    if (!bufferBindingPoint.elements.empty()) {
-        auto expectedSize = 0;
-        for (const auto &[name, element] : bufferBindingPoint.elements)
-            expectedSize = std::max(expectedSize,
-                element.offset + element.size * element.arrayStride);
-
-        if (bufferSize < expectedSize) {
-            mMessages += MessageList::insert(binding.bindingItemId,
-                MessageType::UniformComponentMismatch,
-                QStringLiteral("(%1 bytes < %2 bytes)")
-                    .arg(bufferSize)
-                    .arg(expectedSize));
-            return false;
-        }
+    if (bufferSize < bufferBindingPoint.minimumSize) {
+        mMessages += MessageList::insert(binding.bindingItemId,
+            MessageType::UniformComponentMismatch,
+            QStringLiteral("(%1 bytes < %2 bytes)")
+                .arg(bufferSize)
+                .arg(bufferBindingPoint.minimumSize));
+        return false;
     }
     buffer.bindIndexedRange(bufferBindingPoint.target, bufferBindingPoint.index,
         offset, bufferSize, bufferBindingPoint.readonly);
+    return true;
+}
+
+bool GLCall::applyDynamicBufferBindings(const QString &bufferName,
+    const GLProgram::Interface::BufferBindingPoint &bufferBindingPoint,
+    const std::map<QString, GLUniformBinding> &bindings,
+    ScriptEngine &scriptEngine)
+{
+    auto &buffer = mProgram->getDynamicUniformBuffer(bufferName,
+        bufferBindingPoint.minimumSize);
+
+    auto memberSet = false;
+    auto membersNotSet = std::vector<QString>();
+    for (const auto &[name, member] : bufferBindingPoint.members) {
+        if (applyBufferMemberBindings(buffer, name, member, bindings,
+                scriptEngine)) {
+            memberSet = true;
+        } else {
+            membersNotSet.push_back(name);
+        }
+    }
+    if (!memberSet && !isGlobalUniformBlockName(bufferName))
+        return false;
+
+    applyBufferBinding(bufferBindingPoint,
+        GLBufferBinding{ .name = bufferName, .buffer = &buffer }, scriptEngine);
+
+    for (const auto &memberName : membersNotSet)
+        mMessages += MessageList::insert(mCall.id, MessageType::UniformNotSet,
+            memberName);
+    return true;
+}
+
+bool GLCall::applyBufferMemberBindings(GLBuffer &buffer, const QString &name,
+    const GLProgram::Interface::BufferMember &member,
+    const std::map<QString, GLUniformBinding> &bindings,
+    ScriptEngine &scriptEngine)
+{
+    if (const auto binding = find(bindings, name)) {
+        applyBufferMemberBinding(buffer, member, *binding, scriptEngine);
+        mUsedItems += binding->bindingItemId;
+        return true;
+    }
+
+    // compare array elements also by basename
+    const auto uniformIndices = getArrayIndices(name);
+    if (uniformIndices.empty())
+        return false;
+
+    auto bindingSet = false;
+    const auto baseName = getBaseName(name);
+    for (const auto &[bindingName, binding] : bindings)
+        if (getBaseName(bindingName) == baseName) {
+            const auto bindingIndices = getArrayIndices(bindingName);
+            const auto [offset, size] = getValuesOffsetSize(uniformIndices,
+                bindingIndices, member.size);
+            if (!size)
+                continue;
+            applyBufferMemberBinding(buffer, member, binding, scriptEngine,
+                offset, size);
+            mUsedItems += binding.bindingItemId;
+            bindingSet = true;
+        }
+
+    return bindingSet;
+}
+
+bool GLCall::applyBufferMemberBinding(GLBuffer &buffer,
+    const GLProgram::Interface::BufferMember &member,
+    const GLUniformBinding &binding, ScriptEngine &scriptEngine, int offset,
+    int size)
+{
+    auto &data = buffer.getWriteableData();
+    const auto itemId = binding.bindingItemId;
+    if (size < 0)
+        size = member.size;
+
+    auto write = [&](const auto &values) {
+        using T = std::decay_t<decltype(values)>::value_type;
+        std::memcpy(data.data() + member.offset, values.data(),
+            values.size() * sizeof(T));
+    };
+
+    switch (member.dataType) {
+#define ADD(TYPE, DATATYPE, COUNT)                                      \
+    case TYPE:                                                          \
+        write(getValues<DATATYPE>(scriptEngine, binding.values, itemId, \
+            COUNT * size, mMessages, COUNT * offset));                  \
+        break
+
+#define ADD_MATRIX(TYPE, DATATYPE, COUNT) ADD(TYPE, DATATYPE, COUNT)
+
+        ADD(GL_FLOAT, GLfloat, 1);
+        ADD(GL_FLOAT_VEC2, GLfloat, 2);
+        ADD(GL_FLOAT_VEC3, GLfloat, 3);
+        ADD(GL_FLOAT_VEC4, GLfloat, 4);
+        ADD(GL_DOUBLE, GLdouble, 1);
+        ADD(GL_DOUBLE_VEC2, GLdouble, 2);
+        ADD(GL_DOUBLE_VEC3, GLdouble, 3);
+        ADD(GL_DOUBLE_VEC4, GLdouble, 4);
+        ADD(GL_INT, GLint, 1);
+        ADD(GL_INT_VEC2, GLint, 2);
+        ADD(GL_INT_VEC3, GLint, 3);
+        ADD(GL_INT_VEC4, GLint, 4);
+        ADD(GL_UNSIGNED_INT, GLuint, 1);
+        ADD(GL_UNSIGNED_INT_VEC2, GLuint, 2);
+        ADD(GL_UNSIGNED_INT_VEC3, GLuint, 3);
+        ADD(GL_UNSIGNED_INT_VEC4, GLuint, 4);
+        ADD(GL_BOOL, GLint, 1);
+        ADD(GL_BOOL_VEC2, GLint, 2);
+        ADD(GL_BOOL_VEC3, GLint, 3);
+        ADD(GL_BOOL_VEC4, GLint, 4);
+        ADD_MATRIX(GL_FLOAT_MAT2, GLfloat, 4);
+        ADD_MATRIX(GL_FLOAT_MAT3, GLfloat, 9);
+        ADD_MATRIX(GL_FLOAT_MAT4, GLfloat, 16);
+        ADD_MATRIX(GL_FLOAT_MAT2x3, GLfloat, 6);
+        ADD_MATRIX(GL_FLOAT_MAT3x2, GLfloat, 6);
+        ADD_MATRIX(GL_FLOAT_MAT2x4, GLfloat, 8);
+        ADD_MATRIX(GL_FLOAT_MAT4x2, GLfloat, 8);
+        ADD_MATRIX(GL_FLOAT_MAT3x4, GLfloat, 12);
+        ADD_MATRIX(GL_FLOAT_MAT4x3, GLfloat, 12);
+        ADD_MATRIX(GL_DOUBLE_MAT2, GLdouble, 4);
+        ADD_MATRIX(GL_DOUBLE_MAT3, GLdouble, 9);
+        ADD_MATRIX(GL_DOUBLE_MAT4, GLdouble, 16);
+        ADD_MATRIX(GL_DOUBLE_MAT2x3, GLdouble, 6);
+        ADD_MATRIX(GL_DOUBLE_MAT3x2, GLdouble, 6);
+        ADD_MATRIX(GL_DOUBLE_MAT2x4, GLdouble, 8);
+        ADD_MATRIX(GL_DOUBLE_MAT4x2, GLdouble, 8);
+        ADD_MATRIX(GL_DOUBLE_MAT3x4, GLdouble, 12);
+        ADD_MATRIX(GL_DOUBLE_MAT4x3, GLdouble, 12);
+#undef ADD
+#undef ADD_MATRIX
+    }
     return true;
 }
 

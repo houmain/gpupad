@@ -21,6 +21,18 @@ namespace {
                 return true;
         return false;
     }
+
+    QString getArrayName(const QString &name)
+    {
+        if (name.endsWith("[0]"))
+            return name.left(name.size() - 3);
+        return {};
+    }
+
+    QString getElementName(const QString &arrayName, int index)
+    {
+        return QString("%1[%2]").arg(arrayName).arg(index);
+    }
 } // namespace
 
 GLProgram::GLProgram(const Program &program, const Session &session)
@@ -139,16 +151,15 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
 
         if (location >= 0) {
             Q_ASSERT(dataType);
-            interface.uniforms[name] = {
+            const auto arrayName = getArrayName(name);
+            interface.uniforms[arrayName.isEmpty() ? name : arrayName] = {
                 .location = location,
                 .dataType = dataType,
                 .size = size,
             };
-            if (name.endsWith("[0]")) {
-                const auto baseName = name.left(name.size() - 3);
-                for (auto j = 1; j < size; ++j) {
-                    const auto elementName =
-                        QString("%1[%2]").arg(baseName).arg(j);
+            if (!arrayName.isEmpty())
+                for (auto j = 0; j < size; ++j) {
+                    const auto elementName = getElementName(arrayName, j);
                     const auto location = gl.glGetUniformLocation(program,
                         qPrintable(elementName));
                     Q_ASSERT(location >= 0);
@@ -158,7 +169,6 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
                         .size = 1,
                     };
                 }
-            }
         }
 
 #if GL_VERSION_4_2
@@ -190,24 +200,31 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
     for (auto i = 0u; i < static_cast<GLuint>(uniformBlocks); ++i) {
         gl.glGetActiveUniformBlockName(program, i,
             static_cast<GLsizei>(buffer.size()), &nameLength, buffer.data());
-        const auto name = QString(buffer.data());
+        const auto bufferName = QString(buffer.data());
         const auto uniformBlockIndex =
-            gl.glGetUniformBlockIndex(program, qPrintable(name));
+            gl.glGetUniformBlockIndex(program, qPrintable(bufferName));
         const auto uniformBlockBinding = i;
         gl.glUniformBlockBinding(program, uniformBlockIndex,
             uniformBlockBinding);
 
         gl.glGetActiveUniformBlockiv(program, i,
             GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniforms);
-        auto elements = std::map<QString, Interface::BufferElement>();
+        auto members = std::map<QString, Interface::BufferMember>();
         auto uniformIndices = std::vector<GLint>(static_cast<size_t>(uniforms));
         gl.glGetActiveUniformBlockiv(program, i,
             GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, uniformIndices.data());
+        auto minimumSize = 0;
         for (GLuint index : uniformIndices) {
             gl.glGetActiveUniform(program, index,
                 static_cast<GLsizei>(buffer.size()), &nameLength, &size,
                 &dataType, buffer.data());
-            const auto name = QString(buffer.data());
+
+            // fully qualify buffer name (glslang does by default, driver not)
+            auto memberName = QString(buffer.data());
+            if (!memberName.startsWith(bufferName) + '.')
+                memberName = bufferName + '.' + memberName;
+            removeGlobalUniformBlockName(buffer.data());
+
             auto offset = GLint{};
             gl.glGetActiveUniformsiv(program, 1, &index, GL_UNIFORM_OFFSET,
                 &offset);
@@ -220,7 +237,8 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
             auto isRowMajor = GLint{};
             gl.glGetActiveUniformsiv(program, 1, &index,
                 GL_UNIFORM_IS_ROW_MAJOR, &isRowMajor);
-            elements[name] = {
+            const auto arrayName = getArrayName(memberName);
+            members[arrayName.isEmpty() ? memberName : arrayName] = {
                 .dataType = dataType,
                 .size = size,
                 .offset = offset,
@@ -228,14 +246,30 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
                 .matrixStride = matrixStride,
                 .isRowMajor = (isRowMajor != 0),
             };
+            if (!arrayName.isEmpty())
+                for (auto j = 0; j < size; ++j) {
+                    const auto elementName = getElementName(arrayName, j);
+                    members[elementName] = {
+                        .dataType = dataType,
+                        .size = 1,
+                        .offset = offset + arrayStride * j,
+                        .arrayStride = arrayStride,
+                        .matrixStride = matrixStride,
+                        .isRowMajor = (isRowMajor != 0),
+                    };
+                }
+            minimumSize = std::max(minimumSize, offset + size * arrayStride);
         }
 
-        interface.bufferBindingPoints[name] = {
-            .target = GL_UNIFORM_BUFFER,
-            .index = uniformBlockBinding,
-            .elements = std::move(elements),
-            .readonly = true,
-        };
+        Q_ASSERT(minimumSize);
+        if (minimumSize)
+            interface.bufferBindingPoints[bufferName] = {
+                .target = GL_UNIFORM_BUFFER,
+                .index = uniformBlockBinding,
+                .members = std::move(members),
+                .minimumSize = minimumSize,
+                .readonly = true,
+            };
     }
 
     auto attributes = GLint{};
@@ -349,4 +383,12 @@ void GLProgram::applyPrintfBindings()
     auto &gl = GLContext::currentContext();
     gl.glBindBufferBase(mPrintfBufferBindingPoint.target,
         mPrintfBufferBindingPoint.index, mPrintf.bufferObject());
+}
+
+GLBuffer &GLProgram::getDynamicUniformBuffer(const QString &name, int size)
+{
+    auto it = mDynamicUniformBuffers.find(name);
+    if (it == mDynamicUniformBuffers.end())
+        it = mDynamicUniformBuffers.emplace(name, size).first;
+    return it->second;
 }

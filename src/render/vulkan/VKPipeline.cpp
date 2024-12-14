@@ -15,16 +15,10 @@ namespace {
         return (it == container.end() ? nullptr : &it->second);
     }
 
-    bool isDefaultUniformBlock(const char *name)
-    {
-        return (name == QStringLiteral("gl_DefaultUniformBlock")
-            || name == QStringLiteral("$Global"));
-    }
-
     QString getBufferMemberFullName(const SpvReflectBlockVariable &block,
         const SpvReflectBlockVariable &member)
     {
-        if (isDefaultUniformBlock(block.type_description->type_name))
+        if (isGlobalUniformBlockName(block.type_description->type_name))
             return member.name;
         return QStringLiteral("%1.%2")
             .arg(block.type_description->type_name)
@@ -353,8 +347,8 @@ void VKPipeline::updateDefaultUniformBlock(VKContext &context,
         auto descriptor =
             std::add_pointer_t<const SpvReflectDescriptorBinding>{};
         for (auto i = 0u; i < interface->descriptor_binding_count; ++i)
-            if (isDefaultUniformBlock(interface->descriptor_bindings[i]
-                                          .type_description->type_name)) {
+            if (isGlobalUniformBlockName(interface->descriptor_bindings[i]
+                                             .type_description->type_name)) {
                 descriptor = &interface->descriptor_bindings[i];
                 break;
             }
@@ -509,7 +503,8 @@ bool VKPipeline::updateBindings(VKContext &context)
 
             switch (desc.descriptor_type) {
             case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-                if (isDefaultUniformBlock(desc.type_description->type_name)) {
+                if (isGlobalUniformBlockName(
+                        desc.type_description->type_name)) {
                     auto &block =
                         getDefaultUniformBlock(desc.set, desc.binding);
                     Q_ASSERT(block.buffer.isValid());

@@ -69,6 +69,16 @@
                     "bindingType": "Uniform",
                     "editor": "Expression",
                     "id": 11,
+                    "name": "u_values_0[0][0]",
+                    "type": "Binding",
+                    "values": [
+                        "1.2"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 904,
                     "name": "u_values_0[1][1]",
                     "type": "Binding",
                     "values": [
@@ -127,8 +137,8 @@
                     "type": "Binding"
                 }
             ],
-            "iterations": "1",
-            "name": "set buffer block",
+            "iterations": "0",
+            "name": "set buffer block (disabled)",
             "type": "Group"
         },
         {
@@ -142,10 +152,41 @@
                     "name": "u_block.values_2",
                     "type": "Binding",
                     "values": [
-                        "1.1",
-                        "2.1",
+                        "1.0",
+                        "2.0",
+                        "3.0",
+                        "4.0"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 902,
+                    "name": "u_block.values_2[1]",
+                    "type": "Binding",
+                    "values": [
                         "3.1",
                         "4.1"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 22,
+                    "name": "u_block.values_2[0][0]",
+                    "type": "Binding",
+                    "values": [
+                        "1.2"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 905,
+                    "name": "u_block.values_2[1][1]",
+                    "type": "Binding",
+                    "values": [
+                        "4.2"
                     ]
                 },
                 {
@@ -155,15 +196,26 @@
                     "name": "u_block.values_3",
                     "type": "Binding",
                     "values": [
-                        "1.1",
-                        "2.1",
+                        "1.0",
+                        "2.0",
+                        "3.0",
+                        "4.0"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 903,
+                    "name": "u_block.values_3[1]",
+                    "type": "Binding",
+                    "values": [
                         "3.1",
                         "4.1"
                     ]
                 }
             ],
             "iterations": "1",
-            "name": "set block elements (not yet)",
+            "name": "set block elements",
             "type": "Group"
         },
         {

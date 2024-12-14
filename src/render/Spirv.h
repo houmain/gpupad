@@ -57,3 +57,8 @@ public:
 private:
     std::vector<uint32_t> mSpirv;
 };
+
+constexpr const char globalUniformBlockName[] { "$Global" };
+bool isGlobalUniformBlockName(const char* name);
+bool isGlobalUniformBlockName(QStringView name);
+QString removeGlobalUniformBlockName(QString string);

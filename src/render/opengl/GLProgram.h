@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GLShader.h"
+#include "GLBuffer.h"
 #include "scripting/ScriptEngine.h"
 #include <map>
 
@@ -16,7 +17,7 @@ public:
             GLint size;
         };
 
-        struct BufferElement
+        struct BufferMember
         {
             GLenum dataType;
             GLint size;
@@ -30,7 +31,8 @@ public:
         {
             GLenum target;
             GLuint index;
-            std::map<QString, BufferElement> elements;
+            std::map<QString, BufferMember> members;
+            int minimumSize;
             bool readonly;
         };
 
@@ -55,6 +57,7 @@ public:
     const Session &session() const { return mSession; }
     const Interface &interface() const { return mInterface; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
+    GLBuffer &getDynamicUniformBuffer(const QString &name, int size);
 
 private:
     bool compileShaders();
@@ -73,4 +76,5 @@ private:
     GLPrintf mPrintf;
     MessagePtrSet mPrintfMessages;
     Interface::BufferBindingPoint mPrintfBufferBindingPoint{};
+    std::map<QString, GLBuffer> mDynamicUniformBuffers;
 };

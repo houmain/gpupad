@@ -6,6 +6,7 @@
 class GLBuffer
 {
 public:
+    explicit GLBuffer(int size);
     GLBuffer(const Buffer &buffer, ScriptEngine &scriptEngine);
     void updateUntitledFilename(const GLBuffer &rhs);
     bool operator==(const GLBuffer &rhs) const;
@@ -16,6 +17,7 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     int size() const { return mSize; }
 
+    QByteArray &getWriteableData();
     void clear();
     void copy(GLBuffer &source);
     bool swap(GLBuffer &other);

@@ -16,6 +16,8 @@ int getBufferSize(const Buffer &buffer, ScriptEngine &scriptEngine,
     return size;
 }
 
+GLBuffer::GLBuffer(int size) : mSize(size) { }
+
 GLBuffer::GLBuffer(const Buffer &buffer, ScriptEngine &scriptEngine)
     : mItemId(buffer.id)
     , mFileName(buffer.fileName)
@@ -42,6 +44,14 @@ bool GLBuffer::operator==(const GLBuffer &rhs) const
 {
     return std::tie(mFileName, mSize, mMessages)
         == std::tie(rhs.mFileName, rhs.mSize, rhs.mMessages);
+}
+
+QByteArray &GLBuffer::getWriteableData()
+{
+    Q_ASSERT(mFileName.isEmpty());
+    mData.resize(mSize);
+    mSystemCopyModified = true;
+    return mData;
 }
 
 void GLBuffer::clear()

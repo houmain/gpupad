@@ -80,7 +80,7 @@ public:
     ItemId itemId() const { return mCall.id; }
     TimerQueryPtr timerQuery() const { return mTimerQuery; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
-    GLProgram* program() { return mProgram; }
+    GLProgram *program() { return mProgram; }
 
     void setProgram(GLProgram *program);
     void setTarget(GLTarget *target);
@@ -103,7 +103,7 @@ private:
     void executeCopyBuffer(MessagePtrSet &messages);
     void executeSwapTextures(MessagePtrSet &messages);
     void executeSwapBuffers(MessagePtrSet &messages);
-    bool applyUniformBinding(const QString &name,
+    bool applyUniformBindings(const QString &name,
         const GLProgram::Interface::Uniform &uniform,
         const std::map<QString, GLUniformBinding> &bindings,
         ScriptEngine &scriptEngine);
@@ -117,6 +117,18 @@ private:
     bool applyBufferBinding(
         const GLProgram::Interface::BufferBindingPoint &bufferBindingPoint,
         const GLBufferBinding &binding, ScriptEngine &scriptEngine);
+    bool applyDynamicBufferBindings(const QString &bufferName,
+        const GLProgram::Interface::BufferBindingPoint &bufferBindingPoint,
+        const std::map<QString, GLUniformBinding> &bindings,
+        ScriptEngine &scriptEngine);
+    bool applyBufferMemberBindings(GLBuffer &buffer, const QString &name,
+        const GLProgram::Interface::BufferMember &member,
+        const std::map<QString, GLUniformBinding> &bindings,
+        ScriptEngine &scriptEngine);
+    bool applyBufferMemberBinding(GLBuffer &buffer,
+        const GLProgram::Interface::BufferMember &member,
+        const GLUniformBinding &binding, ScriptEngine &scriptEngine,
+        int offset = -1, int size = -1);
     bool bindVertexStream();
     void unbindVertexStream();
     GLenum getIndexType() const;

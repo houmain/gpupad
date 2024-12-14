@@ -11,7 +11,7 @@
 #include <glslang/SPIRV/disassemble.h>
 
 #if __has_include(<glslang/MachineIndependent/LiveTraverser.h>)
-#include <glslang/MachineIndependent/LiveTraverser.h>
+#  include <glslang/MachineIndependent/LiveTraverser.h>
 #endif
 
 #include <spirv_glsl.hpp>
@@ -173,8 +173,10 @@ namespace {
 
         shader.setAutoMapBindings(session.autoMapBindings);
         shader.setAutoMapLocations(session.autoMapLocations);
-        if (session.vulkanRulesRelaxed)
+        if (session.vulkanRulesRelaxed) {
             shader.setEnvInputVulkanRulesRelaxed();
+            shader.setGlobalUniformBlockName(globalUniformBlockName);
+        }
         shader.setHlslIoMapping(language == Shader::Language::HLSL);
         if (session.autoSampledTextures)
             shader.setTextureSamplerTransformMode(
@@ -192,7 +194,8 @@ namespace {
             void visitSymbol(glslang::TIntermSymbol *base) override
             {
                 if (base->getQualifier().isUniformOrBuffer()
-                    && base->getAccessName() == "$Global") {
+                    && isGlobalUniformBlockName(
+                        base->getAccessName().c_str())) {
                     auto &qualifier = base->getWritableType().getQualifier();
                     // TODO: simply set to something reasonable high for now
                     qualifier.layoutSet = 4;
@@ -208,6 +211,31 @@ namespace {
 #endif
     }
 } // namespace
+
+bool isGlobalUniformBlockName(const char *name)
+{
+    return (name && !std::strcmp(name, globalUniformBlockName));
+}
+
+bool isGlobalUniformBlockName(QStringView name)
+{
+    const auto size = sizeof(globalUniformBlockName) - 1;
+    if (name.size() != size)
+        return false;
+    for (auto i = 0u; i < size; ++i)
+        if (name[i] != globalUniformBlockName[i])
+            return false;
+    return true;
+}
+
+QString removeGlobalUniformBlockName(QString string)
+{
+    if (string.startsWith(globalUniformBlockName))
+        return string.mid(sizeof(globalUniformBlockName));
+    return string;
+}
+
+//-------------------------------------------------------------------------
 
 Spirv::Interface::Interface(const std::vector<uint32_t> &spirv)
 {

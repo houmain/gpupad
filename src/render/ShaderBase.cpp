@@ -53,18 +53,6 @@ namespace {
         }
     }
 
-    void insertAfterExtensions(QString &source, const QString &text) 
-    {
-        static const auto regex =
-            QRegularExpression("^(?!.*#|.*\\/|\\s+).*$",
-                QRegularExpression::MultilineOption);
-
-        // find first line which is not a comment, directive or empty
-        auto match = regex.match(source);
-        auto position = (match.hasMatch() ? match.capturedStart() : 0);
-        source.insert(position, text);
-    }
-
     int countLines(const QString &source, int offset = -1)
     {
         auto end = source.size();
@@ -75,6 +63,17 @@ namespace {
             if (source[i] == '\n')
                 ++line;
         return line;
+    }
+
+    void insertAfterExtensions(QString &source, const QString &text)
+    {
+        // find first line which is not a comment, directive or empty
+        static const auto regex = QRegularExpression("^(?!.*#|.*\\/|\\s+).*$",
+            QRegularExpression::MultilineOption);
+        const auto match = regex.match(source);
+        const auto position = (match.hasMatch() ? match.capturedStart() : 0);
+        const auto lineNo = countLines(source, position);
+        source.insert(position, text + QString("#line %1 0\n").arg(lineNo));
     }
 
     QString substituteIncludes(QString source, const QString &fileName,

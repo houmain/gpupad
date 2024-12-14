@@ -226,7 +226,7 @@
                     "divisor": 0,
                     "fieldId": 891,
                     "id": 85,
-                    "name": "input_position",
+                    "name": "input.position",
                     "normalize": false,
                     "type": "Attribute"
                 },
@@ -234,7 +234,7 @@
                     "divisor": 0,
                     "fieldId": 892,
                     "id": 86,
-                    "name": "input_normal",
+                    "name": "input.normal",
                     "normalize": false,
                     "type": "Attribute"
                 },
@@ -242,7 +242,7 @@
                     "divisor": 0,
                     "fieldId": 893,
                     "id": 87,
-                    "name": "input_texCoords",
+                    "name": "input.texCoords",
                     "normalize": false,
                     "type": "Attribute"
                 }
