@@ -121,14 +121,6 @@ int main(int argc, char *argv[])
     QApplication::setEffectEnabled(Qt::UI_AnimateTooltip, false);
     QApplication::setEffectEnabled(Qt::UI_FadeTooltip, true);
 
-#if defined(_WIN32)
-    // workaround for consistent font size on Windows
-    auto ratio = QWidget().devicePixelRatio();
-    auto font = QApplication::font("QMenu");
-    font.setPointSizeF(font.pointSizeF() / ratio);
-    app.setFont(font);
-#endif
-
     auto instance = SingleApplication(true, singleApplicationMode);
     auto window = MainWindow();
 
