@@ -231,6 +231,8 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
     if (!computePass.isValid())
         return;
 
+    mPipeline->updatePushConstants(computePass, scriptEngine);
+
     computePass.dispatchCompute(KDGpu::ComputeCommand{
         .workGroupX = evaluateUInt(scriptEngine, mCall.workGroupsX),
         .workGroupY = evaluateUInt(scriptEngine, mCall.workGroupsY),

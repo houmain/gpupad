@@ -74,13 +74,14 @@ public:
     bool createGraphics(VKContext &context,
         KDGpu::PrimitiveOptions &primitiveOptions);
     bool createCompute(VKContext &context);
-    void updatePushConstants(KDGpu::RenderPassCommandRecorder &renderPass,
-        ScriptEngine &scriptEngine);
-    void updateDefaultUniformBlock(VKContext &context,
-        ScriptEngine &scriptEngine);
-    bool updateBindings(VKContext &context);
     KDGpu::RenderPassCommandRecorder beginRenderPass(VKContext &context);
     KDGpu::ComputePassCommandRecorder beginComputePass(VKContext &context);
+    void updatePushConstants(KDGpu::RenderPassCommandRecorder &renderPass,
+        ScriptEngine &scriptEngine);
+    void updatePushConstants(KDGpu::ComputePassCommandRecorder &computePass,
+        ScriptEngine &scriptEngine);
+    void updateDefaultUniformBlock(VKContext &context, ScriptEngine &scriptEngine);
+    bool updateBindings(VKContext &context);
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
@@ -107,6 +108,7 @@ private:
     bool createLayout(VKContext &context);
     void updateUniformBlockData(std::byte *bufferData,
         const SpvReflectBlockVariable &block, ScriptEngine &scriptEngine);
+    bool updatePushConstants(ScriptEngine &scriptEngine);
 
     ItemId mItemId;
     VKProgram &mProgram;

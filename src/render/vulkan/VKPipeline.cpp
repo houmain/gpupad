@@ -324,11 +324,10 @@ void VKPipeline::updateUniformBlockData(std::byte *bufferData,
     }
 }
 
-void VKPipeline::updatePushConstants(
-    KDGpu::RenderPassCommandRecorder &renderPass, ScriptEngine &scriptEngine)
+bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
 {
     if (mPushConstantRange.size == 0)
-        return;
+        return false;
 
     for (const auto &[stage, interface] : mProgram.interface()) {
         for (auto i = 0u; i < interface->push_constant_block_count; ++i) {
@@ -337,9 +336,22 @@ void VKPipeline::updatePushConstants(
                 scriptEngine);
         }
     }
-    renderPass.pushConstant(mPushConstantRange, mPushConstantData.data());
+    return true;
 }
 
+void VKPipeline::updatePushConstants(
+    KDGpu::RenderPassCommandRecorder &renderPass, ScriptEngine &scriptEngine)
+{
+    if (updatePushConstants(scriptEngine))
+        renderPass.pushConstant(mPushConstantRange, mPushConstantData.data());
+}
+
+void VKPipeline::updatePushConstants(
+    KDGpu::ComputePassCommandRecorder &computePass, ScriptEngine &scriptEngine)
+{
+    if (updatePushConstants(scriptEngine))
+        computePass.pushConstant(mPushConstantRange, mPushConstantData.data());
+}
 void VKPipeline::updateDefaultUniformBlock(VKContext &context,
     ScriptEngine &scriptEngine)
 {
