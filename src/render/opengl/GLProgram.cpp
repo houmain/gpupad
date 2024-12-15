@@ -33,6 +33,65 @@ namespace {
     {
         return QString("%1[%2]").arg(arrayName).arg(index);
     }
+
+    QString removeInstanceName(const QString &bufferName)
+    {
+        if (auto index = bufferName.indexOf('.'); index >= 0)
+            return bufferName.left(index);
+        return bufferName;
+    }
+
+    QString removePrefix(const QString &string, const QString &prefix)
+    {
+        if (string.startsWith(prefix))
+            return string.mid(prefix.size());
+        return string;
+    }
+
+    int getDataTypeSize(GLenum dataType)
+    {
+        switch (dataType) {
+        case GL_FLOAT:             return 1 * sizeof(GLfloat);
+        case GL_FLOAT_VEC2:        return 2 * sizeof(GLfloat);
+        case GL_FLOAT_VEC3:        return 3 * sizeof(GLfloat);
+        case GL_FLOAT_VEC4:        return 4 * sizeof(GLfloat);
+        case GL_DOUBLE:            return 1 * sizeof(GLdouble);
+        case GL_DOUBLE_VEC2:       return 2 * sizeof(GLdouble);
+        case GL_DOUBLE_VEC3:       return 3 * sizeof(GLdouble);
+        case GL_DOUBLE_VEC4:       return 4 * sizeof(GLdouble);
+        case GL_INT:               return 1 * sizeof(GLint);
+        case GL_INT_VEC2:          return 2 * sizeof(GLint);
+        case GL_INT_VEC3:          return 3 * sizeof(GLint);
+        case GL_INT_VEC4:          return 4 * sizeof(GLint);
+        case GL_UNSIGNED_INT:      return 1 * sizeof(GLuint);
+        case GL_UNSIGNED_INT_VEC2: return 2 * sizeof(GLuint);
+        case GL_UNSIGNED_INT_VEC3: return 3 * sizeof(GLuint);
+        case GL_UNSIGNED_INT_VEC4: return 4 * sizeof(GLuint);
+        case GL_BOOL:              return 1 * sizeof(GLboolean);
+        case GL_BOOL_VEC2:         return 2 * sizeof(GLboolean);
+        case GL_BOOL_VEC3:         return 3 * sizeof(GLboolean);
+        case GL_BOOL_VEC4:         return 4 * sizeof(GLboolean);
+        case GL_FLOAT_MAT2:        return 2 * 2 * sizeof(GLfloat);
+        case GL_FLOAT_MAT3:        return 3 * 3 * sizeof(GLfloat);
+        case GL_FLOAT_MAT4:        return 4 * 4 * sizeof(GLfloat);
+        case GL_FLOAT_MAT2x3:      return 2 * 3 * sizeof(GLfloat);
+        case GL_FLOAT_MAT2x4:      return 2 * 4 * sizeof(GLfloat);
+        case GL_FLOAT_MAT3x2:      return 3 * 2 * sizeof(GLfloat);
+        case GL_FLOAT_MAT3x4:      return 3 * 4 * sizeof(GLfloat);
+        case GL_FLOAT_MAT4x2:      return 4 * 2 * sizeof(GLfloat);
+        case GL_FLOAT_MAT4x3:      return 4 * 3 * sizeof(GLfloat);
+        case GL_DOUBLE_MAT2:       return 2 * 2 * sizeof(GLdouble);
+        case GL_DOUBLE_MAT3:       return 3 * 3 * sizeof(GLdouble);
+        case GL_DOUBLE_MAT4:       return 4 * 4 * sizeof(GLdouble);
+        case GL_DOUBLE_MAT2x3:     return 2 * 3 * sizeof(GLdouble);
+        case GL_DOUBLE_MAT2x4:     return 2 * 4 * sizeof(GLdouble);
+        case GL_DOUBLE_MAT3x2:     return 3 * 2 * sizeof(GLdouble);
+        case GL_DOUBLE_MAT3x4:     return 3 * 4 * sizeof(GLdouble);
+        case GL_DOUBLE_MAT4x2:     return 4 * 2 * sizeof(GLdouble);
+        case GL_DOUBLE_MAT4x3:     return 4 * 3 * sizeof(GLdouble);
+        }
+        return 0;
+    }
 } // namespace
 
 GLProgram::GLProgram(const Program &program, const Session &session)
@@ -71,7 +130,9 @@ bool GLProgram::link()
         mFailed = true;
         return false;
     }
+
     fillInterface(mProgramObject, mInterface);
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
 
     // remove printf binding point from interface
     const auto name = mPrintf.bufferBindingName();
@@ -202,28 +263,30 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
             static_cast<GLsizei>(buffer.size()), &nameLength, buffer.data());
         const auto bufferName = QString(buffer.data());
         const auto uniformBlockIndex =
-            gl.glGetUniformBlockIndex(program, qPrintable(bufferName));
+            gl.glGetUniformBlockIndex(program, buffer.data());
         const auto uniformBlockBinding = i;
         gl.glUniformBlockBinding(program, uniformBlockIndex,
             uniformBlockBinding);
-
         gl.glGetActiveUniformBlockiv(program, i,
             GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &uniforms);
-        auto members = std::map<QString, Interface::BufferMember>();
         auto uniformIndices = std::vector<GLint>(static_cast<size_t>(uniforms));
         gl.glGetActiveUniformBlockiv(program, i,
             GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, uniformIndices.data());
+
+        // glslang generates block_name.instance_name
+        const auto blockName = removeInstanceName(bufferName);
+        auto members = std::map<QString, Interface::BufferMember>();
         auto minimumSize = 0;
         for (GLuint index : uniformIndices) {
             gl.glGetActiveUniform(program, index,
                 static_cast<GLsizei>(buffer.size()), &nameLength, &size,
                 &dataType, buffer.data());
 
-            // fully qualify buffer name (glslang does by default, driver not)
+            // fully qualify buffer member name (glslang does already, driver not)
             auto memberName = QString(buffer.data());
-            if (!memberName.startsWith(bufferName) + '.')
-                memberName = bufferName + '.' + memberName;
-            removeGlobalUniformBlockName(buffer.data());
+            memberName = removePrefix(memberName, bufferName + '.');
+            memberName = blockName + '.' + memberName;
+            memberName = removeGlobalUniformBlockName(memberName);
 
             auto offset = GLint{};
             gl.glGetActiveUniformsiv(program, 1, &index, GL_UNIFORM_OFFSET,
@@ -231,6 +294,8 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
             auto arrayStride = GLint{};
             gl.glGetActiveUniformsiv(program, 1, &index,
                 GL_UNIFORM_ARRAY_STRIDE, &arrayStride);
+            if (!arrayStride)
+                arrayStride = getDataTypeSize(dataType);
             auto matrixStride = GLint{};
             gl.glGetActiveUniformsiv(program, 1, &index,
                 GL_UNIFORM_MATRIX_STRIDE, &matrixStride);
@@ -263,7 +328,7 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
 
         Q_ASSERT(minimumSize);
         if (minimumSize)
-            interface.bufferBindingPoints[bufferName] = {
+            interface.bufferBindingPoints[blockName] = {
                 .target = GL_UNIFORM_BUFFER,
                 .index = uniformBlockBinding,
                 .members = std::move(members),

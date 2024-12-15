@@ -26,10 +26,10 @@
                     "name": "u_values_0",
                     "type": "Binding",
                     "values": [
-                        "1",
-                        "2",
-                        "3",
-                        "4"
+                        "1.0",
+                        "2.0",
+                        "3.0",
+                        "4.0"
                     ]
                 },
                 {
@@ -39,10 +39,21 @@
                     "name": "u_values_1",
                     "type": "Binding",
                     "values": [
-                        "1",
-                        "2",
-                        "3",
-                        "4"
+                        "1.0",
+                        "2.0",
+                        "3.0",
+                        "4.0"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 906,
+                    "name": "u_values_2",
+                    "type": "Binding",
+                    "values": [
+                        "1.0",
+                        "2.0"
                     ]
                 }
             ],
@@ -116,14 +127,30 @@
                                     "count": 4,
                                     "dataType": "Float",
                                     "id": 18,
-                                    "name": "values",
+                                    "name": "values_0",
+                                    "padding": 0,
+                                    "type": "Field"
+                                },
+                                {
+                                    "count": 4,
+                                    "dataType": "Float",
+                                    "id": 908,
+                                    "name": "values_1",
+                                    "padding": 0,
+                                    "type": "Field"
+                                },
+                                {
+                                    "count": 2,
+                                    "dataType": "Float",
+                                    "id": 909,
+                                    "name": "values_2",
                                     "padding": 0,
                                     "type": "Field"
                                 }
                             ],
                             "name": "Block",
                             "offset": "0",
-                            "rowCount": "2",
+                            "rowCount": "1",
                             "type": "Block"
                         }
                     ],
@@ -149,7 +176,7 @@
                     "bindingType": "Uniform",
                     "editor": "Expression2x2",
                     "id": 9,
-                    "name": "u_block.values_2",
+                    "name": "u_block.values_0",
                     "type": "Binding",
                     "values": [
                         "1.0",
@@ -162,7 +189,7 @@
                     "bindingType": "Uniform",
                     "editor": "Expression2",
                     "id": 902,
-                    "name": "u_block.values_2[1]",
+                    "name": "u_block.values_0[1]",
                     "type": "Binding",
                     "values": [
                         "3.1",
@@ -173,7 +200,7 @@
                     "bindingType": "Uniform",
                     "editor": "Expression",
                     "id": 22,
-                    "name": "u_block.values_2[0][0]",
+                    "name": "u_block.values_0[0][0]",
                     "type": "Binding",
                     "values": [
                         "1.2"
@@ -183,7 +210,7 @@
                     "bindingType": "Uniform",
                     "editor": "Expression",
                     "id": 905,
-                    "name": "u_block.values_2[1][1]",
+                    "name": "u_block.values_0[1][1]",
                     "type": "Binding",
                     "values": [
                         "4.2"
@@ -191,9 +218,9 @@
                 },
                 {
                     "bindingType": "Uniform",
-                    "editor": "Expression2x2",
-                    "id": 10,
-                    "name": "u_block.values_3",
+                    "editor": "Expression4",
+                    "id": 903,
+                    "name": "u_block.values_1",
                     "type": "Binding",
                     "values": [
                         "1.0",
@@ -205,12 +232,23 @@
                 {
                     "bindingType": "Uniform",
                     "editor": "Expression2",
-                    "id": 903,
-                    "name": "u_block.values_3[1]",
+                    "id": 907,
+                    "name": "u_block.values_1[1]",
                     "type": "Binding",
                     "values": [
                         "3.1",
                         "4.1"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 10,
+                    "name": "u_block.values_2",
+                    "type": "Binding",
+                    "values": [
+                        "1.0",
+                        "2.0"
                     ]
                 }
             ],

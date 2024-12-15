@@ -870,8 +870,9 @@ bool GLCall::applyBufferMemberBinding(GLBuffer &buffer,
 
     auto write = [&](const auto &values) {
         using T = std::decay_t<decltype(values)>::value_type;
-        std::memcpy(data.data() + member.offset, values.data(),
-            values.size() * sizeof(T));
+        const auto size = static_cast<qsizetype>(values.size() * sizeof(T));
+        Q_ASSERT(member.offset + size <= data.size());
+        std::memcpy(data.data() + member.offset, values.data(), size);
     };
 
     switch (member.dataType) {
