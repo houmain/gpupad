@@ -271,16 +271,16 @@ void VKPipeline::setBindGroupResource(uint32_t set,
     bindGroup.resources.emplace_back(std::move(resource));
 }
 
-auto VKPipeline::getDefaultUniformBlock(uint32_t set,
-    uint32_t binding) -> DefaultUniformBlock &
+auto VKPipeline::getDynamicUniformBuffer(uint32_t set,
+    uint32_t binding) -> DynamicUniformBuffer &
 {
-    auto it = std::find_if(mDefaultUniformBlocks.begin(),
-        mDefaultUniformBlocks.end(), [&](const auto &block) {
+    auto it = std::find_if(mDynamicUniformBuffers.begin(),
+        mDynamicUniformBuffers.end(), [&](const auto &block) {
             return (block->set == set && block->binding == binding);
         });
-    if (it == mDefaultUniformBlocks.end()) {
-        it = mDefaultUniformBlocks.emplace(mDefaultUniformBlocks.end(),
-            new DefaultUniformBlock{
+    if (it == mDynamicUniformBuffers.end()) {
+        it = mDynamicUniformBuffers.emplace(mDynamicUniformBuffers.end(),
+            new DynamicUniformBuffer{
                 .set = set,
                 .binding = binding,
             });
@@ -288,20 +288,21 @@ auto VKPipeline::getDefaultUniformBlock(uint32_t set,
     return **it;
 }
 
-void VKPipeline::updateUniformBlockData(std::byte *bufferData,
+bool VKPipeline::updateUniformBlockData(std::byte *bufferData,
     const SpvReflectBlockVariable &block, ScriptEngine &scriptEngine)
 {
+    auto memberSet = false;
+    auto membersNotSet = std::vector<QString>();
     for (auto i = 0u; i < block.member_count; ++i) {
         const auto &member = block.members[i];
+        if (member.flags & SPV_REFLECT_VARIABLE_FLAGS_UNUSED)
+            continue;
         const auto fullName = getBufferMemberFullName(block, member);
         const auto binding = find(mBindings.uniforms, fullName);
         if (!binding) {
-            if ((member.flags & SPV_REFLECT_VARIABLE_FLAGS_UNUSED) == 0)
-                mMessages += MessageList::insert(mItemId,
-                    MessageType::UniformNotSet, fullName);
+            membersNotSet.push_back(fullName);
             continue;
         }
-
         const auto type = getBufferMemberDataType(member);
         const auto count = getBufferMemberElementCount(member);
         const auto memberData = &bufferData[member.offset];
@@ -320,8 +321,50 @@ void VKPipeline::updateUniformBlockData(std::byte *bufferData,
 #undef ADD
         default: Q_ASSERT(!"not handled data type");
         }
+        memberSet = true;
         mUsedItems += binding->bindingItemId;
     }
+    if (!memberSet
+        && !isGlobalUniformBlockName(block.type_description->type_name))
+        return false;
+
+    for (const auto &memberName : membersNotSet)
+        mMessages += MessageList::insert(mItemId, MessageType::UniformNotSet,
+            memberName);
+
+    return true;
+}
+
+bool VKPipeline::updateDynamicBufferBindings(VKContext &context,
+    const SpvReflectDescriptorBinding &descriptor, ScriptEngine &scriptEngine)
+{
+    auto &block = getDynamicUniformBuffer(descriptor.set, descriptor.binding);
+    if (!block.buffer.isValid()) {
+        block.buffer = context.device.createBuffer(KDGpu::BufferOptions{
+            .size = descriptor.block.size,
+            .usage = KDGpu::BufferUsageFlagBits::UniformBufferBit,
+            .memoryUsage = KDGpu::MemoryUsage::CpuToGpu,
+        });
+        block.size = descriptor.block.size;
+    }
+    Q_ASSERT(block.buffer.isValid());
+    Q_ASSERT(descriptor.block.size == block.size);
+    if (!block.buffer.isValid() || descriptor.block.size != block.size)
+        return false;
+
+    auto bufferData = static_cast<std::byte *>(block.buffer.map());
+    const auto guard = qScopeGuard([&] { block.buffer.unmap(); });
+
+    if (!updateUniformBlockData(bufferData, descriptor.block, scriptEngine))
+        return false;
+
+    setBindGroupResource(descriptor.set,
+        {
+            .binding = descriptor.binding,
+            .resource = KDGpu::UniformBufferBinding{ .buffer = block.buffer },
+        });
+
+    return true;
 }
 
 bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
@@ -329,13 +372,15 @@ bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
     if (mPushConstantRange.size == 0)
         return false;
 
-    for (const auto &[stage, interface] : mProgram.interface()) {
+    for (const auto &[stage, interface] : mProgram.interface())
         for (auto i = 0u; i < interface->push_constant_block_count; ++i) {
             auto &block = interface->push_constant_blocks[i];
-            updateUniformBlockData(mPushConstantData.data(), block,
-                scriptEngine);
+            if (!updateUniformBlockData(mPushConstantData.data(), block,
+                    scriptEngine))
+                mMessages += MessageList::insert(mItemId,
+                    MessageType::BufferNotSet,
+                    block.type_description->type_name);
         }
-    }
     return true;
 }
 
@@ -351,39 +396,6 @@ void VKPipeline::updatePushConstants(
 {
     if (updatePushConstants(scriptEngine))
         computePass.pushConstant(mPushConstantRange, mPushConstantData.data());
-}
-void VKPipeline::updateDefaultUniformBlock(VKContext &context,
-    ScriptEngine &scriptEngine)
-{
-    for (const auto &[stage, interface] : mProgram.interface()) {
-        auto descriptor =
-            std::add_pointer_t<const SpvReflectDescriptorBinding>{};
-        for (auto i = 0u; i < interface->descriptor_binding_count; ++i)
-            if (isGlobalUniformBlockName(interface->descriptor_bindings[i]
-                                             .type_description->type_name)) {
-                descriptor = &interface->descriptor_bindings[i];
-                break;
-            }
-        if (!descriptor || !descriptor->accessed)
-            continue;
-
-        auto &block =
-            getDefaultUniformBlock(descriptor->set, descriptor->binding);
-        if (!block.buffer.isValid()) {
-            block.buffer = context.device.createBuffer(KDGpu::BufferOptions{
-                .size = descriptor->block.size,
-                .usage = KDGpu::BufferUsageFlagBits::UniformBufferBit,
-                .memoryUsage = KDGpu::MemoryUsage::CpuToGpu,
-            });
-            block.size = descriptor->block.size;
-        }
-
-        Q_ASSERT(descriptor->block.size == block.size);
-        auto bufferData = static_cast<std::byte *>(block.buffer.map());
-        const auto guard = qScopeGuard([&] { block.buffer.unmap(); });
-
-        updateUniformBlockData(bufferData, descriptor->block, scriptEngine);
-    }
 }
 
 bool VKPipeline::createGraphics(VKContext &context,
@@ -492,7 +504,7 @@ void VKPipeline::setBindings(VKBindings &&bindings)
     mBindings = std::move(bindings);
 }
 
-bool VKPipeline::updateBindings(VKContext &context)
+bool VKPipeline::updateBindings(VKContext &context, ScriptEngine &scriptEngine)
 {
     mSamplers.clear();
 
@@ -515,23 +527,9 @@ bool VKPipeline::updateBindings(VKContext &context)
 
             switch (desc.descriptor_type) {
             case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-                if (isGlobalUniformBlockName(
+                if (const auto bufferBinding = find(mBindings.buffers,
                         desc.type_description->type_name)) {
-                    auto &block =
-                        getDefaultUniformBlock(desc.set, desc.binding);
-                    Q_ASSERT(block.buffer.isValid());
-                    if (block.buffer.isValid())
-                        setBindGroupResource(desc.set,
-                            {
-                                .binding = desc.binding,
-                                .resource =
-                                    KDGpu::UniformBufferBinding{
-                                        .buffer = block.buffer },
-                            });
-                } else {
-                    const auto bufferBinding = find(mBindings.buffers,
-                        desc.type_description->type_name);
-                    if (!bufferBinding || !bufferBinding->buffer) {
+                    if (!bufferBinding->buffer) {
                         notBoundError(MessageType::BufferNotSet,
                             desc.type_description->type_name);
                         continue;
@@ -549,6 +547,11 @@ bool VKPipeline::updateBindings(VKContext &context)
                                         bufferBinding->buffer
                                             ->getReadOnlyBuffer(context) },
                         });
+                } else {
+                    if (!updateDynamicBufferBindings(context, desc,
+                            scriptEngine))
+                        notBoundError(MessageType::BufferNotSet,
+                            desc.type_description->type_name);
                 }
                 break;
 

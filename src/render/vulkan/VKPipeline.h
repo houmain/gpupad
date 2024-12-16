@@ -70,18 +70,17 @@ public:
         VKStream *vertexStream);
     ~VKPipeline();
 
-    void setBindings(VKBindings&& bindings);
+    void setBindings(VKBindings &&bindings);
     bool createGraphics(VKContext &context,
         KDGpu::PrimitiveOptions &primitiveOptions);
     bool createCompute(VKContext &context);
+    bool updateBindings(VKContext &context, ScriptEngine &scriptEngine);
     KDGpu::RenderPassCommandRecorder beginRenderPass(VKContext &context);
     KDGpu::ComputePassCommandRecorder beginComputePass(VKContext &context);
     void updatePushConstants(KDGpu::RenderPassCommandRecorder &renderPass,
         ScriptEngine &scriptEngine);
     void updatePushConstants(KDGpu::ComputePassCommandRecorder &computePass,
         ScriptEngine &scriptEngine);
-    void updateDefaultUniformBlock(VKContext &context, ScriptEngine &scriptEngine);
-    bool updateBindings(VKContext &context);
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
@@ -92,7 +91,7 @@ private:
         KDGpu::BindGroup bindGroup;
     };
 
-    struct DefaultUniformBlock
+    struct DynamicUniformBuffer
     {
         uint32_t set;
         uint32_t binding;
@@ -104,9 +103,12 @@ private:
     bool createOrUpdateBindGroup(uint32_t set, uint32_t binding,
         const KDGpu::ResourceBindingLayout &layout);
     void setBindGroupResource(uint32_t set, KDGpu::BindGroupEntry &&resource);
-    DefaultUniformBlock &getDefaultUniformBlock(uint32_t set, uint32_t binding);
+    DynamicUniformBuffer &getDynamicUniformBuffer(uint32_t set,
+        uint32_t binding);
+    bool updateDynamicBufferBindings(VKContext &context,
+        const SpvReflectDescriptorBinding &desc, ScriptEngine &scriptEngine);
     bool createLayout(VKContext &context);
-    void updateUniformBlockData(std::byte *bufferData,
+    bool updateUniformBlockData(std::byte *bufferData,
         const SpvReflectBlockVariable &block, ScriptEngine &scriptEngine);
     bool updatePushConstants(ScriptEngine &scriptEngine);
 
@@ -123,7 +125,7 @@ private:
     std::vector<KDGpu::BindGroupLayout> mBindGroupLayouts;
     VKBindings mBindings;
     std::vector<KDGpu::Sampler> mSamplers;
-    std::vector<std::unique_ptr<DefaultUniformBlock>> mDefaultUniformBlocks;
+    std::vector<std::unique_ptr<DynamicUniformBuffer>> mDynamicUniformBuffers;
     std::vector<std::byte> mPushConstantData;
     KDGpu::PushConstantRange mPushConstantRange{};
     MessagePtrSet mMessages;

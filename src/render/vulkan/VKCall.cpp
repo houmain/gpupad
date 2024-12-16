@@ -15,7 +15,7 @@ VKCall::~VKCall() = default;
 void VKCall::setProgram(VKProgram *program)
 {
     if (!callTypeHasProgram(mCall.callType))
-      return;
+        return;
 
     mProgram = program;
 }
@@ -156,11 +156,11 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     if (!mPipeline || !mPipeline->createGraphics(context, primitiveOptions))
         return;
 
-    mPipeline->updateDefaultUniformBlock(context, scriptEngine);
-    const auto canRender = mPipeline->updateBindings(context);
-    mUsedItems += mPipeline->usedItems();
-    if (!canRender)
+    const auto canRender = mPipeline->updateBindings(context, scriptEngine);
+    if (!canRender) {
+      mUsedItems += mPipeline->usedItems();
         return;
+        }
 
     auto renderPass = mPipeline->beginRenderPass(context);
     if (!renderPass.isValid())
@@ -213,6 +213,7 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
         });
     }
     renderPass.end();
+    mUsedItems += mPipeline->usedItems();
 }
 
 void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
@@ -221,11 +222,11 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
     if (!mPipeline || !mPipeline->createCompute(context))
         return;
 
-    mPipeline->updateDefaultUniformBlock(context, scriptEngine);
-    const auto canRender = mPipeline->updateBindings(context);
-    mUsedItems += mPipeline->usedItems();
-    if (!canRender)
+    const auto canRender = mPipeline->updateBindings(context, scriptEngine);
+    if (!canRender) {
+        mUsedItems += mPipeline->usedItems();
         return;
+    }
 
     auto computePass = mPipeline->beginComputePass(context);
     if (!computePass.isValid())
@@ -239,6 +240,7 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
         .workGroupZ = evaluateUInt(scriptEngine, mCall.workGroupsZ),
     });
     computePass.end();
+    mUsedItems += mPipeline->usedItems();
 }
 
 void VKCall::executeClearTexture(VKContext &context, MessagePtrSet &messages)
