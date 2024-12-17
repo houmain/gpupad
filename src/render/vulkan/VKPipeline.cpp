@@ -222,6 +222,33 @@ KDGpu::ComputePassCommandRecorder VKPipeline::beginComputePass(
     return computePass;
 }
 
+namespace KDGpu {
+    bool operator<(const SamplerOptions &a, const SamplerOptions &b)
+    {
+        const auto tie = [](const SamplerOptions &a) {
+            return std::tie(a.magFilter, a.minFilter, a.mipmapFilter, a.u, a.v,
+                a.w, a.lodMinClamp, a.lodMaxClamp, a.anisotropyEnabled,
+                a.maxAnisotropy, a.compareEnabled, a.compare,
+                a.normalizedCoordinates);
+        };
+        return tie(a) < tie(b);
+    }
+} // namespace KDGpu
+
+const KDGpu::Sampler &VKPipeline::getSampler(VKContext &context,
+    const VKSamplerBinding &samplerBinding)
+{
+    const auto maxSamplerAnisotropy =
+        context.device.adapter()->properties().limits.maxSamplerAnisotropy;
+    const auto samplerOptions =
+        getSamplerOptions(samplerBinding, maxSamplerAnisotropy);
+
+    auto &sampler = mSamplers[samplerOptions];
+    if (!sampler.isValid())
+        sampler = context.device.createSampler();
+    return sampler;
+}
+
 auto VKPipeline::getBindGroup(uint32_t set) -> BindGroup &
 {
     mBindGroups.resize(
@@ -506,8 +533,6 @@ void VKPipeline::setBindings(VKBindings &&bindings)
 
 bool VKPipeline::updateBindings(VKContext &context, ScriptEngine &scriptEngine)
 {
-    mSamplers.clear();
-
     for (auto &bindGroup : mBindGroups) {
         bindGroup.resources = {};
         bindGroup.bindGroup = {};
@@ -602,14 +627,7 @@ bool VKPipeline::updateBindings(VKContext &context, ScriptEngine &scriptEngine)
                 }
                 mUsedItems += samplerBinding->bindingItemId;
 
-                // TODO: do not recreate every time
-                const auto maxSamplerAnisotropy =
-                    context.device.adapter()
-                        ->properties()
-                        .limits.maxSamplerAnisotropy;
-                const auto &sampler = mSamplers.emplace_back(
-                    context.device.createSampler(getSamplerOptions(
-                        *samplerBinding, maxSamplerAnisotropy)));
+                const auto &sampler = getSampler(context, *samplerBinding);
 
                 if (desc.descriptor_type
                     == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER) {

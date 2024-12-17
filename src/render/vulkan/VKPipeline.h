@@ -99,6 +99,8 @@ private:
         KDGpu::Buffer buffer;
     };
 
+    const KDGpu::Sampler &getSampler(VKContext &context,
+        const VKSamplerBinding &samplerBinding);
     BindGroup &getBindGroup(uint32_t set);
     bool createOrUpdateBindGroup(uint32_t set, uint32_t binding,
         const KDGpu::ResourceBindingLayout &layout);
@@ -124,7 +126,7 @@ private:
     std::vector<BindGroup> mBindGroups;
     std::vector<KDGpu::BindGroupLayout> mBindGroupLayouts;
     VKBindings mBindings;
-    std::vector<KDGpu::Sampler> mSamplers;
+    std::map<KDGpu::SamplerOptions, KDGpu::Sampler> mSamplers;
     std::vector<std::unique_ptr<DynamicUniformBuffer>> mDynamicUniformBuffers;
     std::vector<std::byte> mPushConstantData;
     KDGpu::PushConstantRange mPushConstantRange{};
