@@ -50,20 +50,24 @@ int ScriptEngine::evaluateInt(const QString &valueExpression, ItemId itemId,
     return static_cast<int>(value + 0.5);
 }
 
-void checkValueCount(const ScriptValueList &values, int count, int offset,
-    ItemId itemId, MessagePtrSet &messages)
+void checkValueCount(int valueCount, int offset, int count, ItemId itemId,
+    MessagePtrSet &messages)
 {
-    if (offset < 0) {
-        // check that value counts match (allow setting 4 components of vec3)
-        if (values.count() != count && (count != 3 || values.count() != 4))
-            messages += MessageList::insert(itemId,
-                MessageType::UniformComponentMismatch,
-                QString("(%1/%2)").arg(values.count()).arg(count));
+    const auto allowSubset = (offset >= 0);
+    if (!allowSubset) {
+        // check that value counts match
+        if (valueCount != count) {
+            // allow setting 4 components of vec3
+            if (valueCount != 4 || count != 3)
+                messages += MessageList::insert(itemId,
+                    MessageType::UniformComponentMismatch,
+                    QString("(%1/%2)").arg(valueCount).arg(count));
+        }
     } else {
         // check that there are enough values
-        if (values.count() < offset + count)
+        if (valueCount < count + offset)
             messages += MessageList::insert(itemId,
                 MessageType::UniformComponentMismatch,
-                QString("(%1 < %2)").arg(values.count()).arg(offset + count));
+                QString("(%1 < %2)").arg(valueCount).arg(count + offset));
     }
 }

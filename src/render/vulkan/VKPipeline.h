@@ -2,6 +2,7 @@
 
 #include "VKShader.h"
 #include "scripting/ScriptEngine.h"
+#include <span>
 #include <map>
 
 class VKTexture;
@@ -110,7 +111,13 @@ private:
     bool updateDynamicBufferBindings(VKContext &context,
         const SpvReflectDescriptorBinding &desc, ScriptEngine &scriptEngine);
     bool createLayout(VKContext &context);
-    bool updateUniformBlockData(std::byte *bufferData,
+    void applyBufferMemberBinding(std::span<std::byte> bufferData,
+        const SpvReflectBlockVariable &member, const VKUniformBinding &binding,
+        int elementOffset, int count, ScriptEngine &scriptEngine);
+    bool applyBufferMemberBindings(std::span<std::byte> bufferData,
+        const QString &name, const SpvReflectBlockVariable &member,
+        ScriptEngine &scriptEngine);
+    bool applyBufferMemberBindings(std::span<std::byte> bufferData,
         const SpvReflectBlockVariable &block, ScriptEngine &scriptEngine);
     bool updatePushConstants(ScriptEngine &scriptEngine);
 

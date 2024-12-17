@@ -108,8 +108,8 @@ private:
         const std::map<QString, GLUniformBinding> &bindings,
         ScriptEngine &scriptEngine);
     void applyUniformBinding(const GLProgram::Interface::Uniform &uniform,
-        const GLUniformBinding &bindings, ScriptEngine &scriptEngine,
-        int offset = -1, int size = -1);
+        const GLUniformBinding &bindings, int offset, int count,
+        ScriptEngine &scriptEngine);
     bool applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
         const GLSamplerBinding &binding, int unit);
     bool applyImageBinding(const GLProgram::Interface::Uniform &uniform,
@@ -126,9 +126,9 @@ private:
         const std::map<QString, GLUniformBinding> &bindings,
         ScriptEngine &scriptEngine);
     bool applyBufferMemberBinding(GLBuffer &buffer,
-        const GLProgram::Interface::BufferMember &member,
-        const GLUniformBinding &binding, ScriptEngine &scriptEngine,
-        int offset = -1, int size = -1);
+        const GLProgram::Interface::BufferMember &member, 
+        const GLUniformBinding &binding, int offset, int count,
+        ScriptEngine &scriptEngine);
     bool bindVertexStream();
     void unbindVertexStream();
     GLenum getIndexType() const;

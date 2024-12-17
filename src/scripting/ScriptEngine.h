@@ -32,27 +32,24 @@ protected:
     explicit ScriptEngine(QObject *parent = nullptr);
 };
 
-void checkValueCount(const ScriptValueList &values, int count, int offset,
-    ItemId itemId, MessagePtrSet &messages);
+void checkValueCount(int valueCount, int offset, int count, ItemId itemId,
+    MessagePtrSet &messages);
 
 template <typename T>
 std::vector<T> getValues(ScriptEngine &scriptEngine,
-    const QStringList &expressions, ItemId itemId, int count,
-    MessagePtrSet &messages, int offset = -1)
+    const QStringList &expressions, int offset, int count, ItemId itemId,
+    MessagePtrSet &messages)
 {
     const auto values =
         scriptEngine.evaluateValues(expressions, itemId, messages);
-    checkValueCount(values, count, offset, itemId, messages);
+
+    checkValueCount(values.size(), offset, count, itemId, messages);
 
     auto results = std::vector<T>();
     results.reserve(count);
-    for (const auto &value : values) {
-        if (offset > 0) {
-            --offset;
-            continue;
-        }
-        results.push_back(static_cast<T>(value));
-    }
+    for (const auto &value : values)
+        if (offset-- <= 0)
+            results.push_back(static_cast<T>(value));
     results.resize(count);
     return results;
 }

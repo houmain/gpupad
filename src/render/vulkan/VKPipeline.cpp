@@ -25,6 +25,29 @@ namespace {
             .arg(member.name);
     }
 
+    QString getBaseName(QStringView name)
+    {
+        if (!name.endsWith(']'))
+            return name.toString();
+        if (auto bracket = name.indexOf('['))
+            return name.left(bracket).toString();
+        return {};
+    }
+
+    std::vector<int> getArrayIndices(QStringView name)
+    {
+        auto result = std::vector<int>();
+        while (name.endsWith(']')) {
+            const auto pos = name.lastIndexOf('[');
+            if (pos < 0)
+                break;
+            const auto index = name.mid(pos + 1, name.size() - pos - 2).toInt();
+            result.insert(result.begin(), index);
+            name = name.left(pos);
+        }
+        return result;
+    }
+
     Field::DataType getBufferMemberDataType(
         const SpvReflectBlockVariable &variable)
     {
@@ -48,8 +71,6 @@ namespace {
         const auto &type_desc = *variable.type_description;
         if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX)
             return variable.numeric.matrix.column_count;
-        if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_VECTOR)
-            return variable.numeric.vector.component_count;
         return 1;
     }
 
@@ -58,6 +79,8 @@ namespace {
         const auto &type_desc = *variable.type_description;
         if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX)
             return variable.numeric.matrix.row_count;
+        if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_VECTOR)
+            return variable.numeric.vector.component_count;
         return 1;
     }
 
@@ -87,33 +110,38 @@ namespace {
         return 0;
     }
 
-    int getBufferMemberElementCount(const SpvReflectBlockVariable &variable)
+    std::span<const uint32_t> getBufferMemberArrayDims(
+        const SpvReflectBlockVariable &variable)
     {
-        return getBufferMemberArraySize(variable)
-            * getBufferMemberColumnCount(variable)
-            * getBufferMemberRowCount(variable);
+        const auto &type_desc = *variable.type_description;
+        if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_ARRAY)
+            return { variable.array.dims, variable.array.dims_count };
+        return {};
     }
 
     template <typename T>
     void copyBufferMember(const SpvReflectBlockVariable &member,
-        std::byte *dest, const T *source)
+        std::byte *dest, int elementOffset, int elementCount, const T *source)
     {
         const auto arraySize = getBufferMemberArraySize(member);
         const auto columns = getBufferMemberColumnCount(member);
         const auto rows = getBufferMemberRowCount(member);
         const auto arrayStride = getBufferMemberArrayStride(member);
         const auto columnStride = getBufferMemberColumnStride(member);
-        const auto sourceStride = rows * sizeof(T);
-        const auto destStride = (columnStride ? columnStride : sourceStride);
-        const auto arrayPadding =
-            (arrayStride ? arrayStride - (columns * destStride) : 0);
+        const auto elementSize = sizeof(T) * rows;
 
-        for (auto a = 0; a < arraySize; ++a, dest += arrayPadding)
-            for (auto c = 0; c < columns; ++c) {
-                std::memcpy(dest, source, sourceStride);
-                dest += destStride;
-                source += rows;
+        for (auto a = 0; a < arraySize; ++a) {
+            const auto arrayBegin = dest;
+            if (elementOffset-- <= 0 && elementCount-- > 0) {
+                for (auto c = 0; c < columns; ++c) {
+                    std::memcpy(dest, source, elementSize);
+                    source += rows;
+                    dest += (columnStride ? columnStride : elementSize);
+                }
             }
+            if (arrayStride)
+                dest = arrayBegin + arrayStride;
+        }
     }
 
     KDGpu::ResourceBindingType getResourceType(SpvReflectDescriptorType type)
@@ -315,7 +343,75 @@ auto VKPipeline::getDynamicUniformBuffer(uint32_t set,
     return **it;
 }
 
-bool VKPipeline::updateUniformBlockData(std::byte *bufferData,
+void VKPipeline::applyBufferMemberBinding(std::span<std::byte> bufferData,
+    const SpvReflectBlockVariable &member, const VKUniformBinding &binding,
+    int elementOffset, int elementCount, ScriptEngine &scriptEngine)
+{
+    const auto type = getBufferMemberDataType(member);
+    const auto memberData = &bufferData[member.offset];
+    const auto valuesPerElement = getBufferMemberColumnCount(member)
+        * getBufferMemberRowCount(member);
+    switch (type) {
+#define ADD(DATATYPE, TYPE)                                                  \
+    case DATATYPE: {                                                         \
+        const auto values = getValues<TYPE>(scriptEngine, binding.values, 0, \
+            elementCount * valuesPerElement, binding.bindingItemId,          \
+            mMessages);                                                      \
+        copyBufferMember<TYPE>(member, memberData, elementOffset,            \
+            elementCount, values.data());                                    \
+        break;                                                               \
+    }
+        ADD(Field::DataType::Int32, int32_t);
+        ADD(Field::DataType::Uint32, uint32_t);
+        ADD(Field::DataType::Float, float);
+        ADD(Field::DataType::Double, double);
+#undef ADD
+    default: Q_ASSERT(!"not handled data type");
+    }
+}
+
+bool VKPipeline::applyBufferMemberBindings(std::span<std::byte> bufferData,
+    const QString &name, const SpvReflectBlockVariable &member,
+    ScriptEngine &scriptEngine)
+{
+    auto bindingSet = false;
+    for (const auto &[bindingName, binding] : mBindings.uniforms) {
+        if (bindingName == name) {
+            applyBufferMemberBinding(bufferData, member, binding, 0,
+                getBufferMemberArraySize(member), scriptEngine);
+            mUsedItems += binding.bindingItemId;
+            bindingSet = true;
+            continue;
+        }
+
+        // compare array elements also by basename
+        const auto baseName = getBaseName(bindingName);
+        if (baseName == name) {
+            const auto indices = getArrayIndices(bindingName);
+            Q_ASSERT(!indices.empty());
+            const auto dims = getBufferMemberArrayDims(member);
+            if (indices.size() > dims.size())
+                continue;
+
+            auto elementOffset = 0;
+            for (auto i = 0; i < indices.size(); ++i)
+                elementOffset += indices[i]
+                    * (i == dims.size() - 1 ? 1 : dims[i]);
+
+            auto elementCount = 1;
+            for (auto i = indices.size(); i < dims.size(); ++i)
+                elementCount *= dims[i];
+
+            applyBufferMemberBinding(bufferData, member, binding, elementOffset,
+                elementCount, scriptEngine);
+            mUsedItems += binding.bindingItemId;
+            bindingSet = true;
+        }
+    }
+    return bindingSet;
+}
+
+bool VKPipeline::applyBufferMemberBindings(std::span<std::byte> bufferData,
     const SpvReflectBlockVariable &block, ScriptEngine &scriptEngine)
 {
     auto memberSet = false;
@@ -324,32 +420,13 @@ bool VKPipeline::updateUniformBlockData(std::byte *bufferData,
         const auto &member = block.members[i];
         if (member.flags & SPV_REFLECT_VARIABLE_FLAGS_UNUSED)
             continue;
-        const auto fullName = getBufferMemberFullName(block, member);
-        const auto binding = find(mBindings.uniforms, fullName);
-        if (!binding) {
-            membersNotSet.push_back(fullName);
-            continue;
+
+        const auto name = getBufferMemberFullName(block, member);
+        if (applyBufferMemberBindings(bufferData, name, member, scriptEngine)) {
+            memberSet = true;
+        } else {
+            membersNotSet.push_back(name);
         }
-        const auto type = getBufferMemberDataType(member);
-        const auto count = getBufferMemberElementCount(member);
-        const auto memberData = &bufferData[member.offset];
-        switch (type) {
-#define ADD(DATATYPE, TYPE)                                                \
-    case DATATYPE: {                                                       \
-        const auto values = getValues<TYPE>(scriptEngine, binding->values, \
-            binding->bindingItemId, count, mMessages);                     \
-        copyBufferMember<TYPE>(member, memberData, values.data());         \
-        break;                                                             \
-    }
-            ADD(Field::DataType::Int32, int32_t);
-            ADD(Field::DataType::Uint32, uint32_t);
-            ADD(Field::DataType::Float, float);
-            ADD(Field::DataType::Double, double);
-#undef ADD
-        default: Q_ASSERT(!"not handled data type");
-        }
-        memberSet = true;
-        mUsedItems += binding->bindingItemId;
     }
     if (!memberSet
         && !isGlobalUniformBlockName(block.type_description->type_name))
@@ -379,10 +456,11 @@ bool VKPipeline::updateDynamicBufferBindings(VKContext &context,
     if (!block.buffer.isValid() || descriptor.block.size != block.size)
         return false;
 
-    auto bufferData = static_cast<std::byte *>(block.buffer.map());
+    auto bufferData = std::span<std::byte>(
+        static_cast<std::byte *>(block.buffer.map()), block.size);
     const auto guard = qScopeGuard([&] { block.buffer.unmap(); });
 
-    if (!updateUniformBlockData(bufferData, descriptor.block, scriptEngine))
+    if (!applyBufferMemberBindings(bufferData, descriptor.block, scriptEngine))
         return false;
 
     setBindGroupResource(descriptor.set,
@@ -402,8 +480,8 @@ bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
     for (const auto &[stage, interface] : mProgram.interface())
         for (auto i = 0u; i < interface->push_constant_block_count; ++i) {
             auto &block = interface->push_constant_blocks[i];
-            if (!updateUniformBlockData(mPushConstantData.data(), block,
-                    scriptEngine))
+            auto bufferData = std::span<std::byte>(mPushConstantData);
+            if (!applyBufferMemberBindings(bufferData, block, scriptEngine))
                 mMessages += MessageList::insert(mItemId,
                     MessageType::BufferNotSet,
                     block.type_description->type_name);

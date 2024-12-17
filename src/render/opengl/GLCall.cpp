@@ -39,7 +39,7 @@ namespace {
         return result;
     }
 
-    std::pair<int, int> getValuesOffsetSize(
+    std::pair<int, int> getValuesOffsetCount(
         const std::vector<int> &uniformIndices,
         const std::vector<int> &bindingIndices, int arraySize)
     {
@@ -53,7 +53,7 @@ namespace {
             return {};
 
         auto offset = 0;
-        auto size = 1;
+        auto count = 1;
         if (uniformIndices.size() == 2 && bindingIndices.size() == 1) {
             offset += uniformIndices[1];
         } else if (uniformIndices.size() == 2 && bindingIndices.size() == 0) {
@@ -64,7 +64,7 @@ namespace {
             Q_ASSERT(!"higher dimensions are not supported yet");
             return {};
         }
-        return { offset, size };
+        return { offset, count };
     }
 
     bool isImageUniform(const GLProgram::Interface::Uniform &uniform)
@@ -556,27 +556,25 @@ bool GLCall::applyUniformBindings(const QString &name,
     ScriptEngine &scriptEngine)
 {
     if (const auto binding = find(bindings, name)) {
-        applyUniformBinding(uniform, *binding, scriptEngine);
+        applyUniformBinding(uniform, *binding, -1, uniform.size, scriptEngine);
         mUsedItems += binding->bindingItemId;
         return true;
     }
 
     // compare array uniforms also by basename
-    const auto uniformIndices = getArrayIndices(name);
-    if (uniformIndices.empty())
-        return false;
-
     auto bindingSet = false;
     const auto baseName = getBaseName(name);
+    const auto uniformIndices = getArrayIndices(name);
     for (const auto &[bindingName, binding] : bindings)
         if (getBaseName(bindingName) == baseName) {
             const auto bindingIndices = getArrayIndices(bindingName);
-            const auto [offset, size] = getValuesOffsetSize(uniformIndices,
+            const auto [offset, count] = getValuesOffsetCount(uniformIndices,
                 bindingIndices, uniform.size);
-            if (!size)
-                continue;
-            applyUniformBinding(uniform, binding, scriptEngine, offset, size);
-            mUsedItems += binding.bindingItemId;
+            if (count) {
+                applyUniformBinding(uniform, binding, offset, count,
+                    scriptEngine);
+                mUsedItems += binding.bindingItemId;
+            }
             bindingSet = true;
         }
 
@@ -584,28 +582,26 @@ bool GLCall::applyUniformBindings(const QString &name,
 }
 
 void GLCall::applyUniformBinding(const GLProgram::Interface::Uniform &uniform,
-    const GLUniformBinding &binding, ScriptEngine &scriptEngine, int offset,
-    int size)
+    const GLUniformBinding &binding, int offset, int count,
+    ScriptEngine &scriptEngine)
 {
     auto &gl = GLContext::currentContext();
     const auto itemId = binding.bindingItemId;
-    if (size < 0)
-        size = uniform.size;
     switch (uniform.dataType) {
-#define ADD(TYPE, DATATYPE, COUNT, FUNCTION)                          \
-    case TYPE:                                                        \
-        FUNCTION(uniform.location, uniform.size,                      \
-            getValues<DATATYPE>(scriptEngine, binding.values, itemId, \
-                COUNT * size, mMessages, COUNT * offset)              \
-                .data());                                             \
+#define ADD(TYPE, DATATYPE, COUNT, FUNCTION)                                  \
+    case TYPE:                                                                \
+        FUNCTION(uniform.location, uniform.size,                              \
+            getValues<DATATYPE>(scriptEngine, binding.values, COUNT * offset, \
+                COUNT * count, itemId, mMessages)                             \
+                .data());                                                     \
         break
 
-#define ADD_MATRIX(TYPE, DATATYPE, COUNT, FUNCTION)                   \
-    case TYPE:                                                        \
-        FUNCTION(uniform.location, uniform.size, binding.transpose,   \
-            getValues<DATATYPE>(scriptEngine, binding.values, itemId, \
-                COUNT * size, mMessages, COUNT * offset)              \
-                .data());                                             \
+#define ADD_MATRIX(TYPE, DATATYPE, COUNT, FUNCTION)                           \
+    case TYPE:                                                                \
+        FUNCTION(uniform.location, uniform.size, binding.transpose,           \
+            getValues<DATATYPE>(scriptEngine, binding.values, COUNT * offset, \
+                COUNT * count, itemId, mMessages)                             \
+                .data());                                                     \
         break
 
         ADD(GL_FLOAT, GLfloat, 1, gl.glUniform1fv);
@@ -830,28 +826,26 @@ bool GLCall::applyBufferMemberBindings(GLBuffer &buffer, const QString &name,
     ScriptEngine &scriptEngine)
 {
     if (const auto binding = find(bindings, name)) {
-        applyBufferMemberBinding(buffer, member, *binding, scriptEngine);
+        applyBufferMemberBinding(buffer, member, *binding, -1, member.size,
+            scriptEngine);
         mUsedItems += binding->bindingItemId;
         return true;
     }
 
     // compare array elements also by basename
-    const auto uniformIndices = getArrayIndices(name);
-    if (uniformIndices.empty())
-        return false;
-
     auto bindingSet = false;
     const auto baseName = getBaseName(name);
+    const auto uniformIndices = getArrayIndices(name);
     for (const auto &[bindingName, binding] : bindings)
         if (getBaseName(bindingName) == baseName) {
             const auto bindingIndices = getArrayIndices(bindingName);
-            const auto [offset, size] = getValuesOffsetSize(uniformIndices,
+            const auto [offset, count] = getValuesOffsetCount(uniformIndices,
                 bindingIndices, member.size);
-            if (!size)
-                continue;
-            applyBufferMemberBinding(buffer, member, binding, scriptEngine,
-                offset, size);
-            mUsedItems += binding.bindingItemId;
+            if (count) {
+                applyBufferMemberBinding(buffer, member, binding, offset, count,
+                    scriptEngine);
+                mUsedItems += binding.bindingItemId;
+            }
             bindingSet = true;
         }
 
@@ -860,14 +854,11 @@ bool GLCall::applyBufferMemberBindings(GLBuffer &buffer, const QString &name,
 
 bool GLCall::applyBufferMemberBinding(GLBuffer &buffer,
     const GLProgram::Interface::BufferMember &member,
-    const GLUniformBinding &binding, ScriptEngine &scriptEngine, int offset,
-    int size)
+    const GLUniformBinding &binding, int offset, int count,
+    ScriptEngine &scriptEngine)
 {
     auto &data = buffer.getWriteableData();
     const auto itemId = binding.bindingItemId;
-    if (size < 0)
-        size = member.size;
-
     auto write = [&](const auto &values) {
         using T = std::decay_t<decltype(values)>::value_type;
         const auto size = static_cast<qsizetype>(values.size() * sizeof(T));
@@ -876,10 +867,10 @@ bool GLCall::applyBufferMemberBinding(GLBuffer &buffer,
     };
 
     switch (member.dataType) {
-#define ADD(TYPE, DATATYPE, COUNT)                                      \
-    case TYPE:                                                          \
-        write(getValues<DATATYPE>(scriptEngine, binding.values, itemId, \
-            COUNT * size, mMessages, COUNT * offset));                  \
+#define ADD(TYPE, DATATYPE, COUNT)                              \
+    case TYPE:                                                  \
+        write(getValues<DATATYPE>(scriptEngine, binding.values, \
+            COUNT * offset, COUNT * count, itemId, mMessages)); \
         break
 
 #define ADD_MATRIX(TYPE, DATATYPE, COUNT) ADD(TYPE, DATATYPE, COUNT)
