@@ -113,10 +113,10 @@ private:
     bool createLayout(VKContext &context);
     void applyBufferMemberBinding(std::span<std::byte> bufferData,
         const SpvReflectBlockVariable &member, const VKUniformBinding &binding,
-        int elementOffset, int count, ScriptEngine &scriptEngine);
+        int memberOffset, int elementOffset, int count, ScriptEngine &scriptEngine);
     bool applyBufferMemberBindings(std::span<std::byte> bufferData,
         const QString &name, const SpvReflectBlockVariable &member,
-        ScriptEngine &scriptEngine);
+        int memberOffset, ScriptEngine &scriptEngine);
     bool applyBufferMemberBindings(std::span<std::byte> bufferData,
         const SpvReflectBlockVariable &block, ScriptEngine &scriptEngine);
     bool updatePushConstants(ScriptEngine &scriptEngine);

@@ -10,15 +10,25 @@
 
 layout (local_size_x = 1) in;
 
+struct Type2 {
+  vec3 z;
+  vec2 w;
+};
+
+struct Type {
+  float x[2];
+  Type2 y[2];
+};
+
 uniform float u_values_0[2][2];
-uniform vec2  u_values_1[2];
+uniform Type  u_values_1[2];
 uniform vec2  u_values_2;
 uniform vec3  u_values_3[2];
 uniform mat3  u_values_4;
 
 layout(std430) uniform u_block {
   float values_0[2][2];
-  vec2  values_1[2];
+  Type  values_1[2];
   vec2  values_2;
 } block;
 
@@ -28,9 +38,19 @@ void main() {
   assertEq(u_values_0[1][0], 3.1);
   assertEq(u_values_0[1][1], 4.2);
   
-  assertEq(u_values_1[0], vec2(1.0, 2.0));
-  assertEq(u_values_1[1], vec2(3.1, 4.1));
-  
+  assertEq(u_values_1[0].x[0], float(1));
+  assertEq(u_values_1[0].x[1], float(2));
+  assertEq(u_values_1[0].y[0].z, vec3(3, 4, 5));
+  assertEq(u_values_1[0].y[0].w, vec2(6, 7));
+  assertEq(u_values_1[0].y[1].z, vec3(8, 9, 10));
+  assertEq(u_values_1[0].y[1].w, vec2(11, 12));  
+  assertEq(u_values_1[1].x[0], float(13));
+  assertEq(u_values_1[1].x[1], float(14));
+  assertEq(u_values_1[1].y[0].z, vec3(15, 16, 17));
+  assertEq(u_values_1[1].y[0].w, vec2(18, 19));
+  assertEq(u_values_1[1].y[1].z, vec3(20, 21, 22));
+  assertEq(u_values_1[1].y[1].w, vec2(23, 24));
+
   assertEq(u_values_2, vec2(1.0, 2.0));
   
   assertEq(u_values_3[0], vec3(1.0, 2.0, 3.0));
@@ -43,8 +63,18 @@ void main() {
   assertEq(block.values_0[1][0], 3.1);
   assertEq(block.values_0[1][1], 4.2);
   
-  assertEq(block.values_1[0], vec2(1.0, 2.0));
-  assertEq(block.values_1[1], vec2(3.1, 4.1));
+  assertEq(block.values_1[0].x[0], float(1));
+  assertEq(block.values_1[0].x[1], float(2));
+  assertEq(block.values_1[0].y[0].z, vec3(3, 4, 5));
+  assertEq(block.values_1[0].y[0].w, vec2(6, 7));
+  assertEq(block.values_1[0].y[1].z, vec3(8, 9, 10));
+  assertEq(block.values_1[0].y[1].w, vec2(11, 12));  
+  assertEq(block.values_1[1].x[0], float(13));
+  assertEq(block.values_1[1].x[1], float(14));
+  assertEq(block.values_1[1].y[0].z, vec3(15, 16, 17));
+  assertEq(block.values_1[1].y[0].w, vec2(18, 19));
+  assertEq(block.values_1[1].y[1].z, vec3(20, 21, 22));
+  assertEq(block.values_1[1].y[1].w, vec2(23, 24));
   
   assertEq(block.values_2, vec2(1.0, 2.0));
 }

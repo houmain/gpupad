@@ -16,12 +16,12 @@ namespace {
         return (it == container.end() ? nullptr : &it->second);
     }
 
-    QString getBaseName(QStringView name)
+    QStringView getBaseName(QStringView name)
     {
         if (!name.endsWith(']'))
-            return name.toString();
-        if (auto bracket = name.indexOf('['))
-            return name.left(bracket).toString();
+            return name;
+        if (auto bracket = name.lastIndexOf('['))
+            return getBaseName(name.left(bracket));
         return {};
     }
 
@@ -544,7 +544,7 @@ bool GLCall::applyBindings(const GLBindings &bindings,
             if (!applyUniformBindings(name, uniform, bindings.uniforms,
                     scriptEngine))
                 mMessages += MessageList::insert(mCall.id,
-                    MessageType::UniformNotSet, getBaseName(name));
+                    MessageType::UniformNotSet, getBaseName(name).toString());
         }
     }
     return canRender;

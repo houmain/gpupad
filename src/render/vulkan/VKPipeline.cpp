@@ -25,12 +25,12 @@ namespace {
             .arg(member.name);
     }
 
-    QString getBaseName(QStringView name)
+    QStringView getBaseName(QStringView name)
     {
         if (!name.endsWith(']'))
-            return name.toString();
-        if (auto bracket = name.indexOf('['))
-            return name.left(bracket).toString();
+            return name;
+        if (auto bracket = name.lastIndexOf('['))
+            return getBaseName(name.left(bracket));
         return {};
     }
 
@@ -203,6 +203,33 @@ namespace {
             //.normalizedCoordinates = true
         };
     }
+
+    template <typename F>
+    void forEachBufferMemberRec(const QString &name,
+        const SpvReflectBlockVariable &member, int memberOffset,
+        const F &function)
+    {
+        memberOffset += member.offset;
+
+        if (!member.member_count)
+            return function(name, member, memberOffset);
+
+        if (auto size = getBufferMemberArraySize(member)) {
+            const auto arrayStride = getBufferMemberArrayStride(member);
+            for (auto a = 0; a < size; ++a) {
+                const auto element = QString("[%1]").arg(a);
+                for (auto i = 0u; i < member.member_count; ++i)
+                    forEachBufferMemberRec(
+                        name + element + '.' + member.members[i].name,
+                        member.members[i], memberOffset + a * arrayStride,
+                        function);
+            }
+        } else {
+            for (auto i = 0u; i < member.member_count; ++i)
+                forEachBufferMemberRec(name + '.' + member.members[i].name,
+                    member.members[i], memberOffset, function);
+        }
+    }
 } // namespace
 
 VKPipeline::VKPipeline(ItemId itemId, VKProgram *program, VKTarget *target,
@@ -345,10 +372,11 @@ auto VKPipeline::getDynamicUniformBuffer(uint32_t set,
 
 void VKPipeline::applyBufferMemberBinding(std::span<std::byte> bufferData,
     const SpvReflectBlockVariable &member, const VKUniformBinding &binding,
-    int elementOffset, int elementCount, ScriptEngine &scriptEngine)
+    int memberOffset, int elementOffset, int elementCount,
+    ScriptEngine &scriptEngine)
 {
     const auto type = getBufferMemberDataType(member);
-    const auto memberData = &bufferData[member.offset];
+    const auto memberData = &bufferData[memberOffset];
     const auto valuesPerElement = getBufferMemberColumnCount(member)
         * getBufferMemberRowCount(member);
     switch (type) {
@@ -372,13 +400,13 @@ void VKPipeline::applyBufferMemberBinding(std::span<std::byte> bufferData,
 
 bool VKPipeline::applyBufferMemberBindings(std::span<std::byte> bufferData,
     const QString &name, const SpvReflectBlockVariable &member,
-    ScriptEngine &scriptEngine)
+    int memberOffset, ScriptEngine &scriptEngine)
 {
     auto bindingSet = false;
     for (const auto &[bindingName, binding] : mBindings.uniforms) {
         if (bindingName == name) {
-            applyBufferMemberBinding(bufferData, member, binding, 0,
-                getBufferMemberArraySize(member), scriptEngine);
+            applyBufferMemberBinding(bufferData, member, binding, memberOffset,
+                0, getBufferMemberArraySize(member), scriptEngine);
             mUsedItems += binding.bindingItemId;
             bindingSet = true;
             continue;
@@ -402,8 +430,8 @@ bool VKPipeline::applyBufferMemberBindings(std::span<std::byte> bufferData,
             for (auto i = indices.size(); i < dims.size(); ++i)
                 elementCount *= dims[i];
 
-            applyBufferMemberBinding(bufferData, member, binding, elementOffset,
-                elementCount, scriptEngine);
+            applyBufferMemberBinding(bufferData, member, binding, memberOffset,
+                elementOffset, elementCount, scriptEngine);
             mUsedItems += binding.bindingItemId;
             bindingSet = true;
         }
@@ -422,11 +450,15 @@ bool VKPipeline::applyBufferMemberBindings(std::span<std::byte> bufferData,
             continue;
 
         const auto name = getBufferMemberFullName(block, member);
-        if (applyBufferMemberBindings(bufferData, name, member, scriptEngine)) {
-            memberSet = true;
-        } else {
-            membersNotSet.push_back(name);
-        }
+        forEachBufferMemberRec(name, member, 0,
+            [&](const QString &name, const auto &member, int memberOffset) {
+                if (applyBufferMemberBindings(bufferData, name, member,
+                        memberOffset, scriptEngine)) {
+                    memberSet = true;
+                } else {
+                    membersNotSet.push_back(name);
+                }
+            });
     }
     if (!memberSet
         && !isGlobalUniformBlockName(block.type_description->type_name))

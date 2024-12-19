@@ -34,19 +34,6 @@
                 },
                 {
                     "bindingType": "Uniform",
-                    "editor": "Expression2x2",
-                    "id": 8,
-                    "name": "u_values_1",
-                    "type": "Binding",
-                    "values": [
-                        "1.0",
-                        "2.0",
-                        "3.0",
-                        "4.0"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
                     "editor": "Expression2",
                     "id": 906,
                     "name": "u_values_2",
@@ -131,13 +118,134 @@
                 },
                 {
                     "bindingType": "Uniform",
-                    "editor": "Expression2",
+                    "editor": "Expression",
                     "id": 21,
-                    "name": "u_values_1[1]",
+                    "name": "u_values_1[0].x[0]",
                     "type": "Binding",
                     "values": [
-                        "3.1",
-                        "4.1"
+                        "1"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 926,
+                    "name": "u_values_1[0].x[1]",
+                    "type": "Binding",
+                    "values": [
+                        "2"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression3",
+                    "id": 927,
+                    "name": "u_values_1[0].y[0].z",
+                    "type": "Binding",
+                    "values": [
+                        "3",
+                        "4",
+                        "5"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 928,
+                    "name": "u_values_1[0].y[0].w",
+                    "type": "Binding",
+                    "values": [
+                        "6",
+                        "7"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression3",
+                    "id": 929,
+                    "name": "u_values_1[0].y[1].z",
+                    "type": "Binding",
+                    "values": [
+                        "8",
+                        "9",
+                        "10"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 930,
+                    "name": "u_values_1[0].y[1].w",
+                    "type": "Binding",
+                    "values": [
+                        "11",
+                        "12"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 937,
+                    "name": "u_values_1[1].x[0]",
+                    "type": "Binding",
+                    "values": [
+                        "13"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 938,
+                    "name": "u_values_1[1].x[1]",
+                    "type": "Binding",
+                    "values": [
+                        "14"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression3",
+                    "id": 939,
+                    "name": "u_values_1[1].y[0].z",
+                    "type": "Binding",
+                    "values": [
+                        "15",
+                        "16",
+                        "17"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 940,
+                    "name": "u_values_1[1].y[0].w",
+                    "type": "Binding",
+                    "values": [
+                        "18",
+                        "19"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression3",
+                    "id": 941,
+                    "name": "u_values_1[1].y[1].z",
+                    "type": "Binding",
+                    "values": [
+                        "20",
+                        "21",
+                        "22"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 942,
+                    "name": "u_values_1[1].y[1].w",
+                    "type": "Binding",
+                    "values": [
+                        "23",
+                        "24"
                     ]
                 },
                 {
@@ -155,62 +263,6 @@
             ],
             "iterations": "1",
             "name": "set uniform elements",
-            "type": "Group"
-        },
-        {
-            "id": 15,
-            "inlineScope": true,
-            "items": [
-                {
-                    "fileName": "Buffer.bin",
-                    "id": 16,
-                    "items": [
-                        {
-                            "id": 17,
-                            "items": [
-                                {
-                                    "count": 4,
-                                    "dataType": "Float",
-                                    "id": 18,
-                                    "name": "values_0",
-                                    "padding": 0,
-                                    "type": "Field"
-                                },
-                                {
-                                    "count": 4,
-                                    "dataType": "Float",
-                                    "id": 908,
-                                    "name": "values_1",
-                                    "padding": 0,
-                                    "type": "Field"
-                                },
-                                {
-                                    "count": 2,
-                                    "dataType": "Float",
-                                    "id": 909,
-                                    "name": "values_2",
-                                    "padding": 0,
-                                    "type": "Field"
-                                }
-                            ],
-                            "name": "Block",
-                            "offset": "0",
-                            "rowCount": "1",
-                            "type": "Block"
-                        }
-                    ],
-                    "type": "Buffer"
-                },
-                {
-                    "bindingType": "BufferBlock",
-                    "blockId": 17,
-                    "id": 19,
-                    "name": "u_block",
-                    "type": "Binding"
-                }
-            ],
-            "iterations": "0",
-            "name": "set buffer block (disabled)",
             "type": "Group"
         },
         {
@@ -263,30 +315,6 @@
                 },
                 {
                     "bindingType": "Uniform",
-                    "editor": "Expression4",
-                    "id": 903,
-                    "name": "u_block.values_1",
-                    "type": "Binding",
-                    "values": [
-                        "1.0",
-                        "2.0",
-                        "3.0",
-                        "4.0"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression2",
-                    "id": 907,
-                    "name": "u_block.values_1[1]",
-                    "type": "Binding",
-                    "values": [
-                        "3.1",
-                        "4.1"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
                     "editor": "Expression2",
                     "id": 10,
                     "name": "u_block.values_2",
@@ -294,6 +322,138 @@
                     "values": [
                         "1.0",
                         "2.0"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 931,
+                    "name": "u_block.values_1[0].x[0]",
+                    "type": "Binding",
+                    "values": [
+                        "1"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 932,
+                    "name": "u_block.values_1[0].x[1]",
+                    "type": "Binding",
+                    "values": [
+                        "2"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression3",
+                    "id": 933,
+                    "name": "u_block.values_1[0].y[0].z",
+                    "type": "Binding",
+                    "values": [
+                        "3",
+                        "4",
+                        "5"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 934,
+                    "name": "u_block.values_1[0].y[0].w",
+                    "type": "Binding",
+                    "values": [
+                        "6",
+                        "7"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression3",
+                    "id": 935,
+                    "name": "u_block.values_1[0].y[1].z",
+                    "type": "Binding",
+                    "values": [
+                        "8",
+                        "9",
+                        "10"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 936,
+                    "name": "u_block.values_1[0].y[1].w",
+                    "type": "Binding",
+                    "values": [
+                        "11",
+                        "12"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 943,
+                    "name": "u_block.values_1[1].x[0]",
+                    "type": "Binding",
+                    "values": [
+                        "13"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 944,
+                    "name": "u_block.values_1[1].x[1]",
+                    "type": "Binding",
+                    "values": [
+                        "14"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression3",
+                    "id": 945,
+                    "name": "u_block.values_1[1].y[0].z",
+                    "type": "Binding",
+                    "values": [
+                        "15",
+                        "16",
+                        "17"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 946,
+                    "name": "u_block.values_1[1].y[0].w",
+                    "type": "Binding",
+                    "values": [
+                        "18",
+                        "19"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression3",
+                    "id": 947,
+                    "name": "u_block.values_1[1].y[1].z",
+                    "type": "Binding",
+                    "values": [
+                        "20",
+                        "21",
+                        "22"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 948,
+                    "name": "u_block.values_1[1].y[1].w",
+                    "type": "Binding",
+                    "values": [
+                        "23",
+                        "24"
                     ]
                 }
             ],
