@@ -19,8 +19,7 @@ VKProgram::VKProgram(const Program &program, const Session &session)
         }
 
     for (const auto &[type, list] : shaders)
-        if (type != Shader::ShaderType::Includable)
-            mShaders.emplace_back(type, list, session);
+        mShaders.emplace_back(type, list, session);
 }
 
 bool VKProgram::operator==(const VKProgram &rhs) const
@@ -38,7 +37,9 @@ bool VKProgram::link(KDGpu::Device &device)
 
     auto inputs = std::vector<Spirv::Input>();
     for (auto &shader : mShaders)
-        inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
+        if (shader.type() != Shader::ShaderType::Includable)
+            inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
+
     auto stages = Spirv::compile(mSession, inputs, mItemId, mLinkMessages);
     if (stages.empty()) {
         mFailed = true;

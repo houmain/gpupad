@@ -127,8 +127,7 @@ GLProgram::GLProgram(const Program &program, const Session &session)
         }
 
     for (const auto &[type, list] : shaders)
-        if (type != Shader::ShaderType::Includable)
-            mShaders.emplace_back(type, list, session);
+        mShaders.emplace_back(type, list, session);
 }
 
 bool GLProgram::operator==(const GLProgram &rhs) const
@@ -166,12 +165,14 @@ bool GLProgram::compileShaders()
 {
     if (mSession.shaderCompiler.isEmpty()) {
         for (auto &shader : mShaders)
-            if (!shader.compile(mPrintf))
-                return false;
+            if (shader.type() != Shader::ShaderType::Includable)
+                if (!shader.compile(mPrintf))
+                    return false;
     } else {
         auto inputs = std::vector<Spirv::Input>();
         for (auto &shader : mShaders)
-            inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
+            if (shader.type() != Shader::ShaderType::Includable)
+                inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
 
         auto stages = Spirv::compile(mSession, inputs, mItemId, mLinkMessages);
         for (auto &shader : mShaders)
@@ -191,7 +192,8 @@ bool GLProgram::linkProgram()
     auto &gl = GLContext::currentContext();
     auto program = GLObject(gl.glCreateProgram(), freeProgram);
     for (auto &shader : mShaders)
-        gl.glAttachShader(program, shader.shaderObject());
+        if (shader.type() != Shader::ShaderType::Includable)
+            gl.glAttachShader(program, shader.shaderObject());
 
     gl.glLinkProgram(program);
     auto status = GLint{};

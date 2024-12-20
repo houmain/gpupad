@@ -267,10 +267,11 @@ bool ShaderBase::operator==(const ShaderBase &rhs) const
     if (shaderSessionSettingsDiffer(mSession, rhs.mSession))
         return false;
 
-    return std::tie(mType, mSources, mFileNames, mLanguage, mEntryPoint,
-               mPreamble, mIncludePaths)
-        == std::tie(rhs.mType, rhs.mSources, rhs.mFileNames, rhs.mLanguage,
-            rhs.mEntryPoint, rhs.mPreamble, rhs.mIncludePaths);
+    const auto tie = [](const ShaderBase &a) {
+        return std::tie(a.mType, a.mSources, a.mFileNames, a.mLanguage,
+            a.mEntryPoint, a.mPreamble, a.mIncludePaths);
+    };
+    return tie(*this) == tie(rhs);
 }
 
 QStringList ShaderBase::preprocessorDefinitions() const

@@ -284,10 +284,6 @@ std::map<Shader::ShaderType, Spirv> Spirv::compile(const Session &session,
     auto shaders = std::vector<std::shared_ptr<glslang::TShader>>();
     auto program = glslang::TProgram();
     for (const auto &input : inputs) {
-        if (input.sources.empty()
-            || input.sources.size() != input.fileNames.size())
-            return {};
-
         auto requestedMessages = unsigned{ EShMsgSpvRules };
         if (session.renderer == "Vulkan")
             requestedMessages |= EShMsgVulkanRules;
@@ -351,9 +347,6 @@ QString Spirv::preprocess(const Session &session, Shader::Language language,
     const QStringList &fileNames, const QString &entryPoint, ItemId itemId,
     MessagePtrSet &messages)
 {
-    if (sources.empty() || sources.size() != fileNames.size())
-        return {};
-
     const auto defaultVersion = 100;
     const auto defaultProfile = ENoProfile;
     const auto forwardCompatible = true;
@@ -387,9 +380,6 @@ QString Spirv::generateAST(const Session &session, Shader::Language language,
     const QStringList &fileNames, const QString &entryPoint, ItemId itemId,
     MessagePtrSet &messages)
 {
-    if (sources.empty() || sources.size() != fileNames.size())
-        return {};
-
     const auto defaultVersion = 100;
     const auto defaultProfile = ENoProfile;
     const auto forwardCompatible = true;
