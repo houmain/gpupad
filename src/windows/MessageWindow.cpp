@@ -60,6 +60,7 @@ void MessageWindow::updateMessages()
 
 QIcon MessageWindow::getMessageIcon(const Message &message) const
 {
+    using enum MessageType;
     switch (message.type) {
     case UniformNotSet:
     case UniformComponentMismatch:
@@ -78,7 +79,9 @@ QIcon MessageWindow::getMessageIcon(const Message &message) const
 
 QString MessageWindow::getMessageText(const Message &message) const
 {
+    using enum MessageType;
     switch (message.type) {
+    case None:
     case ShaderInfo:
     case ShaderWarning:
     case ShaderError:
@@ -197,7 +200,7 @@ bool MessageWindow::addMessageOnce(const Message &message)
     messageItem->setData(Qt::UserRole + 1, message.itemId);
     messageItem->setData(Qt::UserRole + 2, message.fileName);
     messageItem->setData(Qt::UserRole + 3, message.line);
-    messageItem->setData(Qt::UserRole + 4, message.type);
+    messageItem->setData(Qt::UserRole + 4, static_cast<int>(message.type));
 
     auto locationText = getLocationText(message);
     auto locationItem = new QTableWidgetItem(locationText);

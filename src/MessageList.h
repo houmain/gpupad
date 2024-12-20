@@ -10,7 +10,8 @@ using MessageId = qulonglong;
 using MessagePtr = QSharedPointer<const struct Message>;
 using MessagePtrSet = QSet<MessagePtr>;
 
-enum MessageType {
+enum class MessageType {
+    None,
     OpenGLVersionNotAvailable,
     VulkanNotAvailable,
     LoadingFileFailed,

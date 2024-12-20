@@ -36,15 +36,28 @@ namespace {
 
     QString removeInstanceName(const QString &bufferName)
     {
-        if (auto index = bufferName.indexOf('.'); index >= 0)
+        if (auto index = bufferName.indexOf('.'); index >= 0) {
+            if (auto bracket = bufferName.indexOf('['); bracket >= 0) {
+                auto copy = bufferName;
+                copy.remove(index, bracket - index);
+                return copy;
+            }
+            return bufferName.left(index);
+        }
+        return bufferName;
+    }
+
+    QString removeArrayIndex(const QString &bufferName)
+    {
+        if (auto index = bufferName.indexOf('['); index >= 0)
             return bufferName.left(index);
         return bufferName;
     }
 
     QString removePrefix(const QString &string, const QString &prefix)
     {
-        if (string.startsWith(prefix))
-            return string.mid(prefix.size());
+        if (string.startsWith(prefix + '.'))
+            return string.mid(prefix.size() + 1);
         return string;
     }
 
@@ -91,6 +104,11 @@ namespace {
         case GL_DOUBLE_MAT4x3:     return 4 * 3 * sizeof(GLdouble);
         }
         return 0;
+    }
+
+    bool isOpaqueType(GLenum dataType)
+    {
+        return (getDataTypeSize(dataType) == 0);
     }
 } // namespace
 
@@ -213,11 +231,15 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
         if (location >= 0) {
             Q_ASSERT(dataType);
             const auto arrayName = getArrayName(name);
-            interface.uniforms[arrayName.isEmpty() ? name : arrayName] = {
-                .location = location,
-                .dataType = dataType,
-                .size = size,
-            };
+
+            // allow to set whole array only when non-opaque
+            if (arrayName.isEmpty() || !isOpaqueType(dataType))
+                interface.uniforms[arrayName.isEmpty() ? name : arrayName] = {
+                    .location = location,
+                    .dataType = dataType,
+                    .size = size,
+                };
+
             if (!arrayName.isEmpty())
                 for (auto j = 0; j < size; ++j) {
                     const auto elementName = getElementName(arrayName, j);
@@ -273,8 +295,9 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
         gl.glGetActiveUniformBlockiv(program, i,
             GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, uniformIndices.data());
 
-        // glslang generates block_name.instance_name
+        // glslang generates block_name.instance_name[N] instead of block_name[N]
         const auto blockName = removeInstanceName(bufferName);
+        const auto memberPrefix = removeArrayIndex(bufferName);
         auto members = std::map<QString, Interface::BufferMember>();
         auto minimumSize = 0;
         for (GLuint index : uniformIndices) {
@@ -282,9 +305,9 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
                 static_cast<GLsizei>(buffer.size()), &nameLength, &size,
                 &dataType, buffer.data());
 
-            // fully qualify buffer member name (glslang does already, driver not)
+            // qualify member with buffer name (glslang does already, driver not always)
             auto memberName = QString(buffer.data());
-            memberName = removePrefix(memberName, bufferName + '.');
+            memberName = removePrefix(memberName, memberPrefix);
             memberName = blockName + '.' + memberName;
             memberName = removeGlobalUniformBlockName(memberName);
 
@@ -302,6 +325,7 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
             auto isRowMajor = GLint{};
             gl.glGetActiveUniformsiv(program, 1, &index,
                 GL_UNIFORM_IS_ROW_MAJOR, &isRowMajor);
+
             const auto arrayName = getArrayName(memberName);
             members[arrayName.isEmpty() ? memberName : arrayName] = {
                 .dataType = dataType,
@@ -311,6 +335,7 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
                 .matrixStride = matrixStride,
                 .isRowMajor = (isRowMajor != 0),
             };
+
             if (!arrayName.isEmpty())
                 for (auto j = 0; j < size; ++j) {
                     const auto elementName = getElementName(arrayName, j);
@@ -325,16 +350,17 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
                 }
             minimumSize = std::max(minimumSize, offset + size * arrayStride);
         }
-
         Q_ASSERT(minimumSize);
-        if (minimumSize)
-            interface.bufferBindingPoints[blockName] = {
-                .target = GL_UNIFORM_BUFFER,
-                .index = uniformBlockBinding,
-                .members = std::move(members),
-                .minimumSize = minimumSize,
-                .readonly = true,
-            };
+        if (!minimumSize)
+            continue;
+
+        interface.bufferBindingPoints[blockName] = {
+            .target = GL_UNIFORM_BUFFER,
+            .index = uniformBlockBinding,
+            .members = std::move(members),
+            .minimumSize = minimumSize,
+            .readonly = true,
+        };
     }
 
     auto attributes = GLint{};

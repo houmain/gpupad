@@ -799,13 +799,13 @@ bool GLCall::applyDynamicBufferBindings(const QString &bufferName,
         bufferBindingPoint.minimumSize);
 
     auto memberSet = false;
-    auto membersNotSet = std::vector<QString>();
     for (const auto &[name, member] : bufferBindingPoint.members) {
         if (applyBufferMemberBindings(buffer, name, member, bindings,
                 scriptEngine)) {
             memberSet = true;
         } else {
-            membersNotSet.push_back(name);
+            mMessages +=
+                MessageList::insert(mCall.id, MessageType::UniformNotSet, name);
         }
     }
     if (!memberSet && !isGlobalUniformBlockName(bufferName))
@@ -813,10 +813,6 @@ bool GLCall::applyDynamicBufferBindings(const QString &bufferName,
 
     applyBufferBinding(bufferBindingPoint,
         GLBufferBinding{ .name = bufferName, .buffer = &buffer }, scriptEngine);
-
-    for (const auto &memberName : membersNotSet)
-        mMessages += MessageList::insert(mCall.id, MessageType::UniformNotSet,
-            memberName);
     return true;
 }
 

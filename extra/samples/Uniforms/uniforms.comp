@@ -32,6 +32,10 @@ layout(std430) uniform u_block {
   vec2  values_2;
 } block;
 
+layout(std430) uniform u_block_2 {
+  float values_0[2];
+} block_2[2];
+
 void main() {
   assertEq(u_values_0[0][0], 1.2);
   assertEq(u_values_0[0][1], 2.0);
@@ -77,4 +81,9 @@ void main() {
   assertEq(block.values_1[1].y[1].w, vec2(23, 24));
   
   assertEq(block.values_2, vec2(1.0, 2.0));
+  
+  assertEq(block_2[0].values_0[0], float(1));
+  assertEq(block_2[0].values_0[1], float(2));
+  assertEq(block_2[1].values_0[0], float(3));
+  assertEq(block_2[1].values_0[1], float(4));  
 }

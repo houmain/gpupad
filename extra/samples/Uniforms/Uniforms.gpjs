@@ -462,6 +462,46 @@
             "type": "Group"
         },
         {
+            "id": 953,
+            "inlineScope": true,
+            "items": [
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression2",
+                    "id": 949,
+                    "name": "u_block_2[0].values_0",
+                    "type": "Binding",
+                    "values": [
+                        "1",
+                        "2"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 951,
+                    "name": "u_block_2[1].values_0[0]",
+                    "type": "Binding",
+                    "values": [
+                        "3"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 952,
+                    "name": "u_block_2[1].values_0[1]",
+                    "type": "Binding",
+                    "values": [
+                        "4"
+                    ]
+                }
+            ],
+            "iterations": "1",
+            "name": "set block array elements",
+            "type": "Group"
+        },
+        {
             "callType": "Compute",
             "checked": true,
             "executeOn": "EveryEvaluation",

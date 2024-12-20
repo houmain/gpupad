@@ -15,11 +15,24 @@ namespace {
         return (it == container.end() ? nullptr : &it->second);
     }
 
+    bool isBufferBinding(SpvReflectDescriptorType type)
+    {
+        return (type == SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER
+            || type == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+    }
+
     QString getBufferMemberFullName(const SpvReflectBlockVariable &block,
-        const SpvReflectBlockVariable &member)
+        uint32_t arrayElement, const SpvReflectBlockVariable &member)
     {
         if (isGlobalUniformBlockName(block.type_description->type_name))
             return member.name;
+
+        if (block.type_description->op == SpvOpTypeArray)
+            return QStringLiteral("%1[%2].%3")
+                .arg(block.type_description->type_name)
+                .arg(arrayElement)
+                .arg(member.name);
+
         return QStringLiteral("%1.%2")
             .arg(block.type_description->type_name)
             .arg(member.name);
@@ -32,6 +45,15 @@ namespace {
         if (auto bracket = name.lastIndexOf('['))
             return getBaseName(name.left(bracket));
         return {};
+    }
+
+    uint32_t getBindingArraySize(const SpvReflectBindingArrayTraits &array)
+    {
+        auto count = 1u;
+        for (auto i = 0u; i < array.dims_count; ++i)
+            count *= array.dims[i];
+        Q_ASSERT(count > 0);
+        return count;
     }
 
     std::vector<int> getArrayIndices(QStringView name)
@@ -230,6 +252,30 @@ namespace {
                     member.members[i], memberOffset, function);
         }
     }
+
+    template <typename F>
+    void forEachArrayElementRec(SpvReflectDescriptorBinding desc,
+        uint32_t arrayDim, uint32_t &arrayElement, const F &function)
+    {
+        if (arrayDim >= desc.array.dims_count)
+            return function(desc, arrayElement++);
+
+        // update descriptor to contain array index in the names
+        const auto baseName = desc.name;
+        const auto baseTypeName = (desc.type_description->type_name
+                ? desc.type_description->type_name
+                : "");
+        auto typeDesc = *desc.type_description;
+        desc.type_description = &typeDesc;
+
+        for (auto i = 0u; i < desc.array.dims[arrayDim]; ++i) {
+            const auto name = std::format("{}[{}]", baseName, i);
+            const auto typeName = std::format("{}[{}]", baseTypeName, i);
+            desc.name = name.c_str();
+            typeDesc.type_name = typeName.c_str();
+            forEachArrayElementRec(desc, arrayDim + 1, arrayElement, function);
+        }
+    }
 } // namespace
 
 VKPipeline::VKPipeline(ItemId itemId, VKProgram *program, VKTarget *target,
@@ -300,7 +346,7 @@ const KDGpu::Sampler &VKPipeline::getSampler(VKContext &context,
 
     auto &sampler = mSamplers[samplerOptions];
     if (!sampler.isValid())
-        sampler = context.device.createSampler();
+        sampler = context.device.createSampler(samplerOptions);
     return sampler;
 }
 
@@ -343,28 +389,32 @@ void VKPipeline::setBindGroupResource(uint32_t set,
     for (const auto &res : bindGroup.resources)
         if (res.binding == resource.binding) {
             // TODO: improve check
-            if (res.resource.type() != resource.resource.type())
+            if (res.resource.type() != resource.resource.type()) {
                 mMessages += MessageList::insert(mProgram.itemId(),
                     MessageType::IncompatibleBindings,
                     QStringLiteral("(set %1)").arg(set));
-
-            return;
+                return;
+            }
+            if (resource.arrayElement == res.arrayElement)
+                return;
         }
     bindGroup.resources.emplace_back(std::move(resource));
 }
 
-auto VKPipeline::getDynamicUniformBuffer(uint32_t set,
-    uint32_t binding) -> DynamicUniformBuffer &
+auto VKPipeline::getDynamicUniformBuffer(uint32_t set, uint32_t binding,
+    uint32_t arrayElement) -> DynamicUniformBuffer &
 {
     auto it = std::find_if(mDynamicUniformBuffers.begin(),
         mDynamicUniformBuffers.end(), [&](const auto &block) {
-            return (block->set == set && block->binding == binding);
+            return (block->set == set && block->binding == binding
+                && block->arrayElement == arrayElement);
         });
     if (it == mDynamicUniformBuffers.end()) {
         it = mDynamicUniformBuffers.emplace(mDynamicUniformBuffers.end(),
             new DynamicUniformBuffer{
                 .set = set,
                 .binding = binding,
+                .arrayElement = arrayElement,
             });
     }
     return **it;
@@ -440,65 +490,62 @@ bool VKPipeline::applyBufferMemberBindings(std::span<std::byte> bufferData,
 }
 
 bool VKPipeline::applyBufferMemberBindings(std::span<std::byte> bufferData,
-    const SpvReflectBlockVariable &block, ScriptEngine &scriptEngine)
+    const SpvReflectBlockVariable &block, uint32_t arrayElement,
+    ScriptEngine &scriptEngine)
 {
     auto memberSet = false;
-    auto membersNotSet = std::vector<QString>();
     for (auto i = 0u; i < block.member_count; ++i) {
         const auto &member = block.members[i];
         if (member.flags & SPV_REFLECT_VARIABLE_FLAGS_UNUSED)
             continue;
 
-        const auto name = getBufferMemberFullName(block, member);
+        const auto name = getBufferMemberFullName(block, arrayElement, member);
         forEachBufferMemberRec(name, member, 0,
             [&](const QString &name, const auto &member, int memberOffset) {
                 if (applyBufferMemberBindings(bufferData, name, member,
                         memberOffset, scriptEngine)) {
                     memberSet = true;
                 } else {
-                    membersNotSet.push_back(name);
+                    mMessages += MessageList::insert(mItemId,
+                        MessageType::UniformNotSet, name);
                 }
             });
     }
-    if (!memberSet
-        && !isGlobalUniformBlockName(block.type_description->type_name))
-        return false;
-
-    for (const auto &memberName : membersNotSet)
-        mMessages += MessageList::insert(mItemId, MessageType::UniformNotSet,
-            memberName);
-
-    return true;
+    return (memberSet
+        || isGlobalUniformBlockName(block.type_description->type_name));
 }
 
 bool VKPipeline::updateDynamicBufferBindings(VKContext &context,
-    const SpvReflectDescriptorBinding &descriptor, ScriptEngine &scriptEngine)
+    const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
+    ScriptEngine &scriptEngine)
 {
-    auto &block = getDynamicUniformBuffer(descriptor.set, descriptor.binding);
+    auto &block = getDynamicUniformBuffer(desc.set, desc.binding, arrayElement);
     if (!block.buffer.isValid()) {
         block.buffer = context.device.createBuffer(KDGpu::BufferOptions{
-            .size = descriptor.block.size,
+            .size = desc.block.size,
             .usage = KDGpu::BufferUsageFlagBits::UniformBufferBit,
             .memoryUsage = KDGpu::MemoryUsage::CpuToGpu,
         });
-        block.size = descriptor.block.size;
+        block.size = desc.block.size;
     }
     Q_ASSERT(block.buffer.isValid());
-    Q_ASSERT(descriptor.block.size == block.size);
-    if (!block.buffer.isValid() || descriptor.block.size != block.size)
+    Q_ASSERT(desc.block.size == block.size);
+    if (!block.buffer.isValid() || desc.block.size != block.size)
         return false;
 
     auto bufferData = std::span<std::byte>(
         static_cast<std::byte *>(block.buffer.map()), block.size);
     const auto guard = qScopeGuard([&] { block.buffer.unmap(); });
 
-    if (!applyBufferMemberBindings(bufferData, descriptor.block, scriptEngine))
+    if (!applyBufferMemberBindings(bufferData, desc.block, arrayElement,
+            scriptEngine))
         return false;
 
-    setBindGroupResource(descriptor.set,
+    setBindGroupResource(desc.set,
         {
-            .binding = descriptor.binding,
+            .binding = desc.binding,
             .resource = KDGpu::UniformBufferBinding{ .buffer = block.buffer },
+            .arrayElement = arrayElement,
         });
 
     return true;
@@ -513,7 +560,7 @@ bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
         for (auto i = 0u; i < interface->push_constant_block_count; ++i) {
             auto &block = interface->push_constant_blocks[i];
             auto bufferData = std::span<std::byte>(mPushConstantData);
-            if (!applyBufferMemberBindings(bufferData, block, scriptEngine))
+            if (!applyBufferMemberBindings(bufferData, block, 0, scriptEngine))
                 mMessages += MessageList::insert(mItemId,
                     MessageType::BufferNotSet,
                     block.type_description->type_name);
@@ -590,15 +637,15 @@ bool VKPipeline::createLayout(VKContext &context)
     mPushConstantRange = KDGpu::PushConstantRange{};
     for (const auto &[stage, interface] : mProgram.interface()) {
         for (auto i = 0u; i < interface->descriptor_binding_count; ++i) {
-            const auto &descriptor = interface->descriptor_bindings[i];
-            if (!descriptor.accessed)
+            const auto &desc = interface->descriptor_bindings[i];
+            if (!desc.accessed)
                 continue;
 
-            if (!createOrUpdateBindGroup(descriptor.set, descriptor.binding,
+            if (!createOrUpdateBindGroup(desc.set, desc.binding,
                     KDGpu::ResourceBindingLayout{
-                        .binding = descriptor.binding,
-                        .resourceType =
-                            getResourceType(descriptor.descriptor_type),
+                        .binding = desc.binding,
+                        .count = getBindingArraySize(desc.array),
+                        .resourceType = getResourceType(desc.descriptor_type),
                         .shaderStages = stage,
                     }))
                 return false;
@@ -649,176 +696,27 @@ bool VKPipeline::updateBindings(VKContext &context, ScriptEngine &scriptEngine)
     }
 
     auto canRender = true;
-    const auto notBoundError = [&](MessageType message, QString name) {
-        mMessages += MessageList::insert(mItemId, message, name);
-        canRender = false;
-    };
-
     for (const auto &[stage, interface] : mProgram.interface())
         for (auto i = 0u; i < interface->descriptor_binding_count; ++i) {
             const auto &desc = interface->descriptor_bindings[i];
             if (!desc.accessed)
                 continue;
 
-            switch (desc.descriptor_type) {
-            case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-                if (const auto bufferBinding = find(mBindings.buffers,
-                        desc.type_description->type_name)) {
-                    if (!bufferBinding->buffer) {
-                        notBoundError(MessageType::BufferNotSet,
-                            desc.type_description->type_name);
-                        continue;
+            auto arrayElement = uint32_t{};
+            forEachArrayElementRec(desc, 0, arrayElement,
+                [&](const auto &desc, uint32_t arrayElement) {
+                    const auto message = updateBindings(context, desc,
+                        arrayElement, scriptEngine);
+
+                    if (message != MessageType::None) {
+                        auto name = desc.name;
+                        if (isBufferBinding(desc.descriptor_type))
+                            name = desc.type_description->type_name;
+                        mMessages +=
+                            MessageList::insert(mItemId, message, name);
+                        canRender = false;
                     }
-                    mUsedItems += bufferBinding->bindingItemId;
-                    mUsedItems += bufferBinding->buffer->itemId();
-                    mUsedItems += bufferBinding->blockItemId;
-
-                    setBindGroupResource(desc.set,
-                        {
-                            .binding = desc.binding,
-                            .resource =
-                                KDGpu::UniformBufferBinding{
-                                    .buffer =
-                                        bufferBinding->buffer
-                                            ->getReadOnlyBuffer(context) },
-                        });
-                } else {
-                    if (!updateDynamicBufferBindings(context, desc,
-                            scriptEngine))
-                        notBoundError(MessageType::BufferNotSet,
-                            desc.type_description->type_name);
-                }
-                break;
-
-            case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
-                if (desc.type_description->type_name
-                    == ShaderPrintf::bufferBindingName()) {
-                    setBindGroupResource(desc.set,
-                        {
-                            .binding = desc.binding,
-                            .resource =
-                                KDGpu::StorageBufferBinding{
-                                    .buffer =
-                                        mProgram.printf().getInitializedBuffer(
-                                            context) },
-                        });
-                } else {
-                    const auto bufferBinding = find(mBindings.buffers,
-                        desc.type_description->type_name);
-                    if (!bufferBinding || !bufferBinding->buffer) {
-                        notBoundError(MessageType::BufferNotSet,
-                            desc.type_description->type_name);
-                        continue;
-                    }
-                    mUsedItems += bufferBinding->bindingItemId;
-                    mUsedItems += bufferBinding->buffer->itemId();
-
-                    setBindGroupResource(desc.set,
-                        {
-                            .binding = desc.binding,
-                            .resource =
-                                KDGpu::StorageBufferBinding{
-                                    .buffer =
-                                        bufferBinding->buffer
-                                            ->getReadWriteBuffer(context) },
-                        });
-                }
-                break;
-            }
-
-            case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
-            case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
-            case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: {
-                const auto samplerBinding = find(mBindings.samplers, desc.name);
-                if (!samplerBinding) {
-                    if (desc.accessed)
-                        notBoundError(MessageType::SamplerNotSet, desc.name);
-                    continue;
-                }
-                mUsedItems += samplerBinding->bindingItemId;
-
-                const auto &sampler = getSampler(context, *samplerBinding);
-
-                if (desc.descriptor_type
-                    == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER) {
-                    setBindGroupResource(desc.set,
-                        {
-                            .binding = desc.binding,
-                            .resource =
-                                KDGpu::SamplerBinding{ .sampler = sampler },
-                        });
-                } else {
-                    if (mTarget->hasAttachment(samplerBinding->texture)) {
-                        notBoundError(MessageType::CantSampleAttachment,
-                            desc.name);
-                        continue;
-                    }
-
-                    if (!samplerBinding->texture
-                        || !samplerBinding->texture->prepareSampledImage(
-                            context)) {
-                        notBoundError(MessageType::SamplerNotSet, desc.name);
-                        continue;
-                    }
-                    mUsedItems += samplerBinding->texture->itemId();
-
-                    if (desc.descriptor_type
-                        == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE) {
-                        setBindGroupResource(desc.set,
-                            {
-                                .binding = desc.binding,
-                                .resource =
-                                    KDGpu::TextureViewBinding{
-                                        .textureView =
-                                            samplerBinding->texture->getView(),
-                                    },
-                            });
-                    } else {
-                        setBindGroupResource(desc.set,
-                            {
-                                .binding = desc.binding,
-                                .resource =
-                                    KDGpu::TextureViewSamplerBinding{
-                                        .textureView =
-                                            samplerBinding->texture->getView(),
-                                        .sampler = sampler,
-                                    },
-                            });
-                    }
-                }
-                break;
-            }
-
-            case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE: {
-                const auto imageBinding = find(mBindings.images, desc.name);
-                if (!imageBinding || !imageBinding->texture
-                    || !imageBinding->texture->prepareStorageImage(context)) {
-                    if (desc.accessed)
-                        notBoundError(MessageType::ImageNotSet, desc.name);
-                    continue;
-                }
-                mUsedItems += imageBinding->bindingItemId;
-                mUsedItems += imageBinding->texture->itemId();
-
-                setBindGroupResource(desc.set,
-                    {
-                        .binding = desc.binding,
-                        .resource =
-                            KDGpu::ImageBinding{
-                                .textureView = imageBinding->texture->getView(
-                                    imageBinding->level, imageBinding->layer,
-                                    toKDGpu(imageBinding->format)),
-                            },
-                    });
-                break;
-            }
-
-            case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
-                Q_ASSERT(!"Texture buffers are not yet available in KDGpu");
-                break;
-
-            default: Q_ASSERT(!"descriptor type not handled"); break;
-            }
+                });
         }
 
     if (!canRender)
@@ -830,11 +728,163 @@ bool VKPipeline::updateBindings(VKContext &context, ScriptEngine &scriptEngine)
         if (bindGroup.resources.empty())
             continue;
 
-        Q_ASSERT(bindGroup.resources.size() == bindGroup.bindings.size());
         bindGroup.bindGroup = context.device.createBindGroup({
             .layout = mBindGroupLayouts[i],
             .resources = bindGroup.resources,
         });
     }
     return true;
+}
+
+MessageType VKPipeline::updateBindings(VKContext &context,
+    const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
+    ScriptEngine &scriptEngine)
+{
+    switch (desc.descriptor_type) {
+    case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+        if (const auto bufferBinding =
+                find(mBindings.buffers, desc.type_description->type_name)) {
+            if (!bufferBinding->buffer)
+                return MessageType::BufferNotSet;
+
+            mUsedItems += bufferBinding->bindingItemId;
+            mUsedItems += bufferBinding->buffer->itemId();
+            mUsedItems += bufferBinding->blockItemId;
+
+            setBindGroupResource(desc.set,
+                {
+                    .binding = desc.binding,
+                    .resource =
+                        KDGpu::UniformBufferBinding{
+                            .buffer = bufferBinding->buffer->getReadOnlyBuffer(
+                                context) },
+                    .arrayElement = arrayElement,
+                });
+        } else {
+            if (!updateDynamicBufferBindings(context, desc, arrayElement,
+                    scriptEngine))
+                return MessageType::BufferNotSet;
+        }
+        break;
+
+    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
+        if (desc.type_description->type_name
+            == ShaderPrintf::bufferBindingName()) {
+            setBindGroupResource(desc.set,
+                {
+                    .binding = desc.binding,
+                    .resource =
+                        KDGpu::StorageBufferBinding{
+                            .buffer = mProgram.printf().getInitializedBuffer(
+                                context) },
+                    .arrayElement = arrayElement,
+                });
+        } else {
+            const auto bufferBinding =
+                find(mBindings.buffers, desc.type_description->type_name);
+            if (!bufferBinding || !bufferBinding->buffer)
+                return MessageType::BufferNotSet;
+
+            mUsedItems += bufferBinding->bindingItemId;
+            mUsedItems += bufferBinding->buffer->itemId();
+
+            setBindGroupResource(desc.set,
+                {
+                    .binding = desc.binding,
+                    .resource =
+                        KDGpu::StorageBufferBinding{
+                            .buffer = bufferBinding->buffer->getReadWriteBuffer(
+                                context) },
+                    .arrayElement = arrayElement,
+                });
+        }
+        break;
+    }
+
+    case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
+    case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+    case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: {
+        const auto samplerBinding = find(mBindings.samplers, desc.name);
+        if (!samplerBinding)
+            return MessageType::SamplerNotSet;
+
+        mUsedItems += samplerBinding->bindingItemId;
+
+        const auto &sampler = getSampler(context, *samplerBinding);
+
+        if (desc.descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER) {
+            setBindGroupResource(desc.set,
+                {
+                    .binding = desc.binding,
+                    .resource = KDGpu::SamplerBinding{ .sampler = sampler },
+                });
+        } else {
+            if (mTarget->hasAttachment(samplerBinding->texture))
+                return MessageType::CantSampleAttachment;
+
+            if (!samplerBinding->texture
+                || !samplerBinding->texture->prepareSampledImage(context))
+                return MessageType::SamplerNotSet;
+
+            mUsedItems += samplerBinding->texture->itemId();
+
+            if (desc.descriptor_type
+                == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE) {
+                setBindGroupResource(desc.set,
+                    {
+                        .binding = desc.binding,
+                        .resource =
+                            KDGpu::TextureViewBinding{
+                                .textureView =
+                                    samplerBinding->texture->getView(),
+                            },
+                        .arrayElement = arrayElement,
+                    });
+            } else {
+                setBindGroupResource(desc.set,
+                    {
+                        .binding = desc.binding,
+                        .resource =
+                            KDGpu::TextureViewSamplerBinding{
+                                .textureView =
+                                    samplerBinding->texture->getView(),
+                                .sampler = sampler,
+                            },
+                        .arrayElement = arrayElement,
+                    });
+            }
+        }
+        break;
+    }
+
+    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE: {
+        const auto imageBinding = find(mBindings.images, desc.name);
+        if (!imageBinding || !imageBinding->texture
+            || !imageBinding->texture->prepareStorageImage(context))
+            return MessageType::ImageNotSet;
+
+        mUsedItems += imageBinding->bindingItemId;
+        mUsedItems += imageBinding->texture->itemId();
+
+        setBindGroupResource(desc.set,
+            {
+                .binding = desc.binding,
+                .resource =
+                    KDGpu::ImageBinding{
+                        .textureView = imageBinding->texture->getView(
+                            imageBinding->level, imageBinding->layer,
+                            toKDGpu(imageBinding->format)),
+                    },
+                .arrayElement = arrayElement,
+            });
+        break;
+    }
+
+    case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+        Q_ASSERT(!"Texture buffers are not yet available in KDGpu");
+        break;
+
+    default: Q_ASSERT(!"descriptor type not handled"); break;
+    }
+    return MessageType::None;
 }
