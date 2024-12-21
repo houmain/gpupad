@@ -72,6 +72,7 @@ void AttachmentProperties::showEvent(QShowEvent *event)
 
 void AttachmentProperties::addMappings(QDataWidgetMapper &mapper)
 {
+    mapper.addMapping(mUi->name, SessionModel::Name);
     mapper.addMapping(mUi->texture, SessionModel::AttachmentTextureId);
     mapper.addMapping(mUi->level, SessionModel::AttachmentLevel);
     mapper.addMapping(mUi->layer, SessionModel::AttachmentLayer);

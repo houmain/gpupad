@@ -268,6 +268,7 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
     case Item::Type::Session: mSessionProperties->addMappings(*mMapper); break;
 
     case Item::Type::Group:
+        map(mGroupProperties->name, SessionModel::Name);
         map(mGroupProperties->inlineScope, SessionModel::GroupInlineScope);
         map(mGroupProperties->iterations, SessionModel::GroupIterations);
         break;
@@ -277,12 +278,14 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
         break;
 
     case Item::Type::Block:
+        map(mBlockProperties->name, SessionModel::Name);
         map(mBlockProperties->offset, SessionModel::BlockOffset);
         map(mBlockProperties->rowCount, SessionModel::BlockRowCount);
         updateBlockWidgets(index);
         break;
 
     case Item::Type::Field:
+        map(mFieldProperties->name, SessionModel::Name);
         map(mFieldProperties->type, SessionModel::FieldDataType);
         map(mFieldProperties->count, SessionModel::FieldCount);
         map(mFieldProperties->padding, SessionModel::FieldPadding);
@@ -290,7 +293,9 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
 
     case Item::Type::Texture: mTextureProperties->addMappings(*mMapper); break;
 
-    case Item::Type::Program: break;
+    case Item::Type::Program:
+        map(mProgramProperties->name, SessionModel::Name);
+        break;
 
     case Item::Type::Shader:
         map(mShaderProperties->file, SessionModel::FileName);
@@ -304,15 +309,19 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
 
     case Item::Type::Binding: mBindingProperties->addMappings(*mMapper); break;
 
-    case Item::Type::Stream: break;
+    case Item::Type::Stream:
+        map(mStreamProperties->name, SessionModel::Name);
+        break;
 
     case Item::Type::Attribute:
+        map(mAttributeProperties->name, SessionModel::Name);
         map(mAttributeProperties->field, SessionModel::AttributeFieldId);
         map(mAttributeProperties->normalize, SessionModel::AttributeNormalize);
         map(mAttributeProperties->divisor, SessionModel::AttributeDivisor);
         break;
 
     case Item::Type::Target:
+        map(mTargetProperties->name, SessionModel::Name);
         map(mTargetProperties->width, SessionModel::TargetDefaultWidth);
         map(mTargetProperties->height, SessionModel::TargetDefaultHeight);
         map(mTargetProperties->layers, SessionModel::TargetDefaultLayers);

@@ -90,6 +90,7 @@ TextureKind CallProperties::currentTextureKind() const
 
 void CallProperties::addMappings(QDataWidgetMapper &mapper)
 {
+    mapper.addMapping(mUi->name, SessionModel::Name);
     mapper.addMapping(mUi->type, SessionModel::CallType);
     mapper.addMapping(mUi->executeOn, SessionModel::CallExecuteOn);
 

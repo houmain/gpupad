@@ -25,6 +25,7 @@ void VKStream::setAttribute(int attributeIndex, const Field &field,
     const auto blockOffset =
         scriptEngine.evaluateValue(block.offset, block.id, mMessages);
     auto &attribute = mAttributes[attributeIndex];
+    mUsedItems += field.id;
     attribute.buffer = buffer;
     attribute.type = field.dataType;
     attribute.count = field.count;

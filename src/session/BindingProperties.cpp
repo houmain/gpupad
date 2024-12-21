@@ -187,6 +187,7 @@ void BindingProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.submit();
     updateWidgets();
     mapper.addMapping(mUi->imageFormat, SessionModel::BindingImageFormat);
+    mapper.addMapping(mUi->name, SessionModel::Name);
 }
 
 Binding::BindingType BindingProperties::currentType() const

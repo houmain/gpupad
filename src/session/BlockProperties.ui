@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>241</width>
-    <height>98</height>
+    <height>105</height>
    </rect>
   </property>
   <layout class="QVBoxLayout">
@@ -34,14 +34,14 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
-     <item row="0" column="0">
+     <item row="1" column="0">
       <widget class="QLabel" name="labelOffset">
        <property name="text">
         <string>Offset</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="1" column="1">
       <widget class="QWidget" name="widgetOffset" native="true">
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <property name="spacing">
@@ -68,21 +68,22 @@
            <string>Deduce offset from end of previous block</string>
           </property>
           <property name="icon">
-           <iconset theme="view-refresh"/>
+           <iconset theme="view-refresh">
+            <normaloff>.</normaloff>.</iconset>
           </property>
          </widget>
         </item>
        </layout>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <widget class="QLabel" name="labelRows">
        <property name="text">
         <string>Rows</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="2" column="1">
       <widget class="QWidget" name="widgetRowCount" native="true">
        <layout class="QHBoxLayout" name="horizontalLayout">
         <property name="spacing">
@@ -109,24 +110,35 @@
            <string>Deduce row count from stride and file size</string>
           </property>
           <property name="icon">
-           <iconset theme="view-refresh"/>
+           <iconset theme="view-refresh">
+            <normaloff>.</normaloff>.</iconset>
           </property>
          </widget>
         </item>
        </layout>
       </widget>
      </item>
-     <item row="2" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="labelStride">
        <property name="text">
         <string>Stride</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="3" column="1">
       <widget class="QLineEdit" name="stride">
        <property name="enabled">
         <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="name"/>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelName">
+       <property name="text">
+        <string>Name</string>
        </property>
       </widget>
      </item>
