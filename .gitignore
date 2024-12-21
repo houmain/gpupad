@@ -3,3 +3,4 @@
 /build/
 /vcpkg/
 /*.user
+/extra/samples/**/*.gpjs.state

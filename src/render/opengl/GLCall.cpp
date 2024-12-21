@@ -547,6 +547,10 @@ bool GLCall::applyBindings(const GLBindings &bindings,
                     MessageType::UniformNotSet, getBaseName(name).toString());
         }
     }
+
+    for (const auto &[stage, subroutines] : interface.stageSubroutines)
+        selectSubroutines(stage, subroutines, bindings.subroutines);
+
     return canRender;
 }
 
@@ -915,33 +919,50 @@ bool GLCall::applyBufferMemberBinding(GLBuffer &buffer,
     return true;
 }
 
-/*
-void GLCall::applySubroutine()
+void GLCall::selectSubroutines(Shader::ShaderType stage,
+    const std::vector<GLProgram::Interface::Subroutine> &subroutines,
+    const std::map<QString, GLSubroutineBinding> &bindings)
 {
-    auto &gl = GLContext::currentContext();
-    if (!gl.v4_0)
+    if (subroutines.empty())
         return;
 
-    auto subroutineIndices = std::vector<GLuint>();
-    for (Shader::ShaderType stage : mSubroutineUniforms.keys()) {
-        for (const auto &uniform : std::as_const(mSubroutineUniforms[stage])) {
-            auto isIndex = false;
-            auto index = uniform.boundSubroutine.toUInt(&isIndex);
-            if (!isIndex)
-                index = gl.v4_0->glGetSubroutineIndex(mProgramObject, stage,
-                    qPrintable(uniform.boundSubroutine));
-            subroutineIndices.push_back(index);
-            if (index == GL_INVALID_INDEX && !uniform.boundSubroutine.isEmpty())
-                *mCallMessages += MessageList::insert(uniform.bindingItemId,
-                    MessageType::InvalidSubroutine, uniform.boundSubroutine);
-        }
-        gl.v4_0->glUniformSubroutinesuiv(stage,
-            static_cast<GLsizei>(subroutineIndices.size()),
-            subroutineIndices.data());
-        subroutineIndices.clear();
+    auto &gl = GLContext::currentContext();
+    if (!gl.v4_0) {
+        mMessages += MessageList::insert(mCall.id,
+            MessageType::OpenGLVersionNotAvailable, "4.0");
+        return;
     }
+
+    auto subroutineIndices = std::vector<GLuint>();
+    for (const auto &subroutine : subroutines) {
+        const auto binding = [&]() -> const GLSubroutineBinding * {
+            for (const auto &[name, binding] : bindings)
+                if (name == subroutine.name)
+                    return &binding;
+            return nullptr;
+        }();
+
+        auto index = 0;
+        if (binding) {
+            mUsedItems += binding->bindingItemId;
+
+            index = subroutine.subroutines.indexOf(binding->subroutine);
+            if (index < 0) {
+                index = 0;
+                mMessages += MessageList::insert(binding->bindingItemId,
+                    MessageType::InvalidSubroutine, binding->subroutine);
+            }
+        } else {
+            mMessages += MessageList::insert(mCall.id,
+                MessageType::SubroutineNotSet, subroutine.name);
+        }
+        subroutineIndices.push_back(index);
+    }
+
+    gl.v4_0->glUniformSubroutinesuiv(stage,
+        static_cast<GLsizei>(subroutineIndices.size()),
+        subroutineIndices.data());
 }
-*/
 
 bool GLCall::bindVertexStream()
 {

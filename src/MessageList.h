@@ -25,6 +25,7 @@ enum class MessageType {
     BufferNotSet,
     SamplerNotSet,
     ImageNotSet,
+    SubroutineNotSet,
     AttributeNotSet,
     ShaderInfo,
     ShaderWarning,

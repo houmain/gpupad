@@ -60,7 +60,6 @@ struct GLSubroutineBinding
     ItemId bindingItemId;
     QString name;
     QString subroutine;
-    Shader::ShaderType type;
 };
 
 struct GLBindings
@@ -126,9 +125,12 @@ private:
         const std::map<QString, GLUniformBinding> &bindings,
         ScriptEngine &scriptEngine);
     bool applyBufferMemberBinding(GLBuffer &buffer,
-        const GLProgram::Interface::BufferMember &member, 
+        const GLProgram::Interface::BufferMember &member,
         const GLUniformBinding &binding, int offset, int count,
         ScriptEngine &scriptEngine);
+    void selectSubroutines(Shader::ShaderType stage,
+        const std::vector<GLProgram::Interface::Subroutine> &subroutines,
+        const std::map<QString, GLSubroutineBinding> &bindings);
     bool bindVertexStream();
     void unbindVertexStream();
     GLenum getIndexType() const;

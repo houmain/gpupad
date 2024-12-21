@@ -244,7 +244,7 @@ void GLRenderSession::createCommandQueue()
 
             case Binding::BindingType::Subroutine:
                 addCommand([binding = GLSubroutineBinding{ b.id, b.name,
-                                b.subroutine, {} }](BindingState &state) {
+                                b.subroutine }](BindingState &state) {
                     state.top().subroutines[binding.name] = binding;
                 });
                 break;
