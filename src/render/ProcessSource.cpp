@@ -55,6 +55,7 @@ ProcessSource::ProcessSource(RendererPtr renderer, QObject *parent)
 ProcessSource::~ProcessSource()
 {
     releaseResources();
+    Q_ASSERT(!mShader);
 }
 
 void ProcessSource::setFileName(QString fileName)
@@ -180,5 +181,5 @@ void ProcessSource::finish()
 
 void ProcessSource::release()
 {
-    Q_ASSERT(!mShader);
+    mShader.reset();
 }

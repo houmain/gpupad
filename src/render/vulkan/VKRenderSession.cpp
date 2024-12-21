@@ -497,7 +497,9 @@ void VKRenderSession::finish()
 
 void VKRenderSession::release()
 {
-    mShareSync->cleanup();
+    if (mShareSync)
+        mShareSync->cleanup();
+    mShareSync.reset();
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
 }
