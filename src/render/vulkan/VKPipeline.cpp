@@ -881,8 +881,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
     }
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
-        Q_ASSERT(!"Texture buffers are not yet available in KDGpu");
-        break;
+        return MessageType::TextureBuffersNotAvailable;
 
     default: Q_ASSERT(!"descriptor type not handled"); break;
     }

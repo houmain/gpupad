@@ -63,6 +63,7 @@ enum class MessageType {
     SampleCountMismatch,
     MaxSampleCountExceeded,
     MaxPushConstantSizeExceeded,
+    TextureBuffersNotAvailable,
 };
 
 struct Message

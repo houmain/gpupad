@@ -158,6 +158,8 @@ QString MessageWindow::getMessageText(const Message &message) const
         return tr("Maximum sample count exceeded (%1)").arg(message.text);
     case MaxPushConstantSizeExceeded:
         return tr("Maximum push constant size exceeded (%1)").arg(message.text);
+    case TextureBuffersNotAvailable:
+        return tr("Texture buffers are not available in Vulkan yet");
     }
     return message.text;
 }
