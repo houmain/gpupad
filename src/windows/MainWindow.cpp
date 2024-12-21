@@ -800,22 +800,20 @@ bool MainWindow::copySessionFiles(const QString &fromPath,
     model.forEachFileItem([&](const FileItem &fileItem) {
         const auto prevFileName = fileItem.fileName;
         if (startsWithPath(prevFileName, fromPath)) {
-            const auto newFileName =
-                QString(toPath + prevFileName.mid(fromPath.length()));
-            if (QFileInfo::exists(newFileName))
-                return;
+            const auto newFileName = toNativeCanonicalFilePath(
+                toPath + prevFileName.mid(fromPath.length()));
 
-            QDir().mkpath(QFileInfo(newFileName).path());
-            if (!QFile(prevFileName).copy(newFileName)) {
-                succeeded = false;
-                return;
-            }
             model.setData(model.getIndex(&fileItem, SessionModel::FileName),
                 newFileName);
 
             // rename editor filenames
             Singletons::editorManager().renameEditors(prevFileName,
                 newFileName);
+
+            if (!QFileInfo::exists(newFileName)) {
+                QDir().mkpath(QFileInfo(newFileName).path());
+                succeeded &= QFile(prevFileName).copy(newFileName);
+            }
         }
     });
     return succeeded;
