@@ -3,6 +3,41 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 2.2.0] - 2024-12-22
+
+### Added
+
+- Allow to bind uniform buffer members separately.
+- Added support for resource-array bindings.
+- Added glslang HLSL support to OpenGL renderer.
+- Added Auto Sampled Textures setting to session.
+- Added push constant support also for compute.
+- Added name input boxes to property editors.
+- Added Uniforms test sample.
+- Added definition of `GPUPAD_GLSLANG`.
+
+### Changed
+
+- Compiling all shader stages to SPIR-V at once.
+- Updated GLSL syntax highlighting keywords to GLSL 4.6 specification.
+- Source editor is centering on word when executing find.
+- Parse line number from printf messages containing "in line".
+- Only sorting #extensions of multi-file shaders to front.
+- Added option for unity build in cmake (on by default).
+
+### Fixed
+
+- Verifying that Vulkan is available.
+- Validating uniform buffer size.
+- Fixed crash when using texture buffers.
+- Fixed file cache invalidation when renaming file in session tree and copying session.
+- Never keep previous shader program when shader compiler did change.
+- Removed no longer needed font size workaround on Windows.
+- Improved alignment of editable region in binary editor.
+- Highlight usage of buffer block and groups.
+- Fixed re-evaluation when Includable shader is changed.
+- Restored OpenGL subroutine support.
+
 ## [Version 2.1.0] - 2024-11-23
 
 ### Added
@@ -752,7 +787,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
-[version 2.0.2]: https://github.com/houmain/gpupad/compare/2.0.1...2.0.2
+[version 2.2.0]: https://github.com/houmain/gpupad/compare/2.1.0...2.2.0
+[version 2.1.0]: https://github.com/houmain/gpupad/compare/2.0.1...2.1.0
 [version 2.0.1]: https://github.com/houmain/gpupad/compare/2.0.0...2.0.1
 [version 2.0.0]: https://github.com/houmain/gpupad/compare/1.35.1...2.0.0
 [version 1.35.1]: https://github.com/houmain/gpupad/compare/1.35.0...1.35.1
