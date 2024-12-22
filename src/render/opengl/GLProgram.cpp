@@ -127,12 +127,14 @@ GLProgram::GLProgram(const Program &program, const Session &session)
         }
 
     for (const auto &[type, list] : shaders)
-        mShaders.emplace_back(type, list, session);
+        (type == Shader::ShaderType::Includable ? mIncludableShaders : mShaders)
+            .emplace_back(type, list, session);
 }
 
 bool GLProgram::operator==(const GLProgram &rhs) const
 {
-    return (std::tie(mShaders) == std::tie(rhs.mShaders)
+    return (std::tie(mShaders, mIncludableShaders)
+            == std::tie(rhs.mShaders, rhs.mIncludableShaders)
         && !shaderSessionSettingsDiffer(mSession, rhs.mSession));
 }
 
@@ -165,14 +167,12 @@ bool GLProgram::compileShaders()
 {
     if (mSession.shaderCompiler.isEmpty()) {
         for (auto &shader : mShaders)
-            if (shader.type() != Shader::ShaderType::Includable)
-                if (!shader.compile(mPrintf))
-                    return false;
+            if (!shader.compile(mPrintf))
+                return false;
     } else {
         auto inputs = std::vector<Spirv::Input>();
         for (auto &shader : mShaders)
-            if (shader.type() != Shader::ShaderType::Includable)
-                inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
+            inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
 
         auto stages = Spirv::compile(mSession, inputs, mItemId, mLinkMessages);
         for (auto &shader : mShaders)
@@ -192,8 +192,7 @@ bool GLProgram::linkProgram()
     auto &gl = GLContext::currentContext();
     auto program = GLObject(gl.glCreateProgram(), freeProgram);
     for (auto &shader : mShaders)
-        if (shader.type() != Shader::ShaderType::Includable)
-            gl.glAttachShader(program, shader.shaderObject());
+        gl.glAttachShader(program, shader.shaderObject());
 
     gl.glLinkProgram(program);
     auto status = GLint{};
@@ -379,8 +378,7 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
     if (auto gl40 = gl.v4_0) {
         auto stages = QSet<Shader::ShaderType>();
         for (const auto &shader : mShaders)
-            if (shader.type())
-                stages += shader.type();
+            stages += shader.type();
 
         auto subroutineIndices = std::vector<GLint>();
         for (const auto &stage : std::as_const(stages)) {

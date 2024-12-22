@@ -19,12 +19,14 @@ VKProgram::VKProgram(const Program &program, const Session &session)
         }
 
     for (const auto &[type, list] : shaders)
-        mShaders.emplace_back(type, list, session);
+        (type == Shader::ShaderType::Includable ? mIncludableShaders : mShaders)
+            .emplace_back(type, list, session);
 }
 
 bool VKProgram::operator==(const VKProgram &rhs) const
 {
-    return (std::tie(mShaders) == std::tie(rhs.mShaders)
+    return (std::tie(mShaders, mIncludableShaders)
+            == std::tie(rhs.mShaders, rhs.mIncludableShaders)
         && !shaderSessionSettingsDiffer(mSession, rhs.mSession));
 }
 
@@ -37,8 +39,7 @@ bool VKProgram::link(KDGpu::Device &device)
 
     auto inputs = std::vector<Spirv::Input>();
     for (auto &shader : mShaders)
-        if (shader.type() != Shader::ShaderType::Includable)
-            inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
+        inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
 
     auto stages = Spirv::compile(mSession, inputs, mItemId, mLinkMessages);
     if (stages.empty()) {

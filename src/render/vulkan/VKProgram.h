@@ -26,6 +26,7 @@ private:
     QSet<ItemId> mUsedItems;
     MessagePtrSet mLinkMessages;
     std::vector<VKShader> mShaders;
+    std::vector<VKShader> mIncludableShaders;
     StageInterface mInterface;
     VKPrintf mPrintf;
     bool mFailed{};

@@ -70,6 +70,7 @@ private:
     QSet<ItemId> mUsedItems;
     MessagePtrSet mLinkMessages;
     std::vector<GLShader> mShaders;
+    std::vector<GLShader> mIncludableShaders;
     GLObject mProgramObject;
     Interface mInterface;
     bool mFailed{};
