@@ -269,8 +269,11 @@ namespace {
         desc.type_description = &typeDesc;
 
         for (auto i = 0u; i < desc.array.dims[arrayDim]; ++i) {
-            const auto name = std::format("{}[{}]", baseName, i);
-            const auto typeName = std::format("{}[{}]", baseTypeName, i);
+            const auto formatArray = [](std::string baseName, uint32_t i) {
+                return baseName + "[" + std::to_string(i) + "]";
+            };
+            const auto name = formatArray(baseName, i);
+            const auto typeName = formatArray(baseTypeName, i);
             desc.name = name.c_str();
             typeDesc.type_name = typeName.c_str();
             forEachArrayElementRec(desc, arrayDim + 1, arrayElement, function);
@@ -475,7 +478,7 @@ bool VKPipeline::applyBufferMemberBindings(std::span<std::byte> bufferData,
                 continue;
 
             auto elementOffset = 0;
-            for (auto i = 0; i < indices.size(); ++i)
+            for (auto i = 0u; i < indices.size(); ++i)
                 elementOffset += indices[i]
                     * (i == dims.size() - 1 ? 1 : dims[i]);
 
