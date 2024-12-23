@@ -291,6 +291,10 @@ VKPipeline::~VKPipeline() = default;
 
 KDGpu::RenderPassCommandRecorder VKPipeline::beginRenderPass(VKContext &context)
 {
+    if (mVertexStream)
+        for (auto &buffer : mVertexStream->getBuffers())
+            buffer->prepareVertexBuffer(context);
+
     auto passOptions = mTarget->prepare(context);
     auto renderPass = context.commandRecorder->beginRenderPass(passOptions);
     renderPass.setPipeline(mGraphicsPipeline);
@@ -303,8 +307,7 @@ KDGpu::RenderPassCommandRecorder VKPipeline::beginRenderPass(VKContext &context)
         const auto &buffers = mVertexStream->getBuffers();
         const auto &offsets = mVertexStream->getBufferOffsets();
         for (auto i = 0u; i < buffers.size(); ++i)
-            renderPass.setVertexBuffer(i,
-                buffers[i]->getReadOnlyBuffer(context),
+            renderPass.setVertexBuffer(i, buffers[i]->buffer(),
                 static_cast<KDGpu::DeviceSize>(offsets[i]));
     }
     return renderPass;
@@ -746,18 +749,20 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                 find(mBindings.buffers, desc.type_description->type_name)) {
             if (!bufferBinding->buffer)
                 return MessageType::BufferNotSet;
+            auto &buffer = *bufferBinding->buffer;
+            buffer.prepareUniformBuffer(context);
 
             mUsedItems += bufferBinding->bindingItemId;
-            mUsedItems += bufferBinding->buffer->itemId();
             mUsedItems += bufferBinding->blockItemId;
+            mUsedItems += buffer.itemId();
 
             setBindGroupResource(desc.set,
                 {
                     .binding = desc.binding,
                     .resource =
                         KDGpu::UniformBufferBinding{
-                            .buffer = bufferBinding->buffer->getReadOnlyBuffer(
-                                context) },
+                            .buffer = buffer.buffer(),
+                        },
                     .arrayElement = arrayElement,
                 });
         } else {
@@ -775,8 +780,9 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                     .binding = desc.binding,
                     .resource =
                         KDGpu::StorageBufferBinding{
-                            .buffer = mProgram.printf().getInitializedBuffer(
-                                context) },
+                            .buffer =
+                                mProgram.printf().getInitializedBuffer(context),
+                        },
                     .arrayElement = arrayElement,
                 });
         } else {
@@ -784,17 +790,18 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                 find(mBindings.buffers, desc.type_description->type_name);
             if (!bufferBinding || !bufferBinding->buffer)
                 return MessageType::BufferNotSet;
+            auto &buffer = *bufferBinding->buffer;
+            buffer.prepareShaderStorageBuffer(context);
 
             mUsedItems += bufferBinding->bindingItemId;
-            mUsedItems += bufferBinding->buffer->itemId();
+            mUsedItems += buffer.itemId();
 
             setBindGroupResource(desc.set,
                 {
                     .binding = desc.binding,
                     .resource =
                         KDGpu::StorageBufferBinding{
-                            .buffer = bufferBinding->buffer->getReadWriteBuffer(
-                                context) },
+                            .buffer = buffer.buffer() },
                     .arrayElement = arrayElement,
                 });
         }
@@ -873,8 +880,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                     KDGpu::ImageBinding{
                         .textureView = imageBinding->texture->getView(
                             imageBinding->level, imageBinding->layer,
-                            toKDGpu(imageBinding->format)),
-                    },
+                            toKDGpu(imageBinding->format)) },
                 .arrayElement = arrayElement,
             });
         break;

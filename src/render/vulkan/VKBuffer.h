@@ -15,18 +15,26 @@ public:
     const QString &fileName() const { return mFileName; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     int size() const { return mSize; }
+    const KDGpu::Buffer &buffer() const { return mBuffer; }
 
     void clear(VKContext &context);
     void copy(VKContext &context, VKBuffer &source);
     bool swap(VKBuffer &other);
-    const KDGpu::Buffer &getReadOnlyBuffer(VKContext &context);
-    const KDGpu::Buffer &getReadWriteBuffer(VKContext &context);
     bool download(VKContext &context, bool checkModification);
+    void prepareIndirectBuffer(VKContext &context);
+    void prepareVertexBuffer(VKContext &context);
+    void prepareIndexBuffer(VKContext &context);
+    void prepareUniformBuffer(VKContext &context);
+    void prepareShaderStorageBuffer(VKContext &context);
 
 private:
     void reload();
     void createBuffer(KDGpu::Device &device);
     void upload(VKContext &context);
+    void updateReadOnlyBuffer(VKContext &context);
+    void updateReadWriteBuffer(VKContext &context);
+    void memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
+        KDGpu::AccessFlags accessMask, KDGpu::PipelineStageFlags stage);
 
     MessagePtrSet mMessages;
     ItemId mItemId{};
@@ -37,6 +45,8 @@ private:
     KDGpu::Buffer mBuffer;
     bool mSystemCopyModified{};
     bool mDeviceCopyModified{};
+    KDGpu::AccessFlags mCurrentAccessMask{};
+    KDGpu::PipelineStageFlags mCurrentStage{};
 };
 
 int getBufferSize(const Buffer &buffer, ScriptEngine &scriptEngine,

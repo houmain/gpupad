@@ -235,7 +235,7 @@ bool VKTexture::prepareSampledImage(VKContext &context)
     memoryBarrier(*context.commandRecorder,
         KDGpu::TextureLayout::ShaderReadOnlyOptimal,
         KDGpu::AccessFlagBit::MemoryReadBit,
-        KDGpu::PipelineStageFlagBit::AllGraphicsBit);
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
 
     return mTexture.isValid();
 }
@@ -248,9 +248,9 @@ bool VKTexture::prepareStorageImage(VKContext &context)
     mMipmapsInvalidated = true;
 
     memoryBarrier(*context.commandRecorder, KDGpu::TextureLayout::General,
-        KDGpu::AccessFlagBit::MemoryWriteBit
-            | KDGpu::AccessFlagBit::MemoryReadBit,
-        KDGpu::PipelineStageFlagBit::AllGraphicsBit);
+        KDGpu::AccessFlagBit::ShaderStorageWriteBit
+            | KDGpu::AccessFlagBit::ShaderStorageReadBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
 
     return mTexture.isValid();
 }
@@ -268,7 +268,7 @@ bool VKTexture::prepareAttachment(VKContext &context)
 
     memoryBarrier(*context.commandRecorder, layout,
         KDGpu::AccessFlagBit::MemoryReadBit,
-        KDGpu::PipelineStageFlagBit::AllGraphicsBit);
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
 
     return mTexture.isValid();
 }

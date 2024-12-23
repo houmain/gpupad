@@ -158,9 +158,15 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
 
     const auto canRender = mPipeline->updateBindings(context, scriptEngine);
     if (!canRender) {
-      mUsedItems += mPipeline->usedItems();
+        mUsedItems += mPipeline->usedItems();
         return;
-        }
+    }
+
+    if (mIndirectBuffer)
+        mIndirectBuffer->prepareIndirectBuffer(context);
+
+    if (mIndexBuffer)
+        mIndexBuffer->prepareIndexBuffer(context);
 
     auto renderPass = mPipeline->beginRenderPass(context);
     if (!renderPass.isValid())
@@ -170,8 +176,8 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
 
     if (mIndexBuffer) {
         const auto indicesOffset = evaluateUInt(scriptEngine, mIndicesOffset);
-        renderPass.setIndexBuffer(mIndexBuffer->getReadOnlyBuffer(context),
-            indicesOffset, mIndexType);
+        renderPass.setIndexBuffer(mIndexBuffer->buffer(), indicesOffset,
+            mIndexType);
     }
 
     const auto count = evaluateUInt(scriptEngine, mCall.count);
@@ -199,14 +205,14 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
         });
     } else if (mCall.callType == Call::CallType::DrawIndirect) {
         renderPass.drawIndirect({
-            .buffer = mIndirectBuffer->getReadOnlyBuffer(context),
+            .buffer = mIndirectBuffer->buffer(),
             .offset = indirectOffset,
             .drawCount = drawCount,
             .stride = static_cast<uint32_t>(mIndirectStride),
         });
     } else if (mCall.callType == Call::CallType::DrawIndexedIndirect) {
         renderPass.drawIndexedIndirect({
-            .buffer = mIndirectBuffer->getReadOnlyBuffer(context),
+            .buffer = mIndirectBuffer->buffer(),
             .offset = indirectOffset,
             .drawCount = drawCount,
             .stride = static_cast<uint32_t>(mIndirectStride),

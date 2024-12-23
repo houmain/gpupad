@@ -91,17 +91,35 @@ bool VKBuffer::operator==(const VKBuffer &rhs) const
 
 void VKBuffer::clear(VKContext &context)
 {
+    updateReadWriteBuffer(context);
+
+    memoryBarrier(*context.commandRecorder,
+        KDGpu::AccessFlagBit::MemoryWriteBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
+
     context.commandRecorder->clearBuffer({
-        .dstBuffer = getReadWriteBuffer(context),
+        .dstBuffer = buffer(),
         .byteSize = static_cast<uint64_t>(mSize),
     });
 }
 
 void VKBuffer::copy(VKContext &context, VKBuffer &source)
 {
+    source.updateReadOnlyBuffer(context);
+
+    source.memoryBarrier(*context.commandRecorder,
+        KDGpu::AccessFlagBit::MemoryReadBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
+
+    updateReadWriteBuffer(context);
+
+    memoryBarrier(*context.commandRecorder,
+        KDGpu::AccessFlagBit::MemoryWriteBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
+
     context.commandRecorder->copyBuffer({
-        .src = source.getReadOnlyBuffer(context),
-        .dst = getReadWriteBuffer(context),
+        .src = source.buffer(),
+        .dst = buffer(),
         .byteSize = static_cast<uint64_t>(mSize),
     });
 }
@@ -117,21 +135,19 @@ bool VKBuffer::swap(VKBuffer &other)
     return true;
 }
 
-const KDGpu::Buffer &VKBuffer::getReadOnlyBuffer(VKContext &context)
+void VKBuffer::updateReadOnlyBuffer(VKContext &context)
 {
     reload();
     createBuffer(context.device);
     upload(context);
-    return mBuffer;
 }
 
-const KDGpu::Buffer &VKBuffer::getReadWriteBuffer(VKContext &context)
+void VKBuffer::updateReadWriteBuffer(VKContext &context)
 {
     reload();
     createBuffer(context.device);
     upload(context);
     mDeviceCopyModified = true;
-    return mBuffer;
 }
 
 void VKBuffer::reload()
@@ -185,15 +201,16 @@ bool VKBuffer::download(VKContext &context, bool checkModification)
     if (!mDeviceCopyModified)
         return false;
 
+    updateReadOnlyBuffer(context);
+
     auto modified = false;
-    if (!downloadBuffer(context, getReadOnlyBuffer(context), mSize,
-            [&](const void *data) {
-                if (!checkModification
-                    || std::memcmp(mData.data(), data, mData.size()) != 0) {
-                    std::memcpy(mData.data(), data, mData.size());
-                    modified = true;
-                }
-            })) {
+    if (!downloadBuffer(context, buffer(), mSize, [&](const void *data) {
+            if (!checkModification
+                || std::memcmp(mData.data(), data, mData.size()) != 0) {
+                std::memcpy(mData.data(), data, mData.size());
+                modified = true;
+            }
+        })) {
         mMessages +=
             MessageList::insert(mItemId, MessageType::DownloadingImageFailed);
         return false;
@@ -201,4 +218,65 @@ bool VKBuffer::download(VKContext &context, bool checkModification)
 
     mSystemCopyModified = mDeviceCopyModified = false;
     return modified;
+}
+
+void VKBuffer::memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
+    KDGpu::AccessFlags accessMask, KDGpu::PipelineStageFlags stage)
+{
+    if (!mBuffer.isValid())
+        return;
+
+    commandRecorder.bufferMemoryBarrier(KDGpu::BufferMemoryBarrierOptions{
+        .srcStages = mCurrentStage,
+        .srcMask = mCurrentAccessMask,
+        .dstStages = stage,
+        .dstMask = accessMask,
+        .buffer = mBuffer,
+    });
+    mCurrentStage = stage;
+    mCurrentAccessMask = accessMask;
+}
+
+void VKBuffer::prepareIndirectBuffer(VKContext &context)
+{
+    updateReadOnlyBuffer(context);
+
+    memoryBarrier(*context.commandRecorder, KDGpu::AccessFlagBit::IndexReadBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
+}
+
+void VKBuffer::prepareVertexBuffer(VKContext &context)
+{
+    updateReadOnlyBuffer(context);
+
+    memoryBarrier(*context.commandRecorder,
+        KDGpu::AccessFlagBit::VertexAttributeReadBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
+}
+
+void VKBuffer::prepareIndexBuffer(VKContext &context)
+{
+    updateReadOnlyBuffer(context);
+
+    memoryBarrier(*context.commandRecorder, KDGpu::AccessFlagBit::IndexReadBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
+}
+
+void VKBuffer::prepareUniformBuffer(VKContext &context)
+{
+    updateReadOnlyBuffer(context);
+
+    memoryBarrier(*context.commandRecorder,
+        KDGpu::AccessFlagBit::UniformReadBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
+}
+
+void VKBuffer::prepareShaderStorageBuffer(VKContext &context)
+{
+    updateReadWriteBuffer(context);
+
+    memoryBarrier(*context.commandRecorder,
+        KDGpu::AccessFlagBit::ShaderStorageReadBit
+            | KDGpu::AccessFlagBit::ShaderStorageWriteBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
 }
