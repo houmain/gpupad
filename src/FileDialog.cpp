@@ -339,6 +339,8 @@ QDir getInstallDirectory(const QString &dirName)
     const auto paths = std::initializer_list<QString>{
         QCoreApplication::applicationDirPath(),
         QCoreApplication::applicationDirPath() + "/..",
+        QCoreApplication::applicationDirPath() + "/../share/"
+            + QCoreApplication::organizationName(),
 #if !defined(NDEBUG)
         QCoreApplication::applicationDirPath() + "/../..",
         QCoreApplication::applicationDirPath() + "/../../extra",
