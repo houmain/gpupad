@@ -373,6 +373,7 @@ bool VKTexture::updateMipmaps(VKContext &context)
         const auto options = KDGpu::GenerateMipMapsOptions{
             .texture = mTexture,
             .layout = mCurrentLayout,
+            .newLayout = KDGpu::TextureLayout::TransferSrcOptimal,
             .extent = {
                 .width = static_cast<uint32_t>(mWidth),
                 .height = static_cast<uint32_t>(mHeight),
