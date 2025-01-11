@@ -153,7 +153,7 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelInstanceCount,
         mUi->instanceCount, kind.draw && !kind.mesh && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelFirstVertex, mUi->firstVertex,
-        kind.draw && !kind.indirect);
+        kind.draw && !kind.mesh && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelBaseVertex, mUi->baseVertex,
         kind.draw && kind.indexed && !kind.mesh && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelBaseInstance,

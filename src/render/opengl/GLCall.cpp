@@ -369,8 +369,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             reinterpret_cast<PFNGLDRAWMESHTASKSNVPROC>(
                 gl.getProcAddress("glDrawMeshTasksNV"));
         if (glDrawMeshTasksNV) {
-            glDrawMeshTasksNV(first,
-                evaluateInt(scriptEngine, mCall.workGroupsX));
+            glDrawMeshTasksNV(0, evaluateInt(scriptEngine, mCall.workGroupsX));
         } else {
             messages += MessageList::insert(mCall.id,
                 MessageType::UnsupportedShaderType);

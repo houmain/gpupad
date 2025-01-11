@@ -645,7 +645,7 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         result &= (column != CallPatchVertices || kind.patches);
         result &= (column != CallIndexBufferBlockId || kind.indexed);
         result &= (column != CallCount || ((kind.draw && !kind.mesh) && !kind.indirect));
-        result &= (column != CallFirst || (kind.draw && !kind.indirect));
+        result &= (column != CallFirst || (kind.draw && !kind.mesh && !kind.indirect));
         result &=
             (column != CallInstanceCount || (kind.draw && !kind.mesh && !kind.indirect));
         result &= (column != CallBaseInstance || (kind.draw && !kind.mesh && !kind.indirect));
