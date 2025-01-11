@@ -30,20 +30,36 @@ namespace {
         static const auto syntaxJavaScript = makeSyntaxJavaScript();
         switch (sourceType) {
         case SourceType::PlainText:
-        case SourceType::Generic:                     break;
+        case SourceType::Generic:                    break;
         case SourceType::GLSL_VertexShader:
         case SourceType::GLSL_FragmentShader:
         case SourceType::GLSL_GeometryShader:
-        case SourceType::GLSL_TessellationControl:
-        case SourceType::GLSL_TessellationEvaluation:
-        case SourceType::GLSL_ComputeShader:          return *syntaxGLSL;
+        case SourceType::GLSL_TessControlShader:
+        case SourceType::GLSL_TessEvaluationShader:
+        case SourceType::GLSL_ComputeShader:
+        case SourceType::GLSL_TaskShader:
+        case SourceType::GLSL_MeshShader:
+        case SourceType::GLSL_RayGenerationShader:
+        case SourceType::GLSL_RayIntersectionShader:
+        case SourceType::GLSL_RayAnyHitShader:
+        case SourceType::GLSL_RayClosestHitShader:
+        case SourceType::GLSL_RayMissShader:
+        case SourceType::GLSL_RayCallableShader:     return *syntaxGLSL;
         case SourceType::HLSL_VertexShader:
         case SourceType::HLSL_PixelShader:
         case SourceType::HLSL_GeometryShader:
         case SourceType::HLSL_DomainShader:
         case SourceType::HLSL_HullShader:
-        case SourceType::HLSL_ComputeShader:          return *syntaxHLSL;
-        case SourceType::JavaScript:                  return *syntaxJavaScript;
+        case SourceType::HLSL_ComputeShader:
+        case SourceType::HLSL_AmplificationShader:
+        case SourceType::HLSL_MeshShader:
+        case SourceType::HLSL_RayGenerationShader:
+        case SourceType::HLSL_RayIntersectionShader:
+        case SourceType::HLSL_RayAnyHitShader:
+        case SourceType::HLSL_RayClosestHitShader:
+        case SourceType::HLSL_RayMissShader:
+        case SourceType::HLSL_RayCallableShader:     return *syntaxHLSL;
+        case SourceType::JavaScript:                 return *syntaxJavaScript;
         }
         return *SyntaxGeneric;
     }

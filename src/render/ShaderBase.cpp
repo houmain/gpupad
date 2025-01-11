@@ -178,12 +178,12 @@ namespace {
         const auto prefix = [&]() {
             switch (shaderType) {
             default:
-            case Shader::ShaderType::Fragment:               return "PS";
-            case Shader::ShaderType::Vertex:                 return "VS";
-            case Shader::ShaderType::Geometry:               return "GS";
-            case Shader::ShaderType::TessellationControl:    return "HS";
-            case Shader::ShaderType::TessellationEvaluation: return "DS";
-            case Shader::ShaderType::Compute:                return "CS";
+            case Shader::ShaderType::Fragment:       return "PS";
+            case Shader::ShaderType::Vertex:         return "VS";
+            case Shader::ShaderType::Geometry:       return "GS";
+            case Shader::ShaderType::TessControl:    return "HS";
+            case Shader::ShaderType::TessEvaluation: return "DS";
+            case Shader::ShaderType::Compute:        return "CS";
             }
         }();
         return completeFunctionName(source, prefix);

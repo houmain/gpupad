@@ -27,11 +27,24 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
     addSourceType(glsl, tr("Vertex Shader"), SourceType::GLSL_VertexShader);
     addSourceType(glsl, tr("Fragment Shader"), SourceType::GLSL_FragmentShader);
     addSourceType(glsl, tr("Geometry Shader"), SourceType::GLSL_GeometryShader);
-    addSourceType(glsl, tr("Tessellation Control"),
-        SourceType::GLSL_TessellationControl);
-    addSourceType(glsl, tr("Tessellation Evaluation"),
-        SourceType::GLSL_TessellationEvaluation);
+    addSourceType(glsl, tr("Tessellation Control Shader"),
+        SourceType::GLSL_TessControlShader);
+    addSourceType(glsl, tr("Tessellation Evaluation Shader"),
+        SourceType::GLSL_TessEvaluationShader);
     addSourceType(glsl, tr("Compute Shader"), SourceType::GLSL_ComputeShader);
+    addSourceType(glsl, tr("Task Shader"), SourceType::GLSL_TaskShader);
+    addSourceType(glsl, tr("Mesh Shader"), SourceType::GLSL_MeshShader);
+    addSourceType(glsl, tr("Ray Generation Shader"),
+        SourceType::GLSL_RayGenerationShader);
+    addSourceType(glsl, tr("Ray Intersection Shader"),
+        SourceType::GLSL_RayIntersectionShader);
+    addSourceType(glsl, tr("Ray Any Hit Shader"),
+        SourceType::GLSL_RayAnyHitShader);
+    addSourceType(glsl, tr("Ray Closest Hit Shader"),
+        SourceType::GLSL_RayClosestHitShader);
+    addSourceType(glsl, tr("Ray Miss Shader"), SourceType::GLSL_RayMissShader);
+    addSourceType(glsl, tr("Ray Callable Shader"),
+        SourceType::GLSL_RayCallableShader);
 
     const auto hlsl = sourceTypeMenu->addMenu(tr("HLSL"));
     addSourceType(hlsl, tr("Vertex Shader"), SourceType::HLSL_VertexShader);
@@ -40,6 +53,20 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
     addSourceType(hlsl, tr("Hull Shader"), SourceType::HLSL_HullShader);
     addSourceType(hlsl, tr("Domain Shader"), SourceType::HLSL_DomainShader);
     addSourceType(hlsl, tr("Compute Shader"), SourceType::HLSL_ComputeShader);
+    addSourceType(hlsl, tr("Amplification Shader"),
+        SourceType::HLSL_AmplificationShader);
+    addSourceType(hlsl, tr("Mesh Shader"), SourceType::HLSL_MeshShader);
+    addSourceType(hlsl, tr("Ray Generation Shader"),
+        SourceType::HLSL_RayGenerationShader);
+    addSourceType(hlsl, tr("Ray Intersection Shader"),
+        SourceType::HLSL_RayIntersectionShader);
+    addSourceType(hlsl, tr("Ray Any Hit Shader"),
+        SourceType::HLSL_RayAnyHitShader);
+    addSourceType(hlsl, tr("Ray Closest Hit Shader"),
+        SourceType::HLSL_RayClosestHitShader);
+    addSourceType(hlsl, tr("Ray Miss Shader"), SourceType::HLSL_RayMissShader);
+    addSourceType(hlsl, tr("Ray Callable Shader"),
+        SourceType::HLSL_RayCallableShader);
 
     addSourceType(sourceTypeMenu, tr("JavaScript"), SourceType::JavaScript);
     sourceTypeMenu->addSeparator();

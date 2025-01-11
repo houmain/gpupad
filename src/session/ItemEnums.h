@@ -45,13 +45,26 @@ namespace ItemEnums {
     Q_ENUM_NS(DataType)
 
     enum ShaderType {
+        Includable = 0,
+
         Vertex = GL_VERTEX_SHADER,
         Fragment = GL_FRAGMENT_SHADER,
         Geometry = GL_GEOMETRY_SHADER,
         TessellationControl = GL_TESS_CONTROL_SHADER,
         TessellationEvaluation = GL_TESS_EVALUATION_SHADER,
         Compute = GL_COMPUTE_SHADER,
-        Includable = 0,
+        Task = GL_TASK_SHADER_NV,
+        Mesh = GL_MESH_SHADER_NV,
+
+        RayGeneration = 0x10000,
+        RayIntersection,
+        RayAnyHit,
+        RayClosestHit,
+        RayMiss,
+        RayCallable,
+
+        TessControl = TessellationControl,
+        TessEvaluation = TessellationEvaluation,
     };
     Q_ENUM_NS(ShaderType)
 

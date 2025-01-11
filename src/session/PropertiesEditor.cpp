@@ -178,9 +178,10 @@ void PropertiesEditor::fillComboBoxes()
     fillComboBox<Target::PolygonMode>(mTargetProperties->polygonMode);
     fillComboBox<Target::LogicOperation>(mTargetProperties->logicOperation);
     fillComboBox<Shader::Language>(mShaderProperties->language);
-    mShaderProperties->language->removeItem(
-        mShaderProperties->language->findText("None"));
+    removeComboBoxItem(mShaderProperties->language, "None");
     fillComboBox<Shader::ShaderType>(mShaderProperties->type);
+    removeComboBoxItem(mShaderProperties->type, "Tess Control");
+    removeComboBoxItem(mShaderProperties->type, "Tess Evaluation");
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
 }
 

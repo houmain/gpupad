@@ -110,3 +110,8 @@ void fillComboBox(QComboBox *c,
         if (kv.first)
             c->addItem(kv.first, kv.second);
 }
+
+inline void removeComboBoxItem(QComboBox *c, const QString &text)
+{
+    c->removeItem(c->findText(text));
+}

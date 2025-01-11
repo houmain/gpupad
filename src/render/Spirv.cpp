@@ -40,14 +40,21 @@ namespace {
     EShLanguage getStage(Shader::ShaderType shaderType)
     {
         switch (shaderType) {
-        case Shader::ShaderType::Vertex:              return EShLangVertex;
-        case Shader::ShaderType::Fragment:            return EShLangFragment;
-        case Shader::ShaderType::Geometry:            return EShLangGeometry;
-        case Shader::ShaderType::TessellationControl: return EShLangTessControl;
-        case Shader::ShaderType::TessellationEvaluation:
-            return EShLangTessEvaluation;
-        case Shader::ShaderType::Compute:    return EShLangCompute;
-        case Shader::ShaderType::Includable: break;
+        case Shader::ShaderType::Vertex:          return EShLangVertex;
+        case Shader::ShaderType::Fragment:        return EShLangFragment;
+        case Shader::ShaderType::Geometry:        return EShLangGeometry;
+        case Shader::ShaderType::TessControl:     return EShLangTessControl;
+        case Shader::ShaderType::TessEvaluation:  return EShLangTessEvaluation;
+        case Shader::ShaderType::Compute:         return EShLangCompute;
+        case Shader::ShaderType::Task:            return EShLangTask;
+        case Shader::ShaderType::Mesh:            return EShLangMesh;
+        case Shader::ShaderType::RayGeneration:   return EShLangRayGen;
+        case Shader::ShaderType::RayIntersection: return EShLangIntersect;
+        case Shader::ShaderType::RayAnyHit:       return EShLangAnyHit;
+        case Shader::ShaderType::RayClosestHit:   return EShLangClosestHit;
+        case Shader::ShaderType::RayMiss:         return EShLangMiss;
+        case Shader::ShaderType::RayCallable:     return EShLangCallable;
+        case Shader::ShaderType::Includable:      break;
         }
         return {};
     }

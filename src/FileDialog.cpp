@@ -27,20 +27,28 @@ namespace {
     {
         switch (sourceType) {
         case SourceType::PlainText:
-        case SourceType::Generic:                     break;
-        case SourceType::GLSL_VertexShader:           return "vert";
-        case SourceType::GLSL_FragmentShader:         return "frag";
-        case SourceType::GLSL_GeometryShader:         return "geom";
-        case SourceType::GLSL_TessellationControl:    return "tesc";
-        case SourceType::GLSL_TessellationEvaluation: return "tese";
-        case SourceType::GLSL_ComputeShader:          return "comp";
+        case SourceType::Generic:                    break;
+        case SourceType::GLSL_VertexShader:          return "vert";
+        case SourceType::GLSL_FragmentShader:        return "frag";
+        case SourceType::GLSL_GeometryShader:        return "geom";
+        case SourceType::GLSL_TessControlShader:     return "tesc";
+        case SourceType::GLSL_TessEvaluationShader:  return "tese";
+        case SourceType::GLSL_ComputeShader:         return "comp";
+        case SourceType::GLSL_MeshShader:            return "mesh";
+        case SourceType::GLSL_TaskShader:            return "task";
+        case SourceType::GLSL_RayGenerationShader:   return "rgen";
+        case SourceType::GLSL_RayIntersectionShader: return "rint";
+        case SourceType::GLSL_RayAnyHitShader:       return "rahit";
+        case SourceType::GLSL_RayClosestHitShader:   return "rchit";
+        case SourceType::GLSL_RayMissShader:         return "rmiss";
+        case SourceType::GLSL_RayCallableShader:     return "rcall";
         case SourceType::HLSL_VertexShader:
         case SourceType::HLSL_PixelShader:
         case SourceType::HLSL_GeometryShader:
         case SourceType::HLSL_HullShader:
         case SourceType::HLSL_DomainShader:
-        case SourceType::HLSL_ComputeShader:          return "hlsl";
-        case SourceType::JavaScript:                  return "js";
+        case SourceType::HLSL_ComputeShader:         return "hlsl";
+        case SourceType::JavaScript:                 return "js";
         }
         return "txt";
     }
