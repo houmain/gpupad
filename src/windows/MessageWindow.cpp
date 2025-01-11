@@ -113,18 +113,20 @@ QString MessageWindow::getMessageText(const Message &message) const
     case ImageNotSet: return tr("Image '%1' not set").arg(message.text);
     case SubroutineNotSet:
         return tr("Subroutine '%1' not set").arg(message.text);
-    case AttributeNotSet:        return tr("Attribute '%1' not set").arg(message.text);
-    case CallDuration:           return tr("Call took %1").arg(message.text);
-    case TotalDuration:          return tr("Total duration %1").arg(message.text);
-    case CallFailed:             return tr("Call failed: %1").arg(message.text);
-    case ClearingTextureFailed:  return tr("Clearing texture failed");
-    case CopyingTextureFailed:   return tr("Copying texture failed");
-    case SwappingTexturesFailed: return tr("Swapping textures failed");
-    case SwappingBuffersFailed:  return tr("Swapping buffers failed");
-    case ProgramNotAssigned:     return tr("No program set");
-    case TargetNotAssigned:      return tr("No target set");
-    case TextureNotAssigned:     return tr("No texture set");
-    case BufferNotAssigned:      return tr("No buffer set");
+    case AttributeNotSet:           return tr("Attribute '%1' not set").arg(message.text);
+    case CallDuration:              return tr("Call took %1").arg(message.text);
+    case TotalDuration:             return tr("Total duration %1").arg(message.text);
+    case CallFailed:                return tr("Call failed: %1").arg(message.text);
+    case ClearingTextureFailed:     return tr("Clearing texture failed");
+    case CopyingTextureFailed:      return tr("Copying texture failed");
+    case SwappingTexturesFailed:    return tr("Swapping textures failed");
+    case SwappingBuffersFailed:     return tr("Swapping buffers failed");
+    case ProgramNotAssigned:        return tr("No program set");
+    case TargetNotAssigned:         return tr("No target set");
+    case IndexBufferNotAssigned:    return tr("No index buffer set");
+    case IndirectBufferNotAssigned: return tr("No indirect buffer set");
+    case TextureNotAssigned:        return tr("No texture set");
+    case BufferNotAssigned:         return tr("No buffer set");
     case InvalidSubroutine:
         return tr("Invalid subroutine '%1'").arg(message.text);
     case ImageFormatNotBindable: return tr("Image format not bindable");

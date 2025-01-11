@@ -14,9 +14,6 @@ VKCall::~VKCall() = default;
 
 void VKCall::setProgram(VKProgram *program)
 {
-    if (!callTypeHasProgram(mCall.callType))
-        return;
-
     mProgram = program;
 }
 
@@ -87,6 +84,32 @@ VKPipeline *VKCall::getPipeline(VKContext &context)
 void VKCall::execute(VKContext &context, MessagePtrSet &messages,
     ScriptEngine &scriptEngine)
 {
+    const auto kind = getKind(mCall);
+
+    if ((kind.draw || kind.compute) && !mProgram) {
+        messages +=
+            MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
+        return;
+    }
+
+    if (kind.draw && !mTarget) {
+        messages +=
+            MessageList::insert(mCall.id, MessageType::TargetNotAssigned);
+        return;
+    }
+
+    if (kind.indexed && !mIndexBuffer) {
+        messages +=
+            MessageList::insert(mCall.id, MessageType::IndexBufferNotAssigned);
+        return;
+    }
+
+    if (kind.indirect && !mIndirectBuffer) {
+        messages += MessageList::insert(mCall.id,
+            MessageType::IndirectBufferNotAssigned);
+        return;
+    }
+
     context.commandRecorder = context.device.createCommandRecorder();
     auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
 
@@ -143,12 +166,6 @@ uint32_t VKCall::evaluateUInt(ScriptEngine &scriptEngine,
 void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     ScriptEngine &scriptEngine)
 {
-    if (!mTarget) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::TargetNotAssigned);
-        return;
-    }
-
     auto primitiveOptions = mTarget->getPrimitiveOptions();
     //primitiveOptions.primitiveRestart = true;
     primitiveOptions.topology = toKDGpu(mCall.primitiveType);

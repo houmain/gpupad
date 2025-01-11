@@ -40,6 +40,8 @@ enum class MessageType {
     ScriptMessage,
     ProgramNotAssigned,
     TargetNotAssigned,
+    IndexBufferNotAssigned,
+    IndirectBufferNotAssigned,
     TextureNotAssigned,
     BufferNotAssigned,
     SwappingTexturesFailed,

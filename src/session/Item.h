@@ -282,7 +282,6 @@ int getFieldRowOffset(const Field &field);
 int getBlockStride(const Block &block);
 TextureKind getKind(const Texture &texture);
 CallKind getKind(const Call &call);
-bool callTypeHasProgram(Call::CallType callType);
 bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType);
 
 SourceType getSourceType(Shader::ShaderType type, Shader::Language language);

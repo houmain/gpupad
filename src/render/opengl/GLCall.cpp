@@ -153,9 +153,6 @@ GLCall::GLCall(const Call &call) : mCall(call) { }
 
 void GLCall::setProgram(GLProgram *program)
 {
-    if (!callTypeHasProgram(mCall.callType))
-        return;
-
     mProgram = program;
     if (program)
         mUsedItems += mProgram->usedItems();
@@ -232,6 +229,32 @@ std::shared_ptr<void> GLCall::beginTimerQuery()
 
 void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
+    const auto kind = getKind(mCall);
+
+    if ((kind.draw || kind.compute) && !mProgram) {
+        messages +=
+            MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
+        return;
+    }
+
+    if (kind.draw && !mTarget) {
+        messages +=
+            MessageList::insert(mCall.id, MessageType::TargetNotAssigned);
+        return;
+    }
+
+    if (kind.indexed && !mIndexBuffer) {
+        messages +=
+            MessageList::insert(mCall.id, MessageType::IndexBufferNotAssigned);
+        return;
+    }
+
+    if (kind.indirect && !mIndirectBuffer) {
+        messages += MessageList::insert(mCall.id,
+            MessageType::IndirectBufferNotAssigned);
+        return;
+    }
+
     switch (mCall.callType) {
     case Call::CallType::Draw:
     case Call::CallType::DrawIndexed:
@@ -272,18 +295,6 @@ int GLCall::evaluateInt(ScriptEngine &scriptEngine, const QString &expression)
 
 void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
-    if (!mProgram) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
-        return;
-    }
-
-    if (!mTarget) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::TargetNotAssigned);
-        return;
-    }
-
     if (!bindVertexStream())
         return;
 
@@ -394,12 +405,6 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 
 void GLCall::executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
-    if (!mProgram) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
-        return;
-    }
-
 #if GL_VERSION_4_3
     if (mIndirectBuffer)
         mIndirectBuffer->bindReadOnly(GL_DISPATCH_INDIRECT_BUFFER);
