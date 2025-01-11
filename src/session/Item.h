@@ -272,6 +272,7 @@ struct CallKind
     bool draw;
     bool indexed;
     bool indirect;
+    bool mesh;
     bool patches;
     bool compute;
 };

@@ -487,6 +487,8 @@ IEditor *PropertiesEditor::openItemEditor(const QModelIndex &index)
         case Call::CallType::DrawIndexed:
         case Call::CallType::DrawIndirect:
         case Call::CallType::DrawIndexedIndirect:
+        case Call::CallType::DrawMeshTasks:
+        case Call::CallType::DrawMeshTasksIndirect:
         case Call::CallType::Compute:
         case Call::CallType::ComputeIndirect:
             return openItemEditor(

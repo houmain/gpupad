@@ -278,6 +278,8 @@ namespace ItemEnums2 {
         DrawIndexed, // glDrawElements(InstancedBaseVertexBaseInstance)
         DrawIndirect, // gl(Multi)DrawArraysIndirect)
         DrawIndexedIndirect, // gl(Multi)DrawElementsIndirect
+        DrawMeshTasks,
+        DrawMeshTasksIndirect,
         Compute,
         ComputeIndirect,
         ClearTexture,

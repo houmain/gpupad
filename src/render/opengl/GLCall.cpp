@@ -237,6 +237,8 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     case Call::CallType::DrawIndexed:
     case Call::CallType::DrawIndirect:
     case Call::CallType::DrawIndexedIndirect:
+    case Call::CallType::DrawMeshTasks:
+    case Call::CallType::DrawMeshTasksIndirect:
         executeDraw(messages, scriptEngine);
         break;
     case Call::CallType::Compute:
@@ -350,6 +352,34 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         } else if (auto gl43 = check(gl.v4_3, mCall.id, messages)) {
             gl43->glMultiDrawElementsIndirect(mCall.primitiveType,
                 getIndexType(), offset, drawCount, mIndirectStride);
+        }
+    } else if (mCall.callType == Call::CallType::DrawMeshTasks) {
+        static auto glDrawMeshTasksNV =
+            reinterpret_cast<PFNGLDRAWMESHTASKSNVPROC>(
+                gl.getProcAddress("glDrawMeshTasksNV"));
+        if (glDrawMeshTasksNV) {
+            glDrawMeshTasksNV(first,
+                evaluateInt(scriptEngine, mCall.workGroupsX));
+        } else {
+            messages += MessageList::insert(mCall.id,
+                MessageType::UnsupportedShaderType);
+        }
+    } else if (mCall.callType == Call::CallType::DrawMeshTasksIndirect) {
+        static auto glDrawMeshTasksIndirectNV =
+            reinterpret_cast<PFNGLDRAWMESHTASKSINDIRECTNVPROC>(
+                gl.getProcAddress("glDrawMeshTasksIndirectNV"));
+        static auto glMultiDrawMeshTasksIndirectNV =
+            reinterpret_cast<PFNGLMULTIDRAWMESHTASKSINDIRECTNVPROC>(
+                gl.getProcAddress("glMultiDrawMeshTasksIndirectNV"));
+        const auto offset =
+            static_cast<intptr_t>(evaluateInt(scriptEngine, mIndirectOffset));
+        if (drawCount == 1 && glDrawMeshTasksIndirectNV) {
+              glDrawMeshTasksIndirectNV(offset);
+        } else if (drawCount != 1 && glMultiDrawMeshTasksIndirectNV) {
+            glMultiDrawMeshTasksIndirectNV(offset, drawCount, mIndirectStride);
+        } else {
+            messages += MessageList::insert(mCall.id,
+                MessageType::UnsupportedShaderType);
         }
     }
 

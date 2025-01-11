@@ -137,11 +137,11 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target,
         kind.draw);
     setFormVisibility(mUi->formLayout, mUi->labelVertexStream,
-        mUi->vertexStream, kind.draw);
+        mUi->vertexStream, kind.draw && !kind.mesh);
     setFormVisibility(mUi->formLayout, mUi->labelIndexBufferBlock,
         mUi->indexBufferBlock, kind.indexed);
     setFormVisibility(mUi->formLayout, mUi->labelPrimitiveType,
-        mUi->primitiveType, kind.draw);
+        mUi->primitiveType, kind.draw && !kind.mesh);
     setFormVisibility(mUi->formLayout, mUi->labelIndirectBufferBlock,
         mUi->indirectBufferBlock, kind.indirect);
 
@@ -149,24 +149,24 @@ void CallProperties::updateWidgets()
         mUi->patchVertices,
         currentPrimitiveType() == Call::PrimitiveType::Patches);
     setFormVisibility(mUi->formLayout, mUi->labelVertexCount, mUi->vertexCount,
-        kind.draw && !kind.indirect);
+        kind.draw && !kind.mesh && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelInstanceCount,
-        mUi->instanceCount, kind.draw && !kind.indirect);
+        mUi->instanceCount, kind.draw && !kind.mesh && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelFirstVertex, mUi->firstVertex,
         kind.draw && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelBaseVertex, mUi->baseVertex,
-        kind.draw && kind.indexed && !kind.indirect);
+        kind.draw && kind.indexed && !kind.mesh && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelBaseInstance,
-        mUi->baseInstance, kind.draw && !kind.indirect);
+        mUi->baseInstance, kind.draw && !kind.mesh && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelDrawCount, mUi->drawCount,
         kind.draw && kind.indirect);
 
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsX, mUi->workGroupsX,
-        kind.compute && !kind.indirect);
+        (kind.compute || kind.mesh) && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsY, mUi->workGroupsY,
-        kind.compute && !kind.indirect);
+        (kind.compute || kind.mesh) && !kind.indirect);
     setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsZ, mUi->workGroupsZ,
-        kind.compute && !kind.indirect);
+        (kind.compute || kind.mesh) && !kind.indirect);
 
     setFormVisibility(mUi->formLayout, mUi->labelFromTexture, mUi->fromTexture,
         type == Call::CallType::CopyTexture

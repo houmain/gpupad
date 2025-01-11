@@ -258,6 +258,8 @@ void GLRenderSession::createCommandQueue()
                 case Call::CallType::DrawIndexed:
                 case Call::CallType::DrawIndirect:
                 case Call::CallType::DrawIndexedIndirect:
+                case Call::CallType::DrawMeshTasks:
+                case Call::CallType::DrawMeshTasksIndirect:
                     glcall.setProgram(addProgramOnce(call->programId));
                     glcall.setTarget(addTargetOnce(call->targetId));
                     glcall.setVextexStream(

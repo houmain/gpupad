@@ -100,6 +100,8 @@ void VKCall::execute(VKContext &context, MessagePtrSet &messages,
     case Call::CallType::DrawIndexed:
     case Call::CallType::DrawIndirect:
     case Call::CallType::DrawIndexedIndirect:
+    case Call::CallType::DrawMeshTasks:
+    case Call::CallType::DrawMeshTasksIndirect:
         executeDraw(context, messages, scriptEngine);
         break;
     case Call::CallType::Compute:
@@ -212,6 +214,19 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
         });
     } else if (mCall.callType == Call::CallType::DrawIndexedIndirect) {
         renderPass.drawIndexedIndirect({
+            .buffer = mIndirectBuffer->buffer(),
+            .offset = indirectOffset,
+            .drawCount = drawCount,
+            .stride = static_cast<uint32_t>(mIndirectStride),
+        });
+    } else if (mCall.callType == Call::CallType::DrawMeshTasks) {
+        renderPass.drawMeshTasks({
+            .workGroupX = evaluateUInt(scriptEngine, mCall.workGroupsX),
+            .workGroupY = evaluateUInt(scriptEngine, mCall.workGroupsY),
+            .workGroupZ = evaluateUInt(scriptEngine, mCall.workGroupsZ),
+        });
+    } else if (mCall.callType == Call::CallType::DrawMeshTasksIndirect) {
+        renderPass.drawMeshTasksIndirect({
             .buffer = mIndirectBuffer->buffer(),
             .offset = indirectOffset,
             .drawCount = drawCount,

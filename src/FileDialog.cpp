@@ -34,8 +34,8 @@ namespace {
         case SourceType::GLSL_TessControlShader:     return "tesc";
         case SourceType::GLSL_TessEvaluationShader:  return "tese";
         case SourceType::GLSL_ComputeShader:         return "comp";
-        case SourceType::GLSL_MeshShader:            return "mesh";
         case SourceType::GLSL_TaskShader:            return "task";
+        case SourceType::GLSL_MeshShader:            return "mesh";
         case SourceType::GLSL_RayGenerationShader:   return "rgen";
         case SourceType::GLSL_RayIntersectionShader: return "rint";
         case SourceType::GLSL_RayAnyHitShader:       return "rahit";
@@ -47,7 +47,15 @@ namespace {
         case SourceType::HLSL_GeometryShader:
         case SourceType::HLSL_HullShader:
         case SourceType::HLSL_DomainShader:
-        case SourceType::HLSL_ComputeShader:         return "hlsl";
+        case SourceType::HLSL_ComputeShader:
+        case SourceType::HLSL_AmplificationShader:
+        case SourceType::HLSL_MeshShader:
+        case SourceType::HLSL_RayGenerationShader:
+        case SourceType::HLSL_RayIntersectionShader:
+        case SourceType::HLSL_RayAnyHitShader:
+        case SourceType::HLSL_RayClosestHitShader:
+        case SourceType::HLSL_RayMissShader:
+        case SourceType::HLSL_RayCallableShader:     return "hlsl";
         case SourceType::JavaScript:                 return "js";
         }
         return "txt";

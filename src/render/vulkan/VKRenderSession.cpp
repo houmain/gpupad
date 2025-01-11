@@ -273,6 +273,8 @@ void VKRenderSession::createCommandQueue()
                 case Call::CallType::DrawIndexed:
                 case Call::CallType::DrawIndirect:
                 case Call::CallType::DrawIndexedIndirect:
+                case Call::CallType::DrawMeshTasks:
+                case Call::CallType::DrawMeshTasksIndirect:
                     vkcall.setProgram(addProgramOnce(call->programId));
                     vkcall.setTarget(addTargetOnce(call->targetId));
                     vkcall.setVextexStream(

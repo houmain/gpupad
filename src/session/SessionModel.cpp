@@ -640,25 +640,25 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         const auto callType = call.callType;
         result &= (column != CallProgramId || kind.draw || kind.compute);
         result &= (column != CallTargetId || kind.draw);
-        result &= (column != CallVertexStreamId || kind.draw);
-        result &= (column != CallPrimitiveType || kind.draw);
+        result &= (column != CallVertexStreamId || (kind.draw && !kind.mesh));
+        result &= (column != CallPrimitiveType || (kind.draw && !kind.mesh));
         result &= (column != CallPatchVertices || kind.patches);
         result &= (column != CallIndexBufferBlockId || kind.indexed);
-        result &= (column != CallCount || (kind.draw && !kind.indirect));
+        result &= (column != CallCount || ((kind.draw && !kind.mesh) && !kind.indirect));
         result &= (column != CallFirst || (kind.draw && !kind.indirect));
         result &=
-            (column != CallInstanceCount || (kind.draw && !kind.indirect));
-        result &= (column != CallBaseInstance || (kind.draw && !kind.indirect));
+            (column != CallInstanceCount || (kind.draw && !kind.mesh && !kind.indirect));
+        result &= (column != CallBaseInstance || (kind.draw && !kind.mesh && !kind.indirect));
         result &= (column != CallBaseVertex
-            || (kind.draw && kind.indexed && !kind.indirect));
+            || (kind.draw && kind.indexed && !kind.mesh && !kind.indirect));
         result &= (column != CallIndirectBufferBlockId || kind.indirect);
         result &= (column != CallDrawCount || (kind.draw && kind.indirect));
         result &=
-            (column != CallWorkGroupsX || (kind.compute && !kind.indirect));
+            (column != CallWorkGroupsX || ((kind.compute || kind.mesh) && !kind.indirect));
         result &=
-            (column != CallWorkGroupsY || (kind.compute && !kind.indirect));
+            (column != CallWorkGroupsY || ((kind.compute || kind.mesh) && !kind.indirect));
         result &=
-            (column != CallWorkGroupsZ || (kind.compute && !kind.indirect));
+            (column != CallWorkGroupsZ || ((kind.compute || kind.mesh) && !kind.indirect));
         result &= (column != CallTextureId
             || callType == Call::CallType::ClearTexture
             || callType == Call::CallType::CopyTexture

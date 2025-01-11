@@ -89,6 +89,10 @@ CallKind getKind(const Call &call)
     case Call::CallType::DrawIndexedIndirect:
         kind.draw = kind.indirect = kind.indexed = true;
         break;
+    case Call::CallType::DrawMeshTasks: kind.draw = kind.mesh = true; break;
+    case Call::CallType::DrawMeshTasksIndirect:
+        kind.draw = kind.mesh = kind.indirect = true;
+        break;
     case Call::CallType::Compute: kind.compute = true; break;
     case Call::CallType::ComputeIndirect:
         kind.compute = kind.indirect = true;
@@ -124,6 +128,8 @@ bool callTypeHasProgram(Call::CallType callType)
     case Call::CallType::DrawIndexed:
     case Call::CallType::DrawIndirect:
     case Call::CallType::DrawIndexedIndirect:
+    case Call::CallType::DrawMeshTasks:
+    case Call::CallType::DrawMeshTasksIndirect:
     case Call::CallType::Compute:
     case Call::CallType::ComputeIndirect:     return true;
     default:                                  return false;
