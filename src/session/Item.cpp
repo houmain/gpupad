@@ -97,7 +97,8 @@ CallKind getKind(const Call &call)
     case Call::CallType::ComputeIndirect:
         kind.compute = kind.indirect = true;
         break;
-    default: break;
+    case Call::CallType::TraceRays: kind.trace = true; break;
+    default:                        break;
     }
 
     if (call.primitiveType == Call::PrimitiveType::Patches)

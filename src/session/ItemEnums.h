@@ -282,6 +282,7 @@ namespace ItemEnums2 {
         DrawMeshTasksIndirect,
         Compute,
         ComputeIndirect,
+        TraceRays,
         ClearTexture,
         CopyTexture,
         SwapTextures,

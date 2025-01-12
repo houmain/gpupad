@@ -275,6 +275,7 @@ struct CallKind
     bool mesh;
     bool patches;
     bool compute;
+    bool trace;
 };
 
 int getFieldSize(const Field &field);

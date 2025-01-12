@@ -329,6 +329,19 @@ KDGpu::ComputePassCommandRecorder VKPipeline::beginComputePass(
     return computePass;
 }
 
+KDGpu::RayTracingPassCommandRecorder VKPipeline::beginRayTracingPass(
+    VKContext &context)
+{
+    auto rayTracingPass = context.commandRecorder->beginRayTracingPass();
+    rayTracingPass.setPipeline(mRayTracingPipeline);
+
+    for (auto i = 0u; i < mBindGroups.size(); ++i)
+        if (mBindGroups[i].bindGroup.isValid())
+            rayTracingPass.setBindGroup(i, mBindGroups[i].bindGroup);
+
+    return rayTracingPass;
+}
+
 namespace KDGpu {
     bool operator<(const SamplerOptions &a, const SamplerOptions &b)
     {
@@ -588,6 +601,15 @@ void VKPipeline::updatePushConstants(
         computePass.pushConstant(mPushConstantRange, mPushConstantData.data());
 }
 
+void VKPipeline::updatePushConstants(
+    KDGpu::RayTracingPassCommandRecorder &rayTracingPass,
+    ScriptEngine &scriptEngine)
+{
+    if (updatePushConstants(scriptEngine))
+        rayTracingPass.pushConstant(mPushConstantRange,
+            mPushConstantData.data());
+}
+
 bool VKPipeline::createGraphics(VKContext &context,
     KDGpu::PrimitiveOptions &primitiveOptions)
 {
@@ -636,6 +658,147 @@ bool VKPipeline::createCompute(VKContext &context)
         },
     });
     return mComputePipeline.isValid();
+}
+
+bool VKPipeline::createRayTracing(VKContext &context)
+{
+    if (std::exchange(mCreated, true))
+        return mRayTracingPipeline.isValid();
+
+    if (!createLayout(context))
+        return false;
+
+    // https://www.willusher.io/graphics/2019/11/20/the-sbt-three-ways/
+    mRayTracingPipeline = context.device.createRayTracingPipeline({
+        .shaderStages = mProgram.getShaderStages(),
+        // TODO:
+        .shaderGroups = {
+            // Gen
+            KDGpu::RayTracingShaderGroupOptions{
+                .type = KDGpu::RayTracingShaderGroupType::General,
+                .generalShaderIndex = 0,
+            },
+            // Miss
+            KDGpu::RayTracingShaderGroupOptions{
+                .type = KDGpu::RayTracingShaderGroupType::General,
+                .generalShaderIndex = 3,
+            },
+            // Closest Hit
+            KDGpu::RayTracingShaderGroupOptions{
+                .type = KDGpu::RayTracingShaderGroupType::ProceduralHit,
+                .closestHitShaderIndex = 2,
+                .intersectionShaderIndex = 1,
+            },
+        },
+        .layout = mPipelineLayout,
+    });
+    if (!mRayTracingPipeline.isValid())
+        return false;
+
+    // TODO:
+    auto &sbt = mRayTracingShaderBindingTable;
+    sbt = KDGpu::RayTracingShaderBindingTable(&context.device,
+        KDGpu::RayTracingShaderBindingTableOptions{
+            .nbrMissShaders = 1,
+            .nbrHitShaders = 1,
+        });
+
+    sbt.addRayGenShaderGroup(mRayTracingPipeline, 0);
+    sbt.addMissShaderGroup(mRayTracingPipeline, 1);
+    sbt.addHitShaderGroup(mRayTracingPipeline, 2);
+    return true;
+}
+
+void VKPipeline::createRayTracingAccelerationStructure(VKContext &context,
+    VKBuffer &aabbBuffer)
+{
+    // bottom level acceleration structure
+    aabbBuffer.prepareAccelerationStructureGeometry(context);
+
+    const auto aabbGeometry = KDGpu::AccelerationStructureGeometryAabbsData{
+        .data = aabbBuffer.buffer(),
+        .stride = sizeof(VkAabbPositionsKHR),
+    };
+    const auto aabbCount =
+        static_cast<uint32_t>(aabbBuffer.size() / sizeof(VkAabbPositionsKHR));
+
+    mBottomLevelAs = context.device.createAccelerationStructure(
+        KDGpu::AccelerationStructureOptions{
+            .type = KDGpu::AccelerationStructureType::BottomLevel,
+            .flags = KDGpu::AccelerationStructureFlagBits::PreferFastTrace,
+            .geometryTypesAndCount = {
+                {
+                    .geometry = aabbGeometry,
+                    .maxPrimitiveCount = aabbCount,
+                },
+            },
+    });
+
+    context.commandRecorder->buildAccelerationStructures({
+        .buildGeometryInfos = {
+            {
+                .geometries = { aabbGeometry },
+                .destinationStructure = mBottomLevelAs,
+                .buildRangeInfos = {
+                    {
+                        .primitiveCount = aabbCount,
+                        .primitiveOffset = 0,
+                        .firstVertex = 0,
+                        .transformOffset = 0,
+                    },
+                },
+            },
+        },
+    });
+
+    context.commandRecorder->memoryBarrier(KDGpu::MemoryBarrierOptions{
+        .srcStages = KDGpu::PipelineStageFlagBit::AccelerationStructureBuildBit,
+        .dstStages = KDGpu::PipelineStageFlagBit::AccelerationStructureBuildBit,
+        .memoryBarriers = {
+            {
+                .srcMask = KDGpu::AccessFlagBit::AccelerationStructureWriteBit,
+                .dstMask = KDGpu::AccessFlagBit::AccelerationStructureReadBit,
+            },
+        },
+    });
+
+    // top level acceleration structure
+    const auto aabbGeometryInstance = KDGpu::AccelerationStructureGeometryInstancesData{
+        .data = {
+            KDGpu::AccelerationStructureGeometryInstance{
+                .flags = KDGpu::GeometryInstanceFlagBits::TriangleFacingCullDisable,
+                .accelerationStructure = mBottomLevelAs,
+            },
+        },
+    };
+
+    mTopLevelAs = context.device.createAccelerationStructure({
+        .type = KDGpu::AccelerationStructureType::TopLevel,
+        .flags = KDGpu::AccelerationStructureFlagBits::PreferFastTrace,
+        .geometryTypesAndCount = {
+            {
+                .geometry = aabbGeometryInstance,
+                .maxPrimitiveCount = 1,
+            },
+        },
+    });
+
+    context.commandRecorder->buildAccelerationStructures({
+        .buildGeometryInfos = {
+            {
+                .geometries = { aabbGeometryInstance },
+                .destinationStructure = mTopLevelAs,
+                .buildRangeInfos = {
+                    {
+                        .primitiveCount = 1, // 1 BLAS
+                        .primitiveOffset = 0,
+                        .firstVertex = 0,
+                        .transformOffset = 0,
+                    },
+                },
+            },
+        },
+    });
 }
 
 bool VKPipeline::createLayout(VKContext &context)
@@ -891,6 +1054,17 @@ MessageType VKPipeline::updateBindings(VKContext &context,
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
         return MessageType::TextureBuffersNotAvailable;
+
+    case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+        setBindGroupResource(desc.set,
+            {
+                .binding = desc.binding,
+                .resource =
+                    KDGpu::AccelerationStructureBinding{
+                        .accelerationStructure = mTopLevelAs,
+                    },
+            });
+        break;
 
     default: Q_ASSERT(!"descriptor type not handled"); break;
     }

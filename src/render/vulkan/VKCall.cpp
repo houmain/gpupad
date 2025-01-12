@@ -131,6 +131,9 @@ void VKCall::execute(VKContext &context, MessagePtrSet &messages,
     case Call::CallType::ComputeIndirect:
         executeCompute(context, messages, scriptEngine);
         break;
+    case Call::CallType::TraceRays:
+        executeTraceRays(context, messages, scriptEngine);
+        break;
     case Call::CallType::ClearTexture:
         executeClearTexture(context, messages);
         break;
@@ -278,6 +281,49 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
         .workGroupZ = evaluateUInt(scriptEngine, mCall.workGroupsZ),
     });
     computePass.end();
+    mUsedItems += mPipeline->usedItems();
+}
+
+void VKCall::executeTraceRays(VKContext &context, MessagePtrSet &messages,
+    ScriptEngine &scriptEngine)
+{
+    if (!mPipeline || !mPipeline->createRayTracing(context))
+        return;
+
+    if (!mBuffer) {
+        messages +=
+            MessageList::insert(mCall.id, MessageType::BufferNotAssigned);
+        return;
+    }
+    mUsedItems += mBuffer->usedItems();
+
+    mPipeline->createRayTracingAccelerationStructure(context, *mBuffer);
+
+    const auto canRender = mPipeline->updateBindings(context, scriptEngine);
+    if (!canRender) {
+        mUsedItems += mPipeline->usedItems();
+        return;
+    }
+
+    auto rayTracingPass = mPipeline->beginRayTracingPass(context);
+    if (!rayTracingPass.isValid())
+        return;
+
+    mPipeline->updatePushConstants(rayTracingPass, scriptEngine);
+
+    const auto &sbt = mPipeline->rayTracingShaderBindingTable();
+    rayTracingPass.traceRays(KDGpu::RayTracingCommand{
+        .raygenShaderBindingTable = sbt.rayGenShaderRegion(),
+        .missShaderBindingTable = sbt.missShaderRegion(),
+        .hitShaderBindingTable = sbt.hitShaderRegion(),
+        .extent = {
+            .width = evaluateUInt(scriptEngine, mCall.workGroupsX),
+            .height = evaluateUInt(scriptEngine, mCall.workGroupsY),
+            .depth = evaluateUInt(scriptEngine, mCall.workGroupsZ),
+        },
+    });
+
+    rayTracingPass.end();
     mUsedItems += mPipeline->usedItems();
 }
 

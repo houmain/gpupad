@@ -9,6 +9,7 @@ namespace KDGpu {
 struct ktxVulkanDeviceInfo;
 
 #include "session/Item.h"
+#include <KDGpu/acceleration_structure.h>
 #include <KDGpu/bind_group.h>
 #include <KDGpu/bind_group_layout_options.h>
 #include <KDGpu/bind_group_options.h>
@@ -18,6 +19,8 @@ struct ktxVulkanDeviceInfo;
 #include <KDGpu/graphics_pipeline_options.h>
 #include <KDGpu/instance.h>
 #include <KDGpu/queue.h>
+#include <KDGpu/raytracing_shader_binding_table.h>
+#include <KDGpu/raytracing_pipeline_options.h>
 #include <KDGpu/sampler.h>
 #include <KDGpu/texture.h>
 #include <KDGpu/texture_options.h>

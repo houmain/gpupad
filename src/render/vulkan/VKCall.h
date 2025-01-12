@@ -37,6 +37,8 @@ private:
         ScriptEngine &scriptEngine);
     void executeCompute(VKContext &context, MessagePtrSet &messages,
         ScriptEngine &scriptEngine);
+    void executeTraceRays(VKContext &context, MessagePtrSet &messages,
+        ScriptEngine &scriptEngine);
     void executeClearTexture(VKContext &context, MessagePtrSet &messages);
     void executeCopyTexture(VKContext &context, MessagePtrSet &messages);
     void executeClearBuffer(VKContext &context, MessagePtrSet &messages);

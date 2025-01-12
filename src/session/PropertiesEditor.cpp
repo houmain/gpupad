@@ -491,6 +491,7 @@ IEditor *PropertiesEditor::openItemEditor(const QModelIndex &index)
         case Call::CallType::DrawMeshTasksIndirect:
         case Call::CallType::Compute:
         case Call::CallType::ComputeIndirect:
+        case Call::CallType::TraceRays:
             return openItemEditor(
                 mModel.getIndex(mModel.findItem(call->programId)));
         case Call::CallType::ClearTexture:

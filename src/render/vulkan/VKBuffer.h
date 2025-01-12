@@ -26,6 +26,7 @@ public:
     void prepareIndexBuffer(VKContext &context);
     void prepareUniformBuffer(VKContext &context);
     void prepareShaderStorageBuffer(VKContext &context);
+    void prepareAccelerationStructureGeometry(VKContext &context);
 
 private:
     void reload();

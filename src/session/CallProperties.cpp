@@ -133,7 +133,7 @@ void CallProperties::updateWidgets()
     const auto type = currentType();
     const auto kind = currentCallKind();
     setFormVisibility(mUi->formLayout, mUi->labelProgram, mUi->program,
-        kind.draw || kind.compute);
+        kind.draw || kind.compute || kind.trace);
     setFormVisibility(mUi->formLayout, mUi->labelTarget, mUi->target,
         kind.draw);
     setFormVisibility(mUi->formLayout, mUi->labelVertexStream,
@@ -161,13 +161,6 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelDrawCount, mUi->drawCount,
         kind.draw && kind.indirect);
 
-    setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsX, mUi->workGroupsX,
-        (kind.compute || kind.mesh) && !kind.indirect);
-    setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsY, mUi->workGroupsY,
-        (kind.compute || kind.mesh) && !kind.indirect);
-    setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsZ, mUi->workGroupsZ,
-        (kind.compute || kind.mesh) && !kind.indirect);
-
     setFormVisibility(mUi->formLayout, mUi->labelFromTexture, mUi->fromTexture,
         type == Call::CallType::CopyTexture
             || type == Call::CallType::SwapTextures);
@@ -189,9 +182,17 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
         type == Call::CallType::ClearBuffer
             || type == Call::CallType::CopyBuffer
-            || type == Call::CallType::SwapBuffers);
+            || type == Call::CallType::SwapBuffers
+            || type == Call::CallType::TraceRays);
 
     setFormVisibility(mUi->formLayout, mUi->labelFromBuffer, mUi->fromBuffer,
         type == Call::CallType::CopyBuffer
             || type == Call::CallType::SwapBuffers);
+
+    setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsX, mUi->workGroupsX,
+        (kind.compute || kind.mesh || kind.trace) && !kind.indirect);
+    setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsY, mUi->workGroupsY,
+        (kind.compute || kind.mesh || kind.trace) && !kind.indirect);
+    setFormVisibility(mUi->formLayout, mUi->labelWorkGroupsZ, mUi->workGroupsZ,
+        (kind.compute || kind.mesh || kind.trace) && !kind.indirect);
 }

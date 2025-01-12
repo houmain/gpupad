@@ -298,6 +298,12 @@ void VKRenderSession::createCommandQueue()
                             addBufferOnce(block->parent->id), *block);
                     break;
 
+                case Call::CallType::TraceRays:
+                    vkcall.setProgram(addProgramOnce(call->programId));
+                    vkcall.setBuffers(addBufferOnce(call->bufferId),
+                        addBufferOnce(call->fromBufferId));
+                    break;
+
                 case Call::CallType::ClearTexture:
                 case Call::CallType::CopyTexture:
                 case Call::CallType::SwapTextures:

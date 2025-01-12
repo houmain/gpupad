@@ -283,6 +283,9 @@ void GLRenderSession::createCommandQueue()
                             addBufferOnce(block->parent->id), *block);
                     break;
 
+                case Call::CallType::TraceRays:
+                    break;
+
                 case Call::CallType::ClearTexture:
                 case Call::CallType::CopyTexture:
                 case Call::CallType::SwapTextures:

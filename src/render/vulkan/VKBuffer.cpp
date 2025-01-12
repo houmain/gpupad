@@ -178,7 +178,9 @@ void VKBuffer::createBuffer(KDGpu::Device &device)
             | KDGpu::BufferUsageFlagBits::IndexBufferBit
             | KDGpu::BufferUsageFlagBits::IndirectBufferBit
             | KDGpu::BufferUsageFlagBits::TransferSrcBit
-            | KDGpu::BufferUsageFlagBits::TransferDstBit,
+            | KDGpu::BufferUsageFlagBits::TransferDstBit
+            | KDGpu::BufferUsageFlagBits::AccelerationStructureBuildInputReadOnlyBit
+            | KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit,
         .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
     });
 }
@@ -278,5 +280,14 @@ void VKBuffer::prepareShaderStorageBuffer(VKContext &context)
     memoryBarrier(*context.commandRecorder,
         KDGpu::AccessFlagBit::ShaderStorageReadBit
             | KDGpu::AccessFlagBit::ShaderStorageWriteBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
+}
+
+void VKBuffer::prepareAccelerationStructureGeometry(VKContext &context)
+{
+    updateReadOnlyBuffer(context);
+
+    memoryBarrier(*context.commandRecorder,
+        KDGpu::AccessFlagBit::AccelerationStructureReadBit,
         KDGpu::PipelineStageFlagBit::AllCommandsBit);
 }

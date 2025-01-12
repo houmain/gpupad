@@ -75,13 +75,26 @@ public:
     bool createGraphics(VKContext &context,
         KDGpu::PrimitiveOptions &primitiveOptions);
     bool createCompute(VKContext &context);
+    bool createRayTracing(VKContext &context);
+    void createRayTracingAccelerationStructure(VKContext &context,
+        VKBuffer &aabbBuffer);
     bool updateBindings(VKContext &context, ScriptEngine &scriptEngine);
     KDGpu::RenderPassCommandRecorder beginRenderPass(VKContext &context);
     KDGpu::ComputePassCommandRecorder beginComputePass(VKContext &context);
+    KDGpu::RayTracingPassCommandRecorder beginRayTracingPass(
+        VKContext &context);
     void updatePushConstants(KDGpu::RenderPassCommandRecorder &renderPass,
         ScriptEngine &scriptEngine);
     void updatePushConstants(KDGpu::ComputePassCommandRecorder &computePass,
         ScriptEngine &scriptEngine);
+    void updatePushConstants(
+        KDGpu::RayTracingPassCommandRecorder &rayTracingPass,
+        ScriptEngine &scriptEngine);
+
+    const KDGpu::RayTracingShaderBindingTable &rayTracingShaderBindingTable() const
+    {
+        return mRayTracingShaderBindingTable;
+    }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
@@ -136,6 +149,7 @@ private:
     bool mCreated{};
     KDGpu::GraphicsPipeline mGraphicsPipeline;
     KDGpu::ComputePipeline mComputePipeline;
+    KDGpu::RayTracingPipeline mRayTracingPipeline;
     KDGpu::PipelineLayout mPipelineLayout;
     std::vector<BindGroup> mBindGroups;
     std::vector<KDGpu::BindGroupLayout> mBindGroupLayouts;
@@ -144,6 +158,9 @@ private:
     std::vector<std::unique_ptr<DynamicUniformBuffer>> mDynamicUniformBuffers;
     std::vector<std::byte> mPushConstantData;
     KDGpu::PushConstantRange mPushConstantRange{};
+    KDGpu::RayTracingShaderBindingTable mRayTracingShaderBindingTable;
+    KDGpu::AccelerationStructure mBottomLevelAs;
+    KDGpu::AccelerationStructure mTopLevelAs;
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
 };
