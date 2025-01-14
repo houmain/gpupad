@@ -94,8 +94,7 @@ KDGpu::Format toKDGpu(QOpenGLTexture::TextureFormat format)
 KDGpu::Format toKDGpu(Field::DataType dataType, int count)
 {
     using KD = KDGpu::Format;
-    if (!count)
-        return KD::UNDEFINED;
+    Q_ASSERT(count);
 
 #define ADD(DATATYPE, BITS, TYPE)                                       \
     case DATATYPE:                                                      \

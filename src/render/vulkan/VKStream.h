@@ -32,6 +32,7 @@ private:
     void invalidateVertexOptions();
     void updateVertexOptions();
 
+    ItemId mItemId{};
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
     QMap<int, VKAttribute> mAttributes;

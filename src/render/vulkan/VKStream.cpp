@@ -1,6 +1,6 @@
 #include "VKStream.h"
 
-VKStream::VKStream(const Stream &stream)
+VKStream::VKStream(const Stream &stream) : mItemId(stream.id)
 {
     mUsedItems += stream.id;
 
@@ -67,6 +67,13 @@ void VKStream::updateVertexOptions()
 {
     if (!mBuffers.empty())
         return;
+
+    for (const auto &attribute : mAttributes)
+        if (!validateAttribute(attribute)) {
+            mMessages += MessageList::insert(mItemId,
+                MessageType::AttributeNotSet, attribute.name);
+            return;
+        }
 
     auto location = 0;
     for (const auto &attribute : mAttributes) {

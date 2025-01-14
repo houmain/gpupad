@@ -619,11 +619,17 @@ bool VKPipeline::createGraphics(VKContext &context,
     if (!createLayout(context))
         return false;
 
+    auto vertexOptions = KDGpu::VertexOptions{};
+    if (mVertexStream) {
+        vertexOptions = mVertexStream->getVertexOptions();
+        if (vertexOptions.attributes.empty())
+            return false;
+    }
+
     mGraphicsPipeline = context.device.createGraphicsPipeline({
         .shaderStages = mProgram.getShaderStages(),
         .layout = mPipelineLayout,
-        .vertex = (mVertexStream ? mVertexStream->getVertexOptions()
-                                 : KDGpu::VertexOptions{}),
+        .vertex = vertexOptions,
         .renderTargets = mTarget->getRenderTargetOptions(),
         .depthStencil = mTarget->getDepthStencilOptions(),
         .primitive = primitiveOptions,
