@@ -39,6 +39,11 @@ ScriptEngineJavaScript::~ScriptEngineJavaScript()
     mInterruptThread->requestInterruption();
 }
 
+void ScriptEngineJavaScript::setOmitReferenceErrors()
+{
+    mOmitReferenceErrors = true;
+}
+
 void ScriptEngineJavaScript::setTimeout(int msec)
 {
     mInterruptTimer->setInterval(msec);
@@ -92,9 +97,7 @@ QJSValue ScriptEngineJavaScript::call(QJSValue &callable,
     mConsole->setMessages(&messages, itemId);
 
     auto result = callable.call(args);
-    if (result.isError())
-        messages += MessageList::insert(itemId, MessageType::ScriptError,
-            result.toString());
+    outputError(result, itemId, messages);
     return result;
 }
 
@@ -125,9 +128,7 @@ ScriptValueList ScriptEngineJavaScript::evaluateValues(
     mConsole->setMessages(&messages, itemId);
 
     auto result = evaluate(valueExpression);
-    if (result.isError())
-        messages += MessageList::insert(itemId, MessageType::ScriptError,
-            result.toString());
+    outputError(result, itemId, messages);
 
     auto values = ScriptValueList();
     if (result.isObject()) {
@@ -141,4 +142,18 @@ ScriptValueList ScriptEngineJavaScript::evaluateValues(
         values.append(result.toNumber());
     }
     return values;
+}
+
+void ScriptEngineJavaScript::outputError(const QJSValue &result, ItemId itemId,
+    MessagePtrSet &messages)
+{
+    if (!result.isError())
+        return;
+
+    if (result.errorType() == QJSValue::ErrorType::ReferenceError
+        && mOmitReferenceErrors)
+        return;
+
+    messages += MessageList::insert(itemId, MessageType::ScriptError,
+        result.toString());
 }

@@ -14,6 +14,7 @@ public:
     explicit ScriptEngineJavaScript(QObject *parent = nullptr);
     ~ScriptEngineJavaScript();
 
+    void setOmitReferenceErrors();
     void setTimeout(int msec) override;
     void setGlobal(const QString &name, QObject *object) override;
     void setGlobal(const QString &name, const ScriptValueList &values) override;
@@ -39,10 +40,13 @@ public:
 private:
     QJSValue evaluate(const QString &program,
         const QString &fileName = QString(), int lineNumber = 1);
+    void outputError(const QJSValue &result, ItemId itemId,
+        MessagePtrSet &messages);
 
     const QThread &mOnThread;
     QJSEngine *mJsEngine{};
     ScriptConsole *mConsole{};
     QThread *mInterruptThread{};
     QTimer *mInterruptTimer{};
+    bool mOmitReferenceErrors{};
 };

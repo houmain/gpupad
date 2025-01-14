@@ -8,8 +8,11 @@ EvaluatedPropertyCache::~EvaluatedPropertyCache() = default;
 
 ScriptEngine *EvaluatedPropertyCache::defaultScriptEngine()
 {
-    if (!mDefaultScriptEngine)
-        mDefaultScriptEngine = std::make_unique<ScriptEngineJavaScript>();
+    if (!mDefaultScriptEngine) {
+        auto scriptEngine = std::make_unique<ScriptEngineJavaScript>();
+        scriptEngine->setOmitReferenceErrors();
+        mDefaultScriptEngine = std::move(scriptEngine);
+    }
     return mDefaultScriptEngine.get();
 }
 
