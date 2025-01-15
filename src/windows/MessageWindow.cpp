@@ -161,9 +161,11 @@ QString MessageWindow::getMessageText(const Message &message) const
     case MaxPushConstantSizeExceeded:
         return tr("Maximum push constant size exceeded (%1)").arg(message.text);
     case TextureBuffersNotAvailable:
-        return tr("Texture buffers are not available in Vulkan yet");
-    case RayTracingNotAvailableInOpenGL:
-        return tr("Raytracing is not available in OpenGL");
+        return tr("Texture buffers not available in Vulkan yet");
+    case RayTracingNotAvailable:
+        return tr("Raytracing not available");
+    case MeshShadersNotAvailable:
+        return tr("Mesh Shaders not available");
     }
     return message.text;
 }

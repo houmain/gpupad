@@ -1,4 +1,5 @@
 #include "VKShader.h"
+#include <optional>
 
 namespace {
     KDGpu::ShaderStageFlagBits getStageFlags(Shader::ShaderType type)
@@ -25,6 +26,32 @@ namespace {
         Q_UNREACHABLE();
         return {};
     }
+
+    std::optional<MessageType> checkShaderTypeSupport(Shader::ShaderType type,
+        const KDGpu::Device &device)
+    {
+        const auto& features = device.adapter()->features();
+        switch (type) {
+        case Shader::ShaderType::Task:
+        case Shader::ShaderType::Mesh:
+            if (!features.meshShader)
+                return MessageType::MeshShadersNotAvailable;
+            break;
+
+        case Shader::ShaderType::RayGeneration:
+        case Shader::ShaderType::RayIntersection:
+        case Shader::ShaderType::RayAnyHit:
+        case Shader::ShaderType::RayClosestHit:
+        case Shader::ShaderType::RayMiss:
+        case Shader::ShaderType::RayCallable:
+            if (!features.rayTracingPipeline)
+                return MessageType::RayTracingNotAvailable;
+            break;
+
+        default: break;
+        }
+        return { };
+    }
 } // namespace
 
 VKShader::VKShader(Shader::ShaderType type,
@@ -35,6 +62,11 @@ VKShader::VKShader(Shader::ShaderType type,
 
 void VKShader::create(KDGpu::Device &device, const Spirv &spirv)
 {
+    if (auto messageType = checkShaderTypeSupport(mType, device)) {
+        mMessages += MessageList::insert(mItemId, *messageType);
+        return;
+    }
+
     Q_ASSERT(spirv);
     mShaderModule = device.createShaderModule(spirv.spirv());
     mInterface = spirv.getInterface();

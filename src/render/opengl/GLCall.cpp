@@ -269,8 +269,8 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         executeCompute(messages, scriptEngine);
         break;
     case Call::CallType::TraceRays:
-        messages += MessageList::insert(mCall.id,
-            MessageType::RayTracingNotAvailableInOpenGL);
+        messages +=
+            MessageList::insert(mCall.id, MessageType::RayTracingNotAvailable);
         break;
     case Call::CallType::ClearTexture: executeClearTexture(messages); break;
     case Call::CallType::CopyTexture:  executeCopyTexture(messages); break;

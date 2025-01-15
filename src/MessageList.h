@@ -66,7 +66,8 @@ enum class MessageType {
     MaxSampleCountExceeded,
     MaxPushConstantSizeExceeded,
     TextureBuffersNotAvailable,
-    RayTracingNotAvailableInOpenGL,
+    RayTracingNotAvailable,
+    MeshShadersNotAvailable,
 };
 
 struct Message

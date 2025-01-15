@@ -86,6 +86,18 @@ void VKCall::execute(VKContext &context, MessagePtrSet &messages,
 {
     const auto kind = getKind(mCall);
 
+    if (kind.trace && !context.features().rayTracingPipeline) {
+        mMessages +=
+            MessageList::insert(mCall.id, MessageType::RayTracingNotAvailable);
+        return;
+    }
+
+    if (kind.mesh && !context.features().meshShader) {
+        mMessages +=
+            MessageList::insert(mCall.id, MessageType::MeshShadersNotAvailable);
+        return;
+    }
+
     if ((kind.draw || kind.compute) && !mProgram) {
         messages +=
             MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);

@@ -36,6 +36,11 @@ struct VKContext
     std::optional<KDGpu::CommandRecorder> commandRecorder;
     std::map<ItemId, KDGpu::TimestampQueryRecorder> timestampQueries;
 
+    const KDGpu::AdapterFeatures &features() const
+    {
+        return device.adapter()->features();
+    }
+
     const KDGpu::AdapterLimits &adapterLimits() const
     {
         return device.adapter()->properties().limits;
