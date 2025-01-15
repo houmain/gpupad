@@ -115,3 +115,10 @@ inline void removeComboBoxItem(QComboBox *c, const QString &text)
 {
     c->removeItem(c->findText(text));
 }
+
+inline void renameComboBoxItem(QComboBox *c, const QString &text, const QString &newText)
+{
+    const auto index = c->findText(text);
+    Q_ASSERT(index >= 0);
+    c->setItemText(index, newText);
+}

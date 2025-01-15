@@ -180,8 +180,8 @@ void PropertiesEditor::fillComboBoxes()
     fillComboBox<Shader::Language>(mShaderProperties->language);
     removeComboBoxItem(mShaderProperties->language, "None");
     fillComboBox<Shader::ShaderType>(mShaderProperties->type);
-    removeComboBoxItem(mShaderProperties->type, "Tess Control");
-    removeComboBoxItem(mShaderProperties->type, "Tess Evaluation");
+    renameComboBoxItem(mShaderProperties->type, "Tess Control", "Tessellation Control");
+    renameComboBoxItem(mShaderProperties->type, "Tess Evaluation", "Tessellation Evaluation");
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
 }
 

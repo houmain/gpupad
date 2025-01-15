@@ -50,8 +50,8 @@ namespace ItemEnums {
         Vertex = GL_VERTEX_SHADER,
         Fragment = GL_FRAGMENT_SHADER,
         Geometry = GL_GEOMETRY_SHADER,
-        TessellationControl = GL_TESS_CONTROL_SHADER,
-        TessellationEvaluation = GL_TESS_EVALUATION_SHADER,
+        TessControl = GL_TESS_CONTROL_SHADER,
+        TessEvaluation = GL_TESS_EVALUATION_SHADER,
         Compute = GL_COMPUTE_SHADER,
         Task = GL_TASK_SHADER_NV,
         Mesh = GL_MESH_SHADER_NV,
@@ -62,9 +62,6 @@ namespace ItemEnums {
         RayClosestHit,
         RayMiss,
         RayCallable,
-
-        TessControl = TessellationControl,
-        TessEvaluation = TessellationEvaluation,
     };
     Q_ENUM_NS(ShaderType)
 
