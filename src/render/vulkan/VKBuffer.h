@@ -17,6 +17,7 @@ public:
     int size() const { return mSize; }
     const KDGpu::Buffer &buffer() const { return mBuffer; }
 
+    void addUsage(KDGpu::BufferUsageFlags usage);
     void clear(VKContext &context);
     void copy(VKContext &context, VKBuffer &source);
     bool swap(VKBuffer &other);
@@ -43,6 +44,7 @@ private:
     int mSize{};
     QByteArray mData;
     QSet<ItemId> mUsedItems;
+    KDGpu::BufferUsageFlags mUsage{};
     KDGpu::Buffer mBuffer;
     bool mSystemCopyModified{};
     bool mDeviceCopyModified{};

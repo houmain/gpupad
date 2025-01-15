@@ -66,6 +66,15 @@ VKBuffer::VKBuffer(const Buffer &buffer, ScriptEngine &scriptEngine)
     , mFileName(buffer.fileName)
     , mSize(getBufferSize(buffer, scriptEngine, mMessages))
 {
+    // TODO: reduce default usage
+    mUsage = KDGpu::BufferUsageFlags{ KDGpu::BufferUsageFlagBits::TransferSrcBit
+        | KDGpu::BufferUsageFlagBits::TransferDstBit
+        | KDGpu::BufferUsageFlagBits::UniformBufferBit
+        | KDGpu::BufferUsageFlagBits::StorageBufferBit
+        | KDGpu::BufferUsageFlagBits::VertexBufferBit
+        | KDGpu::BufferUsageFlagBits::IndexBufferBit
+        | KDGpu::BufferUsageFlagBits::IndirectBufferBit };
+
     mUsedItems += buffer.id;
     for (const auto item : buffer.items)
         if (auto block = static_cast<const Block *>(item)) {
@@ -74,6 +83,11 @@ VKBuffer::VKBuffer(const Buffer &buffer, ScriptEngine &scriptEngine)
                 if (auto field = static_cast<const Block *>(item))
                     mUsedItems += field->id;
         }
+}
+
+void VKBuffer::addUsage(KDGpu::BufferUsageFlags usage)
+{
+    mUsage |= usage;
 }
 
 void VKBuffer::updateUntitledFilename(const VKBuffer &rhs)
@@ -172,15 +186,7 @@ void VKBuffer::createBuffer(KDGpu::Device &device)
 
     mBuffer = device.createBuffer({
         .size = static_cast<KDGpu::DeviceSize>(mSize),
-        .usage = KDGpu::BufferUsageFlagBits::UniformBufferBit
-            | KDGpu::BufferUsageFlagBits::StorageBufferBit
-            | KDGpu::BufferUsageFlagBits::VertexBufferBit
-            | KDGpu::BufferUsageFlagBits::IndexBufferBit
-            | KDGpu::BufferUsageFlagBits::IndirectBufferBit
-            | KDGpu::BufferUsageFlagBits::TransferSrcBit
-            | KDGpu::BufferUsageFlagBits::TransferDstBit
-            | KDGpu::BufferUsageFlagBits::AccelerationStructureBuildInputReadOnlyBit
-            | KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit,
+        .usage = mUsage,
         .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
     });
 }
