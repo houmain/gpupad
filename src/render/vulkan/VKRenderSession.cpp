@@ -189,7 +189,8 @@ void VKRenderSession::createCommandQueue()
             // push binding scope
             addCommand([](BindingState &state) { state.push({}); });
         } else if (auto script = castItem<Script>(item)) {
-            mUsedItems += script->id;
+            if (script->executeOn != Script::ExecuteOn::ResetEvaluation)
+                mUsedItems += script->id;
         } else if (auto binding = castItem<Binding>(item)) {
             const auto &b = *binding;
             switch (b.bindingType) {
