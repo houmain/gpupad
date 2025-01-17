@@ -130,7 +130,8 @@ void CustomActions::importAction()
 
 void CustomActions::editAction()
 {
-    auto filePath = mModel->fileInfo(ui->actions->currentIndex()).filePath();
+    const auto filePath = toNativeCanonicalFilePath(
+        mModel->fileInfo(ui->actions->currentIndex()).filePath());
     close();
     Singletons::editorManager().openEditor(filePath);
 }
@@ -171,8 +172,9 @@ void CustomActions::updateActions()
     mActions.clear();
     auto root = mModel->index(mModel->rootPath());
     for (auto i = 0; i < mModel->rowCount(root); i++) {
-        mActions.emplace_back(
-            new CustomAction(mModel->filePath(mModel->index(i, 0, root))));
+        const auto filePath = toNativeCanonicalFilePath(
+            mModel->filePath(mModel->index(i, 0, root)));
+        mActions.emplace_back(new CustomAction(filePath));
         connect(mActions.back().get(), &QAction::triggered, this,
             &CustomActions::actionTriggered);
     }
