@@ -11,6 +11,7 @@ class MouseScriptObject final : public QObject
     Q_PROPERTY(QJsonValue fragCoord READ fragCoord CONSTANT)
     Q_PROPERTY(QJsonValue prevCoord READ prevCoord CONSTANT)
     Q_PROPERTY(QJsonValue prevFragCoord READ prevFragCoord CONSTANT)
+    Q_PROPERTY(QJsonValue delta READ delta CONSTANT)
     Q_PROPERTY(QJsonValue buttons READ buttons CONSTANT)
 
 public:
@@ -22,6 +23,7 @@ public:
     QJsonValue fragCoord() const;
     QJsonValue prevCoord() const;
     QJsonValue prevFragCoord() const;
+    QJsonValue delta() const;
     QJsonValue buttons() const;
     bool wasRead() const { return mWasRead; }
 

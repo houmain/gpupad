@@ -36,6 +36,16 @@ QJsonValue MouseScriptObject::prevFragCoord() const
     return toFragCoord(mPrevPosition);
 }
 
+QJsonValue MouseScriptObject::delta() const
+{
+    mWasRead = true;
+    const auto delta = (mPosition - mPrevPosition);
+    auto vector = QJsonArray();
+    vector.append((delta.x() + 0.5) / mEditorSize.width());
+    vector.append((delta.y() + 0.5) / mEditorSize.height());
+    return vector;
+}
+
 QJsonValue MouseScriptObject::buttons() const
 {
     mWasRead = true;
