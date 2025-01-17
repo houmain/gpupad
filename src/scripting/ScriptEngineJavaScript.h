@@ -38,8 +38,7 @@ public:
     }
 
 private:
-    QJSValue evaluate(const QString &program,
-        const QString &fileName = QString(), int lineNumber = 1);
+    void resetInterruptTimer();
     void outputError(const QJSValue &result, ItemId itemId,
         MessagePtrSet &messages);
 

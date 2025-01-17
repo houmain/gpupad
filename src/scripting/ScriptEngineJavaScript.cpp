@@ -49,14 +49,11 @@ void ScriptEngineJavaScript::setTimeout(int msec)
     mInterruptTimer->setInterval(msec);
 }
 
-QJSValue ScriptEngineJavaScript::evaluate(const QString &program,
-    const QString &fileName, int lineNumber)
-{
+void ScriptEngineJavaScript::resetInterruptTimer() {
     Q_ASSERT(&mOnThread == QThread::currentThread());
     QMetaObject::invokeMethod(mInterruptTimer, "start",
         Qt::BlockingQueuedConnection);
     mJsEngine->setInterrupted(false);
-    return mJsEngine->evaluate(program, fileName, lineNumber);
 }
 
 void ScriptEngineJavaScript::setGlobal(const QString &name, QJSValue value)
@@ -95,6 +92,7 @@ QJSValue ScriptEngineJavaScript::call(QJSValue &callable,
     const QJSValueList &args, ItemId itemId, MessagePtrSet &messages)
 {
     mConsole->setMessages(&messages, itemId);
+    resetInterruptTimer();
 
     auto result = callable.call(args);
     outputError(result, itemId, messages);
@@ -114,8 +112,9 @@ void ScriptEngineJavaScript::evaluateScript(const QString &script,
     const QString &fileName, MessagePtrSet &messages)
 {
     mConsole->setMessages(&messages, fileName);
+    resetInterruptTimer();
 
-    auto result = evaluate(script, fileName);
+    auto result = mJsEngine->evaluate(script, fileName);
     if (result.isError())
         messages += MessageList::insert(fileName,
             result.property("lineNumber").toInt(), MessageType::ScriptError,
@@ -126,8 +125,9 @@ ScriptValueList ScriptEngineJavaScript::evaluateValues(
     const QString &valueExpression, ItemId itemId, MessagePtrSet &messages)
 {
     mConsole->setMessages(&messages, itemId);
+    resetInterruptTimer();
 
-    auto result = evaluate(valueExpression);
+    auto result = mJsEngine->evaluate(valueExpression);
     outputError(result, itemId, messages);
 
     auto values = ScriptValueList();
