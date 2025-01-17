@@ -1,0 +1,569 @@
+{
+    "autoMapBindings": false,
+    "autoMapLocations": false,
+    "autoSampledTextures": false,
+    "id": 2,
+    "items": [
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 103,
+            "name": "Width",
+            "type": "Binding",
+            "values": [
+                "512"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 137,
+            "name": "Height",
+            "type": "Binding",
+            "values": [
+                "512"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 136,
+            "name": "ParticlesCount",
+            "type": "Binding",
+            "values": [
+                "30"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 135,
+            "name": "MaxFragmentCount",
+            "type": "Binding",
+            "values": [
+                "Width * Height * 4"
+            ]
+        },
+        {
+            "id": 130,
+            "inlineScope": true,
+            "items": [
+                {
+                    "flipVertically": false,
+                    "format": "SRGB8_Alpha8",
+                    "height": "Height",
+                    "id": 102,
+                    "name": "Color",
+                    "samples": 1,
+                    "target": "Target2D",
+                    "type": "Texture",
+                    "width": "Width"
+                },
+                {
+                    "blendConstant": "#ffffffff",
+                    "cullMode": "NoCulling",
+                    "defaultHeight": 512,
+                    "defaultLayers": 1,
+                    "defaultSamples": 1,
+                    "defaultWidth": 512,
+                    "frontFace": "CCW",
+                    "id": 162,
+                    "logicOperation": "NoLogicOperation",
+                    "name": "Alpha Target",
+                    "polygonMode": "Fill",
+                    "type": "Target"
+                },
+                {
+                    "blendConstant": "#ffffffff",
+                    "cullMode": "NoCulling",
+                    "frontFace": "CCW",
+                    "id": 100,
+                    "items": [
+                        {
+                            "blendAlphaDest": "One",
+                            "blendAlphaEq": "Add",
+                            "blendAlphaSource": "Zero",
+                            "blendColorDest": "One",
+                            "blendColorEq": "Add",
+                            "blendColorSource": "One",
+                            "colorWriteMask": 15,
+                            "id": 101,
+                            "level": 0,
+                            "name": "Color",
+                            "textureId": 102,
+                            "type": "Attachment"
+                        }
+                    ],
+                    "logicOperation": "NoLogicOperation",
+                    "name": "Compositing Target",
+                    "polygonMode": "Fill",
+                    "type": "Target"
+                }
+            ],
+            "iterations": "1",
+            "name": "Targets",
+            "type": "Group"
+        },
+        {
+            "id": 146,
+            "inlineScope": true,
+            "items": [
+                {
+                    "executeOn": "ResetEvaluation",
+                    "fileName": "generate_particles.js",
+                    "id": 145,
+                    "type": "Script"
+                },
+                {
+                    "id": 111,
+                    "items": [
+                        {
+                            "id": 112,
+                            "items": [
+                                {
+                                    "count": 4,
+                                    "dataType": "Float",
+                                    "id": 113,
+                                    "name": "positionSize",
+                                    "padding": 0,
+                                    "type": "Field"
+                                },
+                                {
+                                    "count": 4,
+                                    "dataType": "Float",
+                                    "id": 114,
+                                    "name": "velocity",
+                                    "padding": 0,
+                                    "type": "Field"
+                                },
+                                {
+                                    "count": 4,
+                                    "dataType": "Float",
+                                    "id": 115,
+                                    "name": "color",
+                                    "padding": 0,
+                                    "type": "Field"
+                                }
+                            ],
+                            "name": "Particle",
+                            "offset": "0",
+                            "rowCount": "ParticlesCount",
+                            "type": "Block"
+                        }
+                    ],
+                    "name": "Particle Buffer",
+                    "type": "Buffer"
+                },
+                {
+                    "fileName": "cube.bin",
+                    "id": 148,
+                    "items": [
+                        {
+                            "id": 149,
+                            "items": [
+                                {
+                                    "count": 3,
+                                    "dataType": "Float",
+                                    "id": 150,
+                                    "name": "position",
+                                    "padding": 0,
+                                    "type": "Field"
+                                },
+                                {
+                                    "count": 3,
+                                    "dataType": "Float",
+                                    "id": 151,
+                                    "name": "normal",
+                                    "padding": 0,
+                                    "type": "Field"
+                                }
+                            ],
+                            "name": "Vertex",
+                            "offset": "0",
+                            "rowCount": "36",
+                            "type": "Block"
+                        }
+                    ],
+                    "type": "Buffer"
+                },
+                {
+                    "id": 94,
+                    "items": [
+                        {
+                            "id": 165,
+                            "items": [
+                                {
+                                    "count": 1,
+                                    "dataType": "Uint32",
+                                    "id": 166,
+                                    "name": "value",
+                                    "padding": 0,
+                                    "type": "Field"
+                                },
+                                {
+                                    "count": 3,
+                                    "dataType": "Float",
+                                    "id": 167,
+                                    "name": "padding",
+                                    "padding": 0,
+                                    "type": "Field"
+                                }
+                            ],
+                            "name": "nextId",
+                            "offset": "0",
+                            "rowCount": "1",
+                            "type": "Block"
+                        },
+                        {
+                            "id": 95,
+                            "items": [
+                                {
+                                    "count": 4,
+                                    "dataType": "Float",
+                                    "id": 96,
+                                    "name": "color",
+                                    "padding": 0,
+                                    "type": "Field"
+                                },
+                                {
+                                    "count": 1,
+                                    "dataType": "Float",
+                                    "id": 138,
+                                    "name": "depth",
+                                    "padding": 0,
+                                    "type": "Field"
+                                },
+                                {
+                                    "count": 1,
+                                    "dataType": "Uint32",
+                                    "id": 139,
+                                    "name": "next",
+                                    "padding": 0,
+                                    "type": "Field"
+                                },
+                                {
+                                    "count": 2,
+                                    "dataType": "Float",
+                                    "id": 140,
+                                    "name": "padding",
+                                    "padding": 0,
+                                    "type": "Field"
+                                }
+                            ],
+                            "name": "FragmentInfo",
+                            "offset": "0",
+                            "rowCount": "MaxFragmentCount",
+                            "type": "Block"
+                        }
+                    ],
+                    "name": "fragmentLinkedListBuffer",
+                    "type": "Buffer"
+                },
+                {
+                    "flipVertically": false,
+                    "format": "R32U",
+                    "height": "Height",
+                    "id": 79,
+                    "name": "fragmentHeadsPointer",
+                    "samples": 1,
+                    "target": "Target2D",
+                    "type": "Texture",
+                    "width": "Width"
+                }
+            ],
+            "iterations": "1",
+            "name": "Buffers",
+            "type": "Group"
+        },
+        {
+            "id": 119,
+            "inlineScope": true,
+            "items": [
+                {
+                    "id": 90,
+                    "items": [
+                        {
+                            "fileName": "particles.comp",
+                            "id": 91,
+                            "language": "GLSL",
+                            "shaderType": "Compute",
+                            "type": "Shader"
+                        }
+                    ],
+                    "name": "Compute Program",
+                    "type": "Program"
+                },
+                {
+                    "id": 104,
+                    "items": [
+                        {
+                            "fileName": "cube_instanced.vert",
+                            "id": 105,
+                            "language": "GLSL",
+                            "shaderType": "Vertex",
+                            "type": "Shader"
+                        },
+                        {
+                            "fileName": "alpha.frag",
+                            "id": 120,
+                            "language": "GLSL",
+                            "shaderType": "Fragment",
+                            "type": "Shader"
+                        }
+                    ],
+                    "name": "Draw Cubes Program",
+                    "type": "Program"
+                },
+                {
+                    "id": 108,
+                    "items": [
+                        {
+                            "fileName": "compositing.vert",
+                            "id": 109,
+                            "language": "GLSL",
+                            "shaderType": "Vertex",
+                            "type": "Shader"
+                        },
+                        {
+                            "fileName": "compositing.frag",
+                            "id": 110,
+                            "language": "GLSL",
+                            "shaderType": "Fragment",
+                            "type": "Shader"
+                        }
+                    ],
+                    "name": "Compositing Program",
+                    "type": "Program"
+                }
+            ],
+            "iterations": "1",
+            "name": "Programs",
+            "type": "Group"
+        },
+        {
+            "id": 116,
+            "inlineScope": true,
+            "items": [
+                {
+                    "executeOn": "ManualEvaluation",
+                    "fileName": "math.js",
+                    "id": 141,
+                    "type": "Script"
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 164,
+                    "name": "frame",
+                    "type": "Binding",
+                    "values": [
+                        "(this.frame || 0) + 1"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 78,
+                    "name": "Camera.modelMatrix",
+                    "type": "Binding",
+                    "values": [
+                        "rotateY(frame / 60)"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression4x4",
+                    "id": 163,
+                    "name": "Camera.viewMatrix",
+                    "type": "Binding",
+                    "values": [
+                        "1",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "1",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "1",
+                        "0",
+                        "0",
+                        "0",
+                        "-50",
+                        "1"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 142,
+                    "name": "Camera.projectionMatrix",
+                    "type": "Binding",
+                    "values": [
+                        "perspective(45, 1.0, 0.1, 1000)"
+                    ]
+                },
+                {
+                    "id": 121,
+                    "items": [
+                        {
+                            "divisor": 0,
+                            "fieldId": 150,
+                            "id": 122,
+                            "name": "vertexPosition",
+                            "normalize": false,
+                            "type": "Attribute"
+                        },
+                        {
+                            "divisor": 0,
+                            "fieldId": 151,
+                            "id": 123,
+                            "name": "vertexNormal",
+                            "normalize": false,
+                            "type": "Attribute"
+                        },
+                        {
+                            "divisor": 1,
+                            "fieldId": 113,
+                            "id": 128,
+                            "name": "particlePosition",
+                            "normalize": false,
+                            "type": "Attribute"
+                        },
+                        {
+                            "divisor": 1,
+                            "fieldId": 115,
+                            "id": 129,
+                            "name": "particleColor",
+                            "normalize": false,
+                            "type": "Attribute"
+                        }
+                    ],
+                    "name": "Cube Stream",
+                    "type": "Stream"
+                },
+                {
+                    "bindingType": "Buffer",
+                    "bufferId": 111,
+                    "id": 117,
+                    "name": "Particles",
+                    "type": "Binding"
+                },
+                {
+                    "bindingType": "Image",
+                    "id": 143,
+                    "imageFormat": "Internal",
+                    "layer": -1,
+                    "level": 0,
+                    "name": "alphaHeadPointer",
+                    "textureId": 79,
+                    "type": "Binding"
+                },
+                {
+                    "bindingType": "Buffer",
+                    "bufferId": 94,
+                    "id": 144,
+                    "name": "AlphaFragments",
+                    "type": "Binding"
+                }
+            ],
+            "iterations": "1",
+            "name": "Bindings",
+            "type": "Group"
+        },
+        {
+            "id": 118,
+            "inlineScope": false,
+            "items": [
+                {
+                    "bufferId": 94,
+                    "callType": "ClearBuffer",
+                    "checked": true,
+                    "executeOn": "EveryEvaluation",
+                    "id": 73,
+                    "name": "Clear fragmentLinkedListBuffer",
+                    "type": "Call"
+                },
+                {
+                    "callType": "ClearTexture",
+                    "checked": true,
+                    "clearColor": "#ff404040",
+                    "clearDepth": 1,
+                    "clearStencil": 0,
+                    "executeOn": "EveryEvaluation",
+                    "id": 160,
+                    "name": "Clear fragmentHeads",
+                    "textureId": 79,
+                    "type": "Call"
+                },
+                {
+                    "callType": "ClearTexture",
+                    "checked": true,
+                    "clearColor": "#ff404040",
+                    "clearDepth": 1,
+                    "clearStencil": 0,
+                    "executeOn": "EveryEvaluation",
+                    "id": 159,
+                    "name": "Clear Target",
+                    "textureId": 102,
+                    "type": "Call"
+                },
+                {
+                    "callType": "Compute",
+                    "checked": true,
+                    "executeOn": "EveryEvaluation",
+                    "id": 93,
+                    "name": "Advance Particles",
+                    "programId": 90,
+                    "type": "Call",
+                    "workGroupsX": "Math.ceil(ParticlesCount / 256)",
+                    "workGroupsY": "1",
+                    "workGroupsZ": "1"
+                },
+                {
+                    "baseInstance": "0",
+                    "callType": "Draw",
+                    "checked": true,
+                    "count": "36",
+                    "executeOn": "EveryEvaluation",
+                    "first": "0",
+                    "id": 161,
+                    "instanceCount": "ParticlesCount",
+                    "name": "Draw Cubes",
+                    "primitiveType": "Triangles",
+                    "programId": 104,
+                    "targetId": 162,
+                    "type": "Call",
+                    "vertexStreamId": 121
+                },
+                {
+                    "baseInstance": "0",
+                    "callType": "Draw",
+                    "checked": true,
+                    "count": "6",
+                    "executeOn": "EveryEvaluation",
+                    "first": "0",
+                    "id": 99,
+                    "instanceCount": "1",
+                    "name": "Compositing",
+                    "primitiveType": "Triangles",
+                    "programId": 108,
+                    "targetId": 100,
+                    "type": "Call",
+                    "vertexStreamId": 0
+                }
+            ],
+            "iterations": "1",
+            "name": "Calls",
+            "type": "Group"
+        }
+    ],
+    "name": "Session",
+    "renderer": "Vulkan",
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "type": "Session",
+    "vulkanRulesRelaxed": false
+}
