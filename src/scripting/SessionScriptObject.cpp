@@ -410,6 +410,12 @@ ItemId SessionScriptObject::getItemId(QJSValue itemDesc)
     return itemDesc.toInt();
 }
 
+QJSValue SessionScriptObject::getItem(QModelIndex index)
+{
+    const auto itemId = Singletons::sessionModel().getItemId(index);
+    return engine().newQObject(new ItemObject(this, itemId));
+}
+
 QJSValue SessionScriptObject::item(QJSValue itemDesc)
 {
     return engine().newQObject(new ItemObject(this, getItemId(itemDesc)));

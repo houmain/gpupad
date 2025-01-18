@@ -22,6 +22,7 @@ public:
     void endBackgroundUpdate();
 
     QJSValue rootItems();
+    QJSValue getItem(QModelIndex index);
     Q_INVOKABLE QJSValue item(QJSValue itemDesc);
     Q_INVOKABLE void clear();
     Q_INVOKABLE void clearItem(QJSValue itemDesc);

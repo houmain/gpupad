@@ -980,9 +980,8 @@ void MainWindow::openRecentFile()
 
 void MainWindow::updateCustomActionsMenu()
 {
-    auto &model = Singletons::sessionModel();
-    auto selection = mSessionEditor->selectionModel()->selectedIndexes();
-    mCustomActions->setSelection(model.getJson(selection));
+    mCustomActions->setSelection(
+        mSessionEditor->selectionModel()->selectedIndexes());
 
     mUi->menuCustomActions->clear();
     mUi->menuCustomActions->addActions(mCustomActions->getApplicableActions());

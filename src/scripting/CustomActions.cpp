@@ -2,6 +2,7 @@
 #include "FileCache.h"
 #include "FileDialog.h"
 #include "ScriptEngineJavaScript.h"
+#include "SessionScriptObject.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
@@ -16,11 +17,14 @@
 class CustomAction final : public QAction
 {
 public:
-    CustomAction(const QString &filePath) : mFilePath(filePath)
+    explicit CustomAction(const QString &filePath) : mFilePath(filePath)
     {
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
             mScriptEngine = std::make_unique<ScriptEngineJavaScript>();
+            mSessionScriptObject =
+                new SessionScriptObject(mScriptEngine->jsEngine());
+            mScriptEngine->setGlobal("Session", mSessionScriptObject);
             mScriptEngine->evaluateScript(source, mFilePath, mMessages);
         }
 
@@ -29,12 +33,12 @@ public:
                                    : name.toString());
     }
 
-    bool context(const QJsonValue &selection, MessagePtrSet &messages)
+    bool context(const QModelIndexList &selection, MessagePtrSet &messages)
     {
         auto applicable = mScriptEngine->getGlobal("applicable");
         if (applicable.isCallable()) {
             auto result = mScriptEngine->call(applicable,
-                { mScriptEngine->toJsValue(selection) }, 0, messages);
+                { getItems(selection) }, 0, messages);
             if (result.isBool())
                 return result.toBool();
             return false;
@@ -42,19 +46,29 @@ public:
         return true;
     }
 
-    void execute(const QJsonValue &selection, MessagePtrSet &messages)
+    void execute(const QModelIndexList &selection, MessagePtrSet &messages)
     {
         auto execute = mScriptEngine->getGlobal("execute");
         if (execute.isCallable()) {
-            mScriptEngine->call(execute,
-                { mScriptEngine->toJsValue(selection) }, 0, messages);
+            mScriptEngine->call(execute, { getItems(selection) }, 0, messages);
         }
     }
 
 private:
+    QJSValue getItems(const QModelIndexList &selectedIndices)
+    {
+        auto array =
+            mScriptEngine->jsEngine()->newArray(selectedIndices.size());
+        auto i = 0;
+        for (const auto &index : selectedIndices)
+            array.setProperty(i++, mSessionScriptObject->getItem(index));
+        return array;
+    }
+
     const QString mFilePath;
     MessagePtrSet mMessages;
     std::unique_ptr<ScriptEngineJavaScript> mScriptEngine;
+    SessionScriptObject *mSessionScriptObject{};
 };
 
 CustomActions::CustomActions(QWidget *parent)
@@ -180,7 +194,7 @@ void CustomActions::updateActions()
     }
 }
 
-void CustomActions::setSelection(QJsonValue selection)
+void CustomActions::setSelection(const QModelIndexList &selection)
 {
     mSelection = selection;
 }

@@ -3,6 +3,7 @@
 #include "MessageList.h"
 #include <QDialog>
 #include <QJsonValue>
+#include <QModelIndex>
 #include <memory>
 #include <vector>
 
@@ -20,7 +21,7 @@ public:
     explicit CustomActions(QWidget *parent = nullptr);
     ~CustomActions();
 
-    void setSelection(QJsonValue selection);
+    void setSelection(const QModelIndexList &selection);
     QList<QAction *> getApplicableActions();
 
 private:
@@ -36,5 +37,5 @@ private:
     QFileSystemModel *mModel;
     std::vector<std::unique_ptr<CustomAction>> mActions;
     MessagePtrSet mMessages;
-    QJsonValue mSelection;
+    QModelIndexList mSelection;
 };
