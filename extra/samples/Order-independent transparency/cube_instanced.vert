@@ -13,7 +13,6 @@ layout(location = 3) out vec3 worldView;
 
 layout(set = 1, binding = 0) uniform Camera
 {
-    mat4 modelMatrix;
     mat4 viewMatrix;
     mat4 projectionMatrix;
 }
@@ -22,11 +21,12 @@ camera;
 void main()
 {
     color = particleColor;
-    worldNormal = (camera.modelMatrix * vec4(vertexNormal, 0)).xyz;
+    // TODO: inverted normal
+    worldNormal = -vertexNormal;
 
     float radius = particlePosition.w;
     worldPosition = particlePosition.xyz + vertexPosition * radius;
-    worldPosition = (camera.modelMatrix * vec4(worldPosition, 1)).xyz;
+    worldPosition = worldPosition;
 
     // Extract world eye pos from viewMatrix
     vec3 worldEyePos = inverse(camera.viewMatrix)[3].xyz;

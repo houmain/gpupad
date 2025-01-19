@@ -280,20 +280,6 @@
             "inlineScope": true,
             "items": [
                 {
-                    "id": 90,
-                    "items": [
-                        {
-                            "fileName": "particles.comp",
-                            "id": 91,
-                            "language": "GLSL",
-                            "shaderType": "Compute",
-                            "type": "Shader"
-                        }
-                    ],
-                    "name": "Compute Program",
-                    "type": "Program"
-                },
-                {
                     "id": 104,
                     "items": [
                         {
@@ -345,54 +331,19 @@
             "inlineScope": true,
             "items": [
                 {
-                    "executeOn": "ManualEvaluation",
-                    "fileName": "math.js",
-                    "id": 141,
+                    "executeOn": "ResetEvaluation",
+                    "fileName": "OrbitCamera.js",
+                    "id": 911,
                     "type": "Script"
                 },
                 {
                     "bindingType": "Uniform",
                     "editor": "Expression",
-                    "id": 164,
-                    "name": "frame",
-                    "type": "Binding",
-                    "values": [
-                        "(this.frame || 0) + 1"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 78,
-                    "name": "Camera.modelMatrix",
-                    "type": "Binding",
-                    "values": [
-                        "rotateY(frame / 60)"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
-                    "editor": "Expression4x4",
-                    "id": 163,
+                    "id": 912,
                     "name": "Camera.viewMatrix",
                     "type": "Binding",
                     "values": [
-                        "1",
-                        "0",
-                        "0",
-                        "0",
-                        "0",
-                        "1",
-                        "0",
-                        "0",
-                        "0",
-                        "0",
-                        "1",
-                        "0",
-                        "0",
-                        "0",
-                        "-50",
-                        "1"
+                        "updateOrbitCamera(Mouse)"
                     ]
                 },
                 {
@@ -509,18 +460,6 @@
                     "name": "Clear Target",
                     "textureId": 102,
                     "type": "Call"
-                },
-                {
-                    "callType": "Compute",
-                    "checked": true,
-                    "executeOn": "EveryEvaluation",
-                    "id": 93,
-                    "name": "Advance Particles",
-                    "programId": 90,
-                    "type": "Call",
-                    "workGroupsX": "Math.ceil(ParticlesCount / 256)",
-                    "workGroupsY": "1",
-                    "workGroupsZ": "1"
                 },
                 {
                     "baseInstance": "0",
