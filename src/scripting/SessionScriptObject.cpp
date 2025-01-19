@@ -6,6 +6,7 @@
 #include "editors/EditorManager.h"
 #include "editors/binary/BinaryEditor.h"
 #include "editors/texture/TextureEditor.h"
+#include "editors/source/SourceEditor.h"
 #include "session/SessionModel.h"
 #include <QDirIterator>
 #include <QFloat16>
@@ -199,6 +200,17 @@ namespace {
         auto editor = editors.openTextureEditor(texture.fileName);
         if (!editor)
             editor = editors.openNewTextureEditor(texture.fileName);
+        editors.setAutoRaise(true);
+        return editor;
+    }
+
+    SourceEditor *openSourceEditor(const FileItem &item)
+    {
+        auto &editors = Singletons::editorManager();
+        editors.setAutoRaise(false);
+        auto editor = editors.openSourceEditor(item.fileName);
+        if (!editor)
+            editor = editors.openNewSourceEditor(item.fileName);
         editors.setAutoRaise(true);
         return editor;
     }
@@ -514,6 +526,48 @@ void SessionScriptObject::setTextureData(QJSValue itemDesc, QJSValue data)
 
     mMessages += MessageList::insert(0, MessageType::ScriptError,
         "setTextureData failed");
+}
+
+void SessionScriptObject::setShaderSource(QJSValue itemDesc, QJSValue data)
+{
+    if (auto shader =
+            threadSessionModel().findItem<Shader>(getItemId(itemDesc)))
+        return withSessionModel(
+            [this, shaderId = shader->id,
+                data = data.toString()](SessionModel &session) {
+                if (auto shader = session.findItem<Shader>(shaderId)) {
+                    ensureFileName(session, shader);
+                    if (onMainThread())
+                        if (auto editor = openSourceEditor(*shader)) {
+                            editor->replace(data);
+                            mUpdatedEditor = true;
+                        }
+                }
+            });
+
+    mMessages += MessageList::insert(0, MessageType::ScriptError,
+        "setShaderSource failed");
+}
+
+void SessionScriptObject::setScriptSource(QJSValue itemDesc, QJSValue data)
+{
+    if (auto script =
+            threadSessionModel().findItem<Script>(getItemId(itemDesc)))
+        return withSessionModel(
+            [this, scriptId = script->id,
+                data = data.toString()](SessionModel &session) {
+                if (auto script = session.findItem<Script>(scriptId)) {
+                    ensureFileName(session, script);
+                    if (onMainThread())
+                        if (auto editor = openSourceEditor(*script)) {
+                            editor->replace(data);
+                            mUpdatedEditor = true;
+                        }
+                }
+            });
+
+    mMessages += MessageList::insert(0, MessageType::ScriptError,
+        "setScriptSource failed");
 }
 
 QJSValue SessionScriptObject::enumerateFiles(const QString &pattern)
