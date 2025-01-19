@@ -62,10 +62,10 @@
                 {
                     "blendConstant": "#ffffffff",
                     "cullMode": "NoCulling",
-                    "defaultHeight": 512,
-                    "defaultLayers": 1,
+                    "defaultHeight": "Height",
+                    "defaultLayers": "1",
                     "defaultSamples": 1,
-                    "defaultWidth": 512,
+                    "defaultWidth": "Width",
                     "frontFace": "CCW",
                     "id": 162,
                     "logicOperation": "NoLogicOperation",

@@ -20,11 +20,14 @@ public:
         int *height, int *depth, int *layers,
         ScriptEngine *scriptEngine = nullptr);
 
+    void evaluateTargetProperties(const Target &target, int *width, int *height,
+        int *layers, ScriptEngine *scriptEngine = nullptr);
+
     void invalidate(ItemId itemId);
 
 private:
     Q_DISABLE_COPY(EvaluatedPropertyCache)
-    ScriptEngine* defaultScriptEngine();
+    ScriptEngine *defaultScriptEngine();
 
     QMutex mMutex;
     std::unique_ptr<ScriptEngine> mDefaultScriptEngine;

@@ -160,9 +160,9 @@ struct Target : Item
     PolygonMode polygonMode{ PolygonMode::Fill };
     LogicOperation logicOperation{ LogicOperation::NoLogicOperation };
     QColor blendConstant{ Qt::white };
-    int defaultWidth{ 1 };
-    int defaultHeight{ 1 };
-    int defaultLayers{ 1 };
+    QString defaultWidth{ "1" };
+    QString defaultHeight{ "1" };
+    QString defaultLayers{ "1" };
     int defaultSamples{ 1 };
 };
 

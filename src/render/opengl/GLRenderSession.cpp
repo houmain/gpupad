@@ -132,7 +132,7 @@ void GLRenderSession::createCommandQueue()
 
     const auto addTargetOnce = [&](ItemId targetId) {
         auto target = session.findItem<Target>(targetId);
-        auto fb = addOnce(mCommandQueue->targets, target);
+        auto fb = addOnce(mCommandQueue->targets, target, scriptEngine);
         if (fb) {
             const auto &items = target->items;
             for (auto i = 0; i < items.size(); ++i)

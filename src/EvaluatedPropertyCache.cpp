@@ -80,6 +80,38 @@ void EvaluatedPropertyCache::evaluateTextureProperties(const Texture &texture,
     }
 }
 
+void EvaluatedPropertyCache::evaluateTargetProperties(const Target &target,
+    int *width, int *height, int *layers, ScriptEngine *scriptEngine)
+{
+    QMutexLocker lock{ &mMutex };
+    Q_ASSERT(width && height && layers);
+
+    const auto updateCache = (scriptEngine != nullptr);
+    if (!updateCache) {
+        const auto it = mEvaluatedProperties.find(target.id);
+        if (it != mEvaluatedProperties.end()) {
+            *width = (*it)[0];
+            *height = (*it)[1];
+            *layers = (*it)[2];
+        } else {
+            scriptEngine = defaultScriptEngine();
+        }
+    }
+    if (scriptEngine) {
+        auto &messages = mMessages[target.id];
+        messages.clear();
+        *width =
+            scriptEngine->evaluateInt(target.defaultWidth, target.id, messages);
+        *height = scriptEngine->evaluateInt(target.defaultHeight, target.id,
+            messages);
+        *layers = scriptEngine->evaluateInt(target.defaultLayers, target.id,
+            messages);
+    }
+    if (updateCache) {
+        mEvaluatedProperties[target.id] = { *width, *height, *layers };
+    }
+}
+
 void EvaluatedPropertyCache::invalidate(ItemId itemId)
 {
     QMutexLocker lock{ &mMutex };

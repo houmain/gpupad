@@ -1,6 +1,7 @@
 #include "VKTarget.h"
+#include "EvaluatedPropertyCache.h"
 
-VKTarget::VKTarget(const Target &target)
+VKTarget::VKTarget(const Target &target, ScriptEngine &scriptEngine)
     : mItemId(target.id)
     , mFrontFace(target.frontFace)
     , mCullMode(target.cullMode)
@@ -8,11 +9,11 @@ VKTarget::VKTarget(const Target &target)
     , mLogicOperation(target.logicOperation)
     , mBlendConstant(target.blendConstant)
     , mSamples(target.defaultSamples)
-    , mDefaultWidth(target.defaultWidth)
-    , mDefaultHeight(target.defaultHeight)
-    , mDefaultLayers(target.defaultLayers)
 {
     mUsedItems += target.id;
+
+    Singletons::evaluatedPropertyCache().evaluateTargetProperties(target,
+        &mDefaultWidth, &mDefaultHeight, &mDefaultLayers, &scriptEngine);
 
     auto attachmentIndex = 0;
     for (const auto &item : target.items) {

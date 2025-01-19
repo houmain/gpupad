@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>214</width>
-    <height>264</height>
+    <height>291</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -41,16 +41,6 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QSpinBox" name="width">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>65536</number>
-       </property>
-      </widget>
-     </item>
      <item row="2" column="0">
       <widget class="QLabel" name="labelHeight">
        <property name="text">
@@ -58,30 +48,10 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QSpinBox" name="height">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>65536</number>
-       </property>
-      </widget>
-     </item>
      <item row="3" column="0">
       <widget class="QLabel" name="labelLayers">
        <property name="text">
         <string>Layers</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QSpinBox" name="layers">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>256</number>
        </property>
       </widget>
      </item>
@@ -198,6 +168,15 @@
      <item row="0" column="1">
       <widget class="QLineEdit" name="name"/>
      </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="width"/>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="height"/>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="layers"/>
+     </item>
     </layout>
    </item>
   </layout>
@@ -215,9 +194,6 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>width</tabstop>
-  <tabstop>height</tabstop>
-  <tabstop>layers</tabstop>
   <tabstop>cullMode</tabstop>
   <tabstop>frontFace</tabstop>
   <tabstop>polygonMode</tabstop>

@@ -1,18 +1,19 @@
 #include "GLTarget.h"
+#include "EvaluatedPropertyCache.h"
 
-GLTarget::GLTarget(const Target &target)
+GLTarget::GLTarget(const Target &target, ScriptEngine &scriptEngine)
     : mItemId(target.id)
     , mFrontFace(target.frontFace)
     , mCullMode(target.cullMode)
     , mPolygonMode(target.polygonMode)
     , mLogicOperation(target.logicOperation)
     , mBlendConstant(target.blendConstant)
-    , mDefaultWidth(target.defaultWidth)
-    , mDefaultHeight(target.defaultHeight)
-    , mDefaultLayers(target.defaultLayers)
     , mDefaultSamples(target.defaultSamples)
 {
     mUsedItems += target.id;
+
+    Singletons::evaluatedPropertyCache().evaluateTargetProperties(target,
+        &mDefaultWidth, &mDefaultHeight, &mDefaultLayers, &scriptEngine);
 
     auto attachmentIndex = 0;
     for (const auto &item : target.items) {
