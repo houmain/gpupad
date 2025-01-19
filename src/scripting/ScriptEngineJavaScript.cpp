@@ -7,6 +7,29 @@
 #include <QThread>
 #include <QTimer>
 
+namespace {
+    void getFlattenedValuesRec(const QJSValue &value, ScriptValueList *values)
+    {
+        if (value.isObject() || value.isArray()) {
+            for (auto i = 0u;; ++i) {
+                auto element = value.property(i);
+                if (element.isUndefined())
+                    break;
+                getFlattenedValuesRec(element, values);
+            }
+        } else {
+            values->append(value.toNumber());
+        }
+    }
+
+    ScriptValueList getFlattenedValues(const QJSValue &value)
+    {
+        auto values = ScriptValueList();
+        getFlattenedValuesRec(value, &values);
+        return values;
+    }
+} // namespace
+
 ScriptEngineJavaScript::ScriptEngineJavaScript(QObject *parent)
     : ScriptEngine(parent)
     , mOnThread(*QThread::currentThread())
@@ -49,7 +72,8 @@ void ScriptEngineJavaScript::setTimeout(int msec)
     mInterruptTimer->setInterval(msec);
 }
 
-void ScriptEngineJavaScript::resetInterruptTimer() {
+void ScriptEngineJavaScript::resetInterruptTimer()
+{
     Q_ASSERT(&mOnThread == QThread::currentThread());
     QMetaObject::invokeMethod(mInterruptTimer, "start",
         Qt::BlockingQueuedConnection);
@@ -129,19 +153,7 @@ ScriptValueList ScriptEngineJavaScript::evaluateValues(
 
     auto result = mJsEngine->evaluate(valueExpression);
     outputError(result, itemId, messages);
-
-    auto values = ScriptValueList();
-    if (result.isObject()) {
-        for (auto i = 0u;; ++i) {
-            auto value = result.property(i);
-            if (value.isUndefined())
-                break;
-            values.append(value.toNumber());
-        }
-    } else {
-        values.append(result.toNumber());
-    }
-    return values;
+    return getFlattenedValues(result);
 }
 
 void ScriptEngineJavaScript::outputError(const QJSValue &result, ItemId itemId,
