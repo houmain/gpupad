@@ -166,6 +166,15 @@ void ScriptEngineJavaScript::outputError(const QJSValue &result, ItemId itemId,
         && mOmitReferenceErrors)
         return;
 
-    messages += MessageList::insert(itemId, MessageType::ScriptError,
-        result.toString());
+    const auto message = result.toString();
+    const auto fileName = result.property("fileName").toString();
+    if (!fileName.isEmpty()) {
+        const auto lineNumber = result.property("lineNumber").toInt();
+        messages += MessageList::insert(
+            toNativeCanonicalFilePath(QUrl(fileName).toLocalFile()), lineNumber,
+            MessageType::ScriptError, message);
+    } else {
+        messages +=
+            MessageList::insert(itemId, MessageType::ScriptError, message);
+    }
 }
