@@ -427,13 +427,15 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
         for (auto i = 0u; i < static_cast<GLuint>(shaderStorageBlocks); ++i) {
             gl43->glGetProgramResourceName(program, GL_SHADER_STORAGE_BLOCK, i,
                 static_cast<GLsizei>(buffer.size()), nullptr, buffer.data());
-            const auto name = QString(buffer.data());
+            // glslang generates block_name.instance_name instead of block_name
+            const auto bufferName = QString(buffer.data());
+            const auto blockName = removeInstanceName(bufferName);
             const auto storageBlockIndex = gl.v4_3->glGetProgramResourceIndex(
-                program, GL_SHADER_STORAGE_BLOCK, qPrintable(name));
+                program, GL_SHADER_STORAGE_BLOCK, qPrintable(bufferName));
             const auto storageBlockBinding = i;
             gl43->glShaderStorageBlockBinding(program, storageBlockIndex,
                 storageBlockBinding);
-            interface.bufferBindingPoints[name] = {
+            interface.bufferBindingPoints[blockName] = {
                 .target = GL_SHADER_STORAGE_BUFFER,
                 .index = storageBlockBinding,
             };
