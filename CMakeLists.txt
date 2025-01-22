@@ -302,11 +302,12 @@ else()
     install(FILES ${DOC_FILES} DESTINATION .)
     install(DIRECTORY extra/samples DESTINATION . COMPONENT Samples)
     install(DIRECTORY extra/themes DESTINATION . COMPONENT Themes)
+    install(DIRECTORY extra/qml DESTINATION . COMPONENT QtQuick)
 
     # install Qt dependencies (requries Qt 5.7)
-    set(DEPLOY_TOOL_OPTIONS "")
+    set(DEPLOY_TOOL_OPTIONS "--qmldir qml")
     if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-        set(DEPLOY_TOOL_OPTIONS --no-opengl-sw --no-system-d3d-compiler --no-system-dxc-compiler)
+        set(DEPLOY_TOOL_OPTIONS ${DEPLOY_TOOL_OPTIONS} --no-opengl-sw --no-system-d3d-compiler --no-system-dxc-compiler)
     endif()
     qt_generate_deploy_app_script(
         TARGET ${PROJECT_NAME}
