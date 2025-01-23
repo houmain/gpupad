@@ -240,7 +240,9 @@ void SynchronizeLogic::handleEditorFileRenamed(const QString &prevFileName,
 void SynchronizeLogic::handleFileItemFileChanged(const FileItem &item)
 {
     // update item name
-    const auto name = FileDialog::getFileTitle(item.fileName);
+    auto name = FileDialog::getFileTitle(item.fileName);
+    if (name.isEmpty())
+        name = mModel.getTypeName(item.type);
     if (name != item.name)
         mModel.setData(mModel.getIndex(&item, SessionModel::Name), name);
 }
