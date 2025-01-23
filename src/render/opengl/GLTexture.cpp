@@ -423,16 +423,10 @@ void GLTexture::upload()
         return;
 
     auto &gl = GLContext::currentContext();
-
-    auto data = mData;
-    if (mData.format() != mFormat)
-        data = mData.convert(mFormat);
-
     auto textureId = static_cast<GLuint>(mTextureObject);
-    if (!upload(gl, data, mTarget, mSamples, &textureId)) {
-        mMessages += MessageList::insert(mItemId,
-            (data.isNull() ? MessageType::UploadingImageFailed
-                           : MessageType::CreatingTextureFailed));
+    if (!upload(gl, mData, mTarget, mSamples, &textureId)) {
+        mMessages +=
+            MessageList::insert(mItemId, MessageType::UploadingImageFailed);
         return;
     }
     mSystemCopyModified = mDeviceCopyModified = false;

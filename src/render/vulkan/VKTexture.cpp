@@ -455,17 +455,11 @@ void VKTexture::createAndUpload(VKContext &context)
         mTexture = context.device.createTexture(textureOptions);
     } else {
         mCurrentLayout = KDGpu::TextureLayout::TransferDstOptimal;
-
-        auto data = mData;
-        if (mData.format() != mFormat)
-            data = mData.convert(mFormat);
-
-        if (!data.uploadVK(&context.ktxDeviceInfo, &mKtxTexture,
+        if (!mData.uploadVK(&context.ktxDeviceInfo, &mKtxTexture,
                 static_cast<VkImageUsageFlags>(mUsage.toInt()),
                 static_cast<VkImageLayout>(mCurrentLayout))) {
-            mMessages += MessageList::insert(mItemId,
-                (data.isNull() ? MessageType::UploadingImageFailed
-                               : MessageType::CreatingTextureFailed));
+            mMessages +=
+                MessageList::insert(mItemId, MessageType::UploadingImageFailed);
             return;
         }
         auto vkApi = static_cast<KDGpu::VulkanGraphicsApi *>(

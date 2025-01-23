@@ -45,9 +45,9 @@ protected:
     int mLayers{};
     int mSamples{};
     TextureData mData;
-    bool mDataWritten{};
     QSet<ItemId> mUsedItems;
     TextureKind mKind{};
+    TextureData mFileData;
     bool mSystemCopyModified{};
     bool mDeviceCopyModified{};
     bool mMipmapsInvalidated{};

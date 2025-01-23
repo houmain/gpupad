@@ -622,6 +622,9 @@ bool TextureData::create(QOpenGLTexture::Target target,
 
 TextureData TextureData::convert(QOpenGLTexture::TextureFormat format)
 {
+    if (format == this->format())
+        return *this;
+
     auto copy = TextureData();
     if (!copy.create(getTarget(), format, width(), height(), depth(), layers(),
             levels()))
@@ -636,7 +639,19 @@ TextureData TextureData::convert(QOpenGLTexture::TextureFormat format)
                     getLevelWidth(level) * getLevelHeight(level)))
                 return {};
 
+    copy.setFlippedVertically(flippedVertically());
     return copy;
+}
+
+TextureData TextureData::convert(QOpenGLTexture::TextureFormat format,
+    int width, int height, int depth, int layers)
+{
+    // TODO: implement resizing
+    if (width != this->width() || height != this->height()
+        || depth != this->depth() || layers != this->layers())
+        return {};
+
+    return convert(format);
 }
 
 bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
@@ -790,8 +805,7 @@ bool TextureData::loadPfm(const QString &fileName, bool flipVertically)
     auto height = 0;
     auto scale = 1.0;
     if (fscanf(f, "%d %d\n", &width, &height) != 2
-        || std::fscanf(f, "%lf\n", &scale) != 1
-        || std::fscanf(f, "\n") != 0)
+        || std::fscanf(f, "%lf\n", &scale) != 1 || std::fscanf(f, "\n") != 0)
         return false;
 
     auto endianness = QSysInfo::BigEndian;

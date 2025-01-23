@@ -18,6 +18,8 @@ public:
         QOpenGLTexture::TextureFormat format, int width, int height, int depth,
         int layers, int levels = 0);
     TextureData convert(QOpenGLTexture::TextureFormat format);
+    TextureData convert(QOpenGLTexture::TextureFormat format, int width,
+        int height, int depth, int layers);
     bool load(const QString &fileName, bool flipVertically);
     bool loadQImage(QImage image, bool flipVertically);
     bool save(const QString &fileName, bool flipVertically) const;
@@ -43,6 +45,7 @@ public:
     int levels() const;
     int layers() const;
     int faces() const;
+    void setFlippedVertically(bool flipped) { mFlippedVertically = flipped; }
     bool flippedVertically() const { return mFlippedVertically; }
     uchar *getWriteonlyData();
     const uchar *getData() const;

@@ -98,6 +98,9 @@ QString MessageWindow::getMessageText(const Message &message) const
             return tr("No file set");
         return tr("Loading file '%1' failed")
             .arg(FileDialog::getFileTitle(message.text));
+    case ConvertingFileFailed:
+        return tr("Converting file '%1' failed")
+            .arg(FileDialog::getFileTitle(message.text));
     case UnsupportedShaderType:    return tr("Unsupported shader type");
     case UnsupportedTextureFormat: return tr("Unsupported texture format");
     case CreatingFramebufferFailed:
@@ -162,10 +165,8 @@ QString MessageWindow::getMessageText(const Message &message) const
         return tr("Maximum push constant size exceeded (%1)").arg(message.text);
     case TextureBuffersNotAvailable:
         return tr("Texture buffers not available in Vulkan yet");
-    case RayTracingNotAvailable:
-        return tr("Raytracing not available");
-    case MeshShadersNotAvailable:
-        return tr("Mesh Shaders not available");
+    case RayTracingNotAvailable:  return tr("Raytracing not available");
+    case MeshShadersNotAvailable: return tr("Mesh Shaders not available");
     }
     return message.text;
 }

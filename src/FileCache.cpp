@@ -279,6 +279,7 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically,
     } else if (!loadTexture(fileName, flipVertically, texture)) {
         return false;
     }
+    Q_ASSERT(texture->flippedVertically() == flipVertically);
     mTextures[key] = *texture;
     return true;
 }

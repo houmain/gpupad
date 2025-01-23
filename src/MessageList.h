@@ -15,6 +15,7 @@ enum class MessageType {
     OpenGLVersionNotAvailable,
     VulkanNotAvailable,
     LoadingFileFailed,
+    ConvertingFileFailed,
     UnsupportedShaderType,
     UnsupportedTextureFormat,
     CreatingFramebufferFailed,

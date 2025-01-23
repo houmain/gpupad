@@ -99,7 +99,7 @@ bool TextureBase::swap(TextureBase &other)
         return false;
 
     std::swap(mData, other.mData);
-    std::swap(mDataWritten, other.mDataWritten);
+    std::swap(mFileData, other.mFileData);
     std::swap(mSystemCopyModified, other.mSystemCopyModified);
     std::swap(mDeviceCopyModified, other.mDeviceCopyModified);
     std::swap(mMipmapsInvalidated, other.mMipmapsInvalidated);
@@ -108,23 +108,28 @@ bool TextureBase::swap(TextureBase &other)
 
 void TextureBase::reload(bool forWriting)
 {
-    auto fileData = TextureData{};
     if (!FileDialog::isEmptyOrUntitled(mFileName)) {
-        if (!Singletons::fileCache().getTexture(mFileName, mFlipVertically,
-                &fileData))
+        auto fileData = TextureData{};
+        if (Singletons::fileCache().getTexture(mFileName, mFlipVertically,
+                &fileData)) {
+            // check if cache still matches the file before conversion
+            if (!mFileData.isSharedWith(fileData)) {
+                mFileData = fileData;
+                fileData =
+                    fileData.convert(mFormat, mWidth, mHeight, mDepth, mLayers);
+                if (!fileData.isNull()) {
+                    if (!mData.isSharedWith(fileData)) {
+                        mSystemCopyModified = true;
+                        mData = fileData;
+                    }
+                } else if (!forWriting) {
+                    mMessages += MessageList::insert(mItemId,
+                        MessageType::ConvertingFileFailed, mFileName);
+                }
+            }
+        } else {
             mMessages += MessageList::insert(mItemId,
                 MessageType::LoadingFileFailed, mFileName);
-
-        const auto hasSameDimensions = [&](const TextureData &data) {
-            return (mFormat == data.format() && mWidth == data.width()
-                && mHeight == data.height() && mDepth == data.depth()
-                && mLayers == data.layers());
-        };
-
-        // validate dimensions when writing
-        if (!forWriting || hasSameDimensions(fileData)) {
-            mSystemCopyModified |= !mData.isSharedWith(fileData);
-            mData = fileData;
         }
     }
 
@@ -136,6 +141,7 @@ void TextureBase::reload(bool forWriting)
                 MessageType::CreatingTextureFailed);
         }
         mData.clear();
+        mData.setFlippedVertically(mFlipVertically);
         mSystemCopyModified = true;
     }
 }
