@@ -262,15 +262,17 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
         const auto file = QFileInfo(fileName);
         const auto prevFile = QFileInfo(prevFileName);
 
-        const auto identical = [](const QFileInfo &a, const QFileInfo &b) {
+        const auto isDuplicate = [](const QFileInfo &a, const QFileInfo &b) {
+            if (a.fileName().compare(b.fileName(), Qt::CaseInsensitive) == 0)
+                return false;
             if (!a.exists() || !b.exists() || a.size() != b.size())
                 return false;
-            return (QFile(a.fileName()).readAll()
-                == QFile(b.fileName()).readAll());
+            return QFile(a.fileName()).readAll()
+                == QFile(b.fileName()).readAll();
         };
 
         const auto mergeRenameOrCopy = [&]() {
-            if (identical(prevFile, file))
+            if (isDuplicate(prevFile, file))
                 return QFile::remove(prevFileName);
 
             auto fileReferencedByOtherItem = false;
