@@ -8,7 +8,12 @@
 #include <QScopeGuard>
 #include <cmath>
 
-VKCall::VKCall(const Call &call) : mCall(call) { }
+VKCall::VKCall(const Call &call, const Session &session)
+    : mCall(call)
+    , mSession(session)
+{
+    mUsedItems += session.id;
+}
 
 VKCall::~VKCall() = default;
 
@@ -202,7 +207,8 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     if (mIndexBuffer)
         mIndexBuffer->prepareIndexBuffer(context);
 
-    auto renderPass = mPipeline->beginRenderPass(context);
+    auto renderPass =
+        mPipeline->beginRenderPass(context, mSession.flipViewport);
     if (!renderPass.isValid())
         return;
 

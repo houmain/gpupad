@@ -17,6 +17,8 @@ public:
         SessionShaderCompiler,
         SessionShaderPreamble,
         SessionShaderIncludePaths,
+        SessionReverseCulling,
+        SessionFlipViewport,
         SessionAutoMapBindings,
         SessionAutoMapLocations,
         SessionAutoSampledTextures,

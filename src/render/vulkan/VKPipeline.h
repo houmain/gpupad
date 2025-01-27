@@ -79,7 +79,8 @@ public:
     void createRayTracingAccelerationStructure(VKContext &context,
         VKBuffer &aabbBuffer);
     bool updateBindings(VKContext &context, ScriptEngine &scriptEngine);
-    KDGpu::RenderPassCommandRecorder beginRenderPass(VKContext &context);
+    KDGpu::RenderPassCommandRecorder beginRenderPass(VKContext &context,
+        bool flipViewport);
     KDGpu::ComputePassCommandRecorder beginComputePass(VKContext &context);
     KDGpu::RayTracingPassCommandRecorder beginRayTracingPass(
         VKContext &context);
@@ -91,7 +92,8 @@ public:
         KDGpu::RayTracingPassCommandRecorder &rayTracingPass,
         ScriptEngine &scriptEngine);
 
-    const KDGpu::RayTracingShaderBindingTable &rayTracingShaderBindingTable() const
+    const KDGpu::RayTracingShaderBindingTable &rayTracingShaderBindingTable()
+        const
     {
         return mRayTracingShaderBindingTable;
     }

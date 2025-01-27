@@ -10,6 +10,8 @@
     ADD(SessionShaderCompiler, Session, shaderCompiler)                       \
     ADD(SessionShaderPreamble, Session, shaderPreamble)                       \
     ADD(SessionShaderIncludePaths, Session, shaderIncludePaths)               \
+    ADD(SessionFlipViewport, Session, flipViewport)                           \
+    ADD(SessionReverseCulling, Session, reverseCulling)                       \
     ADD(SessionAutoMapBindings, Session, autoMapBindings)                     \
     ADD(SessionAutoMapLocations, Session, autoMapLocations)                   \
     ADD(SessionAutoSampledTextures, Session, autoSampledTextures)             \

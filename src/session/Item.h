@@ -43,6 +43,8 @@ struct Session : ScopeItem
     QString shaderCompiler;
     QString shaderPreamble;
     QString shaderIncludePaths;
+    bool flipViewport{};
+    bool reverseCulling{ true };
 
     // glslang compiler options
     bool autoMapBindings{ true };

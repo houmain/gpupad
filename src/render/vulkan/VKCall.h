@@ -7,7 +7,7 @@
 class VKCall
 {
 public:
-    explicit VKCall(const Call &call);
+    VKCall(const Call &call, const Session &session);
     VKCall(const VKCall &) = delete;
     VKCall &operator=(const VKCall &) = delete;
     ~VKCall();
@@ -48,6 +48,7 @@ private:
 
     MessagePtrSet mMessages;
     Call mCall{};
+    Session mSession{};
     VKProgram *mProgram{};
     VKTarget *mTarget{};
     VKStream *mVertexStream{};

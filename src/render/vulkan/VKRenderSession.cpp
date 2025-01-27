@@ -142,7 +142,8 @@ void VKRenderSession::createCommandQueue()
 
     const auto addTargetOnce = [&](ItemId targetId) {
         auto target = session.findItem<Target>(targetId);
-        auto fb = addOnce(mCommandQueue->targets, target, scriptEngine);
+        auto fb = addOnce(mCommandQueue->targets, target, session.sessionItem(),
+            scriptEngine);
         if (fb) {
             const auto &items = target->items;
             for (auto i = 0; i < items.size(); ++i)
@@ -267,7 +268,8 @@ void VKRenderSession::createCommandQueue()
         } else if (auto call = castItem<Call>(item)) {
             if (call->checked) {
                 mUsedItems += call->id;
-                auto pvkcall = std::make_shared<VKCall>(*call);
+                auto pvkcall =
+                    std::make_shared<VKCall>(*call, session.sessionItem());
                 auto &vkcall = *pvkcall;
                 switch (call->callType) {
                 case Call::CallType::Draw:

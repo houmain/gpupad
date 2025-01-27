@@ -208,11 +208,9 @@ KDGpu::CullModeFlags toKDGpu(Target::CullMode cullMode)
 
 KDGpu::FrontFace toKDGpu(Target::FrontFace frontFace)
 {
-    // TODO: fix winding order issue
-    // https://stackoverflow.com/questions/58753504/vulkan-front-face-winding-order
     switch (frontFace) {
-    case Target::FrontFace::CW:  return KDGpu::FrontFace::CounterClockwise;
-    case Target::FrontFace::CCW: return KDGpu::FrontFace::Clockwise;
+    case Target::FrontFace::CW:  return KDGpu::FrontFace::Clockwise;
+    case Target::FrontFace::CCW: return KDGpu::FrontFace::CounterClockwise;
     }
     Q_UNREACHABLE();
     return {};

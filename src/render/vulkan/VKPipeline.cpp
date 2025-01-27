@@ -292,7 +292,8 @@ VKPipeline::VKPipeline(ItemId itemId, VKProgram *program, VKTarget *target,
 
 VKPipeline::~VKPipeline() = default;
 
-KDGpu::RenderPassCommandRecorder VKPipeline::beginRenderPass(VKContext &context)
+KDGpu::RenderPassCommandRecorder VKPipeline::beginRenderPass(VKContext &context,
+    bool flipViewport)
 {
     if (mVertexStream)
         for (auto &buffer : mVertexStream->getBuffers())
@@ -301,6 +302,18 @@ KDGpu::RenderPassCommandRecorder VKPipeline::beginRenderPass(VKContext &context)
     auto passOptions = mTarget->prepare(context);
     auto renderPass = context.commandRecorder->beginRenderPass(passOptions);
     renderPass.setPipeline(mGraphicsPipeline);
+
+    if (flipViewport) {
+        // https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/
+        renderPass.setViewport({
+            .x = 0,
+            .y = static_cast<float>(passOptions.framebufferHeight),
+            .width = static_cast<float>(passOptions.framebufferWidth),
+            .height = -static_cast<float>(passOptions.framebufferHeight),
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        });
+    }
 
     for (auto i = 0u; i < mBindGroups.size(); ++i)
         if (mBindGroups[i].bindGroup.isValid())

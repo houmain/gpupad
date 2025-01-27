@@ -48,6 +48,10 @@ void SessionProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->shaderIncludePaths,
         SessionModel::SessionShaderIncludePaths);
 
+    mapper.addMapping(mUi->reverseCulling,
+        SessionModel::SessionReverseCulling);
+    mapper.addMapping(mUi->flipViewport, SessionModel::SessionFlipViewport);
+
     mapper.addMapping(mUi->autoMapBindings,
         SessionModel::SessionAutoMapBindings);
     mapper.addMapping(mUi->autoMapLocations,
@@ -70,6 +74,7 @@ void SessionProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelShaderCompiler,
         mUi->shaderCompiler, !hasVulkanRenderer);
 
+    mUi->rendererOptions->setVisible(hasVulkanRenderer);
     mUi->shaderCompilerOptions->setVisible(hasShaderCompiler);
     mUi->vulkanRulesRelaxed->setVisible(hasVulkanRenderer);
 }

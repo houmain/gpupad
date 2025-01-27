@@ -532,6 +532,8 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         const auto hasVulkanRenderer = (session.renderer == "Vulkan");
         const auto hasShaderCompiler =
             (!session.shaderCompiler.isEmpty() || hasVulkanRenderer);
+        result &= (column != SessionFlipViewport || hasVulkanRenderer);
+        result &= (column != SessionReverseCulling || hasVulkanRenderer);
         result &= (column != SessionShaderCompiler || !hasVulkanRenderer);
         result &= (column != SessionAutoMapBindings || hasShaderCompiler);
         result &= (column != SessionAutoMapLocations || hasShaderCompiler);
@@ -638,7 +640,8 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         const auto &call = static_cast<const Call &>(item);
         const auto kind = getKind(call);
         const auto callType = call.callType;
-        result &= (column != CallProgramId || kind.draw || kind.compute || kind.trace);
+        result &= (column != CallProgramId || kind.draw || kind.compute
+            || kind.trace);
         result &= (column != CallTargetId || kind.draw);
         result &= (column != CallVertexStreamId || (kind.draw && !kind.mesh));
         result &= (column != CallPrimitiveType || (kind.draw && !kind.mesh));

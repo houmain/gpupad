@@ -1,7 +1,8 @@
 #include "VKTarget.h"
 #include "EvaluatedPropertyCache.h"
 
-VKTarget::VKTarget(const Target &target, ScriptEngine &scriptEngine)
+VKTarget::VKTarget(const Target &target, const Session &session,
+    ScriptEngine &scriptEngine)
     : mItemId(target.id)
     , mFrontFace(target.frontFace)
     , mCullMode(target.cullMode)
@@ -11,6 +12,12 @@ VKTarget::VKTarget(const Target &target, ScriptEngine &scriptEngine)
     , mSamples(target.defaultSamples)
 {
     mUsedItems += target.id;
+    mUsedItems += session.id;
+
+    if (session.reverseCulling)
+        mFrontFace = (mFrontFace == Target::FrontFace::CW
+                ? Target::FrontFace::CCW
+                : Target::FrontFace::CW);
 
     Singletons::evaluatedPropertyCache().evaluateTargetProperties(target,
         &mDefaultWidth, &mDefaultHeight, &mDefaultLayers, &scriptEngine);
