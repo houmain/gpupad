@@ -194,6 +194,12 @@ void CustomActions::updateActions()
     }
 }
 
+void CustomActions::showEvent(QShowEvent *event)
+{
+    QDialog::showEvent(event);
+    qApp->setActiveWindow(this);
+}
+
 void CustomActions::setSelection(const QModelIndexList &selection)
 {
     mSelection = selection;

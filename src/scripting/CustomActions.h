@@ -25,6 +25,8 @@ public:
     QList<QAction *> getApplicableActions();
 
 private:
+    void showEvent(QShowEvent *event) override;
+
     void newAction();
     void importAction();
     void editAction();
