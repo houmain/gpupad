@@ -130,10 +130,10 @@ class OrbitCamera {
 
 const center = [0,0,0]
 const up = [0, 1, 0]
-const radius = 50
+const radius = 60
 const minRadius = 3
-const azimuthAngle = 0
-const polarAngle = 0
+const azimuthAngle = 0.5
+const polarAngle = 0.2
 const camera = new OrbitCamera(center, up, radius, minRadius, azimuthAngle, polarAngle)
 
 function updateOrbitCamera(mouse) {
@@ -142,7 +142,7 @@ function updateOrbitCamera(mouse) {
     camera.rotatePolar(2 * -mouse.delta[1])
   }
   if (mouse.buttons[2] == 1) {
-    camera.zoom(mouse.delta[1])
+    camera.zoom(mouse.delta[1] * -10)
   }
   return camera.getViewMatrix();
 }

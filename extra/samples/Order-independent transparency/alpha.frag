@@ -27,7 +27,7 @@ layout(set = 0, binding = 1, r32ui) uniform coherent uimage2D alphaHeadPointer;
 vec4 adsModel(vec4 color)
 {
     const vec3 lightWorldPos = vec3(-30.0, 30.0, 30.0);
-    const float shininess = 50.0;
+    const float shininess = 5.0;
 
     // We perform all work in world space
     vec3 n = normalize(worldNormal);
@@ -35,14 +35,17 @@ vec4 adsModel(vec4 color)
     float sDotN = dot(s, n);
 
     // Calculate the diffuse factor
-    float diffuse = max(sDotN, 0.0);
+    float diffuse = sDotN;
 
     // Calculate the specular factor
-    float specular = 0.0;
-    if (diffuse > 0.0 && shininess > 0.0) {
-        float normFactor = (shininess + 2.0) / 2.0;
-        vec3 r = reflect(s, n); // Reflection direction in world space
-        specular = normFactor * pow(max(dot(r, worldView), 0.0), shininess);
+    float normFactor = (shininess + 2.0) / 2.0;
+    vec3 r = reflect(s, n); // Reflection direction in world space
+    float specular = normFactor * pow(max(dot(r, worldView), 0.0), shininess);
+
+    // Also light backfaces
+    if (diffuse < 0) {
+      diffuse = -diffuse / 2;
+      specular /= 2;
     }
 
     // Accumulate the diffuse and specular contributions
@@ -51,7 +54,7 @@ vec4 adsModel(vec4 color)
     vec3 diffuseFactor = diffuse * lightDiffuseColor;
     vec3 specularFactor = specular * lightSpecularColor;
 
-    vec3 ambientColor = color.rgb * 0.4;
+    vec3 ambientColor = color.rgb * 0.1;
     const vec3 specularColor = vec3(1.0);
     vec4 lightedColor = vec4(ambientColor + diffuseFactor * color.rgb + specularFactor * specularColor, color.a);
     return lightedColor;
