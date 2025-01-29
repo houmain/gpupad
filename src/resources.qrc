@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/">
-        <file>images/16x16/window-close.png</file>    
+        <file>images/16x16/window-close.png</file>
         <file>images/32x32/icon.png</file>
         <file>images/64x64/icon.png</file>
         <file>scripting/ScriptEngineJavaScript.js</file>
@@ -102,5 +102,7 @@
         <file>icons/dark/icons/zoom-original.svg</file>
         <file>icons/light/icons/zoom-fit-best.svg</file>
         <file>icons/light/icons/zoom-original.svg</file>
+        <file>icons/light/icons/user-bookmarks.svg</file>
+        <file>icons/dark/icons/user-bookmarks.svg</file>
     </qresource>
 </RCC>

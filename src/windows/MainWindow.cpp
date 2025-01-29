@@ -337,6 +337,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mUi->actionManageCustomActions, &QAction::triggered,
         mCustomActions.get(), &QDialog::show);
 
+    auto* customActionsButton = static_cast<QToolButton*>(mUi->toolBarMain->widgetForAction(mUi->actionCustomActions));
+    customActionsButton->setMenu(mUi->menuCustomActions);
+    customActionsButton->setPopupMode(QToolButton::InstantPopup);
+
     qApp->installEventFilter(this);
 
     mUi->actionPasteInNewEditor->setEnabled(

@@ -44,8 +44,7 @@
       <string>&amp;Recent Files</string>
      </property>
      <property name="icon">
-      <iconset theme="document-open-recent">
-       <normaloff>.</normaloff>.</iconset>
+      <iconset theme="document-open-recent"/>
      </property>
     </widget>
     <addaction name="actionNew"/>
@@ -98,8 +97,7 @@
       <string>Open &amp;Sample</string>
      </property>
      <property name="icon">
-      <iconset theme="document-open">
-       <normaloff>.</normaloff>.</iconset>
+      <iconset theme="document-open"/>
      </property>
     </widget>
     <addaction name="separator"/>
@@ -117,8 +115,7 @@
       <string>&amp;Evaluation</string>
      </property>
      <property name="icon">
-      <iconset theme="view-refresh">
-       <normaloff>.</normaloff>.</iconset>
+      <iconset theme="view-refresh"/>
      </property>
      <addaction name="actionEvalReset"/>
      <addaction name="actionEvalManual"/>
@@ -196,6 +193,7 @@
    <addaction name="actionPaste"/>
    <addaction name="actionDelete"/>
    <addaction name="actionFindReplace"/>
+   <addaction name="actionCustomActions"/>
    <addaction name="separator"/>
    <addaction name="actionEvalReset"/>
    <addaction name="actionEvalManual"/>
@@ -205,8 +203,7 @@
   </widget>
   <action name="actionOpen">
    <property name="icon">
-    <iconset theme="document-open">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="document-open"/>
    </property>
    <property name="text">
     <string>&amp;Open...</string>
@@ -214,8 +211,7 @@
   </action>
   <action name="actionSave">
    <property name="icon">
-    <iconset theme="document-save">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="document-save"/>
    </property>
    <property name="text">
     <string>&amp;Save</string>
@@ -223,8 +219,7 @@
   </action>
   <action name="actionQuit">
    <property name="icon">
-    <iconset theme="application-exit">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="application-exit"/>
    </property>
    <property name="text">
     <string>&amp;Quit</string>
@@ -238,8 +233,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-copy">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="edit-copy"/>
    </property>
    <property name="text">
     <string>&amp;Copy</string>
@@ -250,8 +244,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-paste">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="edit-paste"/>
    </property>
    <property name="text">
     <string>&amp;Paste</string>
@@ -259,8 +252,7 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset theme="help-about">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="help-about"/>
    </property>
    <property name="text">
     <string>&amp;About GPUpad</string>
@@ -271,8 +263,7 @@
   </action>
   <action name="actionSaveAs">
    <property name="icon">
-    <iconset theme="document-save-as">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="document-save-as"/>
    </property>
    <property name="text">
     <string>Save &amp;As...</string>
@@ -280,8 +271,7 @@
   </action>
   <action name="actionNew">
    <property name="icon">
-    <iconset theme="document-new">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="document-new"/>
    </property>
    <property name="text">
     <string>&amp;New</string>
@@ -289,8 +279,7 @@
   </action>
   <action name="actionClose">
    <property name="icon">
-    <iconset theme="process-stop">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="process-stop"/>
    </property>
    <property name="text">
     <string>&amp;Close</string>
@@ -301,8 +290,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-cut">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="edit-cut"/>
    </property>
    <property name="text">
     <string>Cu&amp;t</string>
@@ -310,8 +298,7 @@
   </action>
   <action name="actionPreferences">
    <property name="icon">
-    <iconset theme="document-properties">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="document-properties"/>
    </property>
    <property name="text">
     <string>Pre&amp;ferences...</string>
@@ -333,8 +320,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-delete">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="edit-delete"/>
    </property>
    <property name="text">
     <string>Delete</string>
@@ -353,8 +339,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="view-refresh">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="view-refresh"/>
    </property>
    <property name="text">
     <string>Reload</string>
@@ -368,8 +353,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-select-all">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="edit-select-all"/>
    </property>
    <property name="text">
     <string>Select &amp;All</string>
@@ -380,8 +364,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-undo">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="edit-undo"/>
    </property>
    <property name="text">
     <string>&amp;Undo</string>
@@ -392,8 +375,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-redo">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="edit-redo"/>
    </property>
    <property name="text">
     <string>&amp;Redo</string>
@@ -431,8 +413,7 @@
   </action>
   <action name="actionSelectFont">
    <property name="icon">
-    <iconset theme="preferences-desktop-font">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="preferences-desktop-font"/>
    </property>
    <property name="text">
     <string>Select F&amp;ont...</string>
@@ -443,8 +424,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-find-replace">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="edit-find-replace"/>
    </property>
    <property name="text">
     <string>&amp;Find/Replace</string>
@@ -452,8 +432,7 @@
   </action>
   <action name="actionEvalManual">
    <property name="icon">
-    <iconset theme="media-skip-forward">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="media-skip-forward"/>
    </property>
    <property name="text">
     <string>&amp;Manual</string>
@@ -470,8 +449,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="media-playback-start">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="media-playback-start"/>
    </property>
    <property name="text">
     <string>&amp;Automatic</string>
@@ -496,8 +474,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="media-seek-forward">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="media-seek-forward"/>
    </property>
    <property name="text">
     <string>&amp;Steady</string>
@@ -519,8 +496,7 @@
   </action>
   <action name="actionOnlineHelp">
    <property name="icon">
-    <iconset theme="help-browser">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="help-browser"/>
    </property>
    <property name="text">
     <string>&amp;Online Help</string>
@@ -536,8 +512,7 @@
   </action>
   <action name="actionEvalReset">
    <property name="icon">
-    <iconset theme="view-refresh">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="view-refresh"/>
    </property>
    <property name="text">
     <string>&amp;Reset</string>
@@ -586,8 +561,7 @@
   </action>
   <action name="actionFullScreenClose">
    <property name="icon">
-    <iconset theme="process-stop">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="process-stop"/>
    </property>
    <property name="text">
     <string>&amp;Quit</string>
@@ -601,8 +575,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="pan-start">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="pan-start"/>
    </property>
    <property name="text">
     <string>Go &amp;Back</string>
@@ -616,8 +589,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="pan-end">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="pan-end"/>
    </property>
    <property name="text">
     <string>&amp;Go Forward</string>
@@ -631,8 +603,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset theme="edit-paste">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="edit-paste"/>
    </property>
    <property name="text">
     <string>&amp;Paste in new Editor</string>
@@ -653,6 +624,17 @@
    </property>
    <property name="toolTip">
     <string>Hide Menu Bar</string>
+   </property>
+  </action>
+  <action name="actionCustomActions">
+   <property name="icon">
+    <iconset theme="user-bookmarks"/>
+   </property>
+   <property name="text">
+    <string>Custom Actions</string>
+   </property>
+   <property name="toolTip">
+    <string>Custom Actions</string>
    </property>
   </action>
  </widget>
