@@ -33,7 +33,7 @@ public:
                                    : name.toString());
     }
 
-    bool context(const QModelIndexList &selection, MessagePtrSet &messages)
+    bool isApplicable(const QModelIndexList &selection, MessagePtrSet &messages)
     {
         auto applicable = mScriptEngine->getGlobal("applicable");
         if (applicable.isCallable()) {
@@ -46,11 +46,11 @@ public:
         return true;
     }
 
-    void execute(const QModelIndexList &selection, MessagePtrSet &messages)
+    void apply(const QModelIndexList &selection, MessagePtrSet &messages)
     {
-        auto execute = mScriptEngine->getGlobal("execute");
-        if (execute.isCallable()) {
-            mScriptEngine->call(execute, { getItems(selection) }, 0, messages);
+        auto apply = mScriptEngine->getGlobal("apply");
+        if (apply.isCallable()) {
+            mScriptEngine->call(apply, { getItems(selection) }, 0, messages);
         }
     }
 
@@ -169,7 +169,7 @@ void CustomActions::actionTriggered()
         *qobject_cast<QAction *>(QObject::sender()));
 
     mMessages.clear();
-    action.execute(mSelection, mMessages);
+    action.apply(mSelection, mMessages);
 }
 
 void CustomActions::updateWidgets()
@@ -207,12 +207,11 @@ void CustomActions::setSelection(const QModelIndexList &selection)
 
 QList<QAction *> CustomActions::getApplicableActions()
 {
-    // TODO: move
     updateActions();
 
     auto actions = QList<QAction *>();
     for (const auto &action : mActions)
-        if (action->context(mSelection, mMessages))
+        if (action->isApplicable(mSelection, mMessages))
             actions += action.get();
     return actions;
 }
