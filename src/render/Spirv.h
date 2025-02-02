@@ -64,6 +64,7 @@ bool isGlobalUniformBlockName(const char *name);
 bool isGlobalUniformBlockName(QStringView name);
 QString removeGlobalUniformBlockName(QString string);
 
+QString getJsonString(const SpvReflectShaderModule &module);
 uint32_t getBindingArraySize(const SpvReflectBindingArrayTraits &array);
 Field::DataType getBufferMemberDataType(
     const SpvReflectBlockVariable &variable);

@@ -21,6 +21,7 @@ public:
     QString preprocess();
     QString generateReadableSpirv();
     QString generateGLSLangAST();
+    QString getJsonInterface();
 
 protected:
     virtual QStringList preprocessorDefinitions() const;

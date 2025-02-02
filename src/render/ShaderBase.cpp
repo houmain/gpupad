@@ -233,15 +233,6 @@ ShaderBase::ShaderBase(Shader::ShaderType type,
     mPreamble = session.shaderPreamble;
     mIncludePaths = session.shaderIncludePaths;
 
-    // override hidden properties which are only used for generating Output
-    const auto hasVulkanRenderer = (session.renderer == "Vulkan");
-    const auto hasShaderCompiler =
-        (!session.shaderCompiler.isEmpty() || hasVulkanRenderer);
-    if (!hasShaderCompiler) {
-        mSession.autoMapBindings = true;
-        mSession.autoMapLocations = true;
-    }
-
     for (const Shader *shader : shaders) {
         auto source = QString();
         if (!Singletons::fileCache().getSource(shader->fileName, &source))
@@ -398,4 +389,12 @@ QString ShaderBase::generateGLSLangAST()
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
     return Spirv::generateAST(mSession, mLanguage, mType, patchedSources,
         usedFileNames, mEntryPoint, mItemId, mMessages);
+}
+
+QString ShaderBase::getJsonInterface()
+{
+    auto printf = RemoveShaderPrintf();
+    const auto spirv = compileSpirv(printf);
+    const auto interface = Spirv::Interface(spirv.spirv());
+    return getJsonString(*interface);
 }

@@ -24,6 +24,8 @@ OutputWindow::OutputWindow(QWidget *parent)
     mTypeSelector->addItem(tr("Dump SPIR-V"), "spirv");
     mTypeSelector->addItem(tr("Dump glslang AST"), "ast");
     mTypeSelector->addItem(tr("Dump assembly (NV_gpu_program)"), "assembly");
+    mTypeSelector->addItem(tr("JSON Interface"), "json");
+
     connect(mTypeSelector, &DataComboBox::currentDataChanged,
         [this](QVariant data) {
             Q_EMIT typeSelectionChanged(data.toString());

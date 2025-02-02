@@ -104,17 +104,30 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
                 break;
             }
 
-        const auto &session = Singletons::sessionModel();
-        const auto &sessionItem = session.sessionItem();
-        switch (renderer().api()) {
-        case RenderAPI::OpenGL:
-            mShader =
-                std::make_unique<GLShader>(shaderType, shaders, sessionItem);
-            break;
-        case RenderAPI::Vulkan:
-            mShader =
-                std::make_unique<VKShader>(shaderType, shaders, sessionItem);
-            break;
+        auto session = Singletons::sessionModel().sessionItem();
+
+        // define state of hidden session properties
+        const auto hasVulkanRenderer = (session.renderer == "Vulkan");
+        const auto hasShaderCompiler =
+            (!session.shaderCompiler.isEmpty() || hasVulkanRenderer);
+        if (!hasShaderCompiler) {
+            session.autoMapBindings = true;
+            session.autoMapLocations = true;
+        }
+
+        if (mProcessType == "json") {
+            // force session properties (otherwise SpvReflect does not enumerate uniforms)
+            session.renderer = "Vulkan";
+            session.vulkanRulesRelaxed = true;
+            session.autoSampledTextures = true;
+            session.autoMapLocations = true;
+            session.autoMapLocations = true;
+        }
+
+        if (session.renderer == "Vulkan") {
+            mShader = std::make_unique<VKShader>(shaderType, shaders, session);
+        } else {
+            mShader = std::make_unique<GLShader>(shaderType, shaders, session);
         }
     }
 }
@@ -165,6 +178,8 @@ void ProcessSource::render()
                     if (shader->compile(printf))
                         mOutput = tryGetProgramBinary(*shader);
                 }
+        } else if (mProcessType == "json") {
+            mOutput = mShader->getJsonInterface();
         }
         if (mOutput.isEmpty())
             mOutput = "not available";
