@@ -155,6 +155,7 @@ set(SOURCES
   src/render/TextureBase.cpp
   src/render/ShaderPrintf.cpp
   src/render/Spirv.cpp
+  src/render/SpirvInterface.cpp
   src/scripting/ScriptConsole.cpp
   src/scripting/MouseScriptObject.cpp
   src/scripting/KeyboardScriptObject.cpp

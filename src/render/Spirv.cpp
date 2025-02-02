@@ -244,32 +244,6 @@ QString removeGlobalUniformBlockName(QString string)
 
 //-------------------------------------------------------------------------
 
-Spirv::Interface::Interface(const std::vector<uint32_t> &spirv)
-{
-    auto module = SpvReflectShaderModule{};
-    const auto result = spvReflectCreateShaderModule(
-        spirv.size() * sizeof(uint32_t), spirv.data(), &module);
-    if (result != SPV_REFLECT_RESULT_SUCCESS)
-        module = {};
-    mModule = std::shared_ptr<SpvReflectShaderModule>(
-        new SpvReflectShaderModule(module), spvReflectDestroyShaderModule);
-}
-
-Spirv::Interface::~Interface() = default;
-
-Spirv::Interface::operator bool() const
-{
-    return static_cast<bool>(mModule);
-}
-
-const SpvReflectShaderModule *Spirv::Interface::operator->() const
-{
-    Q_ASSERT(mModule);
-    return mModule.get();
-}
-
-//-------------------------------------------------------------------------
-
 Spirv::Spirv(std::vector<uint32_t> spirv) : mSpirv(std::move(spirv)) { }
 
 Spirv::Interface Spirv::getInterface() const

@@ -25,6 +25,7 @@ public:
         ~Interface();
 
         explicit operator bool() const;
+        const SpvReflectShaderModule &operator*() const;
         const SpvReflectShaderModule *operator->() const;
 
     private:
@@ -58,7 +59,16 @@ private:
     std::vector<uint32_t> mSpirv;
 };
 
-constexpr const char globalUniformBlockName[] { "$Global" };
-bool isGlobalUniformBlockName(const char* name);
+constexpr const char globalUniformBlockName[]{ "$Global" };
+bool isGlobalUniformBlockName(const char *name);
 bool isGlobalUniformBlockName(QStringView name);
 QString removeGlobalUniformBlockName(QString string);
+
+uint32_t getBindingArraySize(const SpvReflectBindingArrayTraits &array);
+Field::DataType getBufferMemberDataType(
+    const SpvReflectBlockVariable &variable);
+int getBufferMemberColumnCount(const SpvReflectBlockVariable &variable);
+int getBufferMemberRowCount(const SpvReflectBlockVariable &variable);
+int getBufferMemberColumnStride(const SpvReflectBlockVariable &variable);
+int getBufferMemberArraySize(const SpvReflectBlockVariable &variable);
+int getBufferMemberArrayStride(const SpvReflectBlockVariable &variable);
