@@ -243,7 +243,7 @@ void BinaryEditor::refresh()
         mEditableRegion->horizontalHeader()->setMinimumSectionSize(1);
         for (auto i = 0; i < dataModel->columnCount({}); ++i)
             mEditableRegion->horizontalHeader()->resizeSection(i,
-                dataModel->getColumnSize(i) * mColumnWidth);
+                dataModel->getColumnSize(i) * (mColumnWidth + 3));
 
         setRowHeight(row,
             mRowHeight + mEditableRegion->horizontalHeader()->height() + 1);
@@ -252,7 +252,7 @@ void BinaryEditor::refresh()
         openPersistentEditor(model()->index(row, 0));
 
         setColumnWidth(0,
-            mColumnWidth + mEditableRegion->verticalHeader()->width());
+            mColumnWidth + mEditableRegion->verticalHeader()->width() + 3);
     }
 }
 
