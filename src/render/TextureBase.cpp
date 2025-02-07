@@ -58,6 +58,8 @@ TextureBase::TextureBase(const Texture &texture, ScriptEngine &scriptEngine)
         mHeight = 1;
     if (mDepth <= 0 || mKind.dimensions < 3)
         mDepth = 1;
+    if (mKind.cubeMap)
+        mHeight = mWidth;
     if (mLayers <= 0 || !mKind.array)
         mLayers = 1;
     if (mSamples <= 0)
