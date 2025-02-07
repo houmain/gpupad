@@ -103,8 +103,10 @@ QString FileDialog::getWindowTitle(const QString &fileName)
 
 QString FileDialog::getFileExtension(const QString &fileName)
 {
-    if (isEmptyOrUntitled(fileName))
+    if (fileName.isEmpty())
         return "";
+    if (isUntitled(fileName))
+        return getFileExtension(getFileTitle(fileName));
     return QFileInfo(fileName).suffix().toLower();
 }
 
