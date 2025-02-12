@@ -301,11 +301,11 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 else()
     install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
     install(FILES ${DOC_FILES} DESTINATION .)
+    install(DIRECTORY extra/qml DESTINATION .)
     install(DIRECTORY extra/samples DESTINATION . COMPONENT Samples)
     install(DIRECTORY extra/themes DESTINATION . COMPONENT Themes)
-    install(DIRECTORY extra/qml DESTINATION . COMPONENT QtQuick)
 
-    # install Qt dependencies (requries Qt 5.7)
+    # install Qt dependencies
     set(DEPLOY_TOOL_OPTIONS "--qmldir qml")
     if(CMAKE_SYSTEM_NAME MATCHES "Windows")
         set(DEPLOY_TOOL_OPTIONS ${DEPLOY_TOOL_OPTIONS} --no-opengl-sw --no-system-d3d-compiler --no-system-dxc-compiler)

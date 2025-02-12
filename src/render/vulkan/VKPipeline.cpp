@@ -656,8 +656,8 @@ bool VKPipeline::createRayTracing(VKContext &context)
     sbt.addRayGenShaderGroup(mRayTracingPipeline, 0);
     sbt.addMissShaderGroup(mRayTracingPipeline, 1);
     sbt.addHitShaderGroup(mRayTracingPipeline, 2);
-    return true;
 #endif
+    return true;
 }
 
 void VKPipeline::createRayTracingAccelerationStructure(VKContext &context,
