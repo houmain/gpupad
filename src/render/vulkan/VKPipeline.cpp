@@ -616,6 +616,7 @@ bool VKPipeline::createRayTracing(VKContext &context)
     if (!createLayout(context))
         return false;
 
+#if 0
     // https://www.willusher.io/graphics/2019/11/20/the-sbt-three-ways/
     mRayTracingPipeline = context.device.createRayTracingPipeline({
         .shaderStages = mProgram.getShaderStages(),
@@ -640,9 +641,10 @@ bool VKPipeline::createRayTracing(VKContext &context)
         },
         .layout = mPipelineLayout,
     });
+#endif
     if (!mRayTracingPipeline.isValid())
         return false;
-
+#if 0
     // TODO:
     auto &sbt = mRayTracingShaderBindingTable;
     sbt = KDGpu::RayTracingShaderBindingTable(&context.device,
@@ -655,6 +657,7 @@ bool VKPipeline::createRayTracing(VKContext &context)
     sbt.addMissShaderGroup(mRayTracingPipeline, 1);
     sbt.addHitShaderGroup(mRayTracingPipeline, 2);
     return true;
+#endif
 }
 
 void VKPipeline::createRayTracingAccelerationStructure(VKContext &context,
