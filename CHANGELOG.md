@@ -3,6 +3,45 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 2.3.0] - 2025-02-12
+
+### Added
+
+- Added modern shader types.
+- Added "Draw Mesh Tasks" call.
+- Added "Trace Rays" call [WIP].
+- Added "Order-independent transparency" sample.
+- Allowing expressions in Target default width/height/layers.
+- Obtaining filename and line number of script errors.
+- Added options "Reverse Culling" and "Flip Viewport" to Vulkan renderer.
+- Added setScriptSource and setShaderSource to Session script object.
+- Added custom actions toolbar item.
+- Added JSON Interface Output.
+- Added delta to Mouse object.
+
+### Changed
+
+- Enforcing dimensions and format selected in texture item.
+- Omitting reference errors when evaluating expressions with default script engine.
+- Extracting uniform values from structured expression results.
+- Custom actions are calling "apply" instead of "execute"
+- Reset item name to type name when clearing filename.
+- Looking for samples also in ../share folder.
+- Updated Quad sample.
+
+### Fixed
+
+- Checking that all attributes are set.
+- Checking that indirect/index buffer is set.
+- Fixed glslang compiled shader SSBO binding.
+- Fixed source type deduction of untitled editors.
+- Improved alignment of editable cells in binary editor.
+- Not automatically evaluating when editing Scripts which are executed on reset.
+- Prevent deletion of file when changing case only of file item.
+- Made Session available again in custom actions.
+- Fixed paths in custom actions.
+- Fixed timeout in custom actions.
+
 ## [Version 2.2.0] - 2024-12-22
 
 ### Added
@@ -787,6 +826,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 2.3.0]: https://github.com/houmain/gpupad/compare/2.2.0...2.3.0
 [version 2.2.0]: https://github.com/houmain/gpupad/compare/2.1.0...2.2.0
 [version 2.1.0]: https://github.com/houmain/gpupad/compare/2.0.1...2.1.0
 [version 2.0.1]: https://github.com/houmain/gpupad/compare/2.0.0...2.0.1
