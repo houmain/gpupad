@@ -621,9 +621,9 @@ bool VKPipeline::createRayTracing(VKContext &context)
     options.shaderStages = mProgram.getShaderStages();
     options.layout = mPipelineLayout;
 
-    auto shaderGroupEntriesRayGen = std::vector<uint32_t>();
-    auto shaderGroupEntriesHit = std::vector<std::pair<uint32_t, uint32_t>>();
-    auto shaderGroupEntriesMiss = std::vector<std::pair<uint32_t, uint32_t>>();
+    auto shaderGroupEntriesRayGen = std::vector<size_t>();
+    auto shaderGroupEntriesHit = std::vector<std::pair<size_t, uint32_t>>();
+    auto shaderGroupEntriesMiss = std::vector<std::pair<size_t, uint32_t>>();
     for (const auto &shader : mProgram.shaders()) {
         switch (shader.type()) {
         case Shader::ShaderType::RayGeneration:
@@ -681,8 +681,8 @@ bool VKPipeline::createRayTracing(VKContext &context)
     auto &sbt = mRayTracingShaderBindingTable;
     sbt = KDGpu::RayTracingShaderBindingTable(&context.device,
         KDGpu::RayTracingShaderBindingTableOptions{
-            .nbrMissShaders = shaderGroupEntriesMiss.size(),
-            .nbrHitShaders = shaderGroupEntriesHit.size(),
+            .nbrMissShaders = static_cast<uint32_t>(shaderGroupEntriesMiss.size()),
+            .nbrHitShaders = static_cast<uint32_t>(shaderGroupEntriesHit.size()),
         });
     for (auto shaderGroupIndex : shaderGroupEntriesRayGen)
         sbt.addRayGenShaderGroup(mRayTracingPipeline, shaderGroupIndex);

@@ -16,14 +16,16 @@ namespace {
     const char *getImageDims(const SpvReflectTypeDescription &type)
     {
         if (type.traits.image.ms) {
-            switch (type.traits.image.dim) {
-            case SpvDim2D: return "2DMSArray";
-            default:       break;
-            }
-        } else {
-            switch (type.traits.image.dim) {
-            case SpvDim2D: return "2DMS";
-            default:       break;
+            if (type.traits.image.arrayed) {
+                switch (type.traits.image.dim) {
+                case SpvDim2D: return "2DMSArray";
+                default:       break;
+                }
+            } else {
+                switch (type.traits.image.dim) {
+                case SpvDim2D: return "2DMS";
+                default:       break;
+                }
             }
         }
         if (type.traits.image.arrayed) {
