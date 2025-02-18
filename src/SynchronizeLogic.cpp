@@ -241,8 +241,12 @@ void SynchronizeLogic::handleFileItemFileChanged(const FileItem &item)
 {
     // update item name
     auto name = FileDialog::getFileTitle(item.fileName);
-    if (name.isEmpty())
+    if (name.isEmpty()) {
+        // only reset to type name when it currently has a filename
+        if (FileDialog::getFileExtension(item.name).isEmpty())
+            return;
         name = mModel.getTypeName(item.type);
+    }
     if (name != item.name)
         mModel.setData(mModel.getIndex(&item, SessionModel::Name), name);
 }
