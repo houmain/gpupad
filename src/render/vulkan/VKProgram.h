@@ -30,5 +30,6 @@ private:
     std::vector<VKShader> mIncludableShaders;
     StageInterface mInterface;
     VKPrintf mPrintf;
+    bool mCompileShadersSeparately{};
     bool mFailed{};
 };
