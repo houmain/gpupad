@@ -616,47 +616,80 @@ bool VKPipeline::createRayTracing(VKContext &context)
     if (!createLayout(context))
         return false;
 
-#if 0
     // https://www.willusher.io/graphics/2019/11/20/the-sbt-three-ways/
-    mRayTracingPipeline = context.device.createRayTracingPipeline({
-        .shaderStages = mProgram.getShaderStages(),
-        // TODO:
-        .shaderGroups = {
-            // Gen
-            KDGpu::RayTracingShaderGroupOptions{
+    auto options = KDGpu::RayTracingPipelineOptions{ };
+    options.shaderStages = mProgram.getShaderStages();
+    options.layout = mPipelineLayout;
+
+    auto shaderGroupEntriesRayGen = std::vector<uint32_t>();
+    auto shaderGroupEntriesHit = std::vector<std::pair<uint32_t, uint32_t>>();
+    auto shaderGroupEntriesMiss = std::vector<std::pair<uint32_t, uint32_t>>();
+    for (const auto &shader : mProgram.shaders()) {
+        switch (shader.type()) {
+        case Shader::ShaderType::RayGeneration:
+            shaderGroupEntriesRayGen.push_back(options.shaderGroups.size());
+            options.shaderGroups.push_back({
                 .type = KDGpu::RayTracingShaderGroupType::General,
-                .generalShaderIndex = 0,
-            },
-            // Miss
-            KDGpu::RayTracingShaderGroupOptions{
+                .generalShaderIndex = shader.shaderIndex(),
+            });
+            break;
+
+        case Shader::ShaderType::RayMiss:
+            shaderGroupEntriesMiss.emplace_back(options.shaderGroups.size(), 0);
+            options.shaderGroups.push_back({
                 .type = KDGpu::RayTracingShaderGroupType::General,
-                .generalShaderIndex = 3,
-            },
-            // Closest Hit
-            KDGpu::RayTracingShaderGroupOptions{
-                .type = KDGpu::RayTracingShaderGroupType::ProceduralHit,
-                .closestHitShaderIndex = 2,
-                .intersectionShaderIndex = 1,
-            },
-        },
-        .layout = mPipelineLayout,
-    });
-#endif
+                .generalShaderIndex = shader.shaderIndex(),
+            });
+            break;
+
+        case Shader::ShaderType::RayIntersection:
+        case Shader::ShaderType::RayAnyHit:
+        case Shader::ShaderType::RayClosestHit: {
+            // merge in last hit group (entry is currently unused)
+            if (shaderGroupEntriesHit.empty()
+                || shaderGroupEntriesHit.back().first + 1 != options.shaderGroups.size()) {
+                shaderGroupEntriesHit.emplace_back(options.shaderGroups.size(), 0);
+                options.shaderGroups.push_back({
+                    .type = KDGpu::RayTracingShaderGroupType::TrianglesHit,
+                });
+            }
+            auto &shaderGroup = options.shaderGroups.back();
+            if (shader.type() == Shader::ShaderType::RayIntersection) {
+                shaderGroup.type = KDGpu::RayTracingShaderGroupType::ProceduralHit;
+                shaderGroup.intersectionShaderIndex = shader.shaderIndex();
+            }
+            else if (shader.type() == Shader::ShaderType::RayAnyHit) {
+                shaderGroup.anyHitShaderIndex = shader.shaderIndex();
+            }
+            else if (shader.type() == Shader::ShaderType::RayClosestHit) {
+                shaderGroup.closestHitShaderIndex = shader.shaderIndex();
+            }
+            break;
+        }
+
+        default:
+            mMessages += MessageList::insert(mItemId,
+                MessageType::ShaderError, "shader type not implemented");
+            return false;
+        }
+    }
+
+    mRayTracingPipeline = context.device.createRayTracingPipeline(options);
     if (!mRayTracingPipeline.isValid())
         return false;
-#if 0
-    // TODO:
+
     auto &sbt = mRayTracingShaderBindingTable;
     sbt = KDGpu::RayTracingShaderBindingTable(&context.device,
         KDGpu::RayTracingShaderBindingTableOptions{
-            .nbrMissShaders = 1,
-            .nbrHitShaders = 1,
+            .nbrMissShaders = shaderGroupEntriesMiss.size(),
+            .nbrHitShaders = shaderGroupEntriesHit.size(),
         });
-
-    sbt.addRayGenShaderGroup(mRayTracingPipeline, 0);
-    sbt.addMissShaderGroup(mRayTracingPipeline, 1);
-    sbt.addHitShaderGroup(mRayTracingPipeline, 2);
-#endif
+    for (auto shaderGroupIndex : shaderGroupEntriesRayGen)
+        sbt.addRayGenShaderGroup(mRayTracingPipeline, shaderGroupIndex);
+    for (auto [shaderGroupIndex, entry] : shaderGroupEntriesHit)
+        sbt.addHitShaderGroup(mRayTracingPipeline, shaderGroupIndex, entry);
+    for (auto [shaderGroupIndex, entry] : shaderGroupEntriesMiss)
+        sbt.addMissShaderGroup(mRayTracingPipeline, shaderGroupIndex, entry);
     return true;
 }
 

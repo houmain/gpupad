@@ -18,6 +18,7 @@ public:
     const Session &session() const { return mSession; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     const StageInterface &interface() const { return mInterface; }
+    const std::vector<VKShader> &shaders() const { return mShaders; }
     VKPrintf &printf() { return mPrintf; }
 
 private:

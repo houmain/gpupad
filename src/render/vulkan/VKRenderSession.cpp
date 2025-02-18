@@ -304,8 +304,9 @@ void VKRenderSession::createCommandQueue()
                 case Call::CallType::TraceRays:
                     vkcall.setProgram(addProgramOnce(call->programId));
                     if (auto buffer = addBufferOnce(call->bufferId)) {
-                        buffer->addUsage(KDGpu::BufferUsageFlagBits::
-                                AccelerationStructureBuildInputReadOnlyBit);
+                        buffer->addUsage(
+                            KDGpu::BufferUsageFlagBits::AccelerationStructureBuildInputReadOnlyBit
+                            | KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit);
                         vkcall.setBuffers(buffer, nullptr);
                     }
                     break;

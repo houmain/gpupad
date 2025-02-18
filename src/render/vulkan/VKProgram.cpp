@@ -21,6 +21,9 @@ VKProgram::VKProgram(const Program &program, const Session &session)
     for (const auto &[type, list] : shaders)
         (type == Shader::ShaderType::Includable ? mIncludableShaders : mShaders)
             .emplace_back(type, list, session);
+
+    for (auto i = 0; i < static_cast<int>(mShaders.size()); ++i)
+        mShaders[i].setShaderIndex(i);
 }
 
 bool VKProgram::operator==(const VKProgram &rhs) const
