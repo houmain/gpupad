@@ -287,6 +287,11 @@ find_package(spirv_cross_reflect CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} 
     PRIVATE spirv-cross-core spirv-cross-glsl spirv-cross-reflect)
 
+# TODO: improve 
+# add custom action projects
+add_subdirectory(extra/actions/ImportOBJ EXCLUDE_FROM_ALL)
+add_dependencies(${PROJECT_NAME} ImportOBJ)
+
 # install -------------------------
 set(DOC_FILES LICENSE CHANGELOG.md THIRD-PARTY.md)
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Application)
@@ -306,7 +311,7 @@ else()
     install(DIRECTORY extra/themes DESTINATION . COMPONENT Themes)
 
     # install Qt dependencies
-    set(DEPLOY_TOOL_OPTIONS "--qmldir qml")
+    set(DEPLOY_TOOL_OPTIONS "--qmldir ${CMAKE_CURRENT_SOURCE_DIR}/extra/qml")
     if(CMAKE_SYSTEM_NAME MATCHES "Windows")
         set(DEPLOY_TOOL_OPTIONS ${DEPLOY_TOOL_OPTIONS} --no-opengl-sw --no-system-d3d-compiler --no-system-dxc-compiler)
     endif()
