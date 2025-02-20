@@ -157,15 +157,15 @@ set(SOURCES
   src/render/Spirv.cpp
   src/render/SpirvInterface.cpp
   src/scripting/ScriptConsole.cpp
-  src/scripting/MouseScriptObject.cpp
-  src/scripting/KeyboardScriptObject.cpp
-  src/scripting/SessionScriptObject.cpp
   src/scripting/ScriptEngine.cpp
   src/scripting/ScriptEngineJavaScript.cpp
   src/scripting/ScriptEngineJavaScript.js
   src/scripting/ScriptSession.cpp
   src/scripting/CustomActions.cpp
   src/scripting/CustomActions.ui
+  src/scripting/objects/MouseScriptObject.cpp
+  src/scripting/objects/KeyboardScriptObject.cpp
+  src/scripting/objects/SessionScriptObject.cpp
   src/session/AttachmentProperties.cpp
   src/session/AttachmentProperties.ui
   src/session/AttributeProperties.ui

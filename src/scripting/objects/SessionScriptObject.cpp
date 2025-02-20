@@ -1,13 +1,13 @@
 #include "SessionScriptObject.h"
 #include "EvaluatedPropertyCache.h"
 #include "FileCache.h"
-#include "ScriptEngine.h"
 #include "Singletons.h"
 #include "editors/EditorManager.h"
 #include "editors/binary/BinaryEditor.h"
 #include "editors/texture/TextureEditor.h"
 #include "editors/source/SourceEditor.h"
 #include "session/SessionModel.h"
+#include "../ScriptEngine.h"
 #include <QDirIterator>
 #include <QFloat16>
 #include <QJSEngine>

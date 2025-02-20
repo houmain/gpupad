@@ -2,11 +2,11 @@
 #include "FileCache.h"
 #include "FileDialog.h"
 #include "ScriptEngineJavaScript.h"
-#include "SessionScriptObject.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
 #include "ui_CustomActions.h"
+#include "objects/SessionScriptObject.h"
 #include <QAction>
 #include <QFileSystemModel>
 #include <QInputDialog>

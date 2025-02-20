@@ -1,8 +1,8 @@
 #include "ScriptSession.h"
-#include "KeyboardScriptObject.h"
-#include "MouseScriptObject.h"
 #include "ScriptEngineJavaScript.h"
-#include "SessionScriptObject.h"
+#include "objects/KeyboardScriptObject.h"
+#include "objects/MouseScriptObject.h"
+#include "objects/SessionScriptObject.h"
 #include "Singletons.h"
 
 ScriptSession::ScriptSession(SourceType sourceType, QObject *parent)
