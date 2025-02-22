@@ -6,9 +6,7 @@
 
 class ScriptEngine;
 class SessionModel;
-class SessionScriptObject;
-class MouseScriptObject;
-class KeyboardScriptObject;
+class AppScriptObject;
 
 class ScriptSession : public QObject
 {
@@ -37,7 +35,5 @@ private:
     MessagePtrSet mMessages;
 
     std::unique_ptr<ScriptEngine> mScriptEngine;
-    SessionScriptObject *mSessionScriptObject{};
-    MouseScriptObject *mMouseScriptObject{};
-    KeyboardScriptObject *mKeyboardScriptObject{};
+    AppScriptObject *mAppScriptObject{};
 };

@@ -1,24 +1,20 @@
 #include "ScriptSession.h"
 #include "ScriptEngineJavaScript.h"
-#include "objects/KeyboardScriptObject.h"
-#include "objects/MouseScriptObject.h"
+#include "objects/AppScriptObject.h"
 #include "objects/SessionScriptObject.h"
 #include "Singletons.h"
 
 ScriptSession::ScriptSession(SourceType sourceType, QObject *parent)
     : QObject(parent)
     , mSourceType(sourceType)
-    , mMouseScriptObject(new MouseScriptObject(this))
-    , mKeyboardScriptObject(new KeyboardScriptObject(this))
+    , mAppScriptObject(new AppScriptObject(this))
 {
 }
 
 void ScriptSession::prepare()
 {
     Q_ASSERT(onMainThread());
-    Singletons::inputState().update();
-    mMouseScriptObject->update(Singletons::inputState());
-    mKeyboardScriptObject->update(Singletons::inputState());
+    mAppScriptObject->update();
 }
 
 void ScriptSession::beginSessionUpdate(SessionModel *sessionCopy)
@@ -26,25 +22,23 @@ void ScriptSession::beginSessionUpdate(SessionModel *sessionCopy)
     Q_ASSERT(!onMainThread());
     if (!mScriptEngine)
         initializeEngine();
-    if (mSessionScriptObject)
-        mSessionScriptObject->beginBackgroundUpdate(sessionCopy);
+    mAppScriptObject->sessionScriptObject().beginBackgroundUpdate(sessionCopy);
 }
 
 void ScriptSession::endSessionUpdate()
 {
     Q_ASSERT(onMainThread());
-    if (mSessionScriptObject)
-        mSessionScriptObject->endBackgroundUpdate();
+    mAppScriptObject->sessionScriptObject().endBackgroundUpdate();
 }
 
 bool ScriptSession::usesMouseState() const
 {
-    return mMouseScriptObject->wasRead();
+    return mAppScriptObject->usesMouseState();
 }
 
 bool ScriptSession::usesKeyboardState() const
 {
-    return mKeyboardScriptObject->wasRead();
+    return mAppScriptObject->usesKeyboardState();
 }
 
 ScriptEngine &ScriptSession::engine()
@@ -58,9 +52,8 @@ void ScriptSession::initializeEngine()
     Q_ASSERT(!mScriptEngine);
     auto scriptEngine = new ScriptEngineJavaScript();
     mScriptEngine.reset(scriptEngine);
-    mSessionScriptObject = new SessionScriptObject(scriptEngine->jsEngine());
-    mScriptEngine->setGlobal("Session", mSessionScriptObject);
     mScriptEngine->setTimeout(5000);
-    mScriptEngine->setGlobal("Mouse", mMouseScriptObject);
-    mScriptEngine->setGlobal("Keyboard", mKeyboardScriptObject);
+
+    mAppScriptObject->initializeEngine(scriptEngine->jsEngine());
+    mScriptEngine->setGlobal("app", mAppScriptObject);
 }

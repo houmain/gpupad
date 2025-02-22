@@ -6,6 +6,7 @@
 #include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
 #include "ui_CustomActions.h"
+#include "objects/AppScriptObject.h"
 #include "objects/SessionScriptObject.h"
 #include <QAction>
 #include <QFileSystemModel>
@@ -22,9 +23,8 @@ public:
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
             mScriptEngine = std::make_unique<ScriptEngineJavaScript>();
-            mSessionScriptObject =
-                new SessionScriptObject(mScriptEngine->jsEngine());
-            mScriptEngine->setGlobal("Session", mSessionScriptObject);
+            mAppScriptObject = new AppScriptObject(mScriptEngine->jsEngine());
+            mScriptEngine->setGlobal("app", mAppScriptObject);
             mScriptEngine->evaluateScript(source, mFilePath, mMessages);
         }
 
@@ -61,14 +61,15 @@ private:
             mScriptEngine->jsEngine()->newArray(selectedIndices.size());
         auto i = 0;
         for (const auto &index : selectedIndices)
-            array.setProperty(i++, mSessionScriptObject->getItem(index));
+            array.setProperty(i++,
+                mAppScriptObject->sessionScriptObject().getItem(index));
         return array;
     }
 
     const QString mFilePath;
     MessagePtrSet mMessages;
     std::unique_ptr<ScriptEngineJavaScript> mScriptEngine;
-    SessionScriptObject *mSessionScriptObject{};
+    AppScriptObject *mAppScriptObject{};
 };
 
 CustomActions::CustomActions(QWidget *parent)

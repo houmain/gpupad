@@ -334,10 +334,11 @@ QVariant SessionScriptObject::ItemListObject::updateValue(const QString &key,
 
 //-------------------------------------------------------------------------
 
-SessionScriptObject::SessionScriptObject(QJSEngine *engine)
-    : QObject(engine)
-    , mEngine(engine)
+SessionScriptObject::SessionScriptObject(QObject *parent) : QObject(parent) { }
+
+void SessionScriptObject::initializeEngine(QJSEngine *engine)
 {
+    mEngine = engine;
 }
 
 SessionModel &SessionScriptObject::threadSessionModel()
@@ -353,6 +354,7 @@ SessionModel &SessionScriptObject::threadSessionModel()
 
 QJSEngine &SessionScriptObject::engine()
 {
+    Q_ASSERT(mEngine);
     return *mEngine;
 }
 

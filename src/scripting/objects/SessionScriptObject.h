@@ -16,7 +16,8 @@ class SessionScriptObject : public QObject
     Q_PROPERTY(QJSValue items READ rootItems CONSTANT)
 
 public:
-    explicit SessionScriptObject(QJSEngine *engine);
+    explicit SessionScriptObject(QObject *parent = nullptr);
+    void initializeEngine(QJSEngine *engine);
 
     void beginBackgroundUpdate(SessionModel *sessionCopy);
     void endBackgroundUpdate();

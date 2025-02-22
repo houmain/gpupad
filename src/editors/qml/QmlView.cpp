@@ -17,7 +17,7 @@ void QmlView::reset() { }
 
 #  include "FileCache.h"
 #  include "Singletons.h"
-#  include "scripting/SessionScriptObject.h"
+#  include "scripting/objects/AppScriptObject.h"
 #  include <QBoxLayout>
 #  include <QDir>
 #  include <QFileInfo>
@@ -133,9 +133,9 @@ QmlView::QmlView(QString fileName, QWidget *parent)
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 
-    qmlRegisterSingletonType<SessionScriptObject>("gpupad", 1, 0, "Session",
+    qmlRegisterSingletonType<AppScriptObject>("gpupad", 1, 0, "app",
         [&](QQmlEngine *, QJSEngine *jsEngine) -> QObject * {
-            return new SessionScriptObject(jsEngine);
+            return new AppScriptObject(jsEngine);
         });
 }
 
@@ -182,7 +182,8 @@ void QmlView::reset()
                     warning.description());
         });
 
-    mNetworkAccessManagerFactory = std::make_unique<NetworkAccessManagerFactory>(this);
+    mNetworkAccessManagerFactory =
+        std::make_unique<NetworkAccessManagerFactory>(this);
     mQuickWidget->engine()->setNetworkAccessManagerFactory(
         mNetworkAccessManagerFactory.get());
 

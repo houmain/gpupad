@@ -163,6 +163,7 @@ set(SOURCES
   src/scripting/ScriptSession.cpp
   src/scripting/CustomActions.cpp
   src/scripting/CustomActions.ui
+  src/scripting/objects/AppScriptObject.cpp
   src/scripting/objects/MouseScriptObject.cpp
   src/scripting/objects/KeyboardScriptObject.cpp
   src/scripting/objects/SessionScriptObject.cpp
