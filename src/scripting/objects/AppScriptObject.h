@@ -24,6 +24,11 @@ public:
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
 
+    Q_INVOKABLE QJSValue enumerateFiles(const QString &pattern);
+    Q_INVOKABLE QJSValue writeTextFile(const QString &fileName,
+        const QString &string);
+    Q_INVOKABLE QJSValue readTextFile(const QString &fileName);
+
     void update();
     bool usesMouseState() const;
     bool usesKeyboardState() const;

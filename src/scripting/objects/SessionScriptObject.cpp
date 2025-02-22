@@ -8,7 +8,6 @@
 #include "editors/source/SourceEditor.h"
 #include "session/SessionModel.h"
 #include "../ScriptEngine.h"
-#include <QDirIterator>
 #include <QFloat16>
 #include <QJSEngine>
 #include <QQmlPropertyMap>
@@ -570,37 +569,4 @@ void SessionScriptObject::setScriptSource(QJSValue itemDesc, QJSValue data)
 
     mMessages += MessageList::insert(0, MessageType::ScriptError,
         "setScriptSource failed");
-}
-
-QJSValue SessionScriptObject::enumerateFiles(const QString &pattern)
-{
-    auto dir = QFileInfo(pattern).dir();
-    dir.setFilter(QDir::Files);
-    dir.setSorting(QDir::Name);
-    auto it = QDirIterator(dir, QDirIterator::Subdirectories);
-    auto result = engine().newArray();
-    for (auto i = 0; it.hasNext();)
-        result.setProperty(i++, it.next());
-    return result;
-}
-
-QJSValue SessionScriptObject::writeTextFile(const QString &fileName,
-    const QString &string)
-{
-    auto file = QFile(fileName);
-    if (!file.open(QFile::WriteOnly | QFile::Text))
-        return false;
-    file.write(string.toUtf8());
-    file.close();
-
-    Singletons::fileCache().invalidateFile(fileName);
-    return true;
-}
-
-QJSValue SessionScriptObject::readTextFile(const QString &fileName)
-{
-    auto source = QString{};
-    if (!Singletons::fileCache().getSource(fileName, &source))
-        return QJSValue::UndefinedValue;
-    return source;
 }
