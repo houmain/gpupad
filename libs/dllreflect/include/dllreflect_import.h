@@ -33,6 +33,100 @@ private:
   Interface m_interface{ };
 };
 
+struct CallBuffer {
+  std::vector<std::byte> data;
+  std::vector<Argument> args;
+};
+
+constexpr size_t get_type_alignment(Type type) {
+  switch (type) {
+    case Type::Void:
+    case Type::Opaque: return 0;
+    case Type::Bool:
+    case Type::Char:
+    case Type::Int8:
+    case Type::UInt8: return 1;
+    case Type::Int16:
+    case Type::UInt16: return 2;
+    case Type::Int32:
+    case Type::UInt32: return 4;
+    case Type::Int64:
+    case Type::UInt64: return 8;
+    case Type::Float: return 4;
+    case Type::Double: return 8;
+    case Type::Utf8Codepoint: return 1;
+  }
+  return 0;
+}
+
+template <
+  typename GetArgumentSize, // size_t(size_t index, ArgumentType type)
+  typename GetArgument, // bool(size_t index, Argument& argument)
+  typename WriteResult> // bool(Argument& argument)
+bool make_call(const Function &function,
+    GetArgumentSize &get_argument_size,
+    GetArgument &get_argument,
+    WriteResult &write_result,
+    CallBuffer *buffer = nullptr) {
+
+  auto new_buffer = CallBuffer{};
+  if (!buffer)
+    buffer = &new_buffer;
+
+  const auto advance = [](size_t &pos, size_t alignment, size_t count) {
+    if (alignment > 0 && count > 0)
+      pos = ((pos + alignment - 1) / alignment + count) * alignment;
+  };
+
+  // call get_argument_size for each argument to get number of elements
+  // to allocate in argument buffer
+  // it should return 0 when it allocates itself
+  buffer->args.resize(function.argument_count);
+  auto buffer_size = size_t{};
+  for (auto i = 0u; i < function.argument_count; ++i) {
+    auto &arg = buffer->args[i];
+    arg.type = function.argument_types[i];
+    arg.count = get_argument_size(i, arg.type.type);
+    advance(buffer_size, get_type_alignment(arg.type.type), arg.count);
+  }
+
+  // call get_argument for each argument
+  // it should either write to data pointing to requested buffer
+  // or allocate itself and set data/free/count
+  buffer->data.resize(buffer_size);
+  auto succeeded = true;
+  auto pos = size_t{};
+  for (auto i = 0u; i < function.argument_count; ++i) {
+    auto &arg = buffer->args[i];
+    arg.data = (arg.count > 0 ? buffer->data.data() + pos : nullptr);
+    arg.free = nullptr;
+    advance(pos, get_type_alignment(arg.type.type), arg.count);
+    succeeded = (succeeded && get_argument(i, arg));
+  }
+
+  // allocate some bytes for result on the stack
+  auto result_buffer = uint64_t{};
+  auto result = Argument{};
+  const auto result_size = get_type_alignment(function.result_type.type);
+  if (result_size > 0 && result_size <= sizeof(result_buffer)) {
+    result.data = &result_buffer;
+    result.type = function.result_type;
+    result.count = 1;
+  }
+
+  if (succeeded)
+    function.call(function.function, &result, buffer->args.data());
+
+  // write result, should reset free 
+  // when it takes ownership of the allocation
+  succeeded = (succeeded && write_result(result));
+
+  if (result.free)
+    result.free(result.data);
+
+  return succeeded;
+}
+
 } // namespace
 
 #if defined(DLLREFLECT_IMPORT_IMPLEMENTATION)

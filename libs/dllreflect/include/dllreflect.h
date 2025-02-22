@@ -5,8 +5,10 @@
 namespace dllreflect {
 
 enum class Type : uint32_t {
-  Opaque,
   Void,
+  Opaque,
+  Bool,
+  Char,
   Int8,
   UInt8,
   Int16,

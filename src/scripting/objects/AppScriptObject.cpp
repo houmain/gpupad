@@ -3,6 +3,7 @@
 #include "SessionScriptObject.h"
 #include "KeyboardScriptObject.h"
 #include "MouseScriptObject.h"
+#include "LibraryScriptObject.h"
 #include "Singletons.h"
 #include "FileCache.h"
 #include <QDirIterator>
@@ -52,6 +53,14 @@ bool AppScriptObject::usesMouseState() const
 bool AppScriptObject::usesKeyboardState() const
 {
     return mKeyboardScriptObject->wasRead();
+}
+
+QJSValue AppScriptObject::loadLibrary(const QString &fileName)
+{
+    auto library = std::make_unique<LibraryScriptObject>();
+    if (!library->load(mEngine, fileName))
+        return {};
+    return engine().newQObject(library.release());
 }
 
 QJSValue AppScriptObject::enumerateFiles(const QString &pattern)

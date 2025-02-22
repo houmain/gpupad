@@ -24,6 +24,7 @@ public:
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
 
+    Q_INVOKABLE QJSValue loadLibrary(const QString &fileName);
     Q_INVOKABLE QJSValue enumerateFiles(const QString &pattern);
     Q_INVOKABLE QJSValue writeTextFile(const QString &fileName,
         const QString &string);
