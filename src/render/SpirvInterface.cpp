@@ -284,7 +284,6 @@ uint32_t getBindingArraySize(const SpvReflectBindingArrayTraits &array)
     auto count = 1u;
     for (auto i = 0u; i < array.dims_count; ++i)
         count *= array.dims[i];
-    Q_ASSERT(count > 0);
     return count;
 }
 

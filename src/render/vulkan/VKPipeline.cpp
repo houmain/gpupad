@@ -454,11 +454,13 @@ bool VKPipeline::applyBufferMemberBindings(std::span<std::byte> bufferData,
     const SpvReflectBlockVariable &block, uint32_t arrayElement,
     ScriptEngine &scriptEngine)
 {
+    auto memberUsed = false;
     auto memberSet = false;
     for (auto i = 0u; i < block.member_count; ++i) {
         const auto &member = block.members[i];
         if (member.flags & SPV_REFLECT_VARIABLE_FLAGS_UNUSED)
             continue;
+        memberUsed = true;
 
         const auto name = getBufferMemberFullName(block, arrayElement, member);
         forEachBufferMemberRec(name, member, 0,
@@ -472,7 +474,8 @@ bool VKPipeline::applyBufferMemberBindings(std::span<std::byte> bufferData,
                 }
             });
     }
-    return (memberSet
+    return (!memberUsed
+        || memberSet
         || isGlobalUniformBlockName(block.type_description->type_name));
 }
 
@@ -976,7 +979,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                     .resource = KDGpu::SamplerBinding{ .sampler = sampler },
                 });
         } else {
-            if (mTarget->hasAttachment(samplerBinding->texture))
+            if (mTarget && mTarget->hasAttachment(samplerBinding->texture))
                 return MessageType::CantSampleAttachment;
 
             if (!samplerBinding->texture
