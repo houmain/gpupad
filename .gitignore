@@ -1,6 +1,6 @@
 /_*
 /src/_version.h
-/build/
+/**/build/
 /vcpkg/
 /*.user
 /extra/samples/**/*.gpjs.state

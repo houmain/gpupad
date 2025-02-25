@@ -24,6 +24,6 @@ void ScriptConsole::output(QString message, int level)
                                         : MessageType::ScriptMessage;
 
     (*mMessages) += (!mFileName.isEmpty()
-            ? MessageList::insert(mFileName, 0, messageType, message)
-            : MessageList::insert(mItemId, messageType, message));
+            ? MessageList::insert(mFileName, 0, messageType, message, false)
+            : MessageList::insert(mItemId, messageType, message, false));
 }
