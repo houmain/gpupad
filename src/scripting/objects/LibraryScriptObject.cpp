@@ -15,6 +15,10 @@ namespace {
             , mLibrary(std::move(library))
             , mArgument(std::move(argument))
         {
+            setObjectName(
+                QStringLiteral("Opaque%1")
+                    .arg(static_cast<int>(mArgument.type)
+                        & ~static_cast<int>(dllreflect::TypeFlags::opaque)));
         }
 
         ~OpaqueArgument()
@@ -87,34 +91,49 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
     }
 
     const auto getArgument = [&](size_t index, dllreflect::Argument &argument) {
-        // TODO: generalize
         if (argument.type & dllreflect::TypeFlags::array) {
-
-            if (base(argument.type) == dllreflect::Type::Utf8Codepoint) {
+            const auto base_type = base(argument.type);
+            if (base_type == dllreflect::Type::Char) {
                 copyString(argument, arguments[index].toString());
                 return true;
             }
 
             const auto list = arguments[index].toList();
             argument.count = list.size();
-            argument.data = new uint32_t[argument.count];
-            auto pos = static_cast<uint32_t *>(argument.data);
-            for (auto value : list)
-                *pos++ = value.toInt();
-            argument.free = [](void *data) { delete[] data; };
+
+            switch (base_type) {
+#define ADD(TYPE, T, GET)                                                    \
+    case TYPE: {                                                             \
+        argument.data = new T[argument.count];                               \
+        auto pos = static_cast<T *>(argument.data);                          \
+        for (auto value : list)                                              \
+            *pos++ = value.GET();                                            \
+        argument.free = [](void *data) { delete[] static_cast<T *>(data); }; \
+        break;                                                               \
+    }
+                ADD(dllreflect::Type::Bool, bool, toUInt)
+                ADD(dllreflect::Type::Char, int8_t, toUInt)
+                ADD(dllreflect::Type::Int8, int8_t, toInt)
+                ADD(dllreflect::Type::UInt8, uint8_t, toUInt)
+                ADD(dllreflect::Type::Int16, int16_t, toInt)
+                ADD(dllreflect::Type::UInt16, uint16_t, toUInt)
+                ADD(dllreflect::Type::Int32, int32_t, toInt)
+                ADD(dllreflect::Type::UInt32, uint32_t, toUInt)
+                ADD(dllreflect::Type::Int64, int64_t, toLongLong)
+                ADD(dllreflect::Type::UInt64, uint64_t, toULongLong)
+                ADD(dllreflect::Type::Float, float, toFloat)
+                ADD(dllreflect::Type::Double, double, toDouble)
+#undef ADD
+            case dllreflect::Type::Void: break;
+            }
             return true;
         }
 
         if (argument.type & dllreflect::TypeFlags::opaque) {
-            if (auto opaque = qvariant_cast<OpaqueArgument *>(arguments[index]);
-                opaque && opaque->checkType(argument.type)) {
-
-                // transfer ownership when it is a sink argument
+            auto opaque = qvariant_cast<OpaqueArgument *>(arguments[index]);
+            if (opaque && opaque->checkType(argument.type)) {
                 argument = opaque->argument();
-                if (argument.type & dllreflect::TypeFlags::sink)
-                    opaque->release();
-                else
-                    argument.free = nullptr;
+                argument.free = nullptr;
                 return true;
             }
             mEngine->throwError(
@@ -125,10 +144,13 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
 
         auto ok = false;
         switch (argument.type) {
-#define ADD(TYPE, T, GET) \
-    case TYPE: writeValue<T>(argument.data, arguments[index].GET(&ok)); break;
+#define ADD(TYPE, T, GET)                                        \
+    case TYPE: {                                                 \
+        writeValue<T>(argument.data, arguments[index].GET(&ok)); \
+        break;                                                   \
+    }
             ADD(dllreflect::Type::Bool, bool, toUInt)
-            ADD(dllreflect::Type::Char, char, toUInt)
+            ADD(dllreflect::Type::Char, int8_t, toUInt)
             ADD(dllreflect::Type::Int8, int8_t, toInt)
             ADD(dllreflect::Type::UInt8, uint8_t, toUInt)
             ADD(dllreflect::Type::Int16, int16_t, toInt)
@@ -139,7 +161,6 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
             ADD(dllreflect::Type::UInt64, uint64_t, toULongLong)
             ADD(dllreflect::Type::Float, float, toFloat)
             ADD(dllreflect::Type::Double, double, toDouble)
-            ADD(dllreflect::Type::Utf8Codepoint, uint8_t, toUInt)
 #undef ADD
         case dllreflect::Type::Void: break;
         }
@@ -152,17 +173,38 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
 
     auto result = QJSValue{};
     const auto writeResult = [&](dllreflect::Argument &argument) {
-        // TODO: generalize
         if (argument.type & dllreflect::TypeFlags::array) {
-            if (base(argument.type) == dllreflect::Type::Utf8Codepoint) {
+            const auto base_type = base(argument.type);
+
+            if (base_type == dllreflect::Type::Char) {
                 result = copyString(argument);
                 return result.isString();
             }
 
-            const auto begin = static_cast<const uint32_t *>(argument.data);
             result = mEngine->newArray(argument.count);
-            for (auto i = 0; i < argument.count; ++i)
-                result.setProperty(i, begin[i]);
+            switch (base_type) {
+#define ADD(TYPE, T)                                              \
+    case TYPE: {                                                  \
+        const auto begin = static_cast<const T *>(argument.data); \
+        for (auto i = 0; i < argument.count; ++i)                 \
+            result.setProperty(i, begin[i]);                      \
+        break;                                                    \
+    }
+                ADD(dllreflect::Type::Bool, bool)
+                ADD(dllreflect::Type::Char, char)
+                ADD(dllreflect::Type::Int8, int8_t)
+                ADD(dllreflect::Type::UInt8, uint8_t)
+                ADD(dllreflect::Type::Int16, int16_t)
+                ADD(dllreflect::Type::UInt16, uint16_t)
+                ADD(dllreflect::Type::Int32, int32_t)
+                ADD(dllreflect::Type::UInt32, uint32_t)
+                //ADD(dllreflect::Type::Int64, int64_t)
+                //ADD(dllreflect::Type::UInt64, uint64_t)
+                ADD(dllreflect::Type::Float, float)
+                ADD(dllreflect::Type::Double, double)
+#undef ADD
+            case dllreflect::Type::Void: break;
+            }
             return true;
         }
 
@@ -176,10 +218,11 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
         switch (argument.type) {
 
 #define ADD(TYPE, T)                                               \
-    case TYPE:                                                     \
+    case TYPE: {                                                   \
         result = QJSValue(*static_cast<const T *>(argument.data)); \
         ok = true;                                                 \
-        break;
+        break;                                                     \
+    }
 
 #define ADD_CHECKED(TYPE, T, DEST)                                 \
     case TYPE: {                                                   \
@@ -202,7 +245,6 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
             ADD_CHECKED(dllreflect::Type::UInt64, uint64_t, uint)
             ADD(dllreflect::Type::Float, float)
             ADD(dllreflect::Type::Double, double)
-            ADD(dllreflect::Type::Utf8Codepoint, uint8_t)
 #undef ADD
 
         case dllreflect::Type::Void: ok = true; break;

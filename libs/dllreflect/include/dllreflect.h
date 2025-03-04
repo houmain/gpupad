@@ -1,14 +1,13 @@
 #pragma once
 
 #include <cstdint>
-#include <array>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
-#if (__cplusplus >= 202002L)
+#if (__cplusplus >= 202000L || _MSVC_LANG >= 202000L)
 # include <span>
 # define DLLREFLECT_CXX20
 #endif
@@ -29,13 +28,12 @@ enum class Type : uint32_t {
   UInt64,
   Float,
   Double,
-  Utf8Codepoint,
 };
 
 enum class TypeFlags : uint32_t {
   opaque = (1 << 20),
   array  = (1 << 21),
-  sink   = (1 << 22),
+  view   = (1 << 22),
 };
 
 struct Argument {
@@ -82,6 +80,27 @@ public:
   }
 };
 
+#if defined(DLLREFLECT_CXX20)
+
+template<typename T>
+using span = std::span<T>;
+
+#else // !DLLREFLECT_CXX20
+
+template<typename T>
+struct span {
+  using value_type = T;
+  T* _begin{ };
+  T* _end{ };
+  T* begin() const { return _begin; }
+  T* end() const { return _end; }
+  T* data() const { return _begin; }
+  size_t size() const { return _begin - _end; }
+  T& operator[](size_t index) const { return _begin[index]; };
+};
+
+#endif // !DLLREFLECT_CXX20
+
 constexpr TypeFlags operator|(TypeFlags type, TypeFlags flags) {
   return static_cast<TypeFlags>(static_cast<uint32_t>(type) | static_cast<uint32_t>(flags));
 }
@@ -94,10 +113,17 @@ constexpr bool operator&(Type type, TypeFlags flags) {
   return static_cast<bool>(static_cast<uint32_t>(type) & static_cast<uint32_t>(flags));
 }
 
+constexpr Type without_flags(Type type, TypeFlags flags) {
+  return static_cast<Type>(static_cast<uint32_t>(type) & ~static_cast<uint32_t>(flags));
+}
+
 constexpr Type base(Type type) {
   // opaque is not removed
-  return static_cast<Type>(static_cast<uint32_t>(type) &
-      ~static_cast<uint32_t>(TypeFlags::array | TypeFlags::sink));
+  return without_flags(type, TypeFlags::array | TypeFlags::view);
+}
+
+constexpr bool is_opaque(Type type) {
+  return static_cast<bool>(type & TypeFlags::opaque);
 }
 
 namespace detail {
@@ -148,28 +174,56 @@ namespace detail {
   template<> constexpr Type get_type<float>::type = Type::Float;
   template<> constexpr Type get_type<double>::type = Type::Double;
 
-  template<> constexpr Type get_type<std::string>::type = (Type::Utf8Codepoint | TypeFlags::array);
-  template<> constexpr Type get_type<std::string_view>::type = (Type::Utf8Codepoint | TypeFlags::array);
-  template<> constexpr Type get_type<const char*>::type = (Type::Utf8Codepoint | TypeFlags::array);
+  template<> constexpr Type get_type<std::string>::type = (Type::Char | TypeFlags::array);
+  template<> constexpr Type get_type<std::string_view>::type = 
+    (Type::Char | TypeFlags::array | TypeFlags::view);
+  template<> constexpr Type get_type<const char*>::type = 
+    (Type::Char | TypeFlags::array | TypeFlags::view);
+  constexpr inline Type add_flags_if_not_opaque(Type type, TypeFlags flags) {
+    return (is_opaque(type) ? type : (type | flags));
+  }
 
   template<typename T>
   constexpr inline Type get_type_v = get_type<std::decay_t<T>>::type;
 
   template<typename T, typename A>
   struct get_type<std::vector<T, A>> {
-    constexpr static Type type = (get_type_v<T> | TypeFlags::array);
+    constexpr static Type type = 
+      (add_flags_if_not_opaque(get_type_v<T>, TypeFlags::array));
+  };
+
+  template<typename T>
+  struct get_type<span<const T>> {
+    constexpr static Type type = 
+      (add_flags_if_not_opaque(get_type_v<T>, TypeFlags::array | TypeFlags::view));
   };
 
   template<typename T>
   struct get_argument {
-    constexpr static T get(const Argument& argument) {
-      return *static_cast<const std::decay_t<T>*>(argument.data);
+    constexpr static decltype(auto) get(const Argument& argument) {
+      return *static_cast<std::remove_reference_t<T>*>(argument.data);
+    }
+  };
+
+  template<typename T>
+  struct get_argument<T*> {
+    constexpr static T* get(const Argument& argument) {
+      return static_cast<T*>(argument.data);
     }
   };
 
   template<typename T>
   struct get_argument<std::vector<T>> {
     constexpr static std::vector<T> get(const Argument& argument) {
+      const auto begin = static_cast<const T*>(argument.data);
+      const auto end = begin + argument.count;
+      return { begin, end };
+    }
+  };
+
+  template<typename T>
+  struct get_argument<span<const T>> {
+    constexpr static span<const T> get(const Argument& argument) {
       const auto begin = static_cast<const T*>(argument.data);
       const auto end = begin + argument.count;
       return { begin, end };
@@ -217,13 +271,28 @@ namespace detail {
     }
   }
 
-  template<typename T, typename = std::enable_if_t<std::is_trivially_copyable_v<T>>>
+  template<typename T>
+  void write_result(Argument& result, T* value) {
+    result.type = get_type_v<T*>;
+    result.count = 1;
+    result.data = value;
+  }
+
+  template<typename T>
   void write_result(Argument& result, std::vector<T>&& values) {
+    static_assert(std::is_trivially_copyable_v<T>);
     result.type = get_type_v<std::vector<T>>;
     result.count = values.size();
     result.data = new T[result.count];
     result.free = [](void* ptr) { delete[] static_cast<T*>(ptr); };
     std::memcpy(result.data, values.data(), result.count * sizeof(T));
+  }
+
+  template<typename T>
+  void write_result(Argument& result, span<const T> values) {
+    result.type = get_type_v<span<const T>>;
+    result.count = values.size();
+    result.data = const_cast<T*>(values.data());
   }
 
   void write_result(Argument& result, std::string&& value) {
@@ -232,6 +301,16 @@ namespace detail {
     result.data = new char[result.count];
     result.free = [](void* ptr) { delete[] static_cast<char*>(ptr); };
     std::memcpy(result.data, value.data(), result.count);
+  }
+
+  void write_result(Argument& result, std::string_view value) {
+    result.type = get_type_v<std::string_view>;
+    result.count = value.size();
+    result.data = const_cast<char*>(value.data());
+  }
+
+  void write_result(Argument& result, const char* value) {
+    return write_result(result, std::string_view(value));
   }
 
   void write_void_result(Argument& result) {
@@ -254,8 +333,7 @@ namespace detail {
       case Type::Bool:
       case Type::Char:
       case Type::Int8:
-      case Type::UInt8:
-      case Type::Utf8Codepoint: return 1;
+      case Type::UInt8: return 1;
       case Type::Int16:
       case Type::UInt16: return 2;
       case Type::Int32:
@@ -358,8 +436,13 @@ R call(const Function& function, Args&&... args) {
       arguments[index++] = args;
     }
     else {
-      const auto type = get_type_v<Args>;
-      if (function.argument_types[index] != type)
+      constexpr Type type = get_type_v<Args>;
+      static_assert(!is_opaque(type), "invalid argument type");
+
+      // view types in input arguments are compatible with non-view types
+      const auto arg_type = function.argument_types[index];
+      if (without_flags(arg_type, TypeFlags::view) !=
+          without_flags(type, TypeFlags::view))
         throw std::runtime_error("argument type mismatch");
 
       if constexpr (type & TypeFlags::array) {
@@ -384,26 +467,35 @@ R call(const Function& function, Args&&... args) {
   else {
     auto result_value = R{ };
     if constexpr (std::is_same_v<R, Opaque>) {
-      if (!(function.result_type & TypeFlags::opaque))
+      if (!is_opaque(function.result_type))
         throw std::runtime_error("result type mismatch");
     
       // write directly in result_value, which is an Argument
       function.call(function.function, &result_value, arguments);
     }
     else {
-      const auto type = get_type_v<R>;
-      if (type != function.result_type)
+      constexpr auto type = get_type_v<R>;
+      static_assert(!is_opaque(type), "invalid result type");
+
+      // also allow to assign view type to non-view type
+      if (type != function.result_type &&
+          type != without_flags(function.result_type, TypeFlags::view))
         throw std::runtime_error("result type mismatch");
 
       if constexpr (type & TypeFlags::array) {
-        // construct array from heap allocation
+        // construct array from heap allocation or span
         auto result = Argument{ };
         function.call(function.function, &result, arguments);
         using T = typename R::value_type;
-        result_value = R{ 
-          static_cast<const T*>(result.data), 
-          static_cast<size_t>(result.count)
-        };
+        const auto begin = static_cast<const T*>(result.data);
+        if constexpr (std::is_same_v<R, std::string_view>) {
+          const auto size = static_cast<size_t>(result.count);
+          result_value = R{ begin, size };
+        }
+        else {
+          const auto end = begin + static_cast<size_t>(result.count);
+          result_value = R{ begin, end };
+        }
         if (result.free)
           result.free(result.data);
       }

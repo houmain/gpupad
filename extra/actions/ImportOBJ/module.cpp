@@ -3,6 +3,8 @@
 #include "rapidobj.hpp"
 #include <span>
 
+using Model = rapidobj::Result;
+
 std::filesystem::path utf8_to_path(std::string_view utf8_string) {
 #if defined(__cpp_char8_t)
   static_assert(sizeof(char) == sizeof(char8_t));
@@ -17,7 +19,9 @@ std::filesystem::path utf8_to_path(std::string_view utf8_string) {
 rapidobj::Result loadFile(const std::string& filename) noexcept try {
   using namespace rapidobj;
   auto material = MaterialLibrary::SearchPath(".", Load::Optional);
-  return ParseFile(utf8_to_path(filename), material);
+  auto result = ParseFile(utf8_to_path(filename), material);
+  Triangulate(result);
+  return result;
 }
 catch (const std::exception& ex) {
   auto result = rapidobj::Result{};
@@ -29,32 +33,43 @@ catch (const std::exception& ex) {
   return result;
 }
 
-std::string getError(const rapidobj::Result& result) {
-  if (!result.error.code)
+std::string getError(const Model& model) {
+  if (!model.error.code)
     return "";
-  return result.error.code.message();
+  return model.error.code.message();
 }
 
-bool triangulate(rapidobj::Result& result) {
-  return Triangulate(result);
+size_t getShapeCount(const Model& model) {
+  return model.shapes.size();
 }
 
-size_t getShapeCount(const rapidobj::Result& result) {
-  return result.shapes.size();
-}
-
-std::span<const rapidobj::Index> getShapeMeshIndices(
-    const rapidobj::Result& result, size_t index) {
-  if (index >= result.shapes.size())
+std::vector<float> getShapeMeshVertices(const Model& model, size_t index) {
+  if (index >= model.shapes.size())
     return { };
-  const auto& indices = result.shapes[index].mesh.indices;
-  return { indices.data(), indices.size() };
+  const auto& mesh = model.shapes[index].mesh;
+  const auto positions = model.attributes.positions.data();
+  const auto normals = model.attributes.normals.data();
+  const auto texcoords = model.attributes.texcoords.data();
+
+  auto result = std::vector<float>();
+  result.reserve(mesh.indices.size() * 8);
+  for (auto i = 0; i < mesh.indices.size(); i += 3) {
+    const auto indices = &mesh.indices[i];
+    for (auto j = 0; j < 3; ++j)
+      result.push_back(positions[indices[j].position_index]);
+    for (auto j = 0; j < 3; ++j)
+      result.push_back((indices[j].normal_index >= 0 ? 
+        (normals[indices[j].normal_index]) : 0));
+    for (auto j = 0; j < 2; ++j)
+      result.push_back((indices[j].texcoord_index >= 0 ? 
+        texcoords[indices[j].texcoord_index] : 0));
+  }
+  return result;
 }
 
 DLLREFLECT_BEGIN()
 DLLREFLECT_FUNC(loadFile)
 DLLREFLECT_FUNC(getError)
-//DLLREFLECT_FUNC(triangulate)
 DLLREFLECT_FUNC(getShapeCount)
-//DLLREFLECT_FUNC(getShapeMeshIndices)
+DLLREFLECT_FUNC(getShapeMeshVertices)
 DLLREFLECT_END()

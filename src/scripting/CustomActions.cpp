@@ -23,6 +23,7 @@ public:
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
             mScriptEngine = std::make_unique<ScriptEngineJavaScript>();
+            mScriptEngine->setTimeout(5000);
             mAppScriptObject = new AppScriptObject(mScriptEngine->jsEngine());
             mScriptEngine->setGlobal("app", mAppScriptObject);
             mScriptEngine->evaluateScript(source, mFilePath, mMessages);
