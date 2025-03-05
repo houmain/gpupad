@@ -190,6 +190,14 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
             result.setProperty(i, begin[i]);                      \
         break;                                                    \
     }
+
+#define ADD_WRAP(TYPE, T, DEST)                                   \
+    case TYPE: {                                                  \
+        const auto begin = static_cast<const T *>(argument.data); \
+        for (auto i = 0; i < argument.count; ++i)                 \
+            result.setProperty(i, static_cast<DEST>(begin[i]));   \
+        break;                                                    \
+    }
                 ADD(dllreflect::Type::Bool, bool)
                 ADD(dllreflect::Type::Char, char)
                 ADD(dllreflect::Type::Int8, int8_t)
@@ -198,11 +206,13 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
                 ADD(dllreflect::Type::UInt16, uint16_t)
                 ADD(dllreflect::Type::Int32, int32_t)
                 ADD(dllreflect::Type::UInt32, uint32_t)
-                //ADD(dllreflect::Type::Int64, int64_t)
-                //ADD(dllreflect::Type::UInt64, uint64_t)
+                // TODO: QJSValue does not have a qlonglong constructor, yet?
+                ADD_WRAP(dllreflect::Type::Int64, int64_t, int)
+                ADD_WRAP(dllreflect::Type::UInt64, uint64_t, uint)
                 ADD(dllreflect::Type::Float, float)
                 ADD(dllreflect::Type::Double, double)
 #undef ADD
+#undef ADD_CLAMP
             case dllreflect::Type::Void: break;
             }
             return true;
@@ -240,12 +250,13 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
             ADD(dllreflect::Type::UInt16, uint16_t)
             ADD(dllreflect::Type::Int32, int32_t)
             ADD(dllreflect::Type::UInt32, uint32_t)
-            // QJSValue does not have a qlonglong constructor, yet?
+            // TODO: QJSValue does not have a qlonglong constructor, yet?
             ADD_CHECKED(dllreflect::Type::Int64, int64_t, int)
             ADD_CHECKED(dllreflect::Type::UInt64, uint64_t, uint)
             ADD(dllreflect::Type::Float, float)
             ADD(dllreflect::Type::Double, double)
 #undef ADD
+#undef ADD_CHECKED
 
         case dllreflect::Type::Void: ok = true; break;
         }

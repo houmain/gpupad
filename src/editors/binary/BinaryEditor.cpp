@@ -68,7 +68,7 @@ BinaryEditor::BinaryEditor(QString fileName, BinaryEditorToolBar *editorToolbar,
     , mFileName(fileName)
 {
     horizontalHeader()->setVisible(false);
-    horizontalHeader()->setDefaultSectionSize(mColumnWidth);
+    horizontalHeader()->setDefaultSectionSize(mColumnWidth + 3);
     horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
     verticalHeader()->setDefaultSectionSize(mRowHeight);
     verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
