@@ -53,7 +53,7 @@ std::vector<float> getShapeMeshVertices(const Model& model, size_t index) {
 
   auto result = std::vector<float>();
   result.reserve(mesh.indices.size() * 8);
-  for (auto i = 0; i < mesh.indices.size(); i += 3) {
+  for (auto i = 0u; i < mesh.indices.size(); i += 3) {
     const auto indices = &mesh.indices[i];
     for (auto j = 0; j < 3; ++j)
       result.push_back(positions[indices[j].position_index]);

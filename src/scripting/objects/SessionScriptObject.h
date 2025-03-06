@@ -29,9 +29,9 @@ public:
     QJSValue sessionItems();
 
     Q_INVOKABLE void clear();
+    Q_INVOKABLE QJSValue item(QJSValue itemDesc);
     Q_INVOKABLE QJSValue insertItem(QJSValue object);
     Q_INVOKABLE QJSValue insertItem(QJSValue itemDesc, QJSValue object);
-    Q_INVOKABLE QJSValue getItem(QJSValue itemDesc);
     Q_INVOKABLE void clearItem(QJSValue itemDesc);
     Q_INVOKABLE void deleteItem(QJSValue itemDesc);
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstring>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -156,47 +157,44 @@ namespace detail {
     }
   }
 
-  template<typename T>
-  struct get_type {
-    constexpr static Type type = (static_cast<Type>(unique_id<T>()) | TypeFlags::opaque);
-  };
-  template<> constexpr Type get_type<void>::type = Type::Void;
-  template<> constexpr Type get_type<bool>::type = Type::Bool;
-  template<> constexpr Type get_type<char>::type = Type::Char;
-  template<> constexpr Type get_type<int8_t>::type = Type::Int8;
-  template<> constexpr Type get_type<uint8_t>::type = Type::UInt8;
-  template<> constexpr Type get_type<int16_t>::type = Type::Int16;
-  template<> constexpr Type get_type<uint16_t>::type = Type::UInt16;
-  template<> constexpr Type get_type<int32_t>::type = Type::Int32;
-  template<> constexpr Type get_type<uint32_t>::type = Type::UInt32;
-  template<> constexpr Type get_type<int64_t>::type = Type::Int64;
-  template<> constexpr Type get_type<uint64_t>::type = Type::UInt64;
-  template<> constexpr Type get_type<float>::type = Type::Float;
-  template<> constexpr Type get_type<double>::type = Type::Double;
-
-  template<> constexpr Type get_type<std::string>::type = (Type::Char | TypeFlags::array);
-  template<> constexpr Type get_type<std::string_view>::type = 
-    (Type::Char | TypeFlags::array | TypeFlags::view);
-  template<> constexpr Type get_type<const char*>::type = 
-    (Type::Char | TypeFlags::array | TypeFlags::view);
   constexpr inline Type add_flags_if_not_opaque(Type type, TypeFlags flags) {
     return (is_opaque(type) ? type : (type | flags));
   }
 
-  template<typename T>
-  constexpr inline Type get_type_v = get_type<std::decay_t<T>>::type;
+  template<class T> constexpr Type to_type = (static_cast<Type>(unique_id<T>()) | TypeFlags::opaque);
+
+  template<> constexpr Type to_type<void> = Type::Void;
+  template<> constexpr Type to_type<bool> = Type::Bool;
+  template<> constexpr Type to_type<char> = Type::Char;
+  template<> constexpr Type to_type<int8_t> = Type::Int8;
+  template<> constexpr Type to_type<uint8_t> = Type::UInt8;
+  template<> constexpr Type to_type<int16_t> = Type::Int16;
+  template<> constexpr Type to_type<uint16_t> = Type::UInt16;
+  template<> constexpr Type to_type<int32_t> = Type::Int32;
+  template<> constexpr Type to_type<uint32_t> = Type::UInt32;
+  template<> constexpr Type to_type<int64_t> = Type::Int64;
+  template<> constexpr Type to_type<uint64_t> = Type::UInt64;
+  template<> constexpr Type to_type<float> = Type::Float;
+  template<> constexpr Type to_type<double> = Type::Double;
+
+  template<> constexpr Type to_type<std::string> = (Type::Char | TypeFlags::array);
+
+  template<> constexpr Type to_type<std::string_view> =
+    (Type::Char | TypeFlags::array | TypeFlags::view);
+
+  template<> constexpr Type to_type<const char*> =
+    (Type::Char | TypeFlags::array | TypeFlags::view);
 
   template<typename T, typename A>
-  struct get_type<std::vector<T, A>> {
-    constexpr static Type type = 
-      (add_flags_if_not_opaque(get_type_v<T>, TypeFlags::array));
-  };
+  constexpr Type to_type<std::vector<T, A>> =
+    add_flags_if_not_opaque(to_type<T>, TypeFlags::array);
 
   template<typename T>
-  struct get_type<span<const T>> {
-    constexpr static Type type = 
-      (add_flags_if_not_opaque(get_type_v<T>, TypeFlags::array | TypeFlags::view));
-  };
+  constexpr Type to_type<span<const T>> =
+    add_flags_if_not_opaque(to_type<T>, TypeFlags::array | TypeFlags::view);
+
+  template<typename T>
+  constexpr inline Type get_type_v = to_type<std::decay_t<T>>;
 
   template<typename T>
   struct get_argument {
@@ -369,9 +367,9 @@ constexpr Function describe(const char* name, R(*function)(Args...)) {
     get_type_v<R>,
     sizeof...(Args),
     TypeList<Args...>::types,
-    function,
+    reinterpret_cast<const void*>(function),
     [](const void* _func, Argument* result, const Argument* arguments) {
-      auto func = static_cast<R(*)(Args...)>(_func);
+      auto func = reinterpret_cast<R(*)(Args...)>(_func);
       if constexpr(std::is_same_v<R, void>) {
         call_with_args<decltype(func), R, Args...>(func, 
           std::index_sequence_for<Args...>{}, arguments);

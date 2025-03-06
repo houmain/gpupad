@@ -52,7 +52,7 @@ namespace {
         const auto utf8 = string.toUtf8();
         argument.count = utf8.size();
         argument.data = new char[argument.count];
-        argument.free = [](void *data) { delete[] data; };
+        argument.free = [](void *data) { delete[] static_cast<char*>(data); };
         std::memcpy(argument.data, utf8.constData(), argument.count);
     }
 
@@ -186,7 +186,7 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
 #define ADD(TYPE, T)                                              \
     case TYPE: {                                                  \
         const auto begin = static_cast<const T *>(argument.data); \
-        for (auto i = 0; i < argument.count; ++i)                 \
+        for (auto i = 0u; i < argument.count; ++i)                \
             result.setProperty(i, begin[i]);                      \
         break;                                                    \
     }
@@ -194,7 +194,7 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
 #define ADD_WRAP(TYPE, T, DEST)                                   \
     case TYPE: {                                                  \
         const auto begin = static_cast<const T *>(argument.data); \
-        for (auto i = 0; i < argument.count; ++i)                 \
+        for (auto i = 0u; i < argument.count; ++i)                \
             result.setProperty(i, static_cast<DEST>(begin[i]));   \
         break;                                                    \
     }

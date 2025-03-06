@@ -427,7 +427,7 @@ QJSValue SessionScriptObject::insertItem(QJSValue itemDesc, QJSValue object)
     return engine().newQObject(new ItemObject(this, id));
 }
 
-QJSValue SessionScriptObject::getItem(QJSValue itemDesc)
+QJSValue SessionScriptObject::item(QJSValue itemDesc)
 {
     const auto itemId = getItemId(itemDesc);
     auto &session = threadSessionModel();
