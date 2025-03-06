@@ -16,7 +16,7 @@ std::filesystem::path utf8_to_path(std::string_view utf8_string) {
 #endif
 }
 
-rapidobj::Result loadFile(const std::string& filename) noexcept try {
+Model loadFile(const std::string& filename) noexcept try {
   using namespace rapidobj;
   auto material = MaterialLibrary::SearchPath(".", Load::Optional);
   auto result = ParseFile(utf8_to_path(filename), material);
@@ -24,7 +24,7 @@ rapidobj::Result loadFile(const std::string& filename) noexcept try {
   return result;
 }
 catch (const std::exception& ex) {
-  auto result = rapidobj::Result{};
+  auto result = Model{};
   result.error = { 
     std::make_error_code(std::io_errc::stream),
     ex.what(),

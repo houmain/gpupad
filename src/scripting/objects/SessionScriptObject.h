@@ -13,7 +13,8 @@ struct Item;
 class SessionScriptObject : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QJSValue items READ rootItems CONSTANT)
+    Q_PROPERTY(QString name READ sessionName WRITE setSessionName)
+    Q_PROPERTY(QJSValue items READ sessionItems CONSTANT)
 
 public:
     explicit SessionScriptObject(QObject *parent = nullptr);
@@ -21,11 +22,16 @@ public:
 
     void beginBackgroundUpdate(SessionModel *sessionCopy);
     void endBackgroundUpdate();
-
-    QJSValue rootItems();
     QJSValue getItem(QModelIndex index);
-    Q_INVOKABLE QJSValue item(QJSValue itemDesc);
+
+    QString sessionName();
+    void setSessionName(QString name);
+    QJSValue sessionItems();
+
     Q_INVOKABLE void clear();
+    Q_INVOKABLE QJSValue insertItem(QJSValue object);
+    Q_INVOKABLE QJSValue insertItem(QJSValue itemDesc, QJSValue object);
+    Q_INVOKABLE QJSValue getItem(QJSValue itemDesc);
     Q_INVOKABLE void clearItem(QJSValue itemDesc);
     Q_INVOKABLE void deleteItem(QJSValue itemDesc);
 
@@ -46,7 +52,7 @@ private:
     ItemId getItemId(QJSValue itemDesc);
 
     QJSEngine *mEngine{};
-    QJSValue mRootItemsList;
+    QJSValue mSessionItems;
     MessagePtrSet mMessages;
     SessionModel *mSessionCopy{};
     std::vector<UpdateFunction> mPendingUpdates;

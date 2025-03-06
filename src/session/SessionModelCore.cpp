@@ -394,9 +394,9 @@ ItemId SessionModelCore::getNextItemId()
     return mNextItemId;
 }
 
-QModelIndex SessionModelCore::sessionItemIndex() const
+QModelIndex SessionModelCore::sessionItemIndex(ColumnType column) const
 {
-    return index(0, 0);
+    return index(0, column);
 }
 
 const Session &SessionModelCore::sessionItem() const
