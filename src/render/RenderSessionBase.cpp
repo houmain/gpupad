@@ -55,11 +55,10 @@ void RenderSessionBase::prepare(bool itemsChanged,
 
 void RenderSessionBase::configure()
 {
-    mScriptSession->beginSessionUpdate(&mSessionCopy);
+    auto &session = mSessionCopy;
+    mScriptSession->beginSessionUpdate(&session);
 
     auto &scriptEngine = mScriptSession->engine();
-    const auto &session = mSessionCopy;
-
     session.forEachItem([&](const Item &item) {
         if (auto script = castItem<Script>(item)) {
             auto source = QString();

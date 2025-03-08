@@ -49,7 +49,14 @@ private:
     SessionModel &threadSessionModel();
     QJSEngine &engine();
     void withSessionModel(UpdateFunction &&updateFunction);
-    ItemId getItemId(QJSValue itemDesc);
+    ItemId getItemId(const QJSValue &itemDesc);
+    const Item *getItem(const QJSValue &itemDesc);
+
+    template <typename T>
+    const T *getItem(const QJSValue &itemDesc)
+    {
+        return castItem<T>(getItem(itemDesc));
+    }
 
     QJSEngine *mEngine{};
     QJSValue mSessionItems;

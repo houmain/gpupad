@@ -374,7 +374,7 @@ QJSValue SessionScriptObject::sessionItems()
     return mSessionItems;
 }
 
-ItemId SessionScriptObject::getItemId(QJSValue itemDesc)
+ItemId SessionScriptObject::getItemId(const QJSValue &itemDesc)
 {
     if (itemDesc.isObject())
         return itemDesc.property("id").toInt();
@@ -395,8 +395,10 @@ ItemId SessionScriptObject::getItemId(QJSValue itemDesc)
 
 QJSValue SessionScriptObject::getItem(QModelIndex index)
 {
-    const auto itemId = Singletons::sessionModel().getItemId(index);
-    return engine().newQObject(new ItemObject(this, itemId));
+    Q_ASSERT(index.isValid());
+    auto &session = threadSessionModel();
+    auto item = session.getItem(index);
+    return engine().newQObject(new ItemObject(this, item.id));
 }
 
 QJSValue SessionScriptObject::insertItem(QJSValue object)
@@ -407,34 +409,50 @@ QJSValue SessionScriptObject::insertItem(QJSValue object)
 
 QJSValue SessionScriptObject::insertItem(QJSValue itemDesc, QJSValue object)
 {
-    const auto parentItemId = getItemId(itemDesc);
-    auto &session = threadSessionModel();
-    if (!session.findItem(parentItemId)) {
-        engine().throwError(QStringLiteral("invalid item '%1'").arg(parentItemId));
+    auto update = engine().toScriptValue(object).toVariant().toJsonObject();
+    if (update.isEmpty()) {
+        engine().throwError(QStringLiteral("Invalid object"));
         return QJSValue::UndefinedValue;
     }
 
-    auto update = engine().toScriptValue(object).toVariant().toJsonObject();
+    auto parent = getItem(itemDesc);
+    if (!parent)
+        return QJSValue::UndefinedValue;
+
     const auto id = threadSessionModel().getNextItemId();
     update.insert("id", id);
 
-    withSessionModel([parentItemId, update](SessionModel &session) {
-        const auto parent = session.getIndex(session.findItem(parentItemId),
+    withSessionModel([parentId = parent->id, update](SessionModel &session) {
+        const auto parent = session.getIndex(session.findItem(parentId),
             SessionModel::ColumnType::Name);
+        Q_ASSERT(!update.isEmpty());
         session.dropJson({ update }, session.rowCount(parent), parent, true);
     });
 
     return engine().newQObject(new ItemObject(this, id));
 }
 
-QJSValue SessionScriptObject::item(QJSValue itemDesc)
+const Item *SessionScriptObject::getItem(const QJSValue &itemDesc)
 {
     const auto itemId = getItemId(itemDesc);
     auto &session = threadSessionModel();
-    if (!session.findItem(itemId)) {
-        engine().throwError(QStringLiteral("invalid item '%1'").arg(itemId));
+    if (auto item = session.findItem(itemId))
+        return item;
+
+    engine().throwError(QStringLiteral("Invalid item '%1'").arg(itemId));
+    return nullptr;
+}
+
+QJSValue SessionScriptObject::item(QJSValue itemDesc)
+{
+    const auto itemId = getItemId(itemDesc);
+    if (!itemId)
         return QJSValue::UndefinedValue;
-    }
+
+    auto item = getItem(itemDesc);
+    if (!item)
+        return QJSValue::UndefinedValue;
+
     return engine().newQObject(new ItemObject(this, itemId));
 }
 
@@ -445,53 +463,55 @@ void SessionScriptObject::clear()
 
 void SessionScriptObject::clearItem(QJSValue itemDesc)
 {
-    withSessionModel([itemId = getItemId(itemDesc)](SessionModel &session) {
-        const auto index = session.getIndex(session.findItem(itemId));
-        if (index.isValid())
-            session.removeRows(0, session.rowCount(index), index);
-    });
+    if (const auto item = getItem(itemDesc))
+        withSessionModel([itemId = item->id](SessionModel &session) {
+            const auto index = session.getIndex(session.findItem(itemId));
+            if (index.isValid())
+                session.removeRows(0, session.rowCount(index), index);
+        });
 }
 
 void SessionScriptObject::deleteItem(QJSValue itemDesc)
 {
-    withSessionModel([itemId = getItemId(itemDesc)](SessionModel &session) {
-        const auto index = session.getIndex(session.findItem(itemId));
-        if (index.isValid())
-            session.deleteItem(index);
-    });
+    if (const auto item = getItem(itemDesc))
+        withSessionModel([itemId = item->id](SessionModel &session) {
+            const auto index = session.getIndex(session.findItem(itemId));
+            if (index.isValid())
+                session.deleteItem(index);
+        });
 }
 
 void SessionScriptObject::setBufferData(QJSValue itemDesc, QJSValue data)
 {
-    if (auto buffer =
-            threadSessionModel().findItem<Buffer>(getItemId(itemDesc)))
-        if (!buffer->items.isEmpty())
-            if (auto block = castItem<Block>(buffer->items[0]))
-                return withSessionModel([this, bufferId = buffer->id,
-                                            data = toByteArray(data, *block)](
-                                            SessionModel &session) {
-                    if (auto buffer = session.findItem<Buffer>(bufferId)) {
-                        ensureFileName(session, buffer);
-                        if (onMainThread())
-                            if (auto editor = openBinaryEditor(*buffer)) {
-                                editor->replace(data, false);
-                                mUpdatedEditor = true;
-                            }
-                    }
-                });
+    if (const auto buffer = getItem<Buffer>(itemDesc)) {
+        auto block = castItem<Block>(buffer->items[0]);
+        if (!block || block->items.empty()) {
+            engine().throwError(QStringLiteral("Buffer structure not defined"));
+            return;
+        }
 
-    mMessages += MessageList::insert(0, MessageType::ScriptError,
-        "setBufferData failed");
+        withSessionModel(
+            [this, bufferId = buffer->id,
+                data = toByteArray(data, *block)](SessionModel &session) {
+                if (auto buffer = session.findItem<Buffer>(bufferId)) {
+                    ensureFileName(session, buffer);
+                    if (onMainThread())
+                        if (auto editor = openBinaryEditor(*buffer)) {
+                            editor->replace(data, false);
+                            mUpdatedEditor = true;
+                        }
+                }
+            });
+    }
 }
 
 void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
 {
-    if (auto block =
-            threadSessionModel().findItem<Block>(getItemId(itemDesc))) {
+    if (const auto block = getItem<Block>(itemDesc)) {
         Singletons::evaluatedPropertyCache().invalidate(block->id);
-        return withSessionModel([this, blockId = block->id,
-                                    data = toByteArray(data, *block)](
-                                    SessionModel &session) {
+        withSessionModel([this, blockId = block->id,
+                             data = toByteArray(data, *block)](
+                             SessionModel &session) {
             if (auto block = session.findItem<Block>(blockId))
                 if (auto buffer = castItem<Buffer>(block->parent)) {
                     ensureFileName(session, castItem<Buffer>(block->parent));
@@ -507,16 +527,12 @@ void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
                 }
         });
     }
-
-    mMessages +=
-        MessageList::insert(0, MessageType::ScriptError, "setBlockData failed");
 }
 
 void SessionScriptObject::setTextureData(QJSValue itemDesc, QJSValue data)
 {
-    if (auto texture =
-            threadSessionModel().findItem<Texture>(getItemId(itemDesc)))
-        return withSessionModel(
+    if (const auto texture = getItem<Texture>(itemDesc))
+        withSessionModel(
             [this, textureId = texture->id,
                 data = toTextureData(data, *texture)](SessionModel &session) {
                 if (auto texture = session.findItem<Texture>(textureId)) {
@@ -528,49 +544,36 @@ void SessionScriptObject::setTextureData(QJSValue itemDesc, QJSValue data)
                         }
                 }
             });
-
-    mMessages += MessageList::insert(0, MessageType::ScriptError,
-        "setTextureData failed");
 }
 
 void SessionScriptObject::setShaderSource(QJSValue itemDesc, QJSValue data)
 {
-    if (auto shader =
-            threadSessionModel().findItem<Shader>(getItemId(itemDesc)))
-        return withSessionModel(
-            [this, shaderId = shader->id,
-                data = data.toString()](SessionModel &session) {
-                if (auto shader = session.findItem<Shader>(shaderId)) {
-                    ensureFileName(session, shader);
-                    if (onMainThread())
-                        if (auto editor = openSourceEditor(*shader)) {
-                            editor->replace(data);
-                            mUpdatedEditor = true;
-                        }
-                }
-            });
-
-    mMessages += MessageList::insert(0, MessageType::ScriptError,
-        "setShaderSource failed");
+    if (const auto shader = getItem<Shader>(itemDesc))
+        withSessionModel([this, shaderId = shader->id,
+                             data = data.toString()](SessionModel &session) {
+            if (auto shader = session.findItem<Shader>(shaderId)) {
+                ensureFileName(session, shader);
+                if (onMainThread())
+                    if (auto editor = openSourceEditor(*shader)) {
+                        editor->replace(data);
+                        mUpdatedEditor = true;
+                    }
+            }
+        });
 }
 
 void SessionScriptObject::setScriptSource(QJSValue itemDesc, QJSValue data)
 {
-    if (auto script =
-            threadSessionModel().findItem<Script>(getItemId(itemDesc)))
-        return withSessionModel(
-            [this, scriptId = script->id,
-                data = data.toString()](SessionModel &session) {
-                if (auto script = session.findItem<Script>(scriptId)) {
-                    ensureFileName(session, script);
-                    if (onMainThread())
-                        if (auto editor = openSourceEditor(*script)) {
-                            editor->replace(data);
-                            mUpdatedEditor = true;
-                        }
-                }
-            });
-
-    mMessages += MessageList::insert(0, MessageType::ScriptError,
-        "setScriptSource failed");
+    if (const auto script = getItem<Script>(itemDesc))
+        withSessionModel([this, scriptId = script->id,
+                             data = data.toString()](SessionModel &session) {
+            if (auto script = session.findItem<Script>(scriptId)) {
+                ensureFileName(session, script);
+                if (onMainThread())
+                    if (auto editor = openSourceEditor(*script)) {
+                        editor->replace(data);
+                        mUpdatedEditor = true;
+                    }
+            }
+        });
 }
