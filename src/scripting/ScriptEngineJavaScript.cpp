@@ -139,10 +139,7 @@ void ScriptEngineJavaScript::evaluateScript(const QString &script,
     resetInterruptTimer();
 
     auto result = mJsEngine->evaluate(script, fileName);
-    if (result.isError())
-        messages += MessageList::insert(fileName,
-            result.property("lineNumber").toInt(), MessageType::ScriptError,
-            result.toString());
+    outputError(result, 0, messages);
 }
 
 ScriptValueList ScriptEngineJavaScript::evaluateValues(
@@ -166,7 +163,15 @@ void ScriptEngineJavaScript::outputError(const QJSValue &result, ItemId itemId,
         && mOmitReferenceErrors)
         return;
 
-    const auto message = result.toString();
+    // clean up message
+    auto message = result.property("message").toString();
+    message.replace("ScriptObject(", "(");
+    static const auto sRemoveAddressRegex = QRegularExpression("of object ([^(]+)\\([^)]+\\)");
+    message.replace(sRemoveAddressRegex, "of object \\1");
+
+    // a stack trace would also be available
+    //const auto stack = result.property("stack").toString();
+
     const auto fileName = result.property("fileName").toString();
     if (!fileName.isEmpty()) {
         const auto lineNumber = result.property("lineNumber").toInt();
