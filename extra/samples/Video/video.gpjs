@@ -1,116 +1,133 @@
-[
-    {
-        "format": "RGBA8_UNorm",
-        "height": 896,
-        "id": 10,
-        "name": "TargetColor",
-        "target": "Target2D",
-        "type": "Texture",
-        "width": 512
-    },
-    {
-        "blendConstant": "#ffffffff",
-        "cullMode": "NoCulling",
-        "frontFace": "CCW",
-        "id": 7,
-        "items": [
-            {
-                "blendAlphaDest": "Zero",
-                "blendAlphaEq": "Add",
-                "blendAlphaSource": "One",
-                "blendColorDest": "Zero",
-                "blendColorEq": "Add",
-                "blendColorSource": "One",
-                "colorWriteMask": 15,
-                "id": 8,
-                "level": 0,
-                "name": "Color",
-                "textureId": 10,
-                "type": "Attachment"
-            }
-        ],
-        "logicOperation": "NoLogicOperation",
-        "name": "Target",
-        "type": "Target"
-    },
-    {
-        "fileName": "robin.mp4",
-        "format": "RGBA8_UNorm",
-        "height": 256,
-        "id": 105,
-        "target": "Target2D",
-        "type": "Texture",
-        "width": 256
-    },
-    {
-        "bindingType": "Sampler",
-        "borderColor": "#ff000000",
-        "comparisonFunc": "NoComparisonFunc",
-        "id": 109,
-        "magFilter": "Linear",
-        "minFilter": "LinearMipMapLinear",
-        "name": "uTexture",
-        "textureId": 105,
-        "type": "Binding",
-        "wrapModeX": "MirroredRepeat",
-        "wrapModeY": "MirroredRepeat",
-        "wrapModeZ": "Repeat"
-    },
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression",
-        "id": 111,
-        "name": "uTime",
-        "type": "Binding",
-        "values": [
-            "(Date.now() % 100000) / 1000"
-        ]
-    },
-    {
-        "id": 1,
-        "items": [
-            {
-                "fileName": "attributeless.vs",
-                "id": 2,
-                "shaderType": "Vertex",
-                "type": "Shader"
-            },
-            {
-                "fileName": "textured.fs",
-                "id": 3,
-                "shaderType": "Fragment",
-                "type": "Shader"
-            }
-        ],
-        "name": "Program",
-        "type": "Program"
-    },
-    {
-        "callType": "ClearTexture",
-        "checked": true,
-        "clearColor": "#00000000",
-        "clearDepth": 1,
-        "clearStencil": 0,
-        "executeOn": "EveryEvaluation",
-        "id": 110,
-        "name": "Clear",
-        "textureId": 10,
-        "type": "Call"
-    },
-    {
-        "baseInstance": "0",
-        "callType": "Draw",
-        "checked": true,
-        "count": "4",
-        "executeOn": "EveryEvaluation",
-        "first": "0",
-        "id": 4,
-        "instanceCount": "1",
-        "name": "Draw",
-        "primitiveType": "TriangleStrip",
-        "programId": 1,
-        "targetId": 7,
-        "type": "Call",
-        "vertexStreamId": 17
-    }
-]
+{
+    "id": 954,
+    "items": [
+        {
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "896",
+            "id": 10,
+            "name": "TargetColor",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "blendConstant": "#ffffffff",
+            "cullMode": "NoCulling",
+            "frontFace": "CCW",
+            "id": 7,
+            "items": [
+                {
+                    "blendAlphaDest": "Zero",
+                    "blendAlphaEq": "Add",
+                    "blendAlphaSource": "One",
+                    "blendColorDest": "Zero",
+                    "blendColorEq": "Add",
+                    "blendColorSource": "One",
+                    "colorWriteMask": 15,
+                    "id": 8,
+                    "level": 0,
+                    "name": "Color",
+                    "textureId": 10,
+                    "type": "Attachment"
+                }
+            ],
+            "logicOperation": "NoLogicOperation",
+            "name": "Target",
+            "polygonMode": "Fill",
+            "type": "Target"
+        },
+        {
+            "fileName": "robin.mp4",
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "512",
+            "id": 105,
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "anisotropic": false,
+            "bindingType": "Sampler",
+            "borderColor": "#ff000000",
+            "comparisonFunc": "NoComparisonFunc",
+            "id": 109,
+            "magFilter": "Linear",
+            "minFilter": "LinearMipMapLinear",
+            "name": "uTexture",
+            "textureId": 105,
+            "type": "Binding",
+            "wrapModeX": "MirroredRepeat",
+            "wrapModeY": "MirroredRepeat",
+            "wrapModeZ": "Repeat"
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 111,
+            "name": "uTime",
+            "type": "Binding",
+            "values": [
+                "(Date.now() % 100000) / 1000"
+            ]
+        },
+        {
+            "id": 1,
+            "items": [
+                {
+                    "fileName": "attributeless.vs",
+                    "id": 2,
+                    "language": "GLSL",
+                    "shaderType": "Vertex",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "textured.fs",
+                    "id": 3,
+                    "language": "GLSL",
+                    "shaderType": "Fragment",
+                    "type": "Shader"
+                }
+            ],
+            "name": "Program",
+            "type": "Program"
+        },
+        {
+            "callType": "ClearTexture",
+            "checked": true,
+            "clearColor": "#00000000",
+            "clearDepth": 1,
+            "clearStencil": 0,
+            "executeOn": "EveryEvaluation",
+            "id": 110,
+            "name": "Clear",
+            "textureId": 10,
+            "type": "Call"
+        },
+        {
+            "baseInstance": "0",
+            "callType": "Draw",
+            "checked": true,
+            "count": "4",
+            "executeOn": "EveryEvaluation",
+            "first": "0",
+            "id": 4,
+            "instanceCount": "1",
+            "name": "Draw",
+            "primitiveType": "TriangleStrip",
+            "programId": 1,
+            "targetId": 7,
+            "type": "Call",
+            "vertexStreamId": 17
+        }
+    ],
+    "name": "Session",
+    "renderer": "OpenGL",
+    "shaderCompiler": "",
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "type": "Session"
+}

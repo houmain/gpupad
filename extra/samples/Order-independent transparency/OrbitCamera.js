@@ -136,12 +136,12 @@ const azimuthAngle = 0.5
 const polarAngle = 0.2
 const camera = new OrbitCamera(center, up, radius, minRadius, azimuthAngle, polarAngle)
 
-function updateOrbitCamera(mouse) {
-  if (mouse.buttons[0] == 1) {
-    camera.rotateAzimuth(2 * mouse.delta[0])
-    camera.rotatePolar(2 * -mouse.delta[1])
+function updateOrbitCamera() {
+  if (app.mouse.buttons[0] == 1) {
+    camera.rotateAzimuth(2 * app.mouse.delta[0])
+    camera.rotatePolar(2 * -app.mouse.delta[1])
   }
-  if (mouse.buttons[2] == 1) {
+  if (app.mouse.buttons[2] == 1) {
     camera.zoom(mouse.delta[1] * -10)
   }
   return camera.getViewMatrix();

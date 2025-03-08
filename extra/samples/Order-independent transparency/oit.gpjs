@@ -2,6 +2,7 @@
     "autoMapBindings": false,
     "autoMapLocations": false,
     "autoSampledTextures": false,
+    "flipViewport": false,
     "id": 2,
     "items": [
         {
@@ -343,7 +344,7 @@
                     "name": "Camera.viewMatrix",
                     "type": "Binding",
                     "values": [
-                        "updateOrbitCamera(Mouse)"
+                        "updateOrbitCamera()"
                     ]
                 },
                 {
@@ -501,6 +502,7 @@
     ],
     "name": "Session",
     "renderer": "Vulkan",
+    "reverseCulling": true,
     "shaderIncludePaths": "",
     "shaderPreamble": "",
     "type": "Session",

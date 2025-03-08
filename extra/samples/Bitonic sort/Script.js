@@ -2,41 +2,49 @@
 // based on DirectX SDK's Direct3D 11 sample
 // https://github.com/walbourn/directx-sdk-samples/tree/main/ComputeShaderSort11
 
-if (!Session.items.Dynamic)
-  Session.items.Dynamic = { }
-let Dynamic = Session.items.Dynamic
-Session.clearItem(Dynamic)
+let Dynamic = app.session.item('Dynamic')
+if (!Dynamic)
+  Dynamic = app.session.insertItem({
+    type: 'Group',
+    name: 'Dynamic'
+  })
+app.session.clearItem(Dynamic)
 
-let Buffer1 = Session.items.Buffer1;
-let Buffer2 = Session.items.Buffer2;
-let BitonicSort =  Session.items.BitonicSort;
-let MatrixTranspose =  Session.items.MatrixTranspose;
+let Buffer1 = app.session.item('Buffer1')
+let Buffer2 = app.session.item('Buffer2')
+let Buffer1Block = app.session.item('Buffer1/Block')
+let Buffer2Block = app.session.item('Buffer2/Block')
+let BitonicSort = app.session.item('BitonicSort')
+let MatrixTranspose = app.session.item('MatrixTranspose')
 
 function SetConstants(level, levelMask, width, height) {
-  Dynamic.items.uConstants = {
-    type: 'Binding',
+  app.session.insertItem(Dynamic, {
+    type: 'Binding',    
+    name: 'uConstants',
     editor: 'Expression4',
     values: [ level, levelMask, width, height ]
-  }
+  })
 }
 
 function BindBuffer(name, buffer) {
-  Dynamic.items[name] = {
-    type: 'Binding',
+  app.session.insertItem(Dynamic, {
+    type: 'Binding',    
+    name: name,
     bindingType: 'Buffer',
     bufferId: buffer.id
-  }
+  })
 }
 
 function Dispatch(program, workGroupsX, workGroupsY, workGroupsZ) {
-  Dynamic.items[program.name] = {
+  app.session.insertItem(Dynamic, {
     type: 'Call',
+    name: program.name,
     callType: 'Compute',
     programId: program.id,
     workGroupsX: workGroupsX,
     workGroupsY: workGroupsY,
     workGroupsZ: workGroupsZ,
-  }
+  })
 }
 
 // The number of elements to sort is limited to an even power of 2
@@ -48,8 +56,8 @@ TRANSPOSE_BLOCK_SIZE = 16;
 MATRIX_WIDTH = BITONIC_BLOCK_SIZE;
 MATRIX_HEIGHT = NUM_ELEMENTS / BITONIC_BLOCK_SIZE;
 
-Buffer1.items.Block.rowCount = NUM_ELEMENTS;
-Buffer2.items.Block.rowCount = NUM_ELEMENTS;
+Buffer1Block.rowCount = NUM_ELEMENTS;
+Buffer2Block.rowCount = NUM_ELEMENTS;
 
 BindBuffer('bData', Buffer1);
 
