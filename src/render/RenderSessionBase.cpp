@@ -58,25 +58,32 @@ void RenderSessionBase::configure()
     auto &session = mSessionCopy;
     mScriptSession->beginSessionUpdate(&session);
 
-    auto &scriptEngine = mScriptSession->engine();
+    // collect items to evaluate, since doing so can modify list
+    auto itemsToEvaluate = QVector<const Item *>();
     session.forEachItem([&](const Item &item) {
         if (auto script = castItem<Script>(item)) {
-            auto source = QString();
             if (shouldExecute(script->executeOn, mEvaluationType))
-                if (Singletons::fileCache().getSource(script->fileName,
-                        &source))
-                    scriptEngine.evaluateScript(source, script->fileName,
-                        mMessages);
+                itemsToEvaluate.append(script);
         } else if (auto binding = castItem<Binding>(item)) {
-            const auto &b = *binding;
-            if (b.bindingType == Binding::BindingType::Uniform) {
-                // set global in script state
-                auto values =
-                    scriptEngine.evaluateValues(b.values, b.id, mMessages);
-                scriptEngine.setGlobal(b.name, values);
-            }
+            if (binding->bindingType == Binding::BindingType::Uniform)
+                itemsToEvaluate.append(binding);
         }
     });
+
+    auto &scriptEngine = mScriptSession->engine();
+    for (const auto *item : itemsToEvaluate) {
+        if (auto script = castItem<Script>(item)) {
+            auto source = QString();
+            if (Singletons::fileCache().getSource(script->fileName, &source))
+                scriptEngine.evaluateScript(source, script->fileName,
+                    mMessages);
+        } else if (auto binding = castItem<Binding>(item)) {
+            // set global in script state
+            auto values = scriptEngine.evaluateValues(binding->values,
+                binding->id, mMessages);
+            scriptEngine.setGlobal(binding->name, values);
+        }
+    }
 }
 
 void RenderSessionBase::configured()

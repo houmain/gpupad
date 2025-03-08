@@ -425,7 +425,6 @@ QJSValue SessionScriptObject::insertItem(QJSValue itemDesc, QJSValue object)
     withSessionModel([parentId = parent->id, update](SessionModel &session) {
         const auto parent = session.getIndex(session.findItem(parentId),
             SessionModel::ColumnType::Name);
-        Q_ASSERT(!update.isEmpty());
         session.dropJson({ update }, session.rowCount(parent), parent, true);
     });
 

@@ -407,7 +407,7 @@ void SessionModel::dropJson(const QJsonArray &jsonArray, int row,
 
     // fixup item references
     for (ItemId prevId : mDroppedIdsReplaced.keys())
-        for (QModelIndex reference : std::as_const(mDroppedReferences))
+        for (const QModelIndex &reference : std::as_const(mDroppedReferences))
             if (data(reference).toInt() == prevId)
                 setData(reference, mDroppedIdsReplaced[prevId]);
     mDroppedIdsReplaced.clear();
@@ -496,7 +496,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
         if (!FileDialog::isEmptyOrUntitled(fileName))
             object["fileName"] = (relativeFilePaths
                     ? QDir::fromNativeSeparators(
-                          QDir::current().relativeFilePath(fileName))
+                        QDir::current().relativeFilePath(fileName))
                     : fileName);
     }
     if (!object.contains("fileName"))
