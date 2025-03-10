@@ -1,7 +1,6 @@
 
 #include "QmlView.h"
 #include <QAction>
-#include <QQmlNetworkAccessManagerFactory>
 
 #if !defined(QtQuick_FOUND)
 
@@ -24,6 +23,7 @@ void QmlView::reset() { }
 #  include <QNetworkAccessManager>
 #  include <QNetworkReply>
 #  include <QQmlAbstractUrlInterceptor>
+#  include <QQmlNetworkAccessManagerFactory>
 #  include <QQmlEngine>
 #  include <QQuickWidget>
 #  include <cstring>
@@ -130,6 +130,10 @@ QmlView::QmlView(QString fileName, QWidget *parent)
     : QFrame(parent)
     , mFileName(fileName)
 {
+    // WORKAROUND: tell QQuickWidget to also use OpenGL for rendering and not turn black
+    // see: https://forum.qt.io/topic/148089/qopenglwidget-doesn-t-work-with-qquickwidget
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 
