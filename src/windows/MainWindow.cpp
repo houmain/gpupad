@@ -334,10 +334,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(mUi->menuCustomActions, &QMenu::aboutToShow, this,
         &MainWindow::updateCustomActionsMenu);
-    connect(mUi->actionManageCustomActions, &QAction::triggered,
-        mCustomActions.get(), &QDialog::show);
 
-    auto* customActionsButton = static_cast<QToolButton*>(mUi->toolBarMain->widgetForAction(mUi->actionCustomActions));
+    auto *customActionsButton = static_cast<QToolButton *>(
+        mUi->toolBarMain->widgetForAction(mUi->actionCustomActions));
     customActionsButton->setMenu(mUi->menuCustomActions);
     customActionsButton->setPopupMode(QToolButton::InstantPopup);
 
@@ -987,10 +986,18 @@ void MainWindow::updateCustomActionsMenu()
     mCustomActions->setSelection(
         mSessionEditor->selectionModel()->selectedIndexes());
 
+    auto actions = mCustomActions->getApplicableActions();
+    if (actions.isEmpty()) {
+        const static auto sEmpty = [&]() {
+            auto action = new QAction(this);
+            action->setText(tr("No custom actions"));
+            action->setEnabled(false);
+            return action;
+        }();
+        actions.append(sEmpty);
+    }
     mUi->menuCustomActions->clear();
-    mUi->menuCustomActions->addActions(mCustomActions->getApplicableActions());
-    mUi->menuCustomActions->addSeparator();
-    mUi->menuCustomActions->addAction(mUi->actionManageCustomActions);
+    mUi->menuCustomActions->addActions(actions);
 }
 
 void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,

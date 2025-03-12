@@ -69,7 +69,6 @@
      <property name="title">
       <string>Cu&amp;stom Actions</string>
      </property>
-     <addaction name="actionManageCustomActions"/>
     </widget>
     <addaction name="actionUndo"/>
     <addaction name="actionRedo"/>
@@ -490,14 +489,6 @@
    </property>
    <property name="shortcut">
     <string>F8</string>
-   </property>
-  </action>
-  <action name="actionManageCustomActions">
-   <property name="text">
-    <string>&amp;Manage...</string>
-   </property>
-   <property name="shortcut">
-    <string>F10</string>
    </property>
   </action>
   <action name="actionOnlineHelp">

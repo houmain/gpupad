@@ -162,7 +162,6 @@ set(SOURCES
   src/scripting/ScriptEngineJavaScript.js
   src/scripting/ScriptSession.cpp
   src/scripting/CustomActions.cpp
-  src/scripting/CustomActions.ui
   src/scripting/objects/AppScriptObject.cpp
   src/scripting/objects/LibraryScriptObject.cpp
   src/scripting/objects/MouseScriptObject.cpp

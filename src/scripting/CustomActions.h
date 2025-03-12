@@ -1,43 +1,26 @@
 #pragma once
 
 #include "MessageList.h"
-#include <QDialog>
-#include <QJsonValue>
 #include <QModelIndex>
-#include <memory>
-#include <vector>
 
-namespace Ui {
-    class CustomActions;
-}
-
-class QFileSystemModel;
 class CustomAction;
+class QAction;
 
-class CustomActions final : public QDialog
+class CustomActions final : public QObject
 {
     Q_OBJECT
 public:
-    explicit CustomActions(QWidget *parent = nullptr);
+    explicit CustomActions(QObject *parent = nullptr);
     ~CustomActions();
 
     void setSelection(const QModelIndexList &selection);
     QList<QAction *> getApplicableActions();
 
 private:
-    void showEvent(QShowEvent *event) override;
-
-    void newAction();
-    void importAction();
-    void editAction();
-    void deleteAction();
     void actionTriggered();
-    void updateWidgets();
     void updateActions();
 
-    Ui::CustomActions *ui;
-    QFileSystemModel *mModel;
-    std::vector<std::unique_ptr<CustomAction>> mActions;
+    std::map<QString, std::unique_ptr<CustomAction>> mActions;
     MessagePtrSet mMessages;
     QModelIndexList mSelection;
 };

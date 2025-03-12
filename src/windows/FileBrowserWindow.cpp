@@ -17,6 +17,7 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent)
     , mFileSystemTree(new QTreeView(this))
     , mRootDirectory(new QComboBox(this))
     , mBrowseButton(new QToolButton(this))
+    , mShowInFileManagerButton(new QToolButton(this))
     , mRecentDirectories(new QStringListModel(this))
 {
     setFrameShape(QFrame::Box);
@@ -30,6 +31,13 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent)
         QIcon(QIcon::fromTheme(QString::fromUtf8("document-open"))));
     mBrowseButton->setAutoRaise(true);
 
+    mShowInFileManagerButton->setIcon(
+        QIcon(QIcon::fromTheme(QString::fromUtf8("dialog-information"))));
+    mShowInFileManagerButton->setAutoRaise(true);
+
+    updateRecentDirectories(getInstallDirectory("actions").path());
+    updateRecentDirectories(getUserDirectory("actions").path());
+
     mRootDirectory->setMinimumWidth(100);
     mRootDirectory->setModel(mRecentDirectories);
 
@@ -39,6 +47,7 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent)
     headerLayout->setSpacing(2);
     headerLayout->addWidget(mRootDirectory);
     headerLayout->addWidget(mBrowseButton);
+    headerLayout->addWidget(mShowInFileManagerButton);
 
     auto titleBar = new WindowTitle();
     titleBar->setWidget(header);
@@ -58,6 +67,8 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent)
 
     connect(mBrowseButton, &QToolButton::clicked, this,
         &FileBrowserWindow::browseDirectory);
+    connect(mShowInFileManagerButton, &QToolButton::clicked, this,
+        &FileBrowserWindow::showInFileManager);
     connect(mFileSystemTree, &QTreeView::activated, this,
         &FileBrowserWindow::itemActivated);
     connect(&Singletons::fileDialog(), &FileDialog::directoryChanged, this,
@@ -122,6 +133,11 @@ void FileBrowserWindow::browseDirectory()
     options.setFlag(FileDialog::Directory);
     if (Singletons::fileDialog().exec(options))
         setRootPath(Singletons::fileDialog().fileName());
+}
+
+void FileBrowserWindow::showInFileManager()
+{
+    ::showInFileManager(mModel->filePath(mFileSystemTree->currentIndex()));
 }
 
 void FileBrowserWindow::updateRecentDirectories(const QString &path)

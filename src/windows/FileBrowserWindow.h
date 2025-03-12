@@ -20,6 +20,7 @@ public:
 
     void setRootPath(const QString &path);
     void browseDirectory();
+    void showInFileManager();
 
 private Q_SLOTS:
     void itemActivated(const QModelIndex &index);
@@ -39,5 +40,6 @@ private:
     QTreeView *mFileSystemTree{};
     QComboBox *mRootDirectory{};
     QToolButton *mBrowseButton{};
+    QToolButton *mShowInFileManagerButton{};
     QStringListModel *mRecentDirectories{};
 };
