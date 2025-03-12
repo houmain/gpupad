@@ -20,7 +20,7 @@ public:
             mScriptEngine = std::make_unique<ScriptEngineJavaScript>();
             mScriptEngine->setTimeout(5000);
             mAppScriptObject = new AppScriptObject(mScriptEngine->jsEngine());
-            mScriptEngine->setGlobal("app", mAppScriptObject);
+            mScriptEngine->setGlobal("App", mAppScriptObject);
             mScriptEngine->evaluateScript(source, mFilePath, mMessages);
             auto name = mScriptEngine->getGlobal("name");
             if (!name.isUndefined())

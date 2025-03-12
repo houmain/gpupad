@@ -55,5 +55,5 @@ void ScriptSession::initializeEngine()
     mScriptEngine->setTimeout(5000);
 
     mAppScriptObject->initializeEngine(scriptEngine->jsEngine());
-    mScriptEngine->setGlobal("app", mAppScriptObject);
+    mScriptEngine->setGlobal("App", mAppScriptObject);
 }
