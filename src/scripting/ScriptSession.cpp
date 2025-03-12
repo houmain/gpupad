@@ -4,10 +4,9 @@
 #include "objects/SessionScriptObject.h"
 #include "Singletons.h"
 
-ScriptSession::ScriptSession(SourceType sourceType, QObject *parent)
+ScriptSession::ScriptSession(const QString &sessionPath, QObject *parent)
     : QObject(parent)
-    , mSourceType(sourceType)
-    , mAppScriptObject(new AppScriptObject(this))
+    , mAppScriptObject(new AppScriptObject(sessionPath, this))
 {
 }
 

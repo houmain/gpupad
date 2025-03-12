@@ -48,7 +48,7 @@ void RenderSessionBase::prepare(bool itemsChanged,
         mSessionCopy = Singletons::sessionModel();
 
     if (mEvaluationType == EvaluationType::Reset)
-        mScriptSession.reset(new ScriptSession(SourceType::JavaScript));
+        mScriptSession.reset(new ScriptSession(""));
 
     mScriptSession->prepare();
 }

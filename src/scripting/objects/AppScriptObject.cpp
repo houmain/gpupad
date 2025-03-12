@@ -6,19 +6,21 @@
 #include "LibraryScriptObject.h"
 #include "Singletons.h"
 #include "FileCache.h"
+#include "editors/EditorManager.h"
 #include <QDirIterator>
 #include <QJSEngine>
 
-AppScriptObject::AppScriptObject(QObject *parent)
+AppScriptObject::AppScriptObject(const QString &scriptPath, QObject *parent)
     : QObject(parent)
+    , mBasePath(QFileInfo(scriptPath).dir())
     , mSessionScriptObject(new SessionScriptObject(this))
     , mMouseScriptObject(new MouseScriptObject(this))
     , mKeyboardScriptObject(new KeyboardScriptObject(this))
 {
 }
 
-AppScriptObject::AppScriptObject(QJSEngine *engine)
-    : AppScriptObject(static_cast<QObject *>(engine))
+AppScriptObject::AppScriptObject(const QString &scriptPath, QJSEngine *engine)
+    : AppScriptObject(scriptPath, static_cast<QObject *>(engine))
 {
     initializeEngine(engine);
 }
@@ -38,6 +40,11 @@ QJSEngine &AppScriptObject::engine()
     return *mEngine;
 }
 
+QString AppScriptObject::getAbsolutePath(const QString &fileName) const
+{
+    return toNativeCanonicalFilePath(mBasePath.filePath(fileName));
+}
+
 void AppScriptObject::update()
 {
     Singletons::inputState().update();
@@ -55,17 +62,23 @@ bool AppScriptObject::usesKeyboardState() const
     return mKeyboardScriptObject->wasRead();
 }
 
-QJSValue AppScriptObject::loadLibrary(const QString &fileName)
+QJSValue AppScriptObject::openEditor(QString fileName)
+{
+    return (Singletons::editorManager().openEditor(getAbsolutePath(fileName))
+        != nullptr);
+}
+
+QJSValue AppScriptObject::loadLibrary(QString fileName)
 {
     auto library = std::make_unique<LibraryScriptObject>();
-    if (!library->load(mEngine, fileName))
+    if (!library->load(mEngine, getAbsolutePath(fileName)))
         return {};
     return engine().newQObject(library.release());
 }
 
-QJSValue AppScriptObject::enumerateFiles(const QString &pattern)
+QJSValue AppScriptObject::enumerateFiles(QString pattern)
 {
-    auto dir = QFileInfo(pattern).dir();
+    auto dir = QDir(getAbsolutePath(pattern));
     dir.setFilter(QDir::Files);
     dir.setSorting(QDir::Name);
     auto it = QDirIterator(dir, QDirIterator::Subdirectories);
@@ -75,9 +88,9 @@ QJSValue AppScriptObject::enumerateFiles(const QString &pattern)
     return result;
 }
 
-QJSValue AppScriptObject::writeTextFile(const QString &fileName,
-    const QString &string)
+QJSValue AppScriptObject::writeTextFile(QString fileName, const QString &string)
 {
+    fileName = getAbsolutePath(fileName);
     auto file = QFile(fileName);
     if (!file.open(QFile::WriteOnly | QFile::Text))
         return false;
@@ -88,10 +101,10 @@ QJSValue AppScriptObject::writeTextFile(const QString &fileName,
     return true;
 }
 
-QJSValue AppScriptObject::readTextFile(const QString &fileName)
+QJSValue AppScriptObject::readTextFile(QString fileName)
 {
     auto source = QString{};
-    if (!Singletons::fileCache().getSource(fileName, &source))
+    if (!Singletons::fileCache().getSource(getAbsolutePath(fileName), &source))
         return QJSValue::UndefinedValue;
     return source;
 }

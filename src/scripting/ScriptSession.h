@@ -12,7 +12,7 @@ class ScriptSession : public QObject
 {
     Q_OBJECT
 public:
-    explicit ScriptSession(SourceType type = SourceType::JavaScript,
+    explicit ScriptSession(const QString &sessionPath,
         QObject *parent = nullptr);
 
     // 1. called in main thread
@@ -31,7 +31,6 @@ public:
 private:
     void initializeEngine();
 
-    const SourceType mSourceType;
     MessagePtrSet mMessages;
 
     std::unique_ptr<ScriptEngine> mScriptEngine;

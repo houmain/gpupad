@@ -3,6 +3,7 @@
 #include "MessageList.h"
 #include <QObject>
 #include <QJSValue>
+#include <QDir>
 
 class SessionScriptObject;
 class MouseScriptObject;
@@ -16,19 +17,21 @@ class AppScriptObject final : public QObject
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
 
 public:
-    explicit AppScriptObject(QObject *parent = nullptr);
-    explicit AppScriptObject(QJSEngine *engine);
+    explicit AppScriptObject(const QString &scriptPath,
+        QObject *parent = nullptr);
+    AppScriptObject(const QString &scriptPath, QJSEngine *engine);
     void initializeEngine(QJSEngine *engine);
 
     QJSValue session() { return mSessionProperty; }
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
 
-    Q_INVOKABLE QJSValue loadLibrary(const QString &fileName);
-    Q_INVOKABLE QJSValue enumerateFiles(const QString &pattern);
-    Q_INVOKABLE QJSValue writeTextFile(const QString &fileName,
+    Q_INVOKABLE QJSValue openEditor(QString fileName);
+    Q_INVOKABLE QJSValue loadLibrary(QString fileName);
+    Q_INVOKABLE QJSValue enumerateFiles(QString pattern);
+    Q_INVOKABLE QJSValue writeTextFile(QString fileName,
         const QString &string);
-    Q_INVOKABLE QJSValue readTextFile(const QString &fileName);
+    Q_INVOKABLE QJSValue readTextFile(QString fileName);
 
     void update();
     bool usesMouseState() const;
@@ -37,7 +40,9 @@ public:
 
 private:
     QJSEngine &engine();
+    QString getAbsolutePath(const QString &fileName) const;
 
+    QDir mBasePath;
     QJSEngine *mEngine{};
     SessionScriptObject *mSessionScriptObject{};
     MouseScriptObject *mMouseScriptObject{};

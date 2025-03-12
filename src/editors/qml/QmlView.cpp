@@ -139,7 +139,7 @@ QmlView::QmlView(QString fileName, QWidget *parent)
 
     qmlRegisterSingletonType<AppScriptObject>("gpupad", 1, 0, "App",
         [&](QQmlEngine *, QJSEngine *jsEngine) -> QObject * {
-            return new AppScriptObject(jsEngine);
+            return new AppScriptObject(mFileName, jsEngine);
         });
 }
 
