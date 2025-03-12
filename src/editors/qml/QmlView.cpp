@@ -137,7 +137,7 @@ QmlView::QmlView(QString fileName, QWidget *parent)
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 
-    qmlRegisterSingletonType<AppScriptObject>("gpupad", 1, 0, "app",
+    qmlRegisterSingletonType<AppScriptObject>("gpupad", 1, 0, "App",
         [&](QQmlEngine *, QJSEngine *jsEngine) -> QObject * {
             return new AppScriptObject(jsEngine);
         });

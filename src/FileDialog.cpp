@@ -373,7 +373,7 @@ QDir getInstallDirectory(const QString &dirName)
     for (const auto &path : paths) {
         auto dir = QDir(path + "/" + dirName);
         if (dir.exists())
-            return dir;
+            return QDir::cleanPath(dir.path());
     }
     return QDir();
 }
