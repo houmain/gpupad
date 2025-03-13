@@ -18,6 +18,7 @@ class TextureEditorToolBar;
 class BinaryEditorToolBar;
 class SourceEditorToolBar;
 class QmlView;
+using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 
 class EditorManager final : public DockWindow
 {
@@ -38,7 +39,7 @@ public:
         int column = -1);
     BinaryEditor *openBinaryEditor(const QString &fileName);
     TextureEditor *openTextureEditor(const QString &fileName);
-    QmlView *openQmlView(const QString &fileName);
+    QmlView *openQmlView(const QString &fileName, const ScriptEnginePtr& enginePtr = {});
     void setAutoRaise(bool raise) { mAutoRaise = raise; }
 
     IEditor *getEditor(const QString &fileName);

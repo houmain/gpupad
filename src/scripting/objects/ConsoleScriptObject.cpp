@@ -1,8 +1,8 @@
-#include "ScriptConsole.h"
+#include "ConsoleScriptObject.h"
 
-ScriptConsole::ScriptConsole(QObject *parent) : QObject(parent) { }
+ConsoleScriptObject::ConsoleScriptObject(QObject *parent) : QObject(parent) { }
 
-void ScriptConsole::setMessages(MessagePtrSet *messages,
+void ConsoleScriptObject::setMessages(MessagePtrSet *messages,
     const QString &fileName)
 {
     mMessages = messages;
@@ -10,14 +10,14 @@ void ScriptConsole::setMessages(MessagePtrSet *messages,
     mItemId = {};
 }
 
-void ScriptConsole::setMessages(MessagePtrSet *messages, ItemId itemId)
+void ConsoleScriptObject::setMessages(MessagePtrSet *messages, ItemId itemId)
 {
     mMessages = messages;
     mItemId = itemId;
     mFileName.clear();
 }
 
-void ScriptConsole::output(QString message, int level)
+void ConsoleScriptObject::output(QString message, int level)
 {
     const auto messageType = level == 2 ? MessageType::ScriptError
         : level == 1                    ? MessageType::ScriptWarning

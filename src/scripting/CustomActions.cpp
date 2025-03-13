@@ -2,7 +2,7 @@
 #include "FileDialog.h"
 #include "FileCache.h"
 #include "Singletons.h"
-#include "ScriptEngineJavaScript.h"
+#include "ScriptEngine.h"
 #include "objects/AppScriptObject.h"
 #include "objects/SessionScriptObject.h"
 #include <QDirIterator>
@@ -17,10 +17,8 @@ public:
 
         auto source = QString();
         if (Singletons::fileCache().getSource(mFilePath, &source)) {
-            mScriptEngine = std::make_unique<ScriptEngineJavaScript>();
-            mScriptEngine->setTimeout(5000);
-            mAppScriptObject = new AppScriptObject(mFilePath, mScriptEngine->jsEngine());
-            mScriptEngine->setGlobal("App", mAppScriptObject);
+            const auto basePath = QFileInfo(mFilePath).absolutePath();
+            mScriptEngine = ScriptEngine::make(basePath);
             mScriptEngine->evaluateScript(source, mFilePath, mMessages);
             auto name = mScriptEngine->getGlobal("name");
             if (!name.isUndefined())
@@ -58,19 +56,18 @@ public:
 private:
     QJSValue getItems(const QModelIndexList &selectedIndices)
     {
-        auto array =
-            mScriptEngine->jsEngine()->newArray(selectedIndices.size());
+        auto array = mScriptEngine->jsEngine().newArray(selectedIndices.size());
         auto i = 0;
         for (const auto &index : selectedIndices)
             array.setProperty(i++,
-                mAppScriptObject->sessionScriptObject().getItem(index));
+                mScriptEngine->appScriptObject().sessionScriptObject().getItem(
+                    index));
         return array;
     }
 
     const QString mFilePath;
     MessagePtrSet mMessages;
-    std::unique_ptr<ScriptEngineJavaScript> mScriptEngine;
-    AppScriptObject *mAppScriptObject{};
+    ScriptEnginePtr mScriptEngine;
 };
 
 //-------------------------------------------------------------------------

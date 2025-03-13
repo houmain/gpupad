@@ -2,24 +2,33 @@
 
 #include "MessageList.h"
 #include <QObject>
+#include <QJSEngine>
+#include <QJSValue>
 #include <vector>
 
+using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 using ScriptValue = double;
 using ScriptValueList = QList<ScriptValue>;
+class ConsoleScriptObject;
+class AppScriptObject;
+class QTimer;
 
 class ScriptEngine : public QObject
 {
 public:
-    virtual void setTimeout(int msec) = 0;
-    virtual void setGlobal(const QString &name, QObject *object) = 0;
-    virtual void setGlobal(const QString &name,
-        const ScriptValueList &values) = 0;
-    virtual void validateScript(const QString &script, const QString &fileName,
-        MessagePtrSet &messages) = 0;
-    virtual void evaluateScript(const QString &script, const QString &fileName,
-        MessagePtrSet &messages) = 0;
-    virtual ScriptValueList evaluateValues(const QString &valueExpressions,
-        ItemId itemId, MessagePtrSet &messages) = 0;
+    static ScriptEnginePtr make(const QString &basePath);
+    ~ScriptEngine();
+
+    void setOmitReferenceErrors();
+    void setTimeout(int msec);
+    void setGlobal(const QString &name, QObject *object);
+    void setGlobal(const QString &name, const ScriptValueList &values);
+    void validateScript(const QString &script, const QString &fileName,
+        MessagePtrSet &messages);
+    void evaluateScript(const QString &script, const QString &fileName,
+        MessagePtrSet &messages);
+    ScriptValueList evaluateValues(const QString &valueExpression,
+        ItemId itemId, MessagePtrSet &messages);
 
     ScriptValueList evaluateValues(const QStringList &valueExpressions,
         ItemId itemId, MessagePtrSet &messages);
@@ -28,8 +37,34 @@ public:
     int evaluateInt(const QString &valueExpression, ItemId itemId,
         MessagePtrSet &messages);
 
-protected:
-    explicit ScriptEngine(QObject *parent = nullptr);
+    QJSEngine &jsEngine() { return *mJsEngine; }
+    AppScriptObject &appScriptObject() { return *mAppScriptObject; }
+
+    void setGlobal(const QString &name, QJSValue value);
+    QJSValue getGlobal(const QString &name);
+    QJSValue call(QJSValue &callable, const QJSValueList &args, ItemId itemId,
+        MessagePtrSet &messages);
+
+    template <typename T>
+    QJSValue toJsValue(const T &value)
+    {
+        return jsEngine().toScriptValue(value);
+    }
+
+private:
+    ScriptEngine();
+    void initialize(const ScriptEnginePtr &self, const QString &basePath);
+    void resetInterruptTimer();
+    void outputError(const QJSValue &result, ItemId itemId,
+        MessagePtrSet &messages);
+
+    const QThread &mOnThread;
+    QJSEngine *mJsEngine{};
+    ConsoleScriptObject *mConsoleScriptObject{};
+    AppScriptObject *mAppScriptObject{};
+    QThread *mInterruptThread{};
+    QTimer *mInterruptTimer{};
+    bool mOmitReferenceErrors{};
 };
 
 void checkValueCount(int valueCount, int offset, int count, ItemId itemId,

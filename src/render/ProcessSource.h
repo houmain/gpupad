@@ -5,7 +5,7 @@
 #include "MessageList.h"
 
 class ShaderBase;
-class ScriptEngine;
+using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 
 class ProcessSource final : public RenderTask
 {
@@ -33,10 +33,7 @@ private:
     std::unique_ptr<ShaderBase> mShader;
     QString mFileName;
     SourceType mSourceType{};
-
-    std::unique_ptr<ScriptEngine> mScriptEngine;
     MessagePtrSet mMessages;
-
     bool mValidateSource{};
     QString mProcessType{};
     QString mOutput;

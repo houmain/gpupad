@@ -7,13 +7,15 @@
 
 class QQuickWidget;
 class QQmlNetworkAccessManagerFactory;
+using QScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 
 class QmlView : public QFrame, public IEditor
 {
     Q_OBJECT
 
 public:
-    explicit QmlView(QString fileName, QWidget *parent = nullptr);
+    explicit QmlView(QString fileName, QScriptEnginePtr enginePtr = nullptr,
+        QWidget *parent = nullptr);
     ~QmlView();
 
     QList<QMetaObject::Connection> connectEditActions(
@@ -33,6 +35,7 @@ private:
     void reset();
 
     const QString mFileName;
+    QScriptEnginePtr mEnginePtr;
     std::unique_ptr<QQmlNetworkAccessManagerFactory>
         mNetworkAccessManagerFactory;
     MessagePtrSet mMessages;

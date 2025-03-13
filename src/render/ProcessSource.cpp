@@ -7,7 +7,7 @@
 #include "opengl/GLShader.h"
 #include "vulkan/VKShader.h"
 #include "session/SessionModel.h"
-#include "scripting/ScriptEngineJavaScript.h"
+#include "scripting/ScriptEngine.h"
 #include <QRegularExpression>
 
 namespace {
@@ -135,7 +135,6 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
 void ProcessSource::render()
 {
     auto messages = MessagePtrSet();
-    mScriptEngine.reset();
     mOutput.clear();
 
     if (mValidateSource) {
@@ -151,16 +150,12 @@ void ProcessSource::render()
             } else {
                 mShader->compileSpirv(printf);
             }
-        } else {
-            if (mSourceType == SourceType::JavaScript)
-                mScriptEngine = std::make_unique<ScriptEngineJavaScript>();
-
-            if (mScriptEngine) {
-                auto scriptSource = QString();
-                Singletons::fileCache().getSource(mFileName, &scriptSource);
-                mScriptEngine->validateScript(scriptSource, mFileName,
-                    messages);
-            }
+        } else if (mSourceType == SourceType::JavaScript) {
+            const auto basePath = QFileInfo(mFileName).absolutePath();
+            auto scriptEngine = ScriptEngine::make(basePath);
+            auto scriptSource = QString();
+            Singletons::fileCache().getSource(mFileName, &scriptSource);
+            scriptEngine->validateScript(scriptSource, mFileName, messages);
         }
     }
 

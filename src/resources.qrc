@@ -3,7 +3,7 @@
         <file>images/16x16/window-close.png</file>
         <file>images/32x32/icon.png</file>
         <file>images/64x64/icon.png</file>
-        <file>scripting/ScriptEngineJavaScript.js</file>
+        <file>scripting/ScriptEngine.js</file>
         <file>icons/dark/index.theme</file>
         <file>icons/light/index.theme</file>
         <file>icons/light/icons/application-exit.svg</file>

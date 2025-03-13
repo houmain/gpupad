@@ -16,7 +16,7 @@ void QmlView::reset() { }
 
 #  include "FileCache.h"
 #  include "Singletons.h"
-#  include "scripting/objects/AppScriptObject.h"
+#  include "scripting/ScriptEngine.h"
 #  include <QBoxLayout>
 #  include <QDir>
 #  include <QFileInfo>
@@ -126,9 +126,10 @@ namespace {
     };
 } // namespace
 
-QmlView::QmlView(QString fileName, QWidget *parent)
+QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     : QFrame(parent)
     , mFileName(fileName)
+    , mEnginePtr(std::move(enginePtr))
 {
     // WORKAROUND: tell QQuickWidget to also use OpenGL for rendering and not turn black
     // see: https://forum.qt.io/topic/148089/qopenglwidget-doesn-t-work-with-qquickwidget
@@ -136,11 +137,6 @@ QmlView::QmlView(QString fileName, QWidget *parent)
 
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-
-    qmlRegisterSingletonType<AppScriptObject>("gpupad", 1, 0, "App",
-        [&](QQmlEngine *, QJSEngine *jsEngine) -> QObject * {
-            return new AppScriptObject(mFileName, jsEngine);
-        });
 }
 
 void QmlView::reset()
@@ -156,7 +152,9 @@ void QmlView::reset()
 
     mMessages.clear();
 
-    mQuickWidget = new QQuickWidget(this);
+    const auto qmlEngine = qobject_cast<QQmlEngine *>(&mEnginePtr->jsEngine());
+    Q_ASSERT(qmlEngine);
+    mQuickWidget = new QQuickWidget(qmlEngine, this);
     layout()->addWidget(mQuickWidget);
 
     mQuickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);

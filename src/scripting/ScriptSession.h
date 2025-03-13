@@ -4,16 +4,14 @@
 #include "SourceType.h"
 #include <QObject>
 
-class ScriptEngine;
+using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 class SessionModel;
-class AppScriptObject;
 
 class ScriptSession : public QObject
 {
     Q_OBJECT
 public:
-    explicit ScriptSession(const QString &sessionPath,
-        QObject *parent = nullptr);
+    explicit ScriptSession(const QString &basePath, QObject *parent = nullptr);
 
     // 1. called in main thread
     void prepare();
@@ -29,10 +27,7 @@ public:
     void endSessionUpdate();
 
 private:
-    void initializeEngine();
-
+    QString mBasePath;
     MessagePtrSet mMessages;
-
-    std::unique_ptr<ScriptEngine> mScriptEngine;
-    AppScriptObject *mAppScriptObject{};
+    ScriptEnginePtr mScriptEngine;
 };

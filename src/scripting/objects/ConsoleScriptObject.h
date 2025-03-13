@@ -3,17 +3,16 @@
 #include "MessageList.h"
 #include <QObject>
 
-class ScriptConsole : public QObject
+class ConsoleScriptObject : public QObject
 {
     Q_OBJECT
 public:
-    explicit ScriptConsole(QObject *parent = 0);
+    explicit ConsoleScriptObject(QObject *parent = 0);
 
     void setMessages(MessagePtrSet *messages, const QString &fileName);
     void setMessages(MessagePtrSet *messages, ItemId itemId);
 
-public Q_SLOTS:
-    void output(QString message, int level);
+    Q_INVOKABLE void output(QString message, int level);
 
 private:
     QString mFileName;

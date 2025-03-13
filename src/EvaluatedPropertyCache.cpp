@@ -1,6 +1,6 @@
 
 #include "EvaluatedPropertyCache.h"
-#include "scripting/ScriptEngineJavaScript.h"
+#include "scripting/ScriptEngine.h"
 
 EvaluatedPropertyCache::EvaluatedPropertyCache() { }
 
@@ -9,7 +9,7 @@ EvaluatedPropertyCache::~EvaluatedPropertyCache() = default;
 ScriptEngine *EvaluatedPropertyCache::defaultScriptEngine()
 {
     if (!mDefaultScriptEngine) {
-        auto scriptEngine = std::make_unique<ScriptEngineJavaScript>();
+        auto scriptEngine = ScriptEngine::make("");
         scriptEngine->setOmitReferenceErrors();
         mDefaultScriptEngine = std::move(scriptEngine);
     }

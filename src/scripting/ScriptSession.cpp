@@ -1,58 +1,53 @@
 #include "ScriptSession.h"
-#include "ScriptEngineJavaScript.h"
+#include "ScriptEngine.h"
 #include "objects/AppScriptObject.h"
 #include "objects/SessionScriptObject.h"
 #include "Singletons.h"
 
-ScriptSession::ScriptSession(const QString &sessionPath, QObject *parent)
+ScriptSession::ScriptSession(const QString &basePath, QObject *parent)
     : QObject(parent)
-    , mAppScriptObject(new AppScriptObject(sessionPath, this))
+    , mBasePath(basePath)
 {
 }
 
 void ScriptSession::prepare()
 {
     Q_ASSERT(onMainThread());
-    mAppScriptObject->update();
+    if (mScriptEngine)
+        mScriptEngine->appScriptObject().update();
 }
 
 void ScriptSession::beginSessionUpdate(SessionModel *sessionCopy)
 {
     Q_ASSERT(!onMainThread());
     if (!mScriptEngine)
-        initializeEngine();
-    mAppScriptObject->sessionScriptObject().beginBackgroundUpdate(sessionCopy);
+        mScriptEngine = ScriptEngine::make(mBasePath);
+
+    mScriptEngine->appScriptObject()
+        .sessionScriptObject()
+        .beginBackgroundUpdate(sessionCopy);
 }
 
 void ScriptSession::endSessionUpdate()
 {
     Q_ASSERT(onMainThread());
-    mAppScriptObject->sessionScriptObject().endBackgroundUpdate();
+    mScriptEngine->appScriptObject()
+        .sessionScriptObject()
+        .endBackgroundUpdate();
 }
 
 bool ScriptSession::usesMouseState() const
 {
-    return mAppScriptObject->usesMouseState();
+    return mScriptEngine->appScriptObject().usesMouseState();
 }
 
 bool ScriptSession::usesKeyboardState() const
 {
-    return mAppScriptObject->usesKeyboardState();
+    return mScriptEngine->appScriptObject().usesKeyboardState();
 }
 
 ScriptEngine &ScriptSession::engine()
 {
     Q_ASSERT(mScriptEngine);
     return *mScriptEngine;
-}
-
-void ScriptSession::initializeEngine()
-{
-    Q_ASSERT(!mScriptEngine);
-    auto scriptEngine = new ScriptEngineJavaScript();
-    mScriptEngine.reset(scriptEngine);
-    mScriptEngine->setTimeout(5000);
-
-    mAppScriptObject->initializeEngine(scriptEngine->jsEngine());
-    mScriptEngine->setGlobal("App", mAppScriptObject);
 }

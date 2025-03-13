@@ -8,6 +8,8 @@
 class SessionScriptObject;
 class MouseScriptObject;
 class KeyboardScriptObject;
+using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
+using WeakScriptEnginePtr = std::weak_ptr<class ScriptEngine>;
 
 class AppScriptObject final : public QObject
 {
@@ -17,10 +19,7 @@ class AppScriptObject final : public QObject
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
 
 public:
-    explicit AppScriptObject(const QString &scriptPath,
-        QObject *parent = nullptr);
-    AppScriptObject(const QString &scriptPath, QJSEngine *engine);
-    void initializeEngine(QJSEngine *engine);
+    AppScriptObject(const ScriptEnginePtr &enginePtr, const QString &basePath);
 
     QJSValue session() { return mSessionProperty; }
     QJSValue mouse() { return mMouseProperty; }
@@ -29,8 +28,7 @@ public:
     Q_INVOKABLE QJSValue openEditor(QString fileName);
     Q_INVOKABLE QJSValue loadLibrary(QString fileName);
     Q_INVOKABLE QJSValue enumerateFiles(QString pattern);
-    Q_INVOKABLE QJSValue writeTextFile(QString fileName,
-        const QString &string);
+    Q_INVOKABLE QJSValue writeTextFile(QString fileName, const QString &string);
     Q_INVOKABLE QJSValue readTextFile(QString fileName);
 
     void update();
@@ -39,11 +37,12 @@ public:
     SessionScriptObject &sessionScriptObject() { return *mSessionScriptObject; }
 
 private:
-    QJSEngine &engine();
+    QJSEngine &jsEngine() { return *mJsEngine; }
     QString getAbsolutePath(const QString &fileName) const;
 
+    WeakScriptEnginePtr mEnginePtr;
+    QJSEngine *mJsEngine{};
     QDir mBasePath;
-    QJSEngine *mEngine{};
     SessionScriptObject *mSessionScriptObject{};
     MouseScriptObject *mMouseScriptObject{};
     KeyboardScriptObject *mKeyboardScriptObject{};

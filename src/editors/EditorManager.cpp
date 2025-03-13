@@ -341,11 +341,12 @@ TextureEditor *EditorManager::openTextureEditor(const QString &fileName)
     return editor;
 }
 
-QmlView *EditorManager::openQmlView(const QString &fileName)
+QmlView *EditorManager::openQmlView(const QString &fileName,
+    const ScriptEnginePtr &enginePtr)
 {
     auto editor = getQmlView(fileName);
     if (!editor) {
-        editor = new QmlView(fileName);
+        editor = new QmlView(fileName, enginePtr);
         if (!editor->load()) {
             delete editor;
             return nullptr;

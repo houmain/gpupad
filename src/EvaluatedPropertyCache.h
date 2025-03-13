@@ -5,7 +5,7 @@
 #include <QMap>
 #include <QMutex>
 
-class ScriptEngine;
+using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 
 class EvaluatedPropertyCache
 {
@@ -30,7 +30,7 @@ private:
     ScriptEngine *defaultScriptEngine();
 
     QMutex mMutex;
-    std::unique_ptr<ScriptEngine> mDefaultScriptEngine;
+    ScriptEnginePtr mDefaultScriptEngine;
     QMap<ItemId, QList<int>> mEvaluatedProperties;
     QMap<ItemId, MessagePtrSet> mMessages;
 };

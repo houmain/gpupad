@@ -4,40 +4,27 @@
 #include "KeyboardScriptObject.h"
 #include "MouseScriptObject.h"
 #include "LibraryScriptObject.h"
+#include "../ScriptEngine.h"
 #include "Singletons.h"
 #include "FileCache.h"
 #include "editors/EditorManager.h"
 #include <QDirIterator>
 #include <QJSEngine>
 
-AppScriptObject::AppScriptObject(const QString &scriptPath, QObject *parent)
-    : QObject(parent)
-    , mBasePath(QFileInfo(scriptPath).dir())
+AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
+    const QString &basePath)
+    : QObject(static_cast<QObject *>(enginePtr.get()))
+    , mEnginePtr(enginePtr)
+    , mJsEngine(&enginePtr->jsEngine())
+    , mBasePath(basePath)
     , mSessionScriptObject(new SessionScriptObject(this))
     , mMouseScriptObject(new MouseScriptObject(this))
     , mKeyboardScriptObject(new KeyboardScriptObject(this))
 {
-}
-
-AppScriptObject::AppScriptObject(const QString &scriptPath, QJSEngine *engine)
-    : AppScriptObject(scriptPath, static_cast<QObject *>(engine))
-{
-    initializeEngine(engine);
-}
-
-void AppScriptObject::initializeEngine(QJSEngine *engine)
-{
-    mEngine = engine;
-    mSessionScriptObject->initializeEngine(engine);
-    mSessionProperty = engine->newQObject(mSessionScriptObject);
-    mMouseProperty = engine->newQObject(mMouseScriptObject);
-    mKeyboardProperty = engine->newQObject(mKeyboardScriptObject);
-}
-
-QJSEngine &AppScriptObject::engine()
-{
-    Q_ASSERT(mEngine);
-    return *mEngine;
+    mSessionScriptObject->initializeEngine(mJsEngine);
+    mSessionProperty = mJsEngine->newQObject(mSessionScriptObject);
+    mMouseProperty = mJsEngine->newQObject(mMouseScriptObject);
+    mKeyboardProperty = mJsEngine->newQObject(mKeyboardScriptObject);
 }
 
 QString AppScriptObject::getAbsolutePath(const QString &fileName) const
@@ -64,16 +51,21 @@ bool AppScriptObject::usesKeyboardState() const
 
 QJSValue AppScriptObject::openEditor(QString fileName)
 {
-    return (Singletons::editorManager().openEditor(getAbsolutePath(fileName))
-        != nullptr);
+    fileName = getAbsolutePath(fileName);
+    auto &editorManager = Singletons::editorManager();
+    if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
+        return static_cast<bool>(
+            editorManager.openQmlView(fileName, mEnginePtr.lock()));
+    }
+    return static_cast<bool>(editorManager.openEditor(fileName));
 }
 
 QJSValue AppScriptObject::loadLibrary(QString fileName)
 {
     auto library = std::make_unique<LibraryScriptObject>();
-    if (!library->load(mEngine, getAbsolutePath(fileName)))
+    if (!library->load(&jsEngine(), getAbsolutePath(fileName)))
         return {};
-    return engine().newQObject(library.release());
+    return jsEngine().newQObject(library.release());
 }
 
 QJSValue AppScriptObject::enumerateFiles(QString pattern)
@@ -82,7 +74,7 @@ QJSValue AppScriptObject::enumerateFiles(QString pattern)
     dir.setFilter(QDir::Files);
     dir.setSorting(QDir::Name);
     auto it = QDirIterator(dir, QDirIterator::Subdirectories);
-    auto result = engine().newArray();
+    auto result = jsEngine().newArray();
     for (auto i = 0; it.hasNext();)
         result.setProperty(i++, it.next());
     return result;
