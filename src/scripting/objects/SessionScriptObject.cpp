@@ -343,12 +343,9 @@ void SessionScriptObject::endBackgroundUpdate()
             update(session);
         mPendingUpdates.clear();
         session.endUndoMacro();
-
-        if (mUpdatedEditor)
-            Singletons::fileCache().updateFromEditors();
-
-        mUpdatedEditor = false;
     }
+
+    Singletons::fileCache().updateFromEditors();
 }
 
 QString SessionScriptObject::sessionName()
@@ -495,10 +492,8 @@ void SessionScriptObject::setBufferData(QJSValue itemDesc, QJSValue data)
                 if (auto buffer = session.findItem<Buffer>(bufferId)) {
                     ensureFileName(session, buffer);
                     if (onMainThread())
-                        if (auto editor = openBinaryEditor(*buffer)) {
-                            editor->replace(data, false);
-                            mUpdatedEditor = true;
-                        }
+                        if (auto editor = openBinaryEditor(*buffer))
+                            editor->replace(data);
                 }
             });
     }
@@ -520,8 +515,7 @@ void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
                             Singletons::evaluatedPropertyCache()
                                 .evaluateBlockProperties(*block, &offset,
                                     &rowCount);
-                            editor->replaceRange(offset, data, false);
-                            mUpdatedEditor = true;
+                            editor->replaceRange(offset, data);
                         }
                 }
         });
@@ -537,10 +531,8 @@ void SessionScriptObject::setTextureData(QJSValue itemDesc, QJSValue data)
                 if (auto texture = session.findItem<Texture>(textureId)) {
                     ensureFileName(session, texture);
                     if (onMainThread())
-                        if (auto editor = openTextureEditor(*texture)) {
-                            editor->replace(data, false);
-                            mUpdatedEditor = true;
-                        }
+                        if (auto editor = openTextureEditor(*texture))
+                            editor->replace(data);
                 }
             });
 }
@@ -553,10 +545,8 @@ void SessionScriptObject::setShaderSource(QJSValue itemDesc, QJSValue data)
             if (auto shader = session.findItem<Shader>(shaderId)) {
                 ensureFileName(session, shader);
                 if (onMainThread())
-                    if (auto editor = openSourceEditor(*shader)) {
+                    if (auto editor = openSourceEditor(*shader))
                         editor->replace(data);
-                        mUpdatedEditor = true;
-                    }
             }
         });
 }
@@ -569,10 +559,8 @@ void SessionScriptObject::setScriptSource(QJSValue itemDesc, QJSValue data)
             if (auto script = session.findItem<Script>(scriptId)) {
                 ensureFileName(session, script);
                 if (onMainThread())
-                    if (auto editor = openSourceEditor(*script)) {
+                    if (auto editor = openSourceEditor(*script))
                         editor->replace(data);
-                        mUpdatedEditor = true;
-                    }
             }
         });
 }

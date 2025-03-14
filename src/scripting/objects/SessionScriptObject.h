@@ -63,5 +63,4 @@ private:
     MessagePtrSet mMessages;
     SessionModel *mSessionCopy{};
     std::vector<UpdateFunction> mPendingUpdates;
-    bool mUpdatedEditor{};
 };

@@ -49,7 +49,9 @@ public:
 
         auto apply = mScriptEngine->getGlobal("apply");
         if (apply.isCallable()) {
+            // TODO: run in cancelable background thread
             mScriptEngine->call(apply, { getItems(selection) }, 0, messages);
+            mScriptEngine->appScriptObject().sessionScriptObject().endBackgroundUpdate();
         }
     }
 

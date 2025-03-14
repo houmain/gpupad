@@ -30,7 +30,7 @@ public:
     bool save() override;
     int tabifyGroup() const override { return 0; }
     void setModified() override;
-    void replace(QString source);
+    void replace(QString source, bool emitFileChanged = true);
     void cut();
     void copy();
     void paste();

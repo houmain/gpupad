@@ -255,7 +255,7 @@ void SourceEditor::setModified()
     document()->setModified(true);
 }
 
-void SourceEditor::replace(QString source)
+void SourceEditor::replace(QString source, bool emitFileChanged)
 {
     const auto current = document()->toPlainText();
     const auto initial = current.isEmpty() && !document()->isUndoAvailable();
@@ -301,6 +301,8 @@ void SourceEditor::replace(QString source)
         setTextCursor(cursor);
         verticalScrollBar()->setSliderPosition(
             scrollToEnd ? verticalScrollBar()->maximum() : scrollPosition);
+
+        Singletons::fileCache().handleEditorFileChanged(mFileName, emitFileChanged);
     }
 
     document()->setUndoRedoEnabled(true);

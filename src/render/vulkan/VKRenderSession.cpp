@@ -383,6 +383,7 @@ void VKRenderSession::render()
 
     if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
         createCommandQueue();
+    Q_ASSERT(mCommandQueue);
 
     reuseUnmodifiedItems();
     executeCommandQueue();
