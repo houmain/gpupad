@@ -131,12 +131,27 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     , mFileName(fileName)
     , mEnginePtr(std::move(enginePtr))
 {
+    if (!mEnginePtr) {
+        const auto basePath = QFileInfo(fileName).absolutePath();
+        mEnginePtr = ScriptEngine::make(basePath);
+    }
     // WORKAROUND: tell QQuickWidget to also use OpenGL for rendering and not turn black
     // see: https://forum.qt.io/topic/148089/qopenglwidget-doesn-t-work-with-qquickwidget
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
+
+    const auto qmlEngine = qobject_cast<QQmlEngine *>(&mEnginePtr->jsEngine());
+    Q_ASSERT(qmlEngine);
+    mNetworkAccessManagerFactory =
+        std::make_unique<NetworkAccessManagerFactory>(this);
+    qmlEngine->setNetworkAccessManagerFactory(
+        mNetworkAccessManagerFactory.get());
+
+    static UrlInterceptor sUrlInterceptor;
+    qmlEngine->addUrlInterceptor(&sUrlInterceptor);
+    qmlEngine->addImportPath(QFileInfo(mFileName).dir().path());
 }
 
 void QmlView::reset()
@@ -154,9 +169,9 @@ void QmlView::reset()
 
     const auto qmlEngine = qobject_cast<QQmlEngine *>(&mEnginePtr->jsEngine());
     Q_ASSERT(qmlEngine);
-    mQuickWidget = new QQuickWidget(qmlEngine, this);
-    layout()->addWidget(mQuickWidget);
+    qmlEngine->clearComponentCache();
 
+    mQuickWidget = new QQuickWidget(qmlEngine, this);
     mQuickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
 
     connect(mQuickWidget, &QQuickWidget::statusChanged,
@@ -184,18 +199,10 @@ void QmlView::reset()
                     warning.description());
         });
 
-    mNetworkAccessManagerFactory =
-        std::make_unique<NetworkAccessManagerFactory>(this);
-    mQuickWidget->engine()->setNetworkAccessManagerFactory(
-        mNetworkAccessManagerFactory.get());
-
-    static UrlInterceptor sUrlInterceptor;
-    mQuickWidget->engine()->addUrlInterceptor(&sUrlInterceptor);
-    mQuickWidget->engine()->addImportPath(QFileInfo(mFileName).dir().path());
-
     Singletons::fileCache().updateFromEditors();
-
     mQuickWidget->setSource(QUrl::fromLocalFile(mFileName));
+
+    layout()->addWidget(mQuickWidget);
 }
 
 #endif // defined(QtQuick_FOUND)

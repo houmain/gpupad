@@ -99,10 +99,13 @@ void ScriptEngine::setTimeout(int msec)
 
 void ScriptEngine::resetInterruptTimer()
 {
+    // TODO: rethink since this interferes with QmlView
+#if 0
     Q_ASSERT(&mOnThread == QThread::currentThread());
     QMetaObject::invokeMethod(mInterruptTimer, "start",
         Qt::BlockingQueuedConnection);
     mJsEngine->setInterrupted(false);
+#endif
 }
 
 void ScriptEngine::setGlobal(const QString &name, QJSValue value)

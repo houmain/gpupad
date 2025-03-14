@@ -156,13 +156,12 @@ set(SOURCES
   src/render/ShaderPrintf.cpp
   src/render/Spirv.cpp
   src/render/SpirvInterface.cpp
-  src/scripting/ScriptConsole.cpp
   src/scripting/ScriptEngine.cpp
-  src/scripting/ScriptEngineJavaScript.cpp
-  src/scripting/ScriptEngineJavaScript.js
+  src/scripting/ScriptEngine.js
   src/scripting/ScriptSession.cpp
   src/scripting/CustomActions.cpp
   src/scripting/objects/AppScriptObject.cpp
+  src/scripting/objects/ConsoleScriptObject.cpp
   src/scripting/objects/LibraryScriptObject.cpp
   src/scripting/objects/MouseScriptObject.cpp
   src/scripting/objects/KeyboardScriptObject.cpp
@@ -303,6 +302,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     install(DIRECTORY extra/share DESTINATION .)
     install(DIRECTORY extra/samples DESTINATION "share/gpupad" COMPONENT Samples)
     install(DIRECTORY extra/themes DESTINATION "share/gpupad" COMPONENT Themes)
+    install(DIRECTORY extra/actions DESTINATION "share/gpupad" COMPONENT Actions)
 
 else()
     install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -310,6 +310,7 @@ else()
     install(DIRECTORY extra/qml DESTINATION .)
     install(DIRECTORY extra/samples DESTINATION . COMPONENT Samples)
     install(DIRECTORY extra/themes DESTINATION . COMPONENT Themes)
+    install(DIRECTORY extra/actions DESTINATION . COMPONENT Actions)
 
     # install Qt dependencies
     set(DEPLOY_TOOL_OPTIONS "--qmldir ${CMAKE_CURRENT_SOURCE_DIR}/extra/qml")
