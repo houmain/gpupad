@@ -124,4 +124,5 @@ private:
     mutable QModelIndexList mDraggedIndices;
     mutable QString mDraggedText;
     mutable QJsonArray mDraggedJson;
+    mutable QMap<ItemId, QString> mDraggedUntitledFileNames;
 };

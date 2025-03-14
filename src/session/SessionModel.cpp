@@ -336,14 +336,15 @@ bool SessionModel::save(const QString &fileName)
 
 QMimeData *SessionModel::mimeData(const QModelIndexList &indexes) const
 {
+    mDraggedIndices = indexes;
+    mDraggedUntitledFileNames.clear();
+
     auto jsonArray = getJson(indexes);
     auto document = (jsonArray.size() != 1
             ? QJsonDocument(jsonArray)
             : QJsonDocument(jsonArray.first().toObject()));
     auto data = new QMimeData();
     data->setText(document.toJson());
-
-    mDraggedIndices = indexes;
     return data;
 }
 
@@ -390,7 +391,7 @@ QJsonArray SessionModel::getJson(const QModelIndexList &indexes) const
             itemArray.append(object);
         }
     } else {
-        for (QModelIndex index : indexes) {
+        for (const QModelIndex &index : indexes) {
             auto object = QJsonObject();
             serialize(object, getItem(index), false);
             itemArray.append(object);
@@ -420,11 +421,17 @@ void SessionModel::deserialize(const QJsonObject &object,
     auto id = (object.contains("id") ? object["id"].toInt() : getNextItemId());
 
     auto existingItem = findItem(id);
+    auto untitledFileName = QString();
     if (existingItem && !updateExisting) {
         // generate new id when it collides with an existing item
         const auto prevId = std::exchange(id, getNextItemId());
         mDroppedIdsReplaced.insert(prevId, id);
         existingItem = nullptr;
+
+        if (mDraggedUntitledFileNames.contains(prevId))
+            untitledFileName = mDraggedUntitledFileNames[prevId];
+    } else if (mDraggedUntitledFileNames.contains(id)) {
+        untitledFileName = mDraggedUntitledFileNames[id];
     }
 
     auto ok = true;
@@ -437,6 +444,10 @@ void SessionModel::deserialize(const QJsonObject &object,
 
     const auto index = (existingItem ? getIndex(existingItem)
                                      : insertItem(type, parent, row, id));
+
+    // preserve untitled filenames when dragging/copying
+    if (!untitledFileName.isEmpty())
+        setData(getIndex(index, FileName), untitledFileName);
 
     const auto dropColumn = [&](const QString &property,
                                 const QModelIndex &index,
@@ -493,11 +504,16 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
     object["id"] = item.id;
     if (auto fileItem = castItem<FileItem>(item)) {
         const auto &fileName = fileItem->fileName;
-        if (!FileDialog::isEmptyOrUntitled(fileName))
-            object["fileName"] = (relativeFilePaths
-                    ? QDir::fromNativeSeparators(
-                        QDir::current().relativeFilePath(fileName))
-                    : fileName);
+        if (!fileName.isEmpty()) {
+            if (FileDialog::isUntitled(fileName)) {
+                mDraggedUntitledFileNames[item.id] = fileName;
+            } else {
+                object["fileName"] = (relativeFilePaths
+                        ? QDir::fromNativeSeparators(
+                            QDir::current().relativeFilePath(fileName))
+                        : fileName);
+            }
+        }
     }
     if (!object.contains("fileName"))
         object["name"] = item.name;

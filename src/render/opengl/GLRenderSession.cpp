@@ -365,6 +365,7 @@ void GLRenderSession::render()
 {
     if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
         createCommandQueue();
+    Q_ASSERT(mCommandQueue);
 
     auto &gl = GLContext::currentContext();
     if (!gl) {
