@@ -1,0 +1,37 @@
+#version 460 core
+#extension GL_EXT_ray_tracing : enable
+
+struct SphereData {
+    vec3 center;
+    float radius;
+    vec4 color;
+};
+
+layout(std430, set = 2, binding = 0) readonly buffer Spheres
+{
+    SphereData data[];
+}
+spheres;
+
+void main()
+{
+    vec3 orig = gl_WorldRayOriginEXT;
+    vec3 dir = normalize(gl_WorldRayDirectionEXT);
+
+    SphereData sphereData = spheres.data[gl_PrimitiveID];
+    vec3 sphereCenter = sphereData.center;
+    float sphereRadius = sphereData.radius;
+
+    vec3 oc = orig - sphereCenter;
+    float b = dot(oc, dir);
+    float c = dot(oc, oc) - sphereRadius * sphereRadius;
+    float discriminant = b * b - c;
+
+    if (discriminant < 0.0)
+        return;
+
+    float hit = -b - sqrt(discriminant);
+
+    // vec3 intersection = orig + hits.x * dir;
+    reportIntersectionEXT(hit, 0);
+}

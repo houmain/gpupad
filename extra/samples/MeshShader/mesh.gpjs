@@ -1,0 +1,100 @@
+{
+    "id": 2,
+    "items": [
+        {
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "512",
+            "id": 10,
+            "name": "TargetColor",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "blendConstant": "#ffffffff",
+            "cullMode": "NoCulling",
+            "frontFace": "CCW",
+            "id": 7,
+            "items": [
+                {
+                    "blendAlphaDest": "Zero",
+                    "blendAlphaEq": "Add",
+                    "blendAlphaSource": "One",
+                    "blendColorDest": "Zero",
+                    "blendColorEq": "Add",
+                    "blendColorSource": "One",
+                    "colorWriteMask": 15,
+                    "id": 8,
+                    "level": 0,
+                    "name": "Color",
+                    "textureId": 10,
+                    "type": "Attachment"
+                }
+            ],
+            "logicOperation": "NoLogicOperation",
+            "name": "Target",
+            "polygonMode": "Fill",
+            "type": "Target"
+        },
+        {
+            "id": 1,
+            "items": [
+                {
+                    "fileName": "triangle.mesh",
+                    "id": 112,
+                    "language": "GLSL",
+                    "shaderType": "Mesh",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "textured.frag",
+                    "id": 3,
+                    "language": "GLSL",
+                    "shaderType": "Fragment",
+                    "type": "Shader"
+                }
+            ],
+            "name": "Program",
+            "type": "Program"
+        },
+        {
+            "callType": "ClearTexture",
+            "checked": true,
+            "clearColor": "#00000000",
+            "clearDepth": 1,
+            "clearStencil": 0,
+            "executeOn": "EveryEvaluation",
+            "id": 110,
+            "name": "Clear",
+            "textureId": 10,
+            "type": "Call"
+        },
+        {
+            "baseInstance": "0",
+            "callType": "DrawMeshTasks",
+            "checked": true,
+            "count": "4",
+            "executeOn": "EveryEvaluation",
+            "first": "0",
+            "id": 4,
+            "instanceCount": "1",
+            "name": "Mesh Task",
+            "primitiveType": "TriangleStrip",
+            "programId": 1,
+            "targetId": 7,
+            "type": "Call",
+            "vertexStreamId": 0,
+            "workGroupsX": "1",
+            "workGroupsY": "1",
+            "workGroupsZ": "1"
+        }
+    ],
+    "name": "Session",
+    "renderer": "OpenGL",
+    "shaderCompiler": "",
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "type": "Session"
+}
