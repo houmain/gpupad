@@ -68,6 +68,14 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
     return jsEngine().newQObject(library.release());
 }
 
+QJSValue AppScriptObject::openFileDialog(QString pattern)
+{
+    auto options = FileDialog::Options{};
+    if (Singletons::fileDialog().exec(options, pattern))
+        return Singletons::fileDialog().fileName();
+    return {};
+}
+
 QJSValue AppScriptObject::enumerateFiles(QString pattern)
 {
     auto dir = QDir(getAbsolutePath(pattern));

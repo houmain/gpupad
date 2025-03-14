@@ -211,7 +211,7 @@ function setMaterial(material) {
 
 function findItemId(type, items) {
   if (!items)
-    items = gpupad.session;
+    items = app.session.items;
   for (var i in items) {
     var item = items[i];
     if (item.type == type)
@@ -224,12 +224,12 @@ function findItemId(type, items) {
   }
 }
 
-function execute(items) {
-  var fileName = gpupad.openFileDialog("*.gltf");
+function apply(items) {
+  var fileName = app.openFileDialog("*.gltf");
   if (!fileName)
     return;
 
-  gltf = JSON.parse(gpupad.readTextFile(fileName));
+  gltf = JSON.parse(app.readTextFile(fileName));
 
   var pathEnd = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\')) + 1;
   basePath = fileName.substr(0, pathEnd);
@@ -254,5 +254,5 @@ function execute(items) {
       call.targetId = findItemId("Target");
     }
   }
-  gpupad.insertItems(group);
+  app.session.insertItem(group);
 }
