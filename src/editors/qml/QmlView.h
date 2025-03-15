@@ -27,6 +27,7 @@ public:
     void setModified() override;
     int tabifyGroup() const override { return 3; }
 
+    const QScriptEnginePtr &enginePtr() const { return mEnginePtr; }
     void addDependency(const QString &fileName);
     bool dependsOn(const QString &fileName) const;
     void resetOnFocus();

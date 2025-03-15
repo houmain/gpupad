@@ -345,6 +345,11 @@ QmlView *EditorManager::openQmlView(const QString &fileName,
     const ScriptEnginePtr &enginePtr)
 {
     auto editor = getQmlView(fileName);
+    // recreate dock when engine changed
+    if (enginePtr && editor && editor->enginePtr() != enginePtr) {
+        closeDock(findEditorDock(editor));
+        editor = nullptr;
+    }
     if (!editor) {
         editor = new QmlView(fileName, enginePtr);
         if (!editor->load()) {
@@ -644,7 +649,7 @@ void EditorManager::addBinaryEditor(BinaryEditor *editor)
 
 QDockWidget *EditorManager::findDockToAddTab(int tabifyGroup)
 {
-    if (mCurrentDock)
+    if (mCurrentDock && currentEditor()->tabifyGroup() == tabifyGroup)
         return mCurrentDock;
 
     if (auto dock = mLastFocusedTabifyGroupDock[tabifyGroup])

@@ -10,6 +10,7 @@
 #include "editors/EditorManager.h"
 #include <QDirIterator>
 #include <QJSEngine>
+#include <QCoreApplication>
 
 AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     const QString &basePath)
@@ -62,8 +63,12 @@ QJSValue AppScriptObject::openEditor(QString fileName)
 
 QJSValue AppScriptObject::loadLibrary(QString fileName)
 {
+    const auto searchPaths = QStringList{
+        mBasePath.dirName(),
+        QCoreApplication::applicationDirPath(),
+    };
     auto library = std::make_unique<LibraryScriptObject>();
-    if (!library->load(&jsEngine(), getAbsolutePath(fileName)))
+    if (!library->load(&jsEngine(), fileName, searchPaths))
         return {};
     return jsEngine().newQObject(library.release());
 }

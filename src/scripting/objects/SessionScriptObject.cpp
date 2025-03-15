@@ -432,24 +432,16 @@ const Item *SessionScriptObject::getItem(const QJSValue &itemDesc)
 {
     const auto itemId = getItemId(itemDesc);
     auto &session = threadSessionModel();
-    if (auto item = session.findItem(itemId))
-        return item;
-
-    engine().throwError(QStringLiteral("Invalid item '%1'").arg(itemId));
-    return nullptr;
+    return session.findItem(itemId);
 }
 
 QJSValue SessionScriptObject::item(QJSValue itemDesc)
 {
-    const auto itemId = getItemId(itemDesc);
-    if (!itemId)
-        return QJSValue::UndefinedValue;
-
-    auto item = getItem(itemDesc);
+    const auto item = getItem(itemDesc);
     if (!item)
         return QJSValue::UndefinedValue;
 
-    return engine().newQObject(new ItemObject(this, itemId));
+    return engine().newQObject(new ItemObject(this, item->id));
 }
 
 void SessionScriptObject::clear()

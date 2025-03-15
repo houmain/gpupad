@@ -253,7 +253,6 @@ int ScriptEngine::evaluateInt(const QString &valueExpression, ItemId itemId,
     MessagePtrSet &messages)
 {
     const auto value = evaluateValue(valueExpression, itemId, messages);
-    Q_ASSERT(std::isfinite(value));
     if (!std::isfinite(value))
         return 0;
     return static_cast<int>(value + 0.5);

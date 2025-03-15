@@ -30,5 +30,6 @@ class LibraryScriptObject final : public QQmlPropertyMap
 public:
     explicit LibraryScriptObject(QObject *parent = nullptr);
 
-    bool load(QJSEngine *engine, const QString &fileName);
+    bool load(QJSEngine *engine, const QString &fileName,
+        const QStringList &searchPaths);
 };

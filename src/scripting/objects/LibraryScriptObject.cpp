@@ -52,7 +52,7 @@ namespace {
         const auto utf8 = string.toUtf8();
         argument.count = utf8.size();
         argument.data = new char[argument.count];
-        argument.free = [](void *data) { delete[] static_cast<char*>(data); };
+        argument.free = [](void *data) { delete[] static_cast<char *>(data); };
         std::memcpy(argument.data, utf8.constData(), argument.count);
     }
 
@@ -277,19 +277,25 @@ LibraryScriptObject::LibraryScriptObject(QObject *parent)
 {
 }
 
-bool LibraryScriptObject::load(QJSEngine *engine, const QString &fileName)
+bool LibraryScriptObject::load(QJSEngine *engine, const QString &fileName,
+    const QStringList &searchPaths)
 {
     setObjectName(fileName);
     auto library = std::make_unique<dllreflect::Library>();
 
-    const auto directory = QString(".");
+    for (auto searchPath : searchPaths) {
+        const auto directory = QString(".");
 #if !defined(_WIN32)
-    if (!library->load(qUtf8Printable(directory), qUtf8Printable(fileName)))
-        return false;
+        if (library->load(qUtf8Printable(directory), qUtf8Printable(fileName)))
+            break;
 #else
-    if (!library->load(qUtf16Printable(directory), qUtf16Printable(fileName)))
-        return false;
+        if (library->load(qUtf16Printable(directory),
+                qUtf16Printable(fileName)))
+            break;
 #endif
+    }
+    if (!library->loaded())
+        return false;
 
     // QQmlPropertyMap is needed for populating functions dynamically, which can
     // not have Q_INVOKABLE functions, therefore delegating to separate object

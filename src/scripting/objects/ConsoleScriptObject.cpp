@@ -19,6 +19,10 @@ void ConsoleScriptObject::setMessages(MessagePtrSet *messages, ItemId itemId)
 
 void ConsoleScriptObject::output(QString message, int level)
 {
+    Q_ASSERT(mMessages);
+    if (!mMessages)
+        return;
+
     const auto messageType = level == 2 ? MessageType::ScriptError
         : level == 1                    ? MessageType::ScriptWarning
                                         : MessageType::ScriptMessage;

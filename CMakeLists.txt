@@ -292,6 +292,9 @@ target_link_libraries(${PROJECT_NAME}
 add_subdirectory(extra/actions/ImportOBJ EXCLUDE_FROM_ALL)
 add_dependencies(${PROJECT_NAME} ImportOBJ)
 
+add_subdirectory(extra/actions/GenerateMesh EXCLUDE_FROM_ALL)
+add_dependencies(${PROJECT_NAME} GenerateMesh)
+
 # install -------------------------
 set(DOC_FILES LICENSE CHANGELOG.md THIRD-PARTY.md)
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Application)
