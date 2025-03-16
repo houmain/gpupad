@@ -23,15 +23,17 @@ void GLStream::setAttribute(int attributeIndex, const Field &field,
         scriptEngine.evaluateValue(block.offset, block.id, mMessages);
     auto &attribute = mAttributes[attributeIndex];
     attribute.usedItems += field.id;
+    attribute.usedItems += block.id;
+    attribute.usedItems += block.parent->id;
     attribute.buffer = buffer;
     attribute.type = field.dataType;
     attribute.count = field.count;
-    if (auto block = castItem<Block>(field.parent)) {
-        attribute.usedItems += block->id;
-        attribute.usedItems += block->parent->id;
-        attribute.stride = getBlockStride(*block);
-        attribute.offset = blockOffset + getFieldRowOffset(field);
-    }
+    attribute.stride = getBlockStride(block);
+    attribute.offset = blockOffset + getFieldRowOffset(field);
+
+    if (attributeIndex == 0)
+        mDefaultElementCount =
+            scriptEngine.evaluateValue(block.rowCount, block.id, mMessages);
 
     if (!validateAttribute(attribute)) {
         attribute.buffer = nullptr;

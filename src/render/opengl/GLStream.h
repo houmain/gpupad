@@ -25,11 +25,13 @@ public:
 
     ItemId itemId() const { return mItemId; }
     const GLAttribute *findAttribute(const QString &name) const;
+    int getDefaultElementCount() const { return mDefaultElementCount; }
 
 private:
     bool validateAttribute(const GLAttribute &attribute) const;
 
-    ItemId mItemId{ };
+    ItemId mItemId{};
     MessagePtrSet mMessages;
     QMap<int, GLAttribute> mAttributes;
+    int mDefaultElementCount{ };
 };
