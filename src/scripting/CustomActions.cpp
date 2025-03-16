@@ -93,20 +93,23 @@ void CustomActions::updateActions()
 
     mActions.clear();
 
-    for (const auto &dir : std::initializer_list<QDir>{
-             getInstallDirectory("actions"), getUserDirectory("actions") }) {
-        auto it = QDirIterator(dir.path(), QStringList() << "*.js", QDir::Files,
-            QDirIterator::Subdirectories);
-        while (it.hasNext()) {
-            // keep only last action with identical name
-            const auto filePath = toNativeCanonicalFilePath(it.next());
-            auto action = new CustomAction(filePath);
-            mActions[action->text()].reset(action);
+    for (const auto &dir : {
+            getInstallDirectory("actions"),
+            getUserDirectory("actions"),
+        })
+        if (dir != QDir()) {
+            auto it = QDirIterator(dir.path(), QStringList() << "*.js", QDir::Files,
+                QDirIterator::Subdirectories);
+            while (it.hasNext()) {
+                // keep only last action with identical name
+                const auto filePath = toNativeCanonicalFilePath(it.next());
+                auto action = new CustomAction(filePath);
+                mActions[action->text()].reset(action);
 
-            connect(action, &QAction::triggered, this,
-                &CustomActions::actionTriggered);
+                connect(action, &QAction::triggered, this,
+                    &CustomActions::actionTriggered);
+            }
         }
-    }
 }
 
 void CustomActions::setSelection(const QModelIndexList &selection)

@@ -283,13 +283,12 @@ bool LibraryScriptObject::load(QJSEngine *engine, const QString &fileName,
     setObjectName(fileName);
     auto library = std::make_unique<dllreflect::Library>();
 
-    for (auto searchPath : searchPaths) {
-        const auto directory = QString(".");
+    for (const auto &searchPath : searchPaths) {
 #if !defined(_WIN32)
-        if (library->load(qUtf8Printable(directory), qUtf8Printable(fileName)))
+        if (library->load(qUtf8Printable(searchPath), qUtf8Printable(fileName)))
             break;
 #else
-        if (library->load(qUtf16Printable(directory),
+        if (library->load(qUtf16Printable(searchPath),
                 qUtf16Printable(fileName)))
             break;
 #endif

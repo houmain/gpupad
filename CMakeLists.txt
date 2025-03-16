@@ -289,6 +289,8 @@ target_link_libraries(${PROJECT_NAME}
 
 # TODO: improve 
 # add custom action projects
+set(CMAKE_SHARED_LIBRARY_PREFIX "")
+
 add_subdirectory(extra/actions/ImportOBJ EXCLUDE_FROM_ALL)
 add_dependencies(${PROJECT_NAME} ImportOBJ)
 

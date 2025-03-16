@@ -72,7 +72,6 @@ namespace {
   void generate_tcoords_sphere(par_shapes_mesh* m) {
     PAR_FREE(m->tcoords);
     m->tcoords = PAR_CALLOC(float, m->npoints * 2);
-    PAR_SHAPES_T const* triangle = m->triangles;
     const float pi = std::atan(1.0f) * 4.0f;
     float normal[3];
     float* point = m->points;
@@ -174,6 +173,8 @@ MeshPtr generate(const Settings& s) {
   auto mesh = MeshPtr();
 
   switch (s.type) {
+    case Type::COUNT:
+      break;
     case Type::cylinder: {
       mesh.reset(par_shapes_create_cylinder(s.slices, s.stacks));
       if (mesh) {

@@ -64,12 +64,15 @@ QJSValue AppScriptObject::openEditor(QString fileName)
 QJSValue AppScriptObject::loadLibrary(QString fileName)
 {
     const auto searchPaths = QStringList{
-        mBasePath.dirName(),
+        mBasePath.path(),
         QCoreApplication::applicationDirPath(),
+        QCoreApplication::applicationDirPath() + "/extra/actions/" + mBasePath.dirName(),
     };
     auto library = std::make_unique<LibraryScriptObject>();
-    if (!library->load(&jsEngine(), fileName, searchPaths))
+    if (!library->load(&jsEngine(), fileName, searchPaths)) {
+        jsEngine().throwError("Loading library '" + fileName + "' failed");
         return {};
+    }
     return jsEngine().newQObject(library.release());
 }
 

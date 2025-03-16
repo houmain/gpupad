@@ -629,7 +629,7 @@ bool Library::load(const std::wstring& directory, const std::wstring& name) noex
   m_handle = LoadLibraryW(name.c_str());
 #else // !_WIN32
 bool Library::load(const std::string& directory, const std::string& name) noexcept {
-  const auto filename = "./" + directory + "/" + name + ".so";
+  const auto filename = directory + "/" + name + ".so";
   m_handle = dlopen(filename.c_str(), RTLD_LAZY);
 #endif // !_WIN32
   if (m_handle == nullptr)

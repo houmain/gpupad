@@ -38,12 +38,12 @@ void ScriptSession::endSessionUpdate()
 
 bool ScriptSession::usesMouseState() const
 {
-    return mScriptEngine->appScriptObject().usesMouseState();
+    return (mScriptEngine && mScriptEngine->appScriptObject().usesMouseState());
 }
 
 bool ScriptSession::usesKeyboardState() const
 {
-    return mScriptEngine->appScriptObject().usesKeyboardState();
+    return (mScriptEngine && mScriptEngine->appScriptObject().usesKeyboardState());
 }
 
 ScriptEngine &ScriptSession::engine()

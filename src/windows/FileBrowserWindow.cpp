@@ -35,8 +35,12 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent)
         QIcon(QIcon::fromTheme(QString::fromUtf8("dialog-information"))));
     mShowInFileManagerButton->setAutoRaise(true);
 
-    updateRecentDirectories(getInstallDirectory("actions").path());
-    updateRecentDirectories(getUserDirectory("actions").path());
+    for (const auto &dir : {
+            getInstallDirectory("actions"),
+            getUserDirectory("actions"),
+        })
+        if (dir != QDir())
+            updateRecentDirectories(dir.path());
 
     mRootDirectory->setMinimumWidth(100);
     mRootDirectory->setModel(mRecentDirectories);
@@ -83,6 +87,7 @@ void FileBrowserWindow::setRootPath(const QString &path)
     if (index != mFileSystemTree->rootIndex()) {
         mFileSystemTree->setRootIndex(index);
         mFileSystemTree->collapseAll();
+        mFileSystemTree->clearSelection();
 
         updateRecentDirectories(path);
     }
@@ -124,7 +129,7 @@ void FileBrowserWindow::currentDirectoryChanged(const QDir &dir)
 void FileBrowserWindow::itemActivated(const QModelIndex &index)
 {
     Q_EMIT fileActivated(
-        toNativeCanonicalFilePath(mModel->fileInfo(index).filePath()));
+        toNativeCanonicalFilePath(mModel->filePath(index)));
 }
 
 void FileBrowserWindow::browseDirectory()
@@ -137,7 +142,11 @@ void FileBrowserWindow::browseDirectory()
 
 void FileBrowserWindow::showInFileManager()
 {
-    ::showInFileManager(mModel->filePath(mFileSystemTree->currentIndex()));
+    auto path = mModel->rootPath();
+    const auto& selectedIndexes = mFileSystemTree->selectionModel()->selectedIndexes();
+    if (!selectedIndexes.isEmpty())
+        path = mModel->filePath(selectedIndexes.first());
+    ::showInFileManager(path);
 }
 
 void FileBrowserWindow::updateRecentDirectories(const QString &path)
