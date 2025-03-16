@@ -141,6 +141,7 @@ QString MessageWindow::getMessageText(const Message &message) const
     case RecursiveInclude:
         return tr("Recursive #include '%1'").arg(message.text);
     case InvalidAttribute: return tr("Invalid stream attribute");
+    case InvalidIndexType: return tr("Invalid index type");
     case TooManyPrintfCalls:
         return tr("Too many printf calls. Please filter threads by setting "
                   "printfEnabled");

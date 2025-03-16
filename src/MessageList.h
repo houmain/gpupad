@@ -49,6 +49,7 @@ enum class MessageType {
     SwappingBuffersFailed,
     InvalidAttribute,
     InvalidSubroutine,
+    InvalidIndexType,
     ImageFormatNotBindable,
     UniformComponentMismatch,
     InvalidIncludeDirective,

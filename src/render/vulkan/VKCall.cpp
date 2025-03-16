@@ -40,9 +40,11 @@ void VKCall::setIndexBuffer(VKBuffer *indices, const Block &block)
         mUsedItems += field->id;
 
     mIndexBuffer = indices;
-    mIndexType = (getBlockStride(block) == 2 ? KDGpu::IndexType::Uint16
-                                             : KDGpu::IndexType::Uint32);
     mIndicesOffset = block.offset;
+    mIndexSize = getBlockStride(block);
+    if (!getIndexType())
+        mMessages +=
+            MessageList::insert(block.id, MessageType::InvalidIndexType);
 }
 
 void VKCall::setIndirectBuffer(VKBuffer *commands, const Block &block)
@@ -183,6 +185,25 @@ uint32_t VKCall::evaluateUInt(ScriptEngine &scriptEngine,
         scriptEngine.evaluateInt(expression, mCall.id, mMessages));
 }
 
+std::optional<KDGpu::IndexType> VKCall::getIndexType() const
+{
+    switch (mIndexSize) {
+    case 1:  return KDGpu::IndexType::Uint8;
+    case 2:  return KDGpu::IndexType::Uint16;
+    case 4:  return KDGpu::IndexType::Uint32;
+    default: return {};
+    }
+}
+
+int VKCall::getDefaultElementCount() const
+{
+    if (mIndexBuffer)
+        return mIndexBuffer->size() / mIndexSize;
+    if (mVertexStream)
+        return mVertexStream->getDefaultElementCount();
+    return 0;
+}
+
 void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     ScriptEngine &scriptEngine)
 {
@@ -217,10 +238,12 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     if (mIndexBuffer) {
         const auto indicesOffset = evaluateUInt(scriptEngine, mIndicesOffset);
         renderPass.setIndexBuffer(mIndexBuffer->buffer(), indicesOffset,
-            mIndexType);
+            getIndexType().value_or(KDGpu::IndexType::Uint32));
     }
 
-    const auto count = evaluateUInt(scriptEngine, mCall.count);
+    const auto count = (!mCall.count.isEmpty()
+            ? evaluateUInt(scriptEngine, mCall.count)
+            : getDefaultElementCount());
     const auto instanceCount = evaluateUInt(scriptEngine, mCall.instanceCount);
     const auto first = evaluateUInt(scriptEngine, mCall.first);
     const auto firstInstance = evaluateUInt(scriptEngine, mCall.baseInstance);

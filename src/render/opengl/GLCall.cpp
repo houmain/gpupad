@@ -178,8 +178,11 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block)
         mUsedItems += field->id;
 
     mIndexBuffer = indices;
-    mIndexSize = getBlockStride(block);
     mIndicesOffset = block.offset;
+    mIndexSize = getBlockStride(block);
+    if (!getIndexType())
+        mMessages +=
+            MessageList::insert(block.id, MessageType::InvalidIndexType);
 }
 
 GLenum GLCall::getIndexType() const
