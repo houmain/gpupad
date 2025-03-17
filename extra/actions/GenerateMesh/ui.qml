@@ -10,6 +10,7 @@ Item {
   property alias stacks: stacks.value
   property alias facetted: facetted.checked
   property alias insideOut: insideOut.checked
+  property alias swapYZ: swapYZ.checked
   property alias width_: width.value
   property alias height_: height.value
   property alias depth: depth.value
@@ -18,6 +19,7 @@ Item {
   property alias seed: seed.value
   property alias scaleU: scaleU.value
   property alias scaleV: scaleV.value
+  property alias indexed: indexed.checked
   property alias addStream: addStream.checked
 
   property bool hasStacks
@@ -54,7 +56,7 @@ Item {
       visible: hasSlices
       Layout.preferredHeight: 25
       Layout.preferredWidth: 50
-      value: 3
+      value: 10
       from: 1
       to: 100
       editable: true
@@ -70,7 +72,7 @@ Item {
       visible: hasStacks
       Layout.preferredHeight: 25
       Layout.preferredWidth: 50
-      value: 3
+      value: 10
       from: 1
       to: 100
       editable: true
@@ -86,7 +88,7 @@ Item {
       visible: hasSubdivisions
       Layout.preferredHeight: 25
       Layout.preferredWidth: 50
-      value: 0
+      value: 2
       from: 0
       to: 20
       editable: true
@@ -183,7 +185,7 @@ Item {
       from: -1000
       to: 1000
       decimals: 2
-      stepSize: 0.1
+      stepSize: 1.0
       editable: true
       onValueModified: { script.refresh() }
     }
@@ -199,7 +201,7 @@ Item {
       from: -1000
       to: 1000
       decimals: 2
-      stepSize: 0.1
+      stepSize: 1.0
       editable: true
       onValueModified: { script.refresh() }
     }    
@@ -215,6 +217,16 @@ Item {
     }
     
     Label {
+      text: qsTr("Swap Y/Z")
+    }
+    CheckBox {
+      id: swapYZ
+      Layout.preferredHeight: 25
+      Layout.preferredWidth: 25
+      onToggled: { script.refresh() }
+    }    
+    
+    Label {
       text: qsTr("Inside Out")
     }
     CheckBox {
@@ -223,7 +235,18 @@ Item {
       Layout.preferredWidth: 25
       onToggled: { script.refresh() }
     }
-    
+
+    Label {
+      text: qsTr("Indexed")
+    }
+    CheckBox {
+      id: indexed
+      Layout.preferredHeight: 25
+      Layout.preferredWidth: 25
+      checked: true
+      onToggled: { script.refresh() }
+    }
+
     Label {
       text: qsTr("Add Stream")
     }
@@ -231,8 +254,9 @@ Item {
       id: addStream
       Layout.preferredHeight: 25
       Layout.preferredWidth: 25
+      checked: true
       onToggled: { script.refresh() }
-    }    
+    }
 
     Item {}
     Button {

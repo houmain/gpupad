@@ -129,24 +129,28 @@
     ADD(CallExecuteOn, Call, executeOn)
 
 template <typename T>
-auto fromVariant(
-    const QVariant &v) -> std::enable_if_t<std::is_enum<T>::value, T>
+auto fromVariant(const QVariant &v)
+    -> std::enable_if_t<std::is_enum<T>::value, T>
 {
     // check if it is a valid key string
+    const auto metaEnum = QMetaEnum::fromType<T>();
+    const auto string = v.toString();
     auto ok = false;
-    auto value =
-        QMetaEnum::fromType<T>().keyToValue(qPrintable(v.toString()), &ok);
+    auto value = metaEnum.keyToValue(qPrintable(string), &ok);
     if (ok)
         return static_cast<T>(value);
+
     // check if it is already a valid value
-    if (QMetaEnum::fromType<T>().valueToKey(v.toInt()))
+    if (metaEnum.valueToKey(v.toInt()))
         return static_cast<T>(v.toInt());
-    return T{};
+
+    Q_ASSERT(!"not a valid enum value");
+    return static_cast<T>(metaEnum.value(0));
 }
 
 template <typename T>
-auto fromVariant(
-    const QVariant &v) -> std::enable_if_t<!std::is_enum<T>::value, T>;
+auto fromVariant(const QVariant &v)
+    -> std::enable_if_t<!std::is_enum<T>::value, T>;
 
 template <>
 inline int fromVariant<int>(const QVariant &v)
@@ -199,15 +203,15 @@ void forEachItem(const Item &item, const F &function)
 }
 
 template <typename T>
-auto toJsonValue(
-    const T &v) -> std::enable_if_t<!std::is_enum<T>::value, QJsonValue>
+auto toJsonValue(const T &v)
+    -> std::enable_if_t<!std::is_enum<T>::value, QJsonValue>
 {
     return v;
 }
 
 template <typename T>
-auto toJsonValue(
-    const T &v) -> std::enable_if_t<std::is_enum<T>::value, QJsonValue>
+auto toJsonValue(const T &v)
+    -> std::enable_if_t<std::is_enum<T>::value, QJsonValue>
 {
     return QMetaEnum::fromType<T>().valueToKey(v);
 }

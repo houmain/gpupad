@@ -49,6 +49,7 @@ namespace {
     int subdivisions{ 0 };
     int seed{ };
     bool inside_out{ };
+    bool swap_yz{ };
     float scale_u{ 1.0f };
     float scale_v{ 1.0f };
   };
@@ -80,7 +81,17 @@ namespace {
       par_shapes__copy3(normal, point);
       par_shapes__normalize3(normal);
       tcoord[0] = std::asin(normal[0]) / pi + 0.5f;
-      tcoord[1] = std::asin(normal[1]) / pi + 0.5f;
+      tcoord[1] = std::asin(normal[2]) / pi + 0.5f;
+    }
+  }
+
+  bool get_swap_yz(const Settings& s) {
+    switch (s.type) {
+      case Type::hemisphere:
+      case Type::rock:
+        return !s.swap_yz;
+      default:
+        return s.swap_yz;
     }
   }
 } // namespace
@@ -122,6 +133,7 @@ void setRadius(Settings& s, float value) { s.radius = value; }
 void setSubdivisions(Settings& s, int value) { s.subdivisions = value; }
 void setSeed(Settings& s, int value) { s.seed = value; }
 void setInsideOut(Settings& s, bool value) { s.inside_out = value; }
+void setSwapYZ(Settings& s, bool value) { s.swap_yz = value; }
 void setScaleU(Settings& s, float value) { s.scale_u = value; }
 void setScaleV(Settings& s, float value) { s.scale_v = value; }
 
@@ -178,27 +190,27 @@ MeshPtr generate(const Settings& s) {
     case Type::cylinder: {
       mesh.reset(par_shapes_create_cylinder(s.slices, s.stacks));
       if (mesh) {
-        auto center = vec3{ 0, 0, 1 };
-        auto normal = vec3{ 0, 0, 1 };
-        auto top = par_shapes_create_disk(1.0f, s.slices,
-          &center.x, &normal.x);
+        auto top = par_shapes_create_parametric_disk(s.slices, s.stacks);
+        auto bottom = par_shapes_create_parametric_disk(s.slices, s.stacks);
+        par_shapes_translate(top, 0, 0, 1);
+        par_shapes_scale(bottom, 1, 1, -1);
+        par_shapes_invert(bottom, 0, 0);
         par_shapes_merge_and_free(mesh.get(), top);
-        center = vec3{ 0, 0, 0 };
-        normal = vec3{ 0, 0, -1 };
-        auto bottom = par_shapes_create_disk(1.0f, s.slices,
-          &center.x, &normal.x);
         par_shapes_merge_and_free(mesh.get(), bottom);
+        par_shapes_scale(mesh.get(), 1, 1, 2);
+        par_shapes_translate(mesh.get(), 0, 0, -1);
       }
       break;
     }
     case Type::cone: {
       mesh.reset(par_shapes_create_cone(s.slices, s.stacks));
       if (mesh) {
-        const auto center = vec3{ 0, 0, 0 };
-        const auto normal = vec3{ 0, 0, -1 };
-        auto bottom = par_shapes_create_disk(1.0f, s.slices,
-          &center.x, &normal.x);
+        auto bottom = par_shapes_create_parametric_disk(s.slices, s.stacks);
+        par_shapes_scale(bottom, 1, 1, -1);
+        par_shapes_invert(bottom, 0, 0);
         par_shapes_merge_and_free(mesh.get(), bottom);
+        par_shapes_scale(mesh.get(), 1, 1, 2);
+        par_shapes_translate(mesh.get(), 0, 0, -1);
       }
       break;
     }
@@ -216,6 +228,9 @@ MeshPtr generate(const Settings& s) {
       break;
     case Type::klein_bottle:
       mesh.reset(par_shapes_create_klein_bottle(s.slices, s.stacks));
+      if (mesh) {
+        par_shapes_scale(mesh.get(), 0.125f, 0.125f, 0.125f);
+      }
       break;
     case Type::trefoil_knot:
       mesh.reset(par_shapes_create_trefoil_knot(s.slices, s.stacks, s.radius));
@@ -225,8 +240,10 @@ MeshPtr generate(const Settings& s) {
       break;
     case Type::plane:
       mesh.reset(par_shapes_create_plane(s.slices, s.stacks));
-      par_shapes_scale(mesh.get(), 2, 2, 2);
-      par_shapes_translate(mesh.get(), -1, -1, 0);
+      if (mesh) {
+        par_shapes_scale(mesh.get(), 2, 2, 2);
+        par_shapes_translate(mesh.get(), -1, -1, 0);
+      }
       break;
     case Type::icosahedron:
       mesh.reset(par_shapes_create_icosahedron());
@@ -242,8 +259,10 @@ MeshPtr generate(const Settings& s) {
       break;
     case Type::cube:
       mesh.reset(par_shapes_create_cube());
-      par_shapes_scale(mesh.get(), 2, 2, 2);
-      par_shapes_translate(mesh.get(), -1, -1, -1);
+      if (mesh) {
+        par_shapes_scale(mesh.get(), 2, 2, 2);
+        par_shapes_translate(mesh.get(), -1, -1, -1);
+      }
       break;
     case Type::rock:
       mesh.reset(par_shapes_create_rock(s.seed, s.subdivisions));
@@ -251,17 +270,13 @@ MeshPtr generate(const Settings& s) {
   }
 
   if (mesh) {
-    if (s.width != 2 || s.height != 2 || s.depth != 2)
-      par_shapes_scale(mesh.get(), s.width / 2, s.height / 2,
-        s.depth / 2);
-
     if (s.facetted)
       par_shapes_unweld(mesh.get(), true);
 
     if (s.facetted || !mesh->normals)
       par_shapes_compute_normals(mesh.get());
 
-    if (!mesh->tcoords)
+    if (s.facetted || !mesh->tcoords)
       generate_tcoords_sphere(mesh.get());
   }
   return mesh;
@@ -271,6 +286,10 @@ std::vector<float> getVertices(const Settings& s, const MeshPtr& mesh) {
   if (!mesh)
     return { };
 
+  const auto swap_yz = get_swap_yz(s);
+  const auto scale_x = (s.width) / 2;
+  const auto scale_y = (s.swap_yz ? s.height : s.depth) / 2;
+  const auto scale_z = (s.swap_yz ? s.depth : s.height) / 2;
   const auto scale_normal = (s.inside_out ? -1.0f : 1.0f);
   const auto translate_u (s.scale_u < 0 ? 1.0f : 0.0f);
   const auto translate_v (s.scale_v < 0 ? 1.0f : 0.0f);
@@ -281,15 +300,18 @@ std::vector<float> getVertices(const Settings& s, const MeshPtr& mesh) {
   auto position = mesh->points;
   auto normal = mesh->normals;
   auto texcoords = mesh->tcoords;
-  for (auto i = 0; i < mesh->npoints; ++i) {
-    for (auto j = 0; j < 3; ++j)
-      vertices.push_back(*position++);
 
-    for (auto j = 0; j < 3; ++j)
-      vertices.push_back(*normal++ * scale_normal);
+  for (auto i = 0; i < mesh->npoints; ++i, position += 3, normal += 3, texcoords += 2) {
+    vertices.push_back(position[0] * scale_x);
+    vertices.push_back(position[swap_yz ? 2 : 1] * scale_y);
+    vertices.push_back(position[swap_yz ? 1 : 2] * scale_z);
 
-    vertices.push_back(*texcoords++ * s.scale_u + translate_u);
-    vertices.push_back(*texcoords++ * s.scale_v + translate_v);
+    vertices.push_back(normal[0] * scale_normal);
+    vertices.push_back(normal[swap_yz ? 2 : 1] * scale_normal);
+    vertices.push_back(normal[swap_yz ? 1 : 2] * scale_normal);
+
+    vertices.push_back(texcoords[0] * s.scale_u + translate_u);
+    vertices.push_back(texcoords[1] * s.scale_v + translate_v);
   }
   return vertices;
 }
@@ -298,17 +320,34 @@ std::vector<uint16_t> getIndices(const Settings& s, const MeshPtr& mesh) {
   if (!mesh)
     return { };
 
-  if (s.inside_out) {
+  const auto swap_yz = get_swap_yz(s);
+
+  if (s.inside_out ^ swap_yz) {
     auto indices = std::vector<uint16_t>();
     indices.reserve(mesh->ntriangles * 3);
     auto triangle = mesh->triangles;
-    for (auto i = 0; i < mesh->ntriangles; ++i, ++triangle) {
+    for (auto i = 0; i < mesh->ntriangles; ++i, triangle += 3) {
       indices.push_back(triangle[0]);
       indices.push_back(triangle[2]);
       indices.push_back(triangle[1]);
     }
+    return indices;
   }
   return { mesh->triangles, mesh->triangles + mesh->ntriangles * 3 };
+}
+
+std::vector<float> getVerticesUnweld(const Settings& s, const MeshPtr& mesh) {
+  const auto indices = getIndices(s, mesh);
+  const auto vertices = getVertices(s, mesh);
+
+  auto unweld = std::vector<float>();
+  unweld.reserve(8 * indices.size());
+  for (auto index : indices) {
+    index *= 8;
+    for (auto i = 0; i < 8; ++i)
+      unweld.push_back(vertices[index++]);
+  }
+  return unweld;
 }
 
 DLLREFLECT_BEGIN()
@@ -326,6 +365,7 @@ DLLREFLECT_FUNC(setRadius)
 DLLREFLECT_FUNC(setSubdivisions)
 DLLREFLECT_FUNC(setSeed)
 DLLREFLECT_FUNC(setInsideOut)
+DLLREFLECT_FUNC(setSwapYZ)
 DLLREFLECT_FUNC(setScaleU)
 DLLREFLECT_FUNC(setScaleV)
 DLLREFLECT_FUNC(hasSlicesStacks)
@@ -335,4 +375,5 @@ DLLREFLECT_FUNC(hasSeed)
 DLLREFLECT_FUNC(generate)
 DLLREFLECT_FUNC(getVertices)
 DLLREFLECT_FUNC(getIndices)
+DLLREFLECT_FUNC(getVerticesUnweld)
 DLLREFLECT_END()

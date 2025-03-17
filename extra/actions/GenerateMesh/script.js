@@ -31,6 +31,7 @@ class Script {
     lib.setSubdivisions(s, ui.subdivisions)
     lib.setSeed(s, ui.seed)
     lib.setInsideOut(s, ui.insideOut)
+    lib.setSwapYZ(s, !ui.swapYZ)
     lib.setScaleU(s, ui.scaleU)
     lib.setScaleV(s, ui.scaleV)
     
@@ -40,16 +41,24 @@ class Script {
     ui.hasSubdivisions = lib.hasSubdivisions(s)
     ui.hasSeed = lib.hasSeed(s)
     
-    if (app.session.item(this.buffer))
+    if (app.session.item(this.vertices))
       this.generate()
   }
   
   insert() {
-    this.buffer = app.session.insertItem({
-      name: 'Mesh',
+    
+    let group = app.session.insertItem({
+      name: 'Model',
+      type: 'Group',
+      inlineScope: true
+    })    
+    
+    this.vertices = app.session.insertItem(group, {
+      name: 'Vertices',
       type: 'Buffer',
       items: [
         {
+          name: 'Vertex',
           items: [
             {
               name: 'position',
@@ -71,40 +80,69 @@ class Script {
       ]
     })
     
-    if (this.ui.addStream) {
-      app.session.insertItem({
-        name: 'Stream',
-        type: 'Stream',
+    if (this.ui.indexed) {
+      this.indices = app.session.insertItem(group, {
+        name: 'Indices',
+        type: 'Buffer',
         items: [
           {
-            name: 'a_position',
-            fieldId: this.buffer.items[0].items[0].id
-          },
-          {
-            name: 'a_normal',
-            fieldId: this.buffer.items[0].items[1].id
-          },
-          {
-            name: 'a_tex_coords',
-            fieldId: this.buffer.items[0].items[2].id
+            name: 'Index',
+            items: [
+              {
+                name: 'index',
+                dataType: 'Uint16',
+              }
+            ]
           }
         ]
       })
     }
+    
+    app.session.insertItem(group, {
+      name: 'Stream',
+      type: 'Stream',
+      items: [
+        {
+          name: 'aPosition',
+          fieldId: this.vertices.items[0].items[0].id,
+        },
+        {
+          name: 'aNormal',
+          fieldId: this.vertices.items[0].items[1].id,
+        },
+        {
+          name: 'aTexCoords',
+          fieldId: this.vertices.items[0].items[2].id,
+        }
+      ]
+    })
   }
   
   generate() {
     const lib = this.library
     const s = this.settings    
     const geometry = lib.generate(s)
-    const vertices = lib.getVertices(s, geometry)
-    const indices = lib.getIndices(s, geometry)
-    if (!vertices.length)
-      throw "Generating geometry failed"
-      
-    this.buffer.items[0].rowCount = vertices.length / 8
     
-    app.session.setBufferData(this.buffer, vertices)
+    if (this.ui.indexed) {
+      const vertices = lib.getVertices(s, geometry)
+      const indices = lib.getIndices(s, geometry)
+      if (!vertices.length)
+        throw "Generating geometry failed"
+        
+      this.vertices.items[0].rowCount = vertices.length / 8
+      app.session.setBufferData(this.vertices, vertices)
+      
+      this.indices.items[0].rowCount = indices.length
+      app.session.setBufferData(this.indices, indices)
+    }
+    else {
+      const vertices = lib.getVerticesUnweld(s, geometry)
+      if (!vertices.length)
+        throw "Generating geometry failed"
+        
+      this.vertices.items[0].rowCount = vertices.length / 8
+      app.session.setBufferData(this.vertices, vertices)
+    }
   }
 }
 
