@@ -1141,7 +1141,7 @@ void MainWindow::populateSampleSessions()
 {
     if (!mUi->menuSampleSessions->actions().empty())
         return;
-    const auto entries = enumerateApplicationPaths("samples", QDir::Dirs);
+    const auto entries = enumerateApplicationPaths(SamplesDir, QDir::Dirs);
     for (const auto &entry : entries) {
         auto dir = QDir(entry.absoluteFilePath());
         dir.setNameFilters({ "*.gpjs" });

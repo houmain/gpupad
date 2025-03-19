@@ -60,6 +60,9 @@ private:
     bool mAsBinaryFile{};
 };
 
+extern const QString SamplesDir;
+extern const QString ActionsDir;
+
 bool isNativeCanonicalFilePath(const QString &fileName);
 QString toNativeCanonicalFilePath(const QString &fileName);
 void showInFileManager(const QString &path);
@@ -68,5 +71,6 @@ bool showSavingFailedMessage(QWidget *parent, const QString &fileName);
 void showCopyingSessionFailedMessage(QWidget *parent);
 QDir getInstallDirectory(const QString &dirName);
 QDir getUserDirectory(const QString &dirName);
+QList<QDir> getApplicationDirectories(const QString &dirName);
 QFileInfoList enumerateApplicationPaths(const QString &dirName,
     QDir::Filters filters);

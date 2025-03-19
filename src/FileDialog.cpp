@@ -11,13 +11,13 @@ namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
     const auto SessionFileExtension = QStringLiteral("gpjs");
     const auto ShaderFileExtensions = { "glsl", "vs", "fs", "gs", "vert",
-        "tesc", "tese", "geom", "frag", "comp", "task", "mesh",
-        "rgen", "rint", "rahit", "rchit", "rmiss", "rcall",
-        "ps", "hlsl", "hlsli", "fx" };
+        "tesc", "tese", "geom", "frag", "comp", "task", "mesh", "rgen", "rint",
+        "rahit", "rchit", "rmiss", "rcall", "ps", "hlsl", "hlsli", "fx" };
     const auto ScriptFileExtensions = { "js", "json", "qml", "lua" };
     const auto TextureFileExtensions = { "ktx", "dds", "png", "exr", "tga",
         "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
-    const auto VideoFileExtensions = std::initializer_list<const char *>{
+    const auto VideoFileExtensions = std::initializer_list<const char *>
+    {
 #if defined(QtMultimedia_FOUND)
         "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi"
 #endif
@@ -63,6 +63,9 @@ namespace {
         return "txt";
     }
 } // namespace
+
+const QString SamplesDir = QStringLiteral("samples");
+const QString ActionsDir = QStringLiteral("actions");
 
 QString FileDialog::generateNextUntitledFileName(QString base)
 {
@@ -293,11 +296,23 @@ QString toNativeCanonicalFilePath(const QString &fileName)
         fileInfo.exists() ? fileInfo.canonicalFilePath() : fileName);
 }
 
+QString getFirstDirEntry(const QString &path)
+{
+    if (QFileInfo(path).isDir()) {
+        auto dir = QDir(path);
+        dir.setFilter(QDir::AllEntries | QDir::NoDotAndDotDot);
+        auto entries = dir.entryInfoList();
+        if (!entries.isEmpty())
+            return entries.first().filePath();
+    }
+    return path;
+}
+
 void showInFileManager(const QString &path)
 {
 #if defined(_WIN32)
     QProcess::startDetached("explorer.exe",
-        { "/select,", QDir::toNativeSeparators(path) });
+        { "/select,", QDir::toNativeSeparators(getFirstDirEntry(path)) });
 #elif defined(__APPLE__)
     QProcess::execute("/usr/bin/osascript",
         { "-e",
@@ -356,17 +371,18 @@ void showCopyingSessionFailedMessage(QWidget *parent)
 
 QDir getInstallDirectory(const QString &dirName)
 {
-    const auto paths = std::initializer_list<QString>{
+    const auto paths = std::initializer_list<QString>
+    {
         QCoreApplication::applicationDirPath(),
-        QCoreApplication::applicationDirPath() + "/..",
-        QCoreApplication::applicationDirPath() + "/../share/"
+            QCoreApplication::applicationDirPath() + "/..",
+            QCoreApplication::applicationDirPath() + "/../share/"
             + QCoreApplication::organizationName(),
 #if !defined(NDEBUG)
-        QCoreApplication::applicationDirPath() + "/../..",
-        QCoreApplication::applicationDirPath() + "/../../extra",
+            QCoreApplication::applicationDirPath() + "/../..",
+            QCoreApplication::applicationDirPath() + "/../../extra",
 #endif
 #if defined(__linux__)
-        qEnvironmentVariable("APPDIR") + "/usr/share/"
+            qEnvironmentVariable("APPDIR") + "/usr/share/"
             + QCoreApplication::organizationName(),
 #endif
     };
@@ -387,13 +403,24 @@ QDir getUserDirectory(const QString &dirName)
     return dir;
 }
 
+QList<QDir> getApplicationDirectories(const QString &dirName)
+{
+    auto result = QList<QDir>();
+    const auto dirs = {
+        getInstallDirectory(dirName),
+        getUserDirectory(dirName),
+    };
+    for (const auto &dir : dirs)
+        if (dir != QDir())
+            result.append(dir);
+    return result;
+}
+
 QFileInfoList enumerateApplicationPaths(const QString &dirName,
     QDir::Filters filters)
 {
     auto entries = QFileInfoList();
-    auto dirs =
-        QList<QDir>{ getInstallDirectory(dirName), getUserDirectory(dirName) };
-    for (auto &dir : dirs) {
+    for (auto &dir : getApplicationDirectories(dirName)) {
         dir.setFilter(filters | QDir::NoDotAndDotDot);
         entries += dir.entryInfoList();
     }

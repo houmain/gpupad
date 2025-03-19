@@ -1,4 +1,8 @@
 
+const manifest = {
+  name: "&Insert Orbit Camera"
+}
+
 const scriptSource = `
 // based on https://www.mbsoftworks.sk/tutorials/opengl4/026-camera-pt3-orbit-camera/ (MIT license)
 class OrbitCamera {
@@ -137,13 +141,13 @@ const azimuthAngle = 0
 const polarAngle = 0
 const camera = new OrbitCamera(center, up, radius, minRadius, azimuthAngle, polarAngle)
 
-function updateOrbitCamera(mouse) {
-  if (mouse.buttons[0] == 1) {
-    camera.rotateAzimuth(2 * mouse.delta[0])
-    camera.rotatePolar(2 * -mouse.delta[1])
+function updateOrbitCamera() {
+  if (app.mouse.buttons[0] == 1) {
+    camera.rotateAzimuth(2 * app.mouse.delta[0])
+    camera.rotatePolar(2 * -app.mouse.delta[1])
   }
-  if (mouse.buttons[2] == 1) {
-    camera.zoom(mouse.delta[1])
+  if (app.mouse.buttons[2] == 1) {
+    camera.zoom(app.mouse.delta[1])
   }
   return camera.getViewMatrix();
 }
@@ -151,18 +155,17 @@ function updateOrbitCamera(mouse) {
 
 //===============================================
 
-function execute(selection) {
-  const scriptName = 'OrbitCamera.js'
-  Session.items[scriptName] = {
-    type: 'Script',
-    executeOn: "ResetEvaluation"
-  }
-  Session.setScriptSource(Session.items[scriptName], scriptSource)
-  
-  Session.items.uViewMatrix = {
-    type: 'Binding',
-    values: [
-      "updateOrbitCamera(Mouse)"
-    ]
-  }
-}
+const script = app.session.insertItem({
+  name: 'OrbitCamera.js',
+  type: 'Script',
+  executeOn: 'ResetEvaluation',
+})
+app.session.setScriptSource(script, scriptSource)
+
+app.session.insertItem({
+  name: 'uViewMatrix',
+  type: 'Binding',
+  values: [
+    "updateOrbitCamera()"
+  ],
+})

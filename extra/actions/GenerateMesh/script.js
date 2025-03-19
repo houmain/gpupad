@@ -1,5 +1,7 @@
 
-name = "&Generate Mesh..."
+const manifest = {
+  name: "&Generate Mesh..."
+}
 
 class Script {
   initialize(ui) {
@@ -146,7 +148,5 @@ class Script {
   }
 }
 
-function apply() {
-  script = new Script()
-  app.openEditor("ui.qml")
-}
+script = new Script()
+app.openEditor("ui.qml")

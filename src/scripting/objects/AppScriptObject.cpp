@@ -33,6 +33,15 @@ QString AppScriptObject::getAbsolutePath(const QString &fileName) const
     return toNativeCanonicalFilePath(mBasePath.filePath(fileName));
 }
 
+void AppScriptObject::setSelection(const QModelIndexList &selectedIndices)
+{
+    mSelectionProperty = mJsEngine->newArray(selectedIndices.size());
+    auto i = 0;
+    for (const auto &index : selectedIndices)
+        mSelectionProperty.setProperty(i++,
+            sessionScriptObject().getItem(index));
+}
+
 void AppScriptObject::update()
 {
     Singletons::inputState().update();
@@ -66,7 +75,8 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
     const auto searchPaths = QStringList{
         mBasePath.path(),
         QCoreApplication::applicationDirPath(),
-        QCoreApplication::applicationDirPath() + "/extra/actions/" + mBasePath.dirName(),
+        QCoreApplication::applicationDirPath() + "/extra/actions/"
+            + mBasePath.dirName(),
     };
     auto library = std::make_unique<LibraryScriptObject>();
     if (!library->load(&jsEngine(), fileName, searchPaths)) {

@@ -8,68 +8,99 @@
 #include <QDirIterator>
 #include <QFileInfo>
 
+namespace {
+    QString extractManifest(const QString &string)
+    {
+        // TODO: improve
+        const auto begin = string.indexOf("manifest");
+        if (begin < 0)
+            return {};
+        auto it = begin;
+        const auto end = string.size();
+        auto level = 0;
+        for (; it < end; ++it) {
+            const auto c = string.at(it);
+            if (c == '{') {
+                ++level;
+            } else if (c == '}') {
+                if (--level == 0)
+                    return string.mid(begin, it - begin + 1);
+            }
+        }
+        return {};
+    }
+} // namespace
+
 class CustomAction final : public QAction
 {
+private:
+    const QString mFilePath;
+    ScriptEnginePtr mScriptEngine;
+
+    QJSValue parseManifest(ScriptEngine &scriptEngine, MessagePtrSet &messages)
+    {
+        auto source = QString();
+        if (Singletons::fileCache().getSource(mFilePath, &source))
+            source = extractManifest(source);
+
+        auto manifest = QJSValue();
+        if (!source.isEmpty()) {
+            scriptEngine.evaluateScript(source, mFilePath, messages);
+            manifest = scriptEngine.getGlobal("manifest");
+            scriptEngine.setGlobal("manifest", QJSValue::UndefinedValue);
+        }
+        if (!manifest.isObject())
+            manifest = scriptEngine.jsEngine().newObject();
+
+        return manifest;
+    }
+
 public:
     explicit CustomAction(const QString &filePath) : mFilePath(filePath)
     {
-        setText(QFileInfo(mFilePath).baseName());
-
-        auto source = QString();
-        if (Singletons::fileCache().getSource(mFilePath, &source)) {
-            const auto basePath = QFileInfo(mFilePath).absolutePath();
-            mScriptEngine = ScriptEngine::make(basePath);
-            mScriptEngine->evaluateScript(source, mFilePath, mMessages);
-            auto name = mScriptEngine->getGlobal("name");
-            if (!name.isUndefined())
-                setText(name.toString());
-        }
+        const auto fileInfo = QFileInfo(mFilePath);
+        setText(fileInfo.baseName());
+        const auto dirName = fileInfo.dir().dirName();
+        if (dirName != ActionsDir)
+            setText(dirName + "/" + fileInfo.baseName());
     }
 
-    bool isApplicable(const QModelIndexList &selection, MessagePtrSet &messages)
+    bool updateManifest(ScriptEngine &scriptEngine, MessagePtrSet &messages)
     {
-        if (!mScriptEngine)
+        auto manifest = parseManifest(scriptEngine, messages);
+        setEnabled(!manifest.isUndefined());
+        if (manifest.isUndefined())
             return false;
 
-        auto applicable = mScriptEngine->getGlobal("applicable");
+        auto name = manifest.property("name");
+        if (!name.isUndefined())
+            setText(name.toString());
+
+        auto applicable = manifest.property("applicable");
         if (applicable.isCallable()) {
-            auto result = mScriptEngine->call(applicable,
-                { getItems(selection) }, 0, messages);
-            if (result.isBool())
-                return result.toBool();
-            return false;
+            const auto result = scriptEngine.call(applicable, {}, 0, messages);
+            setEnabled(result.isBool() && result.toBool());
         }
         return true;
     }
 
     void apply(const QModelIndexList &selection, MessagePtrSet &messages)
     {
-        if (!mScriptEngine)
-            return;
+        mScriptEngine.reset();
 
-        auto apply = mScriptEngine->getGlobal("apply");
-        if (apply.isCallable()) {
-            // TODO: run in cancelable background thread
-            mScriptEngine->call(apply, { getItems(selection) }, 0, messages);
-            mScriptEngine->appScriptObject().sessionScriptObject().endBackgroundUpdate();
-        }
+        const auto basePath = QFileInfo(mFilePath).absolutePath();
+        mScriptEngine = ScriptEngine::make(basePath);
+        mScriptEngine->appScriptObject().setSelection(selection);
+
+        auto source = QString();
+        if (Singletons::fileCache().getSource(mFilePath, &source))
+            mScriptEngine->evaluateScript(source, mFilePath, messages);
+
+        // TODO: run in cancelable background thread
+        mScriptEngine->appScriptObject()
+            .sessionScriptObject()
+            .endBackgroundUpdate();
     }
-
-private:
-    QJSValue getItems(const QModelIndexList &selectedIndices)
-    {
-        auto array = mScriptEngine->jsEngine().newArray(selectedIndices.size());
-        auto i = 0;
-        for (const auto &index : selectedIndices)
-            array.setProperty(i++,
-                mScriptEngine->appScriptObject().sessionScriptObject().getItem(
-                    index));
-        return array;
-    }
-
-    const QString mFilePath;
-    MessagePtrSet mMessages;
-    ScriptEnginePtr mScriptEngine;
 };
 
 //-------------------------------------------------------------------------
@@ -91,25 +122,26 @@ void CustomActions::updateActions()
 {
     Singletons::fileCache().updateFromEditors();
 
+    mMessages.clear();
     mActions.clear();
 
-    for (const auto &dir : {
-            getInstallDirectory("actions"),
-            getUserDirectory("actions"),
-        })
-        if (dir != QDir()) {
-            auto it = QDirIterator(dir.path(), QStringList() << "*.js", QDir::Files,
-                QDirIterator::Subdirectories);
-            while (it.hasNext()) {
-                // keep only last action with identical name
-                const auto filePath = toNativeCanonicalFilePath(it.next());
-                auto action = new CustomAction(filePath);
-                mActions[action->text()].reset(action);
+    for (const auto &dir : getApplicationDirectories(ActionsDir)) {
+        auto scriptEngine = ScriptEngine::make(dir.path());
 
-                connect(action, &QAction::triggered, this,
-                    &CustomActions::actionTriggered);
-            }
+        auto it = QDirIterator(dir.path(), QStringList() << "*.js", QDir::Files,
+            QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            // keep only last action with identical name
+            const auto filePath = toNativeCanonicalFilePath(it.next());
+            auto action = std::make_unique<CustomAction>(filePath);
+            if (!action->updateManifest(*scriptEngine, mMessages))
+                continue;
+
+            connect(action.get(), &QAction::triggered, this,
+                &CustomActions::actionTriggered);
+            mActions[action->text()] = std::move(action);
         }
+    }
 }
 
 void CustomActions::setSelection(const QModelIndexList &selection)
@@ -123,7 +155,7 @@ QList<QAction *> CustomActions::getApplicableActions()
 
     auto actions = QList<QAction *>();
     for (const auto &[name, action] : mActions)
-        if (action->isApplicable(mSelection, mMessages))
+        if (action->isEnabled())
             actions += action.get();
     return actions;
 }

@@ -3,6 +3,7 @@
 #include "MessageList.h"
 #include <QObject>
 #include <QJSValue>
+#include <QModelIndex>
 #include <QDir>
 
 class SessionScriptObject;
@@ -24,6 +25,7 @@ public:
     QJSValue session() { return mSessionProperty; }
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
+    QJSValue selection() { return mSelectionProperty; }
 
     Q_INVOKABLE QJSValue openEditor(QString fileName);
     Q_INVOKABLE QJSValue loadLibrary(QString fileName);
@@ -32,6 +34,7 @@ public:
     Q_INVOKABLE QJSValue writeTextFile(QString fileName, const QString &string);
     Q_INVOKABLE QJSValue readTextFile(QString fileName);
 
+    void setSelection(const QModelIndexList &selectedIndices);
     void update();
     bool usesMouseState() const;
     bool usesKeyboardState() const;
@@ -50,4 +53,5 @@ private:
     QJSValue mSessionProperty;
     QJSValue mMouseProperty;
     QJSValue mKeyboardProperty;
+    QJSValue mSelectionProperty;
 };

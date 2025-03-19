@@ -5,6 +5,7 @@
 
 class CustomAction;
 class QAction;
+using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 
 class CustomActions final : public QObject
 {
