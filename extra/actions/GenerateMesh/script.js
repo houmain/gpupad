@@ -1,3 +1,4 @@
+"use strict"
 
 const manifest = {
   name: "&Generate Mesh..."
@@ -50,7 +51,7 @@ class Script {
   insert() {
     
     let group = app.session.insertItem({
-      name: 'Model',
+      name: 'Mesh',
       type: 'Group',
       inlineScope: true
     })    
@@ -148,5 +149,5 @@ class Script {
   }
 }
 
-script = new Script()
+this.script = new Script()
 app.openEditor("ui.qml")

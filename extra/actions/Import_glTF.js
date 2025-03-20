@@ -1,10 +1,10 @@
 "use strict"
 
-var name = "Import gl&TF";
-
-function applicable(items) {
-  return true;
+const manifest = {
+  name: "Import gl&TF",
+  applicable: false, // Disabled for now
 }
+
 
 var PrimitiveType = {
   4: "Triangles",
@@ -224,35 +224,33 @@ function findItemId(type, items) {
   }
 }
 
-function apply(items) {
-  var fileName = app.openFileDialog("*.gltf");
-  if (!fileName)
-    return;
+var fileName = app.openFileDialog("*.gltf");
+if (!fileName)
+  return;
+  
+gltf = JSON.parse(app.readTextFile(fileName));
 
-  gltf = JSON.parse(app.readTextFile(fileName));
+var pathEnd = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\')) + 1;
+basePath = fileName.substr(0, pathEnd);
+fileName = fileName.substr(pathEnd, fileName.lastIndexOf('.') - pathEnd);
 
-  var pathEnd = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\')) + 1;
-  basePath = fileName.substr(0, pathEnd);
-  fileName = fileName.substr(pathEnd, fileName.lastIndexOf('.') - pathEnd);
+group = {
+  name: fileName,
+  items: [],
+};
 
-  group = {
-    name: fileName,
-    items: [],
-  };
+for (var m in gltf.meshes) {
+  var mesh = gltf.meshes[m];
+  for (var p in mesh.primitives) {
+    var primitive = mesh.primitives[p];
+    if (primitive.material >= 0)
+      setMaterial(gltf.materials[primitive.material]);
+    
+    var call = addDrawCall(primitive);
 
-  for (var m in gltf.meshes) {
-    var mesh = gltf.meshes[m];
-    for (var p in mesh.primitives) {
-      var primitive = mesh.primitives[p];
-      if (primitive.material >= 0)
-        setMaterial(gltf.materials[primitive.material]);
-      
-      var call = addDrawCall(primitive);
-
-      // automatically use first program and target
-      call.programId = findItemId("Program");
-      call.targetId = findItemId("Target");
-    }
+    // automatically use first program and target
+    call.programId = findItemId("Program");
+    call.targetId = findItemId("Target");
   }
-  app.session.insertItem(group);
 }
+app.session.insertItem(group);

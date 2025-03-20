@@ -77,8 +77,10 @@ public:
             setText(name.toString());
 
         auto applicable = manifest.property("applicable");
-        if (applicable.isCallable()) {
-            const auto result = scriptEngine.call(applicable, {}, 0, messages);
+        if (!applicable.isUndefined()) {
+            const auto result = (applicable.isCallable()
+                    ? scriptEngine.call(applicable, {}, 0, messages)
+                    : applicable);
             setEnabled(result.isBool() && result.toBool());
         }
         return true;

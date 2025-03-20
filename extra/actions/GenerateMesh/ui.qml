@@ -20,7 +20,6 @@ ScrollView {
   property alias scaleU: scaleU.value
   property alias scaleV: scaleV.value
   property alias indexed: indexed.checked
-  property alias addStream: addStream.checked
 
   property bool hasStacks
   property bool hasSlices
@@ -241,17 +240,6 @@ ScrollView {
     }
     CheckBox {
       id: indexed
-      Layout.preferredHeight: 25
-      Layout.preferredWidth: 25
-      checked: true
-      onToggled: { script.refresh() }
-    }
-
-    Label {
-      text: qsTr("Add Stream")
-    }
-    CheckBox {
-      id: addStream
       Layout.preferredHeight: 25
       Layout.preferredWidth: 25
       checked: true
