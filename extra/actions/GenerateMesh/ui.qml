@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts 1.0
 
-Item {
+ScrollView {
   id: root
   property alias type: type.currentIndex
   property alias typeNames: type.model

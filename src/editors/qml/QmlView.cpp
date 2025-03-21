@@ -16,6 +16,7 @@ void QmlView::reset() { }
 
 #  include "FileCache.h"
 #  include "Singletons.h"
+#  include "Settings.h"
 #  include "scripting/ScriptEngine.h"
 #  include <QBoxLayout>
 #  include <QDir>
@@ -26,6 +27,8 @@ void QmlView::reset() { }
 #  include <QQmlNetworkAccessManagerFactory>
 #  include <QQmlEngine>
 #  include <QQuickWidget>
+#  include <QQuickStyle>
+#  include <QApplication>
 #  include <cstring>
 
 namespace {
@@ -131,6 +134,8 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     , mFileName(fileName)
     , mEnginePtr(std::move(enginePtr))
 {
+    QQuickStyle::setStyle("Fusion");
+
     if (!mEnginePtr) {
         const auto basePath = QFileInfo(fileName).absolutePath();
         mEnginePtr = ScriptEngine::make(basePath);
@@ -152,6 +157,15 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     static UrlInterceptor sUrlInterceptor;
     qmlEngine->addUrlInterceptor(&sUrlInterceptor);
     qmlEngine->addImportPath(QFileInfo(mFileName).dir().path());
+
+    connect(&Singletons::settings(), &Settings::windowThemeChanged, this,
+        &QmlView::windowThemeChanged);
+}
+
+void QmlView::windowThemeChanged(const Theme &theme)
+{
+    if (mQuickWidget)
+        mQuickWidget->setClearColor(qApp->palette().toolTipBase().color());
 }
 
 void QmlView::reset()
@@ -173,6 +187,12 @@ void QmlView::reset()
 
     mQuickWidget = new QQuickWidget(qmlEngine, this);
     mQuickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    mQuickWidget->setClearColor(qApp->palette().toolTipBase().color());
+
+    // WORKAROUND: reapply current palette, to fix Fusion theme
+    auto palette = qApp->palette();
+    qApp->setPalette(QPalette());
+    qApp->setPalette(palette);
 
     connect(mQuickWidget, &QQuickWidget::statusChanged,
         [this, widget = mQuickWidget](QQuickWidget::Status status) {

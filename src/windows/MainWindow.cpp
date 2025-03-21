@@ -1026,17 +1026,19 @@ void MainWindow::handleThemeChanging(const Theme &theme)
             .name(QColor::HexRgb);
     };
     const auto format = QStringLiteral(
-        "QLabel:disabled { color: %1 }\n"
-        "QDockWidget > QFrame { border:1px solid %2 }\n"
-        "QDockWidget[current=true] > QFrame { border:1px solid %3 }\n"
+        "QLabel:disabled { color: %2 }\n"
+        "QDockWidget > QFrame { border:1px solid %3 }\n"
+        "QDockWidget[current=true] > QFrame { border:1px solid %4 }\n"
         "QDockWidget > QFrame[no-bottom-border=true] { border-bottom: none }\n"
-        "QMenuBar { background-color: %4; border:none; margin:0; padding:0; "
+        "QMenuBar { color: %1; background-color: %5; border:none; margin:0; "
+        "padding:0; "
         "padding-top:2px; }\n"
         "QToolButton { margin:2; margin:0px; padding:2px; }\n"
         "QToolBar { spacing:2px; margin:0; padding:2px; padding-left:4px; "
-        "background-color: %4; border:none }\n");
+        "background-color: %5; border:none }\n");
     const auto styleSheet =
-        format.arg(color(QPalette::WindowText, QPalette::Disabled),
+        format.arg(color(QPalette::WindowText, QPalette::Active),
+            color(QPalette::WindowText, QPalette::Disabled),
             color(QPalette::Window, QPalette::Active, frameDarker),
             color(QPalette::Window, QPalette::Active, currentFrameDarker),
             color(QPalette::Base, QPalette::Active));

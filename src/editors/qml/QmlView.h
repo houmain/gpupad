@@ -5,6 +5,7 @@
 #include <QFrame>
 #include <QSet>
 
+class Theme;
 class QQuickWidget;
 class QQmlNetworkAccessManagerFactory;
 using QScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
@@ -33,6 +34,7 @@ public:
     void resetOnFocus();
 
 private:
+    void windowThemeChanged(const Theme &theme);
     void reset();
 
     const QString mFileName;
