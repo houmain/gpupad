@@ -592,9 +592,10 @@ void MainWindow::updateFileActions()
     mUi->actionOpenContainingFolder->setEnabled(hasFile);
 }
 
-void MainWindow::stopEvaluation()
+void MainWindow::stopSteadyEvaluation()
 {
-    setEvaluationMode(EvaluationMode::Paused);
+    if (mUi->actionEvalSteady->isChecked())
+        setEvaluationMode(EvaluationMode::Automatic);
 }
 
 void MainWindow::setEvaluationMode(EvaluationMode evaluationMode)
@@ -896,7 +897,7 @@ bool MainWindow::restoreSessionState(const QString &sessionFileName)
 
 bool MainWindow::closeSession()
 {
-    stopEvaluation();
+    stopSteadyEvaluation();
 
     if (!mEditorManager.promptSaveAllEditors())
         return false;

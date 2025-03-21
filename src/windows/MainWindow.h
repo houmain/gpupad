@@ -70,7 +70,7 @@ private:
     void focusNextEditor();
     void focusPreviousEditor();
     void setFullScreen(bool fullScreen);
-    void stopEvaluation();
+    void stopSteadyEvaluation();
     void setEvaluationMode(EvaluationMode evaluationMode);
     void updateEvaluationMode();
     bool openSession(const QString &fileName);
