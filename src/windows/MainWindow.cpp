@@ -1036,6 +1036,7 @@ void MainWindow::handleThemeChanging(const Theme &theme)
     };
     const auto format = QStringLiteral(
         "QLabel:disabled { color: %2 }\n"
+        "QDockWidget { color: %1; background-color: %5 }\n"
         "QDockWidget > QFrame { border:1px solid %3 }\n"
         "QDockWidget[current=true] > QFrame { border:1px solid %4 }\n"
         "QDockWidget > QFrame[no-bottom-border=true] { border-bottom: none }\n"

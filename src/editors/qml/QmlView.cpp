@@ -189,10 +189,16 @@ void QmlView::reset()
     mQuickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
     mQuickWidget->setClearColor(qApp->palette().toolTipBase().color());
 
+#if defined(_WIN32)
     // WORKAROUND: reapply current palette, to fix Fusion theme
     auto palette = qApp->palette();
     qApp->setPalette(QPalette());
     qApp->setPalette(palette);
+#else
+    // on Linux some more needs to be reapplied (very slow on Windows)
+    qApp->setPalette(QPalette());
+    Singletons::settings().setWindowTheme(Singletons::settings().windowTheme());
+#endif
 
     connect(mQuickWidget, &QQuickWidget::statusChanged,
         [this, widget = mQuickWidget](QQuickWidget::Status status) {
