@@ -52,6 +52,7 @@ void VKTarget::setTexture(int index, VKTexture *texture)
 
     mAttachments[index].texture = texture;
     mSamples = texture->samples();
+    mUsedItems += texture->usedItems();
 }
 
 KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
@@ -105,8 +106,6 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
                 getKDSamples(kind.color ? limits.framebufferColorSampleCounts
                         : kind.depth    ? limits.framebufferDepthSampleCounts
                                      : limits.framebufferStencilSampleCounts));
-
-            mUsedItems += texture->usedItems();
         }
 
     if (!renderPassOptions.framebufferWidth

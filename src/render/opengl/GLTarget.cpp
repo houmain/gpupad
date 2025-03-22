@@ -38,6 +38,7 @@ void GLTarget::setAttachment(int index, GLTexture *texture)
         return;
     }
     mAttachments[index].texture = texture;
+    mUsedItems += texture->usedItems();
 }
 
 bool GLTarget::bind()
@@ -117,7 +118,6 @@ bool GLTarget::create()
                     attachment.attachmentPoint, texture->getReadOnlyTextureId(),
                     level);
             }
-            mUsedItems += texture->usedItems();
         }
 
 #if GL_VERSION_4_3
