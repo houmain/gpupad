@@ -142,7 +142,9 @@ int main(int argc, char *argv[])
             restoreProcessPriority();
         });
 
+    app.processEvents();
     window.show();
+    app.processEvents();
 
     auto arguments = app.arguments();
     arguments.removeFirst();
