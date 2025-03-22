@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 2.4.0] - 2025-03-22
+
+### Changed
+
+- Added `app` script object, made `Session/Mouse/Keyboard` properties of it.
+- Started integrating custom actions manager in file browser.
+
+### Added
+
+- Added `loadLibrary` to app script object, for loading binaries.
+- Added `openFileDialog` to app script object.
+- Added "Generate Mesh" action.
+- Added "Ray Tracing" and "Mesh Shader" samples.
+- Allow to leave "Draw" call's vertex count empty to deduce from stream.
+- Added new shader file extensions to file dialogs.
+- More work on "Trace Rays" call.
+
+### Fixed
+
+- Fixed buffer not set warning when no member is used.
+- Validating index type of "DrawIndexed" call.
+- Toolbar icon size explicitly set to 16x16.
+- Fixed QML views from being completely black on Windows.
+- Preserving untitled filenames when dragging/copying items.
+
 ## [Version 2.3.0] - 2025-02-12
 
 ### Added
@@ -826,6 +851,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 2.4.0]: https://github.com/houmain/gpupad/compare/2.3.0...2.4.0
 [version 2.3.0]: https://github.com/houmain/gpupad/compare/2.2.0...2.3.0
 [version 2.2.0]: https://github.com/houmain/gpupad/compare/2.1.0...2.2.0
 [version 2.1.0]: https://github.com/houmain/gpupad/compare/2.0.1...2.1.0

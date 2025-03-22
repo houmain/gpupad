@@ -25,7 +25,8 @@ A lightweight editor for GLSL and HLSL shaders and a fully-featured IDE for deve
 * Possibility to evaluate shader programs with completely customizeable input and render state.
 * Continuous validation of standalone shader and script files.
 * Automatically defined printf function for printf-debugging.
-* JavaScript expressions and scripts to define uniform input.
+* JavaScript expressions to define uniform input.
+* Custom actions to extend the functionality.
 * Dumping of preprocessed source, SPIR-V and glslang AST.
 * Reading and writing of image files ([KTX](https://github.com/KhronosGroup/KTX-Software) and DDS for 3D/Array textures, block compressed textures, cube maps&hellip;).
 * Streaming video files to textures (only when built with the optional dependency `Qt6Multimedia`).
@@ -44,13 +45,13 @@ A lightweight editor for GLSL and HLSL shaders and a fully-featured IDE for deve
 ### Getting Started
 To get started, you can open and play around with the sample sessions in the *Help* menu.
 
+The sample sessions can also be used as templates - saving a session As... copies all the dependencies to the new location.
+
 ### Session
 In order to try out the shaders, the session allows to define draw and compute calls, together with the pipeline state and data the programs should operate on.
 
 It can be populated with items from the *Session* menu or the context menu. Undo/redo, copy/paste and drag/drop should work as expected (also between multiple instances).
 It is even possible to drag the items to and from a text editor (they are serialized as JSON).
-
-The sample sessions can also be used as templates - saving a session As... copies all the dependencies to the new location.
 
 ### Evaluation
 The session can be evaluated manually *[F6]*, automatically whenever something relevant changes *[F7]* or steadily *[F8]*, for animations.
@@ -88,6 +89,51 @@ Allows to structure more complex sessions. They open a new scope unless *inline 
 Allows to define JavaScript functions and variables in script files, which can subsequently be used in uniform binding expressions.
 Scripts can also be used to dynamically populate the session and generate buffer and texture data.
 There is one JavaScript state for the whole session and the scripts are evaluated in consecutive order (*Group* scopes do not have an effect).
+
+## Scripting
+
+Initial documentation of the available script objects:
+
+:warning: Please use the discussions section for requesting additional information or functionality.
+
+### App
+
+- `keyboard: Keyboard`
+- `mouse: Mouse`
+- `session: Session`
+- `selection: [Item]`
+- `enumerateFiles(pattern): [filename]`
+- `loadLibrary(fileName): Library`
+- `openEditor(fileName): bool`
+- `openFileDialog(pattern): filename`
+- `readTextFile(fileName): string`
+- `writeTextFile(fileName, string): bool`
+
+### Session
+
+- `clear()`
+- `clearItem(item/id): Item`
+- `deleteItem(item/id): Item`
+- `insertItem(item/id, object): Item`
+- `item(id): Item`
+- `setBlockData(item/id, data)`
+- `setBufferData(item/id, data)`
+- `setScriptSource(item/id, data)`
+- `setShaderSource(item/id, data)`
+- `setTextureData(item/id, data)`
+
+### Mouse
+
+- `button: [state]` - The state of each mouse button (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
+- `coord: [x,y]`
+- `delta: [x,y]`
+- `fragCoord: [x,y]`
+- `prevCoord: [x,y]`
+- `prevFragCoord: [x,y]`
+
+### Keyboard
+
+- `keys: [bool]` - The state of each key (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
 
 ## Installation
 

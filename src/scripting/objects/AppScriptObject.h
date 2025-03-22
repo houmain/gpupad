@@ -18,6 +18,7 @@ class AppScriptObject final : public QObject
     Q_PROPERTY(QJSValue session READ session CONSTANT)
     Q_PROPERTY(QJSValue mouse READ mouse CONSTANT)
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
+    Q_PROPERTY(QJSValue selection READ selection CONSTANT)
 
 public:
     AppScriptObject(const ScriptEnginePtr &enginePtr, const QString &basePath);
