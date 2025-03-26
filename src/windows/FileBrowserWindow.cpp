@@ -91,8 +91,8 @@ void FileBrowserWindow::setRootPath(const QString &path)
 
 bool FileBrowserWindow::revealDirectory(const QDir &dir)
 {
-    const auto path = dir.absolutePath();
-    const auto index = mModel->index(path);
+    const auto native = toNativeCanonicalFilePath(dir.absolutePath());
+    const auto index = mModel->index(native);
     mFileSystemTree->setExpanded(index, true);
     if (!mFileSystemTree->contentsRect().intersects(
             mFileSystemTree->visualRect(index))) {
@@ -147,17 +147,19 @@ void FileBrowserWindow::showInFileManager()
 
 void FileBrowserWindow::updateRecentDirectories(const QString &path)
 {
+    auto native = toNativeCanonicalFilePath(path);
     auto paths = mRecentDirectories->stringList();
-    paths.removeAll(path);
-    paths.insert(0, path);
+    paths.removeAll(native);
+    paths.insert(0, native);
     mRecentDirectories->setStringList(paths);
 }
 
 QString FileBrowserWindow::completeToRecentDirectory(const QString &path)
 {
+    auto native = toNativeCanonicalFilePath(path);
     const auto &recentPaths = mRecentDirectories->stringList();
     for (const auto &recent : recentPaths)
-        if (path.startsWith(recent))
+        if (native.startsWith(recent))
             return recent;
-    return path;
+    return native;
 }
