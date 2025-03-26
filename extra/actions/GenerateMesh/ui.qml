@@ -4,7 +4,8 @@ import QtQuick.Layouts 1.0
 
 ScrollView {
   id: root
-  property alias type: type.currentIndex
+  property alias typeIndex: type.currentIndex
+  property alias type: type.currentText
   property alias typeNames: type.model
   property alias slices: slices.value
   property alias stacks: stacks.value
@@ -27,7 +28,7 @@ ScrollView {
   property bool hasSubdivisions
   property bool hasSeed
   
-  Component.onCompleted: script.initialize(root)
+  Component.onCompleted: script.initializeUi(root)
 
   GridLayout {
     x: 16

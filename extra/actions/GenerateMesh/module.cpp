@@ -1,5 +1,6 @@
 
 #include "dllreflect.h"
+#include "json_struct.h"
 #include <memory>
 #include <cmath>
 
@@ -15,50 +16,73 @@
 # pragma warning(pop)
 #endif
 
+// see: https://prideout.net/shapes
+enum class ShapeType {
+  cube,
+  cylinder,
+  cone,
+  torus,
+  parametric_sphere,
+  parametric_disk,
+  subdivided_sphere,
+  klein_bottle,
+  trefoil_knot,
+  hemisphere,
+  plane,
+  icosahedron,
+  dodecahedron,
+  octahedron,
+  tetrahedron,
+  rock,
+  COUNT
+};
+
+struct Settings {
+  ShapeType type{ ShapeType::cube };
+  float width{ 2 };
+  float height{ 2 };
+  float depth{ 2 };
+  float radius{ 1.0f };
+  float scale_u{ 1.0f };
+  float scale_v{ 1.0f };
+  int slices{ 1 };
+  int stacks{ 1 };
+  int subdivisions{ 0 };
+  int seed{ };
+  bool facetted{ };
+  bool inside_out{ };
+  bool swap_yz{ };
+  bool indexed{ };
+
+  JS_OBJECT(
+    JS_MEMBER(type),
+    JS_MEMBER(width),
+    JS_MEMBER(height),
+    JS_MEMBER(depth),
+    JS_MEMBER(radius),
+    JS_MEMBER_WITH_NAME(scale_u, "scaleU"),
+    JS_MEMBER_WITH_NAME(scale_v, "scaleV"),
+    JS_MEMBER(slices),
+    JS_MEMBER(stacks),
+    JS_MEMBER(subdivisions),
+    JS_MEMBER(seed),
+    JS_MEMBER(facetted),
+    JS_MEMBER_WITH_NAME(inside_out, "insideOut"),
+    JS_MEMBER_WITH_NAME(swap_yz, "swapYZ"),
+    JS_MEMBER(indexed));
+};
+
+struct FreeMesh {
+  void operator()(par_shapes_mesh* mesh) const { par_shapes_free_mesh(mesh); }
+};
+using MeshPtr = std::unique_ptr<par_shapes_mesh, FreeMesh>;
+
+struct Geometry {
+  Settings settings;
+  std::unique_ptr<par_shapes_mesh, FreeMesh> mesh;
+};
+
 namespace {
-  // see: https://prideout.net/shapes
-  enum class Type {
-    cube,
-    cylinder,
-    cone,
-    torus,
-    parametric_sphere,
-    parametric_disk,
-    subdivided_sphere,
-    klein_bottle,
-    trefoil_knot,
-    hemisphere,
-    plane,
-    icosahedron,
-    dodecahedron,
-    octahedron,
-    tetrahedron,
-    rock,
-    COUNT
-  };
-
-  struct Settings {
-    Type type{ Type::cube };
-    float width{ 2 };
-    float height{ 2 };
-    float depth{ 2 };
-    bool facetted{ };
-    int slices{ 1 };
-    int stacks{ 1 };
-    float radius{ 1.0f };
-    int subdivisions{ 0 };
-    int seed{ };
-    bool inside_out{ };
-    bool swap_yz{ };
-    float scale_u{ 1.0f };
-    float scale_v{ 1.0f };
-  };
-
-  struct FreeMesh {
-    void operator()(par_shapes_mesh* mesh) const { par_shapes_free_mesh(mesh); }
-  };
-  using MeshPtr = std::unique_ptr<par_shapes_mesh, FreeMesh>;
-
   struct vec2 { float x, y; };
   struct vec3 { float x, y, z; };
   struct vec4 { float x, y, z, w; };
@@ -87,221 +111,216 @@ namespace {
 
   bool get_swap_yz(const Settings& s) {
     switch (s.type) {
-      case Type::hemisphere:
-      case Type::rock:
-        return !s.swap_yz;
-      default:
-        return s.swap_yz;
+    case ShapeType::hemisphere:
+    case ShapeType::rock:
+      return !s.swap_yz;
+    default:
+      return s.swap_yz;
     }
   }
 } // namespace
 
-int getTypeCount() { return static_cast<int>(Type::COUNT); }
+int getTypeCount() {
+  return static_cast<int>(ShapeType::COUNT);
+}
 
 const char* getTypeName(int index) {
-  switch (static_cast<Type>(index)) {
-    case Type::cube: return "Cube";
-    case Type::cylinder: return "Cylinder";
-    case Type::cone: return "Cone";
-    case Type::torus: return "Torus";
-    case Type::parametric_sphere: return "Parametric Sphere";
-    case Type::parametric_disk: return "Parametric Disk";
-    case Type::subdivided_sphere: return "Subdivided Sphere";
-    case Type::klein_bottle: return "Klein Bottle";
-    case Type::trefoil_knot: return "Trefoil Knot";
-    case Type::hemisphere: return "Hemisphere";
-    case Type::plane: return "Plane";
-    case Type::icosahedron: return "Icosahedron";
-    case Type::dodecahedron: return "Dodecahedron";
-    case Type::octahedron: return "Octahedron";
-    case Type::tetrahedron: return "Tetrahedron";
-    case Type::rock: return "Rock";
-    case Type::COUNT: break;
+  switch (static_cast<ShapeType>(index)) {
+  case ShapeType::cube: return "Cube";
+  case ShapeType::cylinder: return "Cylinder";
+  case ShapeType::cone: return "Cone";
+  case ShapeType::torus: return "Torus";
+  case ShapeType::parametric_sphere: return "Parametric Sphere";
+  case ShapeType::parametric_disk: return "Parametric Disk";
+  case ShapeType::subdivided_sphere: return "Subdivided Sphere";
+  case ShapeType::klein_bottle: return "Klein Bottle";
+  case ShapeType::trefoil_knot: return "Trefoil Knot";
+  case ShapeType::hemisphere: return "Hemisphere";
+  case ShapeType::plane: return "Plane";
+  case ShapeType::icosahedron: return "Icosahedron";
+  case ShapeType::dodecahedron: return "Dodecahedron";
+  case ShapeType::octahedron: return "Octahedron";
+  case ShapeType::tetrahedron: return "Tetrahedron";
+  case ShapeType::rock: return "Rock";
+  case ShapeType::COUNT: break;
   }
   return "";
 }
 
-Settings getSettings() { return { }; }
-void setType(Settings& s, int index) { s.type = static_cast<Type>(index); }
-void setWidth(Settings& s, float value) { s.width = value; }
-void setHeight(Settings& s, float value) { s.height = value; }
-void setDepth(Settings& s, float value) { s.depth = value; }
-void setFacetted(Settings& s, bool value) { s.facetted = value; }
-void setSlices(Settings& s, int value) { s.slices = value; }
-void setStacks(Settings& s, int value) { s.stacks = value; }
-void setRadius(Settings& s, float value) { s.radius = value; }
-void setSubdivisions(Settings& s, int value) { s.subdivisions = value; }
-void setSeed(Settings& s, int value) { s.seed = value; }
-void setInsideOut(Settings& s, bool value) { s.inside_out = value; }
-void setSwapYZ(Settings& s, bool value) { s.swap_yz = value; }
-void setScaleU(Settings& s, float value) { s.scale_u = value; }
-void setScaleV(Settings& s, float value) { s.scale_v = value; }
-
-bool hasSlicesStacks(const Settings& s) { 
-  switch (s.type) {
-    case Type::subdivided_sphere:
-    case Type::icosahedron:
-    case Type::dodecahedron:
-    case Type::octahedron:
-    case Type::tetrahedron:
-    case Type::cube:
-    case Type::rock:
-      return false;
-    default:
-      return true;
+bool hasSlicesStacks(int type_index) {
+  switch (static_cast<ShapeType>(type_index)) {
+  case ShapeType::subdivided_sphere:
+  case ShapeType::icosahedron:
+  case ShapeType::dodecahedron:
+  case ShapeType::octahedron:
+  case ShapeType::tetrahedron:
+  case ShapeType::cube:
+  case ShapeType::rock:
+    return false;
+  default:
+    return true;
   }
 }
 
-bool hasRadius(const Settings& s) { 
-  switch (s.type) {
-    case Type::torus:
-    case Type::trefoil_knot:
-      return true;
-    default: 
-      return false;
+bool hasRadius(int type_index) {
+  switch (static_cast<ShapeType>(type_index)) {
+  case ShapeType::torus:
+  case ShapeType::trefoil_knot:
+    return true;
+  default:
+    return false;
   }
 }
 
-bool hasSubdivisions(const Settings& s) { 
-  switch (s.type) {
-    case Type::subdivided_sphere:
-    case Type::rock:
-      return true;
-    default:
-      return false;
+bool hasSubdivisions(int type_index) {
+  switch (static_cast<ShapeType>(type_index)) {
+  case ShapeType::subdivided_sphere:
+  case ShapeType::rock:
+    return true;
+  default:
+    return false;
   }
 }
 
-bool hasSeed(const Settings& s) { 
-  switch (s.type) {
-    case Type::rock:
-      return true;
-    default: 
-      return false;
+bool hasSeed(int type_index) {
+  switch (static_cast<ShapeType>(type_index)) {
+  case ShapeType::rock:
+    return true;
+  default:
+    return false;
   }
 }
 
-MeshPtr generate(const Settings& s) {
-  auto mesh = MeshPtr();
-
-  switch (s.type) {
-    case Type::COUNT:
-      break;
-    case Type::cylinder: {
-      mesh.reset(par_shapes_create_cylinder(s.slices, s.stacks));
-      if (mesh) {
-        auto top = par_shapes_create_parametric_disk(s.slices, s.stacks);
-        auto bottom = par_shapes_create_parametric_disk(s.slices, s.stacks);
-        par_shapes_translate(top, 0, 0, 1);
-        par_shapes_scale(bottom, 1, 1, -1);
-        par_shapes_invert(bottom, 0, 0);
-        par_shapes_merge_and_free(mesh.get(), top);
-        par_shapes_merge_and_free(mesh.get(), bottom);
-        par_shapes_scale(mesh.get(), 1, 1, 2);
-        par_shapes_translate(mesh.get(), 0, 0, -1);
-      }
-      break;
-    }
-    case Type::cone: {
-      mesh.reset(par_shapes_create_cone(s.slices, s.stacks));
-      if (mesh) {
-        auto bottom = par_shapes_create_parametric_disk(s.slices, s.stacks);
-        par_shapes_scale(bottom, 1, 1, -1);
-        par_shapes_invert(bottom, 0, 0);
-        par_shapes_merge_and_free(mesh.get(), bottom);
-        par_shapes_scale(mesh.get(), 1, 1, 2);
-        par_shapes_translate(mesh.get(), 0, 0, -1);
-      }
-      break;
-    }
-    case Type::torus:
-      mesh.reset(par_shapes_create_torus(s.slices, s.stacks, s.radius));
-      break;
-    case Type::parametric_sphere:
-      mesh.reset(par_shapes_create_parametric_sphere(s.slices, s.stacks));
-      break;
-    case Type::parametric_disk:
-      mesh.reset(par_shapes_create_parametric_disk(s.slices, s.stacks));
-      break;
-    case Type::subdivided_sphere:
-      mesh.reset(par_shapes_create_subdivided_sphere(s.subdivisions));
-      break;
-    case Type::klein_bottle:
-      mesh.reset(par_shapes_create_klein_bottle(s.slices, s.stacks));
-      if (mesh) {
-        par_shapes_scale(mesh.get(), 0.125f, 0.125f, 0.125f);
-      }
-      break;
-    case Type::trefoil_knot:
-      mesh.reset(par_shapes_create_trefoil_knot(s.slices, s.stacks, s.radius));
-      break;
-    case Type::hemisphere:
-      mesh.reset(par_shapes_create_hemisphere(s.slices, s.stacks));
-      break;
-    case Type::plane:
-      mesh.reset(par_shapes_create_plane(s.slices, s.stacks));
-      if (mesh) {
-        par_shapes_scale(mesh.get(), 2, 2, 2);
-        par_shapes_translate(mesh.get(), -1, -1, 0);
-      }
-      break;
-    case Type::icosahedron:
-      mesh.reset(par_shapes_create_icosahedron());
-      break;
-    case Type::dodecahedron:
-      mesh.reset(par_shapes_create_dodecahedron());
-      break;
-    case Type::octahedron:
-      mesh.reset(par_shapes_create_octahedron());
-      break;
-    case Type::tetrahedron:
-      mesh.reset(par_shapes_create_tetrahedron());
-      break;
-    case Type::cube:
-      mesh.reset(par_shapes_create_cube());
-      if (mesh) {
-        par_shapes_scale(mesh.get(), 2, 2, 2);
-        par_shapes_translate(mesh.get(), -1, -1, -1);
-      }
-      break;
-    case Type::rock:
-      mesh.reset(par_shapes_create_rock(s.seed, s.subdivisions));
-      break;
-  }
-
-  if (mesh) {
-    if (s.facetted)
-      par_shapes_unweld(mesh.get(), true);
-
-    if (s.facetted || !mesh->normals)
-      par_shapes_compute_normals(mesh.get());
-
-    if (s.facetted || !mesh->tcoords)
-      generate_tcoords_sphere(mesh.get());
-  }
-  return mesh;
-}
-
-std::vector<float> getVertices(const Settings& s, const MeshPtr& mesh) {
-  if (!mesh)
+Geometry generate(std::string_view json) {
+  auto geometry = Geometry{ };
+  auto context = JS::ParseContext(json.data(), json.size());
+  auto error = context.parseTo(geometry.settings);
+  if (error != JS::Error::NoError)
     return { };
+
+  auto& m = geometry.mesh;
+  auto& s = geometry.settings;
+
+  switch (s.type) {
+  case ShapeType::COUNT:
+    break;
+  case ShapeType::cylinder: {
+    m.reset(par_shapes_create_cylinder(s.slices, s.stacks));
+    if (m) {
+      auto top = par_shapes_create_parametric_disk(s.slices, s.stacks);
+      auto bottom = par_shapes_create_parametric_disk(s.slices, s.stacks);
+      par_shapes_translate(top, 0, 0, 1);
+      par_shapes_scale(bottom, 1, 1, -1);
+      par_shapes_invert(bottom, 0, 0);
+      par_shapes_merge_and_free(m.get(), top);
+      par_shapes_merge_and_free(m.get(), bottom);
+      par_shapes_scale(m.get(), 1, 1, 2);
+      par_shapes_translate(m.get(), 0, 0, -1);
+    }
+    break;
+  }
+  case ShapeType::cone: {
+    m.reset(par_shapes_create_cone(s.slices, s.stacks));
+    if (m) {
+      auto bottom = par_shapes_create_parametric_disk(s.slices, s.stacks);
+      par_shapes_scale(bottom, 1, 1, -1);
+      par_shapes_invert(bottom, 0, 0);
+      par_shapes_merge_and_free(m.get(), bottom);
+      par_shapes_scale(m.get(), 1, 1, 2);
+      par_shapes_translate(m.get(), 0, 0, -1);
+    }
+    break;
+  }
+  case ShapeType::torus:
+    m.reset(par_shapes_create_torus(s.slices, s.stacks, s.radius));
+    break;
+  case ShapeType::parametric_sphere:
+    m.reset(par_shapes_create_parametric_sphere(s.slices, s.stacks));
+    break;
+  case ShapeType::parametric_disk:
+    m.reset(par_shapes_create_parametric_disk(s.slices, s.stacks));
+    break;
+  case ShapeType::subdivided_sphere:
+    m.reset(par_shapes_create_subdivided_sphere(s.subdivisions));
+    break;
+  case ShapeType::klein_bottle:
+    m.reset(par_shapes_create_klein_bottle(s.slices, s.stacks));
+    if (m) {
+      par_shapes_scale(m.get(), 0.125f, 0.125f, 0.125f);
+    }
+    break;
+  case ShapeType::trefoil_knot:
+    m.reset(par_shapes_create_trefoil_knot(s.slices, s.stacks, s.radius));
+    break;
+  case ShapeType::hemisphere:
+    m.reset(par_shapes_create_hemisphere(s.slices, s.stacks));
+    break;
+  case ShapeType::plane:
+    m.reset(par_shapes_create_plane(s.slices, s.stacks));
+    if (m) {
+      par_shapes_scale(m.get(), 2, 2, 2);
+      par_shapes_translate(m.get(), -1, -1, 0);
+    }
+    break;
+  case ShapeType::icosahedron:
+    m.reset(par_shapes_create_icosahedron());
+    break;
+  case ShapeType::dodecahedron:
+    m.reset(par_shapes_create_dodecahedron());
+    break;
+  case ShapeType::octahedron:
+    m.reset(par_shapes_create_octahedron());
+    break;
+  case ShapeType::tetrahedron:
+    m.reset(par_shapes_create_tetrahedron());
+    break;
+  case ShapeType::cube:
+    m.reset(par_shapes_create_cube());
+    if (m) {
+      par_shapes_scale(m.get(), 2, 2, 2);
+      par_shapes_translate(m.get(), -1, -1, -1);
+    }
+    break;
+  case ShapeType::rock:
+    m.reset(par_shapes_create_rock(s.seed, s.subdivisions));
+    break;
+  }
+
+  if (m) {
+    if (s.facetted)
+      par_shapes_unweld(m.get(), true);
+
+    if (s.facetted || !m->normals)
+      par_shapes_compute_normals(m.get());
+
+    if (s.facetted || !m->tcoords)
+      generate_tcoords_sphere(m.get());
+  }
+  return geometry;
+}
+
+std::vector<float> getVertices(const Geometry& geometry) {
+  if (!geometry.mesh)
+    return { };
+  const auto& m = *geometry.mesh;
+  const auto& s = geometry.settings;
 
   const auto swap_yz = get_swap_yz(s);
   const auto scale_x = (s.width) / 2;
   const auto scale_y = (s.swap_yz ? s.height : s.depth) / 2;
   const auto scale_z = (s.swap_yz ? s.depth : s.height) / 2;
   const auto scale_normal = (s.inside_out ? -1.0f : 1.0f);
-  const auto translate_u (s.scale_u < 0 ? 1.0f : 0.0f);
-  const auto translate_v (s.scale_v < 0 ? 1.0f : 0.0f);
+  const auto translate_u(s.scale_u < 0 ? 1.0f : 0.0f);
+  const auto translate_v(s.scale_v < 0 ? 1.0f : 0.0f);
 
   auto vertices = std::vector<float>();
-  vertices.reserve(8 * mesh->npoints);
+  vertices.reserve(8 * m.npoints);
 
-  auto position = mesh->points;
-  auto normal = mesh->normals;
-  auto texcoords = mesh->tcoords;
+  auto position = m.points;
+  auto normal = m.normals;
+  auto texcoords = m.tcoords;
 
-  for (auto i = 0; i < mesh->npoints; ++i, position += 3, normal += 3, texcoords += 2) {
+  for (auto i = 0; i < m.npoints; ++i, position += 3, normal += 3, texcoords += 2) {
     vertices.push_back(position[0] * scale_x);
     vertices.push_back(position[swap_yz ? 2 : 1] * scale_y);
     vertices.push_back(position[swap_yz ? 1 : 2] * scale_z);
@@ -316,29 +335,29 @@ std::vector<float> getVertices(const Settings& s, const MeshPtr& mesh) {
   return vertices;
 }
 
-std::vector<uint16_t> getIndices(const Settings& s, const MeshPtr& mesh) {
-  if (!mesh)
+std::vector<uint16_t> getIndices(const Geometry& geometry) {
+  if (!geometry.mesh)
     return { };
-
+  const auto& m = *geometry.mesh;
+  const auto& s = geometry.settings;
   const auto swap_yz = get_swap_yz(s);
-
   if (s.inside_out ^ swap_yz) {
     auto indices = std::vector<uint16_t>();
-    indices.reserve(mesh->ntriangles * 3);
-    auto triangle = mesh->triangles;
-    for (auto i = 0; i < mesh->ntriangles; ++i, triangle += 3) {
+    indices.reserve(m.ntriangles * 3);
+    auto triangle = m.triangles;
+    for (auto i = 0; i < m.ntriangles; ++i, triangle += 3) {
       indices.push_back(triangle[0]);
       indices.push_back(triangle[2]);
       indices.push_back(triangle[1]);
     }
     return indices;
   }
-  return { mesh->triangles, mesh->triangles + mesh->ntriangles * 3 };
+  return { m.triangles, m.triangles + m.ntriangles * 3 };
 }
 
-std::vector<float> getVerticesUnweld(const Settings& s, const MeshPtr& mesh) {
-  const auto indices = getIndices(s, mesh);
-  const auto vertices = getVertices(s, mesh);
+std::vector<float> getVerticesUnweld(const Geometry& geometry) {
+  const auto indices = getIndices(geometry);
+  const auto vertices = getVertices(geometry);
 
   auto unweld = std::vector<float>();
   unweld.reserve(8 * indices.size());
@@ -350,24 +369,26 @@ std::vector<float> getVerticesUnweld(const Settings& s, const MeshPtr& mesh) {
   return unweld;
 }
 
+namespace JS {
+  template<>
+  struct TypeHandler<ShapeType> {
+  public:
+    static inline Error to(ShapeType& type, ParseContext& context) {
+      const auto name = std::string_view(
+        context.token.value.data, context.token.value.size);
+      for (auto i = 0; i < static_cast<int>(ShapeType::COUNT); ++i)
+        if (getTypeName(i) == name) {
+          type = static_cast<ShapeType>(i);
+          return Error::NoError;
+        }
+      return Error::IllegalDataValue;
+    }
+  };
+}
+
 DLLREFLECT_BEGIN()
 DLLREFLECT_FUNC(getTypeCount)
 DLLREFLECT_FUNC(getTypeName)
-DLLREFLECT_FUNC(getSettings)
-DLLREFLECT_FUNC(setType)
-DLLREFLECT_FUNC(setWidth)
-DLLREFLECT_FUNC(setHeight)
-DLLREFLECT_FUNC(setDepth)
-DLLREFLECT_FUNC(setFacetted)
-DLLREFLECT_FUNC(setSlices)
-DLLREFLECT_FUNC(setStacks)
-DLLREFLECT_FUNC(setRadius)
-DLLREFLECT_FUNC(setSubdivisions)
-DLLREFLECT_FUNC(setSeed)
-DLLREFLECT_FUNC(setInsideOut)
-DLLREFLECT_FUNC(setSwapYZ)
-DLLREFLECT_FUNC(setScaleU)
-DLLREFLECT_FUNC(setScaleV)
 DLLREFLECT_FUNC(hasSlicesStacks)
 DLLREFLECT_FUNC(hasRadius)
 DLLREFLECT_FUNC(hasSubdivisions)

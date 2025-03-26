@@ -5,10 +5,12 @@ const manifest = {
 }
 
 class Script {
-  initialize(ui) {
+  constructor() {
+    this.library = app.loadLibrary("GenerateMesh")    
+  }
+  
+  initializeUi(ui) {
     this.ui = ui
-    this.library = app.loadLibrary("GenerateMesh")
-    this.settings = this.library.getSettings()
     
     const typeCount = this.library.getTypeCount()
     const typeNames = []
@@ -21,35 +23,38 @@ class Script {
   
   refresh() {
     const lib = this.library
-    const s = this.settings
     const ui = this.ui
-    lib.setType(s, ui.type)
-    lib.setWidth(s, ui.width_)
-    lib.setHeight(s, ui.height_)
-    lib.setDepth(s, ui.depth)
-    lib.setFacetted(s, ui.facetted)
-    lib.setSlices(s, ui.slices)
-    lib.setStacks(s, ui.stacks)
-    lib.setRadius(s, ui.radius)
-    lib.setSubdivisions(s, ui.subdivisions)
-    lib.setSeed(s, ui.seed)
-    lib.setInsideOut(s, ui.insideOut)
-    lib.setSwapYZ(s, !ui.swapYZ)
-    lib.setScaleU(s, ui.scaleU)
-    lib.setScaleV(s, ui.scaleV)
     
-    ui.hasStacks = lib.hasSlicesStacks(s)
-    ui.hasSlices = lib.hasSlicesStacks(s)
-    ui.hasRadius = lib.hasRadius(s)
-    ui.hasSubdivisions = lib.hasSubdivisions(s)
-    ui.hasSeed = lib.hasSeed(s)
+    this.settings = {
+      type: ui.type,
+      width: ui.width_,
+      height: ui.height_,
+      depth: ui.depth,
+      facetted: ui.facetted,
+      slices: ui.slices,
+      stacks: ui.stacks,
+      radius: ui.radius,
+      subdivisions: ui.subdivisions,
+      seed: ui.seed,
+      insideOut: ui.insideOut,
+      swapYZ: ui.swapYZ,
+      scaleU: ui.scaleU,
+      scaleV: ui.scaleV,
+      indexed: ui.indexed
+    }
+    
+    const typeIndex = this.ui.typeIndex
+    ui.hasStacks = lib.hasSlicesStacks(typeIndex)
+    ui.hasSlices = lib.hasSlicesStacks(typeIndex)
+    ui.hasRadius = lib.hasRadius(typeIndex)
+    ui.hasSubdivisions = lib.hasSubdivisions(typeIndex)
+    ui.hasSeed = lib.hasSeed(typeIndex)
     
     if (app.session.item(this.vertices))
       this.generate()
   }
   
   insert() {
-    
     let group = app.session.insertItem({
       name: 'Mesh',
       type: 'Group',
@@ -83,7 +88,7 @@ class Script {
       ]
     })
     
-    if (this.ui.indexed) {
+    if (this.settings.indexed) {
       this.indices = app.session.insertItem(group, {
         name: 'Indices',
         type: 'Buffer',
@@ -123,12 +128,11 @@ class Script {
   
   generate() {
     const lib = this.library
-    const s = this.settings    
-    const geometry = lib.generate(s)
+    const geometry = lib.generate(JSON.stringify(this.settings))
     
-    if (this.ui.indexed) {
-      const vertices = lib.getVertices(s, geometry)
-      const indices = lib.getIndices(s, geometry)
+    if (this.settings.indexed) {
+      const vertices = lib.getVertices(geometry)
+      const indices = lib.getIndices(geometry)
       if (!vertices.length)
         throw "Generating geometry failed"
         
@@ -139,7 +143,7 @@ class Script {
       app.session.setBufferData(this.indices, indices)
     }
     else {
-      const vertices = lib.getVerticesUnweld(s, geometry)
+      const vertices = lib.getVerticesUnweld(geometry)
       if (!vertices.length)
         throw "Generating geometry failed"
         
@@ -150,4 +154,12 @@ class Script {
 }
 
 this.script = new Script()
-app.openEditor("ui.qml")
+
+if (this.arguments) {
+  this.script.settings = this.arguments
+  this.script.insert()
+  this.script.generate()
+}
+else {
+  app.openEditor("ui.qml")
+}
