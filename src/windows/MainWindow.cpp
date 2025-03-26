@@ -42,7 +42,6 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , mUi(new Ui::MainWindow)
     , mMessageWindow(std::make_unique<MessageWindow>())
-    , mCustomActions(new CustomActions(this))
     , mSingletons(new Singletons(this))
     , mOutputWindow(std::make_unique<OutputWindow>())
     , mFileBrowserWindow(std::make_unique<FileBrowserWindow>())
@@ -984,10 +983,19 @@ void MainWindow::openRecentFile()
 
 void MainWindow::updateCustomActionsMenu()
 {
-    mCustomActions->setSelection(
+    auto &customActions = Singletons::customActions();
+    customActions.setSelection(
         mSessionEditor->selectionModel()->selectedIndexes());
 
-    auto actions = mCustomActions->getApplicableActions();
+    // keep actions referenced
+    const auto actionPtrs = customActions.getApplicableActions();
+    mUi->menuCustomActions->setProperty("actions",
+        QVariant::fromValue(actionPtrs));
+
+    auto actions = QList<QAction *>();
+    for (const auto &actionPtr : actionPtrs)
+        actions += actionPtr.get();
+
     if (actions.isEmpty()) {
         const static auto sEmpty = [&]() {
             auto action = new QAction(this);

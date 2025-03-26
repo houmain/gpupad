@@ -20,7 +20,6 @@ class FileBrowserWindow;
 class EditorManager;
 class SessionEditor;
 class PropertiesEditor;
-class CustomActions;
 class Theme;
 
 class MainWindow final : public QMainWindow
@@ -97,7 +96,6 @@ private:
     QLabel *mFullScreenTitle{};
     EditActions mEditActions;
     std::unique_ptr<MessageWindow> mMessageWindow;
-    std::unique_ptr<CustomActions> mCustomActions;
     std::unique_ptr<Singletons> mSingletons;
     std::unique_ptr<OutputWindow> mOutputWindow;
     std::unique_ptr<FileBrowserWindow> mFileBrowserWindow;

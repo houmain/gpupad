@@ -30,6 +30,8 @@ public:
 
     Q_INVOKABLE QJSValue openEditor(QString fileName);
     Q_INVOKABLE QJSValue loadLibrary(QString fileName);
+    Q_INVOKABLE QJSValue callAction(QString id);
+    Q_INVOKABLE QJSValue callAction(QString id, QJSValue arguments);
     Q_INVOKABLE QJSValue openFileDialog(QString pattern);
     Q_INVOKABLE QJSValue enumerateFiles(QString pattern);
     Q_INVOKABLE QJSValue writeTextFile(QString fileName, const QString &string);

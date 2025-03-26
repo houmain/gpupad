@@ -5,6 +5,7 @@
 #include "MouseScriptObject.h"
 #include "LibraryScriptObject.h"
 #include "../ScriptEngine.h"
+#include "../CustomActions.h"
 #include "Singletons.h"
 #include "FileCache.h"
 #include "editors/EditorManager.h"
@@ -84,6 +85,30 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
         return {};
     }
     return jsEngine().newQObject(library.release());
+}
+
+QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)
+{
+    auto engine = mEnginePtr.lock();
+    engine->setGlobal("arguments", arguments);
+
+    auto &customActions = Singletons::customActions();
+    const auto applied = customActions.applyActionInEngine(id, *engine);
+
+    engine->setGlobal("arguments", QJSValue::UndefinedValue);
+
+    if (!applied)
+        jsEngine().throwError("Applying action '" + id + "' failed");
+
+    const auto result = engine->getGlobal("result");
+    engine->setGlobal("result", QJSValue::UndefinedValue);
+
+    return result;
+}
+
+QJSValue AppScriptObject::callAction(QString id)
+{
+    return callAction(id, mJsEngine->newObject());
 }
 
 QJSValue AppScriptObject::openFileDialog(QString pattern)

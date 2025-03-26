@@ -10,6 +10,7 @@
 #include "render/opengl/GLRenderer.h"
 #include "render/vulkan/VKRenderer.h"
 #include "session/SessionModel.h"
+#include "scripting/CustomActions.h"
 #include <QApplication>
 
 Singletons *Singletons::sInstance;
@@ -94,6 +95,12 @@ EvaluatedPropertyCache &Singletons::evaluatedPropertyCache()
     return *sInstance->mEvaluatedPropertyCache;
 }
 
+CustomActions &Singletons::customActions()
+{
+    Q_ASSERT(onMainThread());
+    return *sInstance->mCustomActions;
+}
+
 Singletons::Singletons(QMainWindow *window)
     : mSettings(std::make_unique<Settings>())
     , mFileCache(std::make_unique<FileCache>())
@@ -103,6 +110,7 @@ Singletons::Singletons(QMainWindow *window)
     , mVideoManager(std::make_unique<VideoManager>())
     , mInputState(std::make_unique<InputState>())
     , mEvaluatedPropertyCache(std::make_unique<EvaluatedPropertyCache>())
+    , mCustomActions(std::make_unique<CustomActions>())
 {
     Q_ASSERT(onMainThread());
     sInstance = this;

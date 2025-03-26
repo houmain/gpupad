@@ -29,23 +29,17 @@ namespace {
         }
         return {};
     }
-} // namespace
 
-class CustomAction final : public QAction
-{
-private:
-    const QString mFilePath;
-    ScriptEnginePtr mScriptEngine;
-
-    QJSValue parseManifest(ScriptEngine &scriptEngine, MessagePtrSet &messages)
+    QJSValue parseManifest(const QString &filePath, ScriptEngine &scriptEngine,
+        MessagePtrSet &messages)
     {
         auto source = QString();
-        if (Singletons::fileCache().getSource(mFilePath, &source))
+        if (Singletons::fileCache().getSource(filePath, &source))
             source = extractManifest(source);
 
         auto manifest = QJSValue();
         if (!source.isEmpty()) {
-            scriptEngine.evaluateScript(source, mFilePath, messages);
+            scriptEngine.evaluateScript(source, filePath, messages);
             manifest = scriptEngine.getGlobal("manifest");
             scriptEngine.setGlobal("manifest", QJSValue::UndefinedValue);
         }
@@ -54,56 +48,68 @@ private:
 
         return manifest;
     }
+} // namespace
 
-public:
-    explicit CustomAction(const QString &filePath) : mFilePath(filePath)
-    {
-        const auto fileInfo = QFileInfo(mFilePath);
+CustomAction::CustomAction(const QString &filePath) : mFilePath(filePath)
+{
+    const auto fileInfo = QFileInfo(mFilePath);
+
+    const auto dirName = fileInfo.dir().dirName();
+    if (dirName != ActionsDir) {
+        setObjectName(dirName);
+        setText(dirName + "/" + fileInfo.baseName());
+    } else {
+        setObjectName(fileInfo.baseName());
         setText(fileInfo.baseName());
-        const auto dirName = fileInfo.dir().dirName();
-        if (dirName != ActionsDir)
-            setText(dirName + "/" + fileInfo.baseName());
     }
+}
 
-    bool updateManifest(ScriptEngine &scriptEngine, MessagePtrSet &messages)
-    {
-        auto manifest = parseManifest(scriptEngine, messages);
-        setEnabled(!manifest.isUndefined());
-        if (manifest.isUndefined())
-            return false;
+bool CustomAction::updateManifest(ScriptEngine &scriptEngine,
+    MessagePtrSet &messages)
+{
+    auto manifest = parseManifest(mFilePath, scriptEngine, messages);
+    setEnabled(!manifest.isUndefined());
+    if (manifest.isUndefined())
+        return false;
 
-        auto name = manifest.property("name");
-        if (!name.isUndefined())
-            setText(name.toString());
+    auto name = manifest.property("name");
+    if (!name.isUndefined())
+        setText(name.toString());
 
-        auto applicable = manifest.property("applicable");
-        if (!applicable.isUndefined()) {
-            const auto result = (applicable.isCallable()
-                    ? scriptEngine.call(applicable, {}, 0, messages)
-                    : applicable);
-            setEnabled(result.isBool() && result.toBool());
-        }
-        return true;
+    auto applicable = manifest.property("applicable");
+    if (!applicable.isUndefined()) {
+        const auto result = (applicable.isCallable()
+                ? scriptEngine.call(applicable, {}, 0, messages)
+                : applicable);
+        setEnabled(result.isBool() && result.toBool());
     }
+    return true;
+}
 
-    void apply(const QModelIndexList &selection, MessagePtrSet &messages)
-    {
-        mScriptEngine.reset();
+void CustomAction::apply(const QModelIndexList &selection,
+    MessagePtrSet &messages)
+{
+    mScriptEngine.reset();
 
-        const auto basePath = QFileInfo(mFilePath).absolutePath();
-        mScriptEngine = ScriptEngine::make(basePath);
-        mScriptEngine->appScriptObject().setSelection(selection);
+    const auto basePath = QFileInfo(mFilePath).absolutePath();
+    mScriptEngine = ScriptEngine::make(basePath);
+    mScriptEngine->appScriptObject().setSelection(selection);
 
-        auto source = QString();
-        if (Singletons::fileCache().getSource(mFilePath, &source))
-            mScriptEngine->evaluateScript(source, mFilePath, messages);
+    applyInEngine(*mScriptEngine, messages);
 
-        // TODO: run in cancelable background thread
-        mScriptEngine->appScriptObject()
-            .sessionScriptObject()
-            .endBackgroundUpdate();
-    }
-};
+    // TODO: run in cancelable background thread
+    mScriptEngine->appScriptObject()
+        .sessionScriptObject()
+        .endBackgroundUpdate();
+}
+
+void CustomAction::applyInEngine(ScriptEngine &scriptEngine,
+    MessagePtrSet &messages) const
+{
+    auto source = QString();
+    if (Singletons::fileCache().getSource(mFilePath, &source))
+        scriptEngine.evaluateScript(source, mFilePath, messages);
+}
 
 //-------------------------------------------------------------------------
 
@@ -122,6 +128,7 @@ void CustomActions::actionTriggered()
 
 void CustomActions::updateActions()
 {
+    Q_ASSERT(onMainThread());
     Singletons::fileCache().updateFromEditors();
 
     mMessages.clear();
@@ -135,7 +142,7 @@ void CustomActions::updateActions()
         while (it.hasNext()) {
             // keep only last action with identical name
             const auto filePath = toNativeCanonicalFilePath(it.next());
-            auto action = std::make_unique<CustomAction>(filePath);
+            auto action = std::make_shared<CustomAction>(filePath);
             if (!action->updateManifest(*scriptEngine, mMessages))
                 continue;
 
@@ -151,13 +158,33 @@ void CustomActions::setSelection(const QModelIndexList &selection)
     mSelection = selection;
 }
 
-QList<QAction *> CustomActions::getApplicableActions()
+QList<CustomActionPtr> CustomActions::getApplicableActions()
 {
     updateActions();
 
-    auto actions = QList<QAction *>();
+    auto actions = QList<CustomActionPtr>();
     for (const auto &[name, action] : mActions)
         if (action->isEnabled())
-            actions += action.get();
+            actions += action;
     return actions;
+}
+
+CustomActionPtr CustomActions::getActionById(const QString &id)
+{
+    updateActions();
+
+    for (const auto &[text, action] : mActions)
+        if (action->objectName() == id)
+            return action;
+    return nullptr;
+}
+
+bool CustomActions::applyActionInEngine(const QString &id,
+    ScriptEngine &scriptEngine)
+{
+    auto action = getActionById(id);
+    if (!action)
+        return false;
+    action->applyInEngine(scriptEngine, mMessages);
+    return true;
 }

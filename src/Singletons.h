@@ -14,6 +14,7 @@ class Renderer;
 class VideoManager;
 class InputState;
 class EvaluatedPropertyCache;
+class CustomActions;
 
 using RendererPtr = std::shared_ptr<Renderer>;
 
@@ -34,6 +35,7 @@ public:
     static VideoManager &videoManager();
     static InputState &inputState();
     static EvaluatedPropertyCache &evaluatedPropertyCache();
+    static CustomActions &customActions();
 
     explicit Singletons(QMainWindow *window);
     ~Singletons();
@@ -52,4 +54,5 @@ private:
     std::unique_ptr<VideoManager> mVideoManager;
     std::unique_ptr<InputState> mInputState;
     std::unique_ptr<EvaluatedPropertyCache> mEvaluatedPropertyCache;
+    std::unique_ptr<CustomActions> mCustomActions;
 };
