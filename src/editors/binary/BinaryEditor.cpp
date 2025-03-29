@@ -10,6 +10,7 @@
 #include <QSaveFile>
 #include <cstdint>
 #include <cstring>
+#include <array>
 
 namespace {
     template <typename T>
@@ -34,6 +35,23 @@ namespace {
 {
     return std::tie(a.name, a.offset, a.rowCount, a.fields)
         == std::tie(b.name, b.offset, b.rowCount, b.fields);
+}
+
+QString toHexString(uint8_t value)
+{
+    static const std::array<QString, 256> sHexStrings = []() {
+        auto strings = std::array<QString, 256>{};
+        for (auto i = 0; i < 256; ++i)
+            strings[i] =
+                QString::number(i, 16).toUpper().rightJustified(2, '0');
+        return strings;
+    }();
+    return sHexStrings[value];
+}
+
+QString toHexString(uint64_t value)
+{
+    return QString::number(value, 16).toUpper().rightJustified(4, '0');
 }
 
 int BinaryEditor::getTypeSize(DataType type)
@@ -190,7 +208,7 @@ auto BinaryEditor::currentBlock() const -> const Block *
 {
     return (mBlocks.empty() ? nullptr
                             : &mBlocks[std::min(mCurrentBlockIndex,
-                                  static_cast<int>(mBlocks.size()) - 1)]);
+                                static_cast<int>(mBlocks.size()) - 1)]);
 }
 
 void BinaryEditor::setCurrentBlockIndex(int index)

@@ -93,3 +93,6 @@ private:
     int mCurrentBlockIndex{};
     int mPrevFirstRow{};
 };
+
+QString toHexString(uint8_t value);
+QString toHexString(uint64_t value);

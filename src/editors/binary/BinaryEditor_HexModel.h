@@ -3,14 +3,6 @@
 #include "BinaryEditor.h"
 #include <QAbstractTableModel>
 
-namespace {
-    template <typename T>
-    QString toHexString(T value, int digits)
-    {
-        return QString::number(value, 16).toUpper().rightJustified(digits, '0');
-    }
-} // namespace
-
 class BinaryEditor::HexModel final : public QAbstractTableModel
 {
     Q_OBJECT
@@ -44,9 +36,11 @@ public:
 
     QVariant data(const QModelIndex &index, int role) const override
     {
-        if (!index.isValid()
-            || (role != Qt::DisplayRole && role != Qt::EditRole
-                && role != Qt::TextAlignmentRole))
+        if (role != Qt::DisplayRole && role != Qt::EditRole
+            && role != Qt::TextAlignmentRole)
+            return QVariant();
+
+        if (!index.isValid())
             return QVariant();
 
         if (role == Qt::TextAlignmentRole) {
@@ -57,15 +51,11 @@ public:
             return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
         }
 
-        if (role == Qt::DisplayRole || role == Qt::EditRole) {
-            auto offset = getOffset(index.row(), index.column());
-            if (offset < 0 || offset >= mData.size())
-                return QVariant();
+        const auto offset = getOffset(index.row(), index.column());
+        if (offset < 0 || offset >= mData.size())
+            return QVariant();
 
-            return toHexString(static_cast<uint8_t>(mData.constData()[offset]),
-                2);
-        }
-        return QVariant();
+        return toHexString(static_cast<uint8_t>(mData.constData()[offset]));
     }
 
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -73,11 +63,11 @@ public:
     {
         if (role == Qt::DisplayRole) {
             if (orientation == Qt::Horizontal)
-                return toHexString(section, 2);
+                return toHexString(static_cast<uint8_t>(section));
 
-            auto offset = getOffset(section, 0);
+            const auto offset = getOffset(section, 0);
             if (offset >= 0)
-                return toHexString(offset, 4);
+                return toHexString(static_cast<uint64_t>(offset));
         }
         return {};
     }

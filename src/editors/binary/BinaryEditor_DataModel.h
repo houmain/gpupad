@@ -29,92 +29,82 @@ public:
         , mRowCount(block.rowCount)
         , mData(*data)
     {
-        auto index = 0;
         auto offset = 0;
         for (const auto &field : block.fields) {
-            if (field.count) {
-                mColumns.append({ index, offset, field.dataType, field.count,
-                    field.name, true });
-
-                index += field.count;
-                offset += getTypeSize(field.dataType) * field.count;
+            for (auto i = 0; i < field.count; ++i) {
+                mColumns.append({ offset, field.dataType, field.name, true });
+                if (field.count > 1) {
+                    auto &name = mColumns.back().name;
+                    name = QStringLiteral("%1[%2]").arg(name).arg(i);
+                }
+                offset += getTypeSize(field.dataType);
             }
             // fill padding with not editable column sets
             if (field.padding) {
-                mColumns.append({ index, offset, DataType::Uint8, field.padding,
-                    "", false });
-
-                index += field.padding;
-                offset += field.padding;
+                for (auto i = 0; i < field.padding; ++i) {
+                    mColumns.append({ offset, DataType::Uint8, "", false });
+                    ++offset;
+                }
             }
         }
-        mColumnCount = index;
     }
 
     int getColumnSize(int index) const
     {
-        if (auto column = getColumn(index))
-            return getTypeSize(column->type);
-        return 0;
+        return getTypeSize(getColumn(index).type);
     }
 
     int rowCount(const QModelIndex &) const override { return mRowCount; }
 
-    int columnCount(const QModelIndex &) const override { return mColumnCount; }
+    int columnCount(const QModelIndex &) const override
+    {
+        return mColumns.size();
+    }
 
     QVariant data(const QModelIndex &index, int role) const override
     {
-        if (!index.isValid()
-            || (role != Qt::DisplayRole && role != Qt::EditRole
-                && role != Qt::TextAlignmentRole && role != Qt::UserRole))
+        if (role != Qt::DisplayRole && role != Qt::EditRole
+            && role != Qt::TextAlignmentRole && role != Qt::UserRole)
             return QVariant();
 
-        auto column = getColumn(index.column());
-        if (!column)
+        if (!index.isValid())
             return QVariant();
 
+        const auto &column = getColumn(index.column());
         if (role == Qt::UserRole)
-            return static_cast<int>(column->type);
+            return static_cast<int>(column.type);
 
         if (role == Qt::TextAlignmentRole) {
-            if (column->editable)
+            if (column.editable)
                 return static_cast<int>(Qt::AlignRight | Qt::AlignVCenter);
             return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
         }
 
-        if (role == Qt::DisplayRole || role == Qt::EditRole) {
-            auto columnOffset = getColumnOffset(index.column());
-            auto offset = mOffset + mStride * index.row() + columnOffset;
-            auto columnSize = getTypeSize(column->type);
-            if (columnOffset + columnSize > mStride
-                || offset + columnSize > mData.size())
-                return QVariant();
+        const auto offset = mOffset + mStride * index.row() + column.offset;
+        const auto columnSize = getTypeSize(column.type);
+        if (column.offset + columnSize > mStride
+            || offset + columnSize > mData.size())
+            return QVariant();
 
-            if (!column->editable)
-                return toHexString(getByte(offset), 2);
+        if (!column.editable)
+            return toHexString(getByte(offset));
 
-            return getData(offset, column->type);
-        }
-        return QVariant();
+        return getData(offset, column.type);
     }
 
     bool setData(const QModelIndex &index, const QVariant &variant,
         int role) override
     {
         if (role == Qt::EditRole) {
-            const auto column = getColumn(index.column());
-            if (!column)
-                return false;
-
-            const auto columnOffset = getColumnOffset(index.column());
-            const auto columnSize = getTypeSize(column->type);
-            if (columnOffset + columnSize > mStride)
+            const auto &column = getColumn(index.column());
+            const auto columnSize = getTypeSize(column.type);
+            if (column.offset + columnSize > mStride)
                 return false;
 
             const auto offset = mOffset + mStride * index.row();
             expand(offset + mStride);
 
-            setData(offset + columnOffset, column->type, variant);
+            setData(offset + column.offset, column.type, variant);
         }
         return true;
     }
@@ -130,12 +120,9 @@ public:
 
         if ((role == Qt::DisplayRole || role == Qt::ToolTipRole)
             && orientation == Qt::Horizontal) {
-            auto column = getColumn(section);
-            if (column && column->editable) {
-                const auto index = section - column->index;
-                return QString(column->name
-                    + (column->count > 1 ? QString("[%1]").arg(index) : ""));
-            }
+            const auto &column = getColumn(section);
+            if (column.editable)
+                return column.name;
         }
 
         return QVariant();
@@ -143,38 +130,26 @@ public:
 
     Qt::ItemFlags flags(const QModelIndex &index) const override
     {
-        if (auto set = getColumn(index.column()))
-            if (set->editable)
-                return Qt::ItemIsEditable | Qt::ItemIsSelectable
-                    | Qt::ItemIsEnabled;
+        const auto &column = getColumn(index.column());
+        if (column.editable)
+            return Qt::ItemIsEditable | Qt::ItemIsSelectable
+                | Qt::ItemIsEnabled;
         return {};
     }
 
 private:
     struct Column
     {
-        int index;
         int offset;
         DataType type;
-        int count;
         QString name;
         bool editable;
     };
 
-    const Column *getColumn(int index) const
+    const Column &getColumn(int index) const
     {
-        for (const auto &c : mColumns)
-            if (index < c.index + c.count)
-                return &c;
-        return nullptr;
-    }
-
-    int getColumnOffset(int index) const
-    {
-        if (auto column = getColumn(index))
-            return column->offset
-                + getTypeSize(column->type) * (index - column->index);
-        return 0;
+        Q_ASSERT(index < mColumns.size());
+        return mColumns[index];
     }
 
     uint8_t getByte(int offset) const
@@ -230,5 +205,4 @@ private:
     const int mRowCount;
     QByteArray &mData;
     QList<Column> mColumns;
-    int mColumnCount{};
 };
