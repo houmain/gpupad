@@ -375,9 +375,11 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
         case Field::DataType::Int8:   return BinaryEditor::DataType::Int8;
         case Field::DataType::Int16:  return BinaryEditor::DataType::Int16;
         case Field::DataType::Int32:  return BinaryEditor::DataType::Int32;
+        case Field::DataType::Int64:  return BinaryEditor::DataType::Int64;
         case Field::DataType::Uint8:  return BinaryEditor::DataType::Uint8;
         case Field::DataType::Uint16: return BinaryEditor::DataType::Uint16;
         case Field::DataType::Uint32: return BinaryEditor::DataType::Uint32;
+        case Field::DataType::Uint64: return BinaryEditor::DataType::Uint64;
         case Field::DataType::Float:  return BinaryEditor::DataType::Float;
         case Field::DataType::Double: return BinaryEditor::DataType::Double;
         }

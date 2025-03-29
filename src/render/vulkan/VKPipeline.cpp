@@ -402,6 +402,8 @@ void VKPipeline::applyBufferMemberBinding(std::span<std::byte> bufferData,
     }
         ADD(Field::DataType::Int32, int32_t);
         ADD(Field::DataType::Uint32, uint32_t);
+        ADD(Field::DataType::Int64, int64_t);
+        ADD(Field::DataType::Uint64, uint64_t);
         ADD(Field::DataType::Float, float);
         ADD(Field::DataType::Double, double);
 #undef ADD

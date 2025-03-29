@@ -34,11 +34,11 @@ namespace ItemEnums {
         Int8 = GL_BYTE,
         Int16 = GL_SHORT,
         Int32 = GL_INT,
-        //Int64 = GL_INT64,
+        Int64 = 0x140B,
         Uint8 = GL_UNSIGNED_BYTE,
         Uint16 = GL_UNSIGNED_SHORT,
         Uint32 = GL_UNSIGNED_INT,
-        //Uint64 = GL_UNSIGNED_INT64,
+        Uint64 = 0x140C,
         Float = GL_FLOAT,
         Double = GL_DOUBLE,
     };

@@ -7,6 +7,7 @@
 #include "editors/texture/TextureEditor.h"
 #include "editors/source/SourceEditor.h"
 #include "session/SessionModel.h"
+#include "LibraryScriptObject.h"
 #include "../ScriptEngine.h"
 #include <QFloat16>
 #include <QJSEngine>
@@ -15,8 +16,8 @@
 #include <cstring>
 
 namespace {
-    // there does not seems to be a way to access e.g. Float32Array directly...
-    QByteArray toByteArray(const QJSValue &data, const Block &block)
+    QByteArray toByteArray(const QJSValue &data, const Block &block,
+        MessagePtrSet &messages)
     {
         auto columns = QList<const Field *>();
         for (auto column : block.items)
@@ -27,54 +28,110 @@ namespace {
         if (!elementsPerRow)
             return {};
 
-        const auto rowCount = data.property("length").toInt() / elementsPerRow;
         auto bytes = QByteArray();
-        bytes.resize(getBlockStride(block) * rowCount);
+        if (auto array = qobject_cast<const LibraryScriptObject_Array *>(
+                data.toQObject())) {
 
-        auto pos = bytes.data();
-        const auto write = [&](auto v) {
-            std::memcpy(pos, &v, sizeof(v));
-            pos += sizeof(v);
-        };
+            const auto rowCount = array->length() / elementsPerRow;
+            bytes.resize(getBlockStride(block) * rowCount);
 
-        auto index = 0;
-        for (auto i = 0; i < rowCount; ++i) {
-            const auto &column = columns[i % columns.size()];
-            for (auto j = 0; j < elementsPerRow; ++j, ++index) {
-                const auto value = data.property(index);
-                switch (column->dataType) {
-                case Field::DataType::Int8:
-                    write(static_cast<int8_t>(value.toInt()));
-                    break;
-                case Field::DataType::Int16:
-                    write(static_cast<int16_t>(value.toInt()));
-                    break;
-                case Field::DataType::Int32:
-                    write(static_cast<int32_t>(value.toInt()));
-                    break;
-                case Field::DataType::Uint8:
-                    write(static_cast<uint8_t>(value.toUInt()));
-                    break;
-                case Field::DataType::Uint16:
-                    write(static_cast<uint16_t>(value.toUInt()));
-                    break;
-                case Field::DataType::Uint32:
-                    write(static_cast<uint32_t>(value.toUInt()));
-                    break;
-                case Field::DataType::Float:
-                    write(static_cast<float>(value.toNumber()));
-                    break;
-                case Field::DataType::Double:
-                    write(static_cast<double>(value.toNumber()));
-                    break;
+            auto pos = bytes.data();
+            const auto write = [&](auto v) {
+                std::memcpy(pos, &v, sizeof(v));
+                pos += sizeof(v);
+            };
+
+            const auto writeRows = [&](auto *values) {
+                auto index = 0;
+                for (auto i = 0; i < rowCount; ++i) {
+                    const auto &column = columns[i % columns.size()];
+                    for (auto j = 0; j < elementsPerRow; ++j, ++index) {
+                        const auto value = values[index];
+                        switch (column->dataType) {
+#define ADD(TYPE, T)                  \
+    case TYPE: {                      \
+        write(static_cast<T>(value)); \
+    } break;
+                            ADD(Field::DataType::Int8, int8_t)
+                            ADD(Field::DataType::Uint8, uint8_t)
+                            ADD(Field::DataType::Int16, int16_t)
+                            ADD(Field::DataType::Uint16, uint16_t)
+                            ADD(Field::DataType::Int32, int32_t)
+                            ADD(Field::DataType::Uint32, uint32_t)
+                            ADD(Field::DataType::Int64, int64_t)
+                            ADD(Field::DataType::Uint64, uint64_t)
+                            ADD(Field::DataType::Float, float)
+                            ADD(Field::DataType::Double, double)
+#undef ADD
+                        }
+                    }
+                    pos += column->padding;
+                }
+            };
+
+            switch (array->type()) {
+#define ADD(TYPE, T)                 \
+    case TYPE: {                     \
+        writeRows(array->data<T>()); \
+    } break;
+                ADD(dllreflect::Type::Bool, bool)
+                ADD(dllreflect::Type::Char, char)
+                ADD(dllreflect::Type::Int8, int8_t)
+                ADD(dllreflect::Type::UInt8, uint8_t)
+                ADD(dllreflect::Type::Int16, int16_t)
+                ADD(dllreflect::Type::UInt16, uint16_t)
+                ADD(dllreflect::Type::Int32, int32_t)
+                ADD(dllreflect::Type::UInt32, uint32_t)
+                ADD(dllreflect::Type::Int64, int64_t)
+                ADD(dllreflect::Type::UInt64, uint64_t)
+                ADD(dllreflect::Type::Float, float)
+                ADD(dllreflect::Type::Double, double)
+#undef ADD
+            case dllreflect::Type::Void: break;
+            }
+        } else {
+            // there does not seems to be a way to access e.g. Float32Array directly...
+            const auto rowCount = data.property("length").toInt()
+                / elementsPerRow;
+            bytes.resize(getBlockStride(block) * rowCount);
+
+            auto pos = bytes.data();
+            const auto write = [&](auto v) {
+                std::memcpy(pos, &v, sizeof(v));
+                pos += sizeof(v);
+            };
+
+            auto index = 0;
+            for (auto i = 0; i < rowCount; ++i) {
+                const auto &column = columns[i % columns.size()];
+                for (auto j = 0; j < elementsPerRow; ++j, ++index) {
+                    const auto value = data.property(index);
+                    switch (column->dataType) {
+#define ADD(TYPE, T, GET)                   \
+    case TYPE: {                            \
+        write(static_cast<T>(value.GET())); \
+    } break;
+                        ADD(Field::DataType::Int8, int8_t, toInt)
+                        ADD(Field::DataType::Uint8, uint8_t, toUInt)
+                        ADD(Field::DataType::Int16, int16_t, toInt)
+                        ADD(Field::DataType::Uint16, uint16_t, toUInt)
+                        ADD(Field::DataType::Int32, int32_t, toInt)
+                        ADD(Field::DataType::Uint32, uint32_t, toUInt)
+                        ADD(Field::DataType::Int64, int64_t, toInt)
+                        ADD(Field::DataType::Uint64, uint64_t, toUInt)
+                        ADD(Field::DataType::Float, float, toNumber)
+                        ADD(Field::DataType::Double, double, toNumber)
+#undef ADD
+                    }
+                    pos += column->padding;
                 }
             }
-            pos += column->padding;
         }
         return bytes;
-    }
+    } // namespace
 
-    TextureData toTextureData(const QJSValue &data, const Texture &texture)
+    TextureData toTextureData(const QJSValue &data, const Texture &texture,
+        MessagePtrSet &messages)
     {
         auto textureData = TextureData();
         if (!textureData.create(texture.target, texture.format,
@@ -478,16 +535,16 @@ void SessionScriptObject::setBufferData(QJSValue itemDesc, QJSValue data)
             return;
         }
 
-        withSessionModel(
-            [this, bufferId = buffer->id,
-                data = toByteArray(data, *block)](SessionModel &session) {
-                if (auto buffer = session.findItem<Buffer>(bufferId)) {
-                    ensureFileName(session, buffer);
-                    if (onMainThread())
-                        if (auto editor = openBinaryEditor(*buffer))
-                            editor->replace(data);
-                }
-            });
+        withSessionModel([this, bufferId = buffer->id,
+                             data = toByteArray(data, *block, mMessages)](
+                             SessionModel &session) {
+            if (auto buffer = session.findItem<Buffer>(bufferId)) {
+                ensureFileName(session, buffer);
+                if (onMainThread())
+                    if (auto editor = openBinaryEditor(*buffer))
+                        editor->replace(data);
+            }
+        });
     }
 }
 
@@ -496,7 +553,7 @@ void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
     if (const auto block = getItem<Block>(itemDesc)) {
         Singletons::evaluatedPropertyCache().invalidate(block->id);
         withSessionModel([this, blockId = block->id,
-                             data = toByteArray(data, *block)](
+                             data = toByteArray(data, *block, mMessages)](
                              SessionModel &session) {
             if (auto block = session.findItem<Block>(blockId))
                 if (auto buffer = castItem<Buffer>(block->parent)) {
@@ -517,16 +574,16 @@ void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
 void SessionScriptObject::setTextureData(QJSValue itemDesc, QJSValue data)
 {
     if (const auto texture = getItem<Texture>(itemDesc))
-        withSessionModel(
-            [this, textureId = texture->id,
-                data = toTextureData(data, *texture)](SessionModel &session) {
-                if (auto texture = session.findItem<Texture>(textureId)) {
-                    ensureFileName(session, texture);
-                    if (onMainThread())
-                        if (auto editor = openTextureEditor(*texture))
-                            editor->replace(data);
-                }
-            });
+        withSessionModel([this, textureId = texture->id,
+                             data = toTextureData(data, *texture, mMessages)](
+                             SessionModel &session) {
+            if (auto texture = session.findItem<Texture>(textureId)) {
+                ensureFileName(session, texture);
+                if (onMainThread())
+                    if (auto editor = openTextureEditor(*texture))
+                        editor->replace(data);
+            }
+        });
 }
 
 void SessionScriptObject::setShaderSource(QJSValue itemDesc, QJSValue data)

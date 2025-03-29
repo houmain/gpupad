@@ -213,10 +213,16 @@ void QmlView::reset()
 
     connect(mQuickWidget->engine(), &QQmlEngine::warnings,
         [this](const QList<QQmlError> &warnings) {
-            for (auto &warning : warnings)
-                mMessages += MessageList::insert(toAbsolutePath(warning.url()),
-                    warning.line(), MessageType::ScriptWarning,
-                    warning.description());
+            for (const auto &warning : warnings) {
+                auto fileName = toAbsolutePath(warning.url());
+                auto line = warning.line();
+                if (fileName.isEmpty()) {
+                    fileName = mFileName;
+                    line = 0;
+                }
+                mMessages += MessageList::insert(fileName, line,
+                    MessageType::ScriptWarning, warning.description());
+            }
         });
 
     Singletons::fileCache().updateFromEditors();

@@ -108,9 +108,11 @@ KDGpu::Format toKDGpu(Field::DataType dataType, int count)
         ADD(Field::DataType::Int8, 8, SINT);
         ADD(Field::DataType::Int16, 16, SINT);
         ADD(Field::DataType::Int32, 32, SINT);
+        ADD(Field::DataType::Int64, 64, SINT);
         ADD(Field::DataType::Uint8, 8, UINT);
         ADD(Field::DataType::Uint16, 16, UINT);
         ADD(Field::DataType::Uint32, 32, UINT);
+        ADD(Field::DataType::Uint64, 64, UINT);
         ADD(Field::DataType::Float, 32, SFLOAT);
     case Field::DataType::Double: return KD::UNDEFINED;
     }

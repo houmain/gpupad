@@ -1,46 +1,10 @@
 
-#include "LibraryScriptObject.h"
 #include <QJSEngine>
 
 #define DLLREFLECT_IMPORT_IMPLEMENTATION
-#include "dllreflect/include/dllreflect.h"
+#include "LibraryScriptObject.h"
 
 namespace {
-    class OpaqueArgument : public QObject
-    {
-    public:
-        OpaqueArgument(std::shared_ptr<void> library,
-            dllreflect::Argument &&argument, QObject *parent = nullptr)
-            : QObject(parent)
-            , mLibrary(std::move(library))
-            , mArgument(std::move(argument))
-        {
-            setObjectName(
-                QStringLiteral("Opaque%1")
-                    .arg(static_cast<int>(mArgument.type)
-                        & ~static_cast<int>(dllreflect::TypeFlags::opaque)));
-        }
-
-        ~OpaqueArgument()
-        {
-            if (mArgument.free)
-                mArgument.free(mArgument.data);
-        }
-
-        const dllreflect::Argument &argument() const { return mArgument; }
-
-        bool checkType(dllreflect::Type type) const
-        {
-            return (type == mArgument.type);
-        }
-
-        void release() { mArgument = {}; }
-
-    private:
-        std::shared_ptr<void> mLibrary;
-        dllreflect::Argument mArgument;
-    };
-
     template <typename T, typename S>
     void writeValue(void *data, const S &value)
     {
@@ -65,6 +29,90 @@ namespace {
     }
 } // namespace
 
+LibraryScriptObject_Opaque::LibraryScriptObject_Opaque(
+    std::shared_ptr<void> library, dllreflect::Argument &&argument,
+    QObject *parent)
+    : QObject(parent)
+    , mLibrary(std::move(library))
+    , mArgument(std::move(argument))
+{
+    setObjectName(QStringLiteral("Opaque%1")
+                      .arg(static_cast<int>(mArgument.type)
+                          & ~static_cast<int>(dllreflect::TypeFlags::opaque)));
+}
+
+LibraryScriptObject_Opaque::~LibraryScriptObject_Opaque()
+{
+    if (mArgument.free)
+        mArgument.free(mArgument.data);
+}
+
+bool LibraryScriptObject_Opaque::checkType(dllreflect::Type type) const
+{
+    return (type == mArgument.type);
+}
+
+//-------------------------------------------------------------------------
+
+LibraryScriptObject_Array::LibraryScriptObject_Array(QJSEngine *jsEngine,
+    std::shared_ptr<void> library, dllreflect::Argument &&argument,
+    QObject *parent)
+    : QObject(parent)
+    , mJsEngine(jsEngine)
+    , mLibrary(std::move(library))
+    , mArgument(std::move(argument))
+{
+    setObjectName("Array");
+}
+
+LibraryScriptObject_Array::~LibraryScriptObject_Array()
+{
+    if (mArgument.free)
+        mArgument.free(mArgument.data);
+}
+
+QJSValue LibraryScriptObject_Array::toArray() const
+{
+    auto result = mJsEngine->newArray();
+    const auto baseType = base(mArgument.type);
+    switch (baseType) {
+#define ADD(TYPE, T)                                               \
+    case TYPE: {                                                   \
+        const auto begin = static_cast<const T *>(mArgument.data); \
+        for (auto i = 0u; i < mArgument.count; ++i)                \
+            result.setProperty(i, begin[i]);                       \
+        break;                                                     \
+    }
+
+#define ADD_WRAP(TYPE, T, DEST)                                    \
+    case TYPE: {                                                   \
+        const auto begin = static_cast<const T *>(mArgument.data); \
+        for (auto i = 0u; i < mArgument.count; ++i)                \
+            result.setProperty(i, static_cast<DEST>(begin[i]));    \
+        break;                                                     \
+    }
+        ADD(dllreflect::Type::Bool, bool)
+        ADD(dllreflect::Type::Char, char)
+        ADD(dllreflect::Type::Int8, int8_t)
+        ADD(dllreflect::Type::UInt8, uint8_t)
+        ADD(dllreflect::Type::Int16, int16_t)
+        ADD(dllreflect::Type::UInt16, uint16_t)
+        ADD(dllreflect::Type::Int32, int32_t)
+        ADD(dllreflect::Type::UInt32, uint32_t)
+        // TODO: QJSValue does not have a qlonglong constructor, yet?
+        ADD_WRAP(dllreflect::Type::Int64, int64_t, int)
+        ADD_WRAP(dllreflect::Type::UInt64, uint64_t, uint)
+        ADD(dllreflect::Type::Float, float)
+        ADD(dllreflect::Type::Double, double)
+#undef ADD
+#undef ADD_WRAP
+    case dllreflect::Type::Void: break;
+    }
+    return result;
+}
+
+//-------------------------------------------------------------------------
+
 LibraryScriptObject_Callable::LibraryScriptObject_Callable(QJSEngine *engine,
     std::shared_ptr<dllreflect::Library> library, QObject *parent)
     : QObject(parent)
@@ -83,17 +131,18 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
 
     const auto &function = interface.functions[index];
     if (arguments.size() != function.argument_count) {
-        mEngine->throwError(
-            QStringLiteral("invalid argument count (%1 provided, %2 expected)")
-                .arg(arguments.size())
-                .arg(function.argument_count));
+        mEngine->throwError(QStringLiteral(
+            "invalid argument count to '%1' (%2 provided, %3 expected)")
+                                .arg(function.name)
+                                .arg(arguments.size())
+                                .arg(function.argument_count));
         return {};
     }
 
     const auto getArgument = [&](size_t index, dllreflect::Argument &argument) {
         if (argument.type & dllreflect::TypeFlags::array) {
-            const auto base_type = base(argument.type);
-            if (base_type == dllreflect::Type::Char) {
+            const auto baseType = base(argument.type);
+            if (baseType == dllreflect::Type::Char) {
                 copyString(argument, arguments[index].toString());
                 return true;
             }
@@ -101,7 +150,7 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
             const auto list = arguments[index].toList();
             argument.count = list.size();
 
-            switch (base_type) {
+            switch (baseType) {
 #define ADD(TYPE, T, GET)                                                    \
     case TYPE: {                                                             \
         argument.data = new T[argument.count];                               \
@@ -130,14 +179,15 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
         }
 
         if (argument.type & dllreflect::TypeFlags::opaque) {
-            auto opaque = qvariant_cast<OpaqueArgument *>(arguments[index]);
+            auto opaque = qvariant_cast<Opaque *>(arguments[index]);
             if (opaque && opaque->checkType(argument.type)) {
                 argument = opaque->argument();
                 argument.free = nullptr;
                 return true;
             }
             mEngine->throwError(
-                QStringLiteral("conversion of argument %1 failed")
+                QStringLiteral("conversion of '%1' %2. argument failed")
+                    .arg(function.name)
                     .arg(index + 1));
             return false;
         }
@@ -166,7 +216,8 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
         }
         if (!ok)
             mEngine->throwError(
-                QStringLiteral("conversion of argument %1 failed")
+                QStringLiteral("conversion of '%1' %2. argument failed")
+                    .arg(function.name)
                     .arg(index + 1));
         return ok;
     };
@@ -174,53 +225,20 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
     auto result = QJSValue{};
     const auto writeResult = [&](dllreflect::Argument &argument) {
         if (argument.type & dllreflect::TypeFlags::array) {
-            const auto base_type = base(argument.type);
+            const auto baseType = base(argument.type);
 
-            if (base_type == dllreflect::Type::Char) {
+            if (baseType == dllreflect::Type::Char) {
                 result = copyString(argument);
                 return result.isString();
             }
-
-            result = mEngine->newArray(argument.count);
-            switch (base_type) {
-#define ADD(TYPE, T)                                              \
-    case TYPE: {                                                  \
-        const auto begin = static_cast<const T *>(argument.data); \
-        for (auto i = 0u; i < argument.count; ++i)                \
-            result.setProperty(i, begin[i]);                      \
-        break;                                                    \
-    }
-
-#define ADD_WRAP(TYPE, T, DEST)                                   \
-    case TYPE: {                                                  \
-        const auto begin = static_cast<const T *>(argument.data); \
-        for (auto i = 0u; i < argument.count; ++i)                \
-            result.setProperty(i, static_cast<DEST>(begin[i]));   \
-        break;                                                    \
-    }
-                ADD(dllreflect::Type::Bool, bool)
-                ADD(dllreflect::Type::Char, char)
-                ADD(dllreflect::Type::Int8, int8_t)
-                ADD(dllreflect::Type::UInt8, uint8_t)
-                ADD(dllreflect::Type::Int16, int16_t)
-                ADD(dllreflect::Type::UInt16, uint16_t)
-                ADD(dllreflect::Type::Int32, int32_t)
-                ADD(dllreflect::Type::UInt32, uint32_t)
-                // TODO: QJSValue does not have a qlonglong constructor, yet?
-                ADD_WRAP(dllreflect::Type::Int64, int64_t, int)
-                ADD_WRAP(dllreflect::Type::UInt64, uint64_t, uint)
-                ADD(dllreflect::Type::Float, float)
-                ADD(dllreflect::Type::Double, double)
-#undef ADD
-#undef ADD_CLAMP
-            case dllreflect::Type::Void: break;
-            }
+            result = mEngine->newQObject(
+                new Array(mEngine, mLibrary, std::exchange(argument, {})));
             return true;
         }
 
         if (argument.type & dllreflect::TypeFlags::opaque) {
             result = mEngine->newQObject(
-                new OpaqueArgument(mLibrary, std::exchange(argument, {})));
+                new Opaque(mLibrary, std::exchange(argument, {})));
             return true;
         }
 
@@ -262,7 +280,8 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
         }
         if (!ok)
             mEngine->throwError(QJSValue::GenericError,
-                "conversion of result failed");
+                QStringLiteral("conversion of '%1' result failed")
+                    .arg(function.name));
         return ok;
     };
     if (!dllreflect::call(function, getArgument, writeResult))

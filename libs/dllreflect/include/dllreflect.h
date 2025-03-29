@@ -293,7 +293,7 @@ namespace detail {
     result.data = const_cast<T*>(values.data());
   }
 
-  void write_result(Argument& result, std::string&& value) {
+  inline void write_result(Argument& result, std::string&& value) {
     result.type = get_type_v<std::string>;
     result.count = value.size();
     result.data = new char[result.count];
@@ -301,17 +301,17 @@ namespace detail {
     std::memcpy(result.data, value.data(), result.count);
   }
 
-  void write_result(Argument& result, std::string_view value) {
+  inline void write_result(Argument& result, std::string_view value) {
     result.type = get_type_v<std::string_view>;
     result.count = value.size();
     result.data = const_cast<char*>(value.data());
   }
 
-  void write_result(Argument& result, const char* value) {
+  inline void write_result(Argument& result, const char* value) {
     return write_result(result, std::string_view(value));
   }
 
-  void write_void_result(Argument& result) {
+  inline void write_void_result(Argument& result) {
     result.type = { Type::Void };
   }
 
