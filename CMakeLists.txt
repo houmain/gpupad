@@ -287,15 +287,16 @@ find_package(spirv_cross_reflect CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} 
     PRIVATE spirv-cross-core spirv-cross-glsl spirv-cross-reflect)
 
-# TODO: improve 
 # add custom action projects
+set(ACTIONS
+    ImportOBJ
+    GenerateMesh
+)
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
-
-add_subdirectory(extra/actions/ImportOBJ EXCLUDE_FROM_ALL)
-add_dependencies(${PROJECT_NAME} ImportOBJ)
-
-add_subdirectory(extra/actions/GenerateMesh EXCLUDE_FROM_ALL)
-add_dependencies(${PROJECT_NAME} GenerateMesh)
+foreach(ACTION ${ACTIONS})
+    add_subdirectory("extra/actions/${ACTION}" EXCLUDE_FROM_ALL)
+    add_dependencies(${PROJECT_NAME} ${ACTION})
+endforeach()
 
 # install -------------------------
 set(DOC_FILES LICENSE CHANGELOG.md THIRD-PARTY.md)
@@ -308,6 +309,9 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     install(DIRECTORY extra/samples DESTINATION "share/gpupad" COMPONENT Samples)
     install(DIRECTORY extra/themes DESTINATION "share/gpupad" COMPONENT Themes)
     install(DIRECTORY extra/actions DESTINATION "share/gpupad" COMPONENT Actions)
+    foreach(ACTION ${ACTIONS})
+        install(TARGETS ${ACTION} DESTINATION "share/gpupad/actions/${ACTION}" COMPONENT Actions)
+    endforeach()
 
 else()
     install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -316,6 +320,9 @@ else()
     install(DIRECTORY extra/samples DESTINATION . COMPONENT Samples)
     install(DIRECTORY extra/themes DESTINATION . COMPONENT Themes)
     install(DIRECTORY extra/actions DESTINATION . COMPONENT Actions)
+    foreach(ACTION ${ACTIONS})
+        install(TARGETS ${ACTION} DESTINATION "actions/${ACTION}" COMPONENT Actions)
+    endforeach()
 
     # install Qt dependencies
     set(DEPLOY_TOOL_OPTIONS "--qmldir ${CMAKE_CURRENT_SOURCE_DIR}/extra/qml")
