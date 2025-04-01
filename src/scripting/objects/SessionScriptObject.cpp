@@ -11,7 +11,6 @@
 #include "../ScriptEngine.h"
 #include <QFloat16>
 #include <QJSEngine>
-#include <QQmlPropertyMap>
 #include <QTextStream>
 #include <cstring>
 
@@ -288,22 +287,8 @@ namespace {
 
 //-------------------------------------------------------------------------
 
-class SessionScriptObject::ItemObject : public QQmlPropertyMap
-{
-private:
-    SessionScriptObject &mSessionObject;
-    ItemId mItemId;
-
-    QVariant updateValue(const QString &key, const QVariant &input) override;
-
-public:
-    ItemObject(SessionScriptObject *sessionObject, ItemId itemId);
-};
-
-//-------------------------------------------------------------------------
-
-SessionScriptObject::ItemObject::ItemObject(SessionScriptObject *sessionObject,
-    ItemId itemId)
+SessionScriptObject_ItemObject::SessionScriptObject_ItemObject(
+    SessionScriptObject *sessionObject, ItemId itemId)
     : mSessionObject(*sessionObject)
     , mItemId(itemId)
 {
@@ -322,13 +307,14 @@ SessionScriptObject::ItemObject::ItemObject(SessionScriptObject *sessionObject,
         for (auto subItem : session.getItem(index).items) {
             items.setProperty(i++,
                 mSessionObject.engine().newQObject(
-                    new ItemObject(&mSessionObject, subItem->id)));
+                    new SessionScriptObject_ItemObject(&mSessionObject,
+                        subItem->id)));
         }
         insert("items", QVariant::fromValue(items));
     }
 }
 
-QVariant SessionScriptObject::ItemObject::updateValue(const QString &key,
+QVariant SessionScriptObject_ItemObject::updateValue(const QString &key,
     const QVariant &input)
 {
     auto update = QJsonObject();
@@ -461,20 +447,40 @@ QJSValue SessionScriptObject::insertItem(QJSValue object)
     return insertItem(session.sessionItem().id, object);
 }
 
+QJsonObject SessionScriptObject::toJsonObject(const QJSValue &value)
+{
+    if (auto object = value.toQObject()) {
+        // create JSON object from ItemObject
+        if (const auto item = qobject_cast<const QQmlPropertyMap *>(object)) {
+            auto jsonObject = QJsonObject();
+            for (const auto &key : item->keys())
+                jsonObject.insert(key,
+                    QJsonValue::fromVariant(item->value(key)));
+            return jsonObject;
+        }
+        return {};
+    }
+    return value.toVariant().toJsonObject();
+}
+
 QJSValue SessionScriptObject::insertItem(QJSValue itemDesc, QJSValue object)
 {
-    auto update = engine().toScriptValue(object).toVariant().toJsonObject();
+    const auto parent = getItem(itemDesc);
+    if (!parent)
+        return QJSValue::UndefinedValue;
+
+    auto id = object.property("id").toInt();
+    if (!id) {
+        // update ID inplace
+        id = threadSessionModel().getNextItemId();
+        object.setProperty("id", id);
+    }
+
+    const auto update = toJsonObject(object);
     if (update.isEmpty()) {
         engine().throwError(QStringLiteral("Invalid object"));
         return QJSValue::UndefinedValue;
     }
-
-    auto parent = getItem(itemDesc);
-    if (!parent)
-        return QJSValue::UndefinedValue;
-
-    const auto id = threadSessionModel().getNextItemId();
-    update.insert("id", id);
 
     withSessionModel([parentId = parent->id, update](SessionModel &session) {
         const auto parent = session.getIndex(session.findItem(parentId),
@@ -483,6 +489,69 @@ QJSValue SessionScriptObject::insertItem(QJSValue itemDesc, QJSValue object)
     });
 
     return engine().newQObject(new ItemObject(this, id));
+}
+
+void SessionScriptObject::replaceItems(QJSValue itemDesc, QJSValue array)
+{
+    const auto count = array.property("length").toInt();
+    auto update = QJsonArray();
+    for (auto i = 0; i < count; ++i) {
+        const auto object = toJsonObject(array.property(i));
+        if (object.isEmpty()) {
+            engine().throwError(QStringLiteral("Invalid object"));
+            return;
+        }
+        update.append(object);
+    }
+
+    const auto parent = getItem(itemDesc);
+    if (!parent)
+        return;
+
+    // collect IDs in current list
+    auto unusedIds = std::vector<std::pair<ItemId, Item::Type>>();
+    for (const auto &item : parent->items)
+        unusedIds.emplace_back(item->id, item->type);
+
+    // remove IDs contained in new list
+    for (auto i = 0; i < update.size(); ++i)
+        if (const auto id = update[i].toObject()["id"].toInt()) {
+            const auto it = std::find_if(unusedIds.begin(), unusedIds.end(),
+                [&](const auto &pair) { return pair.first == id; });
+            if (it != unusedIds.end())
+                unusedIds.erase(it);
+        }
+
+    // reuse IDs of items with same type or assign a new one
+    for (auto i = 0; i < update.size(); ++i) {
+        auto object = update[i].toObject();
+        auto id = object["id"].toInt();
+        if (!id) {
+            const auto type = getItemTypeByName(object["type"].toString());
+            const auto it = std::find_if(unusedIds.begin(), unusedIds.end(),
+                [&](const auto &pair) { return pair.second == type; });
+            if (it != unusedIds.end()) {
+                id = it->first;
+                unusedIds.erase(it);
+            } else {
+                id = threadSessionModel().getNextItemId();
+            }
+            object["id"] = id;
+            update[i] = object;
+        }
+
+        // update IDs inplace
+        array.property(i).setProperty("id", id);
+    }
+
+    withSessionModel(
+        [parentId = parent->id, update, unusedIds](SessionModel &session) {
+            const auto parent = session.getIndex(session.findItem(parentId),
+                SessionModel::ColumnType::Name);
+            session.dropJson(update, session.rowCount(parent), parent, true);
+            for (const auto [id, type] : unusedIds)
+                session.deleteItem(session.getIndex(session.findItem(id)));
+        });
 }
 
 const Item *SessionScriptObject::getItem(const QJSValue &itemDesc)

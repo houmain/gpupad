@@ -253,10 +253,7 @@ ScrollView {
       text: qsTr("Insert")
       Layout.preferredHeight: 30
       Layout.preferredWidth: 125
-      onClicked: {
-        script.insert()
-        script.refresh()
-      }
+      onClicked: { script.insert() }
     }
   }
 }

@@ -280,6 +280,7 @@ struct CallKind
     bool trace;
 };
 
+Item::Type getItemTypeByName(const QString &name);
 int getFieldSize(const Field &field);
 int getFieldRowOffset(const Field &field);
 int getBlockStride(const Block &block);

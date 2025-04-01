@@ -5,13 +5,14 @@ import QtQuick.Layouts 1.0
 ScrollView {
   id: root
   property alias fileName: fileName.text
-  property alias normalize: normalize.checked
-  property alias swapYZ: swapYZ.checked
   property alias width_: width.value
   property alias height_: height.value
   property alias depth: depth.value
   property alias scaleU: scaleU.value
   property alias scaleV: scaleV.value
+  property alias normalize: normalize.checked
+  property alias center: center.checked
+  property alias swapYZ: swapYZ.checked  
   property alias indexed: indexed.checked
 
   Component.onCompleted: script.initializeUi(root)
@@ -30,6 +31,10 @@ ScrollView {
         id: fileName
         Layout.preferredHeight: 25
         Layout.preferredWidth: 150
+        onTextChanged: {
+          insert.enabled = (this.text.length > 0)
+          script.refresh()
+        }
       }
       Button {
         id: browseFileName
@@ -117,17 +122,6 @@ ScrollView {
       stepSize: 1.0
       editable: true
       onValueModified: { script.refresh() }
-    }    
-
-    Label {
-      text: qsTr("Center")
-    }
-    CheckBox {
-      id: center
-      Layout.preferredHeight: 25
-      Layout.preferredWidth: 25
-      onToggled: { script.refresh() }
-      checked: true
     }
 
     Label {
@@ -140,6 +134,17 @@ ScrollView {
       onToggled: { script.refresh() }
       checked: true
     }
+    
+    Label {
+      text: qsTr("Center")
+    }
+    CheckBox {
+      id: center
+      Layout.preferredHeight: 25
+      Layout.preferredWidth: 25
+      onToggled: { script.refresh() }
+      checked: true
+    }    
     
     Label {
       text: qsTr("Swap Y/Z")
@@ -168,10 +173,8 @@ ScrollView {
       text: qsTr("Insert")
       Layout.preferredHeight: 30
       Layout.preferredWidth: 125
-      onClicked: {
-        script.insert()
-        script.refresh()
-      }
+      enabled: false
+      onClicked: { script.insert() }
     }
   }
 }

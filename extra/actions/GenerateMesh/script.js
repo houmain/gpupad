@@ -124,6 +124,7 @@ class Script {
         }
       ]
     })
+    this.generate()
   }
   
   generate() {

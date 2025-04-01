@@ -5,10 +5,26 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <QQmlPropertyMap>
 #include <functional>
 
 class SessionModel;
+class SessionScriptObject;
 struct Item;
+
+class SessionScriptObject_ItemObject : public QQmlPropertyMap
+{
+    Q_OBJECT
+
+public:
+    SessionScriptObject_ItemObject(SessionScriptObject *sessionObject, ItemId itemId);
+
+private:
+    QVariant updateValue(const QString &key, const QVariant &input) override;
+
+    SessionScriptObject &mSessionObject;
+    ItemId mItemId;
+};
 
 class SessionScriptObject : public QObject
 {
@@ -32,6 +48,7 @@ public:
     Q_INVOKABLE QJSValue item(QJSValue itemDesc);
     Q_INVOKABLE QJSValue insertItem(QJSValue object);
     Q_INVOKABLE QJSValue insertItem(QJSValue itemDesc, QJSValue object);
+    Q_INVOKABLE void replaceItems(QJSValue itemDesc, QJSValue array);
     Q_INVOKABLE void clearItem(QJSValue itemDesc);
     Q_INVOKABLE void deleteItem(QJSValue itemDesc);
 
@@ -42,12 +59,13 @@ public:
     Q_INVOKABLE void setShaderSource(QJSValue itemDesc, QJSValue data);
 
 private:
-    class ItemObject;
-    class ItemListObject;
+    friend SessionScriptObject_ItemObject;
+    using ItemObject = SessionScriptObject_ItemObject;
     using UpdateFunction = std::function<void(SessionModel &)>;
 
     SessionModel &threadSessionModel();
     QJSEngine &engine();
+    QJsonObject toJsonObject(const QJSValue &object);
     void withSessionModel(UpdateFunction &&updateFunction);
     ItemId getItemId(const QJSValue &itemDesc);
     const Item *getItem(const QJSValue &itemDesc);

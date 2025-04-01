@@ -1,4 +1,12 @@
 #include "Item.h"
+#include "ItemEnums.h"
+#include <QMetaEnum>
+
+Item::Type getItemTypeByName(const QString &name)
+{
+    auto metaType = QMetaEnum::fromType<ItemEnums::ItemType>();
+    return static_cast<Item::Type>(metaType.keyToValue(qUtf8Printable(name)));
+}
 
 int getFieldSize(const Field &field)
 {
@@ -6,7 +14,7 @@ int getFieldSize(const Field &field)
     case Field::DataType::Int8:   return 1;
     case Field::DataType::Int16:  return 2;
     case Field::DataType::Int32:  return 4;
-    case Field::DataType::Int64: return 8;
+    case Field::DataType::Int64:  return 8;
     case Field::DataType::Uint8:  return 1;
     case Field::DataType::Uint16: return 2;
     case Field::DataType::Uint32: return 4;

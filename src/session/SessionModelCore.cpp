@@ -391,7 +391,7 @@ ItemId SessionModelCore::getNextItemId()
 {
     while (findItem(mNextItemId))
         mNextItemId++;
-    return mNextItemId;
+    return mNextItemId++;
 }
 
 QModelIndex SessionModelCore::sessionItemIndex(ColumnType column) const
