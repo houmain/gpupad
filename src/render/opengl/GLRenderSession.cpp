@@ -499,3 +499,21 @@ void GLRenderSession::release()
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
 }
+
+quint64 GLRenderSession::getTextureHandle(ItemId itemId)
+{
+    if (!mCommandQueue)
+        mCommandQueue = std::make_unique<CommandQueue>();
+
+    auto &scriptEngine = mScriptSession->engine();
+    const auto &session = mSessionCopy;
+
+    const auto addTextureOnce = [&](ItemId textureId) {
+        return addOnce(mCommandQueue->textures,
+            session.findItem<Texture>(textureId), scriptEngine);
+    };
+
+    if (auto texture = addTextureOnce(itemId))
+        return texture->obtainBindlessHandle();
+    return 0;
+}

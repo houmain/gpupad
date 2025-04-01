@@ -9,6 +9,7 @@
 #include "session/SessionModel.h"
 #include "LibraryScriptObject.h"
 #include "../ScriptEngine.h"
+#include "../IScriptRenderSession.h"
 #include <QFloat16>
 #include <QJSEngine>
 #include <QTextStream>
@@ -368,10 +369,12 @@ void SessionScriptObject::withSessionModel(UpdateFunction &&updateFunction)
     }
 }
 
-void SessionScriptObject::beginBackgroundUpdate(SessionModel *sessionCopy)
+void SessionScriptObject::beginBackgroundUpdate(SessionModel *sessionCopy,
+    IScriptRenderSession *renderSession)
 {
     Q_ASSERT(!onMainThread());
     mSessionCopy = sessionCopy;
+    mRenderSession = renderSession;
 }
 
 void SessionScriptObject::endBackgroundUpdate()
@@ -557,6 +560,8 @@ void SessionScriptObject::replaceItems(QJSValue itemDesc, QJSValue array)
 const Item *SessionScriptObject::getItem(const QJSValue &itemDesc)
 {
     const auto itemId = getItemId(itemDesc);
+    if (!itemId)
+        return nullptr;
     auto &session = threadSessionModel();
     return session.findItem(itemId);
 }
@@ -681,4 +686,12 @@ void SessionScriptObject::setScriptSource(QJSValue itemDesc, QJSValue data)
                         editor->replace(data);
             }
         });
+}
+
+quint64 SessionScriptObject::getTextureHandle(QJSValue itemDesc)
+{
+    if (mRenderSession)
+        if (const auto texture = getItem<Texture>(itemDesc))
+            return mRenderSession->getTextureHandle(texture->id);
+    return 0;
 }

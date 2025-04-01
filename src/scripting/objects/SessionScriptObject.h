@@ -10,6 +10,7 @@
 
 class SessionModel;
 class SessionScriptObject;
+class IScriptRenderSession;
 struct Item;
 
 class SessionScriptObject_ItemObject : public QQmlPropertyMap
@@ -17,7 +18,8 @@ class SessionScriptObject_ItemObject : public QQmlPropertyMap
     Q_OBJECT
 
 public:
-    SessionScriptObject_ItemObject(SessionScriptObject *sessionObject, ItemId itemId);
+    SessionScriptObject_ItemObject(SessionScriptObject *sessionObject,
+        ItemId itemId);
 
 private:
     QVariant updateValue(const QString &key, const QVariant &input) override;
@@ -36,7 +38,8 @@ public:
     explicit SessionScriptObject(QObject *parent = nullptr);
     void initializeEngine(QJSEngine *engine);
 
-    void beginBackgroundUpdate(SessionModel *sessionCopy);
+    void beginBackgroundUpdate(SessionModel *sessionCopy,
+        IScriptRenderSession *renderSession);
     void endBackgroundUpdate();
     QJSValue getItem(QModelIndex index);
 
@@ -57,6 +60,8 @@ public:
     Q_INVOKABLE void setTextureData(QJSValue itemDesc, QJSValue data);
     Q_INVOKABLE void setScriptSource(QJSValue itemDesc, QJSValue data);
     Q_INVOKABLE void setShaderSource(QJSValue itemDesc, QJSValue data);
+
+    Q_INVOKABLE quint64 getTextureHandle(QJSValue itemDesc);
 
 private:
     friend SessionScriptObject_ItemObject;
@@ -80,5 +85,6 @@ private:
     QJSValue mSessionItems;
     MessagePtrSet mMessages;
     SessionModel *mSessionCopy{};
+    IScriptRenderSession *mRenderSession{};
     std::vector<UpdateFunction> mPendingUpdates;
 };

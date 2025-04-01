@@ -15,6 +15,7 @@ public:
     void render() override;
     void finish() override;
     void release() override;
+    quint64 getTextureHandle(ItemId itemId) override;
 
 private:
     struct CommandQueue;

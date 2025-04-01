@@ -20,6 +20,7 @@ public:
     bool operator==(const GLTexture &rhs) const;
 
     GLuint textureId() const { return mTextureObject; }
+    GLuint64 obtainBindlessHandle();
     bool clear(std::array<double, 4> color, double depth, int stencil);
     bool copy(GLTexture &source);
     bool swap(GLTexture &other);
@@ -35,4 +36,5 @@ private:
 
     GLBuffer *mTextureBuffer{};
     GLObject mTextureObject;
+    GLuint64 mBindlessHandle{};
 };

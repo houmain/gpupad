@@ -3,13 +3,14 @@
 #include "RenderTask.h"
 #include "MessageList.h"
 #include "TextureData.h"
+#include "scripting/IScriptRenderSession.h"
 #include "session/SessionModel.h"
 #include <QMap>
 #include <QMutex>
 
 class ScriptSession;
 
-class RenderSessionBase : public RenderTask
+class RenderSessionBase : public RenderTask, public IScriptRenderSession
 {
 public:
     static std::unique_ptr<RenderSessionBase> create(RendererPtr renderer);

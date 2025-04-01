@@ -17,7 +17,8 @@ void ScriptSession::prepare()
         mScriptEngine->appScriptObject().update();
 }
 
-void ScriptSession::beginSessionUpdate(SessionModel *sessionCopy)
+void ScriptSession::beginSessionUpdate(SessionModel *sessionCopy,
+    IScriptRenderSession *renderSession)
 {
     Q_ASSERT(!onMainThread());
     if (!mScriptEngine)
@@ -25,7 +26,7 @@ void ScriptSession::beginSessionUpdate(SessionModel *sessionCopy)
 
     mScriptEngine->appScriptObject()
         .sessionScriptObject()
-        .beginBackgroundUpdate(sessionCopy);
+        .beginBackgroundUpdate(sessionCopy, renderSession);
 }
 
 void ScriptSession::endSessionUpdate()
@@ -43,7 +44,8 @@ bool ScriptSession::usesMouseState() const
 
 bool ScriptSession::usesKeyboardState() const
 {
-    return (mScriptEngine && mScriptEngine->appScriptObject().usesKeyboardState());
+    return (mScriptEngine
+        && mScriptEngine->appScriptObject().usesKeyboardState());
 }
 
 ScriptEngine &ScriptSession::engine()

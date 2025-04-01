@@ -29,15 +29,15 @@ public:
 
     void handleConfigureTask(RenderTask *renderTask)
     {
+        if (!std::exchange(mInitialized, true))
+            initialize();
+
         renderTask->configure();
         Q_EMIT taskConfigured();
     }
 
     void handleRenderTask(RenderTask *renderTask)
     {
-        if (!std::exchange(mInitialized, true))
-            initialize();
-
         renderTask->render();
         Q_EMIT taskRendered();
     }

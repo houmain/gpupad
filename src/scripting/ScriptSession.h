@@ -6,6 +6,7 @@
 
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 class SessionModel;
+class IScriptRenderSession;
 
 class ScriptSession : public QObject
 {
@@ -20,7 +21,8 @@ public:
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
 
     // 2. called in render thread
-    void beginSessionUpdate(SessionModel *sessionCopy);
+    void beginSessionUpdate(SessionModel *sessionCopy,
+        IScriptRenderSession *renderSession);
     ScriptEngine &engine();
 
     // 3. called in main thread

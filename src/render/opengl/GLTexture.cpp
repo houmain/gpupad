@@ -449,3 +449,26 @@ bool GLTexture::download()
     mSystemCopyModified = mDeviceCopyModified = false;
     return true;
 }
+
+GLuint64 GLTexture::obtainBindlessHandle()
+{
+    if (mBindlessHandle)
+        return mBindlessHandle;
+
+    auto &gl = GLContext::currentContext();
+
+    static auto glGetTextureHandleARB =
+        reinterpret_cast<PFNGLGETTEXTUREHANDLEARBPROC>(
+            gl.getProcAddress("glGetTextureHandleARB"));
+    if (glGetTextureHandleARB)
+        mBindlessHandle = glGetTextureHandleARB(getReadOnlyTextureId());
+
+    static auto glMakeTextureHandleResidentARB =
+        reinterpret_cast<PFNGLMAKETEXTUREHANDLERESIDENTARBPROC>(
+            gl.getProcAddress("glMakeTextureHandleResidentARB"));
+    if (mBindlessHandle && glMakeTextureHandleResidentARB)
+        glMakeTextureHandleResidentARB(mBindlessHandle);
+
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
+    return mBindlessHandle;
+}

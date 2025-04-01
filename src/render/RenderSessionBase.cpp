@@ -56,7 +56,7 @@ void RenderSessionBase::prepare(bool itemsChanged,
 void RenderSessionBase::configure()
 {
     auto &session = mSessionCopy;
-    mScriptSession->beginSessionUpdate(&session);
+    mScriptSession->beginSessionUpdate(&session, this);
 
     // collect items to evaluate, since doing so can modify list
     auto itemsToEvaluate = QVector<const Item *>();

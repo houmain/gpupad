@@ -1,0 +1,156 @@
+{
+    "id": 897,
+    "items": [
+        {
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "512",
+            "id": 10,
+            "name": "TargetColor",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "blendConstant": "#ffffffff",
+            "cullMode": "Back",
+            "frontFace": "CCW",
+            "id": 7,
+            "items": [
+                {
+                    "blendAlphaDest": "Zero",
+                    "blendAlphaEq": "Add",
+                    "blendAlphaSource": "One",
+                    "blendColorDest": "Zero",
+                    "blendColorEq": "Add",
+                    "blendColorSource": "One",
+                    "colorWriteMask": 15,
+                    "id": 8,
+                    "level": 0,
+                    "name": "Color",
+                    "textureId": 10,
+                    "type": "Attachment"
+                }
+            ],
+            "logicOperation": "NoLogicOperation",
+            "name": "Target",
+            "polygonMode": "Fill",
+            "type": "Target"
+        },
+        {
+            "fileName": "../Quad/marble.png",
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "512",
+            "id": 105,
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "fileName": "../Cube/Planks.jpg",
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "512",
+            "id": 903,
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "id": 898,
+            "items": [
+                {
+                    "id": 899,
+                    "items": [
+                        {
+                            "count": 1,
+                            "dataType": "Uint64",
+                            "id": 900,
+                            "name": "Handle",
+                            "padding": 0,
+                            "type": "Field"
+                        }
+                    ],
+                    "name": "Textures",
+                    "offset": "0",
+                    "rowCount": "2",
+                    "type": "Block"
+                }
+            ],
+            "name": "Buffer",
+            "type": "Buffer"
+        },
+        {
+            "bindingType": "BufferBlock",
+            "blockId": 899,
+            "id": 901,
+            "name": "bTextures",
+            "type": "Binding"
+        },
+        {
+            "executeOn": "EveryEvaluation",
+            "fileName": "setHandles.js",
+            "id": 902,
+            "type": "Script"
+        },
+        {
+            "id": 1,
+            "items": [
+                {
+                    "fileName": "attributeless.vs",
+                    "id": 2,
+                    "language": "GLSL",
+                    "shaderType": "Vertex",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "textured.fs",
+                    "id": 3,
+                    "language": "GLSL",
+                    "shaderType": "Fragment",
+                    "type": "Shader"
+                }
+            ],
+            "name": "Program",
+            "type": "Program"
+        },
+        {
+            "callType": "ClearTexture",
+            "checked": true,
+            "clearColor": "#00000000",
+            "clearDepth": 1,
+            "clearStencil": 0,
+            "executeOn": "EveryEvaluation",
+            "id": 110,
+            "name": "Clear",
+            "textureId": 10,
+            "type": "Call"
+        },
+        {
+            "baseInstance": "0",
+            "callType": "Draw",
+            "checked": true,
+            "count": "4",
+            "executeOn": "EveryEvaluation",
+            "first": "0",
+            "id": 4,
+            "instanceCount": "1",
+            "name": "Draw",
+            "primitiveType": "TriangleStrip",
+            "programId": 1,
+            "targetId": 7,
+            "type": "Call",
+            "vertexStreamId": 0
+        }
+    ],
+    "name": "Session",
+    "renderer": "OpenGL",
+    "shaderCompiler": "",
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "type": "Session"
+}
