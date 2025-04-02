@@ -104,11 +104,10 @@ namespace {
     const auto dx = (settings.center ? -cx : 0.0f) * sx;
     const auto dy = (settings.center ? -cy : 0.0f) * sy;
     const auto dz = (settings.center ? -cz : 0.0f) * sz;
-    for (auto i = 0; i < size; i += 8) {
+    for (auto i = 0u; i < size; i += 8) {
       auto& px = vertices[i + 0];
       auto& py = vertices[i + 1];
       auto& pz = vertices[i + 2];
-      auto& nx = vertices[i + 3];
       auto& ny = vertices[i + 4];
       auto& nz = vertices[i + 5];
       auto& u = vertices[i + 6];

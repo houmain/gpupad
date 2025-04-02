@@ -24,7 +24,7 @@ private:
 class LibraryScriptObject_Array : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(uint64_t length READ length CONSTANT)
+    Q_PROPERTY(int length READ length CONSTANT)
 
 public:
     LibraryScriptObject_Array(QJSEngine *jsEngine,
@@ -35,7 +35,7 @@ public:
     Q_INVOKABLE QJSValue toArray() const;
 
     dllreflect::Type type() const { return base(mArgument.type); }
-    uint64_t length() const { return mArgument.count; }
+    int length() const { return static_cast<int>(mArgument.count); }
 
     template <typename T = void>
     const T *data() const

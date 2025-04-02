@@ -554,7 +554,7 @@ void SessionScriptObject::replaceItems(QJSValue itemDesc, QJSValue array)
             const auto parent = session.getIndex(session.findItem(parentId),
                 SessionModel::ColumnType::Name);
             session.dropJson(update, session.rowCount(parent), parent, true);
-            for (const auto [id, type] : unusedIds)
+            for (const auto &[id, type] : unusedIds)
                 session.deleteItem(session.getIndex(session.findItem(id)));
         });
 }
