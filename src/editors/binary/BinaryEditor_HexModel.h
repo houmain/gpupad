@@ -7,21 +7,32 @@ class BinaryEditor::HexModel final : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    HexModel(const QByteArray *data, int offset, int stride, int rowCount,
-        QObject *parent)
-        : QAbstractTableModel(parent)
-        , mData(*data)
-        , mOffset(offset)
-        , mStride(stride)
+    HexModel(QObject *parent = nullptr) : QAbstractTableModel(parent) { }
+
+    void setData(const QByteArray *data, int offset, int stride, int rowCount)
     {
+        const auto prevData = mData;
+        const auto prevOffset = mOffset;
+        const auto prevStride = mStride;
+        const auto prevRowCount = mRowCount;
+
+        mData = data;
+        mOffset = offset;
+        mStride = stride;
+
         const auto lastRow = (mOffset + mStride * rowCount + mStride - 1)
             / mStride;
-
-        rowCount = mData.size() / mStride + 2;
-        while (getOffset(rowCount - 1, 0) >= mData.size())
+        rowCount = mData->size() / mStride + 2;
+        while (getOffset(rowCount - 1, 0) >= mData->size())
             --rowCount;
-
         mRowCount = std::max(rowCount, lastRow);
+
+        if (prevData == mData && prevOffset == mOffset && prevStride == mStride
+            && prevRowCount == mRowCount)
+            return;
+
+        beginResetModel();
+        endResetModel();
     }
 
     int rowCount(const QModelIndex &) const override { return mRowCount; }
@@ -52,10 +63,10 @@ public:
         }
 
         const auto offset = getOffset(index.row(), index.column());
-        if (offset < 0 || offset >= mData.size())
+        if (offset < 0 || offset >= mData->size())
             return QVariant();
 
-        return toHexString(static_cast<uint8_t>(mData.constData()[offset]));
+        return toHexString(static_cast<uint8_t>(mData->constData()[offset]));
     }
 
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -75,7 +86,7 @@ public:
     Qt::ItemFlags flags(const QModelIndex &) const override { return {}; }
 
 private:
-    const QByteArray &mData;
+    const QByteArray *mData{};
     int mOffset{};
     int mStride{};
     int mRowCount{};

@@ -12,6 +12,10 @@ class Script {
   initializeUi(ui) {
     this.ui = ui
     this.refresh()
+    
+    //ui.fileName = `C:\\Users\\albert\\Downloads\\bunny\\bunny.obj`
+    ui.fileName = `C:\\Users\\albert\\Downloads\\sponza\\sponza.obj`
+    //ui.fileName = `C:\\Users\\albert\\Downloads\\sportsCar\\sportsCar.obj`
   }
 
   refresh() {
@@ -27,6 +31,7 @@ class Script {
       center: ui.center,
       swapYZ: ui.swapYZ,
       indexed: ui.indexed,
+      drawCalls: ui.drawCalls,
     }
     
     if (this.group)
@@ -61,38 +66,31 @@ class Script {
     })
     
     this.buffer = app.session.insertItem(this.group, {
-      name: 'Mesh',
+      name: 'Buffer',
       type: 'Buffer',
     })
     
-    // TODO: update items on insert
-    this.buffer = app.session.item(this.buffer)
+    this.streams = app.session.insertItem(this.group, {
+      name: 'Streams',
+      type: 'Group',
+    })
     
     this.update()
   }
-
+  
   update() {
     const lib = this.library
     lib.setSettings(this.model, JSON.stringify(this.settings))
-
-    let tempId = 10000
-    const groupItems = []
-    const addGroupItem = (item) => {
-      if (!item.id)
-        item.id = tempId++
-      if (item.items)
-        for (let subItem of item.items)
-          if (!subItem.id)
-            subItem.id = tempId++
-      return groupItems[groupItems.push(item) - 1]
-    }
     
+    this.updateBuffer()
+    this.updateStreams()
+    this.updateDrawCalls()
+  }  
+  
+  updateBuffer() {
+    const lib = this.library
     app.session.clearItem(this.buffer)
-    addGroupItem(this.buffer)
-
-    const targetId = this.findSessionItem('Target')?.id
-    const programId = this.findSessionItem('Program')?.id
-
+    
     const shapeCount = lib.getShapeCount(this.model)
     if (this.settings.indexed) {
       const vertices = lib.getVertices(this.model)
@@ -120,25 +118,6 @@ class Script {
       })
       app.session.setBlockData(block, vertices)
       
-      const stream = addGroupItem({
-        name: 'Stream',
-        type: 'Stream',
-        items: [
-          {
-            name: 'aPosition',
-            fieldId: block.items[0].id,
-          },
-          {
-            name: 'aNormal',
-            fieldId: block.items[1].id,
-          },
-          {
-            name: 'aTexCoords',
-            fieldId: block.items[2].id,
-          }      
-        ]
-      })
-
       let offset = vertices.length * 4
       for (let i = 0; i < shapeCount; ++i) {
         const name = lib.getShapeName(this.model, i)        
@@ -157,27 +136,10 @@ class Script {
         })
         app.session.setBlockData(block, indices)
         offset += indices.length * 4
-        
-        addGroupItem({
-          name: 'Draw ' + name,
-          type: 'Call',
-          callType: 'DrawIndexed',
-          vertexStreamId: stream.id,
-          indexBufferBlockId: block.id,
-          targetId: targetId,
-          programId: programId,
-          count: "",
-        })
       }
     }
     else {
       let offset = 0
-      const streams = {
-        name: 'Streams',
-        type: 'Group',
-        items: []
-      }
-      
       for (let i = 0; i < shapeCount; ++i) {
         const name = lib.getShapeName(this.model, i)
         const vertices = lib.getShapeVertices(this.model, i)
@@ -206,9 +168,39 @@ class Script {
         })
         app.session.setBlockData(block, vertices)
         offset += vertices.length * 8
-        
-        streams.items.push({
-          name: name,
+      }
+    }
+    // TODO: update items on insert
+    this.buffer = app.session.item(this.buffer)
+  }
+  
+  updateStreams() {
+    let streams = []
+    if (this.settings.indexed) {
+      const block = this.buffer.items[0]
+      streams.push({
+        name: 'Stream',
+        type: 'Stream',
+        items: [
+          {
+            name: 'aPosition',
+            fieldId: block.items[0].id,
+          },
+          {
+            name: 'aNormal',
+            fieldId: block.items[1].id,
+          },
+          {
+            name: 'aTexCoords',
+            fieldId: block.items[2].id,
+          }      
+        ]
+      })
+    }
+    else {
+      for (let block of this.buffer.items)
+        streams.push({
+          name: block.name,
           type: 'Stream',
           items: [
             {
@@ -225,25 +217,66 @@ class Script {
             }      
           ]
         })
-      }
-      addGroupItem(streams)
+    }
+    
+    // TODO: make replace items also replace sub items
+    app.session.clearItem(this.streams)
+    app.session.replaceItems(this.streams, streams)
+    // TODO: update items on insert
+    this.streams = app.session.item(this.streams)
+  }
+  
+  updateDrawCalls() {
+    if (!this.settings.drawCalls) {
+      if (this.drawCalls)
+        app.session.deleteItem(this.drawCalls)
+      this.drawCalls = undefined
+      return
+    }
+    
+    if (!this.drawCalls)
+      this.drawCalls = app.session.insertItem(this.group, {
+        name: 'Calls',
+        type: 'Group',
+      })
       
-      for (let i = 0; i < streams.items.length; ++i) {
-        addGroupItem({
-          name: 'Draw ' + streams.items[i].name,
+    const targetId = this.findSessionItem('Target')?.id
+    const programId = this.findSessionItem('Program')?.id
+      
+    let drawCalls = []
+    if (this.settings.indexed) {
+      for (let i = 1; i < this.buffer.items.length; ++i) {
+        const stream = this.streams.items[0]
+        const indices = this.buffer.items[i]
+        drawCalls.push({
+          name: 'Draw ' + indices.name,
           type: 'Call',
-          callType: 'Draw',
-          vertexStreamId: streams.items[i].id,
+          callType: 'DrawIndexed',
+          vertexStreamId: stream.id,
+          indexBufferBlockId: indices.id,
           targetId: targetId,
           programId: programId,
           count: "",
-        })        
+        })
       }
     }
-    
-    app.session.replaceItems(this.group, groupItems)
-  } // update
-  
+    else {
+      for (let i = 0; i < this.streams.items.length; ++i) {
+        const stream = this.streams.items[i]
+        drawCalls.push({
+          name: 'Draw ' + stream.name,
+          type: 'Call',
+          callType: 'Draw',
+          vertexStreamId: stream.id,
+          targetId: targetId,
+          programId: programId,
+          count: "",
+        })
+      }
+    }
+
+    app.session.replaceItems(this.drawCalls, drawCalls)
+  }
 } // Script
 
 this.script = new Script()

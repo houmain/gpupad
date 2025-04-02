@@ -20,6 +20,7 @@ ScrollView {
   property alias seed: seed.value
   property alias scaleU: scaleU.value
   property alias scaleV: scaleV.value
+  property alias drawCall: drawCall.checked
   property alias indexed: indexed.checked
 
   property bool hasStacks
@@ -247,6 +248,17 @@ ScrollView {
       onToggled: { script.refresh() }
     }
 
+    Label {
+      text: qsTr("Draw Call")
+    }
+    CheckBox {
+      id: drawCall
+      Layout.preferredHeight: 25
+      Layout.preferredWidth: 25
+      checked: true
+      onToggled: { script.refresh() }
+    }
+    
     Item {}
     Button {
       id: insert

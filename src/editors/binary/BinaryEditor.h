@@ -86,6 +86,8 @@ private:
     QString mFileName;
     bool mModified{};
     QByteArray mData;
+    HexModel *mHexModel{};
+    DataModel *mDataModel{};
     EditableRegion *mEditableRegion{};
     int mRowHeight{ 20 };
     int mColumnWidth{ 32 };

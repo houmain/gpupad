@@ -12,7 +12,8 @@ ScrollView {
   property alias scaleV: scaleV.value
   property alias normalize: normalize.checked
   property alias center: center.checked
-  property alias swapYZ: swapYZ.checked  
+  property alias swapYZ: swapYZ.checked
+  property alias drawCalls: drawCalls.checked
   property alias indexed: indexed.checked
 
   Component.onCompleted: script.initializeUi(root)
@@ -132,7 +133,6 @@ ScrollView {
       Layout.preferredHeight: 25
       Layout.preferredWidth: 25
       onToggled: { script.refresh() }
-      checked: true
     }
     
     Label {
@@ -143,8 +143,7 @@ ScrollView {
       Layout.preferredHeight: 25
       Layout.preferredWidth: 25
       onToggled: { script.refresh() }
-      checked: true
-    }    
+    }
     
     Label {
       text: qsTr("Swap Y/Z")
@@ -154,13 +153,24 @@ ScrollView {
       Layout.preferredHeight: 25
       Layout.preferredWidth: 25
       onToggled: { script.refresh() }
-    }    
+    }
 
     Label {
       text: qsTr("Indexed")
     }
     CheckBox {
       id: indexed
+      Layout.preferredHeight: 25
+      Layout.preferredWidth: 25
+      checked: true
+      onToggled: { script.refresh() }
+    }
+    
+    Label {
+      text: qsTr("Draw Calls")
+    }
+    CheckBox {
+      id: drawCalls
       Layout.preferredHeight: 25
       Layout.preferredWidth: 25
       checked: true

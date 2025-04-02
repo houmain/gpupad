@@ -19,17 +19,32 @@ namespace {
 
 class BinaryEditor::DataModel final : public QAbstractTableModel
 {
+    Q_OBJECT
 public:
-    DataModel(BinaryEditor *editor, const BinaryEditor::Block &block,
-        QByteArray *data)
+    DataModel(BinaryEditor *editor)
         : QAbstractTableModel(editor)
         , mEditor(*editor)
-        , mOffset(block.offset)
-        , mStride(getStride(block))
-        , mRowCount(block.rowCount)
-        , mData(*data)
     {
+    }
+
+    void setData(QByteArray *data, const BinaryEditor::Block &block)
+    {
+        const auto prevData = mData;
+        const auto prevOffset = mOffset;
+        const auto prevStride = mStride;
+        const auto prevRowCount = mRowCount;
+
+        mData = data;
+        mOffset = block.offset;
+        mStride = getStride(block);
+        mRowCount = block.rowCount;
+
+        if (prevData == mData && prevOffset == mOffset && prevStride == mStride
+            && prevRowCount == mRowCount)
+            return;
+
         auto offset = 0;
+        mColumns.clear();
         for (const auto &field : block.fields) {
             for (auto i = 0; i < field.count; ++i) {
                 mColumns.append({ offset, field.dataType, field.name, true });
@@ -47,6 +62,9 @@ public:
                 }
             }
         }
+
+        beginResetModel();
+        endResetModel();
     }
 
     int getColumnSize(int index) const
@@ -83,7 +101,7 @@ public:
         const auto offset = mOffset + mStride * index.row() + column.offset;
         const auto columnSize = getTypeSize(column.type);
         if (column.offset + columnSize > mStride
-            || offset + columnSize > mData.size())
+            || offset + columnSize > mData->size())
             return QVariant();
 
         if (!column.editable)
@@ -154,12 +172,12 @@ private:
 
     uint8_t getByte(int offset) const
     {
-        return static_cast<uint8_t>(mData.constData()[offset]);
+        return static_cast<uint8_t>(mData->constData()[offset]);
     }
 
     QVariant getData(int offset, DataType type) const
     {
-        auto data = mData.constData() + offset;
+        auto data = mData->constData() + offset;
         switch (type) {
         case DataType::Int8:   return get<int8_t>(data);
         case DataType::Int16:  return get<int16_t>(data);
@@ -177,7 +195,7 @@ private:
 
     void setData(int offset, DataType type, QVariant v)
     {
-        auto data = mData.data() + offset;
+        auto data = mData->data() + offset;
         switch (type) {
         case DataType::Int8:   set<int8_t>(data, v.toInt()); break;
         case DataType::Int16:  set<int16_t>(data, v.toInt()); break;
@@ -194,15 +212,15 @@ private:
 
     void expand(int requiredSize)
     {
-        if (requiredSize > mData.size()) {
-            mData.append(QByteArray(requiredSize - mData.size(), 0));
+        if (requiredSize > mData->size()) {
+            mData->append(QByteArray(requiredSize - mData->size(), 0));
         }
     }
 
     BinaryEditor &mEditor;
-    const int mOffset;
-    const int mStride;
-    const int mRowCount;
-    QByteArray &mData;
+    QByteArray *mData{};
+    int mOffset{};
+    int mStride{};
+    int mRowCount{};
     QList<Column> mColumns;
 };

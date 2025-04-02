@@ -21,6 +21,12 @@ class Script {
     this.refresh()
   }
   
+  findSessionItem(type) {
+    for (let i = app.session.items.length - 1; i >= 0; --i)
+      if (app.session.items[i].type == type)
+        return app.session.items[i]
+  }
+  
   refresh() {
     const lib = this.library
     const ui = this.ui
@@ -40,7 +46,8 @@ class Script {
       swapYZ: ui.swapYZ,
       scaleU: ui.scaleU,
       scaleV: ui.scaleV,
-      indexed: ui.indexed
+      drawCall: ui.drawCall,
+      indexed: ui.indexed,
     }
     
     const typeIndex = this.ui.typeIndex
@@ -55,13 +62,13 @@ class Script {
   }
   
   insert() {
-    let group = app.session.insertItem({
+    this.group = app.session.insertItem({
       name: 'Mesh',
       type: 'Group',
       inlineScope: true
     })    
     
-    this.vertices = app.session.insertItem(group, {
+    this.vertices = app.session.insertItem(this.group, {
       name: 'Vertices',
       type: 'Buffer',
       items: [
@@ -88,8 +95,8 @@ class Script {
       ]
     })
     
-    if (this.settings.indexed) {
-      this.indices = app.session.insertItem(group, {
+    if (this.settings.indexed)
+      this.indices = app.session.insertItem(this.group, {
         name: 'Indices',
         type: 'Buffer',
         items: [
@@ -104,9 +111,8 @@ class Script {
           }
         ]
       })
-    }
     
-    app.session.insertItem(group, {
+    this.stream = app.session.insertItem(this.group, {
       name: 'Stream',
       type: 'Stream',
       items: [
@@ -124,7 +130,31 @@ class Script {
         }
       ]
     })
+    
     this.generate()
+  }
+  
+  updateDrawCall() {
+    if (!this.settings.drawCall) {
+      if (this.drawCall)
+        app.session.deleteItem(this.drawCall)
+      this.drawCall = undefined
+      return
+    }
+    
+    if (!this.drawCall)
+      this.drawCall = app.session.insertItem(this.group, {
+        name: 'Draw',
+        type: 'Call',
+        vertexStreamId: this.stream.id,
+        indexBufferBlockId: this.indices.items[0].id,
+        targetId: this.findSessionItem('Target')?.id,
+        programId: this.findSessionItem('Program')?.id,
+        count: "",
+      })
+    
+    this.drawCall.callType =
+      (this.settings.indexed ? 'DrawIndexed' : 'Draw')
   }
   
   generate() {
@@ -151,8 +181,10 @@ class Script {
       this.vertices.items[0].rowCount = vertices.length / 8
       app.session.setBufferData(this.vertices, vertices)
     }
+    
+    this.updateDrawCall()
   }
-}
+} // Script
 
 this.script = new Script()
 

@@ -469,8 +469,10 @@ QJsonObject SessionScriptObject::toJsonObject(const QJSValue &value)
 QJSValue SessionScriptObject::insertItem(QJSValue itemDesc, QJSValue object)
 {
     const auto parent = getItem(itemDesc);
-    if (!parent)
+    if (!parent) {
+        engine().throwError(QStringLiteral("Invalid parent"));
         return QJSValue::UndefinedValue;
+    }
 
     auto id = object.property("id").toInt();
     if (!id) {
@@ -541,10 +543,10 @@ void SessionScriptObject::replaceItems(QJSValue itemDesc, QJSValue array)
             }
             object["id"] = id;
             update[i] = object;
+            
+            // update IDs inplace
+            array.property(i).setProperty("id", id);
         }
-
-        // update IDs inplace
-        array.property(i).setProperty("id", id);
     }
 
     withSessionModel(

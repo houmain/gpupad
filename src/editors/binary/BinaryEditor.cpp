@@ -94,9 +94,18 @@ BinaryEditor::BinaryEditor(QString fileName, BinaryEditorToolBar *editorToolbar,
     verticalHeader()->setSectionsClickable(false);
     setGridStyle(Qt::DotLine);
 
+    mHexModel = new HexModel(this);
+    setModel(mHexModel);
+
     mEditableRegion = new EditableRegion(mColumnWidth, mRowHeight, this);
     setItemDelegate(new EditableRegionDelegate(mEditableRegion, this));
     mEditableRegion->setStyleSheet("QTableView { margin-top: 1px; }");
+
+    mDataModel = new DataModel(this);
+    mEditableRegion->setModel(mDataModel);
+
+    connect(mDataModel, &DataModel::dataChanged, this,
+        &BinaryEditor::handleDataChanged);
 
     refresh();
 }
@@ -175,14 +184,22 @@ void BinaryEditor::replace(QByteArray data, bool emitFileChanged)
 void BinaryEditor::replaceRange(int offset, QByteArray data,
     bool emitFileChanged)
 {
-    if (offset == 0 && data.size() >= mData.size()) {
-        mData = data;
-    } else {
-        if (offset + data.size() > mData.size())
-            mData.resize(offset + data.size());
-        std::memcpy(mData.data() + offset, data.constData(), data.size());
-    }
-    replace(std::exchange(mData, {}), emitFileChanged);
+    if (offset == 0 && data.size() >= mData.size())
+        return replace(data, emitFileChanged);
+
+    if (mData.size() >= data.size() + offset
+        && !std::memcmp(mData.data() + offset, data.constData(), data.size()))
+        return;
+
+    if (offset + data.size() > mData.size())
+        mData.resize(offset + data.size());
+    std::memcpy(mData.data() + offset, data.constData(), data.size());
+    refresh();
+
+    if (!FileDialog::isEmptyOrUntitled(mFileName))
+        setModified(true);
+
+    Singletons::fileCache().handleEditorFileChanged(mFileName, emitFileChanged);
 }
 
 void BinaryEditor::handleDataChanged()
@@ -237,9 +254,7 @@ void BinaryEditor::refresh()
         stride = 16;
     }
 
-    auto prevModel = model();
-    setModel(new HexModel(&mData, offset, stride, rowCount, this));
-    delete prevModel;
+    mHexModel->setData(&mData, offset, stride, rowCount);
 
     clearSpans();
     setRowHeight(mPrevFirstRow, mRowHeight);
@@ -250,18 +265,12 @@ void BinaryEditor::refresh()
         const auto row = (offset + stride - 1) / stride;
         setSpan(row, 0, rowCount, stride);
 
-        auto dataModel = new DataModel(this, *block, &mData);
-        prevModel = mEditableRegion->model();
-        mEditableRegion->setModel(dataModel);
-        delete prevModel;
-
-        connect(dataModel, &DataModel::dataChanged, this,
-            &BinaryEditor::handleDataChanged);
+        mDataModel->setData(&mData, *block);
 
         mEditableRegion->horizontalHeader()->setMinimumSectionSize(1);
-        for (auto i = 0; i < dataModel->columnCount({}); ++i)
+        for (auto i = 0; i < mDataModel->columnCount({}); ++i)
             mEditableRegion->horizontalHeader()->resizeSection(i,
-                dataModel->getColumnSize(i) * (mColumnWidth + 3));
+                mDataModel->getColumnSize(i) * (mColumnWidth + 3));
 
         setRowHeight(row,
             mRowHeight + mEditableRegion->horizontalHeader()->height() + 1);
