@@ -298,10 +298,9 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         gl.v4_2->glMemoryBarrier(GL_ALL_BARRIER_BITS);
 #endif
 
-    const auto error = glGetError();
-    if (error != GL_NO_ERROR)
+    if (auto errorMessage = getFirstGLError(); !errorMessage.isEmpty())
         messages += MessageList::insert(mCall.id, MessageType::CallFailed,
-            getFirstGLError());
+            errorMessage);
 }
 
 int GLCall::evaluateInt(ScriptEngine &scriptEngine, const QString &expression)

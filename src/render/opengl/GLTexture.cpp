@@ -58,7 +58,7 @@ namespace {
         gl.glDeleteFramebuffers(1, &sourceFbo);
         gl.glDeleteFramebuffers(1, &destFbo);
         gl.glBindFramebuffer(GL_FRAMEBUFFER, previousTarget);
-        return (glGetError() == GL_NONE);
+        return (glGetError() == GL_NO_ERROR);
     }
 
     bool uploadMultisample(QOpenGLFunctions_3_3_Core &gl,
@@ -365,16 +365,16 @@ bool GLTexture::swap(GLTexture &other)
 
 bool GLTexture::updateMipmaps()
 {
-    Q_ASSERT(glGetError() == GL_NO_ERROR);
     if (mMipmapsInvalidated) {
         if (levels() > 1) {
             auto &gl = GLContext::currentContext();
             gl.glBindTexture(target(), getReadWriteTextureId());
             gl.glGenerateMipmap(target());
+            Q_ASSERT(glGetError() == GL_NO_ERROR);
         }
         mMipmapsInvalidated = false;
     }
-    return (glGetError() == GL_NO_ERROR);
+    return true;
 }
 
 void GLTexture::reload(bool forWriting)

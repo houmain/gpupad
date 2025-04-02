@@ -634,7 +634,8 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
         gl.glBindTexture(target, 0);
         mShareSync->endUsage(gl);
     }
-    return (glGetError() == GL_NO_ERROR);
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
+    return true;
 }
 
 void TextureItem::updateHistogram()
