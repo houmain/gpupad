@@ -57,7 +57,7 @@ class Script {
     ui.hasSubdivisions = lib.hasSubdivisions(typeIndex)
     ui.hasSeed = lib.hasSeed(typeIndex)
     
-    if (app.session.item(this.vertices))
+    if (app.session.item(this.buffer))
       this.generate()
   }
   
@@ -68,8 +68,8 @@ class Script {
       inlineScope: true
     })    
     
-    this.vertices = app.session.insertItem(this.group, {
-      name: 'Vertices',
+    this.buffer = app.session.insertItem(this.group, {
+      name: 'Buffer',
       type: 'Buffer',
       items: [
         {
@@ -94,23 +94,7 @@ class Script {
         }
       ]
     })
-    
-    if (this.settings.indexed)
-      this.indices = app.session.insertItem(this.group, {
-        name: 'Indices',
-        type: 'Buffer',
-        items: [
-          {
-            name: 'Index',
-            items: [
-              {
-                name: 'index',
-                dataType: 'Uint16',
-              }
-            ]
-          }
-        ]
-      })
+    this.vertices = this.buffer.items[0]
     
     this.stream = app.session.insertItem(this.group, {
       name: 'Stream',
@@ -118,20 +102,64 @@ class Script {
       items: [
         {
           name: 'aPosition',
-          fieldId: this.vertices.items[0].items[0].id,
+          fieldId: this.buffer.items[0].items[0].id,
         },
         {
           name: 'aNormal',
-          fieldId: this.vertices.items[0].items[1].id,
+          fieldId: this.buffer.items[0].items[1].id,
         },
         {
           name: 'aTexCoords',
-          fieldId: this.vertices.items[0].items[2].id,
+          fieldId: this.buffer.items[0].items[2].id,
         }
       ]
     })
     
     this.generate()
+  }
+  
+  updateBuffer() {
+    const lib = this.library
+    const geometry = lib.generate(JSON.stringify(this.settings))
+    
+    if (this.settings.indexed) {
+      const vertices = lib.getVertices(geometry)
+      if (!vertices.length)
+        throw "Generating geometry failed"
+        
+      this.vertices.rowCount = vertices.length / 8
+      app.session.setBlockData(this.vertices, vertices)
+      
+      if (!this.indices)
+        this.indices = app.session.insertItem(this.buffer, {
+          name: 'Indices',
+          type: 'Block',
+          items: [
+            {
+              name: 'index',
+              dataType: 'Uint16',
+            }
+          ]
+        })
+      
+      const indices = lib.getIndices(geometry)
+      this.indices.offset = this.vertices.rowCount * 8 * 4
+      this.indices.rowCount = indices.length
+      app.session.setBlockData(this.indices, indices)
+    }
+    else {
+      const vertices = lib.getVerticesUnweld(geometry)
+      if (!vertices.length)
+        throw "Generating geometry failed"
+        
+      this.vertices.rowCount = vertices.length / 8
+      app.session.setBlockData(this.vertices, vertices)
+      
+      if (this.indices) {
+        app.session.deleteItem(this.indices)
+        this.indices = undefined
+      }
+    }
   }
   
   updateDrawCall() {
@@ -147,7 +175,6 @@ class Script {
         name: 'Draw',
         type: 'Call',
         vertexStreamId: this.stream.id,
-        indexBufferBlockId: this.indices.items[0].id,
         targetId: this.findSessionItem('Target')?.id,
         programId: this.findSessionItem('Program')?.id,
         count: "",
@@ -155,33 +182,11 @@ class Script {
     
     this.drawCall.callType =
       (this.settings.indexed ? 'DrawIndexed' : 'Draw')
+    this.drawCall.indexBufferBlockId = this.indices?.id
   }
   
   generate() {
-    const lib = this.library
-    const geometry = lib.generate(JSON.stringify(this.settings))
-    
-    if (this.settings.indexed) {
-      const vertices = lib.getVertices(geometry)
-      const indices = lib.getIndices(geometry)
-      if (!vertices.length)
-        throw "Generating geometry failed"
-        
-      this.vertices.items[0].rowCount = vertices.length / 8
-      app.session.setBufferData(this.vertices, vertices)
-      
-      this.indices.items[0].rowCount = indices.length
-      app.session.setBufferData(this.indices, indices)
-    }
-    else {
-      const vertices = lib.getVerticesUnweld(geometry)
-      if (!vertices.length)
-        throw "Generating geometry failed"
-        
-      this.vertices.items[0].rowCount = vertices.length / 8
-      app.session.setBufferData(this.vertices, vertices)
-    }
-    
+    this.updateBuffer()
     this.updateDrawCall()
   }
 } // Script

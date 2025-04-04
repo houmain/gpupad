@@ -19,35 +19,41 @@ namespace {
     QByteArray toByteArray(const QJSValue &data, const Block &block,
         MessagePtrSet &messages)
     {
-        auto columns = QList<const Field *>();
-        for (auto column : block.items)
-            columns.append(static_cast<const Field *>(column));
-        auto elementsPerRow = 0;
-        for (const auto &column : columns)
-            elementsPerRow += column->count;
-        if (!elementsPerRow)
+        auto elementTypes = std::vector<Field::DataType>();
+        auto padding = std::vector<int>();
+        for (auto item : block.items) {
+            auto column = static_cast<const Field *>(item);
+            for (auto i = 0; i < column->count; ++i) {
+                elementTypes.push_back(column->dataType);
+                padding.push_back(0);
+            }
+            if (column->padding) {
+                if (padding.empty())
+                    return {};
+                padding.back() += column->padding;
+            }
+        }
+        if (elementTypes.empty())
             return {};
 
         auto bytes = QByteArray();
         if (auto array = qobject_cast<const LibraryScriptObject_Array *>(
                 data.toQObject())) {
 
-            const auto rowCount = array->length() / elementsPerRow;
+            const auto rowCount = array->length() / elementTypes.size();
             bytes.resize(getBlockStride(block) * rowCount);
 
-            auto pos = bytes.data();
-            const auto write = [&](auto v) {
-                std::memcpy(pos, &v, sizeof(v));
-                pos += sizeof(v);
-            };
-
-            const auto writeRows = [&](auto *values) {
-                auto index = 0;
-                for (auto i = 0; i < rowCount; ++i) {
-                    const auto &column = columns[i % columns.size()];
-                    for (auto j = 0; j < elementsPerRow; ++j, ++index) {
+            const auto writeRows = [&](const auto *values) {
+                auto pos = bytes.data();
+                const auto write = [&](auto v) {
+                    std::memcpy(pos, &v, sizeof(v));
+                    pos += sizeof(v);
+                };
+                auto index = 0u;
+                for (auto i = 0u; i < rowCount; ++i) {
+                    for (auto j = 0u; j < elementTypes.size(); ++j, ++index) {
                         const auto value = values[index];
-                        switch (column->dataType) {
+                        switch (elementTypes[j]) {
 #define ADD(TYPE, T)                  \
     case TYPE: {                      \
         write(static_cast<T>(value)); \
@@ -64,8 +70,8 @@ namespace {
                             ADD(Field::DataType::Double, double)
 #undef ADD
                         }
+                        pos += padding[j];
                     }
-                    pos += column->padding;
                 }
             };
 
@@ -92,7 +98,7 @@ namespace {
         } else {
             // there does not seems to be a way to access e.g. Float32Array directly...
             const auto rowCount = data.property("length").toInt()
-                / elementsPerRow;
+                / elementTypes.size();
             bytes.resize(getBlockStride(block) * rowCount);
 
             auto pos = bytes.data();
@@ -101,12 +107,11 @@ namespace {
                 pos += sizeof(v);
             };
 
-            auto index = 0;
-            for (auto i = 0; i < rowCount; ++i) {
-                const auto &column = columns[i % columns.size()];
-                for (auto j = 0; j < elementsPerRow; ++j, ++index) {
+            auto index = 0u;
+            for (auto i = 0u; i < rowCount; ++i) {
+                for (auto j = 0u; j < elementTypes.size(); ++j, ++index) {
                     const auto value = data.property(index);
-                    switch (column->dataType) {
+                    switch (elementTypes[j]) {
 #define ADD(TYPE, T, GET)                   \
     case TYPE: {                            \
         write(static_cast<T>(value.GET())); \
@@ -123,7 +128,7 @@ namespace {
                         ADD(Field::DataType::Double, double, toNumber)
 #undef ADD
                     }
-                    pos += column->padding;
+                    pos += padding[j];
                 }
             }
         }
