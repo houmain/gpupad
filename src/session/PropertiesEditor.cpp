@@ -578,7 +578,7 @@ void PropertiesEditor::updateBlockWidgets(const QModelIndex &index)
         stride = getBlockStride(*block);
         isFirstBlock = (buffer.items.first() == block);
         isLastBlock = (buffer.items.last() == block);
-        if (!FileDialog::isEmptyOrUntitled(buffer.fileName))
+        if (!buffer.fileName.isEmpty())
             hasFile = true;
     }
 

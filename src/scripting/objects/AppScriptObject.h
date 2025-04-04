@@ -57,4 +57,5 @@ private:
     QJSValue mMouseProperty;
     QJSValue mKeyboardProperty;
     QJSValue mSelectionProperty;
+    QDir mLastFileDialogDirectory;
 };

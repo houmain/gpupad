@@ -96,7 +96,8 @@ namespace {
             removeExtensions(&source, extensions);
 
         auto linesInserted = (versionRemoved ? -1 : 0);
-        static const auto regex = QRegularExpression(R"(#include([^\n]*))");
+        static const auto regex = QRegularExpression(
+            R"(^\s*#include([^\n]*))", QRegularExpression::MultilineOption);
         for (auto match = regex.match(source); match.hasMatch();
              match = regex.match(source)) {
             source.remove(match.capturedStart(), match.capturedLength());

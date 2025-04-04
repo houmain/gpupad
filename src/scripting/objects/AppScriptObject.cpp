@@ -62,6 +62,9 @@ bool AppScriptObject::usesKeyboardState() const
 
 QJSValue AppScriptObject::openEditor(QString fileName)
 {
+    if (!onMainThread())
+        return {};
+
     fileName = getAbsolutePath(fileName);
     auto &editorManager = Singletons::editorManager();
     if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
@@ -113,9 +116,16 @@ QJSValue AppScriptObject::callAction(QString id)
 
 QJSValue AppScriptObject::openFileDialog(QString pattern)
 {
+    if (!onMainThread())
+        return {};
+
     auto options = FileDialog::Options{};
-    if (Singletons::fileDialog().exec(options, pattern))
+    Singletons::fileDialog().setDirectory(mLastFileDialogDirectory);
+
+    if (Singletons::fileDialog().exec(options, pattern)) {
+        mLastFileDialogDirectory = Singletons::fileDialog().directory();
         return Singletons::fileDialog().fileName();
+    }
     return {};
 }
 
