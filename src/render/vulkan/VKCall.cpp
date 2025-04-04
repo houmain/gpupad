@@ -195,15 +195,6 @@ std::optional<KDGpu::IndexType> VKCall::getIndexType() const
     }
 }
 
-int VKCall::getDefaultElementCount() const
-{
-    if (mIndexBuffer)
-        return mIndexBuffer->size() / mIndexSize;
-    if (mVertexStream)
-        return mVertexStream->getDefaultElementCount();
-    return 0;
-}
-
 void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     ScriptEngine &scriptEngine)
 {
@@ -241,9 +232,7 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
             getIndexType().value_or(KDGpu::IndexType::Uint32));
     }
 
-    const auto count = (!mCall.count.isEmpty()
-            ? evaluateUInt(scriptEngine, mCall.count)
-            : getDefaultElementCount());
+    const auto count = evaluateUInt(scriptEngine, mCall.count);
     const auto instanceCount = evaluateUInt(scriptEngine, mCall.instanceCount);
     const auto first = evaluateUInt(scriptEngine, mCall.first);
     const auto firstInstance = evaluateUInt(scriptEngine, mCall.baseInstance);

@@ -34,10 +34,6 @@ void VKStream::setAttribute(int attributeIndex, const Field &field,
     attribute.stride = getBlockStride(block);
     attribute.offset = blockOffset + getFieldRowOffset(field);
 
-    if (attributeIndex == 0)
-        mDefaultElementCount =
-            scriptEngine.evaluateValue(block.rowCount, block.id, mMessages);
-
     if (!validateAttribute(attribute)) {
         mMessages +=
             MessageList::insert(field.id, MessageType::InvalidAttribute);

@@ -134,7 +134,6 @@ private:
     bool bindVertexStream();
     void unbindVertexStream();
     GLenum getIndexType() const;
-    int getDefaultElementCount() const;
 
     MessagePtrSet mMessages;
     Call mCall{};

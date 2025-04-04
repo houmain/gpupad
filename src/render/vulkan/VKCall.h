@@ -34,7 +34,6 @@ private:
     uint32_t evaluateUInt(ScriptEngine &scriptEngine,
         const QString &expression);
     std::optional<KDGpu::IndexType> getIndexType() const;
-    int getDefaultElementCount() const;
     void executeDraw(VKContext &context, MessagePtrSet &messages,
         ScriptEngine &scriptEngine);
     void executeCompute(VKContext &context, MessagePtrSet &messages,

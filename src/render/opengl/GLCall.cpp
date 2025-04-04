@@ -195,15 +195,6 @@ GLenum GLCall::getIndexType() const
     }
 }
 
-int GLCall::getDefaultElementCount() const
-{
-    if (mIndexBuffer)
-        return mIndexBuffer->size() / mIndexSize;
-    if (mVertexStream)
-        return mVertexStream->getDefaultElementCount();
-    return 0;
-}
-
 void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block)
 {
     mUsedItems += block.id;
@@ -328,9 +319,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             evaluateInt(scriptEngine, mCall.patchVertices));
 
     const auto first = evaluateInt(scriptEngine, mCall.first);
-    const auto count = (!mCall.count.isEmpty()
-            ? evaluateInt(scriptEngine, mCall.count)
-            : getDefaultElementCount());
+    const auto count = evaluateInt(scriptEngine, mCall.count);
     const auto instanceCount = evaluateInt(scriptEngine, mCall.instanceCount);
     const auto baseVertex = evaluateInt(scriptEngine, mCall.baseVertex);
     const auto baseInstance = evaluateInt(scriptEngine, mCall.baseInstance);

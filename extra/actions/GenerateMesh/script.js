@@ -177,9 +177,11 @@ class Script {
         vertexStreamId: this.stream.id,
         targetId: this.findSessionItem('Target')?.id,
         programId: this.findSessionItem('Program')?.id,
-        count: "",
       })
     
+    this.drawCall.count =
+      (this.settings.indexed ?
+        this.indices.rowCount : this.vertices.rowCount)
     this.drawCall.callType =
       (this.settings.indexed ? 'DrawIndexed' : 'Draw')
     this.drawCall.indexBufferBlockId = this.indices?.id

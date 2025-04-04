@@ -256,7 +256,7 @@ class Script {
           indexBufferBlockId: indices.id,
           targetId: targetId,
           programId: programId,
-          count: "",
+          count: indices.rowCount,
         })
       }
     }
@@ -270,7 +270,7 @@ class Script {
           vertexStreamId: stream.id,
           targetId: targetId,
           programId: programId,
-          count: "",
+          count: this.buffer.items[i].rowCount,
         })
       }
     }
