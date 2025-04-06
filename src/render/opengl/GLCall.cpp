@@ -149,20 +149,16 @@ namespace {
     }
 } // namespace
 
-GLCall::GLCall(const Call &call) : mCall(call) { }
+GLCall::GLCall(const Call &call) : mCall(call), mKind(getKind(call)) { }
 
 void GLCall::setProgram(GLProgram *program)
 {
     mProgram = program;
-    if (program)
-        mUsedItems += mProgram->usedItems();
 }
 
 void GLCall::setTarget(GLTarget *target)
 {
     mTarget = target;
-    if (target)
-        mUsedItems += mTarget->usedItems();
 }
 
 void GLCall::setVextexStream(GLStream *stream)
@@ -172,6 +168,9 @@ void GLCall::setVextexStream(GLStream *stream)
 
 void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block)
 {
+    if (!mKind.indexed)
+        return;
+
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
     for (auto field : block.items)
@@ -197,6 +196,9 @@ GLenum GLCall::getIndexType() const
 
 void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block)
 {
+    if (!mKind.indirect)
+        return;
+
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
     for (auto field : block.items)
@@ -232,27 +234,31 @@ std::shared_ptr<void> GLCall::beginTimerQuery()
 
 void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
-    const auto kind = getKind(mCall);
-
-    if ((kind.draw || kind.compute) && !mProgram) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
-        return;
+    if (mKind.draw || mKind.compute) {
+        if (!mProgram) {
+            messages +=
+                MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
+            return;
+        }
+        mUsedItems += mProgram->usedItems();
     }
 
-    if (kind.draw && !mTarget) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::TargetNotAssigned);
-        return;
+    if (mKind.draw && !mTarget) {
+        if (!mTarget) {
+            messages +=
+                MessageList::insert(mCall.id, MessageType::TargetNotAssigned);
+            return;
+        }
+        mUsedItems += mTarget->usedItems();
     }
 
-    if (kind.indexed && !mIndexBuffer) {
+    if (mKind.indexed && !mIndexBuffer) {
         messages +=
             MessageList::insert(mCall.id, MessageType::IndexBufferNotAssigned);
         return;
     }
 
-    if (kind.indirect && !mIndirectBuffer) {
+    if (mKind.indirect && !mIndirectBuffer) {
         messages += MessageList::insert(mCall.id,
             MessageType::IndirectBufferNotAssigned);
         return;

@@ -47,9 +47,10 @@ private:
     void executeSwapTextures(MessagePtrSet &messages);
     void executeSwapBuffers(MessagePtrSet &messages);
 
+    const Call mCall;
+    const CallKind mKind;
+    const Session mSession;
     MessagePtrSet mMessages;
-    Call mCall{};
-    Session mSession{};
     VKProgram *mProgram{};
     VKTarget *mTarget{};
     VKStream *mVertexStream{};

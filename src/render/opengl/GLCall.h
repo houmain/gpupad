@@ -135,8 +135,9 @@ private:
     void unbindVertexStream();
     GLenum getIndexType() const;
 
+    const Call mCall;
+    const CallKind mKind;
     MessagePtrSet mMessages;
-    Call mCall{};
     GLProgram *mProgram{};
     GLTarget *mTarget{};
     GLStream *mVertexStream{};

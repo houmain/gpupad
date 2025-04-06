@@ -10,6 +10,7 @@
 
 VKCall::VKCall(const Call &call, const Session &session)
     : mCall(call)
+    , mKind(getKind(mCall))
     , mSession(session)
 {
     mUsedItems += session.id;
@@ -34,6 +35,9 @@ void VKCall::setVextexStream(VKStream *stream)
 
 void VKCall::setIndexBuffer(VKBuffer *indices, const Block &block)
 {
+    if (mKind.indexed)
+        return;
+
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
     for (auto field : block.items)
@@ -49,6 +53,9 @@ void VKCall::setIndexBuffer(VKBuffer *indices, const Block &block)
 
 void VKCall::setIndirectBuffer(VKBuffer *commands, const Block &block)
 {
+    if (mKind.indirect)
+        return;
+
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
     for (auto field : block.items)
@@ -78,10 +85,6 @@ VKPipeline *VKCall::getPipeline(VKContext &context)
             mVertexStream);
 
         mProgram->link(context.device);
-        mUsedItems += mProgram->usedItems();
-
-        if (mTarget)
-            mUsedItems += mTarget->usedItems();
         if (mVertexStream)
             mUsedItems += mVertexStream->usedItems();
     }
@@ -91,39 +94,43 @@ VKPipeline *VKCall::getPipeline(VKContext &context)
 void VKCall::execute(VKContext &context, MessagePtrSet &messages,
     ScriptEngine &scriptEngine)
 {
-    const auto kind = getKind(mCall);
-
-    if (kind.trace && !context.features().rayTracingPipeline) {
+    if (mKind.trace && !context.features().rayTracingPipeline) {
         mMessages +=
             MessageList::insert(mCall.id, MessageType::RayTracingNotAvailable);
         return;
     }
 
-    if (kind.mesh && !context.features().meshShader) {
+    if (mKind.mesh && !context.features().meshShader) {
         mMessages +=
             MessageList::insert(mCall.id, MessageType::MeshShadersNotAvailable);
         return;
     }
 
-    if ((kind.draw || kind.compute) && !mProgram) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
-        return;
+    if (mKind.draw || mKind.compute) {
+        if (!mProgram) {
+            messages +=
+                MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
+            return;
+        }
+        mUsedItems += mProgram->usedItems();
     }
 
-    if (kind.draw && !mTarget) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::TargetNotAssigned);
-        return;
+    if (mKind.draw) {
+        if (!mTarget) {
+            messages +=
+                MessageList::insert(mCall.id, MessageType::TargetNotAssigned);
+            return;
+        }
+        mUsedItems += mTarget->usedItems();
     }
 
-    if (kind.indexed && !mIndexBuffer) {
+    if (mKind.indexed && !mIndexBuffer) {
         messages +=
             MessageList::insert(mCall.id, MessageType::IndexBufferNotAssigned);
         return;
     }
 
-    if (kind.indirect && !mIndirectBuffer) {
+    if (mKind.indirect && !mIndirectBuffer) {
         messages += MessageList::insert(mCall.id,
             MessageType::IndirectBufferNotAssigned);
         return;
