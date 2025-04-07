@@ -1,0 +1,426 @@
+{
+    "autoMapBindings": true,
+    "autoMapLocations": true,
+    "autoSampledTextures": true,
+    "flipViewport": false,
+    "id": 1,
+    "items": [
+        {
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "720",
+            "id": 10031,
+            "name": "OutputImage",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "1280"
+        },
+        {
+            "flipVertically": false,
+            "format": "RGBA32F",
+            "height": "720",
+            "id": 10058,
+            "name": "AccumulationImage",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "1280"
+        },
+        {
+            "id": 897,
+            "items": [
+                {
+                    "id": 898,
+                    "items": [
+                        {
+                            "count": 3,
+                            "dataType": "Float",
+                            "id": 899,
+                            "name": "position",
+                            "padding": 0,
+                            "type": "Field"
+                        },
+                        {
+                            "count": 1,
+                            "dataType": "Float",
+                            "id": 901,
+                            "name": "radius",
+                            "padding": 0,
+                            "type": "Field"
+                        }
+                    ],
+                    "name": "Sphere",
+                    "offset": "0",
+                    "rowCount": "485",
+                    "type": "Block"
+                }
+            ],
+            "name": "Spheres",
+            "type": "Buffer"
+        },
+        {
+            "id": 10049,
+            "items": [
+                {
+                    "id": 10050,
+                    "items": [
+                        {
+                            "count": 4,
+                            "dataType": "Float",
+                            "id": 10051,
+                            "name": "Diffuse",
+                            "padding": 0,
+                            "type": "Field"
+                        },
+                        {
+                            "count": 1,
+                            "dataType": "Int32",
+                            "id": 10052,
+                            "name": "DiffuseTextureId",
+                            "padding": 0,
+                            "type": "Field"
+                        },
+                        {
+                            "count": 1,
+                            "dataType": "Float",
+                            "id": 10053,
+                            "name": "Fuzziness",
+                            "padding": 0,
+                            "type": "Field"
+                        },
+                        {
+                            "count": 1,
+                            "dataType": "Float",
+                            "id": 10054,
+                            "name": "RefractionIndex",
+                            "padding": 0,
+                            "type": "Field"
+                        },
+                        {
+                            "count": 1,
+                            "dataType": "Uint32",
+                            "id": 10055,
+                            "name": "MaterialModel",
+                            "padding": 0,
+                            "type": "Field"
+                        }
+                    ],
+                    "name": "Material",
+                    "offset": "0",
+                    "rowCount": "485",
+                    "type": "Block"
+                }
+            ],
+            "name": "Materials",
+            "type": "Buffer"
+        },
+        {
+            "id": 904,
+            "items": [
+                {
+                    "id": 905,
+                    "items": [
+                        {
+                            "count": 3,
+                            "dataType": "Float",
+                            "id": 906,
+                            "name": "min",
+                            "padding": 0,
+                            "type": "Field"
+                        },
+                        {
+                            "count": 3,
+                            "dataType": "Float",
+                            "id": 907,
+                            "name": "max",
+                            "padding": 0,
+                            "type": "Field"
+                        }
+                    ],
+                    "name": "AABB",
+                    "offset": "0",
+                    "rowCount": "485",
+                    "type": "Block"
+                }
+            ],
+            "name": "AABBs",
+            "type": "Buffer"
+        },
+        {
+            "executeOn": "ResetEvaluation",
+            "fileName": "generateSpheres.js",
+            "id": 903,
+            "type": "Script"
+        },
+        {
+            "executeOn": "ResetEvaluation",
+            "fileName": "../../libs/gl-matrix.js",
+            "id": 10063,
+            "type": "Script"
+        },
+        {
+            "executeOn": "EveryEvaluation",
+            "fileName": "camera.js",
+            "id": 103,
+            "type": "Script"
+        },
+        {
+            "id": 10033,
+            "inlineScope": true,
+            "items": [
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 10034,
+                    "name": "UniformBufferObjectStruct.Camera[0].ModelView",
+                    "type": "Binding",
+                    "values": [
+                        "view"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 10035,
+                    "name": "UniformBufferObjectStruct.Camera[0].Projection",
+                    "type": "Binding",
+                    "values": [
+                        "projection"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 10036,
+                    "name": "UniformBufferObjectStruct.Camera[0].ModelViewInverse",
+                    "type": "Binding",
+                    "values": [
+                        "viewInverse"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 10037,
+                    "name": "UniformBufferObjectStruct.Camera[0].ProjectionInverse",
+                    "type": "Binding",
+                    "values": [
+                        "projectionInverse"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 10038,
+                    "name": "UniformBufferObjectStruct.Camera[0].Aperture",
+                    "type": "Binding",
+                    "values": [
+                        "0.1"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 10039,
+                    "name": "UniformBufferObjectStruct.Camera[0].FocusDistance",
+                    "type": "Binding",
+                    "values": [
+                        "10"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 10040,
+                    "name": "UniformBufferObjectStruct.Camera[0].HeatmapScale",
+                    "type": "Binding",
+                    "values": [
+                        "1.5"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 10042,
+                    "name": "UniformBufferObjectStruct.Camera[0].NumberOfSamples",
+                    "type": "Binding",
+                    "values": [
+                        "samples"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 10043,
+                    "name": "UniformBufferObjectStruct.Camera[0].NumberOfBounces",
+                    "type": "Binding",
+                    "values": [
+                        "16"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 10044,
+                    "name": "UniformBufferObjectStruct.Camera[0].RandomSeed",
+                    "type": "Binding",
+                    "values": [
+                        "1"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 10045,
+                    "name": "UniformBufferObjectStruct.Camera[0].HasSky",
+                    "type": "Binding",
+                    "values": [
+                        "1"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 10046,
+                    "name": "UniformBufferObjectStruct.Camera[0].ShowHeatmap",
+                    "type": "Binding",
+                    "values": [
+                        "0"
+                    ]
+                },
+                {
+                    "bindingType": "Buffer",
+                    "bufferId": 897,
+                    "id": 10048,
+                    "name": "SphereArray",
+                    "type": "Binding"
+                },
+                {
+                    "bindingType": "Buffer",
+                    "bufferId": 10049,
+                    "id": 10056,
+                    "name": "MaterialArray",
+                    "type": "Binding"
+                },
+                {
+                    "bindingType": "Image",
+                    "id": 10032,
+                    "imageFormat": "Internal",
+                    "layer": -1,
+                    "level": 0,
+                    "name": "OutputImage",
+                    "textureId": 10031,
+                    "type": "Binding"
+                },
+                {
+                    "bindingType": "Image",
+                    "id": 10057,
+                    "imageFormat": "Internal",
+                    "layer": -1,
+                    "level": 0,
+                    "name": "AccumulationImage",
+                    "textureId": 10058,
+                    "type": "Binding"
+                }
+            ],
+            "iterations": "1",
+            "name": "Bindings",
+            "type": "Group"
+        },
+        {
+            "id": 10021,
+            "items": [
+                {
+                    "fileName": "Material.glsl",
+                    "id": 10024,
+                    "language": "GLSL",
+                    "shaderType": "Includable",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "UniformBufferObject.glsl",
+                    "id": 10025,
+                    "language": "GLSL",
+                    "shaderType": "Includable",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "Scatter.glsl",
+                    "id": 10026,
+                    "language": "GLSL",
+                    "shaderType": "Includable",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "Heatmap.glsl",
+                    "id": 10047,
+                    "language": "GLSL",
+                    "shaderType": "Includable",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "RayTracing.rgen",
+                    "id": 10022,
+                    "language": "GLSL",
+                    "shaderType": "RayGeneration",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "RayTracing.rmiss",
+                    "id": 10028,
+                    "language": "GLSL",
+                    "shaderType": "RayMiss",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "RayTracing.Procedural.rchit",
+                    "id": 10029,
+                    "language": "GLSL",
+                    "shaderType": "RayClosestHit",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "RayTracing.Procedural.rint",
+                    "id": 10030,
+                    "language": "GLSL",
+                    "shaderType": "RayIntersection",
+                    "type": "Shader"
+                }
+            ],
+            "name": "Program",
+            "type": "Program"
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 10041,
+            "name": "UniformBufferObjectStruct.Camera[0].TotalNumberOfSamples",
+            "type": "Binding",
+            "values": [
+                "totalSamples"
+            ]
+        },
+        {
+            "bufferId": 904,
+            "callType": "TraceRays",
+            "checked": true,
+            "executeOn": "EveryEvaluation",
+            "id": 10023,
+            "name": "Trace Rays",
+            "programId": 10021,
+            "type": "Call",
+            "workGroupsX": "1280",
+            "workGroupsY": "720",
+            "workGroupsZ": "1"
+        }
+    ],
+    "name": "Session",
+    "renderer": "Vulkan",
+    "reverseCulling": true,
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "spirvVersion": 15,
+    "type": "Session",
+    "vulkanRulesRelaxed": true
+}

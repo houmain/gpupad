@@ -106,7 +106,7 @@ void VKCall::execute(VKContext &context, MessagePtrSet &messages,
         return;
     }
 
-    if (mKind.draw || mKind.compute) {
+    if (mKind.draw || mKind.compute || mKind.trace) {
         if (!mProgram) {
             messages +=
                 MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
