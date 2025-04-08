@@ -138,13 +138,14 @@ class Script {
             {
               name: 'index',
               dataType: 'Uint16',
+              count: 3,
             }
           ]
         })
       
       const indices = lib.getIndices(geometry)
       this.indices.offset = this.vertices.rowCount * 8 * 4
-      this.indices.rowCount = indices.length
+      this.indices.rowCount = indices.length / 3
       app.session.setBlockData(this.indices, indices)
     }
     else {
@@ -181,7 +182,7 @@ class Script {
     
     this.drawCall.count =
       (this.settings.indexed ?
-        this.indices.rowCount : this.vertices.rowCount)
+        this.indices.rowCount * 3 : this.vertices.rowCount)
     this.drawCall.callType =
       (this.settings.indexed ? 'DrawIndexed' : 'Draw')
     this.drawCall.indexBufferBlockId = this.indices?.id

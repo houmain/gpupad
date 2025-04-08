@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MessageList.h"
 #include <QObject>
 #include <QJSValue>
 #include <QModelIndex>

@@ -49,8 +49,8 @@ struct Function {
   Type result_type;
   uint32_t argument_count;
   const Type* argument_types;
-  const void* function;
-  void (*call)(const void* function, 
+  void* function;
+  void (*call)(void* function,
     Argument* result, const Argument* arguments);
 };
 
@@ -367,8 +367,8 @@ constexpr Function describe(const char* name, R(*function)(Args...)) {
     get_type_v<R>,
     sizeof...(Args),
     TypeList<Args...>::types,
-    reinterpret_cast<const void*>(function),
-    [](const void* _func, Argument* result, const Argument* arguments) {
+    reinterpret_cast<void*>(function),
+    [](void* _func, Argument* result, const Argument* arguments) {
       auto func = reinterpret_cast<R(*)(Args...)>(_func);
       if constexpr(std::is_same_v<R, void>) {
         call_with_args<decltype(func), R, Args...>(func, 

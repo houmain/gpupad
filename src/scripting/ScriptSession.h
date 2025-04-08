@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MessageList.h"
-#include "SourceType.h"
 #include <QObject>
 
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;

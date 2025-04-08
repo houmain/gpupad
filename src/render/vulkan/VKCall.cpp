@@ -35,17 +35,20 @@ void VKCall::setVextexStream(VKStream *stream)
 
 void VKCall::setIndexBuffer(VKBuffer *indices, const Block &block)
 {
-    if (mKind.indexed)
+    if (!mKind.indexed)
         return;
 
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
-    for (auto field : block.items)
-        mUsedItems += field->id;
+    for (auto item : block.items)
+        if (auto field = castItem<Field>(item)) {
+            if (!mIndexSize)
+                mIndexSize = getFieldSize(*field);
+            mUsedItems += field->id;
+        }
 
     mIndexBuffer = indices;
     mIndicesOffset = block.offset;
-    mIndexSize = getBlockStride(block);
     if (!getIndexType())
         mMessages +=
             MessageList::insert(block.id, MessageType::InvalidIndexType);
@@ -53,7 +56,7 @@ void VKCall::setIndexBuffer(VKBuffer *indices, const Block &block)
 
 void VKCall::setIndirectBuffer(VKBuffer *commands, const Block &block)
 {
-    if (mKind.indirect)
+    if (!mKind.indirect)
         return;
 
     mUsedItems += block.id;
@@ -232,11 +235,11 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
         return;
 
     mPipeline->updatePushConstants(renderPass, scriptEngine);
+    const auto indexType = getIndexType();
 
-    if (mIndexBuffer) {
+    if (mIndexBuffer && indexType) {
         const auto indicesOffset = evaluateUInt(scriptEngine, mIndicesOffset);
-        renderPass.setIndexBuffer(mIndexBuffer->buffer(), indicesOffset,
-            getIndexType().value_or(KDGpu::IndexType::Uint32));
+        renderPass.setIndexBuffer(mIndexBuffer->buffer(), indicesOffset, indexType.value());
     }
 
     const auto count = evaluateUInt(scriptEngine, mCall.count);
@@ -254,7 +257,7 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
             .firstVertex = first,
             .firstInstance = firstInstance,
         });
-    } else if (mCall.callType == Call::CallType::DrawIndexed) {
+    } else if (mCall.callType == Call::CallType::DrawIndexed && indexType) {
         renderPass.drawIndexed({
             .indexCount = count,
             .instanceCount = instanceCount,
@@ -269,7 +272,7 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
             .drawCount = drawCount,
             .stride = static_cast<uint32_t>(mIndirectStride),
         });
-    } else if (mCall.callType == Call::CallType::DrawIndexedIndirect) {
+    } else if (mCall.callType == Call::CallType::DrawIndexedIndirect && indexType) {
         renderPass.drawIndexedIndirect({
             .buffer = mIndirectBuffer->buffer(),
             .offset = indirectOffset,

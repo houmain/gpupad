@@ -12,10 +12,6 @@ class Script {
   initializeUi(ui) {
     this.ui = ui
     this.refresh()
-    
-    //ui.fileName = `C:\\Users\\albert\\Downloads\\bunny\\bunny.obj`
-    ui.fileName = `C:\\Users\\albert\\Downloads\\sponza\\sponza.obj`
-    //ui.fileName = `C:\\Users\\albert\\Downloads\\sportsCar\\sportsCar.obj`
   }
 
   refresh() {
@@ -125,12 +121,13 @@ class Script {
         const block = app.session.insertItem(this.buffer, {
           name: name,
           type: 'Block',
-          rowCount: indices.length,
+          rowCount: indices.length / 3,
           offset: offset,
           items: [
             {
               name: 'index',
               dataType: 'Uint32',
+              count: 3,
             }
           ]
         })
@@ -256,7 +253,7 @@ class Script {
           indexBufferBlockId: indices.id,
           targetId: targetId,
           programId: programId,
-          count: indices.rowCount,
+          count: indices.rowCount * 3,
         })
       }
     }

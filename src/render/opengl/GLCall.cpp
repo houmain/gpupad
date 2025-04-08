@@ -173,12 +173,15 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block)
 
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
-    for (auto field : block.items)
-        mUsedItems += field->id;
+    for (auto item : block.items)
+        if (auto field = castItem<Field>(item)) {
+            if (!mIndexSize)
+                mIndexSize = getFieldSize(*field);
+            mUsedItems += field->id;
+        }
 
     mIndexBuffer = indices;
     mIndicesOffset = block.offset;
-    mIndexSize = getBlockStride(block);
     if (!getIndexType())
         mMessages +=
             MessageList::insert(block.id, MessageType::InvalidIndexType);
@@ -330,6 +333,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     const auto baseVertex = evaluateInt(scriptEngine, mCall.baseVertex);
     const auto baseInstance = evaluateInt(scriptEngine, mCall.baseInstance);
     const auto drawCount = evaluateInt(scriptEngine, mCall.drawCount);
+    const auto indexType = getIndexType();
 
     auto guard = beginTimerQuery();
     if (mCall.callType == Call::CallType::Draw) {
@@ -341,7 +345,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             gl42->glDrawArraysInstancedBaseInstance(mCall.primitiveType, first,
                 count, instanceCount, static_cast<GLuint>(baseInstance));
         }
-    } else if (mCall.callType == Call::CallType::DrawIndexed) {
+    } else if (mCall.callType == Call::CallType::DrawIndexed && indexType) {
         // DrawElements(InstancedBaseVertexBaseInstance)
         const auto offset = reinterpret_cast<void *>(static_cast<intptr_t>(
             evaluateInt(scriptEngine, mIndicesOffset) + first * mIndexSize));
@@ -364,7 +368,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             gl43->glMultiDrawArraysIndirect(mCall.primitiveType, offset,
                 drawCount, mIndirectStride);
         }
-    } else if (mCall.callType == Call::CallType::DrawIndexedIndirect) {
+    } else if (mCall.callType == Call::CallType::DrawIndexedIndirect && indexType) {
         // (Multi)DrawElementsIndirect
         const auto offset = reinterpret_cast<void *>(
             static_cast<intptr_t>(evaluateInt(scriptEngine, mIndirectOffset)));
