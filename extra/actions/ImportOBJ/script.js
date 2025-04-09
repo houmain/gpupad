@@ -34,10 +34,10 @@ class Script {
       this.update()
   }
   
-  findSessionItem(type) {
+  findSessionItem(predicate) {
     for (let i = app.session.items.length - 1; i >= 0; --i)
-      if (app.session.items[i].type == type)
-        return app.session.items[i]
+      if (predicate(app.session.items[i]))
+          return app.session.items[i]
   }
 
   getBaseName(name) {
@@ -236,10 +236,14 @@ class Script {
         name: 'Calls',
         type: 'Group',
       })
-      
-    const targetId = this.findSessionItem('Target')?.id
-    const programId = this.findSessionItem('Program')?.id
-      
+
+    const targetId = this.findSessionItem(
+      (item) => (item.type == 'Target'))?.id
+
+    const programId = this.findSessionItem(
+      (item) => (item.type == 'Program' &&
+        item.items[0]?.shaderType == "Vertex"))?.id
+
     let drawCalls = []
     if (this.settings.indexed) {
       for (let i = 1; i < this.buffer.items.length; ++i) {

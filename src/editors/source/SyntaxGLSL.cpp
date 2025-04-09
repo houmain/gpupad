@@ -166,8 +166,14 @@ namespace glsl {
             "gl_PointCoord", "gl_PointSize", "gl_Position", "gl_PrimitiveID",
             "gl_PrimitiveIDIn", "gl_SampleID", "gl_SampleMask",
             "gl_SampleMaskIn", "gl_SamplePosition", "gl_TessCoord",
-            "gl_TessLevelInner", "gl_TessLevelOuter", "gl_VertexID",
-            "gl_ViewportIndex", "gl_WorkGroupID", "gl_WorkGroupSize" };
+            "gl_TessLevelInner", "gl_TessLevelOuter",
+            "gl_ViewportIndex", "gl_WorkGroupID", "gl_WorkGroupSize",
+            "gl_DrawID", "gl_BaseVertex", "gl_BaseInstance",
+            // only present when not targeting Vulkan
+            "gl_VertexID", "gl_InstanceID",
+            // only present when targeting Vulkan
+            "gl_VertexIndex", "gl_InstanceIndex",
+        };
     }
 
     QStringList layoutQualifiers()

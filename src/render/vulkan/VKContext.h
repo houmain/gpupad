@@ -2,6 +2,11 @@
 
 #include <vector>
 
+// added because of memset in bind_group_description.h
+#if defined(__GNUC__)
+# pragma GCC diagnostic ignored "-Wclass-memaccess"
+#endif
+
 // still missing declaration in KDGpu/texture_view.h?
 namespace KDGpu {
     class Texture;

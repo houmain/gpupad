@@ -9,6 +9,6 @@ in vec2 vTexCoords;
 out vec4 oColor;
 
 void main() {
-  uint index = uint(vTexCoords.x * 10) % textures.length();
+  uint index = uint(vTexCoords.x * textures.length());
   oColor = texture(textures[index], vTexCoords);
 }

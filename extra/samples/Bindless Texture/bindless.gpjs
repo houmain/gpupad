@@ -50,7 +50,7 @@
             "width": "512"
         },
         {
-            "fileName": "../Cube/Planks.jpg",
+            "fileName": "../Cube/planks.jpg",
             "flipVertically": false,
             "format": "RGBA8_UNorm",
             "height": "512",

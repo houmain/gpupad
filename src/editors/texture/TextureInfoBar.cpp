@@ -72,8 +72,9 @@ void TextureInfoBar::setPickerColor(const QVector4D &color)
 
     // output encoded value and color mapped to range
     const auto range = mappingRange();
-    c = (color - QVector4D(1, 1, 1, 1) * range.minimum)
-        / (range.maximum - range.minimum);
+    if (range.maximum != range.minimum)
+        c = (color - QVector4D(1, 1, 1, 1) * range.minimum)
+            / (range.maximum - range.minimum);
     c.setW(color.w());
 
     const auto toStringEncoded = [](const char *channel, float v) {

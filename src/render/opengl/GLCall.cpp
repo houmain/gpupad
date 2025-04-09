@@ -245,7 +245,7 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         }
     }
 
-    if (mKind.draw && !mTarget) {
+    if (mKind.draw) {
         if (!mTarget) {
             messages +=
                 MessageList::insert(mCall.id, MessageType::TargetNotAssigned);

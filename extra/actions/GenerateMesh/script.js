@@ -21,10 +21,10 @@ class Script {
     this.refresh()
   }
   
-  findSessionItem(type) {
+  findSessionItem(predicate) {
     for (let i = app.session.items.length - 1; i >= 0; --i)
-      if (app.session.items[i].type == type)
-        return app.session.items[i]
+      if (predicate(app.session.items[i]))
+          return app.session.items[i]
   }
   
   refresh() {
@@ -115,6 +115,8 @@ class Script {
       ]
     })
     
+    this.indices = undefined
+    this.drawCall = undefined
     this.generate()
   }
   
@@ -171,14 +173,22 @@ class Script {
       return
     }
     
-    if (!this.drawCall)
+    if (!this.drawCall) {
+      const target = this.findSessionItem(
+        (item) => (item.type == 'Target'))
+
+      const program = this.findSessionItem(
+        (item) => (item.type == 'Program' &&
+          item.items[0]?.shaderType == "Vertex"))
+
       this.drawCall = app.session.insertItem(this.group, {
         name: 'Draw',
         type: 'Call',
         vertexStreamId: this.stream.id,
-        targetId: this.findSessionItem('Target')?.id,
-        programId: this.findSessionItem('Program')?.id,
+        targetId: target?.id,
+        programId: program?.id,
       })
+    }
     
     this.drawCall.count =
       (this.settings.indexed ?
