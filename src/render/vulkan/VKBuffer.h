@@ -1,12 +1,11 @@
 #pragma once
 
 #include "VKItem.h"
-#include "scripting/ScriptEngine.h"
 
 class VKBuffer
 {
 public:
-    VKBuffer(const Buffer &buffer, ScriptEngine &scriptEngine);
+    VKBuffer(const Buffer &buffer, VKRenderSession &renderSession);
     void updateUntitledFilename(const VKBuffer &rhs);
     bool operator==(const VKBuffer &rhs) const;
 
@@ -52,7 +51,5 @@ private:
     KDGpu::PipelineStageFlags mCurrentStage{};
 };
 
-int getBufferSize(const Buffer &buffer, ScriptEngine &scriptEngine,
-    MessagePtrSet &messages);
 bool downloadBuffer(VKContext &context, const KDGpu::Buffer &buffer,
     uint64_t size, std::function<void(const std::byte *)> &&callback);

@@ -10,7 +10,6 @@
 #include "Singletons.h"
 #include "editors/EditorManager.h"
 #include "editors/texture/TextureEditor.h"
-#include "scripting/ScriptSession.h"
 #include <QOpenGLTimerQuery>
 #include <QStack>
 #include <deque>
@@ -84,8 +83,8 @@ struct GLRenderSession::CommandQueue
     std::vector<GLProgram> failedPrograms;
 };
 
-GLRenderSession::GLRenderSession(RendererPtr renderer)
-    : RenderSessionBase(std::move(renderer))
+GLRenderSession::GLRenderSession(RendererPtr renderer, const QString &basePath)
+    : RenderSessionBase(std::move(renderer), basePath)
     , mShareSync(std::make_shared<GLShareSync>())
 {
 }
@@ -103,7 +102,7 @@ void GLRenderSession::createCommandQueue()
     mUsedItems.clear();
 
     auto &scriptEngine = mScriptSession->engine();
-    const auto &session = mSessionCopy;
+    const auto &sessionModel = mSessionModelCopy;
 
     const auto addCommand = [&](auto &&command) {
         mCommandQueue->commands.emplace_back(std::move(command));
@@ -111,28 +110,29 @@ void GLRenderSession::createCommandQueue()
 
     const auto addProgramOnce = [&](ItemId programId) {
         return addOnce(mCommandQueue->programs,
-            session.findItem<Program>(programId), session.sessionItem());
+            sessionModel.findItem<Program>(programId),
+            sessionModel.sessionItem());
     };
 
     const auto addBufferOnce = [&](ItemId bufferId) {
         return addOnce(mCommandQueue->buffers,
-            session.findItem<Buffer>(bufferId), scriptEngine);
+            sessionModel.findItem<Buffer>(bufferId), *this);
     };
 
     const auto addTextureOnce = [&](ItemId textureId) {
         return addOnce(mCommandQueue->textures,
-            session.findItem<Texture>(textureId), scriptEngine);
+            sessionModel.findItem<Texture>(textureId), *this);
     };
 
     const auto addTextureBufferOnce = [&](ItemId bufferId, GLBuffer *buffer,
                                           Texture::Format format) {
         return addOnce(mCommandQueue->textures,
-            session.findItem<Buffer>(bufferId), buffer, format, scriptEngine);
+            sessionModel.findItem<Buffer>(bufferId), buffer, format, *this);
     };
 
     const auto addTargetOnce = [&](ItemId targetId) {
-        auto target = session.findItem<Target>(targetId);
-        auto fb = addOnce(mCommandQueue->targets, target, scriptEngine);
+        auto target = sessionModel.findItem<Target>(targetId);
+        auto fb = addOnce(mCommandQueue->targets, target, *this);
         if (fb) {
             const auto &items = target->items;
             for (auto i = 0; i < items.size(); ++i)
@@ -143,14 +143,14 @@ void GLRenderSession::createCommandQueue()
     };
 
     const auto addVertexStreamOnce = [&](ItemId vertexStreamId) {
-        auto vertexStream = session.findItem<Stream>(vertexStreamId);
+        auto vertexStream = sessionModel.findItem<Stream>(vertexStreamId);
         auto vs = addOnce(mCommandQueue->vertexStreams, vertexStream);
         if (vs) {
             const auto &items = vertexStream->items;
             for (auto i = 0; i < items.size(); ++i)
                 if (auto attribute = castItem<Attribute>(items[i]))
                     if (auto field =
-                            session.findItem<Field>(attribute->fieldId))
+                            sessionModel.findItem<Field>(attribute->fieldId))
                         vs->setAttribute(i, *field,
                             addBufferOnce(field->parent->parent->id),
                             scriptEngine);
@@ -158,7 +158,7 @@ void GLRenderSession::createCommandQueue()
         return vs;
     };
 
-    session.forEachItem([&](const Item &item) {
+    sessionModel.forEachItem([&](const Item &item) {
         if (auto group = castItem<Group>(item)) {
             // mark begin of iteration
             addCommand([this, groupId = group->id](BindingState &) {
@@ -233,7 +233,7 @@ void GLRenderSession::createCommandQueue()
                 break;
 
             case Binding::BindingType::BufferBlock:
-                if (auto block = session.findItem<Block>(b.blockId))
+                if (auto block = sessionModel.findItem<Block>(b.blockId))
                     addCommand(
                         [binding = GLBufferBinding{ b.id, b.name,
                              addBufferOnce(block->parent->id), block->id,
@@ -265,11 +265,11 @@ void GLRenderSession::createCommandQueue()
                     glcall.setTarget(addTargetOnce(call->targetId));
                     glcall.setVextexStream(
                         addVertexStreamOnce(call->vertexStreamId));
-                    if (auto block =
-                            session.findItem<Block>(call->indexBufferBlockId))
+                    if (auto block = sessionModel.findItem<Block>(
+                            call->indexBufferBlockId))
                         glcall.setIndexBuffer(addBufferOnce(block->parent->id),
                             *block);
-                    if (auto block = session.findItem<Block>(
+                    if (auto block = sessionModel.findItem<Block>(
                             call->indirectBufferBlockId))
                         glcall.setIndirectBuffer(
                             addBufferOnce(block->parent->id), *block);
@@ -278,7 +278,7 @@ void GLRenderSession::createCommandQueue()
                 case Call::CallType::Compute:
                 case Call::CallType::ComputeIndirect:
                     glcall.setProgram(addProgramOnce(call->programId));
-                    if (auto block = session.findItem<Block>(
+                    if (auto block = sessionModel.findItem<Block>(
                             call->indirectBufferBlockId))
                         glcall.setIndirectBuffer(
                             addBufferOnce(block->parent->id), *block);
@@ -505,12 +505,11 @@ quint64 GLRenderSession::getTextureHandle(ItemId itemId)
     if (!mCommandQueue)
         mCommandQueue = std::make_unique<CommandQueue>();
 
-    auto &scriptEngine = mScriptSession->engine();
-    const auto &session = mSessionCopy;
+    const auto &sessionModel = mSessionModelCopy;
 
     const auto addTextureOnce = [&](ItemId textureId) {
         return addOnce(mCommandQueue->textures,
-            session.findItem<Texture>(textureId), scriptEngine);
+            sessionModel.findItem<Texture>(textureId), *this);
     };
 
     if (auto texture = addTextureOnce(itemId))

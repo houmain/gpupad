@@ -1,5 +1,4 @@
 #include "VKTexture.h"
-#include "EvaluatedPropertyCache.h"
 #include "SynchronizeLogic.h"
 #include "VKBuffer.h"
 #include <QScopeGuard>
@@ -180,8 +179,8 @@ namespace {
     };
 } // namespace
 
-VKTexture::VKTexture(const Texture &texture, ScriptEngine &scriptEngine)
-    : TextureBase(texture, scriptEngine)
+VKTexture::VKTexture(const Texture &texture, VKRenderSession &renderSession)
+    : TextureBase(texture, renderSession)
 {
     mUsage =
         KDGpu::TextureUsageFlags{ KDGpu::TextureUsageFlagBits::TransferSrcBit
@@ -189,8 +188,8 @@ VKTexture::VKTexture(const Texture &texture, ScriptEngine &scriptEngine)
 }
 
 VKTexture::VKTexture(const Buffer &buffer, VKBuffer *textureBuffer,
-    Texture::Format format, ScriptEngine &scriptEngine)
-    : TextureBase(buffer, format, scriptEngine)
+    Texture::Format format, VKRenderSession &renderSession)
+    : TextureBase(buffer, format, renderSession)
     , mTextureBuffer(textureBuffer)
 {
 }

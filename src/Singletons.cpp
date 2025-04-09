@@ -1,5 +1,4 @@
 #include "Singletons.h"
-#include "EvaluatedPropertyCache.h"
 #include "FileCache.h"
 #include "FileDialog.h"
 #include "InputState.h"
@@ -90,11 +89,6 @@ InputState &Singletons::inputState()
     return *sInstance->mInputState;
 }
 
-EvaluatedPropertyCache &Singletons::evaluatedPropertyCache()
-{
-    return *sInstance->mEvaluatedPropertyCache;
-}
-
 CustomActions &Singletons::customActions()
 {
     Q_ASSERT(onMainThread());
@@ -109,7 +103,6 @@ Singletons::Singletons(QMainWindow *window)
     , mSessionModel(std::make_unique<SessionModel>())
     , mVideoManager(std::make_unique<VideoManager>())
     , mInputState(std::make_unique<InputState>())
-    , mEvaluatedPropertyCache(std::make_unique<EvaluatedPropertyCache>())
     , mCustomActions(std::make_unique<CustomActions>())
 {
     Q_ASSERT(onMainThread());

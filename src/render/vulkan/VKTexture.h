@@ -4,14 +4,13 @@
 #include "render/TextureBase.h"
 
 class VKBuffer;
-class ScriptEngine;
 
 class VKTexture : public TextureBase
 {
 public:
-    VKTexture(const Texture &texture, ScriptEngine &scriptEngine);
+    VKTexture(const Texture &texture, VKRenderSession &renderSession);
     VKTexture(const Buffer &buffer, VKBuffer *textureBuffer,
-        Texture::Format format, ScriptEngine &scriptEngine);
+        Texture::Format format, VKRenderSession &renderSession);
 
     KDGpu::Texture &texture() { return mTexture; }
     KDGpu::TextureLayout currentLayout() const { return mCurrentLayout; }

@@ -4,10 +4,9 @@
 #include "FileDialog.h"
 #include "GLContext.h"
 #include "GLObject.h"
-#include "MessageList.h"
 #include "Singletons.h"
 #include "session/Item.h"
-#include "session/SessionModel.h"
+#include "GLRenderSession.h"
 #include <QSet>
 #include <memory>
 

@@ -43,11 +43,12 @@ void AppScriptObject::setSelection(const QModelIndexList &selectedIndices)
             sessionScriptObject().getItem(index));
 }
 
-void AppScriptObject::update()
+void AppScriptObject::updateInputState()
 {
-    Singletons::inputState().update();
-    mMouseScriptObject->update(Singletons::inputState());
-    mKeyboardScriptObject->update(Singletons::inputState());
+    auto& inputState = Singletons::inputState();
+    inputState.update();
+    mMouseScriptObject->update(inputState);
+    mKeyboardScriptObject->update(inputState);
 }
 
 bool AppScriptObject::usesMouseState() const

@@ -5,7 +5,7 @@
 class GLTarget
 {
 public:
-    GLTarget(const Target &target, ScriptEngine &scriptEngine);
+    GLTarget(const Target &target, GLRenderSession &renderSession);
     void setAttachment(int index, GLTexture *texture);
 
     bool bind();

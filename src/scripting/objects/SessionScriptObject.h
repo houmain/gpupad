@@ -38,8 +38,7 @@ public:
     explicit SessionScriptObject(QObject *parent = nullptr);
     void initializeEngine(QJSEngine *engine);
 
-    void beginBackgroundUpdate(SessionModel *sessionCopy,
-        IScriptRenderSession *renderSession);
+    void beginBackgroundUpdate(IScriptRenderSession *renderSession);
     void endBackgroundUpdate();
     QJSValue getItem(QModelIndex index);
 
@@ -84,7 +83,6 @@ private:
     QJSEngine *mEngine{};
     QJSValue mSessionItems;
     MessagePtrSet mMessages;
-    SessionModel *mSessionCopy{};
     IScriptRenderSession *mRenderSession{};
     std::vector<UpdateFunction> mPendingUpdates;
 };

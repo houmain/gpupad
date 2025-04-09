@@ -1,7 +1,6 @@
 #include "GLTarget.h"
-#include "EvaluatedPropertyCache.h"
 
-GLTarget::GLTarget(const Target &target, ScriptEngine &scriptEngine)
+GLTarget::GLTarget(const Target &target, GLRenderSession &renderSession)
     : mItemId(target.id)
     , mFrontFace(target.frontFace)
     , mCullMode(target.cullMode)
@@ -12,8 +11,8 @@ GLTarget::GLTarget(const Target &target, ScriptEngine &scriptEngine)
 {
     mUsedItems += target.id;
 
-    Singletons::evaluatedPropertyCache().evaluateTargetProperties(target,
-        &mDefaultWidth, &mDefaultHeight, &mDefaultLayers, &scriptEngine);
+    renderSession.evaluateTargetProperties(target, &mDefaultWidth,
+        &mDefaultHeight, &mDefaultLayers);
 
     auto attachmentIndex = 0;
     for (const auto &item : target.items) {

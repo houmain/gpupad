@@ -1,9 +1,9 @@
 
 #include "TextureBase.h"
-#include "EvaluatedPropertyCache.h"
 #include "FileCache.h"
 #include "FileDialog.h"
 #include "Singletons.h"
+#include "RenderSessionBase.h"
 #include <cmath>
 
 void transformClearColor(std::array<double, 4> &color,
@@ -40,7 +40,8 @@ void transformClearColor(std::array<double, 4> &color,
     }
 }
 
-TextureBase::TextureBase(const Texture &texture, ScriptEngine &scriptEngine)
+TextureBase::TextureBase(const Texture &texture,
+    RenderSessionBase &renderSession)
     : mItemId(texture.id)
     , mFileName(texture.fileName)
     , mFlipVertically(texture.flipVertically)
@@ -49,8 +50,8 @@ TextureBase::TextureBase(const Texture &texture, ScriptEngine &scriptEngine)
     , mSamples(texture.samples)
     , mKind(getKind(texture))
 {
-    Singletons::evaluatedPropertyCache().evaluateTextureProperties(texture,
-        &mWidth, &mHeight, &mDepth, &mLayers, &scriptEngine);
+    renderSession.evaluateTextureProperties(texture, &mWidth, &mHeight, &mDepth,
+        &mLayers);
 
     if (mWidth <= 0)
         mWidth = 1;
@@ -69,11 +70,11 @@ TextureBase::TextureBase(const Texture &texture, ScriptEngine &scriptEngine)
 }
 
 TextureBase::TextureBase(const Buffer &buffer, Texture::Format format,
-    ScriptEngine &scriptEngine)
+    RenderSessionBase &renderSession)
     : mItemId(buffer.id)
     , mTarget(Texture::Target::TargetBuffer)
     , mFormat(format)
-    , mWidth(getBufferSize(buffer, scriptEngine, mMessages))
+    , mWidth(renderSession.getBufferSize(buffer))
     , mHeight(1)
     , mDepth(1)
     , mLayers(1)

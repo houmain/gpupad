@@ -13,21 +13,34 @@
 #include "session/SessionModel.h"
 #include "vulkan/VKRenderSession.h"
 #include "vulkan/VKRenderer.h"
+#include <QGuiApplication>
 
 std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
-    RendererPtr renderer)
+    RendererPtr renderer, const QString &basePath)
 {
+    auto session = std::unique_ptr<RenderSessionBase>();
     switch (renderer->api()) {
     case RenderAPI::OpenGL:
-        return std::make_unique<GLRenderSession>(std::move(renderer));
+        session.reset(new GLRenderSession(renderer, basePath));
+        break;
     case RenderAPI::Vulkan:
-        return std::make_unique<VKRenderSession>(std::move(renderer));
+        session.reset(new VKRenderSession(renderer, basePath));
+        break;
+    default: return {};
     }
-    return {};
+
+    // block until session is initialized
+    session->update(false, EvaluationType::Reset);
+    while (session->updating())
+        qApp->processEvents();
+
+    return session;
 }
 
-RenderSessionBase::RenderSessionBase(RendererPtr renderer, QObject *parent)
+RenderSessionBase::RenderSessionBase(RendererPtr renderer,
+    const QString &basePath, QObject *parent)
     : RenderTask(std::move(renderer), parent)
+    , mBasePath(basePath)
 {
 }
 
@@ -36,31 +49,32 @@ RenderSessionBase::~RenderSessionBase() = default;
 void RenderSessionBase::prepare(bool itemsChanged,
     EvaluationType evaluationType)
 {
+    Q_ASSERT(onMainThread());
     mItemsChanged = itemsChanged;
     mEvaluationType = evaluationType;
     mPrevMessages.swap(mMessages);
     mMessages.clear();
 
-    if (!mScriptSession)
+    if (mScriptSession)
+        mScriptSession->updateInputState();
+    else
         mEvaluationType = EvaluationType::Reset;
 
     if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
-        mSessionCopy = Singletons::sessionModel();
-
-    if (mEvaluationType == EvaluationType::Reset)
-        mScriptSession.reset(new ScriptSession(""));
-
-    mScriptSession->prepare();
+        mSessionModelCopy = Singletons::sessionModel();
 }
 
 void RenderSessionBase::configure()
 {
-    auto &session = mSessionCopy;
-    mScriptSession->beginSessionUpdate(&session, this);
+    Q_ASSERT(!onMainThread());
+    if (mEvaluationType == EvaluationType::Reset)
+        mScriptSession.reset(new ScriptSession(mBasePath));
+
+    mScriptSession->beginSessionUpdate(this);
 
     // collect items to evaluate, since doing so can modify list
     auto itemsToEvaluate = QVector<const Item *>();
-    session.forEachItem([&](const Item &item) {
+    mSessionModelCopy.forEachItem([&](const Item &item) {
         if (auto script = castItem<Script>(item)) {
             if (shouldExecute(script->executeOn, mEvaluationType))
                 itemsToEvaluate.append(script);
@@ -88,6 +102,7 @@ void RenderSessionBase::configure()
 
 void RenderSessionBase::configured()
 {
+    Q_ASSERT(onMainThread());
     mScriptSession->endSessionUpdate();
 
     if (mEvaluationType == EvaluationType::Automatic)
@@ -98,19 +113,21 @@ void RenderSessionBase::configured()
 
 void RenderSessionBase::finish()
 {
+    Q_ASSERT(onMainThread());
     auto &editors = Singletons::editorManager();
-    auto &session = Singletons::sessionModel();
 
     editors.setAutoRaise(false);
 
     for (auto itemId : mModifiedTextures.keys())
-        if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
+        if (auto fileItem =
+                castItem<FileItem>(mSessionModelCopy.findItem(itemId)))
             if (auto editor = editors.openTextureEditor(fileItem->fileName))
                 editor->replace(mModifiedTextures[itemId], false);
     mModifiedTextures.clear();
 
     for (auto itemId : mModifiedBuffers.keys())
-        if (auto fileItem = castItem<FileItem>(session.findItem(itemId)))
+        if (auto fileItem =
+                castItem<FileItem>(mSessionModelCopy.findItem(itemId)))
             if (auto editor = editors.openBinaryEditor(fileItem->fileName))
                 editor->replace(mModifiedBuffers[itemId], false);
     mModifiedBuffers.clear();
@@ -121,6 +138,11 @@ void RenderSessionBase::finish()
 
     QMutexLocker lock{ &mUsedItemsCopyMutex };
     mUsedItemsCopy = mUsedItems;
+}
+
+const Session &RenderSessionBase::session() const
+{
+    return mSessionModelCopy.sessionItem();
 }
 
 QSet<ItemId> RenderSessionBase::usedItems() const
@@ -147,4 +169,54 @@ bool RenderSessionBase::updatingPreviewTextures() const
 void RenderSessionBase::setNextCommandQueueIndex(size_t index)
 {
     mNextCommandQueueIndex = index;
+}
+
+int RenderSessionBase::getBufferSize(const Buffer &buffer)
+{
+    auto size = 1;
+    for (const Item *item : buffer.items) {
+        const auto &block = *static_cast<const Block *>(item);
+        auto offset = 0, rowCount = 0;
+        evaluateBlockProperties(block, &offset, &rowCount);
+        size = std::max(size, offset + rowCount * getBlockStride(block));
+    }
+    return size;
+}
+
+void RenderSessionBase::evaluateBlockProperties(const Block &block, int *offset,
+    int *rowCount)
+{
+    Q_ASSERT(offset && rowCount);
+    dispatchToRenderThread([&]() {
+        auto &engine = mScriptSession->engine();
+        *offset = engine.evaluateInt(block.offset, block.id, mMessages);
+        *rowCount = engine.evaluateInt(block.rowCount, block.id, mMessages);
+    });
+}
+
+void RenderSessionBase::evaluateTextureProperties(const Texture &texture,
+    int *width, int *height, int *depth, int *layers)
+{
+    Q_ASSERT(width && height && depth && layers);
+    dispatchToRenderThread([&]() {
+        auto &engine = mScriptSession->engine();
+        *width = engine.evaluateInt(texture.width, texture.id, mMessages);
+        *height = engine.evaluateInt(texture.height, texture.id, mMessages);
+        *depth = engine.evaluateInt(texture.depth, texture.id, mMessages);
+        *layers = engine.evaluateInt(texture.layers, texture.id, mMessages);
+    });
+}
+
+void RenderSessionBase::evaluateTargetProperties(const Target &target,
+    int *width, int *height, int *layers)
+{
+    Q_ASSERT(width && height && layers);
+    dispatchToRenderThread([&]() {
+        auto &engine = mScriptSession->engine();
+        *width = engine.evaluateInt(target.defaultWidth, target.id, mMessages);
+        *height =
+            engine.evaluateInt(target.defaultHeight, target.id, mMessages);
+        *layers =
+            engine.evaluateInt(target.defaultLayers, target.id, mMessages);
+    });
 }

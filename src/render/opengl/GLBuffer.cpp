@@ -1,27 +1,12 @@
 #include "GLBuffer.h"
-#include "EvaluatedPropertyCache.h"
 #include "Singletons.h"
-
-int getBufferSize(const Buffer &buffer, ScriptEngine &scriptEngine,
-    MessagePtrSet &messages)
-{
-    auto size = 1;
-    for (const Item *item : buffer.items) {
-        const auto &block = *static_cast<const Block *>(item);
-        auto offset = 0, rowCount = 0;
-        Singletons::evaluatedPropertyCache().evaluateBlockProperties(block,
-            &offset, &rowCount, &scriptEngine);
-        size = std::max(size, offset + rowCount * getBlockStride(block));
-    }
-    return size;
-}
 
 GLBuffer::GLBuffer(int size) : mSize(size) { }
 
-GLBuffer::GLBuffer(const Buffer &buffer, ScriptEngine &scriptEngine)
+GLBuffer::GLBuffer(const Buffer &buffer, GLRenderSession &renderSession)
     : mItemId(buffer.id)
     , mFileName(buffer.fileName)
-    , mSize(getBufferSize(buffer, scriptEngine, mMessages))
+    , mSize(renderSession.getBufferSize(buffer))
 {
     mUsedItems += buffer.id;
     for (const auto item : buffer.items)

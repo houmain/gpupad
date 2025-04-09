@@ -37,8 +37,16 @@ public:
     void setCurrentEditorFileName(QString fileName);
     void setCurrentEditorSourceType(SourceType sourceType);
 
+    void handleSessionFileNameChanged(const QString& fileName);
     void handleMouseStateChanged();
     void handleKeyboardStateChanged();
+
+    void evaluateBlockProperties(const Block &block, int *offset,
+        int *rowCount);
+    void evaluateTextureProperties(const Texture &texture, int *width,
+        int *height, int *depth, int *layers);
+    void evaluateTargetProperties(const Target &target, int *width, int *height,
+        int *layers);
 
 Q_SIGNALS:
     void outputChanged(QString assembly);
@@ -68,6 +76,7 @@ private:
     QTimer *mUpdateEditorsTimer{};
     QSet<ItemId> mEditorItemsModified;
 
+    QString mSessionFileName;
     QTimer *mEvaluationTimer{};
     std::unique_ptr<RenderSessionBase> mRenderSession;
     bool mRenderSessionInvalidated{};

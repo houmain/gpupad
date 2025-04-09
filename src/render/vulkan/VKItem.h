@@ -5,7 +5,7 @@
 #include "KDGpuEnums.h"
 #include "MessageList.h"
 #include "Singletons.h"
-#include "session/SessionModel.h"
+#include "VKRenderSession.h"
 
 // prevent COM from polluting global scope
 #if defined(interface)

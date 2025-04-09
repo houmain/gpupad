@@ -14,9 +14,9 @@ public:
     static bool download(QOpenGLFunctions_3_3_Core &gl, TextureData &data,
         QOpenGLTexture::Target target, GLuint textureId);
 
-    GLTexture(const Texture &texture, ScriptEngine &scriptEngine);
+    GLTexture(const Texture &texture, GLRenderSession &renderSession);
     GLTexture(const Buffer &buffer, GLBuffer *textureBuffer,
-        Texture::Format format, ScriptEngine &scriptEngine);
+        Texture::Format format, GLRenderSession &renderSession);
     bool operator==(const GLTexture &rhs) const;
 
     GLuint textureId() const { return mTextureObject; }

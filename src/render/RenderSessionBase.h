@@ -3,19 +3,22 @@
 #include "RenderTask.h"
 #include "MessageList.h"
 #include "TextureData.h"
-#include "scripting/IScriptRenderSession.h"
+#include "InputState.h"
 #include "session/SessionModel.h"
+#include "scripting/IScriptRenderSession.h"
+#include "scripting/ScriptSession.h"
 #include <QMap>
 #include <QMutex>
-
-class ScriptSession;
+#include <QThread>
 
 class RenderSessionBase : public RenderTask, public IScriptRenderSession
 {
 public:
-    static std::unique_ptr<RenderSessionBase> create(RendererPtr renderer);
-    
-    RenderSessionBase(RendererPtr renderer, QObject *parent = nullptr);
+    static std::unique_ptr<RenderSessionBase> create(RendererPtr renderer,
+        const QString &basePath);
+
+    RenderSessionBase(RendererPtr renderer, const QString &basePath,
+        QObject *parent = nullptr);
     virtual ~RenderSessionBase();
 
     void prepare(bool itemsChanged, EvaluationType evaluationType);
@@ -24,10 +27,20 @@ public:
     virtual void render() = 0;
     virtual void finish();
     virtual void release() = 0;
+    SessionModel &sessionModelCopy() override { return mSessionModelCopy; }
 
+    const Session &session() const;
     QSet<ItemId> usedItems() const;
     bool usesMouseState() const;
     bool usesKeyboardState() const;
+
+    int getBufferSize(const Buffer &buffer);
+    void evaluateBlockProperties(const Block &block, int *offset,
+        int *rowCount);
+    void evaluateTextureProperties(const Texture &texture, int *width,
+        int *height, int *depth, int *layers);
+    void evaluateTargetProperties(const Target &target, int *width, int *height,
+        int *layers);
 
 protected:
     struct GroupIteration
@@ -40,7 +53,20 @@ protected:
     void setNextCommandQueueIndex(size_t index);
     virtual bool updatingPreviewTextures() const;
 
-    SessionModel mSessionCopy;
+    template <typename F>
+    void dispatchToRenderThread(F &&function)
+    {
+        Q_ASSERT(mScriptSession);
+        if (QThread::currentThread() != mScriptSession->thread()) {
+            QMetaObject::invokeMethod(mScriptSession.get(), std::forward<F>(function),
+                Qt::BlockingQueuedConnection);
+        } else {
+            function();
+        }
+    }
+
+    const QString mBasePath;
+    SessionModel mSessionModelCopy;
     std::unique_ptr<ScriptSession> mScriptSession;
     QSet<ItemId> mUsedItems;
     MessagePtrSet mMessages;

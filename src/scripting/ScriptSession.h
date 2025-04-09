@@ -1,10 +1,10 @@
 #pragma once
 
 #include "MessageList.h"
+#include "session/Item.h"
 #include <QObject>
 
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
-class SessionModel;
 class IScriptRenderSession;
 
 class ScriptSession : public QObject
@@ -14,14 +14,13 @@ public:
     explicit ScriptSession(const QString &basePath, QObject *parent = nullptr);
 
     // 1. called in main thread
-    void prepare();
     bool usesMouseState() const;
     bool usesKeyboardState() const;
+    void updateInputState();
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
 
     // 2. called in render thread
-    void beginSessionUpdate(SessionModel *sessionCopy,
-        IScriptRenderSession *renderSession);
+    void beginSessionUpdate(IScriptRenderSession *renderSession);
     ScriptEngine &engine();
 
     // 3. called in main thread

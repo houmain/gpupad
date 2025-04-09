@@ -3,7 +3,6 @@
 #include "BindingProperties.h"
 #include "CallProperties.h"
 #include "SessionProperties.h"
-#include "EvaluatedPropertyCache.h"
 #include "FileCache.h"
 #include "SessionModel.h"
 #include "Settings.h"
@@ -620,7 +619,7 @@ void PropertiesEditor::deduceBlockOffset()
 
         const auto &prevBlock = *static_cast<const Block *>(item);
         auto prevOffset = 0, prevRowCount = 0;
-        Singletons::evaluatedPropertyCache().evaluateBlockProperties(prevBlock,
+        Singletons::synchronizeLogic().evaluateBlockProperties(prevBlock,
             &prevOffset, &prevRowCount);
 
         offset = std::max(offset, prevOffset)
@@ -638,7 +637,7 @@ void PropertiesEditor::deduceBlockRowCount()
     const auto stride = getBlockStride(block);
     if (stride) {
         auto offset = 0, rowCount = 0;
-        Singletons::evaluatedPropertyCache().evaluateBlockProperties(block,
+        Singletons::synchronizeLogic().evaluateBlockProperties(block,
             &offset, &rowCount);
         auto binary = QByteArray();
         if (Singletons::fileCache().getBinary(buffer.fileName, &binary))

@@ -1,8 +1,6 @@
 #include "VKTarget.h"
-#include "EvaluatedPropertyCache.h"
 
-VKTarget::VKTarget(const Target &target, const Session &session,
-    ScriptEngine &scriptEngine)
+VKTarget::VKTarget(const Target &target, VKRenderSession &renderSession)
     : mItemId(target.id)
     , mFrontFace(target.frontFace)
     , mCullMode(target.cullMode)
@@ -12,15 +10,15 @@ VKTarget::VKTarget(const Target &target, const Session &session,
     , mSamples(target.defaultSamples)
 {
     mUsedItems += target.id;
-    mUsedItems += session.id;
+    mUsedItems += renderSession.session().id;
 
-    if (session.reverseCulling)
+    if (renderSession.session().reverseCulling)
         mFrontFace = (mFrontFace == Target::FrontFace::CW
                 ? Target::FrontFace::CCW
                 : Target::FrontFace::CW);
 
-    Singletons::evaluatedPropertyCache().evaluateTargetProperties(target,
-        &mDefaultWidth, &mDefaultHeight, &mDefaultLayers, &scriptEngine);
+    renderSession.evaluateTargetProperties(target, &mDefaultWidth,
+        &mDefaultHeight, &mDefaultLayers);
 
     auto attachmentIndex = 0;
     for (const auto &item : target.items) {

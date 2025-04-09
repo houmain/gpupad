@@ -5,8 +5,7 @@
 class VKTarget
 {
 public:
-    VKTarget(const Target &target, const Session &session,
-        ScriptEngine &scriptEngine);
+    VKTarget(const Target &target, VKRenderSession &renderSession);
     void setTexture(int index, VKTexture *texture);
 
     KDGpu::RenderPassCommandRecorderOptions prepare(VKContext &context);

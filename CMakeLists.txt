@@ -76,7 +76,6 @@ set(SOURCES
   libs/SingleApplication/singleapplication_p.cpp
   libs/spirv-reflect/spirv_reflect.cpp
   src/FileDialog.cpp
-  src/EvaluatedPropertyCache.cpp
   src/FileCache.cpp
   src/MessageList.cpp
   src/Settings.cpp

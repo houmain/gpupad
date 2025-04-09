@@ -735,6 +735,8 @@ bool MainWindow::openSession(const QString &fileName)
     if (!mSessionEditor->load())
         return false;
 
+    Singletons::synchronizeLogic().handleSessionFileNameChanged(fileName);
+
     if (!restoreSessionState(fileName)) {
         openSessionDock();
         auto &editors = Singletons::editorManager();

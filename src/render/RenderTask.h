@@ -18,6 +18,7 @@ public:
     ~RenderTask() override;
 
     virtual QSet<ItemId> usedItems() const { return {}; }
+    bool updating() const { return mUpdating; }
 
     Renderer &renderer() { return *mRenderer; }
     void update(bool itemChanged = false,

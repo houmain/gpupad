@@ -1,5 +1,5 @@
 #include "SessionScriptObject.h"
-#include "EvaluatedPropertyCache.h"
+#include "SynchronizeLogic.h"
 #include "FileCache.h"
 #include "Singletons.h"
 #include "editors/EditorManager.h"
@@ -347,12 +347,11 @@ void SessionScriptObject::initializeEngine(QJSEngine *engine)
 
 SessionModel &SessionScriptObject::threadSessionModel()
 {
-    if (mSessionCopy) {
-        Q_ASSERT(!onMainThread());
-        return *mSessionCopy;
-    } else {
-        Q_ASSERT(onMainThread());
+    if (onMainThread()) {
         return Singletons::sessionModel();
+    } else {
+        Q_ASSERT(mRenderSession);
+        return mRenderSession->sessionModelCopy();
     }
 }
 
@@ -365,27 +364,25 @@ QJSEngine &SessionScriptObject::engine()
 void SessionScriptObject::withSessionModel(UpdateFunction &&updateFunction)
 {
     if (onMainThread()) {
-        Q_ASSERT(!mSessionCopy);
         updateFunction(Singletons::sessionModel());
     } else {
-        Q_ASSERT(mSessionCopy);
-        updateFunction(*mSessionCopy);
+        Q_ASSERT(mRenderSession);
+        updateFunction(mRenderSession->sessionModelCopy());
         mPendingUpdates.push_back(std::move(updateFunction));
     }
 }
 
-void SessionScriptObject::beginBackgroundUpdate(SessionModel *sessionCopy,
+void SessionScriptObject::beginBackgroundUpdate(
     IScriptRenderSession *renderSession)
 {
     Q_ASSERT(!onMainThread());
-    mSessionCopy = sessionCopy;
     mRenderSession = renderSession;
 }
 
 void SessionScriptObject::endBackgroundUpdate()
 {
     Q_ASSERT(onMainThread());
-    mSessionCopy = nullptr;
+    mRenderSession = nullptr;
 
     auto &session = Singletons::sessionModel();
     if (!mPendingUpdates.empty()) {
@@ -548,7 +545,7 @@ void SessionScriptObject::replaceItems(QJSValue itemDesc, QJSValue array)
             }
             object["id"] = id;
             update[i] = object;
-            
+
             // update IDs inplace
             array.property(i).setProperty("id", id);
         }
@@ -632,7 +629,6 @@ void SessionScriptObject::setBufferData(QJSValue itemDesc, QJSValue data)
 void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
 {
     if (const auto block = getItem<Block>(itemDesc)) {
-        Singletons::evaluatedPropertyCache().invalidate(block->id);
         withSessionModel([this, blockId = block->id,
                              data = toByteArray(data, *block, mMessages)](
                              SessionModel &session) {
@@ -642,7 +638,7 @@ void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
                     if (onMainThread())
                         if (auto editor = openBinaryEditor(*buffer)) {
                             auto offset = 0, rowCount = 0;
-                            Singletons::evaluatedPropertyCache()
+                            Singletons::synchronizeLogic()
                                 .evaluateBlockProperties(*block, &offset,
                                     &rowCount);
                             editor->replaceRange(offset, data);

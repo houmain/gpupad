@@ -11,8 +11,6 @@
 #include "VKTexture.h"
 #include "editors/EditorManager.h"
 #include "editors/texture/TextureEditor.h"
-#include "scripting/ScriptEngine.h"
-#include "scripting/ScriptSession.h"
 #include <QStack>
 #include <deque>
 #include <functional>
@@ -83,8 +81,8 @@ struct VKRenderSession::CommandQueue
     std::vector<VKProgram> failedPrograms;
 };
 
-VKRenderSession::VKRenderSession(RendererPtr renderer)
-    : RenderSessionBase(std::move(renderer))
+VKRenderSession::VKRenderSession(RendererPtr renderer, const QString &basePath)
+    : RenderSessionBase(std::move(renderer), basePath)
 {
 }
 
@@ -113,7 +111,7 @@ void VKRenderSession::createCommandQueue()
     mUsedItems.clear();
 
     auto &scriptEngine = mScriptSession->engine();
-    const auto &session = mSessionCopy;
+    const auto &sessionModel = mSessionModelCopy;
 
     const auto addCommand = [&](auto &&command) {
         mCommandQueue->commands.emplace_back(std::move(command));
@@ -121,29 +119,29 @@ void VKRenderSession::createCommandQueue()
 
     const auto addProgramOnce = [&](ItemId programId) {
         return addOnce(mCommandQueue->programs,
-            session.findItem<Program>(programId), session.sessionItem());
+            sessionModel.findItem<Program>(programId),
+            sessionModel.sessionItem());
     };
 
     const auto addBufferOnce = [&](ItemId bufferId) {
         return addOnce(mCommandQueue->buffers,
-            session.findItem<Buffer>(bufferId), scriptEngine);
+            sessionModel.findItem<Buffer>(bufferId), *this);
     };
 
     const auto addTextureOnce = [&](ItemId textureId) {
         return addOnce(mCommandQueue->textures,
-            session.findItem<Texture>(textureId), scriptEngine);
+            sessionModel.findItem<Texture>(textureId), *this);
     };
 
     const auto addTextureBufferOnce = [&](ItemId bufferId, VKBuffer *buffer,
                                           Texture::Format format) {
         return addOnce(mCommandQueue->textures,
-            session.findItem<Buffer>(bufferId), buffer, format, scriptEngine);
+            sessionModel.findItem<Buffer>(bufferId), buffer, format, *this);
     };
 
     const auto addTargetOnce = [&](ItemId targetId) {
-        auto target = session.findItem<Target>(targetId);
-        auto fb = addOnce(mCommandQueue->targets, target, session.sessionItem(),
-            scriptEngine);
+        auto target = sessionModel.findItem<Target>(targetId);
+        auto fb = addOnce(mCommandQueue->targets, target, *this);
         if (fb) {
             const auto &items = target->items;
             for (auto i = 0; i < items.size(); ++i)
@@ -154,14 +152,14 @@ void VKRenderSession::createCommandQueue()
     };
 
     const auto addVertexStreamOnce = [&](ItemId vertexStreamId) {
-        auto vertexStream = session.findItem<Stream>(vertexStreamId);
+        auto vertexStream = sessionModel.findItem<Stream>(vertexStreamId);
         auto vs = addOnce(mCommandQueue->vertexStreams, vertexStream);
         if (vs) {
             const auto &items = vertexStream->items;
             for (auto i = 0; i < items.size(); ++i)
                 if (auto attribute = castItem<Attribute>(items[i]))
                     if (auto field =
-                            session.findItem<Field>(attribute->fieldId))
+                            sessionModel.findItem<Field>(attribute->fieldId))
                         vs->setAttribute(i, *field,
                             addBufferOnce(field->parent->parent->id),
                             scriptEngine);
@@ -169,7 +167,7 @@ void VKRenderSession::createCommandQueue()
         return vs;
     };
 
-    session.forEachItem([&](const Item &item) {
+    sessionModel.forEachItem([&](const Item &item) {
         if (auto group = castItem<Group>(item)) {
             // mark begin of iteration
             addCommand([this, groupId = group->id](BindingState &) {
@@ -250,7 +248,7 @@ void VKRenderSession::createCommandQueue()
                 break;
 
             case Binding::BindingType::BufferBlock:
-                if (auto block = session.findItem<Block>(b.blockId))
+                if (auto block = sessionModel.findItem<Block>(b.blockId))
                     addCommand(
                         [binding = VKBufferBinding{ b.id, b.name,
                              addBufferOnce(block->parent->id), block->id,
@@ -269,7 +267,7 @@ void VKRenderSession::createCommandQueue()
             if (call->checked) {
                 mUsedItems += call->id;
                 auto pvkcall =
-                    std::make_shared<VKCall>(*call, session.sessionItem());
+                    std::make_shared<VKCall>(*call, sessionModel.sessionItem());
                 auto &vkcall = *pvkcall;
                 switch (call->callType) {
                 case Call::CallType::Draw:
@@ -282,11 +280,11 @@ void VKRenderSession::createCommandQueue()
                     vkcall.setTarget(addTargetOnce(call->targetId));
                     vkcall.setVextexStream(
                         addVertexStreamOnce(call->vertexStreamId));
-                    if (auto block =
-                            session.findItem<Block>(call->indexBufferBlockId))
+                    if (auto block = sessionModel.findItem<Block>(
+                            call->indexBufferBlockId))
                         vkcall.setIndexBuffer(addBufferOnce(block->parent->id),
                             *block);
-                    if (auto block = session.findItem<Block>(
+                    if (auto block = sessionModel.findItem<Block>(
                             call->indirectBufferBlockId))
                         vkcall.setIndirectBuffer(
                             addBufferOnce(block->parent->id), *block);
@@ -295,7 +293,7 @@ void VKRenderSession::createCommandQueue()
                 case Call::CallType::Compute:
                 case Call::CallType::ComputeIndirect:
                     vkcall.setProgram(addProgramOnce(call->programId));
-                    if (auto block = session.findItem<Block>(
+                    if (auto block = sessionModel.findItem<Block>(
                             call->indirectBufferBlockId))
                         vkcall.setIndirectBuffer(
                             addBufferOnce(block->parent->id), *block);
@@ -305,8 +303,10 @@ void VKRenderSession::createCommandQueue()
                     vkcall.setProgram(addProgramOnce(call->programId));
                     if (auto buffer = addBufferOnce(call->bufferId)) {
                         buffer->addUsage(
-                            KDGpu::BufferUsageFlagBits::AccelerationStructureBuildInputReadOnlyBit
-                            | KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit);
+                            KDGpu::BufferUsageFlagBits::
+                                AccelerationStructureBuildInputReadOnlyBit
+                            | KDGpu::BufferUsageFlagBits::
+                                ShaderDeviceAddressBit);
                         vkcall.setBuffers(buffer, nullptr);
                     }
                     break;
@@ -496,13 +496,13 @@ void VKRenderSession::finish()
         return;
 
     auto &editors = Singletons::editorManager();
-    auto &session = Singletons::sessionModel();
+    auto &sessionModel = Singletons::sessionModel();
 
     if (updatingPreviewTextures())
         for (const auto &[itemId, texture] : mCommandQueue->textures)
             if (texture.deviceCopyModified())
                 if (auto fileItem =
-                        castItem<FileItem>(session.findItem(itemId)))
+                        castItem<FileItem>(sessionModel.findItem(itemId)))
                     if (auto editor =
                             editors.getTextureEditor(fileItem->fileName))
                         if (auto handle = texture.getSharedMemoryHandle();

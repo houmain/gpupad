@@ -1,13 +1,12 @@
 #pragma once
 
 #include "GLItem.h"
-#include "scripting/ScriptEngine.h"
 
 class GLBuffer
 {
 public:
     explicit GLBuffer(int size);
-    GLBuffer(const Buffer &buffer, ScriptEngine &scriptEngine);
+    GLBuffer(const Buffer &buffer, GLRenderSession &renderSession);
     void updateUntitledFilename(const GLBuffer &rhs);
     bool operator==(const GLBuffer &rhs) const;
 

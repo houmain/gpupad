@@ -1,5 +1,4 @@
 #include "SynchronizeLogic.h"
-#include "EvaluatedPropertyCache.h"
 #include "FileCache.h"
 #include "Settings.h"
 #include "Singletons.h"
@@ -10,6 +9,7 @@
 #include "render/ProcessSource.h"
 #include "render/RenderSessionBase.h"
 #include "session/SessionModel.h"
+#include "scripting/ScriptSession.h"
 #include <QTimer>
 
 SynchronizeLogic::SynchronizeLogic(QObject *parent)
@@ -75,7 +75,8 @@ void SynchronizeLogic::updateRenderSession()
     if (mRenderSession && &mRenderSession->renderer() == sessionRenderer.get())
         return;
 
-    mRenderSession = RenderSessionBase::create(sessionRenderer);
+    const auto basePath = QFileInfo(mSessionFileName).path();
+    mRenderSession = RenderSessionBase::create(sessionRenderer, basePath);
     connect(mRenderSession.get(), &RenderTask::updated, this,
         &SynchronizeLogic::handleSessionRendered);
 
@@ -190,12 +191,10 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
         if (auto buffer = mModel.item<Buffer>(index)) {
             mEditorItemsModified.insert(buffer->id);
         } else if (auto block = mModel.item<Block>(index)) {
-            Singletons::evaluatedPropertyCache().invalidate(block->id);
             mEditorItemsModified.insert(block->parent->id);
         } else if (auto field = mModel.item<Field>(index)) {
             mEditorItemsModified.insert(field->parent->parent->id);
         } else if (auto texture = mModel.item<Texture>(index)) {
-            Singletons::evaluatedPropertyCache().invalidate(texture->id);
             mEditorItemsModified.insert(texture->id);
         }
     }
@@ -354,8 +353,7 @@ void SynchronizeLogic::updateTextureEditor(const Texture &texture,
     TextureEditor &editor)
 {
     auto width = 0, height = 0, depth = 0, layers = 0;
-    Singletons::evaluatedPropertyCache().evaluateTextureProperties(texture,
-        &width, &height, &depth, &layers);
+    evaluateTextureProperties(texture, &width, &height, &depth, &layers);
     editor.setRawFormat({
         texture.target,
         texture.format,
@@ -396,8 +394,7 @@ void SynchronizeLogic::updateBinaryEditor(const Buffer &buffer,
                 field.count, field.padding });
         }
         auto offset = 0, rowCount = 0;
-        Singletons::evaluatedPropertyCache().evaluateBlockProperties(block,
-            &offset, &rowCount);
+        evaluateBlockProperties(block, &offset, &rowCount);
         blocks.append({ block.name, offset, rowCount, fields });
     }
     editor.setBlocks(blocks);
@@ -424,6 +421,12 @@ void SynchronizeLogic::processSource()
     mProcessSource->update();
 }
 
+void SynchronizeLogic::handleSessionFileNameChanged(const QString &fileName)
+{
+    mSessionFileName = toNativeCanonicalFilePath(fileName);
+    resetRenderSession();
+}
+
 void SynchronizeLogic::handleMouseStateChanged()
 {
     if (mRenderSession && mRenderSession->usesMouseState()) {
@@ -438,4 +441,26 @@ void SynchronizeLogic::handleKeyboardStateChanged()
         if (mEvaluationMode == EvaluationMode::Automatic)
             evaluate(EvaluationType::Steady);
     }
+}
+
+void SynchronizeLogic::evaluateBlockProperties(const Block &block, int *offset,
+    int *rowCount)
+{
+    updateRenderSession();
+    mRenderSession->evaluateBlockProperties(block, offset, rowCount);
+}
+
+void SynchronizeLogic::evaluateTextureProperties(const Texture &texture,
+    int *width, int *height, int *depth, int *layers)
+{
+    updateRenderSession();
+    mRenderSession->evaluateTextureProperties(texture, width, height, depth,
+        layers);
+}
+
+void SynchronizeLogic::evaluateTargetProperties(const Target &target,
+    int *width, int *height, int *layers)
+{
+    updateRenderSession();
+    mRenderSession->evaluateTargetProperties(target, width, height, layers);
 }

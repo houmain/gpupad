@@ -1,5 +1,5 @@
 #include "VKBuffer.h"
-#include "EvaluatedPropertyCache.h"
+#include "scripting/ScriptEngine.h"
 #include "Singletons.h"
 #include <QScopeGuard>
 
@@ -61,10 +61,10 @@ bool downloadBuffer(VKContext &context, const KDGpu::Buffer &buffer,
     return true;
 }
 
-VKBuffer::VKBuffer(const Buffer &buffer, ScriptEngine &scriptEngine)
+VKBuffer::VKBuffer(const Buffer &buffer, VKRenderSession &renderSession)
     : mItemId(buffer.id)
     , mFileName(buffer.fileName)
-    , mSize(getBufferSize(buffer, scriptEngine, mMessages))
+    , mSize(renderSession.getBufferSize(buffer))
 {
     // TODO: reduce default usage
     mUsage = KDGpu::BufferUsageFlags{ KDGpu::BufferUsageFlagBits::TransferSrcBit

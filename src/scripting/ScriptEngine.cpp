@@ -35,17 +35,19 @@ namespace {
     }
 } // namespace
 
-ScriptEnginePtr ScriptEngine::make(const QString &basePath)
+ScriptEnginePtr ScriptEngine::make(const QString &basePath, QObject *parent)
 {
-    auto engine = ScriptEnginePtr(new ScriptEngine());
+    auto engine = ScriptEnginePtr(new ScriptEngine(parent));
+    engine->setParent(nullptr);
     engine->initialize(engine, basePath);
     return engine;
 }
 
-ScriptEngine::ScriptEngine()
-    : mOnThread(*QThread::currentThread())
+ScriptEngine::ScriptEngine(QObject* parent)
+    : QObject(parent)
     , mConsoleScriptObject(new ConsoleScriptObject(this))
 {
+    Q_ASSERT(QThread::currentThread() == thread());
 }
 
 void ScriptEngine::initialize(const ScriptEnginePtr &self,
@@ -110,13 +112,13 @@ void ScriptEngine::resetInterruptTimer()
 
 void ScriptEngine::setGlobal(const QString &name, QJSValue value)
 {
-    Q_ASSERT(&mOnThread == QThread::currentThread());
+    Q_ASSERT(QThread::currentThread() == thread());
     mJsEngine->globalObject().setProperty(name, value);
 }
 
 void ScriptEngine::setGlobal(const QString &name, QObject *object)
 {
-    Q_ASSERT(&mOnThread == QThread::currentThread());
+    Q_ASSERT(QThread::currentThread() == thread());
     mJsEngine->globalObject().setProperty(name, mJsEngine->newQObject(object));
 }
 
@@ -135,13 +137,14 @@ void ScriptEngine::setGlobal(const QString &name, const ScriptValueList &values)
 
 QJSValue ScriptEngine::getGlobal(const QString &name)
 {
-    Q_ASSERT(&mOnThread == QThread::currentThread());
+    Q_ASSERT(QThread::currentThread() == thread());
     return mJsEngine->globalObject().property(name);
 }
 
 QJSValue ScriptEngine::call(QJSValue &callable, const QJSValueList &args,
     ItemId itemId, MessagePtrSet &messages)
 {
+    Q_ASSERT(QThread::currentThread() == thread());
     mConsoleScriptObject->setMessages(&messages, itemId);
     resetInterruptTimer();
 
@@ -162,6 +165,7 @@ void ScriptEngine::validateScript(const QString &script,
 void ScriptEngine::evaluateScript(const QString &script,
     const QString &fileName, MessagePtrSet &messages)
 {
+    Q_ASSERT(QThread::currentThread() == thread());
     mConsoleScriptObject->setMessages(&messages, fileName);
     resetInterruptTimer();
 
@@ -172,6 +176,7 @@ void ScriptEngine::evaluateScript(const QString &script,
 ScriptValueList ScriptEngine::evaluateValues(const QString &valueExpression,
     ItemId itemId, MessagePtrSet &messages)
 {
+    Q_ASSERT(QThread::currentThread() == thread());
     mConsoleScriptObject->setMessages(&messages, itemId);
     resetInterruptTimer();
 
@@ -256,6 +261,12 @@ int ScriptEngine::evaluateInt(const QString &valueExpression, ItemId itemId,
     if (!std::isfinite(value))
         return 0;
     return static_cast<int>(value + 0.5);
+}
+
+QJSEngine &ScriptEngine::jsEngine()
+{
+    Q_ASSERT(QThread::currentThread() == thread());
+    return *mJsEngine;
 }
 
 void checkValueCount(int valueCount, int offset, int count, ItemId itemId,

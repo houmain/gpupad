@@ -4,14 +4,14 @@
 #include "TextureData.h"
 #include "session/Item.h"
 
-class ScriptEngine;
+class RenderSessionBase;
 
 class TextureBase
 {
 public:
-    TextureBase(const Texture &texture, ScriptEngine &scriptEngine);
+    TextureBase(const Texture &texture, RenderSessionBase &renderSession);
     TextureBase(const Buffer &buffer, Texture::Format format,
-        ScriptEngine &scriptEngine);
+        RenderSessionBase &renderSession);
     bool operator==(const TextureBase &rhs) const;
 
     ItemId itemId() const { return mItemId; }
@@ -53,7 +53,5 @@ protected:
     bool mMipmapsInvalidated{};
 };
 
-int getBufferSize(const Buffer &buffer, ScriptEngine &scriptEngine,
-    MessagePtrSet &messages);
 void transformClearColor(std::array<double, 4> &color,
     TextureSampleType sampleType);

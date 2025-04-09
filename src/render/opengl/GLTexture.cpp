@@ -247,14 +247,14 @@ bool GLTexture::download(QOpenGLFunctions_3_3_Core &gl, TextureData &data,
     return ::download(gl, data, target, textureId);
 }
 
-GLTexture::GLTexture(const Texture &texture, ScriptEngine &scriptEngine)
-    : TextureBase(texture, scriptEngine)
+GLTexture::GLTexture(const Texture &texture, GLRenderSession &renderSession)
+    : TextureBase(texture, renderSession)
 {
 }
 
 GLTexture::GLTexture(const Buffer &buffer, GLBuffer *textureBuffer,
-    Texture::Format format, ScriptEngine &scriptEngine)
-    : TextureBase(buffer, format, scriptEngine)
+    Texture::Format format, GLRenderSession &renderSession)
+    : TextureBase(buffer, format, renderSession)
     , mTextureBuffer(textureBuffer)
 {
 }

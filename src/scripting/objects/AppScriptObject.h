@@ -36,8 +36,8 @@ public:
     Q_INVOKABLE QJSValue writeTextFile(QString fileName, const QString &string);
     Q_INVOKABLE QJSValue readTextFile(QString fileName);
 
+    void updateInputState();
     void setSelection(const QModelIndexList &selectedIndices);
-    void update();
     bool usesMouseState() const;
     bool usesKeyboardState() const;
     SessionScriptObject &sessionScriptObject() { return *mSessionScriptObject; }

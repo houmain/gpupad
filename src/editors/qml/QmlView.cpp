@@ -138,7 +138,7 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
 
     if (!mEnginePtr) {
         const auto basePath = QFileInfo(fileName).absolutePath();
-        mEnginePtr = ScriptEngine::make(basePath);
+        mEnginePtr = ScriptEngine::make(basePath, this);
     }
     // WORKAROUND: tell QQuickWidget to also use OpenGL for rendering and not turn black
     // see: https://forum.qt.io/topic/148089/qopenglwidget-doesn-t-work-with-qquickwidget

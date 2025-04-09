@@ -5,12 +5,11 @@
 
 class VKRenderer;
 class VKShareSync;
-class ScriptSession;
 
 class VKRenderSession final : public RenderSessionBase
 {
 public:
-    explicit VKRenderSession(RendererPtr renderer);
+    VKRenderSession(RendererPtr renderer, const QString &basePath);
     ~VKRenderSession();
 
     void render() override;

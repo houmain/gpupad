@@ -16,7 +16,7 @@ class QTimer;
 class ScriptEngine : public QObject
 {
 public:
-    static ScriptEnginePtr make(const QString &basePath);
+    static ScriptEnginePtr make(const QString &basePath, QObject *parent);
     ~ScriptEngine();
 
     void setOmitReferenceErrors();
@@ -29,15 +29,14 @@ public:
         MessagePtrSet &messages);
     ScriptValueList evaluateValues(const QString &valueExpression,
         ItemId itemId, MessagePtrSet &messages);
-
     ScriptValueList evaluateValues(const QStringList &valueExpressions,
         ItemId itemId, MessagePtrSet &messages);
     ScriptValue evaluateValue(const QString &valueExpression, ItemId itemId,
         MessagePtrSet &messages);
     int evaluateInt(const QString &valueExpression, ItemId itemId,
         MessagePtrSet &messages);
+    QJSEngine &jsEngine();
 
-    QJSEngine &jsEngine() { return *mJsEngine; }
     AppScriptObject &appScriptObject() { return *mAppScriptObject; }
 
     void setGlobal(const QString &name, QJSValue value);
@@ -52,13 +51,12 @@ public:
     }
 
 private:
-    ScriptEngine();
+    ScriptEngine(QObject* parent);
     void initialize(const ScriptEnginePtr &self, const QString &basePath);
     void resetInterruptTimer();
     void outputError(const QJSValue &result, ItemId itemId,
         MessagePtrSet &messages);
 
-    const QThread &mOnThread;
     QJSEngine *mJsEngine{};
     ConsoleScriptObject *mConsoleScriptObject{};
     AppScriptObject *mAppScriptObject{};

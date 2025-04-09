@@ -1,32 +1,32 @@
 #include "ScriptSession.h"
 #include "ScriptEngine.h"
+#include "scripting/IScriptRenderSession.h"
 #include "objects/AppScriptObject.h"
 #include "objects/SessionScriptObject.h"
 #include "Singletons.h"
+#include <QThread>
 
 ScriptSession::ScriptSession(const QString &basePath, QObject *parent)
     : QObject(parent)
     , mBasePath(basePath)
 {
+    Q_ASSERT(!onMainThread());
+    moveToThread(QThread::currentThread());
+    mScriptEngine = ScriptEngine::make(mBasePath, this);
 }
 
-void ScriptSession::prepare()
-{
-    Q_ASSERT(onMainThread());
-    if (mScriptEngine)
-        mScriptEngine->appScriptObject().update();
-}
-
-void ScriptSession::beginSessionUpdate(SessionModel *sessionCopy,
-    IScriptRenderSession *renderSession)
+void ScriptSession::beginSessionUpdate(IScriptRenderSession *renderSession)
 {
     Q_ASSERT(!onMainThread());
-    if (!mScriptEngine)
-        mScriptEngine = ScriptEngine::make(mBasePath);
-
     mScriptEngine->appScriptObject()
         .sessionScriptObject()
-        .beginBackgroundUpdate(sessionCopy, renderSession);
+        .beginBackgroundUpdate(renderSession);
+}
+
+ScriptEngine &ScriptSession::engine()
+{
+    Q_ASSERT(!onMainThread());
+    return *mScriptEngine;
 }
 
 void ScriptSession::endSessionUpdate()
@@ -39,17 +39,18 @@ void ScriptSession::endSessionUpdate()
 
 bool ScriptSession::usesMouseState() const
 {
-    return (mScriptEngine && mScriptEngine->appScriptObject().usesMouseState());
+    Q_ASSERT(onMainThread());
+    return mScriptEngine->appScriptObject().usesMouseState();
 }
 
 bool ScriptSession::usesKeyboardState() const
 {
-    return (mScriptEngine
-        && mScriptEngine->appScriptObject().usesKeyboardState());
+    Q_ASSERT(onMainThread());
+    return mScriptEngine->appScriptObject().usesKeyboardState();
 }
 
-ScriptEngine &ScriptSession::engine()
+void ScriptSession::updateInputState()
 {
-    Q_ASSERT(mScriptEngine);
-    return *mScriptEngine;
+    Q_ASSERT(onMainThread());
+    mScriptEngine->appScriptObject().updateInputState();
 }
