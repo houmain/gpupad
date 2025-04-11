@@ -243,7 +243,6 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
                 MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
             return;
         }
-        mUsedItems += mProgram->usedItems();
     }
 
     if (mKind.draw && !mTarget) {

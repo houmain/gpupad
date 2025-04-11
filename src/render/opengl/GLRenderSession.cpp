@@ -309,6 +309,7 @@ void GLRenderSession::createCommandQueue()
 
                         auto &scriptEngine = mScriptSession->engine();
                         if (auto program = call.program()) {
+                            mUsedItems += program->usedItems();
                             if (program->bind()) {
                                 if (call.applyBindings(mergeBindingState(state),
                                         scriptEngine))
