@@ -4,23 +4,23 @@
 #include "objects/AppScriptObject.h"
 #include "objects/SessionScriptObject.h"
 #include "Singletons.h"
-#include <QThread>
 
-ScriptSession::ScriptSession(const QString &basePath, QObject *parent)
+ScriptSession::ScriptSession(IScriptRenderSession *renderSession,
+    QObject *parent)
     : QObject(parent)
-    , mBasePath(basePath)
+    , mRenderSession(*renderSession)
 {
-    Q_ASSERT(!onMainThread());
-    moveToThread(QThread::currentThread());
-    mScriptEngine = ScriptEngine::make(mBasePath, this);
+    moveToThread(mRenderSession.renderThread());
+    mScriptEngine = ScriptEngine::make(mRenderSession.basePath(), this);
+    Q_ASSERT(mScriptEngine->thread() == mRenderSession.renderThread());
 }
 
-void ScriptSession::beginSessionUpdate(IScriptRenderSession *renderSession)
+void ScriptSession::beginSessionUpdate()
 {
     Q_ASSERT(!onMainThread());
     mScriptEngine->appScriptObject()
         .sessionScriptObject()
-        .beginBackgroundUpdate(renderSession);
+        .beginBackgroundUpdate(&mRenderSession);
 }
 
 ScriptEngine &ScriptSession::engine()

@@ -518,4 +518,6 @@ void VKRenderSession::release()
     mShareSync.reset();
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
+
+    RenderSessionBase::release();
 }

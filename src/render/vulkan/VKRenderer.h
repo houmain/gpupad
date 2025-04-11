@@ -18,6 +18,7 @@ public:
 
     void render(RenderTask *task) override;
     void release(RenderTask *task) override;
+    QThread* renderThread() override { return &mThread; }
 
     KDGpu::Device &device();
     ktxVulkanDeviceInfo &ktxDeviceInfo();

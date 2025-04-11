@@ -38,7 +38,7 @@ namespace {
 ScriptEnginePtr ScriptEngine::make(const QString &basePath, QObject *parent)
 {
     auto engine = ScriptEnginePtr(new ScriptEngine(parent));
-    engine->setParent(nullptr);
+    engine->moveToThread(parent->thread());
     engine->initialize(engine, basePath);
     return engine;
 }
@@ -87,11 +87,6 @@ ScriptEngine::~ScriptEngine()
     connect(mInterruptThread, &QThread::finished, mInterruptThread,
         &QObject::deleteLater);
     mInterruptThread->requestInterruption();
-}
-
-void ScriptEngine::setOmitReferenceErrors()
-{
-    mOmitReferenceErrors = true;
 }
 
 void ScriptEngine::setTimeout(int msec)
@@ -189,10 +184,6 @@ void ScriptEngine::outputError(const QJSValue &result, ItemId itemId,
     MessagePtrSet &messages)
 {
     if (!result.isError())
-        return;
-
-    if (result.errorType() == QJSValue::ErrorType::ReferenceError
-        && mOmitReferenceErrors)
         return;
 
     // clean up message

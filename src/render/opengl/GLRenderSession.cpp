@@ -499,6 +499,8 @@ void GLRenderSession::release()
     mVao.destroy();
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
+
+    RenderSessionBase::release();
 }
 
 quint64 GLRenderSession::getTextureHandle(ItemId itemId)

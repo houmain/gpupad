@@ -13,7 +13,6 @@
 #include "session/SessionModel.h"
 #include "vulkan/VKRenderSession.h"
 #include "vulkan/VKRenderer.h"
-#include <QGuiApplication>
 
 std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
     RendererPtr renderer, const QString &basePath)
@@ -21,20 +20,12 @@ std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
     auto session = std::unique_ptr<RenderSessionBase>();
     switch (renderer->api()) {
     case RenderAPI::OpenGL:
-        session.reset(new GLRenderSession(renderer, basePath));
-        break;
+        return std::make_unique<GLRenderSession>(renderer, basePath);
     case RenderAPI::Vulkan:
-        session.reset(new VKRenderSession(renderer, basePath));
-        break;
-    default: return {};
+        return std::make_unique<VKRenderSession>(renderer, basePath);
     }
-
-    // block until session is initialized
-    session->update(false, EvaluationType::Reset);
-    while (session->updating())
-        qApp->processEvents();
-
-    return session;
+    Q_UNREACHABLE();
+    return {};
 }
 
 RenderSessionBase::RenderSessionBase(RendererPtr renderer,
@@ -68,9 +59,9 @@ void RenderSessionBase::configure()
 {
     Q_ASSERT(!onMainThread());
     if (mEvaluationType == EvaluationType::Reset)
-        mScriptSession.reset(new ScriptSession(mBasePath));
+        mScriptSession.reset(new ScriptSession(this));
 
-    mScriptSession->beginSessionUpdate(this);
+    mScriptSession->beginSessionUpdate();
 
     // collect items to evaluate, since doing so can modify list
     auto itemsToEvaluate = QVector<const Item *>();
@@ -140,6 +131,11 @@ void RenderSessionBase::finish()
     mUsedItemsCopy = mUsedItems;
 }
 
+void RenderSessionBase::release()
+{
+    mScriptSession.reset();
+}
+
 const Session &RenderSessionBase::session() const
 {
     return mSessionModelCopy.sessionItem();
@@ -188,6 +184,8 @@ void RenderSessionBase::evaluateBlockProperties(const Block &block, int *offset,
 {
     Q_ASSERT(offset && rowCount);
     dispatchToRenderThread([&]() {
+        if (!mScriptSession)
+            return;
         auto &engine = mScriptSession->engine();
         *offset = engine.evaluateInt(block.offset, block.id, mMessages);
         *rowCount = engine.evaluateInt(block.rowCount, block.id, mMessages);
@@ -199,6 +197,8 @@ void RenderSessionBase::evaluateTextureProperties(const Texture &texture,
 {
     Q_ASSERT(width && height && depth && layers);
     dispatchToRenderThread([&]() {
+        if (!mScriptSession)
+            return;
         auto &engine = mScriptSession->engine();
         *width = engine.evaluateInt(texture.width, texture.id, mMessages);
         *height = engine.evaluateInt(texture.height, texture.id, mMessages);
@@ -212,6 +212,8 @@ void RenderSessionBase::evaluateTargetProperties(const Target &target,
 {
     Q_ASSERT(width && height && layers);
     dispatchToRenderThread([&]() {
+        if (!mScriptSession)
+            return;
         auto &engine = mScriptSession->engine();
         *width = engine.evaluateInt(target.defaultWidth, target.id, mMessages);
         *height =

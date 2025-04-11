@@ -19,7 +19,6 @@ public:
     static ScriptEnginePtr make(const QString &basePath, QObject *parent);
     ~ScriptEngine();
 
-    void setOmitReferenceErrors();
     void setTimeout(int msec);
     void setGlobal(const QString &name, QObject *object);
     void setGlobal(const QString &name, const ScriptValueList &values);
@@ -62,7 +61,6 @@ private:
     AppScriptObject *mAppScriptObject{};
     QThread *mInterruptThread{};
     QTimer *mInterruptTimer{};
-    bool mOmitReferenceErrors{};
 };
 
 void checkValueCount(int valueCount, int offset, int count, ItemId itemId,

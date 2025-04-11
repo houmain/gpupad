@@ -2,7 +2,7 @@
 
 #include "Evaluation.h"
 #include "Renderer.h"
-#include <QObject>
+#include <QThread>
 #include <QSet>
 #include <optional>
 
@@ -29,6 +29,17 @@ Q_SIGNALS:
 
 protected:
     void releaseResources();
+
+    template <typename F>
+    void dispatchToRenderThread(F &&function)
+    {
+        if (QThread::currentThread() != thread()) {
+            QMetaObject::invokeMethod(this, std::forward<F>(function),
+                Qt::BlockingQueuedConnection);
+        } else {
+            function();
+        }
+    }
 
 private:
     friend class GLRenderer;

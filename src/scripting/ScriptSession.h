@@ -11,7 +11,8 @@ class ScriptSession : public QObject
 {
     Q_OBJECT
 public:
-    explicit ScriptSession(const QString &basePath, QObject *parent = nullptr);
+    ScriptSession(IScriptRenderSession *renderSession,
+        QObject *parent = nullptr);
 
     // 1. called in main thread
     bool usesMouseState() const;
@@ -20,14 +21,14 @@ public:
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
 
     // 2. called in render thread
-    void beginSessionUpdate(IScriptRenderSession *renderSession);
+    void beginSessionUpdate();
     ScriptEngine &engine();
 
     // 3. called in main thread
     void endSessionUpdate();
 
 private:
-    QString mBasePath;
+    IScriptRenderSession &mRenderSession;
     MessagePtrSet mMessages;
     ScriptEnginePtr mScriptEngine;
 };

@@ -9,7 +9,6 @@
 #include "scripting/ScriptSession.h"
 #include <QMap>
 #include <QMutex>
-#include <QThread>
 
 class RenderSessionBase : public RenderTask, public IScriptRenderSession
 {
@@ -21,12 +20,13 @@ public:
         QObject *parent = nullptr);
     virtual ~RenderSessionBase();
 
-    void prepare(bool itemsChanged, EvaluationType evaluationType);
-    void configure();
-    void configured();
-    virtual void render() = 0;
-    virtual void finish();
-    virtual void release() = 0;
+    QThread *renderThread() override { return renderer().renderThread(); }
+    const QString &basePath() override { return mBasePath; }
+    void prepare(bool itemsChanged, EvaluationType evaluationType) override;
+    void configure() override;
+    void configured() override;
+    void finish() override;
+    void release() override;
     SessionModel &sessionModelCopy() override { return mSessionModelCopy; }
 
     const Session &session() const;
@@ -52,18 +52,6 @@ protected:
 
     void setNextCommandQueueIndex(size_t index);
     virtual bool updatingPreviewTextures() const;
-
-    template <typename F>
-    void dispatchToRenderThread(F &&function)
-    {
-        Q_ASSERT(mScriptSession);
-        if (QThread::currentThread() != mScriptSession->thread()) {
-            QMetaObject::invokeMethod(mScriptSession.get(), std::forward<F>(function),
-                Qt::BlockingQueuedConnection);
-        } else {
-            function();
-        }
-    }
 
     const QString mBasePath;
     SessionModel mSessionModelCopy;

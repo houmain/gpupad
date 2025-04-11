@@ -53,7 +53,7 @@ Q_SIGNALS:
 
 private:
     void invalidateRenderSession();
-    void updateRenderSession();
+    void initializeRenderSession();
     void handleItemModified(const QModelIndex &index);
     void handleItemsModified(const QModelIndex &topLeft,
         const QModelIndex &bottomRight, const QVector<int> &roles);

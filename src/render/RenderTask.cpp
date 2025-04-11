@@ -4,6 +4,7 @@ RenderTask::RenderTask(RendererPtr renderer, QObject *parent)
     : QObject(parent)
     , mRenderer(std::move(renderer))
 {
+    moveToThread(mRenderer->renderThread());
 }
 
 RenderTask::~RenderTask()

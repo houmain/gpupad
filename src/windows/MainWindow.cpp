@@ -911,7 +911,7 @@ bool MainWindow::closeSession()
             return false;
     }
 
-    Singletons::synchronizeLogic().resetRenderSession();
+    Singletons::synchronizeLogic().handleSessionFileNameChanged("");
     mEditorManager.closeAllEditors(false);
     mOutputWindow->setText("");
     updateCurrentEditor();

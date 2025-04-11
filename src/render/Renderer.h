@@ -8,6 +8,7 @@ enum class RenderAPI : int {
 };
 
 using RendererPtr = std::shared_ptr<class Renderer>;
+class QThread;
 class RenderTask;
 
 class Renderer
@@ -18,6 +19,7 @@ public:
     virtual ~Renderer() = default;
     virtual void render(RenderTask *task) = 0;
     virtual void release(RenderTask *task) = 0;
+    virtual QThread *renderThread() = 0;
 
     RenderAPI api() const { return mApi; }
 

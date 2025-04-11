@@ -69,7 +69,7 @@ void SynchronizeLogic::setCurrentEditorSourceType(SourceType sourceType)
         mProcessSourceTimer->start();
 }
 
-void SynchronizeLogic::updateRenderSession()
+void SynchronizeLogic::initializeRenderSession()
 {
     const auto sessionRenderer = Singletons::sessionRenderer();
     if (mRenderSession && &mRenderSession->renderer() == sessionRenderer.get())
@@ -323,7 +323,7 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
     Singletons::fileCache().updateFromEditors();
     const auto itemsChanged = std::exchange(mRenderSessionInvalidated, false);
-    updateRenderSession();
+    initializeRenderSession();
     mRenderSession->update(itemsChanged, evaluationType);
 }
 
@@ -413,7 +413,7 @@ void SynchronizeLogic::processSource()
         return;
 
     Singletons::fileCache().updateFromEditors();
-    updateRenderSession();
+    initializeRenderSession();
     mProcessSource->setFileName(mCurrentEditorFileName);
     mProcessSource->setSourceType(mCurrentEditorSourceType);
     mProcessSource->setValidateSource(mValidateSource);
@@ -446,14 +446,14 @@ void SynchronizeLogic::handleKeyboardStateChanged()
 void SynchronizeLogic::evaluateBlockProperties(const Block &block, int *offset,
     int *rowCount)
 {
-    updateRenderSession();
+    initializeRenderSession();
     mRenderSession->evaluateBlockProperties(block, offset, rowCount);
 }
 
 void SynchronizeLogic::evaluateTextureProperties(const Texture &texture,
     int *width, int *height, int *depth, int *layers)
 {
-    updateRenderSession();
+    initializeRenderSession();
     mRenderSession->evaluateTextureProperties(texture, width, height, depth,
         layers);
 }
@@ -461,6 +461,6 @@ void SynchronizeLogic::evaluateTextureProperties(const Texture &texture,
 void SynchronizeLogic::evaluateTargetProperties(const Target &target,
     int *width, int *height, int *layers)
 {
-    updateRenderSession();
+    initializeRenderSession();
     mRenderSession->evaluateTargetProperties(target, width, height, layers);
 }
