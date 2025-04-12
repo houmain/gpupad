@@ -1,8 +1,8 @@
 
-#include <QJSEngine>
-
 #define DLLREFLECT_IMPORT_IMPLEMENTATION
+#include "dllreflect/include/dllreflect.h"
 #include "LibraryScriptObject.h"
+#include <QJSEngine>
 
 namespace {
     template <typename T, typename S>
@@ -155,7 +155,7 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
     case TYPE: {                                                             \
         argument.data = new T[argument.count];                               \
         auto pos = static_cast<T *>(argument.data);                          \
-        for (auto value : list)                                              \
+        for (const auto &value : list)                                       \
             *pos++ = value.GET();                                            \
         argument.free = [](void *data) { delete[] static_cast<T *>(data); }; \
         break;                                                               \

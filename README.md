@@ -101,9 +101,9 @@ Initial documentation of the available script objects:
 - `keyboard: Keyboard`
 - `mouse: Mouse`
 - `session: Session`
-- `selection: [Item]`
+- `selection: Items`
 - `callAction(id, [arguments]): result`
-- `enumerateFiles(pattern): [filename]`
+- `enumerateFiles(pattern): filenames`
 - `loadLibrary(fileName): Library`
 - `openEditor(fileName): bool`
 - `openFileDialog(pattern): filename`
@@ -115,13 +115,15 @@ Initial documentation of the available script objects:
 - `clear()`
 - `clearItem(item/id): Item`
 - `deleteItem(item/id): Item`
-- `insertItem(item/id, object): Item`
+- `insertItem([item/id], object): Item`
+- `replaceItems(item/id, array)`
 - `item(id): Item`
 - `setBlockData(item/id, data)`
 - `setBufferData(item/id, data)`
 - `setScriptSource(item/id, data)`
 - `setShaderSource(item/id, data)`
 - `setTextureData(item/id, data)`
+- `getTextureHandle(item/id): uint64`
 
 ### Mouse
 

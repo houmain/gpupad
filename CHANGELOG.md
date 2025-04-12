@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 2.5.0] - 2025-04-13
+
+### Added
+
+- Allow to load JavaScript libraries from "libs" directory.
+- Added bindless textures support / `getTextureHandle` to session script object.
+- Added "Ray Tracing In Vulkan" sample.
+- Added `callAction` to app script object.
+
+### Fixed
+
+- Improved performance of buffer block updates.
+- Improved highlighting of items used by call.
+
 ## [Version 2.4.0] - 2025-03-22
 
 ### Changed
@@ -16,7 +30,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added `openFileDialog` to app script object.
 - Added "Generate Mesh" action.
 - Added "Ray Tracing" and "Mesh Shader" samples.
-- Allow to leave "Draw" call's vertex count empty to deduce from stream.
 - Added new shader file extensions to file dialogs.
 - More work on "Trace Rays" call.
 
@@ -851,6 +864,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 2.5.0]: https://github.com/houmain/gpupad/compare/2.4.0...2.5.0
 [version 2.4.0]: https://github.com/houmain/gpupad/compare/2.3.0...2.4.0
 [version 2.3.0]: https://github.com/houmain/gpupad/compare/2.2.0...2.3.0
 [version 2.2.0]: https://github.com/houmain/gpupad/compare/2.1.0...2.2.0
