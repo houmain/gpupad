@@ -77,18 +77,41 @@ QJSValue AppScriptObject::openEditor(QString fileName)
 
 QJSValue AppScriptObject::loadLibrary(QString fileName)
 {
-    const auto searchPaths = QStringList{
-        mBasePath.path(),
-        QCoreApplication::applicationDirPath(),
-        QCoreApplication::applicationDirPath() + "/extra/actions/"
-            + mBasePath.dirName(),
-    };
-    auto library = std::make_unique<LibraryScriptObject>();
-    if (!library->load(&jsEngine(), fileName, searchPaths)) {
-        jsEngine().throwError("Loading library '" + fileName + "' failed");
-        return {};
+    // search in script's base path and in libs
+    auto searchPaths = QList<QDir>();
+    if (mBasePath != QDir())
+        searchPaths += mBasePath;
+    searchPaths += getApplicationDirectories("libs");
+#if !defined(NDEBUG)
+    searchPaths += QDir(QCoreApplication::applicationDirPath()
+        + "/extra/actions/" + mBasePath.dirName());
+#endif
+
+    auto engine = mEnginePtr.lock();
+    if (FileDialog::getFileExtension(fileName) == "js") {
+        for (const auto &dir : std::as_const(searchPaths))
+            if (dir.exists(fileName)) {
+                const auto filePath =
+                    toNativeCanonicalFilePath(dir.filePath(fileName));
+                auto source = QString();
+                if (Singletons::fileCache().getSource(filePath, &source)) {
+                    auto messages = MessagePtrSet();
+                    engine->evaluateScript(source, filePath, messages);
+                    if (!messages.empty())
+                        jsEngine().throwError((*messages.begin())->text);
+                    return {};
+                }
+            }
+    } else {
+        auto paths = QStringList();
+        for (const auto &dir : std::as_const(searchPaths))
+            paths += dir.path();
+        auto library = std::make_unique<LibraryScriptObject>();
+        if (library->load(&jsEngine(), fileName, paths))
+            return jsEngine().newQObject(library.release());
     }
-    return jsEngine().newQObject(library.release());
+    jsEngine().throwError("Loading library '" + fileName + "' failed");
+    return {};
 }
 
 QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)

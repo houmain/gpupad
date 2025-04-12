@@ -77,7 +77,7 @@ void RenderSessionBase::configure()
     });
 
     auto &scriptEngine = mScriptSession->engine();
-    for (const auto *item : itemsToEvaluate) {
+    for (const auto *item : std::as_const(itemsToEvaluate)) {
         if (auto script = castItem<Script>(item)) {
             auto source = QString();
             if (Singletons::fileCache().getSource(script->fileName, &source))

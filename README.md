@@ -102,6 +102,7 @@ Initial documentation of the available script objects:
 - `mouse: Mouse`
 - `session: Session`
 - `selection: [Item]`
+- `callAction(id, [arguments]): result`
 - `enumerateFiles(pattern): [filename]`
 - `loadLibrary(fileName): Library`
 - `openEditor(fileName): bool`
@@ -133,7 +134,7 @@ Initial documentation of the available script objects:
 
 ### Keyboard
 
-- `keys: [bool]` - The state of each key (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
+- `keys: [state]` - The state of each key (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
 
 ## Installation
 

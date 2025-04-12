@@ -174,6 +174,7 @@ void ScriptEngine::evaluateScript(const QString &script,
     const QString &fileName, MessagePtrSet &messages)
 {
     Q_ASSERT(QThread::currentThread() == thread());
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
     mConsoleScriptObject->setMessages(&messages, fileName);
     resetInterruptTimer();
 

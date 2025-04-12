@@ -6,7 +6,7 @@ const manifest = {
 
 class Script {
   constructor() {
-    this.library = app.loadLibrary("GenerateMesh")    
+    this.library = app.loadLibrary("GenerateMesh")
   }
   
   initializeUi(ui) {

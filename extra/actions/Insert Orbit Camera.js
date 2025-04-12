@@ -6,6 +6,11 @@ const manifest = {
 
 const scriptSource = `
 // based on https://www.mbsoftworks.sk/tutorials/opengl4/026-camera-pt3-orbit-camera/ (MIT license)
+
+app.loadLibrary("gl-matrix.js")
+const vec3 = glMatrix.vec3
+const mat4 = glMatrix.mat4
+
 class OrbitCamera {
   constructor(center, upVector, radius, minRadius, azimuthAngle, polarAngle) {
     this.center = center;
@@ -50,7 +55,7 @@ class OrbitCamera {
 
   getViewMatrix() {
     const eye = this.getEye();
-    return this.lookAt(eye, this.center, this.upVector);
+    return mat4.lookAt(mat4.create(), eye, this.center, this.upVector);
   }
 
   getEye() {
@@ -88,58 +93,14 @@ class OrbitCamera {
   getRadius() {
     return this.radius;
   }
-
-  subtract(a, b) {
-    return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
-  }
-
-  normalize(v) {
-    const len = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-    return [v[0] / len, v[1] / len, v[2] / len];
-  }
-
-  crossProduct(a, b) {
-    return [
-      a[1] * b[2] - a[2] * b[1],
-      a[2] * b[0] - a[0] * b[2],
-      a[0] * b[1] - a[1] * b[0]
-    ];
-  }
-
-  addScaledVector(v, scaleVec, scale) {
-    v[0] += scaleVec[0] * scale;
-    v[1] += scaleVec[1] * scale;
-    v[2] += scaleVec[2] * scale;
-  }
-
-  lookAt(eye, center, up) {
-    const zaxis = this.normalize(this.subtract(eye, center));
-    const xaxis = this.normalize(this.crossProduct(up, zaxis));
-    const yaxis = this.crossProduct(zaxis, xaxis);
-
-    const ex = -this.dot(xaxis, eye);
-    const ey = -this.dot(yaxis, eye);
-    const ez = -this.dot(zaxis, eye);
-
-    return [
-      [xaxis[0], yaxis[0], zaxis[0], 0],
-      [xaxis[1], yaxis[1], zaxis[1], 0],
-      [xaxis[2], yaxis[2], zaxis[2], 0],
-      [ex, ey, ez, 1]
-    ];
-  }
-
-  dot(a, b) {
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-  }
 }
 
 const center = [0,0,0]
 const up = [0, 1, 0]
 const radius = 5
 const minRadius = 3
-const azimuthAngle = 0
-const polarAngle = 0
+const azimuthAngle = 0.5
+const polarAngle = 0.2
 const camera = new OrbitCamera(center, up, radius, minRadius, azimuthAngle, polarAngle)
 
 function updateOrbitCamera() {
@@ -151,6 +112,10 @@ function updateOrbitCamera() {
     camera.zoom(app.mouse.delta[1])
   }
   return camera.getViewMatrix();
+}
+
+function perspective(fovy, aspect, near, far) {
+  return mat4.perspective(mat4.create(), fovy, aspect, near, far)
 }
 `
 

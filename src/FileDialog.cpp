@@ -371,26 +371,25 @@ void showCopyingSessionFailedMessage(QWidget *parent)
 
 QDir getInstallDirectory(const QString &dirName)
 {
-    const auto paths = std::initializer_list<QString>
-    {
-        QCoreApplication::applicationDirPath(),
-            QCoreApplication::applicationDirPath() + "/..",
-            QCoreApplication::applicationDirPath() + "/../share/"
-            + QCoreApplication::organizationName(),
+    const auto binDir = QDir(QCoreApplication::applicationDirPath());
+    const auto installDir = (binDir.dirName() == "bin"
+            ? QDir::cleanPath(binDir.filePath(".."))
+            : binDir);
+    const auto searchPaths = std::initializer_list<QDir>{
+        installDir.filePath("share/" + QCoreApplication::organizationName()),
 #if !defined(NDEBUG)
-            QCoreApplication::applicationDirPath() + "/../..",
-            QCoreApplication::applicationDirPath() + "/../../extra",
+        installDir.filePath("extra"),
 #endif
 #if defined(__linux__)
-            qEnvironmentVariable("APPDIR") + "/usr/share/"
-            + QCoreApplication::organizationName(),
+        QDir(qEnvironmentVariable("APPDIR") + "/usr/share/"
+            + QCoreApplication::organizationName()),
 #endif
+        binDir.path(),
     };
-    for (const auto &path : paths) {
-        auto dir = QDir(path + "/" + dirName);
-        if (dir.exists())
-            return QDir::cleanPath(dir.path());
-    }
+    for (const auto &path : searchPaths)
+        if (path.exists(dirName))
+            return QDir::cleanPath(path.filePath(dirName));
+
     return QDir();
 }
 

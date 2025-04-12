@@ -152,9 +152,10 @@ void ProcessSource::render()
             }
         } else if (mSourceType == SourceType::JavaScript) {
             const auto basePath = QFileInfo(mFileName).absolutePath();
+            auto scriptEngine = ScriptEngine::make(basePath);
             auto scriptSource = QString();
             Singletons::fileCache().getSource(mFileName, &scriptSource);
-            Singletons::defaultScriptEngine().validateScript(scriptSource, mFileName, messages);
+            scriptEngine->validateScript(scriptSource, mFileName, messages);
         }
     }
 

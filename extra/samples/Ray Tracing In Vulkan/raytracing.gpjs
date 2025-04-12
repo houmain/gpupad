@@ -154,12 +154,6 @@
             "type": "Script"
         },
         {
-            "executeOn": "ResetEvaluation",
-            "fileName": "../../libs/gl-matrix.js",
-            "id": 10063,
-            "type": "Script"
-        },
-        {
             "executeOn": "EveryEvaluation",
             "fileName": "camera.js",
             "id": 103,
