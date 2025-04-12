@@ -35,11 +35,18 @@ namespace {
     }
 } // namespace
 
-ScriptEnginePtr ScriptEngine::make(const QString &basePath, QObject *parent)
+ScriptEnginePtr ScriptEngine::make(const QString &basePath,
+    QThread *thread, QObject *parent)
 {
     auto engine = ScriptEnginePtr(new ScriptEngine(parent));
-    engine->moveToThread(parent->thread());
-    engine->initialize(engine, basePath);
+    if (thread && thread != QThread::currentThread()) {
+        engine->moveToThread(thread);
+        QMetaObject::invokeMethod(engine.get(), &ScriptEngine::initialize,
+            Qt::BlockingQueuedConnection, engine, basePath);
+    }
+    else {
+        engine->initialize(engine, basePath);
+    }
     return engine;
 }
 
@@ -47,7 +54,6 @@ ScriptEngine::ScriptEngine(QObject* parent)
     : QObject(parent)
     , mConsoleScriptObject(new ConsoleScriptObject(this))
 {
-    Q_ASSERT(QThread::currentThread() == thread());
 }
 
 void ScriptEngine::initialize(const ScriptEnginePtr &self,
@@ -82,11 +88,18 @@ void ScriptEngine::initialize(const ScriptEnginePtr &self,
 
 ScriptEngine::~ScriptEngine()
 {
+    Q_ASSERT(QThread::currentThread() == thread());
+
     QMetaObject::invokeMethod(mInterruptTimer, "stop",
         Qt::BlockingQueuedConnection);
     connect(mInterruptThread, &QThread::finished, mInterruptThread,
         &QObject::deleteLater);
     mInterruptThread->requestInterruption();
+}
+
+void ScriptEngine::setOmitReferenceErrors()
+{
+    mOmitReferenceErrors = true;
 }
 
 void ScriptEngine::setTimeout(int msec)
@@ -184,6 +197,10 @@ void ScriptEngine::outputError(const QJSValue &result, ItemId itemId,
     MessagePtrSet &messages)
 {
     if (!result.isError())
+        return;
+
+    if (result.errorType() == QJSValue::ErrorType::ReferenceError
+        && mOmitReferenceErrors)
         return;
 
     // clean up message

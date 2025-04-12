@@ -58,6 +58,7 @@ void RenderSessionBase::prepare(bool itemsChanged,
 void RenderSessionBase::configure()
 {
     Q_ASSERT(!onMainThread());
+
     if (mEvaluationType == EvaluationType::Reset)
         mScriptSession.reset(new ScriptSession(this));
 
@@ -133,7 +134,8 @@ void RenderSessionBase::finish()
 
 void RenderSessionBase::release()
 {
-    mScriptSession.reset();
+    if (mScriptSession)
+        mScriptSession->resetEngine();
 }
 
 const Session &RenderSessionBase::session() const
@@ -182,43 +184,47 @@ int RenderSessionBase::getBufferSize(const Buffer &buffer)
 void RenderSessionBase::evaluateBlockProperties(const Block &block, int *offset,
     int *rowCount)
 {
-    Q_ASSERT(offset && rowCount);
-    dispatchToRenderThread([&]() {
-        if (!mScriptSession)
-            return;
-        auto &engine = mScriptSession->engine();
+    const auto evaluate = [&](ScriptEngine &engine) {
+        Q_ASSERT(offset && rowCount);
         *offset = engine.evaluateInt(block.offset, block.id, mMessages);
         *rowCount = engine.evaluateInt(block.rowCount, block.id, mMessages);
-    });
+    };
+    if (mScriptSession) {
+        dispatchToRenderThread([&]() { evaluate(mScriptSession->engine()); });
+    } else {
+        evaluate(Singletons::defaultScriptEngine());
+    }
 }
 
 void RenderSessionBase::evaluateTextureProperties(const Texture &texture,
     int *width, int *height, int *depth, int *layers)
 {
-    Q_ASSERT(width && height && depth && layers);
-    dispatchToRenderThread([&]() {
-        if (!mScriptSession)
-            return;
-        auto &engine = mScriptSession->engine();
+    const auto evaluate = [&](ScriptEngine &engine) {
+        Q_ASSERT(width && height && depth && layers);
         *width = engine.evaluateInt(texture.width, texture.id, mMessages);
         *height = engine.evaluateInt(texture.height, texture.id, mMessages);
         *depth = engine.evaluateInt(texture.depth, texture.id, mMessages);
         *layers = engine.evaluateInt(texture.layers, texture.id, mMessages);
-    });
+    };
+    if (mScriptSession) {
+        dispatchToRenderThread([&]() { evaluate(mScriptSession->engine()); });
+    } else {
+        evaluate(Singletons::defaultScriptEngine());
+    }
 }
 
 void RenderSessionBase::evaluateTargetProperties(const Target &target,
     int *width, int *height, int *layers)
 {
-    Q_ASSERT(width && height && layers);
-    dispatchToRenderThread([&]() {
-        if (!mScriptSession)
-            return;
-        auto &engine = mScriptSession->engine();
+    const auto evaluate = [&](ScriptEngine &engine) {
+        Q_ASSERT(width && height && layers);
         *width = engine.evaluateInt(target.defaultWidth, target.id, mMessages);
-        *height =
-            engine.evaluateInt(target.defaultHeight, target.id, mMessages);
-        *layers =
-            engine.evaluateInt(target.defaultLayers, target.id, mMessages);
-    });
+        *height = engine.evaluateInt(target.defaultHeight, target.id, mMessages);
+        *layers = engine.evaluateInt(target.defaultLayers, target.id, mMessages);
+    };
+    if (mScriptSession) {
+        dispatchToRenderThread([&]() { evaluate(mScriptSession->engine()); });
+    } else {
+        evaluate(Singletons::defaultScriptEngine());
+    }
 }

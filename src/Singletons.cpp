@@ -10,6 +10,7 @@
 #include "render/vulkan/VKRenderer.h"
 #include "session/SessionModel.h"
 #include "scripting/CustomActions.h"
+#include "scripting/ScriptEngine.h"
 #include <QApplication>
 
 Singletons *Singletons::sInstance;
@@ -95,6 +96,12 @@ CustomActions &Singletons::customActions()
     return *sInstance->mCustomActions;
 }
 
+ScriptEngine &Singletons::defaultScriptEngine()
+{
+    Q_ASSERT(onMainThread());
+    return *sInstance->mDefaultScriptEngine;
+}
+
 Singletons::Singletons(QMainWindow *window)
     : mSettings(std::make_unique<Settings>())
     , mFileCache(std::make_unique<FileCache>())
@@ -104,6 +111,7 @@ Singletons::Singletons(QMainWindow *window)
     , mVideoManager(std::make_unique<VideoManager>())
     , mInputState(std::make_unique<InputState>())
     , mCustomActions(std::make_unique<CustomActions>())
+    , mDefaultScriptEngine(ScriptEngine::make())
 {
     Q_ASSERT(onMainThread());
     sInstance = this;
@@ -112,6 +120,8 @@ Singletons::Singletons(QMainWindow *window)
     QObject::connect(&fileCache(), &FileCache::videoPlayerRequested,
         &videoManager(), &VideoManager::handleVideoPlayerRequested,
         Qt::QueuedConnection);
+
+    mDefaultScriptEngine->setOmitReferenceErrors();
 }
 
 Singletons::~Singletons() = default;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MessageList.h"
-#include "session/Item.h"
 #include <QObject>
 
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
@@ -13,6 +12,7 @@ class ScriptSession : public QObject
 public:
     ScriptSession(IScriptRenderSession *renderSession,
         QObject *parent = nullptr);
+    void resetEngine();
 
     // 1. called in main thread
     bool usesMouseState() const;

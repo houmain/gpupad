@@ -10,9 +10,14 @@ ScriptSession::ScriptSession(IScriptRenderSession *renderSession,
     : QObject(parent)
     , mRenderSession(*renderSession)
 {
-    moveToThread(mRenderSession.renderThread());
-    mScriptEngine = ScriptEngine::make(mRenderSession.basePath(), this);
-    Q_ASSERT(mScriptEngine->thread() == mRenderSession.renderThread());
+    mScriptEngine = ScriptEngine::make(mRenderSession.basePath(),
+        mRenderSession.renderThread());
+}
+
+void ScriptSession::resetEngine()
+{
+    Q_ASSERT(mScriptEngine.use_count() == 1);
+    mScriptEngine.reset();
 }
 
 void ScriptSession::beginSessionUpdate()

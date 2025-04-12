@@ -134,11 +134,12 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     , mFileName(fileName)
     , mEnginePtr(std::move(enginePtr))
 {
+    Q_ASSERT(onMainThread());
     QQuickStyle::setStyle("Fusion");
 
     if (!mEnginePtr) {
         const auto basePath = QFileInfo(fileName).absolutePath();
-        mEnginePtr = ScriptEngine::make(basePath, this);
+        mEnginePtr = ScriptEngine::make(basePath, thread(), this);
     }
     // WORKAROUND: tell QQuickWidget to also use OpenGL for rendering and not turn black
     // see: https://forum.qt.io/topic/148089/qopenglwidget-doesn-t-work-with-qquickwidget
