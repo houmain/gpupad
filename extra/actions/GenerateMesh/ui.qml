@@ -22,6 +22,7 @@ ScrollView {
   property alias scaleV: scaleV.value
   property alias drawCall: drawCall.checked
   property alias indexed: indexed.checked
+  property alias vertexPadding: vertexPadding.value
 
   property bool hasStacks
   property bool hasSlices
@@ -206,6 +207,20 @@ ScrollView {
       editable: true
       onValueModified: { script.refresh() }
     }    
+
+    Label {
+      text: qsTr("Padding")
+    }
+    SpinBox {
+      id: vertexPadding
+      Layout.preferredHeight: 25
+      Layout.preferredWidth: 55
+      value: 0
+      from: 0
+      to: 64
+      editable: true
+      onValueModified: { script.refresh() }
+    }
 
     Label {
       text: qsTr("Facetted")

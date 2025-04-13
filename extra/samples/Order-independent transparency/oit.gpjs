@@ -397,13 +397,6 @@
                     "type": "Stream"
                 },
                 {
-                    "bindingType": "Buffer",
-                    "bufferId": 111,
-                    "id": 117,
-                    "name": "Particles",
-                    "type": "Binding"
-                },
-                {
                     "bindingType": "Image",
                     "id": 143,
                     "imageFormat": "Internal",

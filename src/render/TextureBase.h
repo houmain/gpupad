@@ -12,6 +12,7 @@ public:
     TextureBase(const Texture &texture, RenderSessionBase &renderSession);
     TextureBase(const Buffer &buffer, Texture::Format format,
         RenderSessionBase &renderSession);
+    virtual ~TextureBase() = default;
     bool operator==(const TextureBase &rhs) const;
 
     ItemId itemId() const { return mItemId; }

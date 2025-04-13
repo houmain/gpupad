@@ -1,7 +1,7 @@
 
 // based on https://www.mbsoftworks.sk/tutorials/opengl4/026-camera-pt3-orbit-camera/ (MIT license)
 
-app.import("gl-matrix.js")
+app.loadLibrary("gl-matrix.js")
 const vec3 = glMatrix.vec3
 const mat4 = glMatrix.mat4
 
@@ -91,7 +91,7 @@ class OrbitCamera {
 
 const center = [0,0,0]
 const up = [0, 1, 0]
-const radius = 60
+const radius = 50
 const minRadius = 3
 const azimuthAngle = 0.5
 const polarAngle = 0.2

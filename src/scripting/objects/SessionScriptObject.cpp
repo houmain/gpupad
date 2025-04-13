@@ -8,7 +8,6 @@
 #include "editors/source/SourceEditor.h"
 #include "session/SessionModel.h"
 #include "LibraryScriptObject.h"
-#include "../ScriptEngine.h"
 #include "../IScriptRenderSession.h"
 #include <QFloat16>
 #include <QJSEngine>
@@ -70,7 +69,8 @@ namespace {
                             ADD(Field::DataType::Double, double)
 #undef ADD
                         }
-                        pos += padding[j];
+                        for (auto i = 0; i < padding[j]; ++i)
+                            write(uint8_t{ 0 });
                     }
                 }
             };
@@ -128,7 +128,8 @@ namespace {
                         ADD(Field::DataType::Double, double, toNumber)
 #undef ADD
                     }
-                    pos += padding[j];
+                    for (auto i = 0; i < padding[j]; ++i)
+                        write(uint8_t{ 0 });
                 }
             }
         }

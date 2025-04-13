@@ -13,7 +13,7 @@ class ConsoleScriptObject;
 class AppScriptObject;
 class QTimer;
 
-class ScriptEngine : public QObject
+class ScriptEngine final : public QObject
 {
 public:
     static ScriptEnginePtr make(const QString &basePath = "",

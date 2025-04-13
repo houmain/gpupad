@@ -6,7 +6,6 @@
 #include "GLStream.h"
 #include "GLTarget.h"
 #include "GLTexture.h"
-#include "Settings.h"
 #include "Singletons.h"
 #include "editors/EditorManager.h"
 #include "editors/texture/TextureEditor.h"

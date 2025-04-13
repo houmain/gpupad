@@ -4,7 +4,7 @@
 #include "session/Item.h"
 #include "spirv-reflect/spirv_reflect.h"
 
-class Spirv
+class Spirv final
 {
 public:
     struct Input

@@ -27,6 +27,7 @@ protected:
     static const auto maxBufferValues = 1024 - 2;
 
     ShaderPrintf() = default;
+    virtual ~ShaderPrintf() = default;
 
     struct ParsedFormatString
     {

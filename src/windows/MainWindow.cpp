@@ -652,8 +652,9 @@ void MainWindow::openFile()
     }
 }
 
-bool MainWindow::openFile(const QString &fileName, bool asBinaryFile)
+bool MainWindow::openFile(const QString &fileName_, bool asBinaryFile)
 {
+    const auto fileName = toNativeCanonicalFilePath(fileName_);
     if (FileDialog::isSessionFileName(fileName)) {
         if (!openSession(fileName))
             return false;
@@ -1079,8 +1080,8 @@ void MainWindow::handleHideMenuBarChanged(bool hide)
         mUi->toolBarMain->insertWidget(mUi->actionNew, mMenuButton);
         mUi->toolBarMain->insertSeparator(mUi->actionNew);
     } else {
-        mUi->toolBarMain->removeAction(mUi->toolBarMain->actions().front());
-        mUi->toolBarMain->removeAction(mUi->toolBarMain->actions().front());
+        const auto& actions = mUi->toolBarMain->actions();
+        mUi->toolBarMain->removeAction(actions.front());
     }
 }
 
@@ -1118,7 +1119,7 @@ void MainWindow::populateThemesMenu()
     auto windowThemeActionGroup = new QActionGroup(this);
     auto editorThemeActionGroup = new QActionGroup(this);
 
-    auto fileNames = Theme::getThemeFileNames();
+    const auto fileNames = Theme::getThemeFileNames();
     for (const auto &fileName : fileNames) {
         const auto &theme = Theme::getTheme(fileName);
         for (auto menu : { mUi->menuWindowThemes, mUi->menuEditorThemes }) {

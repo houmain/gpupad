@@ -6,7 +6,7 @@
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 class IScriptRenderSession;
 
-class ScriptSession : public QObject
+class ScriptSession final : public QObject
 {
     Q_OBJECT
 public:

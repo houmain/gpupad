@@ -48,6 +48,7 @@ class Script {
       scaleV: ui.scaleV,
       drawCall: ui.drawCall,
       indexed: ui.indexed,
+      vertexPadding: ui.vertexPadding,
     }
     
     const typeIndex = this.ui.typeIndex
@@ -123,13 +124,15 @@ class Script {
   updateBuffer() {
     const lib = this.library
     const geometry = lib.generate(JSON.stringify(this.settings))
-    
+    const padding = this.settings.vertexPadding
+    const components = 8
     if (this.settings.indexed) {
       const vertices = lib.getVertices(geometry)
       if (!vertices.length)
         throw "Generating geometry failed"
         
-      this.vertices.rowCount = vertices.length / 8
+      this.vertices.items[2].padding = padding * 4
+      this.vertices.rowCount = vertices.length / components
       app.session.setBlockData(this.vertices, vertices)
       
       if (!this.indices)
@@ -146,7 +149,7 @@ class Script {
         })
       
       const indices = lib.getIndices(geometry)
-      this.indices.offset = this.vertices.rowCount * 8 * 4
+      this.indices.offset = this.vertices.rowCount * (components + padding) * 4
       this.indices.rowCount = indices.length / 3
       app.session.setBlockData(this.indices, indices)
     }
@@ -155,7 +158,8 @@ class Script {
       if (!vertices.length)
         throw "Generating geometry failed"
         
-      this.vertices.rowCount = vertices.length / 8
+      this.vertices.items[2].padding = this.settings.vertexPadding * 4
+      this.vertices.rowCount = vertices.length / components
       app.session.setBlockData(this.vertices, vertices)
       
       if (this.indices) {

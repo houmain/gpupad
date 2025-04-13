@@ -8,6 +8,8 @@ class ShaderBase
 public:
     ShaderBase(Shader::ShaderType type, const QList<const Shader *> &shaders,
         const Session &session);
+    virtual ~ShaderBase() = default;
+
     bool operator==(const ShaderBase &rhs) const;
     ItemId itemId() const { return mItemId; }
     Shader::ShaderType type() const { return mType; }
