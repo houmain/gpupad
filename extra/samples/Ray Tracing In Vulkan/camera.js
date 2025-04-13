@@ -1,5 +1,5 @@
 
-app.import("gl-matrix.js")
+app.loadLibrary("gl-matrix.js")
 const vec3 = glMatrix.vec3
 const mat4 = glMatrix.mat4
 

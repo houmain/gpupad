@@ -8,8 +8,8 @@ const uint MaterialDiffuseLight = 4;
 struct Material
 {
 	vec4 Diffuse;
-	int DiffuseTextureId;
 	float Fuzziness;
 	float RefractionIndex;
 	uint MaterialModel;
+	uint _padding;
 };

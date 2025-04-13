@@ -4,9 +4,8 @@
 #extension GL_EXT_ray_tracing : require
 #include "Material.glsl"
 
-layout(binding = 6) readonly buffer MaterialArray { Material[] Materials; };
-layout(binding = 8) uniform sampler2D[] TextureSamplers;
-layout(binding = 9) readonly buffer SphereArray { vec4[] Spheres; };
+layout(binding = 4) readonly buffer MaterialArray { Material[] Materials; };
+layout(binding = 5) readonly buffer SphereArray { vec4[] Spheres; };
 
 #include "Scatter.glsl"
 

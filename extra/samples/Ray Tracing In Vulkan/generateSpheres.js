@@ -9,24 +9,24 @@ function sub(a, b) {
   return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 }
 
-function Lambertian(diffuse, textureId = -1) {
-	return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 0];
+function Lambertian(diffuse) {
+	return [diffuse[0], diffuse[1], diffuse[2], 1, 0.0, 0.0, 0];
 }
 
-function Metallic(diffuse, fuzziness, textureId = -1) {
-	return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, fuzziness, 0.0, 1];
+function Metallic(diffuse, fuzziness) {
+	return [diffuse[0], diffuse[1], diffuse[2], 1, fuzziness, 0.0, 1];
 }
 
-function Dielectric(refractionIndex, textureId = -1) {
-	return [0.7, 0.7, 1.0, 1, textureId, 0.0, refractionIndex, 2];
+function Dielectric(refractionIndex) {
+	return [0.7, 0.7, 1.0, 1, 0.0, refractionIndex, 2];
 }
 
-function Isotropic(diffuse, textureId = -1) {
-	return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 3];
+function Isotropic(diffuse) {
+	return [diffuse[0], diffuse[1], diffuse[2], 1, 0.0, 0.0, 3];
 }
 
-function DiffuseLight(diffuse, textureId = -1) {
-	return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 4];
+function DiffuseLight(diffuse) {
+	return [diffuse[0], diffuse[1], diffuse[2], 1, 0.0, 0.0, 4];
 }
 
 

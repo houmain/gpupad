@@ -75,14 +75,6 @@
                         },
                         {
                             "count": 1,
-                            "dataType": "Int32",
-                            "id": 10052,
-                            "name": "DiffuseTextureId",
-                            "padding": 0,
-                            "type": "Field"
-                        },
-                        {
-                            "count": 1,
                             "dataType": "Float",
                             "id": 10053,
                             "name": "Fuzziness",
@@ -102,7 +94,7 @@
                             "dataType": "Uint32",
                             "id": 10055,
                             "name": "MaterialModel",
-                            "padding": 0,
+                            "padding": 4,
                             "type": "Field"
                         }
                     ],
