@@ -376,11 +376,17 @@ QDir getInstallDirectory(const QString &dirName)
             ? QDir::cleanPath(binDir.filePath(".."))
             : binDir);
     const auto searchPaths = std::initializer_list<QDir>{
-        installDir.filePath("share/" + QCoreApplication::organizationName()),
 #if !defined(NDEBUG)
+        installDir.filePath("../../extra"),
+        installDir.filePath("../extra"),
         installDir.filePath("extra"),
+        installDir.filePath(".."),
+        installDir.filePath("../.."),
 #endif
-#if defined(__linux__)
+#if defined(_WIN32)
+        installDir.path(),
+#else
+        installDir.filePath("share/" + QCoreApplication::organizationName()),
         QDir(qEnvironmentVariable("APPDIR") + "/usr/share/"
             + QCoreApplication::organizationName()),
 #endif
