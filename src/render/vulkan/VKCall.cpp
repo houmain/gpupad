@@ -81,11 +81,15 @@ void VKCall::setTextures(VKTexture *texture, VKTexture *fromTexture)
     mFromTexture = fromTexture;
 }
 
+void VKCall::setAccelerationStructure(VKAccelerationStructure *accelStruct)
+{
+    mAccelerationStructure = accelStruct;
+}
+
 VKPipeline *VKCall::getPipeline(VKContext &context)
 {
     if (!mPipeline && mProgram) {
-        mPipeline = std::make_unique<VKPipeline>(mCall.id, mProgram, mTarget,
-            mVertexStream);
+        mPipeline = std::make_unique<VKPipeline>(mCall.id, mProgram);
 
         mProgram->link(context.device);
         if (mVertexStream)
@@ -130,6 +134,12 @@ void VKCall::execute(VKContext &context, MessagePtrSet &messages,
     if (mKind.indexed && !mIndexBuffer) {
         messages +=
             MessageList::insert(mCall.id, MessageType::IndexBufferNotAssigned);
+        return;
+    }
+
+    if (mKind.trace && !mAccelerationStructure) {
+        messages += MessageList::insert(mCall.id,
+            MessageType::AccelerationStructureNotAssigned);
         return;
     }
 
@@ -214,7 +224,9 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     primitiveOptions.patchControlPoints =
         evaluateUInt(scriptEngine, mCall.patchVertices);
 
-    if (!mPipeline || !mPipeline->createGraphics(context, primitiveOptions))
+    if (!mPipeline
+        || !mPipeline->createGraphics(context, primitiveOptions, mTarget,
+            mVertexStream))
         return;
 
     const auto canRender = mPipeline->updateBindings(context, scriptEngine);
@@ -327,17 +339,9 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
 void VKCall::executeTraceRays(VKContext &context, MessagePtrSet &messages,
     ScriptEngine &scriptEngine)
 {
-    if (!mPipeline || !mPipeline->createRayTracing(context))
+    if (!mPipeline
+        || !mPipeline->createRayTracing(context, mAccelerationStructure))
         return;
-
-    if (!mBuffer) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::BufferNotAssigned);
-        return;
-    }
-    mUsedItems += mBuffer->usedItems();
-
-    mPipeline->createRayTracingAccelerationStructure(context, *mBuffer);
 
     const auto canRender = mPipeline->updateBindings(context, scriptEngine);
     if (!canRender) {
@@ -356,6 +360,7 @@ void VKCall::executeTraceRays(VKContext &context, MessagePtrSet &messages,
         .raygenShaderBindingTable = sbt.rayGenShaderRegion(),
         .missShaderBindingTable = sbt.missShaderRegion(),
         .hitShaderBindingTable = sbt.hitShaderRegion(),
+        .callableShaderBindingTable = {},
         .extent = {
             .width = evaluateUInt(scriptEngine, mCall.workGroupsX),
             .height = evaluateUInt(scriptEngine, mCall.workGroupsY),

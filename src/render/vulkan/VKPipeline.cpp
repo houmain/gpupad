@@ -5,6 +5,7 @@
 #include "VKStream.h"
 #include "VKTarget.h"
 #include "VKTexture.h"
+#include "VKAccelerationStructure.h"
 #include <QScopeGuard>
 
 namespace {
@@ -210,12 +211,9 @@ namespace {
     }
 } // namespace
 
-VKPipeline::VKPipeline(ItemId itemId, VKProgram *program, VKTarget *target,
-    VKStream *vertexStream)
+VKPipeline::VKPipeline(ItemId itemId, VKProgram *program)
     : mItemId(itemId)
     , mProgram(*program)
-    , mTarget(target)
-    , mVertexStream(vertexStream)
 {
 }
 
@@ -558,10 +556,14 @@ void VKPipeline::updatePushConstants(
 }
 
 bool VKPipeline::createGraphics(VKContext &context,
-    KDGpu::PrimitiveOptions &primitiveOptions)
+    KDGpu::PrimitiveOptions &primitiveOptions, VKTarget *target,
+    VKStream *vertexStream)
 {
     if (std::exchange(mCreated, true))
         return mGraphicsPipeline.isValid();
+
+    mTarget = target;
+    mVertexStream = vertexStream;
 
     if (!createLayout(context))
         return false;
@@ -613,13 +615,16 @@ bool VKPipeline::createCompute(VKContext &context)
     return mComputePipeline.isValid();
 }
 
-bool VKPipeline::createRayTracing(VKContext &context)
+bool VKPipeline::createRayTracing(VKContext &context,
+        VKAccelerationStructure *accelStruct)
 {
     if (std::exchange(mCreated, true))
         return mRayTracingPipeline.isValid();
 
     if (!createLayout(context))
         return false;
+
+    mAccelerationStructure = accelStruct;
 
     // https://www.willusher.io/graphics/2019/11/20/the-sbt-three-ways/
     auto options = KDGpu::RayTracingPipelineOptions{ };
@@ -698,97 +703,6 @@ bool VKPipeline::createRayTracing(VKContext &context)
     return true;
 }
 
-void VKPipeline::createRayTracingAccelerationStructure(VKContext &context,
-    VKBuffer &aabbBuffer)
-{
-    // bottom level acceleration structure
-    aabbBuffer.prepareAccelerationStructureGeometry(context);
-
-    const auto aabbGeometry = KDGpu::AccelerationStructureGeometryAabbsData{
-        .data = aabbBuffer.buffer(),
-        .stride = sizeof(VkAabbPositionsKHR),
-    };
-    const auto aabbCount =
-        static_cast<uint32_t>(aabbBuffer.size() / sizeof(VkAabbPositionsKHR));
-
-    mBottomLevelAs = context.device.createAccelerationStructure(
-        KDGpu::AccelerationStructureOptions{
-            .type = KDGpu::AccelerationStructureType::BottomLevel,
-            .flags = KDGpu::AccelerationStructureFlagBits::PreferFastTrace,
-            .geometryTypesAndCount = {
-                {
-                    .geometry = aabbGeometry,
-                    .maxPrimitiveCount = aabbCount,
-                },
-            },
-    });
-
-    context.commandRecorder->buildAccelerationStructures({
-        .buildGeometryInfos = {
-            {
-                .geometries = { aabbGeometry },
-                .destinationStructure = mBottomLevelAs,
-                .buildRangeInfos = {
-                    {
-                        .primitiveCount = aabbCount,
-                        .primitiveOffset = 0,
-                        .firstVertex = 0,
-                        .transformOffset = 0,
-                    },
-                },
-            },
-        },
-    });
-
-    context.commandRecorder->memoryBarrier(KDGpu::MemoryBarrierOptions{
-        .srcStages = KDGpu::PipelineStageFlagBit::AccelerationStructureBuildBit,
-        .dstStages = KDGpu::PipelineStageFlagBit::AccelerationStructureBuildBit,
-        .memoryBarriers = {
-            {
-                .srcMask = KDGpu::AccessFlagBit::AccelerationStructureWriteBit,
-                .dstMask = KDGpu::AccessFlagBit::AccelerationStructureReadBit,
-            },
-        },
-    });
-
-    // top level acceleration structure
-    const auto aabbGeometryInstance = KDGpu::AccelerationStructureGeometryInstancesData{
-        .data = {
-            KDGpu::AccelerationStructureGeometryInstance{
-                .flags = KDGpu::GeometryInstanceFlagBits::TriangleFacingCullDisable,
-                .accelerationStructure = mBottomLevelAs,
-            },
-        },
-    };
-
-    mTopLevelAs = context.device.createAccelerationStructure({
-        .type = KDGpu::AccelerationStructureType::TopLevel,
-        .flags = KDGpu::AccelerationStructureFlagBits::PreferFastTrace,
-        .geometryTypesAndCount = {
-            {
-                .geometry = aabbGeometryInstance,
-                .maxPrimitiveCount = 1,
-            },
-        },
-    });
-
-    context.commandRecorder->buildAccelerationStructures({
-        .buildGeometryInfos = {
-            {
-                .geometries = { aabbGeometryInstance },
-                .destinationStructure = mTopLevelAs,
-                .buildRangeInfos = {
-                    {
-                        .primitiveCount = 1, // 1 BLAS
-                        .primitiveOffset = 0,
-                        .firstVertex = 0,
-                        .transformOffset = 0,
-                    },
-                },
-            },
-        },
-    });
-}
 
 bool VKPipeline::createLayout(VKContext &context)
 {
@@ -1045,13 +959,19 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         return MessageType::TextureBuffersNotAvailable;
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+        if (!mAccelerationStructure)
+            return MessageType::AccelerationStructureNotAssigned;
+
+        mAccelerationStructure->prepare(context);
+        mUsedItems += mAccelerationStructure->usedItems();
+
         setBindGroupResource(desc.set,
             {
                 .binding = desc.binding,
                 .resource =
                     KDGpu::AccelerationStructureBinding{
-                        .accelerationStructure = mTopLevelAs,
-                    },
+                        .accelerationStructure =
+                            mAccelerationStructure->topLevelAs() },
             });
         break;
 

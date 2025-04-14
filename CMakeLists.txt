@@ -147,6 +147,7 @@ set(SOURCES
   src/render/vulkan/VKTexture.cpp
   src/render/vulkan/VKRenderer.cpp
   src/render/vulkan/VKRenderSession.cpp
+  src/render/vulkan/VKAccelerationStructure.cpp
   src/render/ProcessSource.cpp
   src/render/RenderTask.cpp
   src/render/RenderSessionBase.cpp

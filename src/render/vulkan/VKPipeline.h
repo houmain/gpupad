@@ -10,6 +10,7 @@ class VKBuffer;
 class VKTarget;
 class VKProgram;
 class VKStream;
+class VKAccelerationStructure;
 
 struct VKUniformBinding
 {
@@ -67,17 +68,16 @@ struct VKBindings
 class VKPipeline
 {
 public:
-    VKPipeline(ItemId itemId, VKProgram *program, VKTarget *target,
-        VKStream *vertexStream);
+    VKPipeline(ItemId itemId, VKProgram *program);
     ~VKPipeline();
 
     void setBindings(VKBindings &&bindings);
     bool createGraphics(VKContext &context,
-        KDGpu::PrimitiveOptions &primitiveOptions);
+        KDGpu::PrimitiveOptions &primitiveOptions, VKTarget *target,
+        VKStream *vertexStream);
     bool createCompute(VKContext &context);
-    bool createRayTracing(VKContext &context);
-    void createRayTracingAccelerationStructure(VKContext &context,
-        VKBuffer &aabbBuffer);
+    bool createRayTracing(VKContext &context,
+        VKAccelerationStructure *accelStruct);
     bool updateBindings(VKContext &context, ScriptEngine &scriptEngine);
     KDGpu::RenderPassCommandRecorder beginRenderPass(VKContext &context,
         bool flipViewport);
@@ -147,6 +147,7 @@ private:
     VKProgram &mProgram;
     VKTarget *mTarget{};
     VKStream *mVertexStream{};
+    VKAccelerationStructure *mAccelerationStructure{};
 
     bool mCreated{};
     KDGpu::GraphicsPipeline mGraphicsPipeline;
@@ -161,8 +162,6 @@ private:
     std::vector<std::byte> mPushConstantData;
     KDGpu::PushConstantRange mPushConstantRange{};
     KDGpu::RayTracingShaderBindingTable mRayTracingShaderBindingTable;
-    KDGpu::AccelerationStructure mBottomLevelAs;
-    KDGpu::AccelerationStructure mTopLevelAs;
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
 };

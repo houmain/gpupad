@@ -1,5 +1,4 @@
 #include "VKRenderSession.h"
-#include "Settings.h"
 #include "Singletons.h"
 #include "VKShareSync.h"
 #include "VKBuffer.h"
@@ -9,6 +8,7 @@
 #include "VKStream.h"
 #include "VKTarget.h"
 #include "VKTexture.h"
+#include "VKAccelerationStructure.h"
 #include "editors/EditorManager.h"
 #include "editors/texture/TextureEditor.h"
 #include <QStack>
@@ -77,6 +77,7 @@ struct VKRenderSession::CommandQueue
     std::map<ItemId, VKProgram> programs;
     std::map<ItemId, VKTarget> targets;
     std::map<ItemId, VKStream> vertexStreams;
+    std::map<ItemId, VKAccelerationStructure> accelerationStructures;
     std::deque<Command> commands;
     std::vector<VKProgram> failedPrograms;
 };
@@ -165,6 +166,11 @@ void VKRenderSession::createCommandQueue()
                             scriptEngine);
         }
         return vs;
+    };
+
+    const auto addAccelerationStructureOnce = [&](ItemId accelStructId) {
+        return addOnce(mCommandQueue->accelerationStructures,
+            sessionModel.findItem<AccelerationStructure>(accelStructId));
     };
 
     sessionModel.forEachItem([&](const Item &item) {
@@ -301,14 +307,9 @@ void VKRenderSession::createCommandQueue()
 
                 case Call::CallType::TraceRays:
                     vkcall.setProgram(addProgramOnce(call->programId));
-                    if (auto buffer = addBufferOnce(call->bufferId)) {
-                        buffer->addUsage(
-                            KDGpu::BufferUsageFlagBits::
-                                AccelerationStructureBuildInputReadOnlyBit
-                            | KDGpu::BufferUsageFlagBits::
-                                ShaderDeviceAddressBit);
-                        vkcall.setBuffers(buffer, nullptr);
-                    }
+                    if (auto accelStruct = addAccelerationStructureOnce(
+                            call->accelerationStructureId))
+                        vkcall.setAccelerationStructure(accelStruct);
                     break;
 
                 case Call::CallType::ClearTexture:
@@ -398,6 +399,7 @@ void VKRenderSession::reuseUnmodifiedItems()
         replaceEqual(mCommandQueue->textures, mPrevCommandQueue->textures);
         replaceEqual(mCommandQueue->buffers, mPrevCommandQueue->buffers);
         replaceEqual(mCommandQueue->programs, mPrevCommandQueue->programs);
+        replaceEqual(mCommandQueue->accelerationStructures, mPrevCommandQueue->accelerationStructures);
 
         // immediately try to link programs
         // when failing restore previous version but keep error messages

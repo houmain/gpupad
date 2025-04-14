@@ -87,6 +87,9 @@ VKBuffer::VKBuffer(const Buffer &buffer, VKRenderSession &renderSession)
 
 void VKBuffer::addUsage(KDGpu::BufferUsageFlags usage)
 {
+    // TODO: not ideal to update usage of already created buffer
+    if ((mUsage & usage) != usage)
+        mBuffer = { };
     mUsage |= usage;
 }
 

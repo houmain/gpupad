@@ -22,9 +22,10 @@ CallProperties::CallProperties(PropertiesEditor *propertiesEditor)
     connect(mUi->primitiveType, &DataComboBox::currentDataChanged, this,
         &CallProperties::updateWidgets);
 
-    for (auto combobox : { mUi->program, mUi->vertexStream, mUi->target,
-             mUi->indexBufferBlock, mUi->indirectBufferBlock, mUi->texture,
-             mUi->fromTexture, mUi->buffer, mUi->fromBuffer })
+    for (auto combobox :
+        { mUi->program, mUi->vertexStream, mUi->target, mUi->indexBufferBlock,
+            mUi->indirectBufferBlock, mUi->texture, mUi->fromTexture,
+            mUi->buffer, mUi->fromBuffer, mUi->accelerationStructure })
         connect(combobox, &ReferenceComboBox::textRequired,
             [this](QVariant data) {
                 return mPropertiesEditor.getItemName(data.toInt());
@@ -35,6 +36,11 @@ CallProperties::CallProperties(PropertiesEditor *propertiesEditor)
     connect(mUi->vertexStream, &ReferenceComboBox::listRequired, [this]() {
         return mPropertiesEditor.getItemIds(Item::Type::Stream, true);
     });
+    connect(mUi->accelerationStructure, &ReferenceComboBox::listRequired,
+        [this]() {
+            return mPropertiesEditor.getItemIds(
+                Item::Type::AccelerationStructure);
+        });
     connect(mUi->target, &ReferenceComboBox::listRequired,
         [this]() { return mPropertiesEditor.getItemIds(Item::Type::Target); });
     for (auto block : { mUi->indexBufferBlock, mUi->indirectBufferBlock })
@@ -126,6 +132,9 @@ void CallProperties::addMappings(QDataWidgetMapper &mapper)
 
     mapper.addMapping(mUi->buffer, SessionModel::CallBufferId);
     mapper.addMapping(mUi->fromBuffer, SessionModel::CallFromBufferId);
+
+    mapper.addMapping(mUi->accelerationStructure,
+        SessionModel::CallAccelerationStructureId);
 }
 
 void CallProperties::updateWidgets()
@@ -182,8 +191,10 @@ void CallProperties::updateWidgets()
     setFormVisibility(mUi->formLayout, mUi->labelBuffer, mUi->buffer,
         type == Call::CallType::ClearBuffer
             || type == Call::CallType::CopyBuffer
-            || type == Call::CallType::SwapBuffers
-            || type == Call::CallType::TraceRays);
+            || type == Call::CallType::SwapBuffers);
+
+    setFormVisibility(mUi->formLayout, mUi->labelAccelerationStructure,
+        mUi->accelerationStructure, type == Call::CallType::TraceRays);
 
     setFormVisibility(mUi->formLayout, mUi->labelFromBuffer, mUi->fromBuffer,
         type == Call::CallType::CopyBuffer

@@ -43,6 +43,7 @@ enum class MessageType {
     TargetNotAssigned,
     IndexBufferNotAssigned,
     IndirectBufferNotAssigned,
+    AccelerationStructureNotAssigned,
     TextureNotAssigned,
     BufferNotAssigned,
     SwappingTexturesFailed,

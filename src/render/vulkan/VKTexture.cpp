@@ -134,7 +134,7 @@ namespace {
                     const auto offset =
                         std::distance(start, data.getData(0, layer, faceSlice));
                     regions.push_back(KDGpu::BufferTextureCopyRegion{
-                        .bufferOffset{ static_cast<size_t>(offset) },
+                        .bufferOffset =  static_cast<KDGpu::DeviceSize>(offset),
                         .textureSubResource{
                             .aspectMask = texture.aspectMask(),
                             .baseArrayLayer = static_cast<uint32_t>(layer),
@@ -196,6 +196,9 @@ VKTexture::VKTexture(const Buffer &buffer, VKBuffer *textureBuffer,
 
 void VKTexture::addUsage(KDGpu::TextureUsageFlags usage)
 {
+    // TODO: not ideal to update usage of already created texture
+    if ((mUsage & usage) != usage)
+        mTexture = { };
     mUsage |= usage;
 }
 

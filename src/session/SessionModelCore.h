@@ -130,6 +130,7 @@ public:
         CallClearDepth,
         CallClearStencil,
         CallExecuteOn,
+        CallAccelerationStructureId,
         InstanceType,
         InstanceTransform,
         InstanceVertexBufferBlockId,

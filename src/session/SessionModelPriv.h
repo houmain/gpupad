@@ -127,6 +127,7 @@
     ADD(CallClearDepth, Call, clearDepth)                                     \
     ADD(CallClearStencil, Call, clearStencil)                                 \
     ADD(CallExecuteOn, Call, executeOn)                                       \
+    ADD(CallAccelerationStructureId, Call, accelerationStructureId)           \
     ADD(InstanceType, Instance, instanceType)                                 \
     ADD(InstanceTransform, Instance, transform)                               \
     ADD(InstanceVertexBufferBlockId, Instance, vertexBufferBlockId)           \

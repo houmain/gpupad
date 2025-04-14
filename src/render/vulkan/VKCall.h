@@ -25,6 +25,7 @@ public:
     void setIndirectBuffer(VKBuffer *commands, const Block &block);
     void setBuffers(VKBuffer *buffer, VKBuffer *fromBuffer);
     void setTextures(VKTexture *texture, VKTexture *fromTexture);
+    void setAccelerationStructure(VKAccelerationStructure *accelStruct);
     VKPipeline *getPipeline(VKContext &context);
     void execute(VKContext &context, MessagePtrSet &messages,
         ScriptEngine &scriptEngine);
@@ -58,6 +59,7 @@ private:
     VKBuffer *mFromBuffer{};
     VKTexture *mTexture{};
     VKTexture *mFromTexture{};
+    VKAccelerationStructure *mAccelerationStructure{};
 
     VKBuffer *mIndexBuffer{};
     QString mIndirectOffset;

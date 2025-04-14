@@ -128,8 +128,10 @@ QString MessageWindow::getMessageText(const Message &message) const
     case TargetNotAssigned:         return tr("No target set");
     case IndexBufferNotAssigned:    return tr("No index buffer set");
     case IndirectBufferNotAssigned: return tr("No indirect buffer set");
-    case TextureNotAssigned:        return tr("No texture set");
-    case BufferNotAssigned:         return tr("No buffer set");
+    case AccelerationStructureNotAssigned:
+        return tr("No acceleration structure set");
+    case TextureNotAssigned: return tr("No texture set");
+    case BufferNotAssigned:  return tr("No buffer set");
     case InvalidSubroutine:
         return tr("Invalid subroutine '%1'").arg(message.text);
     case ImageFormatNotBindable: return tr("Image format not bindable");

@@ -709,11 +709,12 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         result &= (column != CallBufferId
             || callType == Call::CallType::ClearBuffer
             || callType == Call::CallType::CopyBuffer
-            || callType == Call::CallType::SwapBuffers
-            || callType == Call::CallType::TraceRays);
+            || callType == Call::CallType::SwapBuffers);
         result &= (column != CallFromBufferId
             || callType == Call::CallType::CopyBuffer
             || callType == Call::CallType::SwapBuffers);
+        result &= (column != CallAccelerationStructureId
+            || callType == Call::CallType::TraceRays);
         break;
     }
 
