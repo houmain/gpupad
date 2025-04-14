@@ -23,6 +23,8 @@
 #include "ui_ShaderProperties.h"
 #include "ui_StreamProperties.h"
 #include "ui_TargetProperties.h"
+#include "ui_AccelerationStructureProperties.h"
+#include "ui_InstanceProperties.h"
 #include <QDataWidgetMapper>
 #include <QStackedWidget>
 #include <QTimer>
@@ -114,6 +116,8 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     mCallProperties = new CallProperties(this);
     mStack->addWidget(mCallProperties);
     add(mScriptProperties);
+    add(mAccelerationStructureProperties);
+    add(mInstanceProperties);
 
     setWidgetResizable(true);
     setWidget(mStack);
@@ -148,13 +152,22 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     connect(mAttributeProperties->field, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(Item::Type::Field); });
 
+    connect(mInstanceProperties->vertexBufferBlock,
+        &ReferenceComboBox::listRequired,
+        [this]() { return getItemIds(Item::Type::Block); });
+    connect(mInstanceProperties->indexBufferBlock,
+        &ReferenceComboBox::listRequired,
+        [this]() { return getItemIds(Item::Type::Block, true); });
+
     for (auto comboBox : { mShaderProperties->file, mBufferProperties->file,
              mScriptProperties->file })
         connect(comboBox, &ReferenceComboBox::textRequired, [](auto data) {
             return FileDialog::getFileTitle(data.toString());
         });
 
-    for (auto comboBox : { mAttributeProperties->field })
+    for (auto comboBox :
+        { mAttributeProperties->field, mInstanceProperties->vertexBufferBlock,
+            mInstanceProperties->indexBufferBlock })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant data) { return getItemName(data.toInt()); });
 
@@ -179,9 +192,12 @@ void PropertiesEditor::fillComboBoxes()
     fillComboBox<Shader::Language>(mShaderProperties->language);
     removeComboBoxItem(mShaderProperties->language, "None");
     fillComboBox<Shader::ShaderType>(mShaderProperties->type);
-    renameComboBoxItem(mShaderProperties->type, "Tess Control", "Tessellation Control");
-    renameComboBoxItem(mShaderProperties->type, "Tess Evaluation", "Tessellation Evaluation");
+    renameComboBoxItem(mShaderProperties->type, "Tess Control",
+        "Tessellation Control");
+    renameComboBoxItem(mShaderProperties->type, "Tess Evaluation",
+        "Tessellation Evaluation");
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
+    fillComboBox<Instance::InstanceType>(mInstanceProperties->type);
 }
 
 QVariantList PropertiesEditor::getFileNames(Item::Type type, bool addNull) const
@@ -346,6 +362,21 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
         map(mScriptProperties->file, SessionModel::FileName);
         map(mScriptProperties->executeOn, SessionModel::ScriptExecuteOn);
         break;
+
+    case Item::Type::AccelerationStructure:
+        map(mAccelerationStructureProperties->name, SessionModel::Name);
+        break;
+
+    case Item::Type::Instance:
+        map(mInstanceProperties->name, SessionModel::Name);
+        map(mInstanceProperties->type, SessionModel::InstanceType);
+        map(mInstanceProperties->transform, SessionModel::InstanceTransform);
+        map(mInstanceProperties->vertexBufferBlock,
+            SessionModel::InstanceVertexBufferBlockId);
+        map(mInstanceProperties->indexBufferBlock,
+            SessionModel::InstanceIndexBufferBlockId);
+        updateInstanceWidgets(index);
+        break;
     }
 
     mMapper->setRootIndex(mModel.parent(index));
@@ -353,9 +384,9 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
 
     // values of Item::Type must match order of Stack Widgets
     static_assert(static_cast<int>(Item::Type::Root) == 0);
-    static_assert(static_cast<int>(Item::Type::Script) == 15);
+    static_assert(static_cast<int>(Item::Type::Instance) == 17);
     const auto lastStackWidget = static_cast<Item::Type>(mStack->count() - 1);
-    Q_ASSERT(lastStackWidget == Item::Type::Script);
+    Q_ASSERT(lastStackWidget == Item::Type::Instance);
 
     const auto stackIndex = static_cast<int>(mModel.getItemType(index));
     mStack->setCurrentIndex(stackIndex);
@@ -609,6 +640,17 @@ void PropertiesEditor::updateTargetWidgets(const QModelIndex &index)
         hasAttachments);
 }
 
+void PropertiesEditor::updateInstanceWidgets(const QModelIndex &index)
+{
+    const auto instance = mModel.item<Instance>(index);
+    const auto hasIndices = (instance->instanceType
+        != Instance::InstanceType::AxisAlignedBoundingBoxes);
+
+    auto &ui = *mInstanceProperties;
+    setFormVisibility(ui.formLayout, ui.labelIndexBufferBlock,
+        ui.indexBufferBlock, hasIndices);
+}
+
 void PropertiesEditor::deduceBlockOffset()
 {
     auto offset = 0;
@@ -637,8 +679,8 @@ void PropertiesEditor::deduceBlockRowCount()
     const auto stride = getBlockStride(block);
     if (stride) {
         auto offset = 0, rowCount = 0;
-        Singletons::synchronizeLogic().evaluateBlockProperties(block,
-            &offset, &rowCount);
+        Singletons::synchronizeLogic().evaluateBlockProperties(block, &offset,
+            &rowCount);
         auto binary = QByteArray();
         if (Singletons::fileCache().getBinary(buffer.fileName, &binary))
             mModel.setData(mModel.getIndex(currentModelIndex(),

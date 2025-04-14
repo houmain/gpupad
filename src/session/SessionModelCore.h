@@ -130,6 +130,10 @@ public:
         CallClearDepth,
         CallClearStencil,
         CallExecuteOn,
+        InstanceType,
+        InstanceTransform,
+        InstanceVertexBufferBlockId,
+        InstanceIndexBufferBlockId,
     };
 
     explicit SessionModelCore(QObject *parent = nullptr);

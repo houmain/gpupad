@@ -74,4 +74,6 @@ private:
     QAction *mAddAttachmentAction{};
     QAction *mAddCallAction{};
     QAction *mAddScriptAction{};
+    QAction *mAddAccelerationStructureAction{};
+    QAction *mAddInstanceAction{};
 };

@@ -101,6 +101,9 @@ namespace {
         case Item::Type::Attachment: return new Attachment();
         case Item::Type::Call:       return new Call();
         case Item::Type::Script:     return new Script();
+        case Item::Type::AccelerationStructure:
+            return new AccelerationStructure();
+        case Item::Type::Instance: return new Instance();
         }
         Q_UNREACHABLE();
         return nullptr;
@@ -141,6 +144,11 @@ namespace {
                 return new Call(static_cast<const Call &>(item));
             case Item::Type::Script:
                 return new Script(static_cast<const Script &>(item));
+            case Item::Type::AccelerationStructure:
+                return new AccelerationStructure(
+                    static_cast<const AccelerationStructure &>(item));
+            case Item::Type::Instance:
+                return new Instance(static_cast<const Instance &>(item));
             }
             Q_UNREACHABLE();
             return nullptr;
@@ -225,27 +233,31 @@ bool SessionModelCore::canContainType(const QModelIndex &index,
         case Item::Type::Stream:
         case Item::Type::Target:
         case Item::Type::Call:
-        case Item::Type::Script:  return true;
-        default:                  return false;
+        case Item::Type::Script:
+        case Item::Type::AccelerationStructure: return true;
+        default:                                return false;
         }
     case Item::Type::Buffer:  return (type == Item::Type::Block);
     case Item::Type::Block:   return (type == Item::Type::Field);
     case Item::Type::Program: return (type == Item::Type::Shader);
     case Item::Type::Stream:  return (type == Item::Type::Attribute);
     case Item::Type::Target:  return (type == Item::Type::Attachment);
-    default:                  return false;
+    case Item::Type::AccelerationStructure:
+        return (type == Item::Type::Instance);
+    default: return false;
     }
 }
 
 Item::Type SessionModelCore::getDefaultChildType(const QModelIndex &index) const
 {
     switch (getItemType(index)) {
-    case Item::Type::Buffer:  return Item::Type::Block;
-    case Item::Type::Block:   return Item::Type::Field;
-    case Item::Type::Program: return Item::Type::Shader;
-    case Item::Type::Stream:  return Item::Type::Attribute;
-    case Item::Type::Target:  return Item::Type::Attachment;
-    default:                  return Item::Type::Group;
+    case Item::Type::Buffer:                return Item::Type::Block;
+    case Item::Type::Block:                 return Item::Type::Field;
+    case Item::Type::Program:               return Item::Type::Shader;
+    case Item::Type::Stream:                return Item::Type::Attribute;
+    case Item::Type::Target:                return Item::Type::Attachment;
+    case Item::Type::AccelerationStructure: return Item::Type::Instance;
+    default:                                return Item::Type::Group;
     }
 }
 

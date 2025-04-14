@@ -186,6 +186,8 @@ set(SOURCES
   src/session/ProgramProperties.ui
   src/session/ReferenceComboBox.cpp
   src/session/ScriptProperties.ui
+  src/session/AccelerationStructureProperties.ui
+  src/session/InstanceProperties.ui
   src/session/SessionEditor.cpp
   src/session/SessionModel.cpp
   src/session/SessionModelCore.cpp

@@ -3,6 +3,7 @@
 #include "FileDialog.h"
 #include "SessionModel.h"
 #include "Singletons.h"
+#include "PropertiesEditor.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QMenu>
@@ -48,8 +49,8 @@ SessionEditor::SessionEditor(QWidget *parent)
                 break;
             }
         }
-        action =
-            new QAction(mModel.getTypeIcon(type), tr("Add ") + typeName, this);
+        action = new QAction(mModel.getTypeIcon(type),
+            tr("Add ") + splitPascalCase(typeName), this);
         connect(action, &QAction::triggered, [this, type]() { addItem(type); });
     };
     addAction(mAddGroupAction, Item::Type::Group);
@@ -66,6 +67,9 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddTargetAction, Item::Type::Target);
     addAction(mAddAttributeAction, Item::Type::Attribute);
     addAction(mAddStreamAction, Item::Type::Stream);
+    addAction(mAddAccelerationStructureAction,
+        Item::Type::AccelerationStructure);
+    addAction(mAddInstanceAction, Item::Type::Instance);
 
     addItemActions(mContextMenu);
 
@@ -84,6 +88,7 @@ void SessionEditor::addItemActions(QMenu *menu)
     menu->addAction(mAddAttributeAction);
     menu->addAction(mAddAttachmentAction);
     menu->addAction(mAddShaderAction);
+    menu->addAction(mAddInstanceAction);
     menu->addSeparator();
     menu->addAction(mAddGroupAction);
     menu->addAction(mAddBufferAction);
@@ -94,6 +99,7 @@ void SessionEditor::addItemActions(QMenu *menu)
     menu->addAction(mAddProgramAction);
     menu->addAction(mAddCallAction);
     menu->addAction(mAddScriptAction);
+    menu->addAction(mAddAccelerationStructureAction);
 }
 
 void SessionEditor::updateItemActions()
@@ -110,6 +116,7 @@ void SessionEditor::updateItemActions()
              TypeAction{ Item::Type::Shader, mAddShaderAction },
              TypeAction{ Item::Type::Attribute, mAddAttributeAction },
              TypeAction{ Item::Type::Attachment, mAddAttachmentAction },
+             TypeAction{ Item::Type::Instance, mAddInstanceAction },
          })
         action->setVisible(mModel.canContainType(index, type)
             || mModel.canContainType(index.parent(), type));

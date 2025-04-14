@@ -250,6 +250,7 @@ struct Call : Item
 
     ItemId bufferId{};
     ItemId fromBufferId{};
+    ItemId accelerationStructureId{};
 };
 
 struct Script : FileItem
@@ -257,6 +258,20 @@ struct Script : FileItem
     using ExecuteOn = ItemEnums::ExecuteOn;
 
     ExecuteOn executeOn{ ExecuteOn::ManualEvaluation };
+};
+
+struct Instance : Item
+{
+    using InstanceType = ItemEnums2::InstanceType;
+
+    InstanceType instanceType{};
+    QString transform;
+    ItemId vertexBufferBlockId{};
+    ItemId indexBufferBlockId{};
+};
+
+struct AccelerationStructure : Item
+{
 };
 
 struct TextureKind
@@ -368,6 +383,16 @@ template <>
 inline Item::Type getItemType<Script>()
 {
     return Item::Type::Script;
+}
+template <>
+inline Item::Type getItemType<Instance>()
+{
+    return Item::Type::Instance;
+}
+template <>
+inline Item::Type getItemType<AccelerationStructure>()
+{
+    return Item::Type::AccelerationStructure;
 }
 
 template <typename T>

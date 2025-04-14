@@ -28,6 +28,10 @@ SessionModel::SessionModel(QObject *parent) : SessionModelCore(parent)
     mTypeIcons[Item::Type::Call] = QIcon::fromTheme("dialog-information");
     mTypeIcons[Item::Type::Script] =
         QIcon::fromTheme("accessories-text-editor");
+    mTypeIcons[Item::Type::AccelerationStructure] =
+        QIcon::fromTheme("zoom-fit-best");
+    mTypeIcons[Item::Type::Instance] =
+        QIcon::fromTheme("media-playback-start-rtl");
 
     connect(&undoStack(), &QUndoStack::cleanChanged, this,
         &SessionModel::undoStackCleanChanged);
@@ -120,8 +124,11 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     case Item::Type::Texture:
     case Item::Type::Program:
     case Item::Type::Stream:
-    case Item::Type::Target:  flags |= Qt::ItemIsDropEnabled; break;
-    default:                  break;
+    case Item::Type::Target:
+    case Item::Type::AccelerationStructure:
+        flags |= Qt::ItemIsDropEnabled;
+        break;
+    default: break;
     }
     // workaround to optimize D&D (do not snap to not droppable targets)
     if (!mDraggedIndices.empty() && (flags & Qt::ItemIsDropEnabled))
@@ -465,6 +472,15 @@ void SessionModel::deserialize(const QJsonObject &object,
         setData(index, value);
     };
 
+    const auto dropItemColumn = [&](const QString &property,
+                                    const QVariant &value) {
+#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY)                   \
+    if (Item::Type::ITEM_TYPE == type && #PROPERTY == property) \
+        return dropColumn(property, getIndex(index, COLUMN_TYPE), value);
+        ADD_EACH_COLUMN_TYPE()
+#undef ADD
+    };
+
     for (const QString &property : object.keys()) {
         auto value = object[property].toVariant();
 
@@ -482,13 +498,9 @@ void SessionModel::deserialize(const QJsonObject &object,
             if (value == "Target2DMultisampleArray")
                 value = "Target2DArray";
             dropColumn(property, getIndex(index, TextureTarget), value);
+        } else {
+            dropItemColumn(property, value);
         }
-#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY)                        \
-    else if (Item::Type::ITEM_TYPE == type && #PROPERTY == property) \
-        dropColumn(property, getIndex(index, COLUMN_TYPE), value);
-
-        ADD_EACH_COLUMN_TYPE()
-#undef ADD
     }
 
     auto items = object["items"].toArray();
@@ -718,6 +730,14 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         result &= (column != TargetDefaultHeight || !hasAttachments);
         result &= (column != TargetDefaultLayers || !hasAttachments);
         result &= (column != TargetDefaultSamples || !hasAttachments);
+        break;
+    }
+
+    case Item::Type::Instance: {
+        const auto &instance = static_cast<const Instance &>(item);
+        const auto hasIndices =
+            (instance.instanceType == Instance::InstanceType::Triangles);
+        result &= (column != InstanceIndexBufferBlockId || hasIndices);
         break;
     }
 

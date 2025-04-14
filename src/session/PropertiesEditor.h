@@ -19,6 +19,8 @@ namespace Ui {
     class AttributeProperties;
     class TargetProperties;
     class ScriptProperties;
+    class AccelerationStructureProperties;
+    class InstanceProperties;
 } // namespace Ui
 
 class QStackedWidget;
@@ -56,6 +58,7 @@ public:
 private:
     void updateBlockWidgets(const QModelIndex &index);
     void updateTargetWidgets(const QModelIndex &index);
+    void updateInstanceWidgets(const QModelIndex &index);
     void deduceBlockOffset();
     void deduceBlockRowCount();
     void deduceShaderType();
@@ -83,6 +86,9 @@ private:
     AttachmentProperties *mAttachmentProperties{};
     CallProperties *mCallProperties{};
     std::unique_ptr<Ui::ScriptProperties> mScriptProperties;
+    std::unique_ptr<Ui::AccelerationStructureProperties>
+        mAccelerationStructureProperties;
+    std::unique_ptr<Ui::InstanceProperties> mInstanceProperties;
 };
 
 QString splitPascalCase(QString str);
@@ -116,7 +122,8 @@ inline void removeComboBoxItem(QComboBox *c, const QString &text)
     c->removeItem(c->findText(text));
 }
 
-inline void renameComboBoxItem(QComboBox *c, const QString &text, const QString &newText)
+inline void renameComboBoxItem(QComboBox *c, const QString &text,
+    const QString &newText)
 {
     const auto index = c->findText(text);
     Q_ASSERT(index >= 0);

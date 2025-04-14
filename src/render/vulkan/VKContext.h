@@ -10,6 +10,7 @@
 // still missing declaration in KDGpu/texture_view.h?
 namespace KDGpu {
     class Texture;
+    class Instance;
 }
 struct ktxVulkanDeviceInfo;
 

@@ -27,6 +27,8 @@ namespace ItemEnums {
         Attachment,
         Call,
         Script,
+        AccelerationStructure,
+        Instance,
     };
     Q_ENUM_NS(ItemType)
 
@@ -301,4 +303,10 @@ namespace ItemEnums2 {
         Invert = GL_INVERT,
     };
     Q_ENUM_NS(StencilOperation)
+
+    enum InstanceType {
+        Triangles,
+        AxisAlignedBoundingBoxes,
+    };
+    Q_ENUM_NS(InstanceType)
 } // namespace ItemEnums2

@@ -126,7 +126,11 @@
     ADD(CallClearColor, Call, clearColor)                                     \
     ADD(CallClearDepth, Call, clearDepth)                                     \
     ADD(CallClearStencil, Call, clearStencil)                                 \
-    ADD(CallExecuteOn, Call, executeOn)
+    ADD(CallExecuteOn, Call, executeOn)                                       \
+    ADD(InstanceType, Instance, instanceType)                                 \
+    ADD(InstanceTransform, Instance, transform)                               \
+    ADD(InstanceVertexBufferBlockId, Instance, vertexBufferBlockId)           \
+    ADD(InstanceIndexBufferBlockId, Instance, indexBufferBlockId)
 
 template <typename T>
 auto fromVariant(const QVariant &v)
