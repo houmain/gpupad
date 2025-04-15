@@ -45,44 +45,44 @@
       <widget class="QLineEdit" name="name"/>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="labelType">
+      <widget class="QLabel" name="labelGeometryType">
        <property name="text">
-        <string>Type</string>
+        <string>Geometry Type</string>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="DataComboBox" name="type"/>
+      <widget class="DataComboBox" name="geometryType"/>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="labelTransform">
-       <property name="text">
-        <string>Transform</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="ExpressionLineEdit" name="transform"/>
-     </item>
-     <item row="3" column="0">
       <widget class="QLabel" name="labelVertexBufferBlock">
        <property name="text">
         <string>Vertices Block</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="2" column="1">
       <widget class="ReferenceComboBox" name="vertexBufferBlock"/>
      </item>
-     <item row="4" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="labelIndexBufferBlock">
        <property name="text">
         <string>Indices Block</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="3" column="1">
       <widget class="ReferenceComboBox" name="indexBufferBlock"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelTransform">
+       <property name="text">
+        <string>Transform</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="ExpressionLineEdit" name="transform"/>
      </item>
     </layout>
    </item>

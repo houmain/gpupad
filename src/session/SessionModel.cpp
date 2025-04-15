@@ -472,15 +472,6 @@ void SessionModel::deserialize(const QJsonObject &object,
         setData(index, value);
     };
 
-    const auto dropItemColumn = [&](const QString &property,
-                                    const QVariant &value) {
-#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY)                   \
-    if (Item::Type::ITEM_TYPE == type && #PROPERTY == property) \
-        return dropColumn(property, getIndex(index, COLUMN_TYPE), value);
-        ADD_EACH_COLUMN_TYPE()
-#undef ADD
-    };
-
     for (const QString &property : object.keys()) {
         auto value = object[property].toVariant();
 
@@ -499,7 +490,16 @@ void SessionModel::deserialize(const QJsonObject &object,
                 value = "Target2DArray";
             dropColumn(property, getIndex(index, TextureTarget), value);
         } else {
-            dropItemColumn(property, value);
+            static const auto sPropertyNameColumnTypeMap =
+                std::map<std::pair<Item::Type, QString>, ColumnType>{
+#define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY) \
+    { { Item::Type::ITEM_TYPE, #PROPERTY }, COLUMN_TYPE },
+                    ADD_EACH_COLUMN_TYPE()
+#undef ADD
+                };
+            const auto it = sPropertyNameColumnTypeMap.find({ type, property });
+            if (it != sPropertyNameColumnTypeMap.end())
+                dropColumn(property, getIndex(index, it->second), value);
         }
     }
 
@@ -737,7 +737,7 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
     case Item::Type::Instance: {
         const auto &instance = static_cast<const Instance &>(item);
         const auto hasIndices =
-            (instance.instanceType == Instance::InstanceType::Triangles);
+            (instance.geometryType == Instance::GeometryType::Triangles);
         result &= (column != InstanceIndexBufferBlockId || hasIndices);
         break;
     }

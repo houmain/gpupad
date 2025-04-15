@@ -6,6 +6,16 @@
 class VKStream
 {
 public:
+    explicit VKStream(const Stream &stream);
+    void setAttribute(int attributeIndex, const Field &column, VKBuffer *buffer,
+        ScriptEngine &scriptEngine);
+
+    const std::vector<VKBuffer *> &getBuffers();
+    const std::vector<int> &getBufferOffsets();
+    const KDGpu::VertexOptions &getVertexOptions();
+    const QSet<ItemId> &usedItems() const { return mUsedItems; }
+
+private:
     struct VKAttribute
     {
         QString name;
@@ -18,16 +28,6 @@ public:
         int offset{};
     };
 
-    explicit VKStream(const Stream &stream);
-    void setAttribute(int attributeIndex, const Field &column, VKBuffer *buffer,
-        ScriptEngine &scriptEngine);
-
-    const std::vector<VKBuffer *> &getBuffers();
-    const std::vector<int> &getBufferOffsets();
-    const KDGpu::VertexOptions &getVertexOptions();
-    const QSet<ItemId> &usedItems() const { return mUsedItems; }
-
-private:
     bool validateAttribute(const VKAttribute &attribute) const;
     void invalidateVertexOptions();
     void updateVertexOptions();

@@ -304,9 +304,9 @@ namespace ItemEnums2 {
     };
     Q_ENUM_NS(StencilOperation)
 
-    enum InstanceType {
-        Triangles,
+    enum GeometryType {
         AxisAlignedBoundingBoxes,
+        Triangles,
     };
-    Q_ENUM_NS(InstanceType)
+    Q_ENUM_NS(GeometryType)
 } // namespace ItemEnums2

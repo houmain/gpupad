@@ -371,6 +371,8 @@ void SessionEditor::addItem(Item::Type type)
         mModel.insertItem(Item::Type::Attribute, index);
     else if (type == Item::Type::Program)
         mModel.insertItem(Item::Type::Shader, index);
+    else if (type == Item::Type::AccelerationStructure)
+        mModel.insertItem(Item::Type::Instance, index);
 
     mModel.endUndoMacro();
 

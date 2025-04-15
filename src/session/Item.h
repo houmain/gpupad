@@ -262,12 +262,12 @@ struct Script : FileItem
 
 struct Instance : Item
 {
-    using InstanceType = ItemEnums2::InstanceType;
+    using GeometryType = ItemEnums2::GeometryType;
 
-    InstanceType instanceType{};
-    QString transform;
+    GeometryType geometryType{};
     ItemId vertexBufferBlockId{};
     ItemId indexBufferBlockId{};
+    QString transform;
 };
 
 struct AccelerationStructure : Item

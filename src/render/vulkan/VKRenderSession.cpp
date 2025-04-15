@@ -169,8 +169,19 @@ void VKRenderSession::createCommandQueue()
     };
 
     const auto addAccelerationStructureOnce = [&](ItemId accelStructId) {
-        return addOnce(mCommandQueue->accelerationStructures,
-            sessionModel.findItem<AccelerationStructure>(accelStructId));
+        const auto accelStruct =
+            sessionModel.findItem<AccelerationStructure>(accelStructId);
+        auto as = addOnce(mCommandQueue->accelerationStructures, accelStruct,
+            scriptEngine);
+        if (as) {
+            const auto &items = accelStruct->items;
+            for (auto i = 0; i < items.size(); ++i)
+                if (auto instance = castItem<Instance>(items[i]))
+                    as->setBuffers(i,
+                        addBufferOnce(instance->vertexBufferBlockId),
+                        addBufferOnce(instance->indexBufferBlockId));
+        }
+        return as;
     };
 
     sessionModel.forEachItem([&](const Item &item) {
@@ -399,7 +410,8 @@ void VKRenderSession::reuseUnmodifiedItems()
         replaceEqual(mCommandQueue->textures, mPrevCommandQueue->textures);
         replaceEqual(mCommandQueue->buffers, mPrevCommandQueue->buffers);
         replaceEqual(mCommandQueue->programs, mPrevCommandQueue->programs);
-        replaceEqual(mCommandQueue->accelerationStructures, mPrevCommandQueue->accelerationStructures);
+        replaceEqual(mCommandQueue->accelerationStructures,
+            mPrevCommandQueue->accelerationStructures);
 
         // immediately try to link programs
         // when failing restore previous version but keep error messages

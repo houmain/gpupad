@@ -197,7 +197,7 @@ void PropertiesEditor::fillComboBoxes()
     renameComboBoxItem(mShaderProperties->type, "Tess Evaluation",
         "Tessellation Evaluation");
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
-    fillComboBox<Instance::InstanceType>(mInstanceProperties->type);
+    fillComboBox<Instance::GeometryType>(mInstanceProperties->geometryType);
 }
 
 QVariantList PropertiesEditor::getFileNames(Item::Type type, bool addNull) const
@@ -369,12 +369,12 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
 
     case Item::Type::Instance:
         map(mInstanceProperties->name, SessionModel::Name);
-        map(mInstanceProperties->type, SessionModel::InstanceType);
-        map(mInstanceProperties->transform, SessionModel::InstanceTransform);
+        map(mInstanceProperties->geometryType, SessionModel::InstanceGeometryType);
         map(mInstanceProperties->vertexBufferBlock,
             SessionModel::InstanceVertexBufferBlockId);
         map(mInstanceProperties->indexBufferBlock,
             SessionModel::InstanceIndexBufferBlockId);
+        map(mInstanceProperties->transform, SessionModel::InstanceTransform);
         updateInstanceWidgets(index);
         break;
     }
@@ -643,8 +643,8 @@ void PropertiesEditor::updateTargetWidgets(const QModelIndex &index)
 void PropertiesEditor::updateInstanceWidgets(const QModelIndex &index)
 {
     const auto instance = mModel.item<Instance>(index);
-    const auto hasIndices = (instance->instanceType
-        != Instance::InstanceType::AxisAlignedBoundingBoxes);
+    const auto hasIndices = (instance->geometryType
+        != Instance::GeometryType::AxisAlignedBoundingBoxes);
 
     auto &ui = *mInstanceProperties;
     setFormVisibility(ui.formLayout, ui.labelIndexBufferBlock,

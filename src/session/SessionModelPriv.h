@@ -128,10 +128,10 @@
     ADD(CallClearStencil, Call, clearStencil)                                 \
     ADD(CallExecuteOn, Call, executeOn)                                       \
     ADD(CallAccelerationStructureId, Call, accelerationStructureId)           \
-    ADD(InstanceType, Instance, instanceType)                                 \
-    ADD(InstanceTransform, Instance, transform)                               \
+    ADD(InstanceGeometryType, Instance, geometryType)                         \
     ADD(InstanceVertexBufferBlockId, Instance, vertexBufferBlockId)           \
-    ADD(InstanceIndexBufferBlockId, Instance, indexBufferBlockId)
+    ADD(InstanceIndexBufferBlockId, Instance, indexBufferBlockId)             \
+    ADD(InstanceTransform, Instance, transform)
 
 template <typename T>
 auto fromVariant(const QVariant &v)
