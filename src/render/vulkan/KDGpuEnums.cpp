@@ -332,3 +332,13 @@ int getKDSamples(KDGpu::SampleCountFlags sampleCounts)
             return (1 << i);
     }
 }
+
+std::optional<KDGpu::IndexType> getKDIndexType(int size)
+{
+    switch (size) {
+    case 1:  return KDGpu::IndexType::Uint8;
+    case 2:  return KDGpu::IndexType::Uint16;
+    case 4:  return KDGpu::IndexType::Uint32;
+    default: return {};
+    }
+}

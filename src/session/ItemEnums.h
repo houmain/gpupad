@@ -29,6 +29,7 @@ namespace ItemEnums {
         Script,
         AccelerationStructure,
         Instance,
+        Geometry,
     };
     Q_ENUM_NS(ItemType)
 

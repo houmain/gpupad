@@ -25,6 +25,7 @@
 #include "ui_TargetProperties.h"
 #include "ui_AccelerationStructureProperties.h"
 #include "ui_InstanceProperties.h"
+#include "ui_GeometryProperties.h"
 #include <QDataWidgetMapper>
 #include <QStackedWidget>
 #include <QTimer>
@@ -118,6 +119,7 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     add(mScriptProperties);
     add(mAccelerationStructureProperties);
     add(mInstanceProperties);
+    add(mGeometryProperties);
 
     setWidgetResizable(true);
     setWidget(mStack);
@@ -152,10 +154,12 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     connect(mAttributeProperties->field, &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(Item::Type::Field); });
 
-    connect(mInstanceProperties->vertexBufferBlock,
+    connect(mGeometryProperties->type, &DataComboBox::currentDataChanged, this,
+        &PropertiesEditor::updateGeometryWidgets);
+    connect(mGeometryProperties->vertexBufferBlock,
         &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(Item::Type::Block); });
-    connect(mInstanceProperties->indexBufferBlock,
+    connect(mGeometryProperties->indexBufferBlock,
         &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(Item::Type::Block, true); });
 
@@ -166,8 +170,8 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
         });
 
     for (auto comboBox :
-        { mAttributeProperties->field, mInstanceProperties->vertexBufferBlock,
-            mInstanceProperties->indexBufferBlock })
+        { mAttributeProperties->field, mGeometryProperties->vertexBufferBlock,
+            mGeometryProperties->indexBufferBlock })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant data) { return getItemName(data.toInt()); });
 
@@ -197,7 +201,7 @@ void PropertiesEditor::fillComboBoxes()
     renameComboBoxItem(mShaderProperties->type, "Tess Evaluation",
         "Tessellation Evaluation");
     fillComboBox<Script::ExecuteOn>(mScriptProperties->executeOn);
-    fillComboBox<Instance::GeometryType>(mInstanceProperties->geometryType);
+    fillComboBox<Geometry::GeometryType>(mGeometryProperties->type);
 }
 
 QVariantList PropertiesEditor::getFileNames(Item::Type type, bool addNull) const
@@ -369,13 +373,18 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
 
     case Item::Type::Instance:
         map(mInstanceProperties->name, SessionModel::Name);
-        map(mInstanceProperties->geometryType, SessionModel::InstanceGeometryType);
-        map(mInstanceProperties->vertexBufferBlock,
-            SessionModel::InstanceVertexBufferBlockId);
-        map(mInstanceProperties->indexBufferBlock,
-            SessionModel::InstanceIndexBufferBlockId);
         map(mInstanceProperties->transform, SessionModel::InstanceTransform);
-        updateInstanceWidgets(index);
+        break;
+
+    case Item::Type::Geometry:
+        map(mGeometryProperties->name, SessionModel::Name);
+        map(mGeometryProperties->type, SessionModel::GeometryType);
+        map(mGeometryProperties->vertexBufferBlock,
+            SessionModel::GeometryVertexBufferBlockId);
+        map(mGeometryProperties->indexBufferBlock,
+            SessionModel::GeometryIndexBufferBlockId);
+        map(mGeometryProperties->count, SessionModel::GeometryCount);
+        map(mGeometryProperties->offset, SessionModel::GeometryOffset);
         break;
     }
 
@@ -384,9 +393,9 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
 
     // values of Item::Type must match order of Stack Widgets
     static_assert(static_cast<int>(Item::Type::Root) == 0);
-    static_assert(static_cast<int>(Item::Type::Instance) == 17);
+    static_assert(static_cast<int>(Item::Type::Geometry) == 18);
     const auto lastStackWidget = static_cast<Item::Type>(mStack->count() - 1);
-    Q_ASSERT(lastStackWidget == Item::Type::Instance);
+    Q_ASSERT(lastStackWidget == Item::Type::Geometry);
 
     const auto stackIndex = static_cast<int>(mModel.getItemType(index));
     mStack->setCurrentIndex(stackIndex);
@@ -640,13 +649,14 @@ void PropertiesEditor::updateTargetWidgets(const QModelIndex &index)
         hasAttachments);
 }
 
-void PropertiesEditor::updateInstanceWidgets(const QModelIndex &index)
+void PropertiesEditor::updateGeometryWidgets()
 {
-    const auto instance = mModel.item<Instance>(index);
-    const auto hasIndices = (instance->geometryType
-        != Instance::GeometryType::AxisAlignedBoundingBoxes);
+    const auto geometryType = static_cast<Geometry::GeometryType>(
+        mGeometryProperties->type->currentData().toInt());
+    const auto hasIndices =
+        (geometryType != Geometry::GeometryType::AxisAlignedBoundingBoxes);
 
-    auto &ui = *mInstanceProperties;
+    auto &ui = *mGeometryProperties;
     setFormVisibility(ui.formLayout, ui.labelIndexBufferBlock,
         ui.indexBufferBlock, hasIndices);
 }

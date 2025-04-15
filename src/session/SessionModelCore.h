@@ -131,10 +131,12 @@ public:
         CallClearStencil,
         CallExecuteOn,
         CallAccelerationStructureId,
-        InstanceGeometryType,
-        InstanceVertexBufferBlockId,
-        InstanceIndexBufferBlockId,
         InstanceTransform,
+        GeometryType,
+        GeometryVertexBufferBlockId,
+        GeometryIndexBufferBlockId,
+        GeometryCount,
+        GeometryOffset,
     };
 
     explicit SessionModelCore(QObject *parent = nullptr);

@@ -70,6 +70,7 @@ SessionEditor::SessionEditor(QWidget *parent)
     addAction(mAddAccelerationStructureAction,
         Item::Type::AccelerationStructure);
     addAction(mAddInstanceAction, Item::Type::Instance);
+    addAction(mAddGeometryAction, Item::Type::Geometry);
 
     addItemActions(mContextMenu);
 
@@ -88,6 +89,7 @@ void SessionEditor::addItemActions(QMenu *menu)
     menu->addAction(mAddAttributeAction);
     menu->addAction(mAddAttachmentAction);
     menu->addAction(mAddShaderAction);
+    menu->addAction(mAddGeometryAction);
     menu->addAction(mAddInstanceAction);
     menu->addSeparator();
     menu->addAction(mAddGroupAction);
@@ -110,14 +112,16 @@ void SessionEditor::updateItemActions()
         Item::Type type;
         QAction *action;
     };
-    for (const auto [type, action] : {
-             TypeAction{ Item::Type::Block, mAddBlockAction },
-             TypeAction{ Item::Type::Field, mAddFieldAction },
-             TypeAction{ Item::Type::Shader, mAddShaderAction },
-             TypeAction{ Item::Type::Attribute, mAddAttributeAction },
-             TypeAction{ Item::Type::Attachment, mAddAttachmentAction },
-             TypeAction{ Item::Type::Instance, mAddInstanceAction },
-         })
+    for (const auto [type, action] :
+        {
+            TypeAction{ Item::Type::Block, mAddBlockAction },
+            TypeAction{ Item::Type::Field, mAddFieldAction },
+            TypeAction{ Item::Type::Shader, mAddShaderAction },
+            TypeAction{ Item::Type::Attribute, mAddAttributeAction },
+            TypeAction{ Item::Type::Attachment, mAddAttachmentAction },
+            TypeAction{ Item::Type::Instance, mAddInstanceAction },
+            TypeAction{ Item::Type::Geometry, mAddGeometryAction },
+        })
         action->setVisible(mModel.canContainType(index, type)
             || mModel.canContainType(index.parent(), type));
 }
@@ -203,7 +207,7 @@ void SessionEditor::selectionChanged(const QItemSelection &selected,
     const auto parent = currentIndex().parent();
     const auto selection = selectionModel()->selection();
     auto invalid = QItemSelection();
-    for (QModelIndex index : selection.indexes())
+    for (const QModelIndex &index : selection.indexes())
         if (index.parent() != parent)
             invalid.select(index, index);
 
@@ -323,7 +327,7 @@ void SessionEditor::delete_()
     auto indices = selectionModel()->selectedIndexes();
     std::sort(indices.begin(), indices.end(),
         [](const auto &a, const auto &b) { return a.row() > b.row(); });
-    for (QModelIndex index : indices)
+    for (const auto &index : std::as_const(indices))
         mModel.deleteItem(index);
     mModel.endUndoMacro();
 }
@@ -371,8 +375,11 @@ void SessionEditor::addItem(Item::Type type)
         mModel.insertItem(Item::Type::Attribute, index);
     else if (type == Item::Type::Program)
         mModel.insertItem(Item::Type::Shader, index);
-    else if (type == Item::Type::AccelerationStructure)
-        mModel.insertItem(Item::Type::Instance, index);
+    else if (type == Item::Type::AccelerationStructure) {
+        const auto instance = mModel.insertItem(Item::Type::Instance, index);
+        mModel.insertItem(Item::Type::Geometry, instance);
+        setExpanded(instance, true);
+    }
 
     mModel.endUndoMacro();
 

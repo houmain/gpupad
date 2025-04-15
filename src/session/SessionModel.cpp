@@ -31,6 +31,8 @@ SessionModel::SessionModel(QObject *parent) : SessionModelCore(parent)
     mTypeIcons[Item::Type::AccelerationStructure] =
         QIcon::fromTheme("zoom-fit-best");
     mTypeIcons[Item::Type::Instance] =
+        QIcon::fromTheme("mail-attachment");
+    mTypeIcons[Item::Type::Geometry] =
         QIcon::fromTheme("media-playback-start-rtl");
 
     connect(&undoStack(), &QUndoStack::cleanChanged, this,
@@ -126,6 +128,7 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     case Item::Type::Stream:
     case Item::Type::Target:
     case Item::Type::AccelerationStructure:
+    case Item::Type::Instance:
         flags |= Qt::ItemIsDropEnabled;
         break;
     default: break;
@@ -734,11 +737,11 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         break;
     }
 
-    case Item::Type::Instance: {
-        const auto &instance = static_cast<const Instance &>(item);
+    case Item::Type::Geometry: {
+        const auto &geometry = static_cast<const Geometry &>(item);
         const auto hasIndices =
-            (instance.geometryType == Instance::GeometryType::Triangles);
-        result &= (column != InstanceIndexBufferBlockId || hasIndices);
+            (geometry.geometryType == Geometry::GeometryType::Triangles);
+        result &= (column != GeometryIndexBufferBlockId || hasIndices);
         break;
     }
 

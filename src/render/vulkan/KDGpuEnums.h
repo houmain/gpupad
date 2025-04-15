@@ -2,6 +2,7 @@
 
 #include "VKContext.h"
 #include "session/Item.h"
+#include <optional>
 
 KDGpu::Format toKDGpu(QOpenGLTexture::TextureFormat format);
 KDGpu::Format toKDGpu(Field::DataType dataType, int count);
@@ -16,3 +17,4 @@ KDGpu::CompareOperation toKDGpu(Attachment::ComparisonFunc func);
 KDGpu::StencilOperation toKDGpu(Attachment::StencilOperation op);
 KDGpu::SampleCountFlagBits getKDSampleCount(int samples);
 int getKDSamples(KDGpu::SampleCountFlags sampleCounts);
+std::optional<KDGpu::IndexType> getKDIndexType(int size);

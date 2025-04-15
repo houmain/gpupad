@@ -51,6 +51,8 @@ enum class MessageType {
     InvalidAttribute,
     InvalidSubroutine,
     InvalidIndexType,
+    InvalidIndirectStride,
+    InvalidGeometryStride,
     ImageFormatNotBindable,
     UniformComponentMismatch,
     InvalidIncludeDirective,

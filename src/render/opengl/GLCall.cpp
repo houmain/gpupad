@@ -173,18 +173,21 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block)
 
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
+    mIndexSize = 0;
     for (auto item : block.items)
         if (auto field = castItem<Field>(item)) {
-            if (!mIndexSize)
-                mIndexSize = getFieldSize(*field);
+            mIndexSize += getFieldSize(*field);
             mUsedItems += field->id;
         }
+    if (!getIndexType()) {
+        mMessages += MessageList::insert(block.id,
+            MessageType::InvalidIndexType,
+            QStringLiteral("%1 bytes").arg(mIndexSize));
+        return;
+    }
 
     mIndexBuffer = indices;
     mIndicesOffset = block.offset;
-    if (!getIndexType())
-        mMessages +=
-            MessageList::insert(block.id, MessageType::InvalidIndexType);
 }
 
 GLenum GLCall::getIndexType() const
@@ -207,8 +210,18 @@ void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block)
     for (auto field : block.items)
         mUsedItems += field->id;
 
-    mIndirectBuffer = commands;
     mIndirectStride = getBlockStride(block);
+    const auto expectedStride = ((mKind.compute ? 3 : 4) * sizeof(uint32_t));
+    if (mIndirectStride != expectedStride) {
+        mMessages += MessageList::insert(block.id,
+            MessageType::InvalidIndirectStride,
+            QStringLiteral("%1/%2 bytes")
+                .arg(mIndirectStride)
+                .arg(expectedStride));
+        return;
+    }
+
+    mIndirectBuffer = commands;
     mIndirectOffset = block.offset;
 }
 
@@ -349,12 +362,12 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         const auto offset = reinterpret_cast<void *>(static_cast<intptr_t>(
             evaluateInt(scriptEngine, mIndicesOffset) + first * mIndexSize));
         if (!baseVertex && !baseInstance) {
-            gl.glDrawElementsInstanced(mCall.primitiveType, count,
-                getIndexType(), offset, instanceCount);
+            gl.glDrawElementsInstanced(mCall.primitiveType, count, indexType,
+                offset, instanceCount);
         } else if (auto gl42 = check(gl.v4_2, mCall.id, messages)) {
             gl42->glDrawElementsInstancedBaseVertexBaseInstance(
-                mCall.primitiveType, count, getIndexType(), offset,
-                instanceCount, baseVertex, static_cast<GLuint>(baseInstance));
+                mCall.primitiveType, count, indexType, offset, instanceCount,
+                baseVertex, static_cast<GLuint>(baseInstance));
         }
     } else if (mCall.callType == Call::CallType::DrawIndirect) {
         // (Multi)DrawArraysIndirect
@@ -367,17 +380,18 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             gl43->glMultiDrawArraysIndirect(mCall.primitiveType, offset,
                 drawCount, mIndirectStride);
         }
-    } else if (mCall.callType == Call::CallType::DrawIndexedIndirect && indexType) {
+    } else if (mCall.callType == Call::CallType::DrawIndexedIndirect
+        && indexType) {
         // (Multi)DrawElementsIndirect
         const auto offset = reinterpret_cast<void *>(
             static_cast<intptr_t>(evaluateInt(scriptEngine, mIndirectOffset)));
         if (drawCount == 1) {
             if (auto gl40 = check(gl.v4_0, mCall.id, messages))
-                gl40->glDrawElementsIndirect(mCall.primitiveType,
-                    getIndexType(), offset);
+                gl40->glDrawElementsIndirect(mCall.primitiveType, indexType,
+                    offset);
         } else if (auto gl43 = check(gl.v4_3, mCall.id, messages)) {
-            gl43->glMultiDrawElementsIndirect(mCall.primitiveType,
-                getIndexType(), offset, drawCount, mIndirectStride);
+            gl43->glMultiDrawElementsIndirect(mCall.primitiveType, indexType,
+                offset, drawCount, mIndirectStride);
         }
     } else if (mCall.callType == Call::CallType::DrawMeshTasks) {
         static auto glDrawMeshTasksNV =

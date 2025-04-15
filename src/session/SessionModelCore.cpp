@@ -104,6 +104,7 @@ namespace {
         case Item::Type::AccelerationStructure:
             return new AccelerationStructure();
         case Item::Type::Instance: return new Instance();
+        case Item::Type::Geometry: return new Geometry();
         }
         Q_UNREACHABLE();
         return nullptr;
@@ -149,6 +150,8 @@ namespace {
                     static_cast<const AccelerationStructure &>(item));
             case Item::Type::Instance:
                 return new Instance(static_cast<const Instance &>(item));
+            case Item::Type::Geometry:
+                return new Geometry(static_cast<const Geometry &>(item));
             }
             Q_UNREACHABLE();
             return nullptr;
@@ -244,7 +247,8 @@ bool SessionModelCore::canContainType(const QModelIndex &index,
     case Item::Type::Target:  return (type == Item::Type::Attachment);
     case Item::Type::AccelerationStructure:
         return (type == Item::Type::Instance);
-    default: return false;
+    case Item::Type::Instance: return (type == Item::Type::Geometry);
+    default:                   return false;
     }
 }
 
@@ -257,6 +261,7 @@ Item::Type SessionModelCore::getDefaultChildType(const QModelIndex &index) const
     case Item::Type::Stream:                return Item::Type::Attribute;
     case Item::Type::Target:                return Item::Type::Attachment;
     case Item::Type::AccelerationStructure: return Item::Type::Instance;
+    case Item::Type::Instance:              return Item::Type::Geometry;
     default:                                return Item::Type::Group;
     }
 }

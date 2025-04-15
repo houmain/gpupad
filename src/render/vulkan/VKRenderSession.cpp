@@ -169,17 +169,27 @@ void VKRenderSession::createCommandQueue()
     };
 
     const auto addAccelerationStructureOnce = [&](ItemId accelStructId) {
-        const auto accelStruct =
+        const auto accelerationStructure =
             sessionModel.findItem<AccelerationStructure>(accelStructId);
-        auto as = addOnce(mCommandQueue->accelerationStructures, accelStruct,
-            scriptEngine);
+        auto as = addOnce(mCommandQueue->accelerationStructures,
+            accelerationStructure, scriptEngine);
         if (as) {
-            const auto &items = accelStruct->items;
+            const auto &items = accelerationStructure->items;
             for (auto i = 0; i < items.size(); ++i)
                 if (auto instance = castItem<Instance>(items[i]))
-                    as->setBuffers(i,
-                        addBufferOnce(instance->vertexBufferBlockId),
-                        addBufferOnce(instance->indexBufferBlockId));
+                    for (auto j = 0; j < instance->items.size(); ++j)
+                        if (auto geometry = castItem<Geometry>(items[j])) {
+                            if (auto block = sessionModel.findItem<Block>(
+                                    geometry->vertexBufferBlockId))
+                                as->setVertexBuffer(i, j,
+                                    addBufferOnce(block->parent->id), *block,
+                                    *this);
+                            if (auto block = sessionModel.findItem<Block>(
+                                    geometry->indexBufferBlockId))
+                                as->setIndexBuffer(i, j,
+                                    addBufferOnce(block->parent->id), *block,
+                                    *this);
+                        }
         }
         return as;
     };

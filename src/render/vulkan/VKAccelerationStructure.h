@@ -10,7 +10,10 @@ public:
     VKAccelerationStructure(const AccelerationStructure &accelStruct,
         ScriptEngine &scriptEngine);
     bool operator==(const VKAccelerationStructure &rhs) const;
-    void setBuffers(int index, VKBuffer *vertexBuffer, VKBuffer *indexBuffer);
+    void setVertexBuffer(int instanceIndex, int geometryIndex, VKBuffer *buffer,
+        const Block &block, VKRenderSession &renderSession);
+    void setIndexBuffer(int instanceIndex, int geometryIndex, VKBuffer *buffer,
+        const Block &block, VKRenderSession &renderSession);
 
     ItemId itemId() const { return mItemId; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
@@ -22,19 +25,32 @@ public:
     void prepare(VKContext &context);
 
 private:
+    struct VKGeometry
+    {
+        bool operator==(const VKGeometry &) const = default;
+
+        ItemId itemId{};
+        Geometry::GeometryType type{};
+        VKBuffer *vertexBuffer{};
+        size_t vertexBufferOffset{};
+        uint32_t vertexStride{};
+        VKBuffer *indexBuffer{};
+        KDGpu::IndexType indexType{};
+        size_t indexBufferOffset{};
+        uint32_t primitiveCount{};
+        uint32_t primitiveOffset{};
+    };
+
     struct VKInstance
     {
+        bool operator==(const VKInstance &) const = default;
+
+        ItemId itemId{};
         ScriptValueList transform;
-        Instance::GeometryType geometryType{};
-        VKBuffer *vertexBuffer{};
-        VKBuffer *indexBuffer{};
+        std::vector<VKGeometry> geometries;
     };
-    friend bool operator==(const VKInstance &a, const VKInstance &b);
-    void createBottomLevelAsAabbs(VKContext &context,
-        const VKInstance &instance);
-    void createBottomLevelAsTriangles(VKContext &context,
-        const VKInstance &instance);
-    void createTopLevelAsInstances(VKContext &context);
+
+    VKGeometry &getGeometry(int instanceIndex, int geometryIndex);
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder);
 
     ItemId mItemId{};

@@ -36,6 +36,8 @@ public:
         MessagePtrSet &messages);
     int evaluateInt(const QString &valueExpression, ItemId itemId,
         MessagePtrSet &messages);
+    uint32_t evaluateUInt(const QString &valueExpression, ItemId itemId,
+        MessagePtrSet &messages);
     QJSEngine &jsEngine();
 
     AppScriptObject &appScriptObject() { return *mAppScriptObject; }
@@ -52,7 +54,7 @@ public:
     }
 
 private:
-    ScriptEngine(QObject* parent);
+    ScriptEngine(QObject *parent);
     void initialize(const ScriptEnginePtr &self, const QString &basePath);
     void resetInterruptTimer();
     void outputError(const QJSValue &result, ItemId itemId,

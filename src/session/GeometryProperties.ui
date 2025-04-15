@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>GeometryProperties</class>
+ <widget class="QWidget" name="GeometryProperties">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>268</width>
+    <height>235</height>
+   </rect>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <property name="labelAlignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <property name="horizontalSpacing">
+      <number>8</number>
+     </property>
+     <property name="verticalSpacing">
+      <number>2</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelName">
+       <property name="text">
+        <string>Name</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="name"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelType">
+       <property name="text">
+        <string>Type</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="DataComboBox" name="type"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelVertexBufferBlock">
+       <property name="text">
+        <string>Vertices Block</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="ReferenceComboBox" name="vertexBufferBlock"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelIndexBufferBlock">
+       <property name="text">
+        <string>Indices Block</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="ReferenceComboBox" name="indexBufferBlock"/>
+     </item>
+     <item row="4" column="1">
+      <widget class="ExpressionLineEdit" name="count"/>
+     </item>
+     <item row="5" column="1">
+      <widget class="ExpressionLineEdit" name="offset"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelCount">
+       <property name="text">
+        <string>Primitive Count</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="labelOffset">
+       <property name="text">
+        <string>Primitive Offset</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ExpressionLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>session/ExpressionLineEdit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>DataComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/DataComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ReferenceComboBox</class>
+   <extends>QComboBox</extends>
+   <header>session/ReferenceComboBox.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

@@ -35,22 +35,21 @@ namespace {
     }
 } // namespace
 
-ScriptEnginePtr ScriptEngine::make(const QString &basePath,
-    QThread *thread, QObject *parent)
+ScriptEnginePtr ScriptEngine::make(const QString &basePath, QThread *thread,
+    QObject *parent)
 {
     auto engine = ScriptEnginePtr(new ScriptEngine(parent));
     if (thread && thread != QThread::currentThread()) {
         engine->moveToThread(thread);
         QMetaObject::invokeMethod(engine.get(), &ScriptEngine::initialize,
             Qt::BlockingQueuedConnection, engine, basePath);
-    }
-    else {
+    } else {
         engine->initialize(engine, basePath);
     }
     return engine;
 }
 
-ScriptEngine::ScriptEngine(QObject* parent)
+ScriptEngine::ScriptEngine(QObject *parent)
     : QObject(parent)
     , mConsoleScriptObject(new ConsoleScriptObject(this))
 {
@@ -270,6 +269,13 @@ int ScriptEngine::evaluateInt(const QString &valueExpression, ItemId itemId,
     if (!std::isfinite(value))
         return 0;
     return static_cast<int>(value + 0.5);
+}
+
+uint32_t ScriptEngine::evaluateUInt(const QString &valueExpression,
+    ItemId itemId, MessagePtrSet &messages)
+{
+    return static_cast<uint32_t>(
+        evaluateInt(valueExpression, itemId, messages));
 }
 
 QJSEngine &ScriptEngine::jsEngine()

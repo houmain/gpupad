@@ -40,18 +40,23 @@ void VKCall::setIndexBuffer(VKBuffer *indices, const Block &block)
 
     mUsedItems += block.id;
     mUsedItems += block.parent->id;
+    auto indexSize = 0;
     for (auto item : block.items)
         if (auto field = castItem<Field>(item)) {
-            if (!mIndexSize)
-                mIndexSize = getFieldSize(*field);
+            indexSize += getFieldSize(*field);
             mUsedItems += field->id;
         }
+    const auto indexType = getKDIndexType(indexSize);
+    if (!indexType) {
+        mMessages += MessageList::insert(block.id,
+            MessageType::InvalidIndexType,
+            QStringLiteral("%1 bytes").arg(indexSize));
+        return;
+    }
 
+    mIndexType = *indexType;
     mIndexBuffer = indices;
     mIndicesOffset = block.offset;
-    if (!getIndexType())
-        mMessages +=
-            MessageList::insert(block.id, MessageType::InvalidIndexType);
 }
 
 void VKCall::setIndirectBuffer(VKBuffer *commands, const Block &block)
@@ -64,8 +69,18 @@ void VKCall::setIndirectBuffer(VKBuffer *commands, const Block &block)
     for (auto field : block.items)
         mUsedItems += field->id;
 
-    mIndirectBuffer = commands;
     mIndirectStride = getBlockStride(block);
+    const auto expectedStride = ((mKind.compute ? 3 : 4) * sizeof(uint32_t));
+    if (mIndirectStride != expectedStride) {
+        mMessages += MessageList::insert(block.id,
+            MessageType::InvalidIndirectStride,
+            QStringLiteral("%1/%2 bytes")
+                .arg(mIndirectStride)
+                .arg(expectedStride));
+        return;
+    }
+
+    mIndirectBuffer = commands;
     mIndirectOffset = block.offset;
 }
 
@@ -201,18 +216,7 @@ int VKCall::evaluateInt(ScriptEngine &scriptEngine, const QString &expression)
 uint32_t VKCall::evaluateUInt(ScriptEngine &scriptEngine,
     const QString &expression)
 {
-    return static_cast<uint32_t>(
-        scriptEngine.evaluateInt(expression, mCall.id, mMessages));
-}
-
-std::optional<KDGpu::IndexType> VKCall::getIndexType() const
-{
-    switch (mIndexSize) {
-    case 1:  return KDGpu::IndexType::Uint8;
-    case 2:  return KDGpu::IndexType::Uint16;
-    case 4:  return KDGpu::IndexType::Uint32;
-    default: return {};
-    }
+    return scriptEngine.evaluateUInt(expression, mCall.id, mMessages);
 }
 
 void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
@@ -247,11 +251,11 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
         return;
 
     mPipeline->updatePushConstants(renderPass, scriptEngine);
-    const auto indexType = getIndexType();
 
-    if (mIndexBuffer && indexType) {
+    if (mIndexBuffer) {
         const auto indicesOffset = evaluateUInt(scriptEngine, mIndicesOffset);
-        renderPass.setIndexBuffer(mIndexBuffer->buffer(), indicesOffset, indexType.value());
+        renderPass.setIndexBuffer(mIndexBuffer->buffer(), indicesOffset,
+            mIndexType);
     }
 
     const auto count = evaluateUInt(scriptEngine, mCall.count);
@@ -269,7 +273,7 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
             .firstVertex = first,
             .firstInstance = firstInstance,
         });
-    } else if (mCall.callType == Call::CallType::DrawIndexed && indexType) {
+    } else if (mCall.callType == Call::CallType::DrawIndexed) {
         renderPass.drawIndexed({
             .indexCount = count,
             .instanceCount = instanceCount,
@@ -284,7 +288,7 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
             .drawCount = drawCount,
             .stride = static_cast<uint32_t>(mIndirectStride),
         });
-    } else if (mCall.callType == Call::CallType::DrawIndexedIndirect && indexType) {
+    } else if (mCall.callType == Call::CallType::DrawIndexedIndirect) {
         renderPass.drawIndexedIndirect({
             .buffer = mIndirectBuffer->buffer(),
             .offset = indirectOffset,

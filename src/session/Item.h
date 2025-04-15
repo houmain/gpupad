@@ -260,18 +260,24 @@ struct Script : FileItem
     ExecuteOn executeOn{ ExecuteOn::ManualEvaluation };
 };
 
+struct AccelerationStructure : Item
+{
+};
+
 struct Instance : Item
+{
+    QString transform;
+};
+
+struct Geometry : Item
 {
     using GeometryType = ItemEnums2::GeometryType;
 
     GeometryType geometryType{};
     ItemId vertexBufferBlockId{};
     ItemId indexBufferBlockId{};
-    QString transform;
-};
-
-struct AccelerationStructure : Item
-{
+    QString count{ "1" };
+    QString offset{ "0" };
 };
 
 struct TextureKind
@@ -385,14 +391,19 @@ inline Item::Type getItemType<Script>()
     return Item::Type::Script;
 }
 template <>
+inline Item::Type getItemType<AccelerationStructure>()
+{
+    return Item::Type::AccelerationStructure;
+}
+template <>
 inline Item::Type getItemType<Instance>()
 {
     return Item::Type::Instance;
 }
 template <>
-inline Item::Type getItemType<AccelerationStructure>()
+inline Item::Type getItemType<Geometry>()
 {
-    return Item::Type::AccelerationStructure;
+    return Item::Type::Geometry;
 }
 
 template <typename T>

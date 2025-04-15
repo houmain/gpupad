@@ -21,6 +21,7 @@ namespace Ui {
     class ScriptProperties;
     class AccelerationStructureProperties;
     class InstanceProperties;
+    class GeometryProperties;
 } // namespace Ui
 
 class QStackedWidget;
@@ -58,7 +59,7 @@ public:
 private:
     void updateBlockWidgets(const QModelIndex &index);
     void updateTargetWidgets(const QModelIndex &index);
-    void updateInstanceWidgets(const QModelIndex &index);
+    void updateGeometryWidgets();
     void deduceBlockOffset();
     void deduceBlockRowCount();
     void deduceShaderType();
@@ -89,6 +90,7 @@ private:
     std::unique_ptr<Ui::AccelerationStructureProperties>
         mAccelerationStructureProperties;
     std::unique_ptr<Ui::InstanceProperties> mInstanceProperties;
+    std::unique_ptr<Ui::GeometryProperties> mGeometryProperties;
 };
 
 QString splitPascalCase(QString str);

@@ -189,6 +189,7 @@ set(SOURCES
   src/session/ScriptProperties.ui
   src/session/AccelerationStructureProperties.ui
   src/session/InstanceProperties.ui
+  src/session/GeometryProperties.ui
   src/session/SessionEditor.cpp
   src/session/SessionModel.cpp
   src/session/SessionModelCore.cpp
