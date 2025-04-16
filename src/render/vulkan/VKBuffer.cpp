@@ -89,7 +89,7 @@ void VKBuffer::addUsage(KDGpu::BufferUsageFlags usage)
 {
     // TODO: not ideal to update usage of already created buffer
     if ((mUsage & usage) != usage)
-        mBuffer = { };
+        mBuffer = {};
     mUsage |= usage;
 }
 

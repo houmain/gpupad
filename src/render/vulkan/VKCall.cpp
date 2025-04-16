@@ -250,7 +250,8 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     if (!renderPass.isValid())
         return;
 
-    mPipeline->updatePushConstants(renderPass, scriptEngine);
+    if (!mPipeline->updatePushConstants(renderPass, scriptEngine))
+        return;
 
     if (mIndexBuffer) {
         const auto indicesOffset = evaluateUInt(scriptEngine, mIndicesOffset);
@@ -329,7 +330,8 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
     if (!computePass.isValid())
         return;
 
-    mPipeline->updatePushConstants(computePass, scriptEngine);
+    if (!mPipeline->updatePushConstants(computePass, scriptEngine))
+        return;
 
     computePass.dispatchCompute(KDGpu::ComputeCommand{
         .workGroupX = evaluateUInt(scriptEngine, mCall.workGroupsX),
@@ -357,7 +359,8 @@ void VKCall::executeTraceRays(VKContext &context, MessagePtrSet &messages,
     if (!rayTracingPass.isValid())
         return;
 
-    mPipeline->updatePushConstants(rayTracingPass, scriptEngine);
+    if (!mPipeline->updatePushConstants(rayTracingPass, scriptEngine))
+        return;
 
     const auto &sbt = mPipeline->rayTracingShaderBindingTable();
     rayTracingPass.traceRays(KDGpu::RayTracingCommand{

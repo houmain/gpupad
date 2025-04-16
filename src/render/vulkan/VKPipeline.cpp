@@ -474,8 +474,7 @@ bool VKPipeline::applyBufferMemberBindings(std::span<std::byte> bufferData,
                 }
             });
     }
-    return (!memberUsed
-        || memberSet
+    return (!memberUsed || memberSet
         || isGlobalUniformBlockName(block.type_description->type_name));
 }
 
@@ -515,44 +514,77 @@ bool VKPipeline::updateDynamicBufferBindings(VKContext &context,
     return true;
 }
 
+bool VKPipeline::hasPushConstants() const
+{
+    return (mPushConstantRange.size > 0);
+}
+
 bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
 {
-    if (mPushConstantRange.size == 0)
-        return false;
-
     for (const auto &[stage, interface] : mProgram.interface())
         for (auto i = 0u; i < interface->push_constant_block_count; ++i) {
             auto &block = interface->push_constant_blocks[i];
             auto bufferData = std::span<std::byte>(mPushConstantData);
-            if (!applyBufferMemberBindings(bufferData, block, 0, scriptEngine))
-                mMessages += MessageList::insert(mItemId,
-                    MessageType::BufferNotSet,
-                    block.type_description->type_name);
+
+            if (const auto bufferBinding = find(mBindings.buffers,
+                    block.type_description->type_name)) {
+                if (!bufferBinding->buffer) {
+                    mMessages += MessageList::insert(mItemId,
+                        MessageType::BufferNotSet,
+                        block.type_description->type_name);
+                    return false;
+                }
+                auto &buffer = *bufferBinding->buffer;
+
+                mUsedItems += bufferBinding->bindingItemId;
+                mUsedItems += bufferBinding->blockItemId;
+                mUsedItems += buffer.itemId();
+
+                std::memcpy(bufferData.data(), buffer.data().constData(),
+                    std::min(bufferData.size(),
+                        static_cast<size_t>(buffer.size())));
+            } else {
+                if (!applyBufferMemberBindings(bufferData, block, 0,
+                        scriptEngine))
+                    return false;
+            }
         }
     return true;
 }
 
-void VKPipeline::updatePushConstants(
+bool VKPipeline::updatePushConstants(
     KDGpu::RenderPassCommandRecorder &renderPass, ScriptEngine &scriptEngine)
 {
-    if (updatePushConstants(scriptEngine))
+    if (hasPushConstants()) {
+        if (!updatePushConstants(scriptEngine))
+            return false;
         renderPass.pushConstant(mPushConstantRange, mPushConstantData.data());
+    }
+    return true;
 }
 
-void VKPipeline::updatePushConstants(
+bool VKPipeline::updatePushConstants(
     KDGpu::ComputePassCommandRecorder &computePass, ScriptEngine &scriptEngine)
 {
-    if (updatePushConstants(scriptEngine))
+    if (hasPushConstants()) {
+        if (!updatePushConstants(scriptEngine))
+            return false;
         computePass.pushConstant(mPushConstantRange, mPushConstantData.data());
+    }
+    return true;
 }
 
-void VKPipeline::updatePushConstants(
+bool VKPipeline::updatePushConstants(
     KDGpu::RayTracingPassCommandRecorder &rayTracingPass,
     ScriptEngine &scriptEngine)
 {
-    if (updatePushConstants(scriptEngine))
+    if (hasPushConstants()) {
+        if (!updatePushConstants(scriptEngine))
+            return false;
         rayTracingPass.pushConstant(mPushConstantRange,
             mPushConstantData.data());
+    }
+    return true;
 }
 
 bool VKPipeline::createGraphics(VKContext &context,
@@ -616,7 +648,7 @@ bool VKPipeline::createCompute(VKContext &context)
 }
 
 bool VKPipeline::createRayTracing(VKContext &context,
-        VKAccelerationStructure *accelStruct)
+    VKAccelerationStructure *accelStruct)
 {
     if (std::exchange(mCreated, true))
         return mRayTracingPipeline.isValid();
@@ -627,7 +659,7 @@ bool VKPipeline::createRayTracing(VKContext &context,
     mAccelerationStructure = accelStruct;
 
     // https://www.willusher.io/graphics/2019/11/20/the-sbt-three-ways/
-    auto options = KDGpu::RayTracingPipelineOptions{ };
+    auto options = KDGpu::RayTracingPipelineOptions{};
     options.shaderStages = mProgram.getShaderStages();
     options.layout = mPipelineLayout;
 
@@ -654,32 +686,33 @@ bool VKPipeline::createRayTracing(VKContext &context,
 
         case Shader::ShaderType::RayIntersection:
         case Shader::ShaderType::RayAnyHit:
-        case Shader::ShaderType::RayClosestHit: {
+        case Shader::ShaderType::RayClosestHit:   {
             // merge in last hit group (entry is currently unused)
             if (shaderGroupEntriesHit.empty()
-                || shaderGroupEntriesHit.back().first + 1 != options.shaderGroups.size()) {
-                shaderGroupEntriesHit.emplace_back(options.shaderGroups.size(), 0);
+                || shaderGroupEntriesHit.back().first + 1
+                    != options.shaderGroups.size()) {
+                shaderGroupEntriesHit.emplace_back(options.shaderGroups.size(),
+                    0);
                 options.shaderGroups.push_back({
                     .type = KDGpu::RayTracingShaderGroupType::TrianglesHit,
                 });
             }
             auto &shaderGroup = options.shaderGroups.back();
             if (shader.type() == Shader::ShaderType::RayIntersection) {
-                shaderGroup.type = KDGpu::RayTracingShaderGroupType::ProceduralHit;
+                shaderGroup.type =
+                    KDGpu::RayTracingShaderGroupType::ProceduralHit;
                 shaderGroup.intersectionShaderIndex = shader.shaderIndex();
-            }
-            else if (shader.type() == Shader::ShaderType::RayAnyHit) {
+            } else if (shader.type() == Shader::ShaderType::RayAnyHit) {
                 shaderGroup.anyHitShaderIndex = shader.shaderIndex();
-            }
-            else if (shader.type() == Shader::ShaderType::RayClosestHit) {
+            } else if (shader.type() == Shader::ShaderType::RayClosestHit) {
                 shaderGroup.closestHitShaderIndex = shader.shaderIndex();
             }
             break;
         }
 
         default:
-            mMessages += MessageList::insert(mItemId,
-                MessageType::ShaderError, "shader type not implemented");
+            mMessages += MessageList::insert(mItemId, MessageType::ShaderError,
+                "shader type not implemented");
             return false;
         }
     }
@@ -691,8 +724,10 @@ bool VKPipeline::createRayTracing(VKContext &context,
     auto &sbt = mRayTracingShaderBindingTable;
     sbt = KDGpu::RayTracingShaderBindingTable(&context.device,
         KDGpu::RayTracingShaderBindingTableOptions{
-            .nbrMissShaders = static_cast<uint32_t>(shaderGroupEntriesMiss.size()),
-            .nbrHitShaders = static_cast<uint32_t>(shaderGroupEntriesHit.size()),
+            .nbrMissShaders =
+                static_cast<uint32_t>(shaderGroupEntriesMiss.size()),
+            .nbrHitShaders =
+                static_cast<uint32_t>(shaderGroupEntriesHit.size()),
         });
     for (auto shaderGroupIndex : shaderGroupEntriesRayGen)
         sbt.addRayGenShaderGroup(mRayTracingPipeline, shaderGroupIndex);
@@ -702,7 +737,6 @@ bool VKPipeline::createRayTracing(VKContext &context,
         sbt.addMissShaderGroup(mRayTracingPipeline, shaderGroupIndex, entry);
     return true;
 }
-
 
 bool VKPipeline::createLayout(VKContext &context)
 {

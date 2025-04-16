@@ -84,11 +84,11 @@ public:
     KDGpu::ComputePassCommandRecorder beginComputePass(VKContext &context);
     KDGpu::RayTracingPassCommandRecorder beginRayTracingPass(
         VKContext &context);
-    void updatePushConstants(KDGpu::RenderPassCommandRecorder &renderPass,
+    bool updatePushConstants(KDGpu::RenderPassCommandRecorder &renderPass,
         ScriptEngine &scriptEngine);
-    void updatePushConstants(KDGpu::ComputePassCommandRecorder &computePass,
+    bool updatePushConstants(KDGpu::ComputePassCommandRecorder &computePass,
         ScriptEngine &scriptEngine);
-    void updatePushConstants(
+    bool updatePushConstants(
         KDGpu::RayTracingPassCommandRecorder &rayTracingPass,
         ScriptEngine &scriptEngine);
 
@@ -141,6 +141,7 @@ private:
     bool applyBufferMemberBindings(std::span<std::byte> bufferData,
         const SpvReflectBlockVariable &block, uint32_t arrayElement,
         ScriptEngine &scriptEngine);
+    bool hasPushConstants() const;
     bool updatePushConstants(ScriptEngine &scriptEngine);
 
     ItemId mItemId;
