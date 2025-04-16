@@ -659,6 +659,8 @@ void PropertiesEditor::updateGeometryWidgets()
     auto &ui = *mGeometryProperties;
     setFormVisibility(ui.formLayout, ui.labelIndexBufferBlock,
         ui.indexBufferBlock, hasIndices);
+    setFormVisibility(ui.formLayout, ui.labelCount, ui.count, true);
+    setFormVisibility(ui.formLayout, ui.labelOffset, ui.offset, true);
 }
 
 void PropertiesEditor::deduceBlockOffset()

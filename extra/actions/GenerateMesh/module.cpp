@@ -10,6 +10,7 @@
 # pragma warning(disable: 4305) // truncation from 'double' to 'float'
 # pragma warning(disable: 4456) // declaration of 'a' hides previous local declaration
 #endif
+#define PAR_SHAPES_T uint32_t
 #define PAR_SHAPES_IMPLEMENTATION
 #include "par_shapes.h"
 #if defined(_MSC_VER)
@@ -368,14 +369,14 @@ std::vector<float> getVertices(const Geometry& geometry) {
   return vertices;
 }
 
-std::vector<uint16_t> getIndices(const Geometry& geometry) {
+std::vector<uint32_t> getIndices(const Geometry& geometry) {
   if (!geometry.mesh)
     return { };
   const auto& m = *geometry.mesh;
   const auto& s = geometry.settings;
   const auto swap_yz = get_swap_yz(s);
   if (s.inside_out ^ swap_yz) {
-    auto indices = std::vector<uint16_t>();
+    auto indices = std::vector<uint32_t>();
     indices.reserve(m.ntriangles * 3);
     auto triangle = m.triangles;
     for (auto i = 0; i < m.ntriangles; ++i, triangle += 3) {

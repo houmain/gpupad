@@ -3,8 +3,9 @@
 
 VKAccelerationStructure::VKAccelerationStructure(
     const AccelerationStructure &accelStruct, ScriptEngine &scriptEngine)
-    : mItemId(accelStruct.id)
 {
+    mUsedItems += accelStruct.id;
+
     const auto getTransform = [&](const Instance &instance) {
         if (instance.transform.isEmpty())
             return ScriptValueList{};
@@ -36,6 +37,7 @@ VKAccelerationStructure::VKAccelerationStructure(
     for (auto item : accelStruct.items)
         if (auto instance = castItem<Instance>(item))
             mInstances.push_back({
+                .itemId = item->id,
                 .transform = getTransform(*instance),
                 .geometries = getGeometries(*instance),
             });
@@ -65,13 +67,19 @@ void VKAccelerationStructure::setVertexBuffer(int instanceIndex,
     if (!buffer)
         return;
 
+    mUsedItems += buffer->usedItems();
+
+    buffer->addUsage(
+        KDGpu::BufferUsageFlagBits::AccelerationStructureBuildInputReadOnlyBit
+        | KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit);
+
     auto &geometry = getGeometry(instanceIndex, geometryIndex);
     geometry.vertexStride = getBlockStride(block);
 
     if (geometry.type == Geometry::GeometryType::AxisAlignedBoundingBoxes) {
         const auto expectedStride = sizeof(VkAabbPositionsKHR);
         if (geometry.vertexStride != expectedStride) {
-            mMessages += MessageList::insert(block.id,
+            mMessages += MessageList::insert(geometry.itemId,
                 MessageType::InvalidGeometryStride,
                 QStringLiteral("%1/%2 bytes")
                     .arg(geometry.vertexStride)
@@ -86,6 +94,7 @@ void VKAccelerationStructure::setVertexBuffer(int instanceIndex,
 
     geometry.vertexBuffer = buffer;
     geometry.vertexBufferOffset = static_cast<size_t>(offset);
+    geometry.maxVertexIndex = static_cast<size_t>(std::max(rowCount, 1) - 1);
 }
 
 void VKAccelerationStructure::setIndexBuffer(int instanceIndex,
@@ -94,6 +103,12 @@ void VKAccelerationStructure::setIndexBuffer(int instanceIndex,
 {
     if (!buffer)
         return;
+
+    mUsedItems += buffer->usedItems();
+
+    buffer->addUsage(
+        KDGpu::BufferUsageFlagBits::AccelerationStructureBuildInputReadOnlyBit
+        | KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit);
 
     auto offset = 0;
     auto rowCount = 0;
@@ -149,14 +164,18 @@ void VKAccelerationStructure::prepare(VKContext &context)
     // create one BLAS per instance
     auto instanceIndex = 0u;
     for (const auto &instance : mInstances) {
-        auto blasBuildOptions = blasBuildGeometryInfos.emplace_back();
+        mUsedItems += instance.itemId;
+
+        auto &blasBuildOptions = blasBuildGeometryInfos.emplace_back();
         auto geometryTypesAndCount = std::vector<
             KDGpu::AccelerationStructureOptions::GeometryTypeAndCount>();
 
         for (const auto &geometry : instance.geometries) {
+            mUsedItems += geometry.itemId;
+
             if (!geometry.vertexBuffer) {
                 mMessages += MessageList::insert(geometry.itemId,
-                    MessageType::BufferNotSet);
+                    MessageType::BufferNotSet, "Vertices");
                 return;
             }
             auto &vertexBuffer = *geometry.vertexBuffer;
@@ -178,9 +197,6 @@ void VKAccelerationStructure::prepare(VKContext &context)
                 blasBuildOptions.geometries.push_back(aabbsGeometry);
 
             } else if (geometry.type == GeometryType::Triangles) {
-                const auto vertexCount = geometry.primitiveCount * 3;
-                const auto maxVertexIndex = std::max(vertexCount, 1u) - 1u;
-
                 auto indexBufferHandle = KDGpu::Handle<KDGpu::Buffer_t>();
                 if (auto indexBuffer = geometry.indexBuffer) {
                     indexBuffer->prepareAccelerationStructureGeometry(context);
@@ -192,7 +208,7 @@ void VKAccelerationStructure::prepare(VKContext &context)
                         .vertexData = vertexBuffer.buffer(),
                         .vertexStride = geometry.vertexStride,
                         .vertexDataOffset = geometry.vertexBufferOffset,
-                        .maxVertex = maxVertexIndex,
+                        .maxVertex = geometry.maxVertexIndex,
                         .indexType = geometry.indexType,
                         .indexData = indexBufferHandle,
                         .indexDataOffset = geometry.indexBufferOffset,
@@ -226,7 +242,7 @@ void VKAccelerationStructure::prepare(VKContext &context)
 
         auto &geometryInstance = geometryInstances.data.emplace_back(
             KDGpu::AccelerationStructureGeometryInstance{
-                .transform = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0 },
+                .transform = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 } },
                 .instanceCustomIndex = instanceIndex++,
                 .mask = 0xFF,
                 .instanceShaderBindingTableRecordOffset = 0,
@@ -264,7 +280,7 @@ void VKAccelerationStructure::prepare(VKContext &context)
                 .destinationStructure = mTopLevelAs,
                 .buildRangeInfos = {
                     {
-                        .primitiveCount = 1,
+                        .primitiveCount = static_cast<uint32_t>(geometryInstances.data.size()),
                         .primitiveOffset = 0,
                         .firstVertex = 0,
                         .transformOffset = 0,

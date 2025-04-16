@@ -179,20 +179,20 @@ void VKRenderSession::buildCommandQueue()
         if (as) {
             const auto &items = accelerationStructure->items;
             for (auto i = 0; i < items.size(); ++i)
-                if (auto instance = castItem<Instance>(items[i]))
-                    for (auto j = 0; j < instance->items.size(); ++j)
-                        if (auto geometry = castItem<Geometry>(items[j])) {
-                            if (auto block = sessionModel.findItem<Block>(
-                                    geometry->vertexBufferBlockId))
-                                as->setVertexBuffer(i, j,
-                                    addBufferOnce(block->parent->id), *block,
-                                    *this);
-                            if (auto block = sessionModel.findItem<Block>(
-                                    geometry->indexBufferBlockId))
-                                as->setIndexBuffer(i, j,
-                                    addBufferOnce(block->parent->id), *block,
-                                    *this);
-                        }
+                for (auto j = 0; j < items[i]->items.size(); ++j)
+                    if (auto geometry =
+                            castItem<Geometry>(items[i]->items[j])) {
+                        if (auto block = sessionModel.findItem<Block>(
+                                geometry->vertexBufferBlockId))
+                            as->setVertexBuffer(i, j,
+                                addBufferOnce(block->parent->id), *block,
+                                *this);
+                        if (auto block = sessionModel.findItem<Block>(
+                                geometry->indexBufferBlockId))
+                            as->setIndexBuffer(i, j,
+                                addBufferOnce(block->parent->id), *block,
+                                *this);
+                    }
         }
         return as;
     };

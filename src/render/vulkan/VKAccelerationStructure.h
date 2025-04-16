@@ -1,6 +1,5 @@
 #pragma once
 
-#include "VKItem.h"
 #include "VKBuffer.h"
 #include "scripting/ScriptEngine.h"
 
@@ -15,7 +14,6 @@ public:
     void setIndexBuffer(int instanceIndex, int geometryIndex, VKBuffer *buffer,
         const Block &block, VKRenderSession &renderSession);
 
-    ItemId itemId() const { return mItemId; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     const KDGpu::AccelerationStructure &topLevelAs() const
     {
@@ -33,6 +31,7 @@ private:
         Geometry::GeometryType type{};
         VKBuffer *vertexBuffer{};
         size_t vertexBufferOffset{};
+        uint32_t maxVertexIndex{};
         uint32_t vertexStride{};
         VKBuffer *indexBuffer{};
         KDGpu::IndexType indexType{};
@@ -53,7 +52,6 @@ private:
     VKGeometry &getGeometry(int instanceIndex, int geometryIndex);
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder);
 
-    ItemId mItemId{};
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
     std::vector<VKInstance> mInstances;

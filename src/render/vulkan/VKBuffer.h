@@ -26,7 +26,8 @@ public:
     void prepareVertexBuffer(VKContext &context);
     void prepareIndexBuffer(VKContext &context);
     void prepareUniformBuffer(VKContext &context);
-    void prepareShaderStorageBuffer(VKContext &context);
+    void prepareShaderStorageBuffer(VKContext &context, bool readable,
+        bool writeable);
     void prepareAccelerationStructureGeometry(VKContext &context);
     uint64_t getDeviceAddress(VKContext &context);
 

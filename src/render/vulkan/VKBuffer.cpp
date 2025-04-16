@@ -282,13 +282,21 @@ void VKBuffer::prepareUniformBuffer(VKContext &context)
         KDGpu::PipelineStageFlagBit::AllCommandsBit);
 }
 
-void VKBuffer::prepareShaderStorageBuffer(VKContext &context)
+void VKBuffer::prepareShaderStorageBuffer(VKContext &context, bool readable,
+    bool writeable)
 {
-    updateReadWriteBuffer(context);
+    if (writeable) {
+        updateReadWriteBuffer(context);
+    } else {
+        updateReadOnlyBuffer(context);
+    }
+    auto accessMask = KDGpu::AccessFlags{};
+    if (readable)
+        accessMask |= KDGpu::AccessFlagBit::ShaderStorageReadBit;
+    if (writeable)
+        accessMask |= KDGpu::AccessFlagBit::ShaderStorageWriteBit;
 
-    memoryBarrier(*context.commandRecorder,
-        KDGpu::AccessFlagBit::ShaderStorageReadBit
-            | KDGpu::AccessFlagBit::ShaderStorageWriteBit,
+    memoryBarrier(*context.commandRecorder, accessMask,
         KDGpu::PipelineStageFlagBit::AllCommandsBit);
 }
 

@@ -388,7 +388,31 @@
             ]
         },
         {
-            "bufferId": 904,
+            "id": 10092,
+            "items": [
+                {
+                    "id": 10093,
+                    "items": [
+                        {
+                            "count": "1940",
+                            "geometryType": "AxisAlignedBoundingBoxes",
+                            "id": 10094,
+                            "name": "AABBs",
+                            "offset": "0",
+                            "type": "Geometry",
+                            "vertexBufferBlockId": 905
+                        }
+                    ],
+                    "name": "Instance",
+                    "transform": "",
+                    "type": "Instance"
+                }
+            ],
+            "name": "AccelerationStructure",
+            "type": "AccelerationStructure"
+        },
+        {
+            "accelerationStructureId": 10092,
             "callType": "TraceRays",
             "checked": true,
             "executeOn": "EveryEvaluation",

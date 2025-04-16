@@ -142,7 +142,7 @@ class Script {
           items: [
             {
               name: 'index',
-              dataType: 'Uint16',
+              dataType: 'Uint32',
               count: 3,
             }
           ]

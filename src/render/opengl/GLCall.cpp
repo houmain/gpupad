@@ -211,7 +211,8 @@ void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block)
         mUsedItems += field->id;
 
     mIndirectStride = getBlockStride(block);
-    const auto expectedStride = ((mKind.compute ? 3 : 4) * sizeof(uint32_t));
+    const auto expectedStride =
+        static_cast<int>((mKind.compute ? 3 : 4) * sizeof(uint32_t));
     if (mIndirectStride != expectedStride) {
         mMessages += MessageList::insert(block.id,
             MessageType::InvalidIndirectStride,

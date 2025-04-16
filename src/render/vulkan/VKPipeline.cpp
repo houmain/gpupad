@@ -898,7 +898,12 @@ MessageType VKPipeline::updateBindings(VKContext &context,
             if (!bufferBinding || !bufferBinding->buffer)
                 return MessageType::BufferNotSet;
             auto &buffer = *bufferBinding->buffer;
-            buffer.prepareShaderStorageBuffer(context);
+
+            const auto readable =
+                !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_READABLE);
+            const auto writeable =
+                !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_WRITABLE);
+            buffer.prepareShaderStorageBuffer(context, readable, writeable);
 
             mUsedItems += bufferBinding->bindingItemId;
             mUsedItems += buffer.itemId();
@@ -996,23 +1001,25 @@ MessageType VKPipeline::updateBindings(VKContext &context,
     case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
         return MessageType::TextureBuffersNotAvailable;
 
-    case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+    case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR: {
         if (!mAccelerationStructure)
             return MessageType::AccelerationStructureNotAssigned;
 
         mAccelerationStructure->prepare(context);
         mUsedItems += mAccelerationStructure->usedItems();
+        const auto &topLevelAs = mAccelerationStructure->topLevelAs();
+        if (!topLevelAs.isValid())
+            return MessageType::AccelerationStructureNotAssigned;
 
         setBindGroupResource(desc.set,
             {
                 .binding = desc.binding,
                 .resource =
                     KDGpu::AccelerationStructureBinding{
-                        .accelerationStructure =
-                            mAccelerationStructure->topLevelAs() },
+                        .accelerationStructure = topLevelAs },
             });
         break;
-
+    }
     default: Q_ASSERT(!"descriptor type not handled"); break;
     }
     return MessageType::None;
