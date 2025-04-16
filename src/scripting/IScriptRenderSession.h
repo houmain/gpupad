@@ -12,4 +12,5 @@ public:
     virtual const QString &basePath() = 0;
     virtual SessionModel &sessionModelCopy() = 0;
     virtual quint64 getTextureHandle(ItemId itemId) = 0;
+    virtual quint64 getBufferHandle(ItemId itemId) = 0;
 };

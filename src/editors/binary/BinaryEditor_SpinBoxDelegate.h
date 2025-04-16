@@ -47,11 +47,11 @@ public:
         case DataType::Int8:   setRange<int8_t>(editor); break;
         case DataType::Int16:  setRange<int16_t>(editor); break;
         case DataType::Int32:  setRange<int32_t>(editor); break;
-        //case DataType::Int64: setRange<int64_t>(editor); break;
+        case DataType::Int64:  setRange<int64_t>(editor); break;
         case DataType::Uint8:  setRange<uint8_t>(editor); break;
         case DataType::Uint16: setRange<uint16_t>(editor); break;
         case DataType::Uint32: setRange<uint32_t>(editor); break;
-        //case DataType::UInt64: setRange<uint64_t>(editor); break;
+        case DataType::Uint64: setRange<uint64_t>(editor); break;
         default:               break;
         }
 
@@ -66,7 +66,7 @@ public:
     void setEditorData(QWidget *editor, const QModelIndex &index) const override
     {
         if (auto *spinBox = qobject_cast<QDoubleSpinBox *>(editor)) {
-            auto value = index.model()->data(index, Qt::EditRole).toInt();
+            auto value = index.model()->data(index, Qt::EditRole).toDouble();
             spinBox->setValue(value);
         } else if (
             auto *lineEdit = qobject_cast<ExpressionLineEdit *>(editor)) {

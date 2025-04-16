@@ -110,7 +110,10 @@ void VKRenderSession::createCommandQueue()
             },
     });
     mUsedItems.clear();
+}
 
+void VKRenderSession::buildCommandQueue()
+{
     auto &scriptEngine = mScriptSession->engine();
     const auto &sessionModel = mSessionModelCopy;
 
@@ -403,8 +406,10 @@ void VKRenderSession::render()
     if (!mShareSync)
         mShareSync = std::make_shared<VKShareSync>(renderer().device());
 
-    if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
+    if (mItemsChanged || mEvaluationType == EvaluationType::Reset) {
         createCommandQueue();
+        buildCommandQueue();
+    }
     Q_ASSERT(mCommandQueue);
 
     reuseUnmodifiedItems();
@@ -544,4 +549,22 @@ void VKRenderSession::release()
     mPrevCommandQueue.reset();
 
     RenderSessionBase::release();
+}
+
+quint64 VKRenderSession::getBufferHandle(ItemId itemId)
+{
+    if (!mCommandQueue)
+        createCommandQueue();
+
+    const auto &sessionModel = mSessionModelCopy;
+
+    const auto addBufferOnce = [&](ItemId bufferId) {
+        mUsedItems += bufferId;
+        return addOnce(mCommandQueue->buffers,
+            sessionModel.findItem<Buffer>(bufferId), *this);
+    };
+
+    if (auto buffer = addBufferOnce(itemId))
+        return buffer->getDeviceAddress(mCommandQueue->context);
+    return 0;
 }

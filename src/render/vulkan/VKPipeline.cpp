@@ -523,9 +523,7 @@ bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
 {
     for (const auto &[stage, interface] : mProgram.interface())
         for (auto i = 0u; i < interface->push_constant_block_count; ++i) {
-            auto &block = interface->push_constant_blocks[i];
-            auto bufferData = std::span<std::byte>(mPushConstantData);
-
+            const auto &block = interface->push_constant_blocks[i];
             if (const auto bufferBinding = find(mBindings.buffers,
                     block.type_description->type_name)) {
                 if (!bufferBinding->buffer) {
@@ -534,17 +532,23 @@ bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
                         block.type_description->type_name);
                     return false;
                 }
-                auto &buffer = *bufferBinding->buffer;
 
+                auto &buffer = *bufferBinding->buffer;
                 mUsedItems += bufferBinding->bindingItemId;
                 mUsedItems += bufferBinding->blockItemId;
                 mUsedItems += buffer.itemId();
 
-                std::memcpy(bufferData.data(), buffer.data().constData(),
-                    std::min(bufferData.size(),
-                        static_cast<size_t>(buffer.size())));
+                buffer.reload();
+                const auto &bufferData = buffer.data();
+                auto &constantData = mPushConstantData;
+                const auto size = std::min(constantData.size(),
+                    static_cast<size_t>(bufferData.size()));
+                std::memcpy(constantData.data(), bufferData.constData(), size);
+                if (size < constantData.size())
+                    std::memset(mPushConstantData.data() + size, 0x00,
+                        constantData.size() - size);
             } else {
-                if (!applyBufferMemberBindings(bufferData, block, 0,
+                if (!applyBufferMemberBindings(mPushConstantData, block, 0,
                         scriptEngine))
                     return false;
             }

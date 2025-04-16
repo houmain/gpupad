@@ -61,6 +61,7 @@ public:
     Q_INVOKABLE void setShaderSource(QJSValue itemDesc, QJSValue data);
 
     Q_INVOKABLE quint64 getTextureHandle(QJSValue itemDesc);
+    Q_INVOKABLE quint64 getBufferHandle(QJSValue itemDesc);
 
 private:
     friend SessionScriptObject_ItemObject;

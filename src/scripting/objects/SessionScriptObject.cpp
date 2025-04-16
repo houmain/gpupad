@@ -15,6 +15,18 @@
 #include <cstring>
 
 namespace {
+    struct Int64
+    {
+        int64_t v;
+        Int64(const QString &string) { v = string.toLongLong(); }
+    };
+
+    struct Uint64
+    {
+        uint64_t v;
+        Uint64(const QString &string) { v = string.toULongLong(); }
+    };
+
     QByteArray toByteArray(const QJSValue &data, const Block &block,
         MessagePtrSet &messages)
     {
@@ -95,7 +107,7 @@ namespace {
 #undef ADD
             case dllreflect::Type::Void: break;
             }
-        } else {
+        } else if (data.isArray()) {
             // there does not seems to be a way to access e.g. Float32Array directly...
             const auto rowCount = data.property("length").toInt()
                 / elementTypes.size();
@@ -122,8 +134,8 @@ namespace {
                         ADD(Field::DataType::Uint16, uint16_t, toUInt)
                         ADD(Field::DataType::Int32, int32_t, toInt)
                         ADD(Field::DataType::Uint32, uint32_t, toUInt)
-                        ADD(Field::DataType::Int64, int64_t, toInt)
-                        ADD(Field::DataType::Uint64, uint64_t, toUInt)
+                        ADD(Field::DataType::Int64, Int64, toString)
+                        ADD(Field::DataType::Uint64, Uint64, toString)
                         ADD(Field::DataType::Float, float, toNumber)
                         ADD(Field::DataType::Double, double, toNumber)
 #undef ADD
@@ -132,6 +144,9 @@ namespace {
                         write(uint8_t{ 0 });
                 }
             }
+        } else {
+            messages += MessageList::insert(block.id, MessageType::ScriptError,
+                QStringLiteral("Value array expected"));
         }
         return bytes;
     } // namespace
@@ -607,89 +622,100 @@ void SessionScriptObject::deleteItem(QJSValue itemDesc)
 
 void SessionScriptObject::setBufferData(QJSValue itemDesc, QJSValue data)
 {
-    if (const auto buffer = getItem<Buffer>(itemDesc)) {
-        auto block = castItem<Block>(buffer->items[0]);
-        if (!block || block->items.empty()) {
-            engine().throwError(QStringLiteral("Buffer structure not defined"));
-            return;
-        }
+    const auto buffer = getItem<Buffer>(itemDesc);
+    if (!buffer)
+        return engine().throwError(QStringLiteral("Invalid item"));
 
-        withSessionModel([this, bufferId = buffer->id,
-                             data = toByteArray(data, *block, mMessages)](
-                             SessionModel &session) {
+    if (buffer->items.empty() || buffer->items[0]->items.empty())
+        return engine().throwError(
+            QStringLiteral("Buffer structure not defined"));
+
+    const auto block = castItem<Block>(buffer->items[0]);
+    withSessionModel([this, bufferId = buffer->id,
+                         data = toByteArray(data, *block, mMessages)](
+                         SessionModel &session) {
+        if (onMainThread())
             if (auto buffer = session.findItem<Buffer>(bufferId)) {
                 ensureFileName(session, buffer);
-                if (onMainThread())
-                    if (auto editor = openBinaryEditor(*buffer))
-                        editor->replace(data);
+                if (auto editor = openBinaryEditor(*buffer))
+                    editor->replace(data);
             }
-        });
-    }
+    });
 }
 
 void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
 {
-    if (const auto block = getItem<Block>(itemDesc)) {
-        withSessionModel([this, blockId = block->id,
-                             data = toByteArray(data, *block, mMessages)](
-                             SessionModel &session) {
+    const auto block = getItem<Block>(itemDesc);
+    if (!block)
+        return engine().throwError(QStringLiteral("Invalid item"));
+
+    withSessionModel([this, blockId = block->id,
+                         data = toByteArray(data, *block, mMessages)](
+                         SessionModel &session) {
+        if (onMainThread())
             if (auto block = session.findItem<Block>(blockId))
                 if (auto buffer = castItem<Buffer>(block->parent)) {
                     ensureFileName(session, castItem<Buffer>(block->parent));
-                    if (onMainThread())
-                        if (auto editor = openBinaryEditor(*buffer)) {
-                            auto offset = 0, rowCount = 0;
-                            Singletons::synchronizeLogic()
-                                .evaluateBlockProperties(*block, &offset,
-                                    &rowCount);
-                            editor->replaceRange(offset, data);
-                        }
+                    if (auto editor = openBinaryEditor(*buffer)) {
+                        auto offset = 0, rowCount = 0;
+                        Singletons::synchronizeLogic().evaluateBlockProperties(
+                            *block, &offset, &rowCount);
+                        editor->replaceRange(offset, data);
+                    }
                 }
-        });
-    }
+    });
 }
 
 void SessionScriptObject::setTextureData(QJSValue itemDesc, QJSValue data)
 {
-    if (const auto texture = getItem<Texture>(itemDesc))
-        withSessionModel([this, textureId = texture->id,
-                             data = toTextureData(data, *texture, mMessages)](
-                             SessionModel &session) {
+    const auto texture = getItem<Texture>(itemDesc);
+    if (!texture)
+        return engine().throwError(QStringLiteral("Invalid item"));
+
+    withSessionModel([this, textureId = texture->id,
+                         data = toTextureData(data, *texture, mMessages)](
+                         SessionModel &session) {
+        if (onMainThread())
             if (auto texture = session.findItem<Texture>(textureId)) {
                 ensureFileName(session, texture);
-                if (onMainThread())
-                    if (auto editor = openTextureEditor(*texture))
-                        editor->replace(data);
+                if (auto editor = openTextureEditor(*texture))
+                    editor->replace(data);
             }
-        });
+    });
 }
 
 void SessionScriptObject::setShaderSource(QJSValue itemDesc, QJSValue data)
 {
-    if (const auto shader = getItem<Shader>(itemDesc))
-        withSessionModel([this, shaderId = shader->id,
-                             data = data.toString()](SessionModel &session) {
+    const auto shader = getItem<Shader>(itemDesc);
+    if (!shader)
+        return engine().throwError(QStringLiteral("Invalid item"));
+
+    withSessionModel([this, shaderId = shader->id,
+                         data = data.toString()](SessionModel &session) {
+        if (onMainThread())
             if (auto shader = session.findItem<Shader>(shaderId)) {
                 ensureFileName(session, shader);
-                if (onMainThread())
-                    if (auto editor = openSourceEditor(*shader))
-                        editor->replace(data);
+                if (auto editor = openSourceEditor(*shader))
+                    editor->replace(data);
             }
-        });
+    });
 }
 
 void SessionScriptObject::setScriptSource(QJSValue itemDesc, QJSValue data)
 {
-    if (const auto script = getItem<Script>(itemDesc))
-        withSessionModel([this, scriptId = script->id,
-                             data = data.toString()](SessionModel &session) {
+    const auto script = getItem<Script>(itemDesc);
+    if (!script)
+        return engine().throwError(QStringLiteral("Invalid item"));
+
+    withSessionModel([this, scriptId = script->id,
+                         data = data.toString()](SessionModel &session) {
+        if (onMainThread())
             if (auto script = session.findItem<Script>(scriptId)) {
                 ensureFileName(session, script);
-                if (onMainThread())
-                    if (auto editor = openSourceEditor(*script))
-                        editor->replace(data);
+                if (auto editor = openSourceEditor(*script))
+                    editor->replace(data);
             }
-        });
+    });
 }
 
 quint64 SessionScriptObject::getTextureHandle(QJSValue itemDesc)
@@ -697,5 +723,13 @@ quint64 SessionScriptObject::getTextureHandle(QJSValue itemDesc)
     if (mRenderSession)
         if (const auto texture = getItem<Texture>(itemDesc))
             return mRenderSession->getTextureHandle(texture->id);
+    return 0;
+}
+
+quint64 SessionScriptObject::getBufferHandle(QJSValue itemDesc)
+{
+    if (mRenderSession)
+        if (const auto buffer = getItem<Buffer>(itemDesc))
+            return mRenderSession->getBufferHandle(buffer->id);
     return 0;
 }

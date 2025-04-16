@@ -17,6 +17,7 @@ public:
     const KDGpu::Buffer &buffer() const { return mBuffer; }
 
     void addUsage(KDGpu::BufferUsageFlags usage);
+    void reload();
     void clear(VKContext &context);
     void copy(VKContext &context, VKBuffer &source);
     bool swap(VKBuffer &other);
@@ -27,9 +28,9 @@ public:
     void prepareUniformBuffer(VKContext &context);
     void prepareShaderStorageBuffer(VKContext &context);
     void prepareAccelerationStructureGeometry(VKContext &context);
+    uint64_t getDeviceAddress(VKContext &context);
 
 private:
-    void reload();
     void createBuffer(KDGpu::Device &device);
     void upload(VKContext &context);
     void updateReadOnlyBuffer(VKContext &context);

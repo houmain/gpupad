@@ -26,16 +26,22 @@ public:
 
     void handleConfigureTask(RenderTask *renderTask)
     {
-        renderTask->configure();
+        try {
+            if (!std::exchange(mInitialized, true))
+                initialize();
+
+            if (mDevice.isValid())
+                renderTask->configure();
+        } catch (const std::exception &ex) {
+            mMessages +=
+                MessageList::insert(0, MessageType::RenderingFailed, ex.what());
+        }
         Q_EMIT taskConfigured();
     }
 
     void handleRenderTask(RenderTask *renderTask)
     {
         try {
-            if (!std::exchange(mInitialized, true))
-                initialize();
-
             if (mDevice.isValid())
                 renderTask->render();
         } catch (const std::exception &ex) {
@@ -75,12 +81,15 @@ private:
 
         mApi = std::make_unique<KDGpu::VulkanGraphicsApi>();
 
-        auto instanceOptions = KDGpu::InstanceOptions{
+        auto instanceOptions = KDGpu::InstanceOptions
+        {
 #if !defined(NDEBUG)
             .layers = { "VK_LAYER_KHRONOS_validation" },
 #endif
-            .extensions = { VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
-                VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME }
+            .extensions = {
+                VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
+                VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME
+            }
         };
         mInstance = mApi->createInstance(instanceOptions);
         if (!mInstance.isValid() || mInstance.adapters().empty()) {

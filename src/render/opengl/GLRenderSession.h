@@ -16,11 +16,13 @@ public:
     void finish() override;
     void release() override;
     quint64 getTextureHandle(ItemId itemId) override;
+    quint64 getBufferHandle(ItemId itemId) override { return 0; }
 
 private:
     struct CommandQueue;
 
     void createCommandQueue();
+    void buildCommandQueue();
     void reuseUnmodifiedItems();
     void executeCommandQueue();
     void downloadModifiedResources();

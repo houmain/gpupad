@@ -99,7 +99,10 @@ void GLRenderSession::createCommandQueue()
     mPrevCommandQueue.swap(mCommandQueue);
     mCommandQueue = std::make_unique<CommandQueue>();
     mUsedItems.clear();
+}
 
+void GLRenderSession::buildCommandQueue()
+{
     auto &scriptEngine = mScriptSession->engine();
     const auto &sessionModel = mSessionModelCopy;
 
@@ -363,8 +366,10 @@ void GLRenderSession::createCommandQueue()
 
 void GLRenderSession::render()
 {
-    if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
+    if (mItemsChanged || mEvaluationType == EvaluationType::Reset) {
         createCommandQueue();
+        buildCommandQueue();
+    }
     Q_ASSERT(mCommandQueue);
 
     auto &gl = GLContext::currentContext();
@@ -505,11 +510,12 @@ void GLRenderSession::release()
 quint64 GLRenderSession::getTextureHandle(ItemId itemId)
 {
     if (!mCommandQueue)
-        mCommandQueue = std::make_unique<CommandQueue>();
+        createCommandQueue();
 
     const auto &sessionModel = mSessionModelCopy;
 
     const auto addTextureOnce = [&](ItemId textureId) {
+        mUsedItems += textureId;
         return addOnce(mCommandQueue->textures,
             sessionModel.findItem<Texture>(textureId), *this);
     };

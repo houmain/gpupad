@@ -16,12 +16,14 @@ public:
     void finish() override;
     void release() override;
     quint64 getTextureHandle(ItemId itemId) override { return 0; }
+    quint64 getBufferHandle(ItemId itemId) override;
 
 private:
     struct CommandQueue;
 
     VKRenderer &renderer();
     void createCommandQueue();
+    void buildCommandQueue();
     void reuseUnmodifiedItems();
     void executeCommandQueue();
     void downloadModifiedResources();

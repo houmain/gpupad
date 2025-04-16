@@ -300,3 +300,10 @@ void VKBuffer::prepareAccelerationStructureGeometry(VKContext &context)
         KDGpu::AccessFlagBit::AccelerationStructureReadBit,
         KDGpu::PipelineStageFlagBit::AllCommandsBit);
 }
+
+uint64_t VKBuffer::getDeviceAddress(VKContext &context)
+{
+    addUsage(KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit);
+    updateReadOnlyBuffer(context);
+    return mBuffer.bufferDeviceAddress();
+}
