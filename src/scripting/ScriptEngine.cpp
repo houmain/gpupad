@@ -275,7 +275,7 @@ uint32_t ScriptEngine::evaluateUInt(const QString &valueExpression,
     ItemId itemId, MessagePtrSet &messages)
 {
     return static_cast<uint32_t>(
-        evaluateInt(valueExpression, itemId, messages));
+        std::max(evaluateInt(valueExpression, itemId, messages), 0));
 }
 
 QJSEngine &ScriptEngine::jsEngine()

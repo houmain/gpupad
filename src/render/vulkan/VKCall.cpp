@@ -57,6 +57,7 @@ void VKCall::setIndexBuffer(VKBuffer *indices, const Block &block)
     mIndexType = *indexType;
     mIndexBuffer = indices;
     mIndicesOffset = block.offset;
+    mIndicesRowCount = block.rowCount;
 }
 
 void VKCall::setIndirectBuffer(VKBuffer *commands, const Block &block)
@@ -220,18 +221,44 @@ uint32_t VKCall::evaluateUInt(ScriptEngine &scriptEngine,
     return scriptEngine.evaluateUInt(expression, mCall.id, mMessages);
 }
 
-int VKCall::getDefaultElementCount() const
+int VKCall::getMaxElementCount(ScriptEngine &scriptEngine)
 {
-    if (mIndexBuffer)
-        return mIndexBuffer->size() / mIndexSize;
+    if (mKind.indexed)
+        return static_cast<int>(evaluateUInt(scriptEngine, mIndicesRowCount));
     if (mVertexStream)
-        return mVertexStream->getDefaultElementCount();
-    return 0;
+        return mVertexStream->maxElementCount();
+    return -1;
 }
 
 void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     ScriptEngine &scriptEngine)
 {
+    const auto first = evaluateUInt(scriptEngine, mCall.first);
+    const auto maxElementCount = getMaxElementCount(scriptEngine);
+    const auto count = (!mCall.count.isEmpty()
+            ? evaluateUInt(scriptEngine, mCall.count)
+            : std::max(maxElementCount - static_cast<int>(first), 0));
+    const auto instanceCount = evaluateUInt(scriptEngine, mCall.instanceCount);
+    const auto baseVertex = evaluateInt(scriptEngine, mCall.baseVertex);
+    const auto firstInstance = evaluateUInt(scriptEngine, mCall.baseInstance);
+    const auto drawCount = evaluateUInt(scriptEngine, mCall.drawCount);
+    const auto indirectOffset =
+        (mKind.indirect ? evaluateUInt(scriptEngine, mIndirectOffset) : 0);
+
+    if (!count)
+        return;
+
+    if (maxElementCount >= 0
+        && first + count > static_cast<uint32_t>(maxElementCount)) {
+        mMessages += MessageList::insert(mCall.id, MessageType::CountExceeded,
+            first ? QStringLiteral("%1 + %2 > %3")
+                        .arg(first)
+                        .arg(count)
+                        .arg(maxElementCount)
+                  : QStringLiteral("%1 > %2").arg(count).arg(maxElementCount));
+        return;
+    }
+
     auto primitiveOptions = mTarget->getPrimitiveOptions();
     //primitiveOptions.primitiveRestart = true;
     primitiveOptions.topology = toKDGpu(mCall.primitiveType);
@@ -269,15 +296,16 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
             mIndexType);
     }
 
-    const auto count = (!mCall.count.isEmpty()
-            ? evaluateUInt(scriptEngine, mCall.count)
-            : getDefaultElementCount());
-    const auto instanceCount = evaluateUInt(scriptEngine, mCall.instanceCount);
-    const auto first = evaluateUInt(scriptEngine, mCall.first);
-    const auto firstInstance = evaluateUInt(scriptEngine, mCall.baseInstance);
-    const auto baseVertex = evaluateInt(scriptEngine, mCall.baseVertex);
-    const auto drawCount = evaluateUInt(scriptEngine, mCall.drawCount);
-    const auto indirectOffset = evaluateUInt(scriptEngine, mIndirectOffset);
+    if (maxElementCount >= 0
+        && first + count > static_cast<uint32_t>(maxElementCount)) {
+        mMessages += MessageList::insert(mCall.id, MessageType::CountExceeded,
+            first ? QStringLiteral("%1 + %2 > %3")
+                        .arg(first)
+                        .arg(count)
+                        .arg(maxElementCount)
+                  : QStringLiteral("%1 > %2").arg(count).arg(maxElementCount));
+        return;
+    }
 
     if (mCall.callType == Call::CallType::Draw) {
         renderPass.draw({

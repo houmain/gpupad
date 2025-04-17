@@ -188,6 +188,7 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block)
 
     mIndexBuffer = indices;
     mIndicesOffset = block.offset;
+    mIndicesRowCount = block.rowCount;
 }
 
 GLenum GLCall::getIndexType() const
@@ -200,13 +201,13 @@ GLenum GLCall::getIndexType() const
     }
 }
 
-int GLCall::getDefaultElementCount() const
+int GLCall::getMaxElementCount(ScriptEngine &scriptEngine)
 {
-    if (mIndexBuffer)
-        return mIndexBuffer->size() / mIndexSize;
+    if (mKind.indexed)
+        return static_cast<int>(evaluateUInt(scriptEngine, mIndicesRowCount));
     if (mVertexStream)
-        return mVertexStream->getDefaultElementCount();
-    return 0;
+        return mVertexStream->maxElementCount();
+    return -1;
 }
 
 void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block)
@@ -330,8 +331,41 @@ int GLCall::evaluateInt(ScriptEngine &scriptEngine, const QString &expression)
     return scriptEngine.evaluateInt(expression, mCall.id, mMessages);
 }
 
+uint32_t GLCall::evaluateUInt(ScriptEngine &scriptEngine,
+    const QString &expression)
+{
+    return scriptEngine.evaluateUInt(expression, mCall.id, mMessages);
+}
+
 void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
+    const auto first = evaluateUInt(scriptEngine, mCall.first);
+    const auto maxElementCount = getMaxElementCount(scriptEngine);
+    const auto count = (!mCall.count.isEmpty()
+            ? evaluateUInt(scriptEngine, mCall.count)
+            : std::max(maxElementCount - static_cast<int>(first), 0));
+    const auto instanceCount = evaluateUInt(scriptEngine, mCall.instanceCount);
+    const auto baseVertex = evaluateUInt(scriptEngine, mCall.baseVertex);
+    const auto baseInstance = evaluateUInt(scriptEngine, mCall.baseInstance);
+    const auto drawCount = evaluateUInt(scriptEngine, mCall.drawCount);
+    const auto indexType = getIndexType();
+    const auto indirectOffset =
+        (mKind.indirect ? evaluateUInt(scriptEngine, mIndirectOffset) : 0);
+
+    if (!count)
+        return;
+
+    if (maxElementCount >= 0
+        && first + count > static_cast<uint32_t>(maxElementCount)) {
+        mMessages += MessageList::insert(mCall.id, MessageType::CountExceeded,
+            first ? QStringLiteral("%1 + %2 > %3")
+                        .arg(first)
+                        .arg(count)
+                        .arg(maxElementCount)
+                  : QStringLiteral("%1 > %2").arg(count).arg(maxElementCount));
+        return;
+    }
+
     if (!bindVertexStream())
         return;
 
@@ -349,16 +383,6 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         gl.v4_0->glPatchParameteri(GL_PATCH_VERTICES,
             evaluateInt(scriptEngine, mCall.patchVertices));
 
-    const auto first = evaluateInt(scriptEngine, mCall.first);
-    const auto count = (!mCall.count.isEmpty()
-            ? evaluateInt(scriptEngine, mCall.count)
-            : getDefaultElementCount());
-    const auto instanceCount = evaluateInt(scriptEngine, mCall.instanceCount);
-    const auto baseVertex = evaluateInt(scriptEngine, mCall.baseVertex);
-    const auto baseInstance = evaluateInt(scriptEngine, mCall.baseInstance);
-    const auto drawCount = evaluateInt(scriptEngine, mCall.drawCount);
-    const auto indexType = getIndexType();
-
     auto guard = beginTimerQuery();
     if (mCall.callType == Call::CallType::Draw) {
         // DrawArrays(InstancedBaseInstance)
@@ -372,7 +396,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     } else if (mCall.callType == Call::CallType::DrawIndexed && indexType) {
         // DrawElements(InstancedBaseVertexBaseInstance)
         const auto offset = reinterpret_cast<void *>(static_cast<intptr_t>(
-            evaluateInt(scriptEngine, mIndicesOffset) + first * mIndexSize));
+            evaluateUInt(scriptEngine, mIndicesOffset) + first * mIndexSize));
         if (!baseVertex && !baseInstance) {
             gl.glDrawElementsInstanced(mCall.primitiveType, count, indexType,
                 offset, instanceCount);
@@ -383,8 +407,8 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         }
     } else if (mCall.callType == Call::CallType::DrawIndirect) {
         // (Multi)DrawArraysIndirect
-        const auto offset = reinterpret_cast<void *>(
-            static_cast<intptr_t>(evaluateInt(scriptEngine, mIndirectOffset)));
+        const auto offset =
+            reinterpret_cast<void *>(static_cast<intptr_t>(indirectOffset));
         if (drawCount == 1) {
             if (auto gl40 = check(gl.v4_0, mCall.id, messages))
                 gl40->glDrawArraysIndirect(mCall.primitiveType, offset);
@@ -395,8 +419,8 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     } else if (mCall.callType == Call::CallType::DrawIndexedIndirect
         && indexType) {
         // (Multi)DrawElementsIndirect
-        const auto offset = reinterpret_cast<void *>(
-            static_cast<intptr_t>(evaluateInt(scriptEngine, mIndirectOffset)));
+        const auto offset =
+            reinterpret_cast<void *>(static_cast<intptr_t>(indirectOffset));
         if (drawCount == 1) {
             if (auto gl40 = check(gl.v4_0, mCall.id, messages))
                 gl40->glDrawElementsIndirect(mCall.primitiveType, indexType,
@@ -410,7 +434,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             reinterpret_cast<PFNGLDRAWMESHTASKSNVPROC>(
                 gl.getProcAddress("glDrawMeshTasksNV"));
         if (glDrawMeshTasksNV) {
-            glDrawMeshTasksNV(0, evaluateInt(scriptEngine, mCall.workGroupsX));
+            glDrawMeshTasksNV(0, evaluateUInt(scriptEngine, mCall.workGroupsX));
         } else {
             messages += MessageList::insert(mCall.id,
                 MessageType::UnsupportedShaderType);
@@ -422,8 +446,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         static auto glMultiDrawMeshTasksIndirectNV =
             reinterpret_cast<PFNGLMULTIDRAWMESHTASKSINDIRECTNVPROC>(
                 gl.getProcAddress("glMultiDrawMeshTasksIndirectNV"));
-        const auto offset =
-            static_cast<intptr_t>(evaluateInt(scriptEngine, mIndirectOffset));
+        const auto offset = static_cast<intptr_t>(indirectOffset);
         if (drawCount == 1 && glDrawMeshTasksIndirectNV) {
             glDrawMeshTasksIndirectNV(offset);
         } else if (drawCount != 1 && glMultiDrawMeshTasksIndirectNV) {

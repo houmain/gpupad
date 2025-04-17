@@ -1,7 +1,6 @@
 #pragma once
 
 #include "VKBuffer.h"
-#include "VKProgram.h"
 
 class VKStream
 {
@@ -14,6 +13,7 @@ public:
     const std::vector<int> &getBufferOffsets();
     const KDGpu::VertexOptions &getVertexOptions();
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
+    int maxElementCount() const { return mMaxElementCount; }
 
 private:
     struct VKAttribute
@@ -28,7 +28,6 @@ private:
         int offset{};
     };
 
-    int getDefaultElementCount() const { return mDefaultElementCount; }
     bool validateAttribute(const VKAttribute &attribute) const;
     void invalidateVertexOptions();
     void updateVertexOptions();
@@ -40,5 +39,5 @@ private:
     std::vector<VKBuffer *> mBuffers;
     std::vector<int> mBufferOffsets;
     KDGpu::VertexOptions mVertexOptions;
-    int mDefaultElementCount{ };
+    int mMaxElementCount{ -1 };
 };

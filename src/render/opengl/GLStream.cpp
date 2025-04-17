@@ -31,9 +31,10 @@ void GLStream::setAttribute(int attributeIndex, const Field &field,
     attribute.stride = getBlockStride(block);
     attribute.offset = blockOffset + getFieldRowOffset(field);
 
-    if (attributeIndex == 0)
-        mDefaultElementCount =
-            scriptEngine.evaluateValue(block.rowCount, block.id, mMessages);
+    const auto rowCount =
+        scriptEngine.evaluateValue(block.rowCount, block.id, mMessages);
+    if (mMaxElementCount < 0 || rowCount < mMaxElementCount)
+        mMaxElementCount = rowCount;
 
     if (!validateAttribute(attribute)) {
         attribute.buffer = nullptr;

@@ -94,6 +94,8 @@ public:
 private:
     std::shared_ptr<void> beginTimerQuery();
     int evaluateInt(ScriptEngine &scriptEngine, const QString &expression);
+    uint32_t evaluateUInt(ScriptEngine &scriptEngine,
+        const QString &expression);
     void executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine);
     void executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
     void executeClearTexture(MessagePtrSet &messages);
@@ -134,7 +136,7 @@ private:
     bool bindVertexStream();
     void unbindVertexStream();
     GLenum getIndexType() const;
-    int getDefaultElementCount() const;
+    int getMaxElementCount(ScriptEngine &scriptEngine);
 
     const Call mCall;
     const CallKind mKind;
@@ -151,6 +153,7 @@ private:
     QString mIndirectOffset;
     int mIndexSize{};
     QString mIndicesOffset;
+    QString mIndicesRowCount;
 
     GLBuffer *mIndirectBuffer{};
     GLint mIndirectStride{};

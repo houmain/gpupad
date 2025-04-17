@@ -54,6 +54,7 @@ enum class MessageType {
     InvalidIndirectStride,
     InvalidGeometryStride,
     ImageFormatNotBindable,
+    CountExceeded,
     UniformComponentMismatch,
     InvalidIncludeDirective,
     IncludableNotFound,

@@ -224,7 +224,7 @@ struct Call : Item
     ItemId vertexStreamId{};
 
     PrimitiveType primitiveType{ PrimitiveType::Triangles };
-    QString count{ "3" };
+    QString count;
     QString first{ "0" };
 
     ItemId indexBufferBlockId{};
@@ -276,7 +276,7 @@ struct Geometry : Item
     GeometryType geometryType{};
     ItemId vertexBufferBlockId{};
     ItemId indexBufferBlockId{};
-    QString count{ "1" };
+    QString count;
     QString offset{ "0" };
 };
 
