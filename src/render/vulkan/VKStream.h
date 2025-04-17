@@ -28,6 +28,7 @@ private:
         int offset{};
     };
 
+    int getDefaultElementCount() const { return mDefaultElementCount; }
     bool validateAttribute(const VKAttribute &attribute) const;
     void invalidateVertexOptions();
     void updateVertexOptions();
@@ -39,4 +40,5 @@ private:
     std::vector<VKBuffer *> mBuffers;
     std::vector<int> mBufferOffsets;
     KDGpu::VertexOptions mVertexOptions;
+    int mDefaultElementCount{ };
 };

@@ -34,6 +34,7 @@ private:
     int evaluateInt(ScriptEngine &scriptEngine, const QString &expression);
     uint32_t evaluateUInt(ScriptEngine &scriptEngine,
         const QString &expression);
+    int getDefaultElementCount() const;
     void executeDraw(VKContext &context, MessagePtrSet &messages,
         ScriptEngine &scriptEngine);
     void executeCompute(VKContext &context, MessagePtrSet &messages,

@@ -220,6 +220,15 @@ uint32_t VKCall::evaluateUInt(ScriptEngine &scriptEngine,
     return scriptEngine.evaluateUInt(expression, mCall.id, mMessages);
 }
 
+int VKCall::getDefaultElementCount() const
+{
+    if (mIndexBuffer)
+        return mIndexBuffer->size() / mIndexSize;
+    if (mVertexStream)
+        return mVertexStream->getDefaultElementCount();
+    return 0;
+}
+
 void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     ScriptEngine &scriptEngine)
 {
@@ -260,7 +269,9 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
             mIndexType);
     }
 
-    const auto count = evaluateUInt(scriptEngine, mCall.count);
+    const auto count = (!mCall.count.isEmpty()
+            ? evaluateUInt(scriptEngine, mCall.count)
+            : getDefaultElementCount());
     const auto instanceCount = evaluateUInt(scriptEngine, mCall.instanceCount);
     const auto first = evaluateUInt(scriptEngine, mCall.first);
     const auto firstInstance = evaluateUInt(scriptEngine, mCall.baseInstance);
