@@ -27,10 +27,10 @@ public:
     void configured() override;
     void finish() override;
     void release() override;
+    QSet<ItemId> usedItems() const override;
     SessionModel &sessionModelCopy() override { return mSessionModelCopy; }
 
     const Session &session() const;
-    QSet<ItemId> usedItems() const;
     bool usesMouseState() const;
     bool usesKeyboardState() const;
 

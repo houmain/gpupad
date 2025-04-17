@@ -35,8 +35,7 @@ namespace {
                 .arg(member.name);
 
         return QStringLiteral("%1.%2")
-            .arg(block.type_description->type_name)
-            .arg(member.name);
+            .arg(block.type_description->type_name, member.name);
     }
 
     QStringView getBaseName(QStringView name)
@@ -850,6 +849,19 @@ MessageType VKPipeline::updateBindings(VKContext &context,
     const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
     ScriptEngine &scriptEngine)
 {
+    const auto getBufferBindingOffsetSize =
+        [&](const VKBufferBinding &binding) {
+            const auto &buffer = *binding.buffer;
+            const auto offset = scriptEngine.evaluateUInt(binding.offset,
+                buffer.itemId(), mMessages);
+            const auto rowCount = scriptEngine.evaluateUInt(binding.rowCount,
+                buffer.itemId(), mMessages);
+            const auto size = (binding.stride ? rowCount * binding.stride
+                                              : buffer.size() - offset);
+            Q_ASSERT(size > 0 && offset + size <= static_cast<size_t>(buffer.size()));
+            return std::pair(offset, size);
+        };
+
     switch (desc.descriptor_type) {
     case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
         if (const auto bufferBinding =
@@ -857,18 +869,22 @@ MessageType VKPipeline::updateBindings(VKContext &context,
             if (!bufferBinding->buffer)
                 return MessageType::BufferNotSet;
             auto &buffer = *bufferBinding->buffer;
-            buffer.prepareUniformBuffer(context);
-
             mUsedItems += bufferBinding->bindingItemId;
             mUsedItems += bufferBinding->blockItemId;
             mUsedItems += buffer.itemId();
 
+            buffer.prepareUniformBuffer(context);
+
+            const auto [offset, size] =
+                getBufferBindingOffsetSize(*bufferBinding);
             setBindGroupResource(desc.set,
                 {
                     .binding = desc.binding,
                     .resource =
                         KDGpu::UniformBufferBinding{
                             .buffer = buffer.buffer(),
+                            .offset = offset,
+                            .size = size,
                         },
                     .arrayElement = arrayElement,
                 });
@@ -898,6 +914,8 @@ MessageType VKPipeline::updateBindings(VKContext &context,
             if (!bufferBinding || !bufferBinding->buffer)
                 return MessageType::BufferNotSet;
             auto &buffer = *bufferBinding->buffer;
+            mUsedItems += bufferBinding->bindingItemId;
+            mUsedItems += buffer.itemId();
 
             const auto readable =
                 !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_READABLE);
@@ -905,15 +923,17 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                 !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_WRITABLE);
             buffer.prepareShaderStorageBuffer(context, readable, writeable);
 
-            mUsedItems += bufferBinding->bindingItemId;
-            mUsedItems += buffer.itemId();
-
+            const auto [offset, size] =
+                getBufferBindingOffsetSize(*bufferBinding);
             setBindGroupResource(desc.set,
                 {
                     .binding = desc.binding,
                     .resource =
                         KDGpu::StorageBufferBinding{
-                            .buffer = buffer.buffer() },
+                            .buffer = buffer.buffer(),
+                            .offset = offset,
+                            .size = size,
+                        },
                     .arrayElement = arrayElement,
                 });
         }

@@ -268,7 +268,7 @@ void VKAccelerationStructure::prepare(VKContext &context)
         .geometryTypesAndCount = {
             {
                 .geometry = geometryInstances,
-                .maxPrimitiveCount = 1,
+                .maxPrimitiveCount = static_cast<uint32_t>(geometryInstances.data.size()),
             },
         },
     });

@@ -1,7 +1,4 @@
 #include "VKProgram.h"
-#include "VKBuffer.h"
-#include "VKTexture.h"
-#include "scripting/ScriptEngine.h"
 #include <QRegularExpression>
 
 namespace {
