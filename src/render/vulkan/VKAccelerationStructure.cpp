@@ -2,45 +2,27 @@
 #include "VKAccelerationStructure.h"
 
 VKAccelerationStructure::VKAccelerationStructure(
-    const AccelerationStructure &accelStruct, ScriptEngine &scriptEngine)
+    const AccelerationStructure &accelStruct)
 {
     mUsedItems += accelStruct.id;
 
-    const auto getTransform = [&](const Instance &instance) {
-        if (instance.transform.isEmpty())
-            return ScriptValueList{};
-        auto values = scriptEngine.evaluateValues(instance.transform,
-            instance.id, mMessages);
-        if (values.size() != 12 && values.size() != 16)
-            mMessages += MessageList::insert(instance.id,
-                MessageType::UniformComponentMismatch,
-                QString("(%1/12 or 16)").arg(values.count()));
-        values.resize(12);
-        return values;
-    };
-
-    const auto getGeometries = [&](const Instance &instance) {
-        auto geometries = std::vector<VKGeometry>();
-        for (auto item : instance.items)
-            if (auto geometry = castItem<Geometry>(item))
-                geometries.push_back({
-                    .itemId = geometry->id,
-                    .type = geometry->geometryType,
-                    .primitiveCount = scriptEngine.evaluateUInt(geometry->count,
-                        geometry->id, mMessages),
-                    .primitiveOffset = scriptEngine.evaluateUInt(
-                        geometry->offset, geometry->id, mMessages),
-                });
-        return geometries;
-    };
-
     for (auto item : accelStruct.items)
-        if (auto instance = castItem<Instance>(item))
+        if (auto instance = castItem<Instance>(item)) {
+            auto geometries = std::vector<VKGeometry>();
+            for (auto item : instance->items)
+                if (auto geometry = castItem<Geometry>(item)) {
+                    geometries.push_back({
+                        .itemId = geometry->id,
+                        .type = geometry->geometryType,
+                        .primitiveCount = geometry->count,
+                        .primitiveOffset = geometry->offset,
+                    });
+                }
             mInstances.push_back({
                 .itemId = item->id,
-                .transform = getTransform(*instance),
-                .geometries = getGeometries(*instance),
+                .geometries = std::move(geometries),
             });
+        }
 }
 
 bool VKAccelerationStructure::operator==(
@@ -149,10 +131,24 @@ void VKAccelerationStructure::memoryBarrier(
     });
 }
 
-void VKAccelerationStructure::prepare(VKContext &context)
+void VKAccelerationStructure::prepare(VKContext &context,
+    ScriptEngine &scriptEngine)
 {
     if (mTopLevelAs.isValid())
         return;
+
+    const auto getTransformValues = [&](ItemId itemId,
+                                        const QString &transform) {
+        if (transform.isEmpty())
+            return ScriptValueList{};
+        auto values = scriptEngine.evaluateValues(transform, itemId, mMessages);
+        if (values.size() != 12 && values.size() != 16)
+            mMessages += MessageList::insert(itemId,
+                MessageType::UniformComponentMismatch,
+                QString("(%1/12 or 16)").arg(values.count()));
+        values.resize(12);
+        return values;
+    };
 
     mBottomLevelAs.clear();
 
@@ -181,6 +177,12 @@ void VKAccelerationStructure::prepare(VKContext &context)
             auto &vertexBuffer = *geometry.vertexBuffer;
             vertexBuffer.prepareAccelerationStructureGeometry(context);
 
+            // TODO: validate count, ...
+            const auto primitiveCount = scriptEngine.evaluateUInt(
+                geometry.primitiveCount, geometry.itemId, mMessages);
+            const auto primitiveOffset = scriptEngine.evaluateUInt(
+                geometry.primitiveOffset, geometry.itemId, mMessages);
+
             using GeometryType = Geometry::GeometryType;
             if (geometry.type == GeometryType::AxisAlignedBoundingBoxes) {
                 const auto aabbsGeometry =
@@ -191,7 +193,7 @@ void VKAccelerationStructure::prepare(VKContext &context)
                     };
                 geometryTypesAndCount.push_back({
                     .geometry = aabbsGeometry,
-                    .maxPrimitiveCount = geometry.primitiveCount,
+                    .maxPrimitiveCount = primitiveCount,
                 });
 
                 blasBuildOptions.geometries.push_back(aabbsGeometry);
@@ -217,14 +219,14 @@ void VKAccelerationStructure::prepare(VKContext &context)
                     };
                 geometryTypesAndCount.push_back({
                     .geometry = triangleGeometry,
-                    .maxPrimitiveCount = geometry.primitiveCount,
+                    .maxPrimitiveCount = primitiveCount,
                 });
 
                 blasBuildOptions.geometries.push_back(triangleGeometry);
             }
             blasBuildOptions.buildRangeInfos.push_back({
-                .primitiveCount = geometry.primitiveCount,
-                .primitiveOffset = geometry.primitiveOffset,
+                .primitiveCount = primitiveCount,
+                .primitiveOffset = primitiveOffset,
                 .firstVertex = 0,
                 .transformOffset = 0,
             });
@@ -250,8 +252,11 @@ void VKAccelerationStructure::prepare(VKContext &context)
                     KDGpu::GeometryInstanceFlagBits::TriangleFacingCullDisable,
                 .accelerationStructure = bottomLevelAs,
             });
-        for (auto i = 0; i < instance.transform.size(); ++i)
-            geometryInstance.transform[i / 4][i % 4] = instance.transform[i];
+
+        const auto transform =
+            getTransformValues(instance.itemId, instance.transform);
+        for (auto i = 0; i < transform.size(); ++i)
+            geometryInstance.transform[i / 4][i % 4] = transform[i];
     }
 
     // build all BLASs

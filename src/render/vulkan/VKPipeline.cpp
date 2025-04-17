@@ -1025,7 +1025,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         if (!mAccelerationStructure)
             return MessageType::AccelerationStructureNotAssigned;
 
-        mAccelerationStructure->prepare(context);
+        mAccelerationStructure->prepare(context, scriptEngine);
         mUsedItems += mAccelerationStructure->usedItems();
         const auto &topLevelAs = mAccelerationStructure->topLevelAs();
         if (!topLevelAs.isValid())

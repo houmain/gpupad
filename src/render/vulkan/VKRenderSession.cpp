@@ -175,7 +175,7 @@ void VKRenderSession::buildCommandQueue()
         const auto accelerationStructure =
             sessionModel.findItem<AccelerationStructure>(accelStructId);
         auto as = addOnce(mCommandQueue->accelerationStructures,
-            accelerationStructure, scriptEngine);
+            accelerationStructure);
         if (as) {
             const auto &items = accelerationStructure->items;
             for (auto i = 0; i < items.size(); ++i)

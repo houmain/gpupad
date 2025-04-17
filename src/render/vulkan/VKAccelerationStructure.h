@@ -6,8 +6,7 @@
 class VKAccelerationStructure
 {
 public:
-    VKAccelerationStructure(const AccelerationStructure &accelStruct,
-        ScriptEngine &scriptEngine);
+    explicit VKAccelerationStructure(const AccelerationStructure &accelStruct);
     bool operator==(const VKAccelerationStructure &rhs) const;
     void setVertexBuffer(int instanceIndex, int geometryIndex, VKBuffer *buffer,
         const Block &block, VKRenderSession &renderSession);
@@ -20,7 +19,7 @@ public:
         return mTopLevelAs;
     }
 
-    void prepare(VKContext &context);
+    void prepare(VKContext &context, ScriptEngine &scriptEngine);
 
 private:
     struct VKGeometry
@@ -36,8 +35,8 @@ private:
         VKBuffer *indexBuffer{};
         KDGpu::IndexType indexType{};
         size_t indexBufferOffset{};
-        uint32_t primitiveCount{};
-        uint32_t primitiveOffset{};
+        QString primitiveCount;
+        QString primitiveOffset;
     };
 
     struct VKInstance
@@ -45,7 +44,7 @@ private:
         bool operator==(const VKInstance &) const = default;
 
         ItemId itemId{};
-        ScriptValueList transform;
+        QString transform;
         std::vector<VKGeometry> geometries;
     };
 
