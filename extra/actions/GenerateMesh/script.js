@@ -4,6 +4,20 @@ const manifest = {
   name: "&Generate Mesh..."
 }
 
+function hasType(type) {
+  return (item) => (item.type == type)
+}
+
+function findItem(parent, predicate) {
+  for (let i = parent?.items.length - 1; i >= 0; --i)
+    if (predicate(parent.items[i]))
+        return parent.items[i]
+}
+
+function findSessionItem(predicate) {
+  return findItem(app.session, predicate)
+}
+
 class Script {
   constructor() {
     this.library = app.loadLibrary("GenerateMesh")
@@ -19,12 +33,6 @@ class Script {
     this.ui.typeNames = typeNames
     
     this.refresh()
-  }
-  
-  findSessionItem(predicate) {
-    for (let i = app.session.items.length - 1; i >= 0; --i)
-      if (predicate(app.session.items[i]))
-          return app.session.items[i]
   }
   
   refresh() {
@@ -62,9 +70,22 @@ class Script {
       this.generate()
   }
   
+  replace(group) {
+    this.group = group
+    this.buffer = findItem(group, hasType('Buffer'))
+    this.stream = findItem(group, hasType('Stream'))
+    this.drawCall = findItem(group, hasType('Call'))
+    this.vertices = this.buffer?.items[0]
+    this.indices = this.buffer?.items[1]
+    if (!this.vertices)
+      return false
+    this.generate()
+    return true
+  }
+  
   insert() {
     this.group = app.session.insertItem({
-      name: 'Mesh',
+      name: (this.settings.name || 'Mesh'),
       type: 'Group',
       inlineScope: true
     })    
@@ -170,7 +191,7 @@ class Script {
   }
   
   updateDrawCall() {
-    if (!this.settings.drawCall) {
+    if (this.settings.drawCall === false) {
       if (this.drawCall)
         app.session.deleteItem(this.drawCall)
       this.drawCall = undefined
@@ -178,17 +199,16 @@ class Script {
     }
     
     if (!this.drawCall) {
-      const target = this.findSessionItem(
-        (item) => (item.type == 'Target'))
+      const target = findSessionItem(hasType('Target'))
 
-      const program = this.findSessionItem(
+      const program = findSessionItem(
         (item) => (item.type == 'Program' &&
           item.items[0]?.shaderType == "Vertex"))
 
       this.drawCall = app.session.insertItem(this.group, {
         name: 'Draw',
         type: 'Call',
-        vertexStreamId: this.stream.id,
+        vertexStreamId: this.stream?.id,
         targetId: target?.id,
         programId: program?.id,
       })
@@ -211,9 +231,12 @@ class Script {
 this.script = new Script()
 
 if (this.arguments) {
-  this.script.settings = this.arguments
-  this.script.insert()
+  const settings = this.arguments
+  this.script.settings = settings
+  if (!this.script.replace(settings.group))
+    this.script.insert()
   this.script.generate()
+  this.result = this.script.group
 }
 else {
   app.openEditor("ui.qml")

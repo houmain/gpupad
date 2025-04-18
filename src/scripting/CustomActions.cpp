@@ -119,6 +119,7 @@ CustomActions::~CustomActions() = default;
 
 void CustomActions::actionTriggered()
 {
+    Q_ASSERT(onMainThread());
     auto &action = static_cast<CustomAction &>(
         *qobject_cast<QAction *>(QObject::sender()));
 
@@ -128,8 +129,8 @@ void CustomActions::actionTriggered()
 
 void CustomActions::updateActions()
 {
-    Q_ASSERT(onMainThread());
-    Singletons::fileCache().updateFromEditors();
+    if (onMainThread())
+        Singletons::fileCache().updateFromEditors();
 
     mMessages.clear();
     mActions.clear();
@@ -155,11 +156,14 @@ void CustomActions::updateActions()
 
 void CustomActions::setSelection(const QModelIndexList &selection)
 {
+    Q_ASSERT(onMainThread());
     mSelection = selection;
 }
 
 QList<CustomActionPtr> CustomActions::getApplicableActions()
 {
+    QMutexLocker lock(&mMutex);
+
     updateActions();
 
     auto actions = QList<CustomActionPtr>();
@@ -171,6 +175,8 @@ QList<CustomActionPtr> CustomActions::getApplicableActions()
 
 CustomActionPtr CustomActions::getActionById(const QString &id)
 {
+    QMutexLocker lock(&mMutex);
+
     updateActions();
 
     for (const auto &[text, action] : mActions)
@@ -180,11 +186,11 @@ CustomActionPtr CustomActions::getActionById(const QString &id)
 }
 
 bool CustomActions::applyActionInEngine(const QString &id,
-    ScriptEngine &scriptEngine)
+    ScriptEngine &scriptEngine, MessagePtrSet &messages)
 {
     auto action = getActionById(id);
     if (!action)
         return false;
-    action->applyInEngine(scriptEngine, mMessages);
+    action->applyInEngine(scriptEngine, messages);
     return true;
 }

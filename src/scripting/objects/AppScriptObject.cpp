@@ -45,7 +45,7 @@ void AppScriptObject::setSelection(const QModelIndexList &selectedIndices)
 
 void AppScriptObject::updateInputState()
 {
-    auto& inputState = Singletons::inputState();
+    auto &inputState = Singletons::inputState();
     inputState.update();
     mMouseScriptObject->update(inputState);
     mKeyboardScriptObject->update(inputState);
@@ -95,10 +95,7 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
                     toNativeCanonicalFilePath(dir.filePath(fileName));
                 auto source = QString();
                 if (Singletons::fileCache().getSource(filePath, &source)) {
-                    auto messages = MessagePtrSet();
-                    engine->evaluateScript(source, filePath, messages);
-                    if (!messages.empty())
-                        jsEngine().throwError((*messages.begin())->text);
+                    engine->evaluateScript(source, filePath, mMessages);
                     return {};
                 }
             }
@@ -120,10 +117,9 @@ QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)
     engine->setGlobal("arguments", arguments);
 
     auto &customActions = Singletons::customActions();
-    const auto applied = customActions.applyActionInEngine(id, *engine);
-
+    const auto applied =
+        customActions.applyActionInEngine(id, *engine, mMessages);
     engine->setGlobal("arguments", QJSValue::UndefinedValue);
-
     if (!applied)
         jsEngine().throwError("Applying action '" + id + "' failed");
 

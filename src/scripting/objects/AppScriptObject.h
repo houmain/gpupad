@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MessageList.h"
 #include <QObject>
 #include <QJSValue>
 #include <QModelIndex>
@@ -49,6 +50,7 @@ private:
     WeakScriptEnginePtr mEnginePtr;
     QJSEngine *mJsEngine{};
     QDir mBasePath;
+    MessagePtrSet mMessages;
     SessionScriptObject *mSessionScriptObject{};
     MouseScriptObject *mMouseScriptObject{};
     KeyboardScriptObject *mKeyboardScriptObject{};

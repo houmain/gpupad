@@ -92,7 +92,6 @@ InputState &Singletons::inputState()
 
 CustomActions &Singletons::customActions()
 {
-    Q_ASSERT(onMainThread());
     return *sInstance->mCustomActions;
 }
 
