@@ -61,6 +61,16 @@ bool AppScriptObject::usesKeyboardState() const
     return mKeyboardScriptObject->wasRead();
 }
 
+QJSValue AppScriptObject::session()
+{
+    if (!mSessionScriptObject->available()) {
+        mJsEngine->throwError(QJSValue::EvalError,
+            "Session object not available");
+        return QJSValue();
+    }
+    return mSessionProperty;
+}
+
 QJSValue AppScriptObject::openEditor(QString fileName)
 {
     if (!onMainThread())

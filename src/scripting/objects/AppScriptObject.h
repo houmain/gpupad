@@ -23,7 +23,7 @@ class AppScriptObject final : public QObject
 public:
     AppScriptObject(const ScriptEnginePtr &enginePtr, const QString &basePath);
 
-    QJSValue session() { return mSessionProperty; }
+    QJSValue session();
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
     QJSValue selection() { return mSelectionProperty; }

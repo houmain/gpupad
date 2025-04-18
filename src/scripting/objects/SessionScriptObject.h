@@ -40,6 +40,7 @@ public:
 
     void beginBackgroundUpdate(IScriptRenderSession *renderSession);
     void endBackgroundUpdate();
+    bool available() const;
     QJSValue getItem(QModelIndex index);
 
     QString sessionName();

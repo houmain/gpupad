@@ -412,6 +412,11 @@ void SessionScriptObject::endBackgroundUpdate()
     Singletons::fileCache().updateFromEditors();
 }
 
+bool SessionScriptObject::available() const
+{
+    return (onMainThread() || mRenderSession != nullptr);
+}
+
 QString SessionScriptObject::sessionName()
 {
     return threadSessionModel().sessionItem().name;
