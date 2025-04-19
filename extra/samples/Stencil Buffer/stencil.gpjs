@@ -1,222 +1,239 @@
-[
-    {
-        "format": "RGBA8_UNorm",
-        "height": "512",
-        "id": 10,
-        "name": "TargetColor",
-        "target": "Target2D",
-        "type": "Texture",
-        "width": "512"
-    },
-    {
-        "format": "S8",
-        "height": "512",
-        "id": 117,
-        "name": "TargetStencil",
-        "target": "Target2D",
-        "type": "Texture",
-        "width": "512"
-    },
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression",
-        "id": 124,
-        "name": "frame",
-        "type": "Binding",
-        "values": [
-            "(this.frame || 0) + 1"
-        ]
-    },
-    {
-        "id": 122,
-        "inlineScope": false,
-        "items": [
-            {
-                "blendConstant": "#ffffffff",
-                "cullMode": "NoCulling",
-                "frontFace": "CCW",
-                "id": 118,
-                "items": [
-                    {
-                        "id": 120,
-                        "level": 0,
-                        "name": "Stencil",
-                        "stencilBackComparisonFunc": "Always",
-                        "stencilBackDepthFailOp": "Keep",
-                        "stencilBackDepthPassOp": "Keep",
-                        "stencilBackFailOp": "Keep",
-                        "stencilBackReadMask": 255,
-                        "stencilBackReference": 0,
-                        "stencilBackWriteMask": 255,
-                        "stencilFrontComparisonFunc": "Always",
-                        "stencilFrontDepthFailOp": "Keep",
-                        "stencilFrontDepthPassOp": "Increment",
-                        "stencilFrontFailOp": "Keep",
-                        "stencilFrontReadMask": 255,
-                        "stencilFrontReference": 0,
-                        "stencilFrontWriteMask": 255,
-                        "textureId": 117,
-                        "type": "Attachment"
-                    }
-                ],
-                "logicOperation": "NoLogicOperation",
-                "name": "Mask Target",
-                "polygonMode": "Fill",
-                "type": "Target"
-            },
-            {
-                "id": 1,
-                "items": [
-                    {
-                        "fileName": "attributeless.vs",
-                        "id": 2,
-                        "shaderType": "Vertex",
-                        "type": "Shader"
-                    },
-                    {
-                        "fileName": "mask.fs",
-                        "id": 3,
-                        "shaderType": "Fragment",
-                        "type": "Shader"
-                    }
-                ],
-                "name": "Mask Program",
-                "type": "Program"
-            },
-            {
-                "callType": "ClearTexture",
-                "checked": true,
-                "clearColor": "#00000000",
-                "clearDepth": 1,
-                "clearStencil": 0,
-                "executeOn": "ResetEvaluation",
-                "id": 121,
-                "name": "Clear Stencil",
-                "textureId": 117,
-                "type": "Call"
-            },
-            {
-                "baseInstance": "0",
-                "callType": "Draw",
-                "checked": true,
-                "count": "4",
-                "executeOn": "EveryEvaluation",
-                "first": "0",
-                "id": 4,
-                "instanceCount": "1",
-                "name": "Mask",
-                "primitiveType": "TriangleStrip",
-                "programId": 1,
-                "targetId": 118,
-                "type": "Call",
-                "vertexStreamId": 0
-            }
-        ],
-        "iterations": "1",
-        "name": "Mask",
-        "type": "Group"
-    },
-    {
-        "id": 123,
-        "inlineScope": false,
-        "items": [
-            {
-                "blendConstant": "#ffffffff",
-                "cullMode": "NoCulling",
-                "frontFace": "CCW",
-                "id": 7,
-                "items": [
-                    {
-                        "blendAlphaDest": "Zero",
-                        "blendAlphaEq": "Add",
-                        "blendAlphaSource": "One",
-                        "blendColorDest": "Zero",
-                        "blendColorEq": "Add",
-                        "blendColorSource": "One",
-                        "colorWriteMask": 15,
-                        "id": 8,
-                        "level": 0,
-                        "name": "Color",
-                        "textureId": 10,
-                        "type": "Attachment"
-                    },
-                    {
-                        "id": 116,
-                        "level": 0,
-                        "name": "Stencil",
-                        "stencilBackComparisonFunc": "Always",
-                        "stencilBackDepthFailOp": "Keep",
-                        "stencilBackDepthPassOp": "Keep",
-                        "stencilBackFailOp": "Keep",
-                        "stencilBackReadMask": 255,
-                        "stencilBackReference": 0,
-                        "stencilBackWriteMask": 255,
-                        "stencilFrontComparisonFunc": "NotEqual",
-                        "stencilFrontDepthFailOp": "Keep",
-                        "stencilFrontDepthPassOp": "Keep",
-                        "stencilFrontFailOp": "Keep",
-                        "stencilFrontReadMask": 255,
-                        "stencilFrontReference": 0,
-                        "stencilFrontWriteMask": 255,
-                        "textureId": 117,
-                        "type": "Attachment"
-                    }
-                ],
-                "logicOperation": "NoLogicOperation",
-                "name": "Fill Target",
-                "polygonMode": "Fill",
-                "type": "Target"
-            },
-            {
-                "id": 113,
-                "items": [
-                    {
-                        "fileName": "attributeless.vs",
-                        "id": 114,
-                        "shaderType": "Vertex",
-                        "type": "Shader"
-                    },
-                    {
-                        "fileName": "fill.fs",
-                        "id": 115,
-                        "shaderType": "Fragment",
-                        "type": "Shader"
-                    }
-                ],
-                "name": "Fill Program",
-                "type": "Program"
-            },
-            {
-                "callType": "ClearTexture",
-                "checked": true,
-                "clearColor": "#ff151515",
-                "clearDepth": 1,
-                "clearStencil": 0,
-                "executeOn": "EveryEvaluation",
-                "id": 110,
-                "name": "Clear Color",
-                "textureId": 10,
-                "type": "Call"
-            },
-            {
-                "baseInstance": "0",
-                "callType": "Draw",
-                "checked": true,
-                "count": "4",
-                "executeOn": "EveryEvaluation",
-                "first": "0",
-                "id": 112,
-                "instanceCount": "1",
-                "name": "Fill",
-                "primitiveType": "TriangleStrip",
-                "programId": 113,
-                "targetId": 7,
-                "type": "Call",
-                "vertexStreamId": 0
-            }
-        ],
-        "iterations": "1",
-        "name": "Fill",
-        "type": "Group"
-    }
-]
+{
+    "id": 927,
+    "items": [
+        {
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "512",
+            "id": 10,
+            "name": "TargetColor",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "flipVertically": false,
+            "format": "S8",
+            "height": "512",
+            "id": 117,
+            "name": "TargetStencil",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 124,
+            "name": "frame",
+            "type": "Binding",
+            "values": [
+                "app.frameIndex"
+            ]
+        },
+        {
+            "id": 122,
+            "inlineScope": false,
+            "items": [
+                {
+                    "blendConstant": "#ffffffff",
+                    "cullMode": "NoCulling",
+                    "frontFace": "CCW",
+                    "id": 118,
+                    "items": [
+                        {
+                            "id": 120,
+                            "level": 0,
+                            "name": "Stencil",
+                            "stencilBackComparisonFunc": "Always",
+                            "stencilBackDepthFailOp": "Keep",
+                            "stencilBackDepthPassOp": "Keep",
+                            "stencilBackFailOp": "Keep",
+                            "stencilBackReadMask": 255,
+                            "stencilBackReference": 0,
+                            "stencilBackWriteMask": 255,
+                            "stencilFrontComparisonFunc": "Always",
+                            "stencilFrontDepthFailOp": "Keep",
+                            "stencilFrontDepthPassOp": "Increment",
+                            "stencilFrontFailOp": "Keep",
+                            "stencilFrontReadMask": 255,
+                            "stencilFrontReference": 0,
+                            "stencilFrontWriteMask": 255,
+                            "textureId": 117,
+                            "type": "Attachment"
+                        }
+                    ],
+                    "logicOperation": "NoLogicOperation",
+                    "name": "Mask Target",
+                    "polygonMode": "Fill",
+                    "type": "Target"
+                },
+                {
+                    "id": 1,
+                    "items": [
+                        {
+                            "fileName": "attributeless.vs",
+                            "id": 2,
+                            "language": "GLSL",
+                            "shaderType": "Vertex",
+                            "type": "Shader"
+                        },
+                        {
+                            "fileName": "mask.fs",
+                            "id": 3,
+                            "language": "GLSL",
+                            "shaderType": "Fragment",
+                            "type": "Shader"
+                        }
+                    ],
+                    "name": "Mask Program",
+                    "type": "Program"
+                },
+                {
+                    "callType": "ClearTexture",
+                    "checked": true,
+                    "clearColor": "#00000000",
+                    "clearDepth": 1,
+                    "clearStencil": 0,
+                    "executeOn": "ResetEvaluation",
+                    "id": 121,
+                    "name": "Clear Stencil",
+                    "textureId": 117,
+                    "type": "Call"
+                },
+                {
+                    "baseInstance": "0",
+                    "callType": "Draw",
+                    "checked": true,
+                    "count": "4",
+                    "executeOn": "EveryEvaluation",
+                    "first": "0",
+                    "id": 4,
+                    "instanceCount": "1",
+                    "name": "Mask",
+                    "primitiveType": "TriangleStrip",
+                    "programId": 1,
+                    "targetId": 118,
+                    "type": "Call",
+                    "vertexStreamId": 0
+                }
+            ],
+            "iterations": "1",
+            "name": "Mask",
+            "type": "Group"
+        },
+        {
+            "id": 123,
+            "inlineScope": false,
+            "items": [
+                {
+                    "blendConstant": "#ffffffff",
+                    "cullMode": "NoCulling",
+                    "frontFace": "CCW",
+                    "id": 7,
+                    "items": [
+                        {
+                            "blendAlphaDest": "Zero",
+                            "blendAlphaEq": "Add",
+                            "blendAlphaSource": "One",
+                            "blendColorDest": "Zero",
+                            "blendColorEq": "Add",
+                            "blendColorSource": "One",
+                            "colorWriteMask": 15,
+                            "id": 8,
+                            "level": 0,
+                            "name": "Color",
+                            "textureId": 10,
+                            "type": "Attachment"
+                        },
+                        {
+                            "id": 116,
+                            "level": 0,
+                            "name": "Stencil",
+                            "stencilBackComparisonFunc": "Always",
+                            "stencilBackDepthFailOp": "Keep",
+                            "stencilBackDepthPassOp": "Keep",
+                            "stencilBackFailOp": "Keep",
+                            "stencilBackReadMask": 255,
+                            "stencilBackReference": 0,
+                            "stencilBackWriteMask": 255,
+                            "stencilFrontComparisonFunc": "NotEqual",
+                            "stencilFrontDepthFailOp": "Keep",
+                            "stencilFrontDepthPassOp": "Keep",
+                            "stencilFrontFailOp": "Keep",
+                            "stencilFrontReadMask": 255,
+                            "stencilFrontReference": 0,
+                            "stencilFrontWriteMask": 255,
+                            "textureId": 117,
+                            "type": "Attachment"
+                        }
+                    ],
+                    "logicOperation": "NoLogicOperation",
+                    "name": "Fill Target",
+                    "polygonMode": "Fill",
+                    "type": "Target"
+                },
+                {
+                    "id": 113,
+                    "items": [
+                        {
+                            "fileName": "attributeless.vs",
+                            "id": 114,
+                            "language": "GLSL",
+                            "shaderType": "Vertex",
+                            "type": "Shader"
+                        },
+                        {
+                            "fileName": "fill.fs",
+                            "id": 115,
+                            "language": "GLSL",
+                            "shaderType": "Fragment",
+                            "type": "Shader"
+                        }
+                    ],
+                    "name": "Fill Program",
+                    "type": "Program"
+                },
+                {
+                    "callType": "ClearTexture",
+                    "checked": true,
+                    "clearColor": "#ff151515",
+                    "clearDepth": 1,
+                    "clearStencil": 0,
+                    "executeOn": "EveryEvaluation",
+                    "id": 110,
+                    "name": "Clear Color",
+                    "textureId": 10,
+                    "type": "Call"
+                },
+                {
+                    "baseInstance": "0",
+                    "callType": "Draw",
+                    "checked": true,
+                    "count": "4",
+                    "executeOn": "EveryEvaluation",
+                    "first": "0",
+                    "id": 112,
+                    "instanceCount": "1",
+                    "name": "Fill",
+                    "primitiveType": "TriangleStrip",
+                    "programId": 113,
+                    "targetId": 7,
+                    "type": "Call",
+                    "vertexStreamId": 0
+                }
+            ],
+            "iterations": "1",
+            "name": "Fill",
+            "type": "Group"
+        }
+    ],
+    "name": "Session",
+    "renderer": "OpenGL",
+    "shaderCompiler": "",
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "type": "Session"
+}

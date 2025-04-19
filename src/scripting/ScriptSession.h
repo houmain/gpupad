@@ -17,7 +17,7 @@ public:
     // 1. called in main thread
     bool usesMouseState() const;
     bool usesKeyboardState() const;
-    void updateInputState();
+    void update();
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
 
     // 2. called in render thread

@@ -15,6 +15,7 @@ using WeakScriptEnginePtr = std::weak_ptr<class ScriptEngine>;
 class AppScriptObject final : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(int frameIndex READ frameIndex CONSTANT)
     Q_PROPERTY(QJSValue session READ session CONSTANT)
     Q_PROPERTY(QJSValue mouse READ mouse CONSTANT)
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
@@ -23,6 +24,7 @@ class AppScriptObject final : public QObject
 public:
     AppScriptObject(const ScriptEnginePtr &enginePtr, const QString &basePath);
 
+    int frameIndex() const { return mFrameIndex; }
     QJSValue session();
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
@@ -37,7 +39,7 @@ public:
     Q_INVOKABLE QJSValue writeTextFile(QString fileName, const QString &string);
     Q_INVOKABLE QJSValue readTextFile(QString fileName);
 
-    void updateInputState();
+    void update();
     void setSelection(const QModelIndexList &selectedIndices);
     bool usesMouseState() const;
     bool usesKeyboardState() const;
@@ -59,4 +61,5 @@ private:
     QJSValue mKeyboardProperty;
     QJSValue mSelectionProperty;
     QDir mLastFileDialogDirectory;
+    int mFrameIndex{ };
 };

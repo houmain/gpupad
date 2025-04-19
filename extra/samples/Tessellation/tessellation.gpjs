@@ -74,7 +74,7 @@
             "name": "frame",
             "type": "Binding",
             "values": [
-                "(this.frame || 0) + 1"
+                "app.frameIndex"
             ]
         },
         {

@@ -47,7 +47,7 @@ void RenderSessionBase::prepare(bool itemsChanged,
     mMessages.clear();
 
     if (mScriptSession)
-        mScriptSession->updateInputState();
+        mScriptSession->update();
     else
         mEvaluationType = EvaluationType::Reset;
 

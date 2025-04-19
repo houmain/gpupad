@@ -98,6 +98,7 @@ Initial documentation of the available script objects:
 
 ### App
 
+- `frameIndex: number`
 - `keyboard: Keyboard`
 - `mouse: Mouse`
 - `session: Session`

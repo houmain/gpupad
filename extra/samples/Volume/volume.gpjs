@@ -1,57 +1,69 @@
-[
-    {
-        "depth": 64,
-        "format": "R8_UNorm",
-        "height": 128,
-        "id": 79,
-        "name": "Buffer",
-        "target": "Target3D",
-        "type": "Texture",
-        "width": 128
-    },
-    {
-        "bindingType": "Image",
-        "id": 86,
-        "imageFormat": "Internal",
-        "layer": -1,
-        "level": 0,
-        "name": "uImage",
-        "textureId": 79,
-        "type": "Binding"
-    },
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression",
-        "id": 108,
-        "name": "frame",
-        "type": "Binding",
-        "values": [
-            "frame = (this.frame || 0) +1"
-        ]
-    },
-    {
-        "id": 90,
-        "items": [
-            {
-                "fileName": "fill.comp",
-                "id": 91,
-                "shaderType": "Compute",
-                "type": "Shader"
-            }
-        ],
-        "name": "Program",
-        "type": "Program"
-    },
-    {
-        "callType": "Compute",
-        "checked": true,
-        "executeOn": "EveryEvaluation",
-        "id": 93,
-        "name": "Fill",
-        "programId": 90,
-        "type": "Call",
-        "workGroupsX": "8",
-        "workGroupsY": "8",
-        "workGroupsZ": "64"
-    }
-]
+{
+    "id": 83,
+    "items": [
+        {
+            "depth": "64",
+            "flipVertically": false,
+            "format": "R8_UNorm",
+            "height": "128",
+            "id": 79,
+            "name": "Buffer",
+            "samples": 1,
+            "target": "Target3D",
+            "type": "Texture",
+            "width": "128"
+        },
+        {
+            "bindingType": "Image",
+            "id": 86,
+            "imageFormat": "Internal",
+            "layer": -1,
+            "level": 0,
+            "name": "uImage",
+            "textureId": 79,
+            "type": "Binding"
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 108,
+            "name": "frame",
+            "type": "Binding",
+            "values": [
+                "app.frameIndex"
+            ]
+        },
+        {
+            "id": 90,
+            "items": [
+                {
+                    "fileName": "fill.comp",
+                    "id": 91,
+                    "language": "GLSL",
+                    "shaderType": "Compute",
+                    "type": "Shader"
+                }
+            ],
+            "name": "Program",
+            "type": "Program"
+        },
+        {
+            "callType": "Compute",
+            "checked": true,
+            "executeOn": "EveryEvaluation",
+            "id": 93,
+            "name": "Fill",
+            "programId": 90,
+            "type": "Call",
+            "workGroupsX": "8",
+            "workGroupsY": "8",
+            "workGroupsZ": "64"
+        }
+    ],
+    "name": "Session",
+    "renderer": "OpenGL",
+    "shaderCompiler": "",
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "type": "Session"
+}

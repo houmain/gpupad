@@ -1,97 +1,106 @@
-[
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression2",
-        "id": 82,
-        "name": "resolution",
-        "type": "Binding",
-        "values": [
-            "1920",
-            "1080"
-        ]
-    },
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression",
-        "id": 74,
-        "name": "frame",
-        "type": "Binding",
-        "values": [
-            "frame = (this.frame || 0) + 1"
-        ]
-    },
-    {
-        "flipVertically": false,
-        "format": "RGBA8_UNorm",
-        "height": "resolution[1]",
-        "id": 70,
-        "name": "Texture",
-        "samples": 1,
-        "target": "Target2D",
-        "type": "Texture",
-        "width": "resolution[0]"
-    },
-    {
-        "blendConstant": "#ff000000",
-        "cullMode": "NoCulling",
-        "frontFace": "CCW",
-        "id": 71,
-        "items": [
-            {
-                "blendAlphaDest": "Zero",
-                "blendAlphaEq": "Add",
-                "blendAlphaSource": "One",
-                "blendColorDest": "Zero",
-                "blendColorEq": "Add",
-                "blendColorSource": "One",
-                "colorWriteMask": 15,
-                "id": 72,
-                "level": 0,
-                "name": "Color",
-                "textureId": 70,
-                "type": "Attachment"
-            }
-        ],
-        "logicOperation": "NoLogicOperation",
-        "name": "Target",
-        "polygonMode": "Fill",
-        "type": "Target"
-    },
-    {
-        "id": 76,
-        "items": [
-            {
-                "fileName": "attributeless.vs",
-                "id": 77,
-                "language": "GLSL",
-                "shaderType": "Vertex",
-                "type": "Shader"
-            },
-            {
-                "fileName": "sync.frag",
-                "id": 79,
-                "language": "GLSL",
-                "shaderType": "Fragment",
-                "type": "Shader"
-            }
-        ],
-        "name": "Program",
-        "type": "Program"
-    },
-    {
-        "baseInstance": "0",
-        "callType": "Draw",
-        "checked": true,
-        "count": "4",
-        "executeOn": "EveryEvaluation",
-        "first": "0",
-        "id": 80,
-        "instanceCount": "1",
-        "name": "Call",
-        "primitiveType": "TriangleStrip",
-        "programId": 76,
-        "targetId": 71,
-        "type": "Call",
-        "vertexStreamId": 0
-    }
-]
+{
+    "id": 2,
+    "items": [
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression2",
+            "id": 82,
+            "name": "resolution",
+            "type": "Binding",
+            "values": [
+                "1920",
+                "1080"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 74,
+            "name": "frame",
+            "type": "Binding",
+            "values": [
+                "app.frameIndex"
+            ]
+        },
+        {
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "resolution[1]",
+            "id": 70,
+            "name": "Texture",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "resolution[0]"
+        },
+        {
+            "blendConstant": "#ff000000",
+            "cullMode": "NoCulling",
+            "frontFace": "CCW",
+            "id": 71,
+            "items": [
+                {
+                    "blendAlphaDest": "Zero",
+                    "blendAlphaEq": "Add",
+                    "blendAlphaSource": "One",
+                    "blendColorDest": "Zero",
+                    "blendColorEq": "Add",
+                    "blendColorSource": "One",
+                    "colorWriteMask": 15,
+                    "id": 72,
+                    "level": 0,
+                    "name": "Color",
+                    "textureId": 70,
+                    "type": "Attachment"
+                }
+            ],
+            "logicOperation": "NoLogicOperation",
+            "name": "Target",
+            "polygonMode": "Fill",
+            "type": "Target"
+        },
+        {
+            "id": 76,
+            "items": [
+                {
+                    "fileName": "attributeless.vs",
+                    "id": 77,
+                    "language": "GLSL",
+                    "shaderType": "Vertex",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "sync.frag",
+                    "id": 79,
+                    "language": "GLSL",
+                    "shaderType": "Fragment",
+                    "type": "Shader"
+                }
+            ],
+            "name": "Program",
+            "type": "Program"
+        },
+        {
+            "baseInstance": "0",
+            "callType": "Draw",
+            "checked": true,
+            "count": "4",
+            "executeOn": "EveryEvaluation",
+            "first": "0",
+            "id": 80,
+            "instanceCount": "1",
+            "name": "Call",
+            "primitiveType": "TriangleStrip",
+            "programId": 76,
+            "targetId": 71,
+            "type": "Call",
+            "vertexStreamId": 0
+        }
+    ],
+    "name": "Session",
+    "renderer": "OpenGL",
+    "shaderCompiler": "",
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "type": "Session"
+}

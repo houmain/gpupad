@@ -54,8 +54,8 @@ bool ScriptSession::usesKeyboardState() const
     return mScriptEngine->appScriptObject().usesKeyboardState();
 }
 
-void ScriptSession::updateInputState()
+void ScriptSession::update()
 {
     Q_ASSERT(onMainThread());
-    mScriptEngine->appScriptObject().updateInputState();
+    mScriptEngine->appScriptObject().update();
 }
