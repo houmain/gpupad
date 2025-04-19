@@ -96,8 +96,8 @@ namespace {
             removeExtensions(&source, extensions);
 
         auto linesInserted = (versionRemoved ? -1 : 0);
-        static const auto regex = QRegularExpression(
-            R"(^\s*#include([^\n]*))", QRegularExpression::MultilineOption);
+        static const auto regex = QRegularExpression(R"(^\s*#include([^\n]*))",
+            QRegularExpression::MultilineOption);
         for (auto match = regex.match(source); match.hasMatch();
              match = regex.match(source)) {
             source.remove(match.capturedStart(), match.capturedLength());
@@ -297,7 +297,12 @@ QStringList ShaderBase::getPatchedSourcesGLSL(ShaderPrintf &printf,
         sources[i] = printf.patchSource(mType, mFileNames[i], sources[i]);
 
     if (printf.isUsed(mType)) {
-        insertAfterExtensions(sources.front(), ShaderPrintf::preambleGLSL());
+        const auto explicitBinding =
+            (mSession.renderer == "Vulkan" && !mSession.autoMapBindings);
+        const auto set = (explicitBinding ? 4 : -1);
+        const auto binding = (explicitBinding ? 8 : -1);
+        insertAfterExtensions(sources.front(),
+            ShaderPrintf::preambleGLSL(set, binding));
         maxVersion = std::max(maxVersion, ShaderPrintf::requiredVersionGLSL());
     }
 

@@ -252,14 +252,20 @@ namespace {
     }
 } // namespace
 
-QString ShaderPrintf::preambleGLSL()
+QString ShaderPrintf::preambleGLSL(int set, int binding)
 {
+    auto bufferLayout = QString("std430");
+    if (set >= 0)
+        bufferLayout += ", set = " + QString::number(set);
+    if (binding >= 0)
+        bufferLayout += ", binding = " + QString::number(binding);
+
     return QStringLiteral(R"(
 
 bool printfEnabled = true;
 uint _printfArgumentOffset = 0;
 
-layout(std430) buffer _printfBuffer {
+layout(%1) buffer _printfBuffer {
   uint _printfOffset;
   uint _printfPrevBegin;
   uint _printfData[];
@@ -371,7 +377,8 @@ void _printf(dmat4x2 m) { _printf(mat4x2(m)); }
 void _printf(dmat4x3 m) { _printf(mat4x3(m)); }
 void _printf(dmat4x4 m) { _printf(mat4x4(m)); }
 
-)");
+)")
+        .arg(bufferLayout);
 }
 
 QString ShaderPrintf::preambleHLSL()

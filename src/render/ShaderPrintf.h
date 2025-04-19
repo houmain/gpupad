@@ -15,7 +15,7 @@ public:
     {
         return QStringLiteral("_printfBuffer");
     }
-    static QString preambleGLSL();
+    static QString preambleGLSL(int set, int binding);
     static QString preambleHLSL();
 
     bool isUsed() const;
