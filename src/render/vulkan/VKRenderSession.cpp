@@ -109,7 +109,6 @@ void VKRenderSession::createCommandQueue()
                 .ktxDeviceInfo = renderer().ktxDeviceInfo(),
             },
     });
-    mUsedItems.clear();
 }
 
 void VKRenderSession::buildCommandQueue()

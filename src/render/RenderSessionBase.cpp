@@ -45,6 +45,7 @@ void RenderSessionBase::prepare(bool itemsChanged,
     mEvaluationType = evaluationType;
     mPrevMessages.swap(mMessages);
     mMessages.clear();
+    mUsedItems.clear();
 
     if (mScriptSession)
         mScriptSession->update();

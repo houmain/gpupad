@@ -98,7 +98,6 @@ void GLRenderSession::createCommandQueue()
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
     mCommandQueue = std::make_unique<CommandQueue>();
-    mUsedItems.clear();
 }
 
 void GLRenderSession::buildCommandQueue()
