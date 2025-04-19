@@ -112,12 +112,11 @@ Initial documentation of the available script objects:
 
 ### Session
 
-- `clear()`
-- `clearItem(item/id): Item`
-- `deleteItem(item/id): Item`
-- `insertItem([item/id], object): Item`
-- `replaceItems(item/id, array)`
 - `item(id): Item`
+- `insertItem([item/id], object): Item`
+- `deleteItem(item/id): Item`
+- `clearItems([item/id]): Item`
+- `replaceItems(item/id, array)`
 - `setBlockData(item/id, data)`
 - `setBufferData(item/id, data)`
 - `setScriptSource(item/id, data)`

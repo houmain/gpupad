@@ -47,12 +47,12 @@ public:
     void setSessionName(QString name);
     QJSValue sessionItems();
 
-    Q_INVOKABLE void clear();
     Q_INVOKABLE QJSValue item(QJSValue itemDesc);
     Q_INVOKABLE QJSValue insertItem(QJSValue object);
     Q_INVOKABLE QJSValue insertItem(QJSValue itemDesc, QJSValue object);
     Q_INVOKABLE void replaceItems(QJSValue itemDesc, QJSValue array);
-    Q_INVOKABLE void clearItem(QJSValue itemDesc);
+    Q_INVOKABLE void clearItems();
+    Q_INVOKABLE void clearItems(QJSValue itemDesc);
     Q_INVOKABLE void deleteItem(QJSValue itemDesc);
 
     Q_INVOKABLE void setBufferData(QJSValue itemDesc, QJSValue data);

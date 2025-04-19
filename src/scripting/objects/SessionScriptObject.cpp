@@ -600,12 +600,12 @@ QJSValue SessionScriptObject::item(QJSValue itemDesc)
     return engine().newQObject(new ItemObject(this, item->id));
 }
 
-void SessionScriptObject::clear()
+void SessionScriptObject::clearItems()
 {
     withSessionModel([](SessionModel &session) { session.clear(); });
 }
 
-void SessionScriptObject::clearItem(QJSValue itemDesc)
+void SessionScriptObject::clearItems(QJSValue itemDesc)
 {
     if (const auto item = getItem(itemDesc))
         withSessionModel([itemId = item->id](SessionModel &session) {
