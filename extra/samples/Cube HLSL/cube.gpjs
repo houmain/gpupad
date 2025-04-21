@@ -132,9 +132,9 @@
             "name": "uAmbient",
             "type": "Binding",
             "values": [
-                "0.333333",
-                "0",
-                "0",
+                "0.176471",
+                "0.176471",
+                "0.176471",
                 "0"
             ]
         },
@@ -150,13 +150,13 @@
             "width": "512"
         },
         {
-            "anisotropic": false,
+            "anisotropic": true,
             "bindingType": "Sampler",
             "borderColor": "#ff000000",
             "comparisonFunc": "NoComparisonFunc",
             "id": 99,
-            "magFilter": "Nearest",
-            "minFilter": "Nearest",
+            "magFilter": "Linear",
+            "minFilter": "LinearMipMapLinear",
             "name": "uTexture",
             "textureId": 104,
             "type": "Binding",
@@ -165,13 +165,13 @@
             "wrapModeZ": "Repeat"
         },
         {
-            "anisotropic": false,
+            "anisotropic": true,
             "bindingType": "Sampler",
             "borderColor": "#ff000000",
             "comparisonFunc": "NoComparisonFunc",
             "id": 896,
             "magFilter": "Linear",
-            "minFilter": "Linear",
+            "minFilter": "LinearMipMapLinear",
             "name": "sampleLinear",
             "textureId": 104,
             "type": "Binding",

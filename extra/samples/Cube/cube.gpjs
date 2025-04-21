@@ -129,9 +129,9 @@
             "name": "uAmbient",
             "type": "Binding",
             "values": [
-                "0.333333",
-                "0",
-                "0",
+                "0.176471",
+                "0.176471",
+                "0.176471",
                 "0"
             ]
         },
@@ -157,8 +157,8 @@
             "name": "uTexture",
             "textureId": 104,
             "type": "Binding",
-            "wrapModeX": "ClampToEdge",
-            "wrapModeY": "ClampToEdge",
+            "wrapModeX": "Repeat",
+            "wrapModeY": "Repeat",
             "wrapModeZ": "Repeat"
         },
         {

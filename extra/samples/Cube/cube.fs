@@ -8,9 +8,15 @@ in vec2 vTexCoords;
 in vec3 vNormal;
 out vec4 oColor;
 
+vec3 toLinear(vec3 color) {
+  return color * color;
+}
+
 void main() {
-  const vec3 light = vec3(-0.71, 0.71, 0);
-  vec3 color = uAmbient + texture(uTexture, vTexCoords).rgb;
-  color *= 0.1 + 0.9 * max(dot(vNormal, light), 0.0);
+  const vec3 light = normalize(vec3(-1, 3, 2));
+  vec3 diffuse = toLinear(texture(uTexture, vTexCoords).rgb)
+    * max(dot(vNormal, light), 0.0);
+  vec3 ambient = toLinear(uAmbient);
+  vec3 color = ambient + diffuse;
   oColor = vec4(color, 1);
 }
