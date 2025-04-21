@@ -6,9 +6,10 @@ let Dynamic = app.session.item('Dynamic')
 if (!Dynamic)
   Dynamic = app.session.insertItem({
     type: 'Group',
-    name: 'Dynamic'
+    name: 'Dynamic',
+    dynamic: true,
   })
-app.session.clearItem(Dynamic)
+app.session.clearItems(Dynamic)
 
 let Buffer1 = app.session.item('Buffer1')
 let Buffer2 = app.session.item('Buffer2')

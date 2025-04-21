@@ -291,6 +291,7 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
         map(mGroupProperties->name, SessionModel::Name);
         map(mGroupProperties->inlineScope, SessionModel::GroupInlineScope);
         map(mGroupProperties->iterations, SessionModel::GroupIterations);
+        map(mGroupProperties->dynamic, SessionModel::GroupDynamic);
         break;
 
     case Item::Type::Buffer:

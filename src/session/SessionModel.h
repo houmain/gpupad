@@ -33,8 +33,6 @@ public:
         QAction *redo);
     bool isUndoStackClean();
     void clearUndoStack();
-    void beginUndoMacro(const QString &text);
-    void endUndoMacro();
 
     QIcon getTypeIcon(Item::Type type) const;
     QString getItemName(ItemId id) const;

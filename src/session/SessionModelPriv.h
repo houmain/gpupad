@@ -18,6 +18,7 @@
     ADD(SessionVulkanRulesRelaxed, Session, vulkanRulesRelaxed)               \
     ADD(SessionSpirvVersion, Session, spirvVersion)                           \
     ADD(GroupInlineScope, Group, inlineScope)                                 \
+    ADD(GroupDynamic, Group, dynamic)                                         \
     ADD(GroupIterations, Group, iterations)                                   \
     ADD(BlockOffset, Block, offset)                                           \
     ADD(BlockRowCount, Block, rowCount)                                       \

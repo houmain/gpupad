@@ -56,8 +56,9 @@ struct Session : ScopeItem
 
 struct Group : ScopeItem
 {
-    bool inlineScope{};
     QString iterations{ "1" };
+    bool inlineScope{};
+    bool dynamic{};
 };
 
 struct Buffer : FileItem

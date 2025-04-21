@@ -438,7 +438,7 @@ QModelIndex SessionModelCore::findChildByName(const QModelIndex &parent,
 }
 
 QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
-    int row, ItemId id)
+    int row, ItemId id, bool isDynamicGroup)
 {
     // insert as sibling, when parent cannot contain an item of type
     while (!canContainType(parent, type)) {
@@ -470,6 +470,10 @@ QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
     item->type = type;
     item->name = name;
     item->id = id;
+
+    if (isDynamicGroup && type == Item::Type::Group)
+        static_cast<Group *>(item)->dynamic = true;
+
     insertItem(item, parent, row);
     return getIndex(item, ColumnType::Name);
 }
@@ -550,23 +554,52 @@ void SessionModelCore::removeItem(QList<Item *> *list,
 
 bool SessionModelCore::removeRows(int row, int count, const QModelIndex &parent)
 {
-    mUndoStack.beginMacro("Remove");
+    beginUndoMacro("Remove");
 
     for (auto i = count - 1; i >= 0; --i)
         deleteItem(index(row + i, 0, parent));
 
-    mUndoStack.endMacro();
+    endUndoMacro();
     return true;
+}
+
+void SessionModelCore::beginUndoMacro(const QString &text)
+{
+    if (mInUndoMacro == 0)
+        mBeginUndoMacro = text;
+    ++mInUndoMacro;
+}
+
+void SessionModelCore::endUndoMacro()
+{
+    Q_ASSERT(mInUndoMacro > 0);
+    if (--mInUndoMacro == 0) {
+        // only end when it was begun
+        if (mBeginUndoMacro.isEmpty())
+            mUndoStack.endMacro();
+        mBeginUndoMacro.clear();
+    }
 }
 
 void SessionModelCore::pushUndoCommand(QUndoCommand *command)
 {
+    if (!mBeginUndoMacro.isEmpty()) {
+        mUndoStack.beginMacro(mBeginUndoMacro);
+        mBeginUndoMacro.clear();
+    }
     mUndoStack.push(command);
 }
 
 void SessionModelCore::undoableInsertItem(QList<Item *> *list, Item *item,
     const QModelIndex &parent, int row)
 {
+    // do not add undo command, when inside dynamic Group
+    if (inDynamicGroup(parent) || isDynamicGroup(*item)
+        || mUndoStack.undoLimit() == 1) {
+        insertItem(list, item, parent, row);
+        return;
+    }
+
     pushUndoCommand(makeUndoCommand(
         "Insert", [=, this]() { insertItem(list, item, parent, row); },
         [=, this]() { removeItem(list, parent, row); }, [=]() { delete item; },
@@ -576,6 +609,12 @@ void SessionModelCore::undoableInsertItem(QList<Item *> *list, Item *item,
 void SessionModelCore::undoableRemoveItem(QList<Item *> *list, Item *item,
     const QModelIndex &index)
 {
+    // do not add undo command, when inside dynamic Group
+    if (inDynamicGroup(index) || mUndoStack.undoLimit() == 1) {
+        removeItem(list, index.parent(), index.row());
+        return;
+    }
+
     pushUndoCommand(makeUndoCommand(
         "Remove",
         [=, this]() { removeItem(list, index.parent(), index.row()); },
@@ -599,6 +638,15 @@ void SessionModelCore::undoableAssignment(const QModelIndex &index, T *to,
 {
     Q_ASSERT(index.isValid());
     if (*to != value) {
+        // do not add undo command, when inside dynamic Group
+        if ((inDynamicGroup(index)
+                && index.column() != ColumnType::GroupDynamic)
+            || mUndoStack.undoLimit() == 1) {
+            *to = static_cast<T>(value);
+            Q_EMIT dataChanged(index, index);
+            return;
+        }
+
         if (mergeId < 0)
             mergeId = -index.column();
         mergeId += reinterpret_cast<uintptr_t>(index.internalPointer());
@@ -635,4 +683,18 @@ void SessionModelCore::undoableFileNameAssignment(const QModelIndex &index,
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
     if (item.fileName != fileName)
         undoableAssignment(index, &item.fileName, fileName);
+}
+
+bool SessionModelCore::isDynamicGroup(const Item &item) const
+{
+    const auto group = castItem<Group>(&item);
+    return (group && group->dynamic);
+}
+
+bool SessionModelCore::inDynamicGroup(const QModelIndex &index) const
+{
+    for (auto *item = &getItem(index); item; item = item->parent)
+        if (isDynamicGroup(*item))
+            return true;
+    return false;
 }

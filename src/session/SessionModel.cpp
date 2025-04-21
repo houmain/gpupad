@@ -30,8 +30,7 @@ SessionModel::SessionModel(QObject *parent) : SessionModelCore(parent)
         QIcon::fromTheme("accessories-text-editor");
     mTypeIcons[Item::Type::AccelerationStructure] =
         QIcon::fromTheme("zoom-fit-best");
-    mTypeIcons[Item::Type::Instance] =
-        QIcon::fromTheme("mail-attachment");
+    mTypeIcons[Item::Type::Instance] = QIcon::fromTheme("mail-attachment");
     mTypeIcons[Item::Type::Geometry] =
         QIcon::fromTheme("media-playback-start-rtl");
 
@@ -67,16 +66,6 @@ bool SessionModel::isUndoStackClean()
 void SessionModel::clearUndoStack()
 {
     undoStack().clear();
-}
-
-void SessionModel::beginUndoMacro(const QString &text)
-{
-    undoStack().beginMacro(text);
-}
-
-void SessionModel::endUndoMacro()
-{
-    undoStack().endMacro();
 }
 
 QIcon SessionModel::getTypeIcon(Item::Type type) const
@@ -128,10 +117,8 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     case Item::Type::Stream:
     case Item::Type::Target:
     case Item::Type::AccelerationStructure:
-    case Item::Type::Instance:
-        flags |= Qt::ItemIsDropEnabled;
-        break;
-    default: break;
+    case Item::Type::Instance:              flags |= Qt::ItemIsDropEnabled; break;
+    default:                                break;
     }
     // workaround to optimize D&D (do not snap to not droppable targets)
     if (!mDraggedIndices.empty() && (flags & Qt::ItemIsDropEnabled))
@@ -452,8 +439,12 @@ void SessionModel::deserialize(const QJsonObject &object,
     if (!ok || !canContainType(parent, type))
         return;
 
-    const auto index = (existingItem ? getIndex(existingItem)
-                                     : insertItem(type, parent, row, id));
+    const auto isDynamicGroup =
+        (type == Item::Type::Group && object["dynamic"].toBool());
+
+    const auto index = (existingItem
+            ? getIndex(existingItem)
+            : insertItem(type, parent, row, id, isDynamicGroup));
 
     // preserve untitled filenames when dragging/copying
     if (!untitledFileName.isEmpty())
@@ -542,7 +533,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
     ADD_EACH_COLUMN_TYPE()
 #undef ADD
 
-    if (!item.items.empty()) {
+    if (!item.items.empty() && !isDynamicGroup(item)) {
         auto items = QJsonArray();
         for (const Item *item : item.items) {
             auto sub = QJsonObject();

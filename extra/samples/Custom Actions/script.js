@@ -12,6 +12,7 @@ const meshType = meshTypes[app.frameIndex % meshTypes.length]
 group = app.callAction("GenerateMesh", {
   name = "Mesh",
   group = app.session.item("Mesh"),
-  type = meshType,  
+  dynamic = true,
+  type = meshType,
   facetted = true,
 })

@@ -26,6 +26,7 @@ public:
         SessionSpirvVersion,
         GroupInlineScope,
         GroupIterations,
+        GroupDynamic,
         BlockOffset,
         BlockRowCount,
         FieldDataType,
@@ -157,13 +158,15 @@ public:
     bool setData(const QModelIndex &index, const QVariant &value,
         int role = Qt::EditRole) override;
     bool removeRows(int row, int count, const QModelIndex &parent) override;
+    void beginUndoMacro(const QString &text);
+    void endUndoMacro();
 
     Item::Type getTypeByName(const QString &name, bool &ok) const;
     QString getTypeName(Item::Type type) const;
     bool canContainType(const QModelIndex &index, Item::Type type) const;
     Item::Type getDefaultChildType(const QModelIndex &index) const;
     QModelIndex insertItem(Item::Type type, QModelIndex parent, int row = -1,
-        ItemId id = 0);
+        ItemId id = 0, bool isDynamicGroup = false);
     void deleteItem(const QModelIndex &index);
     QModelIndex getIndex(const Item *item,
         ColumnType column = ColumnType::None) const;
@@ -194,6 +197,9 @@ protected:
     const Root &root() const { return mRoot; }
     QUndoStack &undoStack() { return mUndoStack; }
 
+    bool isDynamicGroup(const Item &item) const;
+    bool inDynamicGroup(const QModelIndex &index) const;
+
 private:
     Item &getItemRef(const QModelIndex &index);
     void insertItem(Item *item, const QModelIndex &parent, int row = -1);
@@ -217,4 +223,6 @@ private:
     Root mRoot;
     QUndoStack mUndoStack;
     QMap<ItemId, const Item *> mItemsById;
+    QString mBeginUndoMacro;
+    int mInUndoMacro{};
 };
