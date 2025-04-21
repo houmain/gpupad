@@ -1,0 +1,283 @@
+{
+    "id": 2,
+    "items": [
+        {
+            "flipVertically": false,
+            "format": "SRGB8_Alpha8",
+            "height": "512",
+            "id": 93,
+            "name": "Color",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "flipVertically": false,
+            "format": "D16",
+            "height": "512",
+            "id": 98,
+            "name": "Depth",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "blendConstant": "#ff000000",
+            "cullMode": "Back",
+            "frontFace": "CCW",
+            "id": 100,
+            "items": [
+                {
+                    "blendAlphaDest": "Zero",
+                    "blendAlphaEq": "Add",
+                    "blendAlphaSource": "One",
+                    "blendColorDest": "Zero",
+                    "blendColorEq": "Add",
+                    "blendColorSource": "One",
+                    "colorWriteMask": 15,
+                    "id": 101,
+                    "level": 0,
+                    "name": "Color",
+                    "textureId": 93,
+                    "type": "Attachment"
+                },
+                {
+                    "depthClamp": false,
+                    "depthComparisonFunc": "Less",
+                    "depthOffsetConstant": 0,
+                    "depthOffsetSlope": 0,
+                    "depthWrite": true,
+                    "id": 102,
+                    "level": 0,
+                    "name": "Depth",
+                    "textureId": 98,
+                    "type": "Attachment"
+                }
+            ],
+            "logicOperation": "NoLogicOperation",
+            "name": "Target",
+            "polygonMode": "Fill",
+            "type": "Target"
+        },
+        {
+            "executeOn": "ManualEvaluation",
+            "fileName": "script.js",
+            "id": 103,
+            "type": "Script"
+        },
+        {
+            "executeOn": "ResetEvaluation",
+            "fileName": "OrbitCamera.js",
+            "id": 910,
+            "type": "Script"
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 911,
+            "name": "uView",
+            "type": "Binding",
+            "values": [
+                "updateOrbitCamera()"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 79,
+            "name": "uProjection",
+            "type": "Binding",
+            "values": [
+                "perspective(45, 1.0, 1, 100)"
+            ]
+        },
+        {
+            "fileName": "../Cube/Planks.jpg",
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "512",
+            "id": 897,
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "anisotropic": true,
+            "bindingType": "Sampler",
+            "borderColor": "#ff000000",
+            "comparisonFunc": "NoComparisonFunc",
+            "id": 99,
+            "magFilter": "Linear",
+            "minFilter": "LinearMipMapLinear",
+            "name": "uTexture",
+            "textureId": 897,
+            "type": "Binding",
+            "wrapModeX": "Repeat",
+            "wrapModeY": "Repeat",
+            "wrapModeZ": "Repeat"
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Color",
+            "id": 1318,
+            "name": "uAmbient",
+            "type": "Binding",
+            "values": [
+                "0.12549",
+                "0.282353",
+                "0.333333",
+                "0"
+            ]
+        },
+        {
+            "id": 88,
+            "items": [
+                {
+                    "fileName": "cube.vs",
+                    "id": 89,
+                    "language": "GLSL",
+                    "shaderType": "Vertex",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "cube.fs",
+                    "id": 90,
+                    "language": "GLSL",
+                    "shaderType": "Fragment",
+                    "type": "Shader"
+                }
+            ],
+            "name": "Program",
+            "type": "Program"
+        },
+        {
+            "callType": "ClearTexture",
+            "checked": true,
+            "clearColor": "#ff464757",
+            "clearDepth": 1,
+            "clearStencil": 0,
+            "executeOn": "EveryEvaluation",
+            "id": 97,
+            "name": "Clear Color",
+            "textureId": 93,
+            "type": "Call"
+        },
+        {
+            "callType": "ClearTexture",
+            "checked": true,
+            "clearColor": "#ff000000",
+            "clearDepth": 1,
+            "clearStencil": 0,
+            "executeOn": "EveryEvaluation",
+            "id": 91,
+            "name": "Clear Depth",
+            "textureId": 98,
+            "type": "Call"
+        },
+        {
+            "id": 1462,
+            "inlineScope": true,
+            "items": [
+                {
+                    "id": 1463,
+                    "items": [
+                        {
+                            "id": 1464,
+                            "items": [
+                                {
+                                    "count": 3,
+                                    "dataType": "Float",
+                                    "id": 1465,
+                                    "name": "position",
+                                    "padding": 0,
+                                    "type": "Field"
+                                },
+                                {
+                                    "count": 3,
+                                    "dataType": "Float",
+                                    "id": 1466,
+                                    "name": "normal",
+                                    "padding": 0,
+                                    "type": "Field"
+                                },
+                                {
+                                    "count": 2,
+                                    "dataType": "Float",
+                                    "id": 1467,
+                                    "name": "texcoord",
+                                    "padding": 0,
+                                    "type": "Field"
+                                }
+                            ],
+                            "name": "Vertex",
+                            "offset": "0",
+                            "rowCount": "12",
+                            "type": "Block"
+                        }
+                    ],
+                    "name": "Buffer",
+                    "type": "Buffer"
+                },
+                {
+                    "id": 1468,
+                    "items": [
+                        {
+                            "divisor": 0,
+                            "fieldId": 1465,
+                            "id": 1469,
+                            "name": "aPosition",
+                            "normalize": false,
+                            "type": "Attribute"
+                        },
+                        {
+                            "divisor": 0,
+                            "fieldId": 1466,
+                            "id": 1470,
+                            "name": "aNormal",
+                            "normalize": false,
+                            "type": "Attribute"
+                        },
+                        {
+                            "divisor": 0,
+                            "fieldId": 1467,
+                            "id": 1471,
+                            "name": "aTexCoords",
+                            "normalize": false,
+                            "type": "Attribute"
+                        }
+                    ],
+                    "name": "Stream",
+                    "type": "Stream"
+                },
+                {
+                    "baseInstance": "0",
+                    "callType": "Draw",
+                    "checked": true,
+                    "count": "12",
+                    "executeOn": "EveryEvaluation",
+                    "first": "0",
+                    "id": 1472,
+                    "instanceCount": "1",
+                    "name": "Draw",
+                    "primitiveType": "Triangles",
+                    "programId": 88,
+                    "targetId": 100,
+                    "type": "Call",
+                    "vertexStreamId": 1468
+                }
+            ],
+            "iterations": "1",
+            "name": "Mesh",
+            "type": "Group"
+        }
+    ],
+    "name": "Session",
+    "renderer": "OpenGL",
+    "shaderCompiler": "",
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "type": "Session"
+}

@@ -47,9 +47,9 @@ namespace {
     float radius{ 1.0f };
     float scale_u{ 1.0f };
     float scale_v{ 1.0f };
-    int slices{ 1 };
-    int stacks{ 1 };
-    int subdivisions{ 0 };
+    int slices{ 10 };
+    int stacks{ 10 };
+    int subdivisions{ 2 };
     int seed{ };
     bool facetted{ };
     bool inside_out{ };
