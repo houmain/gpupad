@@ -152,6 +152,7 @@ private:
     GLBuffer *mIndexBuffer{};
     QString mIndirectOffset;
     int mIndexSize{};
+    int mIndicesPerRow{};
     QString mIndicesOffset;
     QString mIndicesRowCount;
 

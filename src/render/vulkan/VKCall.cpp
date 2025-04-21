@@ -58,6 +58,7 @@ void VKCall::setIndexBuffer(VKBuffer *indices, const Block &block)
     mIndexBuffer = indices;
     mIndicesOffset = block.offset;
     mIndicesRowCount = block.rowCount;
+    mIndicesPerRow = getBlockStride(block) / indexSize;
 }
 
 void VKCall::setIndirectBuffer(VKBuffer *commands, const Block &block)
@@ -224,7 +225,8 @@ uint32_t VKCall::evaluateUInt(ScriptEngine &scriptEngine,
 int VKCall::getMaxElementCount(ScriptEngine &scriptEngine)
 {
     if (mKind.indexed)
-        return static_cast<int>(evaluateUInt(scriptEngine, mIndicesRowCount));
+        return static_cast<int>(evaluateUInt(scriptEngine, mIndicesRowCount))
+            * mIndicesPerRow;
     if (mVertexStream)
         return mVertexStream->maxElementCount();
     return -1;

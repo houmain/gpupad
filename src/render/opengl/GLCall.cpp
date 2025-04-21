@@ -188,6 +188,7 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block)
 
     mIndexBuffer = indices;
     mIndicesOffset = block.offset;
+    mIndicesPerRow = getBlockStride(block) / mIndexSize;
     mIndicesRowCount = block.rowCount;
 }
 
@@ -204,7 +205,8 @@ GLenum GLCall::getIndexType() const
 int GLCall::getMaxElementCount(ScriptEngine &scriptEngine)
 {
     if (mKind.indexed)
-        return static_cast<int>(evaluateUInt(scriptEngine, mIndicesRowCount));
+        return static_cast<int>(evaluateUInt(scriptEngine, mIndicesRowCount))
+            * mIndicesPerRow;
     if (mVertexStream)
         return mVertexStream->maxElementCount();
     return -1;

@@ -66,6 +66,7 @@ private:
     KDGpu::IndexType mIndexType{};
     QString mIndicesOffset;
     QString mIndicesRowCount;
+    int mIndicesPerRow{};
 
     VKBuffer *mIndirectBuffer{};
     int mIndirectStride{};
