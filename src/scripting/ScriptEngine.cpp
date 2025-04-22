@@ -205,6 +205,8 @@ void ScriptEngine::outputError(const QJSValue &result, ItemId itemId,
 
     // clean up message
     auto message = result.property("message").toString();
+    if (message.isEmpty())
+        message = result.toString();
     message.replace("ScriptObject(", "(");
     static const auto sRemoveAddressRegex =
         QRegularExpression("of object ([^(]+)\\([^)]+\\)");

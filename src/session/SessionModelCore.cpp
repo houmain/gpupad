@@ -537,6 +537,8 @@ Item::Type SessionModelCore::getItemType(const QModelIndex &index) const
 void SessionModelCore::insertItem(QList<Item *> *list, Item *item,
     const QModelIndex &parent, int row)
 {
+    // ensure parent column is never None, since it does not update tree
+    Q_ASSERT(!parent.isValid() || parent.column() != ColumnType::None);
     mItemsById[item->id] = item;
     beginInsertRows(parent, row, row);
     list->insert(row, item);

@@ -173,17 +173,19 @@ QString SessionModel::getItemName(ItemId id) const
 
 QString SessionModel::getFullItemName(ItemId id) const
 {
-    if (auto item = findItem(id)) {
-        const auto fullwidthHyphenMinus = QChar(0xFF0D);
-        auto name = item->name;
-        for (item = item->parent; item && item != &root(); item = item->parent)
-            name = item->name
-                + (item->type == Item::Type::Block ? QChar('.')
-                                                   : fullwidthHyphenMinus)
-                + name;
-        return name;
+    auto item = findItem(id);
+    if (!item)
+        return {};
+    const auto fullwidthHyphenMinus = QChar(0xFF0D);
+    auto name = item->name;
+    const auto end = &sessionItem();
+    for (item = item->parent; item && item != end; item = item->parent) {
+        const auto sep = (item->type == Item::Type::Block
+                ? QChar('.')
+                : fullwidthHyphenMinus);
+        name = item->name + sep + name;
     }
-    return {};
+    return name;
 }
 
 QStringList SessionModel::mimeTypes() const
@@ -274,8 +276,9 @@ bool SessionModel::canDropMimeData(const QMimeData *data, Qt::DropAction action,
     const auto jsonArray = parseDraggedJson(parent, data);
     for (const QJsonValue &value : jsonArray) {
         auto ok = false;
-        const auto type =
-            getTypeByName(value.toObject()["type"].toString(), ok);
+        const auto object = value.toObject();
+        const auto typeName = object["type"].toString();
+        const auto type = getTypeByName(typeName, ok);
         if (!ok || !canContainType(parent, type))
             return false;
     }
@@ -404,7 +407,8 @@ void SessionModel::dropJson(const QJsonArray &jsonArray, int row,
         deserialize(value.toObject(), parent, row++, updateExisting);
 
     // fixup item references
-    for (ItemId prevId : mDroppedIdsReplaced.keys())
+    const auto keys = mDroppedIdsReplaced.keys();
+    for (ItemId prevId : keys)
         for (const QModelIndex &reference : std::as_const(mDroppedReferences))
             if (data(reference).toInt() == prevId)
                 setData(reference, mDroppedIdsReplaced[prevId]);
@@ -443,7 +447,7 @@ void SessionModel::deserialize(const QJsonObject &object,
         (type == Item::Type::Group && object["dynamic"].toBool());
 
     const auto index = (existingItem
-            ? getIndex(existingItem)
+            ? getIndex(existingItem, ColumnType::Name)
             : insertItem(type, parent, row, id, isDynamicGroup));
 
     // preserve untitled filenames when dragging/copying
@@ -466,7 +470,8 @@ void SessionModel::deserialize(const QJsonObject &object,
         setData(index, value);
     };
 
-    for (const QString &property : object.keys()) {
+    const auto keys = object.keys();
+    for (const QString &property : keys) {
         auto value = object[property].toVariant();
 
         if (property == "name") {
@@ -499,7 +504,7 @@ void SessionModel::deserialize(const QJsonObject &object,
 
     auto items = object["items"].toArray();
     if (!items.isEmpty())
-        for (const QJsonValue &value : items)
+        for (const QJsonValue &value : std::as_const(items))
             deserialize(value.toObject(), index, -1, updateExisting);
 }
 

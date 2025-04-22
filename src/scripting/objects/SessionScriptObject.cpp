@@ -424,6 +424,11 @@ bool SessionScriptObject::available() const
     return (onMainThread() || mRenderSession != nullptr);
 }
 
+int SessionScriptObject::itemId()
+{
+    return threadSessionModel().sessionItem().id;
+}
+
 QString SessionScriptObject::sessionName()
 {
     return threadSessionModel().sessionItem().name;
@@ -486,7 +491,8 @@ QJsonObject SessionScriptObject::toJsonObject(const QJSValue &value)
         // create JSON object from ItemObject
         if (const auto item = qobject_cast<const QQmlPropertyMap *>(object)) {
             auto jsonObject = QJsonObject();
-            for (const auto &key : item->keys())
+            const auto keys = item->keys();
+            for (const auto &key : keys)
                 jsonObject.insert(key,
                     QJsonValue::fromVariant(item->value(key)));
             return jsonObject;

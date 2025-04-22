@@ -9,7 +9,7 @@ function hasType(type) {
 }
 
 function findItem(parent, predicate) {
-  for (let i = parent?.items.length - 1; i >= 0; --i)
+  for (let i = parent?.items?.length - 1; i >= 0; --i)
     if (predicate(parent.items[i]))
         return parent.items[i]
 }
@@ -84,7 +84,8 @@ class Script {
   }
   
   insert() {
-    this.group = app.session.insertItem({
+    const parent = this.settings.parent || app.session
+    this.group = app.session.insertItem(parent, {
       name: (this.settings.name || 'Mesh'),
       type: 'Group',
       inlineScope: true

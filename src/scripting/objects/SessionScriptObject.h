@@ -31,6 +31,7 @@ private:
 class SessionScriptObject : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(ItemId id READ itemId CONSTANT)
     Q_PROPERTY(QString name READ sessionName WRITE setSessionName)
     Q_PROPERTY(QJSValue items READ sessionItems CONSTANT)
 
@@ -43,6 +44,7 @@ public:
     bool available() const;
     QJSValue getItem(QModelIndex index);
 
+    ItemId itemId();
     QString sessionName();
     void setSessionName(QString name);
     QJSValue sessionItems();
