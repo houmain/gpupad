@@ -27,7 +27,6 @@ private:
     void prepare(bool itemsChanged, EvaluationType);
     void render() override;
     void finish() override;
-    void release() override;
 
 private:
     std::unique_ptr<ShaderBase> mShader;

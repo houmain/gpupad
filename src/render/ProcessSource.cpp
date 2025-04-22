@@ -124,6 +124,7 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
             session.autoMapLocations = true;
         }
 
+        Q_ASSERT(!mShader);
         if (session.renderer == "Vulkan") {
             mShader = std::make_unique<VKShader>(shaderType, shaders, session);
         } else {
@@ -178,6 +179,9 @@ void ProcessSource::render()
         }
         if (mOutput.isEmpty())
             mOutput = "not available";
+    }
+
+    if (mShader) {
         messages += mShader->resetMessages();
         mShader.reset();
     }
@@ -187,9 +191,4 @@ void ProcessSource::render()
 void ProcessSource::finish()
 {
     Q_EMIT outputChanged(mOutput);
-}
-
-void ProcessSource::release()
-{
-    mShader.reset();
 }
