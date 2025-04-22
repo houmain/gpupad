@@ -252,11 +252,18 @@ namespace {
         return textureData;
     }
 
-    void ensureFileName(SessionModel &session, const FileItem *item)
+    void ensureFileName(SessionModel &session, const FileItem *item,
+        QString *hint)
     {
-        if (item->fileName.isEmpty())
-            session.setData(session.getIndex(item, SessionModel::FileName),
-                FileDialog::generateNextUntitledFileName(item->name));
+        auto fileName = item->fileName;
+        if (fileName.isEmpty() && hint)
+            fileName = *hint;
+        if (fileName.isEmpty())
+            fileName = FileDialog::generateNextUntitledFileName(item->name);
+        const auto index = session.getIndex(item, SessionModel::FileName);
+        session.setData(index, fileName);
+        if (hint)
+            *hint = fileName;
     }
 
     BinaryEditor *openBinaryEditor(const Buffer &buffer)
@@ -636,15 +643,15 @@ void SessionScriptObject::setBufferData(QJSValue itemDesc, QJSValue data)
             QStringLiteral("Buffer structure not defined"));
 
     const auto block = castItem<Block>(buffer->items[0]);
-    withSessionModel([this, bufferId = buffer->id,
-                         data = toByteArray(data, *block, mMessages)](
-                         SessionModel &session) {
-        if (onMainThread())
-            if (auto buffer = session.findItem<Buffer>(bufferId)) {
-                ensureFileName(session, buffer);
+    withSessionModel([bufferId = buffer->id,
+                         data = toByteArray(data, *block, mMessages),
+                         fileName = QString()](SessionModel &session) mutable {
+        if (auto buffer = session.findItem<Buffer>(bufferId)) {
+            ensureFileName(session, buffer, &fileName);
+            if (onMainThread())
                 if (auto editor = openBinaryEditor(*buffer))
                     editor->replace(data);
-            }
+        }
     });
 }
 
@@ -654,20 +661,20 @@ void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
     if (!block)
         return engine().throwError(QStringLiteral("Invalid item"));
 
-    withSessionModel([this, blockId = block->id,
-                         data = toByteArray(data, *block, mMessages)](
-                         SessionModel &session) {
-        if (onMainThread())
-            if (auto block = session.findItem<Block>(blockId))
-                if (auto buffer = castItem<Buffer>(block->parent)) {
-                    ensureFileName(session, castItem<Buffer>(block->parent));
+    withSessionModel([blockId = block->id,
+                         data = toByteArray(data, *block, mMessages),
+                         fileName = QString()](SessionModel &session) mutable {
+        if (auto block = session.findItem<Block>(blockId))
+            if (auto buffer = castItem<Buffer>(block->parent)) {
+                ensureFileName(session, buffer, &fileName);
+                if (onMainThread())
                     if (auto editor = openBinaryEditor(*buffer)) {
                         auto offset = 0, rowCount = 0;
                         Singletons::synchronizeLogic().evaluateBlockProperties(
                             *block, &offset, &rowCount);
                         editor->replaceRange(offset, data);
                     }
-                }
+            }
     });
 }
 
@@ -677,15 +684,15 @@ void SessionScriptObject::setTextureData(QJSValue itemDesc, QJSValue data)
     if (!texture)
         return engine().throwError(QStringLiteral("Invalid item"));
 
-    withSessionModel([this, textureId = texture->id,
-                         data = toTextureData(data, *texture, mMessages)](
-                         SessionModel &session) {
-        if (onMainThread())
-            if (auto texture = session.findItem<Texture>(textureId)) {
-                ensureFileName(session, texture);
+    withSessionModel([textureId = texture->id,
+                         data = toTextureData(data, *texture, mMessages),
+                         fileName = QString()](SessionModel &session) mutable {
+        if (auto texture = session.findItem<Texture>(textureId)) {
+            ensureFileName(session, texture, &fileName);
+            if (onMainThread())
                 if (auto editor = openTextureEditor(*texture))
                     editor->replace(data);
-            }
+        }
     });
 }
 
@@ -695,14 +702,14 @@ void SessionScriptObject::setShaderSource(QJSValue itemDesc, QJSValue data)
     if (!shader)
         return engine().throwError(QStringLiteral("Invalid item"));
 
-    withSessionModel([this, shaderId = shader->id,
-                         data = data.toString()](SessionModel &session) {
-        if (onMainThread())
-            if (auto shader = session.findItem<Shader>(shaderId)) {
-                ensureFileName(session, shader);
+    withSessionModel([shaderId = shader->id, data = data.toString(),
+                         fileName = QString()](SessionModel &session) mutable {
+        if (auto shader = session.findItem<Shader>(shaderId)) {
+            ensureFileName(session, shader, &fileName);
+            if (onMainThread())
                 if (auto editor = openSourceEditor(*shader))
                     editor->replace(data);
-            }
+        }
     });
 }
 
@@ -712,14 +719,14 @@ void SessionScriptObject::setScriptSource(QJSValue itemDesc, QJSValue data)
     if (!script)
         return engine().throwError(QStringLiteral("Invalid item"));
 
-    withSessionModel([this, scriptId = script->id,
-                         data = data.toString()](SessionModel &session) {
-        if (onMainThread())
-            if (auto script = session.findItem<Script>(scriptId)) {
-                ensureFileName(session, script);
+    withSessionModel([scriptId = script->id, data = data.toString(),
+                         fileName = QString()](SessionModel &session) mutable {
+        if (auto script = session.findItem<Script>(scriptId)) {
+            ensureFileName(session, script, &fileName);
+            if (onMainThread())
                 if (auto editor = openSourceEditor(*script))
                     editor->replace(data);
-            }
+        }
     });
 }
 
