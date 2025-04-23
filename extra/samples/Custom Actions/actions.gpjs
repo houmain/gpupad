@@ -96,7 +96,7 @@
         {
             "fileName": "../Cube/Planks.jpg",
             "flipVertically": false,
-            "format": "RGBA8_UNorm",
+            "format": "SRGB8_Alpha8",
             "height": "512",
             "id": 897,
             "samples": 1,
@@ -126,9 +126,9 @@
             "name": "uAmbient",
             "type": "Binding",
             "values": [
-                "0.12549",
-                "0.282353",
-                "0.333333",
+                "0.0784314",
+                "0.176471",
+                "0.203922",
                 "0"
             ]
         },

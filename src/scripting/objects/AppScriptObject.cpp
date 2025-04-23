@@ -97,6 +97,8 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
     searchPaths += QDir(
         QCoreApplication::applicationDirPath() + "/extra/actions/" + fileName);
 #endif
+    for (const auto &dir : getApplicationDirectories("actions"))
+        searchPaths += dir.filePath(fileName);
     searchPaths += getApplicationDirectories("libs");
 
     auto engine = mEnginePtr.lock();

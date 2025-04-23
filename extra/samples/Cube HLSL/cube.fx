@@ -27,15 +27,11 @@ PS_INPUT VS(VS_INPUT input) {
   return output;
 }
 
-float3 toLinear(float3 color) {
-  return color * color;
-}
-
 float4 PS(PS_INPUT input) : SV_Target {
   const float3 light = normalize(float3(-1, 3, 2));
-  float3 diffuse = toLinear(uTexture.Sample(sampleLinear, input.texCoords).rgb)
-    * max(dot(input.normal, light), 0.0);
-  float3 ambient = toLinear(uAmbient);
-  float3 color = ambient + diffuse;
-  return float4(color, 1);  
+  const float3 normal = normalize(input.normal);
+  float3 albedo = uTexture.Sample(sampleLinear, input.texCoords).rgb;
+  float3 diffuse = float3(1) * max(dot(normal, light), 0.0);
+  float3 color = albedo * (uAmbient + diffuse);
+  return float4(color, 1);
 }

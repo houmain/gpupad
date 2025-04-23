@@ -88,7 +88,8 @@ class Script {
     this.group = app.session.insertItem(parent, {
       name: (this.settings.name || 'Mesh'),
       type: 'Group',
-      inlineScope: true
+      inlineScope: true,
+      dynamic: this.settings.dynamic,
     })    
     
     this.buffer = app.session.insertItem(this.group, {

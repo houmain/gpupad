@@ -98,8 +98,7 @@ void RenderSessionBase::configured()
     Q_ASSERT(onMainThread());
     mScriptSession->endSessionUpdate();
 
-    if (mEvaluationType == EvaluationType::Automatic)
-        Singletons::synchronizeLogic().cancelAutomaticRevalidation();
+    Singletons::synchronizeLogic().cancelAutomaticRevalidation();
 
     mMessages += mScriptSession->resetMessages();
 }
