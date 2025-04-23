@@ -146,7 +146,7 @@ class Script {
   updateBuffer() {
     const lib = this.library
     const geometry = lib.generate(JSON.stringify(this.settings))
-    const padding = this.settings.vertexPadding
+    const padding = this.settings.vertexPadding || 0
     const components = 8
     if (this.settings.indexed) {
       const vertices = lib.getVertices(geometry)

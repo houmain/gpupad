@@ -76,7 +76,7 @@ void VKAccelerationStructure::setVertexBuffer(int instanceIndex,
 
     geometry.vertexBuffer = buffer;
     geometry.vertexBufferOffset = static_cast<size_t>(offset);
-    geometry.maxVertexIndex = static_cast<size_t>(std::max(rowCount, 1) - 1);
+    geometry.vertexCount = static_cast<uint32_t>(rowCount);
 }
 
 void VKAccelerationStructure::setIndexBuffer(int instanceIndex,
@@ -103,7 +103,7 @@ void VKAccelerationStructure::setIndexBuffer(int instanceIndex,
             mUsedItems += field->id;
         }
     const auto indexType = getKDIndexType(indexSize);
-    if (!indexType) {
+    if (!indexType || !indexSize) {
         mMessages += MessageList::insert(block.id,
             MessageType::InvalidIndexType,
             QStringLiteral("%1 bytes").arg(indexSize));
@@ -114,6 +114,8 @@ void VKAccelerationStructure::setIndexBuffer(int instanceIndex,
     geometry.indexBuffer = buffer;
     geometry.indexBufferOffset = static_cast<size_t>(offset);
     geometry.indexType = *indexType;
+    const auto indicesPerRow = getBlockStride(block) / indexSize;
+    geometry.indexCount = static_cast<uint32_t>(rowCount) * indicesPerRow;
 }
 
 void VKAccelerationStructure::memoryBarrier(
@@ -176,14 +178,42 @@ void VKAccelerationStructure::prepare(VKContext &context,
             }
             auto &vertexBuffer = *geometry.vertexBuffer;
             vertexBuffer.prepareAccelerationStructureGeometry(context);
+            Q_ASSERT(vertexBuffer.buffer().bufferDeviceAddress());
 
-            // TODO: validate count, ...
-            const auto primitiveCount = scriptEngine.evaluateUInt(
-                geometry.primitiveCount, geometry.itemId, mMessages);
+            auto indexBufferHandle = KDGpu::Handle<KDGpu::Buffer_t>();
+            auto maxPrimitiveCount = 0u;
+
+            using GeometryType = Geometry::GeometryType;
+            if (geometry.type == GeometryType::AxisAlignedBoundingBoxes) {
+                maxPrimitiveCount = geometry.vertexCount / 6;
+            } else if (geometry.type == GeometryType::Triangles) {
+                maxPrimitiveCount = geometry.vertexCount / 3;
+                if (auto indexBuffer = geometry.indexBuffer) {
+                    indexBuffer->prepareAccelerationStructureGeometry(context);
+                    Q_ASSERT(indexBuffer->buffer().bufferDeviceAddress());
+                    indexBufferHandle = indexBuffer->buffer();
+                    maxPrimitiveCount = geometry.indexCount / 3;
+                }
+            } else {
+                Q_UNREACHABLE();
+            }
+
+            const auto primitiveCount = (geometry.primitiveCount.isEmpty()
+                    ? maxPrimitiveCount
+                    : scriptEngine.evaluateUInt(geometry.primitiveCount,
+                          geometry.itemId, mMessages));
             const auto primitiveOffset = scriptEngine.evaluateUInt(
                 geometry.primitiveOffset, geometry.itemId, mMessages);
 
-            using GeometryType = Geometry::GeometryType;
+            if (primitiveCount > maxPrimitiveCount) {
+                mMessages += MessageList::insert(geometry.itemId,
+                    MessageType::CountExceeded,
+                    QStringLiteral("%1 > %2")
+                        .arg(primitiveCount)
+                        .arg(maxPrimitiveCount));
+                return;
+            }
+
             if (geometry.type == GeometryType::AxisAlignedBoundingBoxes) {
                 const auto aabbsGeometry =
                     KDGpu::AccelerationStructureGeometryAabbsData{
@@ -195,22 +225,16 @@ void VKAccelerationStructure::prepare(VKContext &context,
                     .geometry = aabbsGeometry,
                     .maxPrimitiveCount = primitiveCount,
                 });
-
                 blasBuildOptions.geometries.push_back(aabbsGeometry);
 
             } else if (geometry.type == GeometryType::Triangles) {
-                auto indexBufferHandle = KDGpu::Handle<KDGpu::Buffer_t>();
-                if (auto indexBuffer = geometry.indexBuffer) {
-                    indexBuffer->prepareAccelerationStructureGeometry(context);
-                    indexBufferHandle = indexBuffer->buffer();
-                }
                 const auto triangleGeometry =
                     KDGpu::AccelerationStructureGeometryTrianglesData{
                         .vertexFormat = KDGpu::Format::R32G32B32_SFLOAT,
                         .vertexData = vertexBuffer.buffer(),
                         .vertexStride = geometry.vertexStride,
                         .vertexDataOffset = geometry.vertexBufferOffset,
-                        .maxVertex = geometry.maxVertexIndex,
+                        .maxVertex = std::max(geometry.vertexCount, 1u) - 1u,
                         .indexType = geometry.indexType,
                         .indexData = indexBufferHandle,
                         .indexDataOffset = geometry.indexBufferOffset,
@@ -221,7 +245,6 @@ void VKAccelerationStructure::prepare(VKContext &context,
                     .geometry = triangleGeometry,
                     .maxPrimitiveCount = primitiveCount,
                 });
-
                 blasBuildOptions.geometries.push_back(triangleGeometry);
             }
             blasBuildOptions.buildRangeInfos.push_back({

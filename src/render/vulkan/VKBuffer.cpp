@@ -1,5 +1,4 @@
 #include "VKBuffer.h"
-#include "scripting/ScriptEngine.h"
 #include "Singletons.h"
 #include <QScopeGuard>
 

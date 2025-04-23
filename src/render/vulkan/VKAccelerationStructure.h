@@ -30,11 +30,12 @@ private:
         Geometry::GeometryType type{};
         VKBuffer *vertexBuffer{};
         size_t vertexBufferOffset{};
-        uint32_t maxVertexIndex{};
+        uint32_t vertexCount{};
         uint32_t vertexStride{};
         VKBuffer *indexBuffer{};
         KDGpu::IndexType indexType{};
         size_t indexBufferOffset{};
+        uint32_t indexCount{};
         QString primitiveCount;
         QString primitiveOffset;
     };

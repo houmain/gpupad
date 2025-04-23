@@ -297,8 +297,7 @@ QStringList ShaderBase::getPatchedSourcesGLSL(ShaderPrintf &printf,
         sources[i] = printf.patchSource(mType, mFileNames[i], sources[i]);
 
     if (printf.isUsed(mType)) {
-        const auto explicitBinding =
-            (mSession.renderer == "Vulkan" && !mSession.autoMapBindings);
+        const auto explicitBinding = (mSession.renderer == "Vulkan");
         const auto set = (explicitBinding ? 4 : -1);
         const auto binding = (explicitBinding ? 8 : -1);
         insertAfterExtensions(sources.front(),
@@ -309,14 +308,15 @@ QStringList ShaderBase::getPatchedSourcesGLSL(ShaderPrintf &printf,
     if (!mPreamble.isEmpty())
         sources.front().prepend("#line 1 0\n" + mPreamble + "\n");
 
-    for (const auto &definition : preprocessorDefinitions())
+    const auto definitions = preprocessorDefinitions();
+    for (const auto &definition : definitions)
         sources.front().prepend("#define " + definition + "\n");
 
     sources.front().prepend(extensions);
 
     if (maxVersion.isEmpty()) {
         maxVersion = "#version 450";
-        for (const auto &source : sources)
+        for (const auto &source : std::as_const(sources))
             if (source.contains("gl_FragColor")) {
                 maxVersion = "#version 120";
                 break;
@@ -346,7 +346,8 @@ QStringList ShaderBase::getPatchedSourcesHLSL(ShaderPrintf &printf,
     if (!mPreamble.isEmpty())
         sources.front().prepend("#line 1 0\n" + mPreamble + "\n");
 
-    for (const auto &definition : preprocessorDefinitions())
+    const auto definitions = preprocessorDefinitions();
+    for (const auto &definition : definitions)
         sources.front().prepend("#define " + definition + "\n");
 
     return sources;

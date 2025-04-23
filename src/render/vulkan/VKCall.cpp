@@ -47,7 +47,7 @@ void VKCall::setIndexBuffer(VKBuffer *indices, const Block &block)
             mUsedItems += field->id;
         }
     const auto indexType = getKDIndexType(indexSize);
-    if (!indexType) {
+    if (!indexType || !indexSize) {
         mMessages += MessageList::insert(block.id,
             MessageType::InvalidIndexType,
             QStringLiteral("%1 bytes").arg(indexSize));
