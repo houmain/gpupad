@@ -105,6 +105,7 @@ private:
         std::vector<KDGpu::ResourceBindingLayout> bindings;
         std::vector<KDGpu::BindGroupEntry> resources;
         KDGpu::BindGroup bindGroup;
+        uint32_t maxVariableArrayLength{ 0 };
     };
 
     struct DynamicUniformBuffer
@@ -121,12 +122,13 @@ private:
     BindGroup &getBindGroup(uint32_t set);
     bool createOrUpdateBindGroup(uint32_t set, uint32_t binding,
         const KDGpu::ResourceBindingLayout &layout);
-    void setBindGroupResource(uint32_t set, KDGpu::BindGroupEntry &&resource);
+    void setBindGroupResource(uint32_t set, bool isVariableLengthArray,
+        KDGpu::BindGroupEntry &&resource);
     DynamicUniformBuffer &getDynamicUniformBuffer(uint32_t set,
         uint32_t binding, uint32_t arrayElement);
     MessageType updateBindings(VKContext &context,
         const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
-        ScriptEngine &scriptEngine);
+        bool isVariableLengthArray, ScriptEngine &scriptEngine);
     bool updateDynamicBufferBindings(VKContext &context,
         const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
         ScriptEngine &scriptEngine);
