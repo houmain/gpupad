@@ -98,7 +98,8 @@ void RenderSessionBase::configured()
     Q_ASSERT(onMainThread());
     mScriptSession->endSessionUpdate();
 
-    Singletons::synchronizeLogic().cancelAutomaticRevalidation();
+    if (Singletons::synchronizeLogic().resetRenderSessionInvalidationState())
+        mItemsChanged = true;
 
     mMessages += mScriptSession->resetMessages();
 }

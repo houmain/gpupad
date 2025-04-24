@@ -27,7 +27,7 @@ public:
     EvaluationMode evaluationMode() const { return mEvaluationMode; }
     void resetEvaluation();
     void manualEvaluation();
-    void cancelAutomaticRevalidation();
+    bool resetRenderSessionInvalidationState();
     void updateEditor(ItemId itemId, bool activated);
 
     void setValidateSource(bool validate);
@@ -37,7 +37,7 @@ public:
     void setCurrentEditorFileName(QString fileName);
     void setCurrentEditorSourceType(SourceType sourceType);
 
-    void handleSessionFileNameChanged(const QString& fileName);
+    void handleSessionFileNameChanged(const QString &fileName);
     void handleMouseStateChanged();
     void handleKeyboardStateChanged();
 

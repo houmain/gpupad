@@ -131,10 +131,14 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
     }
 }
 
-void SynchronizeLogic::cancelAutomaticRevalidation()
+bool SynchronizeLogic::resetRenderSessionInvalidationState()
 {
-    if (mEvaluationMode == EvaluationMode::Automatic)
-        mEvaluationTimer->stop();
+    if (std::exchange(mRenderSessionInvalidated, false)) {
+        if (mEvaluationMode == EvaluationMode::Automatic)
+            mEvaluationTimer->stop();
+        return true;
+    }
+    return false;
 }
 
 void SynchronizeLogic::handleSessionRendered()
