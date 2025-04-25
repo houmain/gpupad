@@ -10,6 +10,11 @@
 # pragma warning(disable: 4305) // truncation from 'double' to 'float'
 # pragma warning(disable: 4456) // declaration of 'a' hides previous local declaration
 #endif
+
+#if defined(__GNUC__)
+# pragma GCC diagnostic ignored "-Wsign-compare"
+#endif
+
 #define PAR_SHAPES_T uint32_t
 #define PAR_SHAPES_IMPLEMENTATION
 #include "par_shapes.h"

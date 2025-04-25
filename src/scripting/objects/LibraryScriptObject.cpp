@@ -1,8 +1,9 @@
 
-#define DLLREFLECT_IMPORT_IMPLEMENTATION
-#include "dllreflect/include/dllreflect.h"
 #include "LibraryScriptObject.h"
 #include <QJSEngine>
+
+#define DLLREFLECT_IMPORT_IMPLEMENTATION
+#include "dllreflect/include/dllreflect.h"
 
 namespace {
     template <typename T, typename S>

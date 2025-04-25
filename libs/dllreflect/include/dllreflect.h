@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DLLREFLECT_H
+#define DLLREFLECT_H
 
 #include <cstdint>
 #include <cstring>
@@ -595,6 +596,8 @@ bool call(const Function &function,
     }; \
     return &s_interface; \
   }
+
+#endif // DLLREFLECT_H
 
 #if defined(DLLREFLECT_IMPORT_IMPLEMENTATION)
 #if defined(_WIN32)

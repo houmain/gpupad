@@ -32,6 +32,7 @@
 #ifndef SINGLEAPPLICATION_P_H
 #define SINGLEAPPLICATION_P_H
 
+#include <QMap>
 #include <QtCore/QSharedMemory>
 #include <QtNetwork/QLocalServer>
 #include <QtNetwork/QLocalSocket>
