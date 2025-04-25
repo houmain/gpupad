@@ -1,7 +1,6 @@
 #pragma once
 
 #include "VKShader.h"
-#include "scripting/ScriptEngine.h"
 
 class VKProgram
 {

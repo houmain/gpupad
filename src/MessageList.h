@@ -72,6 +72,7 @@ enum class MessageType {
     MaxSampleCountExceeded,
     MaxPushConstantSizeExceeded,
     MaxVariableBindGroupEntriesExceeded,
+    OnlyLastBindingMayBeUnsizedArray,
     TextureBuffersNotAvailable,
     RayTracingNotAvailable,
     MeshShadersNotAvailable,

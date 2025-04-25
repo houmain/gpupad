@@ -54,7 +54,7 @@
             "width": "512"
         },
         {
-            "fileName": "../Cube/Planks.jpg",
+            "fileName": "../Cube/planks.jpg",
             "flipVertically": false,
             "format": "RGBA8_UNorm",
             "height": "512",
@@ -89,21 +89,6 @@
             "minFilter": "Nearest",
             "name": "uTexture[1]",
             "textureId": 900,
-            "type": "Binding",
-            "wrapModeX": "Repeat",
-            "wrapModeY": "Repeat",
-            "wrapModeZ": "Repeat"
-        },
-        {
-            "anisotropic": true,
-            "bindingType": "Sampler",
-            "borderColor": "#ff000000",
-            "comparisonFunc": "NoComparisonFunc",
-            "id": 898,
-            "magFilter": "Linear",
-            "minFilter": "LinearMipMapLinear",
-            "name": "uSampler",
-            "textureId": 0,
             "type": "Binding",
             "wrapModeX": "Repeat",
             "wrapModeY": "Repeat",

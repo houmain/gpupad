@@ -218,6 +218,17 @@ namespace {
                 break;
         }
     }
+
+    uint32_t getMaxBindingNumberInSet(const Spirv::Interface &interface,
+        uint32_t s)
+    {
+        auto maxBindingNumber = 0u;
+        for (auto i = 0u; i < interface->descriptor_binding_count; ++i) {
+            const auto &desc = interface->descriptor_bindings[i];
+            maxBindingNumber = std::max(maxBindingNumber, desc.binding);
+        }
+        return maxBindingNumber;
+    }
 } // namespace
 
 VKPipeline::VKPipeline(ItemId itemId, VKProgram *program)
@@ -768,6 +779,12 @@ bool VKPipeline::createLayout(VKContext &context)
             auto count = getBindingArraySize(desc.array);
             auto flags = KDGpu::ResourceBindingFlagBits::None;
             if (count == 0) {
+                if (desc.binding
+                    != getMaxBindingNumberInSet(interface, desc.set)) {
+                    mMessages += MessageList::insert(mItemId,
+                        MessageType::OnlyLastBindingMayBeUnsizedArray);
+                    return false;
+                }
                 count = maxVariableBindGroupEntries;
                 flags = KDGpu::ResourceBindingFlagBits::
                     VariableBindGroupEntriesCountBit;
@@ -871,6 +888,7 @@ bool VKPipeline::updateBindings(VKContext &context, ScriptEngine &scriptEngine)
         if (bindGroup.resources.empty())
             continue;
 
+        // check that hardcoded limit in layout is not exceeded
         if (bindGroup.maxVariableArrayLength > maxVariableBindGroupEntries) {
             mMessages += MessageList::insert(mItemId,
                 MessageType::MaxVariableBindGroupEntriesExceeded,
