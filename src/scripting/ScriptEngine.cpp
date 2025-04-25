@@ -41,7 +41,7 @@ ScriptEnginePtr ScriptEngine::make(const QString &basePath, QThread *thread,
     auto engine = ScriptEnginePtr(new ScriptEngine(parent));
     if (thread && thread != QThread::currentThread()) {
         engine->moveToThread(thread);
-        QMetaObject::invokeMethod(engine.get(), &ScriptEngine::initialize,
+        QMetaObject::invokeMethod(engine.get(), "initialize",
             Qt::BlockingQueuedConnection, engine, basePath);
     } else {
         engine->initialize(engine, basePath);
