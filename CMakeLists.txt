@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 project(gpupad LANGUAGES CXX C)
 
-option(ENABLE_UNITY_BUILD "Enable Unity Build" ON)
+option(ENABLE_UNITY_BUILD "Enable Unity Build" OFF)
 if (ENABLE_UNITY_BUILD)
     set(CMAKE_UNITY_BUILD TRUE)
 endif()
