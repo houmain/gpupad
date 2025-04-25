@@ -94,7 +94,7 @@
             ]
         },
         {
-            "fileName": "../Cube/Planks.jpg",
+            "fileName": "../Cube/planks.jpg",
             "flipVertically": false,
             "format": "SRGB8_Alpha8",
             "height": "512",
