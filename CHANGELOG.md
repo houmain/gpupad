@@ -3,19 +3,28 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Version 2.5.0] - 2025-04-13
+## [Version 2.5.0] - 2025-04-25
 
 ### Added
 
-- Allow to load JavaScript libraries from "libs" directory.
+- Added `AccelerationStructure`, `Instance`, `Geometry` items for ray tracing call.
+- Allow `loadLibrary` to load JavaScript libraries from "libs" directory.
 - Added bindless textures support / `getTextureHandle` to session script object.
-- Added "Ray Tracing In Vulkan" sample.
+- Added buffer reference support / `getBufferHandle` to session script object.
+- Added nonuniform indexing / variable length array support.
 - Added `callAction` to app script object.
+- Added `frameIndex` to App script object.
+- Added "Ray Tracing In Vulkan" samples.
+- Added "Custom Actions" sample.
 
 ### Fixed
 
+- Validating Call's count does not exceed vertex/indexs count.
+- Fixed offset/size of buffer block bindings in Vulkan.
 - Improved performance of buffer block updates.
 - Improved highlighting of items used by call.
+- Prevent using Session object in binding scripts.
+- Fixed printf in Vulkan renderer without enabled Auto Map Bindings.
 
 ## [Version 2.4.0] - 2025-03-22
 
