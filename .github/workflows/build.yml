@@ -21,9 +21,10 @@ jobs:
            , VCPKG_TRIPLET: "x64-linux-release"
           }
         - {
+            # Available Qt versions: https://ddalcino.github.io/aqt-list-server/
             name: "Windows-x64", WIN_ARCH: "x64"
             , os: windows-2022
-            , QT_VERSION: 6.7.3, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/6.7.3/msvc2022_64", QT_ARCH: win64_msvc2022_64
+            , QT_VERSION: 6.8.3, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/6.8.3/msvc2022_64", QT_ARCH: win64_msvc2022_64
             , VCPKG_TRIPLET: "x64-windows-release"
           }
 #        - {
