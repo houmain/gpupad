@@ -1,7 +1,6 @@
 
 #include "RenderSessionBase.h"
 #include "FileCache.h"
-#include "Settings.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
@@ -12,7 +11,6 @@
 #include "scripting/ScriptSession.h"
 #include "session/SessionModel.h"
 #include "vulkan/VKRenderSession.h"
-#include "vulkan/VKRenderer.h"
 
 std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
     RendererPtr renderer, const QString &basePath)
@@ -45,15 +43,16 @@ void RenderSessionBase::prepare(bool itemsChanged,
     mEvaluationType = evaluationType;
     mPrevMessages.swap(mMessages);
     mMessages.clear();
-    mUsedItems.clear();
 
     if (mScriptSession)
         mScriptSession->update();
     else
         mEvaluationType = EvaluationType::Reset;
 
-    if (mItemsChanged || mEvaluationType == EvaluationType::Reset)
+    if (mItemsChanged || mEvaluationType == EvaluationType::Reset) {
+        mUsedItems.clear();
         mSessionModelCopy = Singletons::sessionModel();
+    }
 }
 
 void RenderSessionBase::configure()
@@ -98,7 +97,8 @@ void RenderSessionBase::configured()
     Q_ASSERT(onMainThread());
     mScriptSession->endSessionUpdate();
 
-    if (Singletons::synchronizeLogic().resetRenderSessionInvalidationState())
+    if (mEvaluationType != EvaluationType::Steady
+        && Singletons::synchronizeLogic().resetRenderSessionInvalidationState())
         mItemsChanged = true;
 
     mMessages += mScriptSession->resetMessages();

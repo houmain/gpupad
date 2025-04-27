@@ -180,7 +180,7 @@ void GLRenderSession::buildCommandQueue()
             // push binding scope
             addCommand([](BindingState &state) { state.push({}); });
         } else if (auto script = castItem<Script>(item)) {
-            if (script->executeOn != Script::ExecuteOn::ResetEvaluation)
+            if (script->executeOn == Script::ExecuteOn::EveryEvaluation)
                 mUsedItems += script->id;
         } else if (auto binding = castItem<Binding>(item)) {
             const auto &b = *binding;
@@ -253,7 +253,10 @@ void GLRenderSession::buildCommandQueue()
             }
         } else if (auto call = castItem<Call>(item)) {
             if (call->checked) {
-                mUsedItems += call->id;
+
+                if (call->executeOn == Call::ExecuteOn::EveryEvaluation)
+                    mUsedItems += call->id;
+
                 auto glcall = GLCall(*call);
                 switch (call->callType) {
                 case Call::CallType::Draw:
@@ -310,7 +313,6 @@ void GLRenderSession::buildCommandQueue()
 
                         auto &scriptEngine = mScriptSession->engine();
                         if (auto program = call.program()) {
-                            mUsedItems += program->usedItems();
                             if (program->bind()) {
                                 if (call.applyBindings(mergeBindingState(state),
                                         scriptEngine))
@@ -326,7 +328,8 @@ void GLRenderSession::buildCommandQueue()
                                 mCommandQueue->timerQueries.emplace_back(
                                     call.itemId(), timerQuery);
 
-                        mUsedItems += call.usedItems();
+                        if (executeOn == Call::ExecuteOn::EveryEvaluation)
+                            mUsedItems += call.usedItems();
                     });
             }
         }
@@ -514,12 +517,13 @@ quint64 GLRenderSession::getTextureHandle(ItemId itemId)
     const auto &sessionModel = mSessionModelCopy;
 
     const auto addTextureOnce = [&](ItemId textureId) {
-        mUsedItems += textureId;
         return addOnce(mCommandQueue->textures,
             sessionModel.findItem<Texture>(textureId), *this);
     };
 
-    if (auto texture = addTextureOnce(itemId))
+    if (auto texture = addTextureOnce(itemId)) {
+        mUsedItems += texture->usedItems();
         return texture->obtainBindlessHandle();
+    }
     return 0;
 }

@@ -217,7 +217,7 @@ void VKRenderSession::buildCommandQueue()
             // push binding scope
             addCommand([](BindingState &state) { state.push({}); });
         } else if (auto script = castItem<Script>(item)) {
-            if (script->executeOn != Script::ExecuteOn::ResetEvaluation)
+            if (script->executeOn == Script::ExecuteOn::EveryEvaluation)
                 mUsedItems += script->id;
         } else if (auto binding = castItem<Binding>(item)) {
             const auto &b = *binding;
@@ -294,7 +294,10 @@ void VKRenderSession::buildCommandQueue()
             }
         } else if (auto call = castItem<Call>(item)) {
             if (call->checked) {
-                mUsedItems += call->id;
+
+                if (call->executeOn == Call::ExecuteOn::EveryEvaluation)
+                    mUsedItems += call->id;
+
                 auto pvkcall =
                     std::make_shared<VKCall>(*call, sessionModel.sessionItem());
                 auto &vkcall = *pvkcall;
@@ -363,7 +366,8 @@ void VKRenderSession::buildCommandQueue()
                         call.execute(mCommandQueue->context, mMessages,
                             mScriptSession->engine());
 
-                        mUsedItems += call.usedItems();
+                        if (executeOn == Call::ExecuteOn::EveryEvaluation)
+                            mUsedItems += call.usedItems();
                     });
             }
         }
@@ -558,12 +562,13 @@ quint64 VKRenderSession::getBufferHandle(ItemId itemId)
     const auto &sessionModel = mSessionModelCopy;
 
     const auto addBufferOnce = [&](ItemId bufferId) {
-        mUsedItems += bufferId;
         return addOnce(mCommandQueue->buffers,
             sessionModel.findItem<Buffer>(bufferId), *this);
     };
 
-    if (auto buffer = addBufferOnce(itemId))
+    if (auto buffer = addBufferOnce(itemId)) {
+        mUsedItems += buffer->usedItems();
         return buffer->getDeviceAddress(mCommandQueue->context);
+    }
     return 0;
 }

@@ -185,7 +185,7 @@ void VKAccelerationStructure::prepare(VKContext &context,
 
             using GeometryType = Geometry::GeometryType;
             if (geometry.type == GeometryType::AxisAlignedBoundingBoxes) {
-                maxPrimitiveCount = geometry.vertexCount / 6;
+                maxPrimitiveCount = geometry.vertexCount;
             } else if (geometry.type == GeometryType::Triangles) {
                 maxPrimitiveCount = geometry.vertexCount / 3;
                 if (auto indexBuffer = geometry.indexBuffer) {

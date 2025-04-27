@@ -269,6 +269,7 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
                 MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
             return;
         }
+        mUsedItems += mProgram->usedItems();
     }
 
     if (mKind.draw) {
@@ -876,7 +877,7 @@ bool GLCall::applyBufferBinding(
     }
 
     auto &buffer = *binding.buffer;
-    mUsedItems += buffer.itemId();
+    mUsedItems += buffer.usedItems();
     mUsedItems += binding.blockItemId;
 
     const auto bufferSize =

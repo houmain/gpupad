@@ -52,7 +52,7 @@
                     ],
                     "name": "Sphere",
                     "offset": "0",
-                    "rowCount": "485",
+                    "rowCount": "486",
                     "type": "Block"
                 }
             ],
@@ -100,7 +100,7 @@
                     ],
                     "name": "Material",
                     "offset": "0",
-                    "rowCount": "485",
+                    "rowCount": "486",
                     "type": "Block"
                 }
             ],
@@ -132,7 +132,7 @@
                     ],
                     "name": "AABB",
                     "offset": "0",
-                    "rowCount": "485",
+                    "rowCount": "486",
                     "type": "Block"
                 }
             ],
@@ -152,6 +152,7 @@
             "type": "Script"
         },
         {
+            "dynamic": false,
             "id": 10033,
             "inlineScope": true,
             "items": [
@@ -394,7 +395,7 @@
                     "id": 10093,
                     "items": [
                         {
-                            "count": "1940",
+                            "count": "",
                             "geometryType": "AxisAlignedBoundingBoxes",
                             "id": 10094,
                             "name": "AABBs",

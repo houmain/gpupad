@@ -23,6 +23,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QByteArray>
 #include <QtCore/QSharedMemory>
+#include <QDebug>
 
 #include "singleapplication.h"
 #include "singleapplication_p.h"

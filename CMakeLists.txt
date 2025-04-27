@@ -68,7 +68,7 @@ add_definitions(-DQT_NO_CAST_TO_ASCII
                 -DQT_NO_NARROWING_CONVERSIONS_IN_CONNECT
                 #-DQT_STRICT_ITERATORS
                 -DQT_NO_KEYWORDS
-                -DQT_DISABLE_DEPRECATED_BEFORE=0x060000
+                -DQT_DISABLE_DEPRECATED_BEFORE=0x060500
                 -DQT_NO_FOREACH)
 
 set(SOURCES

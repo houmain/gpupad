@@ -561,7 +561,7 @@ bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
                 auto &buffer = *bufferBinding->buffer;
                 mUsedItems += bufferBinding->bindingItemId;
                 mUsedItems += bufferBinding->blockItemId;
-                mUsedItems += buffer.itemId();
+                mUsedItems += buffer.usedItems();
 
                 buffer.reload();
                 const auto &bufferData = buffer.data();
@@ -932,7 +932,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
             auto &buffer = *bufferBinding->buffer;
             mUsedItems += bufferBinding->bindingItemId;
             mUsedItems += bufferBinding->blockItemId;
-            mUsedItems += buffer.itemId();
+            mUsedItems += buffer.usedItems();
 
             buffer.prepareUniformBuffer(context);
 
@@ -975,7 +975,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                 return MessageType::BufferNotSet;
             auto &buffer = *bufferBinding->buffer;
             mUsedItems += bufferBinding->bindingItemId;
-            mUsedItems += buffer.itemId();
+            mUsedItems += buffer.usedItems();
 
             const auto readable =
                 !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_READABLE);

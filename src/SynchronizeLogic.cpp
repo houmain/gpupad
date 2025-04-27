@@ -123,6 +123,8 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
         mEvaluationTimer->setSingleShot(true);
         if (mRenderSessionInvalidated)
             mEvaluationTimer->start(0);
+        if (mRenderSession)
+            Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
         Singletons::videoManager().pauseVideoFiles();
     } else {
         mEvaluationTimer->stop();
@@ -206,10 +208,11 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
     if (mRenderSession
         && mRenderSession->usedItems().contains(mModel.getItemId(index))) {
         invalidateRenderSession();
-    } else if (index.column() == SessionModel::Name) {
+    } else if (index.column() == SessionModel::ScriptExecuteOn) {
         invalidateRenderSession();
     } else if (auto call = mModel.item<Call>(index)) {
-        if (call->checked)
+        if (call->checked
+            && call->executeOn == Call::ExecuteOn::EveryEvaluation)
             invalidateRenderSession();
     } else if (mModel.item<Group>(index)) {
         invalidateRenderSession();

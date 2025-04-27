@@ -98,7 +98,7 @@
             "type": "Binding"
         },
         {
-            "executeOn": "ManualEvaluation",
+            "executeOn": "EveryEvaluation",
             "fileName": "setHandles.js",
             "id": 905,
             "type": "Script"
