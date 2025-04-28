@@ -844,6 +844,10 @@ void MainWindow::saveSessionState(const QString &sessionFileName)
 
     // add other editors by relative filename
     mEditorManager.forEachEditor([&](const IEditor &editor) {
+        // not saving/restoring Qml views for now
+        if (FileDialog::getFileExtension(editor.fileName()) == "qml")
+            return;
+
         if (!filesAdded.contains(editor.fileName()))
             openEditors += QString("%1|%2").arg(
                 QDir::fromNativeSeparators(

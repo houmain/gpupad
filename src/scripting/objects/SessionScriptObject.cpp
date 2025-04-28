@@ -384,6 +384,14 @@ QJSEngine &SessionScriptObject::engine()
     return *mEngine;
 }
 
+void SessionScriptObject::setSelection(const QModelIndexList &selectedIndices)
+{
+    mSelectionProperty = engine().newArray(selectedIndices.size());
+    auto i = 0;
+    for (const auto &index : selectedIndices)
+        mSelectionProperty.setProperty(i++, getItem(index));
+}
+
 void SessionScriptObject::withSessionModel(UpdateFunction &&updateFunction)
 {
     if (onMainThread()) {
@@ -750,4 +758,9 @@ quint64 SessionScriptObject::getBufferHandle(QJSValue itemDesc)
         if (const auto buffer = getItem<Buffer>(itemDesc))
             return mRenderSession->getBufferHandle(buffer->id);
     return 0;
+}
+
+QJSValue SessionScriptObject::getShaderInterface(QJSValue itemDesc)
+{
+    return QJSValue::UndefinedValue;
 }

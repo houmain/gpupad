@@ -19,7 +19,6 @@ class AppScriptObject final : public QObject
     Q_PROPERTY(QJSValue session READ session CONSTANT)
     Q_PROPERTY(QJSValue mouse READ mouse CONSTANT)
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
-    Q_PROPERTY(QJSValue selection READ selection CONSTANT)
 
 public:
     AppScriptObject(const ScriptEnginePtr &enginePtr, const QString &basePath);
@@ -28,7 +27,6 @@ public:
     QJSValue session();
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
-    QJSValue selection() { return mSelectionProperty; }
 
     Q_INVOKABLE QJSValue openEditor(QString fileName);
     Q_INVOKABLE QJSValue loadLibrary(QString fileName);
@@ -40,7 +38,6 @@ public:
     Q_INVOKABLE QJSValue readTextFile(QString fileName);
 
     void update();
-    void setSelection(const QModelIndexList &selectedIndices);
     bool usesMouseState() const;
     bool usesKeyboardState() const;
     SessionScriptObject &sessionScriptObject() { return *mSessionScriptObject; }
@@ -59,7 +56,6 @@ private:
     QJSValue mSessionProperty;
     QJSValue mMouseProperty;
     QJSValue mKeyboardProperty;
-    QJSValue mSelectionProperty;
     QDir mLastFileDialogDirectory;
     int mFrameIndex{ };
 };

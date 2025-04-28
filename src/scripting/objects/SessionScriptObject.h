@@ -6,6 +6,7 @@
 #include <QJsonObject>
 #include <QJsonValue>
 #include <QQmlPropertyMap>
+#include <QModelIndexList>
 #include <functional>
 
 class SessionModel;
@@ -31,6 +32,7 @@ private:
 class SessionScriptObject : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QJSValue selection READ selection CONSTANT)
     Q_PROPERTY(ItemId id READ itemId CONSTANT)
     Q_PROPERTY(QString name READ sessionName WRITE setSessionName)
     Q_PROPERTY(QJSValue items READ sessionItems CONSTANT)
@@ -39,11 +41,13 @@ public:
     explicit SessionScriptObject(QObject *parent = nullptr);
     void initializeEngine(QJSEngine *engine);
 
+    void setSelection(const QModelIndexList &selectedIndices);
     void beginBackgroundUpdate(IScriptRenderSession *renderSession);
     void endBackgroundUpdate();
     bool available() const;
     QJSValue getItem(QModelIndex index);
 
+    QJSValue selection() { return mSelectionProperty; }
     ItemId itemId();
     QString sessionName();
     void setSessionName(QString name);
@@ -65,6 +69,7 @@ public:
 
     Q_INVOKABLE quint64 getTextureHandle(QJSValue itemDesc);
     Q_INVOKABLE quint64 getBufferHandle(QJSValue itemDesc);
+    Q_INVOKABLE QJSValue getShaderInterface(QJSValue itemDesc);
 
 private:
     friend SessionScriptObject_ItemObject;
@@ -85,6 +90,7 @@ private:
     }
 
     QJSEngine *mEngine{};
+    QJSValue mSelectionProperty;
     QJSValue mSessionItems;
     MessagePtrSet mMessages;
     IScriptRenderSession *mRenderSession{};

@@ -34,15 +34,6 @@ QString AppScriptObject::getAbsolutePath(const QString &fileName) const
     return toNativeCanonicalFilePath(mBasePath.filePath(fileName));
 }
 
-void AppScriptObject::setSelection(const QModelIndexList &selectedIndices)
-{
-    mSelectionProperty = mJsEngine->newArray(selectedIndices.size());
-    auto i = 0;
-    for (const auto &index : selectedIndices)
-        mSelectionProperty.setProperty(i++,
-            sessionScriptObject().getItem(index));
-}
-
 void AppScriptObject::update()
 {
     mFrameIndex++;

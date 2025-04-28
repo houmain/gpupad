@@ -93,7 +93,7 @@ void CustomAction::apply(const QModelIndexList &selection,
 
     const auto basePath = QFileInfo(mFilePath).absolutePath();
     mScriptEngine = ScriptEngine::make(basePath);
-    mScriptEngine->appScriptObject().setSelection(selection);
+    mScriptEngine->appScriptObject().sessionScriptObject().setSelection(selection);
 
     applyInEngine(*mScriptEngine, messages);
 
@@ -137,6 +137,7 @@ void CustomActions::updateActions()
 
     for (const auto &dir : getApplicationDirectories(ActionsDir)) {
         auto scriptEngine = ScriptEngine::make(dir.path());
+        scriptEngine->appScriptObject().sessionScriptObject().setSelection(mSelection);
 
         auto it = QDirIterator(dir.path(), QStringList() << "*.js", QDir::Files,
             QDirIterator::Subdirectories);

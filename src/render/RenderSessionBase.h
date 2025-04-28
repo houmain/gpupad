@@ -3,7 +3,6 @@
 #include "RenderTask.h"
 #include "MessageList.h"
 #include "TextureData.h"
-#include "InputState.h"
 #include "session/SessionModel.h"
 #include "scripting/IScriptRenderSession.h"
 #include "scripting/ScriptSession.h"

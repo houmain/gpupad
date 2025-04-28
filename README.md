@@ -102,7 +102,6 @@ Initial documentation of the available script objects:
 - `keyboard: Keyboard`
 - `mouse: Mouse`
 - `session: Session`
-- `selection: Items`
 - `callAction(id, [arguments]): result`
 - `enumerateFiles(pattern): filenames`
 - `loadLibrary(fileName): Library`
@@ -113,6 +112,7 @@ Initial documentation of the available script objects:
 
 ### Session
 
+- `selection: Items`
 - `item(id): Item`
 - `insertItem([item/id], object): Item`
 - `deleteItem(item/id): Item`
