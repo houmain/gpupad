@@ -1,174 +1,185 @@
-[
-    {
-        "flipVertically": false,
-        "format": "RGBA8_UNorm",
-        "height": "512",
-        "id": 70,
-        "name": "Texture",
-        "target": "Target2D",
-        "type": "Texture",
-        "width": "512"
-    },
-    {
-        "blendConstant": "#ff000000",
-        "cullMode": "NoCulling",
-        "frontFace": "CCW",
-        "id": 71,
-        "items": [
-            {
-                "blendAlphaDest": "Zero",
-                "blendAlphaEq": "Add",
-                "blendAlphaSource": "One",
-                "blendColorDest": "Zero",
-                "blendColorEq": "Add",
-                "blendColorSource": "One",
-                "colorWriteMask": 15,
-                "id": 72,
-                "level": 0,
-                "name": "Color",
-                "textureId": 70,
-                "type": "Attachment"
-            }
-        ],
-        "logicOperation": "NoLogicOperation",
-        "name": "Target",
-        "polygonMode": "Fill",
-        "type": "Target"
-    },
-    {
-        "flipVertically": false,
-        "format": "RGBA8_UNorm",
-        "height": "256",
-        "id": 927,
-        "name": "Input Texture",
-        "target": "Target2D",
-        "type": "Texture",
-        "width": "256"
-    },
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression3",
-        "id": 81,
-        "name": "iResolution",
-        "type": "Binding",
-        "values": [
-            "512",
-            "512",
-            "0"
-        ]
-    },
-    {
-        "bindingType": "Uniform",
-        "editor": "Expression",
-        "id": 74,
-        "name": "iFrame",
-        "type": "Binding",
-        "values": [
-            "(this.iFrame || 0) + 1"
-        ]
-    },
-    {
-        "anisotropic": false,
-        "bindingType": "Sampler",
-        "borderColor": "#ff000000",
-        "comparisonFunc": "NoComparisonFunc",
-        "id": 928,
-        "magFilter": "Nearest",
-        "minFilter": "Nearest",
-        "name": "iChannel0",
-        "textureId": 927,
-        "type": "Binding",
-        "wrapModeX": "Repeat",
-        "wrapModeY": "Repeat",
-        "wrapModeZ": "Repeat"
-    },
-    {
-        "anisotropic": false,
-        "bindingType": "Sampler",
-        "borderColor": "#ff000000",
-        "comparisonFunc": "NoComparisonFunc",
-        "id": 929,
-        "magFilter": "Nearest",
-        "minFilter": "Nearest",
-        "name": "iChannel1",
-        "textureId": 927,
-        "type": "Binding",
-        "wrapModeX": "Repeat",
-        "wrapModeY": "Repeat",
-        "wrapModeZ": "Repeat"
-    },
-    {
-        "anisotropic": false,
-        "bindingType": "Sampler",
-        "borderColor": "#ff000000",
-        "comparisonFunc": "NoComparisonFunc",
-        "id": 930,
-        "magFilter": "Nearest",
-        "minFilter": "Nearest",
-        "name": "iChannel2",
-        "textureId": 927,
-        "type": "Binding",
-        "wrapModeX": "Repeat",
-        "wrapModeY": "Repeat",
-        "wrapModeZ": "Repeat"
-    },
-    {
-        "anisotropic": false,
-        "bindingType": "Sampler",
-        "borderColor": "#ff000000",
-        "comparisonFunc": "NoComparisonFunc",
-        "id": 931,
-        "magFilter": "Nearest",
-        "minFilter": "Nearest",
-        "name": "iChannel3",
-        "textureId": 927,
-        "type": "Binding",
-        "wrapModeX": "Repeat",
-        "wrapModeY": "Repeat",
-        "wrapModeZ": "Repeat"
-    },
-    {
-        "id": 76,
-        "items": [
-            {
-                "fileName": "attributeless.vs",
-                "id": 77,
-                "language": "GLSL",
-                "shaderType": "Vertex",
-                "type": "Shader"
-            },
-            {
-                "fileName": "shadertoy.fs",
-                "id": 78,
-                "language": "GLSL",
-                "shaderType": "Fragment",
-                "type": "Shader"
-            },
-            {
-                "fileName": "image.fs",
-                "id": 79,
-                "language": "GLSL",
-                "shaderType": "Fragment",
-                "type": "Shader"
-            }
-        ],
-        "name": "Program",
-        "type": "Program"
-    },
-    {
-        "baseInstance": "0",
-        "callType": "Draw",
-        "checked": true,
-        "count": "4",
-        "executeOn": "EveryEvaluation",
-        "first": "0",
-        "id": 80,
-        "instanceCount": "1",
-        "name": "Call",
-        "primitiveType": "TriangleStrip",
-        "programId": 76,
-        "targetId": 71,
-        "type": "Call",
-        "vertexStreamId": 0
-    }
-]
+{
+    "id": 2,
+    "items": [
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression3",
+            "id": 81,
+            "name": "iResolution",
+            "type": "Binding",
+            "values": [
+                "1920/2",
+                "1080/2",
+                "0"
+            ]
+        },
+        {
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "iResolution[1]",
+            "id": 70,
+            "name": "Texture",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "iResolution[0]"
+        },
+        {
+            "blendConstant": "#ff000000",
+            "cullMode": "NoCulling",
+            "frontFace": "CCW",
+            "id": 71,
+            "items": [
+                {
+                    "blendAlphaDest": "Zero",
+                    "blendAlphaEq": "Add",
+                    "blendAlphaSource": "One",
+                    "blendColorDest": "Zero",
+                    "blendColorEq": "Add",
+                    "blendColorSource": "One",
+                    "colorWriteMask": 15,
+                    "id": 72,
+                    "level": 0,
+                    "name": "Color",
+                    "textureId": 70,
+                    "type": "Attachment"
+                }
+            ],
+            "logicOperation": "NoLogicOperation",
+            "name": "Target",
+            "polygonMode": "Fill",
+            "type": "Target"
+        },
+        {
+            "fileName": "../Quad/marble.png",
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "512",
+            "id": 927,
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "512"
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 74,
+            "name": "iFrame",
+            "type": "Binding",
+            "values": [
+                "app.frameIndex"
+            ]
+        },
+        {
+            "anisotropic": false,
+            "bindingType": "Sampler",
+            "borderColor": "#ff000000",
+            "comparisonFunc": "NoComparisonFunc",
+            "id": 928,
+            "magFilter": "Nearest",
+            "minFilter": "Nearest",
+            "name": "iChannel0",
+            "textureId": 927,
+            "type": "Binding",
+            "wrapModeX": "Repeat",
+            "wrapModeY": "Repeat",
+            "wrapModeZ": "Repeat"
+        },
+        {
+            "anisotropic": false,
+            "bindingType": "Sampler",
+            "borderColor": "#ff000000",
+            "comparisonFunc": "NoComparisonFunc",
+            "id": 929,
+            "magFilter": "Nearest",
+            "minFilter": "Nearest",
+            "name": "iChannel1",
+            "textureId": 927,
+            "type": "Binding",
+            "wrapModeX": "Repeat",
+            "wrapModeY": "Repeat",
+            "wrapModeZ": "Repeat"
+        },
+        {
+            "anisotropic": false,
+            "bindingType": "Sampler",
+            "borderColor": "#ff000000",
+            "comparisonFunc": "NoComparisonFunc",
+            "id": 930,
+            "magFilter": "Nearest",
+            "minFilter": "Nearest",
+            "name": "iChannel2",
+            "textureId": 927,
+            "type": "Binding",
+            "wrapModeX": "Repeat",
+            "wrapModeY": "Repeat",
+            "wrapModeZ": "Repeat"
+        },
+        {
+            "anisotropic": false,
+            "bindingType": "Sampler",
+            "borderColor": "#ff000000",
+            "comparisonFunc": "NoComparisonFunc",
+            "id": 931,
+            "magFilter": "Nearest",
+            "minFilter": "Nearest",
+            "name": "iChannel3",
+            "textureId": 927,
+            "type": "Binding",
+            "wrapModeX": "Repeat",
+            "wrapModeY": "Repeat",
+            "wrapModeZ": "Repeat"
+        },
+        {
+            "id": 76,
+            "items": [
+                {
+                    "fileName": "attributeless.vs",
+                    "id": 77,
+                    "language": "GLSL",
+                    "shaderType": "Vertex",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "shadertoy.fs",
+                    "id": 78,
+                    "language": "GLSL",
+                    "shaderType": "Fragment",
+                    "type": "Shader"
+                },
+                {
+                    "fileName": "image.fs",
+                    "id": 79,
+                    "language": "GLSL",
+                    "shaderType": "Fragment",
+                    "type": "Shader"
+                }
+            ],
+            "name": "Program",
+            "type": "Program"
+        },
+        {
+            "baseInstance": "0",
+            "callType": "Draw",
+            "checked": true,
+            "count": "4",
+            "executeOn": "EveryEvaluation",
+            "first": "0",
+            "id": 80,
+            "instanceCount": "1",
+            "name": "Call",
+            "primitiveType": "TriangleStrip",
+            "programId": 76,
+            "targetId": 71,
+            "type": "Call",
+            "vertexStreamId": 0
+        }
+    ],
+    "name": "Session",
+    "renderer": "OpenGL",
+    "shaderCompiler": "",
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "type": "Session"
+}
