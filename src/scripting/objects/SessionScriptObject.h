@@ -54,6 +54,7 @@ public:
     QJSValue sessionItems();
 
     Q_INVOKABLE QJSValue item(QJSValue itemDesc);
+    Q_INVOKABLE QJSValue parentItem(QJSValue itemDesc);
     Q_INVOKABLE QJSValue insertItem(QJSValue object);
     Q_INVOKABLE QJSValue insertItem(QJSValue itemDesc, QJSValue object);
     Q_INVOKABLE QJSValue insertBeforeItem(QJSValue itemDesc, QJSValue object);

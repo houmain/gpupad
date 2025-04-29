@@ -655,6 +655,15 @@ QJSValue SessionScriptObject::item(QJSValue itemDesc)
     return engine().newQObject(new ItemObject(this, item->id));
 }
 
+QJSValue SessionScriptObject::parentItem(QJSValue itemDesc)
+{
+    const auto item = getItem(itemDesc);
+    if (!item || !item->parent)
+        return QJSValue::UndefinedValue;
+
+    return engine().newQObject(new ItemObject(this, item->parent->id));
+}
+
 void SessionScriptObject::clearItems()
 {
     withSessionModel([](SessionModel &session) { session.clear(); });
