@@ -512,14 +512,9 @@ QJsonObject SessionScriptObject::toJsonObject(const QJSValue &value)
     return value.toVariant().toJsonObject();
 }
 
-QJSValue SessionScriptObject::insertItem(QJSValue itemDesc, QJSValue object)
+QJSValue SessionScriptObject::insertItemAt(const Item *parent, int row,
+    QJSValue object)
 {
-    const auto parent = getItem(itemDesc);
-    if (!parent) {
-        engine().throwError(QStringLiteral("Invalid parent"));
-        return QJSValue::UndefinedValue;
-    }
-
     auto id = object.property("id").toInt();
     if (!id) {
         // update ID inplace
@@ -533,13 +528,50 @@ QJSValue SessionScriptObject::insertItem(QJSValue itemDesc, QJSValue object)
         return QJSValue::UndefinedValue;
     }
 
-    withSessionModel([parentId = parent->id, update](SessionModel &session) {
-        const auto parent = session.getIndex(session.findItem(parentId),
-            SessionModel::ColumnType::Name);
-        session.dropJson({ update }, session.rowCount(parent), parent, true);
-    });
+    withSessionModel(
+        [parentId = parent->id, row, update](SessionModel &session) {
+            const auto parent = session.getIndex(session.findItem(parentId),
+                SessionModel::ColumnType::Name);
+            session.dropJson({ update }, row, parent, true);
+        });
 
     return engine().newQObject(new ItemObject(this, id));
+}
+
+QJSValue SessionScriptObject::insertItem(QJSValue itemDesc, QJSValue object)
+{
+    const auto parent = getItem(itemDesc);
+    if (!parent) {
+        engine().throwError(QStringLiteral("Invalid parent"));
+        return QJSValue::UndefinedValue;
+    }
+    return insertItemAt(parent, parent->items.size(), object);
+}
+
+QJSValue SessionScriptObject::insertBeforeItem(QJSValue itemDesc,
+    QJSValue object)
+{
+    const auto sibling = getItem(itemDesc);
+    if (!sibling || !sibling->parent) {
+        engine().throwError(QStringLiteral("Invalid sibling"));
+        return QJSValue::UndefinedValue;
+    }
+    const auto parent = sibling->parent;
+    const auto row = parent->items.indexOf(sibling);
+    return insertItemAt(parent, row, object);
+}
+
+QJSValue SessionScriptObject::insertAfterItem(QJSValue itemDesc,
+    QJSValue object)
+{
+    const auto sibling = getItem(itemDesc);
+    if (!sibling || !sibling->parent) {
+        engine().throwError(QStringLiteral("Invalid sibling"));
+        return QJSValue::UndefinedValue;
+    }
+    const auto parent = sibling->parent;
+    const auto row = parent->items.indexOf(sibling) + 1;
+    return insertItemAt(parent, row, object);
 }
 
 void SessionScriptObject::replaceItems(QJSValue itemDesc, QJSValue array)

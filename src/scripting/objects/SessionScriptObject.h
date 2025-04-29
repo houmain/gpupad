@@ -56,6 +56,8 @@ public:
     Q_INVOKABLE QJSValue item(QJSValue itemDesc);
     Q_INVOKABLE QJSValue insertItem(QJSValue object);
     Q_INVOKABLE QJSValue insertItem(QJSValue itemDesc, QJSValue object);
+    Q_INVOKABLE QJSValue insertBeforeItem(QJSValue itemDesc, QJSValue object);
+    Q_INVOKABLE QJSValue insertAfterItem(QJSValue itemDesc, QJSValue object);
     Q_INVOKABLE void replaceItems(QJSValue itemDesc, QJSValue array);
     Q_INVOKABLE void clearItems();
     Q_INVOKABLE void clearItems(QJSValue itemDesc);
@@ -82,6 +84,7 @@ private:
     void withSessionModel(UpdateFunction &&updateFunction);
     ItemId getItemId(const QJSValue &itemDesc);
     const Item *getItem(const QJSValue &itemDesc);
+    QJSValue insertItemAt(const Item *parent, int row, QJSValue object);
 
     template <typename T>
     const T *getItem(const QJSValue &itemDesc)

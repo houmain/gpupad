@@ -440,7 +440,7 @@ void SessionModel::deserialize(const QJsonObject &object,
             : object.contains("type")
             ? getTypeByName(object["type"].toString(), ok)
             : getDefaultChildType(parent));
-    if (!ok || !canContainType(parent, type))
+    if (!ok)
         return;
 
     const auto isDynamicGroup =
