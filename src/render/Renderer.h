@@ -17,12 +17,14 @@ public:
     explicit Renderer(RenderAPI api) : mApi(api) { }
 
     virtual ~Renderer() = default;
-    virtual void render(RenderTask *task) = 0;
-    virtual void release(RenderTask *task) = 0;
     virtual QThread *renderThread() = 0;
 
     RenderAPI api() const { return mApi; }
 
 private:
+    friend class RenderTask;
+    virtual void render(RenderTask *task) = 0;
+    virtual void release(RenderTask *task) = 0;
+
     RenderAPI mApi;
 };

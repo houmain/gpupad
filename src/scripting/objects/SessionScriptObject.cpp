@@ -9,6 +9,8 @@
 #include "session/SessionModel.h"
 #include "LibraryScriptObject.h"
 #include "../IScriptRenderSession.h"
+#include "render/Renderer.h"
+#include "render/ProcessSource.h"
 #include <QFloat16>
 #include <QJSEngine>
 #include <QTextStream>
@@ -762,5 +764,24 @@ quint64 SessionScriptObject::getBufferHandle(QJSValue itemDesc)
 
 QJSValue SessionScriptObject::getShaderInterface(QJSValue itemDesc)
 {
+    if (const auto shader = getItem<Shader>(itemDesc)) {
+        auto result = QString();
+        auto renderer = Singletons::sessionRenderer();
+        auto processSource = ProcessSource(renderer);
+        connect(&processSource, &ProcessSource::outputChanged,
+            [&](QString output) { result = output; });
+
+        processSource.setFileName(shader->fileName);
+        processSource.setSourceType(
+            getSourceType(shader->shaderType, shader->language));
+        processSource.setProcessType("json");
+        processSource.update();
+
+        // block until process source signaled completion
+        while (processSource.updating())
+            qApp->processEvents(QEventLoop::WaitForMoreEvents);
+
+        return result;
+    }
     return QJSValue::UndefinedValue;
 }
