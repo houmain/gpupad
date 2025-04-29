@@ -255,6 +255,7 @@ bool TextureEditor::save()
 
 void TextureEditor::replace(TextureData texture, bool emitFileChanged)
 {
+    Q_ASSERT(!texture.isNull());
     if (texture == mTexture)
         return;
 
@@ -461,7 +462,8 @@ void TextureEditor::keyPressEvent(QKeyEvent *event)
     if (event->key() == Qt::Key_Escape)
         Q_EMIT mTextureInfoBar.cancelled();
 
-    Singletons::inputState().setKeyPressed(event->key(), event->isAutoRepeat());
+    if (!event->isAutoRepeat())
+        Singletons::inputState().setKeyPressed(event->nativeVirtualKey());
 
     QAbstractScrollArea::keyPressEvent(event);
 }
@@ -469,7 +471,7 @@ void TextureEditor::keyPressEvent(QKeyEvent *event)
 void TextureEditor::keyReleaseEvent(QKeyEvent *event)
 {
     if (!event->isAutoRepeat())
-        Singletons::inputState().setKeyReleased(event->key());
+        Singletons::inputState().setKeyReleased(event->nativeVirtualKey());
 
     QAbstractScrollArea::keyReleaseEvent(event);
 }

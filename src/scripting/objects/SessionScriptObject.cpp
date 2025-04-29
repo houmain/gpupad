@@ -14,6 +14,7 @@
 #include <QFloat16>
 #include <QJSEngine>
 #include <QTextStream>
+#include <limits>
 #include <cstring>
 
 namespace {
@@ -29,8 +30,7 @@ namespace {
         Uint64(const QString &string) { v = string.toULongLong(); }
     };
 
-    QByteArray toByteArray(const QJSValue &data, const Block &block,
-        MessagePtrSet &messages)
+    QByteArray toByteArray(const QJSValue &data, const Block &block)
     {
         auto elementTypes = std::vector<Field::DataType>();
         auto padding = std::vector<int>();
@@ -146,15 +146,21 @@ namespace {
                         write(uint8_t{ 0 });
                 }
             }
-        } else {
-            messages += MessageList::insert(block.id, MessageType::ScriptError,
-                QStringLiteral("Value array expected"));
         }
         return bytes;
     } // namespace
 
-    TextureData toTextureData(const QJSValue &data, const Texture &texture,
-        MessagePtrSet &messages)
+    template <typename T>
+    T denormalize(double number)
+    {
+        if (number < 0)
+            return static_cast<T>(
+                std::min(-number, 1.0) * std::numeric_limits<T>::min());
+        return static_cast<T>(
+            std::min(number, 1.0) * std::numeric_limits<T>::max());
+    }
+
+    TextureData toTextureData(const QJSValue &data, const Texture &texture)
     {
         auto textureData = TextureData();
         if (!textureData.create(texture.target, texture.format,
@@ -165,8 +171,6 @@ namespace {
         const auto components = getTextureComponentCount(texture.format);
         const auto count = (textureData.width() * textureData.height()
             * textureData.depth() * components);
-        if (data.property("length").toInt() != count)
-            return {};
 
         auto pos = textureData.getWriteonlyData(0, 0, 0);
         const auto write = [&](auto v) {
@@ -180,6 +184,9 @@ namespace {
             case QOpenGLTexture::RG8_UNorm:
             case QOpenGLTexture::RGB8_UNorm:
             case QOpenGLTexture::RGBA8_UNorm:
+                write(denormalize<uint8_t>(value.toNumber()));
+                break;
+
             case QOpenGLTexture::R8U:
             case QOpenGLTexture::RG8U:
             case QOpenGLTexture::RGB8U:
@@ -191,6 +198,9 @@ namespace {
             case QOpenGLTexture::RG16_UNorm:
             case QOpenGLTexture::RGB16_UNorm:
             case QOpenGLTexture::RGBA16_UNorm:
+                write(denormalize<uint16_t>(value.toNumber()));
+                break;
+
             case QOpenGLTexture::R16U:
             case QOpenGLTexture::RG16U:
             case QOpenGLTexture::RGB16U:
@@ -209,6 +219,9 @@ namespace {
             case QOpenGLTexture::RG8_SNorm:
             case QOpenGLTexture::RGB8_SNorm:
             case QOpenGLTexture::RGBA8_SNorm:
+                write(denormalize<uint8_t>(value.toNumber()));
+                break;
+
             case QOpenGLTexture::R8I:
             case QOpenGLTexture::RG8I:
             case QOpenGLTexture::RGB8I:
@@ -220,6 +233,9 @@ namespace {
             case QOpenGLTexture::RG16_SNorm:
             case QOpenGLTexture::RGB16_SNorm:
             case QOpenGLTexture::RGBA16_SNorm:
+                write(denormalize<int16_t>(value.toNumber()));
+                break;
+
             case QOpenGLTexture::R16I:
             case QOpenGLTexture::RG16I:
             case QOpenGLTexture::RGB16I:
@@ -700,14 +716,18 @@ void SessionScriptObject::setBufferData(QJSValue itemDesc, QJSValue data)
             QStringLiteral("Buffer structure not defined"));
 
     const auto block = castItem<Block>(buffer->items[0]);
-    withSessionModel([bufferId = buffer->id,
-                         data = toByteArray(data, *block, mMessages),
+
+    const auto bufferData = toByteArray(data, *block);
+    if (bufferData.isNull())
+        return engine().throwError(QStringLiteral("Invalid data"));
+
+    withSessionModel([bufferId = buffer->id, bufferData,
                          fileName = QString()](SessionModel &session) mutable {
         if (auto buffer = session.findItem<Buffer>(bufferId)) {
             ensureFileName(session, buffer, &fileName);
             if (onMainThread())
                 if (auto editor = openBinaryEditor(*buffer))
-                    editor->replace(data);
+                    editor->replace(bufferData);
         }
     });
 }
@@ -718,8 +738,11 @@ void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
     if (!block)
         return engine().throwError(QStringLiteral("Invalid item"));
 
-    withSessionModel([blockId = block->id,
-                         data = toByteArray(data, *block, mMessages),
+    const auto bufferData = toByteArray(data, *block);
+    if (bufferData.isNull())
+        return engine().throwError(QStringLiteral("Invalid data"));
+
+    withSessionModel([blockId = block->id, bufferData,
                          fileName = QString()](SessionModel &session) mutable {
         if (auto block = session.findItem<Block>(blockId))
             if (auto buffer = castItem<Buffer>(block->parent)) {
@@ -729,7 +752,7 @@ void SessionScriptObject::setBlockData(QJSValue itemDesc, QJSValue data)
                         auto offset = 0, rowCount = 0;
                         Singletons::synchronizeLogic().evaluateBlockProperties(
                             *block, &offset, &rowCount);
-                        editor->replaceRange(offset, data);
+                        editor->replaceRange(offset, bufferData);
                     }
             }
     });
@@ -741,14 +764,17 @@ void SessionScriptObject::setTextureData(QJSValue itemDesc, QJSValue data)
     if (!texture)
         return engine().throwError(QStringLiteral("Invalid item"));
 
-    withSessionModel([textureId = texture->id,
-                         data = toTextureData(data, *texture, mMessages),
+    const auto textureData = toTextureData(data, *texture);
+    if (textureData.isNull())
+        return engine().throwError(QStringLiteral("Invalid data"));
+
+    withSessionModel([textureId = texture->id, textureData,
                          fileName = QString()](SessionModel &session) mutable {
         if (auto texture = session.findItem<Texture>(textureId)) {
             ensureFileName(session, texture, &fileName);
             if (onMainThread())
                 if (auto editor = openTextureEditor(*texture))
-                    editor->replace(data);
+                    editor->replace(textureData);
         }
     });
 }

@@ -19,7 +19,7 @@ namespace {
 InputState::InputState()
 {
     mMouseButtonStates.resize(5);
-    mKeyStates.resize(128);
+    mKeyStates.resize(256);
 }
 
 void InputState::update()
@@ -88,10 +88,9 @@ void InputState::setMouseButtonReleased(Qt::MouseButton button)
     Q_EMIT mouseChanged();
 }
 
-void InputState::setKeyPressed(int key, bool isAutoRepeat)
+void InputState::setKeyPressed(int key)
 {
-    if (!isAutoRepeat)
-        mNextKeyStates.emplace_back(key, ButtonState::Pressed);
+    mNextKeyStates.emplace_back(key, ButtonState::Pressed);
     Q_EMIT keysChanged();
 }
 

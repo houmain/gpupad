@@ -23,7 +23,7 @@ public:
     void setMousePosition(const QPoint &position);
     void setMouseButtonPressed(Qt::MouseButton button);
     void setMouseButtonReleased(Qt::MouseButton button);
-    void setKeyPressed(int key, bool isAutoRepeat);
+    void setKeyPressed(int key);
     void setKeyReleased(int key);
     void update();
 

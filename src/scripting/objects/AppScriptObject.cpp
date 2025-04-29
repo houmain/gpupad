@@ -27,6 +27,10 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     mSessionProperty = mJsEngine->newQObject(mSessionScriptObject);
     mMouseProperty = mJsEngine->newQObject(mMouseScriptObject);
     mKeyboardProperty = mJsEngine->newQObject(mKeyboardScriptObject);
+
+    const auto emptyInputState = InputState();
+    mMouseScriptObject->update(emptyInputState);
+    mKeyboardScriptObject->update(emptyInputState);
 }
 
 QString AppScriptObject::getAbsolutePath(const QString &fileName) const
@@ -36,7 +40,7 @@ QString AppScriptObject::getAbsolutePath(const QString &fileName) const
 
 void AppScriptObject::update()
 {
-    mFrameIndex++;
+    ++mFrameIndex;
 
     auto &inputState = Singletons::inputState();
     inputState.update();

@@ -975,6 +975,7 @@ int TextureData::dimensions() const
 
 QOpenGLTexture::Target TextureData::getTarget(int samples) const
 {
+    Q_ASSERT(mKtxTexture);
     if (!mKtxTexture)
         return {};
     const auto &texture = *mKtxTexture;
@@ -1000,7 +1001,7 @@ QOpenGLTexture::TextureFormat TextureData::format() const
 {
     return (isNull() ? QOpenGLTexture::TextureFormat::NoFormat
                      : static_cast<QOpenGLTexture::TextureFormat>(
-                           mKtxTexture->glInternalformat));
+                         mKtxTexture->glInternalformat));
 }
 
 QOpenGLTexture::PixelFormat TextureData::pixelFormat() const

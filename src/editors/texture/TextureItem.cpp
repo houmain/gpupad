@@ -373,6 +373,7 @@ void TextureItem::releaseGL()
 
 void TextureItem::setImage(TextureData image)
 {
+    Q_ASSERT(!image.isNull());
     const auto w = image.width();
     const auto h = image.height();
     mBoundingRect = { -w / 2, -h / 2, w, h };

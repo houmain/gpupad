@@ -1,0 +1,440 @@
+{
+    "id": 2,
+    "items": [
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression3",
+            "id": 81,
+            "name": "iResolution",
+            "type": "Binding",
+            "values": [
+                "1920/2",
+                "1080/2",
+                "0"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 74,
+            "name": "iFrame",
+            "type": "Binding",
+            "values": [
+                "app.frameIndex"
+            ]
+        },
+        {
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "iResolution[1]",
+            "id": 957,
+            "name": "Image Target",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "iResolution[0]"
+        },
+        {
+            "flipVertically": false,
+            "format": "RGBA32F",
+            "height": "iResolution[1]",
+            "id": 70,
+            "name": "BufferA Sample",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "iResolution[0]"
+        },
+        {
+            "flipVertically": false,
+            "format": "RGBA32F",
+            "height": "iResolution[1]",
+            "id": 962,
+            "name": "BufferA Target",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "iResolution[0]"
+        },
+        {
+            "dynamic": false,
+            "id": 961,
+            "inlineScope": true,
+            "items": [
+                {
+                    "fileName": "../Cube/Planks.jpg",
+                    "flipVertically": false,
+                    "format": "RGBA8_UNorm",
+                    "height": "512",
+                    "id": 927,
+                    "samples": 1,
+                    "target": "Target2D",
+                    "type": "Texture",
+                    "width": "512"
+                },
+                {
+                    "fileName": "../gltf Viewer/gltf-viewer/papermill/papermill_pmrem.ktx",
+                    "flipVertically": false,
+                    "format": "RGBA16F",
+                    "id": 958,
+                    "samples": 1,
+                    "target": "TargetCubeMap",
+                    "type": "Texture",
+                    "width": "256"
+                },
+                {
+                    "fileName": "RGBA Noise Medium.png",
+                    "flipVertically": false,
+                    "format": "RGBA8_UNorm",
+                    "height": "256",
+                    "id": 959,
+                    "samples": 1,
+                    "target": "Target2D",
+                    "type": "Texture",
+                    "width": "256"
+                },
+                {
+                    "fileName": "Font 1.png",
+                    "flipVertically": false,
+                    "format": "RGBA8_UNorm",
+                    "height": "1024",
+                    "id": 960,
+                    "samples": 1,
+                    "target": "Target2D",
+                    "type": "Texture",
+                    "width": "1024"
+                },
+                {
+                    "flipVertically": false,
+                    "format": "R8_UNorm",
+                    "height": "3",
+                    "id": 965,
+                    "name": "Keyboard",
+                    "samples": 1,
+                    "target": "Target2D",
+                    "type": "Texture",
+                    "width": "256"
+                },
+                {
+                    "executeOn": "EveryEvaluation",
+                    "fileName": "keyboard.js",
+                    "id": 967,
+                    "type": "Script"
+                }
+            ],
+            "iterations": "1",
+            "name": "Textures",
+            "type": "Group"
+        },
+        {
+            "dynamic": false,
+            "id": 945,
+            "inlineScope": false,
+            "items": [
+                {
+                    "blendConstant": "#ff000000",
+                    "cullMode": "NoCulling",
+                    "frontFace": "CCW",
+                    "id": 955,
+                    "items": [
+                        {
+                            "blendAlphaDest": "Zero",
+                            "blendAlphaEq": "Add",
+                            "blendAlphaSource": "One",
+                            "blendColorDest": "Zero",
+                            "blendColorEq": "Add",
+                            "blendColorSource": "One",
+                            "colorWriteMask": 15,
+                            "id": 956,
+                            "level": 0,
+                            "name": "Color",
+                            "textureId": 962,
+                            "type": "Attachment"
+                        }
+                    ],
+                    "logicOperation": "NoLogicOperation",
+                    "name": "Target",
+                    "polygonMode": "Fill",
+                    "type": "Target"
+                },
+                {
+                    "anisotropic": false,
+                    "bindingType": "Sampler",
+                    "borderColor": "#ff000000",
+                    "comparisonFunc": "NoComparisonFunc",
+                    "id": 946,
+                    "magFilter": "Linear",
+                    "minFilter": "LinearMipMapLinear",
+                    "name": "iChannel0",
+                    "textureId": 70,
+                    "type": "Binding",
+                    "wrapModeX": "Repeat",
+                    "wrapModeY": "Repeat",
+                    "wrapModeZ": "Repeat"
+                },
+                {
+                    "anisotropic": false,
+                    "bindingType": "Sampler",
+                    "borderColor": "#ff000000",
+                    "comparisonFunc": "NoComparisonFunc",
+                    "id": 947,
+                    "magFilter": "Linear",
+                    "minFilter": "LinearMipMapLinear",
+                    "name": "iChannel1",
+                    "textureId": 965,
+                    "type": "Binding",
+                    "wrapModeX": "Repeat",
+                    "wrapModeY": "Repeat",
+                    "wrapModeZ": "Repeat"
+                },
+                {
+                    "anisotropic": false,
+                    "bindingType": "Sampler",
+                    "borderColor": "#ff000000",
+                    "comparisonFunc": "NoComparisonFunc",
+                    "id": 948,
+                    "magFilter": "Linear",
+                    "minFilter": "LinearMipMapLinear",
+                    "name": "iChannel2",
+                    "textureId": 927,
+                    "type": "Binding",
+                    "wrapModeX": "Repeat",
+                    "wrapModeY": "Repeat",
+                    "wrapModeZ": "Repeat"
+                },
+                {
+                    "anisotropic": false,
+                    "bindingType": "Sampler",
+                    "borderColor": "#ff000000",
+                    "comparisonFunc": "NoComparisonFunc",
+                    "id": 949,
+                    "magFilter": "Linear",
+                    "minFilter": "LinearMipMapLinear",
+                    "name": "iChannel3",
+                    "textureId": 959,
+                    "type": "Binding",
+                    "wrapModeX": "Repeat",
+                    "wrapModeY": "Repeat",
+                    "wrapModeZ": "Repeat"
+                },
+                {
+                    "id": 950,
+                    "items": [
+                        {
+                            "fileName": "attributeless.vs",
+                            "id": 951,
+                            "language": "GLSL",
+                            "shaderType": "Vertex",
+                            "type": "Shader"
+                        },
+                        {
+                            "fileName": "shadertoy.fs",
+                            "id": 952,
+                            "language": "GLSL",
+                            "preamble": "#define PASS 0",
+                            "shaderType": "Fragment",
+                            "type": "Shader"
+                        },
+                        {
+                            "fileName": "bufferA.fs",
+                            "id": 953,
+                            "language": "GLSL",
+                            "shaderType": "Fragment",
+                            "type": "Shader"
+                        }
+                    ],
+                    "name": "Program",
+                    "type": "Program"
+                },
+                {
+                    "callType": "ClearTexture",
+                    "checked": true,
+                    "clearColor": "#00000000",
+                    "clearDepth": 1,
+                    "clearStencil": 0,
+                    "executeOn": "ResetEvaluation",
+                    "id": 963,
+                    "name": "Clear Target",
+                    "textureId": 962,
+                    "type": "Call"
+                },
+                {
+                    "baseInstance": "0",
+                    "callType": "Draw",
+                    "checked": true,
+                    "count": "4",
+                    "executeOn": "EveryEvaluation",
+                    "first": "0",
+                    "id": 954,
+                    "instanceCount": "1",
+                    "name": "Call",
+                    "primitiveType": "TriangleStrip",
+                    "programId": 950,
+                    "targetId": 955,
+                    "type": "Call",
+                    "vertexStreamId": 0
+                },
+                {
+                    "callType": "CopyTexture",
+                    "checked": true,
+                    "executeOn": "EveryEvaluation",
+                    "fromTextureId": 962,
+                    "id": 964,
+                    "name": "Copy Target",
+                    "textureId": 70,
+                    "type": "Call"
+                }
+            ],
+            "iterations": "1",
+            "name": "Buffer A",
+            "type": "Group"
+        },
+        {
+            "dynamic": false,
+            "id": 944,
+            "inlineScope": false,
+            "items": [
+                {
+                    "blendConstant": "#ff000000",
+                    "cullMode": "NoCulling",
+                    "frontFace": "CCW",
+                    "id": 71,
+                    "items": [
+                        {
+                            "blendAlphaDest": "Zero",
+                            "blendAlphaEq": "Add",
+                            "blendAlphaSource": "One",
+                            "blendColorDest": "Zero",
+                            "blendColorEq": "Add",
+                            "blendColorSource": "One",
+                            "colorWriteMask": 15,
+                            "id": 72,
+                            "level": 0,
+                            "name": "Color",
+                            "textureId": 957,
+                            "type": "Attachment"
+                        }
+                    ],
+                    "logicOperation": "NoLogicOperation",
+                    "name": "Target",
+                    "polygonMode": "Fill",
+                    "type": "Target"
+                },
+                {
+                    "anisotropic": false,
+                    "bindingType": "Sampler",
+                    "borderColor": "#ff000000",
+                    "comparisonFunc": "NoComparisonFunc",
+                    "id": 928,
+                    "magFilter": "Linear",
+                    "minFilter": "LinearMipMapLinear",
+                    "name": "iChannel0",
+                    "textureId": 70,
+                    "type": "Binding",
+                    "wrapModeX": "Repeat",
+                    "wrapModeY": "Repeat",
+                    "wrapModeZ": "Repeat"
+                },
+                {
+                    "anisotropic": false,
+                    "bindingType": "Sampler",
+                    "borderColor": "#ff000000",
+                    "comparisonFunc": "NoComparisonFunc",
+                    "id": 929,
+                    "magFilter": "Linear",
+                    "minFilter": "LinearMipMapLinear",
+                    "name": "iChannel1",
+                    "textureId": 927,
+                    "type": "Binding",
+                    "wrapModeX": "Repeat",
+                    "wrapModeY": "Repeat",
+                    "wrapModeZ": "Repeat"
+                },
+                {
+                    "anisotropic": false,
+                    "bindingType": "Sampler",
+                    "borderColor": "#ff000000",
+                    "comparisonFunc": "NoComparisonFunc",
+                    "id": 930,
+                    "magFilter": "Linear",
+                    "minFilter": "LinearMipMapLinear",
+                    "name": "iChannel2",
+                    "textureId": 960,
+                    "type": "Binding",
+                    "wrapModeX": "Repeat",
+                    "wrapModeY": "Repeat",
+                    "wrapModeZ": "Repeat"
+                },
+                {
+                    "anisotropic": true,
+                    "bindingType": "Sampler",
+                    "borderColor": "#ff000000",
+                    "comparisonFunc": "NoComparisonFunc",
+                    "id": 931,
+                    "magFilter": "Linear",
+                    "minFilter": "LinearMipMapLinear",
+                    "name": "iChannel3",
+                    "textureId": 958,
+                    "type": "Binding",
+                    "wrapModeX": "Repeat",
+                    "wrapModeY": "Repeat",
+                    "wrapModeZ": "Repeat"
+                },
+                {
+                    "id": 76,
+                    "items": [
+                        {
+                            "fileName": "attributeless.vs",
+                            "id": 77,
+                            "language": "GLSL",
+                            "shaderType": "Vertex",
+                            "type": "Shader"
+                        },
+                        {
+                            "fileName": "shadertoy.fs",
+                            "id": 78,
+                            "language": "GLSL",
+                            "preamble": "#define PASS 1",
+                            "shaderType": "Fragment",
+                            "type": "Shader"
+                        },
+                        {
+                            "fileName": "image.fs",
+                            "id": 79,
+                            "language": "GLSL",
+                            "shaderType": "Fragment",
+                            "type": "Shader"
+                        }
+                    ],
+                    "name": "Program",
+                    "type": "Program"
+                },
+                {
+                    "baseInstance": "0",
+                    "callType": "Draw",
+                    "checked": true,
+                    "count": "4",
+                    "executeOn": "EveryEvaluation",
+                    "first": "0",
+                    "id": 80,
+                    "instanceCount": "1",
+                    "name": "Call",
+                    "primitiveType": "TriangleStrip",
+                    "programId": 76,
+                    "targetId": 71,
+                    "type": "Call",
+                    "vertexStreamId": 0
+                }
+            ],
+            "iterations": "1",
+            "name": "Image",
+            "type": "Group"
+        }
+    ],
+    "name": "Session",
+    "renderer": "OpenGL",
+    "shaderCompiler": "",
+    "shaderIncludePaths": "",
+    "shaderPreamble": "",
+    "type": "Session"
+}

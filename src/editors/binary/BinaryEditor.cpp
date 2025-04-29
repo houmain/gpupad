@@ -169,6 +169,7 @@ bool BinaryEditor::save()
 
 void BinaryEditor::replace(QByteArray data, bool emitFileChanged)
 {
+    Q_ASSERT(!data.isNull());
     if (data.isSharedWith(mData))
         return;
 

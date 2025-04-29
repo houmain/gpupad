@@ -111,29 +111,27 @@ bool TextureBase::swap(TextureBase &other)
 
 void TextureBase::reload(bool forWriting)
 {
-    if (!FileDialog::isEmptyOrUntitled(mFileName)) {
-        auto fileData = TextureData{};
-        if (Singletons::fileCache().getTexture(mFileName, mFlipVertically,
-                &fileData)) {
-            // check if cache still matches the file before conversion
-            if (!mFileData.isSharedWith(fileData)) {
-                mFileData = fileData;
-                fileData =
-                    fileData.convert(mFormat, mWidth, mHeight, mDepth, mLayers);
-                if (!fileData.isNull()) {
-                    if (!mData.isSharedWith(fileData)) {
-                        mSystemCopyModified = true;
-                        mData = fileData;
-                    }
-                } else if (!forWriting) {
-                    mMessages += MessageList::insert(mItemId,
-                        MessageType::ConvertingFileFailed, mFileName);
+    auto fileData = TextureData{};
+    if (Singletons::fileCache().getTexture(mFileName, mFlipVertically,
+            &fileData)) {
+        // check if cache still matches the file before conversion
+        if (!mFileData.isSharedWith(fileData)) {
+            mFileData = fileData;
+            fileData =
+                fileData.convert(mFormat, mWidth, mHeight, mDepth, mLayers);
+            if (!fileData.isNull()) {
+                if (!mData.isSharedWith(fileData)) {
+                    mSystemCopyModified = true;
+                    mData = fileData;
                 }
+            } else if (!forWriting) {
+                mMessages += MessageList::insert(mItemId,
+                    MessageType::ConvertingFileFailed, mFileName);
             }
-        } else {
-            mMessages += MessageList::insert(mItemId,
-                MessageType::LoadingFileFailed, mFileName);
         }
+    } else if (!FileDialog::isEmptyOrUntitled(mFileName)) {
+        mMessages += MessageList::insert(mItemId,
+            MessageType::LoadingFileFailed, mFileName);
     }
 
     if (mData.isNull()) {
