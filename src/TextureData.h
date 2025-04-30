@@ -17,9 +17,10 @@ public:
     bool create(QOpenGLTexture::Target target,
         QOpenGLTexture::TextureFormat format, int width, int height, int depth,
         int layers, int levels = 0);
-    TextureData convert(QOpenGLTexture::TextureFormat format);
+    TextureData resize(int width, int height, int depth, int layers) const;
+    TextureData convert(QOpenGLTexture::TextureFormat format) const;
     TextureData convert(QOpenGLTexture::TextureFormat format, int width,
-        int height, int depth, int layers);
+        int height, int depth, int layers) const;
     bool load(const QString &fileName, bool flipVertically);
     bool loadQImage(QImage image, bool flipVertically);
     bool save(const QString &fileName, bool flipVertically) const;
@@ -42,6 +43,7 @@ public:
     int getLevelWidth(int level) const;
     int getLevelHeight(int level) const;
     int getLevelDepth(int level) const;
+    int getLevelStride(int level) const;
     int levels() const;
     int layers() const;
     int faces() const;

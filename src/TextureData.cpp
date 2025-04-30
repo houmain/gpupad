@@ -15,6 +15,9 @@
 #  include <OpenImageIO/imageio.h>
 #endif
 
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include "stb/stb_image_resize2.h"
+
 namespace {
     // TODO: remove when libKTX is fixed
     void fixFormat(ktxTexture1 &texture)
@@ -276,6 +279,42 @@ namespace {
         ADD(Uint32, uint32_t, Int32, int32_t, -1)
 #undef ADD
         return false;
+    }
+
+    bool resizePlane(const uchar *source, QOpenGLTexture::TextureFormat format,
+        uchar *dest, int sourceWidth, int sourceHeight, int sourceStride,
+        int destWidth, int destHeight, int destStride)
+    {
+        if (!source || !dest || destWidth <= 0 || destHeight <= 0)
+            return false;
+
+        auto pixelLayout = stbir_pixel_layout{};
+        switch (getTextureComponentCount(format)) {
+        case 1:  pixelLayout = STBIR_1CHANNEL; break;
+        case 2:  pixelLayout = STBIR_2CHANNEL; break;
+        case 3:  pixelLayout = STBIR_RGB; break;
+        case 4:  pixelLayout = STBIR_RGBA; break;
+        default: return {};
+        }
+
+        auto dataType = stbir_datatype{};
+        switch (getTextureDataType(format)) {
+        case TextureDataType::Packed:
+        case TextureDataType::Compressed:
+        case TextureDataType::Int8:
+        case TextureDataType::Int16:
+        case TextureDataType::Int32:      return {};
+        case TextureDataType::Uint8:      dataType = STBIR_TYPE_UINT8_SRGB; break;
+        case TextureDataType::Uint16:     dataType = STBIR_TYPE_UINT16; break;
+        case TextureDataType::Uint32:     return {};
+        case TextureDataType::Float16:    dataType = STBIR_TYPE_FLOAT; break;
+        case TextureDataType::Float32:    dataType = STBIR_TYPE_HALF_FLOAT; break;
+        }
+        const auto filter = STBIR_FILTER_DEFAULT;
+        const auto edgeMode = STBIR_EDGE_CLAMP;
+        return stbir_resize(source, sourceWidth, sourceHeight, sourceStride,
+            dest, destWidth, destHeight, destStride, pixelLayout, dataType,
+            edgeMode, filter);
     }
 } // namespace
 
@@ -620,7 +659,7 @@ bool TextureData::create(QOpenGLTexture::Target target,
     return false;
 }
 
-TextureData TextureData::convert(QOpenGLTexture::TextureFormat format)
+TextureData TextureData::convert(QOpenGLTexture::TextureFormat format) const
 {
     if (format == this->format())
         return *this;
@@ -643,15 +682,40 @@ TextureData TextureData::convert(QOpenGLTexture::TextureFormat format)
     return copy;
 }
 
-TextureData TextureData::convert(QOpenGLTexture::TextureFormat format,
-    int width, int height, int depth, int layers)
+TextureData TextureData::resize(int width, int height, int depth,
+    int layers) const
 {
-    // TODO: implement resizing
-    if (width != this->width() || height != this->height()
-        || depth != this->depth() || layers != this->layers())
+    if (depth != this->depth() || layers != this->layers())
+        return {};
+    if (width == this->width() && height == this->height())
+        return *this;
+
+    auto copy = TextureData();
+    if (!copy.create(getTarget(), format(), width, height, depth, layers,
+            (levels() == 1 ? 1 : 0)))
         return {};
 
-    return convert(format);
+    const auto level = 0;
+    for (auto layer = 0; layer < layers; ++layer)
+        for (auto faceSlice = 0; faceSlice < depth * faces(); ++faceSlice)
+            if (!resizePlane(getData(level, layer, faceSlice), this->format(),
+                    copy.getWriteonlyData(level, layer, faceSlice),
+                    getLevelWidth(level), getLevelHeight(level),
+                    getLevelStride(level), copy.getLevelWidth(level),
+                    copy.getLevelHeight(level), copy.getLevelStride(level)))
+                return {};
+
+    copy.setFlippedVertically(flippedVertically());
+    return copy;
+}
+
+TextureData TextureData::convert(QOpenGLTexture::TextureFormat format,
+    int width, int height, int depth, int layers) const
+{
+    auto converted = convert(format);
+    if (converted.isNull())
+        return {};
+    return converted.resize(width, height, depth, layers);
 }
 
 bool TextureData::loadKtx(const QString &fileName, bool flipVertically)
@@ -733,7 +797,7 @@ bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
     if (!create(target, format, spec.width, spec.height, spec.depth, 1))
         return false;
 
-    const auto stride = getLevelSize(0) / getLevelHeight(0);
+    const auto stride = getLevelStride(0);
 
     // TODO: load all layers/levels
     if (!input->read_image(0, 0, 0, -1, spec.format, getWriteonlyData(0, 0, 0),
@@ -1039,6 +1103,13 @@ int TextureData::getLevelDepth(int level) const
             : std::max(static_cast<int>(mKtxTexture->baseDepth) >> level, 1));
 }
 
+int TextureData::getLevelStride(int level) const
+{
+    if (auto height = getLevelHeight(level))
+        return getLevelSize(level) / height;
+    return 0;
+}
+
 int TextureData::levels() const
 {
     return (isNull() ? 0 : static_cast<int>(mKtxTexture->numLevels));
@@ -1133,7 +1204,7 @@ void TextureData::clear()
 
 void TextureData::flipVertically()
 {
-    const auto pitch = getLevelSize(0) / height();
+    const auto pitch = getLevelStride(0);
     const auto data = getWriteonlyData(0, 0, 0);
     auto buffer = std::vector<std::byte>(pitch);
     auto low = data;

@@ -444,6 +444,7 @@ void GLRenderSession::executeCommandQueue()
     }
 
     mShareSync->endUpdate(context);
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
 }
 
 void GLRenderSession::downloadModifiedResources()

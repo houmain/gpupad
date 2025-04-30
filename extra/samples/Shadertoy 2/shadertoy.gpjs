@@ -97,12 +97,12 @@
                     "fileName": "Font 1.png",
                     "flipVertically": false,
                     "format": "RGBA8_UNorm",
-                    "height": "1024",
+                    "height": "512",
                     "id": 960,
                     "samples": 1,
                     "target": "Target2D",
                     "type": "Texture",
-                    "width": "1024"
+                    "width": "512"
                 },
                 {
                     "flipVertically": false,
