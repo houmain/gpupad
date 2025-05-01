@@ -1117,10 +1117,13 @@ int TextureData::levels() const
 
 int TextureData::layers() const
 {
+    if (isNull())
+        return 0;
+
     if (getTarget() == QOpenGLTexture::TargetCubeMapArray)
         return static_cast<int>(mKtxTexture->numLayers / 6);
 
-    return (isNull() ? 0 : static_cast<int>(mKtxTexture->numLayers));
+    return static_cast<int>(mKtxTexture->numLayers);
 }
 
 int TextureData::faces() const

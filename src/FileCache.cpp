@@ -221,6 +221,10 @@ bool FileCache::updateFromEditor(const QString &fileName)
         return true;
     }
     if (auto editor = editorManager.getTextureEditor(fileName)) {
+        // do not update with empty texture
+        if (FileDialog::isUntitled(fileName) && editor->isRaw())
+            return false;
+
         const auto &texture = editor->texture();
         mTextures[TextureKey(fileName, texture.flippedVertically())] = texture;
         return true;

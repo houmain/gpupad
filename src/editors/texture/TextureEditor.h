@@ -38,6 +38,7 @@ public:
     int tabifyGroup() const override;
     void setModified() override;
     bool isModified() const { return mModified; }
+    bool isRaw() const { return mIsRaw; }
     void replace(TextureData texture, bool emitFileChanged = true);
     void setFlipVertically(bool flipVertically);
     void updatePreviewTexture(ShareSyncPtr shareSync, GLuint textureId,
