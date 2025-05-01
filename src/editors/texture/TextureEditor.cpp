@@ -463,7 +463,8 @@ void TextureEditor::keyPressEvent(QKeyEvent *event)
         Q_EMIT mTextureInfoBar.cancelled();
 
     if (!event->isAutoRepeat())
-        Singletons::inputState().setKeyPressed(event->nativeVirtualKey());
+        Singletons::inputState().setKeyPressed(
+            static_cast<Qt::Key>(event->key()));
 
     QAbstractScrollArea::keyPressEvent(event);
 }
@@ -471,7 +472,8 @@ void TextureEditor::keyPressEvent(QKeyEvent *event)
 void TextureEditor::keyReleaseEvent(QKeyEvent *event)
 {
     if (!event->isAutoRepeat())
-        Singletons::inputState().setKeyReleased(event->nativeVirtualKey());
+        Singletons::inputState().setKeyReleased(
+            static_cast<Qt::Key>(event->key()));
 
     QAbstractScrollArea::keyReleaseEvent(event);
 }

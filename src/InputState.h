@@ -23,8 +23,8 @@ public:
     void setMousePosition(const QPoint &position);
     void setMouseButtonPressed(Qt::MouseButton button);
     void setMouseButtonReleased(Qt::MouseButton button);
-    void setKeyPressed(int key);
-    void setKeyReleased(int key);
+    void setKeyPressed(Qt::Key key);
+    void setKeyReleased(Qt::Key key);
     void update();
 
     const QSize &editorSize() const { return mEditorSize; }
