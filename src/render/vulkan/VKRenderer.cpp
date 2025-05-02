@@ -81,8 +81,16 @@ private:
 
         mApi = std::make_unique<KDGpu::VulkanGraphicsApi>();
 
-        auto instanceOptions = KDGpu::InstanceOptions
+        const auto version = qApp->applicationVersion();
+        auto major = 0;
+        auto minor = 0;
+        auto build = 0;
+        std::sscanf(qPrintable(version), "%d.%d.%d", &major, &minor, &build);
+
+        const auto instanceOptions = KDGpu::InstanceOptions
         {
+            .applicationName = qApp->applicationName().toStdString(),
+            .applicationVersion = KDGPU_MAKE_API_VERSION(0, major, minor, build),
 #if !defined(NDEBUG)
             .layers = { "VK_LAYER_KHRONOS_validation" },
 #endif
