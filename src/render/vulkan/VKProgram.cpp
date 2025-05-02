@@ -2,7 +2,8 @@
 #include <QRegularExpression>
 
 namespace {
-    bool isRaytracingProgram(const Program &program) {
+    bool isRaytracingProgram(const Program &program)
+    {
         for (const auto &item : program.items)
             if (auto shader = castItem<Shader>(item))
                 if (shader->shaderType == Shader::ShaderType::RayGeneration)
@@ -25,11 +26,11 @@ VKProgram::VKProgram(const Program &program, const Session &session)
                 mUsedItems += shader->id;
                 const auto type = shader->shaderType;
                 const auto list = QList<const Shader *>{ shader };
-                (type == Shader::ShaderType::Includable ? mIncludableShaders : mShaders)
+                (type == Shader::ShaderType::Includable ? mIncludableShaders
+                                                        : mShaders)
                     .emplace_back(type, list, session);
             }
-    }
-    else {
+    } else {
         // create one Shader per stage
         auto shaders = std::map<Shader::ShaderType, QList<const Shader *>>();
         for (const auto &item : program.items)
@@ -39,7 +40,8 @@ VKProgram::VKProgram(const Program &program, const Session &session)
             }
 
         for (const auto &[type, list] : shaders)
-            (type == Shader::ShaderType::Includable ? mIncludableShaders : mShaders)
+            (type == Shader::ShaderType::Includable ? mIncludableShaders
+                                                    : mShaders)
                 .emplace_back(type, list, session);
     }
 
@@ -66,7 +68,8 @@ bool VKProgram::link(KDGpu::Device &device)
             auto inputs = std::vector<Spirv::Input>();
             inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
 
-            auto stages = Spirv::compile(mSession, inputs, mItemId, mLinkMessages);
+            auto stages =
+                Spirv::compile(mSession, inputs, mItemId, mLinkMessages);
             if (stages.empty()) {
                 mFailed = true;
                 return false;
@@ -74,8 +77,7 @@ bool VKProgram::link(KDGpu::Device &device)
             shader.create(device, stages[shader.type()]);
             mInterface[shader.getShaderStage().stage] = shader.interface();
         }
-    }
-    else {
+    } else {
         auto inputs = std::vector<Spirv::Input>();
         for (auto &shader : mShaders)
             inputs.push_back(shader.getSpirvCompilerInput(mPrintf));

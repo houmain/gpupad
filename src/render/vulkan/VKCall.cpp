@@ -104,14 +104,32 @@ void VKCall::setAccelerationStructure(VKAccelerationStructure *accelStruct)
     mAccelerationStructure = accelStruct;
 }
 
+bool VKCall::validateShaderTypes()
+{
+    if (!mProgram)
+        return false;
+    for (const auto &shader : mProgram->shaders())
+        if (!callTypeSupportsShaderType(mCall.callType, shader.type())) {
+            mMessages += MessageList::insert(mCall.id,
+                MessageType::InvalidShaderTypeForCall);
+            return false;
+        }
+    return true;
+}
+
 VKPipeline *VKCall::getPipeline(VKContext &context)
 {
     if (!mPipeline && mProgram) {
-        mPipeline = std::make_unique<VKPipeline>(mCall.id, mProgram);
+        if (!validateShaderTypes())
+            return nullptr;
 
-        mProgram->link(context.device);
+        if (!mProgram->link(context.device))
+            return nullptr;
+
         if (mVertexStream)
             mUsedItems += mVertexStream->usedItems();
+
+        mPipeline = std::make_unique<VKPipeline>(mCall.id, mProgram);
     }
     return mPipeline.get();
 }

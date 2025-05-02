@@ -92,6 +92,7 @@ public:
     void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
 
 private:
+    bool validateShaderTypes();
     std::shared_ptr<void> beginTimerQuery();
     int evaluateInt(ScriptEngine &scriptEngine, const QString &expression);
     uint32_t evaluateUInt(ScriptEngine &scriptEngine,

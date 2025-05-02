@@ -592,11 +592,28 @@ void GLCall::executeSwapBuffers(MessagePtrSet &messages)
             MessageList::insert(mCall.id, MessageType::SwappingBuffersFailed);
 }
 
+bool GLCall::validateShaderTypes()
+{
+    if (!mProgram)
+        return false;
+    for (const auto &shader : mProgram->shaders())
+        if (!callTypeSupportsShaderType(mCall.callType, shader.type())) {
+            mMessages += MessageList::insert(mCall.id,
+                MessageType::InvalidShaderTypeForCall);
+            return false;
+        }
+    return true;
+}
+
 bool GLCall::applyBindings(const GLBindings &bindings,
     ScriptEngine &scriptEngine)
 {
     if (!mProgram)
         return false;
+
+    if (!validateShaderTypes())
+        return false;
+
     const auto &interface = mProgram->interface();
 
     auto canRender = true;

@@ -149,6 +149,8 @@ QString MessageWindow::getMessageText(const Message &message) const
         return tr("Invalid indirect stride (%1)").arg(message.text);
     case InvalidGeometryStride:
         return tr("Invalid geometry stride (%1)").arg(message.text);
+    case InvalidShaderTypeForCall:
+        return tr("Invalid shader type for call");
     case CountExceeded:
         return tr("Maximum count exceeded (%1)").arg(message.text);
     case TooManyPrintfCalls:

@@ -58,6 +58,7 @@ public:
     const Interface &interface() const { return mInterface; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     GLBuffer &getDynamicUniformBuffer(const QString &name, int size);
+    const std::vector<GLShader>& shaders() const { return mShaders; }
 
 private:
     bool compileShaders();

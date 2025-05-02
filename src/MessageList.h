@@ -53,6 +53,7 @@ enum class MessageType {
     InvalidIndexType,
     InvalidIndirectStride,
     InvalidGeometryStride,
+    InvalidShaderTypeForCall,
     ImageFormatNotBindable,
     CountExceeded,
     UniformComponentMismatch,

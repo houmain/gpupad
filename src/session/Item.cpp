@@ -115,6 +115,51 @@ CallKind getKind(const Call &call)
     return kind;
 }
 
+bool callTypeSupportsShaderType(Call::CallType callType,
+    Shader::ShaderType shaderType)
+{
+    if (shaderType == Shader::ShaderType::Includable)
+        return true;
+
+    switch (callType) {
+    case Call::CallType::Draw:
+    case Call::CallType::DrawIndexed:
+    case Call::CallType::DrawIndirect:
+    case Call::CallType::DrawIndexedIndirect:
+        switch (shaderType) {
+        case Shader::ShaderType::Vertex:
+        case Shader::ShaderType::Fragment:
+        case Shader::ShaderType::Geometry:
+        case Shader::ShaderType::TessControl:
+        case Shader::ShaderType::TessEvaluation: return true;
+        default:                                 return false;
+        }
+    case Call::CallType::DrawMeshTasks:
+    case Call::CallType::DrawMeshTasksIndirect:
+        switch (shaderType) {
+        case Shader::ShaderType::Task:
+        case Shader::ShaderType::Mesh:
+        case Shader::ShaderType::Fragment: return true;
+        default:                           return false;
+        }
+    case Call::CallType::Compute:
+    case Call::CallType::ComputeIndirect:
+        return (shaderType == Shader::ShaderType::Compute);
+
+    case Call::CallType::TraceRays:
+        switch (shaderType) {
+        case Shader::ShaderType::RayGeneration:
+        case Shader::ShaderType::RayIntersection:
+        case Shader::ShaderType::RayAnyHit:
+        case Shader::ShaderType::RayClosestHit:
+        case Shader::ShaderType::RayMiss:
+        case Shader::ShaderType::RayCallable:     return true;
+        default:                                  return false;
+        }
+    default: return false;
+    }
+}
+
 bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType)
 {
     switch (executeOn) {
