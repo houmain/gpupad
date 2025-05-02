@@ -6,6 +6,14 @@ on:
   release:
     types:
       - published
+
+# needed for vcpkg caching
+permissions:
+  contents: write
+
+env:
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+  VCPKG_DISABLE_METRICS: true
   
 jobs:
   build:
@@ -33,10 +41,7 @@ jobs:
 #            , QT_VERSION: 6.2.4, QT_INST_DIR: /Users/runner, QTDIR: /Users/runner/Qt/6.2.4/clang_64
 #            , VCPKG_TRIPLET: "x64-osx-release"
 #          }
-    
-    env: 
-      VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
-      
+
     steps:
     - name: Export GitHub Actions cache environment variables
       uses: actions/github-script@v7
