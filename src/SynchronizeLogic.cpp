@@ -128,6 +128,7 @@ void SynchronizeLogic::resetRenderSession()
 {
     mRenderSession.reset();
     mProcessSource.reset();
+    Singletons::videoManager().unloadAll();
 }
 
 void SynchronizeLogic::resetEvaluation()

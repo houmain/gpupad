@@ -15,6 +15,7 @@ public:
     VideoManager &operator=(const VideoManager &) = delete;
     ~VideoManager();
 
+    void unloadAll();
     void playVideoFiles();
     void pauseVideoFiles();
     void rewindVideoFiles();

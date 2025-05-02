@@ -8,6 +8,14 @@ VideoManager::VideoManager(QObject *parent) : QObject(parent) { }
 
 VideoManager::~VideoManager() = default;
 
+void VideoManager::unloadAll()
+{
+    Q_ASSERT(onMainThread());
+    for (const auto &[fileName, videoPlayer] : mVideoPlayers)
+        Singletons::fileCache().invalidateFile(fileName);
+    mVideoPlayers.clear();
+}
+
 void VideoManager::handleVideoPlayerRequested(const QString &fileName,
     bool flipVertically)
 {
