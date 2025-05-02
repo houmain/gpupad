@@ -58,7 +58,7 @@ The session can be evaluated manually *[F6]*, automatically whenever something r
 All items which contributed to the last evaluation are highlighted.
 
 ### Items
-The items of a session pretty much correspond the concepts known from writing OpenGL applications:
+The items of a session pretty much correspond the concepts known from writing OpenGL or Vulkan applications:
 
 - **Call** -
 Most prominently are the draw and the compute calls. Whenever the session is evaluated, all active calls are evaluated in consecutive order. They can be de-/activated using the checkbox.
@@ -74,7 +74,7 @@ All kind of color, depth or stencil textures can be created. They serve as sampl
 Specifies where draws calls should render to. Multiple images can be attached. Depending on the attached image's type, different render states can be configured.
 
 - **Binding** -
-Allows to bind data to a program's uniforms, samplers, images and buffers. A binding affects all subsequent calls, until it is replaced by a binding with the same name, or the scope ends (see *Groups*). The name of a binding needs to match the name of a program's binding points.
+Allows to bind data to a program's uniforms, samplers, images and buffers. A binding affects all subsequent calls, until it is replaced by a binding with the same name, or the scope ends (see *Groups*). The name of a binding needs to match the name of a program's binding point.
 
 - **Buffer** -
 Buffer blocks define the structure of a region within a binary. They consist of rows with multiple fields of some data type. Buffers can be backed by binary files.
@@ -114,7 +114,10 @@ Initial documentation of the available script objects:
 
 - `selection: Items`
 - `item(id): Item`
-- `insertItem([item/id], object): Item`
+- `parentItem(id): Item`
+- `insertItem([parent item/id], object): Item`
+- `insertItemAfter(sibling item/id, object): Item`
+- `insertItemBefore(sibling item/id, object): Item`
 - `deleteItem(item/id): Item`
 - `clearItems([item/id]): Item`
 - `replaceItems(item/id, array)`
@@ -123,6 +126,8 @@ Initial documentation of the available script objects:
 - `setScriptSource(item/id, data)`
 - `setShaderSource(item/id, data)`
 - `setTextureData(item/id, data)`
+- `getShaderInterface(item/id): string`
+- `getBufferHandle(item/id): uint64`
 - `getTextureHandle(item/id): uint64`
 
 ### Mouse
@@ -175,7 +180,7 @@ cd gpupad
 
 # install vcpkg
 git clone --depth=1 https://github.com/microsoft/vcpkg.git
-vcpkg/bootstrap-vcpkg.sh
+vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
 # install additional dependencies using vcpkg
 vcpkg/vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator spdlog
@@ -197,7 +202,7 @@ cd gpupad
 
 # install vcpkg
 git clone --depth=1 https://github.com/microsoft/vcpkg.git
-vcpkg\bootstrap-vcpkg
+vcpkg\bootstrap-vcpkg -disableMetrics
 
 # install dependencies using vcpkg
 vcpkg\vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator spdlog

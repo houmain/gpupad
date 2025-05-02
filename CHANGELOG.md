@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 2.6.0] - 2025-05-01
+
+### Added
+
+- Added session script object `getShaderInterface`.
+- Added session script object `insertBeforeItem` / `insertAfterItem`.
+- Added session script object `parentItem`.
+- Added second shadertoy sample.
+- Implemented automatic texture resizing on upload.
+
+### Changed
+
+- Moved `selection` from app to session script object.
+- Keyboard script object `keys` array can be indexed by ASCII code.
+
 ## [Version 2.5.0] - 2025-04-25
 
 ### Added
@@ -873,6 +888,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 2.6.0]: https://github.com/houmain/gpupad/compare/2.5.0...2.6.0
 [version 2.5.0]: https://github.com/houmain/gpupad/compare/2.4.0...2.5.0
 [version 2.4.0]: https://github.com/houmain/gpupad/compare/2.3.0...2.4.0
 [version 2.3.0]: https://github.com/houmain/gpupad/compare/2.2.0...2.3.0
