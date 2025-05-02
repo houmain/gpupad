@@ -287,6 +287,11 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
         const auto bufferName = QString(buffer.data());
         const auto uniformBlockIndex =
             gl.glGetUniformBlockIndex(program, buffer.data());
+
+        // skip when an invalid index is returned (with glslang on AMD/Linux)
+        if (static_cast<int32_t>(uniformBlockIndex) < 0)
+            continue;
+
         const auto uniformBlockBinding = i;
         gl.glUniformBlockBinding(program, uniformBlockIndex,
             uniformBlockBinding);

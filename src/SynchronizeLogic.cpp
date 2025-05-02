@@ -234,7 +234,8 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
     }
 
     if (auto call = mModel.item<Call>(index))
-        if (hasDefaultName<Call::CallType>(*call))
+        if (index.column() == SessionModel::CallType
+            && hasDefaultName<Call::CallType>(*call))
             mModel.setData(mModel.getIndex(index, SessionModel::Name),
                 getValueName(call->callType));
 

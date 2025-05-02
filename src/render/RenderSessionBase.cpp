@@ -95,13 +95,14 @@ void RenderSessionBase::configure()
 void RenderSessionBase::configured()
 {
     Q_ASSERT(onMainThread());
-    mScriptSession->endSessionUpdate();
+    if (mScriptSession) {
+        mScriptSession->endSessionUpdate();
+        mMessages += mScriptSession->resetMessages();
+    }
 
     if (mEvaluationType != EvaluationType::Steady
         && Singletons::synchronizeLogic().resetRenderSessionInvalidationState())
         mItemsChanged = true;
-
-    mMessages += mScriptSession->resetMessages();
 }
 
 void RenderSessionBase::finish()

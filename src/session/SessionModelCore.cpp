@@ -639,11 +639,11 @@ void SessionModelCore::undoableAssignment(const QModelIndex &index, T *to,
     S &&value, int mergeId)
 {
     Q_ASSERT(index.isValid());
+
     if (*to != value) {
         // do not add undo command, when inside dynamic Group
-        if ((inDynamicGroup(index)
-                && index.column() != ColumnType::GroupDynamic)
-            || mUndoStack.undoLimit() == 1) {
+        if (inDynamicGroup(index)
+            && index.column() != ColumnType::GroupDynamic) {
             *to = static_cast<T>(value);
             Q_EMIT dataChanged(index, index);
             return;

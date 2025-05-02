@@ -187,7 +187,7 @@ vcpkg/vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-alloc
 
 # build
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
-cmake --build build -j8
+cmake --build build -j4
 ```
 
 ### Building on Windows:
@@ -209,7 +209,7 @@ vcpkg\vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-alloc
 
 # build
 cmake -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.7.2\msvc2022_64 -DCMAKE_TOOLCHAIN_FILE=vcpkg\scripts\buildsystems\vcpkg.cmake
-cmake --build build -j8
+cmake --build build -j4
 ```
 
 ## License

@@ -127,10 +127,11 @@ GLObject GLShader::createShader()
 
     auto &gl = GLContext::currentContext();
 
-    if (mType == Shader::ShaderType::Mesh && !gl.hasExtension("GL_NV_mesh_shader")) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::MeshShadersNotAvailable);
-        return {};
+    if ((mType == Shader::ShaderType::Task ||
+         mType == Shader::ShaderType::Mesh) && !gl.hasExtension("GL_NV_mesh_shader")) {
+      mMessages +=
+          MessageList::insert(mItemId, MessageType::MeshShadersNotAvailable);
+      return {};
     }
 
     auto shader = GLObject(gl.glCreateShader(mType), freeShader);
