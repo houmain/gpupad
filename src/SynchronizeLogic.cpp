@@ -10,8 +10,46 @@
 #include "render/ProcessSource.h"
 #include "render/RenderSessionBase.h"
 #include "session/SessionModel.h"
+#include "session/PropertiesEditor.h"
 #include "scripting/ScriptSession.h"
 #include <QTimer>
+#include <QMetaEnum>
+
+namespace {
+    QString unsplitPascalCase(QString string)
+    {
+        if (string.isEmpty() || string.back().isSpace())
+            return string;
+        return string.removeIf([](QChar c) { return c.isSpace(); });
+    }
+
+    template <typename T>
+    bool hasDefaultName(QString name, const QString &defaultName)
+    {
+        name = unsplitPascalCase(name);
+        auto metaType = QMetaEnum::fromType<T>();
+        for (auto i = 0; i < metaType.keyCount(); ++i)
+            if (name == metaType.key(i))
+                return true;
+        return (name == defaultName);
+    }
+
+    template <typename T>
+    QString getValueName(const T &value)
+    {
+        auto metaType = QMetaEnum::fromType<T>();
+        if (auto key = metaType.key(static_cast<int>(value)))
+            return splitPascalCase(key);
+        return {};
+    }
+
+    template <typename T>
+    bool hasDefaultName(const Item &item)
+    {
+        const auto typeName = getValueName(item.type);
+        return hasDefaultName<T>(item.name, typeName);
+    }
+} // namespace
 
 SynchronizeLogic::SynchronizeLogic(QObject *parent)
     : QObject(parent)
@@ -194,6 +232,11 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
         else if (index.column() == SessionModel::FileName)
             handleFileItemFileChanged(*fileItem);
     }
+
+    if (auto call = mModel.item<Call>(index))
+        if (hasDefaultName<Call::CallType>(*call))
+            mModel.setData(mModel.getIndex(index, SessionModel::Name),
+                getValueName(call->callType));
 
     if (index.column() != SessionModel::None) {
         if (auto buffer = mModel.item<Buffer>(index)) {
