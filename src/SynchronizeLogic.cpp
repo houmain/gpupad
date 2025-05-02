@@ -6,6 +6,7 @@
 #include "editors/EditorManager.h"
 #include "editors/binary/BinaryEditor.h"
 #include "editors/texture/TextureEditor.h"
+#include "editors/source/SourceEditor.h"
 #include "render/ProcessSource.h"
 #include "render/RenderSessionBase.h"
 #include "session/SessionModel.h"
@@ -124,7 +125,8 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
         if (mRenderSessionInvalidated)
             mEvaluationTimer->start(0);
         if (mRenderSession)
-            Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
+            Singletons::sessionModel().setActiveItems(
+                mRenderSession->usedItems());
         Singletons::videoManager().pauseVideoFiles();
     } else {
         mEvaluationTimer->stop();
@@ -237,9 +239,19 @@ void SynchronizeLogic::handleEditorFileRenamed(const QString &prevFileName,
     // update references to untitled file
     if (FileDialog::isUntitled(prevFileName))
         mModel.forEachFileItem([&](const FileItem &item) {
-            if (item.fileName == prevFileName)
+            if (item.fileName == prevFileName) {
                 mModel.setData(mModel.getIndex(&item, SessionModel::FileName),
                     fileName);
+
+                // also synchronize shader type
+                if (item.type == Item::Type::Shader) {
+                    auto &editorManager = Singletons::editorManager();
+                    if (auto editor = editorManager.getSourceEditor(fileName))
+                        mModel.setData(
+                            mModel.getIndex(&item, SessionModel::ShaderType),
+                            getShaderType(editor->sourceType()));
+                }
+            }
         });
 }
 
