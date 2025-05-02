@@ -126,12 +126,25 @@ GLObject GLShader::createShader()
     };
 
     auto &gl = GLContext::currentContext();
-
-    if ((mType == Shader::ShaderType::Task ||
-         mType == Shader::ShaderType::Mesh) && !gl.hasExtension("GL_NV_mesh_shader")) {
+    switch (mType) {
+    case Shader::ShaderType::Task:
+    case Shader::ShaderType::Mesh:
+        if (!gl.hasExtension("GL_NV_mesh_shader")) {
+            mMessages += MessageList::insert(mItemId,
+                MessageType::MeshShadersNotAvailable);
+            return {};
+        }
+        break;
+    case Shader::ShaderType::RayGeneration:
+    case Shader::ShaderType::RayIntersection:
+    case Shader::ShaderType::RayAnyHit:
+    case Shader::ShaderType::RayClosestHit:
+    case Shader::ShaderType::RayMiss:
+    case Shader::ShaderType::RayCallable:
       mMessages +=
-          MessageList::insert(mItemId, MessageType::MeshShadersNotAvailable);
+          MessageList::insert(mItemId, MessageType::RayTracingNotAvailable);
       return {};
+    default: break;
     }
 
     auto shader = GLObject(gl.glCreateShader(mType), freeShader);

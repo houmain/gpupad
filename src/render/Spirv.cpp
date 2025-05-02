@@ -257,6 +257,12 @@ std::map<Shader::ShaderType, Spirv> Spirv::compile(const Session &session,
     const std::vector<Input> &inputs, ItemId programItemId,
     MessagePtrSet &messages)
 {
+    if (inputs.empty()) {
+        messages +=
+            MessageList::insert(programItemId, MessageType::ProgramHasNoShader);
+        return {};
+    }
+
     const auto defaultVersion = 100;
     const auto defaultProfile = ECoreProfile;
     const auto forwardCompatible = true;

@@ -312,7 +312,7 @@ void GLRenderSession::buildCommandQueue()
 
                         auto &scriptEngine = mScriptSession->engine();
                         if (auto program = call.program()) {
-                            if (program->bind()) {
+                            if (call.validateShaderTypes() && program->bind()) {
                                 if (call.applyBindings(mergeBindingState(state),
                                         scriptEngine))
                                     call.execute(mMessages, scriptEngine);

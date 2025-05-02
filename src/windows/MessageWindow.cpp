@@ -102,6 +102,7 @@ QString MessageWindow::getMessageText(const Message &message) const
         return tr("Converting file '%1' failed")
             .arg(FileDialog::getFileTitle(message.text));
     case UnsupportedShaderType:    return tr("Unsupported shader type");
+    case ProgramHasNoShader:       return tr("Program has no shader");
     case UnsupportedTextureFormat: return tr("Unsupported texture format");
     case CreatingFramebufferFailed:
         return tr("Creating framebuffer failed %1").arg(message.text);
@@ -149,8 +150,7 @@ QString MessageWindow::getMessageText(const Message &message) const
         return tr("Invalid indirect stride (%1)").arg(message.text);
     case InvalidGeometryStride:
         return tr("Invalid geometry stride (%1)").arg(message.text);
-    case InvalidShaderTypeForCall:
-        return tr("Invalid shader type for call");
+    case InvalidShaderTypeForCall: return tr("Invalid shader type for call");
     case CountExceeded:
         return tr("Maximum count exceeded (%1)").arg(message.text);
     case TooManyPrintfCalls:

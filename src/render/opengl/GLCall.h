@@ -88,11 +88,11 @@ public:
     void setIndirectBuffer(GLBuffer *commands, const Block &block);
     void setBuffers(GLBuffer *buffer, GLBuffer *fromBuffer);
     void setTextures(GLTexture *texture, GLTexture *fromTexture);
+    bool validateShaderTypes();
     bool applyBindings(const GLBindings &bindings, ScriptEngine &scriptEngine);
     void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
 
 private:
-    bool validateShaderTypes();
     std::shared_ptr<void> beginTimerQuery();
     void executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine);
     void executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine);

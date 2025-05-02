@@ -599,10 +599,6 @@ bool GLCall::applyBindings(const GLBindings &bindings,
 {
     if (!mProgram)
         return false;
-
-    if (!validateShaderTypes())
-        return false;
-
     const auto &interface = mProgram->interface();
 
     auto canRender = true;

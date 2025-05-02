@@ -184,6 +184,12 @@ bool GLProgram::compileShaders()
 
 bool GLProgram::linkProgram()
 {
+    if (mShaders.empty()) {
+        mLinkMessages +=
+            MessageList::insert(mItemId, MessageType::ProgramHasNoShader);
+        return false;
+    }
+
     auto freeProgram = [](GLuint program) {
         auto &gl = GLContext::currentContext();
         gl.glDeleteProgram(program);
