@@ -69,7 +69,7 @@ jobs:
        arch: ${{ matrix.config.QT_ARCH }}
        version: ${{ matrix.config.QT_VERSION }}
        modules: ${{ matrix.config.QT_MODULES }}
-       cached: ${{ steps.cache-qt.outputs.cache-hit }}
+       cache: true
 
     - name: Checkout
       uses: actions/checkout@v2
