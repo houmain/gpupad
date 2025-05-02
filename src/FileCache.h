@@ -24,6 +24,7 @@ public:
         TextureData texture);
 
     // only call from main thread
+    void unloadAll();
     void invalidateFile(const QString &fileName);
     void handleEditorFileChanged(const QString &fileName,
         bool emitFileChanged = true);

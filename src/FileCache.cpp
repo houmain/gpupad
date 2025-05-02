@@ -183,6 +183,15 @@ FileCache::~FileCache()
     mBackgroundLoaderThread.wait();
 }
 
+void FileCache::unloadAll()
+{
+    QMutexLocker lock(&mMutex);
+    mSources.clear();
+    mTextures.clear();
+    mBinaries.clear();
+    mFileSystemWatchesToAdd.clear();
+}
+
 void FileCache::invalidateFile(const QString &fileName)
 {
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
