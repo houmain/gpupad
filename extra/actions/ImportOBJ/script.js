@@ -4,6 +4,24 @@ const manifest = {
   name: "&Import Wavefront OBJ...",
 }
 
+function hasName(name) {
+  return (item) => (item.name == name)
+}
+
+function hasType(type) {
+  return (item) => (item.type == type)
+}
+
+function findItem(parent, predicate) {
+  for (let i = parent?.items?.length - 1; i >= 0; --i)
+    if (predicate(parent.items[i]))
+        return parent.items[i]
+}
+
+function findSessionItem(predicate) {
+  return findItem(app.session, predicate)
+}
+
 class Script {
   constructor() {
     this.library = app.loadLibrary("ImportOBJ")
@@ -34,29 +52,38 @@ class Script {
       this.update()
   }
   
-  findSessionItem(predicate) {
-    for (let i = app.session.items.length - 1; i >= 0; --i)
-      if (predicate(app.session.items[i]))
-          return app.session.items[i]
-  }
-
   getBaseName(name) {
     return name.match(/[^/\\]+$/)[0]
   }
   
-  insert() {
-    if (!this.settings.fileName)
-      return
-      
+  load() {
     const lib = this.library
     this.model = lib.loadFile(this.settings.fileName)
     const error = lib.getError(this.model)
     if (error)
       throw new Error(error)
     lib.setSettings(this.model, JSON.stringify(this.settings))
+  }
+  
+  replace(group) {
+    this.group = group
+    this.buffer = findItem(group, hasType('Buffer'))
+    this.streams = findItem(group, hasName('Streams'))
+    this.drawCalls = findItem(group, hasName('Calls'))
+    if (!this.buffer || !this.streams)
+      return false
+    this.load()
+    return true
+  }
+  
+  insert() {
+    if (!this.settings.fileName)
+      return
       
+    this.load()
+    
     this.group = app.session.insertItem({
-      name: this.getBaseName(this.settings.fileName),
+      name: (this.settings.name || this.getBaseName(this.settings.fileName)),
       type: 'Group',
       inlineScope: true,
     })
@@ -85,7 +112,7 @@ class Script {
   
   updateBuffer() {
     const lib = this.library
-    app.session.clearItem(this.buffer)
+    app.session.clearItems(this.buffer)
     
     const shapeCount = lib.getShapeCount(this.model)
     if (this.settings.indexed) {
@@ -217,14 +244,14 @@ class Script {
     }
     
     // TODO: make replace items also replace sub items
-    app.session.clearItem(this.streams)
+    app.session.clearItems(this.streams)
     app.session.replaceItems(this.streams, streams)
     // TODO: update items on insert
     this.streams = app.session.item(this.streams)
   }
   
   updateDrawCalls() {
-    if (!this.settings.drawCalls) {
+    if (this.settings.drawCalls === false) {
       if (this.drawCalls)
         app.session.deleteItem(this.drawCalls)
       this.drawCalls = undefined
@@ -237,10 +264,9 @@ class Script {
         type: 'Group',
       })
 
-    const targetId = this.findSessionItem(
-      (item) => (item.type == 'Target'))?.id
+    const targetId = findSessionItem(hasType("Target"))?.id
 
-    const programId = this.findSessionItem(
+    const programId = findSessionItem(
       (item) => (item.type == 'Program' &&
         item.items[0]?.shaderType == "Vertex"))?.id
 
@@ -283,9 +309,12 @@ class Script {
 this.script = new Script()
 
 if (this.arguments) {
-  this.script.settings = this.arguments
-  this.script.insert()
+  const settings = this.arguments
+  this.script.settings = settings
+  if (!this.script.replace(settings.group))
+    this.script.insert()
   this.script.update()
+  this.result = this.script.group
 }
 else {
   app.openEditor("ui.qml")

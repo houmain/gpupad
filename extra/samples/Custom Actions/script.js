@@ -1,18 +1,39 @@
 
+// cycle through OBJ files in directory
+if (!this.files)
+  this.files = app.enumerateFiles("**/*.obj")
+
 const meshTypes = [
-  "Cube",
   "Cylinder",
   "Icosahedron",
   "Dodecahedron",
   "Octahedron",
   "Tetrahedron",
 ]
-const meshType = meshTypes[app.frameIndex % meshTypes.length]
+  
+const total = meshTypes.length + this.files.length
+const index = app.frameIndex % total
 
-group = app.callAction("GenerateMesh", {
-  name = "Mesh",
-  group = app.session.item("Mesh"),
-  dynamic = true,
-  type = meshType,
-  facetted = true,
-})
+if (index < this.files.length) {
+  group = app.callAction("ImportOBJ", {
+    fileName = this.files[index],
+    name = "Mesh",
+    group = app.session.item("Mesh"),
+    indexed = true,
+    dynamic = true,
+    normalize = true,
+    center = true,
+  })
+  console.log(`Wavefront OBJ: '${this.files[index]}' (${index + 1}/${this.files.length})`)
+}
+else {
+  const meshType = meshTypes[index - this.files.length]
+  group = app.callAction("GenerateMesh", {
+    name = "Mesh",
+    group = app.session.item("Mesh"),
+    dynamic = true,
+    type = meshType,
+    facetted = true,
+  })
+  console.log(`Generated mesh: ${meshType}`)
+}

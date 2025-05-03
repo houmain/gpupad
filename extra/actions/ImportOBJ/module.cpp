@@ -6,14 +6,14 @@
 
 namespace {
   struct Settings {
-    float width;
-    float height;
-    float depth;
-    float scale_u;
-    float scale_v;
-    bool normalize;
-    bool center;
-    bool swap_yz;
+    float width{ 1 };
+    float height{ 1 };
+    float depth{ 1 };
+    float scale_u{ 1 };
+    float scale_v{ 1 };
+    bool normalize{ };
+    bool center{ };
+    bool swap_yz{ };
   };
 
   struct AABB {
