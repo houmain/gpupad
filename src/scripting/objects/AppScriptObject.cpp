@@ -160,10 +160,17 @@ QJSValue AppScriptObject::openFileDialog(QString pattern)
 
 QJSValue AppScriptObject::enumerateFiles(QString pattern)
 {
-    auto dir = QDir(getAbsolutePath(pattern));
+    const auto fileInfo = QFileInfo(getAbsolutePath(pattern));
+    auto dir = fileInfo.dir();
+    auto flags = QDirIterator::IteratorFlags{ QDirIterator::FollowSymlinks };
+    if (dir.dirName() == "**") {
+        dir.cdUp();
+        flags |= QDirIterator::Subdirectories;
+    }
     dir.setFilter(QDir::Files);
+    dir.setNameFilters({ fileInfo.fileName() });
     dir.setSorting(QDir::Name);
-    auto it = QDirIterator(dir, QDirIterator::Subdirectories);
+    auto it = QDirIterator(dir, flags);
     auto result = jsEngine().newArray();
     for (auto i = 0; it.hasNext();)
         result.setProperty(i++, it.next());
