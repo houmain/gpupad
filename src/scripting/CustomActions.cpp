@@ -129,8 +129,8 @@ void CustomActions::actionTriggered()
 
 void CustomActions::updateActions()
 {
-    if (onMainThread())
-        Singletons::fileCache().updateFromEditors();
+    Q_ASSERT(onMainThread());
+    Singletons::fileCache().updateFromEditors();
 
     mMessages.clear();
     mActions.clear();
@@ -142,7 +142,6 @@ void CustomActions::updateActions()
         auto it = QDirIterator(dir.path(), QStringList() << "*.js", QDir::Files,
             QDirIterator::Subdirectories);
         while (it.hasNext()) {
-            // keep only last action with identical name
             const auto filePath = toNativeCanonicalFilePath(it.next());
             auto action = std::make_shared<CustomAction>(filePath);
             if (!action->updateManifest(*scriptEngine, mMessages))
@@ -150,6 +149,8 @@ void CustomActions::updateActions()
 
             connect(action.get(), &QAction::triggered, this,
                 &CustomActions::actionTriggered);
+
+            // keep only last action with identical name
             mActions[action->text()] = std::move(action);
         }
     }
@@ -163,8 +164,7 @@ void CustomActions::setSelection(const QModelIndexList &selection)
 
 QList<CustomActionPtr> CustomActions::getApplicableActions()
 {
-    QMutexLocker lock(&mMutex);
-
+    Q_ASSERT(onMainThread());
     updateActions();
 
     auto actions = QList<CustomActionPtr>();
@@ -176,13 +176,16 @@ QList<CustomActionPtr> CustomActions::getApplicableActions()
 
 CustomActionPtr CustomActions::getActionById(const QString &id)
 {
-    QMutexLocker lock(&mMutex);
-
-    updateActions();
-
-    for (const auto &[text, action] : mActions)
-        if (action->objectName() == id)
-            return action;
+    for (const auto &dir : getApplicationDirectories(ActionsDir)) {
+        auto it = QDirIterator(dir.path(), QStringList() << "*.js", QDir::Files,
+            QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            const auto filePath = toNativeCanonicalFilePath(it.next());
+            auto action = std::make_shared<CustomAction>(filePath);
+            if (action->objectName() == id)
+                return action;
+        }
+    }
     return nullptr;
 }
 

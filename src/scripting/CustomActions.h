@@ -3,7 +3,6 @@
 #include "MessageList.h"
 #include <QModelIndex>
 #include <QAction>
-#include <QMutex>
 
 class QAction;
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
@@ -35,17 +34,15 @@ public:
     QList<CustomActionPtr> getApplicableActions();
 
     // any thread
-    bool applyActionInEngine(const QString &id, ScriptEngine &scriptEngine,
+    static bool applyActionInEngine(const QString &id, ScriptEngine &scriptEngine,
         MessagePtrSet &messages);
 
 private:
     void actionTriggered();
     void updateActions();
-    CustomActionPtr getActionById(const QString &id);
+    static CustomActionPtr getActionById(const QString &id);
 
-    QMutex mMutex;
     std::map<QString, CustomActionPtr> mActions;
     MessagePtrSet mMessages;
-
     QModelIndexList mSelection;
 };
