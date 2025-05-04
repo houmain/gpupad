@@ -42,5 +42,5 @@ private:
     std::optional<QOpenGLFunctions_4_2_Core> mGL42;
     std::optional<QOpenGLFunctions_4_5_Core> mGL45;
     QOpenGLVertexArrayObject mVao;
-    QOpenGLDebugLogger mDebugLogger;
+    std::unique_ptr<QOpenGLDebugLogger> mDebugLogger;
 };
