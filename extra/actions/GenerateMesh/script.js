@@ -132,7 +132,7 @@ class Script {
         ]
       })
     
-    this.drawCall = findItem(group, hasType('Call'))
+    this.drawCall = findItem(this.group, hasType('Call'))
     
     app.session.replaceItems(this.group, [this.buffer, this.stream, this.drawCall])
     
