@@ -33,10 +33,12 @@ namespace {
             const QModelIndex &index) const override
         {
             if (!mEditing) {
+                mEditing = true;
                 auto editor = static_cast<ExpressionEditor *>(editor_);
                 auto text = index.model()->data(index, Qt::EditRole).toString();
                 editor->setText(text);
                 editor->selectAll();
+                mEditing = false;
             }
         }
 
@@ -64,13 +66,15 @@ namespace {
     private:
         void valueChanged()
         {
-            mEditing = true;
-            Q_EMIT commitData(
-                static_cast<ExpressionEditor *>(QObject::sender()));
-            mEditing = false;
+            if (!mEditing) {
+                mEditing = true;
+                auto editor = static_cast<ExpressionEditor *>(QObject::sender());
+                Q_EMIT commitData(editor);
+                mEditing = false;
+            }
         }
 
-        bool mEditing{};
+        mutable bool mEditing{};
     };
 } // namespace
 
