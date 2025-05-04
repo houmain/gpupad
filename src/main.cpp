@@ -77,6 +77,23 @@ bool forwardToInstance(int argc, char *argv[])
     return true;
 }
 
+QtMessageHandler defaultMessageHandler;
+
+void filteringMessageHandler(QtMsgType type, const QMessageLogContext &context,
+    const QString &msg)
+{
+    if (msg
+        == "QMetaObject::indexOfSignal: signal textChanged(QString) from "
+           "QLineEdit redefined in ExpressionLineEdit")
+        return;
+
+    // Variable ... is used before its declaration at
+    if (msg.contains("gl-matrix"))
+        return;
+
+    defaultMessageHandler(type, context, msg);
+}
+
 int main(int argc, char *argv[])
 {
     raiseProcessPriority();
@@ -117,6 +134,7 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     auto app = QApplication(argc, argv);
+    defaultMessageHandler = qInstallMessageHandler(filteringMessageHandler);
 
     QApplication::setStyle(new Style());
     QApplication::setEffectEnabled(Qt::UI_AnimateTooltip, false);

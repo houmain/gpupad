@@ -19,6 +19,7 @@ public:
     void setDecimal(bool decimal) { mDecimal = decimal; }
 
 Q_SIGNALS:
+    // overridden so base class does not emit
     void textChanged(const QString &);
 
 protected:
