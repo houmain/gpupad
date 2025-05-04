@@ -84,6 +84,10 @@ QJSValue AppScriptObject::openEditor(QString fileName)
 
 QJSValue AppScriptObject::loadLibrary(QString fileName)
 {
+    // only load each library once
+    if (auto it = mLoadedLibraries.find(fileName); it != mLoadedLibraries.end())
+        return *it;
+
     // search in script's base path and in libs
     auto searchPaths = QList<QDir>();
     if (mBasePath != QDir())
@@ -105,7 +109,10 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
                 auto source = QString();
                 if (Singletons::fileCache().getSource(filePath, &source)) {
                     engine->evaluateScript(source, filePath);
-                    return {};
+                    // script does not return anything for now
+                    const auto libraryObject = jsEngine().newObject();
+                    mLoadedLibraries[fileName] = libraryObject;
+                    return libraryObject;
                 }
             }
     } else {
@@ -113,8 +120,11 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
         for (const auto &dir : std::as_const(searchPaths))
             paths += dir.path();
         auto library = std::make_unique<LibraryScriptObject>();
-        if (library->load(&jsEngine(), fileName, paths))
-            return jsEngine().newQObject(library.release());
+        if (library->load(&jsEngine(), fileName, paths)) {
+            const auto libraryObject = jsEngine().newQObject(library.release());
+            mLoadedLibraries[fileName] = libraryObject;
+            return libraryObject;
+        }
     }
     jsEngine().throwError("Loading library '" + fileName + "' failed");
     return {};

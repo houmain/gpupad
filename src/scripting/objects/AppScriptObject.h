@@ -57,4 +57,5 @@ private:
     QJSValue mKeyboardProperty;
     QDir mLastFileDialogDirectory;
     int mFrameIndex{ };
+    QMap<QString, QJSValue> mLoadedLibraries;
 };
