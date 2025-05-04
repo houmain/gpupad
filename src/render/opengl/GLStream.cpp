@@ -20,7 +20,7 @@ void GLStream::setAttribute(int attributeIndex, const Field &field,
 {
     const auto &block = *castItem<Block>(field.parent);
     const auto blockOffset =
-        scriptEngine.evaluateValue(block.offset, block.id, mMessages);
+        scriptEngine.evaluateValue(block.offset, block.id);
     auto &attribute = mAttributes[attributeIndex];
     attribute.usedItems += field.id;
     attribute.usedItems += block.id;
@@ -32,7 +32,7 @@ void GLStream::setAttribute(int attributeIndex, const Field &field,
     attribute.offset = blockOffset + getFieldRowOffset(field);
 
     const auto rowCount =
-        scriptEngine.evaluateValue(block.rowCount, block.id, mMessages);
+        scriptEngine.evaluateValue(block.rowCount, block.id);
     if (mMaxElementCount < 0 || rowCount < mMaxElementCount)
         mMaxElementCount = rowCount;
 

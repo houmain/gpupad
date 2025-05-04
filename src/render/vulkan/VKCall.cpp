@@ -229,22 +229,10 @@ void VKCall::execute(VKContext &context, MessagePtrSet &messages,
     context.commandBuffers.push_back(context.commandRecorder->finish());
 }
 
-int VKCall::evaluateInt(ScriptEngine &scriptEngine, const QString &expression)
-{
-    return scriptEngine.evaluateInt(expression, mCall.id, mMessages);
-}
-
-uint32_t VKCall::evaluateUInt(ScriptEngine &scriptEngine,
-    const QString &expression)
-{
-    return scriptEngine.evaluateUInt(expression, mCall.id, mMessages);
-}
-
 int VKCall::getMaxElementCount(ScriptEngine &scriptEngine)
 {
     if (mKind.indexed)
-        return static_cast<int>(evaluateUInt(scriptEngine, mIndicesRowCount))
-            * mIndicesPerRow;
+        return scriptEngine.evaluateInt(mIndicesRowCount, mCall.id) * mIndicesPerRow;
     if (mVertexStream)
         return mVertexStream->maxElementCount();
     return -1;
@@ -253,17 +241,17 @@ int VKCall::getMaxElementCount(ScriptEngine &scriptEngine)
 void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     ScriptEngine &scriptEngine)
 {
-    const auto first = evaluateUInt(scriptEngine, mCall.first);
+    const auto first = scriptEngine.evaluateUInt(mCall.first, mCall.id);
     const auto maxElementCount = getMaxElementCount(scriptEngine);
     const auto count = (!mCall.count.isEmpty()
-            ? evaluateUInt(scriptEngine, mCall.count)
+            ? scriptEngine.evaluateUInt(mCall.count, mCall.id)
             : std::max(maxElementCount - static_cast<int>(first), 0));
-    const auto instanceCount = evaluateUInt(scriptEngine, mCall.instanceCount);
-    const auto baseVertex = evaluateInt(scriptEngine, mCall.baseVertex);
-    const auto firstInstance = evaluateUInt(scriptEngine, mCall.baseInstance);
-    const auto drawCount = evaluateUInt(scriptEngine, mCall.drawCount);
+    const auto instanceCount = scriptEngine.evaluateUInt(mCall.instanceCount, mCall.id);
+    const auto baseVertex = scriptEngine.evaluateInt(mCall.baseVertex, mCall.id);
+    const auto firstInstance = scriptEngine.evaluateUInt(mCall.baseInstance, mCall.id);
+    const auto drawCount = scriptEngine.evaluateUInt(mCall.drawCount, mCall.id);
     const auto indirectOffset =
-        (mKind.indirect ? evaluateUInt(scriptEngine, mIndirectOffset) : 0);
+        (mKind.indirect ? scriptEngine.evaluateUInt(mIndirectOffset, mCall.id) : 0);
 
     if (!count)
         return;
@@ -283,7 +271,7 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
     //primitiveOptions.primitiveRestart = true;
     primitiveOptions.topology = toKDGpu(mCall.primitiveType);
     primitiveOptions.patchControlPoints =
-        evaluateUInt(scriptEngine, mCall.patchVertices);
+        scriptEngine.evaluateUInt(mCall.patchVertices, mCall.id);
 
     if (!mPipeline
         || !mPipeline->createGraphics(context, primitiveOptions, mTarget,
@@ -311,7 +299,7 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
         return;
 
     if (mIndexBuffer) {
-        const auto indicesOffset = evaluateUInt(scriptEngine, mIndicesOffset);
+        const auto indicesOffset = scriptEngine.evaluateUInt(mIndicesOffset, mCall.id);
         renderPass.setIndexBuffer(mIndexBuffer->buffer(), indicesOffset,
             mIndexType);
     }
@@ -358,9 +346,9 @@ void VKCall::executeDraw(VKContext &context, MessagePtrSet &messages,
         });
     } else if (mCall.callType == Call::CallType::DrawMeshTasks) {
         renderPass.drawMeshTasks({
-            .workGroupX = evaluateUInt(scriptEngine, mCall.workGroupsX),
-            .workGroupY = evaluateUInt(scriptEngine, mCall.workGroupsY),
-            .workGroupZ = evaluateUInt(scriptEngine, mCall.workGroupsZ),
+            .workGroupX = scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
+            .workGroupY = scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
+            .workGroupZ = scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id),
         });
     } else if (mCall.callType == Call::CallType::DrawMeshTasksIndirect) {
         renderPass.drawMeshTasksIndirect({
@@ -394,9 +382,9 @@ void VKCall::executeCompute(VKContext &context, MessagePtrSet &messages,
         return;
 
     computePass.dispatchCompute(KDGpu::ComputeCommand{
-        .workGroupX = evaluateUInt(scriptEngine, mCall.workGroupsX),
-        .workGroupY = evaluateUInt(scriptEngine, mCall.workGroupsY),
-        .workGroupZ = evaluateUInt(scriptEngine, mCall.workGroupsZ),
+        .workGroupX = scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
+        .workGroupY = scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
+        .workGroupZ = scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id),
     });
     computePass.end();
     mUsedItems += mPipeline->usedItems();
@@ -429,9 +417,9 @@ void VKCall::executeTraceRays(VKContext &context, MessagePtrSet &messages,
         .hitShaderBindingTable = sbt.hitShaderRegion(),
         .callableShaderBindingTable = {},
         .extent = {
-            .width = evaluateUInt(scriptEngine, mCall.workGroupsX),
-            .height = evaluateUInt(scriptEngine, mCall.workGroupsY),
-            .depth = evaluateUInt(scriptEngine, mCall.workGroupsZ),
+            .width = scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id),
+            .height = scriptEngine.evaluateUInt(mCall.workGroupsY, mCall.id),
+            .depth = scriptEngine.evaluateUInt(mCall.workGroupsZ, mCall.id),
         },
     });
 

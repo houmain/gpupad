@@ -81,12 +81,11 @@ void RenderSessionBase::configure()
         if (auto script = castItem<Script>(item)) {
             auto source = QString();
             if (Singletons::fileCache().getSource(script->fileName, &source))
-                scriptEngine.evaluateScript(source, script->fileName,
-                    mMessages);
+                scriptEngine.evaluateScript(source, script->fileName);
         } else if (auto binding = castItem<Binding>(item)) {
             // set global in script state
             auto values = scriptEngine.evaluateValues(binding->values,
-                binding->id, mMessages);
+                binding->id);
             scriptEngine.setGlobal(binding->name, values);
         }
     }
@@ -188,8 +187,8 @@ void RenderSessionBase::evaluateBlockProperties(const Block &block, int *offset,
 {
     const auto evaluate = [&](ScriptEngine &engine) {
         Q_ASSERT(offset && rowCount);
-        *offset = engine.evaluateInt(block.offset, block.id, mMessages);
-        *rowCount = engine.evaluateInt(block.rowCount, block.id, mMessages);
+        *offset = engine.evaluateInt(block.offset, block.id);
+        *rowCount = engine.evaluateInt(block.rowCount, block.id);
     };
     if (mScriptSession) {
         dispatchToRenderThread([&]() { evaluate(mScriptSession->engine()); });
@@ -203,10 +202,10 @@ void RenderSessionBase::evaluateTextureProperties(const Texture &texture,
 {
     const auto evaluate = [&](ScriptEngine &engine) {
         Q_ASSERT(width && height && depth && layers);
-        *width = engine.evaluateInt(texture.width, texture.id, mMessages);
-        *height = engine.evaluateInt(texture.height, texture.id, mMessages);
-        *depth = engine.evaluateInt(texture.depth, texture.id, mMessages);
-        *layers = engine.evaluateInt(texture.layers, texture.id, mMessages);
+        *width = engine.evaluateInt(texture.width, texture.id);
+        *height = engine.evaluateInt(texture.height, texture.id);
+        *depth = engine.evaluateInt(texture.depth, texture.id);
+        *layers = engine.evaluateInt(texture.layers, texture.id);
     };
     if (mScriptSession) {
         dispatchToRenderThread([&]() { evaluate(mScriptSession->engine()); });
@@ -220,9 +219,9 @@ void RenderSessionBase::evaluateTargetProperties(const Target &target,
 {
     const auto evaluate = [&](ScriptEngine &engine) {
         Q_ASSERT(width && height && layers);
-        *width = engine.evaluateInt(target.defaultWidth, target.id, mMessages);
-        *height = engine.evaluateInt(target.defaultHeight, target.id, mMessages);
-        *layers = engine.evaluateInt(target.defaultLayers, target.id, mMessages);
+        *width = engine.evaluateInt(target.defaultWidth, target.id);
+        *height = engine.evaluateInt(target.defaultHeight, target.id);
+        *layers = engine.evaluateInt(target.defaultLayers, target.id);
     };
     if (mScriptSession) {
         dispatchToRenderThread([&]() { evaluate(mScriptSession->engine()); });

@@ -104,7 +104,7 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
                     toNativeCanonicalFilePath(dir.filePath(fileName));
                 auto source = QString();
                 if (Singletons::fileCache().getSource(filePath, &source)) {
-                    engine->evaluateScript(source, filePath, mMessages);
+                    engine->evaluateScript(source, filePath);
                     return {};
                 }
             }
@@ -126,8 +126,7 @@ QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)
     engine->setGlobal("arguments", arguments);
 
     auto &customActions = Singletons::customActions();
-    const auto applied =
-        customActions.applyActionInEngine(id, *engine, mMessages);
+    const auto applied = customActions.applyActionInEngine(id, *engine);
     engine->setGlobal("arguments", QJSValue::UndefinedValue);
     if (!applied)
         jsEngine().throwError("Applying action '" + id + "' failed");

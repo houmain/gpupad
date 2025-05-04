@@ -18,7 +18,7 @@ public:
     bool usesMouseState() const;
     bool usesKeyboardState() const;
     void update();
-    MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
+    MessagePtrSet resetMessages();
 
     // 2. called in render thread
     void beginSessionUpdate();
@@ -29,6 +29,5 @@ public:
 
 private:
     IScriptRenderSession &mRenderSession;
-    MessagePtrSet mMessages;
     ScriptEnginePtr mScriptEngine;
 };

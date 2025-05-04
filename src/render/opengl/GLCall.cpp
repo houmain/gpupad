@@ -205,7 +205,7 @@ GLenum GLCall::getIndexType() const
 int GLCall::getMaxElementCount(ScriptEngine &scriptEngine)
 {
     if (mKind.indexed)
-        return static_cast<int>(evaluateUInt(scriptEngine, mIndicesRowCount))
+        return scriptEngine.evaluateInt(mIndicesRowCount, mCall.id)
             * mIndicesPerRow;
     if (mVertexStream)
         return mVertexStream->maxElementCount();
@@ -329,31 +329,20 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             errorMessage);
 }
 
-int GLCall::evaluateInt(ScriptEngine &scriptEngine, const QString &expression)
-{
-    return scriptEngine.evaluateInt(expression, mCall.id, mMessages);
-}
-
-uint32_t GLCall::evaluateUInt(ScriptEngine &scriptEngine,
-    const QString &expression)
-{
-    return scriptEngine.evaluateUInt(expression, mCall.id, mMessages);
-}
-
 void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
-    const auto first = evaluateUInt(scriptEngine, mCall.first);
+    const auto first = scriptEngine.evaluateUInt(mCall.first, mCall.id);
     const auto maxElementCount = getMaxElementCount(scriptEngine);
     const auto count = (!mCall.count.isEmpty()
-            ? evaluateUInt(scriptEngine, mCall.count)
+            ? scriptEngine.evaluateUInt(mCall.count, mCall.id)
             : std::max(maxElementCount - static_cast<int>(first), 0));
-    const auto instanceCount = evaluateUInt(scriptEngine, mCall.instanceCount);
-    const auto baseVertex = evaluateUInt(scriptEngine, mCall.baseVertex);
-    const auto baseInstance = evaluateUInt(scriptEngine, mCall.baseInstance);
-    const auto drawCount = evaluateUInt(scriptEngine, mCall.drawCount);
+    const auto instanceCount = scriptEngine.evaluateUInt(mCall.instanceCount, mCall.id);
+    const auto baseVertex = scriptEngine.evaluateUInt(mCall.baseVertex, mCall.id);
+    const auto baseInstance = scriptEngine.evaluateUInt(mCall.baseInstance, mCall.id);
+    const auto drawCount = scriptEngine.evaluateUInt(mCall.drawCount, mCall.id);
     const auto indexType = getIndexType();
     const auto indirectOffset =
-        (mKind.indirect ? evaluateUInt(scriptEngine, mIndirectOffset) : 0);
+        (mKind.indirect ? scriptEngine.evaluateUInt(mIndirectOffset, mCall.id) : 0);
 
     if (!count)
         return;
@@ -384,7 +373,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 
     if (mCall.primitiveType == Call::PrimitiveType::Patches && gl.v4_0)
         gl.v4_0->glPatchParameteri(GL_PATCH_VERTICES,
-            evaluateInt(scriptEngine, mCall.patchVertices));
+            scriptEngine.evaluateInt(mCall.patchVertices, mCall.id));
 
     auto guard = beginTimerQuery();
     if (mCall.callType == Call::CallType::Draw) {
@@ -399,7 +388,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     } else if (mCall.callType == Call::CallType::DrawIndexed && indexType) {
         // DrawElements(InstancedBaseVertexBaseInstance)
         const auto offset = reinterpret_cast<void *>(static_cast<intptr_t>(
-            evaluateUInt(scriptEngine, mIndicesOffset) + first * mIndexSize));
+            scriptEngine.evaluateUInt(mIndicesOffset, mCall.id) + first * mIndexSize));
         if (!baseVertex && !baseInstance) {
             gl.glDrawElementsInstanced(mCall.primitiveType, count, indexType,
                 offset, instanceCount);
@@ -437,7 +426,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             reinterpret_cast<PFNGLDRAWMESHTASKSNVPROC>(
                 gl.getProcAddress("glDrawMeshTasksNV"));
         if (glDrawMeshTasksNV) {
-            glDrawMeshTasksNV(0, evaluateUInt(scriptEngine, mCall.workGroupsX));
+            glDrawMeshTasksNV(0, scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id));
         } else {
             messages += MessageList::insert(mCall.id,
                 MessageType::UnsupportedShaderType);
@@ -480,12 +469,12 @@ void GLCall::executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     if (auto gl43 = check(gl.v4_3, mCall.id, messages)) {
         if (mCall.callType == Call::CallType::Compute) {
             gl43->glDispatchCompute(
-                evaluateInt(scriptEngine, mCall.workGroupsX),
-                evaluateInt(scriptEngine, mCall.workGroupsY),
-                evaluateInt(scriptEngine, mCall.workGroupsZ));
+                scriptEngine.evaluateInt(mCall.workGroupsX, mCall.id),
+                scriptEngine.evaluateInt(mCall.workGroupsY, mCall.id),
+                scriptEngine.evaluateInt(mCall.workGroupsZ, mCall.id));
         } else if (mCall.callType == Call::CallType::ComputeIndirect) {
             const auto offset = static_cast<GLintptr>(
-                evaluateInt(scriptEngine, mIndirectOffset));
+                scriptEngine.evaluateInt(mIndirectOffset, mCall.id));
             gl43->glDispatchComputeIndirect(offset);
         }
     }
@@ -714,7 +703,7 @@ void GLCall::applyUniformBinding(const GLProgram::Interface::Uniform &uniform,
     case TYPE:                                                                \
         FUNCTION(uniform.location, uniform.size,                              \
             getValues<DATATYPE>(scriptEngine, binding.values, COUNT * offset, \
-                COUNT * count, itemId, mMessages)                             \
+                COUNT * count, itemId)                                        \
                 .data());                                                     \
         break
 
@@ -722,7 +711,7 @@ void GLCall::applyUniformBinding(const GLProgram::Interface::Uniform &uniform,
     case TYPE:                                                                \
         FUNCTION(uniform.location, uniform.size, binding.transpose,           \
             getValues<DATATYPE>(scriptEngine, binding.values, COUNT * offset, \
-                COUNT * count, itemId, mMessages)                             \
+                COUNT * count, itemId)                                        \
                 .data());                                                     \
         break
 
@@ -883,9 +872,9 @@ bool GLCall::applyBufferBinding(
     const GLBufferBinding &binding, ScriptEngine &scriptEngine)
 {
     const auto offset =
-        scriptEngine.evaluateInt(binding.offset, mCall.id, mMessages);
+        scriptEngine.evaluateInt(binding.offset, mCall.id);
     const auto rowCount =
-        scriptEngine.evaluateInt(binding.rowCount, mCall.id, mMessages);
+        scriptEngine.evaluateInt(binding.rowCount, mCall.id);
 
     if (!binding.buffer) {
         mMessages += MessageList::insert(binding.bindingItemId,
@@ -988,7 +977,7 @@ bool GLCall::applyBufferMemberBinding(GLBuffer &buffer,
 #define ADD(TYPE, DATATYPE, COUNT)                              \
     case TYPE:                                                  \
         write(getValues<DATATYPE>(scriptEngine, binding.values, \
-            COUNT * offset, COUNT * count, itemId, mMessages)); \
+            COUNT * offset, COUNT * count, itemId));            \
         break
 
 #define ADD_MATRIX(TYPE, DATATYPE, COUNT) ADD(TYPE, DATATYPE, COUNT)

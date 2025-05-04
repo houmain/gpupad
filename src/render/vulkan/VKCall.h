@@ -32,9 +32,6 @@ public:
 
 private:
     bool validateShaderTypes();
-    int evaluateInt(ScriptEngine &scriptEngine, const QString &expression);
-    uint32_t evaluateUInt(ScriptEngine &scriptEngine,
-        const QString &expression);
     int getMaxElementCount(ScriptEngine &scriptEngine);
     void executeDraw(VKContext &context, MessagePtrSet &messages,
         ScriptEngine &scriptEngine);

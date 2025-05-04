@@ -12,10 +12,11 @@ class CustomAction final : public QAction
 {
 public:
     explicit CustomAction(const QString &filePath);
-    bool updateManifest(ScriptEngine &scriptEngine, MessagePtrSet &messages);
-    void apply(const QModelIndexList &selection, MessagePtrSet &messages);
-    void applyInEngine(ScriptEngine &scriptEngine,
-        MessagePtrSet &messages) const;
+
+    MessagePtrSet apply(const QModelIndexList &selection);
+
+    bool updateManifest(ScriptEngine &scriptEngine);
+    void applyInEngine(ScriptEngine &scriptEngine) const;
 
 private:
     const QString mFilePath;
@@ -34,8 +35,7 @@ public:
     QList<CustomActionPtr> getApplicableActions();
 
     // any thread
-    static bool applyActionInEngine(const QString &id, ScriptEngine &scriptEngine,
-        MessagePtrSet &messages);
+    static bool applyActionInEngine(const QString &id, ScriptEngine &scriptEngine);
 
 private:
     void actionTriggered();

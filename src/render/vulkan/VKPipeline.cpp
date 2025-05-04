@@ -417,8 +417,7 @@ void VKPipeline::applyBufferMemberBinding(std::span<std::byte> bufferData,
 #define ADD(DATATYPE, TYPE)                                                  \
     case DATATYPE: {                                                         \
         const auto values = getValues<TYPE>(scriptEngine, binding.values, 0, \
-            elementCount * valuesPerElement, binding.bindingItemId,          \
-            mMessages);                                                      \
+            elementCount * valuesPerElement, binding.bindingItemId);         \
         copyBufferMember<TYPE>(member, memberData, elementOffset,            \
             elementCount, values.data());                                    \
         break;                                                               \
@@ -913,9 +912,9 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         [&](const VKBufferBinding &binding) {
             const auto &buffer = *binding.buffer;
             const auto offset = scriptEngine.evaluateUInt(binding.offset,
-                buffer.itemId(), mMessages);
+                buffer.itemId());
             const auto rowCount = scriptEngine.evaluateUInt(binding.rowCount,
-                buffer.itemId(), mMessages);
+                buffer.itemId());
             const auto size = (binding.stride ? rowCount * binding.stride
                                               : buffer.size() - offset);
             Q_ASSERT(size > 0

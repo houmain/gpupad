@@ -51,7 +51,7 @@ ScriptEnginePtr ScriptEngine::make(const QString &basePath, QThread *thread,
 
 ScriptEngine::ScriptEngine(QObject *parent)
     : QObject(parent)
-    , mConsoleScriptObject(new ConsoleScriptObject(this))
+    , mConsoleScriptObject(new ConsoleScriptObject(&mMessages, this))
 {
 }
 
@@ -149,52 +149,50 @@ QJSValue ScriptEngine::getGlobal(const QString &name)
 }
 
 QJSValue ScriptEngine::call(QJSValue &callable, const QJSValueList &args,
-    ItemId itemId, MessagePtrSet &messages)
+    ItemId itemId)
 {
     Q_ASSERT(QThread::currentThread() == thread());
-    mConsoleScriptObject->setMessages(&messages, itemId);
+    mConsoleScriptObject->setItemId(itemId);
     resetInterruptTimer();
 
     auto result = callable.call(args);
-    outputError(result, itemId, messages);
+    outputError(result, itemId);
     return result;
 }
 
-void ScriptEngine::validateScript(const QString &script,
-    const QString &fileName, MessagePtrSet &messages)
+void ScriptEngine::validateScript(const QString &script, const QString &fileName)
 {
     if (script.trimmed().startsWith('{'))
-        evaluateScript("json = " + script, fileName, messages);
+        evaluateScript("json = " + script, fileName);
     else
-        evaluateScript("if (false) {" + script + "}", fileName, messages);
+        evaluateScript("if (false) {" + script + "}", fileName);
 }
 
 void ScriptEngine::evaluateScript(const QString &script,
-    const QString &fileName, MessagePtrSet &messages)
+    const QString &fileName)
 {
     Q_ASSERT(QThread::currentThread() == thread());
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
-    mConsoleScriptObject->setMessages(&messages, fileName);
+    mConsoleScriptObject->setFileName(fileName);
     resetInterruptTimer();
 
     auto result = mJsEngine->evaluate(script, fileName);
-    outputError(result, 0, messages);
+    outputError(result, 0);
 }
 
 ScriptValueList ScriptEngine::evaluateValues(const QString &valueExpression,
-    ItemId itemId, MessagePtrSet &messages)
+    ItemId itemId)
 {
     Q_ASSERT(QThread::currentThread() == thread());
-    mConsoleScriptObject->setMessages(&messages, itemId);
+    mConsoleScriptObject->setItemId(itemId);
     resetInterruptTimer();
 
     auto result = mJsEngine->evaluate(valueExpression);
-    outputError(result, itemId, messages);
+    outputError(result, itemId);
     return getFlattenedValues(result);
 }
 
-void ScriptEngine::outputError(const QJSValue &result, ItemId itemId,
-    MessagePtrSet &messages)
+void ScriptEngine::outputError(const QJSValue &result, ItemId itemId)
 {
     if (!result.isError())
         return;
@@ -218,17 +216,17 @@ void ScriptEngine::outputError(const QJSValue &result, ItemId itemId,
     const auto fileName = result.property("fileName").toString();
     if (!fileName.isEmpty()) {
         const auto lineNumber = result.property("lineNumber").toInt();
-        messages += MessageList::insert(
+        mMessages += MessageList::insert(
             toNativeCanonicalFilePath(QUrl(fileName).toLocalFile()), lineNumber,
             MessageType::ScriptError, message);
     } else {
-        messages +=
+        mMessages +=
             MessageList::insert(itemId, MessageType::ScriptError, message);
     }
 }
 
 ScriptValueList ScriptEngine::evaluateValues(
-    const QStringList &valueExpressions, ItemId itemId, MessagePtrSet &messages)
+    const QStringList &valueExpressions, ItemId itemId)
 {
     auto values = QList<double>();
     for (const QString &valueExpression : valueExpressions) {
@@ -244,13 +242,13 @@ ScriptValueList ScriptEngine::evaluateValues(
             values.append(value);
             continue;
         }
-        values += evaluateValues(valueExpression, itemId, messages);
+        values += evaluateValues(valueExpression, itemId);
     }
     return values;
 }
 
 ScriptValue ScriptEngine::evaluateValue(const QString &valueExpression,
-    ItemId itemId, MessagePtrSet &messages)
+    ItemId itemId)
 {
     // fast path, when expression is empty or a number
     if (valueExpression.isEmpty())
@@ -260,24 +258,23 @@ ScriptValue ScriptEngine::evaluateValue(const QString &valueExpression,
     if (ok)
         return value;
 
-    const auto values = evaluateValues(valueExpression, itemId, messages);
+    const auto values = evaluateValues(valueExpression, itemId);
     return (values.isEmpty() ? 0.0 : values.first());
 }
 
-int ScriptEngine::evaluateInt(const QString &valueExpression, ItemId itemId,
-    MessagePtrSet &messages)
+int ScriptEngine::evaluateInt(const QString &valueExpression, ItemId itemId)
 {
-    const auto value = evaluateValue(valueExpression, itemId, messages);
+    const auto value = evaluateValue(valueExpression, itemId);
     if (!std::isfinite(value))
         return 0;
     return static_cast<int>(value + 0.5);
 }
 
 uint32_t ScriptEngine::evaluateUInt(const QString &valueExpression,
-    ItemId itemId, MessagePtrSet &messages)
+    ItemId itemId)
 {
     return static_cast<uint32_t>(
-        std::max(evaluateInt(valueExpression, itemId, messages), 0));
+        std::max(evaluateInt(valueExpression, itemId), 0));
 }
 
 QJSEngine &ScriptEngine::jsEngine()

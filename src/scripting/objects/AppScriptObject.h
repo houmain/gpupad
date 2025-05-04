@@ -49,7 +49,6 @@ private:
     WeakScriptEnginePtr mEnginePtr;
     QJSEngine *mJsEngine{};
     QDir mBasePath;
-    MessagePtrSet mMessages;
     SessionScriptObject *mSessionScriptObject{};
     MouseScriptObject *mMouseScriptObject{};
     KeyboardScriptObject *mKeyboardScriptObject{};

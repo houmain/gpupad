@@ -156,7 +156,8 @@ void ProcessSource::render()
             auto scriptEngine = ScriptEngine::make(basePath);
             auto scriptSource = QString();
             Singletons::fileCache().getSource(mFileName, &scriptSource);
-            scriptEngine->validateScript(scriptSource, mFileName, messages);
+            scriptEngine->validateScript(scriptSource, mFileName);
+            messages += scriptEngine->resetMessages();
         }
     }
 

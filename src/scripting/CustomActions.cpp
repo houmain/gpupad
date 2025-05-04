@@ -30,8 +30,7 @@ namespace {
         return {};
     }
 
-    QJSValue parseManifest(const QString &filePath, ScriptEngine &scriptEngine,
-        MessagePtrSet &messages)
+    QJSValue parseManifest(const QString &filePath, ScriptEngine &scriptEngine)
     {
         auto source = QString();
         if (Singletons::fileCache().getSource(filePath, &source))
@@ -39,7 +38,7 @@ namespace {
 
         auto manifest = QJSValue();
         if (!source.isEmpty()) {
-            scriptEngine.evaluateScript(source, filePath, messages);
+            scriptEngine.evaluateScript(source, filePath);
             manifest = scriptEngine.getGlobal("manifest");
             scriptEngine.setGlobal("manifest", QJSValue::UndefinedValue);
         }
@@ -64,10 +63,9 @@ CustomAction::CustomAction(const QString &filePath) : mFilePath(filePath)
     }
 }
 
-bool CustomAction::updateManifest(ScriptEngine &scriptEngine,
-    MessagePtrSet &messages)
+bool CustomAction::updateManifest(ScriptEngine &scriptEngine)
 {
-    auto manifest = parseManifest(mFilePath, scriptEngine, messages);
+    auto manifest = parseManifest(mFilePath, scriptEngine);
     setEnabled(!manifest.isUndefined());
     if (manifest.isUndefined())
         return false;
@@ -79,15 +77,14 @@ bool CustomAction::updateManifest(ScriptEngine &scriptEngine,
     auto applicable = manifest.property("applicable");
     if (!applicable.isUndefined()) {
         const auto result = (applicable.isCallable()
-                ? scriptEngine.call(applicable, {}, 0, messages)
+                ? scriptEngine.call(applicable, {}, 0)
                 : applicable);
         setEnabled(result.isBool() && result.toBool());
     }
     return true;
 }
 
-void CustomAction::apply(const QModelIndexList &selection,
-    MessagePtrSet &messages)
+MessagePtrSet CustomAction::apply(const QModelIndexList &selection)
 {
     mScriptEngine.reset();
 
@@ -95,20 +92,21 @@ void CustomAction::apply(const QModelIndexList &selection,
     mScriptEngine = ScriptEngine::make(basePath);
     mScriptEngine->appScriptObject().sessionScriptObject().setSelection(selection);
 
-    applyInEngine(*mScriptEngine, messages);
+    applyInEngine(*mScriptEngine);
 
     // TODO: run in cancelable background thread
     mScriptEngine->appScriptObject()
         .sessionScriptObject()
         .endBackgroundUpdate();
+
+    return mScriptEngine->resetMessages();
 }
 
-void CustomAction::applyInEngine(ScriptEngine &scriptEngine,
-    MessagePtrSet &messages) const
+void CustomAction::applyInEngine(ScriptEngine &scriptEngine) const
 {
     auto source = QString();
     if (Singletons::fileCache().getSource(mFilePath, &source))
-        scriptEngine.evaluateScript(source, mFilePath, messages);
+        scriptEngine.evaluateScript(source, mFilePath);
 }
 
 //-------------------------------------------------------------------------
@@ -123,8 +121,7 @@ void CustomActions::actionTriggered()
     auto &action = static_cast<CustomAction &>(
         *qobject_cast<QAction *>(QObject::sender()));
 
-    mMessages.clear();
-    action.apply(mSelection, mMessages);
+    mMessages = action.apply(mSelection);
 }
 
 void CustomActions::updateActions()
@@ -144,7 +141,7 @@ void CustomActions::updateActions()
         while (it.hasNext()) {
             const auto filePath = toNativeCanonicalFilePath(it.next());
             auto action = std::make_shared<CustomAction>(filePath);
-            if (!action->updateManifest(*scriptEngine, mMessages))
+            if (!action->updateManifest(*scriptEngine))
                 continue;
 
             connect(action.get(), &QAction::triggered, this,
@@ -153,6 +150,7 @@ void CustomActions::updateActions()
             // keep only last action with identical name
             mActions[action->text()] = std::move(action);
         }
+        mMessages += scriptEngine->resetMessages();
     }
 }
 
@@ -190,11 +188,11 @@ CustomActionPtr CustomActions::getActionById(const QString &id)
 }
 
 bool CustomActions::applyActionInEngine(const QString &id,
-    ScriptEngine &scriptEngine, MessagePtrSet &messages)
+    ScriptEngine &scriptEngine)
 {
     auto action = getActionById(id);
     if (!action)
         return false;
-    action->applyInEngine(scriptEngine, messages);
+    action->applyInEngine(scriptEngine);
     return true;
 }

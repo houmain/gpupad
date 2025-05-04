@@ -143,7 +143,7 @@ void VKAccelerationStructure::prepare(VKContext &context,
                                         const QString &transform) {
         if (transform.isEmpty())
             return ScriptValueList{};
-        auto values = scriptEngine.evaluateValues(transform, itemId, mMessages);
+        auto values = scriptEngine.evaluateValues(transform, itemId);
         if (values.size() != 12 && values.size() != 16)
             mMessages += MessageList::insert(itemId,
                 MessageType::UniformComponentMismatch,
@@ -201,9 +201,9 @@ void VKAccelerationStructure::prepare(VKContext &context,
             const auto primitiveCount = (geometry.primitiveCount.isEmpty()
                     ? maxPrimitiveCount
                     : scriptEngine.evaluateUInt(geometry.primitiveCount,
-                          geometry.itemId, mMessages));
+                          geometry.itemId));
             const auto primitiveOffset = scriptEngine.evaluateUInt(
-                geometry.primitiveOffset, geometry.itemId, mMessages);
+                geometry.primitiveOffset, geometry.itemId);
 
             if (primitiveCount > maxPrimitiveCount) {
                 mMessages += MessageList::insert(geometry.itemId,

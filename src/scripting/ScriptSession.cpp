@@ -59,3 +59,9 @@ void ScriptSession::update()
     Q_ASSERT(onMainThread());
     mScriptEngine->appScriptObject().update();
 }
+
+MessagePtrSet ScriptSession::resetMessages()
+{
+    Q_ASSERT(onMainThread());
+    return mScriptEngine->resetMessages();
+}

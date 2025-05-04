@@ -20,32 +20,28 @@ public:
         QThread *thread = nullptr, QObject *parent = nullptr);
     ~ScriptEngine();
 
+    MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
+    MessagePtrSet &messages() { return mMessages; }
     void setOmitReferenceErrors();
     void setTimeout(int msec);
     void setGlobal(const QString &name, QObject *object);
     void setGlobal(const QString &name, const ScriptValueList &values);
-    void validateScript(const QString &script, const QString &fileName,
-        MessagePtrSet &messages);
-    void evaluateScript(const QString &script, const QString &fileName,
-        MessagePtrSet &messages);
+    void validateScript(const QString &script, const QString &fileName);
+    void evaluateScript(const QString &script, const QString &fileName);
     ScriptValueList evaluateValues(const QString &valueExpression,
-        ItemId itemId, MessagePtrSet &messages);
+        ItemId itemId);
     ScriptValueList evaluateValues(const QStringList &valueExpressions,
-        ItemId itemId, MessagePtrSet &messages);
-    ScriptValue evaluateValue(const QString &valueExpression, ItemId itemId,
-        MessagePtrSet &messages);
-    int evaluateInt(const QString &valueExpression, ItemId itemId,
-        MessagePtrSet &messages);
-    uint32_t evaluateUInt(const QString &valueExpression, ItemId itemId,
-        MessagePtrSet &messages);
+        ItemId itemId);
+    ScriptValue evaluateValue(const QString &valueExpression, ItemId itemId);
+    int evaluateInt(const QString &valueExpression, ItemId itemId);
+    uint32_t evaluateUInt(const QString &valueExpression, ItemId itemId);
     QJSEngine &jsEngine();
 
     AppScriptObject &appScriptObject() { return *mAppScriptObject; }
 
     void setGlobal(const QString &name, QJSValue value);
     QJSValue getGlobal(const QString &name);
-    QJSValue call(QJSValue &callable, const QJSValueList &args, ItemId itemId,
-        MessagePtrSet &messages);
+    QJSValue call(QJSValue &callable, const QJSValueList &args, ItemId itemId);
 
     template <typename T>
     QJSValue toJsValue(const T &value)
@@ -57,9 +53,9 @@ private:
     ScriptEngine(QObject *parent);
     void initialize(const ScriptEnginePtr &self, const QString &basePath);
     void resetInterruptTimer();
-    void outputError(const QJSValue &result, ItemId itemId,
-        MessagePtrSet &messages);
+    void outputError(const QJSValue &result, ItemId itemId);
 
+    MessagePtrSet mMessages;
     QJSEngine *mJsEngine{};
     ConsoleScriptObject *mConsoleScriptObject{};
     AppScriptObject *mAppScriptObject{};
@@ -73,13 +69,13 @@ void checkValueCount(int valueCount, int offset, int count, ItemId itemId,
 
 template <typename T>
 std::vector<T> getValues(ScriptEngine &scriptEngine,
-    const QStringList &expressions, int offset, int count, ItemId itemId,
-    MessagePtrSet &messages)
+    const QStringList &expressions, int offset, int count, ItemId itemId)
 {
     const auto values =
-        scriptEngine.evaluateValues(expressions, itemId, messages);
+        scriptEngine.evaluateValues(expressions, itemId);
 
-    checkValueCount(values.size(), offset, count, itemId, messages);
+    checkValueCount(values.size(), offset, count, itemId,
+        scriptEngine.messages());
 
     auto results = std::vector<T>();
     results.reserve(count);

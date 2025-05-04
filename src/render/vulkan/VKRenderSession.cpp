@@ -207,8 +207,7 @@ void VKRenderSession::buildCommandQueue()
             iteration.commandQueueBeginIndex = mCommandQueue->commands.size();
             const auto max_iterations = 1000;
             iteration.iterations = std::min(max_iterations,
-                scriptEngine.evaluateInt(group->iterations, group->id,
-                    mMessages));
+                scriptEngine.evaluateInt(group->iterations, group->id));
 
             // push binding scope
             if (!group->inlineScope)

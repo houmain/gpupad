@@ -7,15 +7,15 @@ class ConsoleScriptObject : public QObject
 {
     Q_OBJECT
 public:
-    explicit ConsoleScriptObject(QObject *parent = 0);
+    explicit ConsoleScriptObject(MessagePtrSet *messages, QObject *parent = 0);
 
-    void setMessages(MessagePtrSet *messages, const QString &fileName);
-    void setMessages(MessagePtrSet *messages, ItemId itemId);
+    void setFileName(const QString &fileName);
+    void setItemId(ItemId itemId);
 
     Q_INVOKABLE void output(QString message, int level);
 
 private:
+    MessagePtrSet &mMessages;
     QString mFileName;
     ItemId mItemId{};
-    MessagePtrSet *mMessages{};
 };

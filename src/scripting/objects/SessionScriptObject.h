@@ -96,7 +96,6 @@ private:
     QJSEngine *mEngine{};
     QJSValue mSelectionProperty;
     QJSValue mSessionItems;
-    MessagePtrSet mMessages;
     IScriptRenderSession *mRenderSession{};
     std::vector<UpdateFunction> mPendingUpdates;
 };
