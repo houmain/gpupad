@@ -70,77 +70,72 @@ class Script {
       this.generate()
   }
   
-  replace(group) {
-    this.group = group
-    this.buffer = findItem(group, hasType('Buffer'))
-    this.stream = findItem(group, hasType('Stream'))
-    this.drawCall = findItem(group, hasType('Call'))
-    this.vertices = this.buffer?.items[0]
-    this.indices = this.buffer?.items[1]
-    if (!this.vertices)
-      return false
-    this.generate()
-    return true
-  }
-  
   insert() {
-    const parent = this.settings.parent || app.session
-    this.group = app.session.insertItem(parent, {
-      name: (this.settings.name || 'Mesh'),
-      type: 'Group',
-      inlineScope: true,
-      dynamic: this.settings.dynamic,
-    })    
+    if (this.settings.group)
+      this.group = this.settings.group
     
-    this.buffer = app.session.insertItem(this.group, {
-      name: 'Buffer',
-      type: 'Buffer',
-      items: [
-        {
-          name: 'Vertex',
-          items: [
-            {
-              name: 'position',
-              dataType: 'Float',
-              count: 3
-            },
-            {
-              name: 'normal',
-              dataType: 'Float',
-              count: 3
-            },
-            {
-              name: 'texcoord',
-              dataType: 'Float',
-              count: 2
-            }          
-          ]
-        }
-      ]
-    })
+    if (!this.group)
+      this.group = app.session.insertItem(this.settings.parent || app.session, {
+        name: (this.settings.name || 'Mesh'),
+        type: 'Group',
+        inlineScope: true,
+        dynamic: this.settings.dynamic,
+      })    
+
+    this.buffer = findItem(this.group, hasType('Buffer')) ||
+      app.session.insertItem(this.group, {
+        name: 'Buffer',
+        type: 'Buffer',
+        items: [
+          {
+            name: 'Vertex',
+            items: [
+              {
+                name: 'position',
+                dataType: 'Float',
+                count: 3
+              },
+              {
+                name: 'normal',
+                dataType: 'Float',
+                count: 3
+              },
+              {
+                name: 'texcoord',
+                dataType: 'Float',
+                count: 2
+              }          
+            ]
+          }
+        ]
+      })
     this.vertices = this.buffer.items[0]
+    this.indices = this.buffer.items[1]
     
-    this.stream = app.session.insertItem(this.group, {
-      name: 'Stream',
-      type: 'Stream',
-      items: [
-        {
-          name: 'aPosition',
-          fieldId: this.buffer.items[0].items[0].id,
-        },
-        {
-          name: 'aNormal',
-          fieldId: this.buffer.items[0].items[1].id,
-        },
-        {
-          name: 'aTexCoords',
-          fieldId: this.buffer.items[0].items[2].id,
-        }
-      ]
-    })
+    this.stream = findItem(this.group, hasType('Stream')) ||
+      app.session.insertItem(this.group, {
+        name: 'Stream',
+        type: 'Stream',
+        items: [
+          {
+            name: 'aPosition',
+            fieldId: this.buffer.items[0].items[0].id,
+          },
+          {
+            name: 'aNormal',
+            fieldId: this.buffer.items[0].items[1].id,
+          },
+          {
+            name: 'aTexCoords',
+            fieldId: this.buffer.items[0].items[2].id,
+          }
+        ]
+      })
     
-    this.indices = undefined
-    this.drawCall = undefined
+    this.drawCall = findItem(group, hasType('Call'))
+    
+    app.session.replaceItems(this.group, [this.buffer, this.stream, this.drawCall])
+    
     this.generate()
   }
   
@@ -235,8 +230,7 @@ this.script = new Script()
 if (this.arguments) {
   const settings = this.arguments
   this.script.settings = settings
-  if (!this.script.replace(settings.group))
-    this.script.insert()
+  this.script.insert()
   this.script.generate()
   this.result = this.script.group
 }

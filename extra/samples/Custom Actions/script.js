@@ -24,13 +24,14 @@ if (index < this.files.length) {
     normalize = true,
     center = true,
   })
-  console.log(`Wavefront OBJ: '${this.files[index]}' (${index + 1}/${this.files.length})`)
+  console.log(`Wavefront OBJ (${index + 1}/${this.files.length}): '${this.files[index]}'`)
 }
 else {
   const meshType = meshTypes[index - this.files.length]
   group = app.callAction("GenerateMesh", {
     name = "Mesh",
     group = app.session.item("Mesh"),
+    indexed = true,
     dynamic = true,
     type = meshType,
     facetted = true,

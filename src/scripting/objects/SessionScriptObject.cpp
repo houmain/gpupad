@@ -594,14 +594,15 @@ void SessionScriptObject::replaceItems(QJSValue itemDesc, QJSValue array)
 {
     const auto count = array.property("length").toInt();
     auto update = QJsonArray();
-    for (auto i = 0; i < count; ++i) {
-        const auto object = toJsonObject(array.property(i));
-        if (object.isEmpty()) {
-            engine().throwError(QStringLiteral("Invalid object"));
-            return;
+    for (auto i = 0; i < count; ++i)
+        if (!array.property(i).isUndefined()) {
+            const auto object = toJsonObject(array.property(i));
+            if (object.isEmpty()) {
+                engine().throwError(QStringLiteral("Invalid object"));
+                return;
+            }
+            update.append(object);
         }
-        update.append(object);
-    }
 
     const auto parent = getItem(itemDesc);
     if (!parent)

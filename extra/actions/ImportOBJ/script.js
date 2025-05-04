@@ -56,47 +56,39 @@ class Script {
     return name.match(/[^/\\]+$/)[0]
   }
   
-  load() {
+  insert() {
     const lib = this.library
     this.model = lib.loadFile(this.settings.fileName)
     const error = lib.getError(this.model)
     if (error)
       throw new Error(error)
     lib.setSettings(this.model, JSON.stringify(this.settings))
-  }
-  
-  replace(group) {
-    this.group = group
-    this.buffer = findItem(group, hasType('Buffer'))
-    this.streams = findItem(group, hasName('Streams'))
+    
+    if (this.settings.group)
+      this.group = this.settings.group
+    
+    if (!this.group)
+      this.group = app.session.insertItem(this.settings.parent || app.session, {
+        name: (this.settings.name || this.getBaseName(this.settings.fileName)),
+        type: 'Group',
+        inlineScope: true,
+      })
+
+    this.buffer = findItem(this.group, hasType('Buffer')) ||
+      app.session.insertItem(this.group, {
+        name: 'Buffer',
+        type: 'Buffer',
+      })
+    
+    this.streams = findItem(this.group, hasName('Streams')) ||
+      app.session.insertItem(this.group, {
+        name: 'Streams',
+        type: 'Group',
+      })
+    
     this.drawCalls = findItem(group, hasName('Calls'))
-    if (!this.buffer || !this.streams)
-      return false
-    this.load()
-    return true
-  }
-  
-  insert() {
-    if (!this.settings.fileName)
-      return
-      
-    this.load()
     
-    this.group = app.session.insertItem({
-      name: (this.settings.name || this.getBaseName(this.settings.fileName)),
-      type: 'Group',
-      inlineScope: true,
-    })
-    
-    this.buffer = app.session.insertItem(this.group, {
-      name: 'Buffer',
-      type: 'Buffer',
-    })
-    
-    this.streams = app.session.insertItem(this.group, {
-      name: 'Streams',
-      type: 'Group',
-    })
+    app.session.replaceItems(this.group, [this.buffer, this.streams, this.drawCalls])
     
     this.update()
   }
@@ -311,8 +303,7 @@ this.script = new Script()
 if (this.arguments) {
   const settings = this.arguments
   this.script.settings = settings
-  if (!this.script.replace(settings.group))
-    this.script.insert()
+  this.script.insert()
   this.script.update()
   this.result = this.script.group
 }

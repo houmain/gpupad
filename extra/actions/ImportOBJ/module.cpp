@@ -6,9 +6,9 @@
 
 namespace {
   struct Settings {
-    float width{ 1 };
-    float height{ 1 };
-    float depth{ 1 };
+    float width{ 2 };
+    float height{ 2 };
+    float depth{ 2 };
     float scale_u{ 1 };
     float scale_v{ 1 };
     bool normalize{ };

@@ -44,11 +44,14 @@ void RenderSessionBase::prepare(bool itemsChanged,
     mPrevMessages.swap(mMessages);
     mMessages.clear();
 
-    if (mScriptSession)
+    if (mScriptSession) {
         mScriptSession->update();
-    else
+        if (mEvaluationType == EvaluationType::Manual)
+            mScriptSession->resetMessages();
+    }
+    else {
         mEvaluationType = EvaluationType::Reset;
-
+    }
     if (mItemsChanged || mEvaluationType == EvaluationType::Reset) {
         mUsedItems.clear();
         mSessionModelCopy = Singletons::sessionModel();
@@ -94,10 +97,8 @@ void RenderSessionBase::configure()
 void RenderSessionBase::configured()
 {
     Q_ASSERT(onMainThread());
-    if (mScriptSession) {
+    if (mScriptSession)
         mScriptSession->endSessionUpdate();
-        mMessages += mScriptSession->resetMessages();
-    }
 
     if (mEvaluationType != EvaluationType::Steady
         && Singletons::synchronizeLogic().resetRenderSessionInvalidationState())
