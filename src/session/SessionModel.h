@@ -38,7 +38,6 @@ public:
     QString getItemName(ItemId id) const;
     QString getFullItemName(ItemId id) const;
     void setActiveItems(QSet<ItemId> itemIds);
-    void setItemActive(ItemId id, bool active);
     void setActiveItemColor(QColor color);
 
     QJsonArray getJson(const QModelIndexList &indexes) const;

@@ -137,26 +137,18 @@ bool SessionModel::removeRows(int row, int count, const QModelIndex &parent)
 
 void SessionModel::setActiveItems(QSet<ItemId> itemIds)
 {
-    if (mActiveItemIds == itemIds)
+    const auto difference =
+        (mActiveItemIds | itemIds) - (mActiveItemIds & itemIds);
+
+    if (difference.empty())
         return;
 
     mActiveItemIds = std::move(itemIds);
-    Q_EMIT dataChanged(index(0, 0), index(rowCount(), 0),
-        { Qt::ForegroundRole });
-}
 
-void SessionModel::setItemActive(ItemId id, bool active)
-{
-    if (active == mActiveItemIds.contains(id))
-        return;
-
-    if (active)
-        mActiveItemIds.insert(id);
-    else
-        mActiveItemIds.remove(id);
-
-    auto item = findItem(id);
-    Q_EMIT dataChanged(getIndex(item), getIndex(item), { Qt::ForegroundRole });
+    for (const auto &itemId : difference) {
+        const auto index = getIndex(findItem(itemId), ColumnType::Name);
+        Q_EMIT dataChanged(index, index, { Qt::ForegroundRole });
+    }
 }
 
 void SessionModel::setActiveItemColor(QColor color)

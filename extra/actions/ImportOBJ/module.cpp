@@ -3,7 +3,7 @@
 #include "rapidobj.hpp"
 #include "jsonc.c"
 #include <span>
-#include <unordered_set>
+#include <unordered_map>
 
 namespace {
   struct Settings {
@@ -263,7 +263,7 @@ Model loadFile(const std::string& filename) noexcept {
     for (const auto& shape : model.object.shapes) {
       auto& shape_indices = model.shape_indices.emplace_back();
       shape_indices.reserve(shape.mesh.indices.size());
-      for (auto i = 0; i < shape.mesh.indices.size(); i += 3) {
+      for (auto i = 0u; i < shape.mesh.indices.size(); i += 3) {
         const auto face_indices = add_face_vertices_once(
           model.vertices, added_vertices, 
           get_face_vertices({ &shape.mesh.indices[i], 3 }, model.object.attributes));
@@ -338,7 +338,7 @@ std::vector<Index> getShapeIndices(const Model& model, size_t index) {
     return model.shape_indices[index];
   
   auto swapped = model.shape_indices[index];
-  for (auto i = 0; i < swapped.size(); i += 3)
+  for (auto i = 0u; i < swapped.size(); i += 3)
     std::swap(swapped[i + 1], swapped[i + 2]);
   return swapped;
 }
