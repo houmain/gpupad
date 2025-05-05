@@ -280,7 +280,7 @@ QModelIndex SessionModelCore::index(int row, int column,
 QModelIndex SessionModelCore::parent(const QModelIndex &child) const
 {
     if (child.isValid())
-        return getIndex(getItem(child).parent, ColumnType::Name);
+        return getIndex(getItem(child).parent);
     return {};
 }
 
@@ -315,8 +315,6 @@ QVariant SessionModelCore::data(const QModelIndex &index, int role) const
 
     switch (column) {
     case ColumnType::Name: return item.name;
-
-    case ColumnType::None: return {};
 
     case ColumnType::FileName:
         if (auto fileItem = castItem<FileItem>(item))
@@ -360,8 +358,6 @@ bool SessionModelCore::setData(const QModelIndex &index, const QVariant &value,
             return false;
         undoableAssignment(index, &item.name, value.toString());
         return true;
-
-    case ColumnType::None: return true;
 
     case ColumnType::FileName:
         if (castItem<FileItem>(item)) {
@@ -475,7 +471,7 @@ QModelIndex SessionModelCore::insertItem(Item::Type type, QModelIndex parent,
         static_cast<Group *>(item)->dynamic = true;
 
     insertItem(item, parent, row);
-    return getIndex(item, ColumnType::Name);
+    return getIndex(item);
 }
 
 void SessionModelCore::deleteItem(const QModelIndex &index)
@@ -537,8 +533,6 @@ Item::Type SessionModelCore::getItemType(const QModelIndex &index) const
 void SessionModelCore::insertItem(QList<Item *> *list, Item *item,
     const QModelIndex &parent, int row)
 {
-    // ensure parent column is never None, since it does not update tree
-    Q_ASSERT(!parent.isValid() || parent.column() != ColumnType::None);
     mItemsById[item->id] = item;
     beginInsertRows(parent, row, row);
     list->insert(row, item);

@@ -10,7 +10,6 @@ class SessionModelCore : public QAbstractItemModel
 public:
     enum ColumnType {
         Name = 0,
-        None,
         FileName,
 
         SessionRenderer,
@@ -169,7 +168,7 @@ public:
         ItemId id = 0, bool isDynamicGroup = false);
     void deleteItem(const QModelIndex &index);
     QModelIndex getIndex(const Item *item,
-        ColumnType column = ColumnType::None) const;
+        ColumnType column = ColumnType::Name) const;
     QModelIndex getIndex(const QModelIndex &index, ColumnType column) const;
     QModelIndex findChildByName(const QModelIndex &parent,
         const QString &name) const;

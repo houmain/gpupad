@@ -146,7 +146,7 @@ void SessionModel::setActiveItems(QSet<ItemId> itemIds)
     mActiveItemIds = std::move(itemIds);
 
     for (const auto &itemId : difference) {
-        const auto index = getIndex(findItem(itemId), ColumnType::Name);
+        const auto index = getIndex(findItem(itemId));
         Q_EMIT dataChanged(index, index, { Qt::ForegroundRole });
     }
 }
@@ -439,7 +439,7 @@ void SessionModel::deserialize(const QJsonObject &object,
         (type == Item::Type::Group && object["dynamic"].toBool());
 
     const auto index = (existingItem
-            ? getIndex(existingItem, ColumnType::Name)
+            ? getIndex(existingItem)
             : insertItem(type, parent, row, id, isDynamicGroup));
 
     // preserve untitled filenames when dragging/copying

@@ -546,8 +546,7 @@ QJSValue SessionScriptObject::insertItemAt(const Item *parent, int row,
 
     withSessionModel(
         [parentId = parent->id, row, update](SessionModel &session) {
-            const auto parent = session.getIndex(session.findItem(parentId),
-                SessionModel::ColumnType::Name);
+            const auto parent = session.getIndex(session.findItem(parentId));
             session.dropJson({ update }, row, parent, true);
         });
 
@@ -646,8 +645,7 @@ void SessionScriptObject::replaceItems(QJSValue itemDesc, QJSValue array)
 
     withSessionModel(
         [parentId = parent->id, update, unusedIds](SessionModel &session) {
-            const auto parent = session.getIndex(session.findItem(parentId),
-                SessionModel::ColumnType::Name);
+            const auto parent = session.getIndex(session.findItem(parentId));
             session.dropJson(update, session.rowCount(parent), parent, true);
             for (const auto &[id, type] : unusedIds)
                 session.deleteItem(session.getIndex(session.findItem(id)));

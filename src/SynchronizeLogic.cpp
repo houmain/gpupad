@@ -241,16 +241,14 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
             mModel.setData(mModel.getIndex(index, SessionModel::Name),
                 getValueName(call->callType));
 
-    if (index.column() != SessionModel::None) {
-        if (auto buffer = mModel.item<Buffer>(index)) {
-            mEditorItemsModified.insert(buffer->id);
-        } else if (auto block = mModel.item<Block>(index)) {
-            mEditorItemsModified.insert(block->parent->id);
-        } else if (auto field = mModel.item<Field>(index)) {
-            mEditorItemsModified.insert(field->parent->parent->id);
-        } else if (auto texture = mModel.item<Texture>(index)) {
-            mEditorItemsModified.insert(texture->id);
-        }
+    if (auto buffer = mModel.item<Buffer>(index)) {
+        mEditorItemsModified.insert(buffer->id);
+    } else if (auto block = mModel.item<Block>(index)) {
+        mEditorItemsModified.insert(block->parent->id);
+    } else if (auto field = mModel.item<Field>(index)) {
+        mEditorItemsModified.insert(field->parent->parent->id);
+    } else if (auto texture = mModel.item<Texture>(index)) {
+        mEditorItemsModified.insert(texture->id);
     }
 
     if (mRenderSession
