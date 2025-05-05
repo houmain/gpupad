@@ -62,16 +62,6 @@
             "type": "Target"
         },
         {
-            "bindingType": "Uniform",
-            "editor": "Expression",
-            "id": 895,
-            "name": "frame",
-            "type": "Binding",
-            "values": [
-                "app.frameIndex"
-            ]
-        },
-        {
             "executeOn": "ResetEvaluation",
             "fileName": "math.js",
             "id": 103,
@@ -84,7 +74,7 @@
             "name": "uModel",
             "type": "Binding",
             "values": [
-                "rotateY(frame / 60)"
+                "rotateY(app.frameIndex / 60)"
             ]
         },
         {

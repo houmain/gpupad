@@ -40,6 +40,7 @@ public:
     void setActiveItems(QSet<ItemId> itemIds);
     void setActiveItemColor(QColor color);
 
+    void clear();
     QJsonArray getJson(const QModelIndexList &indexes) const;
     void dropJson(const QJsonArray &json, int row, const QModelIndex &parent,
         bool updateExisting);

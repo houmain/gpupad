@@ -137,9 +137,8 @@ bool SessionModel::removeRows(int row, int count, const QModelIndex &parent)
 
 void SessionModel::setActiveItems(QSet<ItemId> itemIds)
 {
-    const auto difference =
-        (mActiveItemIds | itemIds) - (mActiveItemIds & itemIds);
-
+    const auto difference = (mActiveItemIds | itemIds)
+        - (mActiveItemIds & itemIds);
     if (difference.empty())
         return;
 
@@ -147,7 +146,8 @@ void SessionModel::setActiveItems(QSet<ItemId> itemIds)
 
     for (const auto &itemId : difference) {
         const auto index = getIndex(findItem(itemId));
-        Q_EMIT dataChanged(index, index, { Qt::ForegroundRole });
+        if (index.isValid())
+            Q_EMIT dataChanged(index, index, { Qt::ForegroundRole });
     }
 }
 
@@ -371,6 +371,12 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
 
     endUndoMacro();
     return true;
+}
+
+void SessionModel::clear()
+{
+    mActiveItemIds.clear();
+    SessionModelCore::clear();
 }
 
 QJsonArray SessionModel::getJson(const QModelIndexList &indexes) const
