@@ -267,16 +267,6 @@
                     ]
                 },
                 {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10046,
-                    "name": "UniformBufferObjectStruct.Camera[0].ShowHeatmap",
-                    "type": "Binding",
-                    "values": [
-                        "0"
-                    ]
-                },
-                {
                     "bindingType": "Buffer",
                     "bufferId": 897,
                     "id": 10048,
@@ -335,13 +325,6 @@
                 {
                     "fileName": "Scatter.glsl",
                     "id": 10026,
-                    "language": "GLSL",
-                    "shaderType": "Includable",
-                    "type": "Shader"
-                },
-                {
-                    "fileName": "Heatmap.glsl",
-                    "id": 10047,
                     "language": "GLSL",
                     "shaderType": "Includable",
                     "type": "Shader"

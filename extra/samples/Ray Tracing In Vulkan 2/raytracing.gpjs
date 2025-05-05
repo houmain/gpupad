@@ -240,16 +240,6 @@
                     ]
                 },
                 {
-                    "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 10046,
-                    "name": "UniformBufferObjectStruct.Camera[0].ShowHeatmap",
-                    "type": "Binding",
-                    "values": [
-                        "0"
-                    ]
-                },
-                {
                     "bindingType": "Image",
                     "id": 10032,
                     "imageFormat": "Internal",
@@ -278,14 +268,14 @@
                 },
                 {
                     "bindingType": "BufferBlock",
-                    "blockId": 10322,
+                    "blockId": 10231,
                     "id": 10078,
                     "name": "VertexArray",
                     "type": "Binding"
                 },
                 {
                     "bindingType": "BufferBlock",
-                    "blockId": 10330,
+                    "blockId": 10239,
                     "id": 10079,
                     "name": "IndexArray",
                     "type": "Binding"
@@ -356,13 +346,6 @@
                     "type": "Shader"
                 },
                 {
-                    "fileName": "Heatmap.glsl",
-                    "id": 10047,
-                    "language": "GLSL",
-                    "shaderType": "Includable",
-                    "type": "Shader"
-                },
-                {
                     "fileName": "RayTracing.rgen",
                     "id": 10022,
                     "language": "GLSL",
@@ -388,7 +371,7 @@
             "type": "Program"
         },
         {
-            "accelerationStructureId": 10332,
+            "accelerationStructureId": 10241,
             "callType": "TraceRays",
             "checked": true,
             "executeOn": "EveryEvaluation",
