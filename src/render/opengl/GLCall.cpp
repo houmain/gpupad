@@ -153,7 +153,11 @@ GLCall::GLCall(const Call &call) : mCall(call), mKind(getKind(call)) { }
 
 void GLCall::setProgram(GLProgram *program)
 {
-    mProgram = program;
+    if (mKind.draw || mKind.compute)
+        mProgram = program;
+
+    if (mProgram)
+        mUsedItems += mProgram->usedItems();
 }
 
 void GLCall::setTarget(GLTarget *target)
@@ -269,7 +273,6 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
                 MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
             return;
         }
-        mUsedItems += mProgram->usedItems();
     }
 
     if (mKind.draw) {
