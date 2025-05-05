@@ -373,7 +373,7 @@ void TextureProperties::setFormat(QVariant value)
             mUi->formatData->setCurrentData(it->second.second);
             Q_EMIT formatChanged();
         } else {
-            qDebug() << "unknown format " << value.toInt();
+            Q_ASSERT(!"not handled format");
         }
     }
 }

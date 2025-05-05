@@ -89,7 +89,9 @@ private:
             if (gFirstGLError.isEmpty())
                 gFirstGLError = message.message();
         } else {
+#if !defined(NDEBUG)
             qDebug() << message.message();
+#endif
         }
     }
 

@@ -11,6 +11,9 @@
 #include <QTextBrowser>
 #include <QTextStream>
 
+#include <glslang/build_info.h>
+#include <spirv_cross/spirv_cross_c.h>
+
 namespace {
     QString loadTextFile(const QString &fileName)
     {
@@ -46,6 +49,22 @@ namespace {
                 "<b>Release date: </b>\\2\n\n"
                 "<b>All commits: </b>[\\1]")
             .mid(7);
+    }
+
+    QString glslangVersionString()
+    {
+        return QStringLiteral("%1.%2.%3")
+            .arg(GLSLANG_VERSION_MAJOR)
+            .arg(GLSLANG_VERSION_MINOR)
+            .arg(GLSLANG_VERSION_PATCH);
+    }
+
+    QString spirvCrossVersionString()
+    {
+        return QStringLiteral("%1.%2.%3")
+            .arg(SPVC_C_API_VERSION_MAJOR)
+            .arg(SPVC_C_API_VERSION_MINOR)
+            .arg(SPVC_C_API_VERSION_PATCH);
     }
 } // namespace
 
@@ -95,8 +114,18 @@ AboutDialog::AboutDialog(QWidget *parent) : QDialog(parent)
            "See the GNU General Public License, version 3 for details."));
 
     auto licenses = loadTextFile("THIRD-PARTY.md");
+
     const auto qtHeader = QString("## Qt Toolkit");
     licenses.replace(qtHeader, qtHeader + " v" + QT_VERSION_STR);
+
+    const auto glslangHeader = QString("## glslang");
+    licenses.replace(glslangHeader,
+        glslangHeader + " v" + glslangVersionString());
+
+    const auto spirvCrossHeader = QString("## SPIRV-Cross");
+    licenses.replace(spirvCrossHeader,
+        spirvCrossHeader + " v" + spirvCrossVersionString());
+
     addTab(tr("Third-Party Libraries"), licenses);
 
     auto buttons = new QDialogButtonBox(this);
