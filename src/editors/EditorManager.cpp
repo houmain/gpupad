@@ -357,7 +357,12 @@ QmlView *EditorManager::openQmlView(const QString &fileName,
             return nullptr;
         }
         mQmlViews.append(editor);
-        createDock(editor, editor);
+        auto dock = createDock(editor, editor);
+
+        connect(editor, &QWidget::windowTitleChanged, this,
+            [this, dock](const QString &title) {
+                setDockWindowTitle(dock, title);
+            });
     }
     autoRaise(editor);
     return editor;

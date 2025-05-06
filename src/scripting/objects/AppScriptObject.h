@@ -28,7 +28,7 @@ public:
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
 
-    Q_INVOKABLE QJSValue openEditor(QString fileName);
+    Q_INVOKABLE QJSValue openEditor(QString fileName, QString title = { });
     Q_INVOKABLE QJSValue loadLibrary(QString fileName);
     Q_INVOKABLE QJSValue callAction(QString id);
     Q_INVOKABLE QJSValue callAction(QString id, QJSValue arguments);

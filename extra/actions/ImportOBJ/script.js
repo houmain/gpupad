@@ -308,5 +308,5 @@ if (this.arguments) {
   this.result = this.script.group
 }
 else {
-  app.openEditor("ui.qml")
+  app.openEditor("ui.qml", manifest.name)
 }

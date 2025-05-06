@@ -9,6 +9,7 @@
 #include "Singletons.h"
 #include "FileCache.h"
 #include "editors/EditorManager.h"
+#include "editors/qml/QmlView.h"
 #include <QDirIterator>
 #include <QJSEngine>
 #include <QCoreApplication>
@@ -68,7 +69,7 @@ QJSValue AppScriptObject::session()
     return mSessionProperty;
 }
 
-QJSValue AppScriptObject::openEditor(QString fileName)
+QJSValue AppScriptObject::openEditor(QString fileName, QString title)
 {
     if (!onMainThread())
         return {};
@@ -76,8 +77,16 @@ QJSValue AppScriptObject::openEditor(QString fileName)
     fileName = getAbsolutePath(fileName);
     auto &editorManager = Singletons::editorManager();
     if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
-        return static_cast<bool>(
-            editorManager.openQmlView(fileName, mEnginePtr.lock()));
+        const auto editor =
+            editorManager.openQmlView(fileName, mEnginePtr.lock());
+        if (!editor)
+            return false;
+
+        // set cleaned up title
+        title = title.remove("&").replace("...", "");
+        if (!title.isEmpty())
+            editor->setWindowTitle(title);
+        return true;
     }
     return static_cast<bool>(editorManager.openEditor(fileName));
 }
