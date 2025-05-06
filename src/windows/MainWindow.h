@@ -89,6 +89,7 @@ private:
         int column);
     void handleThemeChanging(const Theme &theme);
     void handleHideMenuBarChanged(bool hide);
+    void setToolbarIconVisible(QAction *action, bool visible);
 
     Ui::MainWindow *mUi{};
     QToolButton *mMenuButton{};

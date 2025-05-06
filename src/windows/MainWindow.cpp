@@ -138,6 +138,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setVisible(false);
     dock->setMinimumSize(200, 150);
     auto action = dock->toggleViewAction();
+    action->setObjectName("toggle" + dock->objectName());
     action->setText(tr("Show &") + action->text());
     action->setIcon(QIcon::fromTheme("format-indent-more"));
     mUi->menuView->addAction(action);
@@ -155,6 +156,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
     action = dock->toggleViewAction();
+    action->setObjectName("toggle" + dock->objectName());
     action->setText(tr("Show &") + action->text());
     action->setIcon(QIcon::fromTheme("folder"));
     mUi->menuView->addAction(action);
@@ -170,6 +172,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
     action = dock->toggleViewAction();
+    action->setObjectName("toggle" + dock->objectName());
     action->setText(tr("Show &") + action->text());
     action->setIcon(QIcon::fromTheme("help-faq"));
     mUi->menuView->addAction(action);
@@ -185,6 +188,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
     action = dock->toggleViewAction();
+    action->setObjectName("toggle" + dock->objectName());
     action->setText(tr("Show &") + action->text());
     action->setIcon(QIcon::fromTheme("utilities-terminal"));
     mUi->menuView->addAction(action);
@@ -397,6 +401,12 @@ void MainWindow::writeSettings()
     settings.setValue("lastDirectory", fileDialog.directory().absolutePath());
 
     settings.setValue("recentFiles", mRecentFiles);
+
+    auto hiddenIcons = QStringList();
+    for (auto action : mUi->toolBarMain->actions())
+        if (!action->isVisible() && !action->objectName().isEmpty())
+            hiddenIcons += action->objectName();
+    settings.setValue("hiddenIcons", hiddenIcons);
 }
 
 void MainWindow::readSettings()
@@ -428,6 +438,20 @@ void MainWindow::readSettings()
     mUi->actionFullScreen->setChecked(isFullScreen());
     if (settings.hideMenuBar())
         handleHideMenuBarChanged(true);
+
+    auto prevVisibleAction = std::add_pointer_t<QAction>{};
+    const auto hiddenIconNames = settings.value("hiddenIcons").toStringList();
+    for (auto action : mUi->toolBarMain->actions()) {
+        if (action->isSeparator())
+            action->setVisible(prevVisibleAction
+                && !prevVisibleAction->isSeparator());
+
+        if (hiddenIconNames.contains(action->objectName())) {
+            setToolbarIconVisible(action, false);
+        } else {
+            prevVisibleAction = action;
+        }
+    }
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
@@ -485,9 +509,67 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
     QMainWindow::keyReleaseEvent(event);
 }
 
+void MainWindow::setToolbarIconVisible(QAction *action, bool visible) {
+  if (action->isVisible() == visible)
+    return;
+
+  // do not simply set visible of action, since it would also
+  // disappear in menu. Therefore replace with an invisble
+  // placeholder, which allows to restore the original
+  auto menu = mUi->toolBarMain;
+  if (!visible) {
+    auto placeholder = new QAction(menu);
+    placeholder->setObjectName(action->objectName());
+    placeholder->setData(QVariant::fromValue(action));
+    placeholder->setText(action->text());
+    placeholder->setVisible(false);
+    menu->insertAction(action, placeholder);
+    menu->removeAction(action);
+  }
+  else {
+    auto placeholder = action;
+    action = qvariant_cast<QAction*>(placeholder->data());
+    menu->insertAction(placeholder, action);
+    menu->removeAction(placeholder);
+    placeholder->deleteLater();
+  }
+}
+
 QMenu *MainWindow::createPopupMenu()
 {
     const auto menu = QMainWindow::createPopupMenu();
+    const auto toggleVisibleMenu = new QMenu("Show &Toolbar Icons", menu);
+    for (auto action : mUi->toolBarMain->actions()) {
+        if (action->isSeparator()) {
+            toggleVisibleMenu->addSeparator();
+            continue;
+        }
+        if (action->text().isEmpty())
+            continue;
+        auto toggleVisible = new QAction(action->text(), menu);
+        toggleVisible->setCheckable(true);
+        toggleVisible->setChecked(action->isVisible());
+        connect(toggleVisible, &QAction::toggled, [this, action](bool checked) {
+            setToolbarIconVisible(action, checked);
+        });
+        toggleVisibleMenu->addAction(toggleVisible);
+    }
+
+    const auto firstSeparator = [&]() {
+        auto separator = std::add_pointer_t<QAction>{};
+        const auto actions = menu->actions();
+        for (auto it = actions.rbegin(); it != actions.rend(); ++it) {
+            auto action = *it;
+            if (!action->isVisible())
+                continue;
+            if (!action->isSeparator())
+                break;
+            separator = action;
+        }
+        return separator;
+    }();
+    menu->insertMenu(firstSeparator, toggleVisibleMenu);
+    menu->addSeparator();
     menu->addAction(mUi->actionHideMenuBar);
     menu->addAction(mUi->actionFullScreen);
     return menu;
