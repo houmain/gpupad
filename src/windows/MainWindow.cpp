@@ -84,7 +84,7 @@ MainWindow::MainWindow(QWidget *parent)
     mFullScreenTitle = new QLabel(this);
     auto fullScreenCloseButton = new QToolButton(this);
     fullScreenCloseButton->setDefaultAction(mUi->actionFullScreenClose);
-    fullScreenCloseButton->setMaximumSize(24, 24);
+    fullScreenCloseButton->setMaximumSize(16, 16);
     mFullScreenBar->setVisible(false);
     mFullScreenBar->addWidget(mFullScreenTitle);
     mFullScreenBar->addWidget(fullScreenCloseButton);
@@ -483,6 +483,14 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
     mLastPressWasAlt = false;
 
     QMainWindow::keyReleaseEvent(event);
+}
+
+QMenu *MainWindow::createPopupMenu()
+{
+    const auto menu = QMainWindow::createPopupMenu();
+    menu->addAction(mUi->actionHideMenuBar);
+    menu->addAction(mUi->actionFullScreen);
+    return menu;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -1084,7 +1092,7 @@ void MainWindow::handleHideMenuBarChanged(bool hide)
         mUi->toolBarMain->insertWidget(mUi->actionNew, mMenuButton);
         mUi->toolBarMain->insertSeparator(mUi->actionNew);
     } else {
-        const auto& actions = mUi->toolBarMain->actions();
+        const auto &actions = mUi->toolBarMain->actions();
         mUi->toolBarMain->removeAction(actions.front());
     }
 }

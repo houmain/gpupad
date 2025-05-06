@@ -58,6 +58,7 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
+    QMenu *createPopupMenu() override;
 
 private:
     void writeSettings();
