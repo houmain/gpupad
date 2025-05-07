@@ -120,6 +120,11 @@ Q_SIGNALS:
 private:
     void initialize()
     {
+        const auto error = [&](const QString &message) {
+            mMessages += MessageList::insert(0, MessageType::VulkanNotAvailable,
+                message);
+        };
+
 #if defined(KDGPU_PLATFORM_WIN32)
         static auto l =
             spdlog::synchronous_factory::create<spdlog::sinks::msvc_sink_mt>(
@@ -148,11 +153,8 @@ private:
             }
         };
         mInstance = mApi->createInstance(instanceOptions);
-        if (!mInstance.isValid() || mInstance.adapters().empty()) {
-            mMessages +=
-                MessageList::insert(0, MessageType::VulkanNotAvailable);
-            return;
-        }
+        if (!mInstance.isValid() || mInstance.adapters().empty())
+            return error("");
 
         mAdapter = [&]() -> KDGpu::Adapter * {
             const auto identity = getOpenGLAdapterIdentity();
@@ -166,11 +168,8 @@ private:
             }
             return nullptr;
         }();
-        if (!mAdapter) {
-            mMessages +=
-                MessageList::insert(0, MessageType::VulkanNotAvailable);
-            return;
-        }
+        if (!mAdapter)
+            return error("no adapter found");
 
         auto deviceOptions =
             KDGpu::DeviceOptions{ .requestedFeatures = mAdapter->features() };
@@ -184,15 +183,27 @@ private:
         };
         mDevice = mAdapter->createDevice(deviceOptions);
 
+        const auto requiredFlags =
+            KDGpu::QueueFlags(KDGpu::QueueFlagBits::GraphicsBit
+                | KDGpu::QueueFlagBits::TransferBit
+                | KDGpu::QueueFlagBits::ComputeBit);
+        for (const auto &queue : mDevice.queues())
+            if ((queue.flags() & requiredFlags) == requiredFlags) {
+                mQueue = queue;
+                break;
+            }
+        if (!mQueue.isValid())
+            return error("no general queue found");
+
         auto &rm = *mDevice.graphicsApi()->resourceManager();
-        auto vkInstance =
+        const auto vkInstance =
             static_cast<KDGpu::VulkanInstance *>(rm.getInstance(mInstance));
-        auto vkAdapter =
+        const auto vkAdapter =
             static_cast<KDGpu::VulkanAdapter *>(rm.getAdapter(*mAdapter));
-        auto vkDevice =
+        const auto vkDevice =
             static_cast<KDGpu::VulkanDevice *>(rm.getDevice(mDevice));
-        auto vkQueue =
-            static_cast<KDGpu::VulkanQueue *>(rm.getQueue(mDevice.queues()[0]));
+        const auto vkQueue =
+            static_cast<KDGpu::VulkanQueue *>(rm.getQueue(mQueue));
 
         auto poolInfo = VkCommandPoolCreateInfo{};
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -206,6 +217,7 @@ private:
             mKtxCommandPool, nullptr, nullptr);
 
         mRenderer.mDevice = &mDevice;
+        mRenderer.mQueue = &mQueue;
         mRenderer.mKtxDeviceInfo = &mKtxDeviceInfo;
     }
 
@@ -228,6 +240,7 @@ private:
     KDGpu::Instance mInstance;
     KDGpu::Adapter *mAdapter{};
     KDGpu::Device mDevice;
+    KDGpu::Queue mQueue;
     ktxVulkanDeviceInfo mKtxDeviceInfo{};
     VkCommandPool mKtxCommandPool;
     MessagePtrSet mMessages;
@@ -291,6 +304,12 @@ KDGpu::Device &VKRenderer::device()
 {
     Q_ASSERT(mDevice);
     return *mDevice;
+}
+
+KDGpu::Queue &VKRenderer::queue()
+{
+    Q_ASSERT(mQueue);
+    return *mQueue;
 }
 
 ktxVulkanDeviceInfo &VKRenderer::ktxDeviceInfo()

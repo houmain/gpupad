@@ -92,7 +92,11 @@ QString MessageWindow::getMessageText(const Message &message) const
     case OpenGLVersionNotAvailable:
         return tr("The required OpenGL version %1 is not available")
             .arg(message.text);
-    case VulkanNotAvailable: return tr("Vulkan is not available");
+    case VulkanNotAvailable:
+        return tr("Vulkan is not available")
+            + (!message.text.isEmpty()
+                    ? QStringLiteral(" (%1)").arg(message.text)
+                    : "");
     case LoadingFileFailed:
         if (message.text.isEmpty())
             return tr("No file set");

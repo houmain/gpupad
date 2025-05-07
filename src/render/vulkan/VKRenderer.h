@@ -6,6 +6,7 @@
 
 namespace KDGpu {
     class Device;
+    class Queue;
 }
 struct ktxVulkanDeviceInfo;
 
@@ -18,9 +19,10 @@ public:
 
     void render(RenderTask *task) override;
     void release(RenderTask *task) override;
-    QThread* renderThread() override { return &mThread; }
+    QThread *renderThread() override { return &mThread; }
 
     KDGpu::Device &device();
+    KDGpu::Queue &queue();
     ktxVulkanDeviceInfo &ktxDeviceInfo();
 
 Q_SIGNALS:
@@ -39,5 +41,6 @@ private:
     QList<RenderTask *> mPendingTasks;
     RenderTask *mCurrentTask{};
     KDGpu::Device *mDevice{};
+    KDGpu::Queue *mQueue{};
     ktxVulkanDeviceInfo *mKtxDeviceInfo{};
 };

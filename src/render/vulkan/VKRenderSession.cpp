@@ -105,7 +105,7 @@ void VKRenderSession::createCommandQueue()
         .context =
             VKContext{
                 .device = renderer().device(),
-                .queue = renderer().device().queues()[0],
+                .queue = renderer().queue(),
                 .ktxDeviceInfo = renderer().ktxDeviceInfo(),
             },
     });
