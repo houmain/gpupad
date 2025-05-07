@@ -456,7 +456,7 @@ GLuint64 GLTexture::obtainBindlessHandle()
         return mBindlessHandle;
 
     auto &gl = GLContext::currentContext();
-    if (!gl.hasExtension("ARB_bindless_texture"))
+    if (!gl.hasExtension("GL_ARB_bindless_texture"))
         return 0;
 
     static auto glGetTextureHandleARB =

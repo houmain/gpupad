@@ -5,6 +5,8 @@
 #include <QApplication>
 #include <QMutex>
 #include <QSemaphore>
+#include <QOpenGLContext>
+#include <QOffscreenSurface>
 
 #include <KDGpu/device.h>
 #include <KDGpu/instance.h>
@@ -16,6 +18,51 @@
 #  include <spdlog/sinks/msvc_sink.h>
 #  include <vulkan/vulkan_win32.h>
 #endif
+
+using UUID = std::array<uint8_t, 16>;
+
+struct AdapterIdentity
+{
+    UUID deviceUUIDs[4];
+    UUID driverUUID;
+};
+
+AdapterIdentity getOpenGLAdapterIdentity()
+{
+    auto glContext = QOpenGLContext();
+    glContext.setShareContext(QOpenGLContext::globalShareContext());
+    auto surface = QOffscreenSurface();
+    surface.setFormat(glContext.format());
+    surface.create();
+    glContext.create();
+    if (!glContext.makeCurrent(&surface))
+        return {};
+    const auto guard = QScopeGuard([&]() { glContext.doneCurrent(); });
+
+    if (!glContext.hasExtension("GL_EXT_memory_object"))
+        return {};
+    const auto glGetUnsignedBytevEXT =
+        reinterpret_cast<PFNGLGETUNSIGNEDBYTEVEXTPROC>(
+            glContext.getProcAddress("glGetUnsignedBytevEXT"));
+    if (!glGetUnsignedBytevEXT)
+        return {};
+
+    const auto glGetUnsignedBytei_vEXT =
+        reinterpret_cast<PFNGLGETUNSIGNEDBYTEI_VEXTPROC>(
+            glContext.getProcAddress("glGetUnsignedBytei_vEXT"));
+    if (!glGetUnsignedBytei_vEXT)
+        return {};
+
+    auto identity = AdapterIdentity();
+    static_assert(GL_UUID_SIZE_EXT == sizeof(UUID));
+    auto numDeviceUuids = GLint{};
+    glGetIntegerv(GL_NUM_DEVICE_UUIDS_EXT, &numDeviceUuids);
+    for (auto i = 0; i < std::min(numDeviceUuids, 4); ++i)
+        glGetUnsignedBytei_vEXT(GL_DEVICE_UUID_EXT, i,
+            identity.deviceUUIDs[i].data());
+    glGetUnsignedBytevEXT(GL_DRIVER_UUID_EXT, identity.driverUUID.data());
+    return identity;
+}
 
 class VKRenderer::Worker final : public QObject
 {
@@ -90,7 +137,8 @@ private:
         const auto instanceOptions = KDGpu::InstanceOptions
         {
             .applicationName = qApp->applicationName().toStdString(),
-            .applicationVersion = KDGPU_MAKE_API_VERSION(0, major, minor, build),
+            .applicationVersion =
+                KDGPU_MAKE_API_VERSION(0, major, minor, build),
 #if !defined(NDEBUG)
             .layers = { "VK_LAYER_KHRONOS_validation" },
 #endif
@@ -106,7 +154,23 @@ private:
             return;
         }
 
-        mAdapter = mInstance.selectAdapter(KDGpu::AdapterDeviceType::Default);
+        mAdapter = [&]() -> KDGpu::Adapter * {
+            const auto identity = getOpenGLAdapterIdentity();
+            for (auto adapter : mInstance.adapters()) {
+                if (std::ranges::equal(adapter->properties().driverUUID,
+                        identity.driverUUID))
+                    for (const auto &deviceUUID : identity.deviceUUIDs)
+                        if (std::ranges::equal(adapter->properties().deviceUUID,
+                                deviceUUID))
+                            return adapter;
+            }
+            return nullptr;
+        }();
+        if (!mAdapter) {
+            mMessages +=
+                MessageList::insert(0, MessageType::VulkanNotAvailable);
+            return;
+        }
 
         auto deviceOptions =
             KDGpu::DeviceOptions{ .requestedFeatures = mAdapter->features() };
