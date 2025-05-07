@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 2.6.1] - 2025-05-07
+
+### Added
+
+- Allow to hide specific toolbar icons.
+- Added fullscreen and collapse menu bar actions to context menu.
+- Added optional parameter to AppScriptObject openEditor to set QML title.
+- Writing glslang and spirv-cross version in about dialog.
+
+### Fixed
+
+- Fixed crash when Vulkan is not available.
+- Ensure Vulkan is using same adapter as OpenGL.
+- Validating that program has a shader.
+- Fixed calling custom actions from render thread.
+- Fixed some runtime warnings.
+- Unloading caches when closing a session.
+
 ## [Version 2.6.0] - 2025-05-01
 
 ### Added
@@ -894,6 +912,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 2.6.1]: https://github.com/houmain/gpupad/compare/2.6.0...2.6.1
 [version 2.6.0]: https://github.com/houmain/gpupad/compare/2.5.0...2.6.0
 [version 2.5.0]: https://github.com/houmain/gpupad/compare/2.4.0...2.5.0
 [version 2.4.0]: https://github.com/houmain/gpupad/compare/2.3.0...2.4.0
