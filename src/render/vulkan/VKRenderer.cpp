@@ -21,48 +21,52 @@
 
 using UUID = std::array<uint8_t, 16>;
 
-struct AdapterIdentity
-{
-    UUID deviceUUIDs[4];
-    UUID driverUUID;
-};
+namespace {
+    struct AdapterIdentity
+    {
+        UUID deviceUUIDs[4];
+        UUID driverUUID;
+    };
 
-AdapterIdentity getOpenGLAdapterIdentity()
-{
-    auto glContext = QOpenGLContext();
-    glContext.setShareContext(QOpenGLContext::globalShareContext());
-    auto surface = QOffscreenSurface();
-    surface.setFormat(glContext.format());
-    surface.create();
-    glContext.create();
-    if (!glContext.makeCurrent(&surface))
-        return {};
-    const auto guard = QScopeGuard([&]() { glContext.doneCurrent(); });
+    AdapterIdentity gAdapterIdentity;
 
-    if (!glContext.hasExtension("GL_EXT_memory_object"))
-        return {};
-    const auto glGetUnsignedBytevEXT =
-        reinterpret_cast<PFNGLGETUNSIGNEDBYTEVEXTPROC>(
-            glContext.getProcAddress("glGetUnsignedBytevEXT"));
-    if (!glGetUnsignedBytevEXT)
-        return {};
+    AdapterIdentity getOpenGLAdapterIdentity()
+    {
+        auto glContext = QOpenGLContext();
+        glContext.setShareContext(QOpenGLContext::globalShareContext());
+        auto surface = QOffscreenSurface();
+        surface.setFormat(glContext.format());
+        surface.create();
+        glContext.create();
+        if (!glContext.makeCurrent(&surface))
+            return {};
+        const auto guard = QScopeGuard([&]() { glContext.doneCurrent(); });
 
-    const auto glGetUnsignedBytei_vEXT =
-        reinterpret_cast<PFNGLGETUNSIGNEDBYTEI_VEXTPROC>(
-            glContext.getProcAddress("glGetUnsignedBytei_vEXT"));
-    if (!glGetUnsignedBytei_vEXT)
-        return {};
+        if (!glContext.hasExtension("GL_EXT_memory_object"))
+            return {};
+        const auto glGetUnsignedBytevEXT =
+            reinterpret_cast<PFNGLGETUNSIGNEDBYTEVEXTPROC>(
+                glContext.getProcAddress("glGetUnsignedBytevEXT"));
+        if (!glGetUnsignedBytevEXT)
+            return {};
 
-    auto identity = AdapterIdentity();
-    static_assert(GL_UUID_SIZE_EXT == sizeof(UUID));
-    auto numDeviceUuids = GLint{};
-    glGetIntegerv(GL_NUM_DEVICE_UUIDS_EXT, &numDeviceUuids);
-    for (auto i = 0; i < std::min(numDeviceUuids, 4); ++i)
-        glGetUnsignedBytei_vEXT(GL_DEVICE_UUID_EXT, i,
-            identity.deviceUUIDs[i].data());
-    glGetUnsignedBytevEXT(GL_DRIVER_UUID_EXT, identity.driverUUID.data());
-    return identity;
-}
+        const auto glGetUnsignedBytei_vEXT =
+            reinterpret_cast<PFNGLGETUNSIGNEDBYTEI_VEXTPROC>(
+                glContext.getProcAddress("glGetUnsignedBytei_vEXT"));
+        if (!glGetUnsignedBytei_vEXT)
+            return {};
+
+        auto identity = AdapterIdentity();
+        static_assert(GL_UUID_SIZE_EXT == sizeof(UUID));
+        auto numDeviceUuids = GLint{};
+        glGetIntegerv(GL_NUM_DEVICE_UUIDS_EXT, &numDeviceUuids);
+        for (auto i = 0; i < std::min(numDeviceUuids, 4); ++i)
+            glGetUnsignedBytei_vEXT(GL_DEVICE_UUID_EXT, i,
+                identity.deviceUUIDs[i].data());
+        glGetUnsignedBytevEXT(GL_DRIVER_UUID_EXT, identity.driverUUID.data());
+        return identity;
+    }
+} // namespace
 
 class VKRenderer::Worker final : public QObject
 {
@@ -82,6 +86,7 @@ public:
         } catch (const std::exception &ex) {
             mMessages +=
                 MessageList::insert(0, MessageType::RenderingFailed, ex.what());
+            shutdown();
         }
         Q_EMIT taskConfigured();
     }
@@ -123,6 +128,7 @@ private:
         const auto error = [&](const QString &message) {
             mMessages += MessageList::insert(0, MessageType::VulkanNotAvailable,
                 message);
+            shutdown();
         };
 
 #if defined(KDGPU_PLATFORM_WIN32)
@@ -147,21 +153,16 @@ private:
 #if !defined(NDEBUG)
             .layers = { "VK_LAYER_KHRONOS_validation" },
 #endif
-            .extensions = {
-                VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
-                VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME
-            }
         };
         mInstance = mApi->createInstance(instanceOptions);
         if (!mInstance.isValid() || mInstance.adapters().empty())
             return error("");
 
         mAdapter = [&]() -> KDGpu::Adapter * {
-            const auto identity = getOpenGLAdapterIdentity();
             for (auto adapter : mInstance.adapters()) {
                 if (std::ranges::equal(adapter->properties().driverUUID,
-                        identity.driverUUID))
-                    for (const auto &deviceUUID : identity.deviceUUIDs)
+                        gAdapterIdentity.driverUUID))
+                    for (const auto &deviceUUID : gAdapterIdentity.deviceUUIDs)
                         if (std::ranges::equal(adapter->properties().deviceUUID,
                                 deviceUUID))
                             return adapter;
@@ -171,31 +172,25 @@ private:
         if (!mAdapter)
             return error("no adapter found");
 
-        auto deviceOptions =
-            KDGpu::DeviceOptions{ .requestedFeatures = mAdapter->features() };
-        deviceOptions.extensions = {
-            VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME,
-            VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME,
-#if defined(KDGPU_PLATFORM_WIN32)
-            VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME,
-            VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME,
-#endif
-        };
-        mDevice = mAdapter->createDevice(deviceOptions);
+        mDevice = mAdapter->createDevice(KDGpu::DeviceOptions{
+            .requestedFeatures = mAdapter->features(),
+        });
+        if (!mDevice.isValid())
+            return error("creating device failed");
 
-        const auto requiredFlags =
+        const auto requiredQueueFlags =
             KDGpu::QueueFlags(KDGpu::QueueFlagBits::GraphicsBit
                 | KDGpu::QueueFlagBits::TransferBit
                 | KDGpu::QueueFlagBits::ComputeBit);
         for (const auto &queue : mDevice.queues())
-            if ((queue.flags() & requiredFlags) == requiredFlags) {
+            if ((queue.flags() & requiredQueueFlags) == requiredQueueFlags) {
                 mQueue = queue;
                 break;
             }
         if (!mQueue.isValid())
             return error("no general queue found");
 
-        auto &rm = *mDevice.graphicsApi()->resourceManager();
+        const auto &rm = *mDevice.graphicsApi()->resourceManager();
         const auto vkInstance =
             static_cast<KDGpu::VulkanInstance *>(rm.getInstance(mInstance));
         const auto vkAdapter =
@@ -205,16 +200,21 @@ private:
         const auto vkQueue =
             static_cast<KDGpu::VulkanQueue *>(rm.getQueue(mQueue));
 
-        auto poolInfo = VkCommandPoolCreateInfo{};
-        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        poolInfo.queueFamilyIndex = 0;
-        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        vkCreateCommandPool(vkDevice->device, &poolInfo, nullptr,
-            &mKtxCommandPool);
+        const auto commandPoolInfo = VkCommandPoolCreateInfo{
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        };
+        if (vkCreateCommandPool(vkDevice->device, &commandPoolInfo, nullptr,
+                &mKtxCommandPool)
+            != VK_SUCCESS)
+            return error("creating command pool failed");
 
-        ktxVulkanDeviceInfo_ConstructEx(&mKtxDeviceInfo, vkInstance->instance,
-            vkAdapter->physicalDevice, vkDevice->device, vkQueue->queue,
-            mKtxCommandPool, nullptr, nullptr);
+        if (ktxVulkanDeviceInfo_ConstructEx(&mKtxDeviceInfo,
+                vkInstance->instance, vkAdapter->physicalDevice,
+                vkDevice->device, vkQueue->queue, mKtxCommandPool, nullptr,
+                nullptr)
+            != KTX_SUCCESS)
+            return error("creating device info for KTX failed");
 
         mRenderer.mDevice = &mDevice;
         mRenderer.mQueue = &mQueue;
@@ -223,14 +223,24 @@ private:
 
     void shutdown()
     {
-        ktxVulkanDeviceInfo_Destruct(&mKtxDeviceInfo);
+        if (mDevice.isValid()) {
+            ktxVulkanDeviceInfo_Destruct(&mKtxDeviceInfo);
 
-        auto &rm = *mDevice.graphicsApi()->resourceManager();
-        auto vkDevice =
-            static_cast<KDGpu::VulkanDevice *>(rm.getDevice(mDevice));
-        vkDestroyCommandPool(vkDevice->device, mKtxCommandPool, nullptr);
+            if (mKtxCommandPool) {
+                const auto &rm = *mDevice.graphicsApi()->resourceManager();
+                const auto vkDevice =
+                    static_cast<KDGpu::VulkanDevice *>(rm.getDevice(mDevice));
+                vkDestroyCommandPool(vkDevice->device, mKtxCommandPool,
+                    nullptr);
+            }
+        }
+        mQueue = {};
+        mDevice = {};
+        mInstance = {};
+        mApi.reset();
 
         mRenderer.mDevice = nullptr;
+        mRenderer.mQueue = nullptr;
         mRenderer.mKtxDeviceInfo = nullptr;
     }
 
@@ -251,6 +261,8 @@ VKRenderer::VKRenderer(QObject *parent)
     , Renderer(RenderAPI::Vulkan)
     , mWorker(std::make_unique<Worker>(this))
 {
+    gAdapterIdentity = getOpenGLAdapterIdentity();
+
     mWorker->moveToThread(&mThread);
 
     connect(this, &VKRenderer::configureTask, mWorker.get(),
