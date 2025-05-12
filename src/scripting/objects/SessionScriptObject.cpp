@@ -828,26 +828,27 @@ quint64 SessionScriptObject::getBufferHandle(QJSValue itemDesc)
     return 0;
 }
 
-QJSValue SessionScriptObject::getShaderInterface(QJSValue itemDesc)
+QJSValue SessionScriptObject::processShader(QJSValue itemDesc,
+    QString processType)
 {
     if (const auto shader = getItem<Shader>(itemDesc)) {
-        auto result = QString();
+        auto result = QVariant();
         auto renderer = Singletons::sessionRenderer();
         auto processSource = ProcessSource(renderer);
         connect(&processSource, &ProcessSource::outputChanged,
-            [&](QString output) { result = output; });
+            [&](QVariant output) { result = output; });
 
         processSource.setFileName(shader->fileName);
         processSource.setSourceType(
             getSourceType(shader->shaderType, shader->language));
-        processSource.setProcessType("json");
+        processSource.setProcessType(processType);
         processSource.update();
 
         // block until process source signaled completion
         while (processSource.updating())
             qApp->processEvents(QEventLoop::WaitForMoreEvents);
 
-        return result;
+        return QJSValue(mEngine->toManagedValue(result));
     }
     return QJSValue::UndefinedValue;
 }

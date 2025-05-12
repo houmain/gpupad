@@ -304,7 +304,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(mMessageWindow.get(), &MessageWindow::messagesAdded, this,
         &MainWindow::openMessageDock);
     connect(&synchronizeLogic, &SynchronizeLogic::outputChanged,
-        mOutputWindow.get(), &OutputWindow::setText);
+        [this](const QVariant &value) {
+            mOutputWindow->setText(value.toString());
+        });
     connect(&Singletons::inputState(), &InputState::mouseChanged,
         &synchronizeLogic, &SynchronizeLogic::handleMouseStateChanged);
     connect(&Singletons::inputState(), &InputState::keysChanged,
@@ -509,30 +511,30 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
     QMainWindow::keyReleaseEvent(event);
 }
 
-void MainWindow::setToolbarIconVisible(QAction *action, bool visible) {
-  if (action->isVisible() == visible)
-    return;
+void MainWindow::setToolbarIconVisible(QAction *action, bool visible)
+{
+    if (action->isVisible() == visible)
+        return;
 
-  // do not simply set visible of action, since it would also
-  // disappear in menu. Therefore replace with an invisble
-  // placeholder, which allows to restore the original
-  auto menu = mUi->toolBarMain;
-  if (!visible) {
-    auto placeholder = new QAction(menu);
-    placeholder->setObjectName(action->objectName());
-    placeholder->setData(QVariant::fromValue(action));
-    placeholder->setText(action->text());
-    placeholder->setVisible(false);
-    menu->insertAction(action, placeholder);
-    menu->removeAction(action);
-  }
-  else {
-    auto placeholder = action;
-    action = qvariant_cast<QAction*>(placeholder->data());
-    menu->insertAction(placeholder, action);
-    menu->removeAction(placeholder);
-    placeholder->deleteLater();
-  }
+    // do not simply set visible of action, since it would also
+    // disappear in menu. Therefore replace with an invisble
+    // placeholder, which allows to restore the original
+    auto menu = mUi->toolBarMain;
+    if (!visible) {
+        auto placeholder = new QAction(menu);
+        placeholder->setObjectName(action->objectName());
+        placeholder->setData(QVariant::fromValue(action));
+        placeholder->setText(action->text());
+        placeholder->setVisible(false);
+        menu->insertAction(action, placeholder);
+        menu->removeAction(action);
+    } else {
+        auto placeholder = action;
+        action = qvariant_cast<QAction *>(placeholder->data());
+        menu->insertAction(placeholder, action);
+        menu->removeAction(placeholder);
+        placeholder->deleteLater();
+    }
 }
 
 QMenu *MainWindow::createPopupMenu()

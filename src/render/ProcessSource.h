@@ -3,6 +3,7 @@
 #include "RenderTask.h"
 #include "SourceType.h"
 #include "MessageList.h"
+#include <QVariant>
 
 class ShaderBase;
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
@@ -21,7 +22,7 @@ public:
     void clearMessages();
 
 Q_SIGNALS:
-    void outputChanged(QString output);
+    void outputChanged(QVariant output);
 
 private:
     void prepare(bool itemsChanged, EvaluationType) override;
@@ -35,5 +36,5 @@ private:
     MessagePtrSet mMessages;
     bool mValidateSource{};
     QString mProcessType{};
-    QString mOutput;
+    QVariant mOutput;
 };

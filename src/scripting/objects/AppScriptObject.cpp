@@ -195,8 +195,11 @@ QJSValue AppScriptObject::enumerateFiles(QString pattern)
     return result;
 }
 
-QJSValue AppScriptObject::writeTextFile(QString fileName, const QString &string)
+QJSValue AppScriptObject::writeTextFile(QString fileName, QString string)
 {
+    if (FileDialog::isEmptyOrUntitled(fileName))
+        return false;
+
     fileName = getAbsolutePath(fileName);
     auto file = QFile(fileName);
     if (!file.open(QFile::WriteOnly | QFile::Text))
@@ -208,8 +211,29 @@ QJSValue AppScriptObject::writeTextFile(QString fileName, const QString &string)
     return true;
 }
 
+QJSValue AppScriptObject::writeBinaryFile(QString fileName, QByteArray binary)
+{
+    if (FileDialog::isEmptyOrUntitled(fileName))
+        return false;
+    if (binary.isNull())
+        return false;
+
+    fileName = getAbsolutePath(fileName);
+    auto file = QFile(fileName);
+    if (!file.open(QFile::WriteOnly))
+        return false;
+    file.write(binary);
+    file.close();
+
+    Singletons::fileCache().invalidateFile(fileName);
+    return true;
+}
+
 QJSValue AppScriptObject::readTextFile(QString fileName)
 {
+    if (FileDialog::isEmptyOrUntitled(fileName))
+        return {};
+
     auto source = QString{};
     if (!Singletons::fileCache().getSource(getAbsolutePath(fileName), &source))
         return QJSValue::UndefinedValue;

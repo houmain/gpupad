@@ -389,6 +389,14 @@ QString ShaderBase::generateReadableSpirv()
     return Spirv::disassemble(compileSpirv(printf));
 }
 
+QByteArray ShaderBase::generateBinarySpirv()
+{
+    auto printf = RemoveShaderPrintf();
+    const auto spirv = compileSpirv(printf);
+    return QByteArray(reinterpret_cast<const char *>(spirv.spirv().data()),
+        spirv.spirv().size() * sizeof(uint32_t));
+}
+
 QString ShaderBase::generateGLSLangAST()
 {
     auto usedFileNames = QStringList();

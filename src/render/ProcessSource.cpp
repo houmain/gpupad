@@ -166,6 +166,8 @@ void ProcessSource::render()
             mOutput = removeLineDirectives(mShader->preprocess());
         } else if (mProcessType == "spirv") {
             mOutput = mShader->generateReadableSpirv();
+        } else if (mProcessType == "spirvBinary") {
+            mOutput = mShader->generateBinarySpirv();
         } else if (mProcessType == "ast") {
             mOutput = mShader->generateGLSLangAST();
         } else if (mProcessType == "assembly") {
@@ -178,7 +180,7 @@ void ProcessSource::render()
         } else if (mProcessType == "json") {
             mOutput = mShader->getJsonInterface();
         }
-        if (mOutput.isEmpty())
+        if (!mOutput.isValid())
             mOutput = "not available";
     }
 
@@ -191,5 +193,6 @@ void ProcessSource::render()
 
 void ProcessSource::finish()
 {
-    Q_EMIT outputChanged(mOutput);
+    if (mOutput.isValid())
+        Q_EMIT outputChanged(mOutput);
 }

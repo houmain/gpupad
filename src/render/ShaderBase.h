@@ -22,6 +22,7 @@ public:
     Spirv compileSpirv(ShaderPrintf &printf);
     QString preprocess();
     QString generateReadableSpirv();
+    QByteArray generateBinarySpirv();
     QString generateGLSLangAST();
     QString getJsonInterface();
 

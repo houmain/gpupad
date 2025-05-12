@@ -72,7 +72,7 @@ public:
 
     Q_INVOKABLE quint64 getTextureHandle(QJSValue itemDesc);
     Q_INVOKABLE quint64 getBufferHandle(QJSValue itemDesc);
-    Q_INVOKABLE QJSValue getShaderInterface(QJSValue itemDesc);
+    Q_INVOKABLE QJSValue processShader(QJSValue itemDesc, QString processType);
 
 private:
     friend SessionScriptObject_ItemObject;

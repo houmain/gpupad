@@ -49,7 +49,7 @@ public:
         int *layers);
 
 Q_SIGNALS:
-    void outputChanged(QString assembly);
+    void outputChanged(QVariant output);
 
 private:
     void invalidateRenderSession();

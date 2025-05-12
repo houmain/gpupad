@@ -34,7 +34,8 @@ public:
     Q_INVOKABLE QJSValue callAction(QString id, QJSValue arguments);
     Q_INVOKABLE QJSValue openFileDialog(QString pattern);
     Q_INVOKABLE QJSValue enumerateFiles(QString pattern);
-    Q_INVOKABLE QJSValue writeTextFile(QString fileName, const QString &string);
+    Q_INVOKABLE QJSValue writeTextFile(QString fileName, QString string);
+    Q_INVOKABLE QJSValue writeBinaryFile(QString fileName, QByteArray binary);
     Q_INVOKABLE QJSValue readTextFile(QString fileName);
 
     void update();
