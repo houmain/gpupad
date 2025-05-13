@@ -127,7 +127,10 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     connect(mShaderProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::ShaderExtensions); });
     connect(mShaderProperties->fileBrowse, &QToolButton::clicked,
-        [this]() { openCurrentItemFile(FileDialog::ShaderExtensions); });
+        [this]() { 
+          if (openCurrentItemFile(FileDialog::ShaderExtensions))
+              deduceShaderType();
+        });
     connect(mShaderProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(Item::Type::Shader); });
     connect(mShaderProperties->file, &ReferenceComboBox::activated, this,
@@ -600,11 +603,14 @@ void PropertiesEditor::saveCurrentItemFileAs(FileDialog::Options options)
     }
 }
 
-void PropertiesEditor::openCurrentItemFile(FileDialog::Options options)
+bool PropertiesEditor::openCurrentItemFile(FileDialog::Options options)
 {
     switchToCurrentFileItemDirectory();
-    if (Singletons::fileDialog().exec(options))
+    if (Singletons::fileDialog().exec(options)) {
         setCurrentItemFile(Singletons::fileDialog().fileName());
+        return true;
+    }
+    return false;
 }
 
 void PropertiesEditor::updateBlockWidgets(const QModelIndex &index)

@@ -51,7 +51,7 @@ public:
     void setCurrentModelIndex(const QModelIndex &index);
     void setCurrentItemFile(const QString &fileName);
     void saveCurrentItemFileAs(FileDialog::Options options);
-    void openCurrentItemFile(FileDialog::Options options);
+    bool openCurrentItemFile(FileDialog::Options options);
     QVariantList getFileNames(Item::Type type, bool addNull = false) const;
     QVariantList getItemIds(Item::Type type, bool addNull = false) const;
     QString getItemName(ItemId itemId) const;
