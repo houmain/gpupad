@@ -2,10 +2,13 @@
 #include "ItemEnums.h"
 #include <QMetaEnum>
 
-Item::Type getItemTypeByName(const QString &name)
+Item::Type getItemTypeByName(const QString &name, bool *ok)
 {
-    auto metaType = QMetaEnum::fromType<ItemEnums::ItemType>();
-    return static_cast<Item::Type>(metaType.keyToValue(qUtf8Printable(name)));
+    const auto metaType = QMetaEnum::fromType<ItemEnums::ItemType>();
+    const auto index = metaType.keyToValue(qUtf8Printable(name));
+    if (ok)
+        *ok = (index >= 0);
+    return (index < 0 ? Item::Type::Group : static_cast<Item::Type>(index));
 }
 
 int getFieldSize(const Field &field)

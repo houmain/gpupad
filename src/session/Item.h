@@ -302,7 +302,7 @@ struct CallKind
     bool trace;
 };
 
-Item::Type getItemTypeByName(const QString &name);
+Item::Type getItemTypeByName(const QString &name, bool *ok = nullptr);
 int getFieldSize(const Field &field);
 int getFieldRowOffset(const Field &field);
 int getBlockStride(const Block &block);

@@ -45,7 +45,6 @@ public:
     void beginBackgroundUpdate(IScriptRenderSession *renderSession);
     void endBackgroundUpdate();
     bool available() const;
-    QJSValue getItem(QModelIndex index);
 
     QJSValue selection() { return mSelectionProperty; }
     ItemId itemId();
@@ -85,12 +84,23 @@ private:
     void withSessionModel(UpdateFunction &&updateFunction);
     ItemId getItemId(const QJSValue &itemDesc);
     const Item *getItem(const QJSValue &itemDesc);
+    QJSValue createItemObject(ItemId itemId);
     QJSValue insertItemAt(const Item *parent, int row, QJSValue object);
 
     template <typename T>
     const T *getItem(const QJSValue &itemDesc)
     {
         return castItem<T>(getItem(itemDesc));
+    }
+
+    template <typename AddElements>
+    QJSValue makeArray(AddElements &&addElements)
+    {
+        auto array = engine().newArray();
+        auto i = 0;
+        addElements(
+            [&](const QJSValue &element) { array.setProperty(i++, element); });
+        return array;
     }
 
     QJSEngine *mEngine{};
