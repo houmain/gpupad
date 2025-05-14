@@ -172,6 +172,11 @@ private:
         if (!mAdapter)
             return error("no adapter found");
 
+        SPDLOG_LOGGER_INFO(KDGpu::Logger::logger(),
+            "Initializing Vulkan on the {} {}",
+            adapterDeviceTypeToString(mAdapter->properties().deviceType),
+            mAdapter->properties().deviceName);
+
         mDevice = mAdapter->createDevice(KDGpu::DeviceOptions{
             .requestedFeatures = mAdapter->features(),
         });
