@@ -703,7 +703,18 @@ QJSValue SessionScriptObject::findItems(QJSValue originIdent,
 {
     return makeArray([&](auto add) {
         if (itemIdent.isCallable()) {
-            threadSessionModel().forEachItem([&](const Item &item) {
+            const auto &session = threadSessionModel();
+            auto originIndex = session.sessionItemIndex();
+            if (!originIdent.isUndefined()) {
+                const auto origin = findSessionItem(originIdent);
+                if (!origin) {
+                    engine().throwError(QStringLiteral("Invalid origin"));
+                    return;
+                }
+                originIndex = session.getIndex(origin);
+            }
+
+            session.forEachItem(originIndex, [&](const Item &item) {
                 if (item.type != Item::Type::Root) {
                     auto itemObject = createItemObject(item.id);
                     if (itemIdent.call({ itemObject }).toBool())

@@ -32,7 +32,7 @@ namespace {
             QRegularExpression::MultilineOption);
 
         for (auto match = regex.match(*source); match.hasMatch();
-             match = regex.match(*source)) {
+            match = regex.match(*source)) {
             *maxVersion = qMax(*maxVersion, match.captured().trimmed());
             source->remove(match.capturedStart(), match.capturedLength());
             return true;
@@ -47,7 +47,7 @@ namespace {
                 QRegularExpression::MultilineOption);
 
         for (auto match = regex.match(*source); match.hasMatch();
-             match = regex.match(*source)) {
+            match = regex.match(*source)) {
             *extensions += match.captured();
             source->remove(match.capturedStart(1), match.capturedLength(1));
         }
@@ -99,7 +99,7 @@ namespace {
         static const auto regex = QRegularExpression(R"(^\s*#include([^\n]*))",
             QRegularExpression::MultilineOption);
         for (auto match = regex.match(source); match.hasMatch();
-             match = regex.match(source)) {
+            match = regex.match(source)) {
             source.remove(match.capturedStart(), match.capturedLength());
             auto include = match.captured(1).trimmed();
             if ((include.startsWith('<') && include.endsWith('>'))
@@ -148,7 +148,7 @@ namespace {
     QString completeFunctionName(const QString &source, const QString &prefix)
     {
         for (auto begin = source.indexOf(prefix); begin > 0;
-             begin = source.indexOf(prefix, begin + 1)) {
+            begin = source.indexOf(prefix, begin + 1)) {
             // must be beginning of word
             if (!source[begin - 1].isSpace())
                 continue;
@@ -389,10 +389,13 @@ QString ShaderBase::generateReadableSpirv()
     return Spirv::disassemble(compileSpirv(printf));
 }
 
-QByteArray ShaderBase::generateBinarySpirv()
+QVariant ShaderBase::generateBinarySpirv()
 {
     auto printf = RemoveShaderPrintf();
     const auto spirv = compileSpirv(printf);
+    if (!spirv)
+        for (auto message : resetMessages())
+            return message->text;
     return QByteArray(reinterpret_cast<const char *>(spirv.spirv().data()),
         spirv.spirv().size() * sizeof(uint32_t));
 }

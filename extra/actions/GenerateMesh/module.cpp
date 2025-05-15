@@ -9,6 +9,7 @@
 # pragma warning(disable: 4244) // conversion from 'double' to 'float'
 # pragma warning(disable: 4305) // truncation from 'double' to 'float'
 # pragma warning(disable: 4456) // declaration of 'a' hides previous local declaration
+# pragma warning(disable: 4018) // '<': signed/unsigned mismatch
 #endif
 
 #if defined(__GNUC__)
