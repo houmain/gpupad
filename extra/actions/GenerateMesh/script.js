@@ -4,20 +4,6 @@ const manifest = {
   name: "&Generate Mesh..."
 }
 
-function hasType(type) {
-  return (item) => (item.type == type)
-}
-
-function findItem(parent, predicate) {
-  for (let i = parent?.items?.length - 1; i >= 0; --i)
-    if (predicate(parent.items[i]))
-        return parent.items[i]
-}
-
-function findSessionItem(predicate) {
-  return findItem(app.session, predicate)
-}
-
 class Script {
   constructor() {
     this.library = app.loadLibrary("GenerateMesh")
@@ -66,23 +52,24 @@ class Script {
     ui.hasSubdivisions = lib.hasSubdivisions(typeIndex)
     ui.hasSeed = lib.hasSeed(typeIndex)
     
-    if (app.session.item(this.buffer))
+    if (app.session.findItem(this.buffer))
       this.generate()
   }
   
   insert() {
-    if (this.settings.group)
-      this.group = this.settings.group
+    this.group = app.session.findItem(this.settings.group)
     
     if (!this.group)
-      this.group = app.session.insertItem(this.settings.parent || app.session, {
-        name: (this.settings.name || 'Mesh'),
-        type: 'Group',
-        inlineScope: true,
-        dynamic: this.settings.dynamic,
-      })    
+      this.group =
+        app.session.insertItem(this.settings.parent || app.session, {
+          name: (this.settings.name || 'Mesh'),
+          type: 'Group',
+          inlineScope: true,
+          dynamic: this.settings.dynamic,
+        })
 
-    this.buffer = findItem(this.group, hasType('Buffer')) ||
+    this.buffer =
+      app.session.findItem(this.group, item => item.type == 'Buffer') ||
       app.session.insertItem(this.group, {
         name: 'Buffer',
         type: 'Buffer',
@@ -112,7 +99,8 @@ class Script {
     this.vertices = this.buffer.items[0]
     this.indices = this.buffer.items[1]
     
-    this.stream = findItem(this.group, hasType('Stream')) ||
+    this.stream =
+      app.session.findItem(this.group, item => item.type == 'Stream') ||
       app.session.insertItem(this.group, {
         name: 'Stream',
         type: 'Stream',
@@ -132,7 +120,7 @@ class Script {
         ]
       })
     
-    this.drawCall = findItem(this.group, hasType('Call'))
+    this.drawCall = app.session.findItem(this.group, item => item.type == 'Call')
     
     app.session.replaceItems(this.group, [this.buffer, this.stream, this.drawCall])
     
@@ -196,10 +184,10 @@ class Script {
     }
     
     if (!this.drawCall) {
-      const target = findSessionItem(hasType('Target'))
+      const target = app.session.findItem(item => item.type == 'Target')
 
-      const program = findSessionItem(
-        (item) => (item.type == 'Program' &&
+      const program = app.session.findItem(
+        item => (item.type == 'Program' &&
           item.items[0]?.shaderType == "Vertex"))
 
       this.drawCall = app.session.insertItem(this.group, {

@@ -18,7 +18,7 @@ if (index < this.files.length) {
   group = app.callAction("ImportOBJ", {
     fileName = this.files[index],
     name = "Mesh",
-    group = app.session.item("Mesh"),
+    group = app.session.findItem("Mesh"),
     indexed = true,
     dynamic = true,
     normalize = true,
@@ -30,7 +30,7 @@ else {
   const meshType = meshTypes[index - this.files.length]
   group = app.callAction("GenerateMesh", {
     name = "Mesh",
-    group = app.session.item("Mesh"),
+    group = app.session.findItem("Mesh"),
     indexed = true,
     dynamic = true,
     type = meshType,

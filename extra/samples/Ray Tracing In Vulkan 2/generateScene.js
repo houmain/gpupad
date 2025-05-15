@@ -1,10 +1,10 @@
 
-const scene = app.session.item("Scene")
+const scene = app.session.findItem("Scene")
 
 let mesh = app.callAction("GenerateMesh", {
   name: "Mesh",
   type: "Trefoil Knot",
-  group: app.session.item("Scene/Mesh"),
+  group: app.session.findItem("Scene/Mesh"),
   parent: scene,
   slices: 50,
   stacks: 180,
@@ -15,7 +15,7 @@ let mesh = app.callAction("GenerateMesh", {
 })
 
 // TODO: remove
-mesh = app.session.item(mesh)
+mesh = app.session.findItem(mesh)
 
 const vertices = mesh.items[0].items[0]
 const indices = mesh.items[0].items[1]
@@ -36,15 +36,15 @@ const as = {
 }
 
 // TODO: remove
-app.session.clearItems("Scene/AccelerationStructure")
+if (app.session.findItem("Scene/AccelerationStructure"))
+  app.session.clearItems("Scene/AccelerationStructure")
 
 app.session.replaceItems(scene, [
   mesh,
   as,
 ])
 
-app.session.item("Trace Rays").accelerationStructureId = as.id
-
+app.session.findItem("Trace Rays").accelerationStructureId = as.id
 
 function Lambertian(diffuse, textureId = -1) {
 	return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 0];
@@ -73,7 +73,7 @@ let materials = [
   Metallic([0.7, 0.6, 0.5], 0.0),
 ];
 
-Materials = app.session.item("Materials/Material")
+Materials = app.session.findItem("Materials/Material")
 
 // TODO: remove
 Materials.rowCount = materials.length
@@ -81,6 +81,6 @@ Materials.rowCount = materials.length
 materials = [].concat.apply([], materials)
 app.session.setBufferData("Materials", materials)
 
-app.session.item("Bindings/MaterialArray").blockId = Materials.id
-app.session.item("Bindings/VertexArray").blockId = vertices.id
-app.session.item("Bindings/IndexArray").blockId = indices.id
+app.session.findItem("Bindings/MaterialArray").blockId = Materials.id
+app.session.findItem("Bindings/VertexArray").blockId = vertices.id
+app.session.findItem("Bindings/IndexArray").blockId = indices.id

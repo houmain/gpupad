@@ -2,7 +2,7 @@
 // based on DirectX SDK's Direct3D 11 sample
 // https://github.com/walbourn/directx-sdk-samples/tree/main/ComputeShaderSort11
 
-let Dynamic = app.session.item('Dynamic')
+let Dynamic = app.session.findItem('Dynamic')
 if (!Dynamic)
   Dynamic = app.session.insertItem({
     type: 'Group',
@@ -11,12 +11,12 @@ if (!Dynamic)
   })
 app.session.clearItems(Dynamic)
 
-let Buffer1 = app.session.item('Buffer1')
-let Buffer2 = app.session.item('Buffer2')
-let Buffer1Block = app.session.item('Buffer1/Block')
-let Buffer2Block = app.session.item('Buffer2/Block')
-let BitonicSort = app.session.item('BitonicSort')
-let MatrixTranspose = app.session.item('MatrixTranspose')
+let Buffer1 = app.session.findItem('Buffer1')
+let Buffer2 = app.session.findItem('Buffer2')
+let Buffer1Block = app.session.findItem('Buffer1/Block')
+let Buffer2Block = app.session.findItem('Buffer2/Block')
+let BitonicSort = app.session.findItem('BitonicSort')
+let MatrixTranspose = app.session.findItem('MatrixTranspose')
 
 function SetConstants(level, levelMask, width, height) {
   app.session.insertItem(Dynamic, {

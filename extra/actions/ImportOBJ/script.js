@@ -4,24 +4,6 @@ const manifest = {
   name: "&Import Wavefront OBJ...",
 }
 
-function hasName(name) {
-  return (item) => (item.name == name)
-}
-
-function hasType(type) {
-  return (item) => (item.type == type)
-}
-
-function findItem(parent, predicate) {
-  for (let i = parent?.items?.length - 1; i >= 0; --i)
-    if (predicate(parent.items[i]))
-        return parent.items[i]
-}
-
-function findSessionItem(predicate) {
-  return findItem(app.session, predicate)
-}
-
 class Script {
   constructor() {
     this.library = app.loadLibrary("ImportOBJ")
@@ -64,9 +46,8 @@ class Script {
       throw new Error(error)
     lib.setSettings(this.model, JSON.stringify(this.settings))
     
-    if (this.settings.group)
-      this.group = this.settings.group
-    
+    this.group = app.session.findItem(this.settings.group)
+
     if (!this.group)
       this.group = app.session.insertItem(this.settings.parent || app.session, {
         name: (this.settings.name || this.getBaseName(this.settings.fileName)),
@@ -74,19 +55,21 @@ class Script {
         inlineScope: true,
       })
 
-    this.buffer = findItem(this.group, hasType('Buffer')) ||
+    this.buffer =
+      app.session.findItem(this.group, item => item.type == 'Buffer') ||
       app.session.insertItem(this.group, {
         name: 'Buffer',
         type: 'Buffer',
       })
     
-    this.streams = findItem(this.group, hasName('Streams')) ||
+    this.streams =
+      app.session.findItem(this.group, 'Streams') ||
       app.session.insertItem(this.group, {
         name: 'Streams',
         type: 'Group',
       })
     
-    this.drawCalls = findItem(this.group, hasName('Calls'))
+    this.drawCalls = app.session.findItem(this.group, 'Calls')
     
     app.session.replaceItems(this.group, [this.buffer, this.streams, this.drawCalls])
     
@@ -187,7 +170,7 @@ class Script {
       }
     }
     // TODO: update items on insert
-    this.buffer = app.session.item(this.buffer)
+    this.buffer = app.session.findItem(this.buffer)
   }
   
   updateStreams() {
@@ -239,7 +222,7 @@ class Script {
     app.session.clearItems(this.streams)
     app.session.replaceItems(this.streams, streams)
     // TODO: update items on insert
-    this.streams = app.session.item(this.streams)
+    this.streams = app.session.findItem(this.streams)
   }
   
   updateDrawCalls() {
@@ -256,10 +239,10 @@ class Script {
         type: 'Group',
       })
 
-    const targetId = findSessionItem(hasType("Target"))?.id
+    const targetId = app.session.findItem(item => item.type == "Target")?.id
 
-    const programId = findSessionItem(
-      (item) => (item.type == 'Program' &&
+    const programId = app.session.findItem(
+      item => (item.type == 'Program' &&
         item.items[0]?.shaderType == "Vertex"))?.id
 
     let drawCalls = []

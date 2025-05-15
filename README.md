@@ -98,41 +98,44 @@ Initial documentation of the available script objects:
 
 ### App
 
-- `frameIndex: number`
+- `frameIndex: Number`
 - `keyboard: Keyboard`
 - `mouse: Mouse`
 - `session: Session`
-- `callAction(id, [arguments]): result`
-- `enumerateFiles(pattern): filenames`
-- `loadLibrary(fileName): Library`
-- `openEditor(fileName): bool`
-- `openFileDialog(pattern): filename`
-- `readTextFile(fileName): string`
-- `writeTextFile(fileName, string): bool`
+- `callAction(id, arguments...) -> result`
+- `enumerateFiles(pattern) -> [filename]`
+- `loadLibrary(filename) -> Library?`
+- `openEditor(filename) -> Bool`
+- `openFileDialog(pattern) -> filename: String?`
+- `readTextFile(filename) -> String?`
+- `writeTextFile(filename, String) -> Bool`
+- `writeBinaryFile(filename, Data) -> Bool`
 
 ### Session
-
-- `selection: Items`
-- `item(id): Item`
-- `parentItem(id): Item`
-- `insertItem([parent item/id], object): Item`
-- `insertItemAfter(sibling item/id, object): Item`
-- `insertItemBefore(sibling item/id, object): Item`
-- `deleteItem(item/id): Item`
-- `clearItems([item/id]): Item`
-- `replaceItems(item/id, array)`
-- `setBlockData(item/id, data)`
-- `setBufferData(item/id, data)`
-- `setScriptSource(item/id, data)`
-- `setShaderSource(item/id, data)`
-- `setTextureData(item/id, data)`
-- `getShaderInterface(item/id): string`
-- `getBufferHandle(item/id): uint64`
-- `getTextureHandle(item/id): uint64`
+- `name: String`
+- `items: [Item]`
+- `selection: [Item]`
+- `findItem(origin: ItemIdent?, ItemIdent) -> Item?`
+- `findItems(origin: ItemIdent?, ItemIdent) -> [Item]`
+- `getParentItem(ItemIdent) -> Item?`
+- `insertItem(parent: ItemIdent?, object) -> Item`
+- `insertItemAfter(sibling: ItemIdent, object) -> Item`
+- `insertItemBefore(sibling: ItemIdent, object) -> Item`
+- `deleteItem(ItemIdent)`
+- `clearItems(ItemIdent)`
+- `replaceItems(parent: ItemIdent, [Object])`
+- `setBlockData(ItemIdent, Data)`
+- `setBufferData(ItemIdent, Data)`
+- `setScriptSource(ItemIdent, Data)`
+- `setShaderSource(ItemIdent, Data)`
+- `setTextureData(ItemIdent, Data)`
+- `getProcessShader(shader: ItemIdent, type: String) -> String/Data`
+- `getBufferHandle(ItemIdent) -> Number`
+- `getTextureHandle(ItemIdent) -> Number`
 
 ### Mouse
 
-- `button: [state]` - The state of each mouse button (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
+- `button: [State]` - The state of each mouse button (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
 - `coord: [x,y]`
 - `delta: [x,y]`
 - `fragCoord: [x,y]`
@@ -141,7 +144,7 @@ Initial documentation of the available script objects:
 
 ### Keyboard
 
-- `keys: [state]` - The state of each key (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
+- `keys: [State]` - The state of each key (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
 
 ## Installation
 

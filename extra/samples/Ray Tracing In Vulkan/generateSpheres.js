@@ -88,9 +88,9 @@ for (let s of spheres) {
   aabbs.push([x - rad, y - rad, z - rad, x + rad, y + rad, z + rad])
 }
 
-const Spheres = app.session.item("Spheres")
-const Materials = app.session.item("Materials")
-const AABBs = app.session.item("AABBs")
+const Spheres = app.session.findItem("Spheres")
+const Materials = app.session.findItem("Materials")
+const AABBs = app.session.findItem("AABBs")
 
 Spheres.items[0].rowCount = spheres.length
 Materials.items[0].rowCount = spheres.length

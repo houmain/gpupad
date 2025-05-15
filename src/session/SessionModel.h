@@ -48,9 +48,15 @@ public:
     bool load(const QString &fileName);
 
     template <typename F> // F(const Item&)
+    void forEachItem(const QModelIndex &origin, const F &function) const
+    {
+        forEachItemRec(getItem(origin), false, function);
+    }
+
+    template <typename F> // F(const Item&)
     void forEachItem(const F &function) const
     {
-        forEachItemRec(getItem(QModelIndex{}), false, function);
+        forEachItem(QModelIndex{}, function);
     }
 
     template <typename F> // F(const Item&)
