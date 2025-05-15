@@ -54,6 +54,10 @@ public:
 
     Q_INVOKABLE QJSValue item(QJSValue itemDesc);
     Q_INVOKABLE QJSValue parentItem(QJSValue itemDesc);
+    Q_INVOKABLE QJSValue findItem(QJSValue predicate);
+    Q_INVOKABLE QJSValue findItem(QJSValue item, QJSValue predicate);
+    Q_INVOKABLE QJSValue findItems(QJSValue predicate);
+    Q_INVOKABLE QJSValue findItems(QJSValue item, QJSValue predicate);
     Q_INVOKABLE QJSValue insertItem(QJSValue object);
     Q_INVOKABLE QJSValue insertItem(QJSValue itemDesc, QJSValue object);
     Q_INVOKABLE QJSValue insertBeforeItem(QJSValue itemDesc, QJSValue object);

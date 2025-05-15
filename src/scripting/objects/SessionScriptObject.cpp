@@ -667,6 +667,42 @@ QJSValue SessionScriptObject::parentItem(QJSValue itemDesc)
     return createItemObject(item->parent->id);
 }
 
+QJSValue SessionScriptObject::findItem(QJSValue item, QJSValue predicate)
+{
+    auto result = QJSValue{};
+    threadSessionModel().forEachItem([&](const Item &item) {
+        if (result.isUndefined() && item.type != Item::Type::Root) {
+            auto itemObject = createItemObject(item.id);
+            if (predicate.call({ itemObject }).toBool())
+                result = itemObject;
+        }
+    });
+    return result;
+}
+
+QJSValue SessionScriptObject::findItem(QJSValue predicate)
+{
+    return findItem(QJSValue::UndefinedValue, predicate);
+}
+
+QJSValue SessionScriptObject::findItems(QJSValue item, QJSValue predicate)
+{
+    return makeArray([&](auto add) {
+        threadSessionModel().forEachItem([&](const Item &item) {
+            if (item.type != Item::Type::Root) {
+                auto itemObject = createItemObject(item.id);
+                if (predicate.call({ itemObject }).toBool())
+                    add(itemObject);
+            }
+        });
+    });
+}
+
+QJSValue SessionScriptObject::findItems(QJSValue predicate)
+{
+    return findItems(QJSValue::UndefinedValue, predicate);
+}
+
 void SessionScriptObject::clearItems()
 {
     withSessionModel([](SessionModel &session) { session.clear(); });
