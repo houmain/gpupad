@@ -191,6 +191,11 @@ void VKRenderSession::buildCommandQueue()
                             as->setIndexBuffer(i, j,
                                 addBufferOnce(block->parent->id), *block,
                                 *this);
+                        if (auto block = sessionModel.findItem<Block>(
+                                geometry->transformBufferBlockId))
+                            as->setTransformBuffer(i, j,
+                                addBufferOnce(block->parent->id), *block,
+                                *this);
                     }
         }
         return as;
@@ -374,8 +379,8 @@ void VKRenderSession::buildCommandQueue()
         // pop binding scope(s) after scopes's last item
         if (!castItem<ScopeItem>(&item)) {
             for (auto it = &item; it && castItem<ScopeItem>(it->parent)
-                 && it->parent->items.back() == it;
-                 it = it->parent)
+                && it->parent->items.back() == it;
+                it = it->parent)
                 if (auto group = castItem<Group>(it->parent)) {
                     if (!group->inlineScope)
                         addCommand([](BindingState &state) { state.pop(); });

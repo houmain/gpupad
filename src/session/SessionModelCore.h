@@ -135,6 +135,7 @@ public:
         GeometryType,
         GeometryVertexBufferBlockId,
         GeometryIndexBufferBlockId,
+        GeometryTransformBufferBlockId,
         GeometryCount,
         GeometryOffset,
     };

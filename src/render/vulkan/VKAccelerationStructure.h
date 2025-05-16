@@ -12,6 +12,8 @@ public:
         const Block &block, VKRenderSession &renderSession);
     void setIndexBuffer(int instanceIndex, int geometryIndex, VKBuffer *buffer,
         const Block &block, VKRenderSession &renderSession);
+    void setTransformBuffer(int instanceIndex, int geometryIndex,
+        VKBuffer *buffer, const Block &block, VKRenderSession &renderSession);
 
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     const KDGpu::AccelerationStructure &topLevelAs() const
@@ -33,9 +35,11 @@ private:
         uint32_t vertexCount{};
         uint32_t vertexStride{};
         VKBuffer *indexBuffer{};
-        KDGpu::IndexType indexType{};
+        KDGpu::IndexType indexType{ KDGpu::IndexType::None };
         size_t indexBufferOffset{};
         uint32_t indexCount{};
+        VKBuffer *transformBuffer{};
+        size_t transformBufferOffset{};
         QString primitiveCount;
         QString primitiveOffset;
     };
@@ -52,6 +56,7 @@ private:
     VKGeometry &getGeometry(int instanceIndex, int geometryIndex);
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder);
 
+    ItemId mItemId{};
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
     std::vector<VKInstance> mInstances;

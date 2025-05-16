@@ -3,6 +3,7 @@
 
 VKAccelerationStructure::VKAccelerationStructure(
     const AccelerationStructure &accelStruct)
+    : mItemId(accelStruct.id)
 {
     mUsedItems += accelStruct.id;
 
@@ -118,6 +119,28 @@ void VKAccelerationStructure::setIndexBuffer(int instanceIndex,
     geometry.indexCount = static_cast<uint32_t>(rowCount) * indicesPerRow;
 }
 
+void VKAccelerationStructure::setTransformBuffer(int instanceIndex,
+    int geometryIndex, VKBuffer *buffer, const Block &block,
+    VKRenderSession &renderSession)
+{
+    if (!buffer)
+        return;
+
+    mUsedItems += buffer->usedItems();
+
+    buffer->addUsage(
+        KDGpu::BufferUsageFlagBits::AccelerationStructureBuildInputReadOnlyBit
+        | KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit);
+
+    auto offset = 0;
+    auto rowCount = 0;
+    renderSession.evaluateBlockProperties(block, &offset, &rowCount);
+
+    auto &geometry = getGeometry(instanceIndex, geometryIndex);
+    geometry.transformBuffer = buffer;
+    geometry.transformBufferOffset = static_cast<size_t>(offset);
+}
+
 void VKAccelerationStructure::memoryBarrier(
     KDGpu::CommandRecorder &commandRecorder)
 {
@@ -181,6 +204,7 @@ void VKAccelerationStructure::prepare(VKContext &context,
             Q_ASSERT(vertexBuffer.buffer().bufferDeviceAddress());
 
             auto indexBufferHandle = KDGpu::Handle<KDGpu::Buffer_t>();
+            auto transformBufferHandle = KDGpu::Handle<KDGpu::Buffer_t>();
             auto maxPrimitiveCount = 0u;
 
             using GeometryType = Geometry::GeometryType;
@@ -193,6 +217,12 @@ void VKAccelerationStructure::prepare(VKContext &context,
                     Q_ASSERT(indexBuffer->buffer().bufferDeviceAddress());
                     indexBufferHandle = indexBuffer->buffer();
                     maxPrimitiveCount = geometry.indexCount / 3;
+                }
+                if (auto transformBuffer = geometry.transformBuffer) {
+                    transformBuffer->prepareAccelerationStructureGeometry(
+                        context);
+                    Q_ASSERT(transformBuffer->buffer().bufferDeviceAddress());
+                    transformBufferHandle = transformBuffer->buffer();
                 }
             } else {
                 Q_UNREACHABLE();
@@ -238,8 +268,8 @@ void VKAccelerationStructure::prepare(VKContext &context,
                         .indexType = geometry.indexType,
                         .indexData = indexBufferHandle,
                         .indexDataOffset = geometry.indexBufferOffset,
-                        .transformData = {},
-                        .transformDataOffset = 0,
+                        .transformData = transformBufferHandle,
+                        .transformDataOffset = geometry.transformBufferOffset,
                     };
                 geometryTypesAndCount.push_back({
                     .geometry = triangleGeometry,
@@ -281,6 +311,9 @@ void VKAccelerationStructure::prepare(VKContext &context,
         for (auto i = 0; i < transform.size(); ++i)
             geometryInstance.transform[i / 4][i % 4] = transform[i];
     }
+
+    if (geometryInstances.data.empty())
+        return;
 
     // build all BLASs
     context.commandRecorder->buildAccelerationStructures({

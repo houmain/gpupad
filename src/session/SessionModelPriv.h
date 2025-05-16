@@ -133,6 +133,7 @@
     ADD(GeometryType, Geometry, geometryType)                                 \
     ADD(GeometryVertexBufferBlockId, Geometry, vertexBufferBlockId)           \
     ADD(GeometryIndexBufferBlockId, Geometry, indexBufferBlockId)             \
+    ADD(GeometryTransformBufferBlockId, Geometry, transformBufferBlockId)     \
     ADD(GeometryCount, Geometry, count)                                       \
     ADD(GeometryOffset, Geometry, offset)
 

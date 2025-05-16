@@ -126,11 +126,10 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
 
     connect(mShaderProperties->fileNew, &QToolButton::clicked,
         [this]() { saveCurrentItemFileAs(FileDialog::ShaderExtensions); });
-    connect(mShaderProperties->fileBrowse, &QToolButton::clicked,
-        [this]() { 
-          if (openCurrentItemFile(FileDialog::ShaderExtensions))
-              deduceShaderType();
-        });
+    connect(mShaderProperties->fileBrowse, &QToolButton::clicked, [this]() {
+        if (openCurrentItemFile(FileDialog::ShaderExtensions))
+            deduceShaderType();
+    });
     connect(mShaderProperties->file, &ReferenceComboBox::listRequired,
         [this]() { return getFileNames(Item::Type::Shader); });
     connect(mShaderProperties->file, &ReferenceComboBox::activated, this,
@@ -162,9 +161,11 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     connect(mGeometryProperties->vertexBufferBlock,
         &ReferenceComboBox::listRequired,
         [this]() { return getItemIds(Item::Type::Block); });
-    connect(mGeometryProperties->indexBufferBlock,
-        &ReferenceComboBox::listRequired,
-        [this]() { return getItemIds(Item::Type::Block, true); });
+
+    for (auto comboBox : { mGeometryProperties->indexBufferBlock,
+             mGeometryProperties->transformBufferBlock })
+        connect(comboBox, &ReferenceComboBox::listRequired,
+            [this]() { return getItemIds(Item::Type::Block, true); });
 
     for (auto comboBox : { mShaderProperties->file, mBufferProperties->file,
              mScriptProperties->file })
@@ -174,7 +175,8 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
 
     for (auto comboBox :
         { mAttributeProperties->field, mGeometryProperties->vertexBufferBlock,
-            mGeometryProperties->indexBufferBlock })
+            mGeometryProperties->indexBufferBlock,
+            mGeometryProperties->transformBufferBlock })
         connect(comboBox, &ReferenceComboBox::textRequired,
             [this](QVariant data) { return getItemName(data.toInt()); });
 
@@ -387,6 +389,8 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
             SessionModel::GeometryVertexBufferBlockId);
         map(mGeometryProperties->indexBufferBlock,
             SessionModel::GeometryIndexBufferBlockId);
+        map(mGeometryProperties->transformBufferBlock,
+            SessionModel::GeometryTransformBufferBlockId);
         map(mGeometryProperties->count, SessionModel::GeometryCount);
         map(mGeometryProperties->offset, SessionModel::GeometryOffset);
         break;
@@ -660,12 +664,14 @@ void PropertiesEditor::updateGeometryWidgets()
 {
     const auto geometryType = static_cast<Geometry::GeometryType>(
         mGeometryProperties->type->currentData().toInt());
-    const auto hasIndices =
-        (geometryType != Geometry::GeometryType::AxisAlignedBoundingBoxes);
+    const auto hasTriangles =
+        (geometryType == Geometry::GeometryType::Triangles);
 
     auto &ui = *mGeometryProperties;
     setFormVisibility(ui.formLayout, ui.labelIndexBufferBlock,
-        ui.indexBufferBlock, hasIndices);
+        ui.indexBufferBlock, hasTriangles);
+    setFormVisibility(ui.formLayout, ui.labelTransformBufferBlock,
+        ui.transformBufferBlock, hasTriangles);
     setFormVisibility(ui.formLayout, ui.labelCount, ui.count, true);
     setFormVisibility(ui.formLayout, ui.labelOffset, ui.offset, true);
 }

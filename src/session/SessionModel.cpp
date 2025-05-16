@@ -733,9 +733,10 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
 
     case Item::Type::Geometry: {
         const auto &geometry = static_cast<const Geometry &>(item);
-        const auto hasIndices =
+        const auto hasTriangles =
             (geometry.geometryType == Geometry::GeometryType::Triangles);
-        result &= (column != GeometryIndexBufferBlockId || hasIndices);
+        result &= (column != GeometryIndexBufferBlockId || hasTriangles);
+        result &= (column != GeometryTransformBufferBlockId || hasTriangles);
         break;
     }
 

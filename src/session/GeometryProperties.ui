@@ -14,7 +14,7 @@
    <item>
     <layout class="QFormLayout" name="formLayout">
      <property name="labelAlignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
      </property>
      <property name="horizontalSpacing">
       <number>8</number>
@@ -74,29 +74,39 @@
      <item row="3" column="1">
       <widget class="ReferenceComboBox" name="indexBufferBlock"/>
      </item>
-     <item row="4" column="1">
+     <item row="5" column="1">
       <widget class="ExpressionLineEdit" name="count">
        <property name="placeholderText">
         <string>max.</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <widget class="ExpressionLineEdit" name="offset"/>
      </item>
-     <item row="4" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="labelCount">
        <property name="text">
         <string>Primitive Count</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="labelOffset">
        <property name="text">
         <string>Primitive Offset</string>
        </property>
       </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelTransformBufferBlock">
+       <property name="text">
+        <string>Transform Block</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="ReferenceComboBox" name="transformBufferBlock"/>
      </item>
     </layout>
    </item>

@@ -277,6 +277,7 @@ struct Geometry : Item
     GeometryType geometryType{};
     ItemId vertexBufferBlockId{};
     ItemId indexBufferBlockId{};
+    ItemId transformBufferBlockId{};
     QString count;
     QString offset{ "0" };
 };
