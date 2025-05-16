@@ -169,8 +169,6 @@ class Script {
         offset += vertices.length * 8
       }
     }
-    // TODO: update items on insert
-    this.buffer = app.session.findItem(this.buffer)
   }
   
   updateStreams() {
@@ -221,8 +219,6 @@ class Script {
     // TODO: make replace items also replace sub items
     app.session.clearItems(this.streams)
     app.session.replaceItems(this.streams, streams)
-    // TODO: update items on insert
-    this.streams = app.session.findItem(this.streams)
   }
   
   updateDrawCalls() {

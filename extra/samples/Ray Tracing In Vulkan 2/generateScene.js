@@ -14,9 +14,6 @@ let mesh = app.callAction("GenerateMesh", {
   drawCall: false,
 })
 
-// TODO: remove
-mesh = app.session.findItem(mesh)
-
 const vertices = mesh.items[0].items[0]
 const indices = mesh.items[0].items[1]
 

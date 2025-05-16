@@ -5,6 +5,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <QJSEngine>
 #include <QQmlPropertyMap>
 #include <QModelIndexList>
 #include <functional>
@@ -21,6 +22,8 @@ class SessionScriptObject_ItemObject : public QQmlPropertyMap
 public:
     SessionScriptObject_ItemObject(SessionScriptObject *sessionObject,
         ItemId itemId);
+
+    void setItemsList(const QList<Item *> &items);
 
 private:
     QVariant updateValue(const QString &key, const QVariant &input) override;
@@ -58,7 +61,7 @@ public:
     Q_INVOKABLE QJSValue findItems(QJSValue itemIdent);
     Q_INVOKABLE QJSValue findItems(QJSValue originIdent, QJSValue itemIdent);
     Q_INVOKABLE QJSValue insertItem(QJSValue object);
-    Q_INVOKABLE QJSValue insertItem(QJSValue itemIdent, QJSValue object);
+    Q_INVOKABLE QJSValue insertItem(QJSValue parentIdent, QJSValue object);
     Q_INVOKABLE QJSValue insertBeforeItem(QJSValue siblingIdent, QJSValue object);
     Q_INVOKABLE QJSValue insertAfterItem(QJSValue siblingIdent, QJSValue object);
     Q_INVOKABLE void replaceItems(QJSValue parentIdent, QJSValue array);
@@ -90,6 +93,7 @@ private:
     const Item *findSessionItem(QJSValue parentIdent, QJSValue itemIdent);
     const Item *findSessionItem(QJSValue itemIdent);
     QJSValue createItemObject(ItemId itemId);
+    void refreshItemObjectItems(const Item *item);
     QJSValue insertItemAt(const Item *parent, int row, QJSValue object);
 
     template <typename T>
@@ -113,4 +117,5 @@ private:
     QJSValue mSessionItems;
     IScriptRenderSession *mRenderSession{};
     std::vector<UpdateFunction> mPendingUpdates;
+    std::map<ItemId, std::pair<ItemObject*, QJSValue>> mCreatedItemObjects;
 };

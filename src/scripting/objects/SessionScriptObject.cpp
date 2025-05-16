@@ -12,7 +12,6 @@
 #include "render/Renderer.h"
 #include "render/ProcessSource.h"
 #include <QFloat16>
-#include <QJSEngine>
 #include <QTextStream>
 #include <limits>
 #include <cstring>
@@ -316,20 +315,6 @@ namespace {
         editors.setAutoRaise(true);
         return editor;
     }
-
-    bool canHaveItems(Item::Type type)
-    {
-        switch (type) {
-        case Item::Type::Session:
-        case Item::Type::Group:
-        case Item::Type::Buffer:
-        case Item::Type::Block:
-        case Item::Type::Program:
-        case Item::Type::Stream:
-        case Item::Type::Target:  return true;
-        default:                  return false;
-        }
-    }
 } // namespace
 
 //-------------------------------------------------------------------------
@@ -348,12 +333,16 @@ SessionScriptObject_ItemObject::SessionScriptObject_ItemObject(
         if (it.key() != "items")
             insert(it.key(), it.value().toVariant());
 
-    if (canHaveItems(session.getItemType(index)))
-        insert("items",
-            QVariant::fromValue(mSessionObject.makeArray([&](auto add) {
-                for (const auto *subItem : session.getItem(index).items)
-                    add(mSessionObject.createItemObject(subItem->id));
-            })));
+    setItemsList(session.getItem(index).items);
+}
+
+void SessionScriptObject_ItemObject::setItemsList(const QList<Item *> &items)
+{
+    insert("items",
+        QVariant::fromValue(mSessionObject.makeArray([&](auto add) {
+            for (const auto *item : items)
+                add(mSessionObject.createItemObject(item->id));
+        })));
 }
 
 QVariant SessionScriptObject_ItemObject::updateValue(const QString &key,
@@ -514,15 +503,16 @@ QJSValue SessionScriptObject::insertItemAt(const Item *parent, int row,
             const auto parent = session.getIndex(session.findItem(parentId));
             session.dropJson({ update }, row, parent, true);
         });
+    refreshItemObjectItems(parent);
 
     return createItemObject(id);
 }
 
-QJSValue SessionScriptObject::insertItem(QJSValue itemIdent, QJSValue object)
+QJSValue SessionScriptObject::insertItem(QJSValue parentIdent, QJSValue object)
 {
-    const auto parent = (itemIdent.isUndefined()
+    const auto parent = (parentIdent.isUndefined()
             ? &threadSessionModel().sessionItem()
-            : findSessionItem(itemIdent));
+            : findSessionItem(parentIdent));
     if (!parent) {
         engine().throwError(QStringLiteral("Invalid parent"));
         return QJSValue::UndefinedValue;
@@ -617,6 +607,8 @@ void SessionScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
             for (const auto &[id, type] : unusedIds)
                 session.deleteItem(session.getIndex(session.findItem(id)));
         });
+
+    refreshItemObjectItems(parent);
 }
 
 const Item *SessionScriptObject::findSessionItem(const QModelIndex &originIndex,
@@ -672,7 +664,22 @@ const Item *SessionScriptObject::findSessionItem(QJSValue itemIdent)
 QJSValue SessionScriptObject::createItemObject(ItemId itemId)
 {
     Q_ASSERT(itemId);
-    return engine().newQObject(new ItemObject(this, itemId));
+    auto &[object, jsValue] = mCreatedItemObjects[itemId];
+    if (!object) {
+        object = new ItemObject(this, itemId);
+        jsValue = engine().newQObject(object);
+    }
+    return jsValue;
+}
+
+void SessionScriptObject::refreshItemObjectItems(const Item *item)
+{
+    if (!item)
+        return;
+
+    const auto it = mCreatedItemObjects.find(item->id);
+    if (it != mCreatedItemObjects.end())
+        it->second.first->setItemsList(item->items);
 }
 
 QJSValue SessionScriptObject::getParentItem(QJSValue itemIdent)
@@ -744,16 +751,22 @@ void SessionScriptObject::clearItems(QJSValue parentIdent)
         if (index.isValid())
             session.removeRows(0, session.rowCount(index), index);
     });
+    refreshItemObjectItems(parent);
 }
 
 void SessionScriptObject::deleteItem(QJSValue itemIdent)
 {
-    if (const auto item = findSessionItem(itemIdent))
-        withSessionModel([itemId = item->id](SessionModel &session) {
-            const auto index = session.getIndex(session.findItem(itemId));
-            if (index.isValid())
-                session.deleteItem(index);
-        });
+    const auto item = findSessionItem(itemIdent);
+    if (!item)
+        return;
+
+    const auto parent = item->parent;
+    withSessionModel([itemId = item->id](SessionModel &session) {
+        const auto index = session.getIndex(session.findItem(itemId));
+        if (index.isValid())
+            session.deleteItem(index);
+    });
+    refreshItemObjectItems(parent);
 }
 
 void SessionScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
