@@ -48,9 +48,9 @@ private:
     ButtonStateQueue mNextMouseButtonStates;
     ButtonStateQueue mNextKeyStates;
 
-    QSize mEditorSize{};
-    QPoint mMousePosition{};
-    QPoint mPrevMousePosition{};
+    QSize mEditorSize{ 2, 2 };
+    QPoint mMousePosition{ 1, 1 };
+    QPoint mPrevMousePosition{ 1, 1 };
     QVector<ButtonState> mMouseButtonStates;
     QVector<ButtonState> mKeyStates;
 };
