@@ -185,6 +185,10 @@ void BinaryEditor::replace(QByteArray data, bool emitFileChanged)
 void BinaryEditor::replaceRange(int offset, QByteArray data,
     bool emitFileChanged)
 {
+    Q_ASSERT(offset >= 0);
+    if (offset < 0)
+        return;
+
     if (offset == 0 && data.size() >= mData.size())
         return replace(data, emitFileChanged);
 
@@ -226,7 +230,7 @@ auto BinaryEditor::currentBlock() const -> const Block *
 {
     return (mBlocks.empty() ? nullptr
                             : &mBlocks[std::min(mCurrentBlockIndex,
-                                static_cast<int>(mBlocks.size()) - 1)]);
+                                  static_cast<int>(mBlocks.size()) - 1)]);
 }
 
 void BinaryEditor::setCurrentBlockIndex(int index)

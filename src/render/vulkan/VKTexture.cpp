@@ -197,7 +197,7 @@ VKTexture::VKTexture(const Buffer &buffer, VKBuffer *textureBuffer,
 void VKTexture::addUsage(KDGpu::TextureUsageFlags usage)
 {
     // TODO: not ideal to update usage of already created texture
-    if ((mUsage & usage) != usage)
+    if (mTexture.isValid() && (mUsage & usage) != usage)
         mTexture = { };
     mUsage |= usage;
 }

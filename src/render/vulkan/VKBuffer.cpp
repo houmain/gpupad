@@ -87,7 +87,7 @@ VKBuffer::VKBuffer(const Buffer &buffer, VKRenderSession &renderSession)
 void VKBuffer::addUsage(KDGpu::BufferUsageFlags usage)
 {
     // TODO: not ideal to update usage of already created buffer
-    if ((mUsage & usage) != usage)
+    if (mBuffer.isValid() && (mUsage & usage) != usage)
         mBuffer = {};
     mUsage |= usage;
 }
@@ -301,6 +301,9 @@ void VKBuffer::prepareShaderStorageBuffer(VKContext &context, bool readable,
 
 void VKBuffer::prepareAccelerationStructureGeometry(VKContext &context)
 {
+    addUsage(
+        KDGpu::BufferUsageFlagBits::AccelerationStructureBuildInputReadOnlyBit
+        | KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit);
     updateReadOnlyBuffer(context);
 
     memoryBarrier(*context.commandRecorder,

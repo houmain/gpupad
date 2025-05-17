@@ -33,7 +33,7 @@ public:
     ScriptValueList evaluateValues(const QStringList &valueExpressions,
         ItemId itemId);
     ScriptValue evaluateValue(const QString &valueExpression, ItemId itemId);
-    int evaluateInt(const QString &valueExpression, ItemId itemId);
+    int32_t evaluateInt(const QString &valueExpression, ItemId itemId);
     uint32_t evaluateUInt(const QString &valueExpression, ItemId itemId);
     QJSEngine &jsEngine();
 

@@ -160,7 +160,8 @@ QJSValue ScriptEngine::call(QJSValue &callable, const QJSValueList &args,
     return result;
 }
 
-void ScriptEngine::validateScript(const QString &script, const QString &fileName)
+void ScriptEngine::validateScript(const QString &script,
+    const QString &fileName)
 {
     if (script.trimmed().startsWith('{'))
         evaluateScript("json = " + script, fileName);
@@ -262,12 +263,14 @@ ScriptValue ScriptEngine::evaluateValue(const QString &valueExpression,
     return (values.isEmpty() ? 0.0 : values.first());
 }
 
-int ScriptEngine::evaluateInt(const QString &valueExpression, ItemId itemId)
+int32_t ScriptEngine::evaluateInt(const QString &valueExpression, ItemId itemId)
 {
     const auto value = evaluateValue(valueExpression, itemId);
     if (!std::isfinite(value))
         return 0;
-    return static_cast<int>(value + 0.5);
+    return static_cast<int32_t>(std::clamp(value + 0.5,
+        static_cast<ScriptValue>(std::numeric_limits<int32_t>::lowest()),
+        static_cast<ScriptValue>(std::numeric_limits<int32_t>::max())));
 }
 
 uint32_t ScriptEngine::evaluateUInt(const QString &valueExpression,
