@@ -338,11 +338,10 @@ SessionScriptObject_ItemObject::SessionScriptObject_ItemObject(
 
 void SessionScriptObject_ItemObject::setItemsList(const QList<Item *> &items)
 {
-    insert("items",
-        QVariant::fromValue(mSessionObject.makeArray([&](auto add) {
-            for (const auto *item : items)
-                add(mSessionObject.createItemObject(item->id));
-        })));
+    insert("items", QVariant::fromValue(mSessionObject.makeArray([&](auto add) {
+        for (const auto *item : items)
+            add(mSessionObject.createItemObject(item->id));
+    })));
 }
 
 QVariant SessionScriptObject_ItemObject::updateValue(const QString &key,
@@ -520,10 +519,10 @@ QJSValue SessionScriptObject::insertItem(QJSValue parentIdent, QJSValue object)
     return insertItemAt(parent, parent->items.size(), object);
 }
 
-QJSValue SessionScriptObject::insertBeforeItem(QJSValue itemIdent,
+QJSValue SessionScriptObject::insertBeforeItem(QJSValue siblingIdent,
     QJSValue object)
 {
-    const auto sibling = findSessionItem(itemIdent);
+    const auto sibling = findSessionItem(siblingIdent);
     if (!sibling || !sibling->parent) {
         engine().throwError(QStringLiteral("Invalid sibling"));
         return QJSValue::UndefinedValue;
@@ -533,10 +532,10 @@ QJSValue SessionScriptObject::insertBeforeItem(QJSValue itemIdent,
     return insertItemAt(parent, row, object);
 }
 
-QJSValue SessionScriptObject::insertAfterItem(QJSValue itemIdent,
+QJSValue SessionScriptObject::insertAfterItem(QJSValue siblingIdent,
     QJSValue object)
 {
-    const auto sibling = findSessionItem(itemIdent);
+    const auto sibling = findSessionItem(siblingIdent);
     if (!sibling || !sibling->parent) {
         engine().throwError(QStringLiteral("Invalid sibling"));
         return QJSValue::UndefinedValue;
@@ -611,8 +610,8 @@ void SessionScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
     refreshItemObjectItems(parent);
 }
 
-const Item *SessionScriptObject::findSessionItem(const QModelIndex &originIndex,
-    QJSValue itemIdent)
+const Item *SessionScriptObject::findSessionItem(QJSValue itemIdent,
+    const QModelIndex &originIndex, bool searchSubItems)
 {
     const auto &session = threadSessionModel();
     if (itemIdent.isString()) {
@@ -628,11 +627,16 @@ const Item *SessionScriptObject::findSessionItem(const QModelIndex &originIndex,
 
     if (itemIdent.isCallable()) {
         auto result = std::add_pointer_t<const Item>{};
-        session.forEachItem(originIndex, [&](const Item &item) {
+        const auto callback = [&](const Item &item) {
             if (!result && item.type != Item::Type::Root)
                 if (itemIdent.call({ createItemObject(item.id) }).toBool())
                     result = session.findItem(item.id);
-        });
+        };
+        if (searchSubItems) {
+            session.forEachItem(originIndex, callback);
+        } else {
+            session.forEachItemDirect(originIndex, callback);
+        }
         return result;
     }
 
@@ -644,8 +648,8 @@ const Item *SessionScriptObject::findSessionItem(const QModelIndex &originIndex,
     return session.findItem(itemId);
 }
 
-const Item *SessionScriptObject::findSessionItem(QJSValue originIdent,
-    QJSValue itemIdent)
+const Item *SessionScriptObject::findSessionItem(QJSValue itemIdent,
+    QJSValue originIdent, bool searchSubItems)
 {
     const auto originItem = findSessionItem(originIdent);
     if (!originItem) {
@@ -653,12 +657,13 @@ const Item *SessionScriptObject::findSessionItem(QJSValue originIdent,
         return nullptr;
     }
     const auto originIndex = threadSessionModel().getIndex(originItem);
-    return findSessionItem(originIndex, itemIdent);
+    return findSessionItem(itemIdent, originIndex, searchSubItems);
 }
 
 const Item *SessionScriptObject::findSessionItem(QJSValue itemIdent)
 {
-    return findSessionItem(threadSessionModel().sessionItemIndex(), itemIdent);
+    return findSessionItem(itemIdent, threadSessionModel().sessionItemIndex(),
+        true);
 }
 
 QJSValue SessionScriptObject::createItemObject(ItemId itemId)
@@ -691,9 +696,10 @@ QJSValue SessionScriptObject::getParentItem(QJSValue itemIdent)
     return createItemObject(item->parent->id);
 }
 
-QJSValue SessionScriptObject::findItem(QJSValue originIdent, QJSValue itemIdent)
+QJSValue SessionScriptObject::findItem(QJSValue itemIdent, QJSValue originIdent,
+    bool searchSubItems)
 {
-    if (auto item = findSessionItem(originIdent, itemIdent))
+    if (auto item = findSessionItem(itemIdent, originIdent, searchSubItems))
         return createItemObject(item->id);
     return QJSValue::UndefinedValue;
 }
@@ -705,8 +711,8 @@ QJSValue SessionScriptObject::findItem(QJSValue itemIdent)
     return QJSValue::UndefinedValue;
 }
 
-QJSValue SessionScriptObject::findItems(QJSValue originIdent,
-    QJSValue itemIdent)
+QJSValue SessionScriptObject::findItems(QJSValue itemIdent,
+    QJSValue originIdent, bool searchSubItems)
 {
     return makeArray([&](auto add) {
         if (itemIdent.isCallable()) {
@@ -721,15 +727,21 @@ QJSValue SessionScriptObject::findItems(QJSValue originIdent,
                 originIndex = session.getIndex(origin);
             }
 
-            session.forEachItem(originIndex, [&](const Item &item) {
+            const auto callback = [&](const Item &item) {
                 if (item.type != Item::Type::Root) {
                     auto itemObject = createItemObject(item.id);
                     if (itemIdent.call({ itemObject }).toBool())
                         add(itemObject);
                 }
-            });
+            };
+            if (searchSubItems) {
+                session.forEachItem(originIndex, callback);
+            } else {
+                session.forEachItemDirect(originIndex, callback);
+            }
         } else {
-            if (auto item = findSessionItem(originIdent, itemIdent))
+            if (auto item =
+                    findSessionItem(itemIdent, originIdent, searchSubItems))
                 add(createItemObject(item->id));
         }
     });
@@ -737,7 +749,7 @@ QJSValue SessionScriptObject::findItems(QJSValue originIdent,
 
 QJSValue SessionScriptObject::findItems(QJSValue itemIdent)
 {
-    return findItems(QJSValue::UndefinedValue, itemIdent);
+    return findItems(itemIdent, QJSValue::UndefinedValue, true);
 }
 
 void SessionScriptObject::clearItems(QJSValue parentIdent)

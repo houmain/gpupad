@@ -21,6 +21,7 @@ VKAccelerationStructure::VKAccelerationStructure(
                 }
             mInstances.push_back({
                 .itemId = item->id,
+                .transform = instance->transform,
                 .geometries = std::move(geometries),
             });
         }

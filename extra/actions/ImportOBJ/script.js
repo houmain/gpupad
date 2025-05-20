@@ -56,20 +56,20 @@ class Script {
       })
 
     this.buffer =
-      app.session.findItem(this.group, item => item.type == 'Buffer') ||
+      app.session.findItem(item => item.type == 'Buffer', this.group) ||
       app.session.insertItem(this.group, {
         name: 'Buffer',
         type: 'Buffer',
       })
     
     this.streams =
-      app.session.findItem(this.group, 'Streams') ||
+      app.session.findItem('Streams', this.group) ||
       app.session.insertItem(this.group, {
         name: 'Streams',
         type: 'Group',
       })
     
-    this.drawCalls = app.session.findItem(this.group, 'Calls')
+    this.drawCalls = app.session.findItem('Calls', this.group)
     
     app.session.replaceItems(this.group, [this.buffer, this.streams, this.drawCalls])
     

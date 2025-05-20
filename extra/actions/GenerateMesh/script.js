@@ -69,7 +69,7 @@ class Script {
         })
 
     this.buffer =
-      app.session.findItem(this.group, item => item.type == 'Buffer') ||
+      app.session.findItem(item => item.type == 'Buffer', this.group) ||
       app.session.insertItem(this.group, {
         name: 'Buffer',
         type: 'Buffer',
@@ -96,11 +96,12 @@ class Script {
           }
         ]
       })
+      
     this.vertices = this.buffer.items[0]
     this.indices = this.buffer.items[1]
     
     this.stream =
-      app.session.findItem(this.group, item => item.type == 'Stream') ||
+      app.session.findItem(item => item.type == 'Stream', this.group) ||
       app.session.insertItem(this.group, {
         name: 'Stream',
         type: 'Stream',
@@ -120,7 +121,7 @@ class Script {
         ]
       })
     
-    this.drawCall = app.session.findItem(this.group, item => item.type == 'Call')
+    this.drawCall = app.session.findItem(item => item.type == 'Call', this.group)
     
     app.session.replaceItems(this.group, [this.buffer, this.stream, this.drawCall])
     
@@ -193,7 +194,6 @@ class Script {
       this.drawCall = app.session.insertItem(this.group, {
         name: 'Draw',
         type: 'Call',
-        vertexStreamId: this.stream?.id,
         targetId: target?.id,
         programId: program?.id,
       })
@@ -204,6 +204,7 @@ class Script {
         this.indices.rowCount * 3 : this.vertices.rowCount)
     this.drawCall.callType =
       (this.settings.indexed ? 'DrawIndexed' : 'Draw')
+    this.drawCall.vertexStreamId = this.stream?.id
     this.drawCall.indexBufferBlockId = this.indices?.id
   }
   

@@ -115,8 +115,8 @@ Initial documentation of the available script objects:
 - `name: String`
 - `items: [Item]`
 - `selection: [Item]`
-- `findItem(origin: ItemIdent?, ItemIdent) -> Item?`
-- `findItems(origin: ItemIdent?, ItemIdent) -> [Item]`
+- `findItem(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> Item?`
+- `findItems(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> [Item]`
 - `getParentItem(ItemIdent) -> Item?`
 - `insertItem(parent: ItemIdent?, object) -> Item`
 - `insertItemAfter(sibling: ItemIdent, object) -> Item`
