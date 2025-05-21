@@ -10,6 +10,7 @@ void MouseScriptObject::update(const InputState &state)
     mPosition = state.mousePosition();
     mPrevPosition = state.prevMousePosition();
     mButtons = state.mouseButtonStates();
+    Q_EMIT changed();
 }
 
 QJsonValue MouseScriptObject::coord() const
@@ -39,10 +40,10 @@ QJsonValue MouseScriptObject::prevFragCoord() const
 QJsonValue MouseScriptObject::delta() const
 {
     mWasRead = true;
-    const auto delta = (mPosition - mPrevPosition);
+    const auto delta = QPointF(mPosition - mPrevPosition);
     auto vector = QJsonArray();
-    vector.append((delta.x() + 0.5) / mEditorSize.width());
-    vector.append((delta.y() + 0.5) / mEditorSize.height());
+    vector.append(delta.x() / mEditorSize.width());
+    vector.append(delta.y() / mEditorSize.height());
     return vector;
 }
 

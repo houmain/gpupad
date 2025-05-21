@@ -7,7 +7,7 @@
 class KeyboardScriptObject final : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QJsonValue keys READ keys CONSTANT)
+    Q_PROPERTY(QJsonValue keys READ keys NOTIFY changed)
 
 public:
     explicit KeyboardScriptObject(QObject *parent = nullptr);
@@ -16,6 +16,9 @@ public:
 
     const QJsonValue &keys() const;
     bool wasRead() const { return mWasRead; }
+
+Q_SIGNALS:
+    void changed();
 
 private:
     QJsonValue mKeys;

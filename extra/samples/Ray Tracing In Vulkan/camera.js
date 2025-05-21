@@ -22,7 +22,7 @@ viewInverse = mat4.invert(mat4.create(), view)
 projectionInverse = mat4.invert(mat4.create(), projection)
 
 // reset sample count when camera moved
-if (app.mouse.delta[0] != 0 || app.mouse.delta[1] != 0)
+if (!this.totalSamples || app.mouse.delta[0] != 0 || app.mouse.delta[1] != 0)
   totalSamples = 0
 
 samples = 8
