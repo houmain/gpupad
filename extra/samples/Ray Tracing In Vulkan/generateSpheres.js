@@ -88,19 +88,11 @@ for (let s of spheres) {
   aabbs.push([x - rad, y - rad, z - rad, x + rad, y + rad, z + rad])
 }
 
-const Spheres = app.session.findItem("Spheres")
-const Materials = app.session.findItem("Materials")
-const AABBs = app.session.findItem("AABBs")
-
-Spheres.items[0].rowCount = spheres.length
-Materials.items[0].rowCount = spheres.length
-AABBs.items[0].rowCount = spheres.length
-
 // convert to single array
 spheres = [].concat.apply([], spheres)
 materials = [].concat.apply([], materials)
 aabbs = [].concat.apply([], aabbs)
 
-app.session.setBufferData(Materials, materials)
-app.session.setBufferData(Spheres, spheres)
-app.session.setBufferData(AABBs, aabbs)
+app.session.setBufferData("Materials", materials)
+app.session.setBufferData("Spheres", spheres)
+app.session.setBufferData("AABBs", aabbs)

@@ -797,9 +797,17 @@ void SessionScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
     if (bufferData.isNull())
         return engine().throwError(QStringLiteral("Invalid data"));
 
-    withSessionModel([bufferId = buffer->id, bufferData,
+    const auto rowCount = bufferData.size() / getBlockStride(*block);
+
+    withSessionModel([bufferId = buffer->id, bufferData, rowCount,
                          fileName = QString()](SessionModel &session) mutable {
         if (auto buffer = session.findItem<Buffer>(bufferId)) {
+            if (buffer->items.size() == 1) {
+                const auto block = castItem<Block>(buffer->items[0]);
+                session.setData(
+                    session.getIndex(block, SessionModel::BlockRowCount),
+                    rowCount);
+            }
             ensureFileName(session, buffer, &fileName);
             if (onMainThread())
                 if (auto editor = openBinaryEditor(*buffer))
@@ -818,10 +826,15 @@ void SessionScriptObject::setBlockData(QJSValue itemIdent, QJSValue data)
     if (bufferData.isNull())
         return engine().throwError(QStringLiteral("Invalid data"));
 
-    withSessionModel([blockId = block->id, bufferData,
+    const auto rowCount = bufferData.size() / getBlockStride(*block);
+
+    withSessionModel([blockId = block->id, bufferData, rowCount,
                          fileName = QString()](SessionModel &session) mutable {
         if (auto block = session.findItem<Block>(blockId))
             if (auto buffer = castItem<Buffer>(block->parent)) {
+                session.setData(
+                    session.getIndex(block, SessionModel::BlockRowCount),
+                    rowCount);
                 ensureFileName(session, buffer, &fileName);
                 if (onMainThread())
                     if (auto editor = openBinaryEditor(*buffer)) {

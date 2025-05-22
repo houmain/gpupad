@@ -57,9 +57,6 @@ TRANSPOSE_BLOCK_SIZE = 16;
 MATRIX_WIDTH = BITONIC_BLOCK_SIZE;
 MATRIX_HEIGHT = NUM_ELEMENTS / BITONIC_BLOCK_SIZE;
 
-Buffer1Block.rowCount = NUM_ELEMENTS;
-Buffer2Block.rowCount = NUM_ELEMENTS;
-
 BindBuffer('bData', Buffer1);
 
 // Sort the row data
