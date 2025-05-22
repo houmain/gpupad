@@ -62,11 +62,15 @@ class Script {
     if (!this.group)
       this.group =
         app.session.insertItem(this.settings.parent || app.session, {
-          name: (this.settings.name || 'Mesh'),
+          name: 'Mesh',
           type: 'Group',
           inlineScope: true,
-          dynamic: this.settings.dynamic,
         })
+        
+    if (this.settings.name)
+      this.group.name = this.settings.name
+    if (this.settings.dynamic)
+      this.group.dynamic = true
 
     this.buffer =
       app.session.findItem(item => item.type == 'Buffer', this.group) ||

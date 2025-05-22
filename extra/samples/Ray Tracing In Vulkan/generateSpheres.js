@@ -96,3 +96,6 @@ aabbs = [].concat.apply([], aabbs)
 app.session.setBufferData("Materials", materials)
 app.session.setBufferData("Spheres", spheres)
 app.session.setBufferData("AABBs", aabbs)
+
+totalSamples = 0
+

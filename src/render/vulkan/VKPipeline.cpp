@@ -917,7 +917,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                 buffer.itemId());
             const auto size = (binding.stride ? rowCount * binding.stride
                                               : buffer.size() - offset);
-            Q_ASSERT(size > 0
+            Q_ASSERT(size >= 0
                 && offset + size <= static_cast<size_t>(buffer.size()));
             return std::pair(offset, size);
         };

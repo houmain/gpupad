@@ -140,7 +140,7 @@
             "type": "Buffer"
         },
         {
-            "executeOn": "ResetEvaluation",
+            "executeOn": "ManualEvaluation",
             "fileName": "generateSpheres.js",
             "id": 903,
             "type": "Script"

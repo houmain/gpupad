@@ -563,31 +563,40 @@ void SessionScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
     if (!parent)
         return;
 
-    // collect IDs in current list
-    auto unusedIds = std::vector<std::pair<ItemId, Item::Type>>();
+    // collect Items in current list
+    struct ItemInfo
+    {
+        ItemId id;
+        Item::Type type;
+        bool hasItems;
+    };
+    auto unusedItems = std::vector<ItemInfo>();
     for (const auto &item : parent->items)
-        unusedIds.emplace_back(item->id, item->type);
+        unusedItems.push_back(
+            ItemInfo{ item->id, item->type, !item->items.empty() });
 
-    // remove IDs contained in new list
+    // remove Items contained in new list
     for (auto i = 0; i < update.size(); ++i)
         if (const auto id = update[i].toObject()["id"].toInt()) {
-            const auto it = std::find_if(unusedIds.begin(), unusedIds.end(),
-                [&](const auto &pair) { return pair.first == id; });
-            if (it != unusedIds.end())
-                unusedIds.erase(it);
+            const auto it = std::find_if(unusedItems.begin(), unusedItems.end(),
+                [&](const ItemInfo &item) { return item.id == id; });
+            if (it != unusedItems.end())
+                unusedItems.erase(it);
         }
 
-    // reuse IDs of items with same type or assign a new one
+    // reuse Items with same type and no items or assign a new one
     for (auto i = 0; i < update.size(); ++i) {
         auto object = update[i].toObject();
         auto id = object["id"].toInt();
         if (!id) {
             const auto type = getItemTypeByName(object["type"].toString());
-            const auto it = std::find_if(unusedIds.begin(), unusedIds.end(),
-                [&](const auto &pair) { return pair.second == type; });
-            if (it != unusedIds.end()) {
-                id = it->first;
-                unusedIds.erase(it);
+            const auto it = std::find_if(unusedItems.begin(), unusedItems.end(),
+                [&](const ItemInfo &item) {
+                    return item.type == type && !item.hasItems;
+                });
+            if (it != unusedItems.end()) {
+                id = it->id;
+                unusedItems.erase(it);
             } else {
                 id = threadSessionModel().getNextItemId();
             }
@@ -600,11 +609,11 @@ void SessionScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
     }
 
     withSessionModel(
-        [parentId = parent->id, update, unusedIds](SessionModel &session) {
+        [parentId = parent->id, update, unusedItems](SessionModel &session) {
+            for (const auto &item : unusedItems)
+                session.deleteItem(session.getIndex(session.findItem(item.id)));
             const auto parent = session.getIndex(session.findItem(parentId));
             session.dropJson(update, session.rowCount(parent), parent, true);
-            for (const auto &[id, type] : unusedIds)
-                session.deleteItem(session.getIndex(session.findItem(id)));
         });
 
     refreshItemObjectItems(parent);
