@@ -276,7 +276,7 @@ void SourceEditor::replace(QString source, bool emitFileChanged)
         const auto [lastDiffSource,
             lastDiffCurrent] = [&]() -> std::pair<int, int> {
             for (auto i = source.length() - 1, j = current.length() - 1;;
-                 --i, --j)
+                --i, --j)
                 if (i < firstDiff || j < firstDiff || source[i] != current[j])
                     return { i + 1, j + 1 };
             return {};
@@ -302,7 +302,8 @@ void SourceEditor::replace(QString source, bool emitFileChanged)
         verticalScrollBar()->setSliderPosition(
             scrollToEnd ? verticalScrollBar()->maximum() : scrollPosition);
 
-        Singletons::fileCache().handleEditorFileChanged(mFileName, emitFileChanged);
+        Singletons::fileCache().handleEditorFileChanged(mFileName,
+            emitFileChanged);
     }
 
     document()->setUndoRedoEnabled(true);
@@ -491,6 +492,9 @@ void SourceEditor::setShowWhiteSpace(bool enabled)
 
 void SourceEditor::setCursorPosition(int line, int column)
 {
+    setCenterOnScroll(true);
+    const auto guard = qScopeGuard([&]() { setCenterOnScroll(false); });
+
     disableLineWrap();
     auto cursor = textCursor();
     auto block = document()->findBlockByLineNumber(line - 1);
@@ -1202,7 +1206,7 @@ void SourceEditor::markOccurrences(QString text, QTextDocument::FindFlags flags)
         top = std::max(top, findReplaceRange.anchor());
         bottom = std::min(bottom, findReplaceRange.position());
         for (auto it = find(text, top, bottom, flags); !it.isNull();
-             it = find(text, it.position() + 1, bottom, flags))
+            it = find(text, it.position() + 1, bottom, flags))
             mMarkedOccurrences.append(it);
     }
     updateExtraSelections();
