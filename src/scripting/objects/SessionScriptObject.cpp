@@ -584,27 +584,20 @@ void SessionScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
                 unusedItems.erase(it);
         }
 
-    // reuse Items with same type and no items or assign a new one
+    // reuse Items with same type and no sub items
     for (auto i = 0; i < update.size(); ++i) {
         auto object = update[i].toObject();
-        auto id = object["id"].toInt();
-        if (!id) {
+        if (!object["id"].toInt()) {
             const auto type = getItemTypeByName(object["type"].toString());
             const auto it = std::find_if(unusedItems.begin(), unusedItems.end(),
                 [&](const ItemInfo &item) {
                     return item.type == type && !item.hasItems;
                 });
             if (it != unusedItems.end()) {
-                id = it->id;
+                object["id"] = it->id;
+                update[i] = object;
                 unusedItems.erase(it);
-            } else {
-                id = threadSessionModel().getNextItemId();
             }
-            object["id"] = id;
-            update[i] = object;
-
-            // update IDs inplace
-            array.property(i).setProperty("id", id);
         }
     }
 
