@@ -66,6 +66,15 @@ public:
         forEachItem(QModelIndex{}, function);
     }
 
+    template <typename T, typename F> // F(const T&)
+    void forEachItem(const F &function) const
+    {
+        forEachItem(QModelIndex{}, [&](const Item &item) {
+            if (auto typedItem = castItem<T>(item))
+                function(*typedItem);
+        });
+    }
+
     template <typename F> // F(const Item&)
     void forEachItemScoped(const QModelIndex &index, const F &function) const
     {

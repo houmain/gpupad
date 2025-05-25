@@ -51,6 +51,7 @@ private:
     bool mDeviceCopyModified{};
     KDGpu::AccessFlags mCurrentAccessMask{};
     KDGpu::PipelineStageFlags mCurrentStage{};
+    bool mDeviceAddressObtained{};
 };
 
 bool downloadBuffer(VKContext &context, const KDGpu::Buffer &buffer,

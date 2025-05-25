@@ -87,8 +87,10 @@ VKBuffer::VKBuffer(const Buffer &buffer, VKRenderSession &renderSession)
 void VKBuffer::addUsage(KDGpu::BufferUsageFlags usage)
 {
     // TODO: not ideal to update usage of already created buffer
-    if (mBuffer.isValid() && (mUsage & usage) != usage)
+    if (mBuffer.isValid() && (mUsage & usage) != usage) {
+        Q_ASSERT(!mDeviceAddressObtained);
         mBuffer = {};
+    }
     mUsage |= usage;
 }
 
@@ -315,5 +317,6 @@ uint64_t VKBuffer::getDeviceAddress(VKContext &context)
 {
     addUsage(KDGpu::BufferUsageFlagBits::ShaderDeviceAddressBit);
     updateReadOnlyBuffer(context);
+    mDeviceAddressObtained = true;
     return mBuffer.bufferDeviceAddress();
 }

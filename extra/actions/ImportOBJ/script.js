@@ -216,8 +216,6 @@ class Script {
         })
     }
     
-    // TODO: make replace items also replace sub items
-    app.session.clearItems(this.streams)
     app.session.replaceItems(this.streams, streams)
   }
   

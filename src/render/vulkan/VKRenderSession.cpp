@@ -563,11 +563,39 @@ quint64 VKRenderSession::getBufferHandle(ItemId itemId)
     if (!mCommandQueue)
         createCommandQueue();
 
-    const auto &sessionModel = mSessionModelCopy;
+    auto &sessionModel = mSessionModelCopy;
 
-    const auto addBufferOnce = [&](ItemId bufferId) {
-        return addOnce(mCommandQueue->buffers,
-            sessionModel.findItem<Buffer>(bufferId), *this);
+    const auto isUsedByAccelerationStructure = [&](const Buffer &buffer) {
+        auto isUsed = false;
+        for (auto block : buffer.items)
+            sessionModel.forEachItem<Geometry>([&](const Geometry &g) {
+                isUsed |= (g.vertexBufferBlockId == block->id
+                    || g.indexBufferBlockId == block->id
+                    || g.transformBufferBlockId == block->id);
+            });
+        return isUsed;
+    };
+
+    const auto addBufferOnce = [&](ItemId bufferId) -> VKBuffer * {
+        if (const auto buffer = sessionModel.findItem<Buffer>(bufferId)) {
+            // ensure that potential current buffer is really getting reused
+            if (const auto it = mCommandQueue->buffers.find(buffer->id);
+                it != mCommandQueue->buffers.end()
+                && it->second != VKBuffer(*buffer, *this))
+                mCommandQueue->buffers.erase(it);
+
+            if (auto vkBuffer =
+                    addOnce(mCommandQueue->buffers, buffer, *this)) {
+
+                // ensure it is not recreated by usage update
+                if (isUsedByAccelerationStructure(*buffer))
+                    vkBuffer->addUsage(KDGpu::BufferUsageFlagBits::
+                            AccelerationStructureBuildInputReadOnlyBit);
+
+                return vkBuffer;
+            }
+        }
+        return nullptr;
     };
 
     if (auto buffer = addBufferOnce(itemId)) {
