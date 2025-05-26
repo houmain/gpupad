@@ -17,8 +17,8 @@ struct VKUniformBinding
     ItemId bindingItemId;
     QString name;
     Binding::BindingType type;
-    QStringList values;
     bool transpose;
+    ScriptValueList values;
 };
 
 struct VKSamplerBinding

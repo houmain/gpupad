@@ -69,11 +69,8 @@ void checkValueCount(int valueCount, int offset, int count, ItemId itemId,
 
 template <typename T>
 std::vector<T> getValues(ScriptEngine &scriptEngine,
-    const QStringList &expressions, int offset, int count, ItemId itemId)
+    const ScriptValueList &values, int offset, int count, ItemId itemId)
 {
-    const auto values =
-        scriptEngine.evaluateValues(expressions, itemId);
-
     checkValueCount(values.size(), offset, count, itemId,
         scriptEngine.messages());
 
@@ -84,4 +81,12 @@ std::vector<T> getValues(ScriptEngine &scriptEngine,
             results.push_back(static_cast<T>(value));
     results.resize(count);
     return results;
+}
+
+template <typename T>
+std::vector<T> getValues(ScriptEngine &scriptEngine,
+    const QStringList &expressions, int offset, int count, ItemId itemId)
+{
+    const auto values = scriptEngine.evaluateValues(expressions, itemId);
+    return getValues<T>(scriptEngine, values, offset, count, itemId);
 }

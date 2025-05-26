@@ -63,6 +63,7 @@ protected:
     QMap<ItemId, QByteArray> mModifiedBuffers;
     size_t mNextCommandQueueIndex{};
     QMap<ItemId, GroupIteration> mGroupIterations;
+    QMap<ItemId, ScriptValueList> mUniformBindingValues;
 
 private:
     MessagePtrSet mPrevMessages;

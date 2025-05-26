@@ -227,11 +227,11 @@ void VKRenderSession::buildCommandQueue()
             const auto &b = *binding;
             switch (b.bindingType) {
             case Binding::BindingType::Uniform:
-                addCommand(
-                    [binding = VKUniformBinding{ b.id, b.name, b.bindingType,
-                         b.values, false }](BindingState &state) {
-                        state.top().uniforms[binding.name] = binding;
-                    });
+                addCommand([this, b](BindingState &state) {
+                    state.top().uniforms[b.name] = VKUniformBinding{ b.id,
+                        b.name, b.bindingType, false,
+                        mUniformBindingValues[b.id] };
+                });
                 break;
 
             case Binding::BindingType::Sampler: {

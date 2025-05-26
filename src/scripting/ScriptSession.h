@@ -4,6 +4,8 @@
 #include <QObject>
 
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
+using ScriptValue = double;
+using ScriptValueList = QList<ScriptValue>;
 class IScriptRenderSession;
 
 class ScriptSession final : public QObject

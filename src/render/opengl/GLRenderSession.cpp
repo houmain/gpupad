@@ -185,11 +185,11 @@ void GLRenderSession::buildCommandQueue()
             const auto &b = *binding;
             switch (b.bindingType) {
             case Binding::BindingType::Uniform:
-                addCommand(
-                    [binding = GLUniformBinding{ b.id, b.name, b.bindingType,
-                         b.values, false }](BindingState &state) {
-                        state.top().uniforms[binding.name] = binding;
-                    });
+                addCommand([this, b](BindingState &state) {
+                    state.top().uniforms[b.name] = GLUniformBinding{ b.id,
+                        b.name, b.bindingType, false,
+                        mUniformBindingValues[b.id] };
+                });
                 break;
 
             case Binding::BindingType::Sampler:
@@ -336,8 +336,8 @@ void GLRenderSession::buildCommandQueue()
         // pop binding scope(s) after scopes's last item
         if (!castItem<ScopeItem>(&item)) {
             for (auto it = &item; it && castItem<ScopeItem>(it->parent)
-                 && it->parent->items.back() == it;
-                 it = it->parent)
+                && it->parent->items.back() == it;
+                it = it->parent)
                 if (auto group = castItem<Group>(it->parent)) {
                     if (!group->inlineScope)
                         addCommand([](BindingState &state) { state.pop(); });

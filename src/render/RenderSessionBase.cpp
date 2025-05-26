@@ -48,8 +48,7 @@ void RenderSessionBase::prepare(bool itemsChanged,
         mScriptSession->update();
         if (mEvaluationType == EvaluationType::Manual)
             mScriptSession->resetMessages();
-    }
-    else {
+    } else {
         mEvaluationType = EvaluationType::Reset;
     }
     if (mItemsChanged || mEvaluationType == EvaluationType::Reset) {
@@ -86,9 +85,10 @@ void RenderSessionBase::configure()
             if (Singletons::fileCache().getSource(script->fileName, &source))
                 scriptEngine.evaluateScript(source, script->fileName);
         } else if (auto binding = castItem<Binding>(item)) {
+            // evaluate each binding only once
+            auto &values = mUniformBindingValues[binding->id];
             // set global in script state
-            auto values = scriptEngine.evaluateValues(binding->values,
-                binding->id);
+            values = scriptEngine.evaluateValues(binding->values, binding->id);
             scriptEngine.setGlobal(binding->name, values);
         }
     }
