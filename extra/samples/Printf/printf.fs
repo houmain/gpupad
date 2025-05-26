@@ -9,8 +9,9 @@ void main() {
   oColor = vec4(sin(tc), 0.33, 1);
   
 #if defined(GPUPAD)
-  printfEnabled = (gl_FragCoord.xy == uMouseFragCoord);
-  printf("The color at %i is %u", ivec2(uMouseFragCoord), uvec3(oColor.rgb * 255));
+  if (gl_FragCoord.xy == uMouseFragCoord)
+    printf("The color at %i is %u",
+      ivec2(uMouseFragCoord), uvec3(oColor.rgb * 255));
 #endif  
   
   if (uMouseFragCoord.x == gl_FragCoord.x)

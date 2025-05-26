@@ -157,10 +157,8 @@ QString MessageWindow::getMessageText(const Message &message) const
     case InvalidShaderTypeForCall: return tr("Invalid shader type for call");
     case CountExceeded:
         return tr("Maximum count exceeded (%1)").arg(message.text);
-    case TooManyPrintfCalls:
-        return tr("Too many printf calls. Please filter threads by setting "
-                  "printfEnabled");
-    case RenderingFailed: return tr("Rendering failed: %1").arg(message.text);
+    case TooManyPrintfCalls: return tr("Too many printf calls");
+    case RenderingFailed:    return tr("Rendering failed: %1").arg(message.text);
     case MoreThanOneDepthStencilAttachment:
         return tr("Only a single depth or stencil attachment is supported");
     case IncompatibleBindings:

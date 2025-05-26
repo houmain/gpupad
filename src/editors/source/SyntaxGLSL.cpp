@@ -108,7 +108,7 @@ namespace glsl {
     QStringList builtinConstants()
     {
         return { "GPUPAD", "GPUPAD_OPENGL", "GPUPAD_VULKAN", "GPUPAD_GLSLANG",
-            "VULKAN", "printfEnabled",
+            "VULKAN",
 
             "gl_ClipDistance", "gl_CullDistance", "gl_DepthRange",
             "gl_DepthRangeParameters", "gl_FragCoord", "gl_FragDepth",

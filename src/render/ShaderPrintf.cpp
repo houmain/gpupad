@@ -262,7 +262,6 @@ QString ShaderPrintf::preambleGLSL(int set, int binding)
 
     return QStringLiteral(R"(
 
-bool printfEnabled = true;
 uint _printfArgumentOffset = 0;
 
 layout(%1) buffer _printfBuffer {
@@ -385,7 +384,6 @@ QString ShaderPrintf::preambleHLSL()
 {
     return QStringLiteral(R"(
 
-static bool printfEnabled = true;
 static uint _printfArgumentOffset = 0;
 
 RWByteAddressBuffer _printfBuffer;
@@ -554,11 +552,8 @@ QString ShaderPrintf::patchSource(Shader::ShaderType stage,
 {
     const auto sourceWithoutComments = blankComments(source);
     const auto calls = findPrintfCalls(sourceWithoutComments);
-    if (calls.isEmpty()) {
-        if (containsIdentifier(source, "printfEnabled"))
-            mUsedInStages.insert(stage);
+    if (calls.isEmpty())
         return source;
-    }
     mUsedInStages.insert(stage);
 
     auto prevOffset = 0;
@@ -568,12 +563,12 @@ QString ShaderPrintf::patchSource(Shader::ShaderType stage,
             call.statement.begin());
         patchedSource +=
             QString(source.data() + prevOffset, offset - prevOffset);
-        patchedSource += QStringLiteral("(printfEnabled ? _printfBegin(%1, %2)")
+        patchedSource += QStringLiteral("(_printfBegin(%1, %2)")
                              .arg(mFormatStrings.size())
                              .arg(call.arguments.size());
         for (const auto &argument : call.arguments)
             patchedSource += QStringLiteral(", _printf(%1)").arg(argument);
-        patchedSource += ", 1 : 0)";
+        patchedSource += ", 1)";
         patchedSource += QString(
             countLines(call.statement.begin(), call.statement.end()), '\n');
         auto formatString = parseFormatString(call.formatString);
