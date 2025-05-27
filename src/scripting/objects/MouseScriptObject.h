@@ -7,6 +7,7 @@
 class MouseScriptObject final : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QJsonValue editorSize READ editorSize NOTIFY changed)
     Q_PROPERTY(QJsonValue coord READ coord NOTIFY changed)
     Q_PROPERTY(QJsonValue fragCoord READ fragCoord NOTIFY changed)
     Q_PROPERTY(QJsonValue prevCoord READ prevCoord NOTIFY changed)
@@ -19,6 +20,7 @@ public:
 
     void update(const InputState &state);
 
+    QJsonValue editorSize() const;
     QJsonValue coord() const;
     QJsonValue fragCoord() const;
     QJsonValue prevCoord() const;

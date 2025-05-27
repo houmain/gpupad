@@ -13,6 +13,14 @@ void MouseScriptObject::update(const InputState &state)
     Q_EMIT changed();
 }
 
+QJsonValue MouseScriptObject::editorSize() const
+{
+    auto vector = QJsonArray();
+    vector.append(mEditorSize.width());
+    vector.append(mEditorSize.height());
+    return vector;
+}
+
 QJsonValue MouseScriptObject::coord() const
 {
     mWasRead = true;

@@ -136,11 +136,12 @@ Initial documentation of the available script objects:
 ### Mouse
 
 - `button: [State]` - The state of each mouse button (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
-- `coord: [x,y]`
-- `delta: [x,y]`
-- `fragCoord: [x,y]`
-- `prevCoord: [x,y]`
-- `prevFragCoord: [x,y]`
+- `coord: [x, y]`
+- `delta: [x, y]`
+- `fragCoord: [x, y]`
+- `prevCoord: [x, y]`
+- `prevFragCoord: [x, y]`
+- `editorSize: [width, height]`
 
 ### Keyboard
 
