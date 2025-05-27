@@ -9,23 +9,6 @@
 #include <QRegularExpression>
 
 namespace {
-    QString getAbsolutePath(const QString &currentFile, const QString &relative,
-        const QString &includePaths)
-    {
-        const auto workdir = QFileInfo(currentFile).dir();
-        auto absolute = workdir.absoluteFilePath(relative);
-        if (!QFile::exists(absolute))
-            for (auto path : includePaths.split('\n'))
-                if (path = path.trimmed(); !path.isEmpty()) {
-                    path = workdir.absoluteFilePath(path) + '/' + relative;
-                    if (QFile::exists(path)) {
-                        absolute = path;
-                        break;
-                    }
-                }
-        return toNativeCanonicalFilePath(absolute);
-    }
-
     bool removeVersion(QString *source, QString *maxVersion)
     {
         static const auto regex = QRegularExpression("(^\\s*#version[^\n]*\n?)",
@@ -38,6 +21,14 @@ namespace {
             return true;
         }
         return false;
+    }
+
+    bool isUsingIncludeExtension(const QString &source)
+    {
+        static const auto regex = QRegularExpression(
+            "(^\\s*#extension\\s+GL_GOOGLE_include_directive)",
+            QRegularExpression::MultilineOption);
+        return regex.match(source).hasMatch();
     }
 
     void removeExtensions(QString *source, QString *extensions)
@@ -92,6 +83,10 @@ namespace {
             (usedFileNames ? usedFileNames->indexOf(fileName) : 0);
         const auto versionRemoved =
             (maxVersion ? removeVersion(&source, maxVersion) : false);
+
+        if (isUsingIncludeExtension(source))
+            return source;
+
         if (extensions)
             removeExtensions(&source, extensions);
 
@@ -101,8 +96,7 @@ namespace {
         for (auto match = regex.match(source); match.hasMatch();
             match = regex.match(source)) {
 
-            const auto lineNo =
-                countLines(source, match.capturedStart());
+            const auto lineNo = countLines(source, match.capturedStart());
 
             source.remove(match.capturedStart(), match.capturedLength());
             auto include = match.captured(1).trimmed();
@@ -111,7 +105,7 @@ namespace {
                 include = include.mid(1, include.size() - 2);
 
                 const auto includeFileName =
-                    getAbsolutePath(fileName, include, includePaths);
+                    resolveIncludePath(fileName, include, includePaths);
                 auto includeSource = QString();
                 if (Singletons::fileCache().getSource(includeFileName,
                         &includeSource)) {
@@ -206,6 +200,23 @@ namespace {
         return "main";
     }
 } // namespace
+
+QString resolveIncludePath(const QString &currentFile, const QString &relative,
+    const QString &includePaths)
+{
+    const auto workdir = QFileInfo(currentFile).dir();
+    auto absolute = workdir.absoluteFilePath(relative);
+    if (!QFile::exists(absolute))
+        for (auto path : includePaths.split('\n'))
+            if (path = path.trimmed(); !path.isEmpty()) {
+                path = workdir.absoluteFilePath(path) + '/' + relative;
+                if (QFile::exists(path)) {
+                    absolute = path;
+                    break;
+                }
+            }
+    return toNativeCanonicalFilePath(absolute);
+}
 
 bool shaderSessionSettingsDiffer(const Session &a, const Session &b)
 {
@@ -365,6 +376,7 @@ Spirv::Input ShaderBase::getSpirvCompilerInput(ShaderPrintf &printf)
         patchedSources,
         usedFileNames,
         mEntryPoint,
+        mIncludePaths,
         mItemId,
     };
 }
@@ -382,7 +394,7 @@ QString ShaderBase::preprocess()
     auto printf = RemoveShaderPrintf();
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
     return Spirv::preprocess(mSession, mLanguage, mType, patchedSources,
-        usedFileNames, mEntryPoint, mItemId, mMessages);
+        usedFileNames, mEntryPoint, mItemId, mIncludePaths, mMessages);
 }
 
 QString ShaderBase::generateReadableSpirv()
@@ -408,7 +420,7 @@ QString ShaderBase::generateGLSLangAST()
     auto printf = RemoveShaderPrintf();
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
     return Spirv::generateAST(mSession, mLanguage, mType, patchedSources,
-        usedFileNames, mEntryPoint, mItemId, mMessages);
+        usedFileNames, mEntryPoint, mItemId, mIncludePaths, mMessages);
 }
 
 QString ShaderBase::getJsonInterface()

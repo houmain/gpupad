@@ -1,6 +1,9 @@
 
 #include "Spirv.h"
+#include "ShaderBase.h"
 #include <QRegularExpression>
+#include <QFile>
+#include <QTextStream>
 #include <sstream>
 #include <set>
 
@@ -144,7 +147,7 @@ namespace {
     std::shared_ptr<glslang::TShader> createShader(const Session &session,
         Shader::Language language, int dialectVersion,
         Shader::ShaderType shaderType, const QStringList &sources,
-        const QString &entryPoint)
+        const QStringList &fileNames, const QString &entryPoint)
     {
         staticInitGlslang();
 
@@ -153,22 +156,36 @@ namespace {
         const auto targetLanguage = glslang::EShTargetLanguage::EShTargetSpv;
         const auto targetVersion = getSpirvVersion(session.spirvVersion);
 
-        // capture sources in deleter lambda
+        auto lengths = std::vector<int>();
         auto sourcesUtf8 = std::vector<QByteArray>();
         auto sourcesCStr = std::vector<const char *>();
         for (const auto &source : sources) {
             sourcesUtf8.push_back(source.toUtf8());
             sourcesCStr.push_back(sourcesUtf8.back().constData());
+            lengths.push_back(static_cast<int>(sourcesUtf8.back().size()));
         }
-        auto sourcesPtr = sourcesCStr.data();
-        auto shaderPtr = std::shared_ptr<glslang::TShader>(
+
+        auto fileNamesUtf8 = std::vector<QByteArray>();
+        auto fileNamesCStr = std::vector<const char *>();
+        for (const auto &fileName : fileNames) {
+            fileNamesUtf8.push_back(fileName.toUtf8());
+            fileNamesCStr.push_back(fileNamesUtf8.back().constData());
+        }
+
+        // capture sources and filenames in deleter lambda
+        const auto sourcesPtr = sourcesCStr.data();
+        const auto fileNamesPtr = fileNamesCStr.data();
+        const auto shaderPtr = std::shared_ptr<glslang::TShader>(
             new glslang::TShader(getStage(shaderType)),
             [sourcesUtf8 = std::move(sourcesUtf8),
-                sourcesCStr = std::move(sourcesCStr)](
+                sourcesCStr = std::move(sourcesCStr),
+                fileNamesUtf8 = std::move(fileNamesUtf8),
+                fileNamesCStr = std::move(fileNamesCStr)](
                 glslang::TShader *shader) { delete shader; });
 
         auto &shader = *shaderPtr;
-        shader.setStrings(sourcesPtr, static_cast<int>(sources.size()));
+        shader.setStringsWithLengthsAndNames(sourcesPtr, lengths.data(),
+            fileNamesPtr, static_cast<int>(sources.size()));
         shader.setEnvInput(getLanguage(language), getStage(shaderType), client,
             dialectVersion);
         shader.setEnvClient(client, clientVersion);
@@ -217,6 +234,51 @@ namespace {
             }
 #endif
     }
+
+    class Includer : public glslang::TShader::Includer
+    {
+    private:
+        const QString mIncludePaths;
+
+        class IncludeResultWithData : public IncludeResult
+        {
+        private:
+            QByteArray mData;
+
+        public:
+            IncludeResultWithData(const std::string &headerName,
+                QByteArray data)
+                : IncludeResult(headerName, data.constData(), data.size(),
+                      nullptr)
+                , mData(data)
+            {
+            }
+        };
+
+    public:
+        explicit Includer(const QString &includePaths)
+            : mIncludePaths(includePaths)
+        {
+        }
+
+        IncludeResult *includeSystem(const char *headerName,
+            const char *includerName, size_t inclusionDepth) override
+        {
+            if (inclusionDepth > 3)
+                return nullptr;
+
+            const auto fileName =
+                resolveIncludePath(includerName, headerName, mIncludePaths);
+
+            auto file = QFile(fileName);
+            if (!file.open(QFile::ReadOnly | QFile::Text))
+                return nullptr;
+
+            return new IncludeResultWithData(fileName.toStdString(),
+                QTextStream(&file).readAll().toUtf8());
+        }
+        void releaseInclude(IncludeResult *result) override { delete result; }
+    };
 } // namespace
 
 bool isGlobalUniformBlockName(const char *name)
@@ -279,11 +341,12 @@ std::map<Shader::ShaderType, Spirv> Spirv::compile(const Session &session,
 
         auto &shader = *shaders.emplace_back(createShader(session,
             input.language, defaultVersion, input.shaderType, input.sources,
-            input.entryPoint));
+            input.fileNames, input.entryPoint));
 
+        auto includer = Includer(input.includePaths);
         if (!shader.parse(GetDefaultResources(), defaultVersion, defaultProfile,
                 false, forwardCompatible,
-                static_cast<EShMessages>(requestedMessages))) {
+                static_cast<EShMessages>(requestedMessages), includer)) {
             parseGLSLangErrors(QString::fromUtf8(shader.getInfoLog()), messages,
                 input.itemId, input.fileNames);
             return {};
@@ -332,7 +395,7 @@ std::map<Shader::ShaderType, Spirv> Spirv::compile(const Session &session,
 QString Spirv::preprocess(const Session &session, Shader::Language language,
     Shader::ShaderType shaderType, const QStringList &sources,
     const QStringList &fileNames, const QString &entryPoint, ItemId itemId,
-    MessagePtrSet &messages)
+    const QString &includePaths, MessagePtrSet &messages)
 {
     const auto defaultVersion = 100;
     const auto defaultProfile = ENoProfile;
@@ -340,9 +403,9 @@ QString Spirv::preprocess(const Session &session, Shader::Language language,
     const auto requestedMessages = EShMsgOnlyPreprocessor;
 
     auto shader = createShader(session, language, defaultVersion, shaderType,
-        sources, entryPoint);
+        sources, fileNames, entryPoint);
     auto string = std::string();
-    auto includer = glslang::TShader::ForbidIncluder();
+    auto includer = Includer(includePaths);
     if (!shader->preprocess(GetResources(), defaultVersion, defaultProfile,
             false, forwardCompatible, requestedMessages, &string, includer)) {
         parseGLSLangErrors(QString::fromUtf8(shader->getInfoLog()), messages,
@@ -365,7 +428,7 @@ QString Spirv::disassemble(const Spirv &spirv)
 QString Spirv::generateAST(const Session &session, Shader::Language language,
     Shader::ShaderType shaderType, const QStringList &sources,
     const QStringList &fileNames, const QString &entryPoint, ItemId itemId,
-    MessagePtrSet &messages)
+    const QString &includePaths, MessagePtrSet &messages)
 {
     const auto defaultVersion = 100;
     const auto defaultProfile = ENoProfile;
@@ -373,9 +436,10 @@ QString Spirv::generateAST(const Session &session, Shader::Language language,
     const auto requestedMessages = EShMsgAST;
 
     auto shader = createShader(session, language, defaultVersion, shaderType,
-        sources, entryPoint);
+        sources, fileNames, entryPoint);
+    auto includer = Includer(includePaths);
     if (!shader->parse(GetDefaultResources(), defaultVersion, defaultProfile,
-            false, forwardCompatible, requestedMessages)) {
+            false, forwardCompatible, requestedMessages, includer)) {
         parseGLSLangErrors(QString::fromUtf8(shader->getInfoLog()), messages,
             itemId, fileNames);
         return {};

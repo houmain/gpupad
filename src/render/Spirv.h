@@ -14,6 +14,7 @@ public:
         QStringList sources;
         QStringList fileNames;
         QString entryPoint;
+        QString includePaths;
         ItemId itemId;
     };
 
@@ -39,14 +40,15 @@ public:
     static QString preprocess(const Session &session, Shader::Language language,
         Shader::ShaderType shaderType, const QStringList &sources,
         const QStringList &fileNames, const QString &entryPoint, ItemId itemId,
-        MessagePtrSet &messages);
+        const QString &includePaths, MessagePtrSet &messages);
 
     static QString disassemble(const Spirv &spirv);
 
     static QString generateAST(const Session &session,
         Shader::Language language, Shader::ShaderType shaderType,
         const QStringList &sources, const QStringList &fileNames,
-        const QString &entryPoint, ItemId itemId, MessagePtrSet &messages);
+        const QString &entryPoint, ItemId itemId, const QString &includePaths,
+        MessagePtrSet &messages);
 
     Spirv() = default;
     explicit Spirv(std::vector<uint32_t> spirv);
