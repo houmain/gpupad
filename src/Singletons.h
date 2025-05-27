@@ -43,8 +43,6 @@ public:
 private:
     static Singletons *sInstance;
 
-    std::shared_ptr<Renderer> mVKRenderer;
-    std::shared_ptr<Renderer> mGLRenderer;
     std::unique_ptr<Settings> mSettings;
     std::unique_ptr<FileCache> mFileCache;
     std::unique_ptr<FileDialog> mFileDialog;
@@ -55,4 +53,6 @@ private:
     std::unique_ptr<InputState> mInputState;
     std::unique_ptr<CustomActions> mCustomActions;
     std::shared_ptr<ScriptEngine> mDefaultScriptEngine;
+    std::shared_ptr<Renderer> mVKRenderer;
+    std::shared_ptr<Renderer> mGLRenderer;
 };
