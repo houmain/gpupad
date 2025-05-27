@@ -84,7 +84,7 @@ namespace {
         if (usedFileNames && !usedFileNames->contains(fileName)) {
             usedFileNames->append(fileName);
         } else if (recursionDepth++ > 3) {
-            messages += MessageList::insert(itemId,
+            messages += MessageList::insert(fileName, 0,
                 MessageType::RecursiveInclude, fileName);
             return {};
         }
@@ -100,19 +100,21 @@ namespace {
             QRegularExpression::MultilineOption);
         for (auto match = regex.match(source); match.hasMatch();
             match = regex.match(source)) {
+
+            const auto lineNo =
+                countLines(source, match.capturedStart());
+
             source.remove(match.capturedStart(), match.capturedLength());
             auto include = match.captured(1).trimmed();
             if ((include.startsWith('<') && include.endsWith('>'))
                 || (include.startsWith('"') && include.endsWith('"'))) {
                 include = include.mid(1, include.size() - 2);
 
-                auto includeFileName =
+                const auto includeFileName =
                     getAbsolutePath(fileName, include, includePaths);
                 auto includeSource = QString();
                 if (Singletons::fileCache().getSource(includeFileName,
                         &includeSource)) {
-                    const auto lineNo =
-                        countLines(source, match.capturedStart());
                     const auto includableSource =
                         QString("%1\n#line %2 %3\n")
                             .arg(substituteIncludes(includeSource,
@@ -124,11 +126,11 @@ namespace {
                     source.insert(match.capturedStart(), includableSource);
                     linesInserted += countLines(includableSource) - 1;
                 } else {
-                    messages += MessageList::insert(itemId,
+                    messages += MessageList::insert(fileName, lineNo,
                         MessageType::IncludableNotFound, include);
                 }
             } else {
-                messages += MessageList::insert(itemId,
+                messages += MessageList::insert(fileName, lineNo,
                     MessageType::InvalidIncludeDirective, fileName);
             }
         }
