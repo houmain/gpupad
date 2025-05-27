@@ -39,7 +39,8 @@ public:
         int column = -1);
     BinaryEditor *openBinaryEditor(const QString &fileName);
     TextureEditor *openTextureEditor(const QString &fileName);
-    QmlView *openQmlView(const QString &fileName, const ScriptEnginePtr& enginePtr = {});
+    QmlView *openQmlView(const QString &fileName,
+        const ScriptEnginePtr &enginePtr = {});
     void setAutoRaise(bool raise) { mAutoRaise = raise; }
 
     IEditor *getEditor(const QString &fileName);
@@ -78,6 +79,7 @@ public:
     void setEditorObjectName(IEditor *editor, const QString &name);
     void pasteInNewEditor();
     bool canPasteInNewEditor() const;
+    QSize getViewportSize(const QString &fileName);
 
 Q_SIGNALS:
     void editorRenamed(const QString &prevFileName, const QString &fileName);

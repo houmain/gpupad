@@ -55,6 +55,12 @@ void RenderSessionBase::prepare(bool itemsChanged,
         mUsedItems.clear();
         mSessionModelCopy = Singletons::sessionModel();
     }
+
+    mSessionModelCopy.forEachItem([&](const Item &item) {
+        if (auto texture = castItem<Texture>(item))
+            texture->viewportSize =
+                Singletons::editorManager().getViewportSize(texture->fileName);
+    });
 }
 
 void RenderSessionBase::configure()
@@ -203,6 +209,12 @@ void RenderSessionBase::evaluateTextureProperties(const Texture &texture,
 {
     const auto evaluate = [&](ScriptEngine &engine) {
         Q_ASSERT(width && height && depth && layers);
+
+        auto array = engine.jsEngine().newArray();
+        array.setProperty(0, texture.viewportSize.width());
+        array.setProperty(1, texture.viewportSize.height());
+        engine.setGlobal("viewportSize", array);
+
         *width = engine.evaluateInt(texture.width, texture.id);
         *height = engine.evaluateInt(texture.height, texture.id);
         *depth = engine.evaluateInt(texture.depth, texture.id);

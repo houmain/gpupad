@@ -580,6 +580,17 @@ void EditorManager::setEditorObjectName(IEditor *editor, const QString &name)
         dock->setObjectName(name);
 }
 
+QSize EditorManager::getViewportSize(const QString &fileName)
+{
+    if (auto editor = getEditor(fileName))
+        if (auto dock = findEditorDock(editor)) {
+            const auto dpr = devicePixelRatioF();
+            const auto size = dock->widget()->childrenRect().size();
+            return dpr * size;
+        }
+    return {};
+}
+
 bool EditorManager::canPasteInNewEditor() const
 {
     return (QApplication::clipboard()->mimeData() != nullptr);

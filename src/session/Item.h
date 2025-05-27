@@ -93,6 +93,8 @@ struct Texture : FileItem
     QString layers{ "1" };
     int samples{ 1 };
     bool flipVertically{};
+
+    mutable QSize viewportSize;
 };
 
 struct Program : Item
