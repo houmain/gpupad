@@ -13,6 +13,14 @@
 #include <QDirIterator>
 #include <QJSEngine>
 #include <QCoreApplication>
+#include <atomic>
+
+namespace {
+    std::atomic<int> gLastEditorWidth{ 2 };
+    std::atomic<int> gLastEditorHeight{ 2 };
+    std::atomic<int> gLastMousePositionX{ 1 };
+    std::atomic<int> gLastMousePositionY{ 1 };
+} // namespace
 
 AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     const QString &basePath)
@@ -29,9 +37,18 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     mMouseProperty = mJsEngine->newQObject(mMouseScriptObject);
     mKeyboardProperty = mJsEngine->newQObject(mKeyboardScriptObject);
 
-    const auto emptyInputState = InputState();
-    mMouseScriptObject->update(emptyInputState);
-    mKeyboardScriptObject->update(emptyInputState);
+    auto inputState = InputState();
+    inputState.setEditorSize({
+        gLastEditorWidth.load(),
+        gLastEditorHeight.load(),
+    });
+    inputState.setMousePosition({
+        gLastMousePositionX.load(),
+        gLastMousePositionY.load(),
+    });
+    inputState.update();
+    mMouseScriptObject->update(inputState);
+    mKeyboardScriptObject->update(inputState);
 }
 
 QString AppScriptObject::getAbsolutePath(const QString &fileName) const
@@ -45,6 +62,11 @@ void AppScriptObject::update()
 
     auto &inputState = Singletons::inputState();
     inputState.update();
+    gLastEditorWidth.store(inputState.editorSize().width());
+    gLastEditorHeight.store(inputState.editorSize().height());
+    gLastMousePositionX.store(inputState.mousePosition().x());
+    gLastMousePositionY.store(inputState.mousePosition().y());
+
     mMouseScriptObject->update(inputState);
     mKeyboardScriptObject->update(inputState);
 }
