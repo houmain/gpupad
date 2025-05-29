@@ -214,6 +214,10 @@ QJsonArray SessionModel::generateJsonFromUrls(QModelIndex target,
             && FileDialog::isShaderFileName(fileName)) {
             auto item = Shader();
             item.type = Item::Type::Shader;
+            const auto sourceType = deduceSourceType(SourceType::PlainText,
+                FileDialog::getFileExtension(fileName), "");
+            item.language = getShaderLanguage(sourceType);
+            item.shaderType = getShaderType(sourceType);
             addFileItem(item, url);
         } else if (canContainType(target, Item::Type::Script)
             && FileDialog::isScriptFileName(fileName)) {
@@ -519,7 +523,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
             } else {
                 object["fileName"] = (relativeFilePaths
                         ? QDir::fromNativeSeparators(
-                            QDir::current().relativeFilePath(fileName))
+                              QDir::current().relativeFilePath(fileName))
                         : fileName);
             }
         }

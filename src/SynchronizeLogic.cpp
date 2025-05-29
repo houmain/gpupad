@@ -283,19 +283,9 @@ void SynchronizeLogic::handleEditorFileRenamed(const QString &prevFileName,
     // update references to untitled file
     if (FileDialog::isUntitled(prevFileName))
         mModel.forEachFileItem([&](const FileItem &item) {
-            if (item.fileName == prevFileName) {
+            if (item.fileName == prevFileName)
                 mModel.setData(mModel.getIndex(&item, SessionModel::FileName),
                     fileName);
-
-                // also synchronize shader type
-                if (item.type == Item::Type::Shader) {
-                    auto &editorManager = Singletons::editorManager();
-                    if (auto editor = editorManager.getSourceEditor(fileName))
-                        mModel.setData(
-                            mModel.getIndex(&item, SessionModel::ShaderType),
-                            getShaderType(editor->sourceType()));
-                }
-            }
         });
 }
 
@@ -311,6 +301,15 @@ void SynchronizeLogic::handleFileItemFileChanged(const FileItem &item)
     }
     if (name != item.name)
         mModel.setData(mModel.getIndex(&item, SessionModel::Name), name);
+
+    // update shader type
+    if (auto shader = castItem<Shader>(item)) {
+        const auto sourceType = deduceSourceType(
+            getSourceType(shader->shaderType, shader->language),
+            FileDialog::getFileExtension(shader->fileName), "");
+        mModel.setData(mModel.getIndex(shader, SessionModel::ShaderType),
+            getShaderType(sourceType));
+    }
 }
 
 void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
