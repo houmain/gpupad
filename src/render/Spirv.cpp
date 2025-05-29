@@ -100,12 +100,12 @@ namespace {
     bool parseGLSLangErrors(const QString &log, MessagePtrSet &messages,
         ItemId itemId, const QStringList &fileNames)
     {
-        // ERROR: 0:50: 'output' : unknown variable
+        // ERROR: Filename:50: 'output' : unknown variable
         // WARNING: Linking fragment stage
         static const auto split = QRegularExpression(
             "("
             "([^:]+):\\s*" // 2. severity/code
-            "((\\d+):" // 4. source index
+            "((.+):" // 4. source index / filename
             "(\\d+):)?" // 5. line
             "\\s*"
             ")?"
@@ -118,7 +118,7 @@ namespace {
                 continue;
 
             const auto severity = match.captured(2);
-            const auto sourceIndex = match.captured(4).toInt();
+            const auto source = match.captured(4);
             const auto lineNumber = match.captured(5).toInt();
             const auto text = match.captured(6);
 
@@ -134,9 +134,14 @@ namespace {
                 hasErrors = true;
             }
 
-            if (sourceIndex < fileNames.size()) {
+            auto isNumber = false;
+            if (auto sourceIndex = source.toInt(&isNumber);
+                isNumber && sourceIndex < fileNames.size()) {
                 messages += MessageList::insert(fileNames[sourceIndex],
                     lineNumber, messageType, text);
+            } else if (!source.isEmpty()) {
+                messages +=
+                    MessageList::insert(source, lineNumber, messageType, text);
             } else {
                 messages += MessageList::insert(itemId, messageType, text);
             }
