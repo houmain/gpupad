@@ -112,6 +112,9 @@ namespace {
                 return { "d", "double", dims };
             return { "", "float", dims };
         }
+        if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_MASK)
+            return { "", "", "" };
+
         Q_ASSERT(!"unhandled type");
         return { "", "", "" };
     }
@@ -154,7 +157,8 @@ namespace {
     {
         auto json = QJsonObject();
         if (!type.member_count) {
-            json["type"] = getTypeName(type);
+            if (auto typeName = getTypeName(type); !typeName.isEmpty())
+                json["type"] = typeName;
         } else {
             json["type"] = type.type_name;
             json["members"] = getTypeMembers(type);
@@ -211,6 +215,7 @@ namespace {
 
         auto jsonUniforms = QJsonArray();
         auto jsonBuffers = QJsonArray();
+        auto jsonAccelerationStructures = QJsonArray();
         for (auto i = 0u; i < module.descriptor_binding_count; ++i)
             if (const auto &binding = module.descriptor_bindings[i]; true) {
                 const auto &type = *binding.type_description;
@@ -233,11 +238,17 @@ namespace {
                         jsonBuffers.push_back(getJson(binding));
                     }
                     break;
+
+                case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+                    jsonAccelerationStructures.push_back(getJson(binding));
+                    break;
+
                 default: Q_ASSERT(!"not handled descriptor type");
                 }
             }
         json["uniforms"] = jsonUniforms;
         json["buffers"] = jsonBuffers;
+        json["accelerationStructures"] = jsonAccelerationStructures;
         return json;
     }
 } // namespace
