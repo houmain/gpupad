@@ -46,8 +46,6 @@ void RenderSessionBase::prepare(bool itemsChanged,
 
     if (mScriptSession) {
         mScriptSession->update();
-        if (mEvaluationType == EvaluationType::Manual)
-            mScriptSession->resetMessages();
     } else {
         mEvaluationType = EvaluationType::Reset;
     }
@@ -67,8 +65,11 @@ void RenderSessionBase::configure()
 {
     Q_ASSERT(!onMainThread());
 
-    if (mEvaluationType == EvaluationType::Reset)
+    if (mEvaluationType == EvaluationType::Reset) {
         mScriptSession.reset(new ScriptSession(this));
+    } else {
+        mScriptSession->resetMessages();
+    }
 
     mScriptSession->beginSessionUpdate();
 

@@ -78,14 +78,13 @@ private:
 
     QString mSessionFileName;
     QTimer *mEvaluationTimer{};
-    std::unique_ptr<RenderSessionBase> mRenderSession;
     bool mRenderSessionInvalidated{};
     EvaluationMode mEvaluationMode{};
-
     bool mValidateSource{};
     QString mCurrentEditorFileName{};
     SourceType mCurrentEditorSourceType{};
     QString mProcessSourceType{};
     QTimer *mProcessSourceTimer{};
     std::unique_ptr<ProcessSource> mProcessSource;
+    std::unique_ptr<RenderSessionBase> mRenderSession;
 };

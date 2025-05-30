@@ -20,7 +20,7 @@ public:
         QThread *thread = nullptr, QObject *parent = nullptr);
     ~ScriptEngine();
 
-    MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
+    MessagePtrSet resetMessages();
     MessagePtrSet &messages() { return mMessages; }
     void setOmitReferenceErrors();
     void setTimeout(int msec);

@@ -62,6 +62,5 @@ void ScriptSession::update()
 
 MessagePtrSet ScriptSession::resetMessages()
 {
-    Q_ASSERT(onMainThread());
     return mScriptEngine->resetMessages();
 }

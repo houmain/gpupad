@@ -117,6 +117,12 @@ void ScriptEngine::resetInterruptTimer()
 #endif
 }
 
+MessagePtrSet ScriptEngine::resetMessages()
+{
+    Q_ASSERT(QThread::currentThread() == thread());
+    return std::exchange(mMessages, {});
+}
+
 void ScriptEngine::setGlobal(const QString &name, QJSValue value)
 {
     Q_ASSERT(QThread::currentThread() == thread());
