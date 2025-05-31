@@ -270,6 +270,13 @@ bool FileDialog::exec(Options options, QString currentFileName,
         dialog.setDirectory(mDirectory);
     dialog.selectFile(currentFileName);
 
+    const auto extension = getFileExtension(currentFileName);
+    for (const auto &filter : filters)
+        if (filter.contains("*." + extension)) {
+            dialog.selectNameFilter(filter);
+            break;
+        }
+
     if (dialog.exec() != QDialog::Accepted)
         return false;
 
