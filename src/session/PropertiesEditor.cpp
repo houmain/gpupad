@@ -426,7 +426,13 @@ IEditor *PropertiesEditor::openEditor(const FileItem &fileItem)
         return editors.openNewTextureEditor(fileItem.fileName);
     }
 
-    case Item::Type::Script: return editors.openEditor(fileItem.fileName);
+    case Item::Type::Script: {
+        auto editor = editors.openSourceEditor(fileItem.fileName);
+        if (!editor)
+            editor = editors.openNewSourceEditor(fileItem.fileName);
+        editor->setSourceType(SourceType::JavaScript);
+        return editor;
+    }
 
     case Item::Type::Shader: {
         auto editor = editors.openSourceEditor(fileItem.fileName);
