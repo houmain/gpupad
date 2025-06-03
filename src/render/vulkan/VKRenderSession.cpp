@@ -438,18 +438,18 @@ void VKRenderSession::reuseUnmodifiedItems()
         // immediately try to link programs
         // when failing restore previous version but keep error messages
         auto &device = mCommandQueue->context.device;
-        for (auto &[id, program] : mCommandQueue->programs) {
-            auto it = mPrevCommandQueue->programs.find(id);
-            if (it != mPrevCommandQueue->programs.end()) {
-                auto &prev = it->second;
-                if (!shaderSessionSettingsDiffer(prev.session(),
-                        program.session())
-                    && !program.link(device) && prev.link(device)) {
-                    mCommandQueue->failedPrograms.push_back(std::move(program));
-                    program = std::move(prev);
-                }
-            }
-        }
+        if (mEvaluationType != EvaluationType::Reset)
+            for (auto &[id, program] : mCommandQueue->programs)
+                if (auto it = mPrevCommandQueue->programs.find(id);
+                    it != mPrevCommandQueue->programs.end())
+                    if (auto &prev = it->second;
+                        !shaderSessionSettingsDiffer(prev.session(),
+                            program.session())
+                        && !program.link(device) && prev.link(device)) {
+                        mCommandQueue->failedPrograms.push_back(
+                            std::move(program));
+                        program = std::move(prev);
+                    }
         mPrevCommandQueue.reset();
     }
 }
