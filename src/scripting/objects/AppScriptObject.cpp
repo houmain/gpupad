@@ -10,6 +10,7 @@
 #include "FileCache.h"
 #include "editors/EditorManager.h"
 #include "editors/qml/QmlView.h"
+#include <QApplication>
 #include <QDirIterator>
 #include <QJSEngine>
 #include <QCoreApplication>
@@ -21,6 +22,40 @@ namespace {
     std::atomic<int> gLastMousePositionX{ 1 };
     std::atomic<int> gLastMousePositionY{ 1 };
 } // namespace
+
+bool AppScriptObject_MainThreadCalls::openQmlView(QString fileName,
+    QString title, ScriptEnginePtr enginePtr)
+{
+    const auto editor =
+        Singletons::editorManager().openQmlView(fileName, enginePtr);
+    if (!editor)
+        return false;
+
+    // set cleaned up title
+    title = title.remove("&").replace("...", "");
+    if (!title.isEmpty())
+        editor->setWindowTitle(title);
+
+    return true;
+}
+
+bool AppScriptObject_MainThreadCalls::openEditor(QString fileName)
+{
+    return static_cast<bool>(Singletons::editorManager().openEditor(fileName));
+}
+
+QString AppScriptObject_MainThreadCalls::openFileDialog(QString pattern)
+{
+    auto options = FileDialog::Options{};
+    Singletons::fileDialog().setDirectory(mLastFileDialogDirectory);
+
+    if (!Singletons::fileDialog().exec(options, pattern))
+        return {};
+    mLastFileDialogDirectory = Singletons::fileDialog().directory();
+    return Singletons::fileDialog().fileName();
+}
+
+//-------------------------------------------------------------------------
 
 AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     const QString &basePath)
@@ -37,6 +72,10 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     mMouseProperty = mJsEngine->newQObject(mMouseScriptObject);
     mKeyboardProperty = mJsEngine->newQObject(mKeyboardScriptObject);
 
+    mMainThreadCalls = new AppScriptObject_MainThreadCalls();
+    if (!onMainThread())
+        mMainThreadCalls->moveToThread(QApplication::instance()->thread());
+
     auto inputState = InputState();
     inputState.setEditorSize({
         gLastEditorWidth.load(),
@@ -51,6 +90,11 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     mKeyboardScriptObject->update(inputState);
 }
 
+AppScriptObject::~AppScriptObject()
+{
+    mMainThreadCalls->deleteLater();
+}
+
 QString AppScriptObject::getAbsolutePath(const QString &fileName) const
 {
     return toNativeCanonicalFilePath(mBasePath.filePath(fileName));
@@ -58,6 +102,8 @@ QString AppScriptObject::getAbsolutePath(const QString &fileName) const
 
 void AppScriptObject::update()
 {
+    Q_ASSERT(onMainThread());
+
     ++mFrameIndex;
 
     auto &inputState = Singletons::inputState();
@@ -73,11 +119,13 @@ void AppScriptObject::update()
 
 bool AppScriptObject::usesMouseState() const
 {
+    Q_ASSERT(onMainThread());
     return mMouseScriptObject->wasRead();
 }
 
 bool AppScriptObject::usesKeyboardState() const
 {
+    Q_ASSERT(onMainThread());
     return mKeyboardScriptObject->wasRead();
 }
 
@@ -93,24 +141,17 @@ QJSValue AppScriptObject::session()
 
 QJSValue AppScriptObject::openEditor(QString fileName, QString title)
 {
-    if (!onMainThread())
-        return {};
-
     fileName = getAbsolutePath(fileName);
-    auto &editorManager = Singletons::editorManager();
-    if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
-        const auto editor =
-            editorManager.openQmlView(fileName, mEnginePtr.lock());
-        if (!editor)
-            return false;
-
-        // set cleaned up title
-        title = title.remove("&").replace("...", "");
-        if (!title.isEmpty())
-            editor->setWindowTitle(title);
-        return true;
-    }
-    return static_cast<bool>(editorManager.openEditor(fileName));
+    auto result = false;
+    dispatchToMainThread([&]() {
+        if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
+            result = static_cast<bool>(mMainThreadCalls->openQmlView(fileName,
+                title, (onMainThread() ? mEnginePtr.lock() : nullptr)));
+        } else {
+            result = static_cast<bool>(mMainThreadCalls->openEditor(fileName));
+        }
+    });
+    return result;
 }
 
 QJSValue AppScriptObject::loadLibrary(QString fileName)
@@ -185,16 +226,11 @@ QJSValue AppScriptObject::callAction(QString id)
 
 QJSValue AppScriptObject::openFileDialog(QString pattern)
 {
-    if (!onMainThread())
-        return {};
-
-    auto options = FileDialog::Options{};
-    Singletons::fileDialog().setDirectory(mLastFileDialogDirectory);
-
-    if (Singletons::fileDialog().exec(options, pattern)) {
-        mLastFileDialogDirectory = Singletons::fileDialog().directory();
-        return Singletons::fileDialog().fileName();
-    }
+    auto result = QString();
+    dispatchToMainThread(
+        [&]() { result = mMainThreadCalls->openFileDialog(pattern); });
+    if (!result.isEmpty())
+        return result;
     return {};
 }
 

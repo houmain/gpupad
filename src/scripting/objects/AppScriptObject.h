@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QJSValue>
 #include <QModelIndex>
+#include <QThread>
 #include <QDir>
 
 class SessionScriptObject;
@@ -11,6 +12,20 @@ class MouseScriptObject;
 class KeyboardScriptObject;
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 using WeakScriptEnginePtr = std::weak_ptr<class ScriptEngine>;
+
+class AppScriptObject_MainThreadCalls : public QObject
+{
+    Q_OBJECT
+
+public:
+     bool openQmlView(QString fileName, QString title,
+        ScriptEnginePtr enginePtr);
+    bool openEditor(QString fileName);
+    QString openFileDialog(QString pattern);
+
+private:
+    QDir mLastFileDialogDirectory;
+};
 
 class AppScriptObject final : public QObject
 {
@@ -22,6 +37,7 @@ class AppScriptObject final : public QObject
 
 public:
     AppScriptObject(const ScriptEnginePtr &enginePtr, const QString &basePath);
+    ~AppScriptObject();
 
     int frameIndex() const { return mFrameIndex; }
     QJSValue session();
@@ -29,10 +45,10 @@ public:
     QJSValue keyboard() { return mKeyboardProperty; }
 
     Q_INVOKABLE QJSValue openEditor(QString fileName, QString title = {});
+    Q_INVOKABLE QJSValue openFileDialog(QString pattern);
     Q_INVOKABLE QJSValue loadLibrary(QString fileName);
     Q_INVOKABLE QJSValue callAction(QString id);
     Q_INVOKABLE QJSValue callAction(QString id, QJSValue arguments);
-    Q_INVOKABLE QJSValue openFileDialog(QString pattern);
     Q_INVOKABLE QJSValue enumerateFiles(QString pattern);
     Q_INVOKABLE QJSValue writeTextFile(QString fileName, QString string);
     Q_INVOKABLE QJSValue writeBinaryFile(QString fileName, QByteArray binary);
@@ -44,6 +60,17 @@ public:
     SessionScriptObject &sessionScriptObject() { return *mSessionScriptObject; }
 
 private:
+    template <typename F>
+    void dispatchToMainThread(F &&function)
+    {
+        if (QThread::currentThread() != mMainThreadCalls->thread()) {
+            QMetaObject::invokeMethod(mMainThreadCalls,
+                std::forward<F>(function), Qt::BlockingQueuedConnection);
+        } else {
+            function();
+        }
+    }
+
     QJSEngine &jsEngine() { return *mJsEngine; }
     QString getAbsolutePath(const QString &fileName) const;
 
@@ -56,7 +83,7 @@ private:
     QJSValue mSessionProperty;
     QJSValue mMouseProperty;
     QJSValue mKeyboardProperty;
-    QDir mLastFileDialogDirectory;
     int mFrameIndex{};
     QMap<QString, QJSValue> mLoadedLibraries;
+    AppScriptObject_MainThreadCalls *mMainThreadCalls{};
 };
