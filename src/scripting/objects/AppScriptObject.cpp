@@ -97,6 +97,8 @@ AppScriptObject::~AppScriptObject()
 
 QString AppScriptObject::getAbsolutePath(const QString &fileName) const
 {
+    if (FileDialog::isEmptyOrUntitled(fileName))
+        return fileName;
     return toNativeCanonicalFilePath(mBasePath.filePath(fileName));
 }
 

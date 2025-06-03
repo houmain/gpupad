@@ -72,6 +72,7 @@ public:
     Q_INVOKABLE void clearItems(QJSValue parentIdent);
     Q_INVOKABLE void deleteItem(QJSValue itemIdent);
 
+    Q_INVOKABLE QJSValue openEditor(QJSValue itemIdent);
     Q_INVOKABLE void setBufferData(QJSValue itemIdent, QJSValue data);
     Q_INVOKABLE void setBlockData(QJSValue itemIdent, QJSValue data);
     Q_INVOKABLE void setTextureData(QJSValue itemIdent, QJSValue data);

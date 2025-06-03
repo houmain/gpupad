@@ -269,21 +269,21 @@ namespace {
         return textureData;
     }
 
-    void ensureFileName(SessionModel &session, const FileItem *item,
+    void ensureFileName(SessionModel &session, const FileItem &item,
         QString *hint)
     {
-        auto fileName = item->fileName;
+        auto fileName = item.fileName;
         if (fileName.isEmpty() && hint)
             fileName = *hint;
         if (fileName.isEmpty())
-            fileName = FileDialog::generateNextUntitledFileName(item->name);
-        const auto index = session.getIndex(item, SessionModel::FileName);
+            fileName = FileDialog::generateNextUntitledFileName(item.name);
+        const auto index = session.getIndex(&item, SessionModel::FileName);
         session.setData(index, fileName);
         if (hint)
             *hint = fileName;
     }
 
-    BinaryEditor *openBinaryEditor(const Buffer &buffer)
+    BinaryEditor *openBinaryEditor(const FileItem &buffer)
     {
         auto &editors = Singletons::editorManager();
         editors.setAutoRaise(false);
@@ -294,7 +294,7 @@ namespace {
         return editor;
     }
 
-    TextureEditor *openTextureEditor(const Texture &texture)
+    TextureEditor *openTextureEditor(const FileItem &texture)
     {
         auto &editors = Singletons::editorManager();
         editors.setAutoRaise(false);
@@ -314,6 +314,17 @@ namespace {
             editor = editors.openNewSourceEditor(item.fileName);
         editors.setAutoRaise(true);
         return editor;
+    }
+
+    IEditor *openEditor(const FileItem &item)
+    {
+        switch (item.type) {
+        case Item::Type::Buffer:  return openBinaryEditor(item);
+        case Item::Type::Texture: return openTextureEditor(item);
+        case Item::Type::Shader:
+        case Item::Type::Script:  return openSourceEditor(item);
+        }
+        return nullptr;
     }
 } // namespace
 
@@ -783,6 +794,25 @@ void SessionScriptObject::deleteItem(QJSValue itemIdent)
     refreshItemObjectItems(parent);
 }
 
+QJSValue SessionScriptObject::openEditor(QJSValue itemIdent)
+{
+    const auto item = findSessionItem<FileItem>(itemIdent);
+    if (!item)
+        return QJSValue::UndefinedValue;
+
+    const auto fileName = std::make_shared<QString>();
+    withSessionModel(
+        [itemId = item->id, fileName](SessionModel &session) mutable {
+            if (const auto item = session.findItem<FileItem>(itemId)) {
+                ensureFileName(session, *item, fileName.get());
+
+                if (onMainThread())
+                    ::openEditor(*item);
+            }
+        });
+    return *fileName;
+}
+
 void SessionScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
 {
     const auto buffer = findSessionItem<Buffer>(itemIdent);
@@ -810,7 +840,7 @@ void SessionScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
                     session.getIndex(block, SessionModel::BlockRowCount),
                     rowCount);
             }
-            ensureFileName(session, buffer, &fileName);
+            ensureFileName(session, *buffer, &fileName);
             if (onMainThread())
                 if (auto editor = openBinaryEditor(*buffer))
                     editor->replace(bufferData);
@@ -837,7 +867,7 @@ void SessionScriptObject::setBlockData(QJSValue itemIdent, QJSValue data)
                 session.setData(
                     session.getIndex(block, SessionModel::BlockRowCount),
                     rowCount);
-                ensureFileName(session, buffer, &fileName);
+                ensureFileName(session, *buffer, &fileName);
                 if (onMainThread())
                     if (auto editor = openBinaryEditor(*buffer)) {
                         auto offset = 0, rowCount = 0;
@@ -862,7 +892,7 @@ void SessionScriptObject::setTextureData(QJSValue itemIdent, QJSValue data)
     withSessionModel([textureId = texture->id, textureData,
                          fileName = QString()](SessionModel &session) mutable {
         if (auto texture = session.findItem<Texture>(textureId)) {
-            ensureFileName(session, texture, &fileName);
+            ensureFileName(session, *texture, &fileName);
             if (onMainThread())
                 if (auto editor = openTextureEditor(*texture))
                     editor->replace(textureData);
@@ -879,7 +909,7 @@ void SessionScriptObject::setShaderSource(QJSValue itemIdent, QJSValue data)
     withSessionModel([shaderId = shader->id, data = data.toString(),
                          fileName = QString()](SessionModel &session) mutable {
         if (auto shader = session.findItem<Shader>(shaderId)) {
-            ensureFileName(session, shader, &fileName);
+            ensureFileName(session, *shader, &fileName);
             if (onMainThread())
                 if (auto editor = openSourceEditor(*shader))
                     editor->replace(data);
@@ -896,7 +926,7 @@ void SessionScriptObject::setScriptSource(QJSValue itemIdent, QJSValue data)
     withSessionModel([scriptId = script->id, data = data.toString(),
                          fileName = QString()](SessionModel &session) mutable {
         if (auto script = session.findItem<Script>(scriptId)) {
-            ensureFileName(session, script, &fileName);
+            ensureFileName(session, *script, &fileName);
             if (onMainThread())
                 if (auto editor = openSourceEditor(*script))
                     editor->replace(data);
