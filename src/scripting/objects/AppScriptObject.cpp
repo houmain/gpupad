@@ -2,6 +2,7 @@
 #include "AppScriptObject.h"
 #include "SessionScriptObject.h"
 #include "KeyboardScriptObject.h"
+#include "EditorScriptObject.h"
 #include "MouseScriptObject.h"
 #include "LibraryScriptObject.h"
 #include "../ScriptEngine.h"
@@ -153,7 +154,9 @@ QJSValue AppScriptObject::openEditor(QString fileName, QString title)
             result = static_cast<bool>(mMainThreadCalls->openEditor(fileName));
         }
     });
-    return result;
+    if (!result)
+        return {};
+    return jsEngine().newQObject(new EditorScriptObject(fileName));
 }
 
 QJSValue AppScriptObject::loadLibrary(QString fileName)

@@ -8,6 +8,7 @@
 #include "editors/source/SourceEditor.h"
 #include "session/SessionModel.h"
 #include "LibraryScriptObject.h"
+#include "EditorScriptObject.h"
 #include "../IScriptRenderSession.h"
 #include "render/Renderer.h"
 #include "render/ProcessSource.h"
@@ -810,7 +811,9 @@ QJSValue SessionScriptObject::openEditor(QJSValue itemIdent)
                     ::openEditor(*item);
             }
         });
-    return *fileName;
+    if (fileName->isEmpty())
+        return {};
+    return engine().newQObject(new EditorScriptObject(*fileName));
 }
 
 void SessionScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)

@@ -105,7 +105,7 @@ Initial documentation of the available script objects:
 - `callAction(id, arguments...) -> result`
 - `enumerateFiles(pattern) -> [filename]`
 - `loadLibrary(filename) -> Library?`
-- `openEditor(filename) -> Bool`
+- `openEditor(filename, title?) -> Editor?`
 - `openFileDialog(pattern) -> filename: String?`
 - `readTextFile(filename) -> String?`
 - `writeTextFile(filename, String) -> Bool`
@@ -124,6 +124,7 @@ Initial documentation of the available script objects:
 - `deleteItem(ItemIdent)`
 - `clearItems(ItemIdent)`
 - `replaceItems(parent: ItemIdent, [Object])`
+- `openEditor(ItemIdent) -> Editor?`
 - `setBlockData(ItemIdent, Data)`
 - `setBufferData(ItemIdent, Data)`
 - `setScriptSource(ItemIdent, Data)`
@@ -132,6 +133,10 @@ Initial documentation of the available script objects:
 - `getProcessShader(shader: ItemIdent, type: String) -> String/Data`
 - `getBufferHandle(ItemIdent) -> Number`
 - `getTextureHandle(ItemIdent) -> Number`
+
+### Editor
+
+- `viewportSize: [width, height]`
 
 ### Mouse
 
