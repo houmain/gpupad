@@ -1,6 +1,8 @@
 #include "ConsoleScriptObject.h"
+#include <QRegularExpression>
 
-ConsoleScriptObject::ConsoleScriptObject(MessagePtrSet *messages, QObject *parent)
+ConsoleScriptObject::ConsoleScriptObject(MessagePtrSet *messages,
+    QObject *parent)
     : QObject(parent)
     , mMessages(*messages)
 {
@@ -20,6 +22,10 @@ void ConsoleScriptObject::setItemId(ItemId itemId)
 
 void ConsoleScriptObject::output(QString message, int level)
 {
+    static const auto emptyObjectName = QRegularExpression(
+        R"("objectName":\s*"",\s*)", QRegularExpression::MultilineOption);
+    message = message.replace(emptyObjectName, "");
+
     const auto messageType = (level == 2 ? MessageType::ScriptError
             : level == 1                 ? MessageType::ScriptWarning
                                          : MessageType::ScriptMessage);

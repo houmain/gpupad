@@ -20,10 +20,10 @@ MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
     mUpdateItemsTimer->start();
 
     setColumnCount(2);
-    verticalHeader()->setVisible(false);
+    verticalHeader()->setVisible(true);
     horizontalHeader()->setVisible(false);
-    verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    verticalHeader()->setDefaultSectionSize(20);
+    verticalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    verticalHeader()->setDefaultSectionSize(24);
     horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     setEditTriggers(NoEditTriggers);
