@@ -1,8 +1,10 @@
 #include "KeyboardScriptObject.h"
 #include <QJsonArray>
 
-KeyboardScriptObject::KeyboardScriptObject(QObject *parent)
-    : QObject(parent) { }
+KeyboardScriptObject::KeyboardScriptObject(QObject *parent) : QObject(parent)
+{
+    update(InputState());
+}
 
 void KeyboardScriptObject::update(const InputState &state)
 {

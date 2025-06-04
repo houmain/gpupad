@@ -17,13 +17,6 @@
 #include <QCoreApplication>
 #include <atomic>
 
-namespace {
-    std::atomic<int> gLastEditorWidth{ 2 };
-    std::atomic<int> gLastEditorHeight{ 2 };
-    std::atomic<int> gLastMousePositionX{ 1 };
-    std::atomic<int> gLastMousePositionY{ 1 };
-} // namespace
-
 bool AppScriptObject_MainThreadCalls::openQmlView(QString fileName,
     QString title, ScriptEnginePtr enginePtr)
 {
@@ -76,19 +69,6 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     mMainThreadCalls = new AppScriptObject_MainThreadCalls();
     if (!onMainThread())
         mMainThreadCalls->moveToThread(QApplication::instance()->thread());
-
-    auto inputState = InputState();
-    inputState.setEditorSize({
-        gLastEditorWidth.load(),
-        gLastEditorHeight.load(),
-    });
-    inputState.setMousePosition({
-        gLastMousePositionX.load(),
-        gLastMousePositionY.load(),
-    });
-    inputState.update();
-    mMouseScriptObject->update(inputState);
-    mKeyboardScriptObject->update(inputState);
 }
 
 AppScriptObject::~AppScriptObject()
@@ -111,11 +91,6 @@ void AppScriptObject::update()
 
     auto &inputState = Singletons::inputState();
     inputState.update();
-    gLastEditorWidth.store(inputState.editorSize().width());
-    gLastEditorHeight.store(inputState.editorSize().height());
-    gLastMousePositionX.store(inputState.mousePosition().x());
-    gLastMousePositionY.store(inputState.mousePosition().y());
-
     mMouseScriptObject->update(inputState);
     mKeyboardScriptObject->update(inputState);
 }

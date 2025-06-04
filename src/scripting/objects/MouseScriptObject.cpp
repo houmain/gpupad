@@ -1,10 +1,36 @@
 #include "MouseScriptObject.h"
 #include <QJsonArray>
 
-MouseScriptObject::MouseScriptObject(QObject *parent) : QObject(parent) { }
+namespace {
+    std::atomic<int> gLastEditorWidth{ 2 };
+    std::atomic<int> gLastEditorHeight{ 2 };
+    std::atomic<int> gLastMousePositionX{ 1 };
+    std::atomic<int> gLastMousePositionY{ 1 };
+} // namespace
+
+MouseScriptObject::MouseScriptObject(QObject *parent) : QObject(parent)
+{
+    auto inputState = InputState();
+    inputState.setEditorSize({
+        gLastEditorWidth.load(),
+        gLastEditorHeight.load(),
+    });
+    inputState.setMousePosition({
+        gLastMousePositionX.load(),
+        gLastMousePositionY.load(),
+    });
+    inputState.update();
+    inputState.update();
+    update(inputState);
+}
 
 void MouseScriptObject::update(const InputState &state)
 {
+    gLastEditorWidth.store(state.editorSize().width());
+    gLastEditorHeight.store(state.editorSize().height());
+    gLastMousePositionX.store(state.mousePosition().x());
+    gLastMousePositionY.store(state.mousePosition().y());
+
     mWasRead = false;
     mEditorSize = state.editorSize();
     mPosition = state.mousePosition();
