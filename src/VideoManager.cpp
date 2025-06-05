@@ -57,6 +57,9 @@ void VideoManager::pauseVideoFiles()
 void VideoManager::rewindVideoFiles()
 {
     Q_ASSERT(onMainThread());
-    for (const auto &videoPlayer : mVideoPlayers)
+    for (const auto &videoPlayer : mVideoPlayers) {
         videoPlayer.second->rewind();
+        if (mVideosPlaying)
+            videoPlayer.second->play();
+    }
 }

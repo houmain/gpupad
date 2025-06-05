@@ -3,6 +3,8 @@
 #  include "VideoPlayer.h"
 #  include "FileCache.h"
 #  include "Singletons.h"
+#  include "editors/EditorManager.h"
+#  include "editors/IEditor.h"
 #  include "TextureData.h"
 #  include <QVideoFrame>
 #  include <cstring>
@@ -43,9 +45,13 @@ void VideoPlayer::handleVideoFrame(const QVideoFrame &frame)
         Q_EMIT loadingFinished();
     }
     auto texture = TextureData();
-    if (texture.loadQImage(frame.toImage(), mFlipVertically))
+    if (texture.loadQImage(frame.toImage(), mFlipVertically)) {
         Singletons::fileCache().updateTexture(mFileName, mFlipVertically,
             std::move(texture));
+
+        if (auto editor = Singletons::editorManager().getEditor(mFileName))
+            editor->load();
+    }
 }
 
 void VideoPlayer::play()

@@ -310,9 +310,6 @@ bool FileCache::updateTexture(const QString &fileName, bool flippedVertically,
     mTextures[key] = std::move(texture);
     lock.unlock();
 
-    if (auto editor = Singletons::editorManager().getEditor(fileName))
-        editor->load();
-
     Q_EMIT fileChanged(fileName);
 
     return true;
@@ -360,7 +357,7 @@ void FileCache::updateFileSystemWatches()
             == 0);
 
     for (auto it = mFileSystemWatchesToAdd.begin();
-         it != mFileSystemWatchesToAdd.end();) {
+        it != mFileSystemWatchesToAdd.end();) {
         const auto &fileName = it.key();
         const auto &changed = it.value();
 
