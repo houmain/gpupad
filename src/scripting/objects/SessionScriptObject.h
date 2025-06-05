@@ -13,6 +13,7 @@
 class SessionModel;
 class SessionScriptObject;
 class IScriptRenderSession;
+class AppScriptObject;
 struct Item;
 
 class SessionScriptObject_ItemObject : public QQmlPropertyMap
@@ -41,7 +42,7 @@ class SessionScriptObject : public QObject
     Q_PROPERTY(QJSValue items READ items CONSTANT)
 
 public:
-    explicit SessionScriptObject(QObject *parent = nullptr);
+    explicit SessionScriptObject(AppScriptObject *appScriptObject);
     void initializeEngine(QJSEngine *engine);
 
     void setSelection(const QModelIndexList &selectedIndices);
@@ -118,6 +119,7 @@ private:
         return array;
     }
 
+    AppScriptObject &mAppScriptObject;
     QJSEngine *mEngine{};
     QJSValue mSelectionProperty;
     QJSValue mSessionItems;

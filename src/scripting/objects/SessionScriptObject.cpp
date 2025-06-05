@@ -1,4 +1,5 @@
 #include "SessionScriptObject.h"
+#include "AppScriptObject.h"
 #include "SynchronizeLogic.h"
 #include "FileCache.h"
 #include "Singletons.h"
@@ -374,7 +375,11 @@ QVariant SessionScriptObject_ItemObject::updateValue(const QString &key,
 
 //-------------------------------------------------------------------------
 
-SessionScriptObject::SessionScriptObject(QObject *parent) : QObject(parent) { }
+SessionScriptObject::SessionScriptObject(AppScriptObject *appScriptObject)
+    : QObject(appScriptObject)
+    , mAppScriptObject(*appScriptObject)
+{
+}
 
 void SessionScriptObject::initializeEngine(QJSEngine *engine)
 {
@@ -813,7 +818,7 @@ QJSValue SessionScriptObject::openEditor(QJSValue itemIdent)
         });
     if (fileName->isEmpty())
         return {};
-    return engine().newQObject(new EditorScriptObject(*fileName));
+    return mAppScriptObject.openEditor(*fileName);
 }
 
 void SessionScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)

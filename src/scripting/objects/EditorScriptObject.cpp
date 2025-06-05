@@ -1,13 +1,34 @@
 #include "EditorScriptObject.h"
+#include "AppScriptObject.h"
+#include "Singletons.h"
+#include "editors/EditorManager.h"
 #include <QJsonArray>
 
-EditorScriptObject::EditorScriptObject(const QString &fileName, QObject *parent)
-    : QObject(parent)
+EditorScriptObject::EditorScriptObject(AppScriptObject *appScriptObject,
+    const QString &fileName)
+    : QObject(appScriptObject)
+    , mAppScriptObject(appScriptObject)
     , mFileName(fileName)
 {
 }
 
-QJsonValue EditorScriptObject::viewportSize() const
+EditorScriptObject::~EditorScriptObject()
 {
-    return QJsonArray({ 100, 100 });
+    if (mAppScriptObject)
+        mAppScriptObject->deregisterEditorScriptObject(this);
+}
+
+void EditorScriptObject::resetAppScriptObject()
+{
+    mAppScriptObject = nullptr;
+}
+
+void EditorScriptObject::update()
+{
+    mViewportSize = Singletons::editorManager().getViewportSize(mFileName);
+}
+
+QJsonValue EditorScriptObject::viewportSize()
+{
+    return QJsonArray({ mViewportSize.width(), mViewportSize.height() });
 }

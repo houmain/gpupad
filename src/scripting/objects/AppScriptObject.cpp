@@ -73,6 +73,9 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
 
 AppScriptObject::~AppScriptObject()
 {
+    for (auto &[editorScriptObject, scriptValue] : mEditorScriptObjects)
+        editorScriptObject->resetAppScriptObject();
+
     mMainThreadCalls->deleteLater();
 }
 
@@ -81,6 +84,11 @@ QString AppScriptObject::getAbsolutePath(const QString &fileName) const
     if (FileDialog::isEmptyOrUntitled(fileName))
         return fileName;
     return toNativeCanonicalFilePath(mBasePath.filePath(fileName));
+}
+
+void AppScriptObject::deregisterEditorScriptObject(EditorScriptObject *object)
+{
+    mEditorScriptObjects.erase(object);
 }
 
 void AppScriptObject::update()
@@ -93,6 +101,9 @@ void AppScriptObject::update()
     inputState.update();
     mMouseScriptObject->update(inputState);
     mKeyboardScriptObject->update(inputState);
+
+    for (auto &[editorScriptObject, scriptValue] : mEditorScriptObjects)
+        editorScriptObject->update();
 }
 
 bool AppScriptObject::usesMouseState() const
@@ -120,6 +131,13 @@ QJSValue AppScriptObject::session()
 QJSValue AppScriptObject::openEditor(QString fileName, QString title)
 {
     fileName = getAbsolutePath(fileName);
+
+    const auto it = std::find_if(mEditorScriptObjects.begin(),
+        mEditorScriptObjects.end(),
+        [&](const auto &kv) { return kv.first->fileName() == fileName; });
+    if (it != mEditorScriptObjects.end())
+        return it->second;
+
     auto result = false;
     dispatchToMainThread([&]() {
         if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
@@ -131,7 +149,11 @@ QJSValue AppScriptObject::openEditor(QString fileName, QString title)
     });
     if (!result)
         return {};
-    return jsEngine().newQObject(new EditorScriptObject(fileName));
+
+    auto editorScriptObject = new EditorScriptObject(this, fileName);
+    return mEditorScriptObjects
+        .emplace(editorScriptObject, jsEngine().newQObject(editorScriptObject))
+        .first->second;
 }
 
 QJSValue AppScriptObject::loadLibrary(QString fileName)

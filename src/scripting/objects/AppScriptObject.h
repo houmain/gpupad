@@ -10,6 +10,7 @@
 class SessionScriptObject;
 class MouseScriptObject;
 class KeyboardScriptObject;
+class EditorScriptObject;
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 using WeakScriptEnginePtr = std::weak_ptr<class ScriptEngine>;
 
@@ -18,7 +19,7 @@ class AppScriptObject_MainThreadCalls : public QObject
     Q_OBJECT
 
 public:
-     bool openQmlView(QString fileName, QString title,
+    bool openQmlView(QString fileName, QString title,
         ScriptEnginePtr enginePtr);
     bool openEditor(QString fileName);
     QString openFileDialog(QString pattern);
@@ -54,6 +55,7 @@ public:
     Q_INVOKABLE QJSValue writeBinaryFile(QString fileName, QByteArray binary);
     Q_INVOKABLE QJSValue readTextFile(QString fileName);
 
+    void deregisterEditorScriptObject(EditorScriptObject *object);
     void update();
     bool usesMouseState() const;
     bool usesKeyboardState() const;
@@ -80,6 +82,7 @@ private:
     SessionScriptObject *mSessionScriptObject{};
     MouseScriptObject *mMouseScriptObject{};
     KeyboardScriptObject *mKeyboardScriptObject{};
+    std::map<EditorScriptObject *, QJSValue> mEditorScriptObjects;
     QJSValue mSessionProperty;
     QJSValue mMouseProperty;
     QJSValue mKeyboardProperty;
