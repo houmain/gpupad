@@ -101,11 +101,10 @@ bool TextureBase::swap(TextureBase &other)
         || mSamples != other.mSamples)
         return false;
 
-    std::swap(mData, other.mData);
-    std::swap(mFileData, other.mFileData);
-    std::swap(mSystemCopyModified, other.mSystemCopyModified);
-    std::swap(mDeviceCopyModified, other.mDeviceCopyModified);
     std::swap(mMipmapsInvalidated, other.mMipmapsInvalidated);
+
+    mDeviceCopyModified = true;
+    other.mDeviceCopyModified = true;
     return true;
 }
 
