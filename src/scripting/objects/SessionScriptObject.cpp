@@ -325,8 +325,8 @@ namespace {
         case Item::Type::Texture: return openTextureEditor(item);
         case Item::Type::Shader:
         case Item::Type::Script:  return openSourceEditor(item);
+        default:                  return nullptr;
         }
-        return nullptr;
     }
 } // namespace
 

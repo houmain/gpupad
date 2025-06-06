@@ -161,13 +161,11 @@ namespace {
         const auto targetLanguage = glslang::EShTargetLanguage::EShTargetSpv;
         const auto targetVersion = getSpirvVersion(session.spirvVersion);
 
-        auto lengths = std::vector<int>();
         auto sourcesUtf8 = std::vector<QByteArray>();
         auto sourcesCStr = std::vector<const char *>();
         for (const auto &source : sources) {
             sourcesUtf8.push_back(source.toUtf8());
             sourcesCStr.push_back(sourcesUtf8.back().constData());
-            lengths.push_back(static_cast<int>(sourcesUtf8.back().size()));
         }
 
         auto fileNamesUtf8 = std::vector<QByteArray>();
@@ -189,7 +187,7 @@ namespace {
                 glslang::TShader *shader) { delete shader; });
 
         auto &shader = *shaderPtr;
-        shader.setStringsWithLengthsAndNames(sourcesPtr, lengths.data(),
+        shader.setStringsWithLengthsAndNames(sourcesPtr, nullptr,
             fileNamesPtr, static_cast<int>(sources.size()));
         shader.setEnvInput(getLanguage(language), getStage(shaderType), client,
             dialectVersion);

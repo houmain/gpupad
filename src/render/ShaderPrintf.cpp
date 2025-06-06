@@ -144,13 +144,6 @@ namespace {
         return std::count(begin, it, '\n');
     }
 
-    bool containsIdentifier(const QString &string, const char *identifier)
-    {
-        auto it = string.begin();
-        return skipUntilIdentifier(it, string.begin(), string.end(),
-            identifier);
-    }
-
     QString blankComments(QString string)
     {
         auto it = string.begin();
