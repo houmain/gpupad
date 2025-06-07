@@ -269,6 +269,14 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
     mTexture = texture;
     mIsRaw = false;
 
+    // automatically enabled zoom to fit,
+    // when texture has viewport size (disables margin)
+    const auto dpr = devicePixelRatioF();
+    const auto width = static_cast<int>(viewport()->width() * dpr + 0.5);
+    const auto height = static_cast<int>(viewport()->height() * dpr + 0.5);
+    if (mTexture.width() == width && mTexture.height() == height)
+        mZoomToFit = true;
+
     if (emitFileChanged || !FileDialog::isEmptyOrUntitled(mFileName))
         setModified(true);
 
@@ -500,7 +508,7 @@ void TextureEditor::zoomToFit()
     const auto height = viewport()->height() * dpr;
     const auto scale =
         std::min(width / mBounds.width(), height / mBounds.height());
-    mZoom = std::max(static_cast<int>(scale * 100), 1);
+    mZoom = std::max(static_cast<int>(scale * 100 + 0.5), 1);
     Q_EMIT zoomChanged(mZoom);
 }
 
@@ -548,11 +556,10 @@ void TextureEditor::updateScrollBars()
     verticalScrollBar()->setPageStep(height);
     horizontalScrollBar()->setSingleStep(32);
     verticalScrollBar()->setSingleStep(32);
-    const auto sx = std::max(bounds.width() - width, 0.0);
-    const auto sy = std::max(bounds.height() - height, 0.0);
+    const auto sx = (mZoomToFit ? 0 : std::max(bounds.width() - width, 0.0));
+    const auto sy = (mZoomToFit ? 0 : std::max(bounds.height() - height, 0.0));
     horizontalScrollBar()->setRange(-sx, sx);
     verticalScrollBar()->setRange(-sy, sy);
-
     mGLWidget->update();
 }
 
