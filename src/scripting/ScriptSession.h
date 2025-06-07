@@ -19,6 +19,7 @@ public:
     // 1. called in main thread
     bool usesMouseState() const;
     bool usesKeyboardState() const;
+    bool usesViewportSize(const QString &fileName) const;
     void update();
     MessagePtrSet resetMessages();
 

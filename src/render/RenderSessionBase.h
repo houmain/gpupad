@@ -32,6 +32,7 @@ public:
     const Session &session() const;
     bool usesMouseState() const;
     bool usesKeyboardState() const;
+    bool usesViewportSize(const QString &fileName) const;
 
     int getBufferSize(const Buffer &buffer);
     void evaluateBlockProperties(const Block &block, int *offset,

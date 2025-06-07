@@ -142,6 +142,16 @@ void EditorManager::updateEditorPropertiesVisibility()
         mTextureInfoBar->parentWidget()->isVisible());
 }
 
+bool EditorManager::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() == QEvent::Resize)
+        if (auto dock = qobject_cast<QDockWidget *>(watched))
+            if (auto editor = mDocks[dock])
+                Q_EMIT viewportSizeChanged(editor->fileName());
+
+    return DockWindow::eventFilter(watched, event);
+}
+
 int EditorManager::getFocusedEditorIndex() const
 {
     auto index = 0;

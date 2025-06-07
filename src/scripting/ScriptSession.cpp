@@ -54,6 +54,12 @@ bool ScriptSession::usesKeyboardState() const
     return mScriptEngine->appScriptObject().usesKeyboardState();
 }
 
+bool ScriptSession::usesViewportSize(const QString &fileName) const
+{
+    Q_ASSERT(onMainThread());
+    return mScriptEngine->appScriptObject().usesViewportSize(fileName);
+}
+
 void ScriptSession::update()
 {
     Q_ASSERT(onMainThread());

@@ -74,6 +74,8 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
         &SynchronizeLogic::handleFileChanged);
     connect(&Singletons::editorManager(), &EditorManager::editorRenamed, this,
         &SynchronizeLogic::handleEditorFileRenamed);
+    connect(&Singletons::editorManager(), &EditorManager::viewportSizeChanged,
+        this, &SynchronizeLogic::handleViewportSizeChanged);
 
     mUpdateEditorsTimer->start(100);
     mEvaluationTimer->setTimerType(Qt::PreciseTimer);
@@ -504,6 +506,12 @@ void SynchronizeLogic::handleKeyboardStateChanged()
         if (mEvaluationMode == EvaluationMode::Automatic)
             evaluate(EvaluationType::Steady);
     }
+}
+
+void SynchronizeLogic::handleViewportSizeChanged(const QString &fileName)
+{
+    if (mRenderSession && mRenderSession->usesViewportSize(fileName))
+        invalidateRenderSession();
 }
 
 void SynchronizeLogic::evaluateBlockProperties(const Block &block, int *offset,

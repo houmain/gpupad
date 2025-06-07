@@ -162,6 +162,11 @@ bool RenderSessionBase::usesKeyboardState() const
     return (mScriptSession && mScriptSession->usesKeyboardState());
 }
 
+bool RenderSessionBase::usesViewportSize(const QString &fileName) const
+{
+    return (mScriptSession && mScriptSession->usesViewportSize(fileName));
+}
+
 bool RenderSessionBase::updatingPreviewTextures() const
 {
     return (!mItemsChanged && mEvaluationType == EvaluationType::Steady);

@@ -196,14 +196,10 @@ private:
             return error("no general queue found");
 
         const auto &rm = *mDevice.graphicsApi()->resourceManager();
-        const auto vkInstance =
-            static_cast<KDGpu::VulkanInstance *>(rm.getInstance(mInstance));
-        const auto vkAdapter =
-            static_cast<KDGpu::VulkanAdapter *>(rm.getAdapter(*mAdapter));
-        const auto vkDevice =
-            static_cast<KDGpu::VulkanDevice *>(rm.getDevice(mDevice));
-        const auto vkQueue =
-            static_cast<KDGpu::VulkanQueue *>(rm.getQueue(mQueue));
+        const auto vkInstance = rm.getInstance(mInstance);
+        const auto vkAdapter = rm.getAdapter(*mAdapter);
+        const auto vkDevice = rm.getDevice(mDevice);
+        const auto vkQueue = rm.getQueue(mQueue);
 
         const auto commandPoolInfo = VkCommandPoolCreateInfo{
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,

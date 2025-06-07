@@ -25,10 +25,12 @@ void EditorScriptObject::resetAppScriptObject()
 
 void EditorScriptObject::update()
 {
+    mViewportSizeWasRead = false;
     mViewportSize = Singletons::editorManager().getViewportSize(mFileName);
 }
 
-QJsonValue EditorScriptObject::viewportSize()
+QJsonValue EditorScriptObject::viewportSize() const
 {
+    mViewportSizeWasRead = true;
     return QJsonArray({ mViewportSize.width(), mViewportSize.height() });
 }

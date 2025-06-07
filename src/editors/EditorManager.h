@@ -87,8 +87,10 @@ Q_SIGNALS:
     void canNavigateBackwardChanged(bool canNavigate);
     void canNavigateForwardChanged(bool canNavigate);
     void canPasteInNewEditorChanged(bool canPaste);
+    void viewportSizeChanged(const QString &fileName);
 
 private:
+    bool eventFilter(QObject *watched, QEvent *event) override;
     int getFocusedEditorIndex() const;
     bool focusEditorByIndex(int index, bool wrap);
     IEditor *currentEditor();

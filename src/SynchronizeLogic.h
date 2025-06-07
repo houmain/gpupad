@@ -59,6 +59,7 @@ private:
         const QModelIndex &bottomRight, const QVector<int> &roles);
     void handleEditorFileRenamed(const QString &prevFileName,
         const QString &fileName);
+    void handleViewportSizeChanged(const QString &fileName);
     void handleFileItemFileChanged(const FileItem &item);
     void handleFileItemRenamed(const FileItem &item);
     void handleFileChanged(const QString &fileName);

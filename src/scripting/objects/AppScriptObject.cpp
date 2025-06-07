@@ -118,6 +118,15 @@ bool AppScriptObject::usesKeyboardState() const
     return mKeyboardScriptObject->wasRead();
 }
 
+bool AppScriptObject::usesViewportSize(const QString &fileName) const
+{
+    Q_ASSERT(onMainThread());
+    for (const auto &[editorScriptObject, scriptValue] : mEditorScriptObjects)
+        if (editorScriptObject->fileName() == fileName)
+            return editorScriptObject->viewportSizeWasRead();
+    return false;
+}
+
 QJSValue AppScriptObject::session()
 {
     if (!mSessionScriptObject->available()) {

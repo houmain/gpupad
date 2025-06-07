@@ -59,6 +59,7 @@ public:
     void update();
     bool usesMouseState() const;
     bool usesKeyboardState() const;
+    bool usesViewportSize(const QString &fileName) const;
     SessionScriptObject &sessionScriptObject() { return *mSessionScriptObject; }
 
 private:
