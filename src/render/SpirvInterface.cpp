@@ -13,6 +13,31 @@ namespace {
         const char *dims;
     };
 
+    const char *getStageName(SpvReflectShaderStageFlagBits stage)
+    {
+        switch (stage) {
+        case SPV_REFLECT_SHADER_STAGE_VERTEX_BIT: return "Vertex";
+        case SPV_REFLECT_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+            return "TessControl";
+        case SPV_REFLECT_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+            return "TessEvaluation";
+        case SPV_REFLECT_SHADER_STAGE_GEOMETRY_BIT:    return "Geometry";
+        case SPV_REFLECT_SHADER_STAGE_FRAGMENT_BIT:    return "Fragment";
+        case SPV_REFLECT_SHADER_STAGE_COMPUTE_BIT:     return "Compute";
+        case SPV_REFLECT_SHADER_STAGE_TASK_BIT_EXT:    return "Task";
+        case SPV_REFLECT_SHADER_STAGE_MESH_BIT_EXT:    return "Mesh";
+        case SPV_REFLECT_SHADER_STAGE_RAYGEN_BIT_KHR:  return "RayGeneration";
+        case SPV_REFLECT_SHADER_STAGE_ANY_HIT_BIT_KHR: return "RayAnyHit";
+        case SPV_REFLECT_SHADER_STAGE_CLOSEST_HIT_BIT_KHR:
+            return "RayClosestHit";
+        case SPV_REFLECT_SHADER_STAGE_MISS_BIT_KHR: return "RayMiss";
+        case SPV_REFLECT_SHADER_STAGE_INTERSECTION_BIT_KHR:
+            return "RayIntersection";
+        case SPV_REFLECT_SHADER_STAGE_CALLABLE_BIT_KHR: return "RayCallable";
+        }
+        return nullptr;
+    }
+
     const char *getImageDims(const SpvReflectTypeDescription &type)
     {
         if (type.traits.image.ms) {
@@ -48,6 +73,56 @@ namespace {
         }
         Q_ASSERT(!"unhandled dimensions");
         return "";
+    }
+
+    const char *getImageFormat(const SpvReflectTypeDescription &type)
+    {
+        switch (type.traits.image.image_format) {
+        case SpvImageFormatUnknown:
+        case SpvImageFormatMax:          break;
+        case SpvImageFormatRgba32f:      return "rgba32f";
+        case SpvImageFormatRgba16f:      return "rgba16f";
+        case SpvImageFormatR32f:         return "r32f";
+        case SpvImageFormatRgba8:        return "rgba8";
+        case SpvImageFormatRgba8Snorm:   return "rgba8snorm";
+        case SpvImageFormatRg32f:        return "rg32f";
+        case SpvImageFormatRg16f:        return "rg16f";
+        case SpvImageFormatR11fG11fB10f: return "r11fg11fb10f";
+        case SpvImageFormatR16f:         return "r16f";
+        case SpvImageFormatRgba16:       return "rgba16";
+        case SpvImageFormatRgb10A2:      return "rgb10a2";
+        case SpvImageFormatRg16:         return "rg16";
+        case SpvImageFormatRg8:          return "rg8";
+        case SpvImageFormatR16:          return "r16";
+        case SpvImageFormatR8:           return "r8";
+        case SpvImageFormatRgba16Snorm:  return "rgba16snorm";
+        case SpvImageFormatRg16Snorm:    return "rg16snorm";
+        case SpvImageFormatRg8Snorm:     return "rg8snorm";
+        case SpvImageFormatR16Snorm:     return "r16snorm";
+        case SpvImageFormatR8Snorm:      return "r8snorm";
+        case SpvImageFormatRgba32i:      return "rgba32i";
+        case SpvImageFormatRgba16i:      return "rgba16i";
+        case SpvImageFormatRgba8i:       return "rgba8i";
+        case SpvImageFormatR32i:         return "r32i";
+        case SpvImageFormatRg32i:        return "rg32i";
+        case SpvImageFormatRg16i:        return "rg16i";
+        case SpvImageFormatRg8i:         return "rg8i";
+        case SpvImageFormatR16i:         return "r16i";
+        case SpvImageFormatR8i:          return "r8i";
+        case SpvImageFormatRgba32ui:     return "rgba32ui";
+        case SpvImageFormatRgba16ui:     return "rgba16ui";
+        case SpvImageFormatRgba8ui:      return "rgba8ui";
+        case SpvImageFormatR32ui:        return "r32ui";
+        case SpvImageFormatRgb10a2ui:    return "rgb10a2ui";
+        case SpvImageFormatRg32ui:       return "rg32ui";
+        case SpvImageFormatRg16ui:       return "rg16ui";
+        case SpvImageFormatRg8ui:        return "rg8ui";
+        case SpvImageFormatR16ui:        return "r16ui";
+        case SpvImageFormatR8ui:         return "r8ui";
+        case SpvImageFormatR64ui:        return "r64ui";
+        case SpvImageFormatR64i:         return "r64i";
+        }
+        return nullptr;
     }
 
     const char *getVectorMatrixDims(const SpvReflectTypeDescription &type)
@@ -159,6 +234,8 @@ namespace {
         if (!type.member_count) {
             if (auto typeName = getTypeName(type); !typeName.isEmpty())
                 json["type"] = typeName;
+            if (auto imageFormat = getImageFormat(type))
+                json["imageFormat"] = imageFormat;
         } else {
             json["type"] = type.type_name;
             json["members"] = getTypeMembers(type);
@@ -183,6 +260,8 @@ namespace {
     {
         auto json = getJson(*variable.type_description);
         json["name"] = variable.name;
+        if (auto location = static_cast<int>(variable.location); location >= 0)
+            json["location"] = location;
         return json;
     }
 
@@ -192,12 +271,15 @@ namespace {
         if (*binding.name)
             json["name"] = binding.name;
         json["accessed"] = static_cast<bool>(binding.accessed);
+        json["binding"] = static_cast<int>(binding.binding);
+        json["set"] = static_cast<int>(binding.set);
         return json;
     }
 
     QJsonObject getJson(const SpvReflectShaderModule &module)
     {
         auto json = QJsonObject();
+        json["stage"] = getStageName(module.shader_stage);
 
         auto jsonInputs = QJsonArray();
         for (auto i = 0u; i < module.input_variable_count; ++i)

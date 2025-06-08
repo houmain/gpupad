@@ -120,7 +120,7 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
             session.renderer = "Vulkan";
             session.vulkanRulesRelaxed = true;
             session.autoSampledTextures = true;
-            session.autoMapLocations = true;
+            session.autoMapBindings = true;
             session.autoMapLocations = true;
         }
 
