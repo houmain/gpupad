@@ -44,6 +44,9 @@ void RenderSessionBase::prepare(bool itemsChanged,
     mPrevMessages.swap(mMessages);
     mMessages.clear();
 
+    if (itemsChanged)
+        invalidateCachedProperties();
+
     if (mScriptSession) {
         mScriptSession->update();
     } else {
@@ -189,13 +192,39 @@ int RenderSessionBase::getBufferSize(const Buffer &buffer)
     return size;
 }
 
-void RenderSessionBase::evaluateBlockProperties(const Block &block, int *offset,
-    int *rowCount)
+void RenderSessionBase::invalidateCachedProperties()
 {
+    auto lock = QMutexLocker(&mPropertyCacheMutex);
+    mPropertyCache.clear();
+}
+
+QList<int> RenderSessionBase::getCachedProperties(ItemId itemId)
+{
+    auto lock = QMutexLocker(&mPropertyCacheMutex);
+    return mPropertyCache[itemId];
+}
+
+void RenderSessionBase::updateCachedProperties(ItemId itemId, QList<int> values)
+{
+    auto lock = QMutexLocker(&mPropertyCacheMutex);
+    mPropertyCache[itemId] = values;
+}
+
+void RenderSessionBase::evaluateBlockProperties(const Block &block, int *offset,
+    int *rowCount, bool cached)
+{
+    if (auto values = getCachedProperties(block.id);
+        cached && values.size() == 2) {
+        *offset = values[0];
+        *rowCount = values[1];
+        return;
+    }
+
     const auto evaluate = [&](ScriptEngine &engine) {
         Q_ASSERT(offset && rowCount);
         *offset = engine.evaluateInt(block.offset, block.id);
         *rowCount = engine.evaluateInt(block.rowCount, block.id);
+        updateCachedProperties(block.id, { *offset, *rowCount });
     };
     if (mScriptSession) {
         dispatchToRenderThread([&]() { evaluate(mScriptSession->engine()); });
@@ -205,14 +234,25 @@ void RenderSessionBase::evaluateBlockProperties(const Block &block, int *offset,
 }
 
 void RenderSessionBase::evaluateTextureProperties(const Texture &texture,
-    int *width, int *height, int *depth, int *layers)
+    int *width, int *height, int *depth, int *layers, bool cached)
 {
+    if (auto values = getCachedProperties(texture.id);
+        cached && values.size() == 4) {
+        *width = values[0];
+        *height = values[1];
+        *depth = values[2];
+        *layers = values[3];
+        return;
+    }
+
     const auto evaluate = [&](ScriptEngine &engine) {
         Q_ASSERT(width && height && depth && layers);
         *width = engine.evaluateInt(texture.width, texture.id);
         *height = engine.evaluateInt(texture.height, texture.id);
         *depth = engine.evaluateInt(texture.depth, texture.id);
         *layers = engine.evaluateInt(texture.layers, texture.id);
+        updateCachedProperties(texture.id,
+            { *width, *height, *depth, *layers });
     };
     if (mScriptSession) {
         dispatchToRenderThread([&]() { evaluate(mScriptSession->engine()); });
@@ -222,13 +262,22 @@ void RenderSessionBase::evaluateTextureProperties(const Texture &texture,
 }
 
 void RenderSessionBase::evaluateTargetProperties(const Target &target,
-    int *width, int *height, int *layers)
+    int *width, int *height, int *layers, bool cached)
 {
+    if (auto values = getCachedProperties(target.id);
+        cached && values.size() == 3) {
+        *width = values[0];
+        *height = values[1];
+        *layers = values[2];
+        return;
+    }
+
     const auto evaluate = [&](ScriptEngine &engine) {
         Q_ASSERT(width && height && layers);
         *width = engine.evaluateInt(target.defaultWidth, target.id);
         *height = engine.evaluateInt(target.defaultHeight, target.id);
         *layers = engine.evaluateInt(target.defaultLayers, target.id);
+        updateCachedProperties(target.id, { *width, *height, *layers });
     };
     if (mScriptSession) {
         dispatchToRenderThread([&]() { evaluate(mScriptSession->engine()); });

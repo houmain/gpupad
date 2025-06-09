@@ -518,7 +518,7 @@ void SynchronizeLogic::evaluateBlockProperties(const Block &block, int *offset,
     int *rowCount)
 {
     initializeRenderSession();
-    mRenderSession->evaluateBlockProperties(block, offset, rowCount);
+    mRenderSession->evaluateBlockProperties(block, offset, rowCount, false);
 }
 
 void SynchronizeLogic::evaluateTextureProperties(const Texture &texture,
@@ -526,12 +526,13 @@ void SynchronizeLogic::evaluateTextureProperties(const Texture &texture,
 {
     initializeRenderSession();
     mRenderSession->evaluateTextureProperties(texture, width, height, depth,
-        layers);
+        layers, false);
 }
 
 void SynchronizeLogic::evaluateTargetProperties(const Target &target,
     int *width, int *height, int *layers)
 {
     initializeRenderSession();
-    mRenderSession->evaluateTargetProperties(target, width, height, layers);
+    mRenderSession->evaluateTargetProperties(target, width, height, layers,
+        false);
 }

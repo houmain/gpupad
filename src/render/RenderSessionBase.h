@@ -36,11 +36,11 @@ public:
 
     int getBufferSize(const Buffer &buffer);
     void evaluateBlockProperties(const Block &block, int *offset,
-        int *rowCount);
+        int *rowCount, bool cached = true);
     void evaluateTextureProperties(const Texture &texture, int *width,
-        int *height, int *depth, int *layers);
+        int *height, int *depth, int *layers, bool cached = true);
     void evaluateTargetProperties(const Target &target, int *width, int *height,
-        int *layers);
+        int *layers, bool cached = true);
 
 protected:
     struct GroupIteration
@@ -52,6 +52,9 @@ protected:
 
     void setNextCommandQueueIndex(size_t index);
     virtual bool updatingPreviewTextures() const;
+    void invalidateCachedProperties();
+    QList<int> getCachedProperties(ItemId itemId);
+    void updateCachedProperties(ItemId itemId, QList<int> values);
 
     const QString mBasePath;
     SessionModel mSessionModelCopy;
@@ -70,4 +73,6 @@ private:
     MessagePtrSet mPrevMessages;
     mutable QMutex mUsedItemsCopyMutex;
     QSet<ItemId> mUsedItemsCopy;
+    mutable QMutex mPropertyCacheMutex;
+    QMap<ItemId, QList<int>> mPropertyCache;
 };
