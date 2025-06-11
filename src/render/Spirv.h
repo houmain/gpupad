@@ -67,6 +67,7 @@ bool isGlobalUniformBlockName(QStringView name);
 QString removeGlobalUniformBlockName(QString string);
 
 QString getJsonString(const SpvReflectShaderModule &module);
+bool isBuiltIn(const SpvReflectInterfaceVariable &variable);
 uint32_t getBindingArraySize(const SpvReflectBindingArrayTraits &array);
 Field::DataType getBufferMemberDataType(
     const SpvReflectBlockVariable &variable);
@@ -75,3 +76,4 @@ int getBufferMemberRowCount(const SpvReflectBlockVariable &variable);
 int getBufferMemberColumnStride(const SpvReflectBlockVariable &variable);
 int getBufferMemberArraySize(const SpvReflectBlockVariable &variable);
 int getBufferMemberArrayStride(const SpvReflectBlockVariable &variable);
+GLenum getBufferMemberGLType(const SpvReflectBlockVariable &variable);

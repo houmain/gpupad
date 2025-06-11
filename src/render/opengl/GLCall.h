@@ -110,9 +110,9 @@ private:
         const GLUniformBinding &bindings, int offset, int count,
         ScriptEngine &scriptEngine);
     bool applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
-        const GLSamplerBinding &binding, int unit);
+        const GLSamplerBinding &binding);
     bool applyImageBinding(const GLProgram::Interface::Uniform &uniform,
-        const GLImageBinding &binding, int unit);
+        const GLImageBinding &binding);
     bool applyBufferBinding(
         const GLProgram::Interface::BufferBindingPoint &bufferBindingPoint,
         const GLBufferBinding &binding, ScriptEngine &scriptEngine);

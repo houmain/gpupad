@@ -434,6 +434,9 @@ void GLTexture::upload()
 
 bool GLTexture::download()
 {
+    if (mData.isNull())
+        return false;
+
     if (mTextureBuffer)
         return mTextureBuffer->download(false);
 

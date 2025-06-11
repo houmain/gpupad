@@ -256,7 +256,7 @@ bool TextureEditor::save()
 void TextureEditor::replace(TextureData texture, bool emitFileChanged)
 {
     Q_ASSERT(!texture.isNull());
-    if (texture == mTexture)
+    if (texture.isNull() || texture == mTexture)
         return;
 
     mTextureItem->setImage(texture);

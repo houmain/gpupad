@@ -61,6 +61,46 @@ namespace {
         return string;
     }
 
+    GLenum getBindingGLType(const SpvReflectDescriptorBinding &binding)
+    {
+#define ADD_EACH_DIMENSION(TYPE)                 \
+    switch (image.dim) {                         \
+    case SpvDim1D:   return GL_##TYPE##_1D;      \
+    case SpvDim2D:   return GL_##TYPE##_2D;      \
+    case SpvDim3D:   return GL_##TYPE##_3D;      \
+    case SpvDimCube: return GL_##TYPE##_CUBE;    \
+    case SpvDimRect: return GL_##TYPE##_2D_RECT; \
+    }
+
+        const auto flags = binding.type_description->type_flags;
+        const auto image = binding.type_description->traits.image;
+        const auto numeric = binding.type_description->traits.numeric;
+        const auto is_integral = (flags & SPV_REFLECT_TYPE_FLAG_INT);
+        const auto is_signed = (is_integral && numeric.scalar.signedness != 0);
+        if (flags
+            & (SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER
+                | SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE)) {
+            if (is_integral && is_signed) {
+                ADD_EACH_DIMENSION(INT_SAMPLER)
+            } else if (is_integral && !is_signed) {
+                ADD_EACH_DIMENSION(UNSIGNED_INT_SAMPLER)
+            } else {
+                ADD_EACH_DIMENSION(SAMPLER)
+            }
+        } else if (flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE) {
+            if (is_integral && is_signed) {
+                ADD_EACH_DIMENSION(INT_IMAGE)
+            } else if (is_integral && !is_signed) {
+                ADD_EACH_DIMENSION(UNSIGNED_INT_IMAGE)
+            } else {
+                ADD_EACH_DIMENSION(IMAGE)
+            }
+        }
+#undef ADD_EACH_DIMENSION
+        assert(!"not handled binding type");
+        return GL_NONE;
+    }
+
     int getDataTypeSize(GLenum dataType)
     {
         switch (dataType) {
@@ -150,8 +190,12 @@ bool GLProgram::link()
         return false;
     }
 
-    fillInterface(mProgramObject, mInterface);
-    Q_ASSERT(glGetError() == GL_NO_ERROR);
+    if (!getInterfaceFromSpirv()) {
+        fillInterface(mInterface, mProgramObject);
+        Q_ASSERT(glGetError() == GL_NO_ERROR);
+    }
+
+    automapUniformBindings(mInterface);
 
     // remove printf binding point from interface
     const auto name = mPrintf.bufferBindingName();
@@ -175,9 +219,14 @@ bool GLProgram::compileShaders()
             inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
 
         auto stages = Spirv::compile(mSession, inputs, mItemId, mLinkMessages);
-        for (auto &shader : mShaders)
-            if (!shader.specialize(stages[shader.type()]))
+        for (auto &shader : mShaders) {
+            const auto &spirv = stages[shader.type()];
+            if (!shader.specialize(spirv))
                 return false;
+
+            if (getInterfaceFromSpirv())
+                fillInterface(mInterface, spirv.getInterface());
+        }
     }
     return true;
 }
@@ -217,7 +266,15 @@ bool GLProgram::linkProgram()
     return true;
 }
 
-void GLProgram::fillInterface(GLuint program, Interface &interface)
+bool GLProgram::getInterfaceFromSpirv() const
+{
+    // glslang cannot automap bindings or locations when targeting OpenGL
+    // keep enumerating interface using OpenGL for now
+    return false;
+    //return !mSession.shaderCompiler.isEmpty();
+}
+
+void GLProgram::fillInterface(Interface &interface, GLuint program)
 {
     auto &gl = GLContext::currentContext();
     auto buffer = std::array<char, 256>();
@@ -226,6 +283,7 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
     auto nameLength = GLint{};
 
     auto uniforms = GLint{};
+    auto nextBindingUnit = 0;
     gl.glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniforms);
     for (auto i = 0u; i < static_cast<GLuint>(uniforms); ++i) {
         gl.glGetActiveUniform(program, i, static_cast<GLsizei>(buffer.size()),
@@ -242,6 +300,7 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
             // allow to set whole array only when non-opaque
             if (arrayName.isEmpty() || !isOpaqueType(dataType))
                 interface.uniforms[arrayName.isEmpty() ? name : arrayName] = {
+                    .binding = -1,
                     .location = location,
                     .dataType = dataType,
                     .size = size,
@@ -254,6 +313,7 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
                         qPrintable(elementName));
                     Q_ASSERT(location >= 0);
                     interface.uniforms[elementName] = {
+                        .binding = -1,
                         .location = location,
                         .dataType = dataType,
                         .size = 1,
@@ -453,6 +513,106 @@ void GLProgram::fillInterface(GLuint program, Interface &interface)
         }
     }
 #endif
+}
+
+void GLProgram::fillInterface(Interface &interface,
+    const Spirv::Interface &spirvInterface)
+{
+    if (spirvInterface->shader_stage & SPV_REFLECT_SHADER_STAGE_VERTEX_BIT)
+        for (auto i = 0u; i < spirvInterface->input_variable_count; ++i) {
+            const auto &input = *spirvInterface->input_variables[i];
+            if (!isBuiltIn(input))
+                interface.attributeLocations[input.name] = input.location;
+        }
+
+    for (auto i = 0u; i < spirvInterface->descriptor_binding_count; ++i) {
+        const auto &desc = spirvInterface->descriptor_bindings[i];
+        if (!desc.accessed)
+            continue;
+
+        switch (desc.descriptor_type) {
+        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
+        case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:          {
+            interface.uniforms[desc.name] = {
+                .binding = static_cast<int>(desc.binding),
+                .location = -1,
+                .dataType = getBindingGLType(desc),
+                .size = static_cast<int>(getBindingArraySize(desc.array)),
+            };
+            break;
+        }
+
+        case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
+            auto target = GLenum{ GL_UNIFORM_BUFFER };
+            auto readonly = true;
+
+            if (desc.descriptor_type
+                == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER) {
+                target = GL_SHADER_STORAGE_BUFFER;
+                readonly = false;
+            }
+
+            auto members = std::map<QString, Interface::BufferMember>();
+            auto minimumSize = 0;
+            std::function<void(const SpvReflectBlockVariable &)> addMember;
+            addMember = [&](const SpvReflectBlockVariable &member) {
+                if (member.member_count) {
+                    for (auto i = 0u; i < member.member_count; ++i)
+                        addMember(member.members[i]);
+                    return;
+                }
+                const auto offset = static_cast<int>(member.absolute_offset);
+                const auto dataType = getBufferMemberGLType(member);
+                auto arrayStride = getBufferMemberArrayStride(member);
+                if (!arrayStride)
+                    arrayStride = getDataTypeSize(dataType);
+                const auto size = getBufferMemberArraySize(member);
+
+                members[member.name] = {
+                    .dataType = dataType,
+                    .size = size,
+                    .offset = offset,
+                    .arrayStride = arrayStride,
+                };
+                minimumSize =
+                    std::max(minimumSize, offset + size * arrayStride);
+            };
+            addMember(desc.block);
+
+            Q_ASSERT(minimumSize);
+            if (!minimumSize)
+                continue;
+
+            interface.bufferBindingPoints[desc.type_description->type_name] = {
+                .target = target,
+                .index = desc.binding,
+                .members = std::move(members),
+                .minimumSize = minimumSize,
+                .readonly = readonly,
+            };
+            break;
+        }
+
+        default: Q_ASSERT(!"not implemented");
+        }
+    }
+}
+
+void GLProgram::automapUniformBindings(Interface &interface)
+{
+    // generate one binding unit per unique uniform location
+    auto uniqueLocations = QSet<int>();
+    for (auto &[name, uniform] : mInterface.uniforms)
+        if (uniform.location >= 0 && isOpaqueType(uniform.dataType))
+            uniqueLocations.insert(uniform.location);
+
+    for (auto &[name, uniform] : mInterface.uniforms)
+        if (uniform.location >= 0 && isOpaqueType(uniform.dataType))
+            uniform.binding = std::distance(uniqueLocations.begin(),
+                uniqueLocations.find(uniform.location));
 }
 
 bool GLProgram::bind()

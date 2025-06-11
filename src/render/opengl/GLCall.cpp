@@ -620,12 +620,11 @@ bool GLCall::applyBindings(const GLBindings &bindings,
         }
     }
 
-    auto textureUnit = 0;
     for (const auto &[name, uniform] : interface.uniforms) {
         if (isImageUniform(uniform)) {
             if (auto imageBinding = find(bindings.images, name)) {
                 mUsedItems += imageBinding->bindingItemId;
-                if (!applyImageBinding(uniform, *imageBinding, textureUnit++))
+                if (!applyImageBinding(uniform, *imageBinding))
                     canRender = false;
             } else {
                 mMessages += MessageList::insert(mCall.id,
@@ -635,8 +634,7 @@ bool GLCall::applyBindings(const GLBindings &bindings,
         } else if (isSamplerUniform(uniform)) {
             if (auto samplerBinding = find(bindings.samplers, name)) {
                 mUsedItems += samplerBinding->bindingItemId;
-                if (!applySamplerBinding(uniform, *samplerBinding,
-                        textureUnit++))
+                if (!applySamplerBinding(uniform, *samplerBinding))
                     canRender = false;
             } else {
                 mMessages += MessageList::insert(mCall.id,
@@ -764,8 +762,9 @@ void GLCall::applyUniformBinding(const GLProgram::Interface::Uniform &uniform,
 }
 
 bool GLCall::applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
-    const GLSamplerBinding &binding, int unit)
+    const GLSamplerBinding &binding)
 {
+    Q_ASSERT(uniform.binding >= 0);
     if (!binding.texture) {
         mMessages += MessageList::insert(binding.bindingItemId,
             MessageType::TextureNotAssigned);
@@ -781,10 +780,11 @@ bool GLCall::applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
 
     const auto target = texture.target();
     auto &gl = GLContext::currentContext();
-    gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
+    gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + uniform.binding));
     texture.updateMipmaps();
     gl.glBindTexture(target, texture.getReadOnlyTextureId());
-    gl.glUniform1i(uniform.location, unit);
+    if (uniform.location >= 0)
+        gl.glUniform1i(uniform.location, uniform.binding);
 
     switch (target) {
     case QOpenGLTexture::Target1D:
@@ -824,8 +824,9 @@ bool GLCall::applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
 }
 
 bool GLCall::applyImageBinding(const GLProgram::Interface::Uniform &uniform,
-    const GLImageBinding &binding, int unit)
+    const GLImageBinding &binding)
 {
+    Q_ASSERT(uniform.binding >= 0);
     auto &gl = GLContext::currentContext();
     if (!gl.v4_2) {
         mMessages += MessageList::insert(mCall.id,
@@ -856,10 +857,11 @@ bool GLCall::applyImageBinding(const GLProgram::Interface::Uniform &uniform,
             MessageType::ImageFormatNotBindable);
         return false;
     }
-    gl.v4_2->glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + unit));
+    gl.v4_2->glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + uniform.binding));
     gl.v4_2->glBindTexture(target, textureId);
-    gl.v4_2->glUniform1i(uniform.location, unit);
-    gl.v4_2->glBindImageTexture(static_cast<GLuint>(unit), textureId,
+    if (uniform.location >= 0)
+        gl.v4_2->glUniform1i(uniform.location, uniform.binding);
+    gl.v4_2->glBindImageTexture(static_cast<GLuint>(uniform.binding), textureId,
         binding.level, (binding.layer < 0), std::max(binding.layer, 0),
         binding.access, format);
 #endif

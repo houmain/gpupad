@@ -34,6 +34,7 @@ namespace ItemEnums {
     Q_ENUM_NS(ItemType)
 
     enum DataType {
+        Bool = GL_BOOL,
         Int8 = GL_BYTE,
         Int16 = GL_SHORT,
         Int32 = GL_INT,

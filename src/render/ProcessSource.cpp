@@ -115,17 +115,8 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
             session.autoMapLocations = true;
         }
 
-        if (mProcessType == "json") {
-            // force session properties (otherwise SpvReflect does not enumerate uniforms)
-            session.renderer = "Vulkan";
-            session.vulkanRulesRelaxed = true;
-            session.autoSampledTextures = true;
-            session.autoMapBindings = true;
-            session.autoMapLocations = true;
-        }
-
-        Q_ASSERT(!mShader);
-        if (session.renderer == "Vulkan") {
+        // always target Vulkan when generating JSON, otherwise SpvReflect cannot enumerate uniforms
+        if (session.renderer == "Vulkan" || mProcessType == "json") {
             mShader = std::make_unique<VKShader>(shaderType, shaders, session);
         } else {
             mShader = std::make_unique<GLShader>(shaderType, shaders, session);

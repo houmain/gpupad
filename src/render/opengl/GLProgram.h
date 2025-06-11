@@ -12,6 +12,7 @@ public:
     {
         struct Uniform
         {
+            GLint binding;
             GLint location;
             GLenum dataType;
             GLint size;
@@ -58,12 +59,16 @@ public:
     const Interface &interface() const { return mInterface; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     GLBuffer &getDynamicUniformBuffer(const QString &name, int size);
-    const std::vector<GLShader>& shaders() const { return mShaders; }
+    const std::vector<GLShader> &shaders() const { return mShaders; }
 
 private:
     bool compileShaders();
     bool linkProgram();
-    void fillInterface(GLuint program, Interface &interface);
+    bool getInterfaceFromSpirv() const;
+    void fillInterface(Interface &interface, GLuint program);
+    void fillInterface(Interface &interface,
+        const Spirv::Interface &spirvInterface);
+    void automapUniformBindings(Interface &interface);
     void applyPrintfBindings();
 
     ItemId mItemId{};

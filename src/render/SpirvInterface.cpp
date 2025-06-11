@@ -250,12 +250,6 @@ namespace {
         return json;
     }
 
-    bool isBuiltIn(const SpvReflectInterfaceVariable &variable)
-    {
-        return (variable.decoration_flags & SPV_REFLECT_DECORATION_BUILT_IN)
-            != 0;
-    }
-
     QJsonObject getJson(const SpvReflectInterfaceVariable &variable)
     {
         auto json = getJson(*variable.type_description);
@@ -333,6 +327,11 @@ namespace {
         json["accelerationStructures"] = jsonAccelerationStructures;
         return json;
     }
+
+    constexpr int hash(int columns, int rows, Field::DataType type)
+    {
+        return columns * 10000 + rows * 100 + static_cast<int>(type);
+    }
 } // namespace
 
 Spirv::Interface::Interface(const std::vector<uint32_t> &spirv)
@@ -370,6 +369,11 @@ const SpvReflectShaderModule *Spirv::Interface::operator->() const
 QString getJsonString(const SpvReflectShaderModule &module)
 {
     return QJsonDocument(getJson(module)).toJson();
+}
+
+bool isBuiltIn(const SpvReflectInterfaceVariable &variable)
+{
+    return (variable.decoration_flags & SPV_REFLECT_DECORATION_BUILT_IN) != 0;
 }
 
 uint32_t getBindingArraySize(const SpvReflectBindingArrayTraits &array)
@@ -438,5 +442,54 @@ int getBufferMemberArrayStride(const SpvReflectBlockVariable &variable)
     const auto &type_desc = *variable.type_description;
     if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_ARRAY)
         return variable.array.stride;
+    return 0;
+}
+
+GLenum getBufferMemberGLType(const SpvReflectBlockVariable &variable)
+{
+    using DT = Field::DataType;
+    const auto columns = getBufferMemberColumnCount(variable);
+    const auto rows = getBufferMemberRowCount(variable);
+    const auto dataType = getBufferMemberDataType(variable);
+    switch (hash(columns, rows, dataType)) {
+    case hash(1, 1, DT::Float):  return GL_FLOAT;
+    case hash(1, 2, DT::Float):  return GL_FLOAT_VEC2;
+    case hash(1, 3, DT::Float):  return GL_FLOAT_VEC3;
+    case hash(1, 4, DT::Float):  return GL_FLOAT_VEC4;
+    case hash(1, 1, DT::Double): return GL_DOUBLE;
+    case hash(1, 2, DT::Double): return GL_DOUBLE_VEC2;
+    case hash(1, 3, DT::Double): return GL_DOUBLE_VEC3;
+    case hash(1, 4, DT::Double): return GL_DOUBLE_VEC4;
+    case hash(1, 1, DT::Int32):  return GL_INT;
+    case hash(1, 2, DT::Int32):  return GL_INT_VEC2;
+    case hash(1, 3, DT::Int32):  return GL_INT_VEC3;
+    case hash(1, 4, DT::Int32):  return GL_INT_VEC4;
+    case hash(1, 1, DT::Uint32): return GL_UNSIGNED_INT;
+    case hash(1, 2, DT::Uint32): return GL_UNSIGNED_INT_VEC2;
+    case hash(1, 3, DT::Uint32): return GL_UNSIGNED_INT_VEC3;
+    case hash(1, 4, DT::Uint32): return GL_UNSIGNED_INT_VEC4;
+    case hash(1, 1, DT::Bool):   return GL_BOOL;
+    case hash(1, 2, DT::Bool):   return GL_BOOL_VEC2;
+    case hash(1, 3, DT::Bool):   return GL_BOOL_VEC3;
+    case hash(1, 4, DT::Bool):   return GL_BOOL_VEC4;
+    case hash(2, 2, DT::Float):  return GL_FLOAT_MAT2;
+    case hash(3, 3, DT::Float):  return GL_FLOAT_MAT3;
+    case hash(4, 4, DT::Float):  return GL_FLOAT_MAT4;
+    case hash(2, 3, DT::Float):  return GL_FLOAT_MAT2x3;
+    case hash(2, 4, DT::Float):  return GL_FLOAT_MAT2x4;
+    case hash(3, 2, DT::Float):  return GL_FLOAT_MAT3x2;
+    case hash(3, 4, DT::Float):  return GL_FLOAT_MAT3x4;
+    case hash(4, 2, DT::Float):  return GL_FLOAT_MAT4x2;
+    case hash(4, 3, DT::Float):  return GL_FLOAT_MAT4x3;
+    case hash(2, 2, DT::Double): return GL_DOUBLE_MAT2;
+    case hash(3, 3, DT::Double): return GL_DOUBLE_MAT3;
+    case hash(4, 4, DT::Double): return GL_DOUBLE_MAT4;
+    case hash(2, 3, DT::Double): return GL_DOUBLE_MAT2x3;
+    case hash(2, 4, DT::Double): return GL_DOUBLE_MAT2x4;
+    case hash(3, 2, DT::Double): return GL_DOUBLE_MAT3x2;
+    case hash(3, 4, DT::Double): return GL_DOUBLE_MAT3x4;
+    case hash(4, 2, DT::Double): return GL_DOUBLE_MAT4x2;
+    case hash(4, 3, DT::Double): return GL_DOUBLE_MAT4x3;
+    }
     return 0;
 }
