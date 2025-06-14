@@ -76,5 +76,7 @@ void SessionProperties::updateWidgets()
 
     mUi->rendererOptions->setVisible(hasVulkanRenderer);
     mUi->shaderCompilerOptions->setVisible(hasShaderCompiler);
+    mUi->autoMapBindings->setVisible(hasVulkanRenderer);
+    mUi->autoMapLocations->setVisible(hasVulkanRenderer);
     mUi->vulkanRulesRelaxed->setVisible(hasVulkanRenderer);
 }

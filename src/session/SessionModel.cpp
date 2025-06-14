@@ -564,10 +564,10 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         result &= (column != SessionFlipViewport || hasVulkanRenderer);
         result &= (column != SessionReverseCulling || hasVulkanRenderer);
         result &= (column != SessionShaderCompiler || !hasVulkanRenderer);
-        result &= (column != SessionAutoMapBindings || hasShaderCompiler);
-        result &= (column != SessionAutoMapLocations || hasShaderCompiler);
+        result &= (column != SessionAutoMapBindings || hasVulkanRenderer);
+        result &= (column != SessionAutoMapLocations || hasVulkanRenderer);
         result &= (column != SessionAutoSampledTextures || hasShaderCompiler);
-        result &= (column != SessionVulkanRulesRelaxed || hasShaderCompiler);
+        result &= (column != SessionVulkanRulesRelaxed || hasVulkanRenderer);
         result &= (column != SessionSpirvVersion
             || (hasShaderCompiler && session.spirvVersion != 0));
         break;
