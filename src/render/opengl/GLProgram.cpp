@@ -284,7 +284,6 @@ void GLProgram::fillInterface(Interface &interface, GLuint program)
     auto nameLength = GLint{};
 
     auto uniforms = GLint{};
-    auto nextBindingUnit = 0;
     gl.glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniforms);
     for (auto i = 0u; i < static_cast<GLuint>(uniforms); ++i) {
         gl.glGetActiveUniform(program, i, static_cast<GLsizei>(buffer.size()),

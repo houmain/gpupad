@@ -103,8 +103,7 @@ void AppScriptObject::dispatchToMainThread(
         Qt::QueuedConnection);
 
     while (!done.load())
-        QCoreApplication::processEvents(QEventLoop::AllEvents,
-            QDeadlineTimer(1));
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 1);
 }
 
 void AppScriptObject::deregisterEditorScriptObject(EditorScriptObject *object)
