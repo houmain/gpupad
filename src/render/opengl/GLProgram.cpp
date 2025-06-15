@@ -70,6 +70,7 @@ namespace {
     case SpvDim3D:   return GL_##TYPE##_3D;      \
     case SpvDimCube: return GL_##TYPE##_CUBE;    \
     case SpvDimRect: return GL_##TYPE##_2D_RECT; \
+    default:         break;                      \
     }
 
         const auto flags = binding.type_description->type_flags;

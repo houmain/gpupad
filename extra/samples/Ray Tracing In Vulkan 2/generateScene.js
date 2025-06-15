@@ -32,10 +32,6 @@ const as = {
   ]
 }
 
-// TODO: remove
-if (app.session.findItem("Scene/AccelerationStructure"))
-  app.session.clearItems("Scene/AccelerationStructure")
-
 app.session.replaceItems(scene, [
   mesh,
   as,
@@ -71,9 +67,6 @@ let materials = [
 ];
 
 Materials = app.session.findItem("Materials/Material")
-
-// TODO: remove
-Materials.rowCount = materials.length
 
 materials = [].concat.apply([], materials)
 app.session.setBufferData("Materials", materials)

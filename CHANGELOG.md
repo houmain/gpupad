@@ -3,6 +3,46 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 2.7.0] - 2025-06-16
+
+### Added
+
+- Added session script object findItem and findItems.
+- Added session script object openEditor.
+- Added editor script object.
+- Added custom action to compile all shaders to Spir-V.
+- Allow to manually resize rows in message list.
+- Improved JSON shader interface output.
+- Logging device name and type Vulkan is initialized on.
+
+### Changed
+
+- Using glslang preprocessor to substitute #includes when extension is enabled.
+- Replaced session script object getShaderInterface with processShader.
+- Removed session script object item(), integrated in findItem().
+- Session script object setBufferData/setBlockData also set block rowCount.
+- Session script object replaceItems only reuses items without subitems.
+- Center source editor on line which is jumped to.
+- Improved shader type deduction on file drop.
+- Hiding automap bindings/locations when using OpenGL renderer.
+- Automatically enable zoom-to-fit when texture has same size as editor viewport
+- Made Shadertoy sample resize to viewport size.
+- Removed printfEnabled.
+
+### Fixed
+
+- Fixed swap textures call to only swap device resources.
+- Fixed reset evaluation stopping video.
+- Not reusing last working shader program on reset.
+- Do not attempt to generate mipmaps from multisample target.
+- Ensure buffer reference is not obtained before buffer is recreated.
+- Evaluate each uniform binding only once.
+- Improved error messages when #include is not found.
+- Initialize source type of new script editors.
+- Preserve mouse coordinates on reset.
+- Preselect correct filter in save dialog.
+- Prevent script messages from piling up.
+
 ## [Version 2.6.1] - 2025-05-07
 
 ### Added
@@ -912,6 +952,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 2.7.0]: https://github.com/houmain/gpupad/compare/2.6.1...2.7.0
 [version 2.6.1]: https://github.com/houmain/gpupad/compare/2.6.0...2.6.1
 [version 2.6.0]: https://github.com/houmain/gpupad/compare/2.5.0...2.6.0
 [version 2.5.0]: https://github.com/houmain/gpupad/compare/2.4.0...2.5.0

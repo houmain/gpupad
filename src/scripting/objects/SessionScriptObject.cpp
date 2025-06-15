@@ -627,6 +627,11 @@ void SessionScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
         });
 
     refreshItemObjectItems(parent);
+
+    // update id in place
+    Q_ASSERT(parent->items.size() == update.size());
+    for (auto i = 0; i < parent->items.size(); ++i)
+        array.property(i).setProperty("id", parent->items[i]->id);
 }
 
 const Item *SessionScriptObject::findSessionItem(QJSValue itemIdent,

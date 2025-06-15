@@ -468,10 +468,10 @@ GLenum getBufferMemberGLType(const SpvReflectBlockVariable &variable)
     case hash(1, 2, DT::Uint32): return GL_UNSIGNED_INT_VEC2;
     case hash(1, 3, DT::Uint32): return GL_UNSIGNED_INT_VEC3;
     case hash(1, 4, DT::Uint32): return GL_UNSIGNED_INT_VEC4;
-    case hash(1, 1, DT::Bool):   return GL_BOOL;
-    case hash(1, 2, DT::Bool):   return GL_BOOL_VEC2;
-    case hash(1, 3, DT::Bool):   return GL_BOOL_VEC3;
-    case hash(1, 4, DT::Bool):   return GL_BOOL_VEC4;
+    //case hash(1, 1, DT::Bool): return GL_BOOL;
+    //case hash(1, 2, DT::Bool): return GL_BOOL_VEC2;
+    //case hash(1, 3, DT::Bool): return GL_BOOL_VEC3;
+    //case hash(1, 4, DT::Bool): return GL_BOOL_VEC4;
     case hash(2, 2, DT::Float):  return GL_FLOAT_MAT2;
     case hash(3, 3, DT::Float):  return GL_FLOAT_MAT3;
     case hash(4, 4, DT::Float):  return GL_FLOAT_MAT4;
