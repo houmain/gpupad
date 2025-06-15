@@ -2,27 +2,21 @@
     "id": 2,
     "items": [
         {
-            "bindingType": "Uniform",
-            "editor": "Expression3",
-            "id": 81,
-            "name": "iResolution",
-            "type": "Binding",
-            "values": [
-                "1920/2",
-                "1080/2",
-                "0"
-            ]
+            "executeOn": "EveryEvaluation",
+            "fileName": "Script.js",
+            "id": 932,
+            "type": "Script"
         },
         {
             "flipVertically": false,
             "format": "RGBA8_UNorm",
-            "height": "iResolution[1]",
+            "height": "target.viewportSize[1]",
             "id": 70,
-            "name": "Texture",
+            "name": "TargetTexture",
             "samples": 1,
             "target": "Target2D",
             "type": "Texture",
-            "width": "iResolution[0]"
+            "width": "target.viewportSize[0]"
         },
         {
             "blendConstant": "#ff000000",
@@ -63,8 +57,20 @@
         },
         {
             "bindingType": "Uniform",
-            "editor": "Expression",
+            "editor": "Expression3",
             "id": 74,
+            "name": "iResolution",
+            "type": "Binding",
+            "values": [
+                "target.viewportSize[0]",
+                "target.viewportSize[1]",
+                "0"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 933,
             "name": "iFrame",
             "type": "Binding",
             "values": [

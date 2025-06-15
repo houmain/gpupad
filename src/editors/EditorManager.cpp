@@ -144,7 +144,8 @@ void EditorManager::updateEditorPropertiesVisibility()
 
 bool EditorManager::eventFilter(QObject *watched, QEvent *event)
 {
-    if (event->type() == QEvent::Resize)
+    if (event->type() == QEvent::Resize ||
+        event->type() == QEvent::Show)
         if (auto dock = qobject_cast<QDockWidget *>(watched))
             if (auto editor = mDocks[dock])
                 Q_EMIT viewportSizeChanged(editor->fileName());
