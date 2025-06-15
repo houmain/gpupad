@@ -63,19 +63,9 @@ public:
     SessionScriptObject &sessionScriptObject() { return *mSessionScriptObject; }
 
 private:
-    template <typename F>
-    void dispatchToMainThread(F &&function)
-    {
-        if (QThread::currentThread() != mMainThreadCalls->thread()) {
-            QMetaObject::invokeMethod(mMainThreadCalls,
-                std::forward<F>(function), Qt::BlockingQueuedConnection);
-        } else {
-            function();
-        }
-    }
-
     QJSEngine &jsEngine() { return *mJsEngine; }
     QString getAbsolutePath(const QString &fileName) const;
+    void dispatchToMainThread(const std::function<void()> &function);
 
     WeakScriptEnginePtr mEnginePtr;
     QJSEngine *mJsEngine{};

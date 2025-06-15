@@ -86,6 +86,27 @@ QString AppScriptObject::getAbsolutePath(const QString &fileName) const
     return toNativeCanonicalFilePath(mBasePath.filePath(fileName));
 }
 
+void AppScriptObject::dispatchToMainThread(
+    const std::function<void()> &function)
+{
+    if (QThread::currentThread() == mMainThreadCalls->thread()) {
+        function();
+        return;
+    }
+    auto done = std::atomic<bool>{};
+    QMetaObject::invokeMethod(
+        mMainThreadCalls,
+        [&]() {
+            function();
+            done.store(true);
+        },
+        Qt::QueuedConnection);
+
+    while (!done.load())
+        QCoreApplication::processEvents(QEventLoop::AllEvents,
+            QDeadlineTimer(1));
+}
+
 void AppScriptObject::deregisterEditorScriptObject(EditorScriptObject *object)
 {
     mEditorScriptObjects.erase(object);

@@ -24,7 +24,7 @@ public:
     int depth() const { return mDepth; }
     int samples() const { return mSamples; }
     int layers() const { return mLayers; }
-    int levels() const { return (isMultisampleTarget(mTarget) ? 1 : mData.levels()); }
+    int levels() const { return (mSamples > 1 ? 1 : mData.levels()); }
     Texture::Format format() const { return mFormat; }
     const TextureData &data() const { return mData; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
