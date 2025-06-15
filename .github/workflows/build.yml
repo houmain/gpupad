@@ -2,10 +2,9 @@
 name: Build
 
 on:
-  #push:    # execute on every push
-  release:
-    types:
-      - published
+  push:
+    tags:
+      - '*.*.*'
 
 # needed for vcpkg caching
 permissions:
