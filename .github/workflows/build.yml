@@ -86,7 +86,7 @@ jobs:
           github-binarycache: true
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_INSTALL_PREFIX=dist -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.config.VCPKG_TRIPLET }}
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_INSTALL_PREFIX=dist -DENABLE_UNITY_BUILD=ON -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.config.VCPKG_TRIPLET }}
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release
     - name: Install
