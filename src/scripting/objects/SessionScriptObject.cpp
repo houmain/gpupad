@@ -13,6 +13,7 @@
 #include "../IScriptRenderSession.h"
 #include "render/Renderer.h"
 #include "render/ProcessSource.h"
+#include <QCoreApplication>
 #include <QFloat16>
 #include <QTextStream>
 #include <limits>
