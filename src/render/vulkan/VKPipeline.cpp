@@ -220,12 +220,13 @@ namespace {
     }
 
     uint32_t getMaxBindingNumberInSet(const Spirv::Interface &interface,
-        uint32_t s)
+        uint32_t set)
     {
         auto maxBindingNumber = 0u;
         for (auto i = 0u; i < interface->descriptor_binding_count; ++i) {
             const auto &desc = interface->descriptor_bindings[i];
-            maxBindingNumber = std::max(maxBindingNumber, desc.binding);
+            if (desc.set == set)
+                maxBindingNumber = std::max(maxBindingNumber, desc.binding);
         }
         return maxBindingNumber;
     }
@@ -778,10 +779,15 @@ bool VKPipeline::createLayout(VKContext &context)
             auto count = getBindingArraySize(desc.array);
             auto flags = KDGpu::ResourceBindingFlagBits::None;
             if (count == 0) {
-                if (desc.binding
-                    != getMaxBindingNumberInSet(interface, desc.set)) {
+                const auto maxBinding =
+                    getMaxBindingNumberInSet(interface, desc.set);
+                if (desc.binding != maxBinding) {
                     mMessages += MessageList::insert(mItemId,
-                        MessageType::OnlyLastBindingMayBeUnsizedArray);
+                        MessageType::OnlyLastBindingMayBeUnsizedArray,
+                        QStringLiteral("%1 < %2 in set %3")
+                            .arg(desc.binding)
+                            .arg(maxBinding)
+                            .arg(desc.set));
                     return false;
                 }
                 count = maxVariableBindGroupEntries;
@@ -911,10 +917,10 @@ MessageType VKPipeline::updateBindings(VKContext &context,
     const auto getBufferBindingOffsetSize =
         [&](const VKBufferBinding &binding) {
             const auto &buffer = *binding.buffer;
-            const auto offset = scriptEngine.evaluateUInt(binding.offset,
-                buffer.itemId());
-            const auto rowCount = scriptEngine.evaluateUInt(binding.rowCount,
-                buffer.itemId());
+            const auto offset =
+                scriptEngine.evaluateUInt(binding.offset, buffer.itemId());
+            const auto rowCount =
+                scriptEngine.evaluateUInt(binding.rowCount, buffer.itemId());
             const auto size = (binding.stride ? rowCount * binding.stride
                                               : buffer.size() - offset);
             Q_ASSERT(size >= 0

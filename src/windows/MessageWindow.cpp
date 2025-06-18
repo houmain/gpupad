@@ -181,7 +181,7 @@ QString MessageWindow::getMessageText(const Message &message) const
         return tr("Maximum variable binding group entries exceeded (%1)")
             .arg(message.text);
     case OnlyLastBindingMayBeUnsizedArray:
-        return tr("Only the last binding may be an unsized array");
+        return tr("Only the last binding may be an unsized array (%1)").arg(message.text);
     case TextureBuffersNotAvailable:
         return tr("Texture buffers not available in Vulkan yet");
     case RayTracingNotAvailable:  return tr("Raytracing not available");
