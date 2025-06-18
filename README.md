@@ -202,6 +202,8 @@ cmake --build build -j4
 ### Building on Windows:
 
 ```bash
+cmd
+
 # install Qt6
 # https://doc.qt.io/qt-6/get-and-install-qt.html
 
@@ -216,9 +218,14 @@ vcpkg\bootstrap-vcpkg -disableMetrics
 # install dependencies using vcpkg
 vcpkg\vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator spdlog
 
-# build
-cmake -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.7.2\msvc2022_64 -DCMAKE_TOOLCHAIN_FILE=vcpkg\scripts\buildsystems\vcpkg.cmake
-cmake --build build -j4
+# generate Visual Studio solution
+cmake -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.9.0\msvc2022_64 -DCMAKE_TOOLCHAIN_FILE=vcpkg\scripts\buildsystems\vcpkg.cmake
+
+# copy all Qt dependencies to Debug directory
+cmake --install build --config Debug --component Application --prefix %CD%\Debug
+
+# open solution
+build\gpupad.sln
 ```
 
 ## License
