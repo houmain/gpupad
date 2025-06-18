@@ -16,8 +16,7 @@ namespace {
     const auto ScriptFileExtensions = { "js", "json", "qml" };
     const auto TextureFileExtensions = { "ktx", "dds", "png", "exr", "tga",
         "bmp", "jpeg", "jpg", "pbm", "pgm", "tif", "tiff", "raw" };
-    const auto VideoFileExtensions = std::initializer_list<const char *>
-    {
+    const auto VideoFileExtensions = std::initializer_list<const char *>{
 #if defined(QtMultimedia_FOUND)
         "mp4", "webm", "mkv", "ogg", "mpg", "wmv", "mov", "avi"
 #endif
@@ -270,12 +269,13 @@ bool FileDialog::exec(Options options, QString currentFileName,
         dialog.setDirectory(mDirectory);
     dialog.selectFile(currentFileName);
 
-    const auto extension = getFileExtension(currentFileName);
-    for (const auto &filter : filters)
-        if (filter.contains("*." + extension)) {
-            dialog.selectNameFilter(filter);
-            break;
-        }
+    if (const auto extension = getFileExtension(currentFileName);
+        !extension.isEmpty())
+        for (const auto &filter : filters)
+            if (filter.contains("*." + extension)) {
+                dialog.selectNameFilter(filter);
+                break;
+            }
 
     if (dialog.exec() != QDialog::Accepted)
         return false;
@@ -339,9 +339,9 @@ int showNotSavedDialog(QWidget *parent, const QString &fileName)
     auto dialog = QMessageBox(parent);
     dialog.setIcon(QMessageBox::Question);
     dialog.setText(parent
-                       ->tr("<h3>The file '%1' is not saved.</h3>"
-                            "Do you want to save it before closing?<br>")
-                       .arg(FileDialog::getFileTitle(fileName)));
+            ->tr("<h3>The file '%1' is not saved.</h3>"
+                 "Do you want to save it before closing?<br>")
+            .arg(FileDialog::getFileTitle(fileName)));
     dialog.addButton(QMessageBox::Save);
     dialog.addButton(parent->tr("&Don't Save"), QMessageBox::RejectRole);
     dialog.addButton(QMessageBox::Cancel);
