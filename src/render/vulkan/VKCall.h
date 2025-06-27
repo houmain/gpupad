@@ -4,6 +4,9 @@
 #include "VKPipeline.h"
 #include "scripting/ScriptEngine.h"
 
+class VKBuffer;
+class VKTexture;
+
 class VKCall
 {
 public:
@@ -26,9 +29,8 @@ public:
     void setBuffers(VKBuffer *buffer, VKBuffer *fromBuffer);
     void setTextures(VKTexture *texture, VKTexture *fromTexture);
     void setAccelerationStructure(VKAccelerationStructure *accelStruct);
-    VKPipeline *getPipeline(VKContext &context);
-    void execute(VKContext &context, MessagePtrSet &messages,
-        ScriptEngine &scriptEngine);
+    void execute(VKContext &context, Bindings &&bindings,
+        MessagePtrSet &messages, ScriptEngine &scriptEngine);
 
 private:
     bool validateShaderTypes();

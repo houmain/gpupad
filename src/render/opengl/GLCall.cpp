@@ -5,7 +5,6 @@
 #include "GLStream.h"
 #include "GLTarget.h"
 #include "GLTexture.h"
-#include <QOpenGLTimerQuery>
 #include <cmath>
 
 namespace {
@@ -149,7 +148,11 @@ namespace {
     }
 } // namespace
 
-GLCall::GLCall(const Call &call) : mCall(call), mKind(getKind(call)) { }
+GLCall::GLCall(const Call &call, const Session &session)
+    : mCall(call)
+    , mKind(getKind(call))
+{
+}
 
 void GLCall::setProgram(GLProgram *program)
 {
@@ -254,15 +257,29 @@ void GLCall::setTextures(GLTexture *texture, GLTexture *fromTexture)
     mFromTexture = fromTexture;
 }
 
-std::shared_ptr<void> GLCall::beginTimerQuery()
+std::shared_ptr<void> GLCall::beginTimerQuery(GLContext &context)
 {
-    if (!mTimerQuery) {
-        mTimerQuery = std::make_shared<QOpenGLTimerQuery>();
-        mTimerQuery->create();
-    }
-    mTimerQuery->begin();
+    auto &query = context.timerQueries[mCall.id];
+    Q_ASSERT(!query.isCreated());
+    query.create();
+    query.begin();
     return std::shared_ptr<void>(nullptr,
-        [this](void *) { mTimerQuery->end(); });
+        [query = &query](void *) { query->end(); });
+}
+
+void GLCall::execute(GLContext &context, Bindings &&bindings,
+    MessagePtrSet &messages, ScriptEngine &scriptEngine)
+{
+    auto guard = beginTimerQuery(context);
+    if (mProgram) {
+        if (validateShaderTypes() && mProgram->bind()) {
+            if (applyBindings(bindings, scriptEngine))
+                execute(messages, scriptEngine);
+            mProgram->unbind();
+        }
+    } else {
+        execute(messages, scriptEngine);
+    }
 }
 
 void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
@@ -339,13 +356,17 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     const auto count = (!mCall.count.isEmpty()
             ? scriptEngine.evaluateUInt(mCall.count, mCall.id)
             : std::max(maxElementCount - static_cast<int>(first), 0));
-    const auto instanceCount = scriptEngine.evaluateUInt(mCall.instanceCount, mCall.id);
-    const auto baseVertex = scriptEngine.evaluateUInt(mCall.baseVertex, mCall.id);
-    const auto baseInstance = scriptEngine.evaluateUInt(mCall.baseInstance, mCall.id);
+    const auto instanceCount =
+        scriptEngine.evaluateUInt(mCall.instanceCount, mCall.id);
+    const auto baseVertex =
+        scriptEngine.evaluateUInt(mCall.baseVertex, mCall.id);
+    const auto baseInstance =
+        scriptEngine.evaluateUInt(mCall.baseInstance, mCall.id);
     const auto drawCount = scriptEngine.evaluateUInt(mCall.drawCount, mCall.id);
     const auto indexType = getIndexType();
-    const auto indirectOffset =
-        (mKind.indirect ? scriptEngine.evaluateUInt(mIndirectOffset, mCall.id) : 0);
+    const auto indirectOffset = (mKind.indirect
+            ? scriptEngine.evaluateUInt(mIndirectOffset, mCall.id)
+            : 0);
 
     if (!count)
         return;
@@ -378,7 +399,6 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         gl.v4_0->glPatchParameteri(GL_PATCH_VERTICES,
             scriptEngine.evaluateInt(mCall.patchVertices, mCall.id));
 
-    auto guard = beginTimerQuery();
     if (mCall.callType == Call::CallType::Draw) {
         // DrawArrays(InstancedBaseInstance)
         if (!baseInstance) {
@@ -391,7 +411,8 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     } else if (mCall.callType == Call::CallType::DrawIndexed && indexType) {
         // DrawElements(InstancedBaseVertexBaseInstance)
         const auto offset = reinterpret_cast<void *>(static_cast<intptr_t>(
-            scriptEngine.evaluateUInt(mIndicesOffset, mCall.id) + first * mIndexSize));
+            scriptEngine.evaluateUInt(mIndicesOffset, mCall.id)
+            + first * mIndexSize));
         if (!baseVertex && !baseInstance) {
             gl.glDrawElementsInstanced(mCall.primitiveType, count, indexType,
                 offset, instanceCount);
@@ -429,7 +450,8 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             reinterpret_cast<PFNGLDRAWMESHTASKSNVPROC>(
                 gl.getProcAddress("glDrawMeshTasksNV"));
         if (glDrawMeshTasksNV) {
-            glDrawMeshTasksNV(0, scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id));
+            glDrawMeshTasksNV(0,
+                scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id));
         } else {
             messages += MessageList::insert(mCall.id,
                 MessageType::UnsupportedShaderType);
@@ -468,7 +490,6 @@ void GLCall::executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         mIndirectBuffer->bindReadOnly(GL_DISPATCH_INDIRECT_BUFFER);
 
     auto &gl = GLContext::currentContext();
-    auto guard = beginTimerQuery();
     if (auto gl43 = check(gl.v4_3, mCall.id, messages)) {
         if (mCall.callType == Call::CallType::Compute) {
             gl43->glDispatchCompute(
@@ -511,7 +532,6 @@ void GLCall::executeClearTexture(MessagePtrSet &messages)
         color[2] = srgbToLinear(color[2]);
     }
 
-    auto guard = beginTimerQuery();
     if (!mTexture->clear(color, mCall.clearDepth, mCall.clearStencil))
         messages +=
             MessageList::insert(mCall.id, MessageType::ClearingTextureFailed);
@@ -526,7 +546,6 @@ void GLCall::executeCopyTexture(MessagePtrSet &messages)
             MessageList::insert(mCall.id, MessageType::TextureNotAssigned);
         return;
     }
-    auto guard = beginTimerQuery();
     if (!mTexture->copy(*mFromTexture))
         messages +=
             MessageList::insert(mCall.id, MessageType::CopyingTextureFailed);
@@ -542,7 +561,6 @@ void GLCall::executeClearBuffer(MessagePtrSet &messages)
             MessageList::insert(mCall.id, MessageType::BufferNotAssigned);
         return;
     }
-    auto guard = beginTimerQuery();
     mBuffer->clear();
     mUsedItems += mBuffer->usedItems();
 }
@@ -554,7 +572,6 @@ void GLCall::executeCopyBuffer(MessagePtrSet &messages)
             MessageList::insert(mCall.id, MessageType::BufferNotAssigned);
         return;
     }
-    auto guard = beginTimerQuery();
     mBuffer->copy(*mFromBuffer);
     mUsedItems += mBuffer->usedItems();
     mUsedItems += mFromBuffer->usedItems();
@@ -597,8 +614,7 @@ bool GLCall::validateShaderTypes()
     return true;
 }
 
-bool GLCall::applyBindings(const GLBindings &bindings,
-    ScriptEngine &scriptEngine)
+bool GLCall::applyBindings(const Bindings &bindings, ScriptEngine &scriptEngine)
 {
     if (!mProgram)
         return false;
@@ -660,7 +676,7 @@ bool GLCall::applyBindings(const GLBindings &bindings,
 
 bool GLCall::applyUniformBindings(const QString &name,
     const GLProgram::Interface::Uniform &uniform,
-    const std::map<QString, GLUniformBinding> &bindings,
+    const std::map<QString, UniformBinding> &bindings,
     ScriptEngine &scriptEngine)
 {
     if (const auto binding = find(bindings, name)) {
@@ -690,7 +706,7 @@ bool GLCall::applyUniformBindings(const QString &name,
 }
 
 void GLCall::applyUniformBinding(const GLProgram::Interface::Uniform &uniform,
-    const GLUniformBinding &binding, int offset, int count,
+    const UniformBinding &binding, int offset, int count,
     ScriptEngine &scriptEngine)
 {
     auto &gl = GLContext::currentContext();
@@ -762,7 +778,7 @@ void GLCall::applyUniformBinding(const GLProgram::Interface::Uniform &uniform,
 }
 
 bool GLCall::applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
-    const GLSamplerBinding &binding)
+    const SamplerBinding &binding)
 {
     Q_ASSERT(uniform.binding >= 0);
     if (!binding.texture) {
@@ -770,7 +786,7 @@ bool GLCall::applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
             MessageType::TextureNotAssigned);
         return false;
     }
-    auto &texture = *binding.texture;
+    auto &texture = static_cast<GLTexture &>(*binding.texture);
     mUsedItems += texture.itemId();
 
     float borderColor[] = { static_cast<float>(binding.borderColor.redF()),
@@ -824,7 +840,7 @@ bool GLCall::applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
 }
 
 bool GLCall::applyImageBinding(const GLProgram::Interface::Uniform &uniform,
-    const GLImageBinding &binding)
+    const ImageBinding &binding)
 {
     Q_ASSERT(uniform.binding >= 0);
     auto &gl = GLContext::currentContext();
@@ -839,7 +855,7 @@ bool GLCall::applyImageBinding(const GLProgram::Interface::Uniform &uniform,
             MessageType::TextureNotAssigned);
         return false;
     }
-    auto &texture = *binding.texture;
+    auto &texture = static_cast<GLTexture &>(*binding.texture);
     mUsedItems += texture.itemId();
 
 #if GL_VERSION_4_2
@@ -857,25 +873,24 @@ bool GLCall::applyImageBinding(const GLProgram::Interface::Uniform &uniform,
             MessageType::ImageFormatNotBindable);
         return false;
     }
-    gl.v4_2->glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + uniform.binding));
+    gl.v4_2->glActiveTexture(
+        static_cast<GLenum>(GL_TEXTURE0 + uniform.binding));
     gl.v4_2->glBindTexture(target, textureId);
     if (uniform.location >= 0)
         gl.v4_2->glUniform1i(uniform.location, uniform.binding);
     gl.v4_2->glBindImageTexture(static_cast<GLuint>(uniform.binding), textureId,
         binding.level, (binding.layer < 0), std::max(binding.layer, 0),
-        binding.access, format);
+        GL_READ_WRITE, format);
 #endif
     return true;
 }
 
 bool GLCall::applyBufferBinding(
     const GLProgram::Interface::BufferBindingPoint &bufferBindingPoint,
-    const GLBufferBinding &binding, ScriptEngine &scriptEngine)
+    const BufferBinding &binding, ScriptEngine &scriptEngine)
 {
-    const auto offset =
-        scriptEngine.evaluateInt(binding.offset, mCall.id);
-    const auto rowCount =
-        scriptEngine.evaluateInt(binding.rowCount, mCall.id);
+    const auto offset = scriptEngine.evaluateInt(binding.offset, mCall.id);
+    const auto rowCount = scriptEngine.evaluateInt(binding.rowCount, mCall.id);
 
     if (!binding.buffer) {
         mMessages += MessageList::insert(binding.bindingItemId,
@@ -883,7 +898,7 @@ bool GLCall::applyBufferBinding(
         return false;
     }
 
-    auto &buffer = *binding.buffer;
+    auto &buffer = static_cast<GLBuffer &>(*binding.buffer);
     mUsedItems += buffer.usedItems();
     mUsedItems += binding.blockItemId;
 
@@ -904,7 +919,7 @@ bool GLCall::applyBufferBinding(
 
 bool GLCall::applyDynamicBufferBindings(const QString &bufferName,
     const GLProgram::Interface::BufferBindingPoint &bufferBindingPoint,
-    const std::map<QString, GLUniformBinding> &bindings,
+    const std::map<QString, UniformBinding> &bindings,
     ScriptEngine &scriptEngine)
 {
     auto &buffer = mProgram->getDynamicUniformBuffer(bufferName,
@@ -924,13 +939,13 @@ bool GLCall::applyDynamicBufferBindings(const QString &bufferName,
         return false;
 
     applyBufferBinding(bufferBindingPoint,
-        GLBufferBinding{ .name = bufferName, .buffer = &buffer }, scriptEngine);
+        BufferBinding{ .name = bufferName, .buffer = &buffer }, scriptEngine);
     return true;
 }
 
 bool GLCall::applyBufferMemberBindings(GLBuffer &buffer, const QString &name,
     const GLProgram::Interface::BufferMember &member,
-    const std::map<QString, GLUniformBinding> &bindings,
+    const std::map<QString, UniformBinding> &bindings,
     ScriptEngine &scriptEngine)
 {
     if (const auto binding = find(bindings, name)) {
@@ -962,7 +977,7 @@ bool GLCall::applyBufferMemberBindings(GLBuffer &buffer, const QString &name,
 
 bool GLCall::applyBufferMemberBinding(GLBuffer &buffer,
     const GLProgram::Interface::BufferMember &member,
-    const GLUniformBinding &binding, int offset, int count,
+    const UniformBinding &binding, int offset, int count,
     ScriptEngine &scriptEngine)
 {
     auto &data = buffer.getWriteableData();
@@ -1029,7 +1044,7 @@ bool GLCall::applyBufferMemberBinding(GLBuffer &buffer,
 
 void GLCall::selectSubroutines(Shader::ShaderType stage,
     const std::vector<GLProgram::Interface::Subroutine> &subroutines,
-    const std::map<QString, GLSubroutineBinding> &bindings)
+    const std::map<QString, SubroutineBinding> &bindings)
 {
     if (subroutines.empty())
         return;
@@ -1043,7 +1058,7 @@ void GLCall::selectSubroutines(Shader::ShaderType stage,
 
     auto subroutineIndices = std::vector<GLuint>();
     for (const auto &subroutine : subroutines) {
-        const auto binding = [&]() -> const GLSubroutineBinding * {
+        const auto binding = [&]() -> const SubroutineBinding * {
             for (const auto &[name, binding] : bindings)
                 if (name == subroutine.name)
                     return &binding;

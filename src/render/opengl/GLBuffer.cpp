@@ -1,12 +1,10 @@
 #include "GLBuffer.h"
 #include "Singletons.h"
 
-GLBuffer::GLBuffer(int size) : mSize(size) { }
+GLBuffer::GLBuffer(int size) : BufferBase(size) { }
 
 GLBuffer::GLBuffer(const Buffer &buffer, GLRenderSession &renderSession)
-    : mItemId(buffer.id)
-    , mFileName(buffer.fileName)
-    , mSize(renderSession.getBufferSize(buffer))
+    : BufferBase(buffer, renderSession.getBufferSize(buffer))
 {
     mUsedItems += buffer.id;
     for (const auto item : buffer.items)
@@ -16,19 +14,6 @@ GLBuffer::GLBuffer(const Buffer &buffer, GLRenderSession &renderSession)
                 if (auto field = static_cast<const Block *>(item))
                     mUsedItems += field->id;
         }
-}
-
-void GLBuffer::updateUntitledFilename(const GLBuffer &rhs)
-{
-    if (mSize == rhs.mSize && FileDialog::isEmptyOrUntitled(mFileName)
-        && FileDialog::isEmptyOrUntitled(rhs.mFileName))
-        mFileName = rhs.mFileName;
-}
-
-bool GLBuffer::operator==(const GLBuffer &rhs) const
-{
-    return std::tie(mFileName, mSize, mMessages)
-        == std::tie(rhs.mFileName, rhs.mSize, rhs.mMessages);
 }
 
 QByteArray &GLBuffer::getWriteableData()

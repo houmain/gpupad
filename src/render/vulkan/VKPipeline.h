@@ -5,65 +5,10 @@
 #include <span>
 #include <map>
 
-class VKTexture;
-class VKBuffer;
 class VKTarget;
 class VKProgram;
 class VKStream;
 class VKAccelerationStructure;
-
-struct VKUniformBinding
-{
-    ItemId bindingItemId;
-    QString name;
-    Binding::BindingType type;
-    bool transpose;
-    ScriptValueList values;
-};
-
-struct VKSamplerBinding
-{
-    ItemId bindingItemId;
-    QString name;
-    VKTexture *texture;
-    Binding::Filter minFilter;
-    Binding::Filter magFilter;
-    bool anisotropic;
-    Binding::WrapMode wrapModeX;
-    Binding::WrapMode wrapModeY;
-    Binding::WrapMode wrapModeZ;
-    QColor borderColor;
-    Binding::ComparisonFunc comparisonFunc;
-};
-
-struct VKImageBinding
-{
-    ItemId bindingItemId;
-    QString name;
-    VKTexture *texture;
-    int level;
-    int layer;
-    Binding::ImageFormat format;
-};
-
-struct VKBufferBinding
-{
-    ItemId bindingItemId;
-    QString name;
-    VKBuffer *buffer;
-    ItemId blockItemId;
-    QString offset;
-    QString rowCount;
-    int stride;
-};
-
-struct VKBindings
-{
-    std::map<QString, VKUniformBinding> uniforms;
-    std::map<QString, VKSamplerBinding> samplers;
-    std::map<QString, VKImageBinding> images;
-    std::map<QString, VKBufferBinding> buffers;
-};
 
 class VKPipeline
 {
@@ -71,7 +16,7 @@ public:
     VKPipeline(ItemId itemId, VKProgram *program);
     ~VKPipeline();
 
-    void setBindings(VKBindings &&bindings);
+    void setBindings(Bindings &&bindings);
     bool createGraphics(VKContext &context,
         KDGpu::PrimitiveOptions &primitiveOptions, VKTarget *target,
         VKStream *vertexStream);
@@ -118,7 +63,7 @@ private:
     };
 
     const KDGpu::Sampler &getSampler(VKContext &context,
-        const VKSamplerBinding &samplerBinding);
+        const SamplerBinding &samplerBinding);
     BindGroup &getBindGroup(uint32_t set);
     bool createOrUpdateBindGroup(uint32_t set, uint32_t binding,
         const KDGpu::ResourceBindingLayout &layout);
@@ -134,7 +79,7 @@ private:
         ScriptEngine &scriptEngine);
     bool createLayout(VKContext &context);
     void applyBufferMemberBinding(std::span<std::byte> bufferData,
-        const SpvReflectBlockVariable &member, const VKUniformBinding &binding,
+        const SpvReflectBlockVariable &member, const UniformBinding &binding,
         int memberOffset, int elementOffset, int count,
         ScriptEngine &scriptEngine);
     bool applyBufferMemberBindings(std::span<std::byte> bufferData,
@@ -159,7 +104,7 @@ private:
     KDGpu::PipelineLayout mPipelineLayout;
     std::vector<BindGroup> mBindGroups;
     std::vector<KDGpu::BindGroupLayout> mBindGroupLayouts;
-    VKBindings mBindings;
+    Bindings mBindings;
     std::map<KDGpu::SamplerOptions, KDGpu::Sampler> mSamplers;
     std::vector<std::unique_ptr<DynamicUniformBuffer>> mDynamicUniformBuffers;
     std::vector<std::byte> mPushConstantData;

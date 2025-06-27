@@ -9,6 +9,8 @@ class QOpenGLTimerQuery;
 class GLRenderSession final : public RenderSessionBase
 {
 public:
+    struct CommandQueue;
+
     GLRenderSession(RendererPtr renderer, const QString &basePath);
     ~GLRenderSession();
 
@@ -18,10 +20,7 @@ public:
     quint64 getTextureHandle(ItemId itemId) override;
 
 private:
-    struct CommandQueue;
-
     void createCommandQueue();
-    void buildCommandQueue();
     void reuseUnmodifiedItems();
     void executeCommandQueue();
     void downloadModifiedResources();

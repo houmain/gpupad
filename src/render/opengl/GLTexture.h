@@ -19,6 +19,9 @@ public:
         Texture::Format format, GLRenderSession &renderSession);
     bool operator==(const GLTexture &rhs) const;
 
+    void boundAsSampler() { }
+    void boundAsImage() { }
+
     GLuint textureId() const { return mTextureObject; }
     GLuint64 obtainBindlessHandle();
     bool clear(std::array<double, 4> color, double depth, int stencil);

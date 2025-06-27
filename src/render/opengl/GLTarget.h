@@ -6,7 +6,7 @@ class GLTarget
 {
 public:
     GLTarget(const Target &target, GLRenderSession &renderSession);
-    void setAttachment(int index, GLTexture *texture);
+    void setTexture(int index, GLTexture *texture);
 
     bool bind();
     void unbind();

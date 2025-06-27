@@ -102,7 +102,7 @@ namespace {
         return static_cast<KDGpu::ResourceBindingType>(type);
     }
 
-    KDGpu::SamplerOptions getSamplerOptions(const VKSamplerBinding &binding,
+    KDGpu::SamplerOptions getSamplerOptions(const SamplerBinding &binding,
         float maxAnisotropy)
     {
         const auto getFilter = [](Binding::Filter filter) {
@@ -317,7 +317,7 @@ namespace KDGpu {
 } // namespace KDGpu
 
 const KDGpu::Sampler &VKPipeline::getSampler(VKContext &context,
-    const VKSamplerBinding &samplerBinding)
+    const SamplerBinding &samplerBinding)
 {
     const auto maxSamplerAnisotropy =
         context.device.adapter()->properties().limits.maxSamplerAnisotropy;
@@ -406,7 +406,7 @@ auto VKPipeline::getDynamicUniformBuffer(uint32_t set, uint32_t binding,
 }
 
 void VKPipeline::applyBufferMemberBinding(std::span<std::byte> bufferData,
-    const SpvReflectBlockVariable &member, const VKUniformBinding &binding,
+    const SpvReflectBlockVariable &member, const UniformBinding &binding,
     int memberOffset, int elementOffset, int elementCount,
     ScriptEngine &scriptEngine)
 {
@@ -558,7 +558,7 @@ bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
                     return false;
                 }
 
-                auto &buffer = *bufferBinding->buffer;
+                auto &buffer = static_cast<VKBuffer &>(*bufferBinding->buffer);
                 mUsedItems += bufferBinding->bindingItemId;
                 mUsedItems += bufferBinding->blockItemId;
                 mUsedItems += buffer.usedItems();
@@ -838,7 +838,7 @@ bool VKPipeline::createLayout(VKContext &context)
     return true;
 }
 
-void VKPipeline::setBindings(VKBindings &&bindings)
+void VKPipeline::setBindings(Bindings &&bindings)
 {
     mBindings = std::move(bindings);
 }
@@ -914,19 +914,18 @@ MessageType VKPipeline::updateBindings(VKContext &context,
     const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
     bool isVariableLengthArray, ScriptEngine &scriptEngine)
 {
-    const auto getBufferBindingOffsetSize =
-        [&](const VKBufferBinding &binding) {
-            const auto &buffer = *binding.buffer;
-            const auto offset =
-                scriptEngine.evaluateUInt(binding.offset, buffer.itemId());
-            const auto rowCount =
-                scriptEngine.evaluateUInt(binding.rowCount, buffer.itemId());
-            const auto size = (binding.stride ? rowCount * binding.stride
-                                              : buffer.size() - offset);
-            Q_ASSERT(size >= 0
-                && offset + size <= static_cast<size_t>(buffer.size()));
-            return std::pair(offset, size);
-        };
+    const auto getBufferBindingOffsetSize = [&](const BufferBinding &binding) {
+        const auto &buffer = *binding.buffer;
+        const auto offset =
+            scriptEngine.evaluateUInt(binding.offset, buffer.itemId());
+        const auto rowCount =
+            scriptEngine.evaluateUInt(binding.rowCount, buffer.itemId());
+        const auto size = (binding.stride ? rowCount * binding.stride
+                                          : buffer.size() - offset);
+        Q_ASSERT(size >= 0
+            && offset + size <= static_cast<size_t>(buffer.size()));
+        return std::pair(offset, size);
+    };
 
     switch (desc.descriptor_type) {
     case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
@@ -934,7 +933,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                 find(mBindings.buffers, desc.type_description->type_name)) {
             if (!bufferBinding->buffer)
                 return MessageType::BufferNotSet;
-            auto &buffer = *bufferBinding->buffer;
+            auto &buffer = static_cast<VKBuffer &>(*bufferBinding->buffer);
             mUsedItems += bufferBinding->bindingItemId;
             mUsedItems += bufferBinding->blockItemId;
             mUsedItems += buffer.usedItems();
@@ -978,7 +977,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                 find(mBindings.buffers, desc.type_description->type_name);
             if (!bufferBinding || !bufferBinding->buffer)
                 return MessageType::BufferNotSet;
-            auto &buffer = *bufferBinding->buffer;
+            auto &buffer = static_cast<VKBuffer &>(*bufferBinding->buffer);
             mUsedItems += bufferBinding->bindingItemId;
             mUsedItems += buffer.usedItems();
 
@@ -1024,14 +1023,15 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                     .arrayElement = arrayElement,
                 });
         } else {
-            if (mTarget && mTarget->hasAttachment(samplerBinding->texture))
+            const auto texture =
+                static_cast<VKTexture *>(samplerBinding->texture);
+            if (mTarget && mTarget->hasAttachment(texture))
                 return MessageType::CantSampleAttachment;
 
-            if (!samplerBinding->texture
-                || !samplerBinding->texture->prepareSampledImage(context))
+            if (!texture || !texture->prepareSampledImage(context))
                 return MessageType::SamplerNotSet;
 
-            mUsedItems += samplerBinding->texture->itemId();
+            mUsedItems += texture->itemId();
 
             if (desc.descriptor_type
                 == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE) {
@@ -1040,8 +1040,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                         .binding = desc.binding,
                         .resource =
                             KDGpu::TextureViewBinding{
-                                .textureView =
-                                    samplerBinding->texture->getView(),
+                                .textureView = texture->getView(),
                             },
                         .arrayElement = arrayElement,
                     });
@@ -1051,8 +1050,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                         .binding = desc.binding,
                         .resource =
                             KDGpu::TextureViewSamplerBinding{
-                                .textureView =
-                                    samplerBinding->texture->getView(),
+                                .textureView = texture->getView(),
                                 .sampler = sampler,
                             },
                         .arrayElement = arrayElement,
@@ -1064,20 +1062,20 @@ MessageType VKPipeline::updateBindings(VKContext &context,
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE: {
         const auto imageBinding = find(mBindings.images, desc.name);
-        if (!imageBinding || !imageBinding->texture
-            || !imageBinding->texture->prepareStorageImage(context))
+        const auto texture = static_cast<VKTexture *>(imageBinding->texture);
+        if (!imageBinding || !texture || !texture->prepareStorageImage(context))
             return MessageType::ImageNotSet;
 
         mUsedItems += imageBinding->bindingItemId;
-        mUsedItems += imageBinding->texture->itemId();
+        mUsedItems += texture->itemId();
 
         setBindGroupResource(desc.set, isVariableLengthArray,
             {
                 .binding = desc.binding,
                 .resource =
                     KDGpu::ImageBinding{
-                        .textureView = imageBinding->texture->getView(
-                            imageBinding->level, imageBinding->layer,
+                        .textureView = texture->getView(imageBinding->level,
+                            imageBinding->layer,
                             toKDGpu(imageBinding->format)) },
                 .arrayElement = arrayElement,
             });

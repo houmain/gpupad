@@ -12,13 +12,16 @@ public:
     VKTexture(const Buffer &buffer, VKBuffer *textureBuffer,
         Texture::Format format, VKRenderSession &renderSession);
 
+    void boundAsSampler() { addUsage(KDGpu::TextureUsageFlagBits::SampledBit); }
+    void boundAsImage() { addUsage(KDGpu::TextureUsageFlagBits::StorageBit); }
+    void addUsage(KDGpu::TextureUsageFlags usage);
+
     KDGpu::Texture &texture() { return mTexture; }
     KDGpu::TextureLayout currentLayout() const { return mCurrentLayout; }
     KDGpu::TextureAspectFlagBits aspectMask() const;
 
     KDGpu::TextureView &getView(int level = -1, int layer = -1,
         KDGpu::Format format = KDGpu::Format::UNDEFINED);
-    void addUsage(KDGpu::TextureUsageFlags usage);
     bool prepareSampledImage(VKContext &context);
     bool prepareStorageImage(VKContext &context);
     bool prepareAttachment(VKContext &context);

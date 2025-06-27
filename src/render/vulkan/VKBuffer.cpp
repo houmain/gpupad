@@ -61,9 +61,7 @@ bool downloadBuffer(VKContext &context, const KDGpu::Buffer &buffer,
 }
 
 VKBuffer::VKBuffer(const Buffer &buffer, VKRenderSession &renderSession)
-    : mItemId(buffer.id)
-    , mFileName(buffer.fileName)
-    , mSize(renderSession.getBufferSize(buffer))
+    : BufferBase(buffer, renderSession.getBufferSize(buffer))
 {
     // TODO: reduce default usage
     mUsage = KDGpu::BufferUsageFlags{ KDGpu::BufferUsageFlagBits::TransferSrcBit
@@ -92,19 +90,6 @@ void VKBuffer::addUsage(KDGpu::BufferUsageFlags usage)
         mBuffer = {};
     }
     mUsage |= usage;
-}
-
-void VKBuffer::updateUntitledFilename(const VKBuffer &rhs)
-{
-    if (mSize == rhs.mSize && FileDialog::isEmptyOrUntitled(mFileName)
-        && FileDialog::isEmptyOrUntitled(rhs.mFileName))
-        mFileName = rhs.mFileName;
-}
-
-bool VKBuffer::operator==(const VKBuffer &rhs) const
-{
-    return std::tie(mFileName, mSize, mMessages)
-        == std::tie(rhs.mFileName, rhs.mSize, rhs.mMessages);
 }
 
 void VKBuffer::clear(VKContext &context)

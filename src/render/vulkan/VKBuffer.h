@@ -1,19 +1,13 @@
 #pragma once
 
 #include "VKItem.h"
+#include "render/BufferBase.h"
 
-class VKBuffer
+class VKBuffer : public BufferBase
 {
 public:
     VKBuffer(const Buffer &buffer, VKRenderSession &renderSession);
-    void updateUntitledFilename(const VKBuffer &rhs);
-    bool operator==(const VKBuffer &rhs) const;
 
-    ItemId itemId() const { return mItemId; }
-    const QByteArray &data() const { return mData; }
-    const QString &fileName() const { return mFileName; }
-    const QSet<ItemId> &usedItems() const { return mUsedItems; }
-    int size() const { return mSize; }
     const KDGpu::Buffer &buffer() const { return mBuffer; }
 
     void addUsage(KDGpu::BufferUsageFlags usage);
@@ -39,16 +33,8 @@ private:
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
         KDGpu::AccessFlags accessMask, KDGpu::PipelineStageFlags stage);
 
-    MessagePtrSet mMessages;
-    ItemId mItemId{};
-    QString mFileName;
-    int mSize{};
-    QByteArray mData;
-    QSet<ItemId> mUsedItems;
     KDGpu::BufferUsageFlags mUsage{};
     KDGpu::Buffer mBuffer;
-    bool mSystemCopyModified{};
-    bool mDeviceCopyModified{};
     KDGpu::AccessFlags mCurrentAccessMask{};
     KDGpu::PipelineStageFlags mCurrentStage{};
     bool mDeviceAddressObtained{};

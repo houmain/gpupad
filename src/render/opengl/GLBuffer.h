@@ -1,20 +1,13 @@
 #pragma once
 
 #include "GLItem.h"
+#include "render/BufferBase.h"
 
-class GLBuffer
+class GLBuffer : public BufferBase
 {
 public:
     explicit GLBuffer(int size);
     GLBuffer(const Buffer &buffer, GLRenderSession &renderSession);
-    void updateUntitledFilename(const GLBuffer &rhs);
-    bool operator==(const GLBuffer &rhs) const;
-
-    ItemId itemId() const { return mItemId; }
-    const QByteArray &data() const { return mData; }
-    const QString &fileName() const { return mFileName; }
-    const QSet<ItemId> &usedItems() const { return mUsedItems; }
-    int size() const { return mSize; }
 
     QByteArray &getWriteableData();
     void clear();
@@ -33,13 +26,5 @@ private:
     void createBuffer();
     void upload();
 
-    MessagePtrSet mMessages;
-    ItemId mItemId{};
-    QString mFileName;
-    int mSize{};
-    QByteArray mData;
-    QSet<ItemId> mUsedItems;
     GLObject mBufferObject;
-    bool mSystemCopyModified{};
-    bool mDeviceCopyModified{};
 };

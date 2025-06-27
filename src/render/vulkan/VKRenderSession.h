@@ -9,6 +9,8 @@ class VKShareSync;
 class VKRenderSession final : public RenderSessionBase
 {
 public:
+    struct CommandQueue;
+
     VKRenderSession(RendererPtr renderer, const QString &basePath);
     ~VKRenderSession();
 
@@ -19,11 +21,8 @@ public:
     quint64 getBufferHandle(ItemId itemId) override;
 
 private:
-    struct CommandQueue;
-
     VKRenderer &renderer();
     void createCommandQueue();
-    void buildCommandQueue();
     void reuseUnmodifiedItems();
     void executeCommandQueue();
     void downloadModifiedResources();

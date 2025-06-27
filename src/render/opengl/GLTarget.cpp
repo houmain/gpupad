@@ -25,7 +25,7 @@ GLTarget::GLTarget(const Target &target, GLRenderSession &renderSession)
     }
 }
 
-void GLTarget::setAttachment(int index, GLTexture *texture)
+void GLTarget::setTexture(int index, GLTexture *texture)
 {
     if (!texture)
         return;

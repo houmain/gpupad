@@ -1,5 +1,6 @@
 #pragma once
 
+#include "session/Item.h"
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QOpenGLFunctions_3_3_Core>
@@ -8,6 +9,8 @@
 #include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLVersionFunctionsFactory>
+#include <QOpenGLTimerQuery>
+#include <map>
 
 class GLContext final : public QOpenGLContext, public QOpenGLFunctions_3_3_Core
 {
@@ -24,6 +27,8 @@ public:
     QOpenGLFunctions_4_2_Core *v4_2{};
     QOpenGLFunctions_4_3_Core *v4_3{};
     QOpenGLFunctions_4_5_Core *v4_5{};
+
+    std::map<ItemId, QOpenGLTimerQuery> timerQueries;
 
     bool initializeOpenGLFunctions() override
     {
