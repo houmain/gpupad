@@ -537,7 +537,7 @@ void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
     mCurrentAccessMask = accessMask;
 }
 
-SharedMemoryHandle VKTexture::getSharedMemoryHandle() const
+ShareHandle VKTexture::getSharedMemoryHandle() const
 {
     if (!mTexture.isValid())
         return {};
@@ -546,6 +546,7 @@ SharedMemoryHandle VKTexture::getSharedMemoryHandle() const
         return {};
 #if defined(KDGPU_PLATFORM_WIN32)
     return {
+        ShareHandleType::OPAQUE_WIN32,
         std::get<HANDLE>(memory.handle),
         memory.allocationSize,
         memory.allocationOffset,
@@ -553,6 +554,7 @@ SharedMemoryHandle VKTexture::getSharedMemoryHandle() const
     };
 #else
     return {
+        ShareHandleType::OPAQUE_FD,
         reinterpret_cast<void *>(intptr_t{ std::get<int>(memory.handle) }),
         memory.allocationSize,
         memory.allocationOffset,

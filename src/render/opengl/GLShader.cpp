@@ -18,7 +18,7 @@ void GLShader::parseLog(const QString &log, MessagePtrSet &messages,
         "([^:]+:|Error)\\s*" // 6. severity/code
         "(.+)"); // 7. text
 
-    const auto lines = log.split('\n');
+    const auto lines = log.split('\n', Qt::SkipEmptyParts);
     for (const auto &line : lines) {
         const auto match = split.match(line);
         const auto sourceIndex = match.captured(2).toInt();

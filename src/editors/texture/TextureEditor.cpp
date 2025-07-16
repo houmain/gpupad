@@ -303,7 +303,7 @@ void TextureEditor::updatePreviewTexture(ShareSyncPtr shareSync,
 }
 
 void TextureEditor::updatePreviewTexture(ShareSyncPtr shareSync,
-    SharedMemoryHandle handle, int samples)
+    ShareHandle handle, int samples)
 {
     mTextureItem->setPreviewTexture(std::move(shareSync), handle, samples);
 }

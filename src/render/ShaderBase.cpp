@@ -346,9 +346,14 @@ QStringList ShaderBase::getPatchedSourcesHLSL(ShaderPrintf &printf,
         return {};
 
     auto sources = QStringList();
-    for (auto i = 0; i < mSources.size(); ++i)
-        sources += substituteIncludes(mSources[i], mFileNames[i], usedFileNames,
-            mItemId, mMessages, mIncludePaths);
+    if (usedFileNames) {
+        for (auto i = 0; i < mSources.size(); ++i)
+            sources += substituteIncludes(mSources[i], mFileNames[i],
+                usedFileNames, mItemId, mMessages, mIncludePaths);
+    } else {
+        sources = mSources;
+        sources.front().prepend("#line 1\n");
+    }
 
     for (auto i = 0; i < sources.size(); ++i)
         sources[i] = printf.patchSource(mType, mFileNames[i], sources[i]);
@@ -357,7 +362,7 @@ QStringList ShaderBase::getPatchedSourcesHLSL(ShaderPrintf &printf,
         sources.front().prepend(ShaderPrintf::preambleHLSL());
 
     if (!mPreamble.isEmpty())
-        sources.front().prepend("#line 1 0\n" + mPreamble + "\n");
+        sources.front().prepend("#line 1\n" + mPreamble + "\n");
 
     const auto definitions = preprocessorDefinitions();
     for (const auto &definition : definitions)

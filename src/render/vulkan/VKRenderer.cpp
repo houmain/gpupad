@@ -7,12 +7,17 @@
 #include <QSemaphore>
 #include <QOpenGLContext>
 #include <QOffscreenSurface>
+ 
+// TODO: added because of multiple definitions of fmt::v11::detail::assert_fail
+#if defined(_WIN32)
+#  define FMT_ASSERT
+#endif
 
 #include <KDGpu/device.h>
 #include <KDGpu/instance.h>
 #include <KDGpu/vulkan/vulkan_graphics_api.h>
 
-#if defined(KDGPU_PLATFORM_WIN32)
+#if defined(_WIN32)
 #  define NOMINMAX
 #  define WIN32_LEAN_AND_MEAN
 #  include <spdlog/sinks/msvc_sink.h>
@@ -131,7 +136,7 @@ private:
             shutdown();
         };
 
-#if defined(KDGPU_PLATFORM_WIN32)
+#if defined(_WIN32)
         static auto l =
             spdlog::synchronous_factory::create<spdlog::sinks::msvc_sink_mt>(
                 "KDGpu");
@@ -145,8 +150,7 @@ private:
         auto build = 0;
         std::sscanf(qPrintable(version), "%d.%d.%d", &major, &minor, &build);
 
-        const auto instanceOptions = KDGpu::InstanceOptions
-        {
+        const auto instanceOptions = KDGpu::InstanceOptions{
             .applicationName = qApp->applicationName().toStdString(),
             .applicationVersion =
                 KDGPU_MAKE_API_VERSION(0, major, minor, build),
@@ -172,10 +176,9 @@ private:
         if (!mAdapter)
             return error("no adapter found");
 
-        SPDLOG_LOGGER_INFO(KDGpu::Logger::logger(),
-            "Initializing Vulkan on the {} {}",
-            adapterDeviceTypeToString(mAdapter->properties().deviceType),
-            mAdapter->properties().deviceName);
+        KDGpu::Logger::logger()->info("Initializing Vulkan on the "
+            + adapterDeviceTypeToString(mAdapter->properties().deviceType) + " "
+            + mAdapter->properties().deviceName);
 
         mDevice = mAdapter->createDevice(KDGpu::DeviceOptions{
             .requestedFeatures = mAdapter->features(),

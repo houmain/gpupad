@@ -30,7 +30,7 @@ public:
     bool updateMipmaps(VKContext &context);
     bool deviceCopyModified() const { return mDeviceCopyModified; }
     bool download(VKContext &context);
-    SharedMemoryHandle getSharedMemoryHandle() const;
+    ShareHandle getSharedMemoryHandle() const;
 
 private:
     struct ViewOptions

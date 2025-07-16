@@ -20,7 +20,7 @@ public:
     void setImage(TextureData image);
     const TextureData &image() const { return mImage; }
     void setPreviewTexture(ShareSyncPtr sync, GLuint textureId, int samples);
-    void setPreviewTexture(ShareSyncPtr sync, SharedMemoryHandle handle,
+    void setPreviewTexture(ShareSyncPtr sync, ShareHandle handle,
         int samples);
 
     bool canFilter() const;

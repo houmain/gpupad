@@ -61,7 +61,7 @@ All items which contributed to the last evaluation are highlighted.
 The items of a session pretty much correspond the concepts known from writing OpenGL or Vulkan applications:
 
 - **Call** -
-Most prominently are the draw and the compute calls. Whenever the session is evaluated, all active calls are evaluated in consecutive order. They can be de-/activated using the checkbox.
+Most prominently are the draw, compute and ray trace calls. Whenever the session is evaluated, all active calls are evaluated in consecutive order. They can be de-/activated using the checkbox.
 The elapsed time of each call is output to the *Message* window (measured using GPU timer queries).
 
 - **Program** -
@@ -89,6 +89,9 @@ Allows to structure more complex sessions. They open a new scope unless *inline 
 Allows to define JavaScript functions and variables in script files, which can subsequently be used in uniform binding expressions.
 Scripts can also be used to dynamically populate the session and generate buffer and texture data.
 There is one JavaScript state for the whole session and the scripts are evaluated in consecutive order (*Group* scopes do not have an effect).
+
+- **Acceleration Structure** -
+Allows to define the instances and geometry for ray tracing calls.
 
 ## Scripting
 
@@ -130,7 +133,7 @@ Initial documentation of the available script objects:
 - `setScriptSource(ItemIdent, Data)`
 - `setShaderSource(ItemIdent, Data)`
 - `setTextureData(ItemIdent, Data)`
-- `getProcessShader(shader: ItemIdent, type: String) -> String/Data`
+- `processShader(shader: ItemIdent, type: String) -> String/Data`
 - `getBufferHandle(ItemIdent) -> Number`
 - `getTextureHandle(ItemIdent) -> Number`
 

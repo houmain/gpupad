@@ -238,7 +238,7 @@ void main() {
         return program.link();
     }
 
-    bool importSharedTexture(SharedMemoryHandle handle, const TextureData &data,
+    bool importSharedTexture(ShareHandle handle, const TextureData &data,
         int samples, GLuint textureId)
     {
         auto &context = *QOpenGLContext::currentContext();
@@ -289,10 +289,10 @@ void main() {
             GL_DEDICATED_MEMORY_OBJECT_EXT, &dedicated);
 #if defined(_WIN32)
         glImportMemoryWin32HandleEXT(memoryObject, handle.allocationSize,
-            GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, handle.handle);
+            static_cast<GLenum>(handle.type), handle.handle);
 #else
         glImportMemoryFdEXT(memoryObject, handle.allocationSize,
-            GL_HANDLE_TYPE_OPAQUE_FD_EXT,
+            static_cast<GLenum>(handle.type),
             reinterpret_cast<intptr_t>(handle.handle));
 #endif
         const auto target = data.getTarget(samples);
@@ -394,8 +394,8 @@ void TextureItem::setPreviewTexture(ShareSyncPtr shareSync, GLuint textureId,
     }
 }
 
-void TextureItem::setPreviewTexture(ShareSyncPtr shareSync,
-    SharedMemoryHandle handle, int samples)
+void TextureItem::setPreviewTexture(ShareSyncPtr shareSync, ShareHandle handle,
+    int samples)
 {
     if (!mImage.isNull() && handle.handle) {
         if (mSharedTextureHandle != handle.handle) {

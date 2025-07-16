@@ -104,8 +104,21 @@ enum class TextureDataType {
     Float32,
 };
 
-struct SharedMemoryHandle
+enum class ShareHandleType {
+    None = 0,
+    OPAQUE_FD = 0x9586,
+    OPAQUE_WIN32 = 0x9587,
+    OPAQUE_WIN32_KMT = 0x9588,
+    D3D12_TILEPOOL = 0x9589,
+    D3D12_RESOURCE = 0x958A,
+    D3D11_IMAGE = 0x958B,
+    D3D11_IMAGE_KMT = 0x958C,
+    D3D_FENCE = 0x9594,
+};
+
+struct ShareHandle
 {
+    ShareHandleType type;
     void *handle;
     size_t allocationSize;
     size_t allocationOffset;

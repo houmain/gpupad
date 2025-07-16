@@ -23,8 +23,7 @@ void VKStream::setAttribute(int attributeIndex, const Field &field,
     VKBuffer *buffer, ScriptEngine &scriptEngine)
 {
     const auto &block = *castItem<Block>(field.parent);
-    const auto blockOffset =
-        scriptEngine.evaluateValue(block.offset, block.id);
+    const auto blockOffset = scriptEngine.evaluateValue(block.offset, block.id);
     auto &attribute = mAttributes[attributeIndex];
     mUsedItems += field.id;
     mUsedItems += block.id;
@@ -35,8 +34,7 @@ void VKStream::setAttribute(int attributeIndex, const Field &field,
     attribute.stride = getBlockStride(block);
     attribute.offset = blockOffset + getFieldRowOffset(field);
 
-    const auto rowCount =
-        scriptEngine.evaluateValue(block.rowCount, block.id);
+    const auto rowCount = scriptEngine.evaluateValue(block.rowCount, block.id);
     if (mMaxElementCount < 0 || rowCount < mMaxElementCount)
         mMaxElementCount = rowCount;
 
@@ -54,10 +52,9 @@ bool VKStream::validateAttribute(const VKAttribute &attribute) const
     case 1:
     case 2:
     case 3:
-    case 4:  break;
+    case 4:  return true;
     default: return false;
     }
-    return true;
 }
 
 void VKStream::invalidateVertexOptions()

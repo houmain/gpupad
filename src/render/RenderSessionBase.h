@@ -28,6 +28,8 @@ public:
     void release() override;
     QSet<ItemId> usedItems() const override;
     SessionModel &sessionModelCopy() override { return mSessionModelCopy; }
+    quint64 getTextureHandle(ItemId itemId) override { return 0; }
+    quint64 getBufferHandle(ItemId itemId) override { return 0; }
 
     const Session &session() const;
     bool usesMouseState() const;

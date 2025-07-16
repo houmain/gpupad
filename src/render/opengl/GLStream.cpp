@@ -19,8 +19,7 @@ void GLStream::setAttribute(int attributeIndex, const Field &field,
     GLBuffer *buffer, ScriptEngine &scriptEngine)
 {
     const auto &block = *castItem<Block>(field.parent);
-    const auto blockOffset =
-        scriptEngine.evaluateValue(block.offset, block.id);
+    const auto blockOffset = scriptEngine.evaluateValue(block.offset, block.id);
     auto &attribute = mAttributes[attributeIndex];
     attribute.usedItems += field.id;
     attribute.usedItems += block.id;
@@ -31,8 +30,7 @@ void GLStream::setAttribute(int attributeIndex, const Field &field,
     attribute.stride = getBlockStride(block);
     attribute.offset = blockOffset + getFieldRowOffset(field);
 
-    const auto rowCount =
-        scriptEngine.evaluateValue(block.rowCount, block.id);
+    const auto rowCount = scriptEngine.evaluateValue(block.rowCount, block.id);
     if (mMaxElementCount < 0 || rowCount < mMaxElementCount)
         mMaxElementCount = rowCount;
 
@@ -49,10 +47,9 @@ bool GLStream::validateAttribute(const GLAttribute &attribute) const
     case 1:
     case 2:
     case 3:
-    case 4:  break;
+    case 4:  return true;
     default: return false;
     }
-    return true;
 }
 
 const GLAttribute *GLStream::findAttribute(const QString &name) const

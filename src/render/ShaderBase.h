@@ -33,7 +33,7 @@ protected:
     QStringList getPatchedSourcesGLSL(ShaderPrintf &printf,
         QStringList *usedFileNames);
     QStringList getPatchedSourcesHLSL(ShaderPrintf &printf,
-        QStringList *usedFileNames);
+        QStringList *usedFileNames = nullptr);
 
     ItemId mItemId{};
     MessagePtrSet mMessages;

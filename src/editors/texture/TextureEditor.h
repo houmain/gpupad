@@ -43,7 +43,7 @@ public:
     void setFlipVertically(bool flipVertically);
     void updatePreviewTexture(ShareSyncPtr shareSync, GLuint textureId,
         int samples);
-    void updatePreviewTexture(ShareSyncPtr shareSync, SharedMemoryHandle handle,
+    void updatePreviewTexture(ShareSyncPtr shareSync, ShareHandle handle,
         int samples);
     const TextureData &texture() const { return mTexture; }
 
