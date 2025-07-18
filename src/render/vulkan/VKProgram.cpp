@@ -56,7 +56,7 @@ bool VKProgram::operator==(const VKProgram &rhs) const
         && !shaderSessionSettingsDiffer(mSession, rhs.mSession));
 }
 
-bool VKProgram::link(KDGpu::Device &device)
+bool VKProgram::link(VKContext &context)
 {
     if (mFailed)
         return false;
@@ -74,7 +74,7 @@ bool VKProgram::link(KDGpu::Device &device)
                 mFailed = true;
                 return false;
             }
-            shader.create(device, stages[shader.type()]);
+            shader.create(context.device, stages[shader.type()]);
             mInterface[shader.getShaderStage().stage] = shader.interface();
         }
     } else {
@@ -88,7 +88,7 @@ bool VKProgram::link(KDGpu::Device &device)
             return false;
         }
         for (auto &shader : mShaders) {
-            shader.create(device, stages[shader.type()]);
+            shader.create(context.device, stages[shader.type()]);
             mInterface[shader.getShaderStage().stage] = shader.interface();
         }
     }

@@ -52,7 +52,7 @@ public:
     GLProgram(const Program &program, const Session &session);
     bool operator==(const GLProgram &rhs) const;
 
-    bool link();
+    bool link(GLContext &context);
     bool bind();
     void unbind();
     const Session &session() const { return mSession; }

@@ -145,7 +145,7 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
         if (!validateShaderTypes())
             return;
 
-        if (!mProgram->link(context.device))
+        if (!mProgram->link(context))
             return;
 
         if (mVertexStream)

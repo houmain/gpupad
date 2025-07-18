@@ -23,7 +23,6 @@ public:
 private:
     VKRenderer &renderer();
     void createCommandQueue();
-    void reuseUnmodifiedItems();
     void executeCommandQueue();
     void downloadModifiedResources();
     void outputTimerQueries();

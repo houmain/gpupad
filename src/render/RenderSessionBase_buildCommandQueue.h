@@ -2,6 +2,49 @@
 
 #include "RenderSessionBase.h"
 
+template <typename T>
+void replaceEqual(std::map<ItemId, T> &to, std::map<ItemId, T> &from)
+{
+    for (auto &kv : to) {
+        auto it = from.find(kv.first);
+        if (it != from.end()) {
+            // implicitly update untitled filename of buffer
+            if constexpr (std::is_base_of_v<BufferBase, T>)
+                it->second.updateUntitledFilename(kv.second);
+
+            if (kv.second == it->second)
+                kv.second = std::move(it->second);
+        }
+    }
+}
+
+template <typename CommandQueue>
+void RenderSessionBase::reuseUnmodifiedItems(CommandQueue &commandQueue,
+    CommandQueue &prevCommandQueue)
+{
+    replaceEqual(commandQueue.textures, prevCommandQueue.textures);
+    replaceEqual(commandQueue.buffers, prevCommandQueue.buffers);
+    replaceEqual(commandQueue.programs, prevCommandQueue.programs);
+    replaceEqual(commandQueue.accelerationStructures,
+        prevCommandQueue.accelerationStructures);
+
+    // immediately try to link programs
+    // when failing restore previous version but keep error messages
+    if (mEvaluationType != EvaluationType::Reset)
+        for (auto &[id, program] : commandQueue.programs)
+            if (auto it = prevCommandQueue.programs.find(id);
+                it != prevCommandQueue.programs.end()) {
+                auto &prev = it->second;
+                if (!shaderSessionSettingsDiffer(prev.session(),
+                        program.session())
+                    && !program.link(commandQueue.context)
+                    && prev.link(commandQueue.context)) {
+                    commandQueue.failedPrograms.push_back(std::move(program));
+                    program = std::move(prev);
+                }
+            }
+}
+
 template <typename RenderSession, typename CommandQueue>
 void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue)
 {

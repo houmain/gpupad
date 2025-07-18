@@ -70,7 +70,7 @@ namespace {
     case SpvDim3D:   return GL_##TYPE##_3D;      \
     case SpvDimCube: return GL_##TYPE##_CUBE;    \
     case SpvDimRect: return GL_##TYPE##_2D_RECT; \
-    default:         break;                      \
+    default:         break;                              \
     }
 
         const auto flags = binding.type_description->type_flags;
@@ -179,7 +179,7 @@ bool GLProgram::operator==(const GLProgram &rhs) const
         && !shaderSessionSettingsDiffer(mSession, rhs.mSession));
 }
 
-bool GLProgram::link()
+bool GLProgram::link(GLContext &context)
 {
     if (mProgramObject)
         return true;
@@ -617,10 +617,10 @@ void GLProgram::automapUniformBindings(Interface &interface)
 
 bool GLProgram::bind()
 {
-    if (!link())
+    auto &gl = GLContext::currentContext();
+    if (!link(gl))
         return false;
 
-    auto &gl = GLContext::currentContext();
     gl.glUseProgram(mProgramObject);
 
     applyPrintfBindings();

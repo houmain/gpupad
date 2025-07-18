@@ -17,24 +17,6 @@
 #include <functional>
 #include <type_traits>
 
-namespace {
-    template <typename T>
-    void replaceEqual(std::map<ItemId, T> &to, std::map<ItemId, T> &from)
-    {
-        for (auto &kv : to) {
-            auto it = from.find(kv.first);
-            if (it != from.end()) {
-                // implicitly update untitled filename of buffer
-                if constexpr (std::is_same_v<T, VKBuffer>)
-                    it->second.updateUntitledFilename(kv.second);
-
-                if (kv.second == it->second)
-                    kv.second = std::move(it->second);
-            }
-        }
-    }
-} // namespace
-
 struct VKRenderSession::CommandQueue
 {
     using Call = VKCall;
@@ -89,39 +71,14 @@ void VKRenderSession::render()
     }
     Q_ASSERT(mCommandQueue);
 
-    reuseUnmodifiedItems();
+    if (mPrevCommandQueue) {
+        reuseUnmodifiedItems(*mCommandQueue, *mPrevCommandQueue);
+        mPrevCommandQueue.reset();
+    }
     executeCommandQueue();
     downloadModifiedResources();
     if (!updatingPreviewTextures())
         outputTimerQueries();
-}
-
-void VKRenderSession::reuseUnmodifiedItems()
-{
-    if (mPrevCommandQueue) {
-        replaceEqual(mCommandQueue->textures, mPrevCommandQueue->textures);
-        replaceEqual(mCommandQueue->buffers, mPrevCommandQueue->buffers);
-        replaceEqual(mCommandQueue->programs, mPrevCommandQueue->programs);
-        replaceEqual(mCommandQueue->accelerationStructures,
-            mPrevCommandQueue->accelerationStructures);
-
-        // immediately try to link programs
-        // when failing restore previous version but keep error messages
-        auto &device = mCommandQueue->context.device;
-        if (mEvaluationType != EvaluationType::Reset)
-            for (auto &[id, program] : mCommandQueue->programs)
-                if (auto it = mPrevCommandQueue->programs.find(id);
-                    it != mPrevCommandQueue->programs.end())
-                    if (auto &prev = it->second;
-                        !shaderSessionSettingsDiffer(prev.session(),
-                            program.session())
-                        && !program.link(device) && prev.link(device)) {
-                        mCommandQueue->failedPrograms.push_back(
-                            std::move(program));
-                        program = std::move(prev);
-                    }
-        mPrevCommandQueue.reset();
-    }
 }
 
 void VKRenderSession::executeCommandQueue()
@@ -256,12 +213,12 @@ quint64 VKRenderSession::getBufferHandle(ItemId itemId)
 
             if (auto vkBuffer =
                     addOnce(mCommandQueue->buffers, buffer, *this)) {
-            
+
                 // ensure it is not recreated by usage update
                 if (isUsedByAccelerationStructure(*buffer))
                     vkBuffer->addUsage(KDGpu::BufferUsageFlagBits::
                             AccelerationStructureBuildInputReadOnlyBit);
-            
+
                 return vkBuffer;
             }
         }

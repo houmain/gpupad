@@ -11,7 +11,7 @@ public:
     VKProgram(const Program &program, const Session &session);
     bool operator==(const VKProgram &rhs) const;
 
-    bool link(KDGpu::Device &device);
+    bool link(VKContext &context);
     std::vector<KDGpu::ShaderStage> getShaderStages();
     ItemId itemId() const { return mItemId; }
     const Session &session() const { return mSession; }

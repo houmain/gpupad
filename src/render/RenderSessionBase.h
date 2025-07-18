@@ -126,6 +126,10 @@ protected:
     QList<int> getCachedProperties(ItemId itemId);
     void updateCachedProperties(ItemId itemId, QList<int> values);
 
+    template <typename CommandQueue>
+    void reuseUnmodifiedItems(CommandQueue &commandQueue,
+        CommandQueue &prevCommandQueue);
+
     template <typename RenderSession, typename CommandQueue>
     void buildCommandQueue(CommandQueue &commandQueue);
 
@@ -160,7 +164,6 @@ T *addOnce(std::map<ItemId, T> &list, const Item *item, Args &&...args)
         return &it->second;
     return &list.emplace(std::piecewise_construct,
                     std::forward_as_tuple(item->id),
-                    std::forward_as_tuple(*item,
-                        std::forward<Args>(args)...))
+                    std::forward_as_tuple(*item, std::forward<Args>(args)...))
                 .first->second;
 }
