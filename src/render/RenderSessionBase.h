@@ -102,6 +102,8 @@ public:
     quint64 getBufferHandle(ItemId itemId) override { return 0; }
 
     const Session &session() const;
+    bool itemsChanged() const { return mItemsChanged; }
+    EvaluationType evaluationType() const { return mEvaluationType; }
     bool usesMouseState() const;
     bool usesKeyboardState() const;
     bool usesViewportSize(const QString &fileName) const;
@@ -115,18 +117,9 @@ public:
         int *layers, bool cached = true);
 
 protected:
-    struct GroupIteration
-    {
-        size_t commandQueueBeginIndex;
-        int iterations;
-        int iterationsLeft;
-    };
-
-    void setNextCommandQueueIndex(size_t index);
-    virtual bool updatingPreviewTextures() const;
-    void invalidateCachedProperties();
-    QList<int> getCachedProperties(ItemId itemId);
-    void updateCachedProperties(ItemId itemId, QList<int> values);
+    void addMessage(MessagePtr message) { mMessages += message; }
+    void addUsedItems(const QSet<ItemId> &itemIds) { mUsedItems += itemIds; }
+    bool updatingPreviewTextures() const;
 
     template <typename CommandQueue>
     void reuseUnmodifiedItems(CommandQueue &commandQueue,
@@ -149,26 +142,37 @@ protected:
     void updatePreviewTextures(CommandQueue &commandQueue,
         ShareSyncPtr shareSync);
 
+private:
+    struct GroupIteration
+    {
+        size_t commandQueueBeginIndex;
+        int iterations;
+        int iterationsLeft;
+    };
+
+    void setNextCommandQueueIndex(size_t index);
+    void invalidateCachedProperties();
+    QList<int> getCachedProperties(ItemId itemId);
+    void updateCachedProperties(ItemId itemId, QList<int> values);
+
     const QString mBasePath;
-    SessionModel mSessionModelCopy;
-    std::unique_ptr<ScriptSession> mScriptSession;
     QSet<ItemId> mUsedItems;
-    MessagePtrSet mMessages;
     bool mItemsChanged{};
     EvaluationType mEvaluationType{};
-    QMap<ItemId, TextureData> mModifiedTextures;
-    QMap<ItemId, QByteArray> mModifiedBuffers;
-    size_t mNextCommandQueueIndex{};
-    QMap<ItemId, GroupIteration> mGroupIterations;
-    QMap<ItemId, ScriptValueList> mUniformBindingValues;
-
-private:
+    SessionModel mSessionModelCopy;
+    std::unique_ptr<ScriptSession> mScriptSession;
+    MessagePtrSet mMessages;
     MessagePtrSet mPrevMessages;
     MessagePtrSet mTimerMessages;
     mutable QMutex mUsedItemsCopyMutex;
     QSet<ItemId> mUsedItemsCopy;
     mutable QMutex mPropertyCacheMutex;
     QMap<ItemId, QList<int>> mPropertyCache;
+    QMap<ItemId, TextureData> mModifiedTextures;
+    QMap<ItemId, QByteArray> mModifiedBuffers;
+    size_t mNextCommandQueueIndex{};
+    QMap<ItemId, GroupIteration> mGroupIterations;
+    QMap<ItemId, ScriptValueList> mUniformBindingValues;
 };
 
 template <typename T, typename Item, typename... Args>

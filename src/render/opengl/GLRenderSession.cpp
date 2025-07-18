@@ -6,7 +6,7 @@
 #include "GLStream.h"
 #include "GLTarget.h"
 #include "GLTexture.h"
-#include "render/RenderSessionBase_buildCommandQueue.h"
+#include "render/RenderSessionBase_CommandQueue.h"
 #include <QOpenGLTimerQuery>
 #include <QStack>
 #include <deque>
@@ -49,18 +49,16 @@ void GLRenderSession::createCommandQueue()
 
 void GLRenderSession::render()
 {
-    if (mItemsChanged || mEvaluationType == EvaluationType::Reset) {
+    if (itemsChanged() || evaluationType() == EvaluationType::Reset) {
         createCommandQueue();
         buildCommandQueue<GLRenderSession>(*mCommandQueue);
     }
     Q_ASSERT(mCommandQueue);
 
     auto &gl = GLContext::currentContext();
-    if (!gl) {
-        mMessages += MessageList::insert(0,
-            MessageType::OpenGLVersionNotAvailable, "3.3");
-        return;
-    }
+    if (!gl)
+        return addMessage(MessageList::insert(0,
+            MessageType::OpenGLVersionNotAvailable, "3.3"));
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
@@ -124,15 +122,13 @@ quint64 GLRenderSession::getTextureHandle(ItemId itemId)
     if (!mCommandQueue)
         createCommandQueue();
 
-    const auto &sessionModel = mSessionModelCopy;
-
     const auto addTextureOnce = [&](ItemId textureId) {
         return addOnce(mCommandQueue->textures,
-            sessionModel.findItem<Texture>(textureId), *this);
+            sessionModelCopy().findItem<Texture>(textureId), *this);
     };
 
     if (auto texture = addTextureOnce(itemId)) {
-        mUsedItems += texture->usedItems();
+        addUsedItems(texture->usedItems());
         return texture->obtainBindlessHandle();
     }
     return 0;

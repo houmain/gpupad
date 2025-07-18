@@ -26,5 +26,4 @@ private:
     std::shared_ptr<GLShareSync> mShareSync;
     std::unique_ptr<CommandQueue> mCommandQueue;
     std::unique_ptr<CommandQueue> mPrevCommandQueue;
-    MessagePtrSet mTimerMessages;
 };

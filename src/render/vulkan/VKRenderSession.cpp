@@ -8,7 +8,7 @@
 #include "VKTarget.h"
 #include "VKTexture.h"
 #include "VKAccelerationStructure.h"
-#include "render/RenderSessionBase_buildCommandQueue.h"
+#include "render/RenderSessionBase_CommandQueue.h"
 #include <QStack>
 #include <deque>
 #include <functional>
@@ -62,7 +62,7 @@ void VKRenderSession::render()
     if (!mShareSync)
         mShareSync = std::make_shared<VKShareSync>(renderer().device());
 
-    if (mItemsChanged || mEvaluationType == EvaluationType::Reset) {
+    if (itemsChanged() || evaluationType() == EvaluationType::Reset) {
         createCommandQueue();
         buildCommandQueue<VKRenderSession>(*mCommandQueue);
     }
@@ -126,12 +126,10 @@ quint64 VKRenderSession::getBufferHandle(ItemId itemId)
     if (!mCommandQueue)
         createCommandQueue();
 
-    auto &sessionModel = mSessionModelCopy;
-
     const auto isUsedByAccelerationStructure = [&](const Buffer &buffer) {
         auto isUsed = false;
         for (auto block : buffer.items)
-            sessionModel.forEachItem<Geometry>([&](const Geometry &g) {
+            sessionModelCopy().forEachItem<Geometry>([&](const Geometry &g) {
                 isUsed |= (g.vertexBufferBlockId == block->id
                     || g.indexBufferBlockId == block->id
                     || g.transformBufferBlockId == block->id);
@@ -140,7 +138,7 @@ quint64 VKRenderSession::getBufferHandle(ItemId itemId)
     };
 
     const auto addBufferOnce = [&](ItemId bufferId) -> VKBuffer * {
-        if (const auto buffer = sessionModel.findItem<Buffer>(bufferId)) {
+        if (const auto buffer = sessionModelCopy().findItem<Buffer>(bufferId)) {
             // ensure that potential current buffer is really getting reused
             if (const auto it = mCommandQueue->buffers.find(buffer->id);
                 it != mCommandQueue->buffers.end()
@@ -162,7 +160,7 @@ quint64 VKRenderSession::getBufferHandle(ItemId itemId)
     };
 
     if (auto buffer = addBufferOnce(itemId)) {
-        mUsedItems += buffer->usedItems();
+        addUsedItems(buffer->usedItems());
         return buffer->getDeviceAddress(mCommandQueue->context);
     }
     return 0;
