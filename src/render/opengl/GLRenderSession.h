@@ -21,8 +21,6 @@ public:
 
 private:
     void createCommandQueue();
-    void executeCommandQueue();
-    void outputTimerQueries();
 
     QOpenGLVertexArrayObject mVao;
     std::shared_ptr<GLShareSync> mShareSync;

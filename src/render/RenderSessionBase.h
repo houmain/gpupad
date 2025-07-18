@@ -3,6 +3,7 @@
 #include "RenderTask.h"
 #include "MessageList.h"
 #include "TextureData.h"
+#include "render/ShareSync.h"
 #include "session/SessionModel.h"
 #include "scripting/IScriptRenderSession.h"
 #include "scripting/ScriptSession.h"
@@ -12,6 +13,7 @@
 
 class BufferBase;
 class TextureBase;
+class ShareSync;
 
 struct UniformBinding
 {
@@ -134,7 +136,18 @@ protected:
     void buildCommandQueue(CommandQueue &commandQueue);
 
     template <typename CommandQueue>
+    void executeCommandQueue(CommandQueue &commandQueue);
+
+    template <typename CommandQueue>
     void downloadModifiedResources(CommandQueue &commandQueue);
+
+    template <typename TimerQueries, typename ToNanoseconds>
+    void outputTimerQueries(TimerQueries &timerQueries,
+        const ToNanoseconds &toNanoseconds);
+
+    template <typename CommandQueue>
+    void updatePreviewTextures(CommandQueue &commandQueue,
+        ShareSyncPtr shareSync);
 
     const QString mBasePath;
     SessionModel mSessionModelCopy;
@@ -151,6 +164,7 @@ protected:
 
 private:
     MessagePtrSet mPrevMessages;
+    MessagePtrSet mTimerMessages;
     mutable QMutex mUsedItemsCopyMutex;
     QSet<ItemId> mUsedItemsCopy;
     mutable QMutex mPropertyCacheMutex;

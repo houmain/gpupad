@@ -1,5 +1,4 @@
 #include "VKRenderSession.h"
-#include "Singletons.h"
 #include "VKShareSync.h"
 #include "VKBuffer.h"
 #include "VKCall.h"
@@ -9,8 +8,6 @@
 #include "VKTarget.h"
 #include "VKTexture.h"
 #include "VKAccelerationStructure.h"
-#include "editors/EditorManager.h"
-#include "editors/texture/TextureEditor.h"
 #include "render/RenderSessionBase_buildCommandQueue.h"
 #include <QStack>
 #include <deque>
@@ -70,85 +67,47 @@ void VKRenderSession::render()
         buildCommandQueue<VKRenderSession>(*mCommandQueue);
     }
     Q_ASSERT(mCommandQueue);
+    auto &context = mCommandQueue->context;
 
     if (mPrevCommandQueue) {
         reuseUnmodifiedItems(*mCommandQueue, *mPrevCommandQueue);
         mPrevCommandQueue.reset();
     }
-    executeCommandQueue();
-    downloadModifiedResources(*mCommandQueue);
-    if (!updatingPreviewTextures())
-        outputTimerQueries();
-}
 
-void VKRenderSession::executeCommandQueue()
-{
     mShareSync->beginUpdate();
+    context.timestampQueries.clear();
 
-    auto state = BindingState{};
-    mCommandQueue->context.timestampQueries.clear();
-
-    mNextCommandQueueIndex = 0;
-    while (mNextCommandQueueIndex < mCommandQueue->commands.size()) {
-        const auto index = mNextCommandQueueIndex++;
-        // executing command might call setNextCommandQueueIndex
-        mCommandQueue->commands[index](state);
-    }
+    executeCommandQueue(*mCommandQueue);
 
     auto submitOptions = KDGpu::SubmitOptions{
         .commandBuffers = std::vector<KDGpu::Handle<KDGpu::CommandBuffer_t>>(
-            mCommandQueue->context.commandBuffers.begin(),
-            mCommandQueue->context.commandBuffers.end()),
+            context.commandBuffers.begin(), context.commandBuffers.end()),
         .signalSemaphores = { mShareSync->usageSemaphore() },
     };
     if (auto &semaphore = mShareSync->usageSemaphore(); semaphore.isValid())
         submitOptions.waitSemaphores.push_back(semaphore);
 
-    mCommandQueue->context.queue.submit(submitOptions);
-    mCommandQueue->context.queue.waitUntilIdle();
-    mCommandQueue->context.commandBuffers.clear();
+    context.queue.submit(submitOptions);
+    context.queue.waitUntilIdle();
+    context.commandBuffers.clear();
 
     mShareSync->endUpdate();
-}
 
-void VKRenderSession::outputTimerQueries()
-{
-    mTimerMessages.clear();
+    downloadModifiedResources(*mCommandQueue);
 
-    auto total = std::chrono::nanoseconds::zero();
-    auto &queries = mCommandQueue->context.timestampQueries;
-    for (auto &[itemId, query] : queries) {
-        const auto duration = std::chrono::nanoseconds(query.nsInterval(0, 1));
-        mTimerMessages += MessageList::insert(itemId, MessageType::CallDuration,
-            formatDuration(duration), false);
-        total += duration;
-    }
-    if (queries.size() > 1)
-        mTimerMessages += MessageList::insert(0, MessageType::TotalDuration,
-            formatDuration(total), false);
+    if (!updatingPreviewTextures())
+        outputTimerQueries(mCommandQueue->context.timestampQueries,
+            [](KDGpu::TimestampQueryRecorder &query) {
+                return std::chrono::nanoseconds(query.nsInterval(0, 1));
+            });
 }
 
 void VKRenderSession::finish()
 {
     RenderSessionBase::finish();
 
-    if (!mCommandQueue)
-        return;
-
-    auto &editors = Singletons::editorManager();
-    auto &sessionModel = Singletons::sessionModel();
-
-    if (updatingPreviewTextures())
-        for (const auto &[itemId, texture] : mCommandQueue->textures)
-            if (texture.deviceCopyModified())
-                if (auto fileItem =
-                        castItem<FileItem>(sessionModel.findItem(itemId)))
-                    if (auto editor =
-                            editors.getTextureEditor(fileItem->fileName))
-                        if (auto handle = texture.getSharedMemoryHandle();
-                            handle.handle)
-                            editor->updatePreviewTexture(mShareSync, handle,
-                                texture.samples());
+    if (updatingPreviewTextures() && mCommandQueue)
+        updatePreviewTextures(*mCommandQueue, mShareSync);
 }
 
 void VKRenderSession::release()

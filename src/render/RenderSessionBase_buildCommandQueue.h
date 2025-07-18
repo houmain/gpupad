@@ -1,6 +1,9 @@
 #pragma once
 
 #include "RenderSessionBase.h"
+#include "Singletons.h"
+#include "editors/EditorManager.h"
+#include "editors/texture/TextureEditor.h"
 
 template <typename T>
 void replaceEqual(std::map<ItemId, T> &to, std::map<ItemId, T> &from)
@@ -350,6 +353,18 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue)
 }
 
 template <typename CommandQueue>
+void RenderSessionBase::executeCommandQueue(CommandQueue &commandQueue)
+{
+    auto state = BindingState{};
+    mNextCommandQueueIndex = 0;
+    while (mNextCommandQueueIndex < commandQueue.commands.size()) {
+        const auto index = mNextCommandQueueIndex++;
+        // executing command might call setNextCommandQueueIndex
+        commandQueue.commands[index](state);
+    }
+}
+
+template <typename CommandQueue>
 void RenderSessionBase::downloadModifiedResources(CommandQueue &commandQueue)
 {
     for (auto &[itemId, program] : commandQueue.programs)
@@ -371,4 +386,37 @@ void RenderSessionBase::downloadModifiedResources(CommandQueue &commandQueue)
             && buffer.download(commandQueue.context,
                 mEvaluationType != EvaluationType::Reset))
             mModifiedBuffers[buffer.itemId()] = buffer.data();
+}
+
+template <typename TimerQueries, typename ToNanoseconds>
+void RenderSessionBase::outputTimerQueries(TimerQueries &timerQueries,
+    const ToNanoseconds &toNanoseconds)
+{
+    mTimerMessages.clear();
+
+    auto total = std::chrono::nanoseconds::zero();
+    for (auto &[itemId, query] : timerQueries) {
+        const auto duration = toNanoseconds(query);
+        mTimerMessages += MessageList::insert(itemId, MessageType::CallDuration,
+            formatDuration(duration), false);
+        total += duration;
+    }
+    if (timerQueries.size() > 1)
+        mTimerMessages += MessageList::insert(0, MessageType::TotalDuration,
+            formatDuration(total), false);
+}
+
+template <typename CommandQueue>
+void RenderSessionBase::updatePreviewTextures(CommandQueue &commandQueue,
+    ShareSyncPtr shareSync)
+{
+    auto &editors = Singletons::editorManager();
+    auto &sessionModel = Singletons::sessionModel();
+    for (const auto &[itemId, texture] : commandQueue.textures)
+        if (texture.deviceCopyModified())
+            if (auto fileItem =
+                    castItem<FileItem>(sessionModel.findItem(itemId)))
+                if (auto editor = editors.getTextureEditor(fileItem->fileName))
+                    editor->updatePreviewTexture(shareSync,
+                        texture.getSharedMemoryHandle(), texture.samples());
 }

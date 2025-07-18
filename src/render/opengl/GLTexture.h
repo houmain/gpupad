@@ -22,7 +22,7 @@ public:
     void boundAsSampler() { }
     void boundAsImage() { }
 
-    GLuint textureId() const { return mTextureObject; }
+    GLuint getSharedMemoryHandle() const { return mTextureObject; }
     GLuint64 obtainBindlessHandle();
     bool clear(std::array<double, 4> color, double depth, int stencil);
     bool copy(GLTexture &source);

@@ -6,9 +6,6 @@
 #include "GLStream.h"
 #include "GLTarget.h"
 #include "GLTexture.h"
-#include "Singletons.h"
-#include "editors/EditorManager.h"
-#include "editors/texture/TextureEditor.h"
 #include "render/RenderSessionBase_buildCommandQueue.h"
 #include <QOpenGLTimerQuery>
 #include <QStack>
@@ -81,68 +78,33 @@ void GLRenderSession::render()
         reuseUnmodifiedItems(*mCommandQueue, *mPrevCommandQueue);
         mPrevCommandQueue.reset();
     }
-    executeCommandQueue();
+
+    mShareSync->beginUpdate(gl);
+
+    gl.timerQueries.clear();
+
+    executeCommandQueue(*mCommandQueue);
+
+    mShareSync->endUpdate(gl);
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
+
     downloadModifiedResources(*mCommandQueue);
+
     if (!updatingPreviewTextures())
-        outputTimerQueries();
+        outputTimerQueries(gl.timerQueries, [](QOpenGLTimerQuery &query) {
+            return std::chrono::nanoseconds(query.waitForResult());
+        });
 
     gl.glFlush();
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-}
-
-void GLRenderSession::executeCommandQueue()
-{
-    auto &context = GLContext::currentContext();
-    mShareSync->beginUpdate(context);
-
-    auto state = BindingState{};
-    mCommandQueue->context.timerQueries.clear();
-
-    mNextCommandQueueIndex = 0;
-    while (mNextCommandQueueIndex < mCommandQueue->commands.size()) {
-        const auto index = mNextCommandQueueIndex++;
-        // executing command might call setNextCommandQueueIndex
-        mCommandQueue->commands[index](state);
-    }
-
-    mShareSync->endUpdate(context);
-    Q_ASSERT(glGetError() == GL_NO_ERROR);
-}
-
-void GLRenderSession::outputTimerQueries()
-{
-    mTimerMessages.clear();
-
-    auto total = std::chrono::nanoseconds::zero();
-    auto &queries = mCommandQueue->context.timerQueries;
-    for (const auto &[itemId, query] : queries) {
-        const auto duration = std::chrono::nanoseconds(query.waitForResult());
-        mTimerMessages += MessageList::insert(itemId, MessageType::CallDuration,
-            formatDuration(duration), false);
-        total += duration;
-    }
-    if (queries.size() > 1)
-        mTimerMessages += MessageList::insert(0, MessageType::TotalDuration,
-            formatDuration(total), false);
 }
 
 void GLRenderSession::finish()
 {
     RenderSessionBase::finish();
 
-    auto &editors = Singletons::editorManager();
-    auto &session = Singletons::sessionModel();
-
-    if (updatingPreviewTextures())
-        for (const auto &[itemId, texture] : mCommandQueue->textures)
-            if (texture.deviceCopyModified())
-                if (auto fileItem =
-                        castItem<FileItem>(session.findItem(itemId)))
-                    if (auto editor =
-                            editors.getTextureEditor(fileItem->fileName))
-                        if (auto textureId = texture.textureId())
-                            editor->updatePreviewTexture(mShareSync, textureId,
-                                texture.samples());
+    if (updatingPreviewTextures() && mCommandQueue)
+        updatePreviewTextures(*mCommandQueue, mShareSync);
 }
 
 void GLRenderSession::release()
