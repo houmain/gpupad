@@ -55,11 +55,13 @@ public:
     bool link(GLContext &context);
     bool bind();
     void unbind();
+    ItemId itemId() const { return mItemId; }
     const Session &session() const { return mSession; }
     const Interface &interface() const { return mInterface; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     GLBuffer &getDynamicUniformBuffer(const QString &name, int size);
     const std::vector<GLShader> &shaders() const { return mShaders; }
+    GLPrintf &printf() { return mPrintf; }
 
 private:
     bool compileShaders();
@@ -81,7 +83,6 @@ private:
     Interface mInterface;
     bool mFailed{};
     GLPrintf mPrintf;
-    MessagePtrSet mPrintfMessages;
     Interface::BufferBindingPoint mPrintfBufferBindingPoint{};
     std::map<QString, GLBuffer> mDynamicUniformBuffers;
 };

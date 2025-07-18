@@ -22,7 +22,6 @@ public:
 private:
     void createCommandQueue();
     void executeCommandQueue();
-    void downloadModifiedResources();
     void outputTimerQueries();
 
     QOpenGLVertexArrayObject mVao;

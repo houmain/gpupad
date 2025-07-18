@@ -133,6 +133,9 @@ protected:
     template <typename RenderSession, typename CommandQueue>
     void buildCommandQueue(CommandQueue &commandQueue);
 
+    template <typename CommandQueue>
+    void downloadModifiedResources(CommandQueue &commandQueue);
+
     const QString mBasePath;
     SessionModel mSessionModelCopy;
     std::unique_ptr<ScriptSession> mScriptSession;

@@ -27,10 +27,10 @@ public:
     bool clear(std::array<double, 4> color, double depth, int stencil);
     bool copy(GLTexture &source);
     bool swap(GLTexture &other);
-    bool updateMipmaps();
+    bool updateMipmaps(GLContext &context);
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();
-    bool download();
+    bool download(GLContext &context);
 
 private:
     void reload(bool forWriting);

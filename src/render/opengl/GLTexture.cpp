@@ -363,11 +363,10 @@ bool GLTexture::swap(GLTexture &other)
     return true;
 }
 
-bool GLTexture::updateMipmaps()
+bool GLTexture::updateMipmaps(GLContext &gl)
 {
     if (mMipmapsInvalidated) {
         if (levels() > 1) {
-            auto &gl = GLContext::currentContext();
             gl.glBindTexture(target(), getReadWriteTextureId());
             gl.glGenerateMipmap(target());
             Q_ASSERT(glGetError() == GL_NO_ERROR);
@@ -432,18 +431,17 @@ void GLTexture::upload()
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
-bool GLTexture::download()
+bool GLTexture::download(GLContext &gl)
 {
     if (mData.isNull())
         return false;
 
     if (mTextureBuffer)
-        return mTextureBuffer->download(false);
+        return mTextureBuffer->download(gl, false);
 
     if (!mDeviceCopyModified)
         return false;
 
-    auto &gl = GLContext::currentContext();
     if (!download(gl, mData, mTarget, mTextureObject)) {
         mMessages +=
             MessageList::insert(mItemId, MessageType::DownloadingImageFailed);

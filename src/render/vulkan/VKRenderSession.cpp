@@ -76,7 +76,7 @@ void VKRenderSession::render()
         mPrevCommandQueue.reset();
     }
     executeCommandQueue();
-    downloadModifiedResources();
+    downloadModifiedResources(*mCommandQueue);
     if (!updatingPreviewTextures())
         outputTimerQueries();
 }
@@ -109,29 +109,6 @@ void VKRenderSession::executeCommandQueue()
     mCommandQueue->context.commandBuffers.clear();
 
     mShareSync->endUpdate();
-}
-
-void VKRenderSession::downloadModifiedResources()
-{
-    for (auto &[itemId, program] : mCommandQueue->programs)
-        if (program.printf().isUsed())
-            mMessages += program.printf().formatMessages(mCommandQueue->context,
-                program.itemId());
-
-    for (auto &[itemId, texture] : mCommandQueue->textures)
-        if (!texture.fileName().isEmpty()) {
-            texture.updateMipmaps(mCommandQueue->context);
-            if (!updatingPreviewTextures()
-                && texture.download(mCommandQueue->context))
-                mModifiedTextures[texture.itemId()] = texture.data();
-        }
-
-    for (auto &[itemId, buffer] : mCommandQueue->buffers)
-        if (!buffer.fileName().isEmpty()
-            && (mItemsChanged || mEvaluationType != EvaluationType::Steady)
-            && buffer.download(mCommandQueue->context,
-                mEvaluationType != EvaluationType::Reset))
-            mModifiedBuffers[buffer.itemId()] = buffer.data();
 }
 
 void VKRenderSession::outputTimerQueries()

@@ -348,3 +348,27 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue)
         }
     });
 }
+
+template <typename CommandQueue>
+void RenderSessionBase::downloadModifiedResources(CommandQueue &commandQueue)
+{
+    for (auto &[itemId, program] : commandQueue.programs)
+        if (program.printf().isUsed())
+            mMessages += program.printf().formatMessages(commandQueue.context,
+                program.itemId());
+
+    for (auto &[itemId, texture] : commandQueue.textures)
+        if (!texture.fileName().isEmpty()) {
+            texture.updateMipmaps(commandQueue.context);
+            if (!updatingPreviewTextures()
+                && texture.download(commandQueue.context))
+                mModifiedTextures[texture.itemId()] = texture.data();
+        }
+
+    for (auto &[itemId, buffer] : commandQueue.buffers)
+        if (!buffer.fileName().isEmpty()
+            && (mItemsChanged || mEvaluationType != EvaluationType::Steady)
+            && buffer.download(commandQueue.context,
+                mEvaluationType != EvaluationType::Reset))
+            mModifiedBuffers[buffer.itemId()] = buffer.data();
+}

@@ -19,7 +19,7 @@
 struct GLRenderSession::CommandQueue
 {
     using Call = GLCall;
-    GLContext context;
+    GLContext &context;
     std::map<ItemId, GLTexture> textures;
     std::map<ItemId, GLBuffer> buffers;
     std::map<ItemId, GLProgram> programs;
@@ -45,7 +45,9 @@ void GLRenderSession::createCommandQueue()
 {
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
-    mCommandQueue = std::make_unique<CommandQueue>();
+    mCommandQueue = std::make_unique<CommandQueue>(CommandQueue{
+        GLContext::currentContext(),
+    });
 }
 
 void GLRenderSession::render()
@@ -80,7 +82,7 @@ void GLRenderSession::render()
         mPrevCommandQueue.reset();
     }
     executeCommandQueue();
-    downloadModifiedResources();
+    downloadModifiedResources(*mCommandQueue);
     if (!updatingPreviewTextures())
         outputTimerQueries();
 
@@ -105,22 +107,6 @@ void GLRenderSession::executeCommandQueue()
 
     mShareSync->endUpdate(context);
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-}
-
-void GLRenderSession::downloadModifiedResources()
-{
-    for (auto &[itemId, texture] : mCommandQueue->textures)
-        if (!texture.fileName().isEmpty()) {
-            texture.updateMipmaps();
-            if (!updatingPreviewTextures() && texture.download())
-                mModifiedTextures[texture.itemId()] = texture.data();
-        }
-
-    for (auto &[itemId, buffer] : mCommandQueue->buffers)
-        if (!buffer.fileName().isEmpty()
-            && (mItemsChanged || mEvaluationType != EvaluationType::Steady)
-            && buffer.download(mEvaluationType != EvaluationType::Reset))
-            mModifiedBuffers[buffer.itemId()] = buffer.data();
 }
 
 void GLRenderSession::outputTimerQueries()

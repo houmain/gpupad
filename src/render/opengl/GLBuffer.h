@@ -19,7 +19,7 @@ public:
     void bindIndexedRange(GLenum target, int index, int offset, int size,
         bool readonly);
     void unbind(GLenum target);
-    bool download(bool checkModification);
+    bool download(GLContext &context, bool checkModification);
 
 private:
     void reload();

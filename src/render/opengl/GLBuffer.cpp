@@ -150,7 +150,7 @@ void GLBuffer::upload()
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
-bool GLBuffer::download(bool checkModification)
+bool GLBuffer::download(GLContext &gl, bool checkModification)
 {
     if (!mDeviceCopyModified)
         return false;
@@ -159,7 +159,6 @@ bool GLBuffer::download(bool checkModification)
     if (checkModification)
         prevData = mData;
 
-    auto &gl = GLContext::currentContext();
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
     gl.glGetBufferSubData(GL_ARRAY_BUFFER, 0, mSize, mData.data());
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);

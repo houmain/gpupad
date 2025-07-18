@@ -797,7 +797,7 @@ bool GLCall::applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
     const auto target = texture.target();
     auto &gl = GLContext::currentContext();
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + uniform.binding));
-    texture.updateMipmaps();
+    texture.updateMipmaps(gl);
     gl.glBindTexture(target, texture.getReadOnlyTextureId());
     if (uniform.location >= 0)
         gl.glUniform1i(uniform.location, uniform.binding);

@@ -24,7 +24,6 @@ private:
     VKRenderer &renderer();
     void createCommandQueue();
     void executeCommandQueue();
-    void downloadModifiedResources();
     void outputTimerQueries();
 
     std::shared_ptr<VKShareSync> mShareSync;

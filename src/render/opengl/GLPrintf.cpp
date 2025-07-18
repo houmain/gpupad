@@ -29,10 +29,9 @@ void GLPrintf::clear()
 #endif // GL_VERSION_4_3
 }
 
-MessagePtrSet GLPrintf::formatMessages(ItemId callItemId)
+MessagePtrSet GLPrintf::formatMessages(GLContext& gl, ItemId callItemId)
 {
 #if GL_VERSION_4_3
-    auto &gl = GLContext::currentContext();
     auto header = BufferHeader{};
     gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferObject);
     gl.glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(header), &header);

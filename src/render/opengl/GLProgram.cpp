@@ -632,9 +632,6 @@ void GLProgram::unbind()
 {
     auto &gl = GLContext::currentContext();
     gl.glUseProgram(GL_NONE);
-
-    if (mPrintf.isUsed())
-        mPrintfMessages = mPrintf.formatMessages(mItemId);
 }
 
 void GLProgram::applyPrintfBindings()
