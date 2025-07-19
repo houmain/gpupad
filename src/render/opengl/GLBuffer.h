@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GLItem.h"
+#include "GLContext.h"
 #include "render/BufferBase.h"
 
 class GLBuffer : public BufferBase

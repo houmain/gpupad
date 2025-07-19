@@ -1,6 +1,10 @@
 #pragma once
 
-#include "session/Item.h"
+#include "GLRenderSession.h"
+#include "GLObject.h"
+#include "FileCache.h"
+#include "FileDialog.h"
+#include "Singletons.h"
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QOpenGLFunctions_3_3_Core>
@@ -10,6 +14,8 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLVersionFunctionsFactory>
 #include <QOpenGLTimerQuery>
+#include <QSet>
+#include <memory>
 #include <map>
 
 class GLContext final : public QOpenGLContext, public QOpenGLFunctions_3_3_Core
@@ -44,3 +50,38 @@ public:
 
     explicit operator bool() { return isInitialized(); }
 };
+
+template <typename T>
+inline T *checkVersion(T *gl, const char *name, ItemId itemId,
+    MessagePtrSet &messages)
+{
+    if (gl)
+        return gl;
+    messages += MessageList::insert(itemId,
+        MessageType::OpenGLVersionNotAvailable, name);
+    return nullptr;
+}
+
+inline auto check(QOpenGLFunctions_4_0_Core *gl, ItemId itemId,
+    MessagePtrSet &messages)
+{
+    return checkVersion(gl, "4.0", itemId, messages);
+}
+
+inline auto check(QOpenGLFunctions_4_2_Core *gl, ItemId itemId,
+    MessagePtrSet &messages)
+{
+    return checkVersion(gl, "4.2", itemId, messages);
+}
+
+inline auto check(QOpenGLFunctions_4_3_Core *gl, ItemId itemId,
+    MessagePtrSet &messages)
+{
+    return checkVersion(gl, "4.3", itemId, messages);
+}
+
+inline auto check(QOpenGLFunctions_4_5_Core *gl, ItemId itemId,
+    MessagePtrSet &messages)
+{
+    return checkVersion(gl, "4.5", itemId, messages);
+}
