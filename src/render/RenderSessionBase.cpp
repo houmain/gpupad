@@ -6,11 +6,12 @@
 #include "editors/EditorManager.h"
 #include "editors/binary/BinaryEditor.h"
 #include "editors/texture/TextureEditor.h"
-#include "opengl/GLRenderSession.h"
 #include "scripting/ScriptEngine.h"
 #include "scripting/ScriptSession.h"
 #include "session/SessionModel.h"
+#include "opengl/GLRenderSession.h"
 #include "vulkan/VKRenderSession.h"
+#include "direct3d/D3DRenderSession.h"
 
 std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
     RendererPtr renderer, const QString &basePath)
@@ -21,6 +22,8 @@ std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
         return std::make_unique<GLRenderSession>(renderer, basePath);
     case RenderAPI::Vulkan:
         return std::make_unique<VKRenderSession>(renderer, basePath);
+    case RenderAPI::Direct3D:
+        return std::make_unique<D3DRenderSession>(renderer, basePath);
     }
     Q_UNREACHABLE();
     return {};

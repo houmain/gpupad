@@ -44,6 +44,7 @@ protected:
 private:
     friend class GLRenderer;
     friend class VKRenderer;
+    friend class D3DRenderer;
 
     // 1. called per update in main thread
     virtual void prepare(bool itemsChanged, EvaluationType evaluationType) { }

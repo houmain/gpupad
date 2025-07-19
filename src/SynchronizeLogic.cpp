@@ -264,7 +264,8 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
             invalidateRenderSession();
     } else if (mModel.item<Group>(index)) {
         invalidateRenderSession();
-    } else if (mModel.item<Binding>(index)) {
+    } else if (index.column() == SessionModel::Name
+        && (mModel.item<Binding>(index) || mModel.item<Attribute>(index))) {
         invalidateRenderSession();
     }
 

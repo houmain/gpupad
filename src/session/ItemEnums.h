@@ -271,6 +271,7 @@ namespace ItemEnums {
     enum Renderer {
         OpenGL,
         Vulkan,
+        Direct3D,
     };
     Q_ENUM_NS(Renderer)
 

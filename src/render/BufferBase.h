@@ -11,6 +11,7 @@ public:
 
     ItemId itemId() const { return mItemId; }
     const QByteArray &data() const { return mData; }
+    QByteArray &writableData();
     const QString &fileName() const { return mFileName; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     int size() const { return mSize; }

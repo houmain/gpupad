@@ -560,12 +560,14 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         const auto &session = static_cast<const Session &>(item);
         const auto hasVulkanRenderer =
             (session.renderer == Session::Renderer::Vulkan);
+        const auto hasOpenGLRenderer =
+            (session.renderer == Session::Renderer::OpenGL);
         const auto hasShaderCompiler =
             (session.shaderCompiler != Session::ShaderCompiler::Driver
                 || hasVulkanRenderer);
-        result &= (column != SessionFlipViewport || hasVulkanRenderer);
-        result &= (column != SessionReverseCulling || hasVulkanRenderer);
-        result &= (column != SessionShaderCompiler || !hasVulkanRenderer);
+        result &= (column != SessionFlipViewport || !hasOpenGLRenderer);
+        result &= (column != SessionReverseCulling || !hasOpenGLRenderer);
+        result &= (column != SessionShaderCompiler || hasOpenGLRenderer);
         result &= (column != SessionAutoMapBindings || hasVulkanRenderer);
         result &= (column != SessionAutoMapLocations || hasVulkanRenderer);
         result &= (column != SessionAutoSampledTextures || hasShaderCompiler);

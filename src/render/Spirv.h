@@ -43,6 +43,8 @@ public:
         const QString &includePaths, MessagePtrSet &messages);
 
     static QString disassemble(const Spirv &spirv);
+    static QString generateGLSL(const Spirv &spirv);
+    static QString generateHLSL(const Spirv &spirv);
 
     static QString generateAST(const Session &session,
         Shader::Language language, Shader::ShaderType shaderType,

@@ -150,6 +150,7 @@ set(SOURCES
   src/render/vulkan/VKRenderSession.cpp
   src/render/vulkan/VKAccelerationStructure.cpp
   src/render/vulkan/VKShareSync.cpp
+  src/render/AdapterIdentity.cpp
   src/render/ProcessSource.cpp
   src/render/RenderTask.cpp
   src/render/RenderSessionBase.cpp
@@ -207,6 +208,25 @@ set(SOURCES
   src/session/TextureProperties.cpp
   src/session/TextureProperties.ui)
 
+if(WIN32)
+  set(SOURCES ${SOURCES}
+  src/render/direct3d/D3DAccelerationStructure.cpp
+  src/render/direct3d/D3DBuffer.cpp
+  src/render/direct3d/D3DCall.cpp
+  src/render/direct3d/D3DEnums.cpp
+  src/render/direct3d/D3DPipeline.cpp
+  src/render/direct3d/D3DProgram.cpp
+  src/render/direct3d/D3DPrintf.cpp
+  src/render/direct3d/D3DShader.cpp
+  src/render/direct3d/D3DStream.cpp
+  src/render/direct3d/D3DTarget.cpp
+  src/render/direct3d/D3DTexture.cpp
+  src/render/direct3d/D3DRenderer.cpp
+  src/render/direct3d/D3DRenderSession.cpp
+  src/render/direct3d/D3DShareSync.cpp
+  libs/d3d12/RenderTargetHelper.cpp)
+endif()
+
 file(GLOB_RECURSE HEADERS include src/*.h)
 if(WIN32)
     set(HEADERS ${HEADERS} src/resources.rc src/qt6.natvis)
@@ -235,7 +255,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE src libs)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_libraries(${PROJECT_NAME} PRIVATE GL)
 elseif(WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
+    find_package(directx-dxc CONFIG REQUIRED)
+
+    target_link_libraries(${PROJECT_NAME} PRIVATE 
+      opengl32
+      d3d11
+      dxgi
+      d3dcompiler
+      Microsoft::DirectXShaderCompiler)
 elseif(APPLE)
     find_package(OpenGL REQUIRED)
     include_directories(${OPENGL_INCLUDE_DIR})
@@ -290,9 +317,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glslang::OSDependent glslang::glsl
 # link SPIRV-Cross
 find_package(spirv_cross_core CONFIG REQUIRED)
 find_package(spirv_cross_glsl CONFIG REQUIRED)
+find_package(spirv_cross_hlsl CONFIG REQUIRED)
 find_package(spirv_cross_reflect CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} 
-    PRIVATE spirv-cross-core spirv-cross-glsl spirv-cross-reflect)
+    PRIVATE spirv-cross-core spirv-cross-glsl spirv-cross-hlsl spirv-cross-reflect)
 
 # add custom action projects
 set(ACTIONS

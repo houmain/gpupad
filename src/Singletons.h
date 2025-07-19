@@ -26,6 +26,7 @@ public:
     static RendererPtr sessionRenderer();
     static RendererPtr glRenderer();
     static RendererPtr vkRenderer();
+    static RendererPtr d3dRenderer();
     static Settings &settings();
     static FileCache &fileCache();
     static FileDialog &fileDialog();
@@ -55,4 +56,6 @@ private:
     std::shared_ptr<ScriptEngine> mDefaultScriptEngine;
     std::shared_ptr<Renderer> mVKRenderer;
     std::shared_ptr<Renderer> mGLRenderer;
+    std::shared_ptr<Renderer> mD3DRenderer;
+
 };

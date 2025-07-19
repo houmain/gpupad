@@ -254,6 +254,8 @@ namespace {
     {
         auto json = getJson(*variable.type_description);
         json["name"] = variable.name;
+        if (variable.semantic)
+            json["semantic"] = variable.semantic;
         if (auto location = static_cast<int>(variable.location); location >= 0)
             json["location"] = location;
         return json;
@@ -280,14 +282,16 @@ namespace {
             if (const auto input = module.input_variables[i])
                 if (!isBuiltIn(*input))
                     jsonInputs.append(getJson(*input));
-        json["inputs"] = jsonInputs;
+        if (!jsonInputs.isEmpty())
+            json["inputs"] = jsonInputs;
 
         auto jsonOutputs = QJsonArray();
         for (auto i = 0u; i < module.output_variable_count; ++i)
             if (const auto output = module.output_variables[i])
                 if (!isBuiltIn(*output))
                     jsonOutputs.append(getJson(*output));
-        json["outputs"] = jsonOutputs;
+        if (!jsonOutputs.isEmpty())
+            json["outputs"] = jsonOutputs;
 
         auto jsonUniforms = QJsonArray();
         auto jsonBuffers = QJsonArray();
@@ -322,9 +326,12 @@ namespace {
                 default: Q_ASSERT(!"not handled descriptor type");
                 }
             }
-        json["uniforms"] = jsonUniforms;
-        json["buffers"] = jsonBuffers;
-        json["accelerationStructures"] = jsonAccelerationStructures;
+        if (!jsonUniforms.isEmpty())
+            json["uniforms"] = jsonUniforms;
+        if (!jsonBuffers.isEmpty())
+            json["buffers"] = jsonBuffers;
+        if (!jsonAccelerationStructures.isEmpty())
+            json["accelerationStructures"] = jsonAccelerationStructures;
         return json;
     }
 

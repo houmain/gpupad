@@ -188,3 +188,10 @@ T *addOnce(std::map<ItemId, T> &list, const Item *item, Args &&...args)
                     std::forward_as_tuple(*item, std::forward<Args>(args)...))
                 .first->second;
 }
+
+template <typename C>
+auto find(C &container, const QString &name)
+{
+    const auto it = container.find(name);
+    return (it == container.end() ? nullptr : &it->second);
+}

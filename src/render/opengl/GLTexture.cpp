@@ -360,6 +360,7 @@ bool GLTexture::swap(GLTexture &other)
 
     std::swap(mTextureBuffer, other.mTextureBuffer);
     std::swap(mTextureObject, other.mTextureObject);
+    std::swap(mBindlessHandle, other.mBindlessHandle);
     return true;
 }
 

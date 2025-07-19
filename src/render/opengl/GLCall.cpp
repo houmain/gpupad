@@ -8,13 +8,6 @@
 #include <cmath>
 
 namespace {
-    template <typename C>
-    auto find(C &container, const QString &name)
-    {
-        const auto it = container.find(name);
-        return (it == container.end() ? nullptr : &it->second);
-    }
-
     QStringView getBaseName(QStringView name)
     {
         if (!name.endsWith(']'))

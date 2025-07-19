@@ -11,13 +11,6 @@
 namespace {
     const auto maxVariableBindGroupEntries = 128;
 
-    template <typename C>
-    auto find(C &container, const QString &name)
-    {
-        const auto it = container.find(name);
-        return (it == container.end() ? nullptr : &it->second);
-    }
-
     bool isBufferBinding(SpvReflectDescriptorType type)
     {
         return (type == SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER

@@ -5,6 +5,7 @@
 enum class RenderAPI : int {
     OpenGL,
     Vulkan,
+    Direct3D,
 };
 
 using RendererPtr = std::shared_ptr<class Renderer>;

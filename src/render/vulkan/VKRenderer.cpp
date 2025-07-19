@@ -1,13 +1,12 @@
 #include "VKRenderer.h"
 #include "MessageList.h"
 #include "TextureData.h"
+#include "render/AdapterIdentity.h"
 #include "render/RenderTask.h"
 #include <QApplication>
 #include <QMutex>
 #include <QSemaphore>
-#include <QOpenGLContext>
-#include <QOffscreenSurface>
- 
+
 // TODO: added because of multiple definitions of fmt::v11::detail::assert_fail
 #if defined(_WIN32)
 #  define FMT_ASSERT
@@ -24,53 +23,8 @@
 #  include <vulkan/vulkan_win32.h>
 #endif
 
-using UUID = std::array<uint8_t, 16>;
-
 namespace {
-    struct AdapterIdentity
-    {
-        UUID deviceUUIDs[4];
-        UUID driverUUID;
-    };
-
     AdapterIdentity gAdapterIdentity;
-
-    AdapterIdentity getOpenGLAdapterIdentity()
-    {
-        auto glContext = QOpenGLContext();
-        glContext.setShareContext(QOpenGLContext::globalShareContext());
-        auto surface = QOffscreenSurface();
-        surface.setFormat(glContext.format());
-        surface.create();
-        glContext.create();
-        if (!glContext.makeCurrent(&surface))
-            return {};
-        const auto guard = QScopeGuard([&]() { glContext.doneCurrent(); });
-
-        if (!glContext.hasExtension("GL_EXT_memory_object"))
-            return {};
-        const auto glGetUnsignedBytevEXT =
-            reinterpret_cast<PFNGLGETUNSIGNEDBYTEVEXTPROC>(
-                glContext.getProcAddress("glGetUnsignedBytevEXT"));
-        if (!glGetUnsignedBytevEXT)
-            return {};
-
-        const auto glGetUnsignedBytei_vEXT =
-            reinterpret_cast<PFNGLGETUNSIGNEDBYTEI_VEXTPROC>(
-                glContext.getProcAddress("glGetUnsignedBytei_vEXT"));
-        if (!glGetUnsignedBytei_vEXT)
-            return {};
-
-        auto identity = AdapterIdentity();
-        static_assert(GL_UUID_SIZE_EXT == sizeof(UUID));
-        auto numDeviceUuids = GLint{};
-        glGetIntegerv(GL_NUM_DEVICE_UUIDS_EXT, &numDeviceUuids);
-        for (auto i = 0; i < std::min(numDeviceUuids, 4); ++i)
-            glGetUnsignedBytei_vEXT(GL_DEVICE_UUID_EXT, i,
-                identity.deviceUUIDs[i].data());
-        glGetUnsignedBytevEXT(GL_DRIVER_UUID_EXT, identity.driverUUID.data());
-        return identity;
-    }
 } // namespace
 
 class VKRenderer::Worker final : public QObject

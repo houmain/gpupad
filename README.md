@@ -19,7 +19,7 @@ A lightweight editor for GLSL and HLSL shaders and a fully-featured IDE for deve
 
 ## Features
 
-* OpenGL and Vulkan renderer.
+* OpenGL, Vulkan and Direct3D 12 renderer.
 * Decent source editor with automatic indentation, brace highlighting, rectangular selection&hellip;
 * GLSL, HLSL and JavaScript syntax highlighting with basic auto completion.
 * Possibility to evaluate shader programs with completely customizeable input and render state.
@@ -184,7 +184,7 @@ It depends on the following libraries, which can be installed using a package ma
 
 ```bash
 # install dependencies
-sudo apt install build-essential git cmake qtdeclarative6-dev libdrm-dev pkg-config libxcb*-dev libx11-dev libxrandr-dev
+sudo apt install build-essential git cmake qtdeclarative6-dev libdrm-dev pkg-config libxcb*-dev libx11-dev libxrandr-dev glslang-tools
 
 # check out source
 git clone --recurse-submodules https://github.com/houmain/gpupad
@@ -195,7 +195,7 @@ git clone --depth=1 https://github.com/microsoft/vcpkg.git
 vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
 # install additional dependencies using vcpkg
-vcpkg/vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator spdlog
+vcpkg/vcpkg install vulkan "ktx[vulkan]" spirv-cross vulkan-memory-allocator spdlog
 
 # build
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake

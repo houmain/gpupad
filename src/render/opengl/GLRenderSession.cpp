@@ -1,5 +1,6 @@
 #include "GLRenderSession.h"
 #include "GLShareSync.h"
+#include "GLAccelerationStructure.h"
 #include "GLBuffer.h"
 #include "GLCall.h"
 #include "GLProgram.h"

@@ -20,10 +20,10 @@ MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
     mUpdateItemsTimer->start();
 
     setColumnCount(2);
-    verticalHeader()->setVisible(true);
+    verticalHeader()->setVisible(false);
     horizontalHeader()->setVisible(false);
-    verticalHeader()->setSectionResizeMode(QHeaderView::Interactive);
-    verticalHeader()->setDefaultSectionSize(24);
+    verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    verticalHeader()->setDefaultSectionSize(20);
     horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     setEditTriggers(NoEditTriggers);
@@ -52,9 +52,10 @@ void MessageWindow::updateMessages()
     }
     removeMessagesExcept(messageIds);
 
-    if (added)
+    if (added) {
+        resizeRowsToContents();
         Q_EMIT messagesAdded();
-
+    }
     mUpdateItemsTimer->start(50);
 }
 
@@ -94,6 +95,11 @@ QString MessageWindow::getMessageText(const Message &message) const
             .arg(message.text);
     case VulkanNotAvailable:
         return tr("Vulkan is not available")
+            + (!message.text.isEmpty()
+                    ? QStringLiteral(" (%1)").arg(message.text)
+                    : "");
+    case Direct3DNotAvailable:
+        return tr("Direct3D is not available")
             + (!message.text.isEmpty()
                     ? QStringLiteral(" (%1)").arg(message.text)
                     : "");
@@ -161,6 +167,7 @@ QString MessageWindow::getMessageText(const Message &message) const
     case RenderingFailed:    return tr("Rendering failed: %1").arg(message.text);
     case MoreThanOneDepthStencilAttachment:
         return tr("Only a single depth or stencil attachment is supported");
+    case TooManyColorAttachments: return tr("Too many color attachments");
     case IncompatibleBindings:
         return tr("Incompatible assignment to the same set/binding %1")
             .arg(message.text);
@@ -181,7 +188,8 @@ QString MessageWindow::getMessageText(const Message &message) const
         return tr("Maximum variable binding group entries exceeded (%1)")
             .arg(message.text);
     case OnlyLastBindingMayBeUnsizedArray:
-        return tr("Only the last binding may be an unsized array (%1)").arg(message.text);
+        return tr("Only the last binding may be an unsized array (%1)")
+            .arg(message.text);
     case TextureBuffersNotAvailable:
         return tr("Texture buffers not available in Vulkan yet");
     case RayTracingNotAvailable:  return tr("Raytracing not available");

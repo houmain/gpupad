@@ -2,13 +2,17 @@
 #include "BufferBase.h"
 #include "FileDialog.h"
 
-BufferBase::BufferBase(int size) : mSize(size) { }
+BufferBase::BufferBase(int size) : mSize(size)
+{
+    Q_ASSERT(size > 0);
+}
 
 BufferBase::BufferBase(const Buffer &buffer, int size)
     : mItemId(buffer.id)
     , mFileName(buffer.fileName)
     , mSize(size)
 {
+    Q_ASSERT(size > 0);
 }
 
 void BufferBase::updateUntitledFilename(const BufferBase &rhs)
@@ -22,4 +26,10 @@ bool BufferBase::operator==(const BufferBase &rhs) const
 {
     return std::tie(mFileName, mSize, mMessages)
         == std::tie(rhs.mFileName, rhs.mSize, rhs.mMessages);
+}
+
+QByteArray &BufferBase::writableData()
+{
+    mSystemCopyModified = true;
+    return mData;
 }

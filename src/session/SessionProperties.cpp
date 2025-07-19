@@ -66,16 +66,16 @@ void SessionProperties::updateWidgets()
     const auto shaderCompiler = static_cast<Session::Renderer>(
         mUi->shaderCompiler->currentData().toInt());
     const auto hasVulkanRenderer = (renderer == Session::Renderer::Vulkan);
-    const auto hasShaderCompiler =
-        (shaderCompiler != Session::ShaderCompiler::Driver
-            || hasVulkanRenderer);
+    const auto hasOpenGLRenderer = (renderer == Session::Renderer::OpenGL);
+    const auto hasShaderCompiler = (hasVulkanRenderer
+        || shaderCompiler != Session::ShaderCompiler::Driver);
 
     setFormVisibility(mUi->formLayout, mUi->labelShaderCompiler,
-        mUi->shaderCompiler, !hasVulkanRenderer);
+        mUi->shaderCompiler, hasOpenGLRenderer);
 
-    mUi->rendererOptions->setVisible(hasVulkanRenderer);
+    mUi->rendererOptions->setVisible(!hasOpenGLRenderer);
     mUi->shaderCompilerOptions->setVisible(hasShaderCompiler);
-    mUi->autoMapBindings->setVisible(hasVulkanRenderer);
-    mUi->autoMapLocations->setVisible(hasVulkanRenderer);
+    mUi->autoMapBindings->setVisible(!hasOpenGLRenderer);
+    mUi->autoMapLocations->setVisible(!hasOpenGLRenderer);
     mUi->vulkanRulesRelaxed->setVisible(hasVulkanRenderer);
 }

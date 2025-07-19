@@ -8,6 +8,7 @@
 #include "editors/EditorManager.h"
 #include "render/opengl/GLRenderer.h"
 #include "render/vulkan/VKRenderer.h"
+#include "render/direct3d/D3DRenderer.h"
 #include "session/SessionModel.h"
 #include "scripting/CustomActions.h"
 #include "scripting/ScriptEngine.h"
@@ -23,9 +24,13 @@ bool onMainThread()
 RendererPtr Singletons::sessionRenderer()
 {
     Q_ASSERT(onMainThread());
-    const auto &renderer = sessionModel().sessionItem().renderer;
-    return (renderer == Session::Renderer::Vulkan ? vkRenderer()
-                                                  : glRenderer());
+    switch (sessionModel().sessionItem().renderer) {
+    case Session::Renderer::OpenGL:   return glRenderer();
+    case Session::Renderer::Vulkan:   return vkRenderer();
+    case Session::Renderer::Direct3D: return d3dRenderer();
+    }
+    Q_UNREACHABLE();
+    return nullptr;
 }
 
 RendererPtr Singletons::glRenderer()
@@ -42,6 +47,14 @@ RendererPtr Singletons::vkRenderer()
     if (!sInstance->mVKRenderer)
         sInstance->mVKRenderer = std::make_shared<VKRenderer>();
     return sInstance->mVKRenderer;
+}
+
+RendererPtr Singletons::d3dRenderer()
+{
+    Q_ASSERT(onMainThread());
+    if (!sInstance->mD3DRenderer)
+        sInstance->mD3DRenderer = std::make_shared<D3DRenderer>();
+    return sInstance->mD3DRenderer;
 }
 
 Settings &Singletons::settings()

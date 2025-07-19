@@ -64,9 +64,9 @@ namespace {
 
     glslang::EShClient getClient(Session::Renderer renderer)
     {
-        return (renderer == Session::Renderer::Vulkan
-                ? glslang::EShClient::EShClientVulkan
-                : glslang::EShClient::EShClientOpenGL);
+        return (renderer == Session::Renderer::OpenGL
+                ? glslang::EShClient::EShClientOpenGL
+                : glslang::EShClient::EShClientVulkan);
     }
 
     glslang::EShTargetClientVersion getClientVersion(glslang::EShClient client,
@@ -206,6 +206,8 @@ namespace {
             shader.setGlobalUniformBlockName(globalUniformBlockName);
         }
         shader.setHlslIoMapping(language == Shader::Language::HLSL);
+        if (session.targetHlslFunctionality1)
+            shader.setEnvTargetHlslFunctionality1();
         if (session.autoSampledTextures)
             shader.setTextureSamplerTransformMode(
                 EShTexSampTransUpgradeTextureRemoveSampler);
@@ -372,7 +374,7 @@ std::map<Shader::ShaderType, Spirv> Spirv::compile(const Session &session,
 
     // do not auto map locations/bindings when targeting OpenGL
     // since it starts counting from 0 in each stage
-    if (session.renderer == Session::Renderer::Vulkan)
+    if (session.renderer != Session::Renderer::OpenGL)
         if (!program.mapIO()) {
             messages += MessageList::insert(programItemId,
                 MessageType::ShaderError, "mapping program IO failed");
@@ -427,6 +429,29 @@ QString Spirv::disassemble(const Spirv &spirv)
     auto ss = std::ostringstream();
     spv::Disassemble(ss, spirv.spirv());
     return QString::fromStdString(ss.str());
+}
+
+QString Spirv::generateGLSL(const Spirv &spirv)
+{
+    if (!spirv)
+        return {};
+
+    auto compiler = spirv_cross::CompilerGLSL(spirv.spirv());
+    auto options = spirv_cross::CompilerGLSL::Options{};
+    compiler.set_common_options(options);
+    return QString::fromStdString(compiler.compile());
+}
+
+QString Spirv::generateHLSL(const Spirv &spirv)
+{
+    if (!spirv)
+        return {};
+
+    auto compiler = spirv_cross::CompilerHLSL(spirv.spirv());
+    auto options = spirv_cross::CompilerHLSL::Options{};
+    options.shader_model = 50;
+    compiler.set_hlsl_options(options);
+    return QString::fromStdString(compiler.compile());
 }
 
 QString Spirv::generateAST(const Session &session, Shader::Language language,
