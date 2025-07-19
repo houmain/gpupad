@@ -17,7 +17,7 @@ namespace {
             QRegularExpression::MultilineOption);
 
         for (auto match = regex.match(source); match.hasMatch();
-             match = regex.match(source))
+            match = regex.match(source))
             source.remove(match.capturedStart(), match.capturedLength());
         return source;
     }
@@ -107,16 +107,19 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
         auto session = Singletons::sessionModel().sessionItem();
 
         // define state of hidden session properties
-        const auto hasVulkanRenderer = (session.renderer == "Vulkan");
+        const auto hasVulkanRenderer =
+            (session.renderer == Session::Renderer::Vulkan);
         const auto hasShaderCompiler =
-            (!session.shaderCompiler.isEmpty() || hasVulkanRenderer);
+            (session.shaderCompiler != Session::ShaderCompiler::Driver
+                || hasVulkanRenderer);
         if (!hasShaderCompiler) {
             session.autoMapBindings = true;
             session.autoMapLocations = true;
         }
 
         // always target Vulkan when generating JSON, otherwise SpvReflect cannot enumerate uniforms
-        if (session.renderer == "Vulkan" || mProcessType == "json") {
+        if (session.renderer == Session::Renderer::Vulkan
+            || mProcessType == "json") {
             mShader = std::make_unique<VKShader>(shaderType, shaders, session);
         } else {
             mShader = std::make_unique<GLShader>(shaderType, shaders, session);

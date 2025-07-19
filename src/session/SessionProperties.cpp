@@ -12,11 +12,8 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
 {
     mUi->setupUi(this);
 
-    mUi->renderer->addItem("OpenGL", "OpenGL");
-    mUi->renderer->addItem("Vulkan", "Vulkan");
-
-    mUi->shaderCompiler->addItem("Driver", "");
-    mUi->shaderCompiler->addItem("glslang", "glslang");
+    fillComboBox<Session::Renderer>(mUi->renderer, true);
+    fillComboBox<Session::ShaderCompiler>(mUi->shaderCompiler, true);
 
     mUi->spirvVersion->addItem("1.0", 0);
     mUi->spirvVersion->addItem("1.1", 11);
@@ -48,8 +45,7 @@ void SessionProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->shaderIncludePaths,
         SessionModel::SessionShaderIncludePaths);
 
-    mapper.addMapping(mUi->reverseCulling,
-        SessionModel::SessionReverseCulling);
+    mapper.addMapping(mUi->reverseCulling, SessionModel::SessionReverseCulling);
     mapper.addMapping(mUi->flipViewport, SessionModel::SessionFlipViewport);
 
     mapper.addMapping(mUi->autoMapBindings,
@@ -65,10 +61,13 @@ void SessionProperties::addMappings(QDataWidgetMapper &mapper)
 
 void SessionProperties::updateWidgets()
 {
-    const auto renderer = mUi->renderer->currentData().toString();
-    const auto hasVulkanRenderer = (renderer == "Vulkan");
+    const auto renderer =
+        static_cast<Session::Renderer>(mUi->renderer->currentData().toInt());
+    const auto shaderCompiler = static_cast<Session::Renderer>(
+        mUi->shaderCompiler->currentData().toInt());
+    const auto hasVulkanRenderer = (renderer == Session::Renderer::Vulkan);
     const auto hasShaderCompiler =
-        (!mUi->shaderCompiler->currentData().toString().isEmpty()
+        (shaderCompiler != Session::ShaderCompiler::Driver
             || hasVulkanRenderer);
 
     setFormVisibility(mUi->formLayout, mUi->labelShaderCompiler,

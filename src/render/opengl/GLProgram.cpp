@@ -210,7 +210,7 @@ bool GLProgram::link(GLContext &context)
 
 bool GLProgram::compileShaders()
 {
-    if (mSession.shaderCompiler.isEmpty()) {
+    if (mSession.shaderCompiler == Session::ShaderCompiler::Driver) {
         for (auto &shader : mShaders)
             if (!shader.compile(mPrintf))
                 return false;

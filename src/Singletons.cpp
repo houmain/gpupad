@@ -24,7 +24,8 @@ RendererPtr Singletons::sessionRenderer()
 {
     Q_ASSERT(onMainThread());
     const auto &renderer = sessionModel().sessionItem().renderer;
-    return (renderer == "Vulkan" ? vkRenderer() : glRenderer());
+    return (renderer == Session::Renderer::Vulkan ? vkRenderer()
+                                                  : glRenderer());
 }
 
 RendererPtr Singletons::glRenderer()

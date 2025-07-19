@@ -62,10 +62,11 @@ namespace {
         return {};
     }
 
-    glslang::EShClient getClient(const QString &renderer)
+    glslang::EShClient getClient(Session::Renderer renderer)
     {
-        return (renderer == "Vulkan" ? glslang::EShClient::EShClientVulkan
-                                     : glslang::EShClient::EShClientOpenGL);
+        return (renderer == Session::Renderer::Vulkan
+                ? glslang::EShClient::EShClientVulkan
+                : glslang::EShClient::EShClientOpenGL);
     }
 
     glslang::EShTargetClientVersion getClientVersion(glslang::EShClient client,
@@ -187,8 +188,8 @@ namespace {
                 glslang::TShader *shader) { delete shader; });
 
         auto &shader = *shaderPtr;
-        shader.setStringsWithLengthsAndNames(sourcesPtr, nullptr,
-            fileNamesPtr, static_cast<int>(sources.size()));
+        shader.setStringsWithLengthsAndNames(sourcesPtr, nullptr, fileNamesPtr,
+            static_cast<int>(sources.size()));
         shader.setEnvInput(getLanguage(language), getStage(shaderType), client,
             dialectVersion);
         shader.setEnvClient(client, clientVersion);
@@ -337,7 +338,7 @@ std::map<Shader::ShaderType, Spirv> Spirv::compile(const Session &session,
     auto program = glslang::TProgram();
     for (const auto &input : inputs) {
         auto requestedMessages = unsigned{ EShMsgSpvRules };
-        if (session.renderer == "Vulkan")
+        if (session.renderer == Session::Renderer::Vulkan)
             requestedMessages |= EShMsgVulkanRules;
         if (input.language == Shader::Language::HLSL)
             requestedMessages |= EShMsgReadHlsl | EShMsgHlslOffsets;
@@ -371,7 +372,7 @@ std::map<Shader::ShaderType, Spirv> Spirv::compile(const Session &session,
 
     // do not auto map locations/bindings when targeting OpenGL
     // since it starts counting from 0 in each stage
-    if (session.renderer == "Vulkan")
+    if (session.renderer == Session::Renderer::Vulkan)
         if (!program.mapIO()) {
             messages += MessageList::insert(programItemId,
                 MessageType::ShaderError, "mapping program IO failed");

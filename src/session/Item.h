@@ -39,8 +39,11 @@ struct Root : ScopeItem
 
 struct Session : ScopeItem
 {
-    QString renderer{ "OpenGL" };
-    QString shaderCompiler;
+    using Renderer = ItemEnums::Renderer;
+    using ShaderCompiler = ItemEnums::ShaderCompiler;
+
+    Renderer renderer{ };
+    ShaderCompiler shaderCompiler;
     QString shaderPreamble;
     QString shaderIncludePaths;
     bool flipViewport{};

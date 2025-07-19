@@ -141,9 +141,9 @@ GLObject GLShader::createShader()
     case Shader::ShaderType::RayClosestHit:
     case Shader::ShaderType::RayMiss:
     case Shader::ShaderType::RayCallable:
-      mMessages +=
-          MessageList::insert(mItemId, MessageType::RayTracingNotAvailable);
-      return {};
+        mMessages +=
+            MessageList::insert(mItemId, MessageType::RayTracingNotAvailable);
+        return {};
     default: break;
     }
 
@@ -180,7 +180,7 @@ QStringList GLShader::preprocessorDefinitions() const
 {
     auto definitions = ShaderBase::preprocessorDefinitions();
     definitions.append("GPUPAD_OPENGL 1");
-    if (mSession.shaderCompiler == "glslang")
+    if (mSession.shaderCompiler == Session::ShaderCompiler::glslang)
         definitions.append("GPUPAD_GLSLANG 1");
     return definitions;
 }

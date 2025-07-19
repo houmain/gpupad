@@ -225,7 +225,8 @@ bool shaderSessionSettingsDiffer(const Session &a, const Session &b)
             a.autoSampledTextures, a.vulkanRulesRelaxed, a.spirvVersion);
     };
     const auto hasShaderCompiler =
-        (!a.shaderCompiler.isEmpty() || a.renderer == "Vulkan");
+        (a.shaderCompiler != Session::ShaderCompiler::Driver
+            || a.renderer == Session::Renderer::Vulkan);
     if (hasShaderCompiler
         && shaderCompilerSettings(a) != shaderCompilerSettings(b))
         return true;
@@ -310,7 +311,8 @@ QStringList ShaderBase::getPatchedSourcesGLSL(ShaderPrintf &printf,
         sources[i] = printf.patchSource(mType, mFileNames[i], sources[i]);
 
     if (printf.isUsed(mType)) {
-        const auto explicitBinding = (mSession.renderer == "Vulkan");
+        const auto explicitBinding =
+            (mSession.renderer == Session::Renderer::Vulkan);
         const auto set = (explicitBinding ? 4 : -1);
         const auto binding = (explicitBinding ? 8 : -1);
         insertAfterExtensions(sources.front(),

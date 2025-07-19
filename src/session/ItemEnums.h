@@ -267,6 +267,18 @@ namespace ItemEnums {
         EveryEvaluation,
     };
     Q_ENUM_NS(ExecuteOn)
+
+    enum Renderer {
+        OpenGL,
+        Vulkan,
+    };
+    Q_ENUM_NS(Renderer)
+
+    enum ShaderCompiler {
+        Driver,
+        glslang,
+    };
+    Q_ENUM_NS(ShaderCompiler)
 } // namespace ItemEnums
 
 // enums moved to another namespace because of name clashes

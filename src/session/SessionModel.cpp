@@ -558,9 +558,11 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
     switch (item.type) {
     case Item::Type::Session: {
         const auto &session = static_cast<const Session &>(item);
-        const auto hasVulkanRenderer = (session.renderer == "Vulkan");
+        const auto hasVulkanRenderer =
+            (session.renderer == Session::Renderer::Vulkan);
         const auto hasShaderCompiler =
-            (!session.shaderCompiler.isEmpty() || hasVulkanRenderer);
+            (session.shaderCompiler != Session::ShaderCompiler::Driver
+                || hasVulkanRenderer);
         result &= (column != SessionFlipViewport || hasVulkanRenderer);
         result &= (column != SessionReverseCulling || hasVulkanRenderer);
         result &= (column != SessionShaderCompiler || !hasVulkanRenderer);
