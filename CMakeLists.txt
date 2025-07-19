@@ -135,6 +135,7 @@ set(SOURCES
   src/render/opengl/GLRenderSession.cpp
   src/render/opengl/GLRenderer.cpp
   src/render/opengl/GLComputeRange.cpp
+  src/render/opengl/GLShareSync.cpp
   src/render/vulkan/KDGpuEnums.cpp
   src/render/vulkan/VKBuffer.cpp
   src/render/vulkan/VKCall.cpp
@@ -148,6 +149,7 @@ set(SOURCES
   src/render/vulkan/VKRenderer.cpp
   src/render/vulkan/VKRenderSession.cpp
   src/render/vulkan/VKAccelerationStructure.cpp
+  src/render/vulkan/VKShareSync.cpp
   src/render/ProcessSource.cpp
   src/render/RenderTask.cpp
   src/render/RenderSessionBase.cpp
