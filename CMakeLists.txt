@@ -280,8 +280,8 @@ endif()
 
 # link glslang
 find_package(glslang CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE glslang::OSDependent glslang::glslang 
-    glslang::MachineIndependent glslang::GenericCodeGen glslang::glslang-default-resource-limits 
+target_link_libraries(${PROJECT_NAME} PRIVATE glslang::glslang
+    glslang::glslang-default-resource-limits
     glslang::SPVRemapper glslang::SPIRV)
 
 # link SPIRV-Cross
