@@ -158,32 +158,32 @@ namespace detail {
     }
   }
 
-  constexpr inline Type add_flags_if_not_opaque(Type type, TypeFlags flags) {
+  constexpr Type add_flags_if_not_opaque(Type type, TypeFlags flags) {
     return (is_opaque(type) ? type : (type | flags));
   }
 
   template<class T> constexpr Type to_type = (static_cast<Type>(unique_id<T>()) | TypeFlags::opaque);
 
-  template<> constexpr Type to_type<void> = Type::Void;
-  template<> constexpr Type to_type<bool> = Type::Bool;
-  template<> constexpr Type to_type<char> = Type::Char;
-  template<> constexpr Type to_type<int8_t> = Type::Int8;
-  template<> constexpr Type to_type<uint8_t> = Type::UInt8;
-  template<> constexpr Type to_type<int16_t> = Type::Int16;
-  template<> constexpr Type to_type<uint16_t> = Type::UInt16;
-  template<> constexpr Type to_type<int32_t> = Type::Int32;
-  template<> constexpr Type to_type<uint32_t> = Type::UInt32;
-  template<> constexpr Type to_type<int64_t> = Type::Int64;
-  template<> constexpr Type to_type<uint64_t> = Type::UInt64;
-  template<> constexpr Type to_type<float> = Type::Float;
-  template<> constexpr Type to_type<double> = Type::Double;
+  template<> constexpr inline Type to_type<void> = Type::Void;
+  template<> constexpr inline Type to_type<bool> = Type::Bool;
+  template<> constexpr inline Type to_type<char> = Type::Char;
+  template<> constexpr inline Type to_type<int8_t> = Type::Int8;
+  template<> constexpr inline Type to_type<uint8_t> = Type::UInt8;
+  template<> constexpr inline Type to_type<int16_t> = Type::Int16;
+  template<> constexpr inline Type to_type<uint16_t> = Type::UInt16;
+  template<> constexpr inline Type to_type<int32_t> = Type::Int32;
+  template<> constexpr inline Type to_type<uint32_t> = Type::UInt32;
+  template<> constexpr inline Type to_type<int64_t> = Type::Int64;
+  template<> constexpr inline Type to_type<uint64_t> = Type::UInt64;
+  template<> constexpr inline Type to_type<float> = Type::Float;
+  template<> constexpr inline Type to_type<double> = Type::Double;
 
-  template<> constexpr Type to_type<std::string> = (Type::Char | TypeFlags::array);
+  template<> constexpr inline Type to_type<std::string> = (Type::Char | TypeFlags::array);
 
-  template<> constexpr Type to_type<std::string_view> =
+  template<> constexpr inline Type to_type<std::string_view> =
     (Type::Char | TypeFlags::array | TypeFlags::view);
 
-  template<> constexpr Type to_type<const char*> =
+  template<> constexpr inline Type to_type<const char*> =
     (Type::Char | TypeFlags::array | TypeFlags::view);
 
   template<typename T, typename A>
@@ -195,7 +195,7 @@ namespace detail {
     add_flags_if_not_opaque(to_type<T>, TypeFlags::array | TypeFlags::view);
 
   template<typename T>
-  constexpr inline Type get_type_v = to_type<std::decay_t<T>>;
+  constexpr Type get_type_v = to_type<std::decay_t<T>>;
 
   template<typename T>
   struct get_argument {
