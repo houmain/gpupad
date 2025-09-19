@@ -33,6 +33,11 @@
     ADD(TextureLayers, Texture, layers)                                       \
     ADD(TextureSamples, Texture, samples)                                     \
     ADD(TextureFlipVertically, Texture, flipVertically)                       \
+    ADD(TextureIsSequence, Texture, isSequence)                               \
+    ADD(TextureSequencePattern, Texture, sequencePattern)                     \
+    ADD(TextureFrameStart, Texture, frameStart)                               \
+    ADD(TextureFrameEnd, Texture, frameEnd)                                   \
+    ADD(TextureLoopSequence, Texture, loopSequence)                           \
     ADD(ScriptExecuteOn, Script, executeOn)                                   \
     ADD(ShaderType, Shader, shaderType)                                       \
     ADD(ShaderLanguage, Shader, language)                                     \

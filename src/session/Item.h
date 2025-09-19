@@ -93,6 +93,16 @@ struct Texture : FileItem
     QString layers{ "1" };
     int samples{ 1 };
     bool flipVertically{};
+
+    // Image sequence support
+    bool isSequence{};
+    QString sequencePattern{ "%06d" };
+    int frameStart{ 1 };
+    int frameEnd{ 100 };
+    bool loopSequence{ true };
+
+    // Runtime state (not serialized)
+    mutable int currentFrame{ 1 };
 };
 
 struct Program : Item

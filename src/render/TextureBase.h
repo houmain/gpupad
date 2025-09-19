@@ -33,6 +33,8 @@ public:
 protected:
     bool swap(TextureBase &other);
     void reload(bool forWriting);
+    QString resolveCurrentFileName() const;
+    void updateSequenceFrame();
 
     ItemId mItemId{};
     MessagePtrSet mMessages;
@@ -52,6 +54,14 @@ protected:
     bool mSystemCopyModified{};
     bool mDeviceCopyModified{};
     bool mMipmapsInvalidated{};
+
+    // Sequence support
+    bool mIsSequence{};
+    QString mSequencePattern;
+    int mFrameStart{};
+    int mFrameEnd{};
+    bool mLoopSequence{};
+    mutable int mCurrentFrame{};
 };
 
 void transformClearColor(std::array<double, 4> &color,

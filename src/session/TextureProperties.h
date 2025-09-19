@@ -33,6 +33,7 @@ private:
     void updateFormatDataWidget(QVariant formatType);
     void updateFormat(QVariant formatData);
     void applyFileFormat();
+    void updateSequenceVisibility();
 
     PropertiesEditor &mPropertiesEditor;
     Ui::TextureProperties *mUi;

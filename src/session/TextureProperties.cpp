@@ -291,6 +291,25 @@ TextureProperties::TextureProperties(PropertiesEditor *propertiesEditor)
     connect(mUi->formatData, &DataComboBox::currentDataChanged, this,
         &TextureProperties::updateFormat);
 
+    // Sequence controls
+    connect(mUi->isSequence, &QCheckBox::toggled, this,
+        &TextureProperties::updateSequenceVisibility);
+    connect(mUi->frameStart, qOverload<int>(&QSpinBox::valueChanged), this,
+        [this](int value) {
+            if (value > mUi->frameEnd->value()) {
+                mUi->frameEnd->setValue(value);
+            }
+        });
+    connect(mUi->frameEnd, qOverload<int>(&QSpinBox::valueChanged), this,
+        [this](int value) {
+            if (value < mUi->frameStart->value()) {
+                mUi->frameStart->setValue(value);
+            }
+        });
+
+    // Initially hide sequence controls
+    updateSequenceVisibility();
+
     fillComboBox<QOpenGLTexture::Target>(mUi->target,
         {
             { "1D Texture", QOpenGLTexture::Target1D },
@@ -360,6 +379,11 @@ void TextureProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->layers, SessionModel::TextureLayers);
     mapper.addMapping(mUi->samples, SessionModel::TextureSamples);
     mapper.addMapping(mUi->flipVertically, SessionModel::TextureFlipVertically);
+    mapper.addMapping(mUi->isSequence, SessionModel::TextureIsSequence);
+    mapper.addMapping(mUi->sequencePattern, SessionModel::TextureSequencePattern);
+    mapper.addMapping(mUi->frameStart, SessionModel::TextureFrameStart);
+    mapper.addMapping(mUi->frameEnd, SessionModel::TextureFrameEnd);
+    mapper.addMapping(mUi->loopSequence, SessionModel::TextureLoopSequence);
 }
 
 void TextureProperties::setFormat(QVariant value)
@@ -497,4 +521,17 @@ void TextureProperties::applyFileFormat()
         mUi->depth->setText(QString::number(texture.depth()));
         mUi->layers->setText(QString::number(texture.layers()));
     }
+}
+
+void TextureProperties::updateSequenceVisibility()
+{
+    bool isSequenceEnabled = mUi->isSequence->isChecked();
+
+    // Show/hide sequence controls
+    mUi->labelPattern->setVisible(isSequenceEnabled);
+    mUi->sequencePattern->setVisible(isSequenceEnabled);
+    mUi->labelFrameRange->setVisible(isSequenceEnabled);
+    mUi->widgetFrameRange->setVisible(isSequenceEnabled);
+    mUi->labelLoop->setVisible(isSequenceEnabled);
+    mUi->loopSequence->setVisible(isSequenceEnabled);
 }

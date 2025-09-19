@@ -49,6 +49,12 @@ TextureBase::TextureBase(const Texture &texture,
     , mFormat(texture.format)
     , mSamples(texture.samples)
     , mKind(getKind(texture))
+    , mIsSequence(texture.isSequence)
+    , mSequencePattern(texture.sequencePattern)
+    , mFrameStart(texture.frameStart)
+    , mFrameEnd(texture.frameEnd)
+    , mLoopSequence(texture.loopSequence)
+    , mCurrentFrame(texture.currentFrame)
 {
     renderSession.evaluateTextureProperties(texture, &mWidth, &mHeight, &mDepth,
         &mLayers);
@@ -67,6 +73,13 @@ TextureBase::TextureBase(const Texture &texture,
         mSamples = 1;
 
     mUsedItems += texture.id;
+
+    // Debug: Show sequence mode initialization
+    if (mIsSequence) {
+        mMessages += MessageList::insert(mItemId, MessageType::ScriptMessage,
+            QString("Sequence initialized: pattern='%1', frames %2-%3, loop=%4")
+                .arg(mSequencePattern).arg(mFrameStart).arg(mFrameEnd).arg(mLoopSequence ? "on" : "off"));
+    }
 }
 
 TextureBase::TextureBase(const Buffer &buffer, Texture::Format format,
@@ -110,8 +123,22 @@ bool TextureBase::swap(TextureBase &other)
 
 void TextureBase::reload(bool forWriting)
 {
+    // Update sequence frame before loading
+    updateSequenceFrame();
+
     auto fileData = TextureData{};
-    if (Singletons::fileCache().getTexture(mFileName, mFlipVertically,
+    QString actualFileName = resolveCurrentFileName();
+
+    // Debug: Show sequence mode status
+    if (mIsSequence) {
+        mMessages += MessageList::insert(mItemId, MessageType::ScriptMessage,
+            QString("Sequence mode: frame %1/%2 -> %3").arg(mCurrentFrame).arg(mFrameEnd).arg(actualFileName));
+    } else if (!mFileName.isEmpty()) {
+        mMessages += MessageList::insert(mItemId, MessageType::ScriptMessage,
+            QString("Single file mode: %1").arg(actualFileName));
+    }
+
+    if (Singletons::fileCache().getTexture(actualFileName, mFlipVertically,
             &fileData)) {
         // check if cache still matches the file before conversion
         if (!mFileData.isSharedWith(fileData)) {
@@ -125,12 +152,12 @@ void TextureBase::reload(bool forWriting)
                 }
             } else if (!forWriting) {
                 mMessages += MessageList::insert(mItemId,
-                    MessageType::ConvertingFileFailed, mFileName);
+                    MessageType::ConvertingFileFailed, actualFileName);
             }
         }
-    } else if (!FileDialog::isEmptyOrUntitled(mFileName)) {
+    } else if (!FileDialog::isEmptyOrUntitled(actualFileName)) {
         mMessages += MessageList::insert(mItemId,
-            MessageType::LoadingFileFailed, mFileName);
+            MessageType::LoadingFileFailed, actualFileName);
     }
 
     if (mData.isNull()) {
@@ -143,5 +170,35 @@ void TextureBase::reload(bool forWriting)
         mData.clear();
         mData.setFlippedVertically(mFlipVertically);
         mSystemCopyModified = true;
+    }
+}
+
+QString TextureBase::resolveCurrentFileName() const
+{
+    if (!mIsSequence)
+        return mFileName;
+
+    return Singletons::fileCache().buildSequenceFileName(
+        mFileName, mSequencePattern, mCurrentFrame);
+}
+
+void TextureBase::updateSequenceFrame()
+{
+    if (!mIsSequence)
+        return;
+
+    // Advance frame
+    mCurrentFrame++;
+
+    if (mCurrentFrame > mFrameEnd) {
+        if (mLoopSequence) {
+            mCurrentFrame = mFrameStart;
+            mMessages += MessageList::insert(mItemId, MessageType::ScriptMessage,
+                QString("Sequence looped: back to frame %1").arg(mCurrentFrame));
+        } else {
+            mCurrentFrame = mFrameEnd;  // Clamp to last frame
+            mMessages += MessageList::insert(mItemId, MessageType::ScriptMessage,
+                QString("Sequence ended: clamped to frame %1").arg(mCurrentFrame));
+        }
     }
 }
