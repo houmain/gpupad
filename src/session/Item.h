@@ -101,8 +101,8 @@ struct Texture : FileItem
     int frameEnd{ 100 };
     bool loopSequence{ true };
 
-    // Runtime state (not serialized)
-    mutable int currentFrame{ 1 };
+    // Runtime state (not serialized) - zero-based index
+    mutable int currentFrame{ 0 };
 };
 
 struct Program : Item
