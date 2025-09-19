@@ -102,7 +102,7 @@ bool TextureBase::operator==(const TextureBase &rhs) const
 {
     const auto properties = [](const TextureBase &a) {
         return std::tie(a.mMessages, a.mFileName, a.mFlipVertically, a.mTarget,
-            a.mFormat, a.mWidth, a.mHeight, a.mDepth, a.mLayers, a.mSamples);
+            a.mFormat, a.mWidth, a.mHeight, a.mDepth, a.mLayers, a.mSamples, a.mCurrentFrame);
     };
     return properties(*this) == properties(rhs);
 }
@@ -130,10 +130,6 @@ void TextureBase::reload(bool forWriting)
     auto fileData = TextureData{};
     QString actualFileName = resolveCurrentFileName();
 
-    // Debug: Show sequence mode status
-    if (mIsSequence) {
-        qDebug() << QString("Sequence mode: frame %1/%2 -> %3").arg(mCurrentFrame).arg(mFrameEnd).arg(actualFileName);
-    }
 
     if (Singletons::fileCache().getTexture(actualFileName, mFlipVertically,
             &fileData)) {
@@ -184,39 +180,8 @@ QString TextureBase::resolveCurrentFileName() const
 
 void TextureBase::updateSequenceFrame()
 {
-    if (!mIsSequence)
-        return;
-
-    // Debug: Show what happens in updateSequenceFrame
-    // int oldFrame = mCurrentFrame;
-    // int actualFrameBefore = mFrameStart + mCurrentFrame;
-
-    // qDebug() << QString("updateSequenceFrame: before - currentFrame=%1, actualFrame=%2, frameLoaded=%3").arg(oldFrame).arg(actualFrameBefore).arg(mFrameLoaded);
-
-    // Only advance if we've already loaded this frame once
-    if (mFrameLoaded) {
-        // Advance zero-based frame index
-        mCurrentFrame++;
-    } else {
-        // Mark that we're about to load this frame
-        mFrameLoaded = true;
-    }
-
-    // Calculate max zero-based index (frameEnd - frameStart)
-    int maxFrameIndex = mFrameEnd - mFrameStart;
-
-    if (mCurrentFrame > maxFrameIndex) {
-        if (mLoopSequence) {
-            mCurrentFrame = 0;  // Reset to zero index
-            // int actualFrameNumber = mFrameStart + mCurrentFrame;
-            // qDebug() << QString("Sequence looped: back to frame %1").arg(actualFrameNumber);
-        } else {
-            mCurrentFrame = maxFrameIndex;  // Clamp to last zero-based index
-            // int actualFrameNumber = mFrameStart + mCurrentFrame;
-            // qDebug() << QString("Sequence ended: clamped to frame %1").arg(actualFrameNumber);
-        }
-    }
-
-    // int actualFrameAfter = mFrameStart + mCurrentFrame;
-    // qDebug() << QString("updateSequenceFrame: after - currentFrame=%1, actualFrame=%2").arg(mCurrentFrame).arg(actualFrameAfter);
+    // TextureBase should NOT advance frames - it should use the currentFrame
+    // from the session model which is already managed by SynchronizeLogic
+    // This method is kept for compatibility but doesn't modify mCurrentFrame
 }
+

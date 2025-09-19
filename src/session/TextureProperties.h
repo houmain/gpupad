@@ -34,6 +34,7 @@ private:
     void updateFormat(QVariant formatData);
     void applyFileFormat();
     void updateSequenceVisibility();
+    void updateCurrentFrameLabel();
 
     PropertiesEditor &mPropertiesEditor;
     Ui::TextureProperties *mUi;

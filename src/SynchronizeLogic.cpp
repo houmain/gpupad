@@ -386,18 +386,40 @@ void SynchronizeLogic::handleEvaluateTimout()
 
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
-    // Reset sequence frames when evaluation is reset
+    // Reset sequence frames when evaluation is reset (F5)
     if (evaluationType == EvaluationType::Reset) {
         mModel.forEachItem<Texture>([&](const Texture &texture) {
-            if (texture.isSequence && texture.currentFrame != 0) {
-                // Reset currentFrame to zero index (frameStart will be applied in TextureBase)
+            if (texture.isSequence) {
                 const_cast<Texture&>(texture).currentFrame = 0;
             }
         });
     }
 
-    // Advance sequence frames for manual, automatic and steady evaluations
-    if (evaluationType == EvaluationType::Manual || evaluationType == EvaluationType::Automatic || evaluationType == EvaluationType::Steady) {
+    // Advance sequence frames for manual evaluation (F6)
+    if (evaluationType == EvaluationType::Manual) {
+        mModel.forEachItem<Texture>([&](const Texture &texture) {
+            if (texture.isSequence) {
+                auto &mutableTexture = const_cast<Texture&>(texture);
+
+                // Advance zero-based frame index
+                mutableTexture.currentFrame++;
+
+                // Calculate max zero-based index (frameEnd - frameStart)
+                int maxFrameIndex = texture.frameEnd - texture.frameStart;
+
+                if (mutableTexture.currentFrame > maxFrameIndex) {
+                    if (texture.loopSequence) {
+                        mutableTexture.currentFrame = 0;  // Reset to zero index
+                    } else {
+                        mutableTexture.currentFrame = maxFrameIndex;  // Clamp to last zero-based index
+                    }
+                }
+            }
+        });
+    }
+
+    // Advance sequence frames for steady evaluation (F8 auto-advancing)
+    if (evaluationType == EvaluationType::Steady) {
         mModel.forEachItem<Texture>([&](const Texture &texture) {
             if (texture.isSequence) {
                 auto &mutableTexture = const_cast<Texture&>(texture);

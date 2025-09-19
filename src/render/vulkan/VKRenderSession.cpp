@@ -413,7 +413,8 @@ void VKRenderSession::render()
     if (!mShareSync)
         mShareSync = std::make_shared<VKShareSync>(renderer().device());
 
-    if (mItemsChanged || mEvaluationType == EvaluationType::Reset) {
+    if (mItemsChanged || mEvaluationType == EvaluationType::Reset ||
+        mEvaluationType == EvaluationType::Manual || mEvaluationType == EvaluationType::Steady) {
         createCommandQueue();
         buildCommandQueue();
     }

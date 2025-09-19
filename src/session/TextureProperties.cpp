@@ -2,6 +2,7 @@
 #include "FileCache.h"
 #include "PropertiesEditor.h"
 #include "Singletons.h"
+#include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
 #include "session/SessionModel.h"
 #include "ui_TextureProperties.h"
@@ -299,16 +300,26 @@ TextureProperties::TextureProperties(PropertiesEditor *propertiesEditor)
             if (value > mUi->frameEnd->value()) {
                 mUi->frameEnd->setValue(value);
             }
+            updateCurrentFrameLabel();
         });
     connect(mUi->frameEnd, qOverload<int>(&QSpinBox::valueChanged), this,
         [this](int value) {
             if (value < mUi->frameStart->value()) {
                 mUi->frameStart->setValue(value);
             }
+            updateCurrentFrameLabel();
         });
 
     // Initially hide sequence controls
     updateSequenceVisibility();
+
+    // Connect to session model for current frame updates
+    connect(&Singletons::sessionModel(), &SessionModel::dataChanged,
+        this, &TextureProperties::updateCurrentFrameLabel);
+
+    // Connect to evaluation updates for immediate frame counter updates
+    connect(&Singletons::synchronizeLogic(), &SynchronizeLogic::evaluationUpdated,
+        this, &TextureProperties::updateCurrentFrameLabel);
 
     fillComboBox<QOpenGLTexture::Target>(mUi->target,
         {
@@ -417,6 +428,8 @@ void TextureProperties::updateWidgets()
         mUi->flipVertically,
         !FileDialog::isEmptyOrUntitled(fileName)
             && (kind.dimensions == 2 || kind.cubeMap));
+
+    updateCurrentFrameLabel();
 }
 
 void TextureProperties::updateFormatDataWidget(QVariant formatType)
@@ -534,4 +547,20 @@ void TextureProperties::updateSequenceVisibility()
     mUi->widgetFrameRange->setVisible(isSequenceEnabled);
     mUi->labelLoop->setVisible(isSequenceEnabled);
     mUi->loopSequence->setVisible(isSequenceEnabled);
+
+    // Update the current frame label when visibility changes
+    updateCurrentFrameLabel();
+}
+
+void TextureProperties::updateCurrentFrameLabel()
+{
+    auto index = mPropertiesEditor.currentModelIndex();
+    if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+        if (texture->isSequence) {
+            int actualFrameNumber = texture->frameStart + texture->currentFrame;
+            mUi->currentFrameLabel->setText(QString::number(actualFrameNumber));
+        } else {
+            mUi->currentFrameLabel->setText("1");
+        }
+    }
 }

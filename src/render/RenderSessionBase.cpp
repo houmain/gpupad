@@ -52,9 +52,17 @@ void RenderSessionBase::prepare(bool itemsChanged,
     } else {
         mEvaluationType = EvaluationType::Reset;
     }
-    if (mItemsChanged || mEvaluationType == EvaluationType::Reset) {
+    if (mItemsChanged || mEvaluationType == EvaluationType::Reset ||
+        mEvaluationType == EvaluationType::Manual || mEvaluationType == EvaluationType::Steady) {
         mUsedItems.clear();
         mSessionModelCopy = Singletons::sessionModel();
+
+        // Debug: Check if sequence textures have updated currentFrame values
+        mSessionModelCopy.forEachItem<Texture>([&](const Texture &texture) {
+            if (texture.isSequence) {
+                qDebug() << QString("Session model copy - sequence texture %1 has currentFrame = %2").arg(texture.fileName).arg(texture.currentFrame);
+            }
+        });
     }
 }
 

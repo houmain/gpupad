@@ -183,6 +183,32 @@
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QLabel" name="labelCurrentFrame">
+          <property name="text">
+           <string>Current:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="currentFrameLabel">
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>1</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
      </item>
