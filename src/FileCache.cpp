@@ -5,6 +5,8 @@
 #include "editors/source/SourceEditor.h"
 #include "editors/texture/TextureEditor.h"
 #include "session/SessionModel.h"
+#include <QFileInfo>
+#include <QRegularExpression>
 #include <QTextStream>
 #include <QThread>
 
@@ -465,6 +467,53 @@ void FileCache::handleReloadingFailed(const QString &fileName)
 {
     Q_ASSERT(onMainThread());
     mUpdateFileSystemWatchesTimer.start();
+}
+
+bool FileCache::getSequenceTexture(const QString &baseFileName,
+                                  const QString &pattern,
+                                  int frameNumber,
+                                  bool flipVertically,
+                                  TextureData *texture) const
+{
+    if (!texture)
+        return false;
+
+    const QString actualFileName = buildSequenceFileName(baseFileName, pattern, frameNumber);
+    return getTexture(actualFileName, flipVertically, texture);
+}
+
+QString FileCache::buildSequenceFileName(const QString &baseFileName,
+                                        const QString &pattern,
+                                        int frameNumber) const
+{
+    if (baseFileName.isEmpty() || pattern.isEmpty())
+        return baseFileName;
+
+    QFileInfo fileInfo(baseFileName);
+    QString dir = fileInfo.absolutePath();
+    QString originalExtension = fileInfo.suffix();
+
+    // Process the pattern to replace %0Xd with zero-padded frame number
+    QString processedPattern = pattern;
+    QRegularExpression regex(R"(%0?(\d+)d)");
+    QRegularExpressionMatch match = regex.match(pattern);
+
+    if (match.hasMatch()) {
+        int padding = match.captured(1).toInt();
+        QString frameStr = QString("%1").arg(frameNumber, padding, 10, QChar('0'));
+        processedPattern.replace(regex, frameStr);
+    } else {
+        // Fallback: replace any %d with frame number
+        processedPattern.replace("%d", QString::number(frameNumber));
+    }
+
+    // If pattern already has an extension, use it as-is
+    // Otherwise, append the original file's extension
+    if (processedPattern.contains('.')) {
+        return QString("%1/%2").arg(dir, processedPattern);
+    } else {
+        return QString("%1/%2.%3").arg(dir, processedPattern, originalExtension);
+    }
 }
 
 #include "FileCache.moc"

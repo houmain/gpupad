@@ -5,6 +5,7 @@
 #include <QMap>
 #include <QMutex>
 #include <QObject>
+#include <QQueue>
 #include <QSet>
 #include <QThread>
 #include <QTimer>
@@ -19,9 +20,18 @@ public:
     bool getSource(const QString &fileName, QString *source) const;
     bool getTexture(const QString &fileName, bool flipVertically,
         TextureData *texture) const;
+    bool getSequenceTexture(const QString &baseFileName,
+                           const QString &pattern,
+                           int frameNumber,
+                           bool flipVertically,
+                           TextureData *texture) const;
     bool getBinary(const QString &fileName, QByteArray *binary) const;
     bool updateTexture(const QString &fileName, bool flippedVertically,
         TextureData texture);
+
+    QString buildSequenceFileName(const QString &baseFileName,
+                                 const QString &pattern,
+                                 int frameNumber) const;
 
     // only call from main thread
     void unloadAll();
