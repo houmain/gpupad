@@ -38,6 +38,7 @@
     ADD(TextureFrameStart, Texture, frameStart)                               \
     ADD(TextureFrameEnd, Texture, frameEnd)                                   \
     ADD(TextureLoopSequence, Texture, loopSequence)                           \
+    ADD(TextureCurrentFrame, Texture, currentFrame)                           \
     ADD(ScriptExecuteOn, Script, executeOn)                                   \
     ADD(ShaderType, Shader, shaderType)                                       \
     ADD(ShaderLanguage, Shader, language)                                     \

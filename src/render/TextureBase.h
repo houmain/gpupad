@@ -62,6 +62,7 @@ protected:
     int mFrameEnd{};
     bool mLoopSequence{};
     mutable int mCurrentFrame{};
+    mutable bool mFrameLoaded{};
 };
 
 void transformClearColor(std::array<double, 4> &color,

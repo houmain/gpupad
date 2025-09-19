@@ -55,6 +55,7 @@ TextureBase::TextureBase(const Texture &texture,
     , mFrameEnd(texture.frameEnd)
     , mLoopSequence(texture.loopSequence)
     , mCurrentFrame(texture.currentFrame)
+    , mFrameLoaded(texture.currentFrame > 0)
 {
     renderSession.evaluateTextureProperties(texture, &mWidth, &mHeight, &mDepth,
         &mLayers);
@@ -131,11 +132,7 @@ void TextureBase::reload(bool forWriting)
 
     // Debug: Show sequence mode status
     if (mIsSequence) {
-        mMessages += MessageList::insert(mItemId, MessageType::ScriptMessage,
-            QString("Sequence mode: frame %1/%2 -> %3").arg(mCurrentFrame).arg(mFrameEnd).arg(actualFileName));
-    } else if (!mFileName.isEmpty()) {
-        mMessages += MessageList::insert(mItemId, MessageType::ScriptMessage,
-            QString("Single file mode: %1").arg(actualFileName));
+        qDebug() << QString("Sequence mode: frame %1/%2 -> %3").arg(mCurrentFrame).arg(mFrameEnd).arg(actualFileName);
     }
 
     if (Singletons::fileCache().getTexture(actualFileName, mFlipVertically,
@@ -178,8 +175,11 @@ QString TextureBase::resolveCurrentFileName() const
     if (!mIsSequence)
         return mFileName;
 
+    // frameStart is already the correct starting frame number
+    // currentFrame is zero-based offset from frameStart
+    int actualFrameNumber = mFrameStart + mCurrentFrame;
     return Singletons::fileCache().buildSequenceFileName(
-        mFileName, mSequencePattern, mCurrentFrame);
+        mFileName, mSequencePattern, actualFrameNumber);
 }
 
 void TextureBase::updateSequenceFrame()
@@ -187,18 +187,36 @@ void TextureBase::updateSequenceFrame()
     if (!mIsSequence)
         return;
 
-    // Advance frame
-    mCurrentFrame++;
+    // Debug: Show what happens in updateSequenceFrame
+    // int oldFrame = mCurrentFrame;
+    // int actualFrameBefore = mFrameStart + mCurrentFrame;
 
-    if (mCurrentFrame > mFrameEnd) {
+    // qDebug() << QString("updateSequenceFrame: before - currentFrame=%1, actualFrame=%2, frameLoaded=%3").arg(oldFrame).arg(actualFrameBefore).arg(mFrameLoaded);
+
+    // Only advance if we've already loaded this frame once
+    if (mFrameLoaded) {
+        // Advance zero-based frame index
+        mCurrentFrame++;
+    } else {
+        // Mark that we're about to load this frame
+        mFrameLoaded = true;
+    }
+
+    // Calculate max zero-based index (frameEnd - frameStart)
+    int maxFrameIndex = mFrameEnd - mFrameStart;
+
+    if (mCurrentFrame > maxFrameIndex) {
         if (mLoopSequence) {
-            mCurrentFrame = mFrameStart;
-            mMessages += MessageList::insert(mItemId, MessageType::ScriptMessage,
-                QString("Sequence looped: back to frame %1").arg(mCurrentFrame));
+            mCurrentFrame = 0;  // Reset to zero index
+            // int actualFrameNumber = mFrameStart + mCurrentFrame;
+            // qDebug() << QString("Sequence looped: back to frame %1").arg(actualFrameNumber);
         } else {
-            mCurrentFrame = mFrameEnd;  // Clamp to last frame
-            mMessages += MessageList::insert(mItemId, MessageType::ScriptMessage,
-                QString("Sequence ended: clamped to frame %1").arg(mCurrentFrame));
+            mCurrentFrame = maxFrameIndex;  // Clamp to last zero-based index
+            // int actualFrameNumber = mFrameStart + mCurrentFrame;
+            // qDebug() << QString("Sequence ended: clamped to frame %1").arg(actualFrameNumber);
         }
     }
+
+    // int actualFrameAfter = mFrameStart + mCurrentFrame;
+    // qDebug() << QString("updateSequenceFrame: after - currentFrame=%1, actualFrame=%2").arg(mCurrentFrame).arg(actualFrameAfter);
 }

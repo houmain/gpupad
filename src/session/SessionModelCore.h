@@ -44,6 +44,7 @@ public:
         TextureFrameStart,
         TextureFrameEnd,
         TextureLoopSequence,
+        TextureCurrentFrame,
         ScriptExecuteOn,
         ShaderType,
         ShaderLanguage,

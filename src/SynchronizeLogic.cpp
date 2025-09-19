@@ -386,6 +386,17 @@ void SynchronizeLogic::handleEvaluateTimout()
 
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
+    // Reset sequence frames when evaluation is reset
+    if (evaluationType == EvaluationType::Reset) {
+        mModel.forEachItem<Texture>([&](const Texture &texture) {
+            if (texture.isSequence && texture.currentFrame != 0) {
+                // Reset currentFrame to zero index (frameStart will be applied in TextureBase)
+                const_cast<Texture&>(texture).currentFrame = 0;
+            }
+        });
+    }
+
+
     Singletons::fileCache().updateFromEditors();
     const auto itemsChanged = std::exchange(mRenderSessionInvalidated, false);
     initializeRenderSession();

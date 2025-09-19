@@ -102,7 +102,7 @@ struct Texture : FileItem
     bool loopSequence{ true };
 
     // Runtime state (not serialized) - zero-based index
-    mutable int currentFrame{ 0 };
+    int currentFrame{ 0 };
 };
 
 struct Program : Item
