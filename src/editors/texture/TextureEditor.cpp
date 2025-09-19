@@ -13,6 +13,7 @@
 #include "getEventPosition.h"
 #include "render/opengl/GLContext.h"
 #include "session/Item.h"
+#include "session/SessionModel.h"
 #include <QAction>
 #include <QApplication>
 #include <QClipboard>
@@ -58,6 +59,9 @@ TextureEditor::TextureEditor(QString fileName,
     setAcceptDrops(false);
     setMouseTracking(true);
     setFrameStyle(QFrame::NoFrame);
+
+    // Connect to evaluation system for sequence texture updates
+    connectToEvaluationSystem();
 }
 
 TextureEditor::~TextureEditor()
@@ -200,10 +204,37 @@ bool TextureEditor::load()
 {
     auto texture = TextureData();
     auto isRaw = false;
-    if (!Singletons::fileCache().getTexture(mFileName, false, &texture)) {
+
+    // Check if this is a sequence texture and get the actual frame filename
+    QString actualFileName = mFileName;
+    auto &model = Singletons::sessionModel();
+    model.forEachItem([&](const Item &item) {
+        if (item.type == Item::Type::Texture) {
+            const auto &textureItem = static_cast<const Texture&>(item);
+            if (textureItem.isSequence) {
+                // Check if our mFileName matches any frame in this sequence
+                QString expectedFrame = Singletons::fileCache().buildSequenceFileName(
+                    textureItem.fileName,
+                    textureItem.sequencePattern,
+                    textureItem.frameStart + textureItem.currentFrame);
+
+                if (expectedFrame == mFileName || textureItem.fileName == mFileName) {
+                    // Calculate actual frame filename
+                    actualFileName = Singletons::fileCache().buildSequenceFileName(
+                        textureItem.fileName,
+                        textureItem.sequencePattern,
+                        textureItem.frameStart + textureItem.currentFrame);
+                }
+            }
+        }
+    });
+
+    // Removed debug output
+
+    if (!Singletons::fileCache().getTexture(actualFileName, false, &texture)) {
         auto binary = QByteArray();
-        if (!Singletons::fileCache().getBinary(mFileName, &binary))
-            if (!FileDialog::isEmptyOrUntitled(mFileName))
+        if (!Singletons::fileCache().getBinary(actualFileName, &binary))
+            if (!FileDialog::isEmptyOrUntitled(actualFileName))
                 return false;
         if (!createFromRaw(binary, mRawFormat, &texture))
             return false;
@@ -228,6 +259,14 @@ bool TextureEditor::load()
     }
 
     replace(texture);
+
+    // For sequence textures, force display update even if replace was skipped
+    if (actualFileName != mFileName) {
+        mTextureItem->setImage(texture);
+        setBounds(mTextureItem->boundingRect().toRect());
+        mTexture = texture;
+        viewport()->update();
+    }
     setModified(false);
     mIsRaw = isRaw;
     return true;
@@ -586,4 +625,46 @@ void TextureEditor::paintGL()
     const auto x = -scrollX / width;
     const auto y = scrollY / height;
     mTextureItem->paintGL(QTransform(sx, 0, 0, 0, sy, 0, x, y, 1));
+}
+
+void TextureEditor::connectToEvaluationSystem()
+{
+    // Connect to the synchronize logic to get notified of evaluations
+    auto &synchronizeLogic = Singletons::synchronizeLogic();
+    connect(&synchronizeLogic, &SynchronizeLogic::evaluationUpdated,
+            this, &TextureEditor::handleEvaluationUpdate);
+}
+
+void TextureEditor::handleEvaluationUpdate()
+{
+    // Check if this texture editor is displaying a sequence texture
+    auto &model = Singletons::sessionModel();
+    bool isSequenceTexture = false;
+
+    model.forEachItem([&](const Item &item) {
+        if (item.type == Item::Type::Texture) {
+            const auto &textureItem = static_cast<const Texture&>(item);
+            if (textureItem.isSequence) {
+                // Check if our mFileName matches any frame in this sequence
+                QString expectedFrame = Singletons::fileCache().buildSequenceFileName(
+                    textureItem.fileName,
+                    textureItem.sequencePattern,
+                    textureItem.frameStart + textureItem.currentFrame);
+
+                if (expectedFrame == mFileName || textureItem.fileName == mFileName) {
+                    isSequenceTexture = true;
+                }
+            }
+        }
+    });
+
+    if (isSequenceTexture) {
+        // For sequence textures, force a viewport update even if texture data appears the same
+        // This ensures that manual evaluations properly refresh the display
+        if (load()) {
+            viewport()->update();
+        }
+        // Force a viewport update regardless, in case the texture comparison failed to detect changes
+        viewport()->update();
+    }
 }

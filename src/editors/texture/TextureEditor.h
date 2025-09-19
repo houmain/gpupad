@@ -46,6 +46,8 @@ public:
     void updatePreviewTexture(ShareSyncPtr shareSync, ShareHandle handle,
         int samples);
     const TextureData &texture() const { return mTexture; }
+    void connectToEvaluationSystem();
+    void handleEvaluationUpdate();
 
 Q_SIGNALS:
     void modificationChanged(bool modified);

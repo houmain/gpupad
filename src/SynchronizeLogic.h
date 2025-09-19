@@ -50,6 +50,7 @@ public:
 
 Q_SIGNALS:
     void outputChanged(QVariant output);
+    void evaluationUpdated();
 
 private:
     void invalidateRenderSession();

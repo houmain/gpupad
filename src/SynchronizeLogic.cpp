@@ -396,11 +396,39 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
         });
     }
 
+    // Advance sequence frames for manual, automatic and steady evaluations
+    if (evaluationType == EvaluationType::Manual || evaluationType == EvaluationType::Automatic || evaluationType == EvaluationType::Steady) {
+        mModel.forEachItem<Texture>([&](const Texture &texture) {
+            if (texture.isSequence) {
+                auto &mutableTexture = const_cast<Texture&>(texture);
+
+                // Advance zero-based frame index
+                mutableTexture.currentFrame++;
+
+                // Calculate max zero-based index (frameEnd - frameStart)
+                int maxFrameIndex = texture.frameEnd - texture.frameStart;
+
+                if (mutableTexture.currentFrame > maxFrameIndex) {
+                    if (texture.loopSequence) {
+                        mutableTexture.currentFrame = 0;  // Reset to zero index
+                    } else {
+                        mutableTexture.currentFrame = maxFrameIndex;  // Clamp to last zero-based index
+                    }
+                }
+            }
+        });
+    }
+
 
     Singletons::fileCache().updateFromEditors();
     const auto itemsChanged = std::exchange(mRenderSessionInvalidated, false);
     initializeRenderSession();
     mRenderSession->update(itemsChanged, evaluationType);
+
+    // No frame state restoration needed
+
+    // Notify texture editors about evaluation updates
+    Q_EMIT evaluationUpdated();
 }
 
 void SynchronizeLogic::updateEditors()
