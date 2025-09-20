@@ -597,6 +597,17 @@ void PropertiesEditor::saveCurrentItemFileAs(FileDialog::Options options)
     const auto prevFileName = currentItemFileName();
     auto fileName = prevFileName;
 
+    // For sequence textures, suggest frame-specific filename in save dialog
+    if (auto texture = model().item<Texture>(currentModelIndex())) {
+        if (texture->isSequence) {
+            // Generate frame-specific filename suggestion
+            fileName = Singletons::fileCache().buildSequenceFileName(
+                texture->fileName,
+                texture->sequencePattern,
+                texture->frameStart + texture->currentFrame);
+        }
+    }
+
     switchToCurrentFileItemDirectory();
     while (Singletons::fileDialog().exec(options, fileName)) {
         fileName = Singletons::fileDialog().fileName();

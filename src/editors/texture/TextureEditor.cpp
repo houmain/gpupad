@@ -285,7 +285,21 @@ int TextureEditor::tabifyGroup() const
 
 bool TextureEditor::save()
 {
-    if (!mTexture.save(fileName(), !mTextureItem->flipVertically()))
+    QString saveFileName = fileName();
+
+    // Check if this is a sequence texture and resolve frame-specific filename
+    auto &model = Singletons::sessionModel();
+    model.forEachItem<Texture>([&](const Texture &texture) {
+        if (texture.isSequence && texture.fileName == mFileName) {
+            // Generate frame-specific filename for save (like load does)
+            saveFileName = Singletons::fileCache().buildSequenceFileName(
+                texture.fileName,
+                texture.sequencePattern,
+                texture.frameStart + texture.currentFrame);
+        }
+    });
+
+    if (!mTexture.save(saveFileName, !mTextureItem->flipVertically()))
         return false;
 
     setModified(false);
