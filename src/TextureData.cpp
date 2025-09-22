@@ -956,7 +956,16 @@ bool TextureData::saveOpenImageIO(const QString &fileName,
         return false;
 
     const auto channelCount = getTextureComponentCount(format());
-    const auto spec = ImageSpec(width(), height(), channelCount, typeDesc);
+    auto spec = ImageSpec(width(), height(), channelCount, typeDesc);
+
+    // TODO: Expose in Preferences UI
+    spec.attribute("Compression", "jpeg:98");
+    spec.attribute("pnm:binary", 1);
+    spec.attribute("pnm:pfmflip", 0);
+    spec.attribute("oiio:UnassociatedAlpha", 1);
+    spec.attribute("jpeg:subsampling", "4:4:4");
+    spec.attribute("png:compressionLevel", 4);
+
     if (!output->open(fileName.toStdWString(), spec))
         return false;
     if (!output->write_image(typeDesc, getData(0, 0, 0)))
