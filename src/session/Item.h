@@ -93,6 +93,7 @@ struct Texture : FileItem
     QString layers{ "1" };
     int samples{ 1 };
     bool flipVertically{};
+    bool autoSave{};
 
     // Image sequence support
     bool isSequence{};

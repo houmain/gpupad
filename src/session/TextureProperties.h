@@ -36,6 +36,7 @@ private:
     void updateSequenceVisibility();
     void updateCurrentFrameLabel();
     void updateUsageLabel();
+    void updateAutoSaveState();
 
     PropertiesEditor &mPropertiesEditor;
     Ui::TextureProperties *mUi;

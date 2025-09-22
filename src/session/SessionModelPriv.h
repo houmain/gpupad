@@ -33,6 +33,7 @@
     ADD(TextureLayers, Texture, layers)                                       \
     ADD(TextureSamples, Texture, samples)                                     \
     ADD(TextureFlipVertically, Texture, flipVertically)                       \
+    ADD(TextureAutoSave, Texture, autoSave)                                   \
     ADD(TextureIsSequence, Texture, isSequence)                               \
     ADD(TextureSequencePattern, Texture, sequencePattern)                     \
     ADD(TextureFrameStart, Texture, frameStart)                               \

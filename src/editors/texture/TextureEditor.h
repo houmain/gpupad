@@ -48,6 +48,7 @@ public:
     const TextureData &texture() const { return mTexture; }
     void connectToEvaluationSystem();
     void handleEvaluationUpdate();
+    void autoSave();
 
 Q_SIGNALS:
     void modificationChanged(bool modified);

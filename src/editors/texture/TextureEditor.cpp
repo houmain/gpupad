@@ -17,6 +17,9 @@
 #include <QAction>
 #include <QApplication>
 #include <QClipboard>
+#include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
 #include <QMatrix4x4>
 #include <QMimeData>
 #include <QScrollBar>
@@ -299,6 +302,7 @@ bool TextureEditor::save()
         }
     });
 
+    qDebug() << "Saving texture to:" << saveFileName;
     if (!mTexture.save(saveFileName, !mTextureItem->flipVertically()))
         return false;
 
@@ -651,15 +655,17 @@ void TextureEditor::connectToEvaluationSystem()
 
 void TextureEditor::handleEvaluationUpdate()
 {
-    // Check if this texture editor is displaying a sequence texture
+    // Check if this texture editor is displaying a sequence texture or auto-save texture
     auto &model = Singletons::sessionModel();
     bool isSequenceTexture = false;
+    bool shouldAutoSave = false;
 
     model.forEachItem([&](const Item &item) {
         if (item.type == Item::Type::Texture) {
             const auto &textureItem = static_cast<const Texture&>(item);
+
+            // Check for sequence textures
             if (textureItem.isSequence) {
-                // Check if our mFileName matches any frame in this sequence
                 QString expectedFrame = Singletons::fileCache().buildSequenceFileName(
                     textureItem.fileName,
                     textureItem.sequencePattern,
@@ -668,6 +674,12 @@ void TextureEditor::handleEvaluationUpdate()
                 if (expectedFrame == mFileName || textureItem.fileName == mFileName) {
                     isSequenceTexture = true;
                 }
+            }
+
+            // Check for auto-save textures (single textures with auto-save enabled)
+            if (!textureItem.isSequence && textureItem.autoSave &&
+                textureItem.fileName == mFileName) {
+                shouldAutoSave = true;
             }
         }
     });
@@ -680,5 +692,51 @@ void TextureEditor::handleEvaluationUpdate()
         }
         // Force a viewport update regardless, in case the texture comparison failed to detect changes
         viewport()->update();
+    }
+
+    if (shouldAutoSave) {
+        // Auto-save single textures
+        autoSave();
+    }
+}
+
+void TextureEditor::autoSave()
+{
+    // Generate auto-save filename based on current texture
+    auto &model = Singletons::sessionModel();
+    QString autoSaveFileName;
+
+    model.forEachItem([&](const Item &item) {
+        if (item.type == Item::Type::Texture) {
+            const auto &textureItem = static_cast<const Texture&>(item);
+            if (textureItem.fileName == mFileName && textureItem.autoSave) {
+                // Generate timestamp filename
+                QFileInfo fileInfo(textureItem.fileName);
+                QString baseName = fileInfo.completeBaseName();
+                QString extension = fileInfo.suffix();
+                QString dirPath = fileInfo.absolutePath();
+
+                // Generate timestamp: YYYYMMDDSS:sss (SS=seconds, sss=milliseconds)
+                QDateTime now = QDateTime::currentDateTime();
+                QString timestamp = now.toString("yyyyMMddhhmmss");
+                int milliseconds = now.time().msec();
+                QString timestampWithMs = QString("%1%2").arg(timestamp).arg(milliseconds, 3, 10, QChar('0'));
+
+                // Create filename: FileName-YYYYMMDDSSsss.ext
+                QString autoSaveFileNameOnly = QString("%1-%2.%3")
+                                               .arg(baseName)
+                                               .arg(timestampWithMs)
+                                               .arg(extension);
+
+                // Return full path
+                autoSaveFileName = QDir(dirPath).filePath(autoSaveFileNameOnly);
+            }
+        }
+    });
+
+    if (!autoSaveFileName.isEmpty()) {
+        // Save texture to auto-save filename
+        qDebug() << "Auto-saving texture to:" << autoSaveFileName;
+        mTexture.save(autoSaveFileName, !mTextureItem->flipVertically());
     }
 }

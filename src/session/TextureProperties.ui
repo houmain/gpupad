@@ -102,6 +102,35 @@
       </widget>
      </item>
      <item row="2" column="0">
+      <widget class="QLabel" name="labelAutoSave">
+       <property name="text">
+        <string>Auto Save</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QCheckBox" name="autoSave">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>On every evaluation</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
       <widget class="QLabel" name="labelSequence">
        <property name="text">
         <string>Sequence</string>
@@ -111,7 +140,7 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="3" column="1">
       <widget class="QCheckBox" name="isSequence">
        <property name="minimumSize">
         <size>
@@ -124,28 +153,28 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="labelPattern">
        <property name="text">
         <string>Pattern</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="4" column="1">
       <widget class="QLineEdit" name="sequencePattern">
        <property name="text">
         <string>%06d</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="labelFrameRange">
        <property name="text">
         <string>Frames</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="5" column="1">
       <widget class="QWidget" name="widgetFrameRange" native="true">
        <layout class="QHBoxLayout" name="horizontalLayoutFrames">
         <property name="spacing">
@@ -228,7 +257,7 @@
        </layout>
       </widget>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="labelLoop">
        <property name="text">
         <string>Loop</string>
@@ -238,7 +267,7 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <widget class="QCheckBox" name="loopSequence">
        <property name="minimumSize">
         <size>
@@ -254,7 +283,7 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="labelTarget">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
@@ -267,70 +296,70 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <widget class="DataComboBox" name="target"/>
      </item>
-     <item row="7" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="labelFormat">
        <property name="text">
         <string>Format</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="8" column="1">
       <widget class="DataComboBox" name="formatType"/>
      </item>
-     <item row="8" column="1">
+     <item row="9" column="1">
       <widget class="DataComboBox" name="formatData"/>
      </item>
-     <item row="9" column="0">
+     <item row="10" column="0">
       <widget class="QLabel" name="labelWidth">
        <property name="text">
         <string>Width</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
+     <item row="10" column="1">
       <widget class="ExpressionLineEdit" name="width"/>
      </item>
-     <item row="10" column="0">
+     <item row="11" column="0">
       <widget class="QLabel" name="labelHeight">
        <property name="text">
         <string>Height</string>
        </property>
       </widget>
      </item>
-     <item row="10" column="1">
+     <item row="11" column="1">
       <widget class="ExpressionLineEdit" name="height"/>
      </item>
-     <item row="11" column="0">
+     <item row="12" column="0">
       <widget class="QLabel" name="labelDepth">
        <property name="text">
         <string>Depth</string>
        </property>
       </widget>
      </item>
-     <item row="11" column="1">
+     <item row="12" column="1">
       <widget class="ExpressionLineEdit" name="depth"/>
      </item>
-     <item row="12" column="0">
+     <item row="13" column="0">
       <widget class="QLabel" name="labelLayers">
        <property name="text">
         <string>Layers</string>
        </property>
       </widget>
      </item>
-     <item row="12" column="1">
+     <item row="13" column="1">
       <widget class="ExpressionLineEdit" name="layers"/>
      </item>
-     <item row="13" column="0">
+     <item row="14" column="0">
       <widget class="QLabel" name="labelSamples">
        <property name="text">
         <string>Samples</string>
        </property>
       </widget>
      </item>
-     <item row="13" column="1">
+     <item row="14" column="1">
       <widget class="QComboBox" name="samples">
        <item>
         <property name="text">
@@ -369,7 +398,7 @@
        </item>
       </widget>
      </item>
-     <item row="14" column="0">
+     <item row="15" column="0">
       <widget class="QLabel" name="labelFlipVertically">
        <property name="text">
         <string>Flip Vert.</string>
@@ -382,7 +411,7 @@
        </property>
       </widget>
      </item>
-     <item row="14" column="1">
+     <item row="15" column="1">
       <widget class="QCheckBox" name="flipVertically">
        <property name="minimumSize">
         <size>

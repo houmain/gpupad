@@ -8,6 +8,10 @@
 #include "ui_TextureProperties.h"
 #include <QDataWidgetMapper>
 #include <QDebug>
+#include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
+#include <QMessageBox>
 
 namespace {
     enum class TextureUsageType {
@@ -48,6 +52,28 @@ namespace {
             case TextureUsageType::Unassigned: return "Unassigned texture";
         }
         return "Unknown";
+    }
+
+    QString generateAutoSaveFileName(const QString &originalFilePath) {
+        QFileInfo fileInfo(originalFilePath);
+        QString baseName = fileInfo.completeBaseName();
+        QString extension = fileInfo.suffix();
+        QString dirPath = fileInfo.absolutePath();
+
+        // Generate timestamp: YYYYMMDDSS:sss (SS=seconds, sss=milliseconds)
+        QDateTime now = QDateTime::currentDateTime();
+        QString timestamp = now.toString("yyyyMMddhhmmss");
+        int milliseconds = now.time().msec();
+        QString timestampWithMs = QString("%1%2").arg(timestamp).arg(milliseconds, 3, 10, QChar('0'));
+
+        // Create filename: FileName-YYYYMMDDSSsss.ext
+        QString autoSaveFileName = QString("%1-%2.%3")
+                                   .arg(baseName)
+                                   .arg(timestampWithMs)
+                                   .arg(extension);
+
+        // Return full path
+        return QDir(dirPath).filePath(autoSaveFileName);
     }
 
     enum FormatType {
@@ -367,6 +393,57 @@ TextureProperties::TextureProperties(PropertiesEditor *propertiesEditor)
     connect(mUi->file, &ReferenceComboBox::currentDataChanged,
         this, &TextureProperties::updateUsageLabel);
 
+    // Connect auto save state updates
+    connect(&Singletons::sessionModel(), &SessionModel::dataChanged,
+        this, &TextureProperties::updateAutoSaveState);
+    connect(mUi->file, &ReferenceComboBox::currentDataChanged,
+        this, &TextureProperties::updateAutoSaveState);
+
+    // Connect auto save warning (only for user-initiated changes)
+    connect(mUi->autoSave, &QCheckBox::clicked, this, [this](bool enabled) {
+        if (enabled) {
+            auto index = mPropertiesEditor.currentModelIndex();
+            if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+                QString fileName = texture->fileName;
+                QFileInfo fileInfo(fileName);
+                QString baseName = fileInfo.completeBaseName();
+                QString extension = fileInfo.suffix();
+                QString dirPath = fileInfo.absolutePath();
+
+                // Check if the directory exists
+                QDir dir(dirPath);
+                if (!dir.exists()) {
+                    QMessageBox msgBox(this);
+                    msgBox.setWindowTitle("Warning!");
+                    msgBox.setText("Directory does not exist");
+                    msgBox.setInformativeText(QString("The directory '%1' does not exist.\n\nAuto-save cannot be enabled.")
+                                             .arg(dirPath));
+                    msgBox.setStandardButtons(QMessageBox::Ok);
+                    msgBox.setIcon(QMessageBox::Warning);
+                    msgBox.exec();
+
+                    // Uncheck the checkbox since the directory doesn't exist
+                    mUi->autoSave->setChecked(false);
+                    return;
+                }
+
+                // Create example filename with literal timestamp string
+                QString exampleFileName = QString("%1-YYYYMMDDSSsss.%2")
+                                         .arg(baseName)
+                                         .arg(extension);
+
+                QMessageBox msgBox(this);
+                msgBox.setWindowTitle("Warning!");
+                msgBox.setText("File will be auto-saved on every evaluation");
+                msgBox.setInformativeText(QString("File will be saved as\n%1\n\nAuto-save disabled after restart")
+                                         .arg(exampleFileName));
+                msgBox.setStandardButtons(QMessageBox::Ok);
+                msgBox.setIcon(QMessageBox::Warning);
+                msgBox.exec();
+            }
+        }
+    });
+
     fillComboBox<QOpenGLTexture::Target>(mUi->target,
         {
             { "1D Texture", QOpenGLTexture::Target1D },
@@ -437,6 +514,7 @@ void TextureProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->layers, SessionModel::TextureLayers);
     mapper.addMapping(mUi->samples, SessionModel::TextureSamples);
     mapper.addMapping(mUi->flipVertically, SessionModel::TextureFlipVertically);
+    mapper.addMapping(mUi->autoSave, SessionModel::TextureAutoSave);
     mapper.addMapping(mUi->isSequence, SessionModel::TextureIsSequence);
     mapper.addMapping(mUi->sequencePattern, SessionModel::TextureSequencePattern);
     mapper.addMapping(mUi->frameStart, SessionModel::TextureFrameStart);
@@ -478,6 +556,7 @@ void TextureProperties::updateWidgets()
 
     updateCurrentFrameLabel();
     updateUsageLabel();
+    updateAutoSaveState();
 }
 
 void TextureProperties::updateFormatDataWidget(QVariant formatType)
@@ -621,5 +700,24 @@ void TextureProperties::updateUsageLabel()
         QString usageText = getTextureUsageString(usageType);
 
         mUi->usageLabel->setText(usageText);
+    }
+}
+
+void TextureProperties::updateAutoSaveState()
+{
+    auto index = mPropertiesEditor.currentModelIndex();
+    if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+        auto usageType = getTextureUsageType(texture->id, mPropertiesEditor.model());
+        bool hasFilePath = !texture->fileName.isEmpty();
+        bool isTargetTexture = (usageType == TextureUsageType::TargetTexture);
+
+        // Enable Auto Save only for Target textures with file path
+        bool shouldEnable = isTargetTexture && hasFilePath;
+        mUi->autoSave->setEnabled(shouldEnable);
+
+        // If not enabled, uncheck it
+        if (!shouldEnable && mUi->autoSave->isChecked()) {
+            mUi->autoSave->setChecked(false);
+        }
     }
 }

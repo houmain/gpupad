@@ -39,6 +39,7 @@ public:
         TextureLayers,
         TextureSamples,
         TextureFlipVertically,
+        TextureAutoSave,
         TextureIsSequence,
         TextureSequencePattern,
         TextureFrameStart,
