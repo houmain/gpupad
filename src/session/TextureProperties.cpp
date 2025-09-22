@@ -10,6 +10,46 @@
 #include <QDebug>
 
 namespace {
+    enum class TextureUsageType {
+        Unassigned,   // No file path, not assigned to target
+        LoadTexture,  // Has file path but not assigned to target
+        TargetTexture // Assigned to any target attachment
+    };
+
+    TextureUsageType getTextureUsageType(ItemId textureId, const SessionModel &model) {
+        bool hasFilePath = false;
+        bool isAssignedToTarget = false;
+
+        // Check if texture has a file path
+        if (auto texture = model.findItem<Texture>(textureId)) {
+            hasFilePath = !texture->fileName.isEmpty();
+        }
+
+        // Check if texture is assigned to any target attachment
+        model.forEachItem<Attachment>([&](const Attachment &attachment) {
+            if (attachment.textureId == textureId) {
+                isAssignedToTarget = true;
+            }
+        });
+
+        if (isAssignedToTarget) {
+            return TextureUsageType::TargetTexture;
+        } else if (hasFilePath) {
+            return TextureUsageType::LoadTexture;
+        } else {
+            return TextureUsageType::Unassigned;
+        }
+    }
+
+    QString getTextureUsageString(TextureUsageType usageType) {
+        switch (usageType) {
+            case TextureUsageType::TargetTexture: return "Target texture";
+            case TextureUsageType::LoadTexture: return "Load texture";
+            case TextureUsageType::Unassigned: return "Unassigned texture";
+        }
+        return "Unknown";
+    }
+
     enum FormatType {
         R,
         RG,
@@ -321,6 +361,12 @@ TextureProperties::TextureProperties(PropertiesEditor *propertiesEditor)
     connect(&Singletons::synchronizeLogic(), &SynchronizeLogic::evaluationUpdated,
         this, &TextureProperties::updateCurrentFrameLabel);
 
+    // Connect usage label updates
+    connect(&Singletons::sessionModel(), &SessionModel::dataChanged,
+        this, &TextureProperties::updateUsageLabel);
+    connect(mUi->file, &ReferenceComboBox::currentDataChanged,
+        this, &TextureProperties::updateUsageLabel);
+
     fillComboBox<QOpenGLTexture::Target>(mUi->target,
         {
             { "1D Texture", QOpenGLTexture::Target1D },
@@ -350,6 +396,7 @@ TextureProperties::TextureProperties(PropertiesEditor *propertiesEditor)
         });
 
     updateWidgets();
+    updateUsageLabel();
 }
 
 TextureProperties::~TextureProperties()
@@ -430,6 +477,7 @@ void TextureProperties::updateWidgets()
             && (kind.dimensions == 2 || kind.cubeMap));
 
     updateCurrentFrameLabel();
+    updateUsageLabel();
 }
 
 void TextureProperties::updateFormatDataWidget(QVariant formatType)
@@ -562,5 +610,16 @@ void TextureProperties::updateCurrentFrameLabel()
         } else {
             mUi->currentFrameLabel->setText("1");
         }
+    }
+}
+
+void TextureProperties::updateUsageLabel()
+{
+    auto index = mPropertiesEditor.currentModelIndex();
+    if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+        auto usageType = getTextureUsageType(texture->id, mPropertiesEditor.model());
+        QString usageText = getTextureUsageString(usageType);
+
+        mUi->usageLabel->setText(usageText);
     }
 }

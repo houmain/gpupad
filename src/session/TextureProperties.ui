@@ -22,14 +22,30 @@
      <property name="verticalSpacing">
       <number>2</number>
      </property>
-     <item row="0" column="0">
+     <item row="0" column="0" colspan="2">
+      <widget class="QLabel" name="usageLabel">
+       <property name="text">
+        <string>Unassigned texture</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignmentFlag::AlignCenter</set>
+       </property>
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
       <widget class="QLabel" name="labelFile">
        <property name="text">
         <string>File</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item row="1" column="1">
       <widget class="QWidget" name="widgetFile" native="true">
        <layout class="QHBoxLayout" name="horizontalLayout_7">
         <property name="spacing">
@@ -85,7 +101,7 @@
        </layout>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <widget class="QLabel" name="labelSequence">
        <property name="text">
         <string>Sequence</string>
@@ -95,7 +111,7 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="2" column="1">
       <widget class="QCheckBox" name="isSequence">
        <property name="minimumSize">
         <size>
@@ -108,28 +124,28 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="labelPattern">
        <property name="text">
         <string>Pattern</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="3" column="1">
       <widget class="QLineEdit" name="sequencePattern">
        <property name="text">
         <string>%06d</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="labelFrameRange">
        <property name="text">
         <string>Frames</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="4" column="1">
       <widget class="QWidget" name="widgetFrameRange" native="true">
        <layout class="QHBoxLayout" name="horizontalLayoutFrames">
         <property name="spacing">
@@ -212,7 +228,7 @@
        </layout>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="labelLoop">
        <property name="text">
         <string>Loop</string>
@@ -222,7 +238,7 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="5" column="1">
       <widget class="QCheckBox" name="loopSequence">
        <property name="minimumSize">
         <size>
@@ -238,7 +254,7 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="labelTarget">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
@@ -251,70 +267,70 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <widget class="DataComboBox" name="target"/>
      </item>
-     <item row="6" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="labelFormat">
        <property name="text">
         <string>Format</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <widget class="DataComboBox" name="formatType"/>
      </item>
-     <item row="7" column="1">
+     <item row="8" column="1">
       <widget class="DataComboBox" name="formatData"/>
      </item>
-     <item row="8" column="0">
+     <item row="9" column="0">
       <widget class="QLabel" name="labelWidth">
        <property name="text">
         <string>Width</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
+     <item row="9" column="1">
       <widget class="ExpressionLineEdit" name="width"/>
      </item>
-     <item row="9" column="0">
+     <item row="10" column="0">
       <widget class="QLabel" name="labelHeight">
        <property name="text">
         <string>Height</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
+     <item row="10" column="1">
       <widget class="ExpressionLineEdit" name="height"/>
      </item>
-     <item row="10" column="0">
+     <item row="11" column="0">
       <widget class="QLabel" name="labelDepth">
        <property name="text">
         <string>Depth</string>
        </property>
       </widget>
      </item>
-     <item row="10" column="1">
+     <item row="11" column="1">
       <widget class="ExpressionLineEdit" name="depth"/>
      </item>
-     <item row="11" column="0">
+     <item row="12" column="0">
       <widget class="QLabel" name="labelLayers">
        <property name="text">
         <string>Layers</string>
        </property>
       </widget>
      </item>
-     <item row="11" column="1">
+     <item row="12" column="1">
       <widget class="ExpressionLineEdit" name="layers"/>
      </item>
-     <item row="12" column="0">
+     <item row="13" column="0">
       <widget class="QLabel" name="labelSamples">
        <property name="text">
         <string>Samples</string>
        </property>
       </widget>
      </item>
-     <item row="12" column="1">
+     <item row="13" column="1">
       <widget class="QComboBox" name="samples">
        <item>
         <property name="text">
@@ -353,7 +369,7 @@
        </item>
       </widget>
      </item>
-     <item row="13" column="0">
+     <item row="14" column="0">
       <widget class="QLabel" name="labelFlipVertically">
        <property name="text">
         <string>Flip Vert.</string>
@@ -366,7 +382,7 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="1">
+     <item row="14" column="1">
       <widget class="QCheckBox" name="flipVertically">
        <property name="minimumSize">
         <size>
