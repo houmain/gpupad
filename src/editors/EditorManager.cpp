@@ -3,6 +3,7 @@
 #include "FileDialog.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
+#include "../session/SessionModel.h"
 #include "binary/BinaryEditor.h"
 #include "binary/BinaryEditorToolBar.h"
 #include "qml/QmlView.h"
@@ -406,9 +407,14 @@ BinaryEditor *EditorManager::getBinaryEditor(const QString &fileName)
 
 TextureEditor *EditorManager::getTextureEditor(const QString &fileName)
 {
-    for (TextureEditor *editor : std::as_const(mTextureEditors))
-        if (editor->fileName() == fileName)
+    // Get the editor key for this fileName
+    QString editorKey = getTextureEditorKey(fileName);
+
+    for (TextureEditor *editor : std::as_const(mTextureEditors)) {
+        QString existingKey = getTextureEditorKey(editor->fileName());
+        if (existingKey == editorKey)
             return editor;
+    }
     return nullptr;
 }
 
@@ -726,9 +732,42 @@ void EditorManager::handleEditorFilenameChanged(QDockWidget *dock)
 void EditorManager::setDockWindowTitle(QDockWidget *dock,
     const QString &fileName)
 {
-    dock->setWindowTitle(FileDialog::getWindowTitle(fileName));
+    QString displayFileName = fileName;
+
+    // For textures, show baseName for display (baseName = fileName for single textures, baseName for sequences)
+    auto &model = Singletons::sessionModel();
+    model.forEachItem([&](const Item &item) {
+        if (auto texture = castItem<Texture>(&item)) {
+            if (texture->fileName == fileName && !texture->baseName.isEmpty()) {
+                displayFileName = texture->baseName;
+                return false; // stop iteration
+            }
+        }
+        return true; // continue iteration
+    });
+
+    dock->setWindowTitle(FileDialog::getWindowTitle(displayFileName));
     if (!FileDialog::isEmptyOrUntitled(fileName))
         dock->setStatusTip(fileName);
+}
+
+QString EditorManager::getTextureEditorKey(const QString &fileName) const
+{
+    // Always use baseName as editor key (baseName = fileName for single textures, baseName for sequences)
+    auto &model = Singletons::sessionModel();
+    QString editorKey = fileName; // fallback if texture not found
+
+    model.forEachItem([&](const Item &item) {
+        if (auto texture = castItem<Texture>(&item)) {
+            if (texture->fileName == fileName && !texture->baseName.isEmpty()) {
+                editorKey = texture->baseName;
+                return false; // stop iteration
+            }
+        }
+        return true; // continue iteration
+    });
+
+    return editorKey;
 }
 
 bool EditorManager::saveDock(QDockWidget *dock)

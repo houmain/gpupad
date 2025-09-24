@@ -112,6 +112,7 @@ private:
     void clearNavigationStack();
     void addNavigationPosition(const QString &position, bool update);
     bool restoreNavigationPosition(int index);
+    QString getTextureEditorKey(const QString &fileName) const;
 
     QList<SourceEditor *> mSourceEditors;
     QList<BinaryEditor *> mBinaryEditors;

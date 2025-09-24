@@ -597,6 +597,8 @@ void PropertiesEditor::saveCurrentItemFileAs(FileDialog::Options options)
     const auto prevFileName = currentItemFileName();
     auto fileName = prevFileName;
 
+    // fileName already contains the correct path for both single and sequence textures
+
     switchToCurrentFileItemDirectory();
     while (Singletons::fileDialog().exec(options, fileName)) {
         fileName = Singletons::fileDialog().fileName();

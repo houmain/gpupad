@@ -367,7 +367,8 @@ void GLRenderSession::buildCommandQueue()
 
 void GLRenderSession::render()
 {
-    if (mItemsChanged || mEvaluationType == EvaluationType::Reset) {
+    if (mItemsChanged || mEvaluationType == EvaluationType::Reset ||
+        mEvaluationType == EvaluationType::Manual || mEvaluationType == EvaluationType::Steady) {
         createCommandQueue();
         buildCommandQueue();
     }

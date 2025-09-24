@@ -2,13 +2,82 @@
 #include "FileCache.h"
 #include "PropertiesEditor.h"
 #include "Singletons.h"
+#include "SynchronizeLogic.h"
 #include "editors/EditorManager.h"
 #include "session/SessionModel.h"
 #include "ui_TextureProperties.h"
 #include <QDataWidgetMapper>
 #include <QDebug>
+#include <QTimer>
+#include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
+#include <QMessageBox>
 
 namespace {
+    enum class TextureUsageType {
+        Unassigned,   // No file path, not assigned to target
+        LoadTexture,  // Has file path but not assigned to target
+        TargetTexture // Assigned to any target attachment
+    };
+
+
+    TextureUsageType getTextureUsageType(ItemId textureId, const SessionModel &model) {
+        bool hasFilePath = false;
+        bool isAssignedToTarget = false;
+
+        // Check if texture has a file path
+        if (auto texture = model.findItem<Texture>(textureId)) {
+            hasFilePath = !texture->fileName.isEmpty();
+        }
+
+        // Check if texture is assigned to any target attachment
+        model.forEachItem<Attachment>([&](const Attachment &attachment) {
+            if (attachment.textureId == textureId) {
+                isAssignedToTarget = true;
+            }
+        });
+
+        if (isAssignedToTarget) {
+            return TextureUsageType::TargetTexture;
+        } else if (hasFilePath) {
+            return TextureUsageType::LoadTexture;
+        } else {
+            return TextureUsageType::Unassigned;
+        }
+    }
+
+    QString getTextureUsageString(TextureUsageType usageType) {
+        switch (usageType) {
+            case TextureUsageType::TargetTexture: return "Target texture";
+            case TextureUsageType::LoadTexture: return "Load texture";
+            case TextureUsageType::Unassigned: return "Unassigned texture";
+        }
+        return "Unknown";
+    }
+
+    QString generateAutoSaveFileName(const QString &originalFilePath) {
+        QFileInfo fileInfo(originalFilePath);
+        QString baseName = fileInfo.completeBaseName();
+        QString extension = fileInfo.suffix();
+        QString dirPath = fileInfo.absolutePath();
+
+        // Generate timestamp: YYYYMMDDSS:sss (SS=seconds, sss=milliseconds)
+        QDateTime now = QDateTime::currentDateTime();
+        QString timestamp = now.toString("yyyyMMddhhmmss");
+        int milliseconds = now.time().msec();
+        QString timestampWithMs = QString("%1%2").arg(timestamp).arg(milliseconds, 3, 10, QChar('0'));
+
+        // Create filename: FileName-YYYYMMDDSSsss.ext
+        QString autoSaveFileName = QString("%1-%2.%3")
+                                   .arg(baseName)
+                                   .arg(timestampWithMs)
+                                   .arg(extension);
+
+        // Return full path
+        return QDir(dirPath).filePath(autoSaveFileName);
+    }
+
     enum FormatType {
         R,
         RG,
@@ -270,14 +339,60 @@ TextureProperties::TextureProperties(PropertiesEditor *propertiesEditor)
         mPropertiesEditor.saveCurrentItemFileAs(FileDialog::TextureExtensions);
     });
     connect(mUi->fileBrowse, &QToolButton::clicked, [this]() {
-        mPropertiesEditor.openCurrentItemFile(FileDialog::TextureExtensions);
+        auto index = mPropertiesEditor.currentModelIndex();
+        bool wasSequence = false;
+        if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+            wasSequence = texture->isSequence;
+            qDebug() << "FileBrowse: wasSequence=" << wasSequence << "baseName=" << texture->baseName;
+        }
+
+        if (mPropertiesEditor.openCurrentItemFile(FileDialog::TextureExtensions)) {
+            qDebug() << "FileBrowse: File opened successfully";
+            // If this was a sequence, we need to update baseName to the new file path
+            if (wasSequence) {
+                qDebug() << "FileBrowse: Handling sequence update";
+                // Refresh the index to get updated data
+                index = mPropertiesEditor.currentModelIndex();
+                if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+                    // Update baseName to the newly loaded file path
+                    qDebug() << "Updating baseName from" << texture->baseName << "to" << texture->fileName;
+                    mPropertiesEditor.model().setData(
+                        mPropertiesEditor.model().getIndex(index, SessionModel::TextureBaseName),
+                        texture->fileName);
+                    // Now update the fileName to the correct sequence frame
+                    updateFileNameForSequence();
+                    // Force render system to refresh with updated fileName
+                    Singletons::synchronizeLogic().automaticEvaluation();
+                }
+            } else {
+                qDebug() << "FileBrowse: Not a sequence, skipping baseName update";
+            }
+        } else {
+            qDebug() << "FileBrowse: File open failed or cancelled";
+        }
         updateWidgets();
         applyFileFormat();
     });
     connect(mUi->file, qOverload<int>(&ReferenceComboBox::activated), this,
         &TextureProperties::applyFileFormat);
     connect(mUi->file, &ReferenceComboBox::textRequired,
-        [](auto data) { return FileDialog::getFileTitle(data.toString()); });
+        [this](auto data) {
+            QString displayFileName = data.toString();
+
+            // Show the logical filename for user display
+            auto index = mPropertiesEditor.currentModelIndex();
+            if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+                if (texture->fileName == displayFileName) {
+                    if (texture->isSequence && !texture->baseName.isEmpty()) {
+                        // Sequence mode: show baseName (e.g., "sequence.jpg")
+                        displayFileName = texture->baseName;
+                    }
+                    // Single frame mode: use fileName as-is
+                }
+            }
+
+            return FileDialog::getFileTitle(displayFileName);
+        });
     connect(mUi->file, &ReferenceComboBox::listRequired, [this]() {
         return mPropertiesEditor.getFileNames(Item::Type::Texture, true);
     });
@@ -290,6 +405,131 @@ TextureProperties::TextureProperties(PropertiesEditor *propertiesEditor)
         &TextureProperties::updateFormatDataWidget);
     connect(mUi->formatData, &DataComboBox::currentDataChanged, this,
         &TextureProperties::updateFormat);
+
+    // Sequence controls
+    connect(mUi->isSequence, &QCheckBox::toggled, this, [this](bool enabled) {
+        handleSequenceModeChanged(enabled);
+        updateSequenceVisibility();
+    });
+    connect(mUi->frameStart, qOverload<int>(&QSpinBox::valueChanged), this,
+        [this](int value) {
+            qDebug() << "TextureProperties: frameStart valueChanged to" << value;
+            if (value > mUi->frameEnd->value()) {
+                qDebug() << "TextureProperties: Adjusting frameEnd from" << mUi->frameEnd->value() << "to" << value;
+                mUi->frameEnd->setValue(value);
+            }
+            updateCurrentFrameLabel();
+        });
+    connect(mUi->frameEnd, qOverload<int>(&QSpinBox::valueChanged), this,
+        [this](int value) {
+            qDebug() << "TextureProperties: frameEnd valueChanged to" << value;
+            if (value < mUi->frameStart->value()) {
+                qDebug() << "TextureProperties: Adjusting frameStart from" << mUi->frameStart->value() << "to" << value;
+                mUi->frameStart->setValue(value);
+            }
+            updateCurrentFrameLabel();
+        });
+    connect(mUi->frameOffset, qOverload<int>(&QSpinBox::valueChanged), this, [this](int value) {
+        qDebug() << "TextureProperties: frameOffset valueChanged to" << value;
+        updateCurrentFrameLabel();
+        mUi->file->update();
+    });
+
+    // Initially hide sequence controls
+    updateSequenceVisibility();
+
+    // Connect to session model for current frame updates
+    connect(&Singletons::sessionModel(), &SessionModel::dataChanged,
+        this, [this](const QModelIndex &topLeft, const QModelIndex &bottomRight) {
+            updateCurrentFrameLabel();
+
+            // Check if sequence-related fields changed
+            for (int column = topLeft.column(); column <= bottomRight.column(); ++column) {
+                if (column == SessionModel::TextureFrameStart ||
+                    column == SessionModel::TextureFrameEnd ||
+                    column == SessionModel::TextureFrameOffset) {
+                    qDebug() << "TextureProperties: Sequence field changed, column=" << column
+                             << "triggering updateFileNameForSequence";
+                    updateFileNameForSequence();
+                    // Trigger evaluation to update TextureEditor (without advancing currentFrame)
+                    QTimer::singleShot(0, []() {
+                        qDebug() << "TextureProperties: Triggering automaticEvaluation after sequence change";
+                        Singletons::synchronizeLogic().automaticEvaluation();
+                    });
+                    break;
+                }
+            }
+        });
+
+    // Connect to evaluation updates for immediate frame counter updates
+    connect(&Singletons::synchronizeLogic(), &SynchronizeLogic::evaluationUpdated,
+        this, [this]() {
+            updateCurrentFrameLabel();
+            updateFileNameForSequence();
+        });
+
+    // Connect usage label updates
+    connect(&Singletons::sessionModel(), &SessionModel::dataChanged,
+        this, &TextureProperties::updateUsageLabel);
+    connect(mUi->file, &ReferenceComboBox::currentDataChanged,
+        this, &TextureProperties::updateUsageLabel);
+
+    // Connect auto save state updates
+    connect(&Singletons::sessionModel(), &SessionModel::dataChanged,
+        this, &TextureProperties::updateAutoSaveState);
+    connect(mUi->file, &ReferenceComboBox::currentDataChanged,
+        this, &TextureProperties::updateAutoSaveState);
+
+    // Connect sequence state updates
+    connect(&Singletons::sessionModel(), &SessionModel::dataChanged,
+        this, &TextureProperties::updateSequenceState);
+    connect(mUi->file, &ReferenceComboBox::currentDataChanged,
+        this, &TextureProperties::updateSequenceState);
+
+    // Connect auto save warning (only for user-initiated changes)
+    connect(mUi->autoSave, &QCheckBox::clicked, this, [this](bool enabled) {
+        if (enabled) {
+            auto index = mPropertiesEditor.currentModelIndex();
+            if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+                QString fileName = texture->fileName;
+                QFileInfo fileInfo(fileName);
+                QString baseName = fileInfo.completeBaseName();
+                QString extension = fileInfo.suffix();
+                QString dirPath = fileInfo.absolutePath();
+
+                // Check if the directory exists
+                QDir dir(dirPath);
+                if (!dir.exists()) {
+                    QMessageBox msgBox(this);
+                    msgBox.setWindowTitle("Warning!");
+                    msgBox.setText("Directory does not exist");
+                    msgBox.setInformativeText(QString("The directory '%1' does not exist.\n\nAuto-save cannot be enabled.")
+                                             .arg(dirPath));
+                    msgBox.setStandardButtons(QMessageBox::Ok);
+                    msgBox.setIcon(QMessageBox::Warning);
+                    msgBox.exec();
+
+                    // Uncheck the checkbox since the directory doesn't exist
+                    mUi->autoSave->setChecked(false);
+                    return;
+                }
+
+                // Create example filename with literal timestamp string
+                QString exampleFileName = QString("%1-YYYYMMDDSSsss.%2")
+                                         .arg(baseName)
+                                         .arg(extension);
+
+                QMessageBox msgBox(this);
+                msgBox.setWindowTitle("Warning!");
+                msgBox.setText("File will be auto-saved on every evaluation");
+                msgBox.setInformativeText(QString("File will be saved as\n%1\n\nAuto-save disabled after restart")
+                                         .arg(exampleFileName));
+                msgBox.setStandardButtons(QMessageBox::Ok);
+                msgBox.setIcon(QMessageBox::Warning);
+                msgBox.exec();
+            }
+        }
+    });
 
     fillComboBox<QOpenGLTexture::Target>(mUi->target,
         {
@@ -320,6 +560,7 @@ TextureProperties::TextureProperties(PropertiesEditor *propertiesEditor)
         });
 
     updateWidgets();
+    updateUsageLabel();
 }
 
 TextureProperties::~TextureProperties()
@@ -360,6 +601,13 @@ void TextureProperties::addMappings(QDataWidgetMapper &mapper)
     mapper.addMapping(mUi->layers, SessionModel::TextureLayers);
     mapper.addMapping(mUi->samples, SessionModel::TextureSamples);
     mapper.addMapping(mUi->flipVertically, SessionModel::TextureFlipVertically);
+    mapper.addMapping(mUi->autoSave, SessionModel::TextureAutoSave);
+    mapper.addMapping(mUi->isSequence, SessionModel::TextureIsSequence);
+    mapper.addMapping(mUi->sequencePattern, SessionModel::TextureSequencePattern);
+    mapper.addMapping(mUi->frameStart, SessionModel::TextureFrameStart);
+    mapper.addMapping(mUi->frameEnd, SessionModel::TextureFrameEnd);
+    mapper.addMapping(mUi->frameOffset, SessionModel::TextureFrameOffset);
+    mapper.addMapping(mUi->loopSequence, SessionModel::TextureLoopSequence);
 }
 
 void TextureProperties::setFormat(QVariant value)
@@ -393,6 +641,11 @@ void TextureProperties::updateWidgets()
         mUi->flipVertically,
         !FileDialog::isEmptyOrUntitled(fileName)
             && (kind.dimensions == 2 || kind.cubeMap));
+
+    updateCurrentFrameLabel();
+    updateUsageLabel();
+    updateAutoSaveState();
+    updateSequenceState();
 }
 
 void TextureProperties::updateFormatDataWidget(QVariant formatType)
@@ -496,5 +749,140 @@ void TextureProperties::applyFileFormat()
         mUi->height->setText(QString::number(texture.height()));
         mUi->depth->setText(QString::number(texture.depth()));
         mUi->layers->setText(QString::number(texture.layers()));
+    }
+}
+
+void TextureProperties::updateSequenceVisibility()
+{
+    bool isSequenceEnabled = mUi->isSequence->isChecked();
+
+    // Show/hide sequence controls
+    mUi->labelPattern->setVisible(isSequenceEnabled);
+    mUi->sequencePattern->setVisible(isSequenceEnabled);
+    mUi->labelFrameRange->setVisible(isSequenceEnabled);
+    mUi->widgetFrameRange->setVisible(isSequenceEnabled);
+    mUi->labelOffset->setVisible(isSequenceEnabled);
+    mUi->frameOffset->setVisible(isSequenceEnabled);
+    mUi->labelLoop->setVisible(isSequenceEnabled);
+    mUi->loopSequence->setVisible(isSequenceEnabled);
+
+    // Update the current frame label when visibility changes
+    updateCurrentFrameLabel();
+}
+
+void TextureProperties::updateCurrentFrameLabel()
+{
+    auto index = mPropertiesEditor.currentModelIndex();
+    if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+        if (texture->isSequence) {
+            // Show the actual frame number that will be loaded
+            int actualFrameNumber = texture->getActualFrameNumber();
+            mUi->currentFrameLabel->setText(QString::number(actualFrameNumber));
+        } else {
+            mUi->currentFrameLabel->setText("1");
+        }
+    }
+}
+
+void TextureProperties::updateUsageLabel()
+{
+    auto index = mPropertiesEditor.currentModelIndex();
+    if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+        auto usageType = getTextureUsageType(texture->id, mPropertiesEditor.model());
+        QString usageText = getTextureUsageString(usageType);
+
+        mUi->usageLabel->setText(usageText);
+    }
+}
+
+void TextureProperties::updateAutoSaveState()
+{
+    auto index = mPropertiesEditor.currentModelIndex();
+    if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+        auto usageType = getTextureUsageType(texture->id, mPropertiesEditor.model());
+        bool hasFilePath = !texture->fileName.isEmpty();
+        bool isTargetTexture = (usageType == TextureUsageType::TargetTexture);
+
+        // Enable Auto Save only for Target textures with file path
+        bool shouldEnable = isTargetTexture && hasFilePath;
+        mUi->autoSave->setEnabled(shouldEnable);
+
+        // If not enabled, uncheck it
+        if (!shouldEnable && mUi->autoSave->isChecked()) {
+            mUi->autoSave->setChecked(false);
+        }
+    }
+}
+
+void TextureProperties::updateSequenceState()
+{
+    auto index = mPropertiesEditor.currentModelIndex();
+    if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+        auto usageType = getTextureUsageType(texture->id, mPropertiesEditor.model());
+        bool hasFilePath = !texture->fileName.isEmpty();
+        bool isLoadTexture = (usageType == TextureUsageType::LoadTexture);
+
+        // Enable Sequence only for Load textures with file path
+        bool shouldEnable = isLoadTexture && hasFilePath;
+        mUi->isSequence->setEnabled(shouldEnable);
+
+        // If not enabled, uncheck it
+        if (!shouldEnable && mUi->isSequence->isChecked()) {
+            mUi->isSequence->setChecked(false);
+        }
+    }
+}
+
+void TextureProperties::handleSequenceModeChanged(bool enabled)
+{
+    auto index = mPropertiesEditor.currentModelIndex();
+    if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+        if (enabled) {
+            // Switching TO sequence mode
+            if (texture->baseName.isEmpty()) {
+                // Copy fileName to baseName
+                mPropertiesEditor.model().setData(
+                    mPropertiesEditor.model().getIndex(index, SessionModel::TextureBaseName),
+                    texture->fileName);
+            }
+            // Update fileName to actual frame file
+            updateFileNameForSequence();
+        } else {
+            // Switching FROM sequence mode
+            if (!texture->baseName.isEmpty()) {
+                // Copy baseName back to fileName
+                mPropertiesEditor.model().setData(
+                    mPropertiesEditor.model().getIndex(index, SessionModel::FileName),
+                    texture->baseName);
+                // Clear baseName
+                mPropertiesEditor.model().setData(
+                    mPropertiesEditor.model().getIndex(index, SessionModel::TextureBaseName),
+                    QString());
+            }
+        }
+    }
+}
+
+void TextureProperties::updateFileNameForSequence()
+{
+    auto index = mPropertiesEditor.currentModelIndex();
+    if (auto texture = mPropertiesEditor.model().item<Texture>(index)) {
+        if (texture->isSequence && !texture->baseName.isEmpty()) {
+            // Calculate actual frame filename from baseName
+            QString actualFileName = Singletons::fileCache().buildSequenceFileName(
+                texture->baseName,
+                texture->sequencePattern,
+                texture->getActualFrameNumber());
+
+            qDebug() << "updateFileNameForSequence: baseName=" << texture->baseName
+                     << "pattern=" << texture->sequencePattern
+                     << "frame=" << texture->getActualFrameNumber()
+                     << "result=" << actualFileName;
+
+            // Update fileName to the actual frame file
+            mPropertiesEditor.model().setData(
+                mPropertiesEditor.model().getIndex(index, SessionModel::FileName),
+                actualFileName);
+        }
     }
 }

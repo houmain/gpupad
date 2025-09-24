@@ -33,6 +33,13 @@ private:
     void updateFormatDataWidget(QVariant formatType);
     void updateFormat(QVariant formatData);
     void applyFileFormat();
+    void updateSequenceVisibility();
+    void updateCurrentFrameLabel();
+    void updateUsageLabel();
+    void updateAutoSaveState();
+    void updateSequenceState();
+    void handleSequenceModeChanged(bool enabled);
+    void updateFileNameForSequence();
 
     PropertiesEditor &mPropertiesEditor;
     Ui::TextureProperties *mUi;

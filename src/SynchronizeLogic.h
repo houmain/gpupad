@@ -27,6 +27,7 @@ public:
     EvaluationMode evaluationMode() const { return mEvaluationMode; }
     void resetEvaluation();
     void manualEvaluation();
+    void automaticEvaluation();
     bool resetRenderSessionInvalidationState();
     void updateEditor(ItemId itemId, bool activated);
 
@@ -50,6 +51,7 @@ public:
 
 Q_SIGNALS:
     void outputChanged(QVariant output);
+    void evaluationUpdated();
 
 private:
     void invalidateRenderSession();

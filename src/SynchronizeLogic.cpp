@@ -145,6 +145,11 @@ void SynchronizeLogic::manualEvaluation()
     evaluate(EvaluationType::Manual);
 }
 
+void SynchronizeLogic::automaticEvaluation()
+{
+    evaluate(EvaluationType::Automatic);
+}
+
 void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
 {
     if (mEvaluationMode == mode)
@@ -304,7 +309,16 @@ void SynchronizeLogic::handleEditorFileRenamed(const QString &prevFileName,
 void SynchronizeLogic::handleFileItemFileChanged(const FileItem &item)
 {
     // update item name
-    auto name = FileDialog::getFileTitle(item.fileName);
+    QString displayFileName = item.fileName;
+
+    // For textures, use baseName for display (baseName = fileName for single textures, baseName for sequences)
+    if (auto texture = castItem<Texture>(&item)) {
+        if (!texture->baseName.isEmpty()) {
+            displayFileName = texture->baseName;
+        }
+    }
+
+    auto name = FileDialog::getFileTitle(displayFileName);
     if (name.isEmpty()) {
         // only reset to type name when it currently has a filename
         if (FileDialog::getFileExtension(item.name).isEmpty())
@@ -386,10 +400,71 @@ void SynchronizeLogic::handleEvaluateTimout()
 
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
+    // Reset sequence frames when evaluation is reset (F5)
+    if (evaluationType == EvaluationType::Reset) {
+        mModel.forEachItem<Texture>([&](const Texture &texture) {
+            if (texture.isSequence) {
+                const_cast<Texture&>(texture).currentFrame = 0;
+            }
+        });
+    }
+
+    // Advance sequence frames for manual evaluation (F6)
+    if (evaluationType == EvaluationType::Manual) {
+        mModel.forEachItem<Texture>([&](const Texture &texture) {
+            if (texture.isSequence) {
+                auto &mutableTexture = const_cast<Texture&>(texture);
+
+                // Advance zero-based frame index
+                mutableTexture.currentFrame++;
+
+                // Calculate max zero-based index (frameEnd - frameStart)
+                int maxFrameIndex = texture.frameEnd - texture.frameStart;
+
+                if (mutableTexture.currentFrame > maxFrameIndex) {
+                    if (texture.loopSequence) {
+                        mutableTexture.currentFrame = 0;  // Reset to zero index
+                    } else {
+                        mutableTexture.currentFrame = maxFrameIndex;  // Clamp to last zero-based index
+                    }
+                }
+            }
+        });
+    }
+
+    // Advance sequence frames for steady evaluation (F8 auto-advancing)
+    if (evaluationType == EvaluationType::Steady) {
+        mModel.forEachItem<Texture>([&](const Texture &texture) {
+            if (texture.isSequence) {
+                auto &mutableTexture = const_cast<Texture&>(texture);
+
+                // Advance zero-based frame index
+                mutableTexture.currentFrame++;
+
+                // Calculate max zero-based index (frameEnd - frameStart)
+                int maxFrameIndex = texture.frameEnd - texture.frameStart;
+
+                if (mutableTexture.currentFrame > maxFrameIndex) {
+                    if (texture.loopSequence) {
+                        mutableTexture.currentFrame = 0;  // Reset to zero index
+                    } else {
+                        mutableTexture.currentFrame = maxFrameIndex;  // Clamp to last zero-based index
+                    }
+                }
+            }
+        });
+    }
+
+
     Singletons::fileCache().updateFromEditors();
     const auto itemsChanged = std::exchange(mRenderSessionInvalidated, false);
     initializeRenderSession();
     mRenderSession->update(itemsChanged, evaluationType);
+
+    // No frame state restoration needed
+
+    // Notify texture editors about evaluation updates
+    Q_EMIT evaluationUpdated();
 }
 
 void SynchronizeLogic::updateEditors()

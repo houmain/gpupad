@@ -6,6 +6,7 @@
 #include "RenderSessionBase.h"
 #include <cmath>
 
+
 void transformClearColor(std::array<double, 4> &color,
     TextureSampleType sampleType)
 {
@@ -49,6 +50,14 @@ TextureBase::TextureBase(const Texture &texture,
     , mFormat(texture.format)
     , mSamples(texture.samples)
     , mKind(getKind(texture))
+    , mIsSequence(texture.isSequence)
+    , mSequencePattern(texture.sequencePattern)
+    , mFrameStart(texture.frameStart)
+    , mFrameEnd(texture.frameEnd)
+    , mFrameOffset(texture.frameOffset)
+    , mLoopSequence(texture.loopSequence)
+    , mCurrentFrame(texture.currentFrame)
+    , mFrameLoaded(texture.currentFrame > 0)
 {
     renderSession.evaluateTextureProperties(texture, &mWidth, &mHeight, &mDepth,
         &mLayers);
@@ -67,6 +76,13 @@ TextureBase::TextureBase(const Texture &texture,
         mSamples = 1;
 
     mUsedItems += texture.id;
+
+    // Debug: Show sequence mode initialization
+    if (mIsSequence) {
+        mMessages += MessageList::insert(mItemId, MessageType::ScriptMessage,
+            QString("Sequence initialized: pattern='%1', frames %2-%3, loop=%4")
+                .arg(mSequencePattern).arg(mFrameStart).arg(mFrameEnd).arg(mLoopSequence ? "on" : "off"));
+    }
 }
 
 TextureBase::TextureBase(const Buffer &buffer, Texture::Format format,
@@ -88,7 +104,7 @@ bool TextureBase::operator==(const TextureBase &rhs) const
 {
     const auto properties = [](const TextureBase &a) {
         return std::tie(a.mMessages, a.mFileName, a.mFlipVertically, a.mTarget,
-            a.mFormat, a.mWidth, a.mHeight, a.mDepth, a.mLayers, a.mSamples);
+            a.mFormat, a.mWidth, a.mHeight, a.mDepth, a.mLayers, a.mSamples, a.mCurrentFrame);
     };
     return properties(*this) == properties(rhs);
 }
@@ -110,8 +126,14 @@ bool TextureBase::swap(TextureBase &other)
 
 void TextureBase::reload(bool forWriting)
 {
+    // Update sequence frame before loading
+    updateSequenceFrame();
+
     auto fileData = TextureData{};
-    if (Singletons::fileCache().getTexture(mFileName, mFlipVertically,
+    QString actualFileName = resolveCurrentFileName();
+
+
+    if (Singletons::fileCache().getTexture(actualFileName, mFlipVertically,
             &fileData)) {
         // check if cache still matches the file before conversion
         if (!mFileData.isSharedWith(fileData)) {
@@ -125,12 +147,12 @@ void TextureBase::reload(bool forWriting)
                 }
             } else if (!forWriting) {
                 mMessages += MessageList::insert(mItemId,
-                    MessageType::ConvertingFileFailed, mFileName);
+                    MessageType::ConvertingFileFailed, actualFileName);
             }
         }
-    } else if (!FileDialog::isEmptyOrUntitled(mFileName)) {
+    } else if (!FileDialog::isEmptyOrUntitled(actualFileName)) {
         mMessages += MessageList::insert(mItemId,
-            MessageType::LoadingFileFailed, mFileName);
+            MessageType::LoadingFileFailed, actualFileName);
     }
 
     if (mData.isNull()) {
@@ -145,3 +167,22 @@ void TextureBase::reload(bool forWriting)
         mSystemCopyModified = true;
     }
 }
+
+QString TextureBase::resolveCurrentFileName() const
+{
+    if (!mIsSequence)
+        return mFileName;
+
+    // Use the same calculation as the Texture struct
+    int actualFrameNumber = mFrameStart + mCurrentFrame + mFrameOffset;
+    return Singletons::fileCache().buildSequenceFileName(
+        mFileName, mSequencePattern, actualFrameNumber);
+}
+
+void TextureBase::updateSequenceFrame()
+{
+    // TextureBase should NOT advance frames - it should use the currentFrame
+    // from the session model which is already managed by SynchronizeLogic
+    // This method is kept for compatibility but doesn't modify mCurrentFrame
+}
+
