@@ -67,6 +67,9 @@ SourceType deduceSourceType(SourceType current, const QString &extension,
         return current;
     }
 
+    if (extension == "slang")
+        return SourceType::Slang;
+
     if (extension == "txt" || extension == "log" || extension == "csv")
         return SourceType::PlainText;
 
@@ -117,6 +120,7 @@ SourceType getSourceType(Shader::ShaderType type, Shader::Language language)
             SourceType::HLSL_RayClosestHitShader },
         { { SL::HLSL, ST::RayMiss }, SourceType::HLSL_RayMissShader },
         { { SL::HLSL, ST::RayCallable }, SourceType::HLSL_RayCallableShader },
+        { { SL::Slang, ST::Includable }, SourceType::Slang },
     };
     return sMapping[{ language, type }];
 }
@@ -128,7 +132,8 @@ Shader::ShaderType getShaderType(SourceType sourceType)
     switch (sourceType) {
     case SourceType::PlainText:
     case SourceType::Generic:
-    case SourceType::JavaScript:                 break;
+    case SourceType::JavaScript:
+    case SourceType::Slang:                      break;
     case SourceType::GLSL_VertexShader:
     case SourceType::HLSL_VertexShader:          return ST::Vertex;
     case SourceType::GLSL_FragmentShader:
@@ -197,6 +202,8 @@ Shader::Language getShaderLanguage(SourceType sourceType)
     case SourceType::HLSL_RayClosestHitShader:
     case SourceType::HLSL_RayMissShader:
     case SourceType::HLSL_RayCallableShader:     return Shader::Language::HLSL;
+
+    case SourceType::Slang: return Shader::Language::Slang;
     }
     return Shader::Language::None;
 }

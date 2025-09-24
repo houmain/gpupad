@@ -33,6 +33,7 @@ enum class SourceType {
     HLSL_RayClosestHitShader,
     HLSL_RayMissShader,
     HLSL_RayCallableShader,
+    Slang,
     JavaScript,
 };
 

@@ -10,9 +10,9 @@
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
     const auto SessionFileExtension = QStringLiteral("gpjs");
-    const auto ShaderFileExtensions = { "glsl", "vs", "fs", "gs", "vert",
+    const auto ShaderFileExtensions = { "glsl", "hlsl", "slang", "vs", "fs", "gs", "vert",
         "tesc", "tese", "geom", "frag", "comp", "task", "mesh", "rgen", "rint",
-        "rahit", "rchit", "rmiss", "rcall", "ps", "hlsl", "hlsli", "fx", "h" };
+        "rahit", "rchit", "rmiss", "rcall", "ps", "hlsli", "fx", "h" };
     const auto ScriptFileExtensions = { "js", "json", "qml" };
     const auto TextureFileExtensions = { "ktx", "dds", "png",
 #if defined(OpenImageIO_FOUND)

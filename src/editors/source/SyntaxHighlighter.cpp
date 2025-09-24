@@ -27,6 +27,7 @@ namespace {
         static const auto SyntaxGeneric = makeSyntaxGeneric();
         static const auto syntaxGLSL = makeSyntaxGLSL();
         static const auto syntaxHLSL = makeSyntaxHLSL();
+        static const auto syntaxSlang = makeSyntaxSlang();
         static const auto syntaxJavaScript = makeSyntaxJavaScript();
         switch (sourceType) {
         case SourceType::PlainText:
@@ -59,6 +60,7 @@ namespace {
         case SourceType::HLSL_RayClosestHitShader:
         case SourceType::HLSL_RayMissShader:
         case SourceType::HLSL_RayCallableShader:     return *syntaxHLSL;
+        case SourceType::Slang:                      return *syntaxSlang;
         case SourceType::JavaScript:                 return *syntaxJavaScript;
         }
         return *SyntaxGeneric;
@@ -114,7 +116,7 @@ namespace {
         for (const auto &builtinConstant : builtinConstants) {
             rule.pattern =
                 QRegularExpression(QStringLiteral("\\b%1(\\.[_A-Za-z0-9]+)*\\b")
-                                       .arg(builtinConstant));
+                        .arg(builtinConstant));
             rule.format = builtinConstantsFormat;
             d.highlightingRules.append(rule);
         }

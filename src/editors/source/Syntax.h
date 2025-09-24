@@ -20,4 +20,5 @@ public:
 Syntax *makeSyntaxGeneric();
 Syntax *makeSyntaxGLSL();
 Syntax *makeSyntaxHLSL();
+Syntax *makeSyntaxSlang();
 Syntax *makeSyntaxJavaScript();

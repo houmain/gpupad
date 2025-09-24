@@ -112,6 +112,7 @@ set(SOURCES
   src/editors/source/SyntaxGLSL.cpp
   src/editors/source/SyntaxHighlighter.cpp
   src/editors/source/SyntaxHLSL.cpp
+  src/editors/source/SyntaxSlang.cpp
   src/editors/source/SyntaxJavaScript.cpp
   src/editors/texture/GLWidget.cpp
   src/editors/texture/Histogram.cpp
@@ -321,6 +322,10 @@ find_package(spirv_cross_hlsl CONFIG REQUIRED)
 find_package(spirv_cross_reflect CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} 
     PRIVATE spirv-cross-core spirv-cross-glsl spirv-cross-hlsl spirv-cross-reflect)
+
+# link Slang
+find_package(slang CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE slang::slang)
 
 # link SPIRV-Tools
 find_package(SPIRV-Tools CONFIG REQUIRED)

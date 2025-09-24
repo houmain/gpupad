@@ -68,6 +68,7 @@ SourceEditorToolBar::SourceEditorToolBar(QWidget *parent)
     addSourceType(hlsl, tr("Ray Callable Shader"),
         SourceType::HLSL_RayCallableShader);
 
+    addSourceType(sourceTypeMenu, tr("Slang"), SourceType::Slang);
     addSourceType(sourceTypeMenu, tr("JavaScript"), SourceType::JavaScript);
     sourceTypeMenu->addSeparator();
     addSourceType(sourceTypeMenu, tr("Generic"), SourceType::Generic);

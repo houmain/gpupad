@@ -15,13 +15,13 @@
 <a href="https://github.com/houmain/gpupad/blob/main/CHANGELOG.md">Changelog</a>
 </p>
 
-A lightweight editor for GLSL and HLSL shaders and a fully-featured IDE for developing GPU based algorithms.
+A lightweight editor for GLSL, HLSL and Slang shaders and a fully-featured IDE for developing GPU based algorithms.
 
 ## Features
 
 * OpenGL, Vulkan and Direct3D 12 renderer.
 * Decent source editor with automatic indentation, brace highlighting, rectangular selection&hellip;
-* GLSL, HLSL and JavaScript syntax highlighting with basic auto completion.
+* GLSL, HLSL, Slang and JavaScript syntax highlighting with basic auto completion.
 * Possibility to evaluate shader programs with completely customizeable input and render state.
 * Continuous validation of standalone shader and script files.
 * Automatically defined printf function for printf-debugging.
@@ -177,6 +177,7 @@ It depends on the following libraries, which can be installed using a package ma
 - [spirv-cross](https://github.com/KhronosGroup/SPIRV-Cross)
 - [libktx](https://github.com/KhronosGroup/KTX-Software)
 - [vulkan-memory-allocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)
+- [Slang](https://https://shader-slang.org)
 - [spdlog](https://github.com/gabime/spdlog)
 - [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO) (optional)
 
@@ -195,7 +196,7 @@ git clone --depth=1 https://github.com/microsoft/vcpkg.git
 vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
 # install additional dependencies using vcpkg
-vcpkg/vcpkg install vulkan "ktx[vulkan]" spirv-cross vulkan-memory-allocator spdlog
+vcpkg/vcpkg install vulkan "ktx[vulkan]" spirv-cross vulkan-memory-allocator shader-slang spdlog
 
 # build
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
@@ -219,7 +220,7 @@ git clone --depth=1 https://github.com/microsoft/vcpkg.git
 vcpkg\bootstrap-vcpkg -disableMetrics
 
 # install dependencies using vcpkg
-vcpkg\vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator spdlog
+vcpkg\vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator shader-slang spdlog
 
 # generate Visual Studio solution
 cmake -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.9.0\msvc2022_64 -DCMAKE_TOOLCHAIN_FILE=vcpkg\scripts\buildsystems\vcpkg.cmake
