@@ -105,10 +105,14 @@ bool GLShader::specialize(const Spirv &spirv)
     if (!shader)
         return false;
 
+    // strip reflection info first, which contains problematic HLSL sematics
+    // https://github.com/KhronosGroup/SPIRV-Tools/issues/2019
+    const auto stripped = Spirv::stripReflection(spirv);
+
     const auto shaderObject = static_cast<GLuint>(shader);
     gl.v4_2->glShaderBinary(1, &shaderObject,
-        GL_SHADER_BINARY_FORMAT_SPIR_V_ARB, spirv.spirv().data(),
-        static_cast<GLsizei>(spirv.spirv().size() * sizeof(uint32_t)));
+        GL_SHADER_BINARY_FORMAT_SPIR_V_ARB, stripped.data(),
+        static_cast<GLsizei>(stripped.size() * sizeof(uint32_t)));
 
     glSpecializeShader(shader, qPrintable(mEntryPoint), 0, 0, 0);
 

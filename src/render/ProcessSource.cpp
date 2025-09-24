@@ -117,11 +117,6 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
             session.autoMapLocations = true;
         }
 
-        // TODO: always set and strip from reflection before loading
-        // then use input semantic instead of name for bindings
-        if (mProcessType == "json")
-            session.targetHlslFunctionality1 = true;
-
         // always target Vulkan when generating JSON, otherwise SpvReflect cannot enumerate uniforms
         if (session.renderer == Session::Renderer::Vulkan
             || mProcessType == "json") {

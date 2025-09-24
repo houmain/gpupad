@@ -54,7 +54,7 @@ struct Session : ScopeItem
     bool autoMapLocations{ true };
     bool autoSampledTextures{ true };
     bool vulkanRulesRelaxed{ true };
-    bool targetHlslFunctionality1{};
+    bool targetHlslFunctionality1{ true };
     int spirvVersion{};
 };
 

@@ -270,9 +270,11 @@ bool GLProgram::linkProgram()
 bool GLProgram::getInterfaceFromSpirv() const
 {
     // glslang cannot automap bindings or locations when targeting OpenGL
-    // keep enumerating interface using OpenGL for now
-    return false;
-    //return !mSession.shaderCompiler.isEmpty();
+    if (mShaders.empty()
+        || mShaders.front().language() == Shader::Language::GLSL)
+        return false;
+
+    return (session().shaderCompiler == Session::ShaderCompiler::glslang);
 }
 
 void GLProgram::fillInterface(Interface &interface, GLuint program)
@@ -521,8 +523,9 @@ void GLProgram::fillInterface(Interface &interface,
     if (spirvInterface->shader_stage & SPV_REFLECT_SHADER_STAGE_VERTEX_BIT)
         for (auto i = 0u; i < spirvInterface->input_variable_count; ++i) {
             const auto &input = *spirvInterface->input_variables[i];
+            const auto name = (input.semantic ? input.semantic : input.name);
             if (!isBuiltIn(input))
-                interface.attributeLocations[input.name] = input.location;
+                interface.attributeLocations[name] = input.location;
         }
 
     for (auto i = 0u; i < spirvInterface->descriptor_binding_count; ++i) {

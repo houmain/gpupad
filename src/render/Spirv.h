@@ -45,6 +45,7 @@ public:
     static QString disassemble(const Spirv &spirv);
     static QString generateGLSL(const Spirv &spirv);
     static QString generateHLSL(const Spirv &spirv);
+    static std::vector<uint32_t> stripReflection(const Spirv &spirv);
 
     static QString generateAST(const Session &session,
         Shader::Language language, Shader::ShaderType shaderType,

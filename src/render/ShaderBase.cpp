@@ -321,7 +321,7 @@ QStringList ShaderBase::getPatchedSourcesGLSL(ShaderPrintf &printf,
     }
 
     if (!mPreamble.isEmpty())
-        sources.front().prepend("#line 1 0\n" + mPreamble + "\n");
+        sources.front().prepend("#line 1\n" + mPreamble + "\n");
 
     const auto definitions = preprocessorDefinitions();
     for (const auto &definition : definitions)

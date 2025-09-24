@@ -20,6 +20,8 @@
 #include <spirv_glsl.hpp>
 #include <spirv_hlsl.hpp>
 
+#include "spirv-tools/optimizer.hpp"
+
 namespace {
     void staticInitGlslang()
     {
@@ -482,4 +484,12 @@ QString Spirv::generateAST(const Session &session, Shader::Language language,
         return {};
     }
     return program.getInfoDebugLog();
+}
+
+std::vector<uint32_t> Spirv::stripReflection(const Spirv &spirv) {
+  auto optimizer = spvtools::Optimizer(SPV_ENV_OPENGL_4_5);
+  optimizer.RegisterPass(std::move(spvtools::CreateStripNonSemanticInfoPass()));
+  auto result = std::vector<uint32_t>();
+  optimizer.Run(spirv.spirv().data(), spirv.spirv().size(), &result);
+  return result;
 }

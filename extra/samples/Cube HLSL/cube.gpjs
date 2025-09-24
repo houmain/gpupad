@@ -1,7 +1,6 @@
 {
-    "autoMapBindings": true,
-    "autoMapLocations": true,
     "autoSampledTextures": true,
+    "flipViewport": true,
     "id": 897,
     "items": [
         {
@@ -216,7 +215,7 @@
                     "divisor": 0,
                     "fieldId": 891,
                     "id": 85,
-                    "name": "input.position",
+                    "name": "POSITION",
                     "normalize": false,
                     "type": "Attribute"
                 },
@@ -224,7 +223,7 @@
                     "divisor": 0,
                     "fieldId": 892,
                     "id": 86,
-                    "name": "input.normal",
+                    "name": "NORMAL",
                     "normalize": false,
                     "type": "Attribute"
                 },
@@ -232,7 +231,7 @@
                     "divisor": 0,
                     "fieldId": 893,
                     "id": 87,
-                    "name": "input.texCoords",
+                    "name": "TEXCOORD",
                     "normalize": false,
                     "type": "Attribute"
                 }
@@ -266,18 +265,6 @@
         {
             "callType": "ClearTexture",
             "checked": true,
-            "clearColor": "#ff464757",
-            "clearDepth": 1,
-            "clearStencil": 0,
-            "executeOn": "EveryEvaluation",
-            "id": 97,
-            "name": "Clear Color",
-            "textureId": 93,
-            "type": "Call"
-        },
-        {
-            "callType": "ClearTexture",
-            "checked": true,
             "clearColor": "#ff000000",
             "clearDepth": 1,
             "clearStencil": 0,
@@ -285,6 +272,18 @@
             "id": 91,
             "name": "Clear Depth",
             "textureId": 98,
+            "type": "Call"
+        },
+        {
+            "callType": "ClearTexture",
+            "checked": true,
+            "clearColor": "#ff464757",
+            "clearDepth": 1,
+            "clearStencil": 0,
+            "executeOn": "EveryEvaluation",
+            "id": 97,
+            "name": "Clear Color",
+            "textureId": 93,
             "type": "Call"
         },
         {
@@ -305,10 +304,9 @@
         }
     ],
     "name": "Session",
-    "renderer": "OpenGL",
-    "shaderCompiler": "glslang",
+    "renderer": "Direct3D",
+    "reverseCulling": true,
     "shaderIncludePaths": "",
     "shaderPreamble": "",
-    "type": "Session",
-    "vulkanRulesRelaxed": true
+    "type": "Session"
 }
