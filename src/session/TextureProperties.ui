@@ -229,9 +229,32 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="labelOffset">
+          <property name="text">
+           <string>Ofs:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="frameOffset">
+          <property name="minimum">
+           <number>-999999</number>
+          </property>
+          <property name="maximum">
+           <number>999999</number>
+          </property>
+          <property name="value">
+           <number>0</number>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLabel" name="labelCurrentFrame">
           <property name="text">
-           <string>Current:</string>
+           <string>Frame:</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignmentFlag::AlignCenter</set>

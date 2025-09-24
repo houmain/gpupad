@@ -94,16 +94,23 @@ struct Texture : FileItem
     int samples{ 1 };
     bool flipVertically{};
     bool autoSave{};
+    QString baseName;  // For sequences: stores original base path
 
     // Image sequence support
     bool isSequence{};
     QString sequencePattern{ "%06d" };
     int frameStart{ 1 };
     int frameEnd{ 100 };
+    int frameOffset{ 0 };
     bool loopSequence{ true };
 
     // Runtime state (not serialized) - zero-based index
     int currentFrame{ 0 };
+
+    // Utility function to calculate actual frame number with offset
+    int getActualFrameNumber() const {
+        return frameStart + currentFrame + frameOffset;
+    }
 };
 
 struct Program : Item

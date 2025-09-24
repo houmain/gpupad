@@ -60,7 +60,11 @@ void RenderSessionBase::prepare(bool itemsChanged,
         // Debug: Check if sequence textures have updated currentFrame values
         mSessionModelCopy.forEachItem<Texture>([&](const Texture &texture) {
             if (texture.isSequence) {
-                qDebug() << QString("Session model copy - sequence texture %1 has currentFrame = %2").arg(texture.fileName).arg(texture.currentFrame);
+                int baseFrame = texture.frameStart + texture.currentFrame;
+                int actualFrame = texture.getActualFrameNumber();
+                qDebug() << QString("Update sequence texture %1 Base=%2 Offset=%3 Final=%4")
+                            .arg(texture.fileName).arg(baseFrame).arg(texture.frameOffset).arg(actualFrame);
+                qDebug() << QString("  baseName: %1").arg(texture.baseName);
             }
         });
     }

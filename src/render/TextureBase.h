@@ -60,6 +60,7 @@ protected:
     QString mSequencePattern;
     int mFrameStart{};
     int mFrameEnd{};
+    int mFrameOffset{};
     bool mLoopSequence{};
     mutable int mCurrentFrame{};
     mutable bool mFrameLoaded{};

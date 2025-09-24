@@ -34,10 +34,12 @@
     ADD(TextureSamples, Texture, samples)                                     \
     ADD(TextureFlipVertically, Texture, flipVertically)                       \
     ADD(TextureAutoSave, Texture, autoSave)                                   \
+    ADD(TextureBaseName, Texture, baseName)                                   \
     ADD(TextureIsSequence, Texture, isSequence)                               \
     ADD(TextureSequencePattern, Texture, sequencePattern)                     \
     ADD(TextureFrameStart, Texture, frameStart)                               \
     ADD(TextureFrameEnd, Texture, frameEnd)                                   \
+    ADD(TextureFrameOffset, Texture, frameOffset)                             \
     ADD(TextureLoopSequence, Texture, loopSequence)                           \
     ADD(TextureCurrentFrame, Texture, currentFrame)                           \
     ADD(ScriptExecuteOn, Script, executeOn)                                   \

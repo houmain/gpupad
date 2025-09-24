@@ -677,8 +677,19 @@ void SessionModelCore::undoableFileNameAssignment(const QModelIndex &index,
     }
 
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
-    if (item.fileName != fileName)
+    if (item.fileName != fileName) {
         undoableAssignment(index, &item.fileName, fileName);
+
+        // For textures: always update baseName for single textures
+        if (auto texture = castItem<Texture>(&item)) {
+            if (!texture->isSequence) {
+                // Single texture: always set baseName = fileName (even if baseName already exists)
+                auto &textureRef = static_cast<Texture&>(item);
+                undoableAssignment(index, &textureRef.baseName, fileName);
+            }
+            // Note: For sequences, baseName is managed explicitly in TextureProperties UI
+        }
+    }
 }
 
 bool SessionModelCore::isDynamicGroup(const Item &item) const

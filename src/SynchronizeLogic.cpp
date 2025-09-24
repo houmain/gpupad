@@ -145,6 +145,11 @@ void SynchronizeLogic::manualEvaluation()
     evaluate(EvaluationType::Manual);
 }
 
+void SynchronizeLogic::automaticEvaluation()
+{
+    evaluate(EvaluationType::Automatic);
+}
+
 void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
 {
     if (mEvaluationMode == mode)
@@ -304,7 +309,16 @@ void SynchronizeLogic::handleEditorFileRenamed(const QString &prevFileName,
 void SynchronizeLogic::handleFileItemFileChanged(const FileItem &item)
 {
     // update item name
-    auto name = FileDialog::getFileTitle(item.fileName);
+    QString displayFileName = item.fileName;
+
+    // For textures, use baseName for display (baseName = fileName for single textures, baseName for sequences)
+    if (auto texture = castItem<Texture>(&item)) {
+        if (!texture->baseName.isEmpty()) {
+            displayFileName = texture->baseName;
+        }
+    }
+
+    auto name = FileDialog::getFileTitle(displayFileName);
     if (name.isEmpty()) {
         // only reset to type name when it currently has a filename
         if (FileDialog::getFileExtension(item.name).isEmpty())

@@ -43,13 +43,14 @@ bool createFromRaw(const QByteArray &binary, const TextureEditor::RawFormat &r,
     return true;
 }
 
+
 TextureEditor::TextureEditor(QString fileName,
     TextureEditorToolBar *editorToolBar, TextureInfoBar *textureInfoBar,
     QWidget *parent)
     : QAbstractScrollArea(parent)
     , mEditorToolBar(*editorToolBar)
     , mTextureInfoBar(*textureInfoBar)
-    , mFileName(fileName)
+    , mFileName(getTextureEditorKey(fileName))
 {
     mGLWidget = new GLWidget(this);
     setViewport(mGLWidget);
@@ -65,6 +66,25 @@ TextureEditor::TextureEditor(QString fileName,
 
     // Connect to evaluation system for sequence texture updates
     connectToEvaluationSystem();
+}
+
+QString TextureEditor::getTextureEditorKey(const QString &fileName) const
+{
+    // Use same logic as EditorManager::getTextureEditorKey()
+    auto &model = Singletons::sessionModel();
+    QString editorKey = fileName; // fallback if texture not found
+
+    model.forEachItem([&](const Item &item) {
+        if (auto texture = castItem<Texture>(&item)) {
+            if (texture->fileName == fileName && !texture->baseName.isEmpty()) {
+                editorKey = texture->baseName;
+                return false; // stop iteration
+            }
+        }
+        return true; // continue iteration
+    });
+
+    return editorKey;
 }
 
 TextureEditor::~TextureEditor()
@@ -97,13 +117,14 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
 {
     actions.copy->setEnabled(true);
     actions.findReplace->setEnabled(true);
-    actions.windowFileName->setText(fileName());
+    actions.windowFileName->setText(getDisplayFileName());
     actions.windowFileName->setEnabled(isModified());
 
     auto c = QList<QMetaObject::Connection>();
     c += connect(actions.copy, &QAction::triggered, this, &TextureEditor::copy);
-    c += connect(this, &TextureEditor::fileNameChanged, actions.windowFileName,
-        &QAction::setText);
+    c += connect(this, &TextureEditor::fileNameChanged, [this, actions](const QString &) {
+        actions.windowFileName->setText(getDisplayFileName());
+    });
     c += connect(this, &TextureEditor::modificationChanged,
         actions.windowFileName, &QAction::setEnabled);
 
@@ -208,36 +229,14 @@ bool TextureEditor::load()
     auto texture = TextureData();
     auto isRaw = false;
 
-    // Check if this is a sequence texture and get the actual frame filename
-    QString actualFileName = mFileName;
-    auto &model = Singletons::sessionModel();
-    model.forEachItem([&](const Item &item) {
-        if (item.type == Item::Type::Texture) {
-            const auto &textureItem = static_cast<const Texture&>(item);
-            if (textureItem.isSequence) {
-                // Check if our mFileName matches any frame in this sequence
-                QString expectedFrame = Singletons::fileCache().buildSequenceFileName(
-                    textureItem.fileName,
-                    textureItem.sequencePattern,
-                    textureItem.frameStart + textureItem.currentFrame);
+    // For sequences: use baseName file for initial load, later updates use current frame
+    QString fileToLoad = mFileName;
+    qDebug() << "TextureEditor::load() loading file:" << fileToLoad;
 
-                if (expectedFrame == mFileName || textureItem.fileName == mFileName) {
-                    // Calculate actual frame filename
-                    actualFileName = Singletons::fileCache().buildSequenceFileName(
-                        textureItem.fileName,
-                        textureItem.sequencePattern,
-                        textureItem.frameStart + textureItem.currentFrame);
-                }
-            }
-        }
-    });
-
-    // Removed debug output
-
-    if (!Singletons::fileCache().getTexture(actualFileName, false, &texture)) {
+    if (!Singletons::fileCache().getTexture(fileToLoad, false, &texture)) {
         auto binary = QByteArray();
-        if (!Singletons::fileCache().getBinary(actualFileName, &binary))
-            if (!FileDialog::isEmptyOrUntitled(actualFileName))
+        if (!Singletons::fileCache().getBinary(fileToLoad, &binary))
+            if (!FileDialog::isEmptyOrUntitled(fileToLoad))
                 return false;
         if (!createFromRaw(binary, mRawFormat, &texture))
             return false;
@@ -262,14 +261,6 @@ bool TextureEditor::load()
     }
 
     replace(texture);
-
-    // For sequence textures, force display update even if replace was skipped
-    if (actualFileName != mFileName) {
-        mTextureItem->setImage(texture);
-        setBounds(mTextureItem->boundingRect().toRect());
-        mTexture = texture;
-        viewport()->update();
-    }
     setModified(false);
     mIsRaw = isRaw;
     return true;
@@ -288,22 +279,9 @@ int TextureEditor::tabifyGroup() const
 
 bool TextureEditor::save()
 {
-    QString saveFileName = fileName();
-
-    // Check if this is a sequence texture and resolve frame-specific filename
-    auto &model = Singletons::sessionModel();
-    model.forEachItem<Texture>([&](const Texture &texture) {
-        if (texture.isSequence && texture.fileName == mFileName) {
-            // Generate frame-specific filename for save (like load does)
-            saveFileName = Singletons::fileCache().buildSequenceFileName(
-                texture.fileName,
-                texture.sequencePattern,
-                texture.frameStart + texture.currentFrame);
-        }
-    });
-
-    qDebug() << "Saving texture to:" << saveFileName;
-    if (!mTexture.save(saveFileName, !mTextureItem->flipVertically()))
+    // fileName now always contains the actual file path
+    qDebug() << "Saving texture to:" << mFileName;
+    if (!mTexture.save(mFileName, !mTextureItem->flipVertically()))
         return false;
 
     setModified(false);
@@ -655,47 +633,60 @@ void TextureEditor::connectToEvaluationSystem()
 
 void TextureEditor::handleEvaluationUpdate()
 {
-    // Check if this texture editor is displaying a sequence texture or auto-save texture
+    // Check if this texture editor needs updates
     auto &model = Singletons::sessionModel();
-    bool isSequenceTexture = false;
     bool shouldAutoSave = false;
+    bool sequenceProcessed = false;
 
     model.forEachItem([&](const Item &item) {
         if (item.type == Item::Type::Texture) {
             const auto &textureItem = static_cast<const Texture&>(item);
 
-            // Check for sequence textures
-            if (textureItem.isSequence) {
-                QString expectedFrame = Singletons::fileCache().buildSequenceFileName(
-                    textureItem.fileName,
-                    textureItem.sequencePattern,
-                    textureItem.frameStart + textureItem.currentFrame);
+            // Check if this editor displays this texture
+            // Use same logic as EditorManager::getTextureEditorKey()
+            QString textureEditorKey = textureItem.isSequence && !textureItem.baseName.isEmpty()
+                                      ? textureItem.baseName
+                                      : textureItem.fileName;
 
-                if (expectedFrame == mFileName || textureItem.fileName == mFileName) {
-                    isSequenceTexture = true;
+            qDebug() << "TextureEditor: Checking texture - editorKey=" << textureEditorKey
+                     << "mFileName=" << mFileName
+                     << "currentFrame=" << textureItem.fileName
+                     << "isSequence=" << textureItem.isSequence;
+
+            if (textureEditorKey == mFileName) {
+                qDebug() << "TextureEditor: Found matching texture!";
+                // For sequences: always reload current frame
+                if (textureItem.isSequence) {
+                    qDebug() << "TextureEditor: Loading frame" << textureItem.fileName;
+                    sequenceProcessed = true;
+                    // Load the current frame file directly
+                    auto texture = TextureData();
+                    if (Singletons::fileCache().getTexture(textureItem.fileName, false, &texture)) {
+                        replace(texture, false);
+                    }
                 }
-            }
 
-            // Check for auto-save textures (single textures with auto-save enabled)
-            if (!textureItem.isSequence && textureItem.autoSave &&
-                textureItem.fileName == mFileName) {
-                shouldAutoSave = true;
+                // Check for auto-save textures
+                if (textureItem.autoSave) {
+                    shouldAutoSave = true;
+                }
             }
         }
     });
 
-    if (isSequenceTexture) {
-        // For sequence textures, force a viewport update even if texture data appears the same
-        // This ensures that manual evaluations properly refresh the display
+    // For single textures: reload from fileName
+    // For sequences: frame already loaded above via replace()
+    if (!sequenceProcessed) {
+        qDebug() << "TextureEditor: Single texture - calling load()";
         if (load()) {
             viewport()->update();
         }
-        // Force a viewport update regardless, in case the texture comparison failed to detect changes
+    } else {
+        qDebug() << "TextureEditor: Sequence processed - skipping load()";
         viewport()->update();
     }
 
     if (shouldAutoSave) {
-        // Auto-save single textures
         autoSave();
     }
 }
@@ -710,8 +701,13 @@ void TextureEditor::autoSave()
         if (item.type == Item::Type::Texture) {
             const auto &textureItem = static_cast<const Texture&>(item);
             if (textureItem.fileName == mFileName && textureItem.autoSave) {
+                // Use baseName for sequences, or fileName for single textures
+                QString sourceFileName = textureItem.isSequence && !textureItem.baseName.isEmpty()
+                                        ? textureItem.baseName
+                                        : textureItem.fileName;
+
                 // Generate timestamp filename
-                QFileInfo fileInfo(textureItem.fileName);
+                QFileInfo fileInfo(sourceFileName);
                 QString baseName = fileInfo.completeBaseName();
                 QString extension = fileInfo.suffix();
                 QString dirPath = fileInfo.absolutePath();
@@ -739,4 +735,24 @@ void TextureEditor::autoSave()
         qDebug() << "Auto-saving texture to:" << autoSaveFileName;
         mTexture.save(autoSaveFileName, !mTextureItem->flipVertically());
     }
+}
+
+QString TextureEditor::getDisplayFileName() const
+{
+    // For textures, return baseName for display (baseName = fileName for single textures, baseName for sequences)
+    auto &model = Singletons::sessionModel();
+    QString displayFileName = mFileName;
+
+    model.forEachItem([&](const Item &item) {
+        if (item.type == Item::Type::Texture) {
+            const auto &textureItem = static_cast<const Texture&>(item);
+            if (textureItem.fileName == mFileName && !textureItem.baseName.isEmpty()) {
+                displayFileName = textureItem.baseName;
+                return false; // stop iteration
+            }
+        }
+        return true; // continue iteration
+    });
+
+    return displayFileName;
 }

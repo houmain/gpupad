@@ -6,6 +6,7 @@
 #include "RenderSessionBase.h"
 #include <cmath>
 
+
 void transformClearColor(std::array<double, 4> &color,
     TextureSampleType sampleType)
 {
@@ -53,6 +54,7 @@ TextureBase::TextureBase(const Texture &texture,
     , mSequencePattern(texture.sequencePattern)
     , mFrameStart(texture.frameStart)
     , mFrameEnd(texture.frameEnd)
+    , mFrameOffset(texture.frameOffset)
     , mLoopSequence(texture.loopSequence)
     , mCurrentFrame(texture.currentFrame)
     , mFrameLoaded(texture.currentFrame > 0)
@@ -171,9 +173,8 @@ QString TextureBase::resolveCurrentFileName() const
     if (!mIsSequence)
         return mFileName;
 
-    // frameStart is already the correct starting frame number
-    // currentFrame is zero-based offset from frameStart
-    int actualFrameNumber = mFrameStart + mCurrentFrame;
+    // Use the same calculation as the Texture struct
+    int actualFrameNumber = mFrameStart + mCurrentFrame + mFrameOffset;
     return Singletons::fileCache().buildSequenceFileName(
         mFileName, mSequencePattern, actualFrameNumber);
 }

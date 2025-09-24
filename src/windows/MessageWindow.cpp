@@ -197,7 +197,21 @@ QString MessageWindow::getLocationText(const Message &message) const
         locationText +=
             Singletons::sessionModel().getFullItemName(message.itemId);
     } else if (!message.fileName.isEmpty()) {
-        locationText = FileDialog::getFileTitle(message.fileName);
+        QString displayFileName = message.fileName;
+
+        // For textures, use baseName for display (baseName = fileName for single textures, baseName for sequences)
+        auto &model = Singletons::sessionModel();
+        model.forEachItem([&](const Item &item) {
+            if (auto texture = castItem<Texture>(&item)) {
+                if (texture->fileName == message.fileName && !texture->baseName.isEmpty()) {
+                    displayFileName = texture->baseName;
+                    return false; // stop iteration
+                }
+            }
+            return true; // continue iteration
+        });
+
+        locationText = FileDialog::getFileTitle(displayFileName);
         if (message.line > 0)
             locationText += ":" + QString::number(message.line);
     }

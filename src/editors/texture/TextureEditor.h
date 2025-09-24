@@ -77,6 +77,8 @@ private:
     double getZoomScale() const;
     void setModified(bool modified);
     void updateEditorToolBar();
+    QString getTextureEditorKey(const QString &fileName) const;
+    QString getDisplayFileName() const;
     void updateScrollBars();
     int margin() const;
     void zoomToFit();
@@ -87,7 +89,7 @@ private:
     GLWidget *mGLWidget{};
     TextureEditorToolBar &mEditorToolBar;
     TextureInfoBar &mTextureInfoBar;
-    QString mFileName;
+    QString mFileName; // Editor key: baseName for sequences, fileName for singles
     RawFormat mRawFormat{};
     bool mIsRaw{};
     bool mModified{};
