@@ -32,6 +32,7 @@ namespace {
         switch (sourceType) {
         case SourceType::PlainText:
         case SourceType::Generic:                    break;
+        case SourceType::Slang:                      return "slang";
         case SourceType::GLSL_VertexShader:          return "vert";
         case SourceType::GLSL_FragmentShader:        return "frag";
         case SourceType::GLSL_GeometryShader:        return "geom";

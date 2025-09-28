@@ -329,11 +329,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE slang::slang)
 
 # link SPIRV-Tools
 find_package(SPIRV-Tools CONFIG REQUIRED)
-find_package(SPIRV-Tools-link CONFIG REQUIRED)
-find_package(SPIRV-Tools-lint CONFIG REQUIRED)
 find_package(SPIRV-Tools-opt CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} 
-    PRIVATE SPIRV-Tools-static SPIRV-Tools-link SPIRV-Tools-lint SPIRV-Tools-opt)
+    PRIVATE SPIRV-Tools-static SPIRV-Tools-opt)
 
 # add custom action projects
 set(ACTIONS
