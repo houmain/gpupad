@@ -138,7 +138,7 @@ bool D3DShader::compile(ShaderPrintf &printf)
 bool D3DShader::compile(const QString &source)
 {
     // TODO:
-    if (true)
+    if (false)
         return compileD3DCompile(source);
 
     return compileDXC(source);
@@ -146,7 +146,7 @@ bool D3DShader::compile(const QString &source)
 
 bool D3DShader::compileD3DCompile(const QString &source)
 {
-    const auto target = getTarget(mType, 5, 0);
+    const auto target = getTarget(mType, 5, 1);
     if (target.isEmpty()) {
         mMessages +=
             MessageList::insert(mItemId, MessageType::UnsupportedShaderType);

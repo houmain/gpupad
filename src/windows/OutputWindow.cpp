@@ -1,4 +1,4 @@
-#include "OutputWindow.h"
+﻿#include "OutputWindow.h"
 #include "Settings.h"
 #include "Singletons.h"
 #include "Theme.h"
@@ -20,11 +20,13 @@ OutputWindow::OutputWindow(QWidget *parent)
     layout->setSpacing(0);
     layout->addWidget(mTextEdit);
 
-    mTypeSelector->addItem(tr("Preprocess"), "preprocess");
-    mTypeSelector->addItem(tr("Dump SPIR-V"), "spirv");
-    mTypeSelector->addItem(tr("Dump glslang AST"), "ast");
-    mTypeSelector->addItem(tr("Dump assembly (NV_gpu_program)"), "assembly");
+    mTypeSelector->addItem(tr("SPIR-V"), "spirv");
+    mTypeSelector->addItem(tr("SPIR-V → GLSL"), "glsl");
+    mTypeSelector->addItem(tr("SPIR-V → HLSL"), "hlsl");
     mTypeSelector->addItem(tr("JSON Interface"), "json");
+    mTypeSelector->addItem(tr("Preprocess"), "preprocess");
+    mTypeSelector->addItem(tr("glslang AST"), "ast");
+    mTypeSelector->addItem(tr("Program Binary (NV_gpu_program)"), "programBinary");
 
     connect(mTypeSelector, &DataComboBox::currentDataChanged,
         [this](QVariant data) {

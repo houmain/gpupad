@@ -19,9 +19,9 @@ public:
     const QString &entryPoint() const { return mEntryPoint; }
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
     Spirv::Input getSpirvCompilerInput(ShaderPrintf &printf);
+    Spirv compileSpirv();
     Spirv compileSpirv(ShaderPrintf &printf);
     QString preprocess();
-    QString generateReadableSpirv();
     QVariant generateBinarySpirv();
     QString generateGLSLangAST();
     QString getJsonInterface();

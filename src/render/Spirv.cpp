@@ -450,8 +450,16 @@ QString Spirv::generateHLSL(const Spirv &spirv)
         return {};
 
     auto compiler = spirv_cross::CompilerHLSL(spirv.spirv());
+
+    auto common = spirv_cross::CompilerGLSL::Options{};
+    compiler.set_common_options(common);
+
     auto options = spirv_cross::CompilerHLSL::Options{};
-    options.shader_model = 50;
+    options.shader_model = 51;
+    // TODO: get from reflection
+    compiler.add_vertex_attribute_remap({ 0, "aPosition" });
+    compiler.add_vertex_attribute_remap({ 1, "aNormal" });
+    compiler.add_vertex_attribute_remap({ 2, "aTexCoords" });
     compiler.set_hlsl_options(options);
     return QString::fromStdString(compiler.compile());
 }
@@ -486,10 +494,12 @@ QString Spirv::generateAST(const Session &session, Shader::Language language,
     return program.getInfoDebugLog();
 }
 
-std::vector<uint32_t> Spirv::stripReflection(const Spirv &spirv) {
-  auto optimizer = spvtools::Optimizer(SPV_ENV_OPENGL_4_5);
-  optimizer.RegisterPass(std::move(spvtools::CreateStripNonSemanticInfoPass()));
-  auto result = std::vector<uint32_t>();
-  optimizer.Run(spirv.spirv().data(), spirv.spirv().size(), &result);
-  return result;
+std::vector<uint32_t> Spirv::stripReflection(const Spirv &spirv)
+{
+    auto optimizer = spvtools::Optimizer(SPV_ENV_OPENGL_4_5);
+    optimizer.RegisterPass(
+        std::move(spvtools::CreateStripNonSemanticInfoPass()));
+    auto result = std::vector<uint32_t>();
+    optimizer.Run(spirv.spirv().data(), spirv.spirv().size(), &result);
+    return result;
 }

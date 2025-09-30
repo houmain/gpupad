@@ -140,12 +140,19 @@ bool D3DPipeline::createInputLayout(
         auto paramDesc = D3D12_SIGNATURE_PARAMETER_DESC{};
         reflection->GetInputParameterDesc(i, &paramDesc);
 
-        const auto name = QString(paramDesc.SemanticName);
-        const auto attribute =
-            (mVertexStream ? mVertexStream->findAttribute(name) : nullptr);
+        if (paramDesc.SystemValueType != D3D_NAME_UNDEFINED)
+            continue;
+
+        auto semanticName = QString(paramDesc.SemanticName);
+        const auto attribute = (mVertexStream
+                ? mVertexStream->findAttribute(semanticName,
+                      paramDesc.SemanticIndex)
+                : nullptr);
         if (!attribute || !attribute->buffer) {
+            if (paramDesc.SemanticIndex)
+                semanticName += QString::number(paramDesc.SemanticIndex);
             mMessages += MessageList::insert(mItemId,
-                MessageType::AttributeNotSet, name);
+                MessageType::AttributeNotSet, semanticName);
             canRender = false;
             continue;
         }
@@ -187,7 +194,12 @@ void D3DPipeline::createRootSignature(D3DContext &context)
                 auto &sampler = staticSamplers.emplace_back(bindDesc.BindPoint);
                 sampler.RegisterSpace = bindDesc.Space;
 
-                if (auto binding = find(mBindings.samplers, bindDesc.Name)) {
+                // TODO: find better solution - demangle _uTexture_sampler
+                auto name = QString(bindDesc.Name);
+                name = name.remove(QRegularExpression("^_"));
+                name = name.remove(QRegularExpression("_sampler$"));
+
+                if (auto binding = find(mBindings.samplers, name)) {
                     mUsedItems += binding->bindingItemId;
 
                     sampler.Filter = getFilter(binding->minFilter,
@@ -304,7 +316,11 @@ void D3DPipeline::updateGlobalConstantBuffers(D3DContext &context,
                     auto varDesc = D3D12_SHADER_VARIABLE_DESC{};
                     var->GetDesc(&varDesc);
 
-                    const auto name = QString(varDesc.Name);
+                    auto name = QString(varDesc.Name);
+
+                    // TODO: find better solution - demangle _44_uPerspective
+                    name = name.remove(QRegularExpression("^_\\d+_"));
+
                     if (auto uniformBinding = find(mBindings.uniforms, name)) {
                         mUsedItems += uniformBinding->bindingItemId;
 

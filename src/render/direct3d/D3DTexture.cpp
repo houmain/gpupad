@@ -216,12 +216,16 @@ bool D3DTexture::clear(D3DContext &context, std::array<double, 4> color,
             nullptr);
 
     } else {
+        const auto sampleType = getTextureSampleType(mFormat);
+        transformClearColor(color, sampleType);
+
         float clearColor[4] = {
             static_cast<float>(color[0]),
             static_cast<float>(color[1]),
             static_cast<float>(color[2]),
             static_cast<float>(color[3]),
         };
+
         const auto desc = renderTargetViewDesc();
         prepareRenderTargetView(context);
         context.renderTargetHelper.ClearRenderTargetView(

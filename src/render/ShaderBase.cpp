@@ -395,6 +395,12 @@ Spirv ShaderBase::compileSpirv(ShaderPrintf &printf)
     return stages[mType];
 }
 
+Spirv ShaderBase::compileSpirv()
+{
+    auto printf = RemoveShaderPrintf();
+    return compileSpirv(printf);
+}
+
 QString ShaderBase::preprocess()
 {
     auto usedFileNames = QStringList();
@@ -402,23 +408,6 @@ QString ShaderBase::preprocess()
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
     return Spirv::preprocess(mSession, mLanguage, mType, patchedSources,
         usedFileNames, mEntryPoint, mItemId, mIncludePaths, mMessages);
-}
-
-QString ShaderBase::generateReadableSpirv()
-{
-    auto printf = RemoveShaderPrintf();
-    return Spirv::disassemble(compileSpirv(printf));
-}
-
-QVariant ShaderBase::generateBinarySpirv()
-{
-    auto printf = RemoveShaderPrintf();
-    const auto spirv = compileSpirv(printf);
-    if (!spirv)
-        for (auto message : resetMessages())
-            return message->text;
-    return QByteArray(reinterpret_cast<const char *>(spirv.spirv().data()),
-        spirv.spirv().size() * sizeof(uint32_t));
 }
 
 QString ShaderBase::generateGLSLangAST()
@@ -432,8 +421,7 @@ QString ShaderBase::generateGLSLangAST()
 
 QString ShaderBase::getJsonInterface()
 {
-    auto printf = RemoveShaderPrintf();
-    const auto spirv = compileSpirv(printf);
+    const auto spirv = compileSpirv();
     const auto interface = Spirv::Interface(spirv.spirv());
     return getJsonString(*interface);
 }

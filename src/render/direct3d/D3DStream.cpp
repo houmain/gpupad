@@ -56,11 +56,15 @@ bool D3DStream::validateAttribute(const D3DAttribute &attribute) const
     }
 }
 
-auto D3DStream::findAttribute(const QString &name) const -> const D3DAttribute *
+auto D3DStream::findAttribute(const QString &semanticName,
+    int semanticIndex) const -> const D3DAttribute *
 {
-    for (auto &attribute : mAttributes)
-        if (attribute.name == name)
+    for (auto &attribute : mAttributes) {
+        if (attribute.name == semanticName + QString::number(semanticIndex))
             return &attribute;
+        if (semanticIndex == 0 && attribute.name == semanticName)
+            return &attribute;
+    }
     return nullptr;
 }
 

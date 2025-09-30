@@ -20,7 +20,8 @@ public:
     explicit D3DStream(const Stream &stream);
     void setAttribute(int attributeIndex, const Field &column,
         D3DBuffer *buffer, ScriptEngine &scriptEngine);
-    const D3DAttribute *findAttribute(const QString &name) const;
+    const D3DAttribute *findAttribute(const QString &semanticName,
+        int semanticIndex) const;
     void bind(D3DContext &context);
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     int maxElementCount() const { return mMaxElementCount; }

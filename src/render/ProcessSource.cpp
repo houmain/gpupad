@@ -129,12 +129,12 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
 
 void ProcessSource::render()
 {
+    auto printf = RemoveShaderPrintf();
     auto messages = MessagePtrSet();
     mOutput.clear();
 
     if (mValidateSource) {
         if (mShader) {
-            auto printf = RemoveShaderPrintf();
             if (renderer().api() == RenderAPI::OpenGL) {
                 if (auto shader = static_cast<GLShader *>(mShader.get()))
                     if (shader->compile(printf)) {
@@ -158,19 +158,30 @@ void ProcessSource::render()
     if (mShader && !mProcessType.isEmpty()) {
         if (mProcessType == "preprocess") {
             mOutput = removeLineDirectives(mShader->preprocess());
+        } else if (mProcessType == "glsl") {
+            mOutput = Spirv::generateGLSL(mShader->compileSpirv(printf));
+        } else if (mProcessType == "hlsl") {
+            mOutput = Spirv::generateHLSL(mShader->compileSpirv(printf));
         } else if (mProcessType == "spirv") {
-            mOutput = mShader->generateReadableSpirv();
+            mOutput = Spirv::disassemble(mShader->compileSpirv());
         } else if (mProcessType == "spirvBinary") {
-            mOutput = mShader->generateBinarySpirv();
+            mOutput = [&]() -> QVariant {
+                if (const auto spirv = mShader->compileSpirv())
+                    return QByteArray(
+                        reinterpret_cast<const char *>(spirv.spirv().data()),
+                        spirv.spirv().size() * sizeof(uint32_t));
+                for (auto message : mShader->resetMessages())
+                    return message->text;
+                return {};
+            }();
         } else if (mProcessType == "ast") {
             mOutput = mShader->generateGLSLangAST();
-        } else if (mProcessType == "assembly") {
+        } else if (mProcessType == "programBinary") {
             if (renderer().api() == RenderAPI::OpenGL)
-                if (auto shader = static_cast<GLShader *>(mShader.get())) {
-                    auto printf = RemoveShaderPrintf();
-                    if (shader->compile(printf))
+                if (auto shader = static_cast<GLShader *>(mShader.get()))
+                    if (shader->compile(printf)
+                        || shader->specialize(shader->compileSpirv()))
                         mOutput = tryGetProgramBinary(*shader);
-                }
         } else if (mProcessType == "json") {
             mOutput = mShader->getJsonInterface();
         }
