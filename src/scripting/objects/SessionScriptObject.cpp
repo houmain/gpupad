@@ -975,8 +975,7 @@ QJSValue SessionScriptObject::processShader(QJSValue itemIdent,
             [&](QVariant output) { result = output; });
 
         processSource.setFileName(shader->fileName);
-        processSource.setSourceType(
-            getSourceType(shader->shaderType, shader->language));
+        processSource.setSourceType(getSourceType(*shader));
         processSource.setProcessType(processType);
         processSource.update();
 

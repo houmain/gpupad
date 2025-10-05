@@ -216,7 +216,6 @@ QJsonArray SessionModel::generateJsonFromUrls(QModelIndex target,
             item.type = Item::Type::Shader;
             const auto sourceType = deduceSourceType(SourceType::PlainText,
                 FileDialog::getFileExtension(fileName), "");
-            item.language = getShaderLanguage(sourceType);
             item.shaderType = getShaderType(sourceType);
             addFileItem(item, url);
         } else if (canContainType(target, Item::Type::Script)
@@ -558,29 +557,18 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
     switch (item.type) {
     case Item::Type::Session: {
         const auto &session = static_cast<const Session &>(item);
-        const auto hasVulkanRenderer =
-            (session.renderer == Session::Renderer::Vulkan);
         const auto hasOpenGLRenderer =
             (session.renderer == Session::Renderer::OpenGL);
-        const auto hasShaderCompiler =
-            (session.shaderCompiler != Session::ShaderCompiler::Driver
-                || hasVulkanRenderer);
+        result &= (column != SessionShaderCompiler || hasOpenGLRenderer);
         result &= (column != SessionFlipViewport || !hasOpenGLRenderer);
         result &= (column != SessionReverseCulling || !hasOpenGLRenderer);
-        result &= (column != SessionShaderCompiler || hasOpenGLRenderer);
-        result &= (column != SessionAutoMapBindings || hasVulkanRenderer);
-        result &= (column != SessionAutoMapLocations || hasVulkanRenderer);
-        result &= (column != SessionAutoSampledTextures || hasShaderCompiler);
-        result &= (column != SessionVulkanRulesRelaxed || hasVulkanRenderer);
-        result &= (column != SessionSpirvVersion
-            || (hasShaderCompiler && session.spirvVersion != 0));
         break;
     }
 
     case Item::Type::Shader: {
         const auto &shader = static_cast<const Shader &>(item);
         result &= (column != ShaderEntryPoint
-            || (shader.language != Shader::Language::GLSL));
+            || (getShaderLanguage(shader) != Session::ShaderLanguage::GLSL));
         result &= (column != ShaderPreamble || !shader.preamble.isEmpty());
         result &=
             (column != ShaderIncludePaths || !shader.includePaths.isEmpty());

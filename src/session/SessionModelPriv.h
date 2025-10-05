@@ -7,16 +7,13 @@
 
 #define ADD_EACH_COLUMN_TYPE()                                                \
     ADD(SessionRenderer, Session, renderer)                                   \
+    ADD(SessionShaderLanguage, Session, shaderLanguage)                       \
     ADD(SessionShaderCompiler, Session, shaderCompiler)                       \
+    ADD(SessionCompilerSettings, Session, compilerSettings)                   \
     ADD(SessionShaderPreamble, Session, shaderPreamble)                       \
     ADD(SessionShaderIncludePaths, Session, shaderIncludePaths)               \
     ADD(SessionFlipViewport, Session, flipViewport)                           \
     ADD(SessionReverseCulling, Session, reverseCulling)                       \
-    ADD(SessionAutoMapBindings, Session, autoMapBindings)                     \
-    ADD(SessionAutoMapLocations, Session, autoMapLocations)                   \
-    ADD(SessionAutoSampledTextures, Session, autoSampledTextures)             \
-    ADD(SessionVulkanRulesRelaxed, Session, vulkanRulesRelaxed)               \
-    ADD(SessionSpirvVersion, Session, spirvVersion)                           \
     ADD(GroupInlineScope, Group, inlineScope)                                 \
     ADD(GroupDynamic, Group, dynamic)                                         \
     ADD(GroupIterations, Group, iterations)                                   \
@@ -35,7 +32,6 @@
     ADD(TextureFlipVertically, Texture, flipVertically)                       \
     ADD(ScriptExecuteOn, Script, executeOn)                                   \
     ADD(ShaderType, Shader, shaderType)                                       \
-    ADD(ShaderLanguage, Shader, language)                                     \
     ADD(ShaderEntryPoint, Shader, entryPoint)                                 \
     ADD(ShaderPreamble, Shader, preamble)                                     \
     ADD(ShaderIncludePaths, Shader, includePaths)                             \
@@ -198,6 +194,12 @@ inline QStringList fromVariant<QStringList>(const QVariant &v)
 }
 
 template <>
+inline QVariantMap fromVariant<QVariantMap>(const QVariant &v)
+{
+    return v.toMap();
+}
+
+template <>
 inline QColor fromVariant<QColor>(const QVariant &v)
 {
     return QColor(v.toString());
@@ -244,4 +246,14 @@ template <>
 inline QJsonValue toJsonValue(const QColor &v)
 {
     return v.name(QColor::HexArgb);
+}
+
+template <>
+inline QJsonValue toJsonValue(const QVariantMap &v)
+{
+    auto object = QJsonObject();
+    for (auto it = v.constBegin(); it != v.constEnd(); ++it)
+        object[it.key()] = it.value().toString();
+
+    return object;
 }

@@ -69,10 +69,10 @@ namespace ItemEnums {
     Q_ENUM_NS(ShaderType)
 
     enum ShaderLanguage {
+        None,
         GLSL,
         HLSL,
         Slang,
-        None,
     };
     Q_ENUM_NS(ShaderLanguage)
 
@@ -275,12 +275,6 @@ namespace ItemEnums {
         Direct3D,
     };
     Q_ENUM_NS(Renderer)
-
-    enum ShaderCompiler {
-        Driver,
-        glslang,
-    };
-    Q_ENUM_NS(ShaderCompiler)
 } // namespace ItemEnums
 
 // enums moved to another namespace because of name clashes
@@ -324,4 +318,13 @@ namespace ItemEnums2 {
         Triangles,
     };
     Q_ENUM_NS(GeometryType)
+
+    enum ShaderCompiler {
+        Driver,
+        glslang,
+        D3DCompiler,
+        DXC,
+        Slang,
+    };
+    Q_ENUM_NS(ShaderCompiler)
 } // namespace ItemEnums2

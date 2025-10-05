@@ -270,8 +270,7 @@ bool GLProgram::linkProgram()
 bool GLProgram::getInterfaceFromSpirv() const
 {
     // glslang cannot automap bindings or locations when targeting OpenGL
-    if (mShaders.empty()
-        || mShaders.front().language() == Shader::Language::GLSL)
+    if (session().shaderLanguage == Session::ShaderLanguage::GLSL)
         return false;
 
     return (session().shaderCompiler == Session::ShaderCompiler::glslang);

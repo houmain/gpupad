@@ -198,8 +198,6 @@ void PropertiesEditor::fillComboBoxes()
     fillComboBox<Target::CullMode>(mTargetProperties->cullMode);
     fillComboBox<Target::PolygonMode>(mTargetProperties->polygonMode);
     fillComboBox<Target::LogicOperation>(mTargetProperties->logicOperation);
-    fillComboBox<Shader::Language>(mShaderProperties->language);
-    removeComboBoxItem(mShaderProperties->language, "None");
     fillComboBox<Shader::ShaderType>(mShaderProperties->type);
     renameComboBoxItem(mShaderProperties->type, "Tess Control",
         "Tessellation Control");
@@ -325,7 +323,6 @@ void PropertiesEditor::setCurrentModelIndex(const QModelIndex &index)
 
     case Item::Type::Shader:
         map(mShaderProperties->file, SessionModel::FileName);
-        map(mShaderProperties->language, SessionModel::ShaderLanguage);
         map(mShaderProperties->type, SessionModel::ShaderType);
         map(mShaderProperties->entryPoint, SessionModel::ShaderEntryPoint);
         map(mShaderProperties->shaderPreamble, SessionModel::ShaderPreamble);
@@ -439,8 +436,7 @@ IEditor *PropertiesEditor::openEditor(const FileItem &fileItem)
         if (!editor)
             editor = editors.openNewSourceEditor(fileItem.fileName);
         if (auto shader = castItem<Shader>(fileItem)) {
-            const auto sourceType =
-                getSourceType(shader->shaderType, shader->language);
+            const auto sourceType = getSourceType(*shader);
             if (sourceType != SourceType::PlainText)
                 editor->setSourceType(sourceType);
         }
@@ -728,19 +724,13 @@ void PropertiesEditor::deduceShaderType()
     if (Singletons::fileCache().getSource(fileName, &source)) {
         const auto currentSourceType = (shader.fileName.isEmpty()
                 ? SourceType::PlainText
-                : getSourceType(shader.shaderType, shader.language));
+                : getSourceType(shader));
         const auto extension = FileDialog::getFileExtension(fileName);
         const auto sourceType =
             deduceSourceType(currentSourceType, extension, source);
-        if (sourceType != currentSourceType) {
-            const auto shaderType = getShaderType(sourceType);
-            const auto shaderLanguage = getShaderLanguage(sourceType);
+        if (sourceType != currentSourceType)
             mModel.setData(
                 mModel.getIndex(currentModelIndex(), SessionModel::ShaderType),
-                shaderType);
-            mModel.setData(mModel.getIndex(currentModelIndex(),
-                               SessionModel::ShaderLanguage),
-                shaderLanguage);
-        }
+                getShaderType(sourceType));
     }
 }

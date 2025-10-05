@@ -102,6 +102,7 @@ template <typename T>
 void fillComboBox(QComboBox *c, bool keepPascalCase = false)
 {
     auto metaType = QMetaEnum::fromType<T>();
+    c->clear();
     for (auto i = 0; i < metaType.keyCount(); ++i) {
         auto key = QString(metaType.key(i));
         if (!keepPascalCase)
@@ -114,6 +115,16 @@ template <typename T>
 void fillComboBox(QComboBox *c,
     std::initializer_list<std::pair<const char *, T>> items)
 {
+    c->clear();
+    for (const auto &kv : items)
+        if (kv.first)
+            c->addItem(kv.first, kv.second);
+}
+
+template <typename T>
+void fillComboBox(QComboBox *c, std::vector<std::pair<const char *, T>> items)
+{
+    c->clear();
     for (const auto &kv : items)
         if (kv.first)
             c->addItem(kv.first, kv.second);

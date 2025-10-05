@@ -32,12 +32,12 @@ namespace {
         } s;
     }
 
-    glslang::EShSource getLanguage(Shader::Language language)
+    glslang::EShSource getLanguage(Session::ShaderLanguage language)
     {
         switch (language) {
-        case Shader::Language::GLSL: return glslang::EShSourceGlsl;
-        case Shader::Language::HLSL: return glslang::EShSourceHlsl;
-        default:                     break;
+        case Session::ShaderLanguage::GLSL: return glslang::EShSourceGlsl;
+        case Session::ShaderLanguage::HLSL: return glslang::EShSourceHlsl;
+        default:                            break;
         }
         return {};
     }
@@ -153,9 +153,9 @@ namespace {
     }
 
     std::shared_ptr<glslang::TShader> createShader(const Session &session,
-        Shader::Language language, int dialectVersion,
-        Shader::ShaderType shaderType, const QStringList &sources,
-        const QStringList &fileNames, const QString &entryPoint)
+        int dialectVersion, Shader::ShaderType shaderType,
+        const QStringList &sources, const QStringList &fileNames,
+        const QString &entryPoint)
     {
         staticInitGlslang();
 
@@ -192,8 +192,8 @@ namespace {
         auto &shader = *shaderPtr;
         shader.setStringsWithLengthsAndNames(sourcesPtr, nullptr, fileNamesPtr,
             static_cast<int>(sources.size()));
-        shader.setEnvInput(getLanguage(language), getStage(shaderType), client,
-            dialectVersion);
+        shader.setEnvInput(getLanguage(session.shaderLanguage),
+            getStage(shaderType), client, dialectVersion);
         shader.setEnvClient(client, clientVersion);
         shader.setEnvTarget(targetLanguage, targetVersion);
 
@@ -207,7 +207,8 @@ namespace {
             shader.setEnvInputVulkanRulesRelaxed();
             shader.setGlobalUniformBlockName(globalUniformBlockName);
         }
-        shader.setHlslIoMapping(language == Shader::Language::HLSL);
+        shader.setHlslIoMapping(session.shaderLanguage
+            == Session::ShaderLanguage::HLSL);
         if (session.targetHlslFunctionality1)
             shader.setEnvTargetHlslFunctionality1();
         if (session.autoSampledTextures)
@@ -333,6 +334,7 @@ std::map<Shader::ShaderType, Spirv> Spirv::compile(const Session &session,
         return {};
     }
 
+    const auto language = session.shaderLanguage;
     const auto defaultVersion = 100;
     const auto defaultProfile = ECoreProfile;
     const auto forwardCompatible = true;
@@ -344,12 +346,12 @@ std::map<Shader::ShaderType, Spirv> Spirv::compile(const Session &session,
         auto requestedMessages = unsigned{ EShMsgSpvRules };
         if (session.renderer == Session::Renderer::Vulkan)
             requestedMessages |= EShMsgVulkanRules;
-        if (input.language == Shader::Language::HLSL)
+        if (language == Session::ShaderLanguage::HLSL)
             requestedMessages |= EShMsgReadHlsl | EShMsgHlslOffsets;
 
         auto &shader = *shaders.emplace_back(createShader(session,
-            input.language, defaultVersion, input.shaderType, input.sources,
-            input.fileNames, input.entryPoint));
+            defaultVersion, input.shaderType, input.sources, input.fileNames,
+            input.entryPoint));
 
         auto includer = Includer(input.includePaths);
         if (!shader.parse(GetDefaultResources(), defaultVersion, defaultProfile,
@@ -361,7 +363,7 @@ std::map<Shader::ShaderType, Spirv> Spirv::compile(const Session &session,
         }
 
         // setGlobalUniformBinding and setGlobalUniformSet do not work
-        if (input.language == Shader::Language::HLSL)
+        if (language == Session::ShaderLanguage::HLSL)
             patchHLSLGlobalUniformBindingSet(shader);
 
         program.addShader(&shader);
@@ -400,18 +402,18 @@ std::map<Shader::ShaderType, Spirv> Spirv::compile(const Session &session,
     return stages;
 }
 
-QString Spirv::preprocess(const Session &session, Shader::Language language,
-    Shader::ShaderType shaderType, const QStringList &sources,
-    const QStringList &fileNames, const QString &entryPoint, ItemId itemId,
-    const QString &includePaths, MessagePtrSet &messages)
+QString Spirv::preprocess(const Session &session, Shader::ShaderType shaderType,
+    const QStringList &sources, const QStringList &fileNames,
+    const QString &entryPoint, ItemId itemId, const QString &includePaths,
+    MessagePtrSet &messages)
 {
     const auto defaultVersion = 100;
     const auto defaultProfile = ENoProfile;
     const auto forwardCompatible = true;
     const auto requestedMessages = EShMsgOnlyPreprocessor;
 
-    auto shader = createShader(session, language, defaultVersion, shaderType,
-        sources, fileNames, entryPoint);
+    auto shader = createShader(session, defaultVersion, shaderType, sources,
+        fileNames, entryPoint);
     auto string = std::string();
     auto includer = Includer(includePaths);
     if (!shader->preprocess(GetResources(), defaultVersion, defaultProfile,
@@ -464,7 +466,7 @@ QString Spirv::generateHLSL(const Spirv &spirv)
     return QString::fromStdString(compiler.compile());
 }
 
-QString Spirv::generateAST(const Session &session, Shader::Language language,
+QString Spirv::generateAST(const Session &session,
     Shader::ShaderType shaderType, const QStringList &sources,
     const QStringList &fileNames, const QString &entryPoint, ItemId itemId,
     const QString &includePaths, MessagePtrSet &messages)
@@ -474,8 +476,8 @@ QString Spirv::generateAST(const Session &session, Shader::Language language,
     const auto forwardCompatible = true;
     const auto requestedMessages = EShMsgAST;
 
-    auto shader = createShader(session, language, defaultVersion, shaderType,
-        sources, fileNames, entryPoint);
+    auto shader = createShader(session, defaultVersion, shaderType, sources,
+        fileNames, entryPoint);
     auto includer = Includer(includePaths);
     if (!shader->parse(GetDefaultResources(), defaultVersion, defaultProfile,
             false, forwardCompatible, requestedMessages, includer)) {

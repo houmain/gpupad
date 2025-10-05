@@ -43,13 +43,13 @@ SourceType deduceSourceType(SourceType current, const QString &extension,
             return SourceType::GLSL_VertexShader;
         if (source.contains("local_size_x"))
             return SourceType::GLSL_ComputeShader;
-        if (getShaderLanguage(current) != Shader::Language::GLSL)
+        if (getShaderLanguage(current) != Session::ShaderLanguage::GLSL)
             return SourceType::GLSL_FragmentShader;
         return current;
     }
 
     if (extension == "hlsl" || extension == "hlsli" || extension == "fx") {
-        if (getShaderLanguage(current) != Shader::Language::HLSL) {
+        if (getShaderLanguage(current) != Session::ShaderLanguage::HLSL) {
             if (source.contains("PS"))
                 return SourceType::HLSL_PixelShader;
             if (source.contains("VS"))
@@ -79,9 +79,10 @@ SourceType deduceSourceType(SourceType current, const QString &extension,
     return current;
 }
 
-SourceType getSourceType(Shader::ShaderType type, Shader::Language language)
+SourceType getSourceType(Session::ShaderLanguage language,
+    Shader::ShaderType type)
 {
-    using SL = Shader::Language;
+    using SL = Session::ShaderLanguage;
     using ST = Shader::ShaderType;
 
     static const auto sMapping = QMap<std::pair<SL, ST>, SourceType>{
@@ -125,6 +126,11 @@ SourceType getSourceType(Shader::ShaderType type, Shader::Language language)
     return sMapping[{ language, type }];
 }
 
+SourceType getSourceType(const Shader &shader)
+{
+    return getSourceType(getShaderLanguage(shader), shader.shaderType);
+}
+
 Shader::ShaderType getShaderType(SourceType sourceType)
 {
     using ST = Shader::ShaderType;
@@ -166,7 +172,7 @@ Shader::ShaderType getShaderType(SourceType sourceType)
     return {};
 }
 
-Shader::Language getShaderLanguage(SourceType sourceType)
+Session::ShaderLanguage getShaderLanguage(SourceType sourceType)
 {
     switch (sourceType) {
     case SourceType::PlainText:
@@ -186,7 +192,8 @@ Shader::Language getShaderLanguage(SourceType sourceType)
     case SourceType::GLSL_RayAnyHitShader:
     case SourceType::GLSL_RayClosestHitShader:
     case SourceType::GLSL_RayMissShader:
-    case SourceType::GLSL_RayCallableShader:     return Shader::Language::GLSL;
+    case SourceType::GLSL_RayCallableShader:
+        return Session::ShaderLanguage::GLSL;
 
     case SourceType::HLSL_VertexShader:
     case SourceType::HLSL_PixelShader:
@@ -201,9 +208,19 @@ Shader::Language getShaderLanguage(SourceType sourceType)
     case SourceType::HLSL_RayAnyHitShader:
     case SourceType::HLSL_RayClosestHitShader:
     case SourceType::HLSL_RayMissShader:
-    case SourceType::HLSL_RayCallableShader:     return Shader::Language::HLSL;
+    case SourceType::HLSL_RayCallableShader:
+        return Session::ShaderLanguage::HLSL;
 
-    case SourceType::Slang: return Shader::Language::Slang;
+    case SourceType::Slang: return Session::ShaderLanguage::Slang;
     }
-    return Shader::Language::None;
+    return Session::ShaderLanguage::None;
+}
+
+Session::ShaderLanguage getShaderLanguage(const Shader &shader)
+{
+    for (auto parent = shader.parent; parent; parent = parent->parent)
+        if (auto session = castItem<Session>(parent))
+            return session->shaderLanguage;
+
+    return {};
 }

@@ -54,7 +54,7 @@ bool GLShader::compile(ShaderPrintf &printf)
 {
     if (mShaderObject)
         return true;
-    if (mLanguage != Shader::Language::GLSL) {
+    if (mSession.shaderLanguage != Session::ShaderLanguage::GLSL) {
         mMessages += MessageList::insert(mItemId,
             MessageType::OpenGLRendererRequiresGLSL);
         return {};

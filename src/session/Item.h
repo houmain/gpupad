@@ -3,6 +3,7 @@
 #include "Evaluation.h"
 #include "ItemEnums.h"
 #include "SourceType.h"
+#include <QVariantMap>
 #include <QList>
 #include <QOpenGLTexture>
 #include <QVariant>
@@ -40,16 +41,19 @@ struct Root : ScopeItem
 struct Session : ScopeItem
 {
     using Renderer = ItemEnums::Renderer;
-    using ShaderCompiler = ItemEnums::ShaderCompiler;
+    using ShaderLanguage = ItemEnums::ShaderLanguage;
+    using ShaderCompiler = ItemEnums2::ShaderCompiler;
 
-    Renderer renderer{ };
-    ShaderCompiler shaderCompiler;
+    Renderer renderer{ Renderer::OpenGL };
+    ShaderLanguage shaderLanguage{ ShaderLanguage::GLSL };
+    ShaderCompiler shaderCompiler{ ShaderCompiler::Driver };
+    QVariantMap compilerSettings;
     QString shaderPreamble;
     QString shaderIncludePaths;
     bool flipViewport{};
     bool reverseCulling{ true };
 
-    // glslang compiler options
+    // TODO: remove
     bool autoMapBindings{ true };
     bool autoMapLocations{ true };
     bool autoSampledTextures{ true };
@@ -106,10 +110,8 @@ struct Program : Item
 struct Shader : FileItem
 {
     using ShaderType = ItemEnums::ShaderType;
-    using Language = ItemEnums::ShaderLanguage;
 
     ShaderType shaderType{ ShaderType::Vertex };
-    Language language{ Language::GLSL };
     QString entryPoint;
     QString preamble;
     QString includePaths;
@@ -317,9 +319,11 @@ bool callTypeSupportsShaderType(Call::CallType callType,
     Shader::ShaderType shaderType);
 bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType);
 
-SourceType getSourceType(Shader::ShaderType type, Shader::Language language);
+SourceType getSourceType(Session::ShaderLanguage language, Shader::ShaderType type);
+SourceType getSourceType(const Shader &shader);
 Shader::ShaderType getShaderType(SourceType sourceType);
-Shader::Language getShaderLanguage(SourceType sourceType);
+Session::ShaderLanguage getShaderLanguage(SourceType sourceType);
+Session::ShaderLanguage getShaderLanguage(const Shader &shader);
 
 template <typename T>
 Item::Type getItemType();

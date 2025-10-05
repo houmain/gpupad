@@ -186,13 +186,14 @@ namespace {
         return completeFunctionName(source, prefix);
     }
 
-    QString getEntryPoint(const QString &entryPoint, Shader::Language language,
-        Shader::ShaderType shaderType, const QString &source)
+    QString getEntryPoint(const QString &entryPoint,
+        Session::ShaderLanguage language, Shader::ShaderType shaderType,
+        const QString &source)
     {
         if (!entryPoint.isEmpty())
             return entryPoint;
 
-        if (language == Shader::Language::HLSL)
+        if (language == Session::ShaderLanguage::HLSL)
             if (auto found = findHLSLEntryPoint(shaderType, source);
                 !found.isEmpty())
                 return found;
@@ -256,15 +257,14 @@ ShaderBase::ShaderBase(Shader::ShaderType type,
 
         mFileNames += shader->fileName;
         mSources += source + "\n";
-        mLanguage = shader->language;
         if (!shader->entryPoint.isEmpty())
             mEntryPoint = shader->entryPoint;
         appendLines(mPreamble, shader->preamble);
         appendLines(mIncludePaths, shader->includePaths);
     }
 
-    mEntryPoint =
-        getEntryPoint(mEntryPoint, mLanguage, mType, mSources.first());
+    mEntryPoint = getEntryPoint(mEntryPoint, mSession.shaderLanguage, mType,
+        mSources.first());
 }
 
 bool ShaderBase::operator==(const ShaderBase &rhs) const
@@ -274,8 +274,8 @@ bool ShaderBase::operator==(const ShaderBase &rhs) const
         return false;
 
     const auto tie = [](const ShaderBase &a) {
-        return std::tie(a.mType, a.mSources, a.mFileNames, a.mLanguage,
-            a.mEntryPoint, a.mPreamble, a.mIncludePaths);
+        return std::tie(a.mType, a.mSources, a.mFileNames, a.mEntryPoint,
+            a.mPreamble, a.mIncludePaths);
     };
     return tie(*this) == tie(rhs);
 }
@@ -288,7 +288,7 @@ QStringList ShaderBase::preprocessorDefinitions() const
 QStringList ShaderBase::getPatchedSources(ShaderPrintf &printf,
     QStringList *usedFileNames)
 {
-    return (mLanguage == Shader::Language::HLSL
+    return (mSession.shaderLanguage == Session::ShaderLanguage::HLSL
             ? getPatchedSourcesHLSL(printf, usedFileNames)
             : getPatchedSourcesGLSL(printf, usedFileNames));
 }
@@ -378,7 +378,6 @@ Spirv::Input ShaderBase::getSpirvCompilerInput(ShaderPrintf &printf)
     auto usedFileNames = QStringList();
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
     return Spirv::Input{
-        mLanguage,
         mType,
         patchedSources,
         usedFileNames,
@@ -406,8 +405,8 @@ QString ShaderBase::preprocess()
     auto usedFileNames = QStringList();
     auto printf = RemoveShaderPrintf();
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
-    return Spirv::preprocess(mSession, mLanguage, mType, patchedSources,
-        usedFileNames, mEntryPoint, mItemId, mIncludePaths, mMessages);
+    return Spirv::preprocess(mSession, mType, patchedSources, usedFileNames,
+        mEntryPoint, mItemId, mIncludePaths, mMessages);
 }
 
 QString ShaderBase::generateGLSLangAST()
@@ -415,8 +414,8 @@ QString ShaderBase::generateGLSLangAST()
     auto usedFileNames = QStringList();
     auto printf = RemoveShaderPrintf();
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
-    return Spirv::generateAST(mSession, mLanguage, mType, patchedSources,
-        usedFileNames, mEntryPoint, mItemId, mIncludePaths, mMessages);
+    return Spirv::generateAST(mSession, mType, patchedSources, usedFileNames,
+        mEntryPoint, mItemId, mIncludePaths, mMessages);
 }
 
 QString ShaderBase::getJsonInterface()

@@ -21,6 +21,7 @@ public:
     void addMappings(QDataWidgetMapper &mapper);
 
 private:
+    void updateShaderCompiler();
     void updateWidgets();
 
     PropertiesEditor &mPropertiesEditor;

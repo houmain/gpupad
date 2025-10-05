@@ -120,7 +120,7 @@ bool D3DShader::compile(ShaderPrintf &printf)
     if (mBinary)
         return true;
 
-    if (mLanguage != Shader::Language::HLSL) {
+    if (mSession.shaderLanguage != Session::ShaderLanguage::HLSL) {
         const auto spirv = compileSpirv(printf);
         if (!spirv)
             return {};

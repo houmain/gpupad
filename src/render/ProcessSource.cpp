@@ -91,7 +91,6 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
         auto shader = Shader{};
         if (shaders.empty()) {
             shader.fileName = mFileName;
-            shader.language = Shader::Language::GLSL;
             shaders = { &shader };
         }
         // replace shader's type and language
@@ -99,12 +98,12 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
             if (s->fileName == mFileName) {
                 shader = *s;
                 shader.shaderType = shaderType;
-                shader.language = getShaderLanguage(mSourceType);
                 s = &shader;
                 break;
             }
 
         auto session = Singletons::sessionModel().sessionItem();
+        session.shaderLanguage = getShaderLanguage(mSourceType);
 
         // define state of hidden session properties
         const auto hasVulkanRenderer =

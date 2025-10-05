@@ -9,7 +9,6 @@ class Spirv final
 public:
     struct Input
     {
-        Shader::Language language;
         Shader::ShaderType shaderType;
         QStringList sources;
         QStringList fileNames;
@@ -37,7 +36,7 @@ public:
         const std::vector<Input> &inputs, ItemId programItemId,
         MessagePtrSet &messages);
 
-    static QString preprocess(const Session &session, Shader::Language language,
+    static QString preprocess(const Session &session,
         Shader::ShaderType shaderType, const QStringList &sources,
         const QStringList &fileNames, const QString &entryPoint, ItemId itemId,
         const QString &includePaths, MessagePtrSet &messages);
@@ -48,10 +47,9 @@ public:
     static std::vector<uint32_t> stripReflection(const Spirv &spirv);
 
     static QString generateAST(const Session &session,
-        Shader::Language language, Shader::ShaderType shaderType,
-        const QStringList &sources, const QStringList &fileNames,
-        const QString &entryPoint, ItemId itemId, const QString &includePaths,
-        MessagePtrSet &messages);
+        Shader::ShaderType shaderType, const QStringList &sources,
+        const QStringList &fileNames, const QString &entryPoint, ItemId itemId,
+        const QString &includePaths, MessagePtrSet &messages);
 
     Spirv() = default;
     explicit Spirv(std::vector<uint32_t> spirv);
