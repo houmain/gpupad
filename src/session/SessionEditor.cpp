@@ -112,16 +112,15 @@ void SessionEditor::updateItemActions()
         Item::Type type;
         QAction *action;
     };
-    for (const auto [type, action] :
-        {
-            TypeAction{ Item::Type::Block, mAddBlockAction },
-            TypeAction{ Item::Type::Field, mAddFieldAction },
-            TypeAction{ Item::Type::Shader, mAddShaderAction },
-            TypeAction{ Item::Type::Attribute, mAddAttributeAction },
-            TypeAction{ Item::Type::Attachment, mAddAttachmentAction },
-            TypeAction{ Item::Type::Instance, mAddInstanceAction },
-            TypeAction{ Item::Type::Geometry, mAddGeometryAction },
-        })
+    for (const auto [type, action] : {
+             TypeAction{ Item::Type::Block, mAddBlockAction },
+             TypeAction{ Item::Type::Field, mAddFieldAction },
+             TypeAction{ Item::Type::Shader, mAddShaderAction },
+             TypeAction{ Item::Type::Attribute, mAddAttributeAction },
+             TypeAction{ Item::Type::Attachment, mAddAttachmentAction },
+             TypeAction{ Item::Type::Instance, mAddInstanceAction },
+             TypeAction{ Item::Type::Geometry, mAddGeometryAction },
+         })
         action->setVisible(mModel.canContainType(index, type)
             || mModel.canContainType(index.parent(), type));
 }
@@ -211,10 +210,12 @@ void SessionEditor::selectionChanged(const QItemSelection &selected,
         if (index.parent() != parent)
             invalid.select(index, index);
 
-    if (!invalid.empty())
+    if (!invalid.empty()) {
         selectionModel()->select(invalid, QItemSelectionModel::Deselect);
-    else
+        QTreeView::selectionChanged(selectionModel()->selection(), deselected);
+    } else {
         QTreeView::selectionChanged(selected, deselected);
+    }
 }
 
 void SessionEditor::focusInEvent(QFocusEvent *event)
