@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(_WIN32)
+
 #include "D3DBuffer.h"
 
 class D3DStream
@@ -36,3 +38,5 @@ private:
     std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
     int mMaxElementCount{ -1 };
 };
+
+#endif // _WIN32

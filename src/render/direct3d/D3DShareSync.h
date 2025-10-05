@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(_WIN32)
+
 #include "D3DContext.h"
 #include "render/ShareSync.h"
 #include <QOpenGLContext>
@@ -19,3 +21,5 @@ public:
 private:
     QMutex mMutex;
 };
+
+#endif // _WIN32

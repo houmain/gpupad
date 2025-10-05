@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(_WIN32)
+
 #include "D3DTexture.h"
 
 class D3DTarget
@@ -33,3 +35,5 @@ private:
     int mDefaultLayers{};
     bool mFlipViewport{};
 };
+
+#endif // _WIN32

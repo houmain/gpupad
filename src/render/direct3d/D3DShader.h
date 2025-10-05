@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(_WIN32)
+
 #include "D3DPrintf.h"
 #include "render/ShaderBase.h"
 
@@ -25,3 +27,5 @@ private:
     ComPtr<ID3DBlob> mBinary;
     ComPtr<ID3D12ShaderReflection> mReflection;
 };
+
+#endif // _WIN32

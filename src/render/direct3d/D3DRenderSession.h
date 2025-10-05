@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(_WIN32)
+
 #include "render/RenderSessionBase.h"
 #include "D3DContext.h"
 
@@ -32,3 +34,5 @@ private:
     ComPtr<ID3D12Fence> mFence;
     uint64_t mFenceValue{};
 };
+
+#endif // _WIN32

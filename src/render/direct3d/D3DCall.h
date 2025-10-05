@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(_WIN32)
+
 #include "D3DContext.h"
 #include "D3DPipeline.h"
 #include "scripting/ScriptEngine.h"
@@ -75,3 +77,5 @@ private:
     std::unique_ptr<D3DPipeline> mPipeline;
     MessagePtrSet mPrintfMessages;
 };
+
+#endif // _WIN32

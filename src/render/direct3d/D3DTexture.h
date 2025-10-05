@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(_WIN32)
+
 #include "D3DContext.h"
 #include "render/TextureBase.h"
 
@@ -56,3 +58,5 @@ private:
     D3D12_RESOURCE_STATES mCurrentState{};
     HANDLE mShareHandle{};
 };
+
+#endif // _WIN32

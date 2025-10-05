@@ -113,11 +113,17 @@ void SynchronizeLogic::setCurrentEditorSourceType(SourceType sourceType)
 void SynchronizeLogic::initializeRenderSession()
 {
     const auto sessionRenderer = Singletons::sessionRenderer();
+    if (!sessionRenderer)
+       return;
+
     if (mRenderSession && &mRenderSession->renderer() == sessionRenderer.get())
         return;
 
     const auto basePath = QFileInfo(mSessionFileName).path();
     mRenderSession = RenderSessionBase::create(sessionRenderer, basePath);
+    if (!mRenderSession)
+        return;
+
     connect(mRenderSession.get(), &RenderTask::updated, this,
         &SynchronizeLogic::handleSessionRendered);
 

@@ -2,7 +2,6 @@
 #include "SessionModel.h"
 #include "PropertiesEditor.h"
 #include "ui_SessionProperties.h"
-#include "render/Renderer.h"
 #include <QDataWidgetMapper>
 
 SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
@@ -115,7 +114,7 @@ void SessionProperties::updateWidgets()
         static_cast<Session::Renderer>(mUi->renderer->currentData().toInt());
     const auto language = static_cast<Session::ShaderLanguage>(
         mUi->shaderLanguage->currentData().toInt());
-    const auto shaderCompiler = static_cast<Session::Renderer>(
+    const auto shaderCompiler = static_cast<Session::ShaderCompiler>(
         mUi->shaderCompiler->currentData().toInt());
 
     const auto hasVulkanRenderer = (renderer == Session::Renderer::Vulkan);

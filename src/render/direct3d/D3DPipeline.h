@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(_WIN32)
+
 #include "D3DShader.h"
 #include "scripting/ScriptEngine.h"
 #include <span>
@@ -55,3 +57,5 @@ private:
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
 };
+
+#endif // _WIN32

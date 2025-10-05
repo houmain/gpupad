@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 project(gpupad LANGUAGES CXX C)
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 option(ENABLE_UNITY_BUILD "Enable Unity Build" OFF)
 if (ENABLE_UNITY_BUILD)
@@ -301,18 +302,10 @@ if(ENABLE_QUICK AND Qt6Quick_FOUND AND Qt6QuickWidgets_FOUND)
     endif()
 endif()
 
-# link OpenImageIO
-find_package(OpenImageIO CONFIG)
-option(ENABLE_OPENIMEAGEIO "Enable OpenImageIO" ON)
-if (ENABLE_OPENIMEAGEIO AND OpenImageIO_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE OpenImageIO::OpenImageIO)
-    add_compile_definitions(OpenImageIO_FOUND)
-endif()
-
 # link glslang
 find_package(glslang CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE glslang::OSDependent glslang::glslang 
-    glslang::MachineIndependent glslang::GenericCodeGen glslang::glslang-default-resource-limits 
+target_link_libraries(${PROJECT_NAME} PRIVATE glslang::OSDependent glslang::glslang
+    glslang::MachineIndependent glslang::GenericCodeGen glslang::glslang-default-resource-limits
     glslang::SPVRemapper glslang::SPIRV)
 
 # link SPIRV-Cross
@@ -323,15 +316,33 @@ find_package(spirv_cross_reflect CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} 
     PRIVATE spirv-cross-core spirv-cross-glsl spirv-cross-hlsl spirv-cross-reflect)
 
-# link Slang
-find_package(slang CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE slang::slang)
-
 # link SPIRV-Tools
 find_package(SPIRV-Tools CONFIG REQUIRED)
 find_package(SPIRV-Tools-opt CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} 
-    PRIVATE SPIRV-Tools-static SPIRV-Tools-opt)
+    PRIVATE SPIRV-Tools-opt)
+
+# link OpenImageIO
+find_package(OpenImageIO)
+if (OpenImageIO_FOUND)
+    set(ENABLE_OPENIMEAGEIO_DEFAULT TRUE)
+endif()
+option(ENABLE_OPENIMEAGEIO "Enable OpenImageIO" ${ENABLE_OPENIMEAGEIO_DEFAULT})
+if (ENABLE_OPENIMEAGEIO)
+    target_link_libraries(${PROJECT_NAME} PRIVATE OpenImageIO::OpenImageIO)
+    add_compile_definitions(OpenImageIO_FOUND)
+endif()
+
+# link Slang
+find_package(Slang)
+if (Slang_FOUND)
+    set(ENABLE_SLANG_DEFAULT TRUE)
+endif()
+option(ENABLE_SLANG "Enable Slang" ${ENABLE_SLANG_DEFAULT})
+if (ENABLE_SLANG)
+    target_link_libraries(${PROJECT_NAME} PRIVATE slang::slang)
+    add_compile_definitions(Slang_FOUND)
+endif()
 
 # add custom action projects
 set(ACTIONS

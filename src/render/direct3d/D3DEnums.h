@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(_WIN32)
+
 #include "D3DContext.h"
 #include "session/Item.h"
 #include <optional>
@@ -19,3 +21,5 @@ D3D12_COMPARISON_FUNC toD3D(Binding::ComparisonFunc compareFunc);
 D3D12_BLEND_OP toD3D(Attachment::BlendEquation eq);
 D3D12_BLEND toD3D(Attachment::BlendFactor factor);
 D3D12_TEXTURE_ADDRESS_MODE toD3D(Binding::WrapMode wrapMode);
+
+#endif // _WIN32

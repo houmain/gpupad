@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(_WIN32)
+
 #include "D3DContext.h"
 #include "render/BufferBase.h"
 
@@ -33,3 +35,5 @@ private:
     ComPtr<ID3D12Resource> mResource;
     D3D12_RESOURCE_STATES mCurrentState{};
 };
+
+#endif // _WIN32

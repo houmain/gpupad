@@ -11,7 +11,10 @@
 #include "session/SessionModel.h"
 #include "opengl/GLRenderSession.h"
 #include "vulkan/VKRenderSession.h"
-#include "direct3d/D3DRenderSession.h"
+
+#if defined(_WIN32)
+#  include "direct3d/D3DRenderSession.h"
+#endif
 
 std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
     RendererPtr renderer, const QString &basePath)
@@ -23,9 +26,11 @@ std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
     case RenderAPI::Vulkan:
         return std::make_unique<VKRenderSession>(renderer, basePath);
     case RenderAPI::Direct3D:
+#if defined(_WIN32)
         return std::make_unique<D3DRenderSession>(renderer, basePath);
+#endif
+        break;
     }
-    Q_UNREACHABLE();
     return {};
 }
 

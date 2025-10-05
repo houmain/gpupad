@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(_WIN32)
+
 #include "D3DShader.h"
 
 class D3DProgram
@@ -33,3 +35,5 @@ private:
     D3DPrintf mPrintf;
     bool mFailed{};
 };
+
+#endif // _WIN32

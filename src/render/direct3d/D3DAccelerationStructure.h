@@ -1,5 +1,7 @@
 #pragma once
 
+#if defined(_WIN32)
+
 #include "D3DBuffer.h"
 #include "scripting/ScriptEngine.h"
 
@@ -54,3 +56,5 @@ private:
     QSet<ItemId> mUsedItems;
     std::vector<D3DInstance> mInstances;
 };
+
+#endif // _WIN32
