@@ -108,7 +108,7 @@
   <customwidget>
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
-   <header>session/DataComboBox.h</header>
+   <header>widgets//DataComboBox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

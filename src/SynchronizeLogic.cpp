@@ -10,7 +10,7 @@
 #include "render/ProcessSource.h"
 #include "render/RenderSessionBase.h"
 #include "session/SessionModel.h"
-#include "session/PropertiesEditor.h"
+#include "session/properties/PropertiesEditor.h"
 #include "scripting/ScriptSession.h"
 #include <QTimer>
 #include <QMetaEnum>

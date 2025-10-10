@@ -173,42 +173,42 @@ set(SOURCES
   src/scripting/objects/MouseScriptObject.cpp
   src/scripting/objects/KeyboardScriptObject.cpp
   src/scripting/objects/SessionScriptObject.cpp
-  src/session/AttachmentProperties.cpp
-  src/session/AttachmentProperties.ui
-  src/session/AttributeProperties.ui
-  src/session/BindingProperties.cpp
-  src/session/BindingProperties.ui
-  src/session/BufferProperties.ui
-  src/session/BlockProperties.ui
-  src/session/CallProperties.cpp
-  src/session/CallProperties.ui
-  src/session/ColorMask.cpp
-  src/session/ColorPicker.cpp
-  src/session/FieldProperties.ui
-  src/session/DataComboBox.cpp
   src/session/Item.cpp
-  src/session/ExpressionEditor.cpp
-  src/session/ExpressionMatrix.cpp
-  src/session/ExpressionLineEdit.cpp
-  src/session/GroupProperties.ui
-  src/session/ProgramProperties.ui
-  src/session/ReferenceComboBox.cpp
-  src/session/ScriptProperties.ui
-  src/session/AccelerationStructureProperties.ui
-  src/session/InstanceProperties.ui
-  src/session/GeometryProperties.ui
+  src/resources.qrc
+  src/session/properties/AccelerationStructureProperties.ui
+  src/session/properties/AttachmentProperties.cpp
+  src/session/properties/AttachmentProperties.ui
+  src/session/properties/AttributeProperties.ui
+  src/session/properties/BindingProperties.cpp
+  src/session/properties/BindingProperties.ui
+  src/session/properties/BlockProperties.ui
+  src/session/properties/BufferProperties.ui
+  src/session/properties/CallProperties.cpp
+  src/session/properties/CallProperties.ui
+  src/session/properties/FieldProperties.ui
+  src/session/properties/GeometryProperties.ui
+  src/session/properties/GroupProperties.ui
+  src/session/properties/InstanceProperties.ui
+  src/session/properties/ProgramProperties.ui
+  src/session/properties/PropertiesEditor.cpp
+  src/session/properties/ScriptProperties.ui
+  src/session/properties/SessionProperties.cpp
+  src/session/properties/SessionProperties.ui
+  src/session/properties/ShaderProperties.ui
+  src/session/properties/StreamProperties.ui
+  src/session/properties/TargetProperties.ui
+  src/session/properties/TextureProperties.cpp
+  src/session/properties/TextureProperties.ui
   src/session/SessionEditor.cpp
   src/session/SessionModel.cpp
   src/session/SessionModelCore.cpp
-  src/session/PropertiesEditor.cpp
-  src/resources.qrc
-  src/session/ShaderProperties.ui
-  src/session/StreamProperties.ui
-  src/session/TargetProperties.ui
-  src/session/SessionProperties.cpp
-  src/session/SessionProperties.ui
-  src/session/TextureProperties.cpp
-  src/session/TextureProperties.ui)
+  src/widgets/ColorMask.cpp
+  src/widgets/ColorPicker.cpp
+  src/widgets/DataComboBox.cpp
+  src/widgets/ExpressionEditor.cpp
+  src/widgets/ExpressionLineEdit.cpp
+  src/widgets/ExpressionMatrix.cpp
+  src/widgets/ReferenceComboBox.cpp)
 
 if(WIN32)
   set(SOURCES ${SOURCES}
@@ -340,7 +340,7 @@ if (Slang_FOUND)
 endif()
 option(ENABLE_SLANG "Enable Slang" ${ENABLE_SLANG_DEFAULT})
 if (ENABLE_SLANG)
-    target_link_libraries(${PROJECT_NAME} PRIVATE slang::slang)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${Slang_LIBRARY})
     add_compile_definitions(Slang_FOUND)
 endif()
 

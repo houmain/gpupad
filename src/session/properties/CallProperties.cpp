@@ -1,5 +1,5 @@
 #include "CallProperties.h"
-#include "SessionModel.h"
+#include "../SessionModel.h"
 #include "PropertiesEditor.h"
 #include "ui_CallProperties.h"
 #include <QDataWidgetMapper>

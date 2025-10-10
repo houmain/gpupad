@@ -3,7 +3,7 @@
 #include "Singletons.h"
 #include "Theme.h"
 #include "WindowTitle.h"
-#include "session/DataComboBox.h"
+#include "widgets/DataComboBox.h"
 #include <QPlainTextEdit>
 #include <QScrollBar>
 #include <QVBoxLayout>

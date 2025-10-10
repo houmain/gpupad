@@ -1,5 +1,5 @@
 #include "BindingProperties.h"
-#include "SessionModel.h"
+#include "../SessionModel.h"
 #include "PropertiesEditor.h"
 #include "TextureData.h"
 #include "ui_BindingProperties.h"

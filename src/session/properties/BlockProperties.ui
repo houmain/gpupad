@@ -150,7 +150,7 @@
   <customwidget>
    <class>ExpressionLineEdit</class>
    <extends>QLineEdit</extends>
-   <header>session/ExpressionLineEdit.h</header>
+   <header>widgets//ExpressionLineEdit.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

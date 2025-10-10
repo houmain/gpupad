@@ -1,7 +1,5 @@
 #pragma once
 
-#if defined(_WIN32)
-
 #include "render/Renderer.h"
 #include <QObject>
 #include <QThread>
@@ -46,5 +44,3 @@ private:
     ID3D12CommandQueue *mQueue{};
     RenderTargetHelper *mRenderTargetHelper{};
 };
-
-#endif // _WIN32

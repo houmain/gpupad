@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BinaryEditor.h"
-#include "session/ExpressionLineEdit.h"
+#include "widgets/ExpressionLineEdit.h"
 #include <QItemDelegate>
 #include <QSpinBox>
 

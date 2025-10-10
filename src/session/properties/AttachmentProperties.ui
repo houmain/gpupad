@@ -595,17 +595,17 @@
   <customwidget>
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
-   <header>session/DataComboBox.h</header>
+   <header>widgets//DataComboBox.h</header>
   </customwidget>
   <customwidget>
    <class>ReferenceComboBox</class>
    <extends>QComboBox</extends>
-   <header>session/ReferenceComboBox.h</header>
+   <header>widgets//ReferenceComboBox.h</header>
   </customwidget>
   <customwidget>
    <class>ColorMask</class>
    <extends>QWidget</extends>
-   <header>session/ColorMask.h</header>
+   <header>widgets//ColorMask.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

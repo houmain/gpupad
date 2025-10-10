@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ScriptProperties</class>
- <widget class="QWidget" name="ScriptProperties">
+ <class>BufferProperties</class>
+ <widget class="QWidget" name="BufferProperties">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>239</width>
-    <height>166</height>
+    <width>241</width>
+    <height>45</height>
    </rect>
   </property>
   <layout class="QVBoxLayout">
@@ -43,7 +43,7 @@
      </item>
      <item row="0" column="1">
       <widget class="QWidget" name="widgetFile" native="true">
-       <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <layout class="QHBoxLayout" name="horizontalLayout_8">
         <property name="spacing">
          <number>2</number>
         </property>
@@ -51,7 +51,7 @@
          <number>0</number>
         </property>
         <property name="topMargin">
-         <number>0</number>
+         <number>1</number>
         </property>
         <property name="rightMargin">
          <number>0</number>
@@ -70,12 +70,6 @@
           <property name="icon">
            <iconset theme="document-save-as"/>
           </property>
-          <property name="iconSize">
-           <size>
-            <width>16</width>
-            <height>16</height>
-           </size>
-          </property>
          </widget>
         </item>
         <item>
@@ -86,26 +80,10 @@
           <property name="icon">
            <iconset theme="document-open"/>
           </property>
-          <property name="iconSize">
-           <size>
-            <width>16</width>
-            <height>16</height>
-           </size>
-          </property>
          </widget>
         </item>
        </layout>
       </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="labelExecuteOn">
-       <property name="text">
-        <string>Execute on</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="DataComboBox" name="executeOn"/>
      </item>
     </layout>
    </item>
@@ -113,14 +91,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>DataComboBox</class>
-   <extends>QComboBox</extends>
-   <header>session/DataComboBox.h</header>
-  </customwidget>
-  <customwidget>
    <class>ReferenceComboBox</class>
    <extends>QComboBox</extends>
-   <header>session/ReferenceComboBox.h</header>
+   <header>widgets//ReferenceComboBox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

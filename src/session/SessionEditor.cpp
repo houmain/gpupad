@@ -3,7 +3,7 @@
 #include "FileDialog.h"
 #include "SessionModel.h"
 #include "Singletons.h"
-#include "PropertiesEditor.h"
+#include "properties/PropertiesEditor.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QMenu>

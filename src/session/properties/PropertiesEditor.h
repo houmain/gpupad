@@ -1,7 +1,7 @@
 #pragma once
 
 #include "FileDialog.h"
-#include "Item.h"
+#include "../Item.h"
 #include <QComboBox>
 #include <QFormLayout>
 #include <QLabel>

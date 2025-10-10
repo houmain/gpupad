@@ -1,5 +1,5 @@
 #include "SessionProperties.h"
-#include "SessionModel.h"
+#include "../SessionModel.h"
 #include "PropertiesEditor.h"
 #include "ui_SessionProperties.h"
 #include <QDataWidgetMapper>

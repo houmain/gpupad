@@ -4,7 +4,7 @@
 #include "CallProperties.h"
 #include "SessionProperties.h"
 #include "FileCache.h"
-#include "SessionModel.h"
+#include "../SessionModel.h"
 #include "Settings.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"

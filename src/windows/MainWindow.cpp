@@ -17,7 +17,7 @@
 #include "scripting/CustomActions.h"
 #include "session/SessionEditor.h"
 #include "session/SessionModel.h"
-#include "session/PropertiesEditor.h"
+#include "session/properties/PropertiesEditor.h"
 #include "ui_MainWindow.h"
 #include <QActionGroup>
 #include <QCloseEvent>

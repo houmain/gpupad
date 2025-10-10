@@ -1,5 +1,5 @@
 #include "AttachmentProperties.h"
-#include "SessionModel.h"
+#include "../SessionModel.h"
 #include "PropertiesEditor.h"
 #include "ui_AttachmentProperties.h"
 #include <QCheckBox>

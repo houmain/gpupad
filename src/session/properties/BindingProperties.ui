@@ -349,22 +349,22 @@
   <customwidget>
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
-   <header>session/DataComboBox.h</header>
+   <header>widgets//DataComboBox.h</header>
   </customwidget>
   <customwidget>
    <class>ReferenceComboBox</class>
    <extends>QComboBox</extends>
-   <header>session/ReferenceComboBox.h</header>
+   <header>widgets//ReferenceComboBox.h</header>
   </customwidget>
   <customwidget>
    <class>ExpressionMatrix</class>
    <extends>QTableWidget</extends>
-   <header>session/ExpressionMatrix.h</header>
+   <header>widgets//ExpressionMatrix.h</header>
   </customwidget>
   <customwidget>
    <class>ColorPicker</class>
    <extends>QCheckBox</extends>
-   <header>session/ColorPicker.h</header>
+   <header>widgets//ColorPicker.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -116,17 +116,17 @@
   <customwidget>
    <class>ExpressionLineEdit</class>
    <extends>QLineEdit</extends>
-   <header>session/ExpressionLineEdit.h</header>
+   <header>widgets//ExpressionLineEdit.h</header>
   </customwidget>
   <customwidget>
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
-   <header>session/DataComboBox.h</header>
+   <header>widgets//DataComboBox.h</header>
   </customwidget>
   <customwidget>
    <class>ReferenceComboBox</class>
    <extends>QComboBox</extends>
-   <header>session/ReferenceComboBox.h</header>
+   <header>widgets//ReferenceComboBox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
