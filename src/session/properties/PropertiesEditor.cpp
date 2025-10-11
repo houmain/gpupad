@@ -119,7 +119,7 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     mMapper->setModel(&mModel);
     connect(mSubmitTimer, &QTimer::timeout, mMapper,
         &QDataWidgetMapper::submit);
-    mSubmitTimer->setInterval(100);
+    mSubmitTimer->setInterval(10);
     mSubmitTimer->setSingleShot(true);
     qApp->installEventFilter(this);
 

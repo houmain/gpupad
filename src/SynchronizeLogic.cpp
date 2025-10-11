@@ -114,7 +114,7 @@ void SynchronizeLogic::initializeRenderSession()
 {
     const auto sessionRenderer = Singletons::sessionRenderer();
     if (!sessionRenderer)
-       return;
+        return;
 
     if (mRenderSession && &mRenderSession->renderer() == sessionRenderer.get())
         return;
@@ -231,7 +231,8 @@ void SynchronizeLogic::invalidateRenderSession()
     mRenderSessionInvalidated = true;
 
     if (mEvaluationMode == EvaluationMode::Automatic)
-        mEvaluationTimer->start(50);
+        if (!mEvaluationTimer->isActive())
+            mEvaluationTimer->start(10);
 }
 
 void SynchronizeLogic::handleItemModified(const QModelIndex &index)
