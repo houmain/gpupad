@@ -84,11 +84,6 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     setFrameShape(QFrame::NoFrame);
     setBackgroundRole(QPalette::ToolTipBase);
 
-    mMapper->setModel(&mModel);
-    connect(mSubmitTimer, &QTimer::timeout, mMapper,
-        &QDataWidgetMapper::submit);
-    mSubmitTimer->start(100);
-
     const auto add = [&](auto &ui) {
         auto widget = new QWidget(this);
         instantiate(ui);
@@ -120,6 +115,13 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     add(mAccelerationStructureProperties);
     add(mInstanceProperties);
     add(mGeometryProperties);
+
+    mMapper->setModel(&mModel);
+    connect(mSubmitTimer, &QTimer::timeout, mMapper,
+        &QDataWidgetMapper::submit);
+    mSubmitTimer->setInterval(100);
+    mSubmitTimer->setSingleShot(true);
+    qApp->installEventFilter(this);
 
     setWidgetResizable(true);
     setWidget(mStack);
@@ -617,6 +619,39 @@ bool PropertiesEditor::openCurrentItemFile(FileDialog::Options options)
         return true;
     }
     return false;
+}
+
+bool PropertiesEditor::eventFilter(QObject *watched, QEvent *event)
+{
+    const auto isSubwidget = [&]() {
+        for (auto widget = watched; widget; widget = widget->parent())
+            if (widget == this)
+                return true;
+        return false;
+    };
+
+    static auto sButtonHeld = false;
+    if (event->type() == QEvent::MouseButtonPress)
+        sButtonHeld = true;
+    else if (event->type() == QEvent::MouseButtonRelease)
+        sButtonHeld = false;
+
+    switch (event->type()) {
+    case QEvent::MouseMove:
+        if (!sButtonHeld)
+            break;
+        [[fallthrough]];
+    case QEvent::KeyPress:
+    case QEvent::KeyRelease:
+    case QEvent::MouseButtonPress:
+    case QEvent::MouseButtonRelease:
+    case QEvent::Wheel:
+        if (!mSubmitTimer->isActive() && isSubwidget())
+            mSubmitTimer->start();
+        break;
+    default: break;
+    }
+    return QScrollArea::eventFilter(watched, event);
 }
 
 void PropertiesEditor::updateBlockWidgets(const QModelIndex &index)

@@ -57,6 +57,7 @@ public:
     QString getItemName(ItemId itemId) const;
 
 private:
+    bool eventFilter(QObject *watched, QEvent *event) override;
     void updateBlockWidgets(const QModelIndex &index);
     void updateTargetWidgets(const QModelIndex &index);
     void updateGeometryWidgets();
