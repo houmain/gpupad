@@ -117,6 +117,8 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     add(mGeometryProperties);
 
     mMapper->setModel(&mModel);
+    connect(mSubmitTimer, &QTimer::timeout, mSessionProperties,
+        &SessionProperties::submitShaderCompilerSettings);
     connect(mSubmitTimer, &QTimer::timeout, mMapper,
         &QDataWidgetMapper::submit);
     mSubmitTimer->setInterval(10);

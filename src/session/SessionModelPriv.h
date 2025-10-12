@@ -9,7 +9,7 @@
     ADD(SessionRenderer, Session, renderer)                                   \
     ADD(SessionShaderLanguage, Session, shaderLanguage)                       \
     ADD(SessionShaderCompiler, Session, shaderCompiler)                       \
-    ADD(SessionCompilerSettings, Session, compilerSettings)                   \
+    ADD(SessionShaderCompilerSettings, Session, shaderCompilerSettings)       \
     ADD(SessionShaderPreamble, Session, shaderPreamble)                       \
     ADD(SessionShaderIncludePaths, Session, shaderIncludePaths)               \
     ADD(SessionFlipViewport, Session, flipViewport)                           \

@@ -3,6 +3,7 @@
 #include "../Item.h"
 #include <QVariant>
 #include <QWidget>
+#include <QAbstractItemModel>
 
 namespace Ui {
     class SessionProperties;
@@ -10,6 +11,42 @@ namespace Ui {
 
 class QDataWidgetMapper;
 class PropertiesEditor;
+
+class VariantMapModel : public QAbstractItemModel
+{
+    Q_OBJECT
+public:
+    explicit VariantMapModel(QObject *parent = nullptr);
+
+    void setVariantMap(QVariantMap variantMap) { mVariantMap = variantMap; }
+    const QVariantMap &variantMap() const { return mVariantMap; }
+    QModelIndex index(int row, int column,
+        const QModelIndex &parent = QModelIndex()) const override;
+    QModelIndex parent(const QModelIndex &child) const override;
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex &index,
+        int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex &index, const QVariant &value,
+        int role) override;
+    virtual QString getColumnKey(int column) const = 0;
+
+private:
+    QVariantMap mVariantMap;
+};
+
+//-------------------------------------------------------------------------
+
+class ShaderCompilerSettingsModel : public VariantMapModel
+{
+    Q_OBJECT
+public:
+    using VariantMapModel::VariantMapModel;
+
+    int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+    QString getColumnKey(int column) const override;
+};
+
+//-------------------------------------------------------------------------
 
 class SessionProperties final : public QWidget
 {
@@ -19,6 +56,7 @@ public:
     ~SessionProperties();
 
     void addMappings(QDataWidgetMapper &mapper);
+    void submitShaderCompilerSettings();
 
 private:
     void updateShaderCompiler();
@@ -26,4 +64,6 @@ private:
 
     PropertiesEditor &mPropertiesEditor;
     Ui::SessionProperties *mUi;
+    ShaderCompilerSettingsModel *mShaderCompilerSettingsModel{};
+    QDataWidgetMapper *mShaderCompilerSettingsMapper{};
 };

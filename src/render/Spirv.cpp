@@ -162,7 +162,8 @@ namespace {
         const auto client = getClient(session.renderer);
         const auto clientVersion = getClientVersion(client, 0);
         const auto targetLanguage = glslang::EShTargetLanguage::EShTargetSpv;
-        const auto targetVersion = getSpirvVersion(session.spirvVersion);
+        const auto targetVersion = getSpirvVersion(getShaderCompilerInt(session,
+            Session::ShaderCompilerSetting::spirvVersion));
 
         auto sourcesUtf8 = std::vector<QByteArray>();
         auto sourcesCStr = std::vector<const char *>();
@@ -201,17 +202,20 @@ namespace {
         shader.setEntryPoint(entryPointU8.constData());
         shader.setSourceEntryPoint(entryPointU8.constData());
 
-        shader.setAutoMapBindings(session.autoMapBindings);
-        shader.setAutoMapLocations(session.autoMapLocations);
-        if (session.vulkanRulesRelaxed) {
+        shader.setAutoMapBindings(getShaderCompilerBool(session,
+            Session::ShaderCompilerSetting::autoMapBindings));
+        shader.setAutoMapLocations(getShaderCompilerBool(session,
+            Session::ShaderCompilerSetting::autoMapLocations));
+        if (getShaderCompilerBool(session,
+                Session::ShaderCompilerSetting::vulkanRulesRelaxed)) {
             shader.setEnvInputVulkanRulesRelaxed();
             shader.setGlobalUniformBlockName(globalUniformBlockName);
         }
         shader.setHlslIoMapping(session.shaderLanguage
             == Session::ShaderLanguage::HLSL);
-        if (session.targetHlslFunctionality1)
-            shader.setEnvTargetHlslFunctionality1();
-        if (session.autoSampledTextures)
+        shader.setEnvTargetHlslFunctionality1();
+        if (getShaderCompilerBool(session,
+                Session::ShaderCompilerSetting::autoSampledTextures))
             shader.setTextureSamplerTransformMode(
                 EShTexSampTransUpgradeTextureRemoveSampler);
         return shaderPtr;

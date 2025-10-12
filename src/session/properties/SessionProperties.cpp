@@ -3,11 +3,73 @@
 #include "PropertiesEditor.h"
 #include "ui_SessionProperties.h"
 #include <QDataWidgetMapper>
+#include <QStringListModel>
+
+VariantMapModel::VariantMapModel(QObject *parent) : QAbstractItemModel(parent)
+{
+}
+
+QModelIndex VariantMapModel::index(int row, int column,
+    const QModelIndex &parent) const
+{
+    return createIndex(row, column, nullptr);
+}
+
+QModelIndex VariantMapModel::parent(const QModelIndex &child) const
+{
+    return QModelIndex();
+}
+
+int VariantMapModel::rowCount(const QModelIndex &parent) const
+{
+    return 1;
+}
+
+QVariant VariantMapModel::data(const QModelIndex &index, int role) const
+{
+    if (index.row() != 0 || (role != Qt::EditRole && role != Qt::DisplayRole))
+        return {};
+
+    return mVariantMap[getColumnKey(index.column())];
+}
+
+bool VariantMapModel::setData(const QModelIndex &index, const QVariant &value,
+    int role)
+{
+    if (index.row() != 0 || role != Qt::EditRole)
+        return {};
+
+    const auto key = getColumnKey(index.column());
+    if (key.isEmpty())
+        return false;
+
+    mVariantMap[key] = value;
+    return true;
+}
+
+//-------------------------------------------------------------------------
+
+int ShaderCompilerSettingsModel::columnCount(const QModelIndex &parent) const
+{
+    return Session::ShaderCompilerSetting::COUNT;
+}
+
+QString ShaderCompilerSettingsModel::getColumnKey(int column) const
+{
+    const auto metaEnum = QMetaEnum::fromType<Session::ShaderCompilerSetting>();
+    if (auto key = metaEnum.key(column))
+        return key;
+    return {};
+}
+
+//-------------------------------------------------------------------------
 
 SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
     : QWidget(propertiesEditor)
     , mPropertiesEditor(*propertiesEditor)
     , mUi(new Ui::SessionProperties)
+    , mShaderCompilerSettingsModel(new ShaderCompilerSettingsModel(this))
+    , mShaderCompilerSettingsMapper(new QDataWidgetMapper(this))
 {
     mUi->setupUi(this);
 
@@ -15,7 +77,22 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
     fillComboBox<Session::ShaderLanguage>(mUi->shaderLanguage);
     removeComboBoxItem(mUi->shaderLanguage, "None");
 
-    mUi->spirvVersion->addItem("1.0", 0);
+    mShaderCompilerSettingsMapper->setModel(mShaderCompilerSettingsModel);
+    mShaderCompilerSettingsMapper->setCurrentModelIndex(
+        mShaderCompilerSettingsModel->index(0, 0));
+
+    mShaderCompilerSettingsMapper->addMapping(mUi->spirvVersion,
+        Session::ShaderCompilerSetting::spirvVersion);
+    mShaderCompilerSettingsMapper->addMapping(mUi->autoMapBindings,
+        Session::ShaderCompilerSetting::autoMapBindings);
+    mShaderCompilerSettingsMapper->addMapping(mUi->autoMapLocations,
+        Session::ShaderCompilerSetting::autoMapLocations);
+    mShaderCompilerSettingsMapper->addMapping(mUi->autoSampledTextures,
+        Session::ShaderCompilerSetting::autoSampledTextures);
+    mShaderCompilerSettingsMapper->addMapping(mUi->vulkanRulesRelaxed,
+        Session::ShaderCompilerSetting::vulkanRulesRelaxed);
+
+    mUi->spirvVersion->addItem("1.0", 10);
     mUi->spirvVersion->addItem("1.1", 11);
     mUi->spirvVersion->addItem("1.2", 12);
     mUi->spirvVersion->addItem("1.3", 13);
@@ -51,6 +128,16 @@ void SessionProperties::addMappings(QDataWidgetMapper &mapper)
 
     mapper.addMapping(mUi->reverseCulling, SessionModel::SessionReverseCulling);
     mapper.addMapping(mUi->flipViewport, SessionModel::SessionFlipViewport);
+}
+
+void SessionProperties::submitShaderCompilerSettings()
+{
+    mShaderCompilerSettingsMapper->submit();
+
+    mPropertiesEditor.model().setData(
+        mPropertiesEditor.currentModelIndex(
+            SessionModel::SessionShaderCompilerSettings),
+        mShaderCompilerSettingsModel->variantMap());
 }
 
 void SessionProperties::updateShaderCompiler()
@@ -104,6 +191,12 @@ void SessionProperties::updateShaderCompiler()
 
     fillComboBox<Session::ShaderCompiler>(mUi->shaderCompiler,
         getShaderCompilers());
+
+    const auto currentIndex = mPropertiesEditor.currentModelIndex(
+        SessionModel::SessionShaderCompilerSettings);
+    mShaderCompilerSettingsModel->setVariantMap(
+        mPropertiesEditor.model().data(currentIndex).toMap());
+    mShaderCompilerSettingsMapper->revert();
 
     updateWidgets();
 }

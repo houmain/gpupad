@@ -221,15 +221,11 @@ QString resolveIncludePath(const QString &currentFile, const QString &relative,
 
 bool shaderSessionSettingsDiffer(const Session &a, const Session &b)
 {
-    const auto shaderCompilerSettings = [](const Session &a) {
-        return std::tie(a.autoMapBindings, a.autoMapLocations,
-            a.autoSampledTextures, a.vulkanRulesRelaxed, a.spirvVersion);
-    };
     const auto hasShaderCompiler =
         (a.shaderCompiler != Session::ShaderCompiler::Driver
             || a.renderer == Session::Renderer::Vulkan);
     if (hasShaderCompiler
-        && shaderCompilerSettings(a) != shaderCompilerSettings(b))
+        && a.shaderCompilerSettings != b.shaderCompilerSettings)
         return true;
 
     const auto common = [](const Session &a) {

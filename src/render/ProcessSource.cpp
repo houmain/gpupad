@@ -112,8 +112,10 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
             (session.shaderCompiler != Session::ShaderCompiler::Driver
                 || hasVulkanRenderer);
         if (!hasShaderCompiler) {
-            session.autoMapBindings = true;
-            session.autoMapLocations = true;
+            setShaderCompilerSetting(session,
+                Session::ShaderCompilerSetting::autoMapBindings, true);
+            setShaderCompilerSetting(session,
+                Session::ShaderCompilerSetting::autoMapLocations, true);
         }
 
         // always target Vulkan when generating JSON, otherwise SpvReflect cannot enumerate uniforms

@@ -177,3 +177,19 @@ bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType)
     }
     return true;
 }
+
+QVariant getShaderCompilerSetting(const Session &session,
+    Session::ShaderCompilerSetting setting)
+{
+    const auto metaEnum = QMetaEnum::fromType<Session::ShaderCompilerSetting>();
+    const auto column = static_cast<int>(setting);
+    return session.shaderCompilerSettings[metaEnum.key(column)];
+}
+
+void setShaderCompilerSetting(Session &session,
+    Session::ShaderCompilerSetting setting, QVariant value)
+{
+    const auto metaEnum = QMetaEnum::fromType<Session::ShaderCompilerSetting>();
+    const auto column = static_cast<int>(setting);
+    session.shaderCompilerSettings[metaEnum.key(column)] = value;
+}

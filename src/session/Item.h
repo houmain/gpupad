@@ -43,23 +43,16 @@ struct Session : ScopeItem
     using Renderer = ItemEnums::Renderer;
     using ShaderLanguage = ItemEnums::ShaderLanguage;
     using ShaderCompiler = ItemEnums2::ShaderCompiler;
+    using ShaderCompilerSetting = ItemEnums2::ShaderCompilerSetting;
 
     Renderer renderer{ Renderer::OpenGL };
     ShaderLanguage shaderLanguage{ ShaderLanguage::GLSL };
     ShaderCompiler shaderCompiler{ ShaderCompiler::Driver };
-    QVariantMap compilerSettings;
+    QVariantMap shaderCompilerSettings;
     QString shaderPreamble;
     QString shaderIncludePaths;
     bool flipViewport{};
     bool reverseCulling{ true };
-
-    // TODO: remove
-    bool autoMapBindings{ true };
-    bool autoMapLocations{ true };
-    bool autoSampledTextures{ true };
-    bool vulkanRulesRelaxed{ true };
-    bool targetHlslFunctionality1{ true };
-    int spirvVersion{};
 };
 
 struct Group : ScopeItem
@@ -319,11 +312,28 @@ bool callTypeSupportsShaderType(Call::CallType callType,
     Shader::ShaderType shaderType);
 bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType);
 
-SourceType getSourceType(Session::ShaderLanguage language, Shader::ShaderType type);
+SourceType getSourceType(Session::ShaderLanguage language,
+    Shader::ShaderType type);
 SourceType getSourceType(const Shader &shader);
 Shader::ShaderType getShaderType(SourceType sourceType);
 Session::ShaderLanguage getShaderLanguage(SourceType sourceType);
 Session::ShaderLanguage getShaderLanguage(const Shader &shader);
+QVariant getShaderCompilerSetting(const Session &session,
+    Session::ShaderCompilerSetting setting);
+void setShaderCompilerSetting(Session &session,
+    Session::ShaderCompilerSetting setting, QVariant value);
+
+inline bool getShaderCompilerBool(const Session &session,
+    Session::ShaderCompilerSetting setting)
+{
+    return getShaderCompilerSetting(session, setting).toBool();
+}
+
+inline int getShaderCompilerInt(const Session &session,
+    Session::ShaderCompilerSetting setting)
+{
+    return getShaderCompilerSetting(session, setting).toInt();
+}
 
 template <typename T>
 Item::Type getItemType();

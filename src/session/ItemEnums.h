@@ -327,4 +327,14 @@ namespace ItemEnums2 {
         Slang,
     };
     Q_ENUM_NS(ShaderCompiler)
+
+    enum ShaderCompilerSetting : int {
+        autoMapBindings,
+        autoMapLocations,
+        autoSampledTextures,
+        vulkanRulesRelaxed,
+        spirvVersion,
+        COUNT,
+    };
+    Q_ENUM_NS(ShaderCompilerSetting)
 } // namespace ItemEnums2

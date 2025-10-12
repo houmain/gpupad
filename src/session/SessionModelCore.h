@@ -15,7 +15,7 @@ public:
         SessionRenderer,
         SessionShaderLanguage,
         SessionShaderCompiler,
-        SessionCompilerSettings,
+        SessionShaderCompilerSettings,
         SessionShaderPreamble,
         SessionShaderIncludePaths,
         SessionReverseCulling,
