@@ -318,6 +318,9 @@ SourceType getSourceType(const Shader &shader);
 Shader::ShaderType getShaderType(SourceType sourceType);
 Session::ShaderLanguage getShaderLanguage(SourceType sourceType);
 Session::ShaderLanguage getShaderLanguage(const Shader &shader);
+bool shaderCompilerHasSetting(const Session& session, Session::ShaderCompilerSetting setting);
+bool shaderCompilerHasSetting(Session::ShaderCompiler compiler,
+    Session::Renderer renderer, Session::ShaderCompilerSetting setting);
 QVariant getShaderCompilerSetting(const Session &session,
     Session::ShaderCompilerSetting setting);
 void setShaderCompilerSetting(Session &session,

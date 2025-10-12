@@ -292,6 +292,19 @@ void D3DPipeline::createGlobalConstantBuffers(D3DContext &context)
     }
 }
 
+void writeValue(QByteArray &data, const D3D12_SHADER_VARIABLE_DESC &varDesc,
+    const D3D12_SHADER_TYPE_DESC &typeDesc, ScriptEngine &scriptEngine,
+    const UniformBinding &binding)
+{
+    Q_ASSERT(typeDesc.Type == D3D_SVT_FLOAT);
+    const auto count = typeDesc.Rows * typeDesc.Columns;
+    const auto values = getValues<float>(scriptEngine, binding.values, 0, count,
+        binding.bindingItemId);
+
+    Q_ASSERT(varDesc.StartOffset + varDesc.Size <= data.size());
+    std::memcpy(data.data() + varDesc.StartOffset, values.data(), varDesc.Size);
+}
+
 void D3DPipeline::updateGlobalConstantBuffers(D3DContext &context,
     ScriptEngine &scriptEngine)
 {
@@ -316,6 +329,10 @@ void D3DPipeline::updateGlobalConstantBuffers(D3DContext &context,
                     auto varDesc = D3D12_SHADER_VARIABLE_DESC{};
                     var->GetDesc(&varDesc);
 
+                    const auto type = var->GetType();
+                    auto typeDesc = D3D12_SHADER_TYPE_DESC{};
+                    type->GetDesc(&typeDesc);
+
                     auto name = QString(varDesc.Name);
 
                     // TODO: find better solution - demangle _44_uPerspective
@@ -323,15 +340,8 @@ void D3DPipeline::updateGlobalConstantBuffers(D3DContext &context,
 
                     if (auto uniformBinding = find(mBindings.uniforms, name)) {
                         mUsedItems += uniformBinding->bindingItemId;
-
-                        // TODO:
-                        auto values = getValues<float>(scriptEngine,
-                            uniformBinding->values, 0, 16, mItemId);
-
-                        Q_ASSERT(varDesc.StartOffset + varDesc.Size
-                            <= data.size());
-                        std::memcpy(data.data() + varDesc.StartOffset,
-                            values.data(), varDesc.Size);
+                        writeValue(data, varDesc, typeDesc, scriptEngine,
+                            *uniformBinding);
                     } else {
                         mMessages += MessageList::insert(mItemId,
                             MessageType::UniformNotSet, name);

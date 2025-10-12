@@ -474,9 +474,6 @@ void VKTexture::createAndUpload(VKContext &context)
 
 bool VKTexture::download(VKContext &context)
 {
-    if (mKind.depth)
-        return false;
-
     if (!mDeviceCopyModified)
         return false;
 

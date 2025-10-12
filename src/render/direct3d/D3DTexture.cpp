@@ -373,13 +373,13 @@ bool D3DTexture::upload(D3DContext &context)
 
 bool D3DTexture::download(D3DContext &context)
 {
-    if (mKind.depth)
-        return false;
-
     if (!mDeviceCopyModified)
         return false;
 
-    if (mData.isNull())
+    if (mData.isNull() || !mResource)
+        return false;
+
+    if (samples() > 1)
         return false;
 
     mSystemCopyModified = mDeviceCopyModified = false;

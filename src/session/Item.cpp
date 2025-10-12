@@ -178,6 +178,31 @@ bool shouldExecute(Call::ExecuteOn executeOn, EvaluationType evaluationType)
     return true;
 }
 
+bool shaderCompilerHasSetting(const Session &session,
+    Session::ShaderCompilerSetting setting)
+{
+    return shaderCompilerHasSetting(session.shaderCompiler, session.renderer,
+        setting);
+}
+
+bool shaderCompilerHasSetting(Session::ShaderCompiler compiler,
+    Session::Renderer renderer, Session::ShaderCompilerSetting setting)
+{
+    using SC = Session::ShaderCompiler;
+    using R = Session::Renderer;
+    using SCS = Session::ShaderCompilerSetting;
+    switch (setting) {
+    case SCS::COUNT:               break;
+    case SCS::spirvVersion:        return (compiler == SC::glslang);
+    case SCS::autoMapBindings:     return (compiler == SC::glslang);
+    case SCS::autoMapLocations:    return (compiler == SC::glslang);
+    case SCS::autoSampledTextures: return (compiler == SC::glslang);
+    case SCS::vulkanRulesRelaxed:
+        return (compiler == SC::glslang && renderer != R::OpenGL);
+    }
+    return false;
+}
+
 QVariant getShaderCompilerSetting(const Session &session,
     Session::ShaderCompilerSetting setting)
 {

@@ -146,3 +146,6 @@ private:
     mutable QJsonArray mDraggedJson;
     mutable QMap<ItemId, QString> mDraggedUntitledFileNames;
 };
+
+bool rendererHasSetting(Session::Renderer renderer,
+    SessionModel::ColumnType column);

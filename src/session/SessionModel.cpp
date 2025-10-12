@@ -557,11 +557,12 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
     switch (item.type) {
     case Item::Type::Session: {
         const auto &session = static_cast<const Session &>(item);
-        const auto hasOpenGLRenderer =
-            (session.renderer == Session::Renderer::OpenGL);
-        result &= (column != SessionShaderCompiler || hasOpenGLRenderer);
-        result &= (column != SessionFlipViewport || !hasOpenGLRenderer);
-        result &= (column != SessionReverseCulling || !hasOpenGLRenderer);
+        for (auto column : {
+                 SessionFlipViewport,
+                 SessionReverseCulling,
+             })
+            result &= (column != column
+                || rendererHasSetting(session.renderer, column));
         break;
     }
 
@@ -739,4 +740,17 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
     default: break;
     }
     return result;
+}
+
+bool rendererHasSetting(Session::Renderer renderer,
+    SessionModel::ColumnType column)
+{
+    using R = Session::Renderer;
+    using CT = SessionModel::ColumnType;
+    switch (column) {
+    default:                        break;
+    case CT::SessionReverseCulling: return (renderer != R::OpenGL);
+    case CT::SessionFlipViewport:   return (renderer != R::OpenGL);
+    }
+    return false;
 }

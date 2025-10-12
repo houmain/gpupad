@@ -120,7 +120,7 @@ bool D3DShader::compile(ShaderPrintf &printf)
     if (mBinary)
         return true;
 
-    if (mSession.shaderLanguage != Session::ShaderLanguage::HLSL) {
+    if (mSession.shaderCompiler == Session::ShaderCompiler::glslang) {
         const auto spirv = compileSpirv(printf);
         if (!spirv)
             return {};
@@ -137,8 +137,7 @@ bool D3DShader::compile(ShaderPrintf &printf)
 
 bool D3DShader::compile(const QString &source)
 {
-    // TODO:
-    if (false)
+    if (mSession.shaderCompiler == Session::ShaderCompiler::D3DCompiler)
         return compileD3DCompile(source);
 
     return compileDXC(source);

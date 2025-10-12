@@ -210,17 +210,27 @@ void SessionProperties::updateWidgets()
     const auto shaderCompiler = static_cast<Session::ShaderCompiler>(
         mUi->shaderCompiler->currentData().toInt());
 
-    const auto hasVulkanRenderer = (renderer == Session::Renderer::Vulkan);
     const auto hasOpenGLRenderer = (renderer == Session::Renderer::OpenGL);
-    const auto hasShaderCompiler = (hasVulkanRenderer
-        || shaderCompiler != Session::ShaderCompiler::Driver);
+    const auto hasShaderCompiler =
+        (shaderCompiler != Session::ShaderCompiler::Driver);
 
     setFormVisibility(mUi->formLayout, mUi->labelShaderCompiler,
         mUi->shaderCompiler, (language != Session::ShaderLanguage::Slang));
 
     mUi->rendererOptions->setVisible(!hasOpenGLRenderer);
-    mUi->shaderCompilerOptions->setVisible(hasShaderCompiler);
-    mUi->autoMapBindings->setVisible(!hasOpenGLRenderer);
-    mUi->autoMapLocations->setVisible(!hasOpenGLRenderer);
-    mUi->vulkanRulesRelaxed->setVisible(hasVulkanRenderer);
+    mUi->shaderCompilerSettings->setVisible(hasShaderCompiler);
+
+    setFormVisibility(mUi->shaderCompilerSettingsLayout, mUi->labelSprivVersion,
+        mUi->spirvVersion,
+        shaderCompilerHasSetting(shaderCompiler, renderer,
+            Session::ShaderCompilerSetting::spirvVersion));
+    mUi->autoMapBindings->setVisible(shaderCompilerHasSetting(shaderCompiler,
+        renderer, Session::ShaderCompilerSetting::autoMapBindings));
+    mUi->autoMapLocations->setVisible(shaderCompilerHasSetting(shaderCompiler,
+        renderer, Session::ShaderCompilerSetting::autoMapLocations));
+    mUi->autoSampledTextures->setVisible(
+        shaderCompilerHasSetting(shaderCompiler, renderer,
+            Session::ShaderCompilerSetting::autoSampledTextures));
+    mUi->vulkanRulesRelaxed->setVisible(shaderCompilerHasSetting(shaderCompiler,
+        renderer, Session::ShaderCompilerSetting::vulkanRulesRelaxed));
 }
