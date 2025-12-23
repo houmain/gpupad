@@ -92,7 +92,7 @@ void D3DRenderSession::render()
 
     executeCommandQueue(*mCommandQueue);
 
-    downloadModifiedResources(*mCommandQueue);
+    beginDownloadModifiedResources(*mCommandQueue);
 
     AssertIfFailed(context.graphicsCommandList->Close());
     auto commandLists =
@@ -121,6 +121,8 @@ void D3DRenderSession::render()
 void D3DRenderSession::finish()
 {
     RenderSessionBase::finish();
+
+    finishDownloadModifiedResources(*mCommandQueue);
 
     if (updatingPreviewTextures() && mCommandQueue)
         updatePreviewTextures(*mCommandQueue, mShareSync);

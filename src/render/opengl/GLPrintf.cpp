@@ -18,8 +18,7 @@ void GLPrintf::clear()
     if (!mBufferObject) {
         mBufferObject = GLObject(createBuffer(), freeBuffer);
         gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferObject);
-        gl.glBufferData(GL_SHADER_STORAGE_BUFFER,
-            maxBufferValues * sizeof(uint32_t) + sizeof(BufferHeader), nullptr,
+        gl.glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, nullptr,
             GL_STREAM_READ);
     }
 
@@ -29,24 +28,26 @@ void GLPrintf::clear()
 #endif // GL_VERSION_4_3
 }
 
-MessagePtrSet GLPrintf::formatMessages(GLContext& gl, ItemId callItemId)
+void GLPrintf::beginDownload(GLContext &gl)
 {
 #if GL_VERSION_4_3
-    auto header = BufferHeader{};
     gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferObject);
-    gl.glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(header), &header);
+    gl.glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(mHeader),
+        &mHeader);
     const auto count =
-        (header.offset > maxBufferValues ? maxBufferValues : header.offset);
-    if (count <= 1)
-        return {};
+        (mHeader.offset > maxBufferValues ? maxBufferValues : mHeader.offset);
 
-    auto data = std::vector<uint32_t>(count);
+    mData.resize(count);
+    if (!count)
+        return;
+
     gl.glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(BufferHeader),
-        count * sizeof(uint32_t), data.data());
+        count * sizeof(uint32_t), mData.data());
     gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, GL_NONE);
-
-    return ShaderPrintf::formatMessages(callItemId, header, data);
-#else
-    return {};
 #endif // GL_VERSION_4_3
+}
+
+MessagePtrSet GLPrintf::finishDownload(ItemId callItemId)
+{
+    return ShaderPrintf::formatMessages(callItemId, mHeader, mData);
 }

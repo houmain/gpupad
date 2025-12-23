@@ -24,8 +24,6 @@ public:
         const QString &fileName, const QString &source);
 
 protected:
-    static const auto maxBufferValues = 1024 - 2;
-
     ShaderPrintf() = default;
     virtual ~ShaderPrintf() = default;
 
@@ -46,6 +44,10 @@ protected:
         uint32_t offset;
         uint32_t prevBegin;
     };
+
+    static const auto maxBufferValues = 1024 - 2;
+    static const auto bufferSize = maxBufferValues * sizeof(uint32_t)
+        + sizeof(BufferHeader);
 
     static BufferHeader initializeHeader();
     static ParsedFormatString parseFormatString(QStringView string);

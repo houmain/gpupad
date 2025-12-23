@@ -19,7 +19,13 @@ public:
     void bindIndexedRange(GLenum target, int index, int offset, int size,
         bool readonly);
     void unbind(GLenum target);
-    bool download(GLContext &context, bool checkModification);
+    void beginDownload(GLContext &context, bool checkModification);
+    bool finishDownload();
+
+    bool download(GLContext &context, bool checkModification) {
+      beginDownload(context, checkModification);
+      return finishDownload();
+    }
 
 private:
     void reload();
@@ -27,4 +33,5 @@ private:
     void upload();
 
     GLObject mBufferObject;
+    bool mDownloaded{ };
 };

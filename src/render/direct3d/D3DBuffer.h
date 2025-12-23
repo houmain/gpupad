@@ -19,7 +19,8 @@ public:
     void clear(D3DContext &context);
     void copy(D3DContext &context, D3DBuffer &source);
     bool swap(D3DBuffer &other);
-    bool download(D3DContext &context, bool checkModification);
+    void beginDownload(D3DContext &context, bool checkModification);
+    bool finishDownload();
     void prepareVertexBuffer(D3DContext &context);
     void prepareIndexBuffer(D3DContext &context);
     void prepareConstantBufferView(D3DContext &context);
@@ -34,6 +35,9 @@ private:
 
     ComPtr<ID3D12Resource> mResource;
     D3D12_RESOURCE_STATES mCurrentState{};
+    ComPtr<ID3D12Resource> mDownloadBuffer;
+    bool mDownloading{ };
+    bool mCheckModification{ };
 };
 
 #endif // _WIN32

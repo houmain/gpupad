@@ -79,6 +79,8 @@ void VKRenderSession::render()
 
     executeCommandQueue(*mCommandQueue);
 
+    beginDownloadModifiedResources(*mCommandQueue);
+
     auto submitOptions = KDGpu::SubmitOptions{
         .commandBuffers = std::vector<KDGpu::Handle<KDGpu::CommandBuffer_t>>(
             context.commandBuffers.begin(), context.commandBuffers.end()),
@@ -93,8 +95,6 @@ void VKRenderSession::render()
 
     mShareSync->endUpdate();
 
-    downloadModifiedResources(*mCommandQueue);
-
     if (!updatingPreviewTextures())
         outputTimerQueries(mCommandQueue->context.timestampQueries,
             [](KDGpu::TimestampQueryRecorder &query) {
@@ -105,6 +105,8 @@ void VKRenderSession::render()
 void VKRenderSession::finish()
 {
     RenderSessionBase::finish();
+
+    finishDownloadModifiedResources(*mCommandQueue);
 
     if (updatingPreviewTextures() && mCommandQueue)
         updatePreviewTextures(*mCommandQueue, mShareSync);

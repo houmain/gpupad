@@ -1,7 +1,9 @@
 
 #include "D3DPrintf.h"
 
-MessagePtrSet D3DPrintf::formatMessages(D3DContext &context, ItemId callItemId)
+void D3DPrintf::beginDownload(D3DContext &context) { }
+
+MessagePtrSet D3DPrintf::finishDownload(ItemId callItemId)
 {
     return {};
 }

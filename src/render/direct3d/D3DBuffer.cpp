@@ -25,7 +25,7 @@ void D3DBuffer::clear(D3DContext &context)
 void D3DBuffer::copy(D3DContext &context, D3DBuffer &source)
 {
     Q_ASSERT(!"not implemented");
-} 
+}
 
 bool D3DBuffer::swap(D3DBuffer &other)
 {
@@ -112,52 +112,59 @@ void D3DBuffer::upload(D3DContext &context)
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
-bool D3DBuffer::download(D3DContext &context, bool checkModification)
+void D3DBuffer::beginDownload(D3DContext &context, bool checkModification)
 {
     if (!mDeviceCopyModified)
-        return false;
+        return;
 
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
-    const auto size = static_cast<UINT64>(mSize);
+    if (!mDownloadBuffer) {
+        const auto heapProperties = D3D12_HEAP_PROPERTIES{
+            .Type = D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_READBACK,
+            .CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+            .MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+            .VisibleNodeMask = 1,
+        };
 
-    auto stagingBuffer = ComPtr<ID3D12Resource>();
-    const auto heapProperties = D3D12_HEAP_PROPERTIES{
-        .Type = D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_READBACK,
-        .CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-        .MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
-        .VisibleNodeMask = 1,
-    };
+        const auto bufferDesc = D3D12_RESOURCE_DESC{
+            .Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
+            .Width = static_cast<UINT64>(mSize),
+            .Height = 1,
+            .DepthOrArraySize = 1,
+            .MipLevels = 1,
+            .Format = DXGI_FORMAT_UNKNOWN,
+            .SampleDesc = { .Count = 1 },
+            .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+            .Flags = D3D12_RESOURCE_FLAG_NONE,
+        };
+        AssertIfFailed(context.device.CreateCommittedResource(&heapProperties,
+            D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST,
+            nullptr, IID_PPV_ARGS(&mDownloadBuffer)));
+    }
 
-    const auto bufferDesc = D3D12_RESOURCE_DESC{
-        .Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-        .Width = size,
-        .Height = 1,
-        .DepthOrArraySize = 1,
-        .MipLevels = 1,
-        .Format = DXGI_FORMAT_UNKNOWN,
-        .SampleDesc = { .Count = 1 },
-        .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-        .Flags = D3D12_RESOURCE_FLAG_NONE,
-    };
-    AssertIfFailed(context.device.CreateCommittedResource(&heapProperties,
-        D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST,
-        nullptr, IID_PPV_ARGS(&stagingBuffer)));
-
-    context.graphicsCommandList->CopyBufferRegion(stagingBuffer.Get(), 0,
-        mResource.Get(), 0, size);
-
-    context.stagingBuffers.push_back(stagingBuffer);
-
-    // TODO: make download asynchronous
-
-    auto mappedData = std::add_pointer_t<void>{};
-    AssertIfFailed(stagingBuffer->Map(0, nullptr, &mappedData));
-    const auto modified = (std::memcmp(mData.data(), mappedData, size) != 0);
-    std::memcpy(mData.data(), mappedData, size);
-    stagingBuffer->Unmap(0, nullptr);
+    context.graphicsCommandList->CopyBufferRegion(mDownloadBuffer.Get(), 0,
+        mResource.Get(), 0, static_cast<UINT64>(mSize));
 
     mSystemCopyModified = mDeviceCopyModified = false;
+    mCheckModification = checkModification;
+    mDownloading = true;
+}
+
+bool D3DBuffer::finishDownload()
+{
+    auto modified = false;
+    if (mDownloading) {
+        auto mappedData = std::add_pointer_t<void>{};
+        AssertIfFailed(mDownloadBuffer->Map(0, nullptr, &mappedData));
+        if (!mCheckModification
+            || std::memcmp(mData.data(), mappedData, mData.size()) != 0) {
+            std::memcpy(mData.data(), mappedData, mData.size());
+            modified = true;
+        }
+        mDownloadBuffer->Unmap(0, nullptr);
+    }
+    mDownloading = false;
     return modified;
 }
 

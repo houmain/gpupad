@@ -84,10 +84,10 @@ void GLRenderSession::render()
 
     executeCommandQueue(*mCommandQueue);
 
+    beginDownloadModifiedResources(*mCommandQueue);
+
     mShareSync->endUpdate(gl);
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-
-    downloadModifiedResources(*mCommandQueue);
 
     if (!updatingPreviewTextures())
         outputTimerQueries(gl.timerQueries, [](QOpenGLTimerQuery &query) {
@@ -101,6 +101,8 @@ void GLRenderSession::render()
 void GLRenderSession::finish()
 {
     RenderSessionBase::finish();
+
+    finishDownloadModifiedResources(*mCommandQueue);
 
     if (updatingPreviewTextures() && mCommandQueue)
         updatePreviewTextures(*mCommandQueue, mShareSync);

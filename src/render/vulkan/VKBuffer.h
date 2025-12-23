@@ -15,7 +15,8 @@ public:
     void clear(VKContext &context);
     void copy(VKContext &context, VKBuffer &source);
     bool swap(VKBuffer &other);
-    bool download(VKContext &context, bool checkModification);
+    void beginDownload(VKContext &context, bool checkModification);
+    bool finishDownload();
     void prepareIndirectBuffer(VKContext &context);
     void prepareVertexBuffer(VKContext &context);
     void prepareIndexBuffer(VKContext &context);
@@ -35,10 +36,10 @@ private:
 
     KDGpu::BufferUsageFlags mUsage{};
     KDGpu::Buffer mBuffer;
+    KDGpu::Buffer mDownloadBuffer;
     KDGpu::AccessFlags mCurrentAccessMask{};
     KDGpu::PipelineStageFlags mCurrentStage{};
     bool mDeviceAddressObtained{};
+    bool mDownloading{};
+    bool mCheckModification{};
 };
-
-bool downloadBuffer(VKContext &context, const KDGpu::Buffer &buffer,
-    uint64_t size, std::function<void(const std::byte *)> &&callback);

@@ -7,8 +7,10 @@ class VKPrintf : public ShaderPrintf
 {
 public:
     KDGpu::Buffer &getInitializedBuffer(VKContext &context);
-    MessagePtrSet formatMessages(VKContext &context, ItemId callItemId);
+    void beginDownload(VKContext &context);
+    MessagePtrSet finishDownload(ItemId callItemId);
 
 private:
     KDGpu::Buffer mBuffer;
+    KDGpu::Buffer mDownloadBuffer;
 };

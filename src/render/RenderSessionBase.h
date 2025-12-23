@@ -132,7 +132,10 @@ protected:
     void executeCommandQueue(CommandQueue &commandQueue);
 
     template <typename CommandQueue>
-    void downloadModifiedResources(CommandQueue &commandQueue);
+    void beginDownloadModifiedResources(CommandQueue &commandQueue);
+
+    template <typename CommandQueue>
+    void finishDownloadModifiedResources(CommandQueue &commandQueue);
 
     template <typename TimerQueries, typename ToNanoseconds>
     void outputTimerQueries(TimerQueries &timerQueries,

@@ -2,64 +2,6 @@
 #include "Singletons.h"
 #include <QScopeGuard>
 
-namespace {
-    class TransferBuffer
-    {
-    private:
-        KDGpu::Buffer mBuffer;
-
-    public:
-        TransferBuffer(KDGpu::Device &device, uint64_t size)
-        {
-            mBuffer = device.createBuffer({
-                .size = size,
-                .usage = KDGpu::BufferUsageFlagBits::TransferDstBit
-                    | KDGpu::BufferUsageFlagBits::TransferSrcBit,
-                .memoryUsage = KDGpu::MemoryUsage::CpuOnly,
-            });
-        }
-
-        bool download(VKContext &context, const KDGpu::Buffer &buffer,
-            uint64_t size)
-        {
-            if (!buffer.isValid() || !mBuffer.isValid())
-                return false;
-
-            context.commandRecorder->copyBuffer({
-                .src = buffer,
-                .dst = mBuffer,
-                .byteSize = size,
-            });
-            return true;
-        }
-
-        std::byte *map() { return static_cast<std::byte *>(mBuffer.map()); }
-
-        void unmap() { mBuffer.unmap(); }
-    };
-} // namespace
-
-bool downloadBuffer(VKContext &context, const KDGpu::Buffer &buffer,
-    uint64_t size, std::function<void(const std::byte *)> &&callback)
-{
-    auto transferBuffer = TransferBuffer(context.device, size);
-
-    context.commandRecorder = context.device.createCommandRecorder();
-    auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
-
-    if (!transferBuffer.download(context, buffer, size))
-        return false;
-
-    auto commandBuffer = context.commandRecorder->finish();
-    context.queue.submit({ .commandBuffers = { commandBuffer } });
-    context.queue.waitUntilIdle();
-
-    auto data = transferBuffer.map();
-    callback(data);
-    transferBuffer.unmap();
-    return true;
-}
-
 VKBuffer::VKBuffer(const Buffer &buffer, VKRenderSession &renderSession)
     : BufferBase(buffer, renderSession.getBufferSize(buffer))
 {
@@ -185,6 +127,7 @@ void VKBuffer::upload(VKContext &context)
     if (!mSystemCopyModified)
         return;
 
+    // TODO: make asynchronous
     context.queue.waitForUploadBufferData({
         .destinationBuffer = mBuffer,
         .data = mData.constData(),
@@ -193,27 +136,50 @@ void VKBuffer::upload(VKContext &context)
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
-bool VKBuffer::download(VKContext &context, bool checkModification)
+void VKBuffer::beginDownload(VKContext &context, bool checkModifications)
 {
     if (!mDeviceCopyModified)
-        return false;
+        return;
 
     updateReadOnlyBuffer(context);
 
-    auto modified = false;
-    if (!downloadBuffer(context, buffer(), mSize, [&](const void *data) {
-            if (!checkModification
-                || std::memcmp(mData.data(), data, mData.size()) != 0) {
-                std::memcpy(mData.data(), data, mData.size());
-                modified = true;
-            }
-        })) {
+    if (!mDownloadBuffer.isValid())
+        mDownloadBuffer = context.device.createBuffer({
+            .size = static_cast<KDGpu::DeviceSize>(mSize),
+            .usage = KDGpu::BufferUsageFlagBits::TransferDstBit
+                | KDGpu::BufferUsageFlagBits::TransferSrcBit,
+            .memoryUsage = KDGpu::MemoryUsage::CpuOnly,
+        });
+    if (!mDownloadBuffer.isValid()) {
         mMessages +=
             MessageList::insert(mItemId, MessageType::DownloadingImageFailed);
-        return false;
+        return;
     }
 
+    context.commandRecorder->copyBuffer({
+        .src = mBuffer,
+        .dst = mDownloadBuffer,
+        .byteSize = static_cast<KDGpu::DeviceSize>(mSize),
+    });
+
     mSystemCopyModified = mDeviceCopyModified = false;
+    mCheckModification = checkModifications;
+    mDownloading = true;
+}
+
+bool VKBuffer::finishDownload()
+{
+    auto modified = false;
+    if (mDownloading) {
+        const auto mappedData = mDownloadBuffer.map();
+        if (!mCheckModification
+            || std::memcmp(mData.data(), mappedData, mData.size()) != 0) {
+            std::memcpy(mData.data(), mappedData, mData.size());
+            modified = true;
+        }
+        mDownloadBuffer.unmap();
+    }
+    mDownloading = false;
     return modified;
 }
 

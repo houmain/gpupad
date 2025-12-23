@@ -365,12 +365,12 @@ void RenderSessionBase::executeCommandQueue(CommandQueue &commandQueue)
 }
 
 template <typename CommandQueue>
-void RenderSessionBase::downloadModifiedResources(CommandQueue &commandQueue)
+void RenderSessionBase::beginDownloadModifiedResources(
+    CommandQueue &commandQueue)
 {
     for (auto &[itemId, program] : commandQueue.programs)
         if (program.printf().isUsed())
-            mMessages += program.printf().formatMessages(commandQueue.context,
-                program.itemId());
+            program.printf().beginDownload(commandQueue.context);
 
     for (auto &[itemId, texture] : commandQueue.textures)
         if (!texture.fileName().isEmpty()) {
@@ -382,9 +382,21 @@ void RenderSessionBase::downloadModifiedResources(CommandQueue &commandQueue)
 
     for (auto &[itemId, buffer] : commandQueue.buffers)
         if (!buffer.fileName().isEmpty()
-            && (mItemsChanged || mEvaluationType != EvaluationType::Steady)
-            && buffer.download(commandQueue.context,
-                mEvaluationType != EvaluationType::Reset))
+            && (mItemsChanged || mEvaluationType != EvaluationType::Steady))
+            buffer.beginDownload(commandQueue.context,
+                mEvaluationType != EvaluationType::Reset);
+}
+
+template <typename CommandQueue>
+void RenderSessionBase::finishDownloadModifiedResources(
+    CommandQueue &commandQueue)
+{
+    for (auto &[itemId, program] : commandQueue.programs)
+        if (program.printf().isUsed())
+            mMessages += program.printf().finishDownload(program.itemId());
+
+    for (auto &[itemId, buffer] : commandQueue.buffers)
+        if (buffer.finishDownload())
             mModifiedBuffers[buffer.itemId()] = buffer.data();
 }
 

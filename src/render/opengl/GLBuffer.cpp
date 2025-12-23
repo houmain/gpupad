@@ -150,10 +150,10 @@ void GLBuffer::upload()
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
-bool GLBuffer::download(GLContext &gl, bool checkModification)
+void GLBuffer::beginDownload(GLContext &gl, bool checkModification)
 {
     if (!mDeviceCopyModified)
-        return false;
+        return;
 
     auto prevData = QByteArray();
     if (checkModification)
@@ -167,7 +167,11 @@ bool GLBuffer::download(GLContext &gl, bool checkModification)
 
     if (checkModification && prevData == mData) {
         mData = prevData;
-        return false;
+        return;
     }
-    return true;
+    mDownloaded = true;
+}
+
+bool GLBuffer::finishDownload() {
+  return std::exchange(mDownloaded, false);
 }

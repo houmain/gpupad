@@ -8,7 +8,8 @@
 class D3DPrintf : public ShaderPrintf
 {
 public:
-    MessagePtrSet formatMessages(D3DContext &context, ItemId callItemId);
+    void beginDownload(D3DContext &context);
+    MessagePtrSet finishDownload(ItemId callItemId);
 };
 
 #endif // _WIN32
