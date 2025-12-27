@@ -155,6 +155,7 @@ bool D3DBuffer::finishDownload()
 {
     auto modified = false;
     if (mDownloading) {
+        mDownloading = false;
         auto mappedData = std::add_pointer_t<void>{};
         AssertIfFailed(mDownloadBuffer->Map(0, nullptr, &mappedData));
         if (!mCheckModification
@@ -164,7 +165,6 @@ bool D3DBuffer::finishDownload()
         }
         mDownloadBuffer->Unmap(0, nullptr);
     }
-    mDownloading = false;
     return modified;
 }
 

@@ -171,6 +171,7 @@ bool VKBuffer::finishDownload()
 {
     auto modified = false;
     if (mDownloading) {
+        mDownloading = false;
         const auto mappedData = mDownloadBuffer.map();
         if (!mCheckModification
             || std::memcmp(mData.data(), mappedData, mData.size()) != 0) {
@@ -179,7 +180,6 @@ bool VKBuffer::finishDownload()
         }
         mDownloadBuffer.unmap();
     }
-    mDownloading = false;
     return modified;
 }
 

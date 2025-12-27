@@ -100,9 +100,9 @@ void GLRenderSession::render()
 
 void GLRenderSession::finish()
 {
-    RenderSessionBase::finish();
-
     finishDownloadModifiedResources(*mCommandQueue);
+
+    RenderSessionBase::finish();
 
     if (updatingPreviewTextures() && mCommandQueue)
         updatePreviewTextures(*mCommandQueue, mShareSync);

@@ -30,7 +30,14 @@ public:
     bool updateMipmaps(GLContext &context);
     GLuint getReadOnlyTextureId();
     GLuint getReadWriteTextureId();
-    bool download(GLContext &context);
+    void beginDownload(GLContext &context);
+    bool finishDownload();
+
+    bool download(GLContext &context)
+    {
+        beginDownload(context);
+        return finishDownload();
+    }
 
 private:
     void reload(bool forWriting);
@@ -40,4 +47,5 @@ private:
     GLBuffer *mTextureBuffer{};
     GLObject mTextureObject;
     GLuint64 mBindlessHandle{};
+    bool mDownloaded{};
 };

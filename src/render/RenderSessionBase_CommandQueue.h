@@ -375,9 +375,8 @@ void RenderSessionBase::beginDownloadModifiedResources(
     for (auto &[itemId, texture] : commandQueue.textures)
         if (!texture.fileName().isEmpty()) {
             texture.updateMipmaps(commandQueue.context);
-            if (!updatingPreviewTextures()
-                && texture.download(commandQueue.context))
-                mModifiedTextures[texture.itemId()] = texture.data();
+            if (!updatingPreviewTextures())
+                texture.beginDownload(commandQueue.context);
         }
 
     for (auto &[itemId, buffer] : commandQueue.buffers)
@@ -394,6 +393,10 @@ void RenderSessionBase::finishDownloadModifiedResources(
     for (auto &[itemId, program] : commandQueue.programs)
         if (program.printf().isUsed())
             mMessages += program.printf().finishDownload(program.itemId());
+
+    for (auto &[itemId, texture] : commandQueue.textures)
+        if (texture.finishDownload())
+            mModifiedTextures[texture.itemId()] = texture.data();
 
     for (auto &[itemId, buffer] : commandQueue.buffers)
         if (buffer.finishDownload())

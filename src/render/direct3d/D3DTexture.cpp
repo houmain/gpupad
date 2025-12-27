@@ -371,18 +371,27 @@ bool D3DTexture::upload(D3DContext &context)
     return true;
 }
 
-bool D3DTexture::download(D3DContext &context)
+void D3DTexture::beginDownload(D3DContext &context)
 {
     if (!mDeviceCopyModified)
-        return false;
+        return;
 
     if (mData.isNull() || !mResource)
-        return false;
+        return;
 
     if (samples() > 1)
-        return false;
+        return;
 
     mSystemCopyModified = mDeviceCopyModified = false;
+    //mDownloading = true;
+}
+
+bool D3DTexture::finishDownload()
+{
+    if (!mDownloading)
+        return false;
+
+    mDownloading = false;
     return true;
 }
 

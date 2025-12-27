@@ -104,9 +104,9 @@ void VKRenderSession::render()
 
 void VKRenderSession::finish()
 {
-    RenderSessionBase::finish();
-
     finishDownloadModifiedResources(*mCommandQueue);
+
+    RenderSessionBase::finish();
 
     if (updatingPreviewTextures() && mCommandQueue)
         updatePreviewTextures(*mCommandQueue, mShareSync);

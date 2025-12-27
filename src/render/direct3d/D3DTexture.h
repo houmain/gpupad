@@ -2,8 +2,8 @@
 
 #if defined(_WIN32)
 
-#include "D3DContext.h"
-#include "render/TextureBase.h"
+#  include "D3DContext.h"
+#  include "render/TextureBase.h"
 
 class D3DBuffer;
 
@@ -31,7 +31,8 @@ public:
     bool swap(D3DTexture &other);
     bool updateMipmaps(D3DContext &context);
     bool deviceCopyModified() const { return mDeviceCopyModified; }
-    bool download(D3DContext &context);
+    void beginDownload(D3DContext &context);
+    bool finishDownload();
     ShareHandle getSharedMemoryHandle() const;
 
 private:
@@ -57,6 +58,7 @@ private:
     ComPtr<ID3D12Resource> mResource;
     D3D12_RESOURCE_STATES mCurrentState{};
     HANDLE mShareHandle{};
+    bool mDownloading{};
 };
 
 #endif // _WIN32

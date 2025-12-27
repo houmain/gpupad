@@ -432,24 +432,29 @@ void GLTexture::upload()
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
-bool GLTexture::download(GLContext &gl)
+void GLTexture::beginDownload(GLContext &gl)
 {
     if (mData.isNull())
-        return false;
+        return;
 
     if (mTextureBuffer)
-        return mTextureBuffer->download(gl, false);
+        return mTextureBuffer->beginDownload(gl, false);
 
     if (!mDeviceCopyModified)
-        return false;
+        return;
 
     if (!download(gl, mData, mTarget, mTextureObject)) {
         mMessages +=
             MessageList::insert(mItemId, MessageType::DownloadingImageFailed);
-        return false;
+        return;
     }
     mSystemCopyModified = mDeviceCopyModified = false;
-    return true;
+    mDownloaded = true;
+}
+
+bool GLTexture::finishDownload()
+{
+    return std::exchange(mDownloaded, false);
 }
 
 GLuint64 GLTexture::obtainBindlessHandle()

@@ -120,9 +120,9 @@ void D3DRenderSession::render()
 
 void D3DRenderSession::finish()
 {
-    RenderSessionBase::finish();
-
     finishDownloadModifiedResources(*mCommandQueue);
+
+    RenderSessionBase::finish();
 
     if (updatingPreviewTextures() && mCommandQueue)
         updatePreviewTextures(*mCommandQueue, mShareSync);

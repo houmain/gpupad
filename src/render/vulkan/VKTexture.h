@@ -32,7 +32,8 @@ public:
     bool swap(VKTexture &other);
     bool updateMipmaps(VKContext &context);
     bool deviceCopyModified() const { return mDeviceCopyModified; }
-    bool download(VKContext &context);
+    void beginDownload(VKContext &context);
+    bool finishDownload();
     ShareHandle getSharedMemoryHandle() const;
 
 private:
@@ -60,8 +61,11 @@ private:
     KDGpu::TextureUsageFlags mUsage{};
     ktxVulkanTexture mKtxTexture{};
     KDGpu::Texture mTexture;
+    KDGpu::Texture mResolveTexture;
+    KDGpu::Buffer mDownloadBuffer;
     std::map<ViewOptions, KDGpu::TextureView> mTextureViews;
     KDGpu::TextureLayout mCurrentLayout{};
     KDGpu::AccessFlags mCurrentAccessMask{};
     KDGpu::PipelineStageFlags mCurrentStage{};
+    bool mDownloading{};
 };
