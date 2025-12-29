@@ -67,5 +67,4 @@ private:
     KDGpu::TextureLayout mCurrentLayout{};
     KDGpu::AccessFlags mCurrentAccessMask{};
     KDGpu::PipelineStageFlags mCurrentStage{};
-    bool mDownloading{};
 };

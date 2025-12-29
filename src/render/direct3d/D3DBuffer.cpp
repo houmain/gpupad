@@ -81,33 +81,38 @@ void D3DBuffer::createBuffer(D3DContext &context)
         nullptr, IID_PPV_ARGS(&mResource)));
 }
 
+ComPtr<ID3D12Resource> D3DBuffer::createStagingBuffer(D3DContext &context,
+    D3D12_HEAP_TYPE type)
+{
+    const auto stagingHeapProperties = CD3DX12_HEAP_PROPERTIES(type);
+    const auto stagingBufferDesc =
+        CD3DX12_RESOURCE_DESC::Buffer(static_cast<UINT64>(mSize));
+    const auto initialState = (type == D3D12_HEAP_TYPE_UPLOAD
+            ? D3D12_RESOURCE_STATE_COPY_SOURCE
+            : D3D12_RESOURCE_STATE_COPY_DEST);
+    auto stagingBuffer = ComPtr<ID3D12Resource>();
+    AssertIfFailed(context.device.CreateCommittedResource(
+        &stagingHeapProperties, D3D12_HEAP_FLAG_NONE, &stagingBufferDesc,
+        initialState, nullptr, IID_PPV_ARGS(&stagingBuffer)));
+
+    context.stagingBuffers.push_back(stagingBuffer);
+    return stagingBuffer;
+}
+
 void D3DBuffer::upload(D3DContext &context)
 {
     if (!mSystemCopyModified)
         return;
 
-    const auto size = static_cast<UINT64>(mSize);
-
-    const auto stagingHeapProperties =
-        CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    const auto stagingBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
-    auto stagingBuffer = ComPtr<ID3D12Resource>();
-    AssertIfFailed(context.device.CreateCommittedResource(
-        &stagingHeapProperties, D3D12_HEAP_FLAG_NONE, &stagingBufferDesc,
-        D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr,
-        IID_PPV_ARGS(&stagingBuffer)));
-
+    auto stagingBuffer = createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD);
     auto mappedData = std::add_pointer_t<void>{};
     AssertIfFailed(stagingBuffer->Map(0, nullptr, &mappedData));
-    std::memcpy(mappedData, mData.constData(), size);
+    std::memcpy(mappedData, mData.constData(), static_cast<UINT64>(mSize));
     stagingBuffer->Unmap(0, nullptr);
 
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
-
     context.graphicsCommandList->CopyBufferRegion(mResource.Get(), 0,
-        stagingBuffer.Get(), 0, size);
-
-    context.stagingBuffers.push_back(std::move(stagingBuffer));
+        stagingBuffer.Get(), 0, static_cast<UINT64>(mSize));
 
     mSystemCopyModified = mDeviceCopyModified = false;
 }
@@ -117,45 +122,21 @@ void D3DBuffer::beginDownload(D3DContext &context, bool checkModification)
     if (!mDeviceCopyModified)
         return;
 
+    Q_ASSERT(!mDownloadBuffer);
+    mDownloadBuffer = createStagingBuffer(context, D3D12_HEAP_TYPE_READBACK);
+
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
-
-    if (!mDownloadBuffer) {
-        const auto heapProperties = D3D12_HEAP_PROPERTIES{
-            .Type = D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_READBACK,
-            .CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-            .MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
-            .VisibleNodeMask = 1,
-        };
-
-        const auto bufferDesc = D3D12_RESOURCE_DESC{
-            .Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-            .Width = static_cast<UINT64>(mSize),
-            .Height = 1,
-            .DepthOrArraySize = 1,
-            .MipLevels = 1,
-            .Format = DXGI_FORMAT_UNKNOWN,
-            .SampleDesc = { .Count = 1 },
-            .Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-            .Flags = D3D12_RESOURCE_FLAG_NONE,
-        };
-        AssertIfFailed(context.device.CreateCommittedResource(&heapProperties,
-            D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST,
-            nullptr, IID_PPV_ARGS(&mDownloadBuffer)));
-    }
-
     context.graphicsCommandList->CopyBufferRegion(mDownloadBuffer.Get(), 0,
         mResource.Get(), 0, static_cast<UINT64>(mSize));
 
     mSystemCopyModified = mDeviceCopyModified = false;
     mCheckModification = checkModification;
-    mDownloading = true;
 }
 
 bool D3DBuffer::finishDownload()
 {
     auto modified = false;
-    if (mDownloading) {
-        mDownloading = false;
+    if (mDownloadBuffer) {
         auto mappedData = std::add_pointer_t<void>{};
         AssertIfFailed(mDownloadBuffer->Map(0, nullptr, &mappedData));
         if (!mCheckModification
@@ -164,6 +145,7 @@ bool D3DBuffer::finishDownload()
             modified = true;
         }
         mDownloadBuffer->Unmap(0, nullptr);
+        mDownloadBuffer.Reset();
     }
     return modified;
 }

@@ -333,24 +333,35 @@ void D3DTexture::createAndUpload(D3DContext &context)
     upload(context);
 }
 
+UINT D3DTexture::numSubresources() const
+{
+    return static_cast<UINT>(levels() * layers());
+}
+
+ComPtr<ID3D12Resource> D3DTexture::createStagingBuffer(D3DContext &context,
+    D3D12_HEAP_TYPE type)
+{
+    const auto stagingHeapProperties = CD3DX12_HEAP_PROPERTIES(type);
+    const auto stagingBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
+        GetRequiredIntermediateSize(mResource.Get(), 0, numSubresources()));
+    const auto initialState = (type == D3D12_HEAP_TYPE_UPLOAD
+            ? D3D12_RESOURCE_STATE_COPY_SOURCE
+            : D3D12_RESOURCE_STATE_COPY_DEST);
+    auto stagingBuffer = ComPtr<ID3D12Resource>();
+    AssertIfFailed(context.device.CreateCommittedResource(
+        &stagingHeapProperties, D3D12_HEAP_FLAG_NONE, &stagingBufferDesc,
+        initialState, nullptr, IID_PPV_ARGS(&stagingBuffer)));
+
+    context.stagingBuffers.push_back(stagingBuffer);
+    return stagingBuffer;
+}
+
 bool D3DTexture::upload(D3DContext &context)
 {
     if (samples() > 1)
         return false;
 
-    const auto numSubresources = static_cast<UINT>(levels() * layers());
-    const auto uploadBufferSize =
-        GetRequiredIntermediateSize(mResource.Get(), 0, numSubresources);
-
-    const auto stagingHeapProperties =
-        CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    const auto stagingBufferDesc =
-        CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize);
-    auto stagingBuffer = ComPtr<ID3D12Resource>();
-    AssertIfFailed(context.device.CreateCommittedResource(
-        &stagingHeapProperties, D3D12_HEAP_FLAG_NONE, &stagingBufferDesc,
-        D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-        IID_PPV_ARGS(&stagingBuffer)));
+    auto stagingBuffer = createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD);
 
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -363,9 +374,7 @@ bool D3DTexture::upload(D3DContext &context)
                 .SlicePitch = mData.getImageSize(level),
             });
     UpdateSubresources(context.graphicsCommandList.Get(), mResource.Get(),
-        stagingBuffer.Get(), 0, 0, numSubresources, subresourceData.data());
-
-    context.stagingBuffers.push_back(std::move(stagingBuffer));
+        stagingBuffer.Get(), 0, 0, numSubresources(), subresourceData.data());
 
     mSystemCopyModified = mDeviceCopyModified = false;
     return true;
@@ -382,16 +391,40 @@ void D3DTexture::beginDownload(D3DContext &context)
     if (samples() > 1)
         return;
 
+    Q_ASSERT(!mDownloadBuffer);
+    mDownloadBuffer = createStagingBuffer(context, D3D12_HEAP_TYPE_READBACK);
+
+    resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
+
+    const auto texDesc = mResource->GetDesc();
+    auto layouts =
+        std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT>(numSubresources());
+    context.device.GetCopyableFootprints(&texDesc, 0, numSubresources(), 0,
+        layouts.data(), nullptr, nullptr, nullptr);
+
+    for (auto i = 0u; i < numSubresources(); ++i) {
+        auto source = CD3DX12_TEXTURE_COPY_LOCATION(mResource.Get(), i);
+        auto dest =
+            CD3DX12_TEXTURE_COPY_LOCATION(mDownloadBuffer.Get(), layouts[i]);
+        context.graphicsCommandList->CopyTextureRegion(&dest, 0, 0, 0, &source,
+            nullptr);
+    }
+
     mSystemCopyModified = mDeviceCopyModified = false;
-    //mDownloading = true;
 }
 
 bool D3DTexture::finishDownload()
 {
-    if (!mDownloading)
+    if (!mDownloadBuffer)
         return false;
 
-    mDownloading = false;
+    auto mappedData = std::add_pointer_t<void>();
+    auto readRange = D3D12_RANGE{ 0, 0 };
+    AssertIfFailed(mDownloadBuffer->Map(0, &readRange, &mappedData));
+    std::memcpy(mData.getWriteonlyData(0, 0, 0), mappedData,
+        mData.getDataSize());
+    mDownloadBuffer->Unmap(0, nullptr);
+    mDownloadBuffer.Reset();
     return true;
 }
 

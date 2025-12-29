@@ -331,13 +331,13 @@ void VKTexture::beginDownload(VKContext &context)
     if (!mDeviceCopyModified || !mTexture.isValid())
         return;
 
-    if (!mDownloadBuffer.isValid())
-        mDownloadBuffer = context.device.createBuffer(KDGpu::BufferOptions{
-            .size = static_cast<size_t>(mData.getDataSize()),
-            .usage = KDGpu::BufferUsageFlagBits::TransferDstBit
-                | KDGpu::BufferUsageFlagBits::TransferSrcBit,
-            .memoryUsage = KDGpu::MemoryUsage::CpuOnly,
-        });
+    Q_ASSERT(!mDownloadBuffer.isValid());
+    mDownloadBuffer = context.device.createBuffer(KDGpu::BufferOptions{
+        .size = static_cast<size_t>(mData.getDataSize()),
+        .usage = KDGpu::BufferUsageFlagBits::TransferDstBit
+            | KDGpu::BufferUsageFlagBits::TransferSrcBit,
+        .memoryUsage = KDGpu::MemoryUsage::CpuOnly,
+    });
 
     if (samples() > 1) {
         Q_ASSERT(levels() == 1);
@@ -449,19 +449,18 @@ void VKTexture::beginDownload(VKContext &context)
     });
 
     mSystemCopyModified = mDeviceCopyModified = false;
-    mDownloading = true;
 }
 
 bool VKTexture::finishDownload()
 {
-    if (!mDownloading)
+    if (!mDownloadBuffer.isValid())
         return false;
 
-    mDownloading = false;
     const auto mappedData = mDownloadBuffer.map();
     std::memcpy(mData.getWriteonlyData(0, 0, 0), mappedData,
         mData.getDataSize());
     mDownloadBuffer.unmap();
+    mDownloadBuffer = {};
     return true;
 }
 

@@ -40,6 +40,5 @@ private:
     KDGpu::AccessFlags mCurrentAccessMask{};
     KDGpu::PipelineStageFlags mCurrentStage{};
     bool mDeviceAddressObtained{};
-    bool mDownloading{};
     bool mCheckModification{};
 };

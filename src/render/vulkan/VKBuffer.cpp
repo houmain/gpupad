@@ -143,18 +143,13 @@ void VKBuffer::beginDownload(VKContext &context, bool checkModifications)
 
     updateReadOnlyBuffer(context);
 
-    if (!mDownloadBuffer.isValid())
-        mDownloadBuffer = context.device.createBuffer({
-            .size = static_cast<KDGpu::DeviceSize>(mSize),
-            .usage = KDGpu::BufferUsageFlagBits::TransferDstBit
-                | KDGpu::BufferUsageFlagBits::TransferSrcBit,
-            .memoryUsage = KDGpu::MemoryUsage::CpuOnly,
-        });
-    if (!mDownloadBuffer.isValid()) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::DownloadingImageFailed);
-        return;
-    }
+    Q_ASSERT(!mDownloadBuffer.isValid());
+    mDownloadBuffer = context.device.createBuffer({
+        .size = static_cast<KDGpu::DeviceSize>(mSize),
+        .usage = KDGpu::BufferUsageFlagBits::TransferDstBit
+            | KDGpu::BufferUsageFlagBits::TransferSrcBit,
+        .memoryUsage = KDGpu::MemoryUsage::CpuOnly,
+    });
 
     context.commandRecorder->copyBuffer({
         .src = mBuffer,
@@ -164,14 +159,12 @@ void VKBuffer::beginDownload(VKContext &context, bool checkModifications)
 
     mSystemCopyModified = mDeviceCopyModified = false;
     mCheckModification = checkModifications;
-    mDownloading = true;
 }
 
 bool VKBuffer::finishDownload()
 {
     auto modified = false;
-    if (mDownloading) {
-        mDownloading = false;
+    if (mDownloadBuffer.isValid()) {
         const auto mappedData = mDownloadBuffer.map();
         if (!mCheckModification
             || std::memcmp(mData.data(), mappedData, mData.size()) != 0) {
@@ -179,6 +172,7 @@ bool VKBuffer::finishDownload()
             modified = true;
         }
         mDownloadBuffer.unmap();
+        mDownloadBuffer = {};
     }
     return modified;
 }

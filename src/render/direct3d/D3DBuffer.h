@@ -28,15 +28,15 @@ public:
     
 private:
     void createBuffer(D3DContext &context);
+    ComPtr<ID3D12Resource> createStagingBuffer(D3DContext &context, D3D12_HEAP_TYPE type);
     void upload(D3DContext &context);
     void updateReadOnlyBuffer(D3DContext &context);
     void updateReadWriteBuffer(D3DContext &context);
     void resourceBarrier(D3DContext &context, D3D12_RESOURCE_STATES state);
 
     ComPtr<ID3D12Resource> mResource;
-    D3D12_RESOURCE_STATES mCurrentState{};
     ComPtr<ID3D12Resource> mDownloadBuffer;
-    bool mDownloading{ };
+    D3D12_RESOURCE_STATES mCurrentState{};
     bool mCheckModification{ };
 };
 

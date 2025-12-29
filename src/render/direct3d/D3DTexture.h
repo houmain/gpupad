@@ -49,6 +49,9 @@ private:
         }
     };
 
+    UINT numSubresources() const;
+    ComPtr<ID3D12Resource> createStagingBuffer(D3DContext &context,
+        D3D12_HEAP_TYPE type);
     void createAndUpload(D3DContext &context);
     bool upload(D3DContext &context);
     void resourceBarrier(D3DContext &context, D3D12_RESOURCE_STATES state);
@@ -56,9 +59,9 @@ private:
     D3DBuffer *mTextureBuffer{};
     bool mCreated{};
     ComPtr<ID3D12Resource> mResource;
+    ComPtr<ID3D12Resource> mDownloadBuffer;
     D3D12_RESOURCE_STATES mCurrentState{};
     HANDLE mShareHandle{};
-    bool mDownloading{};
 };
 
 #endif // _WIN32
