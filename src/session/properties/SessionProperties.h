@@ -27,8 +27,9 @@ public:
     QVariant data(const QModelIndex &index,
         int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex &index, const QVariant &value,
-        int role) override;
+        int role = Qt::EditRole) override;
     virtual QString getColumnKey(int column) const = 0;
+    virtual QVariant getColumnDefaultValue(int column) const = 0;
 
 private:
     QVariantMap mVariantMap;
@@ -44,6 +45,7 @@ public:
 
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QString getColumnKey(int column) const override;
+    QVariant getColumnDefaultValue(int column) const override;
 };
 
 //-------------------------------------------------------------------------

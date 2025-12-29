@@ -30,7 +30,11 @@ QVariant VariantMapModel::data(const QModelIndex &index, int role) const
     if (index.row() != 0 || (role != Qt::EditRole && role != Qt::DisplayRole))
         return {};
 
-    return mVariantMap[getColumnKey(index.column())];
+    const auto it = mVariantMap.find(getColumnKey(index.column()));
+    if (it == mVariantMap.end())
+        return getColumnDefaultValue(index.column());
+
+    return it.value();
 }
 
 bool VariantMapModel::setData(const QModelIndex &index, const QVariant &value,
@@ -59,6 +63,19 @@ QString ShaderCompilerSettingsModel::getColumnKey(int column) const
     const auto metaEnum = QMetaEnum::fromType<Session::ShaderCompilerSetting>();
     if (auto key = metaEnum.key(column))
         return key;
+    return {};
+}
+
+QVariant ShaderCompilerSettingsModel::getColumnDefaultValue(int column) const
+{
+    auto setting = static_cast<Session::ShaderCompilerSetting>(column);
+    switch (setting) {
+    case Session::ShaderCompilerSetting::autoMapBindings:
+    case Session::ShaderCompilerSetting::autoMapLocations:
+    case Session::ShaderCompilerSetting::autoSampledTextures:
+    case Session::ShaderCompilerSetting::vulkanRulesRelaxed:  return true;
+    case Session::ShaderCompilerSetting::spirvVersion:        return 15;
+    }
     return {};
 }
 
@@ -220,17 +237,14 @@ void SessionProperties::updateWidgets()
     mUi->rendererOptions->setVisible(!hasOpenGLRenderer);
     mUi->shaderCompilerSettings->setVisible(hasShaderCompiler);
 
+    using SCS = Session::ShaderCompilerSetting;
+    const auto hasSetting = [&](SCS setting) {
+        return shaderCompilerHasSetting(shaderCompiler, renderer, setting);
+    };
     setFormVisibility(mUi->shaderCompilerSettingsLayout, mUi->labelSprivVersion,
-        mUi->spirvVersion,
-        shaderCompilerHasSetting(shaderCompiler, renderer,
-            Session::ShaderCompilerSetting::spirvVersion));
-    mUi->autoMapBindings->setVisible(shaderCompilerHasSetting(shaderCompiler,
-        renderer, Session::ShaderCompilerSetting::autoMapBindings));
-    mUi->autoMapLocations->setVisible(shaderCompilerHasSetting(shaderCompiler,
-        renderer, Session::ShaderCompilerSetting::autoMapLocations));
-    mUi->autoSampledTextures->setVisible(
-        shaderCompilerHasSetting(shaderCompiler, renderer,
-            Session::ShaderCompilerSetting::autoSampledTextures));
-    mUi->vulkanRulesRelaxed->setVisible(shaderCompilerHasSetting(shaderCompiler,
-        renderer, Session::ShaderCompilerSetting::vulkanRulesRelaxed));
+        mUi->spirvVersion, hasSetting(SCS::spirvVersion));
+    mUi->autoMapBindings->setVisible(hasSetting(SCS::autoMapBindings));
+    mUi->autoMapLocations->setVisible(hasSetting(SCS::autoMapLocations));
+    mUi->autoSampledTextures->setVisible(hasSetting(SCS::autoSampledTextures));
+    mUi->vulkanRulesRelaxed->setVisible(hasSetting(SCS::vulkanRulesRelaxed));
 }
