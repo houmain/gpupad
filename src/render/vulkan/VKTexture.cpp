@@ -357,9 +357,6 @@ void VKTexture::beginDownload(VKContext &context)
         Q_ASSERT(mResolveTexture.isValid());
     }
 
-    context.commandRecorder = context.device.createCommandRecorder();
-    const auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
-
     const auto range =
         KDGpu::TextureSubresourceRange{ .aspectMask = aspectMask() };
 
@@ -450,8 +447,6 @@ void VKTexture::beginDownload(VKContext &context)
         .dstMask = KDGpu::AccessFlagBit::MemoryReadBit,
         .buffer = mDownloadBuffer,
     });
-
-    context.commandBuffers.push_back(context.commandRecorder->finish());
 
     mSystemCopyModified = mDeviceCopyModified = false;
     mDownloading = true;

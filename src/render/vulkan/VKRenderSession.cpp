@@ -77,9 +77,14 @@ void VKRenderSession::render()
     mShareSync->beginUpdate();
     context.timestampQueries.clear();
 
+    context.commandRecorder = context.device.createCommandRecorder();
+
     executeCommandQueue(*mCommandQueue);
 
     beginDownloadModifiedResources(*mCommandQueue);
+
+    context.commandBuffers.push_back(context.commandRecorder->finish());
+    context.commandRecorder.reset();
 
     auto submitOptions = KDGpu::SubmitOptions{
         .commandBuffers = std::vector<KDGpu::Handle<KDGpu::CommandBuffer_t>>(

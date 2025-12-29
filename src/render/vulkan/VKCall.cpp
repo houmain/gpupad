@@ -184,9 +184,6 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
     if (mPipeline)
         mPipeline->setBindings(std::move(bindings));
 
-    context.commandRecorder = context.device.createCommandRecorder();
-    auto guard = qScopeGuard([&] { context.commandRecorder.reset(); });
-
     auto &recorder = context.timestampQueries[mCall.id];
     recorder =
         context.commandRecorder->beginTimestampRecording({ .queryCount = 2 });
@@ -225,7 +222,6 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
     }
 
     recorder.writeTimestamp(KDGpu::PipelineStageFlagBit::BottomOfPipeBit);
-    context.commandBuffers.push_back(context.commandRecorder->finish());
 }
 
 int VKCall::getMaxElementCount(ScriptEngine &scriptEngine)
