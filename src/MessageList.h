@@ -69,7 +69,6 @@ enum class MessageType {
     IncompatibleBindings,
     CreatingPipelineFailed,
     OpenGLRendererRequiresGLSL,
-    SubroutinesNotAvailableInVulkan,
     OpenGLRequiresCombinedTextureSamplers,
     CantSampleAttachment,
     SampleCountMismatch,

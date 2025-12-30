@@ -228,8 +228,10 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue)
                 break;
 
             case Binding::BindingType::Subroutine:
-                mMessages += MessageList::insert(b.id,
-                    MessageType::SubroutinesNotAvailableInVulkan);
+                addCommand([binding = SubroutineBinding{ b.id, b.name,
+                                b.subroutine }](BindingState &state) {
+                    state.top().subroutines[binding.name] = binding;
+                });
                 break;
             }
         } else if (auto call = castItem<Call>(item)) {
@@ -311,6 +313,8 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue)
                             merged.images[name] = binding;
                         for (const auto &[name, binding] : scope.buffers)
                             merged.buffers[name] = binding;
+                        for (const auto &[name, binding] : scope.subroutines)
+                            merged.subroutines[name] = binding;
                     }
                     queueCall.execute(*context, std::move(merged), mMessages,
                         mScriptSession->engine());

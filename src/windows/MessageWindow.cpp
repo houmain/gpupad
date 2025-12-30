@@ -176,8 +176,6 @@ QString MessageWindow::getMessageText(const Message &message) const
         return tr("The OpenGL driver can only compile GLSL shaders");
     case OpenGLRequiresCombinedTextureSamplers:
         return tr("OpenGL requires combined texture/samplers");
-    case SubroutinesNotAvailableInVulkan:
-        return tr("Subroutines not available in Vulkan");
     case SampleCountMismatch:
         return tr("Sample count of attachments does not match");
     case MaxSampleCountExceeded:
