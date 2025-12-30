@@ -74,7 +74,7 @@ QVariant ShaderCompilerSettingsModel::getColumnDefaultValue(int column) const
     case Session::ShaderCompilerSetting::autoMapLocations:
     case Session::ShaderCompilerSetting::autoSampledTextures:
     case Session::ShaderCompilerSetting::vulkanRulesRelaxed:  return true;
-    case Session::ShaderCompilerSetting::spirvVersion:        return 15;
+    case Session::ShaderCompilerSetting::spirvVersion:        return {};
     }
     return {};
 }

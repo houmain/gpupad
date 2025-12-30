@@ -1,4 +1,5 @@
 #include "GLShader.h"
+#include "GLRenderer.h"
 
 void GLShader::parseLog(const QString &log, MessagePtrSet &messages,
     ItemId itemId, const QStringList &fileNames)
@@ -171,10 +172,15 @@ bool GLShader::setShaderObject(GLObject shader,
         gl.glGetShaderInfoLog(shader, length, nullptr, log.data());
         GLShader::parseLog(log.data(), mMessages, mItemId, usedFileNames);
     }
+
     auto status = GLint{};
     gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-    if (status != GL_TRUE)
+    if (status != GL_TRUE) {
+        if (auto errorMessage = getFirstGLError(); !errorMessage.isEmpty())
+            mMessages += MessageList::insert(mItemId, MessageType::ShaderError,
+                errorMessage);
         return false;
+    }
 
     mShaderObject = std::move(shader);
     return true;
