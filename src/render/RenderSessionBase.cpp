@@ -3,9 +3,6 @@
 #include "FileCache.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
-#include "editors/EditorManager.h"
-#include "editors/binary/BinaryEditor.h"
-#include "editors/texture/TextureEditor.h"
 #include "scripting/ScriptEngine.h"
 #include "scripting/ScriptSession.h"
 #include "session/SessionModel.h"
@@ -115,35 +112,6 @@ void RenderSessionBase::configured()
     if (mEvaluationType != EvaluationType::Steady
         && Singletons::synchronizeLogic().resetRenderSessionInvalidationState())
         mItemsChanged = true;
-}
-
-void RenderSessionBase::finish()
-{
-    Q_ASSERT(onMainThread());
-    auto &editors = Singletons::editorManager();
-
-    editors.setAutoRaise(false);
-
-    for (auto itemId : mModifiedTextures.keys())
-        if (auto fileItem =
-                castItem<FileItem>(mSessionModelCopy.findItem(itemId)))
-            if (auto editor = editors.openTextureEditor(fileItem->fileName))
-                editor->replace(mModifiedTextures[itemId], false);
-    mModifiedTextures.clear();
-
-    for (auto itemId : mModifiedBuffers.keys())
-        if (auto fileItem =
-                castItem<FileItem>(mSessionModelCopy.findItem(itemId)))
-            if (auto editor = editors.openBinaryEditor(fileItem->fileName))
-                editor->replace(mModifiedBuffers[itemId], false);
-    mModifiedBuffers.clear();
-
-    editors.setAutoRaise(true);
-
-    mPrevMessages.clear();
-
-    QMutexLocker lock{ &mUsedItemsCopyMutex };
-    mUsedItemsCopy = mUsedItems;
 }
 
 void RenderSessionBase::release()

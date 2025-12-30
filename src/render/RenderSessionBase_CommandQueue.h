@@ -4,6 +4,7 @@
 #include "Singletons.h"
 #include "editors/EditorManager.h"
 #include "editors/texture/TextureEditor.h"
+#include "editors/binary/BinaryEditor.h"
 
 template <typename T>
 void replaceEqual(std::map<ItemId, T> &to, std::map<ItemId, T> &from)
@@ -386,23 +387,6 @@ void RenderSessionBase::beginDownloadModifiedResources(
                 mEvaluationType != EvaluationType::Reset);
 }
 
-template <typename CommandQueue>
-void RenderSessionBase::finishDownloadModifiedResources(
-    CommandQueue &commandQueue)
-{
-    for (auto &[itemId, program] : commandQueue.programs)
-        if (program.printf().isUsed())
-            mMessages += program.printf().finishDownload(program.itemId());
-
-    for (auto &[itemId, texture] : commandQueue.textures)
-        if (texture.finishDownload())
-            mModifiedTextures[texture.itemId()] = texture.data();
-
-    for (auto &[itemId, buffer] : commandQueue.buffers)
-        if (buffer.finishDownload())
-            mModifiedBuffers[buffer.itemId()] = buffer.data();
-}
-
 template <typename TimerQueries, typename ToNanoseconds>
 void RenderSessionBase::outputTimerQueries(TimerQueries &timerQueries,
     const ToNanoseconds &toNanoseconds)
@@ -422,16 +406,42 @@ void RenderSessionBase::outputTimerQueries(TimerQueries &timerQueries,
 }
 
 template <typename CommandQueue>
-void RenderSessionBase::updatePreviewTextures(CommandQueue &commandQueue,
+void RenderSessionBase::finish(CommandQueue &commandQueue,
     ShareSyncPtr shareSync)
 {
+    Q_ASSERT(onMainThread());
     auto &editors = Singletons::editorManager();
     auto &sessionModel = Singletons::sessionModel();
-    for (const auto &[itemId, texture] : commandQueue.textures)
-        if (texture.deviceCopyModified())
-            if (auto fileItem =
-                    castItem<FileItem>(sessionModel.findItem(itemId)))
+
+    for (auto &[itemId, program] : commandQueue.programs)
+        if (program.printf().isUsed())
+            mMessages += program.printf().finishDownload(program.itemId());
+
+    editors.setAutoRaise(false);
+
+    for (auto &[itemId, texture] : commandQueue.textures) {
+        if (texture.finishDownload()) {
+            if (auto fileItem = sessionModel.findItem<FileItem>(itemId))
+                if (auto editor = editors.openTextureEditor(fileItem->fileName))
+                    editor->replace(texture.data(), false);
+        } else if (texture.deviceCopyModified()) {
+            if (auto fileItem = sessionModel.findItem<FileItem>(itemId))
                 if (auto editor = editors.getTextureEditor(fileItem->fileName))
                     editor->updatePreviewTexture(shareSync,
                         texture.getSharedMemoryHandle(), texture.samples());
+        }
+    }
+
+    for (auto &[itemId, buffer] : commandQueue.buffers)
+        if (buffer.finishDownload())
+            if (auto fileItem = sessionModel.findItem<FileItem>(itemId))
+                if (auto editor = editors.openBinaryEditor(fileItem->fileName))
+                    editor->replace(buffer.data(), false);
+
+    editors.setAutoRaise(true);
+
+    mPrevMessages.clear();
+
+    QMutexLocker lock{ &mUsedItemsCopyMutex };
+    mUsedItemsCopy = mUsedItems;
 }

@@ -94,7 +94,6 @@ public:
     void prepare(bool itemsChanged, EvaluationType evaluationType) override;
     void configure() override;
     void configured() override;
-    void finish() override;
     void release() override;
     QSet<ItemId> usedItems() const override;
     SessionModel &sessionModelCopy() override { return mSessionModelCopy; }
@@ -134,16 +133,12 @@ protected:
     template <typename CommandQueue>
     void beginDownloadModifiedResources(CommandQueue &commandQueue);
 
-    template <typename CommandQueue>
-    void finishDownloadModifiedResources(CommandQueue &commandQueue);
-
     template <typename TimerQueries, typename ToNanoseconds>
     void outputTimerQueries(TimerQueries &timerQueries,
         const ToNanoseconds &toNanoseconds);
 
     template <typename CommandQueue>
-    void updatePreviewTextures(CommandQueue &commandQueue,
-        ShareSyncPtr shareSync);
+    void finish(CommandQueue &commandQueue, ShareSyncPtr shareSync);
 
 private:
     struct GroupIteration
@@ -171,8 +166,6 @@ private:
     QSet<ItemId> mUsedItemsCopy;
     mutable QMutex mPropertyCacheMutex;
     QMap<ItemId, QList<int>> mPropertyCache;
-    QMap<ItemId, TextureData> mModifiedTextures;
-    QMap<ItemId, QByteArray> mModifiedBuffers;
     size_t mNextCommandQueueIndex{};
     QMap<ItemId, GroupIteration> mGroupIterations;
     QMap<ItemId, ScriptValueList> mUniformBindingValues;
