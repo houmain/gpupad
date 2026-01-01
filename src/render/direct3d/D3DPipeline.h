@@ -24,8 +24,8 @@ public:
     bool createGraphics(D3DContext &context, Call::PrimitiveType primitiveType,
         D3DTarget *target, D3DStream *vertexStream);
     bool createCompute(D3DContext &context);
-    void bindGraphics(D3DContext &context, ScriptEngine &scriptEngine);
-    void bindCompute(D3DContext &context, ScriptEngine &scriptEngine);
+    bool bindGraphics(D3DContext &context, ScriptEngine &scriptEngine);
+    bool bindCompute(D3DContext &context, ScriptEngine &scriptEngine);
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:

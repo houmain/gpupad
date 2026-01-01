@@ -124,8 +124,15 @@ bool D3DShader::compile(ShaderPrintf &printf)
         const auto spirv = compileSpirv(printf);
         if (!spirv)
             return {};
-        const auto hlsl = Spirv::generateHLSL(spirv);
-        return compile(hlsl);
+
+        try {
+            const auto hlsl = Spirv::generateHLSL(spirv);
+            return compile(hlsl);
+        } catch (const std::exception &ex) {
+            mMessages += MessageList::insert(mItemId, MessageType::ShaderError,
+                ex.what());
+            return false;
+        }
     }
 
     const auto patchedSources = getPatchedSourcesHLSL(printf);

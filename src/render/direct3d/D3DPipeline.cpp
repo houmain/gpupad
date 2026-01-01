@@ -375,6 +375,9 @@ void D3DPipeline::createDescriptorHeap(D3DContext &context)
 
 bool D3DPipeline::setDescriptors(D3DContext &context)
 {
+    if (!mDescriptorHeap)
+        return true;
+
     const auto descriptorSize = context.device.GetDescriptorHandleIncrementSize(
         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     auto descriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE{
@@ -452,6 +455,34 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
                     nullptr, &uavDesc, descriptor);
                 descriptor.Offset(1, descriptorSize);
 
+            } else if (bindDesc.Type == D3D_SIT_BYTEADDRESS
+                || bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS) {
+                const auto bufferBinding = find(mBindings.buffers, name);
+                if (!bufferBinding || !bufferBinding->buffer) {
+                    mMessages += MessageList::insert(mItemId,
+                        MessageType::BufferNotSet, name);
+                    canRender = false;
+                    continue;
+                }
+
+                mUsedItems += bufferBinding->bindingItemId;
+                mUsedItems += bufferBinding->blockItemId;
+                auto buffer = static_cast<D3DBuffer *>(bufferBinding->buffer);
+                buffer->prepareUnorderedAccessView(context);
+
+                const auto uavDesc = D3D12_UNORDERED_ACCESS_VIEW_DESC{
+                    .Format = DXGI_FORMAT_R32_TYPELESS,
+                    .ViewDimension = D3D12_UAV_DIMENSION_BUFFER,
+                    .Buffer =
+                        D3D12_BUFFER_UAV{
+                            .NumElements = static_cast<UINT>(
+                                buffer->size() / sizeof(UINT)),
+                            .Flags = D3D12_BUFFER_UAV_FLAG_RAW,
+                        },
+                };
+                context.device.CreateUnorderedAccessView(buffer->resource(),
+                    nullptr, &uavDesc, descriptor);
+                descriptor.Offset(1, descriptorSize);
             } else if (bindDesc.Type == D3D_SIT_SAMPLER) {
                 // nothing to do
             } else {
@@ -467,7 +498,7 @@ void D3DPipeline::setBindings(Bindings &&bindings)
     mBindings = std::move(bindings);
 }
 
-void D3DPipeline::bindGraphics(D3DContext &context, ScriptEngine &scriptEngine)
+bool D3DPipeline::bindGraphics(D3DContext &context, ScriptEngine &scriptEngine)
 {
     context.graphicsCommandList->SetPipelineState(mPipelineState.Get());
     context.graphicsCommandList->SetGraphicsRootSignature(mRootSignature.Get());
@@ -479,7 +510,10 @@ void D3DPipeline::bindGraphics(D3DContext &context, ScriptEngine &scriptEngine)
 
     updateGlobalConstantBuffers(context, scriptEngine);
 
-    if (mDescriptorHeap && setDescriptors(context)) {
+    if (!setDescriptors(context))
+        return false;
+
+    if (mDescriptorHeap) {
         auto descriptorHeaps = mDescriptorHeap.Get();
         context.graphicsCommandList->SetDescriptorHeaps(1, &descriptorHeaps);
 
@@ -495,16 +529,20 @@ void D3DPipeline::bindGraphics(D3DContext &context, ScriptEngine &scriptEngine)
             descriptor.Offset(mDescriptorTableEntries[i], descriptorSize);
         }
     }
+    return true;
 }
 
-void D3DPipeline::bindCompute(D3DContext &context, ScriptEngine &scriptEngine)
+bool D3DPipeline::bindCompute(D3DContext &context, ScriptEngine &scriptEngine)
 {
     context.graphicsCommandList->SetPipelineState(mPipelineState.Get());
     context.graphicsCommandList->SetComputeRootSignature(mRootSignature.Get());
 
     updateGlobalConstantBuffers(context, scriptEngine);
 
-    if (mDescriptorHeap && setDescriptors(context)) {
+    if (!setDescriptors(context))
+        return false;
+
+    if (mDescriptorHeap) {
         auto descriptorHeaps = mDescriptorHeap.Get();
         context.graphicsCommandList->SetDescriptorHeaps(1, &descriptorHeaps);
 
@@ -520,4 +558,5 @@ void D3DPipeline::bindCompute(D3DContext &context, ScriptEngine &scriptEngine)
             descriptor.Offset(mDescriptorTableEntries[i], descriptorSize);
         }
     }
+    return true;
 }

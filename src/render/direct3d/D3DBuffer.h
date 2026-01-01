@@ -24,6 +24,7 @@ public:
     void prepareVertexBuffer(D3DContext &context);
     void prepareIndexBuffer(D3DContext &context);
     void prepareConstantBufferView(D3DContext &context);
+    void prepareUnorderedAccessView(D3DContext &context);
     D3D12_GPU_VIRTUAL_ADDRESS getDeviceAddress();
     
 private:

@@ -196,17 +196,17 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
     case Call::CallType::ClearTexture:
         executeClearTexture(context, messages);
         break;
-        case Call::CallType::CopyTexture:
-            executeCopyTexture(context, messages);
-            break;
-        case Call::CallType::ClearBuffer:
-            executeClearBuffer(context, messages);
-            break;
-        case Call::CallType::CopyBuffer:
-            executeCopyBuffer(context, messages);
-            break;
-        case Call::CallType::SwapTextures: executeSwapTextures(messages); break;
-        case Call::CallType::SwapBuffers:  executeSwapBuffers(messages); break;
+    case Call::CallType::CopyTexture:
+        executeCopyTexture(context, messages);
+        break;
+    case Call::CallType::ClearBuffer:
+        executeClearBuffer(context, messages);
+        break;
+    case Call::CallType::CopyBuffer:
+        executeCopyBuffer(context, messages);
+        break;
+    case Call::CallType::SwapTextures: executeSwapTextures(messages); break;
+    case Call::CallType::SwapBuffers:  executeSwapBuffers(messages); break;
     }
 }
 
@@ -255,10 +255,9 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
 
     if (!mPipeline
         || !mPipeline->createGraphics(context, mCall.primitiveType, mTarget,
-            mVertexStream))
+            mVertexStream)
+        || !mPipeline->bindGraphics(context, scriptEngine))
         return;
-
-    mPipeline->bindGraphics(context, scriptEngine);
 
     //if (mIndirectBuffer)
     //    mIndirectBuffer->prepareIndirectBuffer(context);
@@ -309,10 +308,9 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
 void D3DCall::executeCompute(D3DContext &context, MessagePtrSet &messages,
     ScriptEngine &scriptEngine)
 {
-    if (!mPipeline || !mPipeline->createCompute(context))
+    if (!mPipeline || !mPipeline->createCompute(context)
+        || !mPipeline->bindCompute(context, scriptEngine))
         return;
-
-    mPipeline->bindCompute(context, scriptEngine);
 
     if (mCall.callType == Call::CallType::Compute) {
         context.graphicsCommandList->Dispatch(

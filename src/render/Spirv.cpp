@@ -457,12 +457,14 @@ QString Spirv::generateHLSL(const Spirv &spirv)
 
     auto compiler = spirv_cross::CompilerHLSL(spirv.spirv());
 
-    auto common = spirv_cross::CompilerGLSL::Options{};
+    const auto common = spirv_cross::CompilerGLSL::Options{};
     compiler.set_common_options(common);
 
-    auto options = spirv_cross::CompilerHLSL::Options{};
-    options.shader_model = 51;
-    compiler.set_hlsl_options(options);
+    compiler.set_hlsl_options({
+        .shader_model = 51,
+        .point_size_compat = true,
+        .point_coord_compat = true,
+    });
 
     auto spirvInterface = spirv.getInterface();
     for (auto i = 0u; i < spirvInterface->input_variable_count; ++i) {

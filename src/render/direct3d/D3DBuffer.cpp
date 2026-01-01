@@ -73,7 +73,9 @@ void D3DBuffer::createBuffer(D3DContext &context)
     if (mResource)
         return;
 
-    const auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(alignedSize());
+    const auto flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+    const auto resourceDesc =
+        CD3DX12_RESOURCE_DESC::Buffer(alignedSize(), flags);
     const auto heapProperties =
         CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     AssertIfFailed(context.device.CreateCommittedResource(&heapProperties,
@@ -182,6 +184,12 @@ void D3DBuffer::prepareConstantBufferView(D3DContext &context)
 {
     updateReadOnlyBuffer(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+}
+
+void D3DBuffer::prepareUnorderedAccessView(D3DContext &context)
+{
+    updateReadWriteBuffer(context);
+    resourceBarrier(context, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS D3DBuffer::getDeviceAddress()
