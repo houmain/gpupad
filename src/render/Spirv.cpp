@@ -462,11 +462,15 @@ QString Spirv::generateHLSL(const Spirv &spirv)
 
     auto options = spirv_cross::CompilerHLSL::Options{};
     options.shader_model = 51;
-    // TODO: get from reflection
-    compiler.add_vertex_attribute_remap({ 0, "aPosition" });
-    compiler.add_vertex_attribute_remap({ 1, "aNormal" });
-    compiler.add_vertex_attribute_remap({ 2, "aTexCoords" });
     compiler.set_hlsl_options(options);
+
+    auto spirvInterface = spirv.getInterface();
+    for (auto i = 0u; i < spirvInterface->input_variable_count; ++i) {
+        const auto &input = *spirvInterface->input_variables[i];
+        if (!isBuiltIn(input))
+            compiler.add_vertex_attribute_remap({ input.location, input.name });
+    }
+
     return QString::fromStdString(compiler.compile());
 }
 

@@ -29,7 +29,7 @@ public:
         const SpvReflectShaderModule *operator->() const;
 
     private:
-        std::shared_ptr<SpvReflectShaderModule> mModule;
+        std::shared_ptr<const SpvReflectShaderModule> mModule;
     };
 
     static std::map<Shader::ShaderType, Spirv> compile(const Session &session,
