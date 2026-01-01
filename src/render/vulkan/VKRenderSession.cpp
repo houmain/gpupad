@@ -110,7 +110,7 @@ void VKRenderSession::render()
 void VKRenderSession::finish()
 {
     if (mCommandQueue)
-        RenderSessionBase::finish(*mCommandQueue, mShareSync);
+        finishCommandQueue(*mCommandQueue, mShareSync);
 }
 
 void VKRenderSession::release()

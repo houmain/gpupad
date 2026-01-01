@@ -40,7 +40,6 @@ private:
 
     ItemId mItemId;
     D3DProgram &mProgram;
-    D3DTarget *mTarget{};
     D3DStream *mVertexStream{};
     D3DAccelerationStructure *mAccelerationStructure{};
 

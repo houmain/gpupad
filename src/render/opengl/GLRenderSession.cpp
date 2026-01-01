@@ -101,7 +101,7 @@ void GLRenderSession::render()
 void GLRenderSession::finish()
 {
     if (mCommandQueue)
-        RenderSessionBase::finish(*mCommandQueue, mShareSync);
+        finishCommandQueue(*mCommandQueue, mShareSync);
 }
 
 void GLRenderSession::release()

@@ -138,7 +138,7 @@ protected:
         const ToNanoseconds &toNanoseconds);
 
     template <typename CommandQueue>
-    void finish(CommandQueue &commandQueue, ShareSyncPtr shareSync);
+    void finishCommandQueue(CommandQueue &commandQueue, ShareSyncPtr shareSync);
 
 private:
     struct GroupIteration

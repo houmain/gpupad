@@ -121,7 +121,7 @@ void D3DRenderSession::render()
 void D3DRenderSession::finish()
 {
     if (mCommandQueue)
-        RenderSessionBase::finish(*mCommandQueue, mShareSync);
+        finishCommandQueue(*mCommandQueue, mShareSync);
 }
 
 void D3DRenderSession::release()

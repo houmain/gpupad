@@ -62,7 +62,6 @@ bool D3DPipeline::createGraphics(D3DContext &context,
     if (std::exchange(mCreated, true))
         return (mPipelineState && mRootSignature);
 
-    mTarget = target;
     mVertexStream = vertexStream;
 
     auto state = D3D12_GRAPHICS_PIPELINE_STATE_DESC{};
@@ -318,6 +317,8 @@ void D3DPipeline::updateGlobalConstantBuffers(D3DContext &context,
                 && isGlobalConstantsBufferName(bindDesc.Name)) {
 
                 auto buffer = getGlobalConstantBuffer(stage);
+                buffer->prepareConstantBufferView(context);
+
                 auto &data = buffer->writableData();
 
                 const auto cbuffer =
@@ -471,19 +472,14 @@ void D3DPipeline::bindGraphics(D3DContext &context, ScriptEngine &scriptEngine)
     context.graphicsCommandList->SetPipelineState(mPipelineState.Get());
     context.graphicsCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-    if (mTarget)
-        mTarget->bind(context);
     if (mVertexStream)
         mVertexStream->bind(context);
 
     //context.graphicsCommandList->IASetIndexBuffer(&mBoxGeo->IndexBufferView());
 
-    if (mDescriptorHeap) {
-        if (!setDescriptors(context))
-            return;
+    updateGlobalConstantBuffers(context, scriptEngine);
 
-        updateGlobalConstantBuffers(context, scriptEngine);
-
+    if (mDescriptorHeap && setDescriptors(context)) {
         auto descriptorHeaps = mDescriptorHeap.Get();
         context.graphicsCommandList->SetDescriptorHeaps(1, &descriptorHeaps);
 
@@ -506,12 +502,9 @@ void D3DPipeline::bindCompute(D3DContext &context, ScriptEngine &scriptEngine)
     context.graphicsCommandList->SetPipelineState(mPipelineState.Get());
     context.graphicsCommandList->SetComputeRootSignature(mRootSignature.Get());
 
-    if (mDescriptorHeap) {
-        if (!setDescriptors(context))
-            return;
+    updateGlobalConstantBuffers(context, scriptEngine);
 
-        updateGlobalConstantBuffers(context, scriptEngine);
-
+    if (mDescriptorHeap && setDescriptors(context)) {
         auto descriptorHeaps = mDescriptorHeap.Get();
         context.graphicsCommandList->SetDescriptorHeaps(1, &descriptorHeaps);
 

@@ -410,7 +410,7 @@ void RenderSessionBase::outputTimerQueries(TimerQueries &timerQueries,
 }
 
 template <typename CommandQueue>
-void RenderSessionBase::finish(CommandQueue &commandQueue,
+void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue,
     ShareSyncPtr shareSync)
 {
     Q_ASSERT(onMainThread());
