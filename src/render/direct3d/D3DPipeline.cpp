@@ -295,13 +295,21 @@ void writeValue(QByteArray &data, const D3D12_SHADER_VARIABLE_DESC &varDesc,
     const D3D12_SHADER_TYPE_DESC &typeDesc, ScriptEngine &scriptEngine,
     const UniformBinding &binding)
 {
-    Q_ASSERT(typeDesc.Type == D3D_SVT_FLOAT);
-    const auto count = typeDesc.Rows * typeDesc.Columns;
-    const auto values = getValues<float>(scriptEngine, binding.values, 0, count,
-        binding.bindingItemId);
-
     Q_ASSERT(varDesc.StartOffset + varDesc.Size <= data.size());
-    std::memcpy(data.data() + varDesc.StartOffset, values.data(), varDesc.Size);
+    const auto count = typeDesc.Rows * typeDesc.Columns;
+    if (typeDesc.Type == D3D_SVT_FLOAT) {
+        const auto values = getValues<float>(scriptEngine, binding.values, 0,
+            count, binding.bindingItemId);
+        std::memcpy(data.data() + varDesc.StartOffset, values.data(),
+            varDesc.Size);
+    } else if (typeDesc.Type == D3D_SVT_INT) {
+        const auto values = getValues<int>(scriptEngine, binding.values, 0,
+            count, binding.bindingItemId);
+        std::memcpy(data.data() + varDesc.StartOffset, values.data(),
+            varDesc.Size);
+    } else {
+        Q_ASSERT("unhandled datatype");
+    }
 }
 
 void D3DPipeline::updateGlobalConstantBuffers(D3DContext &context,

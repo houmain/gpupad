@@ -118,9 +118,19 @@ D3D12_SHADER_RESOURCE_VIEW_DESC D3DTexture::shaderResourceViewDesc() const
         .ViewDimension = toSRVDimension(mTarget, mSamples),
         .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
     };
-    // TODO:
-    desc.Texture2D.MostDetailedMip = 0;
-    desc.Texture2D.MipLevels = -1;
+    switch (desc.ViewDimension) {
+    case D3D12_SRV_DIMENSION_TEXTURE2D:
+        desc.Texture2D = {
+            .MipLevels = ~UINT{ 0 },
+        };
+        break;
+    case D3D12_SRV_DIMENSION_TEXTURECUBE:
+        desc.TextureCube = {
+            .MipLevels = ~UINT{ 0 },
+        };
+        break;
+    default: Q_ASSERT(!"not handled");
+    }
     return desc;
 }
 
@@ -130,9 +140,15 @@ D3D12_UNORDERED_ACCESS_VIEW_DESC D3DTexture::unorderedAccessViewDesc() const
         .Format = toDXGIFormat(mFormat),
         .ViewDimension = toUAVDimension(mTarget, mSamples),
     };
-    // TODO:
-    desc.Texture2D.MipSlice = 0;
-    desc.Texture2D.PlaneSlice = 0;
+    switch (desc.ViewDimension) {
+    case D3D12_UAV_DIMENSION_TEXTURE2D:
+        desc.Texture2D = {
+            .MipSlice = 0,
+            .PlaneSlice = 0,
+        };
+        break;
+    default: Q_ASSERT(!"not handled");
+    }
     return desc;
 }
 
@@ -308,12 +324,13 @@ void D3DTexture::createAndUpload(D3DContext &context)
             : D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
                 | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS };
 
+    const auto faceSlices = (depth() * isCubemapTarget(target()) ? 6 : 1);
     const auto resourceDesc = D3D12_RESOURCE_DESC{
         .Dimension = toResourceDimension(target()),
         .Alignment = 0,
         .Width = static_cast<UINT64>(width()),
         .Height = static_cast<UINT>(height()),
-        .DepthOrArraySize = static_cast<UINT16>(depth() * layers()),
+        .DepthOrArraySize = static_cast<UINT16>(faceSlices * layers()),
         .MipLevels = static_cast<UINT16>(levels()),
         .Format = dxgiFormat,
         .SampleDesc = toDXGISampleDesc(samples()),

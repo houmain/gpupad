@@ -48,15 +48,16 @@ D3DProgram::D3DProgram(const Program &program, const Session &session)
     mUsedItems += program.id;
     mUsedItems += session.id;
 
+    auto shaders = std::map<Shader::ShaderType, QList<const Shader *>>();
     for (const auto &item : program.items)
         if (auto shader = castItem<Shader>(item)) {
             mUsedItems += shader->id;
-            const auto type = shader->shaderType;
-            const auto list = QList<const Shader *>{ shader };
-            (type == Shader::ShaderType::Includable ? mIncludableShaders
-                                                    : mShaders)
-                .emplace_back(type, list, session);
+            shaders[shader->shaderType].append(shader);
         }
+
+    for (const auto &[type, list] : shaders)
+        (type == Shader::ShaderType::Includable ? mIncludableShaders : mShaders)
+            .emplace_back(type, list, session);
 }
 
 bool D3DProgram::operator==(const D3DProgram &rhs) const
