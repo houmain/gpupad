@@ -95,7 +95,8 @@ Allows to define the instances and geometry for ray tracing calls.
 
 ## Scripting
 
-Initial documentation of the available script objects:
+<details>
+<summary>Initial documentation of the available script objects.</summary>
 
 :warning: Please use the discussions section for requesting additional information or functionality.
 
@@ -154,6 +155,8 @@ Initial documentation of the available script objects:
 ### Keyboard
 
 - `keys: [State]` - The state of each key (0 = Up, 1 = Down, 2 = Pressed, -1 = Released).
+
+</details>
 
 ## Installation
 

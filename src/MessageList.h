@@ -12,6 +12,7 @@ using MessagePtrSet = QSet<MessagePtr>;
 
 enum class MessageType {
     None,
+    NotImplemented,
     OpenGLVersionNotAvailable,
     VulkanNotAvailable,
     Direct3DNotAvailable,
@@ -76,7 +77,6 @@ enum class MessageType {
     MaxPushConstantSizeExceeded,
     MaxVariableBindGroupEntriesExceeded,
     OnlyLastBindingMayBeUnsizedArray,
-    TextureBuffersNotAvailable,
     RayTracingNotAvailable,
     MeshShadersNotAvailable,
 };

@@ -93,6 +93,8 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
     fillComboBox<Session::Renderer>(mUi->renderer, true);
     fillComboBox<Session::ShaderLanguage>(mUi->shaderLanguage);
     removeComboBoxItem(mUi->shaderLanguage, "None");
+    // TODO: implement Slang
+    removeComboBoxItem(mUi->shaderLanguage, "Slang");
 
     mShaderCompilerSettingsMapper->setModel(mShaderCompilerSettingsModel);
     mShaderCompilerSettingsMapper->setCurrentModelIndex(
@@ -189,7 +191,8 @@ void SessionProperties::updateShaderCompiler()
                 };
             return {
                 { "glslang", Session::ShaderCompiler::glslang },
-                { "DXC", Session::ShaderCompiler::DXC },
+                // TODO: implement DXC -> SpirV
+                //{ "DXC", Session::ShaderCompiler::DXC },
             };
 
         case Session::Renderer::Direct3D:

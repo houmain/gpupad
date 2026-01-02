@@ -1076,7 +1076,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
     }
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
-        return MessageType::TextureBuffersNotAvailable;
+        return MessageType::NotImplemented;
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR: {
         if (!mAccelerationStructure)

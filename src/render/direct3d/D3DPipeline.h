@@ -30,7 +30,7 @@ public:
 
 private:
     bool createInputLayout(std::vector<D3D12_INPUT_ELEMENT_DESC> *inputLayout);
-    void createRootSignature(D3DContext &context);
+    bool createRootSignature(D3DContext &context);
     void createDescriptorHeap(D3DContext &context);
     void createGlobalConstantBuffers(D3DContext &context);
     void updateGlobalConstantBuffers(D3DContext &context,

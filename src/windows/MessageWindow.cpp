@@ -90,6 +90,11 @@ QString MessageWindow::getMessageText(const Message &message) const
     case ScriptWarning:
     case ScriptMessage: return message.text;
 
+    case NotImplemented:
+        return tr("Not implemented")
+            + (!message.text.isEmpty()
+                    ? QStringLiteral(" (%1)").arg(message.text)
+                    : "");
     case OpenGLVersionNotAvailable:
         return tr("The required OpenGL version %1 is not available")
             .arg(message.text);
@@ -188,8 +193,6 @@ QString MessageWindow::getMessageText(const Message &message) const
     case OnlyLastBindingMayBeUnsizedArray:
         return tr("Only the last binding may be an unsized array (%1)")
             .arg(message.text);
-    case TextureBuffersNotAvailable:
-        return tr("Texture buffers not available in Vulkan yet");
     case RayTracingNotAvailable:  return tr("Raytracing not available");
     case MeshShadersNotAvailable: return tr("Mesh Shaders not available");
     }

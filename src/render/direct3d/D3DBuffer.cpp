@@ -20,11 +20,16 @@ D3DBuffer::D3DBuffer(int size) : BufferBase(size) { }
 void D3DBuffer::clear(D3DContext &context)
 {
     Q_ASSERT(!"not implemented");
+    // see https://asawicki.info/news_1795_secrets_of_direct3d_12_the_behavior_of_clearunorderedaccessviewuintfloat
+    mMessages +=
+        MessageList::insert(mItemId, MessageType::NotImplemented, "Clear Buffer");
 }
 
 void D3DBuffer::copy(D3DContext &context, D3DBuffer &source)
 {
-    Q_ASSERT(!"not implemented");
+    resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
+    source.resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    context.graphicsCommandList->CopyResource(resource(), source.resource());
 }
 
 bool D3DBuffer::swap(D3DBuffer &other)

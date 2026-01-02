@@ -114,14 +114,14 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
     MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
     if (mKind.trace) {
-        mMessages +=
-            MessageList::insert(mCall.id, MessageType::RayTracingNotAvailable);
+        mMessages += MessageList::insert(mCall.id, MessageType::NotImplemented,
+            "Ray Tracing");
         return;
     }
 
     if (mKind.mesh) {
-        mMessages +=
-            MessageList::insert(mCall.id, MessageType::MeshShadersNotAvailable);
+        mMessages += MessageList::insert(mCall.id, MessageType::NotImplemented,
+            "Mesh Shaders");
         return;
     }
 
@@ -261,7 +261,7 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
 
     //if (mIndirectBuffer)
     //    mIndirectBuffer->prepareIndirectBuffer(context);
-    //
+
     //if (mIndexBuffer)
     //    mIndexBuffer->prepareIndexBuffer(context);
 
@@ -285,23 +285,10 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
     } else if (mCall.callType == Call::CallType::DrawIndexed) {
         context.graphicsCommandList->DrawIndexedInstanced(count, instanceCount,
             first, baseVertex, firstInstance);
+    } else {
+        mMessages += MessageList::insert(mCall.id, MessageType::NotImplemented,
+            "Call Type");
     }
-    //else if (mCall.callType == Call::CallType::DrawIndirect) {
-    //    renderPass.drawIndirect({
-    //        .buffer = mIndirectBuffer->buffer(),
-    //        .offset = indirectOffset,
-    //        .drawCount = drawCount,
-    //        .stride = static_cast<uint32_t>(mIndirectStride),
-    //    });
-    //} else if (mCall.callType == Call::CallType::DrawIndexedIndirect) {
-    //    renderPass.drawIndexedIndirect({
-    //        .buffer = mIndirectBuffer->buffer(),
-    //        .offset = indirectOffset,
-    //        .drawCount = drawCount,
-    //        .stride = static_cast<uint32_t>(mIndirectStride),
-    //    });
-    //}
-    //renderPass.end();
     mUsedItems += mPipeline->usedItems();
 }
 

@@ -245,7 +245,7 @@ DXGI_SAMPLE_DESC toDXGISampleDesc(int samples)
 {
     return {
         static_cast<UINT>(samples),
-        (samples > 0 ? DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN : 0),
+        (samples > 1 ? DXGI_STANDARD_MULTISAMPLE_QUALITY_PATTERN : 0),
     };
 }
 

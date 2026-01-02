@@ -24,7 +24,7 @@ void replaceEqual(std::map<ItemId, T> &to, std::map<ItemId, T> &from)
 
 template <typename CommandQueue>
 void RenderSessionBase::reuseUnmodifiedItems(CommandQueue &commandQueue,
-    CommandQueue &prevCommandQueue)
+    CommandQueue &prevCommandQueue) noexcept
 {
     replaceEqual(commandQueue.textures, prevCommandQueue.textures);
     replaceEqual(commandQueue.buffers, prevCommandQueue.buffers);
@@ -50,7 +50,7 @@ void RenderSessionBase::reuseUnmodifiedItems(CommandQueue &commandQueue,
 }
 
 template <typename RenderSession, typename CommandQueue>
-void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue)
+void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
 {
     auto &self = *static_cast<RenderSession *>(this);
     auto &scriptEngine = mScriptSession->engine();
@@ -358,7 +358,7 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue)
 }
 
 template <typename CommandQueue>
-void RenderSessionBase::executeCommandQueue(CommandQueue &commandQueue)
+void RenderSessionBase::executeCommandQueue(CommandQueue &commandQueue) noexcept
 {
     auto state = BindingState{};
     mNextCommandQueueIndex = 0;
@@ -371,7 +371,7 @@ void RenderSessionBase::executeCommandQueue(CommandQueue &commandQueue)
 
 template <typename CommandQueue>
 void RenderSessionBase::beginDownloadModifiedResources(
-    CommandQueue &commandQueue)
+    CommandQueue &commandQueue) noexcept
 {
     for (auto &[itemId, program] : commandQueue.programs)
         if (program.printf().isUsed())
@@ -393,7 +393,7 @@ void RenderSessionBase::beginDownloadModifiedResources(
 
 template <typename TimerQueries, typename ToNanoseconds>
 void RenderSessionBase::outputTimerQueries(TimerQueries &timerQueries,
-    const ToNanoseconds &toNanoseconds)
+    const ToNanoseconds &toNanoseconds) noexcept
 {
     mTimerMessages.clear();
 
@@ -411,7 +411,7 @@ void RenderSessionBase::outputTimerQueries(TimerQueries &timerQueries,
 
 template <typename CommandQueue>
 void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue,
-    ShareSyncPtr shareSync)
+    ShareSyncPtr shareSync) noexcept
 {
     Q_ASSERT(onMainThread());
     auto &editors = Singletons::editorManager();

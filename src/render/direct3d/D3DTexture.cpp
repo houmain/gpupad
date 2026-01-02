@@ -119,15 +119,29 @@ D3D12_SHADER_RESOURCE_VIEW_DESC D3DTexture::shaderResourceViewDesc() const
         .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
     };
     switch (desc.ViewDimension) {
+
+    case D3D12_SRV_DIMENSION_TEXTURE1D:
+        desc.Texture1D = { .MipLevels = ~UINT{ 0 } };
+        break;
+    case D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
+        desc.Texture1DArray = { .MipLevels = ~UINT{ 0 } };
+        break;
     case D3D12_SRV_DIMENSION_TEXTURE2D:
-        desc.Texture2D = {
-            .MipLevels = ~UINT{ 0 },
-        };
+        desc.Texture2D = { .MipLevels = ~UINT{ 0 } };
+        break;
+    case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
+        desc.Texture2DArray = { .MipLevels = ~UINT{ 0 } };
+        break;
+    case D3D12_SRV_DIMENSION_TEXTURE2DMS:
+    case D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY: break;
+    case D3D12_SRV_DIMENSION_TEXTURE3D:
+        desc.Texture3D = { .MipLevels = ~UINT{ 0 } };
         break;
     case D3D12_SRV_DIMENSION_TEXTURECUBE:
-        desc.TextureCube = {
-            .MipLevels = ~UINT{ 0 },
-        };
+        desc.TextureCube = { .MipLevels = ~UINT{ 0 } };
+        break;
+    case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
+        desc.TextureCubeArray = { .MipLevels = ~UINT{ 0 } };
         break;
     default: Q_ASSERT(!"not handled");
     }
@@ -141,11 +155,14 @@ D3D12_UNORDERED_ACCESS_VIEW_DESC D3DTexture::unorderedAccessViewDesc() const
         .ViewDimension = toUAVDimension(mTarget, mSamples),
     };
     switch (desc.ViewDimension) {
+    case D3D12_UAV_DIMENSION_TEXTURE1D:
+    case D3D12_UAV_DIMENSION_TEXTURE1DARRAY:
     case D3D12_UAV_DIMENSION_TEXTURE2D:
-        desc.Texture2D = {
-            .MipSlice = 0,
-            .PlaneSlice = 0,
-        };
+    case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
+    case D3D12_UAV_DIMENSION_TEXTURE2DMS:
+    case D3D12_UAV_DIMENSION_TEXTURE2DMSARRAY: break;
+    case D3D12_UAV_DIMENSION_TEXTURE3D:
+        desc.Texture3D = { .WSize = ~UINT{ 0 } };
         break;
     default: Q_ASSERT(!"not handled");
     }
@@ -253,8 +270,10 @@ bool D3DTexture::clear(D3DContext &context, std::array<double, 4> color,
 
 bool D3DTexture::copy(D3DContext &context, D3DTexture &source)
 {
-    Q_ASSERT(!"not implemented");
-    return false;
+    resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
+    source.resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    context.graphicsCommandList->CopyResource(resource(), source.resource());
+    return true;
 }
 
 bool D3DTexture::swap(D3DTexture &other)

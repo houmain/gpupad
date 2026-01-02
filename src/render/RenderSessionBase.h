@@ -122,23 +122,23 @@ protected:
 
     template <typename CommandQueue>
     void reuseUnmodifiedItems(CommandQueue &commandQueue,
-        CommandQueue &prevCommandQueue);
+        CommandQueue &prevCommandQueue) noexcept;
 
     template <typename RenderSession, typename CommandQueue>
-    void buildCommandQueue(CommandQueue &commandQueue);
+    void buildCommandQueue(CommandQueue &commandQueue) noexcept;
 
     template <typename CommandQueue>
-    void executeCommandQueue(CommandQueue &commandQueue);
+    void executeCommandQueue(CommandQueue &commandQueue) noexcept;
 
     template <typename CommandQueue>
-    void beginDownloadModifiedResources(CommandQueue &commandQueue);
+    void beginDownloadModifiedResources(CommandQueue &commandQueue) noexcept;
 
     template <typename TimerQueries, typename ToNanoseconds>
     void outputTimerQueries(TimerQueries &timerQueries,
-        const ToNanoseconds &toNanoseconds);
+        const ToNanoseconds &toNanoseconds) noexcept;
 
     template <typename CommandQueue>
-    void finishCommandQueue(CommandQueue &commandQueue, ShareSyncPtr shareSync);
+    void finishCommandQueue(CommandQueue &commandQueue, ShareSyncPtr shareSync) noexcept;
 
 private:
     struct GroupIteration

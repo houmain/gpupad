@@ -82,7 +82,9 @@ bool D3DPipeline::createGraphics(D3DContext &context,
     state.InputLayout = { inputLayout.data(),
         static_cast<UINT>(inputLayout.size()) };
 
-    createRootSignature(context);
+    if (!createRootSignature(context))
+        return false;
+
     createGlobalConstantBuffers(context);
     createDescriptorHeap(context);
 
@@ -108,7 +110,9 @@ bool D3DPipeline::createCompute(D3DContext &context)
     if (!mProgram.setupPipelineState(state))
         return false;
 
-    createRootSignature(context);
+    if (!createRootSignature(context))
+        return false;
+
     createGlobalConstantBuffers(context);
     createDescriptorHeap(context);
 
@@ -171,7 +175,7 @@ bool D3DPipeline::createInputLayout(
     return canRender;
 }
 
-void D3DPipeline::createRootSignature(D3DContext &context)
+bool D3DPipeline::createRootSignature(D3DContext &context)
 {
     struct DescriptorTable
     {
@@ -233,6 +237,13 @@ void D3DPipeline::createRootSignature(D3DContext &context)
                 || descriptorTables.back().rangeType != rangeType)
                 descriptorTables.push_back({ visibility, rangeType });
 
+            // TODO: fix non uniform indexing
+            if (!bindDesc.BindCount) {
+                mMessages += MessageList::insert(mItemId,
+                    MessageType::NotImplemented, "Non-Uniform Indexing");
+                return false;
+            }
+
             descriptorTables.back().ranges.emplace_back().Init(rangeType,
                 bindDesc.BindCount, bindDesc.BindPoint, bindDesc.Space);
             ++mDescriptorCount;
@@ -259,6 +270,7 @@ void D3DPipeline::createRootSignature(D3DContext &context)
     AssertIfFailed(context.device.CreateRootSignature(0,
         rootSignatureBlob->GetBufferPointer(),
         rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&mRootSignature)));
+    return true;
 }
 
 void D3DPipeline::createGlobalConstantBuffers(D3DContext &context)
