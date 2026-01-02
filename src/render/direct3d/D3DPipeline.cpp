@@ -162,7 +162,7 @@ bool D3DPipeline::createInputLayout(
             .Format = toDXGIFormat(attribute->type, attribute->count),
             .InputSlot = i,
             .AlignedByteOffset = static_cast<UINT>(attribute->offset),
-            .InputSlotClass = (attribute->divisor > 1
+            .InputSlotClass = (attribute->divisor >= 1
                     ? D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA
                     : D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA),
             .InstanceDataStepRate = static_cast<UINT>(attribute->divisor),
