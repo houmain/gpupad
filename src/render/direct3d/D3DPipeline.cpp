@@ -266,27 +266,22 @@ void D3DPipeline::createGlobalConstantBuffers(D3DContext &context)
     for (const auto [stage, reflection] : mProgram.reflection()) {
         auto shaderDesc = D3D12_SHADER_DESC{};
         reflection->GetDesc(&shaderDesc);
-        for (auto i = 0u; i < shaderDesc.BoundResources; ++i) {
-            auto bindDesc = D3D12_SHADER_INPUT_BIND_DESC{};
-            reflection->GetResourceBindingDesc(i, &bindDesc);
-            if (bindDesc.Type == D3D_SIT_CBUFFER
-                && isGlobalConstantsBufferName(bindDesc.Name)) {
+        for (auto i = 0u; i < shaderDesc.ConstantBuffers; ++i) {
+            const auto cbuffer = reflection->GetConstantBufferByIndex(i);
+            auto cbufferDesc = D3D12_SHADER_BUFFER_DESC{};
+            cbuffer->GetDesc(&cbufferDesc);
+            if (cbufferDesc.Type != D3D_SIT_CBUFFER
+                || !isGlobalConstantsBufferName(cbufferDesc.Name))
+                continue;
 
-                const auto cbuffer =
-                    reflection->GetConstantBufferByIndex(bindDesc.BindPoint);
-                auto cbufferDesc = D3D12_SHADER_BUFFER_DESC{};
-                cbuffer->GetDesc(&cbufferDesc);
-
-                auto size = UINT{ 1 };
-                for (auto v = 0u; v < cbufferDesc.Variables; ++v) {
-                    const auto var = cbuffer->GetVariableByIndex(v);
-                    auto varDesc = D3D12_SHADER_VARIABLE_DESC{};
-                    var->GetDesc(&varDesc);
-                    size = std::max(size, varDesc.StartOffset + varDesc.Size);
-                }
-                mGlobalConstantBuffers[stage] =
-                    std::make_unique<D3DBuffer>(size);
+            auto size = UINT{ 1 };
+            for (auto v = 0u; v < cbufferDesc.Variables; ++v) {
+                const auto var = cbuffer->GetVariableByIndex(v);
+                auto varDesc = D3D12_SHADER_VARIABLE_DESC{};
+                var->GetDesc(&varDesc);
+                size = std::max(size, varDesc.StartOffset + varDesc.Size);
             }
+            mGlobalConstantBuffers[stage] = std::make_unique<D3DBuffer>(size);
         }
     }
 }
@@ -318,43 +313,39 @@ void D3DPipeline::updateGlobalConstantBuffers(D3DContext &context,
     for (const auto [stage, reflection] : mProgram.reflection()) {
         auto shaderDesc = D3D12_SHADER_DESC{};
         reflection->GetDesc(&shaderDesc);
-        for (auto i = 0u; i < shaderDesc.BoundResources; ++i) {
-            auto bindDesc = D3D12_SHADER_INPUT_BIND_DESC{};
-            reflection->GetResourceBindingDesc(i, &bindDesc);
-            if (bindDesc.Type == D3D_SIT_CBUFFER
-                && isGlobalConstantsBufferName(bindDesc.Name)) {
+        for (auto i = 0u; i < shaderDesc.ConstantBuffers; ++i) {
+            const auto cbuffer = reflection->GetConstantBufferByIndex(i);
+            auto cbufferDesc = D3D12_SHADER_BUFFER_DESC{};
+            cbuffer->GetDesc(&cbufferDesc);
+            if (cbufferDesc.Type != D3D_SIT_CBUFFER
+                || !isGlobalConstantsBufferName(cbufferDesc.Name))
+                continue;
 
-                auto buffer = getGlobalConstantBuffer(stage);
-                buffer->prepareConstantBufferView(context);
+            auto buffer = getGlobalConstantBuffer(stage);
+            buffer->prepareConstantBufferView(context);
+            auto &data = buffer->writableData();
 
-                auto &data = buffer->writableData();
+            for (auto v = 0u; v < cbufferDesc.Variables; ++v) {
+                const auto var = cbuffer->GetVariableByIndex(v);
+                auto varDesc = D3D12_SHADER_VARIABLE_DESC{};
+                var->GetDesc(&varDesc);
 
-                const auto cbuffer =
-                    reflection->GetConstantBufferByIndex(bindDesc.BindPoint);
-                auto cbufferDesc = D3D12_SHADER_BUFFER_DESC{};
-                cbuffer->GetDesc(&cbufferDesc);
-                for (auto v = 0u; v < cbufferDesc.Variables; ++v) {
-                    const auto var = cbuffer->GetVariableByIndex(v);
-                    auto varDesc = D3D12_SHADER_VARIABLE_DESC{};
-                    var->GetDesc(&varDesc);
+                const auto type = var->GetType();
+                auto typeDesc = D3D12_SHADER_TYPE_DESC{};
+                type->GetDesc(&typeDesc);
 
-                    const auto type = var->GetType();
-                    auto typeDesc = D3D12_SHADER_TYPE_DESC{};
-                    type->GetDesc(&typeDesc);
+                auto name = QString(varDesc.Name);
 
-                    auto name = QString(varDesc.Name);
+                // TODO: find better solution - demangle _44_uPerspective
+                name = name.remove(QRegularExpression("^_\\d+_"));
 
-                    // TODO: find better solution - demangle _44_uPerspective
-                    name = name.remove(QRegularExpression("^_\\d+_"));
-
-                    if (auto uniformBinding = find(mBindings.uniforms, name)) {
-                        mUsedItems += uniformBinding->bindingItemId;
-                        writeValue(data, varDesc, typeDesc, scriptEngine,
-                            *uniformBinding);
-                    } else {
-                        mMessages += MessageList::insert(mItemId,
-                            MessageType::UniformNotSet, name);
-                    }
+                if (auto uniformBinding = find(mBindings.uniforms, name)) {
+                    mUsedItems += uniformBinding->bindingItemId;
+                    writeValue(data, varDesc, typeDesc, scriptEngine,
+                        *uniformBinding);
+                } else {
+                    mMessages += MessageList::insert(mItemId,
+                        MessageType::UniformNotSet, name);
                 }
             }
         }
