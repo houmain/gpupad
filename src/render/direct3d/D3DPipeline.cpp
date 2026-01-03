@@ -402,7 +402,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
         for (auto i = 0u; i < shaderDesc.BoundResources; ++i) {
             auto bindDesc = D3D12_SHADER_INPUT_BIND_DESC{};
             reflection->GetResourceBindingDesc(i, &bindDesc);
-            auto name = QString(bindDesc.Name);
+            const auto name = QString(bindDesc.Name);
 
             if (bindDesc.Type == D3D_SIT_CBUFFER) {
                 auto buffer = std::add_pointer_t<D3DBuffer>{};
@@ -469,18 +469,26 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
             } else if (bindDesc.Type == D3D_SIT_BYTEADDRESS
                 || bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS) {
 
-                name = mProgram.getBufferBindingName(stage, name);
-                const auto bufferBinding = find(mBindings.buffers, name);
-                if (!bufferBinding || !bufferBinding->buffer) {
-                    mMessages += MessageList::insert(mItemId,
-                        MessageType::BufferNotSet, name);
-                    canRender = false;
-                    continue;
+                const auto bindingName =
+                    mProgram.getBufferBindingName(stage, name);
+
+                auto buffer = std::add_pointer_t<D3DBuffer>{};
+                if (bindingName == ShaderPrintf::bufferBindingName()) {
+                    buffer = &mProgram.printf().getInitializedBuffer(context);
+                } else {
+                    const auto bufferBinding =
+                        find(mBindings.buffers, bindingName);
+                    if (!bufferBinding || !bufferBinding->buffer) {
+                        mMessages += MessageList::insert(mItemId,
+                            MessageType::BufferNotSet, bindingName);
+                        canRender = false;
+                        continue;
+                    }
+                    mUsedItems += bufferBinding->bindingItemId;
+                    mUsedItems += bufferBinding->blockItemId;
+                    buffer = static_cast<D3DBuffer *>(bufferBinding->buffer);
                 }
 
-                mUsedItems += bufferBinding->bindingItemId;
-                mUsedItems += bufferBinding->blockItemId;
-                auto buffer = static_cast<D3DBuffer *>(bufferBinding->buffer);
                 buffer->prepareUnorderedAccessView(context);
 
                 const auto uavDesc = D3D12_UNORDERED_ACCESS_VIEW_DESC{

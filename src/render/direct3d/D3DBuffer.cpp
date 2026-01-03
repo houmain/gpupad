@@ -21,8 +21,8 @@ void D3DBuffer::clear(D3DContext &context)
 {
     Q_ASSERT(!"not implemented");
     // see https://asawicki.info/news_1795_secrets_of_direct3d_12_the_behavior_of_clearunorderedaccessviewuintfloat
-    mMessages +=
-        MessageList::insert(mItemId, MessageType::NotImplemented, "Clear Buffer");
+    mMessages += MessageList::insert(mItemId, MessageType::NotImplemented,
+        "Clear Buffer");
 }
 
 void D3DBuffer::copy(D3DContext &context, D3DBuffer &source)
@@ -46,14 +46,12 @@ bool D3DBuffer::swap(D3DBuffer &other)
 void D3DBuffer::updateReadOnlyBuffer(D3DContext &context)
 {
     reload();
-    createBuffer(context);
     upload(context);
 }
 
 void D3DBuffer::updateReadWriteBuffer(D3DContext &context)
 {
     reload();
-    createBuffer(context);
     upload(context);
     mDeviceCopyModified = true;
 }
@@ -106,20 +104,27 @@ ComPtr<ID3D12Resource> D3DBuffer::createStagingBuffer(D3DContext &context,
     return stagingBuffer;
 }
 
+void D3DBuffer::upload(D3DContext &context, const void *data, size_t size)
+{
+    createBuffer(context);
+
+    auto stagingBuffer = createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD);
+    auto mappedData = std::add_pointer_t<void>{};
+    AssertIfFailed(stagingBuffer->Map(0, nullptr, &mappedData));
+    std::memcpy(mappedData, data, size);
+    stagingBuffer->Unmap(0, nullptr);
+
+    resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
+    context.graphicsCommandList->CopyBufferRegion(mResource.Get(), 0,
+        stagingBuffer.Get(), 0, static_cast<UINT64>(size));
+}
+
 void D3DBuffer::upload(D3DContext &context)
 {
     if (!mSystemCopyModified)
         return;
 
-    auto stagingBuffer = createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD);
-    auto mappedData = std::add_pointer_t<void>{};
-    AssertIfFailed(stagingBuffer->Map(0, nullptr, &mappedData));
-    std::memcpy(mappedData, mData.constData(), static_cast<UINT64>(mSize));
-    stagingBuffer->Unmap(0, nullptr);
-
-    resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
-    context.graphicsCommandList->CopyBufferRegion(mResource.Get(), 0,
-        stagingBuffer.Get(), 0, static_cast<UINT64>(mSize));
+    upload(context, mData.constData(), mSize);
 
     mSystemCopyModified = mDeviceCopyModified = false;
 }

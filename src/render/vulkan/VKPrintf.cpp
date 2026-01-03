@@ -14,7 +14,7 @@ KDGpu::Buffer &VKPrintf::getInitializedBuffer(VKContext &context)
         });
     }
 
-    auto header = initializeHeader();
+    const auto header = initializeHeader();
     context.queue.waitForUploadBufferData({
         .destinationBuffer = mBuffer,
         .data = &header,
