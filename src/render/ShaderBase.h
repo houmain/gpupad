@@ -19,14 +19,16 @@ public:
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
     Spirv::Input getSpirvCompilerInput(ShaderPrintf &printf);
     Spirv compileSpirv();
-    Spirv compileSpirv(ShaderPrintf &printf);
     QString preprocess();
-    QVariant generateBinarySpirv();
+    QString generateGLSL();
+    QString generateHLSL();
+    QString disassemble();
     QString generateGLSLangAST();
     QString getJsonInterface();
 
 protected:
     virtual QStringList preprocessorDefinitions() const;
+    Spirv compileSpirv(ShaderPrintf &printf);
     QStringList getPatchedSources(ShaderPrintf &printf,
         QStringList *usedFileNames);
     QStringList getPatchedSourcesGLSL(ShaderPrintf &printf,

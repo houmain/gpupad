@@ -130,7 +130,6 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
 
 void ProcessSource::render()
 {
-    auto printf = RemoveShaderPrintf();
     auto messages = MessagePtrSet();
     mOutput.clear();
 
@@ -138,13 +137,13 @@ void ProcessSource::render()
         if (mShader) {
             if (renderer().api() == RenderAPI::OpenGL) {
                 if (auto shader = static_cast<GLShader *>(mShader.get()))
-                    if (shader->compile(printf)) {
+                    if (shader->compile()) {
                         // try to link and if it also succeeds,
                         // output messages from linking to get potential warnings
                         tryGetLinkerWarnings(*shader, messages);
                     }
             } else {
-                mShader->compileSpirv(printf);
+                mShader->compileSpirv();
             }
         } else if (mSourceType == SourceType::JavaScript) {
             const auto basePath = QFileInfo(mFileName).absolutePath();
@@ -160,11 +159,11 @@ void ProcessSource::render()
         if (mProcessType == "preprocess") {
             mOutput = removeLineDirectives(mShader->preprocess());
         } else if (mProcessType == "glsl") {
-            mOutput = Spirv::generateGLSL(mShader->compileSpirv(printf));
+            mOutput = mShader->generateGLSL();
         } else if (mProcessType == "hlsl") {
-            mOutput = Spirv::generateHLSL(mShader->compileSpirv(printf));
+            mOutput = mShader->generateHLSL();
         } else if (mProcessType == "spirv") {
-            mOutput = Spirv::disassemble(mShader->compileSpirv());
+            mOutput = mShader->disassemble();
         } else if (mProcessType == "spirvBinary") {
             mOutput = [&]() -> QVariant {
                 if (const auto spirv = mShader->compileSpirv())
@@ -180,7 +179,7 @@ void ProcessSource::render()
         } else if (mProcessType == "programBinary") {
             if (renderer().api() == RenderAPI::OpenGL)
                 if (auto shader = static_cast<GLShader *>(mShader.get()))
-                    if (shader->compile(printf)
+                    if (shader->compile()
                         || shader->specialize(shader->compileSpirv()))
                         mOutput = tryGetProgramBinary(*shader);
         } else if (mProcessType == "json") {

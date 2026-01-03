@@ -668,6 +668,9 @@ MessagePtrSet ShaderPrintf::formatMessages(ItemId callItemId,
     const BufferHeader &header, std::span<const uint32_t> data)
 {
     const auto count = data.size();
+    if (count <= 1)
+        return {};
+
     auto readOutside = false;
     const auto read = [&](auto offset) -> uint32_t {
         if (offset < count)

@@ -42,8 +42,10 @@ public:
         const QString &includePaths, MessagePtrSet &messages);
 
     static QString disassemble(const Spirv &spirv);
-    static QString generateGLSL(const Spirv &spirv);
-    static QString generateHLSL(const Spirv &spirv);
+    static QString generateGLSL(const Spirv &spirv, ItemId itemId,
+        MessagePtrSet &messages);
+    static QString generateHLSL(const Spirv &spirv, ItemId itemId,
+        MessagePtrSet &messages);
     static std::vector<uint32_t> stripReflection(const Spirv &spirv);
 
     static QString generateAST(const Session &session,

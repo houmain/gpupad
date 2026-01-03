@@ -439,8 +439,9 @@ QString Spirv::disassemble(const Spirv &spirv)
     return QString::fromStdString(ss.str());
 }
 
-QString Spirv::generateGLSL(const Spirv &spirv)
-{
+QString Spirv::generateGLSL(const Spirv &spirv, ItemId itemId,
+    MessagePtrSet &messages)
+try {
     if (!spirv)
         return {};
 
@@ -448,10 +449,15 @@ QString Spirv::generateGLSL(const Spirv &spirv)
     auto options = spirv_cross::CompilerGLSL::Options{};
     compiler.set_common_options(options);
     return QString::fromStdString(compiler.compile());
+} catch (const std::exception &ex) {
+    messages +=
+        MessageList::insert(itemId, MessageType::SpirvCrossError, ex.what());
+    return {};
 }
 
-QString Spirv::generateHLSL(const Spirv &spirv)
-{
+QString Spirv::generateHLSL(const Spirv &spirv, ItemId itemId,
+    MessagePtrSet &messages)
+try {
     if (!spirv)
         return {};
 
@@ -474,6 +480,10 @@ QString Spirv::generateHLSL(const Spirv &spirv)
     }
 
     return QString::fromStdString(compiler.compile());
+} catch (const std::exception &ex) {
+    messages +=
+        MessageList::insert(itemId, MessageType::SpirvCrossError, ex.what());
+    return {};
 }
 
 QString Spirv::generateAST(const Session &session,

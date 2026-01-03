@@ -85,6 +85,5 @@ QStringList VKShader::preprocessorDefinitions() const
 {
     auto definitions = ShaderBase::preprocessorDefinitions();
     definitions.append("GPUPAD_VULKAN 1");
-    definitions.append("GPUPAD_GLSLANG 1");
     return definitions;
 }

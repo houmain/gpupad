@@ -93,8 +93,9 @@ QString MessageWindow::getMessageText(const Message &message) const
     case NotImplemented:
         return tr("Not implemented")
             + (!message.text.isEmpty()
-                    ? QStringLiteral(" (%1)").arg(message.text)
+                    ? QStringLiteral(": %1").arg(message.text)
                     : "");
+    case SpirvCrossError: return tr("Spirv-Cross Error: %1").arg(message.text);
     case OpenGLVersionNotAvailable:
         return tr("The required OpenGL version %1 is not available")
             .arg(message.text);

@@ -51,6 +51,12 @@ GLShader::GLShader(Shader::ShaderType type,
 {
 }
 
+bool GLShader::compile()
+{
+    auto printf = RemoveShaderPrintf();
+    return compile(printf);
+}
+
 bool GLShader::compile(ShaderPrintf &printf)
 {
     if (mShaderObject)
@@ -190,8 +196,6 @@ QStringList GLShader::preprocessorDefinitions() const
 {
     auto definitions = ShaderBase::preprocessorDefinitions();
     definitions.append("GPUPAD_OPENGL 1");
-    if (mSession.shaderCompiler == Session::ShaderCompiler::glslang)
-        definitions.append("GPUPAD_GLSLANG 1");
     return definitions;
 }
 

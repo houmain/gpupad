@@ -38,7 +38,7 @@ void GLPrintf::beginDownload(GLContext &gl)
         (mHeader.offset > maxBufferValues ? maxBufferValues : mHeader.offset);
 
     mData.resize(count);
-    if (!count)
+    if (count <= 1)
         return;
 
     gl.glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(BufferHeader),

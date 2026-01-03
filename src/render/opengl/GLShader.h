@@ -12,6 +12,7 @@ public:
     GLShader(Shader::ShaderType type, const QList<const Shader *> &shaders,
         const Session &session);
 
+    bool compile();
     bool compile(ShaderPrintf &printf);
     bool specialize(const Spirv &spirv);
     GLuint shaderObject() const { return mShaderObject; }

@@ -278,7 +278,24 @@ bool ShaderBase::operator==(const ShaderBase &rhs) const
 
 QStringList ShaderBase::preprocessorDefinitions() const
 {
-    return { "GPUPAD 1" };
+    auto definitions = QStringList();
+    definitions.append("GPUPAD 1");
+    switch (mSession.shaderCompiler) {
+    case Session::ShaderCompiler::Driver: break;
+    case Session::ShaderCompiler::glslang:
+        definitions.append("GPUPAD_GLSLANG 1");
+        break;
+    case Session::ShaderCompiler::D3DCompiler:
+        definitions.append("GPUPAD_D3DCOMPILER 1");
+        break;
+    case Session::ShaderCompiler::DXC:
+        definitions.append("GPUPAD_DXC 1");
+        break;
+    case Session::ShaderCompiler::Slang:
+        definitions.append("GPUPAD_SLANG 1");
+        break;
+    }
+    return definitions;
 }
 
 QStringList ShaderBase::getPatchedSources(ShaderPrintf &printf,
@@ -394,6 +411,20 @@ Spirv ShaderBase::compileSpirv()
 {
     auto printf = RemoveShaderPrintf();
     return compileSpirv(printf);
+}
+
+QString ShaderBase::generateGLSL()
+{
+    return Spirv::generateGLSL(compileSpirv(), mItemId, mMessages);
+}
+
+QString ShaderBase::generateHLSL()
+{
+    return Spirv::generateHLSL(compileSpirv(), mItemId, mMessages);
+}
+QString ShaderBase::disassemble()
+{
+    return Spirv::disassemble(compileSpirv());
 }
 
 QString ShaderBase::preprocess()

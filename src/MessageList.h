@@ -79,6 +79,7 @@ enum class MessageType {
     OnlyLastBindingMayBeUnsizedArray,
     RayTracingNotAvailable,
     MeshShadersNotAvailable,
+    SpirvCrossError,
 };
 
 struct Message
