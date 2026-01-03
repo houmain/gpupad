@@ -17,6 +17,7 @@ public:
     {
         return mReflection;
     }
+    QString getBufferBindingName(const QString &name) const;
 
 private:
     QStringList preprocessorDefinitions() const override;
@@ -26,6 +27,7 @@ private:
 
     ComPtr<ID3DBlob> mBinary;
     ComPtr<ID3D12ShaderReflection> mReflection;
+    Spirv::Interface mInterface;
 };
 
 #endif // _WIN32

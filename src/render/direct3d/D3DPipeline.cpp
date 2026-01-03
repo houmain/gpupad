@@ -402,7 +402,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
         for (auto i = 0u; i < shaderDesc.BoundResources; ++i) {
             auto bindDesc = D3D12_SHADER_INPUT_BIND_DESC{};
             reflection->GetResourceBindingDesc(i, &bindDesc);
-            const auto name = QString(bindDesc.Name);
+            auto name = QString(bindDesc.Name);
 
             if (bindDesc.Type == D3D_SIT_CBUFFER) {
                 auto buffer = std::add_pointer_t<D3DBuffer>{};
@@ -468,6 +468,8 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
 
             } else if (bindDesc.Type == D3D_SIT_BYTEADDRESS
                 || bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS) {
+
+                name = mProgram.getBufferBindingName(stage, name);
                 const auto bufferBinding = find(mBindings.buffers, name);
                 if (!bufferBinding || !bufferBinding->buffer) {
                     mMessages += MessageList::insert(mItemId,

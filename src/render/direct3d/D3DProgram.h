@@ -20,6 +20,8 @@ public:
     const StageReflection &reflection() const { return mReflection; }
     const std::vector<D3DShader> &shaders() const { return mShaders; }
     const D3DShader *getVertexShader() const;
+    QString getBufferBindingName(Shader::ShaderType stage,
+        const QString &name) const;
     D3DPrintf &printf() { return mPrintf; }
     bool setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state);
     bool setupPipelineState(D3D12_COMPUTE_PIPELINE_STATE_DESC &state);

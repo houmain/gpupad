@@ -115,6 +115,22 @@ QStringList D3DShader::preprocessorDefinitions() const
     return definitions;
 }
 
+QString D3DShader::getBufferBindingName(const QString &name) const
+{
+    if (mInterface && name.startsWith("_")) {
+        auto ok = false;
+        const auto spirvId = name.mid(1).toUInt(&ok);
+        if (ok) {
+            for (auto i = 0u; i < mInterface->descriptor_binding_count; ++i) {
+                const auto &binding = mInterface->descriptor_bindings[i];
+                if (binding.spirv_id == spirvId)
+                    return binding.type_description->type_name;
+            }
+        }
+    }
+    return name;
+}
+
 bool D3DShader::compile(ShaderPrintf &printf)
 {
     if (mBinary)
@@ -123,13 +139,11 @@ bool D3DShader::compile(ShaderPrintf &printf)
     if (mSession.shaderCompiler == Session::ShaderCompiler::glslang) {
         const auto spirv = compileSpirv(printf);
         if (!spirv)
-            return {};
-
-        const auto hlsl = Spirv::generateHLSL(spirv, mItemId, mMessages);
-        if (hlsl.isEmpty())
-            return {};
-
-        return compile(hlsl);
+            return false;
+        if (!compile(Spirv::generateHLSL(spirv, mItemId, mMessages)))
+            return false;
+        mInterface = spirv.getInterface();
+        return true;
     }
 
     const auto patchedSources = getPatchedSourcesHLSL(printf);
@@ -141,6 +155,9 @@ bool D3DShader::compile(ShaderPrintf &printf)
 
 bool D3DShader::compile(const QString &source)
 {
+    if (source.isEmpty())
+        return false;
+
     if (mSession.shaderCompiler == Session::ShaderCompiler::D3DCompiler)
         return compileD3DCompile(source);
 

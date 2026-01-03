@@ -59,7 +59,7 @@ namespace {
         case Shader::ShaderType::RayClosestHit:   return EShLangClosestHit;
         case Shader::ShaderType::RayMiss:         return EShLangMiss;
         case Shader::ShaderType::RayCallable:     return EShLangCallable;
-        case Shader::ShaderType::Includable:      break;
+        case Shader::ShaderType::Includable:      Q_ASSERT(!"unreachable"); break;
         }
         return {};
     }
