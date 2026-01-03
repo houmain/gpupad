@@ -259,18 +259,26 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
         || !mPipeline->bindGraphics(context, scriptEngine))
         return;
 
-    //if (mIndirectBuffer)
-    //    mIndirectBuffer->prepareIndirectBuffer(context);
+    if (mIndexBuffer) {
+        // really cannot use resource as index and vertex buffer simultaneously?
+        if (mVertexStream->usedItems().contains(mIndexBuffer->itemId())) {
+            mMessages +=
+                MessageList::insert(mCall.id, MessageType::BufferInUse);
+            return;
+        }
+        mIndexBuffer->prepareIndexBuffer(context);
 
-    //if (mIndexBuffer)
-    //    mIndexBuffer->prepareIndexBuffer(context);
-
-    //if (mIndexBuffer) {
-    //    const auto indicesOffset =
-    //        scriptEngine.evaluateUInt(mIndicesOffset, mCall.id);
-    //    renderPass.setIndexBuffer(mIndexBuffer->buffer(), indicesOffset,
-    //        mIndexType);
-    //}
+        const auto indicesOffset =
+            scriptEngine.evaluateUInt(mIndicesOffset, mCall.id);
+        const auto indexBufferView = D3D12_INDEX_BUFFER_VIEW{
+            .BufferLocation = mIndexBuffer->getDeviceAddress() + indicesOffset,
+            .SizeInBytes = mIndexBuffer->alignedSize() - indicesOffset,
+            .Format = (mIndexSize == 1 ? DXGI_FORMAT_R8_UINT
+                    : mIndexSize == 2  ? DXGI_FORMAT_R16_UINT
+                                       : DXGI_FORMAT_R32_UINT),
+        };
+        context.graphicsCommandList->IASetIndexBuffer(&indexBufferView);
+    }
 
     context.graphicsCommandList->IASetPrimitiveTopology(
         toD3DPrimitiveTopology(mCall.primitiveType,
