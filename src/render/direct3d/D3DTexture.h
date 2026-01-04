@@ -18,9 +18,9 @@ public:
     void boundAsImage() { }
     ID3D12Resource *resource() { return mResource.Get(); }
     void prepareShaderResourceView(D3DContext &context,
-        CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor);
+        D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
     void prepareUnorderedAccessView(D3DContext &context,
-        CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor);
+        D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
     void prepareRenderTargetView(D3DContext &context);
     void prepareDepthStencilView(D3DContext &context);
     D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc() const;

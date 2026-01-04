@@ -190,29 +190,27 @@ D3D12_DEPTH_STENCIL_VIEW_DESC D3DTexture::depthStencilViewDesc() const
 }
 
 void D3DTexture::prepareShaderResourceView(D3DContext &context,
-    CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor)
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
     reload(false);
     createAndUpload(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     const auto srvDesc = shaderResourceViewDesc();
-    context.device.CreateShaderResourceView(mResource.Get(), &srvDesc,
+    context.device.CreateShaderResourceView(resource(), &srvDesc,
         descriptor);
-    descriptor.Offset(1, context.descriptorSize);
 }
 
 void D3DTexture::prepareUnorderedAccessView(D3DContext &context,
-    CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor)
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
     reload(true);
     createAndUpload(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     const auto uavDesc = unorderedAccessViewDesc();
-    context.device.CreateUnorderedAccessView(mResource.Get(), nullptr, &uavDesc,
+    context.device.CreateUnorderedAccessView(resource(), nullptr, &uavDesc,
         descriptor);
-    descriptor.Offset(1, context.descriptorSize);
 
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
@@ -315,8 +313,8 @@ bool D3DTexture::updateMipmaps(D3DContext &context)
         // TODO: dummy implementation without stretching
         for (auto i = 1; i < levels(); ++i) {
             const auto source =
-                CD3DX12_TEXTURE_COPY_LOCATION(mResource.Get(), i - 1);
-            const auto dest = CD3DX12_TEXTURE_COPY_LOCATION(mResource.Get(), i);
+                CD3DX12_TEXTURE_COPY_LOCATION(resource(), i - 1);
+            const auto dest = CD3DX12_TEXTURE_COPY_LOCATION(resource(), i);
             const auto sourceRegion = D3D12_BOX{
                 .left = 0,
                 .top = 0,
@@ -376,7 +374,7 @@ void D3DTexture::createAndUpload(D3DContext &context)
         heapFlags, &resourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr,
         IID_PPV_ARGS(&mResource)));
 
-    AssertIfFailed(context.device.CreateSharedHandle(mResource.Get(), nullptr,
+    AssertIfFailed(context.device.CreateSharedHandle(resource(), nullptr,
         GENERIC_ALL, nullptr, &mShareHandle));
 
     upload(context);
@@ -392,7 +390,7 @@ ComPtr<ID3D12Resource> D3DTexture::createStagingBuffer(D3DContext &context,
 {
     const auto stagingHeapProperties = CD3DX12_HEAP_PROPERTIES(type);
     const auto stagingBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
-        GetRequiredIntermediateSize(mResource.Get(), 0, numSubresources()));
+        GetRequiredIntermediateSize(resource(), 0, numSubresources()));
     const auto initialState = (type == D3D12_HEAP_TYPE_UPLOAD
             ? D3D12_RESOURCE_STATE_COPY_SOURCE
             : D3D12_RESOURCE_STATE_COPY_DEST);
@@ -422,7 +420,7 @@ bool D3DTexture::upload(D3DContext &context)
                 .RowPitch = mData.getLevelStride(level),
                 .SlicePitch = mData.getImageSize(level),
             });
-    UpdateSubresources(context.graphicsCommandList.Get(), mResource.Get(),
+    UpdateSubresources(context.graphicsCommandList.Get(), resource(),
         stagingBuffer.Get(), 0, 0, numSubresources(), subresourceData.data());
 
     mSystemCopyModified = mDeviceCopyModified = false;
@@ -452,7 +450,7 @@ void D3DTexture::beginDownload(D3DContext &context)
         layouts.data(), nullptr, nullptr, nullptr);
 
     for (auto i = 0u; i < numSubresources(); ++i) {
-        auto source = CD3DX12_TEXTURE_COPY_LOCATION(mResource.Get(), i);
+        auto source = CD3DX12_TEXTURE_COPY_LOCATION(resource(), i);
         auto dest =
             CD3DX12_TEXTURE_COPY_LOCATION(mDownloadBuffer.Get(), layouts[i]);
         context.graphicsCommandList->CopyTextureRegion(&dest, 0, 0, 0, &source,
@@ -480,6 +478,9 @@ bool D3DTexture::finishDownload()
 void D3DTexture::resourceBarrier(D3DContext &context,
     D3D12_RESOURCE_STATES state)
 {
+    if (!mResource)
+        return;
+
     if (state == mCurrentState) {
         if (state == D3D12_RESOURCE_STATE_UNORDERED_ACCESS) {
             const auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(resource());

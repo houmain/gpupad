@@ -19,10 +19,39 @@ D3DBuffer::D3DBuffer(int size) : BufferBase(size) { }
 
 void D3DBuffer::clear(D3DContext &context)
 {
-    Q_ASSERT(!"not implemented");
     // see https://asawicki.info/news_1795_secrets_of_direct3d_12_the_behavior_of_clearunorderedaccessviewuintfloat
-    mMessages += MessageList::insert(mItemId, MessageType::NotImplemented,
-        "Clear Buffer");
+    if (!mShaderVisibleDescHeap) {
+        auto descriptorHeapDesc = D3D12_DESCRIPTOR_HEAP_DESC{
+            .Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+            .NumDescriptors = 1,
+            .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+            .NodeMask = 0,
+        };
+        AssertIfFailed(context.device.CreateDescriptorHeap(&descriptorHeapDesc,
+            IID_PPV_ARGS(&mShaderVisibleDescHeap)));
+
+        descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        AssertIfFailed(context.device.CreateDescriptorHeap(&descriptorHeapDesc,
+            IID_PPV_ARGS(&mNonShaderVisibleDescHeap)));
+    }
+
+    auto shaderVisibleGpuDescHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+        mShaderVisibleDescHeap->GetGPUDescriptorHandleForHeapStart());
+    auto shaderVisibleCpuDescHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(
+        mShaderVisibleDescHeap->GetCPUDescriptorHandleForHeapStart());
+    auto nonShaderVisibleCpuDescHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(
+        mNonShaderVisibleDescHeap->GetCPUDescriptorHandleForHeapStart());
+
+    prepareUnorderedAccessView(context, shaderVisibleCpuDescHandle);
+    prepareUnorderedAccessView(context, nonShaderVisibleCpuDescHandle);
+
+    auto descriptorHeaps = mShaderVisibleDescHeap.Get();
+    context.graphicsCommandList->SetDescriptorHeaps(1, &descriptorHeaps);
+
+    UINT values[4] = { 0, 0, 0, 0 };
+    context.graphicsCommandList->ClearUnorderedAccessViewUint(
+        shaderVisibleGpuDescHandle, nonShaderVisibleCpuDescHandle,
+        mResource.Get(), values, 0, nullptr);
 }
 
 void D3DBuffer::copy(D3DContext &context, D3DBuffer &source)
@@ -197,7 +226,7 @@ void D3DBuffer::prepareIndexBuffer(D3DContext &context)
 }
 
 void D3DBuffer::prepareConstantBufferView(D3DContext &context,
-    CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor)
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
     updateReadOnlyBuffer(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
@@ -207,11 +236,10 @@ void D3DBuffer::prepareConstantBufferView(D3DContext &context,
         .SizeInBytes = alignedSize(),
     };
     context.device.CreateConstantBufferView(&cbvDesc, descriptor);
-    descriptor.Offset(1, context.descriptorSize);
 }
 
 void D3DBuffer::prepareUnorderedAccessView(D3DContext &context,
-    CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor)
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
     updateReadWriteBuffer(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
@@ -227,7 +255,6 @@ void D3DBuffer::prepareUnorderedAccessView(D3DContext &context,
     };
     context.device.CreateUnorderedAccessView(mResource.Get(), nullptr, &uavDesc,
         descriptor);
-    descriptor.Offset(1, context.descriptorSize);
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS D3DBuffer::getDeviceAddress()

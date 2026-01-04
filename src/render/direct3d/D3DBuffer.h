@@ -27,9 +27,9 @@ public:
     void prepareVertexBuffer(D3DContext &context);
     void prepareIndexBuffer(D3DContext &context);
     void prepareConstantBufferView(D3DContext &context,
-        CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor);
+        D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
     void prepareUnorderedAccessView(D3DContext &context,
-        CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor);
+        D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
     D3D12_GPU_VIRTUAL_ADDRESS getDeviceAddress();
 
 private:
@@ -42,6 +42,8 @@ private:
 
     ComPtr<ID3D12Resource> mResource;
     ComPtr<ID3D12Resource> mDownloadBuffer;
+    ComPtr<ID3D12DescriptorHeap> mShaderVisibleDescHeap;
+    ComPtr<ID3D12DescriptorHeap> mNonShaderVisibleDescHeap;
     D3D12_RESOURCE_STATES mCurrentState{};
     bool mCheckModification{};
 };

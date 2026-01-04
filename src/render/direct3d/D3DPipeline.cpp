@@ -432,6 +432,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
                 } else {
                     buffer->prepareUnorderedAccessView(context, descriptor);
                 }
+                descriptor.Offset(1, context.descriptorSize);
 
             } else if (bindDesc.Type == D3D_SIT_TEXTURE) {
                 const auto samplerBinding = find(mBindings.samplers, name);
@@ -447,6 +448,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
                 auto texture =
                     static_cast<D3DTexture *>(samplerBinding->texture);
                 texture->prepareShaderResourceView(context, descriptor);
+                descriptor.Offset(1, context.descriptorSize);
 
             } else if (bindDesc.Type == D3D_SIT_UAV_RWTYPED) {
                 const auto imageBinding = find(mBindings.images, name);
@@ -460,6 +462,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
                 mUsedItems += imageBinding->texture->itemId();
                 auto texture = static_cast<D3DTexture *>(imageBinding->texture);
                 texture->prepareUnorderedAccessView(context, descriptor);
+                descriptor.Offset(1, context.descriptorSize);
             } else if (bindDesc.Type == D3D_SIT_SAMPLER) {
                 // nothing to do
             } else {
