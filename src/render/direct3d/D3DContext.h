@@ -27,6 +27,7 @@ struct D3DContext
     RenderTargetHelper &renderTargetHelper;
     ComPtr<ID3D12GraphicsCommandList> graphicsCommandList;
     std::vector<ComPtr<ID3D12Resource>> stagingBuffers;
+    const UINT descriptorSize;
 };
 
 inline void AssertIfFailed(HRESULT hr)

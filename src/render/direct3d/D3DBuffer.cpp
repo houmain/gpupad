@@ -43,6 +43,12 @@ bool D3DBuffer::swap(D3DBuffer &other)
     return true;
 }
 
+void D3DBuffer::initialize(D3DContext &context)
+{
+    reload();
+    upload(context);
+}
+
 void D3DBuffer::updateReadOnlyBuffer(D3DContext &context)
 {
     reload();
@@ -190,16 +196,38 @@ void D3DBuffer::prepareIndexBuffer(D3DContext &context)
     resourceBarrier(context, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 }
 
-void D3DBuffer::prepareConstantBufferView(D3DContext &context)
+void D3DBuffer::prepareConstantBufferView(D3DContext &context,
+    CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor)
 {
     updateReadOnlyBuffer(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
+    const auto cbvDesc = D3D12_CONSTANT_BUFFER_VIEW_DESC{
+        .BufferLocation = getDeviceAddress(),
+        .SizeInBytes = alignedSize(),
+    };
+    context.device.CreateConstantBufferView(&cbvDesc, descriptor);
+    descriptor.Offset(1, context.descriptorSize);
 }
 
-void D3DBuffer::prepareUnorderedAccessView(D3DContext &context)
+void D3DBuffer::prepareUnorderedAccessView(D3DContext &context,
+    CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor)
 {
     updateReadWriteBuffer(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+    const auto uavDesc = D3D12_UNORDERED_ACCESS_VIEW_DESC{
+        .Format = DXGI_FORMAT_R32_TYPELESS,
+        .ViewDimension = D3D12_UAV_DIMENSION_BUFFER,
+        .Buffer =
+            D3D12_BUFFER_UAV{
+                .NumElements = static_cast<UINT>(mSize / sizeof(UINT)),
+                .Flags = D3D12_BUFFER_UAV_FLAG_RAW,
+            },
+    };
+    context.device.CreateUnorderedAccessView(mResource.Get(), nullptr, &uavDesc,
+        descriptor);
+    descriptor.Offset(1, context.descriptorSize);
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS D3DBuffer::getDeviceAddress()

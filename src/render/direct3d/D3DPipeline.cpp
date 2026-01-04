@@ -286,6 +286,7 @@ void D3DPipeline::createGlobalConstantBuffers(D3DContext &context)
                 || !isGlobalConstantsBufferName(cbufferDesc.Name))
                 continue;
 
+            auto &buffer = mGlobalConstantBuffers[stage];
             auto size = UINT{ 1 };
             for (auto v = 0u; v < cbufferDesc.Variables; ++v) {
                 const auto var = cbuffer->GetVariableByIndex(v);
@@ -293,7 +294,8 @@ void D3DPipeline::createGlobalConstantBuffers(D3DContext &context)
                 var->GetDesc(&varDesc);
                 size = std::max(size, varDesc.StartOffset + varDesc.Size);
             }
-            mGlobalConstantBuffers[stage] = std::make_unique<D3DBuffer>(size);
+            buffer = std::make_unique<D3DBuffer>(size);
+            buffer->initialize(context);
         }
     }
 }
@@ -334,9 +336,7 @@ void D3DPipeline::updateGlobalConstantBuffers(D3DContext &context,
                 continue;
 
             auto buffer = getGlobalConstantBuffer(stage);
-            buffer->prepareConstantBufferView(context);
             auto &data = buffer->writableData();
-
             for (auto v = 0u; v < cbufferDesc.Variables; ++v) {
                 const auto var = cbuffer->GetVariableByIndex(v);
                 auto varDesc = D3D12_SHADER_VARIABLE_DESC{};
@@ -389,8 +389,6 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
     if (!mDescriptorHeap)
         return true;
 
-    const auto descriptorSize = context.device.GetDescriptorHandleIncrementSize(
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     auto descriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE{
         mDescriptorHeap->GetCPUDescriptorHandleForHeapStart()
     };
@@ -404,30 +402,37 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
             reflection->GetResourceBindingDesc(i, &bindDesc);
             const auto name = QString(bindDesc.Name);
 
-            if (bindDesc.Type == D3D_SIT_CBUFFER) {
+            if (bindDesc.Type == D3D_SIT_CBUFFER
+                || bindDesc.Type == D3D_SIT_BYTEADDRESS
+                || bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS) {
+
+                const auto bindingName =
+                    mProgram.getBufferBindingName(stage, name);
+
                 auto buffer = std::add_pointer_t<D3DBuffer>{};
-                if (auto bufferBinding = find(mBindings.buffers, name)) {
+                if (isGlobalConstantsBufferName(bindingName)) {
+                    buffer = getGlobalConstantBuffer(stage);
+                } else if (bindingName == ShaderPrintf::bufferBindingName()) {
+                    buffer = &mProgram.printf().getInitializedBuffer(context);
+                } else if (
+                    auto bufferBinding = find(mBindings.buffers, bindingName)) {
                     buffer = static_cast<D3DBuffer *>(bufferBinding->buffer);
                     mUsedItems += bufferBinding->bindingItemId;
                     mUsedItems += bufferBinding->blockItemId;
-                } else if (isGlobalConstantsBufferName(name)) {
-                    buffer = getGlobalConstantBuffer(stage);
                 }
-
                 if (!buffer) {
                     mMessages += MessageList::insert(mItemId,
-                        MessageType::BufferNotSet, name);
+                        MessageType::BufferNotSet, bindingName);
                     canRender = false;
                     continue;
                 }
-                buffer->prepareConstantBufferView(context);
 
-                const auto cbvDesc = D3D12_CONSTANT_BUFFER_VIEW_DESC{
-                    .BufferLocation = buffer->getDeviceAddress(),
-                    .SizeInBytes = buffer->alignedSize(),
-                };
-                context.device.CreateConstantBufferView(&cbvDesc, descriptor);
-                descriptor.Offset(1, descriptorSize);
+                if (bindDesc.Type == D3D_SIT_CBUFFER) {
+                    buffer->prepareConstantBufferView(context, descriptor);
+                } else {
+                    buffer->prepareUnorderedAccessView(context, descriptor);
+                }
+
             } else if (bindDesc.Type == D3D_SIT_TEXTURE) {
                 const auto samplerBinding = find(mBindings.samplers, name);
                 if (!samplerBinding || !samplerBinding->texture) {
@@ -441,12 +446,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
                 mUsedItems += samplerBinding->texture->itemId();
                 auto texture =
                     static_cast<D3DTexture *>(samplerBinding->texture);
-                texture->prepareShaderResourceView(context);
-
-                const auto srvDesc = texture->shaderResourceViewDesc();
-                context.device.CreateShaderResourceView(texture->resource(),
-                    &srvDesc, descriptor);
-                descriptor.Offset(1, descriptorSize);
+                texture->prepareShaderResourceView(context, descriptor);
 
             } else if (bindDesc.Type == D3D_SIT_UAV_RWTYPED) {
                 const auto imageBinding = find(mBindings.images, name);
@@ -459,51 +459,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
                 mUsedItems += imageBinding->bindingItemId;
                 mUsedItems += imageBinding->texture->itemId();
                 auto texture = static_cast<D3DTexture *>(imageBinding->texture);
-                texture->prepareUnorderedAccessView(context);
-
-                const auto uavDesc = texture->unorderedAccessViewDesc();
-                context.device.CreateUnorderedAccessView(texture->resource(),
-                    nullptr, &uavDesc, descriptor);
-                descriptor.Offset(1, descriptorSize);
-
-            } else if (bindDesc.Type == D3D_SIT_BYTEADDRESS
-                || bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS) {
-
-                const auto bindingName =
-                    mProgram.getBufferBindingName(stage, name);
-
-                auto buffer = std::add_pointer_t<D3DBuffer>{};
-                if (bindingName == ShaderPrintf::bufferBindingName()) {
-                    buffer = &mProgram.printf().getInitializedBuffer(context);
-                } else {
-                    const auto bufferBinding =
-                        find(mBindings.buffers, bindingName);
-                    if (!bufferBinding || !bufferBinding->buffer) {
-                        mMessages += MessageList::insert(mItemId,
-                            MessageType::BufferNotSet, bindingName);
-                        canRender = false;
-                        continue;
-                    }
-                    mUsedItems += bufferBinding->bindingItemId;
-                    mUsedItems += bufferBinding->blockItemId;
-                    buffer = static_cast<D3DBuffer *>(bufferBinding->buffer);
-                }
-
-                buffer->prepareUnorderedAccessView(context);
-
-                const auto uavDesc = D3D12_UNORDERED_ACCESS_VIEW_DESC{
-                    .Format = DXGI_FORMAT_R32_TYPELESS,
-                    .ViewDimension = D3D12_UAV_DIMENSION_BUFFER,
-                    .Buffer =
-                        D3D12_BUFFER_UAV{
-                            .NumElements = static_cast<UINT>(
-                                buffer->size() / sizeof(UINT)),
-                            .Flags = D3D12_BUFFER_UAV_FLAG_RAW,
-                        },
-                };
-                context.device.CreateUnorderedAccessView(buffer->resource(),
-                    nullptr, &uavDesc, descriptor);
-                descriptor.Offset(1, descriptorSize);
+                texture->prepareUnorderedAccessView(context, descriptor);
             } else if (bindDesc.Type == D3D_SIT_SAMPLER) {
                 // nothing to do
             } else {
@@ -527,8 +483,6 @@ bool D3DPipeline::bindGraphics(D3DContext &context, ScriptEngine &scriptEngine)
     if (mVertexStream)
         mVertexStream->bind(context);
 
-    //context.graphicsCommandList->IASetIndexBuffer(&mBoxGeo->IndexBufferView());
-
     updateGlobalConstantBuffers(context, scriptEngine);
 
     if (!setDescriptors(context))
@@ -538,16 +492,14 @@ bool D3DPipeline::bindGraphics(D3DContext &context, ScriptEngine &scriptEngine)
         auto descriptorHeaps = mDescriptorHeap.Get();
         context.graphicsCommandList->SetDescriptorHeaps(1, &descriptorHeaps);
 
-        const auto descriptorSize =
-            context.device.GetDescriptorHandleIncrementSize(
-                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         auto descriptor = CD3DX12_GPU_DESCRIPTOR_HANDLE{
             mDescriptorHeap->GetGPUDescriptorHandleForHeapStart()
         };
         for (auto i = 0u; i < mDescriptorTableEntries.size(); ++i) {
             context.graphicsCommandList->SetGraphicsRootDescriptorTable(i,
                 descriptor);
-            descriptor.Offset(mDescriptorTableEntries[i], descriptorSize);
+            descriptor.Offset(mDescriptorTableEntries[i],
+                context.descriptorSize);
         }
     }
     return true;
@@ -567,16 +519,14 @@ bool D3DPipeline::bindCompute(D3DContext &context, ScriptEngine &scriptEngine)
         auto descriptorHeaps = mDescriptorHeap.Get();
         context.graphicsCommandList->SetDescriptorHeaps(1, &descriptorHeaps);
 
-        const auto descriptorSize =
-            context.device.GetDescriptorHandleIncrementSize(
-                D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         auto descriptor = CD3DX12_GPU_DESCRIPTOR_HANDLE{
             mDescriptorHeap->GetGPUDescriptorHandleForHeapStart()
         };
         for (auto i = 0u; i < mDescriptorTableEntries.size(); ++i) {
             context.graphicsCommandList->SetComputeRootDescriptorTable(i,
                 descriptor);
-            descriptor.Offset(mDescriptorTableEntries[i], descriptorSize);
+            descriptor.Offset(mDescriptorTableEntries[i],
+                context.descriptorSize);
         }
     }
     return true;

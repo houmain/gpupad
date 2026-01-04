@@ -55,6 +55,9 @@ void D3DRenderSession::createCommandQueue()
                 .device = renderer().device(),
                 .queue = renderer().queue(),
                 .renderTargetHelper = renderer().renderTargetHelper(),
+                .descriptorSize =
+                    renderer().device().GetDescriptorHandleIncrementSize(
+                        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV),
             },
     });
 

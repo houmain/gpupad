@@ -17,12 +17,12 @@ public:
     void boundAsSampler() { }
     void boundAsImage() { }
     ID3D12Resource *resource() { return mResource.Get(); }
-    void prepareShaderResourceView(D3DContext &context);
-    void prepareUnorderedAccessView(D3DContext &context);
+    void prepareShaderResourceView(D3DContext &context,
+        CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor);
+    void prepareUnorderedAccessView(D3DContext &context,
+        CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor);
     void prepareRenderTargetView(D3DContext &context);
     void prepareDepthStencilView(D3DContext &context);
-    D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc() const;
-    D3D12_UNORDERED_ACCESS_VIEW_DESC unorderedAccessViewDesc() const;
     D3D12_RENDER_TARGET_VIEW_DESC renderTargetViewDesc() const;
     D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc() const;
     bool clear(D3DContext &context, std::array<double, 4> color, double depth,
@@ -54,6 +54,8 @@ private:
         D3D12_HEAP_TYPE type);
     void createAndUpload(D3DContext &context);
     bool upload(D3DContext &context);
+    D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc() const;
+    D3D12_UNORDERED_ACCESS_VIEW_DESC unorderedAccessViewDesc() const;
     void resourceBarrier(D3DContext &context, D3D12_RESOURCE_STATES state);
 
     D3DBuffer *mTextureBuffer{};

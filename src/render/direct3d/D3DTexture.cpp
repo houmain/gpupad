@@ -189,18 +189,31 @@ D3D12_DEPTH_STENCIL_VIEW_DESC D3DTexture::depthStencilViewDesc() const
     return desc;
 }
 
-void D3DTexture::prepareShaderResourceView(D3DContext &context)
+void D3DTexture::prepareShaderResourceView(D3DContext &context,
+    CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor)
 {
     reload(false);
     createAndUpload(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+
+    const auto srvDesc = shaderResourceViewDesc();
+    context.device.CreateShaderResourceView(mResource.Get(), &srvDesc,
+        descriptor);
+    descriptor.Offset(1, context.descriptorSize);
 }
 
-void D3DTexture::prepareUnorderedAccessView(D3DContext &context)
+void D3DTexture::prepareUnorderedAccessView(D3DContext &context,
+    CD3DX12_CPU_DESCRIPTOR_HANDLE &descriptor)
 {
     reload(true);
     createAndUpload(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+    const auto uavDesc = unorderedAccessViewDesc();
+    context.device.CreateUnorderedAccessView(mResource.Get(), nullptr, &uavDesc,
+        descriptor);
+    descriptor.Offset(1, context.descriptorSize);
+
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
 }
