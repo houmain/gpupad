@@ -18,6 +18,8 @@ public:
     void finish() override;
     void release() override;
     quint64 getBufferHandle(ItemId itemId) override;
+    std::vector<Duration> resetTimeQueries(size_t count) override;
+    std::shared_ptr<void> beginTimeQuery(size_t index) override;
 
 private:
     VKRenderer &renderer();
@@ -26,4 +28,5 @@ private:
     std::shared_ptr<VKShareSync> mShareSync;
     std::unique_ptr<CommandQueue> mCommandQueue;
     std::unique_ptr<CommandQueue> mPrevCommandQueue;
+    KDGpu::TimestampQueryRecorder mTimestampQueries;
 };

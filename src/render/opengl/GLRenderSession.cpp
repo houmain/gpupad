@@ -8,7 +8,6 @@
 #include "GLTarget.h"
 #include "GLTexture.h"
 #include "render/RenderSessionBase_CommandQueue.h"
-#include <QOpenGLTimerQuery>
 #include <QStack>
 #include <deque>
 #include <functional>
@@ -48,6 +47,26 @@ void GLRenderSession::createCommandQueue()
     });
 }
 
+std::vector<Duration> GLRenderSession::resetTimeQueries(size_t count)
+{
+    Q_ASSERT(count <= mTimeQueries.size());
+    auto durations = std::vector<Duration>();
+    durations.reserve(count);
+    for (auto i = 0u; i < count; ++i)
+        durations.push_back(
+            std::chrono::nanoseconds(mTimeQueries[i].waitForResult()));
+    return durations;
+}
+
+std::shared_ptr<void> GLRenderSession::beginTimeQuery(size_t index)
+{
+    if (index >= mTimeQueries.size())
+        mTimeQueries.emplace_back().create();
+    mTimeQueries[index].begin();
+    return std::shared_ptr<void>(nullptr,
+        [this, index](void *) { mTimeQueries[index].end(); });
+}
+
 void GLRenderSession::render()
 {
     if (itemsChanged() || evaluationType() == EvaluationType::Reset) {
@@ -80,21 +99,13 @@ void GLRenderSession::render()
 
     mShareSync->beginUpdate(gl);
 
-    gl.timerQueries.clear();
-
     executeCommandQueue(*mCommandQueue);
 
     beginDownloadModifiedResources(*mCommandQueue);
+    obtainTimeQueryResults();
 
     mShareSync->endUpdate(gl);
-    Q_ASSERT(glGetError() == GL_NO_ERROR);
 
-    if (!updatingPreviewTextures())
-        outputTimerQueries(gl.timerQueries, [](QOpenGLTimerQuery &query) {
-            return std::chrono::nanoseconds(query.waitForResult());
-        });
-
-    gl.glFlush();
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 }
 
@@ -107,7 +118,7 @@ void GLRenderSession::finish()
 void GLRenderSession::release()
 {
     auto &context = GLContext::currentContext();
-    context.timerQueries.clear();
+    mTimeQueries.clear();
     mShareSync->cleanup(context);
     mVao.destroy();
     mCommandQueue.reset();

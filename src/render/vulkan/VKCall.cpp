@@ -184,11 +184,6 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
     if (mPipeline)
         mPipeline->setBindings(std::move(bindings));
 
-    auto &recorder = context.timestampQueries[mCall.id];
-    recorder =
-        context.commandRecorder->beginTimestampRecording({ .queryCount = 2 });
-    recorder.writeTimestamp(KDGpu::PipelineStageFlagBit::TopOfPipeBit);
-
     switch (mCall.callType) {
     case Call::CallType::Draw:
     case Call::CallType::DrawIndexed:
@@ -220,8 +215,6 @@ void VKCall::execute(VKContext &context, Bindings &&bindings,
     case Call::CallType::SwapTextures: executeSwapTextures(messages); break;
     case Call::CallType::SwapBuffers:  executeSwapBuffers(messages); break;
     }
-
-    recorder.writeTimestamp(KDGpu::PipelineStageFlagBit::BottomOfPipeBit);
 }
 
 int VKCall::getMaxElementCount(ScriptEngine &scriptEngine)

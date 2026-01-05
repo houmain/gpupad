@@ -34,8 +34,6 @@ public:
     QOpenGLFunctions_4_3_Core *v4_3{};
     QOpenGLFunctions_4_5_Core *v4_5{};
 
-    std::map<ItemId, QOpenGLTimerQuery> timerQueries;
-
     bool initializeOpenGLFunctions() override
     {
         if (!QOpenGLFunctions_3_3_Core::initializeOpenGLFunctions())

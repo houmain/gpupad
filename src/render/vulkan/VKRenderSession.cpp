@@ -57,6 +57,29 @@ void VKRenderSession::createCommandQueue()
     });
 }
 
+std::vector<Duration> VKRenderSession::resetTimeQueries(size_t count)
+{
+    Q_ASSERT(count <= maxTimeQueries);
+    auto durations = std::vector<Duration>();
+    durations.reserve(count);
+    for (auto i = 0u; i < count; ++i)
+        durations.push_back(std::chrono::nanoseconds(
+            mTimestampQueries.nsInterval(i * 2, i * 2 + 1)));
+    mTimestampQueries.reset();
+    return durations;
+}
+
+std::shared_ptr<void> VKRenderSession::beginTimeQuery(size_t index)
+{
+    Q_ASSERT(index < maxTimeQueries);
+    mTimestampQueries.writeTimestamp(KDGpu::PipelineStageFlagBit::TopOfPipeBit);
+
+    return std::shared_ptr<void>(nullptr, [this](void *) {
+        mTimestampQueries.writeTimestamp(
+            KDGpu::PipelineStageFlagBit::BottomOfPipeBit);
+    });
+}
+
 void VKRenderSession::render()
 {
     if (!mShareSync)
@@ -75,9 +98,11 @@ void VKRenderSession::render()
     }
 
     mShareSync->beginUpdate();
-    context.timestampQueries.clear();
 
     context.commandRecorder = context.device.createCommandRecorder();
+    mTimestampQueries =
+        mCommandQueue->context.commandRecorder->beginTimestampRecording(
+            { .queryCount = maxTimeQueries * 2 });
 
     executeCommandQueue(*mCommandQueue);
 
@@ -96,15 +121,10 @@ void VKRenderSession::render()
 
     context.queue.submit(submitOptions);
     context.queue.waitUntilIdle();
+    obtainTimeQueryResults();
     context.commandBuffers.clear();
 
     mShareSync->endUpdate();
-
-    if (!updatingPreviewTextures())
-        outputTimerQueries(mCommandQueue->context.timestampQueries,
-            [](KDGpu::TimestampQueryRecorder &query) {
-                return std::chrono::nanoseconds(query.nsInterval(0, 1));
-            });
 }
 
 void VKRenderSession::finish()

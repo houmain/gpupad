@@ -316,6 +316,12 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
                         for (const auto &[name, binding] : scope.subroutines)
                             merged.subroutines[name] = binding;
                     }
+
+                    auto &self = *static_cast<RenderSession *>(this);
+                    auto timeQuery = std::shared_ptr<void>();
+                    if (auto index = addTimeQuery(queueCall.itemId()))
+                        timeQuery = self.beginTimeQuery(*index);
+
                     queueCall.execute(*context, std::move(merged), mMessages,
                         mScriptSession->engine());
 
@@ -389,24 +395,6 @@ void RenderSessionBase::beginDownloadModifiedResources(
             && (mItemsChanged || mEvaluationType != EvaluationType::Steady))
             buffer.beginDownload(commandQueue.context,
                 mEvaluationType != EvaluationType::Reset);
-}
-
-template <typename TimerQueries, typename ToNanoseconds>
-void RenderSessionBase::outputTimerQueries(TimerQueries &timerQueries,
-    const ToNanoseconds &toNanoseconds) noexcept
-{
-    mTimerMessages.clear();
-
-    auto total = std::chrono::nanoseconds::zero();
-    for (auto &[itemId, query] : timerQueries) {
-        const auto duration = toNanoseconds(query);
-        mTimerMessages += MessageList::insert(itemId, MessageType::CallDuration,
-            formatDuration(duration), false);
-        total += duration;
-    }
-    if (timerQueries.size() > 1)
-        mTimerMessages += MessageList::insert(0, MessageType::TotalDuration,
-            formatDuration(total), false);
 }
 
 template <typename CommandQueue>

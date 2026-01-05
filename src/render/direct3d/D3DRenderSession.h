@@ -1,10 +1,10 @@
 #pragma once
 
-#if defined(_WIN32)
-
 #include "render/RenderSessionBase.h"
 #include "D3DContext.h"
+#if defined(_WIN32)
 
+struct D3DContext;
 class D3DRenderer;
 class D3DShareSync;
 struct ID3D12CommandAllocator;
@@ -22,6 +22,8 @@ public:
     void finish() override;
     void release() override;
     quint64 getBufferHandle(ItemId itemId) override;
+    std::vector<Duration> resetTimeQueries(size_t count) override;
+    std::shared_ptr<void> beginTimeQuery(size_t index) override;
 
 private:
     D3DRenderer &renderer();
@@ -33,6 +35,8 @@ private:
     ComPtr<ID3D12CommandAllocator> mCommandAllocator;
     ComPtr<ID3D12Fence> mFence;
     uint64_t mFenceValue{};
+    ComPtr<ID3D12QueryHeap> mTimeQueryHeap;
+    ComPtr<ID3D12Resource> mTimeQueryResolveBuffer;
 };
 
 #endif // _WIN32

@@ -30,7 +30,6 @@ public:
         MessagePtrSet &messages, ScriptEngine &scriptEngine);
 
 private:
-    std::shared_ptr<void> beginTimerQuery(GLContext &context);
     void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
     void executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine);
     void executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine);

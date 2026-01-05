@@ -69,6 +69,54 @@ void D3DRenderSession::createCommandQueue()
         D3D12_COMMAND_LIST_TYPE_DIRECT, mCommandAllocator.Get(), nullptr,
         IID_PPV_ARGS(&context.graphicsCommandList)));
     AssertIfFailed(context.graphicsCommandList->Close());
+
+    if (!mTimeQueryHeap) {
+        const auto queryHeapDesc = D3D12_QUERY_HEAP_DESC{
+            .Type = D3D12_QUERY_HEAP_TYPE_TIMESTAMP,
+            .Count = maxTimeQueries * 2,
+        };
+        context.device.CreateQueryHeap(&queryHeapDesc,
+            IID_PPV_ARGS(&mTimeQueryHeap));
+
+        const auto stagingHeapProperties =
+            CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK);
+        const auto stagingBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
+            sizeof(uint64_t) * queryHeapDesc.Count);
+        AssertIfFailed(context.device.CreateCommittedResource(
+            &stagingHeapProperties, D3D12_HEAP_FLAG_NONE, &stagingBufferDesc,
+            D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+            IID_PPV_ARGS(&mTimeQueryResolveBuffer)));
+    }
+}
+
+std::vector<Duration> D3DRenderSession::resetTimeQueries(size_t count)
+{
+    Q_ASSERT(count <= maxTimeQueries);
+    auto mappedData = std::add_pointer_t<void>{};
+    AssertIfFailed(mTimeQueryResolveBuffer->Map(0, nullptr, &mappedData));
+    const auto *timestamps = static_cast<const uint64_t *>(mappedData);
+
+    auto durations = std::vector<Duration>();
+    durations.reserve(count);
+    for (auto i = 0u; i < count; ++i)
+        durations.push_back(std::chrono::nanoseconds(
+            timestamps[i * 2 + 1] - timestamps[i * 2]));
+
+    mTimeQueryResolveBuffer->Unmap(0, nullptr);
+    return durations;
+}
+
+std::shared_ptr<void> D3DRenderSession::beginTimeQuery(size_t index)
+{
+    Q_ASSERT(index < maxTimeQueries);
+    mCommandQueue->context.graphicsCommandList->EndQuery(mTimeQueryHeap.Get(),
+        D3D12_QUERY_TYPE_TIMESTAMP, static_cast<UINT>(index * 2));
+
+    return std::shared_ptr<void>(nullptr, [this, index](void *) {
+        mCommandQueue->context.graphicsCommandList->EndQuery(
+            mTimeQueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP,
+            static_cast<UINT>(index * 2 + 1));
+    });
 }
 
 void D3DRenderSession::render()
@@ -97,6 +145,10 @@ void D3DRenderSession::render()
 
     beginDownloadModifiedResources(*mCommandQueue);
 
+    context.graphicsCommandList->ResolveQueryData(mTimeQueryHeap.Get(),
+        D3D12_QUERY_TYPE_TIMESTAMP, 0, static_cast<UINT>(timeQueryCount() * 2),
+        mTimeQueryResolveBuffer.Get(), 0);
+
     AssertIfFailed(context.graphicsCommandList->Close());
     auto commandLists =
         std::array<ID3D12CommandList *, 1>{ context.graphicsCommandList.Get() };
@@ -117,6 +169,7 @@ void D3DRenderSession::render()
         }
 
     context.stagingBuffers.clear();
+    obtainTimeQueryResults();
 
     mShareSync->endUpdate();
 }

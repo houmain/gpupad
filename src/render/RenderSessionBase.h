@@ -76,6 +76,7 @@ struct Bindings
     std::map<QString, SubroutineBinding> subroutines;
 };
 
+using Duration = std::chrono::duration<double>;
 using BindingState = QStack<Bindings>;
 using Command = std::function<void(BindingState &)>;
 
@@ -99,6 +100,8 @@ public:
     SessionModel &sessionModelCopy() override { return mSessionModelCopy; }
     quint64 getTextureHandle(ItemId itemId) override { return 0; }
     quint64 getBufferHandle(ItemId itemId) override { return 0; }
+    virtual std::vector<Duration> resetTimeQueries(size_t count) = 0;
+    virtual std::shared_ptr<void> beginTimeQuery(size_t index) = 0;
 
     const Session &session() const;
     bool itemsChanged() const { return mItemsChanged; }
@@ -116,9 +119,13 @@ public:
         int *layers, bool cached = true);
 
 protected:
+    static const auto maxTimeQueries = 128;
+
     void addMessage(MessagePtr message) { mMessages += message; }
     void addUsedItems(const QSet<ItemId> &itemIds) { mUsedItems += itemIds; }
     bool updatingPreviewTextures() const;
+    size_t timeQueryCount() const { return mTimeQueryCallIds.size(); }
+    void obtainTimeQueryResults();
 
     template <typename CommandQueue>
     void reuseUnmodifiedItems(CommandQueue &commandQueue,
@@ -133,12 +140,9 @@ protected:
     template <typename CommandQueue>
     void beginDownloadModifiedResources(CommandQueue &commandQueue) noexcept;
 
-    template <typename TimerQueries, typename ToNanoseconds>
-    void outputTimerQueries(TimerQueries &timerQueries,
-        const ToNanoseconds &toNanoseconds) noexcept;
-
     template <typename CommandQueue>
-    void finishCommandQueue(CommandQueue &commandQueue, ShareSyncPtr shareSync) noexcept;
+    void finishCommandQueue(CommandQueue &commandQueue,
+        ShareSyncPtr shareSync) noexcept;
 
 private:
     struct GroupIteration
@@ -152,6 +156,7 @@ private:
     void invalidateCachedProperties();
     QList<int> getCachedProperties(ItemId itemId);
     void updateCachedProperties(ItemId itemId, QList<int> values);
+    std::optional<size_t> addTimeQuery(ItemId callId);
 
     const QString mBasePath;
     QSet<ItemId> mUsedItems;
@@ -161,7 +166,8 @@ private:
     std::unique_ptr<ScriptSession> mScriptSession;
     MessagePtrSet mMessages;
     MessagePtrSet mPrevMessages;
-    MessagePtrSet mTimerMessages;
+    MessagePtrSet mTimeQueryMessages;
+    std::vector<ItemId> mTimeQueryCallIds;
     mutable QMutex mUsedItemsCopyMutex;
     QSet<ItemId> mUsedItemsCopy;
     mutable QMutex mPropertyCacheMutex;

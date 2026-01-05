@@ -186,6 +186,14 @@ void RenderSessionBase::updateCachedProperties(ItemId itemId, QList<int> values)
     mPropertyCache[itemId] = values;
 }
 
+std::optional<size_t> RenderSessionBase::addTimeQuery(ItemId callId)
+{
+    if (mTimeQueryCallIds.size() >= maxTimeQueries)
+        return std::nullopt;
+    mTimeQueryCallIds.push_back(callId);
+    return mTimeQueryCallIds.size() - 1;
+}
+
 void RenderSessionBase::evaluateBlockProperties(const Block &block, int *offset,
     int *rowCount, bool cached)
 {
@@ -260,4 +268,28 @@ void RenderSessionBase::evaluateTargetProperties(const Target &target,
     } else {
         evaluate(Singletons::defaultScriptEngine());
     }
+}
+
+void RenderSessionBase::obtainTimeQueryResults()
+{
+    // TODO: remove when message list performance issue is resolved
+    if (updatingPreviewTextures()) {
+        resetTimeQueries(0);
+        mTimeQueryCallIds.clear();
+        return;
+    }
+
+    mTimeQueryMessages.clear();
+    auto total = std::chrono::duration<double>::zero();
+    for (const auto &duration : resetTimeQueries(timeQueryCount())) {
+        const auto itemId = mTimeQueryCallIds[mTimeQueryMessages.size()];
+        mTimeQueryMessages += MessageList::insert(itemId,
+            MessageType::CallDuration, formatDuration(duration), false);
+        total += duration;
+    }
+    mTimeQueryCallIds.clear();
+
+    if (mTimeQueryMessages.size() > 1)
+        mTimeQueryMessages += MessageList::insert(0, MessageType::TotalDuration,
+            formatDuration(total), false);
 }

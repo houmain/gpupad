@@ -250,20 +250,9 @@ void GLCall::setTextures(GLTexture *texture, GLTexture *fromTexture)
     mFromTexture = fromTexture;
 }
 
-std::shared_ptr<void> GLCall::beginTimerQuery(GLContext &context)
-{
-    auto &query = context.timerQueries[mCall.id];
-    Q_ASSERT(!query.isCreated());
-    query.create();
-    query.begin();
-    return std::shared_ptr<void>(nullptr,
-        [query = &query](void *) { query->end(); });
-}
-
 void GLCall::execute(GLContext &context, Bindings &&bindings,
     MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
-    auto guard = beginTimerQuery(context);
     if (mProgram) {
         if (validateShaderTypes() && mProgram->bind()) {
             if (applyBindings(bindings, scriptEngine))
