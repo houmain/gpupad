@@ -24,6 +24,7 @@ public:
     void upload(D3DContext &context, const void *data, size_t size);
     void beginDownload(D3DContext &context, bool checkModification);
     bool finishDownload();
+    void prepareCopySource(D3DContext &context);
     void prepareVertexBuffer(D3DContext &context);
     void prepareIndexBuffer(D3DContext &context);
     void prepareConstantBufferView(D3DContext &context,

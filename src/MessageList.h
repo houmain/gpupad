@@ -49,7 +49,6 @@ enum class MessageType {
     AccelerationStructureNotAssigned,
     TextureNotAssigned,
     BufferNotAssigned,
-    BufferInUse,
     SwappingTexturesFailed,
     SwappingBuffersFailed,
     InvalidAttribute,

@@ -259,26 +259,11 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
         || !mPipeline->bindGraphics(context, scriptEngine))
         return;
 
-    if (mIndexBuffer) {
-        // really cannot use resource as index and vertex buffer simultaneously?
-        if (mVertexStream->usedItems().contains(mIndexBuffer->itemId())) {
-            mMessages +=
-                MessageList::insert(mCall.id, MessageType::BufferInUse);
-            return;
-        }
-        mIndexBuffer->prepareIndexBuffer(context);
+    if (mIndexBuffer)
+        bindIndexBuffer(context, scriptEngine);
 
-        const auto indicesOffset =
-            scriptEngine.evaluateUInt(mIndicesOffset, mCall.id);
-        const auto indexBufferView = D3D12_INDEX_BUFFER_VIEW{
-            .BufferLocation = mIndexBuffer->getDeviceAddress() + indicesOffset,
-            .SizeInBytes = mIndexBuffer->alignedSize() - indicesOffset,
-            .Format = (mIndexSize == 1 ? DXGI_FORMAT_R8_UINT
-                    : mIndexSize == 2  ? DXGI_FORMAT_R16_UINT
-                                       : DXGI_FORMAT_R32_UINT),
-        };
-        context.graphicsCommandList->IASetIndexBuffer(&indexBufferView);
-    }
+    if (mVertexStream)
+        mVertexStream->bind(context);
 
     context.graphicsCommandList->IASetPrimitiveTopology(
         toD3DPrimitiveTopology(mCall.primitiveType,
@@ -298,6 +283,60 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
             "Call Type");
     }
     mUsedItems += mPipeline->usedItems();
+}
+
+void D3DCall::bindIndexBuffer(D3DContext &context, ScriptEngine &scriptEngine)
+{
+    const auto offset = scriptEngine.evaluateUInt(mIndicesOffset, mCall.id);
+    const auto size = scriptEngine.evaluateUInt(mIndicesRowCount, mCall.id)
+        * mIndicesPerRow * mIndexSize;
+
+    // really cannot use resource as index and vertex buffer simultaneously?
+    auto deviceAddress = UINT64{};
+    if (!mVertexStream->usedItems().contains(mIndexBuffer->itemId())) {
+        mIndexBuffer->prepareIndexBuffer(context);
+        deviceAddress = mIndexBuffer->getDeviceAddress() + offset;
+    } else {
+        deviceAddress = copyToTempBuffer(context, *mIndexBuffer, offset, size);
+    }
+    const auto indexBufferView = D3D12_INDEX_BUFFER_VIEW{
+        .BufferLocation = deviceAddress,
+        .SizeInBytes = size,
+        .Format = (mIndexSize == 1 ? DXGI_FORMAT_R8_UINT
+                : mIndexSize == 2  ? DXGI_FORMAT_R16_UINT
+                                   : DXGI_FORMAT_R32_UINT),
+    };
+    context.graphicsCommandList->IASetIndexBuffer(&indexBufferView);
+}
+
+UINT64 D3DCall::copyToTempBuffer(D3DContext &context, D3DBuffer &buffer,
+    UINT offset, UINT size)
+{
+    if (size > mTempBufferCapacity) {
+        const auto resourceDesc =
+            CD3DX12_RESOURCE_DESC::Buffer(size, D3D12_RESOURCE_FLAG_NONE);
+        const auto heapProperties =
+            CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+        AssertIfFailed(context.device.CreateCommittedResource(&heapProperties,
+            D3D12_HEAP_FLAG_NONE, &resourceDesc, D3D12_RESOURCE_STATE_COMMON,
+            nullptr, IID_PPV_ARGS(&mTempBuffer)));
+        mTempBufferCapacity = size;
+    }
+
+    auto transition = CD3DX12_RESOURCE_BARRIER::Transition(mTempBuffer.Get(),
+        D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_COPY_DEST);
+    context.graphicsCommandList->ResourceBarrier(1, &transition);
+
+    buffer.prepareCopySource(context);
+
+    context.graphicsCommandList->CopyBufferRegion(mTempBuffer.Get(), 0,
+        buffer.resource(), offset, size);
+
+    transition = CD3DX12_RESOURCE_BARRIER::Transition(mTempBuffer.Get(),
+        D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
+    context.graphicsCommandList->ResourceBarrier(1, &transition);
+
+    return mTempBuffer->GetGPUVirtualAddress();
 }
 
 void D3DCall::executeCompute(D3DContext &context, MessagePtrSet &messages,

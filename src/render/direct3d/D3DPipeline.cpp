@@ -483,9 +483,6 @@ bool D3DPipeline::bindGraphics(D3DContext &context, ScriptEngine &scriptEngine)
     context.graphicsCommandList->SetPipelineState(mPipelineState.Get());
     context.graphicsCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-    if (mVertexStream)
-        mVertexStream->bind(context);
-
     updateGlobalConstantBuffers(context, scriptEngine);
 
     if (!setDescriptors(context))

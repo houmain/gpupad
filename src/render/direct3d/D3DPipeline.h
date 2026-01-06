@@ -2,10 +2,10 @@
 
 #if defined(_WIN32)
 
-#include "D3DShader.h"
-#include "scripting/ScriptEngine.h"
-#include <span>
-#include <map>
+#  include "D3DShader.h"
+#  include "scripting/ScriptEngine.h"
+#  include <span>
+#  include <map>
 
 class D3DTarget;
 class D3DProgram;

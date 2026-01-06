@@ -213,6 +213,12 @@ void D3DBuffer::resourceBarrier(D3DContext &context,
     }
 }
 
+void D3DBuffer::prepareCopySource(D3DContext &context)
+{
+    updateReadOnlyBuffer(context);
+    resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
+}
+
 void D3DBuffer::prepareVertexBuffer(D3DContext &context)
 {
     updateReadOnlyBuffer(context);

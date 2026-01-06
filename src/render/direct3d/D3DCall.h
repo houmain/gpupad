@@ -2,9 +2,9 @@
 
 #if defined(_WIN32)
 
-#include "D3DContext.h"
-#include "D3DPipeline.h"
-#include "scripting/ScriptEngine.h"
+#  include "D3DContext.h"
+#  include "D3DPipeline.h"
+#  include "scripting/ScriptEngine.h"
 
 class D3DBuffer;
 class D3DTexture;
@@ -49,6 +49,9 @@ private:
     void executeCopyBuffer(D3DContext &context, MessagePtrSet &messages);
     void executeSwapTextures(MessagePtrSet &messages);
     void executeSwapBuffers(MessagePtrSet &messages);
+    void bindIndexBuffer(D3DContext &context, ScriptEngine &scriptEngine);
+    UINT64 copyToTempBuffer(D3DContext &context, D3DBuffer &buffer, UINT offset,
+        UINT size);
 
     const Call mCall;
     const CallKind mKind;
@@ -69,6 +72,8 @@ private:
     QString mIndicesOffset;
     QString mIndicesRowCount;
     int mIndicesPerRow{};
+    ComPtr<ID3D12Resource> mTempBuffer;
+    UINT64 mTempBufferCapacity{};
 
     D3DBuffer *mIndirectBuffer{};
     int mIndirectStride{};
