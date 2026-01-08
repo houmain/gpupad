@@ -135,7 +135,7 @@ public:
             maxColumn = qMax(maxColumn, column);
             ++row;
         }
-        Q_EMIT model() -> dataChanged(begin, model()->index(row, maxColumn));
+        Q_EMIT model()->dataChanged(begin, model()->index(row, maxColumn));
     }
 
     void cut()
@@ -159,7 +159,7 @@ public:
                 maxIndex = model()->index(std::max(index.row(), maxIndex.row()),
                     std::max(index.column(), maxIndex.column()));
             }
-        Q_EMIT model() -> dataChanged(minIndex, maxIndex);
+        Q_EMIT model()->dataChanged(minIndex, maxIndex);
     }
 
 private:
@@ -170,6 +170,16 @@ private:
         const auto semicolons = text.count(';');
         return (commas > tabs ? (commas > semicolons ? ',' : ';')
                               : (tabs > semicolons ? '\t' : ';'));
+    }
+
+    static QStringView trimLine(QStringView line)
+    {
+        line = line.trimmed();
+        if (line.startsWith('{') && line.endsWith(QStringLiteral("},")))
+            line = line.mid(1, line.length() - 3);
+        else if (line.startsWith('{') && line.endsWith('}'))
+            line = line.mid(1, line.length() - 2);
+        return line.trimmed();
     }
 
     static double toNumber(QStringView value)
@@ -207,11 +217,11 @@ private:
                 result.append(row);
         } else {
             // multiple rows
-            for (auto line : lines) {
-                line = line.trimmed();
-                if (!line.isEmpty()) {
+            for (const auto &line : lines) {
+                const auto trimmedLine = trimLine(line);
+                if (!trimmedLine.isEmpty()) {
                     auto row = QVariantList();
-                    const auto values = line.split(separator);
+                    const auto values = trimmedLine.split(separator);
                     for (const auto &value : values)
                         row.append(toNumber(value.trimmed()));
                     result.append(row);
