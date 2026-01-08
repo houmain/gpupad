@@ -279,13 +279,29 @@ void VKTexture::createAndUpload(VKContext &context)
         .usage = mUsage,
         .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
     };
-
     const auto isWritten = (mUsage
         & (KDGpu::TextureUsageFlagBits::ColorAttachmentBit
             | KDGpu::TextureUsageFlagBits::DepthStencilAttachmentBit
             | KDGpu::TextureUsageFlagBits::StorageBit));
 
     if (isWritten || mSamples > 1) {
+        mTexture = {};
+    } else {
+        mCurrentLayout = KDGpu::TextureLayout::TransferDstOptimal;
+        if (mData.uploadVK(&context.ktxDeviceInfo, &mKtxTexture,
+                static_cast<VkImageUsageFlags>(mUsage.toInt()),
+                static_cast<VkImageLayout>(mCurrentLayout))) {
+            auto vkApi = static_cast<KDGpu::VulkanGraphicsApi *>(
+                context.device.graphicsApi());
+            mTexture = vkApi->createTextureFromExistingVkImage(context.device,
+                textureOptions, mKtxTexture.image);
+        } else {
+            mMessages +=
+                MessageList::insert(mItemId, MessageType::UploadingImageFailed);
+        }
+    }
+
+    if (!mTexture.isValid()) {
         // check if format is supported
         const auto properties =
             context.device.adapter()->formatProperties(textureOptions.format);
@@ -303,19 +319,7 @@ void VKTexture::createAndUpload(VKContext &context)
             KDGpu::ExternalMemoryHandleTypeFlagBits::OpaqueFD;
 #endif
         mTexture = context.device.createTexture(textureOptions);
-    } else {
-        mCurrentLayout = KDGpu::TextureLayout::TransferDstOptimal;
-        if (!mData.uploadVK(&context.ktxDeviceInfo, &mKtxTexture,
-                static_cast<VkImageUsageFlags>(mUsage.toInt()),
-                static_cast<VkImageLayout>(mCurrentLayout))) {
-            mMessages +=
-                MessageList::insert(mItemId, MessageType::UploadingImageFailed);
-            return;
-        }
-        auto vkApi = static_cast<KDGpu::VulkanGraphicsApi *>(
-            context.device.graphicsApi());
-        mTexture = vkApi->createTextureFromExistingVkImage(context.device,
-            textureOptions, mKtxTexture.image);
+        mCurrentLayout = textureOptions.initialLayout;
     }
     mSystemCopyModified = mDeviceCopyModified = false;
 }
