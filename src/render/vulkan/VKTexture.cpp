@@ -464,9 +464,13 @@ bool VKTexture::finishDownload()
 
 KDGpu::TextureAspectFlagBits VKTexture::aspectMask() const
 {
-    return mKind.stencil ? KDGpu::TextureAspectFlagBits::StencilBit
-        : mKind.depth    ? KDGpu::TextureAspectFlagBits::DepthBit
-                         : KDGpu::TextureAspectFlagBits::ColorBit;
+    const auto depthStencilBits = static_cast<KDGpu::TextureAspectFlagBits>(
+        static_cast<uint32_t>(KDGpu::TextureAspectFlagBits::DepthBit)
+        | static_cast<uint32_t>(KDGpu::TextureAspectFlagBits::StencilBit));
+    return (mKind.stencil && mKind.depth ? depthStencilBits
+            : mKind.stencil ? KDGpu::TextureAspectFlagBits::StencilBit
+            : mKind.depth   ? KDGpu::TextureAspectFlagBits::DepthBit
+                            : KDGpu::TextureAspectFlagBits::ColorBit);
 }
 
 void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder,

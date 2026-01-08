@@ -14,7 +14,7 @@
         },
         {
             "flipVertically": false,
-            "format": "S8",
+            "format": "D24S8",
             "height": "512",
             "id": 117,
             "name": "TargetStencil",
@@ -34,6 +34,7 @@
             ]
         },
         {
+            "dynamic": false,
             "id": 122,
             "inlineScope": false,
             "items": [
@@ -44,6 +45,11 @@
                     "id": 118,
                     "items": [
                         {
+                            "depthClamp": false,
+                            "depthComparisonFunc": "Always",
+                            "depthOffsetConstant": 0,
+                            "depthOffsetSlope": 0,
+                            "depthWrite": true,
                             "id": 120,
                             "level": 0,
                             "name": "Stencil",
@@ -76,14 +82,12 @@
                         {
                             "fileName": "attributeless.vs",
                             "id": 2,
-                            "language": "GLSL",
                             "shaderType": "Vertex",
                             "type": "Shader"
                         },
                         {
                             "fileName": "mask.fs",
                             "id": 3,
-                            "language": "GLSL",
                             "shaderType": "Fragment",
                             "type": "Shader"
                         }
@@ -125,6 +129,7 @@
             "type": "Group"
         },
         {
+            "dynamic": false,
             "id": 123,
             "inlineScope": false,
             "items": [
@@ -149,6 +154,11 @@
                             "type": "Attachment"
                         },
                         {
+                            "depthClamp": false,
+                            "depthComparisonFunc": "Always",
+                            "depthOffsetConstant": 0,
+                            "depthOffsetSlope": 0,
+                            "depthWrite": true,
                             "id": 116,
                             "level": 0,
                             "name": "Stencil",
@@ -181,14 +191,12 @@
                         {
                             "fileName": "attributeless.vs",
                             "id": 114,
-                            "language": "GLSL",
                             "shaderType": "Vertex",
                             "type": "Shader"
                         },
                         {
                             "fileName": "fill.fs",
                             "id": 115,
-                            "language": "GLSL",
                             "shaderType": "Fragment",
                             "type": "Shader"
                         }
@@ -232,8 +240,16 @@
     ],
     "name": "Session",
     "renderer": "OpenGL",
-    "shaderCompiler": "",
+    "shaderCompiler": "Driver",
+    "shaderCompilerSettings": {
+        "autoMapBindings": "true",
+        "autoMapLocations": "true",
+        "autoSampledTextures": "true",
+        "spirvVersion": "10",
+        "vulkanRulesRelaxed": "true"
+    },
     "shaderIncludePaths": "",
+    "shaderLanguage": "GLSL",
     "shaderPreamble": "",
     "type": "Session"
 }
