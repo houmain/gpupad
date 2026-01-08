@@ -65,7 +65,6 @@ std::vector<Duration> VKRenderSession::resetTimeQueries(size_t count)
     for (auto i = 0u; i < count; ++i)
         durations.push_back(std::chrono::nanoseconds(
             mTimestampQueries.nsInterval(i * 2, i * 2 + 1)));
-    mTimestampQueries.reset();
     return durations;
 }
 

@@ -97,6 +97,9 @@ bool GLShader::specialize(const Spirv &spirv)
     if (mShaderObject)
         return true;
 
+    if (!spirv)
+        return false;
+
     auto &gl = GLContext::currentContext();
     void (*glSpecializeShader)(GLuint, const GLchar *, GLuint, const GLuint *,
         const GLuint *);

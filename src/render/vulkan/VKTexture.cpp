@@ -238,14 +238,8 @@ bool VKTexture::updateMipmaps(VKContext &context)
             .mipLevels = static_cast<uint32_t>(levels()),
             .layerCount = static_cast<uint32_t>(layers()),
         };
-        if (context.commandRecorder) {
-            prepareTransferSource(context);
-            context.commandRecorder->generateMipMaps(options);
-        } else {
-            mTexture.generateMipMaps(context.device, context.queue,
-                toKDGpu(mFormat), KDGpu::TextureTiling::Optimal, options);
-            mCurrentLayout = KDGpu::TextureLayout::TransferSrcOptimal;
-        }
+        context.commandRecorder->generateMipMaps(options);
+        mCurrentLayout = options.newLayout;
     }
     return true;
 }
@@ -328,7 +322,7 @@ void VKTexture::createAndUpload(VKContext &context)
 
 void VKTexture::beginDownload(VKContext &context)
 {
-    if (!mDeviceCopyModified || !mTexture.isValid())
+    if (!mDeviceCopyModified || !mTexture.isValid() || mData.isNull())
         return;
 
     Q_ASSERT(!mDownloadBuffer.isValid());

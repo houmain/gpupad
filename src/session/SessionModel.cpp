@@ -557,12 +557,11 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
     switch (item.type) {
     case Item::Type::Session: {
         const auto &session = static_cast<const Session &>(item);
-        for (auto column : {
+        for (auto c : {
                  SessionFlipViewport,
                  SessionReverseCulling,
              })
-            result &= (column != column
-                || rendererHasSetting(session.renderer, column));
+            result &= (column != c || rendererHasSetting(session.renderer, c));
         break;
     }
 

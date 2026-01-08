@@ -95,6 +95,8 @@ std::vector<Duration> D3DRenderSession::resetTimeQueries(size_t count)
     auto mappedData = std::add_pointer_t<void>{};
     AssertIfFailed(mTimeQueryResolveBuffer->Map(0, nullptr, &mappedData));
     const auto *timestamps = static_cast<const uint64_t *>(mappedData);
+    if (!timestamps)
+        return {};
 
     auto durations = std::vector<Duration>();
     durations.reserve(count);
