@@ -34,20 +34,20 @@ namespace {
     {
         // FILENAME(100,30-32): SEVERITY X100: TEXT
         static const auto split = QRegularExpression(
-            "(.*)" // 1. filename
-            "\\((\\d+)," // 2. line
-            "([^\\)]*)\\):\\s+" // 3. column
-            "([^ ]+)\\s+" // 4. severity
-            "([^:]+):\\s+" // 5. code
-            "(.*)"); // 6. text
+            "((.*)" // 2. filename
+            "\\((\\d+)," // 3. line
+            "([^\\)]*)\\):\\s+)?" // 4. column
+            "([^ ]+)\\s+" // 5. severity
+            "([^:]+):\\s+" // 6. code
+            "(.*)"); // 7. text
 
         const auto lines = log.split('\n', Qt::SkipEmptyParts);
         for (const auto &line : lines) {
             const auto match = split.match(line);
-            const auto fileName = match.captured(1);
-            const auto lineNumber = match.captured(2).toInt();
-            const auto severity = match.captured(4);
-            const auto text = match.captured(6);
+            const auto fileName = match.captured(2);
+            const auto lineNumber = match.captured(3).toInt();
+            const auto severity = match.captured(5);
+            const auto text = match.captured(7);
             if (text.isEmpty())
                 continue;
 
