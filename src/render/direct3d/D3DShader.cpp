@@ -246,7 +246,7 @@ bool D3DShader::compileDXC(const QString &source)
 
     auto compileResult = ComPtr<IDxcResult>();
     compiler->Compile(&sourceBuffer, arguments.data(),
-        static_cast<uint32_t>(arguments.size()), nullptr,
+        static_cast<uint32_t>(arguments.size()), includeHandler.Get(),
         IID_PPV_ARGS(&compileResult));
 
     auto errors = ComPtr<IDxcBlobUtf8>();

@@ -16,8 +16,8 @@ namespace {
         case Shader::ShaderType::Vertex:         state.VS = bytecode; break;
         case Shader::ShaderType::Fragment:       state.PS = bytecode; break;
         case Shader::ShaderType::Geometry:       state.GS = bytecode; break;
-        case Shader::ShaderType::TessControl:    state.DS = bytecode; break;
-        case Shader::ShaderType::TessEvaluation: state.HS = bytecode; break;
+        case Shader::ShaderType::TessControl:    state.HS = bytecode; break;
+        case Shader::ShaderType::TessEvaluation: state.DS = bytecode; break;
         default:                                 return false;
         }
         return true;
