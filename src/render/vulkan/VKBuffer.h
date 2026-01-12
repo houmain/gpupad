@@ -7,6 +7,7 @@ class VKBuffer : public BufferBase
 {
 public:
     VKBuffer(const Buffer &buffer, VKRenderSession &renderSession);
+    explicit VKBuffer(int size);
 
     const KDGpu::Buffer &buffer() const { return mBuffer; }
 
@@ -15,6 +16,8 @@ public:
     void clear(VKContext &context);
     void copy(VKContext &context, VKBuffer &source);
     bool swap(VKBuffer &other);
+    void upload(VKContext &context);
+    void upload(VKContext &context, const void *data, size_t size);
     void beginDownload(VKContext &context, bool checkModification);
     bool finishDownload();
     void prepareIndirectBuffer(VKContext &context);
@@ -27,8 +30,10 @@ public:
     uint64_t getDeviceAddress(VKContext &context);
 
 private:
+    KDGpu::BufferUsageFlags defaultUsage() const;
     void createBuffer(KDGpu::Device &device);
-    void upload(VKContext &context);
+    KDGpu::Buffer createStagingBuffer(KDGpu::Device &device,
+        KDGpu::BufferUsageFlagBits usage);
     void updateReadOnlyBuffer(VKContext &context);
     void updateReadWriteBuffer(VKContext &context);
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder,

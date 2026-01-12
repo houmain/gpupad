@@ -4,16 +4,8 @@
 
 VKBuffer::VKBuffer(const Buffer &buffer, VKRenderSession &renderSession)
     : BufferBase(buffer, renderSession.getBufferSize(buffer))
+    , mUsage(defaultUsage())
 {
-    // TODO: reduce default usage
-    mUsage = KDGpu::BufferUsageFlags{ KDGpu::BufferUsageFlagBits::TransferSrcBit
-        | KDGpu::BufferUsageFlagBits::TransferDstBit
-        | KDGpu::BufferUsageFlagBits::UniformBufferBit
-        | KDGpu::BufferUsageFlagBits::StorageBufferBit
-        | KDGpu::BufferUsageFlagBits::VertexBufferBit
-        | KDGpu::BufferUsageFlagBits::IndexBufferBit
-        | KDGpu::BufferUsageFlagBits::IndirectBufferBit };
-
     mUsedItems += buffer.id;
     for (const auto item : buffer.items)
         if (auto block = static_cast<const Block *>(item)) {
@@ -22,6 +14,20 @@ VKBuffer::VKBuffer(const Buffer &buffer, VKRenderSession &renderSession)
                 if (auto field = static_cast<const Block *>(item))
                     mUsedItems += field->id;
         }
+}
+
+VKBuffer::VKBuffer(int size) : BufferBase(size), mUsage(defaultUsage()) { }
+
+KDGpu::BufferUsageFlags VKBuffer::defaultUsage() const
+{
+    // TODO: reduce default usage
+    return KDGpu::BufferUsageFlags{ KDGpu::BufferUsageFlagBits::TransferSrcBit
+        | KDGpu::BufferUsageFlagBits::TransferDstBit
+        | KDGpu::BufferUsageFlagBits::UniformBufferBit
+        | KDGpu::BufferUsageFlagBits::StorageBufferBit
+        | KDGpu::BufferUsageFlagBits::VertexBufferBit
+        | KDGpu::BufferUsageFlagBits::IndexBufferBit
+        | KDGpu::BufferUsageFlagBits::IndirectBufferBit };
 }
 
 void VKBuffer::addUsage(KDGpu::BufferUsageFlags usage)
@@ -122,17 +128,46 @@ void VKBuffer::createBuffer(KDGpu::Device &device)
     });
 }
 
+KDGpu::Buffer VKBuffer::createStagingBuffer(KDGpu::Device &device,
+    KDGpu::BufferUsageFlagBits usage)
+{
+    return device.createBuffer({
+        .size = static_cast<KDGpu::DeviceSize>(mSize),
+        .usage = usage,
+        .memoryUsage = KDGpu::MemoryUsage::CpuOnly,
+    });
+}
+
+void VKBuffer::upload(VKContext &context, const void *data, size_t size)
+{
+    createBuffer(context.device);
+
+    auto &stagingBuffer =
+        context.stagingBuffers.emplace_back(createStagingBuffer(context.device,
+            KDGpu::BufferUsageFlagBits::TransferSrcBit));
+
+    auto mappedData = stagingBuffer.map();
+    std::memcpy(mappedData, data, size);
+    stagingBuffer.unmap();
+
+    memoryBarrier(*context.commandRecorder,
+        KDGpu::AccessFlagBit::TransferWriteBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
+
+    context.commandRecorder->copyBuffer({
+        .src = stagingBuffer,
+        .dst = mBuffer,
+        .byteSize = static_cast<size_t>(mSize),
+    });
+}
+
 void VKBuffer::upload(VKContext &context)
 {
     if (!mSystemCopyModified)
         return;
 
-    // TODO: make asynchronous
-    context.queue.waitForUploadBufferData({
-        .destinationBuffer = mBuffer,
-        .data = mData.constData(),
-        .byteSize = static_cast<KDGpu::DeviceSize>(mSize),
-    });
+    upload(context, mData.constData(), mSize);
+
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 
@@ -144,12 +179,12 @@ void VKBuffer::beginDownload(VKContext &context, bool checkModifications)
     updateReadOnlyBuffer(context);
 
     Q_ASSERT(!mDownloadBuffer.isValid());
-    mDownloadBuffer = context.device.createBuffer({
-        .size = static_cast<KDGpu::DeviceSize>(mSize),
-        .usage = KDGpu::BufferUsageFlagBits::TransferDstBit
-            | KDGpu::BufferUsageFlagBits::TransferSrcBit,
-        .memoryUsage = KDGpu::MemoryUsage::CpuOnly,
-    });
+    mDownloadBuffer = createStagingBuffer(context.device,
+        KDGpu::BufferUsageFlagBits::TransferDstBit);
+
+    memoryBarrier(*context.commandRecorder,
+        KDGpu::AccessFlagBit::TransferReadBit,
+        KDGpu::PipelineStageFlagBit::AllCommandsBit);
 
     context.commandRecorder->copyBuffer({
         .src = mBuffer,
@@ -198,7 +233,8 @@ void VKBuffer::prepareIndirectBuffer(VKContext &context)
 {
     updateReadOnlyBuffer(context);
 
-    memoryBarrier(*context.commandRecorder, KDGpu::AccessFlagBit::IndexReadBit,
+    memoryBarrier(*context.commandRecorder,
+        KDGpu::AccessFlagBit::IndirectCommandReadBit,
         KDGpu::PipelineStageFlagBit::AllCommandsBit);
 }
 

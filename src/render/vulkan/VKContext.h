@@ -51,6 +51,7 @@ struct VKContext
     ktxVulkanDeviceInfo &ktxDeviceInfo;
     std::vector<KDGpu::CommandBuffer> commandBuffers;
     std::optional<KDGpu::CommandRecorder> commandRecorder;
+    std::vector<KDGpu::Buffer> stagingBuffers;
 
     const KDGpu::AdapterFeatures &features() const
     {

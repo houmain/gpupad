@@ -954,48 +954,40 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         break;
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
+        auto buffer = std::add_pointer_t<VKBuffer>();
+        auto offset = uint32_t{};
+        auto size = static_cast<uint32_t>(KDGpu::WholeSize);
         if (desc.type_description->type_name
             == ShaderPrintf::bufferBindingName()) {
-            setBindGroupResource(desc.set, isVariableLengthArray,
-                {
-                    .binding = desc.binding,
-                    .resource =
-                        KDGpu::StorageBufferBinding{
-                            .buffer =
-                                mProgram.printf().getInitializedBuffer(context),
-                        },
-                });
-        } else {
-            const auto bufferBinding =
-                find(mBindings.buffers, desc.type_description->type_name);
-            if (!bufferBinding || !bufferBinding->buffer)
-                return MessageType::BufferNotSet;
-            auto &buffer = static_cast<VKBuffer &>(*bufferBinding->buffer);
+            buffer = &mProgram.printf().getInitializedBuffer(context);
+
+        } else if (const auto bufferBinding = find(mBindings.buffers,
+                       desc.type_description->type_name)) {
+            buffer = static_cast<VKBuffer *>(bufferBinding->buffer);
+            std::tie(offset, size) = getBufferBindingOffsetSize(*bufferBinding);
             mUsedItems += bufferBinding->bindingItemId;
-            mUsedItems += buffer.usedItems();
-
-            const auto readable =
-                !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_READABLE);
-            const auto writeable =
-                !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_WRITABLE);
-            buffer.prepareShaderStorageBuffer(context, readable, writeable);
-
-            const auto [offset, size] =
-                getBufferBindingOffsetSize(*bufferBinding);
-            setBindGroupResource(desc.set, isVariableLengthArray,
-                {
-                    .binding = desc.binding,
-                    .resource =
-                        KDGpu::StorageBufferBinding{
-                            .buffer = buffer.buffer(),
-                            .offset = offset,
-                            .size = size,
-                        },
-                    .arrayElement = arrayElement,
-                });
+            mUsedItems += buffer->usedItems();
         }
-        break;
-    }
+        if (!buffer)
+            return MessageType::BufferNotSet;
+
+        const auto readable =
+            !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_READABLE);
+        const auto writeable =
+            !(desc.decoration_flags & SPV_REFLECT_DECORATION_NON_WRITABLE);
+        buffer->prepareShaderStorageBuffer(context, readable, writeable);
+        setBindGroupResource(desc.set, isVariableLengthArray,
+            {
+                .binding = desc.binding,
+                .resource =
+                    KDGpu::StorageBufferBinding{
+                        .buffer = buffer->buffer(),
+                        .offset = offset,
+                        .size = size,
+                    },
+                .arrayElement = arrayElement,
+            });
+    } break;
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
     case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:

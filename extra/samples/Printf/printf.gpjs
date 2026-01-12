@@ -1,4 +1,5 @@
 {
+    "flipViewport": false,
     "id": 923,
     "items": [
         {
@@ -54,14 +55,12 @@
                 {
                     "fileName": "attributeless.vs",
                     "id": 2,
-                    "language": "GLSL",
                     "shaderType": "Vertex",
                     "type": "Shader"
                 },
                 {
                     "fileName": "printf.fs",
                     "id": 3,
-                    "language": "GLSL",
                     "shaderType": "Fragment",
                     "type": "Shader"
                 }

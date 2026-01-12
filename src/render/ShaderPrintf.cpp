@@ -684,6 +684,10 @@ MessagePtrSet ShaderPrintf::formatMessages(ItemId callItemId,
     for (auto offset = data[0];;) {
         const auto lastMessage = (offset == lastBegin);
         const auto nextBegin = read(offset++);
+        if (!lastMessage && nextBegin < offset) {
+            Q_ASSERT(!"invalid message buffer");
+            break;
+        }
         const auto &formatString = mFormatStrings[read(offset++)];
         const auto argumentCount = read(offset++);
 

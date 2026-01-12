@@ -120,8 +120,10 @@ void VKRenderSession::render()
 
     context.queue.submit(submitOptions);
     context.queue.waitUntilIdle();
+
     obtainTimeQueryResults();
     context.commandBuffers.clear();
+    context.stagingBuffers.clear();
 
     mShareSync->endUpdate();
 }
