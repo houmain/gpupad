@@ -45,8 +45,8 @@ protected:
         uint32_t prevBegin;
     };
 
-    static const auto maxBufferValues = 1024 - 2;
-    static const auto bufferSize = maxBufferValues * sizeof(uint32_t)
+    static constexpr auto maxBufferValues = 1024 - 2;
+    static constexpr auto bufferSize = maxBufferValues * sizeof(uint32_t)
         + sizeof(BufferHeader);
 
     static BufferHeader initializeHeader();

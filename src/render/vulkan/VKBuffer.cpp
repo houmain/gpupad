@@ -150,15 +150,24 @@ void VKBuffer::upload(VKContext &context, const void *data, size_t size)
     std::memcpy(mappedData, data, size);
     stagingBuffer.unmap();
 
-    memoryBarrier(*context.commandRecorder,
-        KDGpu::AccessFlagBit::TransferWriteBit,
-        KDGpu::PipelineStageFlagBit::AllCommandsBit);
-
-    context.commandRecorder->copyBuffer({
-        .src = stagingBuffer,
-        .dst = mBuffer,
-        .byteSize = static_cast<size_t>(mSize),
-    });
+    if (context.commandRecorder) {
+        memoryBarrier(*context.commandRecorder,
+            KDGpu::AccessFlagBit::TransferWriteBit,
+            KDGpu::PipelineStageFlagBit::AllCommandsBit);
+    
+        context.commandRecorder->copyBuffer({
+            .src = stagingBuffer,
+            .dst = mBuffer,
+            .byteSize = static_cast<size_t>(mSize),
+        });
+    }
+    else {
+        context.queue.waitForUploadBufferData({
+            .destinationBuffer = mBuffer,
+            .data = data,
+            .byteSize = static_cast<KDGpu::DeviceSize>(size),
+        });
+    }
 }
 
 void VKBuffer::upload(VKContext &context)

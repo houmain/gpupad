@@ -11,7 +11,7 @@ layout(location = 1) out vec3 worldNormal;
 layout(location = 2) out vec3 worldPosition;
 layout(location = 3) out vec3 worldView;
 
-layout(set = 1, binding = 0) uniform Camera
+layout(binding = 2) uniform Camera
 {
     mat4 viewMatrix;
     mat4 projectionMatrix;

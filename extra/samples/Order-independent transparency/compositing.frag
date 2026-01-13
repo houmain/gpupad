@@ -11,7 +11,7 @@ struct AlphaFragment {
 
 layout(location = 0) out vec4 fragColor;
 
-layout(std430, set = 0, binding = 0) coherent readonly buffer AlphaFragments
+layout(std430, binding = 0) coherent readonly buffer AlphaFragments
 {
     uint count;
     vec3 _pad;
@@ -19,7 +19,7 @@ layout(std430, set = 0, binding = 0) coherent readonly buffer AlphaFragments
 }
 alphaFragments;
 
-layout(set = 0, binding = 1, r32ui) uniform readonly uimage2D alphaHeadPointer;
+layout(binding = 1, r32ui) uniform readonly uimage2D alphaHeadPointer;
 
 float alphaDepth(uint idx)
 {

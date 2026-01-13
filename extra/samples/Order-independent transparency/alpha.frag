@@ -22,7 +22,7 @@ layout(std430, set = 0, binding = 0) coherent buffer AlphaFragments
 }
 alphaFragments;
 
-layout(set = 0, binding = 1, r32ui) uniform coherent uimage2D alphaHeadPointer;
+layout(binding = 1, r32ui) uniform coherent uimage2D alphaHeadPointer;
 
 vec4 adsModel(vec4 color)
 {

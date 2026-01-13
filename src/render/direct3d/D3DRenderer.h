@@ -12,6 +12,9 @@ class RenderTargetHelper;
 class D3DRenderer : public QObject, public Renderer
 {
     Q_OBJECT
+
+#if defined(_WIN32)
+
 public:
     explicit D3DRenderer(QObject *parent = nullptr);
     ~D3DRenderer() override;
@@ -43,4 +46,6 @@ private:
     ID3D12Device *mDevice{};
     ID3D12CommandQueue *mQueue{};
     RenderTargetHelper *mRenderTargetHelper{};
+
+#endif // _WIN32
 };

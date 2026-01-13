@@ -12,5 +12,10 @@ vec3 vertices[6] = {
 
 void main()
 {
-    gl_Position = vec4(vertices[gl_VertexIndex], 1.0);
+#if defined(VULKAN)
+    int vertexIndex = gl_VertexIndex;
+#else
+    int vertexIndex = gl_VertexID;
+#endif
+    gl_Position = vec4(vertices[vertexIndex], 1.0);
 }

@@ -68,13 +68,15 @@ QString ShaderCompilerSettingsModel::getColumnKey(int column) const
 
 QVariant ShaderCompilerSettingsModel::getColumnDefaultValue(int column) const
 {
+    using enum Session::ShaderCompilerSetting;
     auto setting = static_cast<Session::ShaderCompilerSetting>(column);
     switch (setting) {
-    case Session::ShaderCompilerSetting::autoMapBindings:
-    case Session::ShaderCompilerSetting::autoMapLocations:
-    case Session::ShaderCompilerSetting::autoSampledTextures:
-    case Session::ShaderCompilerSetting::vulkanRulesRelaxed:  return true;
-    case Session::ShaderCompilerSetting::spirvVersion:        return {};
+    case autoMapBindings:
+    case autoMapLocations:
+    case autoSampledTextures:
+    case vulkanRulesRelaxed:  return true;
+    case spirvVersion:        return {};
+    case COUNT:               break;
     }
     return {};
 }
