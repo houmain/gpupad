@@ -74,9 +74,6 @@ private:
     MessageType updateBindings(VKContext &context,
         const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
         bool isVariableLengthArray, ScriptEngine &scriptEngine);
-    bool updateDynamicBufferBindings(VKContext &context,
-        const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
-        ScriptEngine &scriptEngine);
     bool createLayout(VKContext &context);
     void applyBufferMemberBinding(std::span<std::byte> bufferData,
         const SpvReflectBlockVariable &member, const UniformBinding &binding,

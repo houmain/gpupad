@@ -496,42 +496,6 @@ bool VKPipeline::applyBufferMemberBindings(std::span<std::byte> bufferData,
         || isGlobalUniformBlockName(block.type_description->type_name));
 }
 
-bool VKPipeline::updateDynamicBufferBindings(VKContext &context,
-    const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
-    ScriptEngine &scriptEngine)
-{
-    auto &block = getDynamicUniformBuffer(desc.set, desc.binding, arrayElement);
-    if (!block.buffer.isValid()) {
-        block.buffer = context.device.createBuffer(KDGpu::BufferOptions{
-            .size = desc.block.size,
-            .usage = KDGpu::BufferUsageFlagBits::UniformBufferBit,
-            .memoryUsage = KDGpu::MemoryUsage::CpuToGpu,
-        });
-        block.size = desc.block.size;
-    }
-    Q_ASSERT(block.buffer.isValid());
-    Q_ASSERT(desc.block.size == block.size);
-    if (!block.buffer.isValid() || desc.block.size != block.size)
-        return false;
-
-    auto bufferData = std::span<std::byte>(
-        static_cast<std::byte *>(block.buffer.map()), block.size);
-    const auto guard = qScopeGuard([&] { block.buffer.unmap(); });
-
-    if (!applyBufferMemberBindings(bufferData, desc.block, arrayElement,
-            scriptEngine))
-        return false;
-
-    setBindGroupResource(desc.set, false,
-        {
-            .binding = desc.binding,
-            .resource = KDGpu::UniformBufferBinding{ .buffer = block.buffer },
-            .arrayElement = arrayElement,
-        });
-
-    return true;
-}
-
 bool VKPipeline::hasPushConstants() const
 {
     return (mPushConstantRange.size > 0);
@@ -947,9 +911,36 @@ MessageType VKPipeline::updateBindings(VKContext &context,
                     .arrayElement = arrayElement,
                 });
         } else {
-            if (!updateDynamicBufferBindings(context, desc, arrayElement,
+            auto &dynamic =
+                getDynamicUniformBuffer(desc.set, desc.binding, arrayElement);
+            if (!dynamic.buffer.isValid()) {
+                dynamic.buffer = context.device.createBuffer({
+                    .size = desc.block.size,
+                    .usage = KDGpu::BufferUsageFlagBits::UniformBufferBit,
+                    .memoryUsage = KDGpu::MemoryUsage::CpuToGpu,
+                });
+                dynamic.size = desc.block.size;
+            }
+            Q_ASSERT(dynamic.buffer.isValid());
+            Q_ASSERT(desc.block.size == dynamic.size);
+            if (!dynamic.buffer.isValid() || desc.block.size != dynamic.size)
+                return MessageType::BufferNotSet;
+
+            auto bufferData = std::span<std::byte>(
+                static_cast<std::byte *>(dynamic.buffer.map()), dynamic.size);
+            const auto guard = qScopeGuard([&] { dynamic.buffer.unmap(); });
+
+            if (!applyBufferMemberBindings(bufferData, desc.block, arrayElement,
                     scriptEngine))
                 return MessageType::BufferNotSet;
+
+            setBindGroupResource(desc.set, false,
+                {
+                    .binding = desc.binding,
+                    .resource =
+                        KDGpu::UniformBufferBinding{ .buffer = dynamic.buffer },
+                    .arrayElement = arrayElement,
+                });
         }
         break;
 
