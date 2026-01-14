@@ -203,6 +203,8 @@ bool VKTexture::copy(VKContext &context, VKTexture &source)
                 static_cast<uint32_t>(mDepth),
             }, }, }, 
         });
+
+    mCurrentLayout = KDGpu::TextureLayout::General;
     return true;
 }
 

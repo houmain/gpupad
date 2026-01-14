@@ -29,16 +29,18 @@ public:
 
     void handleConfigureTask(RenderTask *renderTask)
     {
-        if (!std::exchange(mInitialized, true))
-            initialize();
-
-        renderTask->configure();
+        if (!mInitialized)
+            if (initialize())
+                mInitialized = true;
+        if (mInitialized)
+            renderTask->configure();
         Q_EMIT taskConfigured();
     }
 
     void handleRenderTask(RenderTask *renderTask)
     {
-        renderTask->render();
+        if (mInitialized)
+            renderTask->render();
         Q_EMIT taskRendered();
     }
 
@@ -52,9 +54,10 @@ public:
 public Q_SLOTS:
     void stop()
     {
-        mDebugLogger.reset();
-        context.doneCurrent();
-
+        if (mInitialized) {
+            mDebugLogger.reset();
+            context.doneCurrent();
+        }
         auto guiThread = QApplication::instance()->thread();
         context.moveToThread(guiThread);
         surface.moveToThread(guiThread);
@@ -66,9 +69,10 @@ Q_SIGNALS:
     void taskRendered();
 
 private:
-    void initialize()
+    bool initialize()
     {
-        context.makeCurrent(&surface);
+        if (!context.makeCurrent(&surface))
+            return false;
         context.initializeOpenGLFunctions();
 
         mDebugLogger = std::make_unique<QOpenGLDebugLogger>();
@@ -80,6 +84,7 @@ private:
                 this, &Worker::handleDebugMessage);
             mDebugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
         }
+        return true;
     }
 
     void handleDebugMessage(const QOpenGLDebugMessage &message)
