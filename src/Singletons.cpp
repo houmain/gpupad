@@ -6,16 +6,13 @@
 #include "SynchronizeLogic.h"
 #include "VideoManager.h"
 #include "editors/EditorManager.h"
+#include "render/direct3d/D3DRenderer.h"
 #include "render/opengl/GLRenderer.h"
 #include "render/vulkan/VKRenderer.h"
 #include "session/SessionModel.h"
 #include "scripting/CustomActions.h"
 #include "scripting/ScriptEngine.h"
 #include <QApplication>
-
-#if defined(_WIN32)
-#  include "render/direct3d/D3DRenderer.h"
-#endif
 
 Singletons *Singletons::sInstance;
 
@@ -54,14 +51,10 @@ RendererPtr Singletons::vkRenderer()
 
 RendererPtr Singletons::d3dRenderer()
 {
-#if defined(_WIN32)
     Q_ASSERT(onMainThread());
     if (!sInstance->mD3DRenderer)
         sInstance->mD3DRenderer = std::make_shared<D3DRenderer>();
     return sInstance->mD3DRenderer;
-#else
-    return nullptr;
-#endif
 }
 
 Settings &Singletons::settings()

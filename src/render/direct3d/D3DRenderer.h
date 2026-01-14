@@ -1,7 +1,7 @@
 #pragma once
 
 #include "render/Renderer.h"
-#include <QObject>
+#include "MessageList.h"
 #include <QThread>
 
 struct ID3D12Device;
@@ -13,8 +13,12 @@ class D3DRenderer : public QObject, public Renderer
 {
     Q_OBJECT
 
-#if defined(_WIN32)
+Q_SIGNALS:
+    void configureTask(RenderTask *renderTask, QPrivateSignal);
+    void renderTask(RenderTask *renderTask, QPrivateSignal);
+    void releaseTask(RenderTask *renderTask, void *userData, QPrivateSignal);
 
+#if defined(_WIN32)
 public:
     explicit D3DRenderer(QObject *parent = nullptr);
     ~D3DRenderer() override;
@@ -26,11 +30,6 @@ public:
     ID3D12Device &device();
     ID3D12CommandQueue &queue();
     RenderTargetHelper &renderTargetHelper();
-
-Q_SIGNALS:
-    void configureTask(RenderTask *renderTask, QPrivateSignal);
-    void renderTask(RenderTask *renderTask, QPrivateSignal);
-    void releaseTask(RenderTask *renderTask, void *userData, QPrivateSignal);
 
 private:
     class Worker;
@@ -47,5 +46,23 @@ private:
     ID3D12CommandQueue *mQueue{};
     RenderTargetHelper *mRenderTargetHelper{};
 
-#endif // _WIN32
+#else // !_WIN32
+
+public:
+    D3DRenderer(QObject *parent = nullptr)
+        : QObject(parent)
+        , Renderer(RenderAPI::Direct3D)
+    {
+        mMessages += MessageList::insert(0, MessageType::Direct3DNotAvailable);
+    }
+
+    ~D3DRenderer() = default;
+    void render(RenderTask *task) { }
+    void release(RenderTask *task) { }
+    QThread *renderThread() override { return nullptr; }
+
+private:
+    MessagePtrSet mMessages;
+
+#endif // !_WIN32
 };
