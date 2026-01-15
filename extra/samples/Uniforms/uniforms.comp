@@ -26,13 +26,13 @@ uniform vec2  u_values_2;
 uniform vec3  u_values_3[2];
 uniform mat3  u_values_4;
 
-layout(std430) uniform u_block {
+layout(std140) uniform u_block {
   float values_0[2][2];
   Type  values_1[2];
   vec2  values_2;
 } block;
 
-layout(std430) uniform u_block_2 {
+layout(std140) uniform u_block_2 {
   float values_0[2];
 } block_2[2];
 

@@ -29,6 +29,14 @@ public:
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
+    struct DescriptorHeapEntry
+    {
+        D3D12_SHADER_VISIBILITY visibility;
+        UINT space;
+        UINT bindPoint;
+        UINT offset;
+    };
+
     bool createInputLayout(std::vector<D3D12_INPUT_ELEMENT_DESC> *inputLayout);
     bool createRootSignature(D3DContext &context);
     void createDescriptorHeap(D3DContext &context);
@@ -36,6 +44,8 @@ private:
     void updateGlobalConstantBuffers(D3DContext &context,
         ScriptEngine &scriptEngine);
     D3DBuffer *getGlobalConstantBuffer(Shader::ShaderType stage);
+    UINT getDescriptorHeapOffset(D3D12_SHADER_VISIBILITY visibility, UINT space,
+        UINT bindPoint) const;
     bool setDescriptors(D3DContext &context);
 
     ItemId mItemId;
@@ -47,9 +57,9 @@ private:
     ComPtr<ID3D12PipelineState> mPipelineState;
     ComPtr<ID3D12GraphicsCommandList> mGraphicsCommandList;
     ComPtr<ID3D12RootSignature> mRootSignature;
-    UINT mDescriptorCount{};
     ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;
-    std::vector<int> mDescriptorTableEntries;
+    std::vector<DescriptorHeapEntry> mDescriptorHeapEntries;
+    std::vector<UINT> mDescriptorTableEntries;
     Bindings mBindings;
     std::map<Shader::ShaderType, std::unique_ptr<D3DBuffer>>
         mGlobalConstantBuffers;
