@@ -110,19 +110,19 @@ void SynchronizeLogic::setCurrentEditorSourceType(SourceType sourceType)
         mProcessSourceTimer->start();
 }
 
-void SynchronizeLogic::initializeRenderSession()
+bool SynchronizeLogic::initializeRenderSession()
 {
     const auto sessionRenderer = Singletons::sessionRenderer();
     if (!sessionRenderer)
-        return;
+        return false;
 
     if (mRenderSession && &mRenderSession->renderer() == sessionRenderer.get())
-        return;
+        return true;
 
     const auto basePath = QFileInfo(mSessionFileName).path();
     mRenderSession = RenderSessionBase::create(sessionRenderer, basePath);
     if (!mRenderSession)
-        return;
+        return false;
 
     connect(mRenderSession.get(), &RenderTask::updated, this,
         &SynchronizeLogic::handleSessionRendered);
@@ -130,6 +130,8 @@ void SynchronizeLogic::initializeRenderSession()
     mProcessSource = std::make_unique<ProcessSource>(sessionRenderer);
     connect(mProcessSource.get(), &ProcessSource::outputChanged, this,
         &SynchronizeLogic::outputChanged);
+
+    return true;
 }
 
 void SynchronizeLogic::resetRenderSession()
@@ -397,8 +399,8 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
     Singletons::fileCache().updateFromEditors();
     const auto itemsChanged = std::exchange(mRenderSessionInvalidated, false);
-    initializeRenderSession();
-    mRenderSession->update(itemsChanged, evaluationType);
+    if (initializeRenderSession())
+        mRenderSession->update(itemsChanged, evaluationType);
 }
 
 void SynchronizeLogic::updateEditors()
@@ -486,8 +488,10 @@ void SynchronizeLogic::processSource()
         || !Singletons::editorManager().getSourceEditor(mCurrentEditorFileName))
         return;
 
-    Singletons::fileCache().updateFromEditors();
-    initializeRenderSession();
+    if (!initializeRenderSession())
+        return;
+        
+    Singletons::fileCache().updateFromEditors();        
     mProcessSource->setFileName(mCurrentEditorFileName);
     mProcessSource->setSourceType(mCurrentEditorSourceType);
     mProcessSource->setValidateSource(mValidateSource);
@@ -526,22 +530,22 @@ void SynchronizeLogic::handleViewportSizeChanged(const QString &fileName)
 void SynchronizeLogic::evaluateBlockProperties(const Block &block, int *offset,
     int *rowCount)
 {
-    initializeRenderSession();
-    mRenderSession->evaluateBlockProperties(block, offset, rowCount, false);
+    if (initializeRenderSession())
+        mRenderSession->evaluateBlockProperties(block, offset, rowCount, false);
 }
 
 void SynchronizeLogic::evaluateTextureProperties(const Texture &texture,
     int *width, int *height, int *depth, int *layers)
 {
-    initializeRenderSession();
-    mRenderSession->evaluateTextureProperties(texture, width, height, depth,
-        layers, false);
+    if (initializeRenderSession())
+        mRenderSession->evaluateTextureProperties(texture, width, height, depth,
+            layers, false);
 }
 
 void SynchronizeLogic::evaluateTargetProperties(const Target &target,
     int *width, int *height, int *layers)
 {
-    initializeRenderSession();
-    mRenderSession->evaluateTargetProperties(target, width, height, layers,
-        false);
+    if (initializeRenderSession())
+        mRenderSession->evaluateTargetProperties(target, width, height, layers,
+            false);
 }
