@@ -158,6 +158,7 @@ set(SOURCES
   src/render/RenderSessionBase.cpp
   src/render/ShaderBase.cpp
   src/render/BufferBase.cpp
+  src/render/PipelineBase.cpp
   src/render/TextureBase.cpp
   src/render/ShaderPrintf.cpp
   src/render/Spirv.cpp

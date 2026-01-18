@@ -1,8 +1,7 @@
 #pragma once
 
+#include "../PipelineBase.h"
 #include "VKShader.h"
-#include "scripting/ScriptEngine.h"
-#include <span>
 #include <map>
 
 class VKTarget;
@@ -10,13 +9,12 @@ class VKProgram;
 class VKStream;
 class VKAccelerationStructure;
 
-class VKPipeline
+class VKPipeline : public PipelineBase
 {
 public:
     VKPipeline(ItemId itemId, VKProgram *program);
     ~VKPipeline();
 
-    void setBindings(Bindings &&bindings);
     bool createGraphics(VKContext &context,
         KDGpu::PrimitiveOptions &primitiveOptions, VKTarget *target,
         VKStream *vertexStream);
@@ -42,7 +40,6 @@ public:
     {
         return mRayTracingShaderBindingTable;
     }
-    const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
     struct BindGroup
@@ -75,20 +72,9 @@ private:
         const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
         bool isVariableLengthArray, ScriptEngine &scriptEngine);
     bool createLayout(VKContext &context);
-    void applyBufferMemberBinding(std::span<std::byte> bufferData,
-        const SpvReflectBlockVariable &member, const UniformBinding &binding,
-        int memberOffset, int elementOffset, int count,
-        ScriptEngine &scriptEngine);
-    bool applyBufferMemberBindings(std::span<std::byte> bufferData,
-        const QString &name, const SpvReflectBlockVariable &member,
-        int memberOffset, ScriptEngine &scriptEngine);
-    bool applyBufferMemberBindings(std::span<std::byte> bufferData,
-        const SpvReflectBlockVariable &block, uint32_t arrayElement,
-        ScriptEngine &scriptEngine);
     bool hasPushConstants() const;
     bool updatePushConstants(ScriptEngine &scriptEngine);
 
-    ItemId mItemId;
     VKProgram &mProgram;
     VKTarget *mTarget{};
     VKStream *mVertexStream{};
@@ -101,12 +87,9 @@ private:
     KDGpu::PipelineLayout mPipelineLayout;
     std::vector<BindGroup> mBindGroups;
     std::vector<KDGpu::BindGroupLayout> mBindGroupLayouts;
-    Bindings mBindings;
     std::map<KDGpu::SamplerOptions, KDGpu::Sampler> mSamplers;
     std::vector<std::unique_ptr<DynamicUniformBuffer>> mDynamicUniformBuffers;
     std::vector<std::byte> mPushConstantData;
     KDGpu::PushConstantRange mPushConstantRange{};
     KDGpu::RayTracingShaderBindingTable mRayTracingShaderBindingTable;
-    MessagePtrSet mMessages;
-    QSet<ItemId> mUsedItems;
 };

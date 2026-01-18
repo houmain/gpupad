@@ -12,7 +12,29 @@ namespace {
     D3D12_FILTER getFilter(Binding::Filter min, Binding::Filter mag,
         bool anisotropic)
     {
-        // TODO:
+        using Filter = Binding::Filter;
+        switch (min) {
+        case Filter::Nearest:
+        case Filter::NearestMipMapNearest:
+            return (mag == Filter::Linear
+                    ? D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT
+                    : anisotropic ? D3D12_FILTER_MIN_MAG_ANISOTROPIC_MIP_POINT
+                                  : D3D12_FILTER_MIN_MAG_MIP_POINT);
+        case Filter::NearestMipMapLinear:
+            return (mag == Filter::Linear
+                    ? D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR
+                    : D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR);
+        case Filter::LinearMipMapNearest:
+            return (mag == Filter::Linear
+                    ? D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT
+                    : D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT);
+        case Filter::Linear:
+        case Filter::LinearMipMapLinear:
+            return (mag == Filter::Nearest
+                    ? D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR
+                    : anisotropic ? D3D12_FILTER_ANISOTROPIC
+                                  : D3D12_FILTER_MIN_MAG_MIP_LINEAR);
+        }
         return D3D12_FILTER_MIN_MAG_MIP_POINT;
     }
 
@@ -48,7 +70,7 @@ namespace {
 } // namespace
 
 D3DPipeline::D3DPipeline(ItemId itemId, D3DProgram *program)
-    : mItemId(itemId)
+    : PipelineBase(itemId)
     , mProgram(*program)
 {
 }
@@ -512,11 +534,6 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
         }
     }
     return canRender;
-}
-
-void D3DPipeline::setBindings(Bindings &&bindings)
-{
-    mBindings = std::move(bindings);
 }
 
 bool D3DPipeline::bindGraphics(D3DContext &context, ScriptEngine &scriptEngine)

@@ -2,9 +2,8 @@
 
 #if defined(_WIN32)
 
+#  include "../PipelineBase.h"
 #  include "D3DShader.h"
-#  include "scripting/ScriptEngine.h"
-#  include <span>
 #  include <map>
 
 class D3DTarget;
@@ -14,19 +13,17 @@ class D3DBuffer;
 class D3DTexture;
 class D3DAccelerationStructure;
 
-class D3DPipeline
+class D3DPipeline : public PipelineBase
 {
 public:
     D3DPipeline(ItemId itemId, D3DProgram *program);
     ~D3DPipeline();
 
-    void setBindings(Bindings &&bindings);
     bool createGraphics(D3DContext &context, Call::PrimitiveType primitiveType,
         D3DTarget *target, D3DStream *vertexStream);
     bool createCompute(D3DContext &context);
     bool bindGraphics(D3DContext &context, ScriptEngine &scriptEngine);
     bool bindCompute(D3DContext &context, ScriptEngine &scriptEngine);
-    const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
     struct DescriptorHeapEntry
@@ -48,7 +45,6 @@ private:
         UINT bindPoint) const;
     bool setDescriptors(D3DContext &context);
 
-    ItemId mItemId;
     D3DProgram &mProgram;
     D3DStream *mVertexStream{};
     D3DAccelerationStructure *mAccelerationStructure{};
@@ -60,11 +56,8 @@ private:
     ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;
     std::vector<DescriptorHeapEntry> mDescriptorHeapEntries;
     std::vector<UINT> mDescriptorTableEntries;
-    Bindings mBindings;
     std::map<Shader::ShaderType, std::unique_ptr<D3DBuffer>>
         mGlobalConstantBuffers;
-    MessagePtrSet mMessages;
-    QSet<ItemId> mUsedItems;
 };
 
 #endif // _WIN32
