@@ -160,7 +160,7 @@ set(SOURCES
   src/render/BufferBase.cpp
   src/render/PipelineBase.cpp
   src/render/TextureBase.cpp
-  src/render/ShaderPrintf.cpp
+  src/render/PrintfBase.cpp
   src/render/Spirv.cpp
   src/render/SpirvInterface.cpp
   src/scripting/ScriptEngine.cpp

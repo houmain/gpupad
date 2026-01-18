@@ -746,7 +746,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         auto offset = uint32_t{};
         auto size = static_cast<uint32_t>(KDGpu::WholeSize);
         if (desc.type_description->type_name
-            == ShaderPrintf::bufferBindingName()) {
+            == PrintfBase::bufferBindingName()) {
             buffer = &mProgram.printf().getInitializedBuffer(context);
 
         } else if (const auto bufferBinding = find(mBindings.buffers,

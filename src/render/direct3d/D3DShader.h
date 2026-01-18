@@ -11,7 +11,7 @@ public:
     D3DShader(Shader::ShaderType type, const QList<const Shader *> &shaders,
         const Session &session);
 
-    bool compile(ShaderPrintf &printf);
+    bool compile(PrintfBase &printf);
     const ComPtr<ID3DBlob> &binary() const { return mBinary; }
     const ComPtr<ID3D12ShaderReflection> &reflection() const
     {

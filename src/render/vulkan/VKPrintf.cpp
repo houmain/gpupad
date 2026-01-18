@@ -25,7 +25,7 @@ MessagePtrSet VKPrintf::finishDownload(ItemId callItemId)
     const auto &header = *reinterpret_cast<const BufferHeader *>(data);
     const auto count =
         (header.offset > maxBufferValues ? maxBufferValues : header.offset);
-    return ShaderPrintf::formatMessages(callItemId, header,
+    return PrintfBase::formatMessages(callItemId, header,
         { reinterpret_cast<const uint32_t *>(data + sizeof(BufferHeader)),
             count });
 }

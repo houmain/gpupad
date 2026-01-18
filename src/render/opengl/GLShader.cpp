@@ -57,7 +57,7 @@ bool GLShader::compile()
     return compile(printf);
 }
 
-bool GLShader::compile(ShaderPrintf &printf)
+bool GLShader::compile(PrintfBase &printf)
 {
     if (mShaderObject)
         return true;

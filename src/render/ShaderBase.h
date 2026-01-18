@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ShaderPrintf.h"
+#include "PrintfBase.h"
 #include "Spirv.h"
 
 class ShaderBase
@@ -17,7 +17,7 @@ public:
     const QStringList &fileNames() const { return mFileNames; }
     const QString &entryPoint() const { return mEntryPoint; }
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
-    Spirv::Input getSpirvCompilerInput(ShaderPrintf &printf);
+    Spirv::Input getSpirvCompilerInput(PrintfBase &printf);
     Spirv compileSpirv();
     QString preprocess();
     QString generateGLSL();
@@ -28,12 +28,12 @@ public:
 
 protected:
     virtual QStringList preprocessorDefinitions() const;
-    Spirv compileSpirv(ShaderPrintf &printf);
-    QStringList getPatchedSources(ShaderPrintf &printf,
+    Spirv compileSpirv(PrintfBase &printf);
+    QStringList getPatchedSources(PrintfBase &printf,
         QStringList *usedFileNames);
-    QStringList getPatchedSourcesGLSL(ShaderPrintf &printf,
+    QStringList getPatchedSourcesGLSL(PrintfBase &printf,
         QStringList *usedFileNames);
-    QStringList getPatchedSourcesHLSL(ShaderPrintf &printf,
+    QStringList getPatchedSourcesHLSL(PrintfBase &printf,
         QStringList *usedFileNames = nullptr);
 
     ItemId mItemId{};

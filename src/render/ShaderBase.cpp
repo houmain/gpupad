@@ -298,7 +298,7 @@ QStringList ShaderBase::preprocessorDefinitions() const
     return definitions;
 }
 
-QStringList ShaderBase::getPatchedSources(ShaderPrintf &printf,
+QStringList ShaderBase::getPatchedSources(PrintfBase &printf,
     QStringList *usedFileNames)
 {
     return (mSession.shaderLanguage == Session::ShaderLanguage::HLSL
@@ -306,7 +306,7 @@ QStringList ShaderBase::getPatchedSources(ShaderPrintf &printf,
             : getPatchedSourcesGLSL(printf, usedFileNames));
 }
 
-QStringList ShaderBase::getPatchedSourcesGLSL(ShaderPrintf &printf,
+QStringList ShaderBase::getPatchedSourcesGLSL(PrintfBase &printf,
     QStringList *usedFileNames)
 {
     if (mSources.isEmpty())
@@ -329,8 +329,8 @@ QStringList ShaderBase::getPatchedSourcesGLSL(ShaderPrintf &printf,
         const auto set = (explicitBinding ? 4 : -1);
         const auto binding = (explicitBinding ? 8 : -1);
         insertAfterExtensions(sources.front(),
-            ShaderPrintf::preambleGLSL(set, binding));
-        maxVersion = std::max(maxVersion, ShaderPrintf::requiredVersionGLSL());
+            PrintfBase::preambleGLSL(set, binding));
+        maxVersion = std::max(maxVersion, PrintfBase::requiredVersionGLSL());
     }
 
     if (!mPreamble.isEmpty())
@@ -354,7 +354,7 @@ QStringList ShaderBase::getPatchedSourcesGLSL(ShaderPrintf &printf,
     return sources;
 }
 
-QStringList ShaderBase::getPatchedSourcesHLSL(ShaderPrintf &printf,
+QStringList ShaderBase::getPatchedSourcesHLSL(PrintfBase &printf,
     QStringList *usedFileNames)
 {
     if (mSources.isEmpty())
@@ -374,7 +374,7 @@ QStringList ShaderBase::getPatchedSourcesHLSL(ShaderPrintf &printf,
         sources[i] = printf.patchSource(mType, mFileNames[i], sources[i]);
 
     if (printf.isUsed(mType))
-        sources.front().prepend(ShaderPrintf::preambleHLSL());
+        sources.front().prepend(PrintfBase::preambleHLSL());
 
     if (!mPreamble.isEmpty())
         sources.front().prepend("#line 1\n" + mPreamble + "\n");
@@ -386,7 +386,7 @@ QStringList ShaderBase::getPatchedSourcesHLSL(ShaderPrintf &printf,
     return sources;
 }
 
-Spirv::Input ShaderBase::getSpirvCompilerInput(ShaderPrintf &printf)
+Spirv::Input ShaderBase::getSpirvCompilerInput(PrintfBase &printf)
 {
     auto usedFileNames = QStringList();
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
@@ -400,7 +400,7 @@ Spirv::Input ShaderBase::getSpirvCompilerInput(ShaderPrintf &printf)
     };
 }
 
-Spirv ShaderBase::compileSpirv(ShaderPrintf &printf)
+Spirv ShaderBase::compileSpirv(PrintfBase &printf)
 {
     auto input = getSpirvCompilerInput(printf);
     auto stages = Spirv::compile(mSession, { input }, mItemId, mMessages);

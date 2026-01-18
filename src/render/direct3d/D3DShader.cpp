@@ -131,7 +131,7 @@ QString D3DShader::getBufferBindingName(const QString &name) const
     return name;
 }
 
-bool D3DShader::compile(ShaderPrintf &printf)
+bool D3DShader::compile(PrintfBase &printf)
 {
     if (mBinary)
         return true;

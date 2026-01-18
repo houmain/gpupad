@@ -465,7 +465,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
                 auto buffer = std::add_pointer_t<D3DBuffer>{};
                 if (isGlobalConstantsBufferName(bindingName)) {
                     buffer = getGlobalConstantBuffer(stage);
-                } else if (bindingName == ShaderPrintf::bufferBindingName()) {
+                } else if (bindingName == PrintfBase::bufferBindingName()) {
                     buffer = &mProgram.printf().getInitializedBuffer(context);
                 } else if (
                     auto bufferBinding = find(mBindings.buffers, bindingName)) {

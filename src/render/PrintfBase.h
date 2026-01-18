@@ -4,7 +4,7 @@
 #include "session/Item.h"
 #include <span>
 
-class ShaderPrintf
+class PrintfBase
 {
 public:
     static QString requiredVersionGLSL()
@@ -24,8 +24,8 @@ public:
         const QString &fileName, const QString &source);
 
 protected:
-    ShaderPrintf() = default;
-    virtual ~ShaderPrintf() = default;
+    PrintfBase() = default;
+    virtual ~PrintfBase() = default;
 
     struct ParsedFormatString
     {
@@ -60,7 +60,7 @@ protected:
     QList<ParsedFormatString> mFormatStrings;
 };
 
-class RemoveShaderPrintf : public ShaderPrintf
+class RemoveShaderPrintf : public PrintfBase
 {
 public:
     QString patchSource(Shader::ShaderType stage, const QString &fileName,

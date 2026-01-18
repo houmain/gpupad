@@ -49,5 +49,5 @@ void GLPrintf::beginDownload(GLContext &gl)
 
 MessagePtrSet GLPrintf::finishDownload(ItemId callItemId)
 {
-    return ShaderPrintf::formatMessages(callItemId, mHeader, mData);
+    return PrintfBase::formatMessages(callItemId, mHeader, mData);
 }

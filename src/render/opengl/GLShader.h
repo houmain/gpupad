@@ -13,7 +13,7 @@ public:
         const Session &session);
 
     bool compile();
-    bool compile(ShaderPrintf &printf);
+    bool compile(PrintfBase &printf);
     bool specialize(const Spirv &spirv);
     GLuint shaderObject() const { return mShaderObject; }
 

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "GLContext.h"
-#include "render/ShaderPrintf.h"
+#include "render/PrintfBase.h"
 
-class GLPrintf : public ShaderPrintf
+class GLPrintf : public PrintfBase
 {
 public:
     const GLObject &bufferObject() const { return mBufferObject; }

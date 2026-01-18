@@ -1,4 +1,4 @@
-#include "ShaderPrintf.h"
+#include "PrintfBase.h"
 #include <QRegularExpression>
 #include <QVector>
 #include <array>
@@ -245,7 +245,7 @@ namespace {
     }
 } // namespace
 
-QString ShaderPrintf::preambleGLSL(int set, int binding)
+QString PrintfBase::preambleGLSL(int set, int binding)
 {
     auto bufferLayout = QString("std430");
     if (set >= 0)
@@ -373,7 +373,7 @@ void _printf(dmat4x4 m) { _printf(mat4x4(m)); }
         .arg(bufferLayout);
 }
 
-QString ShaderPrintf::preambleHLSL()
+QString PrintfBase::preambleHLSL()
 {
     return QStringLiteral(R"(
 
@@ -530,17 +530,17 @@ void _printf(double4x4 m) { _printf(float4x4(m)); }
 )");
 }
 
-bool ShaderPrintf::isUsed() const
+bool PrintfBase::isUsed() const
 {
     return !mUsedInStages.isEmpty();
 }
 
-bool ShaderPrintf::isUsed(Shader::ShaderType stage) const
+bool PrintfBase::isUsed(Shader::ShaderType stage) const
 {
     return mUsedInStages.contains(stage);
 }
 
-QString ShaderPrintf::patchSource(Shader::ShaderType stage,
+QString PrintfBase::patchSource(Shader::ShaderType stage,
     const QString &fileName, const QString &source)
 {
     const auto sourceWithoutComments = blankComments(source);
@@ -576,14 +576,14 @@ QString ShaderPrintf::patchSource(Shader::ShaderType stage,
     return patchedSource;
 }
 
-auto ShaderPrintf::initializeHeader() -> BufferHeader
+auto PrintfBase::initializeHeader() -> BufferHeader
 {
     // data[0] is already reserved for head of linked list
     // and prevBegin points to it
     return BufferHeader{ 1, 0 };
 }
 
-auto ShaderPrintf::parseFormatString(QStringView string_) -> ParsedFormatString
+auto PrintfBase::parseFormatString(QStringView string_) -> ParsedFormatString
 {
     auto parsed = ParsedFormatString{};
 
@@ -616,7 +616,7 @@ auto ShaderPrintf::parseFormatString(QStringView string_) -> ParsedFormatString
     return parsed;
 }
 
-QString ShaderPrintf::formatMessage(const ParsedFormatString &format,
+QString PrintfBase::formatMessage(const ParsedFormatString &format,
     const QList<Argument> &arguments)
 {
     Q_ASSERT(!format.text.empty());
@@ -664,7 +664,7 @@ QString ShaderPrintf::formatMessage(const ParsedFormatString &format,
     return string;
 }
 
-MessagePtrSet ShaderPrintf::formatMessages(ItemId callItemId,
+MessagePtrSet PrintfBase::formatMessages(ItemId callItemId,
     const BufferHeader &header, std::span<const uint32_t> data)
 {
     const auto count = data.size();
