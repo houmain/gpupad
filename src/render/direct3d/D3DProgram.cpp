@@ -87,13 +87,13 @@ const D3DShader *D3DProgram::getVertexShader() const
     return nullptr;
 }
 
-QString D3DProgram::getBufferBindingName(Shader::ShaderType stage,
-    const QString &name) const
+const SpvReflectDescriptorBinding *D3DProgram::getSpirvDescriptorBinding(
+    Shader::ShaderType stage, const QString &name) const
 {
     for (const auto &shader : mShaders)
         if (shader.type() == stage)
-            return shader.getBufferBindingName(name);
-    return name;
+            return shader.getSpirvDescriptorBinding(name);
+    return nullptr;
 }
 
 bool D3DProgram::setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state)

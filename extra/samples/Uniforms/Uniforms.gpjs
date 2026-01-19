@@ -7,7 +7,6 @@
                 {
                     "fileName": "uniforms.comp",
                     "id": 5,
-                    "language": "GLSL",
                     "shaderType": "Compute",
                     "type": "Shader"
                 }
@@ -478,12 +477,13 @@
                 },
                 {
                     "bindingType": "Uniform",
-                    "editor": "Expression",
-                    "id": 951,
-                    "name": "u_block_2[1].values_0[0]",
+                    "editor": "Expression2",
+                    "id": 954,
+                    "name": "u_block_2[1].values_0",
                     "type": "Binding",
                     "values": [
-                        "3"
+                        "3",
+                        "4"
                     ]
                 },
                 {
@@ -493,7 +493,7 @@
                     "name": "u_block_2[1].values_0[1]",
                     "type": "Binding",
                     "values": [
-                        "4"
+                        "4.1"
                     ]
                 }
             ],
@@ -516,8 +516,16 @@
     ],
     "name": "Session",
     "renderer": "OpenGL",
-    "shaderCompiler": "",
+    "shaderCompiler": "Driver",
+    "shaderCompilerSettings": {
+        "autoMapBindings": "true",
+        "autoMapLocations": "true",
+        "autoSampledTextures": "true",
+        "spirvVersion": "10",
+        "vulkanRulesRelaxed": "true"
+    },
     "shaderIncludePaths": "",
+    "shaderLanguage": "GLSL",
     "shaderPreamble": "",
     "type": "Session"
 }

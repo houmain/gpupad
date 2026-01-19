@@ -565,6 +565,12 @@ bool SessionModel::shouldSerializeColumn(const Item &item,
         break;
     }
 
+    case Item::Type::Group: {
+        const auto &group = static_cast<const Group &>(item);
+        result &= (column != GroupDynamic || (group.dynamic));
+        break;
+    }
+
     case Item::Type::Shader: {
         const auto &shader = static_cast<const Shader &>(item);
         result &= (column != ShaderEntryPoint

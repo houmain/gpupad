@@ -31,5 +31,7 @@ bool BufferBase::operator==(const BufferBase &rhs) const
 QByteArray &BufferBase::writableData()
 {
     mSystemCopyModified = true;
+    if (mData.isNull())
+        mData.resize(mSize);
     return mData;
 }

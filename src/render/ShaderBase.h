@@ -50,3 +50,4 @@ protected:
 QString resolveIncludePath(const QString &currentFile, const QString &relative,
     const QString &includePaths);
 bool shaderSessionSettingsDiffer(const Session &a, const Session &b);
+bool isGlobalConstantsBufferName(const QString &name);

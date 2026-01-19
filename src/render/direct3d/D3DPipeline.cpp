@@ -67,6 +67,12 @@ namespace {
     {
         return (name == "$Globals" || name == "_Global");
     }
+
+    SpvReflectBlockVariable toSpirvReflectBlockVariable(
+        const D3D12_SHADER_BUFFER_DESC &)
+    {
+        return {};
+    }
 } // namespace
 
 D3DPipeline::D3DPipeline(ItemId itemId, D3DProgram *program)
@@ -431,7 +437,8 @@ UINT D3DPipeline::getDescriptorHeapOffset(D3D12_SHADER_VISIBILITY visibility,
     return it->offset;
 }
 
-bool D3DPipeline::setDescriptors(D3DContext &context)
+bool D3DPipeline::setDescriptors(D3DContext &context,
+    ScriptEngine &scriptEngine)
 {
     if (!mDescriptorHeap)
         return true;
@@ -455,17 +462,64 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
                     bindDesc.BindPoint),
                 context.descriptorSize);
 
-            if (bindDesc.Type == D3D_SIT_CBUFFER
-                || bindDesc.Type == D3D_SIT_BYTEADDRESS
-                || bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS) {
-
+            if (bindDesc.Type == D3D_SIT_CBUFFER) {
                 const auto bindingName =
                     mProgram.getBufferBindingName(stage, name);
 
                 auto buffer = std::add_pointer_t<D3DBuffer>{};
                 if (isGlobalConstantsBufferName(bindingName)) {
                     buffer = getGlobalConstantBuffer(stage);
-                } else if (bindingName == PrintfBase::bufferBindingName()) {
+                } else if (
+                    auto bufferBinding = find(mBindings.buffers, bindingName)) {
+                    buffer = static_cast<D3DBuffer *>(bufferBinding->buffer);
+                    mUsedItems += bufferBinding->bindingItemId;
+                    mUsedItems += bufferBinding->blockItemId;
+                } else {
+                    // TODO:
+                    const auto arrayElement = 0;
+                    auto &dynamic = getDynamicConstantBuffer(bindDesc.Space,
+                        bindDesc.BindPoint, arrayElement);
+
+                    if (auto cbuffer = reflection->GetConstantBufferByName(
+                            bindDesc.Name)) {
+                        auto cbufferDesc = D3D12_SHADER_BUFFER_DESC{};
+                        cbuffer->GetDesc(&cbufferDesc);
+                        if (!dynamic.buffer)
+                            dynamic.buffer.emplace(cbufferDesc.Size);
+                        Q_ASSERT(dynamic.buffer->size() == cbufferDesc.Size);
+                        if (dynamic.buffer->size() == cbufferDesc.Size) {
+                            auto &data = buffer->writableData();
+                            auto bufferData = std::span<std::byte>(
+                                reinterpret_cast<std::byte *>(data.data()),
+                                data.size());
+
+                            if (applyBufferMemberBindings(bufferData,
+                                    toSpirvReflectBlockVariable(cbufferDesc),
+                                    arrayElement, scriptEngine))
+                                buffer = &dynamic.buffer.value();
+                        }
+                    }
+                }
+                if (!buffer) {
+                    mMessages += MessageList::insert(mItemId,
+                        MessageType::BufferNotSet, bindingName);
+                    canRender = false;
+                    continue;
+                }
+
+                // TODO:
+                for (auto i = 0u; i < bindDesc.BindCount; ++i) {
+                    buffer->prepareConstantBufferView(context, descriptor);
+                    descriptor.Offset(1, context.descriptorSize);
+                }
+            } else if (bindDesc.Type == D3D_SIT_BYTEADDRESS
+                || bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS) {
+
+                const auto bindingName =
+                    mProgram.getBufferBindingName(stage, name);
+
+                auto buffer = std::add_pointer_t<D3DBuffer>{};
+                if (bindingName == PrintfBase::bufferBindingName()) {
                     buffer = &mProgram.printf().getInitializedBuffer(context);
                 } else if (
                     auto bufferBinding = find(mBindings.buffers, bindingName)) {
@@ -482,14 +536,9 @@ bool D3DPipeline::setDescriptors(D3DContext &context)
 
                 // TODO:
                 for (auto i = 0u; i < bindDesc.BindCount; ++i) {
-                    if (bindDesc.Type == D3D_SIT_CBUFFER) {
-                        buffer->prepareConstantBufferView(context, descriptor);
-                    } else {
-                        buffer->prepareUnorderedAccessView(context, descriptor);
-                    }
+                    buffer->prepareUnorderedAccessView(context, descriptor);
                     descriptor.Offset(1, context.descriptorSize);
                 }
-
             } else if (bindDesc.Type == D3D_SIT_TEXTURE) {
                 const auto samplerBinding = find(mBindings.samplers, name);
                 if (!samplerBinding || !samplerBinding->texture) {
@@ -543,7 +592,7 @@ bool D3DPipeline::bindGraphics(D3DContext &context, ScriptEngine &scriptEngine)
 
     updateGlobalConstantBuffers(context, scriptEngine);
 
-    if (!setDescriptors(context))
+    if (!setDescriptors(context, scriptEngine))
         return false;
 
     if (mDescriptorHeap) {
@@ -570,7 +619,7 @@ bool D3DPipeline::bindCompute(D3DContext &context, ScriptEngine &scriptEngine)
 
     updateGlobalConstantBuffers(context, scriptEngine);
 
-    if (!setDescriptors(context))
+    if (!setDescriptors(context, scriptEngine))
         return false;
 
     if (mDescriptorHeap) {
@@ -580,4 +629,23 @@ bool D3DPipeline::bindCompute(D3DContext &context, ScriptEngine &scriptEngine)
             mDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
     }
     return true;
+}
+
+auto D3DPipeline::getDynamicConstantBuffer(uint32_t space, uint32_t binding,
+    uint32_t arrayElement) -> DynamicConstantBuffer &
+{
+    auto it = std::find_if(mDynamicConstantBuffers.begin(),
+        mDynamicConstantBuffers.end(), [&](const auto &block) {
+            return (block->space == space && block->binding == binding
+                && block->arrayElement == arrayElement);
+        });
+    if (it == mDynamicConstantBuffers.end()) {
+        it = mDynamicConstantBuffers.emplace(mDynamicConstantBuffers.end(),
+            new DynamicConstantBuffer{
+                .space = space,
+                .binding = binding,
+                .arrayElement = arrayElement,
+            });
+    }
+    return **it;
 }

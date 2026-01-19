@@ -79,7 +79,6 @@ private:
     VKTarget *mTarget{};
     VKStream *mVertexStream{};
     VKAccelerationStructure *mAccelerationStructure{};
-
     bool mCreated{};
     KDGpu::GraphicsPipeline mGraphicsPipeline;
     KDGpu::ComputePipeline mComputePipeline;

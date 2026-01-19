@@ -115,20 +115,44 @@ QStringList D3DShader::preprocessorDefinitions() const
     return definitions;
 }
 
-QString D3DShader::getBufferBindingName(const QString &name) const
+const SpvReflectDescriptorBinding *D3DShader::getSpirvDescriptorBinding(
+    const QString &name) const
 {
-    if (mInterface && name.startsWith("_")) {
+    if (!mInterface)
+        return nullptr;
+
+    if (isGlobalConstantsBufferName(name))
+        for (auto i = 0u; i < mInterface->descriptor_binding_count; ++i) {
+            const auto &binding = mInterface->descriptor_bindings[i];
+            if (isGlobalConstantsBufferName(
+                    binding.type_description->type_name))
+                return &binding;
+        }
+
+    for (auto i = 0u; i < mInterface->descriptor_binding_count; ++i) {
+        const auto &binding = mInterface->descriptor_bindings[i];
+        if (binding.type_description->type_name == name)
+            return &binding;
+    }
+
+    for (auto i = 0u; i < mInterface->descriptor_binding_count; ++i) {
+        const auto &binding = mInterface->descriptor_bindings[i];
+        if (binding.name == name)
+            return &binding;
+    }
+
+    if (name.startsWith("_")) {
         auto ok = false;
         const auto spirvId = name.mid(1).toUInt(&ok);
         if (ok) {
             for (auto i = 0u; i < mInterface->descriptor_binding_count; ++i) {
                 const auto &binding = mInterface->descriptor_bindings[i];
                 if (binding.spirv_id == spirvId)
-                    return binding.type_description->type_name;
+                    return &binding;
             }
         }
     }
-    return name;
+    return nullptr;
 }
 
 bool D3DShader::compile(PrintfBase &printf)

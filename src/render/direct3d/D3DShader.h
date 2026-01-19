@@ -2,8 +2,8 @@
 
 #if defined(_WIN32)
 
-#include "D3DPrintf.h"
-#include "render/ShaderBase.h"
+#  include "D3DPrintf.h"
+#  include "render/ShaderBase.h"
 
 class D3DShader : public ShaderBase
 {
@@ -18,6 +18,8 @@ public:
         return mReflection;
     }
     QString getBufferBindingName(const QString &name) const;
+    const SpvReflectDescriptorBinding *getSpirvDescriptorBinding(
+        const QString &name) const;
 
 private:
     QStringList preprocessorDefinitions() const override;

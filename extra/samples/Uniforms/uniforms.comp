@@ -85,5 +85,7 @@ void main() {
   assertEq(block_2[0].values_0[0], float(1));
   assertEq(block_2[0].values_0[1], float(2));
   assertEq(block_2[1].values_0[0], float(3));
-  assertEq(block_2[1].values_0[1], float(4));  
+  assertEq(block_2[1].values_0[1], float(4.1));
+  
+  printf("All tests completed.");
 }
