@@ -202,11 +202,6 @@ namespace {
     }
 } // namespace
 
-bool isGlobalConstantsBufferName(const QString &name)
-{
-    return (name == "$Global" || name == "$Globals" || name == "_Global");
-}
-
 QString resolveIncludePath(const QString &currentFile, const QString &relative,
     const QString &includePaths)
 {

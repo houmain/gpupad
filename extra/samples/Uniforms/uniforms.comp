@@ -1,9 +1,14 @@
 #version 450
 
-#if defined(GPUPAD_GLSLANG)
-# extension GL_EXT_scalar_block_layout: enable
+#if 0
+# define LAYOUT std430
+# if defined(GPUPAD_GLSLANG)
+#   extension GL_EXT_scalar_block_layout: enable
+# else
+#   extension GL_NV_uniform_buffer_std430_layout: enable
+# endif
 #else
-# extension GL_NV_uniform_buffer_std430_layout: enable
+# define LAYOUT std140
 #endif
 
 #define assertEq(X, Y) if ((X) == (Y)); else printf("Assertion %.1f == %.1f failed in line %d.", (X), (Y), __LINE__)
@@ -26,13 +31,13 @@ uniform vec2  u_values_2;
 uniform vec3  u_values_3[2];
 uniform mat3  u_values_4;
 
-layout(std140) uniform u_block {
+layout(LAYOUT) uniform u_block {
   float values_0[2][2];
   Type  values_1[2];
   vec2  values_2;
 } block;
 
-layout(std140) uniform u_block_2 {
+layout(LAYOUT) uniform u_block_2 {
   float values_0[2];
 } block_2[2];
 

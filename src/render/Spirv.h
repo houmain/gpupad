@@ -66,7 +66,7 @@ private:
 
 constexpr const char globalUniformBlockName[]{ "$Global" };
 bool isGlobalUniformBlockName(const char *name);
-bool isGlobalUniformBlockName(QStringView name);
+bool isGlobalUniformBlockName(const QString &name);
 QString removeGlobalUniformBlockName(QString string);
 
 QString getJsonString(const SpvReflectShaderModule &module);

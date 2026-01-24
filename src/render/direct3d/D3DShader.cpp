@@ -121,10 +121,10 @@ const SpvReflectDescriptorBinding *D3DShader::getSpirvDescriptorBinding(
     if (!mInterface)
         return nullptr;
 
-    if (isGlobalConstantsBufferName(name))
+    if (isGlobalUniformBlockName(name))
         for (auto i = 0u; i < mInterface->descriptor_binding_count; ++i) {
             const auto &binding = mInterface->descriptor_bindings[i];
-            if (isGlobalConstantsBufferName(
+            if (isGlobalUniformBlockName(
                     binding.type_description->type_name))
                 return &binding;
         }

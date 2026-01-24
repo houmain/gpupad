@@ -294,20 +294,17 @@ namespace {
     };
 } // namespace
 
-bool isGlobalUniformBlockName(const char *name)
+bool isGlobalUniformBlockName(const char *name_)
 {
-    return (name && !std::strcmp(name, globalUniformBlockName));
+    if (!name_)
+      return false;
+    const auto name = std::string_view(name_);
+    return (name == "$Globals" || name == "$Global" || name == "_Global");
 }
 
-bool isGlobalUniformBlockName(QStringView name)
+bool isGlobalUniformBlockName(const QString &name)
 {
-    const auto size = sizeof(globalUniformBlockName) - 1;
-    if (name.size() != size)
-        return false;
-    for (auto i = 0u; i < size; ++i)
-        if (name[i] != globalUniformBlockName[i])
-            return false;
-    return true;
+    return isGlobalUniformBlockName(qUtf8Printable(name));
 }
 
 QString removeGlobalUniformBlockName(QString string)
