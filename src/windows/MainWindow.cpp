@@ -1008,6 +1008,8 @@ bool MainWindow::closeSession()
             return false;
     }
 
+    setEvaluationMode(EvaluationMode::Paused);
+    Singletons::synchronizeLogic().resetRenderSession();
     Singletons::synchronizeLogic().handleSessionFileNameChanged("");
     mEditorManager.closeAllEditors(false);
     mOutputWindow->setText("");

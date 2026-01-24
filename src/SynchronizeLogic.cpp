@@ -136,7 +136,7 @@ bool SynchronizeLogic::initializeRenderSession()
 
 void SynchronizeLogic::resetRenderSession()
 {
-    mEvaluationMode = EvaluationMode::Paused;
+    Q_ASSERT(mEvaluationMode == EvaluationMode::Paused);
     mRenderSession.reset();
     mProcessSource.reset();
     Singletons::videoManager().unloadAll();
@@ -490,8 +490,8 @@ void SynchronizeLogic::processSource()
 
     if (!initializeRenderSession())
         return;
-        
-    Singletons::fileCache().updateFromEditors();        
+
+    Singletons::fileCache().updateFromEditors();
     mProcessSource->setFileName(mCurrentEditorFileName);
     mProcessSource->setSourceType(mCurrentEditorSourceType);
     mProcessSource->setValidateSource(mValidateSource);
@@ -502,7 +502,6 @@ void SynchronizeLogic::processSource()
 void SynchronizeLogic::handleSessionFileNameChanged(const QString &fileName)
 {
     mSessionFileName = toNativeCanonicalFilePath(fileName);
-    resetRenderSession();
 }
 
 void SynchronizeLogic::handleMouseStateChanged()
