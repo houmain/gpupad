@@ -1066,8 +1066,7 @@ void MainWindow::updateRecentFileActions()
                 auto text = action->text();
                 if (text.size() > 100)
                     text = text.replace(45, text.size() - 90, "...  ...");
-                action->setText(
-                    QStringLiteral("  &%1 %2")
+                action->setText(QStringLiteral("  &%1 %2")
                         .arg(QChar(index < 9 ? '1' + index : 'A' + (index - 9)))
                         .arg(text));
                 ++index;
@@ -1252,15 +1251,21 @@ void MainWindow::populateSampleSessions()
 {
     if (!mUi->menuSampleSessions->actions().empty())
         return;
-    const auto entries = enumerateApplicationPaths(SamplesDir, QDir::Dirs);
-    for (const auto &entry : entries) {
-        auto dir = QDir(entry.absoluteFilePath());
-        dir.setNameFilters({ "*.gpjs" });
-        auto sessions = dir.entryInfoList();
-        if (!sessions.empty()) {
-            auto action = mUi->menuSampleSessions->addAction(
-                "&" + entry.fileName(), this, SLOT(openSampleSession()));
-            action->setData(sessions.first().absoluteFilePath());
+    const auto subDirInfos = enumerateApplicationPaths(SamplesDir, QDir::Dirs);
+    for (const auto &subDirInfo : subDirInfos) {
+        auto subDir = QDir(subDirInfo.absoluteFilePath());
+        subDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
+        auto subMenu = mUi->menuSampleSessions->addMenu(subDirInfo.baseName());
+        const auto entries = subDir.entryInfoList();
+        for (const auto &entry : entries) {
+            auto dir = QDir(entry.absoluteFilePath());
+            dir.setNameFilters({ "*.gpjs" });
+            const auto sessions = dir.entryInfoList();
+            if (!sessions.empty()) {
+                auto action = subMenu->addAction("&" + entry.fileName(), this,
+                    SLOT(openSampleSession()));
+                action->setData(sessions.first().absoluteFilePath());
+            }
         }
     }
 }
