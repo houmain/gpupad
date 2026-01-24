@@ -1,5 +1,4 @@
 {
-    "autoSampledTextures": true,
     "flipViewport": true,
     "id": 897,
     "items": [
@@ -246,7 +245,6 @@
                     "entryPoint": "VS",
                     "fileName": "cube.fx",
                     "id": 89,
-                    "language": "HLSL",
                     "shaderType": "Vertex",
                     "type": "Shader"
                 },
@@ -254,7 +252,6 @@
                     "entryPoint": "PS",
                     "fileName": "cube.fx",
                     "id": 90,
-                    "language": "HLSL",
                     "shaderType": "Fragment",
                     "type": "Shader"
                 }
@@ -306,7 +303,16 @@
     "name": "Session",
     "renderer": "Direct3D",
     "reverseCulling": true,
+    "shaderCompiler": "DXC",
+    "shaderCompilerSettings": {
+        "autoMapBindings": "true",
+        "autoMapLocations": "true",
+        "autoSampledTextures": "true",
+        "spirvVersion": "10",
+        "vulkanRulesRelaxed": "true"
+    },
     "shaderIncludePaths": "",
+    "shaderLanguage": "HLSL",
     "shaderPreamble": "",
     "type": "Session"
 }

@@ -31,6 +31,9 @@ void GLPrintf::clear()
 void GLPrintf::beginDownload(GLContext &gl)
 {
 #if GL_VERSION_4_3
+    if (!mBufferObject)
+        return;
+
     gl.glBindBuffer(GL_SHADER_STORAGE_BUFFER, mBufferObject);
     gl.glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(mHeader),
         &mHeader);

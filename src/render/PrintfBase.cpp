@@ -727,7 +727,21 @@ QString RemoveShaderPrintf::patchSource(Shader::ShaderType stage,
     const QString &fileName, const QString &source_)
 {
     auto source = blankComments(source_);
-    source = source.replace(QRegularExpression("printfEnabled[^;]+"), "");
-    source = source.replace(QRegularExpression("printf\\([^;]+"), "");
+
+    static const auto regex = QRegularExpression("(printf\\s*\\()",
+        QRegularExpression::MultilineOption);
+
+    for (auto match = regex.match(source); match.hasMatch();
+        match = regex.match(source)) {
+        auto pos = match.capturedStart() + match.capturedLength();
+        for (auto level = 1; level > 0 && pos < source.length(); ++pos) {
+            const auto c = source.at(pos);
+            if (c == '(')
+                ++level;
+            else if (c == ')')
+                --level;
+        }
+        source.remove(match.capturedStart(), pos - match.capturedStart());
+    }
     return source;
 }

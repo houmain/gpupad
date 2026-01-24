@@ -76,10 +76,14 @@ private:
         context.initializeOpenGLFunctions();
 
         mDebugLogger = std::make_unique<QOpenGLDebugLogger>();
+
         if (mDebugLogger->initialize()) {
             mDebugLogger->disableMessages(QOpenGLDebugMessage::AnySource,
                 QOpenGLDebugMessage::AnyType,
-                QOpenGLDebugMessage::NotificationSeverity);
+                QOpenGLDebugMessage::NotificationSeverity
+                    | QOpenGLDebugMessage::LowSeverity
+                    | QOpenGLDebugMessage::MediumSeverity);
+
             connect(mDebugLogger.get(), &QOpenGLDebugLogger::messageLogged,
                 this, &Worker::handleDebugMessage);
             mDebugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
@@ -89,15 +93,15 @@ private:
 
     void handleDebugMessage(const QOpenGLDebugMessage &message)
     {
-        auto lock = QMutexLocker(&gFirstGLErrorMutex);
-        if (message.severity() == QOpenGLDebugMessage::HighSeverity) {
-            if (gFirstGLError.isEmpty())
-                gFirstGLError = message.message();
-        } else {
+        const auto lock = QMutexLocker(&gFirstGLErrorMutex);
+        Q_ASSERT(message.severity() == QOpenGLDebugMessage::HighSeverity);
+
+        if (gFirstGLError.isEmpty())
+            gFirstGLError = message.message();
+
 #if !defined(NDEBUG)
-            qDebug() << message.message();
+        qDebug() << message.message();
 #endif
-        }
     }
 
     bool mInitialized{};
