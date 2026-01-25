@@ -379,7 +379,7 @@ QString PrintfBase::preambleHLSL()
 
 static uint _printfArgumentOffset = 0;
 
-RWByteAddressBuffer _printfBuffer;
+RWByteAddressBuffer _printfBuffer : register(u31, space4);
 
 void _printfBegin(int whichFormatString, int argumentCount) {
   uint offset;
@@ -395,7 +395,7 @@ void _printfBegin(int whichFormatString, int argumentCount) {
 #define W(N) \
 void _printfWrite(uint typeBase, uint v[N]) { \
   uint offset; \
-  _printfBuffer.InterlockedAdd(0, 1 + N, offset); \
+  _printfBuffer.InterlockedAdd(0, uint(1 + N), offset); \
   _printfBuffer.Store(_printfArgumentOffset++ * 4 + 8, offset); \
   _printfBuffer.Store(offset++ * 4 + 8, typeBase + N); \
   for (int i = 0; i < N; ++i) \
@@ -504,29 +504,6 @@ void _printf(float4x4 m) {
   uint a[] = { u0[0], u0[1], u0[2], u0[3], u1[0], u1[1], u1[2], u1[3], u2[0], u2[1], u2[2], u2[3], u3[0], u3[1], u3[2], u3[3] };
   _printfWrite(4400, a);
 }
-
-void _printf(int v) { _printf(uint(v)); }
-void _printf(int2 v) { _printf(uint2(v)); }
-void _printf(int3 v) { _printf(uint3(v)); }
-void _printf(int4 v) { _printf(uint4(v)); }
-void _printf(bool v) { _printf(uint(v)); }
-void _printf(bool2 v) { _printf(uint2(v)); }
-void _printf(bool3 v) { _printf(uint3(v)); }
-void _printf(bool4 v) { _printf(uint4(v)); }
-void _printf(double v) { _printf(float(v)); }
-void _printf(double2 v) { _printf(float2(v)); }
-void _printf(double3 v) { _printf(float3(v)); }
-void _printf(double4 v) { _printf(float4(v)); }
-void _printf(double2x2 m) { _printf(float2x2(m)); }
-void _printf(double2x3 m) { _printf(float2x3(m)); }
-void _printf(double2x4 m) { _printf(float2x4(m)); }
-void _printf(double3x2 m) { _printf(float3x2(m)); }
-void _printf(double3x3 m) { _printf(float3x3(m)); }
-void _printf(double3x4 m) { _printf(float3x4(m)); }
-void _printf(double4x2 m) { _printf(float4x2(m)); }
-void _printf(double4x3 m) { _printf(float4x3(m)); }
-void _printf(double4x4 m) { _printf(float4x4(m)); }
-
 )");
 }
 
@@ -561,7 +538,7 @@ QString PrintfBase::patchSource(Shader::ShaderType stage,
                              .arg(call.arguments.size());
         for (const auto &argument : call.arguments)
             patchedSource += QStringLiteral(", _printf(%1)").arg(argument);
-        patchedSource += ", 1)";
+        patchedSource += ")";
         patchedSource += QString(
             countLines(call.statement.begin(), call.statement.end()), '\n');
         auto formatString = parseFormatString(call.formatString);
@@ -728,7 +705,7 @@ QString RemoveShaderPrintf::patchSource(Shader::ShaderType stage,
 {
     auto source = blankComments(source_);
 
-    static const auto regex = QRegularExpression("(printf\\s*\\()",
+    static const auto regex = QRegularExpression("(\\bprintf\\s*\\()",
         QRegularExpression::MultilineOption);
 
     for (auto match = regex.match(source); match.hasMatch();
