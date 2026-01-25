@@ -498,5 +498,5 @@ GLenum getBufferMemberGLType(const SpvReflectBlockVariable &variable)
     case hash(4, 2, DT::Double): return GL_DOUBLE_MAT4x2;
     case hash(4, 3, DT::Double): return GL_DOUBLE_MAT4x3;
     }
-    return 0;
+    return GL_NONE;
 }

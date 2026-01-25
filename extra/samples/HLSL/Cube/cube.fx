@@ -2,9 +2,7 @@
 matrix uModel;
 matrix uView;
 matrix uProjection;
-
-// TODO: restore
-//float3 uAmbient;
+float3 uAmbient;
 
 Texture2D uTexture;
 SamplerState sampleLinear;
@@ -34,6 +32,6 @@ float4 PS(PS_INPUT input) : SV_Target {
   const float3 normal = normalize(input.normal);
   float3 albedo = uTexture.Sample(sampleLinear, input.texCoords).rgb;
   float3 diffuse = max(dot(normal, light), 0.0);
-  float3 color = albedo * diffuse;//(uAmbient + diffuse);
+  float3 color = albedo * (uAmbient + diffuse);
   return float4(color, 1);
 }

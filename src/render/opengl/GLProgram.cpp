@@ -559,11 +559,27 @@ void GLProgram::fillInterface(Interface &interface,
 
             auto members = std::map<QString, Interface::BufferMember>();
             auto minimumSize = 0;
-            std::function<void(const SpvReflectBlockVariable &)> addMember;
-            addMember = [&](const SpvReflectBlockVariable &member) {
+            using Member = SpvReflectBlockVariable;
+            std::function<void(const Member &, const QString &)> addMember;
+            addMember = [&](const Member &member, QString name) {
                 if (member.member_count) {
-                    for (auto i = 0u; i < member.member_count; ++i)
-                        addMember(member.members[i]);
+                    if (member.array.dims_count) {
+                        // TODO: multiple dimensions
+                        for (auto a = 0u; a < member.array.dims[0]; ++a)
+                            for (auto i = 0u; i < member.member_count; ++i)
+                                addMember(member.members[i],
+                                    QStringLiteral("%1[%2].%3")
+                                        .arg(name)
+                                        .arg(a)
+                                        .arg(member.members[i].name));
+                    } else {
+                        for (auto i = 0u; i < member.member_count; ++i)
+                            addMember(member.members[i],
+                                (name.isEmpty()
+                                        ? member.members[i].name
+                                        : QStringLiteral("%1.%2").arg(name).arg(
+                                              member.members[i].name)));
+                    }
                     return;
                 }
                 const auto offset = static_cast<int>(member.absolute_offset);
@@ -573,7 +589,7 @@ void GLProgram::fillInterface(Interface &interface,
                     arrayStride = getDataTypeSize(dataType);
                 const auto size = getBufferMemberArraySize(member);
 
-                members[member.name] = {
+                members[name] = {
                     .dataType = dataType,
                     .size = size,
                     .offset = offset,
@@ -582,7 +598,14 @@ void GLProgram::fillInterface(Interface &interface,
                 minimumSize =
                     std::max(minimumSize, offset + size * arrayStride);
             };
-            addMember(desc.block);
+            if (desc.array.dims_count) {
+                // TODO: multiple dimensions
+                for (auto a = 0u; a < desc.array.dims[0]; ++a)
+                    addMember(desc.block,
+                        QStringLiteral("%1[%2]").arg(desc.block.name).arg(a));
+            } else {
+                addMember(desc.block, desc.block.name);
+            }
 
             Q_ASSERT(minimumSize);
             if (!minimumSize)
