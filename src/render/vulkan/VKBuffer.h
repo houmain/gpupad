@@ -17,7 +17,6 @@ public:
     void copy(VKContext &context, VKBuffer &source);
     bool swap(VKBuffer &other);
     void upload(VKContext &context);
-    void upload(VKContext &context, const void *data, size_t size);
     void beginDownload(VKContext &context, bool checkModification);
     bool finishDownload();
     void prepareIndirectBuffer(VKContext &context);

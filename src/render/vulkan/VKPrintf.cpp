@@ -7,7 +7,7 @@ VKBuffer &VKPrintf::getInitializedBuffer(VKContext &context)
         mBuffer.emplace(bufferSize);
 
     const auto header = initializeHeader();
-    mBuffer->upload(context, &header, sizeof(BufferHeader));
+    std::memcpy(mBuffer->writableData().data(), &header, sizeof(BufferHeader));
     return *mBuffer;
 }
 

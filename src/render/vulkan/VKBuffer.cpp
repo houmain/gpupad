@@ -138,45 +138,38 @@ KDGpu::Buffer VKBuffer::createStagingBuffer(KDGpu::Device &device,
     });
 }
 
-void VKBuffer::upload(VKContext &context, const void *data, size_t size)
-{
-    createBuffer(context.device);
-
-    auto &stagingBuffer =
-        context.stagingBuffers.emplace_back(createStagingBuffer(context.device,
-            KDGpu::BufferUsageFlagBits::TransferSrcBit));
-
-    auto mappedData = stagingBuffer.map();
-    std::memcpy(mappedData, data, size);
-    stagingBuffer.unmap();
-
-    if (context.commandRecorder) {
-        memoryBarrier(*context.commandRecorder,
-            KDGpu::AccessFlagBit::TransferWriteBit,
-            KDGpu::PipelineStageFlagBit::AllCommandsBit);
-    
-        context.commandRecorder->copyBuffer({
-            .src = stagingBuffer,
-            .dst = mBuffer,
-            .byteSize = static_cast<size_t>(mSize),
-        });
-    }
-    else {
-        context.queue.waitForUploadBufferData({
-            .destinationBuffer = mBuffer,
-            .data = data,
-            .byteSize = static_cast<KDGpu::DeviceSize>(size),
-        });
-    }
-}
-
 void VKBuffer::upload(VKContext &context)
 {
     if (!mSystemCopyModified)
         return;
 
-    upload(context, mData.constData(), mSize);
+    createBuffer(context.device);
 
+    if (context.commandRecorder) {
+        memoryBarrier(*context.commandRecorder,
+            KDGpu::AccessFlagBit::TransferWriteBit,
+            KDGpu::PipelineStageFlagBit::AllCommandsBit);
+
+        auto &stagingBuffer =
+            context.stagingBuffers.emplace_back(createStagingBuffer(
+                context.device, KDGpu::BufferUsageFlagBits::TransferSrcBit));
+
+        auto mappedData = stagingBuffer.map();
+        std::memcpy(mappedData, mData.constData(), mData.size());
+        stagingBuffer.unmap();
+
+        context.commandRecorder->copyBuffer({
+            .src = stagingBuffer,
+            .dst = mBuffer,
+            .byteSize = static_cast<size_t>(mSize),
+        });
+    } else {
+        context.queue.waitForUploadBufferData({
+            .destinationBuffer = mBuffer,
+            .data = mData.constData(),
+            .byteSize = static_cast<KDGpu::DeviceSize>(mData.size()),
+        });
+    }
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 

@@ -139,27 +139,22 @@ ComPtr<ID3D12Resource> D3DBuffer::createStagingBuffer(D3DContext &context,
     return stagingBuffer;
 }
 
-void D3DBuffer::upload(D3DContext &context, const void *data, size_t size)
-{
-    createBuffer(context);
-
-    auto stagingBuffer = createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD);
-    auto mappedData = std::add_pointer_t<void>{};
-    AssertIfFailed(stagingBuffer->Map(0, nullptr, &mappedData));
-    std::memcpy(mappedData, data, size);
-    stagingBuffer->Unmap(0, nullptr);
-
-    resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
-    context.graphicsCommandList->CopyBufferRegion(mResource.Get(), 0,
-        stagingBuffer.Get(), 0, static_cast<UINT64>(size));
-}
-
 void D3DBuffer::upload(D3DContext &context)
 {
     if (!mSystemCopyModified)
         return;
 
-    upload(context, mData.constData(), mSize);
+    createBuffer(context);
+
+    auto stagingBuffer = createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD);
+    auto mappedData = std::add_pointer_t<void>{};
+    AssertIfFailed(stagingBuffer->Map(0, nullptr, &mappedData));
+    std::memcpy(mappedData, mData.constData(), mSize);
+    stagingBuffer->Unmap(0, nullptr);
+
+    resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
+    context.graphicsCommandList->CopyBufferRegion(mResource.Get(), 0,
+        stagingBuffer.Get(), 0, static_cast<UINT64>(mSize));
 
     mSystemCopyModified = mDeviceCopyModified = false;
 }

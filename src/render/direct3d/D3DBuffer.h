@@ -21,7 +21,6 @@ public:
     void copy(D3DContext &context, D3DBuffer &source);
     bool swap(D3DBuffer &other);
     void upload(D3DContext &context);
-    void upload(D3DContext &context, const void *data, size_t size);
     void beginDownload(D3DContext &context, bool checkModification);
     bool finishDownload();
     void prepareCopySource(D3DContext &context);
