@@ -112,12 +112,12 @@ namespace {
         }
     }
 
-    uint32_t getMaxBindingNumberInSet(const Spirv::Interface &interface,
+    uint32_t getMaxBindingNumberInSet(const Reflection &reflection,
         uint32_t set)
     {
         auto maxBindingNumber = 0u;
-        for (auto i = 0u; i < interface->descriptor_binding_count; ++i) {
-            const auto &desc = interface->descriptor_bindings[i];
+        for (auto i = 0u; i < reflection->descriptor_binding_count; ++i) {
+            const auto &desc = reflection->descriptor_bindings[i];
             if (desc.set == set)
                 maxBindingNumber = std::max(maxBindingNumber, desc.binding);
         }
@@ -305,9 +305,9 @@ bool VKPipeline::hasPushConstants() const
 
 bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
 {
-    for (const auto &[stage, interface] : mProgram.interface())
-        for (auto i = 0u; i < interface->push_constant_block_count; ++i) {
-            const auto &block = interface->push_constant_blocks[i];
+    for (const auto &[stage, reflection] : mProgram.reflection())
+        for (auto i = 0u; i < reflection->push_constant_block_count; ++i) {
+            const auto &block = reflection->push_constant_blocks[i];
             if (const auto bufferBinding = find(mBindings.buffers,
                     block.type_description->type_name)) {
                 if (!bufferBinding->buffer) {
@@ -529,9 +529,9 @@ bool VKPipeline::createRayTracing(VKContext &context,
 bool VKPipeline::createLayout(VKContext &context)
 {
     mPushConstantRange = KDGpu::PushConstantRange{};
-    for (const auto &[stage, interface] : mProgram.interface()) {
-        for (auto i = 0u; i < interface->descriptor_binding_count; ++i) {
-            const auto &desc = interface->descriptor_bindings[i];
+    for (const auto &[stage, reflection] : mProgram.reflection()) {
+        for (auto i = 0u; i < reflection->descriptor_binding_count; ++i) {
+            const auto &desc = reflection->descriptor_bindings[i];
             if (!desc.accessed)
                 continue;
 
@@ -539,7 +539,7 @@ bool VKPipeline::createLayout(VKContext &context)
             auto flags = KDGpu::ResourceBindingFlagBits::None;
             if (count == 0) {
                 const auto maxBinding =
-                    getMaxBindingNumberInSet(interface, desc.set);
+                    getMaxBindingNumberInSet(reflection, desc.set);
                 if (desc.binding != maxBinding) {
                     mMessages += MessageList::insert(mItemId,
                         MessageType::OnlyLastBindingMayBeUnsizedArray,
@@ -565,8 +565,8 @@ bool VKPipeline::createLayout(VKContext &context)
                 return false;
         }
 
-        for (auto i = 0u; i < interface->push_constant_block_count; ++i) {
-            const auto &block = interface->push_constant_blocks[i];
+        for (auto i = 0u; i < reflection->push_constant_block_count; ++i) {
+            const auto &block = reflection->push_constant_blocks[i];
             mPushConstantRange.shaderStages |= stage;
             mPushConstantRange.size =
                 std::max(mPushConstantRange.size, block.size);
@@ -605,9 +605,9 @@ bool VKPipeline::updateBindings(VKContext &context, ScriptEngine &scriptEngine)
     }
 
     auto canRender = true;
-    for (const auto &[stage, interface] : mProgram.interface())
-        for (auto i = 0u; i < interface->descriptor_binding_count; ++i) {
-            const auto &desc = interface->descriptor_bindings[i];
+    for (const auto &[stage, reflection] : mProgram.reflection())
+        for (auto i = 0u; i < reflection->descriptor_binding_count; ++i) {
+            const auto &desc = reflection->descriptor_bindings[i];
             if (!desc.accessed)
                 continue;
 

@@ -2,6 +2,7 @@
 
 #include "PrintfBase.h"
 #include "Spirv.h"
+#include "Reflection.h"
 
 class ShaderBase
 {
@@ -24,7 +25,7 @@ public:
     QString generateHLSL();
     QString disassemble();
     QString generateGLSLangAST();
-    QString getJsonInterface();
+    QString getJsonReflection();
 
 protected:
     virtual QStringList preprocessorDefinitions() const;

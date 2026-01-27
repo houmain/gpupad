@@ -13,9 +13,9 @@ public:
 
     bool compile(PrintfBase &printf);
     const ComPtr<ID3DBlob> &binary() const { return mBinary; }
-    const ComPtr<ID3D12ShaderReflection> &reflection() const
+    const ComPtr<ID3D12ShaderReflection> &d3dReflection() const
     {
-        return mReflection;
+        return mD3DReflection;
     }
     QString getBufferBindingName(const QString &name) const;
     const SpvReflectDescriptorBinding *getSpirvDescriptorBinding(
@@ -28,8 +28,8 @@ private:
     bool compileDXC(const QString &source);
 
     ComPtr<ID3DBlob> mBinary;
-    ComPtr<ID3D12ShaderReflection> mReflection;
-    Spirv::Interface mInterface;
+    ComPtr<ID3D12ShaderReflection> mD3DReflection;
+    Reflection mReflection;
 };
 
 #endif // _WIN32

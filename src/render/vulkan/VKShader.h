@@ -12,13 +12,13 @@ public:
     void setShaderIndex(int index) { mShaderIndex = index; }
     int shaderIndex() const { return mShaderIndex; }
     void create(KDGpu::Device &device, const Spirv &spirv);
-    const Spirv::Interface &interface() const { return mInterface; }
+    const Reflection &reflection() const { return mReflection; }
     KDGpu::ShaderStage getShaderStage() const;
 
 private:
     QStringList preprocessorDefinitions() const override;
 
     KDGpu::ShaderModule mShaderModule;
-    Spirv::Interface mInterface;
+    Reflection mReflection;
     int mShaderIndex{ -1 };
 };

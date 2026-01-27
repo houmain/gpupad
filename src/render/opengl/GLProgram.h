@@ -68,8 +68,7 @@ private:
     bool linkProgram();
     bool getInterfaceFromSpirv() const;
     void fillInterface(Interface &interface, GLuint program);
-    void fillInterface(Interface &interface,
-        const Spirv::Interface &spirvInterface);
+    void fillInterface(Interface &interface, const Reflection &reflection);
     void automapUniformBindings(Interface &interface);
     void applyPrintfBindings();
 

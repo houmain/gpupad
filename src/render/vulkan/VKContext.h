@@ -32,12 +32,6 @@ struct ktxVulkanDeviceInfo;
 #include <KDGpu/texture_view.h>
 #include <KDGpu/vulkan/vulkan_graphics_api.h>
 #include "KDGpuEnums.h"
-
-// prevent COM from polluting global scope
-#if defined(interface)
-#  undef interface
-#endif
-
 #include "VKRenderSession.h"
 #include "FileCache.h"
 #include "FileDialog.h"

@@ -1,6 +1,7 @@
 
 #include "Spirv.h"
 #include "ShaderBase.h"
+#include "Reflection.h"
 #include <QRegularExpression>
 #include <QFile>
 #include <QTextStream>
@@ -294,34 +295,9 @@ namespace {
     };
 } // namespace
 
-bool isGlobalUniformBlockName(const char *name_)
-{
-    if (!name_)
-      return false;
-    const auto name = std::string_view(name_);
-    return (name == "$Globals" || name == "$Global" || name == "_Global");
-}
-
-bool isGlobalUniformBlockName(const QString &name)
-{
-    return isGlobalUniformBlockName(qUtf8Printable(name));
-}
-
-QString removeGlobalUniformBlockName(QString string)
-{
-    if (string.startsWith(globalUniformBlockName))
-        return string.mid(sizeof(globalUniformBlockName));
-    return string;
-}
-
 //-------------------------------------------------------------------------
 
 Spirv::Spirv(std::vector<uint32_t> spirv) : mSpirv(std::move(spirv)) { }
-
-Spirv::Interface Spirv::getInterface() const
-{
-    return Spirv::Interface(mSpirv);
-}
 
 //-------------------------------------------------------------------------
 
@@ -469,9 +445,9 @@ try {
         .point_coord_compat = true,
     });
 
-    auto spirvInterface = spirv.getInterface();
-    for (auto i = 0u; i < spirvInterface->input_variable_count; ++i) {
-        const auto &input = *spirvInterface->input_variables[i];
+    auto reflection = Reflection(spirv.spirv());
+    for (auto i = 0u; i < reflection->input_variable_count; ++i) {
+        const auto &input = *reflection->input_variables[i];
         if (!isBuiltIn(input))
             compiler.add_vertex_attribute_remap({ input.location, input.name });
     }

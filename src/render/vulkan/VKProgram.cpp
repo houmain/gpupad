@@ -60,7 +60,7 @@ bool VKProgram::link(VKContext &context)
 {
     if (mFailed)
         return false;
-    if (!mInterface.empty())
+    if (!mReflection.empty())
         return true;
 
     if (mCompileShadersSeparately) {
@@ -75,7 +75,7 @@ bool VKProgram::link(VKContext &context)
                 return false;
             }
             shader.create(context.device, stages[shader.type()]);
-            mInterface[shader.getShaderStage().stage] = shader.interface();
+            mReflection[shader.getShaderStage().stage] = shader.reflection();
         }
     } else {
         auto inputs = std::vector<Spirv::Input>();
@@ -89,7 +89,7 @@ bool VKProgram::link(VKContext &context)
         }
         for (auto &shader : mShaders) {
             shader.create(context.device, stages[shader.type()]);
-            mInterface[shader.getShaderStage().stage] = shader.interface();
+            mReflection[shader.getShaderStage().stage] = shader.reflection();
         }
     }
     return true;

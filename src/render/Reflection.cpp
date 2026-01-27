@@ -1,5 +1,5 @@
 
-#include "Spirv.h"
+#include "Reflection.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -341,37 +341,62 @@ namespace {
     }
 } // namespace
 
-Spirv::Interface::Interface(const std::vector<uint32_t> &spirv)
+Reflection::Reflection(const std::vector<uint32_t> &spirv)
 {
-    auto module = SpvReflectShaderModule{};
+    auto module = std::make_unique<SpvReflectShaderModule>();
     const auto result = spvReflectCreateShaderModule(
-        spirv.size() * sizeof(uint32_t), spirv.data(), &module);
+        spirv.size() * sizeof(uint32_t), spirv.data(), module.get());
     if (result != SPV_REFLECT_RESULT_SUCCESS)
-        module = {};
-    mModule = std::shared_ptr<SpvReflectShaderModule>(
-        new SpvReflectShaderModule(module), spvReflectDestroyShaderModule);
+        *module = {};
+
+    mModule = std::shared_ptr<SpvReflectShaderModule>(module.release(),
+        [](SpvReflectShaderModule *module) {
+            if (module)
+                spvReflectDestroyShaderModule(module);
+            delete module;
+        });
 }
 
-Spirv::Interface::~Interface() = default;
+Reflection::~Reflection() = default;
 
-Spirv::Interface::operator bool() const
+Reflection::operator bool() const
 {
     return static_cast<bool>(mModule);
 }
 
-const SpvReflectShaderModule &Spirv::Interface::operator*() const
+const SpvReflectShaderModule &Reflection::operator*() const
 {
     Q_ASSERT(mModule);
     return *mModule;
 }
 
-const SpvReflectShaderModule *Spirv::Interface::operator->() const
+const SpvReflectShaderModule *Reflection::operator->() const
 {
     Q_ASSERT(mModule);
     return mModule.get();
 }
 
 //-------------------------------------------------------------------------
+
+bool isGlobalUniformBlockName(const char *name_)
+{
+    if (!name_)
+        return false;
+    const auto name = std::string_view(name_);
+    return (name == "$Globals" || name == "$Global" || name == "_Global");
+}
+
+bool isGlobalUniformBlockName(const QString &name)
+{
+    return isGlobalUniformBlockName(qUtf8Printable(name));
+}
+
+QString removeGlobalUniformBlockName(QString string)
+{
+    if (string.startsWith(globalUniformBlockName))
+        return string.mid(sizeof(globalUniformBlockName));
+    return string;
+}
 
 QString getJsonString(const SpvReflectShaderModule &module)
 {

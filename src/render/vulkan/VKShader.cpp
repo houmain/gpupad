@@ -30,7 +30,7 @@ namespace {
     std::optional<MessageType> checkShaderTypeSupport(Shader::ShaderType type,
         const KDGpu::Device &device)
     {
-        const auto& features = device.adapter()->features();
+        const auto &features = device.adapter()->features();
         switch (type) {
         case Shader::ShaderType::Task:
         case Shader::ShaderType::Mesh:
@@ -50,7 +50,7 @@ namespace {
 
         default: break;
         }
-        return { };
+        return {};
     }
 } // namespace
 
@@ -69,7 +69,7 @@ void VKShader::create(KDGpu::Device &device, const Spirv &spirv)
 
     Q_ASSERT(spirv);
     mShaderModule = device.createShaderModule(spirv.spirv());
-    mInterface = spirv.getInterface();
+    mReflection = Reflection(spirv.spirv());
 }
 
 KDGpu::ShaderStage VKShader::getShaderStage() const

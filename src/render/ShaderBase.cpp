@@ -1,5 +1,6 @@
 
 #include "ShaderBase.h"
+#include "Reflection.h"
 #include "FileCache.h"
 #include "FileDialog.h"
 #include "Singletons.h"
@@ -445,9 +446,9 @@ QString ShaderBase::generateGLSLangAST()
         mEntryPoint, mItemId, mIncludePaths, mMessages);
 }
 
-QString ShaderBase::getJsonInterface()
+QString ShaderBase::getJsonReflection()
 {
     const auto spirv = compileSpirv();
-    const auto interface = Spirv::Interface(spirv.spirv());
-    return getJsonString(*interface);
+    const auto reflection = Reflection(spirv.spirv());
+    return getJsonString(*reflection);
 }

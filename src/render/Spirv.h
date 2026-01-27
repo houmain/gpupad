@@ -2,7 +2,6 @@
 
 #include "MessageList.h"
 #include "session/Item.h"
-#include "spirv-reflect/spirv_reflect.h"
 
 class Spirv final
 {
@@ -15,21 +14,6 @@ public:
         QString entryPoint;
         QString includePaths;
         ItemId itemId;
-    };
-
-    class Interface
-    {
-    public:
-        Interface() = default;
-        explicit Interface(const std::vector<uint32_t> &spirv);
-        ~Interface();
-
-        explicit operator bool() const;
-        const SpvReflectShaderModule &operator*() const;
-        const SpvReflectShaderModule *operator->() const;
-
-    private:
-        std::shared_ptr<const SpvReflectShaderModule> mModule;
     };
 
     static std::map<Shader::ShaderType, Spirv> compile(const Session &session,
@@ -58,25 +42,7 @@ public:
 
     explicit operator bool() const { return !mSpirv.empty(); }
     const std::vector<uint32_t> &spirv() const { return mSpirv; }
-    Interface getInterface() const;
 
 private:
     std::vector<uint32_t> mSpirv;
 };
-
-constexpr const char globalUniformBlockName[]{ "$Global" };
-bool isGlobalUniformBlockName(const char *name);
-bool isGlobalUniformBlockName(const QString &name);
-QString removeGlobalUniformBlockName(QString string);
-
-QString getJsonString(const SpvReflectShaderModule &module);
-bool isBuiltIn(const SpvReflectInterfaceVariable &variable);
-uint32_t getBindingArraySize(const SpvReflectBindingArrayTraits &array);
-Field::DataType getBufferMemberDataType(
-    const SpvReflectBlockVariable &variable);
-int getBufferMemberColumnCount(const SpvReflectBlockVariable &variable);
-int getBufferMemberRowCount(const SpvReflectBlockVariable &variable);
-int getBufferMemberColumnStride(const SpvReflectBlockVariable &variable);
-int getBufferMemberArraySize(const SpvReflectBlockVariable &variable);
-int getBufferMemberArrayStride(const SpvReflectBlockVariable &variable);
-GLenum getBufferMemberGLType(const SpvReflectBlockVariable &variable);

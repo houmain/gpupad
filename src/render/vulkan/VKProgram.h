@@ -5,8 +5,7 @@
 class VKProgram
 {
 public:
-    using StageInterface =
-        std::map<KDGpu::ShaderStageFlagBits, Spirv::Interface>;
+    using StageReflection = std::map<KDGpu::ShaderStageFlagBits, Reflection>;
 
     VKProgram(const Program &program, const Session &session);
     bool operator==(const VKProgram &rhs) const;
@@ -16,7 +15,7 @@ public:
     ItemId itemId() const { return mItemId; }
     const Session &session() const { return mSession; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
-    const StageInterface &interface() const { return mInterface; }
+    const StageReflection &reflection() const { return mReflection; }
     const std::vector<VKShader> &shaders() const { return mShaders; }
     VKPrintf &printf() { return mPrintf; }
 
@@ -27,7 +26,7 @@ private:
     MessagePtrSet mLinkMessages;
     std::vector<VKShader> mShaders;
     std::vector<VKShader> mIncludableShaders;
-    StageInterface mInterface;
+    StageReflection mReflection;
     VKPrintf mPrintf;
     bool mCompileShadersSeparately{};
     bool mFailed{};

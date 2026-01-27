@@ -183,7 +183,7 @@ void ProcessSource::render()
                         || shader->specialize(shader->compileSpirv()))
                         mOutput = tryGetProgramBinary(*shader);
         } else if (mProcessType == "json") {
-            mOutput = mShader->getJsonInterface();
+            mOutput = mShader->getJsonReflection();
         }
         if (!mOutput.isValid())
             mOutput = "not available";

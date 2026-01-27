@@ -226,7 +226,7 @@ bool GLProgram::compileShaders()
                 return false;
 
             if (getInterfaceFromSpirv())
-                fillInterface(mInterface, spirv.getInterface());
+                fillInterface(mInterface, Reflection(spirv.spirv()));
         }
     }
     return true;
@@ -517,18 +517,18 @@ void GLProgram::fillInterface(Interface &interface, GLuint program)
 }
 
 void GLProgram::fillInterface(Interface &interface,
-    const Spirv::Interface &spirvInterface)
+    const Reflection &reflection)
 {
-    if (spirvInterface->shader_stage & SPV_REFLECT_SHADER_STAGE_VERTEX_BIT)
-        for (auto i = 0u; i < spirvInterface->input_variable_count; ++i) {
-            const auto &input = *spirvInterface->input_variables[i];
+    if (reflection->shader_stage & SPV_REFLECT_SHADER_STAGE_VERTEX_BIT)
+        for (auto i = 0u; i < reflection->input_variable_count; ++i) {
+            const auto &input = *reflection->input_variables[i];
             const auto name = (input.semantic ? input.semantic : input.name);
             if (!isBuiltIn(input))
                 interface.attributeLocations[name] = input.location;
         }
 
-    for (auto i = 0u; i < spirvInterface->descriptor_binding_count; ++i) {
-        const auto &desc = spirvInterface->descriptor_bindings[i];
+    for (auto i = 0u; i < reflection->descriptor_binding_count; ++i) {
+        const auto &desc = reflection->descriptor_bindings[i];
         if (!desc.accessed)
             continue;
 

@@ -162,7 +162,7 @@ set(SOURCES
   src/render/TextureBase.cpp
   src/render/PrintfBase.cpp
   src/render/Spirv.cpp
-  src/render/SpirvInterface.cpp
+  src/render/Reflection.cpp
   src/scripting/ScriptEngine.cpp
   src/scripting/ScriptEngine.js
   src/scripting/ScriptSession.cpp

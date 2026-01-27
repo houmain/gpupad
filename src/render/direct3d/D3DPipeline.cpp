@@ -98,7 +98,7 @@ namespace {
             var->GetDesc(&varDesc);
 
             auto type = var->GetType();
-            auto typeDesc = D3D12_SHADER_TYPE_DESC{ };
+            auto typeDesc = D3D12_SHADER_TYPE_DESC{};
             type->GetDesc(&typeDesc);
 
             block.members[i].name = varDesc.Name;
@@ -193,7 +193,7 @@ bool D3DPipeline::createInputLayout(
     if (!vertexShader)
         return true;
 
-    auto reflection = vertexShader->reflection();
+    auto reflection = vertexShader->d3dReflection();
     auto desc = D3D12_SHADER_DESC{};
     reflection->GetDesc(&desc);
 

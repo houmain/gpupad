@@ -118,25 +118,24 @@ QStringList D3DShader::preprocessorDefinitions() const
 const SpvReflectDescriptorBinding *D3DShader::getSpirvDescriptorBinding(
     const QString &name) const
 {
-    if (!mInterface)
+    if (!mReflection)
         return nullptr;
 
     if (isGlobalUniformBlockName(name))
-        for (auto i = 0u; i < mInterface->descriptor_binding_count; ++i) {
-            const auto &binding = mInterface->descriptor_bindings[i];
-            if (isGlobalUniformBlockName(
-                    binding.type_description->type_name))
+        for (auto i = 0u; i < mReflection->descriptor_binding_count; ++i) {
+            const auto &binding = mReflection->descriptor_bindings[i];
+            if (isGlobalUniformBlockName(binding.type_description->type_name))
                 return &binding;
         }
 
-    for (auto i = 0u; i < mInterface->descriptor_binding_count; ++i) {
-        const auto &binding = mInterface->descriptor_bindings[i];
+    for (auto i = 0u; i < mReflection->descriptor_binding_count; ++i) {
+        const auto &binding = mReflection->descriptor_bindings[i];
         if (binding.type_description->type_name == name)
             return &binding;
     }
 
-    for (auto i = 0u; i < mInterface->descriptor_binding_count; ++i) {
-        const auto &binding = mInterface->descriptor_bindings[i];
+    for (auto i = 0u; i < mReflection->descriptor_binding_count; ++i) {
+        const auto &binding = mReflection->descriptor_bindings[i];
         if (binding.name == name)
             return &binding;
     }
@@ -145,8 +144,8 @@ const SpvReflectDescriptorBinding *D3DShader::getSpirvDescriptorBinding(
         auto ok = false;
         const auto spirvId = name.mid(1).toUInt(&ok);
         if (ok) {
-            for (auto i = 0u; i < mInterface->descriptor_binding_count; ++i) {
-                const auto &binding = mInterface->descriptor_bindings[i];
+            for (auto i = 0u; i < mReflection->descriptor_binding_count; ++i) {
+                const auto &binding = mReflection->descriptor_bindings[i];
                 if (binding.spirv_id == spirvId)
                     return &binding;
             }
@@ -166,7 +165,7 @@ bool D3DShader::compile(PrintfBase &printf)
             return false;
         if (!compile(Spirv::generateHLSL(spirv, mItemId, mMessages)))
             return false;
-        mInterface = spirv.getInterface();
+        mReflection = Reflection(spirv.spirv());
         return true;
     }
 
@@ -213,7 +212,7 @@ bool D3DShader::compileD3DCompile(const QString &source)
     }
 
     if (FAILED(D3DReflect(binary->GetBufferPointer(), binary->GetBufferSize(),
-            IID_PPV_ARGS(&mReflection)))) {
+            IID_PPV_ARGS(&mD3DReflection)))) {
         mMessages +=
             MessageList::insert(mItemId, MessageType::UnsupportedShaderType);
         return false;
@@ -293,7 +292,7 @@ bool D3DShader::compileDXC(const QString &source)
     reflectionBuffer.Size = reflectionData->GetBufferSize();
     reflectionBuffer.Encoding = 0;
     AssertIfFailed(utils->CreateReflection(&reflectionBuffer,
-        IID_PPV_ARGS(mReflection.GetAddressOf())));
+        IID_PPV_ARGS(mD3DReflection.GetAddressOf())));
 
     mBinary = std::move(binary);
     return true;
