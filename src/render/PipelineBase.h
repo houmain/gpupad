@@ -13,6 +13,9 @@ public:
 
 protected:
     explicit PipelineBase(ItemId itemId);
+
+    std::pair<uint32_t, uint32_t> getBufferBindingOffsetSize(
+        const BufferBinding &binding, ScriptEngine &scriptEngine) const;
     void applyBufferMemberBinding(std::span<std::byte> bufferData,
         const SpvReflectBlockVariable &member, const UniformBinding &binding,
         int memberOffset, int elementOffset, int count,
@@ -29,3 +32,8 @@ protected:
     MessagePtrSet mMessages;
     QSet<ItemId> mUsedItems;
 };
+
+void forEachArrayElementRec(SpvReflectDescriptorBinding desc, uint32_t arrayDim,
+    uint32_t &arrayElement,
+    const std::function<void(SpvReflectDescriptorBinding, uint32_t, bool *)> &f,
+    bool *variableLengthArrayDonePtr = nullptr);

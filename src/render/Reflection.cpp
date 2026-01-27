@@ -339,6 +339,115 @@ namespace {
     {
         return columns * 10000 + rows * 100 + static_cast<int>(type);
     }
+
+    struct SpvReflectShaderModuleExt : SpvReflectShaderModule
+    {
+        std::vector<SpvReflectInterfaceVariable> interfaceVariables;
+        std::vector<SpvReflectInterfaceVariable *> inputVariables;
+        std::vector<SpvReflectDescriptorBinding> descriptorBindings;
+        std::vector<SpvReflectTypeDescription> typeDescriptions;
+        std::vector<SpvReflectBlockVariable> blockMembers;
+
+        virtual ~SpvReflectShaderModuleExt() = default;
+    };
+
+    size_t countBlockMembersRec(const Reflection::Builder::BlockVariable &var)
+    {
+        auto count = size_t{ 1 };
+        for (const auto &member : var.members)
+            count += countBlockMembersRec(member);
+        return count;
+    }
+
+    SpvReflectTypeDescription *getStandardTypeDescription()
+    {
+        static auto sDesc = SpvReflectTypeDescription{
+            .type_flags = SPV_REFLECT_TYPE_FLAG_FLOAT,
+            .traits = { 
+                .numeric = {
+                    .scalar = {
+                        .width = 32,
+                        .signedness = 1,
+                    },
+                },
+            },
+        };
+        return &sDesc;
+    }
+
+    std::unique_ptr<SpvReflectShaderModuleExt> buildSpvReflectShaderModule(
+        const Reflection::Builder &builder)
+    {
+        auto module = std::make_unique<SpvReflectShaderModuleExt>();
+
+        module->interfaceVariables.reserve(builder.inputs.size());
+        module->inputVariables.reserve(builder.inputs.size());
+        for (const auto &input : builder.inputs) {
+            auto &variable = module->interfaceVariables.emplace_back();
+            variable.name = input.name.c_str();
+            variable.location = input.location;
+            module->inputVariables.push_back(&variable);
+        }
+        module->input_variables = module->inputVariables.data();
+        module->input_variable_count =
+            static_cast<uint32_t>(module->inputVariables.size());
+
+        auto totalBlockMembers = size_t{};
+        for (const auto &descriptor : builder.descriptorsBindings)
+            for (const auto &member : descriptor.block.members) {
+                // TODO: recursive
+                totalBlockMembers += 1; // countBlockMembersRec(member);
+            }
+        module->blockMembers.reserve(totalBlockMembers);
+
+        auto totalTypeDescriptions = builder.descriptorsBindings.size();
+        for (const auto &descriptor : builder.descriptorsBindings)
+            if (descriptor.block.size)
+                ++totalTypeDescriptions;
+        module->typeDescriptions.reserve(totalTypeDescriptions);
+
+        module->descriptorBindings.reserve(builder.descriptorsBindings.size());
+        for (const auto &descriptor : builder.descriptorsBindings) {
+            auto &desc = module->descriptorBindings.emplace_back();
+            desc.name = descriptor.name.c_str();
+            desc.descriptor_type = descriptor.type;
+            desc.binding = descriptor.binding;
+
+            auto &typeDesc = module->typeDescriptions.emplace_back();
+            typeDesc.type_name = descriptor.typeName.c_str();
+            desc.type_description = &typeDesc;
+
+            if (descriptor.block.size) {
+                desc.block.size = descriptor.block.size;
+
+                auto &blockTypeDesc = module->typeDescriptions.emplace_back();
+                blockTypeDesc.type_name = descriptor.typeName.c_str();
+                desc.block.type_description = &blockTypeDesc;
+
+                const auto memberOffset = module->blockMembers.size();
+                for (const auto &member : descriptor.block.members) {
+                    auto &variable = module->blockMembers.emplace_back();
+                    variable.name = member.name.c_str();
+                    variable.size = member.size;
+                    variable.type_description = getStandardTypeDescription();
+                    variable.decoration_flags = member.decorationFlags;
+                    variable.numeric = member.numeric;
+                    variable.array = member.array;
+                    // TODO: members
+                }
+                desc.block.members = &module->blockMembers[memberOffset];
+                desc.block.member_count =
+                    static_cast<uint32_t>(descriptor.block.members.size());
+            }
+        }
+        module->descriptor_bindings = module->descriptorBindings.data();
+        module->descriptor_binding_count =
+            static_cast<uint32_t>(module->descriptorBindings.size());
+
+        Q_ASSERT(module->typeDescriptions.size() == totalTypeDescriptions);
+        Q_ASSERT(module->blockMembers.size() == totalBlockMembers);
+        return module;
+    }
 } // namespace
 
 Reflection::Reflection(const std::vector<uint32_t> &spirv)
@@ -355,6 +464,12 @@ Reflection::Reflection(const std::vector<uint32_t> &spirv)
                 spvReflectDestroyShaderModule(module);
             delete module;
         });
+}
+
+Reflection::Reflection(std::unique_ptr<Builder> builder)
+    : mBuilder(std::move(builder))
+    , mModule(buildSpvReflectShaderModule(*mBuilder))
+{
 }
 
 Reflection::~Reflection() = default;
@@ -396,6 +511,12 @@ QString removeGlobalUniformBlockName(QString string)
     if (string.startsWith(globalUniformBlockName))
         return string.mid(sizeof(globalUniformBlockName));
     return string;
+}
+
+bool isBufferBinding(SpvReflectDescriptorType type)
+{
+    return (type == SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER
+        || type == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER);
 }
 
 QString getJsonString(const SpvReflectShaderModule &module)

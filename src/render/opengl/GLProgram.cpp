@@ -7,16 +7,16 @@
 #include <array>
 
 namespace {
-    bool operator==(const GLProgram::Interface::BufferBindingPoint &a,
-        const GLProgram::Interface::BufferBindingPoint &b)
+    bool operator==(const Reflection::Builder::DescriptorBinding &a,
+        const Reflection::Builder::DescriptorBinding &b)
     {
-        return std::tie(a.target, a.index) == std::tie(b.target, b.index);
+        return std::tie(a.type, a.binding) == std::tie(b.type, b.binding);
     }
 
     template <typename C, typename T>
     bool containsValue(const C &container, const T &value)
     {
-        for (const auto &[key, val] : container)
+        for (const auto &val : container)
             if (val == value)
                 return true;
         return false;
@@ -59,47 +59,6 @@ namespace {
         if (string.startsWith(prefix + '.'))
             return string.mid(prefix.size() + 1);
         return string;
-    }
-
-    GLenum getBindingGLType(const SpvReflectDescriptorBinding &binding)
-    {
-#define ADD_EACH_DIMENSION(TYPE)                 \
-    switch (image.dim) {                         \
-    case SpvDim1D:   return GL_##TYPE##_1D;      \
-    case SpvDim2D:   return GL_##TYPE##_2D;      \
-    case SpvDim3D:   return GL_##TYPE##_3D;      \
-    case SpvDimCube: return GL_##TYPE##_CUBE;    \
-    case SpvDimRect: return GL_##TYPE##_2D_RECT; \
-    default:         break;                              \
-    }
-
-        const auto flags = binding.type_description->type_flags;
-        const auto image = binding.type_description->traits.image;
-        const auto numeric = binding.type_description->traits.numeric;
-        const auto is_integral = (flags & SPV_REFLECT_TYPE_FLAG_INT);
-        const auto is_signed = (is_integral && numeric.scalar.signedness != 0);
-        if (flags
-            & (SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER
-                | SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE)) {
-            if (is_integral && is_signed) {
-                ADD_EACH_DIMENSION(INT_SAMPLER)
-            } else if (is_integral && !is_signed) {
-                ADD_EACH_DIMENSION(UNSIGNED_INT_SAMPLER)
-            } else {
-                ADD_EACH_DIMENSION(SAMPLER)
-            }
-        } else if (flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE) {
-            if (is_integral && is_signed) {
-                ADD_EACH_DIMENSION(INT_IMAGE)
-            } else if (is_integral && !is_signed) {
-                ADD_EACH_DIMENSION(UNSIGNED_INT_IMAGE)
-            } else {
-                ADD_EACH_DIMENSION(IMAGE)
-            }
-        }
-#undef ADD_EACH_DIMENSION
-        assert(!"not handled binding type");
-        return GL_NONE;
     }
 
     int getDataTypeSize(GLenum dataType)
@@ -151,6 +110,16 @@ namespace {
     {
         return (getDataTypeSize(dataType) == 0);
     }
+
+    SpvReflectDescriptorType getDescriptorType(GLenum dataType)
+    {
+        switch (dataType) {
+        case GL_SAMPLER_2D:
+            return SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        default: Q_ASSERT(!"not handled data type");
+        }
+        return {};
+    }
 } // namespace
 
 GLProgram::GLProgram(const Program &program, const Session &session)
@@ -191,20 +160,13 @@ bool GLProgram::link(GLContext &context)
         return false;
     }
 
-    if (!getInterfaceFromSpirv()) {
-        fillInterface(mInterface, mProgramObject);
+    if (!getReflectionFromSpirv()) {
+        generateReflectionFromProgram(mProgramObject);
         Q_ASSERT(glGetError() == GL_NO_ERROR);
     }
 
-    automapUniformBindings(mInterface);
+    automapDescriptorBindings();
 
-    // remove printf binding point from interface
-    const auto name = mPrintf.bufferBindingName();
-    const auto it = mInterface.bufferBindingPoints.find(name);
-    if (it != mInterface.bufferBindingPoints.end()) {
-        mPrintfBufferBindingPoint = it->second;
-        mInterface.bufferBindingPoints.erase(it);
-    }
     return true;
 }
 
@@ -225,8 +187,8 @@ bool GLProgram::compileShaders()
             if (!shader.specialize(spirv))
                 return false;
 
-            if (getInterfaceFromSpirv())
-                fillInterface(mInterface, Reflection(spirv.spirv()));
+            if (getReflectionFromSpirv())
+                mReflection = Reflection(spirv.spirv());
         }
     }
     return true;
@@ -267,7 +229,7 @@ bool GLProgram::linkProgram()
     return true;
 }
 
-bool GLProgram::getInterfaceFromSpirv() const
+bool GLProgram::getReflectionFromSpirv() const
 {
     // glslang cannot automap bindings or locations when targeting OpenGL
     if (session().shaderLanguage == Session::ShaderLanguage::GLSL)
@@ -276,11 +238,15 @@ bool GLProgram::getInterfaceFromSpirv() const
     return (session().shaderCompiler == Session::ShaderCompiler::glslang);
 }
 
-void GLProgram::fillInterface(Interface &interface, GLuint program)
+void GLProgram::generateReflectionFromProgram(GLuint program)
 {
+    using BlockVariable = Reflection::Builder::BlockVariable;
+    using DescriptorBinding = Reflection::Builder::DescriptorBinding;
+    auto reflection = std::make_unique<Reflection::Builder>();
+
     auto &gl = GLContext::currentContext();
     auto buffer = std::array<char, 256>();
-    auto size = GLint{};
+    auto arrayElements = GLint{};
     auto dataType = GLenum{};
     auto nameLength = GLint{};
 
@@ -288,7 +254,7 @@ void GLProgram::fillInterface(Interface &interface, GLuint program)
     gl.glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniforms);
     for (auto i = 0u; i < static_cast<GLuint>(uniforms); ++i) {
         gl.glGetActiveUniform(program, i, static_cast<GLsizei>(buffer.size()),
-            &nameLength, &size, &dataType, buffer.data());
+            &nameLength, &arrayElements, &dataType, buffer.data());
 
         const auto name = QString(buffer.data());
         const auto location =
@@ -297,27 +263,32 @@ void GLProgram::fillInterface(Interface &interface, GLuint program)
         if (location >= 0) {
             Q_ASSERT(dataType);
             const auto arrayName = getArrayName(name);
+            const auto baseName = (arrayName.isEmpty() ? name : arrayName);
+
+            if (isOpaqueType(dataType))
+                reflection->descriptorsBindings.push_back({
+                    .typeName = baseName.toStdString(),
+                    .type = getDescriptorType(dataType),
+                });
 
             // allow to set whole array only when non-opaque
             if (arrayName.isEmpty() || !isOpaqueType(dataType))
-                interface.uniforms[arrayName.isEmpty() ? name : arrayName] = {
-                    .binding = -1,
+                mUniforms[baseName] = {
                     .location = location,
                     .dataType = dataType,
-                    .size = size,
+                    .arrayElements = arrayElements,
                 };
 
             if (!arrayName.isEmpty())
-                for (auto j = 0; j < size; ++j) {
+                for (auto j = 0; j < arrayElements; ++j) {
                     const auto elementName = getElementName(arrayName, j);
                     const auto location = gl.glGetUniformLocation(program,
                         qPrintable(elementName));
                     Q_ASSERT(location >= 0);
-                    interface.uniforms[elementName] = {
-                        .binding = -1,
+                    mUniforms[elementName] = {
                         .location = location,
                         .dataType = dataType,
-                        .size = 1,
+                        .arrayElements = 1,
                     };
                 }
         }
@@ -332,15 +303,16 @@ void GLProgram::fillInterface(Interface &interface, GLuint program)
                 gl42->glGetActiveAtomicCounterBufferiv(program,
                     atomicCounterIndex, GL_ATOMIC_COUNTER_BUFFER_BINDING,
                     &bufferBindingIndex);
-                auto bindingPoint = Interface::BufferBindingPoint{
-                    .target = GL_ATOMIC_COUNTER_BUFFER,
-                    .index = static_cast<GLuint>(bufferBindingIndex),
+                auto desc = DescriptorBinding{
+                    .name = name.toStdString(),
+                    .type = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                    .binding = static_cast<uint32_t>(bufferBindingIndex),
                 };
-                if (!containsValue(interface.bufferBindingPoints, bindingPoint))
-                    interface.bufferBindingPoints[name] = bindingPoint;
+                if (!containsValue(reflection->descriptorsBindings, desc))
+                    reflection->descriptorsBindings.push_back(desc);
 
                 // uniform is set by atomic counter buffer
-                interface.uniforms.erase(name);
+                mUniforms.erase(name);
             }
         }
 #endif
@@ -371,12 +343,12 @@ void GLProgram::fillInterface(Interface &interface, GLuint program)
         // glslang generates block_name.instance_name[N] instead of block_name[N]
         const auto blockName = removeInstanceName(bufferName);
         const auto memberPrefix = removeArrayIndex(bufferName);
-        auto members = std::map<QString, Interface::BufferMember>();
+        auto members = std::vector<BlockVariable>{};
         auto minimumSize = 0;
         for (GLuint index : uniformIndices) {
             gl.glGetActiveUniform(program, index,
-                static_cast<GLsizei>(buffer.size()), &nameLength, &size,
-                &dataType, buffer.data());
+                static_cast<GLsizei>(buffer.size()), &nameLength,
+                &arrayElements, &dataType, buffer.data());
 
             // qualify member with buffer name (glslang does already, driver not always)
             auto memberName = QString(buffer.data());
@@ -400,51 +372,65 @@ void GLProgram::fillInterface(Interface &interface, GLuint program)
                 GL_UNIFORM_IS_ROW_MAJOR, &isRowMajor);
 
             const auto arrayName = getArrayName(memberName);
-            members[arrayName.isEmpty() ? memberName : arrayName] = {
-                .dataType = dataType,
-                .size = size,
-                .offset = offset,
-                .arrayStride = arrayStride,
-                .matrixStride = matrixStride,
-                .isRowMajor = (isRowMajor != 0),
-            };
+            members.push_back(BlockVariable {
+                .name = (arrayName.isEmpty() ? memberName : arrayName)
+                            .toStdString(),
+                .offset = static_cast<uint32_t>(offset),
+                .size = static_cast<uint32_t>(arrayStride),
+                .array = {
+                    .dims_count = arrayElements ? 1u : 0u,
+                    .dims = { static_cast<uint32_t>(arrayElements) },
+                    .stride = static_cast<uint32_t>(arrayStride),
+                },
+                //.dataType = dataType,
+                //.arrayStride = arrayStride,
+                //.matrixStride = matrixStride,
+                //.isRowMajor = (isRowMajor != 0),
+            });
 
-            if (!arrayName.isEmpty())
-                for (auto j = 0; j < size; ++j) {
-                    const auto elementName = getElementName(arrayName, j);
-                    members[elementName] = {
-                        .dataType = dataType,
-                        .size = 1,
-                        .offset = offset + arrayStride * j,
-                        .arrayStride = arrayStride,
-                        .matrixStride = matrixStride,
-                        .isRowMajor = (isRowMajor != 0),
-                    };
-                }
-            minimumSize = std::max(minimumSize, offset + size * arrayStride);
+            //if (!arrayName.isEmpty())
+            //    for (auto j = 0; j < size; ++j)
+            //        members.push_back({
+            //            .name = getElementName(arrayName, j).toStdString(),
+            //            .offset = offset + arrayStride * j,
+            //            .size = 1,
+            //            .dataType = dataType,
+            //            .arrayStride = arrayStride,
+            //            .matrixStride = matrixStride,
+            //            .isRowMajor = (isRowMajor != 0),
+            //        });
+
+            minimumSize =
+                std::max(minimumSize, offset + arrayElements * arrayStride);
         }
         Q_ASSERT(minimumSize);
         if (!minimumSize)
             continue;
 
-        interface.bufferBindingPoints[blockName] = {
-            .target = GL_UNIFORM_BUFFER,
-            .index = uniformBlockBinding,
-            .members = std::move(members),
-            .minimumSize = minimumSize,
-            .readonly = true,
-        };
+        reflection->descriptorsBindings.push_back(DescriptorBinding{
+            .typeName = blockName.toStdString(),
+            .type = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .binding = uniformBlockBinding,
+            .decorationFlags = SPV_REFLECT_DECORATION_NON_WRITABLE,
+            .block = {
+                .size = static_cast<uint32_t>(minimumSize),
+                .members = std::move(members),
+            },
+        });
     }
 
     auto attributes = GLint{};
     gl.glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributes);
     for (auto i = 0u; i < static_cast<GLuint>(attributes); ++i) {
         gl.glGetActiveAttrib(program, i, static_cast<GLsizei>(buffer.size()),
-            &nameLength, &size, &dataType, buffer.data());
+            &nameLength, &arrayElements, &dataType, buffer.data());
         const auto name = QString(buffer.data());
         const auto location = gl.glGetAttribLocation(program, qPrintable(name));
         if (location >= 0)
-            interface.attributeLocations[name] = static_cast<GLuint>(location);
+            reflection->inputs.push_back({
+                .name = name.toStdString(),
+                .location = static_cast<GLuint>(location),
+            });
     }
 
     if (auto gl40 = gl.v4_0) {
@@ -478,7 +464,7 @@ void GLProgram::fillInterface(Interface &interface, GLuint program)
                         buffer.data());
                     subroutines += QString(buffer.data());
                 }
-                interface.stageSubroutines[stage].push_back({
+                mStageSubroutines[stage].push_back({
                     .name = name,
                     .subroutines = subroutines,
                 });
@@ -507,137 +493,30 @@ void GLProgram::fillInterface(Interface &interface, GLuint program)
             const auto storageBlockBinding = i;
             gl43->glShaderStorageBlockBinding(program, storageBlockIndex,
                 storageBlockBinding);
-            interface.bufferBindingPoints[blockName] = {
-                .target = GL_SHADER_STORAGE_BUFFER,
-                .index = storageBlockBinding,
-            };
+            reflection->descriptorsBindings.push_back(DescriptorBinding{
+                .typeName = blockName.toStdString(),
+                .type = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                .binding = storageBlockBinding,
+            });
         }
     }
 #endif
+
+    mReflection = Reflection(std::move(reflection));
 }
 
-void GLProgram::fillInterface(Interface &interface,
-    const Reflection &reflection)
-{
-    if (reflection->shader_stage & SPV_REFLECT_SHADER_STAGE_VERTEX_BIT)
-        for (auto i = 0u; i < reflection->input_variable_count; ++i) {
-            const auto &input = *reflection->input_variables[i];
-            const auto name = (input.semantic ? input.semantic : input.name);
-            if (!isBuiltIn(input))
-                interface.attributeLocations[name] = input.location;
-        }
-
-    for (auto i = 0u; i < reflection->descriptor_binding_count; ++i) {
-        const auto &desc = reflection->descriptor_bindings[i];
-        if (!desc.accessed)
-            continue;
-
-        switch (desc.descriptor_type) {
-        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
-        case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
-        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:          {
-            interface.uniforms[desc.name] = {
-                .binding = static_cast<int>(desc.binding),
-                .location = -1,
-                .dataType = getBindingGLType(desc),
-                .size = static_cast<int>(getBindingArraySize(desc.array)),
-            };
-            break;
-        }
-
-        case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
-            auto target = GLenum{ GL_UNIFORM_BUFFER };
-            auto readonly = true;
-
-            if (desc.descriptor_type
-                == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER) {
-                target = GL_SHADER_STORAGE_BUFFER;
-                readonly = false;
-            }
-
-            auto members = std::map<QString, Interface::BufferMember>();
-            auto minimumSize = 0;
-            using Member = SpvReflectBlockVariable;
-            std::function<void(const Member &, const QString &)> addMember;
-            addMember = [&](const Member &member, QString name) {
-                if (member.member_count) {
-                    if (member.array.dims_count) {
-                        // TODO: multiple dimensions
-                        for (auto a = 0u; a < member.array.dims[0]; ++a)
-                            for (auto i = 0u; i < member.member_count; ++i)
-                                addMember(member.members[i],
-                                    QStringLiteral("%1[%2].%3")
-                                        .arg(name)
-                                        .arg(a)
-                                        .arg(member.members[i].name));
-                    } else {
-                        for (auto i = 0u; i < member.member_count; ++i)
-                            addMember(member.members[i],
-                                (name.isEmpty()
-                                        ? member.members[i].name
-                                        : QStringLiteral("%1.%2").arg(name).arg(
-                                              member.members[i].name)));
-                    }
-                    return;
-                }
-                const auto offset = static_cast<int>(member.absolute_offset);
-                const auto dataType = getBufferMemberGLType(member);
-                auto arrayStride = getBufferMemberArrayStride(member);
-                if (!arrayStride)
-                    arrayStride = getDataTypeSize(dataType);
-                const auto size = getBufferMemberArraySize(member);
-
-                members[name] = {
-                    .dataType = dataType,
-                    .size = size,
-                    .offset = offset,
-                    .arrayStride = arrayStride,
-                };
-                minimumSize =
-                    std::max(minimumSize, offset + size * arrayStride);
-            };
-            if (desc.array.dims_count) {
-                // TODO: multiple dimensions
-                for (auto a = 0u; a < desc.array.dims[0]; ++a)
-                    addMember(desc.block,
-                        QStringLiteral("%1[%2]").arg(desc.block.name).arg(a));
-            } else {
-                addMember(desc.block, desc.block.name);
-            }
-
-            Q_ASSERT(minimumSize);
-            if (!minimumSize)
-                continue;
-
-            interface.bufferBindingPoints[desc.type_description->type_name] = {
-                .target = target,
-                .index = desc.binding,
-                .members = std::move(members),
-                .minimumSize = minimumSize,
-                .readonly = readonly,
-            };
-            break;
-        }
-
-        default: Q_ASSERT(!"not implemented");
-        }
-    }
-}
-
-void GLProgram::automapUniformBindings(Interface &interface)
+void GLProgram::automapDescriptorBindings()
 {
     // generate one binding unit per unique uniform location
-    auto uniqueLocations = QSet<int>();
-    for (auto &[name, uniform] : mInterface.uniforms)
-        if (uniform.location >= 0 && isOpaqueType(uniform.dataType))
-            uniqueLocations.insert(uniform.location);
-
-    for (auto &[name, uniform] : mInterface.uniforms)
-        if (uniform.location >= 0 && isOpaqueType(uniform.dataType))
-            uniform.binding = std::distance(uniqueLocations.begin(),
-                uniqueLocations.find(uniform.location));
+    //auto uniqueLocations = QSet<int>();
+    //for (auto &[name, uniform] : mUniforms)
+    //    if (uniform.location >= 0 && isOpaqueType(uniform.dataType))
+    //        uniqueLocations.insert(uniform.location);
+    //
+    //for (auto &[name, uniform] : mUniforms)
+    //    if (uniform.location >= 0 && isOpaqueType(uniform.dataType))
+    //        uniform.binding = std::distance(uniqueLocations.begin(),
+    //            uniqueLocations.find(uniform.location));
 }
 
 bool GLProgram::bind()
@@ -647,9 +526,6 @@ bool GLProgram::bind()
         return false;
 
     gl.glUseProgram(mProgramObject);
-
-    applyPrintfBindings();
-
     return true;
 }
 
@@ -659,16 +535,12 @@ void GLProgram::unbind()
     gl.glUseProgram(GL_NONE);
 }
 
-void GLProgram::applyPrintfBindings()
+int GLProgram::getUniformLocation(const SpvReflectDescriptorBinding &desc) const
 {
-    if (!mPrintf.isUsed())
-        return;
-
-    mPrintf.clear();
-
-    auto &gl = GLContext::currentContext();
-    gl.glBindBufferBase(mPrintfBufferBindingPoint.target,
-        mPrintfBufferBindingPoint.index, mPrintf.bufferObject());
+    for (const auto &[name, uniform] : mUniforms)
+        if (name == desc.name)
+            return uniform.location;
+    return -1;
 }
 
 GLBuffer &GLProgram::getDynamicUniformBuffer(const QString &name, int size)

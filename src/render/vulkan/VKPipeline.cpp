@@ -11,12 +11,6 @@
 namespace {
     const auto maxVariableBindGroupEntries = 128;
 
-    bool isBufferBinding(SpvReflectDescriptorType type)
-    {
-        return (type == SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER
-            || type == SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER);
-    }
-
     KDGpu::ResourceBindingType getResourceType(SpvReflectDescriptorType type)
     {
         return static_cast<KDGpu::ResourceBindingType>(type);
@@ -77,50 +71,14 @@ namespace {
         };
     }
 
-    template <typename F>
-    void forEachArrayElementRec(SpvReflectDescriptorBinding desc,
-        uint32_t arrayDim, uint32_t &arrayElement, const F &function,
-        bool *variableLengthArrayDonePtr = nullptr)
-    {
-        if (arrayDim >= desc.array.dims_count)
-            return function(desc, arrayElement++, variableLengthArrayDonePtr);
-
-        // update descriptor to contain array index in the names
-        const auto baseName = desc.name;
-        const auto baseTypeName = (desc.type_description->type_name
-                ? desc.type_description->type_name
-                : "");
-        auto typeDesc = *desc.type_description;
-        desc.type_description = &typeDesc;
-
-        const auto count = desc.array.dims[arrayDim];
-        const auto variableLengthArray = (count == 0);
-        auto variableLengthArrayDone = false;
-
-        for (auto i = 0u; variableLengthArray || i < count; ++i) {
-            const auto formatArray = [](std::string baseName, uint32_t i) {
-                return baseName + "[" + std::to_string(i) + "]";
-            };
-            const auto name = formatArray(baseName, i);
-            const auto typeName = formatArray(baseTypeName, i);
-            desc.name = name.c_str();
-            typeDesc.type_name = typeName.c_str();
-            forEachArrayElementRec(desc, arrayDim + 1, arrayElement, function,
-                (variableLengthArray ? &variableLengthArrayDone : nullptr));
-            if (variableLengthArrayDone)
-                break;
-        }
-    }
-
     uint32_t getMaxBindingNumberInSet(const Reflection &reflection,
         uint32_t set)
     {
         auto maxBindingNumber = 0u;
-        for (auto i = 0u; i < reflection->descriptor_binding_count; ++i) {
-            const auto &desc = reflection->descriptor_bindings[i];
+        for (const auto &desc : reflection.descriptorBindings())
             if (desc.set == set)
                 maxBindingNumber = std::max(maxBindingNumber, desc.binding);
-        }
+
         return maxBindingNumber;
     }
 } // namespace
@@ -306,8 +264,7 @@ bool VKPipeline::hasPushConstants() const
 bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
 {
     for (const auto &[stage, reflection] : mProgram.reflection())
-        for (auto i = 0u; i < reflection->push_constant_block_count; ++i) {
-            const auto &block = reflection->push_constant_blocks[i];
+        for (const auto &block : reflection.pushConstantBlocks()) {
             if (const auto bufferBinding = find(mBindings.buffers,
                     block.type_description->type_name)) {
                 if (!bufferBinding->buffer) {
@@ -530,8 +487,7 @@ bool VKPipeline::createLayout(VKContext &context)
 {
     mPushConstantRange = KDGpu::PushConstantRange{};
     for (const auto &[stage, reflection] : mProgram.reflection()) {
-        for (auto i = 0u; i < reflection->descriptor_binding_count; ++i) {
-            const auto &desc = reflection->descriptor_bindings[i];
+        for (const auto &desc : reflection.descriptorBindings()) {
             if (!desc.accessed)
                 continue;
 
@@ -565,8 +521,7 @@ bool VKPipeline::createLayout(VKContext &context)
                 return false;
         }
 
-        for (auto i = 0u; i < reflection->push_constant_block_count; ++i) {
-            const auto &block = reflection->push_constant_blocks[i];
+        for (const auto &block : reflection.pushConstantBlocks()) {
             mPushConstantRange.shaderStages |= stage;
             mPushConstantRange.size =
                 std::max(mPushConstantRange.size, block.size);
@@ -606,8 +561,7 @@ bool VKPipeline::updateBindings(VKContext &context, ScriptEngine &scriptEngine)
 
     auto canRender = true;
     for (const auto &[stage, reflection] : mProgram.reflection())
-        for (auto i = 0u; i < reflection->descriptor_binding_count; ++i) {
-            const auto &desc = reflection->descriptor_bindings[i];
+        for (const auto &desc : reflection.descriptorBindings()) {
             if (!desc.accessed)
                 continue;
 
@@ -668,19 +622,6 @@ MessageType VKPipeline::updateBindings(VKContext &context,
     const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
     bool isVariableLengthArray, ScriptEngine &scriptEngine)
 {
-    const auto getBufferBindingOffsetSize = [&](const BufferBinding &binding) {
-        const auto &buffer = *binding.buffer;
-        const auto offset =
-            scriptEngine.evaluateUInt(binding.offset, buffer.itemId());
-        const auto rowCount =
-            scriptEngine.evaluateUInt(binding.rowCount, buffer.itemId());
-        const auto size = (binding.stride ? rowCount * binding.stride
-                                          : buffer.size() - offset);
-        Q_ASSERT(size >= 0
-            && offset + size <= static_cast<size_t>(buffer.size()));
-        return std::pair(offset, size);
-    };
-
     switch (desc.descriptor_type) {
     case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
         if (const auto bufferBinding =
@@ -695,7 +636,7 @@ MessageType VKPipeline::updateBindings(VKContext &context,
             buffer.prepareUniformBuffer(context);
 
             const auto [offset, size] =
-                getBufferBindingOffsetSize(*bufferBinding);
+                getBufferBindingOffsetSize(*bufferBinding, scriptEngine);
             setBindGroupResource(desc.set, isVariableLengthArray,
                 {
                     .binding = desc.binding,
@@ -752,7 +693,8 @@ MessageType VKPipeline::updateBindings(VKContext &context,
         } else if (const auto bufferBinding = find(mBindings.buffers,
                        desc.type_description->type_name)) {
             buffer = static_cast<VKBuffer *>(bufferBinding->buffer);
-            std::tie(offset, size) = getBufferBindingOffsetSize(*bufferBinding);
+            std::tie(offset, size) =
+                getBufferBindingOffsetSize(*bufferBinding, scriptEngine);
             mUsedItems += bufferBinding->bindingItemId;
             mUsedItems += buffer->usedItems();
         }
@@ -877,7 +819,9 @@ MessageType VKPipeline::updateBindings(VKContext &context,
             });
         break;
     }
-    default: Q_ASSERT(!"descriptor type not handled"); break;
+    default:
+        Q_ASSERT(!"descriptor type not handled");
+        return MessageType::NotImplemented;
     }
     return MessageType::None;
 }

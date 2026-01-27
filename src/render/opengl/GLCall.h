@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GLProgram.h"
+#include "../PipelineBase.h"
 
 class GLTarget;
 class GLStream;
@@ -8,7 +9,7 @@ class GLBuffer;
 class GLTexture;
 class GLAccelerationStructure;
 
-class GLCall
+class GLCall : public PipelineBase
 {
 public:
     GLCall(const Call &call, const Session &session);
@@ -39,36 +40,20 @@ private:
     void executeCopyBuffer(MessagePtrSet &messages);
     void executeSwapTextures(MessagePtrSet &messages);
     void executeSwapBuffers(MessagePtrSet &messages);
-    bool applyBindings(const Bindings &bindings, ScriptEngine &scriptEngine);
-    bool applyUniformBindings(const QString &name,
-        const GLProgram::Interface::Uniform &uniform,
-        const std::map<QString, UniformBinding> &bindings,
+    bool updateBindings(ScriptEngine &scriptEngine);
+    MessageType applyBinding(const SpvReflectDescriptorBinding &desc,
+        uint32_t arrayElement, bool isVariableLengthArray,
         ScriptEngine &scriptEngine);
-    void applyUniformBinding(const GLProgram::Interface::Uniform &uniform,
+    void applyUniformBindings(const QString &name,
+        const GLProgram::Uniform &uniform, ScriptEngine &scriptEngine);
+    void applyUniformBinding(const GLProgram::Uniform &uniform,
         const UniformBinding &bindings, int offset, int count,
         ScriptEngine &scriptEngine);
-    bool applySamplerBinding(const GLProgram::Interface::Uniform &uniform,
+    bool applySamplerBinding(const SpvReflectDescriptorBinding &desc,
         const SamplerBinding &binding);
-    bool applyImageBinding(const GLProgram::Interface::Uniform &uniform,
+    bool applyImageBinding(const SpvReflectDescriptorBinding &desc,
         const ImageBinding &binding);
-    bool applyBufferBinding(
-        const GLProgram::Interface::BufferBindingPoint &bufferBindingPoint,
-        const BufferBinding &binding, ScriptEngine &scriptEngine);
-    bool applyDynamicBufferBindings(const QString &bufferName,
-        const GLProgram::Interface::BufferBindingPoint &bufferBindingPoint,
-        const std::map<QString, UniformBinding> &bindings,
-        ScriptEngine &scriptEngine);
-    bool applyBufferMemberBindings(GLBuffer &buffer, const QString &name,
-        const GLProgram::Interface::BufferMember &member,
-        const std::map<QString, UniformBinding> &bindings,
-        ScriptEngine &scriptEngine);
-    bool applyBufferMemberBinding(GLBuffer &buffer,
-        const GLProgram::Interface::BufferMember &member,
-        const UniformBinding &binding, int offset, int count,
-        ScriptEngine &scriptEngine);
-    void selectSubroutines(Shader::ShaderType stage,
-        const std::vector<GLProgram::Interface::Subroutine> &subroutines,
-        const std::map<QString, SubroutineBinding> &bindings);
+    void selectSubroutines();
     bool bindVertexStream();
     void unbindVertexStream();
     GLenum getIndexType() const;
@@ -76,7 +61,6 @@ private:
 
     const Call mCall;
     const CallKind mKind;
-    MessagePtrSet mMessages;
     GLProgram *mProgram{};
     GLTarget *mTarget{};
     GLStream *mVertexStream{};
@@ -94,6 +78,4 @@ private:
 
     GLBuffer *mIndirectBuffer{};
     GLint mIndirectStride{};
-
-    QSet<ItemId> mUsedItems;
 };

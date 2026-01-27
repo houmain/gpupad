@@ -1,5 +1,6 @@
 
 #include "PipelineBase.h"
+#include "BufferBase.h"
 
 namespace {
     QString getBufferMemberFullName(const SpvReflectBlockVariable &block,
@@ -75,7 +76,6 @@ namespace {
         }
     }
 
-
     template <typename F>
     void forEachBufferMemberRec(const QString &name,
         const SpvReflectBlockVariable &member, int memberOffset,
@@ -110,6 +110,20 @@ void PipelineBase::setBindings(Bindings &&bindings)
 {
     mBindings = std::move(bindings);
 }
+
+std::pair<uint32_t, uint32_t> PipelineBase::getBufferBindingOffsetSize(
+    const BufferBinding &binding, ScriptEngine &scriptEngine) const
+{
+    const auto &buffer = *binding.buffer;
+    const auto offset =
+        scriptEngine.evaluateUInt(binding.offset, buffer.itemId());
+    const auto rowCount =
+        scriptEngine.evaluateUInt(binding.rowCount, buffer.itemId());
+    const auto size =
+        (binding.stride ? rowCount * binding.stride : buffer.size() - offset);
+    Q_ASSERT(size >= 0 && offset + size <= static_cast<size_t>(buffer.size()));
+    return std::pair(offset, size);
+};
 
 void PipelineBase::applyBufferMemberBinding(std::span<std::byte> bufferData,
     const SpvReflectBlockVariable &member, const UniformBinding &binding,
@@ -207,4 +221,41 @@ bool PipelineBase::applyBufferMemberBindings(std::span<std::byte> bufferData,
     }
     return (!memberUsed || memberSet
         || isGlobalUniformBlockName(block.type_description->type_name));
+}
+
+//-------------------------------------------------------------------------
+
+void forEachArrayElementRec(SpvReflectDescriptorBinding desc, uint32_t arrayDim,
+    uint32_t &arrayElement,
+    const std::function<void(SpvReflectDescriptorBinding, uint32_t, bool *)> &f,
+    bool *variableLengthArrayDonePtr)
+{
+    if (arrayDim >= desc.array.dims_count)
+        return f(desc, arrayElement++, variableLengthArrayDonePtr);
+
+    // update descriptor to contain array index in the names
+    const auto baseName = desc.name;
+    const auto baseTypeName = (desc.type_description->type_name
+            ? desc.type_description->type_name
+            : "");
+    auto typeDesc = *desc.type_description;
+    desc.type_description = &typeDesc;
+
+    const auto count = desc.array.dims[arrayDim];
+    const auto variableLengthArray = (count == 0);
+    auto variableLengthArrayDone = false;
+
+    for (auto i = 0u; variableLengthArray || i < count; ++i) {
+        const auto formatArray = [](std::string baseName, uint32_t i) {
+            return baseName + "[" + std::to_string(i) + "]";
+        };
+        const auto name = formatArray(baseName, i);
+        const auto typeName = formatArray(baseTypeName, i);
+        desc.name = name.c_str();
+        typeDesc.type_name = typeName.c_str();
+        forEachArrayElementRec(desc, arrayDim + 1, arrayElement, f,
+            (variableLengthArray ? &variableLengthArrayDone : nullptr));
+        if (variableLengthArrayDone)
+            break;
+    }
 }
