@@ -27,13 +27,11 @@ QByteArray &GLBuffer::getWriteableData()
 void GLBuffer::clear()
 {
     auto &gl = GLContext::currentContext();
-    if (auto gl43 = check(gl.v4_3, mItemId, mMessages)) {
-        auto data = uint8_t();
-        gl.glBindBuffer(GL_ARRAY_BUFFER, getReadWriteBufferId());
-        gl43->glClearBufferData(GL_ARRAY_BUFFER, GL_R8, GL_RED,
-            GL_UNSIGNED_BYTE, &data);
-        gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
-    }
+    auto data = uint8_t();
+    gl.glBindBuffer(GL_ARRAY_BUFFER, getReadWriteBufferId());
+    gl.glClearBufferData(GL_ARRAY_BUFFER, GL_R8, GL_RED,
+        GL_UNSIGNED_BYTE, &data);
+    gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 }
 
 void GLBuffer::copy(GLBuffer &source)

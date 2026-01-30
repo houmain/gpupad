@@ -120,8 +120,8 @@ bool GLShader::specialize(const Spirv &spirv)
     const auto stripped = Spirv::stripReflection(spirv);
 
     const auto shaderObject = static_cast<GLuint>(shader);
-    gl.v4_2->glShaderBinary(1, &shaderObject,
-        GL_SHADER_BINARY_FORMAT_SPIR_V_ARB, stripped.data(),
+    gl.glShaderBinary(1, &shaderObject, GL_SHADER_BINARY_FORMAT_SPIR_V_ARB,
+        stripped.data(),
         static_cast<GLsizei>(stripped.size() * sizeof(uint32_t)));
 
     glSpecializeShader(shader, qPrintable(mEntryPoint), 0, 0, 0);
@@ -227,7 +227,7 @@ QString tryGetProgramBinary(const GLShader &shader)
 {
     auto assembly = QString();
     auto &gl = GLContext::currentContext();
-    if (gl.v4_2 && shader.shaderObject()) {
+    if (shader.shaderObject()) {
         auto program = gl.glCreateProgram();
         gl.glAttachShader(program, shader.shaderObject());
         gl.glLinkProgram(program);
@@ -237,7 +237,7 @@ QString tryGetProgramBinary(const GLShader &shader)
         if (length > 0) {
             auto format = GLuint{};
             auto binary = std::string(static_cast<size_t>(length + 1), ' ');
-            gl.v4_2->glGetProgramBinary(program, length, nullptr, &format,
+            gl.glGetProgramBinary(program, length, nullptr, &format,
                 &binary[0]);
 
             // only supported on Nvidia so far

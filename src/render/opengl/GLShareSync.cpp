@@ -1,7 +1,7 @@
 
 #include "GLShareSync.h"
 
-void GLShareSync::cleanup(QOpenGLFunctions_3_3_Core &gl)
+void GLShareSync::cleanup(QOpenGLFunctions_4_5_Core &gl)
 {
     QMutexLocker lock{ &mMutex };
 
@@ -14,7 +14,7 @@ void GLShareSync::cleanup(QOpenGLFunctions_3_3_Core &gl)
     mUsageFenceSyncs.clear();
 }
 
-void GLShareSync::beginUpdate(QOpenGLFunctions_3_3_Core &gl)
+void GLShareSync::beginUpdate(QOpenGLFunctions_4_5_Core &gl)
 {
     mMutex.lock();
     // synchronize with end of usage
@@ -25,7 +25,7 @@ void GLShareSync::beginUpdate(QOpenGLFunctions_3_3_Core &gl)
     mUsageFenceSyncs.clear();
 }
 
-void GLShareSync::endUpdate(QOpenGLFunctions_3_3_Core &gl)
+void GLShareSync::endUpdate(QOpenGLFunctions_4_5_Core &gl)
 {
     // mark end of update
     if (mUpdateFenceSync)
@@ -35,7 +35,7 @@ void GLShareSync::endUpdate(QOpenGLFunctions_3_3_Core &gl)
     mMutex.unlock();
 }
 
-void GLShareSync::beginUsage(QOpenGLFunctions_3_3_Core &gl)
+void GLShareSync::beginUsage(QOpenGLFunctions_4_5_Core &gl)
 {
     mMutex.lock();
     // synchronize with end of update
@@ -43,7 +43,7 @@ void GLShareSync::beginUsage(QOpenGLFunctions_3_3_Core &gl)
         gl.glWaitSync(mUpdateFenceSync, 0, GL_TIMEOUT_IGNORED);
 }
 
-void GLShareSync::endUsage(QOpenGLFunctions_3_3_Core &gl)
+void GLShareSync::endUsage(QOpenGLFunctions_4_5_Core &gl)
 {
     // mark end of usage
     mUsageFenceSyncs.append(gl.glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0));

@@ -15,8 +15,8 @@ public:
     void cleanup();
     void beginUpdate();
     void endUpdate();
-    void beginUsage(QOpenGLFunctions_3_3_Core &gl) override;
-    void endUsage(QOpenGLFunctions_3_3_Core &gl) override;
+    void beginUsage(QOpenGLFunctions_4_5_Core &gl) override;
+    void endUsage(QOpenGLFunctions_4_5_Core &gl) override;
 
 private:
     QMutex mMutex;

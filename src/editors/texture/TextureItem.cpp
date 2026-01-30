@@ -397,17 +397,20 @@ void TextureItem::setPreviewTexture(ShareSyncPtr shareSync, GLuint textureId,
 void TextureItem::setPreviewTexture(ShareSyncPtr shareSync, ShareHandle handle,
     int samples)
 {
+    if (!widget().initialized())
+        return;
+
     if (!mImage.isNull() && handle.handle) {
         if (mSharedTextureHandle != handle.handle) {
             mSharedTextureHandle = handle.handle;
-            if (auto gl = widget().gl45(); gl) {
-                if (mSharedTextureId)
-                    gl->glDeleteTextures(1, &mSharedTextureId);
-                gl->glCreateTextures(mImage.getTarget(samples), 1,
-                    &mSharedTextureId);
-                gl->glTextureParameteri(mSharedTextureId, GL_TEXTURE_TILING_EXT,
-                    GL_OPTIMAL_TILING_EXT);
-            }
+            auto &gl = widget().gl();
+            if (mSharedTextureId)
+                gl.glDeleteTextures(1, &mSharedTextureId);
+            gl.glCreateTextures(mImage.getTarget(samples), 1,
+                &mSharedTextureId);
+            gl.glTextureParameteri(mSharedTextureId, GL_TEXTURE_TILING_EXT,
+                GL_OPTIMAL_TILING_EXT);
+
             importSharedTexture(handle, mImage, samples, mSharedTextureId);
         }
         mShareSync = std::move(shareSync);
@@ -569,48 +572,40 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
             static_cast<float>(1 / mMappingRange.range()));
         program->setUniformValue("uColorMask", mColorMask);
 
-#if GL_VERSION_4_2
         if (mPickerEnabled) {
-            if (auto gl42 = widget().gl42()) {
-                if (!mPickerTexture.isCreated()) {
-                    mPickerTexture.setSize(1, 1);
-                    mPickerTexture.setFormat(QOpenGLTexture::RGBA32F);
-                    mPickerTexture.allocateStorage();
-                }
-                gl42->glBindImageTexture(1, mPickerTexture.textureId(), 0,
-                    GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-                program->setUniformValue("uPickerColor", 1);
-                program->setUniformValue("uPickerFragCoord",
-                    mMousePosition + QPointF(0.5, 0.5));
+
+            if (!mPickerTexture.isCreated()) {
+                mPickerTexture.setSize(1, 1);
+                mPickerTexture.setFormat(QOpenGLTexture::RGBA32F);
+                mPickerTexture.allocateStorage();
             }
+            gl.glBindImageTexture(1, mPickerTexture.textureId(), 0, GL_FALSE, 0,
+                GL_WRITE_ONLY, GL_RGBA32F);
+            program->setUniformValue("uPickerColor", 1);
+            program->setUniformValue("uPickerFragCoord",
+                mMousePosition + QPointF(0.5, 0.5));
         }
         if (mHistogramEnabled) {
-            if (auto gl42 = widget().gl42()) {
-                if (!mHistogramTexture.isCreated()
-                    || mHistogramTexture.width() != mHistogramBins.size()) {
-                    mHistogramTexture.destroy();
-                    mHistogramTexture.setSize(mHistogramBins.size());
-                    mHistogramTexture.setFormat(QOpenGLTexture::R32U);
-                    mHistogramTexture.allocateStorage();
-                }
-                gl42->glBindImageTexture(2, mHistogramTexture.textureId(), 0,
-                    GL_FALSE, 0, GL_READ_WRITE, GL_R32UI);
-                program->setUniformValue("uHistogram", 2);
-                program->setUniformValue("uHistogramOffset",
-                    static_cast<float>(-mHistogramBounds.minimum));
-                const auto scaleToBins = mHistogramBins.size() / 3 - 1;
-                program->setUniformValue("uHistogramFactor",
-                    static_cast<float>(
-                        1 / mHistogramBounds.range() * scaleToBins));
+            if (!mHistogramTexture.isCreated()
+                || mHistogramTexture.width() != mHistogramBins.size()) {
+                mHistogramTexture.destroy();
+                mHistogramTexture.setSize(mHistogramBins.size());
+                mHistogramTexture.setFormat(QOpenGLTexture::R32U);
+                mHistogramTexture.allocateStorage();
             }
+            gl.glBindImageTexture(2, mHistogramTexture.textureId(), 0, GL_FALSE,
+                0, GL_READ_WRITE, GL_R32UI);
+            program->setUniformValue("uHistogram", 2);
+            program->setUniformValue("uHistogramOffset",
+                static_cast<float>(-mHistogramBounds.minimum));
+            const auto scaleToBins = mHistogramBins.size() / 3 - 1;
+            program->setUniformValue("uHistogramFactor",
+                static_cast<float>(1 / mHistogramBounds.range() * scaleToBins));
         }
-#endif
 
         gl.glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-#if GL_VERSION_4_2
-        if (auto gl42 = widget().gl42())
-            gl42->glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
+        gl.glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
 
         auto pickerColor = QVector4D{};
         if (mPickerEnabled) {
@@ -628,7 +623,6 @@ bool TextureItem::renderTexture(const QMatrix4x4 &transform)
                 GL_UNSIGNED_INT, mHistogramBins.data());
             updateHistogram();
         }
-#endif
     }
 
     if (mPreviewTextureId) {

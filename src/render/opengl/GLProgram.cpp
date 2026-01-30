@@ -245,7 +245,12 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
     auto reflection = std::make_unique<Reflection::Builder>();
 
     auto &gl = GLContext::currentContext();
-    auto buffer = std::array<char, 256>();
+
+    auto maxNameLength = GLint{};
+    gl.glGetProgramInterfaceiv(program, GL_SHADER_STORAGE_BLOCK,
+        GL_MAX_NAME_LENGTH, &maxNameLength);
+    auto buffer = std::vector<char>(maxNameLength);
+
     auto arrayElements = GLint{};
     auto dataType = GLenum{};
     auto nameLength = GLint{};
@@ -293,29 +298,24 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
                 }
         }
 
-#if GL_VERSION_4_2
-        if (auto gl42 = gl.v4_2) {
-            auto atomicCounterIndex = 0;
-            gl.glGetActiveUniformsiv(program, 1, &i,
-                GL_UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX, &atomicCounterIndex);
-            if (atomicCounterIndex >= 0) {
-                auto bufferBindingIndex = GLint{};
-                gl42->glGetActiveAtomicCounterBufferiv(program,
-                    atomicCounterIndex, GL_ATOMIC_COUNTER_BUFFER_BINDING,
-                    &bufferBindingIndex);
-                auto desc = DescriptorBinding{
-                    .name = name.toStdString(),
-                    .type = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                    .binding = static_cast<uint32_t>(bufferBindingIndex),
-                };
-                if (!containsValue(reflection->descriptorsBindings, desc))
-                    reflection->descriptorsBindings.push_back(desc);
+        auto atomicCounterIndex = 0;
+        gl.glGetActiveUniformsiv(program, 1, &i,
+            GL_UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX, &atomicCounterIndex);
+        if (atomicCounterIndex >= 0) {
+            auto bufferBindingIndex = GLint{};
+            gl.glGetActiveAtomicCounterBufferiv(program, atomicCounterIndex,
+                GL_ATOMIC_COUNTER_BUFFER_BINDING, &bufferBindingIndex);
+            auto desc = DescriptorBinding{
+                .name = name.toStdString(),
+                .type = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                .binding = static_cast<uint32_t>(bufferBindingIndex),
+            };
+            if (!containsValue(reflection->descriptorsBindings, desc))
+                reflection->descriptorsBindings.push_back(desc);
 
-                // uniform is set by atomic counter buffer
-                mUniforms.erase(name);
-            }
+            // uniform is set by atomic counter buffer
+            mUniforms.erase(name);
         }
-#endif
     }
 
     auto uniformBlocks = GLint{};
@@ -433,75 +433,63 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
             });
     }
 
-    if (auto gl40 = gl.v4_0) {
-        auto stages = QSet<Shader::ShaderType>();
-        for (const auto &shader : mShaders)
-            stages += shader.type();
+    auto stages = QSet<Shader::ShaderType>();
+    for (const auto &shader : mShaders)
+        stages += shader.type();
 
-        auto subroutineIndices = std::vector<GLint>();
-        for (const auto &stage : std::as_const(stages)) {
-            gl40->glGetProgramStageiv(program, stage,
-                GL_ACTIVE_SUBROUTINE_UNIFORMS, &uniforms);
-            for (auto i = 0u; i < static_cast<GLuint>(uniforms); ++i) {
-                gl40->glGetActiveSubroutineUniformName(program, stage, i,
+    auto subroutineIndices = std::vector<GLint>();
+    for (const auto &stage : std::as_const(stages)) {
+        gl.glGetProgramStageiv(program, stage, GL_ACTIVE_SUBROUTINE_UNIFORMS,
+            &uniforms);
+        for (auto i = 0u; i < static_cast<GLuint>(uniforms); ++i) {
+            gl.glGetActiveSubroutineUniformName(program, stage, i,
+                static_cast<GLsizei>(buffer.size()), &nameLength,
+                buffer.data());
+            auto name = QString(buffer.data());
+
+            auto compatible = GLint{};
+            gl.glGetActiveSubroutineUniformiv(program, stage, i,
+                GL_NUM_COMPATIBLE_SUBROUTINES, &compatible);
+
+            subroutineIndices.resize(static_cast<size_t>(compatible));
+            gl.glGetActiveSubroutineUniformiv(program, stage, i,
+                GL_COMPATIBLE_SUBROUTINES, subroutineIndices.data());
+
+            auto subroutines = QStringList();
+            for (auto index : subroutineIndices) {
+                gl.glGetActiveSubroutineName(program, stage,
+                    static_cast<GLuint>(index),
                     static_cast<GLsizei>(buffer.size()), &nameLength,
                     buffer.data());
-                auto name = QString(buffer.data());
-
-                auto compatible = GLint{};
-                gl40->glGetActiveSubroutineUniformiv(program, stage, i,
-                    GL_NUM_COMPATIBLE_SUBROUTINES, &compatible);
-
-                subroutineIndices.resize(static_cast<size_t>(compatible));
-                gl40->glGetActiveSubroutineUniformiv(program, stage, i,
-                    GL_COMPATIBLE_SUBROUTINES, subroutineIndices.data());
-
-                auto subroutines = QStringList();
-                for (auto index : subroutineIndices) {
-                    gl40->glGetActiveSubroutineName(program, stage,
-                        static_cast<GLuint>(index),
-                        static_cast<GLsizei>(buffer.size()), &nameLength,
-                        buffer.data());
-                    subroutines += QString(buffer.data());
-                }
-                mStageSubroutines[stage].push_back({
-                    .name = name,
-                    .subroutines = subroutines,
-                });
+                subroutines += QString(buffer.data());
             }
-        }
-    }
-
-#if GL_VERSION_4_3
-    if (auto gl43 = gl.v4_3) {
-        auto maxNameLength = GLint{};
-        gl43->glGetProgramInterfaceiv(program, GL_SHADER_STORAGE_BLOCK,
-            GL_MAX_NAME_LENGTH, &maxNameLength);
-        auto buffer = std::vector<char>(maxNameLength);
-
-        auto shaderStorageBlocks = GLint{};
-        gl43->glGetProgramInterfaceiv(program, GL_SHADER_STORAGE_BLOCK,
-            GL_ACTIVE_RESOURCES, &shaderStorageBlocks);
-        for (auto i = 0u; i < static_cast<GLuint>(shaderStorageBlocks); ++i) {
-            gl43->glGetProgramResourceName(program, GL_SHADER_STORAGE_BLOCK, i,
-                static_cast<GLsizei>(buffer.size()), nullptr, buffer.data());
-            // glslang generates block_name.instance_name instead of block_name
-            const auto bufferName = QString(buffer.data());
-            const auto blockName = removeInstanceName(bufferName);
-            const auto storageBlockIndex = gl.v4_3->glGetProgramResourceIndex(
-                program, GL_SHADER_STORAGE_BLOCK, qPrintable(bufferName));
-            const auto storageBlockBinding = i;
-            gl43->glShaderStorageBlockBinding(program, storageBlockIndex,
-                storageBlockBinding);
-            reflection->descriptorsBindings.push_back(DescriptorBinding{
-                .typeName = blockName.toStdString(),
-                .type = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                .binding = storageBlockBinding,
+            mStageSubroutines[stage].push_back({
+                .name = name,
+                .subroutines = subroutines,
             });
         }
     }
-#endif
 
+    auto shaderStorageBlocks = GLint{};
+    gl.glGetProgramInterfaceiv(program, GL_SHADER_STORAGE_BLOCK,
+        GL_ACTIVE_RESOURCES, &shaderStorageBlocks);
+    for (auto i = 0u; i < static_cast<GLuint>(shaderStorageBlocks); ++i) {
+        gl.glGetProgramResourceName(program, GL_SHADER_STORAGE_BLOCK, i,
+            static_cast<GLsizei>(buffer.size()), nullptr, buffer.data());
+        // glslang generates block_name.instance_name instead of block_name
+        const auto bufferName = QString(buffer.data());
+        const auto blockName = removeInstanceName(bufferName);
+        const auto storageBlockIndex = gl.glGetProgramResourceIndex(program,
+            GL_SHADER_STORAGE_BLOCK, qPrintable(bufferName));
+        const auto storageBlockBinding = i;
+        gl.glShaderStorageBlockBinding(program, storageBlockIndex,
+            storageBlockBinding);
+        reflection->descriptorsBindings.push_back(DescriptorBinding{
+            .typeName = blockName.toStdString(),
+            .type = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .binding = storageBlockBinding,
+        });
+    }
     mReflection = Reflection(std::move(reflection));
 }
 

@@ -119,19 +119,16 @@ bool GLTarget::create()
             }
         }
 
-#if GL_VERSION_4_3
-    auto gl43 = gl.v4_3;
-    if (gl43 && mAttachments.empty()) {
-        gl43->glFramebufferParameteri(GL_FRAMEBUFFER,
-            GL_FRAMEBUFFER_DEFAULT_WIDTH, mDefaultWidth);
-        gl43->glFramebufferParameteri(GL_FRAMEBUFFER,
+    if (mAttachments.empty()) {
+        gl.glFramebufferParameteri(GL_FRAMEBUFFER, GL_FRAMEBUFFER_DEFAULT_WIDTH,
+            mDefaultWidth);
+        gl.glFramebufferParameteri(GL_FRAMEBUFFER,
             GL_FRAMEBUFFER_DEFAULT_HEIGHT, mDefaultHeight);
-        gl43->glFramebufferParameteri(GL_FRAMEBUFFER,
+        gl.glFramebufferParameteri(GL_FRAMEBUFFER,
             GL_FRAMEBUFFER_DEFAULT_LAYERS, mDefaultLayers);
-        gl43->glFramebufferParameteri(GL_FRAMEBUFFER,
+        gl.glFramebufferParameteri(GL_FRAMEBUFFER,
             GL_FRAMEBUFFER_DEFAULT_SAMPLES, mDefaultSamples);
     }
-#endif
 
     const auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -207,12 +204,11 @@ void GLTarget::applyAttachmentStates(const GLAttachment &a)
             gl.glBlendEquationSeparate(a.blendColorEq, a.blendAlphaEq);
             gl.glBlendFuncSeparate(a.blendColorSource, a.blendColorDest,
                 a.blendAlphaSource, a.blendAlphaDest);
-        } else if (auto gl40 = check(gl.v4_0, mItemId, mMessages)) {
-            gl40->glEnablei(GL_BLEND, index);
-            gl40->glBlendEquationSeparatei(index, a.blendColorEq,
-                a.blendAlphaEq);
-            gl40->glBlendFuncSeparatei(index, a.blendColorSource,
-                a.blendColorDest, a.blendAlphaSource, a.blendAlphaDest);
+        } else {
+            gl.glEnablei(GL_BLEND, index);
+            gl.glBlendEquationSeparatei(index, a.blendColorEq, a.blendAlphaEq);
+            gl.glBlendFuncSeparatei(index, a.blendColorSource, a.blendColorDest,
+                a.blendAlphaSource, a.blendAlphaDest);
         }
 
         auto isSet = [](auto v, auto bit) { return (v & (1 << bit)) != 0; };

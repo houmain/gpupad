@@ -73,7 +73,8 @@ private:
     {
         if (!context.makeCurrent(&surface))
             return false;
-        context.initializeOpenGLFunctions();
+        if (!context.initializeOpenGLFunctions())
+            return false;
 
         mDebugLogger = std::make_unique<QOpenGLDebugLogger>();
 

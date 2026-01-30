@@ -76,9 +76,6 @@ void GLRenderSession::render()
     Q_ASSERT(mCommandQueue);
 
     auto &gl = GLContext::currentContext();
-    if (!gl)
-        return addMessage(MessageList::insert(0,
-            MessageType::OpenGLVersionNotAvailable, "3.3"));
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
@@ -86,11 +83,7 @@ void GLRenderSession::render()
     gl.glEnable(GL_FRAMEBUFFER_SRGB);
     gl.glEnable(GL_PROGRAM_POINT_SIZE);
     gl.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
-#if GL_VERSION_4_3
-    if (gl.v4_3)
-        gl.glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
-#endif
+    gl.glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
 
     if (mPrevCommandQueue) {
         reuseUnmodifiedItems(*mCommandQueue, *mPrevCommandQueue);

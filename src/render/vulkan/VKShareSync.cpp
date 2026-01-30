@@ -76,7 +76,7 @@ void VKShareSync::endUpdate()
     mMutex.unlock();
 }
 
-void VKShareSync::beginUsage(QOpenGLFunctions_3_3_Core &gl)
+void VKShareSync::beginUsage(QOpenGLFunctions_4_5_Core &gl)
 {
     mMutex.lock();
 
@@ -95,7 +95,7 @@ void VKShareSync::beginUsage(QOpenGLFunctions_3_3_Core &gl)
 #endif
 }
 
-void VKShareSync::endUsage(QOpenGLFunctions_3_3_Core &gl)
+void VKShareSync::endUsage(QOpenGLFunctions_4_5_Core &gl)
 {
 #if 0 // TODO:
     auto &context = *QOpenGLContext::currentContext();

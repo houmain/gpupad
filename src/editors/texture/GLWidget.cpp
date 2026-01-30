@@ -11,16 +11,10 @@ GLWidget::~GLWidget()
 
 void GLWidget::initializeGL()
 {
+    if (!mGL.initializeOpenGLFunctions())
+        return;
+
     mInitialized = true;
-    mGL.initializeOpenGLFunctions();
-
-    mGL42.emplace();
-    if (!mGL42->initializeOpenGLFunctions())
-        mGL42.reset();
-
-    mGL45.emplace();
-    if (!mGL45->initializeOpenGLFunctions())
-        mGL45.reset();
 
 #if !defined(NDEBUG)
     mDebugLogger = std::make_unique<QOpenGLDebugLogger>();
@@ -38,6 +32,9 @@ void GLWidget::initializeGL()
 
 void GLWidget::paintGL()
 {
+    if (!mInitialized)
+        return;
+
     QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
     Q_EMIT paintingGL();
 }
@@ -48,24 +45,15 @@ void GLWidget::releaseGL()
         return;
 
     makeCurrent();
-    Q_EMIT releasingGL();        
+    Q_EMIT releasingGL();
     mDebugLogger.reset();
     doneCurrent();
 }
 
-QOpenGLFunctions_3_3_Core &GLWidget::gl()
+QOpenGLFunctions_4_5_Core &GLWidget::gl()
 {
+    Q_ASSERT(mInitialized);
     return mGL;
-}
-
-QOpenGLFunctions_4_2_Core *GLWidget::gl42()
-{
-    return (mGL42.has_value() ? &mGL42.value() : nullptr);
-}
-
-QOpenGLFunctions_4_5_Core *GLWidget::gl45()
-{
-    return (mGL45.has_value() ? &mGL45.value() : nullptr);
 }
 
 void GLWidget::handleDebugMessage(const QOpenGLDebugMessage &message)

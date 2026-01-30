@@ -7,11 +7,11 @@
 class GLShareSync : public ShareSync
 {
 public:
-    void cleanup(QOpenGLFunctions_3_3_Core &gl);
-    void beginUpdate(QOpenGLFunctions_3_3_Core &gl);
-    void endUpdate(QOpenGLFunctions_3_3_Core &gl);
-    void beginUsage(QOpenGLFunctions_3_3_Core &gl) override;
-    void endUsage(QOpenGLFunctions_3_3_Core &gl) override;
+    void cleanup(QOpenGLFunctions_4_5_Core &gl);
+    void beginUpdate(QOpenGLFunctions_4_5_Core &gl);
+    void endUpdate(QOpenGLFunctions_4_5_Core &gl);
+    void beginUsage(QOpenGLFunctions_4_5_Core &gl) override;
+    void endUsage(QOpenGLFunctions_4_5_Core &gl) override;
 
 private:
     QMutex mMutex;

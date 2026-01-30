@@ -5,8 +5,8 @@
 #include <cmath>
 
 namespace {
-    GLuint createFramebuffer(QOpenGLFunctions_3_3_Core &gl, GLenum target,
-        GLuint textureId, GLenum attachment)
+    GLuint createFramebuffer(QOpenGLFunctions_4_5_Core &gl, GLenum target, GLuint textureId,
+        GLenum attachment)
     {
         auto fbo = GLuint{};
         gl.glGenFramebuffers(1, &fbo);
@@ -15,7 +15,7 @@ namespace {
         return fbo;
     }
 
-    bool resolveTexture(QOpenGLFunctions_3_3_Core &gl, GLuint sourceTextureId,
+    bool resolveTexture(QOpenGLFunctions_4_5_Core &gl, GLuint sourceTextureId,
         GLuint destTextureId, int width, int height,
         QOpenGLTexture::TextureFormat format)
     {
@@ -61,9 +61,8 @@ namespace {
         return (glGetError() == GL_NO_ERROR);
     }
 
-    bool uploadMultisample(QOpenGLFunctions_3_3_Core &gl,
-        const TextureData &data, QOpenGLTexture::Target target, int samples,
-        GLuint textureId)
+    bool uploadMultisample(QOpenGLFunctions_4_5_Core &gl, const TextureData &data,
+        QOpenGLTexture::Target target, int samples, GLuint textureId)
     {
         gl.glBindTexture(target, textureId);
         if (target == QOpenGLTexture::Target2DMultisample) {
@@ -88,7 +87,7 @@ namespace {
         return false;
     }
 
-    bool download(QOpenGLFunctions_3_3_Core &gl, TextureData &data,
+    bool download(QOpenGLFunctions_4_5_Core &gl, TextureData &data,
         QOpenGLTexture::Target target, GLuint textureId)
     {
         gl.glBindTexture(target, textureId);
@@ -110,7 +109,7 @@ namespace {
         return (glGetError() == GL_NO_ERROR);
     }
 
-    bool downloadCubemap(QOpenGLFunctions_3_3_Core &gl, TextureData &data,
+    bool downloadCubemap(QOpenGLFunctions_4_5_Core &gl, TextureData &data,
         QOpenGLTexture::Target target, GLuint textureId)
     {
         // TODO: download
@@ -118,7 +117,7 @@ namespace {
         return true;
     }
 
-    bool downloadMultisample(QOpenGLFunctions_3_3_Core &gl, TextureData &data,
+    bool downloadMultisample(QOpenGLFunctions_4_5_Core &gl, TextureData &data,
         QOpenGLTexture::Target target, GLuint textureId)
     {
         if (target == QOpenGLTexture::Target2DMultisample) {
@@ -142,8 +141,8 @@ namespace {
         return false;
     }
 
-    GLObject createFramebuffer(QOpenGLFunctions_3_3_Core &gl,
-        const TextureKind &kind, GLuint textureId, int level)
+    GLObject createFramebuffer(QOpenGLFunctions_4_5_Core &gl, const TextureKind &kind,
+        GLuint textureId, int level)
     {
         const auto createFBO = [&]() {
             auto fbo = GLuint{};
@@ -172,7 +171,7 @@ namespace {
         return fbo;
     }
 
-    bool copyTexture(QOpenGLFunctions_3_3_Core &gl, const TextureKind &kind,
+    bool copyTexture(QOpenGLFunctions_4_5_Core &gl, const TextureKind &kind,
         GLuint sourceTextureId, GLuint destTextureId, int width, int height,
         int level)
     {
@@ -204,7 +203,7 @@ bool GLTexture::operator==(const GLTexture &rhs) const
         && mTextureBuffer == rhs.mTextureBuffer);
 }
 
-bool GLTexture::upload(QOpenGLFunctions_3_3_Core &gl, const TextureData &data,
+bool GLTexture::upload(QOpenGLFunctions_4_5_Core &gl, const TextureData &data,
     QOpenGLTexture::Target target, int samples, GLuint *textureId)
 {
     Q_ASSERT(target && textureId);
@@ -233,7 +232,7 @@ bool GLTexture::upload(QOpenGLFunctions_3_3_Core &gl, const TextureData &data,
     return true;
 }
 
-bool GLTexture::download(QOpenGLFunctions_3_3_Core &gl, TextureData &data,
+bool GLTexture::download(QOpenGLFunctions_4_5_Core &gl, TextureData &data,
     QOpenGLTexture::Target target, GLuint textureId)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);

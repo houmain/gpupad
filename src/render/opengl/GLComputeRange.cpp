@@ -193,18 +193,14 @@ void GLComputeRange::setImage(QOpenGLTexture::Target target, GLuint textureId,
 
 void GLComputeRange::render()
 {
-#if GL_VERSION_4_3
     auto &gl = GLContext::currentContext();
-    if (!gl.v4_3)
-        return;
-
     const auto min = std::numeric_limits<float>::lowest();
     const auto max = std::numeric_limits<float>::max();
 
     if (auto program = getProgram(mTarget, mFormat)) {
         program->bind();
         program->setUniformValue("uTexture", 0);
-        gl.v4_3->glProgramUniform2ui(program->programId(),
+        gl.glProgramUniform2ui(program->programId(),
             program->uniformLocation("uSize"), mSize.width(), mSize.height());
         program->setUniformValue("uLevel", mLevel);
         program->setUniformValue("uLayer", mLayer);
@@ -240,7 +236,7 @@ void GLComputeRange::render()
         gl.glTexParameteri(mTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         gl.glTexParameteri(mTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-        gl.v4_3->glDispatchCompute(16, 16, 1);
+        gl.glDispatchCompute(16, 16, 1);
 
         mBuffer.read(0, &result, sizeof(result));
         mRange = {
@@ -248,7 +244,6 @@ void GLComputeRange::render()
             qMax(qMax(result.max[0], result.max[1]), result.max[2]),
         };
     }
-#endif
 }
 
 void GLComputeRange::release()

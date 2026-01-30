@@ -241,11 +241,8 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     case Call::CallType::SwapBuffers:  executeSwapBuffers(messages); break;
     }
 
-#if GL_VERSION_4_2
     auto &gl = GLContext::currentContext();
-    if (gl.v4_2)
-        gl.v4_2->glMemoryBarrier(GL_ALL_BARRIER_BITS);
-#endif
+    gl.glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     if (auto errorMessage = getFirstGLError(); !errorMessage.isEmpty())
         messages += MessageList::insert(mCall.id, MessageType::CallFailed,
@@ -300,8 +297,8 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 
     auto &gl = GLContext::currentContext();
 
-    if (mCall.primitiveType == Call::PrimitiveType::Patches && gl.v4_0)
-        gl.v4_0->glPatchParameteri(GL_PATCH_VERTICES,
+    if (mCall.primitiveType == Call::PrimitiveType::Patches)
+        gl.glPatchParameteri(GL_PATCH_VERTICES,
             scriptEngine.evaluateInt(mCall.patchVertices, mCall.id));
 
     if (mCall.callType == Call::CallType::Draw) {
@@ -309,8 +306,8 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         if (!baseInstance) {
             gl.glDrawArraysInstanced(mCall.primitiveType, first, count,
                 instanceCount);
-        } else if (auto gl42 = check(gl.v4_2, mCall.id, messages)) {
-            gl42->glDrawArraysInstancedBaseInstance(mCall.primitiveType, first,
+        } else {
+            gl.glDrawArraysInstancedBaseInstance(mCall.primitiveType, first,
                 count, instanceCount, static_cast<GLuint>(baseInstance));
         }
     } else if (mCall.callType == Call::CallType::DrawIndexed && indexType) {
@@ -321,8 +318,8 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         if (!baseVertex && !baseInstance) {
             gl.glDrawElementsInstanced(mCall.primitiveType, count, indexType,
                 offset, instanceCount);
-        } else if (auto gl42 = check(gl.v4_2, mCall.id, messages)) {
-            gl42->glDrawElementsInstancedBaseVertexBaseInstance(
+        } else {
+            gl.glDrawElementsInstancedBaseVertexBaseInstance(
                 mCall.primitiveType, count, indexType, offset, instanceCount,
                 baseVertex, static_cast<GLuint>(baseInstance));
         }
@@ -331,11 +328,10 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         const auto offset =
             reinterpret_cast<void *>(static_cast<intptr_t>(indirectOffset));
         if (drawCount == 1) {
-            if (auto gl40 = check(gl.v4_0, mCall.id, messages))
-                gl40->glDrawArraysIndirect(mCall.primitiveType, offset);
-        } else if (auto gl43 = check(gl.v4_3, mCall.id, messages)) {
-            gl43->glMultiDrawArraysIndirect(mCall.primitiveType, offset,
-                drawCount, mIndirectStride);
+            gl.glDrawArraysIndirect(mCall.primitiveType, offset);
+        } else {
+            gl.glMultiDrawArraysIndirect(mCall.primitiveType, offset, drawCount,
+                mIndirectStride);
         }
     } else if (mCall.callType == Call::CallType::DrawIndexedIndirect
         && indexType) {
@@ -343,11 +339,9 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         const auto offset =
             reinterpret_cast<void *>(static_cast<intptr_t>(indirectOffset));
         if (drawCount == 1) {
-            if (auto gl40 = check(gl.v4_0, mCall.id, messages))
-                gl40->glDrawElementsIndirect(mCall.primitiveType, indexType,
-                    offset);
-        } else if (auto gl43 = check(gl.v4_3, mCall.id, messages)) {
-            gl43->glMultiDrawElementsIndirect(mCall.primitiveType, indexType,
+            gl.glDrawElementsIndirect(mCall.primitiveType, indexType, offset);
+        } else {
+            gl.glMultiDrawElementsIndirect(mCall.primitiveType, indexType,
                 offset, drawCount, mIndirectStride);
         }
     } else if (mCall.callType == Call::CallType::DrawMeshTasks) {
@@ -390,27 +384,23 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 
 void GLCall::executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
-#if GL_VERSION_4_3
     if (mIndirectBuffer)
         mIndirectBuffer->bindReadOnly(GL_DISPATCH_INDIRECT_BUFFER);
 
     auto &gl = GLContext::currentContext();
-    if (auto gl43 = check(gl.v4_3, mCall.id, messages)) {
-        if (mCall.callType == Call::CallType::Compute) {
-            gl43->glDispatchCompute(
-                scriptEngine.evaluateInt(mCall.workGroupsX, mCall.id),
-                scriptEngine.evaluateInt(mCall.workGroupsY, mCall.id),
-                scriptEngine.evaluateInt(mCall.workGroupsZ, mCall.id));
-        } else if (mCall.callType == Call::CallType::ComputeIndirect) {
-            const auto offset = static_cast<GLintptr>(
-                scriptEngine.evaluateInt(mIndirectOffset, mCall.id));
-            gl43->glDispatchComputeIndirect(offset);
-        }
+    if (mCall.callType == Call::CallType::Compute) {
+        gl.glDispatchCompute(
+            scriptEngine.evaluateInt(mCall.workGroupsX, mCall.id),
+            scriptEngine.evaluateInt(mCall.workGroupsY, mCall.id),
+            scriptEngine.evaluateInt(mCall.workGroupsZ, mCall.id));
+    } else if (mCall.callType == Call::CallType::ComputeIndirect) {
+        const auto offset = static_cast<GLintptr>(
+            scriptEngine.evaluateInt(mIndirectOffset, mCall.id));
+        gl.glDispatchComputeIndirect(offset);
     }
 
     if (mIndirectBuffer)
         mIndirectBuffer->unbind(GL_DISPATCH_INDIRECT_BUFFER);
-#endif // GL_VERSION_4_3
 }
 
 void GLCall::executeClearTexture(MessagePtrSet &messages)
@@ -732,10 +722,10 @@ void GLCall::applyUniformBinding(const GLProgram::Uniform &uniform,
         ADD(GL_FLOAT_VEC2, GLfloat, 2, gl.glUniform2fv);
         ADD(GL_FLOAT_VEC3, GLfloat, 3, gl.glUniform3fv);
         ADD(GL_FLOAT_VEC4, GLfloat, 4, gl.glUniform4fv);
-        ADD(GL_DOUBLE, GLdouble, 1, gl.v4_0->glUniform1dv);
-        ADD(GL_DOUBLE_VEC2, GLdouble, 2, gl.v4_0->glUniform2dv);
-        ADD(GL_DOUBLE_VEC3, GLdouble, 3, gl.v4_0->glUniform3dv);
-        ADD(GL_DOUBLE_VEC4, GLdouble, 4, gl.v4_0->glUniform4dv);
+        ADD(GL_DOUBLE, GLdouble, 1, gl.glUniform1dv);
+        ADD(GL_DOUBLE_VEC2, GLdouble, 2, gl.glUniform2dv);
+        ADD(GL_DOUBLE_VEC3, GLdouble, 3, gl.glUniform3dv);
+        ADD(GL_DOUBLE_VEC4, GLdouble, 4, gl.glUniform4dv);
         ADD(GL_INT, GLint, 1, gl.glUniform1iv);
         ADD(GL_INT_VEC2, GLint, 2, gl.glUniform2iv);
         ADD(GL_INT_VEC3, GLint, 3, gl.glUniform3iv);
@@ -757,21 +747,15 @@ void GLCall::applyUniformBinding(const GLProgram::Uniform &uniform,
         ADD_MATRIX(GL_FLOAT_MAT4x2, GLfloat, 8, gl.glUniformMatrix4x2fv);
         ADD_MATRIX(GL_FLOAT_MAT3x4, GLfloat, 12, gl.glUniformMatrix3x4fv);
         ADD_MATRIX(GL_FLOAT_MAT4x3, GLfloat, 12, gl.glUniformMatrix4x3fv);
-        ADD_MATRIX(GL_DOUBLE_MAT2, GLdouble, 4, gl.v4_0->glUniformMatrix2dv);
-        ADD_MATRIX(GL_DOUBLE_MAT3, GLdouble, 9, gl.v4_0->glUniformMatrix3dv);
-        ADD_MATRIX(GL_DOUBLE_MAT4, GLdouble, 16, gl.v4_0->glUniformMatrix4dv);
-        ADD_MATRIX(GL_DOUBLE_MAT2x3, GLdouble, 6,
-            gl.v4_0->glUniformMatrix2x3dv);
-        ADD_MATRIX(GL_DOUBLE_MAT3x2, GLdouble, 6,
-            gl.v4_0->glUniformMatrix3x2dv);
-        ADD_MATRIX(GL_DOUBLE_MAT2x4, GLdouble, 8,
-            gl.v4_0->glUniformMatrix2x4dv);
-        ADD_MATRIX(GL_DOUBLE_MAT4x2, GLdouble, 8,
-            gl.v4_0->glUniformMatrix4x2dv);
-        ADD_MATRIX(GL_DOUBLE_MAT3x4, GLdouble, 12,
-            gl.v4_0->glUniformMatrix3x4dv);
-        ADD_MATRIX(GL_DOUBLE_MAT4x3, GLdouble, 12,
-            gl.v4_0->glUniformMatrix4x3dv);
+        ADD_MATRIX(GL_DOUBLE_MAT2, GLdouble, 4, gl.glUniformMatrix2dv);
+        ADD_MATRIX(GL_DOUBLE_MAT3, GLdouble, 9, gl.glUniformMatrix3dv);
+        ADD_MATRIX(GL_DOUBLE_MAT4, GLdouble, 16, gl.glUniformMatrix4dv);
+        ADD_MATRIX(GL_DOUBLE_MAT2x3, GLdouble, 6, gl.glUniformMatrix2x3dv);
+        ADD_MATRIX(GL_DOUBLE_MAT3x2, GLdouble, 6, gl.glUniformMatrix3x2dv);
+        ADD_MATRIX(GL_DOUBLE_MAT2x4, GLdouble, 8, gl.glUniformMatrix2x4dv);
+        ADD_MATRIX(GL_DOUBLE_MAT4x2, GLdouble, 8, gl.glUniformMatrix4x2dv);
+        ADD_MATRIX(GL_DOUBLE_MAT3x4, GLdouble, 12, gl.glUniformMatrix3x4dv);
+        ADD_MATRIX(GL_DOUBLE_MAT4x3, GLdouble, 12, gl.glUniformMatrix4x3dv);
 #undef ADD
 #undef ADD_MATRIX
     }
@@ -841,13 +825,6 @@ bool GLCall::applyImageBinding(const SpvReflectDescriptorBinding &desc,
     Q_ASSERT(binding.texture);
 
     auto &gl = GLContext::currentContext();
-    if (!gl.v4_2) {
-        mMessages += MessageList::insert(mCall.id,
-            MessageType::OpenGLVersionNotAvailable, "4.2");
-        return false;
-    }
-
-#if GL_VERSION_4_2
     auto &texture = static_cast<GLTexture &>(*binding.texture);
     const auto target = texture.target();
     const auto textureId = texture.getReadWriteTextureId();
@@ -856,33 +833,27 @@ bool GLCall::applyImageBinding(const SpvReflectDescriptorBinding &desc,
             : static_cast<GLenum>(texture.format()));
 
     auto formatSupported = GLint();
-    gl.v4_2->glGetInternalformativ(target, format, GL_SHADER_IMAGE_LOAD, 1,
+    gl.glGetInternalformativ(target, format, GL_SHADER_IMAGE_LOAD, 1,
         &formatSupported);
     if (formatSupported == GL_NONE) {
         mMessages += MessageList::insert(binding.bindingItemId,
             MessageType::ImageFormatNotBindable);
         return false;
     }
-    gl.v4_2->glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + desc.binding));
-    gl.v4_2->glBindTexture(target, textureId);
+    gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + desc.binding));
+    gl.glBindTexture(target, textureId);
     if (auto location = mProgram->getUniformLocation(desc); location >= 0)
-        gl.v4_2->glUniform1i(location, desc.binding);
-    gl.v4_2->glBindImageTexture(static_cast<GLuint>(desc.binding), textureId,
+        gl.glUniform1i(location, desc.binding);
+    gl.glBindImageTexture(static_cast<GLuint>(desc.binding), textureId,
         binding.level, (binding.layer < 0), std::max(binding.layer, 0),
         GL_READ_WRITE, format);
-#endif
+
     return true;
 }
 
 void GLCall::selectSubroutines()
 {
     auto &gl = GLContext::currentContext();
-    if (!gl.v4_0) {
-        mMessages += MessageList::insert(mCall.id,
-            MessageType::OpenGLVersionNotAvailable, "4.0");
-        return;
-    }
-
     for (const auto &[stage, subroutines] : mProgram->stageSubroutines()) {
         auto subroutineIndices = std::vector<GLuint>();
         for (const auto &subroutine : subroutines) {
@@ -910,7 +881,7 @@ void GLCall::selectSubroutines()
             subroutineIndices.push_back(index);
         }
 
-        gl.v4_0->glUniformSubroutinesuiv(stage,
+        gl.glUniformSubroutinesuiv(stage,
             static_cast<GLsizei>(subroutineIndices.size()),
             subroutineIndices.data());
     }
@@ -970,11 +941,10 @@ bool GLCall::bindVertexStream()
             break;
 
         case GL_DOUBLE:
-            if (gl.v4_2)
-                gl.v4_2->glVertexAttribLPointer(location, attribute.count,
-                    attribute.type, attribute.stride,
-                    reinterpret_cast<void *>(
-                        static_cast<intptr_t>(attribute.offset)));
+            gl.glVertexAttribLPointer(location, attribute.count, attribute.type,
+                attribute.stride,
+                reinterpret_cast<void *>(
+                    static_cast<intptr_t>(attribute.offset)));
             break;
         }
 

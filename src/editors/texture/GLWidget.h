@@ -3,8 +3,6 @@
 #include <QOpenGLContext>
 #include <QOpenGLDebugLogger>
 #include <QOpenGLFunctions>
-#include <QOpenGLFunctions_3_3_Core>
-#include <QOpenGLFunctions_4_2_Core>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLWidget>
@@ -18,9 +16,8 @@ public:
     explicit GLWidget(QWidget *parent);
     ~GLWidget();
 
-    QOpenGLFunctions_3_3_Core &gl();
-    QOpenGLFunctions_4_2_Core *gl42();
-    QOpenGLFunctions_4_5_Core *gl45();
+    bool initialized() const { return mInitialized; }
+    QOpenGLFunctions_4_5_Core &gl();
 
     using QOpenGLWidget::paintEvent;
 
@@ -38,9 +35,7 @@ private:
     void releaseGL();
 
     bool mInitialized{};
-    QOpenGLFunctions_3_3_Core mGL;
-    std::optional<QOpenGLFunctions_4_2_Core> mGL42;
-    std::optional<QOpenGLFunctions_4_5_Core> mGL45;
+    QOpenGLFunctions_4_5_Core mGL;
     QOpenGLVertexArrayObject mVao;
     std::unique_ptr<QOpenGLDebugLogger> mDebugLogger;
 };

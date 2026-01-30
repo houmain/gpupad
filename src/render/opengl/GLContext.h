@@ -1,24 +1,15 @@
 #pragma once
 
+#include <QOpenGLContext>
+#include <QOpenGLFunctions_4_5_Core>
 #include "GLRenderSession.h"
 #include "GLObject.h"
 #include "FileCache.h"
 #include "FileDialog.h"
+#include "MessageList.h"
 #include "Singletons.h"
-#include <QOpenGLContext>
-#include <QOpenGLFunctions>
-#include <QOpenGLFunctions_3_3_Core>
-#include <QOpenGLFunctions_4_0_Core>
-#include <QOpenGLFunctions_4_2_Core>
-#include <QOpenGLFunctions_4_3_Core>
-#include <QOpenGLFunctions_4_5_Core>
-#include <QOpenGLVersionFunctionsFactory>
-#include <QOpenGLTimerQuery>
-#include <QSet>
-#include <memory>
-#include <map>
 
-class GLContext final : public QOpenGLContext, public QOpenGLFunctions_3_3_Core
+class GLContext final : public QOpenGLContext, public QOpenGLFunctions_4_5_Core
 {
     Q_OBJECT
 public:
@@ -29,57 +20,5 @@ public:
         return *static_cast<GLContext *>(current);
     }
 
-    QOpenGLFunctions_4_0_Core *v4_0{};
-    QOpenGLFunctions_4_2_Core *v4_2{};
-    QOpenGLFunctions_4_3_Core *v4_3{};
-    QOpenGLFunctions_4_5_Core *v4_5{};
-
-    bool initializeOpenGLFunctions() override
-    {
-        if (!QOpenGLFunctions_3_3_Core::initializeOpenGLFunctions())
-            return false;
-
-        v4_0 = QOpenGLVersionFunctionsFactory::get<QOpenGLFunctions_4_0_Core>();
-        v4_2 = QOpenGLVersionFunctionsFactory::get<QOpenGLFunctions_4_2_Core>();
-        v4_3 = QOpenGLVersionFunctionsFactory::get<QOpenGLFunctions_4_3_Core>();
-        v4_5 = QOpenGLVersionFunctionsFactory::get<QOpenGLFunctions_4_5_Core>();
-        return true;
-    }
-
-    explicit operator bool() { return isInitialized(); }
+    using QOpenGLContext::QOpenGLContext;
 };
-
-template <typename T>
-inline T *checkVersion(T *gl, const char *name, ItemId itemId,
-    MessagePtrSet &messages)
-{
-    if (gl)
-        return gl;
-    messages += MessageList::insert(itemId,
-        MessageType::OpenGLVersionNotAvailable, name);
-    return nullptr;
-}
-
-inline auto check(QOpenGLFunctions_4_0_Core *gl, ItemId itemId,
-    MessagePtrSet &messages)
-{
-    return checkVersion(gl, "4.0", itemId, messages);
-}
-
-inline auto check(QOpenGLFunctions_4_2_Core *gl, ItemId itemId,
-    MessagePtrSet &messages)
-{
-    return checkVersion(gl, "4.2", itemId, messages);
-}
-
-inline auto check(QOpenGLFunctions_4_3_Core *gl, ItemId itemId,
-    MessagePtrSet &messages)
-{
-    return checkVersion(gl, "4.3", itemId, messages);
-}
-
-inline auto check(QOpenGLFunctions_4_5_Core *gl, ItemId itemId,
-    MessagePtrSet &messages)
-{
-    return checkVersion(gl, "4.5", itemId, messages);
-}

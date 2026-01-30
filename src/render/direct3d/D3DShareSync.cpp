@@ -21,12 +21,12 @@ void D3DShareSync::endUpdate()
     mMutex.unlock();
 }
 
-void D3DShareSync::beginUsage(QOpenGLFunctions_3_3_Core &gl)
+void D3DShareSync::beginUsage(QOpenGLFunctions_4_5_Core &gl)
 {
     mMutex.lock();
 }
 
-void D3DShareSync::endUsage(QOpenGLFunctions_3_3_Core &gl)
+void D3DShareSync::endUsage(QOpenGLFunctions_4_5_Core &gl)
 {
     mMutex.unlock();
 }
