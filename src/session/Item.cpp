@@ -11,9 +11,9 @@ Item::Type getItemTypeByName(const QString &name, bool *ok)
     return (index < 0 ? Item::Type::Group : static_cast<Item::Type>(index));
 }
 
-int getFieldSize(const Field &field)
+int getDataTypeSize(Field::DataType dataType)
 {
-    switch (field.dataType) {
+    switch (dataType) {
     case Field::DataType::Int8:   return 1;
     case Field::DataType::Int16:  return 2;
     case Field::DataType::Int32:  return 4;
@@ -26,6 +26,11 @@ int getFieldSize(const Field &field)
     case Field::DataType::Double: return 8;
     }
     return 0;
+}
+
+int getFieldSize(const Field &field)
+{
+    return getDataTypeSize(field.dataType);
 }
 
 int getFieldRowOffset(const Field &field)

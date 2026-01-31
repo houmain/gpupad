@@ -303,6 +303,7 @@ struct CallKind
 };
 
 Item::Type getItemTypeByName(const QString &name, bool *ok = nullptr);
+int getDataTypeSize(Field::DataType dataType);
 int getFieldSize(const Field &field);
 int getFieldRowOffset(const Field &field);
 int getBlockStride(const Block &block);

@@ -154,6 +154,18 @@ const SpvReflectDescriptorBinding *D3DShader::getSpirvDescriptorBinding(
     return nullptr;
 }
 
+bool D3DShader::validate()
+{
+    auto printf = RemoveShaderPrintf{};
+    return compile(printf);
+}
+
+Reflection D3DShader::getReflection()
+{
+    validate();
+    return reflection();
+}
+
 bool D3DShader::compile(PrintfBase &printf)
 {
     if (mBinary)
@@ -173,7 +185,11 @@ bool D3DShader::compile(PrintfBase &printf)
     if (patchedSources.isEmpty())
         return false;
 
-    return compile(patchedSources.join("\n"));
+    if (!compile(patchedSources.join("\n")))
+        return false;
+
+    mReflection = generateSpirvReflection(mType, mD3DReflection.Get());
+    return true;
 }
 
 bool D3DShader::compile(const QString &source)

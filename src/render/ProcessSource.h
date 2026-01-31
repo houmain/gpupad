@@ -1,11 +1,11 @@
 #pragma once
 
 #include "RenderTask.h"
-#include "SourceType.h"
 #include "MessageList.h"
-#include <QVariant>
+#include "session/Item.h"
 
 class ShaderBase;
+class GLProgram;
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 
 class ProcessSource final : public RenderTask
@@ -28,9 +28,12 @@ private:
     void prepare(bool itemsChanged, EvaluationType) override;
     void render() override;
     void finish() override;
+    void prepareShader(Shader::ShaderType shaderType);
+    void validate();
+    QVariant process();
 
-private:
     std::unique_ptr<ShaderBase> mShader;
+    std::unique_ptr<GLProgram> mGLProgram;
     QString mFileName;
     SourceType mSourceType{};
     MessagePtrSet mMessages;

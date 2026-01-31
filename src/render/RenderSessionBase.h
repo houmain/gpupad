@@ -191,9 +191,9 @@ T *addOnce(std::map<ItemId, T> &list, const Item *item, Args &&...args)
                 .first->second;
 }
 
-template <typename C>
-auto find(C &container, const QString &name)
+template <typename C, typename T>
+auto find(C &container, const T &key)
 {
-    const auto it = container.find(name);
+    const auto it = container.find(key);
     return (it == container.end() ? nullptr : &it->second);
 }

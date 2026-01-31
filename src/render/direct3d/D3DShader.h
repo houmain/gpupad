@@ -11,13 +11,15 @@ public:
     D3DShader(Shader::ShaderType type, const QList<const Shader *> &shaders,
         const Session &session);
 
+    bool validate() override;
+    Reflection getReflection() override;
     bool compile(PrintfBase &printf);
     const ComPtr<ID3DBlob> &binary() const { return mBinary; }
     const ComPtr<ID3D12ShaderReflection> &d3dReflection() const
     {
         return mD3DReflection;
     }
-    QString getBufferBindingName(const QString &name) const;
+    const Reflection &reflection() const { return mReflection; }
     const SpvReflectDescriptorBinding *getSpirvDescriptorBinding(
         const QString &name) const;
 
@@ -31,5 +33,8 @@ private:
     ComPtr<ID3D12ShaderReflection> mD3DReflection;
     Reflection mReflection;
 };
+
+Reflection generateSpirvReflection(Shader::ShaderType shaderType,
+    ID3D12ShaderReflection *reflection);
 
 #endif // _WIN32

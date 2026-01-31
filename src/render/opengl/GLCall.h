@@ -44,8 +44,8 @@ private:
     MessageType applyBinding(const SpvReflectDescriptorBinding &desc,
         uint32_t arrayElement, bool isVariableLengthArray,
         ScriptEngine &scriptEngine);
-    void applyUniformBindings(const QString &name,
-        const GLProgram::Uniform &uniform, ScriptEngine &scriptEngine);
+    void applyUniformBindings(const GLProgram::Uniform &uniform,
+        ScriptEngine &scriptEngine);
     void applyUniformBinding(const GLProgram::Uniform &uniform,
         const UniformBinding &bindings, int offset, int count,
         ScriptEngine &scriptEngine);

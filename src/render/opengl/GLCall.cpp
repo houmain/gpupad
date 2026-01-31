@@ -518,8 +518,8 @@ bool GLCall::updateBindings(ScriptEngine &scriptEngine)
 
     auto canRender = true;
     for (const auto &desc : reflection.descriptorBindings()) {
-        //if (!desc.accessed)
-        //    continue;
+        if (!desc.accessed)
+            continue;
 
         auto arrayElement = uint32_t{};
         forEachArrayElementRec(desc, 0, arrayElement,
@@ -546,8 +546,8 @@ bool GLCall::updateBindings(ScriptEngine &scriptEngine)
             });
     }
 
-    for (const auto &[name, uniform] : mProgram->uniforms())
-        applyUniformBindings(name, uniform, scriptEngine);
+    for (const auto &uniform : mProgram->uniforms())
+        applyUniformBindings(uniform, scriptEngine);
 
     selectSubroutines();
 
@@ -663,11 +663,11 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
     return MessageType::None;
 }
 
-void GLCall::applyUniformBindings(const QString &name,
-    const GLProgram::Uniform &uniform, ScriptEngine &scriptEngine)
+void GLCall::applyUniformBindings(const GLProgram::Uniform &uniform,
+    ScriptEngine &scriptEngine)
 {
-    if (const auto binding = find(mBindings.uniforms, name)) {
-        applyUniformBinding(uniform, *binding, -1, uniform.arrayElements,
+    if (const auto binding = find(mBindings.uniforms, uniform.name)) {
+        applyUniformBinding(uniform, *binding, -1, uniform.arraySize,
             scriptEngine);
         mUsedItems += binding->bindingItemId;
         return;
@@ -675,13 +675,13 @@ void GLCall::applyUniformBindings(const QString &name,
 
     // compare array uniforms also by basename
     auto bindingSet = false;
-    const auto baseName = getBaseName(name);
-    const auto uniformIndices = getArrayIndices(name);
+    const auto baseName = getBaseName(uniform.name).toString();
+    const auto uniformIndices = getArrayIndices(uniform.name);
     for (const auto &[bindingName, binding] : mBindings.uniforms)
         if (getBaseName(bindingName) == baseName) {
             const auto bindingIndices = getArrayIndices(bindingName);
             const auto [offset, count] = getValuesOffsetCount(uniformIndices,
-                bindingIndices, uniform.arrayElements);
+                bindingIndices, uniform.arraySize);
             if (count) {
                 applyUniformBinding(uniform, binding, offset, count,
                     scriptEngine);
@@ -691,8 +691,8 @@ void GLCall::applyUniformBindings(const QString &name,
         }
 
     if (!bindingSet)
-        mMessages += MessageList::insert(mCall.id, MessageType::UniformNotSet,
-            getBaseName(name).toString());
+        mMessages +=
+            MessageList::insert(mCall.id, MessageType::UniformNotSet, baseName);
 }
 
 void GLCall::applyUniformBinding(const GLProgram::Uniform &uniform,
@@ -704,7 +704,7 @@ void GLCall::applyUniformBinding(const GLProgram::Uniform &uniform,
     switch (uniform.dataType) {
 #define ADD(TYPE, DATATYPE, COUNT, FUNCTION)                                  \
     case TYPE:                                                                \
-        FUNCTION(uniform.location, uniform.arrayElements,                     \
+        FUNCTION(uniform.location, uniform.arraySize,                         \
             getValues<DATATYPE>(scriptEngine, binding.values, COUNT * offset, \
                 COUNT * count, itemId)                                        \
                 .data());                                                     \
@@ -712,7 +712,7 @@ void GLCall::applyUniformBinding(const GLProgram::Uniform &uniform,
 
 #define ADD_MATRIX(TYPE, DATATYPE, COUNT, FUNCTION)                           \
     case TYPE:                                                                \
-        FUNCTION(uniform.location, uniform.arrayElements, binding.transpose,  \
+        FUNCTION(uniform.location, uniform.arraySize, binding.transpose,      \
             getValues<DATATYPE>(scriptEngine, binding.values, COUNT * offset, \
                 COUNT * count, itemId)                                        \
                 .data());                                                     \
@@ -778,7 +778,8 @@ bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + desc.binding));
     texture.updateMipmaps(gl);
     gl.glBindTexture(target, texture.getReadOnlyTextureId());
-    if (auto location = mProgram->getUniformLocation(desc); location >= 0)
+    if (auto location = mProgram->getDescriptorUniformLocation(desc);
+        location >= 0)
         gl.glUniform1i(location, desc.binding);
 
     switch (target) {
@@ -842,7 +843,8 @@ bool GLCall::applyImageBinding(const SpvReflectDescriptorBinding &desc,
     }
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + desc.binding));
     gl.glBindTexture(target, textureId);
-    if (auto location = mProgram->getUniformLocation(desc); location >= 0)
+    if (auto location = mProgram->getDescriptorUniformLocation(desc);
+        location >= 0)
         gl.glUniform1i(location, desc.binding);
     gl.glBindImageTexture(static_cast<GLuint>(desc.binding), textureId,
         binding.level, (binding.layer < 0), std::max(binding.layer, 0),
@@ -912,6 +914,8 @@ bool GLCall::bindVertexStream()
         }
 
         const auto location = input->location;
+        Q_ASSERT(static_cast<int32_t>(location) >= 0);
+
         const auto &attribute = *attributePtr;
         auto &buffer = *attribute.buffer;
         buffer.bindReadOnly(GL_ARRAY_BUFFER);

@@ -29,9 +29,11 @@ private:
     struct DescriptorHeapEntry
     {
         D3D12_SHADER_VISIBILITY visibility;
+        D3D12_DESCRIPTOR_RANGE_TYPE rangeType;
         UINT space;
         UINT bindPoint;
         UINT offset;
+        UINT count;
     };
 
     struct DynamicConstantBuffer
@@ -46,8 +48,8 @@ private:
     bool createInputLayout(std::vector<D3D12_INPUT_ELEMENT_DESC> *inputLayout);
     bool createRootSignature(D3DContext &context);
     void createDescriptorHeap(D3DContext &context);
-    UINT getDescriptorHeapOffset(D3D12_SHADER_VISIBILITY visibility, UINT space,
-        UINT bindPoint) const;
+    UINT getDescriptorHeapOffset(D3D12_SHADER_VISIBILITY visibility,
+        D3D_SHADER_INPUT_TYPE inputType, UINT space, UINT bindPoint) const;
     bool setDescriptors(D3DContext &context, ScriptEngine &scriptEngine);
     DynamicConstantBuffer &getDynamicConstantBuffer(
         D3D12_SHADER_VISIBILITY visibility, UINT space, UINT bindPoint,

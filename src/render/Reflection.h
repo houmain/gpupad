@@ -15,29 +15,41 @@ public:
             std::string name;
             uint32_t offset;
             uint32_t size;
+            std::string typeName;
+            SpvReflectTypeFlags typeFlags;
             SpvReflectDecorationFlags decorationFlags;
             SpvReflectNumericTraits numeric;
+            SpvReflectImageTraits image;
             SpvReflectArrayTraits array;
             std::vector<BlockVariable> members;
         };
 
         struct DescriptorBinding
         {
+            SpvReflectDescriptorType descriptorType;
             std::string name;
             std::string typeName;
-            SpvReflectDescriptorType type;
-            uint32_t binding;
             SpvReflectDecorationFlags decorationFlags;
+            SpvReflectNumericTraits numeric;
+            SpvReflectImageTraits image;
+            SpvReflectArrayTraits array;
             BlockVariable block;
+            uint32_t binding;
+            uint32_t set;
         };
 
-        struct Input
+        struct InterfaceVariable
         {
             std::string name;
+            std::string semantic;
+            int builtIn;
+            SpvReflectFormat format;
             uint32_t location;
         };
 
-        std::vector<Input> inputs;
+        SpvReflectShaderStageFlagBits shaderStage;
+        std::vector<InterfaceVariable> inputs;
+        std::vector<InterfaceVariable> outputs;
         std::vector<DescriptorBinding> descriptorsBindings;
     };
 
@@ -78,10 +90,9 @@ bool isGlobalUniformBlockName(const char *name);
 bool isGlobalUniformBlockName(const QString &name);
 QString removeGlobalUniformBlockName(QString string);
 bool isBufferBinding(SpvReflectDescriptorType type);
-
-QString getJsonString(const SpvReflectShaderModule &module);
 bool isBuiltIn(const SpvReflectInterfaceVariable &variable);
 uint32_t getBindingArraySize(const SpvReflectBindingArrayTraits &array);
+SpvReflectShaderStageFlagBits getShaderStage(Shader::ShaderType shaderType);
 Field::DataType getBufferMemberDataType(
     const SpvReflectBlockVariable &variable);
 int getBufferMemberColumnCount(const SpvReflectBlockVariable &variable);
@@ -90,3 +101,5 @@ int getBufferMemberColumnStride(const SpvReflectBlockVariable &variable);
 int getBufferMemberArraySize(const SpvReflectBlockVariable &variable);
 int getBufferMemberArrayStride(const SpvReflectBlockVariable &variable);
 GLenum getBufferMemberGLType(const SpvReflectBlockVariable &variable);
+
+QString getJsonString(const Reflection &reflection);

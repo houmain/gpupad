@@ -19,13 +19,14 @@ public:
     const QString &entryPoint() const { return mEntryPoint; }
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
     Spirv::Input getSpirvCompilerInput(PrintfBase &printf);
+    virtual bool validate();
+    virtual Reflection getReflection();
     Spirv compileSpirv();
     QString preprocess();
     QString generateGLSL();
     QString generateHLSL();
     QString disassemble();
     QString generateGLSLangAST();
-    QString getJsonReflection();
 
 protected:
     virtual QStringList preprocessorDefinitions() const;

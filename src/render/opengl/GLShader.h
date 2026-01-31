@@ -24,6 +24,3 @@ private:
 
     GLObject mShaderObject;
 };
-
-QString tryGetProgramBinary(const GLShader &shader);
-void tryGetLinkerWarnings(const GLShader &shader, MessagePtrSet &messages);

@@ -20,13 +20,14 @@ OutputWindow::OutputWindow(QWidget *parent)
     layout->setSpacing(0);
     layout->addWidget(mTextEdit);
 
-    mTypeSelector->addItem(tr("SPIR-V"), "spirv");
+    mTypeSelector->addItem(tr("JSON Reflection"), "json");
+    mTypeSelector->addItem(tr("Preprocess"), "preprocess");
     mTypeSelector->addItem(tr("SPIR-V → GLSL"), "glsl");
     mTypeSelector->addItem(tr("SPIR-V → HLSL"), "hlsl");
-    mTypeSelector->addItem(tr("JSON Interface"), "json");
-    mTypeSelector->addItem(tr("Preprocess"), "preprocess");
+    mTypeSelector->addItem(tr("SPIR-V"), "spirv");
     mTypeSelector->addItem(tr("glslang AST"), "ast");
-    mTypeSelector->addItem(tr("Program Binary (NV_gpu_program)"), "programBinary");
+    mTypeSelector->addItem(tr("Program Binary (NV_gpu_program)"),
+        "programBinary");
 
     connect(mTypeSelector, &DataComboBox::currentDataChanged,
         [this](QVariant data) {

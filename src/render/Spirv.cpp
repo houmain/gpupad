@@ -321,7 +321,7 @@ std::map<Shader::ShaderType, Spirv> Spirv::compile(const Session &session,
     auto program = glslang::TProgram();
     for (const auto &input : inputs) {
         auto requestedMessages = unsigned{ EShMsgSpvRules };
-        if (session.renderer == Session::Renderer::Vulkan)
+        if (session.renderer != Session::Renderer::OpenGL)
             requestedMessages |= EShMsgVulkanRules;
         if (language == Session::ShaderLanguage::HLSL)
             requestedMessages |= EShMsgReadHlsl | EShMsgHlslOffsets;

@@ -129,6 +129,7 @@ set(SOURCES
   src/render/opengl/GLBuffer.cpp
   src/render/opengl/GLCall.cpp
   src/render/opengl/GLProgram.cpp
+  src/render/opengl/GLProgram_Reflection.cpp
   src/render/opengl/GLShader.cpp
   src/render/opengl/GLStream.cpp
   src/render/opengl/GLTarget.cpp
@@ -163,6 +164,8 @@ set(SOURCES
   src/render/PrintfBase.cpp
   src/render/Spirv.cpp
   src/render/Reflection.cpp
+  src/render/Reflection_Builder.cpp
+  src/render/Reflection_JSON.cpp
   src/scripting/ScriptEngine.cpp
   src/scripting/ScriptEngine.js
   src/scripting/ScriptSession.cpp
@@ -221,6 +224,7 @@ if(WIN32)
   src/render/direct3d/D3DProgram.cpp
   src/render/direct3d/D3DPrintf.cpp
   src/render/direct3d/D3DShader.cpp
+  src/render/direct3d/D3DShader_Reflection.cpp
   src/render/direct3d/D3DStream.cpp
   src/render/direct3d/D3DTarget.cpp
   src/render/direct3d/D3DTexture.cpp

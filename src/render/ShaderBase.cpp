@@ -401,6 +401,16 @@ Spirv::Input ShaderBase::getSpirvCompilerInput(PrintfBase &printf)
     };
 }
 
+bool ShaderBase::validate()
+{
+    return static_cast<bool>(compileSpirv());
+}
+
+Reflection ShaderBase::getReflection()
+{
+    return Reflection(compileSpirv().spirv());
+}
+
 Spirv ShaderBase::compileSpirv(PrintfBase &printf)
 {
     auto input = getSpirvCompilerInput(printf);
@@ -444,11 +454,4 @@ QString ShaderBase::generateGLSLangAST()
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
     return Spirv::generateAST(mSession, mType, patchedSources, usedFileNames,
         mEntryPoint, mItemId, mIncludePaths, mMessages);
-}
-
-QString ShaderBase::getJsonReflection()
-{
-    const auto spirv = compileSpirv();
-    const auto reflection = Reflection(spirv.spirv());
-    return getJsonString(*reflection);
 }

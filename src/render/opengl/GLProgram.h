@@ -10,9 +10,10 @@ class GLProgram
 public:
     struct Uniform
     {
+        QString name;
         GLint location;
         GLenum dataType;
-        GLint arrayElements;
+        GLint arraySize;
     };
 
     struct Subroutine
@@ -26,6 +27,7 @@ public:
     GLProgram(const Program &program, const Session &session);
     bool operator==(const GLProgram &rhs) const;
 
+    bool validate();
     bool link(GLContext &context);
     bool bind();
     void unbind();
@@ -33,27 +35,30 @@ public:
     const Session &session() const { return mSession; }
     const Reflection &reflection() const { return mReflection; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
-    int getUniformLocation(const SpvReflectDescriptorBinding &desc) const;
+    int getDescriptorUniformLocation(
+        const SpvReflectDescriptorBinding &desc) const;
     GLBuffer &getDynamicUniformBuffer(const QString &name, int size);
     const std::vector<GLShader> &shaders() const { return mShaders; }
-    const std::map<QString, Uniform> &uniforms() const { return mUniforms; }
+    const std::vector<Uniform> &uniforms() const { return mUniforms; }
     const StageSubroutines &stageSubroutines() const
     {
         return mStageSubroutines;
     }
     GLPrintf &printf() { return mPrintf; }
+    MessagePtrSet resetMessages();
+    QString tryGetProgramBinary();
 
 private:
     bool compileShaders();
     bool linkProgram();
-    bool getReflectionFromSpirv() const;
     void generateReflectionFromProgram(GLuint program);
+    void enumerateSubroutines(GLuint program);
     void automapDescriptorBindings();
 
     ItemId mItemId{};
     Session mSession{};
     QSet<ItemId> mUsedItems;
-    MessagePtrSet mLinkMessages;
+    MessagePtrSet mMessages;
     std::vector<GLShader> mShaders;
     std::vector<GLShader> mIncludableShaders;
     GLObject mProgramObject;
@@ -61,6 +66,8 @@ private:
     bool mFailed{};
     GLPrintf mPrintf;
     std::map<QString, GLBuffer> mDynamicUniformBuffers;
-    std::map<QString, Uniform> mUniforms;
+    std::vector<Uniform> mUniforms;
+    std::map<QString, GLint> mDescriptorUniformLocations;
+    std::map<Shader::ShaderType, Spirv> mStageSpirv;
     std::map<Shader::ShaderType, std::vector<Subroutine>> mStageSubroutines;
 };
