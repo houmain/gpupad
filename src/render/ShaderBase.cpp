@@ -4,7 +4,7 @@
 #include "FileCache.h"
 #include "FileDialog.h"
 #include "Singletons.h"
-#include "Spirv.h"
+#include "ShaderCompiler.h"
 #include <QDir>
 #include <QFileInfo>
 #include <QRegularExpression>
@@ -65,7 +65,7 @@ namespace {
         const auto match = regex.match(source);
         const auto position = (match.hasMatch() ? match.capturedStart() : 0);
         const auto lineNo = countLines(source, position);
-        source.insert(position, text + QString("#line %1 0\n").arg(lineNo));
+        source.insert(position, text + QString("#line %1\n").arg(lineNo));
     }
 
     QString substituteIncludes(QString source, const QString &fileName,
@@ -129,7 +129,9 @@ namespace {
                     MessageType::InvalidIncludeDirective, fileName);
             }
         }
-        return QString("#line %1 %2\n").arg(versionRemoved ? 2 : 1).arg(fileNo)
+        return QString("#line %1 %2\n")
+                   .arg(versionRemoved ? 2 : 1)
+                   .arg(fileNo ? QString::number(fileNo) : "")
             + source;
     }
 
@@ -387,11 +389,11 @@ QStringList ShaderBase::getPatchedSourcesHLSL(PrintfBase &printf,
     return sources;
 }
 
-Spirv::Input ShaderBase::getSpirvCompilerInput(PrintfBase &printf)
+ShaderCompiler::Input ShaderBase::getShaderCompilerInput(PrintfBase &printf)
 {
     auto usedFileNames = QStringList();
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
-    return Spirv::Input{
+    return ShaderCompiler::Input{
         mType,
         patchedSources,
         usedFileNames,
@@ -403,18 +405,20 @@ Spirv::Input ShaderBase::getSpirvCompilerInput(PrintfBase &printf)
 
 bool ShaderBase::validate()
 {
-    return static_cast<bool>(compileSpirv());
+    const auto spirv = compileSpirv();
+    return !spirv.empty();
 }
 
 Reflection ShaderBase::getReflection()
 {
-    return Reflection(compileSpirv().spirv());
+    return Reflection(compileSpirv());
 }
 
 Spirv ShaderBase::compileSpirv(PrintfBase &printf)
 {
-    auto input = getSpirvCompilerInput(printf);
-    auto stages = Spirv::compile(mSession, { input }, mItemId, mMessages);
+    auto input = getShaderCompilerInput(printf);
+    auto stages =
+        ShaderCompiler::compileSpirv(mSession, { input }, mItemId, mMessages);
     return stages[mType];
 }
 
@@ -426,16 +430,16 @@ Spirv ShaderBase::compileSpirv()
 
 QString ShaderBase::generateGLSL()
 {
-    return Spirv::generateGLSL(compileSpirv(), mItemId, mMessages);
+    return ShaderCompiler::generateGLSL(compileSpirv(), mItemId, mMessages);
 }
 
 QString ShaderBase::generateHLSL()
 {
-    return Spirv::generateHLSL(compileSpirv(), mItemId, mMessages);
+    return ShaderCompiler::generateHLSL(compileSpirv(), mItemId, mMessages);
 }
 QString ShaderBase::disassemble()
 {
-    return Spirv::disassemble(compileSpirv());
+    return ShaderCompiler::disassemble(compileSpirv());
 }
 
 QString ShaderBase::preprocess()
@@ -443,8 +447,8 @@ QString ShaderBase::preprocess()
     auto usedFileNames = QStringList();
     auto printf = RemoveShaderPrintf();
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
-    return Spirv::preprocess(mSession, mType, patchedSources, usedFileNames,
-        mEntryPoint, mItemId, mIncludePaths, mMessages);
+    return ShaderCompiler::preprocess(mSession, mType, patchedSources,
+        usedFileNames, mEntryPoint, mItemId, mIncludePaths, mMessages);
 }
 
 QString ShaderBase::generateGLSLangAST()
@@ -452,6 +456,6 @@ QString ShaderBase::generateGLSLangAST()
     auto usedFileNames = QStringList();
     auto printf = RemoveShaderPrintf();
     auto patchedSources = getPatchedSources(printf, &usedFileNames);
-    return Spirv::generateAST(mSession, mType, patchedSources, usedFileNames,
-        mEntryPoint, mItemId, mIncludePaths, mMessages);
+    return ShaderCompiler::generateAST(mSession, mType, patchedSources,
+        usedFileNames, mEntryPoint, mItemId, mIncludePaths, mMessages);
 }

@@ -210,7 +210,7 @@ bool D3DPipeline::createRootSignature(D3DContext &context)
     auto descriptorTableDescs = std::vector<DescriptorTableDesc>();
     auto staticSamplers = std::vector<CD3DX12_STATIC_SAMPLER_DESC>();
     auto descriptorHeapOffset = UINT{};
-    for (const auto [stage, reflection] : mProgram.reflection()) {
+    for (const auto [stage, reflection] : mProgram.d3dReflection()) {
         const auto visibility = stageToVisibility(stage);
         auto rangesPerType =
             std::vector<std::vector<CD3DX12_DESCRIPTOR_RANGE>>();
@@ -351,7 +351,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
     };
 
     auto canRender = true;
-    for (const auto [stage, reflection] : mProgram.reflection()) {
+    for (const auto [stage, reflection] : mProgram.d3dReflection()) {
         const auto visibility = stageToVisibility(stage);
         auto shaderDesc = D3D12_SHADER_DESC{};
         reflection->GetDesc(&shaderDesc);

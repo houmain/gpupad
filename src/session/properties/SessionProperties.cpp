@@ -193,8 +193,7 @@ void SessionProperties::updateShaderCompiler()
                 };
             return {
                 { "glslang", Session::ShaderCompiler::glslang },
-                // TODO: implement DXC -> SpirV
-                //{ "DXC", Session::ShaderCompiler::DXC },
+                { "DXC", Session::ShaderCompiler::DXC },
             };
 
         case Session::Renderer::Direct3D:

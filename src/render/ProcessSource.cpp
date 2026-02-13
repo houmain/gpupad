@@ -53,9 +53,8 @@ namespace {
                         // add other shaders of program with same type
                         shaders.append(child);
                     }
-        }
-        else {
-          shaders.append(&shader);
+        } else {
+            shaders.append(&shader);
         }
     }
 } // namespace
@@ -116,9 +115,7 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
 
 #if 0
     // never target OpenGL when generating JSON, otherwise SpvReflect cannot enumerate uniforms
-    if (mProcessType == "json"
-        && session.renderer == Session::Renderer::OpenGL
-        && session.shaderCompiler == Session::ShaderCompiler::glslang)
+    if (mProcessType == "json" && session.renderer == Session::Renderer::OpenGL)
         session.renderer = Session::Renderer::Vulkan;
 #endif
 
@@ -211,10 +208,9 @@ QVariant ProcessSource::process()
         return mShader->disassemble();
 
     if (mProcessType == "spirvBinary" && mShader) {
-        if (const auto spirv = mShader->compileSpirv())
-            return QByteArray(
-                reinterpret_cast<const char *>(spirv.spirv().data()),
-                spirv.spirv().size() * sizeof(uint32_t));
+        if (const auto spirv = mShader->compileSpirv(); !spirv.empty())
+            return QByteArray(reinterpret_cast<const char *>(spirv.data()),
+                spirv.size() * sizeof(uint32_t));
         for (auto message : mShader->resetMessages())
             return message->text;
     }

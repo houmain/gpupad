@@ -2,16 +2,10 @@
 
 #if defined(_WIN32)
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <windows.h>
-#include <wrl.h>
+#include "../ShaderCompiler_Microsoft.h"
 #include <dxgi1_4.h>
-#include <d3d12shader.h>
 #include "d3dx12.h"
 #include "d3d12/RenderTargetHelper.hpp"
-
-using Microsoft::WRL::ComPtr;
 
 #include "D3DRenderSession.h"
 #include "D3DEnums.h"
@@ -29,10 +23,5 @@ struct D3DContext
     std::vector<ComPtr<ID3D12Resource>> stagingBuffers;
     const UINT descriptorSize;
 };
-
-inline void AssertIfFailed(HRESULT hr)
-{
-    Q_ASSERT(SUCCEEDED(hr));
-}
 
 #endif // _WIN32

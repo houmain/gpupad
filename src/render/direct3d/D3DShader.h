@@ -15,10 +15,7 @@ public:
     Reflection getReflection() override;
     bool compile(PrintfBase &printf);
     const ComPtr<ID3DBlob> &binary() const { return mBinary; }
-    const ComPtr<ID3D12ShaderReflection> &d3dReflection() const
-    {
-        return mD3DReflection;
-    }
+    ID3D12ShaderReflection *d3dReflection() const { return mD3DReflection.Get(); }
     const Reflection &reflection() const { return mReflection; }
     const SpvReflectDescriptorBinding *getSpirvDescriptorBinding(
         const QString &name) const;
@@ -26,8 +23,6 @@ public:
 private:
     QStringList preprocessorDefinitions() const override;
     bool compile(const QString &source);
-    bool compileD3DCompile(const QString &source);
-    bool compileDXC(const QString &source);
 
     ComPtr<ID3DBlob> mBinary;
     ComPtr<ID3D12ShaderReflection> mD3DReflection;

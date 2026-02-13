@@ -86,11 +86,12 @@ bool GLProgram::compileShaders()
             if (!shader.compile(mPrintf))
                 return false;
     } else {
-        auto inputs = std::vector<Spirv::Input>();
+        auto inputs = std::vector<ShaderCompiler::Input>();
         for (auto &shader : mShaders)
-            inputs.push_back(shader.getSpirvCompilerInput(mPrintf));
+            inputs.push_back(shader.getShaderCompilerInput(mPrintf));
 
-        mStageSpirv = Spirv::compile(mSession, inputs, mItemId, mMessages);
+        mStageSpirv =
+            ShaderCompiler::compileSpirv(mSession, inputs, mItemId, mMessages);
         for (auto &shader : mShaders)
             if (!shader.specialize(mStageSpirv[shader.type()]))
                 return false;

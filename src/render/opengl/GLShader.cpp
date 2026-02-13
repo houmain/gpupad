@@ -97,7 +97,7 @@ bool GLShader::specialize(const Spirv &spirv)
     if (mShaderObject)
         return true;
 
-    if (!spirv)
+    if (spirv.empty())
         return false;
 
     auto &gl = GLContext::currentContext();
@@ -117,7 +117,7 @@ bool GLShader::specialize(const Spirv &spirv)
 
     // strip reflection info first, which contains problematic HLSL sematics
     // https://github.com/KhronosGroup/SPIRV-Tools/issues/2019
-    const auto stripped = Spirv::stripReflection(spirv);
+    const auto stripped = ShaderCompiler::stripReflection(spirv);
 
     const auto shaderObject = static_cast<GLuint>(shader);
     gl.glShaderBinary(1, &shaderObject, GL_SHADER_BINARY_FORMAT_SPIR_V_ARB,

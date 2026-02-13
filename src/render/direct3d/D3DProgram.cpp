@@ -74,7 +74,7 @@ bool D3DProgram::link(D3DContext &context)
 
     for (auto &shader : mShaders) {
         mFailed |= !shader.compile(mPrintf);
-        mReflection[shader.type()] = shader.d3dReflection().Get();
+        mD3DReflection[shader.type()] = shader.d3dReflection();
     }
     return !mFailed;
 }

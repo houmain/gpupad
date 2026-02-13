@@ -7,7 +7,7 @@
 class D3DProgram
 {
 public:
-    using StageReflection =
+    using StageD3DReflection =
         std::map<Shader::ShaderType, ID3D12ShaderReflection *>;
 
     D3DProgram(const Program &program, const Session &session);
@@ -17,7 +17,7 @@ public:
     ItemId itemId() const { return mItemId; }
     const Session &session() const { return mSession; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
-    const StageReflection &reflection() const { return mReflection; }
+    const StageD3DReflection &d3dReflection() const { return mD3DReflection; }
     const std::vector<D3DShader> &shaders() const { return mShaders; }
     const D3DShader *getVertexShader() const;
     const SpvReflectDescriptorBinding *getSpirvDescriptorBinding(
@@ -33,7 +33,7 @@ private:
     MessagePtrSet mLinkMessages;
     std::vector<D3DShader> mShaders;
     std::vector<D3DShader> mIncludableShaders;
-    StageReflection mReflection;
+    StageD3DReflection mD3DReflection;
     D3DPrintf mPrintf;
     bool mFailed{};
 };

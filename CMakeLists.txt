@@ -162,7 +162,9 @@ set(SOURCES
   src/render/PipelineBase.cpp
   src/render/TextureBase.cpp
   src/render/PrintfBase.cpp
-  src/render/Spirv.cpp
+  src/render/ShaderCompiler.cpp
+  src/render/ShaderCompiler_glslang.cpp
+  src/render/ShaderCompiler_Microsoft.cpp
   src/render/Reflection.cpp
   src/render/Reflection_Builder.cpp
   src/render/Reflection_JSON.cpp

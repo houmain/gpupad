@@ -537,8 +537,8 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
 
     auto inputSemantics = std::map<std::string, std::string>();
     if (mSession.shaderLanguage == Session::ShaderLanguage::HLSL)
-        if (auto vertexStage = find(mStageSpirv, Shader::ShaderType::Vertex))
-            for (auto reflection = Reflection(vertexStage->spirv());
+        if (auto spirv = find(mStageSpirv, Shader::ShaderType::Vertex))
+            for (auto reflection = Reflection(*spirv);
                 auto input : reflection.inputVariables())
                 if (input->name && input->semantic)
                     inputSemantics[input->name] = input->semantic;

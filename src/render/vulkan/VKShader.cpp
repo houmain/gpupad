@@ -67,9 +67,9 @@ void VKShader::create(KDGpu::Device &device, const Spirv &spirv)
         return;
     }
 
-    Q_ASSERT(spirv);
-    mShaderModule = device.createShaderModule(spirv.spirv());
-    mReflection = Reflection(spirv.spirv());
+    Q_ASSERT(!spirv.empty());
+    mShaderModule = device.createShaderModule(spirv);
+    mReflection = Reflection(spirv);
 }
 
 KDGpu::ShaderStage VKShader::getShaderStage() const

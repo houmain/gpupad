@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PrintfBase.h"
-#include "Spirv.h"
+#include "ShaderCompiler.h"
 #include "Reflection.h"
 
 class ShaderBase
@@ -18,7 +18,7 @@ public:
     const QStringList &fileNames() const { return mFileNames; }
     const QString &entryPoint() const { return mEntryPoint; }
     MessagePtrSet resetMessages() { return std::exchange(mMessages, {}); }
-    Spirv::Input getSpirvCompilerInput(PrintfBase &printf);
+    ShaderCompiler::Input getShaderCompilerInput(PrintfBase &printf);
     virtual bool validate();
     virtual Reflection getReflection();
     Spirv compileSpirv();
