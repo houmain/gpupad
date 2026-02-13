@@ -20,12 +20,8 @@ namespace ShaderCompiler {
             return {};
         }
 
-        if (session.shaderCompiler == Session::ShaderCompiler::glslang)
-            return compileSpirv_glslang(session, inputs, programItemId,
-                messages);
-
-#if defined(_WIN32)
         if (session.shaderCompiler == Session::ShaderCompiler::DXC) {
+#if defined(_WIN32)
             auto stageSpirv = std::map<Shader::ShaderType, Spirv>();
             for (const auto &input : inputs) {
                 auto spirv = compileSpirv_DXC(session, { input }, messages);
@@ -33,10 +29,13 @@ namespace ShaderCompiler {
                     stageSpirv[input.shaderType] = std::move(spirv);
             }
             return stageSpirv;
+#else
+            messages += MessageList::insert(programItemId,
+                MessageType::UnsupportedShaderType);
+            return {};
         }
 #endif
 
-        Q_ASSERT(!"unexpected shader compiler");
-        return {};
+        return compileSpirv_glslang(session, inputs, programItemId, messages);
     }
 } // namespace ShaderCompiler

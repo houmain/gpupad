@@ -1,6 +1,4 @@
 #include "ProcessSource.h"
-#include "PrintfBase.h"
-#include "Settings.h"
 #include "Singletons.h"
 #include "FileCache.h"
 #include "SynchronizeLogic.h"
@@ -42,7 +40,7 @@ namespace {
         if (auto sessionShader = findShaderInSession(shader)) {
             const auto program = castItem<Program>(sessionShader->parent);
             for (auto item : program->items)
-                if (auto child = castItem<Shader>(item))
+                if (auto child = castItem<Shader>(item)) {
                     if (child == sessionShader) {
                         // copy everything but type from session shader
                         const auto shaderType = shader.shaderType;
@@ -53,6 +51,7 @@ namespace {
                         // add other shaders of program with same type
                         shaders.append(child);
                     }
+                }
         } else {
             shaders.append(&shader);
         }
@@ -143,13 +142,18 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
         }
         break;
     }
+      
+    default:
     case Session::Renderer::Vulkan:
         mShader = std::make_unique<VKShader>(shaderType, shaders, session);
         break;
+
+#if defined(_WIN32)
     case Session::Renderer::Direct3D:
         mShader = std::make_unique<D3DShader>(shaderType, shaders, session);
         break;
-    }
+#endif
+    }   
 }
 
 void ProcessSource::render()
@@ -211,7 +215,7 @@ QVariant ProcessSource::process()
         if (const auto spirv = mShader->compileSpirv(); !spirv.empty())
             return QByteArray(reinterpret_cast<const char *>(spirv.data()),
                 spirv.size() * sizeof(uint32_t));
-        for (auto message : mShader->resetMessages())
+        for (const auto &message : mShader->resetMessages())
             return message->text;
     }
 

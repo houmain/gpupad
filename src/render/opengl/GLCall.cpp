@@ -578,8 +578,8 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
             auto &buffer = mProgram->getDynamicUniformBuffer(
                 desc.type_description->type_name, desc.block.size);
 
-            Q_ASSERT(desc.block.size == buffer.size());
-            if (desc.block.size != buffer.size())
+            Q_ASSERT(desc.block.size == static_cast<uint32_t>(buffer.size()));
+            if (desc.block.size != static_cast<uint32_t>(buffer.size()))
                 return MessageType::BufferNotSet;
 
             auto bufferData = std::span<std::byte>(

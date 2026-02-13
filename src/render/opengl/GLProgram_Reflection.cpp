@@ -63,7 +63,7 @@ namespace {
         return string;
     }
 
-    Field::DataType getComponentDataType(GLenum type)
+    std::optional<Field::DataType> getComponentDataType(GLenum type)
     {
         switch (type) {
         case GL_INT:
@@ -104,7 +104,7 @@ namespace {
         case GL_DOUBLE_MAT3x4:
         case GL_DOUBLE_MAT4x2:
         case GL_DOUBLE_MAT4x3:     return Field::DataType::Double;
-        default:                   return Field::DataType::NoDataType;
+        default:                   return { };
         }
     }
 
@@ -174,8 +174,12 @@ namespace {
 
     int getSize(GLenum type)
     {
-        return getTypeRows(type) * getTypeColumns(type)
-            * getDataTypeSize(getComponentDataType(type));
+        const auto dataType = getComponentDataType(type);
+        if (!dataType)
+            return 0;
+    
+        return getTypeRows(type) * getTypeColumns(type) *
+            getDataTypeSize(*dataType);
     }
 
     SpvReflectTypeFlags getTypeFlags(GLenum type, bool isArray)
@@ -187,7 +191,7 @@ namespace {
             return SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER
                 | SPV_REFLECT_TYPE_FLAG_FLOAT;
         default:
-            switch (getComponentDataType(type)) {
+            switch (getComponentDataType(type).value_or(Field::DataType::Uint8)) {
             case Field::DataType::Int32:
             case Field::DataType::Uint32:
                 typeFlags |= SPV_REFLECT_TYPE_FLAG_INT;
@@ -216,12 +220,16 @@ namespace {
 
     SpvReflectNumericTraits getNumericTraits(GLenum type)
     {
-        const auto size = getDataTypeSize(getComponentDataType(type));
+        const auto dataType = getComponentDataType(type);
+        if (!dataType)
+            return {};
+
+        const auto bytes = getDataTypeSize(*dataType);
         const auto rows = getTypeRows(type);
         const auto columns = getTypeColumns(type);
 
         auto numeric = SpvReflectNumericTraits{};
-        numeric.scalar.width = size * 8;
+        numeric.scalar.width = bytes * 8;
         numeric.scalar.signedness = (type == Field::DataType::Uint32 ? 0 : 1u);
         if (columns > 1) {
             numeric.matrix.column_count = columns;
@@ -254,7 +262,7 @@ namespace {
 
     bool isOpaqueType(GLenum type)
     {
-        return (getComponentDataType(type) == Field::DataType::NoDataType);
+        return !getComponentDataType(type).has_value();
     }
 
     SpvReflectDescriptorType getDescriptorType(GLenum type)

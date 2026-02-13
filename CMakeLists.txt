@@ -164,7 +164,6 @@ set(SOURCES
   src/render/PrintfBase.cpp
   src/render/ShaderCompiler.cpp
   src/render/ShaderCompiler_glslang.cpp
-  src/render/ShaderCompiler_Microsoft.cpp
   src/render/Reflection.cpp
   src/render/Reflection_Builder.cpp
   src/render/Reflection_JSON.cpp
@@ -218,6 +217,7 @@ set(SOURCES
 
 if(WIN32)
   set(SOURCES ${SOURCES}
+  src/render/ShaderCompiler_Microsoft.cpp
   src/render/direct3d/D3DAccelerationStructure.cpp
   src/render/direct3d/D3DBuffer.cpp
   src/render/direct3d/D3DCall.cpp
