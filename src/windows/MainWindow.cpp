@@ -1253,22 +1253,32 @@ void MainWindow::populateSampleSessions()
 {
     if (!mUi->menuSampleSessions->actions().empty())
         return;
-    const auto subDirInfos = enumerateApplicationPaths(SamplesDir, QDir::Dirs);
-    for (const auto &subDirInfo : subDirInfos) {
-        auto subDir = QDir(subDirInfo.absoluteFilePath());
-        subDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
-        auto subMenu = mUi->menuSampleSessions->addMenu(subDirInfo.baseName());
-        const auto entries = subDir.entryInfoList();
-        for (const auto &entry : entries) {
-            auto dir = QDir(entry.absoluteFilePath());
-            dir.setNameFilters({ "*.gpjs" });
-            const auto sessions = dir.entryInfoList();
-            if (!sessions.empty()) {
-                auto action = subMenu->addAction("&" + entry.fileName(), this,
-                    SLOT(openSampleSession()));
-                action->setData(sessions.first().absoluteFilePath());
-            }
-        }
+    const auto dirInfos = enumerateApplicationPaths(SamplesDir, QDir::Dirs);
+    for (const auto &dirInfo : dirInfos) {
+        const auto addDirs =
+            [this](const auto& addDirs, QMenu& menu, const QFileInfo &dirInfo) -> void {
+                auto dir = QDir(dirInfo.absoluteFilePath());
+                dir.setFilter(QDir::Files);
+                dir.setNameFilters({ "*.gpjs" });
+                const auto sessions = dir.entryInfoList();
+                if (!sessions.empty()) {
+                    const auto& session = sessions.first();
+                    auto action = menu.addAction("&" + dirInfo.fileName(), this,
+                        SLOT(openSampleSession()));
+                    action->setData(session.absoluteFilePath());
+                }
+                else {
+                    dir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
+                    dir.setNameFilters({ });
+                    auto subMenu = std::make_unique<QMenu>("&" + dirInfo.fileName());
+                    const auto subDirInfos = dir.entryInfoList();
+                    for (const auto &subDirInfo : subDirInfos)
+                        addDirs(addDirs, *subMenu, subDirInfo);
+                    if (!subMenu->isEmpty())
+                        menu.addMenu(subMenu.release());
+                }
+            };
+        addDirs(addDirs, *mUi->menuSampleSessions, dirInfo);
     }
 }
 
