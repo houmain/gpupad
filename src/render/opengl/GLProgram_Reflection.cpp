@@ -30,29 +30,17 @@ namespace {
         return QString("%1[%2]").arg(arrayName).arg(index);
     }
 
-    QString removeInstanceName(const QString &bufferName)
+    std::string removeInstanceName(std::string bufferName)
     {
-        if (auto index = bufferName.indexOf('.'); index >= 0) {
-            if (auto bracket = bufferName.indexOf('['); bracket >= 0) {
+        if (auto index = bufferName.find('.'); index != std::string::npos) {
+            if (auto bracket = bufferName.find('['); bracket != std::string::npos) {
                 auto copy = bufferName;
-                copy.remove(index, bracket - index);
+                copy.erase(index, bracket - index);
                 return copy;
             }
-            return bufferName.left(index);
+            return bufferName.substr(0, index);
         }
         return bufferName;
-    }
-
-    std::string removeArrayIndex(std::string name)
-    {
-        if (auto index = name.find('['); index != std::string::npos)
-            return name.substr(0, index);
-        return name;
-    }
-
-    bool isElementName(const std::string &string)
-    {
-        return string.find('[') != std::string::npos;
     }
 
     std::string removePrefix(const std::string &string,
@@ -177,7 +165,7 @@ namespace {
         const auto dataType = getComponentDataType(type);
         if (!dataType)
             return 0;
-    
+
         return getTypeRows(type) * getTypeColumns(type) *
             getDataTypeSize(*dataType);
     }
@@ -327,24 +315,52 @@ namespace {
         }
     }
 
+    SpvReflectDecorationFlags getDecorationFlags(bool isRowMajor) {
+        auto flags = SpvReflectDecorationFlags{};
+        if (isRowMajor)
+            flags |= SPV_REFLECT_DECORATION_ROW_MAJOR;
+        return flags;
+    }
+
+    auto splitArrayNameDims(const std::string& name) -> std::pair<std::string, SpvReflectArrayTraits>{
+        auto baseName = std::string();
+        auto array = SpvReflectArrayTraits{ };
+        auto begin = name.find('.');
+        begin = name.find('[', (begin != std::string::npos ? begin : 0));
+        for (; begin != std::string::npos; begin = name.find('[', begin))
+            if (const auto end = name.find(']', begin); end != std::string::npos) {
+                const auto value = std::atoi(name.c_str() + begin + 1);
+                array.dims[array.dims_count] = value + 1;
+                if (array.dims_count == 0)
+                    baseName = name.substr(0, begin);
+                ++array.dims_count;
+                begin = end + 1;
+            }
+        return { !baseName.empty() ? std::move(baseName) : name, array };
+    }
+
     Reflection::Builder::BlockVariable createBlockVariable(
         const std::string &name, GLenum type, int arraySize, int offset,
         int arrayStride, int matrixStride, bool isRowMajor,
         int topLevelArraySize, int topLevelArrayStride)
     {
-        const auto isArray = isElementName(name);
-        return Reflection::Builder::BlockVariable{ 
-            .name = removeArrayIndex(name),
+        auto [baseName, array] = splitArrayNameDims(name);
+        if (array.dims_count > 0) {
+            array.dims[array.dims_count - 1] = arraySize;
+            array.stride = arrayStride;
+            if (topLevelArraySize)
+                array.dims[0] = topLevelArraySize;
+        }
+
+        return Reflection::Builder::BlockVariable{
+            .name = baseName,
             .offset = static_cast<uint32_t>(offset),
             .size = static_cast<uint32_t>(getSize(type)),
-            .typeFlags = getTypeFlags(type, isArray),
+            .typeFlags = getTypeFlags(type, array.dims_count > 0),
+            .decorationFlags = getDecorationFlags(isRowMajor),
             .numeric = getNumericTraits(type),
             .image = getImageTraits(type),
-            .array = {
-                .dims_count = (isArray ? 1u : 0u),
-                .dims = { static_cast<uint32_t>(isArray ? arraySize : 0) },
-                .stride = static_cast<uint32_t>(isArray ? arrayStride : 0),
-            },
+            .array = array,
         };
     }
 } // namespace
@@ -459,13 +475,15 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
         });
 
     forEachActiveResource(GL_UNIFORM_BLOCK,
-        [&](GLuint programInterface, GLuint index, std::string bufferName) {
+        [&](GLuint programInterface, GLuint index, const std::string& bufferName) {
             const auto [bufferBinding, bufferDataSize] =
                 getResourceValues(programInterface, index,
                     std::to_array<GLuint>({
                         GL_BUFFER_BINDING,
                         GL_BUFFER_DATA_SIZE,
                     }));
+
+            auto [baseName, array] = splitArrayNameDims(bufferName);
 
             auto members = std::vector<BlockVariable>();
             forEachActiveVariable(GL_UNIFORM_BLOCK, index, GL_UNIFORM,
@@ -483,15 +501,19 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
                         }));
 
                     members.push_back(createBlockVariable(
-                        removePrefix(name, bufferName), type, arraySize, offset,
+                        removePrefix(name, baseName), type, arraySize, offset,
                         arrayStride, matrixStride, isRowMajor, 0, 0));
                 });
 
+            // glslang generates block_name.instance_name[N] instead of block_name[N]
+            baseName = removeInstanceName(std::move(baseName));
+
             reflection->descriptorsBindings.push_back(DescriptorBinding{
               .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-              .typeName = std::move(bufferName),
+              .typeName = std::move(baseName),
               .block = {
                   .size = static_cast<uint32_t>(bufferDataSize),
+                  .array = array,
                   .members = std::move(members),
               },
               .binding = static_cast<uint32_t>(bufferBinding),
@@ -532,7 +554,7 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
                 });
 
             reflection->descriptorsBindings.push_back(
-                DescriptorBinding{ 
+                DescriptorBinding{
                     .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                     .typeName = std::move(bufferName),
                     .block = {

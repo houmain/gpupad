@@ -2,7 +2,6 @@
 
 #include "GLShader.h"
 #include "GLBuffer.h"
-#include "scripting/ScriptEngine.h"
 #include <map>
 
 class GLProgram
@@ -28,6 +27,7 @@ public:
     bool operator==(const GLProgram &rhs) const;
 
     bool validate();
+    bool link(PrintfBase &printf);
     bool link(GLContext &context);
     bool bind();
     void unbind();
@@ -49,7 +49,7 @@ public:
     QString tryGetProgramBinary();
 
 private:
-    bool compileShaders();
+    bool compileShaders(PrintfBase &printf);
     bool linkProgram();
     void generateReflectionFromProgram(GLuint program);
     void enumerateSubroutines(GLuint program);

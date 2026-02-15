@@ -1,10 +1,7 @@
 #include "GLProgram.h"
 #include "GLBuffer.h"
 #include "GLTexture.h"
-#include "GLStream.h"
-#include "scripting/ScriptEngine.h"
 #include <QRegularExpression>
-#include <array>
 
 namespace {
     QString formatNvGpuProgram(QString assembly)
@@ -57,38 +54,41 @@ bool GLProgram::operator==(const GLProgram &rhs) const
 
 bool GLProgram::validate()
 {
-    return link(GLContext::currentContext());
+    auto printf = RemoveShaderPrintf{};
+    return link(printf);
 }
 
-bool GLProgram::link(GLContext &context)
+bool GLProgram::link(GLContext &context) {
+  return link(mPrintf);
+}
+
+bool GLProgram::link(PrintfBase &printf)
 {
     if (mProgramObject)
         return true;
     if (mFailed)
         return false;
 
-    if (!compileShaders() || !linkProgram()) {
+    if (!compileShaders(printf) || !linkProgram()) {
         mFailed = true;
         return false;
     }
-
     generateReflectionFromProgram(mProgramObject);
     automapDescriptorBindings();
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-
     return true;
 }
 
-bool GLProgram::compileShaders()
+bool GLProgram::compileShaders(PrintfBase &printf)
 {
     if (mSession.shaderCompiler == Session::ShaderCompiler::Driver) {
         for (auto &shader : mShaders)
-            if (!shader.compile(mPrintf))
+            if (!shader.compile(printf))
                 return false;
     } else {
         auto inputs = std::vector<ShaderCompiler::Input>();
         for (auto &shader : mShaders)
-            inputs.push_back(shader.getShaderCompilerInput(mPrintf));
+            inputs.push_back(shader.getShaderCompilerInput(printf));
 
         mStageSpirv =
             ShaderCompiler::compileSpirv(mSession, inputs, mItemId, mMessages);

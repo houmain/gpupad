@@ -1,4 +1,5 @@
 #include "GLStream.h"
+#include "scripting/ScriptEngine.h"
 
 GLStream::GLStream(const Stream &stream) : mItemId(stream.id)
 {
