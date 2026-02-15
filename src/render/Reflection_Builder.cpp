@@ -22,29 +22,32 @@ namespace {
         return count;
     }
 
-    SpvReflectTypeFlags getDescriptorTypeFlags(SpvReflectDescriptorType type)
+    SpvReflectTypeFlags getDescriptorTypeFlags(SpvReflectDescriptorType type, bool isArray)
     {
+        auto typeFlags = SpvReflectTypeFlags{ };
         switch (type) {
         case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
-            return SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER;
-
+            typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER;
+            break;
         case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-            return SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE
-                | SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER;
-
+            typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE;
+            typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER;
+            break;
         case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
-            return SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE;
-
+            typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE;
+            break;
         case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
-            return SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE;
-
+            typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE;
+            break;
         case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
         case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
-            return SPV_REFLECT_TYPE_FLAG_EXTERNAL_BLOCK;
-
+            typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_BLOCK;
+            break;
         default: Q_ASSERT(!"type not handled"); break;
         }
-        return {};
+        if (isArray)
+            typeFlags |= SPV_REFLECT_TYPE_FLAG_ARRAY;
+        return typeFlags;
     }
 
     SpvReflectTypeDescription getTypeDescription(SpvReflectFormat format)
@@ -102,7 +105,7 @@ namespace {
 
         return SpvReflectTypeDescription{
             .type_flags = typeFlags,
-            .traits = { 
+            .traits = {
                 .numeric = {
                     .scalar = {
                         .width = 32,
@@ -180,7 +183,8 @@ namespace {
             auto &typeDesc = module->typeDescriptions.emplace_back();
             typeDesc.type_name = descriptor.typeName.c_str();
             typeDesc.type_flags =
-                getDescriptorTypeFlags(descriptor.descriptorType);
+                getDescriptorTypeFlags(descriptor.descriptorType,
+                    descriptor.array.dims_count > 0);
             typeDesc.traits.numeric = descriptor.numeric;
             typeDesc.traits.image = descriptor.image;
             typeDesc.traits.array = descriptor.array;

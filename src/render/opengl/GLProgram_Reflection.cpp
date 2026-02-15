@@ -2,32 +2,20 @@
 #include "GLProgram.h"
 
 namespace {
-    bool operator==(const Reflection::Builder::DescriptorBinding &a,
-        const Reflection::Builder::DescriptorBinding &b)
-    {
-        return std::tie(a.descriptorType, a.binding)
-            == std::tie(b.descriptorType, b.binding);
-    }
+    using BlockVariable = Reflection::Builder::BlockVariable;
+    using InterfaceVariable = Reflection::Builder::InterfaceVariable;
+    using DescriptorBinding = Reflection::Builder::DescriptorBinding;
 
-    template <typename C, typename T>
-    bool containsValue(const C &container, const T &value)
+    std::string getArrayName(const std::string &name)
     {
-        for (const auto &val : container)
-            if (val == value)
-                return true;
-        return false;
-    }
-
-    QString getArrayName(const QString &name)
-    {
-        if (name.endsWith("[0]"))
-            return name.left(name.size() - 3);
+        if (name.ends_with("[0]"))
+            return name.substr(0, name.size() - 3);
         return {};
     }
 
-    QString getElementName(const QString &arrayName, int index)
+    std::string getElementName(const std::string &arrayName, int index)
     {
-        return QString("%1[%2]").arg(arrayName).arg(index);
+        return std::format("{}[{}]", arrayName, index);
     }
 
     std::string removeInstanceName(std::string bufferName)
@@ -322,11 +310,12 @@ namespace {
         return flags;
     }
 
-    auto splitArrayNameDims(const std::string& name) -> std::pair<std::string, SpvReflectArrayTraits>{
+    auto splitArrayNameDims(const std::string& name)
+        -> std::pair<std::string, SpvReflectArrayTraits>{
+        const auto dot = name.rfind('.');
         auto baseName = std::string();
         auto array = SpvReflectArrayTraits{ };
-        auto begin = name.find('.');
-        begin = name.find('[', (begin != std::string::npos ? begin : 0));
+        auto begin = name.find('[', (dot != std::string::npos ? dot : 0));
         for (; begin != std::string::npos; begin = name.find('[', begin))
             if (const auto end = name.find(']', begin); end != std::string::npos) {
                 const auto value = std::atoi(name.c_str() + begin + 1);
@@ -339,7 +328,16 @@ namespace {
         return { !baseName.empty() ? std::move(baseName) : name, array };
     }
 
-    Reflection::Builder::BlockVariable createBlockVariable(
+    std::tuple<std::string, SpvReflectArrayTraits, std::string> splitNestedTypeName(
+            const std::string& name) {
+        const auto dot = name.rfind('.');
+        if (dot == std::string::npos)
+            return { };
+        auto [typeName, array] = splitArrayNameDims(name.substr(0, dot));
+        return { std::move(typeName), array, name.substr(dot + 1) };
+    }
+
+    BlockVariable createBlockVariable(
         const std::string &name, GLenum type, int arraySize, int offset,
         int arrayStride, int matrixStride, bool isRowMajor,
         int topLevelArraySize, int topLevelArrayStride)
@@ -352,7 +350,7 @@ namespace {
                 array.dims[0] = topLevelArraySize;
         }
 
-        return Reflection::Builder::BlockVariable{
+        return BlockVariable{
             .name = baseName,
             .offset = static_cast<uint32_t>(offset),
             .size = static_cast<uint32_t>(getSize(type)),
@@ -363,13 +361,78 @@ namespace {
             .array = array,
         };
     }
+
+    template<typename T, typename Tie, typename Merge>
+    bool mergeAdjacentElements(std::vector<T> &elements, const Tie &tie, const Merge &merge) {
+        auto merged = false;
+        for (auto begin = elements.begin(); begin != elements.end(); ++begin) {
+            const auto &first = tie(*begin);
+            auto end = std::next(begin);
+            for (; end != elements.end(); ++end)
+                if (first != tie(*end))
+                    break;
+            if (std::distance(begin, end) > 1) {
+                *begin = merge(std::span<T>(begin, end));
+                elements.erase(std::next(begin), end);
+                merged = true;
+            }
+        }
+        return merged;
+    }
+
+    void createBlockMemberNestedTypes(std::vector<BlockVariable>& members) {
+        while(mergeAdjacentElements(members,
+            [](const auto &a) {
+                // return something unique when not within a nested type
+                if (a.name.find('.') == std::string::npos)
+                    return std::to_string(reinterpret_cast<uintptr_t>(&a));
+                return std::get<0>(splitNestedTypeName(a.name));
+
+            },
+            [](std::span<BlockVariable> members) {
+                auto type = BlockVariable{
+                    .typeFlags = SPV_REFLECT_TYPE_FLAG_STRUCT,
+                };
+                for (auto &member : members) {
+                    auto [typeName, array, memberName] =
+                        splitNestedTypeName(member.name);
+                    type.name = std::move(typeName);
+                    type.array = array;
+                    if (*std::max_element(array.dims, array.dims + array.dims_count) <= 1) {
+                        member.name = std::move(memberName);
+                        type.members.push_back(std::move(member));
+                    }
+                }
+                if (type.array.dims_count > 0)
+                    type.typeFlags |= SPV_REFLECT_TYPE_FLAG_ARRAY;
+
+                return type;
+            }));
+    }
+
+    void mergeBlockMemberArrays(std::vector<BlockVariable>& members) {
+        mergeAdjacentElements(members,
+            [](const auto &a) { return std::tie(a.name); },
+            [](std::span<BlockVariable> members) {
+                auto merged = members.front();
+                merged.array = members.back().array;
+                return merged;
+            });
+    }
+
+    void mergeDescriptorBindingArrays(std::vector<DescriptorBinding> &bindings) {
+        mergeAdjacentElements(bindings,
+            [](const auto &a) { return std::tie(a.descriptorType, a.name, a.typeName); },
+            [](std::span<DescriptorBinding> members) {
+                auto merged = members.front();
+                merged.array = members.back().array;
+                return merged;
+            });
+    }
 } // namespace
 
 void GLProgram::generateReflectionFromProgram(GLuint program)
 {
-    using BlockVariable = Reflection::Builder::BlockVariable;
-    using InterfaceVariable = Reflection::Builder::InterfaceVariable;
-    using DescriptorBinding = Reflection::Builder::DescriptorBinding;
     auto &gl = GLContext::currentContext();
 
     const auto getResourceValues = [&](GLuint programInterface, GLuint index,
@@ -443,30 +506,30 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
 
             Q_ASSERT(location >= 0);
             Q_ASSERT(type);
-            const auto arrayName = getArrayName(QString::fromStdString(name));
-            const auto baseName = (arrayName.isEmpty()
-                    ? QString::fromStdString(name)
+            const auto arrayName = getArrayName(name);
+            const auto baseName = (arrayName.empty()
+                    ? name
                     : arrayName);
 
             if (isOpaqueType(type)) {
                 reflection->descriptorsBindings.push_back({
                     .descriptorType = getDescriptorType(type),
-                    .name = baseName.toStdString(),
+                    .name = baseName,
                     .image = getImageTraits(type),
                     // TODO: array
                 });
-                mDescriptorUniformLocations[baseName] = location;
+                mDescriptorUniformLocations[baseName.c_str()] = location;
             } else {
                 mUniforms.push_back({
-                    .name = baseName,
+                    .name = baseName.c_str(),
                     .location = location,
                     .dataType = static_cast<GLenum>(type),
                     .arraySize = arraySize,
                 });
-                if (!arrayName.isEmpty())
+                if (!arrayName.empty())
                     for (auto i = 0; i < arraySize; ++i)
                         mUniforms.push_back({
-                            .name = getElementName(arrayName, i),
+                            .name = getElementName(arrayName, i).c_str(),
                             .location = location + i,
                             .dataType = static_cast<GLenum>(type),
                             .arraySize = 1,
@@ -505,18 +568,21 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
                         arrayStride, matrixStride, isRowMajor, 0, 0));
                 });
 
+            mergeBlockMemberArrays(members);
+            createBlockMemberNestedTypes(members);
+
             // glslang generates block_name.instance_name[N] instead of block_name[N]
             baseName = removeInstanceName(std::move(baseName));
 
             reflection->descriptorsBindings.push_back(DescriptorBinding{
-              .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-              .typeName = std::move(baseName),
-              .block = {
-                  .size = static_cast<uint32_t>(bufferDataSize),
-                  .array = array,
-                  .members = std::move(members),
-              },
-              .binding = static_cast<uint32_t>(bufferBinding),
+                .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .typeName = std::move(baseName),
+                .array = array,
+                .block = {
+                    .size = static_cast<uint32_t>(bufferDataSize),
+                    .members = std::move(members),
+                },
+                .binding = static_cast<uint32_t>(bufferBinding),
             });
         });
 
@@ -564,6 +630,8 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
                     .binding = static_cast<uint32_t>(bufferBinding),
                 });
         });
+
+    mergeDescriptorBindingArrays(reflection->descriptorsBindings);
 
     auto inputSemantics = std::map<std::string, std::string>();
     if (mSession.shaderLanguage == Session::ShaderLanguage::HLSL)
