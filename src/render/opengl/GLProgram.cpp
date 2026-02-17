@@ -55,27 +55,26 @@ bool GLProgram::operator==(const GLProgram &rhs) const
 bool GLProgram::validate()
 {
     auto printf = RemoveShaderPrintf{};
-    return link(printf);
+    if (!compileShaders(printf) || !linkProgram())
+        return false;
+    generateReflectionFromProgram(mProgramObject, true);
+    enumerateSubroutines(mProgramObject);
+    return true;
 }
 
-bool GLProgram::link(GLContext &context) {
-  return link(mPrintf);
-}
-
-bool GLProgram::link(PrintfBase &printf)
+bool GLProgram::link(GLContext &context)
 {
     if (mProgramObject)
         return true;
     if (mFailed)
         return false;
 
-    if (!compileShaders(printf) || !linkProgram()) {
+    if (!compileShaders(mPrintf) || !linkProgram()) {
         mFailed = true;
         return false;
     }
-    generateReflectionFromProgram(mProgramObject);
-    automapDescriptorBindings();
-    Q_ASSERT(glGetError() == GL_NO_ERROR);
+    generateReflectionFromProgram(mProgramObject, false);
+    enumerateSubroutines(mProgramObject);
     return true;
 }
 

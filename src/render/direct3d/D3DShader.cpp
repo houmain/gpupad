@@ -27,7 +27,14 @@ bool D3DShader::compile(PrintfBase &printf)
         const auto spirv = compileSpirv(printf);
         if (spirv.empty())
             return false;
-        if (!compile(ShaderCompiler::generateHLSL(spirv, mItemId, mMessages)))
+        const auto hlsl =
+            ShaderCompiler::generateHLSL(spirv, mItemId, mMessages);
+        if (hlsl.isEmpty())
+            return false;
+        auto session = mSession;
+        session.shaderCompiler = Session::ShaderCompiler::DXC;
+        session.shaderLanguage = Session::ShaderLanguage::HLSL;
+        if (!compile(session, hlsl))
             return false;
         mReflection = Reflection(spirv);
         return true;
@@ -37,14 +44,14 @@ bool D3DShader::compile(PrintfBase &printf)
     if (patchedSources.isEmpty())
         return false;
 
-    if (!compile(patchedSources.join("\n")))
+    if (!compile(mSession, patchedSources.join("\n")))
         return false;
 
     mReflection = generateSpirvReflection(mType, mD3DReflection.Get());
     return true;
 }
 
-bool D3DShader::compile(const QString &source)
+bool D3DShader::compile(const Session &session, const QString &source)
 {
     if (source.isEmpty())
         return false;
@@ -57,7 +64,7 @@ bool D3DShader::compile(const QString &source)
         .includePaths = mIncludePaths,
         .itemId = mItemId,
     };
-    return ShaderCompiler::compileDXIL(mSession, input, mMessages, mBinary,
+    return ShaderCompiler::compileDXIL(session, input, mMessages, mBinary,
         mD3DReflection);
 }
 

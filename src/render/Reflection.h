@@ -102,3 +102,8 @@ int getBufferMemberArrayStride(const SpvReflectBlockVariable &variable);
 GLenum getBufferMemberGLType(const SpvReflectBlockVariable &variable);
 
 QString getJsonString(const Reflection &reflection);
+
+inline uint32_t alignUp(uint32_t offset, uint32_t align)
+{
+    return (offset + (align - 1)) & ~(align - 1);
+}

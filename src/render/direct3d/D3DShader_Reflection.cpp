@@ -138,12 +138,6 @@ namespace {
         Q_ASSERT(bindDesc.Dimension == D3D_SRV_DIMENSION_TEXTURE2D);
         return make(SpvDim2D, Sampled);
     }
-
-    // https://maraneshi.github.io/HLSL-ConstantBufferLayoutVisualizer/
-    uint32_t alignUp(uint32_t offset, uint32_t align)
-    {
-        return (offset + (align - 1)) & ~(align - 1);
-    }
 } // namespace
 
 Reflection generateSpirvReflection(Shader::ShaderType shaderType,
@@ -216,6 +210,7 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
                         auto memberTypeDesc = D3D12_SHADER_TYPE_DESC{};
                         memberType->GetDesc(&memberTypeDesc);
 
+                        // https://maraneshi.github.io/HLSL-ConstantBufferLayoutVisualizer/
                         auto subMembers =
                             createTypeMembers(createTypeMembers, memberType);
                         const auto elementSize = (!members.empty()

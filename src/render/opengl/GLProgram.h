@@ -23,11 +23,16 @@ public:
     using StageSubroutines =
         std::map<Shader::ShaderType, std::vector<Subroutine>>;
 
+    struct BindingPoint
+    {
+        GLenum target;
+        GLuint index;
+    };
+
     GLProgram(const Program &program, const Session &session);
     bool operator==(const GLProgram &rhs) const;
 
     bool validate();
-    bool link(PrintfBase &printf);
     bool link(GLContext &context);
     bool bind();
     void unbind();
@@ -35,8 +40,8 @@ public:
     const Session &session() const { return mSession; }
     const Reflection &reflection() const { return mReflection; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
-    int getDescriptorUniformLocation(
-        const SpvReflectDescriptorBinding &desc) const;
+    BindingPoint getDescriptorBindingPoint(
+        const SpvReflectDescriptorBinding &desc, int arrayIndex = 0) const;
     GLBuffer &getDynamicUniformBuffer(const QString &name, int size);
     const std::vector<GLShader> &shaders() const { return mShaders; }
     const std::vector<Uniform> &uniforms() const { return mUniforms; }
@@ -51,9 +56,9 @@ public:
 private:
     bool compileShaders(PrintfBase &printf);
     bool linkProgram();
-    void generateReflectionFromProgram(GLuint program);
+    void generateReflectionFromProgram(GLuint program,
+        bool generateGlobalUniformBlockBinding);
     void enumerateSubroutines(GLuint program);
-    void automapDescriptorBindings();
 
     ItemId mItemId{};
     Session mSession{};
@@ -67,7 +72,7 @@ private:
     GLPrintf mPrintf;
     std::map<QString, GLBuffer> mDynamicUniformBuffers;
     std::vector<Uniform> mUniforms;
-    std::map<QString, GLint> mDescriptorUniformLocations;
+    std::map<QString, BindingPoint> mDescriptorBindingPoints;
     std::map<Shader::ShaderType, Spirv> mStageSpirv;
     std::map<Shader::ShaderType, std::vector<Subroutine>> mStageSubroutines;
 };

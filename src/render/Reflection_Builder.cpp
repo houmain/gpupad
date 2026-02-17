@@ -14,17 +14,19 @@ namespace {
         virtual ~SpvReflectShaderModuleExt() = default;
     };
 
-    size_t countBlockMembersRec(const Reflection::Builder::BlockVariable &var)
+    template<typename T>
+    size_t countMembersRec(const T &variable)
     {
         auto count = size_t{ 1 };
-        for (const auto &member : var.members)
-            count += countBlockMembersRec(member);
+        for (const auto &member : variable.members)
+            count += countMembersRec(member);
         return count;
     }
 
-    SpvReflectTypeFlags getDescriptorTypeFlags(SpvReflectDescriptorType type, bool isArray)
+    SpvReflectTypeFlags getDescriptorTypeFlags(SpvReflectDescriptorType type,
+        bool isArray)
     {
-        auto typeFlags = SpvReflectTypeFlags{ };
+        auto typeFlags = SpvReflectTypeFlags{};
         switch (type) {
         case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
             typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER;
@@ -134,7 +136,7 @@ namespace {
         auto totalBlockMembers = size_t{};
         for (const auto &descriptor : builder.descriptorsBindings)
             for (const auto &member : descriptor.block.members)
-                totalBlockMembers += countBlockMembersRec(member);
+                totalBlockMembers += countMembersRec(member);
         module->blockMembers.reserve(totalBlockMembers);
 
         auto totalTypeDescriptions = size_t{};
@@ -161,6 +163,9 @@ namespace {
                 typeDesc.type_name = inputOutput.name.c_str();
                 variable.type_description = &typeDesc;
                 variable.built_in = inputOutput.builtIn;
+                if (variable.built_in >= 0)
+                    variable.decoration_flags |=
+                        SPV_REFLECT_DECORATION_BUILT_IN;
 
                 auto &variables = (inputsOutputs == &builder.inputs
                         ? module->inputVariables
@@ -182,9 +187,8 @@ namespace {
         for (const auto &descriptor : builder.descriptorsBindings) {
             auto &typeDesc = module->typeDescriptions.emplace_back();
             typeDesc.type_name = descriptor.typeName.c_str();
-            typeDesc.type_flags =
-                getDescriptorTypeFlags(descriptor.descriptorType,
-                    descriptor.array.dims_count > 0);
+            typeDesc.type_flags = getDescriptorTypeFlags(
+                descriptor.descriptorType, descriptor.array.dims_count > 0);
             typeDesc.traits.numeric = descriptor.numeric;
             typeDesc.traits.image = descriptor.image;
             typeDesc.traits.array = descriptor.array;
@@ -197,12 +201,12 @@ namespace {
             desc.accessed = 1;
             desc.type_description = &typeDesc;
 
-            if (descriptor.block.size) {
+            if (!descriptor.block.members.empty()) {
                 desc.block.size = descriptor.block.size;
                 desc.block.type_description = desc.type_description;
 
                 const auto addBlockMembers =
-                    [&module](const auto &addBlockMembers,
+                    [&module, &desc](const auto &addBlockMembers,
                         SpvReflectBlockVariable &block,
                         const BlockVariable &descBlock) -> void {
                     if (descBlock.members.empty())
@@ -226,8 +230,6 @@ namespace {
                         variable.decoration_flags = member.decorationFlags;
                         variable.numeric = member.numeric;
                         variable.array = member.array;
-
-                        addBlockMembers(addBlockMembers, variable, member);
                     }
                     block.members = &module->blockMembers[memberOffset];
                     block.member_count =
@@ -235,6 +237,11 @@ namespace {
                     block.type_description->members =
                         block.members[0].type_description;
                     block.type_description->member_count = block.member_count;
+
+                    // breadth first - add types of struct before traversing down
+                    for (auto i = 0; i < descBlock.members.size(); ++i)
+                        addBlockMembers(addBlockMembers, block.members[i],
+                            descBlock.members[i]);
                 };
                 addBlockMembers(addBlockMembers, desc.block, descriptor.block);
             }

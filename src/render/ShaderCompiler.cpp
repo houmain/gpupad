@@ -33,9 +33,8 @@ namespace ShaderCompiler {
             messages += MessageList::insert(programItemId,
                 MessageType::UnsupportedShaderType);
             return {};
-        }
 #endif
-
+        }
         return compileSpirv_glslang(session, inputs, programItemId, messages);
     }
 } // namespace ShaderCompiler

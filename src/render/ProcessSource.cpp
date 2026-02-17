@@ -112,12 +112,6 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
     auto session = Singletons::sessionModel().sessionItem();
     session.shaderLanguage = getShaderLanguage(mSourceType);
 
-#if 0
-    // never target OpenGL when generating JSON, otherwise SpvReflect cannot enumerate uniforms
-    if (mProcessType == "json" && session.renderer == Session::Renderer::OpenGL)
-        session.renderer = Session::Renderer::Vulkan;
-#endif
-
     // define state of hidden session properties
     const auto hasShaderCompiler =
         (session.shaderCompiler != Session::ShaderCompiler::Driver

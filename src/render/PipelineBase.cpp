@@ -6,17 +6,17 @@ namespace {
     QString getBufferMemberFullName(const SpvReflectBlockVariable &block,
         uint32_t arrayElement, const SpvReflectBlockVariable &member)
     {
-        if (isGlobalUniformBlockName(block.type_description->type_name))
+        const auto &type_desc = *block.type_description;
+        if (isGlobalUniformBlockName(type_desc.type_name))
             return member.name;
 
-        if (block.type_description->op == SpvOpTypeArray)
+        if (type_desc.type_flags & SPV_REFLECT_TYPE_FLAG_ARRAY)
             return QStringLiteral("%1[%2].%3")
-                .arg(block.type_description->type_name)
+                .arg(type_desc.type_name)
                 .arg(arrayElement)
                 .arg(member.name);
 
-        return QStringLiteral("%1.%2").arg(block.type_description->type_name,
-            member.name);
+        return QStringLiteral("%1.%2").arg(type_desc.type_name, member.name);
     }
 
     QStringView getBaseName(QStringView name)

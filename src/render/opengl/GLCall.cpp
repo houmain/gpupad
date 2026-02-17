@@ -572,8 +572,9 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
             const auto [offset, size] =
                 getBufferBindingOffsetSize(*bufferBinding, scriptEngine);
 
-            buffer.bindIndexedRange(GL_UNIFORM_BUFFER,
-                desc.binding + arrayElement, offset, size, true);
+            const auto [target, bindingPoint] =
+                mProgram->getDescriptorBindingPoint(desc, arrayElement);
+            buffer.bindIndexedRange(target, bindingPoint, offset, size, true);
         } else {
             auto &buffer = mProgram->getDynamicUniformBuffer(
                 desc.type_description->type_name, desc.block.size);
@@ -589,8 +590,10 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
                     scriptEngine))
                 return MessageType::BufferNotSet;
 
-            buffer.bindIndexedRange(GL_UNIFORM_BUFFER, desc.binding, 0,
-                buffer.size(), true);
+            const auto [target, bindingPoint] =
+                mProgram->getDescriptorBindingPoint(desc);
+            buffer.bindIndexedRange(target, bindingPoint, 0, buffer.size(),
+                true);
         }
         break;
 
@@ -614,9 +617,10 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
 
         const auto readonly =
             (desc.decoration_flags & SPV_REFLECT_DECORATION_NON_WRITABLE);
-        // TODO: GL_ATOMIC_COUNTER_BUFFER
-        buffer->bindIndexedRange(GL_SHADER_STORAGE_BUFFER,
-            desc.binding + arrayElement, offset, size, readonly);
+
+        const auto [target, bindingPoint] =
+            mProgram->getDescriptorBindingPoint(desc, arrayElement);
+        buffer->bindIndexedRange(target, bindingPoint, offset, size, readonly);
     } break;
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
@@ -764,7 +768,7 @@ void GLCall::applyUniformBinding(const GLProgram::Uniform &uniform,
 bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
     const SamplerBinding &binding)
 {
-    Q_ASSERT(desc.binding >= 0);
+    Q_ASSERT(static_cast<GLint>(desc.binding) >= 0);
     Q_ASSERT(binding.texture);
 
     float borderColor[] = { static_cast<float>(binding.borderColor.redF()),
@@ -778,9 +782,8 @@ bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + desc.binding));
     texture.updateMipmaps(gl);
     gl.glBindTexture(target, texture.getReadOnlyTextureId());
-    if (auto location = mProgram->getDescriptorUniformLocation(desc);
-        location >= 0)
-        gl.glUniform1i(location, desc.binding);
+    const auto location = mProgram->getDescriptorBindingPoint(desc).index;
+    gl.glUniform1i(location, desc.binding);
 
     switch (target) {
     case QOpenGLTexture::Target1D:
@@ -822,7 +825,7 @@ bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
 bool GLCall::applyImageBinding(const SpvReflectDescriptorBinding &desc,
     const ImageBinding &binding)
 {
-    Q_ASSERT(desc.binding >= 0);
+    Q_ASSERT(static_cast<GLint>(desc.binding) >= 0);
     Q_ASSERT(binding.texture);
 
     auto &gl = GLContext::currentContext();
@@ -843,9 +846,8 @@ bool GLCall::applyImageBinding(const SpvReflectDescriptorBinding &desc,
     }
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + desc.binding));
     gl.glBindTexture(target, textureId);
-    if (auto location = mProgram->getDescriptorUniformLocation(desc);
-        location >= 0)
-        gl.glUniform1i(location, desc.binding);
+    const auto location = mProgram->getDescriptorBindingPoint(desc).index;
+    gl.glUniform1i(location, desc.binding);
     gl.glBindImageTexture(static_cast<GLuint>(desc.binding), textureId,
         binding.level, (binding.layer < 0), std::max(binding.layer, 0),
         GL_READ_WRITE, format);

@@ -213,15 +213,14 @@ namespace {
         return QStringLiteral("%1%2%3").arg(prefix).arg(kind).arg(dims);
     }
 
-    QJsonObject getJson(const SpvReflectTypeDescription &type);
+    QJsonObject getJson(const SpvReflectBlockVariable &variable);
 
-    QJsonArray getTypeMembers(const SpvReflectTypeDescription &type)
+    QJsonArray getMembersJson(const SpvReflectBlockVariable &variable)
     {
         auto json = QJsonArray();
-        for (auto i = 0u; i < type.member_count; ++i) {
-            const auto &member = type.members[i];
+        for (auto i = 0u; i < variable.member_count; ++i) {
+            const auto &member = variable.members[i];
             auto jsonMember = getJson(member);
-            jsonMember["name"] = member.struct_member_name;
             json.append(jsonMember);
         }
         return json;
@@ -230,11 +229,12 @@ namespace {
     QJsonObject getJson(const SpvReflectTypeDescription &type)
     {
         auto json = QJsonObject();
+        if (type.struct_member_name)
+            json["name"] = type.struct_member_name;
         if (type.type_flags
             & (SPV_REFLECT_TYPE_FLAG_STRUCT
                 | SPV_REFLECT_TYPE_FLAG_EXTERNAL_BLOCK)) {
             json["type"] = type.type_name;
-            json["members"] = getTypeMembers(type);
         } else {
             Q_ASSERT(!type.member_count);
             if (auto typeName = getTypeName(type); !typeName.isEmpty())
@@ -248,29 +248,65 @@ namespace {
             for (auto i = 0u; i < type.traits.array.dims_count; ++i)
                 array.append(static_cast<int>(type.traits.array.dims[i]));
             json["array"] = array;
+            json["arrayStride"] = static_cast<int>(type.traits.array.stride);
         }
+        return json;
+    }
+
+    QJsonArray getMembersJson(const SpvReflectTypeDescription &type)
+    {
+        auto json = QJsonArray();
+        for (auto i = 0u; i < type.member_count; ++i) {
+            const auto &member = type.members[i];
+            auto jsonMember = getJson(member);
+            json.append(jsonMember);
+        }
+        return json;
+    }
+
+    QJsonObject getJson(const SpvReflectBlockVariable &variable)
+    {
+        auto json = getJson(*variable.type_description);
+        json["name"] = variable.name;
+        json["offset"] = static_cast<int>(variable.offset);
+        json["size"] = static_cast<int>(variable.size);
+        const auto &type = *variable.type_description;
+        if (type.type_flags
+            & (SPV_REFLECT_TYPE_FLAG_STRUCT
+                | SPV_REFLECT_TYPE_FLAG_EXTERNAL_BLOCK))
+            json["members"] = getMembersJson(variable);
         return json;
     }
 
     QJsonObject getJson(const SpvReflectInterfaceVariable &variable)
     {
-        auto json = getJson(*variable.type_description);
+        auto json = QJsonObject();
+        const auto &type = *variable.type_description;
         json["name"] = variable.name;
+        json["type"] = getTypeName(type);
+        if (type.type_flags & SPV_REFLECT_TYPE_FLAG_STRUCT)
+            json["members"] = getMembersJson(type);
         if (variable.semantic)
             json["semantic"] = variable.semantic;
         if (auto location = static_cast<int>(variable.location); location >= 0)
             json["location"] = location;
+        if (variable.decoration_flags & SPV_REFLECT_DECORATION_BUILT_IN)
+            json["builtin"] = true;
         return json;
     }
 
     QJsonObject getJson(const SpvReflectDescriptorBinding &binding)
     {
-        auto json = getJson(*binding.type_description);
+        auto json = binding.block.type_description
+            ? getJson(binding.block)
+            : getJson(*binding.type_description);
         if (binding.name && *binding.name)
             json["name"] = binding.name;
-        json["accessed"] = static_cast<bool>(binding.accessed);
+        if (!static_cast<bool>(binding.accessed))
+            json["unused"] = true;
         json["binding"] = static_cast<int>(binding.binding);
-        json["set"] = static_cast<int>(binding.set);
+        if (binding.set > 0)
+            json["set"] = static_cast<int>(binding.set);
         return json;
     }
 
@@ -300,7 +336,6 @@ namespace {
         auto jsonAccelerationStructures = QJsonArray();
         for (auto i = 0u; i < module.descriptor_binding_count; ++i)
             if (const auto &binding = module.descriptor_bindings[i]; true) {
-                const auto &type = *binding.type_description;
                 switch (binding.descriptor_type) {
                 case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
                 case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
@@ -313,8 +348,9 @@ namespace {
                 case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
                 case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
                 case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
-                    if (isGlobalUniformBlockName(type.type_name)) {
-                        for (const auto &member : getTypeMembers(type))
+                    if (isGlobalUniformBlockName(
+                            binding.type_description->type_name)) {
+                        for (const auto &member : getMembersJson(binding.block))
                             jsonUniforms.push_back(member);
                     } else {
                         jsonBuffers.push_back(getJson(binding));

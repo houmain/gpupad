@@ -21,7 +21,8 @@ namespace {
     std::string removeInstanceName(std::string bufferName)
     {
         if (auto index = bufferName.find('.'); index != std::string::npos) {
-            if (auto bracket = bufferName.find('['); bracket != std::string::npos) {
+            if (auto bracket = bufferName.find('[');
+                bracket != std::string::npos) {
                 auto copy = bufferName;
                 copy.erase(index, bracket - index);
                 return copy;
@@ -45,15 +46,16 @@ namespace {
         case GL_INT:
         case GL_INT_VEC2:
         case GL_INT_VEC3:
-        case GL_INT_VEC4:          return Field::DataType::Int32;
+        case GL_INT_VEC4:                    return Field::DataType::Int32;
         case GL_UNSIGNED_INT:
+        case GL_UNSIGNED_INT_ATOMIC_COUNTER:
         case GL_UNSIGNED_INT_VEC2:
         case GL_UNSIGNED_INT_VEC3:
         case GL_UNSIGNED_INT_VEC4:
         case GL_BOOL:
         case GL_BOOL_VEC2:
         case GL_BOOL_VEC3:
-        case GL_BOOL_VEC4:         return Field::DataType::Uint32;
+        case GL_BOOL_VEC4:                   return Field::DataType::Uint32;
         case GL_FLOAT:
         case GL_FLOAT_VEC2:
         case GL_FLOAT_VEC3:
@@ -66,7 +68,7 @@ namespace {
         case GL_FLOAT_MAT3x2:
         case GL_FLOAT_MAT3x4:
         case GL_FLOAT_MAT4x2:
-        case GL_FLOAT_MAT4x3:      return Field::DataType::Float;
+        case GL_FLOAT_MAT4x3:                return Field::DataType::Float;
         case GL_DOUBLE:
         case GL_DOUBLE_VEC2:
         case GL_DOUBLE_VEC3:
@@ -79,8 +81,8 @@ namespace {
         case GL_DOUBLE_MAT3x2:
         case GL_DOUBLE_MAT3x4:
         case GL_DOUBLE_MAT4x2:
-        case GL_DOUBLE_MAT4x3:     return Field::DataType::Double;
-        default:                   return { };
+        case GL_DOUBLE_MAT4x3:               return Field::DataType::Double;
+        default:                             return {};
         }
     }
 
@@ -154,8 +156,8 @@ namespace {
         if (!dataType)
             return 0;
 
-        return getTypeRows(type) * getTypeColumns(type) *
-            getDataTypeSize(*dataType);
+        return getTypeRows(type) * getTypeColumns(type)
+            * getDataTypeSize(*dataType);
     }
 
     SpvReflectTypeFlags getTypeFlags(GLenum type, bool isArray)
@@ -167,7 +169,8 @@ namespace {
             return SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER
                 | SPV_REFLECT_TYPE_FLAG_FLOAT;
         default:
-            switch (getComponentDataType(type).value_or(Field::DataType::Uint8)) {
+            switch (
+                getComponentDataType(type).value_or(Field::DataType::Uint8)) {
             case Field::DataType::Int32:
             case Field::DataType::Uint32:
                 typeFlags |= SPV_REFLECT_TYPE_FLAG_INT;
@@ -176,7 +179,6 @@ namespace {
             case Field::DataType::Double:
                 typeFlags |= SPV_REFLECT_TYPE_FLAG_FLOAT;
                 break;
-
             default: Q_ASSERT(!"unhandled type");
             }
         }
@@ -247,8 +249,14 @@ namespace {
         case GL_SAMPLER_1D:
         case GL_SAMPLER_2D:
         case GL_SAMPLER_3D:
+        case GL_SAMPLER_2D_RECT:
         case GL_SAMPLER_CUBE:
+        case GL_SAMPLER_BUFFER:
+        case GL_SAMPLER_1D_ARRAY:
+        case GL_SAMPLER_2D_ARRAY:
         case GL_SAMPLER_CUBE_MAP_ARRAY:
+        case GL_SAMPLER_2D_MULTISAMPLE:
+        case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
             return SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
         case GL_IMAGE_1D:
@@ -262,6 +270,28 @@ namespace {
         case GL_IMAGE_CUBE_MAP_ARRAY:
         case GL_IMAGE_2D_MULTISAMPLE:
         case GL_IMAGE_2D_MULTISAMPLE_ARRAY:
+        case GL_INT_IMAGE_1D:
+        case GL_INT_IMAGE_2D:
+        case GL_INT_IMAGE_3D:
+        case GL_INT_IMAGE_2D_RECT:
+        case GL_INT_IMAGE_CUBE:
+        case GL_INT_IMAGE_BUFFER:
+        case GL_INT_IMAGE_1D_ARRAY:
+        case GL_INT_IMAGE_2D_ARRAY:
+        case GL_INT_IMAGE_CUBE_MAP_ARRAY:
+        case GL_INT_IMAGE_2D_MULTISAMPLE:
+        case GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
+        case GL_UNSIGNED_INT_IMAGE_1D:
+        case GL_UNSIGNED_INT_IMAGE_2D:
+        case GL_UNSIGNED_INT_IMAGE_3D:
+        case GL_UNSIGNED_INT_IMAGE_2D_RECT:
+        case GL_UNSIGNED_INT_IMAGE_CUBE:
+        case GL_UNSIGNED_INT_IMAGE_BUFFER:
+        case GL_UNSIGNED_INT_IMAGE_1D_ARRAY:
+        case GL_UNSIGNED_INT_IMAGE_2D_ARRAY:
+        case GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY:
+        case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE:
+        case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
             return SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 
         default: Q_ASSERT(!"not handled data type");
@@ -272,12 +302,13 @@ namespace {
     SpvReflectImageTraits getImageTraits(GLenum type)
     {
         enum Flag : uint32_t {
+            None = 0,
             Sampled = 1 << 0,
             Arrayed = 2 << 1,
             MS = 1 << 2,
             Depth = 1 << 3,
         };
-        const auto make = [](SpvDim dim, uint32_t flags) {
+        const auto make = [](SpvDim dim, uint32_t flags = Flag::None) {
             return SpvReflectImageTraits{
                 .dim = dim,
                 .depth = (flags & Depth ? 1u : 0),
@@ -299,25 +330,61 @@ namespace {
             return make(SpvDimCube, Sampled | Arrayed);
         case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
             return make(SpvDim2D, Sampled | MS | Arrayed);
-        default: return {};
+        case GL_INT_IMAGE_1D:
+        case GL_UNSIGNED_INT_IMAGE_1D:
+        case GL_IMAGE_1D:                                return make(SpvDim1D);
+        case GL_INT_IMAGE_2D:
+        case GL_UNSIGNED_INT_IMAGE_2D:
+        case GL_IMAGE_2D:                                return make(SpvDim2D);
+        case GL_INT_IMAGE_3D:
+        case GL_UNSIGNED_INT_IMAGE_3D:
+        case GL_IMAGE_3D:                                return make(SpvDim3D);
+        case GL_INT_IMAGE_2D_RECT:
+        case GL_UNSIGNED_INT_IMAGE_2D_RECT:
+        case GL_IMAGE_2D_RECT:                           return make(SpvDim2D);
+        case GL_INT_IMAGE_CUBE:
+        case GL_UNSIGNED_INT_IMAGE_CUBE:
+        case GL_IMAGE_CUBE:                              return make(SpvDimCube);
+        case GL_INT_IMAGE_BUFFER:
+        case GL_UNSIGNED_INT_IMAGE_BUFFER:
+        case GL_IMAGE_BUFFER:                            return make(SpvDimBuffer);
+        case GL_INT_IMAGE_1D_ARRAY:
+        case GL_UNSIGNED_INT_IMAGE_1D_ARRAY:
+        case GL_IMAGE_1D_ARRAY:                          return make(SpvDim1D, Arrayed);
+        case GL_INT_IMAGE_2D_ARRAY:
+        case GL_UNSIGNED_INT_IMAGE_2D_ARRAY:
+        case GL_IMAGE_2D_ARRAY:                          return make(SpvDim2D, Arrayed);
+        case GL_INT_IMAGE_CUBE_MAP_ARRAY:
+        case GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY:
+        case GL_IMAGE_CUBE_MAP_ARRAY:                    return make(SpvDimCube, Arrayed);
+        case GL_INT_IMAGE_2D_MULTISAMPLE:
+        case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE:
+        case GL_IMAGE_2D_MULTISAMPLE:                    return make(SpvDim2D, MS);
+        case GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
+        case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
+        case GL_IMAGE_2D_MULTISAMPLE_ARRAY:              return make(SpvDim2D, Arrayed | MS);
+        default:                                         Q_ASSERT(!"unhandled type"); return {};
         }
     }
 
-    SpvReflectDecorationFlags getDecorationFlags(bool isRowMajor) {
+    SpvReflectDecorationFlags getDecorationFlags(bool isRowMajor)
+    {
         auto flags = SpvReflectDecorationFlags{};
         if (isRowMajor)
             flags |= SPV_REFLECT_DECORATION_ROW_MAJOR;
         return flags;
     }
 
-    auto splitArrayNameDims(const std::string& name)
-        -> std::pair<std::string, SpvReflectArrayTraits>{
+    auto splitArrayNameDims(const std::string &name)
+        -> std::pair<std::string, SpvReflectArrayTraits>
+    {
         const auto dot = name.rfind('.');
         auto baseName = std::string();
-        auto array = SpvReflectArrayTraits{ };
+        auto array = SpvReflectArrayTraits{};
         auto begin = name.find('[', (dot != std::string::npos ? dot : 0));
         for (; begin != std::string::npos; begin = name.find('[', begin))
-            if (const auto end = name.find(']', begin); end != std::string::npos) {
+            if (const auto end = name.find(']', begin);
+                end != std::string::npos) {
                 const auto value = std::atoi(name.c_str() + begin + 1);
                 array.dims[array.dims_count] = value + 1;
                 if (array.dims_count == 0)
@@ -328,42 +395,47 @@ namespace {
         return { !baseName.empty() ? std::move(baseName) : name, array };
     }
 
-    std::tuple<std::string, SpvReflectArrayTraits, std::string> splitNestedTypeName(
-            const std::string& name) {
+    std::tuple<std::string, SpvReflectArrayTraits, std::string>
+    splitNestedTypeName(const std::string &name)
+    {
         const auto dot = name.rfind('.');
         if (dot == std::string::npos)
-            return { };
+            return {};
         auto [typeName, array] = splitArrayNameDims(name.substr(0, dot));
         return { std::move(typeName), array, name.substr(dot + 1) };
     }
 
-    BlockVariable createBlockVariable(
-        const std::string &name, GLenum type, int arraySize, int offset,
-        int arrayStride, int matrixStride, bool isRowMajor,
-        int topLevelArraySize, int topLevelArrayStride)
+    BlockVariable createBlockVariable(const std::string &name, GLenum type,
+        int arraySize, int offset, int arrayStride, int matrixStride,
+        bool isRowMajor)
     {
+        auto size = getSize(type);
         auto [baseName, array] = splitArrayNameDims(name);
-        if (array.dims_count > 0) {
+        if (arrayStride > 0) {
             array.dims[array.dims_count - 1] = arraySize;
             array.stride = arrayStride;
-            if (topLevelArraySize)
-                array.dims[0] = topLevelArraySize;
+            size = arraySize * arrayStride;
         }
-
-        return BlockVariable{
+        auto variable = BlockVariable{
             .name = baseName,
             .offset = static_cast<uint32_t>(offset),
-            .size = static_cast<uint32_t>(getSize(type)),
+            .size = static_cast<uint32_t>(size),
             .typeFlags = getTypeFlags(type, array.dims_count > 0),
             .decorationFlags = getDecorationFlags(isRowMajor),
-            .numeric = getNumericTraits(type),
-            .image = getImageTraits(type),
             .array = array,
         };
+        if (isOpaqueType(type)) {
+            variable.image = getImageTraits(type);
+        } else {
+            variable.numeric = getNumericTraits(type);
+        }
+        return variable;
     }
 
-    template<typename T, typename Tie, typename Merge>
-    bool mergeAdjacentElements(std::vector<T> &elements, const Tie &tie, const Merge &merge) {
+    template <typename T, typename Tie, typename Merge>
+    bool mergeAdjacentElements(std::vector<T> &elements, const Tie &tie,
+        const Merge &merge)
+    {
         auto merged = false;
         for (auto begin = elements.begin(); begin != elements.end(); ++begin) {
             const auto &first = tie(*begin);
@@ -380,49 +452,82 @@ namespace {
         return merged;
     }
 
-    void createBlockMemberNestedTypes(std::vector<BlockVariable>& members) {
-        while(mergeAdjacentElements(members,
+    bool isArrayElementZero(const SpvReflectArrayTraits &array)
+    {
+        return *std::max_element(array.dims, array.dims + array.dims_count)
+            <= 1;
+    }
+
+    void createBlockMemberNestedTypes(std::vector<BlockVariable> &members)
+    {
+        std::sort(members.begin(), members.end(),
+            [](const auto &a, const auto &b) { return a.offset < b.offset; });
+        // keep merging one level after the other
+        while (mergeAdjacentElements(
+            members,
             [](const auto &a) {
                 // return something unique when not within a nested type
                 if (a.name.find('.') == std::string::npos)
                     return std::to_string(reinterpret_cast<uintptr_t>(&a));
                 return std::get<0>(splitNestedTypeName(a.name));
-
             },
             [](std::span<BlockVariable> members) {
                 auto type = BlockVariable{
                     .typeFlags = SPV_REFLECT_TYPE_FLAG_STRUCT,
                 };
+                // first member of first element defines offset
+                type.offset = members.front().offset;
                 for (auto &member : members) {
                     auto [typeName, array, memberName] =
                         splitNestedTypeName(member.name);
                     type.name = std::move(typeName);
-                    type.array = array;
-                    if (*std::max_element(array.dims, array.dims + array.dims_count) <= 1) {
-                        member.name = std::move(memberName);
+                    member.name = std::move(memberName);
+                    member.offset -= type.offset;
+                    if (isArrayElementZero(array)) {
+                        // only add members of first element
+                        type.array = array;
                         type.members.push_back(std::move(member));
+                    } else if (!type.array.stride) {
+                        // first member of second element defines stride
+                        type.array = array;
+                        type.array.stride = member.offset;
                     }
                 }
-                if (type.array.dims_count > 0)
+                if (type.array.dims_count > 0) {
                     type.typeFlags |= SPV_REFLECT_TYPE_FLAG_ARRAY;
-
+                    auto arrayElements = 1;
+                    for (auto i = 0u; i < type.array.dims_count; ++i)
+                        arrayElements *= type.array.dims[i];
+                    type.size = type.array.stride * arrayElements;
+                } else {
+                    type.size = type.members.back().offset
+                        + type.members.back().size;
+                }
                 return type;
-            }));
+            })) { }
     }
 
-    void mergeBlockMemberArrays(std::vector<BlockVariable>& members) {
-        mergeAdjacentElements(members,
-            [](const auto &a) { return std::tie(a.name); },
+    void mergeBlockMemberArrays(std::vector<BlockVariable> &members)
+    {
+        std::sort(members.begin(), members.end(),
+            [](const auto &a, const auto &b) { return a.offset < b.offset; });
+        mergeAdjacentElements(
+            members, [](const auto &a) { return std::tie(a.name); },
             [](std::span<BlockVariable> members) {
                 auto merged = members.front();
                 merged.array = members.back().array;
+                merged.size = members.back().offset + members.back().size;
                 return merged;
             });
     }
 
-    void mergeDescriptorBindingArrays(std::vector<DescriptorBinding> &bindings) {
-        mergeAdjacentElements(bindings,
-            [](const auto &a) { return std::tie(a.descriptorType, a.name, a.typeName); },
+    void mergeDescriptorBindingArrays(std::vector<DescriptorBinding> &bindings)
+    {
+        mergeAdjacentElements(
+            bindings,
+            [](const auto &a) {
+                return std::tie(a.descriptorType, a.name, a.typeName);
+            },
             [](std::span<DescriptorBinding> members) {
                 auto merged = members.front();
                 merged.array = members.back().array;
@@ -431,7 +536,8 @@ namespace {
     }
 } // namespace
 
-void GLProgram::generateReflectionFromProgram(GLuint program)
+void GLProgram::generateReflectionFromProgram(GLuint program,
+    bool generateGlobalUniformBlockBinding)
 {
     auto &gl = GLContext::currentContext();
 
@@ -454,10 +560,13 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
 
     const auto getResourceName = [&](GLuint programInterface, GLuint index) {
         auto name = std::string();
-        name.resize(
-            getResourceValue(programInterface, index, GL_NAME_LENGTH) - 1);
-        gl.glGetProgramResourceName(program, programInterface, index,
-            static_cast<GLsizei>(name.size() + 1), nullptr, name.data());
+        if (programInterface != GL_ATOMIC_COUNTER_BUFFER
+            && programInterface != GL_TRANSFORM_FEEDBACK_BUFFER) {
+            name.resize(
+                getResourceValue(programInterface, index, GL_NAME_LENGTH) - 1);
+            gl.glGetProgramResourceName(program, programInterface, index,
+                static_cast<GLsizei>(name.size() + 1), nullptr, name.data());
+        }
         return name;
     };
 
@@ -489,37 +598,61 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
     if (!mShaders.empty())
         reflection->shaderStage = getShaderStage(mShaders.front().type());
 
+    auto nextTextureUnit = GLuint{};
+    auto globalUniformBlockMembers = std::vector<BlockVariable>();
     forEachActiveResource(GL_UNIFORM,
         [&](GLuint programInterface, GLuint index, std::string name) {
-            const auto [blockIndex, arraySize, type, location] =
-                getResourceValues(programInterface, index,
-                    std::to_array<GLuint>({
-                        GL_BLOCK_INDEX,
-                        GL_ARRAY_SIZE,
-                        GL_TYPE,
-                        GL_LOCATION,
-                    }));
+            const auto [blockIndex, arraySize, type, location,
+                atomicCounterBufferIndex,
+                offset] = getResourceValues(programInterface, index,
+                std::to_array<GLuint>({
+                    GL_BLOCK_INDEX,
+                    GL_ARRAY_SIZE,
+                    GL_TYPE,
+                    GL_LOCATION,
+                    GL_ATOMIC_COUNTER_BUFFER_INDEX,
+                    GL_OFFSET,
+                }));
 
-            // skip uniforms in uniform blocks
-            if (blockIndex != -1)
-                return;
-
-            Q_ASSERT(location >= 0);
             Q_ASSERT(type);
             const auto arrayName = getArrayName(name);
-            const auto baseName = (arrayName.empty()
-                    ? name
-                    : arrayName);
+            const auto baseName = (arrayName.empty() ? name : arrayName);
 
-            if (isOpaqueType(type)) {
+            if (atomicCounterBufferIndex >= 0) {
+                reflection->descriptorsBindings.push_back(DescriptorBinding{
+                    .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                    .typeName = baseName,
+                    .block = {
+                        .members = {
+                            createBlockVariable(name, type, arraySize, offset, 0, 0, false),
+                        },
+                    },
+                });
+                mDescriptorBindingPoints[QString::fromStdString(baseName)] = {
+                    GL_ATOMIC_COUNTER_BUFFER,
+                    static_cast<uint32_t>(atomicCounterBufferIndex),
+                };
+            } else if (isOpaqueType(type)) {
+                Q_ASSERT(location >= 0);
+                const auto bindingPoint = nextTextureUnit;
+                nextTextureUnit += arraySize;
+
                 reflection->descriptorsBindings.push_back({
                     .descriptorType = getDescriptorType(type),
                     .name = baseName,
                     .image = getImageTraits(type),
-                    // TODO: array
+                    .array = { 
+                        .dims_count = (arraySize > 0 ? 1u : 0u),
+                        .dims = { static_cast<uint32_t>(arraySize) },
+                    },
+                    .binding = bindingPoint,
                 });
-                mDescriptorUniformLocations[baseName.c_str()] = location;
-            } else {
+                mDescriptorBindingPoints[baseName.c_str()] = {
+                    GL_TEXTURE,
+                    static_cast<GLuint>(location),
+                };
+            } else if (blockIndex == -1) {
+                Q_ASSERT(location >= 0);
                 mUniforms.push_back({
                     .name = baseName.c_str(),
                     .location = location,
@@ -534,11 +667,26 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
                             .dataType = static_cast<GLenum>(type),
                             .arraySize = 1,
                         });
+
+                if (generateGlobalUniformBlockBinding)
+                    globalUniformBlockMembers.push_back(
+                        createBlockVariable(baseName, type, 0, 0, 0, 0, false));
             }
         });
 
+    if (!globalUniformBlockMembers.empty())
+        reflection->descriptorsBindings.push_back(DescriptorBinding{
+            .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .typeName = globalUniformBlockName,
+            .block = {
+                .members = std::move(globalUniformBlockMembers),
+            },
+        });
+
+    auto nextUniformBlockBindingPoint = GLuint{};
     forEachActiveResource(GL_UNIFORM_BLOCK,
-        [&](GLuint programInterface, GLuint index, const std::string& bufferName) {
+        [&](GLuint programInterface, GLuint index,
+            const std::string &bufferName) {
             const auto [bufferBinding, bufferDataSize] =
                 getResourceValues(programInterface, index,
                     std::to_array<GLuint>({
@@ -565,14 +713,18 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
 
                     members.push_back(createBlockVariable(
                         removePrefix(name, baseName), type, arraySize, offset,
-                        arrayStride, matrixStride, isRowMajor, 0, 0));
+                        arrayStride, matrixStride, isRowMajor));
                 });
-
-            mergeBlockMemberArrays(members);
-            createBlockMemberNestedTypes(members);
 
             // glslang generates block_name.instance_name[N] instead of block_name[N]
             baseName = removeInstanceName(std::move(baseName));
+
+            const auto bindingPoint = nextUniformBlockBindingPoint++;
+            gl.glUniformBlockBinding(mProgramObject, index, bindingPoint);
+            mDescriptorBindingPoints[QString::fromStdString(baseName)] = {
+                GL_UNIFORM_BUFFER,
+                bindingPoint,
+            };
 
             reflection->descriptorsBindings.push_back(DescriptorBinding{
                 .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -582,10 +734,11 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
                     .size = static_cast<uint32_t>(bufferDataSize),
                     .members = std::move(members),
                 },
-                .binding = static_cast<uint32_t>(bufferBinding),
+                .binding = bindingPoint,
             });
         });
 
+    auto nextShaderStorageBindingPoint = GLuint{};
     forEachActiveResource(GL_SHADER_STORAGE_BLOCK,
         [&](GLuint programInterface, GLuint index, std::string bufferName) {
             const auto [bufferBinding, bufferDataSize] =
@@ -615,9 +768,15 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
 
                     members.push_back(createBlockVariable(
                         removePrefix(name, bufferName), type, arraySize, offset,
-                        arrayStride, matrixStride, isRowMajor,
-                        topLevelArraySize, topLevelArrayStride));
+                        arrayStride, matrixStride, isRowMajor));
                 });
+
+            const auto bindingPoint = nextShaderStorageBindingPoint++;
+            gl.glShaderStorageBlockBinding(mProgramObject, index, bindingPoint);
+            mDescriptorBindingPoints[QString::fromStdString(bufferName)] = {
+                GL_SHADER_STORAGE_BUFFER,
+                bindingPoint,
+            };
 
             reflection->descriptorsBindings.push_back(
                 DescriptorBinding{
@@ -627,10 +786,14 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
                         .size = static_cast<uint32_t>(bufferDataSize),
                         .members = std::move(members),
                     },
-                    .binding = static_cast<uint32_t>(bufferBinding),
+                    .binding = bindingPoint,
                 });
         });
 
+    for (auto &descriptorBinding : reflection->descriptorsBindings) {
+        mergeBlockMemberArrays(descriptorBinding.block.members);
+        createBlockMemberNestedTypes(descriptorBinding.block.members);
+    }
     mergeDescriptorBindingArrays(reflection->descriptorsBindings);
 
     auto inputSemantics = std::map<std::string, std::string>();
@@ -655,20 +818,20 @@ void GLProgram::generateReflectionFromProgram(GLuint program)
                         GL_LOCATION_COMPONENT,
                     }));
 
-                if (location >= 0) {
-                    auto &variables = (programInterface == GL_PROGRAM_INPUT
-                            ? reflection->inputs
-                            : reflection->outputs);
-                    variables.push_back(InterfaceVariable{
-                        .name = name,
-                        .semantic = inputSemantics[name],
-                        .format = getInputFormat(type),
-                        .location = static_cast<GLuint>(location),
-                    });
-                }
+                auto &variables = (programInterface == GL_PROGRAM_INPUT
+                        ? reflection->inputs
+                        : reflection->outputs);
+                variables.push_back(InterfaceVariable{
+                    .name = name,
+                    .semantic = inputSemantics[name],
+                    .builtIn = (name.starts_with("gl_") ? 0 : -1),
+                    .format = getInputFormat(type),
+                    .location = static_cast<GLuint>(location),
+                });
             });
 
     mReflection = Reflection(std::move(reflection));
+    Q_ASSERT(glGetError() == GL_NO_ERROR);
 }
 
 void GLProgram::enumerateSubroutines(GLuint program)
@@ -716,23 +879,18 @@ void GLProgram::enumerateSubroutines(GLuint program)
     }
 }
 
-int GLProgram::getDescriptorUniformLocation(
-    const SpvReflectDescriptorBinding &desc) const
+auto GLProgram::getDescriptorBindingPoint(
+    const SpvReflectDescriptorBinding &desc, int arrayIndex) const
+    -> BindingPoint
 {
-    const auto it = mDescriptorUniformLocations.find(desc.name);
-    return (it == mDescriptorUniformLocations.end() ? -1 : it->second);
-}
-
-void GLProgram::automapDescriptorBindings()
-{
-    // generate one binding unit per unique uniform location
-    auto uniqueLocations = QSet<int>();
-    for (auto &[name, location] : mDescriptorUniformLocations)
-        uniqueLocations.insert(location);
-
-    for (auto &desc : std::span(mReflection->descriptor_bindings,
-             mReflection->descriptor_binding_count))
-        if (auto location = getDescriptorUniformLocation(desc); location >= 0)
-            desc.binding = std::distance(uniqueLocations.begin(),
-                uniqueLocations.find(location));
+    Q_ASSERT(desc.name && desc.type_description
+        && desc.type_description->type_name);
+    const auto it = mDescriptorBindingPoints.find(
+        *desc.name ? desc.name : desc.type_description->type_name);
+    if (it != mDescriptorBindingPoints.end()) {
+        auto [target, bindingPoint] = it->second;
+        return { target, bindingPoint + arrayIndex };
+    }
+    Q_ASSERT(!"binding without assigned binding point");
+    return { GL_NONE, 0 };
 }
