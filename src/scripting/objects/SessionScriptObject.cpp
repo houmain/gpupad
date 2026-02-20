@@ -363,7 +363,14 @@ QVariant SessionScriptObject_ItemObject::updateValue(const QString &key,
 {
     auto update = QJsonObject();
     update.insert("id", mItemId);
-    update.insert(key, input.toJsonValue());
+    if (input.canConvert<QJSValue>()) {
+        const auto jsValue = mSessionObject.engine().toScriptValue(input);
+        const auto json = jsValue.toVariant(QJSValue::ConvertJSObjects);
+        auto name = json.typeName();
+        update.insert(key, json.toJsonValue());
+    } else {
+        update.insert(key, input.toJsonValue());
+    }
 
     mSessionObject.withSessionModel(
         [itemId = mItemId, update](SessionModel &session) {
