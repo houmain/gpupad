@@ -4,6 +4,12 @@
 #include <QRegularExpression>
 
 namespace {
+    void parseLinkerLog(const QString &log, MessagePtrSet &messages,
+        ItemId itemId)
+    {
+        messages += MessageList::insert(itemId, MessageType::ShaderWarning, log);
+    }
+
     QString formatNvGpuProgram(QString assembly)
     {
         // indent conditional jumps
@@ -122,9 +128,9 @@ bool GLProgram::linkProgram()
     gl.glGetProgramiv(program, GL_LINK_STATUS, &status);
     gl.glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
     if (length > 0) {
-        auto log = std::vector<char>(static_cast<size_t>(length));
-        gl.glGetProgramInfoLog(program, length, nullptr, log.data());
-        GLShader::parseLog(log.data(), mMessages, mItemId, {});
+        auto log = std::make_unique<char[]>(length);
+        gl.glGetProgramInfoLog(program, length, nullptr, log.get());
+        parseLinkerLog(log.get(), mMessages, mItemId);
     } else {
         if (status != GL_TRUE)
             mMessages += MessageList::insert(mItemId,

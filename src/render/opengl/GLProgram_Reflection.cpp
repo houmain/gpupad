@@ -411,7 +411,9 @@ namespace {
     {
         auto size = getSize(type);
         auto [baseName, array] = splitArrayNameDims(name);
-        if (arrayStride > 0) {
+        
+        Q_ASSERT(arrayStride == 0 || array.dims_count > 0);
+        if (arrayStride > 0 && array.dims_count > 0) {
             array.dims[array.dims_count - 1] = arraySize;
             array.stride = arrayStride;
             size = arraySize * arrayStride;

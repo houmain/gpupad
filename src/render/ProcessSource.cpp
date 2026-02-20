@@ -35,6 +35,18 @@ namespace {
         return result;
     }
 
+    Shader::ShaderType getStage(Shader::ShaderType type)
+    {
+        using ST = Shader::ShaderType;
+        switch (type)  {
+            case ST::Vertex:
+            case ST::Geometry:
+            case ST::TessControl:
+            case ST::TessEvaluation: return ST::Vertex;
+            default:                 return type;
+        }
+    }
+
     void getShadersFromSession(Shader &shader, QList<const Shader *> &shaders)
     {
         if (auto sessionShader = findShaderInSession(shader)) {
@@ -47,9 +59,10 @@ namespace {
                         shader = *child;
                         shader.shaderType = shaderType;
                         shaders.append(&shader);
-                    } else if (child->shaderType == shader.shaderType) {
-                        // add other shaders of program with same type
-                        shaders.append(child);
+                    } else {
+                        // add other shaders of program with same stage
+                        if (getStage(child->shaderType) == getStage(shader.shaderType))
+                            shaders.append(child);
                     }
                 }
         } else {

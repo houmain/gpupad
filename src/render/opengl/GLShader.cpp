@@ -1,49 +1,48 @@
 #include "GLShader.h"
 #include "GLRenderer.h"
 
-void GLShader::parseLog(const QString &log, MessagePtrSet &messages,
-    ItemId itemId, const QStringList &fileNames)
-{
-    // Mesa:    0:13(2): error: `gl_Positin' undeclared
-    // NVidia:  0(13) : error C1008: undefined variable "gl_Positin"
-    // Linker:  error: struct type mismatch between shaders for uniform
-    // Linker:  Error Duplicate location 0 for uniform uModel
-
-    static const auto split = QRegularExpression(
-        "("
-        "(\\d+)" // 2. source index
-        "(:(\\d+))?" // 4. [line]
-        "\\((\\d+)\\)" // 5. line or column
-        "\\s*:\\s*"
-        ")?"
-        "([^:]+:|Error)\\s*" // 6. severity/code
-        "(.+)"); // 7. text
-
-    const auto lines = log.split('\n', Qt::SkipEmptyParts);
-    for (const auto &line : lines) {
-        const auto match = split.match(line);
-        const auto sourceIndex = match.captured(2).toInt();
-        const auto lineNumber = (!match.captured(4).isEmpty()
-                ? match.captured(4).toInt()
-                : match.captured(5).toInt());
-        const auto severity = match.captured(6);
-        const auto text = match.captured(7).trimmed();
-        if (text.isEmpty())
-            continue;
-
-        auto messageType = MessageType::ShaderWarning;
-        if (severity.contains("Info", Qt::CaseInsensitive))
-            messageType = MessageType::ShaderInfo;
-        if (severity.contains("Error", Qt::CaseInsensitive))
-            messageType = MessageType::ShaderError;
-
-        if (sourceIndex < fileNames.size())
-            messages += MessageList::insert(fileNames[sourceIndex], lineNumber,
-                messageType, text);
-        else
-            messages += MessageList::insert(itemId, messageType, text);
+namespace {
+    void parseLog(const QString &log, MessagePtrSet &messages,
+        ItemId itemId, const QStringList &fileNames)
+    {
+        // Mesa:    0:13(2): error: `gl_Positin' undeclared
+        // NVidia:  0(13) : error C1008: undefined variable "gl_Positin"
+        static const auto split = QRegularExpression(
+            "("
+            "(\\d+)" // 2. source index
+            "(:(\\d+))?" // 4. [line]
+            "\\((\\d+)\\)" // 5. line or column
+            "\\s*:\\s*"
+            ")?"
+            "([^:]+:|Error)\\s*" // 6. severity/code
+            "(.+)"); // 7. text
+    
+        const auto lines = log.split('\n', Qt::SkipEmptyParts);
+        for (const auto &line : lines) {
+            const auto match = split.match(line);
+            const auto sourceIndex = match.captured(2).toInt();
+            const auto lineNumber = (!match.captured(4).isEmpty()
+                    ? match.captured(4).toInt()
+                    : match.captured(5).toInt());
+            const auto severity = match.captured(6);
+            const auto text = match.captured(7).trimmed();
+            if (text.isEmpty())
+                continue;
+    
+            auto messageType = MessageType::ShaderWarning;
+            if (severity.contains("Info", Qt::CaseInsensitive))
+                messageType = MessageType::ShaderInfo;
+            if (severity.contains("Error", Qt::CaseInsensitive))
+                messageType = MessageType::ShaderError;
+    
+            if (sourceIndex < fileNames.size())
+                messages += MessageList::insert(fileNames[sourceIndex], lineNumber,
+                    messageType, text);
+            else
+                messages += MessageList::insert(itemId, messageType, text);
+        }
     }
-}
+} // namespace
 
 GLShader::GLShader(Shader::ShaderType type,
     const QList<const Shader *> &shaders, const Session &session)
@@ -179,7 +178,7 @@ bool GLShader::setShaderObject(GLObject shader,
     if (length > 0) {
         auto log = std::vector<char>(static_cast<size_t>(length));
         gl.glGetShaderInfoLog(shader, length, nullptr, log.data());
-        GLShader::parseLog(log.data(), mMessages, mItemId, usedFileNames);
+        parseLog(log.data(), mMessages, mItemId, usedFileNames);
     }
 
     auto status = GLint{};

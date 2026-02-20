@@ -196,20 +196,21 @@ namespace {
     QString getTypeName(const SpvReflectTypeDescription &type)
     {
         const auto [prefix, single, dims] = getTypeDesc(type);
-        auto kind = "";
-        if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE) {
-            kind = "sampler";
-        } else if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE) {
-            kind = "image";
-        } else if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER) {
-            kind = "sampler";
-        } else if (type.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX) {
-            kind = "mat";
-        } else if (type.type_flags & SPV_REFLECT_TYPE_FLAG_VECTOR) {
-            kind = "vec";
-        } else {
+        const auto kind = [&]() -> const char* {
+            if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE)
+                return "sampler";
+            if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE)
+                return "image";
+            if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER)
+                return "sampler";
+            if (type.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX)
+                return "mat";
+            if (type.type_flags & SPV_REFLECT_TYPE_FLAG_VECTOR)
+                return "vec";
+            return nullptr;
+        }();
+        if (!kind)
             return single;
-        }
         return QStringLiteral("%1%2%3").arg(prefix).arg(kind).arg(dims);
     }
 
