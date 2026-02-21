@@ -20,6 +20,11 @@ namespace {
         return 0;
     }
 
+    uint32_t getTypeSize(D3D12_SHADER_TYPE_DESC typeDesc)
+    {
+        return getTypeSize(typeDesc.Type) * typeDesc.Rows * typeDesc.Columns;
+    }
+
     SpvReflectTypeFlags getTypeFlags(const D3D12_SHADER_TYPE_DESC &typeDesc)
     {
         auto typeFlags = SpvReflectTypeFlags{};
@@ -56,16 +61,18 @@ namespace {
     {
         auto numeric = SpvReflectNumericTraits{};
         switch (typeDesc.Type) {
-        case D3D_SVT_VOID:   break;
+        case D3D_SVT_VOID:    break;
+        case D3D_SVT_INT16:
+        case D3D_SVT_UINT16:
+        case D3D_SVT_FLOAT16: numeric.scalar.width = 16; break;
         case D3D_SVT_BOOL:
         case D3D_SVT_INT:
         case D3D_SVT_FLOAT:
-        case D3D_SVT_UINT:   numeric.scalar.width = 32; break;
-        case D3D_SVT_INT16:
-        case D3D_SVT_UINT16: numeric.scalar.width = 16; break;
+        case D3D_SVT_UINT:    numeric.scalar.width = 32; break;
         case D3D_SVT_INT64:
-        case D3D_SVT_UINT64: numeric.scalar.width = 64; break;
-        default:             Q_ASSERT(!"not handled type"); break;
+        case D3D_SVT_UINT64:
+        case D3D_SVT_DOUBLE:  numeric.scalar.width = 64; break;
+        default:              Q_ASSERT(!"not handled type"); break;
         }
 
         switch (typeDesc.Type) {
@@ -93,18 +100,55 @@ namespace {
         return numeric;
     }
 
-    SpvReflectFormat getFormat(D3D_REGISTER_COMPONENT_TYPE componentType)
+    SpvReflectFormat getFormat(D3D_REGISTER_COMPONENT_TYPE componentType,
+        int componentCount)
     {
-        switch (componentType) {
-        case D3D_REGISTER_COMPONENT_UINT32:
-            return SPV_REFLECT_FORMAT_R32G32B32A32_UINT;
-        case D3D_REGISTER_COMPONENT_SINT32:
-            return SPV_REFLECT_FORMAT_R32G32B32A32_SINT;
-        case D3D_REGISTER_COMPONENT_FLOAT32:
-            return SPV_REFLECT_FORMAT_R32G32B32A32_SFLOAT;
-        default: Q_ASSERT(!"unhandled component type");
+        constexpr auto mask = [](int count, D3D_REGISTER_COMPONENT_TYPE type) {
+            return static_cast<int>(type) * 1000 + count;
+        };
+        switch (mask(componentCount, componentType)) {
+#define ADD(COUNT, TYPE, FORMAT)                     \
+    case mask(COUNT, D3D_REGISTER_COMPONENT_##TYPE): \
+        return SPV_REFLECT_FORMAT_##FORMAT;
+            ADD(1, UINT16, R16_UINT)
+            ADD(1, SINT16, R16_SINT)
+            ADD(1, FLOAT16, R16_SFLOAT)
+            ADD(2, UINT16, R16G16_UINT)
+            ADD(2, SINT16, R16G16_SINT)
+            ADD(2, FLOAT16, R16G16_SFLOAT)
+            ADD(3, UINT16, R16G16B16_UINT)
+            ADD(3, SINT16, R16G16B16_SINT)
+            ADD(3, FLOAT16, R16G16B16_SFLOAT)
+            ADD(4, UINT16, R16G16B16A16_UINT)
+            ADD(4, SINT16, R16G16B16A16_SINT)
+            ADD(4, FLOAT16, R16G16B16A16_SFLOAT)
+            ADD(1, UINT32, R32_UINT)
+            ADD(1, SINT32, R32_SINT)
+            ADD(1, FLOAT32, R32_SFLOAT)
+            ADD(2, UINT32, R32G32_UINT)
+            ADD(2, SINT32, R32G32_SINT)
+            ADD(2, FLOAT32, R32G32_SFLOAT)
+            ADD(3, UINT32, R32G32B32_UINT)
+            ADD(3, SINT32, R32G32B32_SINT)
+            ADD(3, FLOAT32, R32G32B32_SFLOAT)
+            ADD(4, UINT32, R32G32B32A32_UINT)
+            ADD(4, SINT32, R32G32B32A32_SINT)
+            ADD(4, FLOAT32, R32G32B32A32_SFLOAT)
+            ADD(1, UINT64, R64_UINT)
+            ADD(1, SINT64, R64_SINT)
+            ADD(1, FLOAT64, R64_SFLOAT)
+            ADD(2, UINT64, R64G64_UINT)
+            ADD(2, SINT64, R64G64_SINT)
+            ADD(2, FLOAT64, R64G64_SFLOAT)
+            ADD(3, UINT64, R64G64B64_UINT)
+            ADD(3, SINT64, R64G64B64_SINT)
+            ADD(3, FLOAT64, R64G64B64_SFLOAT)
+            ADD(4, UINT64, R64G64B64A64_UINT)
+            ADD(4, SINT64, R64G64B64A64_SINT)
+            ADD(4, FLOAT64, R64G64B64A64_SFLOAT)
+#undef ADD
         }
-        return SPV_REFLECT_FORMAT_R32G32B32A32_SFLOAT;
+        return SPV_REFLECT_FORMAT_UNDEFINED;
     }
 
     int getBuiltIn(D3D_NAME systemValueType)
@@ -141,7 +185,7 @@ namespace {
 } // namespace
 
 Reflection generateSpirvReflection(Shader::ShaderType shaderType,
-    ID3D12ShaderReflection *reflection)
+    const Reflection &spirvReflection, ID3D12ShaderReflection *reflection)
 {
     using BlockVariable = Reflection::Builder::BlockVariable;
     using InterfaceVariable = Reflection::Builder::InterfaceVariable;
@@ -161,7 +205,8 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
                         : std::format("{}{}", paramDesc.SemanticName,
                               paramDesc.SemanticIndex)),
                 .builtIn = getBuiltIn(paramDesc.SystemValueType),
-                .format = getFormat(paramDesc.ComponentType),
+                .format = getFormat(paramDesc.ComponentType,
+                    std::popcount(paramDesc.Mask)),
                 .location = paramDesc.Register,
             };
         };
@@ -213,9 +258,10 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
                         // https://maraneshi.github.io/HLSL-ConstantBufferLayoutVisualizer/
                         auto subMembers =
                             createTypeMembers(createTypeMembers, memberType);
-                        const auto elementSize = (!members.empty()
-                                ? members.back().offset + members.back().size
-                                : getTypeSize(memberTypeDesc.Type));
+                        const auto elementSize = (!subMembers.empty()
+                                ? subMembers.back().offset
+                                    + subMembers.back().size
+                                : getTypeSize(memberTypeDesc));
                         const auto arrayStride = (memberTypeDesc.Elements
                                 ? alignUp(elementSize, 16)
                                 : 0);
@@ -225,7 +271,7 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
                             size += arrayStride * (memberTypeDesc.Elements - 1);
 
                         auto& member = members.emplace_back(BlockVariable{
-                            .name = "_" + std::to_string(i),
+                            .name = "m" + std::to_string(i),
                             .offset = memberTypeDesc.Offset,
                             .size = size,
                             .typeName = memberTypeDesc.Name,
@@ -265,15 +311,35 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
             }
 
             // ConstantBuffer
+            auto array = SpvReflectArrayTraits{};
             if (variables.size() == 1 && !variables.front().members.empty()) {
                 auto first = std::move(variables.front());
+                array = first.array;
                 variables = std::move(first.members);
             }
+
+            // fixup member names using SPIR-V reflection
+            const auto fixupMemberNames =
+                [](const auto &fixupMemberNames, BlockVariable &variable,
+                    const SpvReflectTypeDescription &spirvType) -> void {
+                variable.name = spirvType.struct_member_name;
+                for (auto i = 0u; i < variable.members.size(); ++i)
+                    if (i < spirvType.member_count)
+                        fixupMemberNames(fixupMemberNames, variable.members[i],
+                            spirvType.members[i]);
+            };
+            for (const auto &binding : spirvReflection.descriptorBindings())
+                if (!std::strcmp(binding.name, bindDesc.Name))
+                    for (auto i = 0u; i < variables.size(); ++i)
+                        if (i < binding.block.member_count)
+                            fixupMemberNames(fixupMemberNames, variables[i],
+                                *binding.block.members[i].type_description);
 
             builder->descriptorsBindings.push_back(DescriptorBinding{
                 .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
                       .name = cbufferDesc.Name,
                       .typeName = cbufferDesc.Name,
+                      .array = array,
                       .block = {
                           .size = cbufferDesc.Size,
                           .members = std::move(variables),

@@ -33,6 +33,6 @@ private:
 };
 
 Reflection generateSpirvReflection(Shader::ShaderType shaderType,
-    ID3D12ShaderReflection *reflection);
+    const Reflection &spirvReflection, ID3D12ShaderReflection *reflection);
 
 #endif // _WIN32

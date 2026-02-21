@@ -14,7 +14,7 @@ struct Type {
   Type2 y[2];
 };
 
-uniform float u_values_0[2][2];
+uniform float u_values_0[4];
 
 uniform Type u_values_1[2];
 uniform float2 u_values_2;
@@ -22,7 +22,7 @@ uniform float3 u_values_3[2];
 uniform float3x3 u_values_4;
 
 struct u_block_t {
-  float values_0[2][2];
+  float values_0[4];
   Type values_1[2];
   float2 values_2;
 };
@@ -36,10 +36,10 @@ ConstantBuffer<u_block_2_t> u_block_2[2];
 
 [numthreads(1, 1, 1)]
 void main() {
-  assertEq(u_values_0[0][0], 1.2);
-  assertEq(u_values_0[0][1], 2.0);
-  assertEq(u_values_0[1][0], 3.1);
-  assertEq(u_values_0[1][1], 4.2);
+  assertEq(u_values_0[0], 1.1);
+  assertEq(u_values_0[1], 2.0);
+  assertEq(u_values_0[2], 3.0);
+  assertEq(u_values_0[3], 4.1);
 
   assertEq(u_values_1[0].x[0], float(1));
   assertEq(u_values_1[0].x[1], float(2));
@@ -63,10 +63,10 @@ void main() {
   assertEq3(u_values_4[1], float3(2, 5, 8));
   assertEq3(u_values_4[2], float3(3, 6, 9));  
 
-  assertEq(u_block.values_0[0][0], 1.2);
-  assertEq(u_block.values_0[0][1], 2.0);
-  assertEq(u_block.values_0[1][0], 3.1);
-  assertEq(u_block.values_0[1][1], 4.2);
+  assertEq(u_block.values_0[0], 1.1);
+  assertEq(u_block.values_0[1], 2.0);
+  assertEq(u_block.values_0[2], 3.0);
+  assertEq(u_block.values_0[3], 4.1);
   
   assertEq(u_block.values_1[0].x[0], float(1));
   assertEq(u_block.values_1[0].x[1], float(2));

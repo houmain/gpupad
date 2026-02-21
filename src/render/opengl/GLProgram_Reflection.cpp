@@ -411,7 +411,7 @@ namespace {
     {
         auto size = getSize(type);
         auto [baseName, array] = splitArrayNameDims(name);
-        
+
         Q_ASSERT(arrayStride == 0 || array.dims_count > 0);
         if (arrayStride > 0 && array.dims_count > 0) {
             array.dims[array.dims_count - 1] = arraySize;
@@ -686,111 +686,82 @@ void GLProgram::generateReflectionFromProgram(GLuint program,
         });
 
     auto nextUniformBlockBindingPoint = GLuint{};
-    forEachActiveResource(GL_UNIFORM_BLOCK,
-        [&](GLuint programInterface, GLuint index,
-            const std::string &bufferName) {
-            const auto [bufferBinding, bufferDataSize] =
-                getResourceValues(programInterface, index,
-                    std::to_array<GLuint>({
-                        GL_BUFFER_BINDING,
-                        GL_BUFFER_DATA_SIZE,
-                    }));
-
-            auto [baseName, array] = splitArrayNameDims(bufferName);
-
-            auto members = std::vector<BlockVariable>();
-            forEachActiveVariable(GL_UNIFORM_BLOCK, index, GL_UNIFORM,
-                [&](GLuint programInterface, GLuint index, std::string name) {
-                    const auto [type, arraySize, offset, arrayStride,
-                        matrixStride,
-                        isRowMajor] = getResourceValues(programInterface, index,
+    auto nextShaderStorageBindingPoint = GLuint{};
+    for (auto programInterface : { GL_UNIFORM_BLOCK, GL_SHADER_STORAGE_BLOCK })
+        forEachActiveResource(programInterface,
+            [&](GLuint programInterface, GLuint index,
+                const std::string &bufferName) {
+                const auto [bufferBinding, bufferDataSize] =
+                    getResourceValues(programInterface, index,
                         std::to_array<GLuint>({
-                            GL_TYPE,
-                            GL_ARRAY_SIZE,
-                            GL_OFFSET,
-                            GL_ARRAY_STRIDE,
-                            GL_MATRIX_STRIDE,
-                            GL_IS_ROW_MAJOR,
+                            GL_BUFFER_BINDING,
+                            GL_BUFFER_DATA_SIZE,
                         }));
 
-                    members.push_back(createBlockVariable(
-                        removePrefix(name, baseName), type, arraySize, offset,
-                        arrayStride, matrixStride, isRowMajor));
-                });
+                auto [baseName, array] = splitArrayNameDims(bufferName);
 
-            // glslang generates block_name.instance_name[N] instead of block_name[N]
-            baseName = removeInstanceName(std::move(baseName));
+                auto descriptorType = SpvReflectDescriptorType{};
+                auto memberProgramInterface = GLenum{};
+                if (programInterface == GL_UNIFORM_BLOCK) {
+                    descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                    memberProgramInterface = GL_UNIFORM;
+                } else {
+                    descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                    memberProgramInterface = GL_BUFFER_VARIABLE;
+                }
 
-            const auto bindingPoint = nextUniformBlockBindingPoint++;
-            gl.glUniformBlockBinding(mProgramObject, index, bindingPoint);
-            mDescriptorBindingPoints[QString::fromStdString(baseName)] = {
-                GL_UNIFORM_BUFFER,
-                bindingPoint,
-            };
+                auto members = std::vector<BlockVariable>();
+                forEachActiveVariable(programInterface, index,
+                    memberProgramInterface,
+                    [&](GLuint programInterface, GLuint index,
+                        std::string name) {
+                        const auto [type, arraySize, offset, arrayStride,
+                            matrixStride, isRowMajor] =
+                            getResourceValues(programInterface, index,
+                                std::to_array<GLuint>({
+                                    GL_TYPE,
+                                    GL_ARRAY_SIZE,
+                                    GL_OFFSET,
+                                    GL_ARRAY_STRIDE,
+                                    GL_MATRIX_STRIDE,
+                                    GL_IS_ROW_MAJOR,
+                                }));
 
-            reflection->descriptorsBindings.push_back(DescriptorBinding{
-                .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .typeName = std::move(baseName),
-                .array = array,
-                .block = {
-                    .size = static_cast<uint32_t>(bufferDataSize),
-                    .members = std::move(members),
-                },
-                .binding = bindingPoint,
+                        members.push_back(createBlockVariable(
+                            removePrefix(name, baseName), type, arraySize,
+                            offset, arrayStride, matrixStride, isRowMajor));
+                    });
+
+                // glslang generates block_name.instance_name[N] instead of block_name[N]
+                baseName = removeInstanceName(std::move(baseName));
+
+                auto bindingPoint = 0u;
+                if (programInterface == GL_UNIFORM_BLOCK) {
+                    bindingPoint = nextUniformBlockBindingPoint++;
+                    gl.glUniformBlockBinding(mProgramObject, index,
+                        bindingPoint);
+                    mDescriptorBindingPoints[QString::fromStdString(
+                        baseName)] = { GL_UNIFORM_BUFFER, bindingPoint };
+                } else {
+                    bindingPoint = nextShaderStorageBindingPoint++;
+                    gl.glShaderStorageBlockBinding(mProgramObject, index,
+                        bindingPoint);
+                    mDescriptorBindingPoints[QString::fromStdString(
+                        baseName)] = { GL_SHADER_STORAGE_BUFFER, bindingPoint };
+                    // TODO: GL_TOP_LEVEL_ARRAY_SIZE, GL_TOP_LEVEL_ARRAY_STRIDE
+                }
+
+                reflection->descriptorsBindings.push_back(DescriptorBinding{
+                  .descriptorType = descriptorType,
+                  .typeName = std::move(baseName),
+                  .array = array,
+                  .block = {
+                      .size = static_cast<uint32_t>(bufferDataSize),
+                      .members = std::move(members),
+                  },
+                  .binding = bindingPoint,
+              });
             });
-        });
-
-    auto nextShaderStorageBindingPoint = GLuint{};
-    forEachActiveResource(GL_SHADER_STORAGE_BLOCK,
-        [&](GLuint programInterface, GLuint index, std::string bufferName) {
-            const auto [bufferBinding, bufferDataSize] =
-                getResourceValues(programInterface, index,
-                    std::to_array<GLuint>({
-                        GL_BUFFER_BINDING,
-                        GL_BUFFER_DATA_SIZE,
-                    }));
-
-            auto members = std::vector<BlockVariable>();
-            forEachActiveVariable(programInterface, index, GL_BUFFER_VARIABLE,
-                [&](GLuint programInterface, GLuint index, std::string name) {
-                    const auto [type, arraySize, offset, arrayStride,
-                        matrixStride, isRowMajor, topLevelArraySize,
-                        topLevelArrayStride] =
-                        getResourceValues(programInterface, index,
-                            std::to_array<GLuint>({
-                                GL_TYPE,
-                                GL_ARRAY_SIZE,
-                                GL_OFFSET,
-                                GL_ARRAY_STRIDE,
-                                GL_MATRIX_STRIDE,
-                                GL_IS_ROW_MAJOR,
-                                GL_TOP_LEVEL_ARRAY_SIZE,
-                                GL_TOP_LEVEL_ARRAY_STRIDE,
-                            }));
-
-                    members.push_back(createBlockVariable(
-                        removePrefix(name, bufferName), type, arraySize, offset,
-                        arrayStride, matrixStride, isRowMajor));
-                });
-
-            const auto bindingPoint = nextShaderStorageBindingPoint++;
-            gl.glShaderStorageBlockBinding(mProgramObject, index, bindingPoint);
-            mDescriptorBindingPoints[QString::fromStdString(bufferName)] = {
-                GL_SHADER_STORAGE_BUFFER,
-                bindingPoint,
-            };
-
-            reflection->descriptorsBindings.push_back(
-                DescriptorBinding{
-                    .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                    .typeName = std::move(bufferName),
-                    .block = {
-                        .size = static_cast<uint32_t>(bufferDataSize),
-                        .members = std::move(members),
-                    },
-                    .binding = bindingPoint,
-                });
-        });
 
     for (auto &descriptorBinding : reflection->descriptorsBindings) {
         mergeBlockMemberArrays(descriptorBinding.block.members);

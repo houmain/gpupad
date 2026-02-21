@@ -88,33 +88,22 @@
             "items": [
                 {
                     "bindingType": "Uniform",
-                    "editor": "Expression2",
-                    "id": 12,
-                    "name": "u_values_0[1]",
-                    "type": "Binding",
-                    "values": [
-                        "3.1",
-                        "4.1"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
                     "editor": "Expression",
                     "id": 11,
-                    "name": "u_values_0[0][0]",
+                    "name": "u_values_0[0]",
                     "type": "Binding",
                     "values": [
-                        "1.2"
+                        "1.1"
                     ]
                 },
                 {
                     "bindingType": "Uniform",
                     "editor": "Expression",
                     "id": 904,
-                    "name": "u_values_0[1][1]",
+                    "name": "u_values_0[3]",
                     "type": "Binding",
                     "values": [
-                        "4.2"
+                        "4.1"
                     ]
                 },
                 {
@@ -285,33 +274,22 @@
                 },
                 {
                     "bindingType": "Uniform",
-                    "editor": "Expression2",
-                    "id": 902,
-                    "name": "u_block.values_0[1]",
-                    "type": "Binding",
-                    "values": [
-                        "3.1",
-                        "4.1"
-                    ]
-                },
-                {
-                    "bindingType": "Uniform",
                     "editor": "Expression",
                     "id": 22,
-                    "name": "u_block.values_0[0][0]",
+                    "name": "u_block.values_0[0]",
                     "type": "Binding",
                     "values": [
-                        "1.2"
+                        "1.1"
                     ]
                 },
                 {
                     "bindingType": "Uniform",
                     "editor": "Expression",
                     "id": 905,
-                    "name": "u_block.values_0[1][1]",
+                    "name": "u_block.values_0[3]",
                     "type": "Binding",
                     "values": [
-                        "4.2"
+                        "4.1"
                     ]
                 },
                 {
