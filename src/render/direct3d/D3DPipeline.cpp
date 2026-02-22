@@ -66,9 +66,11 @@ namespace {
     D3D12_DESCRIPTOR_RANGE_TYPE getRangeType(D3D_SHADER_INPUT_TYPE inputType)
     {
         switch (inputType) {
-        case D3D_SIT_CBUFFER: return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-        case D3D_SIT_TEXTURE: return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        default:              return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+        case D3D_SIT_CBUFFER:     return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+        case D3D_SIT_TEXTURE:
+        case D3D_SIT_STRUCTURED:
+        case D3D_SIT_BYTEADDRESS: return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        default:                  return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
         }
     }
 
@@ -374,7 +376,8 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     bindDesc.Space, bindDesc.BindPoint),
                 context.descriptorSize);
 
-            if (bindDesc.Type == D3D_SIT_CBUFFER) {
+            switch (bindDesc.Type) {
+            case D3D_SIT_CBUFFER: {
                 auto buffer = std::add_pointer_t<D3DBuffer>{};
                 if (auto bufferBinding = find(mBindings.buffers, bindingName)) {
                     buffer = static_cast<D3DBuffer *>(bufferBinding->buffer);
@@ -419,9 +422,13 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     buffer->prepareConstantBufferView(context, descriptor);
                     descriptor.Offset(1, context.descriptorSize);
                 }
-            } else if (bindDesc.Type == D3D_SIT_BYTEADDRESS
-                || bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS) {
+                break;
+            }
 
+            case D3D_SIT_STRUCTURED:
+            case D3D_SIT_BYTEADDRESS:
+            case D3D_SIT_UAV_RWSTRUCTURED:
+            case D3D_SIT_UAV_RWBYTEADDRESS: {
                 auto buffer = std::add_pointer_t<D3DBuffer>{};
                 if (bindingName == PrintfBase::bufferBindingName()) {
                     buffer = &mProgram.printf().getInitializedBuffer(context);
@@ -438,12 +445,26 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     continue;
                 }
 
+                const auto isStructured = (bindDesc.Type == D3D_SIT_STRUCTURED
+                    || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED);
+                const auto isUav = (bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS
+                    || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED);
+
                 // TODO:
                 for (auto i = 0u; i < bindDesc.BindCount; ++i) {
-                    buffer->prepareUnorderedAccessView(context, descriptor);
+                    if (isUav) {
+                        buffer->prepareUnorderedAccessView(context, descriptor,
+                            isStructured);
+                    } else {
+                        buffer->prepareShaderResourceView(context, descriptor,
+                            isStructured);
+                    }
                     descriptor.Offset(1, context.descriptorSize);
                 }
-            } else if (bindDesc.Type == D3D_SIT_TEXTURE) {
+                break;
+            }
+
+            case D3D_SIT_TEXTURE: {
                 const auto samplerBinding = find(mBindings.samplers, name);
                 if (!samplerBinding || !samplerBinding->texture) {
                     mMessages += MessageList::insert(mItemId,
@@ -462,7 +483,10 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     texture->prepareShaderResourceView(context, descriptor);
                     descriptor.Offset(1, context.descriptorSize);
                 }
-            } else if (bindDesc.Type == D3D_SIT_UAV_RWTYPED) {
+                break;
+            }
+
+            case D3D_SIT_UAV_RWTYPED: {
                 const auto imageBinding = find(mBindings.images, name);
                 if (!imageBinding || !imageBinding->texture) {
                     mMessages += MessageList::insert(mItemId,
@@ -479,8 +503,10 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     texture->prepareUnorderedAccessView(context, descriptor);
                     descriptor.Offset(1, context.descriptorSize);
                 }
-            } else {
-                Q_ASSERT(!"binding type not handled");
+                break;
+            }
+
+            default: Q_ASSERT(!"binding type not handled"); break;
             }
         }
     }

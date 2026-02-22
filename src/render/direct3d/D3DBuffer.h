@@ -2,8 +2,8 @@
 
 #if defined(_WIN32)
 
-#include "D3DContext.h"
-#include "render/BufferBase.h"
+#  include "D3DContext.h"
+#  include "render/BufferBase.h"
 
 class D3DBuffer : public BufferBase
 {
@@ -29,7 +29,9 @@ public:
     void prepareConstantBufferView(D3DContext &context,
         D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
     void prepareUnorderedAccessView(D3DContext &context,
-        D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
+        D3D12_CPU_DESCRIPTOR_HANDLE descriptor, bool isStructured = false);
+    void prepareShaderResourceView(D3DContext &context,
+        D3D12_CPU_DESCRIPTOR_HANDLE descriptor, bool isStructured = false);
     D3D12_GPU_VIRTUAL_ADDRESS getDeviceAddress();
 
 private:
@@ -45,6 +47,7 @@ private:
     ComPtr<ID3D12DescriptorHeap> mShaderVisibleDescHeap;
     ComPtr<ID3D12DescriptorHeap> mNonShaderVisibleDescHeap;
     D3D12_RESOURCE_STATES mCurrentState{};
+    uint32_t mElementSize{};
     bool mCheckModification{};
 };
 

@@ -12,6 +12,9 @@ D3DBuffer::D3DBuffer(const Buffer &buffer, D3DRenderSession &renderSession)
             for (const auto item : block->items)
                 if (auto field = static_cast<const Block *>(item))
                     mUsedItems += field->id;
+
+            if (!mElementSize)
+                mElementSize = getBlockStride(*block);
         }
 }
 
@@ -240,21 +243,57 @@ void D3DBuffer::prepareConstantBufferView(D3DContext &context,
 }
 
 void D3DBuffer::prepareUnorderedAccessView(D3DContext &context,
-    D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, bool isStructured)
 {
     updateReadWriteBuffer(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-    const auto uavDesc = D3D12_UNORDERED_ACCESS_VIEW_DESC{
-        .Format = DXGI_FORMAT_R32_TYPELESS,
+    auto uavDesc = D3D12_UNORDERED_ACCESS_VIEW_DESC{
         .ViewDimension = D3D12_UAV_DIMENSION_BUFFER,
-        .Buffer =
-            D3D12_BUFFER_UAV{
-                .NumElements = static_cast<UINT>(mSize / sizeof(UINT)),
-                .Flags = D3D12_BUFFER_UAV_FLAG_RAW,
-            },
     };
+    if (isStructured) {
+        uavDesc.Buffer = D3D12_BUFFER_UAV{
+            .NumElements = static_cast<UINT>(mSize / mElementSize),
+            .StructureByteStride = mElementSize,
+            .Flags = D3D12_BUFFER_UAV_FLAG_NONE,
+        };
+    } else {
+        uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+        uavDesc.Buffer = D3D12_BUFFER_UAV{
+            .NumElements = static_cast<UINT>(mSize / sizeof(UINT)),
+            .StructureByteStride = 0,
+            .Flags = D3D12_BUFFER_UAV_FLAG_RAW,
+        };
+    }
     context.device.CreateUnorderedAccessView(mResource.Get(), nullptr, &uavDesc,
+        descriptor);
+}
+
+void D3DBuffer::prepareShaderResourceView(D3DContext &context,
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, bool isStructured)
+{
+    updateReadWriteBuffer(context);
+    resourceBarrier(context, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+    auto srvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
+        .ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+        .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+    };
+    if (isStructured) {
+        srvDesc.Buffer = D3D12_BUFFER_SRV{
+            .NumElements = static_cast<UINT>(mSize / mElementSize),
+            .StructureByteStride = mElementSize,
+            .Flags = D3D12_BUFFER_SRV_FLAG_NONE,
+        };
+    } else {
+        srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+        srvDesc.Buffer = D3D12_BUFFER_SRV{
+            .NumElements = static_cast<UINT>(mSize / sizeof(UINT)),
+            .StructureByteStride = 0,
+            .Flags = D3D12_BUFFER_SRV_FLAG_RAW,
+        };
+    }
+    context.device.CreateShaderResourceView(mResource.Get(), &srvDesc,
         descriptor);
 }
 

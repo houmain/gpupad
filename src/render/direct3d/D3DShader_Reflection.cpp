@@ -349,7 +349,7 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
                   });
         } break;
 
-        case D3D_SIT_UAV_RWBYTEADDRESS:
+        default:
             builder->descriptorsBindings.push_back(DescriptorBinding{
                 .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                 .name = bindDesc.Name,
@@ -359,16 +359,16 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
             });
             break;
 
-        case D3D_SIT_SAMPLER: {
+        case D3D_SIT_SAMPLER:
             builder->descriptorsBindings.push_back(DescriptorBinding{
                 .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER,
                 .name = bindDesc.Name,
                 .binding = bindDesc.BindPoint,
                 .set = bindDesc.Space,
             });
-        } break;
+            break;
 
-        case D3D_SIT_TEXTURE: {
+        case D3D_SIT_TEXTURE:
             builder->descriptorsBindings.push_back(DescriptorBinding{
                 .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
                 .name = bindDesc.Name,
@@ -376,9 +376,7 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
                 .binding = bindDesc.BindPoint,
                 .set = bindDesc.Space,
             });
-        } break;
-
-        default: Q_ASSERT(!"unhandled type");
+            break;
         }
     }
     return Reflection(std::move(builder));
