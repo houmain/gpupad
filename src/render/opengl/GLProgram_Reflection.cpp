@@ -803,6 +803,11 @@ void GLProgram::generateReflectionFromProgram(GLuint program,
                 });
             });
 
+    // WORKAROUND: programs with mesh shaders should not enumerate any inputs
+    if (std::count_if(mShaders.begin(), mShaders.end(),
+            [](const auto &s) { return s.type() == Shader::ShaderType::Mesh; }))
+        reflection->inputs.clear();
+
     mReflection = Reflection(std::move(reflection));
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 }
