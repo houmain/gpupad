@@ -164,10 +164,7 @@ void DockWindow::onDockTopLevelChanged(bool floating)
 
 void DockWindow::setDockTitleBar(QDockWidget *dock)
 {
-    if (dock->isFloating()) {
-        delete dock->titleBarWidget();
-        dock->setTitleBarWidget(nullptr);
-    } else if (!dock->titleBarWidget()) {
+    if (!dock->titleBarWidget()) {
         auto title = new DockTitle(dock);
         dock->setTitleBarWidget(title);
 
