@@ -133,7 +133,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setObjectName("Session");
     dock->setTitleBarWidget(new WindowTitle(dock));
     dock->setFeatures(QDockWidget::DockWidgetClosable
-        | QDockWidget::DockWidgetMovable);
+        | QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
     dock->setWidget(mSessionSplitter);
     dock->setVisible(false);
     dock->setMinimumSize(200, 150);
@@ -151,7 +151,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setObjectName("FileBrowser");
     dock->setTitleBarWidget(mFileBrowserWindow->titleBar());
     dock->setFeatures(QDockWidget::DockWidgetClosable
-        | QDockWidget::DockWidgetMovable);
+        | QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
     dock->setWidget(mFileBrowserWindow.get());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
@@ -167,7 +167,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setObjectName("Messages");
     dock->setTitleBarWidget(new WindowTitle(dock));
     dock->setFeatures(QDockWidget::DockWidgetClosable
-        | QDockWidget::DockWidgetMovable);
+        | QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
     dock->setWidget(mMessageWindow.get());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
@@ -183,7 +183,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setObjectName("Output");
     dock->setTitleBarWidget(mOutputWindow->titleBar());
     dock->setFeatures(QDockWidget::DockWidgetClosable
-        | QDockWidget::DockWidgetMovable);
+        | QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
     dock->setWidget(mOutputWindow.get());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
