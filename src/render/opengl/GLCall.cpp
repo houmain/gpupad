@@ -253,7 +253,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
     const auto first = scriptEngine.evaluateUInt(mCall.first, mCall.id);
     const auto maxElementCount = getMaxElementCount(scriptEngine);
-    const auto count = (mKind.indexed || mKind.indirect || mKind.mesh ? 1
+    const auto count = (mKind.indirect || mKind.mesh ? 1
             : !mCall.count.isEmpty()
             ? scriptEngine.evaluateUInt(mCall.count, mCall.id)
             : std::max(maxElementCount - static_cast<int>(first), 0));

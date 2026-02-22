@@ -196,7 +196,7 @@ namespace {
     QString getTypeName(const SpvReflectTypeDescription &type)
     {
         const auto [prefix, single, dims] = getTypeDesc(type);
-        const auto kind = [&]() -> const char* {
+        const auto kind = [&]() -> const char * {
             if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE)
                 return "sampler";
             if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE)
@@ -214,14 +214,16 @@ namespace {
         return QStringLiteral("%1%2%3").arg(prefix).arg(kind).arg(dims);
     }
 
-    QJsonObject getJson(const SpvReflectBlockVariable &variable);
+    QJsonObject getJson(const SpvReflectBlockVariable &variable,
+        bool isUniform = false);
 
-    QJsonArray getMembersJson(const SpvReflectBlockVariable &variable)
+    QJsonArray getMembersJson(const SpvReflectBlockVariable &variable,
+        bool isUniform = false)
     {
         auto json = QJsonArray();
         for (auto i = 0u; i < variable.member_count; ++i) {
             const auto &member = variable.members[i];
-            auto jsonMember = getJson(member);
+            auto jsonMember = getJson(member, isUniform);
             json.append(jsonMember);
         }
         return json;
@@ -265,12 +267,14 @@ namespace {
         return json;
     }
 
-    QJsonObject getJson(const SpvReflectBlockVariable &variable)
+    QJsonObject getJson(const SpvReflectBlockVariable &variable, bool isUniform)
     {
         auto json = getJson(*variable.type_description);
         json["name"] = variable.name;
-        json["offset"] = static_cast<int>(variable.offset);
-        json["size"] = static_cast<int>(variable.size);
+        if (!isUniform) {
+            json["offset"] = static_cast<int>(variable.offset);
+            json["size"] = static_cast<int>(variable.size);
+        }
         const auto &type = *variable.type_description;
         if (type.type_flags
             & (SPV_REFLECT_TYPE_FLAG_STRUCT
@@ -351,7 +355,8 @@ namespace {
                 case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
                     if (isGlobalUniformBlockName(
                             binding.type_description->type_name)) {
-                        for (const auto &member : getMembersJson(binding.block))
+                        for (const auto &member :
+                            getMembersJson(binding.block, true))
                             jsonUniforms.push_back(member);
                     } else {
                         jsonBuffers.push_back(getJson(binding));

@@ -38,16 +38,17 @@ namespace {
     Shader::ShaderType getStage(Shader::ShaderType type)
     {
         using ST = Shader::ShaderType;
-        switch (type)  {
-            case ST::Vertex:
-            case ST::Geometry:
-            case ST::TessControl:
-            case ST::TessEvaluation: return ST::Vertex;
-            default:                 return type;
+        switch (type) {
+        case ST::Vertex:
+        case ST::Geometry:
+        case ST::TessControl:
+        case ST::TessEvaluation: return ST::Vertex;
+        default:                 return type;
         }
     }
 
-    void getShadersFromSession(Shader &shader, QList<const Shader *> &shaders)
+    void getShadersFromSession(Shader &shader, QList<const Shader *> &shaders,
+        bool linkingProgram)
     {
         if (auto sessionShader = findShaderInSession(shader)) {
             const auto program = castItem<Program>(sessionShader->parent);
@@ -61,8 +62,13 @@ namespace {
                         shaders.append(&shader);
                     } else {
                         // add other shaders of program with same stage
-                        if (getStage(child->shaderType) == getStage(shader.shaderType))
+                        if (child->shaderType == shader.shaderType) {
                             shaders.append(child);
+                        } else if (linkingProgram
+                            && getStage(child->shaderType)
+                                == getStage(shader.shaderType)) {
+                            shaders.append(child);
+                        }
                     }
                 }
         } else {
@@ -116,14 +122,21 @@ void ProcessSource::prepare(bool itemsChanged, EvaluationType)
 
 void ProcessSource::prepareShader(Shader::ShaderType shaderType)
 {
+    auto session = Singletons::sessionModel().sessionItem();
+    session.shaderLanguage = getShaderLanguage(mSourceType);
+
+    const auto linkingProgram = [&]() {
+        if (session.renderer != Session::Renderer::OpenGL)
+            return false;
+        return (mValidateSource || mProcessType == "programBinary"
+            || mProcessType == "json");
+    }();
+
     auto shader = Shader{};
     auto shaders = QList<const Shader *>();
     shader.fileName = mFileName;
     shader.shaderType = shaderType;
-    getShadersFromSession(shader, shaders);
-
-    auto session = Singletons::sessionModel().sessionItem();
-    session.shaderLanguage = getShaderLanguage(mSourceType);
+    getShadersFromSession(shader, shaders, linkingProgram);
 
     // define state of hidden session properties
     const auto hasShaderCompiler =
@@ -138,8 +151,7 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
 
     switch (session.renderer) {
     case Session::Renderer::OpenGL: {
-        if (mValidateSource || mProcessType == "programBinary"
-            || mProcessType == "json") {
+        if (linkingProgram) {
             auto program = Program{};
             for (auto shader : shaders)
                 program.items.append(const_cast<Shader *>(shader));
@@ -149,7 +161,7 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
         }
         break;
     }
-      
+
     default:
     case Session::Renderer::Vulkan:
         mShader = std::make_unique<VKShader>(shaderType, shaders, session);
@@ -160,7 +172,7 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
         mShader = std::make_unique<D3DShader>(shaderType, shaders, session);
         break;
 #endif
-    }   
+    }
 }
 
 void ProcessSource::render()
