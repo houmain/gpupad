@@ -103,6 +103,10 @@ Allows to define the instances and geometry for ray tracing calls.
 ### App
 
 - `frameIndex: Number`
+- `frameRate: Number`
+- `time: Number`
+- `timeDelta: Number`
+- `date: [Number]` - The current date (year, month, day, time in seconds).
 - `keyboard: Keyboard`
 - `mouse: Mouse`
 - `session: Session`

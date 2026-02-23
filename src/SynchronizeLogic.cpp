@@ -86,6 +86,25 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
 
 SynchronizeLogic::~SynchronizeLogic() = default;
 
+void SynchronizeLogic::setFrameIndex(int index)
+{
+
+    if (std::exchange(mFrameIndex, index) != index)
+        invalidateRenderSession();
+}
+
+void SynchronizeLogic::setFrameRate(double frameRate)
+{
+    if (std::exchange(mFrameRate, frameRate) != frameRate)
+        invalidateRenderSession();
+}
+
+void SynchronizeLogic::setTime(double time)
+{
+    if (std::exchange(mTime, time) != time)
+        invalidateRenderSession();
+}
+
 void SynchronizeLogic::setValidateSource(bool validate)
 {
     if (std::exchange(mValidateSource, validate) != validate)
@@ -399,6 +418,14 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
     Singletons::fileCache().updateFromEditors();
     const auto itemsChanged = std::exchange(mRenderSessionInvalidated, false);
+
+    if (evaluationType == EvaluationType::Reset) {
+        mFrameIndex = 0;
+        mTime = 0.0;
+    } else {
+        mFrameIndex += 1;
+        mTime += mFrameRate;
+    }
     if (initializeRenderSession())
         mRenderSession->update(itemsChanged, evaluationType);
 }

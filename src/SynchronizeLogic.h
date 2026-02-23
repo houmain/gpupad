@@ -29,6 +29,12 @@ public:
     void manualEvaluation();
     bool resetRenderSessionInvalidationState();
     void updateEditor(ItemId itemId, bool activated);
+    int frameIndex() const { return mFrameIndex; }
+    void setFrameIndex(int index);
+    double frameRate() const { return mFrameRate; }
+    void setFrameRate(double frameRate);
+    double time() const { return mTime; }
+    void setTime(double time);
 
     void setValidateSource(bool validate);
     bool validatingSource() const { return mValidateSource; }
@@ -88,4 +94,7 @@ private:
     QTimer *mProcessSourceTimer{};
     std::unique_ptr<ProcessSource> mProcessSource;
     std::unique_ptr<RenderSessionBase> mRenderSession;
+    int mFrameIndex{};
+    double mFrameRate{ 1.0 / 60.0 };
+    double mTime{};
 };

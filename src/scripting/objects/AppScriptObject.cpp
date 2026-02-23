@@ -7,6 +7,7 @@
 #include "LibraryScriptObject.h"
 #include "../ScriptEngine.h"
 #include "../CustomActions.h"
+#include "SynchronizeLogic.h"
 #include "Singletons.h"
 #include "FileCache.h"
 #include "editors/EditorManager.h"
@@ -115,7 +116,18 @@ void AppScriptObject::update()
 {
     Q_ASSERT(onMainThread());
 
-    ++mFrameIndex;
+    auto &synchronizeLogic = Singletons::synchronizeLogic();
+    mFrameIndex = synchronizeLogic.frameIndex();
+    mPrevTime = mTime;
+    mTime = synchronizeLogic.time();
+
+    if (!mDate.isArray())
+        mDate = mJsEngine->newArray(4);
+    const auto date = QDate::currentDate();
+    mDate.setProperty(0, date.year());
+    mDate.setProperty(1, date.month());
+    mDate.setProperty(2, date.day());
+    mDate.setProperty(3, QTime::currentTime().msecsSinceStartOfDay() / 1000.0);
 
     auto &inputState = Singletons::inputState();
     inputState.update();
@@ -145,6 +157,27 @@ bool AppScriptObject::usesViewportSize(const QString &fileName) const
         if (editorScriptObject->fileName() == fileName)
             return editorScriptObject->viewportSizeWasRead();
     return false;
+}
+
+void AppScriptObject::setFrameIndex(int index)
+{
+    mFrameIndex = index;
+    dispatchToMainThread(
+        [&]() { Singletons::synchronizeLogic().setFrameIndex(index); });
+}
+
+void AppScriptObject::setFrameRate(double frameRate)
+{
+    mFrameRate = frameRate;
+    dispatchToMainThread(
+        [&]() { Singletons::synchronizeLogic().setFrameRate(frameRate); });
+}
+
+void AppScriptObject::setTime(double time)
+{
+    mTime = time;
+    dispatchToMainThread(
+        [&]() { Singletons::synchronizeLogic().setTime(time); });
 }
 
 QJSValue AppScriptObject::session()

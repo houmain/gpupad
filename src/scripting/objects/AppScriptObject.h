@@ -31,7 +31,10 @@ private:
 class AppScriptObject final : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int frameIndex READ frameIndex CONSTANT)
+    Q_PROPERTY(int frameIndex READ frameIndex WRITE setFrameIndex)
+    Q_PROPERTY(double frameRate READ frameRate WRITE setFrameRate)
+    Q_PROPERTY(double time READ time WRITE setTime)
+    Q_PROPERTY(double timeDelta READ timeDelta CONSTANT)
     Q_PROPERTY(QJSValue session READ session CONSTANT)
     Q_PROPERTY(QJSValue mouse READ mouse CONSTANT)
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
@@ -41,6 +44,13 @@ public:
     ~AppScriptObject();
 
     int frameIndex() const { return mFrameIndex; }
+    void setFrameIndex(int index);
+    double frameRate() const { return mFrameRate; }
+    void setFrameRate(double frameRate);
+    double time() const { return mTime; }
+    void setTime(double time);
+    double timeDelta() const { return mTime - mPrevTime; }
+    QJSValue date() const { return mDate; }
     QJSValue session();
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
@@ -77,7 +87,11 @@ private:
     QJSValue mSessionProperty;
     QJSValue mMouseProperty;
     QJSValue mKeyboardProperty;
-    int mFrameIndex{};
     QMap<QString, QJSValue> mLoadedLibraries;
     AppScriptObject_MainThreadCalls *mMainThreadCalls{};
+    int mFrameIndex{};
+    double mFrameRate{};
+    double mTime{};
+    double mPrevTime{};
+    QJSValue mDate;
 };
