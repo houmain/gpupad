@@ -89,9 +89,10 @@ InputState::InputState()
 {
     mMouseButtonStates.resize(5);
     mKeyStates.resize(256);
+    mFrameRate = 1.0 / 60.0;
 }
 
-void InputState::update()
+void InputState::update(EvaluationType evaluationType)
 {
     mEditorSize = mNextEditorSize;
     mPrevMousePosition = mMousePosition;
@@ -125,22 +126,56 @@ void InputState::update()
     };
     updateButtonStates(mNextMouseButtonStates, mMouseButtonStates);
     updateButtonStates(mNextKeyStates, mKeyStates);
+
+    if (evaluationType == EvaluationType::Reset) {
+        mFrameIndex = 0;
+        mTime = 0.0;
+    } else {
+        mFrameIndex += 1;
+        mTime += mFrameRate;
+    }
+    Q_EMIT frameIndexChanged(mFrameIndex);
+    Q_EMIT timeChanged(mTime);
+}
+
+void InputState::setFrameIndex(int frameIndex)
+{
+    if (std::exchange(mFrameIndex, frameIndex) != frameIndex)
+        Q_EMIT frameIndexChanged(mFrameIndex);
+}
+
+void InputState::setFrameRate(double frameRate)
+{
+    if (std::exchange(mFrameRate, frameRate) != frameRate)
+        Q_EMIT frameRateChanged(mFrameRate);
+}
+
+void InputState::setTime(double time)
+{
+    if (std::exchange(mTime, time) != time)
+        Q_EMIT timeChanged(mTime);
+}
+
+void InputState::restoreEditorSize(QSize size)
+{
+    mNextEditorSize = mEditorSize = size;
 }
 
 void InputState::setEditorSize(QSize size)
 {
-    if (mNextEditorSize != size) {
-        mNextEditorSize = size;
+    if (std::exchange(mNextEditorSize, size) != size)
         Q_EMIT mouseChanged();
-    }
+}
+
+void InputState::restoreMousePosition(const QPoint &position)
+{
+    mNextMousePosition = mMousePosition = position;
 }
 
 void InputState::setMousePosition(const QPoint &position)
 {
-    if (mNextMousePosition != position) {
-        mNextMousePosition = position;
+    if (std::exchange(mNextMousePosition, position) != position)
         Q_EMIT mouseChanged();
-    }
 }
 
 void InputState::setMouseButtonPressed(Qt::MouseButton button)

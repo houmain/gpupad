@@ -11,16 +11,14 @@ namespace {
 MouseScriptObject::MouseScriptObject(QObject *parent) : QObject(parent)
 {
     auto inputState = InputState();
-    inputState.setEditorSize({
+    inputState.restoreEditorSize({
         gLastEditorWidth.load(),
         gLastEditorHeight.load(),
     });
-    inputState.setMousePosition({
+    inputState.restoreMousePosition({
         gLastMousePositionX.load(),
         gLastMousePositionY.load(),
     });
-    inputState.update();
-    inputState.update();
     update(inputState);
 }
 

@@ -2,7 +2,6 @@
 #include "AboutDialog.h"
 #include "AutoOrientationSplitter.h"
 #include "FileBrowserWindow.h"
-#include "InputState.h"
 #include "MessageList.h"
 #include "MessageWindow.h"
 #include "OutputWindow.h"
@@ -307,10 +306,6 @@ MainWindow::MainWindow(QWidget *parent)
         [this](const QVariant &value) {
             mOutputWindow->setText(value.toString());
         });
-    connect(&Singletons::inputState(), &InputState::mouseChanged,
-        &synchronizeLogic, &SynchronizeLogic::handleMouseStateChanged);
-    connect(&Singletons::inputState(), &InputState::keysChanged,
-        &synchronizeLogic, &SynchronizeLogic::handleKeyboardStateChanged);
 
     auto &settings = Singletons::settings();
     connect(mUi->actionSelectFont, &QAction::triggered, &settings,
@@ -336,6 +331,8 @@ MainWindow::MainWindow(QWidget *parent)
         &MainWindow::updateEvaluationMode);
     connect(mUi->actionEvalSteady, &QAction::toggled, this,
         &MainWindow::updateEvaluationMode);
+    connect(&synchronizeLogic, &SynchronizeLogic::evaluationModeChanged, this,
+        &MainWindow::setEvaluationMode);
 
     connect(mUi->menuCustomActions, &QMenu::aboutToShow, this,
         &MainWindow::updateCustomActionsMenu);
@@ -1255,29 +1252,29 @@ void MainWindow::populateSampleSessions()
         return;
     const auto dirInfos = enumerateApplicationPaths(SamplesDir, QDir::Dirs);
     for (const auto &dirInfo : dirInfos) {
-        const auto addDirs =
-            [this](const auto& addDirs, QMenu& menu, const QFileInfo &dirInfo) -> void {
-                auto dir = QDir(dirInfo.absoluteFilePath());
-                dir.setFilter(QDir::Files);
-                dir.setNameFilters({ "*.gpjs" });
-                const auto sessions = dir.entryInfoList();
-                if (!sessions.empty()) {
-                    const auto& session = sessions.first();
-                    auto action = menu.addAction("&" + dirInfo.fileName(), this,
-                        SLOT(openSampleSession()));
-                    action->setData(session.absoluteFilePath());
-                }
-                else {
-                    dir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
-                    dir.setNameFilters({ });
-                    auto subMenu = std::make_unique<QMenu>("&" + dirInfo.fileName());
-                    const auto subDirInfos = dir.entryInfoList();
-                    for (const auto &subDirInfo : subDirInfos)
-                        addDirs(addDirs, *subMenu, subDirInfo);
-                    if (!subMenu->isEmpty())
-                        menu.addMenu(subMenu.release());
-                }
-            };
+        const auto addDirs = [this](const auto &addDirs, QMenu &menu,
+                                 const QFileInfo &dirInfo) -> void {
+            auto dir = QDir(dirInfo.absoluteFilePath());
+            dir.setFilter(QDir::Files);
+            dir.setNameFilters({ "*.gpjs" });
+            const auto sessions = dir.entryInfoList();
+            if (!sessions.empty()) {
+                const auto &session = sessions.first();
+                auto action = menu.addAction("&" + dirInfo.fileName(), this,
+                    SLOT(openSampleSession()));
+                action->setData(session.absoluteFilePath());
+            } else {
+                dir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
+                dir.setNameFilters({});
+                auto subMenu =
+                    std::make_unique<QMenu>("&" + dirInfo.fileName());
+                const auto subDirInfos = dir.entryInfoList();
+                for (const auto &subDirInfo : subDirInfos)
+                    addDirs(addDirs, *subMenu, subDirInfo);
+                if (!subMenu->isEmpty())
+                    menu.addMenu(subMenu.release());
+            }
+        };
         addDirs(addDirs, *mUi->menuSampleSessions, dirInfo);
     }
 }

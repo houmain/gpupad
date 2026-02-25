@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MessageList.h"
+#include "Evaluation.h"
 #include <QObject>
 #include <QJSValue>
 #include <QModelIndex>
@@ -31,10 +32,15 @@ private:
 class AppScriptObject final : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int frameIndex READ frameIndex WRITE setFrameIndex)
-    Q_PROPERTY(double frameRate READ frameRate WRITE setFrameRate)
-    Q_PROPERTY(double time READ time WRITE setTime)
+    Q_PROPERTY(QString evaluation READ evaluation WRITE setEvaluation NOTIFY
+            evaluationChanged)
+    Q_PROPERTY(int frameIndex READ frameIndex WRITE setFrameIndex NOTIFY
+            frameIndexChanged)
+    Q_PROPERTY(double frameRate READ frameRate WRITE setFrameRate NOTIFY
+            frameRateChanged)
+    Q_PROPERTY(double time READ time WRITE setTime NOTIFY timeChanged)
     Q_PROPERTY(double timeDelta READ timeDelta CONSTANT)
+    Q_PROPERTY(QJSValue date READ date CONSTANT)
     Q_PROPERTY(QJSValue session READ session CONSTANT)
     Q_PROPERTY(QJSValue mouse READ mouse CONSTANT)
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
@@ -43,14 +49,16 @@ public:
     AppScriptObject(const ScriptEnginePtr &enginePtr, const QString &basePath);
     ~AppScriptObject();
 
+    QString evaluation() const;
+    void setEvaluation(QString mode);
     int frameIndex() const { return mFrameIndex; }
     void setFrameIndex(int index);
     double frameRate() const { return mFrameRate; }
     void setFrameRate(double frameRate);
     double time() const { return mTime; }
     void setTime(double time);
-    double timeDelta() const { return mTime - mPrevTime; }
-    QJSValue date() const { return mDate; }
+    double timeDelta() const { return mTimeDelta; }
+    QJSValue date();
     QJSValue session();
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
@@ -72,7 +80,17 @@ public:
     bool usesViewportSize(const QString &fileName) const;
     SessionScriptObject &sessionScriptObject() { return *mSessionScriptObject; }
 
+Q_SIGNALS:
+    void evaluationChanged();
+    void frameIndexChanged();
+    void frameRateChanged();
+    void timeChanged();
+
 private:
+    void handleEvaluationModeChanged(EvaluationMode evaluationMode);
+    void handleFrameIndexChanged(int frameIndex);
+    void handleFrameRateChanged(double frameRate);
+    void handleTimeChanged(double time);
     QJSEngine &jsEngine() { return *mJsEngine; }
     QString getAbsolutePath(const QString &fileName) const;
     void dispatchToMainThread(const std::function<void()> &function);
@@ -87,11 +105,12 @@ private:
     QJSValue mSessionProperty;
     QJSValue mMouseProperty;
     QJSValue mKeyboardProperty;
+    QJSValue mDateProperty;
     QMap<QString, QJSValue> mLoadedLibraries;
     AppScriptObject_MainThreadCalls *mMainThreadCalls{};
+    EvaluationMode mEvaluationMode{};
     int mFrameIndex{};
     double mFrameRate{};
     double mTime{};
-    double mPrevTime{};
-    QJSValue mDate;
+    double mTimeDelta{};
 };

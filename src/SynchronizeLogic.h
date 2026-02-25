@@ -29,12 +29,6 @@ public:
     void manualEvaluation();
     bool resetRenderSessionInvalidationState();
     void updateEditor(ItemId itemId, bool activated);
-    int frameIndex() const { return mFrameIndex; }
-    void setFrameIndex(int index);
-    double frameRate() const { return mFrameRate; }
-    void setFrameRate(double frameRate);
-    double time() const { return mTime; }
-    void setTime(double time);
 
     void setValidateSource(bool validate);
     bool validatingSource() const { return mValidateSource; }
@@ -44,8 +38,6 @@ public:
     void setCurrentEditorSourceType(SourceType sourceType);
 
     void handleSessionFileNameChanged(const QString &fileName);
-    void handleMouseStateChanged();
-    void handleKeyboardStateChanged();
 
     void evaluateBlockProperties(const Block &block, int *offset,
         int *rowCount);
@@ -55,6 +47,7 @@ public:
         int *layers);
 
 Q_SIGNALS:
+    void evaluationModeChanged(EvaluationMode mode);
     void outputChanged(QVariant output);
 
 private:
@@ -65,6 +58,8 @@ private:
         const QModelIndex &bottomRight, const QVector<int> &roles);
     void handleEditorFileRenamed(const QString &prevFileName,
         const QString &fileName);
+    void handleMouseStateChanged();
+    void handleKeyboardStateChanged();
     void handleViewportSizeChanged(const QString &fileName);
     void handleFileItemFileChanged(const FileItem &item);
     void handleFileItemRenamed(const FileItem &item);
@@ -94,7 +89,4 @@ private:
     QTimer *mProcessSourceTimer{};
     std::unique_ptr<ProcessSource> mProcessSource;
     std::unique_ptr<RenderSessionBase> mRenderSession;
-    int mFrameIndex{};
-    double mFrameRate{ 1.0 / 60.0 };
-    double mTime{};
 };

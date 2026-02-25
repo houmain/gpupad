@@ -66,10 +66,28 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     mSessionProperty = mJsEngine->newQObject(mSessionScriptObject);
     mMouseProperty = mJsEngine->newQObject(mMouseScriptObject);
     mKeyboardProperty = mJsEngine->newQObject(mKeyboardScriptObject);
+    mDateProperty = mJsEngine->newArray(4);
 
     mMainThreadCalls = new AppScriptObject_MainThreadCalls();
     if (!onMainThread())
         mMainThreadCalls->moveToThread(QApplication::instance()->thread());
+
+    dispatchToMainThread([&]() {
+        connect(&Singletons::synchronizeLogic(),
+            &SynchronizeLogic::evaluationModeChanged, this,
+            &AppScriptObject::handleEvaluationModeChanged);
+
+        auto &inputState = Singletons::inputState();
+        mFrameIndex = inputState.frameIndex();
+        mFrameRate = inputState.frameRate();
+        mTime = inputState.time();
+        connect(&inputState, &InputState::frameIndexChanged, this,
+            &AppScriptObject::handleFrameIndexChanged);
+        connect(&inputState, &InputState::frameRateChanged, this,
+            &AppScriptObject::handleFrameRateChanged);
+        connect(&inputState, &InputState::timeChanged, this,
+            &AppScriptObject::handleTimeChanged);
+    });
 }
 
 AppScriptObject::~AppScriptObject()
@@ -116,21 +134,7 @@ void AppScriptObject::update()
 {
     Q_ASSERT(onMainThread());
 
-    auto &synchronizeLogic = Singletons::synchronizeLogic();
-    mFrameIndex = synchronizeLogic.frameIndex();
-    mPrevTime = mTime;
-    mTime = synchronizeLogic.time();
-
-    if (!mDate.isArray())
-        mDate = mJsEngine->newArray(4);
-    const auto date = QDate::currentDate();
-    mDate.setProperty(0, date.year());
-    mDate.setProperty(1, date.month());
-    mDate.setProperty(2, date.day());
-    mDate.setProperty(3, QTime::currentTime().msecsSinceStartOfDay() / 1000.0);
-
     auto &inputState = Singletons::inputState();
-    inputState.update();
     mMouseScriptObject->update(inputState);
     mKeyboardScriptObject->update(inputState);
 
@@ -159,25 +163,87 @@ bool AppScriptObject::usesViewportSize(const QString &fileName) const
     return false;
 }
 
-void AppScriptObject::setFrameIndex(int index)
+QString AppScriptObject::evaluation() const
 {
-    mFrameIndex = index;
+    switch (mEvaluationMode) {
+    case EvaluationMode::Paused:    return "Paused";
+    case EvaluationMode::Steady:    return "Steady";
+    case EvaluationMode::Automatic: return "Automatic";
+    }
+    return "";
+}
+
+void AppScriptObject::setEvaluation(QString mode)
+{
+    dispatchToMainThread([&]() {
+        auto &synchronizeLogic = Singletons::synchronizeLogic();
+        if (mode == "Reset") {
+            synchronizeLogic.resetEvaluation();
+        } else if (mode == "Manual") {
+            synchronizeLogic.setEvaluationMode(EvaluationMode::Paused);
+            synchronizeLogic.manualEvaluation();
+        } else if (mode == "Automatic") {
+            synchronizeLogic.setEvaluationMode(EvaluationMode::Automatic);
+            Q_EMIT evaluationChanged();
+        } else if (mode == "Steady") {
+            synchronizeLogic.setEvaluationMode(EvaluationMode::Steady);
+        } else if (mode == "Paused") {
+            synchronizeLogic.setEvaluationMode(EvaluationMode::Paused);
+        }
+    });
+}
+
+void AppScriptObject::handleEvaluationModeChanged(EvaluationMode evaluationMode)
+{
+    mEvaluationMode = evaluationMode;
+    Q_EMIT evaluationChanged();
+}
+
+void AppScriptObject::setFrameIndex(int frameIndex)
+{
     dispatchToMainThread(
-        [&]() { Singletons::synchronizeLogic().setFrameIndex(index); });
+        [&]() { Singletons::inputState().setFrameIndex(frameIndex); });
+}
+
+void AppScriptObject::handleFrameIndexChanged(int frameIndex)
+{
+    mFrameIndex = frameIndex;
+    Q_EMIT frameIndexChanged();
 }
 
 void AppScriptObject::setFrameRate(double frameRate)
 {
-    mFrameRate = frameRate;
     dispatchToMainThread(
-        [&]() { Singletons::synchronizeLogic().setFrameRate(frameRate); });
+        [&]() { Singletons::inputState().setFrameRate(frameRate); });
+}
+
+void AppScriptObject::handleFrameRateChanged(double frameRate)
+{
+    mFrameRate = frameRate;
+    Q_EMIT frameRateChanged();
 }
 
 void AppScriptObject::setTime(double time)
 {
+    dispatchToMainThread([&]() { Singletons::inputState().setTime(time); });
+}
+
+void AppScriptObject::handleTimeChanged(double time)
+{
+    mTimeDelta = time - mTime;
     mTime = time;
-    dispatchToMainThread(
-        [&]() { Singletons::synchronizeLogic().setTime(time); });
+    Q_EMIT timeChanged();
+}
+
+QJSValue AppScriptObject::date()
+{
+    const auto date = QDate::currentDate();
+    mDateProperty.setProperty(0, date.year());
+    mDateProperty.setProperty(1, date.month());
+    mDateProperty.setProperty(2, date.day());
+    mDateProperty.setProperty(3,
+        QTime::currentTime().msecsSinceStartOfDay() / 1000.0);
+    return mDateProperty;
 }
 
 QJSValue AppScriptObject::session()

@@ -124,7 +124,6 @@ Singletons::Singletons(QMainWindow *window)
     , mVideoManager(std::make_unique<VideoManager>())
     , mInputState(std::make_unique<InputState>())
     , mCustomActions(std::make_unique<CustomActions>())
-    , mDefaultScriptEngine(ScriptEngine::make())
 {
     Q_ASSERT(onMainThread());
     sInstance = this;
@@ -134,6 +133,7 @@ Singletons::Singletons(QMainWindow *window)
         &videoManager(), &VideoManager::handleVideoPlayerRequested,
         Qt::QueuedConnection);
 
+    mDefaultScriptEngine = ScriptEngine::make();
     mDefaultScriptEngine->setOmitReferenceErrors();
 }
 

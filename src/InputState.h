@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Evaluation.h"
 #include <QObject>
 #include <QPoint>
 #include <QSize>
@@ -19,14 +20,23 @@ class InputState : public QObject
 public:
     InputState();
 
+    void restoreEditorSize(QSize size);
+    void restoreMousePosition(const QPoint &position);
+
+    void setFrameIndex(int index);
+    void setFrameRate(double frameRate);
+    void setTime(double time);
     void setEditorSize(QSize size);
     void setMousePosition(const QPoint &position);
     void setMouseButtonPressed(Qt::MouseButton button);
     void setMouseButtonReleased(Qt::MouseButton button);
     void setKeyPressed(Qt::Key key);
     void setKeyReleased(Qt::Key key);
-    void update();
+    void update(EvaluationType evaluationType);
 
+    int frameIndex() const { return mFrameIndex; }
+    double frameRate() const { return mFrameRate; }
+    double time() const { return mTime; }
     const QSize &editorSize() const { return mEditorSize; }
     const QPoint &mousePosition() const { return mMousePosition; }
     const QPoint &prevMousePosition() const { return mPrevMousePosition; }
@@ -37,6 +47,9 @@ public:
     const QVector<ButtonState> &keyStates() const { return mKeyStates; }
 
 Q_SIGNALS:
+    void frameIndexChanged(int frameIndex);
+    void frameRateChanged(double frameRate);
+    void timeChanged(double time);
     void mouseChanged();
     void keysChanged();
 
@@ -48,6 +61,9 @@ private:
     ButtonStateQueue mNextMouseButtonStates;
     ButtonStateQueue mNextKeyStates;
 
+    int mFrameIndex{};
+    double mFrameRate{};
+    double mTime{};
     QSize mEditorSize;
     QPoint mMousePosition;
     QPoint mPrevMousePosition;

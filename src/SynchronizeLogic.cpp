@@ -2,6 +2,7 @@
 #include "FileCache.h"
 #include "Settings.h"
 #include "Singletons.h"
+#include "InputState.h"
 #include "VideoManager.h"
 #include "editors/EditorManager.h"
 #include "editors/binary/BinaryEditor.h"
@@ -77,6 +78,15 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     connect(&Singletons::editorManager(), &EditorManager::viewportSizeChanged,
         this, &SynchronizeLogic::handleViewportSizeChanged);
 
+    connect(&Singletons::inputState(), &InputState::frameIndexChanged, this,
+        &SynchronizeLogic::invalidateRenderSession);
+    connect(&Singletons::inputState(), &InputState::timeChanged, this,
+        &SynchronizeLogic::invalidateRenderSession);
+    connect(&Singletons::inputState(), &InputState::mouseChanged, this,
+        &SynchronizeLogic::handleMouseStateChanged);
+    connect(&Singletons::inputState(), &InputState::keysChanged, this,
+        &SynchronizeLogic::handleKeyboardStateChanged);
+
     mUpdateEditorsTimer->start(100);
     mEvaluationTimer->setTimerType(Qt::PreciseTimer);
 
@@ -85,25 +95,6 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
 }
 
 SynchronizeLogic::~SynchronizeLogic() = default;
-
-void SynchronizeLogic::setFrameIndex(int index)
-{
-
-    if (std::exchange(mFrameIndex, index) != index)
-        invalidateRenderSession();
-}
-
-void SynchronizeLogic::setFrameRate(double frameRate)
-{
-    if (std::exchange(mFrameRate, frameRate) != frameRate)
-        invalidateRenderSession();
-}
-
-void SynchronizeLogic::setTime(double time)
-{
-    if (std::exchange(mTime, time) != time)
-        invalidateRenderSession();
-}
 
 void SynchronizeLogic::setValidateSource(bool validate)
 {
@@ -184,6 +175,7 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
     }
 
     mEvaluationMode = mode;
+    Q_EMIT evaluationModeChanged(mEvaluationMode);
 
     if (mEvaluationMode == EvaluationMode::Steady) {
         mEvaluationTimer->setSingleShot(false);
@@ -417,15 +409,11 @@ void SynchronizeLogic::handleEvaluateTimout()
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
     Singletons::fileCache().updateFromEditors();
-    const auto itemsChanged = std::exchange(mRenderSessionInvalidated, false);
 
-    if (evaluationType == EvaluationType::Reset) {
-        mFrameIndex = 0;
-        mTime = 0.0;
-    } else {
-        mFrameIndex += 1;
-        mTime += mFrameRate;
-    }
+    const auto itemsChanged = mRenderSessionInvalidated;
+    Singletons::inputState().update(evaluationType);
+    resetRenderSessionInvalidationState();
+
     if (initializeRenderSession())
         mRenderSession->update(itemsChanged, evaluationType);
 }
@@ -533,18 +521,16 @@ void SynchronizeLogic::handleSessionFileNameChanged(const QString &fileName)
 
 void SynchronizeLogic::handleMouseStateChanged()
 {
-    if (mRenderSession && mRenderSession->usesMouseState()) {
+    if (mRenderSession && mRenderSession->usesMouseState())
         if (mEvaluationMode == EvaluationMode::Automatic)
             evaluate(EvaluationType::Steady);
-    }
 }
 
 void SynchronizeLogic::handleKeyboardStateChanged()
 {
-    if (mRenderSession && mRenderSession->usesKeyboardState()) {
+    if (mRenderSession && mRenderSession->usesKeyboardState())
         if (mEvaluationMode == EvaluationMode::Automatic)
             evaluate(EvaluationType::Steady);
-    }
 }
 
 void SynchronizeLogic::handleViewportSizeChanged(const QString &fileName)
