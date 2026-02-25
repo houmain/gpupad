@@ -46,23 +46,28 @@ ScrollView {
       Label {
         id: time
         text: app.time
-      }      
+      }
     }
     
     Button {
-      text: "Manual"
-      onClicked: app.evaluation = "Manual"
+      text: "Paused"
+      onClicked: app.evaluation = "Paused"
     }
-    
+
+    Button {
+      text: "Automatic"
+      onClicked: app.evaluation = "Automatic"
+    }
+
     Button {
       text: "Steady"
       onClicked: app.evaluation = "Steady"
     }
-    
+
     Button {
-      text: "Automatic"
-      onClicked: app.evaluation = "Automatic"
-    }    
+      text: "Manual"
+      onClicked: app.evaluation = "Manual"
+    }
     
     Button {
       text: "Reset"

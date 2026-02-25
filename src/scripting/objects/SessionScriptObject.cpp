@@ -366,7 +366,6 @@ QVariant SessionScriptObject_ItemObject::updateValue(const QString &key,
     if (input.canConvert<QJSValue>()) {
         const auto jsValue = mSessionObject.engine().toScriptValue(input);
         const auto json = jsValue.toVariant(QJSValue::ConvertJSObjects);
-        auto name = json.typeName();
         update.insert(key, json.toJsonValue());
     } else {
         update.insert(key, input.toJsonValue());

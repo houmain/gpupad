@@ -180,11 +180,9 @@ void AppScriptObject::setEvaluation(QString mode)
         if (mode == "Reset") {
             synchronizeLogic.resetEvaluation();
         } else if (mode == "Manual") {
-            synchronizeLogic.setEvaluationMode(EvaluationMode::Paused);
             synchronizeLogic.manualEvaluation();
         } else if (mode == "Automatic") {
             synchronizeLogic.setEvaluationMode(EvaluationMode::Automatic);
-            Q_EMIT evaluationChanged();
         } else if (mode == "Steady") {
             synchronizeLogic.setEvaluationMode(EvaluationMode::Steady);
         } else if (mode == "Paused") {

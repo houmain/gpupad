@@ -78,7 +78,8 @@ void ScriptEngine::initialize(const ScriptEnginePtr &self,
     setGlobal("console", mConsoleScriptObject);
 
     auto file = QFile(":/scripting/ScriptEngine.js");
-    file.open(QFile::ReadOnly | QFile::Text);
+    [[maybe_unused]] const auto result = file.open(QFile::ReadOnly | QFile::Text);
+    Q_ASSERT(result);
     mJsEngine->evaluate(QTextStream(&file).readAll());
 
     mAppScriptObject = new AppScriptObject(self, basePath);
