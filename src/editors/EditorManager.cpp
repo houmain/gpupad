@@ -144,10 +144,9 @@ void EditorManager::updateEditorPropertiesVisibility()
 
 bool EditorManager::eventFilter(QObject *watched, QEvent *event)
 {
-    if (event->type() == QEvent::Resize ||
-        event->type() == QEvent::Show)
+    if (event->type() == QEvent::Resize || event->type() == QEvent::Show)
         if (auto dock = qobject_cast<QDockWidget *>(watched))
-            if (auto editor = mDocks[dock])
+            if (auto editor = getEditor(dock))
                 Q_EMIT viewportSizeChanged(editor->fileName());
 
     return DockWindow::eventFilter(watched, event);
@@ -220,6 +219,12 @@ IEditor *EditorManager::currentEditor()
     if (mCurrentDock)
         return mDocks[mCurrentDock];
     return nullptr;
+}
+
+IEditor *EditorManager::getEditor(const QDockWidget *dock)
+{
+    const auto it = mDocks.find(const_cast<QDockWidget *>(dock));
+    return (it != mDocks.end() ? it->second : nullptr);
 }
 
 QDockWidget *EditorManager::findEditorDock(const IEditor *editor) const

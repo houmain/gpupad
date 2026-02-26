@@ -94,6 +94,7 @@ private:
     int getFocusedEditorIndex() const;
     bool focusEditorByIndex(int index, bool wrap);
     IEditor *currentEditor();
+    IEditor *getEditor(const QDockWidget *dock);
     QDockWidget *findEditorDock(const IEditor *editor) const;
     void closeUntitledUntouchedSourceEditor();
     void addSourceEditor(SourceEditor *editor);

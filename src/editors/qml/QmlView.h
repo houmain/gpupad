@@ -6,7 +6,7 @@
 #include <QSet>
 
 class Theme;
-class QQuickWidget;
+class QQuickView;
 class QQmlNetworkAccessManagerFactory;
 using QScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 
@@ -42,7 +42,8 @@ private:
     std::unique_ptr<QQmlNetworkAccessManagerFactory>
         mNetworkAccessManagerFactory;
     MessagePtrSet mMessages;
-    QQuickWidget *mQuickWidget{};
+    QQuickView *mQuickView{};
+    QWidget *mQuickViewContainer{};
     QSet<QString> mDependencies;
     bool mResetOnFocus{};
 };

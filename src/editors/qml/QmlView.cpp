@@ -26,7 +26,7 @@ void QmlView::reset() { }
 #  include <QQmlAbstractUrlInterceptor>
 #  include <QQmlNetworkAccessManagerFactory>
 #  include <QQmlEngine>
-#  include <QQuickWidget>
+#  include <QQuickView>
 #  include <QQuickStyle>
 #  include <QApplication>
 #  include <cstring>
@@ -141,9 +141,6 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
         const auto basePath = QFileInfo(fileName).absolutePath();
         mEnginePtr = ScriptEngine::make(basePath, thread(), this);
     }
-    // WORKAROUND: tell QQuickWidget to also use OpenGL for rendering and not turn black
-    // see: https://forum.qt.io/topic/148089/qopenglwidget-doesn-t-work-with-qquickwidget
-    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -163,20 +160,18 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
         &QmlView::windowThemeChanged);
 }
 
-void QmlView::windowThemeChanged(const Theme &theme)
-{
-    if (mQuickWidget)
-        mQuickWidget->setClearColor(qApp->palette().toolTipBase().color());
-}
+void QmlView::windowThemeChanged(const Theme &theme) { }
 
 void QmlView::reset()
 {
-    if (mQuickWidget) {
-        layout()->removeWidget(mQuickWidget);
-        connect(mQuickWidget, &QQuickWidget::destroyed, this, &QmlView::reset,
+    if (mQuickViewContainer) {
+        layout()->removeWidget(mQuickViewContainer);
+        connect(mQuickViewContainer, &QWidget::destroyed, this, &QmlView::reset,
             Qt::QueuedConnection);
-        mQuickWidget->deleteLater();
-        mQuickWidget = nullptr;
+        mQuickViewContainer->deleteLater();
+        mQuickView->deleteLater();
+        mQuickViewContainer = nullptr;
+        mQuickView = nullptr;
         return;
     }
 
@@ -186,24 +181,23 @@ void QmlView::reset()
     Q_ASSERT(qmlEngine);
     qmlEngine->clearComponentCache();
 
-    mQuickWidget = new QQuickWidget(qmlEngine, this);
-    mQuickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
-    mQuickWidget->setClearColor(qApp->palette().toolTipBase().color());
+    mQuickView = new QQuickView(qmlEngine, nullptr);
+    mQuickView->setResizeMode(QQuickView::SizeRootObjectToView);
 
-#if defined(_WIN32)
+#  if defined(_WIN32)
     // WORKAROUND: reapply current palette, to fix Fusion theme
     auto palette = qApp->palette();
     qApp->setPalette(QPalette());
     qApp->setPalette(palette);
-#else
+#  else
     // on Linux some more needs to be reapplied (very slow on Windows)
     qApp->setPalette(QPalette());
     Singletons::settings().setWindowTheme(Singletons::settings().windowTheme());
-#endif
+#  endif
 
-    connect(mQuickWidget, &QQuickWidget::statusChanged,
-        [this, widget = mQuickWidget](QQuickWidget::Status status) {
-            if (status == QQuickWidget::Error) {
+    connect(mQuickView, &QQuickView::statusChanged,
+        [this, widget = mQuickView](QQuickView::Status status) {
+            if (status == QQuickView::Error) {
                 const auto errors = widget->errors();
                 for (const QQmlError &error : errors)
                     mMessages += MessageList::insert(
@@ -212,13 +206,13 @@ void QmlView::reset()
             }
         });
 
-    connect(mQuickWidget, &QQuickWidget::sceneGraphError,
+    connect(mQuickView, &QQuickView::sceneGraphError,
         [this](QQuickWindow::SceneGraphError error, const QString &message) {
             mMessages += MessageList::insert(mFileName, 0,
                 MessageType::ScriptError, message);
         });
 
-    connect(mQuickWidget->engine(), &QQmlEngine::warnings,
+    connect(mQuickView->engine(), &QQmlEngine::warnings,
         [this](const QList<QQmlError> &warnings) {
             for (const auto &warning : warnings) {
                 auto fileName = toAbsolutePath(warning.url());
@@ -233,9 +227,10 @@ void QmlView::reset()
         });
 
     Singletons::fileCache().updateFromEditors();
-    mQuickWidget->setSource(QUrl::fromLocalFile(mFileName));
+    mQuickView->setSource(QUrl::fromLocalFile(mFileName));
 
-    layout()->addWidget(mQuickWidget);
+    mQuickViewContainer = QWidget::createWindowContainer(mQuickView);
+    layout()->addWidget(mQuickViewContainer);
 }
 
 #endif // defined(QtQuick_FOUND)
