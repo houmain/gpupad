@@ -134,6 +134,7 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
 
     auto shader = Shader{};
     auto shaders = QList<const Shader *>();
+    shader.type = Item::Type::Shader;
     shader.fileName = mFileName;
     shader.shaderType = shaderType;
     getShadersFromSession(shader, shaders, linkingProgram);

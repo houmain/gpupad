@@ -721,7 +721,7 @@ void SessionScriptObject::refreshItemObjectItems(const Item *item)
 QJSValue SessionScriptObject::getParentItem(QJSValue itemIdent)
 {
     const auto item = findSessionItem(itemIdent);
-    if (!item || !item->parent)
+    if (!item || !item->parent || !item->parent->id)
         return QJSValue::UndefinedValue;
 
     return createItemObject(item->parent->id);

@@ -178,12 +178,10 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
     Q_EMIT evaluationModeChanged(mEvaluationMode);
 
     if (mEvaluationMode == EvaluationMode::Steady) {
-        mEvaluationTimer->setSingleShot(false);
-        mEvaluationTimer->start(1);
+        mEvaluationTimer->start(0);
         Singletons::videoManager().playVideoFiles();
     } else if (mEvaluationMode == EvaluationMode::Automatic) {
         mEvaluationTimer->stop();
-        mEvaluationTimer->setSingleShot(true);
         if (mRenderSessionInvalidated)
             mEvaluationTimer->start(0);
         if (mRenderSession)
@@ -213,6 +211,9 @@ void SynchronizeLogic::handleSessionRendered()
 
     if (mEvaluationMode != EvaluationMode::Paused && mRenderSession)
         Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
+
+    if (mEvaluationMode == EvaluationMode::Steady)
+        mEvaluationTimer->start();
 }
 
 void SynchronizeLogic::handleFileChanged(const QString &fileName)
@@ -412,7 +413,8 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 
     const auto itemsChanged = mRenderSessionInvalidated;
     Singletons::inputState().update(evaluationType);
-    resetRenderSessionInvalidationState();
+    mRenderSessionInvalidated = false;
+    mEvaluationTimer->stop();
 
     if (initializeRenderSession())
         mRenderSession->update(itemsChanged, evaluationType);
