@@ -6,22 +6,21 @@
 #include <QObject>
 #include <QOpenGLTexture>
 
-class GLWidget;
+class GLWindow;
 class ComputeRange;
 
 class TextureItem final : public QObject
 {
     Q_OBJECT
 public:
-    explicit TextureItem(GLWidget *parent);
+    explicit TextureItem(GLWindow *parent);
     ~TextureItem() override;
     void releaseGL();
     void paintGL(const QMatrix4x4 &transform);
     void setImage(TextureData image);
     const TextureData &image() const { return mImage; }
     void setPreviewTexture(ShareSyncPtr sync, GLuint textureId, int samples);
-    void setPreviewTexture(ShareSyncPtr sync, ShareHandle handle,
-        int samples);
+    void setPreviewTexture(ShareSyncPtr sync, ShareHandle handle, int samples);
 
     bool canFilter() const;
     void setMagnifyLinear(bool magnifyLinear)
@@ -83,7 +82,8 @@ Q_SIGNALS:
 private:
     class ProgramCache;
 
-    GLWidget &widget();
+    GLWindow &window();
+    void render();
     void update();
     bool updateTexture();
     bool renderTexture(const QMatrix4x4 &transform);

@@ -1,41 +1,37 @@
 #pragma once
 
-#include <QOpenGLContext>
+#include <QWindow>
 #include <QOpenGLDebugLogger>
-#include <QOpenGLFunctions>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLVertexArrayObject>
-#include <QOpenGLWidget>
-#include <optional>
 
-class GLWidget : public QOpenGLWidget
+class QOpenGLContext;
+
+class GLWindow : public QWindow, protected QOpenGLFunctions_4_5_Core
 {
     Q_OBJECT
-
 public:
-    explicit GLWidget(QWidget *parent);
-    ~GLWidget();
+    explicit GLWindow(QWindow *parent = nullptr);
+    ~GLWindow();
+    QOpenGLFunctions_4_5_Core &gl() { return *this; }
 
     bool initialized() const { return mInitialized; }
-    QOpenGLFunctions_4_5_Core &gl();
-
-    using QOpenGLWidget::paintEvent;
+    void update();
+    using QWindow::requestUpdate;
 
 Q_SIGNALS:
     void initializingGL();
     void paintingGL();
     void releasingGL();
 
-protected:
-    void initializeGL() override;
-    void paintGL() override;
-
 private:
+    bool event(QEvent *event) override;
+    void exposeEvent(QExposeEvent *event) override;
+    void initialize();
     void handleDebugMessage(const QOpenGLDebugMessage &message);
-    void releaseGL();
 
     bool mInitialized{};
-    QOpenGLFunctions_4_5_Core mGL;
+    QOpenGLContext *m_context{};
     QOpenGLVertexArrayObject mVao;
     std::unique_ptr<QOpenGLDebugLogger> mDebugLogger;
 };

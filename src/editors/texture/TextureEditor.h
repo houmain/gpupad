@@ -10,7 +10,7 @@ class TextureItem;
 class TextureBackground;
 class TextureEditorToolBar;
 class TextureInfoBar;
-class GLWidget;
+class GLWindow;
 
 class TextureEditor final : public QAbstractScrollArea, public IEditor
 {
@@ -54,6 +54,7 @@ Q_SIGNALS:
     void zoomToFitChanged(bool fit);
 
 protected:
+    bool eventFilter(QObject *watched, QEvent *event);
     void wheelEvent(QWheelEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
@@ -81,7 +82,8 @@ private:
     QPointF mapToScene(const QPointF &position) const;
     QPointF mapFromScene(const QPointF &position) const;
 
-    GLWidget *mGLWidget{};
+    GLWindow *mGLWindow{};
+    QWidget *mGLWindowContainer{};
     TextureEditorToolBar &mEditorToolBar;
     TextureInfoBar &mTextureInfoBar;
     QString mFileName;

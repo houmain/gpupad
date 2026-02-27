@@ -115,7 +115,7 @@ set(SOURCES
   src/editors/source/SyntaxHLSL.cpp
   src/editors/source/SyntaxSlang.cpp
   src/editors/source/SyntaxJavaScript.cpp
-  src/editors/texture/GLWidget.cpp
+  src/editors/texture/GLWindow.cpp
   src/editors/texture/Histogram.cpp
   src/editors/texture/TextureEditor.cpp
   src/editors/texture/TextureEditorToolBar.cpp

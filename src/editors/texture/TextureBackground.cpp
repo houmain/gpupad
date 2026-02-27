@@ -1,6 +1,7 @@
 #include "TextureBackground.h"
-#include "GLWidget.h"
+#include "GLWindow.h"
 #include <QOpenGLShaderProgram>
+#include <QPalette>
 
 namespace {
     const auto backgroundVS = R"(
@@ -62,13 +63,13 @@ void main() {
     }
 } // namespace
 
-TextureBackground::TextureBackground(GLWidget *parent) : QObject(parent) { }
+TextureBackground::TextureBackground(GLWindow *parent) : QObject(parent) { }
 
 TextureBackground::~TextureBackground() = default;
 
-GLWidget &TextureBackground::widget()
+GLWindow &TextureBackground::window()
 {
-    return *qobject_cast<GLWidget *>(parent());
+    return *qobject_cast<GLWindow *>(parent());
 }
 
 void TextureBackground::releaseGL()
@@ -79,7 +80,7 @@ void TextureBackground::releaseGL()
 void TextureBackground::paintGL(const QSizeF &size, const QPointF &offset)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    auto &gl = widget().gl();
+    auto &gl = window().gl();
 
     if (!mProgram) {
         mProgram = std::make_unique<QOpenGLShaderProgram>();

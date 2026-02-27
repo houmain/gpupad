@@ -2,19 +2,19 @@
 
 #include <QObject>
 
-class GLWidget;
+class GLWindow;
 class QOpenGLShaderProgram;
 
 class TextureBackground final : public QObject
 {
     Q_OBJECT
 public:
-    explicit TextureBackground(GLWidget *parent);
+    explicit TextureBackground(GLWindow *parent);
     ~TextureBackground() override;
     void releaseGL();
     void paintGL(const QSizeF &size, const QPointF &offset);
 
 private:
-    GLWidget &widget();
+    GLWindow &window();
     std::unique_ptr<QOpenGLShaderProgram> mProgram;
 };

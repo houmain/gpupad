@@ -1,6 +1,6 @@
 
 #include "TextureItem.h"
-#include "GLWidget.h"
+#include "GLWindow.h"
 #include "Singletons.h"
 #include "render/ComputeRange.h"
 #include "render/ShareSync.h"
@@ -351,7 +351,7 @@ private:
 
 //-------------------------------------------------------------------------
 
-TextureItem::TextureItem(GLWidget *widget)
+TextureItem::TextureItem(GLWindow *widget)
     : QObject(widget)
     , mProgramCache(new ProgramCache())
 {
@@ -362,7 +362,7 @@ TextureItem::~TextureItem() = default;
 
 void TextureItem::releaseGL()
 {
-    auto &gl = widget().gl();
+    auto &gl = window().gl();
     if (mImageTextureId)
         gl.glDeleteTextures(1, &mImageTextureId);
     if (mSharedTextureHandle)
@@ -380,7 +380,7 @@ void TextureItem::setImage(TextureData image)
     mImage = std::move(image);
     mUpload = true;
     mPreviewTextureId = GL_NONE;
-    update();
+    render();
 }
 
 void TextureItem::setPreviewTexture(ShareSyncPtr shareSync, GLuint textureId,
@@ -390,20 +390,20 @@ void TextureItem::setPreviewTexture(ShareSyncPtr shareSync, GLuint textureId,
         mShareSync = std::move(shareSync);
         mPreviewTextureId = textureId;
         mPreviewSamples = samples;
-        update();
+        render();
     }
 }
 
 void TextureItem::setPreviewTexture(ShareSyncPtr shareSync, ShareHandle handle,
     int samples)
 {
-    if (!widget().initialized())
+    if (!window().initialized())
         return;
 
     if (!mImage.isNull() && handle.handle) {
         if (mSharedTextureHandle != handle.handle) {
             mSharedTextureHandle = handle.handle;
-            auto &gl = widget().gl();
+            auto &gl = window().gl();
             if (mSharedTextureId)
                 gl.glDeleteTextures(1, &mSharedTextureId);
             gl.glCreateTextures(mImage.getTarget(samples), 1,
@@ -416,7 +416,7 @@ void TextureItem::setPreviewTexture(ShareSyncPtr shareSync, ShareHandle handle,
         mShareSync = std::move(shareSync);
         mPreviewTextureId = mSharedTextureId;
         mPreviewSamples = samples;
-        update();
+        render();
     }
 }
 
@@ -475,14 +475,19 @@ void TextureItem::computeHistogramBounds()
     mComputeRange->update();
 }
 
-GLWidget &TextureItem::widget()
+GLWindow &TextureItem::window()
 {
-    return *qobject_cast<GLWidget *>(parent());
+    return *qobject_cast<GLWindow *>(parent());
+}
+
+void TextureItem::render()
+{
+    window().update();
 }
 
 void TextureItem::update()
 {
-    widget().update();
+    window().requestUpdate();
 }
 
 void TextureItem::paintGL(const QMatrix4x4 &transform)
@@ -499,7 +504,7 @@ bool TextureItem::updateTexture()
 {
     if (!mPreviewTextureId && std::exchange(mUpload, false)) {
         // upload/replace texture
-        auto &gl = widget().gl();
+        auto &gl = window().gl();
         gl.glDeleteTextures(1, &mImageTextureId);
         mImageTextureId = GL_NONE;
 
@@ -514,7 +519,7 @@ bool TextureItem::updateTexture()
 bool TextureItem::renderTexture(const QMatrix4x4 &transform)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    auto &gl = widget().gl();
+    auto &gl = window().gl();
 
     // WORKAROUND: renderer can delete the texture without resetting it
     if (mPreviewTextureId && !gl.glIsTexture(mPreviewTextureId))

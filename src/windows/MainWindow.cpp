@@ -26,7 +26,6 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QMimeData>
-#include <QOpenGLWidget>
 #include <QScreen>
 #include <QTimer>
 #include <QToolButton>
@@ -62,12 +61,6 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->toolBarMain->toggleViewAction()->setVisible(false);
 
     takeCentralWidget();
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    // WORKAROUND: trigger initialization of OpenGL immediately, otherwise
-    // application window disappears momentaryly when the first texture editor is opened
-    (new QOpenGLWidget(this))->setVisible(false);
-#endif
 
     setContentsMargins(2, 0, 2, 2);
     auto content = new QWidget(this);
