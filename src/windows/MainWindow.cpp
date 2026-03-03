@@ -30,6 +30,10 @@
 #include <QTimer>
 #include <QToolButton>
 
+// increase when restoring old session states does not work properly
+const auto MainWindowStateVersion = 1;
+const auto EditorManagerStateVersion = 1;
+
 void setFileDialogDirectory(const QString &fileName)
 {
     if (!FileDialog::isEmptyOrUntitled(fileName))
@@ -386,7 +390,7 @@ void MainWindow::writeSettings()
     if (!isFullScreen())
         settings.setValue("maximized", isMaximized());
     settings.setValue("fullScreen", isFullScreen());
-    settings.setValue("state", saveState());
+    settings.setValue("state", saveState(MainWindowStateVersion));
     settings.setValue("sessionSplitter", mSessionSplitter->saveState());
 
     auto &fileDialog = Singletons::fileDialog();
@@ -414,7 +418,7 @@ void MainWindow::readSettings()
     // workaround: restore state after geometry is applied, so it is not garbled
     QTimer::singleShot(1, this, [this]() {
         const auto &settings = Singletons::settings();
-        restoreState(settings.value("state").toByteArray());
+        restoreState(settings.value("state").toByteArray(), MainWindowStateVersion);
         mSessionSplitter->restoreState(
             settings.value("sessionSplitter").toByteArray());
     });
@@ -937,7 +941,8 @@ void MainWindow::saveSessionState(const QString &sessionFileName)
                 mEditorManager.getEditorObjectName(&editor));
     });
 
-    settings.setValue("editorState", mEditorManager.saveState());
+    settings.setValue("editorState",
+        mEditorManager.saveState(EditorManagerStateVersion));
     settings.setValue("openEditors", openEditors);
     auto &synchronizeLogic = Singletons::synchronizeLogic();
     settings.setValue("evaluationMode",
@@ -975,7 +980,8 @@ bool MainWindow::restoreSessionState(const QString &sessionFileName)
                         editorObjectName);
             }
         }
-    mEditorManager.restoreState(settings.value("editorState").toByteArray());
+    mEditorManager.restoreState(settings.value("editorState").toByteArray(),
+        EditorManagerStateVersion);
     mEditorManager.setAutoRaise(true);
 
     setEvaluationMode(

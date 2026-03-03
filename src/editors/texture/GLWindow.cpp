@@ -63,9 +63,10 @@ void GLWindow::update()
         m_context = new QOpenGLContext(this);
         m_context->setShareContext(QOpenGLContext::globalShareContext());
         m_context->setFormat(QSurfaceFormat::defaultFormat());
-        m_context->create();
-        m_context->makeCurrent(this);
-        initialize();
+        if (m_context->create()) {
+            m_context->makeCurrent(this);
+            initialize();
+        }
     }
 
     if (initialized()) {
@@ -76,9 +77,8 @@ void GLWindow::update()
         glViewport(0, 0, width() * dpr, height() * dpr);
 
         Q_EMIT paintingGL();
+        m_context->swapBuffers(this);
     }
-
-    m_context->swapBuffers(this);
 }
 
 void GLWindow::handleDebugMessage(const QOpenGLDebugMessage &message)

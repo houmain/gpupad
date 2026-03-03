@@ -27,6 +27,7 @@ public:
     bool save() override;
     void setModified() override;
     int tabifyGroup() const override { return 3; }
+    QSize minimumSizeHint() const override { return QSize(150, 150); }
 
     const QScriptEnginePtr &enginePtr() const { return mEnginePtr; }
     void addDependency(const QString &fileName);
