@@ -45,7 +45,8 @@ bool isGlobalUniformBlockName(const char *name_)
     if (!name_)
         return false;
     const auto name = std::string_view(name_);
-    return (name == "$Globals" || name == "$Global" || name == "_Global");
+    return (name == "$Globals" || name == "$Global" || name == "_Global"
+        || name == "type.$Globals");
 }
 
 bool isGlobalUniformBlockName(const QString &name)
@@ -70,21 +71,22 @@ SpvReflectShaderStageFlagBits getShaderStage(Shader::ShaderType shaderType)
 {
     using enum Shader::ShaderType;
     switch (shaderType) {
-    case Includable: break;
-    case Vertex: return SPV_REFLECT_SHADER_STAGE_VERTEX_BIT;
-    case Fragment: return SPV_REFLECT_SHADER_STAGE_FRAGMENT_BIT;
-    case Geometry: return SPV_REFLECT_SHADER_STAGE_GEOMETRY_BIT;
+    case Includable:  break;
+    case Vertex:      return SPV_REFLECT_SHADER_STAGE_VERTEX_BIT;
+    case Fragment:    return SPV_REFLECT_SHADER_STAGE_FRAGMENT_BIT;
+    case Geometry:    return SPV_REFLECT_SHADER_STAGE_GEOMETRY_BIT;
     case TessControl: return SPV_REFLECT_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-    case TessEvaluation: return SPV_REFLECT_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-    case Compute: return SPV_REFLECT_SHADER_STAGE_COMPUTE_BIT;
-    case Task: return SPV_REFLECT_SHADER_STAGE_TASK_BIT_EXT;
-    case Mesh: return SPV_REFLECT_SHADER_STAGE_MESH_BIT_EXT;
-    case RayGeneration: return SPV_REFLECT_SHADER_STAGE_RAYGEN_BIT_KHR;
+    case TessEvaluation:
+        return SPV_REFLECT_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+    case Compute:         return SPV_REFLECT_SHADER_STAGE_COMPUTE_BIT;
+    case Task:            return SPV_REFLECT_SHADER_STAGE_TASK_BIT_EXT;
+    case Mesh:            return SPV_REFLECT_SHADER_STAGE_MESH_BIT_EXT;
+    case RayGeneration:   return SPV_REFLECT_SHADER_STAGE_RAYGEN_BIT_KHR;
     case RayIntersection: return SPV_REFLECT_SHADER_STAGE_INTERSECTION_BIT_KHR;
-    case RayAnyHit: return SPV_REFLECT_SHADER_STAGE_ANY_HIT_BIT_KHR;
-    case RayClosestHit: return SPV_REFLECT_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
-    case RayMiss: return SPV_REFLECT_SHADER_STAGE_MISS_BIT_KHR;
-    case RayCallable: return SPV_REFLECT_SHADER_STAGE_CALLABLE_BIT_KHR;
+    case RayAnyHit:       return SPV_REFLECT_SHADER_STAGE_ANY_HIT_BIT_KHR;
+    case RayClosestHit:   return SPV_REFLECT_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+    case RayMiss:         return SPV_REFLECT_SHADER_STAGE_MISS_BIT_KHR;
+    case RayCallable:     return SPV_REFLECT_SHADER_STAGE_CALLABLE_BIT_KHR;
     }
     return {};
 }

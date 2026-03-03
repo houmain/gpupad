@@ -197,8 +197,7 @@ void D3DTexture::prepareShaderResourceView(D3DContext &context,
     resourceBarrier(context, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     const auto srvDesc = shaderResourceViewDesc();
-    context.device.CreateShaderResourceView(resource(), &srvDesc,
-        descriptor);
+    context.device.CreateShaderResourceView(resource(), &srvDesc, descriptor);
 }
 
 void D3DTexture::prepareUnorderedAccessView(D3DContext &context,
@@ -354,7 +353,7 @@ void D3DTexture::createAndUpload(D3DContext &context)
             : D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
                 | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS };
 
-    const auto faceSlices = (depth() * isCubemapTarget(target()) ? 6 : 1);
+    const auto faceSlices = depth() * (isCubemapTarget(target()) ? 6 : 1);
     const auto resourceDesc = D3D12_RESOURCE_DESC{
         .Dimension = toResourceDimension(target()),
         .Alignment = 0,
@@ -386,11 +385,10 @@ UINT D3DTexture::numSubresources() const
 }
 
 ComPtr<ID3D12Resource> D3DTexture::createStagingBuffer(D3DContext &context,
-    D3D12_HEAP_TYPE type)
+    D3D12_HEAP_TYPE type, uint64_t size)
 {
     const auto stagingHeapProperties = CD3DX12_HEAP_PROPERTIES(type);
-    const auto stagingBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
-        GetRequiredIntermediateSize(resource(), 0, numSubresources()));
+    const auto stagingBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
     const auto initialState = (type == D3D12_HEAP_TYPE_UPLOAD
             ? D3D12_RESOURCE_STATE_COPY_SOURCE
             : D3D12_RESOURCE_STATE_COPY_DEST);
@@ -408,20 +406,28 @@ bool D3DTexture::upload(D3DContext &context)
     if (samples() > 1)
         return false;
 
-    auto stagingBuffer = createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD);
+    const auto texDesc = mResource->GetDesc();
+    auto stagingBufferSize = uint64_t{};
+    context.device.GetCopyableFootprints(&texDesc, 0, numSubresources(), 0,
+        nullptr, nullptr, nullptr, &stagingBufferSize);
+    const auto stagingBuffer =
+        createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD, stagingBufferSize);
 
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
 
     auto subresourceData = std::vector<D3D12_SUBRESOURCE_DATA>();
     for (auto level = 0; level < levels(); ++level)
-        for (auto layer = 0; layer < layers(); ++layer)
+        for (auto layer = 0; layer < layers(); ++layer) {
             subresourceData.push_back({
                 .pData = mData.getData(level, layer, 0),
                 .RowPitch = mData.getLevelStride(level),
                 .SlicePitch = mData.getImageSize(level),
             });
+        }
+
     UpdateSubresources(context.graphicsCommandList.Get(), resource(),
-        stagingBuffer.Get(), 0, 0, numSubresources(), subresourceData.data());
+        stagingBuffer.Get(), 0, 0, static_cast<UINT>(subresourceData.size()),
+        subresourceData.data());
 
     mSystemCopyModified = mDeviceCopyModified = false;
     return true;
@@ -438,25 +444,37 @@ void D3DTexture::beginDownload(D3DContext &context)
     if (samples() > 1)
         return;
 
-    Q_ASSERT(!mDownloadBuffer);
-    mDownloadBuffer = createStagingBuffer(context, D3D12_HEAP_TYPE_READBACK);
+    auto layouts = std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT>();
+    const auto format = toDXGIFormat(mFormat);
+    for (auto level = 0; level < levels(); ++level)
+        for (auto layer = 0; layer < layers(); ++layer)
+            layouts.push_back({
+                .Offset = mData.getOffset(level, layer, 0),
+                .Footprint = {
+                    .Format = format,
+                    .Width = static_cast<UINT>(mData.getLevelWidth(level)),
+                    .Height = static_cast<UINT>(mData.getLevelHeight(level)),
+                    .Depth = static_cast<UINT>(mData.getLevelDepth(level)),
+                    .RowPitch = static_cast<UINT>(mData.getLevelStride(level)),
+                },
+            });
+
+    const auto stagingBufferSize = mData.getDataSize();
+    const auto stagingBuffer = createStagingBuffer(context,
+        D3D12_HEAP_TYPE_READBACK, stagingBufferSize);
 
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
-
-    const auto texDesc = mResource->GetDesc();
-    auto layouts =
-        std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT>(numSubresources());
-    context.device.GetCopyableFootprints(&texDesc, 0, numSubresources(), 0,
-        layouts.data(), nullptr, nullptr, nullptr);
 
     for (auto i = 0u; i < numSubresources(); ++i) {
         auto source = CD3DX12_TEXTURE_COPY_LOCATION(resource(), i);
         auto dest =
-            CD3DX12_TEXTURE_COPY_LOCATION(mDownloadBuffer.Get(), layouts[i]);
+            CD3DX12_TEXTURE_COPY_LOCATION(stagingBuffer.Get(), layouts[i]);
         context.graphicsCommandList->CopyTextureRegion(&dest, 0, 0, 0, &source,
             nullptr);
     }
 
+    Q_ASSERT(!mDownloadBuffer);
+    mDownloadBuffer = stagingBuffer;
     mSystemCopyModified = mDeviceCopyModified = false;
 }
 

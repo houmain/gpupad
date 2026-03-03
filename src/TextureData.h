@@ -54,7 +54,9 @@ public:
     int getDataSize() const;
     uchar *getWriteonlyData(int level, int layer, int faceSlice);
     const uchar *getData(int level, int layer, int faceSlice) const;
+    size_t getOffset(int level, int layer, int faceSlice) const;
     int getImageSize(int level) const;
+    int getSlicesSize(int level) const;
     int getLevelSize(int level) const;
     bool uploadGL(GLuint *textureId) const;
     bool uploadVK(ktxVulkanDeviceInfo *vdi, ktxVulkanTexture *vkTexture,

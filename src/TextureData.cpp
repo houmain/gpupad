@@ -1065,7 +1065,7 @@ QOpenGLTexture::TextureFormat TextureData::format() const
 {
     return (isNull() ? QOpenGLTexture::TextureFormat::NoFormat
                      : static_cast<QOpenGLTexture::TextureFormat>(
-                         mKtxTexture->glInternalformat));
+                           mKtxTexture->glInternalformat));
 }
 
 QOpenGLTexture::PixelFormat TextureData::pixelFormat() const
@@ -1106,7 +1106,7 @@ int TextureData::getLevelDepth(int level) const
 int TextureData::getLevelStride(int level) const
 {
     if (auto height = getLevelHeight(level))
-        return getLevelSize(level) / height;
+        return getImageSize(level) / height;
     return 0;
 }
 
@@ -1179,18 +1179,27 @@ const uchar *TextureData::getData(int level, int layer, int faceSlice) const
     return nullptr;
 }
 
+size_t TextureData::getOffset(int level, int layer, int faceSlice) const
+{
+    return std::distance(getData(), getData(level, layer, faceSlice));
+}
+
 int TextureData::getImageSize(int level) const
 {
     if (isNull())
         return 0;
     return static_cast<int>(ktxTexture_GetImageSize(
-               ktxTexture(mKtxTexture.get()), static_cast<ktx_uint32_t>(level)))
-        * getLevelDepth(level);
+        ktxTexture(mKtxTexture.get()), static_cast<ktx_uint32_t>(level)));
+}
+
+int TextureData::getSlicesSize(int level) const
+{
+    return getImageSize(level) * getLevelDepth(level);
 }
 
 int TextureData::getLevelSize(int level) const
 {
-    return getImageSize(level) * layers() * faces();
+    return getSlicesSize(level) * layers() * faces();
 }
 
 void TextureData::clear()

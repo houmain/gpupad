@@ -51,7 +51,7 @@ private:
 
     UINT numSubresources() const;
     ComPtr<ID3D12Resource> createStagingBuffer(D3DContext &context,
-        D3D12_HEAP_TYPE type);
+        D3D12_HEAP_TYPE type, uint64_t size);
     void createAndUpload(D3DContext &context);
     bool upload(D3DContext &context);
     D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc() const;
