@@ -257,6 +257,8 @@ namespace {
         case GL_SAMPLER_CUBE_MAP_ARRAY:
         case GL_SAMPLER_2D_MULTISAMPLE:
         case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
+        case GL_SAMPLER_1D_SHADOW:
+        case GL_SAMPLER_2D_SHADOW:
             return SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
         case GL_IMAGE_1D:
@@ -319,7 +321,9 @@ namespace {
             };
         };
         switch (type) {
+        case GL_SAMPLER_1D_SHADOW:
         case GL_SAMPLER_1D:             return make(SpvDim1D, Sampled);
+          case GL_SAMPLER_2D_SHADOW:
         case GL_SAMPLER_2D:             return make(SpvDim2D, Sampled);
         case GL_SAMPLER_3D:             return make(SpvDim3D, Sampled);
         case GL_SAMPLER_CUBE:           return make(SpvDimCube, Sampled);

@@ -453,8 +453,10 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                 // TODO:
                 for (auto i = 0u; i < bindDesc.BindCount; ++i) {
                     if (isUav) {
+                        const auto isReadonly =
+                            (bindDesc.Type == D3D_SIT_STRUCTURED);
                         buffer->prepareUnorderedAccessView(context, descriptor,
-                            isStructured);
+                            isStructured, isReadonly);
                     } else {
                         buffer->prepareShaderResourceView(context, descriptor,
                             isStructured);

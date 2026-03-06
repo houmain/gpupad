@@ -45,8 +45,10 @@ void D3DBuffer::clear(D3DContext &context)
     auto nonShaderVisibleCpuDescHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(
         mNonShaderVisibleDescHeap->GetCPUDescriptorHandleForHeapStart());
 
-    prepareUnorderedAccessView(context, shaderVisibleCpuDescHandle);
-    prepareUnorderedAccessView(context, nonShaderVisibleCpuDescHandle);
+    prepareUnorderedAccessView(context, shaderVisibleCpuDescHandle, false,
+        false);
+    prepareUnorderedAccessView(context, nonShaderVisibleCpuDescHandle, false,
+        false);
 
     auto descriptorHeaps = mShaderVisibleDescHeap.Get();
     context.graphicsCommandList->SetDescriptorHeaps(1, &descriptorHeaps);
@@ -184,9 +186,10 @@ bool D3DBuffer::finishDownload()
     if (mDownloadBuffer) {
         auto mappedData = std::add_pointer_t<void>{};
         AssertIfFailed(mDownloadBuffer->Map(0, nullptr, &mappedData));
+        Q_ASSERT(mData.size() >= mSize);
         if (!mCheckModification
-            || std::memcmp(mData.data(), mappedData, mData.size()) != 0) {
-            std::memcpy(mData.data(), mappedData, mData.size());
+            || std::memcmp(mData.data(), mappedData, mSize) != 0) {
+            std::memcpy(mData.data(), mappedData, mSize);
             modified = true;
         }
         mDownloadBuffer->Unmap(0, nullptr);
@@ -243,9 +246,13 @@ void D3DBuffer::prepareConstantBufferView(D3DContext &context,
 }
 
 void D3DBuffer::prepareUnorderedAccessView(D3DContext &context,
-    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, bool isStructured)
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, bool isStructured, bool isReadonly)
 {
-    updateReadWriteBuffer(context);
+    if (isReadonly) {
+        updateReadOnlyBuffer(context);
+    } else {
+        updateReadWriteBuffer(context);
+    }
     resourceBarrier(context, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     auto uavDesc = D3D12_UNORDERED_ACCESS_VIEW_DESC{
@@ -272,8 +279,8 @@ void D3DBuffer::prepareUnorderedAccessView(D3DContext &context,
 void D3DBuffer::prepareShaderResourceView(D3DContext &context,
     D3D12_CPU_DESCRIPTOR_HANDLE descriptor, bool isStructured)
 {
-    updateReadWriteBuffer(context);
-    resourceBarrier(context, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    updateReadOnlyBuffer(context);
+    resourceBarrier(context, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     auto srvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC{
         .ViewDimension = D3D12_SRV_DIMENSION_BUFFER,

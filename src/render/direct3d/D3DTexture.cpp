@@ -193,7 +193,8 @@ void D3DTexture::prepareShaderResourceView(D3DContext &context,
     D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
     reload(false);
-    createAndUpload(context);
+    create(context);
+    upload(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
     const auto srvDesc = shaderResourceViewDesc();
@@ -204,7 +205,8 @@ void D3DTexture::prepareUnorderedAccessView(D3DContext &context,
     D3D12_CPU_DESCRIPTOR_HANDLE descriptor)
 {
     reload(true);
-    createAndUpload(context);
+    create(context);
+    upload(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     const auto uavDesc = unorderedAccessViewDesc();
@@ -218,7 +220,7 @@ void D3DTexture::prepareUnorderedAccessView(D3DContext &context,
 void D3DTexture::prepareRenderTargetView(D3DContext &context)
 {
     reload(false);
-    createAndUpload(context);
+    create(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_RENDER_TARGET);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
@@ -227,7 +229,7 @@ void D3DTexture::prepareRenderTargetView(D3DContext &context)
 void D3DTexture::prepareDepthStencilView(D3DContext &context)
 {
     reload(false);
-    createAndUpload(context);
+    create(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_DEPTH_WRITE);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
@@ -237,7 +239,7 @@ bool D3DTexture::clear(D3DContext &context, std::array<double, 4> color,
     double depth, int stencil)
 {
     reload(true);
-    createAndUpload(context);
+    create(context);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
 
@@ -334,7 +336,7 @@ bool D3DTexture::updateMipmaps(D3DContext &context)
     return true;
 }
 
-void D3DTexture::createAndUpload(D3DContext &context)
+void D3DTexture::create(D3DContext &context)
 {
     if (std::exchange(mCreated, true))
         return;
@@ -375,13 +377,6 @@ void D3DTexture::createAndUpload(D3DContext &context)
 
     AssertIfFailed(context.device.CreateSharedHandle(resource(), nullptr,
         GENERIC_ALL, nullptr, &mShareHandle));
-
-    upload(context);
-}
-
-UINT D3DTexture::numSubresources() const
-{
-    return static_cast<UINT>(levels() * layers());
 }
 
 ComPtr<ID3D12Resource> D3DTexture::createStagingBuffer(D3DContext &context,
@@ -401,14 +396,18 @@ ComPtr<ID3D12Resource> D3DTexture::createStagingBuffer(D3DContext &context,
     return stagingBuffer;
 }
 
-bool D3DTexture::upload(D3DContext &context)
+void D3DTexture::upload(D3DContext &context)
 {
-    if (samples() > 1)
-        return false;
+    if (!mSystemCopyModified)
+        return;
+
+    if (!mResource || samples() > 1)
+        return;
 
     const auto texDesc = mResource->GetDesc();
+    const auto numSubresources = texDesc.MipLevels * layers();
     auto stagingBufferSize = uint64_t{};
-    context.device.GetCopyableFootprints(&texDesc, 0, numSubresources(), 0,
+    context.device.GetCopyableFootprints(&texDesc, 0, numSubresources, 0,
         nullptr, nullptr, nullptr, &stagingBufferSize);
     const auto stagingBuffer =
         createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD, stagingBufferSize);
@@ -416,7 +415,7 @@ bool D3DTexture::upload(D3DContext &context)
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
 
     auto subresourceData = std::vector<D3D12_SUBRESOURCE_DATA>();
-    for (auto level = 0; level < levels(); ++level)
+    for (auto level = 0; level < texDesc.MipLevels; ++level)
         for (auto layer = 0; layer < layers(); ++layer) {
             subresourceData.push_back({
                 .pData = mData.getData(level, layer, 0),
@@ -430,7 +429,6 @@ bool D3DTexture::upload(D3DContext &context)
         subresourceData.data());
 
     mSystemCopyModified = mDeviceCopyModified = false;
-    return true;
 }
 
 void D3DTexture::beginDownload(D3DContext &context)
@@ -444,9 +442,11 @@ void D3DTexture::beginDownload(D3DContext &context)
     if (samples() > 1)
         return;
 
+    const auto texDesc = mResource->GetDesc();
+    const auto numSubresources = texDesc.MipLevels * layers();
     auto layouts = std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT>();
     const auto format = toDXGIFormat(mFormat);
-    for (auto level = 0; level < levels(); ++level)
+    for (auto level = 0; level < texDesc.MipLevels; ++level)
         for (auto layer = 0; layer < layers(); ++layer)
             layouts.push_back({
                 .Offset = mData.getOffset(level, layer, 0),
@@ -465,7 +465,7 @@ void D3DTexture::beginDownload(D3DContext &context)
 
     resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
-    for (auto i = 0u; i < numSubresources(); ++i) {
+    for (auto i = 0; i < numSubresources; ++i) {
         auto source = CD3DX12_TEXTURE_COPY_LOCATION(resource(), i);
         auto dest =
             CD3DX12_TEXTURE_COPY_LOCATION(stagingBuffer.Get(), layouts[i]);
