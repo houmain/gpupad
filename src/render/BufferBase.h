@@ -19,6 +19,7 @@ public:
 protected:
     explicit BufferBase(int size);
     BufferBase(const Buffer &buffer, int size);
+    bool swap(BufferBase &other);
 
     MessagePtrSet mMessages;
     ItemId mItemId{};

@@ -29,8 +29,8 @@ void GLBuffer::clear()
     auto &gl = GLContext::currentContext();
     auto data = uint8_t();
     gl.glBindBuffer(GL_ARRAY_BUFFER, getReadWriteBufferId());
-    gl.glClearBufferData(GL_ARRAY_BUFFER, GL_R8, GL_RED,
-        GL_UNSIGNED_BYTE, &data);
+    gl.glClearBufferData(GL_ARRAY_BUFFER, GL_R8, GL_RED, GL_UNSIGNED_BYTE,
+        &data);
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 }
 
@@ -47,12 +47,9 @@ void GLBuffer::copy(GLBuffer &source)
 
 bool GLBuffer::swap(GLBuffer &other)
 {
-    if (mSize != other.mSize)
+    if (!BufferBase::swap(other))
         return false;
-    mData.swap(other.mData);
     std::swap(mBufferObject, other.mBufferObject);
-    std::swap(mSystemCopyModified, other.mSystemCopyModified);
-    std::swap(mDeviceCopyModified, other.mDeviceCopyModified);
     return true;
 }
 
@@ -170,6 +167,7 @@ void GLBuffer::beginDownload(GLContext &gl, bool checkModification)
     mDownloaded = true;
 }
 
-bool GLBuffer::finishDownload() {
-  return std::exchange(mDownloaded, false);
+bool GLBuffer::finishDownload()
+{
+    return std::exchange(mDownloaded, false);
 }

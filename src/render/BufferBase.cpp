@@ -35,3 +35,13 @@ QByteArray &BufferBase::writableData()
         mData.resize(mSize);
     return mData;
 }
+
+bool BufferBase::swap(BufferBase &other)
+{
+    if (mSize != other.mSize)
+        return false;
+
+    mDeviceCopyModified = true;
+    other.mDeviceCopyModified = true;
+    return true;
+}

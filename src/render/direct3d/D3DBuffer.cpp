@@ -68,12 +68,9 @@ void D3DBuffer::copy(D3DContext &context, D3DBuffer &source)
 
 bool D3DBuffer::swap(D3DBuffer &other)
 {
-    if (mSize != other.mSize)
+    if (!BufferBase::swap(other))
         return false;
-    mData.swap(other.mData);
     std::swap(mResource, other.mResource);
-    std::swap(mSystemCopyModified, other.mSystemCopyModified);
-    std::swap(mDeviceCopyModified, other.mDeviceCopyModified);
     return true;
 }
 

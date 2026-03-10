@@ -77,12 +77,12 @@ void VKBuffer::copy(VKContext &context, VKBuffer &source)
 
 bool VKBuffer::swap(VKBuffer &other)
 {
-    if (mSize != other.mSize)
+    if (!BufferBase::swap(other))
         return false;
-    mData.swap(other.mData);
     std::swap(mBuffer, other.mBuffer);
-    std::swap(mSystemCopyModified, other.mSystemCopyModified);
-    std::swap(mDeviceCopyModified, other.mDeviceCopyModified);
+    std::swap(mCurrentAccessMask, other.mCurrentAccessMask);
+    std::swap(mCurrentStage, other.mCurrentStage);
+    std::swap(mDeviceAddressObtained, other.mDeviceAddressObtained);
     return true;
 }
 
