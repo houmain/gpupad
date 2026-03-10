@@ -48,7 +48,7 @@ QWidget *EditorManager::createEditorPropertiesPanel(QAction *showAction)
 {
     auto propertiesPanel = new QWidget(this);
     propertiesPanel->setAutoFillBackground(true);
-    propertiesPanel->setBackgroundRole(QPalette::ToolTipBase);
+    propertiesPanel->setBackgroundRole(QPalette::AlternateBase);
     propertiesPanel->hide();
 
     auto layout = new QHBoxLayout(propertiesPanel);

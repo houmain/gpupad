@@ -82,7 +82,7 @@ PropertiesEditor::PropertiesEditor(QWidget *parent)
     , mSubmitTimer(new QTimer(this))
 {
     setFrameShape(QFrame::NoFrame);
-    setBackgroundRole(QPalette::ToolTipBase);
+    setBackgroundRole(QPalette::AlternateBase);
 
     const auto add = [&](auto &ui) {
         auto widget = new QWidget(this);

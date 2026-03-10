@@ -65,7 +65,7 @@ QString OutputWindow::selectedType() const
 void OutputWindow::handleThemeChanged(const Theme &theme)
 {
     auto palette = theme.palette();
-    palette.setColor(QPalette::Base, palette.toolTipBase().color());
+    palette.setColor(QPalette::Base, palette.alternateBase().color());
     mTextEdit->setPalette(palette);
 }
 

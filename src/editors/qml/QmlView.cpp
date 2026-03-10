@@ -160,7 +160,11 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
         &QmlView::windowThemeChanged);
 }
 
-void QmlView::windowThemeChanged(const Theme &theme) { }
+void QmlView::windowThemeChanged(const Theme &theme)
+{
+    if (mQuickView)
+        mQuickView->setColor(qApp->palette().alternateBase().color());
+}
 
 void QmlView::reset()
 {
@@ -183,6 +187,7 @@ void QmlView::reset()
 
     mQuickView = new QQuickView(qmlEngine, nullptr);
     mQuickView->setResizeMode(QQuickView::SizeRootObjectToView);
+    mQuickView->setColor(qApp->palette().alternateBase().color());
 
 #  if defined(_WIN32)
     // WORKAROUND: reapply current palette, to fix Fusion theme
