@@ -503,6 +503,9 @@ void VKCall::executeSwapTextures(MessagePtrSet &messages)
     if (!mTexture->swap(*mFromTexture))
         messages +=
             MessageList::insert(mCall.id, MessageType::SwappingTexturesFailed);
+
+    mUsedItems += mTexture->itemId();
+    mUsedItems += mFromTexture->itemId();
 }
 
 void VKCall::executeSwapBuffers(MessagePtrSet &messages)
@@ -515,4 +518,7 @@ void VKCall::executeSwapBuffers(MessagePtrSet &messages)
     if (!mBuffer->swap(*mFromBuffer))
         messages +=
             MessageList::insert(mCall.id, MessageType::SwappingBuffersFailed);
+
+    mUsedItems += mBuffer->itemId();
+    mUsedItems += mFromBuffer->itemId();
 }

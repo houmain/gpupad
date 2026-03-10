@@ -6,16 +6,6 @@ D3DBuffer::D3DBuffer(const Buffer &buffer, D3DRenderSession &renderSession)
     : BufferBase(buffer, renderSession.getBufferSize(buffer))
 {
     mUsedItems += buffer.id;
-    for (const auto item : buffer.items)
-        if (auto block = static_cast<const Block *>(item)) {
-            mUsedItems += block->id;
-            for (const auto item : block->items)
-                if (auto field = static_cast<const Block *>(item))
-                    mUsedItems += field->id;
-
-            if (!mElementSize)
-                mElementSize = getBlockStride(*block);
-        }
 }
 
 D3DBuffer::D3DBuffer(int size) : BufferBase(size) { }
@@ -45,9 +35,8 @@ void D3DBuffer::clear(D3DContext &context)
     auto nonShaderVisibleCpuDescHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(
         mNonShaderVisibleDescHeap->GetCPUDescriptorHandleForHeapStart());
 
-    prepareUnorderedAccessView(context, shaderVisibleCpuDescHandle, false,
-        false);
-    prepareUnorderedAccessView(context, nonShaderVisibleCpuDescHandle, false,
+    prepareUnorderedAccessView(context, shaderVisibleCpuDescHandle, 0, false);
+    prepareUnorderedAccessView(context, nonShaderVisibleCpuDescHandle, 0,
         false);
 
     auto descriptorHeaps = mShaderVisibleDescHeap.Get();
@@ -77,18 +66,21 @@ bool D3DBuffer::swap(D3DBuffer &other)
 void D3DBuffer::initialize(D3DContext &context)
 {
     reload();
+    createBuffer(context);
     upload(context);
 }
 
 void D3DBuffer::updateReadOnlyBuffer(D3DContext &context)
 {
     reload();
+    createBuffer(context);
     upload(context);
 }
 
 void D3DBuffer::updateReadWriteBuffer(D3DContext &context)
 {
     reload();
+    createBuffer(context);
     upload(context);
     mDeviceCopyModified = true;
 }
@@ -145,8 +137,6 @@ void D3DBuffer::upload(D3DContext &context)
 {
     if (!mSystemCopyModified)
         return;
-
-    createBuffer(context);
 
     auto stagingBuffer = createStagingBuffer(context, D3D12_HEAP_TYPE_UPLOAD);
     auto mappedData = std::add_pointer_t<void>{};
@@ -243,8 +233,10 @@ void D3DBuffer::prepareConstantBufferView(D3DContext &context,
 }
 
 void D3DBuffer::prepareUnorderedAccessView(D3DContext &context,
-    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, bool isStructured, bool isReadonly)
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, int structureByteStride,
+    bool isReadonly)
 {
+    Q_ASSERT(mSize >= structureByteStride);
     if (isReadonly) {
         updateReadOnlyBuffer(context);
     } else {
@@ -255,10 +247,10 @@ void D3DBuffer::prepareUnorderedAccessView(D3DContext &context,
     auto uavDesc = D3D12_UNORDERED_ACCESS_VIEW_DESC{
         .ViewDimension = D3D12_UAV_DIMENSION_BUFFER,
     };
-    if (isStructured) {
+    if (structureByteStride) {
         uavDesc.Buffer = D3D12_BUFFER_UAV{
-            .NumElements = static_cast<UINT>(mSize / mElementSize),
-            .StructureByteStride = mElementSize,
+            .NumElements = static_cast<UINT>(mSize / structureByteStride),
+            .StructureByteStride = static_cast<UINT>(structureByteStride),
             .Flags = D3D12_BUFFER_UAV_FLAG_NONE,
         };
     } else {
@@ -274,8 +266,9 @@ void D3DBuffer::prepareUnorderedAccessView(D3DContext &context,
 }
 
 void D3DBuffer::prepareShaderResourceView(D3DContext &context,
-    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, bool isStructured)
+    D3D12_CPU_DESCRIPTOR_HANDLE descriptor, int structureByteSize)
 {
+    Q_ASSERT(mSize >= structureByteSize);
     updateReadOnlyBuffer(context);
     resourceBarrier(context, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 
@@ -283,10 +276,10 @@ void D3DBuffer::prepareShaderResourceView(D3DContext &context,
         .ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
         .Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
     };
-    if (isStructured) {
+    if (structureByteSize) {
         srvDesc.Buffer = D3D12_BUFFER_SRV{
-            .NumElements = static_cast<UINT>(mSize / mElementSize),
-            .StructureByteStride = mElementSize,
+            .NumElements = static_cast<UINT>(mSize / structureByteSize),
+            .StructureByteStride = static_cast<UINT>(structureByteSize),
             .Flags = D3D12_BUFFER_SRV_FLAG_NONE,
         };
     } else {

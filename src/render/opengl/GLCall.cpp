@@ -483,6 +483,9 @@ void GLCall::executeSwapTextures(MessagePtrSet &messages)
     if (!mTexture->swap(*mFromTexture))
         messages +=
             MessageList::insert(mCall.id, MessageType::SwappingTexturesFailed);
+
+    mUsedItems += mTexture->itemId();
+    mUsedItems += mFromTexture->itemId();
 }
 
 void GLCall::executeSwapBuffers(MessagePtrSet &messages)
@@ -495,6 +498,9 @@ void GLCall::executeSwapBuffers(MessagePtrSet &messages)
     if (!mBuffer->swap(*mFromBuffer))
         messages +=
             MessageList::insert(mCall.id, MessageType::SwappingBuffersFailed);
+
+    mUsedItems += mBuffer->itemId();
+    mUsedItems += mFromBuffer->itemId();
 }
 
 bool GLCall::validateShaderTypes()

@@ -29,10 +29,10 @@ public:
     void prepareConstantBufferView(D3DContext &context,
         D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
     void prepareUnorderedAccessView(D3DContext &context,
-        D3D12_CPU_DESCRIPTOR_HANDLE descriptor, bool isStructured,
+        D3D12_CPU_DESCRIPTOR_HANDLE descriptor, int structureByteStride,
         bool isReadonly);
     void prepareShaderResourceView(D3DContext &context,
-        D3D12_CPU_DESCRIPTOR_HANDLE descriptor, bool isStructured);
+        D3D12_CPU_DESCRIPTOR_HANDLE descriptor, int structureByteStride);
     D3D12_GPU_VIRTUAL_ADDRESS getDeviceAddress();
 
 private:
@@ -48,7 +48,6 @@ private:
     ComPtr<ID3D12DescriptorHeap> mShaderVisibleDescHeap;
     ComPtr<ID3D12DescriptorHeap> mNonShaderVisibleDescHeap;
     D3D12_RESOURCE_STATES mCurrentState{};
-    uint32_t mElementSize{};
     bool mCheckModification{};
 };
 

@@ -397,6 +397,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                             dynamic.buffer.emplace(cbufferDesc.Size);
                         Q_ASSERT(dynamic.buffer->size() == cbufferDesc.Size);
                         if (dynamic.buffer->size() == cbufferDesc.Size) {
+                            // TODO: check if data changed before upload
                             auto &data = dynamic.buffer->writableData();
                             auto bufferData = std::span<std::byte>(
                                 reinterpret_cast<std::byte *>(data.data()),
@@ -445,10 +446,22 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     continue;
                 }
 
-                const auto isStructured = (bindDesc.Type == D3D_SIT_STRUCTURED
-                    || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED);
+                const auto structureByteStride =
+                    (bindDesc.Type == D3D_SIT_STRUCTURED
+                                || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED
+                            ? static_cast<int>(bindDesc.NumSamples)
+                            : 0);
                 const auto isUav = (bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS
                     || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED);
+
+                if (buffer->size() < structureByteStride) {
+                    // buffer smaller than structure size
+                    // TODO: warn when buffer block stride is smaller
+                    mMessages += MessageList::insert(mItemId,
+                        MessageType::BufferNotSet, bindingName);
+                    canRender = false;
+                    continue;
+                }
 
                 // TODO:
                 for (auto i = 0u; i < bindDesc.BindCount; ++i) {
@@ -456,10 +469,10 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                         const auto isReadonly =
                             (bindDesc.Type == D3D_SIT_STRUCTURED);
                         buffer->prepareUnorderedAccessView(context, descriptor,
-                            isStructured, isReadonly);
+                            structureByteStride, isReadonly);
                     } else {
                         buffer->prepareShaderResourceView(context, descriptor,
-                            isStructured);
+                            structureByteStride);
                     }
                     descriptor.Offset(1, context.descriptorSize);
                 }

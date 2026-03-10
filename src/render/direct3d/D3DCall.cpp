@@ -439,6 +439,9 @@ void D3DCall::executeSwapTextures(MessagePtrSet &messages)
     if (!mTexture->swap(*mFromTexture))
         messages +=
             MessageList::insert(mCall.id, MessageType::SwappingTexturesFailed);
+
+    mUsedItems += mTexture->itemId();
+    mUsedItems += mFromTexture->itemId();
 }
 
 void D3DCall::executeSwapBuffers(MessagePtrSet &messages)
@@ -451,4 +454,7 @@ void D3DCall::executeSwapBuffers(MessagePtrSet &messages)
     if (!mBuffer->swap(*mFromBuffer))
         messages +=
             MessageList::insert(mCall.id, MessageType::SwappingBuffersFailed);
+
+    mUsedItems += mBuffer->itemId();
+    mUsedItems += mFromBuffer->itemId();
 }
