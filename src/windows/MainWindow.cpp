@@ -64,9 +64,10 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->menubar->setFixedHeight(24);
     mUi->toolBarMain->toggleViewAction()->setVisible(false);
 
+    setDockOptions(QMainWindow::AllowNestedDocks);
     takeCentralWidget();
 
-    setContentsMargins(2, 0, 2, 2);
+    setContentsMargins(4, 0, 4, 4);
     auto content = new QWidget(this);
     mEditorManager.setParent(content);
     auto layout = new QVBoxLayout(content);
@@ -419,8 +420,7 @@ void MainWindow::readSettings()
     else if (settings.value("maximized").toBool())
         showMaximized();
 
-    restoreState(settings.value("state").toByteArray(),
-        MainWindowStateVersion);
+    restoreState(settings.value("state").toByteArray(), MainWindowStateVersion);
     mSessionSplitter->restoreState(
         settings.value("sessionSplitter").toByteArray());
 
@@ -602,7 +602,7 @@ void MainWindow::setFullScreen(bool fullScreen)
         mFullScreenBar->show();
         updateFileActions();
     } else {
-        setContentsMargins(1, 1, 1, 1);
+        setContentsMargins(4, 0, 4, 4);
         mFullScreenBar->hide();
         if (mSingletons->settings().value("maximized").toBool()) {
             showMaximized();
