@@ -1,7 +1,4 @@
 {
-    "autoMapBindings": true,
-    "autoMapLocations": true,
-    "autoSampledTextures": true,
     "flipViewport": false,
     "id": 1,
     "items": [
@@ -152,7 +149,6 @@
             "type": "Script"
         },
         {
-            "dynamic": false,
             "id": 10033,
             "inlineScope": true,
             "items": [
@@ -311,49 +307,42 @@
                 {
                     "fileName": "Material.glsl",
                     "id": 10024,
-                    "language": "GLSL",
                     "shaderType": "Includable",
                     "type": "Shader"
                 },
                 {
                     "fileName": "UniformBufferObject.glsl",
                     "id": 10025,
-                    "language": "GLSL",
                     "shaderType": "Includable",
                     "type": "Shader"
                 },
                 {
                     "fileName": "Scatter.glsl",
                     "id": 10026,
-                    "language": "GLSL",
                     "shaderType": "Includable",
                     "type": "Shader"
                 },
                 {
                     "fileName": "RayTracing.rgen",
                     "id": 10022,
-                    "language": "GLSL",
                     "shaderType": "RayGeneration",
                     "type": "Shader"
                 },
                 {
                     "fileName": "RayTracing.rmiss",
                     "id": 10028,
-                    "language": "GLSL",
                     "shaderType": "RayMiss",
                     "type": "Shader"
                 },
                 {
                     "fileName": "RayTracing.Procedural.rchit",
                     "id": 10029,
-                    "language": "GLSL",
                     "shaderType": "RayClosestHit",
                     "type": "Shader"
                 },
                 {
                     "fileName": "RayTracing.Procedural.rint",
                     "id": 10030,
-                    "language": "GLSL",
                     "shaderType": "RayIntersection",
                     "type": "Shader"
                 }
@@ -412,9 +401,16 @@
     "name": "Session",
     "renderer": "Vulkan",
     "reverseCulling": true,
+    "shaderCompiler": "glslang",
+    "shaderCompilerSettings": {
+        "autoMapBindings": "true",
+        "autoMapLocations": "true",
+        "autoSampledTextures": "true",
+        "spirvVersion": "15",
+        "vulkanRulesRelaxed": "true"
+    },
     "shaderIncludePaths": "",
+    "shaderLanguage": "GLSL",
     "shaderPreamble": "",
-    "spirvVersion": 15,
-    "type": "Session",
-    "vulkanRulesRelaxed": true
+    "type": "Session"
 }

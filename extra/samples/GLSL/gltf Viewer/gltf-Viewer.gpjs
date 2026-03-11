@@ -62,16 +62,6 @@
             "type": "Target"
         },
         {
-            "bindingType": "Uniform",
-            "editor": "Expression",
-            "id": 896,
-            "name": "frame",
-            "type": "Binding",
-            "values": [
-                "(this.frame || 0) + 1"
-            ]
-        },
-        {
             "executeOn": "ManualEvaluation",
             "fileName": "math.js",
             "id": 796,
@@ -302,7 +292,7 @@
                             "name": "u_ModelMatrix",
                             "type": "Binding",
                             "values": [
-                                "modelMatrix(frame / 60)"
+                                "modelMatrix(app.time)"
                             ]
                         },
                         {
@@ -312,7 +302,7 @@
                             "name": "u_NormalMatrix",
                             "type": "Binding",
                             "values": [
-                                "normalMatrix(frame / 60)"
+                                "normalMatrix(app.time)"
                             ]
                         },
                         {
@@ -707,56 +697,48 @@
                         {
                             "fileName": "gltf-viewer/header.vert",
                             "id": 12,
-                            "language": "GLSL",
                             "shaderType": "Vertex",
                             "type": "Shader"
                         },
                         {
                             "fileName": "gltf-viewer/animation.vert",
                             "id": 11,
-                            "language": "GLSL",
                             "shaderType": "Vertex",
                             "type": "Shader"
                         },
                         {
                             "fileName": "gltf-viewer/primitive.vert",
                             "id": 7,
-                            "language": "GLSL",
                             "shaderType": "Vertex",
                             "type": "Shader"
                         },
                         {
                             "fileName": "gltf-viewer/header.frag",
                             "id": 16,
-                            "language": "GLSL",
                             "shaderType": "Fragment",
                             "type": "Shader"
                         },
                         {
                             "fileName": "gltf-viewer/tonemapping.frag",
                             "id": 17,
-                            "language": "GLSL",
                             "shaderType": "Fragment",
                             "type": "Shader"
                         },
                         {
                             "fileName": "gltf-viewer/textures.frag",
                             "id": 18,
-                            "language": "GLSL",
                             "shaderType": "Fragment",
                             "type": "Shader"
                         },
                         {
                             "fileName": "gltf-viewer/functions.frag",
                             "id": 19,
-                            "language": "GLSL",
                             "shaderType": "Fragment",
                             "type": "Shader"
                         },
                         {
                             "fileName": "gltf-viewer/metallic-roughness.frag",
                             "id": 15,
-                            "language": "GLSL",
                             "shaderType": "Fragment",
                             "type": "Shader"
                         }
@@ -814,8 +796,11 @@
     ],
     "name": "Session",
     "renderer": "OpenGL",
-    "shaderCompiler": "",
+    "shaderCompiler": "Driver",
+    "shaderCompilerSettings": {
+    },
     "shaderIncludePaths": "",
+    "shaderLanguage": "GLSL",
     "shaderPreamble": "",
     "type": "Session"
 }

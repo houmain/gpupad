@@ -78,6 +78,36 @@
             ]
         },
         {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 10098,
+            "name": "iTime",
+            "type": "Binding",
+            "values": [
+                "app.time"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 10099,
+            "name": "iTimeDelta",
+            "type": "Binding",
+            "values": [
+                "app.timeDelta"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 10100,
+            "name": "iDate",
+            "type": "Binding",
+            "values": [
+                "app.date"
+            ]
+        },
+        {
             "anisotropic": false,
             "bindingType": "Sampler",
             "borderColor": "#ff000000",
@@ -143,21 +173,18 @@
                 {
                     "fileName": "attributeless.vs",
                     "id": 77,
-                    "language": "GLSL",
                     "shaderType": "Vertex",
                     "type": "Shader"
                 },
                 {
                     "fileName": "shadertoy.fs",
                     "id": 78,
-                    "language": "GLSL",
                     "shaderType": "Fragment",
                     "type": "Shader"
                 },
                 {
                     "fileName": "image.fs",
                     "id": 79,
-                    "language": "GLSL",
                     "shaderType": "Fragment",
                     "type": "Shader"
                 }
@@ -184,8 +211,11 @@
     ],
     "name": "Session",
     "renderer": "OpenGL",
-    "shaderCompiler": "",
+    "shaderCompiler": "Driver",
+    "shaderCompilerSettings": {
+    },
     "shaderIncludePaths": "",
+    "shaderLanguage": "GLSL",
     "shaderPreamble": "",
     "type": "Session"
 }

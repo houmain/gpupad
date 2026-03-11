@@ -24,6 +24,36 @@
             ]
         },
         {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 10102,
+            "name": "iTime",
+            "type": "Binding",
+            "values": [
+                "app.time"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 10103,
+            "name": "iTimeDelta",
+            "type": "Binding",
+            "values": [
+                "app.timeDelta"
+            ]
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 10104,
+            "name": "iDate",
+            "type": "Binding",
+            "values": [
+                "app.date"
+            ]
+        },
+        {
             "flipVertically": false,
             "format": "RGBA8_UNorm",
             "height": "iResolution[1]",
@@ -57,7 +87,6 @@
             "width": "iResolution[0]"
         },
         {
-            "dynamic": false,
             "id": 961,
             "inlineScope": true,
             "items": [
@@ -127,7 +156,6 @@
             "type": "Group"
         },
         {
-            "dynamic": false,
             "id": 945,
             "inlineScope": false,
             "items": [
@@ -223,14 +251,12 @@
                         {
                             "fileName": "attributeless.vs",
                             "id": 951,
-                            "language": "GLSL",
                             "shaderType": "Vertex",
                             "type": "Shader"
                         },
                         {
                             "fileName": "shadertoy.fs",
                             "id": 952,
-                            "language": "GLSL",
                             "preamble": "#define PASS 0",
                             "shaderType": "Fragment",
                             "type": "Shader"
@@ -238,7 +264,6 @@
                         {
                             "fileName": "bufferA.fs",
                             "id": 953,
-                            "language": "GLSL",
                             "shaderType": "Fragment",
                             "type": "Shader"
                         }
@@ -290,7 +315,6 @@
             "type": "Group"
         },
         {
-            "dynamic": false,
             "id": 944,
             "inlineScope": false,
             "items": [
@@ -386,14 +410,12 @@
                         {
                             "fileName": "attributeless.vs",
                             "id": 77,
-                            "language": "GLSL",
                             "shaderType": "Vertex",
                             "type": "Shader"
                         },
                         {
                             "fileName": "shadertoy.fs",
                             "id": 78,
-                            "language": "GLSL",
                             "preamble": "#define PASS 1",
                             "shaderType": "Fragment",
                             "type": "Shader"
@@ -401,7 +423,6 @@
                         {
                             "fileName": "image.fs",
                             "id": 79,
-                            "language": "GLSL",
                             "shaderType": "Fragment",
                             "type": "Shader"
                         }
@@ -433,8 +454,11 @@
     ],
     "name": "Session",
     "renderer": "OpenGL",
-    "shaderCompiler": "",
+    "shaderCompiler": "Driver",
+    "shaderCompilerSettings": {
+    },
     "shaderIncludePaths": "",
+    "shaderLanguage": "GLSL",
     "shaderPreamble": "",
     "type": "Session"
 }

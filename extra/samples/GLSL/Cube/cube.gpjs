@@ -74,7 +74,7 @@
             "name": "uModel",
             "type": "Binding",
             "values": [
-                "rotateY(app.frameIndex / 60)"
+                "rotateY(app.time)"
             ]
         },
         {
@@ -228,14 +228,12 @@
                 {
                     "fileName": "cube.vs",
                     "id": 89,
-                    "language": "GLSL",
                     "shaderType": "Vertex",
                     "type": "Shader"
                 },
                 {
                     "fileName": "cube.fs",
                     "id": 90,
-                    "language": "GLSL",
                     "shaderType": "Fragment",
                     "type": "Shader"
                 }
@@ -286,8 +284,11 @@
     ],
     "name": "Session",
     "renderer": "OpenGL",
-    "shaderCompiler": "",
+    "shaderCompiler": "Driver",
+    "shaderCompilerSettings": {
+    },
     "shaderIncludePaths": "",
+    "shaderLanguage": "GLSL",
     "shaderPreamble": "",
     "type": "Session"
 }

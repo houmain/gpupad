@@ -68,8 +68,8 @@
             "name": "attractor",
             "type": "Binding",
             "values": [
-                "Math.sin(Date.now() / 20)",
-                "Math.cos(Date.now() / 30)"
+                "Math.sin(app.time * 200)",
+                "Math.cos(app.time * 300)"
             ]
         },
         {
@@ -119,14 +119,12 @@
                 {
                     "fileName": "particle.comp",
                     "id": 76,
-                    "language": "GLSL",
                     "shaderType": "Includable",
                     "type": "Shader"
                 },
                 {
                     "fileName": "reset.comp",
                     "id": 63,
-                    "language": "GLSL",
                     "shaderType": "Compute",
                     "type": "Shader"
                 }
@@ -140,14 +138,12 @@
                 {
                     "fileName": "particle.comp",
                     "id": 75,
-                    "language": "GLSL",
                     "shaderType": "Includable",
                     "type": "Shader"
                 },
                 {
                     "fileName": "update.comp",
                     "id": 73,
-                    "language": "GLSL",
                     "shaderType": "Compute",
                     "type": "Shader"
                 }
@@ -161,14 +157,12 @@
                 {
                     "fileName": "particle.vs",
                     "id": 81,
-                    "language": "GLSL",
                     "shaderType": "Vertex",
                     "type": "Shader"
                 },
                 {
                     "fileName": "particle.fs",
                     "id": 85,
-                    "language": "GLSL",
                     "shaderType": "Fragment",
                     "type": "Shader"
                 }
@@ -231,8 +225,11 @@
     ],
     "name": "Session",
     "renderer": "OpenGL",
-    "shaderCompiler": "",
+    "shaderCompiler": "Driver",
+    "shaderCompilerSettings": {
+    },
     "shaderIncludePaths": "",
+    "shaderLanguage": "GLSL",
     "shaderPreamble": "",
     "type": "Session"
 }
