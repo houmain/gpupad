@@ -133,6 +133,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setWidget(mSessionSplitter);
     dock->setVisible(false);
     dock->setMinimumSize(200, 150);
+    dock->setSizePolicy({ QSizePolicy::Fixed, QSizePolicy::Fixed });
     auto action = dock->toggleViewAction();
     action->setObjectName("toggle" + dock->objectName());
     action->setText(tr("Show &") + action->text());
@@ -151,6 +152,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setWidget(mFileBrowserWindow.get());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
+    dock->setSizePolicy({ QSizePolicy::Fixed, QSizePolicy::Fixed });
     action = dock->toggleViewAction();
     action->setObjectName("toggle" + dock->objectName());
     action->setText(tr("Show &") + action->text());
@@ -167,6 +169,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setWidget(mMessageWindow.get());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
+    dock->setSizePolicy({ QSizePolicy::Fixed, QSizePolicy::Fixed });
     action = dock->toggleViewAction();
     action->setObjectName("toggle" + dock->objectName());
     action->setText(tr("Show &") + action->text());
@@ -183,6 +186,7 @@ MainWindow::MainWindow(QWidget *parent)
     dock->setWidget(mOutputWindow.get());
     dock->setVisible(false);
     dock->setMinimumSize(150, 150);
+    dock->setSizePolicy({ QSizePolicy::Fixed, QSizePolicy::Fixed });
     action = dock->toggleViewAction();
     action->setObjectName("toggle" + dock->objectName());
     action->setText(tr("Show &") + action->text());
@@ -415,13 +419,10 @@ void MainWindow::readSettings()
     else if (settings.value("maximized").toBool())
         showMaximized();
 
-    // workaround: restore state after geometry is applied, so it is not garbled
-    QTimer::singleShot(1, this, [this]() {
-        const auto &settings = Singletons::settings();
-        restoreState(settings.value("state").toByteArray(), MainWindowStateVersion);
-        mSessionSplitter->restoreState(
-            settings.value("sessionSplitter").toByteArray());
-    });
+    restoreState(settings.value("state").toByteArray(),
+        MainWindowStateVersion);
+    mSessionSplitter->restoreState(
+        settings.value("sessionSplitter").toByteArray());
 
     Singletons::fileDialog().setDirectory(
         settings.value("lastDirectory").toString());
