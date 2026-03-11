@@ -20,6 +20,7 @@ class InputState : public QObject
 public:
     InputState();
 
+    void reset();
     void restoreEditorSize(QSize size);
     void restoreMousePosition(const QPoint &position);
 

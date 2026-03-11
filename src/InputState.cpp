@@ -89,7 +89,7 @@ InputState::InputState()
 {
     mMouseButtonStates.resize(5);
     mKeyStates.resize(256);
-    mFrameRate = 1.0 / 60.0;
+    reset();
 }
 
 void InputState::update(EvaluationType evaluationType)
@@ -154,6 +154,13 @@ void InputState::setTime(double time)
 {
     if (std::exchange(mTime, time) != time)
         Q_EMIT timeChanged(mTime);
+}
+
+void InputState::reset()
+{
+    mFrameIndex = 0;
+    mTime = 0;
+    mFrameRate = 1.0 / 60.0;
 }
 
 void InputState::restoreEditorSize(QSize size)
