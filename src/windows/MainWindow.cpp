@@ -476,12 +476,26 @@ void MainWindow::dropEvent(QDropEvent *event)
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
     switch (event->type()) {
-    case QEvent::KeyPress:
     case QEvent::MouseButtonPress:
     case QEvent::MouseButtonRelease:
+        if (const auto button = static_cast<QMouseEvent *>(event)->button();
+            button == Qt::BackButton || button == Qt::ForwardButton) {
+
+            if (event->type() == QEvent::MouseButtonRelease) {
+                if (button == Qt::BackButton)
+                    mEditorManager.navigateBackward();
+                else
+                    mEditorManager.navigateForward();
+            }
+            return true;
+        }
+        [[fallthrough]];
+
+    case QEvent::KeyPress:
     case QEvent::MouseMove:
-    case QEvent::Wheel:              mLastPressWasAlt = false; break;
-    default:                         break;
+    case QEvent::Wheel:     mLastPressWasAlt = false; break;
+
+    default: break;
     }
     return QMainWindow::eventFilter(watched, event);
 }

@@ -797,7 +797,9 @@ void SourceEditor::mousePressEvent(QMouseEvent *event)
         cursorForPosition(getEventPosition(event)));
     QPlainTextEdit::mousePressEvent(event);
     mMultiTextCursors.handleMousePressedEvent(event, textCursor(), prevCursor);
-    emitNavigationPositionChanged();
+
+    if (event->button() == Qt::LeftButton)
+        emitNavigationPositionChanged();
 }
 
 void SourceEditor::mouseMoveEvent(QMouseEvent *event)
