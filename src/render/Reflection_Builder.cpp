@@ -239,7 +239,7 @@ namespace {
                     block.type_description->member_count = block.member_count;
 
                     // breadth first - add types of struct before traversing down
-                    for (auto i = 0; i < descBlock.members.size(); ++i)
+                    for (auto i = 0u; i < descBlock.members.size(); ++i)
                         addBlockMembers(addBlockMembers, block.members[i],
                             descBlock.members[i]);
                 };

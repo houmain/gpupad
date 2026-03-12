@@ -29,6 +29,7 @@
 #include <QScreen>
 #include <QTimer>
 #include <QToolButton>
+#include <QOpenGLWidget>
 
 // increase when restoring old session states does not work properly
 const auto MainWindowStateVersion = 1;
@@ -67,7 +68,13 @@ MainWindow::MainWindow(QWidget *parent)
     setDockOptions(QMainWindow::AnimatedDocks | QMainWindow::AllowNestedDocks);
     takeCentralWidget();
 
-    setContentsMargins(4, 0, 4, 4);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0) && !defined(USE_WINDOW_CONTAINER)
+    // WORKAROUND: trigger initialization of OpenGL immediately, otherwise
+    // application window disappears momentaryly when the first texture editor is opened
+    (new QOpenGLWidget(this))->setVisible(false);
+#endif
+
+    setDefaultContentsMargins();
     auto content = new QWidget(this);
     mEditorManager.setParent(content);
     auto layout = new QVBoxLayout(content);
@@ -608,6 +615,15 @@ void MainWindow::focusPreviousEditor()
         mSessionEditor->setFocus();
 }
 
+void MainWindow::setDefaultContentsMargins()
+{
+#if defined(_WIN32)
+    setContentsMargins(4, 0, 4, 4);
+#else
+    setContentsMargins(0, 0, 0, 0);
+#endif
+}
+
 void MainWindow::setFullScreen(bool fullScreen)
 {
     if (fullScreen) {
@@ -616,7 +632,7 @@ void MainWindow::setFullScreen(bool fullScreen)
         mFullScreenBar->show();
         updateFileActions();
     } else {
-        setContentsMargins(4, 0, 4, 4);
+        setDefaultContentsMargins();
         mFullScreenBar->hide();
         if (mSingletons->settings().value("maximized").toBool()) {
             showMaximized();

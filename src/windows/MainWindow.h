@@ -69,6 +69,7 @@ private:
     void updateFileActions();
     void focusNextEditor();
     void focusPreviousEditor();
+    void setDefaultContentsMargins();
     void setFullScreen(bool fullScreen);
     void stopSteadyEvaluation();
     void setEvaluationMode(EvaluationMode evaluationMode);

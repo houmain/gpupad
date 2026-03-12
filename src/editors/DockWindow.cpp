@@ -10,14 +10,11 @@
 #include <QTabBar>
 #include <QTimer>
 
-namespace {
-    QDockWidget *getTabBarDock(QTabBar *tabBar, int index)
-    {
-        // source: https://bugreports.qt.io/browse/QTBUG-39489
-        return reinterpret_cast<QDockWidget *>(
-            tabBar->tabData(index).toULongLong());
-    }
-} // namespace
+QDockWidget *getTabBarDock(QTabBar *tabBar, int index)
+{
+    // source: https://bugreports.qt.io/browse/QTBUG-39489
+    return reinterpret_cast<QDockWidget *>(tabBar->tabData(index).toULongLong());
+}
 
 DockWindow::DockWindow(QWidget *parent) : QMainWindow(parent) { }
 
@@ -67,8 +64,8 @@ bool DockWindow::eventFilter(QObject *watched, QEvent *event)
 
     // inform titlebars of corresponding tabbar, whenever tabbar children change
     if (event->type() == QEvent::ChildAdded
-        || event->type() == QEvent::ChildRemoved)
-        if (qobject_cast<QTabBar *>(watched)) {
+        || (event->type() == QEvent::ChildRemoved && qobject_cast<QTabBar *>(watched)))
+        {
             const auto dockTitles = findChildren<DockTitle *>();
             for (auto title : dockTitles)
                 title->setTabBar(nullptr);
@@ -76,8 +73,7 @@ bool DockWindow::eventFilter(QObject *watched, QEvent *event)
             const auto tabBars = findChildren<QTabBar *>();
             for (auto tabBar : tabBars)
                 for (auto i = 0; i < tabBar->count(); i++)
-                    if (auto dock = qobject_cast<QDockWidget *>(
-                            getTabBarDock(tabBar, i)))
+                    if (auto dock = getTabBarDock(tabBar, i))
                         if (auto title = qobject_cast<DockTitle *>(
                                 dock->titleBarWidget()))
                             title->setTabBar(tabBar);

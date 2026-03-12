@@ -351,8 +351,9 @@ bool TextureEditor::eventFilter(QObject *watched, QEvent *event)
     case QEvent::KeyRelease:
         keyReleaseEvent(static_cast<QKeyEvent *>(event));
         break;
+    default: break;
     }
-    return false;
+    return QAbstractScrollArea::eventFilter(watched, event);
 }
 
 void TextureEditor::wheelEvent(QWheelEvent *event)

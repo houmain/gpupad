@@ -11,6 +11,8 @@ namespace {
     const auto tabsListButtonText = QChar(0x2026);
 } // namespace
 
+extern QDockWidget *getTabBarDock(QTabBar *tabBar, int index);
+
 DockTitle::DockTitle(QDockWidget *parent) : QWidget(parent)
 {
     setMouseTracking(true);
@@ -69,11 +71,8 @@ QDockWidget *DockTitle::tabDock(int index)
 
 const QDockWidget *DockTitle::tabDock(int index) const
 {
-    if (mTabBar && mTabBar->count() > 1) {
-        // source: https://bugreports.qt.io/browse/QTBUG-39489
-        return reinterpret_cast<QDockWidget *>(
-            mTabBar->tabData(index).toULongLong());
-    }
+    if (mTabBar && mTabBar->count() > 1)
+        return getTabBarDock(mTabBar, index);
     return static_cast<QDockWidget *>(parentWidget());
 }
 
