@@ -245,10 +245,7 @@ void SynchronizeLogic::handleItemsModified(const QModelIndex &topLeft,
 void SynchronizeLogic::invalidateRenderSession()
 {
     mRenderSessionInvalidated = true;
-
-    if (mEvaluationMode == EvaluationMode::Automatic)
-        if (!mEvaluationTimer->isActive())
-            mEvaluationTimer->start(10);
+    triggerAutomaticEvaluation();
 }
 
 void SynchronizeLogic::handleItemModified(const QModelIndex &index)
@@ -401,6 +398,13 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
     Singletons::editorManager().renameEditors(prevFileName, item.fileName);
 }
 
+void SynchronizeLogic::triggerAutomaticEvaluation()
+{
+    if (mEvaluationMode == EvaluationMode::Automatic)
+        if (!mEvaluationTimer->isActive())
+            mEvaluationTimer->start(10);
+}
+
 void SynchronizeLogic::handleEvaluateTimout()
 {
     evaluate(mEvaluationMode == EvaluationMode::Automatic
@@ -525,15 +529,13 @@ void SynchronizeLogic::handleSessionFileNameChanged(const QString &fileName)
 void SynchronizeLogic::handleMouseStateChanged()
 {
     if (mRenderSession && mRenderSession->usesMouseState())
-        if (mEvaluationMode == EvaluationMode::Automatic)
-            evaluate(EvaluationType::Steady);
+        triggerAutomaticEvaluation();
 }
 
 void SynchronizeLogic::handleKeyboardStateChanged()
 {
     if (mRenderSession && mRenderSession->usesKeyboardState())
-        if (mEvaluationMode == EvaluationMode::Automatic)
-            evaluate(EvaluationType::Steady);
+        triggerAutomaticEvaluation();
 }
 
 void SynchronizeLogic::handleViewportSizeChanged(const QString &fileName)

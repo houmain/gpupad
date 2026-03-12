@@ -176,7 +176,7 @@ void InputState::setEditorSize(QSize size)
 
 void InputState::restoreMousePosition(const QPoint &position)
 {
-    mNextMousePosition = mMousePosition = position;
+    mNextMousePosition = mPrevMousePosition = mMousePosition = position;
 }
 
 void InputState::setMousePosition(const QPoint &position)

@@ -52,6 +52,7 @@ Q_SIGNALS:
 
 private:
     void invalidateRenderSession();
+    void triggerAutomaticEvaluation();
     bool initializeRenderSession();
     void handleItemModified(const QModelIndex &index);
     void handleItemsModified(const QModelIndex &topLeft,
