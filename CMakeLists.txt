@@ -297,6 +297,10 @@ elseif(WIN32)
       dxgi
       d3dcompiler
       Microsoft::DirectXShaderCompiler)
+
+    # embed editors using QWidget::createWindowContainer for improved performance
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_WINDOW_CONTAINER)
+
 elseif(APPLE)
     find_package(OpenGL REQUIRED)
     include_directories(${OPENGL_INCLUDE_DIR})

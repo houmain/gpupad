@@ -4,10 +4,6 @@
 #include "editors/IEditor.h"
 #include <QFrame>
 
-#if defined(_WIN32)
-#  define USE_WINDOW_CONTAINER
-#endif
-
 class Theme;
 class QQmlNetworkAccessManagerFactory;
 using QScriptEnginePtr = std::shared_ptr<class ScriptEngine>;

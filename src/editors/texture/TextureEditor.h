@@ -3,14 +3,14 @@
 #include "TextureData.h"
 #include "editors/IEditor.h"
 #include "render/ShareSync.h"
+#include "GLWindow.h"
 #include <QOpenGLTexture>
-#include <QScrollArea>
+#include <QAbstractScrollArea>
 
 class TextureItem;
 class TextureBackground;
 class TextureEditorToolBar;
 class TextureInfoBar;
-class GLWindow;
 
 class TextureEditor final : public QAbstractScrollArea, public IEditor
 {
@@ -83,7 +83,10 @@ private:
     QPointF mapFromScene(const QPointF &position) const;
 
     GLWindow *mGLWindow{};
+#if defined(USE_WINDOW_CONTAINER)
     QWidget *mGLWindowContainer{};
+#endif
+
     TextureEditorToolBar &mEditorToolBar;
     TextureInfoBar &mTextureInfoBar;
     QString mFileName;

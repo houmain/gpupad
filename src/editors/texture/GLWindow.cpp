@@ -1,27 +1,22 @@
 
 #include "GLWindow.h"
 #include <QOpenGLContext>
-#include <QOpenGLPaintDevice>
-#include <QPainter>
 
-GLWindow::GLWindow(QWindow *parent) : QWindow(parent)
+GLWindow::GLWindow() : GLWindowBase()
 {
+#if defined(USE_WINDOW_CONTAINER)
     setSurfaceType(QWindow::OpenGLSurface);
+#endif
 }
 
 GLWindow::~GLWindow()
 {
-    if (!mInitialized)
-        return;
-
-    m_context->makeCurrent(this);
-    Q_EMIT releasingGL();
-    mDebugLogger.reset();
+    releaseGL();
 }
 
-void GLWindow::initialize()
+void GLWindow::initializeGL()
 {
-    if (!initializeOpenGLFunctions())
+    if (!mGL.initializeOpenGLFunctions())
         return;
 
     mInitialized = true;
@@ -39,6 +34,31 @@ void GLWindow::initialize()
 #endif
     Q_EMIT initializingGL();
 }
+
+void GLWindow::releaseGL()
+{
+    if (!mInitialized)
+        return;
+
+#if defined(USE_WINDOW_CONTAINER)
+    m_context->makeCurrent(this);
+#else
+    makeCurrent();
+#endif
+    Q_EMIT releasingGL();
+    mDebugLogger.reset();
+}
+
+void GLWindow::paintGL()
+{
+    if (!mInitialized)
+        return;
+
+    QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
+    Q_EMIT paintingGL();
+}
+
+#if defined(USE_WINDOW_CONTAINER)
 
 bool GLWindow::event(QEvent *event)
 {
@@ -65,21 +85,22 @@ void GLWindow::update()
         m_context->setFormat(QSurfaceFormat::defaultFormat());
         if (m_context->create()) {
             m_context->makeCurrent(this);
-            initialize();
+            initializeGL();
         }
     }
 
     if (initialized()) {
         m_context->makeCurrent(this);
-        QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
 
         const qreal dpr = devicePixelRatio();
         glViewport(0, 0, width() * dpr, height() * dpr);
 
-        Q_EMIT paintingGL();
+        paintGL();
         m_context->swapBuffers(this);
     }
 }
+
+#endif // defined(USE_WINDOW_CONTAINER)
 
 void GLWindow::handleDebugMessage(const QOpenGLDebugMessage &message)
 {

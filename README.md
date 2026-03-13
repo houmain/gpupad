@@ -234,7 +234,7 @@ cmake -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.9.0\msvc2022_64 -DCMAKE_TOOLCHAIN_FIL
 
 # build Debug version and copy all dependencies to build directory
 cmake --build build --config Debug
-cmake --install build --config Debug --component Application --prefix %CD%\Debug
+cmake --install build --config Debug --component Application --prefix %CD%\build\Debug
 
 # open solution (Visual Studio solutions prior to 2026 have .sln extension)
 start build\gpupad.slnx
