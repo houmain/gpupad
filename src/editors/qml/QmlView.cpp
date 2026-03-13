@@ -20,16 +20,20 @@ void QmlView::reset() { }
 #  include "scripting/ScriptEngine.h"
 #  include <QBoxLayout>
 #  include <QDir>
-#  include <QFileInfo>
 #  include <QNetworkAccessManager>
 #  include <QNetworkReply>
 #  include <QQmlAbstractUrlInterceptor>
 #  include <QQmlNetworkAccessManagerFactory>
 #  include <QQmlEngine>
-#  include <QQuickView>
 #  include <QQuickStyle>
 #  include <QApplication>
 #  include <cstring>
+
+#  if defined(USE_WINDOW_CONTAINER)
+#    include <QQuickView>
+#  else
+#    include <QQuickWidget>
+#  endif
 
 namespace {
     QString toAbsolutePath(const QUrl &url)
@@ -162,20 +166,26 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
 
 void QmlView::windowThemeChanged(const Theme &theme)
 {
-    if (mQuickView)
-        mQuickView->setColor(qApp->palette().alternateBase().color());
+#  if defined(USE_WINDOW_CONTAINER)
+    mQuickView->setColor(backgroundColor());
+#  else
+    mQuickWidget->setClearColor(backgroundColor());
+#  endif
+}
+
+QColor QmlView::backgroundColor() const
+{
+    return qApp->palette().alternateBase().color();
 }
 
 void QmlView::reset()
 {
-    if (mQuickViewContainer) {
-        layout()->removeWidget(mQuickViewContainer);
-        connect(mQuickViewContainer, &QWidget::destroyed, this, &QmlView::reset,
+    if (mQuickWidget) {
+        layout()->removeWidget(mQuickWidget);
+        connect(mQuickWidget, &QWidget::destroyed, this, &QmlView::reset,
             Qt::QueuedConnection);
-        mQuickViewContainer->deleteLater();
-        mQuickView->deleteLater();
-        mQuickViewContainer = nullptr;
-        mQuickView = nullptr;
+        mQuickWidget->deleteLater();
+        mQuickWidget = nullptr;
         return;
     }
 
@@ -185,25 +195,22 @@ void QmlView::reset()
     Q_ASSERT(qmlEngine);
     qmlEngine->clearComponentCache();
 
+#  if defined(USE_WINDOW_CONTAINER)
     mQuickView = new QQuickView(qmlEngine, nullptr);
     mQuickView->setResizeMode(QQuickView::SizeRootObjectToView);
-    mQuickView->setColor(qApp->palette().alternateBase().color());
-
-#  if defined(_WIN32)
-    // WORKAROUND: reapply current palette, to fix Fusion theme
-    auto palette = qApp->palette();
-    qApp->setPalette(QPalette());
-    qApp->setPalette(palette);
+    mQuickView->setColor(backgroundColor());
+    auto widgetOrView = mQuickView;
 #  else
-    // on Linux some more needs to be reapplied (very slow on Windows)
-    qApp->setPalette(QPalette());
-    Singletons::settings().setWindowTheme(Singletons::settings().windowTheme());
+    mQuickWidget = new QQuickWidget(qmlEngine, nullptr);
+    mQuickWidget->setClearColor(backgroundColor());
+    auto widgetOrView = mQuickWidget;
 #  endif
 
-    connect(mQuickView, &QQuickView::statusChanged,
-        [this, widget = mQuickView](QQuickView::Status status) {
-            if (status == QQuickView::Error) {
-                const auto errors = widget->errors();
+    using WidgetOrView = std::decay_t<decltype(*widgetOrView)>;
+    connect(widgetOrView, &WidgetOrView::statusChanged,
+        [this, widgetOrView](WidgetOrView::Status status) {
+            if (status == WidgetOrView::Error) {
+                const auto errors = widgetOrView->errors();
                 for (const QQmlError &error : errors)
                     mMessages += MessageList::insert(
                         toAbsolutePath(error.url()), error.line(),
@@ -211,13 +218,13 @@ void QmlView::reset()
             }
         });
 
-    connect(mQuickView, &QQuickView::sceneGraphError,
+    connect(widgetOrView, &WidgetOrView::sceneGraphError,
         [this](QQuickWindow::SceneGraphError error, const QString &message) {
             mMessages += MessageList::insert(mFileName, 0,
                 MessageType::ScriptError, message);
         });
 
-    connect(mQuickView->engine(), &QQmlEngine::warnings,
+    connect(qmlEngine, &QQmlEngine::warnings,
         [this](const QList<QQmlError> &warnings) {
             for (const auto &warning : warnings) {
                 auto fileName = toAbsolutePath(warning.url());
@@ -232,10 +239,26 @@ void QmlView::reset()
         });
 
     Singletons::fileCache().updateFromEditors();
-    mQuickView->setSource(QUrl::fromLocalFile(mFileName));
 
-    mQuickViewContainer = QWidget::createWindowContainer(mQuickView);
-    layout()->addWidget(mQuickViewContainer);
+#  if defined(USE_WINDOW_CONTAINER)
+    mQuickView->setSource(QUrl::fromLocalFile(mFileName));
+    mQuickWidget = QWidget::createWindowContainer(mQuickView);
+#  else
+    mQuickWidget->setSource(QUrl::fromLocalFile(mFileName));
+#  endif
+
+    layout()->addWidget(mQuickWidget);
+
+#  if defined(_WIN32)
+    // WORKAROUND: reapply current palette, to fix Fusion theme
+    auto palette = qApp->palette();
+    qApp->setPalette(QPalette());
+    qApp->setPalette(palette);
+#  else
+    // on Linux some more needs to be reapplied (very slow on Windows)
+    qApp->setPalette(QPalette());
+    Singletons::settings().setWindowTheme(Singletons::settings().windowTheme());
+#  endif
 }
 
 #endif // defined(QtQuick_FOUND)
