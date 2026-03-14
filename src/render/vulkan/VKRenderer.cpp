@@ -200,6 +200,7 @@ private:
         mRenderer.mDevice = nullptr;
         mRenderer.mQueue = nullptr;
         mRenderer.mKtxDeviceInfo = nullptr;
+        mRenderer.setFailed();
     }
 
     VKRenderer &mRenderer;

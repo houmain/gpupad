@@ -24,6 +24,16 @@ bool onMainThread()
 RendererPtr Singletons::sessionRenderer()
 {
     Q_ASSERT(onMainThread());
+
+    // reset failed renderers so error message disappears
+    for (auto renderer_ptr : {
+             &sInstance->mGLRenderer,
+             &sInstance->mVKRenderer,
+             &sInstance->mD3DRenderer,
+         })
+        if (*renderer_ptr && (*renderer_ptr)->failed())
+            *renderer_ptr = nullptr;
+
     switch (sessionModel().sessionItem().renderer) {
     case Session::Renderer::OpenGL:   return glRenderer();
     case Session::Renderer::Vulkan:   return vkRenderer();

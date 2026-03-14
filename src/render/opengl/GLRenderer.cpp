@@ -22,8 +22,9 @@ QString getFirstGLError()
 class GLRenderer::Worker final : public QObject
 {
     Q_OBJECT
-
 public:
+    explicit Worker(GLRenderer *renderer) : mRenderer(*renderer) { }
+
     GLContext context;
     QOffscreenSurface surface;
 
@@ -71,10 +72,13 @@ Q_SIGNALS:
 private:
     bool initialize()
     {
-        if (!context.makeCurrent(&surface))
+        if (!context.makeCurrent(&surface)
+            || !context.initializeOpenGLFunctions()) {
+            mMessages +=
+                MessageList::insert(0, MessageType::OpenGLVersionNotAvailable, "4.5");
+            mRenderer.setFailed();
             return false;
-        if (!context.initializeOpenGLFunctions())
-            return false;
+        }
 
         mDebugLogger = std::make_unique<QOpenGLDebugLogger>();
 
@@ -105,14 +109,16 @@ private:
 #endif
     }
 
+    GLRenderer &mRenderer;
     bool mInitialized{};
     std::unique_ptr<QOpenGLDebugLogger> mDebugLogger;
+    MessagePtrSet mMessages;
 };
 
 GLRenderer::GLRenderer(QObject *parent)
     : QObject(parent)
     , Renderer(RenderAPI::OpenGL)
-    , mWorker(std::make_unique<Worker>())
+    , mWorker(std::make_unique<Worker>(this))
 {
     mWorker->context.setShareContext(QOpenGLContext::globalShareContext());
     mWorker->context.create();

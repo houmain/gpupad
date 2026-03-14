@@ -129,6 +129,7 @@ private:
         mRenderer.mDevice = nullptr;
         mRenderer.mQueue = nullptr;
         mRenderer.mRenderTargetHelper = nullptr;
+        mRenderer.setFailed();
     }
 
     D3DRenderer &mRenderer;

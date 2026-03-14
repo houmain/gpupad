@@ -21,6 +21,10 @@ public:
     virtual QThread *renderThread() = 0;
 
     RenderAPI api() const { return mApi; }
+    bool failed() const { return mFailed; }
+
+protected:
+    void setFailed() { mFailed = true; }
 
 private:
     friend class RenderTask;
@@ -28,4 +32,5 @@ private:
     virtual void release(RenderTask *task) = 0;
 
     RenderAPI mApi;
+    bool mFailed{};
 };
