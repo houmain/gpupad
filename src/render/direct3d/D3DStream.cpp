@@ -34,9 +34,12 @@ void D3DStream::setAttribute(int attributeIndex, const Field &field,
     attribute.stride = getBlockStride(block);
     attribute.offset = blockOffset + getFieldRowOffset(field);
 
-    const auto rowCount = scriptEngine.evaluateValue(block.rowCount, block.id);
-    if (mMaxElementCount < 0 || rowCount < mMaxElementCount)
-        mMaxElementCount = rowCount;
+    if (attribute.divisor == 0) {
+        const auto rowCount =
+            scriptEngine.evaluateValue(block.rowCount, block.id);
+        if (mMaxElementCount < 0 || rowCount < mMaxElementCount)
+            mMaxElementCount = rowCount;
+    }
 
     if (!validateAttribute(attribute)) {
         mMessages +=
