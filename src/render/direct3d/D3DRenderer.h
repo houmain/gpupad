@@ -54,7 +54,7 @@ public:
         , Renderer(RenderAPI::Direct3D)
     {
         mMessages += MessageList::insert(0, MessageType::Direct3DNotAvailable);
-        mRenderer.setFailed();
+        setFailed();
     }
 
     ~D3DRenderer() = default;

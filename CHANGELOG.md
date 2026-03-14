@@ -3,6 +3,33 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 3.0.0] - 2026-03-14
+
+### Added
+
+- Added Direct3D 12 renderer [WIP].
+- Allow to select shader language and compiler in session properties.
+- Generating output window content with currently selected renderer.
+- Added app script object `time`, `timeDelta`, `frameRate` and `date` (#38).
+- Made `frameIndex` settable.
+- Allow to navigate back/fore with designated mouse buttons.
+- Trimming braces when pasting in binary editor.
+- Added NBodyGravity sample.
+- Added some demo custom actions [WIP].
+
+### Changed
+
+- Requiring OpenGL 4.5 support (might reconsider when this limits portability).
+- Split samples in GLSL and HLSL folders/submenus.
+- Improved multiline messages in message window.
+- Changed background color of property editor...
+
+### Fixed
+
+- Greatly improved UI rendering performance on Windows.
+- Only growing editor docks when resizing window.
+- Many minor fixes.
+
 ## [Version 2.7.0] - 2025-06-16
 
 ### Added
@@ -952,6 +979,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 3.0.0]: https://github.com/houmain/gpupad/compare/2.7.0...3.0.0
 [version 2.7.0]: https://github.com/houmain/gpupad/compare/2.6.1...2.7.0
 [version 2.6.1]: https://github.com/houmain/gpupad/compare/2.6.0...2.6.1
 [version 2.6.0]: https://github.com/houmain/gpupad/compare/2.5.0...2.6.0
