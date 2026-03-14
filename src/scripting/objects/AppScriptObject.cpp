@@ -265,18 +265,20 @@ QJSValue AppScriptObject::openEditor(QString fileName, QString title)
         return it->second;
 
     auto result = false;
+    auto viewportSize = QSize();
     dispatchToMainThread([&]() {
         if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
-            result = static_cast<bool>(mMainThreadCalls->openQmlView(fileName,
-                title, (onMainThread() ? mEnginePtr.lock() : nullptr)));
+            result = mMainThreadCalls->openQmlView(fileName, title,
+                (onMainThread() ? mEnginePtr.lock() : nullptr));
         } else {
-            result = static_cast<bool>(mMainThreadCalls->openEditor(fileName));
+            result = mMainThreadCalls->openEditor(fileName);
         }
+        viewportSize = Singletons::editorManager().getViewportSize(fileName);
     });
     if (!result)
         return {};
 
-    auto editorScriptObject = new EditorScriptObject(this, fileName);
+    auto editorScriptObject = new EditorScriptObject(this, fileName, viewportSize);
     return mEditorScriptObjects
         .emplace(editorScriptObject, jsEngine().newQObject(editorScriptObject))
         .first->second;

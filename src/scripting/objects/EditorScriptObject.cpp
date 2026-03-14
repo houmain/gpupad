@@ -5,10 +5,11 @@
 #include <QJsonArray>
 
 EditorScriptObject::EditorScriptObject(AppScriptObject *appScriptObject,
-    const QString &fileName)
+    const QString &fileName, QSize viewportSize)
     : QObject(appScriptObject)
     , mAppScriptObject(appScriptObject)
     , mFileName(fileName)
+    , mViewportSize(viewportSize)
 {
 }
 
@@ -26,7 +27,12 @@ void EditorScriptObject::resetAppScriptObject()
 void EditorScriptObject::update()
 {
     mViewportSizeWasRead = false;
-    mViewportSize = Singletons::editorManager().getViewportSize(mFileName);
+    const auto viewportSize =
+        Singletons::editorManager().getViewportSize(mFileName);
+    if (mViewportSize != viewportSize) {
+        mViewportSize = viewportSize;
+        Q_EMIT viewportResized();
+    }
 }
 
 QJsonValue EditorScriptObject::viewportSize() const

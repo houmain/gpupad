@@ -14,7 +14,7 @@ class EditorScriptObject final : public QObject
 
 public:
     EditorScriptObject(AppScriptObject *appScriptObject,
-        const QString &fileName);
+        const QString &fileName, QSize viewportSize);
     ~EditorScriptObject();
 
     void resetAppScriptObject();
@@ -30,6 +30,6 @@ Q_SIGNALS:
 private:
     AppScriptObject *mAppScriptObject{ };
     QString mFileName;
-    QSize mViewportSize{ 256, 256 };
+    QSize mViewportSize;
     mutable bool mViewportSizeWasRead{};
 };
