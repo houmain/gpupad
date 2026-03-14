@@ -218,10 +218,10 @@ void RenderSessionBase::evaluateBlockProperties(const Block &block, int *offset,
         Q_ASSERT(offset && rowCount);
         *offset = engine.evaluateInt(block.offset, block.id);
         *rowCount = engine.evaluateInt(block.rowCount, block.id);
-        updateCachedProperties(block.id, { *offset, *rowCount });
     };
     if (mScriptSession) {
         dispatchToRenderThread([&]() { evaluate(mScriptSession->engine()); });
+        updateCachedProperties(block.id, { *offset, *rowCount });
     } else {
         evaluate(Singletons::defaultScriptEngine());
     }
@@ -245,11 +245,11 @@ void RenderSessionBase::evaluateTextureProperties(const Texture &texture,
         *height = engine.evaluateInt(texture.height, texture.id);
         *depth = engine.evaluateInt(texture.depth, texture.id);
         *layers = engine.evaluateInt(texture.layers, texture.id);
-        updateCachedProperties(texture.id,
-            { *width, *height, *depth, *layers });
     };
     if (mScriptSession) {
         dispatchToRenderThread([&]() { evaluate(mScriptSession->engine()); });
+        updateCachedProperties(texture.id,
+            { *width, *height, *depth, *layers });
     } else {
         evaluate(Singletons::defaultScriptEngine());
     }
@@ -271,10 +271,10 @@ void RenderSessionBase::evaluateTargetProperties(const Target &target,
         *width = engine.evaluateInt(target.defaultWidth, target.id);
         *height = engine.evaluateInt(target.defaultHeight, target.id);
         *layers = engine.evaluateInt(target.defaultLayers, target.id);
-        updateCachedProperties(target.id, { *width, *height, *layers });
     };
     if (mScriptSession) {
         dispatchToRenderThread([&]() { evaluate(mScriptSession->engine()); });
+        updateCachedProperties(target.id, { *width, *height, *layers });
     } else {
         evaluate(Singletons::defaultScriptEngine());
     }
