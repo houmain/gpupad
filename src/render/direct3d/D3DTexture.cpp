@@ -303,6 +303,9 @@ bool D3DTexture::swap(D3DTexture &other)
 
 bool D3DTexture::updateMipmaps(D3DContext &context)
 {
+    if (!resource())
+        return false;
+
     if (std::exchange(mMipmapsInvalidated, false) && levels() > 1) {
 
         resourceBarrier(context, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -371,9 +374,13 @@ void D3DTexture::create(D3DContext &context)
     const auto heapProperties =
         CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     const auto heapFlags = D3D12_HEAP_FLAG_SHARED;
-    AssertIfFailed(context.device.CreateCommittedResource(&heapProperties,
-        heapFlags, &resourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr,
-        IID_PPV_ARGS(&mResource)));
+    if (FAILED(context.device.CreateCommittedResource(&heapProperties,
+            heapFlags, &resourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr,
+            IID_PPV_ARGS(&mResource)))) {
+        mMessages +=
+            MessageList::insert(mItemId, MessageType::CreatingTextureFailed);
+        return;
+    }
 
     AssertIfFailed(context.device.CreateSharedHandle(resource(), nullptr,
         GENERIC_ALL, nullptr, &mShareHandle));

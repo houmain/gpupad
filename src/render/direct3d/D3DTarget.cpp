@@ -156,7 +156,7 @@ bool D3DTarget::setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state)
     return true;
 }
 
-void D3DTarget::bind(D3DContext &context)
+bool D3DTarget::bind(D3DContext &context)
 {
     auto renderTargets = std::vector<ID3D12Resource *>();
     auto renderTargetViewDescs = std::vector<D3D12_RENDER_TARGET_VIEW_DESC>();
@@ -167,6 +167,10 @@ void D3DTarget::bind(D3DContext &context)
 
     for (auto &attachment : mAttachments)
         if (auto texture = attachment.texture) {
+
+            if (!texture->resource())
+                return false;
+
             const auto kind = texture->kind();
             if (kind.depth || kind.stencil) {
                 texture->prepareDepthStencilView(context);
@@ -211,6 +215,7 @@ void D3DTarget::bind(D3DContext &context)
 
     const auto scissorRect = D3D12_RECT{ 0, 0, width, height };
     context.graphicsCommandList->RSSetScissorRects(1, &scissorRect);
+    return true;
 }
 
 bool D3DTarget::hasAttachment(const D3DTexture *texture) const

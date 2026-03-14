@@ -2,7 +2,7 @@
 
 #if defined(_WIN32)
 
-#include "D3DTexture.h"
+#  include "D3DTexture.h"
 
 class D3DTarget
 {
@@ -12,7 +12,7 @@ public:
     bool hasAttachment(const D3DTexture *texture) const;
     const QSet<ItemId> &usedItems() const { return mUsedItems; };
     bool setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state);
-    void bind(D3DContext &context);
+    bool bind(D3DContext &context);
 
 private:
     struct D3DAttachment : Attachment

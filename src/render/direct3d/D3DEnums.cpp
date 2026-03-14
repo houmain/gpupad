@@ -166,7 +166,7 @@ DXGI_FORMAT toDXGITypelessFormat(Texture::Format format)
     case TF::RGB_BP_UNSIGNED_FLOAT:
     case TF::RGB_BP_SIGNED_FLOAT:   return DXGI_FORMAT_BC6H_TYPELESS;
     case TF::RGB_BP_UNorm:          return DXGI_FORMAT_BC7_TYPELESS;
-    case TF::SRGB8:
+    //case TF::SRGB8:
     case TF::SRGB8_Alpha8:          return DXGI_FORMAT_R8G8B8A8_TYPELESS;
     case TF::SRGB_DXT1:             return DXGI_FORMAT_BC1_TYPELESS;
     case TF::SRGB_Alpha_DXT1:       return DXGI_FORMAT_BC1_TYPELESS;
