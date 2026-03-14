@@ -141,9 +141,6 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
         if (!mProgram->link(context))
             return;
 
-        if (mVertexStream)
-            mUsedItems += mVertexStream->usedItems();
-
         mPipeline = std::make_unique<D3DPipeline>(mCall.id, mProgram);
     }
 
@@ -262,8 +259,10 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
     if (mIndexBuffer)
         bindIndexBuffer(context, scriptEngine);
 
-    if (mVertexStream)
+    if (mVertexStream) {
         mVertexStream->bind(context);
+        mUsedItems += mVertexStream->itemId();
+    }
 
     context.graphicsCommandList->IASetPrimitiveTopology(
         toD3DPrimitiveTopology(mCall.primitiveType,
@@ -293,7 +292,7 @@ void D3DCall::bindIndexBuffer(D3DContext &context, ScriptEngine &scriptEngine)
 
     // really cannot use resource as index and vertex buffer simultaneously?
     auto deviceAddress = UINT64{};
-    if (!mVertexStream->usedItems().contains(mIndexBuffer->itemId())) {
+    if (!mVertexStream->usesBuffer(mIndexBuffer)) {
         mIndexBuffer->prepareIndexBuffer(context);
         deviceAddress = mIndexBuffer->getDeviceAddress() + offset;
     } else {

@@ -328,14 +328,6 @@
                     "items": [
                         {
                             "divisor": 0,
-                            "fieldId": 921,
-                            "id": 942,
-                            "name": "POSITION",
-                            "normalize": false,
-                            "type": "Attribute"
-                        },
-                        {
-                            "divisor": 0,
                             "fieldId": 963,
                             "id": 944,
                             "name": "COLOR",

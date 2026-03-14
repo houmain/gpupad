@@ -312,7 +312,7 @@
                             "name": "u_ViewProjectionMatrix",
                             "type": "Binding",
                             "values": [
-                                "multiply(\n  translation(0, 0, -3.5),\n  perspective(45, 1.0, 0.1, 1000),\n)"
+                                "viewProjectionMatrix(app.time)"
                             ]
                         },
                         {

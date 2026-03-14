@@ -4,16 +4,14 @@
 GLStream::GLStream(const Stream &stream) : mItemId(stream.id)
 {
     auto attributeIndex = 0;
-    for (const auto &item : stream.items) {
+    for (const auto &item : stream.items)
         if (auto attribute = castItem<Attribute>(item))
-            mAttributes[attributeIndex] = GLAttribute{
+            mAttributes[attributeIndex++] = GLAttribute{
                 { item->id },
                 attribute->name,
                 attribute->normalize,
                 attribute->divisor,
             };
-        ++attributeIndex;
-    }
 }
 
 void GLStream::setAttribute(int attributeIndex, const Field &field,

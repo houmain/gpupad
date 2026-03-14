@@ -6,17 +6,15 @@ VKStream::VKStream(const Stream &stream) : mItemId(stream.id)
     mUsedItems += stream.id;
 
     auto attributeIndex = 0;
-    for (const auto *item : stream.items) {
+    for (const auto *item : stream.items)
         if (auto attribute = castItem<Attribute>(item)) {
             mUsedItems += item->id;
-            mAttributes[attributeIndex] = VKAttribute{
+            mAttributes[attributeIndex++] = VKAttribute{
                 attribute->name,
                 attribute->normalize,
                 attribute->divisor,
             };
         }
-        ++attributeIndex;
-    }
 }
 
 void VKStream::setAttribute(int attributeIndex, const Field &field,

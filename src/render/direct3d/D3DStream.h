@@ -2,13 +2,14 @@
 
 #if defined(_WIN32)
 
-#include "D3DBuffer.h"
+#  include "D3DBuffer.h"
 
 class D3DStream
 {
 public:
     struct D3DAttribute
     {
+        QSet<ItemId> usedItems;
         QString name;
         bool normalize{};
         int divisor{};
@@ -17,15 +18,17 @@ public:
         int count{};
         int stride{};
         int offset{};
+        bool isUsed{};
     };
 
     explicit D3DStream(const Stream &stream);
+    ItemId itemId() const { return mItemId; }
     void setAttribute(int attributeIndex, const Field &column,
         D3DBuffer *buffer, ScriptEngine &scriptEngine);
+    bool usesBuffer(const D3DBuffer *buffer) const;
     const D3DAttribute *findAttribute(const QString &semanticName,
-        int semanticIndex) const;
+        int semanticIndex);
     void bind(D3DContext &context);
-    const QSet<ItemId> &usedItems() const { return mUsedItems; }
     int maxElementCount() const { return mMaxElementCount; }
 
 private:
@@ -33,7 +36,6 @@ private:
 
     ItemId mItemId{};
     MessagePtrSet mMessages;
-    QSet<ItemId> mUsedItems;
     QMap<int, D3DAttribute> mAttributes;
     std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
     int mMaxElementCount{ -1 };

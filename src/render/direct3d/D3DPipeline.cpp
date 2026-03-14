@@ -186,6 +186,7 @@ bool D3DPipeline::createInputLayout(
             canRender = false;
             continue;
         }
+        mUsedItems += attribute->usedItems;
 
         inputLayout->push_back(D3D12_INPUT_ELEMENT_DESC{
             .SemanticName = paramDesc.SemanticName,

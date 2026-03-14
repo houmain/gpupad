@@ -60,6 +60,7 @@ bool D3DBuffer::swap(D3DBuffer &other)
     if (!BufferBase::swap(other))
         return false;
     std::swap(mResource, other.mResource);
+    std::swap(mCurrentState, other.mCurrentState);
     return true;
 }
 
