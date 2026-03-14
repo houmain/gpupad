@@ -163,12 +163,16 @@ void RenderSessionBase::buildCommandQueue(CommandQueue &commandQueue) noexcept
         } else if (auto binding = castItem<Binding>(item)) {
             const auto &b = *binding;
             switch (b.bindingType) {
-            case Binding::BindingType::Uniform:
+            case Binding::BindingType::Uniform: {
+                // evaluate dynamically created bindings
+                evaluateBindingValues(b, scriptEngine);
+
                 addCommand([this, b](BindingState &state) {
                     state.top().uniforms[b.name] = UniformBinding{ b.id, b.name,
-                        b.bindingType, false, mUniformBindingValues[b.id] };
+                        b.bindingType, false, mBindingValues[b.id] };
                 });
                 break;
+            }
 
             case Binding::BindingType::Sampler: {
                 auto texture = addTextureOnce(b.textureId);

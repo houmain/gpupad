@@ -74,6 +74,7 @@ void RenderSessionBase::configure()
     }
 
     mScriptSession->beginSessionUpdate();
+    mBindingValues.clear();
 
     // collect items to evaluate, since doing so can modify list
     auto itemsToEvaluate = QVector<const Item *>();
@@ -94,12 +95,21 @@ void RenderSessionBase::configure()
             if (Singletons::fileCache().getSource(script->fileName, &source))
                 scriptEngine.evaluateScript(source, script->fileName);
         } else if (auto binding = castItem<Binding>(item)) {
-            // evaluate each binding only once
-            auto &values = mUniformBindingValues[binding->id];
-            // set global in script state
-            values = scriptEngine.evaluateValues(binding->values, binding->id);
-            scriptEngine.setGlobal(binding->name, values);
+            // evaluate bindings with script objects, since they are setting globals
+            evaluateBindingValues(*binding, scriptEngine);
         }
+    }
+}
+
+void RenderSessionBase::evaluateBindingValues(const Binding &binding,
+    ScriptEngine &scriptEngine)
+{
+    auto &values = mBindingValues[binding.id];
+    if (values.isEmpty()) {
+        values = scriptEngine.evaluateValues(binding.values, binding.id);
+
+        // set global in script state
+        scriptEngine.setGlobal(binding.name, values);
     }
 }
 

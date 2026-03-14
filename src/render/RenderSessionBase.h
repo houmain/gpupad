@@ -157,6 +157,8 @@ private:
     QList<int> getCachedProperties(ItemId itemId);
     void updateCachedProperties(ItemId itemId, QList<int> values);
     std::optional<size_t> addTimeQuery(ItemId callId);
+    void evaluateBindingValues(const Binding &binding,
+        ScriptEngine &scriptEngine);
 
     const QString mBasePath;
     QSet<ItemId> mUsedItems;
@@ -174,7 +176,7 @@ private:
     QMap<ItemId, QList<int>> mPropertyCache;
     size_t mNextCommandQueueIndex{};
     QMap<ItemId, GroupIteration> mGroupIterations;
-    QMap<ItemId, ScriptValueList> mUniformBindingValues;
+    QMap<ItemId, ScriptValueList> mBindingValues;
 };
 
 template <typename T, typename Item, typename... Args>
