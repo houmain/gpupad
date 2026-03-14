@@ -110,6 +110,7 @@ void RenderSessionBase::evaluateBindingValues(const Binding &binding,
 
         // set global in script state
         scriptEngine.setGlobal(binding.name, values);
+        mUsedItems += binding.id;
     }
 }
 
