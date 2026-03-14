@@ -1,0 +1,398 @@
+{
+    "flipViewport": false,
+    "id": 913,
+    "items": [
+        {
+            "flipVertically": false,
+            "format": "RGBA8_UNorm",
+            "height": "600",
+            "id": 940,
+            "name": "Color",
+            "samples": 1,
+            "target": "Target2D",
+            "type": "Texture",
+            "width": "800"
+        },
+        {
+            "blendConstant": "#ffffffff",
+            "cullMode": "NoCulling",
+            "frontFace": "CCW",
+            "id": 938,
+            "items": [
+                {
+                    "blendAlphaDest": "One",
+                    "blendAlphaEq": "Add",
+                    "blendAlphaSource": "One",
+                    "blendColorDest": "One",
+                    "blendColorEq": "Add",
+                    "blendColorSource": "SrcAlpha",
+                    "colorWriteMask": 15,
+                    "id": 939,
+                    "level": 0,
+                    "name": "Attachment",
+                    "textureId": 940,
+                    "type": "Attachment"
+                }
+            ],
+            "logicOperation": "NoLogicOperation",
+            "name": "Target",
+            "polygonMode": "Fill",
+            "type": "Target"
+        },
+        {
+            "bindingType": "Uniform",
+            "editor": "Expression",
+            "id": 960,
+            "name": "ParticleCount",
+            "type": "Binding",
+            "values": [
+                "10000"
+            ]
+        },
+        {
+            "executeOn": "ResetEvaluation",
+            "fileName": "generate.js",
+            "id": 953,
+            "type": "Script"
+        },
+        {
+            "id": 919,
+            "items": [
+                {
+                    "id": 920,
+                    "items": [
+                        {
+                            "count": 4,
+                            "dataType": "Float",
+                            "id": 921,
+                            "name": "Pos",
+                            "padding": 0,
+                            "type": "Field"
+                        },
+                        {
+                            "count": 4,
+                            "dataType": "Float",
+                            "id": 922,
+                            "name": "Velo",
+                            "padding": 0,
+                            "type": "Field"
+                        }
+                    ],
+                    "name": "Block",
+                    "offset": "0",
+                    "rowCount": "10000",
+                    "type": "Block"
+                }
+            ],
+            "name": "BufferR",
+            "type": "Buffer"
+        },
+        {
+            "id": 926,
+            "items": [
+                {
+                    "id": 927,
+                    "items": [
+                        {
+                            "count": 4,
+                            "dataType": "Float",
+                            "id": 928,
+                            "name": "Pos",
+                            "padding": 0,
+                            "type": "Field"
+                        },
+                        {
+                            "count": 4,
+                            "dataType": "Float",
+                            "id": 929,
+                            "name": "Velo",
+                            "padding": 0,
+                            "type": "Field"
+                        }
+                    ],
+                    "name": "Block",
+                    "offset": "0",
+                    "rowCount": "10000",
+                    "type": "Block"
+                }
+            ],
+            "name": "BufferW",
+            "type": "Buffer"
+        },
+        {
+            "id": 961,
+            "items": [
+                {
+                    "id": 962,
+                    "items": [
+                        {
+                            "count": 4,
+                            "dataType": "Float",
+                            "id": 963,
+                            "name": "color",
+                            "padding": 0,
+                            "type": "Field"
+                        }
+                    ],
+                    "name": "Colors",
+                    "offset": "0",
+                    "rowCount": "10000",
+                    "type": "Block"
+                }
+            ],
+            "name": "Colors",
+            "type": "Buffer"
+        },
+        {
+            "id": 945,
+            "inlineScope": false,
+            "items": [
+                {
+                    "id": 914,
+                    "items": [
+                        {
+                            "entryPoint": "",
+                            "fileName": "nBodyGravityCS.hlsl",
+                            "id": 915,
+                            "shaderType": "Compute",
+                            "type": "Shader"
+                        }
+                    ],
+                    "name": "Program",
+                    "type": "Program"
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression4",
+                    "id": 923,
+                    "name": "cbCS.g_param",
+                    "type": "Binding",
+                    "values": [
+                        "ParticleCount",
+                        "1",
+                        "0",
+                        "0"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression4",
+                    "id": 924,
+                    "name": "cbCS.g_paramf",
+                    "type": "Binding",
+                    "values": [
+                        "0.1",
+                        "1",
+                        "0",
+                        "0"
+                    ]
+                },
+                {
+                    "bindingType": "Buffer",
+                    "bufferId": 919,
+                    "id": 925,
+                    "name": "oldPosVelo",
+                    "type": "Binding"
+                },
+                {
+                    "bindingType": "Buffer",
+                    "bufferId": 926,
+                    "id": 930,
+                    "name": "newPosVelo",
+                    "type": "Binding"
+                },
+                {
+                    "bufferId": 919,
+                    "callType": "SwapBuffers",
+                    "checked": true,
+                    "executeOn": "EveryEvaluation",
+                    "fromBufferId": 926,
+                    "id": 955,
+                    "name": "Swap Buffers",
+                    "type": "Call"
+                },
+                {
+                    "callType": "Compute",
+                    "checked": true,
+                    "executeOn": "EveryEvaluation",
+                    "id": 916,
+                    "name": "Compute",
+                    "programId": 914,
+                    "type": "Call",
+                    "workGroupsX": "Math.ceil(ParticleCount / 128)",
+                    "workGroupsY": "1",
+                    "workGroupsZ": "1"
+                }
+            ],
+            "iterations": "1",
+            "name": "Simulate",
+            "type": "Group"
+        },
+        {
+            "id": 946,
+            "inlineScope": false,
+            "items": [
+                {
+                    "executeOn": "ResetEvaluation",
+                    "fileName": "OrbitCamera.js",
+                    "id": 967,
+                    "type": "Script"
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 968,
+                    "name": "View",
+                    "type": "Binding",
+                    "values": [
+                        "updateOrbitCamera()"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 969,
+                    "name": "Projection",
+                    "type": "Binding",
+                    "values": [
+                        "perspective(45, 1.0, 1.0, 10000)"
+                    ]
+                },
+                {
+                    "bindingType": "Buffer",
+                    "bufferId": 919,
+                    "id": 949,
+                    "name": "g_bufPosVelo",
+                    "type": "Binding"
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 950,
+                    "name": "cb0.g_mWorldViewProj",
+                    "type": "Binding",
+                    "values": [
+                        "multiply(View, Projection)"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 951,
+                    "name": "cb0.g_mInvView",
+                    "type": "Binding",
+                    "values": [
+                        "invert(View)"
+                    ]
+                },
+                {
+                    "bindingType": "Uniform",
+                    "editor": "Expression",
+                    "id": 954,
+                    "name": "cb1.g_fParticleRad",
+                    "type": "Binding",
+                    "values": [
+                        "30"
+                    ]
+                },
+                {
+                    "id": 933,
+                    "items": [
+                        {
+                            "entryPoint": "VSParticleDraw",
+                            "fileName": "ParticleDraw.hlsl",
+                            "id": 934,
+                            "shaderType": "Vertex",
+                            "type": "Shader"
+                        },
+                        {
+                            "entryPoint": "GSParticleDraw",
+                            "fileName": "ParticleDraw.hlsl",
+                            "id": 935,
+                            "shaderType": "Geometry",
+                            "type": "Shader"
+                        },
+                        {
+                            "entryPoint": "PSParticleDraw",
+                            "fileName": "ParticleDraw.hlsl",
+                            "id": 936,
+                            "shaderType": "Fragment",
+                            "type": "Shader"
+                        }
+                    ],
+                    "name": "Draw Program",
+                    "type": "Program"
+                },
+                {
+                    "id": 941,
+                    "items": [
+                        {
+                            "divisor": 0,
+                            "fieldId": 921,
+                            "id": 942,
+                            "name": "POSITION",
+                            "normalize": false,
+                            "type": "Attribute"
+                        },
+                        {
+                            "divisor": 0,
+                            "fieldId": 963,
+                            "id": 944,
+                            "name": "COLOR",
+                            "normalize": false,
+                            "type": "Attribute"
+                        }
+                    ],
+                    "name": "Stream",
+                    "type": "Stream"
+                },
+                {
+                    "callType": "ClearTexture",
+                    "checked": true,
+                    "clearColor": "#ff000000",
+                    "clearDepth": 1,
+                    "clearStencil": 0,
+                    "executeOn": "EveryEvaluation",
+                    "id": 952,
+                    "name": "Clear Texture",
+                    "textureId": 940,
+                    "type": "Call"
+                },
+                {
+                    "baseInstance": "0",
+                    "callType": "Draw",
+                    "checked": true,
+                    "count": "",
+                    "executeOn": "EveryEvaluation",
+                    "first": "0",
+                    "id": 937,
+                    "instanceCount": "1",
+                    "name": "Draw",
+                    "primitiveType": "Points",
+                    "programId": 933,
+                    "targetId": 938,
+                    "type": "Call",
+                    "vertexStreamId": 941
+                }
+            ],
+            "iterations": "1",
+            "name": "Render",
+            "type": "Group"
+        }
+    ],
+    "name": "Session",
+    "renderer": "Direct3D",
+    "reverseCulling": true,
+    "shaderCompiler": "D3DCompiler",
+    "shaderCompilerSettings": {
+        "autoMapBindings": "true",
+        "autoMapLocations": "true",
+        "autoSampledTextures": "true",
+        "spirvVersion": "10",
+        "vulkanRulesRelaxed": "true"
+    },
+    "shaderIncludePaths": "",
+    "shaderLanguage": "HLSL",
+    "shaderPreamble": "",
+    "type": "Session"
+}

@@ -233,7 +233,7 @@ void SessionProperties::updateWidgets()
 
     const auto hasOpenGLRenderer = (renderer == Session::Renderer::OpenGL);
     const auto hasShaderCompiler =
-        (shaderCompiler != Session::ShaderCompiler::Driver);
+        (shaderCompiler == Session::ShaderCompiler::glslang);
 
     setFormVisibility(mUi->formLayout, mUi->labelShaderCompiler,
         mUi->shaderCompiler, (language != Session::ShaderLanguage::Slang));
