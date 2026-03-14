@@ -1,6 +1,6 @@
+#pragma once
 
 #include "render/Renderer.h"
-#include <QObject>
 #include <QThread>
 
 class GLRenderer : public QObject, public Renderer

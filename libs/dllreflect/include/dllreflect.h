@@ -400,7 +400,7 @@ public:
 #endif
   void unload() noexcept;
   bool loaded() const { return static_cast<bool>(m_handle); }
-  const Interface& interface() const { return m_interface; }
+  const Interface& get_interface() const { return m_interface; }
 
 private:
   template<typename Signature>
@@ -639,8 +639,8 @@ bool Library::load(const std::string& directory, const std::string& name) noexce
     return false;
 
   if (auto get_interface = get_function<const Interface*()>("dllreflect_export"))
-    if (auto interface = get_interface())
-      m_interface = *interface;
+    if (auto inter = get_interface())
+      m_interface = *inter;
   
   return true;
 }

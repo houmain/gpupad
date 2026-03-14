@@ -126,7 +126,7 @@ LibraryScriptObject_Callable::~LibraryScriptObject_Callable() = default;
 
 QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
 {
-    const auto &interface = mLibrary->interface();
+    const auto &interface = mLibrary->get_interface();
     if (index < 0 || index >= static_cast<int>(interface.function_count))
         return {};
 
@@ -318,7 +318,7 @@ bool LibraryScriptObject::load(QJSEngine *engine, const QString &fileName,
 
     // QQmlPropertyMap is needed for populating functions dynamically, which can
     // not have Q_INVOKABLE functions, therefore delegating to separate object
-    const auto &interface = library->interface();
+    const auto &interface = library->get_interface();
     engine->globalObject().setProperty("_lib",
         engine->newQObject(new LibraryScriptObject_Callable(engine,
             std::move(library), this)));
