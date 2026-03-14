@@ -76,7 +76,6 @@ namespace {
         case T::Target3D: return D3D12_RTV_DIMENSION_TEXTURE3D;
         default:          break;
         }
-        Q_ASSERT(!"not handled target");
         return D3D12_RTV_DIMENSION_UNKNOWN;
     }
 
@@ -94,7 +93,6 @@ namespace {
                                  : D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY);
         default: break;
         }
-        Q_ASSERT(!"not handled target");
         return D3D12_DSV_DIMENSION_UNKNOWN;
     }
 } // namespace
@@ -176,6 +174,32 @@ D3D12_RENDER_TARGET_VIEW_DESC D3DTexture::renderTargetViewDesc() const
         .ViewDimension = toRTVDimension(mTarget, mSamples),
     };
     // TODO: select array slice
+    switch (desc.ViewDimension) {
+    case D3D12_RTV_DIMENSION_BUFFER:    desc.Buffer = {}; break;
+    case D3D12_RTV_DIMENSION_TEXTURE1D: desc.Texture1D = {}; break;
+    case D3D12_RTV_DIMENSION_TEXTURE1DARRAY:
+        desc.Texture1DArray = {
+            .ArraySize = static_cast<UINT>(-1),
+        };
+        break;
+    case D3D12_RTV_DIMENSION_TEXTURE2D: desc.Texture2D = {}; break;
+    case D3D12_RTV_DIMENSION_TEXTURE2DARRAY:
+        desc.Texture2DArray = {
+            .ArraySize = static_cast<UINT>(-1),
+        };
+        break;
+    case D3D12_RTV_DIMENSION_TEXTURE2DMS: desc.Texture2DMS = {}; break;
+    case D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY:
+        desc.Texture2DMSArray = {
+            .ArraySize = static_cast<UINT>(-1),
+        };
+        break;
+    case D3D12_RTV_DIMENSION_TEXTURE3D:
+        desc.Texture3D = {
+            .WSize = static_cast<UINT>(-1),
+        };
+        break;
+    }
     return desc;
 }
 
@@ -186,6 +210,26 @@ D3D12_DEPTH_STENCIL_VIEW_DESC D3DTexture::depthStencilViewDesc() const
         .ViewDimension = toDSVDimension(mTarget, mSamples),
     };
     // TODO: select array slice
+    switch (desc.ViewDimension) {
+    case D3D12_DSV_DIMENSION_TEXTURE1D: desc.Texture1D = {}; break;
+    case D3D12_DSV_DIMENSION_TEXTURE1DARRAY:
+        desc.Texture1DArray = {
+            .ArraySize = static_cast<UINT>(-1),
+        };
+        break;
+    case D3D12_DSV_DIMENSION_TEXTURE2D: desc.Texture2D = {}; break;
+    case D3D12_DSV_DIMENSION_TEXTURE2DARRAY:
+        desc.Texture2DArray = {
+            .ArraySize = static_cast<UINT>(-1),
+        };
+        break;
+    case D3D12_DSV_DIMENSION_TEXTURE2DMS: desc.Texture2DMS = {}; break;
+    case D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY:
+        desc.Texture2DMSArray = {
+            .ArraySize = static_cast<UINT>(-1),
+        };
+        break;
+    }
     return desc;
 }
 
@@ -254,6 +298,9 @@ bool D3DTexture::clear(D3DContext &context, std::array<double, 4> color,
             flags |= D3D12_CLEAR_FLAG_STENCIL;
 
         const auto desc = depthStencilViewDesc();
+        if (!desc.ViewDimension)
+            return false;
+
         prepareDepthStencilView(context);
         context.renderTargetHelper.ClearDepthStencilView(
             context.graphicsCommandList.Get(), resource(), &desc, flags,
@@ -272,6 +319,9 @@ bool D3DTexture::clear(D3DContext &context, std::array<double, 4> color,
         };
 
         const auto desc = renderTargetViewDesc();
+        if (!desc.ViewDimension)
+            return false;
+
         prepareRenderTargetView(context);
         context.renderTargetHelper.ClearRenderTargetView(
             context.graphicsCommandList.Get(), resource(), &desc, clearColor, 0,

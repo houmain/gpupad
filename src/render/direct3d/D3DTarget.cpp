@@ -167,7 +167,7 @@ bool D3DTarget::bind(D3DContext &context)
 
     for (auto &attachment : mAttachments)
         if (auto texture = attachment.texture) {
-
+            const auto &resource = texture->resource();
             if (!texture->resource())
                 return false;
 
@@ -175,12 +175,18 @@ bool D3DTarget::bind(D3DContext &context)
             if (kind.depth || kind.stencil) {
                 texture->prepareDepthStencilView(context);
                 depthStencilViewDesc = texture->depthStencilViewDesc();
-                depthStencilView = texture->resource();
+                if (!depthStencilViewDesc.ViewDimension)
+                    return false;
+                depthStencilView = resource;
             } else if (kind.color) {
+                const auto renderTargetViewDesc =
+                    texture->renderTargetViewDesc();
+                if (!renderTargetViewDesc.ViewDimension)
+                    return false;
+
                 texture->prepareRenderTargetView(context);
-                renderTargetViewDescs.push_back(
-                    texture->renderTargetViewDesc());
-                renderTargets.push_back(texture->resource());
+                renderTargetViewDescs.push_back(renderTargetViewDesc);
+                renderTargets.push_back(resource);
             }
 
             const auto min = [](int &var, const int value) {

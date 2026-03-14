@@ -268,8 +268,11 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
         toD3DPrimitiveTopology(mCall.primitiveType,
             scriptEngine.evaluateUInt(mCall.patchVertices, mCall.id)));
 
-    if (mTarget && !mTarget->bind(context))
+    if (mTarget && !mTarget->bind(context)) {
+        mMessages +=
+            MessageList::insert(mCall.id, MessageType::TargetNotAssigned);
         return;
+    }
 
     if (mCall.callType == Call::CallType::Draw) {
         context.graphicsCommandList->DrawInstanced(count, instanceCount, first,
