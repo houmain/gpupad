@@ -122,12 +122,12 @@ void SynchronizeLogic::setCurrentEditorSourceType(SourceType sourceType)
 
 bool SynchronizeLogic::initializeRenderSession()
 {
+    if (mRenderSession)
+        return true;
+
     const auto sessionRenderer = Singletons::sessionRenderer();
     if (!sessionRenderer)
         return false;
-
-    if (mRenderSession && &mRenderSession->renderer() == sessionRenderer.get())
-        return true;
 
     const auto basePath = QFileInfo(mSessionFileName).path();
     mRenderSession = RenderSessionBase::create(sessionRenderer, basePath);
@@ -146,7 +146,6 @@ bool SynchronizeLogic::initializeRenderSession()
 
 void SynchronizeLogic::resetRenderSession()
 {
-    Q_ASSERT(mEvaluationMode == EvaluationMode::Paused);
     mRenderSession.reset();
     mProcessSource.reset();
     Singletons::videoManager().unloadAll();
@@ -414,6 +413,10 @@ void SynchronizeLogic::handleEvaluateTimout()
 
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
+    const auto sessionRenderer = Singletons::sessionRenderer();
+    if (mRenderSession && &mRenderSession->renderer() != sessionRenderer.get())
+        resetRenderSession();
+
     Singletons::fileCache().updateFromEditors();
 
     const auto itemsChanged = mRenderSessionInvalidated;
