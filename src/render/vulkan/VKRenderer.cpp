@@ -8,7 +8,7 @@
 #include <QSemaphore>
 
 // TODO: added because of multiple definitions of fmt::v11::detail::assert_fail
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(FMT_ASSERT)
 #  define FMT_ASSERT
 #endif
 

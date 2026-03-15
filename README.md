@@ -203,7 +203,7 @@ git clone --depth=1 https://github.com/microsoft/vcpkg.git
 vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
 # install additional dependencies using vcpkg
-vcpkg/vcpkg install vulkan "ktx[vulkan]" spirv-cross vulkan-memory-allocator spdlog
+vcpkg/vcpkg install vulkan "ktx[vulkan]" spirv-cross spirv-tools vulkan-memory-allocator spdlog
 
 # build
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
@@ -227,7 +227,7 @@ git clone --depth=1 https://github.com/microsoft/vcpkg.git
 vcpkg\bootstrap-vcpkg -disableMetrics
 
 # install dependencies using vcpkg
-vcpkg\vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator spdlog directx-dxc
+vcpkg\vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross spirv-tools vulkan-memory-allocator spdlog directx-dxc
 
 # generate Visual Studio solution (set correct path to Qt installation)
 cmake -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.9.0\msvc2022_64 -DCMAKE_TOOLCHAIN_FILE=vcpkg\scripts\buildsystems\vcpkg.cmake

@@ -15,7 +15,7 @@ namespace {
 
     std::string getElementName(const std::string &arrayName, int index)
     {
-        return std::format("{}[{}]", arrayName, index);
+        return arrayName + "[" + std::to_string(index) + "]";
     }
 
     std::string removeInstanceName(std::string bufferName)
