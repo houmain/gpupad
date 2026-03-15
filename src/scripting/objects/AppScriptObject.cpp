@@ -292,8 +292,8 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
 
     // search in script's base path and in libs
     auto searchPaths = QList<QDir>();
-    if (mBasePath != QDir())
-        searchPaths += mBasePath;
+    searchPaths += mBasePath;
+
 #if !defined(NDEBUG)
     searchPaths += QDir(
         QCoreApplication::applicationDirPath() + "/extra/actions/" + fileName);

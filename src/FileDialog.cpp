@@ -407,7 +407,7 @@ QDir getInstallDirectory(const QString &dirName)
         if (path.exists(dirName))
             return QDir::cleanPath(path.filePath(dirName));
 
-    return QDir();
+    return {};
 }
 
 QDir getUserDirectory(const QString &dirName)
@@ -427,8 +427,7 @@ QList<QDir> getApplicationDirectories(const QString &dirName)
         getUserDirectory(dirName),
     };
     for (const auto &dir : dirs)
-        if (dir != QDir())
-            result.append(dir);
+        result.append(dir);
     return result;
 }
 
