@@ -15,13 +15,13 @@
 <a href="https://github.com/houmain/gpupad/blob/main/CHANGELOG.md">Changelog</a>
 </p>
 
-A lightweight editor for GLSL, HLSL and Slang shaders and a fully-featured IDE for developing GPU based algorithms.
+A lightweight editor for GLSL and HLSL shaders and a fully-featured IDE for developing GPU based algorithms.
 
 ## Features
 
 * OpenGL, Vulkan and Direct3D 12 renderer.
 * Decent source editor with automatic indentation, brace highlighting, rectangular selection&hellip;
-* GLSL, HLSL, Slang and JavaScript syntax highlighting with basic auto completion.
+* GLSL, HLSL and JavaScript syntax highlighting with basic auto completion.
 * Possibility to evaluate shader programs with completely customizeable input and render state.
 * Continuous validation of standalone shader and script files.
 * Automatically defined printf function for printf-debugging.
@@ -203,7 +203,7 @@ git clone --depth=1 https://github.com/microsoft/vcpkg.git
 vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
 # install additional dependencies using vcpkg
-vcpkg/vcpkg install vulkan "ktx[vulkan]" spirv-cross vulkan-memory-allocator shader-slang spdlog
+vcpkg/vcpkg install vulkan "ktx[vulkan]" spirv-cross vulkan-memory-allocator spdlog
 
 # build
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
@@ -227,7 +227,7 @@ git clone --depth=1 https://github.com/microsoft/vcpkg.git
 vcpkg\bootstrap-vcpkg -disableMetrics
 
 # install dependencies using vcpkg
-vcpkg\vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator shader-slang spdlog
+vcpkg\vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator spdlog directx-dxc
 
 # generate Visual Studio solution (set correct path to Qt installation)
 cmake -B build -DCMAKE_PREFIX_PATH=C:\Qt\6.9.0\msvc2022_64 -DCMAKE_TOOLCHAIN_FILE=vcpkg\scripts\buildsystems\vcpkg.cmake
