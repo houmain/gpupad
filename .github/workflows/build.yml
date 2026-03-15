@@ -83,7 +83,7 @@ jobs:
       uses: johnwason/vcpkg-action@v6
       with:
           revision: '60d5b6b80f107a200e911ca3820e1eac70675e9d'
-          pkgs: 'vulkan "ktx[vulkan]" glslang spirv-cross vulkan-memory-allocator spdlog OpenImageIO ${{ matrix.config.VCPKG_PACKAGES }}'
+          pkgs: 'vulkan "ktx[vulkan]" glslang spirv-cross spirv-tools vulkan-memory-allocator spdlog OpenImageIO ${{ matrix.config.VCPKG_PACKAGES }}'
           triplet: '${{ matrix.config.VCPKG_TRIPLET }}'
           token: ${{ github.token }}
           github-binarycache: true
