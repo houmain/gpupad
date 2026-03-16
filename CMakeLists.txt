@@ -280,6 +280,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE KTX::ktx)
 
 target_include_directories(${PROJECT_NAME} PRIVATE src libs)
 
+# embed editors using QWidget::createWindowContainer for improved performance
+target_compile_definitions(${PROJECT_NAME} PRIVATE USE_WINDOW_CONTAINER)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_libraries(${PROJECT_NAME} PRIVATE GL)
 elseif(WIN32)
@@ -291,9 +294,6 @@ elseif(WIN32)
       dxgi
       d3dcompiler
       Microsoft::DirectXShaderCompiler)
-
-    # embed editors using QWidget::createWindowContainer for improved performance
-    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_WINDOW_CONTAINER)
 
 elseif(APPLE)
     find_package(OpenGL REQUIRED)

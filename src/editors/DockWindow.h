@@ -28,5 +28,4 @@ protected:
 private:
     void initializeTabBar(QTabBar *tabBar);
     void initializeDock(QDockWidget *dock);
-    void setDockTitleBar(QDockWidget *dock);
 };

@@ -4,6 +4,7 @@
 
 class QTabBar;
 class QDockWidget;
+class QStylePainter;
 
 class DockTitle : public QWidget
 {
@@ -12,6 +13,7 @@ public:
     explicit DockTitle(QDockWidget *parent);
 
     void setTabBar(QTabBar *tabBar);
+    void setFloating(bool floating) { mFloating = floating; }
     QSize sizeHint() const override;
 
 Q_SIGNALS:
@@ -24,17 +26,21 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
+    void leaveEvent(QEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
 
 private:
-    void paintTab(const QRect &rect, const QString &text, int index,
-        int current, int last);
+    void paintTab(QStylePainter &painter, const QRect &rect,
+        const QString &text, int index, int current, int last);
+    void paintCloseButton(QStylePainter &painter);
     int tabCount() const;
     int currentTabIndex() const;
-    int tabContainingPoint(const QPoint &point);
+    int tabContainingPoint(const QPoint &point, bool withTabListButton = false);
     QSize tabSize(int index) const;
     QString tabText(int index) const;
+    QRect tabsRect() const;
     QRect tabRect(int index) const;
+    QRect closeButtonRect() const;
     QDockWidget *tabDock(int index);
     const QDockWidget *tabDock(int index) const;
     void updateTabSizes();
@@ -45,5 +51,8 @@ private:
     QTabBar *mTabBar{};
     QList<QSize> mTabSizes;
     int mTabsListButtonWidth{};
+    bool mFloating{};
     bool mMousePressIntercepted{};
+    bool mCloseButtonHovered{};
+    bool mCloseButtonPressed{};
 };

@@ -99,7 +99,15 @@ void DockWindow::initializeDock(QDockWidget *dock)
 
     connect(dock, &QDockWidget::topLevelChanged, this,
         &DockWindow::onDockTopLevelChanged);
-    setDockTitleBar(dock);
+
+    auto title = new DockTitle(dock);
+    dock->setTitleBarWidget(title);
+
+    connect(title, &DockTitle::openNewDock, this, &DockWindow::openNewDock);
+    connect(title, &DockTitle::dockCloseRequested, this,
+        &DockWindow::dockCloseRequested);
+    connect(title, &DockTitle::contextMenuRequested, this,
+        &DockWindow::openContextMenu);
 }
 
 void DockWindow::openContextMenu(QPoint pos, QTabBar *tabBar, QDockWidget *dock)
@@ -153,24 +161,14 @@ void DockWindow::openContextMenu(QPoint pos, QTabBar *tabBar, QDockWidget *dock)
 void DockWindow::onDockTopLevelChanged(bool floating)
 {
     auto dock = qobject_cast<QDockWidget *>(sender());
-    setDockTitleBar(dock);
+
+    // increase margin when floating to make resizing easier
+    // ideally the dock's widget would be transparent to mouse input only at the border
+    const auto margin = (floating ? 2 : 0);
+    dock->setContentsMargins(0, 0, margin, margin);
+
+    if (auto tabBar = qobject_cast<DockTitle *>(dock->titleBarWidget()))
+        tabBar->setFloating(floating);
 
     dock->setMinimumSize(floating ? dock->size() / 2 : QSize(0, 0));
-}
-
-void DockWindow::setDockTitleBar(QDockWidget *dock)
-{
-    if (dock->isFloating()) {
-        delete dock->titleBarWidget();
-        dock->setTitleBarWidget(nullptr);
-    } else if (!dock->titleBarWidget()) {
-        auto title = new DockTitle(dock);
-        dock->setTitleBarWidget(title);
-
-        connect(title, &DockTitle::openNewDock, this, &DockWindow::openNewDock);
-        connect(title, &DockTitle::dockCloseRequested, this,
-            &DockWindow::dockCloseRequested);
-        connect(title, &DockTitle::contextMenuRequested, this,
-            &DockWindow::openContextMenu);
-    }
 }
