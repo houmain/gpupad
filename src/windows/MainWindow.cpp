@@ -65,7 +65,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->menubar->setFixedHeight(24);
     mUi->toolBarMain->toggleViewAction()->setVisible(false);
 
-    setDockOptions(QMainWindow::AnimatedDocks | QMainWindow::AllowNestedDocks);
+    setDockOptions(QMainWindow::AllowNestedDocks);
     takeCentralWidget();
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0) && !defined(USE_WINDOW_CONTAINER)

@@ -29,7 +29,7 @@ EditorManager::EditorManager(QWidget *parent)
 {
     setWindowFlags(Qt::Widget);
     setTabPosition(Qt::AllDockWidgetAreas, QTabWidget::North);
-    setDockOptions(AnimatedDocks | AllowNestedDocks | AllowTabbedDocks);
+    setDockOptions(AllowNestedDocks | AllowTabbedDocks);
     setDocumentMode(true);
     setContentsMargins(0, 1, 0, 0);
 
