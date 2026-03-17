@@ -168,23 +168,26 @@ bool D3DTarget::bind(D3DContext &context)
     for (auto &attachment : mAttachments)
         if (auto texture = attachment.texture) {
             const auto &resource = texture->resource();
-            if (!texture->resource())
-                return false;
-
             const auto kind = texture->kind();
             if (kind.depth || kind.stencil) {
                 texture->prepareDepthStencilView(context);
+                if (!texture->resource())
+                    return false;
+
                 depthStencilViewDesc = texture->depthStencilViewDesc();
                 if (!depthStencilViewDesc.ViewDimension)
                     return false;
                 depthStencilView = resource;
             } else if (kind.color) {
+                texture->prepareRenderTargetView(context);
+                if (!texture->resource())
+                    return false;
+
                 const auto renderTargetViewDesc =
                     texture->renderTargetViewDesc();
                 if (!renderTargetViewDesc.ViewDimension)
                     return false;
 
-                texture->prepareRenderTargetView(context);
                 renderTargetViewDescs.push_back(renderTargetViewDesc);
                 renderTargets.push_back(resource);
             }
