@@ -48,13 +48,9 @@ TextureEditor::TextureEditor(QString fileName,
     , mFileName(fileName)
 {
     mGLWindow = new GLWindow();
-#if defined(USE_WINDOW_CONTAINER)
     mGLWindowContainer = QWidget::createWindowContainer(mGLWindow);
     mGLWindow->installEventFilter(this);
     setViewport(mGLWindowContainer);
-#else
-    setViewport(mGLWindow);
-#endif
 
     mTextureItem = new TextureItem(mGLWindow);
     mTextureBackground = new TextureBackground(mGLWindow);
@@ -84,7 +80,7 @@ void TextureEditor::resizeEvent(QResizeEvent *event)
 
 void TextureEditor::paintEvent(QPaintEvent *event)
 {
-    mGLWindow->paintEvent(event);
+    mGLWindow->update();
 }
 
 void TextureEditor::releaseGL()

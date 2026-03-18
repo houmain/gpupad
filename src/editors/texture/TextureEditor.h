@@ -83,10 +83,7 @@ private:
     QPointF mapFromScene(const QPointF &position) const;
 
     GLWindow *mGLWindow{};
-#if defined(USE_WINDOW_CONTAINER)
     QWidget *mGLWindowContainer{};
-#endif
-
     TextureEditorToolBar &mEditorToolBar;
     TextureInfoBar &mTextureInfoBar;
     QString mFileName;

@@ -68,12 +68,6 @@ MainWindow::MainWindow(QWidget *parent)
     setDockOptions(QMainWindow::AllowNestedDocks);
     takeCentralWidget();
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0) && !defined(USE_WINDOW_CONTAINER)
-    // WORKAROUND: trigger initialization of OpenGL immediately, otherwise
-    // application window disappears momentaryly when the first texture editor is opened
-    (new QOpenGLWidget(this))->setVisible(false);
-#endif
-
     setDefaultContentsMargins();
     auto content = new QWidget(this);
     mEditorManager.setParent(content);

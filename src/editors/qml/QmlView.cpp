@@ -27,13 +27,8 @@ void QmlView::reset() { }
 #  include <QQmlEngine>
 #  include <QQuickStyle>
 #  include <QApplication>
+#  include <QQuickView>
 #  include <cstring>
-
-#  if defined(USE_WINDOW_CONTAINER)
-#    include <QQuickView>
-#  else
-#    include <QQuickWidget>
-#  endif
 
 namespace {
     QString toAbsolutePath(const QUrl &url)
@@ -166,11 +161,7 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
 
 void QmlView::windowThemeChanged(const Theme &theme)
 {
-#  if defined(USE_WINDOW_CONTAINER)
     mQuickView->setColor(backgroundColor());
-#  else
-    mQuickWidget->setClearColor(backgroundColor());
-#  endif
 }
 
 QColor QmlView::backgroundColor() const
@@ -195,22 +186,15 @@ void QmlView::reset()
     Q_ASSERT(qmlEngine);
     qmlEngine->clearComponentCache();
 
-#  if defined(USE_WINDOW_CONTAINER)
     mQuickView = new QQuickView(qmlEngine, nullptr);
     mQuickView->setResizeMode(QQuickView::SizeRootObjectToView);
     mQuickView->setColor(backgroundColor());
-    auto widgetOrView = mQuickView;
-#  else
-    mQuickWidget = new QQuickWidget(qmlEngine, nullptr);
-    mQuickWidget->setClearColor(backgroundColor());
-    auto widgetOrView = mQuickWidget;
-#  endif
+    mQuickView->setFormat(QSurfaceFormat::defaultFormat());
 
-    using WidgetOrView = std::decay_t<decltype(*widgetOrView)>;
-    connect(widgetOrView, &WidgetOrView::statusChanged,
-        [this, widgetOrView](WidgetOrView::Status status) {
-            if (status == WidgetOrView::Error) {
-                const auto errors = widgetOrView->errors();
+    connect(mQuickView, &QQuickView::statusChanged,
+        [this](QQuickView::Status status) {
+            if (status == QQuickView::Error) {
+                const auto errors = mQuickView->errors();
                 for (const QQmlError &error : errors)
                     mMessages += MessageList::insert(
                         toAbsolutePath(error.url()), error.line(),
@@ -218,7 +202,7 @@ void QmlView::reset()
             }
         });
 
-    connect(widgetOrView, &WidgetOrView::sceneGraphError,
+    connect(mQuickView, &QQuickView::sceneGraphError,
         [this](QQuickWindow::SceneGraphError error, const QString &message) {
             mMessages += MessageList::insert(mFileName, 0,
                 MessageType::ScriptError, message);
@@ -240,12 +224,8 @@ void QmlView::reset()
 
     Singletons::fileCache().updateFromEditors();
 
-#  if defined(USE_WINDOW_CONTAINER)
     mQuickView->setSource(QUrl::fromLocalFile(mFileName));
     mQuickWidget = QWidget::createWindowContainer(mQuickView);
-#  else
-    mQuickWidget->setSource(QUrl::fromLocalFile(mFileName));
-#  endif
 
     layout()->addWidget(mQuickWidget);
 
