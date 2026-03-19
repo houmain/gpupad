@@ -123,7 +123,6 @@ set(SOURCES
   src/editors/source/SyntaxHLSL.cpp
   src/editors/source/SyntaxSlang.cpp
   src/editors/source/SyntaxJavaScript.cpp
-  src/editors/texture/GLWindow.cpp
   src/editors/texture/Histogram.cpp
   src/editors/texture/TextureEditor.cpp
   src/editors/texture/TextureEditorToolBar.cpp
@@ -162,6 +161,7 @@ set(SOURCES
   src/render/vulkan/VKAccelerationStructure.cpp
   src/render/vulkan/VKShareSync.cpp
   src/render/AdapterIdentity.cpp
+  src/render/GLWindow.cpp
   src/render/ProcessSource.cpp
   src/render/RenderTask.cpp
   src/render/RenderSessionBase.cpp

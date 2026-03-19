@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QOpenGLDebugLogger>
+#include <QWindow>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLVertexArrayObject>
-#include <QWindow>
+#include <QOpenGLDebugLogger>
 
 class QOpenGLContext;
 
@@ -11,7 +11,7 @@ class GLWindow : public QWindow
 {
     Q_OBJECT
 public:
-    explicit GLWindow();
+    explicit GLWindow(bool isSyncWindow = false);
     ~GLWindow();
 
     bool initialized() const { return mInitialized; }
@@ -33,9 +33,12 @@ private:
     void initializeGL();
     void paintGL();
 
+    const bool mIsSyncWindow{};
     bool mInitialized{};
     QOpenGLContext *mContext{};
     QOpenGLFunctions_4_5_Core mGL;
     QOpenGLVertexArrayObject mVao;
+#if !defined(NDEBUG)
     std::unique_ptr<QOpenGLDebugLogger> mDebugLogger;
+#endif
 };

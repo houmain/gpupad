@@ -74,7 +74,7 @@
             "name": "uModel",
             "type": "Binding",
             "values": [
-                "rotateY(app.time)"
+                "rotateY(app.time * 2)"
             ]
         },
         {

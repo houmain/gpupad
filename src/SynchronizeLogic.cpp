@@ -424,6 +424,8 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
     mRenderSessionInvalidated = false;
     mEvaluationTimer->stop();
 
+    Q_EMIT waitingForSync();
+
     if (initializeRenderSession())
         mRenderSession->update(itemsChanged, evaluationType);
 }

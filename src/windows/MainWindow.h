@@ -20,6 +20,7 @@ class FileBrowserWindow;
 class EditorManager;
 class SessionEditor;
 class PropertiesEditor;
+class GLWindow;
 class Theme;
 
 class MainWindow final : public QMainWindow
@@ -93,6 +94,7 @@ private:
     void setToolbarIconVisible(QAction *action, bool visible);
 
     Ui::MainWindow *mUi{};
+    GLWindow *mSyncWindow{};
     QToolButton *mMenuButton{};
     QSplitter *mSessionSplitter{};
     QToolBar *mFullScreenBar{};

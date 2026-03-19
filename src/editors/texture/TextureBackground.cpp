@@ -1,5 +1,5 @@
 #include "TextureBackground.h"
-#include "GLWindow.h"
+#include "render/GLWindow.h"
 #include <QOpenGLShaderProgram>
 #include <QPalette>
 

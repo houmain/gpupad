@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
     format.setMinorVersion(5);
     format.setProfile(QSurfaceFormat::CoreProfile);
     format.setOption(QSurfaceFormat::DebugContext);
-    format.setSwapInterval(1);
+    format.setSwapInterval(0);
     QSurfaceFormat::setDefaultFormat(format);
 
     auto app = QApplication(argc, argv);

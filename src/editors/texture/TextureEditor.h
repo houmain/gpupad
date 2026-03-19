@@ -3,7 +3,7 @@
 #include "TextureData.h"
 #include "editors/IEditor.h"
 #include "render/ShareSync.h"
-#include "GLWindow.h"
+#include "render/GLWindow.h"
 #include <QOpenGLTexture>
 #include <QAbstractScrollArea>
 

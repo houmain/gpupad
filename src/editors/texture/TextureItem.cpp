@@ -1,13 +1,11 @@
 
 #include "TextureItem.h"
-#include "GLWindow.h"
 #include "Singletons.h"
+#include "render/GLWindow.h"
 #include "render/ComputeRange.h"
 #include "render/ShareSync.h"
 #include "render/opengl/GLTexture.h"
 #include <array>
-#include <cmath>
-#include <optional>
 
 namespace {
     const auto textureItemVS = R"(

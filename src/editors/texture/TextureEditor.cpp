@@ -1,7 +1,6 @@
 #include "TextureEditor.h"
 #include "FileCache.h"
 #include "FileDialog.h"
-#include "GLWindow.h"
 #include "InputState.h"
 #include "Settings.h"
 #include "Singletons.h"
@@ -11,6 +10,7 @@
 #include "TextureInfoBar.h"
 #include "TextureItem.h"
 #include "getEventPosition.h"
+#include "render/GLWindow.h"
 #include "render/opengl/GLContext.h"
 #include "session/Item.h"
 #include <QAction>

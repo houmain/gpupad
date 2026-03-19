@@ -47,6 +47,7 @@ public:
         int *layers);
 
 Q_SIGNALS:
+    void waitingForSync();
     void evaluationModeChanged(EvaluationMode mode);
     void outputChanged(QVariant output);
 

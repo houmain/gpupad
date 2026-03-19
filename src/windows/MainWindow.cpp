@@ -2,7 +2,6 @@
 #include "AboutDialog.h"
 #include "AutoOrientationSplitter.h"
 #include "FileBrowserWindow.h"
-#include "MessageList.h"
 #include "MessageWindow.h"
 #include "OutputWindow.h"
 #include "Settings.h"
@@ -10,6 +9,7 @@
 #include "SynchronizeLogic.h"
 #include "Theme.h"
 #include "WindowTitle.h"
+#include "render/GLWindow.h"
 #include "editors/EditorManager.h"
 #include "editors/IEditor.h"
 #include "getEventPosition.h"
@@ -29,7 +29,6 @@
 #include <QScreen>
 #include <QTimer>
 #include <QToolButton>
-#include <QOpenGLWidget>
 
 // increase when restoring old session states does not work properly
 const auto MainWindowStateVersion = 1;
@@ -54,6 +53,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     mUi->setupUi(this);
     setFont(qApp->font());
+
+    mSyncWindow = new GLWindow(true);
+    auto container = QWidget::createWindowContainer(mSyncWindow);
+    container->setGeometry(0, 0, 1, 1);
+    container->setParent(this);
 
     setAcceptDrops(true);
 
@@ -295,6 +299,8 @@ MainWindow::MainWindow(QWidget *parent)
         [this](const QString &fileName) { openFile(fileName); });
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
+    connect(&synchronizeLogic, &SynchronizeLogic::waitingForSync, mSyncWindow,
+        &GLWindow::update, Qt::ConnectionType::DirectConnection);
     connect(mOutputWindow.get(), &OutputWindow::typeSelectionChanged,
         &synchronizeLogic, &SynchronizeLogic::setProcessSourceType);
     connect(outputDock, &QDockWidget::visibilityChanged, [this](bool visible) {

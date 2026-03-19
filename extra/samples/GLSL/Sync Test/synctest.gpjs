@@ -16,10 +16,10 @@
             "bindingType": "Uniform",
             "editor": "Expression",
             "id": 74,
-            "name": "frame",
+            "name": "time",
             "type": "Binding",
             "values": [
-                "app.frameIndex"
+                "app.time"
             ]
         },
         {
@@ -65,14 +65,12 @@
                 {
                     "fileName": "attributeless.vs",
                     "id": 77,
-                    "language": "GLSL",
                     "shaderType": "Vertex",
                     "type": "Shader"
                 },
                 {
                     "fileName": "sync.frag",
                     "id": 79,
-                    "language": "GLSL",
                     "shaderType": "Fragment",
                     "type": "Shader"
                 }
@@ -99,8 +97,11 @@
     ],
     "name": "Session",
     "renderer": "OpenGL",
-    "shaderCompiler": "",
+    "shaderCompiler": "Driver",
+    "shaderCompilerSettings": {
+    },
     "shaderIncludePaths": "",
+    "shaderLanguage": "GLSL",
     "shaderPreamble": "",
     "type": "Session"
 }

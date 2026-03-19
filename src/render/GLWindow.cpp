@@ -2,9 +2,15 @@
 #include "GLWindow.h"
 #include <QOpenGLContext>
 
-GLWindow::GLWindow()
+GLWindow::GLWindow(bool isSyncWindow) : mIsSyncWindow(isSyncWindow)
 {
     setSurfaceType(QWindow::OpenGLSurface);
+    if (isSyncWindow) {
+        auto format = QSurfaceFormat::defaultFormat();
+        format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+        format.setSwapInterval(1);
+        setFormat(format);
+    }
 }
 
 GLWindow::~GLWindow()
@@ -40,7 +46,9 @@ void GLWindow::releaseGL()
 
     mContext->makeCurrent(this);
     Q_EMIT releasingGL();
+#if !defined(NDEBUG)
     mDebugLogger.reset();
+#endif
 }
 
 void GLWindow::paintGL()
@@ -73,7 +81,10 @@ void GLWindow::update()
 
     if (!mContext) {
         mContext = new QOpenGLContext(this);
-        mContext->setShareContext(QOpenGLContext::globalShareContext());
+
+        if (!mIsSyncWindow)
+            mContext->setShareContext(QOpenGLContext::globalShareContext());
+
         if (mContext->create()) {
             mContext->makeCurrent(this);
             initializeGL();
