@@ -29,6 +29,8 @@ public:
     const Theme &editorTheme() const { return *mEditorTheme; }
     void setHideMenuBar(bool hide);
     bool hideMenuBar() const { return mHideMenuBar; }
+    void setSyncInterval(int syncInterval);
+    int syncInterval() const { return mSyncInterval; }
 
 Q_SIGNALS:
     void tabSizeChanged(int tabSize);
@@ -41,6 +43,7 @@ Q_SIGNALS:
     void editorThemeChanging(const Theme &theme);
     void editorThemeChanged(const Theme &theme);
     void hideMenuBarChanged(bool hide);
+    void syncIntervalChanged(int syncInterval);
 
 private:
     int mTabSize{ 2 };
@@ -51,4 +54,5 @@ private:
     const Theme *mWindowTheme{};
     const Theme *mEditorTheme{};
     bool mHideMenuBar{};
+    int mSyncInterval{ 1 };
 };

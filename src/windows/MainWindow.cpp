@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->setupUi(this);
     setFont(qApp->font());
 
-    mSyncWindow = new GLWindow(true);
+    mSyncWindow = new GLWindow(1);
     auto container = QWidget::createWindowContainer(mSyncWindow);
     container->setGeometry(0, 0, 1, 1);
     container->setParent(this);
@@ -299,8 +299,8 @@ MainWindow::MainWindow(QWidget *parent)
         [this](const QString &fileName) { openFile(fileName); });
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
-    connect(&synchronizeLogic, &SynchronizeLogic::waitingForSync, mSyncWindow,
-        &GLWindow::update, Qt::ConnectionType::DirectConnection);
+    connect(&synchronizeLogic, &SynchronizeLogic::waitingForSync,
+        this, &MainWindow::waitForSync);
     connect(mOutputWindow.get(), &OutputWindow::typeSelectionChanged,
         &synchronizeLogic, &SynchronizeLogic::setProcessSourceType);
     connect(outputDock, &QDockWidget::visibilityChanged, [this](bool visible) {
@@ -355,6 +355,17 @@ MainWindow::MainWindow(QWidget *parent)
 
     mUi->actionPasteInNewEditor->setEnabled(
         mEditorManager.canPasteInNewEditor());
+
+    auto syncIntervalActionGroup = new QActionGroup(this);
+    connect(syncIntervalActionGroup, &QActionGroup::triggered, [](QAction *a) {
+        Singletons::settings().setSyncInterval(a->text().toInt());
+    });
+    for (auto i : { 0, 1, 2, 3, 4 }) {
+        auto action = mUi->menuSyncInterval->addAction(QString::number(i));
+        action->setCheckable(true);
+        action->setChecked(i == settings.syncInterval());
+        action->setActionGroup(syncIntervalActionGroup);
+    }
 
     auto indentActionGroup = new QActionGroup(this);
     connect(indentActionGroup, &QActionGroup::triggered, [](QAction *a) {
@@ -525,6 +536,13 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
     mLastPressWasAlt = false;
 
     QMainWindow::keyReleaseEvent(event);
+}
+
+void MainWindow::waitForSync()
+{
+    const auto syncInterval = Singletons::settings().syncInterval();
+    for (auto i = 0; i < syncInterval; ++i)
+        mSyncWindow->update();
 }
 
 void MainWindow::setToolbarIconVisible(QAction *action, bool visible)

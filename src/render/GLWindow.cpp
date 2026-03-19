@@ -2,15 +2,19 @@
 #include "GLWindow.h"
 #include <QOpenGLContext>
 
-GLWindow::GLWindow(bool isSyncWindow) : mIsSyncWindow(isSyncWindow)
+GLWindow::GLWindow() : mIsSyncWindow(false)
 {
     setSurfaceType(QWindow::OpenGLSurface);
-    if (isSyncWindow) {
-        auto format = QSurfaceFormat::defaultFormat();
-        format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-        format.setSwapInterval(1);
-        setFormat(format);
-    }
+}
+
+GLWindow::GLWindow(int syncInterval) : mIsSyncWindow(true)
+{
+    setSurfaceType(QWindow::OpenGLSurface);
+
+    auto format = QSurfaceFormat::defaultFormat();
+    format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+    format.setSwapInterval(syncInterval);
+    setFormat(format);
 }
 
 GLWindow::~GLWindow()

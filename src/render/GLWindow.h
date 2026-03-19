@@ -11,7 +11,8 @@ class GLWindow : public QWindow
 {
     Q_OBJECT
 public:
-    explicit GLWindow(bool isSyncWindow = false);
+    GLWindow();
+    explicit GLWindow(int syncInterval);
     ~GLWindow();
 
     bool initialized() const { return mInitialized; }

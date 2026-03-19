@@ -33,7 +33,7 @@ public:
     void setMouseButtonReleased(Qt::MouseButton button);
     void setKeyPressed(Qt::Key key);
     void setKeyReleased(Qt::Key key);
-    void update(EvaluationType evaluationType);
+    void update(EvaluationType evaluationType, int syncInterval);
 
     int frameIndex() const { return mFrameIndex; }
     double frameRate() const { return mFrameRate; }
@@ -70,4 +70,5 @@ private:
     QPoint mPrevMousePosition;
     QVector<ButtonState> mMouseButtonStates;
     QVector<ButtonState> mKeyStates;
+    double mLastUpdateTime{};
 };

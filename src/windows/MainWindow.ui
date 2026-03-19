@@ -105,25 +105,6 @@
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
    </widget>
-   <widget class="QMenu" name="menuSession">
-    <property name="title">
-     <string>&amp;Session</string>
-    </property>
-    <widget class="QMenu" name="menuEvaluation">
-     <property name="title">
-      <string>&amp;Evaluation</string>
-     </property>
-     <property name="icon">
-      <iconset theme="view-refresh"/>
-     </property>
-     <addaction name="actionEvalReset"/>
-     <addaction name="actionEvalManual"/>
-     <addaction name="actionEvalAuto"/>
-     <addaction name="actionEvalSteady"/>
-    </widget>
-    <addaction name="menuEvaluation"/>
-    <addaction name="separator"/>
-   </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
      <string>&amp;View</string>
@@ -143,6 +124,11 @@
       <string>&amp;Editor Theme</string>
      </property>
     </widget>
+    <widget class="QMenu" name="menuSyncInterval">
+     <property name="title">
+      <string>&amp;Sync Interval</string>
+     </property>
+    </widget>
     <addaction name="actionNavigateBackward"/>
     <addaction name="actionNavigateForward"/>
     <addaction name="separator"/>
@@ -156,6 +142,26 @@
     <addaction name="menuEditorThemes"/>
     <addaction name="actionHideMenuBar"/>
     <addaction name="actionFullScreen"/>
+    <addaction name="menuSyncInterval"/>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuSession">
+    <property name="title">
+     <string>&amp;Session</string>
+    </property>
+    <widget class="QMenu" name="menuEvaluation">
+     <property name="title">
+      <string>&amp;Evaluation</string>
+     </property>
+     <property name="icon">
+      <iconset theme="view-refresh"/>
+     </property>
+     <addaction name="actionEvalReset"/>
+     <addaction name="actionEvalManual"/>
+     <addaction name="actionEvalAuto"/>
+     <addaction name="actionEvalSteady"/>
+    </widget>
+    <addaction name="menuEvaluation"/>
     <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>

@@ -1,5 +1,6 @@
 
 #include "InputState.h"
+#include <QDateTime>
 #include <QSet>
 
 namespace {
@@ -92,7 +93,7 @@ InputState::InputState()
     reset();
 }
 
-void InputState::update(EvaluationType evaluationType)
+void InputState::update(EvaluationType evaluationType, int syncInterval)
 {
     mEditorSize = mNextEditorSize;
     mPrevMousePosition = mMousePosition;
@@ -127,13 +128,20 @@ void InputState::update(EvaluationType evaluationType)
     updateButtonStates(mNextMouseButtonStates, mMouseButtonStates);
     updateButtonStates(mNextKeyStates, mKeyStates);
 
+    const auto now = QDateTime::currentMSecsSinceEpoch() / 1000.0;
     if (evaluationType == EvaluationType::Reset) {
         mFrameIndex = 0;
         mTime = 0.0;
     } else {
         mFrameIndex += 1;
-        mTime += mFrameRate;
+        if (syncInterval == 0) {
+            mTime += std::chrono::duration<double>(now - mLastUpdateTime).count();
+        } else {
+            mTime += mFrameRate * syncInterval;
+        }
     }
+    mLastUpdateTime = now;
+
     Q_EMIT frameIndexChanged(mFrameIndex);
     Q_EMIT timeChanged(mTime);
 }
