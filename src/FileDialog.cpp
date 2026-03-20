@@ -10,9 +10,10 @@
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
     const auto SessionFileExtension = QStringLiteral("gpjs");
-    const auto ShaderFileExtensions = { "glsl", "hlsl", "slang", "vs", "fs", "gs", "vert",
-        "tesc", "tese", "geom", "frag", "comp", "task", "mesh", "rgen", "rint",
-        "rahit", "rchit", "rmiss", "rcall", "ps", "hlsli", "fx", "h" };
+    const auto ShaderFileExtensions = { "glsl", "hlsl", "slang", "vs", "fs",
+        "gs", "vert", "tesc", "tese", "geom", "frag", "comp", "task", "mesh",
+        "rgen", "rint", "rahit", "rchit", "rmiss", "rcall", "ps", "hlsli", "fx",
+        "h" };
     const auto ScriptFileExtensions = { "js", "json", "qml" };
     const auto TextureFileExtensions = { "ktx", "dds", "png",
 #if defined(OpenImageIO_FOUND)
@@ -387,13 +388,10 @@ QDir getInstallDirectory(const QString &dirName)
             ? QDir::cleanPath(binDir.filePath(".."))
             : binDir);
     const auto searchPaths = std::initializer_list<QDir>{
-#if !defined(NDEBUG)
+        // also search in extra folder (to simplify development)
         installDir.filePath("../../extra"),
         installDir.filePath("../extra"),
         installDir.filePath("extra"),
-        installDir.filePath(".."),
-        installDir.filePath("../.."),
-#endif
 #if defined(_WIN32)
         installDir.path(),
 #else
