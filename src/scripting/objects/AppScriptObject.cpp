@@ -78,13 +78,10 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
             &AppScriptObject::handleEvaluationModeChanged);
 
         auto &inputState = Singletons::inputState();
-        mFrameIndex = inputState.frameIndex();
-        mFrameRate = inputState.frameRate();
+        mFrame = inputState.frameIndex();
         mTime = inputState.time();
         connect(&inputState, &InputState::frameIndexChanged, this,
-            &AppScriptObject::handleFrameIndexChanged);
-        connect(&inputState, &InputState::frameRateChanged, this,
-            &AppScriptObject::handleFrameRateChanged);
+            &AppScriptObject::handleFrameChanged);
         connect(&inputState, &InputState::timeChanged, this,
             &AppScriptObject::handleTimeChanged);
     });
@@ -197,28 +194,16 @@ void AppScriptObject::handleEvaluationModeChanged(EvaluationMode evaluationMode)
     Q_EMIT evaluationChanged();
 }
 
-void AppScriptObject::setFrameIndex(int frameIndex)
+void AppScriptObject::setFrame(int frame)
 {
     dispatchToMainThread(
-        [&]() { Singletons::inputState().setFrameIndex(frameIndex); });
+        [&]() { Singletons::inputState().setFrameIndex(frame); });
 }
 
-void AppScriptObject::handleFrameIndexChanged(int frameIndex)
+void AppScriptObject::handleFrameChanged(int frame)
 {
-    mFrameIndex = frameIndex;
-    Q_EMIT frameIndexChanged();
-}
-
-void AppScriptObject::setFrameRate(double frameRate)
-{
-    dispatchToMainThread(
-        [&]() { Singletons::inputState().setFrameRate(frameRate); });
-}
-
-void AppScriptObject::handleFrameRateChanged(double frameRate)
-{
-    mFrameRate = frameRate;
-    Q_EMIT frameRateChanged();
+    mFrame = frame;
+    Q_EMIT frameChanged();
 }
 
 void AppScriptObject::setTime(double time)
@@ -231,6 +216,7 @@ void AppScriptObject::handleTimeChanged(double time)
     mTimeDelta = time - mTime;
     mTime = time;
     Q_EMIT timeChanged();
+    Q_EMIT timeDeltaChanged();
 }
 
 QJSValue AppScriptObject::date()

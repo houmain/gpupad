@@ -34,12 +34,10 @@ class AppScriptObject final : public QObject
     Q_OBJECT
     Q_PROPERTY(QString evaluation READ evaluation WRITE setEvaluation NOTIFY
             evaluationChanged)
-    Q_PROPERTY(int frameIndex READ frameIndex WRITE setFrameIndex NOTIFY
-            frameIndexChanged)
-    Q_PROPERTY(double frameRate READ frameRate WRITE setFrameRate NOTIFY
-            frameRateChanged)
+    Q_PROPERTY(int frame READ frame WRITE setFrame NOTIFY
+            frameChanged)
     Q_PROPERTY(double time READ time WRITE setTime NOTIFY timeChanged)
-    Q_PROPERTY(double timeDelta READ timeDelta CONSTANT)
+    Q_PROPERTY(double timeDelta READ timeDelta NOTIFY timeDeltaChanged)
     Q_PROPERTY(QJSValue date READ date CONSTANT)
     Q_PROPERTY(QJSValue session READ session CONSTANT)
     Q_PROPERTY(QJSValue mouse READ mouse CONSTANT)
@@ -51,10 +49,8 @@ public:
 
     QString evaluation() const;
     void setEvaluation(QString mode);
-    int frameIndex() const { return mFrameIndex; }
-    void setFrameIndex(int index);
-    double frameRate() const { return mFrameRate; }
-    void setFrameRate(double frameRate);
+    int frame() const { return mFrame; }
+    void setFrame(int index);
     double time() const { return mTime; }
     void setTime(double time);
     double timeDelta() const { return mTimeDelta; }
@@ -82,14 +78,13 @@ public:
 
 Q_SIGNALS:
     void evaluationChanged();
-    void frameIndexChanged();
-    void frameRateChanged();
+    void frameChanged();
     void timeChanged();
+    void timeDeltaChanged();
 
 private:
     void handleEvaluationModeChanged(EvaluationMode evaluationMode);
-    void handleFrameIndexChanged(int frameIndex);
-    void handleFrameRateChanged(double frameRate);
+    void handleFrameChanged(int frame);
     void handleTimeChanged(double time);
     QJSEngine &jsEngine() { return *mJsEngine; }
     QString getAbsolutePath(const QString &fileName) const;
@@ -109,8 +104,7 @@ private:
     QMap<QString, QJSValue> mLoadedLibraries;
     AppScriptObject_MainThreadCalls *mMainThreadCalls{};
     EvaluationMode mEvaluationMode{};
-    int mFrameIndex{};
-    double mFrameRate{};
+    int mFrame{};
     double mTime{};
     double mTimeDelta{};
 };

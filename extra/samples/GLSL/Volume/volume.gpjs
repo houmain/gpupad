@@ -30,7 +30,7 @@
             "name": "frame",
             "type": "Binding",
             "values": [
-                "app.frameIndex"
+                "app.frame"
             ]
         },
         {

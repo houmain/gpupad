@@ -95,15 +95,16 @@ void GLWindow::update()
         }
     }
 
-    if (initialized()) {
-        mContext->makeCurrent(this);
+    if (!initialized())
+        return;
 
+    if (!mIsSyncWindow) {
+        mContext->makeCurrent(this);
         const qreal dpr = devicePixelRatio();
         glViewport(0, 0, width() * dpr, height() * dpr);
-
         paintGL();
-        mContext->swapBuffers(this);
     }
+    mContext->swapBuffers(this);
 }
 
 void GLWindow::handleDebugMessage(const QOpenGLDebugMessage &message)

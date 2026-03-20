@@ -93,7 +93,7 @@ InputState::InputState()
     reset();
 }
 
-void InputState::update(EvaluationType evaluationType, int syncInterval)
+void InputState::update(EvaluationType evaluationType)
 {
     mEditorSize = mNextEditorSize;
     mPrevMousePosition = mMousePosition;
@@ -128,17 +128,17 @@ void InputState::update(EvaluationType evaluationType, int syncInterval)
     updateButtonStates(mNextMouseButtonStates, mMouseButtonStates);
     updateButtonStates(mNextKeyStates, mKeyStates);
 
-    const auto now = QDateTime::currentMSecsSinceEpoch() / 1000.0;
-    if (evaluationType == EvaluationType::Reset) {
+    const auto now = Clock::now();
+    mFrameIndex += 1;
+    if (evaluationType == EvaluationType::Reset
+        || !mLastUpdateTime.time_since_epoch().count()) {
         mFrameIndex = 0;
-        mTime = 0.0;
+        mTime = 0;
+    } else if (evaluationType == EvaluationType::Manual) {
+        // TODO: obtain actual frame rate
+        mTime += 1.0 / 60;
     } else {
-        mFrameIndex += 1;
-        if (syncInterval == 0) {
-            mTime += std::chrono::duration<double>(now - mLastUpdateTime).count();
-        } else {
-            mTime += mFrameRate * syncInterval;
-        }
+        mTime += std::chrono::duration<double>(now - mLastUpdateTime).count();
     }
     mLastUpdateTime = now;
 
@@ -152,12 +152,6 @@ void InputState::setFrameIndex(int frameIndex)
         Q_EMIT frameIndexChanged(mFrameIndex);
 }
 
-void InputState::setFrameRate(double frameRate)
-{
-    if (std::exchange(mFrameRate, frameRate) != frameRate)
-        Q_EMIT frameRateChanged(mFrameRate);
-}
-
 void InputState::setTime(double time)
 {
     if (std::exchange(mTime, time) != time)
@@ -168,7 +162,6 @@ void InputState::reset()
 {
     mFrameIndex = 0;
     mTime = 0;
-    mFrameRate = 1.0 / 60.0;
 }
 
 void InputState::restoreEditorSize(QSize size)

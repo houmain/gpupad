@@ -10,9 +10,9 @@ const meshTypes = [
   "Octahedron",
   "Tetrahedron",
 ]
-  
+
 const total = meshTypes.length + this.files.length
-const index = app.frameIndex % total
+const index = app.frame % total
 
 if (index < this.files.length) {
   group = app.callAction("ImportOBJ", {

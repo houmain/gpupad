@@ -31,15 +31,15 @@ ScrollView {
         }
         
         Slider {
-          value: app.frameIndex
+          value: app.frame
           from: 0
-          to: 1000
-          onMoved: { app.frameIndex = value }
+          to: 3600
+          onMoved: { app.frame = value }
         }
         
         Label {
-          id: frameIndex
-          text: app.frameIndex
+          id: frame
+          text: app.frame
         }
       }
           
@@ -53,16 +53,30 @@ ScrollView {
         Slider {
           value: app.time
           from: 0
-          to: 1000/60
+          to: 60
           onMoved: { app.time = value }
         }
-        
+
         Label {
           id: time
-          text: app.time
+          text: Math.round(app.time * 10) / 10
         }
       }
+
+      Label {
+        text: "Time Delta: " + Math.round(app.timeDelta * 10000) / 10000
+      }
       
+      Text {
+          text: "UI Refresh Rate: " + frameAnimation.fps.toFixed(0)
+      }
+
+      FrameAnimation {
+          id: frameAnimation
+          property real fps: smoothFrameTime > 0 ? (1.0 / smoothFrameTime) : 0
+          running: true
+      }
+
       Button {
         text: "Steady"
         onClicked: app.evaluation = "Steady"

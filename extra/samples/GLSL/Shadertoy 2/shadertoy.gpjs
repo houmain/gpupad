@@ -20,7 +20,7 @@
             "name": "iFrame",
             "type": "Binding",
             "values": [
-                "app.frameIndex"
+                "app.frame"
             ]
         },
         {

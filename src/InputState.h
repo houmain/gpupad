@@ -6,6 +6,7 @@
 #include <QSize>
 #include <QVector>
 #include <vector>
+#include <chrono>
 
 enum class ButtonState {
     Up = 0,
@@ -25,7 +26,6 @@ public:
     void restoreMousePosition(const QPoint &position);
 
     void setFrameIndex(int index);
-    void setFrameRate(double frameRate);
     void setTime(double time);
     void setEditorSize(QSize size);
     void setMousePosition(const QPoint &position);
@@ -33,10 +33,9 @@ public:
     void setMouseButtonReleased(Qt::MouseButton button);
     void setKeyPressed(Qt::Key key);
     void setKeyReleased(Qt::Key key);
-    void update(EvaluationType evaluationType, int syncInterval);
+    void update(EvaluationType evaluationType);
 
     int frameIndex() const { return mFrameIndex; }
-    double frameRate() const { return mFrameRate; }
     double time() const { return mTime; }
     const QSize &editorSize() const { return mEditorSize; }
     const QPoint &mousePosition() const { return mMousePosition; }
@@ -49,12 +48,12 @@ public:
 
 Q_SIGNALS:
     void frameIndexChanged(int frameIndex);
-    void frameRateChanged(double frameRate);
     void timeChanged(double time);
     void mouseChanged();
     void keysChanged();
 
 private:
+    using Clock = std::chrono::system_clock;
     using ButtonStateQueue = std::vector<std::pair<int, ButtonState>>;
 
     QSize mNextEditorSize{};
@@ -63,12 +62,11 @@ private:
     ButtonStateQueue mNextKeyStates;
 
     int mFrameIndex{};
-    double mFrameRate{};
     double mTime{};
     QSize mEditorSize;
     QPoint mMousePosition;
     QPoint mPrevMousePosition;
     QVector<ButtonState> mMouseButtonStates;
     QVector<ButtonState> mKeyStates;
-    double mLastUpdateTime{};
+    Clock::time_point mLastUpdateTime{};
 };

@@ -422,8 +422,7 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
     Q_EMIT waitingForSync();
 
     const auto itemsChanged = mRenderSessionInvalidated;
-    const auto syncInterval = Singletons::settings().syncInterval();
-    Singletons::inputState().update(evaluationType, syncInterval);
+    Singletons::inputState().update(evaluationType);
     mRenderSessionInvalidated = false;
     mEvaluationTimer->stop();
 
