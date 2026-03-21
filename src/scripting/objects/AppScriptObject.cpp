@@ -280,13 +280,9 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
     auto searchPaths = QList<QDir>();
     searchPaths += mBasePath;
 
-#if !defined(NDEBUG)
-    searchPaths += QDir(
-        QCoreApplication::applicationDirPath() + "/extra/actions/" + fileName);
-#endif
-    for (const auto &dir : getApplicationDirectories("actions"))
+    for (const auto &dir : getApplicationDirectories(ActionsDir))
         searchPaths += dir.filePath(fileName);
-    searchPaths += getApplicationDirectories("libs");
+    searchPaths += getApplicationDirectories(LibrariesDir);
 
     auto engine = mEnginePtr.lock();
     if (FileDialog::getFileExtension(fileName) == "js") {

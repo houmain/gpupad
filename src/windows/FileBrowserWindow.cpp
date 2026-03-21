@@ -37,6 +37,8 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent)
 
     for (const auto &dir : getApplicationDirectories(ActionsDir))
         updateRecentDirectories(dir.path());
+    for (const auto &dir : getApplicationDirectories(LibrariesDir))
+        updateRecentDirectories(dir.path());
 
     mRootDirectory->setMinimumWidth(100);
     mRootDirectory->setModel(mRecentDirectories);

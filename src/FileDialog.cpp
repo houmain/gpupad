@@ -71,6 +71,7 @@ namespace {
 
 const QString SamplesDir = QStringLiteral("samples");
 const QString ActionsDir = QStringLiteral("actions");
+const QString LibrariesDir = QStringLiteral("libs");
 
 QString FileDialog::generateNextUntitledFileName(QString base)
 {
@@ -281,10 +282,9 @@ bool FileDialog::exec(Options options, QString currentFileName,
         dialog.setDirectory(mDirectory);
     dialog.selectFile(currentFileName);
 
-    if (const auto extension = getFileExtension(currentFileName);
-        !extension.isEmpty())
-        for (const auto &filter : filters)
-            if (filter.contains("*." + extension)) {
+    if (auto ext = getFileExtension(currentFileName); !ext.isEmpty())
+        for (const auto &filter : std::as_const(filters))
+            if (filter.contains("*." + ext)) {
                 dialog.selectNameFilter(filter);
                 break;
             }

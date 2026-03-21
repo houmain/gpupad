@@ -64,6 +64,7 @@ private:
 
 extern const QString SamplesDir;
 extern const QString ActionsDir;
+extern const QString LibrariesDir;
 
 bool isNativeCanonicalFilePath(const QString &fileName);
 QString toNativeCanonicalFilePath(const QString &fileName);
