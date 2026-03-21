@@ -3,6 +3,7 @@
 #include "SourceType.h"
 #include <QDir>
 #include <QMessageBox>
+#include <optional>
 
 class QMainWindow;
 
@@ -22,6 +23,7 @@ public:
     static bool isScriptFileName(const QString &fileName);
     static bool isTextureFileName(const QString &fileName);
     static bool isVideoFileName(const QString &fileName);
+    static void setSessionDir(std::optional<QDir> sessionDir);
 
     enum OptionBit {
         Saving = 1 << 0,

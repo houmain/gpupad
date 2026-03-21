@@ -27,6 +27,7 @@ namespace {
     };
 
     int gNextUntitledFileIndex;
+    std::optional<QDir> gSessionDir;
 
     QString getDefaultSourceTypeExtension(SourceType sourceType)
     {
@@ -159,6 +160,12 @@ bool FileDialog::isVideoFileName(const QString &fileName)
             return true;
     return false;
 }
+
+void FileDialog::setSessionDir(std::optional<QDir> sessionDir) {
+    gSessionDir = sessionDir;
+}
+
+//-------------------------------------------------------------------------
 
 FileDialog::FileDialog(QMainWindow *window) : mWindow(window) { }
 
@@ -293,6 +300,8 @@ bool FileDialog::exec(Options options, QString currentFileName,
     return true;
 }
 
+//-------------------------------------------------------------------------
+
 bool isNativeCanonicalFilePath(const QString &fileName)
 {
     return (toNativeCanonicalFilePath(fileName) == fileName);
@@ -388,7 +397,7 @@ QDir getInstallDirectory(const QString &dirName)
             ? QDir::cleanPath(binDir.filePath(".."))
             : binDir);
     const auto searchPaths = std::initializer_list<QDir>{
-        // also search in extra folder (to simplify development)
+        // also search for extra folder (to simplify development)
         installDir.filePath("../../extra"),
         installDir.filePath("../extra"),
         installDir.filePath("extra"),
@@ -419,13 +428,12 @@ QDir getUserDirectory(const QString &dirName)
 
 QList<QDir> getApplicationDirectories(const QString &dirName)
 {
-    auto result = QList<QDir>();
-    const auto dirs = {
-        getInstallDirectory(dirName),
-        getUserDirectory(dirName),
-    };
-    for (const auto &dir : dirs)
-        result.append(dir);
+    // first (optional) session-, then user-, then installation-directory
+    auto result = QList<QDir>{};
+    if (gSessionDir && QFileInfo::exists(gSessionDir->filePath(dirName)))
+        result.append(QDir(gSessionDir->filePath(dirName)));
+    result.append(getUserDirectory(dirName));
+    result.append(getInstallDirectory(dirName));
     return result;
 }
 

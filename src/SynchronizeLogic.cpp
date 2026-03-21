@@ -529,6 +529,9 @@ void SynchronizeLogic::processSource()
 void SynchronizeLogic::handleSessionFileNameChanged(const QString &fileName)
 {
     mSessionFileName = toNativeCanonicalFilePath(fileName);
+    FileDialog::setSessionDir(
+        (FileDialog::isEmptyOrUntitled(fileName)) ? std::nullopt :
+        std::make_optional(QFileInfo(mSessionFileName).dir()));
 }
 
 void SynchronizeLogic::handleMouseStateChanged()

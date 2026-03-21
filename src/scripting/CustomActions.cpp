@@ -147,8 +147,8 @@ void CustomActions::updateActions()
             connect(action.get(), &QAction::triggered, this,
                 &CustomActions::actionTriggered);
 
-            // keep only last action with identical name
-            mActions[action->text()] = std::move(action);
+            // keep only first action with identical name
+            mActions.emplace(action->text(), std::move(action));
         }
         mMessages += scriptEngine->resetMessages();
     }
