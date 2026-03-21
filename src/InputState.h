@@ -63,6 +63,7 @@ private:
 
     int mFrameIndex{};
     double mTime{};
+    double mManualTimeStep{ 1.0 / 60 };
     QSize mEditorSize;
     QPoint mMousePosition;
     QPoint mPrevMousePosition;

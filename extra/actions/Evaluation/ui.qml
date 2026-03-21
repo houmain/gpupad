@@ -59,7 +59,7 @@ ScrollView {
 
         Label {
           id: time
-          text: Math.round(app.time * 10) / 10
+          text: Math.round(app.time * 1000) / 1000
         }
       }
 
@@ -83,13 +83,13 @@ ScrollView {
       }      
       
       Button {
-        text: "Pause"
-        onClicked: app.evaluation = "Paused"
-      }
-  
-      Button {
         text: "Automatic"
         onClicked: app.evaluation = "Automatic"
+      }
+      
+      Button {
+        text: "Pause"
+        onClicked: app.evaluation = "Paused"
       }
   
       Button {

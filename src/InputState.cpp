@@ -130,17 +130,29 @@ void InputState::update(EvaluationType evaluationType)
 
     const auto now = Clock::now();
     mFrameIndex += 1;
-    if (evaluationType == EvaluationType::Reset
-        || !mLastUpdateTime.time_since_epoch().count()) {
+    switch (evaluationType) {
+    case EvaluationType::Reset:
         mFrameIndex = 0;
         mTime = 0;
-    } else if (evaluationType == EvaluationType::Manual) {
-        // TODO: obtain actual frame rate
-        mTime += 1.0 / 60;
-    } else {
-        mTime += std::chrono::duration<double>(now - mLastUpdateTime).count();
+        break;
+
+    case EvaluationType::Automatic:
+        // do not advance time
+        break;
+
+    case EvaluationType::Manual:
+        mTime += mManualTimeStep;
+        break;
+
+    case EvaluationType::Steady:
+        if (mLastUpdateTime.time_since_epoch().count() > 0)
+            mTime += std::chrono::duration<double>(now - mLastUpdateTime).count();
+        break;
     }
-    mLastUpdateTime = now;
+
+    // only measure elapsed time between two steady evaluations
+    mLastUpdateTime = (evaluationType == EvaluationType::Steady ?
+        now : Clock::time_point());
 
     Q_EMIT frameIndexChanged(mFrameIndex);
     Q_EMIT timeChanged(mTime);

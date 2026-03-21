@@ -358,21 +358,33 @@ MainWindow::MainWindow(QWidget *parent)
 
     auto syncIntervalActionGroup = new QActionGroup(this);
     connect(syncIntervalActionGroup, &QActionGroup::triggered, [](QAction *a) {
-        Singletons::settings().setSyncInterval(a->text().toInt());
+        Singletons::settings().setSyncInterval(a->data().toInt());
     });
-    for (auto i : { 0, 1, 2, 3, 4 }) {
-        auto action = mUi->menuSyncInterval->addAction(QString::number(i));
+    auto i = 0;
+    for (const auto &text : {
+            tr("Free Run"),
+            tr("Every V-Sync"),
+            tr("Every 2nd V-Sync"),
+            tr("Every 3rd V-Sync"),
+            tr("Every 4th V-Sync"),
+        }) {
+        auto action = mUi->menuSyncInterval->addAction(text);
+        action->setData(i);
         action->setCheckable(true);
         action->setChecked(i == settings.syncInterval());
         action->setActionGroup(syncIntervalActionGroup);
+        if (i == 0)
+            mUi->menuSyncInterval->addSeparator();
+        ++i;
     }
 
     auto indentActionGroup = new QActionGroup(this);
     connect(indentActionGroup, &QActionGroup::triggered, [](QAction *a) {
-        Singletons::settings().setTabSize(a->text().toInt());
+        Singletons::settings().setTabSize(a->data().toInt());
     });
-    for (auto i = 1; i <= 8; i++) {
-        auto action = mUi->menuTabSize->addAction(QString::number(i));
+    for (auto i = 2; i <= 8; i++) {
+        auto action = mUi->menuTabSize->addAction(tr("%1 Spaces").arg(i));
+        action->setData(i);
         action->setCheckable(true);
         action->setChecked(i == settings.tabSize());
         action->setActionGroup(indentActionGroup);
