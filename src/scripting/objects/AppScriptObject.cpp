@@ -252,10 +252,10 @@ QJSValue AppScriptObject::openEditor(QString fileName, QString title)
 
     auto result = false;
     auto viewportSize = QSize();
-    dispatchToMainThread([&]() {
+    dispatchToMainThread([&, onMainThread = onMainThread()]() {
         if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
             result = mMainThreadCalls->openQmlView(fileName, title,
-                (onMainThread() ? mEnginePtr.lock() : nullptr));
+                (onMainThread ? mEnginePtr.lock() : nullptr));
         } else {
             result = mMainThreadCalls->openEditor(fileName);
         }

@@ -193,10 +193,16 @@ void QmlView::reset()
         [this](QQuickView::Status status) {
             if (status == QQuickView::Error) {
                 const auto errors = mQuickView->errors();
-                for (const QQmlError &error : errors)
-                    mMessages += MessageList::insert(
-                        toAbsolutePath(error.url()), error.line(),
-                        MessageType::ScriptError, error.description());
+                for (const QQmlError &error : errors) {
+                    const auto fileName = toAbsolutePath(error.url());
+                    if (!QFileInfo(fileName).isFile() && error.line() < 0) {
+                        mMessages += MessageList::insert(0, 0,
+                            MessageType::LoadingFileFailed, fileName);
+                    } else {
+                        mMessages += MessageList::insert(fileName, error.line(),
+                            MessageType::ScriptError, error.description());
+                    }
+                }
             }
         });
 
