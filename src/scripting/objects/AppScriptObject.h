@@ -44,7 +44,7 @@ class AppScriptObject final : public QObject
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
 
 public:
-    AppScriptObject(const ScriptEnginePtr &enginePtr, const QString &basePath);
+    AppScriptObject(const ScriptEnginePtr &enginePtr, const QDir &basePath);
     ~AppScriptObject();
 
     QString evaluation() const;
@@ -69,6 +69,7 @@ public:
     Q_INVOKABLE QJSValue writeBinaryFile(QString fileName, QByteArray binary);
     Q_INVOKABLE QJSValue readTextFile(QString fileName);
 
+    const QDir &basePath() const { return mBasePath; }
     void deregisterEditorScriptObject(EditorScriptObject *object);
     void update();
     bool usesMouseState() const;

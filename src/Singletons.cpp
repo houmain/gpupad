@@ -143,7 +143,7 @@ Singletons::Singletons(QMainWindow *window)
         &videoManager(), &VideoManager::handleVideoPlayerRequested,
         Qt::QueuedConnection);
 
-    mDefaultScriptEngine = ScriptEngine::make();
+    mDefaultScriptEngine = ScriptEngine::make(QDir::current());
     mDefaultScriptEngine->setOmitReferenceErrors();
 }
 

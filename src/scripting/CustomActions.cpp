@@ -88,9 +88,9 @@ MessagePtrSet CustomAction::apply(const QModelIndexList &selection)
 {
     mScriptEngine.reset();
 
-    const auto basePath = QFileInfo(mFilePath).absolutePath();
-    mScriptEngine = ScriptEngine::make(basePath);
-    mScriptEngine->appScriptObject().sessionScriptObject().setSelection(selection);
+    mScriptEngine = ScriptEngine::make(objectName(), mFilePath);
+    mScriptEngine->appScriptObject().sessionScriptObject().setSelection(
+        selection);
 
     applyInEngine(*mScriptEngine);
 
@@ -133,8 +133,9 @@ void CustomActions::updateActions()
     mActions.clear();
 
     for (const auto &dir : getApplicationDirectories(ActionsDir)) {
-        auto scriptEngine = ScriptEngine::make(dir.path());
-        scriptEngine->appScriptObject().sessionScriptObject().setSelection(mSelection);
+        auto scriptEngine = ScriptEngine::make(dir);
+        scriptEngine->appScriptObject().sessionScriptObject().setSelection(
+            mSelection);
 
         auto it = QDirIterator(dir.path(), QStringList() << "*.js", QDir::Files,
             QDirIterator::Subdirectories);
@@ -147,8 +148,8 @@ void CustomActions::updateActions()
             connect(action.get(), &QAction::triggered, this,
                 &CustomActions::actionTriggered);
 
-            // keep only first action with identical name
-            mActions.emplace(action->text(), std::move(action));
+            // keep only first action with identical id
+            mActions.emplace(action->objectName(), std::move(action));
         }
         mMessages += scriptEngine->resetMessages();
     }
@@ -170,6 +171,17 @@ QList<CustomActionPtr> CustomActions::getApplicableActions()
         if (action->isEnabled())
             actions += action;
     return actions;
+}
+
+bool CustomActions::applyAction(const QString &id)
+{
+    Q_ASSERT(onMainThread());
+    auto action = getActionById(id);
+    if (!action)
+        return false;
+
+    mMessages += action->apply(mSelection);
+    return true;
 }
 
 CustomActionPtr CustomActions::getActionById(const QString &id)

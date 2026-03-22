@@ -136,10 +136,8 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     Q_ASSERT(onMainThread());
     QQuickStyle::setStyle("Fusion");
 
-    if (!mEnginePtr) {
-        const auto basePath = QFileInfo(fileName).absolutePath();
-        mEnginePtr = ScriptEngine::make(basePath, thread(), this);
-    }
+    if (!mEnginePtr)
+        mEnginePtr = ScriptEngine::make(fileName, thread(), this);
 
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -285,6 +283,11 @@ bool QmlView::save()
 }
 
 void QmlView::setModified() { }
+
+QString QmlView::actionId() const
+{
+    return mEnginePtr->actionId();
+}
 
 void QmlView::addDependency(const QString &fileName)
 {

@@ -29,6 +29,7 @@ public:
     QSize minimumSizeHint() const override { return QSize(150, 150); }
 
     const QScriptEnginePtr &enginePtr() const { return mEnginePtr; }
+    QString actionId() const;
     void addDependency(const QString &fileName);
     bool dependsOn(const QString &fileName) const;
     void resetOnFocus();

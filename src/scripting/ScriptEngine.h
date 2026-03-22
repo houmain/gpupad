@@ -3,6 +3,7 @@
 #include "MessageList.h"
 #include <QObject>
 #include <QJSEngine>
+#include <QDir>
 #include <QJSValue>
 #include <vector>
 
@@ -16,8 +17,12 @@ class QTimer;
 class ScriptEngine final : public QObject
 {
 public:
-    static ScriptEnginePtr make(const QString &basePath = "",
-        QThread *thread = nullptr, QObject *parent = nullptr);
+    static ScriptEnginePtr make(const QString &actionId,
+        const QString &mainScriptFileName, QThread *thread = nullptr,
+        QObject *parent = nullptr);
+    static ScriptEnginePtr make(const QDir &basePath, QThread *thread = nullptr,
+        QObject *parent = nullptr);
+    static ScriptEnginePtr make(const QString &basePath) = delete;
     ~ScriptEngine();
 
     MessagePtrSet resetMessages();
@@ -37,6 +42,8 @@ public:
     uint32_t evaluateUInt(const QString &valueExpression, ItemId itemId);
     QJSEngine &jsEngine();
 
+    const QString &actionId() const { return mActionId; }
+    const QString &mainScriptFileName() const { return mMainScriptFileName; }
     AppScriptObject &appScriptObject() { return *mAppScriptObject; }
 
     void setGlobal(const QString &name, QJSValue value);
@@ -51,10 +58,12 @@ public:
 
 private:
     ScriptEngine(QObject *parent);
-    void initialize(const ScriptEnginePtr &self, const QString &basePath);
+    void initialize(const ScriptEnginePtr &self, const QDir &basePath);
     void resetInterruptTimer();
     void outputError(const QJSValue &result, ItemId itemId);
 
+    QString mActionId;
+    QString mMainScriptFileName;
     MessagePtrSet mMessages;
     QJSEngine *mJsEngine{};
     ConsoleScriptObject *mConsoleScriptObject{};

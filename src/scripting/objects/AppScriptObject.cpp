@@ -53,7 +53,7 @@ QString AppScriptObject_MainThreadCalls::openFileDialog(QString pattern)
 //-------------------------------------------------------------------------
 
 AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
-    const QString &basePath)
+    const QDir &basePath)
     : QObject(static_cast<QObject *>(enginePtr.get()))
     , mEnginePtr(enginePtr)
     , mJsEngine(&enginePtr->jsEngine())

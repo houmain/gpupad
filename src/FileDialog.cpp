@@ -162,7 +162,8 @@ bool FileDialog::isVideoFileName(const QString &fileName)
     return false;
 }
 
-void FileDialog::setSessionDir(std::optional<QDir> sessionDir) {
+void FileDialog::setSessionDir(std::optional<QDir> sessionDir)
+{
     gSessionDir = sessionDir;
 }
 
@@ -315,6 +316,12 @@ QString toNativeCanonicalFilePath(const QString &fileName)
     Q_ASSERT(fileInfo.isAbsolute());
     return QDir::toNativeSeparators(
         fileInfo.exists() ? fileInfo.canonicalFilePath() : fileName);
+}
+
+QString toForwardSlashRelativeFilePath(const QString &fileName)
+{
+    const auto dir = (gSessionDir.has_value() ? *gSessionDir : QDir::current());
+    return QDir::fromNativeSeparators(dir.relativeFilePath(fileName));
 }
 
 QString getFirstDirEntry(const QString &path)

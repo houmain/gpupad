@@ -762,6 +762,7 @@ bool EditorManager::promptSaveDock(QDockWidget *dock)
 
 void EditorManager::closeDock(QDockWidget *dock)
 {
+    Q_ASSERT(dock);
     auto editor = mDocks[dock];
     Q_EMIT editorRenamed(editor->fileName(), "");
 

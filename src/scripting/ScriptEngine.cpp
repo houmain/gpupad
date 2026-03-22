@@ -35,7 +35,17 @@ namespace {
     }
 } // namespace
 
-ScriptEnginePtr ScriptEngine::make(const QString &basePath, QThread *thread,
+ScriptEnginePtr ScriptEngine::make(const QString &actionId,
+    const QString &mainScriptFileName, QThread *thread, QObject *parent)
+{
+    const auto basePath = QFileInfo(mainScriptFileName).absoluteDir();
+    auto engine = make(basePath, thread, parent);
+    engine->mActionId = actionId;
+    engine->mMainScriptFileName = mainScriptFileName;
+    return engine;
+}
+
+ScriptEnginePtr ScriptEngine::make(const QDir &basePath, QThread *thread,
     QObject *parent)
 {
     auto engine = ScriptEnginePtr(new ScriptEngine(parent));
@@ -55,8 +65,7 @@ ScriptEngine::ScriptEngine(QObject *parent)
 {
 }
 
-void ScriptEngine::initialize(const ScriptEnginePtr &self,
-    const QString &basePath)
+void ScriptEngine::initialize(const ScriptEnginePtr &self, const QDir &basePath)
 {
 #if defined(QtQuick_FOUND)
     // make a QmlEngine which can be shared with QmlViews
@@ -78,7 +87,8 @@ void ScriptEngine::initialize(const ScriptEnginePtr &self,
     setGlobal("console", mConsoleScriptObject);
 
     auto file = QFile(":/scripting/ScriptEngine.js");
-    [[maybe_unused]] const auto result = file.open(QFile::ReadOnly | QFile::Text);
+    [[maybe_unused]] const auto result =
+        file.open(QFile::ReadOnly | QFile::Text);
     Q_ASSERT(result);
     mJsEngine->evaluate(QTextStream(&file).readAll());
 

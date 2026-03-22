@@ -521,8 +521,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
                 mDraggedUntitledFileNames[item.id] = fileName;
             } else {
                 object["fileName"] = (relativeFilePaths
-                        ? QDir::fromNativeSeparators(
-                              QDir::current().relativeFilePath(fileName))
+                        ? toForwardSlashRelativeFilePath(fileName)
                         : fileName);
             }
         }

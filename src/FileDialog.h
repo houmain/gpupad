@@ -68,6 +68,7 @@ extern const QString LibrariesDir;
 
 bool isNativeCanonicalFilePath(const QString &fileName);
 QString toNativeCanonicalFilePath(const QString &fileName);
+QString toForwardSlashRelativeFilePath(const QString &fileName);
 void showInFileManager(const QString &path);
 int showNotSavedDialog(QWidget *parent, const QString &fileName);
 bool showSavingFailedMessage(QWidget *parent, const QString &fileName);

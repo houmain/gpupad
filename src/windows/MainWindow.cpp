@@ -12,6 +12,7 @@
 #include "render/GLWindow.h"
 #include "editors/EditorManager.h"
 #include "editors/IEditor.h"
+#include "editors/qml/QmlView.h"
 #include "getEventPosition.h"
 #include "scripting/CustomActions.h"
 #include "session/SessionEditor.h"
@@ -20,14 +21,11 @@
 #include "ui_MainWindow.h"
 #include <QActionGroup>
 #include <QCloseEvent>
-#include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDockWidget>
 #include <QMenu>
 #include <QMessageBox>
 #include <QMimeData>
-#include <QScreen>
-#include <QTimer>
 #include <QToolButton>
 
 // increase when restoring old session states does not work properly
@@ -299,8 +297,8 @@ MainWindow::MainWindow(QWidget *parent)
         [this](const QString &fileName) { openFile(fileName); });
 
     auto &synchronizeLogic = Singletons::synchronizeLogic();
-    connect(&synchronizeLogic, &SynchronizeLogic::waitingForSync,
-        this, &MainWindow::waitForSync);
+    connect(&synchronizeLogic, &SynchronizeLogic::waitingForSync, this,
+        &MainWindow::waitForSync);
     connect(mOutputWindow.get(), &OutputWindow::typeSelectionChanged,
         &synchronizeLogic, &SynchronizeLogic::setProcessSourceType);
     connect(outputDock, &QDockWidget::visibilityChanged, [this](bool visible) {
@@ -362,12 +360,12 @@ MainWindow::MainWindow(QWidget *parent)
     });
     auto i = 0;
     for (const auto &text : {
-            tr("Free Run"),
-            tr("Every V-Sync"),
-            tr("Every 2nd V-Sync"),
-            tr("Every 3rd V-Sync"),
-            tr("Every 4th V-Sync"),
-        }) {
+             tr("Free Run"),
+             tr("Every V-Sync"),
+             tr("Every 2nd V-Sync"),
+             tr("Every 3rd V-Sync"),
+             tr("Every 4th V-Sync"),
+         }) {
         auto action = mUi->menuSyncInterval->addAction(text);
         action->setData(i);
         action->setCheckable(true);
@@ -979,8 +977,9 @@ void MainWindow::saveSessionState(const QString &sessionFileName)
     auto settings = QSettings(sessionStateFile, QSettings::IniFormat);
 
     // add file items by id (may not have a filename)
+    auto activeActions = QStringList();
     auto openEditors = QStringList();
-    auto filesAdded = QStringList();
+    auto filesAdded = QSet<QString>();
     mSingletons->sessionModel().forEachFileItem([&](const FileItem &item) {
         if (auto editor = mEditorManager.getEditor(item.fileName)) {
             openEditors += QString("%1|%2").arg(item.id).arg(
@@ -991,19 +990,26 @@ void MainWindow::saveSessionState(const QString &sessionFileName)
 
     // add other editors by relative filename
     mEditorManager.forEachEditor([&](const IEditor &editor) {
-        // not saving/restoring Qml views for now
-        if (FileDialog::getFileExtension(editor.fileName()) == "qml")
+        // obtain filenames of actions to reapply from QmlViews
+        if (auto qmlView = mEditorManager.getQmlView(editor.fileName())) {
+            const auto actionId = qmlView->actionId();
+            if (!actionId.isEmpty() && !activeActions.contains(actionId))
+                activeActions += actionId;
+
+        } else if (FileDialog::getFileExtension(editor.fileName()) == "qml") {
+            // not saving/restoring Qml source editors for now
             return;
+        }
 
         if (!filesAdded.contains(editor.fileName()))
             openEditors += QString("%1|%2").arg(
-                QDir::fromNativeSeparators(
-                    sessionDir.relativeFilePath(editor.fileName())),
+                toForwardSlashRelativeFilePath(editor.fileName()),
                 mEditorManager.getEditorObjectName(&editor));
     });
 
     settings.setValue("editorState",
         mEditorManager.saveState(EditorManagerStateVersion));
+    settings.setValue("activeActions", activeActions);
     settings.setValue("openEditors", openEditors);
     auto &synchronizeLogic = Singletons::synchronizeLogic();
     settings.setValue("evaluationMode",
@@ -1019,6 +1025,11 @@ bool MainWindow::restoreSessionState(const QString &sessionFileName)
 
     auto &model = Singletons::sessionModel();
     auto settings = QSettings(sessionStateFile, QSettings::IniFormat);
+
+    const auto activeActions = settings.value("activeActions").toStringList();
+    for (const auto &actionId : activeActions)
+        Singletons::customActions().applyAction(actionId);
+
     const auto openEditors = settings.value("openEditors").toStringList();
     mEditorManager.setAutoRaise(false);
     for (const auto &openEditor : openEditors)

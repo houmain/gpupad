@@ -208,7 +208,7 @@ void ProcessSource::validate()
     } else if (mShader) {
         mShader->validate();
     } else if (mSourceType == SourceType::JavaScript) {
-        const auto basePath = QFileInfo(mFileName).absolutePath();
+        const auto basePath = QFileInfo(mFileName).absoluteDir();
         auto scriptEngine = ScriptEngine::make(basePath);
         auto scriptSource = QString();
         Singletons::fileCache().getSource(mFileName, &scriptSource);

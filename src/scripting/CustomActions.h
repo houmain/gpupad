@@ -32,6 +32,7 @@ public:
 
     // main thread
     void setSelection(const QModelIndexList &selection);
+    bool applyAction(const QString &id);
     QList<CustomActionPtr> getApplicableActions();
 
     // any thread
