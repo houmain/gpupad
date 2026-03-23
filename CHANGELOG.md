@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 3.1.0] - 2026-03-23
+
+### Added
+
+- Added Sync Interval menu to View menu.
+- Added close button to editor dock title bars.
+- Enumerating actions also in session directory (#40).
+- Saving/restoring active actions in session state (#40).
+
+### Changed
+
+- Renamed `app` property `frameIndex` to `frame`, removed `frameRate`.
+- No longer advancing time in Automatic evaluation.
+- Searching for installation files in ../extra also in Release builds.
+
+### Fixed
+
+- Greatly improved UI rendering performance on Linux.
+- Fixed binding targets with D3D.
+- Fixed loading libraries from session base directory.
+- Fixed crash when opening Qml views from session scripts.
+
 ## [Version 3.0.0] - 2026-03-14
 
 ### Added
@@ -10,7 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added Direct3D 12 renderer [WIP].
 - Allow to select shader language and compiler in session properties.
 - Generating output window content with currently selected renderer.
-- Added app script object `time`, `timeDelta`, `frameRate` and `date` (#38).
+- Added `app` properties `time`, `timeDelta`, `frameRate` and `date` (#38).
 - Made `frameIndex` settable.
 - Allow to navigate back/fore with designated mouse buttons.
 - Trimming braces when pasting in binary editor.
@@ -979,6 +1001,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 3.1.0]: https://github.com/houmain/gpupad/compare/3.0.0...3.1.0
 [version 3.0.0]: https://github.com/houmain/gpupad/compare/2.7.0...3.0.0
 [version 2.7.0]: https://github.com/houmain/gpupad/compare/2.6.1...2.7.0
 [version 2.6.1]: https://github.com/houmain/gpupad/compare/2.6.0...2.6.1
