@@ -1,6 +1,8 @@
 #include "MessageWindow.h"
 #include "FileDialog.h"
 #include "MessageList.h"
+#include "editors/EditorManager.h"
+#include "editors/source/SourceEditor.h"
 #include "Singletons.h"
 #include "WindowTitle.h"
 #include "session/SessionModel.h"
@@ -10,7 +12,6 @@
 #include <QTimer>
 #include <QToolButton>
 #include <QVBoxLayout>
-#include <QFile>
 #include <QTextStream>
 
 MessageWindow::MessageWindow(QWidget *parent)
@@ -293,14 +294,16 @@ void MessageWindow::handleItemActivated(QTableWidgetItem *messageItem)
 
 void MessageWindow::exportMessages()
 {
-    auto options = FileDialog::Options{ FileDialog::Saving
-        | FileDialog::ScriptExtensions };
-    if (Singletons::fileDialog().exec(options, "messages.txt")) {
-        auto file = QFile(Singletons::fileDialog().fileName());
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            auto out = QTextStream(&file);
-            for (auto row = 0; row < rowCount(); ++row)
-                out << item(row, 0)->text() << "\t" << item(row, 1)->text() << "\n";
-        }
+    auto string = QString();
+    auto out = QTextStream(&string);
+    for (auto row = 0; row < rowCount(); ++row)
+        out << item(row, 0)->text() << "\t" << item(row, 1)->text() << "\n";
+
+    auto editor = Singletons::editorManager().getSourceEditor(mLastExportFileName);
+    if (!editor) {
+        mLastExportFileName = FileDialog::generateNextUntitledFileName("Messages");
+        editor = Singletons::editorManager().openSourceEditor(mLastExportFileName);
     }
+    if (editor)
+        editor->replace(string);
 }

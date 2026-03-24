@@ -36,4 +36,5 @@ private:
     QIcon mErrorIcon;
     QList<MessageId> mMessageIds;
     QToolButton *mExportButton{};
+    QString mLastExportFileName;
 };
