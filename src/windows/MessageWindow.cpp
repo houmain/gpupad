@@ -2,13 +2,20 @@
 #include "FileDialog.h"
 #include "MessageList.h"
 #include "Singletons.h"
+#include "WindowTitle.h"
 #include "session/SessionModel.h"
 #include <QHeaderView>
 #include <QRegularExpression>
 #include <QStandardItemModel>
 #include <QTimer>
+#include <QToolButton>
+#include <QVBoxLayout>
+#include <QFile>
+#include <QTextStream>
 
-MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
+MessageWindow::MessageWindow(QWidget *parent)
+    : QTableWidget(parent)
+    , mExportButton(new QToolButton(this))
 {
     connect(this, &MessageWindow::itemActivated, this,
         &MessageWindow::handleItemActivated);
@@ -37,6 +44,23 @@ MessageWindow::MessageWindow(QWidget *parent) : QTableWidget(parent)
     mInfoIcon = QIcon::fromTheme("dialog-information");
     mWarningIcon = QIcon::fromTheme("dialog-warning");
     mErrorIcon = QIcon::fromTheme("dialog-error");
+
+    mExportButton->setIcon(
+        QIcon(QIcon::fromTheme(QString::fromUtf8("document-save"))));
+    mExportButton->setAutoRaise(true);
+
+    auto header = new QWidget(this);
+    auto headerLayout = new QHBoxLayout(header);
+    headerLayout->setContentsMargins(4, 4, 4, 4);
+    headerLayout->addWidget(mExportButton);
+    headerLayout->addStretch(1);
+
+    auto titleBar = new WindowTitle();
+    titleBar->setWidget(header);
+    mTitleBar = titleBar;
+
+    connect(mExportButton, &QToolButton::clicked, this,
+        &MessageWindow::exportMessages);
 }
 
 void MessageWindow::updateMessages()
@@ -265,4 +289,18 @@ void MessageWindow::handleItemActivated(QTableWidgetItem *messageItem)
         line = match.capturedView(1).toInt();
 
     Q_EMIT messageActivated(itemId, fileName, line, -1);
+}
+
+void MessageWindow::exportMessages()
+{
+    auto options = FileDialog::Options{ FileDialog::Saving
+        | FileDialog::ScriptExtensions };
+    if (Singletons::fileDialog().exec(options, "messages.txt")) {
+        auto file = QFile(Singletons::fileDialog().fileName());
+        if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            auto out = QTextStream(&file);
+            for (auto row = 0; row < rowCount(); ++row)
+                out << item(row, 0)->text() << "\t" << item(row, 1)->text() << "\n";
+        }
+    }
 }

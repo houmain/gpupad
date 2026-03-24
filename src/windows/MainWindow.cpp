@@ -167,7 +167,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     dock = new QDockWidget(tr("Messages"), this);
     dock->setObjectName("Messages");
-    dock->setTitleBarWidget(new WindowTitle(dock));
+    dock->setTitleBarWidget(mMessageWindow->titleBar());
     dock->setFeatures(QDockWidget::DockWidgetClosable
         | QDockWidget::DockWidgetMovable);
     dock->setWidget(mMessageWindow.get());
