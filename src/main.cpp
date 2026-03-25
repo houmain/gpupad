@@ -98,6 +98,31 @@ void filteringMessageHandler(QtMsgType type, const QMessageLogContext &context,
     defaultMessageHandler(type, context, msg);
 }
 
+int runHeadless(QStringList &arguments)
+{
+    auto singletons = Singletons(nullptr);
+    auto& sessionModel = singletons.sessionModel();
+    for (const auto &argument : arguments) {
+        if (FileDialog::isSessionFileName(argument)) {
+            const auto fileName = QFileInfo(argument).absoluteFilePath();
+            if (!singletons.sessionModel().load(fileName))
+                return 1;
+        }
+        else if (FileDialog::isScriptFileName(argument)) {
+            const auto fileName = QFileInfo(argument).absoluteFilePath();
+            const auto index = sessionModel.insertItem(
+                Item::Type::Script, sessionModel.sessionItemIndex());
+            sessionModel.setData(sessionModel.getIndex(index, SessionModel::FileName), fileName);
+        }
+        singletons.synchronizeLogic().manualEvaluation();
+        singletons.editorManager().saveAllEditors();
+        singletons.editorManager().closeAllEditors(false);
+        singletons.sessionModel().clear();
+        singletons.synchronizeLogic().resetRenderSession();
+    }
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     raiseProcessPriority();
@@ -113,7 +138,8 @@ int main(int argc, char *argv[])
     QSettings::setDefaultFormat(QSettings::IniFormat);
 #endif
 
-    if (forwardToInstance(argc, argv))
+    const auto headless = (argc > 1 && !std::strcmp(argv[1], "--headless"));
+    if (!headless && forwardToInstance(argc, argv))
         return 0;
 
 #if defined(__linux)
@@ -140,20 +166,11 @@ int main(int argc, char *argv[])
     auto app = QApplication(argc, argv);
     defaultMessageHandler = qInstallMessageHandler(filteringMessageHandler);
 
-    auto arguments = app.arguments();
+    auto arguments = QApplication::arguments();
     arguments.removeFirst();
-
-    if (!arguments.isEmpty() && arguments.first() == "--headless") {
+    if (headless) {
         arguments.removeFirst();
-        auto singletons = Singletons(nullptr);
-        if (arguments.isEmpty()
-            || !singletons.sessionModel().load(arguments.first()))
-            return 1;
-        singletons.synchronizeLogic().manualEvaluation();
-        singletons.synchronizeLogic().resetRenderSession();
-        if (!singletons.editorManager().saveAllEditors())
-            return 2;
-        return 0;
+        return runHeadless(arguments);
     }
 
     QApplication::setStyle(new Style());
