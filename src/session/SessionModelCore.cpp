@@ -192,7 +192,7 @@ SessionModelCore &SessionModelCore::operator=(const SessionModelCore &rhs)
 
 SessionModelCore::~SessionModelCore()
 {
-    Q_ASSERT(rowCount() == 1);
+    Q_ASSERT(mRoot.items.size() == 1);
     Q_ASSERT(undoStack().isClean());
 }
 

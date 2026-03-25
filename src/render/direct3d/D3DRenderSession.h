@@ -15,7 +15,7 @@ class D3DRenderSession final : public RenderSessionBase
 public:
     struct CommandQueue;
 
-    D3DRenderSession(RendererPtr renderer, const QString &basePath);
+    explicit D3DRenderSession(RendererPtr renderer);
     ~D3DRenderSession();
 
     void render() override;

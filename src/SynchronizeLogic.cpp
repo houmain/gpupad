@@ -131,8 +131,7 @@ bool SynchronizeLogic::initializeRenderSession()
     if (!sessionRenderer)
         return false;
 
-    const auto basePath = QFileInfo(mSessionFileName).path();
-    mRenderSession = RenderSessionBase::create(sessionRenderer, basePath);
+    mRenderSession = RenderSessionBase::create(sessionRenderer);
     if (!mRenderSession)
         return false;
 
@@ -538,10 +537,9 @@ void SynchronizeLogic::processSource()
 
 void SynchronizeLogic::handleSessionFileNameChanged(const QString &fileName)
 {
-    mSessionFileName = toNativeCanonicalFilePath(fileName);
-    FileDialog::setSessionDir((FileDialog::isEmptyOrUntitled(fileName))
-            ? std::nullopt
-            : std::make_optional(QFileInfo(mSessionFileName).dir()));
+    FileDialog::setWorkingDir((FileDialog::isEmptyOrUntitled(fileName))
+            ? QDir::current()
+            : QFileInfo(fileName).dir());
 }
 
 void SynchronizeLogic::handleMouseStateChanged()

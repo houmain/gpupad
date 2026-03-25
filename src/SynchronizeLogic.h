@@ -81,7 +81,6 @@ private:
     QTimer *mUpdateEditorsTimer{};
     QSet<ItemId> mEditorItemsModified;
 
-    QString mSessionFileName;
     QTimer *mEvaluationTimer{};
     bool mRenderSessionInvalidated{};
     EvaluationMode mEvaluationMode{};

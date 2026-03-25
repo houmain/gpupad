@@ -83,15 +83,12 @@ using Command = std::function<void(BindingState &)>;
 class RenderSessionBase : public RenderTask, public IScriptRenderSession
 {
 public:
-    static std::unique_ptr<RenderSessionBase> create(RendererPtr renderer,
-        const QString &basePath);
+    static std::unique_ptr<RenderSessionBase> create(RendererPtr renderer);
 
-    RenderSessionBase(RendererPtr renderer, const QString &basePath,
-        QObject *parent = nullptr);
+    RenderSessionBase(RendererPtr renderer, QObject *parent = nullptr);
     virtual ~RenderSessionBase();
 
     QThread *renderThread() override { return renderer().renderThread(); }
-    const QString &basePath() override { return mBasePath; }
     void prepare(bool itemsChanged, EvaluationType evaluationType) override;
     void configure() override;
     void configured() override;
@@ -160,7 +157,6 @@ private:
     void evaluateBindingValues(const Binding &binding,
         ScriptEngine &scriptEngine);
 
-    const QString mBasePath;
     QSet<ItemId> mUsedItems;
     bool mItemsChanged{};
     EvaluationType mEvaluationType{};

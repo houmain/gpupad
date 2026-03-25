@@ -62,6 +62,7 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     , mMouseScriptObject(new MouseScriptObject(this))
     , mKeyboardScriptObject(new KeyboardScriptObject(this))
 {
+    Q_ASSERT(mBasePath.isAbsolute());
     mSessionScriptObject->initializeEngine(mJsEngine);
     mSessionProperty = mJsEngine->newQObject(mSessionScriptObject);
     mMouseProperty = mJsEngine->newQObject(mMouseScriptObject);

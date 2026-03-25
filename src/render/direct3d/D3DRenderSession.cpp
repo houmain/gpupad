@@ -28,9 +28,8 @@ struct D3DRenderSession::CommandQueue
     std::vector<D3DProgram> failedPrograms;
 };
 
-D3DRenderSession::D3DRenderSession(RendererPtr renderer,
-    const QString &basePath)
-    : RenderSessionBase(std::move(renderer), basePath)
+D3DRenderSession::D3DRenderSession(RendererPtr renderer)
+    : RenderSessionBase(std::move(renderer))
 {
 }
 

@@ -12,7 +12,7 @@ class GLRenderSession final : public RenderSessionBase
 public:
     struct CommandQueue;
 
-    GLRenderSession(RendererPtr renderer, const QString &basePath);
+    explicit GLRenderSession(RendererPtr renderer);
     ~GLRenderSession();
 
     void render() override;

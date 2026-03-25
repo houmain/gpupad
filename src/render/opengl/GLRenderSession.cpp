@@ -27,8 +27,8 @@ struct GLRenderSession::CommandQueue
     std::vector<GLProgram> failedPrograms;
 };
 
-GLRenderSession::GLRenderSession(RendererPtr renderer, const QString &basePath)
-    : RenderSessionBase(std::move(renderer), basePath)
+GLRenderSession::GLRenderSession(RendererPtr renderer)
+    : RenderSessionBase(std::move(renderer))
     , mShareSync(std::make_shared<GLShareSync>())
 {
 }

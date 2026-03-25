@@ -4,13 +4,14 @@
 #include "objects/AppScriptObject.h"
 #include "objects/SessionScriptObject.h"
 #include "Singletons.h"
+#include "FileDialog.h"
 
 ScriptSession::ScriptSession(IScriptRenderSession *renderSession,
     QObject *parent)
     : QObject(parent)
     , mRenderSession(*renderSession)
 {
-    mScriptEngine = ScriptEngine::make(mRenderSession.basePath(),
+    mScriptEngine = ScriptEngine::make(FileDialog::workingDir(),
         mRenderSession.renderThread());
 }
 

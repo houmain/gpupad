@@ -14,27 +14,25 @@
 #endif
 
 std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
-    RendererPtr renderer, const QString &basePath)
+    RendererPtr renderer)
 {
     auto session = std::unique_ptr<RenderSessionBase>();
     switch (renderer->api()) {
     case RenderAPI::OpenGL:
-        return std::make_unique<GLRenderSession>(renderer, basePath);
+        return std::make_unique<GLRenderSession>(renderer);
     case RenderAPI::Vulkan:
-        return std::make_unique<VKRenderSession>(renderer, basePath);
+        return std::make_unique<VKRenderSession>(renderer);
     case RenderAPI::Direct3D:
 #if defined(_WIN32)
-        return std::make_unique<D3DRenderSession>(renderer, basePath);
+        return std::make_unique<D3DRenderSession>(renderer);
 #endif
         break;
     }
     return {};
 }
 
-RenderSessionBase::RenderSessionBase(RendererPtr renderer,
-    const QString &basePath, QObject *parent)
+RenderSessionBase::RenderSessionBase(RendererPtr renderer, QObject *parent)
     : RenderTask(std::move(renderer), parent)
-    , mBasePath(basePath)
 {
 }
 

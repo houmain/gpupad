@@ -11,7 +11,7 @@ class VKRenderSession final : public RenderSessionBase
 public:
     struct CommandQueue;
 
-    VKRenderSession(RendererPtr renderer, const QString &basePath);
+    explicit VKRenderSession(RendererPtr renderer);
     ~VKRenderSession();
 
     void render() override;

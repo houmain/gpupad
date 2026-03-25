@@ -28,8 +28,8 @@ struct VKRenderSession::CommandQueue
     std::vector<VKProgram> failedPrograms;
 };
 
-VKRenderSession::VKRenderSession(RendererPtr renderer, const QString &basePath)
-    : RenderSessionBase(std::move(renderer), basePath)
+VKRenderSession::VKRenderSession(RendererPtr renderer)
+    : RenderSessionBase(std::move(renderer))
 {
 }
 
