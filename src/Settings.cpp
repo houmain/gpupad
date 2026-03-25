@@ -4,7 +4,10 @@
 #include <QFontDialog>
 #include <QIcon>
 
-Settings::Settings(QObject *parent) : QSettings(parent)
+Settings::Settings(QObject *parent) 
+    : QSettings(parent)
+    , mWindowTheme(&Theme::getTheme(""))
+    , mEditorTheme(&Theme::getTheme(""))
 {
     mFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     QIcon::setThemeName("light");

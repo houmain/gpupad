@@ -2,6 +2,10 @@
 #include "SingleApplication/singleapplication.h"
 #include "Style.h"
 #include "windows/MainWindow.h"
+#include "Singletons.h"
+#include "SynchronizeLogic.h"
+#include "session/SessionModel.h"
+#include "editors/EditorManager.h"
 #include <QApplication>
 #include <QSettings>
 #include <QSurfaceFormat>
@@ -67,13 +71,13 @@ bool forwardToInstance(int argc, char *argv[])
     auto arguments = app.arguments();
     arguments.removeFirst();
     if (arguments.empty()
-        || std::find_if(arguments.begin(), arguments.end(),
-               &FileDialog::isSessionFileName)
-            != arguments.end())
+        || std::count_if(arguments.begin(), arguments.end(),
+            &FileDialog::isSessionFileName))
         return false;
 
     for (const auto &argument : std::as_const(arguments))
-        instance.sendMessage(argument.toUtf8());
+        if (!instance.sendMessage(argument.toUtf8(), 1000))
+            return false;
     return true;
 }
 
@@ -136,6 +140,22 @@ int main(int argc, char *argv[])
     auto app = QApplication(argc, argv);
     defaultMessageHandler = qInstallMessageHandler(filteringMessageHandler);
 
+    auto arguments = app.arguments();
+    arguments.removeFirst();
+
+    if (!arguments.isEmpty() && arguments.first() == "--headless") {
+        arguments.removeFirst();
+        auto singletons = Singletons(nullptr);
+        if (arguments.isEmpty()
+            || !singletons.sessionModel().load(arguments.first()))
+            return 1;
+        singletons.synchronizeLogic().manualEvaluation();
+        singletons.synchronizeLogic().resetRenderSession();
+        if (!singletons.editorManager().saveAllEditors())
+            return 2;
+        return 0;
+    }
+
     QApplication::setStyle(new Style());
     QApplication::setEffectEnabled(Qt::UI_AnimateTooltip, false);
     QApplication::setEffectEnabled(Qt::UI_FadeTooltip, true);
@@ -165,8 +185,6 @@ int main(int argc, char *argv[])
     window.show();
     app.processEvents();
 
-    auto arguments = app.arguments();
-    arguments.removeFirst();
     for (const QString &argument : std::as_const(arguments))
         window.openFile(argument);
 
