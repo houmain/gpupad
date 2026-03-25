@@ -189,6 +189,9 @@ public:
         return castItem<T>(SessionModelCore::findItem(id));
     }
 
+Q_SIGNALS:
+    void itemRenamed(const QModelIndex &index, const QString &prevName);
+
 protected:
     const Root &root() const { return mRoot; }
     QUndoStack &undoStack() { return mUndoStack; }

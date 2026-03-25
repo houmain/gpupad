@@ -55,6 +55,7 @@ private:
     void invalidateRenderSession();
     void triggerAutomaticEvaluation();
     bool initializeRenderSession();
+    void handleItemRenamed(const QModelIndex &index, const QString &prevName);
     void handleItemModified(const QModelIndex &index);
     void handleItemsModified(const QModelIndex &topLeft,
         const QModelIndex &bottomRight, const QVector<int> &roles);
@@ -64,7 +65,7 @@ private:
     void handleKeyboardStateChanged();
     void handleViewportSizeChanged(const QString &fileName);
     void handleFileItemFileChanged(const FileItem &item);
-    void handleFileItemRenamed(const FileItem &item);
+    void handleFileItemRenamed(const FileItem &item, const QString &prevName);
     void handleFileChanged(const QString &fileName);
     void handleItemReordered(const QModelIndex &parent, int first);
     void handleSessionRendered();

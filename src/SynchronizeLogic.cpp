@@ -65,6 +65,8 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
         &SynchronizeLogic::handleEvaluateTimout);
     connect(mProcessSourceTimer, &QTimer::timeout, this,
         &SynchronizeLogic::processSource);
+    connect(&mModel, &SessionModel::itemRenamed, this,
+        &SynchronizeLogic::handleItemRenamed);
     connect(&mModel, &SessionModel::dataChanged, this,
         &SynchronizeLogic::handleItemsModified);
     connect(&mModel, &SessionModel::rowsInserted, this,
@@ -247,14 +249,19 @@ void SynchronizeLogic::invalidateRenderSession()
     triggerAutomaticEvaluation();
 }
 
+void SynchronizeLogic::handleItemRenamed(const QModelIndex &index,
+    const QString &prevName)
+{
+    Q_ASSERT(index.column() == SessionModel::Name);
+    if (auto fileItem = mModel.item<FileItem>(index))
+        handleFileItemRenamed(*fileItem, prevName);
+}
+
 void SynchronizeLogic::handleItemModified(const QModelIndex &index)
 {
-    if (auto fileItem = mModel.item<FileItem>(index)) {
-        if (index.column() == SessionModel::Name)
-            handleFileItemRenamed(*fileItem);
-        else if (index.column() == SessionModel::FileName)
+    if (auto fileItem = mModel.item<FileItem>(index))
+        if (index.column() == SessionModel::FileName)
             handleFileItemFileChanged(*fileItem);
-    }
 
     if (auto call = mModel.item<Call>(index))
         if (index.column() == SessionModel::CallType
@@ -335,9 +342,12 @@ void SynchronizeLogic::handleFileItemFileChanged(const FileItem &item)
         mModel.setData(mModel.getIndex(&item, SessionModel::Name), name);
 }
 
-void SynchronizeLogic::handleFileItemRenamed(const FileItem &item)
+void SynchronizeLogic::handleFileItemRenamed(const FileItem &item,
+    const QString &prevName)
 {
+    // also rename file when item name previously matched the filename
     if (item.fileName.isEmpty()
+        || FileDialog::getFileTitle(item.fileName) != prevName
         || FileDialog::getFileTitle(item.fileName) == item.name)
         return;
 
@@ -529,9 +539,9 @@ void SynchronizeLogic::processSource()
 void SynchronizeLogic::handleSessionFileNameChanged(const QString &fileName)
 {
     mSessionFileName = toNativeCanonicalFilePath(fileName);
-    FileDialog::setSessionDir(
-        (FileDialog::isEmptyOrUntitled(fileName)) ? std::nullopt :
-        std::make_optional(QFileInfo(mSessionFileName).dir()));
+    FileDialog::setSessionDir((FileDialog::isEmptyOrUntitled(fileName))
+            ? std::nullopt
+            : std::make_optional(QFileInfo(mSessionFileName).dir()));
 }
 
 void SynchronizeLogic::handleMouseStateChanged()

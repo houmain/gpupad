@@ -353,11 +353,17 @@ bool SessionModelCore::setData(const QModelIndex &index, const QVariant &value,
     }
 
     switch (static_cast<ColumnType>(index.column())) {
-    case ColumnType::Name:
-        if (value.toString().isEmpty())
+    case ColumnType::Name: {
+        const auto newName = value.toString();
+        const auto prevName = item.name;
+        if (newName.isEmpty())
             return false;
-        undoableAssignment(index, &item.name, value.toString());
+        if (newName != prevName) {
+            undoableAssignment(index, &item.name, newName);
+            Q_EMIT itemRenamed(index, prevName);
+        }
         return true;
+    }
 
     case ColumnType::FileName:
         if (castItem<FileItem>(item)) {

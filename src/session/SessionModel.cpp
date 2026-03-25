@@ -514,6 +514,8 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
 {
     object["type"] = getTypeName(item.type);
     object["id"] = item.id;
+    object["name"] = item.name;
+
     if (auto fileItem = castItem<FileItem>(item)) {
         const auto &fileName = fileItem->fileName;
         if (!fileName.isEmpty()) {
@@ -523,11 +525,11 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
                 object["fileName"] = (relativeFilePaths
                         ? toForwardSlashRelativeFilePath(fileName)
                         : fileName);
+                if (QFileInfo(fileName).fileName() == item.name)
+                    object.remove("name");
             }
         }
     }
-    if (!object.contains("fileName"))
-        object["name"] = item.name;
 
 #define ADD(COLUMN_TYPE, ITEM_TYPE, PROPERTY)        \
     if (item.type == Item::Type::ITEM_TYPE           \
