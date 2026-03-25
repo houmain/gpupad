@@ -297,22 +297,73 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically,
     return true;
 }
 
-bool FileCache::updateTexture(const QString &fileName, bool flippedVertically,
+void FileCache::updateSource(const QString &fileName, QString source)
+{
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
+    if (auto editor = Singletons::editorManager().getSourceEditor(fileName)) {
+        editor->replace(std::move(source));
+    } else {
+        QMutexLocker lock(&mMutex);
+        mSources[fileName] = std::move(source);
+        lock.unlock();
+        Q_EMIT fileChanged(fileName);
+    }
+}
+
+void FileCache::updateTexture(const QString &fileName, bool flippedVertically,
     TextureData texture)
 {
     Q_ASSERT(!texture.isNull());
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
-    QMutexLocker lock(&mMutex);
+    if (auto editor = Singletons::editorManager().getTextureEditor(fileName)) {
+        editor->replace(std::move(texture));
+    } else {
+        QMutexLocker lock(&mMutex);
+        mTextures[TextureKey(fileName, flippedVertically)] = std::move(texture);
+        lock.unlock();
+        Q_EMIT fileChanged(fileName);
+    }
+}
 
-    const auto key = TextureKey(fileName, flippedVertically);
-    if (!mTextures.contains(key))
-        return false;
-    mTextures[key] = std::move(texture);
-    lock.unlock();
+void FileCache::updateBinary(const QString &fileName, QByteArray binary)
+{
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
+    if (auto editor = Singletons::editorManager().getBinaryEditor(fileName)) {
+        editor->replace(binary);
+    } else {
+        QMutexLocker lock(&mMutex);
+        mBinaries[fileName] = std::move(binary);
+        lock.unlock();
+        Q_EMIT fileChanged(fileName);
+    }
+}
 
-    Q_EMIT fileChanged(fileName);
+void FileCache::updateBinaryRange(const QString &fileName, int offset,
+    const QByteArray &range)
+{
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
+    Q_ASSERT(offset >= 0);
+    if (offset < 0)
+        return;
 
-    return true;
+    auto data = QByteArray();
+    if (auto editor = Singletons::editorManager().getBinaryEditor(fileName)) {
+        data = editor->data();
+    } else {
+        getBinary(fileName, &data);
+    }
+    if (offset == 0 && range.size() >= data.size())
+        return updateBinary(fileName, range);
+
+    if (data.size() >= range.size() + offset
+        && !std::memcmp(data.data() + offset, range.constData(), range.size()))
+        return;
+
+    if (offset + range.size() > data.size())
+        data.resize(offset + range.size());
+    std::memcpy(data.data() + offset, range.constData(), range.size());
+
+    updateBinary(fileName, data);
 }
 
 bool FileCache::getBinary(const QString &fileName, QByteArray *binary) const

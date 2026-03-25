@@ -182,31 +182,6 @@ void BinaryEditor::replace(QByteArray data, bool emitFileChanged)
     Singletons::fileCache().handleEditorFileChanged(mFileName, emitFileChanged);
 }
 
-void BinaryEditor::replaceRange(int offset, QByteArray data,
-    bool emitFileChanged)
-{
-    Q_ASSERT(offset >= 0);
-    if (offset < 0)
-        return;
-
-    if (offset == 0 && data.size() >= mData.size())
-        return replace(data, emitFileChanged);
-
-    if (mData.size() >= data.size() + offset
-        && !std::memcmp(mData.data() + offset, data.constData(), data.size()))
-        return;
-
-    if (offset + data.size() > mData.size())
-        mData.resize(offset + data.size());
-    std::memcpy(mData.data() + offset, data.constData(), data.size());
-    refresh();
-
-    if (!FileDialog::isEmptyOrUntitled(mFileName))
-        setModified(true);
-
-    Singletons::fileCache().handleEditorFileChanged(mFileName, emitFileChanged);
-}
-
 void BinaryEditor::handleDataChanged()
 {
     setModified(true);

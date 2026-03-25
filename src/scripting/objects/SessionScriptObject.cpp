@@ -837,7 +837,7 @@ void SessionScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
 {
     const auto buffer = findSessionItem<Buffer>(itemIdent);
     if (!buffer)
-        return engine().throwError(QStringLiteral("Invalid item"));
+        return engine().throwError(QStringLiteral("Invalid Buffer item"));
 
     if (buffer->items.empty() || buffer->items[0]->items.empty())
         return engine().throwError(
@@ -862,8 +862,8 @@ void SessionScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
             }
             ensureFileName(session, *buffer, &fileName);
             if (onMainThread())
-                if (auto editor = openBinaryEditor(*buffer))
-                    editor->replace(bufferData);
+                Singletons::fileCache().updateBinary(buffer->fileName,
+                    bufferData);
         }
     });
 }
@@ -872,7 +872,7 @@ void SessionScriptObject::setBlockData(QJSValue itemIdent, QJSValue data)
 {
     const auto block = findSessionItem<Block>(itemIdent);
     if (!block)
-        return engine().throwError(QStringLiteral("Invalid item"));
+        return engine().throwError(QStringLiteral("Invalid Block item"));
 
     const auto bufferData = toByteArray(data, *block);
     if (bufferData.isNull())
@@ -888,13 +888,13 @@ void SessionScriptObject::setBlockData(QJSValue itemIdent, QJSValue data)
                     session.getIndex(block, SessionModel::BlockRowCount),
                     rowCount);
                 ensureFileName(session, *buffer, &fileName);
-                if (onMainThread())
-                    if (auto editor = openBinaryEditor(*buffer)) {
-                        auto offset = 0, rowCount = 0;
-                        Singletons::synchronizeLogic().evaluateBlockProperties(
-                            *block, &offset, &rowCount);
-                        editor->replaceRange(offset, bufferData);
-                    }
+                if (onMainThread()) {
+                    auto offset = 0, rowCount = 0;
+                    Singletons::synchronizeLogic().evaluateBlockProperties(
+                        *block, &offset, &rowCount);
+                    Singletons::fileCache().updateBinaryRange(buffer->fileName,
+                        offset, bufferData);
+                }
             }
     });
 }
@@ -903,7 +903,7 @@ void SessionScriptObject::setTextureData(QJSValue itemIdent, QJSValue data)
 {
     const auto texture = findSessionItem<Texture>(itemIdent);
     if (!texture)
-        return engine().throwError(QStringLiteral("Invalid item"));
+        return engine().throwError(QStringLiteral("Invalid Texture item"));
 
     const auto textureData = toTextureData(data, *texture);
     if (textureData.isNull())
@@ -914,8 +914,8 @@ void SessionScriptObject::setTextureData(QJSValue itemIdent, QJSValue data)
         if (auto texture = session.findItem<Texture>(textureId)) {
             ensureFileName(session, *texture, &fileName);
             if (onMainThread())
-                if (auto editor = openTextureEditor(*texture))
-                    editor->replace(textureData);
+                Singletons::fileCache().updateTexture(texture->fileName,
+                    texture->flipVertically, textureData);
         }
     });
 }
@@ -924,15 +924,14 @@ void SessionScriptObject::setShaderSource(QJSValue itemIdent, QJSValue data)
 {
     const auto shader = findSessionItem<Shader>(itemIdent);
     if (!shader)
-        return engine().throwError(QStringLiteral("Invalid item"));
+        return engine().throwError(QStringLiteral("Invalid Shader item"));
 
     withSessionModel([shaderId = shader->id, data = data.toString(),
                          fileName = QString()](SessionModel &session) mutable {
         if (auto shader = session.findItem<Shader>(shaderId)) {
             ensureFileName(session, *shader, &fileName);
             if (onMainThread())
-                if (auto editor = openSourceEditor(*shader))
-                    editor->replace(data);
+                Singletons::fileCache().updateSource(shader->fileName, data);
         }
     });
 }
@@ -941,15 +940,14 @@ void SessionScriptObject::setScriptSource(QJSValue itemIdent, QJSValue data)
 {
     const auto script = findSessionItem<Script>(itemIdent);
     if (!script)
-        return engine().throwError(QStringLiteral("Invalid item"));
+        return engine().throwError(QStringLiteral("Invalid Script item"));
 
     withSessionModel([scriptId = script->id, data = data.toString(),
                          fileName = QString()](SessionModel &session) mutable {
         if (auto script = session.findItem<Script>(scriptId)) {
             ensureFileName(session, *script, &fileName);
             if (onMainThread())
-                if (auto editor = openSourceEditor(*script))
-                    editor->replace(data);
+                Singletons::fileCache().updateSource(script->fileName, data);
         }
     });
 }
