@@ -300,7 +300,10 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically,
 void FileCache::updateSource(const QString &fileName, QString source)
 {
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
-    if (auto editor = Singletons::editorManager().getSourceEditor(fileName)) {
+    auto &editorManager = Singletons::editorManager();
+    if (auto editor = (FileDialog::isUntitled(fileName)
+                ? editorManager.getSourceEditor(fileName)
+                : editorManager.openSourceEditor(fileName, true))) {
         editor->replace(std::move(source));
     } else {
         QMutexLocker lock(&mMutex);
@@ -315,7 +318,10 @@ void FileCache::updateTexture(const QString &fileName, bool flippedVertically,
 {
     Q_ASSERT(!texture.isNull());
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
-    if (auto editor = Singletons::editorManager().getTextureEditor(fileName)) {
+    auto &editorManager = Singletons::editorManager();
+    if (auto editor = (FileDialog::isUntitled(fileName)
+                ? editorManager.getTextureEditor(fileName)
+                : editorManager.openTextureEditor(fileName, true))) {
         editor->replace(std::move(texture));
     } else {
         QMutexLocker lock(&mMutex);
@@ -328,7 +334,10 @@ void FileCache::updateTexture(const QString &fileName, bool flippedVertically,
 void FileCache::updateBinary(const QString &fileName, QByteArray binary)
 {
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
-    if (auto editor = Singletons::editorManager().getBinaryEditor(fileName)) {
+    auto &editorManager = Singletons::editorManager();
+    if (auto editor = (FileDialog::isUntitled(fileName)
+                ? editorManager.getBinaryEditor(fileName)
+                : editorManager.openBinaryEditor(fileName, true))) {
         editor->replace(binary);
     } else {
         QMutexLocker lock(&mMutex);

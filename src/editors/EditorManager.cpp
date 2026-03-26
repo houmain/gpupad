@@ -306,14 +306,14 @@ IEditor *EditorManager::openEditor(const QString &fileName, bool asBinaryFile)
     return openBinaryEditor(fileName);
 }
 
-SourceEditor *EditorManager::openSourceEditor(const QString &fileName, int line,
-    int column)
+SourceEditor *EditorManager::openSourceEditor(const QString &fileName,
+    bool loadOrCreate, int line, int column)
 {
     auto editor = getSourceEditor(fileName);
     if (!editor) {
         editor =
             new SourceEditor(fileName, mSourceEditorToolBar, mFindReplaceBar);
-        if (!editor->load()) {
+        if (!editor->load() && !loadOrCreate) {
             delete editor;
             return nullptr;
         }
@@ -326,12 +326,13 @@ SourceEditor *EditorManager::openSourceEditor(const QString &fileName, int line,
     return editor;
 }
 
-BinaryEditor *EditorManager::openBinaryEditor(const QString &fileName)
+BinaryEditor *EditorManager::openBinaryEditor(const QString &fileName,
+    bool loadOrCreate)
 {
     auto editor = getBinaryEditor(fileName);
     if (!editor) {
         editor = new BinaryEditor(fileName, mBinaryEditorToolBar);
-        if (!editor->load()) {
+        if (!editor->load() && !loadOrCreate) {
             delete editor;
             return nullptr;
         }
@@ -341,13 +342,14 @@ BinaryEditor *EditorManager::openBinaryEditor(const QString &fileName)
     return editor;
 }
 
-TextureEditor *EditorManager::openTextureEditor(const QString &fileName)
+TextureEditor *EditorManager::openTextureEditor(const QString &fileName,
+    bool loadOrCreate)
 {
     auto editor = getTextureEditor(fileName);
     if (!editor) {
         editor =
             new TextureEditor(fileName, mTextureEditorToolBar, mTextureInfoBar);
-        if (!editor->load()) {
+        if (!editor->load() && !loadOrCreate) {
             delete editor;
             return nullptr;
         }

@@ -35,10 +35,12 @@ public:
     BinaryEditor *openNewBinaryEditor(const QString &fileName);
     TextureEditor *openNewTextureEditor(const QString &fileName);
     IEditor *openEditor(const QString &fileName, bool asBinaryFile = false);
-    SourceEditor *openSourceEditor(const QString &fileName, int line = -1,
-        int column = -1);
-    BinaryEditor *openBinaryEditor(const QString &fileName);
-    TextureEditor *openTextureEditor(const QString &fileName);
+    SourceEditor *openSourceEditor(const QString &fileName,
+        bool loadOrCreate = false, int line = -1, int column = -1);
+    BinaryEditor *openBinaryEditor(const QString &fileName,
+        bool loadOrCreate = false);
+    TextureEditor *openTextureEditor(const QString &fileName,
+        bool loadOrCreate = false);
     QmlView *openQmlView(const QString &fileName,
         const ScriptEnginePtr &enginePtr = {});
     void setAutoRaise(bool raise) { mAutoRaise = raise; }

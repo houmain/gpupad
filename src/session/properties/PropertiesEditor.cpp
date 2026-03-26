@@ -421,24 +421,17 @@ IEditor *PropertiesEditor::openEditor(const FileItem &fileItem)
 
     auto &editors = Singletons::editorManager();
     switch (fileItem.type) {
-    case Item::Type::Texture: {
-        if (auto editor = editors.openTextureEditor(fileItem.fileName))
-            return editor;
-        return editors.openNewTextureEditor(fileItem.fileName);
-    }
+    case Item::Type::Texture:
+        return editors.openTextureEditor(fileItem.fileName, true);
 
     case Item::Type::Script: {
-        auto editor = editors.openSourceEditor(fileItem.fileName);
-        if (!editor)
-            editor = editors.openNewSourceEditor(fileItem.fileName);
+        auto editor = editors.openSourceEditor(fileItem.fileName, true);
         editor->setSourceType(SourceType::JavaScript);
         return editor;
     }
 
     case Item::Type::Shader: {
-        auto editor = editors.openSourceEditor(fileItem.fileName);
-        if (!editor)
-            editor = editors.openNewSourceEditor(fileItem.fileName);
+        auto editor = editors.openSourceEditor(fileItem.fileName, true);
         if (auto shader = castItem<Shader>(fileItem)) {
             const auto sourceType = getSourceType(*shader);
             if (sourceType != SourceType::PlainText)
@@ -447,11 +440,8 @@ IEditor *PropertiesEditor::openEditor(const FileItem &fileItem)
         return editor;
     }
 
-    case Item::Type::Buffer: {
-        if (auto editor = editors.openBinaryEditor(fileItem.fileName))
-            return editor;
-        return editors.openNewBinaryEditor(fileItem.fileName);
-    }
+    case Item::Type::Buffer:
+        return editors.openBinaryEditor(fileItem.fileName, true);
 
     default: return nullptr;
     }

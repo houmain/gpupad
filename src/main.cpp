@@ -101,24 +101,25 @@ void filteringMessageHandler(QtMsgType type, const QMessageLogContext &context,
 int runHeadless(QStringList &arguments)
 {
     auto singletons = Singletons(nullptr);
-    auto& sessionModel = singletons.sessionModel();
+    auto &sessionModel = singletons.sessionModel();
     for (const auto &argument : arguments) {
         if (FileDialog::isSessionFileName(argument)) {
             const auto fileName = QFileInfo(argument).absoluteFilePath();
             if (!singletons.sessionModel().load(fileName))
                 return 1;
-        }
-        else if (FileDialog::isScriptFileName(argument)) {
+        } else if (FileDialog::isScriptFileName(argument)) {
             const auto fileName = QFileInfo(argument).absoluteFilePath();
-            const auto index = sessionModel.insertItem(
-                Item::Type::Script, sessionModel.sessionItemIndex());
-            sessionModel.setData(sessionModel.getIndex(index, SessionModel::FileName), fileName);
+            const auto index = sessionModel.insertItem(Item::Type::Script,
+                sessionModel.sessionItemIndex());
+            sessionModel.setData(
+                sessionModel.getIndex(index, SessionModel::FileName),
+                toNativeCanonicalFilePath(fileName));
         }
         singletons.synchronizeLogic().manualEvaluation();
+        singletons.synchronizeLogic().resetRenderSession();
         singletons.editorManager().saveAllEditors();
         singletons.editorManager().closeAllEditors(false);
         singletons.sessionModel().clear();
-        singletons.synchronizeLogic().resetRenderSession();
     }
     return 0;
 }

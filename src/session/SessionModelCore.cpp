@@ -202,6 +202,7 @@ void SessionModelCore::clear()
     undoStack().setUndoLimit(1);
 
     deleteItem(QModelIndex());
+    mNextItemId = 1;
     insertItem(Item::Type::Session, QModelIndex());
 
     undoStack().clear();

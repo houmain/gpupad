@@ -285,50 +285,6 @@ namespace {
         if (hint)
             *hint = fileName;
     }
-
-    BinaryEditor *openBinaryEditor(const FileItem &buffer)
-    {
-        auto &editors = Singletons::editorManager();
-        editors.setAutoRaise(false);
-        auto editor = editors.openBinaryEditor(buffer.fileName);
-        if (!editor)
-            editor = editors.openNewBinaryEditor(buffer.fileName);
-        editors.setAutoRaise(true);
-        return editor;
-    }
-
-    TextureEditor *openTextureEditor(const FileItem &texture)
-    {
-        auto &editors = Singletons::editorManager();
-        editors.setAutoRaise(false);
-        auto editor = editors.openTextureEditor(texture.fileName);
-        if (!editor)
-            editor = editors.openNewTextureEditor(texture.fileName);
-        editors.setAutoRaise(true);
-        return editor;
-    }
-
-    SourceEditor *openSourceEditor(const FileItem &item)
-    {
-        auto &editors = Singletons::editorManager();
-        editors.setAutoRaise(false);
-        auto editor = editors.openSourceEditor(item.fileName);
-        if (!editor)
-            editor = editors.openNewSourceEditor(item.fileName);
-        editors.setAutoRaise(true);
-        return editor;
-    }
-
-    IEditor *openEditor(const FileItem &item)
-    {
-        switch (item.type) {
-        case Item::Type::Buffer:  return openBinaryEditor(item);
-        case Item::Type::Texture: return openTextureEditor(item);
-        case Item::Type::Shader:
-        case Item::Type::Script:  return openSourceEditor(item);
-        default:                  return nullptr;
-        }
-    }
 } // namespace
 
 //-------------------------------------------------------------------------
@@ -824,8 +780,12 @@ QJSValue SessionScriptObject::openEditor(QJSValue itemIdent)
             if (const auto item = session.findItem<FileItem>(itemId)) {
                 ensureFileName(session, *item, fileName.get());
 
-                if (onMainThread())
-                    ::openEditor(*item);
+                if (onMainThread()) {
+                    auto &editors = Singletons::editorManager();
+                    editors.setAutoRaise(false);
+                    editors.openEditor(item->fileName);
+                    editors.setAutoRaise(true);
+                }
             }
         });
     if (fileName->isEmpty())

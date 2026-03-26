@@ -1184,7 +1184,8 @@ void MainWindow::handleMessageActivated(ItemId itemId, QString fileName,
         mSessionEditor->setCurrentItem(itemId);
         openSessionDock();
     } else if (!fileName.isEmpty()) {
-        Singletons::editorManager().openSourceEditor(fileName, line, column);
+        Singletons::editorManager().openSourceEditor(fileName, false, line,
+            column);
     }
 }
 
