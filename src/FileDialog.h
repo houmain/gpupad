@@ -67,6 +67,7 @@ extern const QString ActionsDir;
 extern const QString LibrariesDir;
 
 bool isNativeCanonicalFilePath(const QString &fileName);
+QString toNativeCanonicalAbsoluteFilePath(const QString &fileName);
 QString toNativeCanonicalFilePath(const QString &fileName);
 QString toForwardSlashRelativeFilePath(const QString &fileName);
 void showInFileManager(const QString &path);

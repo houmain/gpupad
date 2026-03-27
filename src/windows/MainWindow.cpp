@@ -799,7 +799,7 @@ void MainWindow::openFile()
 
 bool MainWindow::openFile(const QString &fileName_, bool asBinaryFile)
 {
-    const auto fileName = toNativeCanonicalFilePath(fileName_);
+    const auto fileName = toNativeCanonicalAbsoluteFilePath(fileName_);
     if (FileDialog::isSessionFileName(fileName)) {
         if (!openSession(fileName))
             return false;

@@ -537,9 +537,8 @@ void SynchronizeLogic::processSource()
 
 void SynchronizeLogic::handleSessionFileNameChanged(const QString &fileName)
 {
-    FileDialog::setWorkingDir((FileDialog::isEmptyOrUntitled(fileName))
-            ? QDir::current()
-            : QFileInfo(fileName).dir());
+    Q_ASSERT(FileDialog::isEmptyOrUntitled(fileName)
+        || QDir::current() == QFileInfo(fileName).dir());
 }
 
 void SynchronizeLogic::handleMouseStateChanged()

@@ -478,10 +478,8 @@ void SessionModel::deserialize(const QJsonObject &object,
         if (property == "name") {
             setData(getIndex(index, Name), value);
         } else if (property == "fileName") {
-            const auto absolutePath =
-                QDir::current().absoluteFilePath(value.toString());
             setData(getIndex(index, FileName),
-                toNativeCanonicalFilePath(absolutePath));
+                toNativeCanonicalAbsoluteFilePath(value.toString()));
         } else if (property == "target") {
             // TODO: remove, added for backward compatibility
             if (value == "Target2DMultisample")

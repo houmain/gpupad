@@ -11,8 +11,8 @@ ScriptSession::ScriptSession(IScriptRenderSession *renderSession,
     : QObject(parent)
     , mRenderSession(*renderSession)
 {
-    mScriptEngine = ScriptEngine::make(FileDialog::workingDir(),
-        mRenderSession.renderThread());
+    mScriptEngine =
+        ScriptEngine::make(QDir::current(), mRenderSession.renderThread());
 }
 
 void ScriptSession::resetEngine()
