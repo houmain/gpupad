@@ -5,6 +5,7 @@
 #include <QOpenGLFunctions_3_3_Core>
 #include <QScopeGuard>
 #include <QtEndian>
+#include <QFileInfo>
 #include <cstring>
 #include <limits>
 
@@ -952,6 +953,7 @@ bool TextureData::saveOpenImageIO(const QString &fileName,
         return false;
 
     auto output = ImageOutput::create(fileName.toStdWString());
+    const auto guard = qScopeGuard([]() { OIIO::geterror(); });
     if (!output)
         return false;
 
@@ -974,7 +976,8 @@ bool TextureData::saveQImage(const QString &fileName, bool flipVertically) const
     if (flipVertically)
         image = std::move(image).mirrored();
 
-    return image.save(fileName);
+    const auto hasExtension = !QFileInfo(fileName).suffix().isEmpty();
+    return image.save(fileName, hasExtension ? nullptr : "PNG");
 }
 
 bool TextureData::save(const QString &fileName, bool flipVertically) const
