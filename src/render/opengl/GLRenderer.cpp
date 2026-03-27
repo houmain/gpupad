@@ -162,11 +162,16 @@ void GLRenderer::render(RenderTask *task)
     renderNextTask();
 }
 
+void GLRenderer::finish()
+{
+    while (mCurrentTask)
+        qApp->processEvents(QEventLoop::WaitForMoreEvents);
+}
+
 void GLRenderer::release(RenderTask *task)
 {
     mPendingTasks.removeAll(task);
-    while (mCurrentTask == task)
-        qApp->processEvents(QEventLoop::WaitForMoreEvents);
+    finish();
 
     QSemaphore done(1);
     done.acquire(1);

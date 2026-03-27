@@ -25,6 +25,7 @@ public:
 
     void render(RenderTask *task) override;
     void release(RenderTask *task) override;
+    void finish() override;
     QThread *renderThread() override { return &mThread; }
 
     ID3D12Device &device();
@@ -58,8 +59,9 @@ public:
     }
 
     ~D3DRenderer() = default;
-    void render(RenderTask *task) { }
-    void release(RenderTask *task) { }
+    void render(RenderTask *task) override { }
+    void release(RenderTask *task) override { }
+    void finish() override { }
     QThread *renderThread() override { return nullptr; }
 
 private:

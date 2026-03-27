@@ -145,6 +145,12 @@ bool SynchronizeLogic::initializeRenderSession()
     return true;
 }
 
+void SynchronizeLogic::finishEvaluation()
+{
+    if (mRenderSession)
+        mRenderSession->renderer().finish();
+}
+
 void SynchronizeLogic::resetRenderSession()
 {
     mRenderSession.reset();

@@ -128,7 +128,7 @@ void TextureBase::reload(bool forWriting)
                     MessageType::ConvertingFileFailed, mFileName);
             }
         }
-    } else if (!FileDialog::isEmptyOrUntitled(mFileName)) {
+    } else if (!FileDialog::isEmptyOrUntitled(mFileName) && !forWriting) {
         mMessages += MessageList::insert(mItemId,
             MessageType::LoadingFileFailed, mFileName);
     }

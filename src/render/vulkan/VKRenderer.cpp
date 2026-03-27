@@ -256,11 +256,16 @@ void VKRenderer::render(RenderTask *task)
     renderNextTask();
 }
 
+void VKRenderer::finish()
+{
+    while (mCurrentTask)
+        qApp->processEvents(QEventLoop::WaitForMoreEvents);
+}
+
 void VKRenderer::release(RenderTask *task)
 {
     mPendingTasks.removeAll(task);
-    while (mCurrentTask == task)
-        qApp->processEvents(QEventLoop::WaitForMoreEvents);
+    finish();
 
     QSemaphore done(1);
     done.acquire(1);

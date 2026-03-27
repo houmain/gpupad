@@ -184,11 +184,16 @@ void D3DRenderer::render(RenderTask *task)
     renderNextTask();
 }
 
+void D3DRenderer::finish()
+{
+    while (mCurrentTask)
+        qApp->processEvents(QEventLoop::WaitForMoreEvents);
+}
+
 void D3DRenderer::release(RenderTask *task)
 {
     mPendingTasks.removeAll(task);
-    while (mCurrentTask == task)
-        qApp->processEvents(QEventLoop::WaitForMoreEvents);
+    finish();
 
     QSemaphore done(1);
     done.acquire(1);

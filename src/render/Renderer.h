@@ -22,6 +22,7 @@ public:
 
     RenderAPI api() const { return mApi; }
     bool failed() const { return mFailed; }
+    virtual void finish() = 0;
 
 protected:
     void setFailed() { mFailed = true; }

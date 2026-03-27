@@ -51,6 +51,17 @@ void restoreProcessPriority()
     SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 }
 
+bool attachToConsole()
+{
+    if (!AttachConsole(ATTACH_PARENT_PROCESS))
+        return false;
+    FILE *in, *out, *err;
+    freopen_s(&in, "CONIN$", "r", stdin);
+    freopen_s(&out, "CONOUT$", "w", stdout);
+    freopen_s(&err, "CONOUT$", "w", stderr);
+    return true;
+}
+
 #else // !_WIN32
 
 void raiseProcessPriority() { }
@@ -100,59 +111,68 @@ void filteringMessageHandler(QtMsgType type, const QMessageLogContext &context,
     defaultMessageHandler(type, context, msg);
 }
 
-int runHeadless(QStringList &arguments)
+void outputMessagesToStdout()
 {
+#if defined(_WIN32)
+    attachToConsole();
+#endif
+    for (const auto &message : MessageList::messages()) {
+        const auto severity = getMessageSeverity(*message);
+        const auto severityText = (severity == MessageSeverity::Error
+                ? "ERROR: "
+                : severity == MessageSeverity::Warning ? "WARNING: "
+                : severity == MessageSeverity::Info    ? "INFO: "
+                                                       : "");
+        const auto format = message->fileName.isEmpty() ? "%s%s.\n"
+            : message->line <= 0                        ? "%s%s%s%s\n"
+                                                        : "%s%s%s%s:%i\n";
+        std::fprintf(stdout, format, severityText,
+            qUtf8Printable(getMessageText(*message)), "\n  in ",
+            qUtf8Printable(FileDialog::getFileTitle(message->fileName)),
+            message->line);
+    }
+    std::fflush(stdout);
+}
+
+int runHeadless(int argc, char *argv[])
+{
+    auto app = QApplication(argc, argv);
+    auto arguments = QApplication::arguments();
+    arguments.remove(0, 2);
+
     auto singletons = Singletons(nullptr);
     auto &sessionModel = singletons.sessionModel();
     for (const auto &argument : arguments) {
+        auto messages = MessagePtrSet{};
         const auto fileName =
             toNativeCanonicalFilePath(QFileInfo(argument).absoluteFilePath());
         if (FileDialog::isSessionFileName(argument)) {
             if (!singletons.sessionModel().load(fileName))
-                return 1;
+                messages += MessageList::insert(0,
+                    MessageType::LoadingFileFailed, fileName);
         } else if (FileDialog::isScriptFileName(argument)) {
             auto source = QString();
-            if (!Singletons::fileCache().getSource(fileName, &source))
-                return 1;
-            singletons.defaultScriptEngine().evaluateScript(source, fileName);
+            if (Singletons::fileCache().getSource(fileName, &source)) {
+                singletons.defaultScriptEngine().evaluateScript(source,
+                    fileName);
+            } else {
+                messages += MessageList::insert(0,
+                    MessageType::LoadingFileFailed, fileName);
+            }
         }
         singletons.synchronizeLogic().manualEvaluation();
-        singletons.synchronizeLogic().resetRenderSession();
+        singletons.synchronizeLogic().finishEvaluation();
+        outputMessagesToStdout();
         singletons.editorManager().saveAllEditors();
         singletons.editorManager().closeAllEditors(false);
         singletons.sessionModel().clear();
+        singletons.synchronizeLogic().resetRenderSession();
     }
     return 0;
 }
 
-int main(int argc, char *argv[])
+int run(int argc, char *argv[])
 {
-    raiseProcessPriority();
-
-    QCoreApplication::setOrganizationName("gpupad");
-    QCoreApplication::setApplicationName("GPUpad");
-#if __has_include("_version.h")
-    QCoreApplication::setApplicationVersion(
-#  include "_version.h"
-    );
-#endif
-#if defined(_WIN32)
-    QSettings::setDefaultFormat(QSettings::IniFormat);
-#endif
-
-    const auto headless = (argc > 1 && !std::strcmp(argv[1], "--headless"));
-    if (!headless && forwardToInstance(argc, argv))
-        return 0;
-
-#if defined(__linux)
-    // try to increase device/driver support
-    // does not seem to cause any problems
-    setenv("MESA_GL_VERSION_OVERRIDE", "4.5", 0);
-    setenv("MESA_GLSL_VERSION_OVERRIDE", "450", 0);
-#endif
-    // format floats independent of locale
-    QLocale::setDefault(QLocale::c());
-
     QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     QApplication::setAttribute(Qt::AA_CompressHighFrequencyEvents);
 
@@ -167,13 +187,6 @@ int main(int argc, char *argv[])
 
     auto app = QApplication(argc, argv);
     defaultMessageHandler = qInstallMessageHandler(filteringMessageHandler);
-
-    auto arguments = QApplication::arguments();
-    arguments.removeFirst();
-    if (headless) {
-        arguments.removeFirst();
-        return runHeadless(arguments);
-    }
 
     QApplication::setStyle(new Style());
     QApplication::setEffectEnabled(Qt::UI_AnimateTooltip, false);
@@ -204,6 +217,8 @@ int main(int argc, char *argv[])
     window.show();
     app.processEvents();
 
+    auto arguments = QApplication::arguments();
+    arguments.removeFirst();
     for (const QString &argument : std::as_const(arguments))
         window.openFile(argument);
 
@@ -213,4 +228,37 @@ int main(int argc, char *argv[])
     restoreProcessPriority();
 
     return app.exec();
+}
+
+int main(int argc, char *argv[])
+{
+    raiseProcessPriority();
+
+    QCoreApplication::setOrganizationName("gpupad");
+    QCoreApplication::setApplicationName("GPUpad");
+#if __has_include("_version.h")
+    QCoreApplication::setApplicationVersion(
+#  include "_version.h"
+    );
+#endif
+#if defined(_WIN32)
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+#endif
+    // format floats independent of locale
+    QLocale::setDefault(QLocale::c());
+
+#if defined(__linux)
+    // try to increase device/driver support
+    // does not seem to cause any problems
+    setenv("MESA_GL_VERSION_OVERRIDE", "4.5", 0);
+    setenv("MESA_GLSL_VERSION_OVERRIDE", "450", 0);
+#endif
+
+    if (argc > 1 && !std::strcmp(argv[1], "--headless"))
+        return runHeadless(argc, argv);
+
+    if (forwardToInstance(argc, argv))
+        return 0;
+
+    return run(argc, argv);
 }

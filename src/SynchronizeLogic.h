@@ -27,6 +27,7 @@ public:
     EvaluationMode evaluationMode() const { return mEvaluationMode; }
     void resetEvaluation();
     void manualEvaluation();
+    void finishEvaluation();
     bool resetRenderSessionInvalidationState();
     void updateEditor(ItemId itemId, bool activated);
 

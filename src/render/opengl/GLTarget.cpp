@@ -110,11 +110,11 @@ bool GLTarget::create()
 
             if (kind.array && attachment.layer >= 0) {
                 gl.glFramebufferTextureLayer(GL_FRAMEBUFFER,
-                    attachment.attachmentPoint, texture->getReadOnlyTextureId(),
+                    attachment.attachmentPoint, texture->getReadWriteTextureId(),
                     level, attachment.layer);
             } else {
                 gl.glFramebufferTexture(GL_FRAMEBUFFER,
-                    attachment.attachmentPoint, texture->getReadOnlyTextureId(),
+                    attachment.attachmentPoint, texture->getReadWriteTextureId(),
                     level);
             }
         }
