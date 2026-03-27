@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MessageList.h"
-#include <QMutex>
 #include <QTableWidget>
 
 class QTimer;
@@ -23,7 +22,6 @@ private:
     void updateMessages();
     void handleItemActivated(QTableWidgetItem *item);
     QIcon getMessageIcon(const Message &message) const;
-    QString getMessageText(const Message &message) const;
     QString getLocationText(const Message &message) const;
     void removeMessagesExcept(const QSet<MessageId> &messageIds);
     bool addMessageOnce(const Message &message);

@@ -2,7 +2,6 @@
 
 #include <QSet>
 #include <QSharedPointer>
-#include <QString>
 #include <chrono>
 
 using ItemId = int;
@@ -92,12 +91,20 @@ struct Message
     int line;
 };
 
+enum class MessageSeverity {
+    Error,
+    Warning,
+    Info,
+};
+
 namespace MessageList {
     MessagePtr insert(QString fileName, int line, MessageType type,
         QString text = "", bool deduplicate = true);
     MessagePtr insert(ItemId itemId, MessageType type, QString text = "",
         bool deduplicate = true);
     QList<MessagePtr> messages();
-}; // namespace MessageList
+} // namespace MessageList
 
 QString formatDuration(const std::chrono::duration<double> &duration);
+MessageSeverity getMessageSeverity(const Message &message);
+QString getMessageText(const Message &message);
