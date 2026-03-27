@@ -5,7 +5,9 @@
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
 #include "session/SessionModel.h"
+#include "scripting/ScriptEngine.h"
 #include "editors/EditorManager.h"
+#include "FileCache.h"
 #include <QApplication>
 #include <QSettings>
 #include <QSurfaceFormat>
@@ -103,17 +105,16 @@ int runHeadless(QStringList &arguments)
     auto singletons = Singletons(nullptr);
     auto &sessionModel = singletons.sessionModel();
     for (const auto &argument : arguments) {
+        const auto fileName =
+            toNativeCanonicalFilePath(QFileInfo(argument).absoluteFilePath());
         if (FileDialog::isSessionFileName(argument)) {
-            const auto fileName = QFileInfo(argument).absoluteFilePath();
             if (!singletons.sessionModel().load(fileName))
                 return 1;
         } else if (FileDialog::isScriptFileName(argument)) {
-            const auto fileName = QFileInfo(argument).absoluteFilePath();
-            const auto index = sessionModel.insertItem(Item::Type::Script,
-                sessionModel.sessionItemIndex());
-            sessionModel.setData(
-                sessionModel.getIndex(index, SessionModel::FileName),
-                toNativeCanonicalFilePath(fileName));
+            auto source = QString();
+            if (!Singletons::fileCache().getSource(fileName, &source))
+                return 1;
+            singletons.defaultScriptEngine().evaluateScript(source, fileName);
         }
         singletons.synchronizeLogic().manualEvaluation();
         singletons.synchronizeLogic().resetRenderSession();
