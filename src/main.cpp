@@ -137,12 +137,11 @@ void outputMessagesToStdout()
 int runHeadless(int argc, char *argv[])
 {
     auto app = QApplication(argc, argv);
-    auto arguments = QApplication::arguments();
-    arguments.remove(0, 2);
+    auto arguments = app.arguments();
+    arguments.removeFirst();
 
     auto singletons = Singletons(nullptr);
-    auto &sessionModel = singletons.sessionModel();
-    for (const auto &argument : arguments) {
+    for (const auto &argument : std::as_const(arguments)) {
         auto messages = MessagePtrSet{};
         const auto fileName =
             toNativeCanonicalFilePath(QFileInfo(argument).absoluteFilePath());
@@ -254,8 +253,13 @@ int main(int argc, char *argv[])
     setenv("MESA_GLSL_VERSION_OVERRIDE", "450", 0);
 #endif
 
-    if (argc > 1 && !std::strcmp(argv[1], "--headless"))
+    if (std::string_view(argv[0]).ends_with("gpupad-headless"))
         return runHeadless(argc, argv);
+
+    if (argc > 1 && std::string_view(argv[1]) == "--headless") {
+        argc = std::distance(argv, std::remove(argv, argv + argc, argv[1]));
+        return runHeadless(argc, argv);
+    }
 
     if (forwardToInstance(argc, argv))
         return 0;
