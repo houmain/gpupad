@@ -26,15 +26,17 @@ RendererPtr Singletons::sessionRenderer()
     Q_ASSERT(onMainThread());
 
     // reset failed renderers so error message disappears
+    const auto type = sessionModel().sessionItem().renderer;
     for (auto renderer_ptr : {
              &sInstance->mGLRenderer,
              &sInstance->mVKRenderer,
              &sInstance->mD3DRenderer,
          })
-        if (*renderer_ptr && (*renderer_ptr)->failed())
-            *renderer_ptr = nullptr;
+        if (auto renderer = *renderer_ptr)
+            if (renderer->failed() && renderer->type() != type)
+                *renderer_ptr = nullptr;
 
-    switch (sessionModel().sessionItem().renderer) {
+    switch (type) {
     case Session::Renderer::OpenGL:   return glRenderer();
     case Session::Renderer::Vulkan:   return vkRenderer();
     case Session::Renderer::Direct3D: return d3dRenderer();

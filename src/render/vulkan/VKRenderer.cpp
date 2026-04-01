@@ -217,7 +217,7 @@ private:
 
 VKRenderer::VKRenderer(QObject *parent)
     : QObject(parent)
-    , Renderer(RenderAPI::Vulkan)
+    , Renderer(Renderer::Type::Vulkan)
     , mWorker(std::make_unique<Worker>(this))
 {
     gAdapterIdentity = getOpenGLAdapterIdentity();

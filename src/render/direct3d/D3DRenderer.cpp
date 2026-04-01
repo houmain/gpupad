@@ -145,7 +145,7 @@ private:
 
 D3DRenderer::D3DRenderer(QObject *parent)
     : QObject(parent)
-    , Renderer(RenderAPI::Direct3D)
+    , Renderer(Renderer::Type::Direct3D)
     , mWorker(std::make_unique<Worker>(this))
 {
     gAdapterIdentity = getOpenGLAdapterIdentity();

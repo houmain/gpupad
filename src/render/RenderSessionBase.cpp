@@ -17,12 +17,12 @@ std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
     RendererPtr renderer)
 {
     auto session = std::unique_ptr<RenderSessionBase>();
-    switch (renderer->api()) {
-    case RenderAPI::OpenGL:
+    switch (renderer->type()) {
+    case Renderer::Type::OpenGL:
         return std::make_unique<GLRenderSession>(renderer);
-    case RenderAPI::Vulkan:
+    case Renderer::Type::Vulkan:
         return std::make_unique<VKRenderSession>(renderer);
-    case RenderAPI::Direct3D:
+    case Renderer::Type::Direct3D:
 #if defined(_WIN32)
         return std::make_unique<D3DRenderSession>(renderer);
 #endif

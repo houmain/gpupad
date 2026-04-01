@@ -10,7 +10,7 @@ public:
     explicit ComputeRange(RendererPtr renderer, QObject *parent = nullptr)
         : RenderTask(std::move(renderer), parent)
     {
-        Q_ASSERT(RenderTask::renderer().api() == RenderAPI::OpenGL);
+        Q_ASSERT(RenderTask::renderer().type() == Renderer::Type::OpenGL);
     }
 
     ~ComputeRange() override { releaseResources(); }

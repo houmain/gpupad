@@ -74,8 +74,8 @@ private:
     {
         if (!context.makeCurrent(&surface)
             || !context.initializeOpenGLFunctions()) {
-            mMessages +=
-                MessageList::insert(0, MessageType::OpenGLVersionNotAvailable, "4.5");
+            mMessages += MessageList::insert(0,
+                MessageType::OpenGLVersionNotAvailable, "4.5");
             mRenderer.setFailed();
             return false;
         }
@@ -117,7 +117,7 @@ private:
 
 GLRenderer::GLRenderer(QObject *parent)
     : QObject(parent)
-    , Renderer(RenderAPI::OpenGL)
+    , Renderer(Renderer::Type::OpenGL)
     , mWorker(std::make_unique<Worker>(this))
 {
     mWorker->context.setShareContext(QOpenGLContext::globalShareContext());
