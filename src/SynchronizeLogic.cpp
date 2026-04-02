@@ -135,8 +135,10 @@ bool SynchronizeLogic::initializeRenderSession()
     if (!mRenderSession)
         return false;
 
+    connect(mRenderSession.get(), &RenderTask::preparing, this,
+        &SynchronizeLogic::handlePreparingEvaluation);
     connect(mRenderSession.get(), &RenderTask::updated, this,
-        &SynchronizeLogic::handleSessionRendered);
+        &SynchronizeLogic::handleEvaluated);
 
     mProcessSource = std::make_unique<ProcessSource>(sessionRenderer);
     connect(mProcessSource.get(), &ProcessSource::outputChanged, this,
@@ -185,12 +187,12 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
     Q_EMIT evaluationModeChanged(mEvaluationMode);
 
     if (mEvaluationMode == EvaluationMode::Steady) {
-        mEvaluationTimer->start(0);
+        triggerEvaluation(EvaluationType::Steady);
         Singletons::videoManager().playVideoFiles();
     } else if (mEvaluationMode == EvaluationMode::Automatic) {
         mEvaluationTimer->stop();
         if (mRenderSessionInvalidated)
-            mEvaluationTimer->start(0);
+            triggerEvaluation(EvaluationType::Automatic);
         if (mRenderSession)
             Singletons::sessionModel().setActiveItems(
                 mRenderSession->usedItems());
@@ -210,17 +212,6 @@ bool SynchronizeLogic::resetRenderSessionInvalidationState()
         return true;
     }
     return false;
-}
-
-void SynchronizeLogic::handleSessionRendered()
-{
-    Singletons::fileCache().updateFromEditors();
-
-    if (mEvaluationMode != EvaluationMode::Paused && mRenderSession)
-        Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
-
-    if (mEvaluationMode == EvaluationMode::Steady)
-        mEvaluationTimer->start();
 }
 
 void SynchronizeLogic::handleFileChanged(const QString &fileName)
@@ -251,7 +242,8 @@ void SynchronizeLogic::handleItemsModified(const QModelIndex &topLeft,
 void SynchronizeLogic::invalidateRenderSession()
 {
     mRenderSessionInvalidated = true;
-    triggerAutomaticEvaluation();
+    if (mEvaluationMode == EvaluationMode::Automatic)
+        triggerEvaluation(EvaluationType::Automatic, 10);
 }
 
 void SynchronizeLogic::handleItemRenamed(const QModelIndex &index,
@@ -412,18 +404,19 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item,
     Singletons::editorManager().renameEditors(prevFileName, item.fileName);
 }
 
-void SynchronizeLogic::triggerAutomaticEvaluation()
+void SynchronizeLogic::triggerEvaluation(EvaluationType type, int delayMs)
 {
-    if (mEvaluationMode == EvaluationMode::Automatic)
-        if (!mEvaluationTimer->isActive())
-            mEvaluationTimer->start(10);
+    if (!mEvaluationTimer->isActive()) {
+        mPendingEvaluationType = type;
+        mEvaluationTimer->start(delayMs);
+    } else {
+        mPendingEvaluationType = std::max(mPendingEvaluationType, type);
+    }
 }
 
 void SynchronizeLogic::handleEvaluateTimout()
 {
-    evaluate(mEvaluationMode == EvaluationMode::Automatic
-            ? EvaluationType::Automatic
-            : EvaluationType::Steady);
+    evaluate(mPendingEvaluationType);
 }
 
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)
@@ -432,17 +425,36 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
     if (mRenderSession && &mRenderSession->renderer() != sessionRenderer.get())
         resetRenderSession();
 
-    Singletons::fileCache().updateFromEditors();
+    mEvaluationType = std::max(mEvaluationType, evaluationType);
+    if (initializeRenderSession())
+        mRenderSession->update();
+}
 
+void SynchronizeLogic::handlePreparingEvaluation(bool &itemsChanged,
+    EvaluationType &evaluationType)
+{
+    Singletons::fileCache().updateFromEditors();
     Q_EMIT waitingForSync();
 
-    const auto itemsChanged = mRenderSessionInvalidated;
-    Singletons::inputState().update(evaluationType);
+    itemsChanged = mRenderSessionInvalidated;
+    evaluationType = mEvaluationType;
+
+    Singletons::inputState().update(mEvaluationType);
+
+    mEvaluationType = EvaluationType::Steady;
     mRenderSessionInvalidated = false;
     mEvaluationTimer->stop();
+}
 
-    if (initializeRenderSession())
-        mRenderSession->update(itemsChanged, evaluationType);
+void SynchronizeLogic::handleEvaluated()
+{
+    Singletons::fileCache().updateFromEditors();
+
+    if (mEvaluationMode != EvaluationMode::Paused && mRenderSession)
+        Singletons::sessionModel().setActiveItems(mRenderSession->usedItems());
+
+    if (mEvaluationMode == EvaluationMode::Steady)
+        triggerEvaluation(EvaluationType::Steady);
 }
 
 void SynchronizeLogic::updateEditors()
@@ -550,13 +562,15 @@ void SynchronizeLogic::handleSessionFileNameChanged(const QString &fileName)
 void SynchronizeLogic::handleMouseStateChanged()
 {
     if (mRenderSession && mRenderSession->usesMouseState())
-        triggerAutomaticEvaluation();
+        if (mEvaluationMode == EvaluationMode::Automatic)
+            triggerEvaluation(EvaluationType::Steady);
 }
 
 void SynchronizeLogic::handleKeyboardStateChanged()
 {
     if (mRenderSession && mRenderSession->usesKeyboardState())
-        triggerAutomaticEvaluation();
+        if (mEvaluationMode == EvaluationMode::Automatic)
+            triggerEvaluation(EvaluationType::Steady);
 }
 
 void SynchronizeLogic::handleViewportSizeChanged(const QString &fileName)

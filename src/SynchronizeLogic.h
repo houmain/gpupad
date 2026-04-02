@@ -54,7 +54,7 @@ Q_SIGNALS:
 
 private:
     void invalidateRenderSession();
-    void triggerAutomaticEvaluation();
+    void triggerEvaluation(EvaluationType type, int delayMs = 0);
     bool initializeRenderSession();
     void handleItemRenamed(const QModelIndex &index, const QString &prevName);
     void handleItemModified(const QModelIndex &index);
@@ -69,12 +69,13 @@ private:
     void handleFileItemRenamed(const FileItem &item, const QString &prevName);
     void handleFileChanged(const QString &fileName);
     void handleItemReordered(const QModelIndex &parent, int first);
-    void handleSessionRendered();
     void updateEditors();
     void updateTextureEditor(const Texture &texture, TextureEditor &editor);
     void updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor);
     void handleEvaluateTimout();
     void evaluate(EvaluationType evaluationType);
+    void handlePreparingEvaluation(bool& itemsChanged, EvaluationType& type);
+    void handleEvaluated();
     void processSource();
 
     SessionModel &mModel;
@@ -83,8 +84,10 @@ private:
     QSet<ItemId> mEditorItemsModified;
 
     QTimer *mEvaluationTimer{};
-    bool mRenderSessionInvalidated{};
+    EvaluationType mPendingEvaluationType{};
     EvaluationMode mEvaluationMode{};
+    bool mRenderSessionInvalidated{};
+    EvaluationType mEvaluationType{};
     bool mValidateSource{};
     QString mCurrentEditorFileName{};
     SourceType mCurrentEditorSourceType{};

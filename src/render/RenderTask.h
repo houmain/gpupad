@@ -19,12 +19,12 @@ public:
 
     virtual QSet<ItemId> usedItems() const { return {}; }
     bool updating() const { return mUpdating; }
-
     Renderer &renderer() { return *mRenderer; }
-    void update(bool itemChanged = false,
-        EvaluationType evaluationType = EvaluationType::Reset);
+
+    void update();
 
 Q_SIGNALS:
+    void preparing(bool& itemChanged, EvaluationType& evaluationType);
     void updated();
 
 protected:
@@ -67,6 +67,5 @@ private:
 
     RendererPtr mRenderer;
     bool mUpdating{};
-    bool mItemsChanged{};
-    std::optional<EvaluationType> mPendingEvaluation;
+    bool mInvalidated{};
 };

@@ -14,26 +14,25 @@ RenderTask::~RenderTask()
 
 void RenderTask::releaseResources()
 {
-    mItemsChanged = false;
-    mPendingEvaluation.reset();
-    if (mRenderer) {
+    if (mRenderer)
         mRenderer->release(this);
-        mRenderer.reset();
-    }
+    mRenderer.reset();
 }
 
-void RenderTask::update(bool itemsChanged, EvaluationType evaluationType)
+void RenderTask::update()
 {
     if (!mRenderer)
         return;
+
     if (!std::exchange(mUpdating, true)) {
+        auto itemsChanged = false;
+        auto evaluationType = EvaluationType::Reset;
+        Q_EMIT preparing(itemsChanged, evaluationType);
+
         prepare(itemsChanged, evaluationType);
         mRenderer->render(this);
     } else {
-        mItemsChanged |= itemsChanged;
-        if (evaluationType != EvaluationType::Steady)
-            mPendingEvaluation = std::max(evaluationType,
-                mPendingEvaluation.value_or(EvaluationType::Steady));
+        mInvalidated = true;
     }
 }
 
@@ -44,9 +43,7 @@ void RenderTask::handleRendered()
 
     Q_EMIT updated();
 
-    // restart when items were changed in the meantime
-    if (mItemsChanged || mPendingEvaluation.has_value())
-        update(std::exchange(mItemsChanged, false),
-            std::exchange(mPendingEvaluation, {})
-                .value_or(EvaluationType::Steady));
+    // restart when update was called in the meantime
+    if (std::exchange(mInvalidated, false))
+        update();
 }
