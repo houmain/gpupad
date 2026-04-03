@@ -4,6 +4,7 @@
 
 #  include <QMediaPlayer>
 #  include <QVideoSink>
+#  include <QVideoFrame>
 
 class VideoPlayer final : public QVideoSink
 {
@@ -15,22 +16,29 @@ public:
     const QString &fileName() const { return mFileName; }
     int width() const { return mWidth; }
     int height() const { return mHeight; }
-    void play();
-    void pause();
-    void rewind();
+    void seek(std::chrono::milliseconds targetTime);
 
 Q_SIGNALS:
     void loadingFinished();
 
 private:
     void handleStatusChanged(QMediaPlayer::MediaStatus status);
-    void handleVideoFrame(const QVideoFrame &frame);
+    void handleFrameDecoded(QVideoFrame frame);
+    void presentFrame(const QVideoFrame &frame);
 
     QMediaPlayer *mPlayer{};
     QString mFileName;
     int mWidth{};
     int mHeight{};
     bool mFlipVertically{};
+    double mPlaybackSpeed{ 1.0 };
+    std::vector<QVideoFrame> mFrameQueue;
+    QVideoFrame mCurrentFrame;
+    std::chrono::milliseconds mTargetTime{};
+    std::chrono::microseconds mDecodeTime{};
+    std::chrono::microseconds mDuration{};
+    int mLoopCount{};
+    bool mSeeking{};
 };
 
 #else // !QtMultimedia_FOUND
@@ -50,9 +58,7 @@ public:
     const QString &fileName() const { return mFileName; }
     int width() const { return 0; }
     int height() const { return 0; }
-    void play() { }
-    void pause() { }
-    void rewind() { }
+    void seek(double time) { }
 
 Q_SIGNALS:
     void loadingFinished();

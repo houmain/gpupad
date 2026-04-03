@@ -331,6 +331,21 @@ void FileCache::updateTexture(const QString &fileName, bool flippedVertically,
     }
 }
 
+void FileCache::updateStreamTexture(const QString &fileName,
+    bool flippedVertically, TextureData texture)
+{
+    Q_ASSERT(!texture.isNull());
+    Q_ASSERT(isNativeCanonicalFilePath(fileName));
+
+    QMutexLocker lock(&mMutex);
+    mTextures[TextureKey(fileName, flippedVertically)] = std::move(texture);
+    lock.unlock();
+
+    auto &editorManager = Singletons::editorManager();
+    if (auto editor = editorManager.getTextureEditor(fileName))
+        editor->load();
+}
+
 void FileCache::updateBinary(const QString &fileName, QByteArray binary)
 {
     Q_ASSERT(isNativeCanonicalFilePath(fileName));

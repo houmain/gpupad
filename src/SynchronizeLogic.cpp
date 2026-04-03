@@ -165,7 +165,6 @@ void SynchronizeLogic::resetRenderSession()
 void SynchronizeLogic::resetEvaluation()
 {
     evaluate(EvaluationType::Reset);
-    Singletons::videoManager().rewindVideoFiles();
 }
 
 void SynchronizeLogic::manualEvaluation()
@@ -188,7 +187,6 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
 
     if (mEvaluationMode == EvaluationMode::Steady) {
         triggerEvaluation(EvaluationType::Steady);
-        Singletons::videoManager().playVideoFiles();
     } else if (mEvaluationMode == EvaluationMode::Automatic) {
         mEvaluationTimer->stop();
         if (mRenderSessionInvalidated)
@@ -196,11 +194,9 @@ void SynchronizeLogic::setEvaluationMode(EvaluationMode mode)
         if (mRenderSession)
             Singletons::sessionModel().setActiveItems(
                 mRenderSession->usedItems());
-        Singletons::videoManager().pauseVideoFiles();
     } else {
         mEvaluationTimer->stop();
         Singletons::sessionModel().setActiveItems({});
-        Singletons::videoManager().pauseVideoFiles();
     }
 }
 
@@ -440,6 +436,7 @@ void SynchronizeLogic::handlePreparingEvaluation(bool &itemsChanged,
     evaluationType = mEvaluationType;
 
     Singletons::inputState().update(mEvaluationType);
+    Singletons::videoManager().seek(Singletons::inputState().time());
 
     mEvaluationType = EvaluationType::Steady;
     mRenderSessionInvalidated = false;

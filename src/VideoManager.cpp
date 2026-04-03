@@ -30,36 +30,23 @@ void VideoManager::handleVideoPlayerLoaded()
     Q_ASSERT(onMainThread());
     auto videoPlayer = qobject_cast<VideoPlayer *>(QObject::sender());
     if (videoPlayer->width()) {
-        if (mVideosPlaying)
-            videoPlayer->play();
+        videoPlayer->seek(mTargetTime);
         mVideoPlayers[videoPlayer->fileName()].reset(videoPlayer);
     } else {
         videoPlayer->deleteLater();
     }
 }
 
-void VideoManager::playVideoFiles()
+void VideoManager::seek(double time)
 {
     Q_ASSERT(onMainThread());
-    for (const auto &videoPlayer : mVideoPlayers)
-        videoPlayer.second->play();
-    mVideosPlaying = true;
-}
+    const auto targetTime =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::duration<double>(time));
+    if (mTargetTime == targetTime)
+        return;
 
-void VideoManager::pauseVideoFiles()
-{
-    Q_ASSERT(onMainThread());
     for (const auto &videoPlayer : mVideoPlayers)
-        videoPlayer.second->pause();
-    mVideosPlaying = false;
-}
-
-void VideoManager::rewindVideoFiles()
-{
-    Q_ASSERT(onMainThread());
-    for (const auto &videoPlayer : mVideoPlayers) {
-        videoPlayer.second->rewind();
-        if (mVideosPlaying)
-            videoPlayer.second->play();
-    }
+        videoPlayer.second->seek(targetTime);
+    mTargetTime = targetTime;
 }

@@ -16,9 +16,7 @@ public:
     ~VideoManager();
 
     void unloadAll();
-    void playVideoFiles();
-    void pauseVideoFiles();
-    void rewindVideoFiles();
+    void seek(double time);
 
     void handleVideoPlayerRequested(const QString &fileName,
         bool flipVertically);
@@ -27,5 +25,5 @@ private:
     void handleVideoPlayerLoaded();
 
     std::map<QString, std::unique_ptr<VideoPlayer>> mVideoPlayers;
-    bool mVideosPlaying{};
+    std::chrono::milliseconds mTargetTime{};
 };

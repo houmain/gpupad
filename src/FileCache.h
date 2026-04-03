@@ -24,6 +24,8 @@ public:
     void updateSource(const QString &fileName, QString source);
     void updateTexture(const QString &fileName, bool flippedVertically,
         TextureData texture);
+    void updateStreamTexture(const QString &fileName, bool flippedVertically,
+        TextureData texture);
     void updateBinary(const QString &fileName, QByteArray binary);
     void updateBinaryRange(const QString &fileName, int offset,
         const QByteArray &range);
