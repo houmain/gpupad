@@ -21,6 +21,7 @@ public:
     static bool isShaderFileName(const QString &fileName);
     static bool isScriptFileName(const QString &fileName);
     static bool isTextureFileName(const QString &fileName);
+    static bool isSequenceFileName(const QString &fileName);
     static bool isVideoFileName(const QString &fileName);
     static void setWorkingDir(QDir workingDir);
     static QDir workingDir();

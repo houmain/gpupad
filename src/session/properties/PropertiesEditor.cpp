@@ -606,7 +606,7 @@ void PropertiesEditor::saveCurrentItemFileAs(FileDialog::Options options)
 bool PropertiesEditor::openCurrentItemFile(FileDialog::Options options)
 {
     switchToCurrentFileItemDirectory();
-    if (Singletons::fileDialog().exec(options)) {
+    if (Singletons::fileDialog().exec(options, currentItemFileName())) {
         setCurrentItemFile(Singletons::fileDialog().fileName());
         return true;
     }

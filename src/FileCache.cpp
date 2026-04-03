@@ -284,7 +284,8 @@ bool FileCache::getTexture(const QString &fileName, bool flipVertically,
 
     addFileSystemWatch(fileName);
 
-    if (FileDialog::isVideoFileName(fileName)) {
+    if (FileDialog::isVideoFileName(fileName)
+        || FileDialog::isSequenceFileName(fileName)) {
         texture->create(QOpenGLTexture::Target2D, QOpenGLTexture::RGB8_UNorm, 1,
             1, 1, 1);
         texture->clear();
@@ -417,7 +418,8 @@ void FileCache::handleFileSystemFileChanged(const QString &fileName)
 void FileCache::addFileSystemWatch(const QString &fileName, bool changed) const
 {
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
-    if (!FileDialog::isEmptyOrUntitled(fileName))
+    if (!FileDialog::isEmptyOrUntitled(fileName)
+        && !FileDialog::isSequenceFileName(fileName))
         mFileSystemWatchesToAdd[fileName] |= changed;
 }
 

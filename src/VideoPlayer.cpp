@@ -63,6 +63,11 @@ void VideoPlayer::handleFrameDecoded(QVideoFrame frame)
         mWidth = frame.width();
         mHeight = frame.height();
         mDuration = std::chrono::milliseconds(mPlayer->duration());
+
+        // play image sequences at 60 fps
+        if (FileDialog::isSequenceFileName(mFileName))
+            mPlaybackSpeed = 2.4;
+
         Q_EMIT loadingFinished();
     }
 

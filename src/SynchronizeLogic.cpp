@@ -338,11 +338,20 @@ void SynchronizeLogic::handleFileItemFileChanged(const FileItem &item)
 void SynchronizeLogic::handleFileItemRenamed(const FileItem &item,
     const QString &prevName)
 {
-    // also rename file when item name previously matched the filename
+    // change filename only when item name previously matched the filename
     if (item.fileName.isEmpty()
         || FileDialog::getFileTitle(item.fileName) != prevName
         || FileDialog::getFileTitle(item.fileName) == item.name)
         return;
+
+    // do not rename file when changing name to/from sequence name
+    if (FileDialog::isSequenceFileName(item.name)
+        != FileDialog::isSequenceFileName(prevName)) {
+        const auto fileName = toNativeCanonicalFilePath(
+            QFileInfo(item.fileName).dir().filePath(item.name));
+        mModel.setData(mModel.getIndex(&item, SessionModel::FileName),
+            fileName);
+    }
 
     mModel.beginUndoMacro("Update filename");
 

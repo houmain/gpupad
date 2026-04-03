@@ -6,6 +6,7 @@
 #include <QMap>
 #include <QProcess>
 #include <QStandardPaths>
+#include <QRegularExpression>
 
 namespace {
     const auto UntitledTag = QStringLiteral("/UT/");
@@ -158,7 +159,14 @@ bool FileDialog::isVideoFileName(const QString &fileName)
     for (const auto &ext : VideoFileExtensions)
         if (ext == extension)
             return true;
+
     return false;
+}
+
+bool FileDialog::isSequenceFileName(const QString &fileName)
+{
+    static const auto imageSequencePattern = QRegularExpression("%\\d+d");
+    return (QFileInfo(fileName).fileName().contains(imageSequencePattern));
 }
 
 //-------------------------------------------------------------------------
