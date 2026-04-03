@@ -30,7 +30,8 @@ private:
     void finish() override;
     void prepareShader(Shader::ShaderType shaderType);
     void validate();
-    QVariant process();
+    QString processString();
+    QByteArray processBinary();
 
     std::unique_ptr<ShaderBase> mShader;
     std::unique_ptr<GLProgram> mGLProgram;

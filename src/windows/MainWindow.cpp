@@ -311,7 +311,8 @@ MainWindow::MainWindow(QWidget *parent)
         &MainWindow::openMessageDock);
     connect(&synchronizeLogic, &SynchronizeLogic::outputChanged,
         [this](const QVariant &value) {
-            mOutputWindow->setText(value.toString());
+            mOutputWindow->setText(value.isNull() ? tr("not available")
+                                                  : value.toString());
         });
 
     auto &settings = Singletons::settings();

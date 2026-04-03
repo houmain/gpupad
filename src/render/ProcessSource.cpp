@@ -185,20 +185,19 @@ void ProcessSource::render()
         validate();
 
     if (!mProcessType.isEmpty()) {
-        mOutput = process();
-        if (!mOutput.isValid())
-            mOutput = "not available";
+        if (auto string = processString(); !string.isEmpty())
+            mOutput = string;
+        else if (auto binary = processBinary(); !binary.isEmpty())
+            mOutput = binary;
     }
 
-    if (mGLProgram) {
+    if (mGLProgram && mValidateSource)
         mMessages += mGLProgram->resetMessages();
-        mGLProgram.reset();
-    }
+    mGLProgram.reset();
 
-    if (mShader) {
+    if (mShader && mValidateSource)
         mMessages += mShader->resetMessages();
-        mShader.reset();
-    }
+    mShader.reset();
 }
 
 void ProcessSource::validate()
@@ -217,7 +216,7 @@ void ProcessSource::validate()
     }
 }
 
-QVariant ProcessSource::process()
+QString ProcessSource::processString()
 {
     if (mProcessType == "preprocess" && mShader)
         return removeLineDirectives(mShader->preprocess());
@@ -230,14 +229,6 @@ QVariant ProcessSource::process()
 
     if (mProcessType == "spirv" && mShader)
         return mShader->disassemble();
-
-    if (mProcessType == "spirvBinary" && mShader) {
-        if (const auto spirv = mShader->compileSpirv(); !spirv.empty())
-            return QByteArray(reinterpret_cast<const char *>(spirv.data()),
-                spirv.size() * sizeof(uint32_t));
-        for (const auto &message : mShader->resetMessages())
-            return message->text;
-    }
 
     if (mProcessType == "ast" && mShader)
         return mShader->generateGLSLangAST();
@@ -255,8 +246,16 @@ QVariant ProcessSource::process()
     return {};
 }
 
+QByteArray ProcessSource::processBinary()
+{
+    if (mProcessType == "spirvBinary" && mShader)
+        if (const auto spirv = mShader->compileSpirv(); !spirv.empty())
+            return QByteArray(reinterpret_cast<const char *>(spirv.data()),
+                spirv.size() * sizeof(uint32_t));
+    return {};
+}
+
 void ProcessSource::finish()
 {
-    if (mOutput.isValid())
-        Q_EMIT outputChanged(mOutput);
+    Q_EMIT outputChanged(mOutput);
 }
