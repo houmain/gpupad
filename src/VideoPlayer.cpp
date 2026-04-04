@@ -153,11 +153,8 @@ void VideoPlayer::presentFrame(const QVideoFrame &frame)
     if (mCurrentFrame == frame)
         return;
     mCurrentFrame = frame;
-
-    auto texture = TextureData();
-    if (texture.loadQImage(frame.toImage(), mFlipVertically))
-        Singletons::fileCache().updateStreamTexture(mFileName, mFlipVertically,
-            std::move(texture));
+    Singletons::fileCache().updateVideoTexture(mFileName, mFlipVertically,
+        frame);
 }
 
 #endif // QtMultimedia_FOUND

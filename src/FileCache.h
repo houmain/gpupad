@@ -9,6 +9,8 @@
 #include <QThread>
 #include <QTimer>
 
+class QVideoFrame;
+
 class FileCache final : public QObject
 {
     Q_OBJECT
@@ -24,8 +26,8 @@ public:
     void updateSource(const QString &fileName, QString source);
     void updateTexture(const QString &fileName, bool flippedVertically,
         TextureData texture);
-    void updateStreamTexture(const QString &fileName, bool flippedVertically,
-        TextureData texture);
+    void updateVideoTexture(const QString &fileName, bool flippedVertically,
+        const QVideoFrame &frame);
     void updateBinary(const QString &fileName, QByteArray binary);
     void updateBinaryRange(const QString &fileName, int offset,
         const QByteArray &range);
@@ -46,6 +48,8 @@ Q_SIGNALS:
     void reloadTexture(const QString &fileName, bool flipVertically,
         QPrivateSignal);
     void reloadBinary(const QString &fileName, QPrivateSignal);
+    void convertVideoFrame(const QString &fileName, bool flipVertically,
+        const QVideoFrame &frame, QPrivateSignal);
 
 public Q_SLOTS:
     void handleSourceReloaded(const QString &fileName, QString);

@@ -5,6 +5,7 @@
 #include "editors/source/SourceEditor.h"
 #include "editors/texture/TextureEditor.h"
 #include "session/SessionModel.h"
+#include <QVideoFrame>
 #include <QTextStream>
 #include <QThread>
 
@@ -132,6 +133,14 @@ public Q_SLOTS:
             Q_EMIT loadingFailed(fileName);
     }
 
+    void convertVideoFrame(const QString &fileName, bool flipVertically,
+        const QVideoFrame &frame)
+    {
+        auto texture = TextureData();
+        if (texture.loadQImage(frame.toImage(), flipVertically))
+            Q_EMIT textureLoaded(fileName, flipVertically, std::move(texture));
+    }
+
 Q_SIGNALS:
     void sourceLoaded(const QString &fileName, QString source);
     void textureLoaded(const QString &fileName, bool flipVertically,
@@ -156,6 +165,8 @@ FileCache::FileCache(QObject *parent) : QObject(parent)
         &BackgroundLoader::loadTexture);
     connect(this, &FileCache::reloadBinary, backgroundLoader,
         &BackgroundLoader::loadBinary);
+    connect(this, &FileCache::convertVideoFrame, backgroundLoader,
+        &BackgroundLoader::convertVideoFrame);
 
     connect(backgroundLoader, &BackgroundLoader::sourceLoaded, this,
         &FileCache::handleSourceReloaded);
@@ -332,19 +343,11 @@ void FileCache::updateTexture(const QString &fileName, bool flippedVertically,
     }
 }
 
-void FileCache::updateStreamTexture(const QString &fileName,
-    bool flippedVertically, TextureData texture)
+void FileCache::updateVideoTexture(const QString &fileName,
+    bool flippedVertically, const QVideoFrame &frame)
 {
-    Q_ASSERT(!texture.isNull());
-    Q_ASSERT(isNativeCanonicalFilePath(fileName));
-
-    QMutexLocker lock(&mMutex);
-    mTextures[TextureKey(fileName, flippedVertically)] = std::move(texture);
-    lock.unlock();
-
-    auto &editorManager = Singletons::editorManager();
-    if (auto editor = editorManager.getTextureEditor(fileName))
-        editor->load();
+    Q_EMIT convertVideoFrame(fileName, flippedVertically, frame,
+        QPrivateSignal());
 }
 
 void FileCache::updateBinary(const QString &fileName, QByteArray binary)
