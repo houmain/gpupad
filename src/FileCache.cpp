@@ -5,9 +5,12 @@
 #include "editors/source/SourceEditor.h"
 #include "editors/texture/TextureEditor.h"
 #include "session/SessionModel.h"
-#include <QVideoFrame>
 #include <QTextStream>
 #include <QThread>
+
+#if defined(QtMultimedia_FOUND)
+#  include <QVideoFrame>
+#endif
 
 namespace {
     const auto textureUpdateInterval = 5;
@@ -136,9 +139,11 @@ public Q_SLOTS:
     void convertVideoFrame(const QString &fileName, bool flipVertically,
         const QVideoFrame &frame)
     {
+#if defined(QtMultimedia_FOUND)
         auto texture = TextureData();
         if (texture.loadQImage(frame.toImage(), flipVertically))
             Q_EMIT textureLoaded(fileName, flipVertically, std::move(texture));
+#endif
     }
 
 Q_SIGNALS:

@@ -58,7 +58,7 @@ public:
     const QString &fileName() const { return mFileName; }
     int width() const { return 0; }
     int height() const { return 0; }
-    void seek(double time) { }
+    void seek(std::chrono::milliseconds time) { }
 
 Q_SIGNALS:
     void loadingFinished();
