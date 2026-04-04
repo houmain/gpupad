@@ -1,31 +1,16 @@
 #include "ScriptEngine.h"
 #include "FileDialog.h"
+#include "ScriptTimeout.h"
 #include "objects/ConsoleScriptObject.h"
 #include "objects/AppScriptObject.h"
 #include "session/SessionModel.h"
 #include <QTextStream>
-#include <QMutex>
 
 #if defined(QtQuick_FOUND)
 #  include <QQmlEngine>
 #endif
 
 namespace {
-    QMutex gRunningScriptEnginesMutex;
-    QList<ScriptEngine *> gRunningScriptEngines;
-
-    void registerRunningScriptEngine(ScriptEngine *scriptEngine)
-    {
-        const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
-        gRunningScriptEngines.append(scriptEngine);
-    }
-
-    void deregisterRunningScriptEngine(ScriptEngine *scriptEngine)
-    {
-        const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
-        gRunningScriptEngines.removeOne(scriptEngine);
-    }
-
     void getFlattenedValuesRec(const QJSValue &value, ScriptValueList *values)
     {
         if (value.isObject() || value.isArray()) {
@@ -47,13 +32,6 @@ namespace {
         return values;
     }
 } // namespace
-
-void ScriptEngine::interruptRunningScriptEngines()
-{
-    const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
-    for (auto *scriptEngine : gRunningScriptEngines)
-        scriptEngine->interrupt();
-}
 
 ScriptEnginePtr ScriptEngine::make(const QString &actionId,
     const QString &mainScriptFileName, QThread *thread, QObject *parent)

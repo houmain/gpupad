@@ -178,6 +178,7 @@ set(SOURCES
   src/scripting/ScriptEngine.cpp
   src/scripting/ScriptEngine.js
   src/scripting/ScriptSession.cpp
+  src/scripting/ScriptTimeout.cpp
   src/scripting/CustomActions.cpp
   src/scripting/objects/AppScriptObject.cpp
   src/scripting/objects/ConsoleScriptObject.cpp

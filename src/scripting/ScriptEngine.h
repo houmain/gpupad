@@ -17,8 +17,6 @@ class QTimer;
 class ScriptEngine final : public QObject
 {
 public:
-    static void interruptRunningScriptEngines();
-
     static ScriptEnginePtr make(const QString &actionId,
         const QString &mainScriptFileName, QThread *thread = nullptr,
         QObject *parent = nullptr);

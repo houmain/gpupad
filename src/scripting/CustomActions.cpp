@@ -11,7 +11,6 @@
 namespace {
     QString extractManifest(const QString &string)
     {
-        // TODO: improve
         const auto begin = string.indexOf("manifest");
         if (begin < 0)
             return {};
@@ -94,7 +93,6 @@ MessagePtrSet CustomAction::apply(const QModelIndexList &selection)
 
     applyInEngine(*mScriptEngine);
 
-    // TODO: run in cancelable background thread
     mScriptEngine->appScriptObject()
         .sessionScriptObject()
         .endBackgroundUpdate();
