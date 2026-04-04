@@ -1,18 +1,31 @@
 #include "ScriptEngine.h"
 #include "FileDialog.h"
-#include "Singletons.h"
 #include "objects/ConsoleScriptObject.h"
 #include "objects/AppScriptObject.h"
 #include "session/SessionModel.h"
 #include <QTextStream>
-#include <QThread>
-#include <QTimer>
+#include <QMutex>
 
 #if defined(QtQuick_FOUND)
 #  include <QQmlEngine>
 #endif
 
 namespace {
+    QMutex gRunningScriptEnginesMutex;
+    QList<ScriptEngine *> gRunningScriptEngines;
+
+    void registerRunningScriptEngine(ScriptEngine *scriptEngine)
+    {
+        const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
+        gRunningScriptEngines.append(scriptEngine);
+    }
+
+    void deregisterRunningScriptEngine(ScriptEngine *scriptEngine)
+    {
+        const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
+        gRunningScriptEngines.removeOne(scriptEngine);
+    }
+
     void getFlattenedValuesRec(const QJSValue &value, ScriptValueList *values)
     {
         if (value.isObject() || value.isArray()) {
@@ -34,6 +47,13 @@ namespace {
         return values;
     }
 } // namespace
+
+void ScriptEngine::interruptRunningScriptEngines()
+{
+    const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
+    for (auto *scriptEngine : gRunningScriptEngines)
+        scriptEngine->interrupt();
+}
 
 ScriptEnginePtr ScriptEngine::make(const QString &actionId,
     const QString &mainScriptFileName, QThread *thread, QObject *parent)
@@ -74,15 +94,6 @@ void ScriptEngine::initialize(const ScriptEnginePtr &self, const QDir &basePath)
     mJsEngine = new QJSEngine(this);
 #endif
 
-    mInterruptThread = new QThread();
-    mInterruptTimer = new QTimer();
-    mInterruptTimer->setSingleShot(true);
-    connect(mInterruptTimer, &QTimer::timeout,
-        [jsEngine = mJsEngine]() { jsEngine->setInterrupted(true); });
-    mInterruptTimer->moveToThread(mInterruptThread);
-    mInterruptThread->start();
-    setTimeout(5000);
-
     mJsEngine->installExtensions(QJSEngine::ConsoleExtension);
     setGlobal("console", mConsoleScriptObject);
 
@@ -99,12 +110,6 @@ void ScriptEngine::initialize(const ScriptEnginePtr &self, const QDir &basePath)
 ScriptEngine::~ScriptEngine()
 {
     Q_ASSERT(QThread::currentThread() == thread());
-
-    QMetaObject::invokeMethod(mInterruptTimer, "stop",
-        Qt::BlockingQueuedConnection);
-    connect(mInterruptThread, &QThread::finished, mInterruptThread,
-        &QObject::deleteLater);
-    mInterruptThread->requestInterruption();
 }
 
 void ScriptEngine::setOmitReferenceErrors()
@@ -112,20 +117,17 @@ void ScriptEngine::setOmitReferenceErrors()
     mOmitReferenceErrors = true;
 }
 
-void ScriptEngine::setTimeout(int msec)
+void ScriptEngine::interrupt()
 {
-    mInterruptTimer->setInterval(msec);
+    mJsEngine->setInterrupted(true);
 }
 
-void ScriptEngine::resetInterruptTimer()
+std::shared_ptr<void> ScriptEngine::registerRunning()
 {
-    // TODO: rethink since this interferes with QmlView
-#if 0
-    Q_ASSERT(&mOnThread == QThread::currentThread());
-    QMetaObject::invokeMethod(mInterruptTimer, "start",
-        Qt::BlockingQueuedConnection);
     mJsEngine->setInterrupted(false);
-#endif
+    registerRunningScriptEngine(this);
+    return std::shared_ptr<void>(nullptr,
+        [&](void *) { deregisterRunningScriptEngine(this); });
 }
 
 MessagePtrSet ScriptEngine::resetMessages()
@@ -170,8 +172,8 @@ QJSValue ScriptEngine::call(QJSValue &callable, const QJSValueList &args,
 {
     Q_ASSERT(QThread::currentThread() == thread());
     mConsoleScriptObject->setItemId(itemId);
-    resetInterruptTimer();
 
+    const auto guard = registerRunning();
     auto result = callable.call(args);
     outputError(result, itemId);
     return result;
@@ -192,8 +194,7 @@ void ScriptEngine::evaluateScript(const QString &script,
     Q_ASSERT(QThread::currentThread() == thread());
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
     mConsoleScriptObject->setFileName(fileName);
-    resetInterruptTimer();
-
+    const auto guard = registerRunning();
     auto result = mJsEngine->evaluate(script, fileName);
     outputError(result, 0);
 }
@@ -203,8 +204,7 @@ ScriptValueList ScriptEngine::evaluateValues(const QString &valueExpression,
 {
     Q_ASSERT(QThread::currentThread() == thread());
     mConsoleScriptObject->setItemId(itemId);
-    resetInterruptTimer();
-
+    const auto guard = registerRunning();
     auto result = mJsEngine->evaluate(valueExpression);
     outputError(result, itemId);
     return getFlattenedValues(result);

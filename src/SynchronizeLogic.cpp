@@ -11,6 +11,7 @@
 #include "render/RenderSessionBase.h"
 #include "session/SessionModel.h"
 #include "session/properties/PropertiesEditor.h"
+#include "scripting/ScriptEngine.h"
 #include <QTimer>
 #include <QMetaEnum>
 
@@ -153,6 +154,7 @@ void SynchronizeLogic::finishEvaluation()
 
 void SynchronizeLogic::resetRenderSession()
 {
+    ScriptEngine::interruptRunningScriptEngines();
     mRenderSession.reset();
     mProcessSource.reset();
     Singletons::videoManager().unloadAll();
@@ -426,6 +428,10 @@ void SynchronizeLogic::handleEvaluateTimout()
 
 void SynchronizeLogic::evaluate(EvaluationType evaluationType)
 {
+    // interrupt script engines when resetting twice
+    if (mEvaluationType == EvaluationType::Reset)
+        ScriptEngine::interruptRunningScriptEngines();
+
     const auto sessionRenderer = Singletons::sessionRenderer();
     if (mRenderSession && &mRenderSession->renderer() != sessionRenderer.get())
         resetRenderSession();

@@ -17,6 +17,8 @@ class QTimer;
 class ScriptEngine final : public QObject
 {
 public:
+    static void interruptRunningScriptEngines();
+
     static ScriptEnginePtr make(const QString &actionId,
         const QString &mainScriptFileName, QThread *thread = nullptr,
         QObject *parent = nullptr);
@@ -28,7 +30,7 @@ public:
     MessagePtrSet resetMessages();
     MessagePtrSet &messages() { return mMessages; }
     void setOmitReferenceErrors();
-    void setTimeout(int msec);
+    void interrupt();
     void setGlobal(const QString &name, QObject *object);
     void setGlobal(const QString &name, const ScriptValueList &values);
     void validateScript(const QString &script, const QString &fileName);
@@ -59,7 +61,7 @@ public:
 private:
     ScriptEngine(QObject *parent);
     void initialize(const ScriptEnginePtr &self, const QDir &basePath);
-    void resetInterruptTimer();
+    std::shared_ptr<void> registerRunning();
     void outputError(const QJSValue &result, ItemId itemId);
 
     QString mActionId;
@@ -68,8 +70,6 @@ private:
     QJSEngine *mJsEngine{};
     ConsoleScriptObject *mConsoleScriptObject{};
     AppScriptObject *mAppScriptObject{};
-    QThread *mInterruptThread{};
-    QTimer *mInterruptTimer{};
     bool mOmitReferenceErrors{};
 };
 
