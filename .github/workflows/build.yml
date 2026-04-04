@@ -62,7 +62,7 @@ jobs:
        dir: ${{matrix.config.QT_INST_DIR}}
        arch: ${{ matrix.config.QT_ARCH }}
        version: ${{ matrix.config.QT_VERSION }}
-       modules: ${{ matrix.config.QT_MODULES }}
+       modules: qtmultimedia
        cache: true
 
     - name: Checkout
