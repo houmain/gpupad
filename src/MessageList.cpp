@@ -3,8 +3,6 @@
 #include <QCoreApplication>
 #include <QMutex>
 
-#define tr qApp->tr
-
 namespace {
     QMutex gMessagesMutex;
     QList<QWeakPointer<const Message>> gMessages;
@@ -102,6 +100,7 @@ MessageSeverity getMessageSeverity(const Message &message)
 
 QString getMessageText(const Message &message)
 {
+#define tr qApp->tr
     using enum MessageType;
     switch (message.type) {
     case None:
@@ -220,4 +219,5 @@ QString getMessageText(const Message &message)
     case MeshShadersNotAvailable: return tr("Mesh Shaders not available");
     }
     return message.text;
+#undef tr
 }
