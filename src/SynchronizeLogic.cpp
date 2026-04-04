@@ -1,6 +1,5 @@
 #include "SynchronizeLogic.h"
 #include "FileCache.h"
-#include "Settings.h"
 #include "Singletons.h"
 #include "InputState.h"
 #include "VideoManager.h"
@@ -12,7 +11,6 @@
 #include "render/RenderSessionBase.h"
 #include "session/SessionModel.h"
 #include "session/properties/PropertiesEditor.h"
-#include "scripting/ScriptSession.h"
 #include <QTimer>
 #include <QMetaEnum>
 
@@ -339,9 +337,11 @@ void SynchronizeLogic::handleFileItemRenamed(const FileItem &item,
     const QString &prevName)
 {
     // change filename only when item name previously matched the filename
+    // and new name also has a suffix
     if (item.fileName.isEmpty()
         || FileDialog::getFileTitle(item.fileName) != prevName
-        || FileDialog::getFileTitle(item.fileName) == item.name)
+        || FileDialog::getFileTitle(item.fileName) == item.name
+        || QFileInfo(item.name).suffix().isEmpty())
         return;
 
     // do not rename file when changing name to/from sequence name
