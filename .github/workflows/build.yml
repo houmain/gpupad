@@ -72,13 +72,12 @@ jobs:
         submodules: recursive
 
     - name: Install vcpkg packages
-      uses: johnwason/vcpkg-action@v6
+      uses: johnwason/vcpkg-action@v7
       with:
           revision: '60d5b6b80f107a200e911ca3820e1eac70675e9d'
           pkgs: 'vulkan "ktx[vulkan]" glslang spirv-cross spirv-tools vulkan-memory-allocator spdlog OpenImageIO ${{ matrix.config.VCPKG_PACKAGES }}'
           triplet: '${{ matrix.config.VCPKG_TRIPLET }}'
           token: ${{ github.token }}
-          github-binarycache: true
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_INSTALL_PREFIX=dist -DENABLE_UNITY_BUILD=ON -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.config.VCPKG_TRIPLET }}
