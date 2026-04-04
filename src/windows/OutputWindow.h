@@ -3,6 +3,7 @@
 #include <QFrame>
 
 class QPlainTextEdit;
+class QToolButton;
 class DataComboBox;
 class Theme;
 
@@ -22,9 +23,12 @@ Q_SIGNALS:
 
 private:
     void handleThemeChanged(const Theme &theme);
+    void exportText();
 
     QWidget *mTitleBar{};
     DataComboBox *mTypeSelector{};
     QPlainTextEdit *mTextEdit{};
     int mLastScrollPosVertical{};
+    QToolButton *mExportButton{};
+    QString mLastExportFileName;
 };

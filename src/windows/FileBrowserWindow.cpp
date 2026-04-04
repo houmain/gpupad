@@ -30,10 +30,12 @@ FileBrowserWindow::FileBrowserWindow(QWidget *parent)
     mBrowseButton->setIcon(
         QIcon(QIcon::fromTheme(QString::fromUtf8("document-open"))));
     mBrowseButton->setAutoRaise(true);
+    mBrowseButton->setToolTip(tr("Browse"));
 
     mShowInFileManagerButton->setIcon(
-        QIcon(QIcon::fromTheme(QString::fromUtf8("dialog-information"))));
+        QIcon(QIcon::fromTheme(QString::fromUtf8("document-properties"))));
     mShowInFileManagerButton->setAutoRaise(true);
+    mShowInFileManagerButton->setToolTip(tr("Open Folder"));
 
     for (const auto &dir : getApplicationDirectories(ActionsDir))
         updateRecentDirectories(dir.path());

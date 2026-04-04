@@ -128,7 +128,8 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
     const auto linkingProgram = [&]() {
         if (session.renderer != Session::Renderer::OpenGL)
             return false;
-        return (mValidateSource || mProcessType == "programBinary"
+        return ((mValidateSource && mProcessType.isEmpty())
+            || mProcessType == "programBinary"
             || mProcessType == "json");
     }();
 
@@ -178,7 +179,7 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
 
 void ProcessSource::render()
 {
-    auto prevMessages = std::exchange(mMessages, {});
+    [[maybe_unused]] auto prevMessages = std::exchange(mMessages, {});
     mOutput.clear();
 
     if (mValidateSource)

@@ -47,7 +47,8 @@ MessageWindow::MessageWindow(QWidget *parent)
     mErrorIcon = QIcon::fromTheme("dialog-error");
 
     mExportButton->setIcon(
-        QIcon(QIcon::fromTheme(QString::fromUtf8("document-save"))));
+        QIcon(QIcon::fromTheme(QString::fromUtf8("application-exit"))));
+    mExportButton->setToolTip(tr("Export To Editor"));
     mExportButton->setAutoRaise(true);
 
     auto header = new QWidget(this);
@@ -170,12 +171,10 @@ void MessageWindow::exportMessages()
 
     auto editor =
         Singletons::editorManager().getSourceEditor(mLastExportFileName);
-    if (!editor) {
+    if (!editor)
         mLastExportFileName =
             FileDialog::generateNextUntitledFileName("Messages");
-        editor =
-            Singletons::editorManager().openSourceEditor(mLastExportFileName);
-    }
+    editor = Singletons::editorManager().openSourceEditor(mLastExportFileName);
     if (editor)
         editor->replace(string);
 }

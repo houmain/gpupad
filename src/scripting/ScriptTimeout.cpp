@@ -11,10 +11,10 @@ class ScriptTimeout : public QObject
 {
     Q_OBJECT
 public:
-    ScriptTimeout()
+    explicit ScriptTimeout(std::chrono::milliseconds timeout)
     {
         mTimer.setSingleShot(true);
-        mTimer.setInterval(std::chrono::seconds(1));
+        mTimer.setInterval(timeout);
         connect(&mTimer, &QTimer::timeout, &interruptRunningScriptEngines);
         mTimer.moveToThread(&mThread);
         mThread.start();
@@ -47,17 +47,22 @@ namespace {
     QMutex gRunningScriptEnginesMutex;
     QList<ScriptEngine *> gRunningScriptEngines;
     int gScriptEnginesRunningOnMainThread;
-    ScriptTimeout gScriptTimeout;
+    std::unique_ptr<ScriptTimeout> gScriptTimeout;
 } // namespace
+
+void setScriptEngineTimeout(std::chrono::milliseconds timeout)
+{
+    gScriptTimeout = std::make_unique<ScriptTimeout>(timeout);
+}
 
 void registerRunningScriptEngine(ScriptEngine *scriptEngine)
 {
     const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
     gRunningScriptEngines.append(scriptEngine);
 
-    if (onMainThread())
-        if (gScriptEnginesRunningOnMainThread++ == 0)
-            gScriptTimeout.startTimeout();
+    if (onMainThread() && gScriptEnginesRunningOnMainThread++ == 0)
+        if (gScriptTimeout)
+            gScriptTimeout->startTimeout();
 }
 
 void deregisterRunningScriptEngine(ScriptEngine *scriptEngine)
@@ -65,9 +70,9 @@ void deregisterRunningScriptEngine(ScriptEngine *scriptEngine)
     const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
     gRunningScriptEngines.removeOne(scriptEngine);
 
-    if (onMainThread())
-        if (--gScriptEnginesRunningOnMainThread == 0)
-            gScriptTimeout.cancelTimeout();
+    if (onMainThread() && --gScriptEnginesRunningOnMainThread == 0)
+        if (gScriptTimeout)
+            gScriptTimeout->cancelTimeout();
 }
 
 void interruptRunningScriptEngines()

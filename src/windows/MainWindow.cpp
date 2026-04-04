@@ -15,6 +15,7 @@
 #include "editors/qml/QmlView.h"
 #include "getEventPosition.h"
 #include "scripting/CustomActions.h"
+#include "scripting/ScriptTimeout.h"
 #include "session/SessionEditor.h"
 #include "session/SessionModel.h"
 #include "session/properties/PropertiesEditor.h"
@@ -311,8 +312,7 @@ MainWindow::MainWindow(QWidget *parent)
         &MainWindow::openMessageDock);
     connect(&synchronizeLogic, &SynchronizeLogic::outputChanged,
         [this](const QVariant &value) {
-            mOutputWindow->setText(value.isNull() ? tr("not available")
-                                                  : value.toString());
+            mOutputWindow->setText(value.toString());
         });
 
     auto &settings = Singletons::settings();
@@ -350,6 +350,7 @@ MainWindow::MainWindow(QWidget *parent)
     customActionsButton->setMenu(mUi->menuCustomActions);
     customActionsButton->setPopupMode(QToolButton::InstantPopup);
 
+    setScriptEngineTimeout(std::chrono::seconds(1));
     qApp->installEventFilter(this);
 
     mUi->actionPasteInNewEditor->setEnabled(

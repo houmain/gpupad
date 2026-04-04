@@ -69,7 +69,7 @@
         <item>
          <widget class="QToolButton" name="fileBrowse">
           <property name="toolTip">
-           <string>Open</string>
+           <string>Browse</string>
           </property>
           <property name="icon">
            <iconset theme="document-open"/>

@@ -52,7 +52,7 @@ private:
 public:
     D3DRenderer(QObject *parent = nullptr)
         : QObject(parent)
-        , Renderer(RenderAPI::Direct3D)
+        , Renderer(Renderer::Type::Direct3D)
     {
         mMessages += MessageList::insert(0, MessageType::Direct3DNotAvailable);
         setFailed();
