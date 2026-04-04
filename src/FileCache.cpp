@@ -34,7 +34,7 @@ namespace {
                     return true;
                 return false;
             });
-    };
+    }
 
     bool loadSource(const QString &fileName, QString *source)
     {

@@ -251,6 +251,11 @@ int main(int argc, char *argv[])
     // does not seem to cause any problems
     setenv("MESA_GL_VERSION_OVERRIDE", "4.5", 0);
     setenv("MESA_GLSL_VERSION_OVERRIDE", "450", 0);
+
+    // disable video acceleration, since seeking crashes with:
+    // "Failed to sync surface 0x6: 5 (invalid VAContextID)."
+    // even when calling QVideoFrame::toImage in QVideoSink::videoFrameChanged
+    setenv("LIBVA_DRIVER_NAME", "", 0);
 #endif
 
     if (std::string_view(argv[0]).ends_with("gpupad-headless"))

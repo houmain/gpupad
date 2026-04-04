@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 3.2.0] - 2026-04-04
+
+### Added
+
+- Added `bin/gpupad-headless` command (#39).
+- Added basic support for image sequences (#26).
+- Added export button to message window (#39).
+- Added export button to output window.
+
+### Changed
+
+- Synchronized video playback with `app.time`.
+- Session `set*Data/set*Source` do no longer open an editor (#42).
+- Allow file items' names to diverge from filenames (#41).
+- Added timeout to script engines running on main thread.
+- Interrupting script engines when unloading session or resetting.
+
+### Fixed
+
+- Improved automatic evaluation on mouse movement.
+- Improved error handling when renderer is not available.
+
 ## [Version 3.1.0] - 2026-03-23
 
 ### Added
@@ -1001,6 +1023,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 3.2.0]: https://github.com/houmain/gpupad/compare/3.1.0...3.2.0
 [version 3.1.0]: https://github.com/houmain/gpupad/compare/3.0.0...3.1.0
 [version 3.0.0]: https://github.com/houmain/gpupad/compare/2.7.0...3.0.0
 [version 2.7.0]: https://github.com/houmain/gpupad/compare/2.6.1...2.7.0

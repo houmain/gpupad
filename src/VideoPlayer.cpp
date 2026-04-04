@@ -11,11 +11,6 @@ namespace {
     const auto SeekThreshold = std::chrono::seconds(1);
     const auto DecodeSpeed = 4;
 
-    std::chrono::milliseconds toMilliSeconds(std::chrono::microseconds us)
-    {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(us);
-    }
-
     std::chrono::microseconds startTime(const QVideoFrame &frame)
     {
         return std::chrono::microseconds(frame.startTime());
@@ -108,7 +103,7 @@ void VideoPlayer::seek(std::chrono::milliseconds time)
     const auto bestFrame = [&]() -> QVideoFrame {
         auto bestFrame = QVideoFrame{};
         auto best = int64_t{};
-        for (auto i = 0; i < mFrameQueue.size(); ++i) {
+        for (auto i = 0u; i < mFrameQueue.size(); ++i) {
             const auto &frame = mFrameQueue[i];
             const auto current = std::abs(
                 ((startTime(frame) + endTime(frame)) / 2 - time).count());
