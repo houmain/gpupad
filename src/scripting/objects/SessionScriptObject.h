@@ -69,6 +69,7 @@ public:
         QJSValue object);
     Q_INVOKABLE QJSValue insertAfterItem(QJSValue siblingIdent,
         QJSValue object);
+    Q_INVOKABLE void clear();
     Q_INVOKABLE void replaceItems(QJSValue parentIdent, QJSValue array);
     Q_INVOKABLE void clearItems(QJSValue parentIdent);
     Q_INVOKABLE void deleteItem(QJSValue itemIdent);

@@ -739,6 +739,11 @@ QJSValue SessionScriptObject::findItems(QJSValue itemIdent)
     return findItems(itemIdent, QJSValue::UndefinedValue, true);
 }
 
+void SessionScriptObject::clear()
+{
+    clearItems(id());
+}
+
 void SessionScriptObject::clearItems(QJSValue parentIdent)
 {
     const auto parent = findSessionItem(parentIdent);

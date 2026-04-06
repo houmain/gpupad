@@ -122,6 +122,7 @@ Allows to define the instances and geometry for ray tracing calls.
 - `name: String`
 - `items: [Item]`
 - `selection: [Item]`
+- `clear()`
 - `findItem(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> Item?`
 - `findItems(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> [Item]`
 - `getParentItem(ItemIdent) -> Item?`
