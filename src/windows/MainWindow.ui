@@ -637,7 +637,10 @@
     <string>Custom Actions</string>
    </property>
    <property name="toolTip">
-    <string>Custom Actions</string>
+    <string>Custom Actions [F4]</string>
+   </property>
+   <property name="shortcut">
+    <string>F4</string>
    </property>
   </action>
  </widget>

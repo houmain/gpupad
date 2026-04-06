@@ -24,8 +24,6 @@
 #include <QCloseEvent>
 #include <QDesktopServices>
 #include <QDockWidget>
-#include <QMenu>
-#include <QMessageBox>
 #include <QMimeData>
 #include <QToolButton>
 
@@ -344,6 +342,13 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(mUi->menuCustomActions, &QMenu::aboutToShow, this,
         &MainWindow::updateCustomActionsMenu);
+    connect(mUi->actionCustomActions, &QAction::triggered, [this]() {
+        if (auto *tb = qobject_cast<QToolButton *>(
+                mUi->toolBarMain->widgetForAction(mUi->actionCustomActions))) {
+            tb->setDown(true);
+            tb->showMenu();
+        }
+    });
 
     auto *customActionsButton = static_cast<QToolButton *>(
         mUi->toolBarMain->widgetForAction(mUi->actionCustomActions));
