@@ -1,7 +1,6 @@
 #pragma once
 
 #include "SessionModelCore.h"
-#include <QFont>
 #include <QIcon>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -84,12 +83,22 @@ public:
     }
 
     template <typename F> // F(const FileItem&)
-    void forEachFileItem(const F &function)
+    void forEachFileItem(const F &function) const
     {
         forEachItem([&](const Item &item) {
             if (auto fileItem = castItem<FileItem>(item))
                 function(*fileItem);
         });
+    }
+
+    const Item *findFileItem(const QString &fileName) const
+    {
+        auto item = std::add_pointer_t<const Item>{};
+        forEachFileItem([&](const FileItem &fileItem) {
+            if (fileItem.fileName == fileName)
+                item = &fileItem;
+        });
+        return item;
     }
 
 Q_SIGNALS:

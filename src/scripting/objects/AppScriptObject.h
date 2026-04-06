@@ -64,6 +64,7 @@ public:
     Q_INVOKABLE QJSValue loadLibrary(QString fileName);
     Q_INVOKABLE QJSValue callAction(QString id);
     Q_INVOKABLE QJSValue callAction(QString id, QJSValue arguments);
+    Q_INVOKABLE void evaluateScript(QString fileName);
     Q_INVOKABLE QJSValue enumerateFiles(QString pattern);
     Q_INVOKABLE QJSValue writeTextFile(QString fileName, QString string);
     Q_INVOKABLE QJSValue writeBinaryFile(QString fileName, QByteArray binary);

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Evaluation.h"
-#include "MessageList.h"
 #include "SourceType.h"
 #include "session/Item.h"
 #include <QObject>
@@ -74,7 +72,7 @@ private:
     void updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor);
     void handleEvaluateTimout();
     void evaluate(EvaluationType evaluationType);
-    void handlePreparingEvaluation(bool& itemsChanged, EvaluationType& type);
+    void handlePreparingEvaluation(bool &itemsChanged, EvaluationType &type);
     void handleEvaluated();
     void processSource();
 

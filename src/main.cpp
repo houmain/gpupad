@@ -1,13 +1,14 @@
 #include "FileDialog.h"
 #include "SingleApplication/singleapplication.h"
 #include "Style.h"
-#include "windows/MainWindow.h"
+#include "MessageList.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
+#include "FileCache.h"
+#include "windows/MainWindow.h"
 #include "session/SessionModel.h"
 #include "scripting/ScriptEngine.h"
 #include "editors/EditorManager.h"
-#include "FileCache.h"
 #include <QApplication>
 #include <QSettings>
 #include <QSurfaceFormat>
@@ -145,19 +146,15 @@ int runHeadless(int argc, char *argv[])
         auto messages = MessagePtrSet{};
         const auto fileName =
             toNativeCanonicalFilePath(QFileInfo(argument).absoluteFilePath());
-        if (FileDialog::isSessionFileName(argument)) {
-            if (!singletons.sessionModel().load(fileName))
-                messages += MessageList::insert(0,
-                    MessageType::LoadingFileFailed, fileName);
-        } else if (FileDialog::isScriptFileName(argument)) {
-            auto source = QString();
-            if (Singletons::fileCache().getSource(fileName, &source)) {
-                singletons.defaultScriptEngine().evaluateScript(source,
-                    fileName);
-            } else {
-                messages += MessageList::insert(0,
-                    MessageType::LoadingFileFailed, fileName);
-            }
+        auto source = QString();
+        if (FileDialog::isSessionFileName(argument)
+            && singletons.sessionModel().load(fileName)) {
+        } else if (FileDialog::isScriptFileName(argument)
+            && singletons.fileCache().getSource(fileName, &source)) {
+            singletons.defaultScriptEngine().evaluateScript(source, fileName);
+        } else {
+            messages += MessageList::insert(0, MessageType::LoadingFileFailed,
+                fileName);
         }
         singletons.synchronizeLogic().manualEvaluation();
         singletons.synchronizeLogic().finishEvaluation();

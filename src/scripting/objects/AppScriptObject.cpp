@@ -331,6 +331,15 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
     return {};
 }
 
+void AppScriptObject::evaluateScript(QString fileName)
+{
+    auto source = QString();
+    if (!Singletons::fileCache().getSource(getAbsolutePath(fileName), &source))
+        jsEngine().throwError(
+            "Loading file '" + FileDialog::getFileTitle(fileName) + "' failed");
+    mEnginePtr.lock()->evaluateScript(source, fileName);
+}
+
 QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)
 {
     auto engine = mEnginePtr.lock();

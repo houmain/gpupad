@@ -146,7 +146,6 @@ Singletons::Singletons(QMainWindow *window)
         Qt::QueuedConnection);
 
     mDefaultScriptEngine = ScriptEngine::make(QDir::current());
-    mDefaultScriptEngine->setOmitReferenceErrors();
 }
 
 Singletons::~Singletons() = default;

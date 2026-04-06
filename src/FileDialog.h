@@ -23,8 +23,6 @@ public:
     static bool isTextureFileName(const QString &fileName);
     static bool isSequenceFileName(const QString &fileName);
     static bool isVideoFileName(const QString &fileName);
-    static void setWorkingDir(QDir workingDir);
-    static QDir workingDir();
 
     enum OptionBit {
         Saving = 1 << 0,

@@ -27,7 +27,6 @@ public:
 
     MessagePtrSet resetMessages();
     MessagePtrSet &messages() { return mMessages; }
-    void setOmitReferenceErrors();
     void interrupt();
     void setGlobal(const QString &name, QObject *object);
     void setGlobal(const QString &name, const ScriptValueList &values);
@@ -68,7 +67,6 @@ private:
     QJSEngine *mJsEngine{};
     ConsoleScriptObject *mConsoleScriptObject{};
     AppScriptObject *mAppScriptObject{};
-    bool mOmitReferenceErrors{};
 };
 
 void checkValueCount(int valueCount, int offset, int count, ItemId itemId,

@@ -91,11 +91,6 @@ ScriptEngine::~ScriptEngine()
     Q_ASSERT(QThread::currentThread() == thread());
 }
 
-void ScriptEngine::setOmitReferenceErrors()
-{
-    mOmitReferenceErrors = true;
-}
-
 void ScriptEngine::interrupt()
 {
     mJsEngine->setInterrupted(true);
@@ -192,10 +187,6 @@ ScriptValueList ScriptEngine::evaluateValues(const QString &valueExpression,
 void ScriptEngine::outputError(const QJSValue &result, ItemId itemId)
 {
     if (!result.isError())
-        return;
-
-    if (result.errorType() == QJSValue::ErrorType::ReferenceError
-        && mOmitReferenceErrors)
         return;
 
     // clean up message

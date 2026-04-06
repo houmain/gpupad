@@ -12,6 +12,7 @@
 #include "session/SessionModel.h"
 #include "session/properties/PropertiesEditor.h"
 #include "scripting/ScriptTimeout.h"
+#include "scripting/ScriptEngine.h"
 #include <QTimer>
 #include <QMetaEnum>
 
@@ -157,6 +158,7 @@ void SynchronizeLogic::resetRenderSession()
     interruptRunningScriptEngines();
     mRenderSession.reset();
     mProcessSource.reset();
+    Singletons::defaultScriptEngine().resetMessages();
     Singletons::videoManager().unloadAll();
     Singletons::fileCache().unloadAll();
     Singletons::inputState().reset();
@@ -431,6 +433,9 @@ void SynchronizeLogic::evaluate(EvaluationType evaluationType)
     // interrupt script engines when resetting twice
     if (mEvaluationType == EvaluationType::Reset)
         interruptRunningScriptEngines();
+
+    // reset messages of default script engine
+    const auto prevMessages = Singletons::defaultScriptEngine().resetMessages();
 
     const auto sessionRenderer = Singletons::sessionRenderer();
     if (mRenderSession && &mRenderSession->renderer() != sessionRenderer.get())

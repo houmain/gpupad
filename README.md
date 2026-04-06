@@ -110,6 +110,7 @@ Allows to define the instances and geometry for ray tracing calls.
 - `mouse: Mouse`
 - `session: Session`
 - `callAction(id, arguments...) -> result`
+- `evaluateScript(fileName)`
 - `enumerateFiles(pattern) -> [filename]`
 - `loadLibrary(filename) -> Library?`
 - `openEditor(filename, title?) -> Editor?`
