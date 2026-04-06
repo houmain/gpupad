@@ -5,6 +5,7 @@
 #include "objects/AppScriptObject.h"
 #include "session/SessionModel.h"
 #include <QTextStream>
+#include <QThread>
 
 #if defined(QtQuick_FOUND)
 #  include <QQmlEngine>

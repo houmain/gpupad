@@ -14,8 +14,6 @@
 #include "editors/qml/QmlView.h"
 #include <QApplication>
 #include <QDirIterator>
-#include <QJSEngine>
-#include <QCoreApplication>
 #include <atomic>
 
 bool AppScriptObject_MainThreadCalls::openQmlView(QString fileName,
@@ -37,6 +35,13 @@ bool AppScriptObject_MainThreadCalls::openQmlView(QString fileName,
 bool AppScriptObject_MainThreadCalls::openEditor(QString fileName)
 {
     return static_cast<bool>(Singletons::editorManager().openEditor(fileName));
+}
+
+bool AppScriptObject_MainThreadCalls::saveEditor(QString fileName)
+{
+    if (auto editor = Singletons::editorManager().getEditor(fileName))
+        return editor->save();
+    return false;
 }
 
 QString AppScriptObject_MainThreadCalls::openFileDialog(QString pattern)
@@ -265,10 +270,19 @@ QJSValue AppScriptObject::openEditor(QString fileName, QString title)
     if (!result)
         return {};
 
-    auto editorScriptObject = new EditorScriptObject(this, fileName, viewportSize);
+    auto editorScriptObject =
+        new EditorScriptObject(this, fileName, viewportSize);
     return mEditorScriptObjects
         .emplace(editorScriptObject, jsEngine().newQObject(editorScriptObject))
         .first->second;
+}
+
+QJSValue AppScriptObject::saveEditor(QString fileName)
+{
+    auto saved = false;
+    dispatchToMainThread(
+        [&]() { saved = mMainThreadCalls->saveEditor(fileName); });
+    return saved;
 }
 
 QJSValue AppScriptObject::loadLibrary(QString fileName)

@@ -113,6 +113,7 @@ Allows to define the instances and geometry for ray tracing calls.
 - `enumerateFiles(pattern) -> [filename]`
 - `loadLibrary(filename) -> Library?`
 - `openEditor(filename, title?) -> Editor?`
+- `saveEditor(filename) -> bool`
 - `openFileDialog(pattern) -> filename: String?`
 - `readTextFile(filename) -> String?`
 - `writeTextFile(filename, String) -> Bool`

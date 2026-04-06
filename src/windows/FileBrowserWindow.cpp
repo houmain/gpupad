@@ -128,7 +128,9 @@ void FileBrowserWindow::currentDirectoryChanged(const QDir &dir)
 
 void FileBrowserWindow::itemActivated(const QModelIndex &index)
 {
-    Q_EMIT fileActivated(toNativeCanonicalFilePath(mModel->filePath(index)));
+    const auto fileName = mModel->filePath(index);
+    if (QFileInfo(fileName).isFile())
+        Q_EMIT fileActivated(toNativeCanonicalFilePath(fileName));
 }
 
 void FileBrowserWindow::browseDirectory()

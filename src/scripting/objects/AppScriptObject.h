@@ -1,11 +1,8 @@
 #pragma once
 
-#include "MessageList.h"
 #include "Evaluation.h"
 #include <QObject>
 #include <QJSValue>
-#include <QModelIndex>
-#include <QThread>
 #include <QDir>
 
 class SessionScriptObject;
@@ -23,6 +20,7 @@ public:
     bool openQmlView(QString fileName, QString title,
         ScriptEnginePtr enginePtr);
     bool openEditor(QString fileName);
+    bool saveEditor(QString fileName);
     QString openFileDialog(QString pattern);
 
 private:
@@ -60,6 +58,7 @@ public:
     QJSValue keyboard() { return mKeyboardProperty; }
 
     Q_INVOKABLE QJSValue openEditor(QString fileName, QString title = {});
+    Q_INVOKABLE QJSValue saveEditor(QString fileName);
     Q_INVOKABLE QJSValue openFileDialog(QString pattern);
     Q_INVOKABLE QJSValue loadLibrary(QString fileName);
     Q_INVOKABLE QJSValue callAction(QString id);

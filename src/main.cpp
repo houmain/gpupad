@@ -162,7 +162,6 @@ int runHeadless(int argc, char *argv[])
         singletons.synchronizeLogic().manualEvaluation();
         singletons.synchronizeLogic().finishEvaluation();
         outputMessagesToStdout();
-        singletons.editorManager().saveAllEditors();
         singletons.editorManager().closeAllEditors(false);
         singletons.sessionModel().clear();
         singletons.synchronizeLogic().resetRenderSession();
