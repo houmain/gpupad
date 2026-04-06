@@ -288,6 +288,32 @@ void EditorManager::closeUntitledUntouchedSourceEditor()
     }
 }
 
+IEditor *EditorManager::openEditor(const FileItem &fileItem)
+{
+    switch (fileItem.type) {
+    case Item::Type::Texture: return openTextureEditor(fileItem.fileName, true);
+
+    case Item::Type::Script: {
+        auto editor = openSourceEditor(fileItem.fileName, true);
+        editor->setSourceType(SourceType::JavaScript);
+        return editor;
+    }
+
+    case Item::Type::Shader: {
+        auto editor = openSourceEditor(fileItem.fileName, true);
+        if (auto shader = castItem<Shader>(fileItem)) {
+            const auto sourceType = getSourceType(*shader);
+            if (sourceType != SourceType::PlainText)
+                editor->setSourceType(sourceType);
+        }
+        return editor;
+    }
+
+    case Item::Type::Buffer: return openBinaryEditor(fileItem.fileName, true);
+
+    default: return nullptr;
+    }
+}
 IEditor *EditorManager::openEditor(const QString &fileName, bool asBinaryFile)
 {
     if (!asBinaryFile) {

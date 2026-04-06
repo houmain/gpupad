@@ -788,7 +788,7 @@ QJSValue SessionScriptObject::openEditor(QJSValue itemIdent)
                 if (onMainThread()) {
                     auto &editors = Singletons::editorManager();
                     editors.setAutoRaise(false);
-                    editors.openEditor(item->fileName);
+                    editors.openEditor(*item);
                     editors.setAutoRaise(true);
                 }
             }

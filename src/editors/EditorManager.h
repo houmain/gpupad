@@ -3,8 +3,7 @@
 #include "DockWindow.h"
 #include "EditActions.h"
 #include "FileDialog.h"
-#include "SourceType.h"
-#include <QList>
+#include "session/Item.h"
 #include <QMap>
 #include <QStack>
 
@@ -34,6 +33,7 @@ public:
         SourceType sourceType = SourceType::PlainText);
     BinaryEditor *openNewBinaryEditor(const QString &fileName);
     TextureEditor *openNewTextureEditor(const QString &fileName);
+    IEditor *openEditor(const FileItem& item);
     IEditor *openEditor(const QString &fileName, bool asBinaryFile = false);
     SourceEditor *openSourceEditor(const QString &fileName,
         bool loadOrCreate = false, int line = -1, int column = -1);

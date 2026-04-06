@@ -418,33 +418,7 @@ IEditor *PropertiesEditor::openEditor(const FileItem &fileItem)
         mModel.setData(mModel.getIndex(&fileItem, SessionModel::FileName),
             fileName);
     }
-
-    auto &editors = Singletons::editorManager();
-    switch (fileItem.type) {
-    case Item::Type::Texture:
-        return editors.openTextureEditor(fileItem.fileName, true);
-
-    case Item::Type::Script: {
-        auto editor = editors.openSourceEditor(fileItem.fileName, true);
-        editor->setSourceType(SourceType::JavaScript);
-        return editor;
-    }
-
-    case Item::Type::Shader: {
-        auto editor = editors.openSourceEditor(fileItem.fileName, true);
-        if (auto shader = castItem<Shader>(fileItem)) {
-            const auto sourceType = getSourceType(*shader);
-            if (sourceType != SourceType::PlainText)
-                editor->setSourceType(sourceType);
-        }
-        return editor;
-    }
-
-    case Item::Type::Buffer:
-        return editors.openBinaryEditor(fileItem.fileName, true);
-
-    default: return nullptr;
-    }
+    return Singletons::editorManager().openEditor(fileItem);
 }
 
 IEditor *PropertiesEditor::openItemEditor(const QModelIndex &index)
