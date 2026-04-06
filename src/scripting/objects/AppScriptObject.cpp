@@ -6,6 +6,7 @@
 #include "MouseScriptObject.h"
 #include "LibraryScriptObject.h"
 #include "../ScriptEngine.h"
+#include "../ScriptTimeout.h"
 #include "../CustomActions.h"
 #include "SynchronizeLogic.h"
 #include "Singletons.h"
@@ -44,11 +45,12 @@ bool AppScriptObject_MainThreadCalls::saveEditor(QString fileName)
     return false;
 }
 
-QString AppScriptObject_MainThreadCalls::openFileDialog(QString pattern)
+QString AppScriptObject_MainThreadCalls::openFileDialog(QString pattern,
+    FileDialog::Options options)
 {
-    auto options = FileDialog::Options{};
-    Singletons::fileDialog().setDirectory(mLastFileDialogDirectory);
+    const auto guard = suspendScriptEngineTimeout();
 
+    Singletons::fileDialog().setDirectory(mLastFileDialogDirectory);
     if (!Singletons::fileDialog().exec(options, pattern))
         return {};
     mLastFileDialogDirectory = Singletons::fileDialog().directory();
@@ -354,8 +356,21 @@ QJSValue AppScriptObject::callAction(QString id)
 QJSValue AppScriptObject::openFileDialog(QString pattern)
 {
     auto result = QString();
-    dispatchToMainThread(
-        [&]() { result = mMainThreadCalls->openFileDialog(pattern); });
+    dispatchToMainThread([&]() {
+        result =
+            mMainThreadCalls->openFileDialog(pattern, FileDialog::Options{});
+    });
+    if (!result.isEmpty())
+        return result;
+    return {};
+}
+
+QJSValue AppScriptObject::saveFileDialog(QString pattern)
+{
+    auto result = QString();
+    dispatchToMainThread([&]() {
+        result = mMainThreadCalls->openFileDialog(pattern, FileDialog::Saving);
+    });
     if (!result.isEmpty())
         return result;
     return {};

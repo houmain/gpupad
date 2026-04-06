@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Evaluation.h"
+#include "FileDialog.h"
 #include <QObject>
 #include <QJSValue>
 #include <QDir>
@@ -21,7 +22,7 @@ public:
         ScriptEnginePtr enginePtr);
     bool openEditor(QString fileName);
     bool saveEditor(QString fileName);
-    QString openFileDialog(QString pattern);
+    QString openFileDialog(QString pattern, FileDialog::Options options);
 
 private:
     QDir mLastFileDialogDirectory;
@@ -32,8 +33,7 @@ class AppScriptObject final : public QObject
     Q_OBJECT
     Q_PROPERTY(QString evaluation READ evaluation WRITE setEvaluation NOTIFY
             evaluationChanged)
-    Q_PROPERTY(int frame READ frame WRITE setFrame NOTIFY
-            frameChanged)
+    Q_PROPERTY(int frame READ frame WRITE setFrame NOTIFY frameChanged)
     Q_PROPERTY(double time READ time WRITE setTime NOTIFY timeChanged)
     Q_PROPERTY(double timeDelta READ timeDelta NOTIFY timeDeltaChanged)
     Q_PROPERTY(QJSValue date READ date CONSTANT)
@@ -59,7 +59,8 @@ public:
 
     Q_INVOKABLE QJSValue openEditor(QString fileName, QString title = {});
     Q_INVOKABLE QJSValue saveEditor(QString fileName);
-    Q_INVOKABLE QJSValue openFileDialog(QString pattern);
+    Q_INVOKABLE QJSValue openFileDialog(QString pattern = "");
+    Q_INVOKABLE QJSValue saveFileDialog(QString pattern = "");
     Q_INVOKABLE QJSValue loadLibrary(QString fileName);
     Q_INVOKABLE QJSValue callAction(QString id);
     Q_INVOKABLE QJSValue callAction(QString id, QJSValue arguments);

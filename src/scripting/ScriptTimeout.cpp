@@ -55,6 +55,20 @@ void setScriptEngineTimeout(std::chrono::milliseconds timeout)
     gScriptTimeout = std::make_unique<ScriptTimeout>(timeout);
 }
 
+std::shared_ptr<void> suspendScriptEngineTimeout()
+{
+    const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
+    if (!gScriptTimeout)
+        return {};
+
+    if (gScriptEnginesRunningOnMainThread)
+        gScriptTimeout->cancelTimeout();
+    return std::shared_ptr<void>(nullptr, [](void *) {
+        if (gScriptEnginesRunningOnMainThread)
+            gScriptTimeout->startTimeout();
+    });
+}
+
 void registerRunningScriptEngine(ScriptEngine *scriptEngine)
 {
     const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
