@@ -248,35 +248,54 @@ QJSValue AppScriptObject::session()
     return mSessionProperty;
 }
 
-QJSValue AppScriptObject::openEditor(QString fileName, QString title)
+QJSValue AppScriptObject::currentEditor()
 {
-    fileName = getAbsolutePath(fileName);
+    auto fileName = QString();
+    dispatchToMainThread([&]() {
+        fileName = Singletons::editorManager().currentEditorFileName();
+    });
+    return getEditorObject(fileName);
+}
 
+QJSValue AppScriptObject::tryGetEditorObject(const QString &fileName)
+{
     const auto it = std::find_if(mEditorScriptObjects.begin(),
         mEditorScriptObjects.end(),
         [&](const auto &kv) { return kv.first->fileName() == fileName; });
     if (it != mEditorScriptObjects.end())
         return it->second;
+    return QJSValue::UndefinedValue;
+}
 
-    auto result = false;
-    auto viewportSize = QSize();
-    dispatchToMainThread([&, onMainThread = onMainThread()]() {
-        if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
-            result = mMainThreadCalls->openQmlView(fileName, title,
-                (onMainThread ? mEnginePtr.lock() : nullptr));
-        } else {
-            result = mMainThreadCalls->openEditor(fileName);
-        }
-        viewportSize = Singletons::editorManager().getViewportSize(fileName);
-    });
-    if (!result)
-        return {};
+QJSValue AppScriptObject::getEditorObject(const QString &fileName)
+{
+    if (auto editor = tryGetEditorObject(fileName); !editor.isUndefined())
+        return editor;
 
-    auto editorScriptObject =
-        new EditorScriptObject(this, fileName, viewportSize);
+    auto editorScriptObject = new EditorScriptObject(this, fileName);
+    dispatchToMainThread([&]() { editorScriptObject->update(); });
     return mEditorScriptObjects
         .emplace(editorScriptObject, jsEngine().newQObject(editorScriptObject))
         .first->second;
+}
+
+QJSValue AppScriptObject::openEditor(QString fileName, QString title)
+{
+    fileName = getAbsolutePath(fileName);
+
+    if (auto editor = tryGetEditorObject(fileName); !editor.isUndefined())
+        return editor;
+
+    auto opened = false;
+    dispatchToMainThread([&, onMainThread = onMainThread()]() {
+        if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
+            opened = mMainThreadCalls->openQmlView(fileName, title,
+                (onMainThread ? mEnginePtr.lock() : nullptr));
+        } else {
+            opened = mMainThreadCalls->openEditor(fileName);
+        }
+    });
+    return (opened ? getEditorObject(fileName) : QJSValue());
 }
 
 QJSValue AppScriptObject::saveEditor(QString fileName)

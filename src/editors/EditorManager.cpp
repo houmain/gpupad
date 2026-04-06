@@ -412,6 +412,24 @@ QmlView *EditorManager::openQmlView(const QString &fileName,
     return editor;
 }
 
+EditorType EditorManager::getEditorType(const QString &fileName)
+{
+    if (auto editor = getSourceEditor(fileName))
+        switch (editor->sourceType()) {
+        case SourceType::Generic:
+        case SourceType::PlainText:  return EditorType::Text;
+        case SourceType::JavaScript: return EditorType::Script;
+        default:                     return EditorType::Shader;
+        }
+    if (getBinaryEditor(fileName))
+        return EditorType::Binary;
+    if (getTextureEditor(fileName))
+        return EditorType::Texture;
+    if (getQmlView(fileName))
+        return EditorType::QmlView;
+    return EditorType::None;
+}
+
 IEditor *EditorManager::getEditor(const QString &fileName)
 {
     if (auto editor = getSourceEditor(fileName))

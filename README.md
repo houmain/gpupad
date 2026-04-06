@@ -105,10 +105,11 @@ Allows to define the instances and geometry for ray tracing calls.
 - `frame: Number`
 - `time: Number`
 - `timeDelta: Number`
-- `date: [Number]` - The current date (year, month, day, time in seconds).
+- `date: [year, month, day, time]` - The current date
 - `keyboard: Keyboard`
 - `mouse: Mouse`
 - `session: Session`
+- `currentEditor - Editor?`
 - `callAction(id, arguments...) -> result`
 - `evaluateScript(fileName)`
 - `enumerateFiles(pattern) -> [filename]`
@@ -116,6 +117,7 @@ Allows to define the instances and geometry for ray tracing calls.
 - `openEditor(filename, title?) -> Editor?`
 - `saveEditor(filename) -> bool`
 - `openFileDialog(pattern) -> filename: String?`
+- `saveFileDialog(pattern) -> filename: String?`
 - `readTextFile(filename) -> String?`
 - `writeTextFile(filename, String) -> Bool`
 - `writeBinaryFile(filename, Data) -> Bool`
@@ -146,6 +148,8 @@ Allows to define the instances and geometry for ray tracing calls.
 
 ### Editor
 
+- `type: String`
+- `fileName: String`
 - `viewportSize: [width, height]`
 
 ### Mouse

@@ -40,6 +40,7 @@ class AppScriptObject final : public QObject
     Q_PROPERTY(QJSValue session READ session CONSTANT)
     Q_PROPERTY(QJSValue mouse READ mouse CONSTANT)
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
+    Q_PROPERTY(QJSValue currentEditor READ currentEditor CONSTANT)
 
 public:
     AppScriptObject(const ScriptEnginePtr &enginePtr, const QDir &basePath);
@@ -56,6 +57,7 @@ public:
     QJSValue session();
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
+    QJSValue currentEditor();
 
     Q_INVOKABLE QJSValue openEditor(QString fileName, QString title = {});
     Q_INVOKABLE QJSValue saveEditor(QString fileName);
@@ -91,6 +93,8 @@ private:
     QJSEngine &jsEngine() { return *mJsEngine; }
     QString getAbsolutePath(const QString &fileName) const;
     void dispatchToMainThread(const std::function<void()> &function);
+    QJSValue tryGetEditorObject(const QString &fileName);
+    QJSValue getEditorObject(const QString &fileName);
 
     WeakScriptEnginePtr mEnginePtr;
     QJSEngine *mJsEngine{};

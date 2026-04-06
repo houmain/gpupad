@@ -5,11 +5,10 @@
 #include <QJsonArray>
 
 EditorScriptObject::EditorScriptObject(AppScriptObject *appScriptObject,
-    const QString &fileName, QSize viewportSize)
+    const QString &fileName)
     : QObject(appScriptObject)
     , mAppScriptObject(appScriptObject)
     , mFileName(fileName)
-    , mViewportSize(viewportSize)
 {
 }
 
@@ -26,6 +25,18 @@ void EditorScriptObject::resetAppScriptObject()
 
 void EditorScriptObject::update()
 {
+    Q_ASSERT(onMainThread());
+
+    switch (Singletons::editorManager().getEditorType(mFileName)) {
+    case EditorType::None:
+    case EditorType::Text:    mEditorType = "Text"; break;
+    case EditorType::Shader:  mEditorType = "Shader"; break;
+    case EditorType::Script:  mEditorType = "Script"; break;
+    case EditorType::Binary:  mEditorType = "Binary"; break;
+    case EditorType::Texture: mEditorType = "Texture"; break;
+    case EditorType::QmlView: mEditorType = "QmlView"; break;
+    }
+
     mViewportSizeWasRead = false;
     const auto viewportSize =
         Singletons::editorManager().getViewportSize(mFileName);
