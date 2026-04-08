@@ -68,7 +68,7 @@ MessageWindow::MessageWindow(QWidget *parent)
 void MessageWindow::updateMessages()
 {
     auto added = false;
-    auto messages = MessageList::messages();
+    auto messages = MessagePtrSet::getAllMessages();
     auto messageIds = QSet<MessageId>();
     for (auto it = messages.begin(); it != messages.end();) {
         const auto &message = **it;

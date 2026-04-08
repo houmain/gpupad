@@ -107,7 +107,7 @@ void VKBuffer::reload()
     if (!mFileName.isEmpty())
         if (!Singletons::fileCache().getBinary(mFileName, &mData))
             if (!FileDialog::isEmptyOrUntitled(mFileName))
-                mMessages += MessageList::insert(mItemId,
+                mMessages.insert(mItemId,
                     MessageType::LoadingFileFailed, mFileName);
 
     if (mSize > mData.size())

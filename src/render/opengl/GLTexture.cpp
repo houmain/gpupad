@@ -424,8 +424,7 @@ void GLTexture::upload()
     auto &gl = GLContext::currentContext();
     auto textureId = static_cast<GLuint>(mTextureObject);
     if (!upload(gl, mData, mTarget, mSamples, &textureId)) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::UploadingImageFailed);
+        mMessages.insert(mItemId, MessageType::UploadingImageFailed);
         return;
     }
     mSystemCopyModified = mDeviceCopyModified = false;
@@ -443,8 +442,7 @@ void GLTexture::beginDownload(GLContext &gl)
         return;
 
     if (!download(gl, mData, mTarget, mTextureObject)) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::DownloadingImageFailed);
+        mMessages.insert(mItemId, MessageType::DownloadingImageFailed);
         return;
     }
     mSystemCopyModified = mDeviceCopyModified = false;

@@ -214,8 +214,7 @@ bool PipelineBase::applyBufferMemberBindings(std::span<std::byte> bufferData,
                         memberOffset, scriptEngine)) {
                     memberSet = true;
                 } else {
-                    mMessages += MessageList::insert(mItemId,
-                        MessageType::UniformNotSet, name);
+                    mMessages.insert(mItemId, MessageType::UniformNotSet, name);
                 }
             });
     }

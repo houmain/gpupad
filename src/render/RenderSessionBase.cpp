@@ -44,8 +44,7 @@ void RenderSessionBase::prepare(bool itemsChanged,
     Q_ASSERT(onMainThread());
     mItemsChanged = itemsChanged;
     mEvaluationType = evaluationType;
-    mPrevMessages.swap(mMessages);
-    mMessages.clear();
+    mPrevMessages = std::exchange(mMessages, {});
 
     if (itemsChanged)
         invalidateCachedProperties();
@@ -292,13 +291,13 @@ void RenderSessionBase::obtainTimeQueryResults()
     auto total = std::chrono::duration<double>::zero();
     for (const auto &duration : resetTimeQueries(timeQueryCount())) {
         const auto itemId = mTimeQueryCallIds[mTimeQueryMessages.size()];
-        mTimeQueryMessages += MessageList::insert(itemId,
-            MessageType::CallDuration, formatDuration(duration), false);
+        mTimeQueryMessages.insert(itemId, MessageType::CallDuration,
+            formatDuration(duration), false);
         total += duration;
     }
     mTimeQueryCallIds.clear();
 
     if (mTimeQueryMessages.size() > 1)
-        mTimeQueryMessages += MessageList::insert(0, MessageType::TotalDuration,
+        mTimeQueryMessages.insert(0, MessageType::TotalDuration,
             formatDuration(total), false);
 }

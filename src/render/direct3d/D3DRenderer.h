@@ -54,7 +54,7 @@ public:
         : QObject(parent)
         , Renderer(Renderer::Type::Direct3D)
     {
-        mMessages += MessageList::insert(0, MessageType::Direct3DNotAvailable);
+        mMessages.insert(0, MessageType::Direct3DNotAvailable);
         setFailed();
     }
 

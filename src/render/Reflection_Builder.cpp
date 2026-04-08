@@ -14,7 +14,7 @@ namespace {
         virtual ~SpvReflectShaderModuleExt() = default;
     };
 
-    template<typename T>
+    template <typename T>
     size_t countMembersRec(const T &variable)
     {
         auto count = size_t{ 1 };

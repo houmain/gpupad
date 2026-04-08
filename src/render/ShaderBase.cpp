@@ -76,7 +76,7 @@ namespace {
         if (usedFileNames && !usedFileNames->contains(fileName)) {
             usedFileNames->append(fileName);
         } else if (recursionDepth++ > 3) {
-            messages += MessageList::insert(fileName, 0,
+            messages.insert(fileName, 0,
                 MessageType::RecursiveInclude, fileName);
             return {};
         }
@@ -121,11 +121,11 @@ namespace {
                     source.insert(match.capturedStart(), includableSource);
                     linesInserted += countLines(includableSource) - 1;
                 } else {
-                    messages += MessageList::insert(fileName, lineNo,
+                    messages.insert(fileName, lineNo,
                         MessageType::IncludableNotFound, include);
                 }
             } else {
-                messages += MessageList::insert(fileName, lineNo,
+                messages.insert(fileName, lineNo,
                     MessageType::InvalidIncludeDirective, fileName);
             }
         }
@@ -251,7 +251,7 @@ ShaderBase::ShaderBase(Shader::ShaderType type,
     for (const Shader *shader : shaders) {
         auto source = QString();
         if (!Singletons::fileCache().getSource(shader->fileName, &source))
-            mMessages += MessageList::insert(shader->id,
+            mMessages.insert(shader->id,
                 MessageType::LoadingFileFailed, shader->fileName);
 
         mFileNames += shader->fileName;

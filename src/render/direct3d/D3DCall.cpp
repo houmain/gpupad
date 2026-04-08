@@ -68,7 +68,7 @@ void D3DCall::setIndirectBuffer(D3DBuffer *commands, const Block &block)
     const auto expectedStride =
         static_cast<int>((mKind.compute ? 3 : 4) * sizeof(uint32_t));
     if (mIndirectStride != expectedStride) {
-        mMessages += MessageList::insert(block.id,
+        mMessages.insert(block.id,
             MessageType::InvalidIndirectStride,
             QStringLiteral("%1/%2 bytes")
                 .arg(mIndirectStride)
@@ -103,7 +103,7 @@ bool D3DCall::validateShaderTypes()
         return false;
     for (const auto &shader : mProgram->shaders())
         if (!callTypeSupportsShaderType(mCall.callType, shader.type())) {
-            mMessages += MessageList::insert(mCall.id,
+            mMessages.insert(mCall.id,
                 MessageType::InvalidShaderTypeForCall);
             return false;
         }
@@ -114,21 +114,20 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
     MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
     if (mKind.trace) {
-        mMessages += MessageList::insert(mCall.id, MessageType::NotImplemented,
+        mMessages.insert(mCall.id, MessageType::NotImplemented,
             "Ray Tracing");
         return;
     }
 
     if (mKind.mesh) {
-        mMessages += MessageList::insert(mCall.id, MessageType::NotImplemented,
+        mMessages.insert(mCall.id, MessageType::NotImplemented,
             "Mesh Shaders");
         return;
     }
 
     if (mKind.draw || mKind.compute || mKind.trace) {
         if (!mProgram) {
-            messages +=
-                MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
+            messages.insert(mCall.id, MessageType::ProgramNotAssigned);
             return;
         }
         mUsedItems += mProgram->usedItems();
@@ -146,27 +145,25 @@ void D3DCall::execute(D3DContext &context, Bindings &&bindings,
 
     if (mKind.draw) {
         if (!mTarget) {
-            messages +=
-                MessageList::insert(mCall.id, MessageType::TargetNotAssigned);
+            messages.insert(mCall.id, MessageType::TargetNotAssigned);
             return;
         }
         mUsedItems += mTarget->usedItems();
     }
 
     if (mKind.indexed && !mIndexBuffer) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::IndexBufferNotAssigned);
+        messages.insert(mCall.id, MessageType::IndexBufferNotAssigned);
         return;
     }
 
     if (mKind.trace && !mAccelerationStructure) {
-        messages += MessageList::insert(mCall.id,
+        messages.insert(mCall.id,
             MessageType::AccelerationStructureNotAssigned);
         return;
     }
 
     if (mKind.indirect && !mIndirectBuffer) {
-        messages += MessageList::insert(mCall.id,
+        messages.insert(mCall.id,
             MessageType::IndirectBufferNotAssigned);
         return;
     }
@@ -241,7 +238,7 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
 
     if (maxElementCount >= 0
         && first + count > static_cast<uint32_t>(maxElementCount)) {
-        mMessages += MessageList::insert(mCall.id, MessageType::CountExceeded,
+        mMessages.insert(mCall.id, MessageType::CountExceeded,
             first ? QStringLiteral("%1 + %2 > %3")
                         .arg(first)
                         .arg(count)
@@ -269,8 +266,7 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
             scriptEngine.evaluateUInt(mCall.patchVertices, mCall.id)));
 
     if (mTarget && !mTarget->bind(context)) {
-        mMessages +=
-            MessageList::insert(mCall.id, MessageType::TargetNotAssigned);
+        mMessages.insert(mCall.id, MessageType::TargetNotAssigned);
         return;
     }
 
@@ -281,7 +277,7 @@ void D3DCall::executeDraw(D3DContext &context, MessagePtrSet &messages,
         context.graphicsCommandList->DrawIndexedInstanced(count, instanceCount,
             first, baseVertex, firstInstance);
     } else {
-        mMessages += MessageList::insert(mCall.id, MessageType::NotImplemented,
+        mMessages.insert(mCall.id, MessageType::NotImplemented,
             "Call Type");
     }
     mUsedItems += mPipeline->usedItems();
@@ -365,8 +361,7 @@ void D3DCall::executeTraceRays(D3DContext &context, MessagePtrSet &messages,
 void D3DCall::executeClearTexture(D3DContext &context, MessagePtrSet &messages)
 {
     if (!mTexture) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::TextureNotAssigned);
+        messages.insert(mCall.id, MessageType::TextureNotAssigned);
         return;
     }
 
@@ -387,8 +382,7 @@ void D3DCall::executeClearTexture(D3DContext &context, MessagePtrSet &messages)
     }
 
     if (!mTexture->clear(context, color, mCall.clearDepth, mCall.clearStencil))
-        messages +=
-            MessageList::insert(mCall.id, MessageType::ClearingTextureFailed);
+        messages.insert(mCall.id, MessageType::ClearingTextureFailed);
 
     mUsedItems += mTexture->usedItems();
 }
@@ -396,13 +390,11 @@ void D3DCall::executeClearTexture(D3DContext &context, MessagePtrSet &messages)
 void D3DCall::executeCopyTexture(D3DContext &context, MessagePtrSet &messages)
 {
     if (!mTexture || !mFromTexture) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::TextureNotAssigned);
+        messages.insert(mCall.id, MessageType::TextureNotAssigned);
         return;
     }
     if (!mTexture->copy(context, *mFromTexture))
-        messages +=
-            MessageList::insert(mCall.id, MessageType::CopyingTextureFailed);
+        messages.insert(mCall.id, MessageType::CopyingTextureFailed);
 
     mUsedItems += mTexture->usedItems();
     mUsedItems += mFromTexture->usedItems();
@@ -411,8 +403,7 @@ void D3DCall::executeCopyTexture(D3DContext &context, MessagePtrSet &messages)
 void D3DCall::executeClearBuffer(D3DContext &context, MessagePtrSet &messages)
 {
     if (!mBuffer) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::BufferNotAssigned);
+        messages.insert(mCall.id, MessageType::BufferNotAssigned);
         return;
     }
     mBuffer->clear(context);
@@ -422,8 +413,7 @@ void D3DCall::executeClearBuffer(D3DContext &context, MessagePtrSet &messages)
 void D3DCall::executeCopyBuffer(D3DContext &context, MessagePtrSet &messages)
 {
     if (!mBuffer || !mFromBuffer) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::BufferNotAssigned);
+        messages.insert(mCall.id, MessageType::BufferNotAssigned);
         return;
     }
     mBuffer->copy(context, *mFromBuffer);
@@ -434,13 +424,11 @@ void D3DCall::executeCopyBuffer(D3DContext &context, MessagePtrSet &messages)
 void D3DCall::executeSwapTextures(MessagePtrSet &messages)
 {
     if (!mTexture || !mFromTexture) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::TextureNotAssigned);
+        messages.insert(mCall.id, MessageType::TextureNotAssigned);
         return;
     }
     if (!mTexture->swap(*mFromTexture))
-        messages +=
-            MessageList::insert(mCall.id, MessageType::SwappingTexturesFailed);
+        messages.insert(mCall.id, MessageType::SwappingTexturesFailed);
 
     mUsedItems += mTexture->itemId();
     mUsedItems += mFromTexture->itemId();
@@ -449,13 +437,11 @@ void D3DCall::executeSwapTextures(MessagePtrSet &messages)
 void D3DCall::executeSwapBuffers(MessagePtrSet &messages)
 {
     if (!mBuffer || !mFromBuffer) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::BufferNotAssigned);
+        messages.insert(mCall.id, MessageType::BufferNotAssigned);
         return;
     }
     if (!mBuffer->swap(*mFromBuffer))
-        messages +=
-            MessageList::insert(mCall.id, MessageType::SwappingBuffersFailed);
+        messages.insert(mCall.id, MessageType::SwappingBuffersFailed);
 
     mUsedItems += mBuffer->itemId();
     mUsedItems += mFromBuffer->itemId();

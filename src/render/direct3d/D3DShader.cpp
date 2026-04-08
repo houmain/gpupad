@@ -47,11 +47,12 @@ bool D3DShader::compile(PrintfBase &printf)
     if (!compile(mSession, patchedSources.join("\n")))
         return false;
 
-    // also generate SPIR-V for completing type information missing in D3D reflection 
+    // also generate SPIR-V for completing type information missing in D3D reflection
     const auto spirv = compileSpirv(printf);
     const auto spirvReflection = Reflection(spirv);
 
-    mReflection = generateSpirvReflection(mType, spirvReflection, mD3DReflection.Get());
+    mReflection =
+        generateSpirvReflection(mType, spirvReflection, mD3DReflection.Get());
     return true;
 }
 

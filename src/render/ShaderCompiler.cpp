@@ -15,8 +15,7 @@ namespace ShaderCompiler {
         MessagePtrSet &messages)
     {
         if (inputs.empty()) {
-            messages += MessageList::insert(programItemId,
-                MessageType::ProgramHasNoShader);
+            messages.insert(programItemId, MessageType::ProgramHasNoShader);
             return {};
         }
 
@@ -30,8 +29,7 @@ namespace ShaderCompiler {
             }
             return stageSpirv;
 #else
-            messages += MessageList::insert(programItemId,
-                MessageType::UnsupportedShaderType);
+            messages.insert(programItemId, MessageType::UnsupportedShaderType);
             return {};
 #endif
         }

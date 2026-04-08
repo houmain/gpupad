@@ -29,8 +29,9 @@ void ConsoleScriptObject::output(QString message, int level)
     const auto messageType = (level == 2 ? MessageType::ScriptError
             : level == 1                 ? MessageType::ScriptWarning
                                          : MessageType::ScriptMessage);
-
-    mMessages += (!mFileName.isEmpty()
-            ? MessageList::insert(mFileName, 0, messageType, message, false)
-            : MessageList::insert(mItemId, messageType, message, false));
+    if (!mFileName.isEmpty()) {
+        mMessages.insert(mFileName, 0, messageType, message, false);
+    } else {
+        mMessages.insert(mItemId, messageType, message, false);
+    }
 }

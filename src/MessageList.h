@@ -7,7 +7,6 @@
 using ItemId = int;
 using MessageId = qulonglong;
 using MessagePtr = QSharedPointer<const struct Message>;
-using MessagePtrSet = QSet<MessagePtr>;
 
 enum class MessageType {
     None,
@@ -97,13 +96,31 @@ enum class MessageSeverity {
     Info,
 };
 
-namespace MessageList {
-    MessagePtr insert(QString fileName, int line, MessageType type,
-        QString text = "", bool deduplicate = true);
-    MessagePtr insert(ItemId itemId, MessageType type, QString text = "",
+class MessagePtrSet : QSet<MessagePtr>
+{
+public:
+    static QList<MessagePtr> getAllMessages();
+
+    using QSet::clear;
+    using QSet::size;
+
+    MessagePtrSet &operator+=(const MessagePtr &message)
+    {
+        QSet::operator+=(message);
+        return *this;
+    }
+
+    MessagePtrSet &operator+=(const MessagePtrSet &other)
+    {
+        QSet::operator+=(other);
+        return *this;
+    }
+
+    void insert(QString fileName, int line, MessageType type, QString text = "",
         bool deduplicate = true);
-    QList<MessagePtr> messages();
-} // namespace MessageList
+    void insert(ItemId itemId, MessageType type, QString text = "",
+        bool deduplicate = true);
+};
 
 QString formatDuration(const std::chrono::duration<double> &duration);
 MessageSeverity getMessageSeverity(const Message &message);

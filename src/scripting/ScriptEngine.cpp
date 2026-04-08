@@ -204,12 +204,11 @@ void ScriptEngine::outputError(const QJSValue &result, ItemId itemId)
     const auto fileName = result.property("fileName").toString();
     if (!fileName.isEmpty()) {
         const auto lineNumber = result.property("lineNumber").toInt();
-        mMessages += MessageList::insert(
+        mMessages.insert(
             toNativeCanonicalFilePath(QUrl(fileName).toLocalFile()), lineNumber,
             MessageType::ScriptError, message);
     } else {
-        mMessages +=
-            MessageList::insert(itemId, MessageType::ScriptError, message);
+        mMessages.insert(itemId, MessageType::ScriptError, message);
     }
 }
 
@@ -282,15 +281,13 @@ void checkValueCount(int valueCount, int offset, int count, ItemId itemId,
         if (valueCount != count) {
             // allow setting 4 components of vec3
             if (valueCount != 4 || count != 3)
-                messages += MessageList::insert(itemId,
-                    MessageType::UniformComponentMismatch,
+                messages.insert(itemId, MessageType::UniformComponentMismatch,
                     QString("(%1/%2)").arg(valueCount).arg(count));
         }
     } else {
         // check that there are enough values
         if (valueCount < count + offset)
-            messages += MessageList::insert(itemId,
-                MessageType::UniformComponentMismatch,
+            messages.insert(itemId, MessageType::UniformComponentMismatch,
                 QString("(%1 < %2)").arg(valueCount).arg(count + offset));
     }
 }

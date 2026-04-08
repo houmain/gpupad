@@ -73,8 +73,7 @@ void D3DTarget::setTexture(int index, D3DTexture *texture)
 
     if (const auto first = mAttachments.first().texture;
         first && texture->samples() != first->samples()) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::SampleCountMismatch);
+        mMessages.insert(mItemId, MessageType::SampleCountMismatch);
         return;
     }
 
@@ -98,7 +97,7 @@ bool D3DTarget::setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state)
             const auto kind = texture->kind();
             if (kind.depth || kind.stencil) {
                 if (state.DSVFormat) {
-                    mMessages += MessageList::insert(mItemId,
+                    mMessages.insert(mItemId,
                         MessageType::MoreThanOneDepthStencilAttachment);
                     continue;
                 }
@@ -129,7 +128,7 @@ bool D3DTarget::setupPipelineState(D3D12_GRAPHICS_PIPELINE_STATE_DESC &state)
                 // stencilFrontReference, stencilBackReference, stencilBackReadMask, stencilBackWriteMask
             } else if (kind.color) {
                 if (state.NumRenderTargets == 8) {
-                    mMessages += MessageList::insert(mItemId,
+                    mMessages.insert(mItemId,
                         MessageType::TooManyColorAttachments);
                     continue;
                 }

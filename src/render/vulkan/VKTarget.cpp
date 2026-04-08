@@ -38,8 +38,7 @@ void VKTarget::setTexture(int index, VKTexture *texture)
 
     if (const auto first = mAttachments.first().texture;
         first && texture->samples() != first->samples()) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::SampleCountMismatch);
+        mMessages.insert(mItemId, MessageType::SampleCountMismatch);
         return;
     }
 
@@ -68,7 +67,7 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
                 auto &depthStencil = renderPassOptions.depthStencilAttachment;
 
                 if (depthStencil.view.isValid()) {
-                    mMessages += MessageList::insert(mItemId,
+                    mMessages.insert(mItemId,
                         MessageType::MoreThanOneDepthStencilAttachment);
                     continue;
                 }
@@ -117,8 +116,8 @@ KDGpu::RenderPassCommandRecorderOptions VKTarget::prepare(VKContext &context)
     }
 
     if (mSamples > maxSamples) {
-        mMessages += MessageList::insert(mItemId,
-            MessageType::MaxSampleCountExceeded, QString::number(maxSamples));
+        mMessages.insert(mItemId, MessageType::MaxSampleCountExceeded,
+            QString::number(maxSamples));
         mSamples = maxSamples;
     }
 
@@ -159,7 +158,7 @@ KDGpu::DepthStencilOptions VKTarget::getDepthStencilOptions()
         const auto kind = attachment.texture->kind();
         if (kind.depth || kind.stencil) {
             if (options.format != KDGpu::Format::UNDEFINED) {
-                mMessages += MessageList::insert(mItemId,
+                mMessages.insert(mItemId,
                     MessageType::MoreThanOneDepthStencilAttachment);
                 continue;
             }

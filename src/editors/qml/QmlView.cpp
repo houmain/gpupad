@@ -196,10 +196,10 @@ void QmlView::reset()
                 for (const QQmlError &error : errors) {
                     const auto fileName = toAbsolutePath(error.url());
                     if (!QFileInfo(fileName).isFile() && error.line() < 0) {
-                        mMessages += MessageList::insert(0, 0,
+                        mMessages.insert(0, 0,
                             MessageType::LoadingFileFailed, fileName);
                     } else {
-                        mMessages += MessageList::insert(fileName, error.line(),
+                        mMessages.insert(fileName, error.line(),
                             MessageType::ScriptError, error.description());
                     }
                 }
@@ -208,7 +208,7 @@ void QmlView::reset()
 
     connect(mQuickView, &QQuickView::sceneGraphError,
         [this](QQuickWindow::SceneGraphError error, const QString &message) {
-            mMessages += MessageList::insert(mFileName, 0,
+            mMessages.insert(mFileName, 0,
                 MessageType::ScriptError, message);
         });
 
@@ -221,7 +221,7 @@ void QmlView::reset()
                     fileName = mFileName;
                     line = 0;
                 }
-                mMessages += MessageList::insert(fileName, line,
+                mMessages.insert(fileName, line,
                     MessageType::ScriptWarning, warning.description());
             }
         });

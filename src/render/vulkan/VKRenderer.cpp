@@ -43,8 +43,7 @@ public:
             if (mDevice.isValid())
                 renderTask->configure();
         } catch (const std::exception &ex) {
-            mMessages +=
-                MessageList::insert(0, MessageType::RenderingFailed, ex.what());
+            mMessages.insert(0, MessageType::RenderingFailed, ex.what());
             shutdown();
         }
         Q_EMIT taskConfigured();
@@ -56,8 +55,7 @@ public:
             if (mDevice.isValid())
                 renderTask->render();
         } catch (const std::exception &ex) {
-            mMessages +=
-                MessageList::insert(0, MessageType::RenderingFailed, ex.what());
+            mMessages.insert(0, MessageType::RenderingFailed, ex.what());
         }
         Q_EMIT taskRendered();
     }
@@ -85,8 +83,7 @@ private:
     void initialize()
     {
         const auto error = [&](const QString &message) {
-            mMessages += MessageList::insert(0, MessageType::VulkanNotAvailable,
-                message);
+            mMessages.insert(0, MessageType::VulkanNotAvailable, message);
             shutdown();
         };
 

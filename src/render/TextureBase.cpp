@@ -87,8 +87,8 @@ TextureBase::TextureBase(const Buffer &buffer, Texture::Format format,
 bool TextureBase::operator==(const TextureBase &rhs) const
 {
     const auto properties = [](const TextureBase &a) {
-        return std::tie(a.mMessages, a.mFileName, a.mFlipVertically, a.mTarget,
-            a.mFormat, a.mWidth, a.mHeight, a.mDepth, a.mLayers, a.mSamples);
+        return std::tie(a.mFileName, a.mFlipVertically, a.mTarget, a.mFormat,
+            a.mWidth, a.mHeight, a.mDepth, a.mLayers, a.mSamples);
     };
     return properties(*this) == properties(rhs);
 }
@@ -124,21 +124,19 @@ void TextureBase::reload(bool forWriting)
                     mData = fileData;
                 }
             } else if (!forWriting) {
-                mMessages += MessageList::insert(mItemId,
-                    MessageType::ConvertingFileFailed, mFileName);
+                mMessages.insert(mItemId, MessageType::ConvertingFileFailed,
+                    mFileName);
             }
         }
     } else if (!FileDialog::isEmptyOrUntitled(mFileName) && !forWriting) {
-        mMessages += MessageList::insert(mItemId,
-            MessageType::LoadingFileFailed, mFileName);
+        mMessages.insert(mItemId, MessageType::LoadingFileFailed, mFileName);
     }
 
     if (mData.isNull()) {
         if (!mData.create(mTarget, mFormat, mWidth, mHeight, mDepth, mLayers,
                 mSamples > 1 ? 1 : 0)) {
             mData.create(mTarget, Texture::Format::RGBA8_UNorm, 1, 1, 1, 1, 1);
-            mMessages += MessageList::insert(mItemId,
-                MessageType::CreatingTextureFailed);
+            mMessages.insert(mItemId, MessageType::CreatingTextureFailed);
         }
         mData.clear();
         mData.setFlippedVertically(mFlipVertically);

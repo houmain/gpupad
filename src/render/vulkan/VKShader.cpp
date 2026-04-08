@@ -63,7 +63,7 @@ VKShader::VKShader(Shader::ShaderType type,
 void VKShader::create(KDGpu::Device &device, const Spirv &spirv)
 {
     if (auto messageType = checkShaderTypeSupport(mType, device)) {
-        mMessages += MessageList::insert(mItemId, *messageType);
+        mMessages.insert(mItemId, *messageType);
         return;
     }
 

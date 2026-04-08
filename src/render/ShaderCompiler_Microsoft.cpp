@@ -62,8 +62,7 @@ namespace ShaderCompiler {
                 if (severity.contains("Error", Qt::CaseInsensitive))
                     messageType = MessageType::ShaderError;
 
-                messages += MessageList::insert(fileName, lineNumber,
-                    messageType, text);
+                messages.insert(fileName, lineNumber, messageType, text);
             }
         }
 
@@ -101,8 +100,7 @@ namespace ShaderCompiler {
                 if (fileName == "hlsl.hlsl")
                     fileName = fileNames[0];
 
-                messages += MessageList::insert(fileName, lineNumber,
-                    messageType, text);
+                messages.insert(fileName, lineNumber, messageType, text);
             }
         }
 
@@ -207,7 +205,7 @@ namespace ShaderCompiler {
         {
             const auto target = getTarget(input.shaderType, 6, 0);
             if (target.isEmpty()) {
-                messages += MessageList::insert(input.itemId,
+                messages.insert(input.itemId,
                     MessageType::UnsupportedShaderType);
                 return false;
             }
@@ -235,8 +233,7 @@ namespace ShaderCompiler {
     {
         const auto target = getTarget(input.shaderType, 5, 1);
         if (target.isEmpty()) {
-            messages += MessageList::insert(input.itemId,
-                MessageType::UnsupportedShaderType);
+            messages.insert(input.itemId, MessageType::UnsupportedShaderType);
             return {};
         }
 
@@ -260,8 +257,7 @@ namespace ShaderCompiler {
 
         if (FAILED(D3DReflect(binary->GetBufferPointer(),
                 binary->GetBufferSize(), IID_PPV_ARGS(&d3dReflection)))) {
-            messages += MessageList::insert(input.itemId,
-                MessageType::UnsupportedShaderType);
+            messages.insert(input.itemId, MessageType::UnsupportedShaderType);
             return false;
         }
         return true;

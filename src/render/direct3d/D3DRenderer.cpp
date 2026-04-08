@@ -28,8 +28,7 @@ public:
             if (mDevice)
                 renderTask->configure();
         } catch (const std::exception &ex) {
-            mMessages +=
-                MessageList::insert(0, MessageType::RenderingFailed, ex.what());
+            mMessages.insert(0, MessageType::RenderingFailed, ex.what());
             shutdown();
         }
         Q_EMIT taskConfigured();
@@ -41,8 +40,7 @@ public:
             if (mDevice)
                 renderTask->render();
         } catch (const std::exception &ex) {
-            mMessages +=
-                MessageList::insert(0, MessageType::RenderingFailed, ex.what());
+            mMessages.insert(0, MessageType::RenderingFailed, ex.what());
         }
         Q_EMIT taskRendered();
     }
@@ -113,7 +111,7 @@ private:
         mRenderer.mRenderTargetHelper = &mRenderTargetHelper;
 
     } catch (const std::exception &) {
-        mMessages += MessageList::insert(0, MessageType::Direct3DNotAvailable);
+        mMessages.insert(0, MessageType::Direct3DNotAvailable);
         shutdown();
     }
 

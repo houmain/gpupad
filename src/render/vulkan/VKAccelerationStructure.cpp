@@ -63,7 +63,7 @@ void VKAccelerationStructure::setVertexBuffer(int instanceIndex,
     if (geometry.type == Geometry::GeometryType::AxisAlignedBoundingBoxes) {
         const auto expectedStride = sizeof(VkAabbPositionsKHR);
         if (geometry.vertexStride != expectedStride) {
-            mMessages += MessageList::insert(geometry.itemId,
+            mMessages.insert(geometry.itemId,
                 MessageType::InvalidGeometryStride,
                 QStringLiteral("%1/%2 bytes")
                     .arg(geometry.vertexStride)
@@ -106,7 +106,7 @@ void VKAccelerationStructure::setIndexBuffer(int instanceIndex,
         }
     const auto indexType = getKDIndexType(indexSize);
     if (!indexType || !indexSize) {
-        mMessages += MessageList::insert(block.id,
+        mMessages.insert(block.id,
             MessageType::InvalidIndexType,
             QStringLiteral("%1 bytes").arg(indexSize));
         return;
@@ -169,7 +169,7 @@ void VKAccelerationStructure::prepare(VKContext &context,
             return ScriptValueList{};
         auto values = scriptEngine.evaluateValues(transform, itemId);
         if (values.size() != 12 && values.size() != 16)
-            mMessages += MessageList::insert(itemId,
+            mMessages.insert(itemId,
                 MessageType::UniformComponentMismatch,
                 QString("(%1/12 or 16)").arg(values.count()));
         values.resize(12);
@@ -196,7 +196,7 @@ void VKAccelerationStructure::prepare(VKContext &context,
             mUsedItems += geometry.itemId;
 
             if (!geometry.vertexBuffer) {
-                mMessages += MessageList::insert(geometry.itemId,
+                mMessages.insert(geometry.itemId,
                     MessageType::BufferNotSet, "Vertices");
                 return;
             }
@@ -237,7 +237,7 @@ void VKAccelerationStructure::prepare(VKContext &context,
                 geometry.primitiveOffset, geometry.itemId);
 
             if (primitiveCount > maxPrimitiveCount) {
-                mMessages += MessageList::insert(geometry.itemId,
+                mMessages.insert(geometry.itemId,
                     MessageType::CountExceeded,
                     QStringLiteral("%1 > %2")
                         .arg(primitiveCount)

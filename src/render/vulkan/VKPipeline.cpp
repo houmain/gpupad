@@ -201,7 +201,7 @@ bool VKPipeline::createOrUpdateBindGroup(uint32_t set, uint32_t binding,
     if (it != end(bindings)) {
         // TODO: improve check
         if (it->resourceType != layout.resourceType) {
-            mMessages += MessageList::insert(mProgram.itemId(),
+            mMessages.insert(mProgram.itemId(),
                 MessageType::IncompatibleBindings,
                 QStringLiteral("(%1/%2)").arg(set).arg(binding));
             return false;
@@ -226,7 +226,7 @@ void VKPipeline::setBindGroupResource(uint32_t set, bool isVariableLengthArray,
         if (res.binding == resource.binding) {
             // TODO: improve check
             if (res.resource.type() != resource.resource.type()) {
-                mMessages += MessageList::insert(mProgram.itemId(),
+                mMessages.insert(mProgram.itemId(),
                     MessageType::IncompatibleBindings,
                     QStringLiteral("(set %1)").arg(set));
                 return;
@@ -268,8 +268,7 @@ bool VKPipeline::updatePushConstants(ScriptEngine &scriptEngine)
             if (const auto bufferBinding = find(mBindings.buffers,
                     block.type_description->type_name)) {
                 if (!bufferBinding->buffer) {
-                    mMessages += MessageList::insert(mItemId,
-                        MessageType::BufferNotSet,
+                    mMessages.insert(mItemId, MessageType::BufferNotSet,
                         block.type_description->type_name);
                     return false;
                 }
@@ -363,8 +362,7 @@ bool VKPipeline::createGraphics(VKContext &context,
     });
 
     if (!mGraphicsPipeline.isValid())
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::CreatingPipelineFailed);
+        mMessages.insert(mItemId, MessageType::CreatingPipelineFailed);
 
     return mGraphicsPipeline.isValid();
 }
@@ -456,7 +454,7 @@ bool VKPipeline::createRayTracing(VKContext &context,
         }
 
         default:
-            mMessages += MessageList::insert(mItemId, MessageType::ShaderError,
+            mMessages.insert(mItemId, MessageType::ShaderError,
                 "shader type not implemented");
             return false;
         }
@@ -497,7 +495,7 @@ bool VKPipeline::createLayout(VKContext &context)
                 const auto maxBinding =
                     getMaxBindingNumberInSet(reflection, desc.set);
                 if (desc.binding != maxBinding) {
-                    mMessages += MessageList::insert(mItemId,
+                    mMessages.insert(mItemId,
                         MessageType::OnlyLastBindingMayBeUnsizedArray,
                         QStringLiteral("%1 < %2 in set %3")
                             .arg(desc.binding)
@@ -535,8 +533,7 @@ bool VKPipeline::createLayout(VKContext &context)
     const auto maxPushConstantsSize =
         context.adapterLimits().maxPushConstantsSize;
     if (mPushConstantRange.size > maxPushConstantsSize) {
-        mMessages += MessageList::insert(mItemId,
-            MessageType::MaxPushConstantSizeExceeded,
+        mMessages.insert(mItemId, MessageType::MaxPushConstantSizeExceeded,
             QString::number(maxPushConstantsSize));
         mPushConstantRange.size = maxPushConstantsSize;
     }
@@ -585,8 +582,7 @@ bool VKPipeline::updateBindings(VKContext &context, ScriptEngine &scriptEngine)
                         auto name = desc.name;
                         if (isBufferBinding(desc.descriptor_type))
                             name = desc.type_description->type_name;
-                        mMessages +=
-                            MessageList::insert(mItemId, message, name);
+                        mMessages.insert(mItemId, message, name);
                         canRender = false;
                     }
                 });
@@ -603,7 +599,7 @@ bool VKPipeline::updateBindings(VKContext &context, ScriptEngine &scriptEngine)
 
         // check that hardcoded limit in layout is not exceeded
         if (bindGroup.maxVariableArrayLength > maxVariableBindGroupEntries) {
-            mMessages += MessageList::insert(mItemId,
+            mMessages.insert(mItemId,
                 MessageType::MaxVariableBindGroupEntriesExceeded,
                 QString::number(maxVariableBindGroupEntries));
             return false;

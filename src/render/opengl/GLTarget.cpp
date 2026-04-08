@@ -32,8 +32,7 @@ void GLTarget::setTexture(int index, GLTexture *texture)
 
     if (const auto first = mAttachments.first().texture;
         first && texture->samples() != first->samples()) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::SampleCountMismatch);
+        mMessages.insert(mItemId, MessageType::SampleCountMismatch);
         return;
     }
     mAttachments[index].texture = texture;
@@ -132,7 +131,7 @@ bool GLTarget::create()
 
     const auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
-        mMessages += MessageList::insert(mItemId,
+        mMessages.insert(mItemId,
             MessageType::CreatingFramebufferFailed,
             (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT
                     ? "(incomplete attachment)"

@@ -298,8 +298,7 @@ void VKTexture::createAndUpload(VKContext &context)
             mTexture = vkApi->createTextureFromExistingVkImage(context.device,
                 textureOptions, mKtxTexture.image);
         } else {
-            mMessages +=
-                MessageList::insert(mItemId, MessageType::UploadingImageFailed);
+            mMessages.insert(mItemId, MessageType::UploadingImageFailed);
         }
     }
 
@@ -308,8 +307,7 @@ void VKTexture::createAndUpload(VKContext &context)
         const auto properties =
             context.device.adapter()->formatProperties(textureOptions.format);
         if (!properties.optimalTilingFeatures) {
-            mMessages += MessageList::insert(mItemId,
-                MessageType::UnsupportedTextureFormat);
+            mMessages.insert(mItemId, MessageType::UnsupportedTextureFormat);
             textureOptions.format = KDGpu::Format::R8_UNORM;
         }
 

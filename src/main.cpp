@@ -117,7 +117,7 @@ void outputMessagesToStdout()
 #if defined(_WIN32)
     attachToConsole();
 #endif
-    for (const auto &message : MessageList::messages()) {
+    for (const auto &message : MessagePtrSet::getAllMessages()) {
         const auto severity = getMessageSeverity(*message);
         const auto severityText = (severity == MessageSeverity::Error
                 ? "ERROR: "
@@ -153,8 +153,7 @@ int runHeadless(int argc, char *argv[])
             && singletons.fileCache().getSource(fileName, &source)) {
             singletons.defaultScriptEngine().evaluateScript(source, fileName);
         } else {
-            messages += MessageList::insert(0, MessageType::LoadingFileFailed,
-                fileName);
+            messages.insert(0, MessageType::LoadingFileFailed, fileName);
         }
         singletons.synchronizeLogic().manualEvaluation();
         singletons.synchronizeLogic().finishEvaluation();

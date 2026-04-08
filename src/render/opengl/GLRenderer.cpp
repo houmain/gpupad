@@ -74,8 +74,7 @@ private:
     {
         if (!context.makeCurrent(&surface)
             || !context.initializeOpenGLFunctions()) {
-            mMessages += MessageList::insert(0,
-                MessageType::OpenGLVersionNotAvailable, "4.5");
+            mMessages.insert(0, MessageType::OpenGLVersionNotAvailable, "4.5");
             mRenderer.setFailed();
             return false;
         }

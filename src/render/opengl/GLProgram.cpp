@@ -7,7 +7,7 @@ namespace {
     void parseLinkerLog(const QString &log, MessagePtrSet &messages,
         ItemId itemId)
     {
-        messages += MessageList::insert(itemId, MessageType::ShaderWarning, log);
+        messages.insert(itemId, MessageType::ShaderWarning, log);
     }
 
     QString formatNvGpuProgram(QString assembly)
@@ -107,8 +107,7 @@ bool GLProgram::compileShaders(PrintfBase &printf)
 bool GLProgram::linkProgram()
 {
     if (mShaders.empty()) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::ProgramHasNoShader);
+        mMessages.insert(mItemId, MessageType::ProgramHasNoShader);
         return false;
     }
 
@@ -133,8 +132,7 @@ bool GLProgram::linkProgram()
         parseLinkerLog(log.get(), mMessages, mItemId);
     } else {
         if (status != GL_TRUE)
-            mMessages += MessageList::insert(mItemId,
-                MessageType::CreatingPipelineFailed);
+            mMessages.insert(mItemId, MessageType::CreatingPipelineFailed);
     }
     if (status != GL_TRUE)
         return false;

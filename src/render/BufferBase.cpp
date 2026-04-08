@@ -24,8 +24,7 @@ void BufferBase::updateUntitledFilename(const BufferBase &rhs)
 
 bool BufferBase::operator==(const BufferBase &rhs) const
 {
-    return std::tie(mFileName, mSize, mMessages)
-        == std::tie(rhs.mFileName, rhs.mSize, rhs.mMessages);
+    return std::tie(mFileName, mSize) == std::tie(rhs.mFileName, rhs.mSize);
 }
 
 QByteArray &BufferBase::writableData()

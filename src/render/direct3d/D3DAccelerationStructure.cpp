@@ -59,7 +59,7 @@ void D3DAccelerationStructure::setVertexBuffer(int instanceIndex,
     if (geometry.type == Geometry::GeometryType::AxisAlignedBoundingBoxes) {
         const auto expectedStride = sizeof(VkAabbPositionsKHR);
         if (geometry.vertexStride != expectedStride) {
-            mMessages += MessageList::insert(geometry.itemId,
+            mMessages.insert(geometry.itemId,
                 MessageType::InvalidGeometryStride,
                 QStringLiteral("%1/%2 bytes")
                     .arg(geometry.vertexStride)

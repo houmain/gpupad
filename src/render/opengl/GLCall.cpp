@@ -100,7 +100,7 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block)
             mUsedItems += field->id;
         }
     if (!getIndexType()) {
-        mMessages += MessageList::insert(block.id,
+        mMessages.insert(block.id,
             MessageType::InvalidIndexType,
             QStringLiteral("%1 bytes").arg(mIndexSize));
         return;
@@ -146,7 +146,7 @@ void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block)
     const auto expectedStride =
         static_cast<int>((mKind.compute ? 3 : 4) * sizeof(uint32_t));
     if (mIndirectStride != expectedStride) {
-        mMessages += MessageList::insert(block.id,
+        mMessages.insert(block.id,
             MessageType::InvalidIndirectStride,
             QStringLiteral("%1/%2 bytes")
                 .arg(mIndirectStride)
@@ -189,29 +189,26 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
     if (mKind.draw || mKind.compute) {
         if (!mProgram) {
-            messages +=
-                MessageList::insert(mCall.id, MessageType::ProgramNotAssigned);
+            messages.insert(mCall.id, MessageType::ProgramNotAssigned);
             return;
         }
     }
 
     if (mKind.draw) {
         if (!mTarget) {
-            messages +=
-                MessageList::insert(mCall.id, MessageType::TargetNotAssigned);
+            messages.insert(mCall.id, MessageType::TargetNotAssigned);
             return;
         }
         mUsedItems += mTarget->usedItems();
     }
 
     if (mKind.indexed && !mIndexBuffer) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::IndexBufferNotAssigned);
+        messages.insert(mCall.id, MessageType::IndexBufferNotAssigned);
         return;
     }
 
     if (mKind.indirect && !mIndirectBuffer) {
-        messages += MessageList::insert(mCall.id,
+        messages.insert(mCall.id,
             MessageType::IndirectBufferNotAssigned);
         return;
     }
@@ -230,8 +227,7 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         executeCompute(messages, scriptEngine);
         break;
     case Call::CallType::TraceRays:
-        messages +=
-            MessageList::insert(mCall.id, MessageType::RayTracingNotAvailable);
+        messages.insert(mCall.id, MessageType::RayTracingNotAvailable);
         break;
     case Call::CallType::ClearTexture: executeClearTexture(messages); break;
     case Call::CallType::CopyTexture:  executeCopyTexture(messages); break;
@@ -245,7 +241,7 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     gl.glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     if (auto errorMessage = getFirstGLError(); !errorMessage.isEmpty())
-        messages += MessageList::insert(mCall.id, MessageType::CallFailed,
+        messages.insert(mCall.id, MessageType::CallFailed,
             errorMessage);
 }
 
@@ -274,7 +270,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 
     if (maxElementCount >= 0
         && first + count > static_cast<uint32_t>(maxElementCount)) {
-        mMessages += MessageList::insert(mCall.id, MessageType::CountExceeded,
+        mMessages.insert(mCall.id, MessageType::CountExceeded,
             first ? QStringLiteral("%1 + %2 > %3")
                         .arg(first)
                         .arg(count)
@@ -353,7 +349,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             glDrawMeshTasksNV(0,
                 scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id));
         } else {
-            messages += MessageList::insert(mCall.id,
+            messages.insert(mCall.id,
                 MessageType::UnsupportedShaderType);
         }
     } else if (mCall.callType == Call::CallType::DrawMeshTasksIndirect) {
@@ -369,7 +365,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         } else if (drawCount != 1 && glMultiDrawMeshTasksIndirectNV) {
             glMultiDrawMeshTasksIndirectNV(offset, drawCount, mIndirectStride);
         } else {
-            messages += MessageList::insert(mCall.id,
+            messages.insert(mCall.id,
                 MessageType::UnsupportedShaderType);
         }
     }
@@ -407,8 +403,7 @@ void GLCall::executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
 void GLCall::executeClearTexture(MessagePtrSet &messages)
 {
     if (!mTexture) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::TextureNotAssigned);
+        messages.insert(mCall.id, MessageType::TextureNotAssigned);
         return;
     }
 
@@ -429,8 +424,7 @@ void GLCall::executeClearTexture(MessagePtrSet &messages)
     }
 
     if (!mTexture->clear(color, mCall.clearDepth, mCall.clearStencil))
-        messages +=
-            MessageList::insert(mCall.id, MessageType::ClearingTextureFailed);
+        messages.insert(mCall.id, MessageType::ClearingTextureFailed);
 
     mUsedItems += mTexture->usedItems();
 }
@@ -438,13 +432,11 @@ void GLCall::executeClearTexture(MessagePtrSet &messages)
 void GLCall::executeCopyTexture(MessagePtrSet &messages)
 {
     if (!mTexture || !mFromTexture) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::TextureNotAssigned);
+        messages.insert(mCall.id, MessageType::TextureNotAssigned);
         return;
     }
     if (!mTexture->copy(*mFromTexture))
-        messages +=
-            MessageList::insert(mCall.id, MessageType::CopyingTextureFailed);
+        messages.insert(mCall.id, MessageType::CopyingTextureFailed);
 
     mUsedItems += mTexture->usedItems();
     mUsedItems += mFromTexture->usedItems();
@@ -453,8 +445,7 @@ void GLCall::executeCopyTexture(MessagePtrSet &messages)
 void GLCall::executeClearBuffer(MessagePtrSet &messages)
 {
     if (!mBuffer) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::BufferNotAssigned);
+        messages.insert(mCall.id, MessageType::BufferNotAssigned);
         return;
     }
     mBuffer->clear();
@@ -464,8 +455,7 @@ void GLCall::executeClearBuffer(MessagePtrSet &messages)
 void GLCall::executeCopyBuffer(MessagePtrSet &messages)
 {
     if (!mBuffer || !mFromBuffer) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::BufferNotAssigned);
+        messages.insert(mCall.id, MessageType::BufferNotAssigned);
         return;
     }
     mBuffer->copy(*mFromBuffer);
@@ -476,13 +466,11 @@ void GLCall::executeCopyBuffer(MessagePtrSet &messages)
 void GLCall::executeSwapTextures(MessagePtrSet &messages)
 {
     if (!mTexture || !mFromTexture) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::TextureNotAssigned);
+        messages.insert(mCall.id, MessageType::TextureNotAssigned);
         return;
     }
     if (!mTexture->swap(*mFromTexture))
-        messages +=
-            MessageList::insert(mCall.id, MessageType::SwappingTexturesFailed);
+        messages.insert(mCall.id, MessageType::SwappingTexturesFailed);
 
     mUsedItems += mTexture->itemId();
     mUsedItems += mFromTexture->itemId();
@@ -491,13 +479,11 @@ void GLCall::executeSwapTextures(MessagePtrSet &messages)
 void GLCall::executeSwapBuffers(MessagePtrSet &messages)
 {
     if (!mBuffer || !mFromBuffer) {
-        messages +=
-            MessageList::insert(mCall.id, MessageType::BufferNotAssigned);
+        messages.insert(mCall.id, MessageType::BufferNotAssigned);
         return;
     }
     if (!mBuffer->swap(*mFromBuffer))
-        messages +=
-            MessageList::insert(mCall.id, MessageType::SwappingBuffersFailed);
+        messages.insert(mCall.id, MessageType::SwappingBuffersFailed);
 
     mUsedItems += mBuffer->itemId();
     mUsedItems += mFromBuffer->itemId();
@@ -509,7 +495,7 @@ bool GLCall::validateShaderTypes()
         return false;
     for (const auto &shader : mProgram->shaders())
         if (!callTypeSupportsShaderType(mCall.callType, shader.type())) {
-            mMessages += MessageList::insert(mCall.id,
+            mMessages.insert(mCall.id,
                 MessageType::InvalidShaderTypeForCall);
             return false;
         }
@@ -547,7 +533,7 @@ bool GLCall::updateBindings(ScriptEngine &scriptEngine)
                     auto name = desc.name;
                     if (isBufferBinding(desc.descriptor_type))
                         name = desc.type_description->type_name;
-                    mMessages += MessageList::insert(mItemId, message, name);
+                    mMessages.insert(mItemId, message, name);
                     canRender = false;
                 }
             });
@@ -702,8 +688,7 @@ void GLCall::applyUniformBindings(const GLProgram::Uniform &uniform,
         }
 
     if (!bindingSet)
-        mMessages +=
-            MessageList::insert(mCall.id, MessageType::UniformNotSet, baseName);
+        mMessages.insert(mCall.id, MessageType::UniformNotSet, baseName);
 }
 
 void GLCall::applyUniformBinding(const GLProgram::Uniform &uniform,
@@ -847,7 +832,7 @@ bool GLCall::applyImageBinding(const SpvReflectDescriptorBinding &desc,
     gl.glGetInternalformativ(target, format, GL_SHADER_IMAGE_LOAD, 1,
         &formatSupported);
     if (formatSupported == GL_NONE) {
-        mMessages += MessageList::insert(binding.bindingItemId,
+        mMessages.insert(binding.bindingItemId,
             MessageType::ImageFormatNotBindable);
         return false;
     }
@@ -882,11 +867,11 @@ void GLCall::selectSubroutines()
                 index = subroutine.subroutines.indexOf(binding->subroutine);
                 if (index < 0) {
                     index = 0;
-                    mMessages += MessageList::insert(binding->bindingItemId,
+                    mMessages.insert(binding->bindingItemId,
                         MessageType::InvalidSubroutine, binding->subroutine);
                 }
             } else {
-                mMessages += MessageList::insert(mCall.id,
+                mMessages.insert(mCall.id,
                     MessageType::SubroutineNotSet, subroutine.name);
             }
             subroutineIndices.push_back(index);
@@ -916,7 +901,7 @@ bool GLCall::bindVertexStream()
             mUsedItems += attributePtr->usedItems;
 
         if (!attributePtr || !attributePtr->buffer) {
-            mMessages += MessageList::insert(mCall.id,
+            mMessages.insert(mCall.id,
                 MessageType::AttributeNotSet, name);
             canRender = false;
             continue;

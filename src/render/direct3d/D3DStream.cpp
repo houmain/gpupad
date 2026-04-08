@@ -37,8 +37,7 @@ void D3DStream::setAttribute(int attributeIndex, const Field &field,
     }
 
     if (!validateAttribute(attribute)) {
-        mMessages +=
-            MessageList::insert(field.id, MessageType::InvalidAttribute);
+        mMessages.insert(field.id, MessageType::InvalidAttribute);
         mAttributes.remove(attributeIndex);
     }
 }

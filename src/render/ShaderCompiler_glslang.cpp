@@ -147,13 +147,12 @@ namespace ShaderCompiler {
                 auto isNumber = false;
                 if (auto sourceIndex = source.toInt(&isNumber);
                     isNumber && sourceIndex < fileNames.size()) {
-                    messages += MessageList::insert(fileNames[sourceIndex],
-                        lineNumber, messageType, text);
-                } else if (!source.isEmpty()) {
-                    messages += MessageList::insert(source, lineNumber,
+                    messages.insert(fileNames[sourceIndex], lineNumber,
                         messageType, text);
+                } else if (!source.isEmpty()) {
+                    messages.insert(source, lineNumber, messageType, text);
                 } else {
-                    messages += MessageList::insert(itemId, messageType, text);
+                    messages.insert(itemId, messageType, text);
                 }
             }
             return hasErrors;
@@ -357,8 +356,8 @@ namespace ShaderCompiler {
         // since it starts counting from 0 in each stage
         if (session.renderer != Session::Renderer::OpenGL)
             if (!program.mapIO()) {
-                messages += MessageList::insert(programItemId,
-                    MessageType::ShaderError, "mapping program IO failed");
+                messages.insert(programItemId, MessageType::ShaderError,
+                    "mapping program IO failed");
                 return {};
             }
 
@@ -425,8 +424,7 @@ namespace ShaderCompiler {
         compiler.set_common_options(options);
         return QString::fromStdString(compiler.compile());
     } catch (const std::exception &ex) {
-        messages += MessageList::insert(itemId, MessageType::SpirvCrossError,
-            ex.what());
+        messages.insert(itemId, MessageType::SpirvCrossError, ex.what());
         return {};
     }
 
@@ -457,8 +455,7 @@ namespace ShaderCompiler {
 
         return QString::fromStdString(compiler.compile());
     } catch (const std::exception &ex) {
-        messages += MessageList::insert(itemId, MessageType::SpirvCrossError,
-            ex.what());
+        messages.insert(itemId, MessageType::SpirvCrossError, ex.what());
         return {};
     }
 

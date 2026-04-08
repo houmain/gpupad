@@ -40,8 +40,7 @@ void VKStream::setAttribute(int attributeIndex, const Field &field,
     }
 
     if (!validateAttribute(attribute)) {
-        mMessages +=
-            MessageList::insert(field.id, MessageType::InvalidAttribute);
+        mMessages.insert(field.id, MessageType::InvalidAttribute);
         mAttributes.remove(attributeIndex);
     }
     invalidateVertexOptions();
@@ -72,7 +71,7 @@ void VKStream::updateVertexOptions()
 
     for (const auto &attribute : mAttributes)
         if (!validateAttribute(attribute)) {
-            mMessages += MessageList::insert(mItemId,
+            mMessages.insert(mItemId,
                 MessageType::AttributeNotSet, attribute.name);
             return;
         }

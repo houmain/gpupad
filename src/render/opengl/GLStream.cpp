@@ -38,8 +38,7 @@ void GLStream::setAttribute(int attributeIndex, const Field &field,
 
     if (!validateAttribute(attribute)) {
         attribute.buffer = nullptr;
-        mMessages +=
-            MessageList::insert(field.id, MessageType::InvalidAttribute);
+        mMessages.insert(field.id, MessageType::InvalidAttribute);
     }
 }
 

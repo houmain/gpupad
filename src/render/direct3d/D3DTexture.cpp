@@ -398,8 +398,7 @@ void D3DTexture::create(D3DContext &context)
     if (!dxgiFormat)
         dxgiFormat = toDXGIFormat(format());
     if (!dxgiFormat) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::UnsupportedTextureFormat);
+        mMessages.insert(mItemId, MessageType::UnsupportedTextureFormat);
         return;
     }
 
@@ -427,8 +426,7 @@ void D3DTexture::create(D3DContext &context)
     if (FAILED(context.device.CreateCommittedResource(&heapProperties,
             heapFlags, &resourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr,
             IID_PPV_ARGS(&mResource)))) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::CreatingTextureFailed);
+        mMessages.insert(mItemId, MessageType::CreatingTextureFailed);
         return;
     }
 

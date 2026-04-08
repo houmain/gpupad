@@ -121,8 +121,7 @@ bool D3DPipeline::createGraphics(D3DContext &context,
 
     if (FAILED(context.device.CreateGraphicsPipelineState(&state,
             IID_PPV_ARGS(&mPipelineState)))) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::CreatingPipelineFailed);
+        mMessages.insert(mItemId, MessageType::CreatingPipelineFailed);
         return false;
     }
     return true;
@@ -147,8 +146,7 @@ bool D3DPipeline::createCompute(D3DContext &context)
 
     if (FAILED(context.device.CreateComputePipelineState(&state,
             IID_PPV_ARGS(&mPipelineState)))) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::CreatingPipelineFailed);
+        mMessages.insert(mItemId, MessageType::CreatingPipelineFailed);
         return false;
     }
     return true;
@@ -181,8 +179,8 @@ bool D3DPipeline::createInputLayout(
         if (!attribute || !attribute->buffer) {
             if (paramDesc.SemanticIndex)
                 semanticName += QString::number(paramDesc.SemanticIndex);
-            mMessages += MessageList::insert(mItemId,
-                MessageType::AttributeNotSet, semanticName);
+            mMessages.insert(mItemId, MessageType::AttributeNotSet,
+                semanticName);
             canRender = false;
             continue;
         }
@@ -249,16 +247,16 @@ bool D3DPipeline::createRootSignature(D3DContext &context)
                     // TODO: fix mip mapping
                     sampler.MaxLOD = 0;
                 } else {
-                    mMessages += MessageList::insert(mItemId,
-                        MessageType::SamplerNotSet, bindDesc.Name);
+                    mMessages.insert(mItemId, MessageType::SamplerNotSet,
+                        bindDesc.Name);
                 }
                 continue;
             }
 
             // TODO: fix non uniform indexing
             if (!bindDesc.BindCount) {
-                mMessages += MessageList::insert(mItemId,
-                    MessageType::NotImplemented, "Non-Uniform Indexing");
+                mMessages.insert(mItemId, MessageType::NotImplemented,
+                    "Non-Uniform Indexing");
                 return false;
             }
 
@@ -413,8 +411,8 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     }
                 }
                 if (!buffer) {
-                    mMessages += MessageList::insert(mItemId,
-                        MessageType::BufferNotSet, bindingName);
+                    mMessages.insert(mItemId, MessageType::BufferNotSet,
+                        bindingName);
                     canRender = false;
                     continue;
                 }
@@ -441,8 +439,8 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                     mUsedItems += bufferBinding->blockItemId;
                 }
                 if (!buffer) {
-                    mMessages += MessageList::insert(mItemId,
-                        MessageType::BufferNotSet, bindingName);
+                    mMessages.insert(mItemId, MessageType::BufferNotSet,
+                        bindingName);
                     canRender = false;
                     continue;
                 }
@@ -458,8 +456,8 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
                 if (buffer->size() < structureByteStride) {
                     // buffer smaller than structure size
                     // TODO: warn when buffer block stride is smaller
-                    mMessages += MessageList::insert(mItemId,
-                        MessageType::BufferNotSet, bindingName);
+                    mMessages.insert(mItemId, MessageType::BufferNotSet,
+                        bindingName);
                     canRender = false;
                     continue;
                 }
@@ -483,8 +481,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
             case D3D_SIT_TEXTURE: {
                 const auto samplerBinding = find(mBindings.samplers, name);
                 if (!samplerBinding || !samplerBinding->texture) {
-                    mMessages += MessageList::insert(mItemId,
-                        MessageType::SamplerNotSet, name);
+                    mMessages.insert(mItemId, MessageType::SamplerNotSet, name);
                     canRender = false;
                     continue;
                 }
@@ -505,8 +502,7 @@ bool D3DPipeline::setDescriptors(D3DContext &context,
             case D3D_SIT_UAV_RWTYPED: {
                 const auto imageBinding = find(mBindings.images, name);
                 if (!imageBinding || !imageBinding->texture) {
-                    mMessages += MessageList::insert(mItemId,
-                        MessageType::ImageNotSet, name);
+                    mMessages.insert(mItemId, MessageType::ImageNotSet, name);
                     canRender = false;
                     continue;
                 }

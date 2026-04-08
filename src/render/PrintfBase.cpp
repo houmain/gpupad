@@ -682,9 +682,9 @@ MessagePtrSet PrintfBase::formatMessages(ItemId callItemId,
         if (readOutside)
             break;
 
-        messages += MessageList::insert(formatString.fileName,
-            formatString.line, MessageType::ShaderInfo,
-            formatMessage(formatString, arguments), false);
+        messages.insert(formatString.fileName, formatString.line,
+            MessageType::ShaderInfo, formatMessage(formatString, arguments),
+            false);
 
         if (lastMessage)
             break;
@@ -693,8 +693,7 @@ MessagePtrSet PrintfBase::formatMessages(ItemId callItemId,
     }
 
     if (readOutside)
-        messages +=
-            MessageList::insert(callItemId, MessageType::TooManyPrintfCalls);
+        messages.insert(callItemId, MessageType::TooManyPrintfCalls);
 
     return messages;
 }

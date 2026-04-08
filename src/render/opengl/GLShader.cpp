@@ -36,10 +36,10 @@ namespace {
                 messageType = MessageType::ShaderError;
     
             if (sourceIndex < fileNames.size())
-                messages += MessageList::insert(fileNames[sourceIndex], lineNumber,
+                messages.insert(fileNames[sourceIndex], lineNumber,
                     messageType, text);
             else
-                messages += MessageList::insert(itemId, messageType, text);
+                messages.insert(itemId, messageType, text);
         }
     }
 } // namespace
@@ -61,7 +61,7 @@ bool GLShader::compile(PrintfBase &printf)
     if (mShaderObject)
         return true;
     if (mSession.shaderLanguage != Session::ShaderLanguage::GLSL) {
-        mMessages += MessageList::insert(mItemId,
+        mMessages.insert(mItemId,
             MessageType::OpenGLRendererRequiresGLSL);
         return {};
     }
@@ -105,7 +105,7 @@ bool GLShader::specialize(const Spirv &spirv)
     glSpecializeShader = reinterpret_cast<decltype(glSpecializeShader)>(
         gl.getProcAddress("glSpecializeShader"));
     if (!glSpecializeShader) {
-        mMessages += MessageList::insert(mItemId,
+        mMessages.insert(mItemId,
             MessageType::OpenGLVersionNotAvailable, "4.6");
         return false;
     }
@@ -143,7 +143,7 @@ GLObject GLShader::createShader()
     case Shader::ShaderType::Task:
     case Shader::ShaderType::Mesh:
         if (!gl.hasExtension("GL_NV_mesh_shader")) {
-            mMessages += MessageList::insert(mItemId,
+            mMessages.insert(mItemId,
                 MessageType::MeshShadersNotAvailable);
             return {};
         }
@@ -154,16 +154,14 @@ GLObject GLShader::createShader()
     case Shader::ShaderType::RayClosestHit:
     case Shader::ShaderType::RayMiss:
     case Shader::ShaderType::RayCallable:
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::RayTracingNotAvailable);
+        mMessages.insert(mItemId, MessageType::RayTracingNotAvailable);
         return {};
     default: break;
     }
 
     auto shader = GLObject(gl.glCreateShader(mType), freeShader);
     if (!shader) {
-        mMessages +=
-            MessageList::insert(mItemId, MessageType::UnsupportedShaderType);
+        mMessages.insert(mItemId, MessageType::UnsupportedShaderType);
         return {};
     }
     return shader;
@@ -185,7 +183,7 @@ bool GLShader::setShaderObject(GLObject shader,
     gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (status != GL_TRUE) {
         if (auto errorMessage = getFirstGLError(); !errorMessage.isEmpty())
-            mMessages += MessageList::insert(mItemId, MessageType::ShaderError,
+            mMessages.insert(mItemId, MessageType::ShaderError,
                 errorMessage);
         return false;
     }
