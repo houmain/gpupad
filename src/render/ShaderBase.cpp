@@ -336,8 +336,11 @@ QStringList ShaderBase::getPatchedSourcesGLSL(PrintfBase &printf,
         maxVersion = std::max(maxVersion, PrintfBase::requiredVersionGLSL());
     }
 
-    if (!mPreamble.isEmpty())
-        sources.front().prepend("#line 1\n" + mPreamble + "\n");
+    if (!mPreamble.isEmpty()) {
+        const auto preamble = substituteIncludes(mPreamble, mFileNames.front(),
+            usedFileNames, mItemId, mMessages, mIncludePaths);
+        sources.front().prepend("#line 1\n" + preamble + "\n");
+    }
 
     const auto definitions = preprocessorDefinitions();
     for (const auto &definition : definitions)
