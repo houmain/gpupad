@@ -68,6 +68,7 @@ public:
     Q_INVOKABLE QJSValue callAction(QString id, QJSValue arguments);
     Q_INVOKABLE void evaluateScript(QString fileName);
     Q_INVOKABLE QJSValue enumerateFiles(QString pattern);
+    Q_INVOKABLE QJSValue enumerateDirs(QString pattern);
     Q_INVOKABLE QJSValue writeTextFile(QString fileName, QString string);
     Q_INVOKABLE QJSValue writeBinaryFile(QString fileName, QByteArray binary);
     Q_INVOKABLE QJSValue readTextFile(QString fileName);
@@ -93,6 +94,7 @@ private:
     QJSEngine &jsEngine() { return *mJsEngine; }
     QString getAbsolutePath(const QString &fileName) const;
     void dispatchToMainThread(const std::function<void()> &function);
+    QJSValue enumerate(QString pattern, bool directories);
     QJSValue tryGetEditorObject(const QString &fileName);
     QJSValue getEditorObject(const QString &fileName);
 

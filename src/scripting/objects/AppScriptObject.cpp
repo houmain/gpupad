@@ -404,7 +404,7 @@ QJSValue AppScriptObject::saveFileDialog(QString pattern)
     return {};
 }
 
-QJSValue AppScriptObject::enumerateFiles(QString pattern)
+QJSValue AppScriptObject::enumerate(QString pattern, bool directories)
 {
     const auto fileInfo = QFileInfo(getAbsolutePath(pattern));
     auto dir = fileInfo.dir();
@@ -413,7 +413,8 @@ QJSValue AppScriptObject::enumerateFiles(QString pattern)
         dir.cdUp();
         flags |= QDirIterator::Subdirectories;
     }
-    dir.setFilter(QDir::Files);
+    dir.setFilter(directories ? QDir::Dirs | QDir::NoDotAndDotDot
+                              : QDir::Files);
     dir.setNameFilters({ fileInfo.fileName() });
     dir.setSorting(QDir::Name);
     auto it = QDirIterator(dir, flags);
@@ -421,6 +422,16 @@ QJSValue AppScriptObject::enumerateFiles(QString pattern)
     for (auto i = 0; it.hasNext();)
         result.setProperty(i++, it.next());
     return result;
+}
+
+QJSValue AppScriptObject::enumerateFiles(QString pattern)
+{
+    return enumerate(pattern, false);
+}
+
+QJSValue AppScriptObject::enumerateDirs(QString pattern)
+{
+    return enumerate(pattern, true);
 }
 
 QJSValue AppScriptObject::writeTextFile(QString fileName, QString string)
