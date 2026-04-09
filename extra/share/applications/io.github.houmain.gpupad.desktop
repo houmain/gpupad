@@ -1,10 +1,15 @@
 [Desktop Entry]
 Type=Application
 Name=GPUpad
-Comment=GLSL Shader Editor
+Comment=GLSL/HLSL Shader Editor
 Exec=gpupad %F
 Icon=io.github.houmain.gpupad
 Terminal=false
 Categories=Development;IDE;
 StartupNotify=true
 Keywords=Text;Editor;
+
+[Desktop Action nvidia]
+Exec=env __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia gpupad %F
+Name=Launch using NVIDIA GPU
+
