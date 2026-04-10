@@ -25,28 +25,14 @@ namespace {
     qulonglong gNextMessageId = 1;
 } // namespace
 
-void MessagePtrSet::insert(QString fileName, int line, MessageType type,
-    QString text, bool deduplicate)
-{
-    return insert(0, type, text, fileName, line, deduplicate);
-}
-
-void MessagePtrSet::insert(ItemId itemId, MessageType type, QString text,
-    bool deduplicate)
-{
-    return insert(itemId, type, text, "", 0, deduplicate);
-}
-
-void MessagePtrSet::insert(ItemId itemId, MessageType type, QString text,
-    QString fileName, int line, bool deduplicate)
+MessagePtr MessagePtrSet::makeMessage(ItemId itemId, MessageType type,
+    QString text, QString fileName, int line, bool deduplicate)
 {
     QMutexLocker lock(&gMessagesMutex);
     auto message = Message{ 0, type, text, itemId, fileName, line };
     if (deduplicate)
-        if (auto messagePtr = gUniqueMessages.value(message).lock()) {
-            QSet::insert(messagePtr);
-            return;
-        }
+        if (auto messagePtr = gUniqueMessages.value(message).lock())
+            return messagePtr;
     message.id = gNextMessageId++;
     const auto messagePtr = MessagePtr(new Message{ message });
     if (deduplicate) {
@@ -54,7 +40,7 @@ void MessagePtrSet::insert(ItemId itemId, MessageType type, QString text,
     } else {
         gMessages.append(messagePtr);
     }
-    QSet::insert(messagePtr);
+    return messagePtr;
 }
 
 QList<MessagePtr> MessagePtrSet::getAllMessages()

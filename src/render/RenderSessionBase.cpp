@@ -214,6 +214,7 @@ void RenderSessionBase::evaluateBlockProperties(const Block &block, int *offset,
 
     const auto evaluate = [&](ScriptEngine &engine) {
         Q_ASSERT(offset && rowCount);
+        const auto guard = engine.beginSettingFirstError(block.id);
         *offset = engine.evaluateInt(block.offset, block.id);
         *rowCount = engine.evaluateInt(block.rowCount, block.id);
     };
@@ -239,6 +240,7 @@ void RenderSessionBase::evaluateTextureProperties(const Texture &texture,
 
     const auto evaluate = [&](ScriptEngine &engine) {
         Q_ASSERT(width && height && depth && layers);
+        const auto guard = engine.beginSettingFirstError(texture.id);
         *width = engine.evaluateInt(texture.width, texture.id);
         *height = engine.evaluateInt(texture.height, texture.id);
         *depth = engine.evaluateInt(texture.depth, texture.id);
@@ -266,6 +268,7 @@ void RenderSessionBase::evaluateTargetProperties(const Target &target,
 
     const auto evaluate = [&](ScriptEngine &engine) {
         Q_ASSERT(width && height && layers);
+        const auto guard = engine.beginSettingFirstError(target.id);
         *width = engine.evaluateInt(target.defaultWidth, target.id);
         *height = engine.evaluateInt(target.defaultHeight, target.id);
         *layers = engine.evaluateInt(target.defaultLayers, target.id);

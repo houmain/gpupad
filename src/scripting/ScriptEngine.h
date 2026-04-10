@@ -17,6 +17,7 @@ class QTimer;
 class ScriptEngine final : public QObject
 {
 public:
+    static void resetFirstError(ItemId itemId);
     static ScriptEnginePtr make(const QString &actionId,
         const QString &mainScriptFileName, QThread *thread = nullptr,
         QObject *parent = nullptr);
@@ -25,6 +26,7 @@ public:
     static ScriptEnginePtr make(const QString &basePath) = delete;
     ~ScriptEngine();
 
+    [[nodiscard]] std::shared_ptr<void> beginSettingFirstError(ItemId itemId);
     MessagePtrSet resetMessages();
     MessagePtrSet &messages() { return mMessages; }
     void interrupt();
@@ -67,6 +69,7 @@ private:
     QJSEngine *mJsEngine{};
     ConsoleScriptObject *mConsoleScriptObject{};
     AppScriptObject *mAppScriptObject{};
+    bool mSettingFirstError{};
 };
 
 void checkValueCount(int valueCount, int offset, int count, ItemId itemId,

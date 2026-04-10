@@ -6,12 +6,16 @@
 #include "session/SessionModel.h"
 #include <QTextStream>
 #include <QThread>
+#include <QMutex>
 
 #if defined(QtQuick_FOUND)
 #  include <QQmlEngine>
 #endif
 
 namespace {
+    QMutex gFirstErrorMutex;
+    QMap<ItemId, MessagePtr> gFirstError;
+
     void getFlattenedValuesRec(const QJSValue &value, ScriptValueList *values)
     {
         if (value.isObject() || value.isArray()) {
@@ -32,7 +36,21 @@ namespace {
         getFlattenedValuesRec(value, &values);
         return values;
     }
+
+    void setFirstError(ItemId itemId, MessagePtr messagePtr)
+    {
+        const auto lock = QMutexLocker(&gFirstErrorMutex);
+        auto &firstError = gFirstError[itemId];
+        if (!firstError)
+            firstError = messagePtr;
+    }
 } // namespace
+
+void ScriptEngine::resetFirstError(ItemId itemId)
+{
+    const auto lock = QMutexLocker(&gFirstErrorMutex);
+    gFirstError.remove(itemId);
+}
 
 ScriptEnginePtr ScriptEngine::make(const QString &actionId,
     const QString &mainScriptFileName, QThread *thread, QObject *parent)
@@ -102,6 +120,14 @@ std::shared_ptr<void> ScriptEngine::registerRunning()
     registerRunningScriptEngine(this);
     return std::shared_ptr<void>(nullptr,
         [&](void *) { deregisterRunningScriptEngine(this); });
+}
+
+std::shared_ptr<void> ScriptEngine::beginSettingFirstError(ItemId itemId)
+{
+    resetFirstError(itemId);
+    mSettingFirstError = true;
+    return std::shared_ptr<void>(nullptr,
+        [this](void *) { mSettingFirstError = false; });
 }
 
 MessagePtrSet ScriptEngine::resetMessages()
@@ -201,13 +227,14 @@ void ScriptEngine::outputError(const QJSValue &result, ItemId itemId)
     //const auto stack = result.property("stack").toString();
 
     const auto fileName = result.property("fileName").toString();
-    if (!fileName.isEmpty()) {
-        const auto lineNumber = result.property("lineNumber").toInt();
-        mMessages.insert(
-            toNativeCanonicalFilePath(QUrl(fileName).toLocalFile()), lineNumber,
-            MessageType::ScriptError, message);
+    const auto lineNumber = result.property("lineNumber").toInt();
+    const auto messagePtr = MessagePtrSet::makeMessage(itemId,
+        MessageType::ScriptError, message,
+        toNativeCanonicalFilePath(QUrl(fileName).toLocalFile()), lineNumber);
+    if (mSettingFirstError) {
+        setFirstError(itemId, messagePtr);
     } else {
-        mMessages.insert(itemId, MessageType::ScriptError, message);
+        mMessages += messagePtr;
     }
 }
 

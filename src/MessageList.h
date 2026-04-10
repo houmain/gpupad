@@ -99,9 +99,12 @@ enum class MessageSeverity {
 class MessagePtrSet : QSet<MessagePtr>
 {
 public:
+    static MessagePtr makeMessage(ItemId itemId, MessageType type, QString text,
+        QString fileName, int line, bool deduplicate = true);
     static QList<MessagePtr> getAllMessages();
 
     using QSet::clear;
+    using QSet::insert;
     using QSet::size;
 
     MessagePtrSet &operator+=(const MessagePtr &message)
@@ -117,11 +120,22 @@ public:
     }
 
     void insert(QString fileName, int line, MessageType type, QString text = "",
-        bool deduplicate = true);
+        bool deduplicate = true)
+    {
+        insert(makeMessage(0, type, text, fileName, line, deduplicate));
+    }
+
     void insert(ItemId itemId, MessageType type, QString text = "",
-        bool deduplicate = true);
+        bool deduplicate = true)
+    {
+        insert(makeMessage(itemId, type, text, "", 0, deduplicate));
+    }
+
     void insert(ItemId itemId, MessageType type, QString text, QString fileName,
-        int line, bool deduplicate = true);
+        int line, bool deduplicate = true)
+    {
+        insert(makeMessage(itemId, type, text, fileName, line, deduplicate));
+    }
 };
 
 QString formatDuration(const std::chrono::duration<double> &duration);
