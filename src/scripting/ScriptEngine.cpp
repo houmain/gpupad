@@ -145,10 +145,9 @@ QJSValue ScriptEngine::call(QJSValue &callable, const QJSValueList &args,
     ItemId itemId)
 {
     Q_ASSERT(QThread::currentThread() == thread());
-    mConsoleScriptObject->setItemId(itemId);
-
-    const auto guard = registerRunning();
-    auto result = callable.call(args);
+    const auto guardRunning = registerRunning();
+    const auto guardConsole = mConsoleScriptObject->setItemId(itemId);
+    const auto result = callable.call(args);
     outputError(result, itemId);
     return result;
 }
@@ -167,9 +166,9 @@ void ScriptEngine::evaluateScript(const QString &script,
 {
     Q_ASSERT(QThread::currentThread() == thread());
     Q_ASSERT(isNativeCanonicalFilePath(fileName));
-    mConsoleScriptObject->setFileName(fileName);
-    const auto guard = registerRunning();
-    auto result = mJsEngine->evaluate(script, fileName);
+    const auto guardRunning = registerRunning();
+    const auto guardConsole = mConsoleScriptObject->setFileName(fileName);
+    const auto result = mJsEngine->evaluate(script, fileName);
     outputError(result, 0);
 }
 
@@ -177,9 +176,9 @@ ScriptValueList ScriptEngine::evaluateValues(const QString &valueExpression,
     ItemId itemId)
 {
     Q_ASSERT(QThread::currentThread() == thread());
-    mConsoleScriptObject->setItemId(itemId);
-    const auto guard = registerRunning();
-    auto result = mJsEngine->evaluate(valueExpression);
+    const auto guardRunning = registerRunning();
+    const auto guardConsole = mConsoleScriptObject->setItemId(itemId);
+    const auto result = mJsEngine->evaluate(valueExpression);
     outputError(result, itemId);
     return getFlattenedValues(result);
 }

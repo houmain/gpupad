@@ -9,12 +9,14 @@ class ConsoleScriptObject : public QObject
 public:
     explicit ConsoleScriptObject(MessagePtrSet *messages, QObject *parent = 0);
 
-    void setFileName(const QString &fileName);
-    void setItemId(ItemId itemId);
+    [[nodiscard]] std::shared_ptr<void> setFileName(const QString &fileName);
+    [[nodiscard]] std::shared_ptr<void> setItemId(ItemId itemId);
 
     Q_INVOKABLE void output(QString message, int level);
 
 private:
+    std::shared_ptr<void> pushState();
+
     MessagePtrSet &mMessages;
     QString mFileName;
     ItemId mItemId{};

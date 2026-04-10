@@ -58,7 +58,7 @@ public:
 private:
     ScriptEngine(QObject *parent);
     void initialize(const ScriptEnginePtr &self, const QDir &basePath);
-    std::shared_ptr<void> registerRunning();
+    [[nodiscard]] std::shared_ptr<void> registerRunning();
     void outputError(const QJSValue &result, ItemId itemId);
 
     QString mActionId;
