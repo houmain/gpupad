@@ -2,9 +2,25 @@
 #include "FileDialog.h"
 #include <QCoreApplication>
 #include <QMutex>
+#include <QHash>
+
+size_t qHash(const Message &message, size_t seed)
+{
+    return qHashMulti(seed, message.type, message.text, message.itemId,
+        message.fileName, message.line);
+}
+
+bool operator==(const Message &a, const Message &b)
+{
+    const auto tie = [](const auto &v) {
+        return std::tie(v.type, v.text, v.itemId, v.fileName, v.line);
+    };
+    return tie(a) == tie(b);
+}
 
 namespace {
     QMutex gMessagesMutex;
+    QHash<Message, QWeakPointer<const Message>> gUniqueMessages;
     QList<QWeakPointer<const Message>> gMessages;
     qulonglong gNextMessageId = 1;
 } // namespace
@@ -12,52 +28,55 @@ namespace {
 void MessagePtrSet::insert(QString fileName, int line, MessageType type,
     QString text, bool deduplicate)
 {
-    QMutexLocker lock(&gMessagesMutex);
-    if (deduplicate) {
-        for (const auto &ptr : std::as_const(gMessages))
-            if (MessagePtr message = ptr.lock())
-                if (message->fileName == fileName && message->line == line
-                    && message->type == type && message->text == text) {
-                    QSet::insert(message);
-                    return;
-                }
-    }
-    auto message = MessagePtr(
-        new Message{ gNextMessageId++, type, text, 0, fileName, line });
-    gMessages.append(message);
-    QSet::insert(message);
+    return insert(0, type, text, fileName, line, deduplicate);
 }
 
 void MessagePtrSet::insert(ItemId itemId, MessageType type, QString text,
     bool deduplicate)
 {
+    return insert(itemId, type, text, "", 0, deduplicate);
+}
+
+void MessagePtrSet::insert(ItemId itemId, MessageType type, QString text,
+    QString fileName, int line, bool deduplicate)
+{
     QMutexLocker lock(&gMessagesMutex);
+    auto message = Message{ 0, type, text, itemId, fileName, line };
+    if (deduplicate)
+        if (auto messagePtr = gUniqueMessages.value(message).lock()) {
+            QSet::insert(messagePtr);
+            return;
+        }
+    message.id = gNextMessageId++;
+    const auto messagePtr = MessagePtr(new Message{ message });
     if (deduplicate) {
-        for (const QWeakPointer<const Message> &ptr : std::as_const(gMessages))
-            if (MessagePtr message = ptr.lock())
-                if ((!itemId || message->itemId == itemId)
-                    && message->type == type && message->text == text) {
-                    QSet::insert(message);
-                    return;
-                }
+        gUniqueMessages.insert(message, messagePtr);
+    } else {
+        gMessages.append(messagePtr);
     }
-    auto message = MessagePtr(
-        new Message{ gNextMessageId++, type, text, itemId, QString(), 0 });
-    gMessages.append(message);
-    QSet::insert(message);
-    return;
+    QSet::insert(messagePtr);
 }
 
 QList<MessagePtr> MessagePtrSet::getAllMessages()
 {
     QMutexLocker lock(&gMessagesMutex);
     auto result = QList<MessagePtr>();
-    QMutableListIterator<QWeakPointer<const Message>> it(gMessages);
+    QMutableHashIterator<Message, QWeakPointer<const Message>> it(
+        gUniqueMessages);
     while (it.hasNext()) {
-        if (MessagePtr message = it.next().lock())
+        if (MessagePtr message = it.next().value().lock()) {
             result += message;
-        else
+        } else {
             it.remove();
+        }
+    }
+    QMutableListIterator<QWeakPointer<const Message>> it2(gMessages);
+    while (it2.hasNext()) {
+        if (MessagePtr message = it2.next().lock()) {
+            result += message;
+        } else {
+            it2.remove();
+        }
     }
     return result;
 }

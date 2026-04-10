@@ -120,6 +120,8 @@ public:
         bool deduplicate = true);
     void insert(ItemId itemId, MessageType type, QString text = "",
         bool deduplicate = true);
+    void insert(ItemId itemId, MessageType type, QString text, QString fileName,
+        int line, bool deduplicate = true);
 };
 
 QString formatDuration(const std::chrono::duration<double> &duration);
