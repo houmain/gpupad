@@ -377,6 +377,7 @@ void RenderSessionBase::executeCommandQueue(CommandQueue &commandQueue) noexcept
         // executing command might call setNextCommandQueueIndex
         commandQueue.commands[index](state);
     }
+    mMessages += mScriptSession->resetMessages();
 }
 
 template <typename CommandQueue>
@@ -418,7 +419,8 @@ void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue,
     for (auto &[itemId, texture] : commandQueue.textures) {
         if (texture.finishDownload()) {
             if (auto fileItem = sessionModel.findItem<FileItem>(itemId))
-                if (auto editor = editors.openTextureEditor(fileItem->fileName, true))
+                if (auto editor =
+                        editors.openTextureEditor(fileItem->fileName, true))
                     editor->replace(texture.data(), false);
         } else if (texture.deviceCopyModified()) {
             if (auto fileItem = sessionModel.findItem<FileItem>(itemId))
@@ -431,12 +433,15 @@ void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue,
     for (auto &[itemId, buffer] : commandQueue.buffers)
         if (buffer.finishDownload())
             if (auto fileItem = sessionModel.findItem<FileItem>(itemId))
-                if (auto editor = editors.openBinaryEditor(fileItem->fileName, true))
+                if (auto editor =
+                        editors.openBinaryEditor(fileItem->fileName, true))
                     editor->replace(buffer.data(), false);
 
     editors.setAutoRaise(true);
 
     mPrevMessages.clear();
+    if (mEvaluationType == EvaluationType::Reset)
+        mLastResetMessages = mMessages;
 
     QMutexLocker lock{ &mUsedItemsCopyMutex };
     mUsedItemsCopy = mUsedItems;

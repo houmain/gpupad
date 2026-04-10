@@ -164,6 +164,7 @@ private:
     std::unique_ptr<ScriptSession> mScriptSession;
     MessagePtrSet mMessages;
     MessagePtrSet mPrevMessages;
+    MessagePtrSet mLastResetMessages;
     MessagePtrSet mTimeQueryMessages;
     std::vector<ItemId> mTimeQueryCallIds;
     mutable QMutex mUsedItemsCopyMutex;
