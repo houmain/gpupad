@@ -199,13 +199,14 @@ It depends on the following libraries, which can be installed using a package ma
 
 ```bash
 # install dependencies
-sudo apt install build-essential git cmake qtdeclarative6-dev libdrm-dev pkg-config libxcb*-dev libx11-dev libxrandr-dev glslang-tools
+sudo apt install build-essential git cmake pkg-config qt6-declarative-dev qt6-multimedia-dev libopenimageio-dev glslang-tools
 
 # check out source
 git clone --recurse-submodules https://github.com/houmain/gpupad
 cd gpupad
 
 # install vcpkg
+sudo apt install curl zip unzip tar
 git clone --depth=1 https://github.com/microsoft/vcpkg.git
 vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
