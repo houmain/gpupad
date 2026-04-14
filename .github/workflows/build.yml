@@ -23,7 +23,6 @@ jobs:
         - {
            name: "Linux-x64"
            , os: ubuntu-22.04
-           , QT_VERSION: 6.10.3, QT_INST_DIR: /opt, QTDIR: /opt/Qt/6.10.3/gcc_64
            , VCPKG_TRIPLET: "x64-linux-release"
            , VCPKG_PACKAGES: ""
           }
@@ -33,7 +32,7 @@ jobs:
             , os: windows-2022
             , QT_VERSION: 6.10.3, QT_INST_DIR: "C:/", QTDIR: "C:/Qt/6.10.3/msvc2022_64", QT_ARCH: win64_msvc2022_64
             , VCPKG_TRIPLET: "x64-windows-release"
-            , VCPKG_PACKAGES: "directx-dxc"
+            , VCPKG_PACKAGES: "OpenImageIO directx-dxc"
           }
 #        - {
 #            name: "MacOS-x64"
@@ -52,9 +51,15 @@ jobs:
 
     - name: Setup Linux
       if: runner.os == 'Linux'
-      run: sudo apt -y install pkg-config libxcb*-dev libx11-dev libxrandr-dev
+      run: |
+        sudo apt install build-essential git cmake pkg-config qt6-base-dev qt6-declarative-dev libqt6svg6-dev qt6-image-formats-plugins libgl1-mesa-dev libxcb*-dev libx11-dev libxrandr-dev
+        sudo apt install qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-shapes
+        # to fix OIIO: https://github.com/colmap/colmap/issues/3811
+        #sudo mkdir -p /usr/include/opencv4
+        #sudo apt install qt6-multimedia-dev libopenimageio-dev libopenexr-dev libz-dev openimageio-tools
 
     - name: Install Qt
+      if: runner.os != 'Linux'
       uses: jurplel/install-qt-action@v4
       with:
        aqtversion: '==3.1.*'
@@ -75,7 +80,7 @@ jobs:
       uses: johnwason/vcpkg-action@v7
       with:
           revision: '60d5b6b80f107a200e911ca3820e1eac70675e9d'
-          pkgs: 'vulkan "ktx[vulkan]" glslang spirv-cross spirv-tools vulkan-memory-allocator spdlog OpenImageIO ${{ matrix.config.VCPKG_PACKAGES }}'
+          pkgs: 'vulkan "ktx[vulkan]" glslang spirv-cross spirv-tools vulkan-memory-allocator spdlog ${{ matrix.config.VCPKG_PACKAGES }}'
           triplet: '${{ matrix.config.VCPKG_TRIPLET }}'
           token: ${{ github.token }}
 
@@ -91,6 +96,9 @@ jobs:
     - name: Build AppImage
       if: runner.os == 'Linux'
       run: |
+        # to fix qmake: https://askubuntu.com/questions/1460242/ubuntu-22-04-with-qt6-qmake-could-not-find-a-qt-installation-of
+        sudo qtchooser -install qt6 $(which qmake6)
+        export QT_SELECT=qt6
         sudo apt-get install libfuse2
         mkdir -p AppDir
         cp -R dist AppDir/usr
@@ -100,7 +108,7 @@ jobs:
         chmod a+x linuxdeployqt*.AppImage
         export VERSION='${{ github.ref_name }}'        
         unset QTDIR; unset QT_PLUGIN_PATH; unset LD_LIBRARY_PATH
-        ./linuxdeployqt*.AppImage AppDir/usr/bin/gpupad -appimage -extra-plugins=iconengines,imageformats -no-translations -no-copy-copyright-files
+        ./linuxdeployqt*.AppImage AppDir/usr/bin/gpupad -appimage -qmldir=${{github.workspace}}/extra/qml -extra-plugins=iconengines,imageformats -no-translations -no-copy-copyright-files
 
     - name: Upload to Github release
       uses: xresloader/upload-to-github-release@v1
@@ -109,4 +117,5 @@ jobs:
       with:
         file: "*.msi;*.dmg;*.tar.gz;GPUpad*.AppImage"
         tags: true
-        draft: false
+        overwrite: true
+

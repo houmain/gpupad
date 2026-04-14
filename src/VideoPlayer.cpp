@@ -139,7 +139,7 @@ void VideoPlayer::seek(std::chrono::milliseconds time)
     }
 
     // start decoding
-    if (!mPlayer->isPlaying() && mFrameQueue.size() < MaxQueuedFrames)
+    if (mFrameQueue.size() < MaxQueuedFrames)
         mPlayer->play();
 }
 

@@ -239,7 +239,9 @@ VKRenderer::~VKRenderer()
 {
     mPendingTasks.clear();
 
-    QMetaObject::invokeMethod(mWorker.get(), "stop", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        mWorker.get(), [worker = mWorker.get()]() { worker->stop(); },
+        Qt::QueuedConnection);
     mThread.wait();
 
     mWorker.reset();

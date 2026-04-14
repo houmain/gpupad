@@ -6,8 +6,8 @@
 
 size_t qHash(const Message &message, size_t seed)
 {
-    return qHashMulti(seed, message.type, message.text, message.itemId,
-        message.fileName, message.line);
+    return qHashMulti(seed, static_cast<int>(message.type), message.text,
+        message.itemId, message.fileName, message.line);
 }
 
 bool operator==(const Message &a, const Message &b)

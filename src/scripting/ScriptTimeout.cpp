@@ -28,13 +28,15 @@ public:
 
     void startTimeout()
     {
-        QMetaObject::invokeMethod(&mTimer, "start",
+        QMetaObject::invokeMethod(
+            &mTimer, [timer = &mTimer]() { timer->start(); },
             Qt::BlockingQueuedConnection);
     }
 
     void cancelTimeout()
     {
-        QMetaObject::invokeMethod(&mTimer, "stop",
+        QMetaObject::invokeMethod(
+            &mTimer, [timer = &mTimer]() { timer->stop(); },
             Qt::BlockingQueuedConnection);
     }
 

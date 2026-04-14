@@ -195,11 +195,43 @@ It depends on the following libraries, which can be installed using a package ma
 - [spdlog](https://github.com/gabime/spdlog)
 - [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO) (optional)
 
-### Building on Debian Linux and derivatives:
+### Build instructions:
+<details>
+<summary>On Arch Linux and derivatives</summary>
 
 ```bash
 # install dependencies
-sudo apt install build-essential git cmake pkg-config qt6-declarative-dev qt6-multimedia-dev libopenimageio-dev glslang-tools
+sudo pacman -S qt6-declarative libdrm vulkan-headers glslang spirv-cross spirv-tools spdlog
+
+# install optional dependencies
+sudo pacman -S qt6-multimedia openimageio
+
+# check out source
+git clone --recurse-submodules https://github.com/houmain/gpupad
+cd gpupad
+
+# install vcpkg
+git clone --depth=1 https://github.com/microsoft/vcpkg.git
+vcpkg/bootstrap-vcpkg.sh -disableMetrics
+
+# install additional dependencies using vcpkg
+vcpkg/vcpkg install "ktx[vulkan]" vulkan-memory-allocator
+
+# build
+cmake -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake --build build -j4
+```
+</details>
+
+<details>
+<summary>On Debian Linux and derivatives</summary>
+
+```bash
+# install dependencies
+sudo apt install build-essential git cmake pkg-config qt6-base-dev qt6-declarative-dev libqt6svg6-dev qt6-image-formats-plugins libgl1-mesa-dev libxcb*-dev libx11-dev libxrandr-dev
+
+# install optional dependencies
+sudo apt install qt6-multimedia-dev libopenimageio-dev libopenexr-dev libz-dev openimageio-tools
 
 # check out source
 git clone --recurse-submodules https://github.com/houmain/gpupad
@@ -211,18 +243,19 @@ git clone --depth=1 https://github.com/microsoft/vcpkg.git
 vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
 # install additional dependencies using vcpkg
-vcpkg/vcpkg install vulkan "ktx[vulkan]" spirv-cross spirv-tools vulkan-memory-allocator spdlog
+vcpkg/vcpkg install vulkan "ktx[vulkan]" glslang spirv-cross spirv-tools vulkan-memory-allocator spdlog
 
 # build
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
 cmake --build build -j4
 ```
 
-### Building on Windows:
+</details>
+
+<details>
+<summary>On Microsoft Windows</summary>
 
 ```bash
-cmd
-
 # install Qt6
 # https://doc.qt.io/qt-6/get-and-install-qt.html
 
@@ -247,6 +280,8 @@ cmake --install build --config Debug --component Application --prefix %CD%\build
 # open solution (Visual Studio solutions prior to 2026 have .sln extension)
 start build\gpupad.slnx
 ```
+
+</details>
 
 ## License
 

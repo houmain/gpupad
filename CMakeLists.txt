@@ -32,7 +32,14 @@ else()
 endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Core)
-qt_standard_project_setup()
+
+if(Qt6_VERSION VERSION_GREATER_EQUAL 6.3)
+    qt_standard_project_setup()
+else()
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTOUIC ON)
+    include(GNUInstallDirs)
+endif()
 set(CMAKE_AUTORCC ON)
 
 # build KDGpu --------------------
@@ -414,9 +421,7 @@ else()
 
     # install Qt dependencies
     set(DEPLOY_TOOL_OPTIONS "--qmldir ${CMAKE_CURRENT_SOURCE_DIR}/extra/qml")
-    if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-        set(DEPLOY_TOOL_OPTIONS ${DEPLOY_TOOL_OPTIONS} --no-opengl-sw --no-system-d3d-compiler --no-system-dxc-compiler)
-    endif()
+    set(DEPLOY_TOOL_OPTIONS ${DEPLOY_TOOL_OPTIONS} --no-opengl-sw --no-system-d3d-compiler --no-system-dxc-compiler)
     qt_generate_deploy_app_script(
         TARGET ${PROJECT_NAME}
         OUTPUT_SCRIPT deploy_script

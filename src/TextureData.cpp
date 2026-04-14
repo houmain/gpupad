@@ -747,7 +747,7 @@ bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
     return false;
 #else // OpenImageIO_FOUND
     using namespace OIIO;
-    auto input = ImageInput::open(fileName.toStdWString());
+    auto input = ImageInput::open(qUtf8Printable(fileName));
     if (!input) {
         OIIO::geterror();
         return false;
@@ -952,14 +952,14 @@ bool TextureData::saveOpenImageIO(const QString &fileName,
     if (typeDesc == TypeDesc::NONE)
         return false;
 
-    auto output = ImageOutput::create(fileName.toStdWString());
+    auto output = ImageOutput::create(qUtf8Printable(fileName));
     const auto guard = qScopeGuard([]() { OIIO::geterror(); });
     if (!output)
         return false;
 
     const auto channelCount = getTextureComponentCount(format());
     const auto spec = ImageSpec(width(), height(), channelCount, typeDesc);
-    if (!output->open(fileName.toStdWString(), spec))
+    if (!output->open(qUtf8Printable(fileName), spec))
         return false;
     if (!output->write_image(typeDesc, getData(0, 0, 0)))
         return false;
