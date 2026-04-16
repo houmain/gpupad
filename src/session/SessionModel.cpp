@@ -479,6 +479,8 @@ void SessionModel::deserialize(const QJsonObject &object,
 
         if (property == "name") {
             setData(getIndex(index, Name), value);
+        } else if (property == "custom") {
+            setData(getIndex(index, Custom), value);
         } else if (property == "fileName") {
             setData(getIndex(index, FileName),
                 toNativeCanonicalAbsoluteFilePath(value.toString()));
@@ -515,6 +517,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
     object["type"] = getTypeName(item.type);
     object["id"] = item.id;
     object["name"] = item.name;
+    object["custom"] = toJsonValue(item.custom);
 
     if (auto fileItem = castItem<FileItem>(item)) {
         const auto &fileName = fileItem->fileName;

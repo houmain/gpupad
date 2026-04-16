@@ -23,6 +23,7 @@ struct Item
     Item *parent{};
     QList<Item *> items;
     QString name;
+    QVariantMap custom;
 };
 
 struct FileItem : Item

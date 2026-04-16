@@ -10,6 +10,7 @@ class SessionModelCore : public QAbstractItemModel
 public:
     enum ColumnType {
         Name = 0,
+        Custom,
         FileName,
 
         SessionRenderer,

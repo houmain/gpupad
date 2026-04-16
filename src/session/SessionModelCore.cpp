@@ -316,6 +316,7 @@ QVariant SessionModelCore::data(const QModelIndex &index, int role) const
 
     switch (column) {
     case ColumnType::Name: return item.name;
+    case ColumnType::Custom: return item.custom;
 
     case ColumnType::FileName:
         if (auto fileItem = castItem<FileItem>(item))
@@ -363,6 +364,11 @@ bool SessionModelCore::setData(const QModelIndex &index, const QVariant &value,
             undoableAssignment(index, &item.name, newName);
             Q_EMIT itemRenamed(index, prevName);
         }
+        return true;
+    }
+
+    case ColumnType::Custom: {
+        undoableAssignment(index, &item.custom, value.toMap());
         return true;
     }
 
