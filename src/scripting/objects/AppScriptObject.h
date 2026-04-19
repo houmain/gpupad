@@ -60,6 +60,8 @@ public:
     QJSValue keyboard() { return mKeyboardProperty; }
     QJSValue currentEditor();
 
+    Q_INVOKABLE bool isUntitled(QString fileName);
+    Q_INVOKABLE QString getFileTitle(QString fileName);
     Q_INVOKABLE QJSValue openEditor(QString fileName, QString title = {});
     Q_INVOKABLE QJSValue saveEditor(QString fileName);
     Q_INVOKABLE QJSValue openFileDialog(QString pattern = "");

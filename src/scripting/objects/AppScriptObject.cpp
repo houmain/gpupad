@@ -107,6 +107,16 @@ AppScriptObject::~AppScriptObject()
     mMainThreadCalls->deleteLater();
 }
 
+bool AppScriptObject::isUntitled(QString fileName)
+{
+    return FileDialog::isUntitled(fileName);
+}
+
+QString AppScriptObject::getFileTitle(QString fileName)
+{
+    return FileDialog::getFileTitle(fileName);
+}
+
 QString AppScriptObject::getAbsolutePath(const QString &fileName) const
 {
     if (FileDialog::isEmptyOrUntitled(fileName))
