@@ -3,10 +3,11 @@
 #include "FileCache.h"
 #include "Singletons.h"
 #include "ScriptEngine.h"
+#include "editors/EditorManager.h"
 #include "objects/AppScriptObject.h"
 #include "objects/SessionScriptObject.h"
 #include <QDirIterator>
-#include <QFileInfo>
+#include <QApplication>
 
 namespace {
     QString extractManifest(const QString &string)
@@ -60,6 +61,11 @@ CustomAction::CustomAction(const QString &filePath) : mFilePath(filePath)
         setObjectName(fileInfo.baseName());
         setText(fileInfo.baseName());
     }
+}
+
+void CustomAction::openInEditor()
+{
+    Singletons::editorManager().openEditor(mFilePath);
 }
 
 bool CustomAction::updateManifest(ScriptEngine &scriptEngine)
@@ -118,6 +124,10 @@ void CustomActions::actionTriggered()
     Q_ASSERT(onMainThread());
     auto &action = static_cast<CustomAction &>(
         *qobject_cast<QAction *>(QObject::sender()));
+
+    const auto modifiers = QApplication::queryKeyboardModifiers();
+    if (modifiers & Qt::ControlModifier)
+        return action.openInEditor();
 
     mMessages = action.apply(mSelection);
 }
