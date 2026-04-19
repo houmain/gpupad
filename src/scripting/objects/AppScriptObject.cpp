@@ -85,6 +85,10 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
             &SynchronizeLogic::evaluationModeChanged, this,
             &AppScriptObject::handleEvaluationModeChanged);
 
+        connect(&Singletons::synchronizeLogic(),
+            &SynchronizeLogic::currentEditorChanged, this,
+            &AppScriptObject::currentEditorChanged);
+
         auto &inputState = Singletons::inputState();
         mFrame = inputState.frameIndex();
         mTime = inputState.time();

@@ -49,6 +49,7 @@ Q_SIGNALS:
     void waitingForSync();
     void evaluationModeChanged(EvaluationMode mode);
     void outputChanged(QVariant output);
+    void currentEditorChanged(QString fileName);
 
 private:
     void invalidateRenderSession();

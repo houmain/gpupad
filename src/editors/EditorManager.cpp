@@ -11,7 +11,6 @@
 #include "texture/TextureEditor.h"
 #include "texture/TextureEditorToolBar.h"
 #include "texture/TextureInfoBar.h"
-#include <QAction>
 #include <QApplication>
 #include <QBoxLayout>
 #include <QClipboard>
@@ -19,7 +18,6 @@
 #include <QMimeData>
 #include <QRandomGenerator>
 #include <QToolBar>
-#include <QToolButton>
 #include <functional>
 
 EditorManager::EditorManager(QWidget *parent)

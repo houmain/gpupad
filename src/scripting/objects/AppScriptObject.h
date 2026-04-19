@@ -40,7 +40,8 @@ class AppScriptObject final : public QObject
     Q_PROPERTY(QJSValue session READ session CONSTANT)
     Q_PROPERTY(QJSValue mouse READ mouse CONSTANT)
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
-    Q_PROPERTY(QJSValue currentEditor READ currentEditor CONSTANT)
+    Q_PROPERTY(
+        QJSValue currentEditor READ currentEditor NOTIFY currentEditorChanged)
 
 public:
     AppScriptObject(const ScriptEnginePtr &enginePtr, const QDir &basePath);
@@ -86,6 +87,7 @@ Q_SIGNALS:
     void frameChanged();
     void timeChanged();
     void timeDeltaChanged();
+    void currentEditorChanged();
 
 private:
     void handleEvaluationModeChanged(EvaluationMode evaluationMode);

@@ -112,8 +112,11 @@ void SynchronizeLogic::setProcessSourceType(QString type)
 
 void SynchronizeLogic::setCurrentEditorFileName(QString fileName)
 {
-    if (std::exchange(mCurrentEditorFileName, fileName) != fileName)
+    if (std::exchange(mCurrentEditorFileName, fileName) != fileName) {
         mProcessSourceTimer->start();
+
+        Q_EMIT currentEditorChanged(fileName);
+    }
 }
 
 void SynchronizeLogic::setCurrentEditorSourceType(SourceType sourceType)

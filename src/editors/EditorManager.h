@@ -4,7 +4,6 @@
 #include "EditActions.h"
 #include "FileDialog.h"
 #include "session/Item.h"
-#include <QMap>
 #include <QStack>
 
 class IEditor;
