@@ -59,9 +59,9 @@ var gltf;
 var basePath;
 var group;
 var idGenerator = 1;
-var addedBuffers = { };
-var addedStreams = { };
-var addedTextures = { };
+var addedBuffers = {};
+var addedStreams = {};
+var addedTextures = {};
 
 function nextId() { return idGenerator++; }
 
@@ -118,7 +118,7 @@ function addStream(primitive) {
       type: "Stream",
       items: [],
     };
-  
+
     for (var a in primitive.attributes) {
       var accessor = gltf.accessors[primitive.attributes[a]];
       var stride = Type_Count[accessor.type] *
@@ -184,7 +184,7 @@ function addSamplerBinding(uniform, texture) {
     values: [{
       textureId: texture.id,
       minFilter: "LinearMipMapLinear",
-      magFilter: "Linear",                      
+      magFilter: "Linear",
     }]
   };
   group.items.push(binding);
@@ -197,7 +197,7 @@ function setMaterial(material) {
       setMaterial(material[p]);
     }
     else if (uniform = Texture_Uniform[p]) {
-      addSamplerBinding(uniform, 
+      addSamplerBinding(uniform,
         addTexture(material[p].index));
     }
     else if (uniform = Factor_Uniform[p]) {
@@ -227,7 +227,7 @@ function findItemId(type, items) {
 var fileName = app.openFileDialog("*.gltf");
 if (!fileName)
   return;
-  
+
 gltf = JSON.parse(app.readTextFile(fileName));
 
 var pathEnd = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\')) + 1;
@@ -245,7 +245,7 @@ for (var m in gltf.meshes) {
     var primitive = mesh.primitives[p];
     if (primitive.material >= 0)
       setMaterial(gltf.materials[primitive.material]);
-    
+
     var call = addDrawCall(primitive);
 
     // automatically use first program and target
@@ -253,4 +253,4 @@ for (var m in gltf.meshes) {
     call.targetId = findItemId("Target");
   }
 }
-app.session.insertItem(group);
+app.insertItem(group);

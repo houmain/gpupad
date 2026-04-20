@@ -121,14 +121,14 @@ function perspective(fovy, aspect, near, far) {
 
 //===============================================
 
-const script = app.session.insertItem({
+const script = app.insertItem({
   name: 'OrbitCamera.js',
   type: 'Script',
   executeOn: 'ResetEvaluation',
 })
-app.session.setScriptSource(script, scriptSource)
+app.setScriptSource(script, scriptSource)
 
-app.session.insertItem({
+app.insertItem({
   name: 'uViewMatrix',
   type: 'Binding',
   values: [

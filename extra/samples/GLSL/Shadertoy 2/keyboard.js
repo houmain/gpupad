@@ -12,4 +12,4 @@ for (let i = 0; i < 256; ++i) {
   data[256 + i] = (key == 2 ? 1 : 0)
   data[512 + i] = toggled[i]
 }
-app.session.setTextureData("Textures/Keyboard", data)
+app.setTextureData("Textures/Keyboard", data)

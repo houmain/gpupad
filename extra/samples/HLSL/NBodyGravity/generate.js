@@ -42,8 +42,8 @@ LoadParticles(data, ParticleCount / 2 * 8,
     vec4.fromValues(0, 0, -20, 1 / 100000000),
     spread, ParticleCount / 2);
     
-app.session.setBufferData("BufferR", data);
-app.session.setBufferData("BufferW", data);
+app.setBufferData("BufferR", data);
+app.setBufferData("BufferW", data);
 
 const colors = []
 for (let i = 0, offset = 0; i < ParticleCount; i++) {
@@ -52,4 +52,4 @@ for (let i = 0, offset = 0; i < ParticleCount; i++) {
     colors[offset++] = 0.2;
     colors[offset++] = 1.0;
 }
-app.session.setBufferData("Colors", colors);
+app.setBufferData("Colors", colors);

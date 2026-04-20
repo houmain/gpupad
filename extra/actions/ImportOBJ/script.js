@@ -46,32 +46,32 @@ class Script {
       throw new Error(error)
     lib.setSettings(this.model, JSON.stringify(this.settings))
     
-    this.group = app.session.findItem(this.settings.group)
+    this.group = app.findItem(this.settings.group)
 
     if (!this.group)
-      this.group = app.session.insertItem(this.settings.parent || app.session, {
+      this.group = app.insertItem(this.settings.parent || app.session, {
         name: (this.settings.name || this.getBaseName(this.settings.fileName)),
         type: 'Group',
         inlineScope: true,
       })
 
     this.buffer =
-      app.session.findItem(item => item.type == 'Buffer', this.group) ||
-      app.session.insertItem(this.group, {
+      app.findItem(item => item.type == 'Buffer', this.group) ||
+      app.insertItem(this.group, {
         name: 'Buffer',
         type: 'Buffer',
       })
     
     this.streams =
-      app.session.findItem('Streams', this.group) ||
-      app.session.insertItem(this.group, {
+      app.findItem('Streams', this.group) ||
+      app.insertItem(this.group, {
         name: 'Streams',
         type: 'Group',
       })
     
-    this.drawCalls = app.session.findItem('Calls', this.group)
+    this.drawCalls = app.findItem('Calls', this.group)
     
-    app.session.replaceItems(this.group, [this.buffer, this.streams, this.drawCalls])
+    app.replaceItems(this.group, [this.buffer, this.streams, this.drawCalls])
     
     this.update()
   }
@@ -87,12 +87,12 @@ class Script {
   
   updateBuffer() {
     const lib = this.library
-    app.session.clearItems(this.buffer)
+    app.clearItems(this.buffer)
     
     const shapeCount = lib.getShapeCount(this.model)
     if (this.settings.indexed) {
       const vertices = lib.getVertices(this.model)
-      const block = app.session.insertItem(this.buffer, {
+      const block = app.insertItem(this.buffer, {
         name: 'Vertices',
         type: 'Block',
         rowCount: vertices.length / 8,
@@ -114,13 +114,13 @@ class Script {
           }          
         ]
       })
-      app.session.setBlockData(block, vertices)
+      app.setBlockData(block, vertices)
       
       let offset = vertices.length * 4
       for (let i = 0; i < shapeCount; ++i) {
         const name = lib.getShapeName(this.model, i)        
         const indices = lib.getShapeIndices(this.model, i)
-        const block = app.session.insertItem(this.buffer, {
+        const block = app.insertItem(this.buffer, {
           name: name,
           type: 'Block',
           rowCount: indices.length / 3,
@@ -133,7 +133,7 @@ class Script {
             }
           ]
         })
-        app.session.setBlockData(block, indices)
+        app.setBlockData(block, indices)
         offset += indices.length * 4
       }
     }
@@ -142,7 +142,7 @@ class Script {
       for (let i = 0; i < shapeCount; ++i) {
         const name = lib.getShapeName(this.model, i)
         const vertices = lib.getShapeVertices(this.model, i)
-        const block = app.session.insertItem(this.buffer, {
+        const block = app.insertItem(this.buffer, {
           name: name,
           type: 'Block',
           rowCount: vertices.length / 8,
@@ -165,7 +165,7 @@ class Script {
             }          
           ]
         })
-        app.session.setBlockData(block, vertices)
+        app.setBlockData(block, vertices)
         offset += vertices.length * 8
       }
     }
@@ -216,26 +216,26 @@ class Script {
         })
     }
     
-    app.session.replaceItems(this.streams, streams)
+    app.replaceItems(this.streams, streams)
   }
   
   updateDrawCalls() {
     if (this.settings.drawCalls === false) {
       if (this.drawCalls)
-        app.session.deleteItem(this.drawCalls)
+        app.deleteItem(this.drawCalls)
       this.drawCalls = undefined
       return
     }
     
     if (!this.drawCalls)
-      this.drawCalls = app.session.insertItem(this.group, {
+      this.drawCalls = app.insertItem(this.group, {
         name: 'Calls',
         type: 'Group',
       })
 
-    const targetId = app.session.findItem(item => item.type == "Target")?.id
+    const targetId = app.findItem(item => item.type == "Target")?.id
 
-    const programId = app.session.findItem(
+    const programId = app.findItem(
       item => (item.type == 'Program' &&
         item.items[0]?.shaderType == "Vertex"))?.id
 
@@ -271,7 +271,7 @@ class Script {
       }
     }
 
-    app.session.replaceItems(this.drawCalls, drawCalls)
+    app.replaceItems(this.drawCalls, drawCalls)
   }
 } // Script
 

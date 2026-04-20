@@ -108,27 +108,10 @@ Allows to define the instances and geometry for ray tracing calls.
 - `date: [year, month, day, time]` - The current date
 - `keyboard: Keyboard`
 - `mouse: Mouse`
-- `session: Session`
-- `currentEditor - Editor?`
-- `isUntitled(fileName) -> bool`
-- `getFileTitle(fileName) -> String`
-- `callAction(id, arguments...) -> result`
-- `evaluateScript(fileName)`
-- `enumerateFiles(pattern) -> [filename]`
-- `loadLibrary(filename) -> Library?`
-- `openEditor(filename, title?) -> Editor?`
-- `saveEditor(filename) -> bool`
-- `openFileDialog(pattern) -> filename: String?`
-- `saveFileDialog(pattern) -> filename: String?`
-- `readTextFile(filename) -> String?`
-- `writeTextFile(filename, String) -> Bool`
-- `writeBinaryFile(filename, Data) -> Bool`
-
-### Session
-- `name: String`
-- `items: [Item]`
+- `session: Item`
 - `selection: [Item]`
-- `clear()`
+
+- `clearSession()`
 - `findItem(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> Item?`
 - `findItems(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> [Item]`
 - `getParentItem(ItemIdent) -> Item?`
@@ -147,6 +130,21 @@ Allows to define the instances and geometry for ray tracing calls.
 - `processShader(shader: ItemIdent, type: String) -> String/Data`
 - `getBufferHandle(ItemIdent) -> Number`
 - `getTextureHandle(ItemIdent) -> Number`
+
+- `currentEditor - Editor?`
+- `isUntitled(fileName) -> bool`
+- `getFileTitle(fileName) -> String`
+- `callAction(id, arguments...) -> result`
+- `evaluateScript(fileName)`
+- `enumerateFiles(pattern) -> [filename]`
+- `loadLibrary(filename) -> Library?`
+- `openEditor(filename, title?) -> Editor?`
+- `saveEditor(filename) -> bool`
+- `openFileDialog(pattern) -> filename: String?`
+- `saveFileDialog(pattern) -> filename: String?`
+- `readTextFile(filename) -> String?`
+- `writeTextFile(filename, String) -> Bool`
+- `writeBinaryFile(filename, Data) -> Bool`
 
 ### Editor
 

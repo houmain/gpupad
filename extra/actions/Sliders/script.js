@@ -12,7 +12,7 @@ class Script {
   initializeUi(ui) {
     this.ui = ui
     
-    const bindings = app.session.findItems((item) => {
+    const bindings = app.findItems((item) => {
       return (item.type == 'Binding');
     })
     

@@ -1,10 +1,10 @@
 
-const scene = app.session.findItem("Scene")
+const scene = app.findItem("Scene")
 
 let mesh = app.callAction("GenerateMesh", {
   name: "Mesh",
   type: "Trefoil Knot",
-  group: app.session.findItem("Scene/Mesh"),
+  group: app.findItem("Scene/Mesh"),
   parent: scene,
   slices: 50,
   stacks: 180,
@@ -32,12 +32,12 @@ const as = {
   ]
 }
 
-app.session.replaceItems(scene, [
+app.replaceItems(scene, [
   mesh,
   as,
 ])
 
-app.session.findItem("Trace Rays").accelerationStructureId = as.id
+app.findItem("Trace Rays").accelerationStructureId = as.id
 
 function Lambertian(diffuse, textureId = -1) {
 	return [diffuse[0], diffuse[1], diffuse[2], 1, textureId, 0.0, 0.0, 0];
@@ -66,11 +66,11 @@ let materials = [
   Metallic([0.7, 0.6, 0.5], 0.0),
 ];
 
-Materials = app.session.findItem("Materials/Material")
+Materials = app.findItem("Materials/Material")
 
 materials = [].concat.apply([], materials)
-app.session.setBufferData("Materials", materials)
+app.setBufferData("Materials", materials)
 
-app.session.findItem("Bindings/MaterialArray").blockId = Materials.id
-app.session.findItem("Bindings/VertexArray").blockId = vertices.id
-app.session.findItem("Bindings/IndexArray").blockId = indices.id
+app.findItem("Bindings/MaterialArray").blockId = Materials.id
+app.findItem("Bindings/VertexArray").blockId = vertices.id
+app.findItem("Bindings/IndexArray").blockId = indices.id

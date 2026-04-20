@@ -25,7 +25,7 @@ ScrollView {
         from: 0
         to: 10
         onMoved: {
-          app.session.findItem(bindingId).values = [
+          app.findItem(bindingId).values = [
             this.value,
           ]
         }

@@ -12,11 +12,11 @@ let indices = Delaunay.triangulate(vertices)
 // convert to single array
 vertices = [].concat.apply([], vertices)
 
-app.session.setBlockData('Buffer/Vertices', vertices)
+app.setBlockData('Buffer/Vertices', vertices)
 
-let Indices = app.session.findItem('Buffer/Indices')
+let Indices = app.findItem('Buffer/Indices')
 Indices.offset = vertices.length * 4
-app.session.setBlockData(Indices, indices)
+app.setBlockData(Indices, indices)
 
-let Draw = app.session.findItem('Draw')
+let Draw = app.findItem('Draw')
 Draw.count = indices.length

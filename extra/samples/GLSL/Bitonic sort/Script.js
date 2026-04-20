@@ -2,24 +2,24 @@
 // based on DirectX SDK's Direct3D 11 sample
 // https://github.com/walbourn/directx-sdk-samples/tree/main/ComputeShaderSort11
 
-let Dynamic = app.session.findItem('Dynamic')
+let Dynamic = app.findItem('Dynamic')
 if (!Dynamic)
-  Dynamic = app.session.insertItem({
+  Dynamic = app.insertItem({
     type: 'Group',
     name: 'Dynamic',
     dynamic: true,
   })
-app.session.clearItems(Dynamic)
+app.clearItems(Dynamic)
 
-let Buffer1 = app.session.findItem('Buffer1')
-let Buffer2 = app.session.findItem('Buffer2')
-let Buffer1Block = app.session.findItem('Buffer1/Block')
-let Buffer2Block = app.session.findItem('Buffer2/Block')
-let BitonicSort = app.session.findItem('BitonicSort')
-let MatrixTranspose = app.session.findItem('MatrixTranspose')
+let Buffer1 = app.findItem('Buffer1')
+let Buffer2 = app.findItem('Buffer2')
+let Buffer1Block = app.findItem('Buffer1/Block')
+let Buffer2Block = app.findItem('Buffer2/Block')
+let BitonicSort = app.findItem('BitonicSort')
+let MatrixTranspose = app.findItem('MatrixTranspose')
 
 function SetConstants(level, levelMask, width, height) {
-  app.session.insertItem(Dynamic, {
+  app.insertItem(Dynamic, {
     type: 'Binding',    
     name: 'uConstants',
     editor: 'Expression4',
@@ -28,7 +28,7 @@ function SetConstants(level, levelMask, width, height) {
 }
 
 function BindBuffer(name, buffer) {
-  app.session.insertItem(Dynamic, {
+  app.insertItem(Dynamic, {
     type: 'Binding',    
     name: name,
     bindingType: 'Buffer',
@@ -37,7 +37,7 @@ function BindBuffer(name, buffer) {
 }
 
 function Dispatch(program, workGroupsX, workGroupsY, workGroupsZ) {
-  app.session.insertItem(Dynamic, {
+  app.insertItem(Dynamic, {
     type: 'Call',
     name: program.name,
     callType: 'Compute',
