@@ -41,6 +41,7 @@ protected:
         const QItemSelection &deselected) override;
     void focusInEvent(QFocusEvent *event) override;
     void focusOutEvent(QFocusEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 
 private:
     void cut();

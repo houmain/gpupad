@@ -104,8 +104,7 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
     flags |= Qt::ItemIsEnabled;
     flags |= Qt::ItemIsEditable;
     flags |= Qt::ItemIsUserCheckable;
-    if (type != Item::Type::Session)
-        flags |= Qt::ItemIsDragEnabled;
+    flags |= Qt::ItemIsDragEnabled;
     switch (type) {
     case Item::Type::Root:
     case Item::Type::Session:
@@ -130,6 +129,10 @@ Qt::ItemFlags SessionModel::flags(const QModelIndex &index) const
 
 bool SessionModel::removeRows(int row, int count, const QModelIndex &parent)
 {
+    // do not allow to move Session
+    if (!parent.isValid())
+        return false;
+
     SessionModelCore::removeRows(row, count, parent);
     mDraggedIndices.clear();
     return true;
@@ -370,6 +373,10 @@ bool SessionModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
             deleteItem(index);
         }
     }
+
+    // do not allow to drop another Sessioon
+    if (!parent.isValid() && sessionItemIndex().isValid())
+        return false;
 
     dropJson(jsonArray, row, parent, false);
     mDraggedIndices.clear();

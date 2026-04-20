@@ -8,6 +8,7 @@
 #include <QClipboard>
 #include <QMenu>
 #include <QMimeData>
+#include <QDropEvent>
 
 SessionEditor::SessionEditor(QWidget *parent)
     : QTreeView(parent)
@@ -228,6 +229,14 @@ void SessionEditor::focusOutEvent(QFocusEvent *event)
 {
     QTreeView::focusOutEvent(event);
     Q_EMIT focusChanged(false);
+}
+
+void SessionEditor::dropEvent(QDropEvent *event)
+{
+    QTreeView::dropEvent(event);
+
+    // ensure Session stays expanded
+    setExpanded(mModel.sessionItemIndex(), true);
 }
 
 bool SessionEditor::isModified() const
