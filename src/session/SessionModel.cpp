@@ -524,7 +524,8 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
     object["type"] = getTypeName(item.type);
     object["id"] = item.id;
     object["name"] = item.name;
-    object["custom"] = toJsonValue(item.custom);
+    if (!item.custom.isEmpty())
+        object["custom"] = toJsonValue(item.custom);
 
     if (auto fileItem = castItem<FileItem>(item)) {
         const auto &fileName = fileItem->fileName;
