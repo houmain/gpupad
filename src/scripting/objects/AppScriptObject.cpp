@@ -1,6 +1,5 @@
 
 #include "AppScriptObject.h"
-#include "SessionScriptObject.h"
 #include "KeyboardScriptObject.h"
 #include "EditorScriptObject.h"
 #include "MouseScriptObject.h"
@@ -13,6 +12,7 @@
 #include "FileCache.h"
 #include "editors/EditorManager.h"
 #include "editors/qml/QmlView.h"
+#include "session/SessionModel.h"
 #include <QApplication>
 #include <QDirIterator>
 #include <atomic>
@@ -65,13 +65,10 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     , mEnginePtr(enginePtr)
     , mJsEngine(&enginePtr->jsEngine())
     , mBasePath(basePath)
-    , mSessionScriptObject(new SessionScriptObject(this))
     , mMouseScriptObject(new MouseScriptObject(this))
     , mKeyboardScriptObject(new KeyboardScriptObject(this))
 {
     Q_ASSERT(mBasePath.isAbsolute());
-    mSessionScriptObject->initializeEngine(mJsEngine);
-    mSessionProperty = mJsEngine->newQObject(mSessionScriptObject);
     mMouseProperty = mJsEngine->newQObject(mMouseScriptObject);
     mKeyboardProperty = mJsEngine->newQObject(mKeyboardScriptObject);
     mDateProperty = mJsEngine->newArray(4);
@@ -105,6 +102,12 @@ AppScriptObject::~AppScriptObject()
         editorScriptObject->resetAppScriptObject();
 
     mMainThreadCalls->deleteLater();
+}
+
+QJSEngine &AppScriptObject::engine()
+{
+    Q_ASSERT(mJsEngine);
+    return *mJsEngine;
 }
 
 bool AppScriptObject::isUntitled(QString fileName)
@@ -252,16 +255,6 @@ QJSValue AppScriptObject::date()
     return mDateProperty;
 }
 
-QJSValue AppScriptObject::session()
-{
-    if (!mSessionScriptObject->available()) {
-        mJsEngine->throwError(QJSValue::EvalError,
-            "Session object not available");
-        return QJSValue();
-    }
-    return mSessionProperty;
-}
-
 QJSValue AppScriptObject::currentEditor()
 {
     auto fileName = QString();
@@ -392,7 +385,7 @@ QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)
 
 QJSValue AppScriptObject::callAction(QString id)
 {
-    return callAction(id, mJsEngine->newObject());
+    return callAction(id, engine().newObject());
 }
 
 QJSValue AppScriptObject::openFileDialog(QString pattern)

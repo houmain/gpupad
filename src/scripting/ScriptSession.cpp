@@ -2,7 +2,6 @@
 #include "ScriptEngine.h"
 #include "scripting/IScriptRenderSession.h"
 #include "objects/AppScriptObject.h"
-#include "objects/SessionScriptObject.h"
 #include "Singletons.h"
 #include "FileDialog.h"
 
@@ -25,7 +24,6 @@ void ScriptSession::beginSessionUpdate()
 {
     Q_ASSERT(!onMainThread());
     mScriptEngine->appScriptObject()
-        .sessionScriptObject()
         .beginBackgroundUpdate(&mRenderSession);
 }
 
@@ -39,7 +37,6 @@ void ScriptSession::endSessionUpdate()
 {
     Q_ASSERT(onMainThread());
     mScriptEngine->appScriptObject()
-        .sessionScriptObject()
         .endBackgroundUpdate();
 }
 

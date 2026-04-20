@@ -188,12 +188,13 @@ set(SOURCES
   src/scripting/ScriptTimeout.cpp
   src/scripting/CustomActions.cpp
   src/scripting/objects/AppScriptObject.cpp
+  src/scripting/objects/AppScriptObject_Session.cpp
   src/scripting/objects/ConsoleScriptObject.cpp
   src/scripting/objects/EditorScriptObject.cpp
   src/scripting/objects/LibraryScriptObject.cpp
   src/scripting/objects/MouseScriptObject.cpp
   src/scripting/objects/KeyboardScriptObject.cpp
-  src/scripting/objects/SessionScriptObject.cpp
+  src/scripting/objects/ItemScriptObject.cpp
   src/session/Item.cpp
   src/resources.qrc
   src/session/properties/AccelerationStructureProperties.ui

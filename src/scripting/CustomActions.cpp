@@ -5,7 +5,6 @@
 #include "ScriptEngine.h"
 #include "editors/EditorManager.h"
 #include "objects/AppScriptObject.h"
-#include "objects/SessionScriptObject.h"
 #include <QDirIterator>
 #include <QApplication>
 
@@ -94,14 +93,11 @@ MessagePtrSet CustomAction::apply(const QModelIndexList &selection)
     mScriptEngine.reset();
 
     mScriptEngine = ScriptEngine::make(objectName(), mFilePath);
-    mScriptEngine->appScriptObject().sessionScriptObject().setSelection(
-        selection);
+    mScriptEngine->appScriptObject().setSelection(selection);
 
     applyInEngine(*mScriptEngine);
 
-    mScriptEngine->appScriptObject()
-        .sessionScriptObject()
-        .endBackgroundUpdate();
+    mScriptEngine->appScriptObject().endBackgroundUpdate();
 
     return mScriptEngine->resetMessages();
 }
@@ -142,8 +138,7 @@ void CustomActions::updateActions()
 
     for (const auto &dir : getApplicationDirectories(ActionsDir)) {
         auto scriptEngine = ScriptEngine::make(dir);
-        scriptEngine->appScriptObject().sessionScriptObject().setSelection(
-            mSelection);
+        scriptEngine->appScriptObject().setSelection(mSelection);
 
         auto it = QDirIterator(dir.path(), QStringList() << "*.js", QDir::Files,
             QDirIterator::Subdirectories);

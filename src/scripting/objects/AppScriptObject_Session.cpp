@@ -1,20 +1,16 @@
-#include "SessionScriptObject.h"
 #include "AppScriptObject.h"
+#include "ItemScriptObject.h"
 #include "SynchronizeLogic.h"
 #include "FileCache.h"
 #include "Singletons.h"
 #include "editors/EditorManager.h"
-#include "editors/binary/BinaryEditor.h"
-#include "editors/texture/TextureEditor.h"
 #include "editors/source/SourceEditor.h"
 #include "session/SessionModel.h"
 #include "LibraryScriptObject.h"
-#include "EditorScriptObject.h"
 #include "../IScriptRenderSession.h"
-#include "render/Renderer.h"
 #include "render/ProcessSource.h"
-#include <QCoreApplication>
 #include <QFloat16>
+#include <QJSEngine>
 #include <QTextStream>
 #include <limits>
 #include <cstring>
@@ -287,69 +283,7 @@ namespace {
     }
 } // namespace
 
-//-------------------------------------------------------------------------
-
-SessionScriptObject_ItemObject::SessionScriptObject_ItemObject(
-    SessionScriptObject *sessionObject, ItemId itemId)
-    : mSessionObject(*sessionObject)
-    , mItemId(itemId)
-{
-    auto &session = mSessionObject.threadSessionModel();
-    auto index = session.getIndex(session.findItem(mItemId));
-    Q_ASSERT(index.isValid());
-
-    const auto json = session.getJson({ index }).first().toObject();
-    for (auto it = json.begin(); it != json.end(); ++it)
-        if (it.key() != "items")
-            insert(it.key(), it.value().toVariant());
-
-    setItemsList(session.getItem(index).items);
-}
-
-void SessionScriptObject_ItemObject::setItemsList(const QList<Item *> &items)
-{
-    insert("items", QVariant::fromValue(mSessionObject.makeArray([&](auto add) {
-        for (const auto *item : items)
-            add(mSessionObject.createItemObject(item->id));
-    })));
-}
-
-QVariant SessionScriptObject_ItemObject::updateValue(const QString &key,
-    const QVariant &input)
-{
-    auto update = QJsonObject();
-    update.insert("id", mItemId);
-    if (input.canConvert<QJSValue>()) {
-        const auto jsValue = mSessionObject.engine().toScriptValue(input);
-        const auto json = jsValue.toVariant(QJSValue::ConvertJSObjects);
-        update.insert(key, json.toJsonValue());
-    } else {
-        update.insert(key, input.toJsonValue());
-    }
-
-    mSessionObject.withSessionModel(
-        [itemId = mItemId, update](SessionModel &session) {
-            const auto index = session.getIndex(session.findItem(itemId));
-            if (index.isValid())
-                session.dropJson({ update }, index.row(), index.parent(), true);
-        });
-    return input;
-}
-
-//-------------------------------------------------------------------------
-
-SessionScriptObject::SessionScriptObject(AppScriptObject *appScriptObject)
-    : QObject(appScriptObject)
-    , mAppScriptObject(*appScriptObject)
-{
-}
-
-void SessionScriptObject::initializeEngine(QJSEngine *engine)
-{
-    mEngine = engine;
-}
-
-SessionModel &SessionScriptObject::threadSessionModel()
+SessionModel &AppScriptObject::threadSessionModel()
 {
     if (onMainThread()) {
         return Singletons::sessionModel();
@@ -359,13 +293,7 @@ SessionModel &SessionScriptObject::threadSessionModel()
     }
 }
 
-QJSEngine &SessionScriptObject::engine()
-{
-    Q_ASSERT(mEngine);
-    return *mEngine;
-}
-
-void SessionScriptObject::setSelection(const QModelIndexList &selectedIndices)
+void AppScriptObject::setSelection(const QModelIndexList &selectedIndices)
 {
     mSelectionProperty = makeArray([&](auto add) {
         for (const auto &index : selectedIndices)
@@ -373,7 +301,7 @@ void SessionScriptObject::setSelection(const QModelIndexList &selectedIndices)
     });
 }
 
-void SessionScriptObject::withSessionModel(UpdateFunction &&updateFunction)
+void AppScriptObject::withSessionModel(UpdateFunction &&updateFunction)
 {
     if (onMainThread()) {
         updateFunction(Singletons::sessionModel());
@@ -384,14 +312,13 @@ void SessionScriptObject::withSessionModel(UpdateFunction &&updateFunction)
     }
 }
 
-void SessionScriptObject::beginBackgroundUpdate(
-    IScriptRenderSession *renderSession)
+void AppScriptObject::beginBackgroundUpdate(IScriptRenderSession *renderSession)
 {
     Q_ASSERT(!onMainThread());
     mRenderSession = renderSession;
 }
 
-void SessionScriptObject::endBackgroundUpdate()
+void AppScriptObject::endBackgroundUpdate()
 {
     Q_ASSERT(onMainThread());
     mRenderSession = nullptr;
@@ -408,43 +335,24 @@ void SessionScriptObject::endBackgroundUpdate()
     Singletons::fileCache().updateFromEditors();
 }
 
-bool SessionScriptObject::available() const
+QJSValue AppScriptObject::session()
 {
-    return (onMainThread() || mRenderSession != nullptr);
+    if (!onMainThread() && !mRenderSession) {
+        engine().throwError(QJSValue::EvalError, "Session not available");
+        return QJSValue();
+    }
+    if (mSessionProperty.isUndefined())
+        mSessionProperty =
+            createItemObject(threadSessionModel().sessionItem().id);
+    return mSessionProperty;
 }
 
-int SessionScriptObject::id()
-{
-    return threadSessionModel().sessionItem().id;
-}
-
-QString SessionScriptObject::name()
-{
-    return threadSessionModel().sessionItem().name;
-}
-
-void SessionScriptObject::setName(QString name)
-{
-    threadSessionModel().setData(
-        threadSessionModel().sessionItemIndex(SessionModel::Name), name);
-}
-
-QJSValue SessionScriptObject::items()
-{
-    if (mSessionItems.isUndefined())
-        mSessionItems = makeArray([&](auto add) {
-            for (const auto *item : threadSessionModel().sessionItem().items)
-                add(createItemObject(item->id));
-        });
-    return mSessionItems;
-}
-
-QJSValue SessionScriptObject::insertItem(QJSValue object)
+QJSValue AppScriptObject::insertItem(QJSValue object)
 {
     return insertItem(QJSValue::UndefinedValue, object);
 }
 
-QJsonObject SessionScriptObject::toJsonObject(const QJSValue &value)
+QJsonObject AppScriptObject::toJsonObject(const QJSValue &value)
 {
     if (auto object = value.toQObject()) {
         // create JSON object from ItemObject
@@ -461,7 +369,7 @@ QJsonObject SessionScriptObject::toJsonObject(const QJSValue &value)
     return value.toVariant().toJsonObject();
 }
 
-QJSValue SessionScriptObject::insertItemAt(const Item *parent, int row,
+QJSValue AppScriptObject::insertItemAt(const Item *parent, int row,
     QJSValue object)
 {
     auto id = object.property("id").toInt();
@@ -487,7 +395,7 @@ QJSValue SessionScriptObject::insertItemAt(const Item *parent, int row,
     return createItemObject(id);
 }
 
-QJSValue SessionScriptObject::insertItem(QJSValue parentIdent, QJSValue object)
+QJSValue AppScriptObject::insertItem(QJSValue parentIdent, QJSValue object)
 {
     const auto parent = (parentIdent.isUndefined()
             ? &threadSessionModel().sessionItem()
@@ -499,7 +407,7 @@ QJSValue SessionScriptObject::insertItem(QJSValue parentIdent, QJSValue object)
     return insertItemAt(parent, parent->items.size(), object);
 }
 
-QJSValue SessionScriptObject::insertBeforeItem(QJSValue siblingIdent,
+QJSValue AppScriptObject::insertBeforeItem(QJSValue siblingIdent,
     QJSValue object)
 {
     const auto sibling = findSessionItem(siblingIdent);
@@ -512,7 +420,7 @@ QJSValue SessionScriptObject::insertBeforeItem(QJSValue siblingIdent,
     return insertItemAt(parent, row, object);
 }
 
-QJSValue SessionScriptObject::insertAfterItem(QJSValue siblingIdent,
+QJSValue AppScriptObject::insertAfterItem(QJSValue siblingIdent,
     QJSValue object)
 {
     const auto sibling = findSessionItem(siblingIdent);
@@ -525,7 +433,7 @@ QJSValue SessionScriptObject::insertAfterItem(QJSValue siblingIdent,
     return insertItemAt(parent, row, object);
 }
 
-void SessionScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
+void AppScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
 {
     const auto count = array.property("length").toInt();
     auto update = QJsonArray();
@@ -597,7 +505,7 @@ void SessionScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
         array.property(i).setProperty("id", parent->items[i]->id);
 }
 
-const Item *SessionScriptObject::findSessionItem(QJSValue itemIdent,
+const Item *AppScriptObject::findSessionItem(QJSValue itemIdent,
     const QModelIndex &originIndex, bool searchSubItems)
 {
     const auto &session = threadSessionModel();
@@ -635,7 +543,7 @@ const Item *SessionScriptObject::findSessionItem(QJSValue itemIdent,
     return session.findItem(itemId);
 }
 
-const Item *SessionScriptObject::findSessionItem(QJSValue itemIdent,
+const Item *AppScriptObject::findSessionItem(QJSValue itemIdent,
     QJSValue originIdent, bool searchSubItems)
 {
     const auto originItem = findSessionItem(originIdent);
@@ -647,24 +555,24 @@ const Item *SessionScriptObject::findSessionItem(QJSValue itemIdent,
     return findSessionItem(itemIdent, originIndex, searchSubItems);
 }
 
-const Item *SessionScriptObject::findSessionItem(QJSValue itemIdent)
+const Item *AppScriptObject::findSessionItem(QJSValue itemIdent)
 {
     return findSessionItem(itemIdent, threadSessionModel().sessionItemIndex(),
         true);
 }
 
-QJSValue SessionScriptObject::createItemObject(ItemId itemId)
+QJSValue AppScriptObject::createItemObject(ItemId itemId)
 {
     Q_ASSERT(itemId);
     auto &[object, jsValue] = mCreatedItemObjects[itemId];
     if (!object) {
-        object = new ItemObject(this, itemId);
+        object = new ItemScriptObject(this, itemId);
         jsValue = engine().newQObject(object);
     }
     return jsValue;
 }
 
-void SessionScriptObject::refreshItemObjectItems(const Item *item)
+void AppScriptObject::refreshItemObjectItems(const Item *item)
 {
     if (!item)
         return;
@@ -674,7 +582,7 @@ void SessionScriptObject::refreshItemObjectItems(const Item *item)
         it->second.first->setItemsList(item->items);
 }
 
-QJSValue SessionScriptObject::getParentItem(QJSValue itemIdent)
+QJSValue AppScriptObject::getParentItem(QJSValue itemIdent)
 {
     const auto item = findSessionItem(itemIdent);
     if (!item || !item->parent || !item->parent->id)
@@ -683,7 +591,7 @@ QJSValue SessionScriptObject::getParentItem(QJSValue itemIdent)
     return createItemObject(item->parent->id);
 }
 
-QJSValue SessionScriptObject::findItem(QJSValue itemIdent, QJSValue originIdent,
+QJSValue AppScriptObject::findItem(QJSValue itemIdent, QJSValue originIdent,
     bool searchSubItems)
 {
     if (auto item = findSessionItem(itemIdent, originIdent, searchSubItems))
@@ -691,15 +599,15 @@ QJSValue SessionScriptObject::findItem(QJSValue itemIdent, QJSValue originIdent,
     return QJSValue::UndefinedValue;
 }
 
-QJSValue SessionScriptObject::findItem(QJSValue itemIdent)
+QJSValue AppScriptObject::findItem(QJSValue itemIdent)
 {
     if (auto item = findSessionItem(itemIdent))
         return createItemObject(item->id);
     return QJSValue::UndefinedValue;
 }
 
-QJSValue SessionScriptObject::findItems(QJSValue itemIdent,
-    QJSValue originIdent, bool searchSubItems)
+QJSValue AppScriptObject::findItems(QJSValue itemIdent, QJSValue originIdent,
+    bool searchSubItems)
 {
     return makeArray([&](auto add) {
         if (itemIdent.isCallable()) {
@@ -734,17 +642,17 @@ QJSValue SessionScriptObject::findItems(QJSValue itemIdent,
     });
 }
 
-QJSValue SessionScriptObject::findItems(QJSValue itemIdent)
+QJSValue AppScriptObject::findItems(QJSValue itemIdent)
 {
     return findItems(itemIdent, QJSValue::UndefinedValue, true);
 }
 
-void SessionScriptObject::clear()
+void AppScriptObject::clearSession()
 {
-    clearItems(id());
+    clearItems(threadSessionModel().sessionItem().id);
 }
 
-void SessionScriptObject::clearItems(QJSValue parentIdent)
+void AppScriptObject::clearItems(QJSValue parentIdent)
 {
     const auto parent = findSessionItem(parentIdent);
     if (!parent)
@@ -758,7 +666,7 @@ void SessionScriptObject::clearItems(QJSValue parentIdent)
     refreshItemObjectItems(parent);
 }
 
-void SessionScriptObject::deleteItem(QJSValue itemIdent)
+void AppScriptObject::deleteItem(QJSValue itemIdent)
 {
     const auto item = findSessionItem(itemIdent);
     if (!item)
@@ -773,7 +681,7 @@ void SessionScriptObject::deleteItem(QJSValue itemIdent)
     refreshItemObjectItems(parent);
 }
 
-QJSValue SessionScriptObject::openEditor(QJSValue itemIdent)
+QJSValue AppScriptObject::openEditor(QJSValue itemIdent)
 {
     const auto item = findSessionItem<FileItem>(itemIdent);
     if (!item)
@@ -795,10 +703,10 @@ QJSValue SessionScriptObject::openEditor(QJSValue itemIdent)
         });
     if (fileName->isEmpty())
         return {};
-    return mAppScriptObject.openEditor(*fileName);
+    return openEditor(*fileName);
 }
 
-void SessionScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
+void AppScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
 {
     const auto buffer = findSessionItem<Buffer>(itemIdent);
     if (!buffer)
@@ -833,7 +741,7 @@ void SessionScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
     });
 }
 
-void SessionScriptObject::setBlockData(QJSValue itemIdent, QJSValue data)
+void AppScriptObject::setBlockData(QJSValue itemIdent, QJSValue data)
 {
     const auto block = findSessionItem<Block>(itemIdent);
     if (!block)
@@ -864,7 +772,7 @@ void SessionScriptObject::setBlockData(QJSValue itemIdent, QJSValue data)
     });
 }
 
-void SessionScriptObject::setTextureData(QJSValue itemIdent, QJSValue data)
+void AppScriptObject::setTextureData(QJSValue itemIdent, QJSValue data)
 {
     const auto texture = findSessionItem<Texture>(itemIdent);
     if (!texture)
@@ -885,7 +793,7 @@ void SessionScriptObject::setTextureData(QJSValue itemIdent, QJSValue data)
     });
 }
 
-void SessionScriptObject::setShaderSource(QJSValue itemIdent, QJSValue data)
+void AppScriptObject::setShaderSource(QJSValue itemIdent, QJSValue data)
 {
     const auto shader = findSessionItem<Shader>(itemIdent);
     if (!shader)
@@ -901,7 +809,7 @@ void SessionScriptObject::setShaderSource(QJSValue itemIdent, QJSValue data)
     });
 }
 
-void SessionScriptObject::setScriptSource(QJSValue itemIdent, QJSValue data)
+void AppScriptObject::setScriptSource(QJSValue itemIdent, QJSValue data)
 {
     const auto script = findSessionItem<Script>(itemIdent);
     if (!script)
@@ -917,7 +825,7 @@ void SessionScriptObject::setScriptSource(QJSValue itemIdent, QJSValue data)
     });
 }
 
-quint64 SessionScriptObject::getTextureHandle(QJSValue itemIdent)
+quint64 AppScriptObject::getTextureHandle(QJSValue itemIdent)
 {
     if (mRenderSession)
         if (const auto texture = findSessionItem<Texture>(itemIdent))
@@ -925,7 +833,7 @@ quint64 SessionScriptObject::getTextureHandle(QJSValue itemIdent)
     return 0;
 }
 
-quint64 SessionScriptObject::getBufferHandle(QJSValue itemIdent)
+quint64 AppScriptObject::getBufferHandle(QJSValue itemIdent)
 {
     if (mRenderSession)
         if (const auto buffer = findSessionItem<Buffer>(itemIdent))
@@ -933,8 +841,7 @@ quint64 SessionScriptObject::getBufferHandle(QJSValue itemIdent)
     return 0;
 }
 
-QJSValue SessionScriptObject::processShader(QJSValue itemIdent,
-    QString processType)
+QJSValue AppScriptObject::processShader(QJSValue itemIdent, QString processType)
 {
     if (const auto shader = findSessionItem<Shader>(itemIdent)) {
         auto result = QVariant();
@@ -952,7 +859,7 @@ QJSValue SessionScriptObject::processShader(QJSValue itemIdent,
         while (processSource.updating())
             qApp->processEvents(QEventLoop::WaitForMoreEvents);
 
-        return QJSValue(mEngine->toManagedValue(result));
+        return QJSValue(engine().toManagedValue(result));
     }
     return QJSValue::UndefinedValue;
 }
