@@ -16,48 +16,6 @@
 #include <QDirIterator>
 #include <atomic>
 
-bool AppScriptObject_MainThreadCalls::openQmlView(QString fileName,
-    QString title, ScriptEnginePtr enginePtr)
-{
-    const auto editor =
-        Singletons::editorManager().openQmlView(fileName, enginePtr);
-    if (!editor)
-        return false;
-
-    // set cleaned up title
-    title = title.remove("&").replace("...", "");
-    if (!title.isEmpty())
-        editor->setWindowTitle(title);
-
-    return true;
-}
-
-bool AppScriptObject_MainThreadCalls::openEditor(QString fileName)
-{
-    return static_cast<bool>(Singletons::editorManager().openEditor(fileName));
-}
-
-bool AppScriptObject_MainThreadCalls::saveEditor(QString fileName)
-{
-    if (auto editor = Singletons::editorManager().getEditor(fileName))
-        return editor->save();
-    return false;
-}
-
-QString AppScriptObject_MainThreadCalls::openFileDialog(QString pattern,
-    FileDialog::Options options)
-{
-    const auto guard = suspendScriptEngineTimeout();
-
-    Singletons::fileDialog().setDirectory(mLastFileDialogDirectory);
-    if (!Singletons::fileDialog().exec(options, pattern))
-        return {};
-    mLastFileDialogDirectory = Singletons::fileDialog().directory();
-    return Singletons::fileDialog().fileName();
-}
-
-//-------------------------------------------------------------------------
-
 AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     const QDir &basePath)
     : QObject(static_cast<QObject *>(enginePtr.get()))
@@ -72,9 +30,9 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
     mKeyboardProperty = mJsEngine->newQObject(mKeyboardScriptObject);
     mDateProperty = mJsEngine->newArray(4);
 
-    mMainThreadCalls = new AppScriptObject_MainThreadCalls();
+    mMainThreadObject = new QObject();
     if (!onMainThread())
-        mMainThreadCalls->moveToThread(QApplication::instance()->thread());
+        mMainThreadObject->moveToThread(QApplication::instance()->thread());
 
     dispatchToMainThread([&]() {
         connect(&Singletons::synchronizeLogic(),
@@ -104,7 +62,7 @@ AppScriptObject::~AppScriptObject()
     for (auto &[editorScriptObject, scriptValue] : mEditorScriptObjects)
         editorScriptObject->resetAppScriptObject();
 
-    mMainThreadCalls->deleteLater();
+    mMainThreadObject->deleteLater();
 }
 
 QJSEngine &AppScriptObject::engine()
@@ -133,13 +91,13 @@ QString AppScriptObject::getAbsolutePath(const QString &fileName) const
 void AppScriptObject::dispatchToMainThread(
     const std::function<void()> &function)
 {
-    if (QThread::currentThread() == mMainThreadCalls->thread()) {
+    if (QThread::currentThread() == mMainThreadObject->thread()) {
         function();
         return;
     }
     auto done = std::atomic<bool>{};
     QMetaObject::invokeMethod(
-        mMainThreadCalls,
+        mMainThreadObject,
         [&]() {
             function();
             done.store(true);
@@ -289,30 +247,13 @@ QJSValue AppScriptObject::getEditorObject(const QString &fileName)
         .first->second;
 }
 
-QJSValue AppScriptObject::openEditor(QString fileName, QString title)
-{
-    fileName = getAbsolutePath(fileName);
-
-    if (auto editor = tryGetEditorObject(fileName); !editor.isUndefined())
-        return editor;
-
-    auto opened = false;
-    dispatchToMainThread([&, onMainThread = onMainThread()]() {
-        if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
-            opened = mMainThreadCalls->openQmlView(fileName, title,
-                (onMainThread ? mEnginePtr.lock() : nullptr));
-        } else {
-            opened = mMainThreadCalls->openEditor(fileName);
-        }
-    });
-    return (opened ? getEditorObject(fileName) : QJSValue());
-}
-
 QJSValue AppScriptObject::saveEditor(QString fileName)
 {
     auto saved = false;
-    dispatchToMainThread(
-        [&]() { saved = mMainThreadCalls->saveEditor(fileName); });
+    dispatchToMainThread([&]() {
+        if (auto editor = Singletons::editorManager().getEditor(fileName))
+            saved = editor->save();
+    });
     return saved;
 }
 
@@ -393,21 +334,22 @@ QJSValue AppScriptObject::callAction(QString id)
 
 QJSValue AppScriptObject::openFileDialog(QString pattern)
 {
-    auto result = QString();
-    dispatchToMainThread([&]() {
-        result =
-            mMainThreadCalls->openFileDialog(pattern, FileDialog::Options{});
-    });
-    if (!result.isEmpty())
-        return result;
-    return {};
+    return openFileDialog(pattern, FileDialog::Options{});
 }
 
 QJSValue AppScriptObject::saveFileDialog(QString pattern)
 {
+    return openFileDialog(pattern, FileDialog::Saving);
+}
+
+QJSValue AppScriptObject::openFileDialog(QString pattern,
+    FileDialog::Options options)
+{
     auto result = QString();
     dispatchToMainThread([&]() {
-        result = mMainThreadCalls->openFileDialog(pattern, FileDialog::Saving);
+        const auto guard = suspendScriptEngineTimeout();
+        if (Singletons::fileDialog().exec(options, pattern))
+            result = Singletons::fileDialog().fileName();
     });
     if (!result.isEmpty())
         return result;

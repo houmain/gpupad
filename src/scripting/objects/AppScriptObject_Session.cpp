@@ -344,7 +344,7 @@ QJSValue AppScriptObject::session()
 {
     if (!isSessionAvailable()) {
         engine().throwError(QJSValue::EvalError, "Session not available");
-        return QJSValue();
+        return QJSValue::UndefinedValue;
     }
 
     if (mSessionProperty.isUndefined())
@@ -694,9 +694,30 @@ void AppScriptObject::deleteItem(QJSValue itemIdent)
     updateItemProperties(parent);
 }
 
-QJSValue AppScriptObject::openEditor(QJSValue itemIdent)
+QJSValue AppScriptObject::openEditor(QJSValue fileNameOrItemIdent)
 {
-    const auto item = findSessionItem<FileItem>(itemIdent);
+    if (fileNameOrItemIdent.isString()) {
+        const auto fileName = getAbsolutePath(fileNameOrItemIdent.toString());
+        if (auto editor = tryGetEditorObject(fileName); !editor.isUndefined())
+            return editor;
+
+        auto opened = false;
+        dispatchToMainThread([&, onMainThread = onMainThread()]() {
+            if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
+                const auto enginePtr =
+                    (onMainThread ? mEnginePtr.lock() : nullptr);
+                const auto editor = Singletons::editorManager().openQmlView(
+                    fileName, enginePtr);
+                opened = static_cast<bool>(editor);
+            } else {
+                opened = static_cast<bool>(
+                    Singletons::editorManager().openEditor(fileName));
+            }
+        });
+        return (opened ? getEditorObject(fileName) : QJSValue::UndefinedValue);
+    }
+
+    const auto item = findSessionItem<FileItem>(fileNameOrItemIdent);
     if (!item)
         return QJSValue::UndefinedValue;
 

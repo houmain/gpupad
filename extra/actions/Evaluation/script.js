@@ -7,7 +7,7 @@ const manifest = {
 class Script {
   constructor() {
   }
-  
+
   initializeUi(ui) {
     this.ui = ui
   }
@@ -15,4 +15,4 @@ class Script {
 
 this.script = new Script()
 
-app.openEditor("ui.qml", manifest.name)
+app.openEditor("ui.qml").title = manifest.name

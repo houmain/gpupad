@@ -8,7 +8,7 @@ class Script {
   constructor() {
     this.library = app.loadLibrary("ImportOBJ")
   }
-  
+
   initializeUi(ui) {
     this.ui = ui
     this.refresh()
@@ -29,15 +29,15 @@ class Script {
       indexed: ui.indexed,
       drawCalls: ui.drawCalls,
     }
-    
+
     if (this.group)
       this.update()
   }
-  
+
   getBaseName(name) {
     return name.match(/[^/\\]+$/)[0]
   }
-  
+
   insert() {
     const lib = this.library
     this.model = lib.loadFile(this.settings.fileName)
@@ -45,7 +45,7 @@ class Script {
     if (error)
       throw new Error(error)
     lib.setSettings(this.model, JSON.stringify(this.settings))
-    
+
     this.group = app.findItem(this.settings.group)
 
     if (!this.group)
@@ -61,34 +61,34 @@ class Script {
         name: 'Buffer',
         type: 'Buffer',
       })
-    
+
     this.streams =
       app.findItem('Streams', this.group) ||
       app.insertItem(this.group, {
         name: 'Streams',
         type: 'Group',
       })
-    
+
     this.drawCalls = app.findItem('Calls', this.group)
-    
+
     app.replaceItems(this.group, [this.buffer, this.streams, this.drawCalls])
-    
+
     this.update()
   }
-  
+
   update() {
     const lib = this.library
     lib.setSettings(this.model, JSON.stringify(this.settings))
-    
+
     this.updateBuffer()
     this.updateStreams()
     this.updateDrawCalls()
-  }  
-  
+  }
+
   updateBuffer() {
     const lib = this.library
     app.clearItems(this.buffer)
-    
+
     const shapeCount = lib.getShapeCount(this.model)
     if (this.settings.indexed) {
       const vertices = lib.getVertices(this.model)
@@ -111,14 +111,14 @@ class Script {
             name: 'texcoord',
             dataType: 'Float',
             count: 2
-          }          
+          }
         ]
       })
       app.setBlockData(block, vertices)
-      
+
       let offset = vertices.length * 4
       for (let i = 0; i < shapeCount; ++i) {
-        const name = lib.getShapeName(this.model, i)        
+        const name = lib.getShapeName(this.model, i)
         const indices = lib.getShapeIndices(this.model, i)
         const block = app.insertItem(this.buffer, {
           name: name,
@@ -162,7 +162,7 @@ class Script {
               name: 'texcoord',
               dataType: 'Float',
               count: 2
-            }          
+            }
           ]
         })
         app.setBlockData(block, vertices)
@@ -170,7 +170,7 @@ class Script {
       }
     }
   }
-  
+
   updateStreams() {
     let streams = []
     if (this.settings.indexed) {
@@ -190,7 +190,7 @@ class Script {
           {
             name: 'aTexCoords',
             fieldId: block.items[2].id,
-          }      
+          }
         ]
       })
     }
@@ -211,14 +211,14 @@ class Script {
             {
               name: 'aTexCoords',
               fieldId: block.items[2].id,
-            }      
+            }
           ]
         })
     }
-    
+
     app.replaceItems(this.streams, streams)
   }
-  
+
   updateDrawCalls() {
     if (this.settings.drawCalls === false) {
       if (this.drawCalls)
@@ -226,7 +226,7 @@ class Script {
       this.drawCalls = undefined
       return
     }
-    
+
     if (!this.drawCalls)
       this.drawCalls = app.insertItem(this.group, {
         name: 'Calls',
@@ -285,5 +285,5 @@ if (this.arguments) {
   this.result = this.script.group
 }
 else {
-  app.openEditor("ui.qml", manifest.name)
+  app.openEditor("ui.qml").title = manifest.name
 }

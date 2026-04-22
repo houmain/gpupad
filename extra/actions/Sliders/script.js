@@ -8,14 +8,14 @@ class Script {
   constructor() {
     this.library = app.loadLibrary("GenerateMesh")
   }
-  
+
   initializeUi(ui) {
     this.ui = ui
-    
+
     const bindings = app.findItems((item) => {
       return (item.type == 'Binding');
     })
-    
+
     let y = 10
     for (let binding of bindings) {
       //console.log(binding.name)
@@ -28,5 +28,5 @@ class Script {
 
 this.script = new Script()
 
-app.openEditor("ui.qml", manifest.name)
+app.openEditor("ui.qml").title = manifest.name
 

@@ -2,6 +2,7 @@
 #include "AppScriptObject.h"
 #include "Singletons.h"
 #include "editors/EditorManager.h"
+#include "editors/qml/QmlView.h"
 #include <QJsonArray>
 
 EditorScriptObject::EditorScriptObject(AppScriptObject *appScriptObject,
@@ -9,6 +10,7 @@ EditorScriptObject::EditorScriptObject(AppScriptObject *appScriptObject,
     : QObject(appScriptObject)
     , mAppScriptObject(appScriptObject)
     , mFileName(fileName)
+    , mTitle(FileDialog::getFileTitle(fileName))
 {
 }
 
@@ -44,6 +46,15 @@ void EditorScriptObject::update()
         mViewportSize = viewportSize;
         Q_EMIT viewportResized();
     }
+}
+
+void EditorScriptObject::setTitle(QString title)
+{
+    if (onMainThread())
+        if (auto editor = Singletons::editorManager().getQmlView(mFileName)) {
+            mTitle = title.remove("&").replace("...", "");
+            editor->setWindowTitle(mTitle);
+        }
 }
 
 QJsonValue EditorScriptObject::viewportSize() const

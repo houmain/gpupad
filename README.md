@@ -110,6 +110,7 @@ Allows to define the instances and geometry for ray tracing calls.
 - `mouse: Mouse`
 - `session: Item`
 - `selection: [Item]`
+- `currentEditor - Editor?`
 
 - `clearSession()`
 - `findItem(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> Item?`
@@ -121,7 +122,7 @@ Allows to define the instances and geometry for ray tracing calls.
 - `deleteItem(ItemIdent)`
 - `clearItems(ItemIdent)`
 - `replaceItems(parent: ItemIdent, [Object])`
-- `openEditor(ItemIdent) -> Editor?`
+- `openEditor(fileName | ItemIdent) -> Editor?`
 - `setBlockData(ItemIdent, Data)`
 - `setBufferData(ItemIdent, Data)`
 - `setScriptSource(ItemIdent, Data)`
@@ -131,14 +132,12 @@ Allows to define the instances and geometry for ray tracing calls.
 - `getBufferHandle(ItemIdent) -> Number`
 - `getTextureHandle(ItemIdent) -> Number`
 
-- `currentEditor - Editor?`
 - `isUntitled(fileName) -> bool`
 - `getFileTitle(fileName) -> String`
 - `callAction(id, arguments...) -> result`
 - `evaluateScript(fileName)`
 - `enumerateFiles(pattern) -> [filename]`
 - `loadLibrary(filename) -> Library?`
-- `openEditor(filename, title?) -> Editor?`
 - `saveEditor(filename) -> bool`
 - `openFileDialog(pattern) -> filename: String?`
 - `saveFileDialog(pattern) -> filename: String?`
@@ -150,6 +149,7 @@ Allows to define the instances and geometry for ray tracing calls.
 
 - `type: String`
 - `fileName: String`
+- `title: String`
 - `viewportSize: [width, height]`
 
 ### Mouse

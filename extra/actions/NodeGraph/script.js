@@ -4,4 +4,4 @@ const manifest = {
   name: "&Node Graph"
 }
 
-app.openEditor("ui.qml", manifest.name)
+app.openEditor("ui.qml").title = manifest.name

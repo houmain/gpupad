@@ -1,2 +1,2 @@
 
-target = app.openEditor("TargetTexture")
+target = app.openEditor(app.findItem("TargetTexture"))

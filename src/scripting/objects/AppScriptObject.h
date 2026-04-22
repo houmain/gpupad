@@ -16,21 +16,6 @@ class IScriptRenderSession;
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 using WeakScriptEnginePtr = std::weak_ptr<class ScriptEngine>;
 
-class AppScriptObject_MainThreadCalls : public QObject
-{
-    Q_OBJECT
-
-public:
-    bool openQmlView(QString fileName, QString title,
-        ScriptEnginePtr enginePtr);
-    bool openEditor(QString fileName);
-    bool saveEditor(QString fileName);
-    QString openFileDialog(QString pattern, FileDialog::Options options);
-
-private:
-    QDir mLastFileDialogDirectory;
-};
-
 class AppScriptObject final : public QObject
 {
     Q_OBJECT
@@ -69,7 +54,6 @@ public:
 
     Q_INVOKABLE bool isUntitled(QString fileName);
     Q_INVOKABLE QString getFileTitle(QString fileName);
-    Q_INVOKABLE QJSValue openEditor(QString fileName, QString title = {});
     Q_INVOKABLE QJSValue saveEditor(QString fileName);
     Q_INVOKABLE QJSValue openFileDialog(QString pattern = "");
     Q_INVOKABLE QJSValue saveFileDialog(QString pattern = "");
@@ -101,7 +85,7 @@ public:
     Q_INVOKABLE void replaceItems(QJSValue parentIdent, QJSValue array);
     Q_INVOKABLE void clearItems(QJSValue parentIdent);
     Q_INVOKABLE void deleteItem(QJSValue itemIdent);
-    Q_INVOKABLE QJSValue openEditor(QJSValue itemIdent);
+    Q_INVOKABLE QJSValue openEditor(QJSValue fileNameOrItemIdent);
     Q_INVOKABLE void setBufferData(QJSValue itemIdent, QJSValue data);
     Q_INVOKABLE void setBlockData(QJSValue itemIdent, QJSValue data);
     Q_INVOKABLE void setTextureData(QJSValue itemIdent, QJSValue data);
@@ -136,6 +120,7 @@ private:
     QJSValue enumerate(QString pattern, bool directories);
     QJSValue tryGetEditorObject(const QString &fileName);
     QJSValue getEditorObject(const QString &fileName);
+    QJSValue openFileDialog(QString pattern, FileDialog::Options options);
 
     // session
     friend class ItemScriptObject;
@@ -181,7 +166,7 @@ private:
     QJSValue mKeyboardProperty;
     QJSValue mDateProperty;
     QMap<QString, QJSValue> mLoadedLibraries;
-    AppScriptObject_MainThreadCalls *mMainThreadCalls{};
+    QObject *mMainThreadObject{};
     EvaluationMode mEvaluationMode{};
     int mFrame{};
     double mTime{};
