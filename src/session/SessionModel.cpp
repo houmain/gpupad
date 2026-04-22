@@ -391,19 +391,20 @@ void SessionModel::clear()
     SessionModelCore::clear();
 }
 
-QJsonArray SessionModel::getJson(const QModelIndexList &indexes) const
+QJsonArray SessionModel::getJson(const QModelIndexList &indexes,
+    bool skipItems) const
 {
     auto itemArray = QJsonArray();
     if (indexes.size() == 1 && !indexes.first().isValid()) {
         for (const Item *item : getItem({}).items) {
             auto object = QJsonObject();
-            serialize(object, *item, true);
+            serialize(object, *item, true, skipItems);
             itemArray.append(object);
         }
     } else {
         for (const QModelIndex &index : indexes) {
             auto object = QJsonObject();
-            serialize(object, getItem(index), false);
+            serialize(object, getItem(index), false, skipItems);
             itemArray.append(object);
         }
     }
@@ -519,7 +520,7 @@ void SessionModel::deserialize(const QJsonObject &object,
 }
 
 void SessionModel::serialize(QJsonObject &object, const Item &item,
-    bool relativeFilePaths) const
+    bool relativeFilePaths, bool skipItems) const
 {
     object["type"] = getTypeName(item.type);
     object["id"] = item.id;
@@ -551,7 +552,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
     ADD_EACH_COLUMN_TYPE()
 #undef ADD
 
-    if (!item.items.empty() && !isDynamicGroup(item)) {
+    if (!skipItems && !item.items.empty() && !isDynamicGroup(item)) {
         auto items = QJsonArray();
         for (const Item *item : item.items) {
             auto sub = QJsonObject();

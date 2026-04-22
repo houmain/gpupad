@@ -390,7 +390,7 @@ QJSValue AppScriptObject::insertItemAt(const Item *parent, int row,
             const auto parent = session.getIndex(session.findItem(parentId));
             session.dropJson({ update }, row, parent, true);
         });
-    refreshItemObjectItems(parent);
+    updateItemProperties(parent);
 
     return createItemObject(id);
 }
@@ -497,7 +497,7 @@ void AppScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
             session.dropJson(update, session.rowCount(parent), parent, true);
         });
 
-    refreshItemObjectItems(parent);
+    updateItemProperties(parent);
 
     // update id in place
     Q_ASSERT(parent->items.size() == update.size());
@@ -572,14 +572,14 @@ QJSValue AppScriptObject::createItemObject(ItemId itemId)
     return jsValue;
 }
 
-void AppScriptObject::refreshItemObjectItems(const Item *item)
+void AppScriptObject::updateItemProperties(const Item *item)
 {
     if (!item)
         return;
 
     const auto it = mCreatedItemObjects.find(item->id);
     if (it != mCreatedItemObjects.end())
-        it->second.first->setItemsList(item->items);
+        it->second.first->updateProperties();
 }
 
 QJSValue AppScriptObject::getParentItem(QJSValue itemIdent)
@@ -663,7 +663,7 @@ void AppScriptObject::clearItems(QJSValue parentIdent)
         if (index.isValid())
             session.removeRows(0, session.rowCount(index), index);
     });
-    refreshItemObjectItems(parent);
+    updateItemProperties(parent);
 }
 
 void AppScriptObject::deleteItem(QJSValue itemIdent)
@@ -678,7 +678,7 @@ void AppScriptObject::deleteItem(QJSValue itemIdent)
         if (index.isValid())
             session.deleteItem(index);
     });
-    refreshItemObjectItems(parent);
+    updateItemProperties(parent);
 }
 
 QJSValue AppScriptObject::openEditor(QJSValue itemIdent)

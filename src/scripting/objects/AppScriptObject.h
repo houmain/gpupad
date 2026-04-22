@@ -149,7 +149,7 @@ private:
         bool searchSubItems);
     const Item *findSessionItem(QJSValue itemIdent);
     QJSValue createItemObject(ItemId itemId);
-    void refreshItemObjectItems(const Item *item);
+    void updateItemProperties(const Item *item);
     QJSValue insertItemAt(const Item *parent, int row, QJSValue object);
 
     template <typename T>
@@ -174,7 +174,7 @@ private:
     MouseScriptObject *mMouseScriptObject{};
     KeyboardScriptObject *mKeyboardScriptObject{};
     std::map<EditorScriptObject *, QJSValue> mEditorScriptObjects;
-    
+
     QJSValue mMouseProperty;
     QJSValue mKeyboardProperty;
     QJSValue mDateProperty;

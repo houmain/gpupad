@@ -4,7 +4,6 @@
 #include <QQmlPropertyMap>
 
 class AppScriptObject;
-struct Item;
 
 class ItemScriptObject : public QQmlPropertyMap
 {
@@ -13,7 +12,7 @@ class ItemScriptObject : public QQmlPropertyMap
 public:
     ItemScriptObject(AppScriptObject *appScriptObject, ItemId itemId);
 
-    void setItemsList(const QList<Item *> &items);
+    void updateProperties();
 
 private:
     QVariant updateValue(const QString &key, const QVariant &input) override;

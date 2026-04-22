@@ -40,7 +40,8 @@ public:
     void setActiveItemColor(QColor color);
 
     void clear();
-    QJsonArray getJson(const QModelIndexList &indexes) const;
+    QJsonArray getJson(const QModelIndexList &indexes,
+        bool skipItems = false) const;
     void dropJson(const QJsonArray &json, int row, const QModelIndex &parent,
         bool updateExisting);
     bool save(const QString &fileName);
@@ -111,7 +112,7 @@ private:
     QJsonArray parseDraggedJson(QModelIndex target,
         const QMimeData *data) const;
     void serialize(QJsonObject &object, const Item &item,
-        bool relativeFilePaths) const;
+        bool relativeFilePaths, bool skipItems = false) const;
     void deserialize(const QJsonObject &object, const QModelIndex &parent,
         int row, bool updateExisting);
 

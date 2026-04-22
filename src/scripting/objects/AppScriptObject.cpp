@@ -12,7 +12,6 @@
 #include "FileCache.h"
 #include "editors/EditorManager.h"
 #include "editors/qml/QmlView.h"
-#include "session/SessionModel.h"
 #include <QApplication>
 #include <QDirIterator>
 #include <atomic>

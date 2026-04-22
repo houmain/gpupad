@@ -9,24 +9,29 @@ ItemScriptObject::ItemScriptObject(AppScriptObject *appScriptObject,
     : mAppScriptObject(*appScriptObject)
     , mItemId(itemId)
 {
+    updateProperties();
+}
+
+void ItemScriptObject::updateProperties()
+{
     auto &session = mAppScriptObject.threadSessionModel();
     auto index = session.getIndex(session.findItem(mItemId));
     Q_ASSERT(index.isValid());
 
-    const auto json = session.getJson({ index }).first().toObject();
-    for (auto it = json.begin(); it != json.end(); ++it)
-        if (it.key() != "items")
-            insert(it.key(), it.value().toVariant());
+    auto properties = QVariantHash();
+    const auto json = session.getJson({ index }, true).first().toObject();
+    for (auto it = json.begin(); it != json.end(); ++it) {
+        Q_ASSERT(it.key() != "items");
+        properties[it.key()] = it.value().toVariant();
+    }
 
-    setItemsList(session.getItem(index).items);
-}
+    properties["items"] =
+        QVariant::fromValue(mAppScriptObject.makeArray([&](auto add) {
+            for (const auto *item : session.getItem(index).items)
+                add(mAppScriptObject.createItemObject(item->id));
+        }));
 
-void ItemScriptObject::setItemsList(const QList<Item *> &items)
-{
-    insert("items", QVariant::fromValue(mAppScriptObject.makeArray([&](auto add) {
-        for (const auto *item : items)
-            add(mAppScriptObject.createItemObject(item->id));
-    })));
+    insert(properties);
 }
 
 QVariant ItemScriptObject::updateValue(const QString &key,
