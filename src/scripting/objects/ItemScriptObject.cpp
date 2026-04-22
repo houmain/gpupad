@@ -12,11 +12,12 @@ ItemScriptObject::ItemScriptObject(AppScriptObject *appScriptObject,
     updateProperties();
 }
 
-void ItemScriptObject::updateProperties()
+bool ItemScriptObject::updateProperties()
 {
     auto &session = mAppScriptObject.threadSessionModel();
     auto index = session.getIndex(session.findItem(mItemId));
-    Q_ASSERT(index.isValid());
+    if (!index.isValid())
+        return false;
 
     auto properties = QVariantHash();
     const auto json = session.getJson({ index }, true).first().toObject();
@@ -32,6 +33,7 @@ void ItemScriptObject::updateProperties()
         }));
 
     insert(properties);
+    return true;
 }
 
 QVariant ItemScriptObject::updateValue(const QString &key,

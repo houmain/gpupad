@@ -50,6 +50,7 @@ Q_SIGNALS:
     void evaluationModeChanged(EvaluationMode mode);
     void outputChanged(QVariant output);
     void currentEditorChanged(QString fileName);
+    void itemModified(const Item* item);
 
 private:
     void invalidateRenderSession();

@@ -257,45 +257,48 @@ void SynchronizeLogic::handleItemRenamed(const QModelIndex &index,
 
 void SynchronizeLogic::handleItemModified(const QModelIndex &index)
 {
-    if (auto fileItem = mModel.item<FileItem>(index))
+    const auto& item = mModel.getItem(index);
+
+    if (auto fileItem = castItem<FileItem>(item))
         if (index.column() == SessionModel::FileName)
             handleFileItemFileChanged(*fileItem);
 
-    if (auto call = mModel.item<Call>(index))
+    if (auto call = castItem<Call>(item))
         if (index.column() == SessionModel::CallType
             && hasDefaultName<Call::CallType>(*call))
             mModel.setData(mModel.getIndex(index, SessionModel::Name),
                 getValueName(call->callType));
 
-    if (auto buffer = mModel.item<Buffer>(index)) {
+    if (auto buffer = castItem<Buffer>(item)) {
         mEditorItemsModified.insert(buffer->id);
-    } else if (auto block = mModel.item<Block>(index)) {
+    } else if (auto block = castItem<Block>(item)) {
         mEditorItemsModified.insert(block->parent->id);
-    } else if (auto field = mModel.item<Field>(index)) {
+    } else if (auto field = castItem<Field>(item)) {
         mEditorItemsModified.insert(field->parent->parent->id);
-    } else if (auto texture = mModel.item<Texture>(index)) {
+    } else if (auto texture = castItem<Texture>(item)) {
         mEditorItemsModified.insert(texture->id);
     }
 
-    if (mRenderSession
-        && mRenderSession->usedItems().contains(mModel.getItemId(index))) {
+    if (mRenderSession && mRenderSession->usedItems().contains(item.id)) {
         invalidateRenderSession();
     } else if (index.column() == SessionModel::ScriptExecuteOn) {
         invalidateRenderSession();
-    } else if (auto call = mModel.item<Call>(index)) {
+    } else if (auto call = castItem<Call>(item)) {
         if (call->checked
             && call->executeOn == Call::ExecuteOn::EveryEvaluation)
             invalidateRenderSession();
-    } else if (mModel.item<Group>(index)) {
+    } else if (castItem<Group>(item)) {
         invalidateRenderSession();
     } else if (index.column() == SessionModel::Name
-        && (mModel.item<Binding>(index) || mModel.item<Attribute>(index))) {
+        && (castItem<Binding>(item) || castItem<Attribute>(item))) {
         invalidateRenderSession();
     }
 
-    if (mModel.item<Session>(index)) {
+    if (castItem<Session>(item)) {
         mProcessSourceTimer->start();
     }
+
+    Q_EMIT itemModified(&item);
 }
 
 void SynchronizeLogic::handleItemReordered(const QModelIndex &parent, int first)

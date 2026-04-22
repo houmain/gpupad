@@ -283,6 +283,11 @@ namespace {
     }
 } // namespace
 
+bool AppScriptObject::isSessionAvailable() const
+{
+    return (onMainThread() || mRenderSession);
+}
+
 SessionModel &AppScriptObject::threadSessionModel()
 {
     if (onMainThread()) {
@@ -301,14 +306,14 @@ void AppScriptObject::setSelection(const QModelIndexList &selectedIndices)
     });
 }
 
-void AppScriptObject::withSessionModel(UpdateFunction &&updateFunction)
+void AppScriptObject::withSessionModel(UpdateSessionFunction &&updateFunction)
 {
     if (onMainThread()) {
         updateFunction(Singletons::sessionModel());
     } else {
         Q_ASSERT(mRenderSession);
         updateFunction(mRenderSession->sessionModelCopy());
-        mPendingUpdates.push_back(std::move(updateFunction));
+        mPendingSessionUpdates.push_back(std::move(updateFunction));
     }
 }
 
@@ -324,11 +329,11 @@ void AppScriptObject::endBackgroundUpdate()
     mRenderSession = nullptr;
 
     auto &session = Singletons::sessionModel();
-    if (!mPendingUpdates.empty()) {
+    if (!mPendingSessionUpdates.empty()) {
         session.beginUndoMacro("Script");
-        for (const auto &update : mPendingUpdates)
+        for (const auto &update : mPendingSessionUpdates)
             update(session);
-        mPendingUpdates.clear();
+        mPendingSessionUpdates.clear();
         session.endUndoMacro();
     }
 
@@ -337,10 +342,11 @@ void AppScriptObject::endBackgroundUpdate()
 
 QJSValue AppScriptObject::session()
 {
-    if (!onMainThread() && !mRenderSession) {
+    if (!isSessionAvailable()) {
         engine().throwError(QJSValue::EvalError, "Session not available");
         return QJSValue();
     }
+
     if (mSessionProperty.isUndefined())
         mSessionProperty =
             createItemObject(threadSessionModel().sessionItem().id);
@@ -572,6 +578,12 @@ QJSValue AppScriptObject::createItemObject(ItemId itemId)
     return jsValue;
 }
 
+void AppScriptObject::handleItemModified(const Item *item)
+{
+    if (isSessionAvailable())
+        updateItemProperties(item);
+}
+
 void AppScriptObject::updateItemProperties(const Item *item)
 {
     if (!item)
@@ -579,7 +591,8 @@ void AppScriptObject::updateItemProperties(const Item *item)
 
     const auto it = mCreatedItemObjects.find(item->id);
     if (it != mCreatedItemObjects.end())
-        it->second.first->updateProperties();
+        if (!it->second.first->updateProperties())
+            mCreatedItemObjects.erase(it);
 }
 
 QJSValue AppScriptObject::getParentItem(QJSValue itemIdent)

@@ -12,7 +12,7 @@ class ItemScriptObject : public QQmlPropertyMap
 public:
     ItemScriptObject(AppScriptObject *appScriptObject, ItemId itemId);
 
-    void updateProperties();
+    bool updateProperties();
 
 private:
     QVariant updateValue(const QString &key, const QVariant &input) override;

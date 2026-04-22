@@ -139,16 +139,18 @@ private:
 
     // session
     friend class ItemScriptObject;
-    using UpdateFunction = std::function<void(SessionModel &)>;
+    using UpdateSessionFunction = std::function<void(SessionModel &)>;
+    bool isSessionAvailable() const;
     SessionModel &threadSessionModel();
     QJsonObject toJsonObject(const QJSValue &object);
-    void withSessionModel(UpdateFunction &&updateFunction);
+    void withSessionModel(UpdateSessionFunction &&updateFunction);
     const Item *findSessionItem(QJSValue itemIdent,
         const QModelIndex &originIndex, bool searchSubItems);
     const Item *findSessionItem(QJSValue itemIdent, QJSValue originIdent,
         bool searchSubItems);
     const Item *findSessionItem(QJSValue itemIdent);
     QJSValue createItemObject(ItemId itemId);
+    void handleItemModified(const Item *item);
     void updateItemProperties(const Item *item);
     QJSValue insertItemAt(const Item *parent, int row, QJSValue object);
 
@@ -189,7 +191,7 @@ private:
     QJSValue mSelectionProperty;
     QJSValue mSessionProperty;
     IScriptRenderSession *mRenderSession{};
-    std::vector<UpdateFunction> mPendingUpdates;
+    std::vector<UpdateSessionFunction> mPendingSessionUpdates;
     std::map<ItemId, std::pair<ItemScriptObject *, QJSValue>>
         mCreatedItemObjects;
 };
