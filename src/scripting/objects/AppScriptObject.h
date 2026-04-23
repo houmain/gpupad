@@ -110,6 +110,15 @@ Q_SIGNALS:
     void currentEditorChanged();
 
 private:
+    friend class ItemScriptObject;
+    using UpdateSessionFunction = std::function<void(SessionModel &)>;
+
+    struct ItemObject
+    {
+        ItemScriptObject *object;
+        QJSValue jsValue;
+    };
+
     QJSEngine &engine();
     void handleEvaluationModeChanged(EvaluationMode evaluationMode);
     void handleFrameChanged(int frame);
@@ -123,8 +132,6 @@ private:
     QJSValue openFileDialog(QString pattern, FileDialog::Options options);
 
     // session
-    friend class ItemScriptObject;
-    using UpdateSessionFunction = std::function<void(SessionModel &)>;
     bool isSessionAvailable() const;
     SessionModel &threadSessionModel();
     QJsonObject toJsonObject(const QJSValue &object);
@@ -134,7 +141,12 @@ private:
     const Item *findSessionItem(QJSValue itemIdent, QJSValue originIdent,
         bool searchSubItems);
     const Item *findSessionItem(QJSValue itemIdent);
-    QJSValue createItemObject(ItemId itemId);
+    QList<const Item *> findSessionItems(QJSValue itemIdent,
+        QJSValue originIdent, bool searchSubItems);
+    QJSValue makeItemObject(ItemId itemId);
+    QJSValue makeItemArray(const QList<ItemId> &itemIds);
+    QJSValue makeItemArray(const QList<const Item*> &items);
+    QJSValue makeItemArray(const QList<Item*> &items);
     void handleItemModified(const Item *item);
     void updateItemProperties(const Item *item);
     QJSValue insertItemAt(const Item *parent, int row, QJSValue object);
@@ -143,16 +155,6 @@ private:
     const T *findSessionItem(const QJSValue &itemObject)
     {
         return castItem<T>(findSessionItem(itemObject));
-    }
-
-    template <typename AddElements>
-    QJSValue makeArray(AddElements &&addElements)
-    {
-        auto array = engine().newArray();
-        auto i = 0;
-        addElements(
-            [&](const QJSValue &element) { array.setProperty(i++, element); });
-        return array;
     }
 
     WeakScriptEnginePtr mEnginePtr;
@@ -177,6 +179,5 @@ private:
     QJSValue mSessionProperty;
     IScriptRenderSession *mRenderSession{};
     std::vector<UpdateSessionFunction> mPendingSessionUpdates;
-    std::map<ItemId, std::pair<ItemScriptObject *, QJSValue>>
-        mCreatedItemObjects;
+    std::map<ItemId, ItemObject> mItemObjects;
 };

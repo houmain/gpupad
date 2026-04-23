@@ -300,10 +300,10 @@ SessionModel &AppScriptObject::threadSessionModel()
 
 void AppScriptObject::setSelection(const QModelIndexList &selectedIndices)
 {
-    mSelectionProperty = makeArray([&](auto add) {
-        for (const auto &index : selectedIndices)
-            add(createItemObject(threadSessionModel().getItem(index).id));
-    });
+    auto itemIds = QList<ItemId>();
+    for (const auto &index : selectedIndices)
+        itemIds.append(threadSessionModel().getItem(index).id);
+    mSelectionProperty = makeItemArray(itemIds);
 }
 
 void AppScriptObject::withSessionModel(UpdateSessionFunction &&updateFunction)
@@ -349,7 +349,7 @@ QJSValue AppScriptObject::session()
 
     if (mSessionProperty.isUndefined())
         mSessionProperty =
-            createItemObject(threadSessionModel().sessionItem().id);
+            makeItemObject(threadSessionModel().sessionItem().id);
     return mSessionProperty;
 }
 
@@ -398,7 +398,7 @@ QJSValue AppScriptObject::insertItemAt(const Item *parent, int row,
         });
     updateItemProperties(parent);
 
-    return createItemObject(id);
+    return makeItemObject(id);
 }
 
 QJSValue AppScriptObject::insertItem(QJSValue parentIdent, QJSValue object)
@@ -530,7 +530,7 @@ const Item *AppScriptObject::findSessionItem(QJSValue itemIdent,
         auto result = std::add_pointer_t<const Item>{};
         const auto callback = [&](const Item &item) {
             if (!result && item.type != Item::Type::Root)
-                if (itemIdent.call({ createItemObject(item.id) }).toBool())
+                if (itemIdent.call({ makeItemObject(item.id) }).toBool())
                     result = session.findItem(item.id);
         };
         if (searchSubItems) {
@@ -567,15 +567,77 @@ const Item *AppScriptObject::findSessionItem(QJSValue itemIdent)
         true);
 }
 
-QJSValue AppScriptObject::createItemObject(ItemId itemId)
+QList<const Item *> AppScriptObject::findSessionItems(QJSValue itemIdent,
+    QJSValue originIdent, bool searchSubItems)
+{
+    auto items = QList<const Item *>();
+    if (itemIdent.isCallable()) {
+        const auto &session = threadSessionModel();
+        auto originIndex = session.sessionItemIndex();
+        if (!originIdent.isUndefined()) {
+            const auto origin = findSessionItem(originIdent);
+            if (!origin) {
+                engine().throwError(QStringLiteral("Invalid origin"));
+                return {};
+            }
+            originIndex = session.getIndex(origin);
+        }
+
+        const auto callback = [&](const Item &item) {
+            if (item.type != Item::Type::Root) {
+                auto itemObject = makeItemObject(item.id);
+                if (itemIdent.call({ itemObject }).toBool())
+                    items.append(&item);
+            }
+        };
+        if (searchSubItems) {
+            session.forEachItem(originIndex, callback);
+        } else {
+            session.forEachItemDirect(originIndex, callback);
+        }
+    } else {
+        if (auto item = findSessionItem(itemIdent, originIdent, searchSubItems))
+            items.append(item);
+    }
+    return items;
+}
+
+QJSValue AppScriptObject::makeItemObject(ItemId itemId)
 {
     Q_ASSERT(itemId);
-    auto &[object, jsValue] = mCreatedItemObjects[itemId];
+    auto &[object, jsValue] = mItemObjects[itemId];
     if (!object) {
         object = new ItemScriptObject(this, itemId);
         jsValue = engine().newQObject(object);
     }
     return jsValue;
+}
+
+QJSValue AppScriptObject::makeItemArray(const QList<ItemId> &itemIds)
+{
+    auto array = engine().newArray(itemIds.size());
+    auto i = 0u;
+    for (auto id : itemIds)
+        array.setProperty(i++, makeItemObject(id));
+    return array;
+}
+
+QJSValue AppScriptObject::makeItemArray(const QList<const Item*> &items)
+{
+    auto array = engine().newArray(items.size());
+    auto i = 0u;
+    for (auto item : items)
+        array.setProperty(i++, makeItemObject(item->id));
+    return array;
+}
+
+QJSValue AppScriptObject::makeItemArray(const QList<Item*> &items)
+{
+    auto array = engine().newArray(items.size());
+    auto i = 0u;
+    for (auto item : items)
+        array.setProperty(i++, makeItemObject(item->id));
+    return array;
 }
 
 void AppScriptObject::handleItemModified(const Item *item)
@@ -589,10 +651,10 @@ void AppScriptObject::updateItemProperties(const Item *item)
     if (!item)
         return;
 
-    const auto it = mCreatedItemObjects.find(item->id);
-    if (it != mCreatedItemObjects.end())
-        if (!it->second.first->updateProperties())
-            mCreatedItemObjects.erase(it);
+    const auto it = mItemObjects.find(item->id);
+    if (it != mItemObjects.end())
+        if (!it->second.object->updateProperties())
+            mItemObjects.erase(it);
 }
 
 QJSValue AppScriptObject::getParentItem(QJSValue itemIdent)
@@ -601,58 +663,29 @@ QJSValue AppScriptObject::getParentItem(QJSValue itemIdent)
     if (!item || !item->parent || !item->parent->id)
         return QJSValue::UndefinedValue;
 
-    return createItemObject(item->parent->id);
+    return makeItemObject(item->parent->id);
 }
 
 QJSValue AppScriptObject::findItem(QJSValue itemIdent, QJSValue originIdent,
     bool searchSubItems)
 {
     if (auto item = findSessionItem(itemIdent, originIdent, searchSubItems))
-        return createItemObject(item->id);
+        return makeItemObject(item->id);
     return QJSValue::UndefinedValue;
 }
 
 QJSValue AppScriptObject::findItem(QJSValue itemIdent)
 {
     if (auto item = findSessionItem(itemIdent))
-        return createItemObject(item->id);
+        return makeItemObject(item->id);
     return QJSValue::UndefinedValue;
 }
 
 QJSValue AppScriptObject::findItems(QJSValue itemIdent, QJSValue originIdent,
     bool searchSubItems)
 {
-    return makeArray([&](auto add) {
-        if (itemIdent.isCallable()) {
-            const auto &session = threadSessionModel();
-            auto originIndex = session.sessionItemIndex();
-            if (!originIdent.isUndefined()) {
-                const auto origin = findSessionItem(originIdent);
-                if (!origin) {
-                    engine().throwError(QStringLiteral("Invalid origin"));
-                    return;
-                }
-                originIndex = session.getIndex(origin);
-            }
-
-            const auto callback = [&](const Item &item) {
-                if (item.type != Item::Type::Root) {
-                    auto itemObject = createItemObject(item.id);
-                    if (itemIdent.call({ itemObject }).toBool())
-                        add(itemObject);
-                }
-            };
-            if (searchSubItems) {
-                session.forEachItem(originIndex, callback);
-            } else {
-                session.forEachItemDirect(originIndex, callback);
-            }
-        } else {
-            if (auto item =
-                    findSessionItem(itemIdent, originIdent, searchSubItems))
-                add(createItemObject(item->id));
-        }
-    });
+    return makeItemArray(
+        findSessionItems(itemIdent, originIdent, searchSubItems));
 }
 
 QJSValue AppScriptObject::findItems(QJSValue itemIdent)

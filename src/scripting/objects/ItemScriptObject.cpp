@@ -26,11 +26,8 @@ bool ItemScriptObject::updateProperties()
         properties[it.key()] = it.value().toVariant();
     }
 
-    properties["items"] =
-        QVariant::fromValue(mAppScriptObject.makeArray([&](auto add) {
-            for (const auto *item : session.getItem(index).items)
-                add(mAppScriptObject.createItemObject(item->id));
-        }));
+    properties["items"] = QVariant::fromValue(
+        mAppScriptObject.makeItemArray(session.getItem(index).items));
 
     insert(properties);
     return true;
