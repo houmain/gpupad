@@ -115,6 +115,7 @@ Allows to define the instances and geometry for ray tracing calls.
 - `clearSession()`
 - `findItem(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> Item?`
 - `findItems(ItemIdent, origin: ItemIdent?, subItems: Bool?) -> [Item]`
+- `trackItems(ItemIdent, origin: ItemIdent?, subItems: Bool?, callback)`
 - `getParentItem(ItemIdent) -> Item?`
 - `insertItem(parent: ItemIdent?, object) -> Item`
 - `insertItemAfter(sibling: ItemIdent, object) -> Item`

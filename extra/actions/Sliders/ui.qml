@@ -5,6 +5,27 @@ import QtQuick.Layouts 1.0
 ScrollView {
   id: root
 
+  ColumnLayout {
+    ColumnLayout {
+      id: sliders
+      spacing: 30
+      Layout.topMargin: 20
+      Layout.leftMargin: 20    
+      
+      Label {
+        text: `Session: '${app.session.name}'`
+      }      
+      
+      Label {
+        text: `Current Editor: '${app.currentEditor?.title}'`
+      }
+      
+      Label {
+        text: `Viewport Size: '${app.currentEditor?.viewportSize}`
+      }
+    }
+  }
+
   Component.onCompleted: script.initializeUi(root)
 
   Component {
@@ -15,31 +36,38 @@ ScrollView {
       property string name;
       property int bindingId
       property alias value: slider.value
-      Label {
-        id: label
-        text: root.name
-      }
-      Slider {
-        id: slider
-        x: 100
-        from: 0
-        to: 10
-        onMoved: {
-          app.findItem(bindingId).values = [
-            this.value,
-          ]
+      RowLayout {
+        Label {
+          id: label
+          text: root.name
+        }
+        Slider {
+          id: slider
+          from: 0
+          to: 10
+          onMoved: {
+            app.findItem(bindingId).values = [
+              this.value,
+            ]
+          }
         }
       }
     }
   }
 
-  function addSlider(binding, y) {
-      var slider = sliderComponent.createObject(root, {
-        x = 10,
-        y = y,
-      });
-      slider.name = binding.name
-      slider.bindingId = binding.id
-      slider.value = parseFloat(binding.values[0])
-  }  
+  function addSlider(binding) {
+    var slider = sliderComponent.createObject(sliders, { });
+    slider.bindingId = binding.id
+    updateSlider(binding, slider)
+    return slider
+  }
+  
+  function updateSlider(binding, slider) {
+    slider.name = binding.name
+    slider.value = parseFloat(binding.values[0])
+  }
+  
+  function removeSlider(slider) {
+    slider.destroy();
+  }
 }

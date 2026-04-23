@@ -6,22 +6,30 @@ const manifest = {
 
 class Script {
   constructor() {
-    this.library = app.loadLibrary("GenerateMesh")
+    this.sliders = [];
   }
 
   initializeUi(ui) {
     this.ui = ui
 
-    const bindings = app.findItems((item) => {
-      return (item.type == 'Binding');
-    })
-
-    let y = 10
-    for (let binding of bindings) {
-      //console.log(binding.name)
-      ui.addSlider(binding, y)
-      y += 30
-    }
+    app.trackItems(
+      (item) => {
+        return (item.type == 'Binding' && item.bindingType == 'Uniform');
+      },
+      (binding, change) => {
+        if (change === 'added') {
+          this.sliders[binding.id] = ui.addSlider(binding)
+        }
+        else if (change === 'modified') {
+          let slider = this.sliders[binding.id]
+          ui.updateSlider(binding, slider);
+        }
+        else if (change === 'removed') {
+          let slider = this.sliders[binding.id]
+          ui.removeSlider(slider);
+          delete this.sliders[binding.id]
+        }        
+      })
   }
 }
 

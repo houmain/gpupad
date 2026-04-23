@@ -43,9 +43,13 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
             &SynchronizeLogic::currentEditorChanged, this,
             &AppScriptObject::currentEditorChanged);
 
+        connect(&Singletons::synchronizeLogic(), &SynchronizeLogic::itemAdded,
+            this, &AppScriptObject::handleItemAdded);
         connect(&Singletons::synchronizeLogic(),
             &SynchronizeLogic::itemModified, this,
             &AppScriptObject::handleItemModified);
+        connect(&Singletons::synchronizeLogic(), &SynchronizeLogic::itemRemoved,
+            this, &AppScriptObject::handleItemRemoved);
 
         auto &inputState = Singletons::inputState();
         mFrame = inputState.frameIndex();

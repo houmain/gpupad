@@ -50,7 +50,9 @@ Q_SIGNALS:
     void evaluationModeChanged(EvaluationMode mode);
     void outputChanged(QVariant output);
     void currentEditorChanged(QString fileName);
+    void itemAdded(const Item* item);
     void itemModified(const Item* item);
+    void itemRemoved(const Item* item);
 
 private:
     void invalidateRenderSession();
@@ -68,7 +70,8 @@ private:
     void handleFileItemFileChanged(const FileItem &item);
     void handleFileItemRenamed(const FileItem &item, const QString &prevName);
     void handleFileChanged(const QString &fileName);
-    void handleItemReordered(const QModelIndex &parent, int first);
+    void handleItemAdded(const QModelIndex &parent, int first);
+    void handleItemRemoved(const QModelIndex &parent, int first);
     void updateEditors();
     void updateTextureEditor(const Texture &texture, TextureEditor &editor);
     void updateBinaryEditor(const Buffer &buffer, BinaryEditor &editor);

@@ -70,9 +70,9 @@ SynchronizeLogic::SynchronizeLogic(QObject *parent)
     connect(&mModel, &SessionModel::dataChanged, this,
         &SynchronizeLogic::handleItemsModified);
     connect(&mModel, &SessionModel::rowsInserted, this,
-        &SynchronizeLogic::handleItemReordered);
+        &SynchronizeLogic::handleItemAdded);
     connect(&mModel, &SessionModel::rowsAboutToBeRemoved, this,
-        &SynchronizeLogic::handleItemReordered);
+        &SynchronizeLogic::handleItemRemoved);
     connect(&Singletons::fileCache(), &FileCache::fileChanged, this,
         &SynchronizeLogic::handleFileChanged);
     connect(&Singletons::editorManager(), &EditorManager::editorRenamed, this,
@@ -255,9 +255,21 @@ void SynchronizeLogic::handleItemRenamed(const QModelIndex &index,
         handleFileItemRenamed(*fileItem, prevName);
 }
 
+void SynchronizeLogic::handleItemAdded(const QModelIndex &parent, int first)
+{
+    invalidateRenderSession();
+    Q_EMIT itemAdded(&mModel.getItem(mModel.index(first, 0, parent)));
+}
+
+void SynchronizeLogic::handleItemRemoved(const QModelIndex &parent, int first)
+{
+    invalidateRenderSession();
+    Q_EMIT itemRemoved(&mModel.getItem(mModel.index(first, 0, parent)));
+}
+
 void SynchronizeLogic::handleItemModified(const QModelIndex &index)
 {
-    const auto& item = mModel.getItem(index);
+    const auto &item = mModel.getItem(index);
 
     if (auto fileItem = castItem<FileItem>(item))
         if (index.column() == SessionModel::FileName)
@@ -297,14 +309,7 @@ void SynchronizeLogic::handleItemModified(const QModelIndex &index)
     if (castItem<Session>(item)) {
         mProcessSourceTimer->start();
     }
-
     Q_EMIT itemModified(&item);
-}
-
-void SynchronizeLogic::handleItemReordered(const QModelIndex &parent, int first)
-{
-    invalidateRenderSession();
-    handleItemModified(mModel.index(first, 0, parent));
 }
 
 void SynchronizeLogic::handleEditorFileRenamed(const QString &prevFileName,

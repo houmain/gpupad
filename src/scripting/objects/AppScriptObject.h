@@ -76,6 +76,11 @@ public:
     Q_INVOKABLE QJSValue findItems(QJSValue itemIdent, QJSValue originIdent,
         bool searchSubItems = false);
     Q_INVOKABLE QJSValue findItems(QJSValue itemIdent);
+    Q_INVOKABLE QJSValue trackItems(QJSValue itemIdent, QJSValue originIdent,
+        bool searchSubItems, QJSValue callback);
+    Q_INVOKABLE QJSValue trackItems(QJSValue itemIdent, QJSValue originIdent,
+        QJSValue callback);
+    Q_INVOKABLE QJSValue trackItems(QJSValue itemIdent, QJSValue callback);
     Q_INVOKABLE QJSValue insertItem(QJSValue object);
     Q_INVOKABLE QJSValue insertItem(QJSValue parentIdent, QJSValue object);
     Q_INVOKABLE QJSValue insertBeforeItem(QJSValue siblingIdent,
@@ -119,6 +124,15 @@ private:
         QJSValue jsValue;
     };
 
+    struct ItemTracking
+    {
+        QJSValue itemIdent;
+        QJSValue callback;
+        ItemId originId;
+        bool searchSubItems;
+        QSet<ItemId> addedItemIds;
+    };
+
     QJSEngine &engine();
     void handleEvaluationModeChanged(EvaluationMode evaluationMode);
     void handleFrameChanged(int frame);
@@ -136,18 +150,21 @@ private:
     SessionModel &threadSessionModel();
     QJsonObject toJsonObject(const QJSValue &object);
     void withSessionModel(UpdateSessionFunction &&updateFunction);
+    QModelIndex getOriginIndex(QJSValue originIdent);
     const Item *findSessionItem(QJSValue itemIdent,
         const QModelIndex &originIndex, bool searchSubItems);
-    const Item *findSessionItem(QJSValue itemIdent, QJSValue originIdent,
-        bool searchSubItems);
     const Item *findSessionItem(QJSValue itemIdent);
     QList<const Item *> findSessionItems(QJSValue itemIdent,
-        QJSValue originIdent, bool searchSubItems);
+        const QModelIndex &originIndex, bool searchSubItems);
     QJSValue makeItemObject(ItemId itemId);
     QJSValue makeItemArray(const QList<ItemId> &itemIds);
-    QJSValue makeItemArray(const QList<const Item*> &items);
-    QJSValue makeItemArray(const QList<Item*> &items);
+    QJSValue makeItemArray(const QList<const Item *> &items);
+    QJSValue makeItemArray(const QList<Item *> &items);
+    void handleItemAdded(const Item *item);
     void handleItemModified(const Item *item);
+    void handleItemRemoved(const Item *item);
+    bool itemMatchesFilter(const Item *item, const ItemTracking &tracking);
+    void updateItemTracking(const Item *item, bool removed);
     void updateItemProperties(const Item *item);
     QJSValue insertItemAt(const Item *parent, int row, QJSValue object);
 
@@ -180,4 +197,6 @@ private:
     IScriptRenderSession *mRenderSession{};
     std::vector<UpdateSessionFunction> mPendingSessionUpdates;
     std::map<ItemId, ItemObject> mItemObjects;
+    std::map<int, ItemTracking> mItemTrackings;
+    int mNextItemTrackingIndex{};
 };
