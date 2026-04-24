@@ -447,7 +447,8 @@ QList<QDir> getApplicationDirectories(const QString &dirName)
 {
     // first working, then user-, then installation-directory
     auto result = QList<QDir>{};
-    result.append(QDir::current().filePath(dirName));
+    if (auto path = QDir::current().filePath(dirName); QFileInfo(path).isDir())
+        result.append(path);
     result.append(getUserDirectory(dirName));
     result.append(getInstallDirectory(dirName));
     return result;
