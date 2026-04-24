@@ -293,17 +293,19 @@ IEditor *EditorManager::openEditor(const FileItem &fileItem)
 
     case Item::Type::Script: {
         auto editor = openSourceEditor(fileItem.fileName, true);
-        editor->setSourceType(SourceType::JavaScript);
+        if (editor)
+            editor->setSourceType(SourceType::JavaScript);
         return editor;
     }
 
     case Item::Type::Shader: {
         auto editor = openSourceEditor(fileItem.fileName, true);
-        if (auto shader = castItem<Shader>(fileItem)) {
-            const auto sourceType = getSourceType(*shader);
-            if (sourceType != SourceType::PlainText)
-                editor->setSourceType(sourceType);
-        }
+        if (editor)
+            if (auto shader = castItem<Shader>(fileItem)) {
+                const auto sourceType = getSourceType(*shader);
+                if (sourceType != SourceType::PlainText)
+                    editor->setSourceType(sourceType);
+            }
         return editor;
     }
 
@@ -314,6 +316,9 @@ IEditor *EditorManager::openEditor(const FileItem &fileItem)
 }
 IEditor *EditorManager::openEditor(const QString &fileName, bool asBinaryFile)
 {
+    if (fileName.isEmpty())
+        return nullptr;
+
     if (!asBinaryFile) {
         if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
             const auto modifiers = QApplication::queryKeyboardModifiers();
@@ -333,6 +338,9 @@ IEditor *EditorManager::openEditor(const QString &fileName, bool asBinaryFile)
 SourceEditor *EditorManager::openSourceEditor(const QString &fileName,
     bool loadOrCreate, int line, int column)
 {
+    if (fileName.isEmpty())
+        return nullptr;
+
     auto editor = getSourceEditor(fileName);
     if (!editor) {
         editor =
@@ -353,6 +361,9 @@ SourceEditor *EditorManager::openSourceEditor(const QString &fileName,
 BinaryEditor *EditorManager::openBinaryEditor(const QString &fileName,
     bool loadOrCreate)
 {
+    if (fileName.isEmpty())
+        return nullptr;
+
     auto editor = getBinaryEditor(fileName);
     if (!editor) {
         editor = new BinaryEditor(fileName, mBinaryEditorToolBar);
@@ -369,6 +380,9 @@ BinaryEditor *EditorManager::openBinaryEditor(const QString &fileName,
 TextureEditor *EditorManager::openTextureEditor(const QString &fileName,
     bool loadOrCreate)
 {
+    if (fileName.isEmpty())
+        return nullptr;
+
     auto editor = getTextureEditor(fileName);
     if (!editor) {
         editor =
@@ -386,6 +400,9 @@ TextureEditor *EditorManager::openTextureEditor(const QString &fileName,
 QmlView *EditorManager::openQmlView(const QString &fileName,
     const ScriptEnginePtr &enginePtr)
 {
+    if (fileName.isEmpty())
+        return nullptr;
+
     auto editor = getQmlView(fileName);
     // recreate dock when engine changed
     if (enginePtr && editor && editor->enginePtr() != enginePtr) {
