@@ -3,26 +3,45 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 3.4.0] - 2026-04-25
+
+### Changed
+
+- Moved `app.session` methods to `app` script object.
+- Updated scripts, replaced `app.session.` with `app.`.
+- CMake is using ccache when available.
+
+### Added
+
+- Keeping session item properties in sync with QML views.
+- Added `app.trackItems` - sample action Sliders adds/removes bindings.
+- Added item property `custom`, a map settable from scripts.
+- Added `app.isUntitled(fileName)` and `app.getFileTitle(fileName)`.
+- Opening Custom Action script in editor when holding Control key.
+- Allow to drag session root as JSON to source editor.
+
+### Fixed
+
 ## [Version 3.3.0] - 2026-04-11
 
 ### Added
 
-Added shortcut F4 to Custom Actions button.
-Added `Evaluate Script` action.
-Substituting includes in shader preamble.
-Added "Launch using NVIDIA GPU" action to .desktop file.
-Added `app.session.clear()`.
-Added `app.saveEditor(fileName)`.
-Added `app.saveFileDialog(pattern)`.
-Added `app.evaluateScript(fileName)`.
-Added `app.currentEditor` and `editor.type` properties.
-Added `app.enumerateDirs(pattern)`.
+- Added shortcut F4 to Custom Actions button.
+- Added `Evaluate Script` action.
+- Substituting includes in shader preamble.
+- Added "Launch using NVIDIA GPU" action to .desktop file.
+- Added `app.session.clear()`.
+- Added `app.saveEditor(fileName)`.
+- Added `app.saveFileDialog(pattern)`.
+- Added `app.evaluateScript(fileName)`.
+- Added `app.currentEditor` and `editor.type` properties.
+- Added `app.enumerateDirs(pattern)`.
 
 ### Fixed
 
-Made `app.session.openEditor` open depending on item type.
-Keeping messages of session reset evaluation.
-Replacing error messages of item property expressions.
+- Made `app.session.openEditor` open depending on item type.
+- Keeping messages of session reset evaluation.
+- Replacing error messages of item property expressions.
 
 ## [Version 3.2.0] - 2026-04-04
 
@@ -1044,6 +1063,7 @@ Replacing error messages of item property expressions.
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 3.4.0]: https://github.com/houmain/gpupad/compare/3.3.0...3.4.0
 [version 3.3.0]: https://github.com/houmain/gpupad/compare/3.2.0...3.3.0
 [version 3.2.0]: https://github.com/houmain/gpupad/compare/3.1.0...3.2.0
 [version 3.1.0]: https://github.com/houmain/gpupad/compare/3.0.0...3.1.0
