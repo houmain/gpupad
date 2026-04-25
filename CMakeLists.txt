@@ -27,7 +27,16 @@ else()
     # use mold linker when available
     find_program(MOLD_PATH NAMES mold)
     if(MOLD_PATH)
+        message(NOTICE "Using mold linker")
         add_link_options(-fuse-ld=mold)
+    endif()
+
+    # use ccache when available
+    find_program(CCACHE_PATH NAMES ccache)
+    if(CCACHE_PATH)
+        message(NOTICE "Using ccache")
+        set(CMAKE_C_COMPILER_LAUNCHER "ccache")
+        set(CMAKE_CXX_COMPILER_LAUNCHER "ccache")
     endif()
 endif()
 
