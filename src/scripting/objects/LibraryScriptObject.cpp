@@ -293,7 +293,7 @@ QJSValue LibraryScriptObject_Callable::call(int index, QVariantList arguments)
 //-------------------------------------------------------------------------
 
 LibraryScriptObject::LibraryScriptObject(QObject *parent)
-    : QQmlPropertyMap(parent)
+    : QQmlPropertyMap(this, parent)
 {
 }
 

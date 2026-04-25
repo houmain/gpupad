@@ -9,9 +9,9 @@ class AppScriptObject;
 class EditorScriptObject final : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString fileName READ fileName CONSTANT);
-    Q_PROPERTY(QString type READ type CONSTANT);
-    Q_PROPERTY(QString title READ title WRITE setTitle CONSTANT);
+    Q_PROPERTY(QString fileName READ fileName NOTIFY fileNameChanged);
+    Q_PROPERTY(QString type READ type NOTIFY typeChanged);
+    Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged);
     Q_PROPERTY(QJsonValue viewportSize READ viewportSize NOTIFY viewportResized)
 
 public:
@@ -30,6 +30,9 @@ public:
     bool viewportSizeWasRead() const { return mViewportSizeWasRead; }
 
 Q_SIGNALS:
+    void fileNameChanged();
+    void typeChanged();
+    void titleChanged();
     void viewportResized();
 
 private:

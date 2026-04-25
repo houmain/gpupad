@@ -12,6 +12,7 @@ class SessionModel;
 class MouseScriptObject;
 class KeyboardScriptObject;
 class EditorScriptObject;
+class ItemScriptObject;
 class IScriptRenderSession;
 using ScriptEnginePtr = std::shared_ptr<class ScriptEngine>;
 using WeakScriptEnginePtr = std::weak_ptr<class ScriptEngine>;

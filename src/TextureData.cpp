@@ -317,6 +317,16 @@ namespace {
             dest, destWidth, destHeight, destStride, pixelLayout, dataType,
             edgeMode, filter);
     }
+    
+    QImage flipImage(QImage &&image)
+    {
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 9, 0))
+        image = image.flipped(Qt::Vertical);
+#else
+        image = std::move(image).mirrored();
+#endif
+        return image;
+    }
 } // namespace
 
 bool isMultisampleTarget(QOpenGLTexture::Target target)
@@ -831,7 +841,7 @@ bool TextureData::loadQImage(QImage image, bool flipVertically)
         getNextNativeImageFormat(image.format()));
 
     if (flipVertically)
-        image = std::move(image).mirrored();
+        image = flipImage(std::move(image));
 
     if (!create(QOpenGLTexture::Target2D, getTextureFormat(image.format()),
             image.width(), image.height(), 1, 1))
@@ -974,7 +984,7 @@ bool TextureData::saveQImage(const QString &fileName, bool flipVertically) const
         return false;
 
     if (flipVertically)
-        image = std::move(image).mirrored();
+        image = flipImage(std::move(image));
 
     const auto hasExtension = !QFileInfo(fileName).suffix().isEmpty();
     return image.save(fileName, hasExtension ? nullptr : "PNG");
