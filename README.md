@@ -58,7 +58,7 @@ The session can be evaluated manually *[F6]*, automatically whenever something r
 All items which contributed to the last evaluation are highlighted.
 
 ### Items
-The items of a session pretty much correspond the concepts known from writing OpenGL or Vulkan applications:
+A session is built from the following items:
 
 - **Call** -
 Most prominently are the draw, compute and ray trace calls. Whenever the session is evaluated, all active calls are evaluated in consecutive order. They can be de-/activated using the checkbox.
@@ -82,6 +82,9 @@ Buffer blocks define the structure of a region within a binary. They consist of 
 - **Stream** -
 Serves as the input for vertex shaders. A stream consists of multiple attributes, which get their data from the referenced buffer blocks.
 
+- **Acceleration Structure** -
+Allows to define the instances and geometry for ray tracing calls.
+
 - **Group** -
 Allows to structure more complex sessions. They open a new scope unless *inline scope* is checked. Items within a scope are not visible for items outside the scope (they do not appear in the combo boxes).
 
@@ -90,8 +93,7 @@ Allows to define JavaScript functions and variables in script files, which can s
 Scripts can also be used to dynamically populate the session and generate buffer and texture data.
 There is one JavaScript state for the whole session and the scripts are evaluated in consecutive order (*Group* scopes do not have an effect).
 
-- **Acceleration Structure** -
-Allows to define the instances and geometry for ray tracing calls.
+<img src="docs/session.png">
 
 ## Scripting
 
