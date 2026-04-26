@@ -271,7 +271,8 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
     auto searchPaths = QList<QDir>();
     searchPaths += mBasePath;
 
-    for (const auto &dir : getApplicationDirectories(ActionsDir))
+    const auto dirs = getApplicationDirectories(ActionsDir);
+    for (const auto &dir : dirs)
         searchPaths += dir.filePath(fileName);
     searchPaths += getApplicationDirectories(LibrariesDir);
 
@@ -309,9 +310,16 @@ void AppScriptObject::evaluateScript(QString fileName)
 {
     auto source = QString();
     if (!Singletons::fileCache().getSource(getAbsolutePath(fileName), &source))
-        jsEngine().throwError(
+        return jsEngine().throwError(
             "Loading file '" + FileDialog::getFileTitle(fileName) + "' failed");
-    mEnginePtr.lock()->evaluateScript(source, fileName);
+
+    if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
+        if (onMainThread())
+            Singletons::editorManager().openQmlView(fileName, mEnginePtr.lock());
+    }
+    else {
+        mEnginePtr.lock()->evaluateScript(source, fileName);
+    }
 }
 
 QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)

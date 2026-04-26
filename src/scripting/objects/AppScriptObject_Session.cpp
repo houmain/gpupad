@@ -470,13 +470,15 @@ void AppScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
             ItemInfo{ item->id, item->type, !item->items.empty() });
 
     // remove Items contained in new list
-    for (auto i = 0; i < update.size(); ++i)
-        if (const auto id = update[i].toObject()["id"].toInt()) {
+    for (auto i = 0; i < update.size(); ++i) {
+        const auto object = update[i].toObject();
+        if (const auto id = object["id"].toInt()) {
             const auto it = std::find_if(unusedItems.begin(), unusedItems.end(),
                 [&](const ItemInfo &item) { return item.id == id; });
             if (it != unusedItems.end())
                 unusedItems.erase(it);
         }
+    }
 
     // reuse Items with same type and no sub items
     for (auto i = 0; i < update.size(); ++i) {
@@ -764,7 +766,7 @@ QJSValue AppScriptObject::trackItems(QJSValue itemIdent, QJSValue originIdent,
     if (!originIndex.isValid())
         return QJSValue::UndefinedValue;
 
-    auto items = findSessionItems(itemIdent, originIndex, searchSubItems);
+    const auto items = findSessionItems(itemIdent, originIndex, searchSubItems);
     auto itemIds = QSet<ItemId>();
     for (const auto *item : items) {
         auto itemObject = makeItemObject(item->id);

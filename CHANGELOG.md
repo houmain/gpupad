@@ -20,8 +20,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Opening Custom Action script in editor when holding Control key.
 - Allow to drag session root as JSON to source editor.
 
-### Fixed
-
 ## [Version 3.3.0] - 2026-04-11
 
 ### Added
