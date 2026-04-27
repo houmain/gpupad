@@ -434,7 +434,7 @@ QJSValue AppScriptObject::writeBinaryFile(QString fileName, QByteArray binary)
 
 QJSValue AppScriptObject::readTextFile(QString fileName)
 {
-    if (FileDialog::isEmptyOrUntitled(fileName))
+    if (fileName.isEmpty())
         return {};
 
     auto source = QString{};
