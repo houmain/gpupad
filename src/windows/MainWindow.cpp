@@ -26,6 +26,7 @@
 #include <QDockWidget>
 #include <QMimeData>
 #include <QToolButton>
+#include <QTimer>
 
 // increase when restoring old session states does not work properly
 const auto MainWindowStateVersion = 1;
@@ -1241,8 +1242,15 @@ void MainWindow::handleThemeChanging(const Theme &theme)
     Singletons::sessionModel().setActiveItemColor(
         theme.getColor(ThemeColor::BuiltinConstant));
 
-    style()->unpolish(qApp);
-    style()->polish(qApp);
+#if defined(_WIN32)
+    // dispatching, since something in qApp->setPalette changes the color back
+    QTimer::singleShot(std::chrono::milliseconds(1),
+        [hwnd = reinterpret_cast<void *>(winId()),
+            dark = theme.isDarkTheme()]() {
+            extern void setWindowBorderTheme(void *hwnd, bool dark);
+            setWindowBorderTheme(hwnd, dark);
+        });
+#endif
 }
 
 void MainWindow::handleHideMenuBarChanged(bool hide)

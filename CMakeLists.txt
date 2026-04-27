@@ -243,6 +243,7 @@ set(SOURCES
 
 if(WIN32)
   set(SOURCES ${SOURCES}
+  src/windows/setWindowBorderTheme.cpp
   src/render/ShaderCompiler_Microsoft.cpp
   src/render/direct3d/D3DAccelerationStructure.cpp
   src/render/direct3d/D3DBuffer.cpp
