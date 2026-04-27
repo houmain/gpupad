@@ -15,6 +15,7 @@ void QmlView::reset() { }
 #else // defined(QtQuick_FOUND)
 
 #  include "FileCache.h"
+#  include "FileDialog.h"
 #  include "Singletons.h"
 #  include "Settings.h"
 #  include "scripting/ScriptEngine.h"
@@ -134,7 +135,10 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     , mEnginePtr(std::move(enginePtr))
 {
     Q_ASSERT(onMainThread());
-    QQuickStyle::setStyle("Fusion");
+    static auto once = []() {
+        QQuickStyle::setStyle("Fusion");
+        return true;
+    }();
 
     if (!mEnginePtr)
         mEnginePtr = ScriptEngine::make(fileName, thread(), this);
@@ -151,7 +155,11 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
 
     static UrlInterceptor sUrlInterceptor;
     qmlEngine->addUrlInterceptor(&sUrlInterceptor);
-    qmlEngine->addImportPath(QFileInfo(mFileName).dir().path());
+
+    auto libraryDirs = getApplicationDirectories(LibrariesDir);
+    std::reverse(libraryDirs.begin(), libraryDirs.end());
+    for (const auto &dir : std::as_const(libraryDirs))
+        qmlEngine->addImportPath(dir.path());
 
     connect(&Singletons::settings(), &Settings::windowThemeChanged, this,
         &QmlView::windowThemeChanged);
@@ -196,8 +204,8 @@ void QmlView::reset()
                 for (const QQmlError &error : errors) {
                     const auto fileName = toAbsolutePath(error.url());
                     if (!QFileInfo(fileName).isFile() && error.line() < 0) {
-                        mMessages.insert(0, 0,
-                            MessageType::LoadingFileFailed, fileName);
+                        mMessages.insert(0, 0, MessageType::LoadingFileFailed,
+                            fileName);
                     } else {
                         mMessages.insert(fileName, error.line(),
                             MessageType::ScriptError, error.description());
@@ -208,8 +216,7 @@ void QmlView::reset()
 
     connect(mQuickView, &QQuickView::sceneGraphError,
         [this](QQuickWindow::SceneGraphError error, const QString &message) {
-            mMessages.insert(mFileName, 0,
-                MessageType::ScriptError, message);
+            mMessages.insert(mFileName, 0, MessageType::ScriptError, message);
         });
 
     connect(qmlEngine, &QQmlEngine::warnings,
@@ -221,8 +228,8 @@ void QmlView::reset()
                     fileName = mFileName;
                     line = 0;
                 }
-                mMessages.insert(fileName, line,
-                    MessageType::ScriptWarning, warning.description());
+                mMessages.insert(fileName, line, MessageType::ScriptWarning,
+                    warning.description());
             }
         });
 
@@ -232,17 +239,6 @@ void QmlView::reset()
     mQuickWidget = QWidget::createWindowContainer(mQuickView);
 
     layout()->addWidget(mQuickWidget);
-
-#  if defined(_WIN32)
-    // WORKAROUND: reapply current palette, to fix Fusion theme
-    auto palette = qApp->palette();
-    qApp->setPalette(QPalette());
-    qApp->setPalette(palette);
-#  else
-    // on Linux some more needs to be reapplied (very slow on Windows)
-    qApp->setPalette(QPalette());
-    Singletons::settings().setWindowTheme(Singletons::settings().windowTheme());
-#  endif
 }
 
 #endif // defined(QtQuick_FOUND)

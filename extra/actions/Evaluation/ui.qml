@@ -1,8 +1,6 @@
-import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts 1.0
+import App
 
-ScrollView {
+ThemedScrollView {
   id: root
 
   Component.onCompleted: {
@@ -67,7 +65,7 @@ ScrollView {
         text: "Time Delta: " + Math.round(app.timeDelta * 10000) / 10000
       }
       
-      Text {
+      Label {
           text: "UI Refresh Rate: " + frameAnimation.fps.toFixed(0)
       }
 

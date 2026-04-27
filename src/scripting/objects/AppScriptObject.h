@@ -31,6 +31,7 @@ class AppScriptObject final : public QObject
     Q_PROPERTY(QJSValue keyboard READ keyboard CONSTANT)
     Q_PROPERTY(
         QJSValue currentEditor READ currentEditor NOTIFY currentEditorChanged)
+    Q_PROPERTY(QVariantMap palette READ palette NOTIFY paletteChanged)
 
 public:
     AppScriptObject(const ScriptEnginePtr &enginePtr, const QDir &basePath);
@@ -52,6 +53,7 @@ public:
     QJSValue mouse() { return mMouseProperty; }
     QJSValue keyboard() { return mKeyboardProperty; }
     QJSValue currentEditor();
+    QVariantMap palette() const;
 
     Q_INVOKABLE bool isUntitled(QString fileName);
     Q_INVOKABLE QString getFileTitle(QString fileName);
@@ -114,6 +116,7 @@ Q_SIGNALS:
     void timeChanged();
     void timeDeltaChanged();
     void currentEditorChanged();
+    void paletteChanged();
 
 private:
     friend class ItemScriptObject;

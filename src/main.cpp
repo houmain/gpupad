@@ -207,10 +207,6 @@ int run(int argc, char *argv[])
             restoreProcessPriority();
         });
 
-    app.processEvents();
-    window.show();
-    app.processEvents();
-
     auto arguments = QApplication::arguments();
     arguments.removeFirst();
     for (const QString &argument : std::as_const(arguments))
@@ -219,6 +215,7 @@ int run(int argc, char *argv[])
     if (!window.hasEditor())
         window.newFile();
 
+    app.processEvents();
     restoreProcessPriority();
 
     return app.exec();

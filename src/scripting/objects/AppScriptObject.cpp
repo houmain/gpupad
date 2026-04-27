@@ -10,6 +10,7 @@
 #include "SynchronizeLogic.h"
 #include "Singletons.h"
 #include "FileCache.h"
+#include "Settings.h"
 #include "editors/EditorManager.h"
 #include "editors/qml/QmlView.h"
 #include <QApplication>
@@ -50,6 +51,9 @@ AppScriptObject::AppScriptObject(const ScriptEnginePtr &enginePtr,
             &AppScriptObject::handleItemModified);
         connect(&Singletons::synchronizeLogic(), &SynchronizeLogic::itemRemoved,
             this, &AppScriptObject::handleItemRemoved);
+
+        connect(&Singletons::settings(), &Settings::windowThemeChanged, this,
+            &AppScriptObject::paletteChanged);
 
         auto &inputState = Singletons::inputState();
         mFrame = inputState.frameIndex();
@@ -220,6 +224,20 @@ QJSValue AppScriptObject::date()
     return mDateProperty;
 }
 
+QVariantMap AppScriptObject::palette() const
+{
+    const auto p = qApp->palette();
+    auto palette = QVariantMap();
+    palette["alternateBase"] = p.color(QPalette::AlternateBase);
+    palette["base"] = p.color(QPalette::Base);
+    palette["text"] = p.color(QPalette::Text);
+    palette["window"] = p.color(QPalette::Window);
+    palette["windowText"] = p.color(QPalette::WindowText);
+    palette["button"] = p.color(QPalette::Button);
+    palette["buttonText"] = p.color(QPalette::ButtonText);
+    return palette;
+}
+
 QJSValue AppScriptObject::currentEditor()
 {
     auto fileName = QString();
@@ -315,9 +333,9 @@ void AppScriptObject::evaluateScript(QString fileName)
 
     if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
         if (onMainThread())
-            Singletons::editorManager().openQmlView(fileName, mEnginePtr.lock());
-    }
-    else {
+            Singletons::editorManager().openQmlView(fileName,
+                mEnginePtr.lock());
+    } else {
         mEnginePtr.lock()->evaluateScript(source, fileName);
     }
 }

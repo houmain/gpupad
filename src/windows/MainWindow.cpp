@@ -26,7 +26,6 @@
 #include <QDockWidget>
 #include <QMimeData>
 #include <QToolButton>
-#include <QTimer>
 
 // increase when restoring old session states does not work properly
 const auto MainWindowStateVersion = 1;
@@ -411,7 +410,6 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     readSettings();
-    settings.applyTheme();
 }
 
 MainWindow::~MainWindow()
@@ -449,12 +447,18 @@ void MainWindow::writeSettings()
 void MainWindow::readSettings()
 {
     auto &settings = Singletons::settings();
+    settings.applyTheme();
+
     if (!restoreGeometry(settings.value("geometry").toByteArray()))
         setGeometry(100, 100, 800, 600);
-    if (settings.value("fullScreen").toBool())
+
+    if (settings.value("fullScreen").toBool()) {
         setFullScreen(true);
-    else if (settings.value("maximized").toBool())
+    } else if (settings.value("maximized").toBool()) {
         showMaximized();
+    } else {
+        show();
+    }
 
     restoreState(settings.value("state").toByteArray(), MainWindowStateVersion);
     mSessionSplitter->restoreState(
@@ -1243,13 +1247,12 @@ void MainWindow::handleThemeChanging(const Theme &theme)
         theme.getColor(ThemeColor::BuiltinConstant));
 
 #if defined(_WIN32)
-    // dispatching, since something in qApp->setPalette changes the color back
-    QTimer::singleShot(std::chrono::milliseconds(1),
-        [hwnd = reinterpret_cast<void *>(winId()),
-            dark = theme.isDarkTheme()]() {
-            extern void setWindowBorderTheme(void *hwnd, bool dark);
-            setWindowBorderTheme(hwnd, dark);
-        });
+    // something in qApp->setPalette changes the border color back
+    qApp->processEvents();
+    auto hwnd = reinterpret_cast<void *>(winId());
+    auto dark = theme.isDarkTheme();
+    extern void setWindowBorderTheme(void *hwnd, bool dark);
+    setWindowBorderTheme(hwnd, dark);
 #endif
 }
 
