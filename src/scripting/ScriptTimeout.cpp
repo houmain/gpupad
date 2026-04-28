@@ -73,9 +73,10 @@ std::shared_ptr<void> suspendScriptEngineTimeout()
 
 void registerRunningScriptEngine(ScriptEngine *scriptEngine)
 {
-    const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
-    gRunningScriptEngines.append(scriptEngine);
-
+    {
+        const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
+        gRunningScriptEngines.append(scriptEngine);
+    }
     if (onMainThread() && gScriptEnginesRunningOnMainThread++ == 0)
         if (gScriptTimeout)
             gScriptTimeout->startTimeout();
@@ -83,9 +84,10 @@ void registerRunningScriptEngine(ScriptEngine *scriptEngine)
 
 void deregisterRunningScriptEngine(ScriptEngine *scriptEngine)
 {
-    const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
-    gRunningScriptEngines.removeOne(scriptEngine);
-
+    {
+        const auto lock = QMutexLocker(&gRunningScriptEnginesMutex);
+        gRunningScriptEngines.removeOne(scriptEngine);
+    }
     if (onMainThread() && --gScriptEnginesRunningOnMainThread == 0)
         if (gScriptTimeout)
             gScriptTimeout->cancelTimeout();
