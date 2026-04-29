@@ -546,7 +546,7 @@ const Item *AppScriptObject::findSessionItem(QJSValue itemIdent,
         auto result = std::add_pointer_t<const Item>{};
         const auto callback = [&](const Item &item) {
             if (!result && item.type != Item::Type::Root)
-                if (itemIdent.call({ makeItemObject(item.id) }).toBool())
+                if (callFunction(itemIdent, makeItemObject(item.id)).toBool())
                     result = session.findItem(item.id);
         };
         if (searchSubItems) {
@@ -579,7 +579,7 @@ QList<const Item *> AppScriptObject::findSessionItems(QJSValue itemIdent,
         const auto callback = [&](const Item &item) {
             if (item.type != Item::Type::Root) {
                 auto itemObject = makeItemObject(item.id);
-                if (itemIdent.call({ itemObject }).toBool())
+                if (callFunction(itemIdent, itemObject).toBool())
                     items.append(&item);
             }
         };
@@ -670,7 +670,7 @@ bool AppScriptObject::itemMatchesFilter(const Item *item,
 
     const auto &itemIdent = tracking.itemIdent;
     if (itemIdent.isCallable())
-        return itemIdent.call({ makeItemObject(item->id) }).toBool();
+        return callFunction(itemIdent, makeItemObject(item->id)).toBool();
 
     const auto itemId = (itemIdent.isNumber()
             ? static_cast<ItemId>(itemIdent.toNumber())
@@ -694,7 +694,7 @@ void AppScriptObject::updateItemTracking(const Item *item, bool removed)
             action = "added";
         }
         auto itemObject = makeItemObject(item->id);
-        tracking.callback.call({ itemObject, action });
+        callFunction(tracking.callback, itemObject, action);
     }
 }
 
@@ -770,7 +770,7 @@ QJSValue AppScriptObject::trackItems(QJSValue itemIdent, QJSValue originIdent,
     auto itemIds = QSet<ItemId>();
     for (const auto *item : items) {
         auto itemObject = makeItemObject(item->id);
-        callback.call({ itemObject, "added" });
+        callFunction(callback, itemObject, "added");
         itemIds.insert(item->id);
     }
 

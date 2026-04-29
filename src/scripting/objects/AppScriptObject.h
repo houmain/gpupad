@@ -176,6 +176,18 @@ private:
     QVariant processShader(const QString &fileName, SourceType sourceType,
         QString processType);
 
+    template <typename... Args>
+    QJSValue callFunction(const QJSValue &function, Args &&...args)
+    {
+        Q_ASSERT(function.isCallable());
+        auto result = function.call({ std::forward<Args>(args)... });
+        if (result.isError()) {
+            engine().throwError(result.toString());
+            return QJSValue::UndefinedValue;
+        }
+        return result;
+    }
+
     template <typename T>
     const T *findSessionItem(const QJSValue &itemObject)
     {
