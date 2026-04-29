@@ -392,19 +392,19 @@ void SessionModel::clear()
 }
 
 QJsonArray SessionModel::getJson(const QModelIndexList &indexes,
-    bool skipItems) const
+    bool serializingScriptItem) const
 {
     auto itemArray = QJsonArray();
     if (indexes.size() == 1 && !indexes.first().isValid()) {
         for (const Item *item : getItem({}).items) {
             auto object = QJsonObject();
-            serialize(object, *item, true, skipItems);
+            serialize(object, *item, true, serializingScriptItem);
             itemArray.append(object);
         }
     } else {
         for (const QModelIndex &index : indexes) {
             auto object = QJsonObject();
-            serialize(object, getItem(index), false, skipItems);
+            serialize(object, getItem(index), false, serializingScriptItem);
             itemArray.append(object);
         }
     }
@@ -520,7 +520,7 @@ void SessionModel::deserialize(const QJsonObject &object,
 }
 
 void SessionModel::serialize(QJsonObject &object, const Item &item,
-    bool relativeFilePaths, bool skipItems) const
+    bool relativeFilePaths, bool serializingScriptItem) const
 {
     object["type"] = getTypeName(item.type);
     object["id"] = item.id;
@@ -531,7 +531,8 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
     if (auto fileItem = castItem<FileItem>(item)) {
         const auto &fileName = fileItem->fileName;
         if (!fileName.isEmpty()) {
-            if (FileDialog::isUntitled(fileName)) {
+            if (FileDialog::isUntitled(fileName)
+                && !serializingScriptItem) {
                 mDraggedUntitledFileNames[item.id] = fileName;
             } else {
                 object["fileName"] = (relativeFilePaths
@@ -552,7 +553,7 @@ void SessionModel::serialize(QJsonObject &object, const Item &item,
     ADD_EACH_COLUMN_TYPE()
 #undef ADD
 
-    if (!skipItems && !item.items.empty() && !isDynamicGroup(item)) {
+    if (!serializingScriptItem && !item.items.empty() && !isDynamicGroup(item)) {
         auto items = QJsonArray();
         for (const Item *item : item.items) {
             auto sub = QJsonObject();
