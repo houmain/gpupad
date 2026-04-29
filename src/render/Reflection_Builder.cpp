@@ -23,35 +23,6 @@ namespace {
         return count;
     }
 
-    SpvReflectTypeFlags getDescriptorTypeFlags(SpvReflectDescriptorType type,
-        bool isArray)
-    {
-        auto typeFlags = SpvReflectTypeFlags{};
-        switch (type) {
-        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
-            typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER;
-            break;
-        case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-            typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE;
-            typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER;
-            break;
-        case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
-            typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE;
-            break;
-        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
-            typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE;
-            break;
-        case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
-            typeFlags |= SPV_REFLECT_TYPE_FLAG_EXTERNAL_BLOCK;
-            break;
-        default: Q_ASSERT(!"type not handled"); break;
-        }
-        if (isArray)
-            typeFlags |= SPV_REFLECT_TYPE_FLAG_ARRAY;
-        return typeFlags;
-    }
-
     SpvReflectTypeDescription getTypeDescription(SpvReflectFormat format)
     {
         auto isSigned = true;
@@ -187,8 +158,7 @@ namespace {
         for (const auto &descriptor : builder.descriptorsBindings) {
             auto &typeDesc = module->typeDescriptions.emplace_back();
             typeDesc.type_name = descriptor.typeName.c_str();
-            typeDesc.type_flags = getDescriptorTypeFlags(
-                descriptor.descriptorType, descriptor.array.dims_count > 0);
+            typeDesc.type_flags = descriptor.typeFlags;
             typeDesc.traits.numeric = descriptor.numeric;
             typeDesc.traits.image = descriptor.image;
             typeDesc.traits.array = descriptor.array;

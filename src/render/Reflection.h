@@ -27,6 +27,7 @@ public:
         struct DescriptorBinding
         {
             SpvReflectDescriptorType descriptorType;
+            SpvReflectTypeFlags typeFlags;
             std::string name;
             std::string typeName;
             SpvReflectDecorationFlags decorationFlags;

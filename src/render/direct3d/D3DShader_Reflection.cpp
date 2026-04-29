@@ -337,21 +337,24 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
 
             builder->descriptorsBindings.push_back(DescriptorBinding{
                 .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                      .name = cbufferDesc.Name,
-                      .typeName = cbufferDesc.Name,
-                      .array = array,
-                      .block = {
-                          .size = cbufferDesc.Size,
-                          .members = std::move(variables),
-                      },
-                      .binding = bindDesc.BindPoint,
-                      .set = bindDesc.Space,
-                  });
+                .typeFlags = SPV_REFLECT_TYPE_FLAG_EXTERNAL_BLOCK |
+                    (array.dims_count > 0 ? SPV_REFLECT_TYPE_FLAG_ARRAY : 0u),
+                .name = cbufferDesc.Name,
+                .typeName = cbufferDesc.Name,
+                .array = array,
+                .block = {
+                    .size = cbufferDesc.Size,
+                    .members = std::move(variables),
+                },
+                .binding = bindDesc.BindPoint,
+                .set = bindDesc.Space,
+            });
         } break;
 
         default:
             builder->descriptorsBindings.push_back(DescriptorBinding{
                 .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                .typeFlags = SPV_REFLECT_TYPE_FLAG_EXTERNAL_BLOCK,
                 .name = bindDesc.Name,
                 .typeName = bindDesc.Name,
                 .binding = bindDesc.BindPoint,
@@ -362,6 +365,7 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
         case D3D_SIT_SAMPLER:
             builder->descriptorsBindings.push_back(DescriptorBinding{
                 .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER,
+                .typeFlags = SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER,
                 .name = bindDesc.Name,
                 .binding = bindDesc.BindPoint,
                 .set = bindDesc.Space,
@@ -371,6 +375,7 @@ Reflection generateSpirvReflection(Shader::ShaderType shaderType,
         case D3D_SIT_TEXTURE:
             builder->descriptorsBindings.push_back(DescriptorBinding{
                 .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                .typeFlags = SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE,
                 .name = bindDesc.Name,
                 .image = getImageTraits(bindDesc),
                 .binding = bindDesc.BindPoint,

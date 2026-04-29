@@ -160,27 +160,25 @@ namespace {
             * getDataTypeSize(*dataType);
     }
 
-    SpvReflectTypeFlags getTypeFlags(GLenum type, bool isArray)
+    bool isOpaqueType(GLenum type)
     {
+        return !getComponentDataType(type).has_value();
+    }
+
+    SpvReflectTypeFlags getNumericTypeFlags(GLenum type, bool isArray)
+    {
+        Q_ASSERT(!isOpaqueType(type));
         auto typeFlags = SpvReflectTypeFlags{};
-        switch (type) {
-            // TODO:
-        case GL_SAMPLER_2D:
-            return SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER
-                | SPV_REFLECT_TYPE_FLAG_FLOAT;
-        default:
-            switch (
-                getComponentDataType(type).value_or(Field::DataType::Uint8)) {
-            case Field::DataType::Int32:
-            case Field::DataType::Uint32:
-                typeFlags |= SPV_REFLECT_TYPE_FLAG_INT;
-                break;
-            case Field::DataType::Float:
-            case Field::DataType::Double:
-                typeFlags |= SPV_REFLECT_TYPE_FLAG_FLOAT;
-                break;
-            default: Q_ASSERT(!"unhandled type");
-            }
+        switch (getComponentDataType(type).value_or(Field::DataType::Uint8)) {
+        case Field::DataType::Int32:
+        case Field::DataType::Uint32:
+            typeFlags |= SPV_REFLECT_TYPE_FLAG_INT;
+            break;
+        case Field::DataType::Float:
+        case Field::DataType::Double:
+            typeFlags |= SPV_REFLECT_TYPE_FLAG_FLOAT;
+            break;
+        default: Q_ASSERT(!"unhandled type");
         }
 
         const auto rows = getTypeRows(type);
@@ -238,80 +236,37 @@ namespace {
         return SPV_REFLECT_FORMAT_UNDEFINED;
     }
 
-    bool isOpaqueType(GLenum type)
+    DescriptorBinding makeOpaqueDescriptorBinding(GLenum type)
     {
-        return !getComponentDataType(type).has_value();
-    }
-
-    SpvReflectDescriptorType getDescriptorType(GLenum type)
-    {
-        switch (type) {
-        case GL_SAMPLER_1D:
-        case GL_SAMPLER_2D:
-        case GL_SAMPLER_3D:
-        case GL_SAMPLER_2D_RECT:
-        case GL_SAMPLER_CUBE:
-        case GL_SAMPLER_BUFFER:
-        case GL_SAMPLER_1D_ARRAY:
-        case GL_SAMPLER_2D_ARRAY:
-        case GL_SAMPLER_CUBE_MAP_ARRAY:
-        case GL_SAMPLER_2D_MULTISAMPLE:
-        case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
-        case GL_SAMPLER_1D_SHADOW:
-        case GL_SAMPLER_2D_SHADOW:
-            return SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-
-        case GL_IMAGE_1D:
-        case GL_IMAGE_2D:
-        case GL_IMAGE_3D:
-        case GL_IMAGE_2D_RECT:
-        case GL_IMAGE_CUBE:
-        case GL_IMAGE_BUFFER:
-        case GL_IMAGE_1D_ARRAY:
-        case GL_IMAGE_2D_ARRAY:
-        case GL_IMAGE_CUBE_MAP_ARRAY:
-        case GL_IMAGE_2D_MULTISAMPLE:
-        case GL_IMAGE_2D_MULTISAMPLE_ARRAY:
-        case GL_INT_IMAGE_1D:
-        case GL_INT_IMAGE_2D:
-        case GL_INT_IMAGE_3D:
-        case GL_INT_IMAGE_2D_RECT:
-        case GL_INT_IMAGE_CUBE:
-        case GL_INT_IMAGE_BUFFER:
-        case GL_INT_IMAGE_1D_ARRAY:
-        case GL_INT_IMAGE_2D_ARRAY:
-        case GL_INT_IMAGE_CUBE_MAP_ARRAY:
-        case GL_INT_IMAGE_2D_MULTISAMPLE:
-        case GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
-        case GL_UNSIGNED_INT_IMAGE_1D:
-        case GL_UNSIGNED_INT_IMAGE_2D:
-        case GL_UNSIGNED_INT_IMAGE_3D:
-        case GL_UNSIGNED_INT_IMAGE_2D_RECT:
-        case GL_UNSIGNED_INT_IMAGE_CUBE:
-        case GL_UNSIGNED_INT_IMAGE_BUFFER:
-        case GL_UNSIGNED_INT_IMAGE_1D_ARRAY:
-        case GL_UNSIGNED_INT_IMAGE_2D_ARRAY:
-        case GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY:
-        case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE:
-        case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
-            return SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-
-        default: Q_ASSERT(!"not handled data type");
-        }
-        return {};
-    }
-
-    SpvReflectImageTraits getImageTraits(GLenum type)
-    {
+        Q_ASSERT(isOpaqueType(type));
+        auto desc = DescriptorBinding{};
         enum Flag : uint32_t {
             None = 0,
             Sampled = 1 << 0,
             Arrayed = 2 << 1,
             MS = 1 << 2,
             Depth = 1 << 3,
+            Int = 1 << 4,
+            UInt = 1 << 5,
         };
         const auto make = [](SpvDim dim, uint32_t flags = Flag::None) {
-            return SpvReflectImageTraits{
+            auto desc = DescriptorBinding{};
+            desc.descriptorType = (flags & Sampled
+                    ? SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+                    : SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+
+            desc.typeFlags |= (flags & Sampled
+                    ? SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE
+                        | SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER
+                    : SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE);
+
+            desc.typeFlags |= (flags & (Int | UInt)
+                    ? SPV_REFLECT_TYPE_FLAG_INT
+                    : SPV_REFLECT_TYPE_FLAG_FLOAT);
+
+            desc.numeric.scalar.signedness = (flags & UInt ? 0 : 1);
+
+            desc.image = SpvReflectImageTraits{
                 .dim = dim,
                 .depth = (flags & Depth ? 1u : 0),
                 .arrayed = (flags & Arrayed ? 1u : 0),
@@ -319,55 +274,116 @@ namespace {
                 .sampled = (flags & Sampled ? 1u : 0),
                 .image_format = SpvImageFormatUnknown,
             };
+            return desc;
         };
         switch (type) {
         case GL_SAMPLER_1D_SHADOW:
-        case GL_SAMPLER_1D:             return make(SpvDim1D, Sampled);
-          case GL_SAMPLER_2D_SHADOW:
-        case GL_SAMPLER_2D:             return make(SpvDim2D, Sampled);
-        case GL_SAMPLER_3D:             return make(SpvDim3D, Sampled);
-        case GL_SAMPLER_CUBE:           return make(SpvDimCube, Sampled);
+        case GL_SAMPLER_1D:              return make(SpvDim1D, Sampled);
+        case GL_INT_SAMPLER_1D:          return make(SpvDim1D, Sampled | Int);
+        case GL_UNSIGNED_INT_SAMPLER_1D: return make(SpvDim1D, Sampled | UInt);
+
+        case GL_SAMPLER_2D_SHADOW:
+        case GL_SAMPLER_2D_RECT:
+        case GL_SAMPLER_2D_RECT_SHADOW:
+        case GL_SAMPLER_2D:                   return make(SpvDim2D, Sampled);
+        case GL_INT_SAMPLER_2D_RECT:
+        case GL_INT_SAMPLER_2D:               return make(SpvDim2D, Sampled | Int);
+        case GL_UNSIGNED_INT_SAMPLER_2D_RECT:
+        case GL_UNSIGNED_INT_SAMPLER_2D:      return make(SpvDim2D, Sampled | UInt);
+
+        case GL_SAMPLER_3D:              return make(SpvDim3D, Sampled);
+        case GL_INT_SAMPLER_3D:          return make(SpvDim3D, Sampled | Int);
+        case GL_UNSIGNED_INT_SAMPLER_3D: return make(SpvDim3D, Sampled | UInt);
+
+        case GL_SAMPLER_CUBE:     return make(SpvDimCube, Sampled);
+        case GL_INT_SAMPLER_CUBE: return make(SpvDimCube, Sampled | Int);
+        case GL_UNSIGNED_INT_SAMPLER_CUBE:
+            return make(SpvDimCube, Sampled | UInt);
+
         case GL_SAMPLER_2D_MULTISAMPLE: return make(SpvDim2D, Sampled | MS);
-        case GL_SAMPLER_1D_ARRAY:       return make(SpvDim1D, Sampled | Arrayed);
-        case GL_SAMPLER_2D_ARRAY:       return make(SpvDim2D, Sampled | Arrayed);
+        case GL_INT_SAMPLER_2D_MULTISAMPLE:
+            return make(SpvDim2D, Sampled | MS | Int);
+        case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:
+            return make(SpvDim2D, Sampled | MS | UInt);
+
+        case GL_SAMPLER_1D_ARRAY: return make(SpvDim1D, Sampled | Arrayed);
+        case GL_INT_SAMPLER_1D_ARRAY:
+            return make(SpvDim1D, Sampled | Arrayed | Int);
+        case GL_UNSIGNED_INT_SAMPLER_1D_ARRAY:
+            return make(SpvDim1D, Sampled | Arrayed | UInt);
+
+        case GL_SAMPLER_2D_ARRAY: return make(SpvDim2D, Sampled | Arrayed);
+        case GL_INT_SAMPLER_2D_ARRAY:
+            return make(SpvDim2D, Sampled | Arrayed | Int);
+        case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
+            return make(SpvDim2D, Sampled | Arrayed | UInt);
+
         case GL_SAMPLER_CUBE_MAP_ARRAY:
             return make(SpvDimCube, Sampled | Arrayed);
+        case GL_INT_SAMPLER_CUBE_MAP_ARRAY:
+            return make(SpvDimCube, Sampled | Arrayed | Int);
+
+        case GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY:
+            return make(SpvDimCube, Sampled | Arrayed | UInt);
         case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
             return make(SpvDim2D, Sampled | MS | Arrayed);
-        case GL_INT_IMAGE_1D:
-        case GL_UNSIGNED_INT_IMAGE_1D:
-        case GL_IMAGE_1D:                                return make(SpvDim1D);
-        case GL_INT_IMAGE_2D:
-        case GL_UNSIGNED_INT_IMAGE_2D:
-        case GL_IMAGE_2D:                                return make(SpvDim2D);
-        case GL_INT_IMAGE_3D:
-        case GL_UNSIGNED_INT_IMAGE_3D:
-        case GL_IMAGE_3D:                                return make(SpvDim3D);
+
+        case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            return make(SpvDim2D, Sampled | MS | Arrayed | Int);
+        case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+            return make(SpvDim2D, Sampled | MS | Arrayed | UInt);
+
+        case GL_IMAGE_1D:              return make(SpvDim1D);
+        case GL_INT_IMAGE_1D:          return make(SpvDim1D, Int);
+        case GL_UNSIGNED_INT_IMAGE_1D: return make(SpvDim1D, UInt);
+
+        case GL_IMAGE_2D_RECT:
+        case GL_IMAGE_2D:                   return make(SpvDim2D);
         case GL_INT_IMAGE_2D_RECT:
+        case GL_INT_IMAGE_2D:               return make(SpvDim2D, Int);
         case GL_UNSIGNED_INT_IMAGE_2D_RECT:
-        case GL_IMAGE_2D_RECT:                           return make(SpvDim2D);
-        case GL_INT_IMAGE_CUBE:
-        case GL_UNSIGNED_INT_IMAGE_CUBE:
-        case GL_IMAGE_CUBE:                              return make(SpvDimCube);
-        case GL_INT_IMAGE_BUFFER:
-        case GL_UNSIGNED_INT_IMAGE_BUFFER:
-        case GL_IMAGE_BUFFER:                            return make(SpvDimBuffer);
-        case GL_INT_IMAGE_1D_ARRAY:
+        case GL_UNSIGNED_INT_IMAGE_2D:      return make(SpvDim2D, UInt);
+
+        case GL_IMAGE_3D:              return make(SpvDim3D);
+        case GL_INT_IMAGE_3D:          return make(SpvDim3D, Int);
+        case GL_UNSIGNED_INT_IMAGE_3D: return make(SpvDim3D, UInt);
+
+        case GL_IMAGE_CUBE:              return make(SpvDimCube);
+        case GL_INT_IMAGE_CUBE:          return make(SpvDimCube, Int);
+        case GL_UNSIGNED_INT_IMAGE_CUBE: return make(SpvDimCube, UInt);
+
+        case GL_IMAGE_BUFFER:              return make(SpvDimBuffer);
+        case GL_INT_IMAGE_BUFFER:          return make(SpvDimBuffer, Int);
+        case GL_UNSIGNED_INT_IMAGE_BUFFER: return make(SpvDimBuffer, UInt);
+
+        case GL_IMAGE_1D_ARRAY:     return make(SpvDim1D, Arrayed);
+        case GL_INT_IMAGE_1D_ARRAY: return make(SpvDim1D, Arrayed | Int);
         case GL_UNSIGNED_INT_IMAGE_1D_ARRAY:
-        case GL_IMAGE_1D_ARRAY:                          return make(SpvDim1D, Arrayed);
-        case GL_INT_IMAGE_2D_ARRAY:
+            return make(SpvDim1D, Arrayed | UInt);
+
+        case GL_IMAGE_2D_ARRAY:     return make(SpvDim2D, Arrayed);
+        case GL_INT_IMAGE_2D_ARRAY: return make(SpvDim2D, Arrayed | Int);
         case GL_UNSIGNED_INT_IMAGE_2D_ARRAY:
-        case GL_IMAGE_2D_ARRAY:                          return make(SpvDim2D, Arrayed);
+            return make(SpvDim2D, Arrayed | UInt);
+
+        case GL_IMAGE_CUBE_MAP_ARRAY: return make(SpvDimCube, Arrayed);
         case GL_INT_IMAGE_CUBE_MAP_ARRAY:
+            return make(SpvDimCube, Arrayed | Int);
         case GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY:
-        case GL_IMAGE_CUBE_MAP_ARRAY:                    return make(SpvDimCube, Arrayed);
-        case GL_INT_IMAGE_2D_MULTISAMPLE:
+            return make(SpvDimCube, Arrayed | UInt);
+
+        case GL_IMAGE_2D_MULTISAMPLE:     return make(SpvDim2D, MS);
+        case GL_INT_IMAGE_2D_MULTISAMPLE: return make(SpvDim2D, MS | Int);
         case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE:
-        case GL_IMAGE_2D_MULTISAMPLE:                    return make(SpvDim2D, MS);
+            return make(SpvDim2D, MS | UInt);
+
+        case GL_IMAGE_2D_MULTISAMPLE_ARRAY: return make(SpvDim2D, Arrayed | MS);
         case GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
+            return make(SpvDim2D, Arrayed | MS | Int);
         case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
-        case GL_IMAGE_2D_MULTISAMPLE_ARRAY:              return make(SpvDim2D, Arrayed | MS);
-        default:                                         Q_ASSERT(!"unhandled type"); return {};
+            return make(SpvDim2D, Arrayed | MS | UInt);
+
+        default: Q_ASSERT(!"unhandled type"); return {};
         }
     }
 
@@ -416,8 +432,9 @@ namespace {
         auto size = getSize(type);
         auto [baseName, array] = splitArrayNameDims(name);
 
-        Q_ASSERT(arrayStride == 0 || array.dims_count > 0);
-        if (arrayStride > 0 && array.dims_count > 0) {
+        const auto isArray = (array.dims_count > 0);
+        Q_ASSERT(arrayStride == 0 || isArray);
+        if (arrayStride > 0 && isArray) {
             array.dims[array.dims_count - 1] = arraySize;
             array.stride = arrayStride;
             size = arraySize * arrayStride;
@@ -426,13 +443,19 @@ namespace {
             .name = baseName,
             .offset = static_cast<uint32_t>(offset),
             .size = static_cast<uint32_t>(size),
-            .typeFlags = getTypeFlags(type, array.dims_count > 0),
             .decorationFlags = getDecorationFlags(isRowMajor),
             .array = array,
         };
+
         if (isOpaqueType(type)) {
-            variable.image = getImageTraits(type);
+            // reusing function to get traits
+            const auto desc = makeOpaqueDescriptorBinding(type);
+            variable.typeFlags = desc.typeFlags
+                | (isArray ? SPV_REFLECT_TYPE_FLAG_ARRAY : 0u);
+            variable.numeric = desc.numeric;
+            variable.image = desc.image;
         } else {
+            variable.typeFlags = getNumericTypeFlags(type, isArray);
             variable.numeric = getNumericTraits(type);
         }
         return variable;
@@ -643,16 +666,17 @@ void GLProgram::generateReflectionFromProgram(GLuint program,
                 const auto bindingPoint = nextTextureUnit;
                 nextTextureUnit += arraySize;
 
-                reflection->descriptorsBindings.push_back({
-                    .descriptorType = getDescriptorType(type),
-                    .name = baseName,
-                    .image = getImageTraits(type),
-                    .array = { 
-                        .dims_count = (arraySize > 0 ? 1u : 0u),
-                        .dims = { static_cast<uint32_t>(arraySize) },
-                    },
-                    .binding = bindingPoint,
-                });
+                const auto isArray = !arrayName.empty();
+                auto desc = makeOpaqueDescriptorBinding(type);
+                desc.typeFlags |= (isArray ? SPV_REFLECT_TYPE_FLAG_ARRAY : 0u);
+                desc.name = baseName;
+                desc.binding = bindingPoint;
+                desc.array = SpvReflectArrayTraits{
+                    .dims_count = (isArray ? 1u : 0u),
+                    .dims = { static_cast<uint32_t>(arraySize) },
+                };
+                reflection->descriptorsBindings.push_back(desc);
+
                 mDescriptorBindingPoints[baseName.c_str()] = {
                     GL_TEXTURE,
                     static_cast<GLuint>(location),
@@ -683,6 +707,7 @@ void GLProgram::generateReflectionFromProgram(GLuint program,
     if (!globalUniformBlockMembers.empty())
         reflection->descriptorsBindings.push_back(DescriptorBinding{
             .descriptorType = SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .typeFlags = SPV_REFLECT_TYPE_FLAG_EXTERNAL_BLOCK,
             .typeName = globalUniformBlockName,
             .block = {
                 .members = std::move(globalUniformBlockMembers),
@@ -757,6 +782,8 @@ void GLProgram::generateReflectionFromProgram(GLuint program,
 
                 reflection->descriptorsBindings.push_back(DescriptorBinding{
                   .descriptorType = descriptorType,
+                  .typeFlags = SPV_REFLECT_TYPE_FLAG_EXTERNAL_BLOCK |
+                      (array.dims_count > 0 ? SPV_REFLECT_TYPE_FLAG_ARRAY : 0u),
                   .typeName = std::move(baseName),
                   .array = array,
                   .block = {

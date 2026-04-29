@@ -199,10 +199,10 @@ namespace {
         const auto kind = [&]() -> const char * {
             if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLED_IMAGE)
                 return "sampler";
-            if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE)
-                return "image";
             if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_SAMPLER)
                 return "sampler";
+            if (type.type_flags & SPV_REFLECT_TYPE_FLAG_EXTERNAL_IMAGE)
+                return "image";
             if (type.type_flags & SPV_REFLECT_TYPE_FLAG_MATRIX)
                 return "mat";
             if (type.type_flags & SPV_REFLECT_TYPE_FLAG_VECTOR)

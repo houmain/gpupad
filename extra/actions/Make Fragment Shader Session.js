@@ -49,12 +49,6 @@ for (let uniform of reflection.uniforms || []) {
   let values = undefined
   let textureId = undefined
   let editor = undefined
-  switch (uniform.type) {
-    case 'float': editor = "Expression"; break;
-    case 'vec2': editor = "Expression2"; break;
-    case 'vec3': editor = "Expression3"; break;
-    case 'vec4': editor = "Expression4"; break;
-  }
   
   if (uniform.type.match(/^[ui]?sampler/) ||
       uniform.type.match(/^[ui]?image/)) {
@@ -81,21 +75,31 @@ for (let uniform of reflection.uniforms || []) {
   }
   else if (uniform.name.match(/time/) &&
       uniform.type == 'float') {
+    editor = "Expression";
     values = ['app.time'];
   }
   else if (uniform.name.match(/resolution/)&&
       uniform.type == 'vec2') {
+    editor = "Expression2";
     values = [width, height];
   }
   else if (uniform.name.match(/mouse/) &&
       uniform.type == 'vec2') {
-    editor = "Expression"
+    editor = "Expression";
     values = ['app.mouse.fragCoord'];
   }
   else if (uniform.name.match(/color/) &&
       (uniform.type == 'vec3' || uniform.type == 'vec4')) {
     editor = "Color";
     values = [1,1,1,1];
+  }
+  else {
+    switch (uniform.type) {
+      case 'float':editor = "Expression";  values = [0]; break;
+      case 'vec2': editor = "Expression2"; values = [0,0]; break;
+      case 'vec3': editor = "Expression3"; values = [0,0,0]; break;
+      case 'vec4': editor = "Expression4"; values = [0,0,0,0]; break;
+    }    
   }
   
   app.insertItem({
