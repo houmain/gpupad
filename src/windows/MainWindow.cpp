@@ -355,7 +355,9 @@ MainWindow::MainWindow(QWidget *parent)
     customActionsButton->setMenu(mUi->menuCustomActions);
     customActionsButton->setPopupMode(QToolButton::InstantPopup);
 
+#if defined(NDEBUG)
     setScriptEngineTimeout(std::chrono::seconds(1));
+#endif
     qApp->installEventFilter(this);
 
     mUi->actionPasteInNewEditor->setEnabled(
