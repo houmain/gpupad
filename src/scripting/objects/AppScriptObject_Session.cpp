@@ -1011,25 +1011,43 @@ quint64 AppScriptObject::getBufferHandle(QJSValue itemIdent)
     return 0;
 }
 
-QJSValue AppScriptObject::processShader(QJSValue itemIdent, QString processType)
+QJSValue AppScriptObject::processShader(QJSValue fileNameOrItemIdent,
+    QString processType)
 {
-    if (const auto shader = findSessionItem<Shader>(itemIdent)) {
-        auto result = QVariant();
-        auto renderer = Singletons::sessionRenderer();
-        auto processSource = ProcessSource(renderer);
-        connect(&processSource, &ProcessSource::outputChanged,
-            [&](QVariant output) { result = output; });
-
-        processSource.setFileName(shader->fileName);
-        processSource.setSourceType(getSourceType(*shader));
-        processSource.setProcessType(processType);
-        processSource.update();
-
-        // block until process source signaled completion
-        while (processSource.updating())
-            qApp->processEvents(QEventLoop::WaitForMoreEvents);
-
-        return QJSValue(engine().toManagedValue(result));
+    auto result = QVariant();
+    if (fileNameOrItemIdent.isString()) {
+        dispatchToMainThread([&]() {
+            if (auto editor = Singletons::editorManager().getSourceEditor(
+                    getAbsolutePath(fileNameOrItemIdent.toString())))
+                result = processShader(editor->fileName(), editor->sourceType(),
+                    processType);
+        });
+    } else {
+        if (const auto shader = findSessionItem<Shader>(fileNameOrItemIdent))
+            result = processShader(shader->fileName, getSourceType(*shader),
+                processType);
     }
-    return QJSValue::UndefinedValue;
+    return (result.isValid() ? QJSValue(engine().toManagedValue(result))
+                             : QJSValue::UndefinedValue);
+}
+
+QVariant AppScriptObject::processShader(const QString &fileName,
+    SourceType sourceType, QString processType)
+{
+    auto result = QVariant();
+    auto renderer = Singletons::sessionRenderer();
+    auto processSource = ProcessSource(renderer);
+    connect(&processSource, &ProcessSource::outputChanged,
+        [&](QVariant output) { result = output; });
+
+    processSource.setFileName(fileName);
+    processSource.setSourceType(sourceType);
+    processSource.setProcessType(processType);
+    processSource.update();
+
+    // block until process source signaled completion
+    while (processSource.updating())
+        qApp->processEvents(QEventLoop::WaitForMoreEvents);
+
+    return result;
 }

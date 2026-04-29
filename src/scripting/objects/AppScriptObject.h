@@ -8,6 +8,7 @@
 #include <QDir>
 
 struct Item;
+struct Shader;
 class SessionModel;
 class MouseScriptObject;
 class KeyboardScriptObject;
@@ -101,7 +102,8 @@ public:
     Q_INVOKABLE void setShaderSource(QJSValue itemIdent, QJSValue data);
     Q_INVOKABLE quint64 getTextureHandle(QJSValue itemIdent);
     Q_INVOKABLE quint64 getBufferHandle(QJSValue itemIdent);
-    Q_INVOKABLE QJSValue processShader(QJSValue itemIdent, QString processType);
+    Q_INVOKABLE QJSValue processShader(QJSValue fileNameOrItemIdent,
+        QString processType);
 
     const QDir &basePath() const { return mBasePath; }
     void deregisterEditorScriptObject(EditorScriptObject *object);
@@ -171,6 +173,8 @@ private:
     void updateItemTracking(const Item *item, bool removed);
     void updateItemProperties(const Item *item);
     QJSValue insertItemAt(const Item *parent, int row, QJSValue object);
+    QVariant processShader(const QString &fileName, SourceType sourceType,
+        QString processType);
 
     template <typename T>
     const T *findSessionItem(const QJSValue &itemObject)

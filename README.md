@@ -131,7 +131,7 @@ There is one JavaScript state for the whole session and the scripts are evaluate
 - `setScriptSource(ItemIdent, Data)`
 - `setShaderSource(ItemIdent, Data)`
 - `setTextureData(ItemIdent, Data)`
-- `processShader(shader: ItemIdent, type: String) -> String/Data`
+- `processShader(fileName | ItemIdent, processType) -> String/Data`
 - `getBufferHandle(ItemIdent) -> Number`
 - `getTextureHandle(ItemIdent) -> Number`
 
