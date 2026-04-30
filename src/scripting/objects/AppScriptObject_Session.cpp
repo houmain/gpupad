@@ -343,7 +343,7 @@ void AppScriptObject::endBackgroundUpdate()
 QJSValue AppScriptObject::session()
 {
     if (!isSessionAvailable()) {
-        engine().throwError(QJSValue::EvalError, "Session not available");
+        throwJsError("Session not available");
         return QJSValue::UndefinedValue;
     }
 
@@ -387,7 +387,7 @@ QJSValue AppScriptObject::insertItemAt(const Item *parent, int row,
 
     const auto update = toJsonObject(object);
     if (update.isEmpty()) {
-        engine().throwError(QStringLiteral("Invalid object"));
+        throwJsError("Invalid object");
         return QJSValue::UndefinedValue;
     }
 
@@ -407,7 +407,7 @@ QJSValue AppScriptObject::insertItem(QJSValue parentIdent, QJSValue object)
             ? &threadSessionModel().sessionItem()
             : findSessionItem(parentIdent));
     if (!parent) {
-        engine().throwError(QStringLiteral("Invalid parent"));
+        throwJsError("Invalid parent");
         return QJSValue::UndefinedValue;
     }
     return insertItemAt(parent, parent->items.size(), object);
@@ -418,7 +418,7 @@ QJSValue AppScriptObject::insertBeforeItem(QJSValue siblingIdent,
 {
     const auto sibling = findSessionItem(siblingIdent);
     if (!sibling || !sibling->parent) {
-        engine().throwError(QStringLiteral("Invalid sibling"));
+        throwJsError("Invalid sibling");
         return QJSValue::UndefinedValue;
     }
     const auto parent = sibling->parent;
@@ -431,7 +431,7 @@ QJSValue AppScriptObject::insertAfterItem(QJSValue siblingIdent,
 {
     const auto sibling = findSessionItem(siblingIdent);
     if (!sibling || !sibling->parent) {
-        engine().throwError(QStringLiteral("Invalid sibling"));
+        throwJsError("Invalid sibling");
         return QJSValue::UndefinedValue;
     }
     const auto parent = sibling->parent;
@@ -447,7 +447,7 @@ void AppScriptObject::replaceItems(QJSValue parentIdent, QJSValue array)
         if (!array.property(i).isUndefined()) {
             const auto object = toJsonObject(array.property(i));
             if (object.isEmpty()) {
-                engine().throwError(QStringLiteral("Invalid object"));
+                throwJsError("Invalid object");
                 return;
             }
             update.append(object);
@@ -521,7 +521,7 @@ QModelIndex AppScriptObject::getOriginIndex(QJSValue originIdent)
 
     const auto origin = findSessionItem(originIdent);
     if (!origin) {
-        engine().throwError(QStringLiteral("Invalid origin"));
+        throwJsError("Invalid origin");
         return {};
     }
     return session.getIndex(origin);
@@ -601,14 +601,14 @@ QJSValue AppScriptObject::makeItemObject(ItemId itemId)
     auto &[object, jsValue] = mItemObjects[itemId];
     if (!object) {
         object = new ItemScriptObject(this, itemId);
-        jsValue = engine().newQObject(object);
+        jsValue = jsEngine().newQObject(object);
     }
     return jsValue;
 }
 
 QJSValue AppScriptObject::makeItemArray(const QList<ItemId> &itemIds)
 {
-    auto array = engine().newArray(itemIds.size());
+    auto array = jsEngine().newArray(itemIds.size());
     auto i = 0u;
     for (auto id : itemIds)
         array.setProperty(i++, makeItemObject(id));
@@ -617,7 +617,7 @@ QJSValue AppScriptObject::makeItemArray(const QList<ItemId> &itemIds)
 
 QJSValue AppScriptObject::makeItemArray(const QList<const Item *> &items)
 {
-    auto array = engine().newArray(items.size());
+    auto array = jsEngine().newArray(items.size());
     auto i = 0u;
     for (auto item : items)
         array.setProperty(i++, makeItemObject(item->id));
@@ -626,7 +626,7 @@ QJSValue AppScriptObject::makeItemArray(const QList<const Item *> &items)
 
 QJSValue AppScriptObject::makeItemArray(const QList<Item *> &items)
 {
-    auto array = engine().newArray(items.size());
+    auto array = jsEngine().newArray(items.size());
     auto i = 0u;
     for (auto item : items)
         array.setProperty(i++, makeItemObject(item->id));
@@ -758,7 +758,7 @@ QJSValue AppScriptObject::trackItems(QJSValue itemIdent, QJSValue originIdent,
     bool searchSubItems, QJSValue callback)
 {
     if (!callback.isCallable()) {
-        engine().throwError(QStringLiteral("Callable expected"));
+        throwJsError("Callable expected");
         return QJSValue::UndefinedValue;
     }
 
@@ -805,7 +805,7 @@ void AppScriptObject::clearItems(QJSValue parentIdent)
 {
     const auto parent = findSessionItem(parentIdent);
     if (!parent)
-        return engine().throwError(QStringLiteral("Invalid parent"));
+        return throwJsError("Invalid parent");
 
     withSessionModel([parentId = parent->id](SessionModel &session) {
         const auto index = session.getIndex(session.findItem(parentId));
@@ -880,17 +880,16 @@ void AppScriptObject::setBufferData(QJSValue itemIdent, QJSValue data)
 {
     const auto buffer = findSessionItem<Buffer>(itemIdent);
     if (!buffer)
-        return engine().throwError(QStringLiteral("Invalid Buffer item"));
+        return throwJsError("Invalid Buffer item");
 
     if (buffer->items.empty() || buffer->items[0]->items.empty())
-        return engine().throwError(
-            QStringLiteral("Buffer structure not defined"));
+        return throwJsError("Buffer structure not defined");
 
     const auto block = castItem<Block>(buffer->items[0]);
 
     const auto bufferData = toByteArray(data, *block);
     if (bufferData.isNull())
-        return engine().throwError(QStringLiteral("Invalid data"));
+        return throwJsError("Invalid data");
 
     const auto rowCount = bufferData.size() / getBlockStride(*block);
 
@@ -915,11 +914,11 @@ void AppScriptObject::setBlockData(QJSValue itemIdent, QJSValue data)
 {
     const auto block = findSessionItem<Block>(itemIdent);
     if (!block)
-        return engine().throwError(QStringLiteral("Invalid Block item"));
+        return throwJsError("Invalid Block item");
 
     const auto bufferData = toByteArray(data, *block);
     if (bufferData.isNull())
-        return engine().throwError(QStringLiteral("Invalid data"));
+        return throwJsError("Invalid data");
 
     const auto rowCount = bufferData.size() / getBlockStride(*block);
 
@@ -946,11 +945,11 @@ void AppScriptObject::setTextureData(QJSValue itemIdent, QJSValue data)
 {
     const auto texture = findSessionItem<Texture>(itemIdent);
     if (!texture)
-        return engine().throwError(QStringLiteral("Invalid Texture item"));
+        return throwJsError("Invalid Texture item");
 
     const auto textureData = toTextureData(data, *texture);
     if (textureData.isNull())
-        return engine().throwError(QStringLiteral("Invalid data"));
+        return throwJsError("Invalid data");
 
     withSessionModel([textureId = texture->id, textureData,
                          fileName = QString()](SessionModel &session) mutable {
@@ -967,7 +966,7 @@ void AppScriptObject::setShaderSource(QJSValue itemIdent, QJSValue data)
 {
     const auto shader = findSessionItem<Shader>(itemIdent);
     if (!shader)
-        return engine().throwError(QStringLiteral("Invalid Shader item"));
+        return throwJsError("Invalid Shader item");
 
     withSessionModel([shaderId = shader->id, data = data.toString(),
                          fileName = QString()](SessionModel &session) mutable {
@@ -983,7 +982,7 @@ void AppScriptObject::setScriptSource(QJSValue itemIdent, QJSValue data)
 {
     const auto script = findSessionItem<Script>(itemIdent);
     if (!script)
-        return engine().throwError(QStringLiteral("Invalid Script item"));
+        return throwJsError("Invalid Script item");
 
     withSessionModel([scriptId = script->id, data = data.toString(),
                          fileName = QString()](SessionModel &session) mutable {
@@ -1027,7 +1026,7 @@ QJSValue AppScriptObject::processShader(QJSValue fileNameOrItemIdent,
             result = processShader(shader->fileName, getSourceType(*shader),
                 processType);
     }
-    return (result.isValid() ? QJSValue(engine().toManagedValue(result))
+    return (result.isValid() ? QJSValue(jsEngine().toManagedValue(result))
                              : QJSValue::UndefinedValue);
 }
 

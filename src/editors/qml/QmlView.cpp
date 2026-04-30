@@ -135,7 +135,7 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     , mEnginePtr(std::move(enginePtr))
 {
     Q_ASSERT(onMainThread());
-    static auto once = []() {
+    [[maybe_unused]] static const auto once = []() {
         QQuickStyle::setStyle("Fusion");
         return true;
     }();

@@ -73,10 +73,14 @@ AppScriptObject::~AppScriptObject()
     mMainThreadObject->deleteLater();
 }
 
-QJSEngine &AppScriptObject::engine()
+QJSEngine &AppScriptObject::jsEngine()
 {
     Q_ASSERT(mJsEngine);
     return *mJsEngine;
+}
+
+void AppScriptObject::throwJsError(const QString &error) {
+    jsEngine().throwError(error);
 }
 
 bool AppScriptObject::isUntitled(QString fileName)
@@ -320,7 +324,7 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
             return libraryObject;
         }
     }
-    jsEngine().throwError("Loading library '" + fileName + "' failed");
+    throwJsError("Loading library '" + fileName + "' failed");
     return {};
 }
 
@@ -328,7 +332,7 @@ void AppScriptObject::evaluateScript(QString fileName)
 {
     auto source = QString();
     if (!Singletons::fileCache().getSource(getAbsolutePath(fileName), &source))
-        return jsEngine().throwError(
+        return throwJsError(
             "Loading file '" + FileDialog::getFileTitle(fileName) + "' failed");
 
     if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
@@ -349,7 +353,7 @@ QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)
     const auto applied = customActions.applyActionInEngine(id, *engine);
     engine->setGlobal("arguments", QJSValue::UndefinedValue);
     if (!applied)
-        jsEngine().throwError("Applying action '" + id + "' failed");
+        throwJsError("Applying action '" + id + "' failed");
 
     const auto result = engine->getGlobal("result");
     engine->setGlobal("result", QJSValue::UndefinedValue);
@@ -359,7 +363,7 @@ QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)
 
 QJSValue AppScriptObject::callAction(QString id)
 {
-    return callAction(id, engine().newObject());
+    return callAction(id, jsEngine().newObject());
 }
 
 QJSValue AppScriptObject::openFileDialog(QString pattern)

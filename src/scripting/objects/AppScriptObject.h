@@ -139,11 +139,11 @@ private:
         QSet<ItemId> addedItemIds;
     };
 
-    QJSEngine &engine();
+    QJSEngine &jsEngine();
+    void throwJsError(const QString &message);
     void handleEvaluationModeChanged(EvaluationMode evaluationMode);
     void handleFrameChanged(int frame);
     void handleTimeChanged(double time);
-    QJSEngine &jsEngine() { return *mJsEngine; }
     QString getAbsolutePath(const QString &fileName) const;
     void dispatchToMainThread(const std::function<void()> &function);
     QJSValue enumerate(QString pattern, bool directories);
@@ -182,7 +182,7 @@ private:
         Q_ASSERT(function.isCallable());
         auto result = function.call({ std::forward<Args>(args)... });
         if (result.isError()) {
-            engine().throwError(result.toString());
+            throwJsError(result.toString());
             return QJSValue::UndefinedValue;
         }
         return result;

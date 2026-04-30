@@ -39,7 +39,7 @@ QVariant ItemScriptObject::updateValue(const QString &key,
     auto update = QJsonObject();
     update.insert("id", mItemId);
     if (input.canConvert<QJSValue>()) {
-        const auto jsValue = mAppScriptObject.engine().toScriptValue(input);
+        const auto jsValue = mAppScriptObject.jsEngine().toScriptValue(input);
         const auto json = jsValue.toVariant(QJSValue::ConvertJSObjects);
         update.insert(key, json.toJsonValue());
     } else {
