@@ -4,6 +4,7 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLDebugLogger>
+#include <chrono>
 
 class QOpenGLContext;
 
@@ -34,11 +35,12 @@ private:
     void initializeGL();
     void paintGL();
 
-    const bool mIsSyncWindow{};
+    const int mSyncInterval{};
     bool mInitialized{};
     QOpenGLContext *mContext{};
     QOpenGLFunctions_4_5_Core mGL;
     QOpenGLVertexArrayObject mVao;
+    std::chrono::high_resolution_clock::time_point mLastSwapTime{ };
 #if !defined(NDEBUG)
     std::unique_ptr<QOpenGLDebugLogger> mDebugLogger;
 #endif
