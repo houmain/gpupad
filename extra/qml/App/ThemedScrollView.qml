@@ -8,5 +8,6 @@ ScrollView {
   palette.text: app.palette.text
   palette.base: app.palette.base
   palette.button: app.palette.button
-  palette.buttonText: app.palette.buttonText  
+  palette.buttonText: app.palette.buttonText
 }
+

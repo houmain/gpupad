@@ -6,7 +6,8 @@
 
 ItemScriptObject::ItemScriptObject(AppScriptObject *appScriptObject,
     ItemId itemId)
-    : mAppScriptObject(*appScriptObject)
+    : QQmlPropertyMap(this, nullptr)
+    , mAppScriptObject(*appScriptObject)
     , mItemId(itemId)
 {
     updateProperties();

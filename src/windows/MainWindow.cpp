@@ -1342,8 +1342,8 @@ void MainWindow::populateSampleSessions()
 {
     if (!mUi->menuSampleSessions->actions().empty())
         return;
-    const auto dirInfos = enumerateApplicationPaths(SamplesDir, QDir::Dirs);
-    for (const auto &dirInfo : dirInfos) {
+    const auto sampleDirs = enumerateApplicationPaths(SamplesDir, QDir::Dirs);
+    for (const auto &dirInfo : sampleDirs) {
         const auto addDirs = [this](const auto &addDirs, QMenu &menu,
                                  const QFileInfo &dirInfo) -> void {
             auto dir = QDir(dirInfo.absoluteFilePath());

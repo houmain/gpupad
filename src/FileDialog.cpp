@@ -407,7 +407,7 @@ void showCopyingSessionFailedMessage(QWidget *parent)
     dialog.exec();
 }
 
-QDir getInstallDirectory(const QString &dirName)
+std::optional<QDir> getInstallDirectory(const QString &dirName)
 {
     const auto binDir = QDir(QCoreApplication::applicationDirPath());
     const auto installDir = (binDir.dirName() == "bin"
@@ -431,10 +431,25 @@ QDir getInstallDirectory(const QString &dirName)
         if (path.exists(dirName))
             return QDir::cleanPath(path.filePath(dirName));
 
-    return {};
+    return std::nullopt;
 }
 
-QDir getUserDirectory(const QString &dirName)
+std::optional<QDir> getWorkingDirectory(const QString &dirName)
+{
+    const auto currentDir = QDir::current();
+    const auto searchPaths = std::initializer_list<QDir>{
+        // also search for extra folder (to simplify development)
+        currentDir.filePath("extra"),
+        currentDir.path(),
+    };
+    for (const auto &path : searchPaths)
+        if (path.exists(dirName))
+            return QDir::cleanPath(path.filePath(dirName));
+
+    return std::nullopt;
+}
+
+std::optional<QDir> getUserDirectory(const QString &dirName)
 {
     auto config =
         QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
@@ -445,12 +460,15 @@ QDir getUserDirectory(const QString &dirName)
 
 QList<QDir> getApplicationDirectories(const QString &dirName)
 {
-    // first working, then user-, then installation-directory
     auto result = QList<QDir>{};
-    if (auto path = QDir::current().filePath(dirName); QFileInfo(path).isDir())
-        result.append(path);
-    result.append(getUserDirectory(dirName));
-    result.append(getInstallDirectory(dirName));
+    for (const auto &path : {
+            getWorkingDirectory(dirName),
+            getUserDirectory(dirName),
+            getInstallDirectory(dirName),
+        })
+        if (path.has_value())
+            result.append(path.value());
+
     return result;
 }
 

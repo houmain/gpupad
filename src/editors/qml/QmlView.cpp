@@ -156,10 +156,12 @@ QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     static UrlInterceptor sUrlInterceptor;
     qmlEngine->addUrlInterceptor(&sUrlInterceptor);
 
-    auto libraryDirs = getApplicationDirectories(LibrariesDir);
-    std::reverse(libraryDirs.begin(), libraryDirs.end());
-    for (const auto &dir : std::as_const(libraryDirs))
+    auto qmlDirs = getApplicationDirectories("qml");
+    std::reverse(qmlDirs.begin(), qmlDirs.end());
+    for (const auto &dir : std::as_const(qmlDirs))
         qmlEngine->addImportPath(dir.path());
+
+    qmlEngine->addImportPath(QFileInfo(mFileName).dir().path());
 
     connect(&Singletons::settings(), &Settings::windowThemeChanged, this,
         &QmlView::windowThemeChanged);

@@ -1,4 +1,10 @@
 module NodeGraph
 
 NodeGraph 1.0 NodeGraph.qml
+Node 1.0 Node.qml
+Attribute 1.0 Attribute.qml
+Cable 1.0 Cable.qml
+SelectionRect 1.0 SelectionRect.qml
+Link 1.0 Link.qml
+Socket 1.0 Socket.qml
 
