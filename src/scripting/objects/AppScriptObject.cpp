@@ -73,9 +73,16 @@ AppScriptObject::~AppScriptObject()
     mMainThreadObject->deleteLater();
 }
 
+ScriptEngine &AppScriptObject::engine()
+{
+    auto engine = mEnginePtr.lock();
+    Q_ASSERT(engine);
+    return *engine;
+}
+
 QJSEngine &AppScriptObject::jsEngine()
 {
-    Q_ASSERT(mJsEngine);
+    Q_ASSERT(mEnginePtr.lock());
     return *mJsEngine;
 }
 
@@ -290,23 +297,18 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
         return *it;
 
     // search in script's base path and in libs
-    auto searchPaths = QList<QDir>();
-    searchPaths += mBasePath;
+    auto libDirs = QList<QDir>();
+    libDirs += mBasePath;
+    libDirs += getApplicationDirectories(LibrariesDir);
 
-    const auto dirs = getApplicationDirectories(ActionsDir);
-    for (const auto &dir : dirs)
-        searchPaths += dir.filePath(fileName);
-    searchPaths += getApplicationDirectories(LibrariesDir);
-
-    auto engine = mEnginePtr.lock();
     if (FileDialog::getFileExtension(fileName) == "js") {
-        for (const auto &dir : std::as_const(searchPaths))
+        for (const auto &dir : std::as_const(libDirs))
             if (dir.exists(fileName)) {
                 const auto filePath =
                     toNativeCanonicalFilePath(dir.filePath(fileName));
                 auto source = QString();
                 if (Singletons::fileCache().getSource(filePath, &source)) {
-                    engine->evaluateScript(source, filePath);
+                    engine().evaluateScript(source, filePath);
                     // script does not return anything for now
                     const auto libraryObject = jsEngine().newObject();
                     mLoadedLibraries[fileName] = libraryObject;
@@ -314,11 +316,16 @@ QJSValue AppScriptObject::loadLibrary(QString fileName)
                 }
             }
     } else {
-        auto paths = QStringList();
-        for (const auto &dir : std::as_const(searchPaths))
-            paths += dir.path();
+        // search folders also in actions
+        const auto actionDirs = getApplicationDirectories(ActionsDir);
+        for (const auto &dir : actionDirs)
+            libDirs += dir.filePath(fileName);
+
+        auto searchPaths = QStringList();
+        for (const auto &dir : std::as_const(libDirs))
+            searchPaths += dir.path();
         auto library = std::make_unique<LibraryScriptObject>();
-        if (library->load(&jsEngine(), fileName, paths)) {
+        if (library->load(&jsEngine(), fileName, searchPaths)) {
             const auto libraryObject = jsEngine().newQObject(library.release());
             mLoadedLibraries[fileName] = libraryObject;
             return libraryObject;
@@ -337,26 +344,25 @@ void AppScriptObject::evaluateScript(QString fileName)
 
     if (fileName.endsWith(".qml", Qt::CaseInsensitive)) {
         if (onMainThread())
-            Singletons::editorManager().openQmlView(fileName,
-                mEnginePtr.lock());
+            Singletons::editorManager().openQmlView(fileName, mEnginePtr.lock());
     } else {
-        mEnginePtr.lock()->evaluateScript(source, fileName);
+        engine().evaluateScript(source, fileName);
     }
 }
 
 QJSValue AppScriptObject::callAction(QString id, QJSValue arguments)
 {
-    auto engine = mEnginePtr.lock();
-    engine->setGlobal("arguments", arguments);
+    auto& engine = this->engine();
+    engine.setGlobal("arguments", arguments);
 
     auto &customActions = Singletons::customActions();
-    const auto applied = customActions.applyActionInEngine(id, *engine);
-    engine->setGlobal("arguments", QJSValue::UndefinedValue);
+    const auto applied = customActions.applyActionInEngine(id, engine);
+    engine.setGlobal("arguments", QJSValue::UndefinedValue);
     if (!applied)
         throwJsError("Applying action '" + id + "' failed");
 
-    const auto result = engine->getGlobal("result");
-    engine->setGlobal("result", QJSValue::UndefinedValue);
+    const auto result = engine.getGlobal("result");
+    engine.setGlobal("result", QJSValue::UndefinedValue);
 
     return result;
 }

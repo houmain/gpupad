@@ -139,6 +139,7 @@ private:
         QSet<ItemId> addedItemIds;
     };
 
+    ScriptEngine &engine();
     QJSEngine &jsEngine();
     void throwJsError(const QString &message);
     void handleEvaluationModeChanged(EvaluationMode evaluationMode);
