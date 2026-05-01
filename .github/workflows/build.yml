@@ -79,7 +79,7 @@ jobs:
     - name: Install vcpkg packages
       uses: johnwason/vcpkg-action@v7
       with:
-          revision: '60d5b6b80f107a200e911ca3820e1eac70675e9d'
+          revision: '56bb2411609227288b70117ead2c47585ba07713'
           pkgs: 'vulkan "ktx[vulkan]" glslang spirv-cross spirv-tools vulkan-memory-allocator spdlog ${{ matrix.config.VCPKG_PACKAGES }}'
           triplet: '${{ matrix.config.VCPKG_TRIPLET }}'
           token: ${{ github.token }}
