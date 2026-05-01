@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Version 3.4.1] - 2026-05-01
+
+### Added
+
+- Added `app.palette`.
+- Added `app.processShader(fileName, type)` overload.
+- Looking for QML modules in qml directory.
+- Added "Make Fragment Shader Session" action [WIP].
+
+### Fixed
+
+- Limiting refresh rate when there is no VSync.
+- Enumerating only existing application directories.
+- Handling empty filename in `app.openEditor`.
+- Fixed `app.readTextFile` of untitled file.
+- Throwing script errors in `app` method callbacks.
+- Preserving untitled filename when serializing script item.
+- Fixed deadlock when unloading running script.
+
 ## [Version 3.4.0] - 2026-04-25
 
 ### Changed
@@ -1061,6 +1080,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved uniform not set warnings.
 - Source validation prepends headers.
 
+[version 3.4.1]: https://github.com/houmain/gpupad/compare/3.4.0...3.4.1
 [version 3.4.0]: https://github.com/houmain/gpupad/compare/3.3.0...3.4.0
 [version 3.3.0]: https://github.com/houmain/gpupad/compare/3.2.0...3.3.0
 [version 3.2.0]: https://github.com/houmain/gpupad/compare/3.1.0...3.2.0
