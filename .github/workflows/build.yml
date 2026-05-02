@@ -108,7 +108,7 @@ jobs:
         wget --no-verbose "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
         chmod +x linuxdeploy*.AppImage
         export OUTPUT=GPUpad-${{ github.ref_name }}-Linux.AppImage
-        export EXTRA_QT_PLUGINS="iconengines;imageformats"
+        export EXTRA_QT_MODULES="svg;qml;waylandcompositor"
         ./linuxdeploy-x86_64.AppImage --appdir AppDir --plugin qt --output appimage        
 
     - name: Upload to Github release
