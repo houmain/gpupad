@@ -53,8 +53,8 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt install build-essential git cmake pkg-config qt6-base-dev qt6-declarative-dev libqt6svg6-dev qt6-image-formats-plugins libgl1-mesa-dev libxcb*-dev libx11-dev libxrandr-dev
-        sudo apt install qml6-module-qtqml qml6-module-qtqml-workerscript
-        sudo apt install qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-shapes qml6-module-qtquick-layouts
+        sudo apt install qml6-module-qtqml qml6-module-qtqml-workerscript qml6-module-qtqml-models 
+        sudo apt install qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-shapes qml6-module-qtquick-layouts qml6-module-qtquick-templates 
         # to fix OIIO: https://github.com/colmap/colmap/issues/3811
         #sudo mkdir -p /usr/include/opencv4
         #sudo apt install qt6-multimedia-dev libopenimageio-dev libopenexr-dev libz-dev openimageio-tools
