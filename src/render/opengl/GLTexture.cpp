@@ -1,12 +1,12 @@
 #include "GLTexture.h"
 #include "GLBuffer.h"
-#include <QOpenGLPixelTransferOptions>
 #include <QScopeGuard>
 #include <cmath>
+#include <cstdint>
 
 namespace {
-    GLuint createFramebuffer(QOpenGLFunctions_4_5_Core &gl, GLenum target, GLuint textureId,
-        GLenum attachment)
+    GLuint createFramebuffer(QOpenGLFunctions_4_5_Core &gl, GLenum target,
+        GLuint textureId, GLenum attachment)
     {
         auto fbo = GLuint{};
         gl.glGenFramebuffers(1, &fbo);
@@ -61,8 +61,9 @@ namespace {
         return (glGetError() == GL_NO_ERROR);
     }
 
-    bool uploadMultisample(QOpenGLFunctions_4_5_Core &gl, const TextureData &data,
-        QOpenGLTexture::Target target, int samples, GLuint textureId)
+    bool uploadMultisample(QOpenGLFunctions_4_5_Core &gl,
+        const TextureData &data, QOpenGLTexture::Target target, int samples,
+        GLuint textureId)
     {
         gl.glBindTexture(target, textureId);
         if (target == QOpenGLTexture::Target2DMultisample) {
@@ -141,8 +142,8 @@ namespace {
         return false;
     }
 
-    GLObject createFramebuffer(QOpenGLFunctions_4_5_Core &gl, const TextureKind &kind,
-        GLuint textureId, int level)
+    GLObject createFramebuffer(QOpenGLFunctions_4_5_Core &gl,
+        const TextureKind &kind, GLuint textureId, int level)
     {
         const auto createFBO = [&]() {
             auto fbo = GLuint{};
@@ -193,8 +194,9 @@ namespace {
         gl.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, destFbo);
         gl.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, blitMask,
             GL_NEAREST);
-        return true;
+        return (glGetError() == GL_NO_ERROR);
     }
+
 } // namespace
 
 bool GLTexture::operator==(const GLTexture &rhs) const
@@ -350,6 +352,15 @@ bool GLTexture::copy(GLTexture &source)
     return copyTexture(gl, mKind, source.getReadOnlyTextureId(),
         getReadWriteTextureId(), mData.getLevelWidth(level),
         mData.getLevelHeight(level), level);
+}
+
+ShareHandle GLTexture::getShareHandle()
+{
+    return {
+        .type = ShareHandleType::OPENGL_TEXTURE_ID,
+        .handle = reinterpret_cast<void *>(
+            static_cast<uintptr_t>(getReadOnlyTextureId())),
+    };
 }
 
 bool GLTexture::swap(GLTexture &other)

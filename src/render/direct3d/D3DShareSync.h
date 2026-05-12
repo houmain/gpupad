@@ -2,11 +2,9 @@
 
 #if defined(_WIN32)
 
-#include "D3DContext.h"
-#include "render/ShareSync.h"
-#include <QOpenGLContext>
-#include <QOpenGLFunctions_3_3_Core>
-#include <QMutex>
+#  include "D3DContext.h"
+#  include "render/ShareSync.h"
+#  include <QMutex>
 
 class D3DShareSync : public ShareSync
 {
@@ -15,8 +13,8 @@ public:
     void cleanup();
     void beginUpdate();
     void endUpdate();
-    void beginUsage(QOpenGLFunctions_4_5_Core &gl) override;
-    void endUsage(QOpenGLFunctions_4_5_Core &gl) override;
+    void beginUsage() override;
+    void endUsage() override;
 
 private:
     QMutex mMutex;

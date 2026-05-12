@@ -3,14 +3,14 @@
 #include "TextureData.h"
 #include "editors/IEditor.h"
 #include "render/ShareSync.h"
-#include "render/GLWindow.h"
 #include <QOpenGLTexture>
 #include <QAbstractScrollArea>
 
-class TextureItem;
-class TextureBackground;
+class TextureEditorItem;
+class TextureEditorBackground;
 class TextureEditorToolBar;
 class TextureInfoBar;
+class RenderWindow;
 
 class TextureEditor final : public QAbstractScrollArea, public IEditor
 {
@@ -41,10 +41,8 @@ public:
     bool isRaw() const { return mIsRaw; }
     void replace(TextureData texture, bool emitFileChanged = true);
     void setFlipVertically(bool flipVertically);
-    void updatePreviewTexture(ShareSyncPtr shareSync, GLuint textureId,
-        int samples);
-    void updatePreviewTexture(ShareSyncPtr shareSync, ShareHandle handle,
-        int samples);
+    void setPreviewTexture(ShareSyncPtr shareSync, ShareHandle textureHandle,
+        int samples = 1);
     const TextureData &texture() const { return mTexture; }
 
 Q_SIGNALS:
@@ -66,8 +64,8 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
-    void paintGL();
-    void releaseGL();
+    void paintGpu();
+    void releaseGpu();
     void updateMousePosition(const QPoint &position);
     void setBounds(QRect bounds);
     void setZoomToFit(bool fit);
@@ -82,8 +80,8 @@ private:
     QPointF mapToScene(const QPointF &position) const;
     QPointF mapFromScene(const QPointF &position) const;
 
-    GLWindow *mGLWindow{};
-    QWidget *mGLWindowContainer{};
+    RenderWindow *mGpuWindow{};
+    QWidget *mGpuWindowContainer{};
     TextureEditorToolBar &mEditorToolBar;
     TextureInfoBar &mTextureInfoBar;
     QString mFileName;
@@ -91,11 +89,12 @@ private:
     bool mIsRaw{};
     bool mModified{};
     TextureData mTexture;
+    int mTextureSamples{ 1 };
     bool mPan{};
     QRect mBounds{};
     bool mZoomToFit{};
     int mZoom{ 100 };
     QPoint mPanStart{};
-    TextureItem *mTextureItem{};
-    TextureBackground *mTextureBackground{};
+    TextureEditorItem *mTextureItem{};
+    TextureEditorBackground *mBackground{};
 };

@@ -1,8 +1,5 @@
 #include "VKTexture.h"
-#include "SynchronizeLogic.h"
 #include "VKBuffer.h"
-#include <QScopeGuard>
-#include <cmath>
 
 namespace {
     KDGpu::TextureType getKDTextureType(const TextureKind &kind)
@@ -31,6 +28,12 @@ namespace {
         }
         return {};
     }
+
+    uint32_t vkArrayLayerCount(const TextureKind &kind, int layers)
+    {
+        return static_cast<uint32_t>(
+            std::max(layers, 1) * (kind.cubeMap ? 6 : 1));
+    }
 } // namespace
 
 VKTexture::VKTexture(const Texture &texture, VKRenderSession &renderSession)
@@ -48,11 +51,35 @@ VKTexture::VKTexture(const Buffer &buffer, VKBuffer *textureBuffer,
 {
 }
 
+VKTexture::VKTexture(TextureData data, int samples)
+    : TextureBase(std::move(data), samples)
+{
+    mUsage =
+        KDGpu::TextureUsageFlags{ KDGpu::TextureUsageFlagBits::TransferSrcBit
+            | KDGpu::TextureUsageFlagBits::TransferDstBit };
+}
+
+VKTexture::VKTexture(TextureData data, int samples, KDGpu::Texture texture)
+    : TextureBase(std::move(data), samples)
+    , mCreated(texture.isValid())
+    , mUsage(KDGpu::TextureUsageFlagBits::SampledBit
+        | KDGpu::TextureUsageFlagBits::TransferSrcBit
+        | KDGpu::TextureUsageFlagBits::TransferDstBit)
+    , mTexture(std::move(texture))
+    , mCurrentLayout(KDGpu::TextureLayout::Undefined)
+    , mCurrentAccessMask(KDGpu::AccessFlagBit::None)
+    , mCurrentStage(KDGpu::PipelineStageFlagBit::TopOfPipeBit)
+{
+    mSystemCopyModified = mDeviceCopyModified = false;
+}
+
 void VKTexture::addUsage(KDGpu::TextureUsageFlags usage)
 {
     // TODO: not ideal to update usage of already created texture
-    if (mTexture.isValid() && (mUsage & usage) != usage)
+    if (mTexture.isValid() && (mUsage & usage) != usage) {
+        Q_ASSERT(!"unreachable");
         mTexture = {};
+    }
     mUsage |= usage;
 }
 
@@ -238,7 +265,7 @@ bool VKTexture::updateMipmaps(VKContext &context)
                 .depth = static_cast<uint32_t>(mDepth),
             },
             .mipLevels = static_cast<uint32_t>(levels()),
-            .layerCount = static_cast<uint32_t>(layers()),
+            .layerCount = vkArrayLayerCount(mKind, mLayers),
         };
         context.commandRecorder->generateMipMaps(options);
         mCurrentLayout = options.newLayout;
@@ -246,7 +273,7 @@ bool VKTexture::updateMipmaps(VKContext &context)
     return true;
 }
 
-void VKTexture::reset(KDGpu::Device &device)
+void VKTexture::release(KDGpu::Device &device)
 {
     if (std::exchange(mCreated, false)) {
         if (mKtxTexture.vkDestroyImage) {
@@ -262,7 +289,7 @@ void VKTexture::reset(KDGpu::Device &device)
 void VKTexture::createAndUpload(VKContext &context)
 {
     if (mSystemCopyModified)
-        reset(context.device);
+        release(context.device);
 
     if (std::exchange(mCreated, true))
         return;
@@ -276,7 +303,7 @@ void VKTexture::createAndUpload(VKContext &context)
             static_cast<uint32_t>(mDepth),
         },
         .mipLevels = static_cast<uint32_t>(levels()),
-        .arrayLayers = static_cast<uint32_t>(mLayers),
+        .arrayLayers = vkArrayLayerCount(mKind, mLayers),
         .samples = getKDSampleCount(mSamples),
         .usage = mUsage,
         .memoryUsage = KDGpu::MemoryUsage::GpuOnly,
@@ -326,7 +353,7 @@ void VKTexture::createAndUpload(VKContext &context)
 
 void VKTexture::beginDownload(VKContext &context)
 {
-    if (!mDeviceCopyModified || !mTexture.isValid() || mData.isNull())
+    if (!mTexture.isValid() || mData.isNull())
         return;
 
     Q_ASSERT(!mDownloadBuffer.isValid());
@@ -495,7 +522,7 @@ void VKTexture::memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
     mCurrentAccessMask = accessMask;
 }
 
-ShareHandle VKTexture::getSharedMemoryHandle() const
+ShareHandle VKTexture::getShareHandle() const
 {
     if (!mTexture.isValid())
         return {};

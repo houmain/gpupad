@@ -1,31 +1,25 @@
 #pragma once
 
+#include "render/RenderWindow.h"
+#include "GLContext.h"
 #include <QWindow>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLDebugLogger>
 #include <chrono>
 
-class QOpenGLContext;
-
-class GLWindow : public QWindow
+class GLWindow : public RenderWindow
 {
     Q_OBJECT
 public:
-    GLWindow();
-    explicit GLWindow(int syncInterval);
-    ~GLWindow();
+    explicit GLWindow(int syncInterval = 0);
+    ~GLWindow() override;
 
-    bool initialized() const { return mInitialized; }
-    QOpenGLFunctions_4_5_Core &gl() { return mGL; }
+    bool initialized() const override { return mInitialized; }
+    QOpenGLFunctions_4_5_Core &gl() { return *mContext; }
 
-    void update();
-    using QWindow::requestUpdate;
-
-Q_SIGNALS:
-    void initializingGL();
-    void paintingGL();
-    void releasingGL();
+    void update() override;
+    bool makeCurrent();
 
 private:
     void handleDebugMessage(const QOpenGLDebugMessage &message);
@@ -37,8 +31,7 @@ private:
 
     const int mSyncInterval{};
     bool mInitialized{};
-    QOpenGLContext *mContext{};
-    QOpenGLFunctions_4_5_Core mGL;
+    GLContext *mContext{};
     QOpenGLVertexArrayObject mVao;
     std::chrono::high_resolution_clock::time_point mLastSwapTime{ };
 #if !defined(NDEBUG)

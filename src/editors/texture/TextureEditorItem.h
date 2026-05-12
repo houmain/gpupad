@@ -5,22 +5,33 @@
 #include "render/ShareSync.h"
 #include <QObject>
 #include <QOpenGLTexture>
+#include <QString>
+#include <array>
+#include <cstdint>
+#include <memory>
+#include <tuple>
 
-class GLWindow;
 class ComputeRange;
+class QMatrix4x4;
+class RenderWindow;
 
-class TextureItem final : public QObject
+class TextureEditorItem : public QObject
 {
     Q_OBJECT
 public:
-    explicit TextureItem(GLWindow *parent);
-    ~TextureItem() override;
-    void releaseGL();
-    void paintGL(const QMatrix4x4 &transform);
+    explicit TextureEditorItem(RenderWindow *parent);
+    ~TextureEditorItem() override;
+    virtual void releaseGpu() = 0;
+    virtual void paintGpu(const QMatrix4x4 &transform) = 0;
     void setImage(TextureData image);
     const TextureData &image() const { return mImage; }
-    void setPreviewTexture(ShareSyncPtr sync, GLuint textureId, int samples);
-    void setPreviewTexture(ShareSyncPtr sync, ShareHandle handle, int samples);
+    virtual bool downloadImage(TextureData *image);
+
+    virtual void setPreviewTexture(ShareSyncPtr shareSync,
+        ShareHandle textureHandle, int samples)
+    {
+        Q_ASSERT(!"preview texture import is not implemented for this item");
+    }
 
     bool canFilter() const;
     void setMagnifyLinear(bool magnifyLinear)
@@ -79,25 +90,52 @@ Q_SIGNALS:
     void histogramChanged(const QVector<qreal> &histogram);
     void histogramBoundsComputed(const Range &range);
 
-private:
-    class ProgramCache;
+protected:
+    struct ShaderDesc
+    {
+        QOpenGLTexture::Target target{};
+        QOpenGLTexture::TextureFormat format{};
+        bool picker{};
+        bool histogram{};
 
-    GLWindow &window();
+        friend bool operator<(const ShaderDesc &a, const ShaderDesc &b)
+        {
+            return std::tie(a.target, a.format, a.picker, a.histogram)
+                < std::tie(b.target, b.format, b.picker, b.histogram);
+        }
+    };
+
+    struct Params
+    {
+        std::array<float, 16> transform{};
+        float width{};
+        float height{};
+        float level{};
+        float layer{};
+        int32_t face{};
+        int32_t sample{};
+        int32_t samples{};
+        int32_t flipVertically{};
+        float mappingOffset{};
+        float mappingFactor{};
+        uint32_t colorMask{};
+    };
+    static_assert(sizeof(Params) == 108);
+
+    static QString vertexShaderSource;
+    static QString buildFragmentShader(const ShaderDesc &desc);
+    static bool canLinearFilter(QOpenGLTexture::TextureFormat format);
+
+    RenderWindow &window();
     void render();
     void update();
-    bool updateTexture();
-    bool renderTexture(const QMatrix4x4 &transform);
     void updateHistogram();
+    Params getParams(const QMatrix4x4 &transform, int textureSamples) const;
+    virtual void imageChanged();
 
-    std::unique_ptr<ProgramCache> mProgramCache;
     QRect mBoundingRect;
     TextureData mImage;
-    GLuint mImageTextureId{};
-    ShareSyncPtr mShareSync;
-    int mPreviewSamples{ 1 };
-    GLuint mPreviewTextureId{};
-    GLuint mSharedTextureId{};
-    void *mSharedTextureHandle{};
+    int mTextureSamples{ 1 };
     bool mMagnifyLinear{};
     float mLevel{};
     int mFace{};

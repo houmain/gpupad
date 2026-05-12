@@ -389,11 +389,8 @@ void RenderSessionBase::beginDownloadModifiedResources(
             program.printf().beginDownload(commandQueue.context);
 
     for (auto &[itemId, texture] : commandQueue.textures)
-        if (!texture.fileName().isEmpty()) {
+        if (!texture.fileName().isEmpty())
             texture.updateMipmaps(commandQueue.context);
-            if (!updatingPreviewTextures())
-                texture.beginDownload(commandQueue.context);
-        }
 
     for (auto &[itemId, buffer] : commandQueue.buffers)
         if (!buffer.fileName().isEmpty()
@@ -417,17 +414,13 @@ void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue,
     editors.setAutoRaise(false);
 
     for (auto &[itemId, texture] : commandQueue.textures) {
-        if (texture.finishDownload()) {
-            if (auto fileItem = sessionModel.findItem<FileItem>(itemId))
-                if (auto editor =
-                        editors.openTextureEditor(fileItem->fileName, true))
-                    editor->replace(texture.data(), false);
-        } else if (texture.deviceCopyModified()) {
-            if (auto fileItem = sessionModel.findItem<FileItem>(itemId))
-                if (auto editor = editors.getTextureEditor(fileItem->fileName))
-                    editor->updatePreviewTexture(shareSync,
-                        texture.getSharedMemoryHandle(), texture.samples());
-        }
+        if (const auto fileItem = sessionModel.findItem<FileItem>(itemId))
+            if (auto editor =
+                    editors.openTextureEditor(fileItem->fileName, true)) {
+
+                editor->setPreviewTexture(shareSync, texture.getShareHandle(),
+                    texture.samples());
+            }
     }
 
     for (auto &[itemId, buffer] : commandQueue.buffers)

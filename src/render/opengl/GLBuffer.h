@@ -22,11 +22,6 @@ public:
     void beginDownload(GLContext &context, bool checkModification);
     bool finishDownload();
 
-    bool download(GLContext &context, bool checkModification) {
-      beginDownload(context, checkModification);
-      return finishDownload();
-    }
-
 private:
     void reload();
     void createBuffer();

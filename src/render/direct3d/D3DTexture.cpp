@@ -567,7 +567,7 @@ void D3DTexture::resourceBarrier(D3DContext &context,
     }
 }
 
-ShareHandle D3DTexture::getSharedMemoryHandle() const
+ShareHandle D3DTexture::getShareHandle() const
 {
     return {
         ShareHandleType::D3D12_RESOURCE,

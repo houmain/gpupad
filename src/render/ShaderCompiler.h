@@ -20,6 +20,8 @@ namespace ShaderCompiler {
         ItemId itemId;
     };
 
+    Spirv compileSpirvVulkanGLSL(Shader::ShaderType shaderType, const QString &source);
+
     std::map<Shader::ShaderType, Spirv> compileSpirv(const Session &session,
         const std::vector<Input> &inputs, ItemId programItemId,
         MessagePtrSet &messages);

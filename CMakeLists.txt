@@ -145,12 +145,14 @@ set(SOURCES
   src/editors/texture/TextureEditorToolBar.ui
   src/editors/texture/TextureInfoBar.cpp
   src/editors/texture/TextureInfoBar.ui
-  src/editors/texture/TextureBackground.cpp
-  src/editors/texture/TextureItem.cpp
+  src/editors/texture/TextureEditorBackground.cpp
+  src/editors/texture/TextureEditorItem.cpp
   src/editors/qml/QmlView.cpp
   src/main.cpp
   src/render/opengl/GLBuffer.cpp
   src/render/opengl/GLCall.cpp
+  src/render/opengl/GLTextureEditorBackground.cpp
+  src/render/opengl/GLTextureEditorItem.cpp
   src/render/opengl/GLProgram.cpp
   src/render/opengl/GLProgram_Reflection.cpp
   src/render/opengl/GLShader.cpp
@@ -162,6 +164,7 @@ set(SOURCES
   src/render/opengl/GLRenderer.cpp
   src/render/opengl/GLComputeRange.cpp
   src/render/opengl/GLShareSync.cpp
+  src/render/opengl/GLWindow.cpp
   src/render/vulkan/KDGpuEnums.cpp
   src/render/vulkan/VKBuffer.cpp
   src/render/vulkan/VKCall.cpp
@@ -172,12 +175,16 @@ set(SOURCES
   src/render/vulkan/VKStream.cpp
   src/render/vulkan/VKTarget.cpp
   src/render/vulkan/VKTexture.cpp
+  src/render/vulkan/VKTextureEditorBackground.cpp
+  src/render/vulkan/VKTextureEditorItem.cpp
+  src/render/vulkan/VKTextureEditorItem_GL.cpp
+  src/render/vulkan/VKTextureEditorItem_Share.cpp
   src/render/vulkan/VKRenderer.cpp
   src/render/vulkan/VKRenderSession.cpp
   src/render/vulkan/VKAccelerationStructure.cpp
   src/render/vulkan/VKShareSync.cpp
+  src/render/vulkan/VKWindow.cpp
   src/render/AdapterIdentity.cpp
-  src/render/GLWindow.cpp
   src/render/ProcessSource.cpp
   src/render/RenderTask.cpp
   src/render/RenderSessionBase.cpp

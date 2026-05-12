@@ -5,13 +5,18 @@
 #include "Settings.h"
 #include "Singletons.h"
 #include "SynchronizeLogic.h"
-#include "TextureBackground.h"
+#include "TextureEditorBackground.h"
 #include "TextureEditorToolBar.h"
 #include "TextureInfoBar.h"
-#include "TextureItem.h"
+#include "TextureEditorItem.h"
 #include "getEventPosition.h"
-#include "render/GLWindow.h"
-#include "render/opengl/GLContext.h"
+#include "render/RenderWindow.h"
+#include "render/opengl/GLTextureEditorBackground.h"
+#include "render/opengl/GLTextureEditorItem.h"
+#include "render/opengl/GLWindow.h"
+#include "render/vulkan/VKTextureEditorBackground.h"
+#include "render/vulkan/VKTextureEditorItem.h"
+#include "render/vulkan/VKWindow.h"
 #include "session/Item.h"
 #include <QAction>
 #include <QApplication>
@@ -22,8 +27,8 @@
 #include <QWheelEvent>
 #include <cstring>
 
-bool createFromRaw(const QByteArray &binary, const TextureEditor::RawFormat &r,
-    TextureData *texture)
+bool createFromRaw(const QByteArray &binary,
+    const TextureEditor::RawFormat &r, TextureData *texture)
 {
     if (!texture->create(r.target, r.format, r.width, r.height, r.depth,
             r.layers))
@@ -47,16 +52,26 @@ TextureEditor::TextureEditor(QString fileName,
     , mTextureInfoBar(*textureInfoBar)
     , mFileName(fileName)
 {
-    mGLWindow = new GLWindow();
-    mGLWindowContainer = QWidget::createWindowContainer(mGLWindow);
-    mGLWindow->installEventFilter(this);
-    setViewport(mGLWindowContainer);
+    if (!VKWindow::isSupported()) {
+        auto *window = new GLWindow();
+        mGpuWindow = window;
+        mTextureItem = new GLTextureEditorItem(window);
+        mBackground = new GLTextureEditorBackground(window);
+    } else {
+        auto *window = new VKWindow();
+        mGpuWindow = window;
+        mTextureItem = new VKTextureEditorItem(window);
+        mBackground = new VKTextureEditorBackground(window);
+    }
 
-    mTextureItem = new TextureItem(mGLWindow);
-    mTextureBackground = new TextureBackground(mGLWindow);
+    mGpuWindowContainer = QWidget::createWindowContainer(mGpuWindow);
+    mGpuWindow->installEventFilter(this);
+    setViewport(mGpuWindowContainer);
 
-    connect(mGLWindow, &GLWindow::releasingGL, this, &TextureEditor::releaseGL);
-    connect(mGLWindow, &GLWindow::paintingGL, this, &TextureEditor::paintGL);
+    connect(mGpuWindow, &RenderWindow::releasingGpu, this,
+        &TextureEditor::releaseGpu);
+    connect(mGpuWindow, &RenderWindow::paintingGpu, this,
+        &TextureEditor::paintGpu);
 
     setAcceptDrops(false);
     setMouseTracking(true);
@@ -65,7 +80,7 @@ TextureEditor::TextureEditor(QString fileName,
 
 TextureEditor::~TextureEditor()
 {
-    delete mGLWindow;
+    delete mGpuWindow;
 
     Singletons::fileCache().invalidateFile(mFileName);
 }
@@ -80,13 +95,13 @@ void TextureEditor::resizeEvent(QResizeEvent *event)
 
 void TextureEditor::paintEvent(QPaintEvent *event)
 {
-    mGLWindow->update();
+    mGpuWindow->update();
 }
 
-void TextureEditor::releaseGL()
+void TextureEditor::releaseGpu()
 {
-    mTextureBackground->releaseGL();
-    mTextureItem->releaseGL();
+    mBackground->releaseGpu();
+    mTextureItem->releaseGpu();
 }
 
 QList<QMetaObject::Connection> TextureEditor::connectEditActions(
@@ -116,37 +131,37 @@ QList<QMetaObject::Connection> TextureEditor::connectEditActions(
         &TextureEditorToolBar::setZoom);
 
     c += connect(&mEditorToolBar, &TextureEditorToolBar::levelChanged,
-        mTextureItem, &TextureItem::setLevel);
+        mTextureItem, &TextureEditorItem::setLevel);
     c += connect(&mEditorToolBar, &TextureEditorToolBar::layerChanged,
-        mTextureItem, &TextureItem::setLayer);
+        mTextureItem, &TextureEditorItem::setLayer);
     c += connect(&mEditorToolBar, &TextureEditorToolBar::sampleChanged,
-        mTextureItem, &TextureItem::setSample);
+        mTextureItem, &TextureEditorItem::setSample);
     c += connect(&mEditorToolBar, &TextureEditorToolBar::faceChanged,
-        mTextureItem, &TextureItem::setFace);
+        mTextureItem, &TextureEditorItem::setFace);
     c += connect(&mEditorToolBar, &TextureEditorToolBar::filterChanged,
-        mTextureItem, &TextureItem::setMagnifyLinear);
+        mTextureItem, &TextureEditorItem::setMagnifyLinear);
     c += connect(&mEditorToolBar, &TextureEditorToolBar::flipVerticallyChanged,
-        mTextureItem, &TextureItem::setFlipVertically);
-    c += connect(mTextureItem, &TextureItem::pickerColorChanged,
+        mTextureItem, &TextureEditorItem::setFlipVertically);
+    c += connect(mTextureItem, &TextureEditorItem::pickerColorChanged,
         &mTextureInfoBar, &TextureInfoBar::setPickerColor);
-    c += connect(mTextureItem, &TextureItem::histogramChanged, &mTextureInfoBar,
-        &TextureInfoBar::updateHistogram);
+    c += connect(mTextureItem, &TextureEditorItem::histogramChanged,
+        &mTextureInfoBar, &TextureInfoBar::updateHistogram);
     c += connect(&mTextureInfoBar, &TextureInfoBar::pickerEnabledChanged,
-        mTextureItem, &TextureItem::setHistogramEnabled);
+        mTextureItem, &TextureEditorItem::setHistogramEnabled);
     c += connect(&mTextureInfoBar, &TextureInfoBar::mappingRangeChanged,
-        mTextureItem, &TextureItem::setMappingRange);
+        mTextureItem, &TextureEditorItem::setMappingRange);
     c += connect(&mTextureInfoBar, &TextureInfoBar::histogramBinCountChanged,
-        mTextureItem, &TextureItem::setHistogramBinCount);
+        mTextureItem, &TextureEditorItem::setHistogramBinCount);
     c += connect(&mTextureInfoBar, &TextureInfoBar::histogramBoundsChanged,
-        mTextureItem, &TextureItem::setHistogramBounds);
+        mTextureItem, &TextureEditorItem::setHistogramBounds);
     c += connect(&mTextureInfoBar, &TextureInfoBar::autoRangeRequested,
-        mTextureItem, &TextureItem::computeHistogramBounds);
-    c += connect(mTextureItem, &TextureItem::histogramBoundsComputed,
+        mTextureItem, &TextureEditorItem::computeHistogramBounds);
+    c += connect(mTextureItem, &TextureEditorItem::histogramBoundsComputed,
         &mTextureInfoBar, &TextureInfoBar::setHistogramBounds);
-    c += connect(mTextureItem, &TextureItem::histogramBoundsComputed,
+    c += connect(mTextureItem, &TextureEditorItem::histogramBoundsComputed,
         &mTextureInfoBar, &TextureInfoBar::setMappingRange);
     c += connect(&mTextureInfoBar, &TextureInfoBar::colorMaskChanged,
-        mTextureItem, &TextureItem::setColorMask);
+        mTextureItem, &TextureEditorItem::setColorMask);
 
     mTextureItem->setHistogramEnabled(mTextureInfoBar.isPickerEnabled());
     mTextureItem->setHistogramBinCount(mTextureInfoBar.histogramBinCount());
@@ -250,9 +265,14 @@ int TextureEditor::tabifyGroup() const
 
 bool TextureEditor::save()
 {
-    if (!mTexture.save(fileName(), !mTextureItem->flipVertically()))
+    auto texture = TextureData{};
+    if (!mTextureItem->downloadImage(&texture))
         return false;
 
+    if (!texture.save(fileName(), !mTextureItem->flipVertically()))
+        return false;
+
+    mTexture = std::move(texture);
     setModified(false);
     return true;
 }
@@ -271,6 +291,7 @@ void TextureEditor::replace(TextureData texture, bool emitFileChanged)
         verticalScrollBar()->setSliderPosition(verticalScrollBar()->minimum());
     }
     mTexture = texture;
+    mTextureSamples = 1;
     mIsRaw = false;
 
     // automatically enabled zoom to fit,
@@ -300,16 +321,13 @@ void TextureEditor::copy()
     }
 }
 
-void TextureEditor::updatePreviewTexture(ShareSyncPtr shareSync,
-    GLuint textureId, int samples)
+void TextureEditor::setPreviewTexture(ShareSyncPtr shareSync,
+    ShareHandle textureHandle, int samples)
 {
-    mTextureItem->setPreviewTexture(std::move(shareSync), textureId, samples);
-}
-
-void TextureEditor::updatePreviewTexture(ShareSyncPtr shareSync,
-    ShareHandle handle, int samples)
-{
-    mTextureItem->setPreviewTexture(std::move(shareSync), handle, samples);
+    if (!mGpuWindow->initialized())
+        mGpuWindow->update();
+    mTextureItem->setPreviewTexture(std::move(shareSync), textureHandle,
+        samples);
 }
 
 void TextureEditor::setModified()
@@ -591,10 +609,10 @@ void TextureEditor::updateScrollBars()
     const auto sy = (mZoomToFit ? 0 : std::max(bounds.height() - height, 0.0));
     horizontalScrollBar()->setRange(-sx, sx);
     verticalScrollBar()->setRange(-sy, sy);
-    mGLWindow->requestUpdate();
+    mGpuWindow->requestUpdate();
 }
 
-void TextureEditor::paintGL()
+void TextureEditor::paintGpu()
 {
     const auto dpr = devicePixelRatioF();
     const auto scale = getZoomScale();
@@ -610,11 +628,11 @@ void TextureEditor::paintGL()
         + QPointF(std::min(scrollOffsetX + 2 * margin(), 0),
             std::min(scrollOffsetY + 2 * margin(), 0))
         + QPointF(-scrollX, scrollY);
-    mTextureBackground->paintGL(bounds, offset / 2);
+    mBackground->paintGpu(bounds, offset / 2);
 
     const auto sx = bounds.width() / width;
     const auto sy = -bounds.height() / height;
     const auto x = -scrollX / width;
     const auto y = scrollY / height;
-    mTextureItem->paintGL(QTransform(sx, 0, 0, 0, sy, 0, x, y, 1));
+    mTextureItem->paintGpu(QTransform(sx, 0, 0, 0, sy, 0, x, y, 1));
 }

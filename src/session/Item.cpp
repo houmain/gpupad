@@ -56,18 +56,18 @@ int getBlockStride(const Block &block)
     return stride;
 }
 
-TextureKind getKind(const Texture &texture)
+TextureKind getKind(Texture::Target target, Texture::Format format)
 {
     auto kind = TextureKind{};
 
-    switch (texture.target) {
+    switch (target) {
     case QOpenGLTexture::Target1D:
     case QOpenGLTexture::Target1DArray: kind.dimensions = 1; break;
     case QOpenGLTexture::Target3D:      kind.dimensions = 3; break;
     default:                            kind.dimensions = 2;
     }
 
-    switch (texture.target) {
+    switch (target) {
     case QOpenGLTexture::Target1DArray:
     case QOpenGLTexture::Target2DArray:
     case QOpenGLTexture::TargetCubeMapArray:
@@ -75,13 +75,13 @@ TextureKind getKind(const Texture &texture)
     default:                                       break;
     }
 
-    switch (texture.target) {
+    switch (target) {
     case QOpenGLTexture::TargetCubeMap:
     case QOpenGLTexture::TargetCubeMapArray: kind.cubeMap = true; break;
     default:                                 break;
     }
 
-    switch (texture.format) {
+    switch (format) {
     case QOpenGLTexture::D16:
     case QOpenGLTexture::D24:
     case QOpenGLTexture::D32:
@@ -92,6 +92,11 @@ TextureKind getKind(const Texture &texture)
     default:                        kind.color = true;
     }
     return kind;
+}
+
+TextureKind getKind(const Texture &texture)
+{
+    return getKind(texture.target, texture.format);
 }
 
 CallKind getKind(const Call &call)

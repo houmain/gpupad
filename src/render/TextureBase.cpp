@@ -84,6 +84,29 @@ TextureBase::TextureBase(const Buffer &buffer, Texture::Format format,
     mUsedItems += buffer.id;
 }
 
+TextureBase::TextureBase(TextureData data, int samples)
+    : mFlipVertically(data.flippedVertically())
+    , mTarget(data.getTarget(samples))
+    , mFormat(data.format())
+    , mWidth(std::max(data.width(), 1))
+    , mHeight(std::max(data.height(), 1))
+    , mDepth(std::max(data.depth(), 1))
+    , mLayers(std::max(data.layers(), 1))
+    , mSamples(std::max(samples, 1))
+    , mData(std::move(data))
+    , mKind(getKind(mTarget, mFormat))
+    , mSystemCopyModified(true)
+{
+    if (mKind.dimensions < 2)
+        mHeight = 1;
+    if (mKind.dimensions < 3)
+        mDepth = 1;
+    if (mKind.cubeMap)
+        mHeight = mWidth;
+    if (!mKind.array)
+        mLayers = 1;
+}
+
 bool TextureBase::operator==(const TextureBase &rhs) const
 {
     const auto properties = [](const TextureBase &a) {

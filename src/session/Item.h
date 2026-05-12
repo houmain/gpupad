@@ -308,6 +308,7 @@ int getDataTypeSize(Field::DataType dataType);
 int getFieldSize(const Field &field);
 int getFieldRowOffset(const Field &field);
 int getBlockStride(const Block &block);
+TextureKind getKind(Texture::Target target, Texture::Format format);
 TextureKind getKind(const Texture &texture);
 CallKind getKind(const Call &call);
 bool callTypeSupportsShaderType(Call::CallType callType,
@@ -320,7 +321,8 @@ SourceType getSourceType(const Shader &shader);
 Shader::ShaderType getShaderType(SourceType sourceType);
 Session::ShaderLanguage getShaderLanguage(SourceType sourceType);
 Session::ShaderLanguage getShaderLanguage(const Shader &shader);
-bool shaderCompilerHasSetting(const Session& session, Session::ShaderCompilerSetting setting);
+bool shaderCompilerHasSetting(const Session &session,
+    Session::ShaderCompilerSetting setting);
 bool shaderCompilerHasSetting(Session::ShaderCompiler compiler,
     Session::Renderer renderer, Session::ShaderCompilerSetting setting);
 QVariant getShaderCompilerSetting(const Session &session,

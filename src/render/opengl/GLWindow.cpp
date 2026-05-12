@@ -1,12 +1,4 @@
-
 #include "GLWindow.h"
-#include <QOpenGLContext>
-#include <thread>
-
-GLWindow::GLWindow() : mSyncInterval(0)
-{
-    setSurfaceType(QWindow::OpenGLSurface);
-}
 
 GLWindow::GLWindow(int syncInterval) : mSyncInterval(syncInterval)
 {
@@ -25,8 +17,11 @@ GLWindow::~GLWindow()
 
 void GLWindow::initializeGL()
 {
-    if (!mGL.initializeOpenGLFunctions())
+    if (!mContext->initializeOpenGLFunctions())
         return;
+
+    if (!mVao.isCreated())
+        mVao.create();
 
     mInitialized = true;
 
@@ -41,7 +36,7 @@ void GLWindow::initializeGL()
         mDebugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
     }
 #endif
-    Q_EMIT initializingGL();
+    Q_EMIT initializingGpu();
 }
 
 void GLWindow::releaseGL()
@@ -50,10 +45,13 @@ void GLWindow::releaseGL()
         return;
 
     mContext->makeCurrent(this);
-    Q_EMIT releasingGL();
+    Q_EMIT releasingGpu();
 #if !defined(NDEBUG)
     mDebugLogger.reset();
 #endif
+    mVao.destroy();
+    mContext->doneCurrent();
+    mInitialized = false;
 }
 
 void GLWindow::paintGL()
@@ -62,7 +60,7 @@ void GLWindow::paintGL()
         return;
 
     QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
-    Q_EMIT paintingGL();
+    Q_EMIT paintingGpu();
 }
 
 bool GLWindow::event(QEvent *event)
@@ -84,25 +82,11 @@ void GLWindow::update()
     if (!isExposed())
         return;
 
-    if (!mContext) {
-        mContext = new QOpenGLContext(this);
-
-        if (!mSyncInterval)
-            mContext->setShareContext(QOpenGLContext::globalShareContext());
-
-        if (mContext->create()) {
-            mContext->makeCurrent(this);
-            initializeGL();
-        }
-    }
-
-    if (!initialized())
+    if (!makeCurrent())
         return;
 
-    mContext->makeCurrent(this);
-
     const qreal dpr = devicePixelRatio();
-    glViewport(0, 0, width() * dpr, height() * dpr);
+    mContext->glViewport(0, 0, width() * dpr, height() * dpr);
     paintGL();
 
     const auto start = std::chrono::high_resolution_clock::now();
@@ -111,10 +95,30 @@ void GLWindow::update()
 
     // limit refresh rate when swapping is not synchronizing
     if (mSyncInterval && end - start < std::chrono::milliseconds(2)) {
-        std::this_thread::sleep_for(mLastSwapTime - end + 
-            std::chrono::microseconds(16'667 * mSyncInterval));
+        std::this_thread::sleep_for(mLastSwapTime - end
+            + std::chrono::microseconds(16'667 * mSyncInterval));
         mLastSwapTime = end;
     }
+}
+
+bool GLWindow::makeCurrent()
+{
+    if (!mContext) {
+        mContext = new GLContext(this);
+        mContext->setFormat(format());
+        if (auto *shareContext = QOpenGLContext::globalShareContext())
+            mContext->setShareContext(shareContext);
+
+        if (mContext->create()) {
+            mContext->makeCurrent(this);
+            initializeGL();
+        }
+    }
+
+    if (!initialized())
+        return false;
+
+    return mContext->makeCurrent(this);
 }
 
 void GLWindow::handleDebugMessage(const QOpenGLDebugMessage &message)

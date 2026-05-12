@@ -108,6 +108,7 @@ enum class TextureDataType {
 
 enum class ShareHandleType {
     None = 0,
+    OPENGL_TEXTURE_ID = 1,
     OPAQUE_FD = 0x9586,
     OPAQUE_WIN32 = 0x9587,
     OPAQUE_WIN32_KMT = 0x9588,
@@ -125,6 +126,9 @@ struct ShareHandle
     size_t allocationSize;
     size_t allocationOffset;
     bool dedicated;
+
+    explicit operator bool() const { return (handle != nullptr); }
+    auto operator<=>(const ShareHandle &) const = default;
 };
 
 bool isMultisampleTarget(QOpenGLTexture::Target target);

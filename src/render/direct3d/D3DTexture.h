@@ -16,6 +16,7 @@ public:
 
     void boundAsSampler() { }
     void boundAsImage() { }
+
     ID3D12Resource *resource() { return mResource.Get(); }
     void prepareShaderResourceView(D3DContext &context,
         D3D12_CPU_DESCRIPTOR_HANDLE descriptor);
@@ -33,7 +34,7 @@ public:
     bool deviceCopyModified() const { return mDeviceCopyModified; }
     void beginDownload(D3DContext &context);
     bool finishDownload();
-    ShareHandle getSharedMemoryHandle() const;
+    ShareHandle getShareHandle() const;
 
 private:
     struct ViewOptions

@@ -11,7 +11,10 @@ public:
     VKTexture(const Texture &texture, VKRenderSession &renderSession);
     VKTexture(const Buffer &buffer, VKBuffer *textureBuffer,
         Texture::Format format, VKRenderSession &renderSession);
+    VKTexture(TextureData data, int samples);
+    VKTexture(TextureData data, int samples, KDGpu::Texture texture);
 
+    void release(KDGpu::Device &device);
     void boundAsSampler() { addUsage(KDGpu::TextureUsageFlagBits::SampledBit); }
     void boundAsImage() { addUsage(KDGpu::TextureUsageFlagBits::StorageBit); }
     void addUsage(KDGpu::TextureUsageFlags usage);
@@ -34,7 +37,7 @@ public:
     bool deviceCopyModified() const { return mDeviceCopyModified; }
     void beginDownload(VKContext &context);
     bool finishDownload();
-    ShareHandle getSharedMemoryHandle() const;
+    ShareHandle getShareHandle() const;
 
 private:
     struct ViewOptions
@@ -50,7 +53,6 @@ private:
         }
     };
 
-    void reset(KDGpu::Device &device);
     void createAndUpload(VKContext &context);
     void memoryBarrier(KDGpu::CommandRecorder &commandRecorder,
         KDGpu::TextureLayout layout, KDGpu::AccessFlags accessMask,

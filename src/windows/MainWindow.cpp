@@ -9,7 +9,7 @@
 #include "SynchronizeLogic.h"
 #include "Theme.h"
 #include "WindowTitle.h"
-#include "render/GLWindow.h"
+#include "render/opengl/GLWindow.h"
 #include "editors/EditorManager.h"
 #include "editors/IEditor.h"
 #include "editors/qml/QmlView.h"

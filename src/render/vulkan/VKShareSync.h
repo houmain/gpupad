@@ -2,8 +2,6 @@
 
 #include "VKContext.h"
 #include "render/ShareSync.h"
-#include <QOpenGLContext>
-#include <QOpenGLFunctions_3_3_Core>
 #include <QMutex>
 
 class VKShareSync : public ShareSync
@@ -15,8 +13,8 @@ public:
     void cleanup();
     void beginUpdate();
     void endUpdate();
-    void beginUsage(QOpenGLFunctions_4_5_Core &gl) override;
-    void endUsage(QOpenGLFunctions_4_5_Core &gl) override;
+    void beginUsage() override;
+    void endUsage() override;
 
 private:
     QMutex mMutex;

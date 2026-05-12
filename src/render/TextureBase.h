@@ -12,6 +12,7 @@ public:
     TextureBase(const Texture &texture, RenderSessionBase &renderSession);
     TextureBase(const Buffer &buffer, Texture::Format format,
         RenderSessionBase &renderSession);
+    TextureBase(TextureData data, int samples);
     virtual ~TextureBase() = default;
     bool operator==(const TextureBase &rhs) const;
 
@@ -26,6 +27,7 @@ public:
     int layers() const { return mLayers; }
     int levels() const { return (mSamples > 1 ? 1 : mData.levels()); }
     Texture::Format format() const { return mFormat; }
+    bool flippedVertically() const { return mFlipVertically; }
     const TextureData &data() const { return mData; }
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
     bool deviceCopyModified() const { return mDeviceCopyModified; }

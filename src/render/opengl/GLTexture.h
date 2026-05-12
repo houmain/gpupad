@@ -22,7 +22,6 @@ public:
     void boundAsSampler() { }
     void boundAsImage() { }
 
-    GLuint getSharedMemoryHandle() const { return mTextureObject; }
     GLuint64 obtainBindlessHandle();
     bool clear(std::array<double, 4> color, double depth, int stencil);
     bool copy(GLTexture &source);
@@ -32,12 +31,7 @@ public:
     GLuint getReadWriteTextureId();
     void beginDownload(GLContext &context);
     bool finishDownload();
-
-    bool download(GLContext &context)
-    {
-        beginDownload(context);
-        return finishDownload();
-    }
+    ShareHandle getShareHandle();
 
 private:
     void reload(bool forWriting);

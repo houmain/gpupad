@@ -35,16 +35,20 @@ void GLShareSync::endUpdate(QOpenGLFunctions_4_5_Core &gl)
     mMutex.unlock();
 }
 
-void GLShareSync::beginUsage(QOpenGLFunctions_4_5_Core &gl)
+void GLShareSync::beginUsage()
 {
     mMutex.lock();
+
     // synchronize with end of update
+    auto &gl = GLContext::currentContext();
     if (mUpdateFenceSync)
         gl.glWaitSync(mUpdateFenceSync, 0, GL_TIMEOUT_IGNORED);
 }
 
-void GLShareSync::endUsage(QOpenGLFunctions_4_5_Core &gl)
+void GLShareSync::endUsage()
 {
+    auto &gl = GLContext::currentContext();
+
     // mark end of usage
     mUsageFenceSyncs.append(gl.glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0));
     gl.glFlush();
