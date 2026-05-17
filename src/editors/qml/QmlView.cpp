@@ -1,12 +1,14 @@
 
 #include "QmlView.h"
+#include "scripting/ScriptEngine.h"
 #include <QAction>
 
 #if !defined(QtQuick_FOUND)
 
-QmlView::QmlView(QString fileName, QWidget *parent)
+QmlView::QmlView(QString fileName, QScriptEnginePtr enginePtr, QWidget *parent)
     : QFrame(parent)
     , mFileName(fileName)
+    , mEnginePtr(std::move(enginePtr))
 {
 }
 
@@ -18,7 +20,6 @@ void QmlView::reset() { }
 #  include "FileDialog.h"
 #  include "Singletons.h"
 #  include "Settings.h"
-#  include "scripting/ScriptEngine.h"
 #  include <QBoxLayout>
 #  include <QDir>
 #  include <QNetworkAccessManager>

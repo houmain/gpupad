@@ -41,11 +41,14 @@ private:
 
     const QString mFileName;
     QScriptEnginePtr mEnginePtr;
-    std::unique_ptr<QQmlNetworkAccessManagerFactory>
-        mNetworkAccessManagerFactory;
     MessagePtrSet mMessages;
-    QQuickView *mQuickView{};
-    QWidget *mQuickWidget{};
     QSet<QString> mDependencies;
     bool mResetOnFocus{};
+
+#if defined(QtQuick_FOUND)
+    QQuickView *mQuickView{};
+    QWidget *mQuickWidget{};
+    std::unique_ptr<QQmlNetworkAccessManagerFactory>
+        mNetworkAccessManagerFactory;
+#endif // defined(QtQuick_FOUND)
 };
