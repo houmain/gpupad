@@ -51,18 +51,6 @@ else()
 endif()
 set(CMAKE_AUTORCC ON)
 
-# build KDGpu --------------------
-find_package(spdlog CONFIG REQUIRED)
-
-find_package(Vulkan)
-find_package(VulkanMemoryAllocator CONFIG REQUIRED)
-add_library(vulkan-memory-allocator::vulkan-memory-allocator ALIAS GPUOpen::VulkanMemoryAllocator)
-
-set(PROJECT_VERSION "0.6.0")
-include(FeatureSummary)
-add_compile_definitions(KDGPU_STATIC_DEFINE)
-add_subdirectory(libs/KDGpu/src/KDGpu EXCLUDE_FROM_ALL)
-
 # setup version -------------------------
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
@@ -149,41 +137,6 @@ set(SOURCES
   src/editors/texture/TextureEditorItem.cpp
   src/editors/qml/QmlView.cpp
   src/main.cpp
-  src/render/opengl/GLBuffer.cpp
-  src/render/opengl/GLCall.cpp
-  src/render/opengl/GLTextureEditorBackground.cpp
-  src/render/opengl/GLTextureEditorItem.cpp
-  src/render/opengl/GLProgram.cpp
-  src/render/opengl/GLProgram_Reflection.cpp
-  src/render/opengl/GLShader.cpp
-  src/render/opengl/GLStream.cpp
-  src/render/opengl/GLTarget.cpp
-  src/render/opengl/GLTexture.cpp
-  src/render/opengl/GLPrintf.cpp
-  src/render/opengl/GLRenderSession.cpp
-  src/render/opengl/GLRenderer.cpp
-  src/render/opengl/GLComputeRange.cpp
-  src/render/opengl/GLShareSync.cpp
-  src/render/opengl/GLWindow.cpp
-  src/render/vulkan/KDGpuEnums.cpp
-  src/render/vulkan/VKBuffer.cpp
-  src/render/vulkan/VKCall.cpp
-  src/render/vulkan/VKPipeline.cpp
-  src/render/vulkan/VKProgram.cpp
-  src/render/vulkan/VKPrintf.cpp
-  src/render/vulkan/VKShader.cpp
-  src/render/vulkan/VKStream.cpp
-  src/render/vulkan/VKTarget.cpp
-  src/render/vulkan/VKTexture.cpp
-  src/render/vulkan/VKTextureEditorBackground.cpp
-  src/render/vulkan/VKTextureEditorItem.cpp
-  src/render/vulkan/VKTextureEditorItem_GL.cpp
-  src/render/vulkan/VKTextureEditorItem_Share.cpp
-  src/render/vulkan/VKRenderer.cpp
-  src/render/vulkan/VKRenderSession.cpp
-  src/render/vulkan/VKAccelerationStructure.cpp
-  src/render/vulkan/VKShareSync.cpp
-  src/render/vulkan/VKWindow.cpp
   src/render/AdapterIdentity.cpp
   src/render/ProcessSource.cpp
   src/render/RenderTask.cpp
@@ -270,6 +223,60 @@ if(WIN32)
   libs/d3d12/RenderTargetHelper.cpp)
 endif()
 
+# OpenGL -------------------------
+option(ENABLE_OPENGL "Enable OpenGL" TRUE)
+if (ENABLE_OPENGL)
+  set(SOURCES ${SOURCES}
+  src/render/opengl/GLBuffer.cpp
+  src/render/opengl/GLCall.cpp
+  src/render/opengl/GLTextureEditorBackground.cpp
+  src/render/opengl/GLTextureEditorItem.cpp
+  src/render/opengl/GLProgram.cpp
+  src/render/opengl/GLProgram_Reflection.cpp
+  src/render/opengl/GLShader.cpp
+  src/render/opengl/GLStream.cpp
+  src/render/opengl/GLTarget.cpp
+  src/render/opengl/GLTexture.cpp
+  src/render/opengl/GLPrintf.cpp
+  src/render/opengl/GLRenderSession.cpp
+  src/render/opengl/GLRenderer.cpp
+  src/render/opengl/GLComputeRange.cpp
+  src/render/opengl/GLShareSync.cpp
+  src/render/opengl/GLWindow.cpp)
+endif()
+
+# Vulkan -------------------------
+find_package(Vulkan)
+if (Vulkan_FOUND)
+   set(ENABLE_VULKAN_DEFAULT TRUE)
+endif()
+option(ENABLE_VULKAN "Enable Vulkan" ${ENABLE_VULKAN_DEFAULT})
+if (ENABLE_VULKAN)
+  find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+  find_package(spdlog CONFIG REQUIRED)
+
+  set(SOURCES ${SOURCES}
+  src/render/vulkan/KDGpuEnums.cpp
+  src/render/vulkan/VKBuffer.cpp
+  src/render/vulkan/VKCall.cpp
+  src/render/vulkan/VKPipeline.cpp
+  src/render/vulkan/VKProgram.cpp
+  src/render/vulkan/VKPrintf.cpp
+  src/render/vulkan/VKShader.cpp
+  src/render/vulkan/VKStream.cpp
+  src/render/vulkan/VKTarget.cpp
+  src/render/vulkan/VKTexture.cpp
+  src/render/vulkan/VKTextureEditorBackground.cpp
+  src/render/vulkan/VKTextureEditorItem.cpp
+  src/render/vulkan/VKTextureEditorItem_GL.cpp
+  src/render/vulkan/VKTextureEditorItem_Share.cpp
+  src/render/vulkan/VKRenderer.cpp
+  src/render/vulkan/VKRenderSession.cpp
+  src/render/vulkan/VKAccelerationStructure.cpp
+  src/render/vulkan/VKShareSync.cpp
+  src/render/vulkan/VKWindow.cpp)
+endif()
+
 file(GLOB_RECURSE HEADERS include src/*.h)
 
 if (MSVC)
@@ -299,7 +306,18 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     MACOSX_BUNDLE TRUE
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu spdlog::spdlog)
+# build KDGpu -------------------------
+if (ENABLE_VULKAN)
+    add_library(vulkan-memory-allocator::vulkan-memory-allocator ALIAS GPUOpen::VulkanMemoryAllocator)
+
+    set(PROJECT_VERSION "0.6.0")
+    include(FeatureSummary)
+    add_compile_definitions(KDGPU_STATIC_DEFINE)
+    add_subdirectory(libs/KDGpu/src/KDGpu EXCLUDE_FROM_ALL)
+
+    target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu spdlog::spdlog)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE VULKAN_ENABLED)
+endif()
 
 find_package(Ktx CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE KTX::ktx)
@@ -325,33 +343,36 @@ elseif(APPLE)
 endif()
 
 # link Qt6
-find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets OpenGL Qml)
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt6::Widgets
-    Qt6::OpenGLWidgets
-    Qt6::OpenGL
-    Qt6::Qml)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Qml)
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets Qt6::Qml)
+
+# TODO: remove once dependency to QOpenGLTexture is removed
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::OpenGL)
+
+if (ENABLE_OPENGL)
+    find_package(Qt6 REQUIRED COMPONENTS OpenGL)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::OpenGL)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE OPENGL_ENABLED)
+endif()
 
 find_package(Qt6Multimedia CONFIG)
 option(ENABLE_MULTIMEDIA "Enable QtMultimedia" ON)
 if(ENABLE_MULTIMEDIA AND Qt6Multimedia_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Multimedia)
-    add_compile_definitions(QtMultimedia_FOUND)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE QtMultimedia_FOUND)
 endif()
 
 find_package(Qt6Quick CONFIG)
 find_package(Qt6QuickWidgets CONFIG)
 option(ENABLE_QUICK "Enable QtQuick" ON)
 if(ENABLE_QUICK AND Qt6Quick_FOUND AND Qt6QuickWidgets_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-        Qt6::Quick
-        Qt6::QuickWidgets)
-    add_compile_definitions(QtQuick_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Quick Qt6::QuickWidgets)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE QtQuick_FOUND)
 
     find_package(Qt6QuickControls2 CONFIG)
     if(Qt6QuickControls2_FOUND)
         target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::QuickControls2)
-        add_compile_definitions(QtQuickControls2_FOUND)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE QtQuickControls2_FOUND)
     endif()
 endif()
 
@@ -382,7 +403,7 @@ endif()
 option(ENABLE_OPENIMEAGEIO "Enable OpenImageIO" ${ENABLE_OPENIMEAGEIO_DEFAULT})
 if (ENABLE_OPENIMEAGEIO)
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenImageIO::OpenImageIO)
-    add_compile_definitions(OpenImageIO_FOUND)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE  OpenImageIO_FOUND)
 endif()
 
 # link Slang
@@ -393,7 +414,7 @@ endif()
 option(ENABLE_SLANG "Enable Slang" ${ENABLE_SLANG_DEFAULT})
 if (ENABLE_SLANG)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${Slang_LIBRARY})
-    add_compile_definitions(Slang_FOUND)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE Slang_FOUND)
 endif()
 
 # add custom action projects

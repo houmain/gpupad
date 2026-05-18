@@ -1,4 +1,5 @@
 #pragma once
+#if defined(OPENGL_ENABLED)
 
 #include "Range.h"
 #include "TextureData.h"
@@ -34,3 +35,5 @@ private:
     QOpenGLBuffer mBuffer;
     std::map<ProgramKey, QOpenGLShaderProgram> mPrograms;
 };
+
+#endif // defined(OPENGL_ENABLED)

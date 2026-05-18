@@ -20,7 +20,7 @@ class FileBrowserWindow;
 class EditorManager;
 class SessionEditor;
 class PropertiesEditor;
-class GLWindow;
+class GpuWindow;
 class Theme;
 
 class MainWindow final : public QMainWindow
@@ -95,7 +95,7 @@ private:
     void waitForSync();
 
     Ui::MainWindow *mUi{};
-    GLWindow *mSyncWindow{};
+    GpuWindow *mSyncWindow{};
     QToolButton *mMenuButton{};
     QSplitter *mSessionSplitter{};
     QToolBar *mFullScreenBar{};

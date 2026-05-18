@@ -1,7 +1,8 @@
 #pragma once
+#if defined(OPENGL_ENABLED)
 
-#include "GLContext.h"
-#include "render/BufferBase.h"
+#  include "GLContext.h"
+#  include "render/BufferBase.h"
 
 class GLBuffer : public BufferBase
 {
@@ -28,5 +29,7 @@ private:
     void upload();
 
     GLObject mBufferObject;
-    bool mDownloaded{ };
+    bool mDownloaded{};
 };
+
+#endif // !defined(OPENGL_ENABLED)

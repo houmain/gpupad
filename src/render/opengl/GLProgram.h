@@ -1,8 +1,11 @@
 #pragma once
 
 #include "GLShader.h"
-#include "GLBuffer.h"
-#include <map>
+
+#if defined(OPENGL_ENABLED)
+
+#  include "GLBuffer.h"
+#  include <map>
 
 class GLProgram
 {
@@ -76,3 +79,19 @@ private:
     std::map<Shader::ShaderType, Spirv> mStageSpirv;
     std::map<Shader::ShaderType, std::vector<Subroutine>> mStageSubroutines;
 };
+
+#else // !defined(OPENGL_ENABLED)
+
+class GLProgram
+{
+public:
+    bool validate() { return false; }
+    const Reflection &reflection() const { return mReflection; }
+    MessagePtrSet resetMessages() { return {}; }
+    QString tryGetProgramBinary() { return {}; }
+
+private:
+    Reflection mReflection;
+};
+
+#endif // !defined(OPENGL_ENABLED)

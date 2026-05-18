@@ -128,8 +128,7 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
         if (session.renderer != Session::Renderer::OpenGL)
             return false;
         return ((mValidateSource && mProcessType.isEmpty())
-            || mProcessType == "programBinary"
-            || mProcessType == "json");
+            || mProcessType == "programBinary" || mProcessType == "json");
     }();
 
     auto shader = Shader{};
@@ -151,6 +150,20 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
     }
 
     switch (session.renderer) {
+    default:
+#if defined(VULKAN_ENABLED)
+    case Session::Renderer::Vulkan:
+        mShader = std::make_unique<VKShader>(shaderType, shaders, session);
+        break;
+#endif
+
+#if defined(_WIN32)
+    case Session::Renderer::Direct3D:
+        mShader = std::make_unique<D3DShader>(shaderType, shaders, session);
+        break;
+#endif
+
+#if defined(OPENGL_ENABLED)
     case Session::Renderer::OpenGL: {
         if (linkingProgram) {
             auto program = Program{};
@@ -162,16 +175,6 @@ void ProcessSource::prepareShader(Shader::ShaderType shaderType)
         }
         break;
     }
-
-    default:
-    case Session::Renderer::Vulkan:
-        mShader = std::make_unique<VKShader>(shaderType, shaders, session);
-        break;
-
-#if defined(_WIN32)
-    case Session::Renderer::Direct3D:
-        mShader = std::make_unique<D3DShader>(shaderType, shaders, session);
-        break;
 #endif
     }
 }

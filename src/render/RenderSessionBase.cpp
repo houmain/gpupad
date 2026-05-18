@@ -8,10 +8,7 @@
 #include "session/SessionModel.h"
 #include "opengl/GLRenderSession.h"
 #include "vulkan/VKRenderSession.h"
-
-#if defined(_WIN32)
-#  include "direct3d/D3DRenderSession.h"
-#endif
+#include "direct3d/D3DRenderSession.h"
 
 std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
     RendererPtr renderer)
@@ -19,9 +16,17 @@ std::unique_ptr<RenderSessionBase> RenderSessionBase::create(
     auto session = std::unique_ptr<RenderSessionBase>();
     switch (renderer->type()) {
     case Renderer::Type::OpenGL:
+#if defined(OPENGL_ENABLED)
         return std::make_unique<GLRenderSession>(renderer);
+#endif
+        break;
+
     case Renderer::Type::Vulkan:
+#if defined(VULKAN_ENABLED)
         return std::make_unique<VKRenderSession>(renderer);
+#endif
+        break;
+
     case Renderer::Type::Direct3D:
 #if defined(_WIN32)
         return std::make_unique<D3DRenderSession>(renderer);

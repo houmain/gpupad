@@ -14,6 +14,7 @@ class VKRenderer : public QObject, public Renderer
 {
     Q_OBJECT
 public:
+#if defined(VULKAN_ENABLED)
     explicit VKRenderer(QObject *parent = nullptr);
     ~VKRenderer() override;
 
@@ -44,4 +45,25 @@ private:
     KDGpu::Device *mDevice{};
     KDGpu::Queue *mQueue{};
     ktxVulkanDeviceInfo *mKtxDeviceInfo{};
+
+#else
+public:
+    explicit VKRenderer(QObject *parent = nullptr)
+        : QObject(parent)
+        , Renderer(Renderer::Type::Vulkan)
+    {
+        mMessages.insert(0, MessageType::VulkanNotAvailable);
+        setFailed();
+    }
+
+    ~VKRenderer() = default;
+    void render(RenderTask *task) override { }
+    void release(RenderTask *task) override { }
+    void finish() override { }
+    QThread *renderThread() override { return nullptr; }
+
+private:
+    MessagePtrSet mMessages;
+
+#endif // defined(VULKAN_ENABLED)
 };

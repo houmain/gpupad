@@ -1,6 +1,7 @@
 #pragma once
+#if defined(VULKAN_ENABLED)
 
-#include "VKShader.h"
+#  include "VKShader.h"
 
 class VKProgram
 {
@@ -31,3 +32,5 @@ private:
     bool mCompileShadersSeparately{};
     bool mFailed{};
 };
+
+#endif // defined(VULKAN_ENABLED)

@@ -1,4 +1,5 @@
 #pragma once
+#if defined(OPENGL_ENABLED)
 
 #include "render/RenderWindow.h"
 #include "GLContext.h"
@@ -38,3 +39,5 @@ private:
     std::unique_ptr<QOpenGLDebugLogger> mDebugLogger;
 #endif
 };
+
+#endif // defined(OPENGL_ENABLED)

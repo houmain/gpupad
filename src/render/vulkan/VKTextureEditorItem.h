@@ -1,4 +1,5 @@
 #pragma once
+#if defined(VULKAN_ENABLED)
 
 #include "editors/texture/TextureEditorItem.h"
 #include <memory>
@@ -53,3 +54,5 @@ private:
     ShareSyncPtr mShareSync;
     ShareHandle mPreviewTextureHandle{};
 };
+
+#endif // defined(VULKAN_ENABLED)

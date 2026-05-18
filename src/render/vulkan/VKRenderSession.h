@@ -1,7 +1,8 @@
 #pragma once
+#if defined(VULKAN_ENABLED)
 
-#include "render/RenderSessionBase.h"
-#include "VKContext.h"
+#  include "render/RenderSessionBase.h"
+#  include "VKContext.h"
 
 class VKRenderer;
 class VKShareSync;
@@ -30,3 +31,5 @@ private:
     std::unique_ptr<CommandQueue> mPrevCommandQueue;
     KDGpu::TimestampQueryRecorder mTimestampQueries;
 };
+
+#endif // defined(VULKAN_ENABLED)

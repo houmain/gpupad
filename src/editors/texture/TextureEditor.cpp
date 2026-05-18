@@ -27,8 +27,8 @@
 #include <QWheelEvent>
 #include <cstring>
 
-bool createFromRaw(const QByteArray &binary,
-    const TextureEditor::RawFormat &r, TextureData *texture)
+bool createFromRaw(const QByteArray &binary, const TextureEditor::RawFormat &r,
+    TextureData *texture)
 {
     if (!texture->create(r.target, r.format, r.width, r.height, r.depth,
             r.layers))
@@ -52,16 +52,28 @@ TextureEditor::TextureEditor(QString fileName,
     , mTextureInfoBar(*textureInfoBar)
     , mFileName(fileName)
 {
-    if (!VKWindow::isSupported()) {
-        auto *window = new GLWindow();
-        mGpuWindow = window;
-        mTextureItem = new GLTextureEditorItem(window);
-        mBackground = new GLTextureEditorBackground(window);
-    } else {
+
+#if defined(VULKAN_ENABLED)
+    if (VKWindow::isSupported()) {
         auto *window = new VKWindow();
         mGpuWindow = window;
         mTextureItem = new VKTextureEditorItem(window);
         mBackground = new VKTextureEditorBackground(window);
+    }
+#endif // defined(VULKAN_ENABLED)
+
+#if defined(OPENGL_ENABLED)
+    if (!mGpuWindow) {
+        auto *window = new GLWindow();
+        mGpuWindow = window;
+        mTextureItem = new GLTextureEditorItem(window);
+        mBackground = new GLTextureEditorBackground(window);
+    }
+#endif // defined(OPENGL_ENABLED)
+
+    if (!mGpuWindow) {
+        setEnabled(false);
+        return;
     }
 
     mGpuWindowContainer = QWidget::createWindowContainer(mGpuWindow);
@@ -87,6 +99,9 @@ TextureEditor::~TextureEditor()
 
 void TextureEditor::resizeEvent(QResizeEvent *event)
 {
+    if (!mGpuWindow)
+        return;
+
     if (mZoomToFit)
         zoomToFit();
     updateGeometry();
@@ -95,7 +110,8 @@ void TextureEditor::resizeEvent(QResizeEvent *event)
 
 void TextureEditor::paintEvent(QPaintEvent *event)
 {
-    mGpuWindow->update();
+    if (mGpuWindow)
+        mGpuWindow->update();
 }
 
 void TextureEditor::releaseGpu()
@@ -254,7 +270,8 @@ bool TextureEditor::load()
 
 void TextureEditor::setFlipVertically(bool flipVertically)
 {
-    mTextureItem->setFlipVertically(flipVertically);
+    if (mTextureItem)
+        mTextureItem->setFlipVertically(flipVertically);
 }
 
 int TextureEditor::tabifyGroup() const
@@ -280,7 +297,7 @@ bool TextureEditor::save()
 void TextureEditor::replace(TextureData texture, bool emitFileChanged)
 {
     Q_ASSERT(!texture.isNull());
-    if (texture.isNull() || texture == mTexture)
+    if (!mTextureItem || texture.isNull() || texture == mTexture)
         return;
 
     mTextureItem->setImage(texture);

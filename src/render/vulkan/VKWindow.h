@@ -1,4 +1,5 @@
 #pragma once
+#if defined(VULKAN_ENABLED)
 
 #include <KDGpu/gpu_core.h>
 #include "render/RenderWindow.h"
@@ -46,3 +47,5 @@ private:
     bool mInitialized{};
     std::unique_ptr<State> mState;
 };
+
+#endif // defined(VULKAN_ENABLED)

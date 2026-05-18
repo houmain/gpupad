@@ -1,7 +1,8 @@
 #pragma once
+#if defined(OPENGL_ENABLED)
 
-#include "GLBuffer.h"
-#include "render/PrintfBase.h"
+#  include "GLBuffer.h"
+#  include "render/PrintfBase.h"
 
 class GLPrintf : public PrintfBase
 {
@@ -13,3 +14,5 @@ public:
 private:
     std::optional<GLBuffer> mBuffer;
 };
+
+#endif // !defined(OPENGL_ENABLED)

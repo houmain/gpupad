@@ -43,13 +43,13 @@ GLTextureEditorItem::GLTextureEditorItem(GLWindow *parent)
 
 GLTextureEditorItem::~GLTextureEditorItem()
 {
-    releaseGpu();
+    Q_ASSERT(!mImageTextureId && !mPreviewTextureId);
 }
 
 void GLTextureEditorItem::releaseGpu()
 {
-    if (glWindow().initialized()) {
-        auto &gl = glWindow().gl();
+    if (window().initialized()) {
+        auto &gl = window().gl();
         if (mImageTextureId)
             gl.glDeleteTextures(1, &mImageTextureId);
 
@@ -82,11 +82,11 @@ bool GLTextureEditorItem::downloadImage(TextureData *image)
     if (!mPreviewTextureId)
         return TextureEditorItem::downloadImage(image);
 
-    if (!glWindow().makeCurrent())
+    if (!window().makeCurrent())
         return false;
 
     auto data = mImage;
-    auto &gl = glWindow().gl();
+    auto &gl = window().gl();
     const auto target = data.getTarget(mTextureSamples);
     if (mShareSync)
         mShareSync->beginUsage();
@@ -126,9 +126,9 @@ void GLTextureEditorItem::setPreviewTexture(ShareSyncPtr shareSync,
     render();
 }
 
-GLWindow &GLTextureEditorItem::glWindow()
+GLWindow &GLTextureEditorItem::window()
 {
-    return static_cast<GLWindow &>(window());
+    return static_cast<GLWindow &>(TextureEditorItem::window());
 }
 
 void GLTextureEditorItem::imageChanged()
@@ -143,7 +143,7 @@ bool GLTextureEditorItem::updateTexture()
         return false;
 
     if (!mPreviewTextureId && std::exchange(mUpload, false)) {
-        auto &gl = glWindow().gl();
+        auto &gl = window().gl();
         gl.glDeleteTextures(1, &mImageTextureId);
         mImageTextureId = GL_NONE;
 
@@ -159,7 +159,7 @@ bool GLTextureEditorItem::updateTexture()
 bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    auto &gl = glWindow().gl();
+    auto &gl = window().gl();
 
     if (mPreviewTextureId && !gl.glIsTexture(mPreviewTextureId))
         mPreviewTextureId = GL_NONE;
@@ -216,7 +216,7 @@ bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
         program->setUniformValue("uMappingOffset", params.mappingOffset);
         program->setUniformValue("uMappingFactor", params.mappingFactor);
         program->setUniformValue("uColorMask",
-            static_cast<GLuint>(params.colorMask));
+            static_cast<GLint>(params.colorMask));
 
         if (mPickerEnabled) {
             if (!mPickerTexture.isCreated()) {

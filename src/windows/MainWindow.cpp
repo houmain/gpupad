@@ -51,10 +51,12 @@ MainWindow::MainWindow(QWidget *parent)
     mUi->setupUi(this);
     setFont(qApp->font());
 
+#if defined(OPENGL_ENABLED)
     mSyncWindow = new GLWindow(1);
     auto container = QWidget::createWindowContainer(mSyncWindow);
     container->setGeometry(0, 0, 1, 1);
     container->setParent(this);
+#endif
 
     setAcceptDrops(true);
 
@@ -564,9 +566,11 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
 
 void MainWindow::waitForSync()
 {
+#if defined(OPENGL_ENABLED)
     const auto syncInterval = Singletons::settings().syncInterval();
     for (auto i = 0; i < syncInterval; ++i)
         mSyncWindow->update();
+#endif
 }
 
 void MainWindow::setToolbarIconVisible(QAction *action, bool visible)

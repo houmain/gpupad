@@ -3,6 +3,8 @@
 #include "GLPrintf.h"
 #include "render/ShaderBase.h"
 
+#if defined(OPENGL_ENABLED)
+
 class GLShader : public ShaderBase
 {
 public:
@@ -21,3 +23,5 @@ private:
 
     GLObject mShaderObject;
 };
+
+#endif // defined(OPENGL_ENABLED)

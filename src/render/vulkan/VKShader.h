@@ -1,7 +1,8 @@
 #pragma once
+#if defined(VULKAN_ENABLED)
 
-#include "VKPrintf.h"
-#include "render/ShaderBase.h"
+#  include "VKPrintf.h"
+#  include "render/ShaderBase.h"
 
 class VKShader : public ShaderBase
 {
@@ -22,3 +23,5 @@ private:
     Reflection mReflection;
     int mShaderIndex{ -1 };
 };
+
+#endif // #if defined(VULKAN_ENABLED)

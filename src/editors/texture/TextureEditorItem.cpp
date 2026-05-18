@@ -122,7 +122,7 @@ uniform int uSample;
 uniform int uSamples;
 uniform float uMappingOffset;
 uniform float uMappingFactor;
-uniform uint uColorMask;
+uniform int uColorMask;
 
 in vec2 vTexCoord;
 out vec4 oColor;
@@ -136,7 +136,7 @@ struct Params {
   int samples;
   float mappingOffset;
   float mappingFactor;
-  uint colorMask;
+  int colorMask;
 };
 Params pc = Params(
   uSize,
@@ -185,10 +185,10 @@ void main() {
   color = MAPPING;
   color = SWIZZLE;
 
-  if ((pc.colorMask & 1u) != 0u) color.r = 0.0;
-  if ((pc.colorMask & 2u) != 0u) color.g = 0.0;
-  if ((pc.colorMask & 4u) != 0u) color.b = 0.0;
-  if ((pc.colorMask & 8u) != 0u) color.a = 1.0;
+  if ((pc.colorMask & 1) != 0) color.r = 0.0;
+  if ((pc.colorMask & 2) != 0) color.g = 0.0;
+  if ((pc.colorMask & 4) != 0) color.b = 0.0;
+  if ((pc.colorMask & 8) != 0) color.a = 1.0;
 
 #if LINEAR_TO_SRGB
   color = vec4(linearToSrgb(color.rgb), color.a);
@@ -217,7 +217,7 @@ void main() {
 }
 )";
 
-TextureEditorItem::TextureEditorItem(RenderWindow *widget) : QObject(widget)
+TextureEditorItem::TextureEditorItem(RenderWindow *window) : QObject(window)
 {
     setHistogramBinCount(1);
 }

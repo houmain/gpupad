@@ -215,7 +215,7 @@ VKTextureEditorItem::VKTextureEditorItem(VKWindow *parent)
 
 VKTextureEditorItem::~VKTextureEditorItem()
 {
-    releaseGpu();
+    Q_ASSERT(!mTexture);
 }
 
 void VKTextureEditorItem::releaseGpu()

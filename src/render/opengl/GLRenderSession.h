@@ -1,9 +1,10 @@
 #pragma once
+#if defined(OPENGL_ENABLED)
 
-#include "render/RenderSessionBase.h"
-#include <QOpenGLVertexArrayObject>
-#include <QOpenGLTimerQuery>
-#include <deque>
+#  include "render/RenderSessionBase.h"
+#  include <QOpenGLVertexArrayObject>
+#  include <QOpenGLTimerQuery>
+#  include <deque>
 
 class GLShareSync;
 
@@ -31,3 +32,5 @@ private:
     std::unique_ptr<CommandQueue> mPrevCommandQueue;
     std::deque<QOpenGLTimerQuery> mTimeQueries;
 };
+
+#endif // !defined(OPENGL_ENABLED)
