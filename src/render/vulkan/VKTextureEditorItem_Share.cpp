@@ -188,8 +188,8 @@ bool VKTextureEditorItem::importShareHandle(VKContext &context,
         static_cast<KDGpu::VulkanDevice *>(rm.getDevice(context.device));
     const auto vkAdapter = rm.getAdapter(context.device.adapter()->handle());
 
-    const auto kind =
-        getKind(mImage.getTarget(mTextureSamples), mImage.format());
+    const auto kind = getKind(mImage.getTarget(mTextureSamples),
+        mImage.format());
     const auto levelCount = static_cast<uint32_t>(
         mTextureSamples > 1 ? 1 : std::max(mImage.levels(), 1));
     const auto layerCount = vkArrayLayerCount(kind, mImage.layers());

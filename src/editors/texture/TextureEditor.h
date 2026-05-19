@@ -18,8 +18,8 @@ class TextureEditor final : public QAbstractScrollArea, public IEditor
 public:
     struct RawFormat
     {
-        QOpenGLTexture::Target target;
-        QOpenGLTexture::TextureFormat format;
+        Texture::Target target;
+        Texture::Format format;
         int width, height, depth, layers, samples;
     };
 

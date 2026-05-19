@@ -10,9 +10,9 @@ class GLTexture : public TextureBase
 {
 public:
     static bool upload(QOpenGLFunctions_4_5_Core &gl, const TextureData &data,
-        QOpenGLTexture::Target target, int samples, GLuint *textureId);
+        Texture::Target target, int samples, GLuint *textureId);
     static bool download(QOpenGLFunctions_4_5_Core &gl, TextureData &data,
-        QOpenGLTexture::Target target, GLuint textureId);
+        Texture::Target target, GLuint textureId);
 
     GLTexture(const Texture &texture, GLRenderSession &renderSession);
     GLTexture(const Buffer &buffer, GLBuffer *textureBuffer,

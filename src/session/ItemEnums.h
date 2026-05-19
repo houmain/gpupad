@@ -1,11 +1,7 @@
 #pragma once
 
 #include <QObject>
-#include <QOpenGLTexture>
-
-#if !defined(GL_COMPUTE_SHADER)
-#  define GL_COMPUTE_SHADER 0x91B9
-#endif
+#include <qopengl.h>
 
 namespace ItemEnums {
     Q_NAMESPACE
@@ -32,6 +28,172 @@ namespace ItemEnums {
         Geometry,
     };
     Q_ENUM_NS(ItemType)
+
+    enum TextureTarget {
+        Target1D = 0x0DE0,
+        Target1DArray = 0x8C18,
+        Target2D = 0x0DE1,
+        Target2DArray = 0x8C1A,
+        Target3D = 0x806F,
+        TargetCubeMap = 0x8513,
+        TargetCubeMapArray = 0x9009,
+        Target2DMultisample = 0x9100,
+        Target2DMultisampleArray = 0x9102,
+        TargetRectangle = 0x84F5,
+        TargetBuffer = 0x8C2A,
+    };
+    Q_ENUM_NS(TextureTarget)
+
+    enum TextureFormat {
+        NoFormat = 0,
+
+        R8_UNorm = 0x8229,
+        RG8_UNorm = 0x822B,
+        RGB8_UNorm = 0x8051,
+        RGBA8_UNorm = 0x8058,
+        R16_UNorm = 0x822A,
+        RG16_UNorm = 0x822C,
+        RGB16_UNorm = 0x8054,
+        RGBA16_UNorm = 0x805B,
+
+        R8_SNorm = 0x8F94,
+        RG8_SNorm = 0x8F95,
+        RGB8_SNorm = 0x8F96,
+        RGBA8_SNorm = 0x8F97,
+        R16_SNorm = 0x8F98,
+        RG16_SNorm = 0x8F99,
+        RGB16_SNorm = 0x8F9A,
+        RGBA16_SNorm = 0x8F9B,
+
+        R8U = 0x8232,
+        RG8U = 0x8238,
+        RGB8U = 0x8D7D,
+        RGBA8U = 0x8D7C,
+        R16U = 0x8234,
+        RG16U = 0x823A,
+        RGB16U = 0x8D77,
+        RGBA16U = 0x8D76,
+        R32U = 0x8236,
+        RG32U = 0x823C,
+        RGB32U = 0x8D71,
+        RGBA32U = 0x8D70,
+
+        R8I = 0x8231,
+        RG8I = 0x8237,
+        RGB8I = 0x8D8F,
+        RGBA8I = 0x8D8E,
+        R16I = 0x8233,
+        RG16I = 0x8239,
+        RGB16I = 0x8D89,
+        RGBA16I = 0x8D88,
+        R32I = 0x8235,
+        RG32I = 0x823B,
+        RGB32I = 0x8D83,
+        RGBA32I = 0x8D82,
+
+        R16F = 0x822D,
+        RG16F = 0x822F,
+        RGB16F = 0x881B,
+        RGBA16F = 0x881A,
+        R32F = 0x822E,
+        RG32F = 0x8230,
+        RGB32F = 0x8815,
+        RGBA32F = 0x8814,
+
+        RGB9E5 = 0x8C3D,
+        RG11B10F = 0x8C3A,
+        RG3B2 = 0x2A10,
+        R5G6B5 = 0x8D62,
+        RGB5A1 = 0x8057,
+        RGBA4 = 0x8056,
+        RGB10A2 = 0x906F,
+
+        D16 = 0x81A5,
+        D24 = 0x81A6,
+        D24S8 = 0x88F0,
+        D32 = 0x81A7,
+        D32F = 0x8CAC,
+        D32FS8X24 = 0x8CAD,
+        S8 = 0x8D48,
+
+        RGB_DXT1 = 0x83F0,
+        RGBA_DXT1 = 0x83F1,
+        RGBA_DXT3 = 0x83F2,
+        RGBA_DXT5 = 0x83F3,
+        R_ATI1N_UNorm = 0x8DBB,
+        R_ATI1N_SNorm = 0x8DBC,
+        RG_ATI2N_UNorm = 0x8DBD,
+        RG_ATI2N_SNorm = 0x8DBE,
+        RGB_BP_UNSIGNED_FLOAT = 0x8E8F,
+        RGB_BP_SIGNED_FLOAT = 0x8E8E,
+        RGB_BP_UNorm = 0x8E8C,
+        R11_EAC_UNorm = 0x9270,
+        R11_EAC_SNorm = 0x9271,
+        RG11_EAC_UNorm = 0x9272,
+        RG11_EAC_SNorm = 0x9273,
+        RGB8_ETC2 = 0x9274,
+        SRGB8_ETC2 = 0x9275,
+        RGB8_PunchThrough_Alpha1_ETC2 = 0x9276,
+        SRGB8_PunchThrough_Alpha1_ETC2 = 0x9277,
+        RGBA8_ETC2_EAC = 0x9278,
+        SRGB8_Alpha8_ETC2_EAC = 0x9279,
+        RGB8_ETC1 = 0x8D64,
+        RGBA_ASTC_4x4 = 0x93B0,
+        RGBA_ASTC_5x4 = 0x93B1,
+        RGBA_ASTC_5x5 = 0x93B2,
+        RGBA_ASTC_6x5 = 0x93B3,
+        RGBA_ASTC_6x6 = 0x93B4,
+        RGBA_ASTC_8x5 = 0x93B5,
+        RGBA_ASTC_8x6 = 0x93B6,
+        RGBA_ASTC_8x8 = 0x93B7,
+        RGBA_ASTC_10x5 = 0x93B8,
+        RGBA_ASTC_10x6 = 0x93B9,
+        RGBA_ASTC_10x8 = 0x93BA,
+        RGBA_ASTC_10x10 = 0x93BB,
+        RGBA_ASTC_12x10 = 0x93BC,
+        RGBA_ASTC_12x12 = 0x93BD,
+        SRGB8_Alpha8_ASTC_4x4 = 0x93D0,
+        SRGB8_Alpha8_ASTC_5x4 = 0x93D1,
+        SRGB8_Alpha8_ASTC_5x5 = 0x93D2,
+        SRGB8_Alpha8_ASTC_6x5 = 0x93D3,
+        SRGB8_Alpha8_ASTC_6x6 = 0x93D4,
+        SRGB8_Alpha8_ASTC_8x5 = 0x93D5,
+        SRGB8_Alpha8_ASTC_8x6 = 0x93D6,
+        SRGB8_Alpha8_ASTC_8x8 = 0x93D7,
+        SRGB8_Alpha8_ASTC_10x5 = 0x93D8,
+        SRGB8_Alpha8_ASTC_10x6 = 0x93D9,
+        SRGB8_Alpha8_ASTC_10x8 = 0x93DA,
+        SRGB8_Alpha8_ASTC_10x10 = 0x93DB,
+        SRGB8_Alpha8_ASTC_12x10 = 0x93DC,
+        SRGB8_Alpha8_ASTC_12x12 = 0x93DD,
+
+        SRGB8 = 0x8C41,
+        SRGB8_Alpha8 = 0x8C43,
+        SRGB_DXT1 = 0x8C4C,
+        SRGB_Alpha_DXT1 = 0x8C4D,
+        SRGB_Alpha_DXT3 = 0x8C4E,
+        SRGB_Alpha_DXT5 = 0x8C4F,
+        SRGB_BP_UNorm = 0x8E8D,
+    };
+    Q_ENUM_NS(TextureFormat)
+
+    enum TextureWrapMode {
+        Repeat = 0x2901,
+        MirroredRepeat = 0x8370,
+        ClampToEdge = 0x812F,
+        ClampToBorder = 0x812D,
+    };
+    Q_ENUM_NS(TextureWrapMode)
+
+    enum TextureFilter {
+        Nearest = 0x2600,
+        Linear = 0x2601,
+        NearestMipMapNearest = 0x2700,
+        NearestMipMapLinear = 0x2702,
+        LinearMipMapNearest = 0x2701,
+        LinearMipMapLinear = 0x2703,
+    };
+    Q_ENUM_NS(TextureFilter)
 
     enum DataType {
         Int8 = GL_BYTE,

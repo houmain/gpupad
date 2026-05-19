@@ -19,13 +19,13 @@ public:
 
 private:
     using ProgramKey =
-        std::tuple<QOpenGLTexture::Target, QOpenGLTexture::TextureFormat>;
+        std::tuple<QOpenGLTexture::Target, Texture::Format>;
 
     QOpenGLShaderProgram *getProgram(QOpenGLTexture::Target target,
-        QOpenGLTexture::TextureFormat format);
+        Texture::Format format);
 
     QOpenGLTexture::Target mTarget{};
-    QOpenGLTexture::TextureFormat mFormat{};
+    Texture::Format mFormat{};
     QSize mSize{};
     int mLevel{};
     int mLayer{};

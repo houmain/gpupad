@@ -7,37 +7,38 @@
 #include <QOffscreenSurface>
 
 namespace {
-    GLenum attachmentForFormat(QOpenGLTexture::TextureFormat format)
+    GLenum attachmentForFormat(Texture::Format format)
     {
         switch (format) {
         default: return GL_COLOR_ATTACHMENT0;
 
-        case QOpenGLTexture::D16:
-        case QOpenGLTexture::D24:
-        case QOpenGLTexture::D32:
-        case QOpenGLTexture::D32F: return GL_DEPTH_ATTACHMENT;
+        case Texture::Format::D16:
+        case Texture::Format::D24:
+        case Texture::Format::D32:
+        case Texture::Format::D32F: return GL_DEPTH_ATTACHMENT;
 
-        case QOpenGLTexture::S8: return GL_STENCIL_ATTACHMENT;
+        case Texture::Format::S8: return GL_STENCIL_ATTACHMENT;
 
-        case QOpenGLTexture::D24S8:
-        case QOpenGLTexture::D32FS8X24: return GL_DEPTH_STENCIL_ATTACHMENT;
+        case Texture::Format::D24S8:
+        case Texture::Format::D32FS8X24:
+            return GL_DEPTH_STENCIL_ATTACHMENT;
         }
     }
 
-    GLbitfield blitMaskForFormat(QOpenGLTexture::TextureFormat format)
+    GLbitfield blitMaskForFormat(Texture::Format format)
     {
         switch (format) {
         default: return GL_COLOR_BUFFER_BIT;
 
-        case QOpenGLTexture::D16:
-        case QOpenGLTexture::D24:
-        case QOpenGLTexture::D32:
-        case QOpenGLTexture::D32F: return GL_DEPTH_BUFFER_BIT;
+        case Texture::Format::D16:
+        case Texture::Format::D24:
+        case Texture::Format::D32:
+        case Texture::Format::D32F: return GL_DEPTH_BUFFER_BIT;
 
-        case QOpenGLTexture::S8: return GL_STENCIL_BUFFER_BIT;
+        case Texture::Format::S8: return GL_STENCIL_BUFFER_BIT;
 
-        case QOpenGLTexture::D24S8:
-        case QOpenGLTexture::D32FS8X24:
+        case Texture::Format::D24S8:
+        case Texture::Format::D32FS8X24:
             return GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
         }
     }

@@ -180,8 +180,8 @@ bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
     gl.glBlendEquation(GL_FUNC_ADD);
     gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    if (target != QOpenGLTexture::Target2DMultisample
-        && target != QOpenGLTexture::Target2DMultisampleArray) {
+    if (target != Texture::Target::Target2DMultisample
+        && target != Texture::Target::Target2DMultisampleArray) {
 
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

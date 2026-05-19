@@ -93,8 +93,8 @@ Q_SIGNALS:
 protected:
     struct ShaderDesc
     {
-        QOpenGLTexture::Target target{};
-        QOpenGLTexture::TextureFormat format{};
+        Texture::Target target{};
+        Texture::Format format{};
         bool picker{};
         bool histogram{};
 
@@ -124,7 +124,7 @@ protected:
 
     static QString vertexShaderSource;
     static QString buildFragmentShader(const ShaderDesc &desc);
-    static bool canLinearFilter(QOpenGLTexture::TextureFormat format);
+    static bool canLinearFilter(Texture::Format format);
 
     RenderWindow &window();
     void render();

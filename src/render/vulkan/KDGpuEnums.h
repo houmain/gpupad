@@ -4,7 +4,7 @@
 #include "session/Item.h"
 #include <optional>
 
-KDGpu::Format toKDGpu(QOpenGLTexture::TextureFormat format);
+KDGpu::Format toKDGpu(Texture::Format format);
 KDGpu::Format toKDGpu(Field::DataType dataType, int count);
 KDGpu::Format toKDGpu(Binding::ImageFormat format);
 KDGpu::PrimitiveTopology toKDGpu(Call::PrimitiveType primitiveType);

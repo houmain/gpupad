@@ -256,31 +256,31 @@ bool TextureEditorItem::canFilter() const
 QString TextureEditorItem::buildFragmentShader(const ShaderDesc &desc)
 {
     static auto sTargetVersions =
-        std::map<QOpenGLTexture::Target, TargetVersion>{
-            { QOpenGLTexture::Target1D,
+        std::map<Texture::Target, TargetVersion>{
+            { Texture::Target::Target1D,
                 { "sampler1D", "textureLod(S, TC.x, pc.level)" } },
-            { QOpenGLTexture::Target1DArray,
+            { Texture::Target::Target1DArray,
                 { "sampler1DArray",
                     "textureLod(S, vec2(TC.x, pc.layer), pc.level)" } },
-            { QOpenGLTexture::Target2D,
+            { Texture::Target::Target2D,
                 { "sampler2D", "textureLod(S, TC, pc.level)" } },
-            { QOpenGLTexture::Target2DArray,
+            { Texture::Target::Target2DArray,
                 { "sampler2DArray",
                     "textureLod(S, vec3(TC, pc.layer), pc.level)" } },
-            { QOpenGLTexture::Target3D,
+            { Texture::Target::Target3D,
                 { "sampler3D",
                     "textureLod(S, vec3(TC, pc.layer), pc.level)" } },
-            { QOpenGLTexture::TargetCubeMap,
+            { Texture::Target::TargetCubeMap,
                 { "samplerCube",
                     "textureLod(S, getCubeTexCoord(TC, pc.face), pc.level)" } },
-            { QOpenGLTexture::TargetCubeMapArray,
+            { Texture::Target::TargetCubeMapArray,
                 { "samplerCubeArray",
                     "textureLod(S, vec4(getCubeTexCoord(TC, pc.face), "
                     "pc.layer), pc.level)" } },
-            { QOpenGLTexture::Target2DMultisample,
+            { Texture::Target::Target2DMultisample,
                 { "sampler2DMS",
                     "texelFetch(S, ivec2(TC * (pc.size - 1)), s)" } },
-            { QOpenGLTexture::Target2DMultisampleArray,
+            { Texture::Target::Target2DMultisampleArray,
                 { "sampler2DMSArray",
                     "texelFetch(S, ivec3(TC * (pc.size - 1), pc.layer), s)" } },
         };
@@ -326,7 +326,7 @@ QString TextureEditorItem::buildFragmentShader(const ShaderDesc &desc)
         + fragmentShaderSource;
 }
 
-bool TextureEditorItem::canLinearFilter(QOpenGLTexture::TextureFormat format)
+bool TextureEditorItem::canLinearFilter(Texture::Format format)
 {
     switch (getTextureSampleType(format)) {
     case TextureSampleType::Int8:

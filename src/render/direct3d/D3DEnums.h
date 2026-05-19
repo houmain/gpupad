@@ -6,7 +6,7 @@
 #include "session/Item.h"
 #include <optional>
 
-DXGI_FORMAT toDXGIFormat(QOpenGLTexture::TextureFormat format);
+DXGI_FORMAT toDXGIFormat(Texture::Format format);
 DXGI_FORMAT toDXGITypelessFormat(Texture::Format format);
 DXGI_FORMAT toDXGIFormat(Field::DataType type, int count);
 DXGI_SAMPLE_DESC toDXGISampleDesc(int samples);

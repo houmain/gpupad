@@ -114,7 +114,7 @@ void main() {
 
     // clang-format off
     QString buildComputeShader(QOpenGLTexture::Target target,
-        QOpenGLTexture::TextureFormat format)
+        Texture::Format format)
     {
         struct TargetVersion
         {
@@ -170,7 +170,7 @@ void main() {
     // clang-format on
 
     bool buildProgram(QOpenGLShaderProgram &program,
-        QOpenGLTexture::Target target, QOpenGLTexture::TextureFormat format)
+        QOpenGLTexture::Target target, Texture::Format format)
     {
         program.create();
         program.addShaderFromSourceCode(QOpenGLShader::Compute,
@@ -252,7 +252,7 @@ void GLComputeRange::release()
 }
 
 QOpenGLShaderProgram *GLComputeRange::getProgram(QOpenGLTexture::Target target,
-    QOpenGLTexture::TextureFormat format)
+    Texture::Format format)
 {
     const auto key = std::make_tuple(target, format);
     auto &program = mPrograms[key];

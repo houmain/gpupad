@@ -291,19 +291,19 @@ TextureProperties::TextureProperties(PropertiesEditor *propertiesEditor)
     connect(mUi->formatData, &DataComboBox::currentDataChanged, this,
         &TextureProperties::updateFormat);
 
-    fillComboBox<QOpenGLTexture::Target>(mUi->target,
+    fillComboBox<Texture::Target>(mUi->target,
         {
-            { "1D Texture", QOpenGLTexture::Target1D },
-            { "1D Texture Array", QOpenGLTexture::Target1DArray },
-            { "2D Texture", QOpenGLTexture::Target2D },
-            //{ "2D Texture Multisample", QOpenGLTexture::Target2DMultisample },
-            { "2D Texture Array", QOpenGLTexture::Target2DArray },
-            //{ "2D Texture Multisample Array", QOpenGLTexture::Target2DMultisampleArray },
-            { "3D Texture", QOpenGLTexture::Target3D },
-            { "CubeMap Texture", QOpenGLTexture::TargetCubeMap },
-            { "CubeMap Texture Array", QOpenGLTexture::TargetCubeMapArray },
-            //{ "Rectangle Texture", QOpenGLTexture::TargetRectangle },
-            //{ "Buffer Texture", QOpenGLTexture::TargetBuffer },
+            { "1D Texture", Texture::Target::Target1D },
+            { "1D Texture Array", Texture::Target::Target1DArray },
+            { "2D Texture", Texture::Target::Target2D },
+            //{ "2D Texture Multisample", Texture::Target::Target2DMultisample },
+            { "2D Texture Array", Texture::Target::Target2DArray },
+            //{ "2D Texture Multisample Array", Texture::Target::Target2DMultisampleArray },
+            { "3D Texture", Texture::Target::Target3D },
+            { "CubeMap Texture", Texture::Target::TargetCubeMap },
+            { "CubeMap Texture Array", Texture::Target::TargetCubeMapArray },
+            //{ "Rectangle Texture", Texture::Target::TargetRectangle },
+            //{ "Buffer Texture", Texture::Target::TargetBuffer },
         });
 
     fillComboBox<FormatType>(mUi->formatType,
@@ -487,8 +487,8 @@ void TextureProperties::applyFileFormat()
         // automatically expand to 4 components
         // since 3 are usually to supported by device
         auto format = texture.format();
-        if (format == QOpenGLTexture::RGB8_UNorm)
-            format = QOpenGLTexture::RGBA8_UNorm;
+        if (format == Texture::Format::RGB8_UNorm)
+            format = Texture::Format::RGBA8_UNorm;
         setFormat(format);
 
         mUi->target->setCurrentData(texture.getTarget());

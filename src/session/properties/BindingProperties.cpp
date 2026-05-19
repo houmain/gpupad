@@ -104,23 +104,23 @@ BindingProperties::BindingProperties(PropertiesEditor *propertiesEditor)
             { "Color", Binding::Editor::Color },
         });
 
-    fillComboBox<QOpenGLTexture::Filter>(mUi->minFilter,
+    fillComboBox<Binding::Filter>(mUi->minFilter,
         {
-            { "Nearest", QOpenGLTexture::Nearest },
-            { "Linear", QOpenGLTexture::Linear },
-            { "Nearest MipMap-Nearest", QOpenGLTexture::NearestMipMapNearest },
-            { "Nearest MipMap-Linear", QOpenGLTexture::NearestMipMapLinear },
-            { "Linear MipMap-Nearest", QOpenGLTexture::LinearMipMapNearest },
-            { "Linear MipMap-Linear", QOpenGLTexture::LinearMipMapLinear },
+            { "Nearest", Binding::Filter::Nearest },
+            { "Linear", Binding::Filter::Linear },
+            { "Nearest MipMap-Nearest", Binding::Filter::NearestMipMapNearest },
+            { "Nearest MipMap-Linear", Binding::Filter::NearestMipMapLinear },
+            { "Linear MipMap-Nearest", Binding::Filter::LinearMipMapNearest },
+            { "Linear MipMap-Linear", Binding::Filter::LinearMipMapLinear },
         });
 
-    fillComboBox<QOpenGLTexture::Filter>(mUi->magFilter,
+    fillComboBox<Binding::Filter>(mUi->magFilter,
         {
-            { "Nearest", QOpenGLTexture::Nearest },
-            { "Linear", QOpenGLTexture::Linear },
+            { "Nearest", Binding::Filter::Nearest },
+            { "Linear", Binding::Filter::Linear },
         });
 
-    fillComboBox<QOpenGLTexture::WrapMode>(mUi->wrapModeX);
+    fillComboBox<Binding::WrapMode>(mUi->wrapModeX);
     mUi->wrapModeY->setModel(mUi->wrapModeX->model());
     mUi->wrapModeZ->setModel(mUi->wrapModeX->model());
 

@@ -1,10 +1,6 @@
 #include "TextureData.h"
 #include "session/Item.h"
 #include <QImageReader>
-#include <QOpenGLContext>
-#include <QOpenGLFunctions_3_3_Core>
-#include <QScopeGuard>
-#include <QtEndian>
 #include <QFileInfo>
 #include <cstring>
 #include <limits>
@@ -18,6 +14,9 @@
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb/stb_image_resize2.h"
+
+using TF = Texture::Format;
+using TT = Texture::Target;
 
 namespace {
     // TODO: remove when libKTX is fixed
@@ -118,54 +117,105 @@ namespace {
         }
     }
 
-    QOpenGLTexture::TextureFormat getTextureFormat(QImage::Format format)
+    Texture::Format getTextureFormat(QImage::Format format)
     {
         switch (format) {
-        case QImage::Format_RGB30:       return QOpenGLTexture::RGB10A2;
-        case QImage::Format_RGB888:      return QOpenGLTexture::RGB8_UNorm;
-        case QImage::Format_RGBA8888:    return QOpenGLTexture::RGBA8_UNorm;
-        case QImage::Format_RGBA64:      return QOpenGLTexture::RGBA16_UNorm;
-        case QImage::Format_Grayscale8:  return QOpenGLTexture::R8_UNorm;
-        case QImage::Format_Grayscale16: return QOpenGLTexture::R16_UNorm;
+        case QImage::Format_RGB30:       return TF::RGB10A2;
+        case QImage::Format_RGB888:      return TF::RGB8_UNorm;
+        case QImage::Format_RGBA8888:    return TF::RGBA8_UNorm;
+        case QImage::Format_RGBA64:      return TF::RGBA16_UNorm;
+        case QImage::Format_Grayscale8:  return TF::R8_UNorm;
+        case QImage::Format_Grayscale16: return TF::R16_UNorm;
 #if (QT_VERSION >= QT_VERSION_CHECK(6, 2, 0))
-        case QImage::Format_RGBA16FPx4: return QOpenGLTexture::RGBA16F;
-        case QImage::Format_RGBA32FPx4: return QOpenGLTexture::RGBA32F;
+        case QImage::Format_RGBA16FPx4: return TF::RGBA16F;
+        case QImage::Format_RGBA32FPx4: return TF::RGBA32F;
 #endif
-        default: return QOpenGLTexture::NoFormat;
+        default: return TF::NoFormat;
         }
     }
 
-    QImage::Format getImageFormat(QOpenGLTexture::PixelFormat format,
-        QOpenGLTexture::PixelType type)
+    QImage::Format getImageFormat(uint32_t format, uint32_t type)
     {
+        enum PixelFormat {
+            NoSourceFormat = 0, // GL_NONE
+            Red = 0x1903, // GL_RED
+            RG = 0x8227, // GL_RG
+            RGB = 0x1907, // GL_RGB
+            BGR = 0x80E0, // GL_BGR
+            RGBA = 0x1908, // GL_RGBA
+            BGRA = 0x80E1, // GL_BGRA
+            Red_Integer = 0x8D94, // GL_RED_INTEGER
+            RG_Integer = 0x8228, // GL_RG_INTEGER
+            RGB_Integer = 0x8D98, // GL_RGB_INTEGER
+            BGR_Integer = 0x8D9A, // GL_BGR_INTEGER
+            RGBA_Integer = 0x8D99, // GL_RGBA_INTEGER
+            BGRA_Integer = 0x8D9B, // GL_BGRA_INTEGER
+            Stencil = 0x1901, // GL_STENCIL_INDEX
+            Depth = 0x1902, // GL_DEPTH_COMPONENT
+            DepthStencil = 0x84F9, // GL_DEPTH_STENCIL
+            Alpha = 0x1906, // GL_ALPHA
+            Luminance = 0x1909, // GL_LUMINANCE
+            LuminanceAlpha = 0x190A // GL_LUMINANCE_ALPHA
+        };
+
+        enum PixelType {
+            NoPixelType = 0, // GL_NONE
+            Int8 = 0x1400, // GL_BYTE
+            UInt8 = 0x1401, // GL_UNSIGNED_BYTE
+            Int16 = 0x1402, // GL_SHORT
+            UInt16 = 0x1403, // GL_UNSIGNED_SHORT
+            Int32 = 0x1404, // GL_INT
+            UInt32 = 0x1405, // GL_UNSIGNED_INT
+            Float16 = 0x140B, // GL_HALF_FLOAT
+            Float16OES = 0x8D61, // GL_HALF_FLOAT_OES
+            Float32 = 0x1406, // GL_FLOAT
+            UInt32_RGB9_E5 = 0x8C3E, // GL_UNSIGNED_INT_5_9_9_9_REV
+            UInt32_RG11B10F = 0x8C3B, // GL_UNSIGNED_INT_10F_11F_11F_REV
+            UInt8_RG3B2 = 0x8032, // GL_UNSIGNED_BYTE_3_3_2
+            UInt8_RG3B2_Rev = 0x8362, // GL_UNSIGNED_BYTE_2_3_3_REV
+            UInt16_RGB5A1 = 0x8034, // GL_UNSIGNED_SHORT_5_5_5_1
+            UInt16_RGB5A1_Rev = 0x8366, // GL_UNSIGNED_SHORT_1_5_5_5_REV
+            UInt16_R5G6B5 = 0x8363, // GL_UNSIGNED_SHORT_5_6_5
+            UInt16_R5G6B5_Rev = 0x8364, // GL_UNSIGNED_SHORT_5_6_5_REV
+            UInt16_RGBA4 = 0x8033, // GL_UNSIGNED_SHORT_4_4_4_4
+            UInt16_RGBA4_Rev = 0x8365, // GL_UNSIGNED_SHORT_4_4_4_4_REV
+            UInt32_RGBA8 = 0x8035, // GL_UNSIGNED_INT_8_8_8_8
+            UInt32_RGBA8_Rev = 0x8367, // GL_UNSIGNED_INT_8_8_8_8_REV
+            UInt32_RGB10A2 = 0x8036, // GL_UNSIGNED_INT_10_10_10_2
+            UInt32_RGB10A2_Rev = 0x8368, // GL_UNSIGNED_INT_2_10_10_10_REV
+            UInt32_D24S8 = 0x84FA, // GL_UNSIGNED_INT_24_8
+            Float32_D32_UInt32_S8_X24 =
+                0x8DAD // GL_FLOAT_32_UNSIGNED_INT_24_8_REV
+        };
+
         switch (type) {
-        case QOpenGLTexture::Int8:
-        case QOpenGLTexture::UInt8:
+        case PixelType::Int8:
+        case PixelType::UInt8:
             switch (format) {
-            case QOpenGLTexture::Red:
-            case QOpenGLTexture::Red_Integer:
-            case QOpenGLTexture::Depth:
-            case QOpenGLTexture::Stencil:     return QImage::Format_Grayscale8;
+            case PixelFormat::Red:
+            case PixelFormat::Red_Integer:
+            case PixelFormat::Depth:
+            case PixelFormat::Stencil:     return QImage::Format_Grayscale8;
 
-            case QOpenGLTexture::RGB:
-            case QOpenGLTexture::RGB_Integer: return QImage::Format_RGB888;
+            case PixelFormat::RGB:
+            case PixelFormat::RGB_Integer: return QImage::Format_RGB888;
 
-            case QOpenGLTexture::RGBA:
-            case QOpenGLTexture::RGBA_Integer: return QImage::Format_RGBA8888;
+            case PixelFormat::RGBA:
+            case PixelFormat::RGBA_Integer: return QImage::Format_RGBA8888;
 
             default: return QImage::Format_Invalid;
             }
 
-        case QOpenGLTexture::Int16:
-        case QOpenGLTexture::UInt16:
+        case PixelType::Int16:
+        case PixelType::UInt16:
             switch (format) {
-            case QOpenGLTexture::RGBA:
-            case QOpenGLTexture::RGBA_Integer: return QImage::Format_RGBA64;
+            case PixelFormat::RGBA:
+            case PixelFormat::RGBA_Integer: return QImage::Format_RGBA64;
 
             default: return QImage::Format_Invalid;
             }
 
-        case QOpenGLTexture::UInt32_D24S8: return QImage::Format_RGBA8888;
+        case PixelType::UInt32_D24S8: return QImage::Format_RGBA8888;
 
         default: return QImage::Format_Invalid;
         }
@@ -181,32 +231,31 @@ namespace {
         return levels;
     }
 
-    bool isDepthStencilFormat(QOpenGLTexture::TextureFormat format)
+    bool isDepthStencilFormat(Texture::Format format)
     {
         switch (format) {
-        case QOpenGLTexture::D16:
-        case QOpenGLTexture::D24:
-        case QOpenGLTexture::D24S8:
-        case QOpenGLTexture::D32:
-        case QOpenGLTexture::D32F:
-        case QOpenGLTexture::D32FS8X24:
-        case QOpenGLTexture::S8:        return true;
-        default:                        return false;
+        case TF::D16:
+        case TF::D24:
+        case TF::D24S8:
+        case TF::D32:
+        case TF::D32F:
+        case TF::D32FS8X24:
+        case TF::S8:        return true;
+        default:            return false;
         }
     }
 
-    bool canGenerateMipmaps(QOpenGLTexture::Target target,
-        QOpenGLTexture::TextureFormat format)
+    bool canGenerateMipmaps(Texture::Target target, Texture::Format format)
     {
         switch (target) {
-        case QOpenGLTexture::Target1D:
-        case QOpenGLTexture::Target1DArray:
-        case QOpenGLTexture::Target2D:
-        case QOpenGLTexture::Target2DArray:
-        case QOpenGLTexture::Target3D:
-        case QOpenGLTexture::TargetCubeMap:
-        case QOpenGLTexture::TargetCubeMapArray: break;
-        default:                                 return false;
+        case TT::Target1D:
+        case TT::Target1DArray:
+        case TT::Target2D:
+        case TT::Target2DArray:
+        case TT::Target3D:
+        case TT::TargetCubeMap:
+        case TT::TargetCubeMapArray: break;
+        default:                     return false;
         }
 
         if (isDepthStencilFormat(format))
@@ -238,9 +287,8 @@ namespace {
         }
     }
 
-    bool convertPlane(const uchar *source,
-        QOpenGLTexture::TextureFormat sourceFormat, uchar *dest,
-        QOpenGLTexture::TextureFormat destFormat, int pixels)
+    bool convertPlane(const uchar *source, Texture::Format sourceFormat,
+        uchar *dest, Texture::Format destFormat, int pixels)
     {
         if (!source || !dest)
             return false;
@@ -282,9 +330,9 @@ namespace {
         return false;
     }
 
-    bool resizePlane(const uchar *source, QOpenGLTexture::TextureFormat format,
-        uchar *dest, int sourceWidth, int sourceHeight, int sourceStride,
-        int destWidth, int destHeight, int destStride)
+    bool resizePlane(const uchar *source, Texture::Format format, uchar *dest,
+        int sourceWidth, int sourceHeight, int sourceStride, int destWidth,
+        int destHeight, int destStride)
     {
         if (!source || !dest || destWidth <= 0 || destHeight <= 0)
             return false;
@@ -317,7 +365,7 @@ namespace {
             dest, destWidth, destHeight, destStride, pixelLayout, dataType,
             edgeMode, filter);
     }
-    
+
     QImage flipImage(QImage &&image)
     {
 #if (QT_VERSION >= QT_VERSION_CHECK(6, 9, 0))
@@ -329,151 +377,149 @@ namespace {
     }
 } // namespace
 
-bool isMultisampleTarget(QOpenGLTexture::Target target)
+bool isMultisampleTarget(Texture::Target target)
 {
-    return (target == QOpenGLTexture::Target2DMultisample
-        || target == QOpenGLTexture::Target2DMultisampleArray);
+    return (target == TT::Target2DMultisample
+        || target == TT::Target2DMultisampleArray);
 }
 
-bool isCubemapTarget(QOpenGLTexture::Target target)
+bool isCubemapTarget(Texture::Target target)
 {
-    return (target == QOpenGLTexture::TargetCubeMap
-        || target == QOpenGLTexture::TargetCubeMapArray);
+    return (target == TT::TargetCubeMap || target == TT::TargetCubeMapArray);
 }
 
-TextureSampleType getTextureSampleType(QOpenGLTexture::TextureFormat format)
+TextureSampleType getTextureSampleType(Texture::Format format)
 {
     switch (format) {
-    case QOpenGLTexture::SRGB8:
-    case QOpenGLTexture::SRGB8_Alpha8:
-        return TextureSampleType::Normalized_sRGB;
+    case TF::SRGB8:
+    case TF::SRGB8_Alpha8: return TextureSampleType::Normalized_sRGB;
 
-    case QOpenGLTexture::R16F:
-    case QOpenGLTexture::RG16F:
-    case QOpenGLTexture::RGB16F:
-    case QOpenGLTexture::RGBA16F:
-    case QOpenGLTexture::R32F:
-    case QOpenGLTexture::RG32F:
-    case QOpenGLTexture::RGB32F:
-    case QOpenGLTexture::RGBA32F:
-    case QOpenGLTexture::RGB9E5:
-    case QOpenGLTexture::RG11B10F: return TextureSampleType::Float;
+    case TF::R16F:
+    case TF::RG16F:
+    case TF::RGB16F:
+    case TF::RGBA16F:
+    case TF::R32F:
+    case TF::RG32F:
+    case TF::RGB32F:
+    case TF::RGBA32F:
+    case TF::RGB9E5:
+    case TF::RG11B10F: return TextureSampleType::Float;
 
-    case QOpenGLTexture::R8U:
-    case QOpenGLTexture::RG8U:
-    case QOpenGLTexture::RGB8U:
-    case QOpenGLTexture::RGBA8U:
-    case QOpenGLTexture::S8:     return TextureSampleType::Uint8;
+    case TF::R8U:
+    case TF::RG8U:
+    case TF::RGB8U:
+    case TF::RGBA8U:
+    case TF::S8:     return TextureSampleType::Uint8;
 
-    case QOpenGLTexture::R16U:
-    case QOpenGLTexture::RG16U:
-    case QOpenGLTexture::RGB16U:
-    case QOpenGLTexture::RGBA16U: return TextureSampleType::Uint16;
+    case TF::R16U:
+    case TF::RG16U:
+    case TF::RGB16U:
+    case TF::RGBA16U: return TextureSampleType::Uint16;
 
-    case QOpenGLTexture::R32U:
-    case QOpenGLTexture::RG32U:
-    case QOpenGLTexture::RGB32U:
-    case QOpenGLTexture::RGBA32U: return TextureSampleType::Uint32;
+    case TF::R32U:
+    case TF::RG32U:
+    case TF::RGB32U:
+    case TF::RGBA32U: return TextureSampleType::Uint32;
 
-    case QOpenGLTexture::R8I:
-    case QOpenGLTexture::RG8I:
-    case QOpenGLTexture::RGB8I:
-    case QOpenGLTexture::RGBA8I: return TextureSampleType::Int8;
+    case TF::R8I:
+    case TF::RG8I:
+    case TF::RGB8I:
+    case TF::RGBA8I: return TextureSampleType::Int8;
 
-    case QOpenGLTexture::R16I:
-    case QOpenGLTexture::RG16I:
-    case QOpenGLTexture::RGB16I:
-    case QOpenGLTexture::RGBA16I: return TextureSampleType::Int16;
+    case TF::R16I:
+    case TF::RG16I:
+    case TF::RGB16I:
+    case TF::RGBA16I: return TextureSampleType::Int16;
 
-    case QOpenGLTexture::R32I:
-    case QOpenGLTexture::RG32I:
-    case QOpenGLTexture::RGB32I:
-    case QOpenGLTexture::RGBA32I: return TextureSampleType::Int32;
+    case TF::R32I:
+    case TF::RG32I:
+    case TF::RGB32I:
+    case TF::RGBA32I: return TextureSampleType::Int32;
 
-    case QOpenGLTexture::RGB10A2: return TextureSampleType::Uint_10_10_10_2;
+    case TF::RGB10A2: return TextureSampleType::Uint_10_10_10_2;
 
     default: return TextureSampleType::Normalized;
     }
 }
 
-TextureDataType getTextureDataType(QOpenGLTexture::TextureFormat format)
+TextureDataType getTextureDataType(Texture::Format format)
 {
     switch (format) {
-    case QOpenGLTexture::R8_UNorm:
-    case QOpenGLTexture::RG8_UNorm:
-    case QOpenGLTexture::RGB8_UNorm:
-    case QOpenGLTexture::RGBA8_UNorm:
-    case QOpenGLTexture::SRGB8:
-    case QOpenGLTexture::SRGB8_Alpha8:
-    case QOpenGLTexture::R8U:
-    case QOpenGLTexture::RG8U:
-    case QOpenGLTexture::RGB8U:
-    case QOpenGLTexture::RGBA8U:
-    case QOpenGLTexture::S8:           return TextureDataType::Uint8;
+    case TF::R8_UNorm:
+    case TF::RG8_UNorm:
+    case TF::RGB8_UNorm:
+    case TF::RGBA8_UNorm:
+    case TF::SRGB8:
+    case TF::SRGB8_Alpha8:
+    case TF::R8U:
+    case TF::RG8U:
+    case TF::RGB8U:
+    case TF::RGBA8U:
+    case TF::S8:           return TextureDataType::Uint8;
 
-    case QOpenGLTexture::R16_UNorm:
-    case QOpenGLTexture::RG16_UNorm:
-    case QOpenGLTexture::RGB16_UNorm:
-    case QOpenGLTexture::RGBA16_UNorm:
-    case QOpenGLTexture::R16U:
-    case QOpenGLTexture::RG16U:
-    case QOpenGLTexture::RGB16U:
-    case QOpenGLTexture::RGBA16U:
-    case QOpenGLTexture::D16:          return TextureDataType::Uint16;
+    case TF::R16_UNorm:
+    case TF::RG16_UNorm:
+    case TF::RGB16_UNorm:
+    case TF::RGBA16_UNorm:
+    case TF::R16U:
+    case TF::RG16U:
+    case TF::RGB16U:
+    case TF::RGBA16U:
+    case TF::D16:          return TextureDataType::Uint16;
 
-    case QOpenGLTexture::R8_SNorm:
-    case QOpenGLTexture::RG8_SNorm:
-    case QOpenGLTexture::RGB8_SNorm:
-    case QOpenGLTexture::RGBA8_SNorm:
-    case QOpenGLTexture::R8I:
-    case QOpenGLTexture::RG8I:
-    case QOpenGLTexture::RGB8I:
-    case QOpenGLTexture::RGBA8I:      return TextureDataType::Int8;
+    case TF::R8_SNorm:
+    case TF::RG8_SNorm:
+    case TF::RGB8_SNorm:
+    case TF::RGBA8_SNorm:
+    case TF::R8I:
+    case TF::RG8I:
+    case TF::RGB8I:
+    case TF::RGBA8I:      return TextureDataType::Int8;
 
-    case QOpenGLTexture::R16_SNorm:
-    case QOpenGLTexture::RG16_SNorm:
-    case QOpenGLTexture::RGB16_SNorm:
-    case QOpenGLTexture::RGBA16_SNorm:
-    case QOpenGLTexture::R16I:
-    case QOpenGLTexture::RG16I:
-    case QOpenGLTexture::RGB16I:
-    case QOpenGLTexture::RGBA16I:      return TextureDataType::Int16;
+    case TF::R16_SNorm:
+    case TF::RG16_SNorm:
+    case TF::RGB16_SNorm:
+    case TF::RGBA16_SNorm:
+    case TF::R16I:
+    case TF::RG16I:
+    case TF::RGB16I:
+    case TF::RGBA16I:      return TextureDataType::Int16;
 
-    case QOpenGLTexture::R32U:
-    case QOpenGLTexture::RG32U:
-    case QOpenGLTexture::RGB32U:
-    case QOpenGLTexture::RGBA32U:
-    case QOpenGLTexture::D32:     return TextureDataType::Uint32;
+    case TF::R32U:
+    case TF::RG32U:
+    case TF::RGB32U:
+    case TF::RGBA32U:
+    case TF::D32:     return TextureDataType::Uint32;
 
-    case QOpenGLTexture::R32I:
-    case QOpenGLTexture::RG32I:
-    case QOpenGLTexture::RGB32I:
-    case QOpenGLTexture::RGBA32I: return TextureDataType::Int32;
+    case TF::R32I:
+    case TF::RG32I:
+    case TF::RGB32I:
+    case TF::RGBA32I: return TextureDataType::Int32;
 
-    case QOpenGLTexture::R16F:
-    case QOpenGLTexture::RG16F:
-    case QOpenGLTexture::RGB16F:
-    case QOpenGLTexture::RGBA16F: return TextureDataType::Float16;
+    case TF::R16F:
+    case TF::RG16F:
+    case TF::RGB16F:
+    case TF::RGBA16F: return TextureDataType::Float16;
 
-    case QOpenGLTexture::R32F:
-    case QOpenGLTexture::RG32F:
-    case QOpenGLTexture::RGB32F:
-    case QOpenGLTexture::RGBA32F:
-    case QOpenGLTexture::D32F:    return TextureDataType::Float32;
+    case TF::R32F:
+    case TF::RG32F:
+    case TF::RGB32F:
+    case TF::RGBA32F:
+    case TF::D32F:    return TextureDataType::Float32;
 
-    case QOpenGLTexture::RGB9E5:
-    case QOpenGLTexture::RG11B10F:
-    case QOpenGLTexture::RG3B2:
-    case QOpenGLTexture::R5G6B5:
-    case QOpenGLTexture::RGB5A1:
-    case QOpenGLTexture::RGBA4:
-    case QOpenGLTexture::RGB10A2:  return TextureDataType::Packed;
+    case TF::RGB9E5:
+    case TF::RG11B10F:
+    case TF::RG3B2:
+    case TF::R5G6B5:
+    case TF::RGB5A1:
+    case TF::RGBA4:
+    case TF::RGB10A2:  return TextureDataType::Packed;
 
     default: return TextureDataType::Compressed;
     }
 }
 
-int getTextureDataSize(QOpenGLTexture::TextureFormat format)
+int getTextureDataSize(Texture::Format format)
 {
     switch (getTextureDataType(format)) {
     case TextureDataType::Int8:       return 1;
@@ -490,73 +536,73 @@ int getTextureDataSize(QOpenGLTexture::TextureFormat format)
     return 0;
 }
 
-int getTextureComponentCount(QOpenGLTexture::TextureFormat format)
+int getTextureComponentCount(Texture::Format format)
 {
     switch (format) {
-    case QOpenGLTexture::R8_UNorm:
-    case QOpenGLTexture::R8_SNorm:
-    case QOpenGLTexture::R16_UNorm:
-    case QOpenGLTexture::R16_SNorm:
-    case QOpenGLTexture::R8U:
-    case QOpenGLTexture::R8I:
-    case QOpenGLTexture::R16U:
-    case QOpenGLTexture::R16I:
-    case QOpenGLTexture::R32U:
-    case QOpenGLTexture::R32I:
-    case QOpenGLTexture::R16F:
-    case QOpenGLTexture::R32F:
-    case QOpenGLTexture::D16:
-    case QOpenGLTexture::D24:
-    case QOpenGLTexture::D32:
-    case QOpenGLTexture::D32F:
-    case QOpenGLTexture::D24S8:
-    case QOpenGLTexture::D32FS8X24:
-    case QOpenGLTexture::S8:
-    case QOpenGLTexture::R_ATI1N_UNorm:
-    case QOpenGLTexture::R_ATI1N_SNorm:
-    case QOpenGLTexture::R11_EAC_UNorm:
-    case QOpenGLTexture::R11_EAC_SNorm: return 1;
+    case TF::R8_UNorm:
+    case TF::R8_SNorm:
+    case TF::R16_UNorm:
+    case TF::R16_SNorm:
+    case TF::R8U:
+    case TF::R8I:
+    case TF::R16U:
+    case TF::R16I:
+    case TF::R32U:
+    case TF::R32I:
+    case TF::R16F:
+    case TF::R32F:
+    case TF::D16:
+    case TF::D24:
+    case TF::D32:
+    case TF::D32F:
+    case TF::D24S8:
+    case TF::D32FS8X24:
+    case TF::S8:
+    case TF::R_ATI1N_UNorm:
+    case TF::R_ATI1N_SNorm:
+    case TF::R11_EAC_UNorm:
+    case TF::R11_EAC_SNorm: return 1;
 
-    case QOpenGLTexture::RG8_UNorm:
-    case QOpenGLTexture::RG8_SNorm:
-    case QOpenGLTexture::RG16_UNorm:
-    case QOpenGLTexture::RG16_SNorm:
-    case QOpenGLTexture::RG8U:
-    case QOpenGLTexture::RG8I:
-    case QOpenGLTexture::RG16U:
-    case QOpenGLTexture::RG16I:
-    case QOpenGLTexture::RG32U:
-    case QOpenGLTexture::RG32I:
-    case QOpenGLTexture::RG16F:
-    case QOpenGLTexture::RG32F:
-    case QOpenGLTexture::RG_ATI2N_UNorm:
-    case QOpenGLTexture::RG_ATI2N_SNorm:
-    case QOpenGLTexture::RGB_BP_UNSIGNED_FLOAT:
-    case QOpenGLTexture::RGB_BP_SIGNED_FLOAT:
-    case QOpenGLTexture::RG11_EAC_UNorm:
-    case QOpenGLTexture::RG11_EAC_SNorm:        return 2;
+    case TF::RG8_UNorm:
+    case TF::RG8_SNorm:
+    case TF::RG16_UNorm:
+    case TF::RG16_SNorm:
+    case TF::RG8U:
+    case TF::RG8I:
+    case TF::RG16U:
+    case TF::RG16I:
+    case TF::RG32U:
+    case TF::RG32I:
+    case TF::RG16F:
+    case TF::RG32F:
+    case TF::RG_ATI2N_UNorm:
+    case TF::RG_ATI2N_SNorm:
+    case TF::RGB_BP_UNSIGNED_FLOAT:
+    case TF::RGB_BP_SIGNED_FLOAT:
+    case TF::RG11_EAC_UNorm:
+    case TF::RG11_EAC_SNorm:        return 2;
 
-    case QOpenGLTexture::RGB8_UNorm:
-    case QOpenGLTexture::RGB8_SNorm:
-    case QOpenGLTexture::RGB16_UNorm:
-    case QOpenGLTexture::RGB16_SNorm:
-    case QOpenGLTexture::RGB8U:
-    case QOpenGLTexture::RGB8I:
-    case QOpenGLTexture::RGB16U:
-    case QOpenGLTexture::RGB16I:
-    case QOpenGLTexture::RGB32U:
-    case QOpenGLTexture::RGB32I:
-    case QOpenGLTexture::RGB16F:
-    case QOpenGLTexture::RGB32F:
-    case QOpenGLTexture::SRGB8:
-    case QOpenGLTexture::SRGB_DXT1:
-    case QOpenGLTexture::RGB9E5:
-    case QOpenGLTexture::RG11B10F:
-    case QOpenGLTexture::RG3B2:
-    case QOpenGLTexture::R5G6B5:
-    case QOpenGLTexture::RGB_DXT1:
-    case QOpenGLTexture::RGB8_ETC2:
-    case QOpenGLTexture::SRGB8_ETC2:  return 3;
+    case TF::RGB8_UNorm:
+    case TF::RGB8_SNorm:
+    case TF::RGB16_UNorm:
+    case TF::RGB16_SNorm:
+    case TF::RGB8U:
+    case TF::RGB8I:
+    case TF::RGB16U:
+    case TF::RGB16I:
+    case TF::RGB32U:
+    case TF::RGB32I:
+    case TF::RGB16F:
+    case TF::RGB32F:
+    case TF::SRGB8:
+    case TF::SRGB_DXT1:
+    case TF::RGB9E5:
+    case TF::RG11B10F:
+    case TF::RG3B2:
+    case TF::R5G6B5:
+    case TF::RGB_DXT1:
+    case TF::RGB8_ETC2:
+    case TF::SRGB8_ETC2:  return 3;
 
     default: return 4;
     }
@@ -599,9 +645,8 @@ bool operator!=(const TextureData &a, const TextureData &b)
     return !(a == b);
 }
 
-bool TextureData::create(QOpenGLTexture::Target target,
-    QOpenGLTexture::TextureFormat format, int width, int height, int depth,
-    int layers, int levels)
+bool TextureData::create(Texture::Target target, Texture::Format format,
+    int width, int height, int depth, int layers, int levels)
 {
     if (width <= 0 || height <= 0 || depth <= 0 || layers <= 0)
         return false;
@@ -618,34 +663,34 @@ bool TextureData::create(QOpenGLTexture::Target target,
     Q_ASSERT(!isMultisampleTarget(target));
 
     switch (target) {
-    case QOpenGLTexture::Target1DArray:
+    case TT::Target1DArray:
         createInfo.isArray = KTX_TRUE;
         createInfo.numLayers = static_cast<ktx_uint32_t>(layers);
         [[fallthrough]];
-    case QOpenGLTexture::Target1D: createInfo.numDimensions = 1; break;
+    case TT::Target1D: createInfo.numDimensions = 1; break;
 
-    case QOpenGLTexture::Target2DArray:
+    case TT::Target2DArray:
         createInfo.isArray = KTX_TRUE;
         createInfo.numLayers = static_cast<ktx_uint32_t>(layers);
         [[fallthrough]];
-    case QOpenGLTexture::Target2D:
-    case QOpenGLTexture::TargetRectangle:
+    case TT::Target2D:
+    case TT::TargetRectangle:
         createInfo.numDimensions = 2;
         createInfo.baseHeight = static_cast<ktx_uint32_t>(height);
         break;
 
-    case QOpenGLTexture::Target3D:
+    case TT::Target3D:
         createInfo.numDimensions = 3;
         createInfo.baseHeight = static_cast<ktx_uint32_t>(height);
         createInfo.baseDepth = static_cast<ktx_uint32_t>(depth);
         break;
 
-    case QOpenGLTexture::TargetCubeMapArray:
+    case TT::TargetCubeMapArray:
         createInfo.isArray = KTX_TRUE;
         createInfo.numLayers = static_cast<ktx_uint32_t>(layers);
         createInfo.numLayers *= 6;
         [[fallthrough]];
-    case QOpenGLTexture::TargetCubeMap:
+    case TT::TargetCubeMap:
         createInfo.baseHeight = createInfo.baseWidth;
         createInfo.numDimensions = 2;
         createInfo.numFaces = 6;
@@ -670,7 +715,7 @@ bool TextureData::create(QOpenGLTexture::Target target,
     return false;
 }
 
-TextureData TextureData::convert(QOpenGLTexture::TextureFormat format) const
+TextureData TextureData::convert(Texture::Format format) const
 {
     if (format == this->format())
         return *this;
@@ -720,8 +765,8 @@ TextureData TextureData::resize(int width, int height, int depth,
     return copy;
 }
 
-TextureData TextureData::convert(QOpenGLTexture::TextureFormat format,
-    int width, int height, int depth, int layers) const
+TextureData TextureData::convert(Texture::Format format, int width, int height,
+    int depth, int layers) const
 {
     auto converted = convert(format);
     if (converted.isNull())
@@ -762,7 +807,7 @@ bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
         OIIO::geterror();
         return false;
     }
-    using F = QOpenGLTexture::TextureFormat;
+    using F = Texture::Format;
     const ImageSpec &spec = input->spec();
 
     const auto channel = [&](auto c1, auto c2, auto c3, auto c4) {
@@ -802,8 +847,7 @@ bool TextureData::loadOpenImageIO(const QString &fileName, bool flipVertically)
         }
         return F::NoFormat;
     }();
-    const auto target =
-        (spec.depth > 1 ? QOpenGLTexture::Target3D : QOpenGLTexture::Target2D);
+    const auto target = (spec.depth > 1 ? TT::Target3D : TT::Target2D);
 
     if (!create(target, format, spec.width, spec.height, spec.depth, 1))
         return false;
@@ -843,8 +887,8 @@ bool TextureData::loadQImage(QImage image, bool flipVertically)
     if (flipVertically)
         image = flipImage(std::move(image));
 
-    if (!create(QOpenGLTexture::Target2D, getTextureFormat(image.format()),
-            image.width(), image.height(), 1, 1))
+    if (!create(TT::Target2D, getTextureFormat(image.format()), image.width(),
+            image.height(), 1, 1))
         return false;
 
     if (static_cast<int>(image.sizeInBytes()) != getImageSize(0))
@@ -888,9 +932,8 @@ bool TextureData::loadPfm(const QString &fileName, bool flipVertically)
         endianness = QSysInfo::LittleEndian;
         scale = -scale;
     }
-    const auto format = (channels == 3 ? QOpenGLTexture::TextureFormat::RGB32F
-                                       : QOpenGLTexture::TextureFormat::R32F);
-    if (!create(QOpenGLTexture::Target2D, format, width, height, 1, 1))
+    const auto format = (channels == 3 ? TF::RGB32F : TF::R32F);
+    if (!create(TT::Target2D, format, width, height, 1, 1))
         return false;
     const auto size = static_cast<size_t>(getImageSize(0));
     const auto data = getWriteonlyData(0, 0, 0);
@@ -1050,49 +1093,41 @@ int TextureData::dimensions() const
     return (isNull() ? 0 : static_cast<int>(mKtxTexture->numDimensions));
 }
 
-QOpenGLTexture::Target TextureData::getTarget(int samples) const
+Texture::Target TextureData::getTarget(int samples) const
 {
     Q_ASSERT(mKtxTexture);
     if (!mKtxTexture)
         return {};
     const auto &texture = *mKtxTexture;
     if (texture.isCubemap)
-        return (texture.isArray ? QOpenGLTexture::TargetCubeMapArray
-                                : QOpenGLTexture::TargetCubeMap);
+        return (texture.isArray ? TT::TargetCubeMapArray : TT::TargetCubeMap);
     switch (texture.numDimensions) {
-    case 1:
-        return (texture.isArray ? QOpenGLTexture::Target1DArray
-                                : QOpenGLTexture::Target1D);
+    case 1: return (texture.isArray ? TT::Target1DArray : TT::Target1D);
     case 2:
         if (samples > 1)
-            return (texture.isArray ? QOpenGLTexture::Target2DMultisampleArray
-                                    : QOpenGLTexture::Target2DMultisample);
-        return (texture.isArray ? QOpenGLTexture::Target2DArray
-                                : QOpenGLTexture::Target2D);
-    case 3: return QOpenGLTexture::Target3D;
+            return (texture.isArray ? TT::Target2DMultisampleArray
+                                    : TT::Target2DMultisample);
+        return (texture.isArray ? TT::Target2DArray : TT::Target2D);
+    case 3: return TT::Target3D;
     }
     return {};
 }
 
-QOpenGLTexture::TextureFormat TextureData::format() const
-{
-    return (isNull() ? QOpenGLTexture::TextureFormat::NoFormat
-                     : static_cast<QOpenGLTexture::TextureFormat>(
-                           mKtxTexture->glInternalformat));
-}
-
-QOpenGLTexture::PixelFormat TextureData::pixelFormat() const
+Texture::Format TextureData::format() const
 {
     return (isNull()
-            ? QOpenGLTexture::PixelFormat::NoSourceFormat
-            : static_cast<QOpenGLTexture::PixelFormat>(mKtxTexture->glFormat));
+            ? TF::NoFormat
+            : static_cast<Texture::Format>(mKtxTexture->glInternalformat));
 }
 
-QOpenGLTexture::PixelType TextureData::pixelType() const
+uint32_t TextureData::pixelFormat() const
 {
-    return (isNull()
-            ? QOpenGLTexture::PixelType::NoPixelType
-            : static_cast<QOpenGLTexture::PixelType>(mKtxTexture->glType));
+    return (isNull() ? 0 : mKtxTexture->glFormat);
+}
+
+uint32_t TextureData::pixelType() const
+{
+    return (isNull() ? 0 : mKtxTexture->glType);
 }
 
 int TextureData::getLevelWidth(int level) const
@@ -1133,7 +1168,7 @@ int TextureData::layers() const
     if (isNull())
         return 0;
 
-    if (getTarget() == QOpenGLTexture::TargetCubeMapArray)
+    if (getTarget() == TT::TargetCubeMapArray)
         return static_cast<int>(mKtxTexture->numLayers / 6);
 
     return static_cast<int>(mKtxTexture->numLayers);

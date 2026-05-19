@@ -346,9 +346,6 @@ endif()
 find_package(Qt6 REQUIRED COMPONENTS Widgets Qml)
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets Qt6::Qml)
 
-# TODO: remove once dependency to QOpenGLTexture is removed
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::OpenGL)
-
 if (ENABLE_OPENGL)
     find_package(Qt6 REQUIRED COMPONENTS OpenGL)
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::OpenGL)

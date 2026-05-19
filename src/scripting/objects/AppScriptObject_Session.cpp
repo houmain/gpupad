@@ -178,87 +178,87 @@ namespace {
         for (auto i = 0; i < count; ++i) {
             const auto value = data.property(i);
             switch (textureData.format()) {
-            case QOpenGLTexture::R8_UNorm:
-            case QOpenGLTexture::RG8_UNorm:
-            case QOpenGLTexture::RGB8_UNorm:
-            case QOpenGLTexture::RGBA8_UNorm:
+            case Texture::Format::R8_UNorm:
+            case Texture::Format::RG8_UNorm:
+            case Texture::Format::RGB8_UNorm:
+            case Texture::Format::RGBA8_UNorm:
                 write(denormalize<uint8_t>(value.toNumber()));
                 break;
 
-            case QOpenGLTexture::R8U:
-            case QOpenGLTexture::RG8U:
-            case QOpenGLTexture::RGB8U:
-            case QOpenGLTexture::RGBA8U:
+            case Texture::Format::R8U:
+            case Texture::Format::RG8U:
+            case Texture::Format::RGB8U:
+            case Texture::Format::RGBA8U:
                 write(static_cast<uint8_t>(value.toUInt()));
                 break;
 
-            case QOpenGLTexture::R16_UNorm:
-            case QOpenGLTexture::RG16_UNorm:
-            case QOpenGLTexture::RGB16_UNorm:
-            case QOpenGLTexture::RGBA16_UNorm:
+            case Texture::Format::R16_UNorm:
+            case Texture::Format::RG16_UNorm:
+            case Texture::Format::RGB16_UNorm:
+            case Texture::Format::RGBA16_UNorm:
                 write(denormalize<uint16_t>(value.toNumber()));
                 break;
 
-            case QOpenGLTexture::R16U:
-            case QOpenGLTexture::RG16U:
-            case QOpenGLTexture::RGB16U:
-            case QOpenGLTexture::RGBA16U:
+            case Texture::Format::R16U:
+            case Texture::Format::RG16U:
+            case Texture::Format::RGB16U:
+            case Texture::Format::RGBA16U:
                 write(static_cast<uint16_t>(value.toUInt()));
                 break;
 
-            case QOpenGLTexture::R32U:
-            case QOpenGLTexture::RG32U:
-            case QOpenGLTexture::RGB32U:
-            case QOpenGLTexture::RGBA32U:
+            case Texture::Format::R32U:
+            case Texture::Format::RG32U:
+            case Texture::Format::RGB32U:
+            case Texture::Format::RGBA32U:
                 write(static_cast<uint32_t>(value.toUInt()));
                 break;
 
-            case QOpenGLTexture::R8_SNorm:
-            case QOpenGLTexture::RG8_SNorm:
-            case QOpenGLTexture::RGB8_SNorm:
-            case QOpenGLTexture::RGBA8_SNorm:
+            case Texture::Format::R8_SNorm:
+            case Texture::Format::RG8_SNorm:
+            case Texture::Format::RGB8_SNorm:
+            case Texture::Format::RGBA8_SNorm:
                 write(denormalize<uint8_t>(value.toNumber()));
                 break;
 
-            case QOpenGLTexture::R8I:
-            case QOpenGLTexture::RG8I:
-            case QOpenGLTexture::RGB8I:
-            case QOpenGLTexture::RGBA8I:
+            case Texture::Format::R8I:
+            case Texture::Format::RG8I:
+            case Texture::Format::RGB8I:
+            case Texture::Format::RGBA8I:
                 write(static_cast<int8_t>(value.toInt()));
                 break;
 
-            case QOpenGLTexture::R16_SNorm:
-            case QOpenGLTexture::RG16_SNorm:
-            case QOpenGLTexture::RGB16_SNorm:
-            case QOpenGLTexture::RGBA16_SNorm:
+            case Texture::Format::R16_SNorm:
+            case Texture::Format::RG16_SNorm:
+            case Texture::Format::RGB16_SNorm:
+            case Texture::Format::RGBA16_SNorm:
                 write(denormalize<int16_t>(value.toNumber()));
                 break;
 
-            case QOpenGLTexture::R16I:
-            case QOpenGLTexture::RG16I:
-            case QOpenGLTexture::RGB16I:
-            case QOpenGLTexture::RGBA16I:
+            case Texture::Format::R16I:
+            case Texture::Format::RG16I:
+            case Texture::Format::RGB16I:
+            case Texture::Format::RGBA16I:
                 write(static_cast<int16_t>(value.toInt()));
                 break;
 
-            case QOpenGLTexture::R32I:
-            case QOpenGLTexture::RG32I:
-            case QOpenGLTexture::RGB32I:
-            case QOpenGLTexture::RGBA32I:
+            case Texture::Format::R32I:
+            case Texture::Format::RG32I:
+            case Texture::Format::RGB32I:
+            case Texture::Format::RGBA32I:
                 write(static_cast<int32_t>(value.toInt()));
                 break;
 
-            case QOpenGLTexture::R16F:
-            case QOpenGLTexture::RG16F:
-            case QOpenGLTexture::RGB16F:
-            case QOpenGLTexture::RGBA16F:
+            case Texture::Format::R16F:
+            case Texture::Format::RG16F:
+            case Texture::Format::RGB16F:
+            case Texture::Format::RGBA16F:
                 write(static_cast<qfloat16>(value.toNumber()));
                 break;
 
-            case QOpenGLTexture::R32F:
-            case QOpenGLTexture::RG32F:
-            case QOpenGLTexture::RGB32F:
-            case QOpenGLTexture::RGBA32F:
+            case Texture::Format::R32F:
+            case Texture::Format::RG32F:
+            case Texture::Format::RGB32F:
+            case Texture::Format::RGBA32F:
                 write(static_cast<float>(value.toNumber()));
                 break;
 

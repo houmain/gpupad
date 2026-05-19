@@ -3,9 +3,9 @@
 #include "Evaluation.h"
 #include "ItemEnums.h"
 #include "SourceType.h"
+#include <QColor>
 #include <QVariantMap>
 #include <QList>
-#include <QOpenGLTexture>
 #include <QVariant>
 #include <array>
 
@@ -84,11 +84,11 @@ struct Field : Item
 
 struct Texture : FileItem
 {
-    using Target = QOpenGLTexture::Target;
-    using Format = QOpenGLTexture::TextureFormat;
+    using Target = ItemEnums::TextureTarget;
+    using Format = ItemEnums::TextureFormat;
 
-    Target target{ QOpenGLTexture::Target2D };
-    Format format{ QOpenGLTexture::RGBA8_UNorm };
+    Target target{ Target::Target2D };
+    Format format{ Format::RGBA8_UNorm };
     QString width{ "256" };
     QString height{ "256" };
     QString depth{ "1" };
@@ -114,8 +114,8 @@ struct Shader : FileItem
 struct Binding : Item
 {
     using BindingType = ItemEnums::BindingType;
-    using Filter = QOpenGLTexture::Filter;
-    using WrapMode = QOpenGLTexture::WrapMode;
+    using Filter = ItemEnums::TextureFilter;
+    using WrapMode = ItemEnums::TextureWrapMode;
     using ComparisonFunc = ItemEnums::ComparisonFunc;
     using Editor = ItemEnums::BindingEditor;
     using ImageFormat = ItemEnums::ImageBindingFormat;
@@ -128,12 +128,12 @@ struct Binding : Item
     ItemId blockId{};
     int level{};
     int layer{ -1 };
-    Filter minFilter{ QOpenGLTexture::Nearest };
-    Filter magFilter{ QOpenGLTexture::Nearest };
+    Filter minFilter{ Filter::Nearest };
+    Filter magFilter{ Filter::Nearest };
     bool anisotropic{};
-    WrapMode wrapModeX{ QOpenGLTexture::Repeat };
-    WrapMode wrapModeY{ QOpenGLTexture::Repeat };
-    WrapMode wrapModeZ{ QOpenGLTexture::Repeat };
+    WrapMode wrapModeX{ WrapMode::Repeat };
+    WrapMode wrapModeY{ WrapMode::Repeat };
+    WrapMode wrapModeZ{ WrapMode::Repeat };
     QColor borderColor{ Qt::black };
     ComparisonFunc comparisonFunc{ ComparisonFunc::NoComparisonFunc };
     QString subroutine;

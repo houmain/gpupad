@@ -778,16 +778,18 @@ bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
     gl.glUniform1i(location, desc.binding);
 
     switch (target) {
-    case QOpenGLTexture::Target1D:
-    case QOpenGLTexture::Target1DArray:
-    case QOpenGLTexture::Target2D:
-    case QOpenGLTexture::Target2DArray:
-    case QOpenGLTexture::Target3D:
-    case QOpenGLTexture::TargetCubeMap:
-    case QOpenGLTexture::TargetCubeMapArray:
-    case QOpenGLTexture::TargetRectangle:
-        gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER, binding.minFilter);
-        gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER, binding.magFilter);
+    case Texture::Target::Target1D:
+    case Texture::Target::Target1DArray:
+    case Texture::Target::Target2D:
+    case Texture::Target::Target2DArray:
+    case Texture::Target::Target3D:
+    case Texture::Target::TargetCubeMap:
+    case Texture::Target::TargetCubeMapArray:
+    case Texture::Target::TargetRectangle:
+        gl.glTexParameteri(target, GL_TEXTURE_MIN_FILTER,
+            static_cast<GLint>(binding.minFilter));
+        gl.glTexParameteri(target, GL_TEXTURE_MAG_FILTER,
+            static_cast<GLint>(binding.magFilter));
         if (binding.minFilter != Binding::Filter::Nearest) {
             auto anisotropy = 1.0f;
             if (binding.anisotropic)
@@ -795,9 +797,12 @@ bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
             gl.glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                 anisotropy);
         }
-        gl.glTexParameteri(target, GL_TEXTURE_WRAP_S, binding.wrapModeX);
-        gl.glTexParameteri(target, GL_TEXTURE_WRAP_T, binding.wrapModeY);
-        gl.glTexParameteri(target, GL_TEXTURE_WRAP_R, binding.wrapModeZ);
+        gl.glTexParameteri(target, GL_TEXTURE_WRAP_S,
+            static_cast<GLint>(binding.wrapModeX));
+        gl.glTexParameteri(target, GL_TEXTURE_WRAP_T,
+            static_cast<GLint>(binding.wrapModeY));
+        gl.glTexParameteri(target, GL_TEXTURE_WRAP_R,
+            static_cast<GLint>(binding.wrapModeZ));
         gl.glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, borderColor);
         if (binding.comparisonFunc) {
             gl.glTexParameteri(target, GL_TEXTURE_COMPARE_MODE,

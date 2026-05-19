@@ -61,35 +61,35 @@ TextureKind getKind(Texture::Target target, Texture::Format format)
     auto kind = TextureKind{};
 
     switch (target) {
-    case QOpenGLTexture::Target1D:
-    case QOpenGLTexture::Target1DArray: kind.dimensions = 1; break;
-    case QOpenGLTexture::Target3D:      kind.dimensions = 3; break;
-    default:                            kind.dimensions = 2;
+    case Texture::Target::Target1D:
+    case Texture::Target::Target1DArray: kind.dimensions = 1; break;
+    case Texture::Target::Target3D:      kind.dimensions = 3; break;
+    default:                             kind.dimensions = 2;
     }
 
     switch (target) {
-    case QOpenGLTexture::Target1DArray:
-    case QOpenGLTexture::Target2DArray:
-    case QOpenGLTexture::TargetCubeMapArray:
-    case QOpenGLTexture::Target2DMultisampleArray: kind.array = true; break;
-    default:                                       break;
+    case Texture::Target::Target1DArray:
+    case Texture::Target::Target2DArray:
+    case Texture::Target::TargetCubeMapArray:
+    case Texture::Target::Target2DMultisampleArray: kind.array = true; break;
+    default:                                        break;
     }
 
     switch (target) {
-    case QOpenGLTexture::TargetCubeMap:
-    case QOpenGLTexture::TargetCubeMapArray: kind.cubeMap = true; break;
-    default:                                 break;
+    case Texture::Target::TargetCubeMap:
+    case Texture::Target::TargetCubeMapArray: kind.cubeMap = true; break;
+    default:                                  break;
     }
 
     switch (format) {
-    case QOpenGLTexture::D16:
-    case QOpenGLTexture::D24:
-    case QOpenGLTexture::D32:
-    case QOpenGLTexture::D32F:      kind.depth = true; break;
-    case QOpenGLTexture::D24S8:
-    case QOpenGLTexture::D32FS8X24: kind.depth = kind.stencil = true; break;
-    case QOpenGLTexture::S8:        kind.stencil = true; break;
-    default:                        kind.color = true;
+    case Texture::Format::D16:
+    case Texture::Format::D24:
+    case Texture::Format::D32:
+    case Texture::Format::D32F:      kind.depth = true; break;
+    case Texture::Format::D24S8:
+    case Texture::Format::D32FS8X24: kind.depth = kind.stencil = true; break;
+    case Texture::Format::S8:        kind.stencil = true; break;
+    default:                         kind.color = true;
     }
     return kind;
 }

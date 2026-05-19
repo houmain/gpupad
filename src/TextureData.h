@@ -1,26 +1,21 @@
 #pragma once
 
-#include <QImage>
-#include <QMetaType>
-#include <QOpenGLTexture>
+#include "session/Item.h"
 #include <ktx.h>
 #include <vulkan/vulkan.h>
 #include <ktxvulkan.h>
 #include <memory>
 
-class QOpenGLFunctions_3_3_Core;
-
 class TextureData
 {
 public:
     bool isSharedWith(const TextureData &other) const;
-    bool create(QOpenGLTexture::Target target,
-        QOpenGLTexture::TextureFormat format, int width, int height, int depth,
-        int layers, int levels = 0);
+    bool create(Texture::Target target, Texture::Format format, int width,
+        int height, int depth, int layers, int levels = 0);
     TextureData resize(int width, int height, int depth, int layers) const;
-    TextureData convert(QOpenGLTexture::TextureFormat format) const;
-    TextureData convert(QOpenGLTexture::TextureFormat format, int width,
-        int height, int depth, int layers) const;
+    TextureData convert(Texture::Format format) const;
+    TextureData convert(Texture::Format format, int width, int height,
+        int depth, int layers) const;
     bool load(const QString &fileName, bool flipVertically);
     bool loadQImage(QImage image, bool flipVertically);
     bool save(const QString &fileName, bool flipVertically) const;
@@ -33,10 +28,10 @@ public:
     bool isCubemap() const;
     bool isCompressed() const;
     int dimensions() const;
-    QOpenGLTexture::Target getTarget(int samples = 0) const;
-    QOpenGLTexture::TextureFormat format() const;
-    QOpenGLTexture::PixelFormat pixelFormat() const;
-    QOpenGLTexture::PixelType pixelType() const;
+    Texture::Target getTarget(int samples = 0) const;
+    Texture::Format format() const;
+    uint32_t pixelFormat() const;
+    uint32_t pixelType() const;
     int width() const { return getLevelWidth(0); }
     int height() const { return getLevelHeight(0); }
     int depth() const { return getLevelDepth(0); }
@@ -131,11 +126,11 @@ struct ShareHandle
     auto operator<=>(const ShareHandle &) const = default;
 };
 
-bool isMultisampleTarget(QOpenGLTexture::Target target);
-bool isCubemapTarget(QOpenGLTexture::Target target);
-TextureSampleType getTextureSampleType(QOpenGLTexture::TextureFormat format);
-TextureDataType getTextureDataType(QOpenGLTexture::TextureFormat format);
-int getTextureDataSize(QOpenGLTexture::TextureFormat dataType);
-int getTextureComponentCount(QOpenGLTexture::TextureFormat format);
+bool isMultisampleTarget(Texture::Target target);
+bool isCubemapTarget(Texture::Target target);
+TextureSampleType getTextureSampleType(Texture::Format format);
+TextureDataType getTextureDataType(Texture::Format format);
+int getTextureDataSize(Texture::Format dataType);
+int getTextureComponentCount(Texture::Format format);
 
 Q_DECLARE_METATYPE(TextureData)

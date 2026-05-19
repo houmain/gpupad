@@ -17,8 +17,8 @@
 namespace {
     struct PipelineDesc
     {
-        QOpenGLTexture::Target target{};
-        QOpenGLTexture::TextureFormat textureFormat{};
+        Texture::Target target{};
+        Texture::Format textureFormat{};
         KDGpu::Format swapchainFormat{};
         bool picker{};
         bool histogram{};

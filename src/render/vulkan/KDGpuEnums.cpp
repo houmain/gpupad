@@ -1,9 +1,9 @@
 
 #include "KDGpuEnums.h"
 
-KDGpu::Format toKDGpu(QOpenGLTexture::TextureFormat format)
+KDGpu::Format toKDGpu(Texture::Format format)
 {
-    using E = QOpenGLTexture::TextureFormat;
+    using E = Texture::Format;
     using KD = KDGpu::Format;
     switch (format) {
     case E::R8_UNorm:              return KD::R8_UNORM;
