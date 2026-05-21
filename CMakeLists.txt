@@ -137,7 +137,7 @@ set(SOURCES
   src/editors/texture/TextureEditorItem.cpp
   src/editors/qml/QmlView.cpp
   src/main.cpp
-  src/render/AdapterIdentity.cpp
+  src/render/Renderer.cpp
   src/render/ProcessSource.cpp
   src/render/RenderTask.cpp
   src/render/RenderSessionBase.cpp
@@ -217,7 +217,7 @@ if(WIN32)
   src/render/direct3d/D3DStream.cpp
   src/render/direct3d/D3DTarget.cpp
   src/render/direct3d/D3DTexture.cpp
-  src/render/direct3d/D3DRenderer.cpp
+  src/render/direct3d/D3DDevice.cpp
   src/render/direct3d/D3DRenderSession.cpp
   src/render/direct3d/D3DShareSync.cpp
   libs/d3d12/RenderTargetHelper.cpp)
@@ -237,9 +237,9 @@ if (ENABLE_OPENGL)
   src/render/opengl/GLStream.cpp
   src/render/opengl/GLTarget.cpp
   src/render/opengl/GLTexture.cpp
+  src/render/opengl/GLDevice.cpp
   src/render/opengl/GLPrintf.cpp
   src/render/opengl/GLRenderSession.cpp
-  src/render/opengl/GLRenderer.cpp
   src/render/opengl/GLComputeRange.cpp
   src/render/opengl/GLShareSync.cpp
   src/render/opengl/GLWindow.cpp)
@@ -266,11 +266,11 @@ if (ENABLE_VULKAN)
   src/render/vulkan/VKStream.cpp
   src/render/vulkan/VKTarget.cpp
   src/render/vulkan/VKTexture.cpp
+  src/render/vulkan/VKDevice.cpp
   src/render/vulkan/VKTextureEditorBackground.cpp
   src/render/vulkan/VKTextureEditorItem.cpp
   src/render/vulkan/VKTextureEditorItem_GL.cpp
   src/render/vulkan/VKTextureEditorItem_Share.cpp
-  src/render/vulkan/VKRenderer.cpp
   src/render/vulkan/VKRenderSession.cpp
   src/render/vulkan/VKAccelerationStructure.cpp
   src/render/vulkan/VKShareSync.cpp

@@ -6,9 +6,17 @@
 #include "SynchronizeLogic.h"
 #include "VideoManager.h"
 #include "editors/EditorManager.h"
-#include "render/direct3d/D3DRenderer.h"
-#include "render/opengl/GLRenderer.h"
-#include "render/vulkan/VKRenderer.h"
+#include "render/AdapterIdentity.h"
+#include "render/Renderer.h"
+#if defined(_WIN32)
+#  include "render/direct3d/D3DDevice.h"
+#endif
+#if defined(OPENGL_ENABLED)
+#  include "render/opengl/GLDevice.h"
+#endif
+#if defined(VULKAN_ENABLED)
+#  include "render/vulkan/VKDevice.h"
+#endif
 #include "session/SessionModel.h"
 #include "scripting/CustomActions.h"
 #include "scripting/ScriptEngine.h"
@@ -19,6 +27,30 @@ Singletons *Singletons::sInstance;
 bool onMainThread()
 {
     return (QThread::currentThread() == QApplication::instance()->thread());
+}
+
+void Singletons::selectAdapter(const AdapterIdentity &adapter)
+{
+    Q_ASSERT(onMainThread());
+    if (sInstance->mSelectedAdapter && *sInstance->mSelectedAdapter == adapter)
+        return;
+
+    sInstance->mGLRenderer.reset();
+    sInstance->mVKRenderer.reset();
+    sInstance->mD3DRenderer.reset();
+    sInstance->mSelectedAdapter = std::make_unique<AdapterIdentity>(adapter);
+#if defined(VULKAN_ENABLED)
+    resetSharedVKDevice();
+#endif
+    sInstance->mEditorManager->recreateTextureEditorGpuWindows();
+}
+
+const AdapterIdentity &Singletons::selectedAdapter()
+{
+    Q_ASSERT(onMainThread());
+    static const auto sEmpty = AdapterIdentity{};
+    return (sInstance->mSelectedAdapter ? *sInstance->mSelectedAdapter
+                                        : sEmpty);
 }
 
 RendererPtr Singletons::sessionRenderer()
@@ -48,24 +80,48 @@ RendererPtr Singletons::sessionRenderer()
 RendererPtr Singletons::glRenderer()
 {
     Q_ASSERT(onMainThread());
-    if (!sInstance->mGLRenderer)
-        sInstance->mGLRenderer = std::make_shared<GLRenderer>();
+    if (!sInstance->mGLRenderer) {
+#if defined(OPENGL_ENABLED)
+        sInstance->mGLRenderer =
+            std::make_shared<Renderer>(Renderer::Type::OpenGL,
+                std::make_unique<GLDevice>(), selectedAdapter());
+#else
+        sInstance->mGLRenderer = std::make_shared<Renderer>(
+            Renderer::Type::OpenGL, MessageType::OpenGLVersionNotAvailable);
+#endif
+    }
     return sInstance->mGLRenderer;
 }
 
 RendererPtr Singletons::vkRenderer()
 {
     Q_ASSERT(onMainThread());
-    if (!sInstance->mVKRenderer)
-        sInstance->mVKRenderer = std::make_shared<VKRenderer>();
+    if (!sInstance->mVKRenderer) {
+#if defined(VULKAN_ENABLED)
+        sInstance->mVKRenderer =
+            std::make_shared<Renderer>(Renderer::Type::Vulkan,
+                std::make_unique<VKDevice>(), selectedAdapter());
+#else
+        sInstance->mVKRenderer = std::make_shared<Renderer>(
+            Renderer::Type::Vulkan, MessageType::VulkanNotAvailable);
+#endif
+    }
     return sInstance->mVKRenderer;
 }
 
 RendererPtr Singletons::d3dRenderer()
 {
     Q_ASSERT(onMainThread());
-    if (!sInstance->mD3DRenderer)
-        sInstance->mD3DRenderer = std::make_shared<D3DRenderer>();
+    if (!sInstance->mD3DRenderer) {
+#if defined(_WIN32)
+        sInstance->mD3DRenderer =
+            std::make_shared<Renderer>(Renderer::Type::Direct3D,
+                std::make_unique<D3DDevice>(), selectedAdapter());
+#else
+        sInstance->mD3DRenderer = std::make_shared<Renderer>(
+            Renderer::Type::Direct3D, MessageType::Direct3DNotAvailable);
+#endif
+    }
     return sInstance->mD3DRenderer;
 }
 

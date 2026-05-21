@@ -2,8 +2,8 @@
 #include "VKShareSync.h"
 #include "VKBuffer.h"
 #include "VKCall.h"
+#include "VKDevice.h"
 #include "VKProgram.h"
-#include "VKRenderer.h"
 #include "VKStream.h"
 #include "VKTarget.h"
 #include "VKTexture.h"
@@ -38,21 +38,22 @@ VKRenderSession::~VKRenderSession()
     releaseResources();
 }
 
-VKRenderer &VKRenderSession::renderer()
+VKDevice &VKRenderSession::vkDevice()
 {
-    return static_cast<VKRenderer &>(RenderSessionBase::renderer());
+    return RenderSessionBase::renderer().device<VKDevice>();
 }
 
 void VKRenderSession::createCommandQueue()
 {
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
+    auto &device = vkDevice();
     mCommandQueue.reset(new CommandQueue{
         .context =
             VKContext{
-                .device = renderer().device(),
-                .queue = renderer().queue(),
-                .ktxDeviceInfo = renderer().ktxDeviceInfo(),
+                .device = device.device(),
+                .queue = device.queue(),
+                .ktxDeviceInfo = device.ktxDeviceInfo(),
             },
     });
 }
@@ -82,7 +83,7 @@ std::shared_ptr<void> VKRenderSession::beginTimeQuery(size_t index)
 void VKRenderSession::render()
 {
     if (!mShareSync)
-        mShareSync = std::make_shared<VKShareSync>(renderer().device());
+        mShareSync = std::make_shared<VKShareSync>(vkDevice().device());
 
     if (itemsChanged() || evaluationType() == EvaluationType::Reset) {
         createCommandQueue();

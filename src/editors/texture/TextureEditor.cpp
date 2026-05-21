@@ -52,38 +52,11 @@ TextureEditor::TextureEditor(QString fileName,
     , mTextureInfoBar(*textureInfoBar)
     , mFileName(fileName)
 {
-
-#if defined(VULKAN_ENABLED)
-    if (VKWindow::isSupported()) {
-        auto *window = new VKWindow();
-        mGpuWindow = window;
-        mTextureItem = new VKTextureEditorItem(window);
-        mBackground = new VKTextureEditorBackground(window);
-    }
-#endif // defined(VULKAN_ENABLED)
-
-#if defined(OPENGL_ENABLED)
-    if (!mGpuWindow) {
-        auto *window = new GLWindow();
-        mGpuWindow = window;
-        mTextureItem = new GLTextureEditorItem(window);
-        mBackground = new GLTextureEditorBackground(window);
-    }
-#endif // defined(OPENGL_ENABLED)
-
-    if (!mGpuWindow) {
+    if (!createGpuWindow()) {
         setEnabled(false);
         return;
     }
-
-    mGpuWindowContainer = QWidget::createWindowContainer(mGpuWindow);
-    mGpuWindow->installEventFilter(this);
-    setViewport(mGpuWindowContainer);
-
-    connect(mGpuWindow, &RenderWindow::releasingGpu, this,
-        &TextureEditor::releaseGpu);
-    connect(mGpuWindow, &RenderWindow::paintingGpu, this,
-        &TextureEditor::paintGpu);
+    setupGpuWindow();
 
     setAcceptDrops(false);
     setMouseTracking(true);
@@ -92,9 +65,98 @@ TextureEditor::TextureEditor(QString fileName,
 
 TextureEditor::~TextureEditor()
 {
-    delete mGpuWindow;
+    destroyGpuWindow();
 
     Singletons::fileCache().invalidateFile(mFileName);
+}
+
+bool TextureEditor::createGpuWindow()
+{
+#if defined(VULKAN_ENABLED)
+    if (VKWindow::isSupported()) {
+        auto *window = new VKWindow();
+        mGpuWindow = window;
+        mTextureItem = new VKTextureEditorItem(window);
+        mBackground = new VKTextureEditorBackground(window);
+        return true;
+    }
+#endif // defined(VULKAN_ENABLED)
+
+#if defined(OPENGL_ENABLED)
+    auto *window = new GLWindow();
+    mGpuWindow = window;
+    mTextureItem = new GLTextureEditorItem(window);
+    mBackground = new GLTextureEditorBackground(window);
+    return true;
+#else
+    return false;
+#endif // defined(OPENGL_ENABLED)
+}
+
+void TextureEditor::destroyGpuWindow()
+{
+    delete mGpuWindow;
+    mGpuWindow = nullptr;
+    mGpuWindowContainer = nullptr;
+    mTextureItem = nullptr;
+    mBackground = nullptr;
+}
+
+void TextureEditor::setupGpuWindow()
+{
+    mGpuWindowContainer = QWidget::createWindowContainer(mGpuWindow);
+    mGpuWindow->installEventFilter(this);
+    setViewport(mGpuWindowContainer);
+
+    connect(mGpuWindow, &RenderWindow::releasingGpu, this,
+        &TextureEditor::releaseGpu);
+    connect(mGpuWindow, &RenderWindow::paintingGpu, this,
+        &TextureEditor::paintGpu);
+}
+
+void TextureEditor::recreateGpuWindow()
+{
+    const auto magnifyLinear =
+        mTextureItem ? mTextureItem->magnifyLinear() : false;
+    const auto level = mTextureItem ? mTextureItem->level() : 0.0f;
+    const auto face = mTextureItem ? mTextureItem->face() : 0;
+    const auto layer = mTextureItem ? mTextureItem->layer() : 0.0f;
+    const auto sample = mTextureItem ? mTextureItem->sample() : -1;
+    const auto flipVertically =
+        mTextureItem ? mTextureItem->flipVertically() : false;
+    const auto histogramEnabled =
+        mTextureItem ? mTextureItem->histogramEnabled() : false;
+    const auto mappingRange =
+        mTextureItem ? mTextureItem->mappingRange() : Range{ 0, 1 };
+    const auto histogramBounds =
+        mTextureItem ? mTextureItem->histogramBounds() : Range{ 0, 1 };
+    const auto colorMask = mTextureItem ? mTextureItem->colorMask() : 0u;
+
+    destroyGpuWindow();
+    if (!createGpuWindow()) {
+        setEnabled(false);
+        return;
+    }
+
+    setEnabled(true);
+    setupGpuWindow();
+
+    if (!mTexture.isNull()) {
+        mTextureItem->setImage(mTexture);
+        mTextureItem->setMagnifyLinear(magnifyLinear);
+        mTextureItem->setLevel(level);
+        mTextureItem->setFace(face);
+        mTextureItem->setLayer(layer);
+        mTextureItem->setSample(sample);
+        mTextureItem->setFlipVertically(flipVertically);
+        mTextureItem->setHistogramEnabled(histogramEnabled);
+        mTextureItem->setMappingRange(mappingRange);
+        mTextureItem->setHistogramBounds(histogramBounds);
+        mTextureItem->setColorMask(colorMask);
+        setBounds(mTextureItem->boundingRect().toRect());
+    }
+
+    updateScrollBars();
 }
 
 void TextureEditor::resizeEvent(QResizeEvent *event)

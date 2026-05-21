@@ -1,7 +1,7 @@
 #include "GLCall.h"
 #include "GLBuffer.h"
+#include "GLDevice.h"
 #include "GLProgram.h"
-#include "GLRenderer.h"
 #include "GLStream.h"
 #include "GLTarget.h"
 #include "GLTexture.h"

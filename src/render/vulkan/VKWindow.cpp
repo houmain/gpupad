@@ -1,20 +1,12 @@
 #include "VKWindow.h"
-#include "VKContext.h"
+#include "VKDevice.h"
+#include "Singletons.h"
 
-#include <QCoreApplication>
 #include <QDebug>
 #include <QEvent>
 #include <algorithm>
 #include <array>
-#include <chrono>
-#include <cstdio>
 #include <optional>
-#include <thread>
-
-// TODO: added because of multiple definitions of fmt::v11::detail::assert_fail
-#if defined(_WIN32) && !defined(FMT_ASSERT)
-#  define FMT_ASSERT
-#endif
 
 #include <KDGpu/adapter.h>
 #include <KDGpu/adapter_swapchain_properties.h>
@@ -34,25 +26,9 @@
 #include <KDGpu/texture.h>
 #include <KDGpu/texture_view.h>
 #include <KDGpu/texture_view_options.h>
-#include <KDGpu/vulkan/vulkan_adapter.h>
-#include <KDGpu/vulkan/vulkan_device.h>
-#include <KDGpu/vulkan/vulkan_graphics_api.h>
-#include <KDGpu/vulkan/vulkan_instance.h>
-#include <KDGpu/vulkan/vulkan_queue.h>
-#include <ktxvulkan.h>
 
 namespace {
     constexpr auto MaxFramesInFlight = 2u;
-
-    uint32_t applicationVersion()
-    {
-        auto major = 0;
-        auto minor = 0;
-        auto build = 0;
-        std::sscanf(qPrintable(QCoreApplication::applicationVersion()),
-            "%d.%d.%d", &major, &minor, &build);
-        return KDGPU_MAKE_API_VERSION(0, major, minor, build);
-    }
 
     KDGpu::SurfaceOptions surfaceOptions(QWindow &window)
     {
@@ -123,163 +99,11 @@ namespace {
 
         return KDGpu::CompositeAlphaFlagBits::OpaqueBit;
     }
-
-    class SharedGpuContext final
-    {
-    public:
-        SharedGpuContext()
-        {
-            api = std::make_unique<KDGpu::VulkanGraphicsApi>();
-
-            auto instanceOptions = KDGpu::InstanceOptions{
-                .applicationName =
-                    QCoreApplication::applicationName().toStdString(),
-                .applicationVersion = applicationVersion(),
-#if !defined(NDEBUG)
-                .layers = { "VK_LAYER_KHRONOS_validation" },
-#endif
-            };
-            instance = api->createInstance(instanceOptions);
-        }
-
-        ~SharedGpuContext()
-        {
-            if (device.isValid())
-                device.waitUntilIdle();
-            releaseKtx();
-        }
-
-        bool initializeDevice(KDGpu::Surface &surface)
-        {
-            if (!instance.isValid() || instance.adapters().empty()) {
-                qWarning() << "Creating KDGpu Vulkan instance failed";
-                return false;
-            }
-
-            if (!device.isValid()) {
-                auto defaultDevice = instance.createDefaultDevice(surface);
-                adapter = defaultDevice.adapter;
-                device = std::move(defaultDevice.device);
-                if (!adapter || !device.isValid()) {
-                    qWarning() << "Creating KDGpu Vulkan device failed";
-                    return false;
-                }
-
-                const auto requiredQueueFlags =
-                    KDGpu::QueueFlags(KDGpu::QueueFlagBits::GraphicsBit
-                        | KDGpu::QueueFlagBits::TransferBit);
-                for (const auto &candidate : device.queues())
-                    if ((candidate.flags() & requiredQueueFlags)
-                            == requiredQueueFlags
-                        && adapter->supportsPresentation(surface,
-                            candidate.queueTypeIndex())) {
-                        queue = candidate;
-                        break;
-                    }
-                if (!queue.isValid())
-                    for (const auto &candidate : device.queues())
-                        if ((candidate.flags()
-                                & KDGpu::QueueFlagBits::GraphicsBit)
-                            && adapter->supportsPresentation(surface,
-                                candidate.queueTypeIndex())) {
-                            queue = candidate;
-                            break;
-                        }
-                if (!queue.isValid()) {
-                    qWarning()
-                        << "No KDGpu Vulkan graphics/present queue found";
-                    return false;
-                }
-            } else if (!adapter->supportsPresentation(surface,
-                           queue.queueTypeIndex())) {
-                qWarning() << "Shared KDGpu device queue cannot present to "
-                              "this window";
-                return false;
-            }
-
-            return initializeKtx();
-        }
-
-        bool initializeKtx()
-        {
-            if (ktxDeviceInfoInitialized)
-                return true;
-
-            const auto &rm = *device.graphicsApi()->resourceManager();
-            const auto vkInstance = rm.getInstance(instance);
-            const auto vkAdapter = rm.getAdapter(*adapter);
-            const auto vkDevice = rm.getDevice(device);
-            const auto vkQueue = rm.getQueue(queue);
-
-            const auto commandPoolInfo = VkCommandPoolCreateInfo{
-                .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-                .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-                .queueFamilyIndex = queue.queueTypeIndex(),
-            };
-            if (vkCreateCommandPool(vkDevice->device, &commandPoolInfo, nullptr,
-                    &ktxCommandPool)
-                != VK_SUCCESS) {
-                qWarning() << "Creating Vulkan command pool for KTX failed";
-                return false;
-            }
-
-            if (ktxVulkanDeviceInfo_ConstructEx(&ktxDeviceInfo,
-                    vkInstance->instance, vkAdapter->physicalDevice,
-                    vkDevice->device, vkQueue->queue, ktxCommandPool, nullptr,
-                    nullptr)
-                != KTX_SUCCESS) {
-                qWarning() << "Creating KTX Vulkan device info failed";
-                releaseKtx();
-                return false;
-            }
-
-            ktxDeviceInfoInitialized = true;
-            return true;
-        }
-
-        void releaseKtx()
-        {
-            if (ktxDeviceInfoInitialized) {
-                ktxVulkanDeviceInfo_Destruct(&ktxDeviceInfo);
-                ktxDeviceInfoInitialized = false;
-                ktxDeviceInfo = {};
-            }
-
-            if (ktxCommandPool && device.isValid()) {
-                const auto &rm = *device.graphicsApi()->resourceManager();
-                const auto vkDevice =
-                    static_cast<KDGpu::VulkanDevice *>(rm.getDevice(device));
-                vkDestroyCommandPool(vkDevice->device, ktxCommandPool, nullptr);
-                ktxCommandPool = VK_NULL_HANDLE;
-            }
-        }
-
-        std::unique_ptr<KDGpu::VulkanGraphicsApi> api;
-        KDGpu::Instance instance;
-        KDGpu::Adapter *adapter{};
-        KDGpu::Device device;
-        KDGpu::Queue queue;
-        ktxVulkanDeviceInfo ktxDeviceInfo{};
-        VkCommandPool ktxCommandPool{};
-        bool ktxDeviceInfoInitialized{};
-    };
-
-    std::weak_ptr<SharedGpuContext> sSharedGpuContext;
-
-    std::shared_ptr<SharedGpuContext> sharedGpuContext()
-    {
-        auto context = sSharedGpuContext.lock();
-        if (!context) {
-            context = std::make_shared<SharedGpuContext>();
-            sSharedGpuContext = context;
-        }
-        return context;
-    }
 } // namespace
 
 struct VKWindow::State
 {
-    std::shared_ptr<SharedGpuContext> shared;
+    std::shared_ptr<VKDevice> shared;
     KDGpu::Surface surface;
     KDGpu::Swapchain swapchain;
     std::vector<KDGpu::TextureView> swapchainViews;
@@ -303,8 +127,30 @@ struct VKWindow::State
 
 bool VKWindow::isSupported()
 {
-    auto context = sharedGpuContext();
-    return context->instance.isValid() && !context->instance.adapters().empty();
+    return sharedVKDevice()->hasAdapters();
+}
+
+QList<AdapterIdentity> VKWindow::getAdapterIdentities()
+{
+    auto result = QList<AdapterIdentity>();
+    const auto device = sharedVKDevice();
+    if (!device->hasAdapters())
+        return result;
+
+    for (const auto adapter : device->instance().adapters()) {
+        const auto &properties = adapter->properties();
+
+        auto identity = AdapterIdentity{};
+        identity.name = QString::fromStdString(properties.deviceName);
+        std::copy(std::begin(properties.deviceUUID),
+            std::end(properties.deviceUUID), identity.deviceUUIDs[0].begin());
+        std::copy(std::begin(properties.driverUUID),
+            std::end(properties.driverUUID), identity.driverUUID.begin());
+        std::copy(std::begin(properties.deviceLUID),
+            std::end(properties.deviceLUID), identity.deviceLUID.begin());
+        result.append(identity);
+    }
+    return result;
 }
 
 VKWindow::VKWindow(int syncInterval) : mSyncInterval(syncInterval)
@@ -320,20 +166,19 @@ VKWindow::~VKWindow()
 KDGpu::Device &VKWindow::device()
 {
     Q_ASSERT(mState && mState->shared);
-    return mState->shared->device;
+    return mState->shared->device();
 }
 
 KDGpu::Queue &VKWindow::queue()
 {
     Q_ASSERT(mState && mState->shared);
-    return mState->shared->queue;
+    return mState->shared->queue();
 }
 
 ktxVulkanDeviceInfo &VKWindow::ktxDeviceInfo()
 {
-    Q_ASSERT(mState && mState->shared
-        && mState->shared->ktxDeviceInfoInitialized);
-    return mState->shared->ktxDeviceInfo;
+    Q_ASSERT(mState && mState->shared);
+    return mState->shared->ktxDeviceInfo();
 }
 
 KDGpu::RenderPassCommandRecorder &VKWindow::renderPass()
@@ -360,20 +205,23 @@ void VKWindow::initializeGpu()
         return;
 
     auto state = std::make_unique<State>();
-    state->shared = sharedGpuContext();
+    state->shared = sharedVKDevice();
+    if (!state->shared->hasAdapters())
+        return;
 
     state->surface =
-        state->shared->instance.createSurface(surfaceOptions(*this));
+        state->shared->instance().createSurface(surfaceOptions(*this));
     if (!state->surface.isValid()) {
         qWarning() << "Creating KDGpu Vulkan window surface failed";
         return;
     }
 
-    if (!state->shared->initializeDevice(state->surface))
+    if (!state->shared->initialize(state->surface,
+            Singletons::selectedAdapter()))
         return;
 
     const auto swapchainProperties =
-        state->shared->adapter->swapchainProperties(state->surface);
+        state->shared->adapter().swapchainProperties(state->surface);
     if (swapchainProperties.formats.empty()
         || swapchainProperties.presentModes.empty()) {
         qWarning() << "KDGpu Vulkan surface has no swapchain support";
@@ -389,8 +237,8 @@ void VKWindow::initializeGpu()
 
     for (auto i = 0u; i < MaxFramesInFlight; ++i) {
         state->presentCompleteSemaphores[i] =
-            state->shared->device.createGpuSemaphore();
-        state->frameFences[i] = state->shared->device.createFence({
+            state->shared->device().createGpuSemaphore();
+        state->frameFences[i] = state->shared->device().createFence({
             .createSignalled = true,
         });
     }
@@ -405,8 +253,8 @@ void VKWindow::releaseGpu()
     if (!mInitialized)
         return;
 
-    if (mState && mState->shared->device.isValid())
-        mState->shared->device.waitUntilIdle();
+    if (mState && mState->shared->isValid())
+        mState->shared->device().waitUntilIdle();
 
     Q_EMIT releasingGpu();
 
@@ -472,7 +320,7 @@ void VKWindow::swapBuffers()
             std::max(1u, static_cast<uint32_t>(height() * dpr + 0.5));
 
         const auto swapchainProperties =
-            shared.adapter->swapchainProperties(state.surface);
+            shared.adapter().swapchainProperties(state.surface);
         const auto &capabilities = swapchainProperties.capabilities;
         state.swapchainExtent = {
             .width = std::clamp(requestedWidth,
@@ -483,14 +331,14 @@ void VKWindow::swapBuffers()
                 capabilities.maxImageExtent.height),
         };
 
-        shared.device.waitUntilIdle();
+        shared.device().waitUntilIdle();
         state.renderPass.reset();
         for (auto &commandBuffer : state.commandBuffers)
             commandBuffer = {};
         state.swapchainViews.clear();
         state.renderCompleteSemaphores.clear();
 
-        state.swapchain = shared.device.createSwapchain({
+        state.swapchain = shared.device().createSwapchain({
             .surface = state.surface,
             .format = state.swapchainFormat,
             .colorSpace = state.colorSpace,
@@ -514,7 +362,7 @@ void VKWindow::swapBuffers()
             state.swapchainViews.emplace_back(
                 texture.createView({ .format = state.swapchainFormat }));
             state.renderCompleteSemaphores.emplace_back(
-                shared.device.createGpuSemaphore());
+                shared.device().createGpuSemaphore());
         }
 
         state.swapchainDirty = false;
@@ -543,7 +391,7 @@ void VKWindow::swapBuffers()
         state.renderCompleteSemaphores.at(state.currentSwapchainImageIndex);
 
     auto commandRecorder =
-        shared.device.createCommandRecorder({ .queue = shared.queue });
+        shared.device().createCommandRecorder({ .queue = shared.queue() });
     state.renderPass.emplace(commandRecorder.beginRenderPass({
         .colorAttachments = {
             {
@@ -563,14 +411,14 @@ void VKWindow::swapBuffers()
 
     state.commandBuffers[state.inFlightIndex] = commandRecorder.finish();
 
-    shared.queue.submit({
+    shared.queue().submit({
         .commandBuffers = { state.commandBuffers[state.inFlightIndex] },
         .waitSemaphores = { presentComplete },
         .signalSemaphores = { renderComplete },
         .signalFence = frameFence,
     });
 
-    const auto presentResult = shared.queue.present({
+    const auto presentResult = shared.queue().present({
         .waitSemaphores = { renderComplete },
         .swapchainInfos = {
             {

@@ -3,6 +3,7 @@
 #include <QString>
 #include <memory>
 
+struct AdapterIdentity;
 class QMainWindow;
 class Settings;
 class FileCache;
@@ -23,6 +24,8 @@ bool onMainThread();
 class Singletons
 {
 public:
+    static void selectAdapter(const AdapterIdentity &adapter);
+    static const AdapterIdentity &selectedAdapter();
     static RendererPtr sessionRenderer();
     static RendererPtr glRenderer();
     static RendererPtr vkRenderer();
@@ -44,6 +47,7 @@ public:
 private:
     static Singletons *sInstance;
 
+    std::unique_ptr<AdapterIdentity> mSelectedAdapter;
     std::unique_ptr<Settings> mSettings;
     std::unique_ptr<FileCache> mFileCache;
     std::unique_ptr<FileDialog> mFileDialog;

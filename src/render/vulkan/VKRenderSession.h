@@ -4,7 +4,7 @@
 #  include "render/RenderSessionBase.h"
 #  include "VKContext.h"
 
-class VKRenderer;
+class VKDevice;
 class VKShareSync;
 
 class VKRenderSession final : public RenderSessionBase
@@ -23,7 +23,7 @@ public:
     std::shared_ptr<void> beginTimeQuery(size_t index) override;
 
 private:
-    VKRenderer &renderer();
+    VKDevice &vkDevice();
     void createCommandQueue();
 
     std::shared_ptr<VKShareSync> mShareSync;

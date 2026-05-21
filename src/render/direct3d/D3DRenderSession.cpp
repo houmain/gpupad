@@ -2,8 +2,8 @@
 #include "D3DShareSync.h"
 #include "D3DBuffer.h"
 #include "D3DCall.h"
+#include "D3DDevice.h"
 #include "D3DProgram.h"
-#include "D3DRenderer.h"
 #include "D3DStream.h"
 #include "D3DTarget.h"
 #include "D3DTexture.h"
@@ -38,24 +38,25 @@ D3DRenderSession::~D3DRenderSession()
     releaseResources();
 }
 
-D3DRenderer &D3DRenderSession::renderer()
+D3DDevice &D3DRenderSession::d3dDevice()
 {
-    return static_cast<D3DRenderer &>(RenderSessionBase::renderer());
+    return RenderSessionBase::renderer().device<D3DDevice>();
 }
 
 void D3DRenderSession::createCommandQueue()
 {
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
+    auto &device = d3dDevice();
 
     mCommandQueue.reset(new CommandQueue{
         .context =
             D3DContext{
-                .device = renderer().device(),
-                .queue = renderer().queue(),
-                .renderTargetHelper = renderer().renderTargetHelper(),
+                .device = device.device(),
+                .queue = device.queue(),
+                .renderTargetHelper = device.renderTargetHelper(),
                 .descriptorSize =
-                    renderer().device().GetDescriptorHandleIncrementSize(
+                    device.device().GetDescriptorHandleIncrementSize(
                         D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV),
             },
     });
@@ -123,7 +124,7 @@ std::shared_ptr<void> D3DRenderSession::beginTimeQuery(size_t index)
 void D3DRenderSession::render()
 {
     if (!mShareSync)
-        mShareSync = std::make_shared<D3DShareSync>(renderer().device());
+        mShareSync = std::make_shared<D3DShareSync>(d3dDevice().device());
 
     if (itemsChanged() || evaluationType() == EvaluationType::Reset) {
         createCommandQueue();
@@ -157,7 +158,7 @@ void D3DRenderSession::render()
         commandLists.data());
 
     if (!mFence)
-        AssertIfFailed(this->renderer().device().CreateFence(0,
+        AssertIfFailed(d3dDevice().device().CreateFence(0,
             D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence)));
 
     mFenceValue++;

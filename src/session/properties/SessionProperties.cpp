@@ -2,8 +2,54 @@
 #include "../SessionModel.h"
 #include "PropertiesEditor.h"
 #include "ui_SessionProperties.h"
+#include "Singletons.h"
+#if defined(OPENGL_ENABLED)
+#  include "render/opengl/GLWindow.h"
+#endif
+#if defined(VULKAN_ENABLED)
+#  include "render/vulkan/VKWindow.h"
+#endif
 #include <QDataWidgetMapper>
+#include <QSignalBlocker>
 #include <QStringListModel>
+#include <algorithm>
+
+namespace {
+    bool isNull(const AdapterIdentity::UUID &uuid)
+    {
+        return std::ranges::all_of(uuid, [](auto byte) { return byte == 0; });
+    }
+
+    bool isNull(const AdapterIdentity::LUID &luid)
+    {
+        return std::ranges::all_of(luid, [](auto byte) { return byte == 0; });
+    }
+
+    bool isSameAdapter(const AdapterIdentity &a, const AdapterIdentity &b)
+    {
+        if (a == b)
+            return true;
+
+        if (!isNull(a.deviceLUID) && a.deviceLUID == b.deviceLUID)
+            return true;
+
+        if (!isNull(a.driverUUID) && a.driverUUID == b.driverUUID)
+            for (const auto &aDeviceUUID : a.deviceUUIDs)
+                if (!isNull(aDeviceUUID))
+                    for (const auto &bDeviceUUID : b.deviceUUIDs)
+                        if (aDeviceUUID == bDeviceUUID)
+                            return true;
+
+        return false;
+    }
+
+    QString getAdapterName(const AdapterIdentity &adapter, int index)
+    {
+        if (!adapter.name.isEmpty())
+            return adapter.name;
+        return QString("Adapter %1").arg(index + 1);
+    }
+} // namespace
 
 VariantMapModel::VariantMapModel(QObject *parent) : QAbstractItemModel(parent)
 {
@@ -123,6 +169,8 @@ SessionProperties::SessionProperties(PropertiesEditor *propertiesEditor)
 
     connect(mUi->renderer, &DataComboBox::currentDataChanged, this,
         &SessionProperties::updateShaderCompiler);
+    connect(mUi->adapter, &DataComboBox::currentDataChanged, this,
+        &SessionProperties::selectAdapter);
     connect(mUi->shaderLanguage, &DataComboBox::currentDataChanged, this,
         &SessionProperties::updateShaderCompiler);
     connect(mUi->shaderCompiler, &DataComboBox::currentDataChanged, this,
@@ -159,6 +207,74 @@ void SessionProperties::submitShaderCompilerSettings()
         mPropertiesEditor.currentModelIndex(
             SessionModel::SessionShaderCompilerSettings),
         mShaderCompilerSettingsModel->variantMap());
+}
+
+void SessionProperties::updateAdapters()
+{
+    const auto renderer =
+        static_cast<Session::Renderer>(mUi->renderer->currentData().toInt());
+
+    mAdapters.clear();
+    switch (renderer) {
+    case Session::Renderer::OpenGL:
+#if defined(OPENGL_ENABLED)
+        mAdapters.append(GLWindow::getAdapterIdentity());
+#endif
+        break;
+
+    case Session::Renderer::Vulkan:
+    case Session::Renderer::Direct3D:
+#if defined(VULKAN_ENABLED)
+        mAdapters = VKWindow::getAdapterIdentities();
+#endif
+        break;
+    }
+
+    const auto signalBlocker = QSignalBlocker(mUi->adapter);
+    mUi->adapter->clear();
+
+    if (mAdapters.isEmpty()) {
+        mUi->adapter->addItem("Default", -1);
+        mUi->adapter->setEnabled(false);
+        if (Singletons::selectedAdapter() != AdapterIdentity{})
+            Singletons::selectAdapter({});
+        return;
+    }
+
+    for (auto i = 0; i < mAdapters.size(); ++i)
+        mUi->adapter->addItem(getAdapterName(mAdapters[i], i), i);
+
+    auto selectedAdapterIndex = -1;
+    for (auto i = 0; i < mAdapters.size(); ++i)
+        if (isSameAdapter(mAdapters[i], Singletons::selectedAdapter())) {
+            selectedAdapterIndex = i;
+            break;
+        }
+
+    if (selectedAdapterIndex < 0)
+        selectedAdapterIndex = 0;
+
+    mUi->adapter->setCurrentIndex(selectedAdapterIndex);
+    mUi->adapter->setEnabled(mAdapters.size() > 1);
+
+    if (Singletons::selectedAdapter() != mAdapters[selectedAdapterIndex])
+        Singletons::selectAdapter(mAdapters[selectedAdapterIndex]);
+}
+
+void SessionProperties::selectAdapter(QVariant data)
+{
+    auto ok = false;
+    const auto adapterIndex = data.toInt(&ok);
+    if (!ok)
+        return;
+
+    if (adapterIndex < 0) {
+        Singletons::selectAdapter({});
+        return;
+    }
+
+    if (adapterIndex < mAdapters.size())
+        Singletons::selectAdapter(mAdapters[adapterIndex]);
 }
 
 void SessionProperties::updateShaderCompiler()
@@ -219,6 +335,7 @@ void SessionProperties::updateShaderCompiler()
         mPropertiesEditor.model().data(currentIndex).toMap());
     mShaderCompilerSettingsMapper->revert();
 
+    updateAdapters();
     updateWidgets();
 }
 

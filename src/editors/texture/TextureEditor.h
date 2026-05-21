@@ -43,6 +43,7 @@ public:
     void setFlipVertically(bool flipVertically);
     void setPreviewTexture(ShareSyncPtr shareSync, ShareHandle textureHandle,
         int samples = 1);
+    void recreateGpuWindow();
     const TextureData &texture() const { return mTexture; }
 
 Q_SIGNALS:
@@ -64,6 +65,9 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
+    bool createGpuWindow();
+    void destroyGpuWindow();
+    void setupGpuWindow();
     void paintGpu();
     void releaseGpu();
     void updateMousePosition(const QPoint &position);

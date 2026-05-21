@@ -75,6 +75,7 @@ public:
     bool hasCurrentEditor() const { return (mCurrentDock != nullptr); }
     QString currentEditorFileName();
     void forEachEditor(const std::function<void(IEditor &)> &function) const;
+    void recreateTextureEditorGpuWindows();
     QList<QMetaObject::Connection> connectEditActions(
         const EditActions &actions);
     void renameEditors(const QString &prevFileName, const QString &fileName);

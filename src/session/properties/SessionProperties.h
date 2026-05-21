@@ -1,9 +1,11 @@
 #pragma once
 
 #include "../Item.h"
+#include "render/AdapterIdentity.h"
 #include <QVariant>
 #include <QWidget>
 #include <QAbstractItemModel>
+#include <QList>
 
 namespace Ui {
     class SessionProperties;
@@ -61,11 +63,14 @@ public:
     void submitShaderCompilerSettings();
 
 private:
+    void updateAdapters();
+    void selectAdapter(QVariant data);
     void updateShaderCompiler();
     void updateWidgets();
 
     PropertiesEditor &mPropertiesEditor;
     Ui::SessionProperties *mUi;
+    QList<AdapterIdentity> mAdapters;
     ShaderCompilerSettingsModel *mShaderCompilerSettingsModel{};
     QDataWidgetMapper *mShaderCompilerSettingsMapper{};
 };

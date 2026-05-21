@@ -1,6 +1,53 @@
 #include "GLWindow.h"
 
-GLWindow::GLWindow(int syncInterval) : mSyncInterval(syncInterval)
+AdapterIdentity GLWindow::getAdapterIdentity()
+{
+    auto glContext = QOpenGLContext();
+    glContext.setShareContext(QOpenGLContext::globalShareContext());
+    auto surface = QOffscreenSurface();
+    surface.setFormat(glContext.format());
+    surface.create();
+    glContext.create();
+    if (!glContext.makeCurrent(&surface))
+        return {};
+    const auto guard = QScopeGuard([&]() { glContext.doneCurrent(); });
+
+    auto identity = AdapterIdentity{};
+    if (auto renderer =
+            reinterpret_cast<const char *>(glGetString(GL_RENDERER)))
+        identity.name = QString::fromUtf8(renderer);
+    if (!glContext.hasExtension("GL_EXT_memory_object"))
+        return identity;
+
+    const auto glGetUnsignedBytevEXT =
+        reinterpret_cast<PFNGLGETUNSIGNEDBYTEVEXTPROC>(
+            glContext.getProcAddress("glGetUnsignedBytevEXT"));
+    if (!glGetUnsignedBytevEXT)
+        return identity;
+
+    const auto glGetUnsignedBytei_vEXT =
+        reinterpret_cast<PFNGLGETUNSIGNEDBYTEI_VEXTPROC>(
+            glContext.getProcAddress("glGetUnsignedBytei_vEXT"));
+    if (!glGetUnsignedBytei_vEXT)
+        return identity;
+
+    static_assert(GL_UUID_SIZE_EXT == sizeof(AdapterIdentity::UUID));
+    auto numDeviceUuids = GLint{};
+    glGetIntegerv(GL_NUM_DEVICE_UUIDS_EXT, &numDeviceUuids);
+    for (auto i = 0; i < std::min(numDeviceUuids, 4); ++i)
+        glGetUnsignedBytei_vEXT(GL_DEVICE_UUID_EXT, i,
+            identity.deviceUUIDs[i].data());
+    glGetUnsignedBytevEXT(GL_DRIVER_UUID_EXT, identity.driverUUID.data());
+
+#if defined(_WIN32)
+    glGetUnsignedBytevEXT(GL_DEVICE_LUID_EXT, identity.deviceLUID.data());
+#endif
+    return identity;
+}
+
+GLWindow::GLWindow(int syncInterval)
+    : mSyncInterval(syncInterval)
+    , mDevice(std::make_unique<GLDevice>(GLDevice::Usage::Window, this))
 {
     setSurfaceType(QWindow::OpenGLSurface);
 
@@ -17,7 +64,7 @@ GLWindow::~GLWindow()
 
 void GLWindow::initializeGL()
 {
-    if (!mContext->initializeOpenGLFunctions())
+    if (!mDevice->initialize({}))
         return;
 
     if (!mVao.isCreated())
@@ -25,17 +72,6 @@ void GLWindow::initializeGL()
 
     mInitialized = true;
 
-#if !defined(NDEBUG)
-    mDebugLogger = std::make_unique<QOpenGLDebugLogger>();
-    if (mDebugLogger->initialize()) {
-        mDebugLogger->disableMessages(QOpenGLDebugMessage::AnySource,
-            QOpenGLDebugMessage::AnyType,
-            QOpenGLDebugMessage::NotificationSeverity);
-        QObject::connect(mDebugLogger.get(), &QOpenGLDebugLogger::messageLogged,
-            this, &GLWindow::handleDebugMessage);
-        mDebugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
-    }
-#endif
     Q_EMIT initializingGpu();
 }
 
@@ -44,13 +80,10 @@ void GLWindow::releaseGL()
     if (!mInitialized)
         return;
 
-    mContext->makeCurrent(this);
+    mDevice->context().makeCurrent(this);
     Q_EMIT releasingGpu();
-#if !defined(NDEBUG)
-    mDebugLogger.reset();
-#endif
     mVao.destroy();
-    mContext->doneCurrent();
+    mDevice->shutdown();
     mInitialized = false;
 }
 
@@ -86,11 +119,11 @@ void GLWindow::update()
         return;
 
     const qreal dpr = devicePixelRatio();
-    mContext->glViewport(0, 0, width() * dpr, height() * dpr);
+    mDevice->gl().glViewport(0, 0, width() * dpr, height() * dpr);
     paintGL();
 
     const auto start = std::chrono::high_resolution_clock::now();
-    mContext->swapBuffers(this);
+    mDevice->context().swapBuffers(this);
     const auto end = std::chrono::high_resolution_clock::now();
 
     // limit refresh rate when swapping is not synchronizing
@@ -103,26 +136,20 @@ void GLWindow::update()
 
 bool GLWindow::makeCurrent()
 {
-    if (!mContext) {
-        mContext = new GLContext(this);
-        mContext->setFormat(format());
+    auto &context = mDevice->context();
+    if (!context.isValid()) {
+        context.setFormat(format());
         if (auto *shareContext = QOpenGLContext::globalShareContext())
-            mContext->setShareContext(shareContext);
-
-        if (mContext->create()) {
-            mContext->makeCurrent(this);
-            initializeGL();
-        }
+            context.setShareContext(shareContext);
+        if (!context.create())
+            return false;
     }
 
-    if (!initialized())
+    if (!context.makeCurrent(this))
         return false;
 
-    return mContext->makeCurrent(this);
-}
+    if (!initialized())
+        initializeGL();
 
-void GLWindow::handleDebugMessage(const QOpenGLDebugMessage &message)
-{
-    const auto text = message.message();
-    qDebug() << text;
+    return initialized();
 }

@@ -2,7 +2,9 @@
 #if defined(VULKAN_ENABLED)
 
 #include <KDGpu/gpu_core.h>
+#include "render/AdapterIdentity.h"
 #include "render/RenderWindow.h"
+#include <QList>
 #include <memory>
 
 struct ktxVulkanDeviceInfo;
@@ -19,6 +21,7 @@ class VKWindow : public RenderWindow
     Q_OBJECT
 public:
     static bool isSupported();
+    static QList<AdapterIdentity> getAdapterIdentities();
 
     explicit VKWindow(int syncInterval = 0);
     ~VKWindow() override;

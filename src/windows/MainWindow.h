@@ -2,6 +2,7 @@
 
 #include "EditActions.h"
 #include "Evaluation.h"
+#include "render/AdapterIdentity.h"
 #include "session/Item.h"
 #include <QMainWindow>
 
@@ -96,6 +97,8 @@ private:
 
     Ui::MainWindow *mUi{};
     RenderWindow *mSyncWindow{};
+    QWidget *mSyncWindowContainer{};
+    AdapterIdentity mSyncWindowAdapter;
     QToolButton *mMenuButton{};
     QSplitter *mSessionSplitter{};
     QToolBar *mFullScreenBar{};

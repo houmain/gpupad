@@ -5,7 +5,7 @@
 #if defined(_WIN32)
 
 struct D3DContext;
-class D3DRenderer;
+class D3DDevice;
 class D3DShareSync;
 struct ID3D12CommandAllocator;
 struct ID3D12Fence;
@@ -26,7 +26,7 @@ public:
     std::shared_ptr<void> beginTimeQuery(size_t index) override;
 
 private:
-    D3DRenderer &renderer();
+    D3DDevice &d3dDevice();
     void createCommandQueue();
 
     std::shared_ptr<D3DShareSync> mShareSync;

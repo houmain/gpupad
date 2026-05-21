@@ -9,6 +9,7 @@
 #include "SynchronizeLogic.h"
 #include "Theme.h"
 #include "WindowTitle.h"
+#include "render/vulkan/VKWindow.h"
 #include "render/opengl/GLWindow.h"
 #include "editors/EditorManager.h"
 #include "editors/IEditor.h"
@@ -50,14 +51,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     mUi->setupUi(this);
     setFont(qApp->font());
-
-#if defined(OPENGL_ENABLED)
-    mSyncWindow = new GLWindow(1);
-    auto container = QWidget::createWindowContainer(mSyncWindow);
-    container->setGeometry(0, 0, 1, 1);
-    container->setParent(this);
-#endif
-
     setAcceptDrops(true);
 
     auto icon = QIcon(":images/16x16/icon.png");
@@ -566,11 +559,34 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
 
 void MainWindow::waitForSync()
 {
-#if defined(OPENGL_ENABLED)
     const auto syncInterval = Singletons::settings().syncInterval();
-    for (auto i = 0; i < syncInterval; ++i)
-        mSyncWindow->update();
+    if (!syncInterval)
+        return;
+
+    if (mSyncWindow && mSyncWindowAdapter != Singletons::selectedAdapter()) {
+        delete mSyncWindowContainer;
+        mSyncWindowContainer = nullptr;
+        mSyncWindow = nullptr;
+        mSyncWindowAdapter = {};
+    }
+
+    if (!mSyncWindow) {
+#if defined(VULKAN_ENABLED)
+        mSyncWindow = new VKWindow(1);
+#elif defined(OPENGL_ENABLED)
+        mSyncWindow = new GLWindow(1);
 #endif
+        if (mSyncWindow) {
+            mSyncWindowAdapter = Singletons::selectedAdapter();
+            mSyncWindowContainer =
+                QWidget::createWindowContainer(mSyncWindow);
+            mSyncWindowContainer->setGeometry(0, 0, 1, 1);
+            mSyncWindowContainer->setParent(this);
+        }
+    }
+    if (mSyncWindow)
+        for (auto i = 0; i < syncInterval; ++i)
+            mSyncWindow->update();
 }
 
 void MainWindow::setToolbarIconVisible(QAction *action, bool visible)

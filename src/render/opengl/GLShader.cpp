@@ -1,5 +1,5 @@
 #include "GLShader.h"
-#include "GLRenderer.h"
+#include "GLDevice.h"
 
 namespace {
     void parseLog(const QString &log, MessagePtrSet &messages,

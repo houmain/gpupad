@@ -240,6 +240,12 @@ void EditorManager::forEachEditor(
         function(*dockEditor);
 }
 
+void EditorManager::recreateTextureEditorGpuWindows()
+{
+    for (auto *editor : std::as_const(mTextureEditors))
+        editor->recreateGpuWindow();
+}
+
 QList<QMetaObject::Connection> EditorManager::connectEditActions(
     const EditActions &actions)
 {
