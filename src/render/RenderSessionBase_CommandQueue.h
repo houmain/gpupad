@@ -413,15 +413,13 @@ void RenderSessionBase::finishCommandQueue(CommandQueue &commandQueue,
 
     editors.setAutoRaise(false);
 
-    for (auto &[itemId, texture] : commandQueue.textures) {
-        if (const auto fileItem = sessionModel.findItem<FileItem>(itemId))
-            if (auto editor =
-                    editors.openTextureEditor(fileItem->fileName, true)) {
-
-                editor->setPreviewTexture(shareSync, texture.getShareHandle(),
-                    texture.samples());
-            }
-    }
+    for (auto &[itemId, texture] : commandQueue.textures)
+        if (texture.deviceCopyModified())
+            if (const auto fileItem = sessionModel.findItem<FileItem>(itemId))
+                if (auto editor =
+                        editors.openTextureEditor(fileItem->fileName, true))
+                    editor->setPreviewTexture(shareSync,
+                        texture.getShareHandle(), texture.samples());
 
     for (auto &[itemId, buffer] : commandQueue.buffers)
         if (buffer.finishDownload())
