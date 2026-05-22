@@ -392,19 +392,20 @@ void VKWindow::swapBuffers()
 
     auto commandRecorder =
         shared.device().createCommandRecorder({ .queue = shared.queue() });
-    state.renderPass.emplace(commandRecorder.beginRenderPass({
-        .colorAttachments = {
-            {
-                .view =
-                    state.swapchainViews.at(state.currentSwapchainImageIndex),
-                .clearValue =
-                    KDGpu::ColorClearValue{ 0.0f, 0.0f, 0.0f, 1.0f },
-                .finalLayout = KDGpu::TextureLayout::PresentSrc,
+    state.renderPass.emplace(commandRecorder.beginRenderPass(
+        KDGpu::RenderPassCommandRecorderOptions{
+            .colorAttachments = {
+                {
+                    .view =
+                        state.swapchainViews.at(state.currentSwapchainImageIndex),
+                    .clearValue =
+                        KDGpu::ColorClearValue{ 0.0f, 0.0f, 0.0f, 1.0f },
+                    .finalLayout = KDGpu::TextureLayout::PresentSrc,
+                },
             },
-        },
-        .framebufferWidth = state.swapchainExtent.width,
-        .framebufferHeight = state.swapchainExtent.height,
-    }));
+            .framebufferWidth = state.swapchainExtent.width,
+            .framebufferHeight = state.swapchainExtent.height,
+        }));
     paintGpu();
     state.renderPass->end();
     state.renderPass.reset();

@@ -14,8 +14,12 @@ AdapterIdentity GLWindow::getAdapterIdentity()
 
     auto identity = AdapterIdentity{};
     if (auto renderer =
-            reinterpret_cast<const char *>(glGetString(GL_RENDERER)))
+            reinterpret_cast<const char *>(glGetString(GL_RENDERER))) {
         identity.name = QString::fromUtf8(renderer);
+        if (auto pos = identity.name.indexOf('/'); pos > 0)
+            identity.name.resize(pos);
+    }
+
     if (!glContext.hasExtension("GL_EXT_memory_object"))
         return identity;
 

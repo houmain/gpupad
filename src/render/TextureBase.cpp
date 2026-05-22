@@ -6,6 +6,18 @@
 #include "RenderSessionBase.h"
 #include <cmath>
 
+Texture::Format toPowerOfTwoByteFormat(Texture::Format format)
+{
+    switch (format) {
+    case Texture::Format::RGB8_UNorm: return Texture::Format::RGBA8_UNorm;
+    case Texture::Format::RGB8_SNorm: return Texture::Format::RGBA8_SNorm;
+    case Texture::Format::RGB8U:      return Texture::Format::RGBA8U;
+    case Texture::Format::RGB8I:      return Texture::Format::RGBA8I;
+    case Texture::Format::SRGB8:      return Texture::Format::SRGB8_Alpha8;
+    default:                          return format;
+    }
+}
+
 void transformClearColor(std::array<double, 4> &color,
     TextureSampleType sampleType)
 {
@@ -87,13 +99,13 @@ TextureBase::TextureBase(const Buffer &buffer, Texture::Format format,
 TextureBase::TextureBase(TextureData data, int samples)
     : mFlipVertically(data.flippedVertically())
     , mTarget(data.getTarget(samples))
-    , mFormat(data.format())
+    , mFormat(toPowerOfTwoByteFormat(data.format()))
     , mWidth(std::max(data.width(), 1))
     , mHeight(std::max(data.height(), 1))
     , mDepth(std::max(data.depth(), 1))
     , mLayers(std::max(data.layers(), 1))
     , mSamples(std::max(samples, 1))
-    , mData(std::move(data))
+    , mData(data.convert(mFormat, mWidth, mHeight, mDepth, mLayers))
     , mKind(getKind(mTarget, mFormat))
     , mSystemCopyModified(true)
 {
