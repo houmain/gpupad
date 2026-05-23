@@ -45,12 +45,12 @@ void VKShareSync::endUpdate()
     mMutex.unlock();
 }
 
-void VKShareSync::beginUsage()
+void VKShareSync::beginUsage(void *context)
 {
     mMutex.lock();
 }
 
-void VKShareSync::endUsage()
+void VKShareSync::endUsage(void *context)
 {
     mMutex.unlock();
 }

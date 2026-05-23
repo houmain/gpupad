@@ -31,31 +31,34 @@ public:
         MessagePtrSet &messages, ScriptEngine &scriptEngine);
 
 private:
-    void execute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
-    void executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine);
-    void executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine);
-    void executeClearTexture(MessagePtrSet &messages);
-    void executeCopyTexture(MessagePtrSet &messages);
-    void executeClearBuffer(MessagePtrSet &messages);
-    void executeCopyBuffer(MessagePtrSet &messages);
+    void execute(GLContext &gl, MessagePtrSet &messages,
+        ScriptEngine &scriptEngine);
+    void executeDraw(GLContext &gl, MessagePtrSet &messages,
+        ScriptEngine &scriptEngine);
+    void executeCompute(GLContext &gl, MessagePtrSet &messages,
+        ScriptEngine &scriptEngine);
+    void executeClearTexture(GLContext &gl, MessagePtrSet &messages);
+    void executeCopyTexture(GLContext &gl, MessagePtrSet &messages);
+    void executeClearBuffer(GLContext &gl, MessagePtrSet &messages);
+    void executeCopyBuffer(GLContext &gl, MessagePtrSet &messages);
     void executeSwapTextures(MessagePtrSet &messages);
     void executeSwapBuffers(MessagePtrSet &messages);
-    bool updateBindings(ScriptEngine &scriptEngine);
+    bool updateBindings(GLContext &gl, ScriptEngine &scriptEngine);
     MessageType applyBinding(const SpvReflectDescriptorBinding &desc,
-        uint32_t arrayElement, bool isVariableLengthArray,
+        uint32_t arrayElement, bool isVariableLengthArray, GLContext &gl,
         ScriptEngine &scriptEngine);
-    void applyUniformBindings(const GLProgram::Uniform &uniform,
+    void applyUniformBindings(const GLProgram::Uniform &uniform, GLContext &gl,
         ScriptEngine &scriptEngine);
     void applyUniformBinding(const GLProgram::Uniform &uniform,
-        const UniformBinding &bindings, int offset, int count,
+        const UniformBinding &bindings, int offset, int count, GLContext &gl,
         ScriptEngine &scriptEngine);
     bool applySamplerBinding(const SpvReflectDescriptorBinding &desc,
-        const SamplerBinding &binding);
+        GLContext &gl, const SamplerBinding &binding);
     bool applyImageBinding(const SpvReflectDescriptorBinding &desc,
-        const ImageBinding &binding);
-    void selectSubroutines();
-    bool bindVertexStream();
-    void unbindVertexStream();
+        GLContext &gl, const ImageBinding &binding);
+    void selectSubroutines(GLContext &gl);
+    bool bindVertexStream(GLContext &gl);
+    void unbindVertexStream(GLContext &gl);
     GLenum getIndexType() const;
     int getMaxElementCount(ScriptEngine &scriptEngine);
 

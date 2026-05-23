@@ -100,8 +100,7 @@ void GLCall::setIndexBuffer(GLBuffer *indices, const Block &block)
             mUsedItems += field->id;
         }
     if (!getIndexType()) {
-        mMessages.insert(block.id,
-            MessageType::InvalidIndexType,
+        mMessages.insert(block.id, MessageType::InvalidIndexType,
             QStringLiteral("%1 bytes").arg(mIndexSize));
         return;
     }
@@ -146,8 +145,7 @@ void GLCall::setIndirectBuffer(GLBuffer *commands, const Block &block)
     const auto expectedStride =
         static_cast<int>((mKind.compute ? 3 : 4) * sizeof(uint32_t));
     if (mIndirectStride != expectedStride) {
-        mMessages.insert(block.id,
-            MessageType::InvalidIndirectStride,
+        mMessages.insert(block.id, MessageType::InvalidIndirectStride,
             QStringLiteral("%1/%2 bytes")
                 .arg(mIndirectStride)
                 .arg(expectedStride));
@@ -174,18 +172,19 @@ void GLCall::execute(GLContext &context, Bindings &&bindings,
     MessagePtrSet &messages, ScriptEngine &scriptEngine)
 {
     if (mProgram) {
-        if (validateShaderTypes() && mProgram->bind()) {
+        if (validateShaderTypes() && mProgram->bind(context)) {
             setBindings(std::move(bindings));
-            if (updateBindings(scriptEngine))
-                execute(messages, scriptEngine);
-            mProgram->unbind();
+            if (updateBindings(context, scriptEngine))
+                execute(context, messages, scriptEngine);
+            mProgram->unbind(context);
         }
     } else {
-        execute(messages, scriptEngine);
+        execute(context, messages, scriptEngine);
     }
 }
 
-void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
+void GLCall::execute(GLContext &gl, MessagePtrSet &messages,
+    ScriptEngine &scriptEngine)
 {
     if (mKind.draw || mKind.compute) {
         if (!mProgram) {
@@ -208,8 +207,7 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     }
 
     if (mKind.indirect && !mIndirectBuffer) {
-        messages.insert(mCall.id,
-            MessageType::IndirectBufferNotAssigned);
+        messages.insert(mCall.id, MessageType::IndirectBufferNotAssigned);
         return;
     }
 
@@ -220,32 +218,31 @@ void GLCall::execute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     case Call::CallType::DrawIndexedIndirect:
     case Call::CallType::DrawMeshTasks:
     case Call::CallType::DrawMeshTasksIndirect:
-        executeDraw(messages, scriptEngine);
+        executeDraw(gl, messages, scriptEngine);
         break;
     case Call::CallType::Compute:
     case Call::CallType::ComputeIndirect:
-        executeCompute(messages, scriptEngine);
+        executeCompute(gl, messages, scriptEngine);
         break;
     case Call::CallType::TraceRays:
         messages.insert(mCall.id, MessageType::RayTracingNotAvailable);
         break;
-    case Call::CallType::ClearTexture: executeClearTexture(messages); break;
-    case Call::CallType::CopyTexture:  executeCopyTexture(messages); break;
-    case Call::CallType::ClearBuffer:  executeClearBuffer(messages); break;
-    case Call::CallType::CopyBuffer:   executeCopyBuffer(messages); break;
+    case Call::CallType::ClearTexture: executeClearTexture(gl, messages); break;
+    case Call::CallType::CopyTexture:  executeCopyTexture(gl, messages); break;
+    case Call::CallType::ClearBuffer:  executeClearBuffer(gl, messages); break;
+    case Call::CallType::CopyBuffer:   executeCopyBuffer(gl, messages); break;
     case Call::CallType::SwapTextures: executeSwapTextures(messages); break;
     case Call::CallType::SwapBuffers:  executeSwapBuffers(messages); break;
     }
 
-    auto &gl = GLContext::currentContext();
     gl.glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
     if (auto errorMessage = getFirstGLError(); !errorMessage.isEmpty())
-        messages.insert(mCall.id, MessageType::CallFailed,
-            errorMessage);
+        messages.insert(mCall.id, MessageType::CallFailed, errorMessage);
 }
 
-void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
+void GLCall::executeDraw(GLContext &gl, MessagePtrSet &messages,
+    ScriptEngine &scriptEngine)
 {
     const auto first = scriptEngine.evaluateUInt(mCall.first, mCall.id);
     const auto maxElementCount = getMaxElementCount(scriptEngine);
@@ -279,20 +276,18 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         return;
     }
 
-    if (!bindVertexStream())
+    if (!bindVertexStream(gl))
         return;
 
-    selectSubroutines();
+    selectSubroutines(gl);
 
-    mTarget->bind();
+    mTarget->bind(gl);
 
     if (mIndexBuffer)
-        mIndexBuffer->bindReadOnly(GL_ELEMENT_ARRAY_BUFFER);
+        mIndexBuffer->bindReadOnly(gl, GL_ELEMENT_ARRAY_BUFFER);
 
     if (mIndirectBuffer)
-        mIndirectBuffer->bindReadOnly(GL_DRAW_INDIRECT_BUFFER);
-
-    auto &gl = GLContext::currentContext();
+        mIndirectBuffer->bindReadOnly(gl, GL_DRAW_INDIRECT_BUFFER);
 
     if (mCall.primitiveType == Call::PrimitiveType::Patches)
         gl.glPatchParameteri(GL_PATCH_VERTICES,
@@ -349,8 +344,7 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
             glDrawMeshTasksNV(0,
                 scriptEngine.evaluateUInt(mCall.workGroupsX, mCall.id));
         } else {
-            messages.insert(mCall.id,
-                MessageType::UnsupportedShaderType);
+            messages.insert(mCall.id, MessageType::UnsupportedShaderType);
         }
     } else if (mCall.callType == Call::CallType::DrawMeshTasksIndirect) {
         static auto glDrawMeshTasksIndirectNV =
@@ -365,26 +359,25 @@ void GLCall::executeDraw(MessagePtrSet &messages, ScriptEngine &scriptEngine)
         } else if (drawCount != 1 && glMultiDrawMeshTasksIndirectNV) {
             glMultiDrawMeshTasksIndirectNV(offset, drawCount, mIndirectStride);
         } else {
-            messages.insert(mCall.id,
-                MessageType::UnsupportedShaderType);
+            messages.insert(mCall.id, MessageType::UnsupportedShaderType);
         }
     }
 
-    unbindVertexStream();
+    unbindVertexStream(gl);
 
     if (mIndirectBuffer)
-        mIndirectBuffer->unbind(GL_DRAW_INDIRECT_BUFFER);
+        mIndirectBuffer->unbind(gl, GL_DRAW_INDIRECT_BUFFER);
 
     if (mIndexBuffer)
-        mIndexBuffer->unbind(GL_ELEMENT_ARRAY_BUFFER);
+        mIndexBuffer->unbind(gl, GL_ELEMENT_ARRAY_BUFFER);
 }
 
-void GLCall::executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
+void GLCall::executeCompute(GLContext &gl, MessagePtrSet &messages,
+    ScriptEngine &scriptEngine)
 {
     if (mIndirectBuffer)
-        mIndirectBuffer->bindReadOnly(GL_DISPATCH_INDIRECT_BUFFER);
+        mIndirectBuffer->bindReadOnly(gl, GL_DISPATCH_INDIRECT_BUFFER);
 
-    auto &gl = GLContext::currentContext();
     if (mCall.callType == Call::CallType::Compute) {
         gl.glDispatchCompute(
             scriptEngine.evaluateInt(mCall.workGroupsX, mCall.id),
@@ -397,10 +390,10 @@ void GLCall::executeCompute(MessagePtrSet &messages, ScriptEngine &scriptEngine)
     }
 
     if (mIndirectBuffer)
-        mIndirectBuffer->unbind(GL_DISPATCH_INDIRECT_BUFFER);
+        mIndirectBuffer->unbind(gl, GL_DISPATCH_INDIRECT_BUFFER);
 }
 
-void GLCall::executeClearTexture(MessagePtrSet &messages)
+void GLCall::executeClearTexture(GLContext &gl, MessagePtrSet &messages)
 {
     if (!mTexture) {
         messages.insert(mCall.id, MessageType::TextureNotAssigned);
@@ -423,42 +416,42 @@ void GLCall::executeClearTexture(MessagePtrSet &messages)
         color[2] = srgbToLinear(color[2]);
     }
 
-    if (!mTexture->clear(color, mCall.clearDepth, mCall.clearStencil))
+    if (!mTexture->clear(gl, color, mCall.clearDepth, mCall.clearStencil))
         messages.insert(mCall.id, MessageType::ClearingTextureFailed);
 
     mUsedItems += mTexture->usedItems();
 }
 
-void GLCall::executeCopyTexture(MessagePtrSet &messages)
+void GLCall::executeCopyTexture(GLContext &gl, MessagePtrSet &messages)
 {
     if (!mTexture || !mFromTexture) {
         messages.insert(mCall.id, MessageType::TextureNotAssigned);
         return;
     }
-    if (!mTexture->copy(*mFromTexture))
+    if (!mTexture->copy(gl, *mFromTexture))
         messages.insert(mCall.id, MessageType::CopyingTextureFailed);
 
     mUsedItems += mTexture->usedItems();
     mUsedItems += mFromTexture->usedItems();
 }
 
-void GLCall::executeClearBuffer(MessagePtrSet &messages)
+void GLCall::executeClearBuffer(GLContext &gl, MessagePtrSet &messages)
 {
     if (!mBuffer) {
         messages.insert(mCall.id, MessageType::BufferNotAssigned);
         return;
     }
-    mBuffer->clear();
+    mBuffer->clear(gl);
     mUsedItems += mBuffer->usedItems();
 }
 
-void GLCall::executeCopyBuffer(MessagePtrSet &messages)
+void GLCall::executeCopyBuffer(GLContext &gl, MessagePtrSet &messages)
 {
     if (!mBuffer || !mFromBuffer) {
         messages.insert(mCall.id, MessageType::BufferNotAssigned);
         return;
     }
-    mBuffer->copy(*mFromBuffer);
+    mBuffer->copy(gl, *mFromBuffer);
     mUsedItems += mBuffer->usedItems();
     mUsedItems += mFromBuffer->usedItems();
 }
@@ -495,14 +488,13 @@ bool GLCall::validateShaderTypes()
         return false;
     for (const auto &shader : mProgram->shaders())
         if (!callTypeSupportsShaderType(mCall.callType, shader.type())) {
-            mMessages.insert(mCall.id,
-                MessageType::InvalidShaderTypeForCall);
+            mMessages.insert(mCall.id, MessageType::InvalidShaderTypeForCall);
             return false;
         }
     return true;
 }
 
-bool GLCall::updateBindings(ScriptEngine &scriptEngine)
+bool GLCall::updateBindings(GLContext &gl, ScriptEngine &scriptEngine)
 {
     if (!mProgram)
         return false;
@@ -519,7 +511,7 @@ bool GLCall::updateBindings(ScriptEngine &scriptEngine)
             [&](const SpvReflectDescriptorBinding &desc, uint32_t arrayElement,
                 bool *variableLengthArrayDone) {
                 const auto message = applyBinding(desc, arrayElement,
-                    (variableLengthArrayDone ? true : false), scriptEngine);
+                    (variableLengthArrayDone ? true : false), gl, scriptEngine);
 
                 const auto failed = (message != MessageType::None);
                 if (variableLengthArrayDone && failed) {
@@ -540,15 +532,15 @@ bool GLCall::updateBindings(ScriptEngine &scriptEngine)
     }
 
     for (const auto &uniform : mProgram->uniforms())
-        applyUniformBindings(uniform, scriptEngine);
+        applyUniformBindings(uniform, gl, scriptEngine);
 
-    selectSubroutines();
+    selectSubroutines(gl);
 
     return canRender;
 }
 
 MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
-    uint32_t arrayElement, bool isVariableLengthArray,
+    uint32_t arrayElement, bool isVariableLengthArray, GLContext &gl,
     ScriptEngine &scriptEngine)
 {
     switch (desc.descriptor_type) {
@@ -567,7 +559,8 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
 
             const auto [target, bindingPoint] =
                 mProgram->getDescriptorBindingPoint(desc, arrayElement);
-            buffer.bindIndexedRange(target, bindingPoint, offset, size, true);
+            buffer.bindIndexedRange(gl, target, bindingPoint, offset, size,
+                true);
         } else {
             auto &buffer = mProgram->getDynamicUniformBuffer(
                 desc.type_description->type_name, desc.block.size);
@@ -585,7 +578,7 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
 
             const auto [target, bindingPoint] =
                 mProgram->getDescriptorBindingPoint(desc);
-            buffer.bindIndexedRange(target, bindingPoint, 0, buffer.size(),
+            buffer.bindIndexedRange(gl, target, bindingPoint, 0, buffer.size(),
                 true);
         }
         break;
@@ -596,7 +589,6 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
         auto offset = uint32_t{};
         auto size = uint32_t{};
         if (name == PrintfBase::bufferBindingName()) {
-            auto &gl = GLContext::currentContext();
             buffer = &mProgram->printf().getInitializedBuffer(gl);
         } else if (const auto bufferBinding = find(mBindings.buffers, name)) {
             buffer = static_cast<GLBuffer *>(bufferBinding->buffer);
@@ -613,7 +605,8 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
 
         const auto [target, bindingPoint] =
             mProgram->getDescriptorBindingPoint(desc, arrayElement);
-        buffer->bindIndexedRange(target, bindingPoint, offset, size, readonly);
+        buffer->bindIndexedRange(gl, target, bindingPoint, offset, size,
+            readonly);
     } break;
 
     case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
@@ -630,7 +623,7 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
             return MessageType::TextureNotAssigned;
         mUsedItems += samplerBinding->texture->itemId();
 
-        if (!applySamplerBinding(desc, *samplerBinding))
+        if (!applySamplerBinding(desc, gl, *samplerBinding))
             return MessageType::TextureNotAssigned;
         break;
     }
@@ -645,7 +638,7 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
             return MessageType::TextureNotAssigned;
         mUsedItems += imageBinding->texture->itemId();
 
-        if (!applyImageBinding(desc, *imageBinding))
+        if (!applyImageBinding(desc, gl, *imageBinding))
             return MessageType::TextureNotAssigned;
         break;
     }
@@ -661,10 +654,10 @@ MessageType GLCall::applyBinding(const SpvReflectDescriptorBinding &desc,
 }
 
 void GLCall::applyUniformBindings(const GLProgram::Uniform &uniform,
-    ScriptEngine &scriptEngine)
+    GLContext &gl, ScriptEngine &scriptEngine)
 {
     if (const auto binding = find(mBindings.uniforms, uniform.name)) {
-        applyUniformBinding(uniform, *binding, -1, uniform.arraySize,
+        applyUniformBinding(uniform, *binding, -1, uniform.arraySize, gl,
             scriptEngine);
         mUsedItems += binding->bindingItemId;
         return;
@@ -680,7 +673,7 @@ void GLCall::applyUniformBindings(const GLProgram::Uniform &uniform,
             const auto [offset, count] = getValuesOffsetCount(uniformIndices,
                 bindingIndices, uniform.arraySize);
             if (count) {
-                applyUniformBinding(uniform, binding, offset, count,
+                applyUniformBinding(uniform, binding, offset, count, gl,
                     scriptEngine);
                 mUsedItems += binding.bindingItemId;
             }
@@ -692,10 +685,9 @@ void GLCall::applyUniformBindings(const GLProgram::Uniform &uniform,
 }
 
 void GLCall::applyUniformBinding(const GLProgram::Uniform &uniform,
-    const UniformBinding &binding, int offset, int count,
+    const UniformBinding &binding, int offset, int count, GLContext &gl,
     ScriptEngine &scriptEngine)
 {
-    auto &gl = GLContext::currentContext();
     const auto itemId = binding.bindingItemId;
     switch (uniform.dataType) {
 #define ADD(TYPE, DATATYPE, COUNT, FUNCTION)                                  \
@@ -758,7 +750,7 @@ void GLCall::applyUniformBinding(const GLProgram::Uniform &uniform,
 }
 
 bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
-    const SamplerBinding &binding)
+    GLContext &gl, const SamplerBinding &binding)
 {
     Q_ASSERT(static_cast<GLint>(desc.binding) >= 0);
     Q_ASSERT(binding.texture);
@@ -770,10 +762,9 @@ bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
 
     auto &texture = static_cast<GLTexture &>(*binding.texture);
     const auto target = texture.target();
-    auto &gl = GLContext::currentContext();
     gl.glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + desc.binding));
     texture.updateMipmaps(gl);
-    gl.glBindTexture(target, texture.getReadOnlyTextureId());
+    gl.glBindTexture(target, texture.getReadOnlyTextureId(gl));
     const auto location = mProgram->getDescriptorBindingPoint(desc).index;
     gl.glUniform1i(location, desc.binding);
 
@@ -820,15 +811,14 @@ bool GLCall::applySamplerBinding(const SpvReflectDescriptorBinding &desc,
 }
 
 bool GLCall::applyImageBinding(const SpvReflectDescriptorBinding &desc,
-    const ImageBinding &binding)
+    GLContext &gl, const ImageBinding &binding)
 {
     Q_ASSERT(static_cast<GLint>(desc.binding) >= 0);
     Q_ASSERT(binding.texture);
 
-    auto &gl = GLContext::currentContext();
     auto &texture = static_cast<GLTexture &>(*binding.texture);
     const auto target = texture.target();
-    const auto textureId = texture.getReadWriteTextureId();
+    const auto textureId = texture.getReadWriteTextureId(gl);
     const auto format = (binding.format
             ? static_cast<GLenum>(binding.format)
             : static_cast<GLenum>(texture.format()));
@@ -852,9 +842,8 @@ bool GLCall::applyImageBinding(const SpvReflectDescriptorBinding &desc,
     return true;
 }
 
-void GLCall::selectSubroutines()
+void GLCall::selectSubroutines(GLContext &gl)
 {
-    auto &gl = GLContext::currentContext();
     for (const auto &[stage, subroutines] : mProgram->stageSubroutines()) {
         auto subroutineIndices = std::vector<GLuint>();
         for (const auto &subroutine : subroutines) {
@@ -876,8 +865,8 @@ void GLCall::selectSubroutines()
                         MessageType::InvalidSubroutine, binding->subroutine);
                 }
             } else {
-                mMessages.insert(mCall.id,
-                    MessageType::SubroutineNotSet, subroutine.name);
+                mMessages.insert(mCall.id, MessageType::SubroutineNotSet,
+                    subroutine.name);
             }
             subroutineIndices.push_back(index);
         }
@@ -888,12 +877,11 @@ void GLCall::selectSubroutines()
     }
 }
 
-bool GLCall::bindVertexStream()
+bool GLCall::bindVertexStream(GLContext &gl)
 {
     if (mVertexStream)
         mUsedItems += mVertexStream->itemId();
 
-    auto &gl = GLContext::currentContext();
     auto canRender = true;
     for (const auto *input : mProgram->reflection().inputVariables()) {
         if (isBuiltIn(*input))
@@ -906,8 +894,7 @@ bool GLCall::bindVertexStream()
             mUsedItems += attributePtr->usedItems;
 
         if (!attributePtr || !attributePtr->buffer) {
-            mMessages.insert(mCall.id,
-                MessageType::AttributeNotSet, name);
+            mMessages.insert(mCall.id, MessageType::AttributeNotSet, name);
             canRender = false;
             continue;
         }
@@ -917,7 +904,7 @@ bool GLCall::bindVertexStream()
 
         const auto &attribute = *attributePtr;
         auto &buffer = *attribute.buffer;
-        buffer.bindReadOnly(GL_ARRAY_BUFFER);
+        buffer.bindReadOnly(gl, GL_ARRAY_BUFFER);
 
         switch (attribute.type) {
         case GL_BYTE:
@@ -955,14 +942,13 @@ bool GLCall::bindVertexStream()
             static_cast<GLuint>(attribute.divisor));
 
         gl.glEnableVertexAttribArray(location);
-        attribute.buffer->unbind(GL_ARRAY_BUFFER);
+        attribute.buffer->unbind(gl, GL_ARRAY_BUFFER);
     }
     return canRender;
 }
 
-void GLCall::unbindVertexStream()
+void GLCall::unbindVertexStream(GLContext &gl)
 {
-    auto &gl = GLContext::currentContext();
     for (const auto *input : mProgram->reflection().inputVariables())
         if (!isBuiltIn(*input))
             gl.glDisableVertexAttribArray(input->location);

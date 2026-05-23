@@ -84,11 +84,6 @@ GLContext &GLDevice::context()
     return *mContext;
 }
 
-QOpenGLFunctions_4_5_Core &GLDevice::gl()
-{
-    return context();
-}
-
 void GLDevice::createContext(QObject *parent)
 {
     mContext = std::make_unique<GLContext>(parent);

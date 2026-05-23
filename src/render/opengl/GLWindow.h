@@ -16,7 +16,7 @@ public:
     ~GLWindow() override;
 
     bool initialized() const override { return mInitialized; }
-    QOpenGLFunctions_4_5_Core &gl() { return mDevice->gl(); }
+    GLContext &context() { return mDevice->context(); }
 
     void update() override;
     bool makeCurrent();

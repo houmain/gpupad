@@ -58,13 +58,13 @@ bool GLProgram::operator==(const GLProgram &rhs) const
         && !shaderSessionSettingsDiffer(mSession, rhs.mSession));
 }
 
-bool GLProgram::validate()
+bool GLProgram::validate(GLContext &gl)
 {
     auto printf = RemoveShaderPrintf{};
-    if (!compileShaders(printf) || !linkProgram())
+    if (!compileShaders(gl, printf) || !linkProgram(gl))
         return false;
-    generateReflectionFromProgram(mProgramObject, true);
-    enumerateSubroutines(mProgramObject);
+    generateReflectionFromProgram(gl, mProgramObject, true);
+    enumerateSubroutines(gl, mProgramObject);
     return true;
 }
 
@@ -75,20 +75,20 @@ bool GLProgram::link(GLContext &context)
     if (mFailed)
         return false;
 
-    if (!compileShaders(mPrintf) || !linkProgram()) {
+    if (!compileShaders(context, mPrintf) || !linkProgram(context)) {
         mFailed = true;
         return false;
     }
-    generateReflectionFromProgram(mProgramObject, false);
-    enumerateSubroutines(mProgramObject);
+    generateReflectionFromProgram(context, mProgramObject, false);
+    enumerateSubroutines(context, mProgramObject);
     return true;
 }
 
-bool GLProgram::compileShaders(PrintfBase &printf)
+bool GLProgram::compileShaders(GLContext &gl, PrintfBase &printf)
 {
     if (mSession.shaderCompiler == Session::ShaderCompiler::Driver) {
         for (auto &shader : mShaders)
-            if (!shader.compile(printf))
+            if (!shader.compile(gl, printf))
                 return false;
     } else {
         auto inputs = std::vector<ShaderCompiler::Input>();
@@ -98,26 +98,24 @@ bool GLProgram::compileShaders(PrintfBase &printf)
         mStageSpirv =
             ShaderCompiler::compileSpirv(mSession, inputs, mItemId, mMessages);
         for (auto &shader : mShaders)
-            if (!shader.specialize(mStageSpirv[shader.type()]))
+            if (!shader.specialize(gl, mStageSpirv[shader.type()]))
                 return false;
     }
     return true;
 }
 
-bool GLProgram::linkProgram()
+bool GLProgram::linkProgram(GLContext &gl)
 {
     if (mShaders.empty()) {
         mMessages.insert(mItemId, MessageType::ProgramHasNoShader);
         return false;
     }
 
-    auto freeProgram = [](GLuint program) {
-        auto &gl = GLContext::currentContext();
+    auto freeProgram = [](GLContext &gl, GLuint program) {
         gl.glDeleteProgram(program);
     };
 
-    auto &gl = GLContext::currentContext();
-    auto program = GLObject(gl.glCreateProgram(), freeProgram);
+    auto program = GLObject(&gl, gl.glCreateProgram(), freeProgram);
     for (auto &shader : mShaders)
         gl.glAttachShader(program, shader.shaderObject());
 
@@ -141,9 +139,8 @@ bool GLProgram::linkProgram()
     return true;
 }
 
-bool GLProgram::bind()
+bool GLProgram::bind(GLContext &gl)
 {
-    auto &gl = GLContext::currentContext();
     if (!link(gl))
         return false;
 
@@ -151,9 +148,8 @@ bool GLProgram::bind()
     return true;
 }
 
-void GLProgram::unbind()
+void GLProgram::unbind(GLContext &gl)
 {
-    auto &gl = GLContext::currentContext();
     gl.glUseProgram(GL_NONE);
 }
 
@@ -172,9 +168,8 @@ MessagePtrSet GLProgram::resetMessages()
     return std::exchange(mMessages, {});
 }
 
-QString GLProgram::tryGetProgramBinary()
+QString GLProgram::tryGetProgramBinary(GLContext &gl)
 {
-    auto &gl = GLContext::currentContext();
     if (!link(gl))
         return {};
 

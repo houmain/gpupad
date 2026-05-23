@@ -8,8 +8,8 @@ namespace {
     using TF = Texture::Format;
     using TT = Texture::Target;
 
-    GLuint createFramebuffer(QOpenGLFunctions_4_5_Core &gl, GLenum target,
-        GLuint textureId, GLenum attachment)
+    GLuint createFramebuffer(GLContext &gl, GLenum target, GLuint textureId,
+        GLenum attachment)
     {
         auto fbo = GLuint{};
         gl.glGenFramebuffers(1, &fbo);
@@ -18,7 +18,7 @@ namespace {
         return fbo;
     }
 
-    bool resolveTexture(QOpenGLFunctions_4_5_Core &gl, GLuint sourceTextureId,
+    bool resolveTexture(GLContext &gl, GLuint sourceTextureId,
         GLuint destTextureId, int width, int height, Texture::Format format)
     {
         auto blitMask = GLbitfield{};
@@ -63,9 +63,8 @@ namespace {
         return (glGetError() == GL_NO_ERROR);
     }
 
-    bool uploadMultisample(QOpenGLFunctions_4_5_Core &gl,
-        const TextureData &data, Texture::Target target, int samples,
-        GLuint textureId)
+    bool uploadMultisample(GLContext &gl, const TextureData &data,
+        Texture::Target target, int samples, GLuint textureId)
     {
         gl.glBindTexture(target, textureId);
         if (target == TT::Target2DMultisample) {
@@ -90,8 +89,8 @@ namespace {
         return false;
     }
 
-    bool download(QOpenGLFunctions_4_5_Core &gl, TextureData &data,
-        Texture::Target target, GLuint textureId)
+    bool download(GLContext &gl, TextureData &data, Texture::Target target,
+        GLuint textureId)
     {
         gl.glBindTexture(target, textureId);
         for (auto level = 0; level < data.levels(); ++level) {
@@ -112,7 +111,7 @@ namespace {
         return (glGetError() == GL_NO_ERROR);
     }
 
-    bool downloadCubemap(QOpenGLFunctions_4_5_Core &gl, TextureData &data,
+    bool downloadCubemap(GLContext &gl, TextureData &data,
         Texture::Target target, GLuint textureId)
     {
         // TODO: download
@@ -120,7 +119,7 @@ namespace {
         return true;
     }
 
-    bool downloadMultisample(QOpenGLFunctions_4_5_Core &gl, TextureData &data,
+    bool downloadMultisample(GLContext &gl, TextureData &data,
         Texture::Target target, GLuint textureId)
     {
         if (target == TT::Target2DMultisample) {
@@ -131,8 +130,7 @@ namespace {
             if (!data.uploadGL(&singleSampleTextureId)
                 || !resolveTexture(gl, textureId, singleSampleTextureId,
                     data.width(), data.height(), data.format())
-                || !download(gl, data, TT::Target2D,
-                    singleSampleTextureId))
+                || !download(gl, data, TT::Target2D, singleSampleTextureId))
                 return false;
 
             return true;
@@ -144,16 +142,15 @@ namespace {
         return false;
     }
 
-    GLObject createFramebuffer(QOpenGLFunctions_4_5_Core &gl,
-        const TextureKind &kind, GLuint textureId, int level)
+    GLObject createFramebuffer(GLContext &gl, const TextureKind &kind,
+        GLuint textureId, int level)
     {
         const auto createFBO = [&]() {
             auto fbo = GLuint{};
             gl.glGenFramebuffers(1, &fbo);
             return fbo;
         };
-        const auto freeFBO = [](GLuint fbo) {
-            auto &gl = GLContext::currentContext();
+        const auto freeFBO = [](GLContext &gl, GLuint fbo) {
             gl.glDeleteFramebuffers(1, &fbo);
         };
 
@@ -165,7 +162,7 @@ namespace {
         else if (kind.stencil)
             attachment = GL_STENCIL_ATTACHMENT;
 
-        auto fbo = GLObject(createFBO(), freeFBO);
+        auto fbo = GLObject(&gl, createFBO(), freeFBO);
         gl.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
         gl.glFramebufferTexture(GL_FRAMEBUFFER, attachment, textureId, level);
         auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -174,7 +171,7 @@ namespace {
         return fbo;
     }
 
-    bool copyTexture(QOpenGLFunctions_4_5_Core &gl, const TextureKind &kind,
+    bool copyTexture(GLContext &gl, const TextureKind &kind,
         GLuint sourceTextureId, GLuint destTextureId, int width, int height,
         int level)
     {
@@ -207,7 +204,7 @@ bool GLTexture::operator==(const GLTexture &rhs) const
         && mTextureBuffer == rhs.mTextureBuffer);
 }
 
-bool GLTexture::upload(QOpenGLFunctions_4_5_Core &gl, const TextureData &data,
+bool GLTexture::upload(GLContext &gl, const TextureData &data,
     Texture::Target target, int samples, GLuint *textureId)
 {
     Q_ASSERT(target && textureId);
@@ -236,7 +233,7 @@ bool GLTexture::upload(QOpenGLFunctions_4_5_Core &gl, const TextureData &data,
     return true;
 }
 
-bool GLTexture::download(QOpenGLFunctions_4_5_Core &gl, TextureData &data,
+bool GLTexture::download(GLContext &gl, TextureData &data,
     Texture::Target target, GLuint textureId)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
@@ -262,28 +259,28 @@ GLTexture::GLTexture(const Buffer &buffer, GLBuffer *textureBuffer,
 {
 }
 
-GLuint GLTexture::getReadOnlyTextureId()
+GLuint GLTexture::getReadOnlyTextureId(GLContext &gl)
 {
-    reload(false);
-    createTexture();
-    upload();
+    reload(gl, false);
+    createTexture(gl);
+    upload(gl);
     return mTextureObject;
 }
 
-GLuint GLTexture::getReadWriteTextureId()
+GLuint GLTexture::getReadWriteTextureId(GLContext &gl)
 {
-    reload(true);
-    createTexture();
-    upload();
+    reload(gl, true);
+    createTexture(gl);
+    upload(gl);
     mDeviceCopyModified = true;
     mMipmapsInvalidated = true;
     return mTextureObject;
 }
 
-bool GLTexture::clear(std::array<double, 4> color, double depth, int stencil)
+bool GLTexture::clear(GLContext &gl, std::array<double, 4> color, double depth,
+    int stencil)
 {
-    auto &gl = GLContext::currentContext();
-    auto fbo = createFramebuffer(gl, mKind, getReadWriteTextureId(), 0);
+    auto fbo = createFramebuffer(gl, mKind, getReadWriteTextureId(gl), 0);
     if (!fbo)
         return false;
 
@@ -347,21 +344,21 @@ bool GLTexture::clear(std::array<double, 4> color, double depth, int stencil)
     return succeeded;
 }
 
-bool GLTexture::copy(GLTexture &source)
+bool GLTexture::copy(GLContext &gl, GLTexture &source)
 {
     const auto level = 0;
-    auto &gl = GLContext::currentContext();
-    return copyTexture(gl, mKind, source.getReadOnlyTextureId(),
-        getReadWriteTextureId(), mData.getLevelWidth(level),
+    return copyTexture(gl, mKind, source.getReadOnlyTextureId(gl),
+        getReadWriteTextureId(gl), mData.getLevelWidth(level),
         mData.getLevelHeight(level), level);
 }
 
 ShareHandle GLTexture::getShareHandle()
 {
+    Q_ASSERT(mTextureObject);
     return {
         .type = ShareHandleType::OPENGL_TEXTURE_ID,
-        .handle = reinterpret_cast<void *>(
-            static_cast<uintptr_t>(getReadOnlyTextureId())),
+        .handle =
+            reinterpret_cast<void *>(static_cast<uintptr_t>(mTextureObject)),
     };
 }
 
@@ -380,7 +377,7 @@ bool GLTexture::updateMipmaps(GLContext &gl)
 {
     if (mMipmapsInvalidated) {
         if (levels() > 1) {
-            gl.glBindTexture(target(), getReadWriteTextureId());
+            gl.glBindTexture(target(), getReadWriteTextureId(gl));
             gl.glGenerateMipmap(target());
             Q_ASSERT(glGetError() == GL_NO_ERROR);
         }
@@ -389,11 +386,11 @@ bool GLTexture::updateMipmaps(GLContext &gl)
     return true;
 }
 
-void GLTexture::reload(bool forWriting)
+void GLTexture::reload(GLContext &gl, bool forWriting)
 {
     if (mTextureBuffer) {
         if (forWriting)
-            mTextureBuffer->getReadWriteBufferId();
+            mTextureBuffer->getReadWriteBufferId(gl);
         return;
     }
 
@@ -403,12 +400,11 @@ void GLTexture::reload(bool forWriting)
     mTarget = mData.getTarget(mSamples);
 }
 
-void GLTexture::createTexture()
+void GLTexture::createTexture(GLContext &gl)
 {
     if (mTextureObject)
         return;
 
-    auto &gl = GLContext::currentContext();
     const auto createTexture = [&]() {
         auto texture = GLuint{};
         gl.glGenTextures(1, &texture);
@@ -416,25 +412,23 @@ void GLTexture::createTexture()
         if (mTextureBuffer) {
             gl.glBindTexture(mTarget, texture);
             gl.glTexBuffer(mTarget, mFormat,
-                mTextureBuffer->getReadWriteBufferId());
+                mTextureBuffer->getReadWriteBufferId(gl));
             gl.glBindTexture(mTarget, 0);
         }
         return texture;
     };
-    const auto freeTexture = [](GLuint texture) {
-        auto &gl = GLContext::currentContext();
+    const auto freeTexture = [](GLContext &gl, GLuint texture) {
         gl.glDeleteTextures(1, &texture);
     };
 
-    mTextureObject = GLObject(createTexture(), freeTexture);
+    mTextureObject = GLObject(&gl, createTexture(), freeTexture);
 }
 
-void GLTexture::upload()
+void GLTexture::upload(GLContext &gl)
 {
     if (!mSystemCopyModified)
         return;
 
-    auto &gl = GLContext::currentContext();
     auto textureId = static_cast<GLuint>(mTextureObject);
     if (!upload(gl, mData, mTarget, mSamples, &textureId)) {
         mMessages.insert(mItemId, MessageType::UploadingImageFailed);
@@ -467,12 +461,11 @@ bool GLTexture::finishDownload()
     return std::exchange(mDownloaded, false);
 }
 
-GLuint64 GLTexture::obtainBindlessHandle()
+GLuint64 GLTexture::obtainBindlessHandle(GLContext &gl)
 {
     if (mBindlessHandle)
         return mBindlessHandle;
 
-    auto &gl = GLContext::currentContext();
     if (!gl.hasExtension("GL_ARB_bindless_texture"))
         return 0;
 
@@ -480,7 +473,7 @@ GLuint64 GLTexture::obtainBindlessHandle()
         reinterpret_cast<PFNGLGETTEXTUREHANDLEARBPROC>(
             gl.getProcAddress("glGetTextureHandleARB"));
     if (glGetTextureHandleARB)
-        mBindlessHandle = glGetTextureHandleARB(getReadOnlyTextureId());
+        mBindlessHandle = glGetTextureHandleARB(getReadOnlyTextureId(gl));
 
     static auto glMakeTextureHandleResidentARB =
         reinterpret_cast<PFNGLMAKETEXTUREHANDLERESIDENTARBPROC>(

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RenderTask.h"
+#include "opengl/GLDevice.h"
 #include "opengl/GLComputeRange.h"
 
 #if defined(OPENGL_ENABLED)
@@ -27,7 +28,11 @@ Q_SIGNALS:
     void rangeComputed(const Range &range);
 
 private:
-    void render() override { mImpl.render(); }
+    void render() override
+    {
+        auto &gl = renderer().device<GLDevice>().context();
+        mImpl.render(gl);
+    }
 
     void finish() override { Q_EMIT rangeComputed(mImpl.range()); }
 

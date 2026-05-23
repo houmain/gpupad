@@ -20,8 +20,7 @@ namespace {
         case Texture::Format::S8: return GL_STENCIL_ATTACHMENT;
 
         case Texture::Format::D24S8:
-        case Texture::Format::D32FS8X24:
-            return GL_DEPTH_STENCIL_ATTACHMENT;
+        case Texture::Format::D32FS8X24: return GL_DEPTH_STENCIL_ATTACHMENT;
         }
     }
 
@@ -43,8 +42,8 @@ namespace {
         }
     }
 
-    GLuint createFramebuffer(QOpenGLFunctions_4_5_Core &gl, GLenum target,
-        GLuint textureId, GLenum attachment)
+    GLuint createFramebuffer(GLContext &gl, GLenum target, GLuint textureId,
+        GLenum attachment)
     {
         auto fbo = GLuint{};
         gl.glGenFramebuffers(1, &fbo);
@@ -53,7 +52,7 @@ namespace {
         return fbo;
     }
 
-    bool copyTexture(QOpenGLFunctions_4_5_Core &gl, const TextureData &data,
+    bool copyTexture(GLContext &gl, const TextureData &data,
         GLuint sourceTextureId, GLuint destTextureId)
     {
         const auto attachment = attachmentForFormat(data.format());
@@ -73,46 +72,45 @@ namespace {
         return (glGetError() == GL_NO_ERROR);
     }
 
-    bool importSharedTexture(ShareHandle handle, const TextureData &data,
-        int samples, GLuint textureId)
+    bool importSharedTexture(GLContext &gl, ShareHandle handle,
+        const TextureData &data, int samples, GLuint textureId)
     {
         if (!handle)
             return false;
 
-        auto &context = *QOpenGLContext::currentContext();
         static auto glCreateMemoryObjectsEXT =
             reinterpret_cast<PFNGLCREATEMEMORYOBJECTSEXTPROC>(
-                context.getProcAddress("glCreateMemoryObjectsEXT"));
+                gl.getProcAddress("glCreateMemoryObjectsEXT"));
         static auto glDeleteMemoryObjectsEXT =
             reinterpret_cast<PFNGLDELETEMEMORYOBJECTSEXTPROC>(
-                context.getProcAddress("glDeleteMemoryObjectsEXT"));
+                gl.getProcAddress("glDeleteMemoryObjectsEXT"));
         static auto glMemoryObjectParameterivEXT =
             reinterpret_cast<PFNGLMEMORYOBJECTPARAMETERIVEXTPROC>(
-                context.getProcAddress("glMemoryObjectParameterivEXT"));
+                gl.getProcAddress("glMemoryObjectParameterivEXT"));
 #if defined(_WIN32)
         static auto glImportMemoryWin32HandleEXT =
             reinterpret_cast<PFNGLIMPORTMEMORYWIN32HANDLEEXTPROC>(
-                context.getProcAddress("glImportMemoryWin32HandleEXT"));
+                gl.getProcAddress("glImportMemoryWin32HandleEXT"));
 #else
         static auto glImportMemoryFdEXT =
             reinterpret_cast<PFNGLIMPORTMEMORYFDEXTPROC>(
-                context.getProcAddress("glImportMemoryFdEXT"));
+                gl.getProcAddress("glImportMemoryFdEXT"));
 #endif
         static auto glTextureStorageMem1DEXT =
             reinterpret_cast<PFNGLTEXTURESTORAGEMEM1DEXTPROC>(
-                context.getProcAddress("glTextureStorageMem1DEXT"));
+                gl.getProcAddress("glTextureStorageMem1DEXT"));
         static auto glTextureStorageMem2DEXT =
             reinterpret_cast<PFNGLTEXTURESTORAGEMEM2DEXTPROC>(
-                context.getProcAddress("glTextureStorageMem2DEXT"));
+                gl.getProcAddress("glTextureStorageMem2DEXT"));
         static auto glTextureStorageMem2DMultisampleEXT =
             reinterpret_cast<PFNGLTEXTURESTORAGEMEM2DMULTISAMPLEEXTPROC>(
-                context.getProcAddress("glTextureStorageMem2DMultisampleEXT"));
+                gl.getProcAddress("glTextureStorageMem2DMultisampleEXT"));
         static auto glTextureStorageMem3DEXT =
             reinterpret_cast<PFNGLTEXTURESTORAGEMEM3DEXTPROC>(
-                context.getProcAddress("glTextureStorageMem3DEXT"));
+                gl.getProcAddress("glTextureStorageMem3DEXT"));
         static auto glTextureStorageMem3DMultisampleEXT =
             reinterpret_cast<PFNGLTEXTURESTORAGEMEM3DMULTISAMPLEEXTPROC>(
-                context.getProcAddress("glTextureStorageMem3DMultisampleEXT"));
+                gl.getProcAddress("glTextureStorageMem3DMultisampleEXT"));
 
         if (!glCreateMemoryObjectsEXT || !glDeleteMemoryObjectsEXT
             || !glMemoryObjectParameterivEXT
@@ -272,7 +270,7 @@ bool VKTextureEditorItem::updateOpenGLTexture()
                 gl.glDeleteTextures(1, &state.textureId);
             state.textureId = GL_NONE;
         });
-        if (!importSharedTexture(destHandle, mImage, mTextureSamples,
+        if (!importSharedTexture(gl, destHandle, mImage, mTextureSamples,
                 state.textureId))
             return false;
         state.importedShareHandle = destHandle;
@@ -280,8 +278,8 @@ bool VKTextureEditorItem::updateOpenGLTexture()
     }
 
     if (mShareSync)
-        mShareSync->beginUsage();
-    const auto cleanup = qScopeGuard([&] { mShareSync->endUsage(); });
+        mShareSync->beginUsage(&gl);
+    const auto cleanup = qScopeGuard([&] { mShareSync->endUsage(&gl); });
 
     if (!copyTexture(gl, mImage, sourceTextureId, state.textureId))
         return false;

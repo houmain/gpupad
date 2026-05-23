@@ -9,9 +9,9 @@ class GLBuffer;
 class GLTexture : public TextureBase
 {
 public:
-    static bool upload(QOpenGLFunctions_4_5_Core &gl, const TextureData &data,
+    static bool upload(GLContext &gl, const TextureData &data,
         Texture::Target target, int samples, GLuint *textureId);
-    static bool download(QOpenGLFunctions_4_5_Core &gl, TextureData &data,
+    static bool download(GLContext &gl, TextureData &data,
         Texture::Target target, GLuint textureId);
 
     GLTexture(const Texture &texture, GLRenderSession &renderSession);
@@ -22,21 +22,22 @@ public:
     void boundAsSampler() { }
     void boundAsImage() { }
 
-    GLuint64 obtainBindlessHandle();
-    bool clear(std::array<double, 4> color, double depth, int stencil);
-    bool copy(GLTexture &source);
+    GLuint64 obtainBindlessHandle(GLContext &gl);
+    bool clear(GLContext &gl, std::array<double, 4> color, double depth,
+        int stencil);
+    bool copy(GLContext &gl, GLTexture &source);
     bool swap(GLTexture &other);
     bool updateMipmaps(GLContext &context);
-    GLuint getReadOnlyTextureId();
-    GLuint getReadWriteTextureId();
+    GLuint getReadOnlyTextureId(GLContext &gl);
+    GLuint getReadWriteTextureId(GLContext &gl);
     void beginDownload(GLContext &context);
     bool finishDownload();
     ShareHandle getShareHandle();
 
 private:
-    void reload(bool forWriting);
-    void createTexture();
-    void upload();
+    void reload(GLContext &gl, bool forWriting);
+    void createTexture(GLContext &gl);
+    void upload(GLContext &gl);
 
     GLBuffer *mTextureBuffer{};
     GLObject mTextureObject;

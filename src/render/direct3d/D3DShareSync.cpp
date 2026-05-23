@@ -21,12 +21,12 @@ void D3DShareSync::endUpdate()
     mMutex.unlock();
 }
 
-void D3DShareSync::beginUsage()
+void D3DShareSync::beginUsage(void *context)
 {
     mMutex.lock();
 }
 
-void D3DShareSync::endUsage()
+void D3DShareSync::endUsage(void *context)
 {
     mMutex.unlock();
 }

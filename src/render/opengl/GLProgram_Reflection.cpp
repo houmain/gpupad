@@ -565,11 +565,9 @@ namespace {
     }
 } // namespace
 
-void GLProgram::generateReflectionFromProgram(GLuint program,
+void GLProgram::generateReflectionFromProgram(GLContext &gl, GLuint program,
     bool generateGlobalUniformBlockBinding)
 {
-    auto &gl = GLContext::currentContext();
-
     const auto getResourceValues = [&](GLuint programInterface, GLuint index,
                                        auto properties) {
         auto result = std::array<GLint, properties.size()>{};
@@ -843,9 +841,8 @@ void GLProgram::generateReflectionFromProgram(GLuint program,
     Q_ASSERT(glGetError() == GL_NO_ERROR);
 }
 
-void GLProgram::enumerateSubroutines(GLuint program)
+void GLProgram::enumerateSubroutines(GLContext &gl, GLuint program)
 {
-    auto &gl = GLContext::currentContext();
     auto buffer = std::vector<char>(256);
     auto nameLength = GLint{};
     auto uniforms = GLint{};

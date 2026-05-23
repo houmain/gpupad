@@ -1,7 +1,7 @@
 
 #include "GLShareSync.h"
 
-void GLShareSync::cleanup(QOpenGLFunctions_4_5_Core &gl)
+void GLShareSync::cleanup(GLContext &gl)
 {
     QMutexLocker lock{ &mMutex };
 
@@ -14,7 +14,7 @@ void GLShareSync::cleanup(QOpenGLFunctions_4_5_Core &gl)
     mUsageFenceSyncs.clear();
 }
 
-void GLShareSync::beginUpdate(QOpenGLFunctions_4_5_Core &gl)
+void GLShareSync::beginUpdate(GLContext &gl)
 {
     mMutex.lock();
     // synchronize with end of usage
@@ -25,7 +25,7 @@ void GLShareSync::beginUpdate(QOpenGLFunctions_4_5_Core &gl)
     mUsageFenceSyncs.clear();
 }
 
-void GLShareSync::endUpdate(QOpenGLFunctions_4_5_Core &gl)
+void GLShareSync::endUpdate(GLContext &gl)
 {
     // mark end of update
     if (mUpdateFenceSync)
@@ -35,21 +35,20 @@ void GLShareSync::endUpdate(QOpenGLFunctions_4_5_Core &gl)
     mMutex.unlock();
 }
 
-void GLShareSync::beginUsage()
+void GLShareSync::beginUsage(void *context)
 {
+    auto &gl = *static_cast<GLContext *>(context);
     mMutex.lock();
 
     // synchronize with end of update
-    auto &gl = GLContext::currentContext();
     if (mUpdateFenceSync)
         gl.glWaitSync(mUpdateFenceSync, 0, GL_TIMEOUT_IGNORED);
 }
 
-void GLShareSync::endUsage()
+void GLShareSync::endUsage(void *context)
 {
-    auto &gl = GLContext::currentContext();
-
     // mark end of usage
+    auto &gl = *static_cast<GLContext *>(context);
     mUsageFenceSyncs.append(gl.glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0));
     gl.glFlush();
     mMutex.unlock();

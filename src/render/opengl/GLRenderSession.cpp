@@ -3,6 +3,7 @@
 #include "GLAccelerationStructure.h"
 #include "GLBuffer.h"
 #include "GLCall.h"
+#include "GLDevice.h"
 #include "GLProgram.h"
 #include "GLStream.h"
 #include "GLTarget.h"
@@ -42,9 +43,8 @@ void GLRenderSession::createCommandQueue()
 {
     Q_ASSERT(!mPrevCommandQueue);
     mPrevCommandQueue.swap(mCommandQueue);
-    mCommandQueue = std::make_unique<CommandQueue>(CommandQueue{
-        GLContext::currentContext(),
-    });
+    auto &gl = renderer().device<GLDevice>().context();
+    mCommandQueue = std::make_unique<CommandQueue>(CommandQueue{ gl });
 }
 
 std::vector<Duration> GLRenderSession::resetTimeQueries(size_t count)
@@ -75,7 +75,7 @@ void GLRenderSession::render()
     }
     Q_ASSERT(mCommandQueue);
 
-    auto &gl = GLContext::currentContext();
+    auto &gl = renderer().device<GLDevice>().context();
 
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     QOpenGLVertexArrayObject::Binder vaoBinder(&mVao);
@@ -110,9 +110,9 @@ void GLRenderSession::finish()
 
 void GLRenderSession::release()
 {
-    auto &context = GLContext::currentContext();
+    auto &gl = renderer().device<GLDevice>().context();
     mTimeQueries.clear();
-    mShareSync->cleanup(context);
+    mShareSync->cleanup(gl);
     mVao.destroy();
     mCommandQueue.reset();
     mPrevCommandQueue.reset();
@@ -132,7 +132,7 @@ quint64 GLRenderSession::getTextureHandle(ItemId itemId)
 
     if (auto texture = addTextureOnce(itemId)) {
         addUsedItems(texture->usedItems());
-        return texture->obtainBindlessHandle();
+        return texture->obtainBindlessHandle(mCommandQueue->context);
     }
     return 0;
 }

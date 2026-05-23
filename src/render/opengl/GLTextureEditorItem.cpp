@@ -49,7 +49,7 @@ GLTextureEditorItem::~GLTextureEditorItem()
 void GLTextureEditorItem::releaseGpu()
 {
     if (window().initialized()) {
-        auto &gl = window().gl();
+        auto &gl = window().context();
         if (mImageTextureId)
             gl.glDeleteTextures(1, &mImageTextureId);
 
@@ -86,13 +86,13 @@ bool GLTextureEditorItem::downloadImage(TextureData *image)
         return false;
 
     auto data = mImage;
-    auto &gl = window().gl();
+    auto &gl = window().context();
     const auto target = data.getTarget(mTextureSamples);
     if (mShareSync)
-        mShareSync->beginUsage();
+        mShareSync->beginUsage(&gl);
     const auto cleanup = qScopeGuard([&] {
         if (mShareSync)
-            mShareSync->endUsage();
+            mShareSync->endUsage(&gl);
     });
 
     if (!gl.glIsTexture(mPreviewTextureId))
@@ -143,7 +143,7 @@ bool GLTextureEditorItem::updateTexture()
         return false;
 
     if (!mPreviewTextureId && std::exchange(mUpload, false)) {
-        auto &gl = window().gl();
+        auto &gl = window().context();
         gl.glDeleteTextures(1, &mImageTextureId);
         mImageTextureId = GL_NONE;
 
@@ -159,7 +159,7 @@ bool GLTextureEditorItem::updateTexture()
 bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
 {
     Q_ASSERT(glGetError() == GL_NO_ERROR);
-    auto &gl = window().gl();
+    auto &gl = window().context();
 
     if (mPreviewTextureId && !gl.glIsTexture(mPreviewTextureId))
         mPreviewTextureId = GL_NONE;
@@ -169,7 +169,7 @@ bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
     gl.glActiveTexture(GL_TEXTURE0);
     const auto usingPreviewTexture = (mPreviewTextureId != GL_NONE);
     if (usingPreviewTexture && mShareSync)
-        mShareSync->beginUsage();
+        mShareSync->beginUsage(&gl);
 
     if (mPreviewTextureId)
         gl.glBindTexture(target, mPreviewTextureId);
@@ -274,7 +274,7 @@ bool GLTextureEditorItem::renderTexture(const QMatrix4x4 &transform)
 
     gl.glBindTexture(target, 0);
     if (usingPreviewTexture && mShareSync)
-        mShareSync->endUsage();
+        mShareSync->endUsage(&gl);
     Q_ASSERT(glGetError() == GL_NO_ERROR);
     return true;
 }

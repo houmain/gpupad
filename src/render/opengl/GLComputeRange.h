@@ -1,16 +1,18 @@
 #pragma once
 #if defined(OPENGL_ENABLED)
 
-#include "Range.h"
-#include "TextureData.h"
-#include <QOpenGLBuffer>
-#include <QOpenGLShaderProgram>
-#include <QOpenGLTexture>
+#  include "Range.h"
+#  include "TextureData.h"
+#  include <QOpenGLBuffer>
+#  include <QOpenGLShaderProgram>
+#  include <QOpenGLTexture>
+
+class GLContext;
 
 class GLComputeRange
 {
 public:
-    void render();
+    void render(GLContext &gl);
     void release();
 
     void setImage(QOpenGLTexture::Target target, GLuint textureId,
@@ -18,8 +20,7 @@ public:
     const Range &range() const { return mRange; }
 
 private:
-    using ProgramKey =
-        std::tuple<QOpenGLTexture::Target, Texture::Format>;
+    using ProgramKey = std::tuple<QOpenGLTexture::Target, Texture::Format>;
 
     QOpenGLShaderProgram *getProgram(QOpenGLTexture::Target target,
         Texture::Format format);

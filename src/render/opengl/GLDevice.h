@@ -2,18 +2,17 @@
 
 #if defined(OPENGL_ENABLED)
 
-#include "GLContext.h"
-#include "MessageList.h"
-#include "render/Device.h"
-#include <QOffscreenSurface>
-#include <QOpenGLDebugLogger>
-#include <memory>
+#  include "GLContext.h"
+#  include "MessageList.h"
+#  include "render/Device.h"
+#  include <QOffscreenSurface>
+#  include <QOpenGLDebugLogger>
+#  include <memory>
 
 class GLDevice final : public Device
 {
 public:
-    enum class Usage
-    {
+    enum class Usage {
         Renderer,
         Window,
     };
@@ -27,7 +26,6 @@ public:
     bool isValid() const override { return mInitialized; }
 
     GLContext &context();
-    QOpenGLFunctions_4_5_Core &gl();
 
 private:
     void createContext(QObject *parent = nullptr);

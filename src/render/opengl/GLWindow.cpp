@@ -123,11 +123,12 @@ void GLWindow::update()
         return;
 
     const qreal dpr = devicePixelRatio();
-    mDevice->gl().glViewport(0, 0, width() * dpr, height() * dpr);
+    auto &gl = mDevice->context();
+    gl.glViewport(0, 0, width() * dpr, height() * dpr);
     paintGL();
 
     const auto start = std::chrono::high_resolution_clock::now();
-    mDevice->context().swapBuffers(this);
+    gl.swapBuffers(this);
     const auto end = std::chrono::high_resolution_clock::now();
 
     // limit refresh rate when swapping is not synchronizing
@@ -140,16 +141,16 @@ void GLWindow::update()
 
 bool GLWindow::makeCurrent()
 {
-    auto &context = mDevice->context();
-    if (!context.isValid()) {
-        context.setFormat(format());
+    auto &gl = mDevice->context();
+    if (!gl.isValid()) {
+        gl.setFormat(format());
         if (auto *shareContext = QOpenGLContext::globalShareContext())
-            context.setShareContext(shareContext);
-        if (!context.create())
+            gl.setShareContext(shareContext);
+        if (!gl.create())
             return false;
     }
 
-    if (!context.makeCurrent(this))
+    if (!gl.makeCurrent(this))
         return false;
 
     if (!initialized())

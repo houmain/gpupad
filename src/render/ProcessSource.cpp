@@ -3,6 +3,7 @@
 #include "FileCache.h"
 #include "SynchronizeLogic.h"
 #include "opengl/GLProgram.h"
+#include "opengl/GLDevice.h"
 #include "vulkan/VKShader.h"
 #include "direct3d/D3DShader.h"
 #include "session/SessionModel.h"
@@ -206,7 +207,8 @@ void ProcessSource::render()
 void ProcessSource::validate()
 {
     if (mGLProgram) {
-        mGLProgram->validate();
+        auto &gl = renderer().device<GLDevice>().context();
+        mGLProgram->validate(gl);
     } else if (mShader) {
         mShader->validate();
     } else if (mSourceType == SourceType::JavaScript) {
@@ -236,13 +238,17 @@ QString ProcessSource::processString()
     if (mProcessType == "ast" && mShader)
         return mShader->generateGLSLangAST();
 
-    if (mProcessType == "programBinary" && mGLProgram)
-        return mGLProgram->tryGetProgramBinary();
+    if (mProcessType == "programBinary" && mGLProgram) {
+        auto &gl = renderer().device<GLDevice>().context();
+        return mGLProgram->tryGetProgramBinary(gl);
+    }
 
     if (mProcessType == "json") {
-        if (mGLProgram && mGLProgram->validate())
-            return getJsonString(mGLProgram->reflection());
-
+        if (mGLProgram) {
+            auto &gl = renderer().device<GLDevice>().context();
+            if (mGLProgram->validate(gl))
+                return getJsonString(mGLProgram->reflection());
+        }
         if (mShader)
             return getJsonString(mShader->getReflection());
     }

@@ -35,10 +35,10 @@ public:
     GLProgram(const Program &program, const Session &session);
     bool operator==(const GLProgram &rhs) const;
 
-    bool validate();
+    bool validate(GLContext &gl);
     bool link(GLContext &context);
-    bool bind();
-    void unbind();
+    bool bind(GLContext &gl);
+    void unbind(GLContext &gl);
     ItemId itemId() const { return mItemId; }
     const Session &session() const { return mSession; }
     const Reflection &reflection() const { return mReflection; }
@@ -54,14 +54,14 @@ public:
     }
     GLPrintf &printf() { return mPrintf; }
     MessagePtrSet resetMessages();
-    QString tryGetProgramBinary();
+    QString tryGetProgramBinary(GLContext &gl);
 
 private:
-    bool compileShaders(PrintfBase &printf);
-    bool linkProgram();
-    void generateReflectionFromProgram(GLuint program,
+    bool compileShaders(GLContext &gl, PrintfBase &printf);
+    bool linkProgram(GLContext &gl);
+    void generateReflectionFromProgram(GLContext &gl, GLuint program,
         bool generateGlobalUniformBlockBinding);
-    void enumerateSubroutines(GLuint program);
+    void enumerateSubroutines(GLContext &gl, GLuint program);
 
     ItemId mItemId{};
     Session mSession{};
@@ -85,10 +85,10 @@ private:
 class GLProgram
 {
 public:
-    bool validate() { return false; }
+    bool validate(GLContext &) { return false; }
     const Reflection &reflection() const { return mReflection; }
     MessagePtrSet resetMessages() { return {}; }
-    QString tryGetProgramBinary() { return {}; }
+    QString tryGetProgramBinary(GLContext &) { return {}; }
 
 private:
     Reflection mReflection;

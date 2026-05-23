@@ -39,12 +39,11 @@ void GLTarget::setTexture(int index, GLTexture *texture)
     mUsedItems += texture->usedItems();
 }
 
-bool GLTarget::bind()
+bool GLTarget::bind(GLContext &gl)
 {
-    if (!create())
+    if (!create(gl))
         return false;
 
-    auto &gl = GLContext::currentContext();
     gl.glBindFramebuffer(GL_FRAMEBUFFER, mFramebufferObject);
 
     auto colorAttachments = std::vector<GLenum>();
@@ -57,35 +56,32 @@ bool GLTarget::bind()
     // mark texture device copies as modified
     for (const GLAttachment &attachment : std::as_const(mAttachments))
         if (auto texture = attachment.texture)
-            texture->getReadWriteTextureId();
+            texture->getReadWriteTextureId(gl);
 
-    applyStates();
+    applyStates(gl);
     return true;
 }
 
-void GLTarget::unbind()
+void GLTarget::unbind(GLContext &gl)
 {
-    auto &gl = GLContext::currentContext();
     gl.glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
 }
 
-bool GLTarget::create()
+bool GLTarget::create(GLContext &gl)
 {
     if (mFramebufferObject)
         return true;
 
-    auto &gl = GLContext::currentContext();
     auto createFBO = [&]() {
         auto fbo = GLuint{};
         gl.glGenFramebuffers(1, &fbo);
         return fbo;
     };
-    auto freeFBO = [](GLuint fbo) {
-        auto &gl = GLContext::currentContext();
+    auto freeFBO = [](GLContext &gl, GLuint fbo) {
         gl.glDeleteFramebuffers(1, &fbo);
     };
 
-    mFramebufferObject = GLObject(createFBO(), freeFBO);
+    mFramebufferObject = GLObject(&gl, createFBO(), freeFBO);
     gl.glBindFramebuffer(GL_FRAMEBUFFER, mFramebufferObject);
 
     auto nextColorAttachment = GLenum(GL_COLOR_ATTACHMENT0);
@@ -109,12 +105,13 @@ bool GLTarget::create()
 
             if (kind.array && attachment.layer >= 0) {
                 gl.glFramebufferTextureLayer(GL_FRAMEBUFFER,
-                    attachment.attachmentPoint, texture->getReadWriteTextureId(),
-                    level, attachment.layer);
+                    attachment.attachmentPoint,
+                    texture->getReadWriteTextureId(gl), level,
+                    attachment.layer);
             } else {
                 gl.glFramebufferTexture(GL_FRAMEBUFFER,
-                    attachment.attachmentPoint, texture->getReadWriteTextureId(),
-                    level);
+                    attachment.attachmentPoint,
+                    texture->getReadWriteTextureId(gl), level);
             }
         }
 
@@ -131,8 +128,7 @@ bool GLTarget::create()
 
     const auto status = gl.glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
-        mMessages.insert(mItemId,
-            MessageType::CreatingFramebufferFailed,
+        mMessages.insert(mItemId, MessageType::CreatingFramebufferFailed,
             (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT
                     ? "(incomplete attachment)"
                     : status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT
@@ -147,10 +143,8 @@ bool GLTarget::create()
     return mFramebufferObject;
 }
 
-void GLTarget::applyStates()
+void GLTarget::applyStates(GLContext &gl)
 {
-    auto &gl = GLContext::currentContext();
-
     gl.glFrontFace(mFrontFace);
     if (mCullMode != Target::CullMode::NoCulling) {
         gl.glEnable(GL_CULL_FACE);
@@ -183,7 +177,7 @@ void GLTarget::applyStates()
                     std::max(texture->height() >> attachment.level, 1);
                 minWidth = (!minWidth ? width : std::min(minWidth, width));
                 minHeight = (!minHeight ? height : std::min(minHeight, height));
-                applyAttachmentStates(attachment);
+                applyAttachmentStates(gl, attachment);
             }
         gl.glViewport(0, 0, minWidth, minHeight);
     } else {
@@ -191,9 +185,8 @@ void GLTarget::applyStates()
     }
 }
 
-void GLTarget::applyAttachmentStates(const GLAttachment &a)
+void GLTarget::applyAttachmentStates(GLContext &gl, const GLAttachment &a)
 {
-    auto &gl = GLContext::currentContext();
     auto kind = a.texture->kind();
 
     if (kind.color) {

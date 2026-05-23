@@ -24,21 +24,19 @@ QByteArray &GLBuffer::getWriteableData()
     return mData;
 }
 
-void GLBuffer::clear()
+void GLBuffer::clear(GLContext &gl)
 {
-    auto &gl = GLContext::currentContext();
     auto data = uint8_t();
-    gl.glBindBuffer(GL_ARRAY_BUFFER, getReadWriteBufferId());
+    gl.glBindBuffer(GL_ARRAY_BUFFER, getReadWriteBufferId(gl));
     gl.glClearBufferData(GL_ARRAY_BUFFER, GL_R8, GL_RED, GL_UNSIGNED_BYTE,
         &data);
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 }
 
-void GLBuffer::copy(GLBuffer &source)
+void GLBuffer::copy(GLContext &gl, GLBuffer &source)
 {
-    auto &gl = GLContext::currentContext();
-    gl.glBindBuffer(GL_COPY_READ_BUFFER, source.getReadOnlyBufferId());
-    gl.glBindBuffer(GL_COPY_WRITE_BUFFER, getReadWriteBufferId());
+    gl.glBindBuffer(GL_COPY_READ_BUFFER, source.getReadOnlyBufferId(gl));
+    gl.glBindBuffer(GL_COPY_WRITE_BUFFER, getReadWriteBufferId(gl));
     gl.glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0,
         std::min(source.mSize, mSize));
     gl.glBindBuffer(GL_COPY_READ_BUFFER, GL_NONE);
@@ -53,29 +51,28 @@ bool GLBuffer::swap(GLBuffer &other)
     return true;
 }
 
-GLuint GLBuffer::getReadOnlyBufferId()
+GLuint GLBuffer::getReadOnlyBufferId(GLContext &gl)
 {
     reload();
-    createBuffer();
-    upload();
+    createBuffer(gl);
+    upload(gl);
     return mBufferObject;
 }
 
-GLuint GLBuffer::getReadWriteBufferId()
+GLuint GLBuffer::getReadWriteBufferId(GLContext &gl)
 {
     reload();
-    createBuffer();
-    upload();
+    createBuffer(gl);
+    upload(gl);
     mDeviceCopyModified = true;
     return mBufferObject;
 }
 
-void GLBuffer::bindIndexedRange(GLenum target, int index, int offset, int size,
-    bool readonly)
+void GLBuffer::bindIndexedRange(GLContext &gl, GLenum target, int index,
+    int offset, int size, bool readonly)
 {
     const auto bufferObject =
-        (readonly ? getReadOnlyBufferId() : getReadWriteBufferId());
-    auto &gl = GLContext::currentContext();
+        (readonly ? getReadOnlyBufferId(gl) : getReadWriteBufferId(gl));
     if (size <= 0) {
         gl.glBindBufferBase(target, index, bufferObject);
     } else {
@@ -83,15 +80,13 @@ void GLBuffer::bindIndexedRange(GLenum target, int index, int offset, int size,
     }
 }
 
-void GLBuffer::bindReadOnly(GLenum target)
+void GLBuffer::bindReadOnly(GLContext &gl, GLenum target)
 {
-    auto &gl = GLContext::currentContext();
-    gl.glBindBuffer(target, getReadOnlyBufferId());
+    gl.glBindBuffer(target, getReadOnlyBufferId(gl));
 }
 
-void GLBuffer::unbind(GLenum target)
+void GLBuffer::unbind(GLContext &gl, GLenum target)
 {
-    auto &gl = GLContext::currentContext();
     gl.glBindBuffer(target, GL_NONE);
 }
 
@@ -110,34 +105,31 @@ void GLBuffer::reload()
     mSystemCopyModified |= !mData.isSharedWith(prevData);
 }
 
-void GLBuffer::createBuffer()
+void GLBuffer::createBuffer(GLContext &gl)
 {
     if (mBufferObject)
         return;
 
-    auto &gl = GLContext::currentContext();
     auto createBuffer = [&]() {
         auto buffer = GLuint{};
         gl.glGenBuffers(1, &buffer);
         return buffer;
     };
-    auto freeBuffer = [](GLuint buffer) {
-        auto &gl = GLContext::currentContext();
+    auto freeBuffer = [](GLContext &gl, GLuint buffer) {
         gl.glDeleteBuffers(1, &buffer);
     };
 
-    mBufferObject = GLObject(createBuffer(), freeBuffer);
+    mBufferObject = GLObject(&gl, createBuffer(), freeBuffer);
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
     gl.glBufferData(GL_ARRAY_BUFFER, mSize, nullptr, GL_DYNAMIC_DRAW);
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
 }
 
-void GLBuffer::upload()
+void GLBuffer::upload(GLContext &gl)
 {
     if (!mSystemCopyModified)
         return;
 
-    auto &gl = GLContext::currentContext();
     gl.glBindBuffer(GL_ARRAY_BUFFER, mBufferObject);
     gl.glBufferSubData(GL_ARRAY_BUFFER, 0, mSize, mData.constData());
     gl.glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);

@@ -8,8 +8,8 @@ public:
     GLTarget(const Target &target, GLRenderSession &renderSession);
     void setTexture(int index, GLTexture *texture);
 
-    bool bind();
-    void unbind();
+    bool bind(GLContext &gl);
+    void unbind(GLContext &gl);
     const QSet<ItemId> &usedItems() const { return mUsedItems; }
 
 private:
@@ -19,9 +19,9 @@ private:
         GLenum attachmentPoint{};
     };
 
-    bool create();
-    void applyStates();
-    void applyAttachmentStates(const GLAttachment &attachment);
+    bool create(GLContext &gl);
+    void applyStates(GLContext &gl);
+    void applyAttachmentStates(GLContext &gl, const GLAttachment &attachment);
 
     ItemId mItemId{};
     MessagePtrSet mMessages;

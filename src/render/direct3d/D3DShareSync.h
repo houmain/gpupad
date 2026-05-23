@@ -13,8 +13,8 @@ public:
     void cleanup();
     void beginUpdate();
     void endUpdate();
-    void beginUsage() override;
-    void endUsage() override;
+    void beginUsage(void *context) override;
+    void endUsage(void *context) override;
 
 private:
     QMutex mMutex;

@@ -191,9 +191,8 @@ void GLComputeRange::setImage(QOpenGLTexture::Target target, GLuint textureId,
     mTextureId = textureId;
 }
 
-void GLComputeRange::render()
+void GLComputeRange::render(GLContext &gl)
 {
-    auto &gl = GLContext::currentContext();
     const auto min = std::numeric_limits<float>::lowest();
     const auto max = std::numeric_limits<float>::max();
 

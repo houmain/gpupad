@@ -2,8 +2,8 @@
 #include "GLDevice.h"
 
 namespace {
-    void parseLog(const QString &log, MessagePtrSet &messages,
-        ItemId itemId, const QStringList &fileNames)
+    void parseLog(const QString &log, MessagePtrSet &messages, ItemId itemId,
+        const QStringList &fileNames)
     {
         // Mesa:    0:13(2): error: `gl_Positin' undeclared
         // NVidia:  0(13) : error C1008: undefined variable "gl_Positin"
@@ -16,7 +16,7 @@ namespace {
             ")?"
             "([^:]+:|Error)\\s*" // 6. severity/code
             "(.+)"); // 7. text
-    
+
         const auto lines = log.split('\n', Qt::SkipEmptyParts);
         for (const auto &line : lines) {
             const auto match = split.match(line);
@@ -28,16 +28,16 @@ namespace {
             const auto text = match.captured(7).trimmed();
             if (text.isEmpty())
                 continue;
-    
+
             auto messageType = MessageType::ShaderWarning;
             if (severity.contains("Info", Qt::CaseInsensitive))
                 messageType = MessageType::ShaderInfo;
             if (severity.contains("Error", Qt::CaseInsensitive))
                 messageType = MessageType::ShaderError;
-    
+
             if (sourceIndex < fileNames.size())
-                messages.insert(fileNames[sourceIndex], lineNumber,
-                    messageType, text);
+                messages.insert(fileNames[sourceIndex], lineNumber, messageType,
+                    text);
             else
                 messages.insert(itemId, messageType, text);
         }
@@ -50,22 +50,21 @@ GLShader::GLShader(Shader::ShaderType type,
 {
 }
 
-bool GLShader::compile()
+bool GLShader::compile(GLContext &gl)
 {
     auto printf = RemoveShaderPrintf();
-    return compile(printf);
+    return compile(gl, printf);
 }
 
-bool GLShader::compile(PrintfBase &printf)
+bool GLShader::compile(GLContext &gl, PrintfBase &printf)
 {
     if (mShaderObject)
         return true;
     if (mSession.shaderLanguage != Session::ShaderLanguage::GLSL) {
-        mMessages.insert(mItemId,
-            MessageType::OpenGLRendererRequiresGLSL);
+        mMessages.insert(mItemId, MessageType::OpenGLRendererRequiresGLSL);
         return {};
     }
-    auto shader = createShader();
+    auto shader = createShader(gl);
     if (!shader)
         return false;
 
@@ -82,16 +81,15 @@ bool GLShader::compile(PrintfBase &printf)
     for (const auto &source : sources)
         sourcePointers.push_back(source.data());
 
-    auto &gl = GLContext::currentContext();
     gl.glShaderSource(shader, static_cast<GLsizei>(sourcePointers.size()),
         sourcePointers.data(), nullptr);
 
     gl.glCompileShader(shader);
 
-    return setShaderObject(std::move(shader), usedFileNames);
+    return setShaderObject(gl, std::move(shader), usedFileNames);
 }
 
-bool GLShader::specialize(const Spirv &spirv)
+bool GLShader::specialize(GLContext &gl, const Spirv &spirv)
 {
     if (mShaderObject)
         return true;
@@ -99,18 +97,17 @@ bool GLShader::specialize(const Spirv &spirv)
     if (spirv.empty())
         return false;
 
-    auto &gl = GLContext::currentContext();
     void (*glSpecializeShader)(GLuint, const GLchar *, GLuint, const GLuint *,
         const GLuint *);
     glSpecializeShader = reinterpret_cast<decltype(glSpecializeShader)>(
         gl.getProcAddress("glSpecializeShader"));
     if (!glSpecializeShader) {
-        mMessages.insert(mItemId,
-            MessageType::OpenGLVersionNotAvailable, "4.6");
+        mMessages.insert(mItemId, MessageType::OpenGLVersionNotAvailable,
+            "4.6");
         return false;
     }
 
-    auto shader = createShader();
+    auto shader = createShader(gl);
     if (!shader)
         return false;
 
@@ -128,23 +125,20 @@ bool GLShader::specialize(const Spirv &spirv)
     // clear error state
     glGetError();
 
-    return setShaderObject(std::move(shader), {});
+    return setShaderObject(gl, std::move(shader), {});
 }
 
-GLObject GLShader::createShader()
+GLObject GLShader::createShader(GLContext &gl)
 {
-    auto freeShader = [](GLuint shaderObject) {
-        auto &gl = GLContext::currentContext();
+    auto freeShader = [](GLContext &gl, GLuint shaderObject) {
         gl.glDeleteShader(shaderObject);
     };
 
-    auto &gl = GLContext::currentContext();
     switch (mType) {
     case Shader::ShaderType::Task:
     case Shader::ShaderType::Mesh:
         if (!gl.hasExtension("GL_NV_mesh_shader")) {
-            mMessages.insert(mItemId,
-                MessageType::MeshShadersNotAvailable);
+            mMessages.insert(mItemId, MessageType::MeshShadersNotAvailable);
             return {};
         }
         break;
@@ -159,7 +153,7 @@ GLObject GLShader::createShader()
     default: break;
     }
 
-    auto shader = GLObject(gl.glCreateShader(mType), freeShader);
+    auto shader = GLObject(&gl, gl.glCreateShader(mType), freeShader);
     if (!shader) {
         mMessages.insert(mItemId, MessageType::UnsupportedShaderType);
         return {};
@@ -167,11 +161,10 @@ GLObject GLShader::createShader()
     return shader;
 }
 
-bool GLShader::setShaderObject(GLObject shader,
+bool GLShader::setShaderObject(GLContext &gl, GLObject shader,
     const QStringList &usedFileNames)
 {
     auto length = GLint{};
-    auto &gl = GLContext::currentContext();
     gl.glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
     if (length > 0) {
         auto log = std::vector<char>(static_cast<size_t>(length));
@@ -183,8 +176,7 @@ bool GLShader::setShaderObject(GLObject shader,
     gl.glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (status != GL_TRUE) {
         if (auto errorMessage = getFirstGLError(); !errorMessage.isEmpty())
-            mMessages.insert(mItemId, MessageType::ShaderError,
-                errorMessage);
+            mMessages.insert(mItemId, MessageType::ShaderError, errorMessage);
         return false;
     }
 

@@ -8,6 +8,6 @@ class ShareSync
 {
 public:
     virtual ~ShareSync() = default;
-    virtual void beginUsage() = 0;
-    virtual void endUsage() = 0;
+    virtual void beginUsage(void *context) = 0;
+    virtual void endUsage(void *context) = 0;
 };
